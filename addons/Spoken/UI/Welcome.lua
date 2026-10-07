@@ -124,18 +124,21 @@ function Welcome:Build()
     layout.titleX = TITLE_X
     -- Its name, words and questions across the middle: a window that opens unasked, read top down.
     layout.centred = true
+    -- Its lists across its width, not from where a settings row's label starts, and compact, so
+    -- every module fits with the window on a small screen.
+    layout.boxLeft, layout.boxRight = 0, 0
+    layout.compactList = true
     self.page, self.layout = page, layout
     -- Headed as the settings' pages are, with a name, and then what the window is for: unlike
     -- a settings page, it opens unasked, and has to say what it is.
     layout:Intro([[Interface\AddOns\Spoken\icon.tga]], L.WELCOME_TITLE, L.WELCOME_INTRO)
 
-    -- What Spoken reads: the modules, a click turning each on or off, their tags saying whether
-    -- each is enabled and has its voices, as on General.
+    -- What Spoken reads: the modules' list, as on General, a click turning each on or off.
     layout:Section(L.WELCOME_PARTS, true)
-    local cards = {}
+    local modules = {}
     for _, part in ipairs(Options.PARTS) do
         local key = part.key
-        table.insert(cards, { icon = part.icon, title = part.label, text = part.text, tooltip = part.tip,
+        table.insert(modules, { icon = part.icon, title = part.label, text = part.text, tooltip = part.tip,
             read = function() return Spoken:IsPartOn(key) end,
             write = function(v) Sources:SetTurnedOff(key, not v) end,
             apply = function() Options:UpdateRows(); layout:Refresh() end,
@@ -143,7 +146,7 @@ function Welcome:Build()
             status = function() return Options:PartVoice(key) end,
             hint = function(on) return on and L.OPT_PART_CLICK_OFF or L.OPT_PART_CLICK_ON end })
     end
-    self.cards = layout:Cards(cards)
+    self.modules = layout:List(modules)
 
     -- How lines appear: the same sketches as General. Choosing subtitles shows one, so it can
     -- be seen and dragged into place now.

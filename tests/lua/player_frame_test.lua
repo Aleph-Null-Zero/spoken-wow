@@ -310,7 +310,20 @@ Expect("on the settings canvas the rows sit in a scroller", host ~= nil, true)
 local lowest = 0
 for _, row in ipairs(rows) do lowest = math.max(lowest, -row.y + row.height) end
 Expect("...tall enough to reach the last row", host:GetHeight() >= lowest, true)
-local gaps = {}
+-- Where each of the narrator style box's untitled sections starts, after its first.
+local sectionStarts = {}
+for _, item in ipairs(_G.SpokenOptionsPanel.layout.items) do
+    if item.kind == "group" and item.shown then
+        local seen = 0
+        for _, section in ipairs(item.sections) do
+            if section.shown then
+                seen = seen + 1
+                if seen > 1 then sectionStarts[string.format("%.1f", section.top)] = true end
+            end
+        end
+    end
+end
+local gaps, sectionGaps = {}, {}
 for index = 2, #rows do
     local previous = rows[index - 1]
     -- Top-anchored and downward, so the gap is the drop less the height already used.
@@ -321,9 +334,22 @@ for index = 2, #rows do
     for _, heading in ipairs(headings) do
         if heading.y < previous.y and heading.y > rows[index].y then crossesHeading = true end
     end
-    if not crossesHeading then table.insert(gaps, gap) end
+    if sectionStarts[string.format("%.1f", rows[index].y)] then
+        table.insert(sectionGaps, gap)
+    elseif not crossesHeading then
+        table.insert(gaps, gap)
+    end
 end
 Expect("every row sits the same distance below the one above it", Distinct(gaps), 1)
+-- Between the narrator style's sections, a divider 16 from the rows either side.
+local dividers = {}
+for _, item in ipairs(_G.SpokenOptionsPanel.layout.items) do
+    if item.kind == "section" and item.shown and item.divider and item.divider.shown ~= false then
+        table.insert(dividers, item.divider.height)
+    end
+end
+Expect("...and the narrator style's sections a divider apart, 16 from the rows either side",
+    #sectionGaps > 0 and Distinct(sectionGaps) == 1 and sectionGaps[1] - dividers[1], 32)
 
 -- Each control sits on its own row, centred on it as the game's settings centre theirs -- the 3
 -- they nudge a slider and a dropdown up by aside (SettingsSliderControlMixin) -- which is how the
@@ -352,8 +378,8 @@ for _, child in ipairs(host.children) do
     end
 end
 Expect("there are labelled controls to line up", captioned > 1, true)
-local distinctColumns = 0
-for _ in pairs(columns) do distinctColumns = distinctColumns + 1 end
+local distinctColumns, columnsSeen = 0, nil
+for key in pairs(columns) do distinctColumns = distinctColumns + 1; columnsSeen = tonumber(key) end
 Expect("...and every one of them ends at the same edge, inside the box too", distinctColumns, 1)
 
 -- From where each section ends -- the bottom of its box, or of its cards where it has no box --
@@ -378,9 +404,7 @@ for _, item in ipairs(_G.SpokenOptionsPanel.layout.items) do
     end
 end
 Expect("every heading the same distance below the section or box above", Distinct(headingGaps), 1)
-Expect("the narrator style's settings are a group of their own, in a box", groups, 1)
--- The box as wide as the module cards above it, and what is inside it in by the same padding on
--- every side: to the rows' sides, to the first section's title (16 down its band), under the last.
+Expect("the narrator style's settings are a group of their own", groups, 1)
 do
     local layout = _G.SpokenOptionsPanel.layout
     local group
@@ -391,16 +415,34 @@ do
     for _, section in ipairs(group and group.sections or {}) do
         if section.shown then table.insert(shown, section) end
     end
-    local first, last = shown[1], shown[#shown]
-    -- The first title's words start 16 down its band and 7 in from the rows' edge.
-    local pads = { group.top - (first.heading.layoutY - 16), last.bottom - group.bottom,
-        first.left + 7 - group.left }
-    Expect("the titles as far from the box's top and bottom as from its left", Distinct(pads), 1)
-    Expect("...23, more than the rows' own spacing", pads[1], 23)
-    Expect("...and the rows in by as much on the right as on the left", group.right - (first.left + first.width),
-        first.left - group.left)
-    Expect("...and the box is as wide as the module cards", group.left == layout.left
-        and group.right == layout.left + layout:Width(), true)
+    local titled, divided = 0, 0
+    for index, section in ipairs(shown) do
+        if section.heading then titled = titled + 1 end
+        if index > 1 and section.divider.shown ~= false then divided = divided + 1 end
+    end
+    Expect("its sections have no titles of their own, only the group's", titled, 0)
+    Expect("...a divider where each one's would be, but the first's", divided .. " " .. tostring(shown[1].divider.shown),
+        (#shown - 1) .. " false")
+    Expect("...its rows where every other section's are, in from no box",
+        shown[1].left .. " " .. shown[1].width, layout.left .. " " .. layout:Width())
+    local list
+    for _, item in ipairs(layout.items) do
+        for _, row in ipairs(item.rows or { item }) do
+            if row.control and row.control.layoutRows and not list then list = row.control end
+        end
+    end
+    local divider = shown[2].divider
+    Expect("...each divider from where its rows' labels start to where the modules' list ends",
+        divider.anchor.x .. " " .. (divider.anchor.x + divider.width),
+        (layout.left + 37) .. " " .. (list.anchor.x + list.width))
+    Expect("...its first rows under its title as a section's are under its own",
+        group.heading.layoutY - shown[1].top, 45 + 9)
+    local preview
+    for _, item in ipairs(layout.items) do
+        if item.button and item.kind == "section" then preview = item.button end
+    end
+    Expect("the Preview button by the styles' title ends where the lists do",
+        preview ~= nil and preview.anchor.x, list.anchor.x + list.width)
 end
 
 -- A heading introduces the section under it. Sit it midway and it reads as belonging to
@@ -452,9 +494,10 @@ local function PanelLabels(client)
 end
 
 local labels = PanelLabels("11509")
--- "Up next" is the queue window's own title. As a settings heading it named nothing.
-Expect("the window settings are headed as such", labels["Window"], true)
-Expect("...not by the queue's title", labels["Up next"], nil)
+-- "Up next" is the queue window's own title. As a settings heading it named nothing. Inside the
+-- narrator style's box the window settings have no heading at all, as the game's boxes have none.
+Expect("the window settings have no heading inside the narrator style's box", labels["Window"], nil)
+Expect("...nor the queue's title", labels["Up next"], nil)
 -- The scale slider was built with no height and no orientation, so it drew nothing: the
 -- setting sat on the panel invisible, with a gap where it should have been. The zones
 -- addon's own sliders, which do render, set both.
