@@ -1,8 +1,9 @@
 setfenv(1, SpokenEnv)
 
--- The DialogueUI settings, on Spoken's page: the window's own rows in the narrator style's Window
--- section (Page:WindowRows), and after the narrator style's settings a DialogueUI group, which each
--- feature addon fills through Spoken:AddDialogueUISettings (Page:Place).
+-- The DialogueUI settings, on Spoken's page: the window's own rows in the narrator style's parts
+-- (Page:WheelNote, Page:ThemeRows, Page:FitRow), and after the narrator style's settings a
+-- DialogueUI group, which each feature addon fills through Spoken:AddDialogueUISettings
+-- (Page:Place).
 --
 -- Parsed by the 1.12 client too (addon.xml is shared), so Lua 5.0 syntax throughout; that
 -- client has no DialogueUI and returns below.
@@ -11,7 +12,9 @@ DialogueUIOptions = { builders = {}, resets = {} }
 
 if Version.IsAnyLegacy then
     function DialogueUIOptions:Add() end
-    function DialogueUIOptions:WindowRows() end
+    function DialogueUIOptions:WheelNote() end
+    function DialogueUIOptions:ThemeRows() end
+    function DialogueUIOptions:FitRow() end
     function DialogueUIOptions:Place() end
     function DialogueUIOptions:Reset() end
     return
@@ -42,26 +45,34 @@ function Page:Run(build)
     end
 end
 
---- The DialogueUI window's own rows, in the Window section beside Window Size, Text Size and Lines,
---- which it follows as the other windows do. `only(row)` shows a row only with that style chosen.
-function Page:WindowRows(layout, only, refresh)
-    local function Window(row)
-        only(row)
-        layout:Requires(row, function() return DialogueUITheme:Available() end, L.OPT_STYLE_DUI_UNKNOWN)
-        return row
-    end
-    Window(layout:Checkbox(L.OPT_DUI_FOLLOW_THEME, L.OPT_DUI_FOLLOW_THEME_TIP,
+-- `only(row)` shows a row only with the DialogueUI window chosen; it also needs DialogueUI to know.
+local function Window(layout, only, row)
+    only(row)
+    layout:Requires(row, function() return DialogueUITheme:Available() end, L.OPT_STYLE_DUI_UNKNOWN)
+    return row
+end
+
+--- Under Size and Position: nothing on the window shows its wheel shortcuts.
+function Page:WheelNote(layout, only)
+    only(layout:Note(L.DUI_WHEEL_HINT, nil, 40))
+end
+
+--- Under Look: the window's theme, DialogueUI's or one chosen.
+function Page:ThemeRows(layout, only, refresh)
+    Window(layout, only, layout:Checkbox(L.OPT_DUI_FOLLOW_THEME, L.OPT_DUI_FOLLOW_THEME_TIP,
         function() return Panel().FollowTheme end, function(v) Panel().FollowTheme = v end, refresh))
     layout:Indent()
-    layout:Requires(Window(layout:Dropdown(L.OPT_DUI_THEME, L.OPT_DUI_THEME_TIP, { 1, 2 },
+    layout:Requires(Window(layout, only, layout:Dropdown(L.OPT_DUI_THEME, L.OPT_DUI_THEME_TIP, { 1, 2 },
         function() return Panel().Theme end, function(v) Panel().Theme = v end, refresh,
         function(v) return v == 2 and L.OPT_DUI_THEME_DARK or L.OPT_DUI_THEME_PARCHMENT end)),
         function() return not Panel().FollowTheme end, L.REASON_DUI_FOLLOW)
     layout:Outdent()
-    Window(layout:Checkbox(L.OPT_DUI_FIT_TEXT, L.OPT_DUI_FIT_TEXT_TIP,
+end
+
+--- Under Words: the window as tall as its words.
+function Page:FitRow(layout, only, refresh)
+    return Window(layout, only, layout:Checkbox(L.OPT_DUI_FIT_TEXT, L.OPT_DUI_FIT_TEXT_TIP,
         function() return Panel().FitText ~= false end, function(v) Panel().FitText = v end, refresh))
-    -- Nothing on the window shows the wheel shortcuts.
-    only(layout:Note(L.DUI_WHEEL_HINT, nil, 40))
 end
 
 --- The DialogueUI group, after the narrator style's settings, kept for the feature addons' rows
