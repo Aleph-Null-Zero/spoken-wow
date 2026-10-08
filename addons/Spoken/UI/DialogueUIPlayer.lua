@@ -192,24 +192,12 @@ function Skin:Initialize()
     pause:SetScript("OnLeave", function() self:UpdateControls(); self:HideTooltip() end)
     self.name = Font(content, 18, 1, 1, 1)
     content.name = self.name -- Actions' header anchor contract.
-    self.title = CreateFrame("Button", nil, content)
     self.name:SetHeight(20)
-    Removable(self.title, 12, 1, 1, 1)
-    self.title:SetScript("OnClick", function()
-        if self:HasClip() then SoundQueue:RemoveSoundFromQueue(self.clip) end
-    end)
-    self.title:SetScript("OnEnter", function()
-        if not self:HasClip() then return end
-        ShowRemove(self.title, true)
-        GameTooltip:SetOwner(self.title, "ANCHOR_RIGHT")
-        GameTooltip:SetText(Label(self.clip))
-        GameTooltip:AddLine(L.QUEUE_REMOVE_TOOLTIP, 1, .82, 0, true)
-        GameTooltip:Show()
-    end)
-    self.title:SetScript("OnLeave", function()
-        ShowRemove(self.title, false)
-        self:HideTooltip()
-    end)
+    -- The line's name, nothing to click: Skip takes a line away, as on the subtitle.
+    self.title = CreateFrame("Frame", nil, content)
+    self.title.text = Font(self.title, 12, 1, 1, 1)
+    self.title.text:SetPoint("TOPLEFT")
+    self.title.text:SetPoint("BOTTOMRIGHT")
 
     self.drawer = CreateFrame("Frame", nil, content)
     self.drawer:EnableMouseWheel(true)
@@ -478,7 +466,7 @@ function Skin:Dress()
 end
 
 function Skin:ConfigurePortrait()
-    if Config().HidePortrait then self.portrait:Hide(); return end
+    -- Always the face: the header strip has its socket, which would stand empty without it.
     self.portrait:Show()
     if not StaticPortrait:Configure(self.viewport, self.clip) then Portrait:Configure(self.viewport, self.clip) end
     local viewport = self.viewport

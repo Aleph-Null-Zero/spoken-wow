@@ -413,6 +413,13 @@ local report = Skin.row[3]
 Expect("...Report after Skip, as large", report ~= nil and report:GetParent() == Skin.controls
     and report:GetWidth() == Skin.play:GetWidth(), true)
 Expect("...and no fold or close button", Skin.fold == nil and Skin.close == nil, true)
+Expect("the line's title is a name, nothing to click: Skip takes a line away",
+    Skin.title:GetObjectType() .. " " .. tostring(Skin.title.scripts.OnClick) .. " " .. tostring(Skin.title.scripts.OnEnter),
+    "Frame nil nil")
+env.Addon.db.profile.Frame.HidePortrait = true
+Skin:ConfigurePortrait()
+Expect("Hide Portrait leaves its face: the header's socket would stand empty", Skin.portrait:IsShown(), true)
+env.Addon.db.profile.Frame.HidePortrait = false
 Expect("the title counts the lines waiting, as the subtitle does",
     string.find(Skin.title.text:GetText(), "One  |c", 1, true) == 1 and string.find(Skin.title.text:GetText(), "• +1|r", 1, true) ~= nil, true)
 Skin:SetExpanded(false)
