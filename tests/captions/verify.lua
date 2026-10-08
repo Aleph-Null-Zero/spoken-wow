@@ -795,6 +795,9 @@ do
     Check(shown==2 and S.rollTop==1,'...from its first line')
     Play(20)
     Check(S.rollTarget>1 and S.rollTop==S.rollTarget,'...gliding on to keep the line being read at the foot')
+    local _,_,_,_,clipY=S.words:GetPoint(1)
+    Check(math.abs((S.wordsTop+clipY)-S.lineStep)<1e-6 and math.abs(S.words:GetHeight()-(S.shownRows*S.lineStep-2+2*S.lineStep))<1e-6,
+        "...a line's room over and under them, where a line gliding out or in fades to nothing before the edge")
     S.rollTop=S.rollTarget-.25; S:PlaceLines()
     local first=math.floor(S.rollTop)
     Check(math.abs(S.lines[first]:GetAlpha()-.25)<1e-6 and math.abs(S.lines[first+2]:GetAlpha()-.75)<1e-6
