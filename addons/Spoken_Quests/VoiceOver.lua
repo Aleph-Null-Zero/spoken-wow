@@ -704,8 +704,11 @@ function Addon:OnInitialize()
                 end
             end
 
-            for _, soundData in ipairs(soundsToRemove) do
-                Player:Remove(soundData)
+            -- From the last: the line speaking goes once nothing of the quest is left behind it,
+            -- so it fades out as Skip's does rather than being cut for a next line that is
+            -- about to go too.
+            for i = #soundsToRemove, 1, -1 do
+                Player:Remove(soundsToRemove[i])
             end
         end
     end
