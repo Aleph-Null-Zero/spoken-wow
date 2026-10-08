@@ -76,6 +76,8 @@ words.SubtitleScroll = "line"; Options:UpdateRows()
 Expect("...and line by line, Lines Shown in its place", tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)),
     "false true")
 words.SubtitleScroll = "page"; Options:UpdateRows()
+Expect("subtitles have Text Size and Hide Portrait, as the windows do",
+    tostring(Shown(Row(home, "Text Size"))) .. " " .. tostring(Shown(Row(home, "Hide Portrait"))), "true true")
 
 ---------------------------------------------------------------- greyed out, and why
 -- A setting waiting on a switch beside it stays, greyed, saying which switch.
