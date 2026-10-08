@@ -104,7 +104,7 @@ function Book:Row()
 		else
 			local key, first = OpenBook()
 			if key and SpokenBooks:IsNarrating(key) then
-				SpokenBooks:StopReading()
+				SpokenBooks:StopReading(key)
 			elseif first then
 				SpokenBooks:SyncTo(first)
 			end
