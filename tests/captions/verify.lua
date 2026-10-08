@@ -442,6 +442,16 @@ cfg.Typewriter=true; T:Update(); Settle()
 Check(T.topTarget==ActiveLine()-7,'typed out, the line being read is the last of eight')
 local typed=Captions()
 Check(not typed:find('\n\n') and typed:sub(-1)~='\n','with no blank row under it')
+do
+    -- Type By, as the subtitle has it: by letter, the word being read only as far as the voice is.
+    local by=cfg.TypewriterBy
+    cfg.TypewriterBy='word'; T.renderedKey=nil; T:Render()
+    local whole=Plain(Captions())
+    cfg.TypewriterBy='letter'; T.renderedKey=nil; T:Render()
+    local letters=Plain(Captions())
+    Check(#letters<=#whole and whole:find(letters,1,true)==1,'by letter the window types the word being read as far as the voice has got')
+    cfg.TypewriterBy=by; T.renderedKey=nil; T:Render()
+end
 cfg.Typewriter=false
 cfg.ScrollMode='line'; T:Update()
 T.frame:Fire('OnMouseWheel',1)
