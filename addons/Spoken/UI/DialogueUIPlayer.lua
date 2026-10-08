@@ -43,6 +43,11 @@ local ROUND_GAP = 4
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
 -- wide as the words up to PICTURE_MOST, PICTURE_GAP above them, the page's grain through it.
 local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA = 400, 10, 0.95
+-- Place Lore's fade at the words' edges (Spoken_Zones' TextView): strips of the parchment drawn
+-- over the text, solid at the edge and then three steps to clear, so text gliding under an edge
+-- dissolves into the page. Each step a third of the fade, { inner, outer } opacity.
+local FADE_STEPS = { { 0, .15 }, { .15, .55 }, { .55, 1 } }
+local FADE_SOLID = 2
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
 -- Text Size's default, at which the words are DialogueUI's own size.
 local BASE_FONT_SIZE = 16
@@ -194,6 +199,27 @@ function Skin:Initialize()
         self.pictureMask = content:CreateMaskTexture()
         self.pictureMask:SetAllPoints(self.picture)
         self.picture:AddMaskTexture(self.pictureMask)
+    end
+
+    -- Over the words, under nothing else: the fade's strips (Skin:PaintFade).
+    self.fade = CreateFrame("Frame", nil, content)
+    self.fade:SetFrameLevel(content:GetFrameLevel() + 6)
+    self.strips = {}
+    local function Edge()
+        local edge = { solid = self.fade:CreateTexture(nil, "OVERLAY"), ramps = {} }
+        table.insert(self.strips, edge.solid)
+        for i = 1, #FADE_STEPS do
+            edge.ramps[i] = self.fade:CreateTexture(nil, "OVERLAY")
+            table.insert(self.strips, edge.ramps[i])
+        end
+        return edge
+    end
+    self.fadeTop, self.fadeBottom = Edge(), Edge()
+    for _, strip in ipairs(self.strips) do
+        -- Drawn where it lies, not on the pixel grid: snapped apart from the page under it, a
+        -- strip's solid edge parted from it by a pixel.
+        if strip.SetSnapToPixelGrid then strip:SetSnapToPixelGrid(false) end
+        if strip.SetTexelSnappingBias then strip:SetTexelSnappingBias(0) end
     end
 
     self.drawer = CreateFrame("Frame", nil, content)
@@ -449,7 +475,20 @@ function Skin:Layout()
         self.picture:ClearAllPoints()
         self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -headerHeight)
     end
-    Transcript:Dock(content, content, "TOPLEFT", 0, -wordsTop, inner, captionHeight)
+    -- The fade's room: in the gaps already over and under the words (the header's or the
+    -- picture's, and the one above the progress line), so the words stay where they were. The top
+    -- at half, as Place Lore's, since it only shows once the words have moved.
+    local fade = lineHeight
+    local over = picture and PICTURE_GAP or textGap
+    local under = math.max(0, textGap - lineGap) + (progress and 6 or 0)
+    local padTop = math.min(over, Round(fade / 2) + FADE_SOLID)
+    local padBottom = math.min(under, fade + FADE_SOLID)
+    self.fadePads = { padTop, padBottom }
+    self.fade:ClearAllPoints()
+    self.fade:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(wordsTop - padTop))
+    self.fade:SetSize(inner, captionHeight + padTop + padBottom)
+    self:PlaceFade(padTop, padBottom)
+    Transcript:Dock(content, content, "TOPLEFT", 0, -(wordsTop - padTop), inner, captionHeight + padTop + padBottom)
     self.scrollbar:ClearAllPoints()
     self.scrollbar:SetPoint("TOPLEFT", content, "TOPRIGHT", 4, -wordsTop)
     self.scrollbar:SetHeight(captionHeight)
@@ -493,7 +532,72 @@ function Skin:Dress()
     local captionSize = self.captionSize or body
     Transcript:SetStyle({ font = fonts.paragraph, size = captionSize, lineGap = self.lineGap or Round(0.35 * captionSize),
         paragraphs = true, color = colors.paragraph, shadow = false,
-        highlight = colors.highlight, lines = self.lines })
+        highlight = colors.highlight, lines = self.lines, padTop = self.fadePads and self.fadePads[1] })
+end
+
+--- The fade's strips at the words' edges: solid at the edge, then the steps inward.
+function Skin:PlaceFade(padTop, padBottom)
+    local function Place(edge, side, height, outward)
+        local inward = side == "TOP" and "BOTTOM" or "TOP"
+        edge.solid:ClearAllPoints()
+        edge.solid:SetPoint(side .. "LEFT", self.fade, side .. "LEFT", 0, 0)
+        edge.solid:SetPoint(side .. "RIGHT", self.fade, side .. "RIGHT", 0, 0)
+        edge.solid:SetHeight(FADE_SOLID)
+        local step = math.max(1, (height - FADE_SOLID) / #FADE_STEPS)
+        local previous = edge.solid
+        -- From the solid band inward, the most solid step first.
+        for i = #FADE_STEPS, 1, -1 do
+            local ramp = edge.ramps[i]
+            ramp:ClearAllPoints()
+            ramp:SetPoint(side .. "LEFT", previous, inward .. "LEFT", 0, 0)
+            ramp:SetPoint(side .. "RIGHT", previous, inward .. "RIGHT", 0, 0)
+            ramp:SetHeight(step)
+            ramp.opacity = outward and { FADE_STEPS[i][1], FADE_STEPS[i][2] } or { FADE_STEPS[i][2], FADE_STEPS[i][1] }
+            previous = ramp
+        end
+    end
+    -- Opacity bottom to top: toward the edge solid. Up at the top edge, down at the bottom one.
+    Place(self.fadeTop, "TOP", padTop, true)
+    Place(self.fadeBottom, "BOTTOM", padBottom, false)
+    self.fadeDirty = true
+end
+
+-- Opacity from `bottom` to `top` up the texture, with whichever call the client has.
+local function Gradient(texture, bottom, top)
+    if texture.SetGradient and CreateColor then
+        texture:SetGradient("VERTICAL", CreateColor(1, 1, 1, bottom), CreateColor(1, 1, 1, top))
+    elseif texture.SetGradientAlpha then
+        texture:SetGradientAlpha("VERTICAL", 1, 1, 1, bottom, 1, 1, 1, top)
+    end
+end
+
+--- Each strip cut from the parchment piece under its middle, at the place it covers, so the
+--- words dissolve into the very page. False until the window is laid out on screen.
+function Skin:PaintFade()
+    local file = Theme:TexturePath() .. "Parchment.png"
+    local pieces = {
+        { self.parchments[1], 0, CAP_ROWS }, { self.parchments[2], CAP_ROWS, CAP_ROWS + MIDDLE_ROWS },
+        { self.parchments[3], CAP_ROWS + MIDDLE_ROWS, 2 * CAP_ROWS + MIDDLE_ROWS },
+    }
+    for _, strip in ipairs(self.strips) do
+        local x0, x1, y0, y1 = strip:GetLeft(), strip:GetRight(), strip:GetTop(), strip:GetBottom()
+        if not (x0 and x1 and y0 and y1) then return false end
+        local middle, piece = (y0 + y1) / 2, nil
+        for _, candidate in ipairs(pieces) do
+            local top, bottom = candidate[1]:GetTop(), candidate[1]:GetBottom()
+            if top and bottom and middle <= top and middle >= bottom then piece = candidate end
+        end
+        piece = piece or pieces[2]
+        local under = piece[1]
+        local left, top, width, height = under:GetLeft(), under:GetTop(), under:GetWidth(), under:GetHeight()
+        if not (left and top and width and width > 0 and height and height > 0) then return false end
+        local function U(x) return (x - left) / width end
+        local function V(y) return piece[2] + (piece[3] - piece[2]) * (top - y) / height end
+        strip:SetTexture(file)
+        strip:SetTexCoord(U(x0), U(x1), V(y0), V(y1))
+        if strip.opacity then Gradient(strip, strip.opacity[1], strip.opacity[2]) end
+    end
+    return true
 end
 
 function Skin:ConfigurePortrait()
@@ -709,6 +813,10 @@ end
 
 function Skin:Tick(elapsed)
     if self.settling then self:SettleStep(elapsed) end
+    -- Cut again once laid out, and while the window's size moves under the strips.
+    if self.fadeDirty or self.settling or self.heightWant then
+        if self:PaintFade() then self.fadeDirty = nil end
+    end
     if self.lineFade then
         self.lineFade = self.lineFade + elapsed
         if self.lineFade >= LINE_IN then self.lineFade = nil end
