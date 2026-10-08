@@ -104,6 +104,60 @@ row.play.scripts.OnClick(row.play, "RightButton")
 Expect("right-click switches Read Automatically", SpokenBooksSettings.autoplay, not autoplay)
 row.play.scripts.OnClick(row.play, "RightButton")
 
+---------------------------------------------------------------- the words
+-- DialogueUI lays the book out as one column of paragraphs and draws those in view on
+-- FontStrings it hands from one to another as it scrolls.
+local RED = "|cff9c1a1a"
+local data = B:Data()
+local content = { { text = "Hillsbrad Town Registry" }, { text = data.pages[261].text }, { text = data.pages[262].text } }
+local strings = {}
+for i = 1, 3 do
+    strings[i] = view:CreateFontString()
+    strings[i]:SetText(content[i].text)
+end
+local scroll = stub.Widget("Frame")
+scroll.content, scroll.contentIndexObject = content, { strings[1], strings[2], strings[3] }
+function scroll:SetObjectData(obj, entry) obj:SetText(entry.text) end
+view.ScrollFrame = scroll
+view.textureKitID = 1
+function view:ScrollToContent(index) self.scrolledTo = index end
+function view:RebuildContentFromCache() end
+local words = env.Addon.db.profile.Transcript
+words.Enabled, words.HighlightWord, words.Typewriter = true, true, false
+B.lastPage = 265
+local function Tick(seconds)
+    stub.Advance(seconds)
+    watch.scripts.OnUpdate(watch, 0.1)
+end
+row.play.scripts.OnClick(row.play, "LeftButton")
+Tick(2)
+local lit = strings[2]:GetText()
+Expect("the page being read lights its word in the book view, deep red on the paper",
+    string.find(lit, RED, 1, true) ~= nil and select(2, string.gsub(lit, "|c", "")) == 2, true)
+Expect("...the title and the next page left alone", strings[1]:GetText() .. "|" .. strings[3]:GetText(),
+    content[1].text .. "|" .. content[3].text)
+-- Scrolled, DialogueUI hands the first FontString to the page being read.
+scroll:SetObjectData(strings[1], content[2], 2)
+Expect("a FontString handed to the page as the view scrolls shows it lit", strings[1]:GetText(), lit)
+strings[1]:SetText(content[1].text)
+words.HighlightWord, words.Typewriter = false, true
+Tick(0.1)
+local typed = strings[2]:GetText()
+Expect("with Type Out, the page types out as the voice reads it", typed ~= "" and typed ~= content[2].text
+    and string.sub(content[2].text, 1, string.len(typed)) == typed, true)
+Expect("...the next page whole: only the page being read types", strings[3]:GetText(), content[3].text)
+view.textureKitID = 2
+words.HighlightWord, words.Typewriter = true, false
+Spoken:StopAll()
+Tick(0.1)
+Expect("stopped, the book's own text is back", strings[2]:GetText(), content[2].text)
+row.play.scripts.OnClick(row.play, "LeftButton")
+Tick(2)
+Expect("on stone the word is lit in gold", string.find(strings[2]:GetText(), "|cffffd100", 1, true) ~= nil, true)
+Spoken:StopAll()
+Tick(0.1)
+view.textureKitID = 1
+
 ---------------------------------------------------------------- a book with no recording
 B.lastPage = 2810
 Book:Draw()

@@ -1,7 +1,9 @@
--- Spoken's controls on DialogueUI's book view (DUIBookFrame), as Spoken Quests puts them on its
--- quest window: Play (Stop while this book is read), Skip and Report, the player's round buttons
--- as large on screen as Place Lore draws them, in a row left of the book's close button, in
--- place of DialogueUI's own speaker. Left alone without DialogueUI or without the player.
+-- DialogueUI's book view (DUIBookFrame), as Spoken Quests does its quest window: Spoken's controls
+-- on it, Play (Stop while this book is read), Skip and Report, the player's round buttons as
+-- large on screen as Place Lore draws them, in a row left of the book's close button, in place
+-- of DialogueUI's own speaker; and the page being read marked in its text, the word being read
+-- lit and the words typed out as the voice reaches them. Left alone without DialogueUI or without
+-- the player.
 --
 -- DialogueUI loads every page of a book as it opens it and leaves the game on the last, so Play
 -- reads the book from its first page, not from the page the game is on.
@@ -255,6 +257,174 @@ function Book:Draw()
 	self:Place()
 end
 
+--------------------------------------------------------------------------------
+-- The words
+--------------------------------------------------------------------------------
+--
+-- The page being read marked as the captions mark it (Spoken:WordMarks), by Spoken's own Highlight
+-- Words and Type Out settings. DialogueUI lays the whole book out as one column of paragraphs
+-- (ScrollFrame.content) and draws only those in view, on FontStrings it hands from one paragraph
+-- to another as it scrolls (contentIndexObject, SetObjectData). So what each paragraph should
+-- show is kept by paragraph, and set again on whichever FontString draws it.
+
+local TICK = 0.05
+
+-- paragraphs: { index (in the view's content), text, words }; byIndex: paragraph by index.
+-- clip, map, span: the caption last matched against them; lit, neighbor, cutP, cutByte: what is
+-- marked; want[p]: what paragraph p shows where that is not its own text.
+local words = { want = {} }
+
+local function Marks()
+	return Spoken.WordMarks and Spoken:WordMarks()
+end
+
+local function Scroll()
+	local view = View()
+	return view and type(view.ScrollFrame) == "table" and view.ScrollFrame or nil
+end
+
+local function FontStringOf(index)
+	local scroll = Scroll()
+	local objects = scroll and scroll.contentIndexObject
+	return type(objects) == "table" and objects[index] or nil
+end
+
+--- Paragraph p as it should show, on the FontString drawing it, if any is.
+local function Apply(p)
+	local para = words.paragraphs[p]
+	local fs = FontStringOf(para.index)
+	local want = words.want[p] or para.text
+	if fs and (fs:GetText() or "") ~= want then
+		fs:SetText(want)
+	end
+end
+
+--- Every paragraph's own text back.
+local function Restore()
+	for p in pairs(words.want) do
+		words.want[p] = nil
+		if words.paragraphs and words.paragraphs[p] then Apply(p) end
+	end
+	words.lit, words.neighbor, words.cutP, words.cutByte = nil, nil, nil, nil
+end
+
+--- The book laid out again, or closed: what was matched against it goes.
+function Book:Invalidate()
+	words.want = {}
+	words.paragraphs, words.byIndex, words.clip, words.map, words.span = nil, nil, nil, nil, nil
+	words.lit, words.neighbor, words.cutP, words.cutByte, words.scrolledTo = nil, nil, nil, nil, nil
+end
+
+local function Collect(marks)
+	local paragraphs, byIndex = {}, {}
+	local scroll = Scroll()
+	for index, data in ipairs(scroll and type(scroll.content) == "table" and scroll.content or {}) do
+		local text = type(data) == "table" and data.text
+		local split = type(text) == "string" and text ~= "" and Spoken:SplitCaption(text)
+		if split and table.getn(split) > 0 then
+			table.insert(paragraphs, { index = index, text = text, words = marks.MarkLinks(text, split) })
+			byIndex[index] = table.getn(paragraphs)
+		end
+	end
+	return paragraphs, byIndex
+end
+
+--- A clip of the book open in the view.
+local function Mine(clip)
+	local key = clip and clip.pageId and SpokenBooks:PlaceOf(clip.pageId)
+	return key ~= nil and key == OpenBook()
+end
+
+--- Keep the voice in view: a paragraph not wholly in the view is scrolled to.
+local function FollowVoice(p)
+	local view, scroll = View(), Scroll()
+	local para = words.paragraphs[p]
+	if not (para and scroll and view.ScrollToContent) then
+		return
+	end
+	local fs = FontStringOf(para.index)
+	local top = fs and fs:IsShown() and fs:GetTop()
+	local bottom = fs and fs:GetBottom()
+	local viewTop, viewBottom = scroll:GetTop(), scroll:GetBottom()
+	if top and bottom and viewTop and viewBottom and top <= viewTop and bottom >= viewBottom then
+		return
+	end
+	view:ScrollToContent(para.index)
+end
+
+--- Mark the page being read, run while the view is open.
+function Book:Mark()
+	local marks, view = Marks(), View()
+	if not (marks and view and view:IsShown() and Spoken.GetCaption and Spoken.SplitCaption and Scroll()) then
+		return
+	end
+	if not words.paragraphs then
+		words.paragraphs, words.byIndex = Collect(marks)
+		words.clip = nil
+	end
+	local caption = Spoken:GetCaption()
+	local clip = caption and caption.clip
+	if Mine(clip) then
+		if clip ~= words.clip then
+			-- Put back and marked again in this one call: nothing shows in between.
+			Restore()
+			words.clip, words.scrolledTo = clip, nil
+			words.map, words.span = marks.Align(caption.words, words.paragraphs)
+		end
+	elseif words.clip then
+		Restore()
+		words.clip, words.map = nil, nil
+	end
+	if not (words.map and (caption.highlight or caption.typewriter)) then
+		if next(words.want) then Restore() end
+		return
+	end
+	local lit, neighbor
+	if caption.highlight then
+		lit, neighbor = marks.Pick(words.map, caption.speaking and caption.activeWord or nil)
+	end
+	local cutP, cutByte = marks.Cut(caption, words.map, words.span, words.paragraphs)
+	if lit == words.lit and neighbor == words.neighbor and cutP == words.cutP and cutByte == words.cutByte then
+		return
+	end
+	-- Gold on the stone, deep red on the paper, as on the quest window.
+	local color = view.textureKitID == 2 and marks.ON_DARK or marks.ON_LIGHT
+	local spans = marks.Spans(words.map, words.paragraphs, lit, neighbor)
+	for p, para in ipairs(words.paragraphs) do
+		local want = marks.Want(para, p, words.span, cutP, cutByte, spans, color)
+		words.want[p] = want ~= para.text and want or nil
+		Apply(p)
+	end
+	words.lit, words.neighbor, words.cutP, words.cutByte = lit, neighbor, cutP, cutByte
+	local target = lit and words.map[lit] and words.map[lit].p or cutP
+	if target and target ~= words.scrolledTo then
+		words.scrolledTo = target
+		FollowVoice(target)
+	end
+end
+
+--- A FontString handed to a paragraph as the view scrolls: it shows that paragraph as marked.
+local function Handed(_, fs, _, index)
+	local p = words.byIndex and words.byIndex[index]
+	local want = p and words.want[p]
+	if want and fs and fs.SetText then
+		fs:SetText(want)
+	end
+end
+
+--- Hooked once the view's scroll frame exists, which it does from the first book DialogueUI opens.
+function Book:HookScroll()
+	local view, scroll = View(), Scroll()
+	if self.scrollHooked or not scroll or type(scroll.SetObjectData) ~= "function" then
+		return
+	end
+	self.scrollHooked = true
+	hooksecurefunc(scroll, "SetObjectData", Handed)
+	if type(view.RebuildContentFromCache) == "function" then
+		hooksecurefunc(view, "RebuildContentFromCache", function() Book:Invalidate() end)
+	end
+end
+
 --- Hooked once DialogueUI's book view exists, with the player there to draw the buttons.
 function SpokenBooks:SetupDialogueUIBook()
 	local view = View()
@@ -271,7 +441,16 @@ function SpokenBooks:SetupDialogueUIBook()
 	end)
 	watch:SetScript("OnHide", function()
 		if Spoken.SetContributeHost then Spoken:SetContributeHost(nil) end
+		Book:Invalidate()
 		Book:Draw()
+	end)
+	local since = 0
+	watch:SetScript("OnUpdate", function(_, elapsed)
+		since = since + elapsed
+		if since < TICK then return end
+		since = 0
+		Book:HookScroll()
+		Book:Mark()
 	end)
 	Book.watch = watch
 	-- Hide Report Buttons, in Spoken's settings, fires no game event.
