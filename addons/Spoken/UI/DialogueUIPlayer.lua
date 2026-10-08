@@ -71,8 +71,10 @@ local STILL, ARM_FRAMES, ARM_MOST = 0.1, 2, 0.5
 -- What follows the title, "• (Stopped)" and the waiting count "• +N": this far after it, fading
 -- over COUNT_IN, Stopped in and out as the line stops and plays, the count in as a line is added.
 local COUNT_GAP, COUNT_IN = 6, .25
--- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
-local ROUND_GAP = 4
+-- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls); and the
+-- buttons' size, which is also the least room between them and the title's end (its count or
+-- Stopped), so a long title cut short does not crowd them.
+local ROUND_GAP, ROUND_SIZE = 4, 24
 -- The words take this share of DialogueUI's column, centred in it: a narrower column than the
 -- header's and the progress line's, read more easily.
 local WORDS_SHARE = 0.9
@@ -519,24 +521,24 @@ function Skin:Layout()
         part:ClearAllPoints()
         part:SetPoint("CENTER", self.portrait, "CENTER", badgeAt, -badgeAt)
     end
+    -- The round buttons as large on screen as Place Lore draws them (24, at UIParent's scale) at
+    -- the default Window Size, growing and shrinking with it from there (Skin:FitControls).
+    self.controlsRound = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
     -- The line's title sits where DialogueUI puts its quest title, the speaker's name in its
-    -- small line above.
+    -- small line above, both stopping a button's width short of the buttons.
+    local clear = Round(ROUND_SIZE * self.controlsRound)
     self.title:ClearAllPoints()
     self.title:SetPoint("LEFT", self.header, "LEFT", Round(53 * ratio), Round(2 * ratio))
-    self.title:SetPoint("RIGHT", self.controls, "LEFT", -6, 0)
+    self.title:SetPoint("RIGHT", self.controls, "LEFT", -clear, 0)
     self.title:SetHeight(Round(fonts.titleSize * TITLE_SHARE) + 4)
     self.name:ClearAllPoints()
     self.name:SetPoint("BOTTOMLEFT", self.title, "TOPLEFT", 0, 2)
-    self.name:SetPoint("RIGHT", self.controls, "LEFT", -6, 0)
+    self.name:SetPoint("RIGHT", self.controls, "LEFT", -clear, 0)
     self.name:SetHeight(fonts.subtitleSize + 2)
     -- Centred on the speaker's name and the line's title together: the title sits on the
     -- socket's middle, 2 up, and the name above it.
     local nameHeight = fonts.subtitleSize + 2
     local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
-    -- The round buttons as large on screen as Place Lore draws them (24, at UIParent's scale) at
-    -- the default Window Size, growing and shrinking with it from there. Its anchor's offset is
-    -- in its own scale.
-    self.controlsRound = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
     self.controlsMiddle = middle
     self:FitControls()
 
