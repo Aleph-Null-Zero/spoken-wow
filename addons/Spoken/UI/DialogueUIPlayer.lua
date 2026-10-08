@@ -336,9 +336,13 @@ function Skin:Layout()
     -- DialogueUI's gap under its header line, before the text.
     local textGap = Round(4 * 0.35 * fontSize)
     local headerHeight = stripHeight + textGap
-    -- A place's picture (Spoken Zones gives one with its line) between the header and the words.
+    -- A place's picture (Spoken Zones gives one with its line) between the header and the words,
+    -- as large on screen as Place Lore draws it beside the map (its `pixels`), in this window's
+    -- own scale; at most the words' width.
     local picture = self.clip and self.clip.present and self.clip.present.picture
-    local pictureWidth = picture and math.min(inner, PICTURE_MOST) or 0
+    local most = picture and picture.pixels and Round(picture.pixels / (UIParent:GetEffectiveScale() * frame.spokenBaseScale))
+        or PICTURE_MOST
+    local pictureWidth = picture and math.min(inner, most) or 0
     local pictureHeight = Round(pictureWidth / 2)
     local wordsTop = headerHeight + (picture and pictureHeight + PICTURE_GAP or 0)
     -- The same gap above the progress line, so the words sit as far from the foot as from the
@@ -886,7 +890,7 @@ function Skin:Update()
     -- how tall the panel is (Fit to the Words): a new line, or its words arriving late.
     local textLines = Transcript.clip == clip and Transcript.lines and #Transcript.lines or 0
     local picture = clip.present and clip.present.picture
-    local key = Waiting() .. ":" .. textLines .. ":" .. (picture and picture.file or "")
+    local key = Waiting() .. ":" .. textLines .. ":" .. (picture and picture.file .. ":" .. (picture.pixels or "") or "")
     if key ~= self.laidOutFor then
         self.laidOutFor = key
         self:Layout()
