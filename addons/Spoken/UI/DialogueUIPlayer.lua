@@ -35,6 +35,9 @@ local SETTLE_TIME = 0.4
 local PAPER_TOP, PAPER_LEFT = 122 / 256, 125 / 1024
 -- Showing and hiding, the paper first and the rest over it (Skin:SetLevel).
 local FADE_IN, FADE_OUT = .28, .32
+-- A new line on a window already showing: its words fade in over LINE_IN, and the window eases to
+-- its new height, as the subtitle's do (Subtitle's PAGE_IN and SIZE_EASE).
+local LINE_IN, SIZE_EASE = .28, 10
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
@@ -84,7 +87,7 @@ function Skin:HasClip()
     return self:IsEnabled() and self.wanted and SoundQueue:GetCurrentSound() ~= nil
 end
 
--- No control shows the wheel sizing (Skin:Wheel), so the face and resize tooltips mention it.
+-- No control shows the wheel sizing (Skin:Wheel), so the resize handle's tooltip mentions it.
 local function WheelHint()
     GameTooltip:AddLine(L.DUI_WHEEL_HINT, 1, .82, 0, true)
 end
@@ -165,34 +168,15 @@ function Skin:Initialize()
     self.viewport = CreateFrame("Frame", nil, host)
     self.viewport:SetAllPoints()
     self.viewport:SetClipsChildren(true)
-    local pause = CreateFrame("Button", nil, host)
-    self.pause = pause
-    pause:SetAllPoints()
-    pause:SetFrameLevel(host:GetFrameLevel() + 3)
-    pause.wash = pause:CreateTexture(nil, "BACKGROUND")
-    pause.wash:SetAllPoints()
-    -- The round mask as a disc, so the wash stops at the face's edge.
-    pause.wash:SetTexture([[Interface\AddOns\Spoken\Textures\MinimalPortraitMask]])
-    pause.wash:SetVertexColor(0, 0, 0, .45)
-    pause:SetNormalTexture([[Interface\AddOns\Spoken\Textures\PortraitFrameAtlas]])
-    local glyph = pause:GetNormalTexture()
-    glyph:ClearAllPoints()
-    glyph:SetPoint("CENTER")
-    glyph:SetSize(18, 18)
-    pause:SetScript("OnClick", function()
-        if self:HasClip() and SoundQueue:CanBePaused() then SoundQueue:TogglePauseQueue() end
-    end)
-    pause:SetScript("OnEnter", function()
-        self:UpdateControls()
-        if not self:HasClip() then return end
-        GameTooltip:SetOwner(pause, "ANCHOR_RIGHT")
-        local stopped = SoundQueue:IsPaused()
-        GameTooltip:SetText(stopped and L.REPLAY or L.STOP)
-        GameTooltip:AddLine(stopped and L.REPLAY_TOOLTIP or L.STOP_TOOLTIP, 1, 1, 1, true)
-        WheelHint()
-        GameTooltip:Show()
-    end)
-    pause:SetScript("OnLeave", function() self:UpdateControls(); self:HideTooltip() end)
+    -- What kind of line it is, on a dark disc at the face's lower right, as the subtitle and the
+    -- small window badge theirs (MinimalPlayer.BADGES).
+    local chrome = CreateFrame("Frame", nil, host)
+    chrome:SetAllPoints()
+    chrome:SetFrameLevel(host:GetFrameLevel() + 8)
+    self.badgeDisc = chrome:CreateTexture(nil, "BACKGROUND")
+    self.badgeDisc:SetTexture([[Interface\AddOns\Spoken\Textures\MinimalPortraitMask]])
+    self.badgeDisc:SetVertexColor(.04, .04, .035, 1)
+    self.badge = chrome:CreateTexture(nil, "OVERLAY")
     self.name = Font(content, 18, 1, 1, 1)
     content.name = self.name -- Actions' header anchor contract.
     self.name:SetHeight(20)
@@ -383,7 +367,11 @@ function Skin:Layout()
     local captionHeight = lines * lineHeight
     height = math.max(height, padTop + wordsTop + captionHeight + queueHeight + padBottom + footerHeight)
     self.settledHeight = height
-    frame:SetSize(width, self.settling and frame:GetHeight() or height)
+    -- A new line on a window already showing eases to its height (Skin:Tick).
+    local easing = self.easeNext and not self.settling and not self.sizing
+    self.easeNext = nil
+    self.heightWant = easing and height or nil
+    frame:SetSize(width, (self.settling or easing) and frame:GetHeight() or height)
     local minHeight = padTop + wordsTop + MIN_LINES * lineHeight + queueHeight + padBottom + footerHeight
     if frame.SetResizeBounds then
         if self.sizingWidth then
@@ -418,6 +406,13 @@ function Skin:Layout()
     self.portrait:SetSize(face, face)
     self.portrait:ClearAllPoints()
     self.portrait:SetPoint("CENTER", self.headerSocket, "TOPLEFT", Round(23 * ratio), -Round(23 * ratio))
+    local badgeAt = Round(face * 0.36)
+    self.badgeDisc:SetSize(Round(face * 0.42), Round(face * 0.42))
+    self.badge:SetSize(Round(face * 0.3), Round(face * 0.3))
+    for _, part in ipairs({ self.badgeDisc, self.badge }) do
+        part:ClearAllPoints()
+        part:SetPoint("CENTER", self.portrait, "CENTER", badgeAt, -badgeAt)
+    end
     -- The line's title sits where DialogueUI puts its quest title, the speaker's name in its
     -- small line above.
     self.title:ClearAllPoints()
@@ -502,6 +497,11 @@ function Skin:ConfigurePortrait()
     if viewport.active == "texture" and viewport.texture then StaticPortrait:Mask(viewport, viewport.texture) end
     local tint = self.colors and self.colors.portraitTint
     if tint and viewport.texture then viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
+    local id = self.clip and self.clip.present and self.clip.present.bullet
+    local badge = MinimalPlayer.BADGES[id] or (Bullets and Bullets[id] and Bullets[id].texture)
+    self.badge:SetTexture(badge)
+    self.badge:SetShown(badge ~= nil)
+    self.badgeDisc:SetShown(badge ~= nil)
 end
 
 function Skin:ConfigureActions()
@@ -585,20 +585,19 @@ end
 --- again only when the play button's label does.
 function Skin:UpdateControls(relayout)
     if not self.clip then return end
-    local paused, playing = SoundQueue:IsPaused(), SoundQueue:IsPlaying()
+    local paused = SoundQueue:IsPaused()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
-    Actions.Glyph(self.pause:GetNormalTexture(), Actions.HeadState())
-    self.pause:GetNormalTexture():SetAlpha((paused or MouseIsOver(self.pause)) and .9 or 0)
-    self.pause.wash:SetShown(paused and not playing)
     -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
     -- first, a fight), which the waiting lines' rows still say.
     local label = Label(self.clip)
-    -- The lines waiting behind this one, counted as the subtitle counts them.
-    local waiting, dim = Waiting(), self.colors and self.colors.disabled
-    if waiting > 0 and dim then
-        label = format("%s  |cff%02x%02x%02x• +%d|r", label,
-            Round(dim[1] * 255), Round(dim[2] * 255), Round(dim[3] * 255), waiting)
+    local dim = self.colors and self.colors.disabled
+    local function Dim(text)
+        return format("  |cff%02x%02x%02x%s|r", Round(dim[1] * 255), Round(dim[2] * 255), Round(dim[3] * 255), text)
     end
+    -- Stopped, said after its name, and the lines waiting behind it counted, as the subtitle does.
+    if paused and dim then label = label .. Dim(format("(%s)", L.SUBTITLE_STOPPED)) end
+    local waiting = Waiting()
+    if waiting > 0 and dim then label = label .. Dim("• +" .. waiting) end
     self.title.text:SetText(label)
     local pausable = SoundQueue:CanBePaused()
     for _, button in ipairs(self.buttons) do
@@ -675,7 +674,13 @@ end
 function Skin:SetLevel(level)
     self.level = level
     self.frame:SetAlpha(Clamp(level * 2, 0, 1))
-    self.content:SetAlpha(Clamp(level * 2 - 1, 0, 1))
+    self:PaintContent()
+end
+
+--- What is on the paper: its share of the window's fade, times a new line's own fade-in.
+function Skin:PaintContent()
+    local line = self.lineFade and Clamp(self.lineFade / LINE_IN, 0, 1) or 1
+    self.content:SetAlpha(Clamp((self.level or 0) * 2 - 1, 0, 1) * (1 - (1 - line) * (1 - line)))
 end
 
 function Skin:SetVisible(visible, immediate)
@@ -697,6 +702,18 @@ end
 
 function Skin:Tick(elapsed)
     if self.settling then self:SettleStep(elapsed) end
+    if self.lineFade then
+        self.lineFade = self.lineFade + elapsed
+        if self.lineFade >= LINE_IN then self.lineFade = nil end
+        self:PaintContent()
+    end
+    local want = self.heightWant
+    if want then
+        local height = self.frame:GetHeight()
+        height = height + (want - height) * math.min(1, elapsed * SIZE_EASE)
+        if math.abs(want - height) < .5 then height, self.heightWant = want, nil end
+        self.frame:SetHeight(height)
+    end
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
         local t = Clamp(self.fadeTime / (self.wanted and FADE_IN or FADE_OUT), 0, 1)
@@ -836,6 +853,13 @@ function Skin:RefreshConfig(original)
     frame:SetScale(frame.spokenBaseScale)
     if not Addon:Layout().DialogueUI and not self.sizing then self:PlaceDefault() end
     if Addon:IsFrameLocked() then frame:StopMovingOrSizing() end
+    -- Locked, clicks on the window pass through to the game, as the subtitle's and the small
+    -- window's do; its buttons still take theirs. Where the client cannot tell a click from the
+    -- pointer passing over, the window keeps both.
+    if frame.SetMouseClickEnabled and frame.SetMouseMotionEnabled then
+        frame:SetMouseMotionEnabled(true)
+        frame:SetMouseClickEnabled(not Addon:IsFrameLocked())
+    end
     Addon:ApplyHost(frame)
     self:Update()
 end
@@ -849,6 +873,10 @@ function Skin:Update()
     if self:Covered() then self:SetVisible(false, true); return end
     if clip ~= self.clip then
         self:HideTooltip()
+        -- Following another line on screen: its words fade in and the window eases to it.
+        if self.clip and self.wanted and self.frame:IsShown() then
+            self.easeNext, self.lineFade = true, 0
+        end
         self.clip, self.seconds, self.offset = clip, 0, 0
     end
     -- The queue's length decides how much of the body the captions get, and the line's words
@@ -861,7 +889,9 @@ function Skin:Update()
         self:Layout()
     end
     self:SetVisible(true)
-    self.name:SetText(clip.present and clip.present.header or "")
+    -- Said once: a name the same as the line's own is left off, as the subtitle leaves it.
+    local header = clip.present and clip.present.header
+    self.name:SetText(header ~= Label(clip) and header or "")
     self:ConfigurePortrait()
     self:ConfigureActions()
     self:LayoutQueue()

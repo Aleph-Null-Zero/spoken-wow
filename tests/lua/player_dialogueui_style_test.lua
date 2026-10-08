@@ -291,6 +291,7 @@ env.PlayerFrame:RefreshConfig()
 env.Options:Preview("dialogueui")
 Expect("previewing the tile shows the window with a sample line", Skin.wanted, true)
 Expect("...its speaker", Skin.name:GetText(), env.L.SAMPLE_SPEAKER)
+Expect("...and words, as the subtitle's sample has", T.text, env.L.SUBTITLE_SAMPLE_TEXT)
 env.Options:Preview(nil)
 Expect("...and puts it away", Skin.wanted, false)
 
@@ -313,6 +314,8 @@ Expect("a book page shows the window", Skin.wanted, true)
 Expect("...titled by the book", Skin.name:GetText(), "A Letter Home")
 Expect("...and named by its key when it has no page label", Skin.title.text:GetText(), "b:1")
 Expect("...the book for a face", Skin.viewport.active, "texture")
+Expect("...badged as a book, as the subtitle badges it", tostring(Skin.badge:IsShown()) .. " " .. tostring(Skin.badge.texture),
+    "true " .. tostring(env.MinimalPlayer.BADGES.book))
 Expect("...with its words in the window", T.text, "Dear mother, the war goes well.")
 Spoken:StopAll()
 local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Zones", order = 2 })
@@ -423,6 +426,7 @@ local report = Skin.row[3]
 Expect("...Report after Skip, as large", report ~= nil and report:GetParent() == Skin.controls
     and report:GetWidth() == Skin.play:GetWidth(), true)
 Expect("...and no fold or close button", Skin.fold == nil and Skin.close == nil, true)
+Expect("...nor a second Stop on the face: the header's is the one, as the subtitle has one", Skin.pause, nil)
 Expect("the line's title is a name, nothing to click: Skip takes a line away",
     Skin.title:GetObjectType() .. " " .. tostring(Skin.title.scripts.OnClick) .. " " .. tostring(Skin.title.scripts.OnEnter),
     "Frame nil nil")
@@ -441,11 +445,26 @@ Expect("its progress line is the subtitle's, with no strip under it",
 Skin.play.scripts.OnClick(Skin.play)
 Expect("Stop stops the line, its glyph turning to Replay", tostring(env.SoundQueue:IsPaused()) .. " " .. tostring(Skin.play.state),
     "true replay")
+Expect("...and the title says it is stopped, after the line's name, as the subtitle does",
+    string.find(Skin.title.text:GetText(), "One  |c", 1, true) == 1
+    and string.find(Skin.title.text:GetText(), "(" .. env.L.SUBTITLE_STOPPED .. ")|r", 1, true) ~= nil, true)
 Skin.play.scripts.OnClick(Skin.play)
 Expect("...and Replay plays it again", Skin.play.state, "stop")
 local first = Spoken:GetCurrent()
 Skin.skip.scripts.OnClick(Skin.skip)
 Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
+Expect("...its words fading in, as the subtitle's next line does", Skin.content:GetAlpha() < 1, true)
+Skin:Tick(0.3)
+Expect("...all the way", Skin.content:GetAlpha(), 1)
+do
+    local height = Skin.frame:GetHeight()
+    Skin.heightWant = height + 60
+    Skin:Tick(0.05)
+    Expect("a new height is eased to, not jumped to", Skin.frame:GetHeight() > height and Skin.frame:GetHeight() < height + 60, true)
+    Skin:Tick(1)
+    Expect("...and reached", tostring(Skin.frame:GetHeight()) .. " " .. tostring(Skin.heightWant), (height + 60) .. " nil")
+    Skin:Layout()
+end
 Expect("...the count gone with no line waiting", string.find(Skin.title.text:GetText(), "+", 1, true), nil)
 -- The client fades each texture on its own: the paper and what is on it fade one after the other.
 Expect("it is not a frame buffer, which crashed the client", Skin.frame:IsFrameBuffer(), false)
@@ -462,11 +481,23 @@ Skin:Tick(0.2)
 Expect("...then what is on it", Skin.content:GetAlpha(), 1)
 Spoken:StopAll()
 
+---------------------------------------------------------------- locked
+Skin.frame.SetMouseClickEnabled = function(f, v) f.clicks = v end
+Skin.frame.SetMouseMotionEnabled = function(f, v) f.motion = v end
+env.Addon.db.profile.Frame.LockFrame = true
+env.PlayerFrame:RefreshConfig()
+Expect("locked, clicks on the window pass through to the game, as on the subtitle; the pointer still counts",
+    tostring(Skin.frame.clicks) .. " " .. tostring(Skin.frame.motion), "false true")
+env.Addon.db.profile.Frame.LockFrame = false
+env.PlayerFrame:RefreshConfig()
+Expect("...unlocked, they are the window's again", Skin.frame.clicks, true)
+
 ---------------------------------------------------------------- a place's picture
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()
 local plainTop = T.frame.anchor.y
 Expect("a line with no picture shows none", Skin.picture:IsShown(), false)
+Expect("a name over it unlike the line's own is shown", Skin.name:GetText(), "Kalimdor")
 Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
     picture = { file = "Interface/Pictures/1412-mulgore", mask = "Interface/Pictures/Mask7" } } }))
@@ -475,6 +506,10 @@ Expect("a place's picture shows over its words, as Place Lore shows it", Skin.pi
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
 Expect("...the words under it, 10 below", plainTop - T.frame.anchor.y, 210)
+Spoken:StopAll()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Mulgore", label = "Mulgore", portrait = { kind = "none" } } }))
+Skin:Update()
+Expect("a name the same as the line's own is said once, in the title", Skin.name:GetText() .. "|" .. Skin.title.text:GetText(), "|Mulgore")
 Spoken:StopAll()
 
 ---------------------------------------------------------------- a line held back
