@@ -40,6 +40,14 @@ env.Addon:Enable()
 local view = stub.Widget("Frame")
 view.GetEffectiveScale = function() return 0.8 end
 view.CloseButton = stub.Widget("Button")
+view.CloseButton:SetSize(64 * 0.53333, 64 * 0.53333)
+view.CloseButton:SetPoint("TOPRIGHT", view, "TOPRIGHT", -26 * 0.53333, -26 * 0.53333)
+-- Its top at 600 and its title's 48 under it.
+view.GetTop = function() return 600 end
+view.Header = stub.Widget("Frame")
+view.Header.Title = stub.Widget("FontString")
+view.Header.Title:Show()
+view.Header.Title.GetTop = function() return 552 end
 view.TTSButton = stub.Widget("Button")
 view.TTSButton:SetAlpha(0.6)
 view:Hide()
@@ -73,6 +81,10 @@ Expect("...Play, Skip and Report, the player's round buttons", row.play.ring ~= 
     and row.report:IsShown(), true)
 Expect("...left of the book's close button", row.frame.anchor.point .. " " .. tostring(row.frame.anchor.relativeTo
     == view.CloseButton) .. " " .. row.frame.anchor.relativePoint .. " " .. row.frame.anchor.x, "RIGHT true LEFT -4")
+local closeAt = view.CloseButton.anchor
+Expect("...the close button's middle halfway between the book's top and its title's, 26 in as DialogueUI has it",
+    closeAt.point .. " " .. tostring(closeAt.relativeTo == view) .. " " .. closeAt.relativePoint .. " " .. closeAt.x
+    .. " " .. closeAt.y, "RIGHT true TOPRIGHT " .. (-26 * 0.53333) .. " -24")
 Expect("...Report rightmost, then Skip, then Play", row.report.anchor.relativeTo == row.frame
     and row.skip.anchor.relativeTo == row.report and row.play.anchor.relativeTo == row.skip, true)
 Expect("...as large on screen as Place Lore draws them, 24 at UIParent's scale",
@@ -171,6 +183,8 @@ view:Hide()
 watch.scripts.OnHide(watch)
 Expect("the book view closing takes the row with it", row.frame:IsShown(), false)
 Expect("...and gives DialogueUI's speaker back", view.TTSButton:GetAlpha(), 0.6)
+Expect("...and its close button its own corner", view.CloseButton.anchor.point .. " " .. view.CloseButton.anchor.y,
+    "TOPRIGHT " .. (-26 * 0.53333))
 
 if Failures() > 0 then
     print(string.format("\n%d book view test(s) failed", Failures()))

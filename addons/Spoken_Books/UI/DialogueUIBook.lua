@@ -191,6 +191,54 @@ local function SetEnabled(button, on)
 	end
 end
 
+-- The book's close button, as DialogueUI draws it: 64 of the book art's pixels across, 26 in from
+-- the right.
+local CLOSE_SIZE, CLOSE_INSET = 64, 26
+
+--- The close button's middle halfway between the view's top and its title's (or the place named
+--- over the title), so it and the row beside it stand as far from the title as from the edge, as
+--- on DialogueUI's quest window (Spoken Quests). Set again whenever DialogueUI lays it out anew.
+function Book:PlaceClose()
+	local view = View()
+	local close = view.CloseButton
+	if type(close) ~= "table" or not close.GetWidth then
+		return
+	end
+	local header = type(view.Header) == "table" and view.Header
+	local top, below = view:GetTop(), nil
+	for _, key in ipairs({ "Title", "Location" }) do
+		local part = header and header[key]
+		local partTop = type(part) == "table" and part.IsShown and part:IsShown() and part:GetTop()
+		if partTop and (not below or partTop > below) then
+			below = partTop
+		end
+	end
+	if not (top and below) then
+		return
+	end
+	local pixel = (close:GetWidth() or CLOSE_SIZE) / CLOSE_SIZE
+	local middle = (below - top) / 2
+	local point, relativeTo, _, _, y = close:GetPoint(1)
+	if point ~= "RIGHT" or relativeTo ~= view or y ~= middle then
+		close:ClearAllPoints()
+		close:SetPoint("RIGHT", view, "TOPRIGHT", -CLOSE_INSET * pixel, middle)
+		self.closeMoved = true
+	end
+end
+
+--- Back where DialogueUI puts it, once the row goes.
+function Book:RestoreClose()
+	local view = View()
+	local close = view and view.CloseButton
+	if not (self.closeMoved and type(close) == "table" and close.GetWidth) then
+		return
+	end
+	self.closeMoved = false
+	local pixel = (close:GetWidth() or CLOSE_SIZE) / CLOSE_SIZE
+	close:ClearAllPoints()
+	close:SetPoint("TOPRIGHT", view, "TOPRIGHT", -CLOSE_INSET * pixel, -CLOSE_INSET * pixel)
+end
+
 --- Right to left from the book's close button, centred on it: Report, Skip, Play, whichever show,
 --- as large on screen as Place Lore draws them, whatever DialogueUI's book size.
 function Book:Place()
@@ -234,6 +282,7 @@ function Book:Draw()
 	local view = View()
 	if not (view and view:IsShown() and SpokenBooks:IsPartOn()) then
 		CoverTheirs(false)
+		self:RestoreClose()
 		if self.row and self.row.frame:IsShown() then
 			self.row.frame:Hide()
 			HideTooltip(self.row.play)
@@ -245,6 +294,7 @@ function Book:Draw()
 	local row = self:Row()
 	row.frame:Show()
 	CoverTheirs(true)
+	self:PlaceClose()
 	local key, first = OpenBook()
 	local voiced = first ~= nil and SpokenBooks:HasAudio(first)
 	SetEnabled(row.play, voiced)
