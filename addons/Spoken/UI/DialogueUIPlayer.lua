@@ -468,10 +468,9 @@ function Skin:Layout()
     -- The round buttons as large on screen as Place Lore draws them (24, at UIParent's scale) at
     -- the default Window Size, growing and shrinking with it from there. Its anchor's offset is
     -- in its own scale.
-    local round = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
-    self.controls:SetScale(round)
-    self.controls:ClearAllPoints()
-    self.controls:SetPoint("RIGHT", content, "TOPRIGHT", 0, -middle / round)
+    self.controlsRound = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
+    self.controlsMiddle = middle
+    self:ScaleControls(self.controlsRound)
 
     -- The words in their narrower column, the picture over them; the scrollbar beside them.
     self.picture:SetShown(picture ~= nil)
@@ -1103,6 +1102,13 @@ function Skin:StartSettle(dialog)
     self:SettleStep(0)
 end
 
+--- The header's round buttons at `scale` of the window's, their anchor's offset in their own.
+function Skin:ScaleControls(scale)
+    self.controls:SetScale(scale)
+    self.controls:ClearAllPoints()
+    self.controls:SetPoint("RIGHT", self.content, "TOPRIGHT", 0, -(self.controlsMiddle or 0) / scale)
+end
+
 function Skin:SettleStep(elapsed)
     local settling, frame = self.settling, self.frame
     settling.time = settling.time + elapsed
@@ -1112,6 +1118,9 @@ function Skin:SettleStep(elapsed)
     local ui = UIParent:GetEffectiveScale()
     local scale = Toward(settling.from, settling.to)
     frame:SetScale(scale)
+    -- The round buttons stay as large on screen as they settle at, as the dialog's own are, rather
+    -- than starting at the dialog's larger scale with the rest.
+    if self.controlsRound then self:ScaleControls(self.controlsRound * settling.to / scale) end
     local pixels = ui * scale
     local toHeight = (self.settledHeight or frame:GetHeight()) * ui * settling.to
     frame:ClearAllPoints()

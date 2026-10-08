@@ -414,6 +414,17 @@ Expect("...in the header at the right, beside the speaker and the line",
 Expect("...the line's title stopping short of them", Skin.title.anchor.relativeTo == Skin.controls, true)
 Expect("...as large on screen as Place Lore's, 24 at UIParent's scale, at the default Window Size",
     math.abs(Skin.play:GetWidth() * Skin.controls:GetScale() * Skin.frame.spokenBaseScale - 24) < 0.01, true)
+do
+    -- Halfway through the slide out of the dialog, the window at a larger scale than it settles at.
+    local to = Skin.frame.spokenBaseScale
+    Skin.settling = { time = 0, from = to * 2, to = to, left = 0, toLeft = 0, top = 0, toTop = 0, height = 100 }
+    Skin:SettleStep(0.2)
+    Expect("...and as large while the window slides and shrinks out of the dialog, not at its scale",
+        math.abs(Skin.play:GetWidth() * Skin.controls:GetScale() * Skin.frame:GetScale() - 24) < 0.01, true)
+    Skin.settling = nil
+    Skin.frame:SetScale(to)
+    Skin:Layout()
+end
 local report = Skin.row[3]
 Expect("...Report after Skip, as large and as strong, as the subtitle shows it", report ~= nil and report:GetParent() == Skin.controls
     and report:GetWidth() == Skin.play:GetWidth() and report:GetAlpha() == 1, true)
