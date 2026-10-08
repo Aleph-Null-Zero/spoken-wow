@@ -25,6 +25,8 @@ local function FakeDialogueUI()
     frame.Parchments = { cap }
     function frame:LoadTheme() end
     function frame:UpdateFrameSize() end
+    -- Closed until a dialog opens.
+    frame:Hide()
     _G.DUIQuestFrame = frame
     local font = stub.Widget("Font")
     function font:GetFont() return "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf", 14 end
@@ -428,18 +430,41 @@ local first = Spoken:GetCurrent()
 Skin.skip.scripts.OnClick(Skin.skip)
 Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
 Expect("...the count gone with no line waiting", string.find(Skin.title.text:GetText(), "+", 1, true), nil)
--- The client fades each texture on its own: the paper and what is on it fade one after the other.
+-- The client fades each texture on its own; drawn as one image, the window fades as one.
+Expect("it is drawn as one image", Skin.flat and Skin.frame:IsFrameBuffer(), true)
+Expect("...what is on it taking no alpha from it, so only the image fades",
+    Skin.content:IsIgnoringParentAlpha() and Skin.parchments[2]:IsIgnoringParentAlpha()
+    and Skin.resizer:IsIgnoringParentAlpha(), true)
 Skin:Tick(1) -- shown in full first
 Skin:SetVisible(false)
-Skin:Tick(0.16)
-Expect("fading out, what is on the paper goes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
+Skin:Tick(0.125)
+Expect("fading out, the image fades as one", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "0.5 1")
 Skin:Tick(0.2)
-Expect("...then the paper", Skin.frame:GetAlpha() .. " " .. tostring(Skin.frame:IsShown()), "0 false")
+Expect("...and is gone", Skin.frame:GetAlpha() .. " " .. tostring(Skin.frame:IsShown()), "0 false")
+-- Without frame buffers, the paper and what is on it fade one after the other.
+Skin.flat = false
 Skin:SetVisible(true)
-Skin:Tick(0.14)
-Expect("fading in, the paper comes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
+Skin:Tick(0.1)
+Expect("without one image, fading in, the paper comes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
 Skin:Tick(0.2)
 Expect("...then what is on it", Skin.content:GetAlpha(), 1)
+Skin.flat = true
+Spoken:StopAll()
+
+---------------------------------------------------------------- under DialogueUI's open window
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Three", portrait = { kind = "none" } } }))
+Skin:Tick(1)
+DUI:Show()
+Skin.dialogWatch.scripts.OnShow(Skin.dialogWatch)
+Expect("DialogueUI's window opening hides this one at once, the dialog showing the line",
+    tostring(Skin.wanted) .. " " .. tostring(Skin.frame:IsShown()), "false false")
+env.PlayerFrame:RefreshConfig()
+Expect("...and it stays hidden while the dialog is open", Skin.frame:IsShown(), false)
+Spoken:SetPlayerHost(DUI)
+env.PlayerFrame:RefreshConfig()
+Expect("...unless it sits on the dialog", Skin.wanted, true)
+Spoken:SetPlayerHost(nil)
+DUI:Hide()
 Spoken:StopAll()
 
 ---------------------------------------------------------------- from the dialog to the top left
@@ -451,6 +476,7 @@ Spoken:StopAll()
 local function CloseDialog()
     DUI.hooks = {}
     DUI:SetScript("OnHide", function() end)
+    DUI:Hide()
     local watch = Skin.dialogWatch
     if watch and watch:GetParent() == DUI then watch.scripts.OnHide(watch) end
 end
