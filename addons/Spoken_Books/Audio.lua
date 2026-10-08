@@ -57,6 +57,19 @@ function SpokenBooks:PageMaterial()
 	return ItemTextGetMaterial and ItemTextGetMaterial() or nil
 end
 
+-- What each kind of readable is called, one of it, by the kinds the Compendium sorts them into
+-- (Data/Places.lua).
+local KINDS = { book = "READABLE_BOOK", letter = "READABLE_LETTER", note = "READABLE_NOTE",
+	scroll = "READABLE_SCROLL", tablet = "READABLE_TABLET", plaque = "READABLE_PLAQUE",
+	grave = "READABLE_GRAVE", exhibit = "READABLE_EXHIBIT", other = "READABLE_OTHER" }
+
+--- What `book` is (a book, a letter, a gravestone...), as the Compendium sorts it.
+function SpokenBooks:KindOf(book)
+	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books
+	local place = places and places[book]
+	return L[KINDS[place and place.type] or "READABLE_OTHER"]
+end
+
 --- Every installed pack this version can read, newest format first.
 function SpokenBooks:GetAudioPacks()
 	local packs = {}
@@ -148,13 +161,11 @@ function SpokenBooks:ClipFor(pageId)
 					-- under a German selection, and its report is about that.
 					language = language,
 					present = {
-						header = title,
+						-- What it is over its name, as a speaker over a quest's title: the
+						-- book is one line, whatever page of it this is.
+						header = self:KindOf(place.book),
 						transcript = text,
-						-- Only where there is more than one page: "page 1 of 1" is noise on a
-						-- letter, which is most of this corpus.
-						label = (book and #book.pages > 1)
-							and format(L.OPT_PAGE_COUNT_FMT, place.number, #book.pages)
-							or nil,
+						label = title ~= "" and title or nil,
 						bullet = "book",
 						material = self:PageMaterial(),
 						portrait = self:PagePicture(),

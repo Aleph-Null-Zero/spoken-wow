@@ -62,12 +62,13 @@ local function OpenRegistry()
     stub.FireEvent("ITEM_TEXT_READY")
 end
 
+-- The pages being read: the one queued, and the rest of its book to follow it.
 local function Queued()
     local count = 0
     for _, clip in ipairs(Spoken:GetQueue()) do
         if clip.pageId then count = count + 1 end
     end
-    return count
+    return count + (B.following and #B.following.pages or 0)
 end
 
 local function Reset()

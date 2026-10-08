@@ -132,6 +132,13 @@ function SourceMethods:Enqueue(clip)
     return Noted(clip, "queue", SoundQueue:Add(clip, self, false))
 end
 
+--- The next part of a line that has just finished (a book's next page), at the head of the
+--- queue: it plays next, and the queue shows the line as one, never its parts waiting behind
+--- it. From a clip's stopCallback when it finished playing.
+function SourceMethods:Continue(clip)
+    return Noted(clip, "continue", SoundQueue:Add(clip, self, true))
+end
+
 function SourceMethods:PlayNow(clip)
     return Noted(clip, "play now", SoundQueue:PlayNow(clip, self))
 end
