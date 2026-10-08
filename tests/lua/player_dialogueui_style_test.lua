@@ -443,6 +443,18 @@ Expect("...and Replay plays it again", Skin.play.state, "stop")
 local first = Spoken:GetCurrent()
 Skin.skip.scripts.OnClick(Skin.skip)
 Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
+Expect("...its words fading in, as the subtitle's next line does", Skin.content:GetAlpha() < 1, true)
+Skin:Tick(0.3)
+Expect("...all the way", Skin.content:GetAlpha(), 1)
+do
+    local height = Skin.frame:GetHeight()
+    Skin.heightWant = height + 60
+    Skin:Tick(0.05)
+    Expect("a new height is eased to, not jumped to", Skin.frame:GetHeight() > height and Skin.frame:GetHeight() < height + 60, true)
+    Skin:Tick(1)
+    Expect("...and reached", tostring(Skin.frame:GetHeight()) .. " " .. tostring(Skin.heightWant), (height + 60) .. " nil")
+    Skin:Layout()
+end
 Expect("...the count gone with no line waiting", string.find(Skin.title.text:GetText(), "+", 1, true), nil)
 -- The client fades each texture on its own: the paper and what is on it fade one after the other.
 Expect("it is not a frame buffer, which crashed the client", Skin.frame:IsFrameBuffer(), false)
