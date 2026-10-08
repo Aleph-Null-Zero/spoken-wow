@@ -465,7 +465,7 @@ function Skin:Layout()
     -- in its own scale.
     self.controlsRound = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
     self.controlsMiddle = middle
-    self:ScaleControls(self.controlsRound)
+    self:FitControls()
 
     -- The words in their narrower column, the picture over them.
     self.picture:SetShown(picture ~= nil)
@@ -1090,6 +1090,16 @@ function Skin:StartSettle(dialog)
     self:SettleStep(0)
 end
 
+--- The header's round buttons as large on screen as they settle at: while the window slides out
+--- of the dialog at a larger scale, against that scale, whichever of the slide and a layout set
+--- them last in a frame.
+function Skin:FitControls()
+    if not self.controlsRound then return end
+    local settling = self.settling
+    local now = self.frame:GetScale() or 1
+    self:ScaleControls(self.controlsRound * (settling and now > 0 and settling.to / now or 1))
+end
+
 --- The header's round buttons at `scale` of the window's, their anchor's offset in their own.
 function Skin:ScaleControls(scale)
     self.controls:SetScale(scale)
@@ -1108,7 +1118,7 @@ function Skin:SettleStep(elapsed)
     frame:SetScale(scale)
     -- The round buttons stay as large on screen as they settle at, as the dialog's own are, rather
     -- than starting at the dialog's larger scale with the rest.
-    if self.controlsRound then self:ScaleControls(self.controlsRound * settling.to / scale) end
+    self:FitControls()
     local pixels = ui * scale
     local toHeight = (self.settledHeight or frame:GetHeight()) * ui * settling.to
     frame:ClearAllPoints()

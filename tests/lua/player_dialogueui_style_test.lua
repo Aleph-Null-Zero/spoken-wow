@@ -431,6 +431,9 @@ do
     Skin:SettleStep(0.2)
     Expect("...and as large while the window slides and shrinks out of the dialog, not at its scale",
         math.abs(Skin.play:GetWidth() * Skin.controls:GetScale() * Skin.frame:GetScale() - 24) < 0.01, true)
+    Skin:Layout()
+    Expect("...a layout during the slide keeping them so, not setting them back for a frame",
+        math.abs(Skin.play:GetWidth() * Skin.controls:GetScale() * Skin.frame:GetScale() - 24) < 0.01, true)
     Skin.settling = nil
     Skin.frame:SetScale(to)
     Skin:Layout()
