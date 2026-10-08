@@ -287,14 +287,14 @@ Expect("it offers the parts as a list, as Home does", #Welcome.modules, 3)
 Expect("...under its header, the paragraph saying what the window is for",
     Welcome.layout.intro.text ~= nil and Welcome.layout.intro.text.text, L.WELCOME_INTRO)
 Expect("...which the settings pages, like the game's own, do without", home.intro.text, nil)
-Expect("...and the ways of showing lines as tiles", #Welcome.tiles >= 3, true)
+Expect("...and the ways of showing lines as a list, as Spoken's settings page has them", #Welcome.styles >= 3, true)
 local subtitles
-for _, tile in ipairs(Welcome.tiles) do if tile.layoutTile.value == "subtitle" then subtitles = tile end end
+for _, row in ipairs(Welcome.styles) do if row.layoutTile.value == "subtitle" then subtitles = row end end
 subtitles.scripts.OnClick(subtitles)
 Expect("a choice applies at once", env.Addon:PlayerStyle(), "subtitle")
 Expect("...and only one way of showing lines is picked", (function()
     local picked = 0
-    for _, tile in ipairs(Welcome.tiles) do if tile.layoutSelected then picked = picked + 1 end end
+    for _, row in ipairs(Welcome.styles) do if row.layoutSelected then picked = picked + 1 end end
     return picked
 end)(), 1)
 local quests = Welcome.modules[1]

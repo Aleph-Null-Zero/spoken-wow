@@ -414,25 +414,27 @@ do
     for _, section in ipairs(shown) do
         if section.heading then titled = titled + 1 end
         if section.small and section.small.shown ~= false then small = small + 1 end
-        if section.divider.shown ~= false then divided = divided + 1 end
+        if section.divider and section.divider.shown ~= false then divided = divided + 1 end
     end
     Expect("its sections have small titles under the group's large one", titled .. " " .. small, "0 " .. #shown)
     Expect("...a line running on from each, the first's too", divided, #shown)
     Expect("...its rows where every other section's are, in from no box",
-        shown[1].left .. " " .. shown[1].width, layout.left .. " " .. layout:Width())
+        shown[1] and (shown[1].left .. " " .. shown[1].width) or "no sections", layout.left .. " " .. layout:Width())
     local list
     for _, item in ipairs(layout.items) do
         for _, row in ipairs(item.rows or { item }) do
             if row.control and row.control.layoutRows and not list then list = row.control end
         end
     end
-    local divider, small = shown[2].divider, shown[2].small
+    -- Guarded, so a layout without small titles or their lines fails these rather than stopping.
+    local divider, small = shown[2] and shown[2].divider, shown[2] and shown[2].small
+    local first = shown[1] and shown[1].small
     Expect("...each title where its rows' labels start, its line on to where the modules' list ends",
-        small.anchor.x .. " " .. (divider.anchor.x + divider.width),
+        small and divider and (small.anchor.x .. " " .. (divider.anchor.x + divider.width)) or "no small title",
         (layout.left + 37) .. " " .. (list.anchor.x + list.width))
     Expect("...the first small title under the group's as a section's rows are under its own, its rows 10 under it",
-        group.heading.layoutY - shown[1].small.layoutY, 45 + 9)
-    Expect("...its rows 10 under it", shown[1].small.layoutY - 14 - shown[1].top, 10)
+        first and (group.heading.layoutY - first.layoutY) or "no small title", 45 + 9)
+    Expect("...its rows 10 under it", first and (first.layoutY - 14 - shown[1].top) or "no small title", 10)
     local preview
     for _, item in ipairs(layout.items) do
         if item.button and item.kind == "section" then preview = item.button end
@@ -762,20 +764,20 @@ local subtitleSample = false
 env.Subtitle.ShowSample = function(_, shown) subtitleSample = shown and true or false end
 env.Subtitle.IsShowingSample = function() return subtitleSample end
 W:Build()
-local tiles = W.tiles
+local tiles = W.styles
 local function Tile(value)
     for _, tile in ipairs(tiles) do if tile.layoutTile.value == value then return tile end end
 end
 local preview = W.preview
 local function Label() return preview:GetText() end
 Expect("one Preview button for the styles", preview ~= nil and Tile("classic").previewButton == nil, true)
-Expect("...between their question and the tiles, as far from each", (function()
+Expect("...at the end of their question's line, as on Spoken's settings page", (function()
     local section = W.layout.items[#W.layout.items]
-    local heading, tiles = section.heading, section.rows[1]
-    if section.button ~= preview or not (heading and tiles and preview.anchor) then return false end
-    local above = (heading.anchor.y - 17) - preview.anchor.y
-    local below = (preview.anchor.y - 22) - section.top
-    return above == below and above > 0
+    local heading = section.heading
+    if section.button ~= preview or not (heading and preview.anchor) then return false end
+    -- Their middles level: the question's 17-high line, the button's 22.
+    return preview.anchor.point == "TOPRIGHT"
+        and math.abs((preview.anchor.y - 11) - (heading.anchor.y - 8.5)) <= 1
 end)(), true)
 env.Addon:SetPlayerStyle("subtitle")
 W.layout:Refresh()
