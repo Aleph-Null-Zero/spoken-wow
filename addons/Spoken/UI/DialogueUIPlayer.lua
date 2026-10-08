@@ -33,6 +33,9 @@ local SETTLE_TIME = 0.4
 -- opaque row of its 256 and the first opaque column of the 1024 (Brown 122 and 130, Dark 126
 -- and 125; the smaller of each, so the paper never runs off the screen).
 local PAPER_TOP, PAPER_LEFT = 122 / 256, 125 / 1024
+-- The bottom cap's light paper ends this share of its height over the window's foot: its rows to
+-- 105 of 256 are light, the curled rim under them, and the cap is centred on the foot.
+local PAPER_FOOT = 23 / 256
 -- Showing and hiding, the paper first and the rest over it (Skin:SetLevel).
 local FADE_IN, FADE_OUT = .28, .32
 -- A new line on a window already showing: its words fade in over LINE_IN, and the window eases to
@@ -349,9 +352,9 @@ function Skin:Layout()
     local pictureHeight = Round(pictureWidth / 2)
     -- With a picture, one gap over it and under it: from the divider's line to the picture, and
     -- from the picture to the words. Halfway between the header's gap under the line and the
-    -- picture's own, and never less than a line, the room the words fade through.
+    -- picture's own.
     local lineBottom = Round(stripHeight * DIVIDER_LINE)
-    local pictureGap = math.max(lineHeight, Round((stripHeight - lineBottom + textGap + PICTURE_GAP) / 2))
+    local pictureGap = Round((stripHeight - lineBottom + textGap + PICTURE_GAP) / 2)
     local pictureTop = lineBottom + pictureGap
     local wordsTop = picture and pictureTop + pictureHeight + pictureGap or headerHeight
     -- The same gap above the progress line, so the words sit as far from the foot as from the
@@ -361,17 +364,19 @@ function Skin:Layout()
     self.progress.track:SetShown(progress)
     local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
     -- A line's room over and under the words, which a line gliding out or in fades through: it is
-    -- at nothing by the time it reaches the edge, so no line is ever seen cut there. Taken from the
-    -- gaps already over and under them (the header's or the picture's, the one over the progress
-    -- line), and made up where those are smaller than a line.
-    local over = picture and pictureGap or textGap
-    local under = math.max(0, textGap - lineGap) + (progress and 6 or 0)
-    wordsTop = wordsTop + math.max(0, lineHeight - over)
-    footerHeight = footerHeight + math.max(0, lineHeight - under)
-    -- Under the progress line, a line's room more, so it sits as far above the paper's foot as
-    -- under the words.
-    local barLift = progress and lineHeight or 0
-    footerHeight = footerHeight + barLift
+    -- at nothing by the time it reaches the edge, so no line is ever seen cut there. It reaches
+    -- over the gaps there (the header's or the picture's, the one over the progress line) and
+    -- adds none: the words keep their place.
+    -- Under the progress line, as far to where the paper's light ends as the last line is over it:
+    -- the 6 and the header's gap over the line, and the line's own spacing under its letters.
+    local barLift = 0
+    if progress then
+        local _, capHeight = Theme:ParchmentSize()
+        local above = 6 + math.max(0, textGap - lineGap) + lineGap
+        barLift = Round(above - (padBottom - capHeight * PAPER_FOOT))
+        footerHeight = footerHeight + barLift
+        self.progressGaps = { above = above, below = padBottom + barLift - capHeight * PAPER_FOOT }
+    end
     -- The lines waiting get rows while the window is open; folded, the title counts them.
     local waiting = Waiting()
     local shownRows = Expanded() and math.min(MAX_ROWS, waiting) or 0
