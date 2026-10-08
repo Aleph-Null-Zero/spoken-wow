@@ -757,7 +757,7 @@ local panel = stub.LoadQuestsPanel(QUESTS, VO)
 panel:Setup()
 local Page = env.DialogueUIOptions
 local layout = Page.layout
-Expect("Spoken's page keeps a DialogueUI group for them", layout == _G.SpokenOptionsPanel.layout and Page.keep ~= nil, true)
+Expect("Spoken's page keeps a place for them", layout == _G.SpokenOptionsPanel.layout and Page.keep ~= nil, true)
 local function Row(label)
     for _, entry in ipairs(layout.entries) do
         if entry.label == label then return entry.frame end
@@ -766,21 +766,26 @@ end
 local captions, scroll = Row(VO.L.OPT_DUI_CAPTIONS), Row(VO.L.OPT_DUI_AUTOSCROLL)
 Expect("nothing there changes DialogueUI's own settings", table.getn(layout.entries) > 0
     and Row("Turn On Text To Speech") == nil, true)
-Expect("the group has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
+Expect("the place has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
     and Row(VO.L.OPT_DUI_PLAY_BUTTON) ~= nil and scroll ~= nil, true)
--- In the group, after the narrator style's settings: the rows sit under its heading, and the
--- page's later sections (the languages, the sound) under them.
+-- Among the narrator style's settings, last, with the DialogueUI style chosen; the page's later
+-- sections (the languages, the sound) under them.
+-- The style as the page reads it: DialogueUI's art is not here to make the style available.
+local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
+env.Addon.PlayerStyle = function() return chosen end
 layout:Refresh()
-local heading
+local narrator, language
 for _, item in ipairs(layout.items) do
-    if item.kind == "group" and item.text == env.L.OPT_STYLE_DIALOGUEUI then heading = item.heading end
-end
-local language
-for _, item in ipairs(layout.items) do
+    if item.kind == "group" and item.text == env.L.OPT_NARRATOR_SETTINGS then narrator = item end
     if item.kind == "section" and item.text == env.L.OPT_LANGUAGE_TITLE then language = item end
 end
-Expect("...under its heading, before the page's later sections", heading ~= nil and heading:IsShown()
-    and captions.layoutY < heading.layoutY and language ~= nil and language.top < captions.layoutY, true)
+Expect("...among the narrator style's settings, last, with the DialogueUI style chosen", captions:IsShown()
+    and narrator ~= nil and captions.layoutY < narrator.heading.layoutY
+    and language ~= nil and language.top < captions.layoutY, true)
+chosen = "subtitle"
+layout:Refresh()
+Expect("...and not with another style", captions:IsShown() or Row(VO.L.OPT_DUI_PLAY_BUTTON):IsShown(), false)
+chosen = "dialogueui"
 layout:Refresh()
 Expect("...live while DialogueUI is loaded", captions and captions.layoutReason, nil)
 loaded = false
@@ -821,6 +826,8 @@ panel.panel.layout:Refresh()
 Expect("the Quests page's Read Automatically stays live with DialogueUI's Auto Play on",
     readRow ~= nil and readRow.layoutReason, nil)
 _G.DialogueUI_DB = nil
+
+env.Addon.PlayerStyle = playerStyle
 
 if Failures() > 0 then
     print(string.format("\n%d DialogueUI test(s) failed", Failures()))

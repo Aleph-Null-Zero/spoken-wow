@@ -1,9 +1,9 @@
 setfenv(1, SpokenEnv)
 
--- The DialogueUI settings, on Spoken's page: the window's own rows in the narrator style's parts
--- (Page:WheelNote, Page:ThemeRows, Page:FitRow), and after the narrator style's settings a
--- DialogueUI group, which each feature addon fills through Spoken:AddDialogueUISettings
--- (Page:Place).
+-- The DialogueUI settings, on Spoken's page, among the narrator style's with the DialogueUI style
+-- chosen: the window's own rows in the narrator style's parts (Page:WheelNote, Page:ThemeRows,
+-- Page:FitRow), and after them what each feature addon adds through
+-- Spoken:AddDialogueUISettings (Page:Place).
 --
 -- Parsed by the 1.12 client too (addon.xml is shared), so Lua 5.0 syntax throughout; that
 -- client has no DialogueUI and returns below.
@@ -24,9 +24,10 @@ local Page = DialogueUIOptions
 
 local function Panel() return Addon.db.profile.Frame.DialogueUI end
 
---- Add a feature addon's rows. build(layout) adds a section and its rows to Spoken's page, in the
---- DialogueUI group, and may return a function that puts them back to their defaults, which
---- Spoken's Start Over runs. Before the page is built they wait for it; after, they go in at once.
+--- Add a feature addon's rows. build(layout) adds a section and its rows to Spoken's page, among
+--- the DialogueUI style's settings, and may return a function that puts them back to their
+--- defaults, which Spoken's Start Over runs. Before the page is built they wait for it; after,
+--- they go in at once.
 function Page:Add(build)
     table.insert(self.builders, build)
     if self.keep then
@@ -35,9 +36,26 @@ function Page:Add(build)
     end
 end
 
+-- The rows a layout method makes, which show only with the DialogueUI style chosen.
+local ROWS = { Checkbox = true, Dropdown = true, Slider = true, Button = true, Note = true }
+
+--- `layout` as a feature addon's build sees it: every row it adds shows only while `applies`.
+--- Its section, with none of its rows showing, does not show either.
+local function Gated(layout, applies)
+    return setmetatable({}, { __index = function(_, key)
+        local value = layout[key]
+        if type(value) ~= "function" then return value end
+        return function(_, ...)
+            local made = value(layout, ...)
+            if ROWS[key] and type(made) == "table" then layout:ShowWhen(made, applies) end
+            return made
+        end
+    end })
+end
+
 function Page:Run(build)
-    local layout = self.layout
-    local ok, reset = pcall(layout.Fill, layout, self.keep, build)
+    local layout, applies = self.layout, self.applies
+    local ok, reset = pcall(layout.Fill, layout, self.keep, function(page) return build(Gated(page, applies)) end)
     if ok and type(reset) == "function" then
         table.insert(self.resets, reset)
     elseif not ok then
@@ -75,14 +93,13 @@ function Page:FitRow(layout, only, refresh)
         function() return Panel().FitText ~= false end, function(v) Panel().FitText = v end, refresh))
 end
 
---- The DialogueUI group, after the narrator style's settings, kept for the feature addons' rows
---- whenever they arrive. Only with DialogueUI installed; with no rows in it, it does not show.
-function Page:Place(layout)
+--- The place, last among the narrator style's settings, kept for the feature addons' rows
+--- whenever they arrive, shown while `applies` (the DialogueUI style chosen). Only with
+--- DialogueUI installed.
+function Page:Place(layout, applies)
     if not DialogueUITheme:Installed() then return end
-    self.layout = layout
-    layout:Group(L.OPT_STYLE_DIALOGUEUI)
+    self.layout, self.applies = layout, applies
     self.keep = layout:Keep()
-    layout:EndGroup()
     for _, build in ipairs(self.builders) do self:Run(build) end
 end
 
