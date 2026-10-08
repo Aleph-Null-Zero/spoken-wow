@@ -106,7 +106,8 @@ Expect("...and its paragraphs set apart", T.style.paragraphs, true)
 T:SetClip({ text = "First paragraph.\nSecond one." })
 Expect("an empty line separates two paragraphs", #T.lines == 3 and #T.lines[2] == 0, true)
 T:SetClip(nil)
-Expect("the words are docked in the window", T.frame:GetParent(), Skin.frame)
+Expect("the words are docked in the window, over the paper with the rest of its contents",
+    T.frame:GetParent(), Skin.content)
 Expect("...filling its body", Skin.lines > 8, true)
 Expect("...with labels enough for them and the line sliding in", #T.labels >= Skin.lines + 1, true)
 Expect("...in DialogueUI's font", T.style.font, "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf")
@@ -179,11 +180,13 @@ env.PlayerFrame:RefreshConfig()
 
 ---------------------------------------------------------------- where it opens
 local function Near(a, b) return a ~= nil and b ~= nil and math.abs(a - b) < 1 end
--- The screen's top left, 32 from the paper: its caps reach past the frame's top and sides.
+-- The screen's top left, 16 from the paper's visible edge: the caps reach past the frame's top
+-- and sides, the paper inside their transparent margin (122 of the cap's 256 rows, 125 of 1024
+-- columns).
 local function AtTopLeft()
     local anchor, base, cap = Skin.frame.anchor, Skin.frame.spokenBaseScale, Skin.parchments[1]
-    local x = 32 / base + math.max(0, (cap.width - Skin.frame:GetWidth()) / 2)
-    local y = 32 / base + cap.height / 2
+    local x = 16 / base + math.max(0, (cap.width - Skin.frame:GetWidth()) / 2 - 125 / 1024 * cap.width)
+    local y = 16 / base + math.max(0, cap.height * (0.5 - 122 / 256))
     return anchor ~= nil and anchor.point == "TOPLEFT" and anchor.relativePoint == "TOPLEFT"
         and Near(anchor.x, x) and Near(anchor.y, -y)
 end
@@ -408,6 +411,14 @@ local report = Skin.row[3]
 Expect("...Report after Skip, as large", report ~= nil and report:GetParent() == Skin.controls
     and report:GetWidth() == Skin.play:GetWidth(), true)
 Expect("...and no fold or close button", Skin.fold == nil and Skin.close == nil, true)
+Expect("the title counts the lines waiting, as the subtitle does",
+    string.find(Skin.title.text:GetText(), "One  |c", 1, true) == 1 and string.find(Skin.title.text:GetText(), "• +1|r", 1, true) ~= nil, true)
+Skin:SetExpanded(false)
+Expect("folded, the lines waiting get no rows", Skin.drawer:IsShown(), false)
+Skin:SetExpanded(true)
+Expect("...open, they do", Skin.drawer:IsShown(), true)
+Expect("its progress line is the subtitle's, with no strip under it",
+    Skin.progress ~= nil and Skin.progress.track:GetParent() == Skin.content and Skin.footerDivider == nil, true)
 Skin.play.scripts.OnClick(Skin.play)
 Expect("Stop stops the line, its glyph turning to Replay", tostring(env.SoundQueue:IsPaused()) .. " " .. tostring(Skin.play.state),
     "true replay")
@@ -416,6 +427,19 @@ Expect("...and Replay plays it again", Skin.play.state, "stop")
 local first = Spoken:GetCurrent()
 Skin.skip.scripts.OnClick(Skin.skip)
 Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
+Expect("...the count gone with no line waiting", string.find(Skin.title.text:GetText(), "+", 1, true), nil)
+-- The client fades each texture on its own: the paper and what is on it fade one after the other.
+Skin:Tick(1) -- shown in full first
+Skin:SetVisible(false)
+Skin:Tick(0.16)
+Expect("fading out, what is on the paper goes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
+Skin:Tick(0.2)
+Expect("...then the paper", Skin.frame:GetAlpha() .. " " .. tostring(Skin.frame:IsShown()), "0 false")
+Skin:SetVisible(true)
+Skin:Tick(0.14)
+Expect("fading in, the paper comes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
+Skin:Tick(0.2)
+Expect("...then what is on it", Skin.content:GetAlpha(), 1)
 Spoken:StopAll()
 
 ---------------------------------------------------------------- from the dialog to the top left

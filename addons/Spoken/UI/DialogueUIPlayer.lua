@@ -20,7 +20,6 @@ local Skin = DialogueUIPlayer
 local Theme = DialogueUITheme
 local MAX_ROWS, ROW_HEIGHT = 4, 20
 local PORTRAIT = 48
-local BAR_HEIGHT = 3
 local MIN_LINES = 2
 -- The panel's share of DialogueUI's window at the default Window Size, small enough to read
 -- beside the next dialog. Taking over from the dialog, it starts at the dialog's whole size and
@@ -28,8 +27,14 @@ local MIN_LINES = 2
 local BASE_SCALE = 0.65
 -- Where it settles when the dialog closes: this far from the screen's top left, the paper's
 -- edge rather than the frame's. And how long it takes to get there from the dialog.
-local EDGE = 32
-local SETTLE_TIME = 0.45
+local EDGE = 16
+local SETTLE_TIME = 0.3
+-- The paper's visible edge in Parchment.png, inside its transparent margin: the top cap's first
+-- opaque row of its 256 and the first opaque column of the 1024 (Brown 122 and 130, Dark 126
+-- and 125; the smaller of each, so the paper never runs off the screen).
+local PAPER_TOP, PAPER_LEFT = 122 / 256, 125 / 1024
+-- Showing and hiding, the paper first and the rest over it (Skin:SetLevel).
+local FADE_IN, FADE_OUT = .28, .32
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
@@ -50,7 +55,6 @@ local HEADER_DIVIDER = { 0, 0.65625, 0.56640625, 0.61328125, 358, 51 }
 -- Where, of the strip's 358, the portrait socket at its left end gives way to the plain
 -- line. The socket is drawn as is; only the line past it stretches with the panel.
 local SOCKET_WIDTH = 64
-local FOOTER_DIVIDER = { 0, 0.71875, 0.6875, 0.71875, 392, 34 }
 -- Ctrl-wheel limits for Window Size and Text Size, matching their sliders' ranges.
 local WINDOW_SIZES, WINDOW_STEP = { 0.5, 2 }, 0.05
 local FONT_SIZES = { 12, 26 }
@@ -77,9 +81,7 @@ function Skin:HasClip()
     return self:IsEnabled() and self.wanted and SoundQueue:GetCurrentSound() ~= nil
 end
 
---- A flat text button with DialogueUI's gossip-option glow. `fn` runs only while a clip plays.
--- No control shows the wheel sizing (Skin:Wheel), so the face, fold and resize tooltips
--- mention it.
+-- No control shows the wheel sizing (Skin:Wheel), so the face and resize tooltips mention it.
 local function WheelHint()
     GameTooltip:AddLine(L.DUI_WHEEL_HINT, 1, .82, 0, true)
 end
@@ -140,6 +142,8 @@ function Skin:Initialize()
 
     local content = CreateFrame("Frame", nil, frame)
     self.content, frame.container = content, content
+    -- The words are docked here (Skin:Layout), and hand Ctrl-wheel to their parent.
+    content.spokenWheel = frame.spokenWheel
     content.buttons = {}
 
     -- DialogueUI's header strip in two pieces: the face's socket, never stretched, and the
@@ -214,16 +218,8 @@ function Skin:Initialize()
     self.queueNote = Font(self.drawer, 10, 1, 1, 1)
     self.drawer:Hide()
 
-    self.bar = CreateFrame("StatusBar", nil, content)
-    self.bar:SetHeight(BAR_HEIGHT)
-    self.bar:SetStatusBarTexture([[Interface\TargetingFrame\UI-StatusBar]])
-    self.bar:SetMinMaxValues(0, 1)
-    self.bar:SetValue(0)
-    -- A faint track, so the line reads as a bar even when little of it is filled.
-    self.track = self.bar:CreateTexture(nil, "BACKGROUND")
-    self.track:SetAllPoints()
-    self.footerDivider = content:CreateTexture(nil, "ARTWORK")
-    self.footerDivider:SetTexCoord(FOOTER_DIVIDER[1], FOOTER_DIVIDER[2], FOOTER_DIVIDER[3], FOOTER_DIVIDER[4])
+    -- The subtitle's progress line, along the foot of the words.
+    self.progress = Actions.ProgressBar(content)
     -- The subtitle's controls (Subtitle:BuildControls) at the header's right end, beside the
     -- speaker and the line: Stop or Replay, Skip, then Report (Skin:ConfigureActions).
     self.controls = CreateFrame("Frame", nil, content)
@@ -345,13 +341,13 @@ function Skin:Layout()
     -- DialogueUI's gap under its header line, before the text.
     local textGap = Round(4 * 0.35 * fontSize)
     local headerHeight = stripHeight + textGap
-    local footerStrip = Round(FOOTER_DIVIDER[6] * baseInner / FOOTER_DIVIDER[5])
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
-    local footerHeight = footerStrip + BAR_HEIGHT + 6 + math.max(0, textGap - lineGap)
+    local footerHeight = self.progress.height + 6 + math.max(0, textGap - lineGap)
+    -- The lines waiting get rows while the window is open; folded, the title counts them.
     local waiting = Waiting()
-    local shownRows = math.min(MAX_ROWS, waiting)
-    local queueHeight = shownRows * ROW_HEIGHT + (waiting > MAX_ROWS and 14 or 0)
+    local shownRows = Expanded() and math.min(MAX_ROWS, waiting) or 0
+    local queueHeight = shownRows * ROW_HEIGHT + (shownRows > 0 and waiting > MAX_ROWS and 14 or 0)
     -- A panel too small for MIN_LINES grows to fit them, so the controls are never cut off.
     local height = self.sizing and Round(frame:GetHeight()) or Addon:Layout().DialogueUIHeight or Round(duiHeight)
     local body = height - padTop - headerHeight - queueHeight - padBottom - footerHeight
@@ -424,7 +420,7 @@ function Skin:Layout()
     self.controls:SetPoint("RIGHT", content, "TOPRIGHT", 0, -middle)
 
     -- The text takes DialogueUI's full column; the scrollbar sits in the margin beside it.
-    Transcript:Dock(frame, content, "TOPLEFT", 0, -headerHeight, inner, captionHeight)
+    Transcript:Dock(content, content, "TOPLEFT", 0, -headerHeight, inner, captionHeight)
     self.scrollbar:ClearAllPoints()
     self.scrollbar:SetPoint("TOPLEFT", content, "TOPRIGHT", 4, -headerHeight)
     self.scrollbar:SetHeight(captionHeight)
@@ -433,13 +429,9 @@ function Skin:Layout()
     self.drawer:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(headerHeight + captionHeight))
     self.drawer:SetSize(inner, math.max(1, queueHeight))
 
-    self.footerDivider:ClearAllPoints()
-    self.footerDivider:SetPoint("BOTTOM", content, "BOTTOM", 0, 0)
-    self.footerDivider:SetSize(inner, footerStrip)
-    self.footerDivider:SetTexture(parchment)
-    self.bar:ClearAllPoints()
-    self.bar:SetPoint("BOTTOMLEFT", self.footerDivider, "TOPLEFT", 0, 2)
-    self.bar:SetPoint("BOTTOMRIGHT", self.footerDivider, "TOPRIGHT", 0, 2)
+    self.progress.track:ClearAllPoints()
+    self.progress.track:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", 0, 0)
+    self.progress.track:SetWidth(inner)
 
     self:Dress()
     self.layingOut = false
@@ -466,7 +458,6 @@ function Skin:Dress()
     local tint = colors.portraitTint
     if self.viewport.texture then self.viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
     local track = colors.disabled
-    self.track:SetColorTexture(track[1], track[2], track[3], .25)
     self.scrollbar.track:SetColorTexture(track[1], track[2], track[3], .2)
     local thumb = self.scrollbar:GetThumbTexture()
     if thumb then thumb:SetVertexColor(track[1], track[2], track[3], .75) end
@@ -572,13 +563,15 @@ function Skin:UpdateControls(relayout)
     Actions.Glyph(self.pause:GetNormalTexture(), Actions.HeadState())
     self.pause:GetNormalTexture():SetAlpha((paused or MouseIsOver(self.pause)) and .9 or 0)
     self.pause.wash:SetShown(paused and not playing)
-    local colors = self.colors
-    if colors then
-        local bar = paused and colors.disabled or colors.gossip
-        self.bar:SetStatusBarColor(bar[1], bar[2], bar[3])
-    end
     local held = not paused and not playing and SoundQueue:GetHeldReason(self.clip)
-    self.title.text:SetText(held and format("%s (%s)", Label(self.clip), held) or Label(self.clip))
+    local label = held and format("%s (%s)", Label(self.clip), held) or Label(self.clip)
+    -- The lines waiting behind this one, counted as the subtitle counts them.
+    local waiting, dim = Waiting(), self.colors and self.colors.disabled
+    if waiting > 0 and dim then
+        label = format("%s  |cff%02x%02x%02x• +%d|r", label,
+            Round(dim[1] * 255), Round(dim[2] * 255), Round(dim[3] * 255), waiting)
+    end
+    self.title.text:SetText(label)
     local pausable = SoundQueue:CanBePaused()
     for _, button in ipairs(self.buttons) do
         button:SetAlpha(pausable and 1 or .4)
@@ -597,7 +590,7 @@ function Skin:UpdateProgress()
         local remaining = Addon:TimeLeft(clip.nextSoundTimer)
         self.seconds = Clamp(duration + SoundQueue:GapAfter(clip) - remaining, 0, duration)
     elseif not SoundQueue:IsPaused() then self.seconds = 0 end
-    self.bar:SetValue(duration > 0 and (self.seconds or 0) / duration or 0)
+    Actions.SetProgress(self.progress, duration > 0 and (self.seconds or 0) / duration or 0)
 end
 
 function Skin:CreateQueueRow(index)
@@ -628,7 +621,7 @@ end
 function Skin:LayoutQueue()
     local waiting = Waiting()
     self.offset = Clamp(self.offset, 0, math.max(0, waiting - MAX_ROWS))
-    local shown = math.min(MAX_ROWS, waiting - self.offset)
+    local shown = Expanded() and math.min(MAX_ROWS, waiting - self.offset) or 0
     for index = 1, MAX_ROWS do
         local button = self.rows[index]
         if index <= shown then
@@ -642,8 +635,17 @@ function Skin:LayoutQueue()
     self.queueNote:ClearAllPoints()
     self.queueNote:SetPoint("BOTTOMLEFT")
     self.queueNote:SetText(format(L.MIN_SCROLL_QUEUE, self.offset + 1, self.offset + shown, waiting))
-    self.queueNote:SetShown(waiting > MAX_ROWS)
+    self.queueNote:SetShown(shown > 0 and waiting > MAX_ROWS)
     self.drawer:SetShown(shown > 0)
+end
+
+--- How much of the window shows, 0 to 1. The client fades each texture on its own, so a
+--- half-faded window shows the paper through its strips and words; the paper takes the lower
+--- half and everything on it the upper, and the two never fade at once.
+function Skin:SetLevel(level)
+    self.level = level
+    self.frame:SetAlpha(Clamp(level * 2, 0, 1))
+    self.content:SetAlpha(Clamp(level * 2 - 1, 0, 1))
 end
 
 function Skin:SetVisible(visible, immediate)
@@ -652,24 +654,24 @@ function Skin:SetVisible(visible, immediate)
     if immediate then
         self.wanted = false
         self.frame:Hide()
-        self.frame:SetAlpha(0)
+        self:SetLevel(0)
         self.fadeTime = nil
         return
     end
     if self.wanted == visible then return end
     self.wanted = visible
-    self.fadeFrom = self.frame:IsShown() and self.frame:GetAlpha() or 0
+    self.fadeFrom = self.frame:IsShown() and self.level or 0
     self.fadeTime = 0
-    if visible then self.frame:SetAlpha(self.fadeFrom); self.frame:Show() end
+    if visible then self:SetLevel(self.fadeFrom); self.frame:Show() end
 end
 
 function Skin:Tick(elapsed)
     if self.settling then self:SettleStep(elapsed) end
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
-        local t = Clamp(self.fadeTime / (self.wanted and .18 or .24), 0, 1)
-        local eased = 1 - (1 - t) * (1 - t)
-        self.frame:SetAlpha(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
+        local t = Clamp(self.fadeTime / (self.wanted and FADE_IN or FADE_OUT), 0, 1)
+        local eased = t * t * (3 - 2 * t)
+        self:SetLevel(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
         if t == 1 then
             self.fadeTime = nil
             if not self.wanted then self.frame:Hide(); return end
@@ -686,19 +688,24 @@ function Skin:Tick(elapsed)
     end
 end
 
+--- How far the paper's visible edge reaches past the frame's left and top, in the frame's units:
+--- its caps are centred on the frame's ends and wider than it, inside a transparent margin.
+function Skin:PaperOverhang()
+    local cap = self.parchments and self.parchments[1]
+    local paperWidth, capHeight = cap and cap:GetWidth() or 0, cap and cap:GetHeight() or 0
+    return math.max(0, (paperWidth - self.frame:GetWidth()) / 2 - PAPER_LEFT * paperWidth),
+        math.max(0, capHeight * (0.5 - PAPER_TOP))
+end
+
 --- The screen's top left, EDGE from the paper: where the window settles when DialogueUI's
 --- window closes on a line that plays on (Skin:Settle), out of the way of the next dialog.
 function Skin:PlaceDefault()
     local frame = self.frame
-    -- In the frame's own units: its effective scale is UIParent's times its base scale. The
-    -- paper's caps reach past the frame's top and sides.
+    -- In the frame's own units: its effective scale is UIParent's times its base scale.
     local k = 1 / (frame.spokenBaseScale or 1)
-    local cap = self.parchments and self.parchments[1]
-    local paperWidth, capHeight = cap and cap:GetWidth() or 0, cap and cap:GetHeight() or 0
-    local x = Round(EDGE * k + math.max(0, (paperWidth - frame:GetWidth()) / 2))
-    local y = Round(EDGE * k + capHeight / 2)
+    local left, top = self:PaperOverhang()
     frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, -y)
+    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", Round(EDGE * k + left), -Round(EDGE * k + top))
 end
 
 --- Where the window rests, its top left in the screen's pixels: where it was dragged to, or the
@@ -712,10 +719,8 @@ function Skin:Home()
     if type(saved) == "table" and saved.left and saved.top then
         return saved.left * scale, saved.top * scale
     end
-    local cap = self.parchments and self.parchments[1]
-    local paperWidth, capHeight = cap and cap:GetWidth() or 0, cap and cap:GetHeight() or 0
-    return EDGE * ui + math.max(0, (paperWidth - frame:GetWidth()) / 2) * scale,
-        UIParent:GetHeight() * ui - EDGE * ui - capHeight / 2 * scale
+    local left, top = self:PaperOverhang()
+    return EDGE * ui + left * scale, UIParent:GetHeight() * ui - EDGE * ui - top * scale
 end
 
 --- DialogueUI's window closed while its line plays on: this window takes the dialog's place, size
@@ -753,7 +758,7 @@ function Skin:StartSettle(dialog)
         left = x * ui - width * k / 2, top = top * ui, height = height * k, toLeft = toLeft, toTop = toTop }
     -- In full at once, where the dialog was: no fade.
     self.wanted, self.fadeTime = true, nil
-    frame:SetAlpha(1)
+    self:SetLevel(1)
     frame:Show()
     self:SettleStep(0)
 end
@@ -787,7 +792,7 @@ function Skin:TextLines(width)
     if not (self.clip and Transcript.clip == self.clip and Transcript.frame) then return nil end
     -- Wrapped at this width first: the captions reflow only when their width changes.
     if Transcript.frame:GetWidth() ~= width then
-        Transcript:Dock(self.frame, self.content, "TOPLEFT", 0, 0, width, math.max(1, Transcript.frame:GetHeight()))
+        Transcript:Dock(self.content, self.content, "TOPLEFT", 0, 0, width, math.max(1, Transcript.frame:GetHeight()))
     end
     local count = Transcript.lines and #Transcript.lines or 0
     return count > 0 and count or nil
