@@ -72,7 +72,6 @@ page gives its uploader and terms.
 | 1413-morshan-rampart | Mor'shan Rampart | [Mor'shan Rampart.jpg](https://warcraft.wiki.gg/wiki/File:Mor'shan_Rampart.jpg) |
 | 1413-raptor-grounds | Raptor Grounds | [Raptor Grounds.jpg](https://warcraft.wiki.gg/wiki/File:Raptor_Grounds.jpg) |
 | 1413-ratchet | Ratchet | [Ratchet - Retail.jpg](https://warcraft.wiki.gg/wiki/File:Ratchet_-_Retail.jpg) |
-| 1413-razorfen-downs | Razorfen Downs | unknown, added by hand |
 | 1413-shrine-of-the-fallen-warrior | Shrine of the Fallen Warrior | [Shrine.jpg](https://warcraft.wiki.gg/wiki/File:Shrine.jpg) |
 | 1413-sludge-fen | Sludge Fen | [Sludgefen.jpg](https://warcraft.wiki.gg/wiki/File:Sludgefen.jpg) |
 | 1413-stagnant-oasis | Stagnant Oasis | [The Stagnant Oasis.jpg](https://warcraft.wiki.gg/wiki/File:The_Stagnant_Oasis.jpg) |
@@ -548,6 +547,7 @@ page gives its uploader and terms.
 | 1441-highperch | Highperch | [Highperch.jpg](https://warcraft.wiki.gg/wiki/File:Highperch.jpg) |
 | 1441-ironstone-camp | Ironstone Camp | [Ironstone Camp.jpg](https://warcraft.wiki.gg/wiki/File:Ironstone_Camp.jpg) |
 | 1441-mirage-raceway | Mirage Raceway | [Mirage Raceway.jpg](https://warcraft.wiki.gg/wiki/File:Mirage_Raceway.jpg) |
+| 1441-razorfen-downs | Razorfen Downs | unknown, added by hand |
 | 1441-roguefeather-den | Roguefeather Den | [Roguefeather Den.jpg](https://warcraft.wiki.gg/wiki/File:Roguefeather_Den.jpg) |
 | 1441-rustmaul-dig-site | Rustmaul Dig Site | [The Rustmaul Dig Site.jpg](https://warcraft.wiki.gg/wiki/File:The_Rustmaul_Dig_Site.jpg) |
 | 1441-screeching-canyon | Screeching Canyon | [The Screeching Canyon.jpg](https://warcraft.wiki.gg/wiki/File:The_Screeching_Canyon.jpg) |
