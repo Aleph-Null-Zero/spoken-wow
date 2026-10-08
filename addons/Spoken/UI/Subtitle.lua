@@ -601,13 +601,19 @@ function Subtitle:Layout(text)
     self.lineStep, self.wordsTop = lineHeight + LINE_GAP, TOP_PAD + titleHeight + titleGap
     self.rollTop, self.rollTarget = 1, 1
     local wordsHeight = self.shownRows * self.lineStep - LINE_GAP
-    -- A few pixels of room either side of the clip, for the letters' tops and tails.
+    -- Line by line, a line's room over and under the words, which a line gliding out or in fades
+    -- through: at nothing by the time it reaches the clip's edge, so no line is seen cut there.
+    -- Made up where the gap there is smaller. Otherwise a few pixels, for the letters' tops and tails.
+    local room = Rolling() and self.lineStep or 4
+    if Rolling() then
+        self.wordsTop = self.wordsTop + math.max(0, room - (named and titleGap or TOP_PAD))
+    end
     self.words:ClearAllPoints()
-    self.words:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -(self.wordsTop - 4))
-    self.words:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", 0, -(self.wordsTop - 4))
-    self.words:SetHeight(wordsHeight + 8)
+    self.words:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -(self.wordsTop - room))
+    self.words:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", 0, -(self.wordsTop - room))
+    self.words:SetHeight(wordsHeight + 2 * room)
     self:PlaceLines()
-    local wordsBottom = self.wordsTop + wordsHeight
+    local wordsBottom = self.wordsTop + wordsHeight + (Rolling() and room or 0)
     self.progressShown = self:ProgressWanted()
     for _, part in ipairs({ self.track, self.fill, self.spark }) do part:SetShown(self.progressShown) end
     -- As far under the words as the words are under the name: the name sits in the middle of the
