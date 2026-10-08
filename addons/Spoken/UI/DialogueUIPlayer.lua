@@ -47,9 +47,12 @@ local STILL, ARM_FRAMES, ARM_MOST = 0.1, 2, 0.5
 local COUNT_GAP, COUNT_IN = 6, .25
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
+-- The words take this share of DialogueUI's column, centred in it: a narrower column than the
+-- header's and the progress line's, read more easily.
+local WORDS_SHARE = 0.8
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
--- wide as the words up to PICTURE_MOST, PICTURE_GAP above them, the page's grain through it.
-local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA = 400, 10, 0.95
+-- wide as the words, PICTURE_GAP above them, the page's grain through it.
+local PICTURE_GAP, PICTURE_ALPHA = 10, 0.95
 -- Where the header strip's line ends, of the strip's height: its art is clear under that (its
 -- last dark row is 77 of the 96 in Parchment.png).
 local DIVIDER_LINE = 0.8
@@ -330,6 +333,8 @@ function Skin:Layout()
     local minWidth, maxWidth = Round(duiWidth * MIN_WIDTH_SHARE), Round(duiWidth * MAX_WIDTH_SHARE)
     width = Clamp(width, minWidth, maxWidth)
     local inner = math.max(1, width - 2 * padH)
+    local wordsWidth = math.max(1, Round(inner * WORDS_SHARE))
+    local wordsLeft = Round((inner - wordsWidth) / 2)
     -- The header and footer are sized from DialogueUI's own column, so a wider panel stretches
     -- the strips but keeps the face, the title and the strips' thickness.
     local baseInner = math.max(1, Round(duiWidth) - 2 * padH)
@@ -351,12 +356,9 @@ function Skin:Layout()
     local textGap = Round(4 * 0.35 * fontSize)
     local headerHeight = stripHeight + textGap
     -- A place's picture (Spoken Zones gives one with its line) between the header and the words,
-    -- as large on screen as Place Lore draws it beside the map (its `pixels`), in this window's
-    -- own scale; at most the words' width.
+    -- as wide as they are.
     local picture = self.clip and self.clip.present and self.clip.present.picture
-    local most = picture and picture.pixels and Round(picture.pixels / (UIParent:GetEffectiveScale() * frame.spokenBaseScale))
-        or PICTURE_MOST
-    local pictureWidth = picture and math.min(inner, most) or 0
+    local pictureWidth = picture and wordsWidth or 0
     local pictureHeight = Round(pictureWidth / 2)
     -- With a picture, one gap over it and under it: from the divider's line to the picture, and
     -- from the picture to the words. Halfway between the header's gap under the line and the
@@ -394,7 +396,7 @@ function Skin:Layout()
     end
     -- Fit to the Words, except while the handle is dragged and the panel follows the pointer.
     if cfg.FitText ~= false and not self.sizing then
-        local needed = self:TextLines(inner)
+        local needed = self:TextLines(wordsWidth)
         if needed and needed < lines then
             lines, height = math.max(needed, expanded and MIN_LINES or 1), 0
         end
@@ -465,7 +467,7 @@ function Skin:Layout()
     self.controls:ClearAllPoints()
     self.controls:SetPoint("RIGHT", content, "TOPRIGHT", 0, -middle)
 
-    -- The text takes DialogueUI's full column; the scrollbar sits in the margin beside it.
+    -- The words in their narrower column, the picture over them; the scrollbar beside them.
     self.picture:SetShown(picture ~= nil)
     if picture then
         self.picture:SetTexture(picture.file)
@@ -479,9 +481,10 @@ function Skin:Layout()
     end
     -- The captions span that room too; the lines fade through it (Transcript:Place).
     self.lineRoom = lineHeight
-    Transcript:Dock(content, content, "TOPLEFT", 0, -(wordsTop - lineHeight), inner, captionHeight + 2 * lineHeight)
+    Transcript:Dock(content, content, "TOPLEFT", wordsLeft, -(wordsTop - lineHeight), wordsWidth,
+        captionHeight + 2 * lineHeight)
     self.scrollbar:ClearAllPoints()
-    self.scrollbar:SetPoint("TOPLEFT", content, "TOPRIGHT", 4, -wordsTop)
+    self.scrollbar:SetPoint("TOPLEFT", content, "TOPLEFT", wordsLeft + wordsWidth + 4, -wordsTop)
     self.scrollbar:SetHeight(captionHeight)
 
     self.drawer:ClearAllPoints()
