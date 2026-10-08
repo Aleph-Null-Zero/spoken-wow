@@ -562,23 +562,18 @@ local function HostContributeBox(host)
 end
 
 --------------------------------------------------------------------------------
--- The controls on the title line
+-- The controls at the top right
 --------------------------------------------------------------------------------
 --
 -- DialogueUI draws a Play button only while its Text To Speech is on, which is off by default
--- and read only at load. This file puts the player's own round buttons on the window's title
--- line instead, as Spoken's DialogueUI window shows them: Play (Stop while the page's line
+-- and read only at load. This file puts the player's own round buttons at the window's top
+-- right instead, as Spoken's DialogueUI window shows them: Play (Stop while the page's line
 -- speaks), Skip, and Report (ContributeButton's icon, handed over through its dialogueUISlot).
 -- Read Automatically, never DialogueUI's Auto Play, decides whether a line reads on its own.
 
 local ROUND, ROUND_GAP = 24, 4
--- From the header's right end, as DialogueUI keeps its title (8), or left of the warband alert
--- where that shows (44 across, centred 25 in).
-local ROW_INSET, ROW_ALERT_INSET = 8, 50
--- Room between the title's words and the row.
-local TITLE_GAP = 6
--- A gossip page has no header: the row sits in the strip above its divider, this far down.
-local GOSSIP_TOP = 8
+-- DialogueUI's buttons at the top right (Copy Text, the translator's): 24 across, 8 in.
+local TOP_INSET, TOP_BUTTON = 8, 24
 -- DialogueUI's own speaker button, as it draws it.
 local THEIRS_ALPHA = 0.6
 -- How often the row looks again for the page's line while the window is open: a quest's ID
@@ -725,34 +720,40 @@ local function Row()
     return row
 end
 
---- Lay the row out on the title line, right to left: Report, Skip, Play. On a quest page the
---- title stops short of it; Report keeps its place there while it comes and goes, so the
---- title's words are not fitted twice. `force` after DialogueUI has put the title back.
+--- Lay the row out at the window's top right, right to left: Report, Skip, Play, on the line of
+--- DialogueUI's own buttons there (Copy Text, the translator's), left of them. As large on screen
+--- as Place Lore draws them, 24 at UIParent's scale, whatever DialogueUI's own size.
 local placedKey
 local function PlaceRow(force)
     local frame = DUIQuestFrame
-    local front = type(frame.FrontFrame) == "table" and frame.FrontFrame or nil
-    local header = front and type(front.Header) == "table" and front.Header or nil
-    local quest = header ~= nil and header:IsShown() and true or false
-    local alert = quest and type(frame.WarbandCompleteAlert) == "table" and frame.WarbandCompleteAlert:IsShown()
-        and true or false
+    local scale = UIParent:GetEffectiveScale() / math.max(0.01, frame:GetEffectiveScale() or 1)
     local list = {}
-    if report and (quest or report:IsShown()) then
+    if report and report:IsShown() then
         table.insert(list, report)
     end
     table.insert(list, row.skip)
     if row.play:IsShown() then
         table.insert(list, row.play)
     end
-    local key = table.concat({ #list, tostring(quest), tostring(alert) }, " ")
+    -- DialogueUI lays Copy Text in the corner and the translator's left of it, or alone there.
+    local leftmost
+    for _, key in ipairs({ "CopyTextButton", "TranslatorButton" }) do
+        local widget = frame[key]
+        if type(widget) == "table" and widget.IsShown and widget:IsShown() then
+            leftmost = widget
+        end
+    end
+    local key = table.concat({ #list, format("%.3f", scale), tostring(leftmost) }, " ")
     if key == placedKey and not force then
         return
     end
     placedKey = key
     local holder = row.frame
-    holder:SetWidth(#list * ROUND + (#list - 1) * ROUND_GAP)
+    holder:SetSize((#list * ROUND + (#list - 1) * ROUND_GAP) * scale, ROUND * scale)
     local right
     for _, button in ipairs(list) do
+        button:SetScale(scale)
+        button:SetSize(ROUND, ROUND)
         button:ClearAllPoints()
         if right then
             button:SetPoint("RIGHT", right, "LEFT", -ROUND_GAP, 0)
@@ -762,14 +763,10 @@ local function PlaceRow(force)
         right = button
     end
     holder:ClearAllPoints()
-    if quest then
-        holder:SetPoint("RIGHT", header, "RIGHT", -(alert and ROW_ALERT_INSET or ROW_INSET), 2)
-        if type(header.Title) == "table" then
-            header.Title:SetPoint("RIGHT", holder, "LEFT", -TITLE_GAP, 0)
-        end
+    if leftmost then
+        holder:SetPoint("RIGHT", leftmost, "LEFT", -ROUND_GAP, 0)
     else
-        local width = header and tonumber(header:GetWidth()) or 358
-        holder:SetPoint("TOPRIGHT", frame, "TOP", width / 2 - ROW_INSET, -GOSSIP_TOP)
+        holder:SetPoint("RIGHT", frame, "TOPRIGHT", -TOP_INSET, -(TOP_INSET + TOP_BUTTON / 2))
     end
 end
 
@@ -965,13 +962,6 @@ function Bridge:Hook()
     local frame = DUIQuestFrame
     -- Asked once: the player's API cannot change within a session.
     canMark = not self:Problem("Captions")
-    -- The row placed as DialogueUI lays a quest page out, before it fits the title to its width,
-    -- so the title is measured beside the row and not under it.
-    if frame.UseQuestLayout then
-        hooksecurefunc(frame, "UseQuestLayout", function()
-            if row then PlaceRow(true) end
-        end)
-    end
     local contribute = rawget(VoiceOver, "ContributeButton")
     if contribute then
         contribute.dialogueUISlot = SlotReport

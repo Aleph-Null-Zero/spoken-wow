@@ -44,26 +44,11 @@ local function Build(text, flag)
     end
     return true
 end
--- The header a quest page has and a gossip page does not: the title, which DialogueUI stops 8
--- short of the header's right end, or 56 with the warband alert shown.
-DUI.FrontFrame = stub.Widget("Frame")
-DUI.FrontFrame.Header = stub.Widget("Frame")
-DUI.FrontFrame.Header:SetSize(358, 51)
-DUI.FrontFrame.Header.Title = stub.Widget("FontString")
-DUI.WarbandCompleteAlert = stub.Widget("Frame")
-DUI.WarbandCompleteAlert:Hide()
-function DUI:UseQuestLayout(state)
-    local header = self.FrontFrame.Header
-    header:SetShown(state)
-    if state then
-        header.Title:SetPoint("RIGHT", header, "RIGHT", self.WarbandCompleteAlert:IsShown() and -56 or -8, 2)
-    end
-end
-function DUI:HandleQuestDetail() self:UseQuestLayout(true); return Build(world.npcName .. ": " .. world.questText, 3) end
-function DUI:HandleQuestProgress() self:UseQuestLayout(true); return Build(world.progressText, 3) end
-function DUI:HandleQuestComplete() self:UseQuestLayout(true); return Build(world.rewardText, 3) end
-function DUI:HandleQuestGreeting() self:UseQuestLayout(false); return Build(world.greetingText or "", 0) end
-function DUI:HandleGossip() self:UseQuestLayout(false); return Build(world.gossipText or "", 0) end
+function DUI:HandleQuestDetail() return Build(world.npcName .. ": " .. world.questText, 3) end
+function DUI:HandleQuestProgress() return Build(world.progressText, 3) end
+function DUI:HandleQuestComplete() return Build(world.rewardText, 3) end
+function DUI:HandleQuestGreeting() return Build(world.greetingText or "", 0) end
+function DUI:HandleGossip() return Build(world.gossipText or "", 0) end
 function DUI:IsScrollable() return self.scrollable end
 function DUI:ScrollTo(value) self.scrolledTo = value end
 _G.DUIQuestFrame = DUI
@@ -372,9 +357,9 @@ Expect("...while a click on its button plays", Spoken:GetQueueSize(), 1)
 Spoken:StopAll()
 _G.DialogueUI_DB = nil
 
----------------------------------------------------------------- Spoken's controls on DialogueUI's title line
+---------------------------------------------------------------- Spoken's controls at DialogueUI's top right
 -- DialogueUI draws its own Play only with its Text To Speech on; Spoken's round Play and Skip are
--- there either way, on the title line, as Spoken's DialogueUI window shows them.
+-- there either way, at the window's top right, as Spoken's DialogueUI window shows them.
 world.questID = 101
 DUI.handler = "HandleQuestDetail"
 DUI:HandleQuestDetail()
@@ -383,16 +368,32 @@ driver:Show()
 driver.scripts.OnShow(driver)
 local play, _, controls = Bridge:PlayButtonState()
 local skip = controls and controls.skip
-local header = DUI.FrontFrame.Header
 Expect("a page with a recording shows Spoken's Play button", play ~= nil and play:IsShown() and play:IsEnabled(), true)
 Expect("...the player's round one, Skip beside it", play and play.ring ~= nil and skip ~= nil and skip:IsShown(), true)
 Expect("...on DialogueUI's window, which UIParent's hiding leaves up", controls and controls.frame:GetParent(), DUI)
-Expect("...at the right end of the title line", controls.frame.anchor.point .. " " ..
-    tostring(controls.frame.anchor.relativeTo == header) .. " " .. controls.frame.anchor.x .. " " .. controls.frame.anchor.y,
-    "RIGHT true -8 2")
+local function Anchor(f)
+    local a = f.anchor
+    return a.point .. " " .. tostring(a.relativeTo == DUI and "window" or a.relativeTo) .. " " .. a.relativePoint
+        .. " " .. a.x .. " " .. a.y
+end
+Expect("...at the window's top right, on the line of DialogueUI's own buttons there, 24 across 8 in",
+    Anchor(controls.frame), "RIGHT window TOPRIGHT -8 -20")
 Expect("...Play left of Skip", play.anchor.relativeTo == skip and play.anchor.relativePoint, "LEFT")
-Expect("...and the title stops short of it", header.Title.anchor.relativeTo == controls.frame
-    and header.Title.anchor.relativePoint, "LEFT")
+local round = UIParent:GetEffectiveScale() / DUI:GetEffectiveScale()
+Expect("...as large on screen as Place Lore draws them, 24 at UIParent's scale, whatever DialogueUI's size",
+    play:GetWidth() .. " " .. play:GetScale() .. " " .. skip:GetScale(), "24 " .. round .. " " .. round)
+-- DialogueUI's Copy Text button in the corner, and the translator's left of it.
+DUI.CopyTextButton = stub.Widget("Button")
+DUI.CopyTextButton:Show()
+Bridge:DrawPlayButton()
+Expect("...left of DialogueUI's Copy Text button", controls.frame.anchor.relativeTo == DUI.CopyTextButton
+    and controls.frame.anchor.relativePoint .. " " .. controls.frame.anchor.x, "LEFT -4")
+DUI.TranslatorButton = stub.Widget("Button")
+DUI.TranslatorButton:Show()
+Bridge:DrawPlayButton()
+Expect("...and of the translator's beside it", controls.frame.anchor.relativeTo == DUI.TranslatorButton, true)
+DUI.CopyTextButton, DUI.TranslatorButton = nil, nil
+Bridge:DrawPlayButton()
 Expect("Skip is greyed with nothing speaking", skip:IsEnabled(), false)
 play.scripts.OnClick(play, "LeftButton")
 Expect("left-click plays the page's line", Spoken:GetCurrent() and Spoken:GetCurrent().fileName, "101-accept")
@@ -422,12 +423,6 @@ play.scripts.OnClick(play, "LeftButton")
 skip.scripts.OnClick(skip)
 Expect("Skip skips what speaks", Spoken:GetCurrent() == nil or Spoken:GetCurrent().fileName ~= "101-accept", true)
 Spoken:StopAll()
-DUI.WarbandCompleteAlert:Show()
-DUI:HandleQuestDetail()
-Expect("with DialogueUI's warband alert at the header's end, the row stands left of it",
-    controls.frame.anchor.x .. " " .. tostring(header.Title.anchor.relativeTo == controls.frame), "-50 true")
-DUI.WarbandCompleteAlert:Hide()
-DUI:HandleQuestDetail()
 
 -- On a gossip page Play reads the gossip module's line: the bridge asks the module the page
 -- belongs to. Gossip has no Read Automatically, so its tooltip says nothing of it and a
@@ -441,10 +436,7 @@ Bridge:RefreshPlayButton("GOSSIP_SHOW")
 local _, gossipLine = Bridge:PlayButtonState()
 Expect("a gossip page with a recording shows the Play button, for the gossip module's line",
     play:IsShown() and gossipLine and gossipLine.fileName, "gossip-hello")
-Expect("...the row, with no header, at the top of the window where the header's end would be",
-    controls.frame.anchor.point .. " " .. tostring(controls.frame.anchor.relativeTo == DUI) .. " "
-    .. controls.frame.anchor.relativePoint .. " " .. controls.frame.anchor.x .. " " .. controls.frame.anchor.y,
-    "TOPRIGHT true TOP 171 -8")
+Expect("...the row where it is on a quest's page", Anchor(controls.frame), "RIGHT window TOPRIGHT -8 -20")
 Expect("...the line the Report button asks the bridge for", Bridge:LineFor("GOSSIP_SHOW") and
     Bridge:LineFor("GOSSIP_SHOW").fileName, "gossip-hello")
 play.scripts.OnClick(play, "LeftButton")
@@ -483,7 +475,6 @@ world.questID = 102
 -- The bridge rechecks the page on a timer while the window is open.
 driver.scripts.OnUpdate(driver, 0.6)
 Expect("a page with no recording greys Play, keeping its place", play:IsShown() and play:IsEnabled(), false)
-Expect("...the title not moved", header.Title.anchor.relativeTo, controls.frame)
 world.questID = 101
 Bridge:RefreshPlayButton()
 Expect("...back on a page with one", play:IsEnabled(), true)
@@ -491,7 +482,7 @@ dui.PlayButton = false
 Bridge:Refresh()
 Expect("with the setting off Play is not there", play:IsShown(), false)
 Expect("...and DialogueUI's own button is given back", DUI.TTSButton:GetAlpha(), 0.6)
-Expect("...Skip moving up to the row's left end", controls.frame:GetWidth(), 24)
+Expect("...Skip moving up to the row's left end", controls.frame:GetWidth(), 24 * round)
 dui.PlayButton = true
 Bridge:Refresh()
 DUI.TTSButton = nil
@@ -624,14 +615,15 @@ DUI.handler = "HandleQuestDetail"
 Expect("the page DialogueUI shows is known", Bridge:Page(), "QUEST_DETAIL")
 DUI:HandleQuestDetail()
 local corner = Contribute.corner
-local icon, link = corner and corner.icon, corner and corner.link
+local icon = corner and corner.icon
 Expect("a voiced quest shows the Report icon", icon ~= nil and icon:IsShown(), true)
 Expect("...on DialogueUI's window, which UIParent's hiding leaves up", icon and icon:GetParent(), DUI)
 local _, _, controls = Bridge:PlayButtonState()
-Expect("...on the title line, rightmost in Spoken's row after Play and Skip", icon.anchor and icon.anchor.point
+Expect("...at the top right, rightmost in Spoken's row after Play and Skip", icon.anchor and icon.anchor.point
     .. " " .. tostring(icon.anchor.relativeTo == controls.frame) .. " " .. tostring(controls.skip.anchor.relativeTo == icon),
     "RIGHT true true")
-Expect("...as large as they are", icon:GetWidth(), controls.play:GetWidth())
+Expect("...as large as they are", icon:GetWidth() .. " " .. icon:GetScale(),
+    controls.play:GetWidth() .. " " .. controls.play:GetScale())
 Expect("...and as strong", icon and icon:GetAlpha(), 1)
 env.Addon.db.profile.Frame.HiddenActions.report = true
 _G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
@@ -639,7 +631,7 @@ Expect("Hide Report Buttons, in Spoken's settings, takes it away at once", icon:
 env.Addon.db.profile.Frame.HiddenActions.report = nil
 _G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
 Expect("...and gives it back when it is off", icon:IsShown(), true)
-Expect("...with nothing to contribute beside it", link and link:IsShown(), false)
+Expect("...with no line of words to contribute under the window's buttons", corner.link, nil)
 Expect("...and not the game's panel button", panelButton:IsShown(), false)
 Fire(icon, "OnEnter")
 Expect("...full under the pointer", icon:GetAlpha(), 1)
@@ -651,25 +643,22 @@ Expect("...at the size the game's tooltip would be", tip and tip:GetScale(), 1 /
 Fire(icon, "OnLeave")
 Expect("...still in full after", icon:GetAlpha(), 1)
 Expect("...and the tooltip gone", tip and tip:IsShown(), false)
-Expect("the words to contribute keep the corner under DialogueUI's Decline, right-aligned with it",
-    link.anchor and link.anchor.point == "RIGHT" and link.anchor.relativeTo == DUI
-    and link.anchor.relativePoint == "BOTTOMRIGHT" and link.anchor.x, -29)
-Expect("...hung just under it, above the parchment's curled foot", link.anchor and link.anchor.y, 28)
+-- Without Spoken Quests' row (its bridge not loaded), the icon keeps the corner, faint.
+Contribute.dialogueUISlot = nil
+Contribute:ShowOnDialogueUI(DUI, false)
+Expect("with no row to go in, the icon keeps the corner under DialogueUI's Decline, right-aligned with it",
+    icon.anchor and icon.anchor.relativeTo == DUI and icon.anchor.relativePoint .. " " .. icon.anchor.x .. " " .. icon.anchor.y,
+    "BOTTOMRIGHT -29 28")
+Expect("...small and faint, at the window's own scale", icon:GetWidth() .. " " .. icon:GetAlpha() .. " " .. icon:GetScale(),
+    "16 0.4 1")
 -- The margins as DialogueUI laid them out, which its window size setting changes.
 local footer = stub.Widget("Button")
 footer.GetBottom = function() return 50 end
 footer.GetRight = function() return 270 end
 DUI.ExitButton = footer
-DUI:HandleQuestDetail()
-Expect("...measured from DialogueUI's footer once it is laid out", link.anchor and link.anchor.x .. " " .. link.anchor.y, "-30 38")
-DUI.ExitButton = nil
--- Without Spoken Quests' row (its bridge not loaded), the icon keeps the corner, faint.
-Contribute.dialogueUISlot = nil
 Contribute:ShowOnDialogueUI(DUI, false)
-Expect("with no row to go in, the icon keeps the corner, right-aligned with Decline",
-    icon.anchor and icon.anchor.relativeTo == DUI and icon.anchor.relativePoint .. " " .. icon.anchor.x .. " " .. icon.anchor.y,
-    "BOTTOMRIGHT -29 28")
-Expect("...small and faint", icon:GetWidth() .. " " .. icon:GetAlpha(), "16 0.4")
+Expect("...measured from DialogueUI's footer once it is laid out", icon.anchor.x .. " " .. icon.anchor.y, "-30 38")
+DUI.ExitButton = nil
 DUI:HandleQuestDetail()
 Expect("...and goes back in the row on the next page", icon.anchor and icon.anchor.relativeTo, controls.frame)
 driver.scripts.OnShow(driver)
@@ -681,48 +670,35 @@ box.frame:Hide()
 
 world.questID = 102
 DUI:HandleQuestDetail()
-Expect("a quest no pack voices shows the icon in full", icon:IsShown() and icon:GetAlpha(), 1)
-Expect("...with the words to contribute beside it", link:IsShown(), true)
-Expect("...saying so", link.label:GetText(), _G.SpokenEnv.L.DIALOGUE_CONTRIBUTE_NO_VO)
-Expect("...on DialogueUI's window", link:GetParent(), DUI)
-Fire(link, "OnEnter")
+Expect("a quest no pack voices keeps the icon in the row, in full, to contribute",
+    tostring(icon:IsShown() and icon:GetAlpha()) .. " " .. tostring(corner.missing), "1 true")
+Fire(icon, "OnEnter")
 Expect("...its tooltip saying what is missing", tip and tip.lines and tip.lines[1], _G.SpokenEnv.L.DIALOGUE_CONTRIBUTE_TIP_QUEST)
-Fire(link, "OnLeave")
+Fire(icon, "OnLeave")
 Expect("...still in full once the pointer leaves", icon:GetAlpha(), 1)
--- DialogueUI's font colour tells which theme is on.
-local red
-link.label.SetTextColor = function(_, r, g, b) red = string.format("%.2f %.2f %.2f", r, g, b) end
-local fontColor = { 0.19, 0.17, 0.13 }
-_G.DUIFont_QuestType_Left = { GetTextColor = function() return fontColor[1], fontColor[2], fontColor[3] end }
-DUI:HandleQuestDetail()
-Expect("...in the Accept button's red on parchment", red, "0.47 0.16 0.08")
-fontColor = { 0.9, 0.9, 0.9 }
-DUI:HandleQuestDetail()
-Expect("...and lifted to read on the dark theme", red, "0.85 0.22 0.20")
-_G.DUIFont_QuestType_Left = nil
 local envelope = VO.Contribute:Capture()
 Expect("...and it sends the quest DialogueUI shows", envelope and envelope:match("\nquest=102\n") ~= nil
     and envelope:match("\nevent=accept\n") ~= nil, true)
 world.questID = 101
 DUI:HandleQuestDetail()
-Expect("back on a voiced quest, the words go", link:IsShown(), false)
+Expect("back on a voiced quest, it reports again", corner.missing, false)
 world.questID = 102
 world.gossipText = "Strange times, friend."
 DUI.handler = "HandleGossip"
 DUI:HandleGossip()
-Expect("gossip no pack voices offers it too", link:IsShown(), true)
+Expect("gossip no pack voices offers it too", icon:IsShown() and corner.missing, true)
 Expect("...for the gossip line", Contribute.gossip, true)
 local gossip = VO.Contribute:Capture()
 Expect("...and it sends the words DialogueUI shows", gossip and gossip:match("\nquest=") == nil
     and gossip:match("\nStrange times, friend%.\n") ~= nil, true)
-Fire(link, "OnClick")
+Fire(icon, "OnClick")
 Expect("the copy box opens over DialogueUI's window", box and box.frame:IsShown() and box.frame:GetParent(), DUI)
 Expect("...the same size on screen", box and box.frame:GetScale(), 1 / 0.8)
 DUI:Hide()
 driver:Hide()
 driver.scripts.OnHide(driver)
 Expect("closing the window leaves no page", Bridge:Page(), nil)
-Expect("...and takes the corner with it", icon:IsShown() or link:IsShown(), false)
+Expect("...and takes the icon with it", icon:IsShown(), false)
 Expect("...and nothing is left on the game's frames", panelButton:IsShown(), false)
 Expect("the copy box goes back to UIParent", box and box.frame:GetParent(), _G.UIParent)
 Expect("...still open, at its own size", box and box.frame:IsShown() and box.frame:GetScale(), 1)
