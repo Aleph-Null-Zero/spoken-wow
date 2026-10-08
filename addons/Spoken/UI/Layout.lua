@@ -73,6 +73,9 @@ local BOX_RIGHT = 14
 local DIVIDER_GAP = 16        -- either side of a divider between a group's sections
 local DIVIDER_COLOR = { 0.55, 0.40, 0.24 }  -- ...a thin line in the bronze of the lists' frame,
 local DIVIDER_ALPHA = 0.5     -- ...faint
+local SUBTITLE_HEIGHT = 14    -- a group's section title: GameFontHighlight, at the rows' labels,
+local SUBTITLE_GAP = 8        -- ...the divider 8 after it, through its middle,
+local SUBTITLE_BELOW = 10     -- ...and its rows 10 under it
 local GOLD = { 1, 0.82, 0 }      -- NORMAL_FONT_COLOR: a setting's name
 local WHITE = { 1, 1, 1 }        -- HIGHLIGHT_FONT_COLOR: a page's and a section's title
 local GREY = { 0.5, 0.5, 0.5 }   -- GameFontDisable: a setting greyed out
@@ -505,15 +508,25 @@ function Layout:Reflow()
                 -- and its rows under it. In a group, a divider where its title would be, from
                 -- where its rows' labels start to where the boxes end, DIVIDER_GAP from the rows
                 -- either side.
-                local divider = item.divider
-                if started and divider then
-                    y = y - DIVIDER_GAP
+                local divider, small = item.divider, item.small
+                if divider and (started or small) then
+                    -- Its small title where the rows' labels start, the line on from it; an
+                    -- untitled one, the line alone. DIVIDER_GAP under the rows above.
+                    if started then y = y - DIVIDER_GAP end
                     local _, right = self:BoxSpan()
                     local left = self.left + LABEL_X
-                    Put(divider, self.parent, left, y)
-                    divider:SetWidth(right - left)
+                    local height, from = divider:GetHeight(), left
+                    if small then
+                        Put(small, self.parent, left, y)
+                        small:Show()
+                        small.layoutY = y
+                        height = SUBTITLE_HEIGHT
+                        from = left + math.ceil(small:GetStringWidth() or 0) + SUBTITLE_GAP
+                    end
+                    Put(divider, self.parent, from, y - math.floor((height - divider:GetHeight()) / 2))
+                    divider:SetWidth(math.max(1, right - from))
                     divider:Show()
-                    y = y - divider:GetHeight() - DIVIDER_GAP
+                    y = y - height - (small and SUBTITLE_BELOW or DIVIDER_GAP)
                 elseif started then
                     y = y - ROW_GAP
                 elseif divider then
@@ -642,8 +655,17 @@ function Layout:Section(text, plain)
         fs:SetText(text)
         fs.layoutHeading, fs.layoutHeight = true, SECTION_HEIGHT
     end
+    -- In a group, a small title instead, where its rows' labels start, the divider running on
+    -- from it to where the boxes end (Reflow).
+    local small
+    if text and self.group then
+        small = parent:CreateFontString(nil, "ARTWORK", Font("GameFontHighlight", "GameFontNormal"))
+        small:SetJustifyH("LEFT")
+        small:SetText(text)
+        small:Hide()
+    end
     local layout = self
-    local section = { kind = "section", text = text, rows = {}, heading = fs,
+    local section = { kind = "section", text = text, rows = {}, heading = fs, small = small,
         band = fs and SECTION_HEIGHT or 0, plain = plain, divider = self.group and Divider(parent) or nil }
     section.place = function(top)
         if fs then
@@ -667,6 +689,7 @@ function Layout:Section(text, plain)
     end
     section.hide = function()
         if fs then fs:Hide() end
+        if small then small:Hide() end
         if section.divider then section.divider:Hide() end
     end
     AddItem(self, section)
@@ -919,7 +942,7 @@ function Layout:Refresh()
     end
     -- A group whose every setting is greyed out -- a module switched off -- greys its title too.
     for _, item in ipairs(self.items) do
-        if item.kind == "section" and item.heading then
+        if item.kind == "section" and (item.heading or item.small) then
             local any, live = false, false
             for _, row in ipairs(item.rows) do
                 local control = row.control
@@ -930,7 +953,8 @@ function Layout:Refresh()
             end
             local grey = any and not live
             local color = grey and GREY or WHITE
-            item.heading:SetTextColor(color[1], color[2], color[3])
+            local title = item.heading or item.small
+            title:SetTextColor(color[1], color[2], color[3])
             item.greyed = grey
         end
     end

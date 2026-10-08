@@ -355,6 +355,8 @@ do
     local open = CreateFrame("Frame")
     open.children = {}
     function open:GetWidth() return 640 end
+    -- The client's white font, which the stub does not define.
+    _G.GameFontHighlight = _G.GameFontHighlight or {}
     local grouped = Layout.New(open, 25, -16)
     grouped:Group("Settings")
     grouped:Section("Display")
@@ -366,20 +368,24 @@ do
     local group, display, window = grouped.items[1], grouped.items[2], grouped.items[3]
     Expect("a group has a title, as a section has, and no box", group.heading.text .. " " .. tostring(group.box),
         "Settings nil")
-    Expect("its sections have no titles of their own", tostring(display.heading) .. " " .. tostring(window.heading),
-        "nil nil")
+    Expect("its sections have small titles, not a section's large one",
+        tostring(display.heading) .. " " .. display.small.text .. " " .. window.small.text, "nil Display Window")
+    Expect("...in the game's white", tostring(window.small.fontObject or window.small.font), "GameFontHighlight")
+    Expect("...where the rows' labels start", (window.small.anchor.x - grouped.left) .. " "
+        .. (display.small.anchor.x - grouped.left), "37 37")
     Expect("...their names still what search files their rows under", grouped.entries[1].section, "Display")
-    Expect("a divider between them, where the second's title would be, none above the first",
-        tostring(display.divider.shown) .. " " .. tostring(window.divider.shown ~= false), "false true")
+    local small, line = window.small, window.divider
+    Expect("a line runs on from each title, the first's too",
+        tostring(display.divider.shown ~= false) .. " " .. tostring(line.shown ~= false), "true true")
     Expect("...one thin, faint bronze line, not the header's divider",
-        tostring(window.divider.layoutAtlas) .. " " .. window.divider.height .. " "
-        .. table.concat(window.divider.layoutColor, ",") .. " " .. window.divider.alpha, "nil 1 0.55,0.4,0.24 0.5")
-    Expect("...from where the rows' labels start to where the boxes end",
-        (window.divider.anchor.x - grouped.left) .. " " .. (window.divider.anchor.x + window.divider.width),
-        "37 " .. (grouped.left + grouped:Width() - 14))
-    Expect("...16 under the rows above it, and the rows under it 16 under it",
-        (display.bottom - window.divider.anchor.y) .. " " .. (window.divider.anchor.y - window.divider.height - window.top),
-        "16 16")
+        tostring(line.layoutAtlas) .. " " .. line.height .. " "
+        .. table.concat(line.layoutColor, ",") .. " " .. line.alpha, "nil 1 0.55,0.4,0.24 0.5")
+    Expect("...from 8 after the title to where the boxes end",
+        (line.anchor.x - (small.anchor.x + small:GetStringWidth())) .. " " .. (line.anchor.x + line.width),
+        "8 " .. (grouped.left + grouped:Width() - 14))
+    Expect("...through the title's middle", small.anchor.y - line.anchor.y, 6)
+    Expect("the title 16 under the rows above it, and its rows 10 under it",
+        (display.bottom - small.anchor.y) .. " " .. (small.anchor.y - 14 - window.top), "16 10")
 end
 
 ---------------------------------------------------------------- sections have no divider
