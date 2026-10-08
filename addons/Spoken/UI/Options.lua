@@ -382,11 +382,10 @@ local function Build(canvas)
     Only(layout:Slider(L.OPT_SCALE, 0.5, 2, 0.05,
         function() return cfg().FrameScale end, function(v) cfg().FrameScale = v end, refresh,
         nil, L.OPT_SCALE_TIP), InWindow)
-    -- The DialogueUI window's own settings, its theme first, live on the DialogueUI page.
-    if canvas then
-        Only(layout:Button(L.OPT_DUI_OPEN_PAGE, 200, function() DialogueUIOptions:Open() end),
-            function() return Style() == "dialogueui" end)
-    end
+    -- The DialogueUI window's own settings, its theme first.
+    DialogueUIOptions:WindowRows(layout, function(row)
+        return Only(row, function() return Style() == "dialogueui" end)
+    end, refresh)
     Only(layout:Checkbox(L.OPT_HIDE_PORTRAIT, L.OPT_HIDE_PORTRAIT_TIP,
         function() return cfg().HidePortrait end, function(v) cfg().HidePortrait = v end, refresh),
         InWindow)
@@ -457,6 +456,9 @@ local function Build(canvas)
 
     -- The narrator style's settings end here; what follows is Spoken's whatever the style.
     layout:EndGroup()
+
+    -- What the feature addons do in DialogueUI's own window, whatever the style.
+    DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each
     -- add a tab to, opened here and from the minimap menu, with each tab's Unlock switch. The tabs
@@ -706,6 +708,8 @@ local function Build(canvas)
                 local tab = Tab(key)
                 if tab and tab.unlock then tab.unlock.set(false) end
             end
+            -- The feature addons' DialogueUI rows are kept in their own settings too.
+            DialogueUIOptions:Reset()
             Addon.db:ResetProfile()
             Addon.db.global.Layout = nil
             ReloadUI()
@@ -951,8 +955,6 @@ function Options:Setup()
     -- Rows come and go with the way lines are shown; the window or scroller follows what is left.
     panel.layout.onResize = function() FitWindow() end
     self:UpdateRows()
-    -- Built with this page; registered last, after every part's.
-    if canvas and DialogueUIOptions then DialogueUIOptions:Setup() end
     if canvas then
         -- Spoken's entry in the game's settings, and each feature addon's page an entry nested
         -- under it (Options:RegisterPage).

@@ -635,17 +635,30 @@ local panel = stub.LoadQuestsPanel(QUESTS, VO)
 panel:Setup()
 local Page = env.DialogueUIOptions
 local layout = Page.layout
-Expect("Spoken built its DialogueUI page", layout ~= nil, true)
+Expect("Spoken's page keeps a DialogueUI group for them", layout == _G.SpokenOptionsPanel.layout and Page.keep ~= nil, true)
 local function Row(label)
     for _, entry in ipairs(layout.entries) do
         if entry.label == label then return entry.frame end
     end
 end
 local captions, scroll = Row(VO.L.OPT_DUI_CAPTIONS), Row(VO.L.OPT_DUI_AUTOSCROLL)
-Expect("the panel has nothing that changes DialogueUI's own settings", table.getn(layout.entries) > 0
+Expect("nothing there changes DialogueUI's own settings", table.getn(layout.entries) > 0
     and Row("Turn On Text To Speech") == nil, true)
-Expect("the panel has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
+Expect("the group has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
     and Row(VO.L.OPT_DUI_PLAY_BUTTON) ~= nil and scroll ~= nil, true)
+-- In the group, after the narrator style's settings: the rows sit under its heading, and the
+-- page's later sections (the languages, the sound) under them.
+layout:Refresh()
+local heading
+for _, item in ipairs(layout.items) do
+    if item.kind == "group" and item.text == env.L.OPT_STYLE_DIALOGUEUI then heading = item.heading end
+end
+local language
+for _, item in ipairs(layout.items) do
+    if item.kind == "section" and item.text == env.L.OPT_LANGUAGE_TITLE then language = item end
+end
+Expect("...under its heading, before the page's later sections", heading ~= nil and heading:IsShown()
+    and captions.layoutY < heading.layoutY and language ~= nil and language.top < captions.layoutY, true)
 layout:Refresh()
 Expect("...live while DialogueUI is loaded", captions and captions.layoutReason, nil)
 loaded = false
@@ -675,7 +688,7 @@ for _, entry in ipairs(panel.panel.layout.entries) do
 end
 dui.Captions, dui.PlayButton = false, false
 Page:Reset()
-Expect("the DialogueUI page's Defaults puts them back", dui.Captions and dui.PlayButton, true)
+Expect("Spoken's Start Over puts them back", dui.Captions and dui.PlayButton, true)
 Expect("diagnostics describe it", string.find(Bridge:Describe(), "words=true", 1, true) ~= nil, true)
 local readRow
 for _, entry in ipairs(panel.panel.layout.entries) do
