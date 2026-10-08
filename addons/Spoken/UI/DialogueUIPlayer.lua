@@ -38,9 +38,11 @@ local FADE_IN, FADE_OUT = .28, .32
 -- A new line on a window already showing: its words fade in over LINE_IN, and the window eases to
 -- its new height, as the subtitle's do (Subtitle's PAGE_IN and SIZE_EASE).
 local LINE_IN, SIZE_EASE = .28, 10
--- How long nothing in the window may have changed before it fades out as one image (Skin:Buffer):
--- a face or a picture just set is still being drawn or loaded for a moment after.
-local STILL = 1.5
+-- Every fade is of the window as one image (Skin:Buffer), and nothing in it may change while it is
+-- one. Before it becomes one: still this long (a face or picture just set is drawn or loaded a
+-- moment after), and, fading out, deaf to the pointer for ARM_FRAMES frames so a click's pressed
+-- and lit states have settled. Never waiting longer than ARM_MOST.
+local STILL, ARM_FRAMES, ARM_MOST = 0.1, 2, 0.5
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
@@ -307,7 +309,6 @@ end
 
 --- Runs on every refresh, so a theme or size change in DialogueUI lands on the next one.
 function Skin:Layout()
-    -- Nothing in the window changes while it is one image.
     self:Touch()
     local frame, cfg = self.frame, Theme:Config()
     local parchment = Theme:TexturePath() .. "Parchment.png"
@@ -521,7 +522,7 @@ function Skin:Dress()
 end
 
 function Skin:ConfigurePortrait()
-    -- A face set or redrawn: not one image for a while.
+    -- A face set or redrawn: it is drawn a moment after.
     self:Touch()
     -- Always the face: the header strip has its socket, which would stand empty without it.
     self.portrait:Show()
@@ -701,12 +702,9 @@ function Skin:LayoutQueue()
     self.drawer:SetShown(shown > 0)
 end
 
---- How much of the window shows, 0 to 1. The client fades each texture on its own, so a
---- half-faded window would show the paper through its strips and words: the paper takes the lower
---- half and everything on it the upper, and the two never fade at once. Not a frame buffer, which
---- would fade it as one image: on this window it crashed the client (ASSERT(!m_deleted),
---- CSimpleRender.cpp) after an hour and a half of play. Fading out, one image does it
---- (Skin:Buffer).
+--- How much of the window shows, 0 to 1: as one image, its alpha (Skin:Buffer). Where the client
+--- has no frame buffers, the paper takes the lower half and everything on it the upper, so the two
+--- never fade at once and the paper never shows through the strips and words.
 function Skin:SetLevel(level)
     self.level = level
     if self.buffered then
@@ -723,19 +721,6 @@ local function Parts(self)
     return { self.content, self.resizer, self.parchments[1], self.parchments[2], self.parchments[3] }
 end
 
---- Fading out, the window is drawn as one image (a frame buffer, as the world map is) and fades
---- as one, its parts ignoring its alpha so only the finished image fades. Only then: the crashes
---- came of something in the image changing or still loading while it was one (a new portrait or
---- picture, the title's remove cross the first time it showed: CSimpleRender.cpp's texture
---- asserts and ASSERT(!m_deleted)), and fading out nothing is. Anything that would change it
---- first lets it go (Skin:Unbuffer).
---- Something in the window changed, or is about to: it is not one image now, nor for STILL after.
---- The portrait cache calls this before it paints or moves a face (StaticPortrait:Capture).
-function Skin:Touch()
-    self.changedAt = GetTime()
-    self:Unbuffer()
-end
-
 -- What the pointer lights, presses or scrolls in the window: a button pressed or lit changes its
 -- textures, which must not happen while it is one image.
 local function Clickables(self)
@@ -745,44 +730,49 @@ local function Clickables(self)
     return list
 end
 
-function Skin:Buffer()
-    local frame = self.frame
-    if self.buffered or not frame.SetIsFrameBuffer then return end
-    -- Not with the pointer on it: Skip just clicked goes from pressed back to normal, and lit to
-    -- unlit, as the fade starts (it crashed so, ASSERT(flattenedBatch != nullptr)).
-    if frame.IsMouseOver and frame:IsMouseOver() then return end
-    -- Only once all in it has been still a while: a face SetPortraitTexture is still drawing, or a
-    -- picture still loading, crashed it when the line was skipped soon after it came. Never with a
-    -- 3D face, which is drawn anew every frame.
-    if self.changedAt and GetTime() - self.changedAt < STILL then return end
-    if self.viewport and self.viewport.active == "model" then return end
-    -- Its own small animations finished first, so nothing in the image moves while it is one.
-    self.lineFade, self.countFade = nil, nil
-    if self.count then self.count:SetAlpha(1) end
-    if self.heightWant then frame:SetHeight(self.heightWant); self.heightWant = nil end
-    -- Deaf to the pointer while it is one image, so passing over it lights or presses nothing.
+-- A texture in the window still loading, which it must not be while it becomes one image.
+local function Loading(texture)
+    return texture ~= nil and texture.IsObjectLoaded ~= nil and texture:IsShown() and not texture:IsObjectLoaded()
+end
+
+--- Something in the window changed: it waits to be still again before it becomes one image.
+function Skin:Touch()
+    self.stillFor = 0
+end
+
+--- Nothing in the window may change: it is one image. The portrait cache asks before it paints a
+--- face anew (StaticPortrait:Capture).
+function Skin:Frozen()
+    return self.buffered and true or false
+end
+
+--- Still a while, and nothing in it loading: it may become one image.
+function Skin:Still()
+    if (self.stillFor or STILL) < STILL then return false end
+    local viewport = self.viewport
+    return not (Loading(self.picture) or Loading(self.badge)
+        or Loading(viewport and viewport.activeFrame) or Loading(viewport and viewport.texture))
+end
+
+--- Deaf to the pointer, so nothing in the window lights or presses: before it becomes one image,
+--- and while it is.
+function Skin:Deafen()
+    if self.deafened then return end
     self.deafened = {}
     for _, part in ipairs(Clickables(self)) do
-        if part and part.EnableMouse and part.IsMouseEnabled and part:IsMouseEnabled() then
-            part:EnableMouse(false)
-            table.insert(self.deafened, part)
-        end
+        local entry = { part = part }
+        if part.IsMouseEnabled and part:IsMouseEnabled() then entry.mouse = true; part:EnableMouse(false) end
+        if part.IsMouseWheelEnabled and part:IsMouseWheelEnabled() then entry.wheel = true; part:EnableMouseWheel(false) end
+        table.insert(self.deafened, entry)
     end
-    if not pcall(frame.SetIsFrameBuffer, frame, true) then
-        self:Undeafen()
-        return
-    end
-    self.buffered = true
-    -- The captions too: the line ending keeps its words, which fade out with the window.
-    Transcript:Hold()
-    for _, part in ipairs(Parts(self)) do
-        if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(true) end
-    end
-    self:SetLevel(self.level or 1)
 end
 
 function Skin:Undeafen()
-    for _, part in ipairs(self.deafened or {}) do part:EnableMouse(true) end
+    if not self.deafened then return end
+    for _, entry in ipairs(self.deafened) do
+        if entry.mouse then entry.part:EnableMouse(true) end
+        if entry.wheel then entry.part:EnableMouseWheel(true) end
+    end
     self.deafened = nil
     -- Locked, clicks still pass through (Skin:RefreshConfig).
     local frame = self.frame
@@ -792,6 +782,37 @@ function Skin:Undeafen()
     end
 end
 
+--- The window drawn as one image (a frame buffer, as the world map is) and faded as one, its parts
+--- ignoring its alpha so only the finished image fades. Every crash came of something in it
+--- changing while it was one (the title's remove cross loading, the captions clearing at a line's
+--- end, Skip going from pressed to normal: CSimpleRender.cpp's texture asserts, ASSERT(!m_deleted),
+--- ASSERT(flattenedBatch != nullptr)), so while it is: deaf to the pointer, the captions held, its
+--- own updates waiting (Skin:Tick, Skin:Update), the portrait cache not painting its face. False
+--- where the client has no frame buffers.
+function Skin:Buffer()
+    local frame = self.frame
+    if self.buffered then return true end
+    if not frame.SetIsFrameBuffer then return false end
+    -- Its own small animations finished first.
+    self.lineFade, self.countFade = nil, nil
+    if self.count then self.count:SetAlpha(1) end
+    if self.heightWant then frame:SetHeight(self.heightWant); self.heightWant = nil end
+    self:Deafen()
+    if not pcall(frame.SetIsFrameBuffer, frame, true) then
+        self:Undeafen()
+        return false
+    end
+    self.buffered = true
+    frame.spokenFrozen = true
+    Transcript:Hold()
+    for _, part in ipairs(Parts(self)) do
+        if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(true) end
+    end
+    self:SetLevel(self.level or 0)
+    return true
+end
+
+--- Itself again, and catching up on what waited: the captions, and an update or a refresh.
 function Skin:Unbuffer()
     if not self.buffered then return end
     self.buffered = nil
@@ -801,8 +822,17 @@ function Skin:Unbuffer()
     pcall(self.frame.SetIsFrameBuffer, self.frame, false)
     self:Undeafen()
     self:SetLevel(self.level or 0)
-    -- What the captions held back, now the window is itself again.
+    -- Moved onto or off DialogueUI's window meanwhile (Addon:ApplyHost): now.
+    self.frame.spokenFrozen = nil
+    if self.frame.spokenHostPending then
+        self.frame.spokenHostPending = nil
+        Addon:ApplyHost(self.frame)
+    end
     Transcript:Release()
+    local pending = self.pending
+    self.pending = nil
+    if pending == "refresh" then self:RefreshConfig()
+    elseif pending == "update" then self:Update() end
 end
 
 --- What is on the paper: its share of the window's fade, times a new line's own fade-in.
@@ -815,29 +845,71 @@ function Skin:SetVisible(visible, immediate)
     if not self.frame then return end
     if not visible then self:HideTooltip() end
     if immediate then
-        self.wanted = false
+        self.wanted, self.preparing, self.arming, self.fadeTime, self.pending = false, nil, nil, nil, nil
         self.frame:Hide()
         self:Unbuffer()
+        self:Undeafen()
+        Transcript:Release()
         self:SetLevel(0)
-        self.fadeTime = nil
         return
     end
     if self.wanted == visible then return end
     self.wanted = visible
-    self.fadeFrom = self.frame:IsShown() and self.level or 0
-    self.fadeTime = 0
-    -- Out from in full, as one image; back in, or in, in two steps (Skin:Buffer).
     if visible then
-        self:Unbuffer()
-        self:SetLevel(self.fadeFrom)
+        self.arming = nil
+        if self.buffered or (self.frame:IsShown() and (self.level or 0) > 0) then
+            -- Fading out, or still on screen: back up from where it is, as it is.
+            if not self.buffered then self:Undeafen(); Transcript:Release() end
+            self.fadeFrom, self.fadeTime = self.level or 0, 0
+            return
+        end
+        -- From nothing: laid out unseen, then once it is still, faded in as one image (Skin:Tick).
+        self:SetLevel(0)
         self.frame:Show()
-    elseif self.frame:IsShown() and (self.level or 0) >= 1 then
-        self:Buffer()
+        self.preparing, self.fadeTime = true, nil
+        return
     end
+    if self.preparing or not self.frame:IsShown() or (self.level or 0) <= 0 then
+        -- Never seen: gone at once.
+        self.preparing, self.fadeTime = nil, nil
+        self.frame:Hide()
+        self:SetLevel(0)
+        return
+    end
+    if self.buffered then
+        -- Fading in as one image: back out the same way.
+        self.fadeFrom, self.fadeTime = self.level or 0, 0
+        return
+    end
+    -- On screen: deaf to the pointer first, so a click's pressed and lit states settle, then one
+    -- image once it is still (Skin:Tick). Its words held from now, so they fade out with it.
+    self:Deafen()
+    Transcript:Hold()
+    self.arming, self.fadeTime = { waited = 0, frames = 0 }, nil
+end
+
+--- Start the fade, as one image where the client can draw one.
+function Skin:StartFade()
+    self:Buffer()
+    self.fadeFrom, self.fadeTime = self.level or 0, 0
 end
 
 function Skin:Tick(elapsed)
     if self.settling then self:SettleStep(elapsed) end
+    self.stillFor = (self.stillFor or 0) + elapsed
+    -- Waiting to be still before it becomes one image: in, laid out unseen; out, deaf to the pointer.
+    if self.preparing and self:Still() then
+        self.preparing = nil
+        self:StartFade()
+    end
+    local arming = self.arming
+    if arming then
+        arming.frames, arming.waited = arming.frames + 1, arming.waited + elapsed
+        if (arming.frames >= ARM_FRAMES and self:Still()) or arming.waited >= ARM_MOST then
+            self.arming = nil
+            self:StartFade()
+        end
+    end
     if self.lineFade then
         self.lineFade = self.lineFade + elapsed
         if self.lineFade >= LINE_IN then self.lineFade = nil end
@@ -859,12 +931,15 @@ function Skin:Tick(elapsed)
             self.fadeTime = nil
             if not self.wanted then
                 self.frame:Hide()
-                self:Unbuffer()
-                return
+                self:Undeafen()
             end
+            -- Faded: itself again, catching up on what waited.
+            self:Unbuffer()
+            if not self.wanted then return end
         end
     end
-    if not self.wanted then return end
+    -- Nothing in it changes while it is one image, nor while it waits to be one.
+    if not self.wanted or self.buffered or self.preparing or self.arming then return end
     if StaticPortrait:Resolved() then self:ConfigurePortrait() end
     self:UpdateProgress()
     self:UpdateScrollbar()
@@ -917,6 +992,10 @@ end
 function Skin:Settle(dialog)
     local frame = self.frame
     if not (self:IsEnabled() and PlayerFrame:Current()) or frame:GetParent() ~= UIParent then return end
+    -- Fading as one image: it finishes, then shows the line as it does any (Skin:Unbuffer).
+    if self.buffered then self.pending = self.pending or "update"; return end
+    self.arming, self.preparing = nil, nil
+    self:Undeafen()
     local ok, err = pcall(self.StartSettle, self, dialog)
     if not ok then
         self.settling = nil
@@ -987,6 +1066,8 @@ end
 
 function Skin:RefreshConfig(original)
     self:Initialize()
+    -- One image fading: nothing in it may change; this waits for it (Skin:Unbuffer).
+    if self.buffered then self.pending = "refresh"; return end
     local frame = self.frame
     frame:SetFrameStrata(Config().FrameStrata)
     self:Layout()
@@ -1011,9 +1092,10 @@ function Skin:Update()
     local clip = PlayerFrame:Current()
     -- Nothing to show: an image fading out goes on fading.
     if not clip then self:SetVisible(false); return end
-    -- Anything else changes the window: it lets the one image go first.
-    self:Touch()
     if self:Covered() then self:SetVisible(false, true); return end
+    -- One image fading: nothing in it may change; this waits for it (Skin:Unbuffer).
+    if self.buffered then self.pending = self.pending or "update"; return end
+    self:Touch()
     if clip ~= self.clip then
         self:HideTooltip()
         -- Following another line on screen: its words fade in and the window eases to it.
