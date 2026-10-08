@@ -343,7 +343,10 @@ function Skin:Layout()
     local wordsTop = headerHeight + (picture and pictureHeight + PICTURE_GAP or 0)
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
-    local footerHeight = self.progress.height + 6 + math.max(0, textGap - lineGap)
+    -- Show Progress, as the subtitle has it: off, the bar goes and the window closes up under the words.
+    local progress = Addon:Profile("Transcript").SubtitleProgress ~= false
+    self.progress.track:SetShown(progress)
+    local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
     -- The lines waiting get rows while the window is open; folded, the title counts them.
     local waiting = Waiting()
     local shownRows = Expanded() and math.min(MAX_ROWS, waiting) or 0
