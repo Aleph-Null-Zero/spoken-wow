@@ -736,9 +736,21 @@ function Skin:Touch()
     self:Unbuffer()
 end
 
+-- What the pointer lights, presses or scrolls in the window: a button pressed or lit changes its
+-- textures, which must not happen while it is one image.
+local function Clickables(self)
+    local list = { self.frame, self.play, self.skip, self.resizer, self.scrollbar, self.drawer, Transcript.frame }
+    for _, button in ipairs(self.row or {}) do table.insert(list, button) end
+    for _, row in ipairs(self.rows or {}) do table.insert(list, row) end
+    return list
+end
+
 function Skin:Buffer()
     local frame = self.frame
     if self.buffered or not frame.SetIsFrameBuffer then return end
+    -- Not with the pointer on it: Skip just clicked goes from pressed back to normal, and lit to
+    -- unlit, as the fade starts (it crashed so, ASSERT(flattenedBatch != nullptr)).
+    if frame.IsMouseOver and frame:IsMouseOver() then return end
     -- Only once all in it has been still a while: a face SetPortraitTexture is still drawing, or a
     -- picture still loading, crashed it when the line was skipped soon after it came. Never with a
     -- 3D face, which is drawn anew every frame.
@@ -748,7 +760,18 @@ function Skin:Buffer()
     self.lineFade, self.countFade = nil, nil
     if self.count then self.count:SetAlpha(1) end
     if self.heightWant then frame:SetHeight(self.heightWant); self.heightWant = nil end
-    if not pcall(frame.SetIsFrameBuffer, frame, true) then return end
+    -- Deaf to the pointer while it is one image, so passing over it lights or presses nothing.
+    self.deafened = {}
+    for _, part in ipairs(Clickables(self)) do
+        if part and part.EnableMouse and part.IsMouseEnabled and part:IsMouseEnabled() then
+            part:EnableMouse(false)
+            table.insert(self.deafened, part)
+        end
+    end
+    if not pcall(frame.SetIsFrameBuffer, frame, true) then
+        self:Undeafen()
+        return
+    end
     self.buffered = true
     -- The captions too: the line ending keeps its words, which fade out with the window.
     Transcript:Hold()
@@ -758,6 +781,17 @@ function Skin:Buffer()
     self:SetLevel(self.level or 1)
 end
 
+function Skin:Undeafen()
+    for _, part in ipairs(self.deafened or {}) do part:EnableMouse(true) end
+    self.deafened = nil
+    -- Locked, clicks still pass through (Skin:RefreshConfig).
+    local frame = self.frame
+    if frame.SetMouseClickEnabled and frame.SetMouseMotionEnabled then
+        frame:SetMouseMotionEnabled(true)
+        frame:SetMouseClickEnabled(not Addon:IsFrameLocked())
+    end
+end
+
 function Skin:Unbuffer()
     if not self.buffered then return end
     self.buffered = nil
@@ -765,6 +799,7 @@ function Skin:Unbuffer()
         if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(false) end
     end
     pcall(self.frame.SetIsFrameBuffer, self.frame, false)
+    self:Undeafen()
     self:SetLevel(self.level or 0)
     -- What the captions held back, now the window is itself again.
     Transcript:Release()

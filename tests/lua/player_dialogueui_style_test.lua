@@ -472,15 +472,18 @@ Expect("...the count gone with no line waiting", string.find(Skin.title.text:Get
 Expect("shown, it is not one image: things change in it", Skin.frame:IsFrameBuffer(), false)
 Skin:Tick(1) -- shown in full first
 Skin.changedAt = GetTime() - 2 -- and nothing in it changed a while
+Skin.skip:EnableMouse(true) -- as a button is in the client; the stub's start without
 Skin:SetVisible(false)
 Expect("fading out, it is drawn as one image", Skin.frame:IsFrameBuffer(), true)
+Expect("...deaf to the pointer meanwhile, so nothing in it lights or presses",
+    tostring(Skin.skip:IsMouseEnabled()) .. " " .. tostring(Skin.frame:IsMouseEnabled()), "false false")
 Expect("...its parts ignoring its alpha, so only the image fades",
     Skin.content:IsIgnoringParentAlpha() and Skin.parchments[2]:IsIgnoringParentAlpha(), true)
 Skin:Tick(0.16)
 Expect("...and fades as one", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "0.5 1")
 Skin:Tick(0.2)
 Expect("...gone, it is itself again", tostring(Skin.frame:IsShown()) .. " " .. tostring(Skin.frame:IsFrameBuffer())
-    .. " " .. tostring(Skin.content:IsIgnoringParentAlpha()), "false false false")
+    .. " " .. tostring(Skin.content:IsIgnoringParentAlpha()) .. " " .. tostring(Skin.skip:IsMouseEnabled()), "false false false true")
 Skin:SetVisible(true)
 Skin:Tick(0.14)
 Expect("fading in, it is not one image, the paper coming first", tostring(Skin.frame:IsFrameBuffer()) .. " "
@@ -512,6 +515,19 @@ Skin:Tick(1)
 Skin.changedAt = GetTime() - 2
 Spoken:StopAll()
 Expect("...one still a while fades out as one image", Skin.frame:IsFrameBuffer(), true)
+Skin:Tick(1)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Again", portrait = { kind = "none" } } }))
+Skin:Tick(1)
+Skin.changedAt = GetTime() - 2
+Skin.frame.IsMouseOver = function() return true end
+Skin.skip.scripts.OnClick(Skin.skip)
+Expect("skipped with the pointer on it (Skip pressed, lit), it fades out in two steps", Skin.frame:IsFrameBuffer(), false)
+Skin.frame.IsMouseOver = nil
+Skin:Tick(1)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Again", portrait = { kind = "none" } } }))
+Skin:Tick(1)
+Skin.changedAt = GetTime() - 2
+Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Next", portrait = { kind = "none" } } }))
 Expect("a new line mid-fade lets the one image go first, the captions taking it up",
     tostring(Skin.frame:IsFrameBuffer()) .. " " .. tostring(T.held) .. " " .. tostring(T.clip and T.clip.present.label), "false nil Next")
