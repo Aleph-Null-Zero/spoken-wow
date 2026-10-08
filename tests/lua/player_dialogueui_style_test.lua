@@ -430,25 +430,19 @@ local first = Spoken:GetCurrent()
 Skin.skip.scripts.OnClick(Skin.skip)
 Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
 Expect("...the count gone with no line waiting", string.find(Skin.title.text:GetText(), "+", 1, true), nil)
--- The client fades each texture on its own; drawn as one image, the window fades as one.
-Expect("it is drawn as one image", Skin.flat and Skin.frame:IsFrameBuffer(), true)
-Expect("...what is on it taking no alpha from it, so only the image fades",
-    Skin.content:IsIgnoringParentAlpha() and Skin.parchments[2]:IsIgnoringParentAlpha()
-    and Skin.resizer:IsIgnoringParentAlpha(), true)
+-- The client fades each texture on its own: the paper and what is on it fade one after the other.
+Expect("it is not a frame buffer, which crashed the client", Skin.frame:IsFrameBuffer(), false)
 Skin:Tick(1) -- shown in full first
 Skin:SetVisible(false)
-Skin:Tick(0.125)
-Expect("fading out, the image fades as one", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "0.5 1")
+Skin:Tick(0.16)
+Expect("fading out, what is on the paper goes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
 Skin:Tick(0.2)
-Expect("...and is gone", Skin.frame:GetAlpha() .. " " .. tostring(Skin.frame:IsShown()), "0 false")
--- Without frame buffers, the paper and what is on it fade one after the other.
-Skin.flat = false
+Expect("...then the paper", Skin.frame:GetAlpha() .. " " .. tostring(Skin.frame:IsShown()), "0 false")
 Skin:SetVisible(true)
-Skin:Tick(0.1)
-Expect("without one image, fading in, the paper comes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
+Skin:Tick(0.14)
+Expect("fading in, the paper comes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
 Skin:Tick(0.2)
 Expect("...then what is on it", Skin.content:GetAlpha(), 1)
-Skin.flat = true
 Spoken:StopAll()
 
 ---------------------------------------------------------------- a line held back
