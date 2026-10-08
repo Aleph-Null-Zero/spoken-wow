@@ -422,6 +422,14 @@ Spoken:StopAll()
 -- DialogueUI's window closes on a line that plays on: the window starts where the dialog was, as
 -- large and as tall, at once and without a fade, then shrinks to its own size and height on its
 -- way to the top left.
+-- DialogueUI sets its window's OnHide with SetScript, dropping any hook: only the window's
+-- children hear it close.
+local function CloseDialog()
+    DUI.hooks = {}
+    DUI:SetScript("OnHide", function() end)
+    local watch = Skin.dialogWatch
+    if watch and watch:GetParent() == DUI then watch.scripts.OnHide(watch) end
+end
 saved.DialogueUI = nil
 Skin:SetExpanded(false)
 env.PlayerFrame:RefreshConfig()
@@ -433,7 +441,7 @@ local frameLeft, frameTop = Skin.frame.GetLeft, Skin.frame.GetTop
 Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
 local dialogLeft = 960 + DUI.frameOffsetX * 0.8 - DUI.frameWidth * 0.8 / 2
 local dialogTop = 540 + DUI.frameHeight * 0.8 / 2
-for _, fn in ipairs(DUI.hooks.OnHide or {}) do fn(DUI) end
+CloseDialog()
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
@@ -450,13 +458,13 @@ Expect("...and settled at the top left, at its own size and height", AtTopLeft()
 local WindowPlace = env.DialogueUITheme.WindowPlace
 env.DialogueUITheme.WindowPlace = function() return nil end
 Skin.frame:SetScale(0.9)
-for _, fn in ipairs(DUI.hooks.OnHide or {}) do fn(DUI) end
+CloseDialog()
 Expect("with no place for the dialog, the window goes straight to the top left at its own size",
     AtTopLeft() and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 env.DialogueUITheme.WindowPlace = WindowPlace
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
-for _, fn in ipairs(DUI.hooks.OnHide or {}) do fn(DUI) end
+CloseDialog()
 Expect("with no line playing on, the dialog closing moves nothing", Skin.settling, nil)
 
 Expect("diagnostics name the style", string.find(Skin:Describe(), "enabled=true", 1, true) ~= nil, true)
