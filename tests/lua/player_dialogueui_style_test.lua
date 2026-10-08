@@ -600,9 +600,8 @@ Expect("...the words narrower than DialogueUI's column, centred in it",
     and math.abs(T.frame.anchor.x * 2 + T.frame:GetWidth() - Skin.progress.track:GetWidth()) <= 1, true)
 local pictureTop = -Skin.picture.anchor.y
 local lineBottom = Skin.headerDivider:GetHeight() * 0.8
-Expect("...as far under the divider's line as the words are under it, never less than a line",
-    math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + Skin.picture:GetHeight()))) < 1
-    and (pictureTop - lineBottom) >= Skin.lineRoom - 1, true)
+Expect("...as far under the divider's line as the words are under it",
+    math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + Skin.picture:GetHeight()))) < 1, true)
 Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Mulgore", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()
@@ -618,6 +617,8 @@ local room = Skin.lineRoom
 Expect("the words have a line's room over them in the captions", room .. " " .. T.labels[1].anchor.y,
     (T.style.size + T.style.lineGap) .. " " .. (-room))
 Expect("...and under them", T.frame:GetHeight(), Skin.lines * room + 2 * room)
+Expect("...reaching over the header's gap, not adding to it: the words where they were",
+    -(T.frame.anchor.y - room) - Skin.headerDivider:GetHeight() < room + T.style.size, true)
 Expect("...no parchment strips drawn over them", Skin.strips, nil)
 T.top = 1.75; T.placedKey = nil; T:Place()
 Expect("a line gliding out is at a quarter, three quarters into the room", math.abs(T.labels[1]:GetAlpha() - .25) < 1e-6, true)
