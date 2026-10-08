@@ -509,8 +509,11 @@ Skin:Update()
 Expect("a place's picture shows over its words, as Place Lore shows it", Skin.picture:IsShown()
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
-Expect("...the words under it, a line's room below it for the lines gliding out", plainTop - WordsTop(),
-    200 + math.max(10, Skin.lineRoom))
+local pictureTop = -Skin.picture.anchor.y
+local lineBottom = Skin.headerDivider:GetHeight() * 0.8
+Expect("...as far under the divider's line as the words are under it, never less than a line",
+    math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + 200))) < 1
+    and (pictureTop - lineBottom) >= Skin.lineRoom - 1, true)
 Spoken:StopAll()
 -- Drawn 294 across at the map's scale beside the map: as large here, in the window's scale (0.52).
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },

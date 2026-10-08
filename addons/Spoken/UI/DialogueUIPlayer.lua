@@ -43,6 +43,9 @@ local ROUND_GAP = 4
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
 -- wide as the words up to PICTURE_MOST, PICTURE_GAP above them, the page's grain through it.
 local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA = 400, 10, 0.95
+-- Where the header strip's line ends, of the strip's height: its art is clear under that (its
+-- last dark row is 77 of the 96 in Parchment.png).
+local DIVIDER_LINE = 0.8
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
 -- Text Size's default, at which the words are DialogueUI's own size.
 local BASE_FONT_SIZE = 16
@@ -344,7 +347,13 @@ function Skin:Layout()
         or PICTURE_MOST
     local pictureWidth = picture and math.min(inner, most) or 0
     local pictureHeight = Round(pictureWidth / 2)
-    local wordsTop = headerHeight + (picture and pictureHeight + PICTURE_GAP or 0)
+    -- With a picture, one gap over it and under it: from the divider's line to the picture, and
+    -- from the picture to the words. Halfway between the header's gap under the line and the
+    -- picture's own, and never less than a line, the room the words fade through.
+    local lineBottom = Round(stripHeight * DIVIDER_LINE)
+    local pictureGap = math.max(lineHeight, Round((stripHeight - lineBottom + textGap + PICTURE_GAP) / 2))
+    local pictureTop = lineBottom + pictureGap
+    local wordsTop = picture and pictureTop + pictureHeight + pictureGap or headerHeight
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
     -- Show Progress, as the subtitle has it: off, the bar goes and the window closes up under the words.
@@ -355,7 +364,7 @@ function Skin:Layout()
     -- at nothing by the time it reaches the edge, so no line is ever seen cut there. Taken from the
     -- gaps already over and under them (the header's or the picture's, the one over the progress
     -- line), and made up where those are smaller than a line.
-    local over = picture and PICTURE_GAP or textGap
+    local over = picture and pictureGap or textGap
     local under = math.max(0, textGap - lineGap) + (progress and 6 or 0)
     wordsTop = wordsTop + math.max(0, lineHeight - over)
     footerHeight = footerHeight + math.max(0, lineHeight - under)
@@ -455,7 +464,7 @@ function Skin:Layout()
         end
         self.picture:SetSize(pictureWidth, pictureHeight)
         self.picture:ClearAllPoints()
-        self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -headerHeight)
+        self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -pictureTop)
     end
     -- The captions span that room too; the lines fade through it (Transcript:Place).
     self.lineRoom = lineHeight
