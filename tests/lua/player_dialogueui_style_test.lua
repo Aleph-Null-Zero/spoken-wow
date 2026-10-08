@@ -594,7 +594,7 @@ Skin:Update()
 Expect("a place's picture shows over its words, as Place Lore shows it", Skin.picture:IsShown()
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(),
-    T.frame:GetWidth() .. "x" .. T.frame:GetWidth() / 2)
+    T.frame:GetWidth() .. "x" .. math.floor(T.frame:GetWidth() / 2 + 0.5))
 Expect("...the words narrower than DialogueUI's column, centred in it",
     T.frame:GetWidth() < Skin.progress.track:GetWidth()
     and math.abs(T.frame.anchor.x * 2 + T.frame:GetWidth() - Skin.progress.track:GetWidth()) <= 1, true)
