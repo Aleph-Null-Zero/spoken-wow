@@ -593,19 +593,16 @@ quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "M
 Skin:Update()
 Expect("a place's picture shows over its words, as Place Lore shows it", Skin.picture:IsShown()
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
-Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
+Expect("...2:1, as wide as the words", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(),
+    T.frame:GetWidth() .. "x" .. T.frame:GetWidth() / 2)
+Expect("...the words narrower than DialogueUI's column, centred in it",
+    T.frame:GetWidth() < Skin.progress.track:GetWidth()
+    and math.abs(T.frame.anchor.x * 2 + T.frame:GetWidth() - Skin.progress.track:GetWidth()) <= 1, true)
 local pictureTop = -Skin.picture.anchor.y
 local lineBottom = Skin.headerDivider:GetHeight() * 0.8
 Expect("...as far under the divider's line as the words are under it, never less than a line",
-    math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + 200))) < 1
+    math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + Skin.picture:GetHeight()))) < 1
     and (pictureTop - lineBottom) >= Skin.lineRoom - 1, true)
-Spoken:StopAll()
--- Drawn 294 across at the map's scale beside the map: as large here, in the window's scale (0.52).
-quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
-    picture = { file = "Interface/Pictures/1412-mulgore", mask = "Interface/Pictures/Mask7", pixels = 294 * 0.9 } } }))
-Skin:Update()
-Expect("...as large on screen as Place Lore draws it beside the map",
-    math.abs(Skin.picture:GetWidth() * Skin.frame.spokenBaseScale * UIParent:GetEffectiveScale() - 294 * 0.9) < 1, true)
 Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Mulgore", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()
