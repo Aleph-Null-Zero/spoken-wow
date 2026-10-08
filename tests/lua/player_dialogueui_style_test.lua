@@ -496,13 +496,20 @@ Skin:SetVisible(false)
 Expect("fading out, it first goes deaf to the pointer, so a click's pressed and lit states settle",
     tostring(Skin.skip:IsMouseEnabled()) .. " " .. tostring(Skin.frame:IsMouseEnabled()) .. " " .. tostring(Skin.frame:IsFrameBuffer()),
     "false false false")
+local hidden = {}
+local SetIsFrameBuffer = Skin.frame.SetIsFrameBuffer
+Skin.frame.SetIsFrameBuffer = function(f, on) table.insert(hidden, tostring(on) .. ":" .. tostring(f:IsShown())); return SetIsFrameBuffer(f, on) end
 Skin:Tick(0.02); Skin:Tick(0.02)
 Expect("...then is drawn as one image", Skin.frame:IsFrameBuffer(), true)
+Expect("...switched into it while hidden, shown again at once: switched on screen and faded, it crashed",
+    table.concat(hidden, ",") .. " " .. tostring(Skin.frame:IsShown()), "true:false true")
 Expect("...its parts ignoring its alpha, so only the image fades",
     Skin.content:IsIgnoringParentAlpha() and Skin.parchments[2]:IsIgnoringParentAlpha(), true)
 Skin:Tick(0.16)
 Expect("...and fades as one", Skin.content:GetAlpha() == 1 and Skin.frame:GetAlpha() > 0 and Skin.frame:GetAlpha() < 1, true)
 Skin:Tick(0.3)
+Expect("...and out of it while hidden too", hidden[2], "false:false")
+Skin.frame.SetIsFrameBuffer = SetIsFrameBuffer
 Expect("...gone, it is itself again", tostring(Skin.frame:IsShown()) .. " " .. tostring(Skin.frame:IsFrameBuffer())
     .. " " .. tostring(Skin.content:IsIgnoringParentAlpha()) .. " " .. tostring(Skin.skip:IsMouseEnabled()), "false false false true")
 Skin:SetVisible(true)
