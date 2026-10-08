@@ -466,11 +466,21 @@ end
 Skin.play.scripts.OnClick(Skin.play)
 Expect("Stop stops the line, its glyph turning to Replay", tostring(env.SoundQueue:IsPaused()) .. " " .. tostring(Skin.play.state),
     "true replay")
-Expect("...and the title says it is stopped, after the line's name, as the subtitle does",
-    string.find(Skin.title.text:GetText(), "One  |c", 1, true) == 1
-    and string.find(Skin.title.text:GetText(), "(" .. env.L.SUBTITLE_STOPPED .. ")|r", 1, true) ~= nil, true)
+Expect("...and the title says it is stopped, after the line's name and a dot, as the count is",
+    Skin.title.text:GetText() .. "|" .. tostring(Skin.stopped:IsShown()) .. "|" .. Skin.stopped:GetText(),
+    "One|true|• (" .. env.L.SUBTITLE_STOPPED .. ")")
+Expect("...fading in", Skin.stopped:GetAlpha() < 1, true)
+Expect("...the count after it", Skin.count.anchor.x > Skin.stopped.anchor.x, true)
+Skin:Tick(0.3)
+Expect("...all the way", Skin.stopped:GetAlpha(), 1)
 Skin.play.scripts.OnClick(Skin.play)
 Expect("...and Replay plays it again", Skin.play.state, "stop")
+Skin:Tick(0.1)
+Expect("...Stopped fading out, keeping its room meanwhile", tostring(Skin.stopped:IsShown()) .. " "
+    .. tostring(Skin.stopped:GetAlpha() < 1 and Skin.stopped:GetAlpha() > 0), "true true")
+Skin:Tick(0.3)
+Expect("...then gone, the count back where it stood, after the name", tostring(Skin.stopped:IsShown()) .. " "
+    .. tostring(Skin.count.anchor.x == Skin.stopped.anchor.x), "false true")
 local first = Spoken:GetCurrent()
 Skin.skip.scripts.OnClick(Skin.skip)
 Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
