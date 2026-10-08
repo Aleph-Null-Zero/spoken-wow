@@ -471,14 +471,14 @@ local function Build(canvas)
             function(v) transcript().Typewriter = v end, refreshTranscript)
         Only(typewriter, Shown)
         Requires(typewriter, Words, L.REASON_WORDS)
-        -- How the subtitles type, under it: letter by letter, or whole words.
+        -- How the words are typed, under it: letter by letter, or whole words.
         layout:Indent()
         local by = layout:Dropdown(L.TRANSCRIPT_TYPEWRITER_BY, L.TRANSCRIPT_TYPEWRITER_BY_TIP, { "word", "letter" },
             function() return transcript().TypewriterBy or "letter" end,
             function(v) transcript().TypewriterBy = v end, refreshTranscript,
             function(v) return v == "letter" and L.TRANSCRIPT_BY_LETTER or L.TRANSCRIPT_BY_WORD end)
         layout:Outdent()
-        Only(by, Subtitles)
+        Only(by, Shown)
         Requires(by, function() return Words() and transcript().Typewriter end, L.REASON_TYPEWRITER)
     end
 
