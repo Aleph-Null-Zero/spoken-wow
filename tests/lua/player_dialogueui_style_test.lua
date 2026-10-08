@@ -424,8 +424,17 @@ env.Addon.db.profile.Frame.HidePortrait = true
 Skin:ConfigurePortrait()
 Expect("Hide Portrait leaves its face: the header's socket would stand empty", Skin.portrait:IsShown(), true)
 env.Addon.db.profile.Frame.HidePortrait = false
-Expect("the title counts the lines waiting, as the subtitle does",
-    string.find(Skin.title.text:GetText(), "One  |c", 1, true) == 1 and string.find(Skin.title.text:GetText(), "• +1|r", 1, true) ~= nil, true)
+Expect("the title counts the lines waiting, after it, as the subtitle does",
+    Skin.title.text:GetText() .. "|" .. tostring(Skin.count:IsShown()) .. "|" .. Skin.count:GetText(), "One|true|• +1")
+Expect("...fading in as the line is added", Skin.count:GetAlpha() < 1, true)
+Skin:Tick(0.3)
+Expect("...all the way", Skin.count:GetAlpha(), 1)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Three", portrait = { kind = "none" } } }))
+Skin:Update()
+Expect("...and again with one more", Skin.count:GetText() .. " " .. tostring(Skin.count:GetAlpha() < 1), "• +2 true")
+Skin:Tick(0.3)
+env.SoundQueue:RemoveSoundFromQueue(env.SoundQueue.sounds[3])
+Skin:Update()
 Skin:SetExpanded(false)
 Expect("folded, the lines waiting get no rows", Skin.drawer:IsShown(), false)
 Skin:SetExpanded(true)
@@ -467,7 +476,7 @@ do
     Expect("...and reached", tostring(Skin.frame:GetHeight()) .. " " .. tostring(Skin.heightWant), (height + 60) .. " nil")
     Skin:Layout()
 end
-Expect("...the count gone with no line waiting", string.find(Skin.title.text:GetText(), "+", 1, true), nil)
+Expect("...the count gone with no line waiting", Skin.count:IsShown(), false)
 -- Every fade is of the window as one image (a frame buffer, as the world map is), and nothing in
 -- it changes while it is one: the client crashed on that.
 Expect("shown, it is not one image: things change in it", Skin.frame:IsFrameBuffer(), false)
