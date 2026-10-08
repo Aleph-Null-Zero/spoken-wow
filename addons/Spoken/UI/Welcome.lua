@@ -11,14 +11,15 @@ Welcome = {}
 
 local Layout = SpokenLayout
 local WIDTH = 760
--- The settings page's own margins, measured from the inside of its frame, on every side here:
--- the page's name 24 in and 35 under the top, its cards and sections 44 in, from the left and
--- the right alike, and the buttons 35 above the bottom.
+-- The settings page's own margins, measured from the inside of its frame: the page's name 24 in,
+-- its lists and sections 44 in, from the left and the right alike. Above the name and under the
+-- buttons 22 rather than the page's 35, so the two lists, four modules and five styles, fit a
+-- 768-high screen.
 local BORDER = 7        -- the frame's edge, inside which the margins are measured
 local BAR = 19          -- the frame's title bar
 local TITLE_X = BORDER + 24
 local CONTENT_X = BORDER + 44
-local TOP_MARGIN, BOTTOM_MARGIN = 35, 35
+local TOP_MARGIN, BOTTOM_MARGIN = 22, 22
 local NAME_Y = 22       -- the page's name, under the page's top: the layout's header puts it there
 local FOOTER_GAP = 20   -- between the last row of tiles and the footer's divider
 local RULE_GAP = 16     -- between the footer's divider and its buttons
