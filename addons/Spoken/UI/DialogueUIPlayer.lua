@@ -114,10 +114,13 @@ function Skin:Initialize()
     frame:SetScript("OnMouseWheel", function(_, delta) self:Wheel(delta) end)
     frame.spokenWheel = function(delta) return self:Wheel(delta) end
     frame:Hide()
-    -- DialogueUI's window closing on a line that plays on: this one takes over from it.
+    -- DialogueUI's window closing on a line that plays on: this one takes over from it. Told by a
+    -- child of that window, as DialogueUIBridge's driver is: DialogueUI sets the window's own
+    -- OnHide with SetScript, which drops a hook.
     local dialog = _G.DUIQuestFrame
-    if dialog and dialog.HookScript then
-        dialog:HookScript("OnHide", function() self:Settle(dialog) end)
+    if dialog then
+        self.dialogWatch = CreateFrame("Frame", nil, dialog)
+        self.dialogWatch:SetScript("OnHide", function() self:Settle(dialog) end)
     end
 
     -- DialogueUI's three parchment strips: caps centred on the frame's ends, the middle
