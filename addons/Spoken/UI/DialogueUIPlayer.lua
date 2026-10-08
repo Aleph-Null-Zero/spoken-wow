@@ -165,6 +165,15 @@ function Skin:Initialize()
     self.viewport = CreateFrame("Frame", nil, host)
     self.viewport:SetAllPoints()
     self.viewport:SetClipsChildren(true)
+    -- What kind of line it is, on a dark disc at the face's lower right, as the subtitle and the
+    -- small window badge theirs (MinimalPlayer.BADGES).
+    local chrome = CreateFrame("Frame", nil, host)
+    chrome:SetAllPoints()
+    chrome:SetFrameLevel(host:GetFrameLevel() + 8)
+    self.badgeDisc = chrome:CreateTexture(nil, "BACKGROUND")
+    self.badgeDisc:SetTexture([[Interface\AddOns\Spoken\Textures\MinimalPortraitMask]])
+    self.badgeDisc:SetVertexColor(.04, .04, .035, 1)
+    self.badge = chrome:CreateTexture(nil, "OVERLAY")
     self.name = Font(content, 18, 1, 1, 1)
     content.name = self.name -- Actions' header anchor contract.
     self.name:SetHeight(20)
@@ -390,6 +399,13 @@ function Skin:Layout()
     self.portrait:SetSize(face, face)
     self.portrait:ClearAllPoints()
     self.portrait:SetPoint("CENTER", self.headerSocket, "TOPLEFT", Round(23 * ratio), -Round(23 * ratio))
+    local badgeAt = Round(face * 0.36)
+    self.badgeDisc:SetSize(Round(face * 0.42), Round(face * 0.42))
+    self.badge:SetSize(Round(face * 0.3), Round(face * 0.3))
+    for _, part in ipairs({ self.badgeDisc, self.badge }) do
+        part:ClearAllPoints()
+        part:SetPoint("CENTER", self.portrait, "CENTER", badgeAt, -badgeAt)
+    end
     -- The line's title sits where DialogueUI puts its quest title, the speaker's name in its
     -- small line above.
     self.title:ClearAllPoints()
@@ -474,6 +490,11 @@ function Skin:ConfigurePortrait()
     if viewport.active == "texture" and viewport.texture then StaticPortrait:Mask(viewport, viewport.texture) end
     local tint = self.colors and self.colors.portraitTint
     if tint and viewport.texture then viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
+    local id = self.clip and self.clip.present and self.clip.present.bullet
+    local badge = MinimalPlayer.BADGES[id] or (Bullets and Bullets[id] and Bullets[id].texture)
+    self.badge:SetTexture(badge)
+    self.badge:SetShown(badge ~= nil)
+    self.badgeDisc:SetShown(badge ~= nil)
 end
 
 function Skin:ConfigureActions()

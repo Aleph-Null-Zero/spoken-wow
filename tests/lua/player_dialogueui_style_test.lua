@@ -303,6 +303,8 @@ Expect("a book page shows the window", Skin.wanted, true)
 Expect("...titled by the book", Skin.name:GetText(), "A Letter Home")
 Expect("...and named by its key when it has no page label", Skin.title.text:GetText(), "b:1")
 Expect("...the book for a face", Skin.viewport.active, "texture")
+Expect("...badged as a book, as the subtitle badges it", tostring(Skin.badge:IsShown()) .. " " .. tostring(Skin.badge.texture),
+    "true " .. tostring(env.MinimalPlayer.BADGES.book))
 Expect("...with its words in the window", T.text, "Dear mother, the war goes well.")
 Spoken:StopAll()
 local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Zones", order = 2 })
