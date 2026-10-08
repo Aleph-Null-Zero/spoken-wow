@@ -281,6 +281,7 @@ env.PlayerFrame:RefreshConfig()
 env.Options:Preview("dialogueui")
 Expect("previewing the tile shows the window with a sample line", Skin.wanted, true)
 Expect("...its speaker", Skin.name:GetText(), env.L.SAMPLE_SPEAKER)
+Expect("...and words, as the subtitle's sample has", T.text, env.L.SUBTITLE_SAMPLE_TEXT)
 env.Options:Preview(nil)
 Expect("...and puts it away", Skin.wanted, false)
 

@@ -17,6 +17,7 @@ function Transcript:ResizePlayer(frame, height, minWidth, maxWidth)
 end
 
 function Transcript:Initialize() end
+function Transcript:Sync() end
 function Transcript:Dock() end
 function Transcript:SetEnabled() end
 function Transcript:Reset() end
