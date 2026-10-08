@@ -387,10 +387,11 @@ local function Build(canvas)
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, refreshSubtitle))
     end
-    -- Hiding the portrait and hiding a button are one kind of choice, so they sit together.
+    -- Hiding the portrait and hiding a button are one kind of choice, so they sit together. Not
+    -- for the DialogueUI window, whose header has the face's socket built in.
     Only(layout:Checkbox(L.OPT_HIDE_PORTRAIT, L.OPT_HIDE_PORTRAIT_TIP,
         function() return cfg().HidePortrait end, function(v) cfg().HidePortrait = v end, refresh),
-        InWindow)
+        function() return InWindow() and not DUI() end)
     -- The small window's metal and every round button's ring: offered whatever the style.
     if Version.IsCamelot then
         layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
