@@ -602,6 +602,8 @@ Expect("...the words narrower than DialogueUI's column, centred in it",
     and math.abs(T.frame.anchor.x * 2 + T.frame:GetWidth() - Skin.drawer:GetWidth()) <= 1, true)
 Expect("...the progress line as wide as they are, under them",
     Skin.progress.track:GetWidth() .. " " .. Skin.progress.track.anchor.x, T.frame:GetWidth() .. " " .. T.frame.anchor.x)
+Expect("...a line's room under it, so it sits as far above the paper's foot as under the words",
+    Skin.progress.track.anchor.y, Skin.lineRoom)
 Expect("...and no scrollbar beside them: the wheel scrolls them", Skin.scrollbar, nil)
 local pictureTop = -Skin.picture.anchor.y
 local lineBottom = Skin.headerDivider:GetHeight() * 0.8
