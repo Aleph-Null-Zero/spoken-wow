@@ -50,7 +50,7 @@ local COUNT_GAP, COUNT_IN = 6, .25
 local ROUND_GAP = 4
 -- The words take this share of DialogueUI's column, centred in it: a narrower column than the
 -- header's and the progress line's, read more easily.
-local WORDS_SHARE = 0.8
+local WORDS_SHARE = 0.9
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
 -- wide as the words, PICTURE_GAP above them, the page's grain through it.
 local PICTURE_GAP, PICTURE_ALPHA = 10, 0.95
