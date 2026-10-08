@@ -452,6 +452,12 @@ local subzones = {
 			full = "Ratchet sits on the eastern shore of the Barrens, a goblin harbor town doing brisk trade with Booty Bay and Baron Revilgaz across the sea. Gazlowe founded it with the coin Thrall paid him for raising Orgrimmar, and it filled out with smugglers and everyone else respectable places had turned away.\n\nThat indifference nearly cost it dearly. The Burning Blade cult worked quietly to set Orgrimmar and Theramore against one another, arranging shipping incidents near Ratchet's harbor that neither side understood as anything but provocation. Orc and human sailors who had shared its docks in peace began brawling in its streets, and when the bruiser Muzzlecrank arrested the captains Klatt and Joq, Northwatch Hold took it as proof the orcs were massing for war. Ratchet became the staging ground for a Horde army readying to march against them. Only when the Burning Blade's hand in the affair came to light did Thrall call the fight off before it began.",
 			source = "https://warcraft.wiki.gg/wiki/Ratchet",
 		},
+		["razorfen downs"] = {
+			name = "Razorfen Downs",
+			short = "Deep within the brambles of the southern Barrens lies a maze of thorn and bone, its entrance said to be shaped from Agamaggan's own maw, an arched gap in the outer dome so hidden that only those who already know its shape can find it.",
+			full = "Deep within the brambles of the southern Barrens lies a maze of thorn and bone, its entrance said to be shaped from Agamaggan's own maw, an arched gap in the outer dome so hidden that only those who already know its shape can find it. This is Razorfen Downs, the ancestral burial ground and traditional capital of the quilboar, crafted from the same mighty vines as Razorfen Kraul. Charlga Razorflank shaped most of the great thorn dome that covers it.\n\nFor generations the Downs stood as a place of quilboar dead, tended by the high priests of the Death's Head tribe. But after the Third War, the lich Amnennar the Coldbringer turned his agents against the quilboar and seized their holy city, binding it into a bastion of the Scourge. The quilboar fought bitterly to win back what was theirs before Amnennar's plague could spread further into the Barrens, and in that struggle the living were dragged down and caged within the thorns alongside the dead.\n\nAmnennar remains within the labyrinth still, ruling over the quilboar he has bent to his will, his hold on the Downs unbroken.",
+			source = "https://warcraft.wiki.gg/wiki/Razorfen_Downs",
+		},
 		["shrine of the fallen warrior"] = {
 			name = "Shrine of the Fallen Warrior",
 			short = "A worn trail climbs a hill west of the Crossroads, ending at a shrine to a fallen warrior. No name is carved there, no banner marks it.",
@@ -3547,12 +3553,6 @@ local subzones = {
 			short = "A goblin named Pozzik and a gnome named Fizzle Brassbolts each believed their own people the cleverer engineers, and neither would yield the point.",
 			full = "A goblin named Pozzik and a gnome named Fizzle Brassbolts each believed their own people the cleverer engineers, and neither would yield the point. So they settled it as tinkerers do: they built a track, and they built rocket cars to run on it.\n\nThe rivalry draws crowds far beyond the two of them. Horde and Alliance alike come to cheer their favorites as gnome and goblin drag cars race daily, each team scrambling afterward to rebuild their engines with some new edge. The real contest is always the same one: which race builds the better machine, and it is never settled.",
 			source = "https://warcraft.wiki.gg/wiki/Mirage_Raceway",
-		},
-		["razorfen downs"] = {
-			name = "Razorfen Downs",
-			short = "Deep within the brambles of the Thousand Needles lies a maze of thorn and bone, its entrance said to be shaped from Agamaggan's own maw, an arched gap in the outer dome so hidden that only those who already know its shape can find it.",
-			full = "Deep within the brambles of the Thousand Needles lies a maze of thorn and bone, its entrance said to be shaped from Agamaggan's own maw, an arched gap in the outer dome so hidden that only those who already know its shape can find it. This is Razorfen Downs, the ancestral burial ground and traditional capital of the quilboar, crafted from the same mighty vines as Razorfen Kraul. Charlga Razorflank shaped most of the great thorn dome that covers it.\n\nFor generations the Downs stood as a place of quilboar dead, tended by the high priests of the Death's Head tribe. But after the Third War, the lich Amnennar the Coldbringer turned his agents against the quilboar and seized their holy city, binding it into a bastion of the Scourge. The quilboar fought bitterly to win back what was theirs before Amnennar's plague could spread further into the Barrens, and in that struggle the living were dragged down and caged within the thorns alongside the dead.\n\nAmnennar remains within the labyrinth still, ruling over the quilboar he has bent to his will, his hold on the Downs unbroken.",
-			source = "https://warcraft.wiki.gg/wiki/Razorfen_Downs",
 		},
 		["roguefeather den"] = {
 			name = "Roguefeather Den",
