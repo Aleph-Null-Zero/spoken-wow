@@ -551,17 +551,12 @@ function Skin:ConfigureActions()
         if button.action.anchor == "header" then
             button:Hide()
         else
-            -- Report and anything else a line offers, after Skip, faint until the pointer is on
-            -- it, as it sat on the parchment before. Hooked: its scripts carry the tooltip.
+            -- Report and anything else a line offers, after Skip and as strong as it, as the
+            -- subtitle shows them.
             button:SetParent(self.controls)
             button:SetFrameLevel(self.controls:GetFrameLevel() + 1)
             if button.showsIcon then button:SetSize(self.play:GetWidth(), self.play:GetHeight()) end
-            button:SetAlpha(.4)
-            if not button.spokenDimmed then
-                button.spokenDimmed = true
-                button:HookScript("OnEnter", function(b) b:SetAlpha(1) end)
-                button:HookScript("OnLeave", function(b) b:SetAlpha(.4) end)
-            end
+            button:SetAlpha(1)
             if button:IsShown() then table.insert(row, button) end
         end
     end
