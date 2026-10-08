@@ -798,10 +798,14 @@ do
     local _,_,_,_,clipY=S.words:GetPoint(1)
     Check(math.abs((S.wordsTop+clipY)-S.lineStep)<1e-6 and math.abs(S.words:GetHeight()-(S.shownRows*S.lineStep-2+2*S.lineStep))<1e-6,
         "...a line's room over and under them, where a line gliding out or in fades to nothing before the edge")
+    local rollingTop,rollingHeight=S.wordsTop,S.rowsHeight
     S.rollTop=S.rollTarget-.25; S:PlaceLines()
     local first=math.floor(S.rollTop)
     Check(math.abs(S.lines[first]:GetAlpha()-.25)<1e-6 and math.abs(S.lines[first+2]:GetAlpha()-.75)<1e-6
         and S.lines[first+1]:GetAlpha()==1,'mid-glide the line leaving fades out and the one coming in fades in')
+    cfg.SubtitleScroll='page'; S:Layout(rolling)
+    Check(S.wordsTop==rollingTop and S.rowsHeight-(S.shownRows-2)*S.lineStep==rollingHeight,
+        '...its room reaching over the gaps to the name and the progress line: the words where they are page by page')
     cfg.SubtitleScroll,cfg.Lines=before,lines
     Q:RemoveAllSoundsFromQueue(); Play(.6)
     E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
