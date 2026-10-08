@@ -194,12 +194,7 @@ function SpokenBooks:SyncTo(pageId, browsing)
 	-- and it starts again from there, after whatever else waits.
 	local book = self:PlaceOf(pageId)
 	if book and self:IsNarrating(book) then
-		self.following[book] = nil
-		for _, clip in ipairs(Spoken:GetQueue()) do
-			if clip.pageId and self:PlaceOf(clip.pageId) == book then
-				self.source:Remove(clip)
-			end
-		end
+		self:StopReading(book)
 	end
 
 	-- Another readable: after what is being read -- the queue may be carrying a quest line, or
@@ -207,14 +202,25 @@ function SpokenBooks:SyncTo(pageId, browsing)
 	return self:PlayFrom(pageId, browsing)
 end
 
---- Stop this source, and only this source: the queue may be carrying a quest line that has
---- nothing to do with a book.
+--- Stop `book`, or with none every readable, and only them: the queue may be carrying a quest
+--- line that has nothing to do with a book, and other readables waiting behind this one.
 ---
---- Reached by `/spb stop` and by SyncTo rebuilding, not by closing the frame -- a book
---- carries on being read after it is shut.
-function SpokenBooks:StopReading()
-	if self.source then
-		self.source:StopAll()
+--- Reached by `/spb stop` (all), a book's Stop and SyncTo turning back (that book), not by
+--- closing the frame -- a book carries on being read after it is shut.
+function SpokenBooks:StopReading(book)
+	if not book then
+		if self.source then
+			self.source:StopAll()
+		end
+		self.following = {}
+		return
 	end
-	self.following = {}
+	self.following[book] = nil
+	if self.source then
+		for _, clip in ipairs(Spoken:GetQueue()) do
+			if clip.pageId and self:PlaceOf(clip.pageId) == book then
+				self.source:Remove(clip)
+			end
+		end
+	end
 end

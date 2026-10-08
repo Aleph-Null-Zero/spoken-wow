@@ -151,10 +151,14 @@ Expect("turning back in the book being read starts it again from there, after wh
     Same(QueuedPages(), { 2810, 261 }) and Same(Coming(), { 262, 265 }), true)
 
 ---------------------------------------------------------------- stopping by hand
+-- A book's Stop: that book goes, the readable waiting with it stays.
+B:StopReading(261)
+Expect("stopping one book drops it and what was to follow, the other readable still waiting",
+    Same(QueuedPages(), { 2810 }) and #Coming() == 0, true)
 -- What `/spb stop` reaches. Closing the frame does not come here: a book carries on being
 -- read after it is shut.
 B:StopReading()
-Expect("stopping drops this source's narration", #QueuedPages(), 0)
+Expect("stopping with no book named drops every readable", #QueuedPages(), 0)
 
 ---------------------------------------------------------------- reading one page only
 SpokenBooksSettings.readWholeBook = false

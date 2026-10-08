@@ -342,7 +342,7 @@ local PLAY = {
 	playing = function(id) return SpokenBooks:IsNarrating(id) end,
 	-- Browsing: heard here is not heard in the world (Read Only Once), nor found.
 	start = function(id) SpokenBooks:SyncTo(Books()[id].pages[1], true) end,
-	stop = function() SpokenBooks:StopReading() end,
+	stop = function(id) SpokenBooks:StopReading(id) end,
 }
 
 -- How a carried readable is had, one line each: "Dropped by Defias Messenger (Westfall)".
