@@ -782,6 +782,19 @@ function Skin:Undeafen()
     end
 end
 
+--- Switch the window into or out of being one image while it is hidden: switched while on screen
+--- and faded (fading in from nothing), the client crashed at once (ASSERT(flattenedBatch !=
+--- nullptr)), as Place Lore's panel did; made one while hidden, as at its creation, it never did.
+--- Hidden and shown again in the one frame, so nothing flickers, and its buttons' lit and pressed
+--- states are reset by it.
+local function SwitchHidden(frame, on)
+    local shown = frame:IsShown()
+    if shown then frame:Hide() end
+    local ok = pcall(frame.SetIsFrameBuffer, frame, on)
+    if shown then frame:Show() end
+    return ok
+end
+
 --- The window drawn as one image (a frame buffer, as the world map is) and faded as one, its parts
 --- ignoring its alpha so only the finished image fades. Every crash came of something in it
 --- changing while it was one (the title's remove cross loading, the captions clearing at a line's
@@ -798,7 +811,7 @@ function Skin:Buffer()
     if self.count then self.count:SetAlpha(1) end
     if self.heightWant then frame:SetHeight(self.heightWant); self.heightWant = nil end
     self:Deafen()
-    if not pcall(frame.SetIsFrameBuffer, frame, true) then
+    if not SwitchHidden(frame, true) then
         self:Undeafen()
         return false
     end
@@ -819,7 +832,7 @@ function Skin:Unbuffer()
     for _, part in ipairs(Parts(self)) do
         if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(false) end
     end
-    pcall(self.frame.SetIsFrameBuffer, self.frame, false)
+    SwitchHidden(self.frame, false)
     self:Undeafen()
     self:SetLevel(self.level or 0)
     -- Moved onto or off DialogueUI's window meanwhile (Addon:ApplyHost): now.
