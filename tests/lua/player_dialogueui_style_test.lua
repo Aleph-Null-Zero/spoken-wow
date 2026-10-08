@@ -456,6 +456,17 @@ Skin:Tick(0.2)
 Expect("...then what is on it", Skin.content:GetAlpha(), 1)
 Spoken:StopAll()
 
+---------------------------------------------------------------- locked
+Skin.frame.SetMouseClickEnabled = function(f, v) f.clicks = v end
+Skin.frame.SetMouseMotionEnabled = function(f, v) f.motion = v end
+env.Addon.db.profile.Frame.LockFrame = true
+env.PlayerFrame:RefreshConfig()
+Expect("locked, clicks on the window pass through to the game, as on the subtitle; the pointer still counts",
+    tostring(Skin.frame.clicks) .. " " .. tostring(Skin.frame.motion), "false true")
+env.Addon.db.profile.Frame.LockFrame = false
+env.PlayerFrame:RefreshConfig()
+Expect("...unlocked, they are the window's again", Skin.frame.clicks, true)
+
 ---------------------------------------------------------------- a place's picture
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()

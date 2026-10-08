@@ -811,6 +811,13 @@ function Skin:RefreshConfig(original)
     frame:SetScale(frame.spokenBaseScale)
     if not Addon:Layout().DialogueUI and not self.sizing then self:PlaceDefault() end
     if Addon:IsFrameLocked() then frame:StopMovingOrSizing() end
+    -- Locked, clicks on the window pass through to the game, as the subtitle's and the small
+    -- window's do; its buttons still take theirs. Where the client cannot tell a click from the
+    -- pointer passing over, the window keeps both.
+    if frame.SetMouseClickEnabled and frame.SetMouseMotionEnabled then
+        frame:SetMouseMotionEnabled(true)
+        frame:SetMouseClickEnabled(not Addon:IsFrameLocked())
+    end
     Addon:ApplyHost(frame)
     self:Update()
 end
