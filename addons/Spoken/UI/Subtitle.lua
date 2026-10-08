@@ -80,6 +80,15 @@ local function Prefix(text, count)
     return table.concat(parts)
 end
 
+-- The word being read, as the windows light it (Transcript's gold).
+local HIGHLIGHT = "|cffffd100"
+-- `text` with its characters `from` (after that many) through `to` lit.
+local function Light(text, from, to)
+    local head = Prefix(text, math.max(0, from))
+    local through = Prefix(text, to)
+    return head .. HIGHLIGHT .. through:sub(#head + 1) .. "|r" .. text:sub(#through + 1)
+end
+
 -- Sentences with their trailing space kept, so joining them gives back the text exactly.
 -- LoreTeller trimmed them and then measured what was left over against the untrimmed text,
 -- which repeated the tail of any line with spaces in it.
@@ -639,14 +648,34 @@ function Subtitle:CharsSpan(n)
 end
 
 --- The rows as the typing has them: each holds the letters typed so far, so nothing yet to come
---- is ever on screen. The subtitle lights no word: the word timing is an estimate, and typed in
---- front of the reader it showed every miss. The windows light it (Transcript).
-function Subtitle:Reveal(count)
-    if count == self.revealed then return end
-    self.revealed = count
+--- is ever on screen. `lit`, the page's word to light: only while the words show whole, since the
+--- word timing is an estimate and typed in front of the reader it showed every miss.
+function Subtitle:Reveal(count, lit)
+    local key = count .. ":" .. (lit or 0)
+    if key == self.revealed then return end
+    self.revealed = key
+    local from, to
+    if lit then from, to = self:CharsSpan(lit) end
+    local offset = 0
     for index, row in ipairs(self.rows) do
-        self.lines[index]:SetText(count >= row.count and row.text or Prefix(row.text, count))
+        local text = count >= row.count and row.text or Prefix(row.text, count)
+        if from and to > offset and from < offset + row.count then
+            text = Light(text, from - offset, to - offset)
+        end
+        self.lines[index]:SetText(text)
         count = math.max(0, count - row.count)
+        offset = offset + row.count
+    end
+end
+
+--- The page's word the voice is on, by its share of the page's time, while Highlight Words is on;
+--- nil before the voice reaches the page and once it has read it.
+function Subtitle:LitWord(page, elapsed)
+    if self.sample or not Config().HighlightWord then return nil end
+    local at = (elapsed - page.start) / math.max(.5, page.length) * page.count
+    if at < 0 or at >= page.count then return nil end
+    for n, finish in ipairs(self.wordEnds or {}) do
+        if at < finish then return n end
     end
 end
 
@@ -717,7 +746,7 @@ function Subtitle:Render()
     end
     local page = self.pages[index]
     if self.sample or not Config().Typewriter then
-        self:Reveal(page.count)
+        self:Reveal(page.count, self:LitWord(page, elapsed))
         return
     end
     -- LoreTeller's pace: a little ahead of the voice, so each page is whole a moment before the

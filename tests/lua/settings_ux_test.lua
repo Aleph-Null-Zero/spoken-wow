@@ -56,6 +56,14 @@ Expect("...and hides the subtitles'", Shown(typing), false)
 Expect("the rows below move up into the space", Row(home, "Silence NPC Voices").layoutY > -100000, true)
 env.Addon:SetPlayerStyle("subtitle"); Options:UpdateRows()
 Expect("...and back down when subtitles return", typing.layoutY, subtitlesTop)
+local lit = Row(home, "Highlight Words")
+local words = env.Addon.db.profile.Transcript
+words.Typewriter = true; Options:UpdateRows()
+Expect("subtitles have Highlight Words, waiting while their words are typed out", tostring(Shown(lit)) .. " "
+    .. tostring(lit.layoutReason), "true " .. L.REASON_UNTYPED)
+words.Typewriter = false; Options:UpdateRows()
+Expect("...and live with them shown whole", lit.layoutReason, nil)
+words.Typewriter = true; Options:UpdateRows()
 
 ---------------------------------------------------------------- greyed out, and why
 -- A setting waiting on a switch beside it stays, greyed, saying which switch.

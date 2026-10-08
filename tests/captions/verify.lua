@@ -524,7 +524,7 @@ end
 local partial=Typed()
 Check(partial~='' and partial~=line and line:find(partial,1,true)==1,'the typewriter has revealed the start of the line')
 Check(cfg.TypewriterBy=='letter','by default it types letter by letter')
-Check(cfg.HighlightWord and not SubtitleLit(),'the subtitle lights no word, even with Highlight Words on: only the windows do')
+Check(cfg.HighlightWord and not SubtitleLit(),'typing, the subtitle lights no word, even with Highlight Words on: an estimate typed in front of the reader shows every miss')
 do
     cfg.TypewriterBy='word'; S.revealed=nil; S:Render()
     local byWord=Typed()
@@ -544,6 +544,10 @@ Play(9.7)
 Check(Typed()==line,'the whole line is typed before the voice finishes')
 cfg.Typewriter=false; T:RefreshConfig()
 Check(Typed()==line,'without the typewriter the whole line shows at once')
+Check(SubtitleLit(),'...lighting the word being read, as the windows do')
+cfg.HighlightWord=false; S.revealed=nil; S:Render()
+Check(not SubtitleLit() and Typed()==line,'...unless Highlight Words is off')
+cfg.HighlightWord=true; S.revealed=nil; S:Render()
 cfg.Typewriter=true; T:RefreshConfig()
 -- The corner Report icon the windows have, beside the subtitle, and gone with the setting
 -- that hides it from the windows.

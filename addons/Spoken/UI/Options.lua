@@ -445,14 +445,15 @@ local function Build(canvas)
             function() return Transcript:ScrollMode() end,
             function(v) transcript().ScrollMode = v; Transcript.manualScroll = false end, refreshTranscript,
             function(v) return SCROLL_LABELS[v] or v end))
-        -- The word being read lit: the windows only. The subtitles type their words at their
-        -- own pace, where an estimated word timing would show every miss. With DialogueUI
-        -- installed, also for the quest text Spoken Quests marks there, under any style.
+        -- The word being read lit. The subtitle lights it only while it shows its words whole:
+        -- typed at their own pace, an estimated word timing would show every miss. With
+        -- DialogueUI installed, also for the quest text Spoken Quests marks there, under any style.
         local highlight = layout:Checkbox(L.TRANSCRIPT_HIGHLIGHT, L.TRANSCRIPT_HIGHLIGHT_TIP,
             function() return transcript().HighlightWord end,
             function(v) transcript().HighlightWord = v end, refreshTranscript)
-        Only(highlight, function() return InWindow() or DialogueUITheme:Available() end)
+        Only(highlight, function() return InWindow() or Subtitles() or DialogueUITheme:Available() end)
         Requires(highlight, Words, L.REASON_WORDS)
+        Requires(highlight, function() return not (Subtitles() and transcript().Typewriter) end, L.REASON_UNTYPED)
         local typewriter = layout:Checkbox(L.TRANSCRIPT_TYPEWRITER, L.TRANSCRIPT_TYPEWRITER_TIP,
             function() return transcript().Typewriter end,
             function(v) transcript().Typewriter = v end, refreshTranscript)
