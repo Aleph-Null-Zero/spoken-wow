@@ -381,6 +381,10 @@ local function Build(canvas)
         ForSubtitles(layout:Slider(L.TRANSCRIPT_SHADOW, 0, 1, 0.05,
             function() return transcript().SubtitleShadow end,
             function(v) transcript().SubtitleShadow = v end, refreshSubtitle, nil, L.TRANSCRIPT_SHADOW_TIP))
+        -- The row over the words, which a player wanting a film's subtitles turns off (issue #288).
+        Only(layout:Checkbox(L.OPT_SUBTITLE_NAME, L.OPT_SUBTITLE_NAME_TIP,
+            function() return transcript().SubtitleName ~= false end,
+            function(v) transcript().SubtitleName = v end, refreshSubtitle), Subtitles)
     end
     if captions then
         ForSubtitles(layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
