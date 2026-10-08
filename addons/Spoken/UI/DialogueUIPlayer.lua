@@ -304,6 +304,8 @@ end
 
 --- Runs on every refresh, so a theme or size change in DialogueUI lands on the next one.
 function Skin:Layout()
+    -- Nothing in the window changes while it is one image.
+    self:Unbuffer()
     local frame, cfg = self.frame, Theme:Config()
     local parchment = Theme:TexturePath() .. "Parchment.png"
     self.layingOut = true
@@ -696,11 +698,49 @@ end
 --- half-faded window would show the paper through its strips and words: the paper takes the lower
 --- half and everything on it the upper, and the two never fade at once. Not a frame buffer, which
 --- would fade it as one image: on this window it crashed the client (ASSERT(!m_deleted),
---- CSimpleRender.cpp) after an hour and a half of play.
+--- CSimpleRender.cpp) after an hour and a half of play. Fading out, one image does it
+--- (Skin:Buffer).
 function Skin:SetLevel(level)
     self.level = level
+    if self.buffered then
+        self.frame:SetAlpha(level)
+        self.content:SetAlpha(1)
+        return
+    end
     self.frame:SetAlpha(Clamp(level * 2, 0, 1))
     self:PaintContent()
+end
+
+-- The window's direct parts, which ignore its alpha while it is one image.
+local function Parts(self)
+    return { self.content, self.resizer, self.parchments[1], self.parchments[2], self.parchments[3] }
+end
+
+--- Fading out, the window is drawn as one image (a frame buffer, as the world map is) and fades
+--- as one, its parts ignoring its alpha so only the finished image fades. Only then: the crashes
+--- came of something in the image changing or still loading while it was one (a new portrait or
+--- picture, the title's remove cross the first time it showed: CSimpleRender.cpp's texture
+--- asserts and ASSERT(!m_deleted)), and fading out nothing is. Anything that would change it
+--- first lets it go (Skin:Unbuffer).
+function Skin:Buffer()
+    local frame = self.frame
+    if self.buffered or not frame.SetIsFrameBuffer then return end
+    if not pcall(frame.SetIsFrameBuffer, frame, true) then return end
+    self.buffered = true
+    for _, part in ipairs(Parts(self)) do
+        if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(true) end
+    end
+    self:SetLevel(self.level or 1)
+end
+
+function Skin:Unbuffer()
+    if not self.buffered then return end
+    self.buffered = nil
+    for _, part in ipairs(Parts(self)) do
+        if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(false) end
+    end
+    pcall(self.frame.SetIsFrameBuffer, self.frame, false)
+    self:SetLevel(self.level or 0)
 end
 
 --- What is on the paper: its share of the window's fade, times a new line's own fade-in.
@@ -723,7 +763,14 @@ function Skin:SetVisible(visible, immediate)
     self.wanted = visible
     self.fadeFrom = self.frame:IsShown() and self.level or 0
     self.fadeTime = 0
-    if visible then self:SetLevel(self.fadeFrom); self.frame:Show() end
+    -- Out from in full, as one image; back in, or in, in two steps (Skin:Buffer).
+    if visible then
+        self:Unbuffer()
+        self:SetLevel(self.fadeFrom)
+        self.frame:Show()
+    elseif self.frame:IsShown() and (self.level or 0) >= 1 then
+        self:Buffer()
+    end
 end
 
 function Skin:Tick(elapsed)
@@ -747,7 +794,11 @@ function Skin:Tick(elapsed)
         self:SetLevel(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
         if t == 1 then
             self.fadeTime = nil
-            if not self.wanted then self.frame:Hide(); return end
+            if not self.wanted then
+                self.frame:Hide()
+                self:Unbuffer()
+                return
+            end
         end
     end
     if not self.wanted then return end
@@ -892,6 +943,8 @@ end
 
 function Skin:Update()
     if not self.frame then return end
+    -- Nothing in the window changes while it is one image.
+    self:Unbuffer()
     if not self:IsEnabled() then self:SetVisible(false, true); return end
     -- The line playing, or the sample a style tile previews (PlayerFrame:ShowSample).
     local clip = PlayerFrame:Current()
