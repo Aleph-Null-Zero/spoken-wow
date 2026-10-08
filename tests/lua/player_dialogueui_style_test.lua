@@ -487,77 +487,79 @@ do
     Skin:Layout()
 end
 Expect("...the count gone with no line waiting", Skin.count:IsShown(), false)
--- The client fades each texture on its own: the paper and what is on it fade one after the other.
+-- Every fade is of the window as one image (a frame buffer, as the world map is), and nothing in
+-- it changes while it is one: the client crashed on that.
 Expect("shown, it is not one image: things change in it", Skin.frame:IsFrameBuffer(), false)
-Skin:Tick(1) -- shown in full first
-Skin.changedAt = GetTime() - 2 -- and nothing in it changed a while
+Skin:Tick(1) -- shown, and still a while
 Skin.skip:EnableMouse(true) -- as a button is in the client; the stub's start without
 Skin:SetVisible(false)
-Expect("fading out, it is drawn as one image", Skin.frame:IsFrameBuffer(), true)
-Expect("...deaf to the pointer meanwhile, so nothing in it lights or presses",
-    tostring(Skin.skip:IsMouseEnabled()) .. " " .. tostring(Skin.frame:IsMouseEnabled()), "false false")
+Expect("fading out, it first goes deaf to the pointer, so a click's pressed and lit states settle",
+    tostring(Skin.skip:IsMouseEnabled()) .. " " .. tostring(Skin.frame:IsMouseEnabled()) .. " " .. tostring(Skin.frame:IsFrameBuffer()),
+    "false false false")
+Skin:Tick(0.02); Skin:Tick(0.02)
+Expect("...then is drawn as one image", Skin.frame:IsFrameBuffer(), true)
 Expect("...its parts ignoring its alpha, so only the image fades",
     Skin.content:IsIgnoringParentAlpha() and Skin.parchments[2]:IsIgnoringParentAlpha(), true)
 Skin:Tick(0.16)
-Expect("...and fades as one", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "0.5 1")
-Skin:Tick(0.2)
+Expect("...and fades as one", Skin.content:GetAlpha() == 1 and Skin.frame:GetAlpha() > 0 and Skin.frame:GetAlpha() < 1, true)
+Skin:Tick(0.3)
 Expect("...gone, it is itself again", tostring(Skin.frame:IsShown()) .. " " .. tostring(Skin.frame:IsFrameBuffer())
     .. " " .. tostring(Skin.content:IsIgnoringParentAlpha()) .. " " .. tostring(Skin.skip:IsMouseEnabled()), "false false false true")
 Skin:SetVisible(true)
-Skin:Tick(0.14)
-Expect("fading in, it is not one image, the paper coming first", tostring(Skin.frame:IsFrameBuffer()) .. " "
-    .. Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "false 1 0")
-Skin:Tick(0.2)
-Expect("...then what is on it", Skin.content:GetAlpha(), 1)
--- A line ending: the window fades out as one image, and nothing in it changes meanwhile.
+Expect("fading in, it is laid out unseen first", tostring(Skin.frame:IsShown()) .. " " .. Skin.frame:GetAlpha() .. " "
+    .. tostring(Skin.frame:IsFrameBuffer()), "true 0 false")
+Skin:Tick(0.05)
+Expect("...then fades in as one image", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.content:GetAlpha(), "true 1")
+Skin:Tick(0.4)
+Expect("...itself again once in", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.frame:GetAlpha(), "false 1")
+
+-- A line ending: nothing in the image changes while it fades out.
 Skin:Tick(1)
 local words = T.text
-Skin.changedAt = GetTime() - 2 -- all still a while
 Spoken:StopAll()
+Skin:Tick(0.02); Skin:Tick(0.02)
 Expect("a line ending fades the window out as one image", tostring(Skin.wanted) .. " " .. tostring(Skin.frame:IsFrameBuffer()), "false true")
-Expect("...its words kept, fading with it: nothing in the image changes", tostring(T.held) .. " " .. tostring(T.text == words)
+Expect("...its words kept, fading with it: the captions held", tostring(T.held) .. " " .. tostring(T.text == words)
     .. " " .. tostring(T.clip ~= nil), "true true true")
+Expect("...the portrait cache not painting its face meanwhile", Skin:Frozen(), true)
+env.Addon:ApplyHost(Skin.frame)
+Expect("...nor moved onto or off DialogueUI's window till it is done", tostring(Skin.frame.spokenHostPending), "true")
 Skin:Update()
 Expect("...another change of the queue with nothing to show leaves the fade alone", Skin.frame:IsFrameBuffer(), true)
 Skin:Tick(0.4)
 Expect("...gone, the window is itself again and the captions catch up", tostring(Skin.frame:IsFrameBuffer()) .. " "
-    .. tostring(T.held) .. " " .. tostring(T.clip), "false nil nil")
--- A new line coming while it fades out: it lets the one image go before anything changes.
+    .. tostring(T.held) .. " " .. tostring(T.clip) .. " " .. tostring(Skin.frame.spokenHostPending), "false nil nil nil")
+
+-- A line coming: laid out unseen, its face and picture drawn, then faded in as one image.
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Again", portrait = { kind = "none" } } }))
+Skin:Tick(0.05)
+Expect("a new line waits, unseen, to be still before it fades in", tostring(Skin.frame:IsFrameBuffer()) .. " "
+    .. Skin.frame:GetAlpha(), "false 0")
+Skin:Tick(0.06)
+Expect("...then fades in as one image", Skin.frame:IsFrameBuffer(), true)
+Skin:Tick(0.4)
+
+-- Skipped: deaf to the pointer, then one image, the pressed Skip settled.
 Skin:Tick(1)
-Spoken:StopAll()
-Expect("a line ended soon after it came fades out in two steps: its face or picture may still be drawing",
-    Skin.frame:IsFrameBuffer(), false)
-Skin:Tick(1)
-quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Again", portrait = { kind = "none" } } }))
-Skin:Tick(1)
-Skin.changedAt = GetTime() - 2
-Spoken:StopAll()
-Expect("...one still a while fades out as one image", Skin.frame:IsFrameBuffer(), true)
-Skin:Tick(1)
-quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Again", portrait = { kind = "none" } } }))
-Skin:Tick(1)
-Skin.changedAt = GetTime() - 2
-Skin.frame.IsMouseOver = function() return true end
+Skin.skip:EnableMouse(true)
 Skin.skip.scripts.OnClick(Skin.skip)
-Expect("skipped with the pointer on it (Skip pressed, lit), it fades out in two steps", Skin.frame:IsFrameBuffer(), false)
-Skin.frame.IsMouseOver = nil
-Skin:Tick(1)
-quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Again", portrait = { kind = "none" } } }))
-Skin:Tick(1)
-Skin.changedAt = GetTime() - 2
-Spoken:StopAll()
+Expect("skipped, it goes deaf to the pointer before it is one image", tostring(Skin.skip:IsMouseEnabled()) .. " "
+    .. tostring(Skin.frame:IsFrameBuffer()), "false false")
+Skin:Tick(0.02); Skin:Tick(0.02)
+Expect("...then fades out as one image", Skin.frame:IsFrameBuffer(), true)
+-- A new line while it fades out: it finishes, then shows the new one as it shows any.
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Next", portrait = { kind = "none" } } }))
-Expect("a new line mid-fade lets the one image go first, the captions taking it up",
-    tostring(Skin.frame:IsFrameBuffer()) .. " " .. tostring(T.held) .. " " .. tostring(T.clip and T.clip.present.label), "false nil Next")
-Skin:Tick(1)
-Skin.changedAt = GetTime() - 2
-Skin.viewport.active = "model"
+Expect("a new line mid-fade waits: the image fading out is not changed", tostring(Skin.frame:IsFrameBuffer()) .. " "
+    .. tostring(T.held) .. " " .. tostring(Skin.pending), "true true update")
+Skin:Tick(0.4)
+Expect("...faded out, the new line is laid out unseen", tostring(Skin.frame:IsFrameBuffer()) .. " "
+    .. tostring(Skin.frame:IsShown()) .. " " .. Skin.frame:GetAlpha() .. " " .. tostring(T.clip and T.clip.present.label), "false true 0 Next")
+Skin:Tick(0.2)
+Expect("...and fades in as one image", Skin.frame:IsFrameBuffer(), true)
+Skin:Tick(0.5)
+Expect("...shown in full, itself", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.frame:GetAlpha(), "false 1")
 Spoken:StopAll()
-Expect("a window with a 3D face never fades out as one image: it is drawn anew every frame", Skin.frame:IsFrameBuffer(), false)
-Skin.viewport.active = nil
 Skin:Tick(1)
-Spoken:StopAll()
 
 ---------------------------------------------------------------- locked
 Skin.frame.SetMouseClickEnabled = function(f, v) f.clicks = v end

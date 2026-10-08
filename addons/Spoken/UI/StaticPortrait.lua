@@ -156,12 +156,19 @@ function StaticPortrait:Capture(clip, refreshGUID)
         if actual and ((guid and actual == guid) or (not guid and creature and CreatureID(actual) == creature)) then
             local entry = self.cache[actual] or self:Acquire(actual)
             if not entry then return cached end
-            if entry.key ~= actual or refreshGUID == actual then
-                -- The face may be on show in the DialogueUI window, drawn as one image while it fades
-                -- out: it lets that go before the face is painted anew.
-                if DialogueUIPlayer and DialogueUIPlayer.Touch and DialogueUIPlayer.frame then DialogueUIPlayer:Touch() end
+            -- The face on show in the DialogueUI window while it is one image is not painted anew: it
+            -- must not change then. It is painted once the window is itself again (stale).
+            local window = DialogueUIPlayer
+            local frozen = window and window.Frozen and window.viewport and window:Frozen()
+                and entry.texture:GetParent() == window.viewport
+            if frozen and (entry.key ~= actual or refreshGUID == actual) then
+                entry.stale = true
+            elseif entry.key ~= actual or refreshGUID == actual or entry.stale then
+                entry.stale = nil
                 SetPortraitTexture(entry.texture, unit)
                 entry.texture:SetTexCoord(0, 1, 0, 1)
+                -- Drawn a moment after: the window waits for it before it is one image.
+                if window and window.Touch and window.frame then window:Touch() end
             end
             return self:Keep(entry, actual, creature)
         end
