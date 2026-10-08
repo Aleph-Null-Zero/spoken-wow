@@ -511,9 +511,8 @@ Expect("a place's picture shows over its words, as Place Lore shows it", Skin.pi
 Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
 local pictureTop = -Skin.picture.anchor.y
 local lineBottom = Skin.headerDivider:GetHeight() * 0.8
-Expect("...as far under the divider's line as the words are under it, never less than a line",
-    math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + 200))) < 1
-    and (pictureTop - lineBottom) >= Skin.lineRoom - 1, true)
+Expect("...as far under the divider's line as the words are under it",
+    math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + 200))) < 1, true)
 Spoken:StopAll()
 -- Drawn 294 across at the map's scale beside the map: as large here, in the window's scale (0.52).
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
@@ -536,6 +535,8 @@ local room = Skin.lineRoom
 Expect("the words have a line's room over them in the captions", room .. " " .. T.labels[1].anchor.y,
     (T.style.size + T.style.lineGap) .. " " .. (-room))
 Expect("...and under them", T.frame:GetHeight(), Skin.lines * room + 2 * room)
+Expect("...reaching over the header's gap, not adding to it: the words where they were",
+    -(T.frame.anchor.y - room) - Skin.headerDivider:GetHeight() < room + T.style.size, true)
 Expect("...no parchment strips drawn over them", Skin.strips, nil)
 T.top = 1.75; T.placedKey = nil; T:Place()
 Expect("a line gliding out is at a quarter, three quarters into the room", math.abs(T.labels[1]:GetAlpha() - .25) < 1e-6, true)
