@@ -52,7 +52,8 @@ end
 
 --- How many pages are being read: the one queued, and the rest of its book to follow it.
 local function Reading()
-    return #QueuedPages() + (B.following and #B.following.pages or 0)
+    local entry = B.following[261]
+    return #QueuedPages() + (entry and #entry.pages or 0)
 end
 
 ---------------------------------------------------------------- opening a book
@@ -60,12 +61,12 @@ stub.ShowPage({ title = "Hillsbrad Town Registry", number = 1, text = REGISTRY_1
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("opening a book queues it, as one line", #QueuedPages(), 1)
 Expect("...starting at the page on screen", QueuedPages()[1], 261)
-Expect("...its other pages to follow", B.following and #B.following.pages, 2)
+Expect("...its other pages to follow", B.following[261] and #B.following[261].pages, 2)
 
 ---------------------------------------------------------------- turning a page
 stub.ShowPage({ title = "Hillsbrad Town Registry", number = 2, text = REGISTRY_2, hasNext = true })
 stub.FireEvent("ITEM_TEXT_READY")
-Expect("turning to a page still to come does not restart the book", QueuedPages()[1] .. " " .. #B.following.pages,
+Expect("turning to a page still to come does not restart the book", QueuedPages()[1] .. " " .. #B.following[261].pages,
     "261 2")
 Expect("...and remembers where the reader is", B.lastPage, 262)
 

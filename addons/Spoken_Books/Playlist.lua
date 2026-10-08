@@ -2,15 +2,15 @@
 --
 -- Opening a book reads it from the page being read to its last, so a twenty-page journal
 -- narrates on while the reader turns pages. Turning a page does not restart anything: if
--- the page turned to is speaking or still to come, nothing happens. If it is not -- the
--- reader jumped, or opened a different book -- what this source holds is dropped and the
--- reading starts again from there. One readable at a time: opening a gravestone while a
--- book is read replaces the book.
+-- the page turned to is speaking or still to come, nothing happens. If it is a page of the
+-- book being read that is not coming (the reader turned back), that book starts again from
+-- there, in the queue's order like anything else. Opening another readable while one is read
+-- queues it after: a gravestone read on the way waits for the book.
 --
--- The book is ONE line in the queue: its first page is queued, and each page, as it
--- finishes, puts the next at the head (source:Continue), so the queue and its waiting count
--- show the book once, and Skip skips the rest of it. Reading the WHOLE book rather than the
--- page on screen is the difference between reading along and pressing play twenty times.
+-- A book is ONE line in the queue: its first page is queued, and each page, as it finishes,
+-- puts the next at the head (source:Continue), so the queue and its waiting count show the
+-- book once, and Skip skips the rest of it. Reading the WHOLE book rather than the page on
+-- screen is the difference between reading along and pressing play twenty times.
 
 local ADDON_NAME, SpokenBooks = ...
 
@@ -50,14 +50,16 @@ function SpokenBooks:IsQueued(pageId)
 	return false
 end
 
---- The pages still to come of the book being read: { book, pages }, each page put at the head
---- of the queue as the one before it finishes (PageEnded). Nil once the book is done, skipped
---- or stopped.
-SpokenBooks.following = nil
+--- Each book being read, by book: { clip, the page of it in the queue; pages, those still to
+--- come }, each page put at the head as the one before it finishes (PageEnded). A book's entry
+--- goes once it is done, skipped or stopped.
+SpokenBooks.following = {}
 
---- Whether `pageId` is still to come of the book being read.
+--- Whether `pageId` is still to come of a book being read.
 function SpokenBooks:IsComing(pageId)
-	for _, id in ipairs(self.following and self.following.pages or {}) do
+	local book = self:PlaceOf(pageId)
+	local entry = book and self.following[book]
+	for _, id in ipairs(entry and entry.pages or {}) do
 		if id == pageId then
 			return true
 		end
@@ -70,25 +72,29 @@ local Follow
 --- A page left the queue: finished, the next page with a clip goes to the head; skipped or
 --- stopped, the rest of the book goes with it.
 local function PageEnded(clip, finished)
-	local following = SpokenBooks.following
-	if not (following and SpokenBooks:PlaceOf(clip.pageId) == following.book) then
+	local book = SpokenBooks:PlaceOf(clip.pageId)
+	local entry = book and SpokenBooks.following[book]
+	-- Only the book's page in the queue: an old page dropped as the book starts again over it
+	-- leaves the new reading alone.
+	if not (entry and entry.clip == clip) then
 		return
 	end
 	if not finished then
-		SpokenBooks.following = nil
+		SpokenBooks.following[book] = nil
 		return
 	end
-	while table.getn(following.pages) > 0 do
-		local id = table.remove(following.pages, 1)
+	while table.getn(entry.pages) > 0 do
+		local id = table.remove(entry.pages, 1)
 		local nextClip = SpokenBooks:ClipFor(id)
 		if nextClip then
 			Follow(nextClip)
 			if SpokenBooks.source and SpokenBooks.source:Continue(nextClip) then
+				entry.clip = nextClip
 				return
 			end
 		end
 	end
-	SpokenBooks.following = nil
+	SpokenBooks.following[book] = nil
 end
 
 --- `clip` puts the next page at the head as it ends (PageEnded), before whatever else its own
@@ -138,8 +144,8 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 		return 0
 	end
 
-	local queued, rest = 0, {}
-	self.following = nil
+	local book = self:PlaceOf(pageId)
+	local queued, rest, first = 0, {}, nil
 	for _, id in ipairs(self:PagesFrom(pageId)) do
 		if SpokenBooksSettings and SpokenBooksSettings.readWholeBook == false and id ~= pageId then
 			break
@@ -149,7 +155,7 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 			if clip then
 				Follow(clip)
 				if source:Enqueue(clip) then
-					queued = 1
+					queued, first = 1, clip
 				end
 			end
 		elseif self:HasAudio(id) then
@@ -157,8 +163,8 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 			queued = queued + 1
 		end
 	end
-	if table.getn(rest) > 0 then
-		self.following = { book = self:PlaceOf(pageId), pages = rest }
+	if book and first then
+		self.following[book] = { clip = first, pages = rest }
 	end
 
 	-- Read, as far as this character is concerned, the moment a page of it is admitted --
@@ -184,11 +190,20 @@ function SpokenBooks:SyncTo(pageId, browsing)
 		return 0
 	end
 
-	-- Somewhere else entirely. Drop what this source holds -- never the whole queue, which
-	-- may be carrying a quest line -- and rebuild from here.
-	if self.source then
-		self.source:StopAll()
+	-- A page of a book being read that is not coming: the reader turned back. Its old pages go
+	-- and it starts again from there, after whatever else waits.
+	local book = self:PlaceOf(pageId)
+	if book and self:IsNarrating(book) then
+		self.following[book] = nil
+		for _, clip in ipairs(Spoken:GetQueue()) do
+			if clip.pageId and self:PlaceOf(clip.pageId) == book then
+				self.source:Remove(clip)
+			end
+		end
 	end
+
+	-- Another readable: after what is being read -- the queue may be carrying a quest line, or
+	-- a book a gravestone met on the way waits behind.
 	return self:PlayFrom(pageId, browsing)
 end
 
@@ -201,4 +216,5 @@ function SpokenBooks:StopReading()
 	if self.source then
 		self.source:StopAll()
 	end
+	self.following = {}
 end
