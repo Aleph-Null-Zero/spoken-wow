@@ -28,7 +28,7 @@ local BASE_SCALE = 0.65
 -- Where it settles when the dialog closes: this far from the screen's top left, the paper's
 -- edge rather than the frame's. And how long it takes to get there from the dialog.
 local EDGE = 16
-local SETTLE_TIME = 0.3
+local SETTLE_TIME = 0.4
 -- The paper's visible edge in Parchment.png, inside its transparent margin: the top cap's first
 -- opaque row of its 256 and the first opaque column of the 1024 (Brown 122 and 130, Dark 126
 -- and 125; the smaller of each, so the paper never runs off the screen).

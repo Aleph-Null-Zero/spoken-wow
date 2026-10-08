@@ -514,8 +514,10 @@ Skin:Tick(0.2)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
-Skin:Tick(0.3)
-Expect("...and settled at the top left, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Skin:Tick(0.15)
+Expect("...still on its way at 0.35 seconds", Skin.settling ~= nil, true)
+Skin:Tick(0.1)
+Expect("...and settled at the top left by 0.4, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 -- Nowhere known to start from: it is simply put where it rests.
 local WindowPlace = env.DialogueUITheme.WindowPlace
