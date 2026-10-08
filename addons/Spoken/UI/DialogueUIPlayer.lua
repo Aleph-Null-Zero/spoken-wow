@@ -38,6 +38,9 @@ local FADE_IN, FADE_OUT = .28, .32
 -- A new line on a window already showing: its words fade in over LINE_IN, and the window eases to
 -- its new height, as the subtitle's do (Subtitle's PAGE_IN and SIZE_EASE).
 local LINE_IN, SIZE_EASE = .28, 10
+-- How long nothing in the window may have changed before it fades out as one image (Skin:Buffer):
+-- a face or a picture just set is still being drawn or loaded for a moment after.
+local STILL = 1.5
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
@@ -305,7 +308,7 @@ end
 --- Runs on every refresh, so a theme or size change in DialogueUI lands on the next one.
 function Skin:Layout()
     -- Nothing in the window changes while it is one image.
-    self:Unbuffer()
+    self:Touch()
     local frame, cfg = self.frame, Theme:Config()
     local parchment = Theme:TexturePath() .. "Parchment.png"
     self.layingOut = true
@@ -518,6 +521,8 @@ function Skin:Dress()
 end
 
 function Skin:ConfigurePortrait()
+    -- A face set or redrawn: not one image for a while.
+    self:Touch()
     -- Always the face: the header strip has its socket, which would stand empty without it.
     self.portrait:Show()
     if not StaticPortrait:Configure(self.viewport, self.clip) then Portrait:Configure(self.viewport, self.clip) end
@@ -660,6 +665,8 @@ function Skin:CreateQueueRow(index)
     button.text:SetFont(fonts.paragraph, math.max(8, fonts.paragraphSize - 1), "")
     button.text:SetShadowColor(0, 0, 0, 0)
     button:SetScript("OnEnter", function()
+        -- Nothing in the window changes while it is one image (Skin:Buffer).
+        if self.buffered then return end
         ShowRemove(button, true)
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetText(Label(button.clip))
@@ -722,11 +729,29 @@ end
 --- picture, the title's remove cross the first time it showed: CSimpleRender.cpp's texture
 --- asserts and ASSERT(!m_deleted)), and fading out nothing is. Anything that would change it
 --- first lets it go (Skin:Unbuffer).
+--- Something in the window changed, or is about to: it is not one image now, nor for STILL after.
+--- The portrait cache calls this before it paints or moves a face (StaticPortrait:Capture).
+function Skin:Touch()
+    self.changedAt = GetTime()
+    self:Unbuffer()
+end
+
 function Skin:Buffer()
     local frame = self.frame
     if self.buffered or not frame.SetIsFrameBuffer then return end
+    -- Only once all in it has been still a while: a face SetPortraitTexture is still drawing, or a
+    -- picture still loading, crashed it when the line was skipped soon after it came. Never with a
+    -- 3D face, which is drawn anew every frame.
+    if self.changedAt and GetTime() - self.changedAt < STILL then return end
+    if self.viewport and self.viewport.active == "model" then return end
+    -- Its own small animations finished first, so nothing in the image moves while it is one.
+    self.lineFade, self.countFade = nil, nil
+    if self.count then self.count:SetAlpha(1) end
+    if self.heightWant then frame:SetHeight(self.heightWant); self.heightWant = nil end
     if not pcall(frame.SetIsFrameBuffer, frame, true) then return end
     self.buffered = true
+    -- The captions too: the line ending keeps its words, which fade out with the window.
+    Transcript:Hold()
     for _, part in ipairs(Parts(self)) do
         if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(true) end
     end
@@ -741,6 +766,8 @@ function Skin:Unbuffer()
     end
     pcall(self.frame.SetIsFrameBuffer, self.frame, false)
     self:SetLevel(self.level or 0)
+    -- What the captions held back, now the window is itself again.
+    Transcript:Release()
 end
 
 --- What is on the paper: its share of the window's fade, times a new line's own fade-in.
@@ -755,6 +782,7 @@ function Skin:SetVisible(visible, immediate)
     if immediate then
         self.wanted = false
         self.frame:Hide()
+        self:Unbuffer()
         self:SetLevel(0)
         self.fadeTime = nil
         return
@@ -943,12 +971,13 @@ end
 
 function Skin:Update()
     if not self.frame then return end
-    -- Nothing in the window changes while it is one image.
-    self:Unbuffer()
     if not self:IsEnabled() then self:SetVisible(false, true); return end
     -- The line playing, or the sample a style tile previews (PlayerFrame:ShowSample).
     local clip = PlayerFrame:Current()
+    -- Nothing to show: an image fading out goes on fading.
     if not clip then self:SetVisible(false); return end
+    -- Anything else changes the window: it lets the one image go first.
+    self:Touch()
     if self:Covered() then self:SetVisible(false, true); return end
     if clip ~= self.clip then
         self:HideTooltip()

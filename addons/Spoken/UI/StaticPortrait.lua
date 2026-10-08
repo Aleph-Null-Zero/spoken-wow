@@ -157,6 +157,9 @@ function StaticPortrait:Capture(clip, refreshGUID)
             local entry = self.cache[actual] or self:Acquire(actual)
             if not entry then return cached end
             if entry.key ~= actual or refreshGUID == actual then
+                -- The face may be on show in the DialogueUI window, drawn as one image while it fades
+                -- out: it lets that go before the face is painted anew.
+                if DialogueUIPlayer and DialogueUIPlayer.Touch and DialogueUIPlayer.frame then DialogueUIPlayer:Touch() end
                 SetPortraitTexture(entry.texture, unit)
                 entry.texture:SetTexCoord(0, 1, 0, 1)
             end
