@@ -122,7 +122,7 @@ Expect("Skip is greyed with nothing speaking", row.skip:IsEnabled(), false)
 ---------------------------------------------------------------- playing it
 row.play.scripts.OnClick(row.play, "LeftButton")
 Expect("Play reads the book from its first page, not the last the game is on", QueuedPages() .. "+"
-    .. table.concat(B.following and B.following.pages or {}, ","), "261+262,263")
+    .. table.concat(B.following[261] and B.following[261].pages or {}, ","), "261+262,263")
 Book:Draw()
 Expect("...and turns to Stop while it reads", row.play.state, "stop")
 Expect("...Skip lit", row.skip:IsEnabled(), true)

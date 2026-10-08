@@ -68,7 +68,10 @@ local function Queued()
     for _, clip in ipairs(Spoken:GetQueue()) do
         if clip.pageId then count = count + 1 end
     end
-    return count + (B.following and #B.following.pages or 0)
+    for _, entry in pairs(B.following) do
+        count = count + #entry.pages
+    end
+    return count
 end
 
 local function Reset()
