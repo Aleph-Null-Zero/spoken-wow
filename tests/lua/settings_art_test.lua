@@ -368,24 +368,31 @@ do
     local group, display, window = grouped.items[1], grouped.items[2], grouped.items[3]
     Expect("a group has a title, as a section has, and no box", group.heading.text .. " " .. tostring(group.box),
         "Settings nil")
+    -- Each read guarded, so a layout without small titles or their lines fails these checks
+    -- rather than stopping the file.
+    local small, line, first = window.small, window.divider, display.small
     Expect("its sections have small titles, not a section's large one",
-        tostring(display.heading) .. " " .. display.small.text .. " " .. window.small.text, "nil Display Window")
-    Expect("...in the game's white", tostring(window.small.fontObject or window.small.font), "GameFontHighlight")
-    Expect("...where the rows' labels start", (window.small.anchor.x - grouped.left) .. " "
-        .. (display.small.anchor.x - grouped.left), "37 37")
+        tostring(display.heading) .. " " .. tostring(first and first.text) .. " " .. tostring(small and small.text),
+        "nil Display Window")
+    Expect("...in the game's white", tostring(small and (small.fontObject or small.font)), "GameFontHighlight")
+    Expect("...where the rows' labels start", small and first and ((small.anchor.x - grouped.left) .. " "
+        .. (first.anchor.x - grouped.left)) or "no small titles", "37 37")
     Expect("...their names still what search files their rows under", grouped.entries[1].section, "Display")
-    local small, line = window.small, window.divider
     Expect("a line runs on from each title, the first's too",
-        tostring(display.divider.shown ~= false) .. " " .. tostring(line.shown ~= false), "true true")
+        tostring(display.divider ~= nil and display.divider.shown ~= false) .. " "
+        .. tostring(line ~= nil and line.shown ~= false), "true true")
     Expect("...one thin, faint bronze line, not the header's divider",
-        tostring(line.layoutAtlas) .. " " .. line.height .. " "
-        .. table.concat(line.layoutColor, ",") .. " " .. line.alpha, "nil 1 0.55,0.4,0.24 0.5")
+        line and (tostring(line.layoutAtlas) .. " " .. line.height .. " "
+        .. table.concat(line.layoutColor or {}, ",") .. " " .. tostring(line.alpha)) or "no line",
+        "nil 1 0.55,0.4,0.24 0.5")
     Expect("...from 8 after the title to where the boxes end",
-        (line.anchor.x - (small.anchor.x + small:GetStringWidth())) .. " " .. (line.anchor.x + line.width),
+        line and small and ((line.anchor.x - (small.anchor.x + small:GetStringWidth())) .. " "
+        .. (line.anchor.x + line.width)) or "no line",
         "8 " .. (grouped.left + grouped:Width() - 14))
-    Expect("...through the title's middle", small.anchor.y - line.anchor.y, 6)
+    Expect("...through the title's middle", line and small and (small.anchor.y - line.anchor.y) or "no line", 6)
     Expect("the title 16 under the rows above it, and its rows 10 under it",
-        (display.bottom - small.anchor.y) .. " " .. (small.anchor.y - 14 - window.top), "16 10")
+        small and ((display.bottom - small.anchor.y) .. " " .. (small.anchor.y - 14 - window.top)) or "no small title",
+        "16 10")
 end
 
 ---------------------------------------------------------------- sections have no divider
