@@ -769,4 +769,28 @@ do
     Q:RemoveAllSoundsFromQueue(); Play(.6)
     E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
 end
+-- Auto-Scroll line by line: a window of Lines Shown that the words glide up through as the
+-- voice reads them, the line leaving fading out and the one coming in fading in.
+do
+    local style=E.Addon.db.profile.Frame.Style
+    E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+    local before,lines=cfg.SubtitleScroll,cfg.Lines
+    cfg.SubtitleScroll='line'; cfg.Lines=2
+    local rolling=('A long line of words that keeps on going for a while. '):rep(8)
+    Q:RemoveAllSoundsFromQueue(); Play(1)
+    source:Enqueue(Clip('roll',rolling,40)); Play(1)
+    Check(#S.rows>2 and S.shownRows==2 and #S.pages==1,'line by line the whole line is one page, two of its lines on show')
+    local shown=0
+    for _,line in ipairs(S.lines) do if line:IsShown() then shown=shown+1 end end
+    Check(shown==2 and S.rollTop==1,'...from its first line')
+    Play(20)
+    Check(S.rollTarget>1 and S.rollTop==S.rollTarget,'...gliding on to keep the line being read at the foot')
+    S.rollTop=S.rollTarget-.25; S:PlaceLines()
+    local first=math.floor(S.rollTop)
+    Check(math.abs(S.lines[first]:GetAlpha()-.25)<1e-6 and math.abs(S.lines[first+2]:GetAlpha()-.75)<1e-6
+        and S.lines[first+1]:GetAlpha()==1,'mid-glide the line leaving fades out and the one coming in fades in')
+    cfg.SubtitleScroll,cfg.Lines=before,lines
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+end
 print(string.format('PASS: %d checks using the real queue, both player layouts, captions, commands and quest adapter.',assertions))
