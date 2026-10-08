@@ -432,6 +432,18 @@ Skin:SetExpanded(true)
 Expect("...open, they do", Skin.drawer:IsShown(), true)
 Expect("its progress line is the subtitle's, with no strip under it",
     Skin.progress ~= nil and Skin.progress.track:GetParent() == Skin.content and Skin.footerDivider == nil, true)
+do
+    local open = env.Addon:Layout().CaptionsExpanded
+    Skin:SetExpanded(false)
+    local tall = Skin.frame:GetHeight()
+    env.Addon.db.profile.Transcript.SubtitleProgress = false
+    env.PlayerFrame:RefreshConfig()
+    Expect("Show Progress off, the bar goes and the window closes up, as the subtitle does",
+        tostring(Skin.progress.track:IsShown()) .. " " .. tostring(Skin.frame:GetHeight() < tall), "false true")
+    env.Addon.db.profile.Transcript.SubtitleProgress = true
+    env.PlayerFrame:RefreshConfig()
+    Skin:SetExpanded(open)
+end
 Skin.play.scripts.OnClick(Skin.play)
 Expect("Stop stops the line, its glyph turning to Replay", tostring(env.SoundQueue:IsPaused()) .. " " .. tostring(Skin.play.state),
     "true replay")
