@@ -28,15 +28,6 @@ end
 -- A page can be built again (an item reward resolving, QUEST_DETAIL firing twice).
 local HANDLERS = { "HandleQuestDetail", "HandleQuestProgress", "HandleQuestComplete",
     "HandleQuestGreeting", "HandleGossip" }
--- How many words of DialogueUI's text a caption word may skip to find its match: the NPC
--- name DialogueUI can put in front of the text, a hint, a word that differs.
-local LOOKAHEAD = 6
--- Below this share of the caption's words found, the window shows something else (an earlier
--- page, another NPC's gossip) and nothing is marked.
-local MIN_SHARE = 0.6
--- Gold reads on DialogueUI's dark theme but not on its tan parchment, where a deep red does.
-local ON_DARK = "|cffffd100"
-local ON_LIGHT = "|cff9c1a1a"
 local TICK = 0.05
 -- Spoken Quests reads a dialog a moment after DialogueUI draws it, so typed-out words the line
 -- will read stay blank for up to this long; shown whole until the voice began, they flashed.
@@ -139,7 +130,8 @@ function Bridge:Problem(feature)
         return L.OPT_DUI_NO_PLAYER
     elseif not Recognised() then
         return L.OPT_DUI_UNKNOWN
-    elseif (feature == "Captions" or feature == "AutoScroll") and not (Spoken.GetCaption and Spoken.SplitCaption) then
+    elseif (feature == "Captions" or feature == "AutoScroll")
+        and not (Spoken.GetCaption and Spoken.SplitCaption and Spoken.WordMarks) then
         return L.OPT_DUI_OLD_PLAYER
     elseif feature == "ShowPlayer" and not Spoken.SetPlayerHost then
         return L.OPT_DUI_OLD_PLAYER
@@ -150,154 +142,13 @@ end
 -- Matching the caption to the window
 --------------------------------------------------------------------------------
 
---- A word as compared: lower case, without ASCII punctuation. nil for all punctuation, or for
---- an escape sequence (a link, a colour): only DialogueUI's copy has those, and they must
---- never be split.
-function Bridge.Key(text)
-    if string.find(text, "|", 1, true) then
-        return nil
-    end
-    local key = string.gsub(string.lower(text), "%p", "")
-    if key == "" then
-        return nil
-    end
-    return key
-end
-
---- Mark the words inside a hyperlink (|H...|h[name]|h): the name's inner words carry no
---- escape of their own, and lighting one, or typing up to it, would split the link.
-function Bridge.MarkLinks(text, words)
-    local from = 1
-    while true do
-        local s, e = string.find(text, "|H.-|h.-|h", from)
-        if not s then
-            return words
-        end
-        for _, word in ipairs(words) do
-            if word.last >= s and word.first <= e then
-                word.inLink = true
-            end
-        end
-        from = e + 1
-    end
-end
-
---- Match the caption's words to the paragraphs' from paragraph `first` on. Each caption word
---- is looked for a few words past the last match; the first only within paragraph `first`.
---- Returns map[i] = { p = paragraph, w = word } for the words found, how many were found,
---- and how many could have been.
-function Bridge.AlignFrom(words, paragraphs, first)
-    local tokens = {}
-    local firstEnd = 0
-    for p = first, table.getn(paragraphs) do
-        for w, word in ipairs(paragraphs[p].words) do
-            table.insert(tokens, { p = p, w = w, key = not word.inLink and Bridge.Key(word.text) or nil })
-        end
-        if p == first then
-            firstEnd = table.getn(tokens)
-        end
-    end
-    local map, found, counted, nextToken = {}, 0, 0, 1
-    local total = table.getn(tokens)
-    for i, word in ipairs(words) do
-        local key = Bridge.Key(word.text)
-        if key then
-            counted = counted + 1
-            local last = math.min(total, found == 0 and firstEnd + LOOKAHEAD or nextToken + LOOKAHEAD)
-            for t = nextToken, last do
-                if tokens[t].key == key then
-                    map[i] = tokens[t]
-                    found = found + 1
-                    nextToken = t + 1
-                    break
-                end
-            end
-        end
-    end
-    return map, found, counted
-end
-
---- The best match over every starting paragraph, or nil when none is good enough. DialogueUI
---- can keep earlier gossip and a hint above the text, so the later start wins a tie. The
---- second value is the span of paragraphs matched, { first, last }: only those are typed out.
-function Bridge.Align(words, paragraphs)
-    local bestMap, bestFound, bestCounted = nil, 0, 0
-    for first = 1, table.getn(paragraphs) do
-        local map, found, counted = Bridge.AlignFrom(words, paragraphs, first)
-        if found > 0 and found >= bestFound then
-            bestMap, bestFound, bestCounted = map, found, counted
-        end
-    end
-    if not bestMap or bestFound < math.min(3, bestCounted) or bestFound < bestCounted * MIN_SHARE then
-        return nil
-    end
-    local span
-    for _, at in pairs(bestMap) do
-        if not span then
-            span = { first = at.p, last = at.p }
-        else
-            span.first, span.last = math.min(span.first, at.p), math.max(span.last, at.p)
-        end
-    end
-    return bestMap, span
-end
-
---- The pair to light for caption word `index`: that word, or the last one before it the
---- window has, and its neighbour in the same paragraph: the next word, or at a paragraph's
---- end the one before, as the captions keep the last pair lit at a page boundary.
-function Bridge.Pick(map, index)
-    if not index then
-        return nil
-    end
-    local lit = index
-    while lit > 0 and not map[lit] do
-        lit = lit - 1
-    end
-    if lit == 0 then
-        return nil
-    end
-    local at = map[lit]
-    local after, before = map[lit + 1], map[lit - 1]
-    if after and after.p == at.p then
-        return lit, lit + 1
-    elseif before and before.p == at.p then
-        return lit, lit - 1
-    end
-    return lit
-end
-
---- How far the text is typed out: the paragraph the voice is in and the last byte of it
---- shown, or nil for all of it (finished, or a clip with no length to time it by). A caption
---- word the window lacks types up to the last one before it that it has.
-function Bridge.Cut(caption, map, span, paragraphs)
-    if not caption.typewriter or not caption.progress or caption.progress >= 1 then
-        return nil
-    end
-    local index = caption.speaking and caption.activeWord or 0
-    while index > 0 and not map[index] do
-        index = index - 1
-    end
-    if index == 0 then
-        return span.first, 0
-    end
-    local at = map[index]
-    return at.p, paragraphs[at.p].words[at.w].last
-end
-
---- `text` with the words at `spans` (sorted by position) wrapped in `color`.
-function Bridge.Wrap(text, spans, color)
-    local parts, from = {}, 1
-    for _, span in ipairs(spans) do
-        table.insert(parts, string.sub(text, from, span.first - 1))
-        table.insert(parts, color .. string.sub(text, span.first, span.last) .. "|r")
-        from = span.last + 1
-    end
-    table.insert(parts, string.sub(text, from))
-    return table.concat(parts)
-end
-
-function Bridge.ColorFor(r, g, b)
-    return Utils:IsBright(r, g, b) and ON_DARK or ON_LIGHT
+-- Spoken's (UI/WordMarks.lua), shared with Spoken Books' book view: finding the caption's words in
+-- the window's paragraphs, the pair to light, how far to type. Nil from a player too old to have
+-- it, which Problem reports.
+local Marks = _G.Spoken and Spoken.WordMarks and Spoken:WordMarks()
+if Marks then
+    Bridge.Key, Bridge.MarkLinks, Bridge.AlignFrom, Bridge.Align = Marks.Key, Marks.MarkLinks, Marks.AlignFrom, Marks.Align
+    Bridge.Pick, Bridge.Cut, Bridge.Wrap, Bridge.ColorFor = Marks.Pick, Marks.Cut, Marks.Wrap, Marks.ColorFor
 end
 
 --------------------------------------------------------------------------------

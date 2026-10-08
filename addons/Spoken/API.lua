@@ -497,6 +497,14 @@ function Spoken:GetCaptionOptions()
     return cfg.HighlightWord and true or false, cfg.Typewriter and true or false
 end
 
+--- Finding the line being read in another window's text and marking it there, as the captions
+--- do (UI/WordMarks.lua): Align a caption's words to the window's paragraphs, Pick the pair to
+--- light, Cut how far to type, Want what a paragraph shows. Nil on the 1.12 client, which has no
+--- captions.
+function Spoken:WordMarks()
+    return rawget(SpokenEnv, "WordMarks")
+end
+
 --- Split text into words as the captions do (a Chinese character is a word), each with its
 --- bytes in text as first/last, so the caller can find GetCaption's word in its own copy of
 --- the line. Escape sequences are not removed.
