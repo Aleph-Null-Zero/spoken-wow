@@ -271,25 +271,30 @@ function Subtitle:Build()
     -- Hung from the background's foot, so the buttons follow it as it eases to a new size.
     self.controls:SetPoint("TOP", self.shadow, "BOTTOM", 0, -2)
 
-    self.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    -- The row over the words: the speaker's picture and name, the line's title, "(Stopped)" and
+    -- the waiting count. One frame, so Show Name and Title hides it whole (Subtitle:NameShown).
+    local row = CreateFrame("Frame", nil, frame)
+    row:SetAllPoints()
+    self.nameRow = row
+    self.title = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.title:SetJustifyH("LEFT")
     self.title:SetTextColor(1, .82, 0)
     self.title:SetShadowColor(0, 0, 0, 1)
     self.title:SetShadowOffset(1, -1)
-    self.dot = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.dot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.dot:SetTextColor(.62, .62, .62)
     self.dot:SetShadowColor(0, 0, 0, 1)
     self.dot:SetShadowOffset(1, -1)
     self.dot:SetText("•")
     -- Cut short with an ellipsis where the row would run too wide.
-    self.label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.label:SetJustifyH("LEFT")
     self.label:SetWordWrap(false)
     self.label:SetTextColor(.62, .62, .62)
     self.label:SetShadowColor(0, 0, 0, 1)
     self.label:SetShadowOffset(1, -1)
     -- No window shows the stop, so "(paused)" takes the label's place, fading across.
-    self.pausedLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.pausedLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.pausedLabel:SetJustifyH("LEFT")
     self.pausedLabel:SetTextColor(.62, .62, .62)
     self.pausedLabel:SetShadowColor(0, 0, 0, 1)
@@ -310,8 +315,8 @@ function Subtitle:Build()
         self.fillRoom, self.progressHeight, self.progressBroken = 0, 0, true
     end
 
-    self.moreDot = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    self.more = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.moreDot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.more = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     for _, part in ipairs({ self.moreDot, self.more }) do
         part:SetTextColor(.62, .62, .62)
         part:SetShadowColor(0, 0, 0, 1)
@@ -339,7 +344,7 @@ end
 
 function Subtitle:BuildPicture()
     local k = PICTURE / 90
-    local host = CreateFrame("Frame", nil, self.frame)
+    local host = CreateFrame("Frame", nil, self.nameRow)
     host:SetSize(PICTURE, PICTURE)
     local background = host:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
@@ -378,12 +383,20 @@ function Subtitle:ConfigurePicture(clip)
     self.badge:SetShown(texture ~= nil)
 end
 
+--- Whether the row over the words shows (Show Name and Title): off, the words stand alone, as a
+--- film's subtitles do.
+function Subtitle:NameShown()
+    return Config().SubtitleName ~= false
+end
+
 function Subtitle:RowHeight()
+    if not self:NameShown() then return 0 end
     return math.max(PICTURE, self.title:GetStringHeight() or 0)
 end
 
 --- The row's visible width, so it centres on what shows. The title is cut to keep it within WIDTH.
 function Subtitle:RowWidth(paused)
+    if not self:NameShown() then return 0 end
     local start = PICTURE + PICTURE_GAP + (self.title:GetStringWidth() or 0)
     -- The waiting count's room, taken first so a long title is cut rather than the count.
     local more = 0
@@ -472,7 +485,11 @@ end
 function Subtitle:Layout(text)
     self.measure:SetText("Ag")
     local lineHeight = self.measure:GetStringHeight()
+    local named = self:NameShown()
+    self.nameRow:SetShown(named)
     local titleHeight, widest = self:RowHeight(), self:RowWidth(self.shownPaused)
+    -- Without the row the words start at the top.
+    local titleGap = named and TITLE_GAP or 0
     self.rows = {}
     for index, wrapped in ipairs(self:Wrap(text)) do
         local width = self:Width(wrapped)
@@ -482,7 +499,7 @@ function Subtitle:Layout(text)
         line:SetWidth(width + 2)
         line:ClearAllPoints()
         line:SetPoint("TOP", self.frame, "TOP", 0,
-            -(TOP_PAD + titleHeight + TITLE_GAP + (index - 1) * (lineHeight + LINE_GAP)))
+            -(TOP_PAD + titleHeight + titleGap + (index - 1) * (lineHeight + LINE_GAP)))
         line:SetText("")
         line:Show()
     end
@@ -490,12 +507,12 @@ function Subtitle:Layout(text)
         self.lines[index]:SetText("")
         self.lines[index]:Hide()
     end
-    local wordsBottom = TOP_PAD + titleHeight + TITLE_GAP + #self.rows * (lineHeight + LINE_GAP) - LINE_GAP
+    local wordsBottom = TOP_PAD + titleHeight + titleGap + #self.rows * (lineHeight + LINE_GAP) - LINE_GAP
     self.progressShown = self:ProgressWanted()
     for _, part in ipairs({ self.track, self.fill, self.spark }) do part:SetShown(self.progressShown) end
     -- As far under the words as the words are under the name: the name sits in the middle of the
     -- picture's height, so its gap is the row's spare half and TITLE_GAP.
-    local gap = TITLE_GAP + math.floor((titleHeight - (self.title:GetStringHeight() or 0)) / 2)
+    local gap = TITLE_GAP + (named and math.floor((titleHeight - (self.title:GetStringHeight() or 0)) / 2) or 0)
     self.progressGap = gap
     if self.progressShown then wordsBottom = wordsBottom + gap + self.progressHeight end
     self.rowsWidest, self.rowsHeight = widest, wordsBottom + BOTTOM_PAD

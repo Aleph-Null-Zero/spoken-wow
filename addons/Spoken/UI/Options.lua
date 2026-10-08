@@ -383,16 +383,21 @@ local function Build(canvas)
         ForSubtitles(layout:Slider(L.TRANSCRIPT_SHADOW, 0, 1, 0.05,
             function() return transcript().SubtitleShadow end,
             function(v) transcript().SubtitleShadow = v end, refreshSubtitle, nil, L.TRANSCRIPT_SHADOW_TIP))
+        -- The row over the words, which a player wanting a film's subtitles turns off (issue #288).
+        Only(layout:Checkbox(L.OPT_SUBTITLE_NAME, L.OPT_SUBTITLE_NAME_TIP,
+            function() return transcript().SubtitleName ~= false end,
+            function(v) transcript().SubtitleName = v end, refreshSubtitle), Subtitles)
     end
     if captions then
         ForSubtitles(layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, refreshSubtitle))
     end
-    -- Hiding the portrait and hiding a button are one kind of choice, so they sit together.
+    -- Hiding the portrait and hiding a button are one kind of choice, so they sit together. Not
+    -- for the DialogueUI window, whose header has the face's socket built in.
     Only(layout:Checkbox(L.OPT_HIDE_PORTRAIT, L.OPT_HIDE_PORTRAIT_TIP,
         function() return cfg().HidePortrait end, function(v) cfg().HidePortrait = v end, refresh),
-        InWindow)
+        function() return InWindow() and not DUI() end)
     -- The small window's metal and every round button's ring: offered whatever the style.
     if Version.IsCamelot then
         layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
