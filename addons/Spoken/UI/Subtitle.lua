@@ -397,7 +397,9 @@ function Subtitle:RowWidth(paused)
         self.label:SetWidth(math.max(1, label))
         return start + lead + (paused and (self.pausedLabel:GetStringWidth() or 0) or label) + more
     end
-    return start + (paused and LABEL_GAP + (self.pausedLabel:GetStringWidth() or 0) or 0) + more
+    -- With no label, Stopped follows a dot of its own, as the count does.
+    local dot = LABEL_GAP + (self.dot:GetStringWidth() or 0) + LABEL_GAP
+    return start + (paused and dot + (self.pausedLabel:GetStringWidth() or 0) or 0) + more
 end
 
 function Subtitle:PlaceRow(left)
@@ -412,7 +414,7 @@ function Subtitle:PlaceRow(left)
     self.label:ClearAllPoints()
     self.label:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
     self.pausedLabel:ClearAllPoints()
-    self.pausedLabel:SetPoint("LEFT", self.labelText and self.dot or self.title, "RIGHT", LABEL_GAP, 0)
+    self.pausedLabel:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
     local last = self.shownPaused and self.pausedLabel or (self.labelText and self.label or self.title)
     local shown = (self.waiting or 0) > 0
     self.moreDot:SetShown(shown)
@@ -578,7 +580,8 @@ function Subtitle:Prepare(clip, text)
     self:SetWaiting(self:Waiting())
     self.title:SetText(title)
     self.label:SetText(label or "")
-    self.dot:SetShown(label ~= nil)
+    -- With no label the dot is Stopped's, fading with it.
+    self.dot:SetAlpha(label and 1 or self.pausedAlpha or 0)
     self:ConfigurePicture(clip)
     -- A clip with no usable length still pages and types, at LoreTeller's reading pace.
     local duration = tonumber(clip.length)
@@ -943,6 +946,7 @@ function Subtitle:Animate(elapsed)
             or math.max(0, self.pausedAlpha - step)
         self.pausedLabel:SetAlpha(self.pausedAlpha)
         self.label:SetAlpha(1 - self.pausedAlpha)
+        if not self.labelText then self.dot:SetAlpha(self.pausedAlpha) end
     end
     if self.rowWant and self.rowLeft and self.rowLeft ~= self.rowWant then
         local k = math.min(1, elapsed * SIZE_EASE)

@@ -43,7 +43,8 @@ local LINE_IN, SIZE_EASE = .28, 10
 -- moment after), and, fading out, deaf to the pointer for ARM_FRAMES frames so a click's pressed
 -- and lit states have settled. Never waiting longer than ARM_MOST.
 local STILL, ARM_FRAMES, ARM_MOST = 0.1, 2, 0.5
--- The waiting count after the title: this far after it, fading in over COUNT_IN as a line is added.
+-- What follows the title, "• (Stopped)" and the waiting count "• +N": this far after it, fading
+-- over COUNT_IN, Stopped in and out as the line stops and plays, the count in as a line is added.
 local COUNT_GAP, COUNT_IN = 6, .25
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
@@ -198,7 +199,11 @@ function Skin:Initialize()
     self.title.text = Font(self.title, 12, 1, 1, 1)
     self.title.text:SetPoint("TOPLEFT")
     self.title.text:SetPoint("BOTTOMRIGHT")
-    -- The lines waiting, after the title: its own text, so it fades in as one is added.
+    -- Stopped and the lines waiting, after the title: each its own text, so each fades by itself.
+    self.stopped = Font(self.title, 12, 1, 1, 1)
+    self.stopped:SetText(format("• (%s)", L.SUBTITLE_STOPPED))
+    self.stopped:Hide()
+    self.stoppedAlpha = 0
     self.count = Font(self.title, 12, 1, 1, 1)
     self.count:Hide()
 
@@ -511,6 +516,7 @@ function Skin:Dress()
     Paint(self.name, fonts.subtitle, fonts.subtitleSize, colors.title)
     Paint(self.title.text, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.title)
     Paint(self.count, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
+    Paint(self.stopped, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
     self.title.color = colors.title
     Paint(self.queueNote, fonts.paragraph, math.max(8, body - 2), colors.disabled)
     for _, row in ipairs(self.rows) do
@@ -627,14 +633,9 @@ function Skin:UpdateControls(relayout)
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
     -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
     -- first, a fight), which the waiting lines' rows still say.
-    local label = Label(self.clip)
-    local dim = self.colors and self.colors.disabled
-    local function Dim(text)
-        return format("  |cff%02x%02x%02x%s|r", Round(dim[1] * 255), Round(dim[2] * 255), Round(dim[3] * 255), text)
-    end
+    self.title.text:SetText(Label(self.clip))
     -- Stopped, said after its name, as the subtitle does.
-    if paused and dim then label = label .. Dim(format("(%s)", L.SUBTITLE_STOPPED)) end
-    self.title.text:SetText(label)
+    if paused ~= (self.shownStopped or false) then self.shownStopped = paused end
     self:Count(Waiting())
     local pausable = SoundQueue:CanBePaused()
     for _, button in ipairs(self.buttons) do
@@ -811,7 +812,10 @@ function Skin:Buffer()
     if not frame.SetIsFrameBuffer then return false end
     -- Its own small animations finished first.
     self.lineFade, self.countFade = nil, nil
-    if self.count then self.count:SetAlpha(1) end
+    if self.count then
+        self.stoppedAlpha = self.shownStopped and 1 or 0
+        self:Count(self.counted or 0)
+    end
     if self.heightWant then frame:SetHeight(self.heightWant); self.heightWant = nil end
     self:Deafen()
     if not SwitchHidden(frame, true) then
@@ -910,32 +914,43 @@ function Skin:StartFade()
     self.fadeFrom, self.fadeTime = self.level or 0, 0
 end
 
---- The lines waiting behind this one, counted after the title as the subtitle counts them. One
---- more fades the count in; the title is cut short, not the count.
+--- After the title, as the subtitle has them: "• (Stopped)" while the line is stopped, and the
+--- lines waiting behind it, "• +N". One more fades the count in; Stopped fades in and out, and
+--- keeps its room until it has faded. The title is cut short, not these.
 function Skin:Count(waiting)
-    local count = self.count
+    local count, stopped = self.count, self.stopped
     if waiting ~= self.counted then
         if waiting > (self.counted or 0) then self.countFade = 0 end
         self.counted = waiting
         count:SetText(waiting > 0 and "• +" .. waiting or "")
     end
-    local shown = waiting > 0
-    count:SetShown(shown)
-    local room = shown and (count:GetStringWidth() or 0) + COUNT_GAP or 0
+    local tail = {}
+    local stoppedShown = self.shownStopped or self.stoppedAlpha > 0
+    stopped:SetShown(stoppedShown)
+    if stoppedShown then table.insert(tail, stopped) end
+    count:SetShown(waiting > 0)
+    if waiting > 0 then table.insert(tail, count) end
+    local room = 0
+    for _, part in ipairs(tail) do room = room + (part:GetStringWidth() or 0) + COUNT_GAP end
     local text = self.title.text
     text:ClearAllPoints()
     text:SetPoint("TOPLEFT")
     text:SetPoint("BOTTOMRIGHT", -room, 0)
-    if not shown then return end
-    local width = math.min(text:GetStringWidth() or 0, math.max(0, (self.title:GetWidth() or 0) - room))
-    count:ClearAllPoints()
-    count:SetPoint("LEFT", text, "LEFT", width + COUNT_GAP, 0)
+    if #tail == 0 then return end
+    local x = math.min(text:GetStringWidth() or 0, math.max(0, (self.title:GetWidth() or 0) - room))
+    for _, part in ipairs(tail) do
+        part:ClearAllPoints()
+        part:SetPoint("LEFT", text, "LEFT", x + COUNT_GAP, 0)
+        x = x + COUNT_GAP + (part:GetStringWidth() or 0)
+    end
     self:PaintCount()
 end
 
+local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
+
 function Skin:PaintCount()
-    local t = self.countFade and Clamp(self.countFade / COUNT_IN, 0, 1) or 1
-    self.count:SetAlpha(1 - (1 - t) * (1 - t))
+    self.count:SetAlpha(EaseOut(self.countFade and Clamp(self.countFade / COUNT_IN, 0, 1) or 1))
+    self.stopped:SetAlpha(EaseOut(self.stoppedAlpha))
 end
 
 function Skin:Tick(elapsed)
@@ -958,6 +973,15 @@ function Skin:Tick(elapsed)
         self.countFade = self.countFade + elapsed
         self:PaintCount()
         if self.countFade >= COUNT_IN then self.countFade = nil end
+    end
+    local stoppedWant = self.shownStopped and 1 or 0
+    if self.stopped and self.stoppedAlpha ~= stoppedWant then
+        local step = elapsed / COUNT_IN
+        self.stoppedAlpha = stoppedWant > self.stoppedAlpha and math.min(1, self.stoppedAlpha + step)
+            or math.max(0, self.stoppedAlpha - step)
+        self:PaintCount()
+        -- Faded out: its room given back.
+        if self.stoppedAlpha == 0 then self:Count(self.counted or 0) end
     end
     if self.lineFade then
         self.lineFade = self.lineFade + elapsed
