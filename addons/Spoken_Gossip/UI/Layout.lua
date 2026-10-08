@@ -16,7 +16,7 @@
 -- they are built and placed by Reflow, top to bottom. Placing them all in one pass is what lets
 -- a row be hidden (ShowWhen) and everything under it close up, rather than leaving a hole.
 
-local VERSION = 61
+local VERSION = 62
 
 -- LibStub's contract, for LibStub's reason: several addons load this file and the newest
 -- copy must win, whichever of them the client happens to load last.
@@ -1334,11 +1334,10 @@ function Layout:Dropdown(label, tooltip, values, read, write, apply, describe)
 end
 
 --- A button that belongs to the section just begun rather than to a row: as wide as its label,
---- at the end of the section's title line, as the game's header has its Defaults button. In a
---- centred window, where the title sits across the middle, it goes under the title instead, as far
---- from it as from the rows under it. Its text may change: Layout.FitButton sizes it again.
+--- at the end of the section's title line, as the game's header has its Defaults button, in a
+--- centred window too, where the title sits across the middle. Its text may change:
+--- Layout.FitButton sizes it again.
 local HEADING_LINE = 17      -- GameFontHighlightLarge's line
-local HEADING_BUTTON_GAP = 12
 function Layout:HeadingButton(label, onClick, tooltip)
     local section = self.current
     local parent, layout = self.parent, self
@@ -1348,23 +1347,15 @@ function Layout:HeadingButton(label, onClick, tooltip)
     Above(button, parent)
     Tooltip(button, label, tooltip)
     self:Index(button, label, tooltip)
-    if self.centred then
-        section.band = SECTION_TITLE_Y + HEADING_LINE + 2 * HEADING_BUTTON_GAP + BUTTON_HEIGHT - ROW_GAP
-    end
     local place, hide = section.place, section.hide
     section.place = function(top)
         place(top)
         button:Show()
         button:ClearAllPoints()
-        if layout.centred then
-            button:SetPoint("TOP", parent, "TOPLEFT", math.floor(layout.left + layout:Width() / 2),
-                top - SECTION_TITLE_Y - HEADING_LINE - HEADING_BUTTON_GAP)
-        else
-            -- Its middle on the title's, its right where the boxes' is.
-            local _, right = layout:BoxSpan()
-            button:SetPoint("TOPRIGHT", parent, "TOPLEFT", right,
-                top - SECTION_TITLE_Y - math.floor((HEADING_LINE - BUTTON_HEIGHT) / 2))
-        end
+        -- Its middle on the title's, its right where the boxes' is.
+        local _, right = layout:BoxSpan()
+        button:SetPoint("TOPRIGHT", parent, "TOPLEFT", right,
+            top - SECTION_TITLE_Y - math.floor((HEADING_LINE - BUTTON_HEIGHT) / 2))
     end
     section.hide = function()
         hide()
