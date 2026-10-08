@@ -37,6 +37,9 @@ local PAPER_TOP, PAPER_LEFT = 122 / 256, 125 / 1024
 local FADE_IN, FADE_OUT = .28, .32
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
+-- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
+-- wide as the words up to PICTURE_MOST, PICTURE_GAP above them, the page's grain through it.
+local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA = 400, 10, 0.95
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
 -- Text Size's default, at which the words are DialogueUI's own size.
 local BASE_FONT_SIZE = 16
@@ -199,6 +202,16 @@ function Skin:Initialize()
     self.title.text:SetPoint("TOPLEFT")
     self.title.text:SetPoint("BOTTOMRIGHT")
 
+    self.picture = content:CreateTexture(nil, "ARTWORK")
+    self.picture:SetAlpha(PICTURE_ALPHA)
+    self.picture:Hide()
+    -- Its frayed edge, where the client has mask textures.
+    if content.CreateMaskTexture and self.picture.AddMaskTexture then
+        self.pictureMask = content:CreateMaskTexture()
+        self.pictureMask:SetAllPoints(self.picture)
+        self.picture:AddMaskTexture(self.pictureMask)
+    end
+
     self.drawer = CreateFrame("Frame", nil, content)
     self.drawer:EnableMouseWheel(true)
     self.drawer:SetScript("OnMouseWheel", function(_, delta)
@@ -339,6 +352,11 @@ function Skin:Layout()
     -- DialogueUI's gap under its header line, before the text.
     local textGap = Round(4 * 0.35 * fontSize)
     local headerHeight = stripHeight + textGap
+    -- A place's picture (Spoken Zones gives one with its line) between the header and the words.
+    local picture = self.clip and self.clip.present and self.clip.present.picture
+    local pictureWidth = picture and math.min(inner, PICTURE_MOST) or 0
+    local pictureHeight = Round(pictureWidth / 2)
+    local wordsTop = headerHeight + (picture and pictureHeight + PICTURE_GAP or 0)
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
     local footerHeight = self.progress.height + 6 + math.max(0, textGap - lineGap)
@@ -348,7 +366,7 @@ function Skin:Layout()
     local queueHeight = shownRows * ROW_HEIGHT + (shownRows > 0 and waiting > MAX_ROWS and 14 or 0)
     -- A panel too small for MIN_LINES grows to fit them, so the controls are never cut off.
     local height = self.sizing and Round(frame:GetHeight()) or Addon:Layout().DialogueUIHeight or Round(duiHeight)
-    local body = height - padTop - headerHeight - queueHeight - padBottom - footerHeight
+    local body = height - padTop - wordsTop - queueHeight - padBottom - footerHeight
     local lines = math.max(MIN_LINES, math.floor(body / lineHeight))
     local expanded = Expanded()
     if not expanded then
@@ -363,10 +381,10 @@ function Skin:Layout()
         end
     end
     local captionHeight = lines * lineHeight
-    height = math.max(height, padTop + headerHeight + captionHeight + queueHeight + padBottom + footerHeight)
+    height = math.max(height, padTop + wordsTop + captionHeight + queueHeight + padBottom + footerHeight)
     self.settledHeight = height
     frame:SetSize(width, self.settling and frame:GetHeight() or height)
-    local minHeight = padTop + headerHeight + MIN_LINES * lineHeight + queueHeight + padBottom + footerHeight
+    local minHeight = padTop + wordsTop + MIN_LINES * lineHeight + queueHeight + padBottom + footerHeight
     if frame.SetResizeBounds then
         if self.sizingWidth then
             frame:SetResizeBounds(minWidth, minHeight, maxWidth, 4000)
@@ -418,13 +436,24 @@ function Skin:Layout()
     self.controls:SetPoint("RIGHT", content, "TOPRIGHT", 0, -middle)
 
     -- The text takes DialogueUI's full column; the scrollbar sits in the margin beside it.
-    Transcript:Dock(content, content, "TOPLEFT", 0, -headerHeight, inner, captionHeight)
+    self.picture:SetShown(picture ~= nil)
+    if picture then
+        self.picture:SetTexture(picture.file)
+        if self.pictureMask then
+            self.pictureMask:SetTexture(picture.mask or [[Interface\Buttons\WHITE8X8]], "CLAMPTOBLACKADDITIVE",
+                "CLAMPTOBLACKADDITIVE")
+        end
+        self.picture:SetSize(pictureWidth, pictureHeight)
+        self.picture:ClearAllPoints()
+        self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -headerHeight)
+    end
+    Transcript:Dock(content, content, "TOPLEFT", 0, -wordsTop, inner, captionHeight)
     self.scrollbar:ClearAllPoints()
-    self.scrollbar:SetPoint("TOPLEFT", content, "TOPRIGHT", 4, -headerHeight)
+    self.scrollbar:SetPoint("TOPLEFT", content, "TOPRIGHT", 4, -wordsTop)
     self.scrollbar:SetHeight(captionHeight)
 
     self.drawer:ClearAllPoints()
-    self.drawer:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(headerHeight + captionHeight))
+    self.drawer:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(wordsTop + captionHeight))
     self.drawer:SetSize(inner, math.max(1, queueHeight))
 
     self.progress.track:ClearAllPoints()
@@ -825,7 +854,8 @@ function Skin:Update()
     -- The queue's length decides how much of the body the captions get, and the line's words
     -- how tall the panel is (Fit to the Words): a new line, or its words arriving late.
     local textLines = Transcript.clip == clip and Transcript.lines and #Transcript.lines or 0
-    local key = Waiting() .. ":" .. textLines
+    local picture = clip.present and clip.present.picture
+    local key = Waiting() .. ":" .. textLines .. ":" .. (picture and picture.file or "")
     if key ~= self.laidOutFor then
         self.laidOutFor = key
         self:Layout()

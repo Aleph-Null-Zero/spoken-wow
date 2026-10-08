@@ -552,6 +552,9 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 	end
 
 	local label = self:GetAudioLabel(mapID, areaKey)
+	-- The place's picture and its frayed edge, for a window that shows one over the words.
+	local picture, mask
+	if self.Picture then picture, mask = self:Picture(mapID, areaKey) end
 	local language = pack.language or "enUS"
 	local data = self.CaptionLore and self.CaptionLore[language]
 	local entries = data and (areaKey and data.subzones or data.zones)
@@ -574,6 +577,7 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 			transcript = entry and entry.full,
 			bullet = "zone",
 			portrait = self:Portrait(mapID),
+			picture = picture and { file = picture, mask = mask } or nil,
 			actions = ACTIONS,
 		},
 		-- Recorded when the clip starts rather than when it is queued, so that
