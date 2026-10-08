@@ -98,6 +98,7 @@ Defaults = {
             SubtitleShadow = 0.6,
             SubtitleProgress = true,
             SubtitleName = true,
+            SubtitleScroll = "page",
             SubtitleScale = 1,
             -- How many sentences the subtitle shows at once, 1 to 4; longer text turns pages.
             SubtitleSentences = 3,

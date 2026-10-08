@@ -430,13 +430,19 @@ local function Build(canvas)
         InWindowText(layout:Slider(L.TRANSCRIPT_SIZE, 12, 26, 1,
             function() return transcript().FontSize end,
             function(v) transcript().FontSize = v end, refreshTranscript, Layout.Number, L.TRANSCRIPT_SIZE_TIP))
-        -- How much shows at once: lines in a window, sentences in a subtitle.
-        InWindowText(layout:Slider(L.TRANSCRIPT_LINES, 1, 2, 1,
+        -- How much shows at once: lines in a window and in a subtitle that scrolls line by line,
+        -- sentences in one that turns pages.
+        local function Rolling() return transcript().SubtitleScroll == "line" end
+        local lines = layout:Slider(L.TRANSCRIPT_LINES, 1, 2, 1,
             function() return transcript().Lines end,
-            function(v) transcript().Lines = v end, refreshTranscript, Layout.Number, L.TRANSCRIPT_LINES_TIP))
-        ForSubtitles(layout:Slider(L.OPT_SUBTITLE_SENTENCES, 1, 4, 1,
+            function(v) transcript().Lines = v end, function() refreshTranscript(); refreshSubtitle() end,
+            Layout.Number, L.TRANSCRIPT_LINES_TIP)
+        Only(lines, function() return InWindow() or (Subtitles() and Rolling()) end)
+        Requires(lines, Words, L.REASON_WORDS)
+        Only(ForSubtitles(layout:Slider(L.OPT_SUBTITLE_SENTENCES, 1, 4, 1,
             function() return transcript().SubtitleSentences or 3 end,
-            function(v) transcript().SubtitleSentences = v end, refreshSubtitle, Layout.Number, L.OPT_SUBTITLE_SENTENCES_TIP))
+            function(v) transcript().SubtitleSentences = v end, refreshSubtitle, Layout.Number, L.OPT_SUBTITLE_SENTENCES_TIP)),
+            function() return not Rolling() end)
         local fit = DialogueUIOptions:FitRow(layout, ForDUI, refresh)
         if fit then Requires(fit, Words, L.REASON_WORDS) end
         local SCROLL_LABELS = { line = L.TRANSCRIPT_SCROLL_LINE, page = L.TRANSCRIPT_SCROLL_PAGE,
@@ -444,6 +450,12 @@ local function Build(canvas)
         InWindowText(layout:Dropdown(L.TRANSCRIPT_SCROLL, L.TRANSCRIPT_SCROLL_TIP, { "line", "page", "off" },
             function() return Transcript:ScrollMode() end,
             function(v) transcript().ScrollMode = v; Transcript.manualScroll = false end, refreshTranscript,
+            function(v) return SCROLL_LABELS[v] or v end))
+        -- The subtitle's own: line by line through a window of Lines Shown, or pages of whole
+        -- sentences. It cannot be scrolled by hand, so it has no Off.
+        ForSubtitles(layout:Dropdown(L.TRANSCRIPT_SCROLL, L.OPT_SUBTITLE_SCROLL_TIP, { "line", "page" },
+            function() return transcript().SubtitleScroll or "page" end,
+            function(v) transcript().SubtitleScroll = v end, function() refreshSubtitle(); Options:UpdateRows() end,
             function(v) return SCROLL_LABELS[v] or v end))
         -- The word being read lit. The subtitle lights it only while it shows its words whole:
         -- typed at their own pace, an estimated word timing would show every miss. With

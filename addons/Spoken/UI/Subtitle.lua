@@ -28,6 +28,8 @@ local SHADOW_REACH = 40
 local TEXTURES = [[Interface\AddOns\Spoken\Textures\]]
 -- A page fades out before the next fades in; the shadow eases to the new page's size.
 local PAGE_OUT, PAGE_IN = .18, .28
+-- Line by line, how fast the words glide up to the next line (Transcript's GLIDE).
+local GLIDE = 0.09
 local PAUSED_FADE = .25
 local PICTURE, PICTURE_GAP, LABEL_GAP = 36, 8, 6
 -- The progress line follows Spoken Subtitles' layout and spark, framed as the game frames a status
@@ -65,6 +67,11 @@ local function Characters(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return count
 end
+-- Auto-Scroll line by line: a window of Lines Shown lines the words glide up through, rather than
+-- pages of whole sentences.
+local function Rolling() return Config().SubtitleScroll == "line" end
+local function Shown() return math.max(1, tonumber(Config().Lines) or 2) end
+
 local function Words(text)
     local count = 0
     for _ in text:gmatch("%S+") do count = count + 1 end
@@ -342,6 +349,11 @@ function Subtitle:Build()
     self.moreDot:SetText("•")
     self.waiting = 0
 
+    -- The words' own frame, which clips them: a line gliding past its top or bottom edge is cut
+    -- there as it fades, not drawn over the name row or the progress line.
+    self.words = CreateFrame("Frame", nil, frame)
+    if self.words.SetClipsChildren then self.words:SetClipsChildren(true) end
+
     -- Unwrapped, so its width is the true width of a candidate line.
     self.measure = frame:CreateFontString(nil, "OVERLAY", "QuestFont")
     self.measure:SetWordWrap(false)
@@ -549,7 +561,7 @@ end
 function Subtitle:Line(index)
     local line = self.lines[index]
     if line then return line end
-    line = self.frame:CreateFontString(nil, "OVERLAY", "QuestFont")
+    line = self.words:CreateFontString(nil, "OVERLAY", "QuestFont")
     line:SetJustifyH("LEFT")
     line:SetJustifyV("TOP")
     line:SetWordWrap(false)
@@ -577,17 +589,25 @@ function Subtitle:Layout(text)
         self.rows[index] = { text = wrapped, count = Characters(wrapped) }
         local line = self:Line(index)
         line:SetWidth(width + 2)
-        line:ClearAllPoints()
-        line:SetPoint("TOP", self.frame, "TOP", 0,
-            -(TOP_PAD + titleHeight + titleGap + (index - 1) * (lineHeight + LINE_GAP)))
         line:SetText("")
-        line:Show()
     end
     for index = #self.rows + 1, #self.lines do
         self.lines[index]:SetText("")
         self.lines[index]:Hide()
     end
-    local wordsBottom = TOP_PAD + titleHeight + titleGap + #self.rows * (lineHeight + LINE_GAP) - LINE_GAP
+    -- Every row of the page, or line by line the window of Lines Shown that the words glide
+    -- through, from its first line.
+    self.shownRows = Rolling() and math.min(#self.rows, Shown()) or #self.rows
+    self.lineStep, self.wordsTop = lineHeight + LINE_GAP, TOP_PAD + titleHeight + titleGap
+    self.rollTop, self.rollTarget = 1, 1
+    local wordsHeight = self.shownRows * self.lineStep - LINE_GAP
+    -- A few pixels of room either side of the clip, for the letters' tops and tails.
+    self.words:ClearAllPoints()
+    self.words:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -(self.wordsTop - 4))
+    self.words:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", 0, -(self.wordsTop - 4))
+    self.words:SetHeight(wordsHeight + 8)
+    self:PlaceLines()
+    local wordsBottom = self.wordsTop + wordsHeight
     self.progressShown = self:ProgressWanted()
     for _, part in ipairs({ self.track, self.fill, self.spark }) do part:SetShown(self.progressShown) end
     -- As far under the words as the words are under the name: the name sits in the middle of the
@@ -606,6 +626,46 @@ function Subtitle:Layout(text)
         self.wordEnds[n], n = finish, n + 1
     end
     self.revealed = nil
+end
+
+--- The rows where the scroll has them. Line by line, the one leaving at the top fades out as it
+--- glides up and the one coming in under the window fades in, as the windows' captions do; the
+--- rest are hidden. Over that, the page's own fade (Animate).
+function Subtitle:PlaceLines()
+    local top = self.rollTop or 1
+    local first = math.floor(top)
+    local fraction = top - first
+    local shown, step, fade = self.shownRows or 0, self.lineStep or 0, self.lineAlpha or 1
+    for index, line in ipairs(self.lines) do
+        local row = index - first
+        local visible = self.rows and index <= #self.rows and row >= 0
+            and (row < shown or (row == shown and fraction > 0))
+        if visible then
+            line:ClearAllPoints()
+            line:SetPoint("TOP", self.frame, "TOP", 0, -(self.wordsTop + (row - fraction) * step))
+            line:SetAlpha(fade * (row == 0 and 1 - fraction or row == shown and fraction or 1))
+        end
+        line:SetShown(visible and true or false)
+    end
+end
+
+--- The row holding the `n`th character of the page (the rows' counts, as Reveal counts them).
+function Subtitle:RowOf(n)
+    local total = 0
+    for index, row in ipairs(self.rows or {}) do
+        total = total + row.count
+        if n < total then return index end
+    end
+    return math.max(1, #(self.rows or {}))
+end
+
+--- Line by line, the window's first line: the one that keeps the line being read (or typed) at
+--- its foot, and never past the last.
+function Subtitle:Follow(at)
+    if not Rolling() then return end
+    local rows, shown = #(self.rows or {}), self.shownRows or 1
+    local row = self:RowOf(math.max(0, at))
+    self.rollTarget = math.max(1, math.min(row - shown + 1, rows - shown + 1))
 end
 
 function Subtitle:Fit()
@@ -703,7 +763,7 @@ function Subtitle:Prepare(clip, text)
     local total = math.max(1, Characters(text))
     self.pages = {}
     local start = 0
-    for index, page in ipairs(self:Paginate(text)) do
+    for index, page in ipairs(Rolling() and { text } or self:Paginate(text)) do
         local count = Characters(page)
         local length = duration * count / total
         -- Never turned in under a second, however short the first half.
@@ -746,6 +806,7 @@ function Subtitle:Render()
     end
     local page = self.pages[index]
     if self.sample or not Config().Typewriter then
+        self:Follow((elapsed - page.start) / math.max(.5, page.length) * page.count)
         self:Reveal(page.count, self:LitWord(page, elapsed))
         return
     end
@@ -760,6 +821,7 @@ function Subtitle:Render()
     local rate = page.count / math.max(.5, page.length - .4) + 10
     local typed = math.floor(math.max(0, elapsed - math.max(page.start, self.turnedAt or 0)) * rate)
     if Config().TypewriterBy == "word" then typed = self:WholeWords(typed) end
+    self:Follow(typed - 1)
     self:Reveal(typed)
 end
 
@@ -1085,7 +1147,15 @@ function Subtitle:Animate(elapsed)
         if math.abs(self.rowLeft - self.rowWant) < .5 then self.rowLeft = self.rowWant end
         self:PlaceRow(self.rowLeft)
     end
-    for _, line in ipairs(self.lines) do line:SetAlpha(alpha) end
+    -- Line by line, the words glide up to the line being read.
+    local top, target = self.rollTop, self.rollTarget
+    if top and target and top ~= target then
+        local moved = top + (target - top) * (1 - math.exp(-elapsed / GLIDE))
+        if math.abs(target - moved) < 0.01 then moved = target end
+        self.rollTop = moved
+    end
+    self.lineAlpha = alpha
+    self:PlaceLines()
 
     local want, size = self.shadowWant, self.shadowSize
     if want and size and (size.w ~= want.w or size.h ~= want.h) then

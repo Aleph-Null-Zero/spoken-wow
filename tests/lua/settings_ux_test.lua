@@ -64,6 +64,18 @@ Expect("subtitles have Highlight Words, waiting while their words are typed out"
 words.Typewriter = false; Options:UpdateRows()
 Expect("...and live with them shown whole", lit.layoutReason, nil)
 words.Typewriter = true; Options:UpdateRows()
+-- The subtitle's Auto-Scroll: pages show Sentences at Once, line by line Lines Shown.
+local function ByTip(tip)
+    for _, entry in ipairs(home.entries) do if entry.tooltip == tip then return entry.frame end end
+end
+local scroll, sentences, linesRow = ByTip(L.OPT_SUBTITLE_SCROLL_TIP), Row(home, "Sentences at Once"), Row(home, "Lines Shown")
+words.SubtitleScroll = "page"; Options:UpdateRows()
+Expect("subtitles have their own Auto-Scroll, by pages showing Sentences at Once",
+    tostring(Shown(scroll)) .. " " .. tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)), "true true false")
+words.SubtitleScroll = "line"; Options:UpdateRows()
+Expect("...and line by line, Lines Shown in its place", tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)),
+    "false true")
+words.SubtitleScroll = "page"; Options:UpdateRows()
 
 ---------------------------------------------------------------- greyed out, and why
 -- A setting waiting on a switch beside it stays, greyed, saying which switch.
