@@ -515,6 +515,10 @@ local function BuildPanel(p)
 		Spoken:RegisterCallback("CONTRIBUTE_SETTINGS_CHANGED", function()
 			SpokenZones:RefreshLoreWindow()
 		end)
+		-- Nor does Hide Report Buttons.
+		Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
+			SpokenZones:RefreshLoreWindow()
+		end)
 	end
 
 	SpokenZones.window = p

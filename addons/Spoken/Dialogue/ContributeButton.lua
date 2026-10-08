@@ -333,12 +333,18 @@ function ContributeButton:Refresh()
         return
     end
 
-    -- DialogueUI's window: the corner is there on every page, Report or Contribute.
+    -- DialogueUI's window: the corner is there on every page, Report or Contribute, Report
+    -- unless Hide Report Buttons is on.
     local page = Utils:DialogueUIPage()
     if page then
         button:Hide()
         self.gossip = page == "GOSSIP_SHOW"
-        self:ShowOnDialogueUI(_G.DUIQuestFrame, Contribute:HasGap())
+        local missing = Contribute:HasGap()
+        if missing or not (_G.Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()) then
+            self:ShowOnDialogueUI(_G.DUIQuestFrame, missing)
+        else
+            self:HideOnDialogueUI()
+        end
         return
     end
     self:HideOnDialogueUI()
@@ -427,6 +433,9 @@ function ContributeButton:Setup()
     -- event, so the button hears about it from the player instead.
     if _G.Spoken and Spoken.RegisterCallback then
         Spoken:RegisterCallback("CONTRIBUTE_SETTINGS_CHANGED", function()
+            ContributeButton:Refresh()
+        end)
+        Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
             ContributeButton:Refresh()
         end)
     end

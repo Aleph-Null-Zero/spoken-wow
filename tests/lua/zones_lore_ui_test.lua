@@ -113,6 +113,19 @@ Z:ToggleLoreWindow()
 Expect("opening it lands on where the player stands", page.title.text, "Durotar")
 Expect("...the story in the spellbook's ink", page.body.ink and page.body.ink[1], 0.24)
 Expect("...with Play and Report for it", page.play.mapID == 1411 and page.report.mapID == 1411, true)
+-- Hide Report Buttons is Spoken's; here, a Spoken that answers it, and the redraw its
+-- REPORT_SETTINGS_CHANGED runs.
+local spoken, reportsHidden = _G.Spoken, true
+_G.Spoken = setmetatable({ AreReportButtonsHidden = function() return reportsHidden end }, { __index = spoken })
+Z:RefreshLoreWindow()
+Expect("Hide Report Buttons, in Spoken's settings, takes Report off the Compendium's page",
+    page.report:IsShown(), false)
+Expect("...Play taking its corner", page.play.anchor.point .. " " .. tostring(page.play.anchor.relativeTo == page.frame),
+    "TOPRIGHT true")
+reportsHidden = false
+Z:RefreshLoreWindow()
+Expect("...and gives it back when it is off", page.report:IsShown(), true)
+_G.Spoken = spoken
 Expect("...and the zone's picture above the story", page.body.picture:IsShown() and page.body.picture:GetTexture(), "Pictures/zone-1411")
 Expect("...its edge frayed by its mask", page.body.pictureMask:GetTexture(), "Pictures/Mask2")
 Expect("...a little see-through, so the parchment shows in it", page.body.picture:GetAlpha(), 0.95)

@@ -633,6 +633,12 @@ Expect("...on the title line, rightmost in Spoken's row after Play and Skip", ic
     "RIGHT true true")
 Expect("...as large as they are", icon:GetWidth(), controls.play:GetWidth())
 Expect("...and as strong", icon and icon:GetAlpha(), 1)
+env.Addon.db.profile.Frame.HiddenActions.report = true
+_G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+Expect("Hide Report Buttons, in Spoken's settings, takes it away at once", icon:IsShown(), false)
+env.Addon.db.profile.Frame.HiddenActions.report = nil
+_G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+Expect("...and gives it back when it is off", icon:IsShown(), true)
 Expect("...with nothing to contribute beside it", link and link:IsShown(), false)
 Expect("...and not the game's panel button", panelButton:IsShown(), false)
 Fire(icon, "OnEnter")

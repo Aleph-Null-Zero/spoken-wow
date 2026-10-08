@@ -364,6 +364,10 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                     Spoken:RegisterCallback("AUDIO_CHANGED", function()
                         QuestOverlayUI:SetPlayButtonState(playButton)
                     end)
+                    -- Hide Report Buttons, in Spoken's settings, fires no game event.
+                    Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
+                        QuestOverlayUI:UpdateDetailsPlayButton()
+                    end)
                 end
 
                 -- With no line to play, the pair gives way to Contribute, in words: no glyph
@@ -457,7 +461,7 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             if DataModules:PrepareSound({ event = Enums.SoundEvent.QuestAccept, questID = questID }) then
                 playButton:Enable()
                 playButton:Show()
-                report:Show()
+                report:SetShown(not (Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()))
             elseif contribute and contribute.CanOfferFromLog and contribute:CanOfferFromLog() then
                 playButton:Hide()
                 report:Hide()

@@ -508,11 +508,13 @@ end
 Expect("the scale slider is a slider", scale ~= nil, true)
 Expect("...with a height, or it draws nothing", scale and scale.height, 16)
 Expect("...and an orientation", scale and scale:GetOrientation(), "HORIZONTAL")
-Expect("an optional action is named on the panel", labels["Hide Report Button"], true)
--- Hiding the portrait and hiding one button are the same kind of choice, so they sit together.
+-- Report shows on the quest log, DialogueUI's window and the lore pages as well as on the
+-- windows, so its switch is a general one, beside Contribute's, not among the window's.
+Expect("Report has one switch for every window", labels["Hide Report Buttons"], true)
+Expect("...not among the window's own settings", labels["Hide Report Button"], nil)
 local order = table.concat(PanelOrder("11509"), "|")
-Expect("...beside hiding the portrait", string.find(order,
-    "Hide Portrait|Hide Report Button", 1, true) ~= nil, true)
+Expect("...beside hiding the Contribute buttons", string.find(order,
+    "Hide Contribute Buttons|Hide Report Buttons", 1, true) ~= nil, true)
 -- Nothing on screen at all is a way of showing lines, chosen with the others, not a switch
 -- among the window's settings.
 Expect("voice only is still one of the ways to show lines", _G.SpokenEnv.Options:Styles()[4], "none")
@@ -529,6 +531,7 @@ Expect("a current client is offered nothing about the music channel",
 -- stop a sound any other way. Those settings existed from the start and had no row at
 -- all: the only way to change one was to edit the saved variables by hand.
 labels = PanelLabels("3.3.5")
+Expect("a legacy client, with no Contribute section, is offered Hide Report Buttons too", labels["Hide Report Buttons"], true)
 Expect("a legacy client can reach the music channel", labels["Play through the music channel"], true)
 Expect("...its volume", labels["Speech volume"], true)
 Expect("...its fade, as a duration and not a percentage", labels["0.5s"], true)
