@@ -43,6 +43,8 @@ local LINE_IN, SIZE_EASE = .28, 10
 -- moment after), and, fading out, deaf to the pointer for ARM_FRAMES frames so a click's pressed
 -- and lit states have settled. Never waiting longer than ARM_MOST.
 local STILL, ARM_FRAMES, ARM_MOST = 0.1, 2, 0.5
+-- The waiting count after the title: this far after it, fading in over COUNT_IN as a line is added.
+local COUNT_GAP, COUNT_IN = 6, .25
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
@@ -193,6 +195,9 @@ function Skin:Initialize()
     self.title.text = Font(self.title, 12, 1, 1, 1)
     self.title.text:SetPoint("TOPLEFT")
     self.title.text:SetPoint("BOTTOMRIGHT")
+    -- The lines waiting, after the title: its own text, so it fades in as one is added.
+    self.count = Font(self.title, 12, 1, 1, 1)
+    self.count:Hide()
 
     self.picture = content:CreateTexture(nil, "ARTWORK")
     self.picture:SetAlpha(PICTURE_ALPHA)
@@ -502,6 +507,7 @@ function Skin:Dress()
     end
     Paint(self.name, fonts.subtitle, fonts.subtitleSize, colors.title)
     Paint(self.title.text, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.title)
+    Paint(self.count, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
     self.title.color = colors.title
     Paint(self.queueNote, fonts.paragraph, math.max(8, body - 2), colors.disabled)
     for _, row in ipairs(self.rows) do
@@ -628,11 +634,10 @@ function Skin:UpdateControls(relayout)
     local function Dim(text)
         return format("  |cff%02x%02x%02x%s|r", Round(dim[1] * 255), Round(dim[2] * 255), Round(dim[3] * 255), text)
     end
-    -- Stopped, said after its name, and the lines waiting behind it counted, as the subtitle does.
+    -- Stopped, said after its name, as the subtitle does.
     if paused and dim then label = label .. Dim(format("(%s)", L.SUBTITLE_STOPPED)) end
-    local waiting = Waiting()
-    if waiting > 0 and dim then label = label .. Dim("• +" .. waiting) end
     self.title.text:SetText(label)
+    self:Count(Waiting())
     local pausable = SoundQueue:CanBePaused()
     for _, button in ipairs(self.buttons) do
         button:SetAlpha(pausable and 1 or .4)
@@ -907,6 +912,34 @@ function Skin:StartFade()
     self.fadeFrom, self.fadeTime = self.level or 0, 0
 end
 
+--- The lines waiting behind this one, counted after the title as the subtitle counts them. One
+--- more fades the count in; the title is cut short, not the count.
+function Skin:Count(waiting)
+    local count = self.count
+    if waiting ~= self.counted then
+        if waiting > (self.counted or 0) then self.countFade = 0 end
+        self.counted = waiting
+        count:SetText(waiting > 0 and "• +" .. waiting or "")
+    end
+    local shown = waiting > 0
+    count:SetShown(shown)
+    local room = shown and (count:GetStringWidth() or 0) + COUNT_GAP or 0
+    local text = self.title.text
+    text:ClearAllPoints()
+    text:SetPoint("TOPLEFT")
+    text:SetPoint("BOTTOMRIGHT", -room, 0)
+    if not shown then return end
+    local width = math.min(text:GetStringWidth() or 0, math.max(0, (self.title:GetWidth() or 0) - room))
+    count:ClearAllPoints()
+    count:SetPoint("LEFT", text, "LEFT", width + COUNT_GAP, 0)
+    self:PaintCount()
+end
+
+function Skin:PaintCount()
+    local t = self.countFade and Clamp(self.countFade / COUNT_IN, 0, 1) or 1
+    self.count:SetAlpha(1 - (1 - t) * (1 - t))
+end
+
 function Skin:Tick(elapsed)
     if self.settling then self:SettleStep(elapsed) end
     self.stillFor = (self.stillFor or 0) + elapsed
@@ -922,6 +955,11 @@ function Skin:Tick(elapsed)
             self.arming = nil
             self:StartFade()
         end
+    end
+    if self.countFade then
+        self.countFade = self.countFade + elapsed
+        self:PaintCount()
+        if self.countFade >= COUNT_IN then self.countFade = nil end
     end
     if self.lineFade then
         self.lineFade = self.lineFade + elapsed
@@ -1114,6 +1152,7 @@ function Skin:Update()
         -- Following another line on screen: its words fade in and the window eases to it.
         if self.clip and self.wanted and self.frame:IsShown() then
             self.easeNext, self.lineFade = true, 0
+            self:PaintContent()
         end
         self.clip, self.seconds, self.offset = clip, 0, 0
     end
