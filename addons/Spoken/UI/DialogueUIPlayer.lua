@@ -84,7 +84,7 @@ function Skin:HasClip()
     return self:IsEnabled() and self.wanted and SoundQueue:GetCurrentSound() ~= nil
 end
 
--- No control shows the wheel sizing (Skin:Wheel), so the face and resize tooltips mention it.
+-- No control shows the wheel sizing (Skin:Wheel), so the resize handle's tooltip mentions it.
 local function WheelHint()
     GameTooltip:AddLine(L.DUI_WHEEL_HINT, 1, .82, 0, true)
 end
@@ -165,34 +165,6 @@ function Skin:Initialize()
     self.viewport = CreateFrame("Frame", nil, host)
     self.viewport:SetAllPoints()
     self.viewport:SetClipsChildren(true)
-    local pause = CreateFrame("Button", nil, host)
-    self.pause = pause
-    pause:SetAllPoints()
-    pause:SetFrameLevel(host:GetFrameLevel() + 3)
-    pause.wash = pause:CreateTexture(nil, "BACKGROUND")
-    pause.wash:SetAllPoints()
-    -- The round mask as a disc, so the wash stops at the face's edge.
-    pause.wash:SetTexture([[Interface\AddOns\Spoken\Textures\MinimalPortraitMask]])
-    pause.wash:SetVertexColor(0, 0, 0, .45)
-    pause:SetNormalTexture([[Interface\AddOns\Spoken\Textures\PortraitFrameAtlas]])
-    local glyph = pause:GetNormalTexture()
-    glyph:ClearAllPoints()
-    glyph:SetPoint("CENTER")
-    glyph:SetSize(18, 18)
-    pause:SetScript("OnClick", function()
-        if self:HasClip() and SoundQueue:CanBePaused() then SoundQueue:TogglePauseQueue() end
-    end)
-    pause:SetScript("OnEnter", function()
-        self:UpdateControls()
-        if not self:HasClip() then return end
-        GameTooltip:SetOwner(pause, "ANCHOR_RIGHT")
-        local stopped = SoundQueue:IsPaused()
-        GameTooltip:SetText(stopped and L.REPLAY or L.STOP)
-        GameTooltip:AddLine(stopped and L.REPLAY_TOOLTIP or L.STOP_TOOLTIP, 1, 1, 1, true)
-        WheelHint()
-        GameTooltip:Show()
-    end)
-    pause:SetScript("OnLeave", function() self:UpdateControls(); self:HideTooltip() end)
     self.name = Font(content, 18, 1, 1, 1)
     content.name = self.name -- Actions' header anchor contract.
     self.name:SetHeight(20)
@@ -591,9 +563,6 @@ function Skin:UpdateControls(relayout)
     if not self.clip then return end
     local paused, playing = SoundQueue:IsPaused(), SoundQueue:IsPlaying()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
-    Actions.Glyph(self.pause:GetNormalTexture(), Actions.HeadState())
-    self.pause:GetNormalTexture():SetAlpha((paused or MouseIsOver(self.pause)) and .9 or 0)
-    self.pause.wash:SetShown(paused and not playing)
     -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
     -- first, a fight), which the waiting lines' rows still say.
     local label = Label(self.clip)
