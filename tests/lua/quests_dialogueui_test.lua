@@ -53,6 +53,7 @@ header:SetSize(358, 51)
 header.GetRight, header.GetTop, header.GetBottom = function() return 380 end, function() return 572 end,
     function() return 521 end
 header.Title = stub.Widget("FontString")
+header.Title:SetHeight(20)
 DUI.FrontFrame.Header = header
 DUI.WarbandCompleteAlert = stub.Widget("Frame")
 DUI.WarbandCompleteAlert:Hide()
@@ -398,19 +399,19 @@ local function Anchor(f)
         .. " " .. a.x .. " " .. a.y
 end
 -- At the top right, beside a close button, as DialogueUI's book view has them: the close button 26
--- in of the book art's pixels (0.5333 each at DialogueUI's size), its middle halfway between the
--- window's top (600) and its header's (572).
+-- in of the book art's pixels (0.5333 each at DialogueUI's size), its middle 36 of UIParent's units
+-- and half a button under the window's top.
+local lineScale = UIParent:GetEffectiveScale() / DUI:GetEffectiveScale()
+local middle = -(36 + 24 / 2) * lineScale
 local _, _, _, closeButton = Bridge:PlayButtonState()
 Expect("...beside the book view's close button at the window's top right, 64 across of the book art",
     closeButton ~= nil and closeButton:IsShown() and Anchor(closeButton) .. " " .. closeButton.width,
-    "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " -14 " .. (64 * 0.53333))
-Expect("...halfway between the window's top and its header's, as far from the title as from the edge",
-    closeButton.anchor.y, (572 - 600) / 2)
--- 36 of UIParent's units over the line and under it, as on the book view: DialogueUI's header and
--- text moved down for it, the text's height shorter by as much.
-local lineScale = UIParent:GetEffectiveScale() / DUI:GetEffectiveScale()
-local shift = (2 * 36 + 24) * lineScale - 28
-Expect("DialogueUI's header moved down to leave 36 over and under the controls' line, as on the book view",
+    "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " " .. middle .. " " .. (64 * 0.53333))
+-- 36 under the line to the quest title's top, as on the book view, not to the portrait's: the title
+-- (20 tall) sits 2 over the middle of DialogueUI's 51-tall header, so the header goes 13.5 higher.
+-- The text moves down with it, its height shorter by as much.
+local shift = (2 * 36 + 24) * lineScale - (51 / 2 - 2 - 20 / 2) - 28
+Expect("DialogueUI's header moved down so its title starts 36 under the controls' line, as on the book view",
     header.anchor.point .. " " .. header.anchor.y, "TOP " .. -(28 + shift))
 Expect("...the quest text with it, its height shorter by as much", DUI.ScrollFrame.anchor.y .. " " .. DUI.scrollViewHeight,
     -(68 + shift) .. " " .. (500 - 40 - shift))
@@ -429,12 +430,14 @@ Expect("...in the paper's art on DialogueUI's parchment", closeButton.file,
 DUI.handler = "HandleGossip"
 DUI:HandleGossip()
 Bridge:RefreshPlayButton("GOSSIP_SHOW")
-Expect("...and on a gossip page the gossip text and its line", DUI.ScrollFrame.anchor.y .. " "
-    .. DUI.FrontFrame.HeaderDivider.anchor.y .. " " .. DUI.scrollViewHeight, -(42 + shift) .. " " .. -(42 + shift)
-    .. " " .. (500 - shift))
+-- The gossip text's top 36 under the line too, not the quest header's distance.
+local gossipShift = (2 * 36 + 24) * lineScale - 42
+Expect("...and on a gossip page its text starts 36 under the line, its own line moved with it",
+    DUI.ScrollFrame.anchor.y .. " " .. DUI.FrontFrame.HeaderDivider.anchor.y .. " " .. DUI.scrollViewHeight,
+    -(42 + gossipShift) .. " " .. -(42 + gossipShift) .. " " .. (500 - gossipShift))
 Expect("on a gossip page the close button and the row stay where they were", Anchor(closeButton) .. " "
     .. tostring(controls.frame.anchor.relativeTo == closeButton),
-    "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " -14 true")
+    "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " " .. middle .. " true")
 -- DialogueUI's Copy Text button, which it puts in that corner, goes left of the row.
 local copyText = stub.Widget("Button")
 copyText:SetPoint("TOPRIGHT", DUI, "TOPRIGHT", -8, -8)
@@ -461,7 +464,7 @@ DUI.WarbandCompleteAlert:Show()
 DUI:HandleQuestDetail()
 Bridge:DrawPlayButton()
 Expect("with DialogueUI's warband alert at the title line's end, nothing moves either", Anchor(closeButton),
-    "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " -14")
+    "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " " .. middle)
 DUI.WarbandCompleteAlert:Hide()
 DUI:HandleQuestDetail()
 Expect("Skip is greyed with nothing speaking", skip:IsEnabled(), false)

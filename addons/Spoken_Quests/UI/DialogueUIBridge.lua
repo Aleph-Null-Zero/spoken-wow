@@ -611,6 +611,17 @@ local function CloseButton()
     return close
 end
 
+-- Room above the controls' line and below it, in UIParent's units, as the buttons' 24 are: the
+-- same on DialogueUI's book view (Spoken Books' UI/DialogueUIBook.lua). The line sits that far
+-- under the window's top on every page; DialogueUI's quest title, or a gossip page's text, moves
+-- down to start that far under it.
+local LINE_ROOM = 36
+-- Where DialogueUI puts its header (28 under the window's top at its size, 51 tall, its title
+-- centred 2 over its middle), its text on a quest page (68 under the top), and on a gossip page,
+-- which has no header, its text and the line over it (42, at any size).
+local HEADER_TOP, HEADER_HEIGHT, TITLE_LIFT = 28, 51, 2
+local QUEST_TEXT_TOP, GOSSIP_TEXT_TOP = 68, 42
+
 local function PlaceClose()
     local frame = DUIQuestFrame
     local button = CloseButton()
@@ -622,10 +633,8 @@ local function PlaceClose()
     end
     local pixel = ART_PIXEL * Multiplier()
     button:SetSize(CLOSE_SIZE * pixel, CLOSE_SIZE * pixel)
-    local front = type(frame.FrontFrame) == "table" and frame.FrontFrame
-    local header = front and type(front.Header) == "table" and front.Header
-    local top, headerTop = frame:GetTop(), header and header:GetTop()
-    local middle = (top and headerTop) and (headerTop - top) / 2 or -(CLOSE_INSET + CLOSE_SIZE / 2) * pixel
+    local scale = UIParent:GetEffectiveScale() / math.max(0.01, frame:GetEffectiveScale() or 1)
+    local middle = -(LINE_ROOM + ROUND / 2) * scale
     if button.middle ~= middle or button.pixel ~= pixel then
         button.middle, button.pixel = middle, pixel
         button:ClearAllPoints()
@@ -634,18 +643,10 @@ local function PlaceClose()
     button:Show()
 end
 
--- Room above the controls' line and below it, in UIParent's units, as the buttons' 24 are: the
--- same on DialogueUI's book view (Spoken Books' UI/DialogueUIBook.lua). DialogueUI's header, and
--- the text under it, move down to make it.
-local LINE_ROOM = 36
--- Where DialogueUI puts its header (28 under the window's top at its size), its text on a quest
--- page (68 under it), and on a gossip page, which has no header, its text and the line over it
--- (42, at any size).
-local HEADER_TOP, QUEST_TEXT_TOP, GOSSIP_TEXT_TOP = 28, 68, 42
-
---- DialogueUI's header and text moved down so the controls' line has LINE_ROOM over and under it,
---- as on the book view; the text's height, which DialogueUI scrolls by, shorter by as much. Run
---- after DialogueUI lays a page out (UseQuestLayout) or resizes the window.
+--- DialogueUI's header and text moved down so the quest title's top, or a gossip page's text's,
+--- is LINE_ROOM under the controls' line, as the book view's title is; the text's height, which
+--- DialogueUI scrolls by, shorter by as much. Measured from the title, not the portrait beside
+--- it. Run after DialogueUI lays a page out (UseQuestLayout), sets its title or resizes.
 local function Lower()
     local frame = DUIQuestFrame
     local front = type(frame.FrontFrame) == "table" and frame.FrontFrame
@@ -656,13 +657,17 @@ local function Lower()
     end
     local size = Multiplier()
     local scale = UIParent:GetEffectiveScale() / math.max(0.01, frame:GetEffectiveScale() or 1)
-    local shift = math.max(0, (2 * LINE_ROOM + ROUND) * scale - HEADER_TOP * size)
+    local below = (2 * LINE_ROOM + ROUND) * scale
+    local title = type(header.Title) == "table" and header.Title
+    local titleInset = (HEADER_HEIGHT / 2 - TITLE_LIFT) * size - (title and tonumber(title:GetHeight()) or 0) / 2
+    local shift = math.max(0, below - titleInset - HEADER_TOP * size)
     header:SetPoint("TOP", front, "TOP", 0, -(HEADER_TOP * size + shift))
     local base = tonumber(frame.scrollFrameBaseHeight)
     if frame.questLayout then
         scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -(QUEST_TEXT_TOP * size + shift))
         if base then frame.scrollViewHeight = base - 40 * size - shift end
     else
+        shift = math.max(0, below - GOSSIP_TEXT_TOP)
         scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -(GOSSIP_TEXT_TOP + shift))
         if base then frame.scrollViewHeight = base - shift end
         if type(front.HeaderDivider) == "table" then
@@ -915,8 +920,9 @@ function Bridge:Hook()
     local frame = DUIQuestFrame
     -- Asked once: the player's API cannot change within a session.
     canMark = not self:Problem("Captions")
-    -- Room for the controls' line, laid out again as DialogueUI lays a page out or resizes.
-    for _, name in ipairs({ "UseQuestLayout", "UpdateFrameSize" }) do
+    -- Room for the controls' line, laid out again as DialogueUI lays a page out, sets its title
+    -- (which may take two lines) or resizes.
+    for _, name in ipairs({ "UseQuestLayout", "UpdateQuestTitle", "UpdateFrameSize" }) do
         if type(frame[name]) == "function" then
             hooksecurefunc(frame, name, Lower)
         end
