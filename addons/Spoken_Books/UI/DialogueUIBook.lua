@@ -1,8 +1,7 @@
 -- DialogueUI's book view (DUIBookFrame), as Spoken Quests does its quest window: Spoken's controls
 -- on it, Play (Stop while this book is read), Skip and Report, the player's round buttons as
--- large on screen as Place Lore draws them, in a row at its top right where its close button
--- was, in place of DialogueUI's own speaker, and no close button, as the quest window has none
--- (Escape closes it); and the page being read marked in its text, the word being read
+-- large on screen as Place Lore draws them, in a row left of the book's close button, in place
+-- of DialogueUI's own speaker; and the page being read marked in its text, the word being read
 -- lit and the words typed out as the voice reaches them. Left alone without DialogueUI or without
 -- the player.
 --
@@ -170,23 +169,6 @@ function Book:Row()
 	return self.row
 end
 
---- DialogueUI's close button, gone while the row stands where it was, as its quest window has
---- none; given back with the row.
-local function HideClose(hide)
-	local view = View()
-	local close = view and view.CloseButton
-	if type(close) ~= "table" or not close.Hide then
-		return
-	end
-	if hide then
-		if close:IsShown() then close:Hide() end
-		Book.closeHidden = true
-	elseif Book.closeHidden then
-		close:Show()
-		Book.closeHidden = false
-	end
-end
-
 --- DialogueUI's speaker, kept out of sight while the row stands in for it.
 local function CoverTheirs(cover)
 	local view = View()
@@ -209,8 +191,7 @@ local function SetEnabled(button, on)
 	end
 end
 
---- Right to left from where the book's close button was, centred on it: Report, Skip, Play,
---- whichever show,
+--- Right to left from the book's close button, centred on it: Report, Skip, Play, whichever show,
 --- as large on screen as Place Lore draws them, whatever DialogueUI's book size.
 function Book:Place()
 	local view, row = View(), self.row
@@ -240,7 +221,7 @@ function Book:Place()
 	row.frame:ClearAllPoints()
 	local close = view.CloseButton
 	if type(close) == "table" and close.GetObjectType then
-		row.frame:SetPoint("RIGHT", close, "RIGHT", 0, 0)
+		row.frame:SetPoint("RIGHT", close, "LEFT", -ROUND_GAP, 0)
 	else
 		row.frame:SetPoint("TOPRIGHT", view, "TOPRIGHT", -48, -19)
 	end
@@ -253,7 +234,6 @@ function Book:Draw()
 	local view = View()
 	if not (view and view:IsShown() and SpokenBooks:IsPartOn()) then
 		CoverTheirs(false)
-		HideClose(false)
 		if self.row and self.row.frame:IsShown() then
 			self.row.frame:Hide()
 			HideTooltip(self.row.play)
@@ -265,7 +245,6 @@ function Book:Draw()
 	local row = self:Row()
 	row.frame:Show()
 	CoverTheirs(true)
-	HideClose(true)
 	local key, first = OpenBook()
 	local voiced = first ~= nil and SpokenBooks:HasAudio(first)
 	SetEnabled(row.play, voiced)
