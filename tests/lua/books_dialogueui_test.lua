@@ -48,6 +48,20 @@ view.Header = stub.Widget("Frame")
 view.Header.Title = stub.Widget("FontString")
 view.Header.Title:Show()
 view.Header.Title.GetTop = function() return 552 end
+-- How DialogueUI lays a short page out: the line under the title hung off the top, the text under
+-- it, the frame as tall as they need.
+view.Header.HeaderDivider = stub.Widget("Texture")
+view.ScrollFrame = stub.Widget("Frame")
+view.ContentFrame = stub.Widget("Frame")
+view:SetHeight(300)
+function view:SetFrameHeight(height) self:SetHeight(height) end
+function view:SetScrollContentHeight()
+    self.Header.Title:SetPoint("TOP", self, "TOP", 0, -48 * 0.53333)
+    self.Header.HeaderDivider:SetPoint("CENTER", self, "TOP", 0, -60)
+    self.ScrollFrame:SetPoint("TOPLEFT", self, "TOPLEFT", 0, -70)
+    self.ContentFrame:SetPoint("TOP", self, "TOP", 0, -70)
+    self:SetHeight(300)
+end
 view.TTSButton = stub.Widget("Button")
 view.TTSButton:SetAlpha(0.6)
 view:Hide()
@@ -68,6 +82,18 @@ local function QueuedPages()
     end
     return table.concat(pages, ",")
 end
+
+---------------------------------------------------------------- room for the controls
+-- 36 of UIParent's units over the controls' line and under it, as on the quest window: the title,
+-- its line and the text moved down for it, a short page's frame taller by as much.
+view:SetScrollContentHeight(100, 1)
+local shift = (2 * 36 + 24) * (UIParent:GetEffectiveScale() / 0.8) - 48 * 0.53333
+Expect("the title moved down to leave 36 over and under the controls' line", view.Header.Title.anchor.y,
+    -(48 * 0.53333 + shift))
+Expect("...its line and the text with it", view.Header.HeaderDivider.anchor.y .. " " .. view.ScrollFrame.anchor.y
+    .. " " .. view.ContentFrame.anchor.y, (-60 - shift) .. " " .. (-70 - shift) .. " " .. (-70 - shift))
+Expect("...a short page's frame taller by as much", view:GetHeight(), 300 + shift)
+view.ScrollFrame, view.ContentFrame = nil, nil
 
 ---------------------------------------------------------------- the row
 -- DialogueUI loads every page as it opens the book and leaves the game on the last.

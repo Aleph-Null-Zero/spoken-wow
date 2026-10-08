@@ -192,8 +192,52 @@ local function SetEnabled(button, on)
 end
 
 -- The book's close button, as DialogueUI draws it: 64 of the book art's pixels across, 26 in from
--- the right.
-local CLOSE_SIZE, CLOSE_INSET = 64, 26
+-- the right; its title 48 under the top.
+local CLOSE_SIZE, CLOSE_INSET, TITLE_TOP = 64, 26, 48
+-- Room above the line of the close button and the controls and below it, in UIParent's units, as
+-- the buttons' 24 are: the same on DialogueUI's quest window (Spoken Quests' DialogueUIBridge).
+-- The title and the text under it move down to make it.
+local LINE_ROOM = 36
+
+--- DialogueUI's title, the line under it and the text moved down so the controls' line has
+--- LINE_ROOM over and under it, as on the quest window: a short page's frame taller by as much, a
+--- long one's scroll longer. Run after DialogueUI lays the book out (SetScrollContentHeight),
+--- which puts all but the title back where it had them.
+function Book:Lower()
+	local view = View()
+	local close, header, scroll = view.CloseButton, view.Header, view.ScrollFrame
+	if not (SpokenBooks:IsPartOn() and type(close) == "table" and close.GetWidth and type(header) == "table"
+		and type(header.Title) == "table" and type(scroll) == "table") then
+		return
+	end
+	local pixel = (close:GetWidth() or CLOSE_SIZE) / CLOSE_SIZE
+	local scale = UIParent:GetEffectiveScale() / math.max(0.01, view:GetEffectiveScale() or 1)
+	local shift = math.max(0, (2 * LINE_ROOM + ROUND) * scale - TITLE_TOP * pixel)
+	if shift <= 0 then
+		return
+	end
+	header.Title:SetPoint("TOP", view, "TOP", 0, -(TITLE_TOP * pixel + shift))
+	-- The line under the title, where DialogueUI hangs it off the top rather than the title.
+	local divider = header.HeaderDivider
+	if type(divider) == "table" then
+		local point, relativeTo, relativePoint, x, y = divider:GetPoint(1)
+		if relativeTo == view and y then
+			divider:SetPoint(point, view, relativePoint, x, y - shift)
+		end
+	end
+	local _, _, _, scrollX, scrollY = scroll:GetPoint(1)
+	scroll:SetPoint("TOPLEFT", view, "TOPLEFT", scrollX or 0, (scrollY or 0) - shift)
+	if view.scrollable then
+		if scroll.SetScrollRange then scroll:SetScrollRange((tonumber(scroll.range) or 0) + shift) end
+	else
+		local content = view.ContentFrame
+		if type(content) == "table" then
+			local _, _, _, x, y = content:GetPoint(1)
+			content:SetPoint("TOP", view, "TOP", x or 0, (y or 0) - shift)
+		end
+		if view.SetFrameHeight then view:SetFrameHeight((view:GetHeight() or 0) + shift, false) end
+	end
+end
 
 --- The close button's middle halfway between the view's top and its title's (or the place named
 --- over the title), so it and the row beside it stand as far from the title as from the edge, as
@@ -503,6 +547,10 @@ function SpokenBooks:SetupDialogueUIBook()
 		Book:Mark()
 	end)
 	Book.watch = watch
+	-- Room for the controls' line whenever DialogueUI lays the book out.
+	if type(view.SetScrollContentHeight) == "function" then
+		hooksecurefunc(view, "SetScrollContentHeight", function() Book:Lower() end)
+	end
 	-- Hide Report Buttons, in Spoken's settings, fires no game event.
 	if Spoken.RegisterCallback then
 		Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function() Book:Draw() end)
