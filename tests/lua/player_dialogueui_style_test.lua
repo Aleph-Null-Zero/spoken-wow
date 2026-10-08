@@ -412,6 +412,8 @@ Expect("...in the header at the right, beside the speaker and the line",
     Skin.controls.anchor.point == "RIGHT" and Skin.controls.anchor.relativeTo == Skin.content
     and Skin.controls.anchor.relativePoint == "TOPRIGHT" and Skin.controls.anchor.y < 0, true)
 Expect("...the line's title stopping short of them", Skin.title.anchor.relativeTo == Skin.controls, true)
+Expect("...as large on screen as Place Lore's, 24 at UIParent's scale, at the default Window Size",
+    math.abs(Skin.play:GetWidth() * Skin.controls:GetScale() * Skin.frame.spokenBaseScale - 24) < 0.01, true)
 local report = Skin.row[3]
 Expect("...Report after Skip, as large and as strong, as the subtitle shows it", report ~= nil and report:GetParent() == Skin.controls
     and report:GetWidth() == Skin.play:GetWidth() and report:GetAlpha() == 1, true)
