@@ -44,11 +44,28 @@ local function Build(text, flag)
     end
     return true
 end
-function DUI:HandleQuestDetail() return Build(world.npcName .. ": " .. world.questText, 3) end
-function DUI:HandleQuestProgress() return Build(world.progressText, 3) end
-function DUI:HandleQuestComplete() return Build(world.rewardText, 3) end
-function DUI:HandleQuestGreeting() return Build(world.greetingText or "", 0) end
-function DUI:HandleGossip() return Build(world.gossipText or "", 0) end
+-- The header a quest page has and a gossip page does not, its title stopped 8 short of its right
+-- end, or 56 with the warband alert shown; where they are, from the window's top right at 400, 600.
+DUI.GetRight, DUI.GetTop = function() return 400 end, function() return 600 end
+DUI.FrontFrame = stub.Widget("Frame")
+local header = stub.Widget("Frame")
+header.GetRight, header.GetTop, header.GetBottom = function() return 380 end, function() return 572 end,
+    function() return 521 end
+header.Title = stub.Widget("FontString")
+DUI.FrontFrame.Header = header
+DUI.WarbandCompleteAlert = stub.Widget("Frame")
+DUI.WarbandCompleteAlert:Hide()
+function DUI:UseQuestLayout(state)
+    header:SetShown(state)
+    if state then
+        header.Title:SetPoint("RIGHT", header, "RIGHT", self.WarbandCompleteAlert:IsShown() and -56 or -8, 2)
+    end
+end
+function DUI:HandleQuestDetail() self:UseQuestLayout(true); return Build(world.npcName .. ": " .. world.questText, 3) end
+function DUI:HandleQuestProgress() self:UseQuestLayout(true); return Build(world.progressText, 3) end
+function DUI:HandleQuestComplete() self:UseQuestLayout(true); return Build(world.rewardText, 3) end
+function DUI:HandleQuestGreeting() self:UseQuestLayout(false); return Build(world.greetingText or "", 0) end
+function DUI:HandleGossip() self:UseQuestLayout(false); return Build(world.gossipText or "", 0) end
 function DUI:IsScrollable() return self.scrollable end
 function DUI:ScrollTo(value) self.scrolledTo = value end
 _G.DUIQuestFrame = DUI
@@ -357,9 +374,9 @@ Expect("...while a click on its button plays", Spoken:GetQueueSize(), 1)
 Spoken:StopAll()
 _G.DialogueUI_DB = nil
 
----------------------------------------------------------------- Spoken's controls at DialogueUI's top right
+---------------------------------------------------------------- Spoken's controls on DialogueUI's title line
 -- DialogueUI draws its own Play only with its Text To Speech on; Spoken's round Play and Skip are
--- there either way, at the window's top right, as Spoken's DialogueUI window shows them.
+-- there either way, on the title line, as Spoken's DialogueUI window shows them.
 world.questID = 101
 DUI.handler = "HandleQuestDetail"
 DUI:HandleQuestDetail()
@@ -376,24 +393,50 @@ local function Anchor(f)
     return a.point .. " " .. tostring(a.relativeTo == DUI and "window" or a.relativeTo) .. " " .. a.relativePoint
         .. " " .. a.x .. " " .. a.y
 end
-Expect("...at the window's top right, on the line of DialogueUI's own buttons there, 24 across 8 in",
-    Anchor(controls.frame), "RIGHT window TOPRIGHT -8 -20")
+-- The title line's end: the header's right (380) less DialogueUI's 8, 2 up from its middle (546.5).
+Expect("...at the title line's end, as Spoken's own DialogueUI window has them",
+    Anchor(controls.frame), "RIGHT window TOPRIGHT -28 -51.5")
 Expect("...Play left of Skip", play.anchor.relativeTo == skip and play.anchor.relativePoint, "LEFT")
 local round = UIParent:GetEffectiveScale() / DUI:GetEffectiveScale()
 Expect("...as large on screen as Place Lore draws them, 24 at UIParent's scale, whatever DialogueUI's size",
     play:GetWidth() .. " " .. play:GetScale() .. " " .. skip:GetScale(), "24 " .. round .. " " .. round)
--- DialogueUI's Copy Text button in the corner, and the translator's left of it.
+local rowWidth = controls.frame:GetWidth()
+Expect("...the title stopping short of where it ends up", header.Title.anchor.relativeTo == header
+    and header.Title.anchor.x .. " " .. header.Title.anchor.y, -(8 + rowWidth + 6) .. " 2")
+-- A gossip page has no title line: the row slides up to DialogueUI's buttons' line at the top.
+DUI.handler = "HandleGossip"
+DUI:HandleGossip()
+Bridge:RefreshPlayButton("GOSSIP_SHOW")
+Expect("on a gossip page it slides, not jumps, to the line of DialogueUI's buttons at the top",
+    Anchor(controls.frame), "RIGHT window TOPRIGHT -28 -51.5")
+controls.frame.scripts.OnUpdate(controls.frame, 0.15)
+local midway = controls.frame.anchor.y
+Expect("...eased there", midway < -20 and midway > -51.5, true)
+controls.frame.scripts.OnUpdate(controls.frame, 0.2)
+Expect("...as far right as on a quest page, 24 across 8 in", Anchor(controls.frame), "RIGHT window TOPRIGHT -28 -20")
+Expect("...then stops", controls.frame.scripts.OnUpdate, nil)
+-- DialogueUI's Copy Text button in the corner: the row keeps clear of it.
 DUI.CopyTextButton = stub.Widget("Button")
+DUI.CopyTextButton.GetLeft = function() return 360 end
 DUI.CopyTextButton:Show()
 Bridge:DrawPlayButton()
-Expect("...left of DialogueUI's Copy Text button", controls.frame.anchor.relativeTo == DUI.CopyTextButton
-    and controls.frame.anchor.relativePoint .. " " .. controls.frame.anchor.x, "LEFT -4")
-DUI.TranslatorButton = stub.Widget("Button")
-DUI.TranslatorButton:Show()
-Bridge:DrawPlayButton()
-Expect("...and of the translator's beside it", controls.frame.anchor.relativeTo == DUI.TranslatorButton, true)
-DUI.CopyTextButton, DUI.TranslatorButton = nil, nil
-Bridge:DrawPlayButton()
+controls.frame.scripts.OnUpdate(controls.frame, 0.4)
+Expect("...left of DialogueUI's Copy Text button where it would reach it", Anchor(controls.frame),
+    "RIGHT window TOPRIGHT -44 -20")
+DUI.CopyTextButton = nil
+DUI.handler = "HandleQuestDetail"
+DUI:HandleQuestDetail()
+Bridge:RefreshPlayButton("QUEST_DETAIL")
+controls.frame.scripts.OnUpdate(controls.frame, 0.4)
+Expect("back on a quest page it slides back to the title line", Anchor(controls.frame), "RIGHT window TOPRIGHT -28 -51.5")
+DUI.WarbandCompleteAlert:Show()
+DUI:HandleQuestDetail()
+controls.frame.scripts.OnUpdate(controls.frame, 0.4)
+Expect("with DialogueUI's warband alert at the title line's end, the row stands left of it",
+    Anchor(controls.frame) .. " " .. header.Title.anchor.x, "RIGHT window TOPRIGHT -70 -51.5 " .. -(50 + rowWidth + 6))
+DUI.WarbandCompleteAlert:Hide()
+DUI:HandleQuestDetail()
+controls.frame.scripts.OnUpdate(controls.frame, 0.4)
 Expect("Skip is greyed with nothing speaking", skip:IsEnabled(), false)
 play.scripts.OnClick(play, "LeftButton")
 Expect("left-click plays the page's line", Spoken:GetCurrent() and Spoken:GetCurrent().fileName, "101-accept")
@@ -436,7 +479,8 @@ Bridge:RefreshPlayButton("GOSSIP_SHOW")
 local _, gossipLine = Bridge:PlayButtonState()
 Expect("a gossip page with a recording shows the Play button, for the gossip module's line",
     play:IsShown() and gossipLine and gossipLine.fileName, "gossip-hello")
-Expect("...the row where it is on a quest's page", Anchor(controls.frame), "RIGHT window TOPRIGHT -8 -20")
+if controls.frame.scripts.OnUpdate then controls.frame.scripts.OnUpdate(controls.frame, 0.4) end
+Expect("...the row on DialogueUI's buttons' line at the top", Anchor(controls.frame), "RIGHT window TOPRIGHT -28 -20")
 Expect("...the line the Report button asks the bridge for", Bridge:LineFor("GOSSIP_SHOW") and
     Bridge:LineFor("GOSSIP_SHOW").fileName, "gossip-hello")
 play.scripts.OnClick(play, "LeftButton")
@@ -654,7 +698,7 @@ Expect("...small and faint, at the window's own scale", icon:GetWidth() .. " " .
 -- The margins as DialogueUI laid them out, which its window size setting changes.
 local footer = stub.Widget("Button")
 footer.GetBottom = function() return 50 end
-footer.GetRight = function() return 270 end
+footer.GetRight = function() return 370 end
 DUI.ExitButton = footer
 Contribute:ShowOnDialogueUI(DUI, false)
 Expect("...measured from DialogueUI's footer once it is laid out", icon.anchor.x .. " " .. icon.anchor.y, "-30 38")
