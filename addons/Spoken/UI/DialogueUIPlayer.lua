@@ -43,11 +43,9 @@ local ROUND_GAP = 4
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
 -- wide as the words up to PICTURE_MOST, PICTURE_GAP above them, the page's grain through it.
 local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA = 400, 10, 0.95
--- Place Lore's fade at the words' edges (Spoken_Zones' TextView): strips of the parchment drawn
--- over the text, solid at the edge and then three steps to clear, so text gliding under an edge
--- dissolves into the page. Each step a third of the fade, { inner, outer } opacity.
-local FADE_STEPS = { { 0, .15 }, { .15, .55 }, { .55, 1 } }
-local FADE_SOLID = 2
+-- Where the header strip's line ends, of the strip's height: its art is clear under that (its
+-- last dark row is 77 of the 96 in Parchment.png).
+local DIVIDER_LINE = 0.8
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
 -- Text Size's default, at which the words are DialogueUI's own size.
 local BASE_FONT_SIZE = 16
@@ -201,27 +199,6 @@ function Skin:Initialize()
         self.picture:AddMaskTexture(self.pictureMask)
     end
 
-    -- Over the words, under nothing else: the fade's strips (Skin:PaintFade).
-    self.fade = CreateFrame("Frame", nil, content)
-    self.fade:SetFrameLevel(content:GetFrameLevel() + 6)
-    self.strips = {}
-    local function Edge()
-        local edge = { solid = self.fade:CreateTexture(nil, "OVERLAY"), ramps = {} }
-        table.insert(self.strips, edge.solid)
-        for i = 1, #FADE_STEPS do
-            edge.ramps[i] = self.fade:CreateTexture(nil, "OVERLAY")
-            table.insert(self.strips, edge.ramps[i])
-        end
-        return edge
-    end
-    self.fadeTop, self.fadeBottom = Edge(), Edge()
-    for _, strip in ipairs(self.strips) do
-        -- Drawn where it lies, not on the pixel grid: snapped apart from the page under it, a
-        -- strip's solid edge parted from it by a pixel.
-        if strip.SetSnapToPixelGrid then strip:SetSnapToPixelGrid(false) end
-        if strip.SetTexelSnappingBias then strip:SetTexelSnappingBias(0) end
-    end
-
     self.drawer = CreateFrame("Frame", nil, content)
     self.drawer:EnableMouseWheel(true)
     self.drawer:SetScript("OnMouseWheel", function(_, delta)
@@ -327,6 +304,8 @@ end
 
 --- Runs on every refresh, so a theme or size change in DialogueUI lands on the next one.
 function Skin:Layout()
+    -- Nothing in the window changes while it is one image.
+    self:Unbuffer()
     local frame, cfg = self.frame, Theme:Config()
     local parchment = Theme:TexturePath() .. "Parchment.png"
     self.layingOut = true
@@ -370,13 +349,27 @@ function Skin:Layout()
         or PICTURE_MOST
     local pictureWidth = picture and math.min(inner, most) or 0
     local pictureHeight = Round(pictureWidth / 2)
-    local wordsTop = headerHeight + (picture and pictureHeight + PICTURE_GAP or 0)
+    -- With a picture, one gap over it and under it: from the divider's line to the picture, and
+    -- from the picture to the words. Halfway between the header's gap under the line and the
+    -- picture's own, and never less than a line, the room the words fade through.
+    local lineBottom = Round(stripHeight * DIVIDER_LINE)
+    local pictureGap = math.max(lineHeight, Round((stripHeight - lineBottom + textGap + PICTURE_GAP) / 2))
+    local pictureTop = lineBottom + pictureGap
+    local wordsTop = picture and pictureTop + pictureHeight + pictureGap or headerHeight
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
     -- Show Progress, as the subtitle has it: off, the bar goes and the window closes up under the words.
     local progress = Addon:Profile("Transcript").SubtitleProgress ~= false
     self.progress.track:SetShown(progress)
     local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
+    -- A line's room over and under the words, which a line gliding out or in fades through: it is
+    -- at nothing by the time it reaches the edge, so no line is ever seen cut there. Taken from the
+    -- gaps already over and under them (the header's or the picture's, the one over the progress
+    -- line), and made up where those are smaller than a line.
+    local over = picture and pictureGap or textGap
+    local under = math.max(0, textGap - lineGap) + (progress and 6 or 0)
+    wordsTop = wordsTop + math.max(0, lineHeight - over)
+    footerHeight = footerHeight + math.max(0, lineHeight - under)
     -- The lines waiting get rows while the window is open; folded, the title counts them.
     local waiting = Waiting()
     local shownRows = Expanded() and math.min(MAX_ROWS, waiting) or 0
@@ -473,22 +466,11 @@ function Skin:Layout()
         end
         self.picture:SetSize(pictureWidth, pictureHeight)
         self.picture:ClearAllPoints()
-        self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -headerHeight)
+        self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -pictureTop)
     end
-    -- The fade's room: in the gaps already over and under the words (the header's or the
-    -- picture's, and the one above the progress line), so the words stay where they were. The top
-    -- at half, as Place Lore's, since it only shows once the words have moved.
-    local fade = lineHeight
-    local over = picture and PICTURE_GAP or textGap
-    local under = math.max(0, textGap - lineGap) + (progress and 6 or 0)
-    local padTop = math.min(over, Round(fade / 2) + FADE_SOLID)
-    local padBottom = math.min(under, fade + FADE_SOLID)
-    self.fadePads = { padTop, padBottom }
-    self.fade:ClearAllPoints()
-    self.fade:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(wordsTop - padTop))
-    self.fade:SetSize(inner, captionHeight + padTop + padBottom)
-    self:PlaceFade(padTop, padBottom)
-    Transcript:Dock(content, content, "TOPLEFT", 0, -(wordsTop - padTop), inner, captionHeight + padTop + padBottom)
+    -- The captions span that room too; the lines fade through it (Transcript:Place).
+    self.lineRoom = lineHeight
+    Transcript:Dock(content, content, "TOPLEFT", 0, -(wordsTop - lineHeight), inner, captionHeight + 2 * lineHeight)
     self.scrollbar:ClearAllPoints()
     self.scrollbar:SetPoint("TOPLEFT", content, "TOPRIGHT", 4, -wordsTop)
     self.scrollbar:SetHeight(captionHeight)
@@ -532,72 +514,7 @@ function Skin:Dress()
     local captionSize = self.captionSize or body
     Transcript:SetStyle({ font = fonts.paragraph, size = captionSize, lineGap = self.lineGap or Round(0.35 * captionSize),
         paragraphs = true, color = colors.paragraph, shadow = false,
-        highlight = colors.highlight, lines = self.lines, padTop = self.fadePads and self.fadePads[1] })
-end
-
---- The fade's strips at the words' edges: solid at the edge, then the steps inward.
-function Skin:PlaceFade(padTop, padBottom)
-    local function Place(edge, side, height, outward)
-        local inward = side == "TOP" and "BOTTOM" or "TOP"
-        edge.solid:ClearAllPoints()
-        edge.solid:SetPoint(side .. "LEFT", self.fade, side .. "LEFT", 0, 0)
-        edge.solid:SetPoint(side .. "RIGHT", self.fade, side .. "RIGHT", 0, 0)
-        edge.solid:SetHeight(FADE_SOLID)
-        local step = math.max(1, (height - FADE_SOLID) / #FADE_STEPS)
-        local previous = edge.solid
-        -- From the solid band inward, the most solid step first.
-        for i = #FADE_STEPS, 1, -1 do
-            local ramp = edge.ramps[i]
-            ramp:ClearAllPoints()
-            ramp:SetPoint(side .. "LEFT", previous, inward .. "LEFT", 0, 0)
-            ramp:SetPoint(side .. "RIGHT", previous, inward .. "RIGHT", 0, 0)
-            ramp:SetHeight(step)
-            ramp.opacity = outward and { FADE_STEPS[i][1], FADE_STEPS[i][2] } or { FADE_STEPS[i][2], FADE_STEPS[i][1] }
-            previous = ramp
-        end
-    end
-    -- Opacity bottom to top: toward the edge solid. Up at the top edge, down at the bottom one.
-    Place(self.fadeTop, "TOP", padTop, true)
-    Place(self.fadeBottom, "BOTTOM", padBottom, false)
-    self.fadeDirty = true
-end
-
--- Opacity from `bottom` to `top` up the texture, with whichever call the client has.
-local function Gradient(texture, bottom, top)
-    if texture.SetGradient and CreateColor then
-        texture:SetGradient("VERTICAL", CreateColor(1, 1, 1, bottom), CreateColor(1, 1, 1, top))
-    elseif texture.SetGradientAlpha then
-        texture:SetGradientAlpha("VERTICAL", 1, 1, 1, bottom, 1, 1, 1, top)
-    end
-end
-
---- Each strip cut from the parchment piece under its middle, at the place it covers, so the
---- words dissolve into the very page. False until the window is laid out on screen.
-function Skin:PaintFade()
-    local file = Theme:TexturePath() .. "Parchment.png"
-    local pieces = {
-        { self.parchments[1], 0, CAP_ROWS }, { self.parchments[2], CAP_ROWS, CAP_ROWS + MIDDLE_ROWS },
-        { self.parchments[3], CAP_ROWS + MIDDLE_ROWS, 2 * CAP_ROWS + MIDDLE_ROWS },
-    }
-    for _, strip in ipairs(self.strips) do
-        local x0, x1, y0, y1 = strip:GetLeft(), strip:GetRight(), strip:GetTop(), strip:GetBottom()
-        if not (x0 and x1 and y0 and y1) then return false end
-        local middle, piece = (y0 + y1) / 2, nil
-        for _, candidate in ipairs(pieces) do
-            local top, bottom = candidate[1]:GetTop(), candidate[1]:GetBottom()
-            if top and bottom and middle <= top and middle >= bottom then piece = candidate end
-        end
-        piece = piece or pieces[2]
-        local under = piece[1]
-        local left, top, width, height = under:GetLeft(), under:GetTop(), under:GetWidth(), under:GetHeight()
-        if not (left and top and width and width > 0 and height and height > 0) then return false end
-        local function U(x) return (x - left) / width end
-        local function V(y) return piece[2] + (piece[3] - piece[2]) * (top - y) / height end
-        strip:SetTexture(file)
-        strip:SetTexCoord(U(x0), U(x1), V(y0), V(y1))
-        if strip.opacity then Gradient(strip, strip.opacity[1], strip.opacity[2]) end
-    end
-    return true
+        highlight = colors.highlight, lines = self.lines, padTop = self.lineRoom })
 end
 
 function Skin:ConfigurePortrait()
@@ -781,11 +698,49 @@ end
 --- half-faded window would show the paper through its strips and words: the paper takes the lower
 --- half and everything on it the upper, and the two never fade at once. Not a frame buffer, which
 --- would fade it as one image: on this window it crashed the client (ASSERT(!m_deleted),
---- CSimpleRender.cpp) after an hour and a half of play.
+--- CSimpleRender.cpp) after an hour and a half of play. Fading out, one image does it
+--- (Skin:Buffer).
 function Skin:SetLevel(level)
     self.level = level
+    if self.buffered then
+        self.frame:SetAlpha(level)
+        self.content:SetAlpha(1)
+        return
+    end
     self.frame:SetAlpha(Clamp(level * 2, 0, 1))
     self:PaintContent()
+end
+
+-- The window's direct parts, which ignore its alpha while it is one image.
+local function Parts(self)
+    return { self.content, self.resizer, self.parchments[1], self.parchments[2], self.parchments[3] }
+end
+
+--- Fading out, the window is drawn as one image (a frame buffer, as the world map is) and fades
+--- as one, its parts ignoring its alpha so only the finished image fades. Only then: the crashes
+--- came of something in the image changing or still loading while it was one (a new portrait or
+--- picture, the title's remove cross the first time it showed: CSimpleRender.cpp's texture
+--- asserts and ASSERT(!m_deleted)), and fading out nothing is. Anything that would change it
+--- first lets it go (Skin:Unbuffer).
+function Skin:Buffer()
+    local frame = self.frame
+    if self.buffered or not frame.SetIsFrameBuffer then return end
+    if not pcall(frame.SetIsFrameBuffer, frame, true) then return end
+    self.buffered = true
+    for _, part in ipairs(Parts(self)) do
+        if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(true) end
+    end
+    self:SetLevel(self.level or 1)
+end
+
+function Skin:Unbuffer()
+    if not self.buffered then return end
+    self.buffered = nil
+    for _, part in ipairs(Parts(self)) do
+        if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(false) end
+    end
+    pcall(self.frame.SetIsFrameBuffer, self.frame, false)
+    self:SetLevel(self.level or 0)
 end
 
 --- What is on the paper: its share of the window's fade, times a new line's own fade-in.
@@ -808,15 +763,18 @@ function Skin:SetVisible(visible, immediate)
     self.wanted = visible
     self.fadeFrom = self.frame:IsShown() and self.level or 0
     self.fadeTime = 0
-    if visible then self:SetLevel(self.fadeFrom); self.frame:Show() end
+    -- Out from in full, as one image; back in, or in, in two steps (Skin:Buffer).
+    if visible then
+        self:Unbuffer()
+        self:SetLevel(self.fadeFrom)
+        self.frame:Show()
+    elseif self.frame:IsShown() and (self.level or 0) >= 1 then
+        self:Buffer()
+    end
 end
 
 function Skin:Tick(elapsed)
     if self.settling then self:SettleStep(elapsed) end
-    -- Cut again once laid out, and while the window's size moves under the strips.
-    if self.fadeDirty or self.settling or self.heightWant then
-        if self:PaintFade() then self.fadeDirty = nil end
-    end
     if self.lineFade then
         self.lineFade = self.lineFade + elapsed
         if self.lineFade >= LINE_IN then self.lineFade = nil end
@@ -836,7 +794,11 @@ function Skin:Tick(elapsed)
         self:SetLevel(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
         if t == 1 then
             self.fadeTime = nil
-            if not self.wanted then self.frame:Hide(); return end
+            if not self.wanted then
+                self.frame:Hide()
+                self:Unbuffer()
+                return
+            end
         end
     end
     if not self.wanted then return end
@@ -981,6 +943,8 @@ end
 
 function Skin:Update()
     if not self.frame then return end
+    -- Nothing in the window changes while it is one image.
+    self:Unbuffer()
     if not self:IsEnabled() then self:SetVisible(false, true); return end
     -- The line playing, or the sample a style tile previews (PlayerFrame:ShowSample).
     local clip = PlayerFrame:Current()

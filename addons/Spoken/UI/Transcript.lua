@@ -439,8 +439,8 @@ function Transcript:Place()
     local placed = format("%.4f:%d:%d:%d", top, step, n, #(self.lines or {}))
     if self.placedKey == placed then return end
     self.placedKey = placed
-    -- Room over the first line where the window draws its own fade (style.padTop): the
-    -- DialogueUI window's strips of parchment, as Place Lore fades its text.
+    -- Room over the first line (style.padTop): the DialogueUI window leaves a line's room over
+    -- and under the words, which a line gliding out or in fades through before it reaches the edge.
     local padTop = self.style and self.style.padTop
     for row, label in ipairs(self.labels) do
         label:ClearAllPoints()
@@ -448,9 +448,8 @@ function Transcript:Place()
         local line = self.lines and self.lines[first + row - 1]
         label:SetShown(line ~= nil and (row <= n or (row == n + 1 and fraction > 0)))
         -- The line leaving at the top fades out as it slides up and the one coming in under the
-        -- page fades in, so the words never stop on a clean cut at an edge. Not where the window
-        -- fades its own edges.
-        label:SetAlpha(padTop and 1 or row == 1 and 1 - fraction or row == n + 1 and fraction or 1)
+        -- page fades in, so the words never stop on a clean cut at an edge.
+        label:SetAlpha(row == 1 and 1 - fraction or row == n + 1 and fraction or 1)
     end
 end
 

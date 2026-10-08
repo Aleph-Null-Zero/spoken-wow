@@ -479,18 +479,28 @@ do
 end
 Expect("...the count gone with no line waiting", string.find(Skin.title.text:GetText(), "+", 1, true), nil)
 -- The client fades each texture on its own: the paper and what is on it fade one after the other.
-Expect("it is not a frame buffer, which crashed the client", Skin.frame:IsFrameBuffer(), false)
+Expect("shown, it is not one image: things change in it", Skin.frame:IsFrameBuffer(), false)
 Skin:Tick(1) -- shown in full first
 Skin:SetVisible(false)
+Expect("fading out, it is drawn as one image", Skin.frame:IsFrameBuffer(), true)
+Expect("...its parts ignoring its alpha, so only the image fades",
+    Skin.content:IsIgnoringParentAlpha() and Skin.parchments[2]:IsIgnoringParentAlpha(), true)
 Skin:Tick(0.16)
-Expect("fading out, what is on the paper goes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
+Expect("...and fades as one", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "0.5 1")
 Skin:Tick(0.2)
-Expect("...then the paper", Skin.frame:GetAlpha() .. " " .. tostring(Skin.frame:IsShown()), "0 false")
+Expect("...gone, it is itself again", tostring(Skin.frame:IsShown()) .. " " .. tostring(Skin.frame:IsFrameBuffer())
+    .. " " .. tostring(Skin.content:IsIgnoringParentAlpha()), "false false false")
 Skin:SetVisible(true)
 Skin:Tick(0.14)
-Expect("fading in, the paper comes first", Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "1 0")
+Expect("fading in, it is not one image, the paper coming first", tostring(Skin.frame:IsFrameBuffer()) .. " "
+    .. Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "false 1 0")
 Skin:Tick(0.2)
 Expect("...then what is on it", Skin.content:GetAlpha(), 1)
+-- A new line coming while it fades out: it lets the one image go before anything changes.
+Skin:SetVisible(false)
+Skin:Tick(0.1)
+Skin:Update()
+Expect("anything changing it mid-fade lets the one image go first", Skin.frame:IsFrameBuffer(), false)
 Spoken:StopAll()
 
 ---------------------------------------------------------------- locked
@@ -506,7 +516,7 @@ Expect("...unlocked, they are the window's again", Skin.frame.clicks, true)
 
 ---------------------------------------------------------------- a place's picture
 -- Where the first line stands: the captions' frame holds the fade's room over it.
-local function WordsTop() return T.frame.anchor.y - Skin.fadePads[1] end
+local function WordsTop() return T.frame.anchor.y - Skin.lineRoom end
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()
 local plainTop = WordsTop()
@@ -519,7 +529,11 @@ Skin:Update()
 Expect("a place's picture shows over its words, as Place Lore shows it", Skin.picture:IsShown()
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
-Expect("...the words under it, 10 below", plainTop - WordsTop(), 210)
+local pictureTop = -Skin.picture.anchor.y
+local lineBottom = Skin.headerDivider:GetHeight() * 0.8
+Expect("...as far under the divider's line as the words are under it, never less than a line",
+    math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + 200))) < 1
+    and (pictureTop - lineBottom) >= Skin.lineRoom - 1, true)
 Spoken:StopAll()
 -- Drawn 294 across at the map's scale beside the map: as large here, in the window's scale (0.52).
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
@@ -534,18 +548,18 @@ Expect("a name the same as the line's own is said once, in the title", Skin.name
 Spoken:StopAll()
 
 ---------------------------------------------------------------- the words' edges
--- Place Lore's fade: strips of the parchment over the words' edges, solid at the edge.
+-- A line's room over and under the words, which a line gliding out or in fades through: at
+-- nothing by the time it reaches the edge, so no line is seen cut there.
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Fade", portrait = { kind = "none" } } }))
 Skin:Update()
-Skin:Tick(0.1)
-local padTop, padBottom = Skin.fadePads[1], Skin.fadePads[2]
-Expect("the words' edges fade into the parchment, strips of it drawn over them",
-    #Skin.strips == 8 and Skin.strips[1].texture == BROWN .. "Parchment.png" and Skin.fade:GetParent() == Skin.content, true)
-Expect("...room for them over and under the words, in the gaps already there", padTop > 0 and padBottom > 0, true)
-Expect("...the captions start under the top one", T.labels[1].anchor.y, -padTop)
-Expect("...and fade no line of their own: the strips do", T.labels[1]:GetAlpha(), 1)
-local ramp = Skin.fadeTop.ramps[3]
-Expect("...the top one solid toward the edge", ramp.opacity[2] > ramp.opacity[1], true)
+local room = Skin.lineRoom
+Expect("the words have a line's room over them in the captions", room .. " " .. T.labels[1].anchor.y,
+    (T.style.size + T.style.lineGap) .. " " .. (-room))
+Expect("...and under them", T.frame:GetHeight(), Skin.lines * room + 2 * room)
+Expect("...no parchment strips drawn over them", Skin.strips, nil)
+T.top = 1.75; T.placedKey = nil; T:Place()
+Expect("a line gliding out is at a quarter, three quarters into the room", math.abs(T.labels[1]:GetAlpha() - .25) < 1e-6, true)
+T.top = 1; T.placedKey = nil; T:Place()
 Spoken:StopAll()
 
 ---------------------------------------------------------------- a line held back
