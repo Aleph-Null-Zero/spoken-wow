@@ -60,7 +60,6 @@ local DIVIDER_LINE = 0.8
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
 -- Text Size's default, at which the words are DialogueUI's own size.
 local BASE_FONT_SIZE = 16
-local SCROLLBAR = 10
 -- Smaller than DialogueUI's quest title, since the speaker's name shares the strip here.
 local TITLE_SHARE = 0.85
 -- Shift-drag width limits as shares of DialogueUI's width; the minimum still fits the face
@@ -250,24 +249,7 @@ function Skin:Initialize()
     self.buttons = { self.play, self.skip }
     Actions:Build(frame)
 
-    -- The captions scroll themselves on the wheel; the scrollbar shows the position and
-    -- lets the reader drag.
-    self.scrollbar = CreateFrame("Slider", nil, content)
-    self.scrollbar:SetOrientation("VERTICAL")
-    self.scrollbar:SetWidth(SCROLLBAR)
-    -- The thumb's length is the page's share of the line, so it shows how much is left to read.
-    self.scrollbar.track = self.scrollbar:CreateTexture(nil, "BACKGROUND")
-    self.scrollbar.track:SetPoint("TOPLEFT", 2, 0)
-    self.scrollbar.track:SetPoint("BOTTOMRIGHT", -2, 0)
-    self.scrollbar:SetThumbTexture([[Interface\Buttons\WHITE8x8]])
-    local thumb = self.scrollbar:GetThumbTexture()
-    if thumb then thumb:SetSize(SCROLLBAR - 2, 24) end
-    self.scrollbar:SetMinMaxValues(1, 1)
-    self.scrollbar:SetValueStep(0)
-    self.scrollbar:SetScript("OnValueChanged", function(_, value, byUser)
-        if byUser then Transcript:ScrollTo(value) end
-    end)
-    self.scrollbar:Hide()
+    -- No scrollbar: the captions scroll themselves on the wheel.
 
     -- The width changes only with Shift held at drag start, so a height drag cannot knock
     -- the column out of DialogueUI's shape.
@@ -477,7 +459,7 @@ function Skin:Layout()
     self.controls:ClearAllPoints()
     self.controls:SetPoint("RIGHT", content, "TOPRIGHT", 0, -middle / round)
 
-    -- The words in their narrower column, the picture over them; the scrollbar beside them.
+    -- The words in their narrower column, the picture over them.
     self.picture:SetShown(picture ~= nil)
     if picture then
         self.picture:SetTexture(picture.file)
@@ -493,17 +475,15 @@ function Skin:Layout()
     self.lineRoom = lineHeight
     Transcript:Dock(content, content, "TOPLEFT", wordsLeft, -(wordsTop - lineHeight), wordsWidth,
         captionHeight + 2 * lineHeight)
-    self.scrollbar:ClearAllPoints()
-    self.scrollbar:SetPoint("TOPLEFT", content, "TOPLEFT", wordsLeft + wordsWidth + 4, -wordsTop)
-    self.scrollbar:SetHeight(captionHeight)
 
     self.drawer:ClearAllPoints()
     self.drawer:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(wordsTop + captionHeight))
     self.drawer:SetSize(inner, math.max(1, queueHeight))
 
+    -- The progress line as wide as the words and the picture over it.
     self.progress.track:ClearAllPoints()
-    self.progress.track:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", 0, 0)
-    self.progress.track:SetWidth(inner)
+    self.progress.track:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", wordsLeft, 0)
+    self.progress.track:SetWidth(wordsWidth)
 
     self:Dress()
     self.layingOut = false
@@ -531,10 +511,6 @@ function Skin:Dress()
     self.colors = colors
     local tint = colors.portraitTint
     if self.viewport.texture then self.viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
-    local track = colors.disabled
-    self.scrollbar.track:SetColorTexture(track[1], track[2], track[3], .2)
-    local thumb = self.scrollbar:GetThumbTexture()
-    if thumb then thumb:SetVertexColor(track[1], track[2], track[3], .75) end
     local captionSize = self.captionSize or body
     Transcript:SetStyle({ font = fonts.paragraph, size = captionSize, lineGap = self.lineGap or Round(0.35 * captionSize),
         paragraphs = true, color = colors.paragraph, shadow = false,
@@ -733,7 +709,7 @@ end
 -- What the pointer lights, presses or scrolls in the window: a button pressed or lit changes its
 -- textures, which must not happen while it is one image.
 local function Clickables(self)
-    local list = { self.frame, self.play, self.skip, self.resizer, self.scrollbar, self.drawer, Transcript.frame }
+    local list = { self.frame, self.play, self.skip, self.resizer, self.drawer, Transcript.frame }
     for _, button in ipairs(self.row or {}) do table.insert(list, button) end
     for _, row in ipairs(self.rows or {}) do table.insert(list, row) end
     return list
@@ -1020,7 +996,6 @@ function Skin:Tick(elapsed)
     if not self.wanted or self.buffered or self.preparing or self.arming then return end
     if StaticPortrait:Resolved() then self:ConfigurePortrait() end
     self:UpdateProgress()
-    self:UpdateScrollbar()
     self.poll = (self.poll or 0) + elapsed
     if self.poll >= .2 then
         self.poll = 0
@@ -1201,24 +1176,6 @@ function Skin:Update()
     self:LayoutQueue()
     self:UpdateProgress()
     self:UpdateControls(true)
-end
-
---- Shown only when the line runs past the page; its range is the page count.
-function Skin:UpdateScrollbar()
-    -- By line, so the thumb rides the captions' glide rather than jumping a page at a time.
-    local top, maxTop = Transcript:GetScroll()
-    if maxTop <= 1 then self.scrollbar:Hide(); return end
-    -- The range and the thumb only when the page or the text changed; the value every frame.
-    local lines, height = self.lines or 1, self.scrollbar:GetHeight() or 0
-    local key = maxTop .. ":" .. lines .. ":" .. height
-    if key ~= self.scrollKey then
-        self.scrollKey = key
-        self.scrollbar:SetMinMaxValues(1, maxTop)
-        local thumb = self.scrollbar:GetThumbTexture()
-        if thumb then thumb:SetHeight(math.max(24, height * lines / (lines + maxTop - 1))) end
-    end
-    if math.abs((self.scrollbar:GetValue() or 1) - top) > 0.001 then self.scrollbar:SetValue(top) end
-    self.scrollbar:Show()
 end
 
 function Skin:Reset()
