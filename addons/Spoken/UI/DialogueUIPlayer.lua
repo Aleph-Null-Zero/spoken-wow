@@ -368,6 +368,10 @@ function Skin:Layout()
     local under = math.max(0, textGap - lineGap) + (progress and 6 or 0)
     wordsTop = wordsTop + math.max(0, lineHeight - over)
     footerHeight = footerHeight + math.max(0, lineHeight - under)
+    -- Under the progress line, a line's room more, so it sits as far above the paper's foot as
+    -- under the words.
+    local barLift = progress and lineHeight or 0
+    footerHeight = footerHeight + barLift
     -- The lines waiting get rows while the window is open; folded, the title counts them.
     local waiting = Waiting()
     local shownRows = Expanded() and math.min(MAX_ROWS, waiting) or 0
@@ -482,7 +486,7 @@ function Skin:Layout()
 
     -- The progress line as wide as the words and the picture over it.
     self.progress.track:ClearAllPoints()
-    self.progress.track:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", wordsLeft, 0)
+    self.progress.track:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", wordsLeft, barLift)
     self.progress.track:SetWidth(wordsWidth)
 
     self:Dress()
