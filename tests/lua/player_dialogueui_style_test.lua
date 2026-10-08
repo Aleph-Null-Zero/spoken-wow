@@ -495,9 +495,11 @@ env.PlayerFrame:RefreshConfig()
 Expect("...unlocked, they are the window's again", Skin.frame.clicks, true)
 
 ---------------------------------------------------------------- a place's picture
+-- Where the first line stands: the captions' frame holds the fade's room over it.
+local function WordsTop() return T.frame.anchor.y - Skin.lineRoom end
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()
-local plainTop = T.frame.anchor.y
+local plainTop = WordsTop()
 Expect("a line with no picture shows none", Skin.picture:IsShown(), false)
 Expect("a name over it unlike the line's own is shown", Skin.name:GetText(), "Kalimdor")
 Spoken:StopAll()
@@ -507,7 +509,8 @@ Skin:Update()
 Expect("a place's picture shows over its words, as Place Lore shows it", Skin.picture:IsShown()
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
-Expect("...the words under it, 10 below", plainTop - T.frame.anchor.y, 210)
+Expect("...the words under it, a line's room below it for the lines gliding out", plainTop - WordsTop(),
+    200 + math.max(10, Skin.lineRoom))
 Spoken:StopAll()
 -- Drawn 294 across at the map's scale beside the map: as large here, in the window's scale (0.52).
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
@@ -519,6 +522,21 @@ Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Mulgore", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()
 Expect("a name the same as the line's own is said once, in the title", Skin.name:GetText() .. "|" .. Skin.title.text:GetText(), "|Mulgore")
+Spoken:StopAll()
+
+---------------------------------------------------------------- the words' edges
+-- A line's room over and under the words, which a line gliding out or in fades through: at
+-- nothing by the time it reaches the edge, so no line is seen cut there.
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Fade", portrait = { kind = "none" } } }))
+Skin:Update()
+local room = Skin.lineRoom
+Expect("the words have a line's room over them in the captions", room .. " " .. T.labels[1].anchor.y,
+    (T.style.size + T.style.lineGap) .. " " .. (-room))
+Expect("...and under them", T.frame:GetHeight(), Skin.lines * room + 2 * room)
+Expect("...no parchment strips drawn over them", Skin.strips, nil)
+T.top = 1.75; T.placedKey = nil; T:Place()
+Expect("a line gliding out is at a quarter, three quarters into the room", math.abs(T.labels[1]:GetAlpha() - .25) < 1e-6, true)
+T.top = 1; T.placedKey = nil; T:Place()
 Spoken:StopAll()
 
 ---------------------------------------------------------------- a line held back

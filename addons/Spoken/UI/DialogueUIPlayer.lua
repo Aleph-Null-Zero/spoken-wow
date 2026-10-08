@@ -351,6 +351,14 @@ function Skin:Layout()
     local progress = Addon:Profile("Transcript").SubtitleProgress ~= false
     self.progress.track:SetShown(progress)
     local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
+    -- A line's room over and under the words, which a line gliding out or in fades through: it is
+    -- at nothing by the time it reaches the edge, so no line is ever seen cut there. Taken from the
+    -- gaps already over and under them (the header's or the picture's, the one over the progress
+    -- line), and made up where those are smaller than a line.
+    local over = picture and PICTURE_GAP or textGap
+    local under = math.max(0, textGap - lineGap) + (progress and 6 or 0)
+    wordsTop = wordsTop + math.max(0, lineHeight - over)
+    footerHeight = footerHeight + math.max(0, lineHeight - under)
     -- The lines waiting get rows while the window is open; folded, the title counts them.
     local waiting = Waiting()
     local shownRows = Expanded() and math.min(MAX_ROWS, waiting) or 0
@@ -449,7 +457,9 @@ function Skin:Layout()
         self.picture:ClearAllPoints()
         self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -headerHeight)
     end
-    Transcript:Dock(content, content, "TOPLEFT", 0, -wordsTop, inner, captionHeight)
+    -- The captions span that room too; the lines fade through it (Transcript:Place).
+    self.lineRoom = lineHeight
+    Transcript:Dock(content, content, "TOPLEFT", 0, -(wordsTop - lineHeight), inner, captionHeight + 2 * lineHeight)
     self.scrollbar:ClearAllPoints()
     self.scrollbar:SetPoint("TOPLEFT", content, "TOPRIGHT", 4, -wordsTop)
     self.scrollbar:SetHeight(captionHeight)
@@ -493,7 +503,7 @@ function Skin:Dress()
     local captionSize = self.captionSize or body
     Transcript:SetStyle({ font = fonts.paragraph, size = captionSize, lineGap = self.lineGap or Round(0.35 * captionSize),
         paragraphs = true, color = colors.paragraph, shadow = false,
-        highlight = colors.highlight, lines = self.lines })
+        highlight = colors.highlight, lines = self.lines, padTop = self.lineRoom })
 end
 
 function Skin:ConfigurePortrait()
