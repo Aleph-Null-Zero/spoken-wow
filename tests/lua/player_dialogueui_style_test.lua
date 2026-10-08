@@ -462,6 +462,21 @@ Skin:Tick(0.2)
 Expect("...then what is on it", Skin.content:GetAlpha(), 1)
 Spoken:StopAll()
 
+---------------------------------------------------------------- a place's picture
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" } } }))
+Skin:Update()
+local plainTop = T.frame.anchor.y
+Expect("a line with no picture shows none", Skin.picture:IsShown(), false)
+Spoken:StopAll()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
+    picture = { file = "Interface/Pictures/1412-mulgore", mask = "Interface/Pictures/Mask7" } } }))
+Skin:Update()
+Expect("a place's picture shows over its words, as Place Lore shows it", Skin.picture:IsShown()
+    and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
+Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
+Expect("...the words under it, 10 below", plainTop - T.frame.anchor.y, 210)
+Spoken:StopAll()
+
 ---------------------------------------------------------------- a line held back
 -- Game Greeting First holds a gossip line until the NPC's own greeting ends.
 local holding = true
