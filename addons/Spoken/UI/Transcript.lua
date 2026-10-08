@@ -439,14 +439,18 @@ function Transcript:Place()
     local placed = format("%.4f:%d:%d:%d", top, step, n, #(self.lines or {}))
     if self.placedKey == placed then return end
     self.placedKey = placed
+    -- Room over the first line where the window draws its own fade (style.padTop): the
+    -- DialogueUI window's strips of parchment, as Place Lore fades its text.
+    local padTop = self.style and self.style.padTop
     for row, label in ipairs(self.labels) do
         label:ClearAllPoints()
-        label:SetPoint("TOPLEFT", 0, -((row - 1) - fraction) * step)
+        label:SetPoint("TOPLEFT", 0, -((padTop or 0) + ((row - 1) - fraction) * step))
         local line = self.lines and self.lines[first + row - 1]
         label:SetShown(line ~= nil and (row <= n or (row == n + 1 and fraction > 0)))
         -- The line leaving at the top fades out as it slides up and the one coming in under the
-        -- page fades in, so the words never stop on a clean cut at an edge.
-        label:SetAlpha(row == 1 and 1 - fraction or row == n + 1 and fraction or 1)
+        -- page fades in, so the words never stop on a clean cut at an edge. Not where the window
+        -- fades its own edges.
+        label:SetAlpha(padTop and 1 or row == 1 and 1 - fraction or row == n + 1 and fraction or 1)
     end
 end
 
@@ -561,7 +565,8 @@ local function SameStyle(a, b)
     if a == b then return true end
     if not a or not b then return false end
     if a.font ~= b.font or a.shadow ~= b.shadow or a.highlight ~= b.highlight or a.lines ~= b.lines
-        or a.size ~= b.size or a.lineGap ~= b.lineGap or a.paragraphs ~= b.paragraphs then return false end
+        or a.size ~= b.size or a.lineGap ~= b.lineGap or a.paragraphs ~= b.paragraphs
+        or a.padTop ~= b.padTop then return false end
     local ca, cb = a.color or {}, b.color or {}
     return ca[1] == cb[1] and ca[2] == cb[2] and ca[3] == cb[3]
 end

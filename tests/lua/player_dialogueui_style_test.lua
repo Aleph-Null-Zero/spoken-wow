@@ -505,9 +505,11 @@ env.PlayerFrame:RefreshConfig()
 Expect("...unlocked, they are the window's again", Skin.frame.clicks, true)
 
 ---------------------------------------------------------------- a place's picture
+-- Where the first line stands: the captions' frame holds the fade's room over it.
+local function WordsTop() return T.frame.anchor.y - Skin.fadePads[1] end
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()
-local plainTop = T.frame.anchor.y
+local plainTop = WordsTop()
 Expect("a line with no picture shows none", Skin.picture:IsShown(), false)
 Expect("a name over it unlike the line's own is shown", Skin.name:GetText(), "Kalimdor")
 Spoken:StopAll()
@@ -517,7 +519,7 @@ Skin:Update()
 Expect("a place's picture shows over its words, as Place Lore shows it", Skin.picture:IsShown()
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
-Expect("...the words under it, 10 below", plainTop - T.frame.anchor.y, 210)
+Expect("...the words under it, 10 below", plainTop - WordsTop(), 210)
 Spoken:StopAll()
 -- Drawn 294 across at the map's scale beside the map: as large here, in the window's scale (0.52).
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
@@ -529,6 +531,21 @@ Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Mulgore", label = "Mulgore", portrait = { kind = "none" } } }))
 Skin:Update()
 Expect("a name the same as the line's own is said once, in the title", Skin.name:GetText() .. "|" .. Skin.title.text:GetText(), "|Mulgore")
+Spoken:StopAll()
+
+---------------------------------------------------------------- the words' edges
+-- Place Lore's fade: strips of the parchment over the words' edges, solid at the edge.
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Fade", portrait = { kind = "none" } } }))
+Skin:Update()
+Skin:Tick(0.1)
+local padTop, padBottom = Skin.fadePads[1], Skin.fadePads[2]
+Expect("the words' edges fade into the parchment, strips of it drawn over them",
+    #Skin.strips == 8 and Skin.strips[1].texture == BROWN .. "Parchment.png" and Skin.fade:GetParent() == Skin.content, true)
+Expect("...room for them over and under the words, in the gaps already there", padTop > 0 and padBottom > 0, true)
+Expect("...the captions start under the top one", T.labels[1].anchor.y, -padTop)
+Expect("...and fade no line of their own: the strips do", T.labels[1]:GetAlpha(), 1)
+local ramp = Skin.fadeTop.ramps[3]
+Expect("...the top one solid toward the edge", ramp.opacity[2] > ramp.opacity[1], true)
 Spoken:StopAll()
 
 ---------------------------------------------------------------- a line held back
