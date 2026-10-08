@@ -165,6 +165,31 @@ function Actions.SetPlayGlyph(button, state)
     button.state, button.playing = state, state == "stop"
 end
 
+--- Skip, as the windows' queue offers it: the round button with the play glyph against a bar,
+--- the usual "next" mark. The subtitle's controls and the DialogueUI window's footer show it.
+function Actions.SkipButton(parent)
+    local skip = Actions.RoundButton(parent, 10)
+    skip.glyph:SetTexture(PORTRAIT_ATLAS)
+    skip.glyph:SetTexCoord(0, 93 / PORTRAIT_ATLAS_SIZE, 419 / PORTRAIT_ATLAS_SIZE, 1)
+    skip.glyph:ClearAllPoints()
+    skip.glyph:SetPoint("CENTER", -2, 0)
+    skip.bar = skip:CreateTexture(nil, "ARTWORK")
+    skip.bar:SetSize(2, 9)
+    skip.bar:SetPoint("LEFT", skip.glyph, "RIGHT", 0, 0)
+    if skip.bar.SetColorTexture then skip.bar:SetColorTexture(1, 0.82, 0, 0.85) end
+    skip:SetScript("OnClick", function()
+        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
+        SoundQueue:Skip()
+    end)
+    skip:SetScript("OnEnter", function()
+        skip.glyph:SetAlpha(1)
+        GameTooltip:SetOwner(skip, "ANCHOR_TOP")
+        GameTooltip:SetText(L.BIND_SKIP)
+        GameTooltip:Show()
+    end)
+    return skip
+end
+
 local PORTRAIT_MASK = [[Interface\CharacterFrame\TempPortraitAlphaMask]]
 local VIGNETTE = [[Interface\AddOns\Spoken\Textures\RoundVignette]]
 

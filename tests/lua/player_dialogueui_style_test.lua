@@ -94,8 +94,8 @@ Expect("...and opened, the other windows' words are opened too", env.Addon:Layou
 Expect("the window is laid out as DialogueUI's", Skin.frame:GetWidth(), 624)
 Expect("...in height too", Skin.frame:GetHeight(), 734)
 -- DialogueUI's window has no parent and is drawn at 0.8 here; UIParent at 1. At the default
--- Window Size the window is 0.65 of that, 0.52: the whole window scaled.
-Expect("...and its size scales the whole of it", math.abs(Skin.frame.scale - 0.52) < 1e-6, true)
+-- Window Size the window is all of that, 0.8: as large as the dialog it takes over from.
+Expect("...and drawn at the dialog's own size", math.abs(Skin.frame.scale - 0.8) < 1e-6, true)
 Expect("the parchment is DialogueUI's own", Skin.parchments[2].texture, BROWN .. "Parchment.png")
 Expect("...its top cap at the top of the image", table.concat(Skin.parchments[1].texCoord, ","), "0,1,0,0.125")
 Expect("...its bottom cap where DialogueUI cuts it", table.concat(Skin.parchments[3].texCoord, ","), "0,1,0.4375,0.5625")
@@ -179,25 +179,27 @@ env.PlayerFrame:RefreshConfig()
 
 ---------------------------------------------------------------- where it opens
 local function Near(a, b) return a ~= nil and b ~= nil and math.abs(a - b) < 1 end
-local function At(x)
-    local anchor, base = Skin.frame.anchor, Skin.frame.spokenBaseScale
-    -- DialogueUI's window, 734 tall at 0.8 scale, centred on the screen's centre.
-    return anchor ~= nil and anchor.point == "TOP" and anchor.relativePoint == "BOTTOMLEFT"
-        and Near(anchor.x, x / base) and Near(anchor.y, (540 + 734 / 2 * 0.8) / base)
+-- The screen's top left, 32 from the paper: its caps reach past the frame's top and sides.
+local function AtTopLeft()
+    local anchor, base, cap = Skin.frame.anchor, Skin.frame.spokenBaseScale, Skin.parchments[1]
+    local x = 32 / base + math.max(0, (cap.width - Skin.frame:GetWidth()) / 2)
+    local y = 32 / base + cap.height / 2
+    return anchor ~= nil and anchor.point == "TOPLEFT" and anchor.relativePoint == "TOPLEFT"
+        and Near(anchor.x, x) and Near(anchor.y, -y)
 end
 saved.DialogueUI = nil
 DUI.frameOffsetX = 480
 env.PlayerFrame:RefreshConfig()
-Expect("never dragged, it opens where DialogueUI puts its window", At(960 + 480 * 0.8), true)
+Expect("never dragged, it opens at the screen's top left, out of the next dialog's way", AtTopLeft(), true)
 DUI.frameOffsetX = -480
 env.PlayerFrame:RefreshConfig()
-Expect("...and follows it to the other side", At(960 - 480 * 0.8), true)
+Expect("...wherever DialogueUI puts its own window", AtTopLeft(), true)
 local hadCtrl = _G.IsControlKeyDown
 _G.IsControlKeyDown = function() return true end
 Skin:Wheel(1)
 _G.IsControlKeyDown = hadCtrl
 Expect("...still there at another size", env.Addon.db.profile.Frame.FrameScale > 0.7
-    and At(960 - 480 * 0.8), true)
+    and AtTopLeft(), true)
 Expect("...the size not taken for a move", saved.DialogueUI, nil)
 env.Addon.db.profile.Frame.FrameScale = 0.7
 env.PlayerFrame:RefreshConfig()
@@ -208,7 +210,7 @@ DUI.frameOffsetX = 480
 env.PlayerFrame:RefreshConfig()
 Expect("...and no longer follows DialogueUI's", Skin.frame.anchor, dragged)
 env.PlayerFrame:Reset()
-Expect("reset, it goes back to where DialogueUI puts its window", saved.DialogueUI == nil and At(960 + 480 * 0.8), true)
+Expect("reset, it goes back to the screen's top left", saved.DialogueUI == nil and AtTopLeft(), true)
 
 ---------------------------------------------------------------- as tall as the words need
 local panel, transcript = env.Addon.db.profile.Frame.DialogueUI, env.Addon.db.profile.Transcript
@@ -326,7 +328,7 @@ Expect("DialogueUI resizing resizes the window", Skin.frame:GetWidth(), 600)
 local frameCfg, words = env.Addon.db.profile.Frame, env.Addon.db.profile.Transcript
 frameCfg.FrameScale = 0.35
 env.PlayerFrame:RefreshConfig()
-Expect("half the Window Size scales it down by half", math.abs(Skin.frame.scale - 0.65 * 0.5 * 0.8) < 1e-6, true)
+Expect("half the Window Size scales it down by half", math.abs(Skin.frame.scale - 0.5 * 0.8) < 1e-6, true)
 Expect("...keeping DialogueUI's layout inside", Skin.frame:GetWidth(), 600)
 frameCfg.FrameScale = 0.7
 env.PlayerFrame:RefreshConfig()
@@ -335,7 +337,7 @@ env.PlayerFrame:RefreshConfig()
 -- DialogueUI's 14 at the default Text Size of 16; at 26, 14 * 26 / 16.
 Expect("Text Size sets the words against DialogueUI's", T.style.size, 23)
 Expect("...their spacing following", T.style.lineGap, 8)
-Expect("...the window keeping its scale", math.abs(Skin.frame.scale - 0.52) < 1e-6, true)
+Expect("...the window keeping its scale", math.abs(Skin.frame.scale - 0.8) < 1e-6, true)
 words.FontSize = 16
 env.PlayerFrame:RefreshConfig()
 Expect("at the default Text Size the words are DialogueUI's size", T.style.size, 14)
@@ -352,9 +354,9 @@ Skin:StopDrag()
 ctrl = true
 T.frame:GetScript("OnMouseWheel")(T.frame, 1)
 Expect("Ctrl and the wheel over the words grow Window Size", math.abs(frameCfg.FrameScale - 0.75) < 1e-9, true)
-local grown = 0.65 * 0.75 / 0.7 * 0.8
+local grown = 0.75 / 0.7 * 0.8
 Expect("...drawing it larger", math.abs(Skin.frame.scale - grown) < 1e-6, true)
-Expect("...its corner kept where it was", math.abs(Skin.frame.anchor.y - 100 * 0.52 / grown) < 1e-6, true)
+Expect("...its corner kept where it was", math.abs(Skin.frame.anchor.y - 100 * 0.8 / grown) < 1e-6, true)
 Expect("...and saying so", _G.GameTooltip.text, env.L.OPT_SCALE .. ": 75%")
 frameCfg.FrameScale = 2
 Skin.frame:GetScript("OnMouseWheel")(Skin.frame, 1)
@@ -374,7 +376,7 @@ env.PlayerFrame:RefreshConfig()
 ---------------------------------------------------------------- over DialogueUI's window
 Spoken:SetPlayerHost(DUI)
 Expect("hosted over DialogueUI the window moves onto it", Skin.frame:GetParent(), DUI)
-Expect("...at its size of the window it sits on", math.abs(Skin.frame.scale - 0.65) < 1e-6, true)
+Expect("...at the size of the window it sits on", math.abs(Skin.frame.scale - 1) < 1e-6, true)
 local moving = false
 Skin.frame.StartMoving = function() moving = true end
 Skin:StartDrag()
@@ -388,7 +390,50 @@ Expect("...and comes back", Skin.frame:GetParent(), _G.UIParent)
 env.PlayerFrame:RefreshConfig()
 Expect("...to the place saved over the window", placed ~= nil and math.abs(Skin.frame:GetLeft() - placed.left) < 1e-6
     and math.abs(Skin.frame:GetTop() - placed.top) < 1e-6, true)
-Expect("...at its own scale", math.abs(Skin.frame.scale - 0.52) < 1e-6, true)
+Expect("...at its own scale", math.abs(Skin.frame.scale - 0.8) < 1e-6, true)
+
+---------------------------------------------------------------- its controls, the subtitle's
+Spoken:StopAll()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "One", portrait = { kind = "none" } } }))
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Two", portrait = { kind = "none" } } }))
+Expect("its footer has the subtitle's round controls, Stop or Replay then Skip, and no Stop All",
+    #Skin.buttons == 2 and Skin.buttons[1] == Skin.play and Skin.buttons[2] == Skin.skip and Skin.stop == nil, true)
+Expect("...Skip in the subtitle's art", Skin.skip.bar ~= nil, true)
+Skin.play.scripts.OnClick(Skin.play)
+Expect("Stop stops the line, its glyph turning to Replay", tostring(env.SoundQueue:IsPaused()) .. " " .. tostring(Skin.play.state),
+    "true replay")
+Skin.play.scripts.OnClick(Skin.play)
+Expect("...and Replay plays it again", Skin.play.state, "stop")
+local first = Spoken:GetCurrent()
+Skin.skip.scripts.OnClick(Skin.skip)
+Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
+Spoken:StopAll()
+
+---------------------------------------------------------------- from the dialog to the top left
+-- DialogueUI's window closes on a line that plays on: the window starts where the dialog was and
+-- as tall, at once and without a fade, then folds to its own height on its way to the top left.
+saved.DialogueUI = nil
+env.PlayerFrame:RefreshConfig()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
+local folded = Skin.frame:GetHeight()
+DUI.GetLeft = function() return 300 end
+DUI.GetTop = function() return 900 end
+DUI.GetHeight = function() return 734 end
+local scale = Skin.frame:GetEffectiveScale()
+for _, fn in ipairs(DUI.hooks.OnHide or {}) do fn(DUI) end
+Expect("the dialog closing on a line starts the window where the dialog was",
+    Near(Skin.frame.anchor.x, 300 * 0.8 / scale) and Near(Skin.frame.anchor.y, 900 * 0.8 / scale)
+    and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
+Expect("...as tall as the dialog", Near(Skin.frame:GetHeight(), 734 * 0.8 / scale), true)
+Expect("...in full at once, not fading in", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime), "1 nil")
+Skin:Tick(0.2)
+Expect("...halfway, between the two", Skin.frame:GetHeight() < 734 * 0.8 / scale and Skin.frame:GetHeight() > folded, true)
+Skin:Tick(0.3)
+Expect("...and settled at the top left, folded to its own height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+    and Skin.settling == nil, true)
+Spoken:StopAll()
+for _, fn in ipairs(DUI.hooks.OnHide or {}) do fn(DUI) end
+Expect("with no line playing on, the dialog closing moves nothing", Skin.settling, nil)
 
 Expect("diagnostics name the style", string.find(Skin:Describe(), "enabled=true", 1, true) ~= nil, true)
 Expect("...and the theme reading", string.find(env.DialogueUITheme:Describe(), "theme=1", 1, true) ~= nil, true)

@@ -24,9 +24,15 @@ local CORNER_ICON = 20
 local CONTROL_HEIGHT = 22
 local BAR_HEIGHT = 3
 local MIN_LINES = 2
--- The panel's share of DialogueUI's window at the default Window Size, small enough to read
--- beside the dialog.
-local BASE_SCALE = 0.65
+-- The panel's share of DialogueUI's window at the default Window Size: all of it, so the words
+-- are as large as they were in the dialog it takes over from.
+local BASE_SCALE = 1
+-- Where it settles when the dialog closes: this far from the screen's top left, the paper's
+-- edge rather than the frame's. And how long it takes to get there from the dialog.
+local EDGE = 32
+local SETTLE_TIME = 0.45
+-- Between the round controls in the footer, as the subtitle's (Subtitle:BuildControls).
+local ROUND_GAP = 4
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
 -- Text Size's default, at which the words are DialogueUI's own size.
 local BASE_FONT_SIZE = 16
@@ -73,22 +79,6 @@ function Skin:HasClip()
 end
 
 --- A flat text button with DialogueUI's gossip-option glow. `fn` runs only while a clip plays.
-local function TextButton(parent, text, fn)
-    local button = CreateFrame("Button", nil, parent)
-    button:SetHeight(CONTROL_HEIGHT)
-    button.text = Font(button, 12, 1, 1, 1)
-    button.text:SetPoint("LEFT", 6, 0)
-    button.text:SetPoint("RIGHT", -6, 0)
-    button.text:SetJustifyH("CENTER")
-    button.text:SetText(text)
-    button:SetHighlightTexture([[Interface\Buttons\UI-Listbox-Highlight2]])
-    button:GetHighlightTexture():SetAlpha(0.25)
-    button:SetScript("OnClick", function()
-        if Skin:HasClip() then fn() end
-    end)
-    return button
-end
-
 -- No control shows the wheel sizing (Skin:Wheel), so the face, fold and resize tooltips
 -- mention it.
 local function WheelHint()
@@ -125,6 +115,11 @@ function Skin:Initialize()
     frame:SetScript("OnMouseWheel", function(_, delta) self:Wheel(delta) end)
     frame.spokenWheel = function(delta) return self:Wheel(delta) end
     frame:Hide()
+    -- DialogueUI's window closing on a line that plays on: this one takes over from it.
+    local dialog = _G.DUIQuestFrame
+    if dialog and dialog.HookScript then
+        dialog:HookScript("OnHide", function() self:Settle(dialog) end)
+    end
 
     -- DialogueUI's three parchment strips: caps centred on the frame's ends, the middle
     -- stretched between, all wider than the frame.
@@ -258,11 +253,22 @@ function Skin:Initialize()
     self.footerDivider:SetTexCoord(FOOTER_DIVIDER[1], FOOTER_DIVIDER[2], FOOTER_DIVIDER[3], FOOTER_DIVIDER[4])
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(CONTROL_HEIGHT)
-    self.play = TextButton(self.controls, L.STOP, function()
-        if SoundQueue:CanBePaused() then SoundQueue:TogglePauseQueue() end
+    -- The subtitle's controls (Subtitle:BuildControls): Stop or Replay, then Skip.
+    local play = Actions.RoundButton(self.controls, 12)
+    play:SetScript("OnClick", function()
+        if not (self:HasClip() and SoundQueue:CanBePaused()) then return end
+        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
+        SoundQueue:TogglePauseQueue()
+        self:UpdateControls()
     end)
-    self.stop = TextButton(self.controls, L.MIN_STOP_ALL, function() SoundQueue:RemoveAllSoundsFromQueue() end)
-    self.buttons = { self.play, self.stop }
+    play:SetScript("OnEnter", function()
+        play.glyph:SetAlpha(1)
+        GameTooltip:SetOwner(play, "ANCHOR_TOP")
+        GameTooltip:SetText(SoundQueue:IsPaused() and L.REPLAY or L.STOP)
+        GameTooltip:Show()
+    end)
+    self.play, self.skip = play, Actions.SkipButton(self.controls)
+    self.buttons = { self.play, self.skip }
     Actions:Build(frame)
 
     -- The captions scroll themselves on the wheel; the scrollbar shows the position and
@@ -390,7 +396,8 @@ function Skin:Layout()
     end
     local captionHeight = lines * lineHeight
     height = math.max(height, padTop + headerHeight + captionHeight + queueHeight + padBottom + footerHeight)
-    frame:SetSize(width, height)
+    self.settledHeight = height
+    frame:SetSize(width, self.settling and frame:GetHeight() or height)
     local minHeight = padTop + headerHeight + MIN_LINES * lineHeight + queueHeight + padBottom + footerHeight
     if frame.SetResizeBounds then
         if self.sizingWidth then
@@ -481,7 +488,6 @@ function Skin:Dress()
         Paint(row.text, fonts.paragraph, math.max(8, body - 1), colors.gossip)
         row.color = colors.gossip
     end
-    for _, button in ipairs(self.buttons) do Paint(button.text, fonts.paragraph, body, colors.paragraph) end
     self.colors = colors
     local tint = colors.portraitTint
     if self.viewport.texture then self.viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
@@ -588,8 +594,7 @@ function Skin:LayoutControls()
     for _, button in ipairs(self.buttons) do
         button:ClearAllPoints()
         button:SetPoint("LEFT", self.controls, "LEFT", x, 0)
-        button:SetWidth(button.text:GetStringWidth() + 12)
-        x = x + button:GetWidth() + 4
+        x = x + button:GetWidth() + ROUND_GAP
     end
 end
 
@@ -598,11 +603,7 @@ end
 function Skin:UpdateControls(relayout)
     if not self.clip then return end
     local paused, playing = SoundQueue:IsPaused(), SoundQueue:IsPlaying()
-    local label = paused and L.REPLAY or L.STOP
-    if self.play.text:GetText() ~= label then
-        self.play.text:SetText(label)
-        relayout = true
-    end
+    Actions.SetPlayGlyph(self.play, Actions.HeadState())
     Actions.Glyph(self.pause:GetNormalTexture(), Actions.HeadState())
     self.pause:GetNormalTexture():SetAlpha((paused or MouseIsOver(self.pause)) and .9 or 0)
     self.pause.wash:SetShown(paused and not playing)
@@ -615,8 +616,7 @@ function Skin:UpdateControls(relayout)
     self.title.text:SetText(held and format("%s (%s)", Label(self.clip), held) or Label(self.clip))
     local pausable = SoundQueue:CanBePaused()
     for _, button in ipairs(self.buttons) do
-        local color = pausable and colors and colors.paragraph or colors and colors.disabled
-        if color then button.text:SetTextColor(color[1], color[2], color[3]) end
+        button:SetAlpha(pausable and 1 or .4)
         if pausable then button:Enable() else button:Disable() end
     end
     if relayout then self:LayoutControls() end
@@ -699,6 +699,7 @@ function Skin:SetVisible(visible, immediate)
 end
 
 function Skin:Tick(elapsed)
+    if self.settling then self:SettleStep(elapsed) end
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
         local t = Clamp(self.fadeTime / (self.wanted and .18 or .24), 0, 1)
@@ -720,19 +721,58 @@ function Skin:Tick(elapsed)
     end
 end
 
---- Where DialogueUI puts its own window, so a line that plays on after the dialog closes
---- stays where the dialog was. Without DialogueUI's place, left of centre.
+--- The screen's top left, EDGE from the paper: where the window settles when DialogueUI's
+--- window closes on a line that plays on (Skin:Settle), out of the way of the next dialog.
 function Skin:PlaceDefault()
     local frame = self.frame
-    local x, top = Theme:WindowPlace()
+    -- In the frame's own units: its effective scale is UIParent's times its base scale. The
+    -- paper's caps reach past the frame's top and sides.
+    local k = 1 / (frame.spokenBaseScale or 1)
+    local cap = self.parchments and self.parchments[1]
+    local paperWidth, capHeight = cap and cap:GetWidth() or 0, cap and cap:GetHeight() or 0
+    local x = Round(EDGE * k + math.max(0, (paperWidth - frame:GetWidth()) / 2))
+    local y = Round(EDGE * k + capHeight / 2)
     frame:ClearAllPoints()
-    if x then
-        -- In the frame's own units: its effective scale is UIParent's times its base scale,
-        -- also while a host holds it (Addon:ApplyHost keeps the effective scale).
-        local k = 1 / (frame.spokenBaseScale or 1)
-        frame:SetPoint("TOP", UIParent, "BOTTOMLEFT", Round(x * k), Round(top * k))
-    else
-        frame:SetPoint("CENTER", UIParent, "CENTER", -Round(UIParent:GetWidth() / 4), 0)
+    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, -y)
+end
+
+--- DialogueUI's window closed while its line plays on: this window takes the dialog's place and
+--- height, then folds to its own height as it moves to where it settles, DialogueUI's opening in
+--- reverse. Not while it sits on the dialog (Show Spoken Over DialogueUI): it is in place already.
+function Skin:Settle(dialog)
+    local frame = self.frame
+    if not (self:IsEnabled() and PlayerFrame:Current()) or frame:GetParent() ~= UIParent then return end
+    local left, top, height = dialog:GetLeft(), dialog:GetTop(), dialog:GetHeight()
+    if not (left and top and height) then return end
+    self:Update()
+    -- Where it settles, as RefreshConfig places it, in the screen's pixels.
+    if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
+    local scale, from = frame:GetEffectiveScale(), dialog:GetEffectiveScale()
+    self.settling = { time = 0, left = left * from, top = top * from, height = height * from,
+        toLeft = frame:GetLeft() * scale, toTop = frame:GetTop() * scale }
+    -- In full at once, where the dialog was: no fade.
+    self.wanted, self.fadeTime = true, nil
+    frame:SetAlpha(1)
+    frame:Show()
+    self:SettleStep(0)
+end
+
+function Skin:SettleStep(elapsed)
+    local settling, frame = self.settling, self.frame
+    settling.time = settling.time + elapsed
+    local t = Clamp(settling.time / SETTLE_TIME, 0, 1)
+    local eased = t * t * (3 - 2 * t)
+    local scale = frame:GetEffectiveScale()
+    local toHeight = (self.settledHeight or frame:GetHeight()) * scale
+    local left = settling.left + (settling.toLeft - settling.left) * eased
+    local top = settling.top + (settling.toTop - settling.top) * eased
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left / scale, top / scale)
+    frame:SetHeight((settling.height + (toHeight - settling.height) * eased) / scale)
+    if t == 1 then
+        self.settling = nil
+        if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
+        self:Layout()
     end
 end
 
