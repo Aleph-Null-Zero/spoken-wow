@@ -422,6 +422,8 @@ Expect("...in the header at the right, beside the speaker and the line",
     Skin.controls.anchor.point == "RIGHT" and Skin.controls.anchor.relativeTo == Skin.content
     and Skin.controls.anchor.relativePoint == "TOPRIGHT" and Skin.controls.anchor.y < 0, true)
 Expect("...the line's title stopping short of them", Skin.title.anchor.relativeTo == Skin.controls, true)
+Expect("...as large on screen as Place Lore's, 24 at UIParent's scale, at the default Window Size",
+    math.abs(Skin.play:GetWidth() * Skin.controls:GetScale() * Skin.frame.spokenBaseScale - 24) < 0.01, true)
 local report = Skin.row[3]
 Expect("...Report after Skip, as large and as strong, as the subtitle shows it", report ~= nil and report:GetParent() == Skin.controls
     and report:GetWidth() == Skin.play:GetWidth() and report:GetAlpha() == 1, true)
@@ -604,7 +606,7 @@ Skin:Update()
 Expect("a place's picture shows over its words, as Place Lore shows it", Skin.picture:IsShown()
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(),
-    T.frame:GetWidth() .. "x" .. T.frame:GetWidth() / 2)
+    T.frame:GetWidth() .. "x" .. math.floor(T.frame:GetWidth() / 2 + 0.5))
 Expect("...the words narrower than DialogueUI's column, centred in it",
     T.frame:GetWidth() < Skin.progress.track:GetWidth()
     and math.abs(T.frame.anchor.x * 2 + T.frame:GetWidth() - Skin.progress.track:GetWidth()) <= 1, true)

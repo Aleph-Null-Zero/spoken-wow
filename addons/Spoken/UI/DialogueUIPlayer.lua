@@ -50,7 +50,7 @@ local COUNT_GAP, COUNT_IN = 6, .25
 local ROUND_GAP = 4
 -- The words take this share of DialogueUI's column, centred in it: a narrower column than the
 -- header's and the progress line's, read more easily.
-local WORDS_SHARE = 0.8
+local WORDS_SHARE = 0.9
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
 -- wide as the words, PICTURE_GAP above them, the page's grain through it.
 local PICTURE_GAP, PICTURE_ALPHA = 10, 0.95
@@ -469,8 +469,13 @@ function Skin:Layout()
     -- socket's middle, 2 up, and the name above it.
     local nameHeight = fonts.subtitleSize + 2
     local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
+    -- The round buttons as large on screen as Place Lore draws them (24, at UIParent's scale) at
+    -- the default Window Size, growing and shrinking with it from there. Its anchor's offset is
+    -- in its own scale.
+    local round = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
+    self.controls:SetScale(round)
     self.controls:ClearAllPoints()
-    self.controls:SetPoint("RIGHT", content, "TOPRIGHT", 0, -middle)
+    self.controls:SetPoint("RIGHT", content, "TOPRIGHT", 0, -middle / round)
 
     -- The words in their narrower column, the picture over them; the scrollbar beside them.
     self.picture:SetShown(picture ~= nil)
