@@ -24,6 +24,8 @@ local L = SpokenEnv.L
 --
 -- DialogueUI hides UIParent while its window is open, so that window gets a corner of its own
 -- under its Decline button: a faint Report icon, or for a line no pack has, a Contribute link.
+-- Where Spoken Quests puts its controls on the window's title line, the icon goes there with
+-- them, in full, and the link alone stays in the corner.
 
 local BUTTON_HEIGHT = 20
 local BUTTON_WIDTH = 90
@@ -44,6 +46,8 @@ local DUI_REPORT_ALPHA = 0.4
 -- Hung just under the footer buttons, not centred in the margin: its lower half is the
 -- parchment's curled edge.
 local DUI_ICON_GAP = 4
+-- The round button's size, as it is drawn beside Play and Skip.
+local DUI_ROUND = 24
 -- The red of DialogueUI's Accept button art (Art/Theme_*/OptionBackground-Common.png), lifted
 -- on the dark theme, where the art's (135, 27, 26) is too dark to read as small text on black.
 local DUI_RED_ON_LIGHT = { 0.467, 0.161, 0.078 }
@@ -62,6 +66,15 @@ local REFRESH_EVENTS = {
 }
 
 ContributeButton = {}
+
+--- Set by Spoken Quests' DialogueUI bridge: `slot(icon)` puts the Report icon in its row of
+--- controls on the window's title line and returns true. Unset, the icon stays in the corner.
+ContributeButton.dialogueUISlot = nil
+
+-- The icon in full in the row or beside the words to contribute; faint alone in the corner.
+local function CornerAlpha(corner)
+    return (corner.missing or corner.slotted) and 1 or DUI_REPORT_ALPHA
+end
 
 -- A copy of VoiceOver.lua's helper of the same name, which is a local there and so not
 -- reachable from this file -- the same reason ReportButton.lua and Player.lua each carry
@@ -193,7 +206,6 @@ function ContributeButton:DialogueUICorner(frame)
     local link = CreateFrame("Button", nil, frame)
     link:SetFrameStrata("FULLSCREEN")
     link:SetHeight(DUI_LINK_HEIGHT)
-    link:SetPoint("RIGHT", icon, "LEFT", -4, 0)
     local label = link:CreateFontString(nil, "OVERLAY")
     label:SetFontObject(_G.DUIFont_QuestType_Left or GameFontNormalSmall)
     label:SetPoint("RIGHT", link, "RIGHT", 0, 0)
@@ -224,7 +236,7 @@ function ContributeButton:DialogueUICorner(frame)
         end
     end
     local function Leave()
-        icon:SetAlpha(corner.missing and 1 or DUI_REPORT_ALPHA)
+        icon:SetAlpha(CornerAlpha(corner))
         if ContributeButton.tooltip then
             ContributeButton.tooltip:Hide()
         end
@@ -243,7 +255,8 @@ function ContributeButton:DialogueUICorner(frame)
 end
 
 --- Show the corner under DialogueUI's Decline (or Goodbye) button, right-aligned with it: the
---- faint Report icon, or with `missing`, the icon in full and the words to contribute.
+--- faint Report icon, or with `missing`, the icon in full and the words to contribute. With a
+--- slot on the title line (dialogueUISlot), the icon goes there in full and the words stay.
 function ContributeButton:ShowOnDialogueUI(frame, missing)
     local corner = self:DialogueUICorner(frame)
     if not corner then
@@ -268,10 +281,22 @@ function ContributeButton:ShowOnDialogueUI(frame, missing)
             beside = frameRight - right
         end
     end
-    icon:ClearAllPoints()
-    icon:SetPoint("RIGHT", frame, "BOTTOMRIGHT", -beside, below - DUI_ICON_GAP - DUI_ICON / 2)
-    icon:SetAlpha(corner.missing and 1 or DUI_REPORT_ALPHA)
+    local y = below - DUI_ICON_GAP - DUI_ICON / 2
+    -- Shown before the slot is asked, which lays its row out by what shows.
     icon:Show()
+    local slot = self.dialogueUISlot
+    corner.slotted = slot ~= nil and slot(icon) and true or false
+    link:ClearAllPoints()
+    if corner.slotted then
+        icon:SetSize(DUI_ROUND, DUI_ROUND)
+        link:SetPoint("RIGHT", frame, "BOTTOMRIGHT", -beside, y)
+    else
+        icon:SetSize(DUI_ICON, DUI_ICON)
+        icon:ClearAllPoints()
+        icon:SetPoint("RIGHT", frame, "BOTTOMRIGHT", -beside, y)
+        link:SetPoint("RIGHT", icon, "LEFT", -4, 0)
+    end
+    icon:SetAlpha(CornerAlpha(corner))
     if corner.missing then
         link:Show()
     else

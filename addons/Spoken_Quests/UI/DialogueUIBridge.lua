@@ -540,11 +540,15 @@ function Bridge:Page()
     end
 end
 
+-- Puts the Report icon in the row of controls on the title line (below).
+local SlotReport
+
 --- The Contribute button follows the window: it opens, closes and changes page with no
 --- event the button hears in time, since DialogueUI builds the page before showing it.
 local function RefreshContribute()
     local button = rawget(VoiceOver, "ContributeButton")
     if button and button.Refresh then
+        button.dialogueUISlot = SlotReport
         button:Refresh()
     end
 end
@@ -558,17 +562,26 @@ local function HostContributeBox(host)
 end
 
 --------------------------------------------------------------------------------
--- The Play button
+-- The controls on the title line
 --------------------------------------------------------------------------------
 --
 -- DialogueUI draws a Play button only while its Text To Speech is on, which is off by default
--- and read only at load, so this file draws its own in the same corner. Read Automatically,
--- never DialogueUI's Auto Play, decides whether a line reads on its own.
+-- and read only at load. This file puts the player's own round buttons on the window's title
+-- line instead, as Spoken's DialogueUI window shows them: Play (Stop while the page's line
+-- speaks), Skip, and Report (ContributeButton's icon, handed over through its dialogueUISlot).
+-- Read Automatically, never DialogueUI's Auto Play, decides whether a line reads on its own.
 
--- A 64-wide cell per theme (1 parchment, 2 dark): the speaker on top, its three waves below.
-local PLAY_ART = "Interface/AddOns/DialogueUI/Art/Theme_Shared/TTSButton.png"
-local PLAY_SIZE, PLAY_ICON, PLAY_ALPHA, PLAY_INSET = 24, 16, 0.6, 8
--- How often the button looks again for the page's line while the window is open: a quest's ID
+local ROUND, ROUND_GAP = 24, 4
+-- From the header's right end, as DialogueUI keeps its title (8), or left of the warband alert
+-- where that shows (44 across, centred 25 in).
+local ROW_INSET, ROW_ALERT_INSET = 8, 50
+-- Room between the title's words and the row.
+local TITLE_GAP = 6
+-- A gossip page has no header: the row sits in the strip above its divider, this far down.
+local GOSSIP_TOP = 8
+-- DialogueUI's own speaker button, as it draws it.
+local THEIRS_ALPHA = 0.6
+-- How often the row looks again for the page's line while the window is open: a quest's ID
 -- can arrive a moment after its page is drawn, and the packs load after login.
 local LOOK_EVERY = 0.5
 
@@ -579,7 +592,9 @@ local AUTOPLAY_DELAY = 0.5
 -- When DialogueUI's autoplay will call playFile. It asks the delay (getAutoPlayDelay) just
 -- before it waits, and a click on its button never does, which is how the two are told apart.
 local autoplayAt
-local playButton
+-- { frame, play, skip }, built the first time the window shows a page; `report` is
+-- ContributeButton's icon once it is handed over.
+local row, report
 
 --- Whether `soundData` is the line at the head of the player's queue, and not stopped there:
 --- the line Stop acts on. A line stopped at the head is one to play again.
@@ -622,30 +637,16 @@ local function LookForLine(event)
     end
 end
 
-local function SetPlayTheme(button)
-    local x = (Utils:DialogueUIThemeID() - 1) * 0.125
-    button.Icon:SetTexCoord(x, 64 / 512 + x, 0, 0.5)
-    button.Wave1:SetTexCoord(x, 16 / 512 + x, 0.5, 1)
-    button.Wave2:SetTexCoord(16 / 512 + x, 40 / 512 + x, 0.5, 1)
-    button.Wave3:SetTexCoord(40 / 512 + x, 64 / 512 + x, 0.5, 1)
-end
-
-local function Wave(button, key, width, anchor, x)
-    local wave = button:CreateTexture(nil, "OVERLAY")
-    wave:SetSize(width, PLAY_ICON)
-    wave:SetPoint("LEFT", anchor, "RIGHT", x, 0)
-    wave:SetTexture(PLAY_ART)
-    wave:Hide()
-    button[key] = wave
-    return wave
-end
-
---- What a click does now, and Read Automatically, which a right-click switches. On a tooltip of
---- the window's own (the game's is a child of UIParent, which DialogueUI hides).
-local function ShowPlayTooltip(button)
+--- The window's own tooltip: the game's is a child of UIParent, which DialogueUI hides.
+local function Tooltip()
     local contribute = rawget(VoiceOver, "ContributeButton")
-    local tooltip = contribute and contribute.DialogueUITooltip and contribute:DialogueUITooltip(DUIQuestFrame)
+    return contribute and contribute.DialogueUITooltip and contribute:DialogueUITooltip(DUIQuestFrame)
         or GameTooltip
+end
+
+--- What a click on Play does now, and Read Automatically, which a right-click switches.
+local function ShowPlayTooltip(button)
+    local tooltip = Tooltip()
     local speaking = line ~= nil and IsSpeaking(line)
     tooltip:SetOwner(button, "ANCHOR_RIGHT")
     tooltip:SetText(speaking and SpokenEnv.L.DIALOGUE_STOP or SpokenEnv.L.DIALOGUE_LISTEN)
@@ -663,31 +664,26 @@ local function ShowPlayTooltip(button)
     button.tooltip = tooltip
 end
 
---- The button, built the first time a page has a line: a child of the window, so it shows
---- while DialogueUI hides UIParent and closes with the window, and drawn above it, over
---- DialogueUI's own button where that one is shown.
-local function PlayButton()
-    if playButton then
-        return playButton
+local function HideTooltip(button)
+    if button.tooltip then
+        button.tooltip:Hide()
+    end
+end
+
+--- Play and Skip in a row on the window: children of it, so they show while DialogueUI hides
+--- UIParent and close with it, and drawn above it.
+local function Row()
+    if row then
+        return row
     end
     local frame = DUIQuestFrame
-    local button = CreateFrame("Button", nil, frame)
-    button:SetSize(PLAY_SIZE, PLAY_SIZE)
-    button:SetPoint("TOPLEFT", frame, "TOPLEFT", PLAY_INSET, -PLAY_INSET)
-    button:SetFrameStrata("FULLSCREEN")
-    button:SetAlpha(PLAY_ALPHA)
-    button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-    button.Icon = button:CreateTexture(nil, "OVERLAY")
-    button.Icon:SetSize(PLAY_ICON, PLAY_ICON)
-    button.Icon:SetPoint("CENTER", button, "CENTER", 0, 0)
-    button.Icon:SetTexture(PLAY_ART)
-    local wave1 = Wave(button, "Wave1", PLAY_ICON * 0.25, button, -8)
-    local wave2 = Wave(button, "Wave2", PLAY_ICON * 0.375, wave1, -3)
-    Wave(button, "Wave3", PLAY_ICON * 0.375, wave2, -4)
-    -- DialogueUI's own animation of the waves where it has it; still waves where it does not.
-    local ok, anim = pcall(button.CreateAnimationGroup, button, nil, "DUISpeakerAnimationTemplate")
-    button.anim = ok and anim or nil
-    button:SetScript("OnClick", function(_, mouse)
+    local holder = CreateFrame("Frame", nil, frame)
+    holder:SetFrameStrata("FULLSCREEN")
+    holder:SetSize(ROUND, ROUND)
+    local play = Spoken:CreateRoundButton(holder, "play")
+    play:SetFrameStrata("FULLSCREEN")
+    play:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    play:SetScript("OnClick", function(_, mouse)
         local reader = ReaderFor(lineEvent)
         if mouse == "RightButton" then
             if reader and reader.autoplay then
@@ -699,31 +695,101 @@ local function PlayButton()
             PlayLine("Spoken's Play button on DialogueUI")
         end
         Bridge:DrawPlayButton()
-        if button.tooltip and button.tooltip:IsShown() then
-            ShowPlayTooltip(button)
+        if play.tooltip and play.tooltip:IsShown() then
+            ShowPlayTooltip(play)
         end
     end)
-    button:SetScript("OnEnter", function()
-        button:SetAlpha(1)
-        ShowPlayTooltip(button)
-    end)
-    button:SetScript("OnLeave", function()
-        button:SetAlpha(PLAY_ALPHA)
-        if button.tooltip then
-            button.tooltip:Hide()
-        end
-    end)
-    button:Hide()
-    playButton = button
-    return button
+    -- Skips by itself.
+    local skip = Spoken:CreateRoundButton(holder, "skip")
+    skip:SetFrameStrata("FULLSCREEN")
+    local function ShowSkipTooltip()
+        local tooltip = Tooltip()
+        tooltip:SetOwner(skip, "ANCHOR_RIGHT")
+        tooltip:SetText(SpokenEnv.L.BIND_SKIP)
+        tooltip:Show()
+        skip.tooltip = tooltip
+    end
+    -- Brighter under the pointer as the ring's own hover has it, and the tooltip on the window's.
+    for button, Show in pairs({ [play] = ShowPlayTooltip, [skip] = ShowSkipTooltip }) do
+        button:SetScript("OnEnter", function(self)
+            if self:IsEnabled() then self.glyph:SetAlpha(1) end
+            Show(self)
+        end)
+        button:SetScript("OnLeave", function(self)
+            if self:IsEnabled() then self.glyph:SetAlpha(0.85) end
+            HideTooltip(self)
+        end)
+    end
+    holder:Hide()
+    row = { frame = holder, play = play, skip = skip }
+    return row
 end
 
---- DialogueUI's own button, kept out of sight while this one stands in its place, and given
---- back as DialogueUI leaves it when this one goes.
+--- Lay the row out on the title line, right to left: Report, Skip, Play. On a quest page the
+--- title stops short of it; Report keeps its place there while it comes and goes, so the
+--- title's words are not fitted twice. `force` after DialogueUI has put the title back.
+local placedKey
+local function PlaceRow(force)
+    local frame = DUIQuestFrame
+    local front = type(frame.FrontFrame) == "table" and frame.FrontFrame or nil
+    local header = front and type(front.Header) == "table" and front.Header or nil
+    local quest = header ~= nil and header:IsShown() and true or false
+    local alert = quest and type(frame.WarbandCompleteAlert) == "table" and frame.WarbandCompleteAlert:IsShown()
+        and true or false
+    local list = {}
+    if report and (quest or report:IsShown()) then
+        table.insert(list, report)
+    end
+    table.insert(list, row.skip)
+    if row.play:IsShown() then
+        table.insert(list, row.play)
+    end
+    local key = table.concat({ #list, tostring(quest), tostring(alert) }, " ")
+    if key == placedKey and not force then
+        return
+    end
+    placedKey = key
+    local holder = row.frame
+    holder:SetWidth(#list * ROUND + (#list - 1) * ROUND_GAP)
+    local right
+    for _, button in ipairs(list) do
+        button:ClearAllPoints()
+        if right then
+            button:SetPoint("RIGHT", right, "LEFT", -ROUND_GAP, 0)
+        else
+            button:SetPoint("RIGHT", holder, "RIGHT", 0, 0)
+        end
+        right = button
+    end
+    holder:ClearAllPoints()
+    if quest then
+        holder:SetPoint("RIGHT", header, "RIGHT", -(alert and ROW_ALERT_INSET or ROW_INSET), 2)
+        if type(header.Title) == "table" then
+            header.Title:SetPoint("RIGHT", holder, "LEFT", -TITLE_GAP, 0)
+        end
+    else
+        local width = header and tonumber(header:GetWidth()) or 358
+        holder:SetPoint("TOPRIGHT", frame, "TOP", width / 2 - ROW_INSET, -GOSSIP_TOP)
+    end
+end
+
+--- ContributeButton's slot: its Report icon joins the row.
+function SlotReport(icon)
+    if not _G.DUIQuestFrame then
+        return false
+    end
+    report = icon
+    Row()
+    PlaceRow(true)
+    return true
+end
+
+--- DialogueUI's own button, kept out of sight while this row stands in for it, and given back
+--- as DialogueUI leaves it when Play goes.
 local covering = false
 local function CoverTheirs(cover)
     local theirs = _G.DUIQuestFrame and DUIQuestFrame.TTSButton
-    if type(theirs) ~= "table" or not theirs.SetAlpha or theirs == playButton then
+    if type(theirs) ~= "table" or not theirs.SetAlpha then
         covering = false
         return
     end
@@ -733,54 +799,54 @@ local function CoverTheirs(cover)
         end
         covering = true
     elseif covering then
-        theirs:SetAlpha(PLAY_ALPHA)
+        theirs:SetAlpha(THEIRS_ALPHA)
         covering = false
     end
 end
 
---- Show the button while the page has a line, and draw it sounding while that line does.
---- Run as a page is built, as the window opens, and on the driver's tick.
-function Bridge:DrawPlayButton()
-    local show = line ~= nil and self:Page() ~= nil
-    if not show then
-        CoverTheirs(false)
-        if playButton and playButton:IsShown() then
-            playButton:Hide()
-            if playButton.tooltip and playButton.tooltip:IsShown() then
-                playButton.tooltip:Hide()
-            end
-        end
-        return
-    end
-    local button = PlayButton()
-    if not button:IsShown() then
-        SetPlayTheme(button)
-        button:Show()
-    end
-    CoverTheirs(true)
-    local now = Spoken.GetNowPlaying and Spoken:GetNowPlaying()
-    local sounding = now ~= nil and now.fileName == line.fileName and true or false
-    if sounding ~= button.sounding then
-        button.sounding = sounding
-        for _, key in ipairs({ "Wave1", "Wave2", "Wave3" }) do
-            button[key]:SetShown(sounding)
-        end
-        if button.anim then
-            if sounding then button.anim:Play() else button.anim:Stop() end
-        end
+local function SetEnabled(button, on)
+    if (button:IsEnabled() and true or false) ~= on then
+        if on then button:Enable() else button:Disable() end
     end
 end
 
---- Look again for the page's line and redraw the button: `event` is the page just built, or
---- the page the window shows.
+--- Show the row while the window shows a page: Play with the Play Button setting on, greyed
+--- with no line to read and Stop while that line speaks; Skip greyed with nothing speaking.
+--- Run as a page is built, as the window opens, and on the driver's tick.
+function Bridge:DrawPlayButton()
+    if self:Page() == nil then
+        CoverTheirs(false)
+        if row and row.frame:IsShown() then
+            row.frame:Hide()
+            HideTooltip(row.play)
+            HideTooltip(row.skip)
+        end
+        return
+    end
+    local r = Row()
+    r.frame:Show()
+    local on = Config().PlayButton and true or false
+    r.play:SetShown(on)
+    CoverTheirs(on)
+    SetEnabled(r.play, line ~= nil)
+    local state = line ~= nil and IsSpeaking(line) and "stop" or "play"
+    if r.play.state ~= state then
+        r.play:SetState(state)
+    end
+    SetEnabled(r.skip, Spoken.GetCurrent ~= nil and Spoken:GetCurrent() ~= nil)
+    PlaceRow()
+end
+
+--- Look again for the page's line and redraw the row: `event` is the page just built, or the
+--- page the window shows.
 function Bridge:RefreshPlayButton(event)
     LookForLine(event or self:Page())
     self:DrawPlayButton()
 end
 
---- The button as a test or /spq diagnostics sees it.
+--- The row as a test or /spq diagnostics sees it: Play, the page's line, the row.
 function Bridge:PlayButtonState()
-    return playButton, line
+    return row and row.play, line, row
 end
 
 --------------------------------------------------------------------------------
@@ -899,6 +965,17 @@ function Bridge:Hook()
     local frame = DUIQuestFrame
     -- Asked once: the player's API cannot change within a session.
     canMark = not self:Problem("Captions")
+    -- The row placed as DialogueUI lays a quest page out, before it fits the title to its width,
+    -- so the title is measured beside the row and not under it.
+    if frame.UseQuestLayout then
+        hooksecurefunc(frame, "UseQuestLayout", function()
+            if row then PlaceRow(true) end
+        end)
+    end
+    local contribute = rawget(VoiceOver, "ContributeButton")
+    if contribute then
+        contribute.dialogueUISlot = SlotReport
+    end
     for _, name in ipairs(HANDLERS) do
         local handler = name
         hooksecurefunc(frame, handler, function()
@@ -999,6 +1076,6 @@ function Bridge:Describe()
     local cfg = Config()
     return format("DialogueUI: %s; words=%s scroll=%s player=%s play=%s button=%s provider=%s", tostring(self.status),
         tostring(cfg.Captions), tostring(cfg.AutoScroll), tostring(cfg.ShowPlayer),
-        tostring(cfg.PlayButton), playButton and playButton:IsShown() and "shown" or "hidden",
+        tostring(cfg.PlayButton), row and row.frame:IsShown() and row.play:IsShown() and "shown" or "hidden",
         tostring(self.provider == true))
 end

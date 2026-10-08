@@ -414,9 +414,10 @@ function Spoken:TogglePause()
 end
 
 --- The player's round button, the same one its subtitle shows, for a feature addon's own
---- window: `kind` "play" (Play's glyph; `button:SetPlaying(on)` shows Pause while a line
---- speaks), "report" (the bug), or "icon" (the texture `icon`, cut round). Anchor it and give
---- it OnClick yourself.
+--- window: `kind` "play" (Play's glyph; `button:SetPlaying(on)` shows Stop while a line
+--- speaks), "skip" (Skip's glyph; a click skips the line speaking, so it needs no OnClick),
+--- "report" (the bug), or "icon" (the texture `icon`, cut round). Anchor it and give it OnClick
+--- yourself. Play and Skip grey out while disabled.
 function Spoken:CreateRoundButton(parent, kind, name, icon)
     return Actions.NewRound(parent, kind, name, icon)
 end
