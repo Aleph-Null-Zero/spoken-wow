@@ -50,7 +50,7 @@ L.MENU_MIDDLE = "|cff66bbffClic central|r detiene o repite"
 L.OPT_LOCK_FRAME = "Bloquear posición"
 L.OPT_LOCK_FRAME_TIP = "Impide arrastrar la ventana y los subtítulos o cambiar su tamaño, y deja que tus clics sobre ellos pasen al juego. Sus botones siguen funcionando."
 L.OPT_HIDE_PORTRAIT = "Ocultar retrato"
-L.OPT_HIDE_PORTRAIT_TIP = "Muestra la ventana sin el retrato del hablante. Útil junto a addons que sustituyen las ventanas de misiones y de conversación."
+L.OPT_HIDE_PORTRAIT_TIP = "Oculta el retrato del hablante. Útil junto a addons que sustituyen las ventanas de misiones y de conversación."
 L.OPT_BRONZE_TINT = "Borde de bronce"
 L.OPT_BRONZE_TINT_TIP = "Tiñe de bronce los aros de los botones redondos, y el borde, la barra de progreso y el aro del retrato de la ventana pequeña, a juego con los marcos propios del juego."
 L.OPT_HIDE_ACTION = "Ocultar botón %1$s"
@@ -128,7 +128,7 @@ L.OPT_RESET_TIP = "Devuelve la ventana y los subtítulos a su posición inicial.
 
 -- Words in the window and subtitles
 L.OPT_TEXT_TITLE = "Texto"
-L.TRANSCRIPT_SIZE_TIP = "Ajusta el tamaño del texto en la ventana."
+L.TRANSCRIPT_SIZE_TIP = "Ajusta el tamaño del texto."
 L.TRANSCRIPT_LINES_TIP = "Cuántas líneas de texto se muestran a la vez."
 L.TRANSCRIPT_TYPEWRITER = "Ir escribiendo el texto"
 L.TRANSCRIPT_TYPEWRITER_TIP = "Va escribiendo las palabras mientras suena la línea: en la ventana, al ritmo de la voz; en los subtítulos, un poco por delante de ella. Desactívalo para mostrar la línea entera de una vez."

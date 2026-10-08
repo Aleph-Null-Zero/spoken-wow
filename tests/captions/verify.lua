@@ -794,4 +794,37 @@ do
     Q:RemoveAllSoundsFromQueue(); Play(.6)
     E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
 end
+-- What the windows have, the subtitle has too: Hide Portrait, Text Size, and buttons that say when
+-- a line cannot be stopped.
+do
+    local style=E.Addon.db.profile.Frame.Style
+    E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+    source:Enqueue(Clip('parity','A line to show the subtitle with.',20)); Play(1)
+    local frameCfg=E.Addon.db.profile.Frame
+    frameCfg.HidePortrait=true; S:Update(); S:Fit()
+    local _,_,_,titleX=S.title:GetPoint(1)
+    Check(not S.picture:IsShown() and titleX==math.floor(S.rowLeft+.5),'Hide Portrait leaves the picture out, the name where it was')
+    frameCfg.HidePortrait=false; S:Update(); S:Fit()
+    Check(S.picture:IsShown(),'...and brings it back')
+    local quest=QuestFont
+    QuestFont={GetFont=function() return 'quest.ttf',13 end}
+    cfg.FontSize=24; S.revealed=nil; S:Layout(S.pages[S.page].text)
+    Check(S.lines[1].fontSize==math.floor(13*24/16+.5) and S.measure.fontSize==S.lines[1].fontSize,
+        'Text Size sizes the words, and what they are measured by, from the quest text at 16')
+    cfg.FontSize=16; S:Layout(S.pages[S.page].text)
+    QuestFont=quest
+    local CanBePaused=Q.CanBePaused
+    for _,button in ipairs({S.pause,S.skip}) do
+        button.Enable=function(b) b.enabled=true end
+        button.Disable=function(b) b.enabled=false end
+    end
+    Q.CanBePaused=function() return false end
+    S:UpdatePause()
+    Check(S.pause:GetAlpha()==.4 and S.pause.enabled==false and S.skip:GetAlpha()==.4 and S.skip.enabled==false,
+        'a line the client cannot stop leaves its buttons faint and still')
+    Q.CanBePaused=CanBePaused; S:UpdatePause()
+    Check(S.pause:GetAlpha()==1 and S.pause.enabled==true,'...and live again with one it can')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+end
 print(string.format('PASS: %d checks using the real queue, both player layouts, captions, commands and quest adapter.',assertions))
