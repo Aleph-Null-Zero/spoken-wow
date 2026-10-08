@@ -35,6 +35,9 @@ local SETTLE_TIME = 0.4
 local PAPER_TOP, PAPER_LEFT = 122 / 256, 125 / 1024
 -- Showing and hiding, the paper first and the rest over it (Skin:SetLevel).
 local FADE_IN, FADE_OUT = .28, .32
+-- A new line on a window already showing: its words fade in over LINE_IN, and the window eases to
+-- its new height, as the subtitle's do (Subtitle's PAGE_IN and SIZE_EASE).
+local LINE_IN, SIZE_EASE = .28, 10
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
@@ -364,7 +367,11 @@ function Skin:Layout()
     local captionHeight = lines * lineHeight
     height = math.max(height, padTop + wordsTop + captionHeight + queueHeight + padBottom + footerHeight)
     self.settledHeight = height
-    frame:SetSize(width, self.settling and frame:GetHeight() or height)
+    -- A new line on a window already showing eases to its height (Skin:Tick).
+    local easing = self.easeNext and not self.settling and not self.sizing
+    self.easeNext = nil
+    self.heightWant = easing and height or nil
+    frame:SetSize(width, (self.settling or easing) and frame:GetHeight() or height)
     local minHeight = padTop + wordsTop + MIN_LINES * lineHeight + queueHeight + padBottom + footerHeight
     if frame.SetResizeBounds then
         if self.sizingWidth then
@@ -667,7 +674,13 @@ end
 function Skin:SetLevel(level)
     self.level = level
     self.frame:SetAlpha(Clamp(level * 2, 0, 1))
-    self.content:SetAlpha(Clamp(level * 2 - 1, 0, 1))
+    self:PaintContent()
+end
+
+--- What is on the paper: its share of the window's fade, times a new line's own fade-in.
+function Skin:PaintContent()
+    local line = self.lineFade and Clamp(self.lineFade / LINE_IN, 0, 1) or 1
+    self.content:SetAlpha(Clamp((self.level or 0) * 2 - 1, 0, 1) * (1 - (1 - line) * (1 - line)))
 end
 
 function Skin:SetVisible(visible, immediate)
@@ -689,6 +702,18 @@ end
 
 function Skin:Tick(elapsed)
     if self.settling then self:SettleStep(elapsed) end
+    if self.lineFade then
+        self.lineFade = self.lineFade + elapsed
+        if self.lineFade >= LINE_IN then self.lineFade = nil end
+        self:PaintContent()
+    end
+    local want = self.heightWant
+    if want then
+        local height = self.frame:GetHeight()
+        height = height + (want - height) * math.min(1, elapsed * SIZE_EASE)
+        if math.abs(want - height) < .5 then height, self.heightWant = want, nil end
+        self.frame:SetHeight(height)
+    end
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
         local t = Clamp(self.fadeTime / (self.wanted and FADE_IN or FADE_OUT), 0, 1)
@@ -848,6 +873,10 @@ function Skin:Update()
     if self:Covered() then self:SetVisible(false, true); return end
     if clip ~= self.clip then
         self:HideTooltip()
+        -- Following another line on screen: its words fade in and the window eases to it.
+        if self.clip and self.wanted and self.frame:IsShown() then
+            self.easeNext, self.lineFade = true, 0
+        end
         self.clip, self.seconds, self.offset = clip, 0, 0
     end
     -- The queue's length decides how much of the body the captions get, and the line's words
