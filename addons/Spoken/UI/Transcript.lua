@@ -201,7 +201,28 @@ function Transcript:SetClip(clip)
     self:Reflow()
 end
 
+--- Held while the window the captions are in is drawn as one image (DialogueUIPlayer:Buffer):
+--- nothing in that image may change, or the client crashes (ASSERT(!m_deleted), CSimpleRender.cpp).
+--- The line that ends as the window fades out keeps its words, which fade with it; whatever came
+--- meanwhile is caught up on Release.
+function Transcript:Hold()
+    self.held = true
+end
+
+function Transcript:Release()
+    if not self.held then return end
+    self.held = nil
+    local start = self.heldStart
+    self.heldStart = nil
+    if start then
+        self:Started(start.clip)
+        self.startedAt = start.at
+    end
+    self:Sync()
+end
+
 function Transcript:Started(clip)
+    if self.held then self.heldStart = { clip = clip, at = GetTime() }; return end
     self.elapsed, self.startedAt = -(clip.delay or 0), GetTime()
     self:SetClip(clip)
     self.hasStarted = true
@@ -211,6 +232,7 @@ function Transcript:Started(clip)
 end
 
 function Transcript:Sync()
+    if self.held then return end
     -- The line playing, or the sample a window previews (PlayerFrame:ShowSample).
     local current = SoundQueue:GetCurrentSound() or (PlayerFrame and PlayerFrame.sample)
     if current ~= self.clip then
@@ -533,7 +555,7 @@ function Transcript:Dock(parent, anchor, point, x, y, width, height)
 end
 
 function Transcript:Update()
-    if not self.frame then return end
+    if not self.frame or self.held then return end
     self:Render()
     self.frame:SetShown(Config().Enabled and Addon:DisplayStyle() ~= "subtitle" and self.clip ~= nil and self.text ~= "")
     Subtitle:Update()
@@ -679,6 +701,7 @@ function Transcript:Initialize()
     frame:SetScript("OnSizeChanged", function() self:Reflow() end)
     local accumulated = 0
     frame:SetScript("OnUpdate", function(_, elapsed)
+        if self.held then return end
         self:Glide(elapsed)
         accumulated = accumulated + elapsed
         if accumulated >= 0.05 then accumulated = 0; self:Update() end

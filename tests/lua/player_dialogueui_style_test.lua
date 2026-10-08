@@ -490,6 +490,7 @@ Expect("...the count gone with no line waiting", Skin.count:IsShown(), false)
 -- The client fades each texture on its own: the paper and what is on it fade one after the other.
 Expect("shown, it is not one image: things change in it", Skin.frame:IsFrameBuffer(), false)
 Skin:Tick(1) -- shown in full first
+Skin.changedAt = GetTime() - 2 -- and nothing in it changed a while
 Skin:SetVisible(false)
 Expect("fading out, it is drawn as one image", Skin.frame:IsFrameBuffer(), true)
 Expect("...its parts ignoring its alpha, so only the image fades",
@@ -505,11 +506,41 @@ Expect("fading in, it is not one image, the paper coming first", tostring(Skin.f
     .. Skin.frame:GetAlpha() .. " " .. Skin.content:GetAlpha(), "false 1 0")
 Skin:Tick(0.2)
 Expect("...then what is on it", Skin.content:GetAlpha(), 1)
--- A new line coming while it fades out: it lets the one image go before anything changes.
-Skin:SetVisible(false)
-Skin:Tick(0.1)
+-- A line ending: the window fades out as one image, and nothing in it changes meanwhile.
+Skin:Tick(1)
+local words = T.text
+Skin.changedAt = GetTime() - 2 -- all still a while
+Spoken:StopAll()
+Expect("a line ending fades the window out as one image", tostring(Skin.wanted) .. " " .. tostring(Skin.frame:IsFrameBuffer()), "false true")
+Expect("...its words kept, fading with it: nothing in the image changes", tostring(T.held) .. " " .. tostring(T.text == words)
+    .. " " .. tostring(T.clip ~= nil), "true true true")
 Skin:Update()
-Expect("anything changing it mid-fade lets the one image go first", Skin.frame:IsFrameBuffer(), false)
+Expect("...another change of the queue with nothing to show leaves the fade alone", Skin.frame:IsFrameBuffer(), true)
+Skin:Tick(0.4)
+Expect("...gone, the window is itself again and the captions catch up", tostring(Skin.frame:IsFrameBuffer()) .. " "
+    .. tostring(T.held) .. " " .. tostring(T.clip), "false nil nil")
+-- A new line coming while it fades out: it lets the one image go before anything changes.
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Again", portrait = { kind = "none" } } }))
+Skin:Tick(1)
+Spoken:StopAll()
+Expect("a line ended soon after it came fades out in two steps: its face or picture may still be drawing",
+    Skin.frame:IsFrameBuffer(), false)
+Skin:Tick(1)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Again", portrait = { kind = "none" } } }))
+Skin:Tick(1)
+Skin.changedAt = GetTime() - 2
+Spoken:StopAll()
+Expect("...one still a while fades out as one image", Skin.frame:IsFrameBuffer(), true)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Next", portrait = { kind = "none" } } }))
+Expect("a new line mid-fade lets the one image go first, the captions taking it up",
+    tostring(Skin.frame:IsFrameBuffer()) .. " " .. tostring(T.held) .. " " .. tostring(T.clip and T.clip.present.label), "false nil Next")
+Skin:Tick(1)
+Skin.changedAt = GetTime() - 2
+Skin.viewport.active = "model"
+Spoken:StopAll()
+Expect("a window with a 3D face never fades out as one image: it is drawn anew every frame", Skin.frame:IsFrameBuffer(), false)
+Skin.viewport.active = nil
+Skin:Tick(1)
 Spoken:StopAll()
 
 ---------------------------------------------------------------- locked
