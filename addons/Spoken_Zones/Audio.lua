@@ -542,6 +542,23 @@ local ACTIONS = {
 -- One factory so that every route to a clip -- a click, a slash command, a
 -- discovery -- produces the same shape.
 --
+--- The place one level up from a zone, as Azeroth's Compendium nests them: a city's zone, a
+--- zone's continent, a continent's world. Nil for the world. Where the Compendium is not loaded,
+--- the game's own map tree.
+function SpokenZones:PlaceAbove(mapID)
+	local C = _G.SpokenCompendium
+	if C and C.ContinentOf then
+		if mapID == C.WORLD then return nil end
+		for _, continent in ipairs(C.CONTINENTS) do
+			if continent == mapID then return C.WORLD end
+		end
+		return C.CITY_IN[mapID] or C.ContinentOf(mapID) or C.WORLD
+	end
+	local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
+	local parent = info and info.parentMapID
+	if parent and parent ~= 0 then return parent end
+end
+
 -- The key is the line id the website and the generation pipeline use -- z:{mapID} or
 -- s:{mapID}:{key} -- and it is frozen: it is what the player dedups on, what a report
 -- names, and what audio-history is keyed by.
@@ -566,10 +583,10 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		mapID = mapID,
 		areaKey = areaKey,
 		present = {
-			-- The zone above, the area being narrated below -- which for zone-level
-			-- lore is the same name twice, and for a subzone is the pair a player
-			-- needs to place it.
-			header = self:GetMapName(mapID) or label,
+			-- Over the place's name, where it is: an area's zone, a zone's continent, a
+			-- continent's world (PlaceAbove), as the Compendium's page says it. The world has
+			-- nothing over it.
+			header = areaKey and (self:GetMapName(mapID) or label) or self:GetMapName(self:PlaceAbove(mapID)),
 			label = label,
 			transcript = entry and entry.full,
 			bullet = "zone",
