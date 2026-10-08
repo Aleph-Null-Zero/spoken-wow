@@ -421,6 +421,13 @@ local report = Skin.row[3]
 Expect("...Report after Skip, as large", report ~= nil and report:GetParent() == Skin.controls
     and report:GetWidth() == Skin.play:GetWidth(), true)
 Expect("...and no fold or close button", Skin.fold == nil and Skin.close == nil, true)
+Expect("the line's title is a name, nothing to click: Skip takes a line away",
+    Skin.title:GetObjectType() .. " " .. tostring(Skin.title.scripts.OnClick) .. " " .. tostring(Skin.title.scripts.OnEnter),
+    "Frame nil nil")
+env.Addon.db.profile.Frame.HidePortrait = true
+Skin:ConfigurePortrait()
+Expect("Hide Portrait leaves its face: the header's socket would stand empty", Skin.portrait:IsShown(), true)
+env.Addon.db.profile.Frame.HidePortrait = false
 Expect("the title counts the lines waiting, as the subtitle does",
     string.find(Skin.title.text:GetText(), "One  |c", 1, true) == 1 and string.find(Skin.title.text:GetText(), "• +1|r", 1, true) ~= nil, true)
 Skin:SetExpanded(false)
@@ -515,8 +522,10 @@ Skin:Tick(0.2)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
-Skin:Tick(0.3)
-Expect("...and settled at the top left, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Skin:Tick(0.15)
+Expect("...still on its way at 0.35 seconds", Skin.settling ~= nil, true)
+Skin:Tick(0.1)
+Expect("...and settled at the top left by 0.4, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 -- Nowhere known to start from: it is simply put where it rests.
 local WindowPlace = env.DialogueUITheme.WindowPlace
