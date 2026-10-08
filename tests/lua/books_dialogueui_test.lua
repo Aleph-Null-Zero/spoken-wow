@@ -40,6 +40,7 @@ env.Addon:Enable()
 local view = stub.Widget("Frame")
 view.GetEffectiveScale = function() return 0.8 end
 view.CloseButton = stub.Widget("Button")
+view.CloseButton:Show()
 view.TTSButton = stub.Widget("Button")
 view.TTSButton:SetAlpha(0.6)
 view:Hide()
@@ -71,8 +72,10 @@ Expect("the book view opening shows Spoken's controls on it", row ~= nil and row
     and row.frame:GetParent() == view, true)
 Expect("...Play, Skip and Report, the player's round buttons", row.play.ring ~= nil and row.skip.bar ~= nil
     and row.report:IsShown(), true)
-Expect("...left of the book's close button", row.frame.anchor.point .. " " .. tostring(row.frame.anchor.relativeTo
-    == view.CloseButton) .. " " .. row.frame.anchor.relativePoint .. " " .. row.frame.anchor.x, "RIGHT true LEFT -4")
+Expect("...at the top right, where the book's close button was", row.frame.anchor.point .. " "
+    .. tostring(row.frame.anchor.relativeTo == view.CloseButton) .. " " .. row.frame.anchor.relativePoint .. " "
+    .. row.frame.anchor.x, "RIGHT true RIGHT 0")
+Expect("...the close button gone, as DialogueUI's quest window has none", view.CloseButton:IsShown(), false)
 Expect("...Report rightmost, then Skip, then Play", row.report.anchor.relativeTo == row.frame
     and row.skip.anchor.relativeTo == row.report and row.play.anchor.relativeTo == row.skip, true)
 Expect("...as large on screen as Place Lore draws them, 24 at UIParent's scale",
@@ -171,6 +174,7 @@ view:Hide()
 watch.scripts.OnHide(watch)
 Expect("the book view closing takes the row with it", row.frame:IsShown(), false)
 Expect("...and gives DialogueUI's speaker back", view.TTSButton:GetAlpha(), 0.6)
+Expect("...and its close button", view.CloseButton:IsShown(), true)
 
 if Failures() > 0 then
     print(string.format("\n%d book view test(s) failed", Failures()))
