@@ -561,17 +561,19 @@ end
 --- again only when the play button's label does.
 function Skin:UpdateControls(relayout)
     if not self.clip then return end
-    local paused, playing = SoundQueue:IsPaused(), SoundQueue:IsPlaying()
+    local paused = SoundQueue:IsPaused()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
     -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
     -- first, a fight), which the waiting lines' rows still say.
     local label = Label(self.clip)
-    -- The lines waiting behind this one, counted as the subtitle counts them.
-    local waiting, dim = Waiting(), self.colors and self.colors.disabled
-    if waiting > 0 and dim then
-        label = format("%s  |cff%02x%02x%02x• +%d|r", label,
-            Round(dim[1] * 255), Round(dim[2] * 255), Round(dim[3] * 255), waiting)
+    local dim = self.colors and self.colors.disabled
+    local function Dim(text)
+        return format("  |cff%02x%02x%02x%s|r", Round(dim[1] * 255), Round(dim[2] * 255), Round(dim[3] * 255), text)
     end
+    -- Stopped, said after its name, and the lines waiting behind it counted, as the subtitle does.
+    if paused and dim then label = label .. Dim(format("(%s)", L.SUBTITLE_STOPPED)) end
+    local waiting = Waiting()
+    if waiting > 0 and dim then label = label .. Dim("• +" .. waiting) end
     self.title.text:SetText(label)
     local pausable = SoundQueue:CanBePaused()
     for _, button in ipairs(self.buttons) do
@@ -834,7 +836,9 @@ function Skin:Update()
         self:Layout()
     end
     self:SetVisible(true)
-    self.name:SetText(clip.present and clip.present.header or "")
+    -- Said once: a name the same as the line's own is left off, as the subtitle leaves it.
+    local header = clip.present and clip.present.header
+    self.name:SetText(header ~= Label(clip) and header or "")
     self:ConfigurePortrait()
     self:ConfigureActions()
     self:LayoutQueue()
