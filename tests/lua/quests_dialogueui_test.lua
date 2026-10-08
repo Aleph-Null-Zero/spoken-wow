@@ -56,7 +56,10 @@ header.Title = stub.Widget("FontString")
 DUI.FrontFrame.Header = header
 DUI.WarbandCompleteAlert = stub.Widget("Frame")
 DUI.WarbandCompleteAlert:Hide()
+DUI.FrontFrame.HeaderDivider = stub.Widget("Texture")
+DUI.scrollFrameBaseHeight = 500
 function DUI:UseQuestLayout(state)
+    self.questLayout = state
     header:SetShown(state)
     if state then
         header.Title:SetPoint("RIGHT", header, "RIGHT", self.WarbandCompleteAlert:IsShown() and -56 or -8, 2)
@@ -403,6 +406,14 @@ Expect("...beside the book view's close button at the window's top right, 64 acr
     "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " -14 " .. (64 * 0.53333))
 Expect("...halfway between the window's top and its header's, as far from the title as from the edge",
     closeButton.anchor.y, (572 - 600) / 2)
+-- 36 of UIParent's units over the line and under it, as on the book view: DialogueUI's header and
+-- text moved down for it, the text's height shorter by as much.
+local lineScale = UIParent:GetEffectiveScale() / DUI:GetEffectiveScale()
+local shift = (2 * 36 + 24) * lineScale - 28
+Expect("DialogueUI's header moved down to leave 36 over and under the controls' line, as on the book view",
+    header.anchor.point .. " " .. header.anchor.y, "TOP " .. -(28 + shift))
+Expect("...the quest text with it, its height shorter by as much", DUI.ScrollFrame.anchor.y .. " " .. DUI.scrollViewHeight,
+    -(68 + shift) .. " " .. (500 - 40 - shift))
 Expect("...the row just left of it, on its middle", controls.frame.anchor.relativeTo == closeButton
     and controls.frame.anchor.point .. " " .. controls.frame.anchor.relativePoint .. " " .. controls.frame.anchor.x
     .. " " .. controls.frame.anchor.y, "RIGHT LEFT -4 0")
@@ -418,6 +429,9 @@ Expect("...in the paper's art on DialogueUI's parchment", closeButton.file,
 DUI.handler = "HandleGossip"
 DUI:HandleGossip()
 Bridge:RefreshPlayButton("GOSSIP_SHOW")
+Expect("...and on a gossip page the gossip text and its line", DUI.ScrollFrame.anchor.y .. " "
+    .. DUI.FrontFrame.HeaderDivider.anchor.y .. " " .. DUI.scrollViewHeight, -(42 + shift) .. " " .. -(42 + shift)
+    .. " " .. (500 - shift))
 Expect("on a gossip page the close button and the row stay where they were", Anchor(closeButton) .. " "
     .. tostring(controls.frame.anchor.relativeTo == closeButton),
     "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " -14 true")

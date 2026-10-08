@@ -634,6 +634,43 @@ local function PlaceClose()
     button:Show()
 end
 
+-- Room above the controls' line and below it, in UIParent's units, as the buttons' 24 are: the
+-- same on DialogueUI's book view (Spoken Books' UI/DialogueUIBook.lua). DialogueUI's header, and
+-- the text under it, move down to make it.
+local LINE_ROOM = 36
+-- Where DialogueUI puts its header (28 under the window's top at its size), its text on a quest
+-- page (68 under it), and on a gossip page, which has no header, its text and the line over it
+-- (42, at any size).
+local HEADER_TOP, QUEST_TEXT_TOP, GOSSIP_TEXT_TOP = 28, 68, 42
+
+--- DialogueUI's header and text moved down so the controls' line has LINE_ROOM over and under it,
+--- as on the book view; the text's height, which DialogueUI scrolls by, shorter by as much. Run
+--- after DialogueUI lays a page out (UseQuestLayout) or resizes the window.
+local function Lower()
+    local frame = DUIQuestFrame
+    local front = type(frame.FrontFrame) == "table" and frame.FrontFrame
+    local header = front and type(front.Header) == "table" and front.Header
+    local scroll = type(frame.ScrollFrame) == "table" and frame.ScrollFrame
+    if not (header and scroll) then
+        return
+    end
+    local size = Multiplier()
+    local scale = UIParent:GetEffectiveScale() / math.max(0.01, frame:GetEffectiveScale() or 1)
+    local shift = math.max(0, (2 * LINE_ROOM + ROUND) * scale - HEADER_TOP * size)
+    header:SetPoint("TOP", front, "TOP", 0, -(HEADER_TOP * size + shift))
+    local base = tonumber(frame.scrollFrameBaseHeight)
+    if frame.questLayout then
+        scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -(QUEST_TEXT_TOP * size + shift))
+        if base then frame.scrollViewHeight = base - 40 * size - shift end
+    else
+        scroll:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -(GOSSIP_TEXT_TOP + shift))
+        if base then frame.scrollViewHeight = base - shift end
+        if type(front.HeaderDivider) == "table" then
+            front.HeaderDivider:SetPoint("CENTER", front, "TOP", 0, -(GOSSIP_TEXT_TOP + shift))
+        end
+    end
+end
+
 --- Lay the row out right to left from the close button, on its middle: Report, Skip, Play, as
 --- large on screen as Place Lore draws them (24 at UIParent's scale, whatever DialogueUI's own
 --- size), in the same place on every page. DialogueUI's buttons in that corner (Copy Text, the
@@ -878,6 +915,12 @@ function Bridge:Hook()
     local frame = DUIQuestFrame
     -- Asked once: the player's API cannot change within a session.
     canMark = not self:Problem("Captions")
+    -- Room for the controls' line, laid out again as DialogueUI lays a page out or resizes.
+    for _, name in ipairs({ "UseQuestLayout", "UpdateFrameSize" }) do
+        if type(frame[name]) == "function" then
+            hooksecurefunc(frame, name, Lower)
+        end
+    end
     local contribute = rawget(VoiceOver, "ContributeButton")
     if contribute then
         contribute.dialogueUISlot = SlotReport
