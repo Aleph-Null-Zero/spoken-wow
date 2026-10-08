@@ -1058,6 +1058,13 @@
       ],
       "raw": "Ratchet_Retail.jpg"
     },
+    "1413-razorfen-downs": {
+      "parent": 1413,
+      "key": "razorfen downs",
+      "title": "Razorfen Downs",
+      "file": null,
+      "others": []
+    },
     "1413-shrine-of-the-fallen-warrior": {
       "parent": 1413,
       "key": "shrine of the fallen warrior",
@@ -9302,13 +9309,6 @@
         "File:Shimmering Flats - Crash03.jpg"
       ],
       "raw": "Mirage_Raceway.jpg"
-    },
-    "1441-razorfen-downs": {
-      "parent": 1441,
-      "key": "razorfen downs",
-      "title": "Razorfen Downs",
-      "file": null,
-      "others": []
     },
     "1441-roguefeather-den": {
       "parent": 1441,

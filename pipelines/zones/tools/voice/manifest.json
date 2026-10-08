@@ -951,6 +951,20 @@
     "dictionaryVersionId": "ChaiSYKomLhEsnqpPSkx",
     "generatedAt": "2026-08-09T17:03:21.966Z"
   },
+  "s:1413:razorfen downs": {
+    "file": "1441/razorfen-downs",
+    "textHash": "6dda0c7ebadbd237309ab5cebdbcc790a0ea23ff",
+    "chars": 1081,
+    "credits": 657,
+    "durationSec": 74.188,
+    "bytes": 1187466,
+    "voiceId": "ggodpz28jXGN11DlccGk",
+    "modelId": "eleven_v3",
+    "outputFormat": "mp3_44100_128",
+    "dictionaryId": "Elx0hcDze8EXW2rImeLT",
+    "dictionaryVersionId": "ChaiSYKomLhEsnqpPSkx",
+    "generatedAt": "2026-08-09T17:04:10.201Z"
+  },
   "s:1413:shrine of the fallen warrior": {
     "file": "1413/shrine-of-the-fallen-warrior",
     "textHash": "ac976cdbceea5e7eec84380d96706bd6934a823d",
@@ -7964,20 +7978,6 @@
     "dictionaryId": "Elx0hcDze8EXW2rImeLT",
     "dictionaryVersionId": "ChaiSYKomLhEsnqpPSkx",
     "generatedAt": "2026-08-09T17:03:58.387Z"
-  },
-  "s:1441:razorfen downs": {
-    "file": "1441/razorfen-downs",
-    "textHash": "6dda0c7ebadbd237309ab5cebdbcc790a0ea23ff",
-    "chars": 1081,
-    "credits": 657,
-    "durationSec": 74.188,
-    "bytes": 1187466,
-    "voiceId": "ggodpz28jXGN11DlccGk",
-    "modelId": "eleven_v3",
-    "outputFormat": "mp3_44100_128",
-    "dictionaryId": "Elx0hcDze8EXW2rImeLT",
-    "dictionaryVersionId": "ChaiSYKomLhEsnqpPSkx",
-    "generatedAt": "2026-08-09T17:04:10.201Z"
   },
   "s:1441:roguefeather den": {
     "file": "1441/roguefeather-den",
