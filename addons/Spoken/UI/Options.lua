@@ -470,11 +470,11 @@ local function Build(canvas)
         Requires(by, function() return Words() and transcript().Typewriter end, L.REASON_TYPEWRITER)
     end
 
+    -- What the feature addons do in DialogueUI's own window, last among the DialogueUI style's.
+    DialogueUIOptions:Place(layout, DUI)
+
     -- The narrator style's settings end here; what follows is Spoken's whatever the style.
     layout:EndGroup()
-
-    -- What the feature addons do in DialogueUI's own window, whatever the style.
-    DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each
     -- add a tab to, opened here and from the minimap menu, with each tab's Unlock switch. The tabs
