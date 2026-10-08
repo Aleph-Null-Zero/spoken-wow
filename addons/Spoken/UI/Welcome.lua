@@ -148,17 +148,17 @@ function Welcome:Build()
     end
     self.modules = layout:List(modules)
 
-    -- How lines appear: the same sketches as General. Choosing subtitles shows one, so it can
-    -- be seen and dragged into place now.
+    -- How lines appear: the same list as Spoken's settings page, a sketch on each row. Choosing
+    -- subtitles shows one, so it can be seen and dragged into place now.
     layout:Section(L.WELCOME_SHOW, true)
-    -- Preview mode, centred between the question and the styles it shows, as far from each.
+    -- Preview mode, at the end of the question's line, as on Spoken's settings page.
     self.preview = Options:PreviewButton(layout)
-    local tiles = {}
+    local styles = {}
     for _, style in ipairs(Options:Styles()) do
-        table.insert(tiles, { value = style, title = Options.STYLE_LABELS[style], text = Options.STYLE_TEXTS[style],
+        table.insert(styles, { value = style, title = Options.STYLE_LABELS[style], text = Options.STYLE_TEXTS[style],
             tooltip = Options.STYLE_TIPS[style], art = Options.SKETCHES[style] })
     end
-    self.tiles = layout:Tiles(tiles, function() return Addon:PlayerStyle() end,
+    self.styles = layout:Choices(styles, function() return Addon:PlayerStyle() end,
         function(v) Addon:SetPlayerStyle(v) end,
         function()
             Refresh()
