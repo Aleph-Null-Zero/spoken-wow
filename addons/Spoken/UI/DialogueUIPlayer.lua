@@ -20,18 +20,17 @@ local Skin = DialogueUIPlayer
 local Theme = DialogueUITheme
 local MAX_ROWS, ROW_HEIGHT = 4, 20
 local PORTRAIT = 48
-local CORNER_ICON = 20
-local CONTROL_HEIGHT = 22
 local BAR_HEIGHT = 3
 local MIN_LINES = 2
--- The panel's share of DialogueUI's window at the default Window Size: all of it, so the words
--- are as large as they were in the dialog it takes over from.
-local BASE_SCALE = 1
+-- The panel's share of DialogueUI's window at the default Window Size, small enough to read
+-- beside the next dialog. Taking over from the dialog, it starts at the dialog's whole size and
+-- shrinks to this (Skin:Settle).
+local BASE_SCALE = 0.65
 -- Where it settles when the dialog closes: this far from the screen's top left, the paper's
 -- edge rather than the frame's. And how long it takes to get there from the dialog.
 local EDGE = 32
 local SETTLE_TIME = 0.45
--- Between the round controls in the footer, as the subtitle's (Subtitle:BuildControls).
+-- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
 -- Text Size's default, at which the words are DialogueUI's own size.
@@ -202,35 +201,6 @@ function Skin:Initialize()
         self:HideTooltip()
     end)
 
-    self.close = CreateFrame("Button", nil, content)
-    self.close:SetSize(CORNER_ICON, CORNER_ICON)
-    self.close:SetPoint("TOPRIGHT", content, "TOPRIGHT", 4, 4)
-    self.close:SetNormalTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Up]])
-    self.close:SetPushedTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Down]])
-    self.close:SetHighlightTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Highlight]], "ADD")
-    self.close:SetScript("OnClick", function()
-        if self:HasClip() then SoundQueue:Skip() end
-    end)
-    self.close:SetScript("OnEnter", function()
-        GameTooltip:SetOwner(self.close, "ANCHOR_LEFT")
-        GameTooltip:SetText(L.DUI_CLOSE)
-        GameTooltip:AddLine(L.DUI_CLOSE_TIP, 1, 1, 1, true)
-        GameTooltip:Show()
-    end)
-    self.close:SetScript("OnLeave", function() self:HideTooltip() end)
-    self.fold = CreateFrame("Button", nil, content)
-    self.fold:SetSize(CORNER_ICON - 4, CORNER_ICON - 4)
-    self.fold:SetPoint("RIGHT", self.close, "LEFT", 0, 0)
-    self.fold:SetHighlightTexture([[Interface\Buttons\UI-PlusButton-Hilight]], "ADD")
-    self.fold:SetScript("OnClick", function() self:SetExpanded(not Expanded()) end)
-    self.fold:SetScript("OnEnter", function()
-        GameTooltip:SetOwner(self.fold, "ANCHOR_LEFT")
-        GameTooltip:SetText(Expanded() and L.TRANSCRIPT_COLLAPSE or L.TRANSCRIPT_EXPAND)
-        WheelHint()
-        GameTooltip:Show()
-    end)
-    self.fold:SetScript("OnLeave", function() self:HideTooltip() end)
-
     self.drawer = CreateFrame("Frame", nil, content)
     self.drawer:EnableMouseWheel(true)
     self.drawer:SetScript("OnMouseWheel", function(_, delta)
@@ -251,9 +221,10 @@ function Skin:Initialize()
     self.track:SetAllPoints()
     self.footerDivider = content:CreateTexture(nil, "ARTWORK")
     self.footerDivider:SetTexCoord(FOOTER_DIVIDER[1], FOOTER_DIVIDER[2], FOOTER_DIVIDER[3], FOOTER_DIVIDER[4])
+    -- The subtitle's controls (Subtitle:BuildControls) at the header's right end, beside the
+    -- speaker and the line: Stop or Replay, Skip, then Report (Skin:ConfigureActions).
     self.controls = CreateFrame("Frame", nil, content)
-    self.controls:SetHeight(CONTROL_HEIGHT)
-    -- The subtitle's controls (Subtitle:BuildControls): Stop or Replay, then Skip.
+    self.controls:SetHeight(1)
     local play = Actions.RoundButton(self.controls, 12)
     play:SetScript("OnClick", function()
         if not (self:HasClip() and SoundQueue:CanBePaused()) then return end
@@ -374,7 +345,7 @@ function Skin:Layout()
     local footerStrip = Round(FOOTER_DIVIDER[6] * baseInner / FOOTER_DIVIDER[5])
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
-    local footerHeight = CONTROL_HEIGHT + footerStrip + BAR_HEIGHT + 6 + math.max(0, textGap - lineGap)
+    local footerHeight = footerStrip + BAR_HEIGHT + 6 + math.max(0, textGap - lineGap)
     local waiting = Waiting()
     local shownRows = math.min(MAX_ROWS, waiting)
     local queueHeight = shownRows * ROW_HEIGHT + (waiting > MAX_ROWS and 14 or 0)
@@ -436,15 +407,18 @@ function Skin:Layout()
     -- small line above.
     self.title:ClearAllPoints()
     self.title:SetPoint("LEFT", self.headerSocket, "LEFT", Round(53 * ratio), Round(2 * ratio))
-    self.title:SetPoint("RIGHT", content, "RIGHT", -(2 * CORNER_ICON), 0)
+    self.title:SetPoint("RIGHT", self.controls, "LEFT", -6, 0)
     self.title:SetHeight(Round(fonts.titleSize * TITLE_SHARE) + 4)
     self.name:ClearAllPoints()
     self.name:SetPoint("BOTTOMLEFT", self.title, "TOPLEFT", 0, 2)
-    self.name:SetPoint("RIGHT", content, "RIGHT", -(2 * CORNER_ICON), 0)
+    self.name:SetPoint("RIGHT", self.controls, "LEFT", -6, 0)
     self.name:SetHeight(fonts.subtitleSize + 2)
-    local glyph = [[Interface\Buttons\UI-]] .. (expanded and "Minus" or "Plus")
-    self.fold:SetNormalTexture(glyph .. "Button-Up")
-    self.fold:SetPushedTexture(glyph .. "Button-Down")
+    -- Centred on the speaker's name and the line's title together: the title sits on the
+    -- socket's middle, 2 up, and the name above it.
+    local nameHeight = fonts.subtitleSize + 2
+    local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
+    self.controls:ClearAllPoints()
+    self.controls:SetPoint("RIGHT", content, "TOPRIGHT", 0, -middle)
 
     -- The text takes DialogueUI's full column; the scrollbar sits in the margin beside it.
     Transcript:Dock(frame, content, "TOPLEFT", 0, -headerHeight, inner, captionHeight)
@@ -456,11 +430,8 @@ function Skin:Layout()
     self.drawer:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(headerHeight + captionHeight))
     self.drawer:SetSize(inner, math.max(1, queueHeight))
 
-    self.controls:ClearAllPoints()
-    self.controls:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", 0, 0)
-    self.controls:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT", 0, 0)
     self.footerDivider:ClearAllPoints()
-    self.footerDivider:SetPoint("BOTTOM", self.controls, "TOP", 0, 0)
+    self.footerDivider:SetPoint("BOTTOM", content, "BOTTOM", 0, 0)
     self.footerDivider:SetSize(inner, footerStrip)
     self.footerDivider:SetTexture(parchment)
     self.bar:ClearAllPoints()
@@ -514,38 +485,27 @@ end
 
 function Skin:ConfigureActions()
     Actions:Configure(self.frame, self.clip)
-    local corner, x = nil, 0
-    local right = self.controls:GetWidth()
+    local row = { self.play, self.skip }
     for _, button in ipairs(self.frame.actions.buttons) do
-        local action = button.action
-        if action.anchor == "header" then
+        if button.action.anchor == "header" then
             button:Hide()
-        elseif action.anchor == "topright" and button.showsIcon and not corner then
-            -- Report sits faint in the controls row, as the corner belongs to Close, at Close's
-            -- size since smaller was hard to see on the parchment. Hooked: its scripts carry the
-            -- tooltip.
-            corner = button
+        else
+            -- Report and anything else a line offers, after Skip, faint until the pointer is on
+            -- it, as it sat on the parchment before. Hooked: its scripts carry the tooltip.
             button:SetParent(self.controls)
             button:SetFrameLevel(self.controls:GetFrameLevel() + 1)
-            button:SetSize(CORNER_ICON, CORNER_ICON)
-            button:ClearAllPoints()
-            button:SetPoint("RIGHT", self.controls, "RIGHT", 0, 0)
+            if button.showsIcon then button:SetSize(self.play:GetWidth(), self.play:GetHeight()) end
             button:SetAlpha(.4)
             if not button.spokenDimmed then
                 button.spokenDimmed = true
                 button:HookScript("OnEnter", function(b) b:SetAlpha(1) end)
                 button:HookScript("OnLeave", function(b) b:SetAlpha(.4) end)
             end
-            x = CORNER_ICON + 6
-        else
-            button:SetParent(self.controls)
-            button:SetFrameLevel(self.controls:GetFrameLevel() + 1)
-            button:ClearAllPoints()
-            button:SetPoint("RIGHT", self.controls, "RIGHT", -x, 0)
-            x = x + button:GetWidth() + 6
+            if button:IsShown() then table.insert(row, button) end
         end
     end
-    self.actionsWidth = x
+    self.row = row
+    self:LayoutControls()
 end
 
 --- Ctrl-wheel steps Window Size, Ctrl-Shift-wheel Text Size, keeping the top-left corner in
@@ -590,12 +550,14 @@ function Skin:SetExpanded(expanded)
 end
 
 function Skin:LayoutControls()
-    local x = 0
-    for _, button in ipairs(self.buttons) do
+    local x, tallest = 0, 1
+    for _, button in ipairs(self.row or self.buttons) do
         button:ClearAllPoints()
         button:SetPoint("LEFT", self.controls, "LEFT", x, 0)
         x = x + button:GetWidth() + ROUND_GAP
+        tallest = math.max(tallest, button:GetHeight())
     end
+    self.controls:SetSize(math.max(1, x - ROUND_GAP), tallest)
 end
 
 --- `relayout` when the row's buttons may have changed (Update); otherwise the row is laid out
@@ -736,20 +698,56 @@ function Skin:PlaceDefault()
     frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, -y)
 end
 
---- DialogueUI's window closed while its line plays on: this window takes the dialog's place and
---- height, then folds to its own height as it moves to where it settles, DialogueUI's opening in
---- reverse. Not while it sits on the dialog (Show Spoken Over DialogueUI): it is in place already.
+--- Where the window rests, its top left in the screen's pixels: where it was dragged to, or the
+--- screen's top left (PlaceDefault). Worked out rather than read off the frame, which has no
+--- place on screen while DialogueUI hides the interface.
+function Skin:Home()
+    local frame = self.frame
+    local ui = UIParent:GetEffectiveScale()
+    local scale = ui * (frame.spokenBaseScale or 1)
+    local saved = Addon:Layout().DialogueUI
+    if type(saved) == "table" and saved.left and saved.top then
+        return saved.left * scale, saved.top * scale
+    end
+    local cap = self.parchments and self.parchments[1]
+    local paperWidth, capHeight = cap and cap:GetWidth() or 0, cap and cap:GetHeight() or 0
+    return EDGE * ui + math.max(0, (paperWidth - frame:GetWidth()) / 2) * scale,
+        UIParent:GetHeight() * ui - EDGE * ui - capHeight / 2 * scale
+end
+
+--- DialogueUI's window closed while its line plays on: this window takes the dialog's place, size
+--- and height, then shrinks to its own size and height as it moves to where it rests, DialogueUI's
+--- opening in reverse. Not while it sits on the dialog (Show Spoken Over DialogueUI): it is in
+--- place already. Should anything fail, it is simply put where it rests.
 function Skin:Settle(dialog)
     local frame = self.frame
     if not (self:IsEnabled() and PlayerFrame:Current()) or frame:GetParent() ~= UIParent then return end
-    local left, top, height = dialog:GetLeft(), dialog:GetTop(), dialog:GetHeight()
-    if not (left and top and height) then return end
+    local ok, err = pcall(self.StartSettle, self, dialog)
+    if not ok then
+        self.settling = nil
+        frame:SetScale(frame.spokenBaseScale or 1)
+        if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
+        self:Layout()
+        if geterrorhandler then geterrorhandler()(err) end
+    end
+end
+
+function Skin:StartSettle(dialog)
+    local frame = self.frame
     self:Update()
-    -- Where it settles, as RefreshConfig places it, in the screen's pixels.
-    if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
-    local scale, from = frame:GetEffectiveScale(), dialog:GetEffectiveScale()
-    self.settling = { time = 0, left = left * from, top = top * from, height = height * from,
-        toLeft = frame:GetLeft() * scale, toTop = frame:GetTop() * scale }
+    local ui = UIParent:GetEffectiveScale()
+    -- The dialog's top left, width and height in the screen's pixels, from where DialogueUI puts
+    -- it: it has no place on screen to read while it hides the interface.
+    local x, top = Theme:WindowPlace()
+    local width, height = Theme:FrameSize()
+    local k = dialog:GetEffectiveScale()
+    if not (x and top and frame:GetWidth() > 0) then error("DialogueUI's window has no place") end
+    -- Its own scale, and the one at which it is drawn as wide as the dialog.
+    local to = frame.spokenBaseScale or 1
+    local from = width * k / (frame:GetWidth() * ui)
+    local toLeft, toTop = self:Home()
+    self.settling = { time = 0, from = from, to = to,
+        left = x * ui - width * k / 2, top = top * ui, height = height * k, toLeft = toLeft, toTop = toTop }
     -- In full at once, where the dialog was: no fade.
     self.wanted, self.fadeTime = true, nil
     frame:SetAlpha(1)
@@ -762,15 +760,19 @@ function Skin:SettleStep(elapsed)
     settling.time = settling.time + elapsed
     local t = Clamp(settling.time / SETTLE_TIME, 0, 1)
     local eased = t * t * (3 - 2 * t)
-    local scale = frame:GetEffectiveScale()
-    local toHeight = (self.settledHeight or frame:GetHeight()) * scale
-    local left = settling.left + (settling.toLeft - settling.left) * eased
-    local top = settling.top + (settling.toTop - settling.top) * eased
+    local function Toward(a, b) return a + (b - a) * eased end
+    local ui = UIParent:GetEffectiveScale()
+    local scale = Toward(settling.from, settling.to)
+    frame:SetScale(scale)
+    local pixels = ui * scale
+    local toHeight = (self.settledHeight or frame:GetHeight()) * ui * settling.to
     frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left / scale, top / scale)
-    frame:SetHeight((settling.height + (toHeight - settling.height) * eased) / scale)
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", Toward(settling.left, settling.toLeft) / pixels,
+        Toward(settling.top, settling.toTop) / pixels)
+    frame:SetHeight(Toward(settling.height, toHeight) / pixels)
     if t == 1 then
         self.settling = nil
+        frame:SetScale(settling.to)
         if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
         self:Layout()
     end
