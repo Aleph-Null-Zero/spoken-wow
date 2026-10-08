@@ -33,8 +33,8 @@ local SETTLE_TIME = 0.3
 -- opaque row of its 256 and the first opaque column of the 1024 (Brown 122 and 130, Dark 126
 -- and 125; the smaller of each, so the paper never runs off the screen).
 local PAPER_TOP, PAPER_LEFT = 122 / 256, 125 / 1024
--- Showing and hiding (Skin:SetLevel).
-local FADE_IN, FADE_OUT = .2, .25
+-- Showing and hiding, the paper first and the rest over it (Skin:SetLevel).
+local FADE_IN, FADE_OUT = .28, .32
 -- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
@@ -296,24 +296,6 @@ function Skin:Initialize()
         self.sizing, self.sizingWidth = false, false
         self:Layout(); self:Update()
     end)
-    self:Flatten()
-end
-
---- The client fades each texture on its own, so a half-faded window would show the paper through
---- its strips and words. Drawn as one image instead (a frame buffer, as the world map is), made
---- one before it is ever drawn: switched on later, on a frame already faded, it crashed the
---- client. What is on it ignores the frame's alpha, which then fades only the finished image.
---- Without frame buffers the paper and the rest fade in turn (Skin:SetLevel).
-function Skin:Flatten()
-    local frame = self.frame
-    if not frame.SetIsFrameBuffer then return end
-    local ok = pcall(frame.SetIsFrameBuffer, frame, true)
-    if not ok then return end
-    self.flat = true
-    local parts = { self.content, self.resizer, self.parchments[1], self.parchments[2], self.parchments[3] }
-    for _, part in ipairs(parts) do
-        if part.SetIgnoreParentAlpha then part:SetIgnoreParentAlpha(true) end
-    end
 end
 
 --- DialogueUI's own window open over this one, which then stays hidden: the dialog shows the line.
@@ -591,8 +573,9 @@ function Skin:UpdateControls(relayout)
     Actions.Glyph(self.pause:GetNormalTexture(), Actions.HeadState())
     self.pause:GetNormalTexture():SetAlpha((paused or MouseIsOver(self.pause)) and .9 or 0)
     self.pause.wash:SetShown(paused and not playing)
-    local held = not paused and not playing and SoundQueue:GetHeldReason(self.clip)
-    local label = held and format("%s (%s)", Label(self.clip), held) or Label(self.clip)
+    -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
+    -- first, a fight), which the waiting lines' rows still say.
+    local label = Label(self.clip)
     -- The lines waiting behind this one, counted as the subtitle counts them.
     local waiting, dim = Waiting(), self.colors and self.colors.disabled
     if waiting > 0 and dim then
@@ -667,16 +650,13 @@ function Skin:LayoutQueue()
     self.drawer:SetShown(shown > 0)
 end
 
---- How much of the window shows, 0 to 1: the one image's alpha (Skin:Flatten). Without it, the
---- paper takes the lower half and everything on it the upper, so the two never fade at once and
---- the paper never shows through the strips and words.
+--- How much of the window shows, 0 to 1. The client fades each texture on its own, so a
+--- half-faded window would show the paper through its strips and words: the paper takes the lower
+--- half and everything on it the upper, and the two never fade at once. Not a frame buffer, which
+--- would fade it as one image: on this window it crashed the client (ASSERT(!m_deleted),
+--- CSimpleRender.cpp) after an hour and a half of play.
 function Skin:SetLevel(level)
     self.level = level
-    if self.flat then
-        self.frame:SetAlpha(level)
-        self.content:SetAlpha(1)
-        return
-    end
     self.frame:SetAlpha(Clamp(level * 2, 0, 1))
     self.content:SetAlpha(Clamp(level * 2 - 1, 0, 1))
 end
