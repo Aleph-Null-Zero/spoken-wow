@@ -432,6 +432,9 @@ Expect("its progress line is the subtitle's, with no strip under it",
 Skin.play.scripts.OnClick(Skin.play)
 Expect("Stop stops the line, its glyph turning to Replay", tostring(env.SoundQueue:IsPaused()) .. " " .. tostring(Skin.play.state),
     "true replay")
+Expect("...and the title says it is stopped, after the line's name, as the subtitle does",
+    string.find(Skin.title.text:GetText(), "One  |c", 1, true) == 1
+    and string.find(Skin.title.text:GetText(), "(" .. env.L.SUBTITLE_STOPPED .. ")|r", 1, true) ~= nil, true)
 Skin.play.scripts.OnClick(Skin.play)
 Expect("...and Replay plays it again", Skin.play.state, "stop")
 local first = Spoken:GetCurrent()
@@ -458,6 +461,7 @@ quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "M
 Skin:Update()
 local plainTop = T.frame.anchor.y
 Expect("a line with no picture shows none", Skin.picture:IsShown(), false)
+Expect("a name over it unlike the line's own is shown", Skin.name:GetText(), "Kalimdor")
 Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
     picture = { file = "Interface/Pictures/1412-mulgore", mask = "Interface/Pictures/Mask7" } } }))
@@ -466,6 +470,10 @@ Expect("a place's picture shows over its words, as Place Lore shows it", Skin.pi
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
 Expect("...the words under it, 10 below", plainTop - T.frame.anchor.y, 210)
+Spoken:StopAll()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Mulgore", label = "Mulgore", portrait = { kind = "none" } } }))
+Skin:Update()
+Expect("a name the same as the line's own is said once, in the title", Skin.name:GetText() .. "|" .. Skin.title.text:GetText(), "|Mulgore")
 Spoken:StopAll()
 
 ---------------------------------------------------------------- a line held back
