@@ -413,8 +413,8 @@ Expect("...in the header at the right, beside the speaker and the line",
     and Skin.controls.anchor.relativePoint == "TOPRIGHT" and Skin.controls.anchor.y < 0, true)
 Expect("...the line's title stopping short of them", Skin.title.anchor.relativeTo == Skin.controls, true)
 local report = Skin.row[3]
-Expect("...Report after Skip, as large", report ~= nil and report:GetParent() == Skin.controls
-    and report:GetWidth() == Skin.play:GetWidth(), true)
+Expect("...Report after Skip, as large and as strong, as the subtitle shows it", report ~= nil and report:GetParent() == Skin.controls
+    and report:GetWidth() == Skin.play:GetWidth() and report:GetAlpha() == 1, true)
 Expect("...and no fold or close button", Skin.fold == nil and Skin.close == nil, true)
 Expect("...nor a second Stop on the face: the header's is the one, as the subtitle has one", Skin.pause, nil)
 Expect("the line's title is a name, nothing to click: Skip takes a line away",
