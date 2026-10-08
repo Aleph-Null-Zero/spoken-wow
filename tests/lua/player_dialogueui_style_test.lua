@@ -466,6 +466,13 @@ Expect("a place's picture shows over its words, as Place Lore shows it", Skin.pi
 Expect("...2:1, as wide as the words up to 400", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(), "400x200")
 Expect("...the words under it, 10 below", plainTop - T.frame.anchor.y, 210)
 Spoken:StopAll()
+-- Drawn 294 across at the map's scale beside the map: as large here, in the window's scale (0.52).
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Kalimdor", label = "Mulgore", portrait = { kind = "none" },
+    picture = { file = "Interface/Pictures/1412-mulgore", mask = "Interface/Pictures/Mask7", pixels = 294 * 0.9 } } }))
+Skin:Update()
+Expect("...as large on screen as Place Lore draws it beside the map",
+    math.abs(Skin.picture:GetWidth() * Skin.frame.spokenBaseScale * UIParent:GetEffectiveScale() - 294 * 0.9) < 1, true)
+Spoken:StopAll()
 
 ---------------------------------------------------------------- a line held back
 -- Game Greeting First holds a gossip line until the NPC's own greeting ends.
