@@ -72,6 +72,17 @@ end
 local function Rolling() return Config().SubtitleScroll == "line" end
 local function Shown() return math.max(1, tonumber(Config().Lines) or 2) end
 
+-- The words' face at Text Size, as the windows' words are: the quest text's own, scaled from 16.
+local function WordsFont()
+    local font = _G.QuestFont
+    if not (font and font.GetFont) then return nil end
+    local path, size = font:GetFont()
+    if not (path and size) then return nil end
+    return path, math.max(6, math.floor(size * (tonumber(Config().FontSize) or 16) / 16 + .5))
+end
+-- Hide Portrait, as the windows have it.
+local function Pictured() return not Addon:Profile("Frame").HidePortrait end
+
 local function Words(text)
     local count = 0
     for _ in text:gmatch("%S+") do count = count + 1 end
@@ -483,13 +494,13 @@ end
 
 function Subtitle:RowHeight()
     if not self:NameShown() then return 0 end
-    return math.max(PICTURE, self.title:GetStringHeight() or 0)
+    return math.max(Pictured() and PICTURE or 0, self.title:GetStringHeight() or 0)
 end
 
 --- The row's visible width, so it centres on what shows. The title is cut to keep it within WIDTH.
 function Subtitle:RowWidth(paused)
     if not self:NameShown() then return 0 end
-    local start = PICTURE + PICTURE_GAP + (self.title:GetStringWidth() or 0)
+    local start = (Pictured() and PICTURE + PICTURE_GAP or 0) + (self.title:GetStringWidth() or 0)
     -- The waiting count's room, taken first so a long title is cut rather than the count.
     local more = 0
     if (self.waiting or 0) > 0 then
@@ -508,10 +519,12 @@ end
 function Subtitle:PlaceRow(left)
     left = math.floor(left + .5)
     local textY = -TOP_PAD - math.floor((self:RowHeight() - (self.title:GetStringHeight() or 0)) / 2)
+    local pictured = Pictured()
+    self.picture:SetShown(pictured)
     self.picture:ClearAllPoints()
     self.picture:SetPoint("TOPLEFT", self.frame, "TOP", left, -TOP_PAD)
     self.title:ClearAllPoints()
-    self.title:SetPoint("TOPLEFT", self.frame, "TOP", left + PICTURE + PICTURE_GAP, textY)
+    self.title:SetPoint("TOPLEFT", self.frame, "TOP", left + (pictured and PICTURE + PICTURE_GAP or 0), textY)
     self.dot:ClearAllPoints()
     self.dot:SetPoint("LEFT", self.title, "RIGHT", LABEL_GAP, 0)
     self.label:ClearAllPoints()
@@ -575,6 +588,8 @@ end
 -- Each line gets a slot of its finished width, centred, and its letters are typed in from
 -- the left of it: the text fills in without re-centring or wobbling as it grows.
 function Subtitle:Layout(text)
+    local path, size = WordsFont()
+    if path then self.measure:SetFont(path, size, "") end
     self.measure:SetText("Ag")
     local lineHeight = self.measure:GetStringHeight()
     local named = self:NameShown()
@@ -588,6 +603,7 @@ function Subtitle:Layout(text)
         widest = math.max(widest, width)
         self.rows[index] = { text = wrapped, count = Characters(wrapped) }
         local line = self:Line(index)
+        if path then line:SetFont(path, size, "") end
         line:SetWidth(width + 2)
         line:SetText("")
     end
@@ -1016,6 +1032,12 @@ end
 
 function Subtitle:UpdatePause()
     Actions.SetPlayGlyph(self.pause, Actions.HeadState())
+    -- A line the client cannot stop: its buttons faint and still, as the windows show it.
+    local pausable = SoundQueue:CanBePaused()
+    for _, button in ipairs({ self.pause, self.skip }) do
+        button:SetAlpha(pausable and 1 or .4)
+        if pausable then button:Enable() else button:Disable() end
+    end
 end
 
 -- Locked, the subtitle lets clicks through to the world but still knows the pointer is over
