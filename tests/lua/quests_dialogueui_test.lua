@@ -49,6 +49,7 @@ end
 DUI.GetRight, DUI.GetTop = function() return 400 end, function() return 600 end
 DUI.FrontFrame = stub.Widget("Frame")
 local header = stub.Widget("Frame")
+header:SetSize(358, 51)
 header.GetRight, header.GetTop, header.GetBottom = function() return 380 end, function() return 572 end,
     function() return 521 end
 header.Title = stub.Widget("FontString")
@@ -427,6 +428,31 @@ DUI.CopyTextButton = nil
 DUI.handler = "HandleQuestDetail"
 DUI:HandleQuestDetail()
 Bridge:RefreshPlayButton("QUEST_DETAIL")
+-- A close button, as DialogueUI's book view has.
+local _, _, _, closeButton = Bridge:PlayButtonState()
+Expect("the window has the book view's close button at its top right, 26 in and 64 across of the book art",
+    closeButton ~= nil and closeButton:IsShown() and closeButton.anchor.point .. " " .. closeButton.anchor.x .. " "
+    .. closeButton.width, "TOPRIGHT " .. (-26 * 0.53333) .. " " .. (64 * 0.53333))
+Expect("...in the paper's art on DialogueUI's parchment", closeButton.file,
+    "Interface/AddOns/DialogueUI/Art/Book/TextureKit-Parchment.png")
+local copyText = stub.Widget("Button")
+copyText:SetPoint("TOPRIGHT", DUI, "TOPRIGHT", -8, -8)
+copyText:Show()
+DUI.CopyTextButton = copyText
+Bridge:DrawPlayButton()
+Expect("...DialogueUI's Copy Text button moved left of it", copyText.anchor.relativeTo == closeButton
+    and copyText.anchor.point .. " " .. copyText.anchor.relativePoint, "RIGHT LEFT")
+DUI.CopyTextButton = nil
+local hidUI
+DUI.HideUI = function() hidUI = true end
+closeButton.scripts.OnClick(closeButton)
+Expect("...closing the window as Escape does", hidUI, true)
+DUI.HideUI = nil
+_G.DUIFont_QuestType_Left = { GetTextColor = function() return 1, 0.82, 0 end }
+Bridge:DrawPlayButton()
+Expect("...in the stone's on its dark theme", closeButton.file, "Interface/AddOns/DialogueUI/Art/Book/TextureKit-Metal.png")
+_G.DUIFont_QuestType_Left = nil
+Bridge:DrawPlayButton()
 controls.frame.scripts.OnUpdate(controls.frame, 0.4)
 Expect("back on a quest page it slides back to the title line", Anchor(controls.frame), "RIGHT window TOPRIGHT -28 -51.5")
 DUI.WarbandCompleteAlert:Show()

@@ -737,6 +737,77 @@ local function SetEnabled(button, on)
     end
 end
 
+--------------------------------------------------------------------------------
+-- A close button, as DialogueUI's book view has
+--------------------------------------------------------------------------------
+--
+-- The book view's own close button, in its art: the paper's on DialogueUI's parchment theme, the
+-- stone's on its dark one; at the window's top right as on the book, 64 of the book art's pixels
+-- across and 26 in, drawn at 0.5333 of a pixel to DialogueUI's size, as the book view draws it.
+-- DialogueUI's Copy Text button, and the translator's beside it, which it puts in that corner,
+-- move left of it.
+
+local BOOK_ART = "Interface/AddOns/DialogueUI/Art/Book/TextureKit-"
+local CLOSE_SIZE, CLOSE_INSET, ART_PIXEL = 64, 26, 0.53333
+local close
+
+--- DialogueUI's size setting, as its header strip is drawn at it (358 across at 1).
+local function Multiplier()
+    local front = type(DUIQuestFrame.FrontFrame) == "table" and DUIQuestFrame.FrontFrame
+    local header = front and type(front.Header) == "table" and front.Header
+    local width = header and tonumber(header:GetWidth())
+    return width and width > 0 and width / 358 or 1
+end
+
+local function CloseButton()
+    if close then
+        return close
+    end
+    local frame = DUIQuestFrame
+    close = CreateFrame("Button", nil, frame)
+    close:SetFrameStrata("FULLSCREEN")
+    close.texture = close:CreateTexture(nil, "ARTWORK")
+    close.texture:SetAllPoints()
+    close.texture:SetTexCoord(768 / 1024, 832 / 1024, 1488 / 2048, 1552 / 2048)
+    close.highlight = close:CreateTexture(nil, "HIGHLIGHT")
+    close.highlight:SetAllPoints()
+    close.highlight:SetTexCoord(832 / 1024, 896 / 1024, 1488 / 2048, 1552 / 2048)
+    -- As Escape closes it: DialogueUI's own way out.
+    close:SetScript("OnClick", function()
+        if type(frame.HideUI) == "function" then frame:HideUI() else frame:Hide() end
+    end)
+    return close
+end
+
+local function PlaceClose()
+    local frame = DUIQuestFrame
+    local button = CloseButton()
+    local file = BOOK_ART .. (Utils:DialogueUIThemeID() == 2 and "Metal.png" or "Parchment.png")
+    if button.file ~= file then
+        button.file = file
+        button.texture:SetTexture(file)
+        button.highlight:SetTexture(file)
+    end
+    local pixel = ART_PIXEL * Multiplier()
+    button:SetSize(CLOSE_SIZE * pixel, CLOSE_SIZE * pixel)
+    button:ClearAllPoints()
+    button:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -CLOSE_INSET * pixel, -CLOSE_INSET * pixel)
+    button:Show()
+    -- DialogueUI's first button in that corner (Copy Text, else the translator's) left of it, on
+    -- its middle; the other keeps its place left of that one.
+    local first
+    for _, key in ipairs({ "TranslatorButton", "CopyTextButton" }) do
+        local widget = frame[key]
+        if type(widget) == "table" and widget.IsShown and widget:IsShown() then
+            first = widget
+        end
+    end
+    if first and select(2, first:GetPoint(1)) ~= button then
+        first:ClearAllPoints()
+        first:SetPoint("RIGHT", button, "LEFT", -ROUND_GAP, 0)
+    end
+end
+
 --- Show the row while the window shows a page: Play with the Play Button setting on, greyed
 --- with no line to read and Stop while that line speaks; Skip greyed with nothing speaking.
 --- Run as a page is built, as the window opens, and on the driver's tick.
@@ -753,6 +824,7 @@ function Bridge:DrawPlayButton()
         end
         return
     end
+    PlaceClose()
     local r = Row()
     r.frame:Show()
     local on = Config().PlayButton and true or false
@@ -774,9 +846,9 @@ function Bridge:RefreshPlayButton(event)
     self:DrawPlayButton()
 end
 
---- The row as a test or /spq diagnostics sees it: Play, the page's line, the row.
+--- The row as a test or /spq diagnostics sees it: Play, the page's line, the row, the close button.
 function Bridge:PlayButtonState()
-    return row and row.play, line, row
+    return row and row.play, line, row, close
 end
 
 --------------------------------------------------------------------------------
