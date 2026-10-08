@@ -451,6 +451,18 @@ Expect("...then what is on it", Skin.content:GetAlpha(), 1)
 Skin.flat = true
 Spoken:StopAll()
 
+---------------------------------------------------------------- a line held back
+-- Game Greeting First holds a gossip line until the NPC's own greeting ends.
+local holding = true
+env.SoundQueue:AddGate(function(clip)
+    if holding and clip.present and clip.present.label == "Gossip" then return "Waiting for the NPC to finish speaking." end
+end)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Vartha Rockmane", label = "Gossip", portrait = { kind = "none" } } }))
+Skin:UpdateControls()
+Expect("a line held back is named alone, as the subtitle names it, not why it waits", Skin.title.text:GetText(), "Gossip")
+holding = false
+Spoken:StopAll()
+
 ---------------------------------------------------------------- under DialogueUI's open window
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Three", portrait = { kind = "none" } } }))
 Skin:Tick(1)

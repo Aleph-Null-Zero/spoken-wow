@@ -591,8 +591,9 @@ function Skin:UpdateControls(relayout)
     Actions.Glyph(self.pause:GetNormalTexture(), Actions.HeadState())
     self.pause:GetNormalTexture():SetAlpha((paused or MouseIsOver(self.pause)) and .9 or 0)
     self.pause.wash:SetShown(paused and not playing)
-    local held = not paused and not playing and SoundQueue:GetHeldReason(self.clip)
-    local label = held and format("%s (%s)", Label(self.clip), held) or Label(self.clip)
+    -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
+    -- first, a fight), which the waiting lines' rows still say.
+    local label = Label(self.clip)
     -- The lines waiting behind this one, counted as the subtitle counts them.
     local waiting, dim = Waiting(), self.colors and self.colors.disabled
     if waiting > 0 and dim then
