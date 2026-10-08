@@ -360,9 +360,9 @@ function Skin:Layout()
     local pictureHeight = Round(pictureWidth / 2)
     -- With a picture, one gap over it and under it: from the divider's line to the picture, and
     -- from the picture to the words. Halfway between the header's gap under the line and the
-    -- picture's own, and never less than a line, the room the words fade through.
+    -- picture's own.
     local lineBottom = Round(stripHeight * DIVIDER_LINE)
-    local pictureGap = math.max(lineHeight, Round((stripHeight - lineBottom + textGap + PICTURE_GAP) / 2))
+    local pictureGap = Round((stripHeight - lineBottom + textGap + PICTURE_GAP) / 2)
     local pictureTop = lineBottom + pictureGap
     local wordsTop = picture and pictureTop + pictureHeight + pictureGap or headerHeight
     -- The same gap above the progress line, so the words sit as far from the foot as from the
@@ -372,13 +372,9 @@ function Skin:Layout()
     self.progress.track:SetShown(progress)
     local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
     -- A line's room over and under the words, which a line gliding out or in fades through: it is
-    -- at nothing by the time it reaches the edge, so no line is ever seen cut there. Taken from the
-    -- gaps already over and under them (the header's or the picture's, the one over the progress
-    -- line), and made up where those are smaller than a line.
-    local over = picture and pictureGap or textGap
-    local under = math.max(0, textGap - lineGap) + (progress and 6 or 0)
-    wordsTop = wordsTop + math.max(0, lineHeight - over)
-    footerHeight = footerHeight + math.max(0, lineHeight - under)
+    -- at nothing by the time it reaches the edge, so no line is ever seen cut there. It reaches
+    -- over the gaps there (the header's or the picture's, the one over the progress line) and
+    -- adds none: the words keep their place.
     -- The lines waiting get rows while the window is open; folded, the title counts them.
     local waiting = Waiting()
     local shownRows = Expanded() and math.min(MAX_ROWS, waiting) or 0
