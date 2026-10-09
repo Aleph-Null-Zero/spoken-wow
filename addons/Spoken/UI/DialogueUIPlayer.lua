@@ -1793,9 +1793,11 @@ function Skin:Update()
     self:Touch()
     if clip ~= self.clip then
         self:HideTooltip()
-        -- Following another line on screen: its words fade in and the window eases to it.
+        -- Following another line on screen: its words fade in, and on the same paper the window
+        -- eases to its height. On another (a stone's line after a quest's) it is another page, at
+        -- its own height at once: easing, the stone seemed to grow into the parchment.
         if self.clip and self.wanted and self.frame:IsShown() then
-            self.easeNext, self.lineFade = true, 0
+            self.easeNext, self.lineFade = LookOf(clip) == LookOf(self.clip), 0
             self:PaintContent()
         end
         self.clip, self.seconds, self.offset = clip, 0, 0
