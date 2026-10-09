@@ -684,6 +684,7 @@ env.PlayerFrame:RefreshConfig()
 Expect("...unless it sits on the dialog", Skin.wanted, true)
 Spoken:SetPlayerHost(nil)
 DUI:Hide()
+Skin:CloseStep(1)
 Spoken:StopAll()
 
 ---------------------------------------------------------------- from the dialog to the top left
@@ -696,6 +697,8 @@ local function CloseDialog()
     DUI.hooks = {}
     DUI:SetScript("OnHide", function() end)
     DUI:Hide()
+    -- Closing on its own line, its words fade first; then it hides.
+    Skin:CloseStep(1)
     local watch = Skin.dialogWatch
     if watch and watch:GetParent() == DUI then watch.scripts.OnHide(watch) end
 end
@@ -718,35 +721,50 @@ Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() re
 local dialogLeft = 960 + DUI.frameOffsetX * 0.8 - DUI.frameWidth * 0.8 / 2
 local dialogTop = 540 + DUI.frameHeight * 0.8 / 2
 OpenDialog()
-CloseDialog()
+-- Its words, which fade on DialogueUI's window as it closes; its paper, which stays.
+local words = CreateFrame("Frame", nil, DUI)
+DUI.BackgroundFrame = CreateFrame("Frame", nil, DUI)
+DUI.hooks = {}
+DUI:SetScript("OnHide", function() end)
+DUI:Hide()
+Skin:CloseStep(0.07)
+Expect("the dialog closing on its line fades its words on DialogueUI's window first, its paper staying",
+    DUI:IsShown() and words.alpha > 0 and words.alpha < 1 and (DUI.BackgroundFrame.alpha or 1) == 1, true)
+Skin:CloseStep(0.1)
+Expect("...then closes, its words given back unseen", tostring(DUI:IsShown()) .. " " .. words.alpha, "false 1")
+Skin.dialogWatch.scripts.OnHide(Skin.dialogWatch)
+DUI.BackgroundFrame = nil
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
 Expect("...as tall as the dialog", Near(Skin.frame:GetHeight() * Skin.frame.scale, DUI.frameHeight * 0.8), true)
-Expect("...in full at once, not fading in", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime), "1 nil")
+Expect("...in full at once, not fading in, its paper alone", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime)
+    .. " " .. Skin.content.alpha, "1 nil 0")
 Skin:Tick(0.1)
 Expect("...lifted off it first, a touch larger, its shadow thrown",
     Skin.frame.scale > 0.8 and Skin.shadow:IsShown(), true)
-Skin:Tick(0.32)
+Skin:Tick(0.14)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
 Expect("...on a curve, not straight at the corner", (function()
     local s = Skin.settling
-    local u = (s.time - 0.12) / 0.5
+    local u = (s.time - 0.08) / 0.36
     local straightX = s.left + (s.toLeft - s.left) * (u < 0.5 and 4 * u * u * u or 1 - (2 - 2 * u) ^ 3 / 2)
     return math.abs(Skin.frame.anchor.x * Skin.frame.scale - straightX) > 1
 end)(), true)
+Expect("...its paper alone as it flies, and never one image while it does", Skin.content.alpha .. " " .. tostring(Skin.buffered), "0 nil")
 Skin:Tick(0.15)
-Expect("...still on its way at 0.57 seconds", Skin.settling ~= nil, true)
+Expect("...still on its way at 0.39 seconds", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
-Expect("...and settled at the top left by 0.62, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Expect("...and settled at the top left by 0.44, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 Skin:Tick(0.05)
-Expect("...landing: giving under it as it touches down", Skin.landing ~= nil and not AtTopLeft(), true)
+Expect("...landing: giving under it as it touches down, its words fading in on its paper",
+    Skin.landing ~= nil and not AtTopLeft() and Skin.content.alpha > 0 and Skin.content.alpha < 1, true)
 Skin:Tick(1)
-Expect("...then at rest, its shadow gone", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
-    .. tostring(Skin.shadow:IsShown()), "nil true false")
+Expect("...then at rest, its shadow gone, its words all there", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
+    .. tostring(Skin.shadow:IsShown()) .. " " .. Skin.content.alpha, "nil true false 1")
 -- Nowhere known to start from: it is simply put where it rests.
 local WindowPlace = env.DialogueUITheme.WindowPlace
 env.DialogueUITheme.WindowPlace = function() return nil end
@@ -808,6 +826,7 @@ bookWatch.scripts.OnShow(bookWatch)
 Expect("the book view opening hides this window, the book showing the page", Skin.frame:IsShown(), false)
 Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
 BookView:Hide()
+Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
 local scale = Skin.frame.scale
 Expect("closed on a page reading on, the window starts where the book was, as wide, in stone",
@@ -835,6 +854,7 @@ bookWatch.scripts.OnShow(bookWatch)
 books:Enqueue(Page("Stone"))
 Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
 BookView:Hide()
+Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
 local ui = UIParent:GetEffectiveScale()
 local card = Skin.card
@@ -861,6 +881,7 @@ stub.Advance(1)
 BookView:Show()
 bookWatch.scripts.OnShow(bookWatch)
 BookView:Hide()
+Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
 Expect("a dialog closed on another's line, having queued nothing, brings this window back and nothing more",
     tostring(Skin.tuck) .. " " .. tostring(Skin.settling) .. " " .. tostring(Skin.wanted), "nil nil true")
@@ -870,6 +891,7 @@ BookView:Show()
 bookWatch.scripts.OnShow(bookWatch)
 books:Enqueue(Page(nil))
 BookView:Hide()
+Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
 Expect("a book's page goes behind in the book view's paper", card.strips[1].texture, BOOK .. "Parchment.png")
 Skin:TuckStep(0.3)

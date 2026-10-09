@@ -31,8 +31,11 @@ local BASE_SCALE = 0.65
 -- of the way to one side (down, so it stays on the screen), then landing: giving SETTLE_GIVE
 -- under it and back, over LAND_TIME.
 local EDGE = 16
-local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .12, .5, .5
-local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 5
+local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .08, .36, .32
+local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 4
+-- The dialog's words fading on DialogueUI's window before it closes (Skin:FadeDialogOut), and this
+-- window's fading in once it has landed (Skin:LandStep): the flight is of the paper alone.
+local CONTENT_OUT, CONTENT_IN = .14, .2
 -- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
 -- the same event, in either order.
@@ -227,6 +230,17 @@ function Skin:Initialize()
             end)
             table.insert(self.dialogs, dialog)
             self.dialogWatches[dialog] = watch
+            -- Closing on its own line, its words fade before it hides (Skin:FadeDialogOut).
+            local hide = dialog.Hide
+            dialog.Hide = function(frame, ...)
+                if self.closing and self.closing.dialog == frame then return end
+                local ok, fades = pcall(self.FadesOnClose, self, frame)
+                if not (ok and fades) then return hide(frame, ...) end
+                self:FadeDialogOut(frame, hide)
+            end
+            if type(dialog.ShowUI) == "function" then
+                hooksecurefunc(dialog, "ShowUI", function() self:CancelDialogFade(dialog) end)
+            end
             self.sessions[dialog] = setmetatable({}, { __mode = "k" })
         end
     end
@@ -972,7 +986,8 @@ end
 --- What is on the paper: its share of the window's fade, times a new line's own fade-in.
 function Skin:PaintContent()
     local line = self.lineFade and Clamp(self.lineFade / LINE_IN, 0, 1) or 1
-    self.content:SetAlpha(Clamp((self.level or 0) * 2 - 1, 0, 1) * (1 - (1 - line) * (1 - line)))
+    -- Times its words' own fade as it settles out of a dialog (Skin:HideWords).
+    self.content:SetAlpha(Clamp((self.level or 0) * 2 - 1, 0, 1) * (1 - (1 - line) * (1 - line)) * (self.wordsAlpha or 1))
 end
 
 function Skin:SetVisible(visible, immediate)
@@ -981,6 +996,7 @@ function Skin:SetVisible(visible, immediate)
     if immediate then
         self:StopTuck()
         self:StopLanding()
+        if self.wordsHidden then self:ShowWords(1) end
         self.wanted, self.preparing, self.arming, self.fadeTime, self.pending = false, nil, nil, nil, nil
         self.frame:Hide()
         self:Unbuffer()
@@ -1189,6 +1205,7 @@ function Skin:Settle(dialog)
     if self.buffered then self.pending = self.pending or "update"; return end
     self:StopTuck()
     self:StopLanding()
+    if self.wordsHidden then self:ShowWords(1) end
     self.arming, self.preparing = nil, nil
     self:Undeafen()
     if not self:Owns(dialog) then
@@ -1206,6 +1223,7 @@ function Skin:Settle(dialog)
     local ok, err = pcall(self.StartSettle, self, dialog)
     if not ok then
         self.settling = nil
+        if self.wordsHidden then self:ShowWords(1) end
         frame:SetScale(frame.spokenBaseScale or 1)
         if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
         self:Layout()
@@ -1247,9 +1265,12 @@ function Skin:StartSettle(dialog)
     local bendX, bendY = BowOf(left, top * ui, toLeft, toTop, SETTLE_BOW)
     self.settling = { time = 0, from = from, to = to,
         left = left, top = top * ui, height = height * ui, toLeft = toLeft, toTop = toTop, bendX = bendX, bendY = bendY }
-    -- In full at once, where the dialog was: no fade.
-    self.wanted, self.fadeTime = true, nil
+    -- In full at once, where the dialog was: no fade, so not one image either (Update above may
+    -- have it waiting to fade in, which made it one image as it flew). Its paper alone: its words
+    -- come in as it lands (Skin:LandStep), the dialog's having faded on DialogueUI's window.
+    self.wanted, self.fadeTime, self.preparing, self.arming = true, nil, nil, nil
     self:SetLevel(1)
+    self:HideWords()
     frame:Show()
     self:SettleStep(0)
 end
@@ -1311,11 +1332,28 @@ function Skin:SettleStep(elapsed)
     end
 end
 
---- Landed where it rests: giving under it and back as it touches down, its shadow drawn in.
+--- This window's words, title and buttons out of sight, its paper left (Skin:StartSettle).
+function Skin:HideWords()
+    self.wordsHidden, self.wordsAlpha = true, 0
+    if self.content then self:PaintContent() end
+    if Transcript.frame and Transcript.frame:GetParent() ~= self.content then Transcript.frame:SetAlpha(0) end
+end
+
+--- Its words at `alpha`; whole again, as this window draws them, at 1.
+function Skin:ShowWords(alpha)
+    if alpha >= 1 then self.wordsHidden, alpha = nil, 1 end
+    self.wordsAlpha = alpha
+    if self.content then self:PaintContent() end
+    if Transcript.frame and self.content and Transcript.frame:GetParent() ~= self.content then Transcript.frame:SetAlpha(alpha) end
+end
+
+--- Landed where it rests: giving under it and back as it touches down, its shadow drawn in, its
+--- words fading in on its paper.
 function Skin:LandStep(elapsed)
     local landing = self.landing
     landing.time = landing.time + elapsed
     local t = landing.time
+    if self.wordsHidden then self:ShowWords(Smooth(Clamp(t / CONTENT_IN, 0, 1))) end
     self:Give(landing, -SETTLE_GIVE * math.exp(-7 * t) * math.sin(2 * math.pi * t / 0.3))
     local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
     self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
@@ -1325,6 +1363,7 @@ end
 function Skin:StopLanding()
     local landing = self.landing
     self.landing = nil
+    if self.wordsHidden then self:ShowWords(1) end
     if self.shadow then self.shadow:Hide() end
     if landing then self:Rest(landing) end
 end
@@ -1370,6 +1409,73 @@ function Skin:Rest(state)
     if not state.rest then return end
     state.rest = nil
     if not Addon:RestoreLayout("DialogueUI", self.frame) then self:PlaceDefault() end
+end
+
+---------------------------------------------------------------- the dialog's words fading first
+-- DialogueUI's dialog and this window lay out the same line differently (title, paragraphs,
+-- buttons, pages), so this window taking the dialog's place showed all of that change at once.
+-- Instead, as the dialog closes on its own line (this window then settles out of it), its words,
+-- buttons and header fade on DialogueUI's own window first, over CONTENT_OUT, leaving its bare
+-- paper; then it closes, and this window, its paper alone (the same art), takes its place and
+-- flies; its own words fade in once it lands (Skin:LandStep). Every other close is at once.
+-- The dialog's frames that are its paper, not its words: the quest window's background, the book
+-- view's footer (its torn foot; its divider line fades with the words).
+local PAPER_FRAMES = { "BackgroundFrame", "Footer" }
+
+--- Whether `dialog` closing now hands its line on to this window (Skin:Settle would settle).
+function Skin:FadesOnClose(dialog)
+    return self:IsEnabled() and self.frame ~= nil and self.frame:GetParent() == UIParent
+        and PlayerFrame:Current() ~= nil and self:Owns(dialog)
+end
+
+--- DialogueUI hiding `dialog`: its words fade first, then `hide` (its own Hide) closes it.
+function Skin:FadeDialogOut(dialog, hide)
+    local paper = {}
+    for _, key in ipairs(PAPER_FRAMES) do
+        if type(dialog[key]) == "table" then paper[dialog[key]] = true end
+    end
+    local parts = {}
+    local children = { dialog:GetChildren() }
+    for index = 1, table.getn(children) do
+        local child = children[index]
+        if not paper[child] then table.insert(parts, { part = child, alpha = child:GetAlpha() or 1 }) end
+    end
+    local footer = type(dialog.Footer) == "table" and dialog.Footer.FooterDivider
+    if type(footer) == "table" and footer.GetAlpha then table.insert(parts, { part = footer, alpha = footer:GetAlpha() or 1 }) end
+    self.closing = { dialog = dialog, hide = hide, time = 0, parts = parts }
+    -- Driven by a frame of no parent: DialogueUI may be hiding the interface.
+    if not self.closeDriver then
+        self.closeDriver = CreateFrame("Frame")
+        self.closeDriver:SetScript("OnUpdate", function(_, elapsed) self:CloseStep(elapsed) end)
+    end
+    self.closeDriver:Show()
+end
+
+function Skin:CloseStep(elapsed)
+    local closing = self.closing
+    if not closing then
+        if self.closeDriver then self.closeDriver:Hide() end
+        return
+    end
+    closing.time = closing.time + elapsed
+    local left = 1 - Smooth(Clamp(closing.time / CONTENT_OUT, 0, 1))
+    for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha * left) end
+    if closing.time >= CONTENT_OUT then
+        -- Closed for real, its words given back unseen for the next time it opens.
+        self.closing = nil
+        if self.closeDriver then self.closeDriver:Hide() end
+        closing.hide(closing.dialog)
+        for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha) end
+    end
+end
+
+--- DialogueUI showing the dialog again before it closed (another page, another line): it stays.
+function Skin:CancelDialogFade(dialog)
+    local closing = self.closing
+    if not (closing and closing.dialog == dialog) then return end
+    self.closing = nil
+    if self.closeDriver then self.closeDriver:Hide() end
+    for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha) end
 end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
