@@ -319,6 +319,27 @@ function Book:Place()
 	end
 end
 
+--- DialogueUI's Copy Text left of the row, on its middle, as on the quest window (Spoken Quests'
+--- DialogueUIBridge); in its own corner again once the row goes. Again whenever DialogueUI lays
+--- its buttons out (LayoutWidgets).
+function Book:PlaceTheirs()
+	local view, row = View(), self.row
+	local copy = view and view.CopyTextButton
+	if type(copy) ~= "table" or not copy.GetPoint then
+		return
+	end
+	if row and row.frame:IsShown() then
+		if copy:IsShown() and select(2, copy:GetPoint(1)) ~= row.frame then
+			copy:ClearAllPoints()
+			copy:SetPoint("RIGHT", row.frame, "LEFT", -ROUND_GAP, 0)
+			self.theirsMoved = true
+		end
+	elseif self.theirsMoved then
+		self.theirsMoved = false
+		if type(view.LayoutWidgets) == "function" then view:LayoutWidgets() end
+	end
+end
+
 --- Show the row while the view is open with the part on: Play greyed with no recording of this
 --- book and Stop while it is read, Skip greyed with nothing speaking, Report while this book has
 --- a recording (unless Hide Report Buttons is on).
@@ -333,6 +354,7 @@ function Book:Draw()
 			HideTooltip(self.row.skip)
 			HideTooltip(self.row.report)
 		end
+		self:PlaceTheirs()
 		return
 	end
 	local row = self:Row()
@@ -349,6 +371,7 @@ function Book:Draw()
 	SetEnabled(row.skip, Spoken.GetCurrent ~= nil and Spoken:GetCurrent() ~= nil)
 	row.report:SetShown(voiced and not ReportsHidden())
 	self:Place()
+	self:PlaceTheirs()
 end
 
 --------------------------------------------------------------------------------
@@ -547,6 +570,10 @@ function SpokenBooks:SetupDialogueUIBook()
 		Book:Mark()
 	end)
 	Book.watch = watch
+	-- Copy Text beside the row whenever DialogueUI lays its buttons out.
+	if type(view.LayoutWidgets) == "function" then
+		hooksecurefunc(view, "LayoutWidgets", function() Book:PlaceTheirs() end)
+	end
 	-- Room for the controls' line whenever DialogueUI lays the book out.
 	if type(view.SetScrollContentHeight) == "function" then
 		hooksecurefunc(view, "SetScrollContentHeight", function() Book:Lower() end)

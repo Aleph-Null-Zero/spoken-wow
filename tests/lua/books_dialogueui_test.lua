@@ -64,6 +64,14 @@ function view:SetScrollContentHeight()
 end
 view.TTSButton = stub.Widget("Button")
 view.TTSButton:SetAlpha(0.6)
+-- Its Copy Text, which it puts in its top left corner as it lays its buttons out.
+view.CopyTextButton = stub.Widget("Button")
+view.CopyTextButton:Show()
+function view:LayoutWidgets()
+    self.CopyTextButton:ClearAllPoints()
+    self.CopyTextButton:SetPoint("TOPLEFT", self, "TOPLEFT", 14, -14)
+end
+view:LayoutWidgets()
 view:Hide()
 _G.DUIBookFrame = view
 
@@ -118,6 +126,11 @@ Expect("...Report rightmost, then Skip, then Play", row.report.anchor.relativeTo
 Expect("...as large on screen as Place Lore draws them, 24 at UIParent's scale",
     row.play:GetWidth() .. " " .. row.play:GetScale(), "24 " .. (UIParent:GetEffectiveScale() / 0.8))
 Expect("...in place of DialogueUI's own speaker", view.TTSButton:GetAlpha(), 0)
+Expect("...DialogueUI's Copy Text left of them, on their middle, as on the quest window",
+    view.CopyTextButton.anchor.point .. " " .. tostring(view.CopyTextButton.anchor.relativeTo == row.frame) .. " "
+    .. view.CopyTextButton.anchor.relativePoint .. " " .. view.CopyTextButton.anchor.x, "RIGHT true LEFT -4")
+view:LayoutWidgets()
+Expect("...staying there as DialogueUI lays its buttons out again", view.CopyTextButton.anchor.relativeTo == row.frame, true)
 Expect("Play is lit for a book with a recording", row.play:IsEnabled(), true)
 Expect("Skip is greyed with nothing speaking", row.skip:IsEnabled(), false)
 
@@ -211,6 +224,8 @@ view:Hide()
 watch.scripts.OnHide(watch)
 Expect("the book view closing takes the row with it", row.frame:IsShown(), false)
 Expect("...and gives DialogueUI's speaker back", view.TTSButton:GetAlpha(), 0.6)
+Expect("...and its Copy Text its own corner", view.CopyTextButton.anchor.point .. " "
+    .. tostring(view.CopyTextButton.anchor.relativeTo == view), "TOPLEFT true")
 Expect("...and its close button its own corner", view.CloseButton.anchor.point .. " " .. view.CloseButton.anchor.y,
     "TOPRIGHT " .. (-26 * 0.53333))
 
