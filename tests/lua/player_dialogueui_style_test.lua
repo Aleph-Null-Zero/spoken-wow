@@ -514,9 +514,11 @@ Skin.skip.scripts.OnClick(Skin.skip)
 Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
 Expect("...the window fading out whole first, as when the queue ends", tostring(Skin.turning) .. " "
     .. tostring(Skin.wanted) .. " " .. tostring(Skin.frame:IsShown()), "true false true")
+Expect("...with the words it showed, not the next line's", T.clip == first, true)
 Skin:Tick(1)
-Expect("...then the next line laid out unseen, to fade in", tostring(Skin.turning) .. " " .. tostring(Skin.wanted) .. " "
-    .. tostring(Skin.clip == Spoken:GetCurrent()), "nil true true")
+Expect("...then the next line laid out unseen, to fade in, its words in the captions", tostring(Skin.turning) .. " "
+    .. tostring(Skin.wanted) .. " " .. tostring(Skin.clip == Spoken:GetCurrent()) .. " " .. tostring(T.clip == Spoken:GetCurrent()),
+    "nil true true true")
 Skin:Tick(1)
 Expect("...and faded in, whole", Skin.level .. " " .. Skin.content:GetAlpha(), "1 1")
 do
