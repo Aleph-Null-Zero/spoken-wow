@@ -421,9 +421,8 @@ local function Build(canvas)
     end
     -- One row per action an addon declared optional, named by that addon. The player is
     -- not told what any of them do. The subtitle shows the corner icon too, so the row is
-    -- there with subtitles as well as with a window. Report is not the window's alone: the
-    -- quest log, DialogueUI's window and the lore pages show it too, so its row is a general
-    -- one (ReportRow, by Contribute).
+    -- there with subtitles as well as with a window. Report is not the window's alone (the
+    -- quest log, DialogueUI's window and the lore pages show it), so its row is a general one.
     for _, optional in ipairs(Actions.optional) do
         if optional.id ~= "report" then
             Only(layout:Checkbox(format(L.OPT_HIDE_ACTION, optional.label), L.OPT_HIDE_ACTION_TIP,
@@ -435,8 +434,8 @@ local function Build(canvas)
                 function() return InWindow() or Subtitles() end)
         end
     end
-    -- Every Report button, whatever shows lines: kept as the report action's switch, which the
-    -- windows already follow, and told to the addons that draw their own (REPORT_SETTINGS_CHANGED).
+    -- The report action's switch, which the windows already follow, so a hidden Report stays
+    -- hidden; addons that draw their own hear REPORT_SETTINGS_CHANGED.
     local function ReportRow()
         layout:Checkbox(L.OPT_HIDE_REPORT, L.OPT_HIDE_REPORT_TIP,
             function() return cfg().HiddenActions.report end,
