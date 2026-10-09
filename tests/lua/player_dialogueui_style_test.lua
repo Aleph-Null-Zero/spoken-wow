@@ -746,10 +746,11 @@ Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
 Skin:CloseStep(0.05)
 Expect("a quest page closing fades the dialog's words at once, without waiting for DialogueUI",
     DUI:IsShown() and Skin.closing ~= nil and words.alpha < 1, true)
-Skin:CloseStep(0.1)
-Expect("...holding a moment, faded, for a page coming back", tostring(DUI:IsShown()) .. " " .. words.alpha, "true 0")
-Skin:CloseStep(0.1)
-Expect("...then closing it", tostring(DUI:IsShown()) .. " " .. words.alpha, "false 1")
+Skin:CloseStep(0.06)
+Expect("...faded, still held for a page coming back", tostring(DUI:IsShown()) .. " " .. words.alpha, "true 0")
+Skin:CloseStep(0.02)
+Expect("...then closed 0.12 after the page closed, the wait running with the fade, not after it",
+    tostring(DUI:IsShown()) .. " " .. words.alpha, "false 1")
 Skin.dialogWatch.scripts.OnHide(Skin.dialogWatch)
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
@@ -766,15 +767,15 @@ Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
 Expect("...on a curve, not straight at the corner", (function()
     local s = Skin.settling
-    local u = (s.time - 0.1) / 0.28
+    local u = (s.time - 0.1) / 0.42
     local straightX = s.left + (s.toLeft - s.left) * (u < 0.5 and 4 * u * u * u or 1 - (2 - 2 * u) ^ 3 / 2)
     return math.abs(Skin.frame.anchor.x * Skin.frame.scale - straightX) > 1
 end)(), true)
 Expect("...its paper alone as it flies, and never one image while it does", Skin.content.alpha .. " " .. tostring(Skin.buffered), "0 nil")
-Skin:Tick(0.05)
-Expect("...still on its way at 0.29 seconds", Skin.settling ~= nil, true)
+Skin:Tick(0.2)
+Expect("...still on its way at 0.44 seconds", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
-Expect("...and settled at the top left by 0.38, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Expect("...and settled at the top left by 0.52, at its own size and height AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 Skin:Tick(0.05)
 Expect("...landing with a little jump, up first, as the tuck's window gives, its words fading in on its paper",

@@ -31,15 +31,17 @@ local BASE_SCALE = 0.65
 -- SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed SETTLE_BOW of the way to one side (down, so
 -- it stays on the screen), then landing with a little jump, up SETTLE_GIVE and back, over LAND_TIME.
 local EDGE = 16
-local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .1, .28, .4
+-- The same lift and flight times as the tuck's page (TUCK_LIFT, TUCK_FLY): one rhythm for both.
+local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .1, .42, .4
 local SETTLE_GROW, SETTLE_RISE, SETTLE_BOW, SETTLE_GIVE = .03, 4, .16, 7
 -- The dialog's words fading on DialogueUI's window before it closes (Skin:FadeDialogOut), and this
 -- window's fading in once it has landed (Skin:LandStep): the flight is of the paper alone.
 local CONTENT_OUT, CONTENT_IN = .1, .16
 -- A quest page closing (QUEST_FINISHED): DialogueUI waits up to a second before it hides its window
 -- (0.5 when the NPC has more quests, in case its gossip comes back, and up to 0.5 more for the
--- camera). The words fade at once instead, and the window is closed here after QUEST_GRACE more,
--- unless DialogueUI shows a page again by then (gossip, the next quest page).
+-- camera). The words fade at once instead, and the window is closed here QUEST_GRACE after the page
+-- closed, unless DialogueUI shows a page again by then (gossip, the next quest page). The wait runs
+-- with the fade, not after it: after it, the bare page hung there before anything moved.
 local QUEST_GRACE = .12
 -- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
@@ -1455,7 +1457,7 @@ end
 
 --- DialogueUI hiding `dialog`: its words fade first, then `hide` (its own Hide) closes it.
 --- A quest page closed: if DialogueUI's window hands a line on, its words fade now and it closes
---- QUEST_GRACE after (Skin:CloseStep), unless DialogueUI shows a page again first.
+--- QUEST_GRACE from now (Skin:CloseStep), unless DialogueUI shows a page again first.
 function Skin:QuestFinished(dialog)
     if self.closing or not dialog:IsShown() then return end
     local ok, fades = pcall(self.FadesOnClose, self, dialog)
@@ -1493,7 +1495,7 @@ function Skin:CloseStep(elapsed)
     closing.time = closing.time + elapsed
     local left = 1 - Smooth(Clamp(closing.time / CONTENT_OUT, 0, 1))
     for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha * left) end
-    if closing.time >= CONTENT_OUT + closing.grace then
+    if closing.time >= math.max(CONTENT_OUT, closing.grace) then
         -- Its words given back, then closed for real in the same moment, so they are never seen
         -- back: given back after, DialogueUI hiding it again from its own OnHide read them faded.
         self.closing = nil
