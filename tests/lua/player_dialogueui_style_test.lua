@@ -748,6 +748,18 @@ Expect("...then closes, its words given back unseen, and still there when Dialog
 DUI:SetScript("OnHide", function() end)
 Skin.dialogWatch.scripts.OnHide(Skin.dialogWatch)
 DUI.BackgroundFrame = nil
+-- A quest page closing: its words fade at once, not when DialogueUI gets round to hiding it, and
+-- the window closes a moment after unless DialogueUI shows a page again.
+OpenDialog()
+Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
+Skin:CloseStep(0.05)
+Expect("a quest page closing fades the dialog's words at once, without waiting for DialogueUI",
+    DUI:IsShown() and Skin.closing ~= nil and words.alpha < 1, true)
+Skin:CloseStep(0.1)
+Expect("...holding a moment, faded, for a page coming back", tostring(DUI:IsShown()) .. " " .. words.alpha, "true 0")
+Skin:CloseStep(0.1)
+Expect("...then closing it", tostring(DUI:IsShown()) .. " " .. words.alpha, "false 1")
+Skin.dialogWatch.scripts.OnHide(Skin.dialogWatch)
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
