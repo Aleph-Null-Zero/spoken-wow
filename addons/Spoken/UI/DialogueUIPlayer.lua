@@ -31,11 +31,11 @@ local BASE_SCALE = 0.65
 -- of the way to one side (down, so it stays on the screen), then landing: giving SETTLE_GIVE
 -- under it and back, over LAND_TIME.
 local EDGE = 16
-local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .08, .36, .32
+local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .06, .28, .26
 local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 4
 -- The dialog's words fading on DialogueUI's window before it closes (Skin:FadeDialogOut), and this
 -- window's fading in once it has landed (Skin:LandStep): the flight is of the paper alone.
-local CONTENT_OUT, CONTENT_IN = .14, .2
+local CONTENT_OUT, CONTENT_IN = .1, .16
 -- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
 -- the same event, in either order.
@@ -43,7 +43,7 @@ local JUST_BEFORE = 0.5
 -- The tuck, in seconds: the page lifted, flying over, sliding behind; this window giving under it
 -- by TUCK_GIVE and back, and its count rippling over TUCK_RIPPLE. The page lands at TUCK_SIZE of
 -- the window, TUCK_LOW of its height under its middle, its foot showing under it.
-local TUCK_LIFT, TUCK_FLY, TUCK_SLIDE, TUCK_NUDGE, TUCK_RIPPLE = .16, .62, .24, .5, .45
+local TUCK_LIFT, TUCK_FLY, TUCK_SLIDE, TUCK_NUDGE, TUCK_RIPPLE = .1, .42, .18, .4, .35
 local TUCK_GIVE, TUCK_SIZE, TUCK_LOW = 7, .9, .3
 -- The art a line is drawn in (Skin:Look), as DialogueUI draws it: its quest window's parchment
 -- for quests, gossip and places; its book view's paper for books and letters, and its stone for
@@ -1416,18 +1416,20 @@ end
 ---------------------------------------------------------------- the dialog's words fading first
 -- DialogueUI's dialog and this window lay out the same line differently (title, paragraphs,
 -- buttons, pages), so this window taking the dialog's place showed all of that change at once.
--- Instead, as the dialog closes on its own line (this window then settles out of it), its words,
--- buttons and header fade on DialogueUI's own window first, over CONTENT_OUT, leaving its bare
--- paper; then it closes, and this window, its paper alone (the same art), takes its place and
--- flies; its own words fade in once it lands (Skin:LandStep). Every other close is at once.
+-- Instead, as the dialog closes on its own line (this window then settles out of it) or on a line
+-- it queued (its page then goes behind this window), its words, buttons and header fade on
+-- DialogueUI's own window first, over CONTENT_OUT, leaving its bare paper; then it closes, and
+-- paper alone flies: this window's (its own words fading in once it lands, Skin:LandStep), or the
+-- page's. A close with nothing to hand on is at once.
 -- The dialog's frames that are its paper, not its words: the quest window's background, the book
 -- view's footer (its torn foot; its divider line fades with the words).
 local PAPER_FRAMES = { "BackgroundFrame", "Footer" }
 
---- Whether `dialog` closing now hands its line on to this window (Skin:Settle would settle).
+--- Whether `dialog` closing now hands a line on: its own, which this window settles out of, or one
+--- it queued, whose page goes behind this window (Skin:Settle).
 function Skin:FadesOnClose(dialog)
     return self:IsEnabled() and self.frame ~= nil and self.frame:GetParent() == UIParent
-        and PlayerFrame:Current() ~= nil and self:Owns(dialog)
+        and PlayerFrame:Current() ~= nil and (self:Owns(dialog) or self:QueuedBy(dialog) ~= nil)
 end
 
 --- DialogueUI hiding `dialog`: its words fade first, then `hide` (its own Hide) closes it.
@@ -1483,7 +1485,8 @@ end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
 -- A dialog closing while another line plays (a gravestone read during a quest's line): its page
--- does not take this window's place, as its own line's would (Skin:Settle). The page is lifted off
+-- does not take this window's place, as its own line's would (Skin:Settle). Its words having faded
+-- on DialogueUI's window (Skin:FadeDialogOut), its bare page is lifted off
 -- where the dialog was, flies over to this window, bending a little as it goes, comes down low on
 -- it with its foot showing under it, and slides up behind it: the line waits behind the one
 -- playing. This window gives as it goes under, and its count ripples. The page is a frame of its
@@ -1536,9 +1539,6 @@ function Skin:TuckFrames()
     card.shadow = card:CreateTexture(nil, "BACKGROUND", nil, -8)
     card.strips = {}
     for index = 1, 3 do card.strips[index] = card:CreateTexture(nil, "BACKGROUND", nil, -1) end
-    card.divider = card:CreateTexture(nil, "ARTWORK")
-    card.title = card:CreateFontString(nil, "ARTWORK")
-    card.body = card:CreateFontString(nil, "ARTWORK")
     card:SetScript("OnUpdate", function(_, elapsed) self:TuckStep(elapsed) end)
     self.card = card
     -- Its count rippling out from where it is.
@@ -1552,11 +1552,9 @@ function Skin:TuckFrames()
     return card
 end
 
---- The page as the dialog showed it: its art, title and words, `width` by `height` in UIParent's
---- units, at `q` of DialogueUI's (its fonts' sizes are in its units). Placed as DialogueUI placed
---- them where it still says (its title and text keep their anchors when it hides), else as near.
-function Skin:DressCard(card, dialog, look, clip, width, height, q)
-    local present = clip.present or {}
+--- The page as the dialog showed it, its words faded from it (Skin:FadeDialogOut): its paper alone,
+--- `width` wide in UIParent's units, at `q` of DialogueUI's.
+function Skin:DressCard(card, look, width, q)
     local file = look.file or Theme:TexturePath() .. "Parchment.png"
     local capWidth, capHeight
     if look.book then
@@ -1580,78 +1578,6 @@ function Skin:DressCard(card, dialog, look, clip, width, height, q)
     strips[2]:SetPoint("TOPLEFT", strips[1], "BOTTOMLEFT", 0, 0)
     strips[2]:SetPoint("BOTTOMRIGHT", strips[3], "TOPRIGHT", 0, -capHeight * look.under / 256)
     card.shadow:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
-
-    local fonts, colors = Theme:Fonts(look.book), Theme:Colors(look.palette)
-    local shadow = look.shadow and 1 or 0
-    local function Paint(text, face, size, color)
-        text:SetFont(face, math.max(6, Round(size)), "")
-        text:SetShadowColor(0, 0, 0, shadow)
-        text:SetShadowOffset(1, -1)
-        text:SetTextColor(color[1], color[2], color[3])
-    end
-    local titleSize = fonts.titleSize * q
-    Paint(card.title, fonts.title, titleSize, colors.title)
-    Paint(card.body, fonts.paragraph, fonts.paragraphSize * q, colors.paragraph)
-    card.title:SetText(Label(clip))
-    -- Its words: the line's own, which the dialog showed.
-    card.body:SetText(present.transcript or clip.text or "")
-    card.body:SetJustifyH("LEFT")
-    card.body:SetJustifyV("TOP")
-    card.body:SetSpacing(Round(0.35 * fonts.paragraphSize * q))
-
-    -- Where DialogueUI had them, from its title's and text's anchors, else near enough.
-    local function Offset(region)
-        if type(region) ~= "table" or not region.GetPoint then return nil end
-        local _, _, _, x, y = region:GetPoint(1)
-        if type(y) == "number" then return (x or 0) * q, -y * q end
-        return nil
-    end
-    local header = dialog.Header or (type(dialog.FrontFrame) == "table" and dialog.FrontFrame.Header)
-    local headerShown = type(header) == "table" and header.IsShown and header:IsShown()
-    local _, titleTop = Offset(look.book and type(header) == "table" and header.Title)
-    titleTop = titleTop or math.max(96, (look.book and 90 * width / 768 or 0.07 * height))
-    local column = width * 0.8
-    card.title:ClearAllPoints()
-    card.body:ClearAllPoints()
-    card.divider:ClearAllPoints()
-    card.divider:SetTexture(file)
-    local bodyTop
-    if look.book then
-        card.title:SetPoint("TOP", card, "TOP", 0, -titleTop)
-        card.title:SetWidth(column)
-        card.title:SetJustifyH("CENTER")
-        local lineWidth = width * 0.92
-        card.divider:SetTexCoord(BOOK_DIVIDER[1], BOOK_DIVIDER[2], BOOK_DIVIDER[3], BOOK_DIVIDER[4])
-        card.divider:SetSize(lineWidth, lineWidth * 32 / 768)
-        card.divider:SetPoint("CENTER", card, "TOP", 0, -(titleTop + titleSize * 1.6))
-        card.divider:Show()
-        card.title:Show()
-        bodyTop = titleTop + titleSize * 2.6
-    else
-        -- The quest window: its header strip's line and the title on it, on a quest page; a
-        -- gossip page has neither.
-        local headerWidth = headerShown and tonumber(header:GetWidth()) or 0
-        local stripWidth = headerWidth > 0 and headerWidth * q or width * 358 / 624
-        local stripHeight = stripWidth * 51 / 358
-        local _, stripTop = Offset(headerShown and header)
-        stripTop = stripTop or titleTop - stripHeight * 0.3
-        local socketU = HEADER_DIVIDER[1] + (HEADER_DIVIDER[2] - HEADER_DIVIDER[1]) * SOCKET_WIDTH / HEADER_DIVIDER[5]
-        local socket = stripWidth * SOCKET_WIDTH / 358
-        card.divider:SetTexCoord(socketU, HEADER_DIVIDER[2], HEADER_DIVIDER[3], HEADER_DIVIDER[4])
-        card.divider:SetSize(stripWidth - socket, stripHeight)
-        card.divider:SetPoint("TOPLEFT", card, "TOP", -stripWidth / 2 + socket, -stripTop)
-        card.title:SetPoint("LEFT", card, "TOP", -stripWidth / 2 + stripWidth * 53 / 358, -(stripTop + stripHeight / 2 - 2 * q))
-        card.title:SetWidth(stripWidth * (358 - 61) / 358)
-        card.title:SetJustifyH("LEFT")
-        card.divider:SetShown(headerShown and true or false)
-        card.title:SetShown(headerShown and true or false)
-        local _, scrollTop = Offset(dialog.ScrollFrame)
-        bodyTop = scrollTop or (headerShown and stripTop + stripHeight * 1.4 or 0.1 * height)
-        column = width - 2 * 26 * stripWidth / 358
-    end
-    card.body:SetWidth(column)
-    card.body:SetHeight(math.max(1, height - bodyTop - capHeight * 0.45))
-    card.body:SetPoint("TOP", card, "TOP", 0, -bodyTop)
 end
 
 --- What `dialog` queued goes behind this window: `clip`'s page lifted off where the dialog was.
@@ -1665,7 +1591,7 @@ function Skin:StartTuck(dialog, clip)
     local left, topPx = self:Home()
     local card = self:TuckFrames()
     local look = LookOf(clip)
-    self:DressCard(card, dialog, look, clip, width, height, q)
+    self:DressCard(card, look, width, q)
     self.tuck = { time = 0, width = width, height = height,
         from = { x = x, y = top - height / 2 },
         to = { x = left / ui + toWidth / 2, y = topPx / ui - toHeight / 2, width = toWidth, height = toHeight } }
@@ -1721,11 +1647,6 @@ function Skin:DrawTuck(tuck)
     card:ClearAllPoints()
     card:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x / scale, y / scale)
 
-    -- Its words go first, then its title: a page in the queue, not one to read.
-    card.body:SetAlpha(1 - Smooth(Clamp((t - 0.08) / 0.3, 0, 1)))
-    local heading = 1 - Smooth(Clamp((t - 0.22) / 0.36, 0, 1))
-    card.title:SetAlpha(heading)
-    card.divider:SetAlpha(heading)
     card:SetAlpha(1 - Smooth(Clamp((t - landed - TUCK_SLIDE * 0.3) / (TUCK_SLIDE * 0.7), 0, 1)))
 
     -- Its shadow: thrown as it is lifted, drawn back in as it comes down.
