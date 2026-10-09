@@ -753,15 +753,15 @@ Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
 Expect("...on a curve, not straight at the corner", (function()
     local s = Skin.settling
-    local u = (s.time - 0.08) / 0.36
+    local u = (s.time - 0.06) / 0.28
     local straightX = s.left + (s.toLeft - s.left) * (u < 0.5 and 4 * u * u * u or 1 - (2 - 2 * u) ^ 3 / 2)
     return math.abs(Skin.frame.anchor.x * Skin.frame.scale - straightX) > 1
 end)(), true)
 Expect("...its paper alone as it flies, and never one image while it does", Skin.content.alpha .. " " .. tostring(Skin.buffered), "0 nil")
-Skin:Tick(0.15)
-Expect("...still on its way at 0.39 seconds", Skin.settling ~= nil, true)
+Skin:Tick(0.05)
+Expect("...still on its way at 0.29 seconds", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
-Expect("...and settled at the top left by 0.44, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Expect("...and settled at the top left by 0.34, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 Skin:Tick(0.05)
 Expect("...landing: giving under it as it touches down, its words fading in on its paper",
@@ -858,6 +858,8 @@ bookWatch.scripts.OnShow(bookWatch)
 books:Enqueue(Page("Stone"))
 Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
 BookView:Hide()
+Expect("a stone closed while a quest's line plays, its line queued, fades its words on the stone first",
+    tostring(BookView:IsShown()) .. " " .. tostring(Skin.closing ~= nil), "true true")
 Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
 local ui = UIParent:GetEffectiveScale()
@@ -870,12 +872,10 @@ Expect("...and the stone's page is lifted off where the stone was, as large, in 
     and Near(card.anchor.x * card.scale, (200 + 409.6 / 2) * 0.8 / ui)
     and Near(card.anchor.y * card.scale, (100 + 477.87 / 2) * 0.8 / ui)
     and Near(card:GetWidth() * card.scale, 409.6 * 0.8 / ui), true)
-Expect("...its title and its words on it", card.title.text .. " / " .. card.body.text,
-    "Page 1 of 4 / Only a few months after Nethergarde's completion.")
+Expect("...its paper alone, no words drawn on it", card.title == nil and card.body == nil, true)
 Skin:TuckStep(0.5)
-Expect("...flying over, smaller, its words gone first", card.scale < 1 and card.body.alpha < 0.05
-    and card.title.alpha > 0, true)
-Skin:TuckStep(0.4)
+Expect("...flying over, smaller", card.scale < 1, true)
+Skin:TuckStep(0.15)
 Expect("...this window giving as the page goes under it", Skin.tuck ~= nil and Skin.tuck.rest ~= nil, true)
 Skin:TuckStep(1)
 Expect("...then gone behind it, the window where it rests",
