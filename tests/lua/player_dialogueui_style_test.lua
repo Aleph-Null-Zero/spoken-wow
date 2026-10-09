@@ -727,8 +727,31 @@ local frameLeft, frameTop = Skin.frame.GetLeft, Skin.frame.GetTop
 Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
 local dialogLeft = 960 + DUI.frameOffsetX * 0.8 - DUI.frameWidth * 0.8 / 2
 local dialogTop = 540 + DUI.frameHeight * 0.8 / 2
+-- Its title, and its objectives, which this window does not have, as DialogueUI draws them.
+local function Inked(text, left, bottom)
+    local inked = stub.Widget("FontString")
+    inked:SetText(text)
+    inked:Show()
+    inked.GetRect = function() return left, bottom, 300, 24 end
+    inked.GetDrawLayer = function() return "ARTWORK", 0 end
+    inked.GetFont = function() return "Fonts\\FRIZQT__.TTF", 18, "" end
+    inked.GetTextColor = function() return 0.2, 0.1, 0, 1 end
+    inked.GetShadowColor = function() return 0, 0, 0, 0 end
+    inked.GetShadowOffset = function() return 0, 0 end
+    inked.GetJustifyH = function() return "LEFT" end
+    inked.GetJustifyV = function() return "MIDDLE" end
+    return inked
+end
+local questTitle, objectives = Inked("The Hunt Begins", 400, 800), Inked("Objectives", 400, 300)
+DUI.GetRegions = function() return questTitle, objectives end
+DUI.GetRect = function() return 300, 200, 624, 734 end
 OpenDialog()
 CloseDialog()
+local ghost = Skin.ghost
+Expect("the dialog closing is drawn again whole first, this window's own words and title under it",
+    ghost ~= nil and ghost:IsShown() and ghost.groups.title ~= nil and ghost.only.alpha == 1
+    and Skin.content.alpha == 0, true)
+DUI.GetRegions, DUI.GetRect = nil, nil
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
@@ -737,6 +760,8 @@ Expect("...in full at once, not fading in", Skin.frame:GetAlpha() .. " " .. tost
 Skin:Tick(0.1)
 Expect("...lifted off it first, a touch larger, its shadow thrown",
     Skin.frame.scale > 0.8 and Skin.shadow:IsShown(), true)
+Expect("...what only the dialog had sinking away first, its title still there to travel",
+    ghost.only.alpha < 0.5 and ghost.groups.title.alpha == 1, true)
 Skin:Tick(0.32)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
@@ -749,9 +774,12 @@ Expect("...on a curve, not straight at the corner", (function()
 end)(), true)
 Skin:Tick(0.15)
 Expect("...still on its way at 0.57 seconds", Skin.settling ~= nil, true)
+Expect("...its title handing over to this window's own", ghost.groups.title.alpha < 0.5 and Skin.content.alpha > 0.5, true)
 Skin:Tick(0.1)
 Expect("...and settled at the top left by 0.62, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
+Expect("...the dialog drawn again gone, this window's own things all seen", tostring(ghost:IsShown()) .. " "
+    .. Skin.content.alpha, "false 1")
 Skin:Tick(0.05)
 Expect("...landing: giving under it as it touches down", Skin.landing ~= nil and not AtTopLeft(), true)
 Skin:Tick(1)
@@ -880,11 +908,11 @@ Expect("...its title and its words on it", card.title.text .. " / " .. card.body
 UIParent:Hide()
 Skin:TuckStep(0.15)
 Expect("...waiting, whole, while the interface is still hidden, so the world never shows through",
-    ghost.alpha .. " " .. card.alpha, "1 0")
+    ghost.paper.alpha .. " " .. card.alpha, "1 0")
 UIParent:Show()
 Skin:TuckStep(0.15)
-Expect("...then, the interface back, dissolving into the page as it is lifted", ghost.alpha > 0 and ghost.alpha < 1
-    and card.alpha > 0, true)
+Expect("...then, the interface back, dissolving into the page as it is lifted", ghost.paper.alpha > 0
+    and ghost.paper.alpha < 1 and card.alpha > 0, true)
 Skin:TuckStep(0.2)
 Expect("...flying over, smaller, its words gone first, the stone drawn again gone", card.scale < 1
     and card.body.alpha < 0.05 and card.title.alpha > 0 and not ghost:IsShown(), true)
