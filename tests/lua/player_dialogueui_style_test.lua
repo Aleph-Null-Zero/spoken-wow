@@ -737,6 +737,8 @@ end
 local questTitle, objectives = Inked("The Hunt Begins", 400, 800), Inked("Objectives", 400, 300)
 DUI.GetRegions = function() return questTitle, objectives end
 DUI.GetRect = function() return 300, 200, 624, 734 end
+-- DialogueUI's interface back as the dialog closes.
+UIParent:Show()
 OpenDialog()
 CloseDialog()
 local ghost = Skin.ghost
@@ -749,12 +751,16 @@ Expect("the dialog closing on a line starts the window where the dialog was, as 
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
 Expect("...as tall as the dialog", Near(Skin.frame:GetHeight() * Skin.frame.scale, DUI.frameHeight * 0.8), true)
 Expect("...in full at once, not fading in", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime), "1 nil")
-Skin:Tick(0.1)
-Expect("...lifted off it first, a touch larger, its shadow thrown",
+Skin:Tick(0.15)
+Expect("...held where the dialog was while the dialog, whole, turns into this window, whole",
+    Near(Skin.frame.scale, 0.8) and Skin.settling.holding == true and ghost.only.alpha > 0 and ghost.only.alpha < 1
+    and ghost.paper.alpha == ghost.only.alpha and Skin.content.alpha > 0, true)
+Skin:Tick(0.18)
+Expect("...handed over: the dialog drawn again gone, this window's own things all seen",
+    tostring(ghost:IsShown()) .. " " .. Skin.content.alpha, "false 1")
+Expect("...then lifted off, a touch larger, its shadow thrown",
     Skin.frame.scale > 0.8 and Skin.shadow:IsShown(), true)
-Expect("...what only the dialog had sinking away first, its title still there to travel",
-    ghost.only.alpha < 0.5 and ghost.groups.title.alpha == 1, true)
-Skin:Tick(0.32)
+Skin:Tick(0.24)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
@@ -765,13 +771,10 @@ Expect("...on a curve, not straight at the corner", (function()
     return math.abs(Skin.frame.anchor.x * Skin.frame.scale - straightX) > 1
 end)(), true)
 Skin:Tick(0.15)
-Expect("...still on its way at 0.57 seconds", Skin.settling ~= nil, true)
-Expect("...its title handing over to this window's own", ghost.groups.title.alpha < 0.5 and Skin.content.alpha > 0.5, true)
+Expect("...still on its way 0.57 seconds after it lifted", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
 Expect("...and settled at the top left by 0.62, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
-Expect("...the dialog drawn again gone, this window's own things all seen", tostring(ghost:IsShown()) .. " "
-    .. Skin.content.alpha, "false 1")
 Skin:Tick(0.05)
 Expect("...landing: giving under it as it touches down", Skin.landing ~= nil and not AtTopLeft(), true)
 Skin:Tick(1)
@@ -882,9 +885,9 @@ bookWatch.scripts.OnHide(bookWatch)
 local ui = UIParent:GetEffectiveScale()
 local card = Skin.card
 local ghost = Skin.ghost
-Expect("closing, the stone is drawn again where it was, its title in its own font and place",
+Expect("closing, the stone is drawn again where it was, its title in its own font, its top left where it was",
     ghost ~= nil and ghost:IsShown() and ghost.texts[1].text == "Here Lies King Terenas Menethil II"
-    and ghost.texts[1].anchor.x .. " " .. ghost.texts[1].anchor.y .. " " .. ghost.texts[1]:GetWidth(), "250 500 300")
+    and ghost.texts[1].anchor.point .. " " .. ghost.texts[1].anchor.x .. " " .. ghost.texts[1].anchor.y .. " " .. ghost.texts[1]:GetWidth(), "TOPLEFT 250 530 300")
 Expect("...the page under it not yet seen", card.alpha, 0)
 Expect("a stone closed while a quest's line plays does not take this window's place", Skin.settling, nil)
 Expect("...this window comes back as it was, in the quest's parchment", tostring(Skin.wanted) .. " "
@@ -906,8 +909,9 @@ Skin:TuckStep(0.15)
 Expect("...then, the interface back, dissolving into the page as it is lifted", ghost.paper.alpha > 0
     and ghost.paper.alpha < 1 and card.alpha > 0, true)
 Skin:TuckStep(0.2)
-Expect("...flying over, smaller, its words gone first, the stone drawn again gone", card.scale < 1
-    and card.body.alpha < 0.05 and card.title.alpha > 0 and not ghost:IsShown(), true)
+Expect("...flying over, smaller, its words and title gone, the stone drawn again gone", card.scale < 1
+    and card.body.alpha < 0.05 and card.title.alpha < 0.05 and not ghost:IsShown(), true)
+Expect("...its words never shrinking with it, but kept at their own size", math.abs(card.ink.scale * card.scale - 1) < 1e-9, true)
 BookView.GetRegions = nil
 Skin:TuckStep(0.4)
 Expect("...this window giving as the page goes under it", Skin.tuck ~= nil and Skin.tuck.rest ~= nil, true)
