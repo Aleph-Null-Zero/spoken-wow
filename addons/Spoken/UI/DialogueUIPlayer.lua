@@ -29,6 +29,15 @@ local BASE_SCALE = 0.65
 -- edge rather than the frame's. And how long it takes to get there from the dialog.
 local EDGE = 16
 local SETTLE_TIME = 0.4
+-- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
+-- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
+-- the same event, in either order.
+local JUST_BEFORE = 0.5
+-- The tuck, in seconds: the page lifted, flying over, sliding behind; this window giving under it
+-- by TUCK_GIVE and back, and the light running across it. The page lands at TUCK_SIZE of the
+-- window, TUCK_LOW of its height under its middle, its foot showing under it.
+local TUCK_LIFT, TUCK_FLY, TUCK_SLIDE, TUCK_NUDGE, TUCK_GLINT = .16, .62, .24, .5, .55
+local TUCK_GIVE, TUCK_SIZE, TUCK_LOW = 7, .9, .3
 -- The art a line is drawn in (Skin:Look), as DialogueUI draws it: its quest window's parchment
 -- for quests, gossip and places; its book view's paper for books and letters, and its stone for
 -- plaques and tombstones, picked as DialogueUI picks them from the item's material. Each is a
@@ -117,14 +126,18 @@ function Skin:IsEnabled()
     return Addon.db and Addon:DisplayStyle() == "dialogueui"
 end
 
---- The art the line is drawn in (LOOKS): Spoken Books' pages in the book view's paper, or its
+--- The art a line is drawn in (LOOKS): Spoken Books' pages in the book view's paper, or its
 --- stone for the materials DialogueUI draws in stone; every other line in the quest parchment.
-function Skin:Look()
-    local present = self.clip and self.clip.present
+local function LookOf(clip)
+    local present = clip and clip.present
     if present and (present.material or present.bullet == "book") then
         return STONE[present.material or ""] and LOOKS.stone or LOOKS.paper
     end
     return LOOKS.quest
+end
+
+function Skin:Look()
+    return LookOf(self.clip)
 end
 
 function Skin:HideTooltip()
@@ -174,17 +187,24 @@ function Skin:Initialize()
     -- over from it. Told by a child of each, as DialogueUIBridge's driver is: DialogueUI sets the
     -- quest window's own OnHide with SetScript, which drops a hook.
     self.dialogs, self.dialogWatches = {}, {}
+    -- Which lines each dialog queued (Skin:StartSession), so the one closing knows its own.
+    self.queuedAt, self.sessions = setmetatable({}, { __mode = "k" }), {}
     for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
         local dialog = _G[name]
         if type(dialog) == "table" and dialog.GetEffectiveScale then
             local watch = CreateFrame("Frame", nil, dialog)
             watch:SetScript("OnHide", function() self:Settle(dialog) end)
             -- Opening, it shows the line itself: this one steps aside at once (Skin:Covered).
-            watch:SetScript("OnShow", function() self:Update() end)
+            watch:SetScript("OnShow", function()
+                self:StartSession(dialog)
+                self:Update()
+            end)
             table.insert(self.dialogs, dialog)
             self.dialogWatches[dialog] = watch
+            self.sessions[dialog] = setmetatable({}, { __mode = "k" })
         end
     end
+    Callbacks:Register("CLIP_QUEUED", function(clip) self:Queued(clip) end)
     self.dialog = _G.DUIQuestFrame
     self.dialogWatch = self.dialog and self.dialogWatches[self.dialog]
 
@@ -933,6 +953,7 @@ function Skin:SetVisible(visible, immediate)
     if not self.frame then return end
     if not visible then self:HideTooltip() end
     if immediate then
+        self:StopTuck()
         self.wanted, self.preparing, self.arming, self.fadeTime, self.pending = false, nil, nil, nil, nil
         self.frame:Hide()
         self:Unbuffer()
@@ -1128,15 +1149,30 @@ end
 
 --- DialogueUI's quest window or book view closed while its line plays on: this window takes the
 --- dialog's place, size and height, then shrinks to its own size and height as it moves to where
---- it rests, DialogueUI's opening in reverse. Not while it sits on the dialog (Show Spoken Over DialogueUI): it is in
---- place already. Should anything fail, it is simply put where it rests.
+--- it rests, DialogueUI's opening in reverse. Closed while another line plays, this window comes
+--- back as it is, and a line the dialog queued goes behind it (Skin:StartTuck). Not while it sits
+--- on the dialog (Show Spoken Over DialogueUI): it is in place already. Should anything fail, it
+--- is simply put where it rests.
 function Skin:Settle(dialog)
     local frame = self.frame
     if not (self:IsEnabled() and PlayerFrame:Current()) or frame:GetParent() ~= UIParent then return end
     -- Fading as one image: it finishes, then shows the line as it does any (Skin:Unbuffer).
     if self.buffered then self.pending = self.pending or "update"; return end
+    self:StopTuck()
     self.arming, self.preparing = nil, nil
     self:Undeafen()
+    if not self:Owns(dialog) then
+        local queued = self:QueuedBy(dialog)
+        self:Update()
+        if queued then
+            local ok, err = pcall(self.StartTuck, self, dialog, queued)
+            if not ok then
+                self:StopTuck()
+                if geterrorhandler then geterrorhandler()(err) end
+            end
+        end
+        return
+    end
     local ok, err = pcall(self.StartSettle, self, dialog)
     if not ok then
         self.settling = nil
@@ -1147,31 +1183,38 @@ function Skin:Settle(dialog)
     end
 end
 
+--- The dialog's middle and top, width and height in UIParent's units, and how large DialogueUI's
+--- units are in them. The quest window's from where DialogueUI puts it: it has no place on screen
+--- to read while it hides the interface. The book view's from its frame, which keeps its place as
+--- it hides: its paper is the frame.
+function Skin:DialogPlace(dialog)
+    local ui = UIParent:GetEffectiveScale()
+    local q = dialog:GetEffectiveScale() / ui
+    if dialog == _G.DUIQuestFrame then
+        local x, top = Theme:WindowPlace()
+        local width, height = Theme:FrameSize()
+        if x and top and width and height then return x, top, width * q, height * q, q end
+        return nil
+    end
+    local left, bottom, w, h = dialog:GetRect()
+    if left and bottom and w and h then
+        return (left + w / 2) * q, (bottom + h) * q, w * q, h * q, q
+    end
+    return nil
+end
+
 function Skin:StartSettle(dialog)
     local frame = self.frame
     self:Update()
     local ui = UIParent:GetEffectiveScale()
-    -- The dialog's top left, width and height in the screen's pixels. The quest window's from
-    -- where DialogueUI puts it: it has no place on screen to read while it hides the interface.
-    -- The book view's from its frame, which keeps its place as it hides: its paper is the frame.
-    local x, top, width, height
-    local k = dialog:GetEffectiveScale()
-    if dialog == _G.DUIQuestFrame then
-        x, top = Theme:WindowPlace()
-        width, height = Theme:FrameSize()
-    else
-        local left, bottom, w, h = dialog:GetRect()
-        if left and bottom and w and h then
-            x, top, width, height = (left + w / 2) * k / ui, (bottom + h) * k / ui, w, h
-        end
-    end
+    local x, top, width, height = self:DialogPlace(dialog)
     if not (x and top and width and frame:GetWidth() > 0) then error("DialogueUI's window has no place") end
     -- Its own scale, and the one at which it is drawn as wide as the dialog.
     local to = frame.spokenBaseScale or 1
-    local from = width * k / (frame:GetWidth() * ui)
+    local from = width / frame:GetWidth()
     local toLeft, toTop = self:Home()
     self.settling = { time = 0, from = from, to = to,
-        left = x * ui - width * k / 2, top = top * ui, height = height * k, toLeft = toLeft, toTop = toTop }
+        left = (x - width / 2) * ui, top = top * ui, height = height * ui, toLeft = toLeft, toTop = toTop }
     -- In full at once, where the dialog was: no fade.
     self.wanted, self.fadeTime = true, nil
     self:SetLevel(1)
@@ -1219,6 +1262,385 @@ function Skin:SettleStep(elapsed)
         frame:SetScale(settling.to)
         if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
         self:Layout()
+    end
+end
+
+---------------------------------------------------------------- a dialog's line joining the queue
+-- A dialog closing while another line plays (a gravestone read during a quest's line): its page
+-- does not take this window's place, as its own line's would (Skin:Settle). The page is lifted off
+-- where the dialog was, flies over to this window, bending a little as it goes, comes down low on
+-- it with its foot showing under it, and slides up behind it: the line waits behind the one
+-- playing. This window gives as it goes under, and light runs across it as its count ripples.
+-- The page and the light are frames of their own, never parts of this window, which may be one
+-- image while it fades in (Skin:Buffer).
+
+--- A line joining the queue: when, and with which open dialog.
+function Skin:Queued(clip)
+    if type(clip) ~= "table" or not self.queuedAt then return end
+    self.queuedAt[clip] = GetTime()
+    for _, dialog in ipairs(self.dialogs) do
+        if dialog:IsShown() then self.sessions[dialog][clip] = true end
+    end
+end
+
+--- A dialog opening: its lines are the ones queued while it is open, and those queued just before
+--- it showed (JUST_BEFORE).
+function Skin:StartSession(dialog)
+    local lines = setmetatable({}, { __mode = "k" })
+    local now = GetTime()
+    for _, clip in ipairs(SoundQueue.sounds) do
+        local at = self.queuedAt[clip]
+        if at and now - at <= JUST_BEFORE then lines[clip] = true end
+    end
+    self.sessions[dialog] = lines
+end
+
+--- Whether `dialog` queued the line playing: closing on it, this window takes the dialog's place.
+function Skin:Owns(dialog)
+    local lines = self.sessions and self.sessions[dialog]
+    local clip = PlayerFrame:Current()
+    return lines ~= nil and clip ~= nil and lines[clip] == true
+end
+
+--- The first line waiting behind the one playing that `dialog` queued.
+function Skin:QueuedBy(dialog)
+    local lines = self.sessions and self.sessions[dialog]
+    if not lines then return nil end
+    for index, clip in ipairs(SoundQueue.sounds) do
+        if index > 1 and lines[clip] then return clip end
+    end
+    return nil
+end
+
+local function Smooth(t) return t * t * (3 - 2 * t) end
+local function EaseInOut(t)
+    if t < 0.5 then return 4 * t * t * t end
+    local f = 2 - 2 * t
+    return 1 - f * f * f / 2
+end
+local function EaseOutCubic(t)
+    local f = 1 - t
+    return 1 - f * f * f
+end
+-- Of a quadratic curve from a to c bent toward b.
+local function Bend(a, b, c, u) return (1 - u) * (1 - u) * a + 2 * (1 - u) * u * b + u * u * c end
+
+--- The page and the light: built once, out of this window.
+function Skin:TuckFrames()
+    if self.card then return self.card end
+    local card = CreateFrame("Frame", nil, UIParent)
+    card:Hide()
+    card:EnableMouse(false)
+    card.shadow = card:CreateTexture(nil, "BACKGROUND", nil, -8)
+    card.strips = {}
+    for index = 1, 3 do card.strips[index] = card:CreateTexture(nil, "BACKGROUND", nil, -1) end
+    card.divider = card:CreateTexture(nil, "ARTWORK")
+    card.title = card:CreateFontString(nil, "ARTWORK")
+    card.body = card:CreateFontString(nil, "ARTWORK")
+    -- The light across the page as it is lifted, kept on the page.
+    card.lightClip = CreateFrame("Frame", nil, card)
+    card.lightClip:SetAllPoints()
+    card.lightClip:SetClipsChildren(true)
+    local holder = CreateFrame("Frame", nil, card.lightClip)
+    holder:SetAllPoints()
+    card.light = holder:CreateTexture(nil, "OVERLAY")
+    card.light:SetBlendMode("ADD")
+    card:SetScript("OnUpdate", function(_, elapsed) self:TuckStep(elapsed) end)
+    self.card = card
+    -- Over this window as the page goes behind it: light across its paper, kept on it.
+    local glint = CreateFrame("Frame", nil, UIParent)
+    glint:Hide()
+    glint:EnableMouse(false)
+    glint:SetClipsChildren(true)
+    local glintHolder = CreateFrame("Frame", nil, glint)
+    glintHolder:SetAllPoints()
+    glint.light = glintHolder:CreateTexture(nil, "OVERLAY")
+    glint.light:SetBlendMode("ADD")
+    self.glint = glint
+    -- Its count rippling out from where it is.
+    local ripple = CreateFrame("Frame", nil, UIParent)
+    ripple:Hide()
+    ripple:EnableMouse(false)
+    ripple:SetSize(1, 1)
+    ripple.text = ripple:CreateFontString(nil, "OVERLAY")
+    ripple.text:SetPoint("CENTER")
+    self.ripple = ripple
+    return card
+end
+
+--- The page as the dialog showed it: its art, title and words, `width` by `height` in UIParent's
+--- units, at `q` of DialogueUI's (its fonts' sizes are in its units). Placed as DialogueUI placed
+--- them where it still says (its title and text keep their anchors when it hides), else as near.
+function Skin:DressCard(card, dialog, look, clip, width, height, q)
+    local present = clip.present or {}
+    local file = look.file or Theme:TexturePath() .. "Parchment.png"
+    local capWidth, capHeight
+    if look.book then
+        capWidth = width / BOOK_PAPER
+        capHeight = capWidth * (look.top[2] - look.top[1]) / 1024
+    else
+        local paperWidth, paperHeight = Theme:ParchmentSize()
+        capWidth, capHeight = paperWidth * q, paperHeight * q
+    end
+    card.capWidth, card.capHeight, card.look = capWidth, capHeight, look
+    local strips = card.strips
+    for index = 1, 3 do strips[index]:SetTexture(file) end
+    strips[1]:SetTexCoord(0, 1, look.top[1] / 2048, look.top[2] / 2048)
+    strips[2]:SetTexCoord(0, 1, look.middle[1] / 2048, look.middle[2] / 2048)
+    strips[3]:SetTexCoord(0, 1, look.bottom[1] / 2048, look.bottom[2] / 2048)
+    strips[1]:ClearAllPoints()
+    strips[1]:SetPoint("CENTER", card, "TOP", 0, 0)
+    strips[3]:ClearAllPoints()
+    strips[3]:SetPoint("CENTER", card, "BOTTOM", 0, 0)
+    strips[2]:ClearAllPoints()
+    strips[2]:SetPoint("TOPLEFT", strips[1], "BOTTOMLEFT", 0, 0)
+    strips[2]:SetPoint("BOTTOMRIGHT", strips[3], "TOPRIGHT", 0, -capHeight * look.under / 256)
+    card.shadow:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
+    card.light:SetTexture(Theme:TexturePath() .. "RewardChoice-Sheen.png")
+
+    local fonts, colors = Theme:Fonts(look.book), Theme:Colors(look.palette)
+    local shadow = look.shadow and 1 or 0
+    local function Paint(text, face, size, color)
+        text:SetFont(face, math.max(6, Round(size)), "")
+        text:SetShadowColor(0, 0, 0, shadow)
+        text:SetShadowOffset(1, -1)
+        text:SetTextColor(color[1], color[2], color[3])
+    end
+    local titleSize = fonts.titleSize * q
+    Paint(card.title, fonts.title, titleSize, colors.title)
+    Paint(card.body, fonts.paragraph, fonts.paragraphSize * q, colors.paragraph)
+    card.title:SetText(Label(clip))
+    -- Its words: the line's own, which the dialog showed.
+    card.body:SetText(present.transcript or clip.text or "")
+    card.body:SetJustifyH("LEFT")
+    card.body:SetJustifyV("TOP")
+    card.body:SetSpacing(Round(0.35 * fonts.paragraphSize * q))
+
+    -- Where DialogueUI had them, from its title's and text's anchors, else near enough.
+    local function Offset(region)
+        if type(region) ~= "table" or not region.GetPoint then return nil end
+        local _, _, _, x, y = region:GetPoint(1)
+        if type(y) == "number" then return (x or 0) * q, -y * q end
+        return nil
+    end
+    local header = dialog.Header or (type(dialog.FrontFrame) == "table" and dialog.FrontFrame.Header)
+    local headerShown = type(header) == "table" and header.IsShown and header:IsShown()
+    local _, titleTop = Offset(look.book and type(header) == "table" and header.Title)
+    titleTop = titleTop or math.max(96, (look.book and 90 * width / 768 or 0.07 * height))
+    local column = width * 0.8
+    card.title:ClearAllPoints()
+    card.body:ClearAllPoints()
+    card.divider:ClearAllPoints()
+    card.divider:SetTexture(file)
+    local bodyTop
+    if look.book then
+        card.title:SetPoint("TOP", card, "TOP", 0, -titleTop)
+        card.title:SetWidth(column)
+        card.title:SetJustifyH("CENTER")
+        local lineWidth = width * 0.92
+        card.divider:SetTexCoord(BOOK_DIVIDER[1], BOOK_DIVIDER[2], BOOK_DIVIDER[3], BOOK_DIVIDER[4])
+        card.divider:SetSize(lineWidth, lineWidth * 32 / 768)
+        card.divider:SetPoint("CENTER", card, "TOP", 0, -(titleTop + titleSize * 1.6))
+        card.divider:Show()
+        card.title:Show()
+        bodyTop = titleTop + titleSize * 2.6
+    else
+        -- The quest window: its header strip's line and the title on it, on a quest page; a
+        -- gossip page has neither.
+        local headerWidth = headerShown and tonumber(header:GetWidth()) or 0
+        local stripWidth = headerWidth > 0 and headerWidth * q or width * 358 / 624
+        local stripHeight = stripWidth * 51 / 358
+        local _, stripTop = Offset(headerShown and header)
+        stripTop = stripTop or titleTop - stripHeight * 0.3
+        local socketU = HEADER_DIVIDER[1] + (HEADER_DIVIDER[2] - HEADER_DIVIDER[1]) * SOCKET_WIDTH / HEADER_DIVIDER[5]
+        local socket = stripWidth * SOCKET_WIDTH / 358
+        card.divider:SetTexCoord(socketU, HEADER_DIVIDER[2], HEADER_DIVIDER[3], HEADER_DIVIDER[4])
+        card.divider:SetSize(stripWidth - socket, stripHeight)
+        card.divider:SetPoint("TOPLEFT", card, "TOP", -stripWidth / 2 + socket, -stripTop)
+        card.title:SetPoint("LEFT", card, "TOP", -stripWidth / 2 + stripWidth * 53 / 358, -(stripTop + stripHeight / 2 - 2 * q))
+        card.title:SetWidth(stripWidth * (358 - 61) / 358)
+        card.title:SetJustifyH("LEFT")
+        card.divider:SetShown(headerShown and true or false)
+        card.title:SetShown(headerShown and true or false)
+        local _, scrollTop = Offset(dialog.ScrollFrame)
+        bodyTop = scrollTop or (headerShown and stripTop + stripHeight * 1.4 or 0.1 * height)
+        column = width - 2 * 26 * stripWidth / 358
+    end
+    card.body:SetWidth(column)
+    card.body:SetHeight(math.max(1, height - bodyTop - capHeight * 0.45))
+    card.body:SetPoint("TOP", card, "TOP", 0, -bodyTop)
+end
+
+--- What `dialog` queued goes behind this window: `clip`'s page lifted off where the dialog was.
+function Skin:StartTuck(dialog, clip)
+    local frame = self.frame
+    local x, top, width, height, q = self:DialogPlace(dialog)
+    local base = frame.spokenBaseScale or 1
+    local toWidth, toHeight = frame:GetWidth() * base, (self.settledHeight or frame:GetHeight()) * base
+    if not (x and top and width and toWidth > 0 and toHeight > 0) then return end
+    local ui = UIParent:GetEffectiveScale()
+    local left, topPx = self:Home()
+    local card = self:TuckFrames()
+    local look = LookOf(clip)
+    self:DressCard(card, dialog, look, clip, width, height, q)
+    self.tuck = { time = 0, width = width, height = height,
+        from = { x = x, y = top - height / 2 },
+        to = { x = left / ui + toWidth / 2, y = topPx / ui - toHeight / 2, width = toWidth, height = toHeight } }
+    -- Under this window, so it goes behind it.
+    card:SetFrameStrata(frame:GetFrameStrata())
+    card:SetFrameLevel(math.max(0, frame:GetFrameLevel() - 1))
+    card:Show()
+    self:DrawTuck(self.tuck)
+end
+
+function Skin:TuckStep(elapsed)
+    local tuck = self.tuck
+    if not tuck then
+        if self.card then self.card:Hide() end
+        return
+    end
+    tuck.time = tuck.time + elapsed
+    local ok, err = pcall(self.DrawTuck, self, tuck)
+    if not ok then
+        self:StopTuck()
+        if geterrorhandler then geterrorhandler()(err) end
+    end
+end
+
+function Skin:DrawTuck(tuck)
+    local card, from, to, t = self.card, tuck.from, tuck.to, tuck.time
+    local landed = TUCK_LIFT + TUCK_FLY
+    local lift = Smooth(Clamp(t / TUCK_LIFT, 0, 1))
+    local fly = EaseInOut(Clamp((t - TUCK_LIFT) / TUCK_FLY, 0, 1))
+    local slide = EaseOutCubic(Clamp((t - landed) / TUCK_SLIDE, 0, 1))
+
+    -- Lifted a touch, then the window's shape at TUCK_SIZE of it, so it fits behind it; bending a
+    -- little across as it flies, as paper does.
+    local endScale = to.width * TUCK_SIZE / tuck.width
+    local scale = 1 + 0.03 * lift + (endScale - 1.03) * fly
+    local endHeight = to.height * TUCK_SIZE / endScale
+    local height = math.max(tuck.height + (endHeight - tuck.height) * fly, card.capHeight * 1.05)
+    local bend = 1 - 0.05 * math.sin(math.pi * fly)
+    local width = tuck.width * bend
+    card.strips[1]:SetSize(card.capWidth * bend, card.capHeight)
+    card.strips[3]:SetSize(card.capWidth * bend, card.capHeight)
+
+    -- Up off the dialog's place, over in an arc, down low on the window, its foot showing under
+    -- it, then up behind it.
+    local startX, startY = from.x, from.y + 4 * lift
+    local landX, landY = to.x, to.y - to.height * TUCK_LOW
+    local distance = math.sqrt((landX - startX) * (landX - startX) + (landY - startY) * (landY - startY))
+    local bendX, bendY = (startX + landX) / 2, math.max(startY, landY) + 0.3 * distance
+    local x, y = Bend(startX, bendX, landX, fly), Bend(startY, bendY, landY, fly)
+    y = y + (to.y - landY) * slide
+    card:SetScale(scale)
+    card:SetSize(width, height)
+    card:ClearAllPoints()
+    card:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x / scale, y / scale)
+
+    -- Its words go first, then its title: a page in the queue, not one to read.
+    card.body:SetAlpha(1 - Smooth(Clamp((t - 0.08) / 0.3, 0, 1)))
+    local heading = 1 - Smooth(Clamp((t - 0.22) / 0.36, 0, 1))
+    card.title:SetAlpha(heading)
+    card.divider:SetAlpha(heading)
+    card:SetAlpha(1 - Smooth(Clamp((t - landed - TUCK_SLIDE * 0.3) / (TUCK_SLIDE * 0.7), 0, 1)))
+
+    -- Its shadow: thrown as it is lifted, drawn back in as it comes down.
+    local reach = (1 - fly * 0.7) * lift
+    local dx, dy = 7 * reach, -10 * reach
+    local blur = 16
+    card.shadow:ClearAllPoints()
+    card.shadow:SetPoint("TOPLEFT", card, "TOPLEFT", (dx - blur) / scale, (dy + blur) / scale)
+    card.shadow:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", (dx + blur) / scale, (dy - blur) / scale)
+    card.shadow:SetAlpha(0.55 * lift * (1 - 0.45 * fly) * (1 - slide))
+
+    -- Light across it as it is lifted.
+    local sweep = Clamp((t - 0.03) / 0.5, 0, 1)
+    card.light:ClearAllPoints()
+    card.light:SetSize(width * 0.42, height)
+    card.light:SetPoint("TOPLEFT", card, "TOPLEFT", -width * 0.42 + width * 1.45 * sweep, 0)
+    card.light:SetAlpha(0.5 * math.sin(math.pi * sweep))
+
+    -- The window giving as the page goes under it: up a little and back, settling.
+    local nudge = t - (landed - 0.05)
+    local frame = self.frame
+    if nudge >= 0 and nudge <= TUCK_NUDGE then
+        local offset = TUCK_GIVE * math.exp(-6 * nudge) * math.sin(2 * math.pi * nudge / 0.34)
+        local point, relativeTo, relativePoint, px, py = frame:GetPoint(1)
+        if not tuck.rest and point then tuck.rest = { point, relativeTo, relativePoint, px, py } end
+        local rest = tuck.rest
+        if rest then
+            frame:ClearAllPoints()
+            frame:SetPoint(rest[1], rest[2], rest[3], rest[4], rest[5] + offset / (frame:GetScale() or 1))
+        end
+    elseif tuck.rest and nudge > TUCK_NUDGE then
+        tuck.rest = nil
+        if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
+    end
+
+    -- Taken: light runs across the window and its count ripples out.
+    local taken = t - (landed + TUCK_SLIDE * 0.45)
+    if taken >= 0 then
+        if not tuck.taken then
+            tuck.taken = true
+            self:StartGlint()
+        end
+        local g = Clamp(taken / TUCK_GLINT, 0, 1)
+        local glint, glintWidth = self.glint, tuck.glintWidth or 0
+        glint.light:ClearAllPoints()
+        glint.light:SetSize(glintWidth * 0.36, tuck.glintHeight or 1)
+        glint.light:SetPoint("TOPLEFT", glint, "TOPLEFT", -glintWidth * 0.36 + glintWidth * 1.4 * EaseInOut(g), 0)
+        glint.light:SetAlpha(0.45 * math.sin(math.pi * g))
+        local ripple = self.ripple
+        if ripple:IsShown() then
+            local r = EaseOutCubic(Clamp(taken / (TUCK_GLINT * 0.8), 0, 1))
+            local rippleScale = 1 + 1.3 * r
+            ripple:SetScale(rippleScale)
+            ripple:ClearAllPoints()
+            ripple:SetPoint("CENTER", UIParent, "BOTTOMLEFT", tuck.rippleX / rippleScale, tuck.rippleY / rippleScale)
+            ripple:SetAlpha(0.9 * (1 - r))
+        end
+        if g >= 1 then self:StopTuck() end
+    end
+end
+
+--- Light over this window's paper, and its count, if it shows one, about to ripple.
+function Skin:StartGlint()
+    local tuck, frame, glint, ripple = self.tuck, self.frame, self.glint, self.ripple
+    local scale = frame:GetScale() or 1
+    tuck.glintWidth, tuck.glintHeight = (frame:GetWidth() or 0) * scale, (frame:GetHeight() or 0) * scale
+    glint:SetFrameStrata(frame:GetFrameStrata())
+    glint:SetFrameLevel(frame:GetFrameLevel() + 40)
+    glint:ClearAllPoints()
+    glint:SetAllPoints(frame)
+    glint:Show()
+    local count = self.count
+    local cx, cy
+    if count and count:IsShown() and (self.counted or 0) > 0 and count.GetCenter then cx, cy = count:GetCenter() end
+    if type(cx) ~= "number" or type(cy) ~= "number" then return end
+    local ui = UIParent:GetEffectiveScale()
+    local pixels = frame:GetEffectiveScale()
+    tuck.rippleX, tuck.rippleY = cx * pixels / ui, cy * pixels / ui
+    local face, size = count:GetFont()
+    local colors = self.colors or Theme:Colors((self.look or LOOKS.quest).palette)
+    ripple:SetFrameStrata(frame:GetFrameStrata())
+    ripple:SetFrameLevel(frame:GetFrameLevel() + 41)
+    ripple.text:SetFont(face, math.max(6, Round((size or 12) * scale)), "")
+    ripple.text:SetTextColor(colors.title[1], colors.title[2], colors.title[3])
+    ripple.text:SetText(count:GetText() or "")
+    ripple:Show()
+end
+
+--- Done, or cut short (a dialog opening, another closing): the page and the light gone, this
+--- window where it rests.
+function Skin:StopTuck()
+    local tuck = self.tuck
+    self.tuck = nil
+    if self.card then self.card:Hide() end
+    if self.glint then self.glint:Hide() end
+    if self.ripple then self.ripple:Hide() end
+    if tuck and tuck.rest then
+        if not Addon:RestoreLayout("DialogueUI", self.frame) then self:PlaceDefault() end
     end
 end
 

@@ -699,6 +699,13 @@ local function CloseDialog()
     local watch = Skin.dialogWatch
     if watch and watch:GetParent() == DUI then watch.scripts.OnHide(watch) end
 end
+-- Opening: the lines queued while it is open, or just before (Spoken and DialogueUI hear the same
+-- event), are its own.
+local function OpenDialog()
+    DUI:Show()
+    local watch = Skin.dialogWatch
+    if watch and watch:GetParent() == DUI then watch.scripts.OnShow(watch) end
+end
 saved.DialogueUI = nil
 Skin:SetExpanded(false)
 env.PlayerFrame:RefreshConfig()
@@ -710,6 +717,7 @@ local frameLeft, frameTop = Skin.frame.GetLeft, Skin.frame.GetTop
 Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
 local dialogLeft = 960 + DUI.frameOffsetX * 0.8 - DUI.frameWidth * 0.8 / 2
 local dialogTop = 540 + DUI.frameHeight * 0.8 / 2
+OpenDialog()
 CloseDialog()
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
@@ -794,6 +802,69 @@ Expect("closed on a page reading on, the window starts where the book was, as wi
 Expect("...as tall as the book", Near(Skin.frame:GetHeight() * scale, 477.87 * 0.8), true)
 Skin:Tick(0.45)
 Expect("...and settles at the top left, the stone's edge 16 from the screen's", AtTopLeft(123, 112) and Skin.settling == nil, true)
+Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
+Spoken:StopAll()
+
+---------------------------------------------------------------- a dialog's line joining the queue
+-- A quest's line playing on, and a gravestone read meanwhile: closing the stone does not hand
+-- this window its place (it turned from stone to parchment on its way); this window comes back as
+-- it is, and the stone's page goes behind it: lifted off where the stone was, flown over, slid
+-- under.
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
+OpenDialog()
+CloseDialog()
+Skin:Tick(1)
+stub.Advance(2)
+BookView:Show()
+bookWatch.scripts.OnShow(bookWatch)
+books:Enqueue(Page("Stone"))
+Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
+BookView:Hide()
+bookWatch.scripts.OnHide(bookWatch)
+local ui = UIParent:GetEffectiveScale()
+local card = Skin.card
+Expect("a stone closed while a quest's line plays does not take this window's place", Skin.settling, nil)
+Expect("...this window comes back as it was, in the quest's parchment", tostring(Skin.wanted) .. " "
+    .. Skin.parchments[1].texture, "true " .. BROWN .. "Parchment.png")
+Expect("...and the stone's page is lifted off where the stone was, as large, in stone",
+    Skin.tuck ~= nil and card:IsShown() and card.strips[1].texture == BOOK .. "Metal.png"
+    and Near(card.anchor.x * card.scale, (200 + 409.6 / 2) * 0.8 / ui)
+    and Near(card.anchor.y * card.scale, (100 + 477.87 / 2) * 0.8 / ui)
+    and Near(card:GetWidth() * card.scale, 409.6 * 0.8 / ui), true)
+Expect("...its title and its words on it", card.title.text .. " / " .. card.body.text,
+    "Page 1 of 4 / Only a few months after Nethergarde's completion.")
+Skin:TuckStep(0.5)
+Expect("...flying over, smaller, its words gone first", card.scale < 1 and card.body.alpha < 0.05
+    and card.title.alpha > 0, true)
+Skin:TuckStep(0.4)
+Expect("...this window giving as the page goes under it", Skin.tuck ~= nil and Skin.tuck.rest ~= nil, true)
+Skin:TuckStep(1)
+Expect("...then gone behind it, the light run across it, the window where it rests",
+    tostring(Skin.tuck) .. " " .. tostring(card:IsShown()) .. " " .. tostring(Skin.glint:IsShown())
+    .. " " .. tostring(AtTopLeft()), "nil false false true")
+-- Nothing queued by it (a book with no recording): this window simply comes back.
+stub.Advance(1)
+BookView:Show()
+bookWatch.scripts.OnShow(bookWatch)
+BookView:Hide()
+bookWatch.scripts.OnHide(bookWatch)
+Expect("a dialog closed on another's line, having queued nothing, brings this window back and nothing more",
+    tostring(Skin.tuck) .. " " .. tostring(Skin.settling) .. " " .. tostring(Skin.wanted), "nil nil true")
+-- A dialog opening while a page flies: cut short.
+stub.Advance(2)
+BookView:Show()
+bookWatch.scripts.OnShow(bookWatch)
+books:Enqueue(Page(nil))
+BookView:Hide()
+bookWatch.scripts.OnHide(bookWatch)
+Expect("a book's page goes behind in the book view's paper", card.strips[1].texture, BOOK .. "Parchment.png")
+Skin:TuckStep(0.3)
+stub.Advance(1)
+OpenDialog()
+Expect("...a dialog opening cuts its flight short", tostring(Skin.tuck) .. " " .. tostring(card:IsShown()), "nil false")
+CloseDialog()
+Expect("...and closing, having queued nothing, sends nothing after it", tostring(Skin.tuck) .. " "
+    .. tostring(Skin.settling), "nil nil")
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 
