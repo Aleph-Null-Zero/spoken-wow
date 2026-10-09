@@ -603,7 +603,7 @@ Expect("a new line mid-fade waits: the image fading out is not changed", tostrin
 Skin:Tick(0.4)
 Expect("...faded out, the new line is laid out unseen", tostring(Skin.frame:IsFrameBuffer()) .. " "
     .. tostring(Skin.frame:IsShown()) .. " " .. Skin.frame:GetAlpha() .. " " .. tostring(T.clip and T.clip.present.label), "false true 0 Next")
-Skin:Tick(0.2)
+Skin:Tick(0.12)
 Expect("...and fades in as one image", Skin.frame:IsFrameBuffer(), true)
 Skin:Tick(0.5)
 Expect("...shown in full, itself", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.frame:GetAlpha(), "false 1")

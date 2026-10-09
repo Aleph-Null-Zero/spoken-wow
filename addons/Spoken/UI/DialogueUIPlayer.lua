@@ -82,7 +82,7 @@ local STONE = { Stone = true, Marble = true, Silver = true, Bronze = true, Proge
 local BOOK_DIVIDER = { 0, 768 / 1024, 1520 / 2048, 1552 / 2048 }
 local BOOK_RING, RING_OPENING = { 768 / 1024, 864 / 1024, 1616 / 2048, 1712 / 2048 }, 56 / 96
 -- Showing and hiding, the paper first and the rest over it (Skin:SetLevel).
-local FADE_IN, FADE_OUT = .28, .32
+local FADE_IN, FADE_OUT = .18, .2
 -- A new line on a window already showing: its words fade in over LINE_IN, and the window eases to
 -- its new height, as the subtitle's do (Subtitle's PAGE_IN and SIZE_EASE).
 local LINE_IN, SIZE_EASE = .28, 10
