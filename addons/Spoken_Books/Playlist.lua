@@ -7,10 +7,9 @@
 -- there, in the queue's order like anything else. Opening another readable while one is read
 -- queues it after: a gravestone read on the way waits for the book.
 --
--- A book is ONE line in the queue: its first page is queued, and each page, as it finishes,
--- puts the next at the head (source:Continue), so the queue and its waiting count show the
--- book once, and Skip skips the rest of it. Reading the WHOLE book rather than the page on
--- screen is the difference between reading along and pressing play twenty times.
+-- A book is one line in the queue: its first page is queued and each page, as it finishes,
+-- puts the next at the head (source:Continue), so the queue counts the book once and Skip
+-- skips the rest of it.
 
 local ADDON_NAME, SpokenBooks = ...
 
@@ -55,7 +54,6 @@ end
 --- goes once it is done, skipped or stopped.
 SpokenBooks.following = {}
 
---- Whether `pageId` is still to come of a book being read.
 function SpokenBooks:IsComing(pageId)
 	local book = self:PlaceOf(pageId)
 	local entry = book and self.following[book]
@@ -197,16 +195,12 @@ function SpokenBooks:SyncTo(pageId, browsing)
 		self:StopReading(book)
 	end
 
-	-- Another readable: after what is being read -- the queue may be carrying a quest line, or
-	-- a book a gravestone met on the way waits behind.
+	-- Another readable waits behind what is being read, a quest line or another book.
 	return self:PlayFrom(pageId, browsing)
 end
 
---- Stop `book`, or with none every readable, and only them: the queue may be carrying a quest
---- line that has nothing to do with a book, and other readables waiting behind this one.
----
---- Reached by `/spb stop` (all), a book's Stop and SyncTo turning back (that book), not by
---- closing the frame -- a book carries on being read after it is shut.
+--- Stop `book`, or every readable with none, and nothing else: a quest line may be queued too.
+--- Not on closing the frame: a book reads on after it is shut.
 function SpokenBooks:StopReading(book)
 	if not book then
 		if self.source then
