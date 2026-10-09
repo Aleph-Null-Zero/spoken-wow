@@ -767,15 +767,15 @@ Expect("...as tall as the dialog", Near(Skin.frame:GetHeight() * Skin.frame.scal
 Expect("...in full at once, not fading in, its paper alone", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime)
     .. " " .. Skin.content.alpha, "1 nil 0")
 Skin:Tick(0.1)
-Expect("...lifted off it first, a touch larger, its shadow thrown",
-    Skin.frame.scale > 0.8 and Skin.shadow:IsShown(), true)
+Expect("...lifted off it first, up a touch and a touch larger, its shadow thrown, as the tuck's page is",
+    Skin.frame.scale > 0.82 and Skin.frame.anchor.y * Skin.frame.scale > dialogTop and Skin.shadow:IsShown(), true)
 Skin:Tick(0.14)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
 Expect("...on a curve, not straight at the corner", (function()
     local s = Skin.settling
-    local u = (s.time - 0.06) / 0.28
+    local u = (s.time - 0.1) / 0.28
     local straightX = s.left + (s.toLeft - s.left) * (u < 0.5 and 4 * u * u * u or 1 - (2 - 2 * u) ^ 3 / 2)
     return math.abs(Skin.frame.anchor.x * Skin.frame.scale - straightX) > 1
 end)(), true)
@@ -783,11 +783,12 @@ Expect("...its paper alone as it flies, and never one image while it does", Skin
 Skin:Tick(0.05)
 Expect("...still on its way at 0.29 seconds", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
-Expect("...and settled at the top left by 0.34, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Expect("...and settled at the top left by 0.38, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 Skin:Tick(0.05)
-Expect("...landing: giving under it as it touches down, its words fading in on its paper",
-    Skin.landing ~= nil and not AtTopLeft() and Skin.content.alpha > 0 and Skin.content.alpha < 1, true)
+Expect("...landing with a little jump, up first, as the tuck's window gives, its words fading in on its paper",
+    Skin.landing ~= nil and Skin.landing.rest ~= nil and Skin.frame.anchor.y > Skin.landing.rest[5]
+    and Skin.content.alpha > 0 and Skin.content.alpha < 1, true)
 Skin:Tick(1)
 Expect("...then at rest, its shadow gone, its words all there", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
     .. tostring(Skin.shadow:IsShown()) .. " " .. Skin.content.alpha, "nil true false 1")
