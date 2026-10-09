@@ -29,7 +29,7 @@ local BASE_SCALE = 0.65
 -- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep): lifted
 -- off it SETTLE_GROW larger over SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed SETTLE_BOW
 -- of the way to one side (down, so it stays on the screen), then landing: giving SETTLE_GIVE
--- under it and back while light runs across it, over LAND_TIME.
+-- under it and back, over LAND_TIME.
 local EDGE = 16
 local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .12, .5, .5
 local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 5
@@ -38,9 +38,9 @@ local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 5
 -- the same event, in either order.
 local JUST_BEFORE = 0.5
 -- The tuck, in seconds: the page lifted, flying over, sliding behind; this window giving under it
--- by TUCK_GIVE and back, and the light running across it. The page lands at TUCK_SIZE of the
--- window, TUCK_LOW of its height under its middle, its foot showing under it.
-local TUCK_LIFT, TUCK_FLY, TUCK_SLIDE, TUCK_NUDGE, TUCK_GLINT = .16, .62, .24, .5, .55
+-- by TUCK_GIVE and back, and its count rippling over TUCK_RIPPLE. The page lands at TUCK_SIZE of
+-- the window, TUCK_LOW of its height under its middle, its foot showing under it.
+local TUCK_LIFT, TUCK_FLY, TUCK_SLIDE, TUCK_NUDGE, TUCK_RIPPLE = .16, .62, .24, .5, .45
 local TUCK_GIVE, TUCK_SIZE, TUCK_LOW = 7, .9, .3
 -- The art a line is drawn in (Skin:Look), as DialogueUI draws it: its quest window's parchment
 -- for quests, gossip and places; its book view's paper for books and letters, and its stone for
@@ -223,13 +223,17 @@ function Skin:Initialize()
             -- Opening, it shows the line itself: this one steps aside at once (Skin:Covered).
             watch:SetScript("OnShow", function()
                 self:StartSession(dialog)
+                self.captureWait = 0
                 self:Update()
             end)
+            -- Its look, read while it is open (Skin:Capture).
+            watch:SetScript("OnUpdate", function(_, elapsed) self:CaptureTick(dialog, elapsed) end)
             table.insert(self.dialogs, dialog)
             self.dialogWatches[dialog] = watch
             self.sessions[dialog] = setmetatable({}, { __mode = "k" })
         end
     end
+    self.captures = {}
     Callbacks:Register("CLIP_QUEUED", function(clip) self:Queued(clip) end)
     self.dialog = _G.DUIQuestFrame
     self.dialogWatch = self.dialog and self.dialogWatches[self.dialog]
@@ -981,6 +985,7 @@ function Skin:SetVisible(visible, immediate)
     if immediate then
         self:StopTuck()
         self:StopLanding()
+        self:HideGhost()
         self.wanted, self.preparing, self.arming, self.fadeTime, self.pending = false, nil, nil, nil, nil
         self.frame:Hide()
         self:Unbuffer()
@@ -1191,11 +1196,16 @@ function Skin:Settle(dialog)
     self:StopLanding()
     self.arming, self.preparing = nil, nil
     self:Undeafen()
+    -- The dialog drawn again where it was, to dissolve rather than vanish.
+    local drawn = false
+    local look = self:ClosingLook(dialog)
+    local okGhost, shown = pcall(self.ShowGhost, self, dialog, look)
+    if okGhost then drawn = shown else self:HideGhost() end
     if not self:Owns(dialog) then
         local queued = self:QueuedBy(dialog)
         self:Update()
         if queued then
-            local ok, err = pcall(self.StartTuck, self, dialog, queued)
+            local ok, err = pcall(self.StartTuck, self, dialog, queued, drawn)
             if not ok then
                 self:StopTuck()
                 if geterrorhandler then geterrorhandler()(err) end
@@ -1246,7 +1256,9 @@ function Skin:StartSettle(dialog)
     local left = (x - width / 2) * ui
     local bendX, bendY = BowOf(left, top * ui, toLeft, toTop, SETTLE_BOW)
     self.settling = { time = 0, from = from, to = to,
-        left = left, top = top * ui, height = height * ui, toLeft = toLeft, toTop = toTop, bendX = bendX, bendY = bendY }
+        left = left, top = top * ui, height = height * ui, toLeft = toLeft, toTop = toTop, bendX = bendX, bendY = bendY,
+        width = width * ui, ghost = self.ghost ~= nil and self.ghost:IsShown() }
+    if self.settling.ghost then self.ghost.driven = true end
     -- In full at once, where the dialog was: no fade.
     self.wanted, self.fadeTime = true, nil
     self:SetLevel(1)
@@ -1271,9 +1283,9 @@ function Skin:ScaleControls(scale)
     self.controls:SetPoint("RIGHT", self.content, "TOPRIGHT", 0, -(self.controlsMiddle or 0) / scale)
 end
 
---- The window lifted off the dialog, a touch larger and its shadow thrown, light across it; flown
---- to where it rests on a curve, shrinking to its own size and height, its shadow drawn in; then
---- landing (Skin:LandStep).
+--- The window lifted off the dialog, a touch larger and its shadow thrown, the dialog drawn again
+--- over it dissolving into it (Skin:ShowGhost); flown to where it rests on a curve, shrinking to its
+--- own size and height, its shadow drawn in; then landing (Skin:LandStep).
 function Skin:SettleStep(elapsed)
     local settling, frame = self.settling, self.frame
     settling.time = settling.time + elapsed
@@ -1300,11 +1312,16 @@ function Skin:SettleStep(elapsed)
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left / pixels, top / pixels)
     frame:SetHeight(height * grow / pixels)
-    -- Its shadow thrown as it is lifted, drawn in as it comes down; light across it as it lifts.
+    -- Its shadow thrown as it is lifted, drawn in as it comes down.
     self:ShadowUnder((1 - 0.7 * eased) * lift, 0.5 * lift * (1 - 0.3 * eased))
-    self:Light(settling, Clamp((t - 0.02) / (SETTLE_LIFT + 0.3), 0, 1), 0.35)
+    -- The dialog drawn again over it, moving with it and dissolving into it.
+    if settling.ghost then
+        local f = width * grow / math.max(1, settling.width)
+        self:MoveGhost(left - f * settling.left, top - f * settling.top, f, self:GhostFade(elapsed))
+    end
     if u == 1 then
         self.settling = nil
+        if settling.ghost then self:HideGhost() end
         frame:SetScale(settling.to)
         if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
         self:Layout()
@@ -1312,8 +1329,7 @@ function Skin:SettleStep(elapsed)
     end
 end
 
---- Landed where it rests: giving under it and back as it touches down, its shadow drawn in, and
---- light running across it once more.
+--- Landed where it rests: giving under it and back as it touches down, its shadow drawn in.
 function Skin:LandStep(elapsed)
     local landing = self.landing
     landing.time = landing.time + elapsed
@@ -1321,7 +1337,6 @@ function Skin:LandStep(elapsed)
     self:Give(landing, -SETTLE_GIVE * math.exp(-7 * t) * math.sin(2 * math.pi * t / 0.3))
     local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
     self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
-    self:Light(landing, Clamp((t - 0.04) / (LAND_TIME - 0.04), 0, 1), 0.4)
     if t >= LAND_TIME then self:StopLanding() end
 end
 
@@ -1329,7 +1344,6 @@ function Skin:StopLanding()
     local landing = self.landing
     self.landing = nil
     if self.shadow then self.shadow:Hide() end
-    if self.glint and not self.tuck then self.glint:Hide() end
     if landing then self:Rest(landing) end
 end
 
@@ -1357,33 +1371,6 @@ function Skin:ShadowUnder(reach, alpha)
     shadow:Show()
 end
 
---- Light running across this window, `g` of the way over it (0 to 1), at most `strength` bright:
---- a frame of its own over it, kept on it.
-function Skin:Light(state, g, strength)
-    local frame = self.frame
-    self:TuckFrames()
-    local glint = self.glint
-    if g <= 0 or g >= 1 then
-        if g >= 1 and state.lit then glint:Hide(); state.lit = nil end
-        return
-    end
-    if not state.lit then
-        state.lit = true
-        glint.light:SetTexture(Theme:TexturePath() .. "RewardChoice-Sheen.png")
-        glint:SetFrameStrata(frame:GetFrameStrata())
-        glint:SetFrameLevel(frame:GetFrameLevel() + 40)
-        glint:ClearAllPoints()
-        glint:SetAllPoints(frame)
-        glint:Show()
-    end
-    local scale = frame:GetScale() or 1
-    local width, height = (frame:GetWidth() or 0) * scale, (frame:GetHeight() or 0) * scale
-    glint.light:ClearAllPoints()
-    glint.light:SetSize(width * 0.36, height)
-    glint.light:SetPoint("TOPLEFT", glint, "TOPLEFT", -width * 0.36 + width * 1.4 * EaseInOut(g), 0)
-    glint.light:SetAlpha(strength * math.sin(math.pi * g))
-end
-
 --- This window moved `offset` (UIParent's units, up) off where it rests, and back (Skin:Rest).
 function Skin:Give(state, offset)
     local frame = self.frame
@@ -1403,14 +1390,316 @@ function Skin:Rest(state)
     if not Addon:RestoreLayout("DialogueUI", self.frame) then self:PlaceDefault() end
 end
 
+---------------------------------------------------------------- the dialog, drawn again as it closes
+-- DialogueUI's dialog and this window lay out the same line differently (its title wraps, its
+-- paragraphs and buttons, its pages), so this window taking its place showed all of that change at
+-- once. Instead the dialog is drawn again as it closes, by frames of this window's own: its parts
+-- are read off it while it is open (every CAPTURE_EVERY) and as it closes (Skin:Capture), and drawn
+-- where they were (Skin:ShowGhost), over this window or the page going behind it, then dissolve as
+-- they move with it (Skin:MoveGhost). It has no parent, so it shows while DialogueUI still hides
+-- the interface, and it waits for the interface to come back before it dissolves: the world never
+-- shows through between the two. Models are left out (they cannot be copied), as are parts lit
+-- only under the pointer.
+local GHOST_FADE, CAPTURE_EVERY = .3, .25
+local LAYERS = { BACKGROUND = true, BORDER = true, ARTWORK = true, OVERLAY = true }
+local UNCOPIED = { Model = true, PlayerModel = true, DressUpModel = true, CinematicModel = true, TabardModel = true,
+    ModelScene = true, Browser = true, MovieFrame = true }
+
+-- Where two clipping rectangles overlap ({ left, bottom, width, height }), either may be nil.
+local function Overlap(a, b)
+    if not a then return b end
+    if not b then return a end
+    local left, bottom = math.max(a[1], b[1]), math.max(a[2], b[2])
+    local right, top = math.min(a[1] + a[3], b[1] + b[3]), math.min(a[2] + a[4], b[2] + b[4])
+    return { left, bottom, math.max(0, right - left), math.max(0, top - bottom) }
+end
+
+--- The dialog's visible parts: each texture's art and each line of text's words, font and colours,
+--- where it is (in its own frame's units, with that frame's scale), its alpha against the dialog's,
+--- its layer and its frame's level, and the rectangle a scroll frame clips it to.
+function Skin:Capture(dialog)
+    local parts = {}
+    local rootAlpha = dialog.GetEffectiveAlpha and dialog:GetEffectiveAlpha() or dialog:GetAlpha() or 1
+    rootAlpha = math.max(0.01, rootAlpha or 1)
+    local function Copy(region, frame, clip)
+        local kind = region.GetObjectType and region:GetObjectType()
+        if (kind ~= "FontString" and kind ~= "Texture") or not region:IsShown() then return end
+        local layer, sublevel = region:GetDrawLayer()
+        if not LAYERS[layer or ""] then return end
+        local left, bottom, width, height = region:GetRect()
+        if not (left and bottom and width and height) or width <= 0 or height <= 0 then return end
+        local alpha = region.GetEffectiveAlpha and region:GetEffectiveAlpha() or region:GetAlpha() or 1
+        alpha = math.min(1, (alpha or 1) / rootAlpha)
+        if alpha <= 0.01 then return end
+        local part = { kind = kind, left = left, bottom = bottom, width = width, height = height,
+            scale = frame:GetEffectiveScale() or 1, alpha = alpha, layer = layer, sublevel = sublevel or 0,
+            level = frame:GetFrameLevel() or 0, clip = clip }
+        if kind == "FontString" then
+            local text = region:GetText()
+            local face, size, flags = region:GetFont()
+            if not text or text == "" or not face then return end
+            part.text, part.font = text, { face, size, flags or "" }
+            part.color = { region:GetTextColor() }
+            part.shadow = { region:GetShadowColor() }
+            part.shadowOffset = { region:GetShadowOffset() }
+            part.justifyH, part.justifyV = region:GetJustifyH(), region:GetJustifyV()
+            part.spacing = region.GetSpacing and region:GetSpacing() or 0
+            part.wrap = region.CanWordWrap and region:CanWordWrap()
+            part.maxLines = region.GetMaxLines and region:GetMaxLines() or 0
+        else
+            local atlas = region.GetAtlas and region:GetAtlas()
+            local file = region:GetTexture()
+            if not atlas and not file then return end
+            part.atlas, part.file = atlas, file
+            part.coords = { region:GetTexCoord() }
+            part.color = { region:GetVertexColor() }
+            part.blend = region:GetBlendMode()
+            part.desaturated = region.IsDesaturated and region:IsDesaturated() or false
+            part.rotation = region.GetRotation and region:GetRotation() or 0
+            -- What cuts it to shape (a portrait's circle, a button's brushed edge), where it is.
+            local count = region.GetNumMaskTextures and region:GetNumMaskTextures() or 0
+            for index = 1, count do
+                local mask = region:GetMaskTexture(index)
+                local maskFile = mask and mask:GetTexture()
+                local ml, mb, mw, mh
+                if mask then ml, mb, mw, mh = mask:GetRect() end
+                if maskFile and ml and mb and mw and mh then
+                    local owner = mask:GetParent()
+                    local maskScale = owner and owner.GetEffectiveScale and owner:GetEffectiveScale() or part.scale
+                    part.masks = part.masks or {}
+                    table.insert(part.masks, { file = maskFile, left = ml * maskScale, bottom = mb * maskScale,
+                        width = mw * maskScale, height = mh * maskScale })
+                end
+            end
+        end
+        table.insert(parts, part)
+    end
+    local function Walk(frame, clip)
+        if frame.IsForbidden and frame:IsForbidden() then return end
+        if UNCOPIED[frame:GetObjectType() or ""] then return end
+        if frame ~= dialog and not frame:IsShown() then return end
+        if (frame.DoesClipChildren and frame:DoesClipChildren()) or frame:GetObjectType() == "ScrollFrame" then
+            local left, bottom, width, height = frame:GetRect()
+            if left and bottom and width and height then
+                local scale = frame:GetEffectiveScale() or 1
+                clip = Overlap(clip, { left * scale, bottom * scale, width * scale, height * scale })
+            end
+        end
+        local regions = { frame:GetRegions() }
+        for index = 1, table.getn(regions) do Copy(regions[index], frame, clip) end
+        local children = { frame:GetChildren() }
+        for index = 1, table.getn(children) do Walk(children[index], clip) end
+    end
+    Walk(dialog, nil)
+    return parts
+end
+
+--- Read the open dialog every CAPTURE_EVERY, so its look as it closes is known whichever of it
+--- and its parts hears of the closing first.
+function Skin:CaptureTick(dialog, elapsed)
+    self.captureWait = (self.captureWait or 0) - elapsed
+    if self.captureWait > 0 or not (self:IsEnabled() and self.frame and self.frame:GetParent() == UIParent) then return end
+    self.captureWait = CAPTURE_EVERY
+    local ok, parts = pcall(self.Capture, self, dialog)
+    if ok then self.captures[dialog] = parts end
+end
+
+--- The dialog's look as it closes: read again now, unless it has already let go of its parts (it
+--- clears its pages as it hides), when the last reading stands.
+function Skin:ClosingLook(dialog)
+    local last = self.captures and self.captures[dialog]
+    if self.captures then self.captures[dialog] = nil end
+    local ok, now = pcall(self.Capture, self, dialog)
+    if ok and now and table.getn(now) >= 0.8 * table.getn(last or {}) then return now end
+    return last
+end
+
+--- Draw `parts` where they were, over everything this window draws.
+function Skin:ShowGhost(dialog, parts)
+    if not parts or table.getn(parts) == 0 then return false end
+    local ghost = self.ghost
+    if not ghost then
+        ghost = CreateFrame("Frame")
+        ghost:SetSize(1, 1)
+        ghost:EnableMouse(false)
+        ghost.frames, ghost.textures, ghost.texts = {}, {}, {}
+        -- Left alone (a dialog closing on another line, nothing queued), it dissolves in place.
+        ghost:SetScript("OnUpdate", function(_, elapsed) self:GhostStep(elapsed) end)
+        self.ghost = ghost
+    end
+    for _, list in ipairs({ ghost.frames, ghost.textures, ghost.texts }) do
+        for _, item in ipairs(list) do item:Hide() end
+    end
+    ghost:SetFrameStrata(dialog:GetFrameStrata() or "DIALOG")
+    -- Each of the dialog's frame levels its own frame, in their order, inside the frame clipping
+    -- them where a scroll frame clipped them.
+    local levels, order = {}, {}
+    for _, part in ipairs(parts) do
+        if not levels[part.level] then levels[part.level] = true; table.insert(order, part.level) end
+    end
+    table.sort(order)
+    local rank = {}
+    for index, level in ipairs(order) do rank[level] = index end
+    local base = ghost:GetFrameLevel() or 1
+    local frames, used, holders = ghost.frames, 0, {}
+    local function NewFrame(parent)
+        used = used + 1
+        local frame = frames[used]
+        if not frame then
+            frame = CreateFrame("Frame", nil, parent)
+            frame:EnableMouse(false)
+            frames[used] = frame
+        end
+        frame:SetParent(parent)
+        frame:SetScale(1)
+        frame:SetClipsChildren(false)
+        frame:ClearAllPoints()
+        frame:Show()
+        return frame
+    end
+    local clips = {}
+    local function Holder(part)
+        local clip = part.clip
+        local key = tostring(clip) .. ":" .. part.level .. ":" .. part.scale
+        if holders[key] then return holders[key] end
+        local parent = ghost
+        if clip then
+            parent = clips[clip]
+            if not parent then
+                parent = NewFrame(ghost)
+                parent:SetClipsChildren(true)
+                parent:SetPoint("BOTTOMLEFT", ghost, "BOTTOMLEFT", clip[1], clip[2])
+                parent:SetSize(math.max(1, clip[3]), math.max(1, clip[4]))
+                parent:SetFrameLevel(base + 1)
+                clips[clip] = parent
+            end
+        end
+        local holder = NewFrame(parent)
+        holder.masksUsed = 0
+        holder:SetScale(part.scale)
+        holder:SetPoint("BOTTOMLEFT", ghost, "BOTTOMLEFT", 0, 0)
+        holder:SetSize(1, 1)
+        holder:SetFrameLevel(base + 1 + rank[part.level])
+        holders[key] = holder
+        return holder
+    end
+    local textures, texts, usedTextures, usedTexts = ghost.textures, ghost.texts, 0, 0
+    for _, part in ipairs(parts) do
+        local holder = Holder(part)
+        local region
+        if part.kind == "FontString" then
+            usedTexts = usedTexts + 1
+            region = texts[usedTexts]
+            if not region then region = holder:CreateFontString(nil, "ARTWORK"); texts[usedTexts] = region end
+            region:SetParent(holder)
+            region:SetFont(part.font[1], part.font[2], part.font[3])
+            region:SetTextColor(part.color[1] or 1, part.color[2] or 1, part.color[3] or 1, part.color[4] or 1)
+            region:SetShadowColor(part.shadow[1] or 0, part.shadow[2] or 0, part.shadow[3] or 0, part.shadow[4] or 0)
+            region:SetShadowOffset(part.shadowOffset[1] or 0, part.shadowOffset[2] or 0)
+            region:SetJustifyH(part.justifyH or "CENTER")
+            region:SetJustifyV(part.justifyV or "MIDDLE")
+            region:SetSpacing(part.spacing or 0)
+            region:SetWordWrap(part.wrap and true or false)
+            if region.SetMaxLines then region:SetMaxLines(part.maxLines or 0) end
+            region:SetText(part.text)
+        else
+            usedTextures = usedTextures + 1
+            region = textures[usedTextures]
+            if not region then region = holder:CreateTexture(nil, "ARTWORK"); textures[usedTextures] = region end
+            region:SetParent(holder)
+            if part.atlas then
+                region:SetAtlas(part.atlas, false)
+            else
+                region:SetTexture(part.file)
+            end
+            local c = part.coords
+            if table.getn(c) == 8 then
+                region:SetTexCoord(c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8])
+            elseif table.getn(c) == 4 then
+                region:SetTexCoord(c[1], c[2], c[3], c[4])
+            end
+            region:SetVertexColor(part.color[1] or 1, part.color[2] or 1, part.color[3] or 1, part.color[4] or 1)
+            region:SetBlendMode(part.blend or "BLEND")
+            region:SetDesaturated(part.desaturated and true or false)
+            if region.SetRotation then region:SetRotation(part.rotation or 0) end
+            -- Its masks, as it had them: the last showing's taken off first.
+            for _, old in ipairs(region.ghostMasks or {}) do region:RemoveMaskTexture(old) end
+            region.ghostMasks = {}
+            for _, shape in ipairs(part.masks or {}) do
+                holder.masks = holder.masks or {}
+                holder.masksUsed = (holder.masksUsed or 0) + 1
+                local mask = holder.masks[holder.masksUsed]
+                if not mask then
+                    mask = holder:CreateMaskTexture()
+                    holder.masks[holder.masksUsed] = mask
+                end
+                mask:SetTexture(shape.file, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                mask:ClearAllPoints()
+                mask:SetPoint("BOTTOMLEFT", ghost, "BOTTOMLEFT", shape.left / part.scale, shape.bottom / part.scale)
+                mask:SetSize(shape.width / part.scale, shape.height / part.scale)
+                mask:Show()
+                region:AddMaskTexture(mask)
+                table.insert(region.ghostMasks, mask)
+            end
+        end
+        region:SetDrawLayer(part.layer, part.sublevel)
+        region:ClearAllPoints()
+        region:SetPoint("BOTTOMLEFT", ghost, "BOTTOMLEFT", part.left, part.bottom)
+        region:SetSize(part.width, part.height)
+        region:SetAlpha(part.alpha)
+        region:Show()
+    end
+    ghost.time, ghost.fade, ghost.driven = 0, 0, nil
+    self:MoveGhost(0, 0, 1, 1)
+    ghost:Show()
+    return true
+end
+
+--- The ghost moved so the dialog's point at `ax`, `ay` in the screen's pixels (UIParent's units
+--- times its scale) is now at `bx`, `by`, `scale` as large, at `alpha`.
+function Skin:MoveGhost(dx, dy, scale, alpha)
+    local ghost = self.ghost
+    if not ghost then return end
+    scale = math.max(0.01, scale)
+    ghost:SetScale(scale)
+    ghost:ClearAllPoints()
+    ghost:SetPoint("BOTTOMLEFT", WorldFrame, "BOTTOMLEFT", dx / scale, dy / scale)
+    ghost:SetAlpha(Clamp(alpha, 0, 1))
+end
+
+--- The ghost dissolving over GHOST_FADE, only as fast as the interface comes back (DialogueUI
+--- fades it in as the dialog closes), so the world never shows through between it and this
+--- window. Its alpha after `elapsed` more.
+function Skin:GhostFade(elapsed)
+    local ghost = self.ghost
+    if not ghost then return 0 end
+    local back = UIParent:IsShown() and (UIParent:GetAlpha() or 1) or 0
+    ghost.fade = math.min(1, (ghost.fade or 0) + elapsed / GHOST_FADE * back)
+    return 1 - Smooth(ghost.fade)
+end
+
+--- Left alone, the ghost dissolves where the dialog was.
+function Skin:GhostStep(elapsed)
+    local ghost = self.ghost
+    ghost.time = (ghost.time or 0) + elapsed
+    if ghost.driven then return end
+    local alpha = self:GhostFade(elapsed)
+    ghost:SetAlpha(alpha)
+    if alpha <= 0 or ghost.time > 5 then ghost:Hide() end
+end
+
+function Skin:HideGhost()
+    if self.ghost then self.ghost:Hide() end
+end
+
 ---------------------------------------------------------------- a dialog's line joining the queue
 -- A dialog closing while another line plays (a gravestone read during a quest's line): its page
 -- does not take this window's place, as its own line's would (Skin:Settle). The page is lifted off
 -- where the dialog was, flies over to this window, bending a little as it goes, comes down low on
 -- it with its foot showing under it, and slides up behind it: the line waits behind the one
--- playing. This window gives as it goes under, and light runs across it as its count ripples.
--- The page and the light are frames of their own, never parts of this window, which may be one
--- image while it fades in (Skin:Buffer).
+-- playing. This window gives as it goes under, and its count ripples. The page is a frame of its
+-- own, never part of this window, which may be one image while it fades in (Skin:Buffer); the
+-- dialog drawn again (Skin:ShowGhost) dissolves into it as it is lifted.
 
 --- A line joining the queue: when, and with which open dialog.
 function Skin:Queued(clip)
@@ -1450,7 +1739,7 @@ function Skin:QueuedBy(dialog)
     return nil
 end
 
---- The page and the light: built once, out of this window.
+--- The page and the count's ripple: built once, out of this window.
 function Skin:TuckFrames()
     if self.card then return self.card end
     local card = CreateFrame("Frame", nil, UIParent)
@@ -1462,26 +1751,8 @@ function Skin:TuckFrames()
     card.divider = card:CreateTexture(nil, "ARTWORK")
     card.title = card:CreateFontString(nil, "ARTWORK")
     card.body = card:CreateFontString(nil, "ARTWORK")
-    -- The light across the page as it is lifted, kept on the page.
-    card.lightClip = CreateFrame("Frame", nil, card)
-    card.lightClip:SetAllPoints()
-    card.lightClip:SetClipsChildren(true)
-    local holder = CreateFrame("Frame", nil, card.lightClip)
-    holder:SetAllPoints()
-    card.light = holder:CreateTexture(nil, "OVERLAY")
-    card.light:SetBlendMode("ADD")
     card:SetScript("OnUpdate", function(_, elapsed) self:TuckStep(elapsed) end)
     self.card = card
-    -- Over this window as the page goes behind it: light across its paper, kept on it.
-    local glint = CreateFrame("Frame", nil, UIParent)
-    glint:Hide()
-    glint:EnableMouse(false)
-    glint:SetClipsChildren(true)
-    local glintHolder = CreateFrame("Frame", nil, glint)
-    glintHolder:SetAllPoints()
-    glint.light = glintHolder:CreateTexture(nil, "OVERLAY")
-    glint.light:SetBlendMode("ADD")
-    self.glint = glint
     -- Its count rippling out from where it is.
     local ripple = CreateFrame("Frame", nil, UIParent)
     ripple:Hide()
@@ -1521,7 +1792,6 @@ function Skin:DressCard(card, dialog, look, clip, width, height, q)
     strips[2]:SetPoint("TOPLEFT", strips[1], "BOTTOMLEFT", 0, 0)
     strips[2]:SetPoint("BOTTOMRIGHT", strips[3], "TOPRIGHT", 0, -capHeight * look.under / 256)
     card.shadow:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
-    card.light:SetTexture(Theme:TexturePath() .. "RewardChoice-Sheen.png")
 
     local fonts, colors = Theme:Fonts(look.book), Theme:Colors(look.palette)
     local shadow = look.shadow and 1 or 0
@@ -1596,8 +1866,9 @@ function Skin:DressCard(card, dialog, look, clip, width, height, q)
     card.body:SetPoint("TOP", card, "TOP", 0, -bodyTop)
 end
 
---- What `dialog` queued goes behind this window: `clip`'s page lifted off where the dialog was.
-function Skin:StartTuck(dialog, clip)
+--- What `dialog` queued goes behind this window: `clip`'s page lifted off where the dialog was,
+--- the dialog drawn again over it (`drawn`) dissolving into it.
+function Skin:StartTuck(dialog, clip, drawn)
     local frame = self.frame
     local x, top, width, height, q = self:DialogPlace(dialog)
     local base = frame.spokenBaseScale or 1
@@ -1608,14 +1879,15 @@ function Skin:StartTuck(dialog, clip)
     local card = self:TuckFrames()
     local look = LookOf(clip)
     self:DressCard(card, dialog, look, clip, width, height, q)
-    self.tuck = { time = 0, width = width, height = height,
+    self.tuck = { time = 0, width = width, height = height, ghost = drawn and self.ghost ~= nil,
         from = { x = x, y = top - height / 2 },
         to = { x = left / ui + toWidth / 2, y = topPx / ui - toHeight / 2, width = toWidth, height = toHeight } }
     -- Under this window, so it goes behind it.
     card:SetFrameStrata(frame:GetFrameStrata())
     card:SetFrameLevel(math.max(0, frame:GetFrameLevel() - 1))
     card:Show()
-    self:DrawTuck(self.tuck)
+    if self.tuck.ghost then self.ghost.driven = true end
+    self:DrawTuck(self.tuck, 0)
 end
 
 function Skin:TuckStep(elapsed)
@@ -1625,14 +1897,14 @@ function Skin:TuckStep(elapsed)
         return
     end
     tuck.time = tuck.time + elapsed
-    local ok, err = pcall(self.DrawTuck, self, tuck)
+    local ok, err = pcall(self.DrawTuck, self, tuck, elapsed)
     if not ok then
         self:StopTuck()
         if geterrorhandler then geterrorhandler()(err) end
     end
 end
 
-function Skin:DrawTuck(tuck)
+function Skin:DrawTuck(tuck, elapsed)
     local card, from, to, t = self.card, tuck.from, tuck.to, tuck.time
     local landed = TUCK_LIFT + TUCK_FLY
     local lift = Smooth(Clamp(t / TUCK_LIFT, 0, 1))
@@ -1668,7 +1940,16 @@ function Skin:DrawTuck(tuck)
     local heading = 1 - Smooth(Clamp((t - 0.22) / 0.36, 0, 1))
     card.title:SetAlpha(heading)
     card.divider:SetAlpha(heading)
-    card:SetAlpha(1 - Smooth(Clamp((t - landed - TUCK_SLIDE * 0.3) / (TUCK_SLIDE * 0.7), 0, 1)))
+    local away = 1 - Smooth(Clamp((t - landed - TUCK_SLIDE * 0.3) / (TUCK_SLIDE * 0.7), 0, 1))
+    -- The dialog drawn again over it, moving with it and dissolving into it.
+    if tuck.ghost then
+        local ghostAlpha = self:GhostFade(elapsed)
+        local ui = UIParent:GetEffectiveScale()
+        self:MoveGhost((x - scale * from.x) * ui, (y - scale * from.y) * ui, scale, ghostAlpha)
+        if ghostAlpha <= 0 then tuck.ghost = false; self:HideGhost() end
+        away = away * (1 - ghostAlpha)
+    end
+    card:SetAlpha(away)
 
     -- Its shadow: thrown as it is lifted, drawn back in as it comes down.
     local reach = (1 - fly * 0.7) * lift
@@ -1679,13 +1960,6 @@ function Skin:DrawTuck(tuck)
     card.shadow:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", (dx + blur) / scale, (dy - blur) / scale)
     card.shadow:SetAlpha(0.55 * lift * (1 - 0.45 * fly) * (1 - slide))
 
-    -- Light across it as it is lifted.
-    local sweep = Clamp((t - 0.03) / 0.5, 0, 1)
-    card.light:ClearAllPoints()
-    card.light:SetSize(width * 0.42, height)
-    card.light:SetPoint("TOPLEFT", card, "TOPLEFT", -width * 0.42 + width * 1.45 * sweep, 0)
-    card.light:SetAlpha(0.5 * math.sin(math.pi * sweep))
-
     -- The window giving as the page goes under it: up a little and back, settling.
     local nudge = t - (landed - 0.05)
     if nudge >= 0 and nudge <= TUCK_NUDGE then
@@ -1694,18 +1968,17 @@ function Skin:DrawTuck(tuck)
         self:Rest(tuck)
     end
 
-    -- Taken: light runs across the window and its count ripples out.
+    -- Taken: its count ripples out.
     local taken = t - (landed + TUCK_SLIDE * 0.45)
     if taken >= 0 then
         if not tuck.taken then
             tuck.taken = true
             self:StartRipple()
         end
-        local g = Clamp(taken / TUCK_GLINT, 0, 1)
-        self:Light(tuck, g < 1 and math.max(g, 0.0001) or 1, 0.45)
+        local g = Clamp(taken / TUCK_RIPPLE, 0, 1)
         local ripple = self.ripple
         if ripple:IsShown() then
-            local r = EaseOutCubic(Clamp(taken / (TUCK_GLINT * 0.8), 0, 1))
+            local r = EaseOutCubic(g)
             local rippleScale = 1 + 1.3 * r
             ripple:SetScale(rippleScale)
             ripple:ClearAllPoints()
@@ -1737,15 +2010,17 @@ function Skin:StartRipple()
     ripple:Show()
 end
 
---- Done, or cut short (a dialog opening, another closing): the page and the light gone, this
---- window where it rests.
+--- Done, or cut short (a dialog opening, another closing): the page, the dialog drawn again and
+--- the ripple gone, this window where it rests.
 function Skin:StopTuck()
     local tuck = self.tuck
     self.tuck = nil
     if self.card then self.card:Hide() end
-    if self.glint and not self.landing then self.glint:Hide() end
     if self.ripple then self.ripple:Hide() end
-    if tuck then self:Rest(tuck) end
+    if tuck then
+        if tuck.ghost then self:HideGhost() end
+        self:Rest(tuck)
+    end
 end
 
 --- Caption lines the current clip's words take at `width`; nil while the captions hold

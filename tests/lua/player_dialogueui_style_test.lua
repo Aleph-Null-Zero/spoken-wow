@@ -735,8 +735,8 @@ Expect("the dialog closing on a line starts the window where the dialog was, as 
 Expect("...as tall as the dialog", Near(Skin.frame:GetHeight() * Skin.frame.scale, DUI.frameHeight * 0.8), true)
 Expect("...in full at once, not fading in", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime), "1 nil")
 Skin:Tick(0.1)
-Expect("...lifted off it first, a touch larger, its shadow thrown and light across it",
-    Skin.frame.scale > 0.8 and Skin.shadow:IsShown() and Skin.glint:IsShown(), true)
+Expect("...lifted off it first, a touch larger, its shadow thrown",
+    Skin.frame.scale > 0.8 and Skin.shadow:IsShown(), true)
 Skin:Tick(0.32)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
@@ -755,8 +755,8 @@ Expect("...and settled at the top left by 0.62, at its own size and height", AtT
 Skin:Tick(0.05)
 Expect("...landing: giving under it as it touches down", Skin.landing ~= nil and not AtTopLeft(), true)
 Skin:Tick(1)
-Expect("...then at rest, its shadow and the light gone", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
-    .. tostring(Skin.shadow:IsShown()) .. " " .. tostring(Skin.glint:IsShown()), "nil true false false")
+Expect("...then at rest, its shadow gone", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
+    .. tostring(Skin.shadow:IsShown()), "nil true false")
 -- Nowhere known to start from: it is simply put where it rests.
 local WindowPlace = env.DialogueUITheme.WindowPlace
 env.DialogueUITheme.WindowPlace = function() return nil end
@@ -840,6 +840,19 @@ OpenDialog()
 CloseDialog()
 Skin:Tick(1)
 stub.Advance(2)
+-- The stone's title as the book view draws it, read off it as it closes.
+local inked = stub.Widget("FontString")
+inked:SetText("Here Lies King Terenas Menethil II")
+inked:Show()
+inked.GetRect = function() return 250, 500, 300, 30 end
+inked.GetDrawLayer = function() return "ARTWORK", 0 end
+inked.GetFont = function() return "Fonts\\TRAJAN.TTF", 18, "" end
+inked.GetTextColor = function() return 0.9, 0.9, 0.9, 1 end
+inked.GetShadowColor = function() return 0, 0, 0, 1 end
+inked.GetShadowOffset = function() return 1, -1 end
+inked.GetJustifyH = function() return "CENTER" end
+inked.GetJustifyV = function() return "MIDDLE" end
+BookView.GetRegions = function() return inked end
 BookView:Show()
 bookWatch.scripts.OnShow(bookWatch)
 books:Enqueue(Page("Stone"))
@@ -848,6 +861,11 @@ BookView:Hide()
 bookWatch.scripts.OnHide(bookWatch)
 local ui = UIParent:GetEffectiveScale()
 local card = Skin.card
+local ghost = Skin.ghost
+Expect("closing, the stone is drawn again where it was, its title in its own font and place",
+    ghost ~= nil and ghost:IsShown() and ghost.texts[1].text == "Here Lies King Terenas Menethil II"
+    and ghost.texts[1].anchor.x .. " " .. ghost.texts[1].anchor.y .. " " .. ghost.texts[1]:GetWidth(), "250 500 300")
+Expect("...the page under it not yet seen", card.alpha, 0)
 Expect("a stone closed while a quest's line plays does not take this window's place", Skin.settling, nil)
 Expect("...this window comes back as it was, in the quest's parchment", tostring(Skin.wanted) .. " "
     .. Skin.parchments[1].texture, "true " .. BROWN .. "Parchment.png")
@@ -858,15 +876,24 @@ Expect("...and the stone's page is lifted off where the stone was, as large, in 
     and Near(card:GetWidth() * card.scale, 409.6 * 0.8 / ui), true)
 Expect("...its title and its words on it", card.title.text .. " / " .. card.body.text,
     "Page 1 of 4 / Only a few months after Nethergarde's completion.")
-Skin:TuckStep(0.5)
-Expect("...flying over, smaller, its words gone first", card.scale < 1 and card.body.alpha < 0.05
-    and card.title.alpha > 0, true)
+-- DialogueUI hides the interface while its dialog is open and fades it back in as it closes.
+UIParent:Hide()
+Skin:TuckStep(0.15)
+Expect("...waiting, whole, while the interface is still hidden, so the world never shows through",
+    ghost.alpha .. " " .. card.alpha, "1 0")
+UIParent:Show()
+Skin:TuckStep(0.15)
+Expect("...then, the interface back, dissolving into the page as it is lifted", ghost.alpha > 0 and ghost.alpha < 1
+    and card.alpha > 0, true)
+Skin:TuckStep(0.2)
+Expect("...flying over, smaller, its words gone first, the stone drawn again gone", card.scale < 1
+    and card.body.alpha < 0.05 and card.title.alpha > 0 and not ghost:IsShown(), true)
+BookView.GetRegions = nil
 Skin:TuckStep(0.4)
 Expect("...this window giving as the page goes under it", Skin.tuck ~= nil and Skin.tuck.rest ~= nil, true)
 Skin:TuckStep(1)
-Expect("...then gone behind it, the light run across it, the window where it rests",
-    tostring(Skin.tuck) .. " " .. tostring(card:IsShown()) .. " " .. tostring(Skin.glint:IsShown())
-    .. " " .. tostring(AtTopLeft()), "nil false false true")
+Expect("...then gone behind it, the window where it rests",
+    tostring(Skin.tuck) .. " " .. tostring(card:IsShown()) .. " " .. tostring(AtTopLeft()), "nil false true")
 -- Nothing queued by it (a book with no recording): this window simply comes back.
 stub.Advance(1)
 BookView:Show()
