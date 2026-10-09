@@ -97,6 +97,8 @@ Expect("...named, described and drawn", env.Options.STYLE_LABELS.dialogueui ~= n
     and env.Options.STYLE_TIPS.dialogueui ~= nil and env.Options.SKETCHES.dialogueui ~= nil, true)
 SlashCmdList.SPOKEN("player dialogueui")
 local Skin, T = env.DialogueUIPlayer, env.Transcript
+-- The closing dialog drawn again is off in the game until it is faithful; tested here all the same.
+Skin.drawGhost = true
 Expect("/spoken player dialogueui draws it", Spoken:GetPlayerStyle(), "dialogueui")
 Expect("...remembered as the style chosen", env.Addon.db.profile.Frame.Style, "dialogueui")
 Expect("...on its own frame", Spoken:GetPlayerFrame(), _G.SpokenDialogueUIPlayerFrame)

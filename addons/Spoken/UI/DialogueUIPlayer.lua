@@ -7,6 +7,9 @@ setfenv(1, SpokenEnv)
 -- stub below is all that client runs.
 
 DialogueUIPlayer = { rows = {}, offset = 0 }
+-- The closing dialog drawn again (Skin:ShowGhost): off until its copy is faithful. In the game it
+-- drew parts DialogueUI keeps hidden, left the portrait empty and cut titles short.
+DialogueUIPlayer.drawGhost = false
 
 if Version.IsAnyLegacy then
     function DialogueUIPlayer:IsEnabled() return false end
@@ -1201,7 +1204,7 @@ function Skin:Settle(dialog)
     -- The dialog drawn again where it was, to dissolve rather than vanish.
     local drawn = false
     local last = self.captures and self.captures[dialog]
-    local look = self:ClosingLook(dialog)
+    local look = self.drawGhost and self:ClosingLook(dialog) or nil
     local okGhost, shown = pcall(self.ShowGhost, self, dialog, look, PlayerFrame:Current())
     if okGhost then drawn = shown else self:HideGhost() end
     -- For /spoken ghost: what this close had to go on, and what came of it.
@@ -1534,6 +1537,7 @@ end
 --- Read the open dialog every CAPTURE_EVERY, so its look as it closes is known whichever of it
 --- and its parts hears of the closing first. A failure is said once, not every time.
 function Skin:CaptureTick(dialog, elapsed)
+    if not self.drawGhost then return end
     self.captureWait = (self.captureWait or 0) - elapsed
     if self.captureWait > 0 or not (self:IsEnabled() and self.frame and self.frame:GetParent() == UIParent) then return end
     self.captureWait = CAPTURE_EVERY
