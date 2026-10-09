@@ -1016,6 +1016,7 @@ function Skin:SetVisible(visible, immediate)
     if not self.frame then return end
     if not visible then self:HideTooltip() end
     if immediate then
+        self.turning = nil
         self:StopTuck()
         self:StopLanding()
         if self.wordsHidden then self:ShowWords(1) end
@@ -1164,6 +1165,11 @@ function Skin:Tick(elapsed)
             end
             -- Faded: itself again, catching up on what waited.
             self:Unbuffer()
+            -- Faded out to turn to the next line: now it comes in.
+            if self.turning then
+                self.turning = nil
+                if not self.wanted then self:Update() end
+            end
             if not self.wanted then return end
         end
     end
@@ -1793,15 +1799,20 @@ function Skin:Update()
     -- One image fading: nothing in it may change; this waits for it (Skin:Unbuffer).
     if self.buffered then self.pending = self.pending or "update"; return end
     self:Touch()
+    -- Fading out to turn to the next line: it comes in once faded (Skin:Tick).
+    if self.turning and self.frame:IsShown() then return end
     if clip ~= self.clip then
-        self:HideTooltip()
-        -- Following another line on screen: its words fade in, and on the same paper the window
-        -- eases to its height. On another (a stone's line after a quest's) it is another page, at
-        -- its own height at once: easing, the stone seemed to grow into the parchment.
-        if self.clip and self.wanted and self.frame:IsShown() then
-            self.easeNext, self.lineFade = LookOf(clip) == LookOf(self.clip), 0
-            self:PaintContent()
+        -- Following another line on screen: this one fades out whole, as the window does when the
+        -- queue ends, and the next fades in from nothing once it has (Skin:Tick), its paper,
+        -- height and words all changed unseen. Not while it settles out of a dialog with its
+        -- words hidden: there the next simply takes its place.
+        if self.clip and self.wanted and self.frame:IsShown() and (self.level or 0) > 0 and not self.settling
+            and not self.wordsHidden then
+            self.turning = true
+            self:SetVisible(false)
+            return
         end
+        self:HideTooltip()
         self.clip, self.seconds, self.offset = clip, 0, 0
     end
     -- The queue's length decides how much of the body the captions get, and the line's words
