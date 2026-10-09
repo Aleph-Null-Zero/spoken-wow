@@ -104,7 +104,7 @@ local WORDS_SHARE = 0.9
 local PICTURE_GAP, PICTURE_ALPHA = 10, 0.95
 -- With no picture, the words start this share of their size under the divider's line: closer than
 -- DialogueUI's own gap under its header strip, which on this smaller window looked adrift.
-local WORDS_UNDER_LINE = 0.8
+local WORDS_UNDER_LINE = 1.4
 -- Where the header strip's line ends, of the strip's height: its art is clear under that (its
 -- last dark row is 77 of the 96 in Parchment.png).
 local DIVIDER_LINE = 0.8
