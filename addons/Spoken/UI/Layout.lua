@@ -1436,8 +1436,9 @@ end
 --
 -- For the choices a page is really about, where a column of switches would bury them: the
 -- modules and the narrator's style, a row each in a list, or a card each, side by side, where a
--- list is too tall. Both in the game's tooltip border, as wide as the rows below. What is chosen or enabled stands at full
--- strength in gold; the rest stand back at lower opacity and come forward under the pointer.
+-- list is too tall. A list sits in the bronze frame across the box's span, a card in the game's
+-- tooltip border. What is chosen or enabled stands at full strength in gold; the rest stand back
+-- at lower opacity and come forward under the pointer.
 -- Everything is drawn with what the rest of the page uses: the game's checkbox and red button, a
 -- dark screen round a picture.
 
@@ -1652,8 +1653,8 @@ local function PlaceCards(layout, cards, top, head, foot, fallback)
     return height, width
 end
 
--- A list: rows in one panel, the cards' tooltip border round the lot and a faint line between
--- them. Each row has a picture at its left (a module's icon, a style's sketch), its name over a
+-- A list: rows in one panel, the bronze frame round the lot (the tooltip border where the client
+-- lacks it) and a faint line between them. Each row has a picture at its left (a module's icon, a style's sketch), its name over a
 -- line about it, and its controls at its right; a click anywhere else on it does what its
 -- checkbox does. What is on or chosen stands at full strength, a gold light fading across it
 -- from the left; the rest stand back, as a card does, and come forward under the pointer.
@@ -1878,7 +1879,7 @@ function Layout:List(items)
                 caption:SetText(message or "")
             end
             status.count, status.caption = value, caption
-            -- Read by the tests and the preview, as the line on a card was.
+            -- Read by the tests and the preview.
             status.layoutStatusLine = status
             edge = status
         end
@@ -2020,8 +2021,8 @@ function Layout:Choices(items, read, write, apply, labels)
 end
 
 --- The narrator's styles, a card each, side by side, where a list is too tall (the welcome
---- window): a sketch of the style in a small dark screen across the top -- the input field's frame, as a module's icon has -- then its name and a line
---- about it. An item is { value, title, text, tooltip, art(frame) }; `art` draws the sketch,
+--- window): a sketch of the style in a small dark screen across the top (the input field's frame,
+--- as a module's icon has), then its name and a line about it. An item is { value, title, text, tooltip, art(frame) }; `art` draws the sketch,
 --- scaled to its screen where that is narrow. `labels.choose` adds a line to an unchosen
 --- style's tooltip saying a click picks it.
 local STYLE_HEAD = SCREEN_HEIGHT + 10 + 16 + TITLE_GAP
