@@ -475,33 +475,17 @@ local function SetupHooks()
 		Dispatch(SpokenZones.mapChangedCallbacks, WorldMapFrame.mapID)
 	end)
 
-	if SpokenZones.SetupMapPanel then
-		SpokenZones:SetupMapPanel()
-	end
-	if SpokenZones.SetupSubzoneClicks then
-		SpokenZones:SetupSubzoneClicks()
-	end
-	if SpokenZones.SetupMapHighlight then
-		SpokenZones:SetupMapHighlight()
-	end
-	if SpokenZones.SetupDiscovery then
-		SpokenZones:SetupDiscovery()
-	end
-	if SpokenZones.SetupLoreWindow then
-		SpokenZones:SetupLoreWindow()
-	end
-	if SpokenZones.SetupMinimapButton then
-		SpokenZones:SetupMinimapButton()
-	end
-	-- Before autoplay: it registers its combat hold on the source this creates.
-	if SpokenZones.SetupAudio then
-		SpokenZones:SetupAudio()
-	end
-	if SpokenZones.SetupAutoplay then
-		SpokenZones:SetupAutoplay()
-	end
-	if SpokenZones.SetupOptions then
-		SpokenZones:SetupOptions()
+	-- Audio before autoplay: autoplay registers its combat hold on the source audio creates. Each
+	-- step on its own, its error printed, so one that fails does not keep the rest from being set
+	-- up: without audio's source, Spoken's page calls Zones not installed.
+	for _, step in ipairs({ "SetupMapPanel", "SetupSubzoneClicks", "SetupMapHighlight", "SetupDiscovery",
+		"SetupLoreWindow", "SetupMinimapButton", "SetupAudio", "SetupAutoplay", "SetupOptions" }) do
+		if SpokenZones[step] then
+			local ok, err = pcall(SpokenZones[step], SpokenZones)
+			if not ok then
+				SpokenZones:Print("|cffff5555%s failed:|r %s", step, tostring(err))
+			end
+		end
 	end
 end
 
