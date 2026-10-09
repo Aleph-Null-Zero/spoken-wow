@@ -102,6 +102,9 @@ local WORDS_SHARE = 0.9
 -- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
 -- wide as the words, PICTURE_GAP above them, the page's grain through it.
 local PICTURE_GAP, PICTURE_ALPHA = 10, 0.95
+-- With no picture, the words start this share of their size under the divider's line: closer than
+-- DialogueUI's own gap under its header strip, which on this smaller window looked adrift.
+local WORDS_UNDER_LINE = 0.8
 -- Where the header strip's line ends, of the strip's height: its art is clear under that (its
 -- last dark row is 77 of the 96 in Parchment.png).
 local DIVIDER_LINE = 0.8
@@ -463,7 +466,6 @@ function Skin:Layout()
     local face = Round(34 * ratio)
     -- DialogueUI's gap under its header line, before the text.
     local textGap = Round(4 * 0.35 * fontSize)
-    local headerHeight = stripHeight + textGap
     -- A place's picture (Spoken Zones gives one with its line) between the header and the words,
     -- as wide as they are.
     local picture = self.clip and self.clip.present and self.clip.present.picture
@@ -475,7 +477,7 @@ function Skin:Layout()
     local lineBottom = Round(stripHeight * DIVIDER_LINE)
     local pictureGap = Round((stripHeight - lineBottom + textGap + PICTURE_GAP) / 2)
     local pictureTop = lineBottom + pictureGap
-    local wordsTop = picture and pictureTop + pictureHeight + pictureGap or headerHeight
+    local wordsTop = picture and pictureTop + pictureHeight + pictureGap or lineBottom + Round(WORDS_UNDER_LINE * captionSize)
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
     -- Show Progress, as the subtitle has it: off, the bar goes and the window closes up under the words.
@@ -631,10 +633,11 @@ function Skin:Layout()
         self.picture:ClearAllPoints()
         self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -pictureTop)
     end
-    -- The captions span that room too; the lines fade through it (Transcript:Place).
-    self.lineRoom = lineHeight
-    Transcript:Dock(content, content, "TOPLEFT", wordsLeft, -(wordsTop - lineHeight), wordsWidth,
-        captionHeight + 2 * lineHeight)
+    -- The captions span that room too; the lines fade through it (Transcript:Place). Over the words
+    -- it ends at the divider's line, so a line leaving never crosses it.
+    self.lineRoom = picture and lineHeight or math.max(1, math.min(lineHeight, wordsTop - lineBottom))
+    Transcript:Dock(content, content, "TOPLEFT", wordsLeft, -(wordsTop - self.lineRoom), wordsWidth,
+        captionHeight + self.lineRoom + lineHeight)
 
     self.drawer:ClearAllPoints()
     self.drawer:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(wordsTop + captionHeight))
