@@ -775,7 +775,7 @@ Expect("...its paper alone as it flies, and never one image while it does", Skin
 Skin:Tick(0.2)
 Expect("...still on its way at 0.44 seconds", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
-Expect("...and settled at the top left by 0.52, at its own size and height AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Expect("...and settled at the top left by 0.52, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 Skin:Tick(0.05)
 Expect("...landing with a little jump, up first, as the tuck's window gives, its words fading in on its paper",
