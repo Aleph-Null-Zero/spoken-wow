@@ -948,6 +948,8 @@ Expect("...and closing, having queued nothing, sends nothing after it", tostring
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 
+Expect("/spoken ghost says what the last close drew, and can draw the dialog again",
+    pcall(SlashCmdList.SPOKEN, "ghost") and pcall(SlashCmdList.SPOKEN, "ghost show"), true)
 Expect("diagnostics name the style", string.find(Skin:Describe(), "enabled=true", 1, true) ~= nil, true)
 Expect("...and the theme reading", string.find(env.DialogueUITheme:Describe(), "theme=1", 1, true) ~= nil, true)
 
