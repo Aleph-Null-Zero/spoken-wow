@@ -56,7 +56,7 @@ view.ContentFrame = stub.Widget("Frame")
 view:SetHeight(300)
 function view:SetFrameHeight(height) self:SetHeight(height) end
 function view:SetScrollContentHeight()
-    self.Header.Title:SetPoint("TOP", self, "TOP", 0, -48 * 0.53333)
+    self.Header.Title:SetPoint("TOP", self, "TOP", 0, -90 * 0.53333)
     self.Header.HeaderDivider:SetPoint("CENTER", self, "TOP", 0, -60)
     self.ScrollFrame:SetPoint("TOPLEFT", self, "TOPLEFT", 0, -70)
     self.ContentFrame:SetPoint("TOP", self, "TOP", 0, -70)
@@ -85,11 +85,13 @@ end
 
 ---------------------------------------------------------------- room for the controls
 -- 36 of UIParent's units over the controls' line and under it, as on the quest window: the title,
--- its line and the text moved down for it, a short page's frame taller by as much.
+-- its line and the text moved down for it by as much as the title moved from DialogueUI's place for
+-- it (90 of the book art's pixels under the top), so the line stays as close under the title as
+-- DialogueUI has it; a short page's frame taller by as much.
 view:SetScrollContentHeight(100, 1)
-local shift = (2 * 36 + 24) * (UIParent:GetEffectiveScale() / 0.8) - 48 * 0.53333
+local shift = (2 * 36 + 24) * (UIParent:GetEffectiveScale() / 0.8) - 90 * 0.53333
 Expect("the title moved down to leave 36 over and under the controls' line", view.Header.Title.anchor.y,
-    -(48 * 0.53333 + shift))
+    -(90 * 0.53333 + shift))
 Expect("...its line and the text with it", view.Header.HeaderDivider.anchor.y .. " " .. view.ScrollFrame.anchor.y
     .. " " .. view.ContentFrame.anchor.y, (-60 - shift) .. " " .. (-70 - shift) .. " " .. (-70 - shift))
 Expect("...a short page's frame taller by as much", view:GetHeight(), 300 + shift)

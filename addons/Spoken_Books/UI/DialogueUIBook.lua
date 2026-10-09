@@ -192,8 +192,8 @@ local function SetEnabled(button, on)
 end
 
 -- The book's close button, as DialogueUI draws it: 64 of the book art's pixels across, 26 in from
--- the right; its title 48 under the top.
-local CLOSE_SIZE, CLOSE_INSET, TITLE_TOP = 64, 26, 48
+-- the right; its title 90 under the top (its PADDING_V), all in the same pixels.
+local CLOSE_SIZE, CLOSE_INSET, TITLE_TOP = 64, 26, 90
 -- Room above the line of the close button and the controls and below it, in UIParent's units, as
 -- the buttons' 24 are: the same on DialogueUI's quest window (Spoken Quests' DialogueUIBridge).
 -- The title and the text under it move down to make it.
