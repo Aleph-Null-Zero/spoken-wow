@@ -1200,9 +1200,14 @@ function Skin:Settle(dialog)
     self:Undeafen()
     -- The dialog drawn again where it was, to dissolve rather than vanish.
     local drawn = false
+    local last = self.captures and self.captures[dialog]
     local look = self:ClosingLook(dialog)
     local okGhost, shown = pcall(self.ShowGhost, self, dialog, look, PlayerFrame:Current())
     if okGhost then drawn = shown else self:HideGhost() end
+    -- For /spoken ghost: what this close had to go on, and what came of it.
+    self.lastClose = { dialog = dialog:GetName() or "?", read = last and table.getn(last) or 0,
+        closing = look and table.getn(look) or 0, drawn = drawn and true or false,
+        problem = not okGhost and tostring(shown) or nil, owns = self:Owns(dialog) }
     if not self:Owns(dialog) then
         local queued = self:QueuedBy(dialog)
         self:Update()
@@ -1524,12 +1529,17 @@ function Skin:CaptureTick(dialog, elapsed)
     self.captureWait = (self.captureWait or 0) - elapsed
     if self.captureWait > 0 or not (self:IsEnabled() and self.frame and self.frame:GetParent() == UIParent) then return end
     self.captureWait = CAPTURE_EVERY
+    self.captureCount = self.captureCount or {}
+    self.captureCount[dialog] = (self.captureCount[dialog] or 0) + 1
     local ok, parts = pcall(self.Capture, self, dialog)
     if ok then
         self.captures[dialog] = parts
-    elseif not self.captureSaid then
-        self.captureSaid = true
-        if geterrorhandler then geterrorhandler()(parts) end
+    else
+        self.captureProblem = tostring(parts)
+        if not self.captureSaid then
+            self.captureSaid = true
+            if geterrorhandler then geterrorhandler()(parts) end
+        end
     end
 end
 
@@ -1889,6 +1899,60 @@ function Skin:GhostStep(elapsed)
     local sink = Smooth(Clamp(ghost.time / MORPH_SINK, 0, 1))
     self:GhostLayers(alpha, math.min(alpha, 1 - sink), math.min(alpha, 1 - sink), SINK_DROP * sink)
     if alpha <= 0 or ghost.time > 5 then ghost:Hide() end
+end
+
+--- /spoken ghost: what the window knows of the dialogs and the last close. With `show`, the open
+--- dialog (or the last read) drawn again where it is for four seconds.
+function Skin:GhostReport(show)
+    local function Say(text) print("|cff88ccffSpoken ghost:|r " .. text) end
+    -- One value, whatever a call returns.
+    local function S(...) local value = ...; return tostring(value) end
+    if not self.frame then Say("the DialogueUI window was never built (style not DialogueUI?)") return end
+    Say(format("enabled=%s window strata=%s level=%s parent=%s", S(self:IsEnabled()),
+        S(self.frame:GetFrameStrata()), S(self.frame:GetFrameLevel()),
+        self.frame:GetParent() == UIParent and "UIParent" or S(self.frame:GetParent() and self.frame:GetParent():GetName())))
+    for _, dialog in ipairs(self.dialogs or {}) do
+        local parts = self.captures and self.captures[dialog]
+        Say(format("%s: shown=%s, read %d times, last reading %d parts, watch shown=%s", dialog:GetName() or "?",
+            S(dialog:IsShown()), self.captureCount and self.captureCount[dialog] or 0, parts and table.getn(parts) or 0,
+            S(self.dialogWatches[dialog] and self.dialogWatches[dialog]:IsVisible())))
+    end
+    if table.getn(self.dialogs or {}) == 0 then Say("no DialogueUI dialogs were found when the window was built") end
+    if self.captureProblem then Say("reading failed: " .. self.captureProblem) end
+    local close = self.lastClose
+    if close then
+        Say(format("last close: %s, its own line=%s, read before %d, as it closed %d, drawn=%s%s", close.dialog,
+            S(close.owns), close.read, close.closing, S(close.drawn),
+            close.problem and (", failed: " .. close.problem) or ""))
+    else
+        Say("no dialog has closed on a playing line since the reload")
+    end
+    local ghost = self.ghost
+    if ghost then
+        local point, _, _, x, y = ghost:GetPoint(1)
+        local texts, textures = 0, 0
+        for _, item in ipairs(ghost.texts or {}) do if item:IsShown() then texts = texts + 1 end end
+        for _, item in ipairs(ghost.textures or {}) do if item:IsShown() then textures = textures + 1 end end
+        Say(format("drawn again: shown=%s strata=%s level=%s scale=%.2f at %s %.0f,%.0f, %d texts %d textures, paper %.2f only %.2f",
+            S(ghost:IsShown()), S(ghost:GetFrameStrata()), S(ghost:GetFrameLevel()), ghost:GetScale() or 0,
+            S(point), x or 0, y or 0, texts, textures, ghost.paper:GetAlpha() or 0, ghost.only:GetAlpha() or 0))
+    end
+    if show then
+        local dialog
+        for _, candidate in ipairs(self.dialogs or {}) do
+            if candidate:IsShown() then dialog = candidate end
+        end
+        dialog = dialog or self.dialogs and self.dialogs[1]
+        if not dialog then return end
+        local ok, parts = pcall(self.Capture, self, dialog)
+        if not ok then Say("reading it now failed: " .. S(parts)) return end
+        if table.getn(parts) == 0 then parts = self.captures and self.captures[dialog] or parts end
+        local okShow, problem = pcall(self.ShowGhost, self, dialog, parts, PlayerFrame:Current())
+        if not okShow then Say("drawing it failed: " .. S(problem)) return end
+        self.ghost.driven = true
+        Say(format("drawn again from %d parts, for four seconds", table.getn(parts)))
+        C_Timer.After(4, function() self:HideGhost() end)
+    end
 end
 
 --- Gone, and this window's own things all seen again.

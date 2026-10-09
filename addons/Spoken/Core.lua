@@ -335,6 +335,9 @@ function Addon:Enable()
                 PlayerFrame:RefreshConfig()
                 Transcript:RefreshConfig()
             end
+        elseif command == "ghost" or command == "ghost show" then
+            -- What the DialogueUI window drew of the last dialog to close (DialogueUIPlayer).
+            if DialogueUIPlayer.GhostReport then DialogueUIPlayer:GhostReport(command == "ghost show") end
         elseif command == "options" or command == "settings" then
             Options:Open()
         elseif command == "share" and Gather then
