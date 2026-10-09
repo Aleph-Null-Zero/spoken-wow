@@ -259,6 +259,9 @@ function Skin:Initialize()
         end
     end
     Callbacks:Register("CLIP_QUEUED", function(clip) self:Queued(clip) end)
+    -- Turning to the next line, this window fades out with the words it shows: the captions wait
+    -- for it rather than taking the next line's first (Skin:WillTurn).
+    Transcript.holdFor = function(clip) return self:WillTurn(clip) end
     -- A quest page closing: its words fade at once, not when DialogueUI gets round to hiding it.
     local quest = _G.DUIQuestFrame
     if quest and self.dialogHides and self.dialogHides[quest] then
@@ -1362,6 +1365,14 @@ function Skin:SettleStep(elapsed)
     end
 end
 
+--- Whether this window, showing a line, will fade out to turn to `clip` (Skin:Update), so the
+--- captions should keep the words it shows until it has.
+function Skin:WillTurn(clip)
+    return self:IsEnabled() and self.frame ~= nil and self.clip ~= nil and clip ~= self.clip and self.wanted
+        and self.frame:IsShown() and (self.level or 0) > 0 and not self.settling and not self.wordsHidden
+        and not self:Covered() and true or false
+end
+
 --- This window's words, title and buttons out of sight, its paper left (Skin:StartSettle).
 function Skin:HideWords()
     self.wordsHidden, self.wordsAlpha = true, 0
@@ -1801,6 +1812,10 @@ function Skin:Update()
     self:Touch()
     -- Fading out to turn to the next line: it comes in once faded (Skin:Tick).
     if self.turning and self.frame:IsShown() then return end
+    -- Not turning after all: the captions held for it go on (Skin:WillTurn).
+    if not self.turning and not self.buffered and not self.arming and Transcript.held and clip == self.clip then
+        Transcript:Release()
+    end
     if clip ~= self.clip then
         -- Following another line on screen: this one fades out whole, as the window does when the
         -- queue ends, and the next fades in from nothing once it has (Skin:Tick), its paper,
