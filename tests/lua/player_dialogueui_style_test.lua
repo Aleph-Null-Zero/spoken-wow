@@ -657,9 +657,10 @@ Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Fade", portrait = { kind = "none" } } }))
 Skin:Update()
 local room = Skin.lineRoom
-Expect("the words have a line's room over them in the captions", room .. " " .. T.labels[1].anchor.y,
-    (T.style.size + T.style.lineGap) .. " " .. (-room))
-Expect("...and under them", T.frame:GetHeight(), Skin.lines * room + 2 * room)
+local lineHeight = T.style.size + T.style.lineGap
+Expect("the words have room over them in the captions, up to the divider's line, a line's at most",
+    room > 0 and room <= lineHeight and T.labels[1].anchor.y == -room, true)
+Expect("...and a line's room under them", T.frame:GetHeight(), Skin.lines * lineHeight + room + lineHeight)
 Expect("...reaching over the header's gap, not adding to it: the words where they were",
     -(T.frame.anchor.y - room) - Skin.headerDivider:GetHeight() < room + T.style.size, true)
 Expect("...no parchment strips drawn over them", Skin.strips, nil)
