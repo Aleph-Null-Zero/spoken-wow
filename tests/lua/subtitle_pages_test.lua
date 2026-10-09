@@ -88,5 +88,22 @@ Expect("...none longer than four lines", Most(pages, function(page) return #Subt
 Expect("...losing no words", Words(table.concat(pages, " ")), Words(rambling))
 cfg.SubtitleSentences = 3
 
+-- Show Name and Title off (issue #288): the words alone, as a film's subtitles, from the top.
+if not Subtitle.frame then Subtitle:Build() end
+-- Heights the stub's text cannot measure.
+Subtitle.measure.GetStringHeight = function() return 16 end
+Subtitle.title.GetStringHeight = function() return 18 end
+Subtitle:Layout(short)
+local named = Subtitle.lines[1].anchor.y
+cfg.SubtitleName = false
+Subtitle:Layout(short)
+Expect("with Show Name and Title off the row over the words is hidden", Subtitle.nameRow:IsShown(), false)
+Expect("...and the words start at the top, where the row was", Subtitle.lines[1].anchor.y .. " " .. tostring(named < -12),
+    "-12 true")
+cfg.SubtitleName = true
+Subtitle:Layout(short)
+Expect("...on again, the row is back over them", tostring(Subtitle.nameRow:IsShown()) .. " " .. Subtitle.lines[1].anchor.y,
+    "true " .. named)
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll subtitle page tests passed")
