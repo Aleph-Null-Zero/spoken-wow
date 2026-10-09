@@ -512,9 +512,13 @@ Expect("...then gone, the count back where it stood, after the name", tostring(S
 local first = Spoken:GetCurrent()
 Skin.skip.scripts.OnClick(Skin.skip)
 Expect("Skip goes on to the next line", Spoken:GetCurrent() ~= nil and Spoken:GetCurrent() ~= first, true)
-Expect("...its words fading in, as the subtitle's next line does", Skin.content:GetAlpha() < 1, true)
-Skin:Tick(0.3)
-Expect("...all the way", Skin.content:GetAlpha(), 1)
+Expect("...the window fading out whole first, as when the queue ends", tostring(Skin.turning) .. " "
+    .. tostring(Skin.wanted) .. " " .. tostring(Skin.frame:IsShown()), "true false true")
+Skin:Tick(1)
+Expect("...then the next line laid out unseen, to fade in", tostring(Skin.turning) .. " " .. tostring(Skin.wanted) .. " "
+    .. tostring(Skin.clip == Spoken:GetCurrent()), "nil true true")
+Skin:Tick(1)
+Expect("...and faded in, whole", Skin.level .. " " .. Skin.content:GetAlpha(), "1 1")
 do
     local height = Skin.frame:GetHeight()
     Skin.heightWant = height + 60
@@ -851,9 +855,12 @@ Skin:Tick(1)
 Expect("(the stone's page on screen)", tostring(Skin.frame:IsShown()) .. " " .. Skin.parchments[1].texture, "true " .. BOOK .. "Metal.png")
 Spoken:Skip()
 Skin:Update()
-Expect("a quest's line following a stone's on screen is at its own height at once, not easing to it",
-    tostring(Skin.heightWant) .. " " .. tostring(Skin.lineFade) .. " " .. tostring(Skin.frame:GetHeight() == Skin.settledHeight),
-    "nil 0 true")
+Expect("a quest's line following a stone's on screen: the stone fades out whole first, still in stone",
+    tostring(Skin.turning) .. " " .. Skin.parchments[1].texture, "true " .. BOOK .. "Metal.png")
+Skin:Tick(1)
+Expect("...then the quest's comes in on its own paper, at its own height, never easing from the stone's",
+    Skin.parchments[1].texture .. " " .. tostring(Skin.heightWant) .. " " .. tostring(Skin.frame:GetHeight() == Skin.settledHeight),
+    BROWN .. "Parchment.png nil true")
 Spoken:StopAll()
 
 -- The book view open: this window steps aside; closed on a page that reads on, the window takes
