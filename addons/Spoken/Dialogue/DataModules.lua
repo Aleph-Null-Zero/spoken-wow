@@ -829,7 +829,8 @@ function DataModules:ShowMissingPopup()
         end
     end
     local details = next(loadDetails) and ("|n|nDetected but not loaded:|n" .. table.concat(loadDetails, "|n")) or ""
-    local text = [[No usable sound packs were loaded.|n|nKeep a sound pack installed beside this addon - "Spoken Quests Audio", or the older "AI_VoiceOverData_Vanilla". Run "/spq diagnostics" for details.]] .. details
+    -- Shared by the quests and gossip modules, so it names both: either may be the one on.
+    local text = [[No usable sound packs were loaded.|n|nKeep a sound pack installed beside Spoken - "Spoken Quests Audio" and its Gossip pack, or the older "AI_VoiceOverData_Vanilla". Run "/spq diagnostics" (quests) or "/spg diagnostics" (gossip) for details.]] .. details
     if IsGamepadUI() then
         DEFAULT_CHAT_FRAME:AddMessage("|cff66bbffSpoken:|r " .. text)
         return

@@ -47,7 +47,11 @@ local defaults = {
 
 local lastGossipOptions
 local selectedGossipOption
+-- Set by picking any option, even one whose label could not be found: a page reached that way
+-- was asked for, so how often the NPC's greetings play is no reason to keep it quiet.
+local gossipOptionPicked
 local currentGossipSoundData
+local GossipPageFollowsOption
 
 --------------------------------------------------------------------------------
 -- State
@@ -268,6 +272,16 @@ function Addon:TakeOverFromQuests()
         end
     end
 
+    -- Every character's profile there, where this module has none yet, so alts sharing one there
+    -- share it here. The character logging in already has its default, so it is set below.
+    if type(quests.profileKeys) == "table" then
+        sv.profileKeys = sv.profileKeys or {}
+        for key, name in pairs(quests.profileKeys) do
+            if sv.profileKeys[key] == nil then
+                sv.profileKeys[key] = name
+            end
+        end
+    end
     local charKey = db.keys and db.keys.char
     local profile = quests.profileKeys and charKey and quests.profileKeys[charKey]
     if profile and profile ~= db:GetCurrentProfile() then
@@ -443,6 +457,7 @@ function Addon:SetupEvents()
     -- Which option the player picked, for the next page's label.
     if C_GossipInfo and C_GossipInfo.SelectOption then
         hooksecurefunc(C_GossipInfo, "SelectOption", function(optionID)
+            gossipOptionPicked = true
             if lastGossipOptions then
                 for _, info in ipairs(lastGossipOptions) do
                     if info.gossipOptionID == optionID then
@@ -455,6 +470,7 @@ function Addon:SetupEvents()
         end)
     elseif SelectGossipOption then
         hooksecurefunc("SelectGossipOption", function(index)
+            gossipOptionPicked = true
             if lastGossipOptions then
                 selectedGossipOption = lastGossipOptions[1 + (index - 1) * 2]
                 lastGossipOptions = nil
@@ -477,7 +493,8 @@ end
 -- The handlers
 --------------------------------------------------------------------------------
 
-function Addon:ShouldPlayGossip(guid, text, manual)
+---@param followsOption boolean? the page was reached by picking one of the NPC's options
+function Addon:ShouldPlayGossip(guid, text, manual, followsOption)
     local npcKey = guid or "unknown"
 
     -- Asked for by name, so having heard it before does not stand in the way.
@@ -486,6 +503,13 @@ function Addon:ShouldPlayGossip(guid, text, manual)
     end
     if not self:IsPartOn() then
         return
+    end
+
+    -- Once per NPC is about the greeting an NPC opens with. A guard's directions are a page the
+    -- player picked an option to reach, and keying them on the NPC kept every one of them quiet
+    -- once the greeting had played. Never still means no gossip at all.
+    if followsOption and self.db.profile.Audio.GossipFrequency ~= Enums.GossipFrequency.Never then
+        return true, npcKey
     end
 
     local gossipSeenForNPC = self.db.char.hasSeenGossipForNPC[npcKey]
@@ -534,7 +558,10 @@ function Addon:MuteGreetingAhead(event)
     if not guid and not speaker.name then
         return
     end
-    if not self:ShouldPlayGossip(guid, nil, false) or not DataModules:HasGossipFor(speaker) then
+    -- A page reached by picking an option is read whatever the frequency. The page is not noted
+    -- yet this early, so the pick is still pending.
+    local followsOption = event == "GOSSIP_SHOW" and GossipPageFollowsOption(false)
+    if not self:ShouldPlayGossip(guid, nil, false, followsOption) or not DataModules:HasGossipFor(speaker) then
         return
     end
     Spoken:MuteGameDialogueAhead(Player.source)
@@ -558,7 +585,8 @@ function Addon:ExpectedLine(event, textIsCurrent)
     if not guid and not speaker.name then
         return nil
     end
-    if not self:ShouldPlayGossip(guid, nil, false) or not DataModules:HasGossipFor(speaker) then
+    local followsOption = event == "GOSSIP_SHOW" and GossipPageFollowsOption(textIsCurrent)
+    if not self:ShouldPlayGossip(guid, nil, false, followsOption) or not DataModules:HasGossipFor(speaker) then
         return nil
     end
     if textIsCurrent and not self:GetVisibleLine(event) then
@@ -608,18 +636,36 @@ local shownGossipTitle
 -- Which page that was. The direct event and the frame's OnShow can both deliver one page,
 -- and the second must not overwrite the label the first took.
 local shownGossipKey
+-- Whether that page was reached by picking an option, which ShouldPlayGossip needs to know.
+local shownGossipFollowsOption
+
+local function GossipPageKey()
+    return tostring(Utils:GetNPCGUID() or Utils:GetNPCName()) .. ":" .. tostring(GetGossipText())
+end
+
+--- Whether the gossip page on screen was reached by picking an option. Before NoteGossipPage
+--- the pick is still pending; after it, the page it noted carries it. DialogueUI can draw the
+--- page on either side of that, so a drawn page (`textIsCurrent`) checks both.
+function GossipPageFollowsOption(textIsCurrent)
+    if gossipOptionPicked then
+        return true
+    end
+    return textIsCurrent and shownGossipFollowsOption and shownGossipKey == GossipPageKey() or false
+end
 
 --- A fresh gossip page: note which option led here and what the page offers next, whether or
 --- not it is read. At Never it is not, and the next page's label would otherwise be looked up
 --- in this page's predecessor's options.
 function Addon:NoteGossipPage()
-    local pageKey = tostring(Utils:GetNPCGUID() or Utils:GetNPCName()) .. ":" .. tostring(GetGossipText())
-    if not selectedGossipOption and pageKey == shownGossipKey then
+    local pageKey = GossipPageKey()
+    if not gossipOptionPicked and pageKey == shownGossipKey then
         return
     end
     shownGossipKey = pageKey
     shownGossipTitle = selectedGossipOption and format([["%s"]], selectedGossipOption)
+    shownGossipFollowsOption = gossipOptionPicked
     selectedGossipOption = nil
+    gossipOptionPicked = nil
     lastGossipOptions = nil
     if C_GossipInfo and C_GossipInfo.GetOptions then
         lastGossipOptions = C_GossipInfo.GetOptions()
@@ -638,7 +684,7 @@ function Addon:GOSSIP_SHOW(event, manual)
         return
     end
 
-    local play, npcKey = self:ShouldPlayGossip(guid, gossipText, manual)
+    local play, npcKey = self:ShouldPlayGossip(guid, gossipText, manual, shownGossipFollowsOption)
     if not play then
         return
     end
@@ -677,6 +723,8 @@ function Addon:GOSSIP_CLOSED()
     currentGossipSoundData = nil
 
     selectedGossipOption = nil
+    gossipOptionPicked = nil
     shownGossipTitle = nil
     shownGossipKey = nil
+    shownGossipFollowsOption = nil
 end

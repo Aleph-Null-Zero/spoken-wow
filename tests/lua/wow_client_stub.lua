@@ -34,6 +34,7 @@ local world = {
     -- the older quest tests read it unchanged; the channel of the nth play is beside it.
     playedChannels = {},
     stopped = {},      -- handles StopSound was asked to stop, in order
+    kitSounds = {},    -- every PlaySound, as {kit, channel}: UI clicks and the item cue
     music = {},        -- paths PlayMusic was given, in order (the 2.4.3/3.3.5 path)
     missing = {},      -- paths PlaySoundFile refuses, as a set
     cvars = {},        -- overrides; anything unset reads as "1"
@@ -88,6 +89,7 @@ end
 function M.HidePanels()
     M.ShowPanel(nil)
     world.gossipText = nil
+    world.gossipOptions = nil
 end
 
 --- Deliver a client event to every frame registered for it.
@@ -517,8 +519,10 @@ _G.GameTooltip = Widget("Frame", "GameTooltip")
 function _G.GameTooltip_Hide() end
 function _G.MouseIsOver() return false end
 function _G.SetCursor() end
-function _G.PlaySound() end
-_G.SOUNDKIT = { U_CHAT_SCROLL_BUTTON = 1115 }
+function _G.PlaySound(kit, channel)
+    table.insert(world.kitSounds, { kit = kit, channel = channel })
+end
+_G.SOUNDKIT = { U_CHAT_SCROLL_BUTTON = 1115, IG_QUEST_LOG_CLOSE = 845 }
 _G.HIGHLIGHT_FONT_COLOR = { r = 1, g = 1, b = 1 }
 _G.NORMAL_FONT_COLOR = { r = 1, g = 0.82, b = 0 }
 _G.GRAY_FONT_COLOR = { r = 0.5, g = 0.5, b = 0.5 }
@@ -574,8 +578,11 @@ _G.ERR_ZONE_EXPLORED = "Discovered %s."
 function _G.GetGossipText() return world.gossipText or "" end
 --- Put words on screen from an NPC with nothing to offer but talk: gossip text with no quest
 --- panel behind it.
-function M.ShowGossip(text)
+--- `options` are the labels the page offers, each leading to another page of gossip; see
+--- PickGossipOption.
+function M.ShowGossip(text, options)
     world.gossipText = text
+    world.gossipOptions = options
     world.panels.GossipFrame = true
 end
 --- The namespaced gossip API. SetClient hands it to the clients that have one.
@@ -583,8 +590,47 @@ M.gossipAPI = {
     GetText = function() return world.gossipText or "" end,
     GetNumActiveQuests = function() return 0 end,
     GetNumAvailableQuests = function() return 0 end,
-    GetOptions = function() return {} end,
+    GetOptions = function()
+        local infos = {}
+        for i, name in ipairs(world.gossipOptions or {}) do
+            infos[i] = { name = name, gossipOptionID = 1000 + i }
+        end
+        return infos
+    end,
+    SelectOption = function() end,
 }
+--- The pre-namespace pair: options come back flattened as name, type, name, type...
+function _G.GetGossipOptions()
+    local flat = {}
+    for _, name in ipairs(world.gossipOptions or {}) do
+        table.insert(flat, name)
+        table.insert(flat, "gossip")
+    end
+    return unpack(flat)
+end
+function _G.SelectGossipOption() end
+
+--- The player clicking one of the page's options, through whichever API the client has.
+function M.SelectGossipOption(name)
+    for i, option in ipairs(world.gossipOptions or {}) do
+        if option == name then
+            if _G.C_GossipInfo then
+                _G.C_GossipInfo.SelectOption(1000 + i)
+            else
+                _G.SelectGossipOption(i)
+            end
+            return
+        end
+    end
+    error("no gossip option " .. tostring(name))
+end
+
+--- ...and the NPC answering with `nextText` on a fresh GOSSIP_SHOW.
+function M.PickGossipOption(name, nextText)
+    M.SelectGossipOption(name)
+    M.ShowGossip(nextText)
+    M.FireEvent("GOSSIP_SHOW")
+end
 
 -- The book UI, which is the same API on all three targets: Era, Anniversary and Forever.
 -- ItemTextFrame serves mail as well as books, which is why a test can set a creator.
@@ -638,7 +684,6 @@ end
 function _G.GetGreetingText() return world.greetingText or "" end
 function _G.GetNumGossipActiveQuests() return 0 end
 function _G.GetNumGossipAvailableQuests() return 0 end
-function _G.GetGossipOptions() return end
 _G.ERR_ZONE_EXPLORED_XP = "Discovered %s: %d experience gained."
 --- The real semantics: the original runs, then the hook, with the same arguments. A no-op
 --- stood here, so nothing an addon installed through it ever ran - and the quest log play
@@ -966,9 +1011,6 @@ local function EmbedTimers(addon)
     function addon:CancelTimer(timer)
         if timer then timer.at = nil end
     end
-    function addon:TimeLeft(timer)
-        return timer and timer.at and math.max(0, timer.at - world.time) or 0
-    end
     return addon
 end
 libs["AceTimer-3.0"] = { Embed = function(_, target) return EmbedTimers(target) end }
@@ -1150,7 +1192,7 @@ end
 
 --- Reset every piece of sound state a test can observe.
 function M.ResetSound()
-    for _, key in ipairs({ "played", "playedChannels", "stopped", "music", "missing", "cvars", "cvarLog" }) do
+    for _, key in ipairs({ "played", "playedChannels", "stopped", "kitSounds", "music", "missing", "cvars", "cvarLog" }) do
         world[key] = {}
     end
 end

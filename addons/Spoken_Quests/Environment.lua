@@ -19,4 +19,4 @@ end
 core.AddonFolder = "Spoken_Quests"
 -- What /spq diagnostics prints. A literal because this file loads before the addon has any
 -- metadata API; scripts/package.sh refuses to build when it disagrees with the .toc.
-core.AddonVersion = "3.1.0"
+core.AddonVersion = "3.2.0"
