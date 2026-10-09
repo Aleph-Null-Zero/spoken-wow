@@ -842,6 +842,18 @@ quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The 
 Expect("a quest's line is back in the quest window's parchment", Skin.parchments[1].texture
     .. " " .. Rows(Skin.parchments[3]), "Interface/AddOns/DialogueUI/Art/Theme_Brown/Parchment.png 896-1152")
 Spoken:StopAll()
+-- Another line following on screen in another art: another page, at its own height at once, its
+-- words fading in as any next line's do.
+books:Enqueue(Page("Stone"))
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
+Skin:Tick(1)
+Expect("(the stone's page on screen)", tostring(Skin.frame:IsShown()) .. " " .. Skin.parchments[1].texture, "true " .. BOOK .. "Metal.png")
+Spoken:Skip()
+Skin:Update()
+Expect("a quest's line following a stone's on screen is at its own height at once, not easing to it",
+    tostring(Skin.heightWant) .. " " .. tostring(Skin.lineFade) .. " " .. tostring(Skin.frame:GetHeight() == Skin.settledHeight),
+    "nil 0 true")
+Spoken:StopAll()
 
 -- The book view open: this window steps aside; closed on a page that reads on, the window takes
 -- the book's place and size and goes to the top left, as from the quest window.
