@@ -598,9 +598,7 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		mapID = mapID,
 		areaKey = areaKey,
 		present = {
-			-- Over the place's name, where it is: an area's zone, a zone's continent, a
-			-- continent's world (PlaceAbove), as the Compendium's page says it. The world has
-			-- nothing over it.
+			-- Over the place's name, the place it is in.
 			header = areaKey and (self:GetMapName(mapID) or label) or self:GetMapName(self:PlaceAbove(mapID)),
 			label = label,
 			transcript = entry and entry.full,
