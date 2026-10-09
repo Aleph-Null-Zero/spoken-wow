@@ -1421,6 +1421,14 @@ local UNCOPIED = { Model = true, PlayerModel = true, DressUpModel = true, Cinema
 -- over to this window's own by MORPH_SWAP; the dialog's paper dissolving from PAPER_FROM.
 local MORPH_SINK, SINK_DROP, MORPH_FROM, MORPH_TO, MORPH_SWAP, PAPER_FROM = .18, 6, .04, .46, .58, .2
 
+-- A texture's rotation, read (no `angle`) or set. Run with the game's own globals as its
+-- environment: the client answers GetRotation with a Vector2D too, whose mixin it looks up in the
+-- caller's environment, and this file's has none ("unable to find mixin or metatable").
+local Rotation = setfenv(function(region, angle)
+    if angle == nil then return (region:GetRotation()) end
+    region:SetRotation(angle)
+end, getfenv(0))
+
 -- Where two clipping rectangles overlap ({ left, bottom, width, height }), either may be nil.
 local function Overlap(a, b)
     if not a then return b end
@@ -1481,7 +1489,7 @@ function Skin:Capture(dialog)
             part.color = { region:GetVertexColor() }
             part.blend = region:GetBlendMode()
             part.desaturated = region.IsDesaturated and region:IsDesaturated() or false
-            part.rotation = region.GetRotation and region:GetRotation() or 0
+            part.rotation = region.GetRotation and Rotation(region) or 0
             -- What cuts it to shape (a portrait's circle, a button's brushed edge), where it is.
             local count = region.GetNumMaskTextures and region:GetNumMaskTextures() or 0
             for index = 1, count do
@@ -1721,7 +1729,7 @@ function Skin:ShowGhost(dialog, parts, clip)
             region:SetVertexColor(part.color[1] or 1, part.color[2] or 1, part.color[3] or 1, part.color[4] or 1)
             region:SetBlendMode(part.blend or "BLEND")
             region:SetDesaturated(part.desaturated and true or false)
-            if region.SetRotation then region:SetRotation(part.rotation or 0) end
+            if region.SetRotation then Rotation(region, part.rotation or 0) end
         end
         -- Placed from its frame's corner: a matched thing's own, else the dialog's screen corner.
         local fromLeft, fromBottom = holder.tag and holder.left or 0, holder.tag and holder.bottom or 0
