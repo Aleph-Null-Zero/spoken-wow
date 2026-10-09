@@ -724,15 +724,29 @@ Expect("the dialog closing on a line starts the window where the dialog was, as 
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
 Expect("...as tall as the dialog", Near(Skin.frame:GetHeight() * Skin.frame.scale, DUI.frameHeight * 0.8), true)
 Expect("...in full at once, not fading in", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime), "1 nil")
-Skin:Tick(0.2)
+Skin:Tick(0.1)
+Expect("...lifted off it first, a touch larger, its shadow thrown and light across it",
+    Skin.frame.scale > 0.8 and Skin.shadow:IsShown() and Skin.glint:IsShown(), true)
+Skin:Tick(0.32)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
+Expect("...on a curve, not straight at the corner", (function()
+    local s = Skin.settling
+    local u = (s.time - 0.12) / 0.5
+    local straightX = s.left + (s.toLeft - s.left) * (u < 0.5 and 4 * u * u * u or 1 - (2 - 2 * u) ^ 3 / 2)
+    return math.abs(Skin.frame.anchor.x * Skin.frame.scale - straightX) > 1
+end)(), true)
 Skin:Tick(0.15)
-Expect("...still on its way at 0.35 seconds", Skin.settling ~= nil, true)
+Expect("...still on its way at 0.57 seconds", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
-Expect("...and settled at the top left by 0.4, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Expect("...and settled at the top left by 0.62, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
+Skin:Tick(0.05)
+Expect("...landing: giving under it as it touches down", Skin.landing ~= nil and not AtTopLeft(), true)
+Skin:Tick(1)
+Expect("...then at rest, its shadow and the light gone", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
+    .. tostring(Skin.shadow:IsShown()) .. " " .. tostring(Skin.glint:IsShown()), "nil true false false")
 -- Nowhere known to start from: it is simply put where it rests.
 local WindowPlace = env.DialogueUITheme.WindowPlace
 env.DialogueUITheme.WindowPlace = function() return nil end
@@ -800,7 +814,8 @@ Expect("closed on a page reading on, the window starts where the book was, as wi
     Near(Skin.frame.anchor.x * scale, 200 * 0.8) and Near(Skin.frame.anchor.y * scale, (100 + 477.87) * 0.8)
     and Near(Skin.frame:GetWidth() * scale, 409.6 * 0.8) and Skin.parchments[1].texture == BOOK .. "Metal.png", true)
 Expect("...as tall as the book", Near(Skin.frame:GetHeight() * scale, 477.87 * 0.8), true)
-Skin:Tick(0.45)
+Skin:Tick(0.7)
+Skin:Tick(1)
 Expect("...and settles at the top left, the stone's edge 16 from the screen's", AtTopLeft(123, 112) and Skin.settling == nil, true)
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
