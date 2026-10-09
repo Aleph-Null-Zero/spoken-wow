@@ -26,13 +26,13 @@ local MIN_LINES = 2
 -- shrinks to this (Skin:Settle).
 local BASE_SCALE = 0.65
 -- Where it settles when the dialog closes: this far from the screen's top left, the paper's
--- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep): lifted
--- off it SETTLE_GROW larger over SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed SETTLE_BOW
--- of the way to one side (down, so it stays on the screen), then landing: giving SETTLE_GIVE
--- under it and back, over LAND_TIME.
+-- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep), moving as
+-- the tuck's page and window do: lifted off it SETTLE_RISE up and SETTLE_GROW larger over
+-- SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed SETTLE_BOW of the way to one side (down, so
+-- it stays on the screen), then landing with a little jump, up SETTLE_GIVE and back, over LAND_TIME.
 local EDGE = 16
-local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .06, .28, .26
-local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 4
+local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .1, .28, .4
+local SETTLE_GROW, SETTLE_RISE, SETTLE_BOW, SETTLE_GIVE = .03, 4, .16, 7
 -- The dialog's words fading on DialogueUI's window before it closes (Skin:FadeDialogOut), and this
 -- window's fading in once it has landed (Skin:LandStep): the flight is of the paper alone.
 local CONTENT_OUT, CONTENT_IN = .1, .16
@@ -1334,7 +1334,9 @@ function Skin:SettleStep(elapsed)
     local height = Toward(settling.height, toHeight)
     local width = (frame:GetWidth() or 0) * ui * base
     local left = Bend(settling.left, settling.bendX or settling.left, settling.toLeft, eased) - (grow - 1) * width / 2
-    local top = Bend(settling.top, settling.bendY or settling.top, settling.toTop, eased) + (grow - 1) * height / 2
+    -- Up a touch as it is lifted, as the tuck's page is, the curve starting from there.
+    local rise = SETTLE_RISE * ui * lift
+    local top = Bend(settling.top + rise, settling.bendY or settling.top, settling.toTop, eased) + (grow - 1) * height / 2
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left / pixels, top / pixels)
     frame:SetHeight(height * grow / pixels)
@@ -1371,7 +1373,8 @@ function Skin:LandStep(elapsed)
     landing.time = landing.time + elapsed
     local t = landing.time
     if self.wordsHidden then self:ShowWords(Smooth(Clamp(t / CONTENT_IN, 0, 1))) end
-    self:Give(landing, -SETTLE_GIVE * math.exp(-7 * t) * math.sin(2 * math.pi * t / 0.3))
+    -- The little jump this window gives as the tuck's page goes under it: up and back, settling.
+    self:Give(landing, SETTLE_GIVE * math.exp(-6 * t) * math.sin(2 * math.pi * t / 0.34))
     local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
     self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
     if t >= LAND_TIME then self:StopLanding() end
