@@ -725,13 +725,17 @@ OpenDialog()
 local words = CreateFrame("Frame", nil, DUI)
 DUI.BackgroundFrame = CreateFrame("Frame", nil, DUI)
 DUI.hooks = {}
-DUI:SetScript("OnHide", function() end)
+-- DialogueUI hides it again from its own OnHide.
+DUI:SetScript("OnHide", function(self) self:Hide() end)
 DUI:Hide()
 Skin:CloseStep(0.07)
 Expect("the dialog closing on its line fades its words on DialogueUI's window first, its paper staying",
     DUI:IsShown() and words.alpha > 0 and words.alpha < 1 and (DUI.BackgroundFrame.alpha or 1) == 1, true)
 Skin:CloseStep(0.1)
-Expect("...then closes, its words given back unseen", tostring(DUI:IsShown()) .. " " .. words.alpha, "false 1")
+if DUI.scripts and DUI.scripts.OnHide then DUI.scripts.OnHide(DUI) end
+Expect("...then closes, its words given back unseen, and still there when DialogueUI hides it again",
+    tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(Skin.closing), "false 1 nil")
+DUI:SetScript("OnHide", function() end)
 Skin.dialogWatch.scripts.OnHide(Skin.dialogWatch)
 DUI.BackgroundFrame = nil
 Expect("the dialog closing on a line starts the window where the dialog was, as large",

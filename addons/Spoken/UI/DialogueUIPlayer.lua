@@ -234,6 +234,8 @@ function Skin:Initialize()
             local hide = dialog.Hide
             dialog.Hide = function(frame, ...)
                 if self.closing and self.closing.dialog == frame then return end
+                -- Already hidden (DialogueUI hides it again from its own OnHide): nothing to fade.
+                if not frame:IsShown() then return hide(frame, ...) end
                 local ok, fades = pcall(self.FadesOnClose, self, frame)
                 if not (ok and fades) then return hide(frame, ...) end
                 self:FadeDialogOut(frame, hide)
@@ -1461,11 +1463,12 @@ function Skin:CloseStep(elapsed)
     local left = 1 - Smooth(Clamp(closing.time / CONTENT_OUT, 0, 1))
     for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha * left) end
     if closing.time >= CONTENT_OUT then
-        -- Closed for real, its words given back unseen for the next time it opens.
+        -- Its words given back, then closed for real in the same moment, so they are never seen
+        -- back: given back after, DialogueUI hiding it again from its own OnHide read them faded.
         self.closing = nil
         if self.closeDriver then self.closeDriver:Hide() end
-        closing.hide(closing.dialog)
         for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha) end
+        closing.hide(closing.dialog)
     end
 end
 
