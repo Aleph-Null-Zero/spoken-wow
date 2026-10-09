@@ -26,9 +26,13 @@ local MIN_LINES = 2
 -- shrinks to this (Skin:Settle).
 local BASE_SCALE = 0.65
 -- Where it settles when the dialog closes: this far from the screen's top left, the paper's
--- edge rather than the frame's. And how long it takes to get there from the dialog.
+-- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep): lifted
+-- off it SETTLE_GROW larger over SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed SETTLE_BOW
+-- of the way to one side (down, so it stays on the screen), then landing: giving SETTLE_GIVE
+-- under it and back while light runs across it, over LAND_TIME.
 local EDGE = 16
-local SETTLE_TIME = 0.4
+local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .12, .5, .5
+local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 5
 -- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
 -- the same event, in either order.
@@ -116,6 +120,28 @@ local parts = MinimalPlayer.parts
 local Font, Removable, ShowRemove, Label = parts.Font, parts.Removable, parts.ShowRemove, parts.Label
 local HeldLabel, Clamp, Waiting, BelongsTo = parts.HeldLabel, parts.Clamp, parts.Waiting, parts.BelongsTo
 local function Round(n) return math.floor(n + 0.5) end
+local function Smooth(t) return t * t * (3 - 2 * t) end
+local function EaseInOut(t)
+    if t < 0.5 then return 4 * t * t * t end
+    local f = 2 - 2 * t
+    return 1 - f * f * f / 2
+end
+local function EaseOutCubic(t)
+    local f = 1 - t
+    return 1 - f * f * f
+end
+-- Of a quadratic curve from a to c bent toward b.
+local function Bend(a, b, c, u) return (1 - u) * (1 - u) * a + 2 * (1 - u) * u * b + u * u * c end
+-- The point bowing a path from a to b `share` of its length to one side: the side below it, so a
+-- window flying to the screen's top edge never runs off it.
+local function BowOf(ax, ay, bx, by, share)
+    local dx, dy = bx - ax, by - ay
+    local length = math.sqrt(dx * dx + dy * dy)
+    if length <= 0 then return ax, ay end
+    local px, py = -dy / length, dx / length
+    if py > 0 then px, py = -px, -py end
+    return (ax + bx) / 2 + px * share * length, (ay + by) / 2 + py * share * length
+end
 -- Through Addon:Profile: the frame still redraws during UI teardown, after AceDB strips
 -- the profile.
 local function Config() return Addon:Profile("Frame") end
@@ -954,6 +980,7 @@ function Skin:SetVisible(visible, immediate)
     if not visible then self:HideTooltip() end
     if immediate then
         self:StopTuck()
+        self:StopLanding()
         self.wanted, self.preparing, self.arming, self.fadeTime, self.pending = false, nil, nil, nil, nil
         self.frame:Hide()
         self:Unbuffer()
@@ -1043,6 +1070,8 @@ function Skin:PaintCount()
 end
 
 function Skin:Tick(elapsed)
+    -- Landing from the frame after it lands, so it touches down where it rests.
+    if self.landing then self:LandStep(elapsed) end
     if self.settling then self:SettleStep(elapsed) end
     self.stillFor = (self.stillFor or 0) + elapsed
     -- Waiting to be still before it becomes one image: in, laid out unseen; out, deaf to the pointer.
@@ -1159,6 +1188,7 @@ function Skin:Settle(dialog)
     -- Fading as one image: it finishes, then shows the line as it does any (Skin:Unbuffer).
     if self.buffered then self.pending = self.pending or "update"; return end
     self:StopTuck()
+    self:StopLanding()
     self.arming, self.preparing = nil, nil
     self:Undeafen()
     if not self:Owns(dialog) then
@@ -1213,8 +1243,10 @@ function Skin:StartSettle(dialog)
     local to = frame.spokenBaseScale or 1
     local from = width / frame:GetWidth()
     local toLeft, toTop = self:Home()
+    local left = (x - width / 2) * ui
+    local bendX, bendY = BowOf(left, top * ui, toLeft, toTop, SETTLE_BOW)
     self.settling = { time = 0, from = from, to = to,
-        left = (x - width / 2) * ui, top = top * ui, height = height * ui, toLeft = toLeft, toTop = toTop }
+        left = left, top = top * ui, height = height * ui, toLeft = toLeft, toTop = toTop, bendX = bendX, bendY = bendY }
     -- In full at once, where the dialog was: no fade.
     self.wanted, self.fadeTime = true, nil
     self:SetLevel(1)
@@ -1239,30 +1271,136 @@ function Skin:ScaleControls(scale)
     self.controls:SetPoint("RIGHT", self.content, "TOPRIGHT", 0, -(self.controlsMiddle or 0) / scale)
 end
 
+--- The window lifted off the dialog, a touch larger and its shadow thrown, light across it; flown
+--- to where it rests on a curve, shrinking to its own size and height, its shadow drawn in; then
+--- landing (Skin:LandStep).
 function Skin:SettleStep(elapsed)
     local settling, frame = self.settling, self.frame
     settling.time = settling.time + elapsed
-    local t = Clamp(settling.time / SETTLE_TIME, 0, 1)
-    local eased = t * t * (3 - 2 * t)
+    local t = settling.time
+    local lift = Smooth(Clamp(t / SETTLE_LIFT, 0, 1))
+    local u = Clamp((t - SETTLE_LIFT) / SETTLE_TIME, 0, 1)
+    local eased = EaseInOut(u)
     local function Toward(a, b) return a + (b - a) * eased end
     local ui = UIParent:GetEffectiveScale()
-    local scale = Toward(settling.from, settling.to)
+    -- Grown about its middle as it is lifted, back to size as it lands.
+    local grow = 1 + SETTLE_GROW * lift * (1 - eased)
+    local base = Toward(settling.from, settling.to)
+    local scale = base * grow
     frame:SetScale(scale)
     -- The round buttons stay as large on screen as they settle at, as the dialog's own are, rather
     -- than starting at the dialog's larger scale with the rest.
     self:FitControls()
     local pixels = ui * scale
     local toHeight = (self.settledHeight or frame:GetHeight()) * ui * settling.to
+    local height = Toward(settling.height, toHeight)
+    local width = (frame:GetWidth() or 0) * ui * base
+    local left = Bend(settling.left, settling.bendX or settling.left, settling.toLeft, eased) - (grow - 1) * width / 2
+    local top = Bend(settling.top, settling.bendY or settling.top, settling.toTop, eased) + (grow - 1) * height / 2
     frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", Toward(settling.left, settling.toLeft) / pixels,
-        Toward(settling.top, settling.toTop) / pixels)
-    frame:SetHeight(Toward(settling.height, toHeight) / pixels)
-    if t == 1 then
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left / pixels, top / pixels)
+    frame:SetHeight(height * grow / pixels)
+    -- Its shadow thrown as it is lifted, drawn in as it comes down; light across it as it lifts.
+    self:ShadowUnder((1 - 0.7 * eased) * lift, 0.5 * lift * (1 - 0.3 * eased))
+    self:Light(settling, Clamp((t - 0.02) / (SETTLE_LIFT + 0.3), 0, 1), 0.35)
+    if u == 1 then
         self.settling = nil
         frame:SetScale(settling.to)
         if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
         self:Layout()
+        self.landing = { time = 0 }
     end
+end
+
+--- Landed where it rests: giving under it and back as it touches down, its shadow drawn in, and
+--- light running across it once more.
+function Skin:LandStep(elapsed)
+    local landing = self.landing
+    landing.time = landing.time + elapsed
+    local t = landing.time
+    self:Give(landing, -SETTLE_GIVE * math.exp(-7 * t) * math.sin(2 * math.pi * t / 0.3))
+    local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
+    self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
+    self:Light(landing, Clamp((t - 0.04) / (LAND_TIME - 0.04), 0, 1), 0.4)
+    if t >= LAND_TIME then self:StopLanding() end
+end
+
+function Skin:StopLanding()
+    local landing = self.landing
+    self.landing = nil
+    if self.shadow then self.shadow:Hide() end
+    if self.glint and not self.tuck then self.glint:Hide() end
+    if landing then self:Rest(landing) end
+end
+
+--- This window's own shadow, `reach` of the way thrown (down and right) and `alpha` dark: a frame
+--- of its own under it, never part of it.
+function Skin:ShadowUnder(reach, alpha)
+    local frame = self.frame
+    local shadow = self.shadow
+    if not shadow then
+        shadow = CreateFrame("Frame", nil, UIParent)
+        shadow:EnableMouse(false)
+        shadow.texture = shadow:CreateTexture(nil, "BACKGROUND")
+        shadow.texture:SetAllPoints()
+        self.shadow = shadow
+    end
+    if alpha <= 0.001 then shadow:Hide(); return end
+    shadow.texture:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
+    shadow:SetFrameStrata(frame:GetFrameStrata())
+    shadow:SetFrameLevel(math.max(0, frame:GetFrameLevel() - 1))
+    local dx, dy, blur = 8 * reach, -12 * reach, 18
+    shadow:ClearAllPoints()
+    shadow:SetPoint("TOPLEFT", frame, "TOPLEFT", dx - blur, dy + blur)
+    shadow:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", dx + blur, dy - blur)
+    shadow:SetAlpha(alpha)
+    shadow:Show()
+end
+
+--- Light running across this window, `g` of the way over it (0 to 1), at most `strength` bright:
+--- a frame of its own over it, kept on it.
+function Skin:Light(state, g, strength)
+    local frame = self.frame
+    self:TuckFrames()
+    local glint = self.glint
+    if g <= 0 or g >= 1 then
+        if g >= 1 and state.lit then glint:Hide(); state.lit = nil end
+        return
+    end
+    if not state.lit then
+        state.lit = true
+        glint.light:SetTexture(Theme:TexturePath() .. "RewardChoice-Sheen.png")
+        glint:SetFrameStrata(frame:GetFrameStrata())
+        glint:SetFrameLevel(frame:GetFrameLevel() + 40)
+        glint:ClearAllPoints()
+        glint:SetAllPoints(frame)
+        glint:Show()
+    end
+    local scale = frame:GetScale() or 1
+    local width, height = (frame:GetWidth() or 0) * scale, (frame:GetHeight() or 0) * scale
+    glint.light:ClearAllPoints()
+    glint.light:SetSize(width * 0.36, height)
+    glint.light:SetPoint("TOPLEFT", glint, "TOPLEFT", -width * 0.36 + width * 1.4 * EaseInOut(g), 0)
+    glint.light:SetAlpha(strength * math.sin(math.pi * g))
+end
+
+--- This window moved `offset` (UIParent's units, up) off where it rests, and back (Skin:Rest).
+function Skin:Give(state, offset)
+    local frame = self.frame
+    if not state.rest then
+        local point, relativeTo, relativePoint, x, y = frame:GetPoint(1)
+        if not point then return end
+        state.rest = { point, relativeTo, relativePoint, x, y }
+    end
+    local rest = state.rest
+    frame:ClearAllPoints()
+    frame:SetPoint(rest[1], rest[2], rest[3], rest[4], rest[5] + offset / (frame:GetScale() or 1))
+end
+
+function Skin:Rest(state)
+    if not state.rest then return end
+    state.rest = nil
+    if not Addon:RestoreLayout("DialogueUI", self.frame) then self:PlaceDefault() end
 end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
@@ -1311,19 +1449,6 @@ function Skin:QueuedBy(dialog)
     end
     return nil
 end
-
-local function Smooth(t) return t * t * (3 - 2 * t) end
-local function EaseInOut(t)
-    if t < 0.5 then return 4 * t * t * t end
-    local f = 2 - 2 * t
-    return 1 - f * f * f / 2
-end
-local function EaseOutCubic(t)
-    local f = 1 - t
-    return 1 - f * f * f
-end
--- Of a quadratic curve from a to c bent toward b.
-local function Bend(a, b, c, u) return (1 - u) * (1 - u) * a + 2 * (1 - u) * u * b + u * u * c end
 
 --- The page and the light: built once, out of this window.
 function Skin:TuckFrames()
@@ -1563,19 +1688,10 @@ function Skin:DrawTuck(tuck)
 
     -- The window giving as the page goes under it: up a little and back, settling.
     local nudge = t - (landed - 0.05)
-    local frame = self.frame
     if nudge >= 0 and nudge <= TUCK_NUDGE then
-        local offset = TUCK_GIVE * math.exp(-6 * nudge) * math.sin(2 * math.pi * nudge / 0.34)
-        local point, relativeTo, relativePoint, px, py = frame:GetPoint(1)
-        if not tuck.rest and point then tuck.rest = { point, relativeTo, relativePoint, px, py } end
-        local rest = tuck.rest
-        if rest then
-            frame:ClearAllPoints()
-            frame:SetPoint(rest[1], rest[2], rest[3], rest[4], rest[5] + offset / (frame:GetScale() or 1))
-        end
-    elseif tuck.rest and nudge > TUCK_NUDGE then
-        tuck.rest = nil
-        if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
+        self:Give(tuck, TUCK_GIVE * math.exp(-6 * nudge) * math.sin(2 * math.pi * nudge / 0.34))
+    elseif nudge > TUCK_NUDGE then
+        self:Rest(tuck)
     end
 
     -- Taken: light runs across the window and its count ripples out.
@@ -1583,14 +1699,10 @@ function Skin:DrawTuck(tuck)
     if taken >= 0 then
         if not tuck.taken then
             tuck.taken = true
-            self:StartGlint()
+            self:StartRipple()
         end
         local g = Clamp(taken / TUCK_GLINT, 0, 1)
-        local glint, glintWidth = self.glint, tuck.glintWidth or 0
-        glint.light:ClearAllPoints()
-        glint.light:SetSize(glintWidth * 0.36, tuck.glintHeight or 1)
-        glint.light:SetPoint("TOPLEFT", glint, "TOPLEFT", -glintWidth * 0.36 + glintWidth * 1.4 * EaseInOut(g), 0)
-        glint.light:SetAlpha(0.45 * math.sin(math.pi * g))
+        self:Light(tuck, g < 1 and math.max(g, 0.0001) or 1, 0.45)
         local ripple = self.ripple
         if ripple:IsShown() then
             local r = EaseOutCubic(Clamp(taken / (TUCK_GLINT * 0.8), 0, 1))
@@ -1604,16 +1716,10 @@ function Skin:DrawTuck(tuck)
     end
 end
 
---- Light over this window's paper, and its count, if it shows one, about to ripple.
-function Skin:StartGlint()
-    local tuck, frame, glint, ripple = self.tuck, self.frame, self.glint, self.ripple
+--- This window's count, if it shows one, about to ripple out from where it is.
+function Skin:StartRipple()
+    local tuck, frame, ripple = self.tuck, self.frame, self.ripple
     local scale = frame:GetScale() or 1
-    tuck.glintWidth, tuck.glintHeight = (frame:GetWidth() or 0) * scale, (frame:GetHeight() or 0) * scale
-    glint:SetFrameStrata(frame:GetFrameStrata())
-    glint:SetFrameLevel(frame:GetFrameLevel() + 40)
-    glint:ClearAllPoints()
-    glint:SetAllPoints(frame)
-    glint:Show()
     local count = self.count
     local cx, cy
     if count and count:IsShown() and (self.counted or 0) > 0 and count.GetCenter then cx, cy = count:GetCenter() end
@@ -1637,11 +1743,9 @@ function Skin:StopTuck()
     local tuck = self.tuck
     self.tuck = nil
     if self.card then self.card:Hide() end
-    if self.glint then self.glint:Hide() end
+    if self.glint and not self.landing then self.glint:Hide() end
     if self.ripple then self.ripple:Hide() end
-    if tuck and tuck.rest then
-        if not Addon:RestoreLayout("DialogueUI", self.frame) then self:PlaceDefault() end
-    end
+    if tuck then self:Rest(tuck) end
 end
 
 --- Caption lines the current clip's words take at `width`; nil while the captions hold
