@@ -418,10 +418,7 @@ end
 --- speaks), "report" (the bug), or "icon" (the texture `icon`, cut round). Anchor it and give
 --- it OnClick yourself.
 function Spoken:CreateRoundButton(parent, kind, name, icon)
-    local button = Actions.NewRound(parent, kind, name, icon)
-    -- What it is, for the DialogueUI window to match a closing dialog's buttons to its own.
-    if type(button) == "table" then button.spokenRound = kind end
-    return button
+    return Actions.NewRound(parent, kind, name, icon)
 end
 
 --- End the head; the backlog runs.

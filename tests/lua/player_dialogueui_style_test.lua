@@ -97,8 +97,6 @@ Expect("...named, described and drawn", env.Options.STYLE_LABELS.dialogueui ~= n
     and env.Options.STYLE_TIPS.dialogueui ~= nil and env.Options.SKETCHES.dialogueui ~= nil, true)
 SlashCmdList.SPOKEN("player dialogueui")
 local Skin, T = env.DialogueUIPlayer, env.Transcript
--- The closing dialog drawn again is off in the game until it is faithful; tested here all the same.
-Skin.drawGhost = true
 Expect("/spoken player dialogueui draws it", Spoken:GetPlayerStyle(), "dialogueui")
 Expect("...remembered as the style chosen", env.Addon.db.profile.Frame.Style, "dialogueui")
 Expect("...on its own frame", Spoken:GetPlayerFrame(), _G.SpokenDialogueUIPlayerFrame)
@@ -719,48 +717,17 @@ local frameLeft, frameTop = Skin.frame.GetLeft, Skin.frame.GetTop
 Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
 local dialogLeft = 960 + DUI.frameOffsetX * 0.8 - DUI.frameWidth * 0.8 / 2
 local dialogTop = 540 + DUI.frameHeight * 0.8 / 2
--- Its title, and its objectives, which this window does not have, as DialogueUI draws them.
-local function Inked(text, left, bottom)
-    local inked = stub.Widget("FontString")
-    inked:SetText(text)
-    inked:Show()
-    inked.GetRect = function() return left, bottom, 300, 24 end
-    inked.GetDrawLayer = function() return "ARTWORK", 0 end
-    inked.GetFont = function() return "Fonts\\FRIZQT__.TTF", 18, "" end
-    inked.GetTextColor = function() return 0.2, 0.1, 0, 1 end
-    inked.GetShadowColor = function() return 0, 0, 0, 0 end
-    inked.GetShadowOffset = function() return 0, 0 end
-    inked.GetJustifyH = function() return "LEFT" end
-    inked.GetJustifyV = function() return "MIDDLE" end
-    return inked
-end
-local questTitle, objectives = Inked("The Hunt Begins", 400, 800), Inked("Objectives", 400, 300)
-DUI.GetRegions = function() return questTitle, objectives end
-DUI.GetRect = function() return 300, 200, 624, 734 end
--- DialogueUI's interface back as the dialog closes.
-UIParent:Show()
 OpenDialog()
 CloseDialog()
-local ghost = Skin.ghost
-Expect("the dialog closing is drawn again whole first, this window's own words and title under it",
-    ghost ~= nil and ghost:IsShown() and ghost.groups.title ~= nil and ghost.only.alpha == 1
-    and Skin.content.alpha == 0, true)
-DUI.GetRegions, DUI.GetRect = nil, nil
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
 Expect("...as tall as the dialog", Near(Skin.frame:GetHeight() * Skin.frame.scale, DUI.frameHeight * 0.8), true)
 Expect("...in full at once, not fading in", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime), "1 nil")
-Skin:Tick(0.15)
-Expect("...held where the dialog was while the dialog, whole, turns into this window, whole",
-    Near(Skin.frame.scale, 0.8) and Skin.settling.holding == true and ghost.only.alpha > 0 and ghost.only.alpha < 1
-    and ghost.paper.alpha == ghost.only.alpha and Skin.content.alpha > 0, true)
-Skin:Tick(0.18)
-Expect("...handed over: the dialog drawn again gone, this window's own things all seen",
-    tostring(ghost:IsShown()) .. " " .. Skin.content.alpha, "false 1")
-Expect("...then lifted off, a touch larger, its shadow thrown",
-    Skin.frame.scale > 0.8 and Skin.shadow:IsShown(), true)
-Skin:Tick(0.24)
+Skin:Tick(0.1)
+Expect("...lifted off it first, a touch larger, its shadow thrown and light across it",
+    Skin.frame.scale > 0.8 and Skin.shadow:IsShown() and Skin.glint:IsShown(), true)
+Skin:Tick(0.32)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
     and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
@@ -771,15 +738,15 @@ Expect("...on a curve, not straight at the corner", (function()
     return math.abs(Skin.frame.anchor.x * Skin.frame.scale - straightX) > 1
 end)(), true)
 Skin:Tick(0.15)
-Expect("...still on its way 0.57 seconds after it lifted", Skin.settling ~= nil, true)
+Expect("...still on its way at 0.57 seconds", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
 Expect("...and settled at the top left by 0.62, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 Skin:Tick(0.05)
 Expect("...landing: giving under it as it touches down", Skin.landing ~= nil and not AtTopLeft(), true)
 Skin:Tick(1)
-Expect("...then at rest, its shadow gone", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
-    .. tostring(Skin.shadow:IsShown()), "nil true false")
+Expect("...then at rest, its shadow and the light gone", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
+    .. tostring(Skin.shadow:IsShown()) .. " " .. tostring(Skin.glint:IsShown()), "nil true false false")
 -- Nowhere known to start from: it is simply put where it rests.
 local WindowPlace = env.DialogueUITheme.WindowPlace
 env.DialogueUITheme.WindowPlace = function() return nil end
@@ -863,19 +830,6 @@ OpenDialog()
 CloseDialog()
 Skin:Tick(1)
 stub.Advance(2)
--- The stone's title as the book view draws it, read off it as it closes.
-local inked = stub.Widget("FontString")
-inked:SetText("Here Lies King Terenas Menethil II")
-inked:Show()
-inked.GetRect = function() return 250, 500, 300, 30 end
-inked.GetDrawLayer = function() return "ARTWORK", 0 end
-inked.GetFont = function() return "Fonts\\TRAJAN.TTF", 18, "" end
-inked.GetTextColor = function() return 0.9, 0.9, 0.9, 1 end
-inked.GetShadowColor = function() return 0, 0, 0, 1 end
-inked.GetShadowOffset = function() return 1, -1 end
-inked.GetJustifyH = function() return "CENTER" end
-inked.GetJustifyV = function() return "MIDDLE" end
-BookView.GetRegions = function() return inked end
 BookView:Show()
 bookWatch.scripts.OnShow(bookWatch)
 books:Enqueue(Page("Stone"))
@@ -884,11 +838,6 @@ BookView:Hide()
 bookWatch.scripts.OnHide(bookWatch)
 local ui = UIParent:GetEffectiveScale()
 local card = Skin.card
-local ghost = Skin.ghost
-Expect("closing, the stone is drawn again where it was, its title in its own font, its top left where it was",
-    ghost ~= nil and ghost:IsShown() and ghost.texts[1].text == "Here Lies King Terenas Menethil II"
-    and ghost.texts[1].anchor.point .. " " .. ghost.texts[1].anchor.x .. " " .. ghost.texts[1].anchor.y .. " " .. ghost.texts[1]:GetWidth(), "TOPLEFT 250 530 300")
-Expect("...the page under it not yet seen", card.alpha, 0)
 Expect("a stone closed while a quest's line plays does not take this window's place", Skin.settling, nil)
 Expect("...this window comes back as it was, in the quest's parchment", tostring(Skin.wanted) .. " "
     .. Skin.parchments[1].texture, "true " .. BROWN .. "Parchment.png")
@@ -899,25 +848,15 @@ Expect("...and the stone's page is lifted off where the stone was, as large, in 
     and Near(card:GetWidth() * card.scale, 409.6 * 0.8 / ui), true)
 Expect("...its title and its words on it", card.title.text .. " / " .. card.body.text,
     "Page 1 of 4 / Only a few months after Nethergarde's completion.")
--- DialogueUI hides the interface while its dialog is open and fades it back in as it closes.
-UIParent:Hide()
-Skin:TuckStep(0.15)
-Expect("...waiting, whole, while the interface is still hidden, so the world never shows through",
-    ghost.paper.alpha .. " " .. card.alpha, "1 0")
-UIParent:Show()
-Skin:TuckStep(0.15)
-Expect("...then, the interface back, dissolving into the page as it is lifted", ghost.paper.alpha > 0
-    and ghost.paper.alpha < 1 and card.alpha > 0, true)
-Skin:TuckStep(0.2)
-Expect("...flying over, smaller, its words and title gone, the stone drawn again gone", card.scale < 1
-    and card.body.alpha < 0.05 and card.title.alpha < 0.05 and not ghost:IsShown(), true)
-Expect("...its words never shrinking with it, but kept at their own size", math.abs(card.ink.scale * card.scale - 1) < 1e-9, true)
-BookView.GetRegions = nil
+Skin:TuckStep(0.5)
+Expect("...flying over, smaller, its words gone first", card.scale < 1 and card.body.alpha < 0.05
+    and card.title.alpha > 0, true)
 Skin:TuckStep(0.4)
 Expect("...this window giving as the page goes under it", Skin.tuck ~= nil and Skin.tuck.rest ~= nil, true)
 Skin:TuckStep(1)
-Expect("...then gone behind it, the window where it rests",
-    tostring(Skin.tuck) .. " " .. tostring(card:IsShown()) .. " " .. tostring(AtTopLeft()), "nil false true")
+Expect("...then gone behind it, the light run across it, the window where it rests",
+    tostring(Skin.tuck) .. " " .. tostring(card:IsShown()) .. " " .. tostring(Skin.glint:IsShown())
+    .. " " .. tostring(AtTopLeft()), "nil false false true")
 -- Nothing queued by it (a book with no recording): this window simply comes back.
 stub.Advance(1)
 BookView:Show()
@@ -944,8 +883,6 @@ Expect("...and closing, having queued nothing, sends nothing after it", tostring
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 
-Expect("/spoken ghost says what the last close drew, and can draw the dialog again",
-    pcall(SlashCmdList.SPOKEN, "ghost") and pcall(SlashCmdList.SPOKEN, "ghost show"), true)
 Expect("diagnostics name the style", string.find(Skin:Describe(), "enabled=true", 1, true) ~= nil, true)
 Expect("...and the theme reading", string.find(env.DialogueUITheme:Describe(), "theme=1", 1, true) ~= nil, true)
 
