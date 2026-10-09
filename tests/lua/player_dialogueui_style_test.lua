@@ -725,8 +725,8 @@ Expect("the dialog closing on a line starts the window where the dialog was, as 
 Expect("...as tall as the dialog", Near(Skin.frame:GetHeight() * Skin.frame.scale, DUI.frameHeight * 0.8), true)
 Expect("...in full at once, not fading in", Skin.frame:GetAlpha() .. " " .. tostring(Skin.fadeTime), "1 nil")
 Skin:Tick(0.1)
-Expect("...lifted off it first, a touch larger, its shadow thrown and light across it",
-    Skin.frame.scale > 0.8 and Skin.shadow:IsShown() and Skin.glint:IsShown(), true)
+Expect("...lifted off it first, a touch larger, its shadow thrown",
+    Skin.frame.scale > 0.8 and Skin.shadow:IsShown(), true)
 Skin:Tick(0.32)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
@@ -745,8 +745,8 @@ Expect("...and settled at the top left by 0.62, at its own size and height", AtT
 Skin:Tick(0.05)
 Expect("...landing: giving under it as it touches down", Skin.landing ~= nil and not AtTopLeft(), true)
 Skin:Tick(1)
-Expect("...then at rest, its shadow and the light gone", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
-    .. tostring(Skin.shadow:IsShown()) .. " " .. tostring(Skin.glint:IsShown()), "nil true false false")
+Expect("...then at rest, its shadow gone", tostring(Skin.landing) .. " " .. tostring(AtTopLeft()) .. " "
+    .. tostring(Skin.shadow:IsShown()), "nil true false")
 -- Nowhere known to start from: it is simply put where it rests.
 local WindowPlace = env.DialogueUITheme.WindowPlace
 env.DialogueUITheme.WindowPlace = function() return nil end
@@ -854,9 +854,8 @@ Expect("...flying over, smaller, its words gone first", card.scale < 1 and card.
 Skin:TuckStep(0.4)
 Expect("...this window giving as the page goes under it", Skin.tuck ~= nil and Skin.tuck.rest ~= nil, true)
 Skin:TuckStep(1)
-Expect("...then gone behind it, the light run across it, the window where it rests",
-    tostring(Skin.tuck) .. " " .. tostring(card:IsShown()) .. " " .. tostring(Skin.glint:IsShown())
-    .. " " .. tostring(AtTopLeft()), "nil false false true")
+Expect("...then gone behind it, the window where it rests",
+    tostring(Skin.tuck) .. " " .. tostring(card:IsShown()) .. " " .. tostring(AtTopLeft()), "nil false true")
 -- Nothing queued by it (a book with no recording): this window simply comes back.
 stub.Advance(1)
 BookView:Show()

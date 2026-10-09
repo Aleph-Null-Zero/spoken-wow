@@ -29,7 +29,7 @@ local BASE_SCALE = 0.65
 -- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep): lifted
 -- off it SETTLE_GROW larger over SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed SETTLE_BOW
 -- of the way to one side (down, so it stays on the screen), then landing: giving SETTLE_GIVE
--- under it and back while light runs across it, over LAND_TIME.
+-- under it and back, over LAND_TIME.
 local EDGE = 16
 local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .12, .5, .5
 local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 5
@@ -38,9 +38,9 @@ local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 5
 -- the same event, in either order.
 local JUST_BEFORE = 0.5
 -- The tuck, in seconds: the page lifted, flying over, sliding behind; this window giving under it
--- by TUCK_GIVE and back, and the light running across it. The page lands at TUCK_SIZE of the
--- window, TUCK_LOW of its height under its middle, its foot showing under it.
-local TUCK_LIFT, TUCK_FLY, TUCK_SLIDE, TUCK_NUDGE, TUCK_GLINT = .16, .62, .24, .5, .55
+-- by TUCK_GIVE and back, and its count rippling over TUCK_RIPPLE. The page lands at TUCK_SIZE of
+-- the window, TUCK_LOW of its height under its middle, its foot showing under it.
+local TUCK_LIFT, TUCK_FLY, TUCK_SLIDE, TUCK_NUDGE, TUCK_RIPPLE = .16, .62, .24, .5, .45
 local TUCK_GIVE, TUCK_SIZE, TUCK_LOW = 7, .9, .3
 -- The art a line is drawn in (Skin:Look), as DialogueUI draws it: its quest window's parchment
 -- for quests, gossip and places; its book view's paper for books and letters, and its stone for
@@ -1271,9 +1271,9 @@ function Skin:ScaleControls(scale)
     self.controls:SetPoint("RIGHT", self.content, "TOPRIGHT", 0, -(self.controlsMiddle or 0) / scale)
 end
 
---- The window lifted off the dialog, a touch larger and its shadow thrown, light across it; flown
---- to where it rests on a curve, shrinking to its own size and height, its shadow drawn in; then
---- landing (Skin:LandStep).
+--- The window lifted off the dialog, a touch larger and its shadow thrown; flown to where it rests
+--- on a curve, shrinking to its own size and height, its shadow drawn in; then landing
+--- (Skin:LandStep).
 function Skin:SettleStep(elapsed)
     local settling, frame = self.settling, self.frame
     settling.time = settling.time + elapsed
@@ -1300,9 +1300,8 @@ function Skin:SettleStep(elapsed)
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left / pixels, top / pixels)
     frame:SetHeight(height * grow / pixels)
-    -- Its shadow thrown as it is lifted, drawn in as it comes down; light across it as it lifts.
+    -- Its shadow thrown as it is lifted, drawn in as it comes down.
     self:ShadowUnder((1 - 0.7 * eased) * lift, 0.5 * lift * (1 - 0.3 * eased))
-    self:Light(settling, Clamp((t - 0.02) / (SETTLE_LIFT + 0.3), 0, 1), 0.35)
     if u == 1 then
         self.settling = nil
         frame:SetScale(settling.to)
@@ -1312,8 +1311,7 @@ function Skin:SettleStep(elapsed)
     end
 end
 
---- Landed where it rests: giving under it and back as it touches down, its shadow drawn in, and
---- light running across it once more.
+--- Landed where it rests: giving under it and back as it touches down, its shadow drawn in.
 function Skin:LandStep(elapsed)
     local landing = self.landing
     landing.time = landing.time + elapsed
@@ -1321,7 +1319,6 @@ function Skin:LandStep(elapsed)
     self:Give(landing, -SETTLE_GIVE * math.exp(-7 * t) * math.sin(2 * math.pi * t / 0.3))
     local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
     self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
-    self:Light(landing, Clamp((t - 0.04) / (LAND_TIME - 0.04), 0, 1), 0.4)
     if t >= LAND_TIME then self:StopLanding() end
 end
 
@@ -1329,7 +1326,6 @@ function Skin:StopLanding()
     local landing = self.landing
     self.landing = nil
     if self.shadow then self.shadow:Hide() end
-    if self.glint and not self.tuck then self.glint:Hide() end
     if landing then self:Rest(landing) end
 end
 
@@ -1357,33 +1353,6 @@ function Skin:ShadowUnder(reach, alpha)
     shadow:Show()
 end
 
---- Light running across this window, `g` of the way over it (0 to 1), at most `strength` bright:
---- a frame of its own over it, kept on it.
-function Skin:Light(state, g, strength)
-    local frame = self.frame
-    self:TuckFrames()
-    local glint = self.glint
-    if g <= 0 or g >= 1 then
-        if g >= 1 and state.lit then glint:Hide(); state.lit = nil end
-        return
-    end
-    if not state.lit then
-        state.lit = true
-        glint.light:SetTexture(Theme:TexturePath() .. "RewardChoice-Sheen.png")
-        glint:SetFrameStrata(frame:GetFrameStrata())
-        glint:SetFrameLevel(frame:GetFrameLevel() + 40)
-        glint:ClearAllPoints()
-        glint:SetAllPoints(frame)
-        glint:Show()
-    end
-    local scale = frame:GetScale() or 1
-    local width, height = (frame:GetWidth() or 0) * scale, (frame:GetHeight() or 0) * scale
-    glint.light:ClearAllPoints()
-    glint.light:SetSize(width * 0.36, height)
-    glint.light:SetPoint("TOPLEFT", glint, "TOPLEFT", -width * 0.36 + width * 1.4 * EaseInOut(g), 0)
-    glint.light:SetAlpha(strength * math.sin(math.pi * g))
-end
-
 --- This window moved `offset` (UIParent's units, up) off where it rests, and back (Skin:Rest).
 function Skin:Give(state, offset)
     local frame = self.frame
@@ -1408,9 +1377,8 @@ end
 -- does not take this window's place, as its own line's would (Skin:Settle). The page is lifted off
 -- where the dialog was, flies over to this window, bending a little as it goes, comes down low on
 -- it with its foot showing under it, and slides up behind it: the line waits behind the one
--- playing. This window gives as it goes under, and light runs across it as its count ripples.
--- The page and the light are frames of their own, never parts of this window, which may be one
--- image while it fades in (Skin:Buffer).
+-- playing. This window gives as it goes under, and its count ripples. The page is a frame of its
+-- own, never part of this window, which may be one image while it fades in (Skin:Buffer).
 
 --- A line joining the queue: when, and with which open dialog.
 function Skin:Queued(clip)
@@ -1450,7 +1418,7 @@ function Skin:QueuedBy(dialog)
     return nil
 end
 
---- The page and the light: built once, out of this window.
+--- The page and the count's ripple: built once, out of this window.
 function Skin:TuckFrames()
     if self.card then return self.card end
     local card = CreateFrame("Frame", nil, UIParent)
@@ -1462,26 +1430,8 @@ function Skin:TuckFrames()
     card.divider = card:CreateTexture(nil, "ARTWORK")
     card.title = card:CreateFontString(nil, "ARTWORK")
     card.body = card:CreateFontString(nil, "ARTWORK")
-    -- The light across the page as it is lifted, kept on the page.
-    card.lightClip = CreateFrame("Frame", nil, card)
-    card.lightClip:SetAllPoints()
-    card.lightClip:SetClipsChildren(true)
-    local holder = CreateFrame("Frame", nil, card.lightClip)
-    holder:SetAllPoints()
-    card.light = holder:CreateTexture(nil, "OVERLAY")
-    card.light:SetBlendMode("ADD")
     card:SetScript("OnUpdate", function(_, elapsed) self:TuckStep(elapsed) end)
     self.card = card
-    -- Over this window as the page goes behind it: light across its paper, kept on it.
-    local glint = CreateFrame("Frame", nil, UIParent)
-    glint:Hide()
-    glint:EnableMouse(false)
-    glint:SetClipsChildren(true)
-    local glintHolder = CreateFrame("Frame", nil, glint)
-    glintHolder:SetAllPoints()
-    glint.light = glintHolder:CreateTexture(nil, "OVERLAY")
-    glint.light:SetBlendMode("ADD")
-    self.glint = glint
     -- Its count rippling out from where it is.
     local ripple = CreateFrame("Frame", nil, UIParent)
     ripple:Hide()
@@ -1521,7 +1471,6 @@ function Skin:DressCard(card, dialog, look, clip, width, height, q)
     strips[2]:SetPoint("TOPLEFT", strips[1], "BOTTOMLEFT", 0, 0)
     strips[2]:SetPoint("BOTTOMRIGHT", strips[3], "TOPRIGHT", 0, -capHeight * look.under / 256)
     card.shadow:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
-    card.light:SetTexture(Theme:TexturePath() .. "RewardChoice-Sheen.png")
 
     local fonts, colors = Theme:Fonts(look.book), Theme:Colors(look.palette)
     local shadow = look.shadow and 1 or 0
@@ -1679,13 +1628,6 @@ function Skin:DrawTuck(tuck)
     card.shadow:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", (dx + blur) / scale, (dy - blur) / scale)
     card.shadow:SetAlpha(0.55 * lift * (1 - 0.45 * fly) * (1 - slide))
 
-    -- Light across it as it is lifted.
-    local sweep = Clamp((t - 0.03) / 0.5, 0, 1)
-    card.light:ClearAllPoints()
-    card.light:SetSize(width * 0.42, height)
-    card.light:SetPoint("TOPLEFT", card, "TOPLEFT", -width * 0.42 + width * 1.45 * sweep, 0)
-    card.light:SetAlpha(0.5 * math.sin(math.pi * sweep))
-
     -- The window giving as the page goes under it: up a little and back, settling.
     local nudge = t - (landed - 0.05)
     if nudge >= 0 and nudge <= TUCK_NUDGE then
@@ -1694,18 +1636,17 @@ function Skin:DrawTuck(tuck)
         self:Rest(tuck)
     end
 
-    -- Taken: light runs across the window and its count ripples out.
+    -- Taken: its count ripples out.
     local taken = t - (landed + TUCK_SLIDE * 0.45)
     if taken >= 0 then
         if not tuck.taken then
             tuck.taken = true
             self:StartRipple()
         end
-        local g = Clamp(taken / TUCK_GLINT, 0, 1)
-        self:Light(tuck, g < 1 and math.max(g, 0.0001) or 1, 0.45)
+        local g = Clamp(taken / TUCK_RIPPLE, 0, 1)
         local ripple = self.ripple
         if ripple:IsShown() then
-            local r = EaseOutCubic(Clamp(taken / (TUCK_GLINT * 0.8), 0, 1))
+            local r = EaseOutCubic(g)
             local rippleScale = 1 + 1.3 * r
             ripple:SetScale(rippleScale)
             ripple:ClearAllPoints()
@@ -1737,13 +1678,12 @@ function Skin:StartRipple()
     ripple:Show()
 end
 
---- Done, or cut short (a dialog opening, another closing): the page and the light gone, this
+--- Done, or cut short (a dialog opening, another closing): the page and the ripple gone, this
 --- window where it rests.
 function Skin:StopTuck()
     local tuck = self.tuck
     self.tuck = nil
     if self.card then self.card:Hide() end
-    if self.glint and not self.landing then self.glint:Hide() end
     if self.ripple then self.ripple:Hide() end
     if tuck then self:Rest(tuck) end
 end
