@@ -152,6 +152,10 @@ function SettingsPanel:Setup()
         if not listed[module.AddonName] and Player:HoldsGossip(module) then PackRow(module) end
     end
     content:SetScript("OnShow", function() layout:Refresh() end)
+    -- Switched on or off from Spoken's page while this one was hidden: drawn again for it.
+    if Spoken and Spoken.RegisterCallback then
+        Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "gossip" then layout:Refresh() end end)
+    end
 
     layout:Section(L.OPT_SECTION_TROUBLE)
     layout:Columns(2)
