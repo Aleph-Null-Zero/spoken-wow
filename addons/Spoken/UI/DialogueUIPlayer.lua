@@ -36,6 +36,11 @@ local SETTLE_GROW, SETTLE_BOW, SETTLE_GIVE = .025, .16, 4
 -- The dialog's words fading on DialogueUI's window before it closes (Skin:FadeDialogOut), and this
 -- window's fading in once it has landed (Skin:LandStep): the flight is of the paper alone.
 local CONTENT_OUT, CONTENT_IN = .1, .16
+-- A quest page closing (QUEST_FINISHED): DialogueUI waits up to a second before it hides its window
+-- (0.5 when the NPC has more quests, in case its gossip comes back, and up to 0.5 more for the
+-- camera). The words fade at once instead, and the window is closed here after QUEST_GRACE more,
+-- unless DialogueUI shows a page again by then (gossip, the next quest page).
+local QUEST_GRACE = .12
 -- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
 -- the same event, in either order.
@@ -232,6 +237,8 @@ function Skin:Initialize()
             self.dialogWatches[dialog] = watch
             -- Closing on its own line, its words fade before it hides (Skin:FadeDialogOut).
             local hide = dialog.Hide
+            self.dialogHides = self.dialogHides or {}
+            self.dialogHides[dialog] = hide
             dialog.Hide = function(frame, ...)
                 if self.closing and self.closing.dialog == frame then return end
                 -- Already hidden (DialogueUI hides it again from its own OnHide): nothing to fade.
@@ -247,6 +254,14 @@ function Skin:Initialize()
         end
     end
     Callbacks:Register("CLIP_QUEUED", function(clip) self:Queued(clip) end)
+    -- A quest page closing: its words fade at once, not when DialogueUI gets round to hiding it.
+    local quest = _G.DUIQuestFrame
+    if quest and self.dialogHides and self.dialogHides[quest] then
+        local events = CreateFrame("Frame")
+        events:RegisterEvent("QUEST_FINISHED")
+        events:SetScript("OnEvent", function() self:QuestFinished(quest) end)
+        self.questEvents = events
+    end
     self.dialog = _G.DUIQuestFrame
     self.dialogWatch = self.dialog and self.dialogWatches[self.dialog]
 
@@ -1433,7 +1448,15 @@ function Skin:FadesOnClose(dialog)
 end
 
 --- DialogueUI hiding `dialog`: its words fade first, then `hide` (its own Hide) closes it.
-function Skin:FadeDialogOut(dialog, hide)
+--- A quest page closed: if DialogueUI's window hands a line on, its words fade now and it closes
+--- QUEST_GRACE after (Skin:CloseStep), unless DialogueUI shows a page again first.
+function Skin:QuestFinished(dialog)
+    if self.closing or not dialog:IsShown() then return end
+    local ok, fades = pcall(self.FadesOnClose, self, dialog)
+    if ok and fades then self:FadeDialogOut(dialog, self.dialogHides[dialog], QUEST_GRACE) end
+end
+
+function Skin:FadeDialogOut(dialog, hide, grace)
     local paper = {}
     for _, key in ipairs(PAPER_FRAMES) do
         if type(dialog[key]) == "table" then paper[dialog[key]] = true end
@@ -1446,7 +1469,7 @@ function Skin:FadeDialogOut(dialog, hide)
     end
     local footer = type(dialog.Footer) == "table" and dialog.Footer.FooterDivider
     if type(footer) == "table" and footer.GetAlpha then table.insert(parts, { part = footer, alpha = footer:GetAlpha() or 1 }) end
-    self.closing = { dialog = dialog, hide = hide, time = 0, parts = parts }
+    self.closing = { dialog = dialog, hide = hide, time = 0, parts = parts, grace = grace or 0 }
     -- Driven by a frame of no parent: DialogueUI may be hiding the interface.
     if not self.closeDriver then
         self.closeDriver = CreateFrame("Frame")
@@ -1464,7 +1487,7 @@ function Skin:CloseStep(elapsed)
     closing.time = closing.time + elapsed
     local left = 1 - Smooth(Clamp(closing.time / CONTENT_OUT, 0, 1))
     for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha * left) end
-    if closing.time >= CONTENT_OUT then
+    if closing.time >= CONTENT_OUT + closing.grace then
         -- Its words given back, then closed for real in the same moment, so they are never seen
         -- back: given back after, DialogueUI hiding it again from its own OnHide read them faded.
         self.closing = nil
