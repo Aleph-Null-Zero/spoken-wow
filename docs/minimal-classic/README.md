@@ -8,7 +8,11 @@ onto 2.1.0 before it was merged.
 The player shows a round native still portrait, the speaker name, the narration
 title and its words, with the progress line along their foot. Stop or Replay,
 Skip and Report are round buttons in the header, as in the DialogueUI window
-and the subtitles. The dark rock background and metal trim use WoW artwork.
+and the subtitles. Its Background setting draws it on parchment, the
+default, with dark words, or on the dark rock it had before, with light
+words. The parchment is a tiled atlas the Classic Era and Forever clients
+both have (`MinimalPlayer.PARCHMENTS`, the first one the client has); the
+rock and the metal trim are WoW artwork too.
 
 Nothing is installed separately: it is part of the player's zip. Choose it as
 the narrator style on Spoken's settings page, in the welcome window, or with
@@ -35,6 +39,7 @@ flavors have not been visually verified.
 | `/sp player minimal` | Switch to this layout (`classic`, `subtitle` or `none` for the others) |
 | `/sp reset` | Reset the active layout's position and width |
 | `/sp diagnostics` | Inspect playback, UI state and captured callback errors |
+| `/sp parchment` | For developers: draw the next parchment art the client has and name it in chat |
 
 The hidden-portrait and optional-action settings remain effective in this
 layout.
