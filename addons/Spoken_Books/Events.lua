@@ -159,7 +159,6 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 		if SpokenBooks.SetupPlayButton then
 			SpokenBooks:SetupPlayButton()
 		end
-		-- Spoken's controls on DialogueUI's book view, where both are here.
 		if SpokenBooks.SetupDialogueUIBook then
 			SpokenBooks:SetupDialogueUIBook()
 		end

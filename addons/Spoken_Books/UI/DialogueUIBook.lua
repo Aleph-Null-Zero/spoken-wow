@@ -1,9 +1,6 @@
--- DialogueUI's book view (DUIBookFrame), as Spoken Quests does its quest window: Spoken's controls
--- on it, Play (Stop while this book is read), Skip and Report, the player's round buttons as
--- large on screen as Place Lore draws them, in a row left of the book's close button, in place
--- of DialogueUI's own speaker; and the page being read marked in its text, the word being read
--- lit and the words typed out as the voice reaches them. Left alone without DialogueUI or without
--- the player.
+-- Spoken's Play, Skip and Report on DialogueUI's book view (DUIBookFrame), in a row left of its
+-- close button in place of DialogueUI's own speaker, and the page being read marked in the book's
+-- text. Does nothing without DialogueUI or the player.
 --
 -- DialogueUI loads every page of a book as it opens it and leaves the game on the last, so Play
 -- reads the book from its first page, not from the page the game is on.
@@ -14,7 +11,6 @@ local L = SpokenBooks.L
 local ROUND, ROUND_GAP = 24, 4
 -- DialogueUI's speaker, as it draws it, given back when the row goes.
 local THEIRS_ALPHA = 0.6
--- How often the row looks again at what plays while the book is open.
 local LOOK_EVERY = 0.1
 
 local Book = {}
@@ -195,15 +191,13 @@ end
 -- The book's close button, as DialogueUI draws it: 64 of the book art's pixels across, 26 in from
 -- the right; its title 90 under the top (its PADDING_V), all in the same pixels.
 local CLOSE_SIZE, CLOSE_INSET, TITLE_TOP = 64, 26, 90
--- Room above the line of the close button and the controls and below it, in UIParent's units, as
--- the buttons' 24 are: the same on DialogueUI's quest window (Spoken Quests' DialogueUIBridge).
--- The title and the text under it move down to make it.
+-- Room above and below the line of the close button and the controls, in UIParent's units as
+-- ROUND is. The title and the text under it move down to make it.
 local LINE_ROOM = 36
 
 --- DialogueUI's title, the line under it and the text moved down so the controls' line has
---- LINE_ROOM over and under it, as on the quest window: a short page's frame taller by as much, a
---- long one's scroll longer. Run after DialogueUI lays the book out (SetScrollContentHeight),
---- which puts all but the title back where it had them.
+--- LINE_ROOM over and under it: a short page's frame taller by as much, a long one's scroll longer.
+--- Run after SetScrollContentHeight, which puts all but the title back where DialogueUI had them.
 function Book:Lower()
 	local view = View()
 	local close, header, scroll = view.CloseButton, view.Header, view.ScrollFrame
@@ -241,8 +235,7 @@ function Book:Lower()
 end
 
 --- The close button's middle halfway between the view's top and its title's (or the place named
---- over the title), so it and the row beside it stand as far from the title as from the edge, as
---- on DialogueUI's quest window (Spoken Quests). Set again whenever DialogueUI lays it out anew.
+--- over the title), so it and the row beside it stand as far from the title as from the edge.
 function Book:PlaceClose()
 	local view = View()
 	local close = view.CloseButton
@@ -271,7 +264,6 @@ function Book:PlaceClose()
 	end
 end
 
---- Back where DialogueUI puts it, once the row goes.
 function Book:RestoreClose()
 	local view = View()
 	local close = view and view.CloseButton
@@ -285,7 +277,7 @@ function Book:RestoreClose()
 end
 
 --- Right to left from the book's close button, centred on it: Report, Skip, Play, whichever show,
---- as large on screen as Place Lore draws them, whatever DialogueUI's book size.
+--- the same size on screen whatever DialogueUI's book scale.
 function Book:Place()
 	local view, row = View(), self.row
 	local scale = UIParent:GetEffectiveScale() / math.max(0.01, view:GetEffectiveScale() or 1)
@@ -320,9 +312,7 @@ function Book:Place()
 	end
 end
 
---- DialogueUI's Copy Text left of the row, on its middle, as on the quest window (Spoken Quests'
---- DialogueUIBridge); in its own corner again once the row goes. Again whenever DialogueUI lays
---- its buttons out (LayoutWidgets).
+--- DialogueUI's Copy Text left of the row, on its middle; in its own corner again once the row goes.
 function Book:PlaceTheirs()
 	local view, row = View(), self.row
 	local copy = view and view.CopyTextButton
@@ -341,9 +331,7 @@ function Book:PlaceTheirs()
 	end
 end
 
---- Show the row while the view is open with the part on: Play greyed with no recording of this
---- book and Stop while it is read, Skip greyed with nothing speaking, Report while this book has
---- a recording (unless Hide Report Buttons is on).
+--- The row while the view is open with the part on; DialogueUI's own buttons back otherwise.
 function Book:Draw()
 	local view = View()
 	if not (view and view:IsShown() and SpokenBooks:IsPartOn()) then
@@ -379,11 +367,10 @@ end
 -- The words
 --------------------------------------------------------------------------------
 --
--- The page being read marked as the captions mark it (Spoken:WordMarks), by Spoken's own Highlight
--- Words and Type Out settings. DialogueUI lays the whole book out as one column of paragraphs
--- (ScrollFrame.content) and draws only those in view, on FontStrings it hands from one paragraph
--- to another as it scrolls (contentIndexObject, SetObjectData). So what each paragraph should
--- show is kept by paragraph, and set again on whichever FontString draws it.
+-- The page being read marked as the captions mark it (Spoken:WordMarks). DialogueUI lays the book
+-- out as one column of paragraphs (ScrollFrame.content) and draws only those in view, on
+-- FontStrings it hands from one paragraph to another as it scrolls (contentIndexObject,
+-- SetObjectData), so what each paragraph should show is kept by paragraph.
 
 local TICK = 0.05
 
@@ -417,7 +404,6 @@ local function Apply(p)
 	end
 end
 
---- Every paragraph's own text back.
 local function Restore()
 	for p in pairs(words.want) do
 		words.want[p] = nil
@@ -470,7 +456,6 @@ local function FollowVoice(p)
 	view:ScrollToContent(para.index)
 end
 
---- Mark the page being read, run while the view is open.
 function Book:Mark()
 	local marks, view = Marks(), View()
 	if not (marks and view and view:IsShown() and Spoken.GetCaption and Spoken.SplitCaption and Scroll()) then
@@ -505,7 +490,7 @@ function Book:Mark()
 	if lit == words.lit and neighbor == words.neighbor and cutP == words.cutP and cutByte == words.cutByte then
 		return
 	end
-	-- Gold on the stone, deep red on the paper, as on the quest window.
+	-- Gold on the stone, deep red on the paper.
 	local color = view.textureKitID == 2 and marks.ON_DARK or marks.ON_LIGHT
 	local spans = marks.Spans(words.map, words.paragraphs, lit, neighbor)
 	for p, para in ipairs(words.paragraphs) do
@@ -550,8 +535,7 @@ function SpokenBooks:SetupDialogueUIBook()
 		return
 	end
 	Book.hooked = true
-	-- Told by a child of the view, as Spoken Quests is by one of the quest window's: a hook on the
-	-- view's own scripts goes when DialogueUI sets them anew.
+	-- A child of the view, not a hook on the view's own scripts: DialogueUI sets those anew.
 	local watch = CreateFrame("Frame", nil, view)
 	watch:SetScript("OnShow", function()
 		if Spoken.SetContributeHost then Spoken:SetContributeHost(view) end
@@ -571,11 +555,9 @@ function SpokenBooks:SetupDialogueUIBook()
 		Book:Mark()
 	end)
 	Book.watch = watch
-	-- Copy Text beside the row whenever DialogueUI lays its buttons out.
 	if type(view.LayoutWidgets) == "function" then
 		hooksecurefunc(view, "LayoutWidgets", function() Book:PlaceTheirs() end)
 	end
-	-- Room for the controls' line whenever DialogueUI lays the book out.
 	if type(view.SetScrollContentHeight) == "function" then
 		hooksecurefunc(view, "SetScrollContentHeight", function() Book:Lower() end)
 	end
