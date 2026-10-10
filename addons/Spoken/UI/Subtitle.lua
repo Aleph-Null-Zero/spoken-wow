@@ -668,6 +668,26 @@ function Subtitle:Prepare(clip, text)
         self.pages[index] = { text = page, count = count, start = start, length = length }
         start = start + length
     end
+    if Transcript.timed and Transcript.clip == clip and Transcript.text == text then
+        self:TimePages(Transcript.words, duration)
+    end
+end
+
+--- With the clip's own word times, each page turns when the voice reaches its first word. A page
+--- cut inside a word counts that word twice; the totals then disagree and the estimate stays.
+function Subtitle:TimePages(words, duration)
+    local starts, word = { 0 }, 1
+    for index, page in ipairs(self.pages) do
+        if index > 1 then
+            if not words[word] then return end
+            starts[index] = words[word].start
+        end
+        word = word + #Transcript:Split(page.text)
+    end
+    if word - 1 ~= #words then return end
+    for index, page in ipairs(self.pages) do
+        page.start, page.length = starts[index], (starts[index + 1] or duration) - starts[index]
+    end
 end
 
 function Subtitle:Render()
