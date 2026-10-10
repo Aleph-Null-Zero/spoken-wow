@@ -18,11 +18,9 @@ import type { PoolClient } from "pg";
 
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
+import { branch, norm } from "@/lib/contributions/gossip";
 import { gossipStemRank } from "@/lib/contributions/naming";
 
-const NORM = (sql: string) => `lower(regexp_replace(btrim(${sql}), '\\s+', ' ', 'g'))`;
-const BRANCH = (sql: string, side: 1 | 2) =>
-  `regexp_replace(${sql}, '\\$[gu]([^:;]*):([^;]*);', '\\${side}', 'gi')`;
 /** The text a client in the row's language shows: English's own, another language's localeText. */
 const SHOWN = `case when l."lang" = '${BASE_LANG}' then l."originalText" else l."localeText" end`;
 
@@ -70,12 +68,12 @@ async function linkByText(client: PoolClient, lineIds: string[] | null, lang: st
   const forms = (gender: string, column: string) =>
     [1, 2].map(
       (side) =>
-        `select b."lang", b."broadcastTextId", '${gender}' as "gender", ${NORM(BRANCH(column, side as 1 | 2))} as "shown"
+        `select b."lang", b."broadcastTextId", '${gender}' as "gender", ${norm(branch(column, side as 1 | 2))} as "shown"
            from "broadcast_text" b where b."lang" in (select "lang" from line)`,
     );
   const { rows } = await client.query<{ lineId: string }>(
     `with line as materialized (
-       select l."lineId", l."lang", ${NORM(SHOWN)} as "shown",
+       select l."lineId", l."lang", ${norm(SHOWN)} as "shown",
               (select s."gender" from "quest_line_speaker" s where s."lineId" = l."lineId" limit 1) as "gender"
          from "quest_line" l
         where l."isCurrent" and l."source" = 'gossip' and coalesce(${SHOWN}, '') <> ''
@@ -108,7 +106,7 @@ type Pair = { a: string; b: string; aCreated: Date; bCreated: Date };
 async function mergeDuplicates(client: PoolClient, lineIds: string[] | null): Promise<[string, string][]> {
   const { rows } = await client.query<Pair>(
     `with cur as materialized (
-       select l."lineId", l."lang", ${NORM(`coalesce(${SHOWN}, '')`)} as "shown"
+       select l."lineId", l."lang", ${norm(`coalesce(${SHOWN}, '')`)} as "shown"
          from "quest_line" l
         where l."isCurrent" and l."source" = 'gossip' and l."variant" = 0
      ),

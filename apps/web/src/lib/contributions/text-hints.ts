@@ -35,9 +35,8 @@ export function textHints(text: string, locale: string): string[] {
   for (const token of judged.match(LEFTOVER) ?? []) hints.add(`unspoken token ${token} — won't be voiced`);
   // Named even beside a token: fixing only the token would still leave the line refused.
   if (/[<>]/.test(judged)) hints.add("unspeakable < or > — won't be voiced");
-  // A direction is never spoken, so its own spacing is no gap; taken with the space before it,
-  // it leaves none behind either.
-  const said = text.replace(/\s*<[^<>]*>/g, "");
+  // A direction is never spoken, so its own spacing is no gap.
+  const said = withoutDirections(text, true);
   if (GAP.test(said.replace(SPACED_ELLIPSIS, "…"))) hints.add("gap before punctuation — a gender branch may be missing");
   if (DOUBLE_SPACE.test(said)) hints.add("double space — a gender branch may be missing");
   return [...hints];

@@ -37,8 +37,11 @@ export const INVALID_CHARS = "$<>";
  */
 const DIRECTION = /<[^<>]*>/g;
 
-export function withoutDirections(text: string): string {
-  return text.replace(DIRECTION, "");
+const DIRECTION_SPACED = new RegExp(String.raw`\s*` + DIRECTION.source, "g");
+
+/** `text` as spoken; `spaceBefore` also takes the space before each direction, so none is left doubled. */
+export function withoutDirections(text: string, spaceBefore = false): string {
+  return text.replace(spaceBefore ? DIRECTION_SPACED : DIRECTION, "");
 }
 
 export function hasInvalidChars(text: string): boolean {
