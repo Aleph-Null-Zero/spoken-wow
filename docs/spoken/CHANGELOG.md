@@ -51,6 +51,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   box with the line's name after it, then Stopped and a count of the lines waiting in place of the
   queue's rows, and Stop, Skip and Report at the right. A progress line runs under the words. With
   Bronze Border on, the window uses the game's Talking Head art. *([Nucabe](https://github.com/Nucabe))*
+- **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
+  written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.2.0 — 2026-10-08
 
