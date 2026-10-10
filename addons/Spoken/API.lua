@@ -59,6 +59,7 @@ end
 --                                             -- glyphs for; the player's size stays
 --       timings  = { 0, .42, .61, ... },      -- optional; when each word of the transcript starts,
 --                                             -- in seconds, one per word as SplitCaption cuts it
+--                                             -- with escape sequences (|n, |T...|t) removed
 --       bullet   = "quest-accept",            -- a RegisterBullet id
 --       tint     = { r, g, b },               -- optional row tint
 --       portrait = { kind = "model", creatureID = 196 }
