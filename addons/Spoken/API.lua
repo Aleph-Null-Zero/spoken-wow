@@ -50,6 +50,7 @@ end
 --     priority = "normal" | "low",            -- low yields at the door; gossip is low
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
 --     continues = true,                       -- optional; its next part follows (source:Continue), no pause or cue
+--     span     = { before = 12, total = 40 }, -- optional; seconds of its item before it and in all, for the progress bar
 --     present  = {
 --       header   = "Eagan Peltskinner",       -- NPC name | place above | book title;
 --                                             -- nil over the world's own lore

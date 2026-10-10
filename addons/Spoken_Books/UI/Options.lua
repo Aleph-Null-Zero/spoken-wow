@@ -105,6 +105,9 @@ function SpokenBooks:SetupOptions()
 	layout:Checkbox(L.OPT_WHOLE_BOOK,
 		L.OPT_WHOLE_BOOK_TIP,
 		Get("readWholeBook"), Set("readWholeBook"))
+	layout:Checkbox(L.OPT_ONE_LINE,
+		L.OPT_ONE_LINE_TIP,
+		Get("bookAsOneLine"), Set("bookAsOneLine"))
 	layout:Checkbox(L.OPT_STOP_ON_CLOSE,
 		L.OPT_STOP_ON_CLOSE_TIP,
 		Get("stopOnClose"), Set("stopOnClose"))

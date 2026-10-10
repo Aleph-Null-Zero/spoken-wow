@@ -40,6 +40,7 @@ Game Menu → Options → AddOns → **Spoken Books**, or the Spoken minimap but
 /spb stop        stop reading
 /spb autoplay    read a book as soon as it opens (on by default)
 /spb whole       read the whole book, or only the page on screen
+/spb oneline     a book as one line in the queue, or a line per page (on by default)
 /spb once        read each book only once (off by default)
 /spb forget      forget what this character has read, so it is all new again
 /spb settings    open the panel

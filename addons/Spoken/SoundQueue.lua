@@ -36,6 +36,7 @@ setfenv(1, SpokenEnv)
 ---@field priority? string    "normal" (default) or "low".
 ---@field group? string       Clips of one item, e.g. a book's pages. No pause or cue between them.
 ---@field continues? boolean  Its next part is put in as it ends (source:Continue). No pause or cue after it.
+---@field span? table         { before, total }: seconds of its item before it, and in all (SoundQueue:Share).
 ---@field present table       See API.lua.
 ---@field addedCallback? fun(clip)
 ---@field startCallback? fun(clip)
@@ -509,6 +510,18 @@ function SoundQueue:PlaySound(clip)
 end
 
 --- Seconds of `clip`'s voice heard so far: 0 before it starts, its length once it has ended.
+--- How far through `clip` is, 0 to 1, `elapsed` seconds into its voice: through the whole item
+--- where the clip is one part of it (clip.span, a book read as one line), else through itself.
+function SoundQueue:Share(clip, elapsed)
+    local length = tonumber(clip and clip.length) or 0
+    if length <= 0 then return 0 end
+    elapsed = math.max(0, math.min(length, elapsed or 0))
+    local span = clip.span
+    local share = span and span.total and span.total > 0 and (span.before + elapsed) / span.total
+        or elapsed / length
+    return math.max(0, math.min(1, share))
+end
+
 function SoundQueue:VoiceElapsed(clip)
     local length = tonumber(clip.length) or 0
     return math.max(0, math.min(length, length - (clip.spokenAt - GetTime())))

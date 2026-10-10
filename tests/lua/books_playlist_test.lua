@@ -189,6 +189,40 @@ Expect("with whole-book reading off, only the page on screen is queued",
 SpokenBooksSettings.readWholeBook = true
 B:StopReading()
 
+---------------------------------------------------------------- the progress bar across the book
+-- One line: the bar runs across the whole book, not each page.
+B:PlayFrom(261)
+local firstPage = Spoken:GetQueue()[1]
+local total = 30.5 + 41.0 + 12.25
+Expect("a book's first page knows the reading's length",
+    firstPage.span and (firstPage.span.before .. " " .. firstPage.span.total), "0 " .. total)
+Expect("...its bar a share of the book, not of the page",
+    math.abs(env.SoundQueue:Share(firstPage, 10) - 10 / total) < 1e-9, true)
+stub.Advance(30.9)
+local secondPage = Spoken:GetQueue()[1]
+Expect("the next page's bar starts where the last page's ended",
+    secondPage.pageId .. " " .. tostring(secondPage.span and secondPage.span.before), "262 30.5")
+B:StopReading()
+-- A page with no length: the bar runs across each page, not a wrong share of the book.
+local pages = SpokenBooksAudioPacks.SpokenBooksAudio.pages
+pages[262].len = 0
+B:PlayFrom(261)
+Expect("a page with no length leaves the bar to each page", Spoken:GetQueue()[1].span, nil)
+pages[262].len = 41.0
+B:StopReading()
+
+---------------------------------------------------------------- a line per page
+SpokenBooksSettings.bookAsOneLine = false
+Expect("Book as One Line off: every page queued now, each a line of its own",
+    B:PlayFrom(261) .. " " .. table.concat(QueuedPages(), ","), "3 261,262,265")
+local page = Spoken:GetQueue()[1]
+Expect("...the book over its page count", page.present.header .. " / " .. tostring(page.present.label),
+    "Hillsbrad Town Registry / Page 1 of 4")
+Expect("...one item, so no pause or cue between its pages", page.group, "book:261")
+Expect("...and nothing to follow it", tostring(page.continues) .. " " .. #Coming(), "nil 0")
+SpokenBooksSettings.bookAsOneLine = true
+B:StopReading()
+
 ---------------------------------------------------------------- with no pack at all
 _G.SpokenBooksAudioPacks = {}
 Expect("no pack means no clips", B:ClipFor(261), nil)

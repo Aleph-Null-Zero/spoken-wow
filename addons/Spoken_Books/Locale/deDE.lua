@@ -15,6 +15,8 @@ L.OPT_AUTOPLAY = "Automatisch vorlesen"
 L.OPT_AUTOPLAY_TIP = "Liest ein Buch oder einen Brief vor, sobald es sich öffnet. Wenn aus, startet nichts von selbst: Klicke auf Abspielen auf der Seite oder tippe /spb read."
 L.OPT_WHOLE_BOOK = "Ganzes Buch vorlesen"
 L.OPT_WHOLE_BOOK_TIP = "Liest jede Seite vor, nicht nur die sichtbare. Beim Öffnen der ersten Seite wird der Rest angereiht, sodass die Stimme weiterliest, während du umblätterst."
+L.OPT_ONE_LINE = "Buch als eine Zeile"
+L.OPT_ONE_LINE_TIP = "Stellt ein Buch als eine Zeile in die Warteschlange, benannt nach seiner Art: Überspringen überspringt den Rest, und der Fortschrittsbalken läuft über das ganze Buch. Aus wartet jede Seite einzeln, mit ihrer Seitenzahl."
 L.OPT_READ_ONCE = "Nur einmal vorlesen"
 L.OPT_READ_ONCE_TIP = "Was dieser Charakter schon gehört hat, wird beim Öffnen nicht erneut vorgelesen. Abspielen funktioniert weiterhin."
 L.OPT_SECTION_READ = "Vorleseverlauf"
@@ -42,6 +44,7 @@ L.OPT_FALLBACK_LANGUAGE_TIP = "Was vorgelesen wird, wenn das Sprachpaket in dein
 L.OPT_FALLBACK_NONE = "Stumm bleiben"
 L.OPT_NO_PACK_AUDIO = "Das installierte Sprachpaket hat für diese Seite noch keine Vertonung."
 L.OPT_NO_PACK_INSTALLED = "Es ist kein Sprachpaket für Bücher installiert."
+L.OPT_PAGE_COUNT_FMT = "Seite %1$d von %2$d"
 
 -- Added in this release (deDE).
 L.OPT_SECTION_PACKS = "Sprachpakete"

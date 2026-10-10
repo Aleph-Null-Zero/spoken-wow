@@ -16,6 +16,8 @@ L.OPT_AUTOPLAY = "Leer automáticamente"
 L.OPT_AUTOPLAY_TIP = "Lee un libro o una carta en cuanto se abre. Desactivado, nada empieza solo: pulsa Reproducir en la página o escribe /spb read."
 L.OPT_WHOLE_BOOK = "Leer el libro entero"
 L.OPT_WHOLE_BOOK_TIP = "Lee todas las páginas, no solo la que está en pantalla. Al abrir la primera página se ponen en cola las demás, así la voz sigue leyendo mientras pasas las páginas."
+L.OPT_ONE_LINE = "Libro como una sola línea"
+L.OPT_ONE_LINE_TIP = "Pone el libro en la cola como una sola línea, con su tipo encima: Saltar salta el resto y la barra de progreso recorre todo el libro. Desactivado, cada página espera en la cola por separado, con su número de página."
 L.OPT_READ_ONCE = "Leer solo una vez"
 L.OPT_READ_ONCE_TIP = "Lo que este personaje ya ha oído no se vuelve a leer al abrirlo. Reproducir sigue funcionando."
 L.OPT_SECTION_READ = "Historial de lectura"
@@ -43,6 +45,7 @@ L.OPT_FALLBACK_LANGUAGE_TIP = "Qué leer cuando el paquete de voces de tu idioma
 L.OPT_FALLBACK_NONE = "Silencio"
 L.OPT_NO_PACK_AUDIO = "El paquete de voces instalado aún no tiene narración para esta página."
 L.OPT_NO_PACK_INSTALLED = "No hay ningún paquete de voces de Libros instalado."
+L.OPT_PAGE_COUNT_FMT = "Página %1$d de %2$d"
 
 -- Added in the settings, subtitles and Zone Lore release.
 

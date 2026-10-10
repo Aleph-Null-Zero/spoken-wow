@@ -33,6 +33,9 @@ local defaults = {
 	-- Whole book rather than the page on screen. A twenty-page journal read one button
 	-- press at a time is a worse experience than one that reads on while you turn pages.
 	readWholeBook = true,
+	-- A book is one line in the queue: Skip skips the rest of it and the progress bar runs
+	-- across it. Off, each page waits in the queue on its own, with its page count.
+	bookAsOneLine = true,
 	-- Off, because a reader who has not asked for it should hear a book whenever they open
 	-- it. On, a book is narrated the first time it is opened and stays quiet after that.
 	readOnce = false,

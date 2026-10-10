@@ -88,6 +88,9 @@ local function PageEnded(clip, finished)
 		if nextClip then
 			Follow(nextClip)
 			nextClip.continues = table.getn(entry.pages) > 0
+			local span = clip.span
+			nextClip.span = span and nextClip.length
+				and { before = span.before + clip.length, total = span.total } or nil
 			if SpokenBooks.source and SpokenBooks.source:Continue(nextClip) then
 				entry.clip = nextClip
 				return
@@ -95,6 +98,23 @@ local function PageEnded(clip, finished)
 		end
 	end
 	SpokenBooks.following[book] = nil
+end
+
+--- Where the first page of a reading sits in it, so the progress bar runs across the book
+--- (clip.span): nothing before it, and every page's length in all. Nil where a page has none.
+local function Span(first, rest)
+	local total = tonumber(first.length)
+	if not total then
+		return nil
+	end
+	for _, id in ipairs(rest) do
+		local length = SpokenBooks:PageLength(id)
+		if not length then
+			return nil
+		end
+		total = total + length
+	end
+	return { before = 0, total = total }
 end
 
 --- `clip` puts the next page at the head as it ends (PageEnded), before whatever else its own
@@ -145,17 +165,22 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 	end
 
 	local book = self:PlaceOf(pageId)
+	-- Book as One Line off: every page queued now, each a line of its own.
+	local oneLine = self:OneLine()
 	local queued, rest, first = 0, {}, nil
 	for _, id in ipairs(self:PagesFrom(pageId)) do
 		if SpokenBooksSettings and SpokenBooksSettings.readWholeBook == false and id ~= pageId then
 			break
 		end
-		if queued == 0 then
+		if queued == 0 or not oneLine then
 			local clip = self:ClipFor(id)
 			if clip then
-				Follow(clip)
+				if oneLine then
+					Follow(clip)
+				end
 				if source:Enqueue(clip) then
-					queued, first = 1, clip
+					queued = queued + 1
+					first = first or clip
 				end
 			end
 		elseif self:HasAudio(id) then
@@ -163,9 +188,10 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 			queued = queued + 1
 		end
 	end
-	if book and first then
+	if oneLine and book and first then
 		self.following[book] = { clip = first, pages = rest }
 		first.continues = #rest > 0
+		first.span = Span(first, rest)
 	end
 
 	-- Read, as far as this character is concerned, the moment a page of it is admitted --

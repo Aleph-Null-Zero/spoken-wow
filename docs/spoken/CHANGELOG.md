@@ -14,8 +14,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   *([Nucabe](https://github.com/Nucabe))*
 - **A book is one entry in the queue.** Skip skips the rest of the book, and a gravestone or
   letter opened while a book is read waits behind it instead of replacing it. The windows show
-  the readable's kind over its name, such as Book or Gravestone, in place of the page count.
-  *([Nucabe](https://github.com/Nucabe))*
+  the readable's kind over its name, such as Book or Gravestone, in place of the page count, and
+  the progress bar runs across the whole book. Book as One Line, on by default, turns it off for
+  a line per page with its page count, as before. *([Nucabe](https://github.com/Nucabe))*
 - **Volume Follows is back.** Choose which volume slider Spoken's voices follow: Master, Effects,
   Music, Ambience or Dialog. On Dialog, a note says which features stop working there.
   *([Nucabe](https://github.com/Nucabe))*
