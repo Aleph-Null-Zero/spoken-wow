@@ -505,7 +505,10 @@ function PlayerFrame:Update()
     local lastContent = self.frame.container.name
     for i, clip in ipairs(SoundQueue:IsEmpty() and { head } or SoundQueue.sounds) do
         if i == 1 then
-            self.frame.container.name:SetText(clip.present and clip.present.header or "")
+            -- Said once: a line titled by its header (a one-page letter) leaves the name line empty.
+            local present = clip.present
+            local header = present and present.header
+            self.frame.container.name:SetText(present and present.label and header or "")
         end
         lastRow = lastRow + 1
         local row = self.frame.container.buttons[lastRow] or self:CreateRow(lastRow)

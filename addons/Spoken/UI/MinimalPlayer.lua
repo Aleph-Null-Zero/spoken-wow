@@ -663,7 +663,9 @@ function MinimalPlayer:Update()
         self.clip, self.seconds, self.offset = clip, 0, 0
     end
     self:SetVisible(true)
-    self.name:SetText(clip.present and clip.present.header or "")
+    -- Said once: a line titled by its header (a one-page letter) leaves the name line empty.
+    local header = clip.present and clip.present.header
+    self.name:SetText(header ~= Label(clip) and header or "")
     self:ConfigurePortrait()
     self:ConfigureActions()
     self:LayoutQueue()
