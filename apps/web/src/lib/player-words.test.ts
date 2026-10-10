@@ -47,11 +47,11 @@ describe("speakPlayerTokens", () => {
     expect(speakPlayerTokens("Olá, $Nama.", "ptBR")).toBe("Olá, $Nama.");
   });
 
-  it("reads deDE's $u as the gender branch $g is", () => {
+  it("reads $u as the gender branch $g is, in every language", () => {
     // q:87288:accept and q:98321:accept, as the client sent them.
     expect(speakPlayerTokens("Seid gegrüßt, $uReisender:Reisende;.", "deDE")).toBe("Seid gegrüßt, Reisender.");
     expect(speakPlayerTokens("Ihr seid $uEin:Eine:r; $R.", "deDE", "f")).toBe("Ihr seid Eine Reisende.");
-    expect(speakPlayerTokens("Hola, $uamigo:amiga;.", "esES")).toBe("Hola, $uamigo:amiga;.");
+    expect(speakPlayerTokens("Olá, $uamigo:amiga;.", "ptBR", "f")).toBe("Olá, amiga.");
   });
 
   it("leaves a branch whose ; is lost, rather than reading on to a later sentence's ;", () => {
@@ -84,11 +84,11 @@ describe("speakPlayerTokens", () => {
 });
 
 describe("branchesOnPlayerGender", () => {
-  it("splits a deDE line on $u as on $g, and no other language's", () => {
-    expect(branchesOnPlayerGender("Willkommen, $uReisender:Reisende;.", "deDE")).toBe(true);
-    expect(branchesOnPlayerGender("Willkommen, $gReisender:Reisende;.", "deDE")).toBe(true);
-    expect(branchesOnPlayerGender("Bienvenue, $uvoyageur:voyageuse;.", "frFR")).toBe(false);
-    expect(branchesOnPlayerGender("Willkommen, $N.", "deDE")).toBe(false);
+  it("splits a line on $u as on $g", () => {
+    expect(branchesOnPlayerGender("Willkommen, $uReisender:Reisende;.")).toBe(true);
+    expect(branchesOnPlayerGender("Willkommen, $gReisender:Reisende;.")).toBe(true);
+    expect(branchesOnPlayerGender("Olá, $uamigo:amiga;.")).toBe(true);
+    expect(branchesOnPlayerGender("Willkommen, $N.")).toBe(false);
   });
 });
 

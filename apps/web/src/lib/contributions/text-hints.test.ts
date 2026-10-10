@@ -25,6 +25,8 @@ describe("textHints", () => {
     ]);
     expect(textHints("Bringt mir 5 <Federn.", "deDE")).toEqual(["unspeakable < or > — won't be voiced"]);
     expect(textHints("<Er nickt.> Gut, $N.", "deDE")).toEqual([]);
+    // A direction's own spacing is never spoken, so it is no gap.
+    expect(textHints("Gut <Er nickt .>, und <so  weiter> weiter <nickt>.", "deDE")).toEqual([]);
     expect(textHints("Bringt mir 5 <Federn, $einen Held.", "deDE")).toEqual([
       "unspoken token $einen — won't be voiced",
       "unspeakable < or > — won't be voiced",

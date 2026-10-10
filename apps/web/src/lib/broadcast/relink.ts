@@ -22,7 +22,7 @@ import { gossipStemRank } from "@/lib/contributions/naming";
 
 const NORM = (sql: string) => `lower(regexp_replace(btrim(${sql}), '\\s+', ' ', 'g'))`;
 const BRANCH = (sql: string, side: 1 | 2) =>
-  `regexp_replace(${sql}, '\\$g([^:;]*):([^;]*);', '\\${side}', 'gi')`;
+  `regexp_replace(${sql}, '\\$[gu]([^:;]*):([^;]*);', '\\${side}', 'gi')`;
 /** The text a client in the row's language shows: English's own, another language's localeText. */
 const SHOWN = `case when l."lang" = '${BASE_LANG}' then l."originalText" else l."localeText" end`;
 

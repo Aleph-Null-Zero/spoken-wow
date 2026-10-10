@@ -69,18 +69,15 @@ const TOKEN_GENITIVE = /\$([NnCc])s(?!\p{L})/gu;
 // form slips past its pattern and arrives here. No branch ends a sentence: one whose `;` was
 // lost would otherwise run on to a later sentence's `;` and drop the words between unheard.
 const BRANCH = String.raw`\s*([^:;.!?…。！？\n]+?)\s*:\s*([^:;.!?…。！？\n]+?)\s*(?::[^:;.!?…。！？\n]*)?;`;
-const GENDER = new RegExp(String.raw`\$[Gg]` + BRANCH, "g");
-// deDE's own templates, the Forever quests' above all, also write the branch as $u.
-const GENDER_DE = new RegExp(String.raw`\$[GgUu]` + BRANCH, "g");
+// $u is the same branch: ptBR's templates write it, and deDE's Forever quests.
+const GENDER = new RegExp(String.raw`\$[GgUu]` + BRANCH, "g");
 // Whatever may stand between a sentence's end and its first word: space, a line break, an
 // opening quote or Spanish's inverted marks.
 const SENTENCE_START = /(?:^|[.!?…。！？]|\n)[\s"'«„“¡¿]*$/u;
 
-const genderIn = (lang: Lang) => (lang === "deDE" ? GENDER_DE : GENDER);
-
-/** Whether a text branches on the player's gender in `lang`, and so is two lines rather than one. */
-export function branchesOnPlayerGender(text: string, lang: Lang): boolean {
-  return new RegExp(genderIn(lang).source).test(text);
+/** Whether a text branches on the player's gender, and so is two lines rather than one. */
+export function branchesOnPlayerGender(text: string): boolean {
+  return new RegExp(GENDER.source).test(text);
 }
 
 /** The text as it is spoken in `lang`, by a reader of `playerGender` where the line has one. */
@@ -97,7 +94,7 @@ export function speakPlayerTokens(
       ? word[0].toUpperCase() + word.slice(1)
       : word;
 
-  let spoken = text.replace(genderIn(lang), (_, male: string, female: string) =>
+  let spoken = text.replace(GENDER, (_, male: string, female: string) =>
     playerGender === "f" ? female : male,
   );
   const genitive = words.nameGenitive;
