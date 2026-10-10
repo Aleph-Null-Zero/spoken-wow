@@ -381,8 +381,7 @@ function PlayerFrame:UpdateProgress()
     if not clip then return end
     if clip ~= self.timed then self.timed, self.seconds = clip, 0 end
     self.seconds = Actions.Elapsed(clip, self.seconds)
-    local duration = tonumber(clip.length) or 0
-    Actions.SetProgress(self.progress, duration > 0 and (self.seconds or 0) / duration or 0)
+    Actions.SetProgress(self.progress, SoundQueue:Share(clip, self.seconds))
 end
 
 function PlayerFrame:Tick(elapsed)
@@ -463,6 +462,7 @@ function PlayerFrame:Update()
     -- The speaker, or the line's name where nobody speaks.
     local header = head.present and head.present.header
     self.frame.container.name:SetText((header and header ~= "") and header or Label(head))
+    Addon:ClipFont(self.frame.container.name, head)
 
     Portrait:Configure(self.frame.portrait, head)
     self:ConfigureActions(head)

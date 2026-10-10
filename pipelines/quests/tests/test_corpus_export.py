@@ -86,3 +86,12 @@ def test_a_speaker_another_language_wrote_is_named_in_english_where_english_has_
                 (str(QUEST + 1),))
     names = [(row[1], row[2]) for row in _speaker_rows(cur) if row[8] == f"q:{QUEST}:accept"]
     assert names == [(QUEST + 1, "English Name"), (QUEST + 2, "Test Speaker")]
+
+
+def test_the_file_names_the_export_as_its_only_writer(cur, tmp_path):
+    from tts_cli.corpus import load_corpus
+    from tts_cli.corpus_db import export_corpus
+
+    path = str(tmp_path / "corpus.json.gz")
+    export_corpus(path, verbose=False)
+    assert load_corpus(path)["producedBy"] == "export-corpus"

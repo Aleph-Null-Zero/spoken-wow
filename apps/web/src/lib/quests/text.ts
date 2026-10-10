@@ -143,10 +143,11 @@ export async function saveQuestText(args: {
 
     const split = momentRows.some((row) => row.playerGender !== null);
     const plainFile = from.playerGender ? from.fileName.slice(2) : from.fileName;
+    const gendered = branchesOnPlayerGender(text);
     const targets =
-      split && from.playerGender && !branchesOnPlayerGender(text)
+      split && from.playerGender && !gendered
         ? [{ lineId: from.lineId, fileName: from.fileName, playerGender: from.playerGender }]
-        : playerGenderForms(moment, plainFile, branchesOnPlayerGender(text));
+        : playerGenderForms(moment, plainFile, gendered);
     const written = targets.map((target) => target.lineId);
     // The plain line a split replaces.
     const retired = momentRows
