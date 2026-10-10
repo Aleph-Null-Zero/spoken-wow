@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from tts_cli.corpus_db import _import_npcs, _import_types
+from tts_cli.corpus_db import _import_npcs, _import_types, answered_models, with_answered_voices
 
 NPC_ID = 987_654_321
 
@@ -134,3 +134,38 @@ def test_a_flavor_the_site_lacks_is_added_with_its_voice(cur):
                          "gender": "male", "flavor": "testflavor", "provenance": "moderator",
                          "voice": "human-male-testflavor"}])
     assert voice_for(cur, "human", "male", "testflavor") == "human-male-testflavor"
+
+
+def dump_row(npc_id, text="Bring me six pelts.", source="accept", skip="no-voice", voice="model-77"):
+    return {"lineId": "q:1:accept", "source": source, "npcType": "creature", "npcId": npc_id,
+            "race": voice, "gender": "male", "flavor": None, "voice": voice, "text": text,
+            "skipReason": skip, "generatable": skip is None}
+
+
+def test_a_model_row_speaks_in_the_voice_its_npc_is_answered_with(cur):
+    # Bragok: a contribution heard a goblin, and that line has takes in goblin-male-zany.
+    seed(cur, NPC_ID, "zany", "client", race="goblin")
+    [row] = with_answered_voices([dump_row(NPC_ID)], answered_models(cur, [dump_row(NPC_ID)]))
+    assert (row["race"], row["gender"], row["flavor"]) == ("goblin", "male", "zany")
+    assert row["voice"] == voice_for(cur, "goblin", "male", "zany")
+    assert (row["skipReason"], row["generatable"]) == (None, True)
+
+
+def test_an_answered_model_row_keeps_any_other_reason_not_to_voice_it(cur):
+    seed(cur, NPC_ID, "zany", "client", race="goblin")
+    rows = [dump_row(NPC_ID, text="Hello, $Q."), dump_row(NPC_ID, source="progress", skip="progress")]
+    tokens, progress = with_answered_voices(rows, answered_models(cur, rows))
+    assert (tokens["skipReason"], tokens["generatable"]) == ("invalid-chars", False)
+    assert (progress["skipReason"], progress["generatable"]) == ("progress", False)
+
+
+def test_a_model_row_nobody_answered_stays_a_model_slot(cur):
+    seed(cur, NPC_ID, None, "none", race=None, gender=None)
+    rows = [dump_row(NPC_ID), dump_row(NPC_ID + 1)]
+    assert with_answered_voices(rows, answered_models(cur, rows)) == rows
+
+
+def test_a_model_row_whose_npc_is_only_a_type_stays_a_model_slot(cur):
+    seed(cur, NPC_ID, None, "client", race="creature", gender=None)
+    rows = [dump_row(NPC_ID)]
+    assert with_answered_voices(rows, answered_models(cur, rows)) == rows
