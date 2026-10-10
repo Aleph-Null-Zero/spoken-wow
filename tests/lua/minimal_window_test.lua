@@ -180,5 +180,27 @@ main:Refresh()
 Expect("Show Progress is offered for the small window, which has the progress line",
     Row(L.OPT_SUBTITLE_PROGRESS) ~= nil and Row(L.OPT_SUBTITLE_PROGRESS):IsShown(), true)
 
+---------------------------------------------------------------- bronze
+-- Bronze Border on every client: the small window's border, progress line and portrait ring.
+env, quests = Boot("11509")
+M = env.MinimalPlayer
+frame = env.Addon.db.profile.Frame
+Record(M.ring)
+quests:Enqueue(Line("One"))
+frame.BronzeTint = true
+env.PlayerFrame:RefreshConfig()
+local function Border() return Colour(unpack(M.panel.backdropBorderColor)) end
+local BRONZE, WHITE = "0.95 0.68 0.35", "1.00 1.00 1.00"
+Expect("on Classic Era, with Bronze Border on, the small window's border is bronze", Border(), BRONZE)
+Expect("...its progress line", Try(function() return Colour(unpack(M.progress.tint)) end), BRONZE)
+Expect("...and its portrait's ring", tostring(M.ring.colour), BRONZE)
+frame.BronzeTint = false
+env.PlayerFrame:RefreshConfig()
+Expect("...each its own colour with it off", Try(function()
+    return Border() .. "|" .. Colour(unpack(M.progress.tint)) .. "|" .. M.ring.colour end),
+    WHITE .. "|" .. WHITE .. "|" .. WHITE)
+frame.BronzeTint = true
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
 if Failures() > 0 then stub.print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 stub.print("\nAll small window tests passed")

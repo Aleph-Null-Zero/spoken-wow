@@ -15,8 +15,9 @@ local WORDS_TOP, PROGRESS_GAP, FOOT = 44, 6, 27
 local INSET, BESIDE_PORTRAIT, NO_PORTRAIT = 18, 96, 16
 -- Between the name or the title and the header's buttons; between the buttons, as the subtitle's.
 local CONTROLS_CLEAR, ROUND_GAP = 8, 4
--- The Forever client tints its frame metal bronze; its palette, so the player matches.
-local BRONZE = Version.IsCamelot and { .95, .68, .35 } or nil
+-- The bronze the Forever client's frames wear (Bronze Border): the border, the progress line and
+-- the portrait's ring take it.
+local BRONZE = { .95, .68, .35 }
 -- The panel's backgrounds (Frame.MinimalBackground). On parchment, the DialogueUI window's
 -- parchment ink (DialogueUITheme's first palette), with no shadow; on the dark rock, the light
 -- colours the window always had.
@@ -550,7 +551,7 @@ function MinimalPlayer:RefreshConfig(original)
     self.content:SetPoint("TOPRIGHT", -INSET, -INSET)
     self.portrait:SetShown(not cfg.HidePortrait)
     local r, g, b = 1, 1, 1
-    if BRONZE and cfg.BronzeTint then r, g, b = unpack(BRONZE) end
+    if Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
     self.panel:SetBackdropBorderColor(r, g, b)
     Actions.TintProgress(self.progress, r, g, b)
     self.ring:SetVertexColor(r, g, b)
