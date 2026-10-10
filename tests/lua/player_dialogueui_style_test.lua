@@ -31,8 +31,7 @@ local function FakeDialogueUI()
     local font = stub.Widget("Font")
     function font:GetFont() return "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf", 14 end
     _G.DUIFont_Quest_Paragraph = font
-    -- Its book view: no parent either, drawn at 0.8, its paper the frame, 409.6 by 477.87 with
-    -- its bottom left at 200, 100. Closed until a book opens.
+    -- Its book view, its paper the frame, closed until a book opens.
     local book = stub.Widget("Frame")
     book.GetEffectiveScale = function() return 0.8 end
     book.GetRect = function() return 200, 100, 409.6, 477.87 end
@@ -705,9 +704,6 @@ CloseDialog()
 Expect("with no line playing on, the dialog closing moves nothing", Skin.settling, nil)
 
 ---------------------------------------------------------------- books and stones
--- Spoken Books' pages, in the art DialogueUI's book view draws them in: its paper for books and
--- letters, its stone for the materials it draws in stone. Every other line keeps the quest
--- window's parchment.
 local BOOK = "Interface/AddOns/DialogueUI/Art/Book/TextureKit-"
 local function Page(material)
     return H.Clip({ length = 30, present = { header = "Beyond the Dark Portal", label = "Page 1 of 4", bullet = "book",
@@ -741,8 +737,6 @@ Expect("a quest's line is back in the quest window's parchment", Skin.parchments
     .. " " .. Rows(Skin.parchments[3]), "Interface/AddOns/DialogueUI/Art/Theme_Brown/Parchment.png 896-1152")
 Spoken:StopAll()
 
--- The book view open: this window steps aside; closed on a page that reads on, the window takes
--- the book's place and size and goes to the top left, as from the quest window.
 local BookView = _G.DUIBookFrame
 local bookWatch = Skin.dialogWatches and Skin.dialogWatches[BookView]
 Expect("the book view is watched, as the quest window is", bookWatch ~= nil, true)
