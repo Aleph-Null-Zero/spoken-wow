@@ -200,8 +200,8 @@ function Actions.SkipButton(parent, name)
     return skip
 end
 
---- Stop or Replay for the line at the head, as the windows' headers show it. `allowed()`, optional,
---- says whether the window has a line to act on; `after()`, optional, runs once it has acted.
+--- Stop or Replay for the line at the head. `allowed()`, optional, says whether the window has
+--- a line to act on; `after()`, optional, runs once it has acted.
 function Actions.StopButton(parent, allowed, after)
     local play = Actions.RoundButton(parent, 12)
     play:SetScript("OnClick", function()
@@ -231,9 +231,9 @@ function Actions.LayOutRow(controls, row, gap)
     controls:SetSize(math.max(1, x - gap), tallest)
 end
 
--- What follows a window's title, as the subtitle has it: "• (Stopped)" while the line is stopped
--- and the lines waiting, "• +N", TAIL_GAP after it. One more fades the count in over TAIL_IN;
--- Stopped fades in and out, and keeps its room until it has faded.
+-- What follows a window's title: "• (Stopped)" while the line is stopped and the lines waiting,
+-- "• +N", TAIL_GAP after it. One more fades the count in over TAIL_IN; Stopped fades in and
+-- out, and keeps its room until it has faded.
 local TAIL_GAP, TAIL_IN = 6, .25
 local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
 
@@ -246,7 +246,7 @@ function Actions.Tail(stopped, count)
     return tail
 end
 
---- Stopped wanted or not; it fades to it (Tail:Step).
+--- Whether Stopped should show; Step fades it in or out.
 function Tail:SetStopped(stopped)
     self.want = stopped and true or false
 end
@@ -618,10 +618,9 @@ function Actions:Configure(frame, clip)
     return shown
 end
 
---- The actions for `clip` in a window's header, as the subtitle shows them: after `first` (its Stop
---- or Replay and Skip), Report and anything else the line offers, as large and as strong, in
---- `controls`. An action anchored to the header (Stop Gossip) is left off: Skip does its work.
---- The buttons in order, those shown.
+--- The actions for `clip` in `controls`, after `first` (its Stop or Replay and Skip) and as large
+--- and as strong. An action anchored to the header (Stop Gossip) is left off: Skip does its work.
+--- Returns the buttons shown, in order.
 function Actions:HeaderControls(frame, controls, first, clip)
     self:Configure(frame, clip)
     local row = {}
@@ -652,8 +651,8 @@ function Actions.DialogCovers()
     return false
 end
 
---- Calls `fn` whenever a DialogueUI dialog opens or closes, a frame later, once DialogueUI's
---- bridge has put the windows over it or not. Told by a child of each, as DialogueUIPlayer is.
+--- Calls `fn` a frame after a DialogueUI dialog opens or closes, once DialogueUI's bridge has put
+--- the windows over it or not.
 function Actions.WatchDialogs(fn)
     local function Later()
         if C_Timer and C_Timer.After then C_Timer.After(0, fn) else fn() end
@@ -702,7 +701,7 @@ function Fader:Set(shown, immediate)
         self:Release()
         self.frame:Show()
     elseif self.frame:IsShown() and not immediate and not self.holding and Transcript.Hold then
-        -- The words stay for the fade (Transcript:Hold); a line that comes meanwhile releases them.
+        -- The words stay for the fade; a line that comes meanwhile releases them.
         Transcript:Hold()
         self.holding = true
     end
