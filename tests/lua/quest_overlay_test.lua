@@ -166,7 +166,8 @@ hiddenActions.report = true
 _G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
 Expect("Hide Report Buttons, in Spoken's settings, takes it away at once", detailsReport:IsShown(), false)
 Expect("...Play moving into its corner", detailsButton.anchor.relativePoint, "RIGHT")
-Expect("...as Spoken says to the addons that ask", _G.Spoken:AreReportButtonsHidden(), true)
+Expect("...as Spoken says to the addons that ask",
+    _G.Spoken.AreReportButtonsHidden and _G.Spoken:AreReportButtonsHidden(), true)
 hiddenActions.report = nil
 _G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
 Expect("...and gives it back when it is off", detailsReport:IsShown(), true)

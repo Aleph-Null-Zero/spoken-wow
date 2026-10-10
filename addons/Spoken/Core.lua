@@ -174,8 +174,8 @@ function Addon:InitDB()
 end
 
 --- Put the profile's settings into effect: the window or subtitles, the captions, the minimap
---- button, the other sounds' levels and the settings page. Each only where it is loaded on this
---- client, and only once Enable has built them.
+--- button, the other sounds' levels, the feature addons' Report and Contribute buttons and the
+--- settings page. Each only where it is loaded on this client, and only once Enable has built them.
 function Addon:ApplyProfile()
     if not self.enabled then return end
     if PlayerFrame and PlayerFrame.RefreshConfig then PlayerFrame:RefreshConfig() end
@@ -187,6 +187,9 @@ function Addon:ApplyProfile()
     -- Which modules are on is the profile's too: each puts its buttons back or takes them off,
     -- and what one now off had queued goes, as switching it off on Spoken's page does.
     for key in Sources:Iterate() do Sources:Apply(key) end
+    -- The addons that draw their own Report and Contribute buttons redraw only when told.
+    Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+    Callbacks:Fire("CONTRIBUTE_SETTINGS_CHANGED")
     if Options and Options.UpdateRows then Options:UpdateRows() end
 end
 

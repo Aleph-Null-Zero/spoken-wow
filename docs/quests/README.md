@@ -863,7 +863,10 @@ asks `Spoken:AreContributeButtonsHidden()` in its gap check and refreshes on the
 With DialogueUI, which never shows the game's quest and gossip frames, its window carries a
 Report icon under its Decline button instead, faint on every page and in full beside
 **No voice-over playing? Contribute!** when a line is missing (see
-[`DIALOGUEUI-BRIDGE.md`](DIALOGUEUI-BRIDGE.md)).
+[`DIALOGUEUI-BRIDGE.md`](DIALOGUEUI-BRIDGE.md)). **Hide Report Buttons**, in the same settings,
+takes away the faint icon with every other Report button, the quest log's included; each addon
+asks `Spoken:AreReportButtonsHidden()` and redraws on the player's `REPORT_SETTINGS_CHANGED`
+callback. The icon beside the Contribute words stays.
 
 Clicking it opens the same copy box `ReportButton.lua` uses, holding a plain-text envelope
 instead of an address: the addon, the build, the locale, the quest or NPC, and the text

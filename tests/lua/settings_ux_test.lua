@@ -444,6 +444,17 @@ do
     registered.OnProfileChanged("OnProfileChanged", env.Addon.db, "Other")
     Expect("...and every module, a module the profile has off told it is off", told[quests], false)
     env.Addon.db.profile.Parts[quests] = nil
+    -- Hide Report Buttons and Hide Contribute Buttons are the profile's too, and the addons
+    -- that draw those buttons redraw only when told.
+    local heard = { REPORT_SETTINGS_CHANGED = 0, CONTRIBUTE_SETTINGS_CHANGED = 0 }
+    local handles = {}
+    for event in pairs(heard) do
+        handles[event] = _G.Spoken:RegisterCallback(event, function() heard[event] = heard[event] + 1 end)
+    end
+    registered.OnProfileChanged("OnProfileChanged", env.Addon.db, "Other")
+    Expect("...and the addons' Report and Contribute buttons, told to ask again",
+        heard.REPORT_SETTINGS_CHANGED .. "," .. heard.CONTRIBUTE_SETTINGS_CHANGED, "1,1")
+    for _, handle in pairs(handles) do _G.Spoken:UnregisterCallback(handle) end
     for _, restore in ipairs(undo) do restore() end
     env.Addon.db = keep
     Options:UpdateRows()
