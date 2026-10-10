@@ -243,7 +243,13 @@ function Skin:Initialize()
                 self:FadeDialogOut(frame, hide)
             end
             if type(dialog.ShowUI) == "function" then
-                hooksecurefunc(dialog, "ShowUI", function() self:CancelDialogFade(dialog) end)
+                hooksecurefunc(dialog, "ShowUI", function()
+                    self:CancelDialogFade(dialog)
+                    -- Another page in the quest window, still open (the gossip back after a quest
+                    -- is accepted): its lines are this page's, not the last's, so closing on the
+                    -- second of a giver's quests sends its page behind the first's line playing on.
+                    if dialog == _G.DUIQuestFrame and dialog:IsShown() then self:StartSession(dialog) end
+                end)
             end
             self.sessions[dialog] = setmetatable({}, { __mode = "k" })
         end

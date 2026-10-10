@@ -25,6 +25,8 @@ local function FakeDialogueUI()
     frame.Parchments = { cap }
     function frame:LoadTheme() end
     function frame:UpdateFrameSize() end
+    -- Showing a page: Spoken hooks it to hear another page shown in a window still open.
+    function frame:ShowUI() end
     -- Closed until a dialog opens.
     frame:Hide()
     _G.DUIQuestFrame = frame
@@ -1004,6 +1006,21 @@ Expect("...a dialog opening cuts its flight short", tostring(Skin.tuck) .. " " .
 CloseDialog()
 Expect("...and closing, having queued nothing, sends nothing after it", tostring(Skin.tuck) .. " "
     .. tostring(Skin.settling), "nil nil")
+-- One quest giver's two quests taken one after the other: accepting the first brings its gossip
+-- back in the same window, another page, while the first quest's line plays on. Accepting the
+-- second closes the window on that line, the second's queued behind it: its page goes behind.
+Spoken:StopAll()
+stub.Advance(2)
+OpenDialog()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "First", portrait = { kind = "none" } } }))
+stub.Advance(2)
+DUI:ShowUI()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Second", portrait = { kind = "none" } } }))
+CloseDialog()
+Expect("a giver's second quest accepted while the first's line plays sends its page behind this window",
+    tostring(Skin.settling) .. " " .. tostring(Skin.tuck ~= nil) .. " " .. tostring(card:IsShown()), "nil true true")
+Skin:TuckStep(1)
+Expect("...this window showing the first quest's line as it was", Skin.title.text:GetText(), "First")
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 
