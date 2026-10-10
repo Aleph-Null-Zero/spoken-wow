@@ -69,7 +69,7 @@ end
 
 --- The pages still to come of `book`, the registry by default.
 local function Coming(book)
-    local entry = B.following[book or 261]
+    local entry = (B.following or {})[book or 261]
     return entry and entry.pages or {}
 end
 
@@ -90,10 +90,6 @@ Expect("a page the pack does not carry has no clip", B:ClipFor(263), nil)
 local letter = B:ClipFor(15)
 Expect("a one-page letter is named by its book, under what the Compendium calls it",
     letter.present.label .. "|" .. letter.present.header, "William's Shipment|Writing")
--- The group is what keeps the cue between items out of a book, and every way a page is
--- queued builds its clip here.
-Expect("pages of one book share a group", B:ClipFor(262).group, clip.group)
-Expect("...which another book's page does not", B:ClipFor(2810).group ~= clip.group, true)
 
 ---------------------------------------------------------------- reporting a bad reading
 local report = clip.present.actions and clip.present.actions[1]
@@ -132,19 +128,45 @@ Expect("the next page carries its own captions", B:ClipFor(262).present.transcri
 Expect("turning to the last page also changes nothing", B:SyncTo(265), 0)
 
 ---------------------------------------------------------------- a page finishing
-stub.Advance(31)
-Expect("a page finishing puts the next at the head, still one line", Same(QueuedPages(), { 262 }), true)
+local audio = env.Addon.db.profile.Audio
+
+--- How many times the cue between lines has played.
+local function Cues()
+    local n = 0
+    for _, s in ipairs(stub.world.kitSounds) do
+        if s.kit == _G.SOUNDKIT.IG_QUEST_LOG_CLOSE then n = n + 1 end
+    end
+    return n
+end
+
+-- Page 261 speaks for 30.5s; the book's gap after it is the source's 0.35s.
+stub.Advance(30.8)
+Expect("a page finishing: the next page waits the book's gap after the voice, even with nothing else queued",
+    Same(QueuedPages(), { 261 }), true)
+stub.Advance(0.1)
+Expect("...then starts at the head, still one line", Same(QueuedPages(), { 262 }), true)
+Expect("...speaking", stub.world.played[#stub.world.played], B:ClipFor(262).path)
 Expect("...what follows it shorter by that page", Same(Coming(), { 265 }), true)
 Spoken:Skip()
-Expect("Skip skips the rest of the book", #QueuedPages() .. " " .. tostring(B.following[261]), "0 nil")
+Expect("Skip skips the rest of the book", #QueuedPages() .. " " .. tostring((B.following or {})[261]), "0 nil")
 B:PlayFrom(261)
 
--- Opening a different book: nothing queued covers it, so this source's queue is dropped
--- and rebuilt from the new page rather than narrating on through the old book.
+-- Another readable opened while a book is read waits behind it: the book reads on to its end.
 B:SyncTo(2810)
 Expect("opening another readable while the book is read queues it after: it waits for the book",
     Same(QueuedPages(), { 261, 2810 }), true)
 Expect("...the book still to follow on", Same(Coming(), { 262, 265 }), true)
+-- The readable waiting must not turn the book's pages into separate lines.
+local cues, lineGap, cueBetween = Cues(), audio.LineGap, audio.CueBetweenLines
+audio.LineGap, audio.CueBetweenLines = 1, true
+stub.Advance(30.8)
+Expect("with a readable waiting, the next page still waits only the book's gap",
+    Same(QueuedPages(), { 261, 2810 }), true)
+stub.Advance(0.1)
+Expect("...then starts ahead of the readable", Same(QueuedPages(), { 262, 2810 }), true)
+stub.Advance(1)
+Expect("...with no cue between the pages", Cues() - cues, 0)
+audio.LineGap, audio.CueBetweenLines = lineGap, cueBetween
 -- Turned back to a page of the book being read that is not coming: the book starts again from
 -- there, in the queue's order: after what waits.
 B:StopReading()

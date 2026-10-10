@@ -50,10 +50,15 @@ local function QueuedPages()
     return pages
 end
 
+--- The registry's pages still to come.
+local function Coming()
+    local entry = (B.following or {})[261]
+    return entry and entry.pages or {}
+end
+
 --- How many pages are being read: the one queued, and the rest of its book to follow it.
 local function Reading()
-    local entry = B.following[261]
-    return #QueuedPages() + (entry and #entry.pages or 0)
+    return #QueuedPages() + #Coming()
 end
 
 ---------------------------------------------------------------- opening a book
@@ -61,12 +66,12 @@ stub.ShowPage({ title = "Hillsbrad Town Registry", number = 1, text = REGISTRY_1
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("opening a book queues it, as one line", #QueuedPages(), 1)
 Expect("...starting at the page on screen", QueuedPages()[1], 261)
-Expect("...its other pages to follow", B.following[261] and #B.following[261].pages, 2)
+Expect("...its other pages to follow", #Coming(), 2)
 
 ---------------------------------------------------------------- turning a page
 stub.ShowPage({ title = "Hillsbrad Town Registry", number = 2, text = REGISTRY_2, hasNext = true })
 stub.FireEvent("ITEM_TEXT_READY")
-Expect("turning to a page still to come does not restart the book", QueuedPages()[1] .. " " .. #B.following[261].pages,
+Expect("turning to a page still to come does not restart the book", tostring(QueuedPages()[1]) .. " " .. #Coming(),
     "261 2")
 Expect("...and remembers where the reader is", B.lastPage, 262)
 
@@ -134,6 +139,10 @@ do
     SlashCmdList["SPOKENBOOKS"]("read")
     Expect("...and on a stopped one, that Spoken is stopped", said and said:find("Spoken is stopped") ~= nil, true)
     Spoken:Resume()
+    stub.ShowPage({ title = "Hillsbrad Town Registry", number = 2, text = REGISTRY_2, hasNext = true })
+    stub.FireEvent("ITEM_TEXT_READY")
+    SlashCmdList["SPOKENBOOKS"]("read")
+    Expect("...and on a page of it still to come, that it is coming", said and said:find("still to come") ~= nil, true)
     B:StopReading()
     stub.ClosePage()
     stub.FireEvent("ITEM_TEXT_CLOSED")

@@ -130,7 +130,8 @@ function SourceMethods:Enqueue(clip)
 end
 
 --- The next part of a line that just finished (a book's next page), at the head of the queue,
---- so the queue shows the line as one. Call it from the finished clip's stopCallback.
+--- so the queue shows the line as one. Call it from the finished clip's stopCallback; that clip
+--- sets `continues` while a part is to follow, or it gets the pause and cue between lines.
 function SourceMethods:Continue(clip)
     return Noted(clip, "continue", SoundQueue:Add(clip, self, true))
 end

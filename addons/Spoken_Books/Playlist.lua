@@ -9,7 +9,8 @@
 --
 -- A book is one line in the queue: its first page is queued and each page, as it finishes,
 -- puts the next at the head (source:Continue), so the queue counts the book once and Skip
--- skips the rest of it.
+-- skips the rest of it. A page with more to follow `continues`: only the book's own gap after
+-- it, not the pause and cue between lines.
 
 local ADDON_NAME, SpokenBooks = ...
 
@@ -86,6 +87,7 @@ local function PageEnded(clip, finished)
 		local nextClip = SpokenBooks:ClipFor(id)
 		if nextClip then
 			Follow(nextClip)
+			nextClip.continues = table.getn(entry.pages) > 0
 			if SpokenBooks.source and SpokenBooks.source:Continue(nextClip) then
 				entry.clip = nextClip
 				return
@@ -163,6 +165,7 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 	end
 	if book and first then
 		self.following[book] = { clip = first, pages = rest }
+		first.continues = #rest > 0
 	end
 
 	-- Read, as far as this character is concerned, the moment a page of it is admitted --
