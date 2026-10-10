@@ -182,5 +182,32 @@ Expect("...each its own colour with it off", Try(function()
 frame.BronzeTint = true
 env.SoundQueue:RemoveAllSoundsFromQueue()
 
+---------------------------------------------------------------- fading in and out
+-- The window fades in and out, and goes while a DialogueUI dialog hides the interface.
+env, quests = Boot()
+M = env.MinimalPlayer
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "One",
+    portrait = { kind = "model", creatureID = 4949 } } }))
+M.fader:Step(0.1)
+Expect("a line starting: the window fading in", Try(function()
+    return tostring(M.frame:IsShown()) .. " " .. tostring(M.frame:GetAlpha() > 0 and M.frame:GetAlpha() < 1)
+end), "true true")
+M.fader:Step(1)
+_G.DUIQuestFrame = CreateFrame("Frame")
+_G.DUIQuestFrame:Show()
+env.PlayerFrame:Update()
+M.fader:Step(0.2)
+Expect("a DialogueUI dialog open: fading out", Try(function()
+    return tostring(M.frame:IsShown()) .. " " .. tostring(M.frame:GetAlpha() < 1)
+end), "true true")
+M.fader:Step(1)
+Expect("...then gone", M.frame:IsShown(), false)
+_G.DUIQuestFrame:Hide()
+env.PlayerFrame:Update()
+M.fader:Step(1)
+Expect("...and back when it closes on the line playing", M.frame:IsShown(), true)
+_G.DUIQuestFrame = nil
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
 if Failures() > 0 then stub.print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 stub.print("\nAll small window tests passed")
