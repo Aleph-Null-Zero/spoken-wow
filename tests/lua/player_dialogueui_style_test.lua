@@ -165,6 +165,11 @@ local function NoteShown(text)
 end
 Expect("...and the wheel's shortcuts", NoteShown(env.L.DUI_WHEEL_HINT), true)
 Expect("no Hide Portrait for it: its header has the face's socket built in", Shown(main, env.L.OPT_HIDE_PORTRAIT), false)
+env.Addon.db.profile.Frame.HidePortrait = true
+Skin:ConfigurePortrait()
+Expect("...so the face stays with Hide Portrait set for another style", Skin.portrait:IsShown(), true)
+env.Addon.db.profile.Frame.HidePortrait = false
+Skin:ConfigurePortrait()
 Expect("the theme waits on not following DialogueUI's", Row(main, env.L.OPT_DUI_THEME).layoutReason, env.L.REASON_DUI_FOLLOW)
 env.Addon:SetPlayerStyle("minimal")
 main:Refresh()
