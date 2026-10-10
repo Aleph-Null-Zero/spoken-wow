@@ -35,7 +35,8 @@ import os
 from collections import Counter
 from datetime import datetime, timezone
 
-from tts_cli.corpus import GENERIC_TYPES, SCHEMA_VERSION, load_corpus, write_corpus
+from tts_cli.corpus import (GENERIC_TYPES, INVALID_CHARS, NO_VOICE, SCHEMA_VERSION, load_corpus,
+                            write_corpus)
 from tts_cli.flavors import fallback_flavors, is_model_voice
 
 LANG = "enUS"
@@ -78,6 +79,43 @@ def connect():
 
 def _line_key(row):
     return tuple(row[field] for field in LINE_FIELDS)
+
+
+def answered_models(cur, lines):
+    """{(npcType, npcId): (race, gender, flavor, voice)} for the NPCs the dump knows only by
+    model but the npc table already names a race and gender for: answers a model answer leaves
+    alone. A bare type ("creature") is not one: a speaker row needs a gender."""
+    keys = {(row["npcType"], row["npcId"]) for row in lines if is_model_voice(row["voice"])}
+    if not keys:
+        return {}
+    cur.execute(
+        """select "npcKind", "npcId", "race", "gender", "flavor",
+                  "voice_for"("race", "gender", "flavor")
+             from "npc"
+            where ("npcKind", "npcId") in %s and "provenance" <> 'none'
+              and "race" !~ '^model-[0-9]+$' and "gender" is not null""",
+        (tuple(keys),),
+    )
+    return {(r[0], r[1]): r[2:] for r in cur.fetchall() if r[5]}
+
+
+def with_answered_voices(lines, answers):
+    """The dump's model rows spoken in the voice their NPC is already answered with, as the site
+    reads it (apps/web migration 0071). Otherwise a line a contributor voiced would turn to
+    no-voice, and its takes would sit under a file its voice no longer names."""
+    out = []
+    for row in lines:
+        answer = answers.get((row["npcType"], row["npcId"])) if is_model_voice(row["voice"]) else None
+        if answer is None:
+            out.append(row)
+            continue
+        race, gender, flavor, voice = answer
+        reason = row["skipReason"]
+        if reason == NO_VOICE:
+            reason = "invalid-chars" if any(c in row["text"] for c in INVALID_CHARS) else None
+        out.append({**row, "race": race, "gender": gender, "flavor": flavor, "voice": voice,
+                    "skipReason": reason, "generatable": reason is None})
+    return out
 
 
 def _variants(lines):
@@ -330,6 +368,10 @@ def import_corpus_data(corpus, verbose=True):
                 corpus["lines"], corpus["schemaVersion"], known_contributions,
                 contributed_speakers,
             )
+            answers = answered_models(cur, lines)
+            answered = sum(1 for row in lines
+                           if is_model_voice(row["voice"]) and (row["npcType"], row["npcId"]) in answers)
+            lines = with_answered_voices(lines, answers)
             variants = _variants(lines)
 
             # The extract's own timestamp, kept so the export can reproduce it. Without it
@@ -508,6 +550,7 @@ def import_corpus_data(corpus, verbose=True):
             f"{counts['skip']} unchanged"
         )
         print(f"{len(speaker_rows)} speakers, {len(npc_rows)} NPCs, {len(spawn_rows)} spawn points")
+        print(f"{answered} model rows spoken in the voice their NPC is already answered with")
         print(f"{len(kept_npcs)} NPC answers kept over a different one in the file"
               + (":" if kept_npcs else ""))
         for kind, npc_id, kept, theirs in kept_npcs:
