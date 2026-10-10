@@ -688,8 +688,6 @@ Expect("nothing there changes DialogueUI's own settings", table.getn(layout.entr
     and Row("Turn On Text To Speech") == nil, true)
 Expect("the place has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
     and Row(VO.L.OPT_DUI_PLAY_BUTTON) ~= nil and scroll ~= nil, true)
--- Among the narrator style's settings, last; the page's later sections (the languages, the
--- sound) under them.
 -- The style as the page reads it: DialogueUI's art is not here to make the style available.
 local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end
