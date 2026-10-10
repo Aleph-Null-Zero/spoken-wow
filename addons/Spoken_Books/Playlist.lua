@@ -165,7 +165,7 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 	end
 
 	local book = self:PlaceOf(pageId)
-	-- Book as One Line off: every page queued now, each a line of its own.
+	-- Read Book as One Line off: every page queued now, each a line of its own.
 	local oneLine = self:OneLine()
 	local queued, rest, first = 0, {}, nil
 	for _, id in ipairs(self:PagesFrom(pageId)) do

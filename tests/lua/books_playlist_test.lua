@@ -213,7 +213,7 @@ B:StopReading()
 
 ---------------------------------------------------------------- a line per page
 SpokenBooksSettings.bookAsOneLine = false
-Expect("Book as One Line off: every page queued now, each a line of its own",
+Expect("Read Book as One Line off: every page queued now, each a line of its own",
     B:PlayFrom(261) .. " " .. table.concat(QueuedPages(), ","), "3 261,262,265")
 local page = Spoken:GetQueue()[1]
 Expect("...the book over its page count", page.present.header .. " / " .. tostring(page.present.label),

@@ -71,7 +71,7 @@ function SpokenBooks:KindOf(book)
 	return L[(self.TYPE_NAMES[place and place.type] or self.TYPE_NAMES.other).one]
 end
 
---- Whether a book is one line in the queue (Book as One Line), rather than a line per page.
+--- Whether a book is one line in the queue (Read Book as One Line), rather than a line per page.
 function SpokenBooks:OneLine()
 	return not (SpokenBooksSettings and SpokenBooksSettings.bookAsOneLine == false)
 end

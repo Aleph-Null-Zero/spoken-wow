@@ -96,8 +96,8 @@ autoplay:SetChecked(true)
 autoplay.scripts.OnClick(autoplay)
 Expect("ticking it again brings Read Only Once back", once.enabled, true)
 
-local oneLine = Labelled("Book as One Line")
-Expect("Book as One Line is on the panel, defaulting on", oneLine ~= nil and oneLine.checked, true)
+local oneLine = Labelled("Read Book as One Line")
+Expect("Read Book as One Line is on the panel, defaulting on", oneLine ~= nil and oneLine.checked, true)
 if oneLine then
     oneLine:SetChecked(false)
     oneLine.scripts.OnClick(oneLine)
