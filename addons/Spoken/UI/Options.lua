@@ -479,7 +479,7 @@ local function Build(canvas)
             function() return transcript().Lines end,
             function(v) transcript().Lines = v end, function() refreshTranscript(); refreshSubtitle() end,
             Layout.Number, L.TRANSCRIPT_LINES_TIP)
-        Only(lines, function() return InWindow() or (Subtitles() and Rolling()) end)
+        Only(lines, function() return (InWindow() and Style() ~= "classic") or (Subtitles() and Rolling()) end)
         Requires(lines, Words, L.REASON_WORDS)
         Only(ForSubtitles(layout:Slider(L.OPT_SUBTITLE_SENTENCES, 1, 4, 1,
             function() return transcript().SubtitleSentences or 3 end,

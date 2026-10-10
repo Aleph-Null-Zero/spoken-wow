@@ -17,13 +17,20 @@ PlayerFrame = {}
 
 -- TalkingHeadUI.xml: the frame and its box are 570 by 155; the portrait's frame is 143 across, 5
 -- in and 6 down; the model 115 across, 21 in and 21 down; the name 2 right of the portrait's frame
--- and 19 down from its top; the words 3 under the name, ending 42 from the right and 12 from the
--- foot; the close button 12 in from the top right corner.
+-- and 19 down from its top; the words 3 under the name, ending 42 from the right.
 local FRAME_WIDTH, FRAME_HEIGHT = 570, 155
 local RING_X, RING_Y, RING_SIZE = 5, -6, 143
 local PORTRAIT_X, PORTRAIT_Y, PORTRAIT_SIZE = 21, -21, 115
 local NAME_X, NAME_Y = RING_X + RING_SIZE + 2, RING_Y - 19
-local WORDS_UNDER, RIGHT, FOOT, CORNER = 3, 42, 12, 12
+local WORDS_UNDER, RIGHT = 3, 42
+-- The box art's shadow is full dark 15 under the frame's top, 12 in from its right and 13 over its
+-- foot (measured in game); its edges fade out past that. The round controls and the progress line
+-- sit PAD inside it.
+local SHADE_TOP, SHADE_RIGHT, SHADE_FOOT, PAD = 15, 12, 13, 10
+local CORNER_X, CORNER_Y, FOOT = SHADE_RIGHT + PAD, SHADE_TOP + PAD, SHADE_FOOT + PAD
+-- At most this many lines of words, fewer where Text Size leaves no room for them over the
+-- progress line, BAR_GAP above it.
+local MOST_LINES, BAR_GAP = 3, 6
 -- Where the name starts with the portrait hidden: as far in as the words end on the right.
 local BARE_LEFT = RIGHT
 -- The atlases, the first of each the client has. Forever's portrait frame for the dark box is the
@@ -150,7 +157,7 @@ function PlayerFrame:InitHeader()
 
     self.controls = CreateFrame("Frame", nil, container)
     self.controls:SetHeight(1)
-    self.controls:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -CORNER, -CORNER)
+    self.controls:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -CORNER_X, -CORNER_Y)
     self.play = Actions.StopButton(self.controls, function() return self:Current() ~= nil end,
         function() self:UpdateControls() end)
     self.skip = Actions.SkipButton(self.controls)
@@ -286,13 +293,14 @@ function PlayerFrame:RefreshConfig()
     self:Update()
 end
 
---- Lines Shown of the words and a line's height, or no lines where the line has no words to show
---- (Show Words off, none written, or 1.12, which has no captions).
+--- The lines of words that fit between the name and the progress line, up to MOST_LINES, and a
+--- line's height; no lines where the line has no words to show (Show Words off, none written, or
+--- 1.12, which has no captions).
 function PlayerFrame:WordLines(clip)
-    local transcript = Addon:Profile("Transcript")
-    local lineHeight = (transcript.FontSize or 16) + 4
+    local lineHeight = (Addon:Profile("Transcript").FontSize or 16) + 4
     if Transcript:HeightForClip(clip) <= 0 then return 0, lineHeight end
-    return transcript.Lines == 1 and 1 or 2, lineHeight
+    local room = FRAME_HEIGHT + NAME_Y - FOOT - (NAME_SIZE + WORDS_UNDER) - BAR_GAP - self.progress.height
+    return math.max(1, math.min(MOST_LINES, math.floor(room / lineHeight))), lineHeight
 end
 
 --- The column's place and the words docked in it. The window keeps the Talking Head's size.
@@ -327,7 +335,7 @@ function PlayerFrame:LayoutHeader()
     local container = self.frame.container
     local name, tail = container.name, self.tail
     local left = FrameConfig().HidePortrait and BARE_LEFT or NAME_X
-    local room = math.max(1, FRAME_WIDTH - CORNER - self.controls:GetWidth() - NAME_GAP - left)
+    local room = math.max(1, FRAME_WIDTH - CORNER_X - self.controls:GetWidth() - NAME_GAP - left)
     local tailRoom = tail:Room()
     -- Unbounded first, so the width measured is the text's own.
     name:SetWidth(0)
