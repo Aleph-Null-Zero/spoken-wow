@@ -435,7 +435,7 @@ Check(T.topTarget==ActiveLine()-7,'typed out, the line being read is the last of
 local typed=Captions()
 Check(not typed:find('\n\n') and typed:sub(-1)~='\n','with no blank row under it')
 do
-    -- Type By, as the subtitle has it: by letter, the word being read only as far as the voice is.
+    -- Type By in the window: by letter, the word being read is typed only as far as the voice has got.
     local by=cfg.TypewriterBy
     cfg.TypewriterBy='word'; T.renderedKey=nil; T:Render()
     local whole=Plain(Captions())
@@ -767,8 +767,7 @@ do
     Q:RemoveAllSoundsFromQueue(); Play(.6)
     E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
 end
--- Auto-Scroll line by line: a window of Lines Shown that the words glide up through as the
--- voice reads them, the line leaving fading out and the one coming in fading in.
+-- The subtitle's Auto-Scroll, line by line.
 do
     local style=E.Addon.db.profile.Frame.Style
     E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
@@ -798,8 +797,7 @@ do
     Q:RemoveAllSoundsFromQueue(); Play(.6)
     E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
 end
--- What the windows have, the subtitle has too: Hide Portrait, Text Size, and buttons that say when
--- a line cannot be stopped.
+-- The subtitle's Hide Portrait, Text Size, and buttons for a line that cannot be stopped.
 do
     local style=E.Addon.db.profile.Frame.Style
     E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
