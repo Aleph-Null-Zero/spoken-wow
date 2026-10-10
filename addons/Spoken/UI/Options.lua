@@ -387,7 +387,7 @@ local function Build(canvas)
             function(v) transcript().SubtitleName = v end, refreshSubtitle), Subtitles)
     end
     if captions then
-        -- The subtitle's progress line. The DialogueUI window always draws its own.
+        -- Subtitles only: the DialogueUI window always draws its own progress line.
         ForSubtitles(layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, refreshSubtitle))
@@ -414,9 +414,8 @@ local function Build(canvas)
     -- lines like the others, chosen with them above.
 
     if captions then
-        -- DialogueUI's own quest text follows Show Words, Highlight Words and Type Words Out too
-        -- (Spoken:GetCaptionOptions), and their tooltips say so where DialogueUI is installed.
-        -- The legacy clients' stub has no Installed: no DialogueUI there.
+        -- DialogueUI's quest text follows Show Words, Highlight Words and Type Words Out too, so
+        -- their tooltips say so where it is installed. The legacy clients' stub has no Installed.
         local withDUI = DialogueUITheme ~= nil and DialogueUITheme.Installed ~= nil and DialogueUITheme:Installed()
         local function Tip(tip, extra) return withDUI and tip .. " " .. extra or tip end
         -- Show Words first: everything under it waits on it.
@@ -495,8 +494,6 @@ local function Build(canvas)
     layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
         function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
 
-    -- What the feature addons do in DialogueUI's own quest window, which is there whatever the
-    -- style: a section of their own, under DialogueUI's name.
     DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each
