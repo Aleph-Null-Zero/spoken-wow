@@ -449,7 +449,8 @@ function TextView:SetText(str)
 
 	-- The quest text's face on a parchment page, as a quest's own words are written there.
 	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
-	-- In the lore's own script where the addon reads another language (Spoken Zones' FontFor).
+	-- Where the addon reads a language other than the client's (only Zones does), in a file that
+	-- draws its script.
 	local fontPath = Addon.FontFor and Addon:FontFor(fontObject)
 		or (fontObject and fontObject.GetFont and fontObject:GetFont())
 	if fontPath then
