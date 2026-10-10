@@ -998,6 +998,40 @@ Expect("a giver's second quest accepted while the first's line plays sends its p
     tostring(Skin.settling) .. " " .. tostring(Skin.tuck ~= nil) .. " " .. tostring(card:IsShown()), "nil true true")
 Skin:TuckStep(1)
 Expect("...this window showing the first quest's line as it was", Skin.title.text:GetText(), "First")
+-- A quest accepted at once (the space bar): the window closes before its line is read, and the
+-- line joins the queue just after. It is still the dialog's: it settles out of where the dialog
+-- was, or, behind another line, its page goes behind this window.
+Skin:TuckStep(1)
+Spoken:StopAll()
+for _ = 1, 40 do Skin:Tick(0.05) end
+stub.Advance(2)
+OpenDialog()
+CloseDialog()
+stub.Advance(0.4)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Quick", portrait = { kind = "none" } } }))
+Expect("a quest's line queued just after its window closed settles out of where the window was",
+    Skin.settling ~= nil and Near(Skin.frame.scale, 0.8), true)
+Skin:Tick(1); Skin:Tick(1)
+stub.Advance(2)
+OpenDialog()
+CloseDialog()
+stub.Advance(0.4)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Quick Second", portrait = { kind = "none" } } }))
+Expect("...and, another line playing, its page goes behind this window", tostring(Skin.settling) .. " " .. tostring(Skin.tuck ~= nil), "nil true")
+Skin:TuckStep(1)
+stub.Advance(2)
+OpenDialog()
+CloseDialog()
+stub.Advance(0.4)
+zones:Enqueue({ key = "z:99", path = "z99.ogg", length = 20, present = { header = "Durotar", label = "Razor Hill", transcript = "Lore." } })
+Expect("a zone's line queued just after a quest window closed is not the window's",
+    tostring(Skin.settling) .. " " .. tostring(Skin.tuck), "nil nil")
+stub.Advance(2)
+OpenDialog()
+CloseDialog()
+stub.Advance(1.5)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Late", portrait = { kind = "none" } } }))
+Expect("...nor a quest's line queued long after", tostring(Skin.settling) .. " " .. tostring(Skin.tuck), "nil nil")
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 

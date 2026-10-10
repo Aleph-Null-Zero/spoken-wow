@@ -47,6 +47,11 @@ local FOLLOWS = .5
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
 -- the same event, in either order.
 local JUST_BEFORE = 0.5
+-- A dialog's line can also join the queue just after it closes: a quest page is read once its
+-- words have held still, and a quest accepted at once (the space bar) closes before that. A line
+-- from the dialog's own modules this soon after it closed is still the dialog's.
+local JUST_AFTER = 1
+local DIALOG_SOURCES = { DUIQuestFrame = { quests = true, gossip = true }, DUIBookFrame = { books = true } }
 -- The tuck, in seconds: the page lifted, flying over, sliding behind; this window giving under it
 -- by TUCK_GIVE and back, and its count rippling over TUCK_RIPPLE. The page lands at TUCK_SIZE of
 -- the window, TUCK_LOW of its height under its middle, its foot showing under it.
@@ -217,7 +222,12 @@ function Skin:Initialize()
         local dialog = _G[name]
         if type(dialog) == "table" and dialog.GetEffectiveScale then
             local watch = CreateFrame("Frame", nil, dialog)
-            watch:SetScript("OnHide", function() self:Settle(dialog) end)
+            self.dialogNames = self.dialogNames or {}
+            self.dialogNames[dialog] = name
+            watch:SetScript("OnHide", function()
+                self.justClosed = { dialog = dialog, at = GetTime() }
+                self:Settle(dialog)
+            end)
             -- Opening, it shows the line itself: this one steps aside at once (Skin:Covered).
             watch:SetScript("OnShow", function()
                 self:StartSession(dialog)
@@ -1094,6 +1104,7 @@ function Skin:Settle(dialog)
         local queued = self:QueuedBy(dialog)
         self:Update()
         if queued then
+            self.justClosed = nil
             local ok, err = pcall(self.StartTuck, self, dialog, queued)
             if not ok then
                 self:StopTuck()
@@ -1102,6 +1113,7 @@ function Skin:Settle(dialog)
         end
         return
     end
+    self.justClosed = nil
     local ok, err = pcall(self.StartSettle, self, dialog)
     if not ok then
         self.settling = nil
@@ -1440,9 +1452,20 @@ end
 function Skin:Queued(clip)
     if type(clip) ~= "table" or not self.queuedAt then return end
     self.queuedAt[clip] = GetTime()
+    local taken = false
     for _, dialog in ipairs(self.dialogs) do
-        if dialog:IsShown() then self.sessions[dialog][clip] = true end
+        if dialog:IsShown() then self.sessions[dialog][clip] = true; taken = true end
     end
+    -- Just after its dialog closed with nothing of its own to hand on: the dialog's after all, and
+    -- it settles out of where the dialog was, or its page goes behind, as it would have.
+    local closed = self.justClosed
+    if taken or not closed then return end
+    self.justClosed = nil
+    local from = DIALOG_SOURCES[self.dialogNames[closed.dialog] or ""]
+    local key = clip.source and clip.source.key
+    if GetTime() - closed.at > JUST_AFTER or closed.dialog:IsShown() or not (from and key and from[key]) then return end
+    self.sessions[closed.dialog] = setmetatable({ [clip] = true }, { __mode = "k" })
+    self:Settle(closed.dialog)
 end
 
 --- A dialog opening: its lines are the ones queued while it is open, and those queued just before
