@@ -14,12 +14,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Subtitles get the windows' settings, and the windows type by letter.** Subtitles gain Show Name
   and Title, Highlight Words, Auto-Scroll line by line or page by page, Text Size and Hide Portrait.
   Type By sets whether a window types out words or letters. *([Nucabe](https://github.com/Nucabe))*
-- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles alone.
-  With DialogueUI installed, Voice Only keeps Show Words, Highlight Words and Type Words Out, as
-  they also mark the words in DialogueUI's quest text, and their tooltips say so. Spoken Quests'
-  DialogueUI switches have a DialogueUI section of their own after the narrator style's settings,
-  without Show Spoken Over DialogueUI under Voice Only. Bronze Border's tooltip says it colours
-  every round button. *([Nucabe](https://github.com/Nucabe))*
+- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles alone,
+  and Voice Only shows none of the words' settings. Spoken Quests' DialogueUI switches have a
+  DialogueUI section of their own after the narrator style's settings. Bronze Border has left the
+  narrator style's settings for a Colours section, on every client: it colours every round button
+  Spoken draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.2.0 — 2026-10-08
 

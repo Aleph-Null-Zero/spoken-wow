@@ -155,8 +155,7 @@ do
         env.Addon:SetPlayerStyle(style); Options:UpdateRows()
         Expect("the " .. style .. " style shows the rows it reads", StyleRows(), ROWS[style])
     end
-    -- With DialogueUI: its window, and Voice Only, which still marks the words in DialogueUI's own
-    -- quest text as Show Words, Highlight Words and Type Words Out say.
+    -- With DialogueUI: its window. Voice Only shows nothing, DialogueUI or not.
     local Theme, playerStyle, chosen = env.DialogueUITheme, env.Addon.PlayerStyle, "dialogueui"
     local available = Theme.Available
     Theme.Available = function() return true end
@@ -167,10 +166,34 @@ do
         .. "Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
         .. "Highlight Words, Type Words Out, Type By")
     chosen = "none"; Options:UpdateRows()
-    Expect("voice only, with DialogueUI, shows the rows its quest text reads", StyleRows(),
-        "Show Words, Highlight Words, Type Words Out")
+    Expect("voice only, with DialogueUI, shows no words' rows: nothing of Spoken's is on screen", StyleRows(), "")
     Theme.Available, env.Addon.PlayerStyle = available, playerStyle
     words.Enabled, words.Typewriter, words.SubtitleScroll = saved[1], saved[2], saved[3]
+    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+end
+
+-- Bronze Border is for every frame Spoken draws: a section of its own after the narrator style's
+-- settings, on every client, whatever the style.
+do
+    local function Placed()
+        local inGroup, section, found = false, nil, nil
+        for _, item in ipairs(home.items) do
+            if item.kind == "group" then inGroup = item.text == L.OPT_NARRATOR_SETTINGS
+            elseif item.kind == "groupEnd" then inGroup = false
+            elseif item.rows then
+                if item.kind == "section" then section = item.text end
+                for _, row in ipairs(item.rows) do
+                    if row.control == Row(home, L.OPT_BRONZE_TINT) then found = { inGroup, section, row.shown } end
+                end
+            end
+        end
+        return found and (tostring(found[1]) .. " " .. tostring(found[2]) .. " " .. tostring(found[3])) or "missing"
+    end
+    for _, style in ipairs({ "minimal", "none" }) do
+        env.Addon:SetPlayerStyle(style); Options:UpdateRows()
+        Expect("Bronze Border outside the narrator style's settings, under Colours, shown with " .. style, Placed(),
+            "false " .. L.OPT_COLOURS_TITLE .. " true")
+    end
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end
 

@@ -114,6 +114,7 @@ L.REASON_UNTYPED = "Desactiva «Ir escribiendo el texto» para usar esto con sub
 L.OPT_PLAYER_STYLE = "Estilo del narrador"
 L.OPT_PLACE_TITLE = "Tamaño y posición"
 L.OPT_LOOK_TITLE = "Aspecto"
+L.OPT_COLOURS_TITLE = "Colores"
 L.OPT_NARRATOR_SETTINGS = "Configuración del estilo del narrador"
 L.OPT_PLAYER_STYLE_TIP = "Ventana grande: el retrato del hablante y las líneas que esperan para sonar a continuación.\n\nSolo subtítulos, en los clientes que los tienen: sin ventana, solo el texto escribiéndose en la parte baja del centro de la pantalla. Pasa el ratón por encima para Detener o Repetir, Omitir e Informar, y arrástralo arriba o abajo para moverlo.\n\nSolo voz: nada en pantalla; las líneas solo se oyen. Las teclas de abajo siguen sirviendo para detener, repetir y omitir."
 L.OPT_STYLE_MINIMAL = "Ventana pequeña"

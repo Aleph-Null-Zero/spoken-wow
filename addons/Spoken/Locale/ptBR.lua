@@ -223,6 +223,7 @@ L.UNCACHED_NPC_TIP = "Encontre este PNJ novamente no mundo para poder ver o mode
 L.OPT_PLAYER_STYLE = "Estilo do narrador"
 L.OPT_PLACE_TITLE = "Tamanho e posição"
 L.OPT_LOOK_TITLE = "Aparência"
+L.OPT_COLOURS_TITLE = "Cores"
 L.OPT_NARRATOR_SETTINGS = "Configurações do estilo do narrador"
 L.OPT_PLAYER_STYLE_TIP = "Janela grande: o retrato de quem fala e as falas que vão tocar em seguida.\n\nApenas legendas, nos clientes que as têm: sem janela, só as palavras digitadas na parte de baixo, no meio da tela. Passe o mouse por cima para Parar ou Repetir, Pular e Reportar, e arraste-a para cima ou para baixo para movê-la.\n\nApenas voz: nada na tela; as falas são apenas ouvidas. As teclas abaixo continuam parando, repetindo e pulando."
 L.OPT_STYLE_MINIMAL = "Janela pequena"
