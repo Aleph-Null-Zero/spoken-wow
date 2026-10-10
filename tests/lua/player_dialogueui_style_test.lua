@@ -456,7 +456,7 @@ do
 end
 Expect("...the count gone with no line waiting", Skin.count:IsShown(), false)
 -- Every fade is of the window as one image (a frame buffer, as the world map is), and nothing in
--- it changes while it is one: the client crashed on that.
+-- it changes while it is one: the client crashes otherwise.
 Expect("shown, it is not one image: things change in it", Skin.frame:IsFrameBuffer(), false)
 Skin:Tick(1) -- shown, and still a while
 Skin.skip:EnableMouse(true) -- as a button is in the client; the stub's start without

@@ -20,8 +20,7 @@ local Skin = DialogueUIPlayer
 local Theme = DialogueUITheme
 local PORTRAIT = 48
 -- The panel's share of DialogueUI's window at the default Window Size, small enough to read
--- beside the next dialog. Taking over from the dialog, it starts at the dialog's whole size and
--- shrinks to this (Skin:Settle).
+-- beside the next dialog.
 local BASE_SCALE = 0.65
 -- Where it settles when the dialog closes: this far from the screen's top left, the paper's
 -- edge rather than the frame's. And how long it takes to get there from the dialog.
@@ -34,26 +33,24 @@ local PAPER_TOP, PAPER_LEFT = 122 / 256, 125 / 1024
 -- The bottom cap's light paper ends this share of its height over the window's foot: its rows to
 -- 105 of 256 are light, the curled rim under them, and the cap is centred on the foot.
 local PAPER_FOOT = 23 / 256
--- Showing and hiding, the paper first and the rest over it (Skin:SetLevel).
 local FADE_IN, FADE_OUT = .28, .32
 -- A new line on a window already showing: its words fade in over LINE_IN, and the window eases to
--- its new height, as the subtitle's do (Subtitle's PAGE_IN and SIZE_EASE).
+-- its new height at SIZE_EASE.
 local LINE_IN, SIZE_EASE = .28, 10
--- Every fade is of the window as one image (Skin:Buffer), and nothing in it may change while it is
--- one. Before it becomes one: still this long (a face or picture just set is drawn or loaded a
+-- Every fade is of the window as one image, and nothing in it may change while it is one.
+-- Before it becomes one: still this long (a face or picture just set is drawn or loaded a
 -- moment after), and, fading out, deaf to the pointer for ARM_FRAMES frames so a click's pressed
 -- and lit states have settled. Never waiting longer than ARM_MOST.
 local STILL, ARM_FRAMES, ARM_MOST = 0.1, 2, 0.5
 -- What follows the title, "• (Stopped)" and the waiting count "• +N": this far after it, fading
 -- over COUNT_IN, Stopped in and out as the line stops and plays, the count in as a line is added.
 local COUNT_GAP, COUNT_IN = 6, .25
--- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls).
 local ROUND_GAP = 4
 -- The words take this share of DialogueUI's column, centred in it: a narrower column than the
 -- header's and the progress line's, read more easily.
 local WORDS_SHARE = 0.9
--- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
--- wide as the words, PICTURE_GAP above them, the page's grain through it.
+-- A place's picture over its words: 2:1, as wide as the words, PICTURE_GAP above them, the
+-- page's grain through it.
 local PICTURE_GAP, PICTURE_ALPHA = 10, 0.95
 -- Where the header strip's line ends, of the strip's height: its art is clear under that (its
 -- last dark row is 77 of the 96 in Parchment.png).
@@ -121,14 +118,14 @@ function Skin:Initialize()
     frame.spokenWheel = function(delta) return self:Wheel(delta) end
     frame:Hide()
     -- DialogueUI's window closing on a line that plays on: this one takes over from it. Told by a
-    -- child of that window, as DialogueUIBridge's driver is: DialogueUI sets the window's own
-    -- OnHide with SetScript, which drops a hook.
+    -- child of that window: DialogueUI sets the window's own OnHide with SetScript, which drops a
+    -- hook.
     local dialog = _G.DUIQuestFrame
     if dialog then
         self.dialog = dialog
         self.dialogWatch = CreateFrame("Frame", nil, dialog)
         self.dialogWatch:SetScript("OnHide", function() self:Settle(dialog) end)
-        -- Opening, it shows the line itself: this window steps aside at once (Skin:Covered).
+        -- Opening, it shows the line itself: this window steps aside at once.
         self.dialogWatch:SetScript("OnShow", function() self:Update() end)
     end
 
@@ -149,7 +146,7 @@ function Skin:Initialize()
 
     local content = CreateFrame("Frame", nil, frame)
     self.content, frame.container = content, content
-    -- The words are docked here (Skin:Layout), and hand Ctrl-wheel to their parent.
+    -- The captions are docked here and hand Ctrl-wheel to their parent.
     content.spokenWheel = frame.spokenWheel
     content.buttons = {}
 
@@ -166,8 +163,7 @@ function Skin:Initialize()
     self.viewport = CreateFrame("Frame", nil, host)
     self.viewport:SetAllPoints()
     self.viewport:SetClipsChildren(true)
-    -- What kind of line it is, on a dark disc at the face's lower right, as the subtitle and the
-    -- small window badge theirs (MinimalPlayer.BADGES).
+    -- What kind of line it is, on a dark disc at the face's lower right.
     local chrome = CreateFrame("Frame", nil, host)
     chrome:SetAllPoints()
     chrome:SetFrameLevel(host:GetFrameLevel() + 8)
@@ -178,7 +174,7 @@ function Skin:Initialize()
     self.name = Font(content, 18, 1, 1, 1)
     content.name = self.name -- Actions' header anchor contract.
     self.name:SetHeight(20)
-    -- The line's name, nothing to click: Skip takes a line away, as on the subtitle.
+    -- The line's name, nothing to click: Skip takes a line away.
     self.title = CreateFrame("Frame", nil, content)
     self.title.text = Font(self.title, 12, 1, 1, 1)
     self.title.text:SetPoint("TOPLEFT")
@@ -201,10 +197,8 @@ function Skin:Initialize()
         self.picture:AddMaskTexture(self.pictureMask)
     end
 
-    -- The subtitle's progress line, along the foot of the words.
     self.progress = Actions.ProgressBar(content)
-    -- The subtitle's controls (Subtitle:BuildControls) at the header's right end, beside the
-    -- speaker and the line: Stop or Replay, Skip, then Report (Skin:ConfigureActions).
+    -- At the header's right end: Stop or Replay, Skip, then Report.
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(1)
     local play = Actions.RoundButton(self.controls, 12)
@@ -245,7 +239,7 @@ end
 
 --- Runs on every refresh, so a theme or size change in DialogueUI lands on the next one.
 function Skin:Layout()
-    -- Fonts and widths change here: the title's tail is laid out afresh (Skin:Count).
+    -- Fonts and widths change here: the title's tail is laid out afresh.
     self.countLaid = nil
     self:Touch()
     local frame, cfg = self.frame, Theme:Config()
@@ -293,14 +287,13 @@ function Skin:Layout()
     local wordsTop = picture and pictureTop + pictureHeight + pictureGap or headerHeight
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
-    -- Show Progress, as the subtitle has it: off, the bar goes and the window closes up under the words.
+    -- Show Progress off: the bar goes and the window closes up under the words.
     local progress = Addon:Profile("Transcript").SubtitleProgress ~= false
     self.progress.track:SetShown(progress)
     local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
-    -- A line's room over and under the words, which a line gliding out or in fades through: it is
-    -- at nothing by the time it reaches the edge, so no line is ever seen cut there. It reaches
-    -- over the gaps there (the header's or the picture's, the one over the progress line) and
-    -- adds none: the words keep their place.
+    -- A line's room over and under the words, which a line gliding out or in fades through, so no
+    -- line is seen cut at the edge. It lies over the gaps there and adds none: the words keep
+    -- their place.
     -- Under the progress line, as far to where the paper's light ends as the last line is over it:
     -- the 6 and the header's gap over the line, and the line's own spacing under its letters.
     local barLift = 0
@@ -321,7 +314,7 @@ function Skin:Layout()
     local captionHeight = lines * lineHeight
     local height = padTop + wordsTop + captionHeight + padBottom + footerHeight
     self.settledHeight = height
-    -- A new line on a window already showing eases to its height (Skin:Tick).
+    -- A new line on a window already showing eases to its height.
     local easing = self.easeNext and not self.settling
     self.easeNext = nil
     self.heightWant = easing and height or nil
@@ -370,14 +363,12 @@ function Skin:Layout()
     -- socket's middle, 2 up, and the name above it.
     local nameHeight = fonts.subtitleSize + 2
     local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
-    -- The round buttons as large on screen as Place Lore draws them (24, at UIParent's scale) at
-    -- the default Window Size, growing and shrinking with it from there. Its anchor's offset is
-    -- in its own scale.
+    -- At the default Window Size the round buttons are drawn at UIParent's scale, growing and
+    -- shrinking with Window Size from there. Their anchor's offset is in their own scale.
     self.controlsRound = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
     self.controlsMiddle = middle
     self:FitControls()
 
-    -- The words in their narrower column, the picture over them.
     self.picture:SetShown(picture ~= nil)
     if picture then
         self.picture:SetTexture(picture.file)
@@ -389,12 +380,11 @@ function Skin:Layout()
         self.picture:ClearAllPoints()
         self.picture:SetPoint("TOP", content, "TOPLEFT", Round(inner / 2), -pictureTop)
     end
-    -- The captions span that room too; the lines fade through it (Transcript:Place).
+    -- The captions also span a line's room over and under the words, which the lines fade through.
     self.lineRoom = lineHeight
     Transcript:Dock(content, content, "TOPLEFT", wordsLeft, -(wordsTop - lineHeight), wordsWidth,
         captionHeight + 2 * lineHeight)
 
-    -- The progress line as wide as the words and the picture over it.
     self.progress.track:ClearAllPoints()
     self.progress.track:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", wordsLeft, barLift)
     self.progress.track:SetWidth(wordsWidth)
@@ -449,8 +439,7 @@ function Skin:ConfigureActions()
         if button.action.anchor == "header" then
             button:Hide()
         else
-            -- Report and anything else a line offers, after Skip and as strong as it, as the
-            -- subtitle shows them.
+            -- Report and anything else a line offers, after Skip and as strong as it.
             button:SetParent(self.controls)
             button:SetFrameLevel(self.controls:GetFrameLevel() + 1)
             if button.showsIcon then button:SetSize(self.play:GetWidth(), self.play:GetHeight()) end
@@ -512,10 +501,8 @@ function Skin:UpdateControls(relayout)
     if not self.clip then return end
     local paused = SoundQueue:IsPaused()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
-    -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
-    -- first, a fight).
+    -- The line's name alone, not why it waits (the NPC's own greeting first, a fight).
     self.title.text:SetText(Label(self.clip))
-    -- Stopped, said after its name, as the subtitle does.
     self.shownStopped = paused
     self:Count(Waiting())
     local pausable = SoundQueue:CanBePaused()
@@ -536,9 +523,9 @@ function Skin:UpdateProgress()
     Actions.SetProgress(self.progress, duration > 0 and (self.seconds or 0) / duration or 0)
 end
 
---- How much of the window shows, 0 to 1: as one image, its alpha (Skin:Buffer). Where the client
---- has no frame buffers, the paper takes the lower half and everything on it the upper, so the two
---- never fade at once and the paper never shows through the strips and words.
+--- How much of the window shows, 0 to 1: as one image, its alpha. Where the client has no frame
+--- buffers, the paper takes the lower half and everything on it the upper, so the two never fade
+--- at once and the paper never shows through the strips and words.
 function Skin:SetLevel(level)
     self.level = level
     if self.buffered then
@@ -573,8 +560,7 @@ function Skin:Touch()
     self.stillFor = 0
 end
 
---- Nothing in the window may change: it is one image. The portrait cache asks before it paints a
---- face anew (StaticPortrait:Capture).
+--- Nothing in the window may change: it is one image.
 function Skin:Frozen()
     return self.buffered and true or false
 end
@@ -610,9 +596,8 @@ function Skin:Undeafen()
     self:ApplyLock()
 end
 
---- Locked, clicks on the window pass through to the game, as the subtitle's and the small
---- window's do; its buttons still take theirs. Where the client cannot tell a click from the
---- pointer passing over, the window keeps both.
+--- Locked, clicks on the window pass through to the game; its buttons still take theirs. Where
+--- the client cannot tell a click from the pointer passing over, the window keeps both.
 function Skin:ApplyLock()
     local frame = self.frame
     if frame.SetMouseClickEnabled and frame.SetMouseMotionEnabled then
@@ -622,10 +607,8 @@ function Skin:ApplyLock()
 end
 
 --- Switch the window into or out of being one image while it is hidden: switched while on screen
---- and faded (fading in from nothing), the client crashed at once (ASSERT(flattenedBatch !=
---- nullptr)), as Place Lore's panel did; made one while hidden, as at its creation, it never did.
---- Hidden and shown again in the one frame, so nothing flickers, and its buttons' lit and pressed
---- states are reset by it.
+--- and faded, the client crashes (ASSERT(flattenedBatch != nullptr)). Hidden and shown again in
+--- the one frame, so nothing flickers; this also resets its buttons' lit and pressed states.
 local function SwitchHidden(frame, on)
     local shown = frame:IsShown()
     if shown then frame:Hide() end
@@ -634,13 +617,11 @@ local function SwitchHidden(frame, on)
     return ok
 end
 
---- The window drawn as one image (a frame buffer, as the world map is) and faded as one, its parts
---- ignoring its alpha so only the finished image fades. Every crash came of something in it
---- changing while it was one (the title's remove cross loading, the captions clearing at a line's
---- end, Skip going from pressed to normal: CSimpleRender.cpp's texture asserts, ASSERT(!m_deleted),
---- ASSERT(flattenedBatch != nullptr)), so while it is: deaf to the pointer, the captions held, its
---- own updates waiting (Skin:Tick, Skin:Update), the portrait cache not painting its face. False
---- where the client has no frame buffers.
+--- The window drawn as one image (a frame buffer) and faded as one, its parts ignoring its alpha
+--- so only the finished image fades. Anything in it changing while it is one crashes the client
+--- (CSimpleRender.cpp's texture asserts, ASSERT(!m_deleted), ASSERT(flattenedBatch != nullptr)),
+--- so while it is: deaf to the pointer, the captions held, its own updates waiting, the portrait
+--- cache not painting its face. False where the client has no frame buffers.
 function Skin:Buffer()
     local frame = self.frame
     if self.buffered then return true end
@@ -677,7 +658,7 @@ function Skin:Unbuffer()
     SwitchHidden(self.frame, false)
     self:Undeafen()
     self:SetLevel(self.level or 0)
-    -- Moved onto or off DialogueUI's window meanwhile (Addon:ApplyHost): now.
+    -- A move onto or off DialogueUI's window that waited happens now.
     self.frame.spokenFrozen = nil
     if self.frame.spokenHostPending then
         self.frame.spokenHostPending = nil
@@ -726,7 +707,7 @@ function Skin:SetVisible(visible, immediate)
             self.fadeFrom, self.fadeTime = self.level or 0, 0
             return
         end
-        -- From nothing: laid out unseen, then once it is still, faded in as one image (Skin:Tick).
+        -- From nothing: laid out unseen, then once it is still, faded in as one image.
         self:SetLevel(0)
         self.frame:Show()
         self.preparing, self.fadeTime = true, nil
@@ -745,7 +726,7 @@ function Skin:SetVisible(visible, immediate)
         return
     end
     -- On screen: deaf to the pointer first, so a click's pressed and lit states settle, then one
-    -- image once it is still (Skin:Tick). Its words held from now, so they fade out with it.
+    -- image once it is still. Its words held from now, so they fade out with it.
     self:Deafen()
     Transcript:Hold()
     self.arming, self.fadeTime = { waited = 0, frames = 0 }, nil
@@ -757,9 +738,9 @@ function Skin:StartFade()
     self.fadeFrom, self.fadeTime = self.level or 0, 0
 end
 
---- After the title, as the subtitle has them: "• (Stopped)" while the line is stopped, and the
---- lines waiting behind it, "• +N". One more fades the count in; Stopped fades in and out, and
---- keeps its room until it has faded. The title is cut short, not these.
+--- After the title: "• (Stopped)" while the line is stopped, and the lines waiting behind it,
+--- "• +N". One more fades the count in; Stopped fades in and out, and keeps its room until it has
+--- faded. The title is cut short, not these.
 function Skin:Count(waiting)
     local count, stopped = self.count, self.stopped
     if waiting ~= self.counted then
@@ -769,7 +750,7 @@ function Skin:Count(waiting)
     end
     local stoppedShown = self.shownStopped or self.stoppedAlpha > 0
     local text, width = self.title.text, self.title:GetWidth() or 0
-    -- Polled while a line plays (Skin:UpdateControls): laid out again only when something moved.
+    -- Polled while a line plays: laid out again only when something moved.
     local laid = self.countLaid
     if laid and laid.waiting == waiting and laid.stopped == stoppedShown and laid.text == text:GetText()
         and laid.width == width then
@@ -856,7 +837,7 @@ function Skin:Tick(elapsed)
             if not self.wanted then
                 self.frame:Hide()
                 self:Undeafen()
-                -- Held from the start of the fade-out, frame buffer or not (Skin:SetVisible).
+                -- Held from the start of the fade-out, frame buffer or not.
                 Transcript:Release()
             end
             -- Faded: itself again, catching up on what waited.
@@ -890,7 +871,7 @@ function Skin:PlaceHome()
 end
 
 --- The screen's top left, EDGE from the paper: where the window settles when DialogueUI's
---- window closes on a line that plays on (Skin:Settle), out of the way of the next dialog.
+--- window closes on a line that plays on, out of the way of the next dialog.
 function Skin:PlaceDefault()
     local frame = self.frame
     -- In the frame's own units: its effective scale is UIParent's times its base scale.
@@ -901,8 +882,8 @@ function Skin:PlaceDefault()
 end
 
 --- Where the window rests, its top left in the screen's pixels: where it was dragged to, or the
---- screen's top left (PlaceDefault). Worked out rather than read off the frame, which has no
---- place on screen while DialogueUI hides the interface.
+--- screen's top left. Worked out rather than read off the frame, which has no place on screen
+--- while DialogueUI hides the interface.
 function Skin:Home()
     local frame = self.frame
     local ui = UIParent:GetEffectiveScale()
@@ -922,7 +903,7 @@ end
 function Skin:Settle(dialog)
     local frame = self.frame
     if not (self:IsEnabled() and PlayerFrame:Current()) or frame:GetParent() ~= UIParent then return end
-    -- Fading as one image: it finishes, then shows the line as it does any (Skin:Unbuffer).
+    -- Fading as one image: it finishes, then shows the line as it does any.
     if self:Defer("update") then return end
     self.arming, self.preparing = nil, nil
     self:Undeafen()
@@ -959,9 +940,8 @@ function Skin:StartSettle(dialog)
     self:SettleStep(0)
 end
 
---- The header's round buttons as large on screen as they settle at: while the window slides out
---- of the dialog at a larger scale, against that scale, whichever of the slide and a layout set
---- them last in a frame.
+--- The header's round buttons as large on screen as they settle at, also while the window slides
+--- out of the dialog at a larger scale. The slide and a layout both set them, in either order.
 function Skin:FitControls()
     if not self.controlsRound then return end
     local settling = self.settling
@@ -985,8 +965,6 @@ function Skin:SettleStep(elapsed)
     local ui = UIParent:GetEffectiveScale()
     local scale = Toward(settling.from, settling.to)
     frame:SetScale(scale)
-    -- The round buttons stay as large on screen as they settle at, as the dialog's own are, rather
-    -- than starting at the dialog's larger scale with the rest.
     self:FitControls()
     local pixels = ui * scale
     local toHeight = (self.settledHeight or frame:GetHeight()) * ui * settling.to
@@ -1057,7 +1035,7 @@ function Skin:Update()
         self:Layout()
     end
     self:SetVisible(true)
-    -- Said once: a name the same as the line's own is left off, as the subtitle leaves it.
+    -- Said once: a name the same as the line's own is left off.
     local header = clip.present and clip.present.header
     self.name:SetText(header ~= Label(clip) and header or "")
     self:ConfigurePortrait()
