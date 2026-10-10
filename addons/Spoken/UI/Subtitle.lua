@@ -550,6 +550,7 @@ function Subtitle:Layout(text)
         widest = math.max(widest, width)
         self.rows[index] = { text = wrapped, count = Characters(wrapped) }
         local line = self:Line(index)
+        Addon:ClipFont(line, self.clip)
         line:SetWidth(width + 2)
         line:ClearAllPoints()
         line:SetPoint("TOP", self.frame, "TOP", 0,
@@ -647,6 +648,8 @@ function Subtitle:Prepare(clip, text)
     -- the count already in, rather than sliding as if lines had just been added.
     self.rowLeft, self.share = nil, 0
     self:SetWaiting(self:Waiting())
+    -- The measure too: pages are cut by the width of the text in the face it is drawn in.
+    for _, text in ipairs({ self.title, self.label, self.measure }) do Addon:ClipFont(text, clip) end
     self.title:SetText(title)
     self.label:SetText(label or "")
     self.dot:SetShown(label ~= nil)
@@ -664,6 +667,26 @@ function Subtitle:Prepare(clip, text)
         if index > 1 then start = math.max(1, start) end
         self.pages[index] = { text = page, count = count, start = start, length = length }
         start = start + length
+    end
+    if Transcript.timed and Transcript.clip == clip and Transcript.text == text then
+        self:TimePages(Transcript.words, duration)
+    end
+end
+
+--- With the clip's own word times, each page turns when the voice reaches its first word. A page
+--- cut inside a word counts that word twice; the totals then disagree and the estimate stays.
+function Subtitle:TimePages(words, duration)
+    local starts, word = { 0 }, 1
+    for index, page in ipairs(self.pages) do
+        if index > 1 then
+            if not words[word] then return end
+            starts[index] = words[word].start
+        end
+        word = word + #Transcript:Split(page.text)
+    end
+    if word - 1 ~= #words then return end
+    for index, page in ipairs(self.pages) do
+        page.start, page.length = starts[index], (starts[index + 1] or duration) - starts[index]
     end
 end
 
@@ -970,7 +993,7 @@ function Subtitle:ShowProgress()
     -- Read only while this line speaks, so the bar fades out where the voice left it.
     local length = self.clip and tonumber(self.clip.length) or 0
     if self.wanted and not self.sample and length > 0 and Transcript.clip == self.clip then
-        self.share = math.max(0, math.min(1, Transcript:AudioElapsed() / length))
+        self.share = SoundQueue:Share(self.clip, Transcript:AudioElapsed())
     end
     local size = self.shadowSize or self.shadowWant
     local width = size and math.floor(size.w * PROGRESS_SHARE)

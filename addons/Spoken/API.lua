@@ -20,8 +20,8 @@ end
 
 ---@param key string  "quests" | "zones" | "books"
 ---@param info SpokenSourceInfo
----@return table source  Carries Enqueue, PlayNow, Remove, StopAll, AddGate, RecheckGates, Retry,
----                      CanPlay, SetQueueLimit and SetInterClipGap.
+---@return table source  Carries Enqueue, Continue, PlayNow, Remove, StopAll, AddGate, RecheckGates,
+---                      Retry, CanPlay, SetQueueLimit and SetInterClipGap.
 function Spoken:RegisterSource(key, info)
     return Sources:Register(key, info)
 end
@@ -49,10 +49,18 @@ end
 --     delay    = nil,                         -- silence before; only 2.4.3/3.3.5 set it
 --     priority = "normal" | "low",            -- low yields at the door; gossip is low
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
+--     continues = true,                       -- optional; its next part follows (source:Continue), no pause or cue
+--     span     = { before = 12, total = 40 }, -- optional; seconds of its item before it and in all, for the progress bar
 --     present  = {
---       header   = "Eagan Peltskinner",       -- NPC name | zone name | book title
+--       header   = "Eagan Peltskinner",       -- NPC name | place above | book title;
+--                                             -- nil over the world's own lore
 --       label    = "Wolves Across the Border",-- quest title | subzone | page label
 --       transcript = "Full dialogue text",   -- optional; falls back to clip.text
+--       font     = [[Interface\AddOns\...\x.ttf]], -- optional; draws this clip's header, label
+--                                             -- and text, for a script the game's font has no
+--                                             -- glyphs for; the player's size stays
+--       timings  = { 0, .42, .61, ... },      -- optional; when each word of the transcript starts,
+--                                             -- in seconds, one per Spoken:CaptionWords(transcript)
 --       bullet   = "quest-accept",            -- a RegisterBullet id
 --       tint     = { r, g, b },               -- optional row tint
 --       portrait = { kind = "model", creatureID = 196 }
@@ -66,16 +74,16 @@ end
 --
 -- The player sets id, handle, source and nextSoundTimer; a caller never does.
 
---- A row bullet, registered once by a feature addon so SpokenBooks needs no change to
---- the player to have one of its own.
---- Declare an action switchable, and what the player's settings should call it. Both
---- shipped addons declare their Report action, so one setting covers whichever is speaking.
+--- Declare an action switchable, and what the player's settings should call it. Report has
+--- its own row; the modules still declare it for an older player, which has no such row.
 ---@param id string the action id, as it appears in a clip's presentation
 ---@param label string what to call it, e.g. "Report"
 function Spoken:RegisterOptionalAction(id, label)
     return Actions:RegisterOptional(id, label)
 end
 
+--- A row bullet, registered once by a feature addon so SpokenBooks needs no change to
+--- the player to have one of its own.
 function Spoken:RegisterBullet(id, texture, size)
     Bullets[id] = { texture = texture, size = size }
 end
@@ -125,6 +133,13 @@ end
 --- A feature addon asks this in its gap check, and re-asks on CONTRIBUTE_SETTINGS_CHANGED.
 function Spoken:AreContributeButtonsHidden()
     return Addon.db and Addon.db.profile.Contribute.HideButtons and true or false
+end
+
+--- Whether the player turned every Report button off in Spoken's settings, the player's and
+--- those feature addons draw. Ask before showing one, and again on REPORT_SETTINGS_CHANGED.
+function Spoken:AreReportButtonsHidden()
+    local hidden = Addon:Profile("Frame").HiddenActions
+    return hidden and hidden.report and true or false
 end
 
 --------------------------------------------------------------------------------
@@ -432,10 +447,10 @@ function Spoken:StopAll()
     SoundQueue:RemoveAllSoundsFromQueue()
 end
 
---- A gate that applies to every source: fn(clip) -> reason | nil.
 --- Switch a channel off on a source's behalf, e.g. Dialog while a quest line speaks.
 --- Unlike a channel the user disabled, clips on it are still admitted, and the mute is
---- lifted before one plays.
+--- lifted before one plays. A channel the user already has off is left alone: nothing is
+--- held, so nothing switches it back on.
 function Spoken:MuteChannel(channel, muted)
     SoundUtils:MuteChannel(channel, muted)
 end
@@ -447,6 +462,7 @@ function Spoken:MuteGameDialogueAhead(source)
     SoundQueue:MuteGameDialogueAhead(source:GetChannel())
 end
 
+--- A gate that applies to every source: fn(clip) -> reason | nil.
 function Spoken:AddGate(fn)
     SoundQueue:AddGate(fn)
 end
@@ -456,15 +472,16 @@ end
 --------------------------------------------------------------------------------
 --
 -- Additive, so guard on the field: `if Spoken.GetCaption then`. Both answer nil on 1.12,
--- which has no captions. The timing is the captions' own estimate (a recording has no word
--- timestamps), so another view marks the same word they would.
+-- which has no captions. The timing is the captions' own: the clip's present.timings when it
+-- brings them, an estimate otherwise, so another view marks the same word they would.
 
 local caption = {}
 
 --- The speaking clip's caption, kept current even while the captions are hidden or off:
----   { clip, words, totalWeight, progress, speaking, activeWord, highlight, typewriter }
+---   { clip, words, totalWeight, progress, speaking, activeWord, highlight, typewriter, timed }
 --- words[i] = { text, start, finish, first, last, joined }: start/finish are the word's share
---- of the recording, in units of totalWeight; first/last its bytes in the clip's text.
+--- of the recording, in units of totalWeight; first/last its bytes in the clip's text. timed is
+--- true when they come from the clip's present.timings, and totalWeight is then its length.
 --- progress is nil for a clip with no length; activeWord is set only while speaking.
 --- highlight and typewriter are the player's Highlight Words and Type Words Out (false with
 --- Show Words off). Read-only, and the same table on every call. nil without a clip.
@@ -477,6 +494,7 @@ function Spoken:GetCaption()
     caption.progress = progress
     caption.speaking = Transcript:IsSpeaking(progress) and true or false
     caption.activeWord = caption.speaking and Transcript:WordAt(progress) or nil
+    caption.timed = Transcript.timed
     caption.highlight, caption.typewriter = self:GetCaptionOptions()
     return caption
 end
@@ -497,6 +515,13 @@ function Spoken:SplitCaption(text)
     return Transcript:Split(text)
 end
 
+--- The words the captions show for `transcript`, escape sequences removed: what
+--- present.timings lists, one time per word.
+function Spoken:CaptionWords(transcript)
+    if Transcript.unavailable or type(transcript) ~= "string" then return nil end
+    return Transcript:Split(Transcript:CleanText(transcript))
+end
+
 --------------------------------------------------------------------------------
 -- Callbacks
 --------------------------------------------------------------------------------
@@ -509,6 +534,7 @@ end
 --   QUEUE_EMPTY        ()
 --   SOURCE_REGISTERED  (source)
 --   CONTRIBUTE_SETTINGS_CHANGED ()          the hide-Contribute-buttons setting was toggled
+--   REPORT_SETTINGS_CHANGED     ()          the hide-Report-buttons setting was toggled
 
 function Spoken:RegisterCallback(event, fn)
     return Callbacks:Register(event, fn)

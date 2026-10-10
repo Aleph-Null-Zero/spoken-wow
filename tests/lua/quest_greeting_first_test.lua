@@ -33,6 +33,13 @@ _G.C_Sound = {
         return sound and sound.volume
     end,
 }
+-- Spoken's own voice is one of the game's sounds too: unknown to IsPlaying, it would read as cut.
+local playSoundFile = _G.PlaySoundFile
+_G.PlaySoundFile = function(...)
+    local willPlay, handle = playSoundFile(...)
+    if willPlay then sounds[handle] = { volume = "spoken", ends = math.huge } end
+    return willPlay, handle
+end
 local stopSound = _G.StopSound
 _G.StopSound = function(handle, ...)
     if sounds[handle] then sounds[handle].ends = world.time end
@@ -51,6 +58,7 @@ VO.DataModules:Register("TestPack", {
 stub.Advance(2)
 local Spoken = _G.Spoken
 _G.SpokenEnv.Addon.db.profile.Audio.AutoToggleDialog = true
+_G.SpokenEnv.Addon.db.profile.Audio.SoundChannel = "Master"
 -- The other sliders stay where they are set: lowered under a line, they would not be the levels
 -- Dialog is compared with.
 _G.SpokenEnv.Addon.db.profile.Audio.LowerOthers.Enabled = false

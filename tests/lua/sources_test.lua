@@ -99,14 +99,15 @@ Expect("...so the player no longer holds it", env.SoundUtils:IsMutedByPlayer("Di
 world.cvars.Sound_EnableDialog = "0"
 Expect("a channel the user disabled is still inaudible", (onDialog:Enqueue(H.Clip())), nil)
 
----------------------------------------------------------------- one sound channel, Master
--- Every addon speaks on Master. A source can still name its own channel; none of the shipped
--- addons does.
+---------------------------------------------------------------- one sound channel, the player's
+-- Every addon speaks on the player's channel. A source may still declare its own, but no
+-- shipped module does.
 env, quests, zones = H.Fresh(stub, SPOKEN)
-Expect("the quests source speaks on Master", quests:GetChannel(), "Master")
-Expect("...and so does the zones source", zones:GetChannel(), "Master")
 env.Addon.db.profile.Audio.SoundChannel = "Dialog"
-Expect("...whatever channel an older profile saved", zones:GetChannel(), "Master")
+Expect("the quests source reads the player's channel", quests:GetChannel(), "Dialog")
+Expect("...and so does the zones source", zones:GetChannel(), "Dialog")
+env.Addon.db.profile.Audio.SoundChannel = "Master"
+Expect("changing it moves every source at once", zones:GetChannel(), "Master")
 
 ---------------------------------------------------------------- muting the game's own dialogue
 -- The client speaks its own NPC barks on the Dialog channel, over the top of a line being
@@ -114,11 +115,20 @@ Expect("...whatever channel an older profile saved", zones:GetChannel(), "Master
 -- belongs here rather than in one addon: any addon's clip is talked over.
 env, quests, zones = H.Fresh(stub, SPOKEN)
 env.Addon.db.profile.Audio.AutoToggleDialog = true
+env.Addon.db.profile.Audio.SoundChannel = "Master"
 quests:Enqueue(H.Clip())
 stub.Advance(0.6)
 Expect("a line speaking mutes the game's dialogue, once faded", GetCVar("Sound_EnableDialog"), "0")
 _G.Spoken:StopAll()
 Expect("...and the empty queue restores it", GetCVar("Sound_EnableDialog"), "1")
+
+-- Speaking on Dialog ourselves: muting it would mute the line.
+env, quests, zones = H.Fresh(stub, SPOKEN)
+env.Addon.db.profile.Audio.AutoToggleDialog = true
+env.Addon.db.profile.Audio.SoundChannel = "Dialog"
+quests:Enqueue(H.Clip())
+stub.Advance(0.6)
+Expect("speaking on Dialog does not mute Dialog", GetCVar("Sound_EnableDialog"), "1")
 
 env, quests, zones = H.Fresh(stub, SPOKEN)
 env.Addon.db.profile.Audio.AutoToggleDialog = false
@@ -130,6 +140,7 @@ Expect("turned off, nothing is muted", GetCVar("Sound_EnableDialog"), "1")
 -- with the dialog is never heard rather than cut short when the line starts.
 env, quests, zones = H.Fresh(stub, SPOKEN)
 env.Addon.db.profile.Audio.AutoToggleDialog = true
+env.Addon.db.profile.Audio.SoundChannel = "Master"
 _G.Spoken:MuteGameDialogueAhead(quests)
 Expect("muting ahead cuts the dialog at once, as the window opens", GetCVar("Sound_EnableDialog"), "0")
 stub.Advance(1.6)
@@ -145,6 +156,7 @@ Expect("...until the queue drains", GetCVar("Sound_EnableDialog"), "1")
 -- Paused, a line queues and does not speak: the greeting has nothing to make way for.
 env, quests, zones = H.Fresh(stub, SPOKEN)
 env.Addon.db.profile.Audio.AutoToggleDialog = true
+env.Addon.db.profile.Audio.SoundChannel = "Master"
 _G.Spoken:Pause()
 _G.Spoken:MuteGameDialogueAhead(quests)
 Expect("paused, muting ahead does nothing", GetCVar("Sound_EnableDialog"), "1")
@@ -179,9 +191,30 @@ Expect("a held line does not keep the mute past the deadline", GetCVar("Sound_En
 holding = false
 
 env, quests, zones = H.Fresh(stub, SPOKEN)
+env.Addon.db.profile.Audio.AutoToggleDialog = true
+env.Addon.db.profile.Audio.SoundChannel = "Dialog"
+_G.Spoken:MuteGameDialogueAhead(quests)
+Expect("a line coming on Dialog does not mute Dialog", GetCVar("Sound_EnableDialog"), "1")
+
+env, quests, zones = H.Fresh(stub, SPOKEN)
 env.Addon.db.profile.Audio.AutoToggleDialog = false
 _G.Spoken:MuteGameDialogueAhead(quests)
 Expect("turned off, muting ahead does nothing", GetCVar("Sound_EnableDialog"), "1")
+
+---------------------------------------------------------------- the player's own Dialog off stays off
+-- With NPC voices switched off and Spoken on SFX, lifting the mute after the line would switch
+-- them back on.
+env, quests, zones = H.Fresh(stub, SPOKEN)
+env.Addon.db.profile.Audio.AutoToggleDialog = true
+env.Addon.db.profile.Audio.SoundChannel = "SFX"
+world.cvars.Sound_EnableDialog = "0"
+_G.Spoken:MuteGameDialogueAhead(quests)
+quests:Enqueue(H.Clip())
+stub.Advance(0.6)
+Expect("a line speaking over a Dialog channel already off holds no mute", env.SoundUtils:IsMutedByPlayer("Dialog"), false)
+_G.Spoken:StopAll()
+stub.Advance(2)
+Expect("...and the empty queue leaves it off", GetCVar("Sound_EnableDialog"), "0")
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll sources tests passed")
