@@ -1,9 +1,8 @@
 setfenv(1, SpokenEnv)
 
--- The DialogueUI settings, on Spoken's page: the window's own rows in the narrator style's parts,
--- shown with the DialogueUI style chosen (Page:WheelNote, Page:ThemeRows, Page:FitRow), and after
--- the narrator style's settings what each feature addon adds through Spoken:AddDialogueUISettings
--- (Page:Place), shown under any style.
+-- The DialogueUI settings on Spoken's page: the window's own rows, shown only with the
+-- DialogueUI style, then, after the narrator style's settings, the rows feature addons add
+-- through Spoken:AddDialogueUISettings, shown under any style.
 --
 -- Parsed by the 1.12 client too (addon.xml is shared), so Lua 5.0 syntax throughout; that
 -- client has no DialogueUI and returns below.
@@ -24,10 +23,6 @@ local Page = DialogueUIOptions
 
 local function Panel() return Addon.db.profile.Frame.DialogueUI end
 
---- Add a feature addon's rows. build(layout) adds a section and its rows to Spoken's page, after
---- the narrator style's settings, and may return a function that puts them back to their
---- defaults, which Spoken's Start Over runs. Before the page is built they wait for it; after,
---- they go in at once.
 function Page:Add(build)
     table.insert(self.builders, build)
     if self.keep then
@@ -73,9 +68,8 @@ function Page:FitRow(layout, only, refresh)
         function() return Panel().FitText ~= false end, function(v) Panel().FitText = v end, refresh))
 end
 
---- The place, after the narrator style's settings, kept for the feature addons' rows whenever
---- they arrive. Only with DialogueUI installed; its rows show under any style, since they change
---- DialogueUI's own quest window.
+--- Where the feature addons' rows go, after the narrator style's settings, now or whenever they
+--- arrive. They show under any style, since they change DialogueUI's own quest window.
 function Page:Place(layout)
     if not DialogueUITheme:Installed() then return end
     self.layout = layout

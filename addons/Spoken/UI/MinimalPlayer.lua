@@ -11,8 +11,7 @@ local CORNER_ICON = 20
 -- Space between the progress bar and the caption lines under it, and between
 -- the last caption line and the frame's bottom border.
 local CAPTION_GAP, CAPTION_BOTTOM = 4, 8
--- The Forever client tints its frame metal bronze; its palette, so the player matches on every
--- client while Bronze Border is on.
+-- The Forever client tints its frame metal bronze; its palette, worn while Bronze Border is on.
 local BRONZE = { .95, .68, .35 }
 -- Portrait badges by bullet id. Quests use trimmed copies of their own glyphs; books
 -- and zones take native ones, since their registered bullet (or none) is not a badge.

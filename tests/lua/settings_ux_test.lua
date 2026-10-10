@@ -136,9 +136,8 @@ env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 Expect("choosing a window shows it again", env.Addon:PlayerStyle(), "minimal")
 
 ---------------------------------------------------------------- each style's rows
--- Under Narrator Style Settings, each style shows the rows its own code reads, and only those.
--- Named as the page names them; a note by what it says. No addon here declares an optional
--- button before the page is built, so no Hide ... Button row.
+-- Rows by their label, notes by what they say. No addon here declares an optional button before
+-- the page is built, so no Hide ... Button row.
 local function StyleRows()
     local names, inGroup, byFrame = {}, false, {}
     for _, entry in ipairs(home.entries) do byFrame[entry.frame] = entry end
@@ -179,7 +178,6 @@ do
         env.Addon:SetPlayerStyle(style); Options:UpdateRows()
         Expect("the " .. style .. " style shows the rows it reads", StyleRows(), ROWS[style])
     end
-    -- With DialogueUI: its window. Voice Only shows nothing, DialogueUI or not.
     local Theme, playerStyle, chosen = env.DialogueUITheme, env.Addon.PlayerStyle, "dialogueui"
     local available = Theme.Available
     Theme.Available = function() return true end
@@ -196,8 +194,7 @@ do
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end
 
--- Bronze Border is for every frame Spoken draws: a section of its own after the narrator style's
--- settings, on every client, whatever the style.
+-- Bronze Border is for every frame Spoken draws, so it sits outside the narrator style's settings.
 do
     local function Placed()
         local inGroup, section, found = false, nil, nil

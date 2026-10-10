@@ -441,9 +441,8 @@ local function Build(canvas)
     -- lines like the others, chosen with them above.
 
     if captions then
-        -- DialogueUI's own quest text follows Show Words, Highlight Words and Type Words Out too
-        -- (Spoken:GetCaptionOptions), and their tooltips say so where DialogueUI is installed.
-        -- The legacy clients' stub has no Installed: no DialogueUI there.
+        -- DialogueUI's quest text follows Show Words, Highlight Words and Type Words Out too, so
+        -- their tooltips say so where it is installed. The legacy clients' stub has no Installed.
         local withDUI = DialogueUITheme ~= nil and DialogueUITheme.Installed ~= nil and DialogueUITheme:Installed()
         local function Tip(tip, extra) return withDUI and tip .. " " .. extra or tip end
         -- Show Words first: everything under it waits on it.
@@ -487,8 +486,8 @@ local function Build(canvas)
             function() return transcript().SubtitleScroll or "page" end,
             function(v) transcript().SubtitleScroll = v end, function() refreshSubtitle(); Options:UpdateRows() end,
             function(v) return SCROLL_LABELS[v] or v end))
-        -- The word being read lit. The subtitle lights it only while it shows its words whole:
-        -- typed at their own pace, an estimated word timing would show every miss.
+        -- The subtitle lights the word only while its words show whole: typed at their own pace, an
+        -- estimated word timing would show every miss.
         local highlight = layout:Checkbox(L.TRANSCRIPT_HIGHLIGHT, Tip(L.TRANSCRIPT_HIGHLIGHT_TIP, L.TRANSCRIPT_DUI_TIP),
             function() return transcript().HighlightWord end,
             function(v) transcript().HighlightWord = v end, refreshTranscript)
@@ -500,7 +499,6 @@ local function Build(canvas)
             function(v) transcript().Typewriter = v end, refreshTranscript)
         Only(typewriter, Shown)
         Requires(typewriter, Words, L.REASON_WORDS)
-        -- How the words are typed, under it: letter by letter, or whole words.
         layout:Indent()
         local by = layout:Dropdown(L.TRANSCRIPT_TYPEWRITER_BY, L.TRANSCRIPT_TYPEWRITER_BY_TIP, { "word", "letter" },
             function() return transcript().TypewriterBy or "letter" end,
@@ -520,8 +518,6 @@ local function Build(canvas)
     layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
         function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
 
-    -- What the feature addons do in DialogueUI's own quest window, which is there whatever the
-    -- style: a section of their own, under DialogueUI's name.
     DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each

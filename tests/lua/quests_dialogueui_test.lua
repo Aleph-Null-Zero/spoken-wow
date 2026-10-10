@@ -826,8 +826,7 @@ Expect("the place has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_
 local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end
 layout:Refresh()
--- They change DialogueUI's quest window, which is there whatever the narrator style: a section of
--- their own under DialogueUI's name, after the narrator style's settings, before the Compendium.
+-- They change DialogueUI's quest window, which is there whatever the narrator style.
 local narratorEnd, section, compendium
 for index, item in ipairs(layout.items) do
     if item.kind == "groupEnd" and item.group.text == env.L.OPT_NARRATOR_SETTINGS then narratorEnd = index end
@@ -850,8 +849,7 @@ for _, style in ipairs({ "subtitle", "minimal", "classic", "dialogueui" }) do
     layout:Refresh()
     Expect("...and is with the " .. style .. " style", showPlayer:IsShown(), true)
 end
--- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked,
--- and say so.
+-- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked.
 for _, label in ipairs({ env.L.TRANSCRIPT_SHOW, env.L.TRANSCRIPT_HIGHLIGHT, env.L.TRANSCRIPT_TYPEWRITER }) do
     local tip
     for _, entry in ipairs(layout.entries) do
