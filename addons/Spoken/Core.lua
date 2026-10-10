@@ -26,9 +26,11 @@ Defaults = {
             -- "subtitle", "minimal" (Small Window), "classic" (Large Window), "dialogueui" or
             -- "none" (the voice alone). Legacy clients start in the window they always had.
             Style = Version.IsAnyLegacy and "classic" or "subtitle",
-            -- Forever only: the bronze its own frames wear, on the minimal player's metal.
+            -- The bronze the Forever client's frames wear, on the windows' metal (Addon:Bronze).
             BronzeTint = true,
             MinimalWidth = 380,
+            -- What the small window is drawn on: "parchment" or "dark", the rock it had before.
+            MinimalBackground = "parchment",
             -- Per action id, for the ones an addon declared optional. Absent means shown.
             HiddenActions = {},
             DialogueUI = {
@@ -382,8 +384,18 @@ function Addon:Enable()
             print("  " .. Transcript:Describe())
             print("  " .. DialogueUITheme:Describe())
             for _, err in ipairs(Callbacks.errors) do print("  callback error: " .. err) end
+        elseif command == "parchment" then
+            -- For comparing the small window's parchment art in game: the next one, named.
+            local name, index, count = MinimalPlayer:NextParchment()
+            if not name then
+                print("Spoken: this client has none of the small window's parchment art")
+            else
+                local shown = MinimalPlayer:IsEnabled() and Addon:Profile("Frame").MinimalBackground ~= "dark"
+                print(format("Spoken: small window parchment %d/%d: %s%s", index, count, name,
+                    shown and "" or " (seen with the small window on Parchment)"))
+            end
         else
-            print("Spoken: /spoken play | stop | skip | player [minimal|classic|dialogueui|subtitle|none] | transcript [on|off|1|2|reset] | log | options | reset | diagnostics")
+            print("Spoken: /spoken play | stop | skip | player [minimal|classic|dialogueui|subtitle|none] | transcript [on|off|1|2|reset] | log | options | reset | diagnostics | parchment")
         end
     end
 end

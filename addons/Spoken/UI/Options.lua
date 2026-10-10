@@ -391,6 +391,9 @@ local function Build(canvas)
 
     layout:Section(L.OPT_LOOK_TITLE)
     DialogueUIOptions:ThemeRows(layout, ForDUI, refresh)
+    Only(layout:Dropdown(L.OPT_MINIMAL_BACKGROUND, L.OPT_MINIMAL_BACKGROUND_TIP, { "parchment", "dark" },
+        function() return cfg().MinimalBackground end, function(v) cfg().MinimalBackground = v end, refresh,
+        function(v) return v == "dark" and L.OPT_DUI_THEME_DARK or L.OPT_DUI_THEME_PARCHMENT end), Small)
     if captions then
         ForSubtitles(layout:Slider(L.TRANSCRIPT_SHADOW, 0, 1, 0.05,
             function() return transcript().SubtitleShadow end,
@@ -401,10 +404,12 @@ local function Build(canvas)
             function(v) transcript().SubtitleName = v end, refreshSubtitle), Subtitles)
     end
     if captions then
-        -- The subtitle's progress line. The DialogueUI window always draws its own.
-        ForSubtitles(layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
+        -- The subtitle's progress line, and the small window'.
+        local progress = layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
-            function(v) transcript().SubtitleProgress = v end, refreshSubtitle))
+            function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
+        Only(progress, function() return Subtitles() or Small() end)
+        Requires(progress, function() return not Subtitles() or Words() end, L.REASON_WORDS)
     end
     -- Hiding the portrait and hiding a button are one kind of choice, so they sit together. Not
     -- for the DialogueUI window, whose header has the face's socket built in.

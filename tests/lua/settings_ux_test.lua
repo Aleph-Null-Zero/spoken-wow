@@ -169,7 +169,8 @@ do
     local WINDOW = "Window Size, Lock Position, Reset Positions, Hide Portrait, Show Words, "
         .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By"
     local ROWS = {
-        minimal = WINDOW,
+        minimal = "Window Size, Lock Position, Reset Positions, Background, Show Progress, Hide Portrait, Show Words, "
+            .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By",
         classic = WINDOW,
         subtitle = "Subtitle Size, Lock Position, Reset Positions, Background Darkness, Show Name and Title, Show Progress, "
             .. "Hide Portrait, Show Words, Text Size, Sentences at Once, Auto-Scroll (subtitles), "
