@@ -234,6 +234,7 @@ L.UNCACHED_NPC_TIP = "在世界中再次遇到该 NPC 后即可看到它的模�
 L.OPT_PLAYER_STYLE = "旁白样式"
 L.OPT_PLACE_TITLE = "大小与位置"
 L.OPT_LOOK_TITLE = "外观"
+L.OPT_COLOURS_TITLE = "颜色"
 L.OPT_NARRATOR_SETTINGS = "旁白样式设置"
 L.OPT_PLAYER_STYLE_TIP = "大窗口：说话者头像，以及等待播放的台词。\n\n仅字幕（限支持的客户端）：没有窗口，只在屏幕中下方逐字打出文字。鼠标悬停可显示停止或重播、跳过和报告，上下拖动可移动位置。\n\n仅语音：屏幕上不显示任何内容，只能听到台词。下方的按键仍可停止、重播和跳过。"
 L.OPT_STYLE_MINIMAL = "小窗口"

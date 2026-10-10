@@ -116,6 +116,7 @@ L.REASON_NOT_INSTALLED = "Non installé. Installez ce module de Spoken pour l'ut
 L.OPT_PLAYER_STYLE = "Style du narrateur"
 L.OPT_PLACE_TITLE = "Taille et position"
 L.OPT_LOOK_TITLE = "Apparence"
+L.OPT_COLOURS_TITLE = "Couleurs"
 L.OPT_NARRATOR_SETTINGS = "Paramètres du style du narrateur"
 L.OPT_PLAYER_STYLE_TIP = "Grande fenêtre : le portrait de l'interlocuteur et les répliques en attente.\n\nSous-titres seuls, sur les clients qui les proposent : pas de fenêtre, juste le texte qui s'écrit en bas, au milieu de l'écran. Survolez-le pour Arrêter ou Rejouer, Passer et Signaler, et faites-le glisser vers le haut ou le bas pour le déplacer.\n\nVoix seule : rien à l'écran ; les répliques sont seulement entendues. Les raccourcis ci-dessous permettent toujours d'arrêter, de rejouer et de passer."
 L.OPT_STYLE_MINIMAL = "Petite fenêtre"

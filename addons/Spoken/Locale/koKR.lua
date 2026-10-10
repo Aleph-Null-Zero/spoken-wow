@@ -234,6 +234,7 @@ L.UNCACHED_NPC_TIP = "월드에서 이 NPC를 다시 만나면 모델을 볼 수
 L.OPT_PLAYER_STYLE = "내레이터 스타일"
 L.OPT_PLACE_TITLE = "크기와 위치"
 L.OPT_LOOK_TITLE = "외형"
+L.OPT_COLOURS_TITLE = "색상"
 L.OPT_NARRATOR_SETTINGS = "내레이터 스타일 설정"
 L.OPT_PLAYER_STYLE_TIP = "큰 창: 화자의 초상화와 다음에 재생할 대사를 보여 줍니다.\n\n자막만(지원하는 클라이언트에서): 창 없이 화면 아래쪽 가운데에 텍스트가 차례로 입력됩니다. 마우스를 올리면 정지/다시 재생, 건너뛰기, 신고 버튼이 나타나고, 위아래로 드래그하면 옮길 수 있습니다.\n\n음성만: 화면에 아무것도 표시하지 않고 소리로만 듣습니다. 아래 키로 정지, 다시 재생, 건너뛰기는 그대로 할 수 있습니다."
 L.OPT_STYLE_MINIMAL = "작은 창"
