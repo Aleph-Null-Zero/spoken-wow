@@ -67,7 +67,7 @@ Expect("...and it is not looked for again", G.Addon.db.global.fromQuests, true)
 G, F = Login(Quests({ GossipFrequency = always }, { profileKeys = { [CHAR] = "Shared", ["Alt - Realm"] = "Shared" } }))
 Expect("each character stays on the profile it was on", G.Addon.db:GetCurrentProfile(), "Shared")
 Expect("...the characters not logged in too, alts sharing a profile there sharing it here",
-    _G.SpokenGossipSettings.profileKeys["Alt - Realm"], "Shared")
+    (_G.SpokenGossipSettings.profileKeys or {})["Alt - Realm"], "Shared")
 
 ---------------------------------------------------------------- quests switched off
 -- A player who had quests off heard no gossip.
