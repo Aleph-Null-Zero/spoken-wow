@@ -409,7 +409,7 @@ function PlayerFrame:CreateRow(i)
 
         -- A held clip says why; otherwise narration waiting out a pull looks exactly like
         -- narration that failed.
-        local text = clip.present and clip.present.label or clip.key
+        local text = MinimalPlayer.parts.Label(clip)
         local held = SoundQueue:GetHeldReason(clip)
         if held then
             text = format("%s |cff888888(%s)|r", text, held)
@@ -506,7 +506,7 @@ function PlayerFrame:Update()
     local lastContent = self.frame.container.name
     for i, clip in ipairs(SoundQueue:IsEmpty() and { head } or SoundQueue.sounds) do
         if i == 1 then
-            self.frame.container.name:SetText(clip.present and clip.present.header or "")
+            self.frame.container.name:SetText(MinimalPlayer.parts.Name(clip))
             Addon:ClipFont(self.frame.container.name, clip)
         end
         lastRow = lastRow + 1

@@ -51,7 +51,7 @@ local WINDOW_SIZES, WINDOW_STEP = { 0.5, 2 }, 0.05
 local FONT_SIZES = { 12, 26 }
 
 local parts = MinimalPlayer.parts
-local Font, Removable, ShowRemove, Label = parts.Font, parts.Removable, parts.ShowRemove, parts.Label
+local Font, Removable, ShowRemove, Label, Name = parts.Font, parts.Removable, parts.ShowRemove, parts.Label, parts.Name
 local HeldLabel, Clamp, Waiting, BelongsTo = parts.HeldLabel, parts.Clamp, parts.Waiting, parts.BelongsTo
 local function Round(n) return math.floor(n + 0.5) end
 -- Through Addon:Profile: the frame still redraws during UI teardown, after AceDB strips
@@ -783,7 +783,7 @@ function Skin:Update()
         self:Layout()
     end
     self:SetVisible(true)
-    self.name:SetText(clip.present and clip.present.header or "")
+    self.name:SetText(Name(clip))
     Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
