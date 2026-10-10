@@ -389,7 +389,13 @@ function PlayerFrame:CreateRow(i)
         if isHead then
             self:SetAlpha(1)
             self.textWidget:SetShadowColor(0, 0, 0, 1)
-            self:SetPoint("TOPLEFT", PlayerFrame.frame.container.name, "BOTTOMLEFT", 0, -2)
+            -- A clip with no header (a world's own story) starts at the top, not under an empty line.
+            local name = PlayerFrame.frame.container.name
+            if (name:GetText() or "") == "" then
+                self:SetPoint("TOPLEFT", name, "TOPLEFT", 0, 0)
+            else
+                self:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -2)
+            end
             self:EnableMouse(SoundQueue:CanBePaused())
         else
             local position = index - 1
@@ -457,7 +463,6 @@ function PlayerFrame:ShowSample(shown)
         key = "sample", length = 0,
         source = { key = "sample", gates = {}, interClipGap = 0 },
         present = { header = L.SAMPLE_SPEAKER, label = L.SAMPLE_LINE,
-            -- Words for the captions to show, as the subtitle's sample has.
             transcript = L.SUBTITLE_SAMPLE_TEXT,
             portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\icon.tga]] } },
     } or nil

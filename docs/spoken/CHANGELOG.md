@@ -7,14 +7,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
   voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
   that voice, the quest plays as before.
-- **With the DialogueUI narrator style, Spoken's small window takes DialogueUI's look.** When a
-  dialog closes on a line still playing, the window slides out of it, with Stop, Skip and Report in
-  its header and a place's picture over its words. *([Nucabe](https://github.com/Nucabe))*
-- **With the DialogueUI narrator style, books show in DialogueUI's paper and plaques and gravestones
-  in its stone.** Spoken's window stays hidden while DialogueUI's book view is open and slides out
-  of it when it closes. *([Nucabe](https://github.com/Nucabe))*
-- **The DialogueUI window settles into place with animation.** A queued line's page tucks behind the
-  window, and the words fade from one line to the next. *([Nucabe](https://github.com/Nucabe))*
 - **Abandoning a quest while its voice speaks fades the voice out.** Before, it was cut off
   mid-word and the quest's next line started for a moment. *([Nucabe](https://github.com/Nucabe))*
 - **Fixed: Books and Zones said "Not installed" in Spoken's module list after login**, and a
@@ -34,6 +26,23 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   letter opened while a book is read waits behind it instead of replacing it. The windows show
   the readable's kind over its name, such as Book or Gravestone, in place of the page count.
   *([Nucabe](https://github.com/Nucabe))*
+- **Captions fade at their edges as they glide.** The line leaving at the top fades out and the
+  line coming in at the bottom fades in, where they were cut off at the edge.
+  *([Nucabe](https://github.com/Nucabe))*
+- **With the DialogueUI narrator style, Spoken's small window takes DialogueUI's look.** When a
+  dialog closes on a line still playing, the window slides out of it, with Stop, Skip and Report in
+  its header and a place's picture over its words. *([Nucabe](https://github.com/Nucabe))*
+- **With the DialogueUI narrator style, books show in DialogueUI's paper and plaques and gravestones
+  in its stone.** Spoken's window stays hidden while DialogueUI's book view is open and slides out
+  of it when it closes. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI window settles into place with animation.** A queued line's page tucks behind the
+  window, and the words fade from one line to the next. *([Nucabe](https://github.com/Nucabe))*
+- **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
+  Spoken's voice when you switch away. The line now stops instead of running on in silence, and
+  Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
+- **A zone's story is headed by the place it is in.** It showed its own name twice, as
+  "Mulgore / Mulgore". The narrator now shows a zone's continent over it and a city's zone, and
+  the Compendium's "In ..." line names the same place. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.2.0 — 2026-10-08
 

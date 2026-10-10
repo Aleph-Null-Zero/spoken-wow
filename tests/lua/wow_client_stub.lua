@@ -195,8 +195,7 @@ local function Widget(kind, name)
     function w:GetRight() return self.width end
     function w:SetAlpha(v) self.alpha = v end
     function w:GetAlpha() return self.alpha end
-    -- Drawn as one image, and parts that take no alpha from their parent: read back by the
-    -- DialogueUI window's tests.
+    -- Drawn as one image, and parts that take no alpha from their parent.
     function w:SetIsFrameBuffer(v) self.frameBuffer = v and true or false end
     function w:IsFrameBuffer() return self.frameBuffer or false end
     function w:SetIgnoreParentAlpha(v) self.ignoreParentAlpha = v and true or false end
@@ -1183,8 +1182,9 @@ end
 --- Load the zones addon's playback files the way the client would -- each chunk receives
 --- the addon name and the shared table as varargs -- against a hand-built SpokenZones table
 --- carrying the few Core.lua facts Audio.lua and Autoplay.lua read. Returns that table.
+--- UI/Compendium.lua too, as the toc loads it: a clip's header is the place above, from its tree.
 function M.LoadZones(addonDirectory, SpokenZones)
-    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay" }) do
+    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay", "UI/Compendium" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
         chunk("Spoken_Zones", SpokenZones)
     end

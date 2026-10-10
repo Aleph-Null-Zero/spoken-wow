@@ -142,9 +142,8 @@ end
 -- Matching the caption to the window
 --------------------------------------------------------------------------------
 
--- Spoken's (UI/WordMarks.lua), shared with Spoken Books' book view: finding the caption's words in
--- the window's paragraphs, the pair to light, how far to type. Nil from a player too old to have
--- it, which Problem reports.
+-- The player's word matching (Spoken:WordMarks). Nil from a player too old to have it, which
+-- Problem reports.
 local Marks = _G.Spoken and Spoken.WordMarks and Spoken:WordMarks()
 if Marks then
     Bridge.Key, Bridge.MarkLinks, Bridge.AlignFrom, Bridge.Align = Marks.Key, Marks.MarkLinks, Marks.AlignFrom, Marks.Align
@@ -391,7 +390,6 @@ function Bridge:Page()
     end
 end
 
--- Puts the Report icon in the row of controls on the title line (below).
 local SlotReport
 
 --- The Contribute button follows the window: it opens, closes and changes page with no
@@ -417,11 +415,10 @@ end
 --------------------------------------------------------------------------------
 --
 -- DialogueUI draws a Play button only while its Text To Speech is on, which is off by default
--- and read only at load. This file puts the player's own round buttons at the window's top
--- right instead, beside a close button, as on DialogueUI's book view: Play (Stop while the
--- page's line speaks), Skip, and Report (ContributeButton's icon, handed over through its
--- dialogueUISlot).
--- Read Automatically, never DialogueUI's Auto Play, decides whether a line reads on its own.
+-- and read only at load, so this file puts the player's round buttons at the window's top
+-- right, beside a close button as on DialogueUI's book view: Play, Skip, and ContributeButton's
+-- Report icon (through its dialogueUISlot). Read Automatically, never DialogueUI's Auto Play,
+-- decides whether a line reads on its own.
 
 local ROUND, ROUND_GAP = 24, 4
 -- DialogueUI's own speaker button, as it draws it.
@@ -574,11 +571,9 @@ end
 -- A close button, as DialogueUI's book view has
 --------------------------------------------------------------------------------
 --
--- The book view's own close button, in its art: the paper's on DialogueUI's parchment theme, the
--- stone's on its dark one; at the window's top right as on the book, 64 of the book art's pixels
--- across and 26 in, drawn at 0.5333 of a pixel to DialogueUI's size, as the book view draws it.
--- Its middle halfway between the window's top and its header's, so it stands as far from the
--- title as from the edge, and in the same place on a gossip page, which has no header to show.
+-- The book view's own close button and art (paper on DialogueUI's parchment theme, stone on its
+-- dark one), sized and inset as the book view draws it: 64 of the art's pixels across and 26 in,
+-- at 0.5333 of a pixel to DialogueUI's size.
 
 local BOOK_ART = "Interface/AddOns/DialogueUI/Art/Book/TextureKit-"
 local CLOSE_SIZE, CLOSE_INSET, ART_PIXEL = 64, 26, 0.53333
@@ -646,7 +641,7 @@ end
 --- DialogueUI's header and text moved down so the quest title's top, or a gossip page's text's,
 --- is LINE_ROOM under the controls' line, as the book view's title is; the text's height, which
 --- DialogueUI scrolls by, shorter by as much. Measured from the title, not the portrait beside
---- it. Run after DialogueUI lays a page out (UseQuestLayout), sets its title or resizes.
+--- it.
 local function Lower()
     local frame = DUIQuestFrame
     local front = type(frame.FrontFrame) == "table" and frame.FrontFrame
@@ -676,10 +671,9 @@ local function Lower()
     end
 end
 
---- Lay the row out right to left from the close button, on its middle: Report, Skip, Play, as
---- large on screen as Place Lore draws them (24 at UIParent's scale, whatever DialogueUI's own
---- size), in the same place on every page. DialogueUI's buttons in that corner (Copy Text, the
---- translator's) go left of it.
+--- Lay the row out right to left from the close button, on its middle: Report, Skip, Play, 24 at
+--- UIParent's scale whatever DialogueUI's own size, in the same place on every page.
+--- DialogueUI's buttons in that corner (Copy Text, the translator's) go left of it.
 local placedKey
 local function PlaceRow(force)
     local frame = DUIQuestFrame

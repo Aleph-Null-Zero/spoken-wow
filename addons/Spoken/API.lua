@@ -51,7 +51,8 @@ end
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
 --     continues = true,                       -- optional; its next part follows (source:Continue), no pause or cue
 --     present  = {
---       header   = "Eagan Peltskinner",       -- NPC name | zone name | book title
+--       header   = "Eagan Peltskinner",       -- NPC name | place above | book title;
+--                                             -- nil over the world's own lore
 --       label    = "Wolves Across the Border",-- quest title | subzone | page label
 --       transcript = "Full dialogue text",   -- optional; falls back to clip.text
 --       bullet   = "quest-accept",            -- a RegisterBullet id
@@ -500,9 +501,8 @@ function Spoken:GetCaptionOptions()
 end
 
 --- Finding the line being read in another window's text and marking it there, as the captions
---- do (UI/WordMarks.lua): Align a caption's words to the window's paragraphs, Pick the pair to
---- light, Cut how far to type, Want what a paragraph shows. Nil on the 1.12 client, which has no
---- captions.
+--- do: Align a caption's words to the window's paragraphs, Pick the pair to light, Cut how far
+--- to type, Want what a paragraph shows. Nil on the 1.12 client, which has no captions.
 function Spoken:WordMarks()
     return rawget(SpokenEnv, "WordMarks")
 end

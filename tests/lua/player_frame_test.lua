@@ -83,6 +83,11 @@ quests:Enqueue(a)
 Expect("shown once something is queued", F.frame:IsShown(), true)
 Expect("the header is the clip's", F.frame.container.name:GetText(), "Eagan Peltskinner")
 Expect("the first row is the clip's label", F.frame.container.buttons[1].textWidget:GetText(), "Wolves Across the Border")
+Expect("...under the header", select(3, F.frame.container.buttons[1]:GetPoint()), "BOTTOMLEFT")
+env.SoundQueue:RemoveAllSoundsFromQueue()
+quests:Enqueue(H.Clip({ present = { label = "Azeroth", bullet = "zone", portrait = { kind = "none" } } }))
+Expect("a clip with no header starts its row at the top, with no empty line over it",
+    select(3, F.frame.container.buttons[1]:GetPoint()), "TOPLEFT")
 env.SoundQueue:RemoveAllSoundsFromQueue()
 Expect("hidden again when the queue empties", F.frame:IsShown(), false)
 quests:Enqueue(H.Clip({ key = "b:1", present = { header = "A Letter Home", portrait = { kind = "none" } } }))
@@ -219,6 +224,12 @@ Expect("...and hides itself if the cursor goes back over the button", tip:IsShow
 stub.ldbObjects.Spoken.OnClick(mmButton, "RightButton")
 stub.ldbObjects.Spoken.OnTooltipShow(tip)
 Expect("with the menu closed it says what the clicks do again", tip:NumLines() > 3, true)
+local playing = env.SoundQueue.GetCurrentSound
+env.SoundQueue.GetCurrentSound = function() return { present = { label = "Azeroth" } } end
+stub.ldbObjects.Spoken.OnTooltipShow(tip)
+Expect("a line with nothing over its name has no empty line over it in the tooltip",
+    tip.lines[1] .. "|" .. tip.lines[2], "Spoken|Azeroth")
+env.SoundQueue.GetCurrentSound = playing
 stub.ldbObjects.Spoken.OnClick(mmButton, "RightButton")
 
 stub.ldbObjects.Spoken.OnClick(mmButton, "RightButton")
