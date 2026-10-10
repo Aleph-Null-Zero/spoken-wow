@@ -97,12 +97,12 @@ Subtitle:Layout(short)
 local named = Subtitle.lines[1].anchor.y
 cfg.SubtitleName = false
 Subtitle:Layout(short)
-Expect("with Show Name and Title off the row over the words is hidden", Subtitle.nameRow:IsShown(), false)
+Expect("with Show Name and Title off the row over the words is hidden", Subtitle.nameRow and Subtitle.nameRow:IsShown(), false)
 Expect("...and the words start at the top, where the row was", Subtitle.lines[1].anchor.y .. " " .. tostring(named < -12),
     "-12 true")
 cfg.SubtitleName = true
 Subtitle:Layout(short)
-Expect("...on again, the row is back over them", tostring(Subtitle.nameRow:IsShown()) .. " " .. Subtitle.lines[1].anchor.y,
+Expect("...on again, the row is back over them", tostring(Subtitle.nameRow and Subtitle.nameRow:IsShown()) .. " " .. Subtitle.lines[1].anchor.y,
     "true " .. named)
 
 -- Each setting the subtitle is laid out with, changed under the sample, shows on it at once, as
@@ -121,10 +121,10 @@ Expect("the sample is up, the row over its words", Subtitle.sample ~= nil and Su
     and Subtitle.nameRow:IsShown() and Subtitle.picture:IsShown(), true)
 cfg.SubtitleName = false
 Subtitle:Update()
-Expect("Show Name and Title off: the sample's row goes", Subtitle.nameRow:IsShown(), false)
+Expect("Show Name and Title off: the sample's row goes", Subtitle.nameRow and Subtitle.nameRow:IsShown(), false)
 cfg.SubtitleName = true
 Subtitle:Update()
-Expect("...on: it is back", Subtitle.nameRow:IsShown(), true)
+Expect("...on: it is back", Subtitle.nameRow and Subtitle.nameRow:IsShown(), true)
 frame.HidePortrait = true
 Subtitle:Update()
 Expect("Hide Portrait: the sample's picture goes", Subtitle.picture:IsShown(), false)
@@ -135,10 +135,11 @@ local rows = #Subtitle.rows
 cfg.SubtitleScroll = "line"
 Subtitle:Update()
 Expect("Auto-Scroll line by line: a line's room over and under the words",
-    Subtitle.words.height, (Subtitle.shownRows + 2) * Subtitle.lineStep - 2)
+    tostring(Subtitle.words and Subtitle.words.height),
+    tostring(Subtitle.lineStep and ((Subtitle.shownRows or 0) + 2) * Subtitle.lineStep - 2))
 cfg.Lines = 1
 Subtitle:Update()
-Expect("Lines Shown: the sample shows that many", tostring(rows > 1) .. " " .. Subtitle.shownRows, "true 1")
+Expect("Lines Shown: the sample shows that many", tostring(rows > 1) .. " " .. tostring(Subtitle.shownRows), "true 1")
 cfg.Lines, cfg.SubtitleScroll = saved.Lines, saved.SubtitleScroll
 Subtitle:Update()
 Expect("...page by page again: every row of the page", Subtitle.shownRows, rows)
