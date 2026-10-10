@@ -28,7 +28,16 @@ local function Clamp(n, low, high) return math.max(low, math.min(high, n)) end
 -- The frame still resizes while the UI is torn down, after AceDB strips it (Addon:Profile).
 local function Config() return Addon:Profile("Frame") end
 local function Waiting() return math.max(0, SoundQueue:GetQueueSize() - 1) end
-local function Label(clip) return clip and (clip.present and clip.present.label or clip.key) or "" end
+-- A line with no label (a one-page letter) goes by its header: its key means nothing to a player.
+local function Label(clip)
+    local present = clip and clip.present
+    return clip and (present and (present.label or present.header) or clip.key) or ""
+end
+-- The name over the title: the header, unless it is already the title (a line with no label).
+local function Name(clip)
+    local present = clip and clip.present
+    return present and present.label and present.header or ""
+end
 local function Font(parent, size, r, g, b)
     local text = parent:CreateFontString(nil, "OVERLAY")
     text:SetFont(GameFontNormal:GetFont(), size, "")
@@ -77,7 +86,7 @@ end
 
 -- Shared with the DialogueUI window's queue, so both lists of waiting lines behave alike.
 MinimalPlayer.parts = { Font = Font, Removable = Removable, ShowRemove = ShowRemove, Label = Label,
-    HeldLabel = HeldLabel, Clamp = Clamp, Waiting = Waiting, BelongsTo = BelongsTo }
+    Name = Name, HeldLabel = HeldLabel, Clamp = Clamp, Waiting = Waiting, BelongsTo = BelongsTo }
 
 function MinimalPlayer:HideTooltip()
     local owner = GameTooltip:GetOwner()
@@ -482,6 +491,7 @@ function MinimalPlayer:UpdateControls()
     self.bar:SetStatusBarColor(paused and .48 or .86, paused and .44 or .67, paused and .32 or .14)
     local held = not paused and not playing and SoundQueue:GetHeldReason(self.clip)
     self.title.text:SetText(held and format("%s |cffaaaa88(%s)|r", Label(self.clip), held) or Label(self.clip))
+    Addon:ClipFont(self.title.text, self.clip)
     self.menuPlay.text:SetText(paused and L.REPLAY or L.STOP)
     self.menuQueue.text:SetText(format("%s (%d)", L.QUEUE_TITLE, Waiting()))
     for _, button in ipairs({ self.menuPlay, self.menuSkip, self.menuStop }) do
@@ -497,7 +507,7 @@ function MinimalPlayer:UpdateProgress()
     if clip.nextSoundTimer and duration > 0 then
         self.seconds = SoundQueue:VoiceElapsed(clip)
     elseif not SoundQueue:IsPaused() then self.seconds = 0 end
-    self.bar:SetValue(duration > 0 and (self.seconds or 0) / duration or 0)
+    self.bar:SetValue(SoundQueue:Share(clip, self.seconds))
 end
 
 function MinimalPlayer:CreateQueueRow(index)
@@ -540,6 +550,7 @@ function MinimalPlayer:LayoutQueue()
             button = button or self:CreateQueueRow(index)
             button.clip = SoundQueue.sounds[index + self.offset + 1]
             button.text:SetText(HeldLabel(button.clip))
+            Addon:ClipFont(button.text, button.clip)
             ShowRemove(button, false)
             button:Show()
         elseif button then button:Hide(); button.clip = nil end
@@ -659,7 +670,8 @@ function MinimalPlayer:Update()
         self.clip, self.seconds, self.offset = clip, 0, 0
     end
     self:SetVisible(true)
-    self.name:SetText(clip.present and clip.present.header or "")
+    self.name:SetText(Name(clip))
+    Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
     self:LayoutQueue()

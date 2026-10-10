@@ -2,7 +2,7 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
-## 3.3.0 — 2026-10-09
+## Unreleased
 
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
   voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
@@ -19,6 +19,46 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   DialogueUI section of their own after the narrator style's settings. Bronze Border has left the
   narrator style's settings for a Colours section, on every client: it colours every round button
   Spoken draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
+- **Abandoning a quest while its voice speaks fades the voice out.** Before, it was cut off
+  mid-word and the quest's next line started for a moment. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: Books and Zones said "Not installed" in Spoken's module list after login**, and a
+  module's settings page could show it switched off after it was switched on from Spoken's page.
+  *([Nucabe](https://github.com/Nucabe))*
+- **A book is one entry in the queue.** Skip skips the rest of the book, and a gravestone or
+  letter opened while a book is read waits behind it instead of replacing it. The windows show
+  the readable's kind over its name, such as Book or Gravestone, in place of the page count, and
+  the progress bar runs across the whole book. Read Book as One Line, on by default, turns it off for
+  a line per page with its page count, as before. *([Nucabe](https://github.com/Nucabe))*
+- **Volume Follows is back.** Choose which volume slider Spoken's voices follow: Master, Effects,
+  Music, Ambience or Dialog. On Dialog, a note says which features stop working there.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Hide Report Buttons hides every Report button.** It sits beside Hide Contribute Buttons and
+  also takes Report off the quest log, DialogueUI's window, the lore beside the map and the
+  Compendium. *([Nucabe](https://github.com/Nucabe))*
+- **NPC voices you switched off (the Dialog channel) stay off.** With Spoken on another channel,
+  they came back on after any line it read, from an NPC's window, a zone or a book.
+  *([svengabr](https://github.com/svengabr))*
+- **Spoken Zones no longer raises a Lua error on chat messages the game keeps hidden from addons**,
+  as in a dungeon group. *([svengabr](https://github.com/svengabr))*
+- **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
+  Spoken's voice when you switch away. The line now stops instead of running on in silence, and
+  Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
+- **A zone's story is headed by the place it is in.** It showed its own name twice, as
+  "Mulgore / Mulgore". The narrator now shows a zone's continent over it and a city's zone, and
+  the Compendium's "In ..." line names the same place. *([Nucabe](https://github.com/Nucabe))*
+- **Books can close themselves once read.** Turn on *Close Book When Done Reading* (or `/spb close`)
+  and a book, letter or plaque shuts after its last page has been read aloud. With DialogueUI's
+  book view, that brings back the interface it hides. The Spoken window now shows a book's title in
+  your client's language, and names a one-page letter by its title instead of an internal key.
+  *([earlsinclairdino](https://github.com/earlsinclairdino))*
+- For feature addons: `present.font` on a clip draws its speaker, title, queue row, captions and
+  subtitle in that face, for a script the game's font has no glyphs for. A face the client cannot
+  load leaves the player's own. *([damesene](https://github.com/damesene))*
+- **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
+  written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
+- For feature addons: `present.timings` on a clip, the time each word of its transcript starts,
+  moves the captions and subtitle with the voice instead of the estimate. `Spoken:CaptionWords`
+  lists the words to time; a list that does not match them is ignored. *([damesene](https://github.com/damesene))*
 
 ## 3.2.0 — 2026-10-08
 

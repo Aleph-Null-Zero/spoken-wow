@@ -339,9 +339,9 @@ local function ShowEntry()
 	-- Chosen from elsewhere (the map's panel), a place not found yet: named, and no more.
 	if SpokenZones:IsLocked(mapID, key) then
 		local entry = key and SpokenZones.Subzones[mapID] and SpokenZones.Subzones[mapID][key]
-		-- Where it sits, a click away: the zone for an area, the continent for a zone.
-		local up = key and mapID or (IsContinent(mapID) and WORLD or ContinentOf(mapID) or WORLD)
-		local line = string.format(L.IN_ZONE_FMT, ZoneName(up))
+		-- Where it sits, a click away: the zone for an area or a city, the continent for a zone.
+		local up = key and mapID or SpokenZones:PlaceAbove(mapID)
+		local line = up and string.format(L.IN_ZONE_FMT, ZoneName(up)) or nil
 		page:Show({ title = entry and (entry.name or key) or ZoneName(mapID), subtitle = line,
 			onSubtitle = up and function()
 				selection = { mapID = up, key = nil }
@@ -394,14 +394,14 @@ local function Count(n, many, one) return n == 1 and one or string.format(many, 
 --- map one level up, which a click on the line opens (nil for Azeroth).
 function SpokenZones:PlaceLine(mapID, key)
 	if key then return string.format(L.IN_ZONE_FMT, ZoneName(mapID)), mapID end
-	if mapID == WORLD then
+	local parent = self:PlaceAbove(mapID)
+	if not parent then
 		return Count(#Continents(), L.CONTINENT_COUNT_FMT, L.CONTINENT_COUNT_ONE) .. ", "
 			.. Count(#ZoneIDs(), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), nil
 	elseif IsContinent(mapID) then
-		return string.format(L.IN_ZONE_FMT, ZoneName(WORLD)) .. " · "
-			.. Count(#ZonesOf(mapID), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), WORLD
+		return string.format(L.IN_ZONE_FMT, ZoneName(parent)) .. " · "
+			.. Count(#ZonesOf(mapID), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), parent
 	end
-	local parent = CITY_IN[mapID] or ContinentOf(mapID) or WORLD
 	local subKeys = SubzoneKeys(mapID)
 	local line = string.format(L.IN_ZONE_FMT, ZoneName(parent))
 	if subKeys then
@@ -513,6 +513,10 @@ local function BuildPanel(p)
 	-- Toggling "Hide Contribute Buttons" in Spoken's settings fires no game event.
 	if _G.Spoken and Spoken.RegisterCallback then
 		Spoken:RegisterCallback("CONTRIBUTE_SETTINGS_CHANGED", function()
+			SpokenZones:RefreshLoreWindow()
+		end)
+		-- Nor does Hide Report Buttons.
+		Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
 			SpokenZones:RefreshLoreWindow()
 		end)
 	end

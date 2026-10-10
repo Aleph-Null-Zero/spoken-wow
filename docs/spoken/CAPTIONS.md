@@ -47,7 +47,8 @@ How the captions in the window follow the voice:
 With **Type Words Out** on, the lines below the voice are still blank, so Line by Line keeps the
 line being read on the last row instead, with what has been read above it, as roll-up
 broadcast captions do. The glide needs the client to clip the captions' frame (`SetClipsChildren`); where it cannot, the text steps a
-line at a time. `Transcript:GetScroll` and `Transcript:ScrollTo` let a player draw its own
+line at a time. While the text moves, a line partly past the top or bottom edge fades by as much of
+it as is out of view, so lines fade out and in at the edges instead of ending on a hard cut. `Transcript:GetScroll` and `Transcript:ScrollTo` let a player draw its own
 scrollbar. Subtitles Only pages on its own and is not affected.
 
 Stopping freezes the text. Replay restarts it with the recording. Skipping
@@ -67,6 +68,17 @@ estimated from word length, punctuation and the total duration. Two neighboring
 words are highlighted to give the estimate some room. At the end of a page,
 the previous word stays highlighted instead of advancing the page early.
 
+A source that knows when each word is spoken passes `clip.present.timings`: one
+start time per word, in seconds from the start of the recording, in the order
+the captions cut the transcript into words: `Spoken:CaptionWords(transcript)`
+returns those words, with the escape sequences the captions do not show
+removed. The captions then follow those
+times instead of the estimate, `Spoken:GetCaption()` reports them with
+`timed = true`, and Subtitles Only turns each page when the voice reaches its
+first word. A list whose length does not match the words, with a hole or a time
+that is not a number, or whose times go backwards or past the recording's
+length, is ignored and the estimate is used.
+
 Captions use the text captured when a quest or gossip clip was queued. Quest
 log replays can use the quest description. A completion recording never uses
 the acceptance text as a substitute. Different quest wording and pauses in a
@@ -80,7 +92,10 @@ text; older translated packs can caption pages opened during the current session
 Mail is excluded. Captions stay hidden when matching text is unavailable.
 
 Other sources can supply `clip.present.transcript`; the player also accepts
-`clip.text`. Book captions are exported by `pipelines/books/tools/lib/lua.mjs`
+`clip.text`. A source whose text is in a script the game's font cannot draw (Czech on a
+Western client, for one) names a font file in `clip.present.font`. The captions, the subtitle
+and every window then draw that clip's header, label and text in it, at the player's own size;
+a clip without one stays in the player's font, and so does a file the client cannot load. Book captions are exported by `pipelines/books/tools/lib/lua.mjs`
 using the same plain text conversion as narration. The current English export
 was regenerated from the public `/api/books/search?lang=enUS` catalogue on
 2026-09-27; page IDs, book order and lookup checksums are unchanged.
