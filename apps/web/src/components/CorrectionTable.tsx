@@ -65,7 +65,7 @@ const STAGE_CHIP_OPTIONS: ChipOption[] = QUEST_STAGES.map((option) => ({ value: 
 type Filters = { status: ContributionStatus; client: ClientFilter; stage: StageFilter; q: string; searchIn: Filter };
 
 function correctionsHref(filters: Filters): string {
-  // Client always written, "all" included: left out, it means the Forever default.
+  // Client always written, "all" included: left out, it means the Era and Forever default.
   const params = new URLSearchParams({ status: filters.status, client: filters.client });
   if (filters.stage !== "all") params.set("stage", filters.stage);
   if (filters.q.trim()) params.set("q", filters.q.trim());

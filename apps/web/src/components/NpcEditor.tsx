@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import Pagination from "@/components/Pagination";
+import { CLIENT_CHIP_OPTIONS } from "@/components/contribution-chips";
+import { clientFilterOf, DEFAULT_CLIENT_FILTER, matchesClient, type ClientFamily } from "@/lib/contributions/client";
 import { flavorOptionsFor, summaryFromResolution } from "@/lib/contributions/speaker";
 import type { Roster, RosterData } from "@/lib/voices/roster";
 import type { NpcSummary } from "@/lib/contributions/triage";
@@ -168,7 +170,8 @@ export default function NpcEditor({
   initial,
   roster: rosterData,
 }: {
-  initial: NpcSummary[];
+  /** Each with the client family whose guess filed it, null for one only the extract names. */
+  initial: (NpcSummary & { client: ClientFamily | null })[];
   /** The roster, for SpeakerCell's pickers, and grown by their "New" entries. */
   roster: RosterData;
 }) {
@@ -185,6 +188,8 @@ export default function NpcEditor({
   const provenance = isProvenance(speakerParam) ? speakerParam : undefined;
   const progressParam = params.get("progress");
   const progress = isProgress(progressParam) ? progressParam : undefined;
+  // Absent is the default bin, so the reset writes "all" to show every client.
+  const client = clientFilterOf(params.get("client"));
   const sortValue = params.get("sort");
   const sort = useMemo(() => sortOf(sortValue), [sortValue]);
   const setParam = useCallback(
@@ -274,6 +279,7 @@ export default function NpcEditor({
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return initial
+      .filter((npc) => matchesClient(npc.client, client))
       .map((npc) => saved[key(npc.npcKind, npc.npcId)] ?? npc)
       .filter(
         (npc) =>
@@ -282,7 +288,7 @@ export default function NpcEditor({
       .filter((npc) => !provenance || npc.provenance === provenance)
       .filter((npc) => !progress || progressOf(npc, roster) === progress)
       .sort(compare(sort));
-  }, [initial, saved, query, provenance, progress, sort, roster]);
+  }, [initial, client, saved, query, provenance, progress, sort, roster]);
 
   // A page at a time: every row is a SpeakerCell with its own selects, and all of them at once
   // made the first load and every tick slow.
@@ -332,6 +338,12 @@ export default function NpcEditor({
           value={progress}
           options={PROGRESS_CHIP_OPTIONS}
           onChange={(next) => setParam("progress", next)}
+        />
+        <FilterChip
+          label="client"
+          value={client === "all" ? undefined : client}
+          options={CLIENT_CHIP_OPTIONS}
+          onChange={(next) => setParam("client", next === DEFAULT_CLIENT_FILTER ? undefined : (next ?? "all"))}
         />
         <span className="text-muted-foreground text-xs">
           {rows.length} of {initial.length}
