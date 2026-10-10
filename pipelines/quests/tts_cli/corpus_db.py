@@ -262,8 +262,38 @@ def _import_npcs(cur, npc_rows):
     return kept
 
 
-def import_corpus(path, verbose=True):
-    """corpus.json.gz -> quest_line, quest_line_speaker, quest_spawn.
+class DatabaseNotEmpty(Exception):
+    """import-corpus was pointed at a database that already holds the corpus."""
+
+
+def import_corpus(path, verbose=True, force=False):
+    """corpus.json.gz -> Postgres, ONCE: to seed an empty database (CI's, a new local one) from
+    the committed export.
+
+    Dangerous anywhere else. The file is only an export, so it lags the database: importing it
+    into a live one puts back the file's older text over newer extracted lines and replaces
+    every speaker the dump gave with the file's list. A filled database takes new dump text
+    through extract instead.
+    `force` is for rebuilding a database deliberately, never for keeping one up to date.
+    """
+    if not force:
+        conn = connect()
+        try:
+            with conn, conn.cursor() as cur:
+                cur.execute("""select exists (select 1 from "quest_line")""")
+                filled = cur.fetchone()[0]
+        finally:
+            conn.close()
+        if filled:
+            raise DatabaseNotEmpty(
+                "quest_line already holds the corpus. import-corpus only seeds an empty "
+                "database; take a new dump in with extract. --force overwrites it anyway.")
+    return import_corpus_data(load_corpus(path), verbose)
+
+
+def import_corpus_data(corpus, verbose=True):
+    """A corpus -> quest_line, quest_line_speaker, quest_spawn: the committed export, or a
+    fresh extract of the world database.
 
     Rerunnable by construction, and the rule for a line that already exists is the one
     pipelines/books/tools/lib/promote.mjs states: unchanged text is skipped, changed text
@@ -275,7 +305,6 @@ def import_corpus(path, verbose=True):
     where they stand are facts about the dump, not versions of anything, and 0026 makes the
     same argument for a book page's structure.
     """
-    corpus = load_corpus(path)
     marked = corpus["schemaVersion"] >= CONTRIBUTIONS_MARKED
 
     counts = Counter()
@@ -542,8 +571,8 @@ def _speaker_rows(cur):
 def export_corpus(path, check=False, verbose=True):
     """quest_line + quest_line_speaker + quest_spawn -> corpus.json.gz.
 
-    Written with the same write_corpus the extract uses, so the file the addon build reads
-    is produced by exactly one piece of code whichever way it was made. With `check` it
+    The only writer of the committed file: a new dump goes into the table (extract), and the
+    file follows from it, so the database stays the one source of truth. With `check` it
     compares instead of writing, which is what CI runs: if an import followed by an export
     does not reproduce the file byte for byte, the table is not carrying everything the
     build needs, and that is worth failing a build over.
@@ -621,6 +650,8 @@ def export_corpus(path, check=False, verbose=True):
     # is defined here, and a file that marks its contributions must say that it does.
     corpus = {
         "schemaVersion": SCHEMA_VERSION,
+        # Postgres is the corpus; this file is its export and nothing else writes it.
+        "producedBy": "export-corpus",
         "generatedAt": meta[1],
         "lineCount": len(lines),
         "lines": lines,
