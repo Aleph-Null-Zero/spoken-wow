@@ -24,10 +24,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   switches have a DialogueUI section of their own after the narrator style's settings. On Forever,
   Bronze Border has left the narrator style's settings for a Colours section: it colours every
   round button Spoken draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
-- **The large window's words are inside its box, under the speaker's name.** The name heads the
-  box with the line's name after it, then Stopped and a count of the lines waiting in place of the
-  queue's rows, and Stop, Skip and Report at the right. A progress line runs under the words. With
-  Bronze Border on, the window uses the game's Talking Head art. *([Nucabe](https://github.com/Nucabe))*
+- **The large window is the game's Talking Head frame.** Its words sit inside the box, under the
+  speaker's gold name, beside the portrait (a 3D model where there is one). Stopped and a count of
+  the lines waiting follow the name in place of the queue's rows, Stop, Skip and Report take the
+  close button's corner, and a progress line runs under the words. Clients without the Talking
+  Head's art draw Spoken's own in the same places. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.0 — 2026-10-11
 

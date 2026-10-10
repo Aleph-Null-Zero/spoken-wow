@@ -350,9 +350,8 @@ Check(T.frame:GetLeft()>original.portrait:GetRight() and T.frame:GetTop()-T.styl
 Check(T.frame:GetBottom()+T.style.padTop>original.background:GetBottom() and T.frame:GetLeft()>=original.background:GetLeft(),
     'the large window\'s box encloses its words')
 Check(not T.expand:IsShown() and select(2,Captions())<=cfg.Lines,'the large window shows Lines Shown lines, with no expand button')
-local previousWidth=T.frame:GetWidth()
-original:SetWidth(620)
-Check(T.frame:GetWidth()>previousWidth,'resizing the original player reflows the attached text')
+Check(original:GetWidth()==570 and original:GetHeight()==155 and T.frame:GetWidth()==original.container:GetWidth(),
+    'the large window keeps the size of the Talking Head, the words as wide as its column')
 CheckLayout()
 frameCfg.Style='minimal'; frameCfg.FrameScale=.7; E.PlayerFrame:RefreshConfig()
 Check(T.frame:GetParent()==M.frame and not original:IsShown(),'switching back restores attachment to the portrait player')

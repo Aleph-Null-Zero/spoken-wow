@@ -88,10 +88,8 @@ local a = H.Clip({ present = { header = "Eagan Peltskinner", label = "Wolves Acr
 quests:Enqueue(a)
 Expect("shown once something is queued", F.frame:IsShown(), true)
 Expect("the header is the clip's", F.frame.container.name:GetText(), "Eagan Peltskinner")
-ExpectOf("...the line's name after the speaker on the same row", function()
-    local label = F.frame.container.label
-    return tostring(label:IsShown()) .. " " .. label:GetText() .. " " .. tostring(label.anchor.relativeTo == F.frame.container.name)
-end, "true Wolves Across the Border true")
+Expect("...the speaker's name alone, as the Talking Head shows: the line's name is left off",
+    F.frame.container.label, nil)
 env.SoundQueue:RemoveAllSoundsFromQueue()
 Expect("hidden again when the queue empties", F.frame:IsShown(), false)
 quests:Enqueue(H.Clip({ key = "b:1", present = { header = "A Letter Home", portrait = { kind = "none" } } }))
@@ -111,13 +109,10 @@ zones:AddGate(function() return "in combat" end)
 local held = H.Clip({ present = { header = "Durotar", label = "Valley of Trials", bullet = "zone", portrait = { kind = "none" } } })
 local free = H.Clip({ present = { header = "Thrall", label = "Warchief", bullet = "quest-accept", portrait = { kind = "none" } } })
 zones:Enqueue(held); quests:Enqueue(free)
-ExpectOf("the speaking clip heads the window even if queued second", function()
-    return F.frame.container.label:GetText()
-end, "Warchief")
-Expect("the header follows the head", F.frame.container.name:GetText(), "Thrall")
-ExpectOf("a waiting line gets no row: the header counts it after the line's name, as the DialogueUI window does", function()
+Expect("the speaking clip heads the window even if queued second", F.frame.container.name:GetText(), "Thrall")
+ExpectOf("a waiting line gets no row: the header counts it after the name, as the DialogueUI window does", function()
     return tostring(F.frame.container.buttons) .. " " .. tostring(F.count:IsShown()) .. " " .. F.count:GetText()
-        .. " " .. tostring(F.count.anchor.relativeTo == F.frame.container.label)
+        .. " " .. tostring(F.count.anchor.relativeTo == F.frame.container.name)
 end, "nil true • +1 true")
 ExpectOf("...fading in as the line is added", function() return F.count:GetAlpha() < 1 end, true)
 pcall(F.Tick, F, 0.3)
@@ -155,11 +150,11 @@ env.Addon.db.profile.Frame.HidePortrait = true
 F:RefreshConfig()
 quests:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", portrait = { kind = "model", creatureID = 1 } } }))
 Expect("HidePortrait hides the portrait", F.frame.portrait:IsShown(), false)
-ExpectOf("...the column starting at the window's left, with no line or second Stop in the face's place: the header's Stop is the one",
+ExpectOf("...the name and words starting as far in as they end on the right, with no second Stop in the face's place",
     function()
-        return tostring(F.frame.container.anchor.x < 120) .. " " .. tostring(F.frame.miniPause) .. " "
-            .. tostring(F.frame.portraitLine)
-    end, "true nil nil")
+        return F.frame.container.anchor.x .. " " .. tostring(F.frame.miniPause) .. " "
+            .. F.frame:GetWidth()
+    end, "42 nil 570")
 ExpectOf("...the mover still at hand, at the window's corner", function()
     return F.frame.mover:GetParent() == F.frame and F.frame.mover.anchor.relativePoint
 end, "BOTTOMLEFT")
@@ -187,43 +182,56 @@ env.SoundQueue:RemoveAllSoundsFromQueue()
 quests:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", portrait = { kind = "none" } } }))
 ExpectOf("no actions, Stop and Skip alone", function() return F.frame.actions.shown .. " " .. #F.row end, "0 2")
 
----------------------------------------------------------------- the box: the header, the words under it, the progress line
--- The words were docked under the 120-high portrait, so they started below the box and ran out of
--- it, while the box held only the name and the queue's rows. Now the header is the box's first
--- row, the words come under it in the same column, and the progress line runs along their foot.
+---------------------------------------------------------------- the Talking Head's layout
+-- The words were docked under the portrait, so they started below the box and ran out of it. The
+-- window is now the game's Talking Head frame as TalkingHeadUI.xml lays it out: 570 by 155, the
+-- portrait 21 in from the top left, the name beside it, the words 3 under the name ending 42 from
+-- the right and 12 from the foot, and the round controls 12 in from the top right corner, where
+-- the Talking Head has its close button.
 env, quests, zones = Boot(); F = env.PlayerFrame
 local T = env.Transcript
 local words = "One two three four five six seven eight nine ten eleven twelve thirteen fourteen."
 quests:Enqueue(H.Clip({ length = 10, present = { header = "Thrall", label = "Warchief",
     transcript = words, portrait = { kind = "none" } } }))
 local column = F.frame.container
-Expect("the words are in the column beside the portrait, not under it", T.frame:GetParent() == column
-    and T.frame.anchor.relativeTo == column and column.anchor ~= nil and column.anchor.x >= 120, true)
+Expect("the Talking Head's size", F.frame:GetWidth() .. "x" .. F.frame:GetHeight(), "570x155")
+ExpectOf("...the portrait 115 across, 21 in from the top left", function()
+    local anchor = F.frame.portrait.anchor
+    return F.frame.portrait:GetWidth() .. " " .. anchor.point .. " " .. anchor.x .. " " .. anchor.y
+end, "115 TOPLEFT 21 -21")
+ExpectOf("the name 2 right of the portrait's frame and 19 under its top, at the column's top", function()
+    return column.anchor.x .. " " .. column.anchor.y .. " " .. column.name.anchor.point
+        .. " " .. tostring(column.name.anchor.relativeTo == column)
+end, "150 -25 TOPLEFT true")
+ExpectOf("...the column ending 42 from the right and 12 from the foot", function()
+    return column:GetWidth() .. " " .. column:GetHeight()
+end, "378 118")
 -- The captions' frame starts a line's room over the words, which a line leaving fades through.
 local function WordsTop() return -T.frame.anchor.y + (T.style and T.style.padTop or 0) end
-Expect("...starting under the header's row, the column's top 24", WordsTop() >= 24, true)
-ExpectOf("...a line's room over them, as the DialogueUI window leaves", function() return T.style.padTop end, 20)
-ExpectOf("...in Lines Shown lines, with no expand button: the window fits them", function()
+Expect("the words in the column, 3 under the name", T.frame:GetParent() == column
+    and T.frame.anchor.relativeTo == column and WordsTop(), 25)
+ExpectOf("...white, with the captions' shadow, as the Talking Head's", function()
+    local color = T.style.color
+    return color[1] .. color[2] .. color[3] .. " " .. tostring(T.style.shadow)
+end, "111 nil")
+ExpectOf("...in Lines Shown lines, with no expand button", function()
     return T.style.lines .. " " .. tostring(T.expand:IsShown())
 end, "2 false")
-ExpectOf("the header's round controls at its right end, Stop or Replay then Skip", function()
-    return F.controls.anchor.point == "RIGHT" and F.controls.anchor.relativeTo == column
-        and F.controls.anchor.relativePoint == "TOPRIGHT" and F.row[1] == F.play and F.row[2] == F.skip
-        and F.play.state == "stop"
-end, true)
+ExpectOf("the round controls 12 in from the top right corner, Stop or Replay then Skip", function()
+    local anchor = F.controls.anchor
+    return anchor.point .. " " .. tostring(anchor.relativeTo == F.frame) .. " " .. anchor.x .. " " .. anchor.y
+        .. " " .. tostring(F.row[1] == F.play and F.row[2] == F.skip) .. " " .. F.play.state
+end, "TOPRIGHT true -12 -12 true stop")
 ExpectOf("...Skip in the subtitle's art", function() return F.skip.bar ~= nil end, true)
-ExpectOf("the progress line along the foot of the words, as wide as they are", function()
+ExpectOf("the progress line along the column's foot, as wide as the words", function()
     return F.progress.track:GetParent() == column and F.progress.track.anchor.point == "BOTTOMLEFT"
-        and F.progress.track:GetWidth() == T.frame:GetWidth()
-end, true)
-ExpectOf("...the column ending at it, the words above it", function()
-    return column:GetHeight() >= WordsTop() + 2 * 20 + F.progress.height
+        and F.progress.track.anchor.relativeTo == column and F.progress.track:GetWidth() == T.frame:GetWidth()
 end, true)
 env.SoundQueue:TogglePauseQueue()
 pcall(F.UpdateControls, F)
 ExpectOf("Stop stops the line, its glyph turning to Replay", function() return F.play.state end, "replay")
-ExpectOf("...and the header says it is stopped, after the line's name and a dot", function()
-    return tostring(F.stopped:IsShown()) .. "|" .. F.stopped:GetText() .. "|" .. tostring(F.stopped.anchor.relativeTo == column.label)
+ExpectOf("...and the header says it is stopped, after the name and a dot", function()
+    return tostring(F.stopped:IsShown()) .. "|" .. F.stopped:GetText() .. "|" .. tostring(F.stopped.anchor.relativeTo == column.name)
 end, "true|• (" .. env.L.SUBTITLE_STOPPED .. ")|true")
 ExpectOf("...fading in", function() return F.stopped:GetAlpha() < 1 end, true)
 pcall(F.Tick, F, 0.3)
@@ -235,42 +243,29 @@ ExpectOf("...fading out as it plays again", function() return F.stopped:IsShown(
 pcall(F.Tick, F, 0.3)
 ExpectOf("...then gone", function() return F.stopped:IsShown() end, false)
 
--- The window as tall as what is in its box: one line less of words is one line less of window.
-env.Addon.db.profile.Frame.HidePortrait = true
-F:RefreshConfig()
-local twoLines = F.frame:GetHeight()
+-- The box keeps the Talking Head's size whatever it holds.
 env.Addon.db.profile.Transcript.Lines = 1
 F:RefreshConfig()
-Expect("the box as tall as the header, the words and the progress line: a line fewer, a line shorter",
-    twoLines - F.frame:GetHeight(), 20)
-ExpectOf("...the captions shown in one line too", function() return T.style.lines end, 1)
+Expect("a line fewer of words: the window the same size", F.frame:GetWidth() .. "x" .. F.frame:GetHeight(), "570x155")
+ExpectOf("...the captions shown in one line", function() return T.style.lines end, 1)
 env.Addon.db.profile.Transcript.Lines = 2
-env.Addon.db.profile.Frame.HidePortrait = false
 F:RefreshConfig()
-Expect("with the portrait, the window at least as tall as it", F.frame:GetHeight() >= 120, true)
 
--- The line's name follows the speaker only where it says something more.
-env.SoundQueue:RemoveAllSoundsFromQueue()
-quests:Enqueue(H.Clip({ present = { header = "Durotar", label = "Durotar", portrait = { kind = "none" } } }))
-ExpectOf("a line named as its speaker shows the name once", function()
-    return column.name:GetText() .. " " .. tostring(column.label:IsShown())
-end, "Durotar false")
+-- The line's name stands in for the speaker where nobody speaks.
 env.SoundQueue:RemoveAllSoundsFromQueue()
 quests:Enqueue(H.Clip({ present = { label = "A Letter", portrait = { kind = "none" } } }))
-ExpectOf("...a line with no speaker shows its own name there", function()
-    return column.name:GetText() .. " " .. tostring(column.label:IsShown())
-end, "A Letter false")
+Expect("a line with no speaker shows its own name there", column.name:GetText(), "A Letter")
 env.SoundQueue:RemoveAllSoundsFromQueue()
 local long = string.rep("Long ", 40)
-quests:Enqueue(H.Clip({ present = { header = "Thrall", label = long, portrait = { kind = "none" } } }))
-ExpectOf("...a long one cut short, stopping a button's width short of the controls", function()
-    return column.label:IsShown() and column.label.width < #long * 7
-        and column.name.width + 8 + column.label.width <= column:GetWidth() - F.controls:GetWidth() - 24
+quests:Enqueue(H.Clip({ present = { header = long, portrait = { kind = "none" } } }))
+ExpectOf("...a long name cut short before the controls", function()
+    return column.name.width < #long * 7
+        and 150 + column.name.width <= 570 - 12 - F.controls:GetWidth()
 end, true)
 
----------------------------------------------------------------- the Talking Head's art with Bronze Border on
--- Retail's Talking Head frame where the client has its atlases; Spoken's own art with Bronze Border
--- off, and where any of them is missing.
+---------------------------------------------------------------- the Talking Head's art
+-- The game's own atlases where the client has them, whether Bronze Border is on or off (it tints
+-- the round buttons); Spoken's own art in the same places where any is missing.
 local function Atlases(names)
     local set = {}
     for _, name in ipairs(names) do set[name] = true end
@@ -289,34 +284,32 @@ local OWN = [[Interface\AddOns\Spoken\Textures\BackgroundGradient|Interface\AddO
 Atlases(ERA)
 env, quests = Boot("11509"); F = env.PlayerFrame
 quests:Enqueue(H.Clip({ present = { header = "Thrall", label = "Warchief", portrait = { kind = "none" } } }))
-Expect("Bronze Border on: the Talking Head's box, ring and face", ArtOf(F.frame),
+Expect("the Talking Head's dark box, its portrait frame and the face's background", ArtOf(F.frame),
     "TalkingHeads-TextBackground|TalkingHeads-PortraitFrame|TalkingHeads-PortraitBg")
-ExpectOf("...the portrait set into its box, as the Talking Head's is", function()
-    return F.frame.portrait.anchor.x > 0 and F.frame.portrait.anchor.y < 0
-end, true)
-Expect("...the window tall enough for the portrait set in its box", F.frame:GetHeight() > 120 + 40, true)
-Expect("...the words in the captions' own colours on its dark box", env.Transcript.style and env.Transcript.style.color, nil)
+ExpectOf("...the portrait frame 143 across, 5 in and 6 down from the window's corner", function()
+    local ring = F.frame.portrait.border.texture
+    return ring:GetWidth() .. " " .. (21 + ring.anchor.x) .. " " .. (-21 + ring.anchor.y)
+end, "143 5 -6")
+ExpectOf("...the box behind the whole window", function()
+    return tostring(F.frame.background.allPoints or F.frame.background.anchor == nil)
+end, "true")
 env.Addon.db.profile.Frame.BronzeTint = false
 F:RefreshConfig()
-Expect("Bronze Border off: Spoken's own art", ArtOf(F.frame), OWN)
+Expect("Bronze Border off: the same art", ArtOf(F.frame),
+    "TalkingHeads-TextBackground|TalkingHeads-PortraitFrame|TalkingHeads-PortraitBg")
 env.Addon.db.profile.Frame.BronzeTint = true
-F:RefreshConfig()
-Expect("...and the Talking Head's again when it is turned back on", F.frame.background:GetAtlas(), "TalkingHeads-TextBackground")
 
 Atlases(FOREVER)
 env, quests = Boot("16001"); F = env.PlayerFrame
 quests:Enqueue(H.Clip({ present = { header = "Thrall", label = "Warchief", portrait = { kind = "none" } } }))
-Expect("on the Forever client the Neutral box and ring", ArtOf(F.frame),
-    "TalkingHeads-Neutral-TextBackground|TalkingHeads-Neutral-PortraitFrame|TalkingHeads-PortraitBg")
-ExpectOf("...the words dark on its light parchment, with no shadow, the word lit in red", function()
-    local style = env.Transcript.style
-    return tostring(style.shadow) .. " " .. tostring(style.color[1] < .5) .. " " .. tostring(style.highlight)
-end, "false true |cff9c1a1a")
+Expect("on the Forever client the dark box and its gold portrait frame, not the Neutral parchment", ArtOf(F.frame),
+    "TalkingHeads-TextBackground|TalkingHeads-Alliance-PortraitFrame|TalkingHeads-PortraitBg")
 
 Atlases({ "TalkingHeads-TextBackground", "TalkingHeads-PortraitBg" })
 env, quests = Boot("11509"); F = env.PlayerFrame
 quests:Enqueue(H.Clip({ present = { header = "Thrall", label = "Warchief", portrait = { kind = "none" } } }))
 Expect("an atlas missing: Spoken's own art throughout", ArtOf(F.frame), OWN)
+Expect("...in the Talking Head's size", F.frame:GetWidth() .. "x" .. F.frame:GetHeight(), "570x155")
 _G.C_Texture = nil
 
 ---------------------------------------------------------------- one minimap button
@@ -860,8 +853,6 @@ for _, client in ipairs({ "11509", "1.12" }) do
     if not ok then Expect(client .. ": ...", tostring(err), "no error") end
     Expect(client .. ": ...so the header is still drawn",
         env.PlayerFrame.frame.container.name:GetText(), "Gornek")
-    ExpectOf(client .. ": ...and the line's name with it",
-        function() return env.PlayerFrame.frame.container.label:GetText() end, "Cutting Teeth")
 end
 
 ---------------------------------------------------------------- the slash command reaches the client
@@ -881,7 +872,6 @@ quests:Enqueue(H.Clip({ present = { header = "Gornek", label = "Cutting Teeth", 
 env.PlayerFrame:Update()
 local report = table.concat(env.PlayerFrame:Describe(), "\n")
 Expect("it reports the header it drew", string.find(report, 'header="Gornek"', 1, true) ~= nil, true)
-Expect("...the line's name after it", string.find(report, 'title="Cutting Teeth"', 1, true) ~= nil, true)
 Expect("...which portrait renderer is in use", string.find(report, "portrait kind=none", 1, true) ~= nil, true)
 Expect("...and how much is queued", string.find(report, "queue=1", 1, true) ~= nil, true)
 
@@ -906,11 +896,10 @@ Expect("the layout survives the logout's stripped settings", ok and "no error" o
 _G.SpokenSettings = nil
 env = Boot()
 local frame = env.PlayerFrame.frame
-frame:SetWidth(500)
 frame.mover.hooks.OnMouseUp[1]()
 local saved = _G.SpokenSettings.global.Layout.Player
 Expect("a drag saves where the player sits", saved and saved.left .. "," .. saved.top, "0,100")
-Expect("...and its width", saved and saved.width, 500)
+Expect("...and its width, the Talking Head's", saved and saved.width, 570)
 env.Transcript:ToggleExpanded()
 Expect("expanding the captions is saved account-wide", _G.SpokenSettings.global.Layout.CaptionsExpanded, true)
 _G.SpokenSettings.profiles = {}   -- the next login's profile is a different one
@@ -919,7 +908,7 @@ frame = env.PlayerFrame.frame
 local point, relative, relativePoint, x, y = frame:GetPoint()
 Expect("the next login puts the player back", table.concat({ point, relativePoint, x, y }, " "), "TOPLEFT BOTTOMLEFT 0 100")
 Expect("...against the screen", relative, _G.UIParent)
-Expect("...at the saved width", frame:GetWidth(), 500)
+Expect("...at the Talking Head's width", frame:GetWidth(), 570)
 Expect("...with the captions still expanded", env.Transcript.expand:GetNormalTexture():GetTexture(),
     [[Interface\Buttons\UI-MinusButton-Up]])
 env.PlayerFrame:Reset()
