@@ -252,6 +252,7 @@ L.UNCACHED_NPC_TIP = "Begegne diesem NPC in der Welt noch einmal, um sein Modell
 L.OPT_PLAYER_STYLE = "Erzählerstil"
 L.OPT_PLACE_TITLE = "Größe und Position"
 L.OPT_LOOK_TITLE = "Aussehen"
+L.OPT_COLOURS_TITLE = "Farben"
 L.OPT_NARRATOR_SETTINGS = "Einstellungen zum Erzählerstil"
 L.OPT_PLAYER_STYLE_TIP = "Großes Fenster: das Porträt des Sprechers, mit dem Text daneben.\n\nNur Untertitel, auf Clients, die sie bieten: kein Fenster, nur der Text, der unten in der Bildschirmmitte eingetippt wird. Fahre mit der Maus darüber für Stopp/Wiederholen, Überspringen und Melden, und ziehe ihn nach oben oder unten, um ihn zu verschieben.\n\nNur Stimme: nichts auf dem Bildschirm, Zeilen sind nur zu hören. Mit den Tasten unten kannst du weiterhin stoppen, wiederholen und überspringen."
 L.OPT_STYLE_MINIMAL = "Kleines Fenster"
