@@ -207,6 +207,9 @@ function SpokenBooks:SetupSource()
 		-- Durations come from a generated lookup and are exact, so the gap only has to
 		-- separate two pages of prose rather than absorb a bad measurement.
 		interClipGap = 0.35,
+		-- A page whose file the client cannot find (a pack updated without a restart, a partial
+		-- install) is refused at the door, so the book reads on from the next page.
+		testBeforeQueue = true,
 		-- What Spoken's settings show on this part's card: which voice packs are installed.
 		packs = function()
 			local names = {}

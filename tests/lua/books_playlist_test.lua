@@ -216,6 +216,24 @@ Expect("a page with no length leaves the bar to each page", Spoken:GetQueue()[1]
 pages[262].len = 41.0
 B:StopReading()
 
+---------------------------------------------------------------- a page whose file is missing
+-- A pack updated without a restart lists pages whose files the client cannot see yet: the
+-- book reads on from the next page rather than wait for one that never plays.
+stub.world.missing[B:ClipFor(261).path] = true
+Expect("a first page with no file: the book starts from the next", B:PlayFrom(261) .. " "
+    .. table.concat(QueuedPages(), ",") .. " " .. table.concat(Coming(), ","), "2 262 265")
+B:StopReading()
+stub.world.missing[B:ClipFor(261).path] = nil
+stub.world.missing[B:ClipFor(262).path] = true
+B:PlayFrom(261)
+stub.Advance(30.9)
+Expect("a middle page with no file: the book goes on to the one after it",
+    table.concat(QueuedPages(), ",") .. " " .. #Coming(), "265 0")
+Expect("...its bar no longer claiming a share of the book", Spoken:GetQueue()[1].span, nil)
+stub.world.missing[B:ClipFor(262).path] = nil
+B:StopReading()
+Expect("...and nothing of the book left behind", next(B.following or {}), nil)
+
 ---------------------------------------------------------------- a line per page
 SpokenBooksSettings.bookAsOneLine = false
 Expect("Read Book as One Line off: every page queued now, each a line of its own",

@@ -68,6 +68,12 @@ end
 
 local Follow
 
+--- Whether the queue took `clip` and kept it: a file the client cannot find is dropped as it
+--- starts, after the queue has taken it, and its stopCallback has run by then (Follow).
+local function Taken(taken, clip)
+	return taken and not clip.ended or false
+end
+
 --- A page left the queue: finished, the next page with a clip goes to the head; skipped or
 --- stopped, the rest of the book goes with it.
 local function PageEnded(clip, finished)
@@ -82,20 +88,22 @@ local function PageEnded(clip, finished)
 		SpokenBooks.following[book] = nil
 		return
 	end
+	local span = clip.span
+	local before = span and clip.length and span.before + clip.length
 	while table.getn(entry.pages) > 0 do
 		local id = table.remove(entry.pages, 1)
 		local nextClip = SpokenBooks:ClipFor(id)
 		if nextClip then
 			Follow(nextClip)
 			nextClip.continues = table.getn(entry.pages) > 0
-			local span = clip.span
-			nextClip.span = span and nextClip.length
-				and { before = span.before + clip.length, total = span.total } or nil
-			if SpokenBooks.source and SpokenBooks.source:Continue(nextClip) then
+			nextClip.span = before and nextClip.length and { before = before, total = span.total } or nil
+			if Taken(SpokenBooks.source and SpokenBooks.source:Continue(nextClip), nextClip) then
 				entry.clip = nextClip
 				return
 			end
 		end
+		-- A page not read: the bar can no longer say how far through the book this is.
+		before = nil
 	end
 	SpokenBooks.following[book] = nil
 end
@@ -118,10 +126,12 @@ local function Span(first, rest)
 end
 
 --- `clip` puts the next page at the head as it ends (PageEnded), before whatever else its own
---- stopCallback does: the next page is coming by the time that asks.
+--- stopCallback does: the next page is coming by the time that asks. Ended, it says so
+--- (`ended`), so a page dropped as it starts is not taken for one being read (Taken).
 function Follow(clip)
 	local after = clip.stopCallback
 	clip.stopCallback = function(ended, finished)
+		ended.ended = true
 		PageEnded(ended, finished)
 		if after then after(ended, finished) end
 	end
@@ -175,10 +185,8 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 		if queued == 0 or not oneLine then
 			local clip = self:ClipFor(id)
 			if clip then
-				if oneLine then
-					Follow(clip)
-				end
-				if source:Enqueue(clip) then
+				Follow(clip)
+				if Taken(source:Enqueue(clip), clip) then
 					queued = queued + 1
 					first = first or clip
 				end
