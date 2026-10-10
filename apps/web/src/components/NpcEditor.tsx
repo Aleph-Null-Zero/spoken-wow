@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import Pagination from "@/components/Pagination";
-import { CLIENT_CHIP_OPTIONS } from "@/components/contribution-chips";
+import ClientSelect from "@/components/ClientSelect";
 import { clientFilterOf, DEFAULT_CLIENT_FILTER, matchesClient, type ClientFamily } from "@/lib/contributions/client";
 import { flavorOptionsFor, summaryFromResolution } from "@/lib/contributions/speaker";
 import type { Roster, RosterData } from "@/lib/voices/roster";
@@ -188,7 +188,7 @@ export default function NpcEditor({
   const provenance = isProvenance(speakerParam) ? speakerParam : undefined;
   const progressParam = params.get("progress");
   const progress = isProgress(progressParam) ? progressParam : undefined;
-  // Absent is the default bin, so the reset writes "all" to show every client.
+  // Absent is the default bin, so "all" is written out.
   const client = clientFilterOf(params.get("client"));
   const sortValue = params.get("sort");
   const sort = useMemo(() => sortOf(sortValue), [sortValue]);
@@ -339,15 +339,13 @@ export default function NpcEditor({
           options={PROGRESS_CHIP_OPTIONS}
           onChange={(next) => setParam("progress", next)}
         />
-        <FilterChip
-          label="client"
-          value={client === "all" ? undefined : client}
-          options={CLIENT_CHIP_OPTIONS}
-          onChange={(next) => setParam("client", next === DEFAULT_CLIENT_FILTER ? undefined : (next ?? "all"))}
-        />
         <span className="text-muted-foreground text-xs">
           {rows.length} of {initial.length}
         </span>
+        <ClientSelect
+          value={client}
+          onChange={(next) => setParam("client", next === DEFAULT_CLIENT_FILTER ? undefined : next)}
+        />
       </div>
 
       {rows.length > 0 ? (

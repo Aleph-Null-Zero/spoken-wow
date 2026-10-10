@@ -15,7 +15,8 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 
 import { useLang } from "@/components/LangProvider";
-import { CLIENT_CHIP_OPTIONS, SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
+import ClientSelect from "@/components/ClientSelect";
+import { SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
 import { LiteButton } from "@/components/LiteControls";
 import { Refreshing } from "@/components/Loading";
@@ -153,12 +154,6 @@ export default function CorrectionTable({
           onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
         />
         <FilterChip
-          label="client"
-          value={client === "all" ? undefined : client}
-          options={CLIENT_CHIP_OPTIONS}
-          onChange={(next) => go({ client: (next ?? "all") as ClientFilter })}
-        />
-        <FilterChip
           label="stage"
           value={stage === "all" ? undefined : stage}
           options={STAGE_CHIP_OPTIONS}
@@ -168,6 +163,7 @@ export default function CorrectionTable({
           {initial.length} {initial.length === 1 ? "correction" : "corrections"}
         </span>
         {pending && <Refreshing />}
+        <ClientSelect value={client} onChange={(next) => go({ client: next })} />
       </nav>
 
       {initial.length === 0 ? (
