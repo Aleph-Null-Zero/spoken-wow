@@ -20,8 +20,8 @@ end
 
 ---@param key string  "quests" | "zones" | "books"
 ---@param info SpokenSourceInfo
----@return table source  Carries Enqueue, PlayNow, Remove, StopAll, AddGate, RecheckGates, Retry,
----                      CanPlay, SetQueueLimit and SetInterClipGap.
+---@return table source  Carries Enqueue, Continue, PlayNow, Remove, StopAll, AddGate, RecheckGates,
+---                      Retry, CanPlay, SetQueueLimit and SetInterClipGap.
 function Spoken:RegisterSource(key, info)
     return Sources:Register(key, info)
 end
@@ -49,6 +49,8 @@ end
 --     delay    = nil,                         -- silence before; only 2.4.3/3.3.5 set it
 --     priority = "normal" | "low",            -- low yields at the door; gossip is low
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
+--     continues = true,                       -- optional; its next part follows (source:Continue), no pause or cue
+--     span     = { before = 12, total = 40 }, -- optional; seconds of its item before it and in all, for the progress bar
 --     present  = {
 --       header   = "Eagan Peltskinner",       -- NPC name | place above | book title;
 --                                             -- nil over the world's own lore

@@ -507,7 +507,7 @@ function MinimalPlayer:UpdateProgress()
     if clip.nextSoundTimer and duration > 0 then
         self.seconds = SoundQueue:VoiceElapsed(clip)
     elseif not SoundQueue:IsPaused() then self.seconds = 0 end
-    self.bar:SetValue(duration > 0 and (self.seconds or 0) / duration or 0)
+    self.bar:SetValue(SoundQueue:Share(clip, self.seconds))
 end
 
 function MinimalPlayer:CreateQueueRow(index)

@@ -973,7 +973,7 @@ function Subtitle:ShowProgress()
     -- Read only while this line speaks, so the bar fades out where the voice left it.
     local length = self.clip and tonumber(self.clip.length) or 0
     if self.wanted and not self.sample and length > 0 and Transcript.clip == self.clip then
-        self.share = math.max(0, math.min(1, Transcript:AudioElapsed() / length))
+        self.share = SoundQueue:Share(self.clip, Transcript:AudioElapsed())
     end
     local size = self.shadowSize or self.shadowWant
     local width = size and math.floor(size.w * PROGRESS_SHARE)

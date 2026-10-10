@@ -55,7 +55,7 @@ end
 
 Expect("every section is there", table.concat(headings, "|"),
     "When to Read|Language|Reading History|Voice Packs|Fix a Problem|Start Over")
-Expect("every switch has a row", table.getn(checkboxes), 5)
+Expect("every switch has a row", table.getn(checkboxes), 6)
 local function Button(text)
     for _, button in ipairs(buttons) do if button.text == text then return button end end
 end
@@ -96,6 +96,16 @@ autoplay:SetChecked(true)
 autoplay.scripts.OnClick(autoplay)
 Expect("ticking it again brings Read Only Once back", once.enabled, true)
 
+local oneLine = Labelled("Read Book as One Line")
+Expect("Read Book as One Line is on the panel, defaulting on", oneLine ~= nil and oneLine.checked, true)
+if oneLine then
+    oneLine:SetChecked(false)
+    oneLine.scripts.OnClick(oneLine)
+    Expect("...and unticking it is the same as /spb oneline", SpokenBooksSettings.bookAsOneLine, false)
+    oneLine:SetChecked(true)
+    oneLine.scripts.OnClick(oneLine)
+end
+
 local close = Labelled("Close Book When Done Reading")
 Expect("Close Book When Done Reading is on the panel, defaulting off", close and close.checked, false)
 close:SetChecked(true)
@@ -130,15 +140,19 @@ Expect("the scroller is told how tall the content grew", content.height > 0, tru
 ---------------------------------------------------------------- closing a book, and saying why
 do
     local stopped = false
-    local stopReading = B.StopReading
-    B.StopReading = function() stopped = true end
+    local stopReading, placeOf = B.StopReading, B.PlaceOf
+    B.StopReading = function(_, book) stopped = book end
+    B.PlaceOf = function(_, pageId) return pageId and 261 end
     SpokenBooksSettings.stopOnClose = false
+    B.lastPage = 262
     B:OnTextClosed()
     Expect("a closed book reads on by default", stopped, false)
     SpokenBooksSettings.stopOnClose = true
+    B.lastPage = 262
     B:OnTextClosed()
-    Expect("...and stops when Stop When Book Closes is on", stopped, true)
-    B.StopReading = stopReading
+    Expect("...and with Stop When Book Closes on, that book stops, not the readables waiting after it",
+        stopped, 261)
+    B.StopReading, B.PlaceOf = stopReading, placeOf
     SpokenBooksSettings.stopOnClose = false
 
     local said = {}
