@@ -38,7 +38,8 @@ end
 
 ---------------------------------------------------------------- hidden when another way is chosen
 -- A setting for another way of showing lines is hidden, and the page closes up round it.
-local function Shown(control) return control.layoutRow.shown end
+-- nil for a row the page does not have, so a missing one fails rather than aborting.
+local function Shown(control) return control and control.layoutRow.shown end
 local function Box(text)
     for _, box in ipairs(home.boxes) do if box.section.text == text then return box end end
 end
@@ -60,7 +61,7 @@ local lit = Row(home, "Highlight Words")
 local words = env.Addon.db.profile.Transcript
 words.Typewriter = true; Options:UpdateRows()
 Expect("subtitles have Highlight Words, waiting while their words are typed out", tostring(Shown(lit)) .. " "
-    .. tostring(lit.layoutReason), "true " .. L.REASON_UNTYPED)
+    .. tostring(lit.layoutReason), "true " .. tostring(L.REASON_UNTYPED))
 words.Typewriter = false; Options:UpdateRows()
 Expect("...and live with them shown whole", lit.layoutReason, nil)
 words.Typewriter = true; Options:UpdateRows()
