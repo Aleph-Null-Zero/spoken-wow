@@ -355,7 +355,7 @@ a warning, and its gossip is matched against the English text.
 #### A line for each player gender, where a language's text needs it
 
 A language's own text decides whether a moment is one line or two. Where it branches on the
-player's gender (`$G`) the moment is `:m` and `:f`, in files `m-…` and `f-…`;
+player's gender (`$G`, or `$U`) the moment is `:m` and `:f`, in files `m-…` and `f-…`;
 otherwise it is one plain line, for every player, whatever English does. German can say one
 thing where English says "lad" and "lass", and French can need two forms where English has one.
 The import (`tts_cli/locale_import.py`), accept and the explorer's text editor all follow the
@@ -443,8 +443,8 @@ the line is judged or sent — the voiceability gate, the request, and the stale
 hashes, which go through one function (`sentText`) so they cannot disagree. Case follows the
 position, not the token: lowercase mid-sentence, capitalised at a sentence's start and always
 in German. A line's female variant, which exists where the English branches on `$G`, gets the
-feminine word, and a leftover `$g…;` takes that variant's branch; German's own templates also
-write the branch as `$u…;`, which is read the same way in deDE. English quest text has
+feminine word, and a leftover `$g…;` takes that variant's branch; `$u…;`, which ptBR's and
+German's own templates write, is read the same way in every language. English quest text has
 nothing left for it to replace, its words having been written in at extraction; a book page
 in any language, English included, goes through the same table (`docs/books/README.md`). A
 token glued to a following letter (`$Nama`) is left in, so the line stays unvoiceable until a
@@ -958,9 +958,9 @@ A gossip row, in any language, is matched in three steps (`apps/web/src/lib/cont
    aside, spoken by the same race and gender. English asks the catalogue, as it always has; another
    language asks its own rows' `localeText`.
 2. **By BroadcastText:** the lowest id whose text in the language reads the same, in the form the
-   NPC's sex shows (`text` for male, `text1` for female, either side of a `$g` branch), then a
-   line of that id (`gossip_broadcast`) in the same race and gender. A line named after its id
-   must also have the same flavor.
+   NPC's sex shows (`text` for male, `text1` for female, either side of a `$g` or `$u` branch, or
+   the `$u` unresolved, as a German client sends it), then a line of that id (`gossip_broadcast`)
+   in the same race and gender. A line named after its id must also have the same flavor.
 3. **Otherwise a new line:** `g:b{id}-{voice}` when the id is known, else `g:{md5}` in English
    and `g:{lang}-{md5}` in another language.
 
