@@ -159,7 +159,7 @@ function Spoken:SetPlayerHost(frame)
     Addon:SetPlayerHost(frame)
 end
 
---- Add a feature addon's rows to the DialogueUI group on Spoken's page. build(layout) runs once,
+--- Add a feature addon's rows to Spoken's page, after the narrator style's. build(layout) runs once,
 --- when the page is built or at once if it is: it adds a section and rows to the SpokenLayout, and
 --- may return a function that resets them, which Spoken's Start Over runs. Never called without
 --- DialogueUI. Additive: guard on the field; without it, keep the rows on the addon's own page,
