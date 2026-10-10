@@ -203,9 +203,9 @@ ExpectOf("the name 2 right of the portrait's frame and 19 under its top, at the 
     return column.anchor.x .. " " .. column.anchor.y .. " " .. column.name.anchor.point
         .. " " .. tostring(column.name.anchor.relativeTo == column)
 end, "150 -25 TOPLEFT true")
-ExpectOf("...the column ending 42 from the right and 12 from the foot", function()
+ExpectOf("...the column ending 42 from the right, and 10 inside the box's shadow at the foot", function()
     return column:GetWidth() .. " " .. column:GetHeight()
-end, "378 118")
+end, "378 107")
 -- The captions' frame starts a line's room over the words, which a line leaving fades through.
 local function WordsTop() return -T.frame.anchor.y + (T.style and T.style.padTop or 0) end
 Expect("the words in the column, 3 under the name", T.frame:GetParent() == column
@@ -214,14 +214,17 @@ ExpectOf("...white, with the captions' shadow, as the Talking Head's", function(
     local color = T.style.color
     return color[1] .. color[2] .. color[3] .. " " .. tostring(T.style.shadow)
 end, "111 nil")
-ExpectOf("...in Lines Shown lines, with no expand button", function()
+ExpectOf("...in three lines, with no expand button", function()
     return T.style.lines .. " " .. tostring(T.expand:IsShown())
-end, "2 false")
-ExpectOf("the round controls 12 in from the top right corner, Stop or Replay then Skip", function()
+end, "3 false")
+ExpectOf("...above the progress line", function()
+    return WordsTop() + 3 * 20 <= column:GetHeight() - F.progress.height
+end, true)
+ExpectOf("the round controls 10 inside the box's shadow at the top and the right, Stop or Replay then Skip", function()
     local anchor = F.controls.anchor
     return anchor.point .. " " .. tostring(anchor.relativeTo == F.frame) .. " " .. anchor.x .. " " .. anchor.y
         .. " " .. tostring(F.row[1] == F.play and F.row[2] == F.skip) .. " " .. F.play.state
-end, "TOPRIGHT true -12 -12 true stop")
+end, "TOPRIGHT true -22 -25 true stop")
 ExpectOf("...Skip in the subtitle's art", function() return F.skip.bar ~= nil end, true)
 ExpectOf("the progress line along the column's foot, as wide as the words", function()
     return F.progress.track:GetParent() == column and F.progress.track.anchor.point == "BOTTOMLEFT"
@@ -243,11 +246,15 @@ ExpectOf("...fading out as it plays again", function() return F.stopped:IsShown(
 pcall(F.Tick, F, 0.3)
 ExpectOf("...then gone", function() return F.stopped:IsShown() end, false)
 
--- The box keeps the Talking Head's size whatever it holds.
+-- The box keeps the Talking Head's size whatever it holds; larger words fit fewer lines in it.
+env.Addon.db.profile.Transcript.FontSize = 26
+F:RefreshConfig()
+Expect("the largest Text Size: the window the same size", F.frame:GetWidth() .. "x" .. F.frame:GetHeight(), "570x155")
+ExpectOf("...the words in the two lines that fit over the progress line", function() return T.style.lines end, 2)
+env.Addon.db.profile.Transcript.FontSize = 16
 env.Addon.db.profile.Transcript.Lines = 1
 F:RefreshConfig()
-Expect("a line fewer of words: the window the same size", F.frame:GetWidth() .. "x" .. F.frame:GetHeight(), "570x155")
-ExpectOf("...the captions shown in one line", function() return T.style.lines end, 1)
+ExpectOf("Lines Shown is not the large window's: still three lines with it at one", function() return T.style.lines end, 3)
 env.Addon.db.profile.Transcript.Lines = 2
 F:RefreshConfig()
 
@@ -260,7 +267,7 @@ local long = string.rep("Long ", 40)
 quests:Enqueue(H.Clip({ present = { header = long, portrait = { kind = "none" } } }))
 ExpectOf("...a long name cut short before the controls", function()
     return column.name.width < #long * 7
-        and 150 + column.name.width <= 570 - 12 - F.controls:GetWidth()
+        and 150 + column.name.width <= 570 - 22 - F.controls:GetWidth()
 end, true)
 
 ---------------------------------------------------------------- the Talking Head's art

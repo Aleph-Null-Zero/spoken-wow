@@ -115,7 +115,7 @@ local function HighlightCount()
 end
 local function CheckLayout()
     local _,count=Captions()
-    Check(count<=(E.Addon:Layout().CaptionsExpanded and 8 or cfg.Lines),'only the requested number of lines is visible')
+    Check(count<=(E.Addon:Layout().CaptionsExpanded and 8 or (T.style and T.style.lines) or cfg.Lines),'only the lines the window asks for are visible')
     for _,label in ipairs(T.labels) do
         if label:IsShown() then
             Check(not label.wordWrap and not label:GetText():find('\n'),'each caption label is exactly one non-wrapping line')
@@ -349,7 +349,7 @@ Check(T.frame:GetLeft()>original.portrait:GetRight() and T.frame:GetTop()-T.styl
     'the large window\'s words sit beside the portrait, under the speaker\'s name')
 Check(T.frame:GetBottom()+T.style.padTop>original.background:GetBottom() and T.frame:GetLeft()>=original.background:GetLeft(),
     'the large window\'s box encloses its words')
-Check(not T.expand:IsShown() and select(2,Captions())<=cfg.Lines,'the large window shows Lines Shown lines, with no expand button')
+Check(not T.expand:IsShown() and select(2,Captions())<=3,'the large window shows up to three lines, with no expand button')
 Check(original:GetWidth()==570 and original:GetHeight()==155 and T.frame:GetWidth()==original.container:GetWidth(),
     'the large window keeps the size of the Talking Head, the words as wide as its column')
 CheckLayout()
