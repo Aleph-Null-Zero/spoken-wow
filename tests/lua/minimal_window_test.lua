@@ -99,5 +99,63 @@ quests:Enqueue(Line("Grull", "Grull"))
 Expect("a name the same as the line's is said once", M.name:GetText() .. "|" .. M.title.text:GetText(), "|Grull")
 env.SoundQueue:RemoveAllSoundsFromQueue()
 
+---------------------------------------------------------------- its background
+-- What each part was last painted: the stub keeps no colours of its own.
+local function Colour(r, g, b) return string.format("%.2f %.2f %.2f", r, g, b) end
+local function Record(widget)
+    widget.SetTextColor = function(self, r, g, b) self.colour = Colour(r, g, b) end
+    widget.SetVertexColor = function(self, r, g, b) self.colour = Colour(r, g, b) end
+    widget.SetAtlas = function(self, atlas) self.atlas, self.texture, self.colour = atlas, nil, nil end
+    widget.SetTexture = function(self, texture) self.texture, self.atlas, self.colour = texture, nil, nil end
+    widget.SetColorTexture = function(self, r, g, b) self.colour, self.atlas, self.texture = Colour(r, g, b), nil, nil end
+    return widget
+end
+local INK, RED = "0.19 0.17 0.13", "|cff9c1a1a"
+env, quests = Boot()
+M, T, L = env.MinimalPlayer, env.Transcript, env.L
+local frame = env.Addon.db.profile.Frame
+Expect("the small window is on parchment unless the player chooses otherwise", frame.MinimalBackground, "parchment")
+for _, part in ipairs({ M.paper, M.name, M.title.text, M.count, M.ring }) do Record(part) end
+quests:Enqueue(Line("One", "Grull"))
+env.PlayerFrame:RefreshConfig()
+Expect("...drawn in the parchment's colour where the client has none of its art", tostring(M.paper.atlas) .. " " .. tostring(M.paper.colour),
+    "nil 0.88 0.68 0.41")
+Expect("...the name and the title in the DialogueUI window's parchment ink", tostring(M.name.colour) .. "|"
+    .. tostring(M.title.text.colour), INK .. "|" .. INK)
+Expect("...the words too, unshadowed, the word being read in its red", tostring(T.style and Colour(T.style.color[1], T.style.color[2],
+    T.style.color[3])) .. " " .. tostring(T.style and T.style.shadow) .. " " .. tostring(T.style and T.style.highlight),
+    INK .. " false " .. RED)
+frame.MinimalBackground = "dark"
+env.PlayerFrame:RefreshConfig()
+Expect("Dark is the rock it always had", M.paper.texture, [[Interface\AddOns\Spoken\Textures\MinimalBackground]])
+Expect("...with the gold name and the light words", tostring(M.name.colour) .. "|" .. tostring(M.title.text.colour) .. "|"
+    .. tostring(T.style),
+    "1.00 0.82 0.00|0.88 0.84 0.76|nil")
+frame.MinimalBackground = "parchment"
+
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
+-- The setting, on Spoken's page, for the small window only.
+env.Options:UpdateRows()
+local main = _G.SpokenOptionsPanel.layout
+local function Row(label)
+    for _, entry in ipairs(main.entries) do if entry.label == label then return entry.frame end end
+end
+main:Refresh()
+local row = Row(L.OPT_MINIMAL_BACKGROUND)
+Expect("Background is on Spoken's page with the small window chosen", row ~= nil and row:IsShown(), true)
+Expect("...offering Parchment and Dark", row and row.layoutValues and table.concat(row.layoutValues, ","), "parchment,dark")
+pcall(function() row.layoutChoose("dark") end)
+Expect("...choosing Dark there draws the rock", tostring(frame.MinimalBackground) .. " " .. tostring(M.paper.texture),
+    [[dark Interface\AddOns\Spoken\Textures\MinimalBackground]])
+pcall(function() row.layoutChoose("parchment") end)
+env.Addon:SetPlayerStyle("classic")
+main:Refresh()
+Expect("...and not with another style", row ~= nil and row:IsShown(), false)
+env.Addon:SetPlayerStyle("minimal")
+main:Refresh()
+Expect("Show Progress is offered for the small window, which has the progress line",
+    Row(L.OPT_SUBTITLE_PROGRESS) ~= nil and Row(L.OPT_SUBTITLE_PROGRESS):IsShown(), true)
+
 if Failures() > 0 then stub.print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 stub.print("\nAll small window tests passed")

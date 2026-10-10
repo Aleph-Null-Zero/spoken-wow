@@ -72,6 +72,8 @@ E.Minimap={Setup=function() end}; E.Options={Setup=function() end}
 -- below, and the defaults themselves are pinned in defaults_test.
 E.Addon:InitDB()
 E.Addon.db.profile.Frame.Style='minimal'
+-- On the dark rock, where the words keep the player's own colours and gold highlight.
+E.Addon.db.profile.Frame.MinimalBackground='dark'
 E.Addon.db.profile.Audio.LineGap=0
 E.Addon.db.profile.Transcript.HighlightWord=true
 E.Addon:Enable()
