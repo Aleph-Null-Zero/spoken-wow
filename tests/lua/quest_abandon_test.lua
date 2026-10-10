@@ -47,9 +47,12 @@ Expect("...and the quest's next line never starting on the way", #started, 0)
 source:Enqueue(Line("accept", 101, Event.QuestAccept))
 source:Enqueue(Line("other", 202, Event.QuestAccept))
 stub.Advance(1)
+fades, started = {}, {}
 abandoning = 101
 C_QuestLog.AbandonQuest()
 Expect("another quest's line stays, and plays next", #Spoken:GetQueue() == 1 and Spoken:GetQueue()[1].questID, 202)
+Expect("...the abandoned line cut at once for it, not faded", table.concat(fades, ","), "0")
+Expect("...and that line starting in its place", table.concat(started, ","), "other")
 Spoken:StopAll()
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

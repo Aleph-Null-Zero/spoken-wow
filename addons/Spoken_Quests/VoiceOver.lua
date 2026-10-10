@@ -704,8 +704,8 @@ function Addon:OnInitialize()
                 end
             end
 
-            -- From the last, so the speaking line goes once nothing of the quest waits behind it
-            -- and fades out, instead of being cut for a next line that is about to go too.
+            -- From the last, so the speaking line goes after its quest's waiting lines: then it fades
+            -- out if nothing at all waits behind it, and is cut only for another quest's line.
             for i = #soundsToRemove, 1, -1 do
                 Player:Remove(soundsToRemove[i])
             end
