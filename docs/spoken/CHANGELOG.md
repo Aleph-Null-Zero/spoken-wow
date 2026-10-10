@@ -12,6 +12,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   turns to Stop while its line speaks and is greyed where no pack has the line, where Report
   offers Contribute in place of the old "No voice-over playing?" line. A close button sits
   beside them. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI settings are on Spoken's page, with the other narrator styles'.** They show when
+  DialogueUI is the narrator style, and every style's settings come in the same order: Size and
+  Position, Look, Words. Show Sample Subtitle is gone, as Preview shows every style.
+  *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.0 — 2026-10-11
 
