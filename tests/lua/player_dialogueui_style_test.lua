@@ -1054,7 +1054,7 @@ quests:Enqueue(H.Clip({ present = { header = "Eagan", label = "Back", portrait =
 Expect("switching back hides the DialogueUI window", Skin.frame:IsShown(), false)
 Expect("...shows the small one", env.MinimalPlayer.frame:IsShown(), true)
 Expect("...and moves the words with it", T.frame:GetParent(), env.MinimalPlayer.frame)
-Expect("...in their own look again", T.style, nil)
+Expect("...in the small window's own look again, not DialogueUI's font", tostring(T.style and T.style.font), "nil")
 Spoken:StopAll()
 
 loaded = false

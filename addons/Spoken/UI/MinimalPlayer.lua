@@ -17,6 +17,16 @@ local INSET, BESIDE_PORTRAIT, NO_PORTRAIT = 18, 96, 16
 local CONTROLS_CLEAR, ROUND_GAP = 8, 4
 -- The Forever client tints its frame metal bronze; its palette, so the player matches.
 local BRONZE = Version.IsCamelot and { .95, .68, .35 } or nil
+-- The panel's backgrounds (Frame.MinimalBackground). On parchment, the DialogueUI window's
+-- parchment ink (DialogueUITheme's first palette), with no shadow; on the dark rock, the light
+-- colours the window always had.
+local LOOKS = {
+    parchment = { name = { .19, .17, .13 }, title = { .19, .17, .13 }, tail = { .50, .36, .24 }, shadow = 0,
+        words = { color = { .19, .17, .13 }, shadow = false, highlight = "|cff9c1a1a" } },
+    dark = { name = { 1, .82, 0 }, title = { .88, .84, .76 }, tail = { .62, .58, .46 }, shadow = 1 },
+}
+-- The parchment's own colour.
+local PARCHMENT_COLOR = { .88, .68, .41 }
 -- Portrait badges by bullet id. Quests use trimmed copies of their own glyphs; books
 -- and zones take native ones, since their registered bullet (or none) is not a badge.
 local BADGES = {
@@ -95,15 +105,12 @@ function MinimalPlayer:Initialize(original)
         edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]], edgeSize = 24,
         insets = { left = 7, right = 7, top = 7, bottom = 7 },
     })
-    -- Tiled by hand: the backdrop's own tiling stretched the rock once the words made the
-    -- panel taller. One 256px tile per 256 units, inside the 7px inset.
+    -- Inside the 7px inset: the parchment, or the rock tiled by hand (Dress), since the
+    -- backdrop's own tiling stretched it once the words made the panel taller.
     self.paper = self.panel:CreateTexture(nil, "BACKGROUND")
-    self.paper:SetTexture(ART .. "MinimalBackground", "REPEAT", "REPEAT")
     self.paper:SetPoint("TOPLEFT", 7, -7)
     self.paper:SetPoint("BOTTOMRIGHT", -7, 7)
-    self.panel:SetScript("OnSizeChanged", function(_, width, height)
-        self.paper:SetTexCoord(0, (width - 14) / 256, 0, (height - 14) / 256)
-    end)
+    self.panel:SetScript("OnSizeChanged", function() self:TileRock() end)
 
     local content = CreateFrame("Frame", nil, frame)
     self.content, frame.container = content, content
@@ -349,6 +356,38 @@ function MinimalPlayer:ConfigurePortrait()
     self.badge:SetShown(texture ~= nil)
 end
 
+--- The rock repeats once per 256 units, inside the inset.
+function MinimalPlayer:TileRock()
+    if not self.dark then return end
+    local width, height = self.panel:GetWidth() or 0, self.panel:GetHeight() or 0
+    self.paper:SetTexCoord(0, math.max(0, width - 14) / 256, 0, math.max(0, height - 14) / 256)
+end
+
+--- The panel in its background, and the name, the title and the words in colours that read on it.
+function MinimalPlayer:Dress()
+    local dark = Config().MinimalBackground == "dark"
+    local look = dark and LOOKS.dark or LOOKS.parchment
+    local paper = self.paper
+    self.dark = dark
+    if dark then
+        paper:SetTexture(ART .. "MinimalBackground", "REPEAT", "REPEAT")
+        self:TileRock()
+    elseif paper.SetColorTexture then
+        paper:SetColorTexture(PARCHMENT_COLOR[1], PARCHMENT_COLOR[2], PARCHMENT_COLOR[3], 1)
+    else
+        paper:SetTexture(PARCHMENT_COLOR[1], PARCHMENT_COLOR[2], PARCHMENT_COLOR[3], 1)
+    end
+    local function Ink(text, color)
+        text:SetTextColor(color[1], color[2], color[3])
+        text:SetShadowColor(0, 0, 0, look.shadow)
+    end
+    Ink(self.name, look.name)
+    Ink(self.title.text, look.title)
+    Ink(self.stopped, look.tail)
+    Ink(self.count, look.tail)
+    Transcript:SetStyle(look.words)
+end
+
 function MinimalPlayer:UpdateControls()
     if not self.clip then return end
     local paused = SoundQueue:IsPaused()
@@ -478,6 +517,7 @@ function MinimalPlayer:RefreshConfig(original)
     self.panel:SetBackdropBorderColor(r, g, b)
     Actions.TintProgress(self.progress, r, g, b)
     self.ring:SetVertexColor(r, g, b)
+    self:Dress()
     if Addon:IsFrameLocked() then frame:StopMovingOrSizing(); self.sizing = false end
     -- Locked, clicks on the window pass through to the game, as the subtitle's do; its buttons
     -- still take theirs, and the header still opens the menu. Where the client cannot tell a
@@ -522,7 +562,7 @@ function MinimalPlayer:Reset()
 end
 
 function MinimalPlayer:Describe()
-    return format("minimal=%s visible=%s portrait=%s progress=%.1fs",
+    return format("minimal=%s visible=%s portrait=%s background=%s progress=%.1fs",
         tostring(self:IsEnabled()), tostring(self.frame and self.frame:IsShown()),
-        tostring(self.viewport and self.viewport.active), self.seconds or 0)
+        tostring(self.viewport and self.viewport.active), tostring(Config().MinimalBackground), self.seconds or 0)
 end
