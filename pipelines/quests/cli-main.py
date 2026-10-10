@@ -5,7 +5,7 @@ the corpus, and building a pack from audio/ once `make quests-sounds` has assemb
 
     init-db       download and import the vmangos dump      maintainer, rare
     extract       world DB -> Postgres                      maintainer, rare
-    import-corpus corpus/corpus.json.gz -> Postgres         to seed an empty database
+    import-corpus corpus/corpus.json.gz -> Postgres         DANGEROUS: once, into an empty database
     export-corpus Postgres -> corpus/corpus.json.gz         before a build; its only writer
     export-locale-text  Postgres -> one language's gossip text   before its Gossip pack
     export-giver-names  Postgres -> the addon's translated quest-giver names   after import-locale
@@ -38,10 +38,14 @@ subparsers.add_parser(
     "extract",
     help="Query the world DB into Postgres; export-corpus then writes the file. Needs MySQL "
          "and DATABASE_URL.")
-subparsers.add_parser(
+imp = subparsers.add_parser(
     "import-corpus",
-    help="corpus.json.gz -> Postgres, to seed an empty database from the committed export.") \
-    .add_argument("--corpus", default=DEFAULT_CORPUS_PATH)
+    help="DANGEROUS. corpus.json.gz -> Postgres, once, to seed an empty database. Refuses a "
+         "database that already holds the corpus.")
+imp.add_argument("--corpus", default=DEFAULT_CORPUS_PATH)
+imp.add_argument("--force", action="store_true",
+                 help="Import into a filled database anyway, putting back the file's text and "
+                      "speakers. Only to rebuild a database on purpose.")
 loc = subparsers.add_parser(
     "import-locale",
     help="The world DB's *_locN text for one language -> Postgres. Needs MySQL and DATABASE_URL.")
@@ -130,8 +134,11 @@ elif args.mode == "import-corpus":
     # Imported here rather than at the top, the way extract is: psycopg2 is in
     # requirements-extract.txt, and the everyday path deliberately installs no database
     # client at all.
-    from tts_cli.corpus_db import import_corpus
-    import_corpus(args.corpus)
+    from tts_cli.corpus_db import DatabaseNotEmpty, import_corpus
+    try:
+        import_corpus(args.corpus, force=args.force)
+    except DatabaseNotEmpty as refused:
+        raise SystemExit(f"refused: {refused}")
 
 elif args.mode == "import-locale":
     # Imported here, the way import-corpus is: it needs PyMySQL, pandas and psycopg2, none

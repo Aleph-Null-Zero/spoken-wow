@@ -58,7 +58,8 @@ claiming is global.
 **The corpus is Postgres `quest_line`.** `corpus/corpus.json.gz` is a committed export of it
 (`make quests-export-corpus`), written by nothing else: a new dump goes into the database
 (`extract`), never into the file. Never hand-edit or merge-build it; change the database and
-export. The pack build reads that file and never a database. MySQL (vmangos) is touched only
+export. `import-corpus` only seeds an empty database (it refuses a filled one); never run it
+against a live one. The pack build reads that file and never a database. MySQL (vmangos) is touched only
 by the rare extract and import targets.
 
 **Filenames come from `tts_cli/naming.py` alone.** `apps/web/src/lib/audio.ts` mirrors its

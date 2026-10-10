@@ -262,9 +262,32 @@ def _import_npcs(cur, npc_rows):
     return kept
 
 
-def import_corpus(path, verbose=True):
-    """corpus.json.gz -> Postgres, to seed an empty database (CI's, a new local one) from the
-    committed export. A live database takes new dump text through extract instead."""
+class DatabaseNotEmpty(Exception):
+    """import-corpus was pointed at a database that already holds the corpus."""
+
+
+def import_corpus(path, verbose=True, force=False):
+    """corpus.json.gz -> Postgres, ONCE: to seed an empty database (CI's, a new local one) from
+    the committed export.
+
+    Dangerous anywhere else. The file is only an export, so it lags the database: importing it
+    into a live one puts back the file's older text over newer extracted lines and replaces
+    every speaker the dump gave with the file's list. A filled database takes new dump text
+    through extract instead.
+    `force` is for rebuilding a database deliberately, never for keeping one up to date.
+    """
+    if not force:
+        conn = connect()
+        try:
+            with conn, conn.cursor() as cur:
+                cur.execute("""select exists (select 1 from "quest_line")""")
+                filled = cur.fetchone()[0]
+        finally:
+            conn.close()
+        if filled:
+            raise DatabaseNotEmpty(
+                "quest_line already holds the corpus. import-corpus only seeds an empty "
+                "database; take a new dump in with extract. --force overwrites it anyway.")
     return import_corpus_data(load_corpus(path), verbose)
 
 

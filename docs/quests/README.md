@@ -73,8 +73,10 @@ make quests-export-corpus                 # then the committed file, from the da
 Commit the re-exported corpus; the diff is reviewable. **The database is the corpus, and
 `corpus/corpus.json.gz` is its export:** `export-corpus` is the only thing that writes it, and
 the file says so in `producedBy`. Never edit it by hand or write it from an extract, a merge
-or a script: change the database, then export. `import-corpus` reads the file only to seed an
-empty database, such as CI's.
+or a script: change the database, then export. `import-corpus` is **dangerous** and for one use: seeding
+an empty database, such as CI's or a new local one. It refuses a database that already holds
+the corpus, because the file lags it and the import would put back the file's older text and
+speakers; `--force` overrides that only to rebuild a database on purpose.
 
 ## Voice Setup
 
