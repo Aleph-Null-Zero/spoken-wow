@@ -47,7 +47,8 @@ How the captions in the window follow the voice:
 With **Type Words Out** on, the lines below the voice are still blank, so Line by Line keeps the
 line being read on the last row instead, with what has been read above it, as roll-up
 broadcast captions do. The glide needs the client to clip the captions' frame (`SetClipsChildren`); where it cannot, the text steps a
-line at a time. `Transcript:GetScroll` and `Transcript:ScrollTo` let a player draw its own
+line at a time. While the text moves, a line partly past the top or bottom edge fades by as much of
+it as is out of view, so lines fade out and in at the edges instead of ending on a hard cut. `Transcript:GetScroll` and `Transcript:ScrollTo` let a player draw its own
 scrollbar. Subtitles Only pages on its own and is not affected.
 
 Stopping freezes the text. Replay restarts it with the recording. Skipping
