@@ -62,7 +62,6 @@ ContributeButton = {}
 --- controls on the window's title line and returns true. Unset, the icon stays in the corner.
 ContributeButton.dialogueUISlot = nil
 
--- The icon in full in the row or to contribute; faint in the corner to report.
 local function CornerAlpha(corner)
     return (corner.missing or corner.slotted) and 1 or DUI_REPORT_ALPHA
 end
@@ -228,9 +227,8 @@ function ContributeButton:DialogueUICorner(frame)
     return corner
 end
 
---- Show the icon: Report, or with `missing`, Contribute. In Spoken Quests' row at the window's top
---- right (dialogueUISlot) where it has one; otherwise under DialogueUI's Decline (or Goodbye)
---- button, right-aligned with it, faint while it reports.
+--- Show the icon: Report, or with `missing`, Contribute. In Spoken Quests' row (dialogueUISlot)
+--- where it has one, else under DialogueUI's Decline (or Goodbye) button, right-aligned with it.
 function ContributeButton:ShowOnDialogueUI(frame, missing)
     local corner = self:DialogueUICorner(frame)
     if not corner then

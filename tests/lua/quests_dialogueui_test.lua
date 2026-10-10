@@ -417,7 +417,7 @@ _G.DialogueUI_DB = nil
 
 ---------------------------------------------------------------- Spoken's controls on DialogueUI's title line
 -- DialogueUI draws its own Play only with its Text To Speech on; Spoken's round Play and Skip are
--- there either way, on the title line, as Spoken's DialogueUI window shows them.
+-- there either way, on the title line.
 world.questID = 101
 DUI.handler = "HandleQuestDetail"
 DUI:HandleQuestDetail()
@@ -473,7 +473,6 @@ Expect("...the title left as DialogueUI lays it out", header.Title.anchor and he
     and header.Title.anchor.x .. " " .. header.Title.anchor.y, "-8 2")
 Expect("...in the paper's art on DialogueUI's parchment", closeButton.file,
     "Interface/AddOns/DialogueUI/Art/Book/TextureKit-Parchment.png")
--- A gossip page has no header to show: nothing moves.
 DUI.handler = "HandleGossip"
 DUI:HandleGossip()
 Bridge:RefreshPlayButton("GOSSIP_SHOW")
@@ -486,7 +485,6 @@ Expect("...and on a gossip page its text starts 36 under the line, its own line 
 Expect("on a gossip page the close button and the row stay where they were", Anchor(closeButton) .. " "
     .. tostring(controls.frame.anchor ~= nil and controls.frame.anchor.relativeTo == closeButton),
     "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " " .. middle .. " true")
--- DialogueUI's Copy Text button, which it puts in that corner, goes left of the row.
 local copyText = stub.Widget("Button")
 copyText:SetPoint("TOPRIGHT", DUI, "TOPRIGHT", -8, -8)
 copyText:Show()

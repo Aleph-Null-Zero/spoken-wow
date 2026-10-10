@@ -3,8 +3,7 @@ setfenv(1, SpokenEnv)
 -- Finding the line being read in another window's text and marking it there, as the captions
 -- mark it: the word being read lit with the one beside it, the words typed out as the voice
 -- reaches them. Matching only: the caller has the window's paragraphs, draws the result, and
--- puts its text back. Spoken Quests marks DialogueUI's quest window with it, Spoken Books its
--- book view; a feature addon reaches it through Spoken:WordMarks().
+-- puts its text back. Feature addons reach it through Spoken:WordMarks().
 --
 -- A paragraph is { text, words }: its text as the window shows it and its words as
 -- Spoken:SplitCaption gives them, with MarkLinks run over them.
