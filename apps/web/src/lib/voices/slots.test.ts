@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { db } from "@/lib/db";
+
 import { isVoiceSlot, slots } from "./slots";
 import { loadRoster } from "./roster-store";
 
@@ -14,11 +16,17 @@ describe("slots", () => {
   });
 
   it("offers a voice the corpus does not speak yet, so it can be cloned first", async () => {
-    // The corpus picks up a voice as contributions are accepted -- all four Skybourne sets
-    // speak since the 2.1.0 packs -- so this names the one roster voice no line has reached.
-    // Move it to another silent voice when this one starts speaking.
-    const slot = (await slots()).find((s) => s.name === "bloodelf-male");
-    expect(slot).toEqual({ name: "bloodelf-male", lineCount: 0, npcCount: 0 });
+    // A voice of its own: every roster voice speaks once contributions reach it.
+    const type = "tsilentslot";
+    await db().query(`insert into "race" ("key") values ($1)`, [type]);
+    await db().query(`insert into "voice" ("name", "race", "gender") values ($1, $1, '')`, [type]);
+    try {
+      const slot = (await slots()).find((s) => s.name === type);
+      expect(slot).toEqual({ name: type, lineCount: 0, npcCount: 0 });
+    } finally {
+      await db().query(`delete from "voice" where "name" = $1`, [type]);
+      await db().query(`delete from "race" where "key" = $1`, [type]);
+    }
     // A race-gender with flavors is offered by its flavors, never bare.
     expect((await slots()).map((s) => s.name)).not.toContain("skybourneelf-female");
   });
