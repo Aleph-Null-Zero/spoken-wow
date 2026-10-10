@@ -53,6 +53,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Bronze Border on, the window uses the game's Talking Head art. *([Nucabe](https://github.com/Nucabe))*
 - **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
   written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
+- **Volume Follows is back.** Choose which volume slider Spoken's voices follow: Master, Effects,
+  Music, Ambience or Dialog. On Dialog, a note says which features stop working there.
+  *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.2.0 — 2026-10-08
 
