@@ -92,10 +92,9 @@ local function QueuedPages()
 end
 
 ---------------------------------------------------------------- room for the controls
--- 36 of UIParent's units over the controls' line and under it, as on the quest window: the title,
--- its line and the text moved down for it by as much as the title moved from DialogueUI's place for
--- it (90 of the book art's pixels under the top), so the line stays as close under the title as
--- DialogueUI has it; a short page's frame taller by as much.
+-- 36 of UIParent's units over the controls' line and under it: the title, its line and the text
+-- moved down by as much as the title moved from DialogueUI's place for it (90 of the book art's
+-- pixels under the top); a short page's frame taller by as much.
 view:SetScrollContentHeight(100, 1)
 local shift = (2 * 36 + 24) * (UIParent:GetEffectiveScale() / 0.8) - 90 * 0.53333
 Expect("the title moved down to leave 36 over and under the controls' line", view.Header.Title.anchor.y,
