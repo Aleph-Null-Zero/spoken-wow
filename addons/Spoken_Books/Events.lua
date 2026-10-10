@@ -105,7 +105,7 @@ function SpokenBooks:OnPageFinished(clip)
 		return
 	end
 	local book = self:PlaceOf(clip.pageId)
-	if not book or self:PlaceOf(self.lastPage) ~= book or self:IsNarrating(book) then
+	if self:PlaceOf(self.lastPage) ~= book or self:IsNarrating(book) then
 		return
 	end
 	local later = self:PagesFrom(clip.pageId)
@@ -115,9 +115,7 @@ function SpokenBooks:OnPageFinished(clip)
 		end
 	end
 	self:Explain("closing the book: its last page has been read")
-	if CloseItemText then
-		CloseItemText()
-	end
+	CloseItemText()
 end
 
 frame:SetScript("OnEvent", function(_, event, arg1)

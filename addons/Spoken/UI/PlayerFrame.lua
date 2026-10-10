@@ -409,7 +409,7 @@ function PlayerFrame:CreateRow(i)
 
         -- A held clip says why; otherwise narration waiting out a pull looks exactly like
         -- narration that failed.
-        local text = clip.present and (clip.present.label or clip.present.header) or clip.key
+        local text = MinimalPlayer.parts.Label(clip)
         local held = SoundQueue:GetHeldReason(clip)
         if held then
             text = format("%s |cff888888(%s)|r", text, held)
@@ -505,10 +505,7 @@ function PlayerFrame:Update()
     local lastContent = self.frame.container.name
     for i, clip in ipairs(SoundQueue:IsEmpty() and { head } or SoundQueue.sounds) do
         if i == 1 then
-            -- Said once: a line titled by its header (a one-page letter) leaves the name line empty.
-            local present = clip.present
-            local header = present and present.header
-            self.frame.container.name:SetText(present and present.label and header or "")
+            self.frame.container.name:SetText(MinimalPlayer.parts.Name(clip))
         end
         lastRow = lastRow + 1
         local row = self.frame.container.buttons[lastRow] or self:CreateRow(lastRow)

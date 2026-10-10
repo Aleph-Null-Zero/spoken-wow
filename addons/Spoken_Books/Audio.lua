@@ -95,9 +95,8 @@ local ACTIONS = {
 	},
 }
 
--- Guarded: a test loads the clips without Events.lua.
 local function PageStopped(clip, finished)
-	if finished and SpokenBooks.OnPageFinished then
+	if finished then
 		SpokenBooks:OnPageFinished(clip)
 	end
 end
@@ -172,6 +171,19 @@ function SpokenBooks:DescribeMissingAudio()
 	return L.OPT_NO_PACK_AUDIO
 end
 
+--- Whether ClipFor would find a clip, without building one.
 function SpokenBooks:HasAudio(pageId)
-	return self:ClipFor(pageId) ~= nil
+	local data = self:Data()
+	if not (data and data.pages[pageId]) then
+		return false
+	end
+	local packs = self:GetAudioPacks()
+	for _, language in ipairs(self:LanguageOrder()) do
+		for _, pack in ipairs(packs) do
+			if self:PackLanguage(pack) == language and pack.pages[pageId] then
+				return true
+			end
+		end
+	end
+	return false
 end
