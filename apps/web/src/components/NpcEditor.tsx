@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import Pagination from "@/components/Pagination";
 import ClientSelect from "@/components/ClientSelect";
-import { clientFilterOf, DEFAULT_CLIENT_FILTER, matchesClient, type ClientFamily } from "@/lib/contributions/client";
+import { clientFilterOf, DEFAULT_CLIENT_FILTER, matchesClient, type ClientFamily, type ClientFilter } from "@/lib/contributions/client";
 import { flavorOptionsFor, summaryFromResolution } from "@/lib/contributions/speaker";
 import type { Roster, RosterData } from "@/lib/voices/roster";
 import type { NpcSummary } from "@/lib/contributions/triage";
@@ -164,6 +164,21 @@ function NameCell({
       </LiteButton>
     </form>
   );
+}
+
+/**
+ * Where an NPC's lines can be looked up: both explorers, and both contribution sections. The
+ * contribution links carry this page's client filter, since the two pages read it the same way.
+ */
+function lookups(npcId: number, client: ClientFilter): { label: string; path: string; where: string }[] {
+  const search = `q=${npcId}&filter=npc`;
+  const contributed = client === DEFAULT_CLIENT_FILTER ? search : `${search}&client=${client}`;
+  return [
+    { label: "Q", path: `/quests?${search}`, where: "the quests explorer" },
+    { label: "G", path: `/gossip?${search}`, where: "the gossip explorer" },
+    { label: "CQ", path: `/contributions/quests?${contributed}`, where: "quest contributions" },
+    { label: "CG", path: `/contributions/gossip?${contributed}`, where: "gossip contributions" },
+  ];
 }
 
 export default function NpcEditor({
@@ -481,15 +496,19 @@ export default function NpcEditor({
                       <p className="text-destructive mt-1">That didn&apos;t go through -- try again.</p>
                     ) : null}
                   </td>
-                  <td className="text-right">
-                    <a
-                      href={localeHref(lang, `/quests?q=${npc.npcId}&filter=npc`)}
-                      title="Find this NPC's lines in the quests explorer"
-                      aria-label={`Find ${npc.npcName ?? npc.npcId} in the quests explorer`}
-                      className="text-muted-foreground hover:text-foreground inline-flex p-1"
-                    >
-                      <SearchIcon className="size-4" />
-                    </a>
+                  <td className="text-right whitespace-nowrap">
+                    {lookups(npc.npcId, client).map(({ label, path, where }) => (
+                      <a
+                        key={label}
+                        href={localeHref(lang, path)}
+                        title={`Find this NPC's lines in ${where}`}
+                        aria-label={`Find ${npc.npcName ?? npc.npcId} in ${where}`}
+                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 p-1 text-xs"
+                      >
+                        <SearchIcon className="size-3.5" />
+                        {label}
+                      </a>
+                    ))}
                   </td>
                 </tr>
               );
