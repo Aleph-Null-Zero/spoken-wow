@@ -124,6 +124,27 @@ ExpectOf("...then hidden, the words let go", function()
     return tostring(F.frame:IsShown()) .. " " .. tostring(env.Transcript.held)
 end, "false nil")
 
+-- From one line to the next, as the DialogueUI window turns: the window fades out whole with the
+-- first line's name and words, and fades in with the next's.
+env, quests, zones = Boot(); F = env.PlayerFrame
+local first = H.Clip({ present = { header = "Thrall", transcript = "Lok'tar ogar.", portrait = { kind = "none" } } })
+local second = H.Clip({ present = { header = "Cairne", transcript = "Walk with the Earth Mother.", portrait = { kind = "none" } } })
+quests:Enqueue(first); quests:Enqueue(second)
+F.fader:Step(1)
+env.SoundQueue:RemoveSoundFromQueue(first)
+ExpectOf("the next line: the window fading out, still the first line's, its words held", function()
+    return tostring(F.frame:IsShown()) .. " " .. F.frame.container.name:GetText() .. " " .. tostring(env.Transcript.held)
+        .. " " .. tostring(F.fader:Leaving())
+end, "true Thrall true true")
+F.fader:Step(1)
+ExpectOf("...then fading in with the next line's", function()
+    return tostring(F.frame:IsShown()) .. " " .. F.frame.container.name:GetText() .. " " .. tostring(env.Transcript.held)
+        .. " " .. tostring(F.fader:Leaving()) .. " " .. tostring(F.frame:GetAlpha() < 1)
+end, "true Cairne nil false true")
+F.fader:Step(1)
+Expect("...all the way", F.frame:GetAlpha(), 1)
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
 -- DialogueUI hides the interface while its dialog is open, and the window with it, but not the
 -- 3D portrait: the whole window goes, and comes back when the dialog closes on a line playing on.
 _G.DUIQuestFrame = CreateFrame("Frame")
