@@ -1067,6 +1067,9 @@ Such an NPC keeps the voice its lines were made in and is listed under Doubtful 
 speaker's NPC an answer from its speaker rows; one with no type has no voice, and its lines wait.
 `import-corpus` never replaces a moderator's answer unless a moderator marked it doubtful, even
 with a moderator answer from the file, and lists every answer it kept over a different one.
+A dump answer that knows only the creature's model (`model-77`) fills an NPC nobody answered
+and updates its own kind, and leaves every other answer, a player's client included: a race
+somebody named says more than a model, and replacing it would take the NPC's voice away.
 Names are per language, in `entity_name`. A moderator can rename an NPC there, in the language their
 rights are checked in (English unless the request names another), and the import leaves an
 edited English name alone.

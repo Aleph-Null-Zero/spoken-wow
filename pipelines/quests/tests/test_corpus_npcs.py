@@ -34,11 +34,12 @@ def answer(cur, npc_id):
     return cur.fetchone()
 
 
-def seed(cur, npc_id, flavor, provenance, doubtful=False):
+def seed(cur, npc_id, flavor, provenance, doubtful=False, race="human", gender="male"):
     cur.execute("""insert into "npc" ("npcKind", "npcId", "race", "gender", "flavor",
                                       "provenance", "confirmed", "doubtful")
-                   values ('creature', %s, 'human', 'male', %s, %s, true, %s)""",
-                (npc_id, flavor, provenance, doubtful))
+                   values ('creature', %s, %s, %s, %s, %s,
+                           %s in ('corpus', 'display', 'moderator'), %s)""",
+                (npc_id, race, gender, flavor, provenance, provenance, doubtful))
 
 
 def test_a_moderators_answer_stays_and_is_reported(cur):
@@ -61,6 +62,31 @@ def test_the_extract_still_updates_its_own_answer(cur):
     kept = _import_npcs(cur, [("creature", NPC_ID, "human", "male", "official", "corpus", False)])
     assert answer(cur, NPC_ID) == ("human", "male", "official", "corpus", False)
     assert kept == []
+
+
+MODEL = ("creature", NPC_ID, "model-77", "male", None, "corpus", False)
+
+
+@pytest.mark.parametrize("provenance", ["client", "display", "corpus"])
+def test_a_model_from_the_dump_leaves_a_race_any_one_named(cur, provenance):
+    # Bragok: a contribution heard a goblin; the dump knows only his model.
+    seed(cur, NPC_ID, "zany", provenance, race="goblin")
+    kept = _import_npcs(cur, [MODEL])
+    assert answer(cur, NPC_ID) == ("goblin", "male", "zany", provenance, False)
+    assert kept == [("creature", NPC_ID, ("goblin", "male", "zany", provenance),
+                     ("model-77", "male", None, "corpus"))]
+
+
+def test_a_model_from_the_dump_answers_an_npc_nobody_did(cur):
+    seed(cur, NPC_ID, None, "none", race=None, gender=None)
+    _import_npcs(cur, [MODEL])
+    assert answer(cur, NPC_ID) == ("model-77", "male", None, "corpus", False)
+
+
+def test_a_model_from_the_dump_updates_its_own_answer(cur):
+    seed(cur, NPC_ID, None, "corpus", race="model-78")
+    _import_npcs(cur, [MODEL])
+    assert answer(cur, NPC_ID) == ("model-77", "male", None, "corpus", False)
 
 
 def test_the_same_answer_is_not_reported(cur):
