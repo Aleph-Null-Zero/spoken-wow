@@ -840,7 +840,6 @@ do
     source:Enqueue(Timed('t6','aaaa bbbb cccc dddd',4,{0,0/0,.4,.6})); Play(.2)
     Check(not T.timed,'...and one with a time that is not a number')
     Q:RemoveAllSoundsFromQueue(); Play(.6)
-    -- Subtitles Only: a page turns when the voice reaches its first word.
     local style=E.Addon:PlayerStyle()
     E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
     cfg.SubtitleSentences=1

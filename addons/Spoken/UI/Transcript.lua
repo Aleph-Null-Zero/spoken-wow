@@ -163,10 +163,8 @@ function Transcript:Split(text)
     return Split(text)
 end
 
--- present.timings: when each word starts, in seconds into the recording, one per word as Split
--- cuts the text. Anything else (a count that disagrees, a hole, a time that is not a number or
--- goes backwards or past the end) is ignored for the estimate, since words drifting a little
--- beat words lit at random.
+-- A timings list that does not fit the words exactly is ignored for the estimate: words drifting
+-- a little beat words lit at random.
 local function ApplyTimings(words, timings, length)
     if type(timings) ~= "table" or #words == 0 or #timings ~= #words or not length or length <= 0 then
         return false
