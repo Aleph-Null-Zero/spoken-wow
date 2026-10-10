@@ -75,7 +75,7 @@ export const branch = (sql: string, side: 1 | 2) => `regexp_replace(${sql}, '\\$
 /**
  * The lowest BroadcastText id whose text in `lang` reads as `text` does, in the form a speaker of
  * this sex shows. One text can sit under several ids, and they read alike. The unbranched form
- * too: a German client sends a `$u` branch unresolved.
+ * too: the client sends a `$u` branch unresolved.
  */
 export async function broadcastIdFor(
   q: Queryable,

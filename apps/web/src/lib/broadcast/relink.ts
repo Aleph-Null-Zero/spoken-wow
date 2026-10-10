@@ -65,7 +65,7 @@ export async function relinkGossip({
 async function linkByText(client: PoolClient, lineIds: string[] | null, lang: string | null): Promise<string[]> {
   // Each id's text in both forms and on both sides of a `$g` branch, so the join is on plain
   // values: an expression over both sides would compare every line with every row. Unbranched
-  // too, since a German client leaves a `$u` branch as it stands.
+  // too, since the client leaves a `$u` branch as it stands.
   const forms = (gender: string, column: string) =>
     [column, branch(column, 1), branch(column, 2)].map(
       (shown) =>

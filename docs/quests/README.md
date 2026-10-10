@@ -959,7 +959,7 @@ A gossip row, in any language, is matched in three steps (`apps/web/src/lib/cont
    language asks its own rows' `localeText`.
 2. **By BroadcastText:** the lowest id whose text in the language reads the same, in the form the
    NPC's sex shows (`text` for male, `text1` for female, either side of a `$g` or `$u` branch, or
-   the `$u` unresolved, as a German client sends it), then a line of that id (`gossip_broadcast`)
+   the `$u` unresolved, as the client sends it), then a line of that id (`gossip_broadcast`)
    in the same race and gender. A line named after its id must also have the same flavor.
 3. **Otherwise a new line:** `g:b{id}-{voice}` when the id is known, else `g:{md5}` in English
    and `g:{lang}-{md5}` in another language.
