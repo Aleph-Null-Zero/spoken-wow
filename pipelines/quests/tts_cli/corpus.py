@@ -173,8 +173,8 @@ def lines_in_area(corpus: dict, map_id: int, x_range, y_range) -> list:
 def extraction_rows(quests, followups):
     """Quest and gossip rows, then follow-ups, then the rows of creatures voiced by their model.
 
-    Each kind goes after the last so existing rows keep their place: import-corpus records it
-    as each row's `ord`. A model row is dropped where a patch variant of the same NPC has a
+    Each kind goes after the last so existing rows keep their place: the import records it as
+    each row's `ord`. A model row is dropped where a patch variant of the same NPC has a
     humanoid display, so one NPC never speaks a line in two voices.
     """
     import pandas as pd
@@ -187,8 +187,9 @@ def extraction_rows(quests, followups):
                      ignore_index=True)
 
 
-def extract(path: str = DEFAULT_CORPUS_PATH) -> dict:
-    """Query the world database and write the corpus. The only step that needs MySQL."""
+def extract() -> dict:
+    """The world database as a corpus, for import_corpus_data to take into Postgres. The only
+    step that needs MySQL; the committed file is written by export-corpus alone."""
     from tts_cli.sql_queries import (query_dataframe_for_all_quests_and_gossip,
                                      query_followup_dataframe, query_spawns)
     from tts_cli.tts_utils import TTSProcessor
@@ -199,6 +200,4 @@ def extract(path: str = DEFAULT_CORPUS_PATH) -> dict:
     # avoid requiring an ElevenLabs key just to extract text.
     df = TTSProcessor.preprocess_dataframe(TTSProcessor.__new__(TTSProcessor), df)
 
-    corpus = build_corpus(df, query_spawns())
-    write_corpus(path, corpus)
-    return corpus
+    return build_corpus(df, query_spawns())
