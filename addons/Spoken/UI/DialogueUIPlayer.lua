@@ -608,10 +608,10 @@ function Skin:Dress()
         highlight = colors.highlight, lines = self.lines, padTop = self.lineRoom })
 end
 
+-- Always shown, Hide Portrait or not: the header's socket is drawn for it and would sit empty.
 function Skin:ConfigurePortrait()
     -- A face set or redrawn: it is drawn a moment after.
     self:Touch()
-    -- Always the face: the header strip has its socket, which would stand empty without it.
     self.portrait:Show()
     if not StaticPortrait:Configure(self.viewport, self.clip) then Portrait:Configure(self.viewport, self.clip) end
     local viewport = self.viewport

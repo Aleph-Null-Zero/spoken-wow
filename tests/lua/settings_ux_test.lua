@@ -38,7 +38,8 @@ end
 
 ---------------------------------------------------------------- hidden when another way is chosen
 -- A setting for another way of showing lines is hidden, and the page closes up round it.
-local function Shown(control) return control.layoutRow.shown end
+-- nil for a row the page does not have, so a missing one fails rather than aborting.
+local function Shown(control) return control and control.layoutRow.shown end
 local function Box(text)
     for _, box in ipairs(home.boxes) do if box.section.text == text then return box end end
 end
@@ -46,7 +47,8 @@ env.Addon:SetPlayerStyle("subtitle"); Options:UpdateRows()
 local size = Row(home, "Window Size")
 local typing = Row(home, "Subtitle Size")
 Expect("a window setting is hidden once subtitles replace the window", Shown(size), false)
-Expect("...and so is its section, with nothing left in it", Box(L.OPT_WINDOW_TITLE).shown, false)
+Expect("...its part, Size and Position, kept: every style has the same three", Box(L.OPT_PLACE_TITLE).shown
+    and Box(L.OPT_LOOK_TITLE).shown and Box(L.OPT_TEXT_TITLE).shown, true)
 Expect("the subtitle settings appear with subtitles chosen", Shown(typing), true)
 local subtitlesTop = typing.layoutY
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
@@ -55,6 +57,28 @@ Expect("...and hides the subtitles'", Shown(typing), false)
 Expect("the rows below move up into the space", Row(home, "Silence NPC Voices").layoutY > -100000, true)
 env.Addon:SetPlayerStyle("subtitle"); Options:UpdateRows()
 Expect("...and back down when subtitles return", typing.layoutY, subtitlesTop)
+local lit = Row(home, "Highlight Words")
+local words = env.Addon.db.profile.Transcript
+words.Typewriter = true; Options:UpdateRows()
+Expect("subtitles have Highlight Words, waiting while their words are typed out", tostring(Shown(lit)) .. " "
+    .. tostring(lit.layoutReason), "true " .. tostring(L.REASON_UNTYPED))
+words.Typewriter = false; Options:UpdateRows()
+Expect("...and live with them shown whole", lit.layoutReason, nil)
+words.Typewriter = true; Options:UpdateRows()
+-- The subtitle's Auto-Scroll: pages show Sentences at Once, line by line Lines Shown.
+local function ByTip(tip)
+    for _, entry in ipairs(home.entries) do if entry.tooltip == tip then return entry.frame end end
+end
+local scroll, sentences, linesRow = ByTip(L.OPT_SUBTITLE_SCROLL_TIP), Row(home, "Sentences at Once"), Row(home, "Lines Shown")
+words.SubtitleScroll = "page"; Options:UpdateRows()
+Expect("subtitles have their own Auto-Scroll, by pages showing Sentences at Once",
+    tostring(Shown(scroll)) .. " " .. tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)), "true true false")
+words.SubtitleScroll = "line"; Options:UpdateRows()
+Expect("...and line by line, Lines Shown in its place", tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)),
+    "false true")
+words.SubtitleScroll = "page"; Options:UpdateRows()
+Expect("subtitles have Text Size and Hide Portrait, as the windows do",
+    tostring(Shown(Row(home, "Text Size"))) .. " " .. tostring(Shown(Row(home, "Hide Portrait"))), "true true")
 
 ---------------------------------------------------------------- greyed out, and why
 -- A setting waiting on a switch beside it stays, greyed, saying which switch.
@@ -86,6 +110,69 @@ Expect("...nor shows words to type out", Shown(Row(home, "Type Words Out")), fal
 Expect("...nor leaves anything to lock in place", Shown(Row(home, "Lock Position")), false)
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 Expect("choosing a window shows it again", env.Addon:PlayerStyle(), "minimal")
+
+---------------------------------------------------------------- each style's rows
+-- Under Narrator Style Settings, each style shows the rows its own code reads, and only those.
+-- Named as the page names them; a note by what it says. No addon here declares an optional
+-- button before the page is built, so no Hide ... Button row.
+local function StyleRows()
+    local names, inGroup, byFrame = {}, false, {}
+    for _, entry in ipairs(home.entries) do byFrame[entry.frame] = entry end
+    for _, item in ipairs(home.items) do
+        if item.kind == "group" then
+            inGroup = item.text == L.OPT_NARRATOR_SETTINGS
+        elseif item.kind == "groupEnd" then
+            inGroup = false
+        elseif inGroup and item.rows then
+            for _, row in ipairs(item.rows) do
+                if row.shown then
+                    local entry = byFrame[row.control]
+                    local name = entry and entry.label or row.control.text
+                    if entry and entry.tooltip == L.OPT_SUBTITLE_SCROLL_TIP then name = name .. " (subtitles)" end
+                    if row.control.text == L.DUI_WHEEL_HINT then name = "wheel note" end
+                    table.insert(names, name)
+                end
+            end
+        end
+    end
+    return table.concat(names, ", ")
+end
+do
+    local words = env.Addon.db.profile.Transcript
+    local saved = { words.Enabled, words.Typewriter, words.SubtitleScroll }
+    words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
+    local WINDOW = "Window Size, Lock Position, Reset Positions, Hide Portrait, Show Words, "
+        .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By"
+    local ROWS = {
+        minimal = WINDOW,
+        classic = WINDOW,
+        subtitle = "Subtitle Size, Lock Position, Reset Positions, Background Darkness, Show Name and Title, Show Progress, "
+            .. "Hide Portrait, Show Words, Text Size, Sentences at Once, Auto-Scroll (subtitles), "
+            .. "Highlight Words, Type Words Out, Type By",
+        none = "",
+    }
+    for _, style in ipairs({ "minimal", "classic", "subtitle", "none" }) do
+        env.Addon:SetPlayerStyle(style); Options:UpdateRows()
+        Expect("the " .. style .. " style shows the rows it reads", StyleRows(), ROWS[style])
+    end
+    -- With DialogueUI: its window, and Voice Only, which still marks the words in DialogueUI's own
+    -- quest text as Show Words, Highlight Words and Type Words Out say.
+    local Theme, playerStyle, chosen = env.DialogueUITheme, env.Addon.PlayerStyle, "dialogueui"
+    local available = Theme.Available
+    Theme.Available = function() return true end
+    env.Addon.PlayerStyle = function() return chosen end
+    Options:UpdateRows()
+    Expect("the dialogueui style shows the rows it reads", StyleRows(),
+        "Window Size, Lock Position, Reset Positions, wheel note, Follow DialogueUI's Theme, Theme, "
+        .. "Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
+        .. "Highlight Words, Type Words Out, Type By")
+    chosen = "none"; Options:UpdateRows()
+    Expect("voice only, with DialogueUI, shows the rows its quest text reads", StyleRows(),
+        "Show Words, Highlight Words, Type Words Out")
+    Theme.Available, env.Addon.PlayerStyle = available, playerStyle
+    words.Enabled, words.Typewriter, words.SubtitleScroll = saved[1], saved[2], saved[3]
+    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+end
 
 ---------------------------------------------------------------- keys
 local bindings = assert(io.open(SPOKEN .. "Bindings.xml")):read("*a")

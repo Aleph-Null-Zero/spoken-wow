@@ -98,7 +98,10 @@ and whether **Highlight Words** and **Type Words Out** are on. It stays current 
 captions are hidden or turned off. `Spoken:SplitCaption(text)` splits any text the way the
 captions do, and records where each word sits in that text. With the two, another addon can
 mark the same words in its own copy of the line. Spoken Quests does this inside DialogueUI's
-window: see [`docs/quests/DIALOGUEUI-BRIDGE.md`](../quests/DIALOGUEUI-BRIDGE.md).
+window: see [`docs/quests/DIALOGUEUI-BRIDGE.md`](../quests/DIALOGUEUI-BRIDGE.md). So with
+DialogueUI installed, **Show Words**, **Highlight Words** and **Type Words Out** stay on
+Spoken's page under Voice Only too, and their tooltips say they apply to DialogueUI's quest and
+gossip text. **Type By** does not: DialogueUI's text is typed by whole words.
 
 ## Checks
 
