@@ -2,11 +2,18 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
-## Unreleased
+## 3.3.0 — 2026-10-10
 
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
-  voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
-  that voice, the quest plays as before.
+  voice among them, and Spoken plays the one for the NPC you are talking to. Greetings and the
+  lines NPCs say after a quest follow the same rule. Until a pack has that voice, the line plays
+  as before.
+- **Greetings are found in every client language.** Spoken carries each greeting's text in your
+  client's language, so a German or Korean client finds the line whatever language its voice
+  packs speak, instead of guessing it from the English text.
+- **Fixed: under NPC Greetings "Once per NPC", the pages an option leads to stayed silent** once
+  the NPC's greeting had been heard, such as a guard's directions. Only the greeting an NPC opens
+  with counts toward "once" now.
 - **Abandoning a quest while its voice speaks fades the voice out.** Before, it was cut off
   mid-word and the quest's next line started for a moment. *([Nucabe](https://github.com/Nucabe))*
 - **Fixed: Books and Zones said "Not installed" in Spoken's module list after login**, and a
@@ -39,6 +46,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   book view, that brings back the interface it hides. The Spoken window now shows a book's title in
   your client's language, and names a one-page letter by its title instead of an internal key.
   *([earlsinclairdino](https://github.com/earlsinclairdino))*
+- **Captions fade lines in and out at the edges as they scroll**, instead of cutting them off.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Narrator Style Settings drops its box.** Small titles with a thin line separate its groups of
+  settings, and the welcome window lists the narrator styles as the settings page does.
+  *([Nucabe](https://github.com/Nucabe))*
 - For feature addons: `present.font` on a clip draws its speaker, title, queue row, captions and
   subtitle in that face, for a script the game's font has no glyphs for. A face the client cannot
   load leaves the player's own. *([damesene](https://github.com/damesene))*
