@@ -394,14 +394,14 @@ local function Count(n, many, one) return n == 1 and one or string.format(many, 
 --- map one level up, which a click on the line opens (nil for Azeroth).
 function SpokenZones:PlaceLine(mapID, key)
 	if key then return string.format(L.IN_ZONE_FMT, ZoneName(mapID)), mapID end
-	if mapID == WORLD then
+	local parent = self:PlaceAbove(mapID)
+	if not parent then
 		return Count(#Continents(), L.CONTINENT_COUNT_FMT, L.CONTINENT_COUNT_ONE) .. ", "
 			.. Count(#ZoneIDs(), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), nil
 	elseif IsContinent(mapID) then
-		return string.format(L.IN_ZONE_FMT, ZoneName(WORLD)) .. " · "
-			.. Count(#ZonesOf(mapID), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), WORLD
+		return string.format(L.IN_ZONE_FMT, ZoneName(parent)) .. " · "
+			.. Count(#ZonesOf(mapID), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), parent
 	end
-	local parent = CITY_IN[mapID] or ContinentOf(mapID) or WORLD
 	local subKeys = SubzoneKeys(mapID)
 	local line = string.format(L.IN_ZONE_FMT, ZoneName(parent))
 	if subKeys then

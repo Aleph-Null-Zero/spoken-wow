@@ -88,7 +88,7 @@ function Z:RefreshFound() end
 Z.ToggleLoreWindow = nil
 _G.hooksecurefunc = _G.hooksecurefunc or function() end
 
-for _, file in ipairs({ "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "Audio", "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 

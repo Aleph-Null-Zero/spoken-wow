@@ -538,27 +538,21 @@ local ACTIONS = {
 	}
 }
 
+--- The place one level up from a zone, as Azeroth's Compendium nests them: a city's zone, a
+--- zone's continent, a continent's world. Nil for the world.
+function SpokenZones:PlaceAbove(mapID)
+	local C = _G.SpokenCompendium
+	if mapID == C.WORLD then return nil end
+	for _, continent in ipairs(C.CONTINENTS) do
+		if continent == mapID then return C.WORLD end
+	end
+	return C.CITY_IN[mapID] or C.ContinentOf(mapID) or C.WORLD
+end
+
 -- A Spoken clip for a lore entry, or nil when the installed pack cannot narrate it.
 -- One factory so that every route to a clip -- a click, a slash command, a
 -- discovery -- produces the same shape.
 --
---- The place one level up from a zone, as Azeroth's Compendium nests them: a city's zone, a
---- zone's continent, a continent's world. Nil for the world. Where the Compendium is not loaded,
---- the game's own map tree.
-function SpokenZones:PlaceAbove(mapID)
-	local C = _G.SpokenCompendium
-	if C and C.ContinentOf then
-		if mapID == C.WORLD then return nil end
-		for _, continent in ipairs(C.CONTINENTS) do
-			if continent == mapID then return C.WORLD end
-		end
-		return C.CITY_IN[mapID] or C.ContinentOf(mapID) or C.WORLD
-	end
-	local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
-	local parent = info and info.parentMapID
-	if parent and parent ~= 0 then return parent end
-end
-
 --- How wide Place Lore draws a picture beside the map, in the screen's pixels: its text column
 --- (the panel less its margins and scroll bar, TextView's 400 at most), at the map's scale. A
 --- window showing the picture over a line's words draws it this large too.
