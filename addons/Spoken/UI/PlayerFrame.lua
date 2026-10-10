@@ -5,68 +5,53 @@ local function FrameConfig()
     return Addon:Profile("Frame")
 end
 
--- The large window, the "classic" narrator style: the speaker's portrait, and beside it a box with
--- the header (who speaks, the line's name, Stopped and the lines waiting, the round controls), the
--- words under it and the progress line along their foot, as the DialogueUI window lays them out.
--- With Bronze Border on, in retail's Talking Head art where the client has it; otherwise in
--- Spoken's own. Loads on 1.12 too, so Lua 5.0 syntax throughout.
+-- The large window, the "classic" narrator style: the game's Talking Head frame, laid out as
+-- TalkingHeadUI.xml lays it out, with the speaker's portrait (a 3D model where there is one) in its
+-- square, the gold name and white words beside it, and Spoken's round controls where the Talking
+-- Head has its close button. Clients without the Talking Head's atlases draw Spoken's own art in
+-- the same places. Loads on 1.12 too, so Lua 5.0 syntax throughout.
 --
 -- Refreshed through the player's AUDIO_CHANGED callback rather than by the queue
 -- calling this file, which is what keeps SoundQueue.lua free of any dependency on it.
 PlayerFrame = {}
 
-local PORTRAIT_SIZE = 120
+-- TalkingHeadUI.xml: the frame and its box are 570 by 155; the portrait's frame is 143 across, 5
+-- in and 6 down; the model 115 across, 21 in and 21 down; the name 2 right of the portrait's frame
+-- and 19 down from its top; the words 3 under the name, ending 42 from the right and 12 from the
+-- foot; the close button 12 in from the top right corner.
+local FRAME_WIDTH, FRAME_HEIGHT = 570, 155
+local RING_X, RING_Y, RING_SIZE = 5, -6, 143
+local PORTRAIT_X, PORTRAIT_Y, PORTRAIT_SIZE = 21, -21, 115
+local NAME_X, NAME_Y = RING_X + RING_SIZE + 2, RING_Y - 19
+local WORDS_UNDER, RIGHT, FOOT, CORNER = 3, 42, 12, 12
+-- Where the name starts with the portrait hidden: as far in as the words end on the right.
+local BARE_LEFT = RIGHT
+-- The atlases, the first of each the client has. Forever's portrait frame for the dark box is the
+-- Alliance one; Classic Era names the same art without the faction.
+local RING = { "TalkingHeads-Alliance-PortraitFrame", "TalkingHeads-PortraitFrame" }
+local BOX = { "TalkingHeads-TextBackground" }
+local FACE = { "TalkingHeads-PortraitBg" }
 -- Spoken's own portrait art: the border's cell in PortraitFrameAtlas, and the opening in it.
 local PORTRAIT_ATLAS_SIZE = 512
 local PORTRAIT_ATLAS_BORDER_SIZE = 416
 local PORTRAIT_ATLAS_VIEWPORT_SIZE = 348
 local PORTRAIT_BORDER_OUTSET = 34 * PORTRAIT_SIZE / PORTRAIT_ATLAS_VIEWPORT_SIZE
--- The Talking Head's (TalkingHeadUI.xml), scaled to this portrait: its face is 115 across and 21
--- into its box from the top and the left, its ring 143 across, 16 left of the face and 15 above it.
-local HEAD = PORTRAIT_SIZE / 115
-local HEAD_INSET, HEAD_RING = 21 * HEAD, 143 * HEAD
-local HEAD_RING_X, HEAD_RING_Y = -16 * HEAD, 15 * HEAD
--- The Talking Head's atlases, the first of each the client has. The Forever client's Neutral box
--- is a light parchment; the other is dark.
-local RING = { "TalkingHeads-Neutral-PortraitFrame", "TalkingHeads-PortraitFrame" }
-local BOX = { "TalkingHeads-Neutral-TextBackground", "TalkingHeads-TextBackground" }
-local FACE = { "TalkingHeads-PortraitBg" }
-local LIGHT_BOX = "TalkingHeads-Neutral-TextBackground"
--- The width the window opens at, less the portrait, which Hide Portrait takes off.
-local FRAME_WIDTH_WITHOUT_PORTRAIT = 400
--- Round the column: after the portrait; from the window's left edge without it, leaving the mover
--- room; before the right edge, where the resizer sits; and the least over and under it.
-local GAP, LEFT, RIGHT, PAD = 18, 30, 20, 12
--- The column's least width: the header's three controls and a name.
-local LEAST_COLUMN = 200
--- The header is as tall as its round controls, ROUND_GAP apart. Its words end a button's width
--- short of them; the line's label sits LABEL_GAP after the name, left off with less room than
--- LABEL_LEAST.
-local ROUND_SIZE, ROUND_GAP = 24, 4
-local LABEL_GAP, LABEL_LEAST = 8, 40
--- The words' gap under the header, of a line's height; a line leaving at the top fades through a
--- whole line's room over them, into the header's foot.
-local WORDS_UNDER = 0.6
--- Between the words and the progress line.
-local BAR_GAP = 6
+-- The name's height, for the words under it, and the gap left before the round controls.
+local NAME_SIZE, NAME_GAP = 22, 8
+local ROUND_GAP = 4
 local TEXTURES = [[Interface\AddOns\Spoken\Textures\]]
--- The header's colours on each box: Spoken's own and the Talking Head's dark one; on its light one
--- the game's (TalkingHeadUI.lua: a brown name, dark words, no shadow), with the words and the word
--- lit in DialogueUI's parchment colours.
-local LOOKS = {
-    own = { name = { 214 / 255, 214 / 255, 214 / 255 }, label = { .62, .62, .62 }, tail = { .5, .5, .5 } },
-    dark = { name = { 1, .82, 0 }, label = { .72, .72, .72 }, tail = { .5, .5, .5 } },
-    light = { name = { .33, .16, .02 }, label = { .5, .36, .24 }, tail = { .5, .36, .24 },
-        words = { .19, .17, .13 }, highlight = "|cff9c1a1a", flat = true },
-}
+-- TalkingHeadUI.lua's colours for its dark box: a gold name, white words, black shadows.
+local NAME_COLOR = { 1, .82, .02 }
+local WORDS_COLOR = { 1, 1, 1 }
+local TAIL_COLOR = { .6, .6, .6 }
 
 do
     local font = CreateFont("SpokenNameFont")
-    font:SetFont(GameFontNormal:GetFont(), 19, "")
+    font:SetFont(GameFontNormal:GetFont(), NAME_SIZE - 2, "")
     font:SetShadowColor(0, 0, 0)
     font:SetShadowOffset(1, -1)
     font:SetJustifyH("LEFT")
-    font:SetJustifyV("MIDDLE")
+    font:SetJustifyV("TOP")
 end
 do
     local font = CreateFont("SpokenLabelFont")
@@ -77,15 +62,6 @@ do
     font:SetJustifyV("MIDDLE")
 end
 
--- 1.12 reports no width for a frame that has not been laid out; the edges are reliable.
-local function WidthOf(frame)
-    if Version.IsLegacyVanilla then
-        return (frame:GetRight() or 0) - (frame:GetLeft() or 0)
-    end
-    return frame:GetWidth()
-end
-
-local function Round(n) return math.floor(n + 0.5) end
 local function Label(clip) return clip and (clip.present and clip.present.label or clip.key) or "" end
 local function Waiting() return math.max(0, SoundQueue:GetQueueSize() - 1) end
 
@@ -110,56 +86,32 @@ end
 function PlayerFrame:InitDisplay()
     self.frame = CreateFrame("Frame", "SpokenPlayerFrame", UIParent, "BackdropTemplate")
     function self.frame:Reset()
-        self:SetWidth(PORTRAIT_SIZE + FRAME_WIDTH_WITHOUT_PORTRAIT)
-        self:SetHeight(PORTRAIT_SIZE)
         self:ClearAllPoints()
         self:SetPoint("BOTTOM", 0, 200)
     end
+    self.frame:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
     self.frame:Reset()
-    if Addon:RestoreLayout("Player", self.frame) then
-        -- Saved as the width with the portrait, which RefreshConfig takes off when hidden.
-        self.frame:SetWidth(Addon:Layout().Player.width or self.frame:GetWidth())
-    end
+    Addon:RestoreLayout("Player", self.frame)
     self.frame:SetMovable(true)
-    self.frame:SetResizable(true)
     self.frame:SetClampedToScreen(true)
     -- Placed from the saved layout instead; the client's cache would only fight it.
     self.frame:SetUserPlaced(false)
     self.frame:SetFrameStrata(FrameConfig().FrameStrata)
     self.frame:Hide()
 
-    -- The box: the Talking Head's behind the whole window, or Spoken's gradient beside the portrait
-    -- (PlayerFrame:ApplyArt).
     self.frame.background = self.frame:CreateTexture(nil, "BACKGROUND")
+    self.frame.background:SetAllPoints()
 
-    self.frame.resizer = CreateFrame("Button", nil, self.frame)
-    self.frame.resizer:SetPoint("BOTTOMRIGHT")
-    self.frame.resizer:SetSize(16, 16)
-    self.frame.resizer:SetNormalTexture(TEXTURES .. "SizeGrabber-Up")
-    self.frame.resizer:SetPushedTexture(TEXTURES .. "SizeGrabber-Down")
-    self.frame.resizer:SetHighlightTexture(TEXTURES .. "SizeGrabber-Highlight")
-    self.frame.resizer:HookScript("OnEnter", function() SetCursor([[Interface\Cursor\UI-Cursor-SizeRight]]) end)
-    self.frame.resizer:HookScript("OnLeave", function() SetCursor(nil) end)
-    self.frame.resizer:HookScript("OnMouseDown", function()
-        self.frame.resizer:GetHighlightTexture():Hide()
-        self.frame:StartSizing("BOTTOMRIGHT")
-    end)
-    self.frame.resizer:HookScript("OnMouseUp", function()
-        self.frame.resizer:GetHighlightTexture():Show()
-        self.frame:StopMovingOrSizing()
-        self:SaveLayout()
-    end)
-
-    -- The column in the box: the header, the words under it, the progress line along their foot.
+    -- The column right of the portrait: the name, the words under it, the progress line at its foot.
     self.frame.container = CreateFrame("Frame", nil, self.frame)
 
-    self.frame:SetScript("OnSizeChanged", function() self:Layout() end)
     self.frame:SetScript("OnUpdate", function(_, elapsed) self:Tick(elapsed) end)
 end
 
 function PlayerFrame:InitPortrait()
     self.frame.portrait = CreateFrame("Frame", nil, self.frame)
     self.frame.portrait:SetSize(PORTRAIT_SIZE, PORTRAIT_SIZE)
+    self.frame.portrait:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PORTRAIT_X, PORTRAIT_Y)
 
     self.frame.portrait.background = self.frame.portrait:CreateTexture(nil, "BACKGROUND")
     self.frame.portrait.background:SetAllPoints()
@@ -168,17 +120,22 @@ function PlayerFrame:InitPortrait()
     self.frame.portrait.border = CreateFrame("Frame", nil, self.frame.portrait)
     self.frame.portrait.border:SetFrameLevel(self.frame.portrait:GetFrameLevel() + 3)
     self.frame.portrait.border:SetAllPoints()
-    self.frame.portrait.border.texture = self.frame.portrait.border:CreateTexture(nil, "BORDER")
+    self.frame.portrait.border.texture = self.frame.portrait.border:CreateTexture(nil, "OVERLAY")
 end
 
---- The header: the speaker, the line's label after the name, Stopped and the count after those,
---- and the round controls at its right end, as the DialogueUI window's. The progress line too.
+--- The name, Stopped and the count after it, the round controls in the top right corner, and the
+--- progress line.
 function PlayerFrame:InitHeader()
     local container = self.frame.container
     container.name = container:CreateFontString(nil, "ARTWORK", "SpokenNameFont")
+    -- The Talking Head's own font where the client has it.
+    if Fancy22Font then container.name:SetFontObject(Fancy22Font) end
+    container.name:SetJustifyH("LEFT")
     container.name:SetWordWrap(false)
-    container.label = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
-    container.label:SetWordWrap(false)
+    container.name:SetTextColor(NAME_COLOR[1], NAME_COLOR[2], NAME_COLOR[3])
+    container.name:SetShadowColor(0, 0, 0, 1)
+    container.name:SetShadowOffset(1, -1)
+    container.name:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
     self.stopped = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
     self.stopped:SetWordWrap(false)
     self.stopped:SetText(format("• (%s)", L.SUBTITLE_STOPPED))
@@ -186,16 +143,21 @@ function PlayerFrame:InitHeader()
     self.count = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
     self.count:SetWordWrap(false)
     self.count:Hide()
+    for _, text in ipairs({ self.stopped, self.count }) do
+        text:SetTextColor(TAIL_COLOR[1], TAIL_COLOR[2], TAIL_COLOR[3])
+    end
     self.tail = Actions.Tail(self.stopped, self.count)
 
     self.controls = CreateFrame("Frame", nil, container)
     self.controls:SetHeight(1)
+    self.controls:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -CORNER, -CORNER)
     self.play = Actions.StopButton(self.controls, function() return self:Current() ~= nil end,
         function() self:UpdateControls() end)
     self.skip = Actions.SkipButton(self.controls)
     self.buttons = { self.play, self.skip }
 
     self.progress = Actions.ProgressBar(container)
+    self.progress.track:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", 0, 0)
 end
 
 function PlayerFrame:InitMover()
@@ -247,13 +209,11 @@ function PlayerFrame:IsShowing()
     return self:Skin() == nil and Addon:DisplayStyle() == "classic"
 end
 
---- The Talking Head's atlases, with Bronze Border on and every one in the client; nil for
---- Spoken's own art.
+--- The Talking Head's atlases where the client has every one; nil for Spoken's own art.
 function PlayerFrame:Art()
-    if not Addon:Bronze() then return nil end
     local ring, box, face = FirstAtlas(RING), FirstAtlas(BOX), FirstAtlas(FACE)
     if not (ring and box and face) then return nil end
-    return { ring = ring, box = box, face = face, look = box == LIGHT_BOX and LOOKS.light or LOOKS.dark }
+    return { ring = ring, box = box, face = face }
 end
 
 local function DrawArt(frame, art)
@@ -264,8 +224,8 @@ local function DrawArt(frame, art)
         frame.background:SetAtlas(art.box)
         portrait.background:SetAtlas(art.face)
         border:SetAtlas(art.ring)
-        border:SetSize(HEAD_RING, HEAD_RING)
-        border:SetPoint("TOPLEFT", portrait, "TOPLEFT", HEAD_RING_X, HEAD_RING_Y)
+        border:SetSize(RING_SIZE, RING_SIZE)
+        border:SetPoint("TOPLEFT", portrait, "TOPLEFT", RING_X - PORTRAIT_X, RING_Y - PORTRAIT_Y)
         return
     end
     frame.background:SetTexture(TEXTURES .. "BackgroundGradient")
@@ -278,8 +238,8 @@ local function DrawArt(frame, art)
     border:SetPoint("BOTTOMRIGHT", portrait, "BOTTOMRIGHT", PORTRAIT_BORDER_OUTSET, -PORTRAIT_BORDER_OUTSET)
 end
 
---- The box and the portrait's art, and the header's colours on it. Art that fails to draw leaves
---- Spoken's own, and its error goes to the error handler.
+--- The box and the portrait's art. Art that fails to draw leaves Spoken's own, and its error goes
+--- to the error handler.
 function PlayerFrame:ApplyArt()
     local art = self:Art()
     if art then
@@ -291,17 +251,6 @@ function PlayerFrame:ApplyArt()
     end
     if not art then DrawArt(self.frame, nil) end
     self.art = art
-    self.look = art and art.look or LOOKS.own
-    local look = self.look
-    local container = self.frame.container
-    local function Paint(text, color)
-        text:SetTextColor(color[1], color[2], color[3])
-        text:SetShadowColor(0, 0, 0, look.flat and 0 or 1)
-    end
-    Paint(container.name, look.name)
-    Paint(container.label, look.label)
-    Paint(self.stopped, look.tail)
-    Paint(self.count, look.tail)
 end
 
 function PlayerFrame:RefreshConfig()
@@ -319,25 +268,18 @@ function PlayerFrame:RefreshConfig()
         return
     end
     local cfg = FrameConfig()
+    self.frame.portrait:SetShown(not cfg.HidePortrait)
+    self.frame.mover:ClearAllPoints()
     if cfg.HidePortrait then
-        if self.frame.portrait:IsShown() then
-            self.frame:SetWidth(self.frame:GetWidth() - PORTRAIT_SIZE)
-        end
-        self.frame.portrait:Hide()
         self.frame.mover:SetParent(self.frame)
-        self.frame.mover:SetPoint("CENTER", self.frame, "BOTTOMLEFT", LEFT / 2, LEFT / 2)
+        self.frame.mover:SetPoint("CENTER", self.frame, "BOTTOMLEFT", BARE_LEFT / 2, BARE_LEFT / 2)
     else
-        if not self.frame.portrait:IsShown() then
-            self.frame:SetWidth(self.frame:GetWidth() + PORTRAIT_SIZE)
-        end
-        self.frame.portrait:Show()
         self.frame.mover:SetParent(self.frame.portrait.border)
-        self.frame.mover:SetPoint("CENTER", self.frame.portrait, "BOTTOMLEFT", 5, 6)
+        self.frame.mover:SetPoint("CENTER", self.frame.portrait, "BOTTOMLEFT", 0, 0)
     end
     self:ApplyArt()
 
     self.frame.mover:SetShown(not Addon:IsFrameLocked())
-    self.frame.resizer:SetShown(not Addon:IsFrameLocked())
     self.frame:SetScale(cfg.FrameScale)
     self.frame:SetFrameStrata(cfg.FrameStrata)
     Addon:ApplyHost(self.frame)
@@ -353,89 +295,47 @@ function PlayerFrame:WordLines(clip)
     return transcript.Lines == 1 and 1 or 2, lineHeight
 end
 
---- The window's height and its column's place for the line, the words docked in the column. Run
---- on every update and resize; the height follows the words, the width is the player's.
+--- The column's place and the words docked in it. The window keeps the Talking Head's size.
 function PlayerFrame:Layout()
     if self.laying or not self:IsShowing() then return end
     self.laying = true
     local frame, container = self.frame, self.frame.container
-    local hidePortrait = FrameConfig().HidePortrait
-    local inset = (self.art and not hidePortrait) and HEAD_INSET or 0
-    local left = hidePortrait and LEFT or inset + PORTRAIT_SIZE + GAP
-
-    local lines, lineHeight = self:WordLines(self:Current())
-    local words = lines * lineHeight
-    local wordsGap = Round(WORDS_UNDER * lineHeight)
-    local wordsTop = ROUND_SIZE + wordsGap
-    local content = (words > 0 and wordsTop + words or ROUND_SIZE) + BAR_GAP + self.progress.height
-    local height = math.max(hidePortrait and 0 or PORTRAIT_SIZE + 2 * inset, content + 2 * PAD)
-    Transcript:ResizePlayer(frame, height, left + LEAST_COLUMN + RIGHT, 10000)
-
-    local width = math.max(1, WidthOf(frame) - left - RIGHT)
+    local left = FrameConfig().HidePortrait and BARE_LEFT or NAME_X
     container:ClearAllPoints()
-    container:SetPoint("TOPLEFT", frame, "TOPLEFT", left, -Round((height - content) / 2))
-    container:SetWidth(width)
-    container:SetHeight(content)
-
-    self.frame.portrait:ClearAllPoints()
-    self.frame.portrait:SetPoint("TOPLEFT", frame, "TOPLEFT", inset, -inset)
-    self.frame.background:ClearAllPoints()
-    if self.art or hidePortrait then
-        self.frame.background:SetPoint("TOPLEFT")
-    else
-        self.frame.background:SetPoint("TOPLEFT", PORTRAIT_SIZE, 0)
-    end
-    self.frame.background:SetPoint("BOTTOMRIGHT")
-
-    container.name:ClearAllPoints()
-    container.name:SetPoint("LEFT", container, "TOPLEFT", 0, -ROUND_SIZE / 2)
-    container.label:ClearAllPoints()
-    container.label:SetPoint("BOTTOMLEFT", container.name, "BOTTOMRIGHT", LABEL_GAP, 1)
-    self.controls:ClearAllPoints()
-    self.controls:SetPoint("RIGHT", container, "TOPRIGHT", 0, -ROUND_SIZE / 2)
+    container:SetPoint("TOPLEFT", frame, "TOPLEFT", left, NAME_Y)
+    container:SetWidth(FRAME_WIDTH - left - RIGHT)
+    container:SetHeight(FRAME_HEIGHT + NAME_Y - FOOT)
+    local width = container:GetWidth()
 
     -- A line's room over the words and under them, which a line gliding out or in fades through.
-    local look = self.look or LOOKS.own
-    local style = { lines = math.max(1, lines), padTop = lineHeight, color = look.words, highlight = look.highlight }
-    if look.flat then style.shadow = false end
+    local lines, lineHeight = self:WordLines(self:Current())
+    local words = lines * lineHeight
+    local font = GameFontHighlightLarge and GameFontHighlightLarge:GetFont() or nil
     self.styling = true
-    Transcript:SetStyle(style)
+    Transcript:SetStyle({ lines = math.max(1, lines), padTop = lineHeight, color = WORDS_COLOR, font = font })
     self.styling = nil
-    Transcript:Dock(container, container, "TOPLEFT", 0, -(wordsTop - lineHeight), width,
+    Transcript:Dock(container, container, "TOPLEFT", 0, -(NAME_SIZE + WORDS_UNDER - lineHeight), width,
         words > 0 and words + 2 * lineHeight or 0)
 
-    self.progress.track:ClearAllPoints()
-    self.progress.track:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", 0, 0)
     self.progress.track:SetWidth(width)
     self:LayoutHeader()
     self.laying = nil
 end
 
---- The name in full where it fits, the label after it cut short (or left off where it would not
---- show enough), then Stopped and the count, all short of the controls by a button's width.
+--- The name in full where it fits, then Stopped and the count after it, all short of the controls.
 function PlayerFrame:LayoutHeader()
     local container = self.frame.container
-    local name, label, tail = container.name, container.label, self.tail
-    local room = math.max(1, WidthOf(container) - self.controls:GetWidth() - ROUND_SIZE)
+    local name, tail = container.name, self.tail
+    local left = FrameConfig().HidePortrait and BARE_LEFT or NAME_X
+    local room = math.max(1, FRAME_WIDTH - CORNER - self.controls:GetWidth() - NAME_GAP - left)
     local tailRoom = tail:Room()
-    -- Unbounded first, so the widths measured are the texts' own.
+    -- Unbounded first, so the width measured is the text's own.
     name:SetWidth(0)
     name:SetText(name:GetText())
     local nameWidth = math.min((name:GetStringWidth() or 0) + 1, math.max(1, room - tailRoom))
     name:SetWidth(nameWidth)
-    local text = label:GetText() or ""
-    local shown = 0
-    if text ~= "" then
-        label:SetWidth(0)
-        label:SetText(text)
-        local want = (label:GetStringWidth() or 0) + 1
-        local free = room - tailRoom - nameWidth - LABEL_GAP
-        if free >= math.min(want, LABEL_LEAST) then shown = math.min(want, free) end
-    end
-    label:SetShown(shown > 0)
-    if shown > 0 then label:SetWidth(shown) end
     if tailRoom > 0 then
-        if shown > 0 then tail:Place(label, shown) else tail:Place(name, nameWidth) end
+        tail:Place(name, nameWidth)
         tail:Paint()
     end
 end
@@ -519,14 +419,9 @@ function PlayerFrame:Update()
     self.frame:SetShown(Addon:DisplayStyle() == "classic" and head ~= nil)
     if not self.frame:IsShown() then return end
 
-    -- The speaker, or the line's name where nobody speaks; then the line's name, unless it is
-    -- the same, as the subtitle leaves it off.
-    local container = self.frame.container
+    -- The speaker, or the line's name where nobody speaks.
     local header = head.present and head.present.header
-    local title = Label(head)
-    local name = (header and header ~= "") and header or title
-    container.name:SetText(name)
-    container.label:SetText(title ~= name and title or "")
+    self.frame.container.name:SetText((header and header ~= "") and header or Label(head))
 
     Portrait:Configure(self.frame.portrait, head)
     self:ConfigureActions(head)
@@ -550,9 +445,9 @@ function PlayerFrame:Describe()
     local container = self.frame.container
     Say(format("frame shown=%s w=%.0f h=%.0f art=%s", tostring(self.frame:IsShown()),
         self.frame:GetWidth() or 0, self.frame:GetHeight() or 0, self.art and self.art.box or "own"))
-    Say(format("container shown=%s w=%.0f h=%.0f header=%q title=%q count=%q", tostring(container:IsShown()),
+    Say(format("container shown=%s w=%.0f h=%.0f header=%q count=%q", tostring(container:IsShown()),
         container:GetWidth() or 0, container:GetHeight() or 0, container.name:GetText() or "",
-        container.label:IsShown() and container.label:GetText() or "", self.count:GetText() or ""))
+        self.count:GetText() or ""))
     Say(format("portrait kind=%s", tostring(self.frame.portrait.active)))
     for _, button in ipairs(self.row or {}) do
         Say(format("  control %s shown=%s", button.action and button.action.id or (button == self.play
@@ -564,19 +459,15 @@ function PlayerFrame:Describe()
 end
 
 function PlayerFrame:SaveLayout()
-    local width = self.frame:GetWidth() + (FrameConfig().HidePortrait and PORTRAIT_SIZE or 0)
-    Addon:SaveLayout("Player", self.frame, width)
+    Addon:SaveLayout("Player", self.frame)
 end
 
---- Back to the default spot and width, forgetting the saved ones, for a frame dragged
---- off-screen or sized past use.
+--- Back to the default spot, forgetting the saved one, for a frame dragged off-screen.
 function PlayerFrame:Reset()
     local skin = self:Skin()
     if skin then skin:Reset(); return end
     Addon:Layout().Player = nil
     if not self.frame then return end
     self.frame:Reset()
-    -- Reset's width has the portrait in it, and RefreshConfig only takes it off on a change.
-    if FrameConfig().HidePortrait then self.frame:SetWidth(self.frame:GetWidth() - PORTRAIT_SIZE) end
     self:RefreshConfig()
 end
