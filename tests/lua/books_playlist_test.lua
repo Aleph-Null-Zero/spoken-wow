@@ -23,13 +23,15 @@ _G.SpokenBooksAudioPacks = {
             -- A page of a different book entirely: what a reader jumping to another book
             -- looks like from here.
             [2810] = { file = "2810", len = 8.0 },
+            -- William's Shipment, a letter of one page.
+            [15] = { file = "15", len = 6.0 },
         },
     },
 }
 
 local function LoadBooks()
     local SpokenBooks = {}
-    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "UI/CopyLink" }) do
+    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
         chunk("Spoken_Books", SpokenBooks)
     end
@@ -85,6 +87,9 @@ Expect("...under what it is, as the Compendium sorts it, as a speaker over a que
 Expect("...named by the book, whatever page of it this is: the book is one line", clip.present.label,
     "Hillsbrad Town Registry")
 Expect("a page the pack does not carry has no clip", B:ClipFor(263), nil)
+local letter = B:ClipFor(15)
+Expect("a one-page letter is named by its title, under what it is", letter.present.label .. " " .. tostring(letter.present.header ~= letter.present.label),
+    "William's Shipment true")
 
 ---------------------------------------------------------------- reporting a bad reading
 local report = clip.present.actions and clip.present.actions[1]

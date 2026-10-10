@@ -28,7 +28,16 @@ local function Clamp(n, low, high) return math.max(low, math.min(high, n)) end
 -- The frame still resizes while the UI is torn down, after AceDB strips it (Addon:Profile).
 local function Config() return Addon:Profile("Frame") end
 local function Waiting() return math.max(0, SoundQueue:GetQueueSize() - 1) end
-local function Label(clip) return clip and (clip.present and clip.present.label or clip.key) or "" end
+-- A line with no label (a one-page letter) goes by its header: its key means nothing to a player.
+local function Label(clip)
+    local present = clip and clip.present
+    return clip and (present and (present.label or present.header) or clip.key) or ""
+end
+-- The name over the title: the header, unless it is already the title (a line with no label).
+local function Name(clip)
+    local present = clip and clip.present
+    return present and present.label and present.header or ""
+end
 local function Font(parent, size, r, g, b)
     local text = parent:CreateFontString(nil, "OVERLAY")
     text:SetFont(GameFontNormal:GetFont(), size, "")
@@ -77,7 +86,7 @@ end
 
 -- Shared with the DialogueUI window's queue, so both lists of waiting lines behave alike.
 MinimalPlayer.parts = { Font = Font, Removable = Removable, ShowRemove = ShowRemove, Label = Label,
-    HeldLabel = HeldLabel, Clamp = Clamp, Waiting = Waiting, BelongsTo = BelongsTo }
+    Name = Name, HeldLabel = HeldLabel, Clamp = Clamp, Waiting = Waiting, BelongsTo = BelongsTo }
 
 function MinimalPlayer:HideTooltip()
     local owner = GameTooltip:GetOwner()
@@ -661,7 +670,7 @@ function MinimalPlayer:Update()
         self.clip, self.seconds, self.offset = clip, 0, 0
     end
     self:SetVisible(true)
-    self.name:SetText(clip.present and clip.present.header or "")
+    self.name:SetText(Name(clip))
     Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
