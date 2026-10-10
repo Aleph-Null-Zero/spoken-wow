@@ -90,6 +90,11 @@ Expect("a clip with no header starts its row at the top, with no empty line over
     select(3, F.frame.container.buttons[1]:GetPoint()), "TOPLEFT")
 env.SoundQueue:RemoveAllSoundsFromQueue()
 Expect("hidden again when the queue empties", F.frame:IsShown(), false)
+quests:Enqueue(H.Clip({ key = "b:1", present = { header = "A Letter Home", portrait = { kind = "none" } } }))
+Expect("a line with no label is named by its header, never by its key",
+    F.frame.container.buttons[1].textWidget:GetText(), "A Letter Home")
+Expect("...said once: no name line over it", F.frame.container.name:GetText(), "")
+env.SoundQueue:RemoveAllSoundsFromQueue()
 
 env.Addon:SetPlayerStyle("none")
 quests:Enqueue(H.Clip())
@@ -535,7 +540,7 @@ Expect("...beside hiding the Contribute buttons", string.find(order,
 Expect("voice only is still one of the ways to show lines", _G.SpokenEnv.Options:Styles()[4], "none")
 Expect("...and a narrator card of its own, a sound's bars rising and falling", labels["Voice Only"], true)
 Expect("...and there is no separate switch to hide the window", labels["Hide Window"], nil)
-Expect("there is no channel to choose: the voices play on Master", labels["Volume Follows"], nil)
+Expect("the channel is chosen here", labels["Volume Follows"], true)
 Expect("...and the voice language, once for every module", labels["Voice Language"], true)
 Expect("...and so is silencing the game's own dialogue",
     labels["Silence NPC Voices"], true)
@@ -792,6 +797,11 @@ Expect("the small window shows the sample too", env.MinimalPlayer.clip == F.samp
 Expect("...its speaker", env.MinimalPlayer.name:GetText(), env.L.SAMPLE_SPEAKER)
 F:ShowSample(false)
 Expect("...and puts it away", env.MinimalPlayer.wanted, false)
+quests:Enqueue(H.Clip({ key = "b:1", present = { header = "A Letter Home", portrait = { kind = "none" } } }))
+Expect("a line with no label: the small window titles it by its header",
+    env.MinimalPlayer.title.text:GetText(), "A Letter Home")
+Expect("...said once: no name over it", env.MinimalPlayer.name:GetText(), "")
+env.SoundQueue:RemoveAllSoundsFromQueue()
 
 -- The welcome window's narrator tiles: a click chooses, and a Preview button on each style but
 -- Voice Only shows that style with a sample line, whichever is chosen, until it is hidden again,
