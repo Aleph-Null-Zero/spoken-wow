@@ -82,6 +82,10 @@ Expect("a page the pack does not carry has no clip", B:ClipFor(263), nil)
 local letter = B:ClipFor(15)
 Expect("a one-page letter is titled with its book", letter.present.header, "William's Shipment")
 Expect("...and has no page count", letter.present.label, nil)
+-- The group is what keeps the cue between items out of a book, and every way a page is
+-- queued builds its clip here.
+Expect("pages of one book share a group", B:ClipFor(262).group, clip.group)
+Expect("...which another book's page does not", B:ClipFor(2810).group ~= clip.group, true)
 
 ---------------------------------------------------------------- reporting a bad reading
 local report = clip.present.actions and clip.present.actions[1]

@@ -37,8 +37,6 @@ function Sources:Register(key, info)
         queueLimit = info.queueLimit,
         -- 0.55 is upstream's figure; it absorbs a duration that is slightly short.
         interClipGap = info.interClipGap or 0.55,
-        -- Pages of one book read on: no LineGap between them.
-        continuous = info.continuous,
         channel = info.channel,
         admit = info.admit,
         testBeforeQueue = info.testBeforeQueue,
@@ -104,14 +102,18 @@ function Sources:Iterate()
     end
 end
 
---- The channel a clip from this source plays on: its own if it names one, else Master. There is
---- no setting for it: on Dialog, Silence NPC Voices would silence Spoken's voices with the NPCs',
---- and Game Greeting First could not tell them from an NPC's. A string, as PlaySoundFile takes.
+--- The channel the player chose for Spoken's voices. Always Master on the legacy clients, whose
+--- playback ignores the channel, so a choice saved elsewhere does not change what they mute.
+function Sources:PlayerChannel()
+    return Version.IsAnyLegacy and "Master" or Addon.db.profile.Audio.SoundChannel
+end
+
+--- The channel a clip from this source plays on: its own if it names one, else the player's.
 function SourceMethods:GetChannel()
     if self.channel then
         return self.channel()
     end
-    return "Master"
+    return Sources:PlayerChannel()
 end
 
 -- A line the queue would not take, in the debug log: the refusals that fire no CLIP_DROPPED

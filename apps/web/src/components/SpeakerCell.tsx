@@ -134,13 +134,13 @@ export default function SpeakerCell({
   // stray click away from silently overwriting a considered "no race" with an empty save.
   const [editing, setEditing] = useState(false);
 
-  // Read-only too for somebody api/contributions/npc would refuse: the answer as it stands,
-  // with no form that could only end in a 403.
-  if (npc.provenance === "corpus" || readOnly) {
-    // The corpus is the exact answer, taken from the same display data the game itself uses --
-    // there is nothing for a moderator to decide, and unlike a `moderator` row (below) there is
-    // no "edit" affordance either: overriding the corpus's own answer would need to be a
-    // deliberate act (e.g. direct SQL), not an accident of a form this table always shows.
+  // An NPC the game gives a race and gender but no flavor (the extract's corpus row) has no
+  // voice until somebody picks one, so it opens on the flavor select, as a guess does.
+  const needsFlavor = Boolean(npc.race && npc.gender && !npc.flavor && npc.flavorOptions.length > 0);
+
+  // Read-only for somebody api/contributions/npc would refuse: the answer as it stands, with no
+  // form that could only end in a 403.
+  if (readOnly) {
     return (
       <div>
         <div className="flex items-center gap-1 whitespace-nowrap">
@@ -153,11 +153,11 @@ export default function SpeakerCell({
     );
   }
 
-  if (npc.confirmed && !editing) {
-    // A moderator's own settled answer, or a `display` one (the other `confirmed` provenances --
-    // migrations 0031 and 0055). A display answer can still be wrong when the addon's rolls
-    // missed the appearance the player saw, so it keeps this Edit rather than the corpus's
-    // read-only view. Shown plainly like the corpus, but with a small edit control that reopens the form
+  if (npc.confirmed && !editing && !needsFlavor) {
+    // A settled answer: the corpus's, a moderator's or a `display` one (migrations 0031 and
+    // 0055). Each can still be wrong -- the extract reads a display, and the addon's rolls can
+    // miss the appearance the player saw -- and an answer here voices every line the NPC
+    // speaks, so each keeps an Edit. Shown plainly like the corpus, but with a small edit control that reopens the form
     // below, preselected with the current values via the same useState initialisers above. The
     // store already lets a moderator write over a moderator row -- upsertResolution's `where`
     // compares ranks with `<=`, so an equal rank still updates (store.test.ts's "lets a
@@ -188,7 +188,7 @@ export default function SpeakerCell({
   // may want to correct any of the three, not just the flavor. So does a guess the moderator
   // has said is wrong (its own Edit, below): the model the client reported is only a guess,
   // and a guessed bloodelf can be a human captain.
-  const known = npc.provenance === "client" && !editing;
+  const known = (npc.provenance === "client" || needsFlavor) && !editing;
   // The "nothing known" state's own flavor options: flavorScopes is the whole corpus, so this
   // narrows to whatever race and gender were just picked, the same shape flavorOptions already
   // is for the "client" state -- npc.flavorOptions answers for the race-gender on file, not

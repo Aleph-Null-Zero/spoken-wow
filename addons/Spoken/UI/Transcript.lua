@@ -424,6 +424,9 @@ function Transcript:Place()
         label:SetPoint("TOPLEFT", 0, -((row - 1) - fraction) * step)
         local line = self.lines and self.lines[first + row - 1]
         label:SetShown(line ~= nil and (row <= n or (row == n + 1 and fraction > 0)))
+        -- As much of the row as is inside the clipped frame, so a line half past an edge does not
+        -- end on a hard cut.
+        label:SetAlpha(row == 1 and 1 - fraction or row == n + 1 and fraction or 1)
     end
 end
 

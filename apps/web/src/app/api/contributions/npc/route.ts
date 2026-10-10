@@ -21,7 +21,7 @@
 import { recordActivity } from "@/lib/activity/store";
 import { requireIn } from "@/lib/generation/authz";
 import { INT32_MAX } from "@/lib/npc/npc";
-import { getResolution, NPC_KINDS, resolutionKey, upsertResolution, type NpcKind } from "@/lib/npc/store";
+import { getResolution, NPC_KINDS, renameNpc, resolutionKey, upsertResolution, type NpcKind } from "@/lib/npc/store";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +55,13 @@ export async function POST(request: Request) {
   // the NPC, and the next person to look may want to know what the guess was based on.
   const existing = await getResolution(npcKind, npcId);
 
+  // A name is its own answer: renaming an NPC confirms nothing about its voice.
+  const npcName = text(body.npcName, 200);
+  const answersVoice = ["race", "gender", "flavor", "doubtful", "note"].some((field) => field in body);
+  if (npcName && !answersVoice && !existing) return Response.json({ error: "unknown npc" }, { status: 404 });
+  if (npcName) await renameNpc(npcKind, npcId, npcName, session.user.id, lang);
+  if (npcName && !answersVoice) return Response.json({ resolution: await getResolution(npcKind, npcId) });
+
   // Absent from the body and sent-as-empty are different answers, and the form now posts race,
   // gender and flavor independently: a moderator confirming "this is a tauren male" has no
   // opinion on the flavor yet, and one who only has an opinion on the flavor of a client-guessed
@@ -68,7 +75,8 @@ export async function POST(request: Request) {
   const row = await upsertResolution({
     npcKind,
     npcId,
-    npcName: existing?.npcName ?? null,
+    // Saved above, by renameNpc, when there is one.
+    npcName: null,
     race: orExisting(body.race, existing?.race ?? null, 64),
     gender: orExisting(body.gender, existing?.gender ?? null, 16),
     flavor: orExisting(body.flavor, existing?.flavor ?? null, 64),

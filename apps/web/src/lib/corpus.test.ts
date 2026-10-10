@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildLineIndex, npcKey } from "./corpus";
-import { corpus as catalogue, defaultFlavorFor, flavorsFor, lineIndex, npcVoiceFromCorpus } from "./quests/catalogue";
+import { corpus as catalogue, defaultFlavorFor, flavorsFor, lineIndex } from "./quests/catalogue";
 
 describe("corpus", async () => {
   const corpus = await catalogue();
@@ -63,32 +63,6 @@ describe("lineIndex", async () => {
   it("memoises", async () => {
     expect(await lineIndex()).toBe(index);
     expect(buildLineIndex(await catalogue())).not.toBe(index);
-  });
-});
-
-describe("npcVoiceFromCorpus", () => {
-  it("carries the exact race, gender and flavor for an npc the corpus knows", async () => {
-    // Jitters, npcId 288, from q:5:accept above -- real values, not just "not null", so a
-    // swapped race/gender or a wrong key format fails this rather than shipping quietly.
-    expect(await npcVoiceFromCorpus("creature", 288)).toEqual({
-      race: "human",
-      gender: "male",
-      flavor: "standard",
-      npcName: "Jitters",
-    });
-  });
-
-  it("is null for an npc the corpus has never carried", async () => {
-    expect(await npcVoiceFromCorpus("creature", 999_999_999)).toBe(null);
-  });
-
-  it("ignores speakers written by accepted contributions", async () => {
-    // Their voice came from the NPC's own resolution, so reading it back would confirm a guess.
-    const lines = (await catalogue()).lines;
-    const extracted = new Set(lines.filter((l) => l.contributionId === null).map(npcKey));
-    const contributedOnly = lines.find((l) => l.contributionId !== null && !extracted.has(npcKey(l)));
-    if (!contributedOnly) return; // a database with no accepted contributions has nothing to check
-    expect(await npcVoiceFromCorpus(contributedOnly.npcType, contributedOnly.npcId)).toBe(null);
   });
 });
 

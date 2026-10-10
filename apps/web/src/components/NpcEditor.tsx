@@ -3,18 +3,20 @@
 /**
  * /contributions/npcs: every NPC on file, one row each, with the triage table's own speaker
  * controls. `initial` is NpcSummary, built server-side (npcSummaryFrom), so nothing from
- * npc_resolution beyond what is rendered crosses into the client.
+ * the npc table beyond what is rendered crosses into the client.
  */
 import { SearchIcon } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
+import { LiteButton } from "@/components/LiteControls";
 import { useLang } from "@/components/LangProvider";
 import SpeakerCell, { type SpeakerAnswer } from "@/components/SpeakerCell";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import Pagination from "@/components/Pagination";
 import { summaryFromResolution, type FlavorScope } from "@/lib/contributions/speaker";
 import type { NpcSummary } from "@/lib/contributions/triage";
 import { localeHref } from "@/lib/lang";
@@ -39,6 +41,8 @@ const SPEAKER_CHIP_OPTIONS: ChipOption[] = PROVENANCES.map((option) => ({
   value: option,
   label: PROVENANCE_LABELS[option],
 }));
+
+const PAGE_SIZE = 100;
 
 const PROGRESSES = ["unfinished", "doubtful", "finished"] as const;
 type Progress = (typeof PROGRESSES)[number];
@@ -72,6 +76,56 @@ function progressOf(npc: NpcSummary): Progress {
   return npc.doubtful ? "doubtful" : "finished";
 }
 
+/** A voice answer, or a name: the route saves each on its own. */
+type Answer = SpeakerAnswer & { npcName?: string };
+
+/** An NPC's name with a moderator's Edit, which saves over whatever named it. */
+function NameCell({
+  name,
+  busy,
+  onSave,
+}: {
+  name: string | null;
+  busy: boolean;
+  onSave: (name: string) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  if (draft === null) {
+    return (
+      <div className="flex items-center gap-1">
+        <span>{name ?? <span className="text-muted-foreground">unnamed</span>}</span>
+        <LiteButton variant="ghost" className="h-5 px-1.5 py-0 text-xs" onClick={() => setDraft(name ?? "")}>
+          Edit
+        </LiteButton>
+      </div>
+    );
+  }
+  const trimmed = draft.trim();
+  return (
+    <form
+      className="flex items-center gap-1"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (trimmed && trimmed !== name) onSave(trimmed);
+        setDraft(null);
+      }}
+    >
+      <input
+        aria-label="NPC name"
+        autoFocus
+        maxLength={200}
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => event.key === "Escape" && setDraft(null)}
+        className="border-input bg-background h-7 w-44 rounded-md border px-2"
+      />
+      <LiteButton type="submit" variant="outline" className="h-7 px-2 text-xs" disabled={busy || !trimmed}>
+        Save
+      </LiteButton>
+    </form>
+  );
+}
+
 export default function NpcEditor({
   initial,
   flavorScopes,
@@ -96,6 +150,8 @@ export default function NpcEditor({
       const search = new URLSearchParams(params.toString());
       if (value) search.set(name, value);
       else search.delete(name);
+      // A narrower view starts again from its first page: the one it was on may not exist.
+      if (name !== "page") search.delete("page");
       const next = search.toString();
       window.history.replaceState(null, "", next ? `${pathname}?${next}` : pathname);
     },
@@ -114,8 +170,8 @@ export default function NpcEditor({
 
   /** One answer, posted and taken into `saved`. True when it landed. */
   const post = useCallback(
-    async (npc: NpcSummary, answer: SpeakerAnswer): Promise<boolean> => {
-      // Every row here came from npc_resolution, so npcKind is never null and the route's
+    async (npc: NpcSummary, answer: Answer): Promise<boolean> => {
+      // Every row here came from the npc table, so npcKind is never null and the route's
       // required kind is always the row's own.
       const response = await fetch("/api/contributions/npc", {
         method: "POST",
@@ -134,7 +190,7 @@ export default function NpcEditor({
   );
 
   const save = useCallback(
-    async (npc: NpcSummary, answer: SpeakerAnswer) => {
+    async (npc: NpcSummary, answer: Answer) => {
       const k = key(npc.npcKind, npc.npcId);
       setBusy(k);
       setFailed(null);
@@ -185,13 +241,24 @@ export default function NpcEditor({
       .filter((npc) => !progress || progressOf(npc) === progress);
   }, [initial, saved, query, provenance, progress]);
 
+  // A page at a time: every row is a SpeakerCell with its own selects, and all of them at once
+  // made the first load and every tick slow.
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const page = Math.min(Math.max(1, Math.floor(Number(params.get("page")) || 1)), pages);
+  const shown = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // The pager sits under the table, so the next page would otherwise open at its last row.
+  const goToPage = (next: number) => {
+    setParam("page", next > 1 ? String(next) : undefined);
+    window.scrollTo({ top: 0 });
+  };
+
   // Only rows still on screen count, as in the triage table: a ticked row a filter now hides
   // must not be saved by a button that no longer shows it.
-  const selectedRows = rows.filter((npc) => selected.has(key(npc.npcKind, npc.npcId)));
+  const selectedRows = shown.filter((npc) => selected.has(key(npc.npcKind, npc.npcId)));
   // A bulk save keeps each row's own answer, so a row without a race and gender has nothing to
   // keep -- saving it would file "this NPC has no race" as a decision nobody made.
   const savable = selectedRows.filter((npc) => npc.race && npc.gender);
-  const allTicked = rows.length > 0 && selectedRows.length === rows.length;
+  const allTicked = shown.length > 0 && selectedRows.length === shown.length;
   const toggle = (k: string, on: boolean) =>
     setSelected((current) => {
       const next = new Set(current);
@@ -284,7 +351,7 @@ export default function NpcEditor({
                   checked={allTicked ? true : selectedRows.length > 0 ? "indeterminate" : false}
                   disabled={bulk !== null}
                   onCheckedChange={(on) =>
-                    setSelected(on === true ? new Set(rows.map((npc) => key(npc.npcKind, npc.npcId))) : new Set())
+                    setSelected(on === true ? new Set(shown.map((npc) => key(npc.npcKind, npc.npcId))) : new Set())
                   }
                 />
               </th>
@@ -295,7 +362,7 @@ export default function NpcEditor({
             </tr>
           </thead>
           <tbody>
-            {rows.map((npc) => {
+            {shown.map((npc) => {
               const k = key(npc.npcKind, npc.npcId);
               return (
                 <tr key={k} className="align-top [&>td]:border-b [&>td]:py-2 [&>td]:leading-5">
@@ -333,7 +400,14 @@ export default function NpcEditor({
                       wf↗
                     </a>
                   </td>
-                  <td className="pr-3 text-xs">{npc.npcName ?? <span className="text-muted-foreground">unnamed</span>}</td>
+                  <td className="pr-3 text-xs">
+                    <NameCell
+                      key={npc.npcName ?? ""}
+                      name={npc.npcName}
+                      busy={busy === k || bulk !== null}
+                      onSave={(npcName) => void save(npc, { npcName })}
+                    />
+                  </td>
                   <td className="pr-3 text-xs">
                     <SpeakerCell
                       // Remount on a save, so the form's own state starts from the new answer.
@@ -364,6 +438,7 @@ export default function NpcEditor({
           </tbody>
         </table>
       )}
+      <Pagination page={page} pageCount={pages} onPage={goToPage} />
     </>
   );
 }

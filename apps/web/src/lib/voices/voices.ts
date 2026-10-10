@@ -87,6 +87,14 @@ export function voiceName(voice: Voice): string {
 
 export const VOICE_NAMES: readonly string[] = VOICES.map(voiceName);
 
+/**
+ * The ElevenLabs voice name for a race, gender and flavor. Mirrors flavors.py's voice_name:
+ * tts_cli/voices.py resolves this name, so the two must agree.
+ */
+export function voiceNameFor(race: string, gender: string, flavor: string | null): string {
+  return voiceName({ race, gender: gender as Gender, flavor });
+}
+
 /** A name a line may be spoken in: the roster's, or a model slot. */
 export function isVoice(name: string): boolean {
   return VOICE_NAMES.includes(name) || isModelVoice(name);

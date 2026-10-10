@@ -10,6 +10,7 @@ import { closeDb, db } from "@/lib/db";
 
 import {
   acceptedContributions,
+  contributionSenders,
   countRecentContributions,
   createContribution,
   fillContributionNpcs,
@@ -124,6 +125,35 @@ describe("createContribution", () => {
       listContributions("new", undefined, { column: "filed", direction }).then((rows) => ours(rows).map((row) => row.text));
     expect(await filed("desc")).toEqual(["Kill six.", "Убей шестерых."]);
     expect(await filed("asc")).toEqual(["Убей шестерых.", "Kill six."]);
+  });
+
+  it("names each copy's sender, counting the unnamed ones as anonymous", async () => {
+    await createContribution(submission({ userId: RESOLVER }));
+    await createContribution(submission({ userId: RESOLVER }));
+    await createContribution(submission({ name: "Thrall" }));
+    await createContribution(submission());
+    const [row] = ours(await listContributions("new"));
+    expect(row.count).toBe(4);
+    expect(await contributionSenders(row.id)).toEqual({
+      senders: [
+        { name: "Test Resolver", count: 2 },
+        { name: "Thrall", count: 1 },
+      ],
+      anonymous: 1,
+    });
+  });
+
+  it("has no senders for a contribution that does not exist", async () => {
+    expect(await contributionSenders(-1)).toBeNull();
+  });
+
+  it("lists one section's rows when asked for one", async () => {
+    await createContribution(submission());
+    await createContribution(submission({ source: "books", dedup: `${dedup}-two` }));
+    const sources = async (source?: "quests" | "books") =>
+      ours(await listContributions("new", undefined, undefined, source)).map((row) => row.source);
+    expect((await sources()).sort()).toEqual(["books", "quests"]);
+    expect(await sources("books")).toEqual(["books"]);
   });
 
   it("keeps different text for the same key as its own row", async () => {

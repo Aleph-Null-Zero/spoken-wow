@@ -23,7 +23,9 @@ import { audioStateFromParams } from "@/lib/audio-state";
 import { useSession } from "@/lib/auth-client";
 import RecordingDropZone from "@/components/RecordingDropZone";
 import { RECORDED, type Recorded } from "@/lib/recordings/live";
+import { BROADCAST_STATUSES } from "@/lib/broadcast/status";
 import type { Facets } from "@/lib/facets";
+import type { Kind } from "@/lib/line-fields";
 import { NARRATOR_VOICE } from "@/lib/generation/narration";
 import { PROVIDER_NAME } from "@/lib/generation/providers";
 import {
@@ -68,6 +70,7 @@ function filterParams(filters: LineFilters): URLSearchParams {
   if (filters.gender) params.set("gender", filters.gender);
   if (filters.flavor) params.set("flavor", filters.flavor);
   if (filters.voice) params.set("voice", filters.voice);
+  if (filters.kind) params.set("kind", filters.kind);
   if (filters.source) params.set("source", filters.source);
   if (filters.npcType) params.set("type", filters.npcType);
   if (filters.includeProgress) params.set("progress", "1");
@@ -82,10 +85,29 @@ function filterParams(filters: LineFilters): URLSearchParams {
   if (filters.model) params.set("model", filters.model);
   if (filters.author) params.set("author", filters.author);
   if (filters.recorded) params.set("rec", filters.recorded);
+  if (filters.broadcast) params.set("bt", filters.broadcast);
   return params;
 }
 
-export default function Explorer({ facets }: { facets: Facets }) {
+/**
+ * How many rows each row's speaker cells span: adjacent rows of one line and speaker are its
+ * player-gender wordings, and say the same thing in every column but the text.
+ */
+function speakerSpans(lines: ResultLine[]): number[] {
+  // A $g line's two rows are <id>:m and <id>:f.
+  const key = (line: ResultLine) =>
+    `${line.playerGender ? line.lineId.replace(/:[mf]$/, "") : line.lineId}|${line.npcType}|${line.npcId}|${line.voice}`;
+  const spans = lines.map(() => 1);
+  for (let start = 0; start < lines.length; ) {
+    let end = start + 1;
+    while (end < lines.length && key(lines[end]) === key(lines[start])) spans[end++] = 0;
+    spans[start] = end - start;
+    start = end;
+  }
+  return spans;
+}
+
+export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind }) {
   const router = useRouter();
   const lang = useLang();
   const params = useSearchParams();
@@ -111,6 +133,9 @@ export default function Explorer({ facets }: { facets: Facets }) {
   // rather than held in state, so the back button is a working undo for a filter too.
   const filters = useMemo<LineFilters>(
     () => ({
+      // From the page, not the URL: which explorer this is is where it lives, so a link
+      // carries it in its path.
+      kind,
       q: urlQuery,
       filter: (params.get("filter") as Filter) ?? "any",
       state: audioStateFromParams(params),
@@ -132,8 +157,9 @@ export default function Explorer({ facets }: { facets: Facets }) {
       model: params.get("model") ?? undefined,
       author: params.get("author") ?? undefined,
       recorded: RECORDED.find((value) => value === params.get("rec")),
+      broadcast: BROADCAST_STATUSES.find((value) => value === params.get("bt")),
     }),
-    [params, urlQuery],
+    [kind, params, urlQuery],
   );
 
   const [query, setQuery] = useState(urlQuery);
@@ -295,6 +321,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
         ...("model" in next ? { model: next.model } : {}),
         ...("author" in next ? { author: next.author } : {}),
         ...("recorded" in next ? { rec: next.recorded } : {}),
+        ...("broadcast" in next ? { bt: next.broadcast } : {}),
       });
     },
     [updateUrl],
@@ -751,6 +778,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
   }, [current]);
 
   const pageCount = result ? Math.max(1, Math.ceil(result.total / result.limit)) : 1;
+  const groupSpans = speakerSpans(result?.lines ?? []);
   // This page's marks, minus what has been cleared without a refetch since.
   const marked = new Set(
     (result?.lines ?? [])
@@ -776,6 +804,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
           canTriage={showRegenerate}
           madeBy={result?.madeBy}
           recordable={showRecordings}
+          broadcastable={kind === "gossip"}
         />
 
         {showRecordings && <RecordingDropZone source="quests" onUploaded={refetch} />}
@@ -840,7 +869,8 @@ export default function Explorer({ facets }: { facets: Facets }) {
           >
             <colgroup>
               <col className="w-52" />
-              <col className="w-48" />
+              {kind !== "gossip" && <col className="w-48" />}
+              {kind === "gossip" && <col className="w-24" />}
               <col className="w-32" />
               {/* The line text takes whatever the named columns leave, which is what anyone
                   here to read came for. */}
@@ -861,7 +891,8 @@ export default function Explorer({ facets }: { facets: Facets }) {
             <thead>
               <tr className="text-muted-foreground border-border border-b text-left text-xs">
                 <th className="px-2 pb-1 font-medium">NPC / object</th>
-                <th className="px-2 pb-1 font-medium">Quest</th>
+                {kind !== "gossip" && <th className="px-2 pb-1 font-medium">Quest</th>}
+                {kind === "gossip" && <th className="px-2 pb-1 font-medium">Broadcast</th>}
                 <th className="px-2 pb-1 font-medium">Race / gender / flavor</th>
                 <th className="px-2 pb-1 font-medium">Line</th>
                 <th className="px-2 pb-1 font-medium">Audio</th>
@@ -871,7 +902,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
               </tr>
             </thead>
             <tbody>
-              {result.lines.map((line) => (
+              {result.lines.map((line, index) => (
                 <LineRow
                   key={line.key}
                   line={line}
@@ -897,6 +928,9 @@ export default function Explorer({ facets }: { facets: Facets }) {
                   onRegenerate={regenerateLine}
                   onRestored={handleRestored}
                   onNarrowToNpc={narrowToNpc}
+                  showQuest={kind !== "gossip"}
+                  showBroadcast={kind === "gossip"}
+                  groupSpan={groupSpans[index]}
                   onNarrowToQuest={narrowToQuest}
                 />
               ))}

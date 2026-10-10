@@ -24,7 +24,6 @@ function Timer:ScheduleRepeatingTimer(fn, delay)
     local id=self:ScheduleTimer(fn,delay); timers[id].interval=delay; return id
 end
 function Timer:CancelTimer(id) timers[id]=nil end
-function Timer:TimeLeft(id) return timers[id] and timers[id].at-clock or 0 end
 LibStub=function(name)
     if name=='AceTimer-3.0' then
         return { Embed=function(_,obj) for k,v in pairs(Timer) do obj[k]=v end; return obj end }
@@ -188,9 +187,7 @@ Check(Captions()=='|cffffd100Second|r |cffffd100quest|r text','current and next 
 Advance(19)
 Check(Captions()=='Second |cffffd100quest|r |cffffd100text|r','the last visible word keeps its previous neighbor highlighted')
 Advance(1.25)
-Check(T.frame:IsShown() and HighlightCount()==0,'highlight ends during the inter-clip gap')
-Advance(1)
-Check(Q:IsEmpty() and not T.frame:IsShown(),'normal completion hides captions')
+Check(Q:IsEmpty() and not T.frame:IsShown(),'normal completion hides captions as the last voice ends')
 Check(Captions()=='' and T.activeWord==nil,'queue exhaustion clears stale dialogue and highlighting')
 
 -- Chinese has no spaces: each character is a word, punctuation stays with
@@ -429,10 +426,15 @@ T.frame:Fire('OnUpdate',.03)
 Check(T.top>settled and T.top<target,'the text glides part of the way, not a whole line at once')
 local _,shown=Captions()
 Check(shown==9,'mid-glide the line sliding in shows under the page')
+local fraction=T.top-math.floor(T.top)
+Check(math.abs(T.labels[1]:GetAlpha()-(1-fraction))<1e-6 and math.abs(T.labels[9]:GetAlpha()-fraction)<1e-6,
+    'mid-glide the line leaving fades out at the top and the one coming in fades in')
+Check(T.labels[5]:GetAlpha()==1,'the lines between stay whole')
 Settle()
 Check(T.top==target,'and settles on the line')
 local _,settledShown=Captions()
 Check(settledShown==8,'with the page back to its eight lines')
+Check(T.labels[1]:GetAlpha()==1,'settled, the top line is whole again')
 cfg.Typewriter=true; T:Update(); Settle()
 Check(T.topTarget==ActiveLine()-7,'typed out, the line being read is the last of eight')
 local typed=Captions()

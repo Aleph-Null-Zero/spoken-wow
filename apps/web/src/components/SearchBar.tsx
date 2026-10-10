@@ -5,6 +5,7 @@ import { forwardRef, useCallback, useMemo } from "react";
 import DateChip from "@/components/DateChip";
 import { MadeByChips } from "@/components/MadeBy";
 import RecordedChip from "@/components/RecordedChip";
+import { BROADCAST_OPTIONS, type BroadcastStatus } from "@/lib/broadcast/status";
 import type { MadeByFacets } from "@/lib/takes/made-by";
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Facets } from "@/lib/facets";
 import { AUDIO_STATE_OPTIONS } from "@/lib/audio-state";
-import { NPC_TYPES, SOURCE_LABELS, SOURCES } from "@/lib/line-fields";
+import { kindOf, NPC_TYPES, SOURCE_LABELS, SOURCES } from "@/lib/line-fields";
 import { activeFilterCount } from "@/lib/active-filters";
 import type { Filter, LineFilters } from "@/lib/search";
 
@@ -30,6 +31,8 @@ type Props = {
   madeBy?: MadeByFacets;
   /** The viewer records here, so the search answers whether each line is recorded. */
   recordable?: boolean;
+  /** The gossip explorer: lines can be narrowed by how their BroadcastText ids were found. */
+  broadcastable?: boolean;
 };
 
 /** Corpus values, which label themselves. */
@@ -37,8 +40,11 @@ function plainOptions(values: readonly string[]): ChipOption[] {
   return values.map((value) => ({ value, label: value }));
 }
 
-/** The sources in corpus order, each under the name SOURCE_LABELS gives it. */
-const SOURCE_OPTIONS: ChipOption[] = SOURCES.map((value) => ({
+/**
+ * The quests explorer's sources in corpus order, each under the name SOURCE_LABELS gives it.
+ * Gossip has its own explorer, where a source chip would have one option and is not shown.
+ */
+const SOURCE_OPTIONS: ChipOption[] = SOURCES.filter((value) => kindOf(value) === "quests").map((value) => ({
   value,
   label: SOURCE_LABELS[value],
 }));
@@ -51,7 +57,7 @@ const SCOPE_OPTIONS: ChipOption[] = [
 ];
 
 const SearchBar = forwardRef<HTMLInputElement, Props>(function SearchBar(
-  { query, filters, facets, onQuery, onFilters, onClearAll, canTriage, madeBy, recordable },
+  { query, filters, facets, onQuery, onFilters, onClearAll, canTriage, madeBy, recordable, broadcastable },
   ref,
 ) {
   const active = activeFilterCount({ ...filters, q: query });
@@ -95,7 +101,7 @@ const SearchBar = forwardRef<HTMLInputElement, Props>(function SearchBar(
         ref={ref}
         type="search"
         value={query}
-        placeholder="NPC, quest, or what the line says…"
+        placeholder={filters.kind === "gossip" ? "NPC, or what the line says…" : "NPC, quest, or what the line says…"}
         aria-label="Search"
         autoFocus
         className="min-w-0 flex-1 basis-64"
@@ -104,7 +110,8 @@ const SearchBar = forwardRef<HTMLInputElement, Props>(function SearchBar(
       <FilterChip
         label="search in"
         value={filters.filter === "any" ? undefined : filters.filter}
-        options={SCOPE_OPTIONS}
+        // No gossip line has a quest to match a title against.
+        options={filters.kind === "gossip" ? SCOPE_OPTIONS.filter((option) => option.value !== "quest") : SCOPE_OPTIONS}
         onChange={(value) => onFilters({ filter: (value ?? "any") as Filter })}
       />
 
@@ -133,12 +140,14 @@ const SearchBar = forwardRef<HTMLInputElement, Props>(function SearchBar(
           options={plainOptions(facets.voices)}
           onChange={(voice) => onFilters({ voice })}
         />
-        <FilterChip
-          label="source"
-          value={filters.source}
-          options={SOURCE_OPTIONS}
-          onChange={(source) => onFilters({ source: source as LineFilters["source"] })}
-        />
+        {filters.kind !== "gossip" && (
+          <FilterChip
+            label="source"
+            value={filters.source}
+            options={SOURCE_OPTIONS}
+            onChange={(source) => onFilters({ source: source as LineFilters["source"] })}
+          />
+        )}
         <FilterChip
           label="type"
           value={filters.npcType}
@@ -174,6 +183,14 @@ const SearchBar = forwardRef<HTMLInputElement, Props>(function SearchBar(
         )}
         {recordable && (
           <RecordedChip value={filters.recorded} onChange={(recorded) => onFilters({ recorded })} />
+        )}
+        {broadcastable && (
+          <FilterChip
+            label="broadcast id"
+            value={filters.broadcast}
+            options={BROADCAST_OPTIONS}
+            onChange={(broadcast) => onFilters({ broadcast: broadcast as BroadcastStatus | undefined })}
+          />
         )}
 
         <div className="flex items-center gap-2 whitespace-nowrap">

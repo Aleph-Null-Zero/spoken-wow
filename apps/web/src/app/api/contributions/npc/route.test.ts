@@ -39,7 +39,9 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  await db().query(`delete from "npc_resolution" where "npcId" in ($1, 0)`, [npcId]);
+  await db().query(`delete from "npc" where "npcId" in ($1, 0)`, [npcId]);
+  await db().query(`delete from "entity_name" where "entityId" = $1`, [String(npcId)]);
+  await db().query(`delete from "activity" where "kind" = 'name.edited' and "actorId" = $1`, [RESOLVER]);
   await db().query(`delete from "activity" where "kind" = 'npc.resolved' and "actorId" = $1`, [
     RESOLVER,
   ]);
@@ -59,6 +61,59 @@ function post(body: unknown, lang?: string): Request {
 }
 
 describe("POST /api/contributions/npc", () => {
+  it("renames an NPC over any name, English included, without touching its voice", async () => {
+    await upsertResolution({
+      npcKind: "creature", npcId, npcName: "Some Gaurd", race: "dwarf", gender: "female", flavor: "guard",
+      provenance: "client", confirmed: false, doubtful: false, modelFileId: null, sex: null,
+      creatureType: null, build: null, note: null, resolvedBy: null,
+    });
+    const response = await POST(post({ npcKind: "creature", npcId, npcName: " Some Guard " }));
+    expect(response.status).toBe(200);
+    expect(await getResolution("creature", npcId)).toMatchObject({
+      npcName: "Some Guard",
+      provenance: "client",
+      confirmed: false,
+    });
+    const { rows } = await db().query(
+      `select "lang", "origin", "editedBy" from "entity_name" where "entityId" = $1 and "isCurrent"`,
+      [String(npcId)],
+    );
+    expect(rows).toEqual([{ lang: "enUS", origin: "edited", editedBy: RESOLVER }]);
+  });
+
+  it("keeps a moderator's English name when the extract writes its own", async () => {
+    await upsertResolution({
+      npcKind: "creature", npcId, npcName: "Some Gaurd", race: null, gender: null, flavor: null,
+      provenance: "none", confirmed: false, doubtful: false, modelFileId: null, sex: null,
+      creatureType: null, build: null, note: null, resolvedBy: null,
+    });
+    await POST(post({ npcKind: "creature", npcId, npcName: "Some Guard" }));
+    // What the import's speaker trigger runs for each English speaker row.
+    await db().query(`select "entity_name_set"('creature', $1, 'enUS', 'Some Gaurd')`, [String(npcId)]);
+    expect((await getResolution("creature", npcId))?.npcName).toBe("Some Guard");
+  });
+
+  it("renames in the language the moderator's rights were checked in, and nowhere else", async () => {
+    await upsertResolution({
+      npcKind: "creature", npcId, npcName: "Some Guard", race: null, gender: null, flavor: null,
+      provenance: "none", confirmed: false, doubtful: false, modelFileId: null, sex: null,
+      creatureType: null, build: null, note: null, resolvedBy: null,
+    });
+    asked.length = 0;
+    await POST(post({ npcKind: "creature", npcId, npcName: "Guarda" }, "ptBR"));
+
+    expect(asked).toEqual(["regenerate@ptBR"]);
+    const { rows } = await db().query(
+      `select "lang", "name" from "entity_name" where "entityId" = $1 and "isCurrent" order by "lang"`,
+      [String(npcId)],
+    );
+    expect(rows).toEqual([{ lang: "enUS", name: "Some Guard" }, { lang: "ptBR", name: "Guarda" }]);
+  });
+
+  it("will not name an NPC it has no row for", async () => {
+    expect((await POST(post({ npcKind: "creature", npcId, npcName: "Nobody" }))).status).toBe(404);
+  });
+
   it("records a moderator's answer and marks it confirmed", async () => {
     const response = await POST(
       post({

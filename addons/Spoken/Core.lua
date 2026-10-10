@@ -45,6 +45,8 @@ Defaults = {
         -- Unset, each module keeps the choice it had before there was one setting for all.
         Language = {},
         Audio = {
+            -- A string, because that is what PlaySoundFile takes.
+            SoundChannel = "Master",
             -- Seconds of quiet between one line and the next, on top of each module's own short
             -- gap: back to back, a new line started before the last had settled.
             LineGap = 1,
@@ -53,6 +55,10 @@ Defaults = {
             -- clip is the one being talked over. Not on clients without the channel, where
             -- Compat.lua interrupts the bark a different way.
             AutoToggleDialog = (Version.IsLegacyVanilla or Version:IsRetailOrAboveLegacyVersion(60100)) or false,
+            -- A short sound in the pause between one line and the next (#142): at a quest hub a hand-in
+            -- and the next pickup otherwise run together, often in the same NPC's voice.
+            -- Off by default, as the queue has always played without it.
+            CueBetweenLines = false,
             -- The other channels turned down while a line is spoken (OtherSounds.lua), each to
             -- this share of the player's own volume, for the length of a line. Not on the legacy
             -- clients, where speech itself goes out on the music channel.
@@ -162,8 +168,8 @@ function Addon:InitDB()
 end
 
 --- Put the profile's settings into effect: the window or subtitles, the captions, the minimap
---- button, the other sounds' levels and the settings page. Each only where it is loaded on this
---- client, and only once Enable has built them.
+--- button, the other sounds' levels, the feature addons' Report and Contribute buttons and the
+--- settings page. Each only where it is loaded on this client, and only once Enable has built them.
 function Addon:ApplyProfile()
     if not self.enabled then return end
     if PlayerFrame and PlayerFrame.RefreshConfig then PlayerFrame:RefreshConfig() end
@@ -175,6 +181,9 @@ function Addon:ApplyProfile()
     -- Which modules are on is the profile's too: each puts its buttons back or takes them off,
     -- and what one now off had queued goes, as switching it off on Spoken's page does.
     for key in Sources:Iterate() do Sources:Apply(key) end
+    -- The addons that draw their own Report and Contribute buttons redraw only when told.
+    Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+    Callbacks:Fire("CONTRIBUTE_SETTINGS_CHANGED")
     if Options and Options.UpdateRows then Options:UpdateRows() end
 end
 

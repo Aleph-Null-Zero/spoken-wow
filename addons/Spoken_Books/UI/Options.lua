@@ -221,6 +221,10 @@ function SpokenBooks:SetupOptions()
 	layout:RequiresAll(PartOn, L.REASON_PART_OFF, switch)
 	layout:Refresh()
 	content:SetScript("OnShow", refresh)
+	-- Switched on or off from Spoken's page while this one was hidden: drawn again for it.
+	if Spoken and Spoken.RegisterCallback then
+		Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "books" then refresh() end end)
+	end
 
 	-- Derived rather than written as a number: a hardcoded height is a number nobody updates
 	-- when a row is added, and what that produces is a section you cannot scroll to.

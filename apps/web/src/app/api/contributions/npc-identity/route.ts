@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   try {
     // Read back through observationMeta, as every other reader of the row does, so what gets
     // resolved is exactly what triage, accept and the export will see.
-    resolution = await resolveNpc(observedFrom(observationMeta(recorded)));
+    resolution = await resolveNpc(observedFrom(observationMeta(recorded)), isLang(locale) ? locale : null);
   } catch {
     resolution = null;
   }

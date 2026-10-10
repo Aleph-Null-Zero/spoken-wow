@@ -538,6 +538,18 @@ local ACTIONS = {
 	}
 }
 
+--- The place one level up from a zone, as Azeroth's Compendium nests them: a city's zone, a
+--- zone's continent, a continent's world. Nil for the world.
+function SpokenZones:PlaceAbove(mapID)
+	local C = _G.SpokenCompendium
+	-- A Compendium that failed to load costs the header, not the clip.
+	if not C or mapID == C.WORLD then return nil end
+	for _, continent in ipairs(C.CONTINENTS) do
+		if continent == mapID then return C.WORLD end
+	end
+	return C.CITY_IN[mapID] or C.ContinentOf(mapID) or C.WORLD
+end
+
 -- A Spoken clip for a lore entry, or nil when the installed pack cannot narrate it.
 -- One factory so that every route to a clip -- a click, a slash command, a
 -- discovery -- produces the same shape.
@@ -566,10 +578,8 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		mapID = mapID,
 		areaKey = areaKey,
 		present = {
-			-- The zone above, the area being narrated below -- which for zone-level
-			-- lore is the same name twice, and for a subzone is the pair a player
-			-- needs to place it.
-			header = self:GetMapName(mapID) or label,
+			-- An area under its zone; anything else under the place above it.
+			header = areaKey and (self:GetMapName(mapID) or label) or self:GetMapName(self:PlaceAbove(mapID)),
 			label = label,
 			transcript = entry and entry.full,
 			bullet = "zone",

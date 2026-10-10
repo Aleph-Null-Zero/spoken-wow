@@ -20,7 +20,7 @@ export const metadata: Metadata = { title: "NPCs · Spoken" };
 export const dynamic = "force-dynamic";
 
 /**
- * Every NPC the contributions have named, and who voices each.
+ * Every NPC, the extract's and every one a contribution named, and who voices each.
  *
  * The same answers the triage queue's NPC column gives, one row per NPC rather than per
  * contribution, so an NPC can be found and corrected without the row that named it being in
@@ -40,12 +40,12 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
       <Contained>
         <h1 className="text-xl font-semibold">Contributions</h1>
         <p className="text-muted-foreground mt-1 mb-5 text-sm">
-          Every NPC a contribution has named, and who voices them. An answer here settles every
-          line that NPC speaks.
+          Every NPC the game or a contribution names, and who voices them. An answer here voices
+          every line that NPC speaks; an NPC with no flavor has no voice until it gets one.
         </p>
-        <ContributionsTabs lang={lang} active="npcs" showNpcs />
       </Contained>
       <Wide>
+        <ContributionsTabs lang={lang} section="npcs" showNpcs />
         <NpcEditor initial={npcs} flavorScopes={flavorScopes} />
       </Wide>
     </main>
