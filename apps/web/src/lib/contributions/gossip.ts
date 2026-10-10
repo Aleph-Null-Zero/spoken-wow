@@ -74,7 +74,8 @@ export const branch = (sql: string, side: 1 | 2) => `regexp_replace(${sql}, '\\$
 
 /**
  * The lowest BroadcastText id whose text in `lang` reads as `text` does, in the form a speaker of
- * this sex shows. One text can sit under several ids, and they read alike.
+ * this sex shows. One text can sit under several ids, and they read alike. The unbranched form
+ * too: a German client sends a `$u` branch unresolved.
  */
 export async function broadcastIdFor(
   q: Queryable,
@@ -88,7 +89,7 @@ export async function broadcastIdFor(
     `select b."broadcastTextId" as "id"
        from "broadcast_text" b
       where b."lang" = $1
-        and $2 in (${norm(branch(form, 1))}, ${norm(branch(form, 2))})
+        and $2 in (${norm(form)}, ${norm(branch(form, 1))}, ${norm(branch(form, 2))})
       order by 1
       limit 1`,
     [lang, normalised(text), gender],

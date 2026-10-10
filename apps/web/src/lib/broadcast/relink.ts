@@ -64,11 +64,12 @@ export async function relinkGossip({
 /** The lines linked. */
 async function linkByText(client: PoolClient, lineIds: string[] | null, lang: string | null): Promise<string[]> {
   // Each id's text in both forms and on both sides of a `$g` branch, so the join is on plain
-  // values: an expression over both sides would compare every line with every row.
+  // values: an expression over both sides would compare every line with every row. Unbranched
+  // too, since a German client leaves a `$u` branch as it stands.
   const forms = (gender: string, column: string) =>
-    [1, 2].map(
-      (side) =>
-        `select b."lang", b."broadcastTextId", '${gender}' as "gender", ${norm(branch(column, side as 1 | 2))} as "shown"
+    [column, branch(column, 1), branch(column, 2)].map(
+      (shown) =>
+        `select b."lang", b."broadcastTextId", '${gender}' as "gender", ${norm(shown)} as "shown"
            from "broadcast_text" b where b."lang" in (select "lang" from line)`,
     );
   const { rows } = await client.query<{ lineId: string }>(
