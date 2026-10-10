@@ -337,9 +337,8 @@ local function Build(canvas)
     else
         layout:Group(L.OPT_NARRATOR_SETTINGS)
     end
-    -- The same three parts whatever the style, each style's rows in the same places: where it
-    -- sits and how large, how it looks, and its words. A row the chosen style has no use for is
-    -- hidden. Without captions (1.12's Transcript is a stub) the words' rows are not built.
+    -- Every style has the same three sections; a row the chosen style has no use for is hidden.
+    -- Without captions (1.12's Transcript is a stub) the words' rows are not built.
     local captions = not Transcript.unavailable
     local function DUI() return Style() == "dialogueui" end
     local function ForDUI(row) return Only(row, DUI) end
@@ -484,7 +483,6 @@ local function Build(canvas)
         Requires(by, function() return Words() and transcript().Typewriter end, L.REASON_TYPEWRITER)
     end
 
-    -- What the feature addons do in DialogueUI's own window, whatever the style.
     DialogueUIOptions:Place(layout)
 
     -- The narrator style's settings end here; what follows is Spoken's whatever the style.

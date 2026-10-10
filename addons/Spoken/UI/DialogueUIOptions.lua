@@ -1,9 +1,7 @@
 setfenv(1, SpokenEnv)
 
--- The DialogueUI settings, on Spoken's page, among the narrator style's: the window's own rows in
--- the narrator style's parts, shown with the DialogueUI style chosen (Page:WheelNote,
--- Page:ThemeRows, Page:FitRow), and after them what each feature addon adds through
--- Spoken:AddDialogueUISettings (Page:Place), shown under any style.
+-- The DialogueUI settings on Spoken's page: the window's own rows, shown only with the
+-- DialogueUI style, then the rows feature addons add through Spoken:AddDialogueUISettings.
 --
 -- Parsed by the 1.12 client too (addon.xml is shared), so Lua 5.0 syntax throughout; that
 -- client has no DialogueUI and returns below.
@@ -24,10 +22,6 @@ local Page = DialogueUIOptions
 
 local function Panel() return Addon.db.profile.Frame.DialogueUI end
 
---- Add a feature addon's rows. build(layout) adds a section and its rows to Spoken's page, last
---- among the narrator style's settings, and may return a function that puts them back to their
---- defaults, which Spoken's Start Over runs. Before the page is built they wait for it; after,
---- they go in at once.
 function Page:Add(build)
     table.insert(self.builders, build)
     if self.keep then
@@ -46,19 +40,17 @@ function Page:Run(build)
     end
 end
 
--- `only(row)` shows a row only with the DialogueUI window chosen; it also needs DialogueUI to know.
 local function Window(layout, only, row)
     only(row)
     layout:Requires(row, function() return DialogueUITheme:Available() end, L.OPT_STYLE_DUI_UNKNOWN)
     return row
 end
 
---- Under Size and Position: nothing on the window shows its wheel shortcuts.
+--- Nothing on the window shows its wheel shortcuts.
 function Page:WheelNote(layout, only)
     only(layout:Note(L.DUI_WHEEL_HINT, nil, 40))
 end
 
---- Under Look: the window's theme, DialogueUI's or one chosen.
 function Page:ThemeRows(layout, only, refresh)
     Window(layout, only, layout:Checkbox(L.OPT_DUI_FOLLOW_THEME, L.OPT_DUI_FOLLOW_THEME_TIP,
         function() return Panel().FollowTheme end, function(v) Panel().FollowTheme = v end, refresh))
@@ -70,15 +62,13 @@ function Page:ThemeRows(layout, only, refresh)
     layout:Outdent()
 end
 
---- Under Words: the window as tall as its words.
 function Page:FitRow(layout, only, refresh)
     return Window(layout, only, layout:Checkbox(L.OPT_DUI_FIT_TEXT, L.OPT_DUI_FIT_TEXT_TIP,
         function() return Panel().FitText ~= false end, function(v) Panel().FitText = v end, refresh))
 end
 
---- The place, last among the narrator style's settings, kept for the feature addons' rows
---- whenever they arrive. Only with DialogueUI installed; its rows show under any style, since
---- they change DialogueUI's own quest window.
+--- Where the feature addons' rows go, now or whenever they arrive. They show under any style,
+--- since they change DialogueUI's own quest window.
 function Page:Place(layout)
     if not DialogueUITheme:Installed() then return end
     self.layout = layout
