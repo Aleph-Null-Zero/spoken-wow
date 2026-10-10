@@ -33,6 +33,12 @@ local CORNER_INSET = 32
 -- for every Spoken addon's clips, so they only relabel the line already found.
 local CLIP_EVENTS = { "CLIP_QUEUED", "CLIP_STARTED", "CLIP_STOPPED", "CLIP_DROPPED" }
 
+-- Every page of an NPC window, whichever module reads it. QuestFrame stays shown while its page
+-- turns from greeting to quest and back, so a button refreshed only on its own pages' events
+-- stayed on the next module's page. Refresh checks its own panel, so another's page hides it.
+local WINDOW_EVENTS = { "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "QUEST_GREETING",
+    "GOSSIP_SHOW", "QUEST_FINISHED", "GOSSIP_CLOSED" }
+
 DialoguePlayButton = {}
 local Methods = {}
 
@@ -91,11 +97,7 @@ end
 ---   offTip   the tooltip's second line, saying why the window did not read itself
 ---   later    fun(fn, seconds): call fn after a moment
 function DialoguePlayButton:New(spec)
-    local refreshEvents = { "QUEST_FINISHED", "GOSSIP_CLOSED" }
-    for event in pairs(spec.panels) do
-        table.insert(refreshEvents, event)
-    end
-    return setmetatable({ spec = spec, refreshEvents = refreshEvents }, { __index = Methods })
+    return setmetatable({ spec = spec, refreshEvents = WINDOW_EVENTS }, { __index = Methods })
 end
 
 function Methods:Position(frameName)

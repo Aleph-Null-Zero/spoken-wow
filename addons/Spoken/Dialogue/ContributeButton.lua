@@ -310,7 +310,8 @@ function ContributeButton:Refresh()
         button:Hide()
         self.gossip = gossipPage
         local missing = Contribute:HasGap()
-        if missing or not (_G.Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()) then
+        local reportHidden = _G.Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()
+        if missing or not reportHidden then
             self:ShowOnDialogueUI(_G.DUIQuestFrame, missing)
         else
             self:HideOnDialogueUI()

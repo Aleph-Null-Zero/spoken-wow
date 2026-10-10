@@ -125,6 +125,16 @@ for _, client in ipairs({ "11509", "1.12" }) do
     Expect(client .. ": Listen reads the greeting", Played(played), "greeting-hash")
     CloseGreeting()
 
+    -- Picking a quest from the greeting puts its page in the same window, which stays open.
+    OpenGreeting()
+    Expect(client .. ": at Never, the greeting shows Listen", button:IsShown(), true)
+    world.questID = 101
+    stub.ShowPanel("QuestFrameDetailPanel")
+    stub.FireEvent("QUEST_DETAIL")
+    stub.Advance(1)
+    Expect(client .. ": ...and picking a quest from it takes Listen off the quest's page", button:IsShown(), false)
+    CloseGreeting()
+
     -- /spg read is the other way in.
     OpenGossip("We stand ready.")
     G.Addon:ReadVisible("/spg read")

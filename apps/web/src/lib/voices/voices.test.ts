@@ -12,13 +12,19 @@ import {
   VOICE_NAMES,
   VOICES,
   voiceName,
+  voiceNameFor,
 } from "./voices";
 
 describe("VOICES", () => {
   // The roster is what /voices, the filters and the triage selects offer, so a corpus line
   // outside it would be spoken in a voice nothing can find or clone.
   it("covers every voice the corpus speaks in", async () => {
-    for (const line of (await corpus()).lines) expect(isVoice(line.voice), line.voice).toBe(true);
+    for (const line of (await corpus()).lines) {
+      // An NPC the game gives no flavor speaks in none until somebody picks one (migration
+      // 0070): its race-gender is on the roster, waiting.
+      const waiting = line.flavor === null && flavorsOf(line.race, line.gender).length > 0;
+      expect(isVoice(line.voice) || waiting, line.voice).toBe(true);
+    }
   });
 
   it("names each voice the way the corpus does", async () => {
@@ -64,5 +70,13 @@ describe("VOICES", () => {
     expect(flavorsOf("skybourneelf", "male")).toEqual(["3776", "3775"]);
     expect(flavorsOf("narrator", "male")).toEqual([]);
     expect(flavorsOf("murloc", "male")).toEqual([]);
+  });
+});
+
+describe("voiceNameFor", () => {
+  it("names a model slot by itself, as flavors.py's voice_name does", () => {
+    expect(voiceNameFor("model-29", "male", null)).toBe("model-29");
+    expect(voiceNameFor("tauren", "male", "warrior")).toBe("tauren-male-warrior");
+    expect(voiceNameFor("narrator", "male", null)).toBe("narrator-male");
   });
 });

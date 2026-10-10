@@ -81,6 +81,7 @@ Expect("...one with a picture sends it and its frayed edge, for a window to show
     pictured.present.picture and (pictured.present.picture.file .. " " .. pictured.present.picture.mask), "Pictures/1411 Pictures/Mask3")
 Expect("...and how large Place Lore draws it beside the map, its panel less its margins",
     pictured.present.picture.pixels, (Z:Get("panelWidth") - 66) * UIParent:GetEffectiveScale())
+Z.Picture = nil
 Z.GetMapName = GetMapName
 
 ---------------------------------------------------------------- playing through the player
@@ -102,11 +103,12 @@ Expect("starting marks the area heard in the per-character record", Z:HasHeard(1
 local F = env.PlayerFrame
 Expect("the player frame shows where the zone is, over its name", F.frame.container.name:GetText(), "Kalimdor")
 Z.GetMapName = GetMapName
--- Report only, as an icon in the corner. Reading the text is reached from the map, the
--- minimap menu and /spz; a button on the player that opened a window over the thing being
+-- Report only, as an icon among the header's controls. Reading the text is reached from the map,
+-- the minimap menu and /spz; a button on the player that opened a window over the thing being
 -- read was one way too many.
 Expect("...and no strip of buttons", F.frame.actions.shown, 0)
-Expect("...but Report in the corner", F.frame.actions.buttons[1].anchor.point, "TOPRIGHT")
+Expect("...but Report in the header after Skip", F.row and F.row[3] == F.frame.actions.buttons[1]
+    and F.frame.actions.buttons[1]:GetParent() == F.controls, true)
 
 env, Z = Boot(); Spoken = _G.Spoken
 Z:PlayLore(1411, nil)

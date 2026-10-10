@@ -51,7 +51,8 @@ end
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
 --     continues = true,                       -- optional; its next part follows (source:Continue), no pause or cue
 --     present  = {
---       header   = "Eagan Peltskinner",       -- NPC name | zone name | book title
+--       header   = "Eagan Peltskinner",       -- NPC name | place above | book title;
+--                                             -- nil over the world's own lore
 --       label    = "Wolves Across the Border",-- quest title | subzone | page label
 --       transcript = "Full dialogue text",   -- optional; falls back to clip.text
 --       bullet   = "quest-accept",            -- a RegisterBullet id
@@ -67,8 +68,6 @@ end
 --
 -- The player sets id, handle, source and nextSoundTimer; a caller never does.
 
---- A row bullet, registered once by a feature addon so SpokenBooks needs no change to
---- the player to have one of its own.
 --- Declare an action switchable, and what the player's settings should call it. Report has
 --- its own row; the modules still declare it for an older player, which has no such row.
 ---@param id string the action id, as it appears in a clip's presentation
@@ -77,6 +76,8 @@ function Spoken:RegisterOptionalAction(id, label)
     return Actions:RegisterOptional(id, label)
 end
 
+--- A row bullet, registered once by a feature addon so SpokenBooks needs no change to
+--- the player to have one of its own.
 function Spoken:RegisterBullet(id, texture, size)
     Bullets[id] = { texture = texture, size = size }
 end
@@ -152,7 +153,7 @@ function Spoken:SetPlayerHost(frame)
     Addon:SetPlayerHost(frame)
 end
 
---- Add a feature addon's rows to the DialogueUI group on Spoken's page. build(layout) runs once,
+--- Add a feature addon's rows to Spoken's page, after the narrator style's. build(layout) runs once,
 --- when the page is built or at once if it is: it adds a section and rows to the SpokenLayout, and
 --- may return a function that resets them, which Spoken's Start Over runs. Never called without
 --- DialogueUI. Additive: guard on the field; without it, keep the rows on the addon's own page,
@@ -441,10 +442,10 @@ function Spoken:StopAll()
     SoundQueue:RemoveAllSoundsFromQueue()
 end
 
---- A gate that applies to every source: fn(clip) -> reason | nil.
 --- Switch a channel off on a source's behalf, e.g. Dialog while a quest line speaks.
 --- Unlike a channel the user disabled, clips on it are still admitted, and the mute is
---- lifted before one plays.
+--- lifted before one plays. A channel the user already has off is left alone: nothing is
+--- held, so nothing switches it back on.
 function Spoken:MuteChannel(channel, muted)
     SoundUtils:MuteChannel(channel, muted)
 end
@@ -456,6 +457,7 @@ function Spoken:MuteGameDialogueAhead(source)
     SoundQueue:MuteGameDialogueAhead(source:GetChannel())
 end
 
+--- A gate that applies to every source: fn(clip) -> reason | nil.
 function Spoken:AddGate(fn)
     SoundQueue:AddGate(fn)
 end

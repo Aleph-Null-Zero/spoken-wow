@@ -554,7 +554,8 @@ end
 --- zone's continent, a continent's world. Nil for the world.
 function SpokenZones:PlaceAbove(mapID)
 	local C = _G.SpokenCompendium
-	if mapID == C.WORLD then return nil end
+	-- A Compendium that failed to load costs the header, not the clip.
+	if not C or mapID == C.WORLD then return nil end
 	for _, continent in ipairs(C.CONTINENTS) do
 		if continent == mapID then return C.WORLD end
 	end
@@ -596,7 +597,7 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		mapID = mapID,
 		areaKey = areaKey,
 		present = {
-			-- Over the place's name, the place it is in.
+			-- An area under its zone; anything else under the place above it.
 			header = areaKey and (self:GetMapName(mapID) or label) or self:GetMapName(self:PlaceAbove(mapID)),
 			label = label,
 			transcript = entry and entry.full,

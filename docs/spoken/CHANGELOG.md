@@ -2,6 +2,67 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## Unreleased
+
+- **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
+  voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
+  that voice, the quest plays as before.
+- **With the DialogueUI narrator style, Spoken's small window takes DialogueUI's look.** When a
+  dialog closes on a line still playing, the window slides out of it, with Stop, Skip and Report in
+  its header and a place's picture over its words. *([Nucabe](https://github.com/Nucabe))*
+- **With the DialogueUI narrator style, books show in DialogueUI's paper and plaques and gravestones
+  in its stone.** Spoken's window stays hidden while DialogueUI's book view is open and slides out
+  of it when it closes. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI window settles into place with animation.** A queued line's page tucks behind the
+  window, and the words fade from one line to the next. *([Nucabe](https://github.com/Nucabe))*
+- **Abandoning a quest while its voice speaks fades the voice out.** Before, it was cut off
+  mid-word and the quest's next line started for a moment. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: Books and Zones said "Not installed" in Spoken's module list after login**, and a
+  module's settings page could show it switched off after it was switched on from Spoken's page.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Hide Report Buttons hides every Report button.** It sits beside Hide Contribute Buttons and
+  also takes Report off the quest log, DialogueUI's window, the lore beside the map and the
+  Compendium. *([Nucabe](https://github.com/Nucabe))*
+- **NPC voices you switched off (the Dialog channel) stay off.** With Spoken on another channel,
+  they came back on after any line it read, from an NPC's window, a zone or a book.
+  *([svengabr](https://github.com/svengabr))*
+- **Spoken Zones no longer raises a Lua error on chat messages the game keeps hidden from addons**,
+  as in a dungeon group. *([svengabr](https://github.com/svengabr))*
+- **What NPCs say is its own module, Spoken Gossip, with its own switch and settings page.**
+  Your gossip settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*
+- **A book is one entry in the queue.** Skip skips the rest of the book, and a gravestone or
+  letter opened while a book is read waits behind it instead of replacing it. The windows show
+  the readable's kind over its name, such as Book or Gravestone, in place of the page count.
+  *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI settings are on Spoken's page, with the other narrator styles'.** They show when
+  DialogueUI is the narrator style, and every style's settings come in the same order: Size and
+  Position, Look, Words. Show Sample Subtitle is gone, as Preview shows every style.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Subtitles get the windows' settings, and the windows type by letter.** Subtitles gain Show Name
+  and Title, Highlight Words, Auto-Scroll line by line or page by page, Text Size and Hide Portrait.
+  Type By sets whether a window types out words or letters. *([Nucabe](https://github.com/Nucabe))*
+- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles alone.
+  With DialogueUI installed, Voice Only keeps Show Words, Highlight Words and Type Words Out, as
+  they also mark the words in DialogueUI's quest text, and their tooltips say so. Spoken Quests'
+  DialogueUI switches have a DialogueUI section of their own after the narrator style's settings,
+  without Show Spoken Over DialogueUI under Voice Only. Bronze Border's tooltip says it colours
+  every round button. *([Nucabe](https://github.com/Nucabe))*
+- **The large window's words are inside its box, under the speaker's name.** The name heads the
+  box with the line's name after it, then Stopped and a count of the lines waiting in place of the
+  queue's rows, and Stop, Skip and Report at the right. A progress line runs under the words. With
+  Bronze Border on, the window uses the game's Talking Head art. *([Nucabe](https://github.com/Nucabe))*
+- **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
+  written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
+- **Volume Follows is back.** Choose which volume slider Spoken's voices follow: Master, Effects,
+  Music, Ambience or Dialog. On Dialog, a note says which features stop working there.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
+  Spoken's voice when you switch away. The line now stops instead of running on in silence, and
+  Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
+- **A zone's story is headed by the place it is in.** It showed its own name twice, as
+  "Mulgore / Mulgore". The narrator now shows a zone's continent over it and a city's zone, and
+  the Compendium's "In ..." line names the same place. *([Nucabe](https://github.com/Nucabe))*
+
 ## 3.2.0 — 2026-10-08
 
 - **Lore of Azeroth is now Azeroth's Compendium, with a Books tab.** The Zones tab lists each

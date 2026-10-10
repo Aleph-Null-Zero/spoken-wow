@@ -3,13 +3,14 @@
 /**
  * /contributions/npcs: every NPC on file, one row each, with the triage table's own speaker
  * controls. `initial` is NpcSummary, built server-side (npcSummaryFrom), so nothing from
- * npc_resolution beyond what is rendered crosses into the client.
+ * the npc table beyond what is rendered crosses into the client.
  */
 import { SearchIcon } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
+import { LiteButton } from "@/components/LiteControls";
 import { useLang } from "@/components/LangProvider";
 import SpeakerCell, { type SpeakerAnswer } from "@/components/SpeakerCell";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,56 @@ function progressOf(npc: NpcSummary): Progress {
   return npc.doubtful ? "doubtful" : "finished";
 }
 
+/** A voice answer, or a name: the route saves each on its own. */
+type Answer = SpeakerAnswer & { npcName?: string };
+
+/** An NPC's name with a moderator's Edit, which saves over whatever named it. */
+function NameCell({
+  name,
+  busy,
+  onSave,
+}: {
+  name: string | null;
+  busy: boolean;
+  onSave: (name: string) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  if (draft === null) {
+    return (
+      <div className="flex items-center gap-1">
+        <span>{name ?? <span className="text-muted-foreground">unnamed</span>}</span>
+        <LiteButton variant="ghost" className="h-5 px-1.5 py-0 text-xs" onClick={() => setDraft(name ?? "")}>
+          Edit
+        </LiteButton>
+      </div>
+    );
+  }
+  const trimmed = draft.trim();
+  return (
+    <form
+      className="flex items-center gap-1"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (trimmed && trimmed !== name) onSave(trimmed);
+        setDraft(null);
+      }}
+    >
+      <input
+        aria-label="NPC name"
+        autoFocus
+        maxLength={200}
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => event.key === "Escape" && setDraft(null)}
+        className="border-input bg-background h-7 w-44 rounded-md border px-2"
+      />
+      <LiteButton type="submit" variant="outline" className="h-7 px-2 text-xs" disabled={busy || !trimmed}>
+        Save
+      </LiteButton>
+    </form>
+  );
+}
+
 export default function NpcEditor({
   initial,
   flavorScopes,
@@ -119,8 +170,8 @@ export default function NpcEditor({
 
   /** One answer, posted and taken into `saved`. True when it landed. */
   const post = useCallback(
-    async (npc: NpcSummary, answer: SpeakerAnswer): Promise<boolean> => {
-      // Every row here came from npc_resolution, so npcKind is never null and the route's
+    async (npc: NpcSummary, answer: Answer): Promise<boolean> => {
+      // Every row here came from the npc table, so npcKind is never null and the route's
       // required kind is always the row's own.
       const response = await fetch("/api/contributions/npc", {
         method: "POST",
@@ -139,7 +190,7 @@ export default function NpcEditor({
   );
 
   const save = useCallback(
-    async (npc: NpcSummary, answer: SpeakerAnswer) => {
+    async (npc: NpcSummary, answer: Answer) => {
       const k = key(npc.npcKind, npc.npcId);
       setBusy(k);
       setFailed(null);
@@ -349,7 +400,14 @@ export default function NpcEditor({
                       wf↗
                     </a>
                   </td>
-                  <td className="pr-3 text-xs">{npc.npcName ?? <span className="text-muted-foreground">unnamed</span>}</td>
+                  <td className="pr-3 text-xs">
+                    <NameCell
+                      key={npc.npcName ?? ""}
+                      name={npc.npcName}
+                      busy={busy === k || bulk !== null}
+                      onSave={(npcName) => void save(npc, { npcName })}
+                    />
+                  </td>
                   <td className="pr-3 text-xs">
                     <SpeakerCell
                       // Remount on a save, so the form's own state starts from the new answer.

@@ -109,7 +109,7 @@ export type IdOnlyLookup = {
 const RANK: Record<Provenance, number> = { moderator: 4, corpus: 3, display: 2, client: 1, none: 0 };
 
 /**
- * Who a kind-less contribution's NPC is, from every npc_resolution row sharing its id.
+ * Who a kind-less contribution's NPC is, from every npc row sharing its id.
  *
  * A kind-less envelope names an id that may exist as both a creature and a gameobject. When the
  * rows that say anything (every provenance but `none`) agree on race, gender and flavor, that
@@ -142,7 +142,7 @@ export function idOnlyResolution(rows: NpcResolution[] | undefined): IdOnlyLooku
 
 /**
  * One row's NPC/Speaker column content, from what the envelope itself observed and whatever
- * npc_resolution row (if any) already answers for that (kind, id).
+ * npc row (if any) already answers for that (kind, id).
  *
  * The resolution's own `npcKind` wins over the observation's: a resolution can only exist when
  * some envelope -- this one or an earlier one for the same NPC -- carried a kind, which makes it

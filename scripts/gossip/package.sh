@@ -42,7 +42,9 @@ for toc in "$SRC"/*.toc; do
   missing=()
   while IFS= read -r entry; do
     [ -f "$SRC/$(printf '%s' "$entry" | tr '\\' '/')" ] || missing+=("$entry")
-  done < <(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$toc" | tr -d '\r' | grep -E '\.(lua|xml)$' || true)
+  # A trailing load directive ("Gossip\deDE.lua [AllowLoadTextLocale deDE]") is not the path.
+  done < <(sed -E -e 's/#.*//' -e 's/[[:space:]]*(\[[^]]*\])?[[:space:]]*$//' "$toc" | tr -d '\r' \
+             | grep -E '\.(lua|xml)$' || true)
   toc_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$toc" | head -1 | tr -d '\r')"
   [ "$toc_version" = "$version" ] || { echo "error: $(basename "$toc") says $toc_version, $NAME.toc says $version" >&2; exit 1; }
   if [ ${#missing[@]} -gt 0 ]; then

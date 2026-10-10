@@ -155,7 +155,8 @@ on this client's clock, and head each line with whose it is.
 - `player`: Spoken's queue as it reports it to every addon (`CLIP_QUEUED`, `CLIP_STARTED`,
   `CLIP_STOPPED`, `CLIP_DROPPED`, the queue stopped or playing again), the lines a source's
   `Enqueue` or `PlayNow` refused without a callback (a duplicate, a file the probe did not find, a
-  muted channel, a module turned off), and the Dialog channel muted or restored.
+  muted channel, a module turned off), and the Dialog channel muted, restored, or left alone
+  because the player already had it off.
 - `screen`: the reading window (books, plaques, signs, letters) as each page shows, with its
   title, page, author for a letter and first words, and whether Spoken Books is there to read it;
   then its closing.

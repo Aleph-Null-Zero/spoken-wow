@@ -2,7 +2,7 @@
  * A moderator's answer to "which NPC is this?", for a contribution whose envelope named its NPC
  * by id alone.
  *
- * Recorded on the contribution, not in npc_resolution: the answers there are about NPCs and are
+ * Recorded on the contribution, not in the npc table: the answers there are about NPCs and are
  * not wrong, only ambiguous for this row, which could mean either kind. After this every reader
  * (the triage page, accept, the export) reads the row as if its envelope had carried the kind.
  * Refused for a row whose envelope already carried one -- the client's own observation stands.

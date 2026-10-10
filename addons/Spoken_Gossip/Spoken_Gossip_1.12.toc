@@ -10,7 +10,7 @@
 ## Notes-koKR: NPC에게 말을 걸 때 NPC가 하는 말을 Spoken으로 소리내어 읽습니다.
 ## Notes-zhCN: 通过 Spoken 朗读与 NPC 交谈时他们说的话。
 ## Notes-zhTW: 透過 Spoken 朗讀和 NPC 交談時對方說的話。
-## Version: 3.2.0
+## Version: 3.3.0
 ## SavedVariables: SpokenGossipSettings
 ## Dependencies: Spoken
 # This client installs by hand from a zip that bundles the player, so the dependency is
@@ -19,3 +19,4 @@
 
 1.12\embeds.xml
 addon.xml
+Gossip\Gossip.xml

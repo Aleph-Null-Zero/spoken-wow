@@ -805,7 +805,7 @@ end
 if Version.IsLegacyWrath then
 
     -- 3.3.5 can show a creature it has not cached only after the client fetches it, so
-    -- the portrait shows a placeholder until then and the pause button says why on hover.
+    -- the portrait shows a placeholder until then and says why on hover.
     function hookModel(self)
         local function HasModelLoaded(self)
             local model = self:GetModel()
@@ -860,16 +860,18 @@ if Version.IsLegacyWrath then
     end
 
     hooksecurefunc(PlayerFrame, "InitPortrait", function(self)
-        self.frame.portrait.pause:HookScript("OnEnter", function()
-            if self.frame.portrait.model and self.frame.portrait.model._awaitingModel then
-                GameTooltip:SetOwner(self.frame.portrait.pause, "ANCHOR_NONE")
-                GameTooltip:SetPoint("BOTTOMLEFT", self.frame.portrait.pause, "BOTTOMRIGHT", 4, -4)
+        local portrait = self.frame.portrait
+        portrait:EnableMouse(true)
+        portrait:HookScript("OnEnter", function()
+            if portrait.model and portrait.model._awaitingModel then
+                GameTooltip:SetOwner(portrait, "ANCHOR_NONE")
+                GameTooltip:SetPoint("BOTTOMLEFT", portrait, "BOTTOMRIGHT", 4, -4)
                 GameTooltip:SetText(L.UNCACHED_NPC, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
                 GameTooltip:AddLine(L.UNCACHED_NPC_TIP, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
                 GameTooltip:Show()
             end
         end)
-        self.frame.portrait.pause:HookScript("OnLeave", GameTooltip_Hide)
+        portrait:HookScript("OnLeave", GameTooltip_Hide)
     end)
 
 end

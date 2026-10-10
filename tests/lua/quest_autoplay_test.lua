@@ -114,6 +114,17 @@ for _, client in ipairs({ "11509", "1.12" }) do
     Close()
     Expect(client .. ": closing the dialog hides the button", button:IsShown(), false)
 
+    -- The quest window's back button turns the offer into the giver's greeting, in the same
+    -- window, which stays open: the greeting is the gossip module's.
+    Open(101, "QuestFrameDetailPanel", "QUEST_DETAIL")
+    Expect(client .. ": autoplay off, the offer shows Listen", button:IsShown(), true)
+    world.questID = 0
+    stub.ShowPanel("QuestFrameGreetingPanel")
+    stub.FireEvent("QUEST_GREETING")
+    stub.Advance(1)
+    Expect(client .. ": ...and going back to the greeting takes it off", button:IsShown(), false)
+    Close()
+
     Open(101, "QuestFrameRewardPanel", "QUEST_COMPLETE")
     Expect(client .. ": autoplay off, a turn-in reads nothing", Played(played), "(nothing)")
     button:Click()

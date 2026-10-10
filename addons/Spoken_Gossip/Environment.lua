@@ -24,5 +24,5 @@ SpokenGossipEnv = setmetatable({
     AddonFolder = "Spoken_Gossip",
     -- What /spg diagnostics prints. A literal because this file loads before the addon has any
     -- metadata API; scripts/package.sh refuses to build when it disagrees with the .toc.
-    AddonVersion = "3.2.0",
+    AddonVersion = "3.3.0",
 }, { __index = core })

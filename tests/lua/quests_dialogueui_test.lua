@@ -303,16 +303,14 @@ Expect("a greeting heard before shows whole at once", Paragraph(1), GREETING)
 stub.SelectGossipOption("Where is the bank?")
 stub.ShowGossip(DIRECTIONS)
 DUI:HandleGossip()
-Expect("directions drawn before Spoken Quests sees the page are kept blank for their line",
+Expect("directions drawn before Spoken Gossip sees the page are kept blank for their line",
     Paragraph(1), "")
 stub.FireEvent("GOSSIP_SHOW")
 stub.Advance(1)
 stub.HidePanels()
 stub.FireEvent("GOSSIP_CLOSED")
 Greet()
-stub.SelectGossipOption("Where is the bank?")
-stub.ShowGossip(DIRECTIONS)
-stub.FireEvent("GOSSIP_SHOW")
+stub.PickGossipOption("Where is the bank?", DIRECTIONS)
 stub.Advance(0.6)
 Spoken:StopAll()
 Expect("...and so are directions drawn after it", G.Addon:ExpectedLine("GOSSIP_SHOW", true), DIRECTIONS)
@@ -324,7 +322,6 @@ Expect("...but not the greeting on the next visit", G.Addon:ExpectedLine("GOSSIP
 stub.HidePanels()
 stub.FireEvent("GOSSIP_CLOSED")
 Spoken:StopAll()
-G.Addon.ExpectedLine = expectedLine
 world.npcGUID, world.gossipText, DUI.handler = questGiver, nil, nil
 
 -- A zone clip whose transcript is the quest text word for word.
@@ -874,25 +871,43 @@ Expect("nothing there changes DialogueUI's own settings", table.getn(layout.entr
     and Row("Turn On Text To Speech") == nil, true)
 Expect("the place has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
     and Row(VO.L.OPT_DUI_PLAY_BUTTON) ~= nil and scroll ~= nil, true)
--- Among the narrator style's settings, last; the page's later sections (the languages, the
--- sound) under them.
 -- The style as the page reads it: DialogueUI's art is not here to make the style available.
 local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end
 layout:Refresh()
-local narrator, language
-for _, item in ipairs(layout.items) do
-    if item.kind == "group" and item.text == env.L.OPT_NARRATOR_SETTINGS then narrator = item end
-    if item.kind == "section" and item.text == env.L.OPT_LANGUAGE_TITLE then language = item end
+-- They change DialogueUI's quest window, which is there whatever the narrator style: a section of
+-- their own under DialogueUI's name, after the narrator style's settings, before the Compendium.
+local narratorEnd, section, compendium
+for index, item in ipairs(layout.items) do
+    if item.kind == "groupEnd" and item.group.text == env.L.OPT_NARRATOR_SETTINGS then narratorEnd = index end
+    if item.kind == "section" and item.text == VO.L.OPT_SECTION_DIALOGUEUI then section = index end
+    if item.kind == "section" and item.text == env.L.OPT_COMPENDIUM_TITLE then compendium = index end
 end
-Expect("...among the narrator style's settings, last", captions:IsShown()
-    and narrator ~= nil and captions.layoutY < narrator.heading.layoutY
-    and language ~= nil and language.top < captions.layoutY, true)
--- They change DialogueUI's quest window, which is there whatever the narrator style.
+Expect("...in a DialogueUI section after the narrator style's settings", captions:IsShown()
+    and narratorEnd ~= nil and section ~= nil and section > narratorEnd and compendium ~= nil and section < compendium
+    and layout.items[section].heading ~= nil, true)
 for _, style in ipairs({ "subtitle", "minimal", "classic", "none" }) do
     chosen = style
     layout:Refresh()
     Expect("...and with the " .. style .. " style too", captions:IsShown() and Row(VO.L.OPT_DUI_PLAY_BUTTON):IsShown(), true)
+end
+-- Show Spoken Over DialogueUI keeps the window or the subtitles on screen; Voice Only has neither.
+local showPlayer = Row(VO.L.OPT_DUI_SHOW_PLAYER)
+Expect("Show Spoken Over DialogueUI is not offered with Voice Only", showPlayer:IsShown(), false)
+for _, style in ipairs({ "subtitle", "minimal", "classic", "dialogueui" }) do
+    chosen = style
+    layout:Refresh()
+    Expect("...and is with the " .. style .. " style", showPlayer:IsShown(), true)
+end
+-- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked,
+-- and say so.
+for _, label in ipairs({ env.L.TRANSCRIPT_SHOW, env.L.TRANSCRIPT_HIGHLIGHT, env.L.TRANSCRIPT_TYPEWRITER }) do
+    local tip
+    for _, entry in ipairs(layout.entries) do
+        if entry.label == label then tip = entry.tooltip end
+    end
+    Expect(label .. "'s tooltip names DialogueUI's quest text", tip ~= nil
+        and string.find(tip, "DialogueUI's quest and gossip text", 1, true) ~= nil, true)
 end
 chosen = "dialogueui"
 layout:Refresh()

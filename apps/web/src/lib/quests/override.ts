@@ -8,6 +8,7 @@
  * the file and what the addon matches on - see the header of migration 0012.
  */
 import { INVALID_CHARS, hasInvalidChars } from "../text-gate";
+import { VOICE_NAMES } from "../voices/voices";
 
 export type LineOverride = {
   file: string;
@@ -50,4 +51,19 @@ export function validateOverride(input: unknown): { file: string; lineId: string
   }
 
   return { file: file.trim(), lineId: lineId.trim(), text: trimmed };
+}
+
+// Longest first, so a voice is never mistaken for the tail of a longer one.
+const BY_LENGTH = [...VOICE_NAMES].sort((a, b) => b.length - a.length);
+
+/**
+ * A file's override, or for a voice's file (`{file}-{voice}`, naming.ts variantFileName) its
+ * line's: a voice's line shares its line's text, and an override is saved against the line's file.
+ */
+export function overrideOf(overrides: Map<string, LineOverride>, file: string): LineOverride | undefined {
+  const own = overrides.get(file);
+  if (own) return own;
+  const stem = file.replace(/\.mp3$/, "");
+  const voice = BY_LENGTH.find((name) => stem.endsWith(`-${name}`));
+  return voice ? overrides.get(`${stem.slice(0, -voice.length - 1)}.mp3`) : undefined;
 }

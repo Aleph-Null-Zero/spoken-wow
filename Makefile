@@ -56,6 +56,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/gossip_takeover_test.lua
 	@$(LUA) tests/lua/greeting_first_takeover_test.lua
 	@$(LUA) tests/lua/gossip_options_test.lua
+	@$(LUA) tests/lua/gossip_text_test.lua
 	@$(LUA) tests/lua/quest_overlay_test.lua
 	@$(LUA) tests/lua/quest_followup_test.lua
 	@$(LUA) tests/lua/quest_abandon_test.lua
@@ -89,6 +90,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/quest_greeting_first_test.lua
 	@$(LUA) tests/lua/data_modules_test.lua
 	@$(LUA) tests/lua/quests_language_test.lua
+	@$(LUA) tests/lua/quest_voice_files_test.lua
 	@$(LUA) tests/lua/player_required_test.lua
 	@$(LUA) tests/lua/duplicate_player_test.lua
 	@$(LUA) tests/lua/zones_options_test.lua

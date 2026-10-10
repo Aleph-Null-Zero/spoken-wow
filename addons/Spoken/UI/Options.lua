@@ -401,12 +401,10 @@ local function Build(canvas)
             function(v) transcript().SubtitleName = v end, refreshSubtitle), Subtitles)
     end
     if captions then
-        -- The subtitle's and the DialogueUI window's progress line.
-        local progress = layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
+        -- The subtitle's progress line. The DialogueUI window always draws its own.
+        ForSubtitles(layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
-            function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
-        Only(progress, function() return Subtitles() or DUI() end)
-        Requires(progress, function() return not Subtitles() or Words() end, L.REASON_WORDS)
+            function(v) transcript().SubtitleProgress = v end, refreshSubtitle))
     end
     -- Hiding the portrait and hiding a button are one kind of choice, so they sit together. Not
     -- for the DialogueUI window, whose header has the face's socket built in.
@@ -423,39 +421,49 @@ local function Build(canvas)
     -- not told what any of them do. The subtitle shows the corner icon too, so the row is
     -- there with subtitles as well as with a window. Report is not the window's alone (the
     -- quest log, DialogueUI's window and the lore pages show it), so its row is a general one.
+    local function HideActionRow(id, label, tip, changed)
+        return layout:Checkbox(label, tip,
+            function() return cfg().HiddenActions[id] end,
+            function(v) cfg().HiddenActions[id] = v or nil end, function()
+                refresh()
+                if Subtitle then Subtitle:Update() end
+                if changed then changed() end
+            end)
+    end
     for _, optional in ipairs(Actions.optional) do
         if optional.id ~= "report" then
-            Only(layout:Checkbox(format(L.OPT_HIDE_ACTION, optional.label), L.OPT_HIDE_ACTION_TIP,
-                function() return cfg().HiddenActions[optional.id] end,
-                function(v) cfg().HiddenActions[optional.id] = v or nil end, function()
-                    refresh()
-                    if Subtitle then Subtitle:Update() end
-                end),
+            Only(HideActionRow(optional.id, format(L.OPT_HIDE_ACTION, optional.label), L.OPT_HIDE_ACTION_TIP),
                 function() return InWindow() or Subtitles() end)
         end
     end
-    -- The report action's switch, which the windows already follow, so a hidden Report stays
-    -- hidden; addons that draw their own hear REPORT_SETTINGS_CHANGED.
-    local function ReportRow()
-        layout:Checkbox(L.OPT_HIDE_REPORT, L.OPT_HIDE_REPORT_TIP,
-            function() return cfg().HiddenActions.report end,
-            function(v) cfg().HiddenActions.report = v or nil end, function()
-                refresh()
-                if Subtitle then Subtitle:Update() end
-                Callbacks:Fire("REPORT_SETTINGS_CHANGED")
-            end)
+    -- The report action's own key, which the windows already follow: a hidden Report stays hidden.
+    local function ReportRow(tip)
+        return HideActionRow("report", L.OPT_HIDE_REPORT, tip,
+            function() Callbacks:Fire("REPORT_SETTINGS_CHANGED") end)
     end
-    -- Where there is no Contribute section to put it beside (the legacy clients), here.
-    if not Spoken.Contribute then ReportRow() end
+    -- Legacy clients have no Contribute section, and Report only on a window or subtitles. Its tip
+    -- names only what they have: no Small Window, and no subtitles on 1.12.
+    if not Spoken.Contribute then
+        Only(ReportRow(Version.IsLegacyVanilla and L.OPT_HIDE_REPORT_TIP_VANILLA
+            or L.OPT_HIDE_REPORT_TIP_LEGACY), function() return InWindow() or Subtitles() end)
+    end
     -- No "hide the window" switch: nothing on screen at all is Voice Only, a way of showing
     -- lines like the others, chosen with them above.
 
     if captions then
+        -- DialogueUI's own quest text, which Spoken Quests marks whatever the style, follows Show
+        -- Words, Highlight Words and Type Words Out (Spoken:GetCaptionOptions): with DialogueUI
+        -- they do something under Voice Only too, and their tooltips say so.
+        local function DUIText() return DialogueUITheme ~= nil and DialogueUITheme:Available() end
+        -- The legacy clients' stub has no Installed: no DialogueUI there.
+        local withDUI = DialogueUITheme ~= nil and DialogueUITheme.Installed ~= nil and DialogueUITheme:Installed()
+        local function Tip(tip, extra) return withDUI and tip .. " " .. extra or tip end
+        local function Marks() return Shown() or DUIText() end
         -- Show Words first: everything under it waits on it.
         layout:Section(L.OPT_TEXT_TITLE)
-        Only(layout:Checkbox(L.TRANSCRIPT_SHOW, L.TRANSCRIPT_SHOW_TIP,
+        Only(layout:Checkbox(L.TRANSCRIPT_SHOW, Tip(L.TRANSCRIPT_SHOW_TIP, L.TRANSCRIPT_SHOW_DUI_TIP),
             function() return transcript().Enabled end,
-            function(v) Transcript:SetEnabled(v) end, function() Options:UpdateRows() end), Shown)
+            function(v) Transcript:SetEnabled(v) end, function() Options:UpdateRows() end), Marks)
         local function InWindowText(row)
             Only(row, InWindow)
             Requires(row, Words, L.REASON_WORDS)
@@ -495,20 +503,20 @@ local function Build(canvas)
             function(v) transcript().SubtitleScroll = v end, function() refreshSubtitle(); Options:UpdateRows() end,
             function(v) return SCROLL_LABELS[v] or v end))
         -- The word being read lit. The subtitle lights it only while it shows its words whole:
-        -- typed at their own pace, an estimated word timing would show every miss. With
-        -- DialogueUI installed, also for the quest text Spoken Quests marks there, under any style.
-        local highlight = layout:Checkbox(L.TRANSCRIPT_HIGHLIGHT, L.TRANSCRIPT_HIGHLIGHT_TIP,
+        -- typed at their own pace, an estimated word timing would show every miss.
+        local highlight = layout:Checkbox(L.TRANSCRIPT_HIGHLIGHT, Tip(L.TRANSCRIPT_HIGHLIGHT_TIP, L.TRANSCRIPT_DUI_TIP),
             function() return transcript().HighlightWord end,
             function(v) transcript().HighlightWord = v end, refreshTranscript)
-        Only(highlight, function() return InWindow() or Subtitles() or DialogueUITheme:Available() end)
+        Only(highlight, Marks)
         Requires(highlight, Words, L.REASON_WORDS)
         Requires(highlight, function() return not (Subtitles() and transcript().Typewriter) end, L.REASON_UNTYPED)
-        local typewriter = layout:Checkbox(L.TRANSCRIPT_TYPEWRITER, L.TRANSCRIPT_TYPEWRITER_TIP,
+        local typewriter = layout:Checkbox(L.TRANSCRIPT_TYPEWRITER, Tip(L.TRANSCRIPT_TYPEWRITER_TIP, L.TRANSCRIPT_DUI_TIP),
             function() return transcript().Typewriter end,
             function(v) transcript().Typewriter = v end, refreshTranscript)
-        Only(typewriter, Shown)
+        Only(typewriter, Marks)
         Requires(typewriter, Words, L.REASON_WORDS)
-        -- How the words are typed, under it: letter by letter, or whole words.
+        -- How the words are typed, under it: letter by letter, or whole words. DialogueUI's quest
+        -- text is always typed by whole words, so not under Voice Only.
         layout:Indent()
         local by = layout:Dropdown(L.TRANSCRIPT_TYPEWRITER_BY, L.TRANSCRIPT_TYPEWRITER_BY_TIP, { "word", "letter" },
             function() return transcript().TypewriterBy or "letter" end,
@@ -519,11 +527,12 @@ local function Build(canvas)
         Requires(by, function() return Words() and transcript().Typewriter end, L.REASON_TYPEWRITER)
     end
 
-    -- What the feature addons do in DialogueUI's own window, whatever the style.
-    DialogueUIOptions:Place(layout)
-
     -- The narrator style's settings end here; what follows is Spoken's whatever the style.
     layout:EndGroup()
+
+    -- What the feature addons do in DialogueUI's own quest window, which is there whatever the
+    -- style: a section of their own, under DialogueUI's name.
+    DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each
     -- add a tab to, opened here and from the minimap menu, with each tab's Unlock switch. The tabs
@@ -695,7 +704,7 @@ local function Build(canvas)
             function() return Addon.db.profile.Contribute.HideButtons end,
             function(v) Addon.db.profile.Contribute.HideButtons = v end,
             function() Callbacks:Fire("CONTRIBUTE_SETTINGS_CHANGED") end)
-        ReportRow()
+        ReportRow(L.OPT_HIDE_REPORT_TIP)
         -- The opt-out the first Contribute click promises. Independent of hiding the buttons:
         -- a player who gathers has no use for them, and hiding them must not stop it.
         if Gather then
