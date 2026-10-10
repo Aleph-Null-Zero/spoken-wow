@@ -390,13 +390,11 @@ local function Build(canvas)
         ForSubtitles(layout:Slider(L.TRANSCRIPT_SHADOW, 0, 1, 0.05,
             function() return transcript().SubtitleShadow end,
             function(v) transcript().SubtitleShadow = v end, refreshSubtitle, nil, L.TRANSCRIPT_SHADOW_TIP))
-        -- The row over the words, which a player wanting a film's subtitles turns off (issue #288).
         Only(layout:Checkbox(L.OPT_SUBTITLE_NAME, L.OPT_SUBTITLE_NAME_TIP,
             function() return transcript().SubtitleName ~= false end,
             function(v) transcript().SubtitleName = v end, refreshSubtitle), Subtitles)
     end
     if captions then
-        -- The subtitle's and the DialogueUI window's progress line.
         local progress = layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
@@ -464,8 +462,7 @@ local function Build(canvas)
             Layout.Number, L.TRANSCRIPT_SIZE_TIP)
         Only(size, function() return InWindow() or Subtitles() end)
         Requires(size, Words, L.REASON_WORDS)
-        -- How much shows at once: lines in a window and in a subtitle that scrolls line by line,
-        -- sentences in one that turns pages.
+        -- How much shows at once: lines in a window or a line-by-line subtitle, sentences in a paged one.
         local function Rolling() return transcript().SubtitleScroll == "line" end
         local lines = layout:Slider(L.TRANSCRIPT_LINES, 1, 2, 1,
             function() return transcript().Lines end,
@@ -485,15 +482,14 @@ local function Build(canvas)
             function() return Transcript:ScrollMode() end,
             function(v) transcript().ScrollMode = v; Transcript.manualScroll = false end, refreshTranscript,
             function(v) return SCROLL_LABELS[v] or v end))
-        -- The subtitle's own: line by line through a window of Lines Shown, or pages of whole
-        -- sentences. It cannot be scrolled by hand, so it has no Off.
+        -- The subtitle's Auto-Scroll has no Off: it cannot be scrolled by hand.
         ForSubtitles(layout:Dropdown(L.TRANSCRIPT_SCROLL, L.OPT_SUBTITLE_SCROLL_TIP, { "line", "page" },
             function() return transcript().SubtitleScroll or "page" end,
             function(v) transcript().SubtitleScroll = v end, function() refreshSubtitle(); Options:UpdateRows() end,
             function(v) return SCROLL_LABELS[v] or v end))
-        -- The word being read lit. The subtitle lights it only while it shows its words whole:
-        -- typed at their own pace, an estimated word timing would show every miss. With
-        -- DialogueUI installed, also for the quest text Spoken Quests marks there, under any style.
+        -- The subtitle lights the word only while its words show whole: typed at their own pace, an
+        -- estimated word timing would show every miss. With DialogueUI installed, also for the quest
+        -- text Spoken Quests marks there, under any style.
         local highlight = layout:Checkbox(L.TRANSCRIPT_HIGHLIGHT, L.TRANSCRIPT_HIGHLIGHT_TIP,
             function() return transcript().HighlightWord end,
             function(v) transcript().HighlightWord = v end, refreshTranscript)
@@ -505,7 +501,6 @@ local function Build(canvas)
             function(v) transcript().Typewriter = v end, refreshTranscript)
         Only(typewriter, Shown)
         Requires(typewriter, Words, L.REASON_WORDS)
-        -- How the words are typed, under it: letter by letter, or whole words.
         layout:Indent()
         local by = layout:Dropdown(L.TRANSCRIPT_TYPEWRITER_BY, L.TRANSCRIPT_TYPEWRITER_BY_TIP, { "word", "letter" },
             function() return transcript().TypewriterBy or "letter" end,

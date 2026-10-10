@@ -51,7 +51,6 @@ local function CharacterCount(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return math.max(1, count)
 end
--- The first `count` characters of `text`.
 local function Prefix(text, count)
     local parts = {}
     for char in text:gmatch(UTF8_CHAR) do
@@ -459,7 +458,7 @@ function Transcript:Render()
     if cfg.Typewriter and progress then
         if inSpeech then
             typedTo = self.activeWord
-            -- By letter, as the subtitle types: the piece being read only as far as the voice is.
+            -- By letter, the piece being read is typed only as far as the voice has got.
             if (cfg.TypewriterBy or "letter") == "letter" and segment then
                 local share = (progress * self.totalWeight - segment.start) / math.max(1e-6, segment.finish - segment.start)
                 typedPiece = segment.index
