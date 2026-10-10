@@ -24,10 +24,10 @@ local PORTRAIT = 48
 -- shrinks to this (Skin:Settle).
 local BASE_SCALE = 0.65
 -- Where it settles when the dialog closes: this far from the screen's top left, the paper's
--- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep), moving as
--- the tuck's page and window do: lifted off it SETTLE_RISE up and SETTLE_GROW larger over
--- SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed SETTLE_BOW of the way to one side (down, so
--- it stays on the screen), then landing with a little jump, up SETTLE_GIVE and back, over LAND_TIME.
+-- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep): lifted
+-- SETTLE_RISE up and SETTLE_GROW larger over SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed
+-- SETTLE_BOW to one side (down, so it stays on the screen), then landing with a jump of SETTLE_GIVE
+-- over LAND_TIME.
 local EDGE = 16
 -- The tuck's page lifts, flies and gives on the same rhythm.
 local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .1, .42, .4
@@ -35,27 +35,24 @@ local SETTLE_GROW, SETTLE_RISE, SETTLE_BOW, SETTLE_GIVE = .03, 4, .16, 7
 -- The dialog's words fading on DialogueUI's window before it closes (Skin:FadeDialogOut), and this
 -- window's fading in once it has landed (Skin:LandStep): the flight is of the paper alone.
 local CONTENT_OUT, CONTENT_IN = .1, .16
--- A quest page closing (QUEST_FINISHED): DialogueUI waits up to a second before it hides its window
--- (DialogueUI 1.0.5's Code/Core.lua): 0.5 when the NPC has more quests (GetQuestFinishedDelay), in
--- case its next page comes, and up to 0.5 more for its camera. Where it expects no page, the window
--- is closed as soon as the game says the conversation with the NPC is over, which is what
--- DialogueUI checks before it closes, watched for up to QUEST_WAIT. Otherwise the page stays as it
--- is, words and all, until DialogueUI closes it: fading them first left bare paper standing.
+-- A quest page closing (QUEST_FINISHED): DialogueUI (1.0.5, Code/Core.lua) waits up to a second
+-- before it hides its window: FOLLOWS when the NPC has more quests (GetQuestFinishedDelay), in case
+-- the next page comes, and up to 0.5 more for its camera. Where it expects no page, the window
+-- closes once the conversation with the NPC is over, watched for up to QUEST_WAIT. Otherwise it is
+-- left to DialogueUI, words and all: fading them early would leave bare paper standing.
 local QUEST_WAIT = 1.1
 local FOLLOWS = .5
--- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
--- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
--- the same event, in either order.
+-- A line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI
+-- hear the same event, in either order.
 local JUST_BEFORE = 0.5
 -- A dialog's line can also join the queue just after it closes: a quest page is read once its
 -- words have held still, and a quest accepted at once (the space bar) closes before that. A line
 -- from the dialog's own modules this soon after it closed is still the dialog's.
 local JUST_AFTER = 1
 local DIALOG_SOURCES = { DUIQuestFrame = { quests = true, gossip = true }, DUIBookFrame = { books = true } }
--- The tuck, in seconds: the page lifted and flown over as the window settles (SETTLE_LIFT,
--- SETTLE_TIME), sliding behind over TUCK_SLIDE; this window giving under it as it lands, and its
--- count rippling over TUCK_RIPPLE. The page lands at TUCK_SIZE of the window, TUCK_LOW of its
--- height under its middle, its foot showing under it.
+-- The tuck: the page slides behind over TUCK_SLIDE seconds and the count ripples over
+-- TUCK_RIPPLE. The page lands at TUCK_SIZE of the window, TUCK_LOW of its height under its middle,
+-- its foot showing under it.
 local TUCK_SLIDE, TUCK_RIPPLE, TUCK_SIZE, TUCK_LOW = .18, .35, .9, .3
 -- The art a line is drawn in (Skin:Look), as DialogueUI draws it: its quest window's parchment
 -- for quests, gossip and places; its book view's paper for books and letters, and its stone for
@@ -119,8 +116,8 @@ local LINE_IN, SIZE_EASE = .28, 10
 -- one. Before it becomes one: still this long (a face or picture just set is drawn or loaded a
 -- moment after), and, fading out, deaf to the pointer for ARM_FRAMES frames so a click's pressed
 -- and lit states have settled. Never waiting longer than ARM_MOST. Fading in, a texture that never
--- says it has loaded would keep it unseen: after PREPARE_MOST it fades in as itself instead, not one
--- image, so a late load changes nothing that could crash.
+-- says it has loaded would keep it unseen: after PREPARE_MOST it fades in as itself, not one image,
+-- so a late load cannot crash it.
 local STILL, ARM_FRAMES, ARM_MOST, PREPARE_MOST = 0.1, 2, 0.5, 1
 -- What follows the title, "• (Stopped)" and the waiting count "• +N": this far after it, fading
 -- over COUNT_IN, Stopped in and out as the line stops and plays, the count in as a line is added.
@@ -181,7 +178,7 @@ local function EaseOutCubic(t)
     local f = 1 - t
     return 1 - f * f * f
 end
--- Of a quadratic curve from a to c bent toward b.
+-- The point at u on a quadratic curve from a to c, bent toward b.
 local function Bend(a, b, c, u) return (1 - u) * (1 - u) * a + 2 * (1 - u) * u * b + u * u * c end
 -- The point bowing a path from a to b `share` of its length to one side: the side below it, so a
 -- window flying to the screen's top edge never runs off it.
@@ -297,8 +294,8 @@ function Skin:Initialize()
                     self.showingUI = nil
                     self:CancelDialogFade(dialog)
                     -- Another page in the quest window, still open (the gossip back after a quest
-                    -- is accepted): its lines are this page's, not the last's, so closing on the
-                    -- second of a giver's quests sends its page behind the first's line playing on.
+                    -- is accepted): its lines are this page's, so closing on a giver's second quest
+                    -- sends its page behind the first's line.
                     if dialog == _G.DUIQuestFrame and dialog:IsShown() then self:StartSession(dialog) end
                 end
             end
@@ -309,7 +306,8 @@ function Skin:Initialize()
     -- Turning to the next line, this window fades out with the words it shows: the captions wait
     -- for it rather than taking the next line's first (Skin:WillTurn).
     Transcript.holdFor = function(clip) return self:WillTurn(clip) end
-    -- A quest page closing: its words fade at once, not when DialogueUI gets round to hiding it.
+    -- A quest page with no page to follow closes at once, not after DialogueUI's wait
+    -- (Skin:QuestFinished).
     local quest = _G.DUIQuestFrame
     if quest and self.dialogHides and self.dialogHides[quest] then
         local events = CreateFrame("Frame")
@@ -996,7 +994,6 @@ function Skin:EndFade()
         Transcript:Release()
     end
     self:Unbuffer()
-    -- Faded out to turn to the next line: now it comes in.
     if self.turning then
         self.turning = nil
         if not self.wanted then self:Update() end
@@ -1235,8 +1232,7 @@ function Skin:StartSettle(dialog)
     self.settling = { time = 0, from = from, to = to,
         left = left, top = top * ui, height = height * ui, toLeft = toLeft, toTop = toTop, bendX = bendX, bendY = bendY }
     -- In full at once, where the dialog was: no fade, so not one image either (Update above may
-    -- have it waiting to fade in, which made it one image as it flew). Its paper alone: its words
-    -- come in as it lands (Skin:LandStep), the dialog's having faded on DialogueUI's window.
+    -- have it waiting to fade in). Its paper alone: its words come in as it lands (Skin:LandStep).
     self.wanted, self.fadeTime, self.preparing, self.arming = true, nil, nil, nil
     self:SetLevel(1)
     self:HideWords()
@@ -1285,7 +1281,7 @@ function Skin:SettleStep(elapsed)
     local height = Lerp(settling.height, toHeight, eased)
     local width = (frame:GetWidth() or 0) * ui * base
     local left = Bend(settling.left, settling.bendX or settling.left, settling.toLeft, eased) - (grow - 1) * width / 2
-    -- Up a touch as it is lifted, as the tuck's page is, the curve starting from there.
+    -- Up a touch as it is lifted, the curve starting from there.
     local rise = SETTLE_RISE * ui * lift
     local top = Bend(settling.top + rise, settling.bendY or settling.top, settling.toTop, eased) + (grow - 1) * height / 2
     frame:ClearAllPoints()
@@ -1332,7 +1328,6 @@ function Skin:LandStep(elapsed)
     landing.time = landing.time + elapsed
     local t = landing.time
     if self.wordsHidden then self:ShowWords(Smooth(Clamp(t / CONTENT_IN, 0, 1))) end
-    -- The little jump this window gives as the tuck's page goes under it: up and back, settling.
     self:Give(landing, Bounce(t))
     local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
     self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
@@ -1403,12 +1398,10 @@ end
 
 ---------------------------------------------------------------- the dialog's words fading first
 -- DialogueUI's dialog and this window lay out the same line differently (title, paragraphs,
--- buttons, pages), so this window taking the dialog's place showed all of that change at once.
--- Instead, as the dialog closes on its own line (this window then settles out of it) or on a line
--- it queued (its page then goes behind this window), its words, buttons and header fade on
--- DialogueUI's own window first, over CONTENT_OUT, leaving its bare paper; then it closes, and
--- paper alone flies: this window's (its own words fading in once it lands, Skin:LandStep), or the
--- page's. A close with nothing to hand on is at once.
+-- buttons, pages), so swapping one for the other would show all of that change at once. As the
+-- dialog closes on its own line or on one it queued, its words, buttons and header fade on
+-- DialogueUI's own window first, over CONTENT_OUT; then it closes and paper alone flies, this
+-- window's or the queued line's page. A close with nothing to hand on is at once.
 -- The dialog's frames that are its paper, not its words: the quest window's background, the book
 -- view's footer (its torn foot; its divider line fades with the words).
 local PAPER_FRAMES = { "BackgroundFrame", "Footer" }
@@ -1420,8 +1413,6 @@ function Skin:FadesOnClose(dialog)
         and PlayerFrame:Current() ~= nil and (self:Owns(dialog) or self:QueuedBy(dialog) ~= nil)
 end
 
---- A quest page closed: if DialogueUI's window hands a line on, its words fade now, and it closes
---- when DialogueUI hides it.
 --- Whether the game still has the player talking to an NPC (gossip or a quest giver), as DialogueUI
 --- asks before it closes its window. False where the client cannot say.
 local function Interacting(manager, types)
@@ -1474,7 +1465,7 @@ end
 
 --- `dialog` closing: its words fade first, then `hide` (its own Hide) closes it.
 function Skin:FadeDialogOut(dialog, hide)
-    -- Another dialog still closing: its words given back, and closed if DialogueUI hid it.
+    -- Another dialog still closing: closed now, its words given back.
     if self.closing then self:EndClose(true) end
     local paper = {}
     for _, key in ipairs(PAPER_FRAMES) do
@@ -1505,9 +1496,9 @@ function Skin:CloseStep(elapsed)
     if closing.time >= CONTENT_OUT then self:EndClose(true) end
 end
 
---- The dialog's words given back, and with `hide` it closed for real in the same moment, so they
---- are never seen back: given back after, DialogueUI hiding it again from its own OnHide read them
---- faded.
+--- The dialog's words given back and, with `hide`, it closed in the same moment, so they are never
+--- seen back. Given back after the close, DialogueUI hiding it again from its own OnHide would read
+--- them faded.
 function Skin:EndClose(hide)
     local closing = self.closing
     if not closing then return end
@@ -1525,13 +1516,11 @@ function Skin:CancelDialogFade(dialog)
 end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
--- A dialog closing while another line plays (a gravestone read during a quest's line): its page
--- does not take this window's place, as its own line's would (Skin:Settle). Its words having faded
--- on DialogueUI's window (Skin:FadeDialogOut), its bare page is lifted off
--- where the dialog was, flies over to this window, bending a little as it goes, comes down low on
--- it with its foot showing under it, and slides up behind it: the line waits behind the one
--- playing. This window gives as it goes under, and its count ripples. The page is a frame of its
--- own, never part of this window, which may be one image while it fades in (Skin:Buffer).
+-- A dialog closing while another line plays (a gravestone read during a quest's line): its bare
+-- page flies from where the dialog was to this window, comes down low on it with its foot showing,
+-- and slides up behind it. This window gives as it goes under, and its count ripples. The page is a
+-- frame of its own, never part of this window, which may be one image while it fades in
+-- (Skin:Buffer).
 
 --- A line joining the queue: when, and with which open dialog.
 function Skin:Queued(clip)
@@ -1593,7 +1582,6 @@ function Skin:TuckFrames()
     for index = 1, 3 do card.strips[index] = card:CreateTexture(nil, "BACKGROUND", nil, -1) end
     card:SetScript("OnUpdate", function(_, elapsed) self:TuckStep(elapsed) end)
     self.card = card
-    -- Its count rippling out from where it is.
     local ripple = CreateFrame("Frame", nil, UIParent)
     ripple:Hide()
     ripple:EnableMouse(false)
@@ -1791,17 +1779,16 @@ function Skin:Update()
     if self:Covered() then self:SetVisible(false, true); return end
     if self:Defer("update") then return end
     self:Touch()
-    -- Fading out to turn to the next line: it comes in once faded (Skin:Tick).
+    -- Fading out to turn to the next line: it comes in once faded (Skin:EndFade).
     if self.turning and self.frame:IsShown() then return end
     -- Not turning after all: the captions held for it go on (Skin:WillTurn).
     if not self.turning and not self.arming and Transcript.held and clip == self.clip then
         Transcript:Release()
     end
     if clip ~= self.clip then
-        -- Following another line on screen: this one fades out whole, as the window does when the
-        -- queue ends, and the next fades in from nothing once it has (Skin:Tick), its paper,
-        -- height and words all changed unseen. Not while it settles out of a dialog with its
-        -- words hidden: there the next simply takes its place.
+        -- Following another line on screen: this one fades out whole and the next fades in from
+        -- nothing once it has (Skin:EndFade), its paper, height and words changed unseen. Not while
+        -- it settles out of a dialog with its words hidden: there the next simply takes its place.
         if self:WillTurn(clip) then
             self.turning = true
             self:SetVisible(false)

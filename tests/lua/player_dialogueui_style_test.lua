@@ -774,8 +774,7 @@ DUI:SetScript("OnHide", function() end)
 Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
 DUI.BackgroundFrame = nil
 -- A quest page closing where DialogueUI may show another page (it does not say otherwise): the
--- page stays as it is, words and all, until DialogueUI closes it; fading them first left bare
--- paper standing for up to a second.
+-- page stays as it is, words and all, until DialogueUI closes it.
 OpenDialog()
 Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
 for _ = 1, 30 do Skin:CloseStep(0.05) end
@@ -1032,9 +1031,7 @@ end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
 -- A quest's line playing on, and a gravestone read meanwhile: closing the stone does not hand
--- this window its place (it turned from stone to parchment on its way); this window comes back as
--- it is, and the stone's page goes behind it: lifted off where the stone was, flown over, slid
--- under.
+-- this window its place; this window comes back as it is, and the stone's page goes behind it.
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
 OpenDialog()
 CloseDialog()

@@ -216,7 +216,6 @@ end
 --- will, and the captions keep the words showing until it has faded (it releases them).
 Transcript.holdFor = nil
 
--- Whether the window asks the captions to wait before taking `clip`.
 local function HeldFor(self, clip)
     return clip ~= nil and clip ~= self.clip and self.holdFor ~= nil and self.holdFor(clip) and true or false
 end
