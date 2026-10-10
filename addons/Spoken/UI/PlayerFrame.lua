@@ -86,8 +86,10 @@ function PlayerFrame:Initialize()
     self:InitHeader()
     self:InitMover()
     Actions:Build(self.frame)
+    self.fader = Actions.Fader(self.frame, function() return { self.frame.portrait.model } end)
     self:RefreshConfig()
     Callbacks:Register("AUDIO_CHANGED", function() PlayerFrame:Update() end)
+    Actions.WatchDialogs(function() PlayerFrame:Update() end)
 end
 
 function PlayerFrame:InitDisplay()
@@ -270,7 +272,7 @@ function PlayerFrame:RefreshConfig()
         if other ~= skin then other:SetVisible(false, true) end
     end
     if skin then
-        self.frame:Hide()
+        self.fader:Set(false, true)
         skin:RefreshConfig(self)
         return
     end
@@ -423,9 +425,12 @@ function PlayerFrame:Update()
     -- The captions taking this window's look ask for an update: the layout under way has it.
     if self.styling then return end
     -- Hidden, not torn down, while subtitles stand in for it: going back finds it as it was.
+    -- Faded out with nothing to say, or while a DialogueUI dialog hides the interface; put away at
+    -- once for another style.
     local head = self:Current()
-    self.frame:SetShown(Addon:DisplayStyle() == "classic" and head ~= nil)
-    if not self.frame:IsShown() then return end
+    local classic = Addon:DisplayStyle() == "classic"
+    self.fader:Set(classic and head ~= nil and not Actions.DialogCovers(), not classic)
+    if self.fader:Leaving() then return end
 
     -- The speaker, or the line's name where nobody speaks.
     local header = head.present and head.present.header

@@ -99,6 +99,54 @@ Expect("Voice Only keeps it hidden with a queue", F.frame:IsShown(), false)
 env.Addon:SetPlayerStyle("classic")
 env.SoundQueue:RemoveAllSoundsFromQueue()
 
+---------------------------------------------------------------- fading in and out
+-- The window fades in as a line starts and out when the queue empties, its 3D portrait with it (a
+-- model takes no alpha from its parent), the words staying until it has gone.
+env, quests, zones = Boot(); F = env.PlayerFrame
+quests:Enqueue(H.Clip({ present = { header = "Thrall", transcript = "Lok'tar ogar.",
+    portrait = { kind = "model", creatureID = 4949 } } }))
+Expect("a line starting: the window shown, from clear", tostring(F.frame:IsShown()) .. " " .. F.frame:GetAlpha(), "true 0")
+F.fader:Step(0.125)
+ExpectOf("...halfway in, the model as faded as the window", function()
+    return tostring(F.frame:GetAlpha() > 0 and F.frame:GetAlpha() < 1) .. " "
+        .. tostring(F.frame.portrait.model:GetAlpha() == F.frame:GetAlpha())
+end, "true true")
+F.fader:Step(1)
+Expect("...then whole", F.frame:GetAlpha(), 1)
+env.SoundQueue:RemoveAllSoundsFromQueue()
+ExpectOf("the queue empty: still shown, fading out, the words held for it", function()
+    return tostring(F.frame:IsShown()) .. " " .. tostring(env.Transcript.held)
+end, "true true")
+F.fader:Step(0.2)
+ExpectOf("...the model fading with it", function() return F.frame.portrait.model:GetAlpha() < 1 end, true)
+F.fader:Step(1)
+ExpectOf("...then hidden, the words let go", function()
+    return tostring(F.frame:IsShown()) .. " " .. tostring(env.Transcript.held)
+end, "false nil")
+
+-- DialogueUI hides the interface while its dialog is open, and the window with it, but not the
+-- 3D portrait: the whole window goes, and comes back when the dialog closes on a line playing on.
+_G.DUIQuestFrame = CreateFrame("Frame")
+_G.DUIQuestFrame:Hide()
+env, quests, zones = Boot(); F = env.PlayerFrame
+quests:Enqueue(H.Clip({ present = { header = "Thrall", portrait = { kind = "none" } } }))
+F.fader:Step(1)
+_G.DUIQuestFrame:Show()
+F:Update()
+F.fader:Step(1)
+Expect("a DialogueUI dialog open: the window gone", F.frame:IsShown(), false)
+_G.DUIQuestFrame:Hide()
+F:Update()
+F.fader:Step(1)
+Expect("...back when it closes on the line playing", tostring(F.frame:IsShown()) .. " " .. F.frame:GetAlpha(), "true 1")
+_G.DUIQuestFrame:Show()
+env.Addon:SetPlayerHost(_G.DUIQuestFrame)
+F.fader:Step(1)
+Expect("...and kept with Show Spoken Over DialogueUI on, the window put over the dialog", F.frame:IsShown(), true)
+env.Addon:SetPlayerHost(nil)
+_G.DUIQuestFrame = nil
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
 ---------------------------------------------------------------- the lines waiting are counted, not listed
 env, quests, zones = Boot(); F = env.PlayerFrame
 zones:AddGate(function() return "in combat" end)
