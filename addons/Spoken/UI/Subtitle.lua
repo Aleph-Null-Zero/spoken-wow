@@ -676,16 +676,17 @@ end
 --- With the clip's own word times, each page turns when the voice reaches its first word. A page
 --- cut inside a word counts that word twice; the totals then disagree and the estimate stays.
 function Subtitle:TimePages(words, duration)
-    local firsts, word = {}, 1
+    local starts, word = { 0 }, 1
     for index, page in ipairs(self.pages) do
-        firsts[index] = word
+        if index > 1 then
+            if not words[word] then return end
+            starts[index] = words[word].start
+        end
         word = word + #Transcript:Split(page.text)
     end
     if word - 1 ~= #words then return end
     for index, page in ipairs(self.pages) do
-        page.start = index == 1 and 0 or words[firsts[index]].start
-        local following = self.pages[index + 1]
-        page.length = (following and words[firsts[index + 1]].start or duration) - page.start
+        page.start, page.length = starts[index], (starts[index + 1] or duration) - starts[index]
     end
 end
 

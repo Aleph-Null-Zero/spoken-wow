@@ -70,9 +70,9 @@ the previous word stays highlighted instead of advancing the page early.
 
 A source that knows when each word is spoken passes `clip.present.timings`: one
 start time per word, in seconds from the start of the recording, in the order
-the captions cut the transcript into words. That is how `Spoken:SplitCaption`
-cuts it once its escape sequences (`|n`, colors, links, `|T` icons) are removed,
-since the captions show the text without them. The captions then follow those
+the captions cut the transcript into words: `Spoken:CaptionWords(transcript)`
+returns those words, with the escape sequences the captions do not show
+removed. The captions then follow those
 times instead of the estimate, `Spoken:GetCaption()` reports them with
 `timed = true`, and Subtitles Only turns each page when the voice reaches its
 first word. A list whose length does not match the words, with a hole or a time

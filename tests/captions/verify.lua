@@ -844,7 +844,7 @@ do
     E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
     cfg.SubtitleSentences=1
     local text=string.rep('A long sentence that keeps going on and on across the screen. ',4)
-    local words=#E.Transcript:Split(text)
+    local words=#T:Split(text)
     local timings={}
     -- The second sentence starts late, after a pause the estimate cannot know about.
     for i=1,words do timings[i]=(i-1)*.1+(i>12 and 5 or 0) end

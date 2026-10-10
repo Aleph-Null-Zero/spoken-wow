@@ -40,8 +40,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
   written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
 - For feature addons: `present.timings` on a clip, the time each word of its transcript starts,
-  moves the captions and subtitle with the voice instead of the estimate. A list that does not
-  match the words is ignored. *([damesene](https://github.com/damesene))*
+  moves the captions and subtitle with the voice instead of the estimate. `Spoken:CaptionWords`
+  lists the words to time; a list that does not match them is ignored. *([damesene](https://github.com/damesene))*
 
 ## 3.2.0 — 2026-10-08
 

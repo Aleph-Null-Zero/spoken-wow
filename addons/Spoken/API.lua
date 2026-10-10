@@ -58,9 +58,7 @@ end
 --                                             -- and text, for a script the game's font has no
 --                                             -- glyphs for; the player's size stays
 --       timings  = { 0, .42, .61, ... },      -- optional; when each word of the transcript starts,
---                                             -- in seconds, one per word as SplitCaption cuts it
---                                             -- with escape sequences (|n, colors, links,
---                                             -- |T icons) removed
+--                                             -- in seconds, one per Spoken:CaptionWords(transcript)
 --       bullet   = "quest-accept",            -- a RegisterBullet id
 --       tint     = { r, g, b },               -- optional row tint
 --       portrait = { kind = "model", creatureID = 196 }
@@ -494,7 +492,7 @@ function Spoken:GetCaption()
     caption.progress = progress
     caption.speaking = Transcript:IsSpeaking(progress) and true or false
     caption.activeWord = caption.speaking and Transcript:WordAt(progress) or nil
-    caption.timed = Transcript.timed and true or false
+    caption.timed = Transcript.timed
     caption.highlight, caption.typewriter = self:GetCaptionOptions()
     return caption
 end
@@ -513,6 +511,13 @@ end
 function Spoken:SplitCaption(text)
     if Transcript.unavailable or type(text) ~= "string" then return nil end
     return Transcript:Split(text)
+end
+
+--- The words the captions show for `transcript`, escape sequences removed: what
+--- present.timings lists, one time per word.
+function Spoken:CaptionWords(transcript)
+    if Transcript.unavailable or type(transcript) ~= "string" then return nil end
+    return Transcript:Split(Transcript:CleanText(transcript))
 end
 
 --------------------------------------------------------------------------------
