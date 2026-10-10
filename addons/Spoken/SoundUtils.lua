@@ -43,6 +43,12 @@ function SoundUtils:MuteChannel(channel, muted, fadeOut)
     if not cvar or (mutedByPlayer[channel] or false) == (muted or false) then
         return
     end
+    -- Lifting a mute switches the channel on, so holding one the player had off would turn
+    -- their switched-off NPC voices back on once the line ends.
+    if muted and tonumber(GetCVar(cvar)) ~= 1 then
+        if Developer then Developer:Log("player", "%s channel already off, not muted", channel) end
+        return
+    end
     mutedByPlayer[channel] = muted or nil
     -- Why an NPC was or was not heard over a line, in the debug log.
     if Developer then Developer:Log("player", "%s channel %s", channel, muted and "muted" or "restored") end

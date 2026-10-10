@@ -1163,8 +1163,9 @@ end
 --- Load the zones addon's playback files the way the client would -- each chunk receives
 --- the addon name and the shared table as varargs -- against a hand-built SpokenZones table
 --- carrying the few Core.lua facts Audio.lua and Autoplay.lua read. Returns that table.
+--- UI/Compendium.lua too, as the toc loads it: a clip's header is the place above, from its tree.
 function M.LoadZones(addonDirectory, SpokenZones)
-    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay" }) do
+    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay", "UI/Compendium" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
         chunk("Spoken_Zones", SpokenZones)
     end

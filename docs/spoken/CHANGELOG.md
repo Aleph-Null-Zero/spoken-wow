@@ -2,7 +2,7 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
-## 3.3.0 — 2026-10-09
+## Unreleased
 
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
   voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
@@ -16,6 +16,28 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   letter opened while a book is read waits behind it instead of replacing it. The windows show
   the readable's kind over its name, such as Book or Gravestone, in place of the page count.
   *([Nucabe](https://github.com/Nucabe))*
+- **Volume Follows is back.** Choose which volume slider Spoken's voices follow: Master, Effects,
+  Music, Ambience or Dialog. On Dialog, a note says which features stop working there.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Hide Report Buttons hides every Report button.** It sits beside Hide Contribute Buttons and
+  also takes Report off the quest log, DialogueUI's window, the lore beside the map and the
+  Compendium. *([Nucabe](https://github.com/Nucabe))*
+- **NPC voices you switched off (the Dialog channel) stay off.** With Spoken on another channel,
+  they came back on after any line it read, from an NPC's window, a zone or a book.
+  *([svengabr](https://github.com/svengabr))*
+- **Spoken Zones no longer raises a Lua error on chat messages the game keeps hidden from addons**,
+  as in a dungeon group. *([svengabr](https://github.com/svengabr))*
+- **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
+  Spoken's voice when you switch away. The line now stops instead of running on in silence, and
+  Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
+- **A zone's story is headed by the place it is in.** It showed its own name twice, as
+  "Mulgore / Mulgore". The narrator now shows a zone's continent over it and a city's zone, and
+  the Compendium's "In ..." line names the same place. *([Nucabe](https://github.com/Nucabe))*
+- For feature addons: `present.font` on a clip draws its speaker, title, queue row, captions and
+  subtitle in that face, for a script the game's font has no glyphs for. A face the client cannot
+  load leaves the player's own. *([damesene](https://github.com/damesene))*
+- **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
+  written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.2.0 — 2026-10-08
 
