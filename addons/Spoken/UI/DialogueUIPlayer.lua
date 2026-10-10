@@ -891,7 +891,7 @@ function Skin:StartFade()
 end
 
 --- After the title, as the subtitle has them: "• (Stopped)" while the line is stopped, and the
---- lines waiting behind it, "• +N" (Actions.Tail). The title is cut short, not these.
+--- lines waiting behind it, "• +N". The title is cut short, not these.
 function Skin:Count(waiting)
     local tail = self.tail
     tail:SetCount(waiting)

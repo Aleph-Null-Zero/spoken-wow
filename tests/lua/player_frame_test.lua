@@ -124,8 +124,8 @@ ExpectOf("...then hidden, the words let go", function()
     return tostring(F.frame:IsShown()) .. " " .. tostring(env.Transcript.held)
 end, "false nil")
 
--- From one line to the next, as the DialogueUI window turns: the window fades out whole with the
--- first line's name and words, and fades in with the next's.
+-- From one line to the next: the window fades out whole with the first line's name and words,
+-- and fades in with the next's.
 env, quests, zones = Boot(); F = env.PlayerFrame
 local first = H.Clip({ present = { header = "Thrall", transcript = "Lok'tar ogar.", portrait = { kind = "none" } } })
 local second = H.Clip({ present = { header = "Cairne", transcript = "Walk with the Earth Mother.", portrait = { kind = "none" } } })
@@ -248,8 +248,7 @@ quests:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", por
 ExpectOf("no actions, Stop and Skip alone", function() return F.frame.actions.shown .. " " .. #F.row end, "0 2")
 
 ---------------------------------------------------------------- the Talking Head's layout
--- The words were docked under the portrait, so they started below the box and ran out of it. The
--- window is now the game's Talking Head frame as TalkingHeadUI.xml lays it out: 570 by 155, the
+-- The window is the game's Talking Head frame as TalkingHeadUI.xml lays it out: 570 by 155, the
 -- portrait 21 in from the top left, the name beside it, the words 3 under the name ending 42 from
 -- the right and 12 from the foot, and the round controls 12 in from the top right corner, where
 -- the Talking Head has its close button.

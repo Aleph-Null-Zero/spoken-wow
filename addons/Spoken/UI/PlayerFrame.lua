@@ -5,11 +5,10 @@ local function FrameConfig()
     return Addon:Profile("Frame")
 end
 
--- The large window, the "classic" narrator style: the game's Talking Head frame, laid out as
--- TalkingHeadUI.xml lays it out, with the speaker's portrait (a 3D model where there is one) in its
--- square, the gold name and white words beside it, and Spoken's round controls where the Talking
--- Head has its close button. Clients without the Talking Head's atlases draw Spoken's own art in
--- the same places. Loads on 1.12 too, so Lua 5.0 syntax throughout.
+-- The large window, the "classic" narrator style: the game's Talking Head frame as
+-- TalkingHeadUI.xml lays it out, with Spoken's round controls where it has its close button.
+-- Clients without its atlases draw Spoken's own art in the same places. Loads on 1.12 too, so
+-- Lua 5.0 syntax throughout.
 --
 -- Refreshed through the player's AUDIO_CHANGED callback rather than by the queue
 -- calling this file, which is what keeps SoundQueue.lua free of any dependency on it.
@@ -91,7 +90,7 @@ function PlayerFrame:Initialize()
         if self.turning then self.turning = nil; self:Update() end
     end)
     -- A window turning to the next line fades out with the words it shows: the captions wait for
-    -- it rather than taking the next line's first (WillTurn on the window in use).
+    -- it rather than taking the next line's first.
     Transcript.holdFor = function(clip)
         local window = self:Skin() or self
         return window.WillTurn ~= nil and window:WillTurn(clip)
@@ -421,7 +420,7 @@ function PlayerFrame:IsShowingSample()
     return self.sample ~= nil
 end
 
---- Whether this window, showing a line, will fade out to turn to `clip` (PlayerFrame:Update).
+--- Whether this window, showing a line, will fade out to turn to `clip`.
 function PlayerFrame:WillTurn(clip)
     return self:IsShowing() and self.shown ~= nil and clip ~= self.shown and self.frame:IsShown()
         and not self.fader:Leaving() and not Actions.DialogCovers()
@@ -450,10 +449,10 @@ function PlayerFrame:Update()
         self.fader:Set(false, not classic)
         return
     end
-    -- Fading out to turn to the next line: it comes in once faded (the fader's faded).
+    -- Fading out to turn to the next line: it comes in once faded.
     if self.turning and self.frame:IsShown() then return end
-    -- Following another line on screen: this one fades out whole, as the window does when the
-    -- queue ends, and the next fades in from nothing once it has, all changed unseen.
+    -- Following another line on screen: this one fades out whole and the next fades in from
+    -- nothing once it has, so the change happens unseen.
     if self.shown and head ~= self.shown and self.frame:IsShown() and not self.fader:Leaving() then
         self.turning = true
         self.fader:Set(false)
