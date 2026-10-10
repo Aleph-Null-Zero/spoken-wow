@@ -192,10 +192,10 @@ function Transcript:SetClip(clip)
     self:Reflow()
 end
 
---- Held while the window the captions are in is drawn as one image (DialogueUIPlayer:Buffer):
---- nothing in that image may change, or the client crashes (ASSERT(!m_deleted), CSimpleRender.cpp).
---- The line that ends as the window fades out keeps its words, which fade with it; whatever came
---- meanwhile is caught up on Release.
+--- Held while the window the captions are in is drawn as one image: nothing in that image may
+--- change, or the client crashes (ASSERT(!m_deleted), CSimpleRender.cpp). The line that ends as
+--- the window fades out keeps its words, which fade with it; whatever came meanwhile is caught up
+--- on Release.
 function Transcript:Hold()
     self.held = true
 end
@@ -224,7 +224,7 @@ end
 
 function Transcript:Sync()
     if self.held then return end
-    -- The line playing, or the sample a window previews (PlayerFrame:ShowSample).
+    -- The line playing, or the sample a window previews.
     local current = SoundQueue:GetCurrentSound() or (PlayerFrame and PlayerFrame.sample)
     if current ~= self.clip then
         self.elapsed, self.startedAt = 0, nil
