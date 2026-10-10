@@ -105,6 +105,7 @@ function MinimalPlayer:Initialize(original)
         if button == "RightButton" then self:ToggleMenu() end
     end)
     frame:Hide()
+    self.fader = Actions.Fader(frame, function() return { self.viewport and self.viewport.model } end)
 
     self.panel = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     self.panel:SetBackdrop({
@@ -467,31 +468,11 @@ end
 function MinimalPlayer:SetVisible(visible, immediate)
     if not self.frame then return end
     if not visible then self.menu:Hide(); self:HideTooltip() end
-    if immediate then
-        self.wanted = false
-        self.frame:Hide()
-        self.frame:SetAlpha(0)
-        self.fadeTime = nil
-        return
-    end
-    if self.wanted == visible then return end
-    self.wanted = visible
-    self.fadeFrom = self.frame:IsShown() and self.frame:GetAlpha() or 0
-    self.fadeTime = 0
-    if visible then self.frame:SetAlpha(self.fadeFrom); self.frame:Show() end
+    self.wanted = visible and true or false
+    self.fader:Set(visible, immediate)
 end
 
 function MinimalPlayer:Tick(elapsed)
-    if self.fadeTime then
-        self.fadeTime = self.fadeTime + elapsed
-        local t = Clamp(self.fadeTime / (self.wanted and .18 or .24), 0, 1)
-        local eased = 1 - (1 - t) * (1 - t)
-        self.frame:SetAlpha(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
-        if t == 1 then
-            self.fadeTime = nil
-            if not self.wanted then self.frame:Hide(); return end
-        end
-    end
     if not self.wanted then return end
     -- Stopped faded out: its room given back.
     if self.tail:Step(elapsed) then self:Count(Waiting()) end
@@ -538,8 +519,9 @@ end
 function MinimalPlayer:Update()
     if not self.frame then return end
     if not self:IsEnabled() then self:SetVisible(false, true); return end
+    -- Faded out with nothing to say, or while a DialogueUI dialog hides the interface.
     local clip = PlayerFrame:Current()
-    if not clip then self:SetVisible(false); return end
+    if not clip or Actions.DialogCovers() then self:SetVisible(false); return end
     if clip ~= self.clip then
         self.menu:Hide()
         self:HideTooltip()
