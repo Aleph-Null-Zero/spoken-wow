@@ -100,11 +100,9 @@ local Skin, T = env.DialogueUIPlayer, env.Transcript
 Expect("/spoken player dialogueui draws it", Spoken:GetPlayerStyle(), "dialogueui")
 Expect("...remembered as the style chosen", env.Addon.db.profile.Frame.Style, "dialogueui")
 Expect("...on its own frame", Spoken:GetPlayerFrame(), _G.SpokenDialogueUIPlayerFrame)
-Expect("it opens folded to Lines Shown, as the other windows' words do", Skin.lines, 2)
-Skin:SetExpanded(true)
-Expect("...and opened, the other windows' words are opened too", env.Addon:Layout().CaptionsExpanded, true)
-Expect("the window is laid out as DialogueUI's", Skin.frame:GetWidth(), 624)
-Expect("...in height too", Skin.frame:GetHeight(), 734)
+Expect("it shows Lines Shown of the words", Skin.lines, 2)
+Expect("the window is as wide as DialogueUI's", Skin.frame:GetWidth(), 624)
+Expect("...and only as tall as its lines need", Skin.frame:GetHeight() < 734, true)
 -- DialogueUI's window has no parent and is drawn at 0.8 here; UIParent at 1. At the default
 -- Window Size the window is 0.65 of that, 0.52: the whole window scaled.
 Expect("...and its size scales the whole of it", math.abs(Skin.frame.scale - 0.52) < 1e-6, true)
@@ -120,7 +118,6 @@ Expect("an empty line separates two paragraphs", #T.lines == 3 and #T.lines[2] =
 T:SetClip(nil)
 Expect("the words are docked in the window, over the paper with the rest of its contents",
     T.frame:GetParent(), Skin.content)
-Expect("...filling its body", Skin.lines > 8, true)
 Expect("...with labels enough for them and the line sliding in", #T.labels >= Skin.lines + 1, true)
 Expect("...in DialogueUI's font", T.style.font, "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf")
 local function RecordFaces()
@@ -183,38 +180,17 @@ env.Addon.db.profile.Frame.DialogueUI.FitText = false
 Page:Reset()
 Expect("Start Over puts the window's settings back", env.Addon.db.profile.Frame.DialogueUI.FitText, true)
 
----------------------------------------------------------------- folded or open
-Skin:SetExpanded(false)
-Expect("folded, the window keeps two lines", Skin.lines, 2)
-Expect("...and shrinks to them", Skin.frame:GetHeight() < 734, true)
-Expect("...the other windows' words folded with it", env.Addon:Layout().CaptionsExpanded, false)
-Skin:SetExpanded(true)
-Expect("...and opens back up", Skin.lines > 8, true)
-T:ToggleExpanded(); env.PlayerFrame:RefreshConfig()
-Expect("the other windows' expand button folds it too", Skin.lines, 2)
-T:ToggleExpanded(); env.PlayerFrame:RefreshConfig()
-Expect("...and opens it", Skin.lines > 8, true)
-
+---------------------------------------------------------------- only the line playing
+-- No fold: the other windows' words opened, this one still shows Lines Shown of the line playing.
 local saved = env.Addon:Layout()
-saved.DialogueUIHeight = 900
+saved.CaptionsExpanded = true
 env.PlayerFrame:RefreshConfig()
-Expect("a dragged height is kept", Skin.frame:GetHeight(), 900)
-Expect("...and the words fill it", Skin.lines > 8, true)
-Expect("...with labels enough for them", #T.labels >= Skin.lines, true)
-saved.DialogueUIHeight = nil
-saved.DialogueUIWidth = 700
-env.PlayerFrame:RefreshConfig()
-Expect("a width dragged with Shift is kept", Skin.frame:GetWidth(), 700)
-local faceAtDefault = Skin.portrait.width
-Expect("...the paper stretching with it", math.abs(Skin.parchments[1].width - 601 * 700 / 624) < 0.01, true)
-local socketAtDefault = Skin.headerSocket.width
-Expect("...and the header line", Skin.headerDivider.width + Skin.headerSocket.width > 600, true)
-saved.DialogueUIWidth = 100
-env.PlayerFrame:RefreshConfig()
-Expect("...but never narrower than the header can hold", Skin.frame:GetWidth(), math.floor(624 * 0.6 + 0.5))
-Expect("the face keeps its size whatever the width", Skin.portrait.width, faceAtDefault)
-Expect("...and so does the socket it sits in", Skin.headerSocket.width, socketAtDefault)
-saved.DialogueUIWidth = nil
+Expect("the other windows' words opened, it still shows Lines Shown", Skin.lines, 2)
+Expect("...with no fold, no rows for the lines waiting and no resize handle",
+    tostring(Skin.SetExpanded) .. " " .. tostring(Skin.drawer) .. " " .. tostring(Skin.resizer), "nil nil nil")
+T:ToggleExpanded(); env.PlayerFrame:RefreshConfig()
+Expect("...and the other windows' expand button leaves it so", Skin.lines, 2)
+saved.CaptionsExpanded = nil
 env.PlayerFrame:RefreshConfig()
 
 ---------------------------------------------------------------- where it opens
@@ -266,40 +242,20 @@ end
 local long = string.rep("The kobolds dig deeper into the mine every night. ", 60)
 Play(long)
 Expect("the window shows the line the captions hold", T.clip ~= nil and T.clip == Skin.clip, true)
-local ceiling = Skin.lines
-Expect("a long line fills the window to its size", ceiling > 8, true)
-Play("Go north.")
-Expect("a short one takes only the lines it needs", Skin.lines, 2)
-Expect("...the window shorter for it", Skin.frame:GetHeight() < 734, true)
-panel.FitText = false
-env.PlayerFrame:RefreshConfig()
-Expect("with Fit to the Words off, it keeps its full size", Skin.lines, ceiling)
-panel.FitText = true
-saved.DialogueUIHeight = 900
-env.PlayerFrame:RefreshConfig()
-Expect("a dragged height is the most it grows to, not its size", Skin.lines, 2)
-saved.DialogueUIHeight = nil
-Play(long)
-Skin:SetExpanded(false)
-Expect("folded, it shows two lines", Skin.lines, 2)
+Expect("a long line gets Lines Shown of it", Skin.lines, 2)
+local tall = Skin.frame:GetHeight()
 transcript.Lines = 1
 env.PlayerFrame:RefreshConfig()
 Expect("...or one, as the player's Lines Shown says", Skin.lines, 1)
 transcript.Lines = 2
 Play("Go north.")
-Expect("...and no more than the words need", Skin.lines, 1)
-Skin:SetExpanded(true)
+Expect("a short one takes only the lines it needs", Skin.lines, 1)
+Expect("...the window shorter for it", Skin.frame:GetHeight() < tall, true)
 panel.FitText = false
+env.PlayerFrame:RefreshConfig()
+Expect("with Fit to the Words off, it keeps Lines Shown", Skin.lines, 2)
 Page:Reset()
 Expect("the page's Defaults puts Fit to the Words back", panel.FitText, true)
-local function Says(text)
-    for _, line in ipairs(_G.GameTooltip.lines or {}) do
-        if line == text then return true end
-    end
-    return false
-end
-Skin.resizer.scripts.OnEnter(Skin.resizer)
-Expect("the resize handle's tooltip names the wheel's shortcuts", Says(env.L.DUI_WHEEL_HINT), true)
 local noted = false
 local function Look(row)
     for _, region in ipairs(row.regions or {}) do
@@ -329,8 +285,7 @@ Expect("a queued line shows the window", Skin.wanted, true)
 Expect("...naming the speaker", Skin.name:GetText(), "Eagan Peltskinner")
 Expect("...and the line", Skin.title.text:GetText(), "Wolves Across the Border")
 quests:Enqueue(H.Clip({ present = { header = "Eagan", label = "Second", portrait = { kind = "none" } } }))
-Expect("a waiting line gets a row", Skin.rows[1] and Skin.rows[1]:IsShown(), true)
-Expect("...reading its label", Skin.rows[1].text:GetText(), "Second")
+Expect("a waiting line gets no row, the title counts it", tostring(Skin.rows) .. " " .. Skin.count:GetText(), "nil • +1")
 Spoken:StopAll()
 
 -- A book page and a zone's lore, queued as Spoken_Books and Spoken_Zones queue them.
@@ -490,15 +445,9 @@ Expect("...and again with one more", Skin.count:GetText() .. " " .. tostring(Ski
 Skin:Tick(0.3)
 env.SoundQueue:RemoveSoundFromQueue(env.SoundQueue.sounds[3])
 Skin:Update()
-Skin:SetExpanded(false)
-Expect("folded, the lines waiting get no rows", Skin.drawer:IsShown(), false)
-Skin:SetExpanded(true)
-Expect("...open, they do", Skin.drawer:IsShown(), true)
 Expect("its progress line is the subtitle's, with no strip under it",
     Skin.progress ~= nil and Skin.progress.track:GetParent() == Skin.content and Skin.footerDivider == nil, true)
 do
-    local open = env.Addon:Layout().CaptionsExpanded
-    Skin:SetExpanded(false)
     local tall = Skin.frame:GetHeight()
     env.Addon.db.profile.Transcript.SubtitleProgress = false
     env.PlayerFrame:RefreshConfig()
@@ -506,7 +455,6 @@ do
         tostring(Skin.progress.track:IsShown()) .. " " .. tostring(Skin.frame:GetHeight() < tall), "false true")
     env.Addon.db.profile.Transcript.SubtitleProgress = true
     env.PlayerFrame:RefreshConfig()
-    Skin:SetExpanded(open)
 end
 Skin.play.scripts.OnClick(Skin.play)
 Expect("Stop stops the line, its glyph turning to Replay", tostring(env.SoundQueue:IsPaused()) .. " " .. tostring(Skin.play.state),
@@ -580,6 +528,20 @@ Skin:Tick(0.05)
 Expect("...then fades in as one image", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.content:GetAlpha(), "true 1")
 Skin:Tick(0.4)
 Expect("...itself again once in", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.frame:GetAlpha(), "false 1")
+do
+    -- A client with no frame buffers: the paper and what is on it fade in turn.
+    local SetIsFrameBuffer = Skin.frame.SetIsFrameBuffer
+    Skin.frame.SetIsFrameBuffer = false
+    Skin:Tick(1); Skin:SetVisible(false)
+    for _ = 1, 40 do Skin:Tick(0.05) end
+    local out = tostring(Skin.frame:IsShown()) .. " " .. tostring(T.held)
+    Skin:SetVisible(true)
+    for _ = 1, 40 do Skin:Tick(0.05) end
+    Skin.frame.SetIsFrameBuffer = SetIsFrameBuffer
+    Expect("with no frame buffer, a finished fade-out lets the captions go, so the next line's words show",
+        out .. " " .. tostring(Skin.frame:IsShown()) .. " " .. Skin.frame:GetAlpha() .. " " .. tostring(T.held),
+        "false nil true 1 nil")
+end
 
 -- A line ending: nothing in the image changes while it fades out.
 Skin:Tick(1)
@@ -656,9 +618,9 @@ Expect("a place's picture shows over its words, as Place Lore shows it", Skin.pi
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(),
     T.frame:GetWidth() .. "x" .. math.floor(T.frame:GetWidth() / 2 + 0.5))
+local column = Skin.headerSocket:GetWidth() + Skin.headerDivider:GetWidth()
 Expect("...the words narrower than DialogueUI's column, centred in it",
-    T.frame:GetWidth() < Skin.drawer:GetWidth()
-    and math.abs(T.frame.anchor.x * 2 + T.frame:GetWidth() - Skin.drawer:GetWidth()) <= 1, true)
+    T.frame:GetWidth() < column and math.abs(T.frame.anchor.x * 2 + T.frame:GetWidth() - column) <= 1, true)
 Expect("...the progress line as wide as they are, under them",
     Skin.progress.track:GetWidth() .. " " .. Skin.progress.track.anchor.x, T.frame:GetWidth() .. " " .. T.frame.anchor.x)
 Expect("...as far over where the paper's light ends as the last line is over it",
@@ -708,7 +670,8 @@ Spoken:StopAll()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Three", portrait = { kind = "none" } } }))
 Skin:Tick(1)
 DUI:Show()
-Skin.dialogWatch.scripts.OnShow(Skin.dialogWatch)
+local questWatch = Skin.dialogWatches and Skin.dialogWatches[DUI]
+if questWatch then questWatch.scripts.OnShow(questWatch) end
 Expect("DialogueUI's window opening hides this one at once, the dialog showing the line",
     tostring(Skin.wanted) .. " " .. tostring(Skin.frame:IsShown()), "false false")
 env.PlayerFrame:RefreshConfig()
@@ -733,21 +696,20 @@ local function CloseDialog()
     DUI:Hide()
     -- Closing on its own line, its words fade first; then it hides.
     Skin:CloseStep(1)
-    local watch = Skin.dialogWatch
+    local watch = Skin.dialogWatches and Skin.dialogWatches[DUI]
     if watch and watch:GetParent() == DUI then watch.scripts.OnHide(watch) end
 end
 -- Opening: the lines queued while it is open, or just before (Spoken and DialogueUI hear the same
 -- event), are its own.
 local function OpenDialog()
     DUI:Show()
-    local watch = Skin.dialogWatch
+    local watch = Skin.dialogWatches and Skin.dialogWatches[DUI]
     if watch and watch:GetParent() == DUI then watch.scripts.OnShow(watch) end
 end
 saved.DialogueUI = nil
-Skin:SetExpanded(false)
 env.PlayerFrame:RefreshConfig()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
-local folded = Skin.frame:GetHeight()
+local own = Skin.frame:GetHeight()
 -- DialogueUI hides the interface, so nothing has a place on screen to read: the dialog's comes
 -- from where DialogueUI puts it, centred frameOffsetX from the screen's centre, drawn at 0.8.
 local frameLeft, frameTop = Skin.frame.GetLeft, Skin.frame.GetTop
@@ -770,21 +732,25 @@ if DUI.scripts and DUI.scripts.OnHide then DUI.scripts.OnHide(DUI) end
 Expect("...then closes, its words given back unseen, and still there when DialogueUI hides it again",
     tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(Skin.closing), "false 1 nil")
 DUI:SetScript("OnHide", function() end)
-Skin.dialogWatch.scripts.OnHide(Skin.dialogWatch)
+Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
 DUI.BackgroundFrame = nil
--- A quest page closing: its words fade at once, not when DialogueUI gets round to hiding it, and
--- the window closes a moment after unless DialogueUI shows a page again.
+-- A quest page closing: its words fade at once, not when DialogueUI gets round to hiding it, but
+-- only DialogueUI closes its window. Left open past DialogueUI's wait, the words come back.
 OpenDialog()
 Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
 Skin:CloseStep(0.05)
 Expect("a quest page closing fades the dialog's words at once, without waiting for DialogueUI",
     DUI:IsShown() and Skin.closing ~= nil and words.alpha < 1, true)
-Skin:CloseStep(0.06)
-Expect("...faded, still held for a page coming back", tostring(DUI:IsShown()) .. " " .. words.alpha, "true 0")
-Skin:CloseStep(0.02)
-Expect("...then closed 0.12 after the page closed, the wait running with the fade, not after it",
-    tostring(DUI:IsShown()) .. " " .. words.alpha, "false 1")
-Skin.dialogWatch.scripts.OnHide(Skin.dialogWatch)
+for _ = 1, 30 do Skin:CloseStep(0.05) end
+Expect("...and DialogueUI not hiding its window within its wait, it stays open, its words back",
+    tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(Skin.closing), "true 1 nil")
+Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
+Skin:CloseStep(0.06); Skin:CloseStep(0.06)
+Expect("...faded, the dialog left for DialogueUI to close", tostring(DUI:IsShown()) .. " " .. words.alpha, "true 0")
+DUI:Hide()
+Expect("...its own Hide closing it at once, the words given back unseen",
+    tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(Skin.closing), "false 1 nil")
+Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
@@ -797,7 +763,7 @@ Expect("...lifted off it first, up a touch and a touch larger, its shadow thrown
 Skin:Tick(0.14)
 Expect("...halfway, shrinking", Skin.frame.scale < 0.8 and Skin.frame.scale > 0.52
     and Skin.frame:GetHeight() * Skin.frame.scale < DUI.frameHeight * 0.8
-    and Skin.frame:GetHeight() * Skin.frame.scale > folded * 0.52, true)
+    and Skin.frame:GetHeight() * Skin.frame.scale > own * 0.52, true)
 Expect("...on a curve, not straight at the corner", (function()
     local s = Skin.settling
     local u = (s.time - 0.1) / 0.42
@@ -808,7 +774,7 @@ Expect("...its paper alone as it flies, and never one image while it does", Skin
 Skin:Tick(0.2)
 Expect("...still on its way at 0.44 seconds", Skin.settling ~= nil, true)
 Skin:Tick(0.1)
-Expect("...and settled at the top left by 0.52, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), folded)
+Expect("...and settled at the top left by 0.52, at its own size and height", AtTopLeft() and Near(Skin.frame:GetHeight(), own)
     and math.abs(Skin.frame.scale - 0.52) < 1e-6 and Skin.settling == nil, true)
 Skin:Tick(0.05)
 Expect("...landing with a little jump, up first, as the tuck's window gives, its words fading in on its paper",
@@ -829,6 +795,22 @@ Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 CloseDialog()
 Expect("with no line playing on, the dialog closing moves nothing", Skin.settling, nil)
+do
+    -- A dialog closing while another's close still runs (the book view closed as the quest window
+    -- closes): that one gets its words back and is hidden first.
+    local hid = {}
+    local first, second = CreateFrame("Frame"), CreateFrame("Frame")
+    local firstWords = CreateFrame("Frame", nil, first)
+    first:Show(); second:Show()
+    Skin:FadeDialogOut(first, function(dialog) table.insert(hid, "first"); dialog:Hide() end)
+    Skin:CloseStep(0.05)
+    Skin:FadeDialogOut(second, function(dialog) table.insert(hid, "second"); dialog:Hide() end)
+    Expect("a close started while another runs hides that one first, its words given back",
+        table.concat(hid, ",") .. " " .. tostring(firstWords.alpha) .. " " .. tostring(first:IsShown()) .. " "
+        .. tostring(Skin.closing ~= nil and Skin.closing.dialog == second), "first 1 false true")
+    Skin:CloseStep(1)
+    Expect("...then closes the second", table.concat(hid, ","), "first,second")
+end
 
 ---------------------------------------------------------------- books and stones
 -- Spoken Books' pages, in the art DialogueUI's book view draws them in: its paper for books and
@@ -885,26 +867,29 @@ Spoken:StopAll()
 -- The book view open: this window steps aside; closed on a page that reads on, the window takes
 -- the book's place and size and goes to the top left, as from the quest window.
 local BookView = _G.DUIBookFrame
-local bookWatch = Skin.dialogWatches[BookView]
-books:Enqueue(Page("Stone"))
-Skin:Tick(1)
-BookView:Show()
-bookWatch.scripts.OnShow(bookWatch)
-Expect("the book view opening hides this window, the book showing the page", Skin.frame:IsShown(), false)
-Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
-BookView:Hide()
-Skin:CloseStep(1)
-bookWatch.scripts.OnHide(bookWatch)
-local scale = Skin.frame.scale
-Expect("closed on a page reading on, the window starts where the book was, as wide, in stone",
-    Near(Skin.frame.anchor.x * scale, 200 * 0.8) and Near(Skin.frame.anchor.y * scale, (100 + 477.87) * 0.8)
-    and Near(Skin.frame:GetWidth() * scale, 409.6 * 0.8) and Skin.parchments[1].texture == BOOK .. "Metal.png", true)
-Expect("...as tall as the book", Near(Skin.frame:GetHeight() * scale, 477.87 * 0.8), true)
-Skin:Tick(0.7)
-Skin:Tick(1)
-Expect("...and settles at the top left, the stone's edge 16 from the screen's", AtTopLeft(123, 112) and Skin.settling == nil, true)
-Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
-Spoken:StopAll()
+local bookWatch = Skin.dialogWatches and Skin.dialogWatches[BookView]
+Expect("the book view is watched, as the quest window is", bookWatch ~= nil, true)
+if bookWatch then
+    books:Enqueue(Page("Stone"))
+    Skin:Tick(1)
+    BookView:Show()
+    bookWatch.scripts.OnShow(bookWatch)
+    Expect("the book view opening hides this window, the book showing the page", Skin.frame:IsShown(), false)
+    Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
+    BookView:Hide()
+    Skin:CloseStep(1)
+    bookWatch.scripts.OnHide(bookWatch)
+    local scale = Skin.frame.scale
+    Expect("closed on a page reading on, the window starts where the book was, as wide, in stone",
+        Near(Skin.frame.anchor.x * scale, 200 * 0.8) and Near(Skin.frame.anchor.y * scale, (100 + 477.87) * 0.8)
+        and Near(Skin.frame:GetWidth() * scale, 409.6 * 0.8) and Skin.parchments[1].texture == BOOK .. "Metal.png", true)
+    Expect("...as tall as the book", Near(Skin.frame:GetHeight() * scale, 477.87 * 0.8), true)
+    Skin:Tick(0.7)
+    Skin:Tick(1)
+    Expect("...and settles at the top left, the stone's edge 16 from the screen's", AtTopLeft(123, 112) and Skin.settling == nil, true)
+    Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
+    Spoken:StopAll()
+end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
 -- A quest's line playing on, and a gravestone read meanwhile: closing the stone does not hand

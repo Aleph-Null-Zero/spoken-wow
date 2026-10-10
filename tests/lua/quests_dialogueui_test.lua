@@ -438,8 +438,17 @@ local skip = controls and controls.skip
 Expect("a page with a recording shows Spoken's Play button", play ~= nil and play:IsShown() and play:IsEnabled(), true)
 Expect("...the player's round one, Skip beside it", play and play.ring ~= nil and skip ~= nil and skip:IsShown(), true)
 Expect("...on DialogueUI's window, which UIParent's hiding leaves up", controls and controls.frame:GetParent(), DUI)
+-- Stand-ins where code without the row has none, so each expectation below fails on its own.
+controls = controls or { frame = stub.Widget("Frame") }
+if not skip then
+    skip = stub.Widget("Button")
+    for _, script in ipairs({ "OnEnter", "OnLeave", "OnClick" }) do skip:SetScript(script, function() end) end
+end
 local function Anchor(f)
     local a = f.anchor
+    if not a then
+        return "no anchor"
+    end
     return a.point .. " " .. tostring(a.relativeTo == DUI and "window" or a.relativeTo) .. " " .. a.relativePoint
         .. " " .. a.x .. " " .. a.y
 end
@@ -452,22 +461,24 @@ local _, _, _, closeButton = Bridge:PlayButtonState()
 Expect("...beside the book view's close button at the window's top right, 64 across of the book art",
     closeButton ~= nil and closeButton:IsShown() and Anchor(closeButton) .. " " .. closeButton.width,
     "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " " .. middle .. " " .. (64 * 0.53333))
+closeButton = closeButton or stub.Widget("Button")
 -- 36 under the line to the quest title's top, as on the book view, not to the portrait's: the title
 -- (20 tall) sits 2 over the middle of DialogueUI's 51-tall header, so the header goes 13.5 higher.
 -- The text moves down with it, its height shorter by as much.
 local shift = (2 * 36 + 24) * lineScale - (51 / 2 - 2 - 20 / 2) - 28
 Expect("DialogueUI's header moved down so its title starts 36 under the controls' line, as on the book view",
-    header.anchor.point .. " " .. header.anchor.y, "TOP " .. -(28 + shift))
-Expect("...the quest text with it, its height shorter by as much", DUI.ScrollFrame.anchor.y .. " " .. DUI.scrollViewHeight,
+    header.anchor and header.anchor.point .. " " .. header.anchor.y, "TOP " .. -(28 + shift))
+Expect("...the quest text with it, its height shorter by as much",
+    DUI.ScrollFrame.anchor and DUI.ScrollFrame.anchor.y .. " " .. tostring(DUI.scrollViewHeight),
     -(68 + shift) .. " " .. (500 - 40 - shift))
-Expect("...the row just left of it, on its middle", controls.frame.anchor.relativeTo == closeButton
+Expect("...the row just left of it, on its middle", controls.frame.anchor and controls.frame.anchor.relativeTo == closeButton
     and controls.frame.anchor.point .. " " .. controls.frame.anchor.relativePoint .. " " .. controls.frame.anchor.x
     .. " " .. controls.frame.anchor.y, "RIGHT LEFT -4 0")
-Expect("...Play left of Skip", play.anchor.relativeTo == skip and play.anchor.relativePoint, "LEFT")
+Expect("...Play left of Skip", play.anchor and play.anchor.relativeTo == skip and play.anchor.relativePoint, "LEFT")
 local round = UIParent:GetEffectiveScale() / DUI:GetEffectiveScale()
 Expect("...as large on screen as Place Lore draws them, 24 at UIParent's scale, whatever DialogueUI's size",
     play:GetWidth() .. " " .. play:GetScale() .. " " .. skip:GetScale(), "24 " .. round .. " " .. round)
-Expect("...the title left as DialogueUI lays it out", header.Title.anchor.relativeTo == header
+Expect("...the title left as DialogueUI lays it out", header.Title.anchor and header.Title.anchor.relativeTo == header
     and header.Title.anchor.x .. " " .. header.Title.anchor.y, "-8 2")
 Expect("...in the paper's art on DialogueUI's parchment", closeButton.file,
     "Interface/AddOns/DialogueUI/Art/Book/TextureKit-Parchment.png")
@@ -478,10 +489,11 @@ Bridge:RefreshPlayButton("GOSSIP_SHOW")
 -- The gossip text's top 36 under the line too, not the quest header's distance.
 local gossipShift = (2 * 36 + 24) * lineScale - 42
 Expect("...and on a gossip page its text starts 36 under the line, its own line moved with it",
-    DUI.ScrollFrame.anchor.y .. " " .. DUI.FrontFrame.HeaderDivider.anchor.y .. " " .. DUI.scrollViewHeight,
+    DUI.ScrollFrame.anchor and DUI.FrontFrame.HeaderDivider.anchor and DUI.ScrollFrame.anchor.y .. " "
+        .. DUI.FrontFrame.HeaderDivider.anchor.y .. " " .. tostring(DUI.scrollViewHeight),
     -(42 + gossipShift) .. " " .. -(42 + gossipShift) .. " " .. (500 - gossipShift))
 Expect("on a gossip page the close button and the row stay where they were", Anchor(closeButton) .. " "
-    .. tostring(controls.frame.anchor.relativeTo == closeButton),
+    .. tostring(controls.frame.anchor ~= nil and controls.frame.anchor.relativeTo == closeButton),
     "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " " .. middle .. " true")
 -- DialogueUI's Copy Text button, which it puts in that corner, goes left of the row.
 local copyText = stub.Widget("Button")
@@ -489,12 +501,12 @@ copyText:SetPoint("TOPRIGHT", DUI, "TOPRIGHT", -8, -8)
 copyText:Show()
 DUI.CopyTextButton = copyText
 Bridge:DrawPlayButton()
-Expect("DialogueUI's Copy Text button goes left of the row, on its middle", copyText.anchor.relativeTo == controls.frame
+Expect("DialogueUI's Copy Text button goes left of the row, on its middle", copyText.anchor and copyText.anchor.relativeTo == controls.frame
     and copyText.anchor.point .. " " .. copyText.anchor.relativePoint, "RIGHT LEFT")
 DUI.CopyTextButton = nil
 local hidUI
 DUI.HideUI = function() hidUI = true end
-closeButton.scripts.OnClick(closeButton)
+if closeButton.scripts.OnClick then closeButton.scripts.OnClick(closeButton) end
 Expect("the close button closes the window as Escape does", hidUI, true)
 DUI.HideUI = nil
 _G.DUIFont_QuestType_Left = { GetTextColor = function() return 1, 0.82, 0 end }
@@ -554,7 +566,7 @@ Bridge:RefreshPlayButton("GOSSIP_SHOW")
 local _, gossipLine = Bridge:PlayButtonState()
 Expect("a gossip page with a recording shows the Play button, for the gossip module's line",
     play:IsShown() and gossipLine and gossipLine.fileName, "gossip-hello")
-Expect("...the row in its place beside the close button", controls.frame.anchor.relativeTo, closeButton)
+Expect("...the row in its place beside the close button", controls.frame.anchor and controls.frame.anchor.relativeTo, closeButton)
 Expect("...the line the Report button asks the bridge for", Bridge:LineFor("GOSSIP_SHOW") and
     Bridge:LineFor("GOSSIP_SHOW").fileName, "gossip-hello")
 play.scripts.OnClick(play, "LeftButton")
@@ -737,8 +749,9 @@ local icon = corner and corner.icon
 Expect("a voiced quest shows the Report icon", icon ~= nil and icon:IsShown(), true)
 Expect("...on DialogueUI's window, which UIParent's hiding leaves up", icon and icon:GetParent(), DUI)
 local _, _, controls = Bridge:PlayButtonState()
+controls = controls or { frame = stub.Widget("Frame"), play = stub.Widget("Button"), skip = stub.Widget("Button") }
 Expect("...at the top right, rightmost in Spoken's row after Play and Skip", icon.anchor and icon.anchor.point
-    .. " " .. tostring(icon.anchor.relativeTo == controls.frame) .. " " .. tostring(controls.skip.anchor.relativeTo == icon),
+    .. " " .. tostring(icon.anchor.relativeTo == controls.frame) .. " " .. tostring(controls.skip.anchor ~= nil and controls.skip.anchor.relativeTo == icon),
     "RIGHT true true")
 Expect("...as large as they are", icon:GetWidth() .. " " .. icon:GetScale(),
     controls.play:GetWidth() .. " " .. controls.play:GetScale())

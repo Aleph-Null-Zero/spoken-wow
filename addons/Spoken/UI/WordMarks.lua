@@ -171,8 +171,7 @@ end
 --- The mark's colour on text drawn in `r`, `g`, `b`: gold on pale text (a dark page), deep red
 --- on dark (a light one).
 function Marks.ColorFor(r, g, b)
-    local bright = (r or 1) * 0.299 + (g or 1) * 0.587 + (b or 1) * 0.114 >= 0.5
-    return bright and Marks.ON_DARK or Marks.ON_LIGHT
+    return VoiceOver.Utils:IsBright(r, g, b) and Marks.ON_DARK or Marks.ON_LIGHT
 end
 
 --- What paragraph `p` should show: its text typed out to `cutByte` in `cutP` within `span`, the

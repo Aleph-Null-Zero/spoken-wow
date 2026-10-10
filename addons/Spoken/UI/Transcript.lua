@@ -490,8 +490,8 @@ function Transcript:Place()
         label:SetPoint("TOPLEFT", 0, -((padTop or 0) + ((row - 1) - fraction) * step))
         local line = self.lines and self.lines[first + row - 1]
         label:SetShown(line ~= nil and (row <= n or (row == n + 1 and fraction > 0)))
-        -- As much of the row as is inside the clipped frame, so a line half past an edge does not
-        -- end on a hard cut.
+        -- The line leaving at the top fades out as it slides up and the one coming in under the
+        -- page fades in, so the words never stop on a clean cut at an edge.
         label:SetAlpha(row == 1 and 1 - fraction or row == n + 1 and fraction or 1)
     end
 end

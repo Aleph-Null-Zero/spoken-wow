@@ -37,10 +37,12 @@ local function OpenBook()
 	return key, entry.pages[1] or pageId
 end
 
---- The page of this book the player is on, else its first.
-local function ReadingPage(first)
+--- The page of book `key` being read, else its first: another readable can be read ahead of the
+--- one open in the view.
+local function ReadingPage(key, first)
 	local head = Spoken.GetCurrent and Spoken:GetCurrent()
-	if head and head.pageId and SpokenBooks:IsQueued(head.pageId) then
+	if key and head and head.pageId and SpokenBooks:IsQueued(head.pageId)
+		and SpokenBooks:PlaceOf(head.pageId) == key then
 		return head.pageId, head.language
 	end
 	return first, nil
@@ -120,8 +122,7 @@ function Book:Row()
 	local report = Spoken:CreateRoundButton(holder, "report")
 	report:SetFrameStrata("FULLSCREEN")
 	report:SetScript("OnClick", function()
-		local _, first = OpenBook()
-		local pageId, language = ReadingPage(first)
+		local pageId, language = ReadingPage(OpenBook())
 		local url = pageId and SpokenBooks:ReportURL(pageId, language)
 		if url and Spoken.ShowContribution then
 			Spoken:ShowContribution(url, nil, true)

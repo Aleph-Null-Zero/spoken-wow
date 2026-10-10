@@ -418,8 +418,9 @@ end
 --
 -- DialogueUI draws a Play button only while its Text To Speech is on, which is off by default
 -- and read only at load. This file puts the player's own round buttons at the window's top
--- right instead, beside a close button, as on DialogueUI's book view (Spoken Books): Play (Stop while the page's line
--- speaks), Skip, and Report (ContributeButton's icon, handed over through its dialogueUISlot).
+-- right instead, beside a close button, as on DialogueUI's book view: Play (Stop while the
+-- page's line speaks), Skip, and Report (ContributeButton's icon, handed over through its
+-- dialogueUISlot).
 -- Read Automatically, never DialogueUI's Auto Play, decides whether a line reads on its own.
 
 local ROUND, ROUND_GAP = 24, 4
@@ -611,10 +612,9 @@ local function CloseButton()
     return close
 end
 
--- Room above the controls' line and below it, in UIParent's units, as the buttons' 24 are: the
--- same on DialogueUI's book view (Spoken Books' UI/DialogueUIBook.lua). The line sits that far
--- under the window's top on every page; DialogueUI's quest title, or a gossip page's text, moves
--- down to start that far under it.
+-- Room above the controls' line and below it, in UIParent's units, as the buttons' 24 are. The
+-- line sits that far under the window's top on every page; DialogueUI's quest title, or a gossip
+-- page's text, moves down to start that far under it.
 local LINE_ROOM = 36
 -- Where DialogueUI puts its header (28 under the window's top at its size, 51 tall, its title
 -- centred 2 over its middle), its text on a quest page (68 under the top), and on a gossip page,

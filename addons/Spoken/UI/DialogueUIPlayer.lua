@@ -1,12 +1,12 @@
 setfenv(1, SpokenEnv)
 
--- The "dialogueui" narrator style: the queue drawn as a smaller twin of DialogueUI's quest
+-- The "dialogueui" narrator style: the line playing drawn as a smaller twin of DialogueUI's quest
 -- window in its own art. DialogueUI's art, window size and colours come through DialogueUITheme.lua.
 --
 -- Parsed by the 1.12 client too (addon.xml is shared), so Lua 5.0 syntax throughout; the
 -- stub below is all that client runs.
 
-DialogueUIPlayer = { rows = {}, offset = 0 }
+DialogueUIPlayer = {}
 
 if Version.IsAnyLegacy then
     function DialogueUIPlayer:IsEnabled() return false end
@@ -18,9 +18,7 @@ end
 
 local Skin = DialogueUIPlayer
 local Theme = DialogueUITheme
-local MAX_ROWS, ROW_HEIGHT = 4, 20
 local PORTRAIT = 48
-local MIN_LINES = 2
 -- The panel's share of DialogueUI's window at the default Window Size, small enough to read
 -- beside the next dialog. Taking over from the dialog, it starts at the dialog's whole size and
 -- shrinks to this (Skin:Settle).
@@ -39,10 +37,10 @@ local SETTLE_GROW, SETTLE_RISE, SETTLE_BOW, SETTLE_GIVE = .03, 4, .16, 7
 local CONTENT_OUT, CONTENT_IN = .1, .16
 -- A quest page closing (QUEST_FINISHED): DialogueUI waits up to a second before it hides its window
 -- (0.5 when the NPC has more quests, in case its gossip comes back, and up to 0.5 more for the
--- camera). The words fade at once instead, and the window is closed here QUEST_GRACE after the page
--- closed, unless DialogueUI shows a page again by then (gossip, the next quest page). The wait runs
--- with the fade, not after it: after it, the bare page hung there before anything moved.
-local QUEST_GRACE = .12
+-- camera; DialogueUI 1.0.5's Code/Core.lua). The words fade at once, but only DialogueUI's own Hide
+-- closes the window; with no Hide within QUEST_WAIT (a page shown again, or the event early), the
+-- words come back.
+local QUEST_WAIT = 1.1
 -- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
 -- the same event, in either order.
@@ -75,7 +73,8 @@ local LOOKS = {
         shadow = true },
 }
 local BOOK_PAPER = 768 / 1024
--- DialogueUI's book view: TextureKit 2 (stone) for these materials, 1 (paper) for every other.
+-- DialogueUI's book view: TextureKit 2 (stone) for these materials, 1 (paper) for every other
+-- (MaterialTextureKitID in DialogueUI 1.0.5's Code/Book/BookUI.lua).
 local STONE = { Stone = true, Marble = true, Silver = true, Bronze = true, Progenitor = true }
 -- In the book art: the line under its title, and the ring it draws round an item's icon, whose
 -- opening is 56 of its 96 across, where the face sits.
@@ -115,9 +114,6 @@ local DEFAULT_WINDOW_SIZE = Defaults.profile.Frame.FrameScale
 local BASE_FONT_SIZE = 16
 -- Smaller than DialogueUI's quest title, since the speaker's name shares the strip here.
 local TITLE_SHARE = 0.85
--- Shift-drag width limits as shares of DialogueUI's width; the minimum still fits the face
--- and a title on the header strip.
-local MIN_WIDTH_SHARE, MAX_WIDTH_SHARE = 0.6, 2
 -- DialogueUI's paddings at multiplier 1.
 local PAD_H, PAD_TOP, PAD_BOTTOM = 26, 48, 36
 -- Where in the quest parchment's file its header strip is; it sits below the caps.
@@ -130,8 +126,7 @@ local WINDOW_SIZES, WINDOW_STEP = { 0.5, 2 }, 0.05
 local FONT_SIZES = { 12, 26 }
 
 local parts = MinimalPlayer.parts
-local Font, Removable, ShowRemove, Label = parts.Font, parts.Removable, parts.ShowRemove, parts.Label
-local HeldLabel, Clamp, Waiting, BelongsTo = parts.HeldLabel, parts.Clamp, parts.Waiting, parts.BelongsTo
+local Font, Label, Clamp, Waiting, BelongsTo = parts.Font, parts.Label, parts.Clamp, parts.Waiting, parts.BelongsTo
 local function Round(n) return math.floor(n + 0.5) end
 local function Smooth(t) return t * t * (3 - 2 * t) end
 local function EaseInOut(t)
@@ -158,8 +153,6 @@ end
 -- Through Addon:Profile: the frame still redraws during UI teardown, after AceDB strips
 -- the profile.
 local function Config() return Addon:Profile("Frame") end
--- The expand state, shared with the other windows' captions.
-local function Expanded() return Addon.db and Addon:Layout().CaptionsExpanded and true or false end
 
 function Skin:IsEnabled()
     return Addon.db and Addon:DisplayStyle() == "dialogueui"
@@ -187,11 +180,6 @@ function Skin:HasClip()
     return self:IsEnabled() and self.wanted and SoundQueue:GetCurrentSound() ~= nil
 end
 
--- No control shows the wheel sizing (Skin:Wheel), so the resize handle's tooltip mentions it.
-local function WheelHint()
-    GameTooltip:AddLine(L.DUI_WHEEL_HINT, 1, .82, 0, true)
-end
-
 function Skin:Initialize()
     if self.frame then return end
     local frame = CreateFrame("Frame", "SpokenDialogueUIPlayerFrame", UIParent)
@@ -201,7 +189,6 @@ function Skin:Initialize()
     -- RefreshConfig re-runs PlaceDefault until the player drags it.
     if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
     frame:SetMovable(true)
-    frame:SetResizable(true)
     frame:SetClampedToScreen(true)
     frame:SetUserPlaced(false)
     frame:EnableMouse(true)
@@ -212,12 +199,8 @@ function Skin:Initialize()
         if button == "RightButton" then Options:Open() end
     end)
     frame:SetScript("OnUpdate", function(_, elapsed) self:Tick(elapsed) end)
-    -- While the handle is dragged the captions follow the edge, not the drop.
-    frame:SetScript("OnSizeChanged", function()
-        if self.sizing and not self.layingOut then self:Layout() end
-    end)
     frame:SetScript("OnHide", function() self:HideTooltip() end)
-    -- The captions and the queue take the wheel first and hand it here when Ctrl is held.
+    -- The captions take the wheel first and hand it here when Ctrl is held.
     frame:EnableMouseWheel(true)
     frame:SetScript("OnMouseWheel", function(_, delta) self:Wheel(delta) end)
     frame.spokenWheel = function(delta) return self:Wheel(delta) end
@@ -245,7 +228,12 @@ function Skin:Initialize()
             self.dialogHides = self.dialogHides or {}
             self.dialogHides[dialog] = hide
             dialog.Hide = function(frame, ...)
-                if self.closing and self.closing.dialog == frame then return end
+                local closing = self.closing
+                if closing and closing.dialog == frame then
+                    -- Its words already fading since QUEST_FINISHED: it closes now (Skin:CloseStep).
+                    if not closing.hiding then closing.hiding = true; self:CloseStep(0) end
+                    return
+                end
                 -- Already hidden (DialogueUI hides it again from its own OnHide): nothing to fade.
                 if not frame:IsShown() then return hide(frame, ...) end
                 local ok, fades = pcall(self.FadesOnClose, self, frame)
@@ -270,8 +258,6 @@ function Skin:Initialize()
         events:SetScript("OnEvent", function() self:QuestFinished(quest) end)
         self.questEvents = events
     end
-    self.dialog = _G.DUIQuestFrame
-    self.dialogWatch = self.dialog and self.dialogWatches[self.dialog]
 
     -- DialogueUI's three parchment strips: caps centred on the frame's ends, the middle
     -- stretched between, all wider than the frame.
@@ -341,16 +327,6 @@ function Skin:Initialize()
         self.picture:AddMaskTexture(self.pictureMask)
     end
 
-    self.drawer = CreateFrame("Frame", nil, content)
-    self.drawer:EnableMouseWheel(true)
-    self.drawer:SetScript("OnMouseWheel", function(_, delta)
-        if self:Wheel(delta) then return end
-        self.offset = Clamp(self.offset - delta, 0, math.max(0, Waiting() - MAX_ROWS))
-        self:LayoutQueue()
-    end)
-    self.queueNote = Font(self.drawer, 10, 1, 1, 1)
-    self.drawer:Hide()
-
     -- The subtitle's progress line, along the foot of the words.
     self.progress = Actions.ProgressBar(content)
     -- The subtitle's controls (Subtitle:BuildControls) at the header's right end, beside the
@@ -375,40 +351,6 @@ function Skin:Initialize()
     Actions:Build(frame)
 
     -- No scrollbar: the captions scroll themselves on the wheel.
-
-    -- The width changes only with Shift held at drag start, so a height drag cannot knock
-    -- the column out of DialogueUI's shape.
-    self.resizer = CreateFrame("Button", nil, frame)
-    self.resizer:SetSize(14, 14)
-    self.resizer:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
-    self.resizer:SetNormalTexture([[Interface\AddOns\Spoken\Textures\SizeGrabber-Up]])
-    self.resizer:SetAlpha(.5)
-    self.resizer:SetScript("OnEnter", function()
-        self.resizer:SetAlpha(1)
-        GameTooltip:SetOwner(self.resizer, "ANCHOR_LEFT")
-        GameTooltip:SetText(L.DUI_RESIZE_TIP, 1, 1, 1, 1, true)
-        WheelHint()
-        GameTooltip:Show()
-    end)
-    self.resizer:SetScript("OnLeave", function() self.resizer:SetAlpha(.5); self:HideTooltip() end)
-    self.resizer:SetScript("OnMouseDown", function(_, button)
-        if button ~= "LeftButton" or Addon:IsFrameLocked() or not Expanded() then return end
-        self.sizing = true
-        self.sizingWidth = IsShiftKeyDown and IsShiftKeyDown() and true or false
-        self:Layout() -- the resize bounds for this drag: free width only with Shift
-        frame:StartSizing(self.sizingWidth and "BOTTOMRIGHT" or "BOTTOM")
-    end)
-    self.resizer:SetScript("OnMouseUp", function()
-        frame:StopMovingOrSizing()
-        if self.sizing then
-            Addon:Layout().DialogueUIHeight = Round(frame:GetHeight())
-            if self.sizingWidth then Addon:Layout().DialogueUIWidth = Round(frame:GetWidth()) end
-            -- Sizing pins the top-left, so the panel now counts as placed by the player.
-            Addon:SaveLayout("DialogueUI", frame)
-        end
-        self.sizing, self.sizingWidth = false, false
-        self:Layout(); self:Update()
-    end)
 end
 
 --- DialogueUI's own window open over this one, which then stays hidden: the dialog shows the line.
@@ -436,7 +378,6 @@ function Skin:Layout()
     local look = self:Look()
     self.look = look
     local parchment = look.file or Theme:TexturePath() .. "Parchment.png"
-    self.layingOut = true
     -- Laid out at DialogueUI's own size, paddings and text; Window Size then scales the
     -- whole frame from BASE_SCALE.
     local scale = BASE_SCALE * (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE
@@ -445,15 +386,10 @@ function Skin:Layout()
     -- The multiplier DialogueUI drew its window at, so the paddings keep its proportions.
     local multiplier = duiHeight / (Theme.HEIGHT_SHARE * math.max(1, UIParent:GetHeight()))
     local padH, padTop, padBottom = PAD_H * multiplier, PAD_TOP * multiplier, PAD_BOTTOM * multiplier
-    local width = self.sizingWidth and Round(frame:GetWidth()) or Addon:Layout().DialogueUIWidth or Round(duiWidth)
-    local minWidth, maxWidth = Round(duiWidth * MIN_WIDTH_SHARE), Round(duiWidth * MAX_WIDTH_SHARE)
-    width = Clamp(width, minWidth, maxWidth)
+    local width = Round(duiWidth)
     local inner = math.max(1, width - 2 * padH)
     local wordsWidth = math.max(1, Round(inner * WORDS_SHARE))
     local wordsLeft = Round((inner - wordsWidth) / 2)
-    -- The header and footer are sized from DialogueUI's own column, so a wider panel stretches
-    -- the strips but keeps the face, the title and the strips' thickness.
-    local baseInner = math.max(1, Round(duiWidth) - 2 * padH)
     -- DialogueUI's spacing: 0.35 of the text size under each line, four of those between
     -- paragraphs, which an empty line approximates.
     local fonts = Theme:Fonts(look.book)
@@ -466,7 +402,7 @@ function Skin:Layout()
 
     -- DialogueUI's header strip thickness and its face and title placements, scaled to its column,
     -- whatever the look.
-    local ratio = baseInner / HEADER_DIVIDER[5]
+    local ratio = inner / HEADER_DIVIDER[5]
     local stripHeight = Round(HEADER_DIVIDER[6] * ratio)
     local face = Round(34 * ratio)
     -- DialogueUI's gap under its header line, before the text.
@@ -495,15 +431,12 @@ function Skin:Layout()
     -- adds none: the words keep their place.
     -- Under the progress line, as far to where the paper's light ends as the last line is over it:
     -- the 6 and the header's gap over the line, and the line's own spacing under its letters.
-    -- The caps: the quest parchment's as DialogueUI drew them, following the panel's width and
-    -- keeping DialogueUI's overhang either side; a book's as wide as its paper puts the paper on
-    -- the frame's width, 4 to 1 as in the file.
+    -- The caps: the quest parchment's as DialogueUI drew them; a book's as wide as its paper puts
+    -- the paper on the frame's width, 4 to 1 as in the file.
     local capWidth, capHeight = Theme:ParchmentSize()
     if look.book then
         capWidth = width / BOOK_PAPER
         capHeight = capWidth * (look.top[2] - look.top[1]) / 1024
-    else
-        capWidth = capWidth * width / math.max(1, Round(duiWidth))
     end
     local barLift = 0
     if progress then
@@ -513,43 +446,21 @@ function Skin:Layout()
         footerHeight = footerHeight + barLift
         self.progressGaps = { above = above, below = padBottom + barLift - foot }
     end
-    -- The lines waiting get rows while the window is open; folded, the title counts them.
-    local waiting = Waiting()
-    local shownRows = Expanded() and math.min(MAX_ROWS, waiting) or 0
-    local queueHeight = shownRows * ROW_HEIGHT + (shownRows > 0 and waiting > MAX_ROWS and 14 or 0)
-    -- A panel too small for MIN_LINES grows to fit them, so the controls are never cut off.
-    local height = self.sizing and Round(frame:GetHeight()) or Addon:Layout().DialogueUIHeight or Round(duiHeight)
-    local body = height - padTop - wordsTop - queueHeight - padBottom - footerHeight
-    local lines = math.max(MIN_LINES, math.floor(body / lineHeight))
-    local expanded = Expanded()
-    if not expanded then
-        lines = Addon:Profile("Transcript").Lines == 1 and 1 or 2
-        height = 0
-    end
-    -- Fit to the Words, except while the handle is dragged and the panel follows the pointer.
-    if cfg.FitText ~= false and not self.sizing then
+    -- Only the line playing, in Lines Shown of its words; the title counts the lines waiting.
+    local lines = Addon:Profile("Transcript").Lines == 1 and 1 or 2
+    -- Fit to the Words: no more lines than the words take.
+    if cfg.FitText ~= false then
         local needed = self:TextLines(wordsWidth)
-        if needed and needed < lines then
-            lines, height = math.max(needed, expanded and MIN_LINES or 1), 0
-        end
+        if needed and needed < lines then lines = needed end
     end
     local captionHeight = lines * lineHeight
-    height = math.max(height, padTop + wordsTop + captionHeight + queueHeight + padBottom + footerHeight)
+    local height = padTop + wordsTop + captionHeight + padBottom + footerHeight
     self.settledHeight = height
     -- A new line on a window already showing eases to its height (Skin:Tick).
-    local easing = self.easeNext and not self.settling and not self.sizing
+    local easing = self.easeNext and not self.settling
     self.easeNext = nil
     self.heightWant = easing and height or nil
     frame:SetSize(width, (self.settling or easing) and frame:GetHeight() or height)
-    local minHeight = padTop + wordsTop + MIN_LINES * lineHeight + queueHeight + padBottom + footerHeight
-    if frame.SetResizeBounds then
-        if self.sizingWidth then
-            frame:SetResizeBounds(minWidth, minHeight, maxWidth, 4000)
-        else
-            frame:SetResizeBounds(width, minHeight, width, 4000)
-        end
-    end
-    self.resizer:SetShown(expanded and not Addon:IsFrameLocked())
     self.lines = lines
 
     for index = 1, 3 do self.parchments[index]:SetTexture(parchment) end
@@ -644,17 +555,12 @@ function Skin:Layout()
     Transcript:Dock(content, content, "TOPLEFT", wordsLeft, -(wordsTop - self.lineRoom), wordsWidth,
         captionHeight + self.lineRoom + lineHeight)
 
-    self.drawer:ClearAllPoints()
-    self.drawer:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(wordsTop + captionHeight))
-    self.drawer:SetSize(inner, math.max(1, queueHeight))
-
     -- The progress line as wide as the words and the picture over it.
     self.progress.track:ClearAllPoints()
     self.progress.track:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", wordsLeft, barLift)
     self.progress.track:SetWidth(wordsWidth)
 
     self:Dress()
-    self.layingOut = false
 end
 
 function Skin:Dress()
@@ -675,11 +581,6 @@ function Skin:Dress()
     Paint(self.count, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
     Paint(self.stopped, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
     self.title.color = colors.title
-    Paint(self.queueNote, fonts.paragraph, math.max(8, body - 2), colors.disabled)
-    for _, row in ipairs(self.rows) do
-        Paint(row.text, fonts.paragraph, math.max(8, body - 1), colors.gossip)
-        row.color = colors.gossip
-    end
     self.colors = colors
     local tint = colors.portraitTint
     if self.viewport.texture then self.viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
@@ -759,14 +660,6 @@ function Skin:Wheel(delta)
     return true
 end
 
---- The state persists and is shared with the other windows' expand button.
-function Skin:SetExpanded(expanded)
-    expanded = expanded and true or false
-    if Expanded() == expanded then return end
-    Addon:Layout().CaptionsExpanded = expanded
-    if self.frame then self:Layout(); self:Update() end
-end
-
 function Skin:LayoutControls()
     local x, tallest = 0, 1
     for _, button in ipairs(self.row or self.buttons) do
@@ -785,7 +678,7 @@ function Skin:UpdateControls(relayout)
     local paused = SoundQueue:IsPaused()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
     -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
-    -- first, a fight), which the waiting lines' rows still say.
+    -- first, a fight).
     self.title.text:SetText(Label(self.clip))
     -- Stopped, said after its name, as the subtitle does.
     if paused ~= (self.shownStopped or false) then self.shownStopped = paused end
@@ -808,54 +701,6 @@ function Skin:UpdateProgress()
     Actions.SetProgress(self.progress, duration > 0 and (self.seconds or 0) / duration or 0)
 end
 
-function Skin:CreateQueueRow(index)
-    local button = CreateFrame("Button", nil, self.drawer)
-    self.rows[index] = button
-    button:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_HEIGHT)
-    button:SetPoint("TOPRIGHT", 0, -(index - 1) * ROW_HEIGHT)
-    button:SetHeight(ROW_HEIGHT)
-    local color = self.colors and self.colors.gossip or { 1, 1, 1 }
-    Removable(button, 11, color[1], color[2], color[3])
-    local fonts = self.fonts or Theme:Fonts()
-    button.text:SetFont(fonts.paragraph, math.max(8, fonts.paragraphSize - 1), "")
-    button.text:SetShadowColor(0, 0, 0, 0)
-    button:SetScript("OnEnter", function()
-        -- Nothing in the window changes while it is one image (Skin:Buffer).
-        if self.buffered then return end
-        ShowRemove(button, true)
-        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-        GameTooltip:SetText(Label(button.clip))
-        GameTooltip:AddLine(L.QUEUE_REMOVE_TOOLTIP, 1, .82, 0, true)
-        GameTooltip:Show()
-    end)
-    button:SetScript("OnLeave", function() ShowRemove(button, false); self:HideTooltip() end)
-    button:SetScript("OnClick", function()
-        if self:HasClip() then SoundQueue:RemoveSoundFromQueue(button.clip) end
-    end)
-    return button
-end
-
-function Skin:LayoutQueue()
-    local waiting = Waiting()
-    self.offset = Clamp(self.offset, 0, math.max(0, waiting - MAX_ROWS))
-    local shown = Expanded() and math.min(MAX_ROWS, waiting - self.offset) or 0
-    for index = 1, MAX_ROWS do
-        local button = self.rows[index]
-        if index <= shown then
-            button = button or self:CreateQueueRow(index)
-            button.clip = SoundQueue.sounds[index + self.offset + 1]
-            button.text:SetText(HeldLabel(button.clip))
-            ShowRemove(button, false)
-            button:Show()
-        elseif button then button:Hide(); button.clip = nil end
-    end
-    self.queueNote:ClearAllPoints()
-    self.queueNote:SetPoint("BOTTOMLEFT")
-    self.queueNote:SetText(format(L.MIN_SCROLL_QUEUE, self.offset + 1, self.offset + shown, waiting))
-    self.queueNote:SetShown(shown > 0 and waiting > MAX_ROWS)
-    self.drawer:SetShown(shown > 0)
-end
-
 --- How much of the window shows, 0 to 1: as one image, its alpha (Skin:Buffer). Where the client
 --- has no frame buffers, the paper takes the lower half and everything on it the upper, so the two
 --- never fade at once and the paper never shows through the strips and words.
@@ -872,15 +717,14 @@ end
 
 -- The window's direct parts, which ignore its alpha while it is one image.
 local function Parts(self)
-    return { self.content, self.resizer, self.parchments[1], self.parchments[2], self.parchments[3] }
+    return { self.content, self.parchments[1], self.parchments[2], self.parchments[3] }
 end
 
 -- What the pointer lights, presses or scrolls in the window: a button pressed or lit changes its
 -- textures, which must not happen while it is one image.
 local function Clickables(self)
-    local list = { self.frame, self.play, self.skip, self.resizer, self.drawer, Transcript.frame }
+    local list = { self.frame, self.play, self.skip, Transcript.frame }
     for _, button in ipairs(self.row or {}) do table.insert(list, button) end
-    for _, row in ipairs(self.rows or {}) do table.insert(list, row) end
     return list
 end
 
@@ -1162,6 +1006,8 @@ function Skin:Tick(elapsed)
             if not self.wanted then
                 self.frame:Hide()
                 self:Undeafen()
+                -- Held from the start of the fade-out, frame buffer or not (Skin:SetVisible).
+                Transcript:Release()
             end
             -- Faded: itself again, catching up on what waited.
             self:Unbuffer()
@@ -1469,16 +1315,20 @@ function Skin:FadesOnClose(dialog)
         and PlayerFrame:Current() ~= nil and (self:Owns(dialog) or self:QueuedBy(dialog) ~= nil)
 end
 
---- DialogueUI hiding `dialog`: its words fade first, then `hide` (its own Hide) closes it.
---- A quest page closed: if DialogueUI's window hands a line on, its words fade now and it closes
---- QUEST_GRACE from now (Skin:CloseStep), unless DialogueUI shows a page again first.
+--- A quest page closed: if DialogueUI's window hands a line on, its words fade now, and it closes
+--- when DialogueUI hides it.
 function Skin:QuestFinished(dialog)
     if self.closing or not dialog:IsShown() then return end
     local ok, fades = pcall(self.FadesOnClose, self, dialog)
-    if ok and fades then self:FadeDialogOut(dialog, self.dialogHides[dialog], QUEST_GRACE) end
+    if ok and fades then self:FadeDialogOut(dialog, self.dialogHides[dialog], QUEST_WAIT) end
 end
 
-function Skin:FadeDialogOut(dialog, hide, grace)
+--- DialogueUI hiding `dialog`: its words fade first, then `hide` (its own Hide) closes it. With
+--- `wait` (QUEST_FINISHED), its words fade before DialogueUI hides it, and come back if it has not
+--- within `wait`.
+function Skin:FadeDialogOut(dialog, hide, wait)
+    -- Another dialog still closing: its words given back, and closed if DialogueUI hid it.
+    if self.closing then self:EndClose(self.closing.hiding) end
     local paper = {}
     for _, key in ipairs(PAPER_FRAMES) do
         if type(dialog[key]) == "table" then paper[dialog[key]] = true end
@@ -1491,7 +1341,7 @@ function Skin:FadeDialogOut(dialog, hide, grace)
     end
     local footer = type(dialog.Footer) == "table" and dialog.Footer.FooterDivider
     if type(footer) == "table" and footer.GetAlpha then table.insert(parts, { part = footer, alpha = footer:GetAlpha() or 1 }) end
-    self.closing = { dialog = dialog, hide = hide, time = 0, parts = parts, grace = grace or 0 }
+    self.closing = { dialog = dialog, hide = hide, time = 0, parts = parts, hiding = wait == nil, wait = wait }
     -- Driven by a frame of no parent: DialogueUI may be hiding the interface.
     if not self.closeDriver then
         self.closeDriver = CreateFrame("Frame")
@@ -1509,23 +1359,29 @@ function Skin:CloseStep(elapsed)
     closing.time = closing.time + elapsed
     local left = 1 - Smooth(Clamp(closing.time / CONTENT_OUT, 0, 1))
     for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha * left) end
-    if closing.time >= math.max(CONTENT_OUT, closing.grace) then
-        -- Its words given back, then closed for real in the same moment, so they are never seen
-        -- back: given back after, DialogueUI hiding it again from its own OnHide read them faded.
-        self.closing = nil
-        if self.closeDriver then self.closeDriver:Hide() end
-        for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha) end
-        closing.hide(closing.dialog)
+    if closing.hiding and closing.time >= CONTENT_OUT then
+        self:EndClose(true)
+    elseif not closing.hiding and closing.time >= closing.wait then
+        self:EndClose(false)
     end
+end
+
+--- The dialog's words given back, and with `hide` it closed for real in the same moment, so they
+--- are never seen back: given back after, DialogueUI hiding it again from its own OnHide read them
+--- faded.
+function Skin:EndClose(hide)
+    local closing = self.closing
+    if not closing then return end
+    self.closing = nil
+    if self.closeDriver then self.closeDriver:Hide() end
+    for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha) end
+    if hide then closing.hide(closing.dialog) end
 end
 
 --- DialogueUI showing the dialog again before it closed (another page, another line): it stays.
 function Skin:CancelDialogFade(dialog)
     local closing = self.closing
-    if not (closing and closing.dialog == dialog) then return end
-    self.closing = nil
-    if self.closeDriver then self.closeDriver:Hide() end
-    for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha) end
+    if closing and closing.dialog == dialog then self:EndClose(false) end
 end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
@@ -1783,7 +1639,7 @@ function Skin:RefreshConfig(original)
     frame:SetFrameStrata(Config().FrameStrata)
     self:Layout()
     frame:SetScale(frame.spokenBaseScale)
-    if not Addon:Layout().DialogueUI and not self.sizing then self:PlaceDefault() end
+    if not Addon:Layout().DialogueUI then self:PlaceDefault() end
     if Addon:IsFrameLocked() then frame:StopMovingOrSizing() end
     -- Locked, clicks on the window pass through to the game, as the subtitle's and the small
     -- window's do; its buttons still take theirs. Where the client cannot tell a click from the
@@ -1825,13 +1681,13 @@ function Skin:Update()
             return
         end
         self:HideTooltip()
-        self.clip, self.seconds, self.offset = clip, 0, 0
+        self.clip, self.seconds = clip, 0
     end
-    -- The queue's length decides how much of the body the captions get, and the line's words
-    -- how tall the panel is (Fit to the Words): a new line, or its words arriving late.
+    -- The line's words decide how tall the panel is (Fit to the Words): a new line, or its words
+    -- arriving late.
     local textLines = Transcript.clip == clip and Transcript.lines and #Transcript.lines or 0
     local picture = clip.present and clip.present.picture
-    local key = Waiting() .. ":" .. textLines .. ":" .. (picture and picture.file .. ":" .. (picture.pixels or "") or "")
+    local key = textLines .. ":" .. (picture and picture.file .. ":" .. (picture.pixels or "") or "")
     if key ~= self.laidOutFor then
         self.laidOutFor = key
         self:Layout()
@@ -1842,7 +1698,6 @@ function Skin:Update()
     self.name:SetText(header ~= Label(clip) and header or "")
     self:ConfigurePortrait()
     self:ConfigureActions()
-    self:LayoutQueue()
     self:UpdateProgress()
     self:UpdateControls(true)
 end
@@ -1851,8 +1706,6 @@ function Skin:Reset()
     if not self.frame then return end
     self.frame:StopMovingOrSizing()
     Addon:Layout().DialogueUI = nil
-    Addon:Layout().DialogueUIHeight = nil
-    Addon:Layout().DialogueUIWidth = nil
     -- Back where DialogueUI puts its window (RefreshConfig, with no saved place).
     self:RefreshConfig(PlayerFrame)
 end

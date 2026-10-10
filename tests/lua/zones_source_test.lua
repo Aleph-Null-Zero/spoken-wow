@@ -81,7 +81,6 @@ Expect("...one with a picture sends it and its frayed edge, for a window to show
     pictured.present.picture and (pictured.present.picture.file .. " " .. pictured.present.picture.mask), "Pictures/1411 Pictures/Mask3")
 Expect("...and how large Place Lore draws it beside the map, its panel less its margins",
     pictured.present.picture.pixels, (Z:Get("panelWidth") - 66) * UIParent:GetEffectiveScale())
-Z.Picture = nil
 Z.GetMapName = GetMapName
 
 ---------------------------------------------------------------- playing through the player

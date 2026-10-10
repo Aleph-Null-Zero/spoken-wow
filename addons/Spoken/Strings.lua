@@ -121,7 +121,6 @@ L = {
     OPT_DUI_FIT_TEXT = "Fit to the Words",
     OPT_DUI_FIT_TEXT_TIP = "The window is only as tall as the line's words need, up to its size. Off, it always opens at its full size.",
     REASON_DUI_FOLLOW = "Turn off Follow DialogueUI's Theme to use this.",
-    DUI_RESIZE_TIP = "Drag to set how tall the window opens. Hold Shift as you start the drag to set its width too.",
     DUI_WHEEL_HINT = "Over the window: Ctrl and the mouse wheel change Window Size; Ctrl, Shift and the mouse wheel change Text Size.",
     OPT_KEYS_TITLE = "Keys",
     OPT_KEY_NONE = "Not set",

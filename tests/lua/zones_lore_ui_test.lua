@@ -88,7 +88,12 @@ function Z:RefreshFound() end
 Z.ToggleLoreWindow = nil
 _G.hooksecurefunc = _G.hooksecurefunc or function() end
 
-for _, file in ipairs({ "Audio", "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
+-- The page's line over a place's name comes from Audio.lua's PlaceAbove; the rest of that file
+-- would replace this test's stand-in packs.
+local audio = setmetatable({}, { __index = Z })
+assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Zones", audio)
+Z.PlaceAbove = audio.PlaceAbove
+for _, file in ipairs({ "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 

@@ -538,6 +538,18 @@ local ACTIONS = {
 	}
 }
 
+--- How wide Place Lore draws a picture beside the map, in the screen's pixels: its text column
+--- (the panel less its margins and scroll bar, TextView's 400 at most), at the map's scale. A
+--- window showing the picture over a line's words draws it this large too.
+function SpokenZones:PicturePixels()
+	local panel = self.Get and tonumber(self:Get("panelWidth")) or 360
+	local width = math.min(400, panel - 66)
+	local map, scale = _G.WorldMapFrame, nil
+	if map and map.GetEffectiveScale then scale = map:GetEffectiveScale() end
+	if not (type(scale) == "number" and scale > 0) then scale = UIParent:GetEffectiveScale() end
+	return width * scale
+end
+
 --- The place one level up from a zone, as Azeroth's Compendium nests them: a city's zone, a
 --- zone's continent, a continent's world. Nil for the world.
 function SpokenZones:PlaceAbove(mapID)
@@ -553,18 +565,6 @@ end
 -- One factory so that every route to a clip -- a click, a slash command, a
 -- discovery -- produces the same shape.
 --
---- How wide Place Lore draws a picture beside the map, in the screen's pixels: its text column
---- (the panel less its margins and scroll bar, TextView's 400 at most), at the map's scale. A
---- window showing the picture over a line's words draws it this large too.
-function SpokenZones:PicturePixels()
-	local panel = self.Get and tonumber(self:Get("panelWidth")) or 360
-	local width = math.min(400, panel - 66)
-	local map, scale = _G.WorldMapFrame, nil
-	if map and map.GetEffectiveScale then scale = map:GetEffectiveScale() end
-	if not (type(scale) == "number" and scale > 0) then scale = UIParent:GetEffectiveScale() end
-	return width * scale
-end
-
 -- The key is the line id the website and the generation pipeline use -- z:{mapID} or
 -- s:{mapID}:{key} -- and it is frozen: it is what the player dedups on, what a report
 -- names, and what audio-history is keyed by.
