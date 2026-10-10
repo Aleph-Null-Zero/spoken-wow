@@ -751,6 +751,22 @@ Expect("...and DialogueUI not hiding its window within its wait, it is back in s
     tostring(DUI:IsShown()) .. " " .. tostring(DUI:GetAlpha()) .. " " .. words.alpha .. " " .. tostring(Skin.closing),
     "true 1 1 nil")
 Expect("...this window stepping aside for it again, its flight stopped", tostring(Skin.settling), "nil")
+-- DialogueUI hides the interface while its window is open (SetGameUIShown), and this window is
+-- part of it: shown again as the dialog goes out of sight, or the flight is unseen.
+local uiShown = {}
+_G.SetGameUIShown = function(shown) table.insert(uiShown, tostring(shown)); if shown then UIParent:Show() else UIParent:Hide() end end
+UIParent:Hide()
+Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
+Skin:CloseStep(0.06); Skin:CloseStep(0.06)
+Expect("with DialogueUI hiding the interface, it is shown as the dialog goes out of sight, fading in under the flight",
+    tostring(UIParent:IsShown()) .. " " .. table.concat(uiShown, ",") .. " " .. tostring(UIParent:GetAlpha() < 1), "true true true")
+Skin:CloseStep(0.1)
+Expect("...in full by the end of the lift", UIParent:GetAlpha(), 1)
+DUI:ShowUI()
+Expect("...and hidden again when the dialog comes back with a page, as DialogueUI left it",
+    tostring(UIParent:IsShown()) .. " " .. table.concat(uiShown, ",") .. " " .. UIParent:GetAlpha(), "false true,false 1")
+UIParent:Show()
+_G.SetGameUIShown = nil
 Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
 Skin:CloseStep(0.06); Skin:CloseStep(0.06)
 DUI:ShowUI()

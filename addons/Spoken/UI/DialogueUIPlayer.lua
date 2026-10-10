@@ -1365,6 +1365,10 @@ function Skin:CloseStep(elapsed)
         return
     end
     closing.time = closing.time + elapsed
+    -- The interface shown under this window's flight comes in over the flight's lift (Skin:Veil).
+    if closing.shownUI and closing.veiledAt then
+        UIParent:SetAlpha(Smooth(Clamp((closing.time - closing.veiledAt) / SETTLE_LIFT, 0, 1)))
+    end
     local left = 1 - Smooth(Clamp(closing.time / CONTENT_OUT, 0, 1))
     for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha * left) end
     if closing.hiding and closing.time >= CONTENT_OUT then
@@ -1382,8 +1386,17 @@ end
 --- that follows.
 function Skin:Veil(closing)
     local dialog = closing.dialog
-    closing.veiled, closing.dialogAlpha = true, dialog:GetAlpha() or 1
+    closing.veiled, closing.dialogAlpha, closing.veiledAt = true, dialog:GetAlpha() or 1, closing.time
     dialog:SetAlpha(0)
+    -- DialogueUI hides the interface while its window is open and shows it as the window closes.
+    -- This window is part of it, so it would fly unseen: the interface is shown now, as DialogueUI
+    -- would, and hidden again should the dialog come back. Not in combat, where DialogueUI shows
+    -- it itself and the call is not allowed.
+    if not UIParent:IsShown() and SetGameUIShown and not (InCombatLockdown and InCombatLockdown()) then
+        closing.shownUI = true
+        UIParent:SetAlpha(0)
+        SetGameUIShown(true)
+    end
     self.flownFrom = dialog
     self:Settle(dialog)
 end
@@ -1417,6 +1430,11 @@ function Skin:EndClose(hide)
     if hide then closing.hide(closing.dialog) end
     if closing.veiled then
         closing.dialog:SetAlpha(closing.dialogAlpha)
+        if closing.shownUI then
+            UIParent:SetAlpha(1)
+            -- The dialog back: the interface hidden again, as DialogueUI left it.
+            if not hide and SetGameUIShown and not (InCombatLockdown and InCombatLockdown()) then SetGameUIShown(false) end
+        end
         if not hide then self:Unveiled(closing.dialog) end
     end
 end
