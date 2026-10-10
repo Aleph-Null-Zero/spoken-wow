@@ -37,9 +37,9 @@ local SETTLE_GROW, SETTLE_RISE, SETTLE_BOW, SETTLE_GIVE = .03, 4, .16, 7
 local CONTENT_OUT, CONTENT_IN = .1, .16
 -- A quest page closing (QUEST_FINISHED): DialogueUI waits up to a second before it hides its window
 -- (0.5 when the NPC has more quests, in case its gossip comes back, and up to 0.5 more for the
--- camera; DialogueUI 1.0.5's Code/Core.lua). Its words fade at once and the window goes out of
--- sight, still open, as this one flies out of it; only DialogueUI's own Hide closes it. With no Hide
--- within QUEST_WAIT (a page shown again, or the event early), it comes back.
+-- camera; DialogueUI 1.0.5's Code/Core.lua). The words fade at once, but only DialogueUI's own Hide
+-- closes the window; with no Hide within QUEST_WAIT (a page shown again, or the event early), the
+-- words come back.
 local QUEST_WAIT = 1.1
 -- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
@@ -215,12 +215,7 @@ function Skin:Initialize()
         local dialog = _G[name]
         if type(dialog) == "table" and dialog.GetEffectiveScale then
             local watch = CreateFrame("Frame", nil, dialog)
-            watch:SetScript("OnHide", function()
-                -- Flown out of already, while DialogueUI held it open out of sight (Skin:Veil):
-                -- not again, but this window is no longer covered by it.
-                if self.flownFrom == dialog then self.flownFrom = nil; self:Update(); return end
-                self:Settle(dialog)
-            end)
+            watch:SetScript("OnHide", function() self:Settle(dialog) end)
             -- Opening, it shows the line itself: this one steps aside at once (Skin:Covered).
             watch:SetScript("OnShow", function()
                 self:StartSession(dialog)
@@ -359,13 +354,10 @@ function Skin:Initialize()
 end
 
 --- DialogueUI's own window open over this one, which then stays hidden: the dialog shows the line.
---- Not while this one sits on the dialog (Show Spoken Over DialogueUI), nor while the dialog is
---- out of sight waiting to close (Skin:Veil): this one has flown out of it.
+--- Not while this one sits on the dialog (Show Spoken Over DialogueUI).
 function Skin:Covered()
-    local closing = self.closing
     for _, dialog in ipairs(self.dialogs or {}) do
-        local veiled = closing and closing.veiled and closing.dialog == dialog
-        if dialog:IsShown() and self.frame:GetParent() ~= dialog and not veiled then return true end
+        if dialog:IsShown() and self.frame:GetParent() ~= dialog then return true end
     end
     return false
 end
@@ -1365,58 +1357,13 @@ function Skin:CloseStep(elapsed)
         return
     end
     closing.time = closing.time + elapsed
-    -- The interface shown under this window's flight comes in over the flight's lift (Skin:Veil).
-    if closing.shownUI and closing.veiledAt then
-        UIParent:SetAlpha(Smooth(Clamp((closing.time - closing.veiledAt) / SETTLE_LIFT, 0, 1)))
-    end
     local left = 1 - Smooth(Clamp(closing.time / CONTENT_OUT, 0, 1))
     for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha * left) end
     if closing.hiding and closing.time >= CONTENT_OUT then
         self:EndClose(true)
     elseif not closing.hiding and closing.time >= closing.wait then
         self:EndClose(false)
-    elseif not closing.hiding and not closing.veiled and closing.time >= CONTENT_OUT then
-        self:Veil(closing)
     end
-end
-
---- A quest page's words faded while DialogueUI waits to see whether another page follows: its
---- window goes out of sight, still open, and this one flies out of it now. Waiting for DialogueUI's
---- Hide left its bare paper standing for up to a second; closing it ourselves would hide a page
---- that follows.
-function Skin:Veil(closing)
-    local dialog = closing.dialog
-    closing.veiled, closing.dialogAlpha, closing.veiledAt = true, dialog:GetAlpha() or 1, closing.time
-    dialog:SetAlpha(0)
-    -- DialogueUI hides the interface while its window is open (SetUIVisibility) and shows it as the
-    -- window closes.
-    -- This window is part of it, so it would fly unseen: the interface is shown now, as DialogueUI
-    -- would, and hidden again should the dialog come back. Not in combat, where DialogueUI shows
-    -- it itself and the call is not allowed.
-    if not UIParent:IsShown() and SetUIVisibility and not (InCombatLockdown and InCombatLockdown()) then
-        closing.shownUI = true
-        UIParent:SetAlpha(0)
-        SetUIVisibility(true)
-    end
-    self.flownFrom = dialog
-    self:Settle(dialog)
-end
-
---- The dialog back in sight, still open (another page, or no Hide within the wait): this window
---- steps aside again, as it does for any open dialog, its flight stopped where it rests.
-function Skin:Unveiled(dialog)
-    if self.flownFrom == dialog then self.flownFrom = nil end
-    local frame = self.frame
-    if self.settling then
-        self.settling = nil
-        frame:SetScale(frame.spokenBaseScale or 1)
-        if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
-        self:Layout()
-    end
-    self:StopLanding()
-    if self.wordsHidden then self:ShowWords(1) end
-    self:StartSession(dialog)
-    self:Update()
 end
 
 --- The dialog's words given back, and with `hide` it closed for real in the same moment, so they
@@ -1429,15 +1376,6 @@ function Skin:EndClose(hide)
     if self.closeDriver then self.closeDriver:Hide() end
     for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha) end
     if hide then closing.hide(closing.dialog) end
-    if closing.veiled then
-        closing.dialog:SetAlpha(closing.dialogAlpha)
-        if closing.shownUI then
-            UIParent:SetAlpha(1)
-            -- The dialog back: the interface hidden again, as DialogueUI left it.
-            if not hide and SetUIVisibility and not (InCombatLockdown and InCombatLockdown()) then SetUIVisibility(false) end
-        end
-        if not hide then self:Unveiled(closing.dialog) end
-    end
 end
 
 --- DialogueUI showing the dialog again before it closed (another page, another line): it stays.

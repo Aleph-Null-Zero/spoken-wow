@@ -25,8 +25,6 @@ local function FakeDialogueUI()
     frame.Parchments = { cap }
     function frame:LoadTheme() end
     function frame:UpdateFrameSize() end
-    -- Showing a page: Spoken hooks it to hear a page shown while its window is closing.
-    function frame:ShowUI() end
     -- Closed until a dialog opens.
     frame:Hide()
     _G.DUIQuestFrame = frame
@@ -743,56 +741,16 @@ Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
 Skin:CloseStep(0.05)
 Expect("a quest page closing fades the dialog's words at once, without waiting for DialogueUI",
     DUI:IsShown() and Skin.closing ~= nil and words.alpha < 1, true)
-Skin:CloseStep(0.06)
-Expect("...then, its words gone, its window goes out of sight still open, and this one flies out of it at once",
-    tostring(DUI:IsShown()) .. " " .. tostring(DUI:GetAlpha()) .. " " .. tostring(Skin.settling ~= nil), "true 0 true")
 for _ = 1, 30 do Skin:CloseStep(0.05) end
-Expect("...and DialogueUI not hiding its window within its wait, it is back in sight, open, with its words",
-    tostring(DUI:IsShown()) .. " " .. tostring(DUI:GetAlpha()) .. " " .. words.alpha .. " " .. tostring(Skin.closing),
-    "true 1 1 nil")
-Expect("...this window stepping aside for it again, its flight stopped", tostring(Skin.settling), "nil")
--- DialogueUI hides the interface while its window is open, and this window is
--- part of it: shown again as the dialog goes out of sight, or the flight is unseen. The game's
--- SetUIVisibility, which DialogueUI calls on these clients.
-local uiShown = {}
-_G.SetUIVisibility = function(shown) table.insert(uiShown, tostring(shown)); if shown then UIParent:Show() else UIParent:Hide() end end
-UIParent:Hide()
+Expect("...and DialogueUI not hiding its window within its wait, it stays open, its words back",
+    tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(Skin.closing), "true 1 nil")
 Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
 Skin:CloseStep(0.06); Skin:CloseStep(0.06)
-Expect("with DialogueUI hiding the interface, it is shown as the dialog goes out of sight, fading in under the flight",
-    tostring(UIParent:IsShown()) .. " " .. table.concat(uiShown, ",") .. " " .. tostring(UIParent:GetAlpha() < 1), "true true true")
-Skin:CloseStep(0.1)
-Expect("...in full by the end of the lift", UIParent:GetAlpha(), 1)
-DUI:ShowUI()
-Expect("...and hidden again when the dialog comes back with a page, as DialogueUI left it",
-    tostring(UIParent:IsShown()) .. " " .. table.concat(uiShown, ",") .. " " .. UIParent:GetAlpha(), "false true,false 1")
-UIParent:Show()
-_G.SetUIVisibility = nil
-Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
-Skin:CloseStep(0.06); Skin:CloseStep(0.06)
-DUI:ShowUI()
-Expect("a page following while it is out of sight (gossip after accepting) brings it back at once, with its words",
-    tostring(DUI:GetAlpha()) .. " " .. words.alpha .. " " .. tostring(Skin.closing) .. " " .. tostring(Skin.settling),
-    "1 1 nil nil")
-Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
-Skin:CloseStep(0.06); Skin:CloseStep(0.06)
-Expect("...faded and out of sight, the dialog left for DialogueUI to close",
-    tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(DUI:GetAlpha()), "true 0 0")
-Skin:Update()
-Expect("...this window flying out of it, not hidden by an update while the dialog is out of sight",
-    tostring(Skin.wanted) .. " " .. tostring(Skin.settling ~= nil) .. " " .. tostring(Skin:Covered()), "true true false")
+Expect("...faded, the dialog left for DialogueUI to close", tostring(DUI:IsShown()) .. " " .. words.alpha, "true 0")
 DUI:Hide()
-Expect("...its own Hide closing it at once, its words and sight given back unseen",
-    tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(DUI:GetAlpha()) .. " " .. tostring(Skin.closing),
-    "false 1 1 nil")
-local settlingBefore = Skin.settling
+Expect("...its own Hide closing it at once, the words given back unseen",
+    tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(Skin.closing), "false 1 nil")
 Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
-Expect("...the flight that began as it went out of sight carrying on, not started again",
-    Skin.settling ~= nil and Skin.settling == settlingBefore, true)
--- The game updates this window as it flies and after the dialog closes: neither may hide it.
-Skin:Update()
-Expect("...not hidden by an update while it flies, the dialog closed",
-    tostring(Skin.wanted) .. " " .. tostring(Skin.settling ~= nil), "true true")
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
