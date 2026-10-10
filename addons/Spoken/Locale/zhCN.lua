@@ -107,6 +107,8 @@ L.OPT_COPY_HINT_PASTE = "按 Ctrl+C，然后粘贴到："
 -- Added in this release: new settings, profiles, module pages and windows.
 L.TRANSCRIPT_TYPEWRITER = "打字效果"
 L.TRANSCRIPT_TYPEWRITER_TIP = "播放台词时逐字打出文字：窗口中跟随语音，字幕中略微领先于语音。关闭后整句台词一次性显示。"
+L.TRANSCRIPT_SHOW_DUI_TIP = "关闭后，DialogueUI 的任务和对话文字中的文字也不会逐字出现或高亮。"
+L.TRANSCRIPT_DUI_TIP = "开启“标记正在朗读的文字”时，也用于 DialogueUI 的任务和对话文字。"
 L.TRANSCRIPT_SHADOW = "背景深浅"
 L.OPT_HOME_TITLE = "Spoken"
 L.OPT_HOME_NOTE = "所有 Spoken 功能的设置。任务、书籍和地区各有自己的设置，可通过下方“Spoken 插件”中的按钮打开。"

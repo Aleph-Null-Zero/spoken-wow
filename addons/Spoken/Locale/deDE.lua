@@ -107,6 +107,8 @@ L.OPT_COPY_HINT_PASTE = "Drücke Strg+C und füge es ein unter:"
 -- Added in this release (deDE).
 L.TRANSCRIPT_TYPEWRITER = "Tippeffekt"
 L.TRANSCRIPT_TYPEWRITER_TIP = "Tippt die Wörter ein, während die Zeile läuft: im Fenster mit der Stimme, in den Untertiteln ihr ein wenig voraus. Ist dies aus, erscheint die ganze Zeile auf einmal."
+L.TRANSCRIPT_SHOW_DUI_TIP = "Ist dies aus, werden die Wörter im Quest- und Gesprächstext von DialogueUI auch weder eingetippt noch hervorgehoben."
+L.TRANSCRIPT_DUI_TIP = "Auch im Quest- und Gesprächstext von DialogueUI, wenn „Gelesene Wörter markieren“ an ist."
 L.TRANSCRIPT_SHADOW = "Hintergrundabdunklung"
 L.OPT_HOME_TITLE = "Spoken"
 L.OPT_HOME_NOTE = "Einstellungen für ganz Spoken. Quests, Bücher und Zonen haben jeweils eigene Einstellungen, die du mit den Schaltflächen unter „Spoken-Addons“ weiter unten öffnest."

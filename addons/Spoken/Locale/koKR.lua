@@ -107,6 +107,8 @@ L.OPT_COPY_HINT_PASTE = "Ctrl+C를 누른 뒤 여기에 붙여넣으세요:"
 -- Added in this release: settings pages, subtitles, voice packs, profiles and module switches.
 L.TRANSCRIPT_TYPEWRITER = "타자기 효과"
 L.TRANSCRIPT_TYPEWRITER_TIP = "대사가 재생되는 동안 단어를 차례로 입력해 보여 줍니다. 창에서는 음성에 맞춰, 자막에서는 음성보다 조금 앞서 나옵니다. 끄면 대사 전체를 한 번에 표시합니다."
+L.TRANSCRIPT_SHOW_DUI_TIP = "끄면 DialogueUI의 퀘스트와 대화 글의 단어도 타자처럼 나타나거나 강조되지 않습니다."
+L.TRANSCRIPT_DUI_TIP = "'읽는 단어 표시'가 켜져 있으면 DialogueUI의 퀘스트와 대화 글에도 적용됩니다."
 L.TRANSCRIPT_SHADOW = "배경 어둡기"
 L.OPT_HOME_TITLE = "Spoken"
 L.OPT_HOME_NOTE = "Spoken 전체에 적용되는 설정입니다. 퀘스트, 책, 지역은 각자 설정이 있으며, 아래 'Spoken 애드온'의 버튼으로 엽니다."

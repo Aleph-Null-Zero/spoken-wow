@@ -107,6 +107,8 @@ L.OPT_COPY_HINT_PASTE = "Pressione Ctrl+C e cole em:"
 -- Added in this release.
 L.TRANSCRIPT_TYPEWRITER = "Digitar palavras"
 L.TRANSCRIPT_TYPEWRITER_TIP = "Digita as palavras enquanto a fala toca: na janela, junto com a voz; nas legendas, um pouco à frente dela. Desative para mostrar a fala inteira de uma vez."
+L.TRANSCRIPT_SHOW_DUI_TIP = "Desativado, as palavras no texto de missões e conversas do DialogueUI também não são digitadas nem destacadas."
+L.TRANSCRIPT_DUI_TIP = "Também no texto de missões e conversas do DialogueUI, com Marcar as palavras lidas ativado."
 L.TRANSCRIPT_SHADOW = "Escuridão do fundo"
 L.OPT_HOME_TITLE = "Spoken"
 L.OPT_HOME_NOTE = "Configurações de todo o Spoken. Missões, Livros e Zonas têm cada um suas próprias configurações, abertas pelos botões em “Addons do Spoken”, mais abaixo."

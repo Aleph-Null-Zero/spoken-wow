@@ -107,6 +107,8 @@ L.OPT_COPY_HINT_PASTE = "Нажмите Ctrl+C и вставьте сюда:"
 -- Added for the settings pages, welcome window, subtitles, keys and profiles.
 L.TRANSCRIPT_TYPEWRITER = "Печатать текст"
 L.TRANSCRIPT_TYPEWRITER_TIP = "Печатает слова по ходу реплики: в окне — вслед за голосом, в субтитрах — чуть опережая его. Выключите, чтобы реплика появлялась сразу целиком."
+L.TRANSCRIPT_SHOW_DUI_TIP = "Если выключить, слова в тексте заданий и разговоров DialogueUI тоже не печатаются и не подсвечиваются."
+L.TRANSCRIPT_DUI_TIP = "Также в тексте заданий и разговоров DialogueUI, если включено «Отмечать читаемые слова»."
 L.TRANSCRIPT_SHADOW = "Затемнение фона"
 L.OPT_HOME_TITLE = "Spoken"
 L.OPT_HOME_NOTE = "Настройки всего Spoken. У модулей «Задания», «Книги» и «Зоны» свои настройки; они открываются кнопками в разделе «Аддоны Spoken» ниже."

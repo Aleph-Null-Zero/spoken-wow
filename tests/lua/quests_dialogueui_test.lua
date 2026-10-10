@@ -840,6 +840,16 @@ for _, style in ipairs({ "subtitle", "minimal", "classic", "none" }) do
     layout:Refresh()
     Expect("...and with the " .. style .. " style too", captions:IsShown() and Row(VO.L.OPT_DUI_PLAY_BUTTON):IsShown(), true)
 end
+-- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked,
+-- and say so.
+for _, label in ipairs({ env.L.TRANSCRIPT_SHOW, env.L.TRANSCRIPT_HIGHLIGHT, env.L.TRANSCRIPT_TYPEWRITER }) do
+    local tip
+    for _, entry in ipairs(layout.entries) do
+        if entry.label == label then tip = entry.tooltip end
+    end
+    Expect(label .. "'s tooltip names DialogueUI's quest text", tip ~= nil
+        and string.find(tip, "DialogueUI's quest and gossip text", 1, true) ~= nil, true)
+end
 chosen = "dialogueui"
 layout:Refresh()
 Expect("...live while DialogueUI is loaded", captions and captions.layoutReason, nil)
