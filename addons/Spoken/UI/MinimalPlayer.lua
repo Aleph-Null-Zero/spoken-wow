@@ -25,7 +25,11 @@ local LOOKS = {
         words = { color = { .19, .17, .13 }, shadow = false, highlight = "|cff9c1a1a" } },
     dark = { name = { 1, .82, 0 }, title = { .88, .84, .76 }, tail = { .62, .58, .46 }, shadow = 1 },
 }
--- The parchment's own colour.
+-- The parchment's art: tiled atlases the Classic Era and Forever clients both have, the first the
+-- default. /spoken parchment steps through them (MinimalPlayer:NextParchment). Where the client
+-- has none of them, the parchment's own colour.
+MinimalPlayer.PARCHMENTS = { "GarrMission_MissionParchment", "AdventureMap_TileBg_Parchment",
+    "photosensitivitywarning-parchment-background", "ShipMissionParchment-Tile" }
 local PARCHMENT_COLOR = { .88, .68, .41 }
 -- Portrait badges by bullet id. Quests use trimmed copies of their own glyphs; books
 -- and zones take native ones, since their registered bullet (or none) is not a badge.
@@ -356,6 +360,35 @@ function MinimalPlayer:ConfigurePortrait()
     self.badge:SetShown(texture ~= nil)
 end
 
+--- The parchment art this client draws, and where it is in PARCHMENTS: the one /spoken parchment
+--- chose, or the first the client has. Nil where it has none.
+function MinimalPlayer:Parchment()
+    local list = self.PARCHMENTS
+    local count, start = getn(list), self.parchmentIndex or 1
+    for step = 0, count - 1 do
+        local index = start + step
+        if index > count then index = index - count end
+        if Actions.HasAtlas(list[index]) then return list[index], index end
+    end
+end
+
+--- The next parchment art the client has, drawn at once, for comparing them in game: its name,
+--- where it is in the list and how long the list is. Nil where the client has none.
+function MinimalPlayer:NextParchment()
+    local _, current = self:Parchment()
+    if not current then return nil end
+    local count = getn(self.PARCHMENTS)
+    for step = 1, count do
+        local index = current + step
+        if index > count then index = index - count end
+        if Actions.HasAtlas(self.PARCHMENTS[index]) then
+            self.parchmentIndex = index
+            if self.frame then self:Dress() end
+            return self.PARCHMENTS[index], index, count
+        end
+    end
+end
+
 --- The rock repeats once per 256 units, inside the inset.
 function MinimalPlayer:TileRock()
     if not self.dark then return end
@@ -369,9 +402,13 @@ function MinimalPlayer:Dress()
     local look = dark and LOOKS.dark or LOOKS.parchment
     local paper = self.paper
     self.dark = dark
+    if paper.SetHorizTile then paper:SetHorizTile(not dark); paper:SetVertTile(not dark) end
+    local atlas = not dark and self:Parchment()
     if dark then
         paper:SetTexture(ART .. "MinimalBackground", "REPEAT", "REPEAT")
         self:TileRock()
+    elseif atlas then
+        paper:SetAtlas(atlas)
     elseif paper.SetColorTexture then
         paper:SetColorTexture(PARCHMENT_COLOR[1], PARCHMENT_COLOR[2], PARCHMENT_COLOR[3], 1)
     else
@@ -562,7 +599,8 @@ function MinimalPlayer:Reset()
 end
 
 function MinimalPlayer:Describe()
-    return format("minimal=%s visible=%s portrait=%s background=%s progress=%.1fs",
+    return format("minimal=%s visible=%s portrait=%s background=%s parchment=%s progress=%.1fs",
         tostring(self:IsEnabled()), tostring(self.frame and self.frame:IsShown()),
-        tostring(self.viewport and self.viewport.active), tostring(Config().MinimalBackground), self.seconds or 0)
+        tostring(self.viewport and self.viewport.active), tostring(Config().MinimalBackground),
+        tostring((self:Parchment())), self.seconds or 0)
 end

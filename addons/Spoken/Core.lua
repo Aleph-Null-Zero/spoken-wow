@@ -376,8 +376,18 @@ function Addon:Enable()
             print("  " .. Transcript:Describe())
             print("  " .. DialogueUITheme:Describe())
             for _, err in ipairs(Callbacks.errors) do print("  callback error: " .. err) end
+        elseif command == "parchment" then
+            -- For comparing the small window's parchment art in game: the next one, named.
+            local name, index, count = MinimalPlayer:NextParchment()
+            if not name then
+                print("Spoken: this client has none of the small window's parchment art")
+            else
+                local shown = MinimalPlayer:IsEnabled() and Addon:Profile("Frame").MinimalBackground ~= "dark"
+                print(format("Spoken: small window parchment %d/%d: %s%s", index, count, name,
+                    shown and "" or " (seen with the small window on Parchment)"))
+            end
         else
-            print("Spoken: /spoken play | stop | skip | player [minimal|classic|dialogueui|subtitle|none] | transcript [on|off|1|2|reset] | log | options | reset | diagnostics")
+            print("Spoken: /spoken play | stop | skip | player [minimal|classic|dialogueui|subtitle|none] | transcript [on|off|1|2|reset] | log | options | reset | diagnostics | parchment")
         end
     end
 end
