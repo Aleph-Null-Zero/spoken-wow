@@ -95,6 +95,12 @@ local ACTIONS = {
 	},
 }
 
+local function PageStopped(clip, finished)
+	if finished then
+		SpokenBooks:OnPageFinished(clip)
+	end
+end
+
 --- The clip for a page, as the player's queue wants it, or nil when no pack carries it.
 ---
 --- Language before pack order: a pack in the voice language answers before any other, and a
@@ -117,6 +123,10 @@ function SpokenBooks:ClipFor(pageId)
 				if not text and self.pageText and self.pageText[language] then
 					text = self.pageText[language][pageId]
 				end
+				-- The title the client showed, in the language of the words below it; the
+				-- corpus's own is English.
+				local title = self.bookTitle and self.bookTitle[language] and self.bookTitle[language][place.book]
+					or (book and book.title) or ""
 				return {
 					key = "b:" .. pageId,
 					path = [[Interface\AddOns\]] .. pack.addon .. [[\Sounds\]] .. entry.file .. ".mp3",
@@ -131,7 +141,7 @@ function SpokenBooks:ClipFor(pageId)
 					-- under a German selection, and its report is about that.
 					language = language,
 					present = {
-						header = book and book.title or "",
+						header = title,
 						transcript = text,
 						-- Only where there is more than one page: "page 1 of 1" is noise on a
 						-- letter, which is most of this corpus.
@@ -142,6 +152,7 @@ function SpokenBooks:ClipFor(pageId)
 						portrait = self:PagePicture(),
 						actions = ACTIONS,
 					},
+					stopCallback = PageStopped,
 				}
 			end
 		end
@@ -160,6 +171,19 @@ function SpokenBooks:DescribeMissingAudio()
 	return L.OPT_NO_PACK_AUDIO
 end
 
+--- Whether ClipFor would find a clip, without building one.
 function SpokenBooks:HasAudio(pageId)
-	return self:ClipFor(pageId) ~= nil
+	local data = self:Data()
+	if not (data and data.pages[pageId]) then
+		return false
+	end
+	local packs = self:GetAudioPacks()
+	for _, language in ipairs(self:LanguageOrder()) do
+		for _, pack in ipairs(packs) do
+			if self:PackLanguage(pack) == language and pack.pages[pageId] then
+				return true
+			end
+		end
+	end
+	return false
 end

@@ -23,6 +23,8 @@ _G.SpokenBooksAudioPacks = {
             -- A page of a different book entirely: what a reader jumping to another book
             -- looks like from here.
             [2810] = { file = "2810", len = 8.0 },
+            -- William's Shipment, a letter of one page.
+            [15] = { file = "15", len = 6.0 },
         },
     },
 }
@@ -77,6 +79,9 @@ Expect("...with readable text even before opening the book", #clip.present.trans
 Expect("...titled with the book", clip.present.header, "Hillsbrad Town Registry")
 Expect("...and numbered, because this book has more than one page", clip.present.label, "Page 1 of 4")
 Expect("a page the pack does not carry has no clip", B:ClipFor(263), nil)
+local letter = B:ClipFor(15)
+Expect("a one-page letter is titled with its book", letter.present.header, "William's Shipment")
+Expect("...and has no page count", letter.present.label, nil)
 -- The group is what keeps the cue between items out of a book, and every way a page is
 -- queued builds its clip here.
 Expect("pages of one book share a group", B:ClipFor(262).group, clip.group)

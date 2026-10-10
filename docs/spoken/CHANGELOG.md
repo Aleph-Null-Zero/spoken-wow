@@ -29,6 +29,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **A zone's story is headed by the place it is in.** It showed its own name twice, as
   "Mulgore / Mulgore". The narrator now shows a zone's continent over it and a city's zone, and
   the Compendium's "In ..." line names the same place. *([Nucabe](https://github.com/Nucabe))*
+- **Books can close themselves once read.** Turn on *Close Book When Done Reading* (or `/spb close`)
+  and a book, letter or plaque shuts after its last page has been read aloud. With DialogueUI's
+  book view, that brings back the interface it hides. The Spoken window now shows a book's title in
+  your client's language, and names a one-page letter by its title instead of an internal key.
+  *([earlsinclairdino](https://github.com/earlsinclairdino))*
 - For feature addons: `present.font` on a clip draws its speaker, title, queue row, captions and
   subtitle in that face, for a script the game's font has no glyphs for. A face the client cannot
   load leaves the player's own. *([damesene](https://github.com/damesene))*
