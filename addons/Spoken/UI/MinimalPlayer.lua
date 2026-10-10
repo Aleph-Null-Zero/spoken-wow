@@ -105,7 +105,10 @@ function MinimalPlayer:Initialize(original)
         if button == "RightButton" then self:ToggleMenu() end
     end)
     frame:Hide()
-    self.fader = Actions.Fader(frame, function() return { self.viewport and self.viewport.model } end)
+    self.fader = Actions.Fader(frame, function() return { self.viewport and self.viewport.model } end, function()
+        -- Faded out to turn to the next line: now it comes in.
+        if self.turning then self.turning = nil; self:Update() end
+    end)
 
     self.panel = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     self.panel:SetBackdrop({
@@ -516,12 +519,27 @@ function MinimalPlayer:RefreshConfig(original)
     self:Update()
 end
 
+--- Whether this window, showing a line, will fade out to turn to `clip` (MinimalPlayer:Update).
+function MinimalPlayer:WillTurn(clip)
+    return self:IsEnabled() and self.frame ~= nil and self.clip ~= nil and clip ~= self.clip and self.wanted
+        and self.frame:IsShown() and not Actions.DialogCovers() and true or false
+end
+
 function MinimalPlayer:Update()
     if not self.frame then return end
-    if not self:IsEnabled() then self:SetVisible(false, true); return end
+    if not self:IsEnabled() then self.turning = nil; self:SetVisible(false, true); return end
     -- Faded out with nothing to say, or while a DialogueUI dialog hides the interface.
     local clip = PlayerFrame:Current()
-    if not clip or Actions.DialogCovers() then self:SetVisible(false); return end
+    if not clip or Actions.DialogCovers() then self.turning = nil; self:SetVisible(false); return end
+    -- Fading out to turn to the next line: it comes in once faded (the fader's faded).
+    if self.turning and self.frame:IsShown() then return end
+    -- Following another line on screen: this one fades out whole, as the window does when the
+    -- queue ends, and the next fades in from nothing once it has, all changed unseen.
+    if clip ~= self.clip and self.clip and self.wanted and self.frame:IsShown() then
+        self.turning = true
+        self:SetVisible(false)
+        return
+    end
     if clip ~= self.clip then
         self.menu:Hide()
         self:HideTooltip()
