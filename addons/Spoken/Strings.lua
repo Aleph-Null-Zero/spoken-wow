@@ -212,8 +212,6 @@ L = {
     STOP = "Stop",
     SETTINGS = "Settings",
     QUEUE_TITLE = "Up next",
-    -- The settings heading for the window above, which "Up next" -- the window's own
-    -- title, on its tooltip -- did not describe.
     QUEUE_DRAG_HINT = "Drag to move. The position can be locked in settings.",
     QUEUE_REMOVE_TOOLTIP = "Click to take this out of the queue.",
     MENU_LEFT = "|cff66bbffLeft-click|r open settings",

@@ -83,8 +83,8 @@ function SettingsPanel:Setup()
     -- does nothing either: greyed, and saying why.
     layout:Requires(followup, function() return Addon:IsAutoplayOn() end, L.REASON_AUTOPLAY)
 
-    -- Only with DialogueUI installed: in the DialogueUI group on Spoken's page, or here with a
-    -- Spoken too old to have it.
+    -- Only with DialogueUI installed: on Spoken's page, or here with a Spoken too old to have
+    -- room for them.
     if DialogueUIBridge and DialogueUIBridge.Problem and IsAddOnLoaded and IsAddOnLoaded("DialogueUI") then
         if Spoken and Spoken.AddDialogueUISettings then
             Spoken:AddDialogueUISettings(function(page)
