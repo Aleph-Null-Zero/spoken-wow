@@ -305,9 +305,6 @@ function Skin:Initialize()
         end
     end
     Callbacks:Register("CLIP_QUEUED", function(clip) self:Queued(clip) end)
-    -- Turning to the next line, this window fades out with the words it shows: the captions wait
-    -- for it rather than taking the next line's first (Skin:WillTurn).
-    Transcript.holdFor = function(clip) return self:WillTurn(clip) end
     -- A quest page with no page to follow closes at once, not after DialogueUI's wait
     -- (Skin:QuestFinished).
     local quest = _G.DUIQuestFrame

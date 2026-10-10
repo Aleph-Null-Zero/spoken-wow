@@ -674,9 +674,10 @@ local FADE_IN, FADE_OUT = .25, .4
 local Fader = {}
 
 --- Shows and hides `frame` by fading it (Fader:Set), with the models `models()` lists: a model
---- takes no alpha from its parent. While it fades out the captions keep the words it had.
-function Actions.Fader(frame, models)
-    local fader = { frame = frame, models = models, alpha = 0, want = false }
+--- takes no alpha from its parent. While it fades out the captions keep the words it had;
+--- `faded()` is called once it has gone.
+function Actions.Fader(frame, models, faded)
+    local fader = { frame = frame, models = models, faded = faded, alpha = 0, want = false }
     for key, fn in pairs(Fader) do fader[key] = fn end
     fader.driver = CreateFrame("Frame")
     fader.driver:Hide()
@@ -734,5 +735,6 @@ function Fader:Step(elapsed)
     if not self.want and self.frame:IsShown() then
         self.frame:Hide()
         self:Release()
+        if self.faded then self.faded() end
     end
 end
