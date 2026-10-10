@@ -41,6 +41,12 @@ local CONTENT_OUT, CONTENT_IN = .1, .16
 -- closes the window; with no Hide within QUEST_WAIT (a page shown again, or the event early), the
 -- words come back.
 local QUEST_WAIT = 1.1
+-- Where DialogueUI expects no page to follow (GetQuestFinishedDelay under its 0.5, the NPC having
+-- no other quest), the rest of its wait is its camera's, not a page's: the window closes this long
+-- after QUEST_FINISHED, once the game says the conversation with the NPC is over, as DialogueUI's
+-- own close checks. Closing it shows the interface again, so this window's flight is seen.
+local QUEST_GRACE = .12
+local FOLLOWS = .5
 -- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
 -- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
 -- the same event, in either order.
@@ -1320,7 +1326,24 @@ end
 function Skin:QuestFinished(dialog)
     if self.closing or not dialog:IsShown() then return end
     local ok, fades = pcall(self.FadesOnClose, self, dialog)
-    if ok and fades then self:FadeDialogOut(dialog, self.dialogHides[dialog], QUEST_WAIT) end
+    if not (ok and fades) then return end
+    self:FadeDialogOut(dialog, self.dialogHides[dialog], QUEST_WAIT)
+    -- No page expected to follow, by DialogueUI's own reckoning: closed soon (Skin:CloseStep).
+    local known, delay = pcall(function() return dialog.GetQuestFinishedDelay and dialog:GetQuestFinishedDelay() end)
+    if known and type(delay) == "number" and delay < FOLLOWS then self.closing.closeAt = QUEST_GRACE end
+end
+
+--- Whether the game still has the player talking to an NPC (gossip or a quest giver), as DialogueUI
+--- asks before it closes its window. False where the client cannot say.
+local function TalkingToNPC()
+    local manager = C_PlayerInteractionManager
+    if not (manager and manager.IsInteractingWithNpcOfType) then return false end
+    local types = Enum and Enum.PlayerInteractionType
+    local ok, talking = pcall(function()
+        return manager.IsInteractingWithNpcOfType(types and types.Gossip or 3)
+            or manager.IsInteractingWithNpcOfType(types and types.QuestGiver or 4)
+    end)
+    return ok and talking == true
 end
 
 --- DialogueUI hiding `dialog`: its words fade first, then `hide` (its own Hide) closes it. With
@@ -1360,6 +1383,9 @@ function Skin:CloseStep(elapsed)
     local left = 1 - Smooth(Clamp(closing.time / CONTENT_OUT, 0, 1))
     for _, entry in ipairs(closing.parts) do entry.part:SetAlpha(entry.alpha * left) end
     if closing.hiding and closing.time >= CONTENT_OUT then
+        self:EndClose(true)
+    elseif not closing.hiding and closing.closeAt and closing.time >= closing.closeAt and not TalkingToNPC() then
+        closing.hiding = true
         self:EndClose(true)
     elseif not closing.hiding and closing.time >= closing.wait then
         self:EndClose(false)

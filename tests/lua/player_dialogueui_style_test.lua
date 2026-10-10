@@ -751,6 +751,48 @@ DUI:Hide()
 Expect("...its own Hide closing it at once, the words given back unseen",
     tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(Skin.closing), "false 1 nil")
 Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
+Spoken:StopAll()
+for _ = 1, 40 do Skin:Tick(0.05) end
+-- The NPC having no other quest, DialogueUI expects no page to follow (GetQuestFinishedDelay under
+-- 0.5): the window closes soon after, through DialogueUI's own Hide, once the game says the
+-- conversation is over. With another quest to offer, it waits for DialogueUI.
+local talking = false
+_G.C_PlayerInteractionManager = { IsInteractingWithNpcOfType = function() return talking end }
+local followDelay = 0.03
+DUI.GetQuestFinishedDelay = function() return followDelay end
+OpenDialog()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
+talking = true
+Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
+Skin:CloseStep(0.06); Skin:CloseStep(0.08)
+Expect("a quest page with nothing to follow stays open while the game still has the NPC talking",
+    DUI:IsShown(), true)
+talking = false
+Skin:CloseStep(0.02)
+Expect("...and closes as soon as the conversation is over, words faded, well before DialogueUI's own wait",
+    tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(Skin.closing), "false 1 nil")
+Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
+Expect("...the window flying out of it as when DialogueUI closes it", Skin.settling ~= nil, true)
+Spoken:StopAll()
+for _ = 1, 40 do Skin:Tick(0.05) end
+followDelay = 0.5
+OpenDialog()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
+Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
+for _ = 1, 8 do Skin:CloseStep(0.05) end
+Expect("with another quest to offer, a page may follow: it waits for DialogueUI's own Hide",
+    tostring(DUI:IsShown()) .. " " .. words.alpha, "true 0")
+DUI:Hide()
+Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
+_G.C_PlayerInteractionManager, DUI.GetQuestFinishedDelay = nil, nil
+Spoken:StopAll()
+for _ = 1, 40 do Skin:Tick(0.05) end
+OpenDialog()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
+Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
+Skin:CloseStep(0.06); Skin:CloseStep(0.06)
+DUI:Hide()
+Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
