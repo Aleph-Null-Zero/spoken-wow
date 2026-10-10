@@ -50,7 +50,6 @@ local function CharacterCount(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return math.max(1, count)
 end
--- The first `count` characters of `text`.
 local function Prefix(text, count)
     local parts = {}
     for char in text:gmatch(UTF8_CHAR) do
@@ -201,10 +200,10 @@ function Transcript:SetClip(clip)
     self:Reflow()
 end
 
---- Held while the window the captions are in is drawn as one image (DialogueUIPlayer:Buffer):
---- nothing in that image may change, or the client crashes (ASSERT(!m_deleted), CSimpleRender.cpp).
---- The line that ends as the window fades out keeps its words, which fade with it; whatever came
---- meanwhile is caught up on Release.
+--- Held while the window the captions are in is drawn as one image: nothing in that image may
+--- change, or the client crashes (ASSERT(!m_deleted), CSimpleRender.cpp). The line that ends as
+--- the window fades out keeps its words, which fade with it; whatever came meanwhile is caught up
+--- on Release.
 function Transcript:Hold()
     self.held = true
 end
@@ -225,7 +224,6 @@ end
 --- will, and the captions keep the words showing until it has faded (it releases them).
 Transcript.holdFor = nil
 
--- Whether the window asks the captions to wait before taking `clip`.
 local function HeldFor(self, clip)
     return clip ~= nil and clip ~= self.clip and self.holdFor ~= nil and self.holdFor(clip) and true or false
 end
@@ -243,7 +241,7 @@ end
 
 function Transcript:Sync()
     if self.held then return end
-    -- The line playing, or the sample a window previews (PlayerFrame:ShowSample).
+    -- The line playing, or the sample a window previews.
     local current = SoundQueue:GetCurrentSound() or (PlayerFrame and PlayerFrame.sample)
     -- A window turning to it by fading out first: these words stay until it has.
     if HeldFor(self, current) then
@@ -435,7 +433,7 @@ function Transcript:Render()
     if cfg.Typewriter and progress then
         if inSpeech then
             typedTo = self.activeWord
-            -- By letter, as the subtitle types: the piece being read only as far as the voice is.
+            -- By letter, the piece being read is typed only as far as the voice has got.
             if (cfg.TypewriterBy or "letter") == "letter" and segment then
                 local share = (progress * self.totalWeight - segment.start) / math.max(1e-6, segment.finish - segment.start)
                 typedPiece = segment.index
@@ -484,8 +482,8 @@ function Transcript:Place()
         label:SetPoint("TOPLEFT", 0, -((padTop or 0) + ((row - 1) - fraction) * step))
         local line = self.lines and self.lines[first + row - 1]
         label:SetShown(line ~= nil and (row <= n or (row == n + 1 and fraction > 0)))
-        -- The line leaving at the top fades out as it slides up and the one coming in under the
-        -- page fades in, so the words never stop on a clean cut at an edge.
+        -- As much of the row as is inside the clipped frame, so a line half past an edge does not
+        -- end on a hard cut.
         label:SetAlpha(row == 1 and 1 - fraction or row == n + 1 and fraction or 1)
     end
 end

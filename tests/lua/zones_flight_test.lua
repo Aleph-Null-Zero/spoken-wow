@@ -109,5 +109,29 @@ UnitOnTaxi = nil
 stub.FireEvent("CHAT_MSG_SYSTEM", "Discovered Durotar.")
 Expect("missing flight APIs do not break ground discovery", Spoken:IsPlaying(), true)
 
+-- Midnight hands some chat payloads over as secret values: tainted code that indexes one
+-- errors. The stand-in is a plain string whose indexing throws, as the client's would.
+Z = Boot("11509", false, false)
+Z:Set("debug", true)
+local SECRET = "Discovered Durotar."
+_G.issecretvalue = function(value) return value == SECRET end
+local strings = getmetatable("")
+local index = strings.__index
+strings.__index = function(s, key)
+    if s == SECRET then error("attempt to index a secret string value") end
+    return index[key]
+end
+local printed = {}
+Z.Print = function(_, fmt, ...) table.insert(printed, fmt:format(...)) end
+-- The client fills the sender and channel fields after the text, mostly with "".
+local ok, err = pcall(stub.FireEvent, "CHAT_MSG_SYSTEM", SECRET, "", "Common", "")
+strings.__index = index
+_G.issecretvalue = nil
+Expect("a secret system message raises no error", ok or err, true)
+Expect("...and discovers nothing", Spoken:GetQueueSize(), 0)
+Expect("...nor prints a field after it as the message", printed[1], nil)
+stub.FireEvent("CHAT_MSG_SYSTEM", "Discovered Durotar.")
+Expect("the same message, not secret, still discovers", Spoken:IsPlaying(), true)
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll zones flight tests passed")

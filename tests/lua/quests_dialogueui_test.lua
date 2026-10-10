@@ -589,6 +589,12 @@ local icon, link = corner and corner.icon, corner and corner.link
 Expect("a voiced quest shows the Report icon", icon ~= nil and icon:IsShown(), true)
 Expect("...on DialogueUI's window, which UIParent's hiding leaves up", icon and icon:GetParent(), DUI)
 Expect("...faint, as the DialogueUI narrator style's", icon and icon:GetAlpha(), 0.4)
+env.Addon.db.profile.Frame.HiddenActions.report = true
+_G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+Expect("Hide Report Buttons, in Spoken's settings, takes it away at once", icon:IsShown(), false)
+env.Addon.db.profile.Frame.HiddenActions.report = nil
+_G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+Expect("...and gives it back when it is off", icon:IsShown(), true)
 Expect("...with nothing to contribute beside it", link and link:IsShown(), false)
 Expect("...and not the game's panel button", panelButton:IsShown(), false)
 Fire(icon, "OnEnter")
@@ -688,8 +694,6 @@ Expect("nothing there changes DialogueUI's own settings", table.getn(layout.entr
     and Row("Turn On Text To Speech") == nil, true)
 Expect("the place has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
     and Row(VO.L.OPT_DUI_PLAY_BUTTON) ~= nil and scroll ~= nil, true)
--- Among the narrator style's settings, last; the page's later sections (the languages, the
--- sound) under them.
 -- The style as the page reads it: DialogueUI's art is not here to make the style available.
 local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end

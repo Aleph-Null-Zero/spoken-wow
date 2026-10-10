@@ -168,8 +168,8 @@ function Addon:InitDB()
 end
 
 --- Put the profile's settings into effect: the window or subtitles, the captions, the minimap
---- button, the other sounds' levels and the settings page. Each only where it is loaded on this
---- client, and only once Enable has built them.
+--- button, the other sounds' levels, the feature addons' Report and Contribute buttons and the
+--- settings page. Each only where it is loaded on this client, and only once Enable has built them.
 function Addon:ApplyProfile()
     if not self.enabled then return end
     if PlayerFrame and PlayerFrame.RefreshConfig then PlayerFrame:RefreshConfig() end
@@ -181,6 +181,9 @@ function Addon:ApplyProfile()
     -- Which modules are on is the profile's too: each puts its buttons back or takes them off,
     -- and what one now off had queued goes, as switching it off on Spoken's page does.
     for key in Sources:Iterate() do Sources:Apply(key) end
+    -- The addons that draw their own Report and Contribute buttons redraw only when told.
+    Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+    Callbacks:Fire("CONTRIBUTE_SETTINGS_CHANGED")
     if Options and Options.UpdateRows then Options:UpdateRows() end
 end
 
@@ -240,8 +243,13 @@ end
 --- spokenBaseStrata give a frame's own scale and strata (the subtitles).
 function Addon:ApplyHost(frame)
     if not frame then return end
-    -- A window drawn as one image while it fades moves once it is itself again (DialogueUIPlayer).
-    if frame.spokenFrozen then frame.spokenHostPending = true; return end
+    -- A window drawn as one image must not move while it fades: it moves once it is itself again.
+    if frame.spokenFrozen then
+        frame.spokenHostPending = true
+        -- Hidden with the host it leaves, it never ticks to its fade's end: ended now, unseen.
+        if frame.spokenEndFade and not frame:IsVisible() then frame.spokenEndFade() end
+        return
+    end
     local host, cfg = self.playerHost, self:Profile("Frame")
     local base = frame.spokenBaseScale or cfg.FrameScale
     if host then
