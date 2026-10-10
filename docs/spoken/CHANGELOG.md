@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Spoken's Play, Skip and Report sit at the top right of DialogueUI's quest window.** Play
+  turns to Stop while its line speaks and is greyed where no pack has the line, where Report
+  offers Contribute in place of the old "No voice-over playing?" line. A close button sits
+  beside them. *([Nucabe](https://github.com/Nucabe))*
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
   voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
   that voice, the quest plays as before.
