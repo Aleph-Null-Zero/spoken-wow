@@ -59,8 +59,10 @@ on the Spoken settings page or in the welcome window on first login:
 - **Small Window** (Minimal Classic): a round portrait, the speaker's name, the title and a
   slim progress bar, with the controls and the queue on interaction. See
   [`docs/minimal-classic/`](docs/minimal-classic/README.md).
-- **Large Window**: the original layout, with the lines waiting to play next. The 1.12,
-  2.4.3 and 3.3.5 clients start in this one; 2.4.3 and 3.3.5 can switch to Subtitles Only.
+- **Large Window**: a bigger portrait, with the speaker, the words, the controls and a count of
+  the lines waiting beside it in one box, in the game's Talking Head art where the client has
+  it. The 1.12, 2.4.3 and 3.3.5 clients start in this one; 2.4.3 and 3.3.5 can switch to
+  Subtitles Only.
 - **DialogueUI**, offered only with the [DialogueUI](https://www.curseforge.com/wow/addons/dialogueui)
   addon installed: a smaller twin of its quest window, in its own parchment or dark art. See
   [`docs/spoken/PLAYER-STYLES.md`](docs/spoken/PLAYER-STYLES.md).
