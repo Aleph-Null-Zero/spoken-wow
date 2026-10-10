@@ -337,6 +337,7 @@ local function FrameProgress(bar, left, right, middle, yellow)
     r:SetPoint("RIGHT", track, "RIGHT", 0, 0)
     m:SetPoint("LEFT", l, "RIGHT", 0, 0)
     m:SetPoint("RIGHT", r, "LEFT", 0, 0)
+    bar.border = { l, m, r }
     bar.room = 8 * k
     local back = track:CreateTexture(nil, "BACKGROUND")
     if AtlasInfo("widgetstatusbar-bgcenter") then back:SetAtlas("widgetstatusbar-bgcenter")
@@ -391,6 +392,13 @@ end
 function Actions.SetProgress(bar, share)
     local room = math.max(0, (bar.track:GetWidth() or 0) - 2 * bar.room)
     bar.fill:SetWidth(math.max(0.01, room * Clamp01(share)))
+end
+
+--- A ProgressBar's frame in `r, g, b` (1, 1, 1 for its own colours); the hairline, which has
+--- none, takes it on its fill.
+function Actions.TintProgress(bar, r, g, b)
+    for _, part in ipairs(bar.border or { bar.fill }) do part:SetVertexColor(r, g, b) end
+    bar.tint = { r, g, b }
 end
 
 --- How far into `clip` its voice is, in seconds, for its progress line: `seconds`, what was shown

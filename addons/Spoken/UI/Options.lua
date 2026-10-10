@@ -387,11 +387,11 @@ local function Build(canvas)
             function(v) transcript().SubtitleName = v end, refreshSubtitle), Subtitles)
     end
     if captions then
-        -- The subtitle's and the DialogueUI window's progress line.
+        -- The subtitle's progress line, and the DialogueUI and small windows'.
         local progress = layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
-        Only(progress, function() return Subtitles() or DUI() end)
+        Only(progress, function() return Subtitles() or DUI() or Small() end)
         Requires(progress, function() return not Subtitles() or Words() end, L.REASON_WORDS)
     end
     -- Hiding the portrait and hiding a button are one kind of choice, so they sit together. Not

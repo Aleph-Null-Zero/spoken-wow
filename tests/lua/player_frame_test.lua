@@ -924,7 +924,7 @@ quests:Enqueue(H.Clip({ present = { header = "Gornek", label = "Cutting Teeth", 
 env.PlayerFrame:Update()
 env.Addon.db.profile.Frame = nil
 local ok, err = pcall(function()
-    env.MinimalPlayer:LayoutQueue()
+    env.MinimalPlayer:Layout()
     env.PlayerFrame:Update()
 end)
 Expect("the layout survives the logout's stripped settings", ok and "no error" or tostring(err), "no error")
