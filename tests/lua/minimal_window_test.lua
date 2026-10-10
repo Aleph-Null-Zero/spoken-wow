@@ -1,6 +1,5 @@
--- The small window ("minimal" narrator style, UI/MinimalPlayer.lua): its header, words and
--- progress line as the DialogueUI window has them, its background, and the bronze. Run with
--- `make test-player`. How it looks is checked in game.
+-- The small window ("minimal" narrator style): its header, words and progress line, its
+-- background, and the bronze. How it looks is checked in game.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
@@ -161,7 +160,7 @@ Expect("Show Progress is offered for the small window, which has the progress li
     Row(L.OPT_SUBTITLE_PROGRESS) ~= nil and Row(L.OPT_SUBTITLE_PROGRESS):IsShown(), true)
 
 ---------------------------------------------------------------- bronze
--- Bronze Border on every client: the small window's border, progress line and portrait ring.
+-- Bronze Border applies on every client, Classic Era included.
 env, quests = Boot("11509")
 M = env.MinimalPlayer
 frame = env.Addon.db.profile.Frame
@@ -183,7 +182,6 @@ frame.BronzeTint = true
 env.SoundQueue:RemoveAllSoundsFromQueue()
 
 ---------------------------------------------------------------- fading in and out
--- The window fades in and out, and goes while a DialogueUI dialog hides the interface.
 env, quests = Boot()
 M = env.MinimalPlayer
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "One",
@@ -193,8 +191,6 @@ Expect("a line starting: the window fading in", Try(function()
     return tostring(M.frame:IsShown()) .. " " .. tostring(M.frame:GetAlpha() > 0 and M.frame:GetAlpha() < 1)
 end), "true true")
 M.fader:Step(1)
--- From one line to the next, as the DialogueUI window turns: out whole with the first line's
--- name and words, in with the next's.
 local second = H.Clip({ length = 30, present = { header = "Kobold", label = "Two", transcript = "You no take candle!",
     portrait = { kind = "none" } } })
 quests:Enqueue(second)

@@ -72,7 +72,7 @@ E.Minimap={Setup=function() end}; E.Options={Setup=function() end}
 -- below, and the defaults themselves are pinned in defaults_test.
 E.Addon:InitDB()
 E.Addon.db.profile.Frame.Style='minimal'
--- On the dark rock, where the words keep the player's own colours and gold highlight.
+-- The dark background keeps the gold highlight the checks below expect.
 E.Addon.db.profile.Frame.MinimalBackground='dark'
 E.Addon.db.profile.Audio.LineGap=0
 E.Addon.db.profile.Transcript.HighlightWord=true
@@ -99,7 +99,7 @@ local function Advance(seconds)
     clock=target
     T:Update()
     M:Tick(seconds)
-    -- The windows' fades run on frames of their own (Actions.Fader).
+    -- Each fader runs on its own driver frame, so it is stepped here too.
     if M.fader then M.fader:Step(seconds) end
     if E.PlayerFrame.fader then E.PlayerFrame.fader:Step(seconds) end
 end
@@ -187,7 +187,6 @@ Check(not T.frame:IsShown() and Q:IsPlaying(a),'hiding captions leaves audio pla
 T:SetEnabled(true)
 Check(T.frame:IsShown() and T:GetElapsed()==10 and HighlightCount()>=1,'reopening catches up to current narration')
 Q:Skip()
--- The window fades out with the first line's words and in with the next's.
 Check(T.clip==a and T.held,'skip keeps the first line words while the window fades out')
 M.fader:Step(1)
 Check(T.clip==b and Plain(Captions())=='Second quest text','skip switches to the next queued clip once it has')

@@ -26,10 +26,10 @@ Defaults = {
             -- "subtitle", "minimal" (Small Window), "classic" (Large Window), "dialogueui" or
             -- "none" (the voice alone). Legacy clients start in the window they always had.
             Style = Version.IsAnyLegacy and "classic" or "subtitle",
-            -- The bronze the Forever client's frames wear, on the windows' metal (Addon:Bronze).
+            -- The windows' metal in the bronze the Forever client's frames wear.
             BronzeTint = true,
             MinimalWidth = 380,
-            -- What the small window is drawn on: "parchment" or "dark", the rock it had before.
+            -- The small window's background: "parchment" or "dark" (the rock).
             MinimalBackground = "parchment",
             -- Per action id, for the ones an addon declared optional. Absent means shown.
             HiddenActions = {},
