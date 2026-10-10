@@ -10,15 +10,17 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
-import { LiteButton } from "@/components/LiteControls";
+import { LiteButton, ROW_BUTTON, ROW_LINE } from "@/components/LiteControls";
 import { useLang } from "@/components/LangProvider";
+import { useRosterEdits } from "@/components/RosterEdits";
+import SortHeader from "@/components/SortHeader";
 import SpeakerCell, { type SpeakerAnswer } from "@/components/SpeakerCell";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import Pagination from "@/components/Pagination";
 import { summaryFromResolution } from "@/lib/contributions/speaker";
-import { Roster, type RosterData } from "@/lib/voices/roster";
+import type { Roster, RosterData } from "@/lib/voices/roster";
 import type { NpcSummary } from "@/lib/contributions/triage";
 import { localeHref } from "@/lib/lang";
 import { isProvenance, PROVENANCES, type NpcRowKind, type Provenance } from "@/lib/npc/npc";
@@ -45,6 +47,37 @@ const SPEAKER_CHIP_OPTIONS: ChipOption[] = PROVENANCES.map((option) => ({
 
 const PAGE_SIZE = 100;
 
+type SortColumn = "id" | "name";
+type Sort = { column: SortColumn; direction: "asc" | "desc" };
+
+/** `?sort=name`, `?sort=-id`: the column, descending when signed. By id, ascending, unsaid. */
+function sortOf(param: string | null): Sort {
+  const direction = param?.startsWith("-") ? "desc" : "asc";
+  const column = param?.replace(/^-/, "");
+  return { column: column === "name" ? "name" : "id", direction };
+}
+
+function sortParam(sort: Sort): string | undefined {
+  if (sort.column === "id" && sort.direction === "asc") return undefined;
+  return `${sort.direction === "desc" ? "-" : ""}${sort.column}`;
+}
+
+/** A click on the column in force flips it; on another, sorts by that one ascending. */
+function nextSort(current: Sort, column: SortColumn): Sort {
+  if (current.column !== column) return { column, direction: "asc" };
+  return { column, direction: current.direction === "asc" ? "desc" : "asc" };
+}
+
+/** Unnamed NPCs last either way, as nothing to read. */
+function compare(sort: Sort): (a: NpcSummary, b: NpcSummary) => number {
+  const sign = sort.direction === "asc" ? 1 : -1;
+  if (sort.column === "id") return (a, b) => sign * (a.npcId - b.npcId);
+  return (a, b) => {
+    if (!a.npcName || !b.npcName) return Number(!a.npcName) - Number(!b.npcName);
+    return sign * a.npcName.localeCompare(b.npcName) || a.npcId - b.npcId;
+  };
+}
+
 const PROGRESSES = ["unfinished", "doubtful", "finished"] as const;
 type Progress = (typeof PROGRESSES)[number];
 
@@ -59,21 +92,24 @@ const PROGRESS_CHIP_OPTIONS: ChipOption[] = [
 ];
 
 /**
- * Whether this NPC's voice still has a blank to fill: race, gender, or a flavor its race and
- * gender offer. A confirmed row with every field null is settled rather than blank -- someone
- * decided it has no race (see SpeakerCell's speakerNote) -- so it counts as finished.
+ * Whether this NPC's voice still has a blank to fill: type, gender where the type has genders,
+ * or a flavor its type and gender offer. A confirmed row with every field null is settled rather
+ * than blank -- someone decided it has no type (see SpeakerCell's speakerNote) -- so it counts
+ * as finished.
  */
-function unfinished(npc: NpcSummary): boolean {
+function unfinished(npc: NpcSummary, roster: Roster): boolean {
   if (npc.confirmed && !npc.race && !npc.gender && !npc.flavor) return false;
-  return !npc.race || !npc.gender || (npc.flavorOptions.length > 0 && !npc.flavor);
+  if (!npc.race) return true;
+  if (!npc.gender && !roster.isGenderless(npc.race)) return true;
+  return npc.flavorOptions.length > 0 && !npc.flavor;
 }
 
 /**
  * Where an NPC stands for the progress filter. A blank outranks a doubt, being the more
  * pressing thing to fill, and "finished" means neither.
  */
-function progressOf(npc: NpcSummary): Progress {
-  if (unfinished(npc)) return "unfinished";
+function progressOf(npc: NpcSummary, roster: Roster): Progress {
+  if (unfinished(npc, roster)) return "unfinished";
   return npc.doubtful ? "doubtful" : "finished";
 }
 
@@ -93,9 +129,9 @@ function NameCell({
   const [draft, setDraft] = useState<string | null>(null);
   if (draft === null) {
     return (
-      <div className="flex items-center gap-1">
+      <div className={ROW_LINE}>
         <span>{name ?? <span className="text-muted-foreground">unnamed</span>}</span>
-        <LiteButton variant="ghost" className="h-5 px-1.5 py-0 text-xs" onClick={() => setDraft(name ?? "")}>
+        <LiteButton className={ROW_BUTTON} onClick={() => setDraft(name ?? "")}>
           Edit
         </LiteButton>
       </div>
@@ -104,7 +140,7 @@ function NameCell({
   const trimmed = draft.trim();
   return (
     <form
-      className="flex items-center gap-1"
+      className={ROW_LINE}
       onSubmit={(event) => {
         event.preventDefault();
         if (trimmed && trimmed !== name) onSave(trimmed);
@@ -120,7 +156,7 @@ function NameCell({
         onKeyDown={(event) => event.key === "Escape" && setDraft(null)}
         className="border-input bg-background h-7 w-44 rounded-md border px-2"
       />
-      <LiteButton type="submit" variant="outline" className="h-7 px-2 text-xs" disabled={busy || !trimmed}>
+      <LiteButton type="submit" className={ROW_BUTTON} disabled={busy || !trimmed}>
         Save
       </LiteButton>
     </form>
@@ -132,11 +168,12 @@ export default function NpcEditor({
   roster: rosterData,
 }: {
   initial: NpcSummary[];
-  /** The roster, for SpeakerCell's selects. */
+  /** The roster, for SpeakerCell's pickers, and grown by their "New" entries. */
   roster: RosterData;
 }) {
   const lang = useLang();
-  const roster = useMemo(() => new Roster(rosterData), [rosterData]);
+  const edits = useRosterEdits(rosterData);
+  const { roster } = edits;
   const pathname = usePathname();
   const params = useSearchParams();
   // The filters live in the URL, so a reload or a shared link keeps the view. Written with
@@ -147,6 +184,8 @@ export default function NpcEditor({
   const provenance = isProvenance(speakerParam) ? speakerParam : undefined;
   const progressParam = params.get("progress");
   const progress = isProgress(progressParam) ? progressParam : undefined;
+  const sortValue = params.get("sort");
+  const sort = useMemo(() => sortOf(sortValue), [sortValue]);
   const setParam = useCallback(
     (name: string, value: string | undefined) => {
       const search = new URLSearchParams(params.toString());
@@ -240,8 +279,9 @@ export default function NpcEditor({
           !needle || String(npc.npcId).includes(needle) || (npc.npcName ?? "").toLowerCase().includes(needle),
       )
       .filter((npc) => !provenance || npc.provenance === provenance)
-      .filter((npc) => !progress || progressOf(npc) === progress);
-  }, [initial, saved, query, provenance, progress]);
+      .filter((npc) => !progress || progressOf(npc, roster) === progress)
+      .sort(compare(sort));
+  }, [initial, saved, query, provenance, progress, sort, roster]);
 
   // A page at a time: every row is a SpeakerCell with its own selects, and all of them at once
   // made the first load and every tick slow.
@@ -345,10 +385,10 @@ export default function NpcEditor({
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">Nothing here.</p>
       ) : (
-        <table className="w-full border-separate border-spacing-0 text-sm">
+        <table className="w-fit border-separate border-spacing-0 text-sm">
           <thead className="text-muted-foreground text-left text-xs">
             <tr>
-              <th className="border-b py-2 pr-2 font-normal">
+              <th className="border-b py-2 pr-2 align-middle font-normal">
                 <Checkbox
                   aria-label="Select every NPC shown"
                   checked={allTicked ? true : selectedRows.length > 0 ? "indeterminate" : false}
@@ -358,9 +398,13 @@ export default function NpcEditor({
                   }
                 />
               </th>
-              <th className="border-b py-2 pr-3 font-normal">ID</th>
-              <th className="border-b py-2 pr-3 font-normal">Name</th>
-              <th className="border-b py-2 pr-3 font-normal">Race / gender / flavor</th>
+              <SortHeader column="id" sort={sort} onSort={(column) => setParam("sort", sortParam(nextSort(sort, column)))}>
+                ID
+              </SortHeader>
+              <SortHeader column="name" sort={sort} onSort={(column) => setParam("sort", sortParam(nextSort(sort, column)))}>
+                Name
+              </SortHeader>
+              <th className="border-b py-2 pr-3 font-normal">Type / gender / flavor</th>
               <th className="border-b py-2 font-normal" />
             </tr>
           </thead>
@@ -368,7 +412,7 @@ export default function NpcEditor({
             {shown.map((npc) => {
               const k = key(npc.npcKind, npc.npcId);
               return (
-                <tr key={k} className="align-top [&>td]:border-b [&>td]:py-2 [&>td]:leading-5">
+                <tr key={k} className="align-middle [&>td]:border-b [&>td]:py-1.5 [&>td]:leading-5">
                   <td className="pr-2">
                     <Checkbox
                       aria-label={`Select NPC ${npc.npcId}`}
@@ -417,6 +461,7 @@ export default function NpcEditor({
                       key={`${npc.provenance}:${npc.race}:${npc.gender}:${npc.flavor}:${npc.doubtful}`}
                       npc={npc}
                       roster={roster}
+                      edits={edits}
                       readOnly={false}
                       busy={busy === k || bulk !== null}
                       onSave={(answer) => void save(npc, answer)}

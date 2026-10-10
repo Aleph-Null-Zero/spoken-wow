@@ -21,12 +21,13 @@
  */
 import { useLang } from "@/components/LangProvider";
 import { localeHref, type Lang } from "@/lib/lang";
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useMemo, useState } from "react";
 
 import { CLIENT_CHIP_OPTIONS, SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
+import SortHeader from "@/components/SortHeader";
 import SpeakerCell, { ProvenanceBadge, type SpeakerAnswer } from "@/components/SpeakerCell";
 import { ACCEPT_TONE, LiteButton, LiteCheckbox, REJECT_TONE } from "@/components/LiteControls";
 import { Refreshing } from "@/components/Loading";
@@ -128,44 +129,6 @@ const STATUS_LABELS: Record<ContributionStatus, string> = {
   rejected: "Rejected",
 };
 
-
-/**
- * A column header that orders the queue: a click sorts on it, a second click flips it. The
- * column in force shows its direction; the others show a faint both-ways arrow, so which
- * headers can be clicked is visible without hovering each one.
- */
-function SortHeader({
-  column,
-  sort,
-  onSort,
-  children,
-}: {
-  column: SortColumn;
-  sort: ContributionSort;
-  onSort: (column: SortColumn) => void;
-  children: React.ReactNode;
-}) {
-  const active = sort.column === column;
-  const Icon = !active ? ArrowUpDownIcon : sort.direction === "asc" ? ArrowUpIcon : ArrowDownIcon;
-  return (
-    <th
-      aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
-      className="border-b py-2 pr-3 font-normal"
-    >
-      <button
-        type="button"
-        onClick={() => onSort(column)}
-        className={cn(
-          "hover:text-foreground inline-flex items-center gap-1 transition-colors",
-          active && "text-foreground font-medium",
-        )}
-      >
-        {children}
-        <Icon className={cn("size-3", !active && "opacity-40")} />
-      </button>
-    </th>
-  );
-}
 
 /** The day and the clock time, short enough to sit in a column, matching ReportTable's `when`. */
 function when(at: string): string {
