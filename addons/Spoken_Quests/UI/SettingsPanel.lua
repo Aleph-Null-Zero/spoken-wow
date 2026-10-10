@@ -122,8 +122,8 @@ function SettingsPanel:Setup()
         function() return audio().OGThrall end,
         function(value) audio().OGThrall = value end)
 
-    -- Only with DialogueUI installed: in the DialogueUI group on Spoken's page, or here with a
-    -- Spoken too old to have it.
+    -- Only with DialogueUI installed: on Spoken's page, or here with a Spoken too old to have
+    -- room for them.
     if DialogueUIBridge and DialogueUIBridge.Problem and IsAddOnLoaded and IsAddOnLoaded("DialogueUI") then
         if Spoken and Spoken.AddDialogueUISettings then
             Spoken:AddDialogueUISettings(function(page)

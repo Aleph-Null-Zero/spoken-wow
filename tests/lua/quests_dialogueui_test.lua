@@ -822,8 +822,8 @@ Expect("nothing there changes DialogueUI's own settings", table.getn(layout.entr
     and Row("Turn On Text To Speech") == nil, true)
 Expect("the place has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
     and Row(VO.L.OPT_DUI_PLAY_BUTTON) ~= nil and scroll ~= nil, true)
--- Among the narrator style's settings, last, with the DialogueUI style chosen; the page's later
--- sections (the languages, the sound) under them.
+-- Among the narrator style's settings, last; the page's later sections (the languages, the
+-- sound) under them.
 -- The style as the page reads it: DialogueUI's art is not here to make the style available.
 local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end
@@ -833,12 +833,15 @@ for _, item in ipairs(layout.items) do
     if item.kind == "group" and item.text == env.L.OPT_NARRATOR_SETTINGS then narrator = item end
     if item.kind == "section" and item.text == env.L.OPT_LANGUAGE_TITLE then language = item end
 end
-Expect("...among the narrator style's settings, last, with the DialogueUI style chosen", captions:IsShown()
+Expect("...among the narrator style's settings, last", captions:IsShown()
     and narrator ~= nil and captions.layoutY < narrator.heading.layoutY
     and language ~= nil and language.top < captions.layoutY, true)
-chosen = "subtitle"
-layout:Refresh()
-Expect("...and not with another style", captions:IsShown() or Row(VO.L.OPT_DUI_PLAY_BUTTON):IsShown(), false)
+-- They change DialogueUI's quest window, which is there whatever the narrator style.
+for _, style in ipairs({ "subtitle", "minimal", "classic", "none" }) do
+    chosen = style
+    layout:Refresh()
+    Expect("...and with the " .. style .. " style too", captions:IsShown() and Row(VO.L.OPT_DUI_PLAY_BUTTON):IsShown(), true)
+end
 chosen = "dialogueui"
 layout:Refresh()
 Expect("...live while DialogueUI is loaded", captions and captions.layoutReason, nil)
