@@ -73,6 +73,12 @@ local function WordsFont()
 end
 -- Hide Portrait, as the windows have it.
 local function Pictured() return not Addon:Profile("Frame").HidePortrait end
+-- The words' face on the measuring string, so wrapping and paging measure at Text Size.
+local function Measure(subtitle)
+    local path, size = WordsFont()
+    if path then subtitle.measure:SetFont(path, size, "") end
+    return path, size
+end
 
 local function Words(text)
     local count = 0
@@ -518,8 +524,7 @@ end
 -- Each line gets a slot of its finished width, centred, and its letters are typed in from
 -- the left of it: the text fills in without re-centring or wobbling as it grows.
 function Subtitle:Layout(text)
-    local path, size = WordsFont()
-    if path then self.measure:SetFont(path, size, "") end
+    local path, size = Measure(self)
     self.measure:SetText("Ag")
     local lineHeight = self.measure:GetStringHeight()
     local named = self:NameShown()
@@ -690,7 +695,17 @@ function Subtitle:LitWord(page, elapsed)
     end
 end
 
+--- Every setting Prepare and Layout read, as one string: when it changes, Update lays the line out
+--- again.
+function Subtitle:LayoutKey()
+    local _, size = WordsFont()
+    return PageSentences() .. ":" .. tostring(Rolling()) .. ":" .. Shown() .. ":" .. tostring(size)
+        .. ":" .. tostring(self:NameShown()) .. ":" .. tostring(Pictured()) .. ":" .. tostring(self:ProgressWanted())
+end
+
 function Subtitle:Prepare(clip, text)
+    Measure(self)
+    self.layoutKey, self.resumeTyping = self:LayoutKey(), nil
     self.clip, self.page = clip, nil
     self.pageFade, self.shadowSize = nil, nil
     for _, line in ipairs(self.lines or {}) do line:SetAlpha(1) end
@@ -774,7 +789,8 @@ function Subtitle:Render()
             index = self.page
         else
             self.page = index
-            self.turnedAt = elapsed
+            self.turnedAt = not self.resumeTyping and elapsed or nil
+            self.resumeTyping = nil
             self:Layout(self.pages[index].text)
         end
     end
@@ -851,16 +867,11 @@ function Subtitle:Update()
         self:Place()
     end
     local clip = speaking and Transcript.clip or self.sample
-    -- The sentences at once changed in the settings: the line paged again, from where the voice is.
-    if self.clip and self.pages and self.pageSentences and self.pageSentences ~= PageSentences() then
+    -- A setting the line was laid out with changed: paged and laid out again, from where the voice is.
+    if self.clip and self.pages and self.layoutKey ~= self:LayoutKey() then
         self:Prepare(self.clip, self.sample and L.SUBTITLE_SAMPLE_TEXT or Transcript.text)
-        self.revealed = nil
-    end
-    -- The progress line turned on or off in the settings: the page laid out again with or without it.
-    if self.page and self.pages and self.pages[self.page]
-        and self:ProgressWanted() ~= self.progressShown then
-        self:Layout(self.pages[self.page].text)
-        self.revealed = nil
+        -- Typed on from where the voice is, not from the page's start again.
+        self.resumeTyping, self.revealed = true, nil
     end
     if wanted and clip ~= self.clip then
         -- A line still on screen fades out first, as when it ends, and the new one fades in after it.
