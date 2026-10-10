@@ -118,8 +118,8 @@ Expect("the small window is on parchment unless the player chooses otherwise", f
 for _, part in ipairs({ M.paper, M.name, M.title.text, M.count, M.ring }) do Record(part) end
 quests:Enqueue(Line("One", "Grull"))
 env.PlayerFrame:RefreshConfig()
-Expect("...drawn in the parchment's colour where the client has none of its art", tostring(M.paper.atlas) .. " " .. tostring(M.paper.colour),
-    "nil 0.88 0.68 0.41")
+Expect("...Spoken's own parchment, which every client draws: the retail atlases are listed without their art",
+    tostring(M.paper.atlas) .. " " .. tostring(M.paper.texture), [[nil Interface\AddOns\Spoken\Textures\MinimalParchment]])
 Expect("...the name and the title in the DialogueUI window's parchment ink", tostring(M.name.colour) .. "|"
     .. tostring(M.title.text.colour), INK .. "|" .. INK)
 Expect("...the words too, unshadowed, the word being read in its red", tostring(T.style and Colour(T.style.color[1], T.style.color[2],
@@ -133,29 +133,9 @@ Expect("...with the gold name and the light words", tostring(M.name.colour) .. "
     "1.00 0.82 0.00|0.88 0.84 0.76|nil")
 frame.MinimalBackground = "parchment"
 
--- The parchment art, where the client has it: tiled atlases both clients list.
-local PARCHMENTS = M.PARCHMENTS or { "none", "none", "none", "none" }
-local atlases = {}
-for _, name in ipairs(PARCHMENTS) do atlases[name] = true end
-_G.C_Texture = { GetAtlasInfo = function(name) return atlases[name] and { width = 256, height = 256 } or nil end }
 env.PlayerFrame:RefreshConfig()
-Expect("with the art, the first parchment is the default", M.paper.atlas, PARCHMENTS[1])
-local said = {}
-local hadPrint = _G.print
-_G.print = function(text) table.insert(said, text) end
-SlashCmdList.SPOKEN("parchment")
-Expect("/spoken parchment draws the next one", M.paper.atlas, PARCHMENTS[2])
-Expect("...and names it", said[1], string.format("Spoken: small window parchment 2/%d: %s", #PARCHMENTS, PARCHMENTS[2]))
-atlases[PARCHMENTS[3]] = nil
-SlashCmdList.SPOKEN("parchment")
-Expect("...passing over one the client has not got", M.paper.atlas, PARCHMENTS[4])
-SlashCmdList.SPOKEN("parchment")
-Expect("...and round to the first again", M.paper.atlas, PARCHMENTS[1])
-said = {}
-SlashCmdList.SPOKEN("help me")
-Expect("the command is in /spoken's help", said[1] ~= nil and string.find(said[1], "| parchment", 1, true) ~= nil, true)
-_G.print = hadPrint
-_G.C_Texture = nil
+Expect("...back on its parchment from the rock, whole, not tiled", tostring(M.paper.texture) .. " " .. tostring(M.paper.horizTile),
+    [[Interface\AddOns\Spoken\Textures\MinimalParchment nil]])
 env.SoundQueue:RemoveAllSoundsFromQueue()
 
 -- The setting, on Spoken's page, for the small window only.
