@@ -10,13 +10,13 @@ local BOOKS = here .. "/../../addons/Spoken_Books/"
 local Expect, Failures = H.Expecter(print)
 
 -- The Hillsbrad Town Registry: four real pages of one real book, 261 through 265; a pack with
--- the first three.
+-- the first three, and the first page of A Dusty Unsent Letter (16).
 local REGISTRY = { 261, 262, 263, 265 }
 _G.SpokenBooksAudioPacks = {
     SpokenBooksAudio = {
         version = 1, addon = "SpokenBooksAudio", quality = "high", bitrate = 128,
         pages = { [261] = { file = "261", len = 30.5 }, [262] = { file = "262", len = 41.0 },
-            [263] = { file = "263", len = 20.0 } },
+            [263] = { file = "263", len = 20.0 }, [16] = { file = "16", len = 12.0 } },
     },
 }
 
@@ -149,6 +149,15 @@ row.report.scripts.OnClick(row.report)
 local box = Spoken.ContributeBox
 Expect("Report gives the address for the page being read, in Spoken's box",
     box and box.editBox:GetText(), B:ReportURL(261))
+-- The letter open in the view while the Registry is still read: Report is for the letter shown.
+B.lastPage = 16
+Book:Draw()
+row.report.scripts.OnClick(row.report)
+box = Spoken.ContributeBox
+Expect("...and with another book open in the view, the address for that book, not the one being read",
+    box and box.editBox:GetText(), B:ReportURL(16))
+B.lastPage = 265
+Book:Draw()
 row.play.scripts.OnClick(row.play, "LeftButton")
 Expect("Stop stops it", QueuedPages(), "")
 Book:Draw()
