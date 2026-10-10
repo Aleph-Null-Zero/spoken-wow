@@ -143,7 +143,12 @@ def _bulk(cur, what, rows, sql, template=None, page=1000):
 
 
 #: Whether an imported answer {new} lands over the table's {old}.
-_REPLACES = """(case when {old}."provenance" = 'moderator'
+# A dump answer that knows only the creature's model says less than anybody who named a race,
+# a player's client included: it fills an NPC nobody answered and updates its own kind, and
+# leaves every other answer, so a voice chosen for the NPC is not taken back to no voice.
+_REPLACES = """(case when {new}."race" like 'model-%%'
+                     then {old}."provenance" = 'none' or coalesce({old}."race", '') like 'model-%%'
+                     when {old}."provenance" = 'moderator'
                      then {old}."doubtful" and {new}."provenance" <> 'none'
                      else "npc_provenance_rank"({old}."provenance")
                           <= "npc_provenance_rank"({new}."provenance") end)"""

@@ -170,19 +170,32 @@ def lines_in_area(corpus: dict, map_id: int, x_range, y_range) -> list:
             if spawn_key(line["npcType"], line["npcId"]) in inside]
 
 
+def extraction_rows(quests, followups):
+    """Quest and gossip rows, then follow-ups, then the rows of creatures voiced by their model.
+
+    Each kind goes after the last so existing rows keep their place: the import records it as
+    each row's `ord`. A model row is dropped where a patch variant of the same NPC has a
+    humanoid display, so one NPC never speaks a line in two voices.
+    """
+    import pandas as pd
+
+    model = quests["ModelID"].notna()
+    humanoid = set(zip(quests.loc[~model, "type"], quests.loc[~model, "id"]))
+    beside_humanoid = pd.Series([key in humanoid for key in zip(quests["type"], quests["id"])],
+                                index=quests.index)
+    return pd.concat([quests[~model], followups, quests[model & ~beside_humanoid]],
+                     ignore_index=True)
+
+
 def extract() -> dict:
     """The world database as a corpus, for import_corpus_data to take into Postgres. The only
     step that needs MySQL; the committed file is written by export-corpus alone."""
-    import pandas as pd
-
     from tts_cli.sql_queries import (query_dataframe_for_all_quests_and_gossip,
                                      query_followup_dataframe, query_spawns)
     from tts_cli.tts_utils import TTSProcessor
 
-    # Follow-up lines after everything else, so adding them left every existing row where it
-    # was: import-corpus records each row's place as its `ord`, and the export reproduces it.
-    df = pd.concat([query_dataframe_for_all_quests_and_gossip(0), query_followup_dataframe()],
-                   ignore_index=True)
+    df = extraction_rows(query_dataframe_for_all_quests_and_gossip(0),
+                         query_followup_dataframe())
     # preprocess_dataframe only uses self for handle_gender_options, so skip __init__ and
     # avoid requiring an ElevenLabs key just to extract text.
     df = TTSProcessor.preprocess_dataframe(TTSProcessor.__new__(TTSProcessor), df)
