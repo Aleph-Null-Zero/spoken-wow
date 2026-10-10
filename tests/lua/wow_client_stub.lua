@@ -215,8 +215,11 @@ local function Widget(kind, name)
     function w:GetObjectType() return self.frameType or self.kind end
     function w:GetChildren() return unpack(self.children) end
     function w:GetFrameLevel() return 1 end
-    function w:SetTexture(t) self.texture = t; return true end
+    -- A texture shows a file or an atlas, whichever was set last.
+    function w:SetTexture(t) self.texture = t; self.atlas = nil; return true end
     function w:GetTexture() return self.texture end
+    function w:SetAtlas(name) self.atlas = name; self.texture = nil end
+    function w:GetAtlas() return self.atlas end
     function w:SetTexCoord(...) self.texCoord = { ... } end
     function w:CreateTexture(n, layer) local t = Widget("Texture", n); t.parent = self; t.layer = layer; return t end
     -- A mask, as the client hands one back: the small window rounds a portrait with it.

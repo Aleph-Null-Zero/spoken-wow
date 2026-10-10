@@ -234,6 +234,12 @@ function Addon:IsFrameLocked()
     return self:Profile("Frame").LockFrame
 end
 
+--- Bronze Border: the windows in the game's bronze art rather than Spoken's own, read the same
+--- way on every client.
+function Addon:Bronze()
+    return self:Profile("Frame").BronzeTint ~= false
+end
+
 --- Put a player frame on the host, or back on UIParent, since a host that hides UIParent
 --- (DialogueUI) would hide the player too. The anchor stays on UIParent and the scale keeps
 --- the effective scale, so the frame keeps its exact place on screen. spokenBaseScale /
