@@ -81,7 +81,9 @@ export default function SearchSelect({
               <CommandEmpty className="py-3 text-center text-xs">Nothing matches.</CommandEmpty>
               {create ? (
                 <CommandGroup>
+                  {/* Kept through any search: one that finds nothing is when it is wanted. */}
                   <CommandItem
+                    forceMount
                     value={`new ${create.label}`}
                     className="text-xs"
                     onSelect={() => {

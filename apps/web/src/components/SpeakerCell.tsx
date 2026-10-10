@@ -145,7 +145,8 @@ export default function SpeakerCell({
 
   // An NPC the game gives a race and gender but no flavor (the extract's corpus row) has no
   // voice until somebody picks one, so it opens on the flavor select, as a guess does.
-  const needsFlavor = Boolean(npc.race && !npc.flavor && npc.flavorOptions.length > 0);
+  // From the roster as it stands: a first flavor made since the page loaded leaves this NPC one to pick.
+  const needsFlavor = Boolean(npc.race && !npc.flavor && flavorOptionsFor(npc.race, npc.gender, roster).length > 0);
 
   // Read-only for somebody api/contributions/npc would refuse: the answer as it stands, with no
   // form that could only end in a 403.

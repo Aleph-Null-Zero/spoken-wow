@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import Pagination from "@/components/Pagination";
-import { summaryFromResolution } from "@/lib/contributions/speaker";
+import { flavorOptionsFor, summaryFromResolution } from "@/lib/contributions/speaker";
 import type { Roster, RosterData } from "@/lib/voices/roster";
 import type { NpcSummary } from "@/lib/contributions/triage";
 import { localeHref } from "@/lib/lang";
@@ -101,7 +101,8 @@ function unfinished(npc: NpcSummary, roster: Roster): boolean {
   if (npc.confirmed && !npc.race && !npc.gender && !npc.flavor) return false;
   if (!npc.race) return true;
   if (!npc.gender && !roster.isGenderless(npc.race)) return true;
-  return npc.flavorOptions.length > 0 && !npc.flavor;
+  // The roster as it stands, not npc.flavorOptions from page load: a flavor made since counts.
+  return !npc.flavor && flavorOptionsFor(npc.race, npc.gender, roster).length > 0;
 }
 
 /**

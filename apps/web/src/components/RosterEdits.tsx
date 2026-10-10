@@ -20,8 +20,11 @@ type Choice = NeedsChoice["choice"];
 export type RosterEdits = {
   roster: Roster;
   busy: boolean;
-  /** Posts one edit; `at` names the control it came from. True when it landed. */
-  send: (at: string, body: Record<string, unknown>) => Promise<boolean>;
+  /**
+   * Posts one edit; `at` names the control it came from. True when it landed. `done` runs once
+   * it lands, also when that is only after the question it raised is answered.
+   */
+  send: (at: string, body: Record<string, unknown>, done?: () => void) => Promise<boolean>;
   /** The last refusal or question, if it answers the control at `at`. */
   refusal: (at: string) => ReactNode;
 };
@@ -33,9 +36,14 @@ export function useRosterEdits(initial: RosterData): RosterEdits {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ at: string; message: string } | null>(null);
   /** An edit waiting on what becomes of the voice it splits. */
-  const [pending, setPending] = useState<{ at: string; body: Record<string, unknown>; choice: Choice } | null>(null);
+  const [pending, setPending] = useState<{
+    at: string;
+    body: Record<string, unknown>;
+    choice: Choice;
+    done?: () => void;
+  } | null>(null);
 
-  const send: RosterEdits["send"] = async (at, body) => {
+  const send: RosterEdits["send"] = async (at, body, done) => {
     setBusy(true);
     setError(null);
     setPending(null);
@@ -49,7 +57,7 @@ export function useRosterEdits(initial: RosterData): RosterEdits {
       | { roster?: RosterData; error?: string; choice?: Choice }
       | null;
     if (response?.status === 409 && answer?.choice) {
-      setPending({ at, body, choice: answer.choice });
+      setPending({ at, body, choice: answer.choice, done });
       return false;
     }
     if (!response?.ok || !answer?.roster) {
@@ -57,19 +65,20 @@ export function useRosterEdits(initial: RosterData): RosterEdits {
       return false;
     }
     setData(answer.roster);
+    done?.();
     return true;
   };
 
   const refusal: RosterEdits["refusal"] = (at) => {
     if (pending?.at === at) {
-      const { choice, body } = pending;
+      const { choice, body, done } = pending;
       return (
         <div className="flex flex-wrap items-center gap-1 py-1 text-xs text-amber-600 dark:text-amber-400">
           {choice.voice} reads {plural(choice.npcs, "NPC")} and {plural(choice.lines, "line")}.
           <LiteButton
             className={ROW_BUTTON}
             disabled={busy}
-            onClick={() => void send(at, { ...body, existing: "map" })}
+            onClick={() => void send(at, { ...body, existing: "map" }, done)}
             title={`${choice.into} takes ${choice.voice} over, its takes too, and the NPCs move to ${choice.into}`}
           >
             Map to {choice.into}
@@ -77,7 +86,7 @@ export function useRosterEdits(initial: RosterData): RosterEdits {
           <LiteButton
             className={ROW_BUTTON}
             disabled={busy}
-            onClick={() => void send(at, { ...body, existing: "discard" })}
+            onClick={() => void send(at, { ...body, existing: "discard" }, done)}
             title={`${choice.into} gets a new voice; ${choice.voice} and its takes stay on file unused, and the NPCs wait for an answer`}
           >
             Throw away
@@ -114,11 +123,11 @@ export function NewTypeForm({
         onSubmit={async (event) => {
           event.preventDefault();
           const made = key.trim();
-          if (await edits.send(at, { action: "add-type", key: made, genders })) {
+          await edits.send(at, { action: "add-type", key: made, genders }, () => {
             setKey("");
             setGenders([]);
             onMade(made, genders);
-          }
+          });
         }}
       >
         <Input
@@ -176,7 +185,7 @@ export function NewGenderForm({
             className={ROW_BUTTON}
             disabled={edits.busy}
             onClick={async () => {
-              if (await edits.send(at, { action: "add-gender", race, gender })) onMade(gender);
+              await edits.send(at, { action: "add-gender", race, gender }, () => onMade(gender));
             }}
           >
             {gender}
@@ -210,10 +219,10 @@ export function NewFlavorForm({
         onSubmit={async (event) => {
           event.preventDefault();
           const made = flavor.trim();
-          if (await edits.send(at, { action: "add-flavor", race, gender, flavor: made })) {
+          await edits.send(at, { action: "add-flavor", race, gender, flavor: made }, () => {
             setFlavor("");
             onMade(made);
-          }
+          });
         }}
       >
         <Input
