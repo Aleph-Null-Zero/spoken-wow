@@ -15,6 +15,8 @@ L.OPT_AUTOPLAY = "自動朗讀"
 L.OPT_AUTOPLAY_TIP = "書籍或信件一開啟就朗讀。關閉後不會自動開始：點擊頁面上的播放，或輸入 /spb read。"
 L.OPT_WHOLE_BOOK = "朗讀整本書"
 L.OPT_WHOLE_BOOK_TIP = "朗讀每一頁，而不只是畫面上的那一頁。開啟第一頁時會把其餘頁面排入佇列，讓你翻頁時語音繼續朗讀。"
+L.OPT_ONE_LINE = "將整本書作為一行朗讀"
+L.OPT_ONE_LINE_TIP = "將整本書作為一行放入佇列，並在上方顯示其類型：跳過會跳過剩餘部分，進度列涵蓋整本書。關閉時，每一頁單獨排隊，並顯示頁碼。"
 L.OPT_READ_ONCE = "只朗讀一次"
 L.OPT_READ_ONCE_TIP = "此角色已聽過的內容，再次開啟時不會再朗讀。播放按鈕仍可使用。"
 L.OPT_SECTION_READ = "朗讀記錄"
@@ -42,6 +44,7 @@ L.OPT_FALLBACK_LANGUAGE_TIP = "當你的語言的語音包沒有某頁的錄音�
 L.OPT_FALLBACK_NONE = "保持靜默"
 L.OPT_NO_PACK_AUDIO = "已安裝的語音包還沒有本頁的旁白。"
 L.OPT_NO_PACK_INSTALLED = "未安裝書籍語音包。"
+L.OPT_PAGE_COUNT_FMT = "第 %1$d 頁，共 %2$d 頁"
 
 -- Added in this release: subtitles, profiles, module pages and windows.
 L.OPT_SECTION_PACKS = "語音包"

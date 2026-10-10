@@ -55,7 +55,7 @@ end
 
 Expect("every section is there", table.concat(headings, "|"),
     "When to Read|Language|Reading History|Voice Packs|Fix a Problem|Start Over")
-Expect("every switch has a row", table.getn(checkboxes), 5)
+Expect("every switch has a row", table.getn(checkboxes), 6)
 local function Button(text)
     for _, button in ipairs(buttons) do if button.text == text then return button end end
 end
@@ -95,6 +95,16 @@ Expect("...which is indented under it", once.text.anchor.x > autoplay.text.ancho
 autoplay:SetChecked(true)
 autoplay.scripts.OnClick(autoplay)
 Expect("ticking it again brings Read Only Once back", once.enabled, true)
+
+local oneLine = Labelled("Read Book as One Line")
+Expect("Read Book as One Line is on the panel, defaulting on", oneLine ~= nil and oneLine.checked, true)
+if oneLine then
+    oneLine:SetChecked(false)
+    oneLine.scripts.OnClick(oneLine)
+    Expect("...and unticking it is the same as /spb oneline", SpokenBooksSettings.bookAsOneLine, false)
+    oneLine:SetChecked(true)
+    oneLine.scripts.OnClick(oneLine)
+end
 
 local close = Labelled("Close Book When Done Reading")
 Expect("Close Book When Done Reading is on the panel, defaulting off", close and close.checked, false)

@@ -15,6 +15,8 @@ L.OPT_AUTOPLAY = "Ler automaticamente"
 L.OPT_AUTOPLAY_TIP = "Lê um livro ou uma carta assim que é aberto. Desativado, nada começa sozinho: aperte Reproduzir na página ou digite /spb read."
 L.OPT_WHOLE_BOOK = "Ler o livro inteiro"
 L.OPT_WHOLE_BOOK_TIP = "Lê todas as páginas, não só a que está na tela. Abrir a primeira página enfileira o resto, então a voz continua lendo enquanto você vira as páginas."
+L.OPT_ONE_LINE = "Ler o livro como uma linha"
+L.OPT_ONE_LINE_TIP = "Coloca o livro na fila como uma só linha, com o tipo acima: Pular pula o resto e a barra de progresso percorre o livro inteiro. Desligado, cada página espera na fila separadamente, com seu número de página."
 L.OPT_READ_ONCE = "Ler só uma vez"
 L.OPT_READ_ONCE_TIP = "O que este personagem já ouviu não é lido de novo quando você abre. Reproduzir continua funcionando."
 L.OPT_SECTION_READ = "Histórico de leitura"
@@ -42,6 +44,7 @@ L.OPT_FALLBACK_LANGUAGE_TIP = "O que ler quando o pacote de voz no seu idioma n�
 L.OPT_FALLBACK_NONE = "Ficar em silêncio"
 L.OPT_NO_PACK_AUDIO = "O pacote de voz instalado ainda não tem narração para esta página."
 L.OPT_NO_PACK_INSTALLED = "Nenhum pacote de voz de Livros instalado."
+L.OPT_PAGE_COUNT_FMT = "Página %1$d de %2$d"
 
 -- Added in this release.
 L.OPT_SECTION_PACKS = "Pacotes de voz"

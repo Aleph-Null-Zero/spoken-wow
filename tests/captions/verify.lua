@@ -762,4 +762,101 @@ do
     Q:RemoveAllSoundsFromQueue(); Play(.6)
     E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
 end
+-- A clip names its own face (present.font) for a script the game's font has no glyphs for. The
+-- captions, the small window and the subtitle draw that clip in it at the player's size, and
+-- the next clip without one in the player's face again.
+do
+    local NOTO='Interface\\AddOns\\Pack\\NotoSerif.ttf'
+    local function Face(text) return (text:GetFont()) end
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    local size=select(2,T.labels[1]:GetFont())
+    local czech=Clip('cz','Příliš žluťoučký kůň úpěl ďábelské ódy.',4)
+    czech.present.font=NOTO
+    source:Enqueue(czech); source:Enqueue(Clip('en','Plain English.',2)); Play(.7)
+    Check(Face(T.labels[1])==NOTO and Face(T.measure)==NOTO,'the captions draw and measure a clip in its own font')
+    Check(select(2,T.labels[1]:GetFont())==size,'...at the size the player set')
+    Check(Face(M.name)==NOTO and Face(M.title.text)==NOTO,"...and the small window names it in that font")
+    Q:Skip(); Play(.7)
+    Check(Face(T.labels[1])=='font.ttf' and Face(M.name)=='font.ttf','the next clip, naming none, is in the player\'s face')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    local broken=Clip('bad','Text in a face the client lacks.',3)
+    broken.present.font='missing.ttf'
+    source:Enqueue(broken); Play(.7)
+    Check(Face(T.labels[1])=='font.ttf' and Face(M.name)=='font.ttf','a face the client cannot load leaves the player\'s own')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    broken=Clip('old','Text in a face an older client lacks.',3)
+    broken.present.font='missing-old.ttf'
+    source:Enqueue(broken); Play(.7)
+    Check(Face(T.labels[1])=='font.ttf' and Face(M.name)=='font.ttf','...and so does one on an older client, which says nothing')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    broken=Clip('retry','Text in a face the client lacks, read for a while.',3)
+    broken.present.font='missing.ttf'
+    local tries,setFont=0,M.title.text.SetFont
+    M.title.text.SetFont=function(text,face,...)
+        if face=='missing.ttf' then tries=tries+1 end
+        return setFont(text,face,...)
+    end
+    source:Enqueue(broken); Play(.2); Play(.7)
+    M.title.text.SetFont=nil
+    Check(tries==1,'...and is not tried again on every update while the clip plays')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    -- The client may report a face in a spelling of its own; that is still the clip's face, not
+    -- one for the next clip to go back to.
+    local spelled=Clip('spelled','Příliš žluťoučký kůň.',3)
+    spelled.present.font='Spelled.ttf'
+    source:Enqueue(spelled); source:Enqueue(Clip('after','Plain English.',2)); Play(.7)
+    Check(Face(M.name)=='spelled.ttf','a clip\'s face reported in the client\'s spelling is drawn')
+    Q:Skip(); Play(.7)
+    Check(Face(M.name)=='font.ttf' and Face(M.title.text)=='font.ttf','...and the next clip, naming none, is in the player\'s face')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    local style=E.Addon:PlayerStyle()
+    E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+    czech=Clip('cz2','Příliš žluťoučký kůň úpěl ďábelské ódy.',4)
+    czech.present.font=NOTO
+    source:Enqueue(czech); Play(.7)
+    Check(Face(S.title)==NOTO and Face(S.lines[1])==NOTO and Face(S.measure)==NOTO,'the subtitle draws, names and measures it in its own font')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+end
+-- A clip that knows when each word is spoken (present.timings) is followed by those times, not
+-- the estimate; a list that does not fit the words is ignored.
+do
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    local function Timed(key,text,length,timings)
+        local clip=Clip(key,text,length)
+        clip.present.timings=timings
+        return clip
+    end
+    -- Four words of one length: the estimate gives each about a second, the times a long last word.
+    source:Enqueue(Timed('t1','aaaa bbbb cccc dddd',4,{0,.2,.4,.6})); Play(1)
+    Check(T.timed and T.totalWeight==4,'a clip with its word times is timed against its length')
+    Check(T:WordAt(T:GetProgress())==4,'...and a second in, the voice is on the word its times say')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    source:Enqueue(Timed('t2','aaaa bbbb cccc dddd',4,{0,.2,.4})); Play(1)
+    Check(not T.timed and T:WordAt(T:GetProgress())<4,'times that do not match the words leave the estimate')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    source:Enqueue(Timed('t3','aaaa bbbb cccc dddd',4,{0,.5,.3,.6})); Play(.2)
+    Check(not T.timed,'...as do times that go backwards')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    source:Enqueue(Timed('t5','aaaa bbbb cccc dddd',4,{0,nil,.4,.6})); Play(.2)
+    Check(not T.timed,'...a list with a hole in it')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    source:Enqueue(Timed('t6','aaaa bbbb cccc dddd',4,{0,0/0,.4,.6})); Play(.2)
+    Check(not T.timed,'...and one with a time that is not a number')
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    local style=E.Addon:PlayerStyle()
+    E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+    cfg.SubtitleSentences=1
+    local text=string.rep('A long sentence that keeps going on and on across the screen. ',4)
+    local words=#T:Split(text)
+    local timings={}
+    -- The second sentence starts late, after a pause the estimate cannot know about.
+    for i=1,words do timings[i]=(i-1)*.1+(i>12 and 5 or 0) end
+    source:Enqueue(Timed('t4',text,words*.1+6,timings)); Play(.7)
+    Check(T.timed and #S.pages==4,'a timed line is paged a sentence at a time')
+    Check(math.abs(S.pages[2].start-timings[13])<1e-9,"...and its second page turns at its first word's time")
+    cfg.SubtitleSentences=3
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+end
 print(string.format('PASS: %d checks using the real queue, both player layouts, captions, commands and quest adapter.',assertions))

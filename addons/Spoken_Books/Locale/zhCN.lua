@@ -15,6 +15,8 @@ L.OPT_AUTOPLAY = "自动朗读"
 L.OPT_AUTOPLAY_TIP = "书籍或信件一打开就开始朗读。关闭后不会自动开始：点击页面上的“播放”，或输入 /spb read。"
 L.OPT_WHOLE_BOOK = "朗读整本书"
 L.OPT_WHOLE_BOOK_TIP = "朗读每一页，而不仅是屏幕上的这一页。打开第一页时会将其余页面排入队列，因此你翻页时语音会继续朗读。"
+L.OPT_ONE_LINE = "将整本书作为一行朗读"
+L.OPT_ONE_LINE_TIP = "将整本书作为一行放入队列，并在上方显示其类型：跳过会跳过剩余部分，进度条覆盖整本书。关闭时，每一页单独排队，并显示页码。"
 L.OPT_READ_ONCE = "只朗读一次"
 L.OPT_READ_ONCE_TIP = "此角色已经听过的内容再次打开时不会重新朗读。“播放”仍然可用。"
 L.OPT_SECTION_READ = "朗读记录"
@@ -42,6 +44,7 @@ L.OPT_FALLBACK_LANGUAGE_TIP = "当你所用语言的语音包没有某页的录�
 L.OPT_FALLBACK_NONE = "保持静默"
 L.OPT_NO_PACK_AUDIO = "已安装的语音包还没有本页的旁白。"
 L.OPT_NO_PACK_INSTALLED = "未安装书籍语音包。"
+L.OPT_PAGE_COUNT_FMT = "第 %1$d 页，共 %2$d 页"
 
 -- Added in this release: new settings, profiles, module pages and windows.
 L.OPT_SECTION_PACKS = "语音包"

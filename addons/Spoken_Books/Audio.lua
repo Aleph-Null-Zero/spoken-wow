@@ -78,6 +78,11 @@ function SpokenBooks:KindOf(book)
 	return L[(self.TYPE_NAMES[place and place.type] or self.TYPE_NAMES.other).one]
 end
 
+--- Whether a book is one line in the queue (Read Book as One Line), rather than a line per page.
+function SpokenBooks:OneLine()
+	return not (SpokenBooksSettings and SpokenBooksSettings.bookAsOneLine == false)
+end
+
 --- Every installed pack this version can read, newest format first.
 function SpokenBooks:GetAudioPacks()
 	local packs = {}
@@ -124,9 +129,8 @@ local ACTIONS = {
 	},
 }
 
--- Guarded: a test loads the clips without Events.lua.
 local function PageStopped(clip, finished)
-	if finished and SpokenBooks.OnPageFinished then
+	if finished then
 		SpokenBooks:OnPageFinished(clip)
 	end
 end
@@ -148,6 +152,7 @@ function SpokenBooks:ClipFor(pageId)
 			local entry = self:PackLanguage(pack) == language and pack.pages[pageId]
 			if entry then
 				local book = self:Data().books[place.book]
+				local oneLine = self:OneLine()
 				local text = entry.text
 				if not text and language == self.BASE_LANGUAGE then text = place.text end
 				if not text and self.pageText and self.pageText[language] then
@@ -165,15 +170,22 @@ function SpokenBooks:ClipFor(pageId)
 					-- here would reset the Play button mid-sentence.
 					length = (entry.len and entry.len > 0) and entry.len or nil,
 					pageId = pageId,
+					-- A line per page: one book is one item to the player, its pages read on
+					-- with no pause or cue between.
+					group = not oneLine and "book:" .. tostring(place.book) or nil,
 					-- What the report is filed under: a fallback page is an English take even
 					-- under a German selection, and its report is about that.
 					language = language,
 					present = {
-						-- What it is over its name, as a speaker over a quest's title: the
-						-- book is one line, whatever page of it this is.
-						header = self:KindOf(place.book),
+						-- One line: what it is over its name, as a speaker over a quest's title,
+						-- whatever page of it this is. A line per page: the book over its page,
+						-- counted only where there is more than one ("page 1 of 1" is noise on
+						-- a letter, which is most of this corpus).
+						header = oneLine and self:KindOf(place.book) or title,
 						transcript = text,
-						label = title ~= "" and title or nil,
+						label = oneLine and (title ~= "" and title or nil)
+							or ((book and #book.pages > 1)
+								and format(L.OPT_PAGE_COUNT_FMT, place.number, #book.pages) or nil),
 						bullet = "book",
 						material = self:PageMaterial(),
 						portrait = self:PagePicture(),
@@ -188,6 +200,21 @@ function SpokenBooks:ClipFor(pageId)
 	return nil
 end
 
+--- A page's length in seconds, from the pack ClipFor would read it from; nil where that pack
+--- recorded none.
+function SpokenBooks:PageLength(pageId)
+	local packs = self:GetAudioPacks()
+	for _, language in ipairs(self:LanguageOrder()) do
+		for _, pack in ipairs(packs) do
+			local entry = self:PackLanguage(pack) == language and pack.pages[pageId]
+			if entry then
+				return (entry.len and entry.len > 0) and entry.len or nil
+			end
+		end
+	end
+	return nil
+end
+
 --- Why there is no clip, phrased for the player. Distinguishes "you have no sound pack"
 --- from "your pack does not cover this page": the first is a download and the second is
 --- nothing they can do, and telling them apart is the point of saying anything at all.
@@ -198,6 +225,19 @@ function SpokenBooks:DescribeMissingAudio()
 	return L.OPT_NO_PACK_AUDIO
 end
 
+--- Whether ClipFor would find a clip, without building one.
 function SpokenBooks:HasAudio(pageId)
-	return self:ClipFor(pageId) ~= nil
+	local data = self:Data()
+	if not (data and data.pages[pageId]) then
+		return false
+	end
+	local packs = self:GetAudioPacks()
+	for _, language in ipairs(self:LanguageOrder()) do
+		for _, pack in ipairs(packs) do
+			if self:PackLanguage(pack) == language and pack.pages[pageId] then
+				return true
+			end
+		end
+	end
+	return false
 end
