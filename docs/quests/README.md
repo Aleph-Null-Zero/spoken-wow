@@ -18,7 +18,8 @@ into a pack:
 
 | Stage | Input | Output | Who runs it |
 | --- | --- | --- | --- |
-| `extract` | vmangos world DB | `corpus/corpus.json.gz` | a maintainer, when vmangos ships a new dump |
+| `extract` | vmangos world DB | Postgres `quest_line` | a maintainer, when vmangos ships a new dump |
+| `export-corpus` | Postgres `quest_line` | `corpus/corpus.json.gz` | before every build (`package-audio` runs it) |
 | `make quests-sounds` | live takes + `audio-history/` | `audio/` | before every build |
 | `build` | corpus + `audio/` | `dist/SpokenQuestsAudio/` | anyone cutting a release |
 | `install` | the built module | WoW AddOns folder | to try it in game |
@@ -65,10 +66,15 @@ column it didn't previously capture.
 pip install -r requirements-extract.txt   # adds pandas, numpy, PyMySQL
 docker compose up -d mysql                # the vmangos world DB
 python cli-main.py init-db                # download and import the vmangos dump
-python cli-main.py extract                # writes corpus/corpus.json.gz
+DATABASE_URL=… python cli-main.py extract # into Postgres, as import-corpus would take it
+make quests-export-corpus                 # then the committed file, from the database
 ```
 
-Commit the resulting corpus; the diff is reviewable.
+Commit the re-exported corpus; the diff is reviewable. **The database is the corpus, and
+`corpus/corpus.json.gz` is its export:** `export-corpus` is the only thing that writes it, and
+the file says so in `producedBy`. Never edit it by hand or write it from an extract, a merge
+or a script: change the database, then export. `import-corpus` reads the file only to seed an
+empty database, such as CI's.
 
 ## Voice Setup
 

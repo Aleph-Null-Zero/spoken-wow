@@ -4,9 +4,9 @@ Audio is not made here: every take is cut by the site and archived there. What i
 the corpus, and building a pack from audio/ once `make quests-sounds` has assembled it:
 
     init-db       download and import the vmangos dump      maintainer, rare
-    extract       world DB -> corpus/corpus.json.gz         maintainer, rare
-    import-corpus corpus/corpus.json.gz -> Postgres         after an extract
-    export-corpus Postgres -> corpus/corpus.json.gz         before a build
+    extract       world DB -> Postgres                      maintainer, rare
+    import-corpus corpus/corpus.json.gz -> Postgres         to seed an empty database
+    export-corpus Postgres -> corpus/corpus.json.gz         before a build; its only writer
     export-locale-text  Postgres -> one language's gossip text   before its Gossip pack
     export-giver-names  Postgres -> the addon's translated quest-giver names   after import-locale
     export-gossip-text  Postgres -> the addon's gossip text per client locale, and aliases
@@ -36,11 +36,11 @@ subparsers.add_parser(
     help="Download the vmangos dump and import it. Needed only before 'extract'.")
 subparsers.add_parser(
     "extract",
-    help="Query the world DB and write the committed corpus. The only stage needing MySQL.") \
-    .add_argument("--out", default=DEFAULT_CORPUS_PATH)
+    help="Query the world DB into Postgres; export-corpus then writes the file. Needs MySQL "
+         "and DATABASE_URL.")
 subparsers.add_parser(
     "import-corpus",
-    help="corpus.json.gz -> Postgres. Needed by a maintainer, not to produce audio.") \
+    help="corpus.json.gz -> Postgres, to seed an empty database from the committed export.") \
     .add_argument("--corpus", default=DEFAULT_CORPUS_PATH)
 loc = subparsers.add_parser(
     "import-locale",
@@ -120,9 +120,11 @@ if args.mode == "init-db":
 
 elif args.mode == "extract":
     from tts_cli.corpus import extract
-    corpus = extract(args.out)
-    print(f"Wrote {corpus['lineCount']} lines "
-          f"and spawns for {len(corpus['spawns'])} NPCs to {args.out}")
+    from tts_cli.corpus_db import import_corpus_data
+    corpus = extract()
+    print(f"Extracted {corpus['lineCount']} lines and spawns for {len(corpus['spawns'])} NPCs")
+    import_corpus_data(corpus)
+    print("Now write the committed file from the database: make quests-export-corpus")
 
 elif args.mode == "import-corpus":
     # Imported here rather than at the top, the way extract is: psycopg2 is in

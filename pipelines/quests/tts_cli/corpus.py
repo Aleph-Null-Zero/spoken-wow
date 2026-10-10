@@ -170,8 +170,9 @@ def lines_in_area(corpus: dict, map_id: int, x_range, y_range) -> list:
             if spawn_key(line["npcType"], line["npcId"]) in inside]
 
 
-def extract(path: str = DEFAULT_CORPUS_PATH) -> dict:
-    """Query the world database and write the corpus. The only step that needs MySQL."""
+def extract() -> dict:
+    """The world database as a corpus, for import_corpus_data to take into Postgres. The only
+    step that needs MySQL; the committed file is written by export-corpus alone."""
     import pandas as pd
 
     from tts_cli.sql_queries import (query_dataframe_for_all_quests_and_gossip,
@@ -186,6 +187,4 @@ def extract(path: str = DEFAULT_CORPUS_PATH) -> dict:
     # avoid requiring an ElevenLabs key just to extract text.
     df = TTSProcessor.preprocess_dataframe(TTSProcessor.__new__(TTSProcessor), df)
 
-    corpus = build_corpus(df, query_spawns())
-    write_corpus(path, corpus)
-    return corpus
+    return build_corpus(df, query_spawns())
