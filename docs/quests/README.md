@@ -18,7 +18,8 @@ into a pack:
 
 | Stage | Input | Output | Who runs it |
 | --- | --- | --- | --- |
-| `extract` | vmangos world DB | `corpus/corpus.json.gz` | a maintainer, when vmangos ships a new dump |
+| `extract` | vmangos world DB | Postgres `quest_line` | a maintainer, when vmangos ships a new dump |
+| `export-corpus` | Postgres `quest_line` | `corpus/corpus.json.gz` | before every build (`package-audio` runs it) |
 | `make quests-sounds` | live takes + `audio-history/` | `audio/` | before every build |
 | `build` | corpus + `audio/` | `dist/SpokenQuestsAudio/` | anyone cutting a release |
 | `install` | the built module | WoW AddOns folder | to try it in game |
@@ -65,10 +66,17 @@ column it didn't previously capture.
 pip install -r requirements-extract.txt   # adds pandas, numpy, PyMySQL
 docker compose up -d mysql                # the vmangos world DB
 python cli-main.py init-db                # download and import the vmangos dump
-python cli-main.py extract                # writes corpus/corpus.json.gz
+DATABASE_URL=… python cli-main.py extract # into Postgres, as import-corpus would take it
+make quests-export-corpus                 # then the committed file, from the database
 ```
 
-Commit the resulting corpus; the diff is reviewable.
+Commit the re-exported corpus; the diff is reviewable. **The database is the corpus, and
+`corpus/corpus.json.gz` is its export:** `export-corpus` is the only thing that writes it, and
+the file says so in `producedBy`. Never edit it by hand or write it from an extract, a merge
+or a script: change the database, then export. `import-corpus` is **dangerous** and for one use: seeding
+an empty database, such as CI's or a new local one. It refuses a database that already holds
+the corpus, because the file lags it and the import would put back the file's older text and
+speakers; `--force` overrides that only to rebuild a database on purpose.
 
 ## Voice Setup
 
@@ -84,6 +92,13 @@ that choice from the SoundEntries names, falling back to the race-gender's commo
 the game data does not answer. The corpus carries the result, so the current corpus needs 54
 voices rather than one per race-gender. `narrator-male` is the exception and has no flavor:
 it is a pseudo-race for gameobjects and items.
+
+An NPC with no humanoid display - Shael'dryn, the OOX robots, Kum'isha - has no race or sex to
+pick a voice by, so it is voiced by the model it is drawn with: `model-{ModelID}`, shared by
+every NPC on that model. Its quest, gossip and follow-up lines are in the corpus, marked
+`no-voice` until a voice is chosen for the model. Its quest and gossip rows come after the
+follow-up rows, so every row before them keeps its place (`ord`). A patch variant of the same
+NPC with a humanoid display wins.
 
 The whole set is listed on `/voices`, which is also the easiest way to build it — see
 "Managing voices". The clips to build them from sit in
@@ -355,7 +370,7 @@ a warning, and its gossip is matched against the English text.
 #### A line for each player gender, where a language's text needs it
 
 A language's own text decides whether a moment is one line or two. Where it branches on the
-player's gender (`$G`) the moment is `:m` and `:f`, in files `m-…` and `f-…`;
+player's gender (`$G`, or `$U`) the moment is `:m` and `:f`, in files `m-…` and `f-…`;
 otherwise it is one plain line, for every player, whatever English does. German can say one
 thing where English says "lad" and "lass", and French can need two forms where English has one.
 The import (`tts_cli/locale_import.py`), accept and the explorer's text editor all follow the
@@ -443,11 +458,18 @@ the line is judged or sent — the voiceability gate, the request, and the stale
 hashes, which go through one function (`sentText`) so they cannot disagree. Case follows the
 position, not the token: lowercase mid-sentence, capitalised at a sentence's start and always
 in German. A line's female variant, which exists where the English branches on `$G`, gets the
-feminine word, and a leftover `$g…;` takes that variant's branch. English quest text has
+feminine word, and a leftover `$g…;` takes that variant's branch; `$u…;`, which ptBR's and
+German's own templates write, is read the same way in every language. English quest text has
 nothing left for it to replace, its words having been written in at extraction; a book page
 in any language, English included, goes through the same table (`docs/books/README.md`). A
 token glued to a following letter (`$Nama`) is left in, so the line stays unvoiceable until a
-translator rewrites it. Doing this at send time rather than in the rows covers every way a
+translator rewrites it. German's genitive `s` is the one exception: `$Ns` and `$Cs` read as
+`Abenteurers`, or `Abenteurerin` on the female variant. A branch never spans a sentence's end,
+so one whose `;` was lost stays in as a token instead of swallowing the text up to a later `;`.
+Contributions triage shows any token still left after this, a bare `<` or `>`, and a gap
+before `.` or `,` or a mid-sentence double space where a gender branch came through empty,
+above the row's text, so a line that would never be voiced is seen before it is accepted.
+Doing this at send time rather than in the rows covers every way a
 translation arrives — the dump, the ptBR import, QuestIT's Italian, a player's contribution, a translator's edit
 — and lets a word be changed later without rewriting any of them; the changed word then marks
 those takes stale.
@@ -645,10 +667,11 @@ Like the lexicon, overrides live only in the database, and the Python CLI does n
 
 `/voices` is admin-only. It lists every voice on the roster — alphabetically, so a
 race-gender's flavors sit together — with the lines and NPCs each one carries, and marks which
-exist in the ElevenLabs account. The roster is `apps/web/src/lib/voices/voices.ts`: every
-race-gender and its flavors, written down by hand, and read by the triage selects and the
-explorer filters too. A voice listed there has a slot before any line uses it, so it can be
-cloned before its first line is accepted. The corpus only supplies the counts; a test fails on
+exist in the ElevenLabs account. The roster is in the database (migration 0071): every type an
+NPC can be, its genders and flavors, and the voice each combination is read by, edited by an
+admin on the Types tab of `/npcs` and read by the triage selects and the explorer filters too.
+A voice there has a slot before any line uses it, so it can be cloned before its first line is
+accepted. The corpus only supplies the counts; a test fails on
 a corpus line whose voice is not on the roster, and accepting a contribution refuses one. The
 Skybourne elves have the game's two voice sets per gender, named by their NPCSounds id
 (`skybourneelf-male-3776`) until they have better names.
@@ -658,7 +681,9 @@ Expanding one shows the clips it would be cloned from: upload, play back, delete
 material in `voice/seed-clips/<race-gender>/<flavor>/`, which is the shape of its name — no
 mapping table to keep in sync when a flavor is added. A slot with no flavor seeds from the files
 directly in `<race-gender>/`, as `bloodelf-female` does: the one voice the roster gives
-them. `narrator-male` has nothing to seed from, which is expected: it is not a race.
+them. `narrator-male` has nothing to seed from, which is expected: it is a voice, not a type.
+It reads the `gameobject`, `item` and `creature` types, which is how a quest started from a
+billboard says it was a gameobject and is still read by the narrator.
 
 Merging is there because the practical source is one-second greeting clips.
 ElevenLabs treats combined length as what decides clone quality — one to two minutes is the
@@ -887,7 +912,10 @@ asks `Spoken:AreContributeButtonsHidden()` in its gap check and refreshes on the
 With DialogueUI, which never shows the game's quest and gossip frames, its window carries a
 Report icon under its Decline button instead, faint on every page and in full beside
 **No voice-over playing? Contribute!** when a line is missing (see
-[`DIALOGUEUI-BRIDGE.md`](DIALOGUEUI-BRIDGE.md)).
+[`DIALOGUEUI-BRIDGE.md`](DIALOGUEUI-BRIDGE.md)). **Hide Report Buttons**, in the same settings,
+takes away the faint icon with every other Report button, the quest log's included; each addon
+asks `Spoken:AreReportButtonsHidden()` and redraws on the player's `REPORT_SETTINGS_CHANGED`
+callback. The icon beside the Contribute words stays.
 
 Clicking it opens the same copy box `ReportButton.lua` uses, holding a plain-text envelope
 instead of an address: the addon, the build, the locale, the quest or NPC, and the text
@@ -948,9 +976,9 @@ A gossip row, in any language, is matched in three steps (`apps/web/src/lib/cont
    aside, spoken by the same race and gender. English asks the catalogue, as it always has; another
    language asks its own rows' `localeText`.
 2. **By BroadcastText:** the lowest id whose text in the language reads the same, in the form the
-   NPC's sex shows (`text` for male, `text1` for female, either side of a `$g` branch), then a
-   line of that id (`gossip_broadcast`) in the same race and gender. A line named after its id
-   must also have the same flavor.
+   NPC's sex shows (`text` for male, `text1` for female, either side of a `$g` or `$u` branch, or
+   the `$u` unresolved, as the client sends it), then a line of that id (`gossip_broadcast`)
+   in the same race and gender. A line named after its id must also have the same flavor.
 3. **Otherwise a new line:** `g:b{id}-{voice}` when the id is known, else `g:{md5}` in English
    and `g:{lang}-{md5}` in another language.
 
@@ -1038,10 +1066,13 @@ the display, and flavor from the NPC's greeting sounds. Where the game names non
 Cairne Bloodhoof's hand-made display, the import gives the race-gender's default ("standard",
 or its busiest flavor) and marks the answer doubtful; the export writes it back without one.
 Such an NPC keeps the voice its lines were made in and is listed under Doubtful on
-`/contributions/npcs`, which lists every NPC, for a moderator to confirm or change.
-A speaker whose NPC nobody knows anything about keeps the voice written with it.
+`/npcs`, which lists every NPC, for an admin to confirm or change. Migration 0071 gave every
+speaker's NPC an answer from its speaker rows; one with no type has no voice, and its lines wait.
 `import-corpus` never replaces a moderator's answer unless a moderator marked it doubtful, even
 with a moderator answer from the file, and lists every answer it kept over a different one.
+A dump answer that knows only the creature's model (`model-77`) fills an NPC nobody answered
+and updates its own kind, and leaves every other answer, a player's client included: a race
+somebody named says more than a model, and replacing it would take the NPC's voice away.
 Names are per language, in `entity_name`. A moderator can rename an NPC there, in the language their
 rights are checked in (English unless the request names another), and the import leaves an
 edited English name alone.
@@ -1073,10 +1104,17 @@ speakers accepted contributions wrote. Those carry the NPC's own resolution at t
 own appearance data. Migration 0058 demoted the 71 rows that had been confirmed that way.
 
 `/contributions` shows the result with its provenance and says plainly which rows are guesses;
-the override there writes `moderator` and is collaborator-only, like everything else that
-changes a row. A new race or voice set is added to the roster in
-`apps/web/src/lib/voices/voices.ts`: that puts it in the triage selects and gives it a slot on
-`/voices`, marked as not existing in the account until it is cloned.
+answering who speaks a row there, like everything on `/npcs`, is a global admin's alone, since
+it picks the voice in every language, and everyone else sees "Missing NPC", "Missing type" or
+the answer. A new type, gender or flavor is added on `/npcs` → Types, with a voice of its own
+or an existing one (a treant could be read by the narrator): that puts it in the selects and
+gives a new voice a slot on `/voices`, marked as not existing in the account until it is cloned.
+`import-corpus` adds any type the file names that the database lacks, and never changes one it
+has. A first gender for a genderless type, or a first flavor for a race-gender read by one
+bare voice, splits a voice NPCs may already speak with, so the Types tab asks first: map it to
+the new combination (its files and takes stay valid, and the type's NPCs move there) or throw
+it away (the new combination gets a new voice; the old one and its takes stay on file unused,
+and the NPCs wait for an answer).
 
 `/contributions/game-data`, unlinked and collaborator-only, resolves NPCs from a game client
 instead of by hand. It lists chat commands that make the client ask its server about every
@@ -1374,6 +1412,7 @@ The dataframe schema before calling the `preprocess_dataframe` function consists
 | `name`        | The name of the NPC involved in the interaction               |
 | `type`        | The type of the NPC involved in the interaction ('creature', 'gameobject', or 'item') |
 | `id`          | The creature/gameobject/item ID of the NPC involved in the interaction |
+| `ModelID`     | The creature's model where its display has no humanoid race, else empty |
 
 `DisplayRaceID = -1` is used for interactions with inanimate NPCs: gameobjects, items etc. It's mapped to a voice called "narrator" in `RACE_DICT`.
 

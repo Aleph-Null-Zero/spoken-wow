@@ -88,6 +88,11 @@ function Z:RefreshFound() end
 Z.ToggleLoreWindow = nil
 _G.hooksecurefunc = _G.hooksecurefunc or function() end
 
+-- The page's line over a place's name comes from Audio.lua's PlaceAbove; the rest of that file
+-- would replace this test's stand-in packs.
+local audio = setmetatable({}, { __index = Z })
+assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Zones", audio)
+Z.PlaceAbove = audio.PlaceAbove
 for _, file in ipairs({ "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
@@ -113,6 +118,19 @@ Z:ToggleLoreWindow()
 Expect("opening it lands on where the player stands", page.title.text, "Durotar")
 Expect("...the story in the spellbook's ink", page.body.ink and page.body.ink[1], 0.24)
 Expect("...with Play and Report for it", page.play.mapID == 1411 and page.report.mapID == 1411, true)
+-- Hide Report Buttons is Spoken's; here, a Spoken that answers it, and the redraw its
+-- REPORT_SETTINGS_CHANGED runs.
+local spoken, reportsHidden = _G.Spoken, true
+_G.Spoken = setmetatable({ AreReportButtonsHidden = function() return reportsHidden end }, { __index = spoken })
+Z:RefreshLoreWindow()
+Expect("Hide Report Buttons, in Spoken's settings, takes Report off the Compendium's page",
+    page.report:IsShown(), false)
+Expect("...Play taking its corner", page.play.anchor.point .. " " .. tostring(page.play.anchor.relativeTo == page.frame),
+    "TOPRIGHT true")
+reportsHidden = false
+Z:RefreshLoreWindow()
+Expect("...and gives it back when it is off", page.report:IsShown(), true)
+_G.Spoken = spoken
 Expect("...and the zone's picture above the story", page.body.picture:IsShown() and page.body.picture:GetTexture(), "Pictures/zone-1411")
 Expect("...its edge frayed by its mask", page.body.pictureMask:GetTexture(), "Pictures/Mask2")
 Expect("...a little see-through, so the parchment shows in it", page.body.picture:GetAlpha(), 0.95)
@@ -393,6 +411,10 @@ RowFor("Eastern Kingdoms").scripts.OnClick(RowFor("Eastern Kingdoms"))
 Expect("a locked continent does not open", Shown(), "Azeroth|Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
 Expect("a locked area cannot be chosen", RowFor("Sen'jin Village").row and RowFor("Durotar").selected, true)
+-- A city not discovered is still in its zone, not its continent.
+Z:ShowLoreFor(1454, nil)
+Expect("a city not discovered is in its zone, not its continent",
+    page.title.text .. "|" .. page.sub.text.text, "Orgrimmar|" .. Z.L.IN_ZONE_FMT:format("Durotar"))
 -- Opened from the map's panel, a place not discovered says so instead of telling its story.
 Z:ShowLoreFor(1411, "sen'jin village")
 Expect("a place not discovered, opened from elsewhere, says so", page.title.text .. ": " .. page.body.text.text, "Sen'jin Village: " .. Z.L.NOT_DISCOVERED)

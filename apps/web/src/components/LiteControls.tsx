@@ -50,3 +50,8 @@ export function LiteCheckbox({ className, ...props }: Omit<ComponentProps<"input
     />
   );
 }
+
+/** The one size for a row's buttons and pickers, so a row of them reads as one set. */
+export const ROW_BUTTON = "h-7 gap-1 px-2 text-xs";
+/** A cell's content on one line as tall as a button, so a row's cells line up. */
+export const ROW_LINE = "flex min-h-7 items-center gap-1";

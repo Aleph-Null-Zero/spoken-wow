@@ -32,7 +32,8 @@ function ReportButton:SetTarget(mapID, areaKey)
 end
 
 function ReportButton:Refresh()
-	if self.mapID then
+	local hidden = _G.Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()
+	if self.mapID and not hidden then
 		self:Show()
 	else
 		self:Hide()

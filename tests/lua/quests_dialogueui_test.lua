@@ -589,6 +589,12 @@ local icon, link = corner and corner.icon, corner and corner.link
 Expect("a voiced quest shows the Report icon", icon ~= nil and icon:IsShown(), true)
 Expect("...on DialogueUI's window, which UIParent's hiding leaves up", icon and icon:GetParent(), DUI)
 Expect("...faint, as the DialogueUI narrator style's", icon and icon:GetAlpha(), 0.4)
+env.Addon.db.profile.Frame.HiddenActions.report = true
+_G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+Expect("Hide Report Buttons, in Spoken's settings, takes it away at once", icon:IsShown(), false)
+env.Addon.db.profile.Frame.HiddenActions.report = nil
+_G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+Expect("...and gives it back when it is off", icon:IsShown(), true)
 Expect("...with nothing to contribute beside it", link and link:IsShown(), false)
 Expect("...and not the game's panel button", panelButton:IsShown(), false)
 Fire(icon, "OnEnter")

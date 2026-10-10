@@ -33,11 +33,17 @@ local defaults = {
 	-- Whole book rather than the page on screen. A twenty-page journal read one button
 	-- press at a time is a worse experience than one that reads on while you turn pages.
 	readWholeBook = true,
+	-- A book is one line in the queue: Skip skips the rest of it and the progress bar runs
+	-- across it. Off, each page waits in the queue on its own, with its page count.
+	bookAsOneLine = true,
 	-- Off, because a reader who has not asked for it should hear a book whenever they open
 	-- it. On, a book is narrated the first time it is opened and stays quiet after that.
 	readOnce = false,
 	-- As Quests' Stop When Window Closes: off, a book carries on being read after it is shut.
 	stopOnClose = false,
+	-- Off: a reader may still be reading along when the voice ends. On, the book shuts after its
+	-- last page has been heard, which also gives back the interface DialogueUI's book view hides.
+	closeWhenRead = false,
 	-- Why a page was or was not read, in chat (/spb debug).
 	debug = false,
 	-- Follow the client, and fall back on English: every pack that exists today is English,
@@ -192,22 +198,18 @@ function SpokenBooks:SetupSource()
 		title = "Spoken Books",
 		addon = ADDON_NAME,
 		order = 3,
-		-- NO LIMIT, unlike the zones source, and the difference is what the limit is for.
-		-- Zone lore arrives in bursts nobody asked for -- crossing a cluster of small
-		-- subzones queues narration about places the player has already left -- so it caps
-		-- the backlog and drops the oldest. A book is the opposite: a bounded sequence
-		-- somebody deliberately opened, whose pages are only meaningful in order. Capped at
-		-- one, queueing a four-page book keeps the first page and the last and silently
-		-- discards the middle, which is how this was found.
-		--
-		-- Nothing accumulates regardless, even though closing the book no longer stops this
-		-- source: turning to -- or opening -- a page that is not already queued rebuilds this
-		-- source's queue from there, so what waits behind the voice is one book and never a
-		-- session's worth of them.
+		-- No limit, unlike the zones source. Zone lore arrives in bursts nobody asked for --
+		-- crossing a cluster of small subzones queues narration about places the player has
+		-- already left -- so it caps the backlog and drops the oldest. A readable is one the
+		-- player opened, and each queues after the one being read: they pile up on purpose, a
+		-- gravestone read on the way waiting for the book, and a cap would drop what was opened.
 		queueLimit = nil,
 		-- Durations come from a generated lookup and are exact, so the gap only has to
 		-- separate two pages of prose rather than absorb a bad measurement.
 		interClipGap = 0.35,
+		-- A page whose file the client cannot find (a pack updated without a restart, a partial
+		-- install) is refused at the door, so the book reads on from the next page.
+		testBeforeQueue = true,
 		-- What Spoken's settings show on this part's card: which voice packs are installed.
 		packs = function()
 			local names = {}
