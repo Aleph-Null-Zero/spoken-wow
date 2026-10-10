@@ -641,3 +641,100 @@ function Actions:HeaderControls(frame, controls, first, clip)
     end
     return row
 end
+
+--- Whether a DialogueUI dialog (its quest window or its book view) is open with the windows not
+--- put over it (Show Spoken Over DialogueUI off): DialogueUI then hides the interface, and a window
+--- left showing would leave its 3D portrait over the dialog, which takes no alpha from it.
+function Actions.DialogCovers()
+    if Addon.playerHost then return false end
+    for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
+        local dialog = _G[name]
+        if type(dialog) == "table" and dialog.IsShown and dialog:IsShown() then return true end
+    end
+    return false
+end
+
+--- Calls `fn` whenever a DialogueUI dialog opens or closes, a frame later, once DialogueUI's
+--- bridge has put the windows over it or not. Told by a child of each, as DialogueUIPlayer is.
+function Actions.WatchDialogs(fn)
+    local function Later()
+        if C_Timer and C_Timer.After then C_Timer.After(0, fn) else fn() end
+    end
+    for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
+        local dialog = _G[name]
+        if type(dialog) == "table" and dialog.GetEffectiveScale then
+            local watch = CreateFrame("Frame", nil, dialog)
+            watch:SetScript("OnShow", Later)
+            watch:SetScript("OnHide", Later)
+        end
+    end
+end
+
+-- A window fading in, and out: the Talking Head's words take a quarter second to show.
+local FADE_IN, FADE_OUT = .25, .4
+
+local Fader = {}
+
+--- Shows and hides `frame` by fading it (Fader:Set), with the models `models()` lists: a model
+--- takes no alpha from its parent. While it fades out the captions keep the words it had.
+function Actions.Fader(frame, models)
+    local fader = { frame = frame, models = models, alpha = 0, want = false }
+    for key, fn in pairs(Fader) do fader[key] = fn end
+    fader.driver = CreateFrame("Frame")
+    fader.driver:Hide()
+    fader.driver:SetScript("OnUpdate", function(_, elapsed) fader:Step(elapsed) end)
+    return fader
+end
+
+function Fader:Paint()
+    local a = self.alpha
+    local eased = a * a * (3 - 2 * a)
+    self.frame:SetAlpha(eased)
+    for _, model in ipairs(self.models and self.models() or {}) do
+        if model.SetAlpha then model:SetAlpha(eased) end
+    end
+end
+
+--- Fades the frame in or out; `immediate` shows or hides it at once.
+function Fader:Set(shown, immediate)
+    shown = shown and true or false
+    if not self.frame:IsShown() then self.alpha = 0 end
+    if shown then
+        self:Release()
+        self.frame:Show()
+    elseif self.frame:IsShown() and not immediate and not self.holding and Transcript.Hold then
+        -- The words stay for the fade (Transcript:Hold); a line that comes meanwhile releases them.
+        Transcript:Hold()
+        self.holding = true
+    end
+    self.want = shown
+    if immediate then self.alpha = shown and 1 or 0 end
+    self:Step(0)
+end
+
+function Fader:Release()
+    if not self.holding then return end
+    self.holding = nil
+    Transcript:Release()
+end
+
+--- Whether the frame is fading out, or out of sight.
+function Fader:Leaving()
+    return not self.want
+end
+
+function Fader:Step(elapsed)
+    local target = self.want and 1 or 0
+    if self.alpha < target then
+        self.alpha = math.min(target, self.alpha + elapsed / FADE_IN)
+    elseif self.alpha > target then
+        self.alpha = math.max(target, self.alpha - elapsed / FADE_OUT)
+    end
+    self:Paint()
+    if self.alpha ~= target then self.driver:Show(); return end
+    self.driver:Hide()
+    if not self.want and self.frame:IsShown() then
+        self.frame:Hide()
+        self:Release()
+    end
+end
