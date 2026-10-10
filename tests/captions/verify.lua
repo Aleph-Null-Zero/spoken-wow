@@ -99,6 +99,9 @@ local function Advance(seconds)
     clock=target
     T:Update()
     M:Tick(seconds)
+    -- The windows' fades run on frames of their own (Actions.Fader).
+    if M.fader then M.fader:Step(seconds) end
+    if E.PlayerFrame.fader then E.PlayerFrame.fader:Step(seconds) end
 end
 local function Clip(key,text,length)
     return {key=key,path=key,length=length or 60,text=text,
@@ -265,6 +268,8 @@ Check(HighlightCount()==0 and T.activeWord==nil,'waiting clips do not claim a wo
 held=false; Advance(1)
 Check(Q:IsPlaying() and T:GetElapsed()==0 and T.activeWord==1,'gated clip begins highlighting only when audio starts')
 Q:RemoveAllSoundsFromQueue()
+-- The window fades out first, keeping its words until it has.
+Advance(1)
 local failed=Clip('failed','Not playable',10); failed.path='missing'
 source:Enqueue(failed)
 Check(not T.frame:IsShown(),'rejected audio leaves no stale captions')
@@ -282,7 +287,8 @@ Check(not cfg.Enabled,'slash command disables captions')
 SlashCmdList.SPOKEN('transcript on')
 Check(cfg.Enabled,'slash command enables captions')
 SlashCmdList.SPOKEN('stop')
-Check(not T.frame:IsShown(),'slash stop clears display')
+Advance(1)
+Check(not T.frame:IsShown(),'slash stop clears display once the window has faded out')
 Check(T:CleanText('|cffff0000Hello|r |Hitem:1|h[sword]|h|n|Ticon:16|tWorld')=='Hello [sword]\nWorld','markup is normalized without losing visible text')
 Check(T:CleanText('Привет 世界')=='Привет 世界','UTF-8 text remains intact')
 
