@@ -1388,14 +1388,15 @@ function Skin:Veil(closing)
     local dialog = closing.dialog
     closing.veiled, closing.dialogAlpha, closing.veiledAt = true, dialog:GetAlpha() or 1, closing.time
     dialog:SetAlpha(0)
-    -- DialogueUI hides the interface while its window is open and shows it as the window closes.
+    -- DialogueUI hides the interface while its window is open (SetUIVisibility) and shows it as the
+    -- window closes.
     -- This window is part of it, so it would fly unseen: the interface is shown now, as DialogueUI
     -- would, and hidden again should the dialog come back. Not in combat, where DialogueUI shows
     -- it itself and the call is not allowed.
-    if not UIParent:IsShown() and SetGameUIShown and not (InCombatLockdown and InCombatLockdown()) then
+    if not UIParent:IsShown() and SetUIVisibility and not (InCombatLockdown and InCombatLockdown()) then
         closing.shownUI = true
         UIParent:SetAlpha(0)
-        SetGameUIShown(true)
+        SetUIVisibility(true)
     end
     self.flownFrom = dialog
     self:Settle(dialog)
@@ -1433,7 +1434,7 @@ function Skin:EndClose(hide)
         if closing.shownUI then
             UIParent:SetAlpha(1)
             -- The dialog back: the interface hidden again, as DialogueUI left it.
-            if not hide and SetGameUIShown and not (InCombatLockdown and InCombatLockdown()) then SetGameUIShown(false) end
+            if not hide and SetUIVisibility and not (InCombatLockdown and InCombatLockdown()) then SetUIVisibility(false) end
         end
         if not hide then self:Unveiled(closing.dialog) end
     end
