@@ -26,7 +26,7 @@ Defaults = {
             -- "subtitle", "minimal" (Small Window), "classic" (Large Window), "dialogueui" or
             -- "none" (the voice alone). Legacy clients start in the window they always had.
             Style = Version.IsAnyLegacy and "classic" or "subtitle",
-            -- Forever only: the bronze its own frames wear, on the minimal player's metal.
+            -- The bronze the Forever client's frames wear, on the windows' metal (Addon:Bronze).
             BronzeTint = true,
             MinimalWidth = 380,
             -- What the small window is drawn on: "parchment" or "dark", the rock it had before.
