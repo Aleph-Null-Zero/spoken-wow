@@ -60,7 +60,7 @@ reproduced. Never prune those.
 (`make/droplet.mk`) locally and from the `DO_*` secrets in CI.
 
 **Ids and filenames are frozen.** `q:{questID}:{accept|progress|complete}`, `g:{md5}`,
-`f:{broadcastTextID}:{voice}` (each with an optional `:m`/`:f` suffix), `z:{mapID}`,
+`g:b{broadcastTextID}-{voice}`, `g:{lang}-{md5}`, `f:{broadcastTextID}:{voice}` (each with an optional `:m`/`:f` suffix), `z:{mapID}`,
 `s:{mapID}:{key}`, `b:{pageTextID}`, and the paths derived from them. Renaming one re-ships a
 pack every player has downloaded and orphans the take history. Each is derived in exactly one
 place: `pipelines/quests/tts_cli/naming.py` (mirrored by
@@ -98,9 +98,8 @@ Tooling, the site, CI and docs bump nothing.
 - The checks above are the verification. Do not stack extra self-review passes or use
   subagents to re-check finished work.
 - PR descriptions are prose for the reviewer and for whoever finds the branch in a year. The
-  title states the outcome. Open with the problem, record the decisions you rejected, and
-  include an honest verification section that says what you did not check (for example,
-  "not looked at in-game").
+  title states the outcome. Open with the problem, and include an honest verification section
+  that says what you did not check (for example, "not looked at in-game").
 
 ## Comments
 
