@@ -34,6 +34,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   book view, that brings back the interface it hides. The Spoken window now shows a book's title in
   your client's language, and names a one-page letter by its title instead of an internal key.
   *([earlsinclairdino](https://github.com/earlsinclairdino))*
+- For feature addons: `present.font` on a clip draws its speaker, title, queue row, captions and
+  subtitle in that face, for a script the game's font has no glyphs for. A face the client cannot
+  load leaves the player's own. *([damesene](https://github.com/damesene))*
+- **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
+  written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.2.0 — 2026-10-08
 

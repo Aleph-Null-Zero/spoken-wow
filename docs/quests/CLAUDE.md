@@ -56,16 +56,24 @@ claiming is global.
 ## Architecture
 
 **The corpus is Postgres `quest_line`.** `corpus/corpus.json.gz` is a committed export of it
-(`make quests-export-corpus`). The Python CLI and the pack build read that file and never a
-database. MySQL (vmangos) is touched only by the rare extract and import targets.
+(`make quests-export-corpus`), written by nothing else: a new dump goes into the database
+(`extract`), never into the file. Never hand-edit or merge-build it; change the database and
+export. `import-corpus` only seeds an empty database (it refuses a filled one); never run it
+against a live one. The pack build reads that file and never a database. MySQL (vmangos) is touched only
+by the rare extract and import targets.
 
 **Filenames come from `tts_cli/naming.py` alone.** `apps/web/src/lib/audio.ts` mirrors its
 subfolder rule. The addon finds a sound through a generated lookup table, so a filename that
 is off by one character plays silence.
 
-**Voices are `race-gender-flavor`.** The roster is hand-kept in `apps/web/src/lib/voices/voices.ts`,
-not derived from the corpus. It is also the whitelist that keeps a voice name safe as a path
-segment, and `voices.test.ts` fails on a corpus voice it lacks.
+**An NPC has a type; a voice reads it.** Types (races, plus `gameobject`, `item` and
+`creature`), their genders and flavors, and the voice each combination is read by live in the
+`race`, `gender`, `flavor`, `voice` and `voice_assignment` tables (migration 0071), which an
+admin edits at `/npcs` → Types. `npc` is the only record of who an NPC is; `quest_line_speaker`
+keeps the names its files were made under. Every voice that existed before is named
+`race-gender-flavor`, and a voice name is frozen once it has takes. The `voice` table is the
+whitelist that keeps a voice name safe as a path segment, and `voices.test.ts` fails on a corpus
+voice it lacks.
 
 **A job is a file, not a line.** Over a thousand files are shared by several NPCs, so
 regenerating one changes every line that points at it. The queue is keyed on the file.

@@ -110,6 +110,18 @@ Expect("the words are docked in the window", T.frame:GetParent(), Skin.frame)
 Expect("...filling its body", Skin.lines > 8, true)
 Expect("...with labels enough for them and the line sliding in", #T.labels >= Skin.lines + 1, true)
 Expect("...in DialogueUI's font", T.style.font, "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf")
+local function RecordFaces()
+    for _, label in ipairs(T.labels) do label.SetFont = function(self, face) self.face = face end end
+    T.measure.SetFont = function(self, face) self.face = face end
+end
+RecordFaces()
+T:SetClip({ text = "Korean lore.", present = { font = "Fonts\\2002.TTF" } })
+Expect("a line that names its own font is written and measured in it, over DialogueUI's",
+    tostring(T.labels[1].face) .. " " .. tostring(T.measure.face), "Fonts\\2002.TTF Fonts\\2002.TTF")
+T:SetClip({ text = "A quest." })
+Expect("...and the next line without one in DialogueUI's again", tostring(T.labels[1].face),
+    "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf")
+T:SetClip(nil)
 Expect("...and the parchment's red highlight", T.style.highlight, RED)
 Expect("the expand button has no place on a fixed page", T.expand:IsShown(), false)
 
@@ -288,6 +300,23 @@ Expect("...and the line", Skin.title.text:GetText(), "Wolves Across the Border")
 quests:Enqueue(H.Clip({ present = { header = "Eagan", label = "Second", portrait = { kind = "none" } } }))
 Expect("a waiting line gets a row", Skin.rows[1] and Skin.rows[1]:IsShown(), true)
 Expect("...reading its label", Skin.rows[1].text:GetText(), "Second")
+Spoken:StopAll()
+
+-- A clip that names its own face (present.font) keeps it while the window is resized, which
+-- repaints every string in the theme's face.
+local function Faced(text) -- keeps the face it is given, as the client's font strings do
+    local face = "Fonts\\FRIZQT__.TTF"
+    function text:SetFont(f) face = f; return true end
+    function text:GetFont() return face, 12 end
+end
+local NOTO = [[Interface\AddOns\Pack\NotoSerif.ttf]]
+Faced(Skin.name); Faced(Skin.title.text); Faced(Skin.rows[1].text)
+quests:Enqueue(H.Clip({ present = { header = "Příliš", label = "Žluťoučký", font = NOTO, portrait = { kind = "none" } } }))
+quests:Enqueue(H.Clip({ present = { header = "Kůň", label = "Úpěl", font = NOTO, portrait = { kind = "none" } } }))
+local function Faces() return Skin.name:GetFont() .. "|" .. Skin.title.text:GetFont() .. "|" .. Skin.rows[1].text:GetFont() end
+Expect("a clip naming its own face is drawn in it", Faces(), NOTO .. "|" .. NOTO .. "|" .. NOTO)
+Skin.sizing = true; Skin:Layout(); Skin.sizing = false
+Expect("...and keeps it while the window is resized", Faces(), NOTO .. "|" .. NOTO .. "|" .. NOTO)
 Spoken:StopAll()
 
 -- A book page and a zone's lore, queued as Spoken_Books and Spoken_Zones queue them.

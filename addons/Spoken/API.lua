@@ -54,6 +54,9 @@ end
 --                                             -- nil over the world's own lore
 --       label    = "Wolves Across the Border",-- quest title | subzone | page label
 --       transcript = "Full dialogue text",   -- optional; falls back to clip.text
+--       font     = [[Interface\AddOns\...\x.ttf]], -- optional; draws this clip's header, label
+--                                             -- and text, for a script the game's font has no
+--                                             -- glyphs for; the player's size stays
 --       bullet   = "quest-accept",            -- a RegisterBullet id
 --       tint     = { r, g, b },               -- optional row tint
 --       portrait = { kind = "model", creatureID = 196 }
