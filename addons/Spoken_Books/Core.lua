@@ -33,6 +33,9 @@ local defaults = {
 	-- Whole book rather than the page on screen. A twenty-page journal read one button
 	-- press at a time is a worse experience than one that reads on while you turn pages.
 	readWholeBook = true,
+	-- A book is one line in the queue: Skip skips the rest of it and the progress bar runs
+	-- across it. Off, each page waits in the queue on its own, with its page count.
+	bookAsOneLine = true,
 	-- Off, because a reader who has not asked for it should hear a book whenever they open
 	-- it. On, a book is narrated the first time it is opened and stays quiet after that.
 	readOnce = false,
@@ -204,6 +207,9 @@ function SpokenBooks:SetupSource()
 		-- Durations come from a generated lookup and are exact, so the gap only has to
 		-- separate two pages of prose rather than absorb a bad measurement.
 		interClipGap = 0.35,
+		-- A page whose file the client cannot find (a pack updated without a restart, a partial
+		-- install) is refused at the door, so the book reads on from the next page.
+		testBeforeQueue = true,
 		-- What Spoken's settings show on this part's card: which voice packs are installed.
 		packs = function()
 			local names = {}

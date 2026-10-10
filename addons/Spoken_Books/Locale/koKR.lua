@@ -15,6 +15,8 @@ L.OPT_AUTOPLAY = "자동으로 읽기"
 L.OPT_AUTOPLAY_TIP = "책이나 편지를 펼치는 즉시 읽습니다. 끄면 자동으로 시작되지 않습니다. 페이지의 재생을 누르거나 /spb read를 입력하세요."
 L.OPT_WHOLE_BOOK = "책 전체 읽기"
 L.OPT_WHOLE_BOOK_TIP = "화면에 보이는 페이지뿐 아니라 모든 페이지를 읽습니다. 첫 페이지를 펼치면 나머지가 대기열에 들어가므로 페이지를 넘기는 동안 계속 읽습니다."
+L.OPT_ONE_LINE = "책을 한 줄로 읽기"
+L.OPT_ONE_LINE_TIP = "책을 대기열에 한 줄로 넣고 종류를 위에 표시합니다. 건너뛰기는 나머지를 모두 건너뛰고, 진행 막대는 책 전체에 걸쳐 진행됩니다. 끄면 각 페이지가 페이지 번호와 함께 따로 대기합니다."
 L.OPT_READ_ONCE = "한 번만 읽기"
 L.OPT_READ_ONCE_TIP = "이 캐릭터가 이미 들은 것은 다시 펼쳐도 읽지 않습니다. 재생 버튼은 계속 작동합니다."
 L.OPT_SECTION_READ = "읽은 기록"
@@ -42,6 +44,7 @@ L.OPT_FALLBACK_LANGUAGE_TIP = "사용하는 언어의 음성 팩에 페이지의
 L.OPT_FALLBACK_NONE = "무음"
 L.OPT_NO_PACK_AUDIO = "설치된 음성 팩에 아직 이 페이지의 내레이션이 없습니다."
 L.OPT_NO_PACK_INSTALLED = "설치된 책 음성 팩이 없습니다."
+L.OPT_PAGE_COUNT_FMT = "페이지 %1$d/%2$d"
 
 -- Added in this release: settings pages, subtitles, voice packs, profiles and module switches.
 L.OPT_SECTION_PACKS = "음성 팩"

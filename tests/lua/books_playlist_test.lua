@@ -31,7 +31,7 @@ _G.SpokenBooksAudioPacks = {
 
 local function LoadBooks()
     local SpokenBooks = {}
-    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "UI/CopyLink" }) do
+    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
         chunk("Spoken_Books", SpokenBooks)
     end
@@ -88,8 +88,8 @@ Expect("...named by the book, whatever page of it this is: the book is one line"
     "Hillsbrad Town Registry")
 Expect("a page the pack does not carry has no clip", B:ClipFor(263), nil)
 local letter = B:ClipFor(15)
-Expect("a one-page letter is titled with its book", letter.present.header, "William's Shipment")
-Expect("...and has no page count", letter.present.label, nil)
+Expect("a one-page letter is named by its title, under what it is", letter.present.label .. " " .. tostring(letter.present.header ~= letter.present.label),
+    "William's Shipment true")
 
 ---------------------------------------------------------------- reporting a bad reading
 local report = clip.present.actions and clip.present.actions[1]
@@ -192,6 +192,58 @@ B:PlayFrom(261)
 Expect("with whole-book reading off, only the page on screen is queued",
     Same(QueuedPages(), { 261 }) and #Coming() == 0, true)
 SpokenBooksSettings.readWholeBook = true
+B:StopReading()
+
+---------------------------------------------------------------- the progress bar across the book
+-- One line: the bar runs across the whole book, not each page.
+B:PlayFrom(261)
+local firstPage = Spoken:GetQueue()[1]
+local total = 30.5 + 41.0 + 12.25
+Expect("a book's first page knows the reading's length",
+    firstPage.span and (firstPage.span.before .. " " .. firstPage.span.total), "0 " .. total)
+Expect("...its bar a share of the book, not of the page",
+    math.abs(env.SoundQueue:Share(firstPage, 10) - 10 / total) < 1e-9, true)
+stub.Advance(30.9)
+local secondPage = Spoken:GetQueue()[1]
+Expect("the next page's bar starts where the last page's ended",
+    secondPage.pageId .. " " .. tostring(secondPage.span and secondPage.span.before), "262 30.5")
+B:StopReading()
+-- A page with no length: the bar runs across each page, not a wrong share of the book.
+local pages = SpokenBooksAudioPacks.SpokenBooksAudio.pages
+pages[262].len = 0
+B:PlayFrom(261)
+Expect("a page with no length leaves the bar to each page", Spoken:GetQueue()[1].span, nil)
+pages[262].len = 41.0
+B:StopReading()
+
+---------------------------------------------------------------- a page whose file is missing
+-- A pack updated without a restart lists pages whose files the client cannot see yet: the
+-- book reads on from the next page rather than wait for one that never plays.
+stub.world.missing[B:ClipFor(261).path] = true
+Expect("a first page with no file: the book starts from the next", B:PlayFrom(261) .. " "
+    .. table.concat(QueuedPages(), ",") .. " " .. table.concat(Coming(), ","), "2 262 265")
+B:StopReading()
+stub.world.missing[B:ClipFor(261).path] = nil
+stub.world.missing[B:ClipFor(262).path] = true
+B:PlayFrom(261)
+stub.Advance(30.9)
+Expect("a middle page with no file: the book goes on to the one after it",
+    table.concat(QueuedPages(), ",") .. " " .. #Coming(), "265 0")
+Expect("...its bar no longer claiming a share of the book", Spoken:GetQueue()[1].span, nil)
+stub.world.missing[B:ClipFor(262).path] = nil
+B:StopReading()
+Expect("...and nothing of the book left behind", next(B.following or {}), nil)
+
+---------------------------------------------------------------- a line per page
+SpokenBooksSettings.bookAsOneLine = false
+Expect("Read Book as One Line off: every page queued now, each a line of its own",
+    B:PlayFrom(261) .. " " .. table.concat(QueuedPages(), ","), "3 261,262,265")
+local page = Spoken:GetQueue()[1]
+Expect("...the book over its page count", page.present.header .. " / " .. tostring(page.present.label),
+    "Hillsbrad Town Registry / Page 1 of 4")
+Expect("...one item, so no pause or cue between its pages", page.group, "book:261")
+Expect("...and nothing to follow it", tostring(page.continues) .. " " .. #Coming(), "nil 0")
+SpokenBooksSettings.bookAsOneLine = true
 B:StopReading()
 
 ---------------------------------------------------------------- with no pack at all
