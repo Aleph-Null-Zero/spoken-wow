@@ -65,13 +65,15 @@ for _, child in ipairs(_G.SpokenOptionsPanel.content.children) do
     end
 end
 Expect("...which says why it cannot be turned on", readablesCard and readablesCard.layoutReason, env.L.REASON_NOT_INSTALLED)
--- The modules register on entering the world, after the page is built: the card is drawn again
+-- The modules register on entering the world, after the page is built: the row is drawn again
 -- at once, not left saying "Not installed" until something else redraws it.
 local lateBooks = _G.Spoken:RegisterSource("books", { title = "Spoken Books", order = 4 })
-Expect("a module registering after the page is built is installed on its card at once",
+Expect("a module registering after the page is built is installed on its row at once",
     readablesCard and readablesCard.layoutReason, nil)
 env.Sources.byKey.books = nil
-lateBooks = nil
+for i, source in ipairs(env.Sources.ordered) do
+    if source == lateBooks then table.remove(env.Sources.ordered, i) break end
+end
 env.Options:UpdateRows()
 -- Installed here, with no voice pack found: the row says what is missing.
 Expect("an installed part says how many of its voice packs it has", labels[env.L.PART_VOICE], true)

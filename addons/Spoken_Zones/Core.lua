@@ -476,14 +476,16 @@ local function SetupHooks()
 	end)
 
 	-- Audio before autoplay: autoplay registers its combat hold on the source audio creates. Each
-	-- step on its own, its error printed, so one that fails does not keep the rest from being set
-	-- up: without audio's source, Spoken's page calls Zones not installed.
+	-- step on its own, its error printed and reported, so one that fails does not keep the rest
+	-- from being set up: without audio's source, Spoken's page calls Zones not installed.
 	for _, step in ipairs({ "SetupMapPanel", "SetupSubzoneClicks", "SetupMapHighlight", "SetupDiscovery",
 		"SetupLoreWindow", "SetupMinimapButton", "SetupAudio", "SetupAutoplay", "SetupOptions" }) do
 		if SpokenZones[step] then
 			local ok, err = pcall(SpokenZones[step], SpokenZones)
 			if not ok then
 				SpokenZones:Print("|cffff5555%s failed:|r %s", step, tostring(err))
+				-- To BugSack and the game's error frame too, which a chat line never reaches.
+				if geterrorhandler then geterrorhandler()(err) end
 			end
 		end
 	end

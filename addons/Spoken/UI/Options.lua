@@ -814,7 +814,7 @@ local function Build(canvas)
     end
     pendingLinks = {}
     -- The modules register on entering the world, after this page is built: drawn again for each,
-    -- or their cards say "Not installed" until something else redraws them.
+    -- or their rows in the module list say "Not installed" until something else redraws them.
     Callbacks:Register("SOURCE_REGISTERED", function() Options:UpdateRows() end)
     if panel.HookScript then
         panel:HookScript("OnShow", function() Options:UpdateRows() end)
