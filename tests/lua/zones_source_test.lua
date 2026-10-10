@@ -47,11 +47,21 @@ Expect("...on the player's channel", Z.source:GetChannel(), "Master")
 Expect("...SpokenZones's queue limit", Z.source.queueLimit, 3)
 Expect("...and its own gap", Z.source.interClipGap, 0.25)
 
+-- Durotar on Kalimdor and Orgrimmar in it, as Azeroth's Compendium nests them.
+local names = { [947] = "Azeroth", [1414] = "Kalimdor", [1411] = "Durotar", [1454] = "Orgrimmar" }
+local GetMapName = Z.GetMapName
+Z.GetMapName = function(_, id) return names[id] end
 local zone = Z:NewLoreSound(1411, nil)
 Expect("a zone clip keeps the frozen line id as its key", zone.key, "z:1411")
 Expect("...resolves the pack path", zone.path, [[Interface\AddOns\ZoneLoreAudio\Sounds\1411\zone.mp3]])
 Expect("...and the pack's duration", zone.length, 81.9)
-Expect("...header is the zone", zone.present.header, "Durotar")
+Expect("...headed by where the zone is, its continent, not its own name twice", zone.present.header, "Kalimdor")
+local packZones = _G.ZoneLoreAudioPacks.ZoneLoreAudio.zones
+for _, id in ipairs({ 1454, 1414, 947 }) do packZones[id] = { file = id .. "\\zone", len = 10 } end
+local function Header(id) return tostring(Z:NewLoreSound(id, nil).present.header) end
+Expect("a city is headed by the zone around it, a continent by the world, the world by nothing",
+    Header(1454) .. " " .. Header(1414) .. " " .. Header(947), "Durotar Azeroth nil")
+for _, id in ipairs({ 1454, 1414, 947 }) do packZones[id] = nil end
 Expect("...label is the zone too", zone.present.label, "Durotar")
 Expect("...portrait is the zone's icon, trimmed of its border", zone.present.portrait.kind .. ":" .. zone.present.portrait.texture
     .. ":" .. table.concat(zone.present.portrait.texCoord, ","), "texture:" .. [[Interface\AddOns\Spoken\Textures\Zones\Durotar]] .. ":0.08,0.92,0.08,0.92")
@@ -72,11 +82,14 @@ Expect("...one with a picture sends it and its frayed edge, for a window to show
 Expect("...and how large Place Lore draws it beside the map, its panel less its margins",
     pictured.present.picture.pixels, (Z:Get("panelWidth") - 66) * UIParent:GetEffectiveScale())
 Z.Picture = nil
+Z.GetMapName = GetMapName
 
 ---------------------------------------------------------------- playing through the player
 env, Z = Boot(); Spoken = _G.Spoken
 local changed = 0
 Z:OnAudioChanged(function() changed = changed + 1 end)
+GetMapName = Z.GetMapName
+Z.GetMapName = function(_, id) return names[id] end
 Expect("PlayLore plays", Z:PlayLore(1411, nil), true)
 Expect("...through the player", Spoken:IsPlaying(), true)
 Expect("...on the player's channel", world.playedChannels[1], "Master")
@@ -88,7 +101,8 @@ Expect("the player's AUDIO_CHANGED reaches SpokenZones's own listeners", changed
 Expect("starting marks the area heard in the per-character record", Z:HasHeard(1411, nil), true)
 
 local F = env.PlayerFrame
-Expect("the player frame shows the zone", F.frame.container.name:GetText(), "Durotar")
+Expect("the player frame shows where the zone is, over its name", F.frame.container.name:GetText(), "Kalimdor")
+Z.GetMapName = GetMapName
 -- Report only, as an icon in the corner. Reading the text is reached from the map, the
 -- minimap menu and /spz; a button on the player that opened a window over the thing being
 -- read was one way too many.
