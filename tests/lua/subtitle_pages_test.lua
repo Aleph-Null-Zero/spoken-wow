@@ -88,7 +88,7 @@ Expect("...none longer than four lines", Most(pages, function(page) return #Subt
 Expect("...losing no words", Words(table.concat(pages, " ")), Words(rambling))
 cfg.SubtitleSentences = 3
 
--- Show Name and Title off (issue #288): the words alone, as a film's subtitles, from the top.
+-- Show Name and Title off: the words alone, from the top.
 if not Subtitle.frame then Subtitle:Build() end
 -- Heights the stub's text cannot measure.
 Subtitle.measure.GetStringHeight = function() return 16 end
@@ -105,8 +105,7 @@ Subtitle:Layout(short)
 Expect("...on again, the row is back over them", tostring(Subtitle.nameRow and Subtitle.nameRow:IsShown()) .. " " .. Subtitle.lines[1].anchor.y,
     "true " .. named)
 
--- Each setting the subtitle is laid out with, changed under the sample, shows on it at once, as
--- the settings page changes it: not at the next line or page.
+-- Each layout setting changed under the sample shows on it at once, not at the next line or page.
 local frame = _G.SpokenEnv.Addon.db.profile.Frame
 -- The measure follows Text Size here: 7 a character at the quest font's 12, more as it grows.
 _G.QuestFont = _G.QuestFont or CreateFrame("Frame"):CreateFontString()

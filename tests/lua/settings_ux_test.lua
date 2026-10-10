@@ -65,7 +65,6 @@ Expect("subtitles have Highlight Words, waiting while their words are typed out"
 words.Typewriter = false; Options:UpdateRows()
 Expect("...and live with them shown whole", lit.layoutReason, nil)
 words.Typewriter = true; Options:UpdateRows()
--- The subtitle's Auto-Scroll: pages show Sentences at Once, line by line Lines Shown.
 local function ByTip(tip)
     for _, entry in ipairs(home.entries) do if entry.tooltip == tip then return entry.frame end end
 end
