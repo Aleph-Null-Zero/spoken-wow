@@ -813,6 +813,9 @@ local function Build(canvas)
         Options:AddLink(link.text, link.onClick)
     end
     pendingLinks = {}
+    -- The modules register on entering the world, after this page is built: drawn again for each,
+    -- or their rows in the module list say "Not installed" until something else redraws them.
+    Callbacks:Register("SOURCE_REGISTERED", function() Options:UpdateRows() end)
     if panel.HookScript then
         panel:HookScript("OnShow", function() Options:UpdateRows() end)
         -- The sample is for placing the subtitle while the settings are open, not after.

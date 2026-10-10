@@ -176,9 +176,10 @@ do
     Expect("...one not installed has a Download button in place of its version",
         horde.layoutGet and horde.layoutButton.text, "Download")
 end
-_G.Spoken:SetPartOn("quests", false); Options:UpdateRows(); quests:Refresh()
+-- Switched from Spoken's page while the Quests page is hidden: the page is drawn again for it.
+_G.Spoken:SetPartOn("quests", false)
 local autoplay = Row(quests, VO.L.OPT_PANEL_AUTOPLAY)
-Expect("switching Quests off greys out its page", autoplay.layoutReason, VO.L.REASON_PART_OFF)
+Expect("switching Quests off from Spoken's page greys out its page at once", autoplay.layoutReason, VO.L.REASON_PART_OFF)
 Expect("...a checkbox's label in the game's grey with its box", autoplay.alpha < 1 and autoplay.text.layoutGreyed, true)
 Expect("...the titles of its groups with it", Group(quests, VO.L.OPT_SECTION_DIALOGUE).greyed, true)
 Expect("...and everything else on it: fixing a problem", Row(quests, VO.L.OPT_PRINT_DIAG).layoutReason, VO.L.REASON_PART_OFF)
