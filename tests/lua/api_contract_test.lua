@@ -45,7 +45,7 @@ local METHODS = {
     "GetPlayerFrame", "GetSettingsCategory", "OpenSettings", "AddSettingsLink", "RefreshPlayer",
     "GetPlayerStyle", "SetPlayerHost", "AddDialogueUISettings",
     -- captions
-    "GetCaption", "GetCaptionOptions", "SplitCaption",
+    "GetCaption", "GetCaptionOptions", "SplitCaption", "CaptionWords",
     -- developer tools: the Spoken_Developer module's
     "RegisterDeveloper", "HasLog", "Log", "IsLogOn", "SetLogOn", "LogLines", "ClearLog", "ShowLog",
     "AddLogSource", "ShowLogMenu", "LogMenuHint", "AddDeveloperSettings", "GetDeveloperSettings",
@@ -56,6 +56,8 @@ local METHODS = {
 for _, name in ipairs(METHODS) do
     Expect("Spoken:" .. name .. " exists", type(Spoken[name]), "function")
 end
+Expect("CaptionWords counts the words the captions show, escapes removed",
+    #Spoken:CaptionWords("aaaa |cffff0000bbbb|r |T x:0|tcccc|ndddd"), 4)
 Expect("Spoken.Packs.Register exists", type(Spoken.Packs and Spoken.Packs.Register), "function")
 Expect("Spoken.Packs.Get exists", type(Spoken.Packs and Spoken.Packs.Get), "function")
 Expect("Spoken.Minimap.AddEntry exists", type(Spoken.Minimap and Spoken.Minimap.AddEntry), "function")

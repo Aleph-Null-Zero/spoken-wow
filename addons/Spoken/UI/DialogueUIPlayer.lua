@@ -146,7 +146,8 @@ local WINDOW_SIZES, WINDOW_STEP = { 0.5, 2 }, 0.05
 local FONT_SIZES = { 12, 26 }
 
 local parts = MinimalPlayer.parts
-local Font, Label, Clamp, Waiting, BelongsTo = parts.Font, parts.Label, parts.Clamp, parts.Waiting, parts.BelongsTo
+local Font, Label, Name, Clamp, Waiting, BelongsTo = parts.Font, parts.Label, parts.Name, parts.Clamp,
+    parts.Waiting, parts.BelongsTo
 local function Round(n) return math.floor(n + 0.5) end
 local function Smooth(t) return t * t * (3 - 2 * t) end
 local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
@@ -599,6 +600,9 @@ function Skin:Dress()
     Paint(self.count, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
     Paint(self.stopped, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
     self.title.color = colors.title
+    -- A clip's own face goes back on over the theme's (Addon:ClipFont).
+    Addon:ClipFont(self.name, self.clip)
+    Addon:ClipFont(self.title.text, self.clip)
     self.colors = colors
     local tint = colors.portraitTint
     if self.viewport.texture then self.viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
@@ -677,6 +681,7 @@ function Skin:UpdateControls(relayout)
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
     -- The line's name alone, not why it waits (the NPC's own greeting first, a fight).
     self.title.text:SetText(Label(self.clip))
+    Addon:ClipFont(self.title.text, self.clip)
     -- Stopped, said after its name, as the subtitle does.
     self.tail:SetStopped(paused)
     self:Count(Waiting())
@@ -693,7 +698,7 @@ function Skin:UpdateProgress()
     if not clip then return end
     local duration = tonumber(clip.length) or 0
     self.seconds = Actions.Elapsed(clip, self.seconds)
-    Actions.SetProgress(self.progress, duration > 0 and (self.seconds or 0) / duration or 0)
+    Actions.SetProgress(self.progress, SoundQueue:Share(clip, self.seconds))
 end
 
 --- How much of the window shows, 0 to 1: as one image, its alpha. Where the client has no frame
@@ -1713,8 +1718,9 @@ function Skin:Update()
     end
     self:SetVisible(true)
     -- Said once: a name the same as the line's own is left off.
-    local header = clip.present and clip.present.header
-    self.name:SetText(header ~= Label(clip) and header or "")
+    local name = Name(clip)
+    self.name:SetText(name ~= Label(clip) and name or "")
+    Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
     self:UpdateProgress()

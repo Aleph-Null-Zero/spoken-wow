@@ -42,7 +42,16 @@ local function Clamp(n, low, high) return math.max(low, math.min(high, n)) end
 -- The frame still resizes while the UI is torn down, after AceDB strips it (Addon:Profile).
 local function Config() return Addon:Profile("Frame") end
 local function Waiting() return math.max(0, SoundQueue:GetQueueSize() - 1) end
-local function Label(clip) return clip and (clip.present and clip.present.label or clip.key) or "" end
+-- A line with no label (a one-page letter) goes by its header: its key means nothing to a player.
+local function Label(clip)
+    local present = clip and clip.present
+    return clip and (present and (present.label or present.header) or clip.key) or ""
+end
+-- The name over the title: the header, unless it is already the title (a line with no label).
+local function Name(clip)
+    local present = clip and clip.present
+    return present and present.label and present.header or ""
+end
 local function Font(parent, size, r, g, b)
     local text = parent:CreateFontString(nil, "OVERLAY")
     text:SetFont(GameFontNormal:GetFont(), size, "")
@@ -66,7 +75,8 @@ function MinimalPlayer:IsEnabled()
 end
 
 -- Shared with the DialogueUI window, so both windows' text behaves alike.
-MinimalPlayer.parts = { Font = Font, Label = Label, Clamp = Clamp, Waiting = Waiting, BelongsTo = BelongsTo }
+MinimalPlayer.parts = { Font = Font, Label = Label, Name = Name, Clamp = Clamp, Waiting = Waiting,
+    BelongsTo = BelongsTo }
 
 function MinimalPlayer:HideTooltip()
     local owner = GameTooltip:GetOwner()
@@ -389,6 +399,7 @@ function MinimalPlayer:UpdateControls()
     local paused = SoundQueue:IsPaused()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
     self.title.text:SetText(Label(self.clip))
+    Addon:ClipFont(self.title.text, self.clip)
     self.tail:SetStopped(paused)
     self:Count(Waiting())
     local pausable = SoundQueue:CanBePaused()
@@ -421,9 +432,8 @@ end
 function MinimalPlayer:UpdateProgress()
     local clip = self.clip
     if not clip then return end
-    local duration = tonumber(clip.length) or 0
     self.seconds = Actions.Elapsed(clip, self.seconds)
-    Actions.SetProgress(self.progress, duration > 0 and (self.seconds or 0) / duration or 0)
+    Actions.SetProgress(self.progress, SoundQueue:Share(clip, self.seconds))
 end
 
 --- The window as tall as its words, with the progress line along their foot.
@@ -530,8 +540,9 @@ function MinimalPlayer:Update()
     end
     self:SetVisible(true)
     -- A speaker name the same as the line's own is left off, so it is not said twice.
-    local header = clip.present and clip.present.header
-    self.name:SetText(header ~= Label(clip) and header or "")
+    local name = Name(clip)
+    self.name:SetText(name ~= Label(clip) and name or "")
+    Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
     self:Layout()

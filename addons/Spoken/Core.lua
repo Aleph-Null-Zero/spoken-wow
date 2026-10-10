@@ -47,6 +47,8 @@ Defaults = {
         -- Unset, each module keeps the choice it had before there was one setting for all.
         Language = {},
         Audio = {
+            -- A string, because that is what PlaySoundFile takes.
+            SoundChannel = "Master",
             -- Seconds of quiet between one line and the next, on top of each module's own short
             -- gap: back to back, a new line started before the last had settled.
             LineGap = 1,
@@ -194,6 +196,32 @@ end
 --- updating while the UI is torn down after that; before InitDB there is no profile at all.
 function Addon:Profile(section)
     return self.db and self.db.profile[section] or Defaults.profile[section]
+end
+
+--- Draws a clip's text in its `present.font`, for a script the game's font has no glyphs for
+--- (Czech on a Western client), and any other clip's in the font string's own face. The size
+--- and flags stay the player's.
+function Addon:ClipFont(fontString, clip)
+    local face, size, flags = fontString:GetFont()
+    if not face then return end
+    -- Anything but the face this set last is the player's own (a skin, a resize), so it is
+    -- the one to go back to.
+    if face ~= fontString.spokenClipFace then fontString.spokenOwnFace = face end
+    local want = clip and clip.present and clip.present.font or fontString.spokenOwnFace
+    -- Asked for last time and still on: done, also when that face failed and the player's
+    -- own stands in, rather than trying it again on every update.
+    if face == fontString.spokenClipFace and want == fontString.spokenClipWant then return end
+    local asked = want
+    -- A face the client cannot load: current clients answer false, older ones nil or nothing, so
+    -- the face it reports afterwards is asked too. Back to the player's own rather than a
+    -- string with no font.
+    if want ~= face and (fontString:SetFont(want, size, flags or "") == false or not fontString:GetFont()) then
+        want = fontString.spokenOwnFace
+        fontString:SetFont(want, size, flags or "")
+    end
+    -- The face as the client reports it, since that is what the next call reads back, and the
+    -- client need not spell a path the way it was given.
+    fontString.spokenClipWant, fontString.spokenClipFace = asked, fontString:GetFont() or want
 end
 
 --- Where each player window sits, how wide it is, and whether the captions are expanded.
