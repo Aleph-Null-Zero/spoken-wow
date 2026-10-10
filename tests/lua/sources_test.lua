@@ -183,5 +183,20 @@ env.Addon.db.profile.Audio.AutoToggleDialog = false
 _G.Spoken:MuteGameDialogueAhead(quests)
 Expect("turned off, muting ahead does nothing", GetCVar("Sound_EnableDialog"), "1")
 
+---------------------------------------------------------------- the player's own Dialog off stays off
+-- With NPC voices switched off and Spoken on SFX, lifting the mute after the line would switch
+-- them back on.
+env, quests, zones = H.Fresh(stub, SPOKEN)
+env.Addon.db.profile.Audio.AutoToggleDialog = true
+env.Addon.db.profile.Audio.SoundChannel = "SFX"
+world.cvars.Sound_EnableDialog = "0"
+_G.Spoken:MuteGameDialogueAhead(quests)
+quests:Enqueue(H.Clip())
+stub.Advance(0.6)
+Expect("a line speaking over a Dialog channel already off holds no mute", env.SoundUtils:IsMutedByPlayer("Dialog"), false)
+_G.Spoken:StopAll()
+stub.Advance(2)
+Expect("...and the empty queue leaves it off", GetCVar("Sound_EnableDialog"), "0")
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll sources tests passed")

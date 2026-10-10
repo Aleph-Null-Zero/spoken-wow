@@ -161,6 +161,16 @@ Expect("...lit for a quest with a line", detailsButton and detailsButton:IsEnabl
 Expect("...showing Play", detailsButton and detailsButton.playing, false)
 Expect("...shown for a quest with a line", detailsReport and detailsReport:IsShown(), true)
 Expect("...and bound to it", detailsReport and detailsReport.questID, 748)
+local hiddenActions = _G.SpokenEnv.Addon.db.profile.Frame.HiddenActions
+hiddenActions.report = true
+_G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+Expect("Hide Report Buttons, in Spoken's settings, takes it away at once", detailsReport:IsShown(), false)
+Expect("...Play moving into its corner", detailsButton.anchor.relativePoint, "RIGHT")
+Expect("...as Spoken says to the addons that ask",
+    _G.Spoken.AreReportButtonsHidden and _G.Spoken:AreReportButtonsHidden(), true)
+hiddenActions.report = nil
+_G.SpokenEnv.Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+Expect("...and gives it back when it is off", detailsReport:IsShown(), true)
 
 before = table.getn(played)
 detailsButton:Click()

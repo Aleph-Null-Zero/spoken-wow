@@ -50,7 +50,8 @@ end
 --     priority = "normal" | "low",            -- low yields at the door; gossip is low
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
 --     present  = {
---       header   = "Eagan Peltskinner",       -- NPC name | zone name | book title
+--       header   = "Eagan Peltskinner",       -- NPC name | place above | book title;
+--                                             -- nil over the world's own lore
 --       label    = "Wolves Across the Border",-- quest title | subzone | page label
 --       transcript = "Full dialogue text",   -- optional; falls back to clip.text
 --       bullet   = "quest-accept",            -- a RegisterBullet id
@@ -66,16 +67,16 @@ end
 --
 -- The player sets id, handle, source and nextSoundTimer; a caller never does.
 
---- A row bullet, registered once by a feature addon so SpokenBooks needs no change to
---- the player to have one of its own.
---- Declare an action switchable, and what the player's settings should call it. Both
---- shipped addons declare their Report action, so one setting covers whichever is speaking.
+--- Declare an action switchable, and what the player's settings should call it. Report has
+--- its own row; the modules still declare it for an older player, which has no such row.
 ---@param id string the action id, as it appears in a clip's presentation
 ---@param label string what to call it, e.g. "Report"
 function Spoken:RegisterOptionalAction(id, label)
     return Actions:RegisterOptional(id, label)
 end
 
+--- A row bullet, registered once by a feature addon so SpokenBooks needs no change to
+--- the player to have one of its own.
 function Spoken:RegisterBullet(id, texture, size)
     Bullets[id] = { texture = texture, size = size }
 end
@@ -125,6 +126,13 @@ end
 --- A feature addon asks this in its gap check, and re-asks on CONTRIBUTE_SETTINGS_CHANGED.
 function Spoken:AreContributeButtonsHidden()
     return Addon.db and Addon.db.profile.Contribute.HideButtons and true or false
+end
+
+--- Whether the player turned every Report button off in Spoken's settings, the player's and
+--- those feature addons draw. Ask before showing one, and again on REPORT_SETTINGS_CHANGED.
+function Spoken:AreReportButtonsHidden()
+    local hidden = Addon:Profile("Frame").HiddenActions
+    return hidden and hidden.report and true or false
 end
 
 --------------------------------------------------------------------------------
@@ -432,10 +440,10 @@ function Spoken:StopAll()
     SoundQueue:RemoveAllSoundsFromQueue()
 end
 
---- A gate that applies to every source: fn(clip) -> reason | nil.
 --- Switch a channel off on a source's behalf, e.g. Dialog while a quest line speaks.
 --- Unlike a channel the user disabled, clips on it are still admitted, and the mute is
---- lifted before one plays.
+--- lifted before one plays. A channel the user already has off is left alone: nothing is
+--- held, so nothing switches it back on.
 function Spoken:MuteChannel(channel, muted)
     SoundUtils:MuteChannel(channel, muted)
 end
@@ -447,6 +455,7 @@ function Spoken:MuteGameDialogueAhead(source)
     SoundQueue:MuteGameDialogueAhead(source:GetChannel())
 end
 
+--- A gate that applies to every source: fn(clip) -> reason | nil.
 function Spoken:AddGate(fn)
     SoundQueue:AddGate(fn)
 end
@@ -509,6 +518,7 @@ end
 --   QUEUE_EMPTY        ()
 --   SOURCE_REGISTERED  (source)
 --   CONTRIBUTE_SETTINGS_CHANGED ()          the hide-Contribute-buttons setting was toggled
+--   REPORT_SETTINGS_CHANGED     ()          the hide-Report-buttons setting was toggled
 
 function Spoken:RegisterCallback(event, fn)
     return Callbacks:Register(event, fn)

@@ -167,12 +167,10 @@ function Actions.SetPlayGlyph(button, state)
     button.state, button.playing = state, state == "stop"
 end
 
---- Skip, as the windows' queue offers it: the round button with the play glyph against a bar,
---- the usual "next" mark. The subtitle's controls and the DialogueUI window's header show it.
+--- Skip: the round button with the play glyph against a bar, the usual "next" mark.
 function Actions.SkipButton(parent)
     local skip = Actions.RoundButton(parent, 10)
-    skip.glyph:SetTexture(PORTRAIT_ATLAS)
-    skip.glyph:SetTexCoord(0, 93 / PORTRAIT_ATLAS_SIZE, 419 / PORTRAIT_ATLAS_SIZE, 1)
+    Actions.Glyph(skip.glyph, "play")
     skip.glyph:ClearAllPoints()
     skip.glyph:SetPoint("CENTER", -2, 0)
     skip.bar = skip:CreateTexture(nil, "ARTWORK")
@@ -192,9 +190,8 @@ function Actions.SkipButton(parent)
     return skip
 end
 
--- The progress line the subtitle and the DialogueUI window draw: Spoken Subtitles' layout and
--- spark, framed as the game frames a status bar (UIWidgetTemplateStatusBar). Without that art,
--- Spoken Subtitles' own hairline.
+-- The progress line: Spoken Subtitles' layout and spark, framed as the game frames a status bar
+-- (UIWidgetTemplateStatusBar). Without that art, Spoken Subtitles' own hairline.
 local PROGRESS_HEIGHT = 7
 local PROGRESS_LINE = [[Interface\AddOns\Spoken\Textures\SubtitleLine]]
 local SPARK = [[Interface\CastingBar\UI-CastingBar-Spark]]
