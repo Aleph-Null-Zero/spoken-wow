@@ -235,7 +235,7 @@ end
 --- spokenBaseStrata give a frame's own scale and strata (the subtitles).
 function Addon:ApplyHost(frame)
     if not frame then return end
-    -- A window drawn as one image while it fades moves once it is itself again (DialogueUIPlayer).
+    -- A window drawn as one image must not move while it fades: it moves once it is itself again.
     if frame.spokenFrozen then
         frame.spokenHostPending = true
         -- Hidden with the host it leaves, it never ticks to its fade's end: ended now, unseen.

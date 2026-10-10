@@ -156,8 +156,8 @@ function StaticPortrait:Capture(clip, refreshGUID)
         if actual and ((guid and actual == guid) or (not guid and creature and CreatureID(actual) == creature)) then
             local entry = self.cache[actual] or self:Acquire(actual)
             if not entry then return cached end
-            -- The face on show in the DialogueUI window while it is one image is not painted anew: it
-            -- must not change then. It is painted once the window is itself again (stale).
+            -- The face in the DialogueUI window must not change while the window is one image: it is
+            -- marked stale and painted once the window is itself again.
             local window = DialogueUIPlayer
             local frozen = window and window.Frozen and window.viewport and window:Frozen()
                 and entry.texture:GetParent() == window.viewport

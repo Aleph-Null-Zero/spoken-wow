@@ -30,7 +30,7 @@ local TEXTURES = [[Interface\AddOns\Spoken\Textures\]]
 local PAGE_OUT, PAGE_IN = .18, .28
 local PAUSED_FADE = .25
 local PICTURE, PICTURE_GAP, LABEL_GAP = 36, 8, 6
--- The progress line (Actions.ProgressBar) spans this share of the band.
+-- The progress line spans this share of the band.
 local PROGRESS_SHARE = 0.45
 local SIZE_EASE = 10
 -- The controls shown on hover: the windows' round pause button, skip, and Report.
@@ -396,7 +396,7 @@ function Subtitle:RowWidth(paused)
         self.label:SetWidth(math.max(1, label))
         return start + lead + (paused and (self.pausedLabel:GetStringWidth() or 0) or label) + more
     end
-    -- With no label, Stopped follows a dot of its own, as the count does.
+    -- With no label, Stopped follows a dot of its own.
     local dot = LABEL_GAP + (self.dot:GetStringWidth() or 0) + LABEL_GAP
     return start + (paused and dot + (self.pausedLabel:GetStringWidth() or 0) or 0) + more
 end
@@ -787,7 +787,6 @@ function Subtitle:BuildControls()
     self.pause = pause
     self:UpdatePause()
 
-    -- Skip, as the windows' queue offers it (Actions.SkipButton).
     local skip = Actions.SkipButton(controls)
     skip:SetPoint("LEFT", pause, "RIGHT", CONTROL_GAP, 0)
     self.skip = skip

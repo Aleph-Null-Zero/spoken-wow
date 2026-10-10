@@ -34,8 +34,7 @@ local function FakeDialogueUI()
     local font = stub.Widget("Font")
     function font:GetFont() return "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf", 14 end
     _G.DUIFont_Quest_Paragraph = font
-    -- Its book view: no parent either, drawn at 0.8, its paper the frame, 409.6 by 477.87 with
-    -- its bottom left at 200, 100. Closed until a book opens.
+    -- Its book view, its paper the frame, closed until a book opens.
     local book = stub.Widget("Frame")
     book.GetEffectiveScale = function() return 0.8 end
     book.GetRect = function() return 200, 100, 409.6, 477.87 end
@@ -489,7 +488,7 @@ do
 end
 Expect("...the count gone with no line waiting", Skin.count:IsShown(), false)
 -- Every fade is of the window as one image (a frame buffer, as the world map is), and nothing in
--- it changes while it is one: the client crashed on that.
+-- it changes while it is one: the client crashes otherwise.
 Expect("shown, it is not one image: things change in it", Skin.frame:IsFrameBuffer(), false)
 Skin:Tick(1) -- shown, and still a while
 Skin.skip:EnableMouse(true) -- as a button is in the client; the stub's start without
@@ -951,9 +950,6 @@ Spoken:StopAll()
 for _ = 1, 40 do Skin:Tick(0.05) end
 
 ---------------------------------------------------------------- books and stones
--- Spoken Books' pages, in the art DialogueUI's book view draws them in: its paper for books and
--- letters, its stone for the materials it draws in stone. Every other line keeps the quest
--- window's parchment.
 local BOOK = "Interface/AddOns/DialogueUI/Art/Book/TextureKit-"
 local function Page(material)
     return H.Clip({ length = 30, present = { header = "Beyond the Dark Portal", label = "Page 1 of 4", bullet = "book",
@@ -1002,8 +998,6 @@ Expect("...then the quest's comes in on its own paper, at its own height, never 
     BROWN .. "Parchment.png nil true")
 Spoken:StopAll()
 
--- The book view open: this window steps aside; closed on a page that reads on, the window takes
--- the book's place and size and goes to the top left, as from the quest window.
 local BookView = _G.DUIBookFrame
 local bookWatch = Skin.dialogWatches and Skin.dialogWatches[BookView]
 Expect("the book view is watched, as the quest window is", bookWatch ~= nil, true)
