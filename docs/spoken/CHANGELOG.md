@@ -9,12 +9,25 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   says "• (Stopped)" and how many lines wait, in place of the list. Its new Background setting
   draws it on parchment, the default, or on the dark rock it had. It fades in and out more
   slowly, from one line to the next too, and goes while a DialogueUI dialog hides the interface. *([Nucabe](https://github.com/Nucabe))*
-
-## 3.3.0 — 2026-10-09
-
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
   voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
   that voice, the quest plays as before.
+- **Abandoning a quest while its voice speaks fades the voice out.** Before, it was cut off
+  mid-word and the quest's next line started for a moment. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: Books and Zones said "Not installed" in Spoken's module list after login**, and a
+  module's settings page could show it switched off after it was switched on from Spoken's page.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Hide Report Buttons hides every Report button.** It sits beside Hide Contribute Buttons and
+  also takes Report off the quest log, DialogueUI's window, the lore beside the map and the
+  Compendium. *([Nucabe](https://github.com/Nucabe))*
+- **NPC voices you switched off (the Dialog channel) stay off.** With Spoken on another channel,
+  they came back on after any line it read, from an NPC's window, a zone or a book.
+  *([svengabr](https://github.com/svengabr))*
+- **Spoken Zones no longer raises a Lua error on chat messages the game keeps hidden from addons**,
+  as in a dungeon group. *([svengabr](https://github.com/svengabr))*
+- **Captions fade at their edges as they glide.** The line leaving at the top fades out and the
+  line coming in at the bottom fades in, where they were cut off at the edge.
+  *([Nucabe](https://github.com/Nucabe))*
 - **With the DialogueUI narrator style, Spoken's small window takes DialogueUI's look.** When a
   dialog closes on a line still playing, the window slides out of it, with Stop, Skip and Report in
   its header and a place's picture over its words. *([Nucabe](https://github.com/Nucabe))*
@@ -34,9 +47,15 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   speaker's gold name, beside the portrait (a 3D model where there is one). Stopped and a count of
   the lines waiting follow the name in place of the queue's rows, Stop, Skip and Report take the
   close button's corner, and a progress line runs under the words. It fades in and out, from one
-  line to the next too, and goes
-  while a DialogueUI dialog hides the interface, where its 3D portrait stayed behind. Clients
-  without the Talking Head's art draw Spoken's own in the same places. *([Nucabe](https://github.com/Nucabe))*
+  line to the next too, and goes while a DialogueUI dialog hides the interface, where its 3D
+  portrait stayed behind. Clients without the Talking Head's art draw Spoken's own in the same
+  places. *([Nucabe](https://github.com/Nucabe))*
+- **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
+  Spoken's voice when you switch away. The line now stops instead of running on in silence, and
+  Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
+- **A zone's story is headed by the place it is in.** It showed its own name twice, as
+  "Mulgore / Mulgore". The narrator now shows a zone's continent over it and a city's zone, and
+  the Compendium's "In ..." line names the same place. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.2.0 — 2026-10-08
 

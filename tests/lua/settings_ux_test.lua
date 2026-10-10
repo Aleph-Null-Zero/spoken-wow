@@ -65,7 +65,6 @@ Expect("subtitles have Highlight Words, waiting while their words are typed out"
 words.Typewriter = false; Options:UpdateRows()
 Expect("...and live with them shown whole", lit.layoutReason, nil)
 words.Typewriter = true; Options:UpdateRows()
--- The subtitle's Auto-Scroll: pages show Sentences at Once, line by line Lines Shown.
 local function ByTip(tip)
     for _, entry in ipairs(home.entries) do if entry.tooltip == tip then return entry.frame end end
 end
@@ -151,9 +150,10 @@ do
     Expect("...one not installed has a Download button in place of its version",
         horde.layoutGet and horde.layoutButton.text, "Download")
 end
-_G.Spoken:SetPartOn("quests", false); Options:UpdateRows(); quests:Refresh()
+-- Switched from Spoken's page while the Quests page is hidden: the page is drawn again for it.
+_G.Spoken:SetPartOn("quests", false)
 local autoplay = Row(quests, VO.L.OPT_PANEL_AUTOPLAY)
-Expect("switching Quests off greys out its page", autoplay.layoutReason, VO.L.REASON_PART_OFF)
+Expect("switching Quests off from Spoken's page greys out its page at once", autoplay.layoutReason, VO.L.REASON_PART_OFF)
 Expect("...a checkbox's label in the game's grey with its box", autoplay.alpha < 1 and autoplay.text.layoutGreyed, true)
 Expect("...the titles of its groups with it", Group(quests, VO.L.OPT_SECTION_DIALOGUE).greyed, true)
 Expect("...and everything else on it: fixing a problem", Row(quests, VO.L.OPT_PRINT_DIAG).layoutReason, VO.L.REASON_PART_OFF)
@@ -426,6 +426,17 @@ do
     registered.OnProfileChanged("OnProfileChanged", env.Addon.db, "Other")
     Expect("...and every module, a module the profile has off told it is off", told[quests], false)
     env.Addon.db.profile.Parts[quests] = nil
+    -- Hide Report Buttons and Hide Contribute Buttons are the profile's too, and the addons
+    -- that draw those buttons redraw only when told.
+    local heard = { REPORT_SETTINGS_CHANGED = 0, CONTRIBUTE_SETTINGS_CHANGED = 0 }
+    local handles = {}
+    for event in pairs(heard) do
+        handles[event] = _G.Spoken:RegisterCallback(event, function() heard[event] = heard[event] + 1 end)
+    end
+    registered.OnProfileChanged("OnProfileChanged", env.Addon.db, "Other")
+    Expect("...and the addons' Report and Contribute buttons, told to ask again",
+        heard.REPORT_SETTINGS_CHANGED .. "," .. heard.CONTRIBUTE_SETTINGS_CHANGED, "1,1")
+    for _, handle in pairs(handles) do _G.Spoken:UnregisterCallback(handle) end
     for _, restore in ipairs(undo) do restore() end
     env.Addon.db = keep
     Options:UpdateRows()

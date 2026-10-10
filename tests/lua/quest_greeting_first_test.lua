@@ -33,6 +33,13 @@ _G.C_Sound = {
         return sound and sound.volume
     end,
 }
+-- Spoken's own voice is one of the game's sounds too: unknown to IsPlaying, it would read as cut.
+local playSoundFile = _G.PlaySoundFile
+_G.PlaySoundFile = function(...)
+    local willPlay, handle = playSoundFile(...)
+    if willPlay then sounds[handle] = { volume = "spoken", ends = math.huge } end
+    return willPlay, handle
+end
 local stopSound = _G.StopSound
 _G.StopSound = function(handle, ...)
     if sounds[handle] then sounds[handle].ends = world.time end

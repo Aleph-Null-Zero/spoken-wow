@@ -28,17 +28,16 @@ local SHADOW_REACH = 40
 local TEXTURES = [[Interface\AddOns\Spoken\Textures\]]
 -- A page fades out before the next fades in; the shadow eases to the new page's size.
 local PAGE_OUT, PAGE_IN = .18, .28
--- Line by line, how fast the words glide up to the next line (Transcript's GLIDE).
+-- Line by line, how fast the words glide up to the next line.
 local GLIDE = 0.09
 local PAUSED_FADE = .25
 local PICTURE, PICTURE_GAP, LABEL_GAP = 36, 8, 6
--- The progress line (Actions.ProgressBar) spans this share of the band.
+-- The progress line spans this share of the band.
 local PROGRESS_SHARE = 0.45
 local SIZE_EASE = 10
 -- The controls shown on hover: the windows' round pause button, skip, and Report.
 local CONTROL_SIZE, CONTROL_GAP = 24, 4
 local CONTROLS_FADE = .15
-local PORTRAIT_ATLAS_SIZE = 512
 local UTF8_CHAR = "[%z\1-\127\194-\244][\128-\191]*"
 
 local function Config()
@@ -59,12 +58,10 @@ local function Characters(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return count
 end
--- Auto-Scroll line by line: a window of Lines Shown lines the words glide up through, rather than
--- pages of whole sentences.
+-- Auto-Scroll line by line: the words glide up through Lines Shown lines instead of turning pages.
 local function Rolling() return Config().SubtitleScroll == "line" end
 local function Shown() return math.max(1, tonumber(Config().Lines) or 2) end
 
--- The words' face at Text Size, as the windows' words are: the quest text's own, scaled from 16.
 local function WordsFont()
     local font = _G.QuestFont
     if not (font and font.GetFont) then return nil end
@@ -72,7 +69,6 @@ local function WordsFont()
     if not (path and size) then return nil end
     return path, math.max(6, math.floor(size * (tonumber(Config().FontSize) or 16) / 16 + .5))
 end
--- Hide Portrait, as the windows have it.
 local function Pictured() return not Addon:Profile("Frame").HidePortrait end
 -- The words' face on the measuring string, so wrapping and paging measure at Text Size.
 local function Measure(subtitle)
@@ -96,7 +92,6 @@ local function Prefix(text, count)
     return table.concat(parts)
 end
 
--- The word being read, as the windows light it (Transcript's gold).
 local HIGHLIGHT = "|cffffd100"
 -- `text` with its characters `from` (after that many) through `to` lit.
 local function Light(text, from, to)
@@ -304,8 +299,7 @@ function Subtitle:Build()
     -- Hung from the background's foot, so the buttons follow it as it eases to a new size.
     self.controls:SetPoint("TOP", self.shadow, "BOTTOM", 0, -2)
 
-    -- The row over the words: the speaker's picture and name, the line's title, "(Stopped)" and
-    -- the waiting count. One frame, so Show Name and Title hides it whole (Subtitle:NameShown).
+    -- One frame for the row over the words, so Show Name and Title hides it whole.
     local row = CreateFrame("Frame", nil, frame)
     row:SetAllPoints()
     self.nameRow = row
@@ -358,8 +352,8 @@ function Subtitle:Build()
     self.moreDot:SetText("•")
     self.waiting = 0
 
-    -- The words' own frame, which clips them: a line gliding past its top or bottom edge is cut
-    -- there as it fades, not drawn over the name row or the progress line.
+    -- Clips the words, so a line gliding past an edge is cut there, not drawn over the name row or
+    -- the progress line.
     self.words = CreateFrame("Frame", nil, frame)
     if self.words.SetClipsChildren then self.words:SetClipsChildren(true) end
 
@@ -421,8 +415,6 @@ function Subtitle:ConfigurePicture(clip)
     self.badge:SetShown(texture ~= nil)
 end
 
---- Whether the row over the words shows (Show Name and Title): off, the words stand alone, as a
---- film's subtitles do.
 function Subtitle:NameShown()
     return Config().SubtitleName ~= false
 end
@@ -448,7 +440,7 @@ function Subtitle:RowWidth(paused)
         self.label:SetWidth(math.max(1, label))
         return start + lead + (paused and (self.pausedLabel:GetStringWidth() or 0) or label) + more
     end
-    -- With no label, Stopped follows a dot of its own, as the count does.
+    -- With no label, Stopped follows a dot of its own.
     local dot = LABEL_GAP + (self.dot:GetStringWidth() or 0) + LABEL_GAP
     return start + (paused and dot + (self.pausedLabel:GetStringWidth() or 0) or 0) + more
 end
@@ -531,7 +523,6 @@ function Subtitle:Layout(text)
     local named = self:NameShown()
     self.nameRow:SetShown(named)
     local titleHeight, widest = self:RowHeight(), self:RowWidth(self.shownPaused)
-    -- Without the row the words start at the top.
     local titleGap = named and TITLE_GAP or 0
     self.rows = {}
     for index, wrapped in ipairs(self:Wrap(text)) do
@@ -547,16 +538,13 @@ function Subtitle:Layout(text)
         self.lines[index]:SetText("")
         self.lines[index]:Hide()
     end
-    -- Every row of the page, or line by line the window of Lines Shown that the words glide
-    -- through, from its first line.
     self.shownRows = Rolling() and math.min(#self.rows, Shown()) or #self.rows
     self.lineStep, self.wordsTop = lineHeight + LINE_GAP, TOP_PAD + titleHeight + titleGap
     self.rollTop, self.rollTarget = 1, 1
     local wordsHeight = self.shownRows * self.lineStep - LINE_GAP
-    -- Line by line, a line's room over and under the words, which a line gliding out or in fades
-    -- through: at nothing by the time it reaches the clip's edge, so no line is seen cut there.
-    -- It reaches over the gaps to the name and the progress line, and under them: the words keep
-    -- the place they have page by page. Otherwise a few pixels, for the letters' tops and tails.
+    -- Line by line, the clip reaches a line past the words each way, over the gaps to the name and
+    -- the progress line, so a line gliding out or in has faded to nothing before the edge cuts it.
+    -- Otherwise a few pixels, for the letters' tops and tails.
     local room = Rolling() and self.lineStep or 4
     self.words:ClearAllPoints()
     self.words:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -(self.wordsTop - room))
@@ -584,9 +572,8 @@ function Subtitle:Layout(text)
     self.revealed = nil
 end
 
---- The rows where the scroll has them. Line by line, the one leaving at the top fades out as it
---- glides up and the one coming in under the window fades in, as the windows' captions do; the
---- rest are hidden. Over that, the page's own fade (Animate).
+--- Line by line, the row leaving at the top fades out as it glides up and the one coming in fades
+--- in; rows outside the window are hidden. The page's own fade multiplies over that.
 function Subtitle:PlaceLines()
     local top = self.rollTop or 1
     local first = math.floor(top)
@@ -605,7 +592,7 @@ function Subtitle:PlaceLines()
     end
 end
 
---- The row holding the `n`th character of the page (the rows' counts, as Reveal counts them).
+--- The row holding the page's character `n`, counted from 0.
 function Subtitle:RowOf(n)
     local total = 0
     for index, row in ipairs(self.rows or {}) do
@@ -615,8 +602,8 @@ function Subtitle:RowOf(n)
     return math.max(1, #(self.rows or {}))
 end
 
---- Line by line, the window's first line: the one that keeps the line being read (or typed) at
---- its foot, and never past the last.
+--- Line by line, scrolls so the row holding character `at` sits at the window's foot, never past
+--- the last row.
 function Subtitle:Follow(at)
     if not Rolling() then return end
     local rows, shown = #(self.rows or {}), self.shownRows or 1
@@ -664,8 +651,8 @@ function Subtitle:CharsSpan(n)
 end
 
 --- The rows as the typing has them: each holds the letters typed so far, so nothing yet to come
---- is ever on screen. `lit`, the page's word to light: only while the words show whole, since the
---- word timing is an estimate and typed in front of the reader it showed every miss.
+--- is ever on screen. `lit` is the page's word to light, passed only while the words show whole:
+--- an estimated word timing typed in front of the reader shows every miss.
 function Subtitle:Reveal(count, lit)
     local key = count .. ":" .. (lit or 0)
     if key == self.revealed then return end
@@ -845,7 +832,6 @@ function Subtitle:Update()
         self:Place()
     end
     local clip = speaking and Transcript.clip or self.sample
-    -- A setting the line was laid out with changed: paged and laid out again, from where the voice is.
     if self.clip and self.pages and self.layoutKey ~= self:LayoutKey() then
         self:Prepare(self.clip, self.sample and L.SUBTITLE_SAMPLE_TEXT or Transcript.text)
         -- Typed on from where the voice is, not from the page's start again.
@@ -927,7 +913,6 @@ function Subtitle:BuildControls()
     self.pause = pause
     self:UpdatePause()
 
-    -- Skip, as the windows' queue offers it (Actions.SkipButton).
     local skip = Actions.SkipButton(controls)
     skip:SetPoint("LEFT", pause, "RIGHT", CONTROL_GAP, 0)
     self.skip = skip
@@ -955,7 +940,6 @@ end
 
 function Subtitle:UpdatePause()
     Actions.SetPlayGlyph(self.pause, Actions.HeadState())
-    -- A line the client cannot stop: its buttons faint and still, as the windows show it.
     local pausable = SoundQueue:CanBePaused()
     for _, button in ipairs({ self.pause, self.skip }) do
         button:SetAlpha(pausable and 1 or .4)
@@ -1099,7 +1083,6 @@ function Subtitle:Animate(elapsed)
         if math.abs(self.rowLeft - self.rowWant) < .5 then self.rowLeft = self.rowWant end
         self:PlaceRow(self.rowLeft)
     end
-    -- Line by line, the words glide up to the line being read.
     local top, target = self.rollTop, self.rollTarget
     if top and target and top ~= target then
         local moved = top + (target - top) * (1 - math.exp(-elapsed / GLIDE))

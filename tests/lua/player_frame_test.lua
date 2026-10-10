@@ -124,8 +124,8 @@ ExpectOf("...then hidden, the words let go", function()
     return tostring(F.frame:IsShown()) .. " " .. tostring(env.Transcript.held)
 end, "false nil")
 
--- From one line to the next, as the DialogueUI window turns: the window fades out whole with the
--- first line's name and words, and fades in with the next's.
+-- From one line to the next: the window fades out whole with the first line's name and words,
+-- and fades in with the next's.
 env, quests, zones = Boot(); F = env.PlayerFrame
 local first = H.Clip({ present = { header = "Thrall", transcript = "Lok'tar ogar.", portrait = { kind = "none" } } })
 local second = H.Clip({ present = { header = "Cairne", transcript = "Walk with the Earth Mother.", portrait = { kind = "none" } } })
@@ -248,8 +248,7 @@ quests:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", por
 ExpectOf("no actions, Stop and Skip alone", function() return F.frame.actions.shown .. " " .. #F.row end, "0 2")
 
 ---------------------------------------------------------------- the Talking Head's layout
--- The words were docked under the portrait, so they started below the box and ran out of it. The
--- window is now the game's Talking Head frame as TalkingHeadUI.xml lays it out: 570 by 155, the
+-- The window is the game's Talking Head frame as TalkingHeadUI.xml lays it out: 570 by 155, the
 -- portrait 21 in from the top left, the name beside it, the words 3 under the name ending 42 from
 -- the right and 12 from the foot, and the round controls 12 in from the top right corner, where
 -- the Talking Head has its close button.
@@ -439,6 +438,12 @@ Expect("...and hides itself if the cursor goes back over the button", tip:IsShow
 stub.ldbObjects.Spoken.OnClick(mmButton, "RightButton")
 stub.ldbObjects.Spoken.OnTooltipShow(tip)
 Expect("with the menu closed it says what the clicks do again", tip:NumLines() > 3, true)
+local playing = env.SoundQueue.GetCurrentSound
+env.SoundQueue.GetCurrentSound = function() return { present = { label = "Azeroth" } } end
+stub.ldbObjects.Spoken.OnTooltipShow(tip)
+Expect("a line with nothing over its name has no empty line over it in the tooltip",
+    tip.lines[1] .. "|" .. tip.lines[2], "Spoken|Azeroth")
+env.SoundQueue.GetCurrentSound = playing
 stub.ldbObjects.Spoken.OnClick(mmButton, "RightButton")
 
 stub.ldbObjects.Spoken.OnClick(mmButton, "RightButton")
@@ -693,6 +698,8 @@ local function PanelLabelsSetup(client)
     stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
     env = stub.LoadSpoken(SPOKEN)
     _G.Spoken:RegisterOptionalAction("report", "Report")
+    -- The legacy clients do not load Contribute.xml, which the stub loads everywhere.
+    if _G.WOW_PROJECT_ID == nil then _G.Spoken.Contribute = nil end
     env.Addon:Enable()
 end
 
@@ -734,11 +741,13 @@ end
 Expect("the scale slider is a slider", scale ~= nil, true)
 Expect("...with a height, or it draws nothing", scale and scale.height, 16)
 Expect("...and an orientation", scale and scale:GetOrientation(), "HORIZONTAL")
-Expect("an optional action is named on the panel", labels["Hide Report Button"], true)
--- Hiding the portrait and hiding one button are the same kind of choice, so they sit together.
+-- Report shows on the quest log, DialogueUI's window and the lore pages as well as on the
+-- windows, so its switch is a general one, beside Contribute's, not among the window's.
+Expect("Report has one switch for every window", labels["Hide Report Buttons"], true)
+Expect("...not among the window's own settings", labels["Hide Report Button"], nil)
 local order = table.concat(PanelOrder("11509"), "|")
-Expect("...beside hiding the portrait", string.find(order,
-    "Hide Portrait|Hide Report Button", 1, true) ~= nil, true)
+Expect("...beside hiding the Contribute buttons", string.find(order,
+    "Hide Contribute Buttons|Hide Report Buttons", 1, true) ~= nil, true)
 -- Nothing on screen at all is a way of showing lines, chosen with the others, not a switch
 -- among the window's settings.
 Expect("voice only is still one of the ways to show lines", _G.SpokenEnv.Options:Styles()[4], "none")
@@ -754,11 +763,33 @@ Expect("a current client is offered nothing about the music channel",
 -- 2.4.3 and 3.3.5 route speech through the music channel, because those clients cannot
 -- stop a sound any other way. Those settings existed from the start and had no row at
 -- all: the only way to change one was to edit the saved variables by hand.
+--- The tooltip of the home page's row labelled `label`, as the panel was last built.
+local function RowTip(label)
+    for _, entry in ipairs(_G.SpokenOptionsPanel.layout.entries) do
+        if entry.label == label then
+            _G.GameTooltip.lines = {}
+            _G.this = entry.frame
+            entry.frame.scripts.OnEnter(entry.frame)
+            return table.concat(_G.GameTooltip.lines, "|")
+        end
+    end
+    return ""
+end
+Expect("on a current client, Hide Report Buttons' tip names the Compendium too",
+    RowTip("Hide Report Buttons"):find("Compendium", 1, true) ~= nil, true)
 labels = PanelLabels("3.3.5")
+Expect("a legacy client, with no Contribute section, is offered Hide Report Buttons too", labels["Hide Report Buttons"], true)
+local reportTip = RowTip("Hide Report Buttons")
+Expect("...its tip naming only the window and the subtitles, all a legacy client has",
+    reportTip:find("from the window and the subtitles.", 1, true) ~= nil and reportTip:find("Compendium", 1, true) == nil, true)
 Expect("a legacy client can reach the music channel", labels["Play through the music channel"], true)
 Expect("...its volume", labels["Speech volume"], true)
 Expect("...its fade, as a duration and not a percentage", labels["0.5s"], true)
 Expect("...and the HD model patch", labels["HD model patch installed"], true)
+PanelLabels("1.12")
+reportTip = RowTip("Hide Report Buttons")
+Expect("on 1.12, which has no subtitles, Hide Report Buttons' tip names only the window",
+    reportTip:find("from the window.", 1, true) ~= nil and reportTip:find("subtitles", 1, true) == nil, true)
 
 ---------------------------------------------------------------- an action in the corner, and hiding them
 -- A button that only ever says "Report" earns an icon rather than a word, and it belongs

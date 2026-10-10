@@ -30,12 +30,14 @@ brings back what was hidden, inside DialogueUI's window:
 - **Report a problem, or contribute a missing line.** Just under DialogueUI's Decline (or
   Goodbye) button, right-aligned with it and clear of the parchment's curled foot, sits the
   player's round Report icon (16 px), faint (40 %)
-  as in the DialogueUI narrator style, on every quest and gossip page: it opens the report
+  as in the DialogueUI narrator style, on every quest and gossip page unless Spoken's
+  **Hide Report Buttons** is on: it opens the report
   address for the page, the quest's or the NPC's. For a quest or gossip line no pack has, the
   same icon is in full, with **No voice-over playing? Contribute!** beside it, in DialogueUI's
   small serif and the red of DialogueUI's Accept button (sampled from its art; on the dark
   theme lifted so small text reads on black); either then does what the game's Contribute
-  button does. Both copy boxes show over the window. Always on, with no setting: the
+  button does. Both copy boxes show over the window. No setting of its own on this page, only
+  Spoken's **Hide Report Buttons** and **Hide Contribute Buttons**, one for each half: the
   Contribute button was missing under DialogueUI
   ([rusty-key/spoken-wow#246](https://github.com/rusty-key/spoken-wow/issues/246)), and
   gathering saved nothing.

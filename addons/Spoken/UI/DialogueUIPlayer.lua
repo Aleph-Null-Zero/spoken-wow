@@ -20,55 +20,46 @@ local Skin = DialogueUIPlayer
 local Theme = DialogueUITheme
 local PORTRAIT = 48
 -- The panel's share of DialogueUI's window at the default Window Size, small enough to read
--- beside the next dialog. Taking over from the dialog, it starts at the dialog's whole size and
--- shrinks to this (Skin:Settle).
+-- beside the next dialog.
 local BASE_SCALE = 0.65
 -- Where it settles when the dialog closes: this far from the screen's top left, the paper's
--- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep), moving as
--- the tuck's page and window do: lifted off it SETTLE_RISE up and SETTLE_GROW larger over
--- SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed SETTLE_BOW of the way to one side (down, so
--- it stays on the screen), then landing with a little jump, up SETTLE_GIVE and back, over LAND_TIME.
+-- edge rather than the frame's. And how it gets there from the dialog (Skin:SettleStep): lifted
+-- SETTLE_RISE up and SETTLE_GROW larger over SETTLE_LIFT, flown over SETTLE_TIME on a curve bowed
+-- SETTLE_BOW to one side (down, so it stays on the screen), then landing with a jump of SETTLE_GIVE
+-- over LAND_TIME.
 local EDGE = 16
--- The same lift and flight times as the tuck's page (TUCK_LIFT, TUCK_FLY): one rhythm for both.
+-- The tuck's page lifts, flies and gives on the same rhythm.
 local SETTLE_LIFT, SETTLE_TIME, LAND_TIME = .1, .42, .4
 local SETTLE_GROW, SETTLE_RISE, SETTLE_BOW, SETTLE_GIVE = .03, 4, .16, 7
 -- The dialog's words fading on DialogueUI's window before it closes (Skin:FadeDialogOut), and this
 -- window's fading in once it has landed (Skin:LandStep): the flight is of the paper alone.
 local CONTENT_OUT, CONTENT_IN = .1, .16
--- A quest page closing (QUEST_FINISHED): DialogueUI waits up to a second before it hides its window
--- (DialogueUI 1.0.5's Code/Core.lua): 0.5 when the NPC has more quests (GetQuestFinishedDelay), in
--- case its next page comes, and up to 0.5 more for its camera. Where it expects no page, the window
--- is closed as soon as the game says the conversation with the NPC is over, which is what
--- DialogueUI checks before it closes, watched for up to QUEST_WAIT. Otherwise the page stays as it
--- is, words and all, until DialogueUI closes it: fading them first left bare paper standing.
+-- A quest page closing (QUEST_FINISHED): DialogueUI (1.0.5, Code/Core.lua) waits up to a second
+-- before it hides its window: FOLLOWS when the NPC has more quests (GetQuestFinishedDelay), in case
+-- the next page comes, and up to 0.5 more for its camera. Where it expects no page, the window
+-- closes once the conversation with the NPC is over, watched for up to QUEST_WAIT. Otherwise it is
+-- left to DialogueUI, words and all: fading them early would leave bare paper standing.
 local QUEST_WAIT = 1.1
 local FOLLOWS = .5
--- A dialog closing on another line than its own: its page goes behind this window (Skin:Tuck). A
--- line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI hear
--- the same event, in either order.
+-- A line queued this long before its dialog showed is still the dialog's: Spoken and DialogueUI
+-- hear the same event, in either order.
 local JUST_BEFORE = 0.5
 -- A dialog's line can also join the queue just after it closes: a quest page is read once its
 -- words have held still, and a quest accepted at once (the space bar) closes before that. A line
 -- from the dialog's own modules this soon after it closed is still the dialog's.
 local JUST_AFTER = 1
 local DIALOG_SOURCES = { DUIQuestFrame = { quests = true, gossip = true }, DUIBookFrame = { books = true } }
--- The tuck, in seconds: the page lifted, flying over, sliding behind; this window giving under it
--- by TUCK_GIVE and back, and its count rippling over TUCK_RIPPLE. The page lands at TUCK_SIZE of
--- the window, TUCK_LOW of its height under its middle, its foot showing under it.
-local TUCK_LIFT, TUCK_FLY, TUCK_SLIDE, TUCK_NUDGE, TUCK_RIPPLE = .1, .42, .18, .4, .35
-local TUCK_GIVE, TUCK_SIZE, TUCK_LOW = 7, .9, .3
--- The art a line is drawn in (Skin:Look), as DialogueUI draws it: its quest window's parchment
--- for quests, gossip and places; its book view's paper for books and letters, and its stone for
--- plaques and tombstones, picked as DialogueUI picks them from the item's material. Each is a
--- top cap, a middle that stretches and a bottom cap, rows of its file's 2048: the caps centred on
--- the window's top and foot, the middle running on `under` rows under the bottom cap, which fades
--- in over its first rows. Then, in the caps' 256 rows and the file's 1024 columns:
---   paperTop: the top cap's first opaque row; paperLeft: the first opaque column (the quest
---     parchment's: Brown 122 and 130, Dark 126 and 125, the smaller of each, so the paper never
---     runs off the screen);
---   foot: how far over the window's foot the bottom cap's light paper ends (the quest
---     parchment's rows to 105 are light, the curled rim under them).
--- The book view's paper spans columns 128 to 896, the frame's width (BOOK_PAPER).
+-- The tuck: the page slides behind over TUCK_SLIDE seconds and the count ripples over
+-- TUCK_RIPPLE. The page lands at TUCK_SIZE of the window, TUCK_LOW of its height under its middle,
+-- its foot showing under it.
+local TUCK_SLIDE, TUCK_RIPPLE, TUCK_SIZE, TUCK_LOW = .18, .35, .9, .3
+-- The art a line is drawn in, as DialogueUI draws it. Each file is 2048 rows: a top cap, a middle
+-- that stretches and a bottom cap, the caps centred on the window's top and foot. The middle runs
+-- on `under` rows under the bottom cap, which fades in over it. In the caps' 256 rows and the
+-- file's 1024 columns, paperTop is the top cap's first opaque row, paperLeft the first opaque
+-- column, and foot how far over the window's foot the bottom cap's light paper ends. The quest
+-- parchment's paperTop and paperLeft are the smaller of its Brown and Dark themes', so the paper
+-- never runs off the screen.
 local BOOK_ART = "Interface/AddOns/DialogueUI/Art/Book/TextureKit-"
 local LOOKS = {
     quest = { top = { 0, 256 }, middle = { 256, 896 }, bottom = { 896, 1152 }, under = 0,
@@ -79,6 +70,7 @@ local LOOKS = {
         bottom = { 1152, 1408 }, under = 40, paperTop = 123, paperLeft = 112, foot = 12, palette = 2, book = true,
         shadow = true },
 }
+-- The book art's paper spans columns 128 to 896, and DialogueUI makes that the frame's width.
 local BOOK_PAPER = 768 / 1024
 -- DialogueUI's book view: TextureKit 2 (stone) for these materials, 1 (paper) for every other
 -- (MaterialTextureKitID in DialogueUI 1.0.5's Code/Book/BookUI.lua).
@@ -87,25 +79,49 @@ local STONE = { Stone = true, Marble = true, Silver = true, Bronze = true, Proge
 -- opening is 56 of its 96 across, where the face sits.
 local BOOK_DIVIDER = { 0, 768 / 1024, 1520 / 2048, 1552 / 2048 }
 local BOOK_RING, RING_OPENING = { 768 / 1024, 864 / 1024, 1616 / 2048, 1712 / 2048 }, 56 / 96
+
+--- A look's cap size for a window `width` wide: a book's puts its paper on that width; the quest
+--- parchment's is DialogueUI's, at `q` of it.
+local function CapSize(look, width, q)
+    if look.book then
+        local capWidth = width / BOOK_PAPER
+        return capWidth, capWidth * (look.top[2] - look.top[1]) / 1024
+    end
+    local capWidth, capHeight = Theme:ParchmentSize()
+    return capWidth * (q or 1), capHeight * (q or 1)
+end
+
+--- The three strips in `look`'s art from `file`, the middle hung between the caps. The caller
+--- places and sizes the caps.
+local function DressStrips(strips, file, look, capHeight)
+    for index = 1, 3 do strips[index]:SetTexture(file) end
+    strips[1]:SetTexCoord(0, 1, look.top[1] / 2048, look.top[2] / 2048)
+    strips[2]:SetTexCoord(0, 1, look.middle[1] / 2048, look.middle[2] / 2048)
+    strips[3]:SetTexCoord(0, 1, look.bottom[1] / 2048, look.bottom[2] / 2048)
+    strips[2]:ClearAllPoints()
+    strips[2]:SetPoint("TOPLEFT", strips[1], "BOTTOMLEFT", 0, 0)
+    strips[2]:SetPoint("BOTTOMRIGHT", strips[3], "TOPRIGHT", 0, -capHeight * look.under / 256)
+end
 -- Showing and hiding, the paper first and the rest over it (Skin:SetLevel).
 local FADE_IN, FADE_OUT = .18, .2
 -- A new line on a window already showing: its words fade in over LINE_IN, and the window eases to
--- its new height, as the subtitle's do (Subtitle's PAGE_IN and SIZE_EASE).
+-- its new height at SIZE_EASE.
 local LINE_IN, SIZE_EASE = .28, 10
--- Every fade is of the window as one image (Skin:Buffer), and nothing in it may change while it is
--- one. Before it becomes one: still this long (a face or picture just set is drawn or loaded a
+-- Every fade is of the window as one image, and nothing in it may change while it is one.
+-- Before it becomes one: still this long (a face or picture just set is drawn or loaded a
 -- moment after), and, fading out, deaf to the pointer for ARM_FRAMES frames so a click's pressed
--- and lit states have settled. Never waiting longer than ARM_MOST.
-local STILL, ARM_FRAMES, ARM_MOST = 0.1, 2, 0.5
--- Between the round controls in the header, as the subtitle's (Subtitle:BuildControls); and the
--- buttons' size, which is also the least room between them and the title's end (its count or
--- Stopped), so a long title cut short does not crowd them.
+-- and lit states have settled. Never waiting longer than ARM_MOST. Fading in, a texture that never
+-- says it has loaded would keep it unseen: after PREPARE_MOST it fades in as itself, not one image,
+-- so a late load cannot crash it.
+local STILL, ARM_FRAMES, ARM_MOST, PREPARE_MOST = 0.1, 2, 0.5, 1
+-- The gap between the round controls in the header, and the buttons' size, which is also the
+-- least room between them and the title's end, so a long title cut short does not crowd them.
 local ROUND_GAP, ROUND_SIZE = 4, 24
 -- The words take this share of DialogueUI's column, centred in it: a narrower column than the
 -- header's and the progress line's, read more easily.
 local WORDS_SHARE = 0.9
--- A place's picture over its words, as Place Lore draws it (Spoken_Zones' TextView): 2:1, as
--- wide as the words, PICTURE_GAP above them, the page's grain through it.
+-- A place's picture over its words: 2:1, as wide as the words, PICTURE_GAP above them, the
+-- page's grain through it.
 local PICTURE_GAP, PICTURE_ALPHA = 10, 0.95
 -- With no picture, the words start this share of their size under the divider's line: closer than
 -- DialogueUI's own gap under its header strip, which on this smaller window looked adrift.
@@ -120,7 +136,7 @@ local BASE_FONT_SIZE = 16
 local TITLE_SHARE = 0.85
 -- DialogueUI's paddings at multiplier 1.
 local PAD_H, PAD_TOP, PAD_BOTTOM = 26, 48, 36
--- Where in the quest parchment's file its header strip is; it sits below the caps.
+-- The quest parchment's header strip: its texture coordinates, then its size in pixels.
 local HEADER_DIVIDER = { 0, 0.65625, 0.56640625, 0.61328125, 358, 51 }
 -- Where, of the strip's 358, the portrait socket at its left end gives way to the plain
 -- line. The socket is drawn as is; only the line past it stretches with the panel.
@@ -133,6 +149,17 @@ local parts = MinimalPlayer.parts
 local Font, Label, Clamp, Waiting, BelongsTo = parts.Font, parts.Label, parts.Clamp, parts.Waiting, parts.BelongsTo
 local function Round(n) return math.floor(n + 0.5) end
 local function Smooth(t) return t * t * (3 - 2 * t) end
+local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
+local function Lerp(a, b, t) return a + (b - a) * t end
+-- The little jump a window gives as something lands on or under it: up SETTLE_GIVE and back.
+local function Bounce(t) return SETTLE_GIVE * math.exp(-6 * t) * math.sin(2 * math.pi * t / 0.34) end
+-- A shadow texture or frame under `anchor`, thrown `dx`, `dy` and blurred `blur` past its edges.
+local function PlaceShadow(region, anchor, dx, dy, blur, scale)
+    scale = scale or 1
+    region:ClearAllPoints()
+    region:SetPoint("TOPLEFT", anchor, "TOPLEFT", (dx - blur) / scale, (dy + blur) / scale)
+    region:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMRIGHT", (dx + blur) / scale, (dy - blur) / scale)
+end
 local function EaseInOut(t)
     if t < 0.5 then return 4 * t * t * t end
     local f = 2 - 2 * t
@@ -142,7 +169,7 @@ local function EaseOutCubic(t)
     local f = 1 - t
     return 1 - f * f * f
 end
--- Of a quadratic curve from a to c bent toward b.
+-- The point at u on a quadratic curve from a to c, bent toward b.
 local function Bend(a, b, c, u) return (1 - u) * (1 - u) * a + 2 * (1 - u) * u * b + u * u * c end
 -- The point bowing a path from a to b `share` of its length to one side: the side below it, so a
 -- window flying to the screen's top edge never runs off it.
@@ -162,8 +189,8 @@ function Skin:IsEnabled()
     return Addon.db and Addon:DisplayStyle() == "dialogueui"
 end
 
---- The art a line is drawn in (LOOKS): Spoken Books' pages in the book view's paper, or its
---- stone for the materials DialogueUI draws in stone; every other line in the quest parchment.
+--- The art a line is drawn in: Spoken Books' pages in the book view's paper, or its stone for
+--- the materials DialogueUI draws in stone; every other line in the quest parchment.
 local function LookOf(clip)
     local present = clip and clip.present
     if present and (present.material or present.bullet == "book") then
@@ -191,7 +218,7 @@ function Skin:Initialize()
     frame.spokenBaseScale = 1
     frame:SetSize(300, 400)
     -- RefreshConfig re-runs PlaceDefault until the player drags it.
-    if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
+    self:PlaceHome()
     frame:SetMovable(true)
     frame:SetClampedToScreen(true)
     frame:SetUserPlaced(false)
@@ -203,15 +230,16 @@ function Skin:Initialize()
         if button == "RightButton" then Options:Open() end
     end)
     frame:SetScript("OnUpdate", function(_, elapsed) self:Tick(elapsed) end)
+    frame.spokenEndFade = function() self:EndFade() end
     frame:SetScript("OnHide", function() self:HideTooltip() end)
     -- The captions take the wheel first and hand it here when Ctrl is held.
     frame:EnableMouseWheel(true)
     frame:SetScript("OnMouseWheel", function(_, delta) self:Wheel(delta) end)
     frame.spokenWheel = function(delta) return self:Wheel(delta) end
     frame:Hide()
-    -- DialogueUI's quest window or its book view closing on a line that plays on: this one takes
-    -- over from it. Told by a child of each, as DialogueUIBridge's driver is: DialogueUI sets the
-    -- quest window's own OnHide with SetScript, which drops a hook.
+    -- DialogueUI's quest window or book view closing on a line that plays on: this one takes over
+    -- from it. Told by a child of each, since DialogueUI sets the quest window's own OnHide with
+    -- SetScript, which drops a hook.
     self.dialogs, self.dialogWatches = {}, {}
     -- Which lines each dialog queued (Skin:StartSession), so the one closing knows its own.
     self.queuedAt, self.sessions = setmetatable({}, { __mode = "k" }), {}
@@ -237,32 +265,37 @@ function Skin:Initialize()
             self.dialogHides = self.dialogHides or {}
             self.dialogHides[dialog] = hide
             dialog.Hide = function(frame, ...)
+                -- DialogueUI closing it from ShowUI (a cutscene, gossip another addon handles):
+                -- ShowUI's end would take it for another page and cancel the fade, so it hides now.
+                if self.showingUI == frame then return hide(frame, ...) end
                 local closing = self.closing
-                if closing and closing.dialog == frame then
-                    -- Its words already fading since QUEST_FINISHED: it closes now (Skin:CloseStep).
-                    if not closing.hiding then closing.hiding = true; self:CloseStep(0) end
-                    return
-                end
+                -- Its words already fading: it closes once they have (Skin:CloseStep).
+                if closing and closing.dialog == frame then return end
                 -- Already hidden (DialogueUI hides it again from its own OnHide): nothing to fade.
                 if not frame:IsShown() then return hide(frame, ...) end
                 local ok, fades = pcall(self.FadesOnClose, self, frame)
                 if not (ok and fades) then return hide(frame, ...) end
                 self:FadeDialogOut(frame, hide)
             end
-            if type(dialog.ShowUI) == "function" then
-                hooksecurefunc(dialog, "ShowUI", function()
+            local showUI = dialog.ShowUI
+            if type(showUI) == "function" then
+                dialog.ShowUI = function(frame, ...)
+                    self.showingUI = frame
+                    showUI(frame, ...)
+                    self.showingUI = nil
                     self:CancelDialogFade(dialog)
                     -- Another page in the quest window, still open (the gossip back after a quest
-                    -- is accepted): its lines are this page's, not the last's, so closing on the
-                    -- second of a giver's quests sends its page behind the first's line playing on.
+                    -- is accepted): its lines are this page's, so closing on a giver's second quest
+                    -- sends its page behind the first's line.
                     if dialog == _G.DUIQuestFrame and dialog:IsShown() then self:StartSession(dialog) end
-                end)
+                end
             end
             self.sessions[dialog] = setmetatable({}, { __mode = "k" })
         end
     end
     Callbacks:Register("CLIP_QUEUED", function(clip) self:Queued(clip) end)
-    -- A quest page closing: its words fade at once, not when DialogueUI gets round to hiding it.
+    -- A quest page with no page to follow closes at once, not after DialogueUI's wait
+    -- (Skin:QuestFinished).
     local quest = _G.DUIQuestFrame
     if quest and self.dialogHides and self.dialogHides[quest] then
         local events = CreateFrame("Frame")
@@ -282,20 +315,20 @@ function Skin:Initialize()
     self.parchments[3]:SetPoint("CENTER", frame, "BOTTOM", 0, 0)
     self.parchments[2]:SetPoint("TOPLEFT", self.parchments[1], "BOTTOMLEFT", 0, 0)
     self.parchments[2]:SetPoint("BOTTOMRIGHT", self.parchments[3], "TOPRIGHT", 0, 0)
-    -- Over the middle where the book art's bottom cap fades in over it.
+    -- Over the middle, which runs on under the book art's bottom cap.
     self.parchments[3]:SetDrawLayer("BACKGROUND", 0)
 
     local content = CreateFrame("Frame", nil, frame)
     self.content, frame.container = content, content
-    -- The words are docked here (Skin:Layout), and hand Ctrl-wheel to their parent.
+    -- The captions are docked here and hand Ctrl-wheel to their parent.
     content.spokenWheel = frame.spokenWheel
     content.buttons = {}
 
-    -- The header strip's place, which the face and the title are set in whatever the look.
+    -- The face and the title are placed on this, whatever the look.
     self.header = CreateFrame("Frame", nil, content)
     -- In the quest parchment, DialogueUI's header strip in two pieces: the face's socket, never
     -- stretched, and the line past it, stretched to the panel's width. In a book's, the ring
-    -- round the face and the line under the title (Skin:Layout).
+    -- round the face and the line under the title.
     self.headerSocket = content:CreateTexture(nil, "ARTWORK")
     self.headerDivider = content:CreateTexture(nil, "ARTWORK")
     local host = CreateFrame("Frame", nil, content)
@@ -304,8 +337,7 @@ function Skin:Initialize()
     self.viewport = CreateFrame("Frame", nil, host)
     self.viewport:SetAllPoints()
     self.viewport:SetClipsChildren(true)
-    -- What kind of line it is, on a dark disc at the face's lower right, as the subtitle and the
-    -- small window badge theirs (MinimalPlayer.BADGES).
+    -- What kind of line it is, on a dark disc at the face's lower right.
     local chrome = CreateFrame("Frame", nil, host)
     chrome:SetAllPoints()
     chrome:SetFrameLevel(host:GetFrameLevel() + 8)
@@ -316,7 +348,7 @@ function Skin:Initialize()
     self.name = Font(content, 18, 1, 1, 1)
     content.name = self.name -- Actions' header anchor contract.
     self.name:SetHeight(20)
-    -- The line's name, nothing to click: Skip takes a line away, as on the subtitle.
+    -- The line's name, nothing to click: Skip takes a line away.
     self.title = CreateFrame("Frame", nil, content)
     self.title.text = Font(self.title, 12, 1, 1, 1)
     self.title.text:SetPoint("TOPLEFT")
@@ -339,10 +371,8 @@ function Skin:Initialize()
         self.picture:AddMaskTexture(self.pictureMask)
     end
 
-    -- The subtitle's progress line, along the foot of the words.
     self.progress = Actions.ProgressBar(content)
-    -- The subtitle's controls (Subtitle:BuildControls) at the header's right end, beside the
-    -- speaker and the line: Stop or Replay, Skip, then Report (Skin:ConfigureActions).
+    -- At the header's right end: Stop or Replay, Skip, then Report.
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(1)
     local play = Actions.StopButton(self.controls, function() return self:HasClip() end,
@@ -374,6 +404,8 @@ end
 
 --- Runs on every refresh, so a theme or size change in DialogueUI lands on the next one.
 function Skin:Layout()
+    -- Fonts and widths change here: the title's tail is laid out afresh.
+    self.countLaid = nil
     self:Touch()
     local frame, cfg = self.frame, Theme:Config()
     local look = self:Look()
@@ -422,23 +454,16 @@ function Skin:Layout()
     local wordsTop = picture and pictureTop + pictureHeight + pictureGap or lineBottom + Round(WORDS_UNDER_LINE * captionSize)
     -- The same gap above the progress line, so the words sit as far from the foot as from the
     -- head. The last line's own spacing counts towards it.
-    -- Show Progress, as the subtitle has it: off, the bar goes and the window closes up under the words.
+    -- Show Progress off: the bar goes and the window closes up under the words.
     local progress = Addon:Profile("Transcript").SubtitleProgress ~= false
     self.progress.track:SetShown(progress)
     local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
-    -- A line's room over and under the words, which a line gliding out or in fades through: it is
-    -- at nothing by the time it reaches the edge, so no line is ever seen cut there. It reaches
-    -- over the gaps there (the header's or the picture's, the one over the progress line) and
-    -- adds none: the words keep their place.
+    -- A line's room over and under the words, which a line gliding out or in fades through, so no
+    -- line is seen cut at the edge. It lies over the gaps there and adds none: the words keep
+    -- their place.
     -- Under the progress line, as far to where the paper's light ends as the last line is over it:
     -- the 6 and the header's gap over the line, and the line's own spacing under its letters.
-    -- The caps: the quest parchment's as DialogueUI drew them; a book's as wide as its paper puts
-    -- the paper on the frame's width, 4 to 1 as in the file.
-    local capWidth, capHeight = Theme:ParchmentSize()
-    if look.book then
-        capWidth = width / BOOK_PAPER
-        capHeight = capWidth * (look.top[2] - look.top[1]) / 1024
-    end
+    local capWidth, capHeight = CapSize(look, width)
     local barLift = 0
     if progress then
         local above = 6 + math.max(0, textGap - lineGap) + lineGap
@@ -457,22 +482,16 @@ function Skin:Layout()
     local captionHeight = lines * lineHeight
     local height = padTop + wordsTop + captionHeight + padBottom + footerHeight
     self.settledHeight = height
-    -- A new line on a window already showing eases to its height (Skin:Tick).
+    -- A new line on a window already showing eases to its height.
     local easing = self.easeNext and not self.settling
     self.easeNext = nil
     self.heightWant = easing and height or nil
     frame:SetSize(width, (self.settling or easing) and frame:GetHeight() or height)
     self.lines = lines
 
-    for index = 1, 3 do self.parchments[index]:SetTexture(parchment) end
-    self.parchments[1]:SetTexCoord(0, 1, look.top[1] / 2048, look.top[2] / 2048)
-    self.parchments[2]:SetTexCoord(0, 1, look.middle[1] / 2048, look.middle[2] / 2048)
-    self.parchments[3]:SetTexCoord(0, 1, look.bottom[1] / 2048, look.bottom[2] / 2048)
+    DressStrips(self.parchments, parchment, look, capHeight)
     self.parchments[1]:SetSize(capWidth, capHeight)
     self.parchments[3]:SetSize(capWidth, capHeight)
-    self.parchments[2]:ClearAllPoints()
-    self.parchments[2]:SetPoint("TOPLEFT", self.parchments[1], "BOTTOMLEFT", 0, 0)
-    self.parchments[2]:SetPoint("BOTTOMRIGHT", self.parchments[3], "TOPRIGHT", 0, -capHeight * look.under / 256)
 
     local content = self.content
     content:ClearAllPoints()
@@ -518,7 +537,7 @@ function Skin:Layout()
         part:SetPoint("CENTER", self.portrait, "CENTER", badgeAt, -badgeAt)
     end
     -- The round buttons as large on screen as Place Lore draws them (24, at UIParent's scale) at
-    -- the default Window Size, growing and shrinking with it from there (Skin:FitControls).
+    -- the default Window Size, growing and shrinking with it from there.
     self.controlsRound = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
     -- The line's title sits where DialogueUI puts its quest title, the speaker's name in its
     -- small line above, both stopping a button's width short of the buttons.
@@ -538,7 +557,6 @@ function Skin:Layout()
     self.controlsMiddle = middle
     self:FitControls()
 
-    -- The words in their narrower column, the picture over them.
     self.picture:SetShown(picture ~= nil)
     if picture then
         self.picture:SetTexture(picture.file)
@@ -556,7 +574,6 @@ function Skin:Layout()
     Transcript:Dock(content, content, "TOPLEFT", wordsLeft, -(wordsTop - self.lineRoom), wordsWidth,
         captionHeight + self.lineRoom + lineHeight)
 
-    -- The progress line as wide as the words and the picture over it.
     self.progress.track:ClearAllPoints()
     self.progress.track:SetPoint("BOTTOMLEFT", content, "BOTTOMLEFT", wordsLeft, barLift)
     self.progress.track:SetWidth(wordsWidth)
@@ -593,6 +610,8 @@ end
 
 -- Always shown, Hide Portrait or not: the header's socket is drawn for it and would sit empty.
 function Skin:ConfigurePortrait()
+    -- One image fading: the face is painted by the update waiting for it (Skin:Unbuffer).
+    if self:Defer("update") then return end
     -- A face set or redrawn: it is drawn a moment after.
     self:Touch()
     self.portrait:Show()
@@ -656,8 +675,7 @@ function Skin:UpdateControls(relayout)
     if not self.clip then return end
     local paused = SoundQueue:IsPaused()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
-    -- The line's name alone, as the subtitle shows it: not why it waits (the NPC's own greeting
-    -- first, a fight).
+    -- The line's name alone, not why it waits (the NPC's own greeting first, a fight).
     self.title.text:SetText(Label(self.clip))
     -- Stopped, said after its name, as the subtitle does.
     self.tail:SetStopped(paused)
@@ -678,9 +696,9 @@ function Skin:UpdateProgress()
     Actions.SetProgress(self.progress, duration > 0 and (self.seconds or 0) / duration or 0)
 end
 
---- How much of the window shows, 0 to 1: as one image, its alpha (Skin:Buffer). Where the client
---- has no frame buffers, the paper takes the lower half and everything on it the upper, so the two
---- never fade at once and the paper never shows through the strips and words.
+--- How much of the window shows, 0 to 1: as one image, its alpha. Where the client has no frame
+--- buffers, the paper takes the lower half and everything on it the upper, so the two never fade
+--- at once and the paper never shows through the strips and words.
 function Skin:SetLevel(level)
     self.level = level
     if self.buffered then
@@ -715,14 +733,14 @@ function Skin:Touch()
     self.stillFor = 0
 end
 
---- Nothing in the window may change: it is one image. The portrait cache asks before it paints a
---- face anew (StaticPortrait:Capture).
+--- Nothing in the window may change: it is one image.
 function Skin:Frozen()
     return self.buffered and true or false
 end
 
 --- Still a while, and nothing in it loading: it may become one image.
 function Skin:Still()
+    if self.settling or self.landing then return false end
     if (self.stillFor or STILL) < STILL then return false end
     local viewport = self.viewport
     return not (Loading(self.picture) or Loading(self.badge)
@@ -749,7 +767,12 @@ function Skin:Undeafen()
         if entry.wheel then entry.part:EnableMouseWheel(true) end
     end
     self.deafened = nil
-    -- Locked, clicks still pass through (Skin:RefreshConfig).
+    self:ApplyLock()
+end
+
+--- Locked, clicks on the window pass through to the game; its buttons still take theirs. Where
+--- the client cannot tell a click from the pointer passing over, the window keeps both.
+function Skin:ApplyLock()
     local frame = self.frame
     if frame.SetMouseClickEnabled and frame.SetMouseMotionEnabled then
         frame:SetMouseMotionEnabled(true)
@@ -758,10 +781,8 @@ function Skin:Undeafen()
 end
 
 --- Switch the window into or out of being one image while it is hidden: switched while on screen
---- and faded (fading in from nothing), the client crashed at once (ASSERT(flattenedBatch !=
---- nullptr)), as Place Lore's panel did; made one while hidden, as at its creation, it never did.
---- Hidden and shown again in the one frame, so nothing flickers, and its buttons' lit and pressed
---- states are reset by it.
+--- and faded, the client crashes (ASSERT(flattenedBatch != nullptr)). Hidden and shown again in
+--- the one frame, so nothing flickers; this also resets its buttons' lit and pressed states.
 local function SwitchHidden(frame, on)
     local shown = frame:IsShown()
     if shown then frame:Hide() end
@@ -770,13 +791,11 @@ local function SwitchHidden(frame, on)
     return ok
 end
 
---- The window drawn as one image (a frame buffer, as the world map is) and faded as one, its parts
---- ignoring its alpha so only the finished image fades. Every crash came of something in it
---- changing while it was one (the title's remove cross loading, the captions clearing at a line's
---- end, Skip going from pressed to normal: CSimpleRender.cpp's texture asserts, ASSERT(!m_deleted),
---- ASSERT(flattenedBatch != nullptr)), so while it is: deaf to the pointer, the captions held, its
---- own updates waiting (Skin:Tick, Skin:Update), the portrait cache not painting its face. False
---- where the client has no frame buffers.
+--- The window drawn as one image (a frame buffer) and faded as one, its parts ignoring its alpha
+--- so only the finished image fades. Anything in it changing while it is one crashes the client
+--- (CSimpleRender.cpp's texture asserts, ASSERT(!m_deleted), ASSERT(flattenedBatch != nullptr)),
+--- so while it is: deaf to the pointer, the captions held, its own updates waiting, the portrait
+--- cache not painting its face. False where the client has no frame buffers.
 function Skin:Buffer()
     local frame = self.frame
     if self.buffered then return true end
@@ -813,7 +832,7 @@ function Skin:Unbuffer()
     SwitchHidden(self.frame, false)
     self:Undeafen()
     self:SetLevel(self.level or 0)
-    -- Moved onto or off DialogueUI's window meanwhile (Addon:ApplyHost): now.
+    -- A move onto or off DialogueUI's window that waited happens now.
     self.frame.spokenFrozen = nil
     if self.frame.spokenHostPending then
         self.frame.spokenHostPending = nil
@@ -826,11 +845,19 @@ function Skin:Unbuffer()
     elseif pending == "update" then self:Update() end
 end
 
+--- One image fading: nothing in it may change, so `what` ("update", or "refresh", which runs one)
+--- waits for Skin:Unbuffer. True when it waits.
+function Skin:Defer(what)
+    if not self.buffered then return false end
+    if what == "refresh" or not self.pending then self.pending = what end
+    return true
+end
+
 --- What is on the paper: its share of the window's fade, times a new line's own fade-in.
 function Skin:PaintContent()
     local line = self.lineFade and Clamp(self.lineFade / LINE_IN, 0, 1) or 1
     -- Times its words' own fade as it settles out of a dialog (Skin:HideWords).
-    self.content:SetAlpha(Clamp((self.level or 0) * 2 - 1, 0, 1) * (1 - (1 - line) * (1 - line)) * (self.wordsAlpha or 1))
+    self.content:SetAlpha(Clamp((self.level or 0) * 2 - 1, 0, 1) * EaseOut(line) * (self.wordsAlpha or 1))
 end
 
 function Skin:SetVisible(visible, immediate)
@@ -839,6 +866,7 @@ function Skin:SetVisible(visible, immediate)
     if immediate then
         self.turning = nil
         self:StopTuck()
+        self:StopSettle()
         self:StopLanding()
         if self.wordsHidden then self:ShowWords(1) end
         self.wanted, self.preparing, self.arming, self.fadeTime, self.pending = false, nil, nil, nil, nil
@@ -851,6 +879,11 @@ function Skin:SetVisible(visible, immediate)
     end
     if self.wanted == visible then return end
     self.wanted = visible
+    -- Going: never still flying or landing, which would change it while it fades as one image.
+    if not visible then
+        self:StopSettle()
+        self:StopLanding()
+    end
     if visible then
         self.arming = nil
         if self.buffered or (self.frame:IsShown() and (self.level or 0) > 0) then
@@ -859,10 +892,10 @@ function Skin:SetVisible(visible, immediate)
             self.fadeFrom, self.fadeTime = self.level or 0, 0
             return
         end
-        -- From nothing: laid out unseen, then once it is still, faded in as one image (Skin:Tick).
+        -- From nothing: laid out unseen, then once it is still, faded in as one image.
         self:SetLevel(0)
         self.frame:Show()
-        self.preparing, self.fadeTime = true, nil
+        self.preparing, self.fadeTime = { waited = 0 }, nil
         return
     end
     if self.preparing or not self.frame:IsShown() or (self.level or 0) <= 0 then
@@ -878,30 +911,56 @@ function Skin:SetVisible(visible, immediate)
         return
     end
     -- On screen: deaf to the pointer first, so a click's pressed and lit states settle, then one
-    -- image once it is still (Skin:Tick). Its words held from now, so they fade out with it.
+    -- image once it is still. Its words held from now, so they fade out with it.
     self:Deafen()
     Transcript:Hold()
     self.arming, self.fadeTime = { waited = 0, frames = 0 }, nil
 end
 
---- Start the fade, as one image where the client can draw one.
-function Skin:StartFade()
-    self:Buffer()
+--- Start the fade, as one image where the client can draw one, unless asked not to.
+function Skin:StartFade(asItself)
+    if not asItself then self:Buffer() end
     self.fadeFrom, self.fadeTime = self.level or 0, 0
 end
 
---- After the title, as the subtitle has them: "• (Stopped)" while the line is stopped, and the
---- lines waiting behind it, "• +N" (Actions.Tail). The title is cut short, not these.
+--- The fade at its end: hidden if it went out, itself again, and the next line in if it turned.
+function Skin:EndFade()
+    self:SetLevel(self.wanted and 1 or 0)
+    self.fadeTime = nil
+    if not self.wanted then
+        self.frame:Hide()
+        self:Undeafen()
+        -- Held from the start of the fade-out, frame buffer or not (Skin:SetVisible).
+        Transcript:Release()
+    end
+    self:Unbuffer()
+    if self.turning then
+        self.turning = nil
+        if not self.wanted then self:Update() end
+    end
+end
+
+--- After the title: "• (Stopped)" while the line is stopped, and the lines waiting behind it,
+--- "• +N". The title is cut short, not these.
 function Skin:Count(waiting)
     local tail = self.tail
     tail:SetCount(waiting)
+    local text, width = self.title.text, self.title:GetWidth() or 0
+    local stoppedShown = tail.want or tail.alpha > 0
+    -- Polled while a line plays: laid out again only when something moved.
+    local laid = self.countLaid
+    if laid and laid.waiting == waiting and laid.stopped == stoppedShown and laid.text == text:GetText()
+        and laid.width == width then
+        if stoppedShown or waiting > 0 then tail:Paint() end
+        return
+    end
+    self.countLaid = { waiting = waiting, stopped = stoppedShown, text = text:GetText(), width = width }
     local room = tail:Room()
-    local text = self.title.text
     text:ClearAllPoints()
     text:SetPoint("TOPLEFT")
     text:SetPoint("BOTTOMRIGHT", -room, 0)
     if room == 0 then return end
-    tail:Place(text, math.min(text:GetStringWidth() or 0, math.max(0, (self.title:GetWidth() or 0) - room)))
+    tail:Place(text, math.min(text:GetStringWidth() or 0, math.max(0, width - room)))
     tail:Paint()
 end
 
@@ -911,9 +970,14 @@ function Skin:Tick(elapsed)
     if self.settling then self:SettleStep(elapsed) end
     self.stillFor = (self.stillFor or 0) + elapsed
     -- Waiting to be still before it becomes one image: in, laid out unseen; out, deaf to the pointer.
-    if self.preparing and self:Still() then
-        self.preparing = nil
-        self:StartFade()
+    local preparing = self.preparing
+    if preparing then
+        preparing.waited = preparing.waited + elapsed
+        local still = self:Still()
+        if still or preparing.waited >= PREPARE_MOST then
+            self.preparing = nil
+            self:StartFade(not still)
+        end
     end
     local arming = self.arming
     if arming then
@@ -940,23 +1004,10 @@ function Skin:Tick(elapsed)
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
         local t = Clamp(self.fadeTime / (self.wanted and FADE_IN or FADE_OUT), 0, 1)
-        local eased = t * t * (3 - 2 * t)
+        local eased = Smooth(t)
         self:SetLevel(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
         if t == 1 then
-            self.fadeTime = nil
-            if not self.wanted then
-                self.frame:Hide()
-                self:Undeafen()
-                -- Held from the start of the fade-out, frame buffer or not (Skin:SetVisible).
-                Transcript:Release()
-            end
-            -- Faded: itself again, catching up on what waited.
-            self:Unbuffer()
-            -- Faded out to turn to the next line: now it comes in.
-            if self.turning then
-                self.turning = nil
-                if not self.wanted then self:Update() end
-            end
+            self:EndFade()
             if not self.wanted then return end
         end
     end
@@ -981,8 +1032,13 @@ function Skin:PaperOverhang()
         math.max(0, capHeight * (0.5 - look.paperTop / 256))
 end
 
+--- Where it rests: the place the player dragged it to, or the default.
+function Skin:PlaceHome()
+    if not Addon:RestoreLayout("DialogueUI", self.frame) then self:PlaceDefault() end
+end
+
 --- The screen's top left, EDGE from the paper: where the window settles when DialogueUI's
---- window closes on a line that plays on (Skin:Settle), out of the way of the next dialog.
+--- window closes on a line that plays on, out of the way of the next dialog.
 function Skin:PlaceDefault()
     local frame = self.frame
     -- In the frame's own units: its effective scale is UIParent's times its base scale.
@@ -993,8 +1049,8 @@ function Skin:PlaceDefault()
 end
 
 --- Where the window rests, its top left in the screen's pixels: where it was dragged to, or the
---- screen's top left (PlaceDefault). Worked out rather than read off the frame, which has no
---- place on screen while DialogueUI hides the interface.
+--- screen's top left. Worked out rather than read off the frame, which has no place on screen
+--- while DialogueUI hides the interface.
 function Skin:Home()
     local frame = self.frame
     local ui = UIParent:GetEffectiveScale()
@@ -1016,8 +1072,8 @@ end
 function Skin:Settle(dialog)
     local frame = self.frame
     if not (self:IsEnabled() and PlayerFrame:Current()) or frame:GetParent() ~= UIParent then return end
-    -- Fading as one image: it finishes, then shows the line as it does any (Skin:Unbuffer).
-    if self.buffered then self.pending = self.pending or "update"; return end
+    -- Fading as one image: it finishes, then shows the line as it does any.
+    if self:Defer("update") then return end
     self:StopTuck()
     self:StopLanding()
     if self.wordsHidden then self:ShowWords(1) end
@@ -1042,7 +1098,7 @@ function Skin:Settle(dialog)
         self.settling = nil
         if self.wordsHidden then self:ShowWords(1) end
         frame:SetScale(frame.spokenBaseScale or 1)
-        if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
+        self:PlaceHome()
         self:Layout()
         if geterrorhandler then geterrorhandler()(err) end
     end
@@ -1083,8 +1139,7 @@ function Skin:StartSettle(dialog)
     self.settling = { time = 0, from = from, to = to,
         left = left, top = top * ui, height = height * ui, toLeft = toLeft, toTop = toTop, bendX = bendX, bendY = bendY }
     -- In full at once, where the dialog was: no fade, so not one image either (Update above may
-    -- have it waiting to fade in, which made it one image as it flew). Its paper alone: its words
-    -- come in as it lands (Skin:LandStep), the dialog's having faded on DialogueUI's window.
+    -- have it waiting to fade in). Its paper alone: its words come in as it lands (Skin:LandStep).
     self.wanted, self.fadeTime, self.preparing, self.arming = true, nil, nil, nil
     self:SetLevel(1)
     self:HideWords()
@@ -1092,9 +1147,8 @@ function Skin:StartSettle(dialog)
     self:SettleStep(0)
 end
 
---- The header's round buttons as large on screen as they settle at: while the window slides out
---- of the dialog at a larger scale, against that scale, whichever of the slide and a layout set
---- them last in a frame.
+--- The header's round buttons as large on screen as they settle at, also while the window slides
+--- out of the dialog at a larger scale. The slide and a layout both set them, in either order.
 function Skin:FitControls()
     if not self.controlsRound then return end
     local settling = self.settling
@@ -1119,22 +1173,19 @@ function Skin:SettleStep(elapsed)
     local lift = Smooth(Clamp(t / SETTLE_LIFT, 0, 1))
     local u = Clamp((t - SETTLE_LIFT) / SETTLE_TIME, 0, 1)
     local eased = EaseInOut(u)
-    local function Toward(a, b) return a + (b - a) * eased end
     local ui = UIParent:GetEffectiveScale()
     -- Grown about its middle as it is lifted, back to size as it lands.
     local grow = 1 + SETTLE_GROW * lift * (1 - eased)
-    local base = Toward(settling.from, settling.to)
+    local base = Lerp(settling.from, settling.to, eased)
     local scale = base * grow
     frame:SetScale(scale)
-    -- The round buttons stay as large on screen as they settle at, as the dialog's own are, rather
-    -- than starting at the dialog's larger scale with the rest.
     self:FitControls()
     local pixels = ui * scale
     local toHeight = (self.settledHeight or frame:GetHeight()) * ui * settling.to
-    local height = Toward(settling.height, toHeight)
+    local height = Lerp(settling.height, toHeight, eased)
     local width = (frame:GetWidth() or 0) * ui * base
     local left = Bend(settling.left, settling.bendX or settling.left, settling.toLeft, eased) - (grow - 1) * width / 2
-    -- Up a touch as it is lifted, as the tuck's page is, the curve starting from there.
+    -- Up a touch as it is lifted, the curve starting from there.
     local rise = SETTLE_RISE * ui * lift
     local top = Bend(settling.top + rise, settling.bendY or settling.top, settling.toTop, eased) + (grow - 1) * height / 2
     frame:ClearAllPoints()
@@ -1145,7 +1196,7 @@ function Skin:SettleStep(elapsed)
     if u == 1 then
         self.settling = nil
         frame:SetScale(settling.to)
-        if not Addon:RestoreLayout("DialogueUI", frame) then self:PlaceDefault() end
+        self:PlaceHome()
         self:Layout()
         self.landing = { time = 0 }
     end
@@ -1181,11 +1232,21 @@ function Skin:LandStep(elapsed)
     landing.time = landing.time + elapsed
     local t = landing.time
     if self.wordsHidden then self:ShowWords(Smooth(Clamp(t / CONTENT_IN, 0, 1))) end
-    -- The little jump this window gives as the tuck's page goes under it: up and back, settling.
-    self:Give(landing, SETTLE_GIVE * math.exp(-6 * t) * math.sin(2 * math.pi * t / 0.34))
+    self:Give(landing, Bounce(t))
     local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
     self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
     if t >= LAND_TIME then self:StopLanding() end
+end
+
+--- The flight from the dialog cut short: where it rests at once, at its own size.
+function Skin:StopSettle()
+    if not self.settling then return end
+    local frame = self.frame
+    self.settling = nil
+    frame:SetScale(frame.spokenBaseScale or 1)
+    self:PlaceHome()
+    if self.shadow then self.shadow:Hide() end
+    if not self:Defer("refresh") then self:Layout() end
 end
 
 function Skin:StopLanding()
@@ -1209,15 +1270,15 @@ function Skin:ShadowUnder(reach, alpha)
         self.shadow = shadow
     end
     if alpha <= 0.001 then shadow:Hide(); return end
-    shadow.texture:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
-    shadow:SetFrameStrata(frame:GetFrameStrata())
-    shadow:SetFrameLevel(math.max(0, frame:GetFrameLevel() - 1))
-    local dx, dy, blur = 8 * reach, -12 * reach, 18
-    shadow:ClearAllPoints()
-    shadow:SetPoint("TOPLEFT", frame, "TOPLEFT", dx - blur, dy + blur)
-    shadow:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", dx + blur, dy - blur)
+    -- Its art and place in the window's strata once as it shows; each frame only where and how dark.
+    if not shadow:IsShown() then
+        shadow.texture:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
+        shadow:SetFrameStrata(frame:GetFrameStrata())
+        shadow:SetFrameLevel(math.max(0, frame:GetFrameLevel() - 1))
+        shadow:Show()
+    end
+    PlaceShadow(shadow, frame, 8 * reach, -12 * reach, 18)
     shadow:SetAlpha(alpha)
-    shadow:Show()
 end
 
 --- This window moved `offset` (UIParent's units, up) off where it rests, and back (Skin:Rest).
@@ -1236,17 +1297,15 @@ end
 function Skin:Rest(state)
     if not state.rest then return end
     state.rest = nil
-    if not Addon:RestoreLayout("DialogueUI", self.frame) then self:PlaceDefault() end
+    self:PlaceHome()
 end
 
 ---------------------------------------------------------------- the dialog's words fading first
 -- DialogueUI's dialog and this window lay out the same line differently (title, paragraphs,
--- buttons, pages), so this window taking the dialog's place showed all of that change at once.
--- Instead, as the dialog closes on its own line (this window then settles out of it) or on a line
--- it queued (its page then goes behind this window), its words, buttons and header fade on
--- DialogueUI's own window first, over CONTENT_OUT, leaving its bare paper; then it closes, and
--- paper alone flies: this window's (its own words fading in once it lands, Skin:LandStep), or the
--- page's. A close with nothing to hand on is at once.
+-- buttons, pages), so swapping one for the other would show all of that change at once. As the
+-- dialog closes on its own line or on one it queued, its words, buttons and header fade on
+-- DialogueUI's own window first, over CONTENT_OUT; then it closes and paper alone flies, this
+-- window's or the queued line's page. A close with nothing to hand on is at once.
 -- The dialog's frames that are its paper, not its words: the quest window's background, the book
 -- view's footer (its torn foot; its divider line fades with the words).
 local PAPER_FRAMES = { "BackgroundFrame", "Footer" }
@@ -1258,18 +1317,16 @@ function Skin:FadesOnClose(dialog)
         and PlayerFrame:Current() ~= nil and (self:Owns(dialog) or self:QueuedBy(dialog) ~= nil)
 end
 
---- A quest page closed: if DialogueUI's window hands a line on, its words fade now, and it closes
---- when DialogueUI hides it.
 --- Whether the game still has the player talking to an NPC (gossip or a quest giver), as DialogueUI
 --- asks before it closes its window. False where the client cannot say.
+local function Interacting(manager, types)
+    return manager.IsInteractingWithNpcOfType(types and types.Gossip or 3)
+        or manager.IsInteractingWithNpcOfType(types and types.QuestGiver or 4)
+end
 local function TalkingToNPC()
     local manager = C_PlayerInteractionManager
     if not (manager and manager.IsInteractingWithNpcOfType) then return false end
-    local types = Enum and Enum.PlayerInteractionType
-    local ok, talking = pcall(function()
-        return manager.IsInteractingWithNpcOfType(types and types.Gossip or 3)
-            or manager.IsInteractingWithNpcOfType(types and types.QuestGiver or 4)
-    end)
+    local ok, talking = pcall(Interacting, manager, Enum and Enum.PlayerInteractionType)
     return ok and talking == true
 end
 
@@ -1312,8 +1369,8 @@ end
 
 --- `dialog` closing: its words fade first, then `hide` (its own Hide) closes it.
 function Skin:FadeDialogOut(dialog, hide)
-    -- Another dialog still closing: its words given back, and closed if DialogueUI hid it.
-    if self.closing then self:EndClose(self.closing.hiding) end
+    -- Another dialog still closing: closed now, its words given back.
+    if self.closing then self:EndClose(true) end
     local paper = {}
     for _, key in ipairs(PAPER_FRAMES) do
         if type(dialog[key]) == "table" then paper[dialog[key]] = true end
@@ -1326,7 +1383,7 @@ function Skin:FadeDialogOut(dialog, hide)
     end
     local footer = type(dialog.Footer) == "table" and dialog.Footer.FooterDivider
     if type(footer) == "table" and footer.GetAlpha then table.insert(parts, { part = footer, alpha = footer:GetAlpha() or 1 }) end
-    self.closing = { dialog = dialog, hide = hide, time = 0, parts = parts, hiding = true }
+    self.closing = { dialog = dialog, hide = hide, time = 0, parts = parts }
     self:DriveClose()
 end
 
@@ -1343,9 +1400,9 @@ function Skin:CloseStep(elapsed)
     if closing.time >= CONTENT_OUT then self:EndClose(true) end
 end
 
---- The dialog's words given back, and with `hide` it closed for real in the same moment, so they
---- are never seen back: given back after, DialogueUI hiding it again from its own OnHide read them
---- faded.
+--- The dialog's words given back and, with `hide`, it closed in the same moment, so they are never
+--- seen back. Given back after the close, DialogueUI hiding it again from its own OnHide would read
+--- them faded.
 function Skin:EndClose(hide)
     local closing = self.closing
     if not closing then return end
@@ -1363,13 +1420,11 @@ function Skin:CancelDialogFade(dialog)
 end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
--- A dialog closing while another line plays (a gravestone read during a quest's line): its page
--- does not take this window's place, as its own line's would (Skin:Settle). Its words having faded
--- on DialogueUI's window (Skin:FadeDialogOut), its bare page is lifted off
--- where the dialog was, flies over to this window, bending a little as it goes, comes down low on
--- it with its foot showing under it, and slides up behind it: the line waits behind the one
--- playing. This window gives as it goes under, and its count ripples. The page is a frame of its
--- own, never part of this window, which may be one image while it fades in (Skin:Buffer).
+-- A dialog closing while another line plays (a gravestone read during a quest's line): its bare
+-- page flies from where the dialog was to this window, comes down low on it with its foot showing,
+-- and slides up behind it. This window gives as it goes under, and its count ripples. The page is a
+-- frame of its own, never part of this window, which may be one image while it fades in
+-- (Skin:Buffer).
 
 --- A line joining the queue: when, and with which open dialog.
 function Skin:Queued(clip)
@@ -1431,7 +1486,6 @@ function Skin:TuckFrames()
     for index = 1, 3 do card.strips[index] = card:CreateTexture(nil, "BACKGROUND", nil, -1) end
     card:SetScript("OnUpdate", function(_, elapsed) self:TuckStep(elapsed) end)
     self.card = card
-    -- Its count rippling out from where it is.
     local ripple = CreateFrame("Frame", nil, UIParent)
     ripple:Hide()
     ripple:EnableMouse(false)
@@ -1446,27 +1500,14 @@ end
 --- `width` wide in UIParent's units, at `q` of DialogueUI's.
 function Skin:DressCard(card, look, width, q)
     local file = look.file or Theme:TexturePath() .. "Parchment.png"
-    local capWidth, capHeight
-    if look.book then
-        capWidth = width / BOOK_PAPER
-        capHeight = capWidth * (look.top[2] - look.top[1]) / 1024
-    else
-        local paperWidth, paperHeight = Theme:ParchmentSize()
-        capWidth, capHeight = paperWidth * q, paperHeight * q
-    end
+    local capWidth, capHeight = CapSize(look, width, q)
     card.capWidth, card.capHeight, card.look = capWidth, capHeight, look
     local strips = card.strips
-    for index = 1, 3 do strips[index]:SetTexture(file) end
-    strips[1]:SetTexCoord(0, 1, look.top[1] / 2048, look.top[2] / 2048)
-    strips[2]:SetTexCoord(0, 1, look.middle[1] / 2048, look.middle[2] / 2048)
-    strips[3]:SetTexCoord(0, 1, look.bottom[1] / 2048, look.bottom[2] / 2048)
     strips[1]:ClearAllPoints()
     strips[1]:SetPoint("CENTER", card, "TOP", 0, 0)
     strips[3]:ClearAllPoints()
     strips[3]:SetPoint("CENTER", card, "BOTTOM", 0, 0)
-    strips[2]:ClearAllPoints()
-    strips[2]:SetPoint("TOPLEFT", strips[1], "BOTTOMLEFT", 0, 0)
-    strips[2]:SetPoint("BOTTOMRIGHT", strips[3], "TOPRIGHT", 0, -capHeight * look.under / 256)
+    DressStrips(strips, file, look, capHeight)
     card.shadow:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
 end
 
@@ -1508,9 +1549,9 @@ end
 
 function Skin:DrawTuck(tuck)
     local card, from, to, t = self.card, tuck.from, tuck.to, tuck.time
-    local landed = TUCK_LIFT + TUCK_FLY
-    local lift = Smooth(Clamp(t / TUCK_LIFT, 0, 1))
-    local fly = EaseInOut(Clamp((t - TUCK_LIFT) / TUCK_FLY, 0, 1))
+    local landed = SETTLE_LIFT + SETTLE_TIME
+    local lift = Smooth(Clamp(t / SETTLE_LIFT, 0, 1))
+    local fly = EaseInOut(Clamp((t - SETTLE_LIFT) / SETTLE_TIME, 0, 1))
     local slide = EaseOutCubic(Clamp((t - landed) / TUCK_SLIDE, 0, 1))
 
     -- Lifted a touch, then the window's shape at TUCK_SIZE of it, so it fits behind it; bending a
@@ -1541,18 +1582,14 @@ function Skin:DrawTuck(tuck)
 
     -- Its shadow: thrown as it is lifted, drawn back in as it comes down.
     local reach = (1 - fly * 0.7) * lift
-    local dx, dy = 7 * reach, -10 * reach
-    local blur = 16
-    card.shadow:ClearAllPoints()
-    card.shadow:SetPoint("TOPLEFT", card, "TOPLEFT", (dx - blur) / scale, (dy + blur) / scale)
-    card.shadow:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", (dx + blur) / scale, (dy - blur) / scale)
+    PlaceShadow(card.shadow, card, 7 * reach, -10 * reach, 16, scale)
     card.shadow:SetAlpha(0.55 * lift * (1 - 0.45 * fly) * (1 - slide))
 
     -- The window giving as the page goes under it: up a little and back, settling.
     local nudge = t - (landed - 0.05)
-    if nudge >= 0 and nudge <= TUCK_NUDGE then
-        self:Give(tuck, TUCK_GIVE * math.exp(-6 * nudge) * math.sin(2 * math.pi * nudge / 0.34))
-    elseif nudge > TUCK_NUDGE then
+    if nudge >= 0 and nudge <= LAND_TIME then
+        self:Give(tuck, Bounce(nudge))
+    elseif nudge > LAND_TIME then
         self:Rest(tuck)
     end
 
@@ -1622,21 +1659,16 @@ end
 
 function Skin:RefreshConfig(original)
     self:Initialize()
-    -- One image fading: nothing in it may change; this waits for it (Skin:Unbuffer).
-    if self.buffered then self.pending = "refresh"; return end
+    if self:Defer("refresh") then return end
+    -- A setting changed as it flies: it lands at once, so the flight does not undo the change.
+    self:StopSettle()
     local frame = self.frame
     frame:SetFrameStrata(Config().FrameStrata)
     self:Layout()
     frame:SetScale(frame.spokenBaseScale)
     if not Addon:Layout().DialogueUI then self:PlaceDefault() end
     if Addon:IsFrameLocked() then frame:StopMovingOrSizing() end
-    -- Locked, clicks on the window pass through to the game, as the subtitle's and the small
-    -- window's do; its buttons still take theirs. Where the client cannot tell a click from the
-    -- pointer passing over, the window keeps both.
-    if frame.SetMouseClickEnabled and frame.SetMouseMotionEnabled then
-        frame:SetMouseMotionEnabled(true)
-        frame:SetMouseClickEnabled(not Addon:IsFrameLocked())
-    end
+    self:ApplyLock()
     Addon:ApplyHost(frame)
     self:Update()
 end
@@ -1649,22 +1681,19 @@ function Skin:Update()
     -- Nothing to show: an image fading out goes on fading.
     if not clip then self:SetVisible(false); return end
     if self:Covered() then self:SetVisible(false, true); return end
-    -- One image fading: nothing in it may change; this waits for it (Skin:Unbuffer).
-    if self.buffered then self.pending = self.pending or "update"; return end
+    if self:Defer("update") then return end
     self:Touch()
-    -- Fading out to turn to the next line: it comes in once faded (Skin:Tick).
+    -- Fading out to turn to the next line: it comes in once faded (Skin:EndFade).
     if self.turning and self.frame:IsShown() then return end
     -- Not turning after all: the captions held for it go on (Skin:WillTurn).
-    if not self.turning and not self.buffered and not self.arming and Transcript.held and clip == self.clip then
+    if not self.turning and not self.arming and Transcript.held and clip == self.clip then
         Transcript:Release()
     end
     if clip ~= self.clip then
-        -- Following another line on screen: this one fades out whole, as the window does when the
-        -- queue ends, and the next fades in from nothing once it has (Skin:Tick), its paper,
-        -- height and words all changed unseen. Not while it settles out of a dialog with its
-        -- words hidden: there the next simply takes its place.
-        if self.clip and self.wanted and self.frame:IsShown() and (self.level or 0) > 0 and not self.settling
-            and not self.wordsHidden then
+        -- Following another line on screen: this one fades out whole and the next fades in from
+        -- nothing once it has (Skin:EndFade), its paper, height and words changed unseen. Not while
+        -- it settles out of a dialog with its words hidden: there the next simply takes its place.
+        if self:WillTurn(clip) then
             self.turning = true
             self:SetVisible(false)
             return
@@ -1673,16 +1702,17 @@ function Skin:Update()
         self.clip, self.seconds = clip, 0
     end
     -- The line's words decide how tall the panel is (Fit to the Words): a new line, or its words
-    -- arriving late.
+    -- arriving late. Its art too: a stone page after a paper one with as many lines is redrawn.
     local textLines = Transcript.clip == clip and Transcript.lines and #Transcript.lines or 0
     local picture = clip.present and clip.present.picture
     local key = textLines .. ":" .. (picture and picture.file .. ":" .. (picture.pixels or "") or "")
+        .. ":" .. (self:Look().file or "quest")
     if key ~= self.laidOutFor then
         self.laidOutFor = key
         self:Layout()
     end
     self:SetVisible(true)
-    -- Said once: a name the same as the line's own is left off, as the subtitle leaves it.
+    -- Said once: a name the same as the line's own is left off.
     local header = clip.present and clip.present.header
     self.name:SetText(header ~= Label(clip) and header or "")
     self:ConfigurePortrait()
