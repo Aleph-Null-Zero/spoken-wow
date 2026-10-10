@@ -216,8 +216,9 @@ function Skin:Initialize()
         if type(dialog) == "table" and dialog.GetEffectiveScale then
             local watch = CreateFrame("Frame", nil, dialog)
             watch:SetScript("OnHide", function()
-                -- Flown out of already, while DialogueUI held it open out of sight (Skin:Veil).
-                if self.flownFrom == dialog then self.flownFrom = nil; return end
+                -- Flown out of already, while DialogueUI held it open out of sight (Skin:Veil):
+                -- not again, but this window is no longer covered by it.
+                if self.flownFrom == dialog then self.flownFrom = nil; self:Update(); return end
                 self:Settle(dialog)
             end)
             -- Opening, it shows the line itself: this one steps aside at once (Skin:Covered).
@@ -358,10 +359,13 @@ function Skin:Initialize()
 end
 
 --- DialogueUI's own window open over this one, which then stays hidden: the dialog shows the line.
---- Not while this one sits on the dialog (Show Spoken Over DialogueUI).
+--- Not while this one sits on the dialog (Show Spoken Over DialogueUI), nor while the dialog is
+--- out of sight waiting to close (Skin:Veil): this one has flown out of it.
 function Skin:Covered()
+    local closing = self.closing
     for _, dialog in ipairs(self.dialogs or {}) do
-        if dialog:IsShown() and self.frame:GetParent() ~= dialog then return true end
+        local veiled = closing and closing.veiled and closing.dialog == dialog
+        if dialog:IsShown() and self.frame:GetParent() ~= dialog and not veiled then return true end
     end
     return false
 end

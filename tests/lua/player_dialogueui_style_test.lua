@@ -761,6 +761,9 @@ Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
 Skin:CloseStep(0.06); Skin:CloseStep(0.06)
 Expect("...faded and out of sight, the dialog left for DialogueUI to close",
     tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(DUI:GetAlpha()), "true 0 0")
+Skin:Update()
+Expect("...this window flying out of it, not hidden by an update while the dialog is out of sight",
+    tostring(Skin.wanted) .. " " .. tostring(Skin.settling ~= nil) .. " " .. tostring(Skin:Covered()), "true true false")
 DUI:Hide()
 Expect("...its own Hide closing it at once, its words and sight given back unseen",
     tostring(DUI:IsShown()) .. " " .. words.alpha .. " " .. tostring(DUI:GetAlpha()) .. " " .. tostring(Skin.closing),
@@ -769,6 +772,10 @@ local settlingBefore = Skin.settling
 Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
 Expect("...the flight that began as it went out of sight carrying on, not started again",
     Skin.settling ~= nil and Skin.settling == settlingBefore, true)
+-- The game updates this window as it flies and after the dialog closes: neither may hide it.
+Skin:Update()
+Expect("...not hidden by an update while it flies, the dialog closed",
+    tostring(Skin.wanted) .. " " .. tostring(Skin.settling ~= nil), "true true")
 Expect("the dialog closing on a line starts the window where the dialog was, as large",
     Near(Skin.frame.scale, 0.8) and Near(Skin.frame.anchor.x * 0.8, dialogLeft) and Near(Skin.frame.anchor.y * 0.8, dialogTop)
     and Skin.frame.anchor.relativePoint == "BOTTOMLEFT", true)
