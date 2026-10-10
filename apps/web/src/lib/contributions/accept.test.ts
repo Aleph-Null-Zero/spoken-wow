@@ -1038,6 +1038,13 @@ describe("resolveContribution: a greeting in any language", { timeout: 20_000 },
     await accepted(await greeting(LOCALE, "Bem-vindo, amiga."));
     expect(await linesSpeaking(bt)).toEqual([gossipLineId(broadcastGossipStem(bt, VOICE))]);
   });
+
+  it("matches a $u branch the client left unresolved", async () => {
+    await speaker(npcId, "tauren", "male", "warrior");
+    await broadcast(LOCALE, bt, "Bem-vindo, $uamigo:amiga;.");
+    await accepted(await greeting(LOCALE, "Bem-vindo, $uamigo:amiga;."));
+    expect(await linesSpeaking(bt)).toEqual([gossipLineId(broadcastGossipStem(bt, VOICE))]);
+  });
 });
 
 describe("resolveContribution: a book page in another language", () => {

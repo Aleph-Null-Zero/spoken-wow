@@ -26,7 +26,7 @@ const SLOT_WORDS = 3;
 
 const TOKEN = /\$[nNcCrR]|[\p{L}\p{N}\p{M}]+(?:['’\-][\p{L}\p{N}\p{M}]+)*|[^\s\p{L}\p{N}\p{M}]/gu;
 
-const GENDER = /\$[gG]\s*([^:;]*?)\s*:\s*([^;]*?)\s*;/g;
+const GENDER = /\$[gGuU]\s*([^:;]*?)\s*:\s*([^;]*?)\s*;/g;
 
 /** A text as the words, marks and slots it is made of -- what both sides are compared as. */
 export function tokensOf(text: string): Token[] {
@@ -45,7 +45,7 @@ export function tokensOf(text: string): Token[] {
  * so every `$G` takes the same side, and a client that left them unexpanded sends the template.
  */
 export function genderForms(text: string): string[] {
-  if (!/\$[gG]/.test(text)) return [text];
+  if (!/\$[gGuU]/.test(text)) return [text];
   return [text.replace(GENDER, "$1"), text.replace(GENDER, "$2"), text];
 }
 

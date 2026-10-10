@@ -78,6 +78,16 @@ describe("relinkGossip", () => {
     expect(rows).toEqual([{ broadcastTextId: bt }]);
   });
 
+  it("links a line that kept its $u branch unresolved, as the client sent it", async () => {
+    await line(LOCALIZED, "ptBR", "Olá, $uviajante:viajanta;.");
+    await db().query(
+      `insert into "broadcast_text" ("lang", "broadcastTextId", "text", "text1", "build") values ('ptBR', $1, $2, '', 1)`,
+      [bt, "Olá, $uviajante:viajanta;."],
+    );
+
+    expect(await relinkGossip({ lineIds: LINES })).toMatchObject({ linked: 1 });
+  });
+
   it("merges a moment minted twice into the line named by its id, renaming nothing", async () => {
     await line(BROADCAST, "ptBR", "Bem-vindo.", { createdAt: "2026-10-02T00:00:00Z" });
     await line(HASH, "enUS", "Welcome.", { createdAt: "2026-10-01T00:00:00Z" });
