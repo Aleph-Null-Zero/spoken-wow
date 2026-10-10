@@ -56,6 +56,12 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Volume Follows is back.** Choose which volume slider Spoken's voices follow: Master, Effects,
   Music, Ambience or Dialog. On Dialog, a note says which features stop working there.
   *([Nucabe](https://github.com/Nucabe))*
+- **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
+  Spoken's voice when you switch away. The line now stops instead of running on in silence, and
+  Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
+- **A zone's story is headed by the place it is in.** It showed its own name twice, as
+  "Mulgore / Mulgore". The narrator now shows a zone's continent over it and a city's zone, and
+  the Compendium's "In ..." line names the same place. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.2.0 — 2026-10-08
 

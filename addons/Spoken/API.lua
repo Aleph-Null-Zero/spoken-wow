@@ -51,7 +51,8 @@ end
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
 --     continues = true,                       -- optional; its next part follows (source:Continue), no pause or cue
 --     present  = {
---       header   = "Eagan Peltskinner",       -- NPC name | zone name | book title
+--       header   = "Eagan Peltskinner",       -- NPC name | place above | book title;
+--                                             -- nil over the world's own lore
 --       label    = "Wolves Across the Border",-- quest title | subzone | page label
 --       transcript = "Full dialogue text",   -- optional; falls back to clip.text
 --       bullet   = "quest-accept",            -- a RegisterBullet id
