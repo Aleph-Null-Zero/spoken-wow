@@ -115,6 +115,14 @@ Expect("Dialog can be chosen, with a warning under it", WarningShown(), true)
 env.Addon.db.profile.Audio.SoundChannel = "Master"; Options:UpdateRows()
 Expect("...which goes with Master again", WarningShown(), false)
 
+-- On Dialog, Silence NPC Voices would silence Spoken's voices too, so the queue never mutes it.
+local silence = Row(home, "Silence NPC Voices")
+Expect("Silence NPC Voices is offered on Master", silence.layoutReason, nil)
+env.Addon.db.profile.Audio.SoundChannel = "Dialog"; Options:UpdateRows()
+Expect("...and greyed on Dialog, saying why", silence.layoutReason, L.REASON_DIALOG_CHANNEL)
+env.Addon.db.profile.Audio.SoundChannel = "Master"; Options:UpdateRows()
+Expect("...and offered again on Master", silence.layoutReason, nil)
+
 ---------------------------------------------------------------- voice only
 -- Nothing on screen is a way of showing lines like the other three, not a switch apart.
 env.Addon:SetPlayerStyle("minimal")

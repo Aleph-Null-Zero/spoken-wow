@@ -115,7 +115,7 @@ L.OPT_CHANNEL_SFX = "Volume des effets"
 L.OPT_CHANNEL_MUSIC = "Volume de la musique"
 L.OPT_CHANNEL_AMBIENCE = "Volume de l'ambiance"
 L.OPT_CHANNEL_DIALOG = "Volume des dialogues"
-L.OPT_CHANNEL_DIALOG_WARN = "Avec Volume des dialogues, Couper les voix des PNJ coupe aussi les voix de Spoken, et Salutation du jeu d'abord ne peut pas les distinguer de celles d'un PNJ."
+L.OPT_CHANNEL_DIALOG_WARN = "Avec Volume des dialogues, les voix des PNJ ne sont ni coupées ni baissées pendant que Spoken parle, et Salutation du jeu d'abord ne peut pas distinguer les voix de Spoken de celles d'un PNJ."
 L.OPT_COPY_HINT_LINK = "Copiez ceci et ouvrez-le dans votre navigateur :"
 L.OPT_COPY_HINT_PASTE = "Appuyez sur Ctrl+C, puis collez-le ici :"
 
@@ -224,6 +224,7 @@ L.OPT_FALLBACK_NONE = "Rester silencieux"
 
 -- Sound
 L.REASON_VOICE_CHANNEL = "Les voix de Spoken passent par ce son, il n'est donc jamais baissé. Changez Volume de référence pour utiliser ceci."
+L.REASON_DIALOG_CHANNEL = "Les voix de Spoken passent par le même son que celles des PNJ, ceci les couperait donc aussi. Changez Volume de référence pour utiliser ceci."
 L.REASON_DIALOG_MUTED = "Couper les voix des PNJ est activé, les voix des PNJ sont donc déjà muettes pendant que Spoken parle."
 L.OPT_LOWER_TITLE = "Jeu plus discret quand Spoken parle"
 L.OPT_LOWER_OTHERS = "Baisser les autres sons"
