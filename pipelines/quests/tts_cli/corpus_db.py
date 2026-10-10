@@ -35,8 +35,9 @@ import os
 from collections import Counter
 from datetime import datetime, timezone
 
-from tts_cli.corpus import SCHEMA_VERSION, load_corpus, write_corpus
-from tts_cli.flavors import fallback_flavors
+from tts_cli.corpus import (GENERIC_TYPES, INVALID_CHARS, NO_VOICE, SCHEMA_VERSION, load_corpus,
+                            write_corpus)
+from tts_cli.flavors import fallback_flavors, is_model_voice
 
 LANG = "enUS"
 
@@ -78,6 +79,43 @@ def connect():
 
 def _line_key(row):
     return tuple(row[field] for field in LINE_FIELDS)
+
+
+def answered_models(cur, lines):
+    """{(npcType, npcId): (race, gender, flavor, voice)} for the NPCs the dump knows only by
+    model but the npc table already names a race and gender for: answers a model answer leaves
+    alone. A bare type ("creature") is not one: a speaker row needs a gender."""
+    keys = {(row["npcType"], row["npcId"]) for row in lines if is_model_voice(row["voice"])}
+    if not keys:
+        return {}
+    cur.execute(
+        """select "npcKind", "npcId", "race", "gender", "flavor",
+                  "voice_for"("race", "gender", "flavor")
+             from "npc"
+            where ("npcKind", "npcId") in %s and "provenance" <> 'none'
+              and "race" !~ '^model-[0-9]+$' and "gender" is not null""",
+        (tuple(keys),),
+    )
+    return {(r[0], r[1]): r[2:] for r in cur.fetchall() if r[5]}
+
+
+def with_answered_voices(lines, answers):
+    """The dump's model rows spoken in the voice their NPC is already answered with, as the site
+    reads it (apps/web migration 0071). Otherwise a line a contributor voiced would turn to
+    no-voice, and its takes would sit under a file its voice no longer names."""
+    out = []
+    for row in lines:
+        answer = answers.get((row["npcType"], row["npcId"])) if is_model_voice(row["voice"]) else None
+        if answer is None:
+            out.append(row)
+            continue
+        race, gender, flavor, voice = answer
+        reason = row["skipReason"]
+        if reason == NO_VOICE:
+            reason = "invalid-chars" if any(c in row["text"] for c in INVALID_CHARS) else None
+        out.append({**row, "race": race, "gender": gender, "flavor": flavor, "voice": voice,
+                    "skipReason": reason, "generatable": reason is None})
+    return out
 
 
 def _variants(lines):
@@ -143,10 +181,24 @@ def _bulk(cur, what, rows, sql, template=None, page=1000):
 
 
 #: Whether an imported answer {new} lands over the table's {old}.
-_REPLACES = """(case when {old}."provenance" = 'moderator'
+# A dump answer that knows only the creature's model says less than anybody who named a race,
+# a player's client included: it fills an NPC nobody answered and updates its own kind, and
+# leaves every other answer, so a voice chosen for the NPC is not taken back to no voice.
+_REPLACES = """(case when {new}."race" like 'model-%%'
+                     then {old}."provenance" = 'none' or coalesce({old}."race", '') like 'model-%%'
+                     when {old}."provenance" = 'moderator'
                      then {old}."doubtful" and {new}."provenance" <> 'none'
                      else "npc_provenance_rank"({old}."provenance")
                           <= "npc_provenance_rank"({new}."provenance") end)"""
+
+
+def retyped(npcs) -> list:
+    """An older file's narrated NPCs as their own types (apps/web migration 0071): the narrator
+    is a voice, not something an NPC is."""
+    return [{**npc, "race": npc["npcType"] if npc["npcType"] in GENERIC_TYPES else "creature",
+             "gender": None}
+            if npc["race"] == "narrator" else npc
+            for npc in npcs]
 
 
 def npc_answers(npcs) -> list:
@@ -158,6 +210,7 @@ def npc_answers(npcs) -> list:
     change. Only the extract's own answers: anybody else's is as they gave it. A race-gender
     with no flavors at all, as the narrator's, keeps none.
     """
+    npcs = retyped(npcs)
     defaults = fallback_flavors((f'{npc["race"]}-{npc["gender"]}', npc["flavor"]) for npc in npcs)
     rows = []
     for npc in npcs:
@@ -167,6 +220,39 @@ def npc_answers(npcs) -> list:
         rows.append((npc["npcType"], npc["npcId"], npc["race"], npc["gender"],
                      npc["flavor"] or guess, provenance, guess is not None))
     return rows
+
+
+def _import_types(cur, npcs):
+    """Every type, flavor and voice the file's NPCs name that the site has none of yet, so the
+    npc rows have somewhere to stand -- the file is an export of a site an admin may have
+    added types to. Insert-only, and a voice is assigned only to a type or a flavor this import
+    added: a flavorless NPC's voice is its line's, made in some flavor, and assigning it to
+    the bare race-gender would voice every flavorless NPC of it. A model slot is a voice by
+    pattern and never a type."""
+    # A few dozen combinations among thousands of NPCs: each once, with the first NPC's voice.
+    combinations = {}
+    for npc in retyped(npcs):
+        combinations.setdefault((npc["race"], npc["gender"], npc["flavor"]), npc.get("voice"))
+    for (race, gender, flavor), voice in combinations.items():
+        if not race or is_model_voice(race):
+            continue
+        cur.execute("""insert into "race" ("key") values (%s) on conflict do nothing""", (race,))
+        new_race = cur.rowcount > 0
+        if gender:
+            cur.execute("""insert into "gender" ("race", "gender") values (%s, %s)
+                           on conflict do nothing""", (race, gender))
+        new_flavor = False
+        if flavor:
+            cur.execute("""insert into "flavor" ("race", "gender", "flavor") values (%s, %s, %s)
+                           on conflict do nothing""", (race, gender, flavor))
+            new_flavor = cur.rowcount > 0
+        if not (new_race or new_flavor) or not voice or is_model_voice(voice):
+            continue
+        cur.execute("""insert into "voice" ("name", "race", "gender") values (%s, %s, %s)
+                       on conflict do nothing""", (voice, race, gender or ""))
+        cur.execute("""insert into "voice_assignment" ("race", "gender", "flavor", "voice")
+                       values (%s, %s, %s, %s) on conflict do nothing""",
+                    (race, gender, flavor if new_flavor else None, voice))
 
 
 def _import_npcs(cur, npc_rows):
@@ -219,8 +305,38 @@ def _import_npcs(cur, npc_rows):
     return kept
 
 
-def import_corpus(path, verbose=True):
-    """corpus.json.gz -> quest_line, quest_line_speaker, quest_spawn.
+class DatabaseNotEmpty(Exception):
+    """import-corpus was pointed at a database that already holds the corpus."""
+
+
+def import_corpus(path, verbose=True, force=False):
+    """corpus.json.gz -> Postgres, ONCE: to seed an empty database (CI's, a new local one) from
+    the committed export.
+
+    Dangerous anywhere else. The file is only an export, so it lags the database: importing it
+    into a live one puts back the file's older text over newer extracted lines and replaces
+    every speaker the dump gave with the file's list. A filled database takes new dump text
+    through extract instead.
+    `force` is for rebuilding a database deliberately, never for keeping one up to date.
+    """
+    if not force:
+        conn = connect()
+        try:
+            with conn, conn.cursor() as cur:
+                cur.execute("""select exists (select 1 from "quest_line")""")
+                filled = cur.fetchone()[0]
+        finally:
+            conn.close()
+        if filled:
+            raise DatabaseNotEmpty(
+                "quest_line already holds the corpus. import-corpus only seeds an empty "
+                "database; take a new dump in with extract. --force overwrites it anyway.")
+    return import_corpus_data(load_corpus(path), verbose)
+
+
+def import_corpus_data(corpus, verbose=True):
+    """A corpus -> quest_line, quest_line_speaker, quest_spawn: the committed export, or a
+    fresh extract of the world database.
 
     Rerunnable by construction, and the rule for a line that already exists is the one
     pipelines/books/tools/lib/promote.mjs states: unchanged text is skipped, changed text
@@ -232,7 +348,6 @@ def import_corpus(path, verbose=True):
     where they stand are facts about the dump, not versions of anything, and 0026 makes the
     same argument for a book page's structure.
     """
-    corpus = load_corpus(path)
     marked = corpus["schemaVersion"] >= CONTRIBUTIONS_MARKED
 
     counts = Counter()
@@ -253,6 +368,10 @@ def import_corpus(path, verbose=True):
                 corpus["lines"], corpus["schemaVersion"], known_contributions,
                 contributed_speakers,
             )
+            answers = answered_models(cur, lines)
+            answered = sum(1 for row in lines
+                           if is_model_voice(row["voice"]) and (row["npcType"], row["npcId"]) in answers)
+            lines = with_answered_voices(lines, answers)
             variants = _variants(lines)
 
             # The extract's own timestamp, kept so the export can reproduce it. Without it
@@ -375,7 +494,10 @@ def import_corpus(path, verbose=True):
             npc_rows = npc_answers(corpus.get("npcs", []))
             kept_npcs = []
             if "npcs" in corpus:
+                _import_types(cur, corpus["npcs"])
                 kept_npcs = _import_npcs(cur, npc_rows)
+                # The site reads an NPC's voice from npc alone (apps/web migration 0071).
+                cur.execute("""select "npc_from_speakers"()""")
 
             # Only from a marked file: in an older one, the rows that would match are the
             # contributed speakers' own round-tripped copies, skipped above or not.
@@ -428,6 +550,7 @@ def import_corpus(path, verbose=True):
             f"{counts['skip']} unchanged"
         )
         print(f"{len(speaker_rows)} speakers, {len(npc_rows)} NPCs, {len(spawn_rows)} spawn points")
+        print(f"{answered} model rows spoken in the voice their NPC is already answered with")
         print(f"{len(kept_npcs)} NPC answers kept over a different one in the file"
               + (":" if kept_npcs else ""))
         for kind, npc_id, kept, theirs in kept_npcs:
@@ -496,8 +619,8 @@ def _speaker_rows(cur):
 def export_corpus(path, check=False, verbose=True):
     """quest_line + quest_line_speaker + quest_spawn -> corpus.json.gz.
 
-    Written with the same write_corpus the extract uses, so the file the addon build reads
-    is produced by exactly one piece of code whichever way it was made. With `check` it
+    The only writer of the committed file: a new dump goes into the table (extract), and the
+    file follows from it, so the database stays the one source of truth. With `check` it
     compares instead of writing, which is what CI runs: if an import followed by an export
     does not reproduce the file byte for byte, the table is not carrying everything the
     build needs, and that is worth failing a build over.
@@ -525,11 +648,12 @@ def export_corpus(path, check=False, verbose=True):
 
             # Every NPC answer, in the order build_corpus writes them: a pack is voiced in
             # whatever the site answered, and a pack build reads no database.
-            # The import's default for the extract's flavorless NPC is not the file's (npc_answers).
+            # The import's default for the extract's flavorless NPC is not the file's (npc_answers),
+            # but the voice is the one it reads with, default flavor and all: the site's.
             cur.execute(
                 """select "npcKind", "npcId", "race", "gender",
                           case when "provenance" = 'corpus' and "doubtful" then null else "flavor" end,
-                          "provenance" from "npc"
+                          "provenance", voice_for("race", "gender", "flavor") from "npc"
                     order by "npcKind", "npcId" """
             )
             npc_rows = cur.fetchall()
@@ -574,14 +698,16 @@ def export_corpus(path, check=False, verbose=True):
     # is defined here, and a file that marks its contributions must say that it does.
     corpus = {
         "schemaVersion": SCHEMA_VERSION,
+        # Postgres is the corpus; this file is its export and nothing else writes it.
+        "producedBy": "export-corpus",
         "generatedAt": meta[1],
         "lineCount": len(lines),
         "lines": lines,
         "spawns": spawns,
         "npcs": [
             {"npcType": kind, "npcId": npc_id, "race": race, "gender": gender, "flavor": flavor,
-             "provenance": provenance}
-            for kind, npc_id, race, gender, flavor, provenance in npc_rows
+             "provenance": provenance, "voice": voice}
+            for kind, npc_id, race, gender, flavor, provenance, voice in npc_rows
         ],
     }
 

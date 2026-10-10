@@ -30,16 +30,19 @@ import {
   momentOf,
   type LineIdentity,
 } from "./naming";
-import { voiceNameFor } from "@/lib/voices/voices";
 
 type Queryable = Pick<PoolClient, "query">;
 
+/**
+ * `race` and `gender` are the ones the speaker's voice's files are named by, not its NPC's type:
+ * a gossip file is md5(text + race + gender), so a re-typed NPC keeps finding its lines.
+ */
 export type GossipSpeaker = {
   npcId: number;
   npcType: string;
   race: string;
   gender: string;
-  flavor: string | null;
+  voice: string;
 };
 
 /** A line of one moment, as resolution sees it. */
@@ -61,14 +64,18 @@ export type GossipPlan =
   | { kind: "line"; identity: LineIdentity; broadcastTextId: number | null };
 
 /** The one-off's normalisation (fill-gossip-broadcast.py): case and runs of whitespace aside. */
-const norm = (sql: string) => `lower(regexp_replace(btrim(${sql}), '\\s+', ' ', 'g'))`;
+export const norm = (sql: string) => `lower(regexp_replace(btrim(${sql}), '\\s+', ' ', 'g'))`;
 
-/** A `$g male:female;` branch, either side: the client shows the one the player's sex picks. */
-const branch = (sql: string, side: 1 | 2) => `regexp_replace(${sql}, '\\$g([^:;]*):([^;]*);', '\\${side}', 'gi')`;
+/**
+ * A `$g male:female;` branch, or `$u`, the same, either side: the client shows the one the
+ * player's sex picks.
+ */
+export const branch = (sql: string, side: 1 | 2) => `regexp_replace(${sql}, '\\$[gu]([^:;]*):([^;]*);', '\\${side}', 'gi')`;
 
 /**
  * The lowest BroadcastText id whose text in `lang` reads as `text` does, in the form a speaker of
- * this sex shows. One text can sit under several ids, and they read alike.
+ * this sex shows. One text can sit under several ids, and they read alike. The unbranched form
+ * too: the client sends a `$u` branch unresolved.
  */
 export async function broadcastIdFor(
   q: Queryable,
@@ -82,7 +89,7 @@ export async function broadcastIdFor(
     `select b."broadcastTextId" as "id"
        from "broadcast_text" b
       where b."lang" = $1
-        and $2 in (${norm(branch(form, 1))}, ${norm(branch(form, 2))})
+        and $2 in (${norm(form)}, ${norm(branch(form, 1))}, ${norm(branch(form, 2))})
       order by 1
       limit 1`,
     [lang, normalised(text), gender],
@@ -132,9 +139,8 @@ async function momentLines(
       group by c."lineId"`,
     [...params, lang, speaker.npcType, speaker.npcId, speaker.race, speaker.gender],
   );
-  const voice = voiceNameFor(speaker.race, speaker.gender, speaker.flavor);
   return rows
-    .filter((row) => sameVoice(row.lineId, voice))
+    .filter((row) => sameVoice(row.lineId, speaker.voice))
     .map(({ langs, ...row }) => ({
       ...row,
       speakerLang: row.hasEnglish ? BASE_LANG : (langs.includes(lang) ? lang : langs[0]),
@@ -200,7 +206,7 @@ export function mintedIdentity(
   const hash = gossipHash(text, speaker.race, speaker.gender);
   const stem =
     broadcastTextId !== null
-      ? broadcastGossipStem(broadcastTextId, voiceNameFor(speaker.race, speaker.gender, speaker.flavor))
+      ? broadcastGossipStem(broadcastTextId, speaker.voice)
       : lang === BASE_LANG
         ? hash
         : localizedGossipStem(lang, hash);

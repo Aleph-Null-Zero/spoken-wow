@@ -59,9 +59,10 @@ local function Status()
 	local read = 0
 	for _ in pairs(SpokenBooksCharacter and SpokenBooksCharacter.read or {}) do read = read + 1 end
 
-	Print("autoplay %s, whole book %s, read once %s",
+	Print("autoplay %s, whole book %s, one line %s, read once %s",
 		SpokenBooksSettings.autoplay and "on" or "off",
 		SpokenBooksSettings.readWholeBook and "on" or "off",
+		SpokenBooks:OneLine() and "on" or "off",
 		SpokenBooksSettings.readOnce and "on" or "off")
 	Print("gathering %s", SpokenBooks:GatherAvailable() and (Spoken.Gather:IsEnabled() and "on" or "off") or "unavailable")
 	-- Said whether or not read-once is on, because the count is what makes `/spb forget`
@@ -107,6 +108,8 @@ SlashCmdList["SPOKENBOOKS"] = function(msg)
 		Toggle("autoplay", "autoplay")
 	elseif cmd == "whole" or cmd == "book" then
 		Toggle("readWholeBook", "reading the whole book")
+	elseif cmd == "oneline" then
+		Toggle("bookAsOneLine", "a book as one line in the queue")
 	elseif cmd == "once" then
 		Toggle("readOnce", "reading each book only once")
 	elseif cmd == "close" then
@@ -145,6 +148,6 @@ SlashCmdList["SPOKENBOOKS"] = function(msg)
 	elseif cmd == "debug" then
 		Toggle("debug", "explaining in chat why a page was or was not read")
 	else
-		Print("/spb read | stop | autoplay | whole | once | close | gather | forget | compendium | settings | status | debug")
+		Print("/spb read | stop | autoplay | whole | oneline | once | close | gather | forget | compendium | settings | status | debug")
 	end
 end
