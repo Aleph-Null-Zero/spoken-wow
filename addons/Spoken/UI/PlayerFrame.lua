@@ -86,7 +86,16 @@ function PlayerFrame:Initialize()
     self:InitHeader()
     self:InitMover()
     Actions:Build(self.frame)
-    self.fader = Actions.Fader(self.frame, function() return { self.frame.portrait.model } end)
+    self.fader = Actions.Fader(self.frame, function() return { self.frame.portrait.model } end, function()
+        -- Faded out to turn to the next line: now it comes in.
+        if self.turning then self.turning = nil; self:Update() end
+    end)
+    -- A window turning to the next line fades out with the words it shows: the captions wait for
+    -- it rather than taking the next line's first (WillTurn on the window in use).
+    Transcript.holdFor = function(clip)
+        local window = self:Skin() or self
+        return window.WillTurn ~= nil and window:WillTurn(clip)
+    end
     self:RefreshConfig()
     Callbacks:Register("AUDIO_CHANGED", function() PlayerFrame:Update() end)
     Actions.WatchDialogs(function() PlayerFrame:Update() end)
@@ -412,6 +421,12 @@ function PlayerFrame:IsShowingSample()
     return self.sample ~= nil
 end
 
+--- Whether this window, showing a line, will fade out to turn to `clip` (PlayerFrame:Update).
+function PlayerFrame:WillTurn(clip)
+    return self:IsShowing() and self.shown ~= nil and clip ~= self.shown and self.frame:IsShown()
+        and not self.fader:Leaving() and not Actions.DialogCovers()
+end
+
 --- The line the window stands for: the one playing, or the sample while nothing is.
 function PlayerFrame:Current()
     if not SoundQueue:IsEmpty() then self.sample = nil end
@@ -429,8 +444,23 @@ function PlayerFrame:Update()
     -- once for another style.
     local head = self:Current()
     local classic = Addon:DisplayStyle() == "classic"
-    self.fader:Set(classic and head ~= nil and not Actions.DialogCovers(), not classic)
-    if self.fader:Leaving() then return end
+    local want = classic and head ~= nil and not Actions.DialogCovers()
+    if not want then
+        self.turning = nil
+        self.fader:Set(false, not classic)
+        return
+    end
+    -- Fading out to turn to the next line: it comes in once faded (the fader's faded).
+    if self.turning and self.frame:IsShown() then return end
+    -- Following another line on screen: this one fades out whole, as the window does when the
+    -- queue ends, and the next fades in from nothing once it has, all changed unseen.
+    if self.shown and head ~= self.shown and self.frame:IsShown() and not self.fader:Leaving() then
+        self.turning = true
+        self.fader:Set(false)
+        return
+    end
+    self.shown = head
+    self.fader:Set(true)
 
     -- The speaker, or the line's name where nobody speaks.
     local header = head.present and head.present.header

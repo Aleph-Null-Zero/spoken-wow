@@ -57,7 +57,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **The large window is the game's Talking Head frame.** Its words sit inside the box, under the
   speaker's gold name, beside the portrait (a 3D model where there is one). Stopped and a count of
   the lines waiting follow the name in place of the queue's rows, Stop, Skip and Report take the
-  close button's corner, and a progress line runs under the words. It fades in and out, and goes
+  close button's corner, and a progress line runs under the words. It fades in and out, from one
+  line to the next too, and goes
   while a DialogueUI dialog hides the interface, where its 3D portrait stayed behind. Clients
   without the Talking Head's art draw Spoken's own in the same places. *([Nucabe](https://github.com/Nucabe))*
 - **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
