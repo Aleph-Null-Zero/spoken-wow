@@ -8,6 +8,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   turns to Stop while its line speaks and is greyed where no pack has the line, where Report
   offers Contribute in place of the old "No voice-over playing?" line. A close button sits
   beside them. *([Nucabe](https://github.com/Nucabe))*
+- **The small window has the DialogueUI window's controls, on parchment.** Stop or Replay, Skip
+  and Report are round buttons in its header, a progress line runs under the words, and the title
+  says "• (Stopped)" and how many lines wait, in place of the list. Its new Background setting
+  draws it on parchment, the default, or on the dark rock it had. It fades in and out more
+  slowly, from one line to the next too, and goes while a DialogueUI dialog hides the interface. *([Nucabe](https://github.com/Nucabe))*
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
   voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
   that voice, the quest plays as before.
@@ -44,6 +49,20 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   of it when it closes. *([Nucabe](https://github.com/Nucabe))*
 - **The DialogueUI window settles into place with animation.** A queued line's page tucks behind the
   window, and the words fade from one line to the next. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI settings are on Spoken's page, with the other narrator styles'.** They show when
+  DialogueUI is the narrator style, and every style's settings come in the same order: Size and
+  Position, Look, Words. Show Sample Subtitle is gone, as Preview shows every style.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Subtitles get the windows' settings, and the windows type by letter.** Subtitles gain Show Name
+  and Title, Highlight Words, Auto-Scroll line by line or page by page, Text Size and Hide Portrait.
+  Type By sets whether a window types out words or letters. *([Nucabe](https://github.com/Nucabe))*
+- **The large window is the game's Talking Head frame.** Its words sit inside the box, under the
+  speaker's gold name, beside the portrait (a 3D model where there is one). Stopped and a count of
+  the lines waiting follow the name in place of the queue's rows, Stop, Skip and Report take the
+  close button's corner, and a progress line runs under the words. It fades in and out, from one
+  line to the next too, and goes while a DialogueUI dialog hides the interface, where its 3D
+  portrait stayed behind. Clients without the Talking Head's art draw Spoken's own in the same
+  places. *([Nucabe](https://github.com/Nucabe))*
 - **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
   Spoken's voice when you switch away. The line now stops instead of running on in silence, and
   Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
