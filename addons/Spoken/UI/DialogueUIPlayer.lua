@@ -85,6 +85,11 @@ local function PaperOf(look)
     return look.file or Theme:TexturePath() .. "Parchment.png"
 end
 
+--- The soft shadow DialogueUI's theme draws under its settings panel.
+local function ShadowArt()
+    return Theme:TexturePath() .. "Settings-BackgroundShadow.png"
+end
+
 --- A look's cap size for a window `width` wide: a book's puts its paper on that width; the quest
 --- parchment's is DialogueUI's, at `q` of it.
 local function CapSize(look, width, q)
@@ -914,7 +919,6 @@ function Skin:SetVisible(visible, immediate)
         self:StopTuck()
         self:StopSettle()
         self:StopLanding()
-        if self.wordsHidden then self:ShowWords(1) end
         self.wanted, self.preparing, self.arming, self.fadeTime, self.pending = false, nil, nil, nil, nil
         self.frame:Hide()
         self:Unbuffer()
@@ -1155,7 +1159,6 @@ function Skin:Settle(dialog)
     if self:Defer("update") then return end
     self:StopTuck()
     self:StopLanding()
-    if self.wordsHidden then self:ShowWords(1) end
     -- Coming back as it is: a fade under way goes on, and Update hands it the line.
     if not self:Owns(dialog) then
         local queued = self:QueuedBy(dialog)
@@ -1354,7 +1357,7 @@ function Skin:ShadowUnder(reach, alpha)
     if alpha <= 0.001 then shadow:Hide(); return end
     -- Its art and place in the window's strata once as it shows; each frame only where and how dark.
     if not shadow:IsShown() then
-        shadow.texture:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
+        shadow.texture:SetTexture(ShadowArt())
         shadow:SetFrameStrata(frame:GetFrameStrata())
         shadow:SetFrameLevel(math.max(0, frame:GetFrameLevel() - 1))
         shadow:Show()
@@ -1581,7 +1584,7 @@ end
 --- The page as the dialog showed it, its words faded from it (Skin:FadeDialogOut): its paper alone,
 --- `width` wide in UIParent's units, at `q` of DialogueUI's.
 function Skin:DressCard(card, look, width, q)
-    local file = look.file or Theme:TexturePath() .. "Parchment.png"
+    local file = PaperOf(look)
     local capWidth, capHeight = CapSize(look, width, q)
     card.capWidth, card.capHeight, card.look = capWidth, capHeight, look
     local strips = card.strips
@@ -1590,7 +1593,7 @@ function Skin:DressCard(card, look, width, q)
     strips[3]:ClearAllPoints()
     strips[3]:SetPoint("CENTER", card, "BOTTOM", 0, 0)
     DressStrips(strips, file, look, capHeight)
-    card.shadow:SetTexture(Theme:TexturePath() .. "Settings-BackgroundShadow.png")
+    card.shadow:SetTexture(ShadowArt())
 end
 
 --- What `dialog` queued goes behind this window: `clip`'s page lifted off where the dialog was.
