@@ -794,11 +794,8 @@ def query_creature_displays():
     """Every humanoid appearance of every creature, as (entry, slot, probability, DisplayRaceID,
     DisplaySexID, npc_sound_name), from the latest patch's creature_template row.
 
-    A creature has up to four displays, drawn by their probabilities, and they need not share a
-    sex: a Stormwind City Guard is a man or a woman at even odds. Everything else here reads
-    display_id1 alone, which is the right answer for a creature's one voice and the wrong one for
-    which sexes it comes in (tts_cli/npc_sexes.py). A display with no CreatureDisplayInfoExtra
-    row has no race or sex and is left out.
+    All four display slots, since they need not share a sex. A display with no
+    CreatureDisplayInfoExtra row has no race or sex and is left out.
     """
     slots = " UNION ALL ".join(
         f"SELECT entry, patch, {n} AS slot, display_id{n} AS display_id, "

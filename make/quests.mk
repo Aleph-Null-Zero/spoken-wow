@@ -373,9 +373,8 @@ import-locale: ## vmangos *_locN -> quest_line + entity_name (LOCALE=deDE; needs
 	@test -n "$(LOCALE)" || { echo "import-locale: set LOCALE, e.g. LOCALE=deDE"; exit 2; }
 	@$(QUESTS_CLI) import-locale --lang $(LOCALE)
 
-# Which NPCs come in both sexes under one id, from the world database straight into Postgres,
-# as import-locale does it: a full extract does the same, but production is never extracted
-# into. Rerunnable; a moderator's answer for a sex is kept (tts_cli/npc_sexes.py).
+# Straight into Postgres, since production is never extracted into. Rerunnable; a moderator's
+# answer is kept.
 import-npc-sexes: ## vmangos creature displays -> npc_sex, splitting each NPC drawn as both sexes (needs MySQL and DATABASE_URL)
 	@$(QUESTS_CLI) import-npc-sexes
 

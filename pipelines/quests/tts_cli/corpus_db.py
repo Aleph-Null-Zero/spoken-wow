@@ -313,9 +313,8 @@ def _import_npcs(cur, npc_rows):
 
 def npc_sex_answers(npc_sexes, npcs) -> list:
     """The file's split NPCs as npc_sex rows, (kind, id, sex, race, flavor, provenance,
-    doubtful), the extract's flavorless sex given its race-gender's default as npc_answers
-    gives an NPC's. A moderator's answer for the NPC is its own sex's: the extract reads the
-    sex's voice off the displays, and splitting must not take back a voice someone chose."""
+    doubtful). A moderator's answer for the NPC becomes its own sex's, so splitting never takes
+    back a voice someone chose."""
     chosen = {(npc["npcType"], npc["npcId"]): npc for npc in npcs
               if npc.get("provenance") == "moderator" and npc.get("race")}
     defaults = fallback_flavors(
@@ -371,8 +370,7 @@ def _import_npc_sexes(cur, rows):
 
 def import_npc_sexes(display_rows, verbose=True) -> list:
     """The world database's split NPCs into a filled database's npc_sex, without a whole
-    extract: the NPCs are the database's own, so a moderator's answer for one decides whether
-    it is a man or a woman it splits from. Returns the rows written."""
+    extract. Returns the rows written."""
     from tts_cli.npc_sexes import npc_sexes
 
     conn = connect()

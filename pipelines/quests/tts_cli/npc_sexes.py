@@ -1,15 +1,8 @@
 """Which NPCs come in both sexes under one id, and who each sex is.
 
-A creature has up to four displays, drawn by their probabilities, and 651 classic creatures have
-a man and a woman among them: a Stormwind City Guard, an Orgrimmar Grunt, a Bluffwatcher. The
-corpus voices an NPC from display_id1 alone, so all of them spoke in one sex's voice. Such an NPC
-is split (apps/web migration 0072): each sex is answered on its own and every line it speaks is
-voiced once per sex.
-
 Each sex is the race of its likeliest display, and the flavor its displays of that race name
-most, weighted by probability, as flavors.py reads a flavor from a greeting sound. A sex whose
-displays name no flavor gets none, and the import gives it its race-gender's default, doubtful,
-as it does an NPC. Free of SQL so it can be tested on its own.
+most, weighted by probability. A sex whose displays name no flavor gets none; the import gives
+it its race-gender's default, marked doubtful.
 """
 from __future__ import annotations
 
@@ -38,9 +31,8 @@ class Display(NamedTuple):
 def npc_sexes(display_rows, npcs) -> list:
     """The corpus's `npcSexes` for the creatures among `npcs` that come in both sexes.
 
-    `display_rows` are sql_queries.query_creature_displays' (entry, slot, probability,
-    DisplayRaceID, DisplaySexID, npc_sound_name). Only a creature with a humanoid answer is
-    split: a model slot or a generic type has no sex to voice by.
+    `display_rows` are (entry, slot, probability, DisplayRaceID, DisplaySexID, npc_sound_name).
+    Only a creature with a humanoid answer is split: a model slot or a generic type has no sex.
     """
     displays = defaultdict(list)
     for entry, slot, probability, race_id, sex_id, sound in display_rows:
