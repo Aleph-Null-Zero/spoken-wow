@@ -263,6 +263,8 @@ end
 --- spokenBaseStrata give a frame's own scale and strata (the subtitles).
 function Addon:ApplyHost(frame)
     if not frame then return end
+    -- A window drawn as one image must not move while it fades: it moves once it is itself again.
+    if frame.spokenFrozen then frame.spokenHostPending = true; return end
     local host, cfg = self.playerHost, self:Profile("Frame")
     local base = frame.spokenBaseScale or cfg.FrameScale
     if host then

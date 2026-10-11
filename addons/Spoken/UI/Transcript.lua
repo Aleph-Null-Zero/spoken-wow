@@ -217,7 +217,28 @@ function Transcript:SetClip(clip)
     self:Reflow()
 end
 
+--- Held while the window the captions are in is drawn as one image: nothing in that image may
+--- change, or the client crashes (ASSERT(!m_deleted), CSimpleRender.cpp). The line that ends as
+--- the window fades out keeps its words, which fade with it; whatever came meanwhile is caught up
+--- on Release.
+function Transcript:Hold()
+    self.held = true
+end
+
+function Transcript:Release()
+    if not self.held then return end
+    self.held = nil
+    local start = self.heldStart
+    self.heldStart = nil
+    if start then
+        self:Started(start.clip)
+        self.startedAt = start.at
+    end
+    self:Sync()
+end
+
 function Transcript:Started(clip)
+    if self.held then self.heldStart = { clip = clip, at = GetTime() }; return end
     self.elapsed, self.startedAt = -(clip.delay or 0), GetTime()
     self:SetClip(clip)
     self.hasStarted = true
@@ -227,7 +248,9 @@ function Transcript:Started(clip)
 end
 
 function Transcript:Sync()
-    local current = SoundQueue:GetCurrentSound()
+    if self.held then return end
+    -- The line playing, or the sample a window previews.
+    local current = PlayerFrame and PlayerFrame:Current() or SoundQueue:GetCurrentSound()
     if current ~= self.clip then
         self.elapsed, self.startedAt = 0, nil
         self:SetClip(current)
@@ -444,9 +467,12 @@ function Transcript:Place()
     local placed = format("%.4f:%d:%d:%d", top, step, n, #(self.lines or {}))
     if self.placedKey == placed then return end
     self.placedKey = placed
+    -- Room over the first line (style.padTop): the DialogueUI window leaves a line's room over
+    -- and under the words, which a line gliding out or in fades through before it reaches the edge.
+    local padTop = self.style and self.style.padTop
     for row, label in ipairs(self.labels) do
         label:ClearAllPoints()
-        label:SetPoint("TOPLEFT", 0, -((row - 1) - fraction) * step)
+        label:SetPoint("TOPLEFT", 0, -((padTop or 0) + ((row - 1) - fraction) * step))
         local line = self.lines and self.lines[first + row - 1]
         label:SetShown(line ~= nil and (row <= n or (row == n + 1 and fraction > 0)))
         -- As much of the row as is inside the clipped frame, so a line half past an edge does not
@@ -535,7 +561,7 @@ function Transcript:Dock(parent, anchor, point, x, y, width, height)
 end
 
 function Transcript:Update()
-    if not self.frame then return end
+    if not self.frame or self.held then return end
     self:Render()
     self.frame:SetShown(Config().Enabled and Addon:DisplayStyle() ~= "subtitle" and self.clip ~= nil and self.text ~= "")
     Subtitle:Update()
@@ -566,7 +592,8 @@ local function SameStyle(a, b)
     if a == b then return true end
     if not a or not b then return false end
     if a.font ~= b.font or a.shadow ~= b.shadow or a.highlight ~= b.highlight or a.lines ~= b.lines
-        or a.size ~= b.size or a.lineGap ~= b.lineGap or a.paragraphs ~= b.paragraphs then return false end
+        or a.size ~= b.size or a.lineGap ~= b.lineGap or a.paragraphs ~= b.paragraphs
+        or a.padTop ~= b.padTop then return false end
     local ca, cb = a.color or {}, b.color or {}
     return ca[1] == cb[1] and ca[2] == cb[2] and ca[3] == cb[3]
 end
@@ -696,6 +723,7 @@ function Transcript:Initialize()
     frame:SetScript("OnSizeChanged", function() self:Reflow() end)
     local accumulated = 0
     frame:SetScript("OnUpdate", function(_, elapsed)
+        if self.held then return end
         self:Glide(elapsed)
         accumulated = accumulated + elapsed
         if accumulated >= 0.05 then accumulated = 0; self:Update() end
