@@ -25,7 +25,8 @@ import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useMemo, useState } from "react";
 
-import { CLIENT_CHIP_OPTIONS, SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
+import ClientSelect from "@/components/ClientSelect";
+import { SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
 import SortHeader from "@/components/SortHeader";
 import SpeakerCell, { ProvenanceBadge, type SpeakerAnswer } from "@/components/SpeakerCell";
@@ -538,12 +539,6 @@ export default function ContributionTable({
             onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
           />
         ) : null}
-        <FilterChip
-          label="client"
-          value={client === "all" ? undefined : client}
-          options={CLIENT_CHIP_OPTIONS}
-          onChange={(next) => go({ client: next as ClientFilter | undefined })}
-        />
         {source === "quests" ? (
           <FilterChip
             label="stage"
@@ -553,6 +548,7 @@ export default function ContributionTable({
           />
         ) : null}
         {pending && <Refreshing />}
+        <ClientSelect value={client} onChange={(next) => go({ client: next })} />
       </nav>
 
       {rows.length > 0 ? (

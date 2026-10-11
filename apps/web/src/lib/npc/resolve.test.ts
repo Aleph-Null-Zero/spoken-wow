@@ -181,6 +181,26 @@ describe("resolveNpc", () => {
     expect(defaultFlavorFor).not.toHaveBeenCalled();
   });
 
+  it("types a critter with no character body as a generic creature, in the client's language", async () => {
+    vi.mocked(getResolution).mockResolvedValue(null);
+    for (const creatureType of ["Critter", "Kleintier", "Tier", "Bestia"]) {
+      const row = await resolveNpc({ ...observed, modelFileId: 1, creatureType }, "enUS");
+      expect(row).toMatchObject({ race: "creature", gender: null, flavor: null, provenance: "client", confirmed: false });
+    }
+  });
+
+  it("leaves an elemental with no character body for a moderator", async () => {
+    vi.mocked(getResolution).mockResolvedValue(null);
+    const row = await resolveNpc({ ...observed, modelFileId: 1, creatureType: "Elemental" }, "enUS");
+    expect(row).toMatchObject({ race: null, provenance: "none" });
+  });
+
+  it("takes the body's race over a beast's type", async () => {
+    vi.mocked(getResolution).mockResolvedValue(null);
+    const row = await resolveNpc({ ...observed, creatureType: "Beast" }, "enUS");
+    expect(row?.race).toBe("tauren");
+  });
+
   it("does nothing at all for an envelope with no npc", async () => {
     expect(await resolveNpc({ ...observed, npcId: null }, "enUS")).toBe(null);
   });
@@ -270,5 +290,22 @@ describe("resolveNpc", () => {
     vi.mocked(voiceFromDisplays).mockClear();
     await resolveNpc({ ...observed, npcKind: "gameobject", displayIds: [9392] }, "enUS");
     expect(voiceFromDisplays).not.toHaveBeenCalled();
+  });
+
+  it("types a gameobject the corpus does not carry as a gameobject, unconfirmed", async () => {
+    vi.mocked(getResolution).mockResolvedValue(null);
+    const row = await resolveNpc({ ...observed, npcKind: "gameobject", npcId: 424005, npcName: "Pocket Litter" }, "enUS");
+    expect(row).toMatchObject({
+      race: "gameobject", gender: null, flavor: null, provenance: "client", confirmed: false,
+    });
+  });
+
+  it("keeps the corpus's gameobject, which has no gender", async () => {
+    vi.mocked(getResolution).mockResolvedValue({
+      ...observed, npcKind: "gameobject", race: "gameobject", gender: null, flavor: null,
+      provenance: "corpus", confirmed: true, doubtful: false, note: null, resolvedBy: null, updatedAt: "now",
+    });
+    const row = await resolveNpc({ ...observed, npcKind: "gameobject" }, "enUS");
+    expect(row).toMatchObject({ race: "gameobject", provenance: "corpus", confirmed: true });
   });
 });

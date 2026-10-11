@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { audioRelPath } from "./audio";
 import { npcKey } from "./corpus";
 import { corpus as catalogue } from "./quests/catalogue";
-import { batchJobs, isGap, matchingLines, search } from "./search";
+import { batchJobs, batchPlan, isGap, matchingLines, search } from "./search";
 import { madeByOf } from "./takes/made-by";
 import { isModelVoice } from "./voices/voices";
 
@@ -327,6 +327,14 @@ describe("batch jobs", () => {
     const jobs = batchJobs(corpus.lines);
     expect(new Set(jobs.map((j) => j.audioPath)).size).toBe(jobs.length);
     expect(jobs.length).toBeLessThan(corpus.lines.filter((l) => l.generatable).length);
+  });
+
+  it("accounts for every matched line that is not a job", () => {
+    const { jobs, skipped } = batchPlan(corpus.lines);
+    const total = Object.values(skipped).reduce((sum, count) => sum + count, 0);
+    expect(jobs.length + total).toBe(corpus.lines.length);
+    expect(skipped["shared-file"]).toBeGreaterThan(0);
+    expect(skipped.progress).toBeGreaterThan(0);
   });
 });
 

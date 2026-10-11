@@ -22,7 +22,7 @@ import { overrideOf, type LineOverride } from "./quests/override";
 import type { LineBroadcast } from "./broadcast/store";
 import type { BroadcastStatus } from "./broadcast/status";
 import type { AudioState } from "./audio-state";
-import { isVoiceable } from "./text-gate";
+import { isVoiceable, unvoicedReason, type UnvoicedReason } from "./text-gate";
 import { madeByFacets, madeByMatches, type MadeBy, type MadeByFacets } from "./takes/made-by";
 import { recordedMatches, type LiveRecording, type Recorded } from "./recordings/live";
 
@@ -284,14 +284,34 @@ export function batchJobs(
   lines: CorpusLine[],
   overrides: Map<string, LineOverride> = NO_CONTEXT.overrides,
 ): BatchLine[] {
+  return batchPlan(lines, overrides).jobs;
+}
+
+/** Why a matched line is not a job of its own: never voiced, or its file is already in. */
+export type BatchSkip = UnvoicedReason | "shared-file";
+
+/** batchJobs, plus a count of the matched lines that did not become a job, by reason. */
+export function batchPlan(
+  lines: CorpusLine[],
+  overrides: Map<string, LineOverride> = NO_CONTEXT.overrides,
+): { jobs: BatchLine[]; skipped: Partial<Record<BatchSkip, number>> } {
   const byFile = new Map<string, BatchLine>();
+  const skipped: Partial<Record<BatchSkip, number>> = {};
+  const skip = (why: BatchSkip) => (skipped[why] = (skipped[why] ?? 0) + 1);
   for (const line of lines) {
     const audioPath = audioRelPath(line);
     // The effective text, so the estimate prices what will actually be sent and a rescued
     // line is not quietly dropped from the batch that was quoted for it.
     const text = overrideOf(overrides, audioPath)?.text ?? line.text;
-    if (!isVoiceable(line, text)) continue;
-    if (byFile.has(audioPath)) continue;
+    const unvoiced = unvoicedReason(line, text);
+    if (unvoiced) {
+      skip(unvoiced);
+      continue;
+    }
+    if (byFile.has(audioPath)) {
+      skip("shared-file");
+      continue;
+    }
     byFile.set(audioPath, {
       lineId: line.lineId,
       audioPath,
@@ -301,7 +321,7 @@ export function batchJobs(
       preview: text.slice(0, 80),
     });
   }
-  return [...byFile.values()];
+  return { jobs: [...byFile.values()], skipped };
 }
 
 const keyCache = new WeakMap<Corpus, Map<CorpusLine, string>>();

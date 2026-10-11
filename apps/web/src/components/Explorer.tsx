@@ -13,7 +13,7 @@ import Player from "./Player";
 import IgnoreDialog from "./IgnoreDialog";
 import ReportDialog from "./ReportDialog";
 import OverrideDialog from "./OverrideDialog";
-import RegenerateDialog from "./RegenerateDialog";
+import RegenerateDialog, { type PendingBatch } from "./RegenerateDialog";
 import RegenerationPanel from "./RegenerationPanel";
 import SearchBar from "./SearchBar";
 import { Contained, Wide } from "./Width";
@@ -35,11 +35,10 @@ import {
   queueBatch,
   regenerate,
   stopQueue,
-  type BatchJob,
   type GenerationStatusResponse,
   type QueueSnapshot,
 } from "@/lib/generation/client";
-import { estimate as estimateBatch, LIST_RATE, type Estimate } from "@/lib/generation/billing";
+import { estimate as estimateBatch, LIST_RATE } from "@/lib/generation/billing";
 import { useClearDirty } from "@/lib/generation/use-clear-dirty";
 import { useCan } from "@/components/useCan";
 import { canConfigureGeneration } from "@/lib/permissions";
@@ -232,17 +231,18 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
   const [ignoring, setIgnoring] = useState<ResultLine | null>(null);
   // Anyone can open this one, signed in or not - see ReportDialog.
   const [reporting, setReporting] = useState<ResultLine | null>(null);
-  const [pendingBatch, setPendingBatch] = useState<{
-    label: string;
-    /**
-     * The filters the estimate was quoted for, carried rather than re-read at confirm time.
-     * The dialog can sit open while someone keeps typing, and enqueuing whatever the search
-     * box says at the moment of the click would spend money on a set nobody was shown.
-     */
-    filters: string;
-    jobs: BatchJob[];
-    estimate: Estimate;
-  } | null>(null);
+  const [pendingBatch, setPendingBatch] = useState<
+    | (PendingBatch & {
+        /**
+         * The filters the estimate was quoted for, carried rather than re-read at confirm
+         * time. The dialog can sit open while someone keeps typing, and enqueuing whatever
+         * the search box says at the moment of the click would spend money on a set nobody
+         * was shown.
+         */
+        filters: string;
+      })
+    | null
+  >(null);
   // The queue, as the server sees it. Null until the first poll answers.
   const [queue, setQueue] = useState<QueueSnapshot | null>(null);
   // What the enqueue request itself answered, as opposed to what the queue is doing: a
@@ -626,21 +626,28 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
    */
   const requestBatch = useCallback(async () => {
     const quoted = filterQuery;
-    const jobs = await fetchBatchJobs(new URLSearchParams(quoted), undefined, lang);
-    if (!jobs || jobs.length === 0) return;
+    // Open on the click: on the whole corpus the set takes seconds to come back.
+    setPendingBatch({ label: "every line this search matches", filters: quoted, estimate: null });
+    const batch = await fetchBatchJobs(new URLSearchParams(quoted), undefined, lang);
 
-    // The same arithmetic the server would do, from the rate it reported. Falls back to
-    // the list rate, which overstates - the right direction for a number meant to give
-    // someone pause.
-    const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
-    setPendingBatch({
-      label: `every line this search matches`,
-      filters: quoted,
-      jobs,
-      estimate: estimateBatch(
-        jobs.map((job) => ({ file: job.audioPath, characters: job.characters })),
-        rate,
-      ),
+    // Only into the dialog this request opened, which may have been cancelled, or replaced
+    // by a later click, while the set was on its way.
+    setPendingBatch((open) => {
+      if (open?.filters !== quoted || open.estimate) return open;
+      if (!batch) return { ...open, failed: true };
+      // The same arithmetic the server would do, from the rate it reported. Falls back to
+      // the list rate, which overstates - the right direction for a number meant to give
+      // someone pause.
+      const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
+      return {
+        ...open,
+        matched: batch.matched,
+        skipped: batch.skipped,
+        estimate: estimateBatch(
+          batch.jobs.map((job) => ({ file: job.audioPath, characters: job.characters })),
+          rate,
+        ),
+      };
     });
   }, [filterQuery, status, lang]);
 
@@ -653,7 +660,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
    * which may have moved on while the dialog was open.
    */
   const startBatch = useCallback(async () => {
-    if (!pendingBatch) return;
+    if (!pendingBatch?.estimate) return;
     setPendingBatch(null);
     setQueueNote(null);
 

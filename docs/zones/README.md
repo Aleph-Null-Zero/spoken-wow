@@ -706,16 +706,15 @@ The consequence is that a character who has already explored the world will neve
 autoplay anything — the discoveries have all happened. `/spz discover [area]`
 simulates one, which is the only way to test this without rolling an alt.
 
-#### The spawn area, which is never announced
+#### The spawn area, which cannot be placed
 
-Where a character starts is the one discovery the client never reports: it is
-either already explored the moment the character is created, or announced while the
-intro cinematic is up, before any addon has registered an event. Either way a new
-orc stands in Valley of Trials in silence — which is the first thing this feature
+Where a character starts is announced a second or so into its first login, while the
+player's map is still the continent, so the discovery finds no lore and is dropped. A
+new orc stands in Valley of Trials in silence — which is the first thing this feature
 should ever have to say.
 
 So the spawn area is seeded two seconds after entering the world, guarded by one
-per-character boolean (`ZoneLoreCharDB.greeted`). This is a greeting rather than a
+per-character boolean (`SpokenZonesCharacter.greeted`). This is a greeting rather than a
 rule: it fires once per character and is the only place left that infers a first
 visit instead of being told about one. The greeting queues immediately and the
 queue holds it until the intro ends — but two seconds is not always before the intro
@@ -724,6 +723,12 @@ and keep it queued, to replay from the start once the intro is over. The greetin
 attempts are not spent while an intro plays: on clients that play it somewhere else,
 with a loading screen after it, every answer during it is wrong, and a player who
 watched it to the end used to arrive after the last attempt.
+
+The boolean is a saved variable, and saved variables get lost: a crash before logout,
+a wiped WTF folder, the 3.0 rename of the addon's folder. So the greeting also needs
+the character to be level 1 and standing in one of the six starting areas
+(`STARTING_AREAS` in `Autoplay.lua`). A character parked in Stormwind, or one that has
+left its valley, is never greeted, whatever the record says.
 
 The flag is set *after* the enabled check, so turning autoplay on later still
 greets rather than having silently spent its turn. `/spz forget` clears it.
