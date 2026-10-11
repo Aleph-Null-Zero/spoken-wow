@@ -164,10 +164,9 @@ do
     local words = env.Addon.db.profile.Transcript
     local saved = { words.Enabled, words.Typewriter, words.SubtitleScroll }
     words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
-    local WINDOW = "Window Size, Lock Position, Reset Positions, Hide Portrait, Show Words, "
-        .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By"
     local ROWS = {
-        minimal = WINDOW,
+        minimal = "Window Size, Lock Position, Reset Positions, Background, Show Progress, Hide Portrait, "
+            .. "Show Words, Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By",
         -- The large window's words fill the box, so no Lines Shown.
         classic = "Window Size, Lock Position, Reset Positions, Show Progress, Hide Portrait, Show Words, "
             .. "Text Size, Auto-Scroll, Highlight Words, Type Words Out, Type By",

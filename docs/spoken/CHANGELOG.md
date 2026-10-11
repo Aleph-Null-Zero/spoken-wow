@@ -19,12 +19,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Subtitles get the windows' settings, and the windows type by letter.** Subtitles gain Show Name
   and Title, Highlight Words, Auto-Scroll line by line or page by page, Text Size and Hide Portrait.
   Type By sets whether a window types out words or letters. *([Nucabe](https://github.com/Nucabe))*
-- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles, the
-  DialogueUI window and the large window, and Voice Only shows none of the words' settings. Spoken
-  Quests' DialogueUI switches have a DialogueUI section of their own after the narrator style's
-  settings. On Forever, Bronze Border has left the narrator style's settings for a Colours section:
-  it colours every round button Spoken draws and the small window's metal.
-  *([Nucabe](https://github.com/Nucabe))*
+- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles and every
+  window, and Voice Only shows none of the words' settings. Spoken Quests' DialogueUI switches have
+  a DialogueUI section of their own after the narrator style's settings. On Forever, Bronze Border
+  has left the narrator style's settings for a Colours section: it colours every round button Spoken
+  draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
 - **The large window is the game's Talking Head frame.** Its words sit inside the box, under the
   speaker's gold name, beside the portrait (a 3D model where there is one). Stopped and a count of
   the lines waiting follow the name in place of the queue's rows, Stop, Skip and Report take the
