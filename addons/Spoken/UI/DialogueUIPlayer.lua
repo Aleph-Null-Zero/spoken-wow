@@ -149,7 +149,6 @@ function Skin:Initialize()
     self.content, frame.container = content, content
     -- The captions are docked here and hand Ctrl-wheel to their parent.
     content.spokenWheel = frame.spokenWheel
-    content.buttons = {}
 
     -- DialogueUI's header strip in two pieces: the face's socket, never stretched, and the
     -- line past it, stretched to the panel's width.
@@ -174,7 +173,6 @@ function Skin:Initialize()
     self.badge = chrome:CreateTexture(nil, "OVERLAY")
     self.name = Font(content, 18, 1, 1, 1)
     content.name = self.name -- Actions' header anchor contract.
-    self.name:SetHeight(20)
     -- The line's name, nothing to click: Skip takes a line away.
     self.title = CreateFrame("Frame", nil, content)
     self.title.text = Font(self.title, 12, 1, 1, 1)
@@ -291,7 +289,8 @@ function Skin:Layout()
     -- Show Progress off: the bar goes and the window closes up under the words.
     local progress = Addon:Profile("Transcript").SubtitleProgress ~= false
     self.progress.track:SetShown(progress)
-    local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
+    local footGap = math.max(0, textGap - lineGap)
+    local footerHeight = (progress and self.progress.height + 6 or 0) + footGap
     -- A line's room over and under the words, which a line gliding out or in fades through, so no
     -- line is seen cut at the edge. It lies over the gaps there and adds none: the words keep
     -- their place.
@@ -300,7 +299,7 @@ function Skin:Layout()
     local barLift = 0
     if progress then
         local _, capHeight = Theme:ParchmentSize()
-        local above = 6 + math.max(0, textGap - lineGap) + lineGap
+        local above = 6 + footGap + lineGap
         barLift = Round(above - (padBottom - capHeight * PAPER_FOOT))
         footerHeight = footerHeight + barLift
         self.progressGaps = { above = above, below = padBottom + barLift - capHeight * PAPER_FOOT }
@@ -359,10 +358,10 @@ function Skin:Layout()
     self.name:ClearAllPoints()
     self.name:SetPoint("BOTTOMLEFT", self.title, "TOPLEFT", 0, 2)
     self.name:SetPoint("RIGHT", self.controls, "LEFT", -6, 0)
-    self.name:SetHeight(fonts.subtitleSize + 2)
+    local nameHeight = fonts.subtitleSize + 2
+    self.name:SetHeight(nameHeight)
     -- Centred on the speaker's name and the line's title together: the title sits on the
     -- socket's middle, 2 up, and the name above it.
-    local nameHeight = fonts.subtitleSize + 2
     local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
     -- At the default Window Size the round buttons are drawn at UIParent's scale, growing and
     -- shrinking with Window Size from there. Their anchor's offset is in their own scale.
@@ -406,7 +405,6 @@ function Skin:Dress()
     Paint(self.title.text, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.title)
     Paint(self.count, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
     Paint(self.stopped, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
-    self.title.color = colors.title
     -- A clip's own face goes back on over the theme's (Addon:ClipFont).
     Addon:ClipFont(self.name, self.clip)
     Addon:ClipFont(self.title.text, self.clip)
@@ -1034,7 +1032,7 @@ function Skin:Update()
     -- arriving late.
     local textLines = Transcript.clip == clip and Transcript.lines and #Transcript.lines or 0
     local picture = clip.present and clip.present.picture
-    local key = textLines .. ":" .. (picture and picture.file .. ":" .. (picture.pixels or "") or "")
+    local key = textLines .. ":" .. (picture and picture.file or "")
     if key ~= self.laidOutFor then
         self.laidOutFor = key
         self:Layout()
