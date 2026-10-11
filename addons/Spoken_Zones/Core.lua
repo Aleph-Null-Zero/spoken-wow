@@ -83,18 +83,7 @@ end
 -- Merge defaults into the saved table without clobbering stored values, so new
 -- options added in later versions appear for existing users. Runtime reads and
 -- writes go straight to SpokenZonesSettings.
--- Whether the client handed back anything it saved. Read before the tables below are
--- created, because creating one is what makes the question unanswerable afterwards.
---
--- False means one of two things: a first run, or a client that does not restore saved
--- variables at all. The 1.60.1 beta is the second - it writes both files correctly every
--- logout and never reads either back, for any addon, which leaves every feature that
--- remembers something across a login repeating itself. Autoplay's login greeting is the
--- one a player hears; see SeedLoginArea.
 local function InitConfig()
-	SpokenZones.savedVariablesRestored =
-		type(SpokenZonesSettings) == "table" or type(SpokenZonesCharacter) == "table"
-
 	if type(SpokenZonesSettings) ~= "table" then
 		SpokenZonesSettings = {}
 	end

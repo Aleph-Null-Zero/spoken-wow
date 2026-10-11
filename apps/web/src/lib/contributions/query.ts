@@ -8,7 +8,7 @@
  * contributions.ts and npc.ts, whose types this one only composes: ContributionTable is a client
  * component and calls this directly on every dropdown change.
  */
-import type { ClientFamily } from "./client";
+import type { ClientFilter } from "./client";
 import type { ContributionStatus } from "./contributions";
 import type { EnvelopeSource } from "./envelope";
 import type { Roster } from "../voices/roster";
@@ -41,7 +41,7 @@ export function bucketOf(
   return roster.voiceFor(npc.race, npc.gender, npc.flavor) ? "ready" : "blocked";
 }
 
-export type ClientFilter = ClientFamily | "all";
+export type { ClientFilter };
 
 /**
  * A section of /contributions, which is the page's path: an envelope source, or gossip -- the
