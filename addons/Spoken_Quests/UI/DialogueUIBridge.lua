@@ -544,6 +544,9 @@ end
 --- DialogueUI scrolls by, shorter by as much. Measured from the title, not the portrait beside
 --- it.
 local function Lower()
+    if not Addon:IsPartOn() then
+        return
+    end
     local frame = DUIQuestFrame
     local front = type(frame.FrontFrame) == "table" and frame.FrontFrame
     local header = front and type(front.Header) == "table" and front.Header
@@ -665,12 +668,15 @@ local function SetEnabled(button, on)
     end
 end
 
---- Show the row while the window shows a page: Play with the Play Button setting on, greyed
---- with no line to read and Stop while that line speaks; Skip greyed with nothing speaking.
---- Run as a page is built, as the window opens, and on the driver's tick.
+--- Show the row while the window shows a page and Spoken Quests is on: Play with the Play Button
+--- setting on, greyed with no line to read and Stop while that line speaks; Skip greyed with
+--- nothing speaking. Run as a page is built, as the window opens, and on the driver's tick.
 function Bridge:DrawPlayButton()
-    if self:Page() == nil then
+    if self:Page() == nil or not Addon:IsPartOn() then
         CoverTheirs(false)
+        if close then
+            close:Hide()
+        end
         if row and row.frame:IsShown() then
             row.frame:Hide()
             HideTooltip(row.play)
