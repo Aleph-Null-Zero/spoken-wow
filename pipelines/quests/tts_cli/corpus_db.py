@@ -308,14 +308,22 @@ def _import_npcs(cur, npc_rows):
 def npc_sex_answers(npc_sexes, npcs) -> list:
     """The file's split NPCs as npc_sex rows, (kind, id, sex, race, flavor, provenance,
     doubtful), the extract's flavorless sex given its race-gender's default as npc_answers
-    gives an NPC's."""
+    gives an NPC's. A moderator's answer for the NPC is its own sex's: the extract reads the
+    sex's voice off the displays, and splitting must not take back a voice someone chose."""
     gender = {2: "male", 3: "female"}
+    chosen = {(npc["npcType"], npc["npcId"]): npc for npc in npcs
+              if npc.get("provenance") == "moderator" and npc.get("race")}
     defaults = fallback_flavors(
         [(f'{npc["race"]}-{npc["gender"]}', npc["flavor"]) for npc in retyped(npcs)]
         + [(f'{row["race"]}-{gender[row["sex"]]}', row["flavor"]) for row in npc_sexes])
     rows = []
     for row in npc_sexes:
         provenance = row.get("provenance", "corpus")
+        npc = chosen.get((row["npcType"], row["npcId"]))
+        if provenance == "corpus" and npc and npc.get("gender") == gender[row["sex"]]:
+            rows.append((row["npcType"], row["npcId"], row["sex"], npc["race"], npc["flavor"],
+                         "moderator", bool(npc.get("doubtful"))))
+            continue
         guess = None if row["flavor"] or provenance != "corpus" else \
             defaults.get(f'{row["race"]}-{gender[row["sex"]]}')
         rows.append((row["npcType"], row["npcId"], row["sex"], row["race"],
@@ -369,10 +377,12 @@ def import_npc_sexes(display_rows, verbose=True) -> list:
     conn = connect()
     try:
         with conn, conn.cursor() as cur:
-            cur.execute("""select "npcKind", "npcId", "race", "gender", "flavor" from "npc"
-                            where "npcKind" = 'creature' order by "npcId" """)
+            cur.execute("""select "npcKind", "npcId", "race", "gender", "flavor", "provenance",
+                                  "doubtful"
+                             from "npc" where "npcKind" = 'creature' order by "npcId" """)
             npcs = [{"npcType": kind, "npcId": npc_id, "race": race, "gender": gender,
-                     "flavor": flavor} for kind, npc_id, race, gender, flavor in cur.fetchall()]
+                     "flavor": flavor, "provenance": provenance, "doubtful": doubtful}
+                    for kind, npc_id, race, gender, flavor, provenance, doubtful in cur.fetchall()]
             rows = npc_sex_answers(npc_sexes(display_rows, npcs), npcs)
             _import_npc_sexes(cur, rows)
     finally:
