@@ -1100,6 +1100,15 @@ made the file keeps it, and the other speaks `{lineId}~{voice}`. The `npc` row s
 for whatever does not know the sex. The corpus file carries the rows as `npcSexes` (schema 5),
 and deleting them unsplits the NPC.
 
+The extract finds them in the game's data (`tts_cli/npc_sexes.py`). A creature has up to four
+displays, each drawn by its probability and each with a sex, and the rest of the extract reads
+only `display_id1`. A speaking creature whose displays include both sexes is split: 58 of them
+in the classic dump, guards for the most part. Each sex takes the race of its likeliest display
+and the flavor its displays' greeting sounds name most. A sex with no greeting sound gets its
+race-gender's default, marked doubtful, as an NPC does. `make quests-import-npc-sexes` writes
+the same rows into a database that is already filled, production included, without a whole
+extract; it keeps a moderator's answer.
+
 `npc` also keeps what the client
 reported even when a moderator overrules it — evidence about the NPC is worth more than the
 guess it produced — along with the client build, since model ids are per-build data.

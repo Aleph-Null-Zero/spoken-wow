@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 
 from tts_cli.flavors import is_model_voice
 from tts_cli.naming import filename_for_row, line_id_for_row
+from tts_cli.npc_sexes import npc_sexes
 
 #: 3: a row a player contributed carries its "contributionId". The extract has none to mark,
 #: but the number says the file's unmarked rows are all the dump's -- which is what lets
@@ -67,8 +68,9 @@ def _skip_reason(row):
     return None
 
 
-def build_corpus(df, spawn_rows) -> dict:
-    """Turn the preprocessed dataframe and raw spawn rows into the corpus document."""
+def build_corpus(df, spawn_rows, display_rows=()) -> dict:
+    """Turn the preprocessed dataframe, raw spawn rows and creature displays into the corpus
+    document."""
     lines = []
     for row in df.to_dict("records"):
         reason = _skip_reason(row)
@@ -101,14 +103,15 @@ def build_corpus(df, spawn_rows) -> dict:
         spawns.setdefault(key, []).append(
             {"map": int(map_id), "x": round(float(x), 1), "y": round(float(y), 1)})
 
+    npcs = npcs_of(df)
     return {
         "schemaVersion": SCHEMA_VERSION,
         "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "lineCount": len(lines),
         "lines": lines,
         "spawns": spawns,
-        "npcs": npcs_of(df),
-        "npcSexes": [],
+        "npcs": npcs,
+        "npcSexes": npc_sexes(display_rows, npcs),
     }
 
 
@@ -193,7 +196,8 @@ def extraction_rows(quests, followups):
 def extract() -> dict:
     """The world database as a corpus, for import_corpus_data to take into Postgres. The only
     step that needs MySQL; the committed file is written by export-corpus alone."""
-    from tts_cli.sql_queries import (query_dataframe_for_all_quests_and_gossip,
+    from tts_cli.sql_queries import (query_creature_displays,
+                                     query_dataframe_for_all_quests_and_gossip,
                                      query_followup_dataframe, query_spawns)
     from tts_cli.tts_utils import TTSProcessor
 
@@ -203,4 +207,4 @@ def extract() -> dict:
     # avoid requiring an ElevenLabs key just to extract text.
     df = TTSProcessor.preprocess_dataframe(TTSProcessor.__new__(TTSProcessor), df)
 
-    return build_corpus(df, query_spawns())
+    return build_corpus(df, query_spawns(), query_creature_displays())

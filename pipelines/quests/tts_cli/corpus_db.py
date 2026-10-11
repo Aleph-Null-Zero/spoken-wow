@@ -360,6 +360,28 @@ def _import_npc_sexes(cur, rows):
                                     excluded."doubtful")""")
 
 
+def import_npc_sexes(display_rows, verbose=True) -> list:
+    """The world database's split NPCs into a filled database's npc_sex, without a whole
+    extract: the NPCs are the database's own, so a moderator's answer for one decides whether
+    it is a man or a woman it splits from. Returns the rows written."""
+    from tts_cli.npc_sexes import npc_sexes
+
+    conn = connect()
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute("""select "npcKind", "npcId", "race", "gender", "flavor" from "npc"
+                            where "npcKind" = 'creature' order by "npcId" """)
+            npcs = [{"npcType": kind, "npcId": npc_id, "race": race, "gender": gender,
+                     "flavor": flavor} for kind, npc_id, race, gender, flavor in cur.fetchall()]
+            rows = npc_sex_answers(npc_sexes(display_rows, npcs), npcs)
+            _import_npc_sexes(cur, rows)
+    finally:
+        conn.close()
+    if verbose:
+        print(f"{len({(row[0], row[1]) for row in rows})} NPCs split by sex, {len(rows)} sexes")
+    return rows
+
+
 class DatabaseNotEmpty(Exception):
     """import-corpus was pointed at a database that already holds the corpus."""
 
