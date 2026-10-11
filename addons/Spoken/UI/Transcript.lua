@@ -605,7 +605,8 @@ function Transcript:Reset()
     -- is the choice of where captions go, not a tweak.
     local defaults = Defaults.profile.Transcript
     for _, key in ipairs({ "Lines", "FontSize", "ScrollMode", "HighlightWord", "Typewriter", "TypewriterBy",
-        "SubtitleShadow", "SubtitleScale" }) do
+        "SubtitleShadow", "SubtitleScale", "SubtitleProgress", "SubtitleName", "SubtitleScroll",
+        "SubtitleSentences" }) do
         cfg[key] = defaults[key]
     end
     Subtitle:Reset()
