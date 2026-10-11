@@ -245,6 +245,18 @@ def test_a_split_npcs_line_is_found_by_its_own_stem_and_each_sex_asked_after():
     assert tables["npc_sex_lookups"][1] == {7: 3}
 
 
+def test_a_split_npcs_follow_up_is_a_file_per_sex_and_the_mans_without_one():
+    followup = line(68, "human-male-official", line_id="f:4377:human-male-official",
+                    file_name="4377-human-male-official", source="followup")
+    corpus = {**GUARD, "lines": [followup]}
+    stems = stored_stems(["followup/4377-human-male-official.mp3",
+                          "followup/4377-human-male-official-human-female-official.mp3"])
+    tables = build_tables(with_voice_files(corpus, stems))
+    assert tables["followup_lookups"][1] == {68: {4377: "4377-human-male-official"}}
+    assert tables["npc_sex_followup_lookups"][1] == {68: {4377: {
+        2: "4377-human-male-official", 3: "4377-human-male-official-human-female-official"}}}
+
+
 def test_a_split_npcs_line_in_a_client_locale_is_its_own_stem():
     stems = stored_stems(["gossip/abc-human-female-official.mp3"])
     rows = [{"lineId": "g:abc", "originalText": "Go to Gryan.", "localeText": "Geht zu Gryan."}]

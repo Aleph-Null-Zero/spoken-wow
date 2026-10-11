@@ -172,6 +172,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
     # by the line's own stem, so the addon finds the line as it always has and then asks the sex.
     gossip_by_sex = {}
     quest_files_by_sex = {}
+    followup_by_sex = {}
     # Which sex each other speaking creature is drawn as, so the addon can tell a man's voice
     # given to a woman, and offer her line for contribution.
     unit_sex = {"male": 2, "female": 3}
@@ -194,8 +195,17 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         # there would answer the wrong question. The addon knows the speaker and the
         # broadcast_text id from its own export, which is all this table is keyed on.
         if line["source"] == FOLLOWUP:
-            followup.setdefault(line["npcId"], {}).setdefault(
-                int(line["lineId"].split(":")[1]), followup_stem_from_line_id(line["lineId"]))
+            broadcast = int(line["lineId"].split(":")[1])
+            stem = followup_stem_from_line_id(line["lineId"])
+            # A split NPC's follow-up is a file per sex. The chat event names the speaker, but
+            # its sex is readable only while the speaker is a unit the player has up, so the
+            # man's file stays the line's for when it is not.
+            if line.get("npcSex"):
+                followup_by_sex.setdefault(line["npcId"], {}).setdefault(broadcast, {})[
+                    line["npcSex"]] = stem
+                if line["npcSex"] == 2:
+                    followup.setdefault(line["npcId"], {})[broadcast] = stem
+            followup.setdefault(line["npcId"], {}).setdefault(broadcast, stem)
             continue
 
         if line["source"] == "gossip":
@@ -256,6 +266,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         "npc_sex_gossip_file_lookups": ("GossipFileLookupByNPCSex", gossip_by_sex),
         "npc_sex_quest_file_lookups": ("QuestFileLookupByNPCSex", quest_files_by_sex),
         "npc_sex_lookups": ("NPCSexByNPCID", sex_of),
+        "npc_sex_followup_lookups": ("FollowupLookupByNPCSex", followup_by_sex),
     }
 
 
