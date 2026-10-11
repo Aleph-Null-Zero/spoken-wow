@@ -259,8 +259,6 @@ function Addon:IsFrameLocked()
     return self:Profile("Frame").LockFrame
 end
 
---- Bronze Border: the windows in the game's bronze art rather than Spoken's own, read the same
---- way on every client.
 function Addon:Bronze()
     return self:Profile("Frame").BronzeTint ~= false
 end

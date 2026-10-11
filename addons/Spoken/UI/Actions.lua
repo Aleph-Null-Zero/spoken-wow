@@ -231,8 +231,8 @@ function Actions.LayOutRow(controls, row, gap)
     controls:SetSize(math.max(1, x - gap), tallest)
 end
 
--- What follows a window's title: "• (Stopped)" while the line is stopped and the lines waiting,
--- "• +N", TAIL_GAP after it. One more fades the count in over TAIL_IN; Stopped fades in and
+-- What follows a window's title: why the line is held, "• (Stopped)" while it is stopped and the
+-- lines waiting, "• +N", TAIL_GAP after it. One more fades the count in over TAIL_IN; Stopped fades in and
 -- out, and keeps its room until it has faded.
 local TAIL_GAP, TAIL_IN = 6, .25
 local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
@@ -279,7 +279,6 @@ function Tail:SetCount(waiting)
     if waiting > 0 then table.insert(self.parts, self.count) end
 end
 
---- The width the tail takes after the title; 0 with nothing to show.
 function Tail:Room()
     local room = 0
     for _, part in ipairs(self.parts) do room = room + (part:GetStringWidth() or 0) + TAIL_GAP end

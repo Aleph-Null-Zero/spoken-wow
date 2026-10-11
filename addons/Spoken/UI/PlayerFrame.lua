@@ -119,7 +119,6 @@ function PlayerFrame:InitDisplay()
     self.frame.background = self.frame:CreateTexture(nil, "BACKGROUND")
     self.frame.background:SetAllPoints()
 
-    -- The column right of the portrait: the name, the words under it, the progress line at its foot.
     self.frame.container = CreateFrame("Frame", nil, self.frame)
 
     self.frame:SetScript("OnUpdate", function(_, elapsed) self:Tick(elapsed) end)
@@ -140,8 +139,6 @@ function PlayerFrame:InitPortrait()
     self.frame.portrait.border.texture = self.frame.portrait.border:CreateTexture(nil, "OVERLAY")
 end
 
---- The name, Stopped and the count after it, the round controls in the top right corner, and the
---- progress line.
 function PlayerFrame:InitHeader()
     local container = self.frame.container
     container.name = container:CreateFontString(nil, "ARTWORK", "SpokenNameFont")
@@ -344,7 +341,7 @@ function PlayerFrame:Layout()
     self.laying = nil
 end
 
---- The name in full where it fits, then Stopped and the count after it, all short of the controls.
+--- The name in full where it fits, then the tail, all short of the controls.
 function PlayerFrame:LayoutHeader()
     local container = self.frame.container
     local name, tail = container.name, self.tail
