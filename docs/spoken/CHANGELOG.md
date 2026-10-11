@@ -6,7 +6,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 - **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go
   behind.** Closing a dialog on another line, such as a greeting before a quest or a gravestone
-  before a book, now brings the window back at once, and the queued page goes behind it.
+  before a book, now fades the window back in at once while the queued page goes behind it.
   *([Nucabe](https://github.com/Nucabe))*
 - **What NPCs say is its own module, Spoken Gossip, with its own switch and settings page.**
   Your gossip settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*

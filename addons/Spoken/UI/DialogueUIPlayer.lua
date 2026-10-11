@@ -1096,9 +1096,9 @@ function Skin:Settle(dialog)
         self:Update()
         if queued then
             self.justClosed = nil
-            -- Back in full at once, so the page goes behind a window that is there, as when it
-            -- was on screen all along.
-            self:ShowAtOnce()
+            -- Fading in now as itself, not one image, so the page goes behind a window that is
+            -- coming in with it rather than one still waiting to.
+            self:FadeInAsItself()
             self:TuckWhenShown(dialog, queued)
         end
         return
@@ -1650,26 +1650,24 @@ end
 
 --- Done, or cut short (a dialog opening, another closing): the page and the ripple gone, this
 --- window where it rests.
---- In full at once and itself, not one image: no fade waits or runs.
-function Skin:ShowAtOnce()
-    self.preparing, self.arming, self.fadeTime, self.turning = nil, nil, nil, nil
+--- Fading in from where it is, now and as itself, not one image: no wait to be still.
+function Skin:FadeInAsItself()
+    self.preparing, self.arming, self.turning = nil, nil, nil
     self.wanted = true
     self:Unbuffer()
     self:Undeafen()
     Transcript:Release()
     self.frame:Show()
-    self:SetLevel(1)
+    self:StartFade(true)
 end
 
---- Whether this window shows in full and is itself, not one image: a tuck may run against it.
+--- Whether this window is coming in or in, and itself, not one image: a tuck may run against it.
 function Skin:Settled()
-    return self.wanted and self.frame:IsShown() and (self.level or 0) >= 1 and not self.buffered
-        and not self.preparing and not self.arming and not self.fadeTime
+    return self.wanted and self.frame:IsShown() and not self.buffered and not self.preparing and not self.arming
 end
 
---- `clip`'s page from `dialog` goes behind this window: now if the window shows in full, or once it
---- has faded in. A window coming back on another's line fades in first, and as one image nothing
---- may move it: the page would go behind nothing.
+--- `clip`'s page from `dialog` goes behind this window: now if the window is itself, or once it
+--- is. As one image, or still waiting to fade in, nothing may move it.
 function Skin:TuckWhenShown(dialog, clip)
     self.tuckWaiting = nil
     if not self:Settled() then

@@ -1085,8 +1085,10 @@ local card = Skin.card
 Expect("a stone closed while a quest's line plays does not take this window's place", Skin.settling, nil)
 Expect("...this window comes back as it was, in the quest's parchment", tostring(Skin.wanted) .. " "
     .. Skin.parchments[1].texture, "true " .. BROWN .. "Parchment.png")
-Expect("...back in full at once, itself, not one image, the stone's page going behind it",
-    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.level) .. " " .. tostring(not Skin.buffered), "true 1 true")
+Expect("...fading back in at once as itself, not one image, the stone's page going behind it",
+    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.fadeTime ~= nil) .. " " .. tostring(not Skin.buffered), "true true true")
+Skin:Tick(0.1)
+Expect("...the window coming in as the page flies, not appearing at once", Skin.level > 0 and Skin.level < 1, true)
 card = Skin.card
 Expect("...then the stone's page is lifted off where the stone was, as large, in stone",
     Skin.tuck ~= nil and card:IsShown() and card.strips[1].texture == BOOK .. "Metal.png"
@@ -1186,7 +1188,7 @@ stub.Advance(1.5)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Late", portrait = { kind = "none" } } }))
 Expect("...nor a quest's line queued long after", tostring(Skin.settling) .. " " .. tostring(Skin.tuck), "nil nil")
 -- Coming back from nothing on another's line, and the quest's line queued while it waits to fade
--- in: the window is back in full at once and the page goes behind it, never behind nothing.
+-- in: the window fades in at once, as itself, while the page goes behind it, never behind nothing.
 Spoken:StopAll()
 for _ = 1, 40 do Skin:Tick(0.05) end
 stub.Advance(2)
@@ -1198,9 +1200,9 @@ Expect("closed on another's line, the window waits unseen to fade in",
     tostring(Skin.preparing ~= nil) .. " " .. Skin.level, "true 0")
 stub.Advance(0.4)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Quick Third", portrait = { kind = "none" } } }))
-Expect("...a quest's line queued then brings it back in full at once, its page going behind it",
-    tostring(Skin.tuck ~= nil) .. " " .. Skin.level .. " " .. tostring(Skin.preparing) .. " " .. tostring(not Skin.buffered),
-    "true 1 nil true")
+Expect("...a quest's line queued then fades it in at once as itself, its page going behind it",
+    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.fadeTime ~= nil) .. " " .. tostring(Skin.preparing) .. " "
+    .. tostring(not Skin.buffered), "true true nil true")
 Skin.stillFor = 1
 Expect("...the window not one image while the page flies", Skin:Still(), false)
 for _ = 1, 40 do Skin:TuckStep(0.05); Skin:Tick(0.05) end
