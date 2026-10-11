@@ -51,7 +51,8 @@ local function CharacterCount(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return math.max(1, count)
 end
-local function Prefix(text, count)
+--- The first `count` characters of `text`, whole UTF-8 characters.
+function Transcript.Prefix(text, count)
     local parts = {}
     for char in text:gmatch(UTF8_CHAR) do
         if #parts >= count then break end
@@ -59,6 +60,7 @@ local function Prefix(text, count)
     end
     return table.concat(parts)
 end
+local Prefix = Transcript.Prefix
 -- Trailing punctuation lengthens a word's share of the recording.
 local STOPS = { ["."] = 0.7, ["!"] = 0.7, ["?"] = 0.7, ["。"] = 0.7, ["！"] = 0.7, ["？"] = 0.7,
     [","] = 0.35, [";"] = 0.35, [":"] = 0.35, ["，"] = 0.35, ["、"] = 0.35, ["；"] = 0.35, ["："] = 0.35 }

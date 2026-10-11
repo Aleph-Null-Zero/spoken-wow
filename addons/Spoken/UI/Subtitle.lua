@@ -83,14 +83,7 @@ local function Words(text)
     return count
 end
 
-local function Prefix(text, count)
-    local parts = {}
-    for char in text:gmatch(UTF8_CHAR) do
-        if #parts >= count then break end
-        parts[#parts + 1] = char
-    end
-    return table.concat(parts)
-end
+local Prefix = Transcript.Prefix
 
 local HIGHLIGHT = "|cffffd100"
 -- `text` with its characters `from` (after that many) through `to` lit.
