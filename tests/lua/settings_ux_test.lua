@@ -185,7 +185,7 @@ do
     Options:UpdateRows()
     Expect("the dialogueui style shows the rows it reads", StyleRows(),
         "Window Size, Lock Position, Reset Positions, wheel note, Follow DialogueUI's Theme, Theme, "
-        .. "Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
+        .. "Show Progress, Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
         .. "Highlight Words, Type Words Out, Type By")
     chosen = "none"; Options:UpdateRows()
     Expect("voice only, with DialogueUI, shows no words' rows: nothing of Spoken's is on screen", StyleRows(), "")
