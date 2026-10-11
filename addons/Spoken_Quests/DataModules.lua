@@ -738,11 +738,12 @@ end
 ---@return number|nil id
 ---@return number|nil sex
 local function CreatureSex(soundData)
-    if not soundData.unitGUID or not Enums.GUID:IsCreature(Utils:GetGUIDType(soundData.unitGUID)) then
+    local id = Utils:GetCreatureIDFromGUID(soundData.unitGUID)
+    if not id then
         return
     end
     soundData.npcSex = soundData.npcSex or Utils:GetSexForGUID(soundData.unitGUID)
-    return Utils:GetIDFromGUID(soundData.unitGUID), soundData.npcSex
+    return id, soundData.npcSex
 end
 
 --- The file a line is in for the sex its NPC is drawn as, where the NPC is split by sex: one

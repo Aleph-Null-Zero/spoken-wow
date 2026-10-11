@@ -559,8 +559,7 @@ function Contribute:Capture()
         -- Keyed on the sex too, so a man and a woman saying the same words are two lines.
         local sex = UnitSex and UnitSex("npc")
         return Spoken.Contribute:Envelope("quests", fields, gossip),
-            sex == 3 and format("g:%d:%d:f", NPCID(), Spoken.Contribute:Checksum(gossip))
-            or format("g:%d:%d", NPCID(), Spoken.Contribute:Checksum(gossip))
+            format("g:%d:%d%s", NPCID(), Spoken.Contribute:Checksum(gossip), sex == 3 and ":f" or "")
     end
 
     return nil

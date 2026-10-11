@@ -69,6 +69,8 @@ function Utils:GetNPCGUID()
     return UnitGUID("questnpc") or UnitGUID("npc")
 end
 
+local SEX_UNITS = { "questnpc", "npc", "target", "mouseover" }
+
 --- The sex (UnitSex: 2 male, 3 female) the unit a GUID names is drawn as, where a unit token
 --- on screen still points at it: the one being talked to, the target or the mouseover.
 ---@param unitGUID string|nil
@@ -77,7 +79,7 @@ function Utils:GetSexForGUID(unitGUID)
     if not unitGUID or not UnitSex then
         return
     end
-    for _, unit in ipairs({ "questnpc", "npc", "target", "mouseover" }) do
+    for _, unit in ipairs(SEX_UNITS) do
         if UnitGUID(unit) == unitGUID then
             return UnitSex(unit)
         end
