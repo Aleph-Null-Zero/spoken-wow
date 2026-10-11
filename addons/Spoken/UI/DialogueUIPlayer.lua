@@ -254,6 +254,8 @@ function Skin:Initialize()
     self.dialogs, self.dialogWatches = {}, {}
     -- Which lines each dialog queued (Skin:StartSession), so the one closing knows its own.
     self.queuedAt, self.sessions = setmetatable({}, { __mode = "k" }), {}
+    -- The lines its earlier pages queued, while the quest window stays open from page to page.
+    self.earlier = {}
     for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
         local dialog = _G[name]
         if type(dialog) == "table" and dialog.GetEffectiveScale then
@@ -266,6 +268,7 @@ function Skin:Initialize()
             end)
             -- Opening, it shows the line itself: this one steps aside at once (Skin:Covered).
             watch:SetScript("OnShow", function()
+                self.earlier[dialog] = nil
                 self:StartSession(dialog)
                 self:Update()
             end)
@@ -298,7 +301,10 @@ function Skin:Initialize()
                     -- Another page in the quest window, still open (the gossip back after a quest
                     -- is accepted): its lines are this page's, so closing on a giver's second quest
                     -- sends its page behind the first's line.
-                    if dialog == _G.DUIQuestFrame and dialog:IsShown() then self:StartSession(dialog) end
+                    if dialog == _G.DUIQuestFrame and dialog:IsShown() then
+                        self:KeepEarlier(dialog)
+                        self:StartSession(dialog)
+                    end
                 end
             end
             self.sessions[dialog] = setmetatable({}, { __mode = "k" })
@@ -1080,8 +1086,15 @@ function Skin:Settle(dialog)
     if self:Defer("update") then return end
     self:StopTuck()
     self:StopLanding()
+    -- The line playing came from an earlier page of this dialog (the greeting before a quest), so
+    -- this window never showed it: it settles out of the dialog with it, and the page this one
+    -- queued goes behind once it has landed.
+    self.tuckAfter = nil
+    if not self:Owns(dialog) and self:OwnedEarlier(dialog) then
+        local queued = self:QueuedBy(dialog)
+        self.tuckAfter = queued and { dialog = dialog, clip = queued } or nil
     -- Coming back as it is: a fade under way goes on, and Update hands it the line.
-    if not self:Owns(dialog) then
+    elseif not self:Owns(dialog) then
         local queued = self:QueuedBy(dialog)
         self:Update()
         if queued then
@@ -1241,7 +1254,22 @@ function Skin:LandStep(elapsed)
     self:Give(landing, Bounce(t))
     local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
     self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
-    if t >= LAND_TIME then self:StopLanding() end
+    if t >= LAND_TIME then
+        local after = self:StopLanding()
+        -- Still waiting behind the line this window landed with: its page goes behind it now.
+        if after and PlayerFrame:Current() ~= after.clip then
+            for index, clip in ipairs(SoundQueue.sounds) do
+                if index > 1 and clip == after.clip then
+                    local ok, err = pcall(self.StartTuck, self, after.dialog, after.clip)
+                    if not ok then
+                        self:StopTuck()
+                        if geterrorhandler then geterrorhandler()(err) end
+                    end
+                    break
+                end
+            end
+        end
+    end
 end
 
 --- The flight from the dialog cut short: where it rests at once, at its own size.
@@ -1255,12 +1283,15 @@ function Skin:StopSettle()
     if not self:Defer("refresh") then self:Layout() end
 end
 
+--- Puts the landing at its end. Returns the page waiting to go behind once it landed, which only
+--- a landing that ran its course sends (LandStep).
 function Skin:StopLanding()
-    local landing = self.landing
-    self.landing = nil
+    local landing, after = self.landing, self.tuckAfter
+    self.landing, self.tuckAfter = nil, nil
     if self.wordsHidden then self:ShowWords(1) end
     if self.shadow then self.shadow:Hide() end
     if landing then self:Rest(landing) end
+    return after
 end
 
 --- This window's own shadow, `reach` of the way thrown (down and right) and `alpha` dark: a frame
@@ -1467,6 +1498,20 @@ end
 --- Whether `dialog` queued the line playing: closing on it, this window takes the dialog's place.
 function Skin:Owns(dialog)
     local lines = self.sessions and self.sessions[dialog]
+    local clip = PlayerFrame:Current()
+    return lines ~= nil and clip ~= nil and lines[clip] == true
+end
+
+--- The page's lines kept as the quest window turns to another page.
+function Skin:KeepEarlier(dialog)
+    local earlier = self.earlier[dialog] or setmetatable({}, { __mode = "k" })
+    for clip in pairs(self.sessions[dialog] or {}) do earlier[clip] = true end
+    self.earlier[dialog] = earlier
+end
+
+--- Whether an earlier page of `dialog`, still open since, queued the line playing.
+function Skin:OwnedEarlier(dialog)
+    local lines = self.earlier and self.earlier[dialog]
     local clip = PlayerFrame:Current()
     return lines ~= nil and clip ~= nil and lines[clip] == true
 end
