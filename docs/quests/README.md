@@ -1106,7 +1106,9 @@ own appearance data. Migration 0058 demoted the 71 rows that had been confirmed 
 `/contributions` shows the result with its provenance and says plainly which rows are guesses;
 answering who speaks a row there, like everything on `/npcs`, is a global admin's alone, since
 it picks the voice in every language, and everyone else sees "Missing NPC", "Missing type" or
-the answer. A new type, gender or flavor is added on `/npcs` → Types, with a voice of its own
+the answer. A missing NPC is answered with its kind (creature, gameobject or item, the Wowhead
+`npc=`, `object=` or `item=` page), its id and its name; a gameobject or an item takes its own
+kind as its type. A new type, gender or flavor is added on `/npcs` → Types, with a voice of its own
 or an existing one (a treant could be read by the narrator): that puts it in the selects and
 gives a new voice a slot on `/voices`, marked as not existing in the account until it is cloned.
 `import-corpus` adds any type the file names that the database lacks, and never changes one it

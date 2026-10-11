@@ -43,7 +43,7 @@ import {
   type NpcSummary,
 } from "@/lib/contributions/triage";
 import { observedFrom, resolveNpc } from "@/lib/npc/resolve";
-import { getResolutions, getResolutionsById, resolutionKey, type NpcKind } from "@/lib/npc/store";
+import { getResolutions, getResolutionsById, resolutionKey, type NpcRowKind } from "@/lib/npc/store";
 import { BASE_LANG, isClientLang, isLang, langName, type Lang } from "@/lib/lang";
 import { loadRoster } from "@/lib/voices/roster-store";
 import { can, isAdmin } from "@/lib/permissions";
@@ -123,7 +123,7 @@ async function npcFor(contributions: Contribution[]): Promise<Record<number, Npc
   // moderator queue issued one round trip per contribution (and, worse, that any single
   // poisoned npcId -- see resolve.ts's digits() -- would throw inside this Promise.all and
   // 500 the entire page).
-  const keys: { npcKind: NpcKind; npcId: number }[] = [];
+  const keys: { npcKind: NpcRowKind; npcId: number }[] = [];
   for (const { observed: o } of observed) {
     if (o.npcKind !== null && o.npcId !== null) keys.push({ npcKind: o.npcKind, npcId: o.npcId });
   }

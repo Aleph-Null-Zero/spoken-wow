@@ -13,7 +13,7 @@
 import { recordActivity } from "@/lib/activity/store";
 import { db } from "@/lib/db";
 import { isLang } from "@/lib/lang";
-import type { NpcKind } from "@/lib/npc/npc";
+import type { NpcKind, NpcRowKind } from "@/lib/npc/npc";
 
 import type { ContributionStatus, Submission } from "./contributions";
 import type { EnvelopeSource } from "./envelope";
@@ -43,8 +43,8 @@ export type Contribution = {
   createdAt: string;
   updatedAt: string;
   resolvedBy: string | null;
-  /** The kind a moderator chose for a kind-less envelope's NPC (migration 0033); null otherwise. */
-  npcKind: NpcKind | null;
+  /** The kind a moderator chose for a kind-less envelope's NPC (migrations 0033, 0073); null otherwise. */
+  npcKind: NpcRowKind | null;
   /** The NPC a moderator named for an envelope that named none (migration 0048); null otherwise. */
   npcId: number | null;
   npcName: string | null;
@@ -76,7 +76,7 @@ export function observationMeta(
  */
 export async function setContributionNpc(
   id: number,
-  npc: { npcKind: NpcKind; npcId: number; npcName: string },
+  npc: { npcKind: NpcRowKind; npcId: number; npcName: string },
   by: string | null,
 ): Promise<Contribution | null> {
   const { rows } = await db().query<Contribution>(
