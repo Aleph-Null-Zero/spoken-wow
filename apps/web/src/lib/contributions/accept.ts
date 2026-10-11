@@ -36,7 +36,6 @@ import {
   getResolutions,
   getResolutionsById,
   resolutionKey,
-  type NpcKind,
   type NpcRowKind,
   type NpcResolution,
 } from "@/lib/npc/store";
@@ -114,7 +113,7 @@ type Resolutions = {
 };
 
 async function resolutionsFor(contributions: readonly Contribution[]): Promise<Resolutions> {
-  const keys: { npcKind: NpcKind; npcId: number }[] = [];
+  const keys: { npcKind: NpcRowKind; npcId: number }[] = [];
   const ids: number[] = [];
   for (const contribution of contributions) {
     const observed = observedFrom(observationMeta(contribution));
@@ -639,9 +638,9 @@ const MAX_NAME = 200;
  */
 export function namesSeenIn(
   contribution: Pick<Contribution, "source" | "meta">,
-): { kind: "quest" | NpcKind; entityId: string; name: string }[] {
+): { kind: "quest" | NpcRowKind; entityId: string; name: string }[] {
   if (contribution.source !== "quests") return [];
-  const names: { kind: "quest" | NpcKind; entityId: string; name: string }[] = [];
+  const names: { kind: "quest" | NpcRowKind; entityId: string; name: string }[] = [];
   const { quest, title } = contribution.meta;
   if (quest && /^\d+$/.test(quest) && title?.trim() && title.trim().length <= MAX_NAME) {
     names.push({ kind: "quest", entityId: quest, name: title.trim() });

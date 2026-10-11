@@ -16,7 +16,9 @@ export const NPC_KINDS = ["creature", "gameobject"] as const;
 export type NpcKind = (typeof NPC_KINDS)[number];
 
 // What an npc row can be: an item starts quests too, and has a type an admin answers for (it is
-// read by a voice like anyone). Never what a client's envelope names, so NPC_KINDS stays apart.
+// read by a voice like anyone). A moderator naming a contribution's NPC may pick it, but a
+// client's envelope never names one, so NPC_KINDS stays apart: a kind-less envelope's id is a
+// creature's or a gameobject's, and those two are all its kind picker offers.
 export const NPC_ROW_KINDS = [...NPC_KINDS, "item"] as const;
 export type NpcRowKind = (typeof NPC_ROW_KINDS)[number];
 

@@ -190,7 +190,7 @@ export function resolutionKey(npcKind: NpcRowKind, npcId: number): string {
  * the table's own two-column key, in a single query.
  */
 export async function getResolutions(
-  keys: { npcKind: NpcKind; npcId: number }[],
+  keys: { npcKind: NpcRowKind; npcId: number }[],
 ): Promise<Map<string, NpcResolution>> {
   if (keys.length === 0) return new Map();
 

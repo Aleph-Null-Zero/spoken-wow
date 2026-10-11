@@ -99,7 +99,7 @@ vi.mock("@/lib/quests/catalogue", () => ({
 }));
 vi.mock("./display-voices", () => ({ voiceFromDisplays: vi.fn() }));
 vi.mock("./store", () => ({
-  NPC_KINDS: ["creature", "gameobject"],
+  NPC_ROW_KINDS: ["creature", "gameobject", "item"],
   getResolution: vi.fn(),
   upsertResolution: vi.fn(async (row) => ({ ...row, updatedAt: "now" })),
 }));
@@ -298,6 +298,16 @@ describe("resolveNpc", () => {
     expect(row).toMatchObject({
       race: "gameobject", gender: null, flavor: null, provenance: "client", confirmed: false,
     });
+  });
+
+  it("types an item the corpus does not carry as an item, unconfirmed", async () => {
+    vi.mocked(getResolution).mockResolvedValue(null);
+    vi.mocked(voiceFromDisplays).mockClear();
+    const row = await resolveNpc({ ...observed, npcKind: "item", npcId: 247857, npcName: "Nibbled-On Book" }, "enUS");
+    expect(row).toMatchObject({
+      npcKind: "item", race: "item", gender: null, flavor: null, provenance: "client", confirmed: false,
+    });
+    expect(voiceFromDisplays).not.toHaveBeenCalled();
   });
 
   it("keeps the corpus's gameobject, which has no gender", async () => {
