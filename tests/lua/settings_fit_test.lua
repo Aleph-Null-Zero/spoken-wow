@@ -42,6 +42,7 @@ stub.TextWidth = function(fs)
 end
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local GOSSIP = here .. "/../../addons/Spoken_Gossip/"
 local BOOKS = here .. "/../../addons/Spoken_Books/"
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 _G.UISpecialFrames = _G.UISpecialFrames or {}
@@ -57,8 +58,10 @@ _G.C_AddOns = { IsAddOnLoaded = function() return true end }
 
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
+local G = stub.LoadGossip(GOSSIP, SPOKEN, true)
+G.Addon:OnInitialize()
 local env = _G.SpokenEnv
-env.Sources:Register("books", { title = "Spoken Books", addon = "Spoken_Books", order = 2,
+env.Sources:Register("books", { title = "Spoken Books", addon = "Spoken_Books", order = 4,
     packs = function() return { "SpokenBooksAudio" } end })
 env.Sources:Register("zones", { title = "Spoken Zones", addon = "Spoken_Zones", order = 3,
     packs = function() return { "SpokenZonesAudio" } end })
@@ -66,6 +69,7 @@ _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()
 local QuestsPanel = stub.LoadQuestsPanel(QUESTS, VO)
 QuestsPanel:Setup()
+stub.LoadGossipPanel(GOSSIP, G):Setup()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU",
     "Locale/koKR", "Locale/zhCN", "Locale/zhTW", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
@@ -92,7 +96,8 @@ local pages = { { name = "General", layout = _G.SpokenOptionsPanel.layout } }
 for _, page in ipairs(env.Options.pages or {}) do
     table.insert(pages, { name = page.name, layout = page.layout })
 end
-Expect("General, the three parts' pages and the Developer page are all here", #pages, 5)
+-- The Developer page is the Spoken_Developer module's.
+Expect("General, the four parts' pages and the Developer page are all here", #pages, 6)
 
 local BOX = Layout.BOX_MARGIN
 local function Label(row)

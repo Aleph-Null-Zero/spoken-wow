@@ -8,6 +8,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   behind.** Closing a dialog on another line, such as a greeting before a quest or a gravestone
   before a book, now brings the window back at once, and the queued page goes behind it.
   *([Nucabe](https://github.com/Nucabe))*
+- **What NPCs say is its own module, Spoken Gossip, with its own switch and settings page.**
+  Your gossip settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
