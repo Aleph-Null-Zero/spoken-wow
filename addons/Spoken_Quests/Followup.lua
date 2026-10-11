@@ -245,16 +245,23 @@ end
 --- within each, and the player-gendered m-/f- variant ahead of the plain one. Every pack
 --- carries the full lookup whether or not it has the audio, so the first stem is usually the
 --- only one; a second is tried only in case packs of different builds disagree.
+---
+--- An NPC split by sex has a file per sex in FollowupLookupByNPCSex. Its sex is readable only
+--- while the speaker is a unit the player has up, so FollowupLookup's file, the man's, plays
+--- when it is not.
 ---@return SoundData|nil
-local function OwnClip(line, npcID)
+local function OwnClip(line, npcID, guid)
     local speaker = line.speaker or npcID
     if not (line.id and speaker) then
         return nil
     end
+    local sex = guid and Utils:GetSexForGUID(guid)
     local tried = {}
     for _, module in DataModules:GetModules() do
+        local bySex = sex and module.FollowupLookupByNPCSex and module.FollowupLookupByNPCSex[speaker]
+        local ofSex = bySex and bySex[line.id] and bySex[line.id][sex]
         local byLine = module.FollowupLookup and module.FollowupLookup[speaker]
-        local stem = byLine and byLine[line.id]
+        local stem = ofSex or byLine and byLine[line.id]
         if stem and not tried[stem] then
             tried[stem] = true
             local probe = { event = Enums.SoundEvent.QuestFollowup, fileName = stem }
@@ -269,7 +276,7 @@ function Followup:Play(entry, message, sender, guid, npcID)
     -- Only the line's own recording plays. A borrowed clip - the speaker's gossip, the
     -- quest's accept or complete - says other words in the NPC's voice while the chat shows
     -- this line, which is worse than the silence of a line nobody has voiced yet.
-    local clip = OwnClip(entry.line, npcID)
+    local clip = OwnClip(entry.line, npcID, guid)
     if not clip then
         Debug:Record("followup-no-recording", format("No installed pack has a recording of follow-up line %d (NPC %s)",
             entry.line.id or 0, tostring(entry.line.speaker or npcID or "unknown")))

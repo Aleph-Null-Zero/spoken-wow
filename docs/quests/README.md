@@ -1116,8 +1116,10 @@ line's own file until its voice's has audio in the store, as any NPC does. An ad
 predates the split never reads those tables and plays the line's own file. `NPCSexByNPCID`
 gives the sex every other speaking creature is answered with, so the addon can tell when it is
 drawn as the other one: the line still plays in the voice it has, and the Contribute button
-offers it, so the site hears that the NPC comes in both sexes. A follow-up is said in chat, where no unit's sex can be read, so a
-split NPC's follow-ups are its man's. The addon's gossip text (`gossip_text.py`) gives a split
+offers it, so the site hears that the NPC comes in both sexes. A follow-up is said in chat:
+`FollowupLookupByNPCSex[npcId][broadcastId][sex]` names each sex's file, which plays when the
+speaker is a unit the player has up (the dialog's NPC, the target, the mouseover), and
+`FollowupLookup` names the man's for when its sex cannot be read. The addon's gossip text (`gossip_text.py`) gives a split
 NPC both forms of a BroadcastText row.
 
 `npc` also keeps what the client
