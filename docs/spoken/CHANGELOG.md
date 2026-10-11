@@ -8,6 +8,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
   login greeting now plays only for a level 1 character in the valley it started in.
+- **Spoken's Play, Skip and Report sit at the top right of DialogueUI's quest window.** Play
+  turns to Stop while its line speaks and is greyed where no pack has the line, where Report
+  offers Contribute in place of the old "No voice-over playing?" line. A close button sits
+  beside them. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.0 — 2026-10-11
 
