@@ -52,6 +52,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **With the DialogueUI narrator style, Spoken's small window takes DialogueUI's look.** When a
   dialog closes on a line still playing, the window slides out of it, with Stop, Skip and Report in
   its header and a place's picture over its words. *([Nucabe](https://github.com/Nucabe))*
+- **With the DialogueUI narrator style, books show in DialogueUI's paper and plaques and gravestones
+  in its stone.** Spoken's window stays hidden while DialogueUI's book view is open and slides out
+  of it when it closes. *([Nucabe](https://github.com/Nucabe))*
 - **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
   Spoken's voice when you switch away. The line now stops instead of running on in silence, and
   Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
