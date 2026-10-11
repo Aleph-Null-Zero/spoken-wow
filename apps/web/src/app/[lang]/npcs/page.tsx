@@ -36,6 +36,7 @@ export default async function Page({
 
   const tab = (await searchParams).tab === "types" ? "types" : "npcs";
   const roster = await loadRoster();
+  const [resolutions, sexes] = tab === "types" ? [[], new Map()] : await Promise.all([listResolutions(), listSexes()]);
 
   return (
     <main className="pt-6 pb-24">
@@ -59,15 +60,12 @@ export default async function Page({
           <TypesEditor initial={roster.data} />
         ) : (
           <NpcEditor
-            initial={await (async () => {
-              const sexes = await listSexes();
-              return (await listResolutions()).map((row) => ({
-                ...summaryFromResolution(row, roster),
-                // The client whose guess filed the NPC; none for one only the extract names.
-                client: row.build ? clientOf(row.build).family : null,
-                sexes: sexes.get(resolutionKey(row.npcKind, row.npcId)) ?? [],
-              }));
-            })()}
+            initial={resolutions.map((row) => ({
+              ...summaryFromResolution(row, roster),
+              // The client whose guess filed the NPC; none for one only the extract names.
+              client: row.build ? clientOf(row.build).family : null,
+              sexes: sexes.get(resolutionKey(row.npcKind, row.npcId)) ?? [],
+            }))}
             roster={roster.data}
           />
         )}

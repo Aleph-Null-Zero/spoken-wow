@@ -343,17 +343,38 @@ describe("splitting by sex", () => {
     expect(vi.mocked(upsertSex).mock.calls[1][0]).toMatchObject({ sex: 3, flavor: "official", provenance: "display", confirmed: true });
   });
 
-  it("leaves an NPC seen as the sex it is voiced in alone", async () => {
+  it("leaves an NPC seen as the sex it is voiced in alone, without asking after its sexes", async () => {
     vi.mocked(getResolution).mockResolvedValue(corpusGuard);
-    vi.mocked(getSexes).mockResolvedValueOnce([]);
+    vi.mocked(getSexes).mockClear();
     vi.mocked(upsertSex).mockClear();
     await resolveNpc({ ...woman, sex: 2 }, "enUS");
     expect(upsertSex).not.toHaveBeenCalled();
+    expect(getSexes).not.toHaveBeenCalled();
+  });
+
+  // Answered first, a client's guess would be retyped as the sex just seen -- the write ranks
+  // as high as the guess -- and the NPC would flip rather than split.
+  it("splits an NPC only a client's guess knows, rather than retyping it as the sex seen", async () => {
+    vi.mocked(getResolution).mockResolvedValue({ ...corpusGuard, provenance: "client", confirmed: false });
+    const split = [2, 3].map((sex) => ({ ...corpusGuard, sex: sex as 2 | 3, provenance: "client" as const }));
+    vi.mocked(getSexes).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce(split);
+    vi.mocked(upsertResolution).mockClear();
+    vi.mocked(upsertSex).mockClear();
+    vi.mocked(voiceFromDisplays).mockResolvedValue(null);
+    vi.mocked(defaultFlavorFor).mockResolvedValue("standard");
+    const row = await resolveNpc(woman, "enUS");
+    expect(row).toMatchObject({ gender: "male", provenance: "client" });
+    expect(upsertResolution).not.toHaveBeenCalled();
+    expect(vi.mocked(upsertSex).mock.calls.map(([sex]) => [sex.sex, sex.provenance])).toEqual([
+      [2, "client"],
+      [3, "client"],
+    ]);
   });
 
   it("answers only the sex it lacks for an NPC split already", async () => {
     vi.mocked(getResolution).mockResolvedValue(corpusGuard);
-    vi.mocked(getSexes).mockResolvedValueOnce([{ ...corpusGuard, sex: 2, gender: "male", race: "human", provenance: "corpus" }]);
+    const man = { ...corpusGuard, sex: 2 as const, gender: "male" as const, race: "human", provenance: "corpus" as const };
+    vi.mocked(getSexes).mockResolvedValueOnce([man]).mockResolvedValueOnce([man]);
     vi.mocked(upsertSex).mockClear();
     vi.mocked(voiceFromDisplays).mockResolvedValue(null);
     await resolveNpc(woman, "enUS");

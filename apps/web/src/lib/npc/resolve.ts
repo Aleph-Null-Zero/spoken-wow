@@ -107,15 +107,18 @@ export function observedFrom(meta: Record<string, string>): Observed {
 
 /**
  * `lang` is the language of the client that observed the NPC, and so of its name. An NPC seen
- * drawn as the sex its voice is not is split by sex as well (split.ts).
+ * drawn as the sex its voice is not is split by sex instead (split.ts): answered, a client's
+ * guess would be retyped as the sex just seen, and its voice would flip with every report.
  */
 export async function resolveNpc(observed: Observed, lang: Lang | null): Promise<NpcResolution | null> {
-  const resolution = await answer(observed, lang);
-  await splitBySex(observed, resolution);
-  return resolution;
+  const { npcKind, npcId } = observed;
+  if (!npcKind || npcId === null) return null;
+  const existing = await getResolution(npcKind, npcId);
+  if ((await splitBySex(observed, existing)).length) return existing;
+  return answer(observed, lang, existing);
 }
 
-async function answer(observed: Observed, lang: Lang | null): Promise<NpcResolution | null> {
+async function answer(observed: Observed, lang: Lang | null, existing: NpcResolution | null): Promise<NpcResolution | null> {
   const { npcKind, npcId } = observed;
   // `npcId === null`, not a truthiness check: id 0 is a real id and must not be mistaken for
   // "no npc at all". A kind-less envelope (see observedFrom) also fails here since npcKind is
@@ -126,7 +129,6 @@ async function answer(observed: Observed, lang: Lang | null): Promise<NpcResolut
   // update, resolves properly.
   if (!npcKind || npcId === null) return null;
 
-  const existing = await getResolution(npcKind, npcId);
   // The store's upsert already ranks provenance and would refuse a lower-ranked write on its
   // own, so this is not what keeps a moderator's answer safe -- it is here so a moderator-owned
   // NPC skips the write entirely, rather than arriving back where it started.

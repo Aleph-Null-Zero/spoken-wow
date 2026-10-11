@@ -12,7 +12,8 @@
  */
 import { recordActivity } from "@/lib/activity/store";
 import { requireAdmin } from "@/lib/generation/authz";
-import { INT32_MAX, isSex, type Sex } from "@/lib/npc/npc";
+import { INT32_MAX, isSex, SEX_GENDER, sexOf } from "@/lib/npc/npc";
+import { splitNpc } from "@/lib/npc/split";
 import {
   getResolution, getSexes, resolutionKey, unsplit, upsertSex, type NpcRowKind,
 } from "@/lib/npc/store";
@@ -20,8 +21,6 @@ import { defaultFlavorFor } from "@/lib/quests/catalogue";
 import { loadRoster } from "@/lib/voices/roster-store";
 
 export const dynamic = "force-dynamic";
-
-const GENDER: Record<Sex, "male" | "female"> = { 2: "male", 3: "female" };
 
 export async function POST(request: Request) {
   const { lang, session, denied } = await requireAdmin(request);
@@ -46,27 +45,32 @@ export async function POST(request: Request) {
   }
 
   if (body.action === "split") {
-    if (!npc.race) return Response.json({ error: "answer who the NPC is first" }, { status: 400 });
-    for (const sex of [2, 3] as const) {
-      const own = npc.gender === GENDER[sex];
-      await upsertSex({
-        npcKind, npcId, sex, race: npc.race,
-        flavor: own ? npc.flavor : await defaultFlavorFor(npc.race, GENDER[sex]),
-        provenance: "moderator", confirmed: true, doubtful: !own, note: null, resolvedBy: session.user.id,
-      });
-    }
+    // Only a man or a woman splits: a beast's or a generic creature's type has no gender, and
+    // the roster no voice for either sex of it.
+    const own = sexOf(npc.gender);
+    if (!npc.race || own === null) return Response.json({ error: "answer the NPC as a man or a woman first" }, { status: 400 });
+    const other = own === 2 ? 3 : 2;
+    const sexes = await splitNpc(npc, {
+      npcKind, npcId, sex: other, race: npc.race, flavor: await defaultFlavorFor(npc.race, SEX_GENDER[other]),
+      provenance: "moderator", confirmed: true, doubtful: true, note: null, resolvedBy: session.user.id,
+    }, { provenance: "moderator", confirmed: true, doubtful: false, resolvedBy: session.user.id });
     await recordActivity({ kind: "npc.split", lang, actorId: session.user.id, subject, detail: { npcName: npc.npcName } });
-    return Response.json({ sexes: await getSexes(npcKind, npcId) });
+    return Response.json({ sexes });
   }
 
   const sex = Number(body.sex);
   if (!isSex(sex)) return Response.json({ error: "sex is 2 or 3" }, { status: 400 });
+  // An answer for one sex of an NPC that is not split would leave it half split, the other
+  // sex voiceless: the split comes first, and writes both.
+  if (!(await getSexes(npcKind, npcId)).length) {
+    return Response.json({ error: "split the NPC first" }, { status: 400 });
+  }
   const text = (value: unknown, max: number) =>
     typeof value === "string" && value.trim() ? value.trim().slice(0, max) : null;
   const race = text(body.race, 64);
   const flavor = text(body.flavor, 64);
   if (!race) return Response.json({ error: "a sex needs a type" }, { status: 400 });
-  const refusal = (await loadRoster()).isAnswer(race, GENDER[sex], flavor);
+  const refusal = (await loadRoster()).isAnswer(race, SEX_GENDER[sex], flavor);
   if (refusal) return Response.json({ error: refusal }, { status: 400 });
 
   const row = await upsertSex({

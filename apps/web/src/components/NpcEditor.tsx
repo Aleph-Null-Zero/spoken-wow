@@ -202,7 +202,8 @@ function SexCells({
   busy: boolean;
   onPost: (body: Record<string, unknown>) => void;
 }) {
-  if (npc.npcKind !== "creature" || !npc.race) return null;
+  // Only a man or a woman splits (api/npcs/sex).
+  if (npc.npcKind !== "creature" || !npc.race || (npc.gender !== "male" && npc.gender !== "female")) return null;
   if (!sexes.length) {
     return (
       <LiteButton className={`${ROW_BUTTON} mt-1`} disabled={busy} onClick={() => onPost({ action: "split" })}

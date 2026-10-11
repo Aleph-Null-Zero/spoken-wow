@@ -76,6 +76,17 @@ describe("POST /api/npcs/sex", () => {
     expect(await getSexes("creature", npcId)).toEqual([]);
   });
 
+  it("refuses an answer for one sex of an NPC that is not split", async () => {
+    expect((await post({ sex: 3, race: "human", flavor: "warrior" })).status).toBe(400);
+    expect(await getSexes("creature", npcId)).toEqual([]);
+  });
+
+  it("refuses to split an NPC that is neither a man nor a woman", async () => {
+    await db().query(`update "npc" set "race" = 'beast', "gender" = null where "npcId" = $1`, [npcId]);
+    expect((await post({ action: "split" })).status).toBe(400);
+    expect(await getSexes("creature", npcId)).toEqual([]);
+  });
+
   it("refuses a gameobject and a sex that is not a man's or a woman's", async () => {
     expect((await post({ npcKind: "gameobject", action: "split" })).status).toBe(400);
     expect((await post({ sex: 1, race: "human", flavor: "official" })).status).toBe(400);
