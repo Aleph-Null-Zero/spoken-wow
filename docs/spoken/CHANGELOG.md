@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## 3.4.0-alpha.1 — 2026-10-11
 
+- **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go
+  behind.** Closing a dialog on another line, such as a greeting before a quest or a gravestone
+  before a book, now brings the window back first, and the queued page goes behind it once it
+  shows. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
