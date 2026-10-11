@@ -1,7 +1,8 @@
 setfenv(1, SpokenEnv)
 
 -- Use the text captured with each queued clip, never the currently open dialog.
--- Recordings have durations, not word timestamps; the highlight is an estimate.
+-- Recordings have durations, not word timestamps; the highlight is an estimate unless the clip
+-- brings its own (present.timings).
 Transcript = { elapsed = 0, manualScroll = false }
 
 local GAP = 4
@@ -162,8 +163,30 @@ function Transcript:Split(text)
     return Split(text)
 end
 
+-- A timings list that does not fit the words exactly is ignored for the estimate: words drifting
+-- a little beat words lit at random.
+local function ApplyTimings(words, timings, length)
+    if type(timings) ~= "table" or #words == 0 or #timings ~= #words or not length or length <= 0 then
+        return false
+    end
+    -- By index, not ipairs, which stops at a hole that # may count past.
+    for i = 1, #words do
+        local at = timings[i]
+        if type(at) ~= "number" or at ~= at or at < (timings[i - 1] or 0) or at > length then return false end
+    end
+    for i, word in ipairs(words) do
+        word.start, word.finish = timings[i], timings[i + 1] or length
+    end
+    return true
+end
+
 function Transcript:Tokenize()
     self.words, self.totalWeight = Split(self.text)
+    local clip = self.clip
+    local length = clip and tonumber(clip.length)
+    -- Timed, a word's share is its own seconds, so progress times length finds it.
+    self.timed = ApplyTimings(self.words, clip and clip.present and clip.present.timings, length)
+    if self.timed then self.totalWeight = length end
 end
 
 function Transcript:IsSpeaking(progress)
@@ -189,6 +212,8 @@ function Transcript:SetClip(clip)
     self.top, self.topTarget = 1, 1
     self:Tokenize()
     if not self.frame then return end
+    -- Before Reflow, which breaks lines by measuring the text in the face it is drawn in.
+    self:ApplyFont()
     self:Reflow()
 end
 
@@ -424,6 +449,9 @@ function Transcript:Place()
         label:SetPoint("TOPLEFT", 0, -((row - 1) - fraction) * step)
         local line = self.lines and self.lines[first + row - 1]
         label:SetShown(line ~= nil and (row <= n or (row == n + 1 and fraction > 0)))
+        -- As much of the row as is inside the clipped frame, so a line half past an edge does not
+        -- end on a hard cut.
+        label:SetAlpha(row == 1 and 1 - fraction or row == n + 1 and fraction or 1)
     end
 end
 
@@ -560,7 +588,6 @@ function Transcript:RefreshConfig()
     if not self.frame then return end
     local size = FontSize()
     local style = self.style or {}
-    local face = style.font or GameFontNormal:GetFont()
     local color = style.color or { .88, .84, .76 }
     local glyph = [[Interface\Buttons\UI-]] .. (Expanded() and "Minus" or "Plus")
     self.expand:SetNormalTexture(glyph .. "Button-Up")
@@ -569,9 +596,9 @@ function Transcript:RefreshConfig()
     -- A skin's page may be taller than the expanded eight lines; one label more than the
     -- page, for the line sliding in mid-glide.
     for row = #self.labels + 1, LineCount() + 1 do self.labels[row] = Label(self.frame) end
-    self.measure:SetFont(face, size, "")
+    self.face = nil -- the labels just made are in the default face
+    self:ApplyFont()
     for row, label in ipairs(self.labels) do
-        label:SetFont(face, size, "")
         label:SetTextColor(color[1], color[2], color[3])
         label:SetShadowColor(0, 0, 0, style.shadow == false and 0 or 1)
         label:SetHeight(size + LineGap())
@@ -579,6 +606,23 @@ function Transcript:RefreshConfig()
     if PlayerFrame.frame then PlayerFrame:Update() end
     self:Reflow()
     self:Update()
+end
+
+--- A clip's `present.font` wins over a skin's face: the clip names it for glyphs other faces
+--- lack. The size stays the skin's or the player's.
+function Transcript:ApplyFont()
+    local present = self.clip and self.clip.present
+    local own = (self.style or {}).font or GameFontNormal:GetFont()
+    local face, size = present and present.font or own, FontSize()
+    if face == self.face and size == self.faceSize then return end
+    -- A face the client cannot load: false on current clients, no face reported on older ones.
+    if self.measure:SetFont(face, size, "") == false or not self.measure:GetFont() then
+        face = own
+        self.measure:SetFont(face, size, "")
+    end
+    self.face, self.faceSize = face, size
+    for _, label in ipairs(self.labels) do label:SetFont(face, size, "") end
+    self.renderedKey = nil
 end
 
 function Label(parent)
@@ -663,8 +707,8 @@ function Transcript:Initialize()
 end
 
 function Transcript:Describe()
-    return format("transcript=%s visible=%s lines=%d scroll=%s top=%.2f/%d page=%d/%d word=%s estimated=true; %s",
+    return format("transcript=%s visible=%s lines=%d scroll=%s top=%.2f/%d page=%d/%d word=%s estimated=%s; %s",
         tostring(Config().Enabled), tostring(self.frame and self.frame:IsVisible()),
         LineCount(), Mode(), self.top or 1, self:MaxTop(), self:Page(), self:PageCount(),
-        tostring(self.activeWord), Subtitle:Describe())
+        tostring(self.activeWord), tostring(not self.timed), Subtitle:Describe())
 end

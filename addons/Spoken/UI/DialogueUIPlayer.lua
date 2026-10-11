@@ -51,7 +51,7 @@ local WINDOW_SIZES, WINDOW_STEP = { 0.5, 2 }, 0.05
 local FONT_SIZES = { 12, 26 }
 
 local parts = MinimalPlayer.parts
-local Font, Removable, ShowRemove, Label = parts.Font, parts.Removable, parts.ShowRemove, parts.Label
+local Font, Removable, ShowRemove, Label, Name = parts.Font, parts.Removable, parts.ShowRemove, parts.Label, parts.Name
 local HeldLabel, Clamp, Waiting, BelongsTo = parts.HeldLabel, parts.Clamp, parts.Waiting, parts.BelongsTo
 local function Round(n) return math.floor(n + 0.5) end
 -- Through Addon:Profile: the frame still redraws during UI teardown, after AceDB strips
@@ -482,6 +482,11 @@ function Skin:Dress()
         row.color = colors.gossip
     end
     for _, button in ipairs(self.buttons) do Paint(button.text, fonts.paragraph, body, colors.paragraph) end
+    -- Layout runs this on every step of a resize drag, so a clip's own face goes back on here
+    -- rather than waiting for the drop.
+    Addon:ClipFont(self.name, self.clip)
+    Addon:ClipFont(self.title.text, self.clip)
+    for _, row in ipairs(self.rows) do Addon:ClipFont(row.text, row.clip) end
     self.colors = colors
     local tint = colors.portraitTint
     if self.viewport.texture then self.viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
@@ -613,6 +618,7 @@ function Skin:UpdateControls(relayout)
     end
     local held = not paused and not playing and SoundQueue:GetHeldReason(self.clip)
     self.title.text:SetText(held and format("%s (%s)", Label(self.clip), held) or Label(self.clip))
+    Addon:ClipFont(self.title.text, self.clip)
     local pausable = SoundQueue:CanBePaused()
     for _, button in ipairs(self.buttons) do
         local color = pausable and colors and colors.paragraph or colors and colors.disabled
@@ -629,7 +635,7 @@ function Skin:UpdateProgress()
     if clip.nextSoundTimer and duration > 0 then
         self.seconds = SoundQueue:VoiceElapsed(clip)
     elseif not SoundQueue:IsPaused() then self.seconds = 0 end
-    self.bar:SetValue(duration > 0 and (self.seconds or 0) / duration or 0)
+    self.bar:SetValue(SoundQueue:Share(clip, self.seconds))
 end
 
 function Skin:CreateQueueRow(index)
@@ -667,6 +673,7 @@ function Skin:LayoutQueue()
             button = button or self:CreateQueueRow(index)
             button.clip = SoundQueue.sounds[index + self.offset + 1]
             button.text:SetText(HeldLabel(button.clip))
+            Addon:ClipFont(button.text, button.clip)
             ShowRemove(button, false)
             button:Show()
         elseif button then button:Hide(); button.clip = nil end
@@ -776,7 +783,8 @@ function Skin:Update()
         self:Layout()
     end
     self:SetVisible(true)
-    self.name:SetText(clip.present and clip.present.header or "")
+    self.name:SetText(Name(clip))
+    Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
     self:LayoutQueue()

@@ -80,15 +80,19 @@ theirs alone. A shared variable copied into one of them drifts.
 
 ## Versions and changelogs
 
-A change that players see bumps a version and writes its changelog section in the same PR.
-Tooling, the site, CI and docs bump nothing.
+Only a release PR bumps a version. Any other PR with a change that players see adds its notes
+under `## Unreleased` at the top of the changelog, creating that heading if it is missing.
+Tooling, the site, CI and docs add no notes.
+
+A release PR bumps the version and renames `## Unreleased` to the real version heading with
+its date.
 
 - Spoken, its modules, `SpokenContributions` and the tombstones move together, in every
   `.toc`, both `Environment.lua` `AddonVersion` literals included. Their notes go in
   `docs/spoken/CHANGELOG.md`, and they release as the `spoken/vX` tag.
 - Sound packs version on their own, with sections in their section's changelog.
-- Release scripts look for the exact `## <version>` heading and fail without it. Write the
-  real version heading with its date, never "Unreleased".
+- Release scripts look for the exact `## <version>` heading and fail without it, so a release
+  must not ship with the notes still under `## Unreleased`.
 
 ## Working agreements
 
@@ -97,9 +101,35 @@ Tooling, the site, CI and docs bump nothing.
   creep.
 - The checks above are the verification. Do not stack extra self-review passes or use
   subagents to re-check finished work.
-- PR descriptions are prose for the reviewer and for whoever finds the branch in a year. The
-  title states the outcome. Open with the problem, and include an honest verification section
-  that says what you did not check (for example, "not looked at in-game").
+
+## PR descriptions
+
+A PR description is prose for the reviewer and for whoever finds the branch in a year. Aim for
+about 200 words. The title states the outcome.
+
+Include:
+
+- Why the change exists and what limits it, followable with no prior context.
+- How it works, only where the diff doesn't show it. Say where the risk sits so the reviewer
+  looks there.
+- Deliberate omissions, and why.
+- Verification as facts only: what ran, what passed, what was not checked (for example, "not
+  looked at in-game").
+- A "How to test" section that lets the reviewer check the change themselves. For a bug fix, the
+  steps to reproduce it in game: where to go, what to click, what went wrong before and what
+  happens now. For a new feature, screenshots, or instructions for finding and trying it.
+
+Leave out:
+
+- Per-change or per-file lists. The files tab has them.
+- History: review rounds, fix-ups, what an earlier version got wrong, dropped designs.
+- Why it is a separate PR ("stacked on #X", "part 2 of 4", what it unblocks). The base branch
+  and labels carry ordering.
+- Tool attribution such as "Generated with Claude Code" and session links. Commit trailers
+  stay.
+
+Write plain words in active voice and short sentences. No em dashes, no filler, no bold labels
+that restate the line. Keep identifiers, flags and issue numbers exact.
 
 ## Comments
 

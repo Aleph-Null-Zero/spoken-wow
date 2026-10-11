@@ -105,9 +105,15 @@ function SpokenBooks:SetupOptions()
 	layout:Checkbox(L.OPT_WHOLE_BOOK,
 		L.OPT_WHOLE_BOOK_TIP,
 		Get("readWholeBook"), Set("readWholeBook"))
+	layout:Checkbox(L.OPT_ONE_LINE,
+		L.OPT_ONE_LINE_TIP,
+		Get("bookAsOneLine"), Set("bookAsOneLine"))
 	layout:Checkbox(L.OPT_STOP_ON_CLOSE,
 		L.OPT_STOP_ON_CLOSE_TIP,
 		Get("stopOnClose"), Set("stopOnClose"))
+	layout:Checkbox(L.OPT_CLOSE_WHEN_READ,
+		L.OPT_CLOSE_WHEN_READ_TIP,
+		Get("closeWhenRead"), Set("closeWhenRead"))
 
 	-- The voice language is set once for every module, on Spoken's page. Here only where the
 	-- player is too old to have that setting.
@@ -218,6 +224,10 @@ function SpokenBooks:SetupOptions()
 	layout:RequiresAll(PartOn, L.REASON_PART_OFF, switch)
 	layout:Refresh()
 	content:SetScript("OnShow", refresh)
+	-- Switched on or off from Spoken's page while this one was hidden: drawn again for it.
+	if Spoken and Spoken.RegisterCallback then
+		Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "books" then refresh() end end)
+	end
 
 	-- Derived rather than written as a number: a hardcoded height is a number nobody updates
 	-- when a row is added, and what that produces is a section you cannot scroll to.

@@ -389,6 +389,9 @@ Addon.DialogueUIDefaults = defaults.profile.DialogueUI
 
 local lastGossipOptions
 local selectedGossipOption
+-- Set by picking any option, even one whose label could not be found, until the window closes:
+-- every page after the greeting was asked for.
+local gossipOptionPicked
 local currentQuestSoundData
 local currentGossipSoundData
 
@@ -985,8 +988,10 @@ function Addon:OnInitialize()
                 end
             end
 
-            for _, soundData in ipairs(soundsToRemove) do
-                Player:Remove(soundData)
+            -- From the last, so the speaking line goes after its quest's waiting lines: then it fades
+            -- out if nothing at all waits behind it, and is cut when any line waits behind it.
+            for i = #soundsToRemove, 1, -1 do
+                Player:Remove(soundsToRemove[i])
             end
         end
     end
@@ -1004,6 +1009,7 @@ function Addon:OnInitialize()
 
     if C_GossipInfo and C_GossipInfo.SelectOption then
         hooksecurefunc(C_GossipInfo, "SelectOption", function(optionID)
+            gossipOptionPicked = true
             if lastGossipOptions then
                 for _, info in ipairs(lastGossipOptions) do
                     if info.gossipOptionID == optionID then
@@ -1016,6 +1022,7 @@ function Addon:OnInitialize()
         end)
     elseif SelectGossipOption then
         hooksecurefunc("SelectGossipOption", function(index)
+            gossipOptionPicked = true
             if lastGossipOptions then
                 selectedGossipOption = lastGossipOptions[1 + (index - 1) * 2]
                 lastGossipOptions = nil
@@ -1168,11 +1175,21 @@ function Addon:QUEST_COMPLETE()
     Player:Enqueue(soundData)
 end
 
-function Addon:ShouldPlayGossip(guid, text, manual)
+---@param followsOption boolean? the page was reached by picking one of the NPC's options
+function Addon:ShouldPlayGossip(guid, text, manual, followsOption)
     local npcKey = guid or "unknown"
 
     -- Asked for by name, so having heard it before does not stand in the way.
     if manual then
+        return true, npcKey
+    end
+
+    if self.db.profile.Audio.GossipFrequency == Enums.GossipFrequency.Never then
+        Debug:Note("gossip", "never", "greetings not read: NPC Greetings is set to never")
+        return
+    end
+    -- The once-per settings hold back the greeting an NPC opens with, not the pages after it.
+    if followsOption then
         return true, npcKey
     end
 
@@ -1192,9 +1209,6 @@ function Addon:ShouldPlayGossip(guid, text, manual)
             Debug:Note("gossip", npcKey .. ":once", "greeting of %s not read: heard before (NPC Greetings: once per NPC)", npcKey)
             return
         end
-    elseif self.db.profile.Audio.GossipFrequency == Enums.GossipFrequency.Never then
-        Debug:Note("gossip", "never", "greetings not read: NPC Greetings is set to never")
-        return
     end
 
     return true, npcKey
@@ -1247,7 +1261,9 @@ function Addon:ExpectedLine(event, textIsCurrent)
         if not guid and not speaker.name then
             return nil
         end
-        if not self:ShouldPlayGossip(guid, nil, false) or not DataModules:HasGossipFor(speaker) then
+        local followsOption = event == "GOSSIP_SHOW" and gossipOptionPicked
+        if not self:ShouldPlayGossip(guid, nil, false, followsOption)
+            or not DataModules:HasGossipFor(speaker) then
             return nil
         end
         if textIsCurrent and not self:GetVisibleLine(event) then
@@ -1336,7 +1352,7 @@ function Addon:GOSSIP_SHOW(event, manual)
         return
     end
 
-    local play, npcKey = self:ShouldPlayGossip(guid, gossipText, manual)
+    local play, npcKey = self:ShouldPlayGossip(guid, gossipText, manual, gossipOptionPicked)
     if not play then
         return
     end
@@ -1372,6 +1388,7 @@ function Addon:GOSSIP_CLOSED()
     currentGossipSoundData = nil
 
     selectedGossipOption = nil
+    gossipOptionPicked = nil
     shownGossipTitle = nil
     shownGossipKey = nil
 end
