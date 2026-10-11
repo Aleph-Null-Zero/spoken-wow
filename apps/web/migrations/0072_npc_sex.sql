@@ -1,16 +1,7 @@
--- One NPC id, drawn as a man or a woman.
---
--- creature_template gives a creature up to four displays, and 651 classic creatures have both
--- sexes among them: a Stormwind City Guard is a man or a woman, at even odds, under one id. The
--- npc row answers one race, gender and flavor for the id, so every guard spoke in a man's voice.
--- An NPC with rows here is split: each sex the client reports (UnitSex: 2 male, 3 female) is
--- answered on its own, and every line the NPC speaks is voiced once per sex. The npc row stays
--- the answer for anything that does not know the sex: an older addon, a name-keyed lookup.
---
--- Same provenance ranking and invariants as npc (0070). The gender is the sex's, so it cannot
--- disagree with it.
---
--- Additive: no reader of npc changes, so the previous release ignores the split.
+-- One creature id can be drawn as a man or a woman (a Stormwind City Guard). An NPC with rows
+-- here is split: each sex the client reports (UnitSex: 2 male, 3 female) has its own answer and
+-- every line it speaks is voiced once per sex. The npc row stays the answer wherever the sex is
+-- unknown. Additive: no reader of npc changes.
 
 create table if not exists "npc_sex" (
   "npcKind"    text not null,

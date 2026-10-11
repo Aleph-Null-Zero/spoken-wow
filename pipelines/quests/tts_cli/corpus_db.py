@@ -324,10 +324,9 @@ def npc_sex_answers(npc_sexes, npcs) -> list:
 
 
 def _import_npc_sexes(cur, rows):
-    """The file's split NPCs into npc_sex (apps/web migration 0072), by _import_npcs' rules: an
-    answer lands over one ranked no higher, a moderator's stays unless marked doubtful, and a
-    `corpus` sex the file no longer carries goes. A sex of an NPC with no npc row is skipped:
-    the split is of an NPC, and the file names every NPC it splits."""
+    """The file's split NPCs into npc_sex. An answer lands over one ranked no higher, a
+    moderator's stays unless marked doubtful, and a `corpus` sex the file no longer carries goes.
+    A sex of an NPC with no npc row is skipped."""
     cur.execute("""create temporary table "npc_sex_import" ("npcKind" text, "npcId" integer,
                      "sex" smallint, "race" text, "flavor" text, "provenance" text,
                      "doubtful" boolean) on commit drop""")

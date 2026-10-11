@@ -58,10 +58,7 @@ export type CorpusLine = {
    * language's word (player-words.ts), so the gate has to know which. Absent means English.
    */
   lang?: Lang;
-  /**
-   * The sex this row is the NPC drawn as, where the NPC is split by sex (migration 0072):
-   * 2 for a man, 3 for a woman. Absent for every NPC that speaks in one voice.
-   */
+  /** The sex this row is for (2 man, 3 woman), on an NPC split by sex only. */
   npcSex?: 2 | 3;
   /**
    * The English names, for a translator to work from. Absent when reading English, and on a

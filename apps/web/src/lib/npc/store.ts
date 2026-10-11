@@ -269,7 +269,7 @@ export async function getSexes(kind: NpcRowKind, npcId: number): Promise<NpcSexA
   return rows;
 }
 
-/** Every split NPC's sexes, for /npcs, keyed as getResolutions keys its rows. */
+/** Every split NPC's sexes, keyed by resolutionKey. */
 export async function listSexes(): Promise<Map<string, NpcSexAnswer[]>> {
   const { rows } = await db().query<NpcSexAnswer>(
     `select ${SEX_COLUMNS} from "npc_sex" x order by x."npcKind", x."npcId", x."sex"`,
@@ -283,8 +283,8 @@ export async function listSexes(): Promise<Map<string, NpcSexAnswer[]>> {
 }
 
 /**
- * One sex's answer, under the same ranking as upsertResolution, which says why. The NPC must
- * have an npc row: a split is of an NPC somebody already answered for.
+ * One sex's answer. It lands only over an answer ranked no higher (npc_provenance_rank). The NPC
+ * must have an npc row.
  */
 export async function upsertSex(
   input: Omit<NpcSexAnswer, "gender" | "updatedAt">,
