@@ -121,45 +121,46 @@ local function Tick(seconds)
 end
 
 ---------------------------------------------------------------- matching, as pure functions
+local Marks = Spoken:WordMarks()
 local function Paras(...)
     local list = {}
     for _, text in ipairs({ ... }) do
-        table.insert(list, { text = text, words = Bridge.MarkLinks(text, Spoken:SplitCaption(text)) })
+        table.insert(list, { text = text, words = Marks.MarkLinks(text, Spoken:SplitCaption(text)) })
     end
     return list
 end
 local caption = Spoken:SplitCaption("Hello there, traveller. Safe roads.")
-local map, span = Bridge.Align(caption, Paras("Farmer Test: Hello there, traveller.", "Safe roads."))
+local map, span = Marks.Align(caption, Paras("Farmer Test: Hello there, traveller.", "Safe roads."))
 Expect("the NPC name DialogueUI puts in front is skipped", map and map[1] and map[1].p .. ":" .. map[1].w, "1:3")
 Expect("...and the next paragraph continues the match", map and map[4] and map[4].p .. ":" .. map[4].w, "2:1")
 Expect("...the line covers both paragraphs", span and span.first .. "-" .. span.last, "1-2")
-map, span = Bridge.Align(caption, Paras("Hello there, traveller. Safe roads.", "Hello there, traveller. Safe roads."))
+map, span = Marks.Align(caption, Paras("Hello there, traveller. Safe roads.", "Hello there, traveller. Safe roads."))
 Expect("with gossip history kept above, the current page is the one matched", map and map[1] and map[1].p, 2)
 Expect("...and only it is the line's", span and span.first .. "-" .. span.last, "2-2")
 Expect("a line DialogueUI is not showing matches nothing",
-    Bridge.Align(caption, Paras("The Barrens are wide and dry.")), nil)
+    Marks.Align(caption, Paras("The Barrens are wide and dry.")), nil)
 local chinese = Spoken:SplitCaption("你好，勇士。")
-map = Bridge.Align(chinese, Paras("农夫：你好，勇士。"))
+map = Marks.Align(chinese, Paras("农夫：你好，勇士。"))
 Expect("Chinese matches character by character", map and map[1] and map[1].w, 3)
-Expect("a word carrying a link or colour is never compared", Bridge.Key("|cffff0000Name|r"), nil)
-Expect("...nor is bare punctuation", Bridge.Key("--"), nil)
+Expect("a word carrying a link or colour is never compared", Marks.Key("|cffff0000Name|r"), nil)
+Expect("...nor is bare punctuation", Marks.Key("--"), nil)
 local linked = Paras("Bring me the |Hitem:1|h[Linen Bolt of Cloth]|h today.")[1].words
 Expect("the words inside a link are never matched either", linked[5].inLink and linked[6].inLink, true)
 Expect("...but those after it are", linked[8].inLink, nil)
-Expect("dark text gets the red highlight", Bridge.ColorFor(0.2, 0.1, 0.05), RED)
-Expect("light text gets the captions' gold", Bridge.ColorFor(0.9, 0.85, 0.8), GOLD)
+Expect("dark text gets the red highlight", Marks.ColorFor(0.2, 0.1, 0.05), RED)
+Expect("light text gets the captions' gold", Marks.ColorFor(0.9, 0.85, 0.8), GOLD)
 Expect("a word and its neighbour are wrapped, nothing else",
-    Bridge.Wrap("a bc d", { { first = 3, last = 4 } }, GOLD), "a " .. GOLD .. "bc|r d")
+    Marks.Wrap("a bc d", { { first = 3, last = 4 } }, GOLD), "a " .. GOLD .. "bc|r d")
 Expect("the last word of a paragraph keeps the one before it lit",
-    table.concat({ Bridge.Pick({ [1] = { p = 1 }, [2] = { p = 1 }, [3] = { p = 2 } }, 2) }, ","), "2,1")
+    table.concat({ Marks.Pick({ [1] = { p = 1 }, [2] = { p = 1 }, [3] = { p = 2 } }, 2) }, ","), "2,1")
 Expect("a word the window lacks lights the last one it has",
-    table.concat({ Bridge.Pick({ [1] = { p = 1 }, [2] = { p = 1 } }, 3) }, ","), "2,1")
+    table.concat({ Marks.Pick({ [1] = { p = 1 }, [2] = { p = 1 } }, 3) }, ","), "2,1")
 
 local paras = Paras("Farmer Test: Hello there, traveller.", "Safe roads.")
-map, span = Bridge.Align(caption, paras)
+map, span = Marks.Align(caption, paras)
 local function Cut(fields)
     fields.typewriter = fields.typewriter ~= false
-    local p, byte = Bridge.Cut(fields, map, span, paras)
+    local p, byte = Marks.Cut(fields, map, span, paras)
     return p and (p .. ":" .. byte) or "all"
 end
 Expect("before the voice starts nothing of the line shows", Cut({ progress = 0, speaking = false }), "1:0")

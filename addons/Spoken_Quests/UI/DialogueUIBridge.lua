@@ -85,10 +85,6 @@ end
 -- The player's word matching (Spoken:WordMarks). Nil from a player too old to have it, which
 -- Problem reports.
 local Marks = _G.Spoken and Spoken.WordMarks and Spoken:WordMarks()
-if Marks then
-    Bridge.Key, Bridge.MarkLinks, Bridge.AlignFrom, Bridge.Align = Marks.Key, Marks.MarkLinks, Marks.AlignFrom, Marks.Align
-    Bridge.Pick, Bridge.Cut, Bridge.Wrap, Bridge.ColorFor = Marks.Pick, Marks.Cut, Marks.Wrap, Marks.ColorFor
-end
 
 --------------------------------------------------------------------------------
 -- Drawing it
@@ -96,7 +92,7 @@ end
 
 -- paragraphs: { fs, text (DialogueUI's), shown (what this file last set), words, color }.
 -- clip, map and span: the caption last matched against them. lit/neighbor: the caption words
--- lit; cutP/cutByte: how far the text is typed out (Bridge.Cut). pending: the line about to be
+-- lit; cutP/cutByte: how far the text is typed out (Marks.Cut). pending: the line about to be
 -- read for the page just built, before it is queued: { words, untilTime, map, span }.
 local state = { dirty = true }
 -- Whether the player reports the word being read (Spoken:GetCaption).
@@ -128,8 +124,8 @@ local function Collect()
             local text = fs:GetText()
             local words = type(text) == "string" and Spoken:SplitCaption(text)
             if words and table.getn(words) > 0 then
-                table.insert(paragraphs, { fs = fs, text = text, shown = text, words = Bridge.MarkLinks(text, words),
-                    color = Bridge.ColorFor(fs:GetTextColor()) })
+                table.insert(paragraphs, { fs = fs, text = text, shown = text, words = Marks.MarkLinks(text, words),
+                    color = Marks.ColorFor(fs:GetTextColor()) })
             end
         end
     end
@@ -165,35 +161,10 @@ local function ScrollIntoView(fs)
 end
 
 local function Draw(map, span, lit, neighbor, cutP, cutByte)
-    local spans = {}
-    for _, index in ipairs({ lit, neighbor }) do
-        local at = map[index]
-        if at then
-            spans[at.p] = spans[at.p] or {}
-            table.insert(spans[at.p], state.paragraphs[at.p].words[at.w])
-        end
-    end
+    local spans = Marks.Spans(map, state.paragraphs, lit, neighbor)
     for p, para in ipairs(state.paragraphs) do
-        local want = para.text
         -- Only the line's paragraphs type out; earlier gossip and the objectives stay whole.
-        if cutP and p >= span.first and p <= span.last then
-            if p > cutP then
-                want = ""
-            elseif p == cutP then
-                want = string.sub(para.text, 1, cutByte)
-            end
-        end
-        if spans[p] then
-            -- Only words already typed: the neighbour past the voice is not shown yet.
-            local shown, kept = string.len(want), {}
-            for _, word in ipairs(spans[p]) do
-                if word.last <= shown then
-                    table.insert(kept, word)
-                end
-            end
-            table.sort(kept, function(a, b) return a.first < b.first end)
-            want = Bridge.Wrap(want, kept, para.color)
-        end
+        local want = Marks.Want(para, p, span, cutP, cutByte, spans, para.color)
         if want ~= para.shown then
             if Showing(para.fs) ~= para.shown then
                 -- DialogueUI changed it under us without a rebuild this file heard of.
@@ -233,7 +204,7 @@ local function Tick()
             -- Put back and drawn again in this one call: nothing shows in between.
             Restore()
             state.clip, state.scrolledTo = clip, nil
-            state.map, state.span = Bridge.Align(caption.words, state.paragraphs)
+            state.map, state.span = Marks.Align(caption.words, state.paragraphs)
         end
     else
         state.clip, state.map = nil, nil
@@ -242,9 +213,9 @@ local function Tick()
         state.pending = nil
         local lit, neighbor
         if caption.highlight then
-            lit, neighbor = Bridge.Pick(state.map, caption.speaking and caption.activeWord or nil)
+            lit, neighbor = Marks.Pick(state.map, caption.speaking and caption.activeWord or nil)
         end
-        local cutP, cutByte = Bridge.Cut(caption, state.map, state.span, state.paragraphs)
+        local cutP, cutByte = Marks.Cut(caption, state.map, state.span, state.paragraphs)
         if lit ~= state.lit or neighbor ~= state.neighbor or cutP ~= state.cutP or cutByte ~= state.cutByte then
             Draw(state.map, state.span, lit, neighbor, cutP, cutByte)
         end
@@ -256,7 +227,7 @@ local function Tick()
     local otherPart = clip ~= nil and clip.source ~= Player.source
     if pending and not otherPart and GetTime() < pending.untilTime then
         if not pending.span then
-            pending.map, pending.span = Bridge.Align(pending.words, state.paragraphs)
+            pending.map, pending.span = Marks.Align(pending.words, state.paragraphs)
         end
         if pending.map then
             if state.lit or state.cutP ~= pending.span.first or state.cutByte ~= 0 then
@@ -557,11 +528,11 @@ local function PlaceClose()
         button.highlight:SetTexture(file)
     end
     local pixel = ART_PIXEL * Multiplier()
-    button:SetSize(CLOSE_SIZE * pixel, CLOSE_SIZE * pixel)
     local scale = UIParent:GetEffectiveScale() / math.max(0.01, frame:GetEffectiveScale() or 1)
     local middle = -(LINE_ROOM + ROUND / 2) * scale
     if button.middle ~= middle or button.pixel ~= pixel then
         button.middle, button.pixel = middle, pixel
+        button:SetSize(CLOSE_SIZE * pixel, CLOSE_SIZE * pixel)
         button:ClearAllPoints()
         button:SetPoint("RIGHT", frame, "TOPRIGHT", -CLOSE_INSET * pixel, middle)
     end
@@ -605,10 +576,16 @@ end
 --- UIParent's scale whatever DialogueUI's own size, in the same place on every page.
 --- DialogueUI's buttons in that corner (Copy Text, the translator's) go left of it.
 local placedKey
+-- Reused on every tick, which runs while the window is open.
+local list = {}
+local THEIRS = { "TranslatorButton", "CopyTextButton" }
+
 local function PlaceRow(force)
     local frame = DUIQuestFrame
     local scale = UIParent:GetEffectiveScale() / math.max(0.01, frame:GetEffectiveScale() or 1)
-    local list = {}
+    for i = #list, 1, -1 do
+        list[i] = nil
+    end
     if report and report:IsShown() then
         table.insert(list, report)
     end
@@ -617,7 +594,7 @@ local function PlaceRow(force)
         table.insert(list, row.play)
     end
     local holder = row.frame
-    local key = table.concat({ #list, format("%.3f", scale) }, " ")
+    local key = #list * 100000 + math.floor(scale * 1000 + 0.5)
     if key ~= placedKey or force then
         placedKey = key
         holder:SetSize((#list * ROUND + (#list - 1) * ROUND_GAP) * scale, ROUND * scale)
@@ -639,7 +616,7 @@ local function PlaceRow(force)
     -- DialogueUI's first button there (Copy Text, else the translator's) left of the row, on its
     -- middle; the other keeps its place left of that one. Again whenever DialogueUI lays them out.
     local first
-    for _, key in ipairs({ "TranslatorButton", "CopyTextButton" }) do
+    for _, key in ipairs(THEIRS) do
         local widget = frame[key]
         if type(widget) == "table" and widget.IsShown and widget:IsShown() then
             first = widget
