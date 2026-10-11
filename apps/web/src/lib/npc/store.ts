@@ -15,10 +15,12 @@ import { saveName } from "@/lib/names/store";
 // importing one out of a module that reaches for `@/lib/db` fails the client build). Imported
 // (not just re-exported) so this file can still use them as it always did, and re-exported so
 // every existing import of these from this module keeps working unchanged.
-import { NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, isProvenance, type NpcKind, type NpcRowKind, type Provenance } from "./npc";
+import {
+  NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, SEXES, isProvenance, isSex, type NpcKind, type NpcRowKind, type Provenance, type Sex,
+} from "./npc";
 
-export { NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, isProvenance };
-export type { NpcKind, NpcRowKind, Provenance };
+export { NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, SEXES, isProvenance, isSex };
+export type { NpcKind, NpcRowKind, Provenance, Sex };
 
 export type NpcResolution = {
   npcKind: NpcRowKind;
@@ -229,14 +231,6 @@ export async function listUnconfirmed(kind: NpcKind): Promise<NpcResolution[]> {
     [kind],
   );
   return rows;
-}
-
-/** UnitSex's answer for a man and a woman, the two an NPC can be split by (migration 0072). */
-export const SEXES = [2, 3] as const;
-export type Sex = (typeof SEXES)[number];
-
-export function isSex(value: unknown): value is Sex {
-  return value === 2 || value === 3;
 }
 
 /** One sex of a split NPC: who it is when the client draws it as that sex. */

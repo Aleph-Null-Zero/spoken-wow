@@ -9,7 +9,7 @@ import { clientOf } from "@/lib/contributions/client";
 import { summaryFromResolution } from "@/lib/contributions/speaker";
 import { localeHref } from "@/lib/lang";
 import { pageLang } from "@/lib/lang-server";
-import { listResolutions } from "@/lib/npc/store";
+import { listResolutions, listSexes, resolutionKey } from "@/lib/npc/store";
 import { isAdmin } from "@/lib/permissions";
 import { currentSession } from "@/lib/session";
 import { loadRoster } from "@/lib/voices/roster-store";
@@ -59,11 +59,15 @@ export default async function Page({
           <TypesEditor initial={roster.data} />
         ) : (
           <NpcEditor
-            initial={(await listResolutions()).map((row) => ({
-              ...summaryFromResolution(row, roster),
-              // The client whose guess filed the NPC; none for one only the extract names.
-              client: row.build ? clientOf(row.build).family : null,
-            }))}
+            initial={await (async () => {
+              const sexes = await listSexes();
+              return (await listResolutions()).map((row) => ({
+                ...summaryFromResolution(row, roster),
+                // The client whose guess filed the NPC; none for one only the extract names.
+                client: row.build ? clientOf(row.build).family : null,
+                sexes: sexes.get(resolutionKey(row.npcKind, row.npcId)) ?? [],
+              }));
+            })()}
             roster={roster.data}
           />
         )}

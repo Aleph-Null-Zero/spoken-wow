@@ -21,6 +21,7 @@ import { isGenericCreatureType } from "./creature-types";
 import { voiceFromDisplays } from "./display-voices";
 import { raceForModel } from "./models";
 import { INT32_MAX } from "./npc";
+import { splitBySex } from "./split";
 import { getResolution, NPC_KINDS, upsertResolution, type NpcKind, type NpcResolution } from "./store";
 
 // The three integer columns npc and contribution both ultimately feed from an
@@ -104,8 +105,17 @@ export function observedFrom(meta: Record<string, string>): Observed {
   };
 }
 
-/** `lang` is the language of the client that observed the NPC, and so of its name. */
+/**
+ * `lang` is the language of the client that observed the NPC, and so of its name. An NPC seen
+ * drawn as the sex its voice is not is split by sex as well (split.ts).
+ */
 export async function resolveNpc(observed: Observed, lang: Lang | null): Promise<NpcResolution | null> {
+  const resolution = await answer(observed, lang);
+  await splitBySex(observed, resolution);
+  return resolution;
+}
+
+async function answer(observed: Observed, lang: Lang | null): Promise<NpcResolution | null> {
   const { npcKind, npcId } = observed;
   // `npcId === null`, not a truthiness check: id 0 is a real id and must not be mistaken for
   // "no npc at all". A kind-less envelope (see observedFrom) also fails here since npcKind is

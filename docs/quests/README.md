@@ -1109,6 +1109,15 @@ race-gender's default, marked doubtful, as an NPC does. `make quests-import-npc-
 the same rows into a database that is already filled, production included, without a whole
 extract; it keeps a moderator's answer.
 
+A contribution splits the NPCs the dump does not know. A greeting from a creature drawn as the
+sex its voice is not (the envelope's `sex` against the `npc` row's gender) is not dropped as
+known, even when the NPC already says it, and storing it splits the NPC (`npc/split.ts`): the
+NPC's answer becomes its own sex's, and the sex the player saw is answered as `resolveNpc`
+answers from the client, from the appearances drawn with the reported body, else that body's
+race and a default flavor, unconfirmed. Once the NPC is split the row reads as known again and
+leaves the queue. On `/npcs` an admin sees each sex under its NPC, answers it, and can split or
+unsplit any creature by hand (`api/npcs/sex`).
+
 A pack finds a split NPC's line as it always has, by its text, under the line's own stem, and
 then asks the sex: `GossipFileLookupByNPCSex[npcId][sex][stem]` and
 `QuestFileLookupByNPCSex[stem][npcId][sex]` name the file each sex hears. A sex keeps the

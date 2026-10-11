@@ -36,3 +36,11 @@ export type Provenance = (typeof PROVENANCES)[number];
 export function isProvenance(value: unknown): value is Provenance {
   return typeof value === "string" && (PROVENANCES as readonly string[]).includes(value);
 }
+
+/** UnitSex's answer for a man and a woman, the two an NPC can be split by (migration 0072). */
+export const SEXES = [2, 3] as const;
+export type Sex = (typeof SEXES)[number];
+
+export function isSex(value: unknown): value is Sex {
+  return value === 2 || value === 3;
+}
