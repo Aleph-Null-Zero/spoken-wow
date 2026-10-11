@@ -1,5 +1,6 @@
 from tts_cli.build import build_tables, locale_tables
 from tts_cli.ignores import ignored_files
+from tts_cli.npc_sexes import SEX_GENDER
 from tts_cli.voice_files import npc_voices, stored_stems, with_voice_files
 
 
@@ -194,7 +195,7 @@ def test_a_languages_greeting_joins_english_by_moment_whatever_its_own_shape():
 
 
 def sex(npc_id, value, race, flavor):
-    gender = {2: "male", 3: "female"}[value]
+    gender = SEX_GENDER[value]
     return {"npcType": "creature", "npcId": npc_id, "sex": value, "race": race, "gender": gender,
             "flavor": flavor, "provenance": "corpus", "voice": f"{race}-{gender}-{flavor}"}
 
