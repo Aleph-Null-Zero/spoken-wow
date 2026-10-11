@@ -36,6 +36,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   says "• (Stopped)" and how many lines wait, in place of the list. Its new Background setting
   draws it on parchment, the default, or on the dark rock it had. It fades in and out more
   slowly, from one line to the next too, and goes while a DialogueUI dialog hides the interface. *([Nucabe](https://github.com/Nucabe))*
+- **Guards and other NPCs that come as a man or a woman speak in the voice of the one in front of
+  you.** A Stormwind City Guard, an Orgrimmar Grunt or a Bluffwatcher can be either, and every
+  one of them spoke in a man's voice. Until a pack has the other voice, the line plays as before.
 
 ## 3.3.0 — 2026-10-11
 

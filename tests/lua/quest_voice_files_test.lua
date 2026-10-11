@@ -76,6 +76,47 @@ VO.DataModules:PrepareSound(soundData)
 Expect("a giver's voice only another language has yields to the line in the player's", soundData.language, "deDE")
 Expect("and the file is the line's", soundData.fileName, "109-accept")
 
+-- A creature drawn as a man or a woman under one id speaks each line in the voice of the sex on
+-- screen, found by the line's own stem.
+local GUARD = "Creature-0-0-0-0-68-0"
+local CLERK = "Creature-0-0-0-0-1-0"
+local LINE = string.rep("a", 32)
+stub.SetLocale("enUS")
+stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetAddOns({ { folder = "Pack", meta = { ["X-SpokenQuests-DataModule-Version"] = "1",
+    Version = "1.0.0", Title = "Pack" } } })
+_G.SpokenQuestsSettings = nil
+VO = stub.LoadQuests(QUESTS, SPOKEN)
+VO.Addon:OnInitialize()
+VO.DataModules:EnumerateAddons(false)
+VO.DataModules:Register("Pack", {
+    SoundLengthLookupByFileName = { [LINE] = 3.0, [LINE .. "-human-female-official"] = 3.1,
+        ["109-accept"] = 5.0, ["109-accept-human-female-official"] = 5.1 },
+    GossipLookupByNPCID = { [68] = { ["Well met."] = LINE }, [1] = { ["Well met."] = LINE } },
+    GossipFileLookupByNPCSex = { [68] = { [2] = { [LINE] = LINE },
+        [3] = { [LINE] = LINE .. "-human-female-official" } } },
+    QuestFileLookupByNPCSex = { ["109-accept"] = { [68] = { [3] = "109-accept-human-female-official" } } },
+    NPCSexByNPCID = { [1] = 2 },
+    GetSoundPath = function(_, fileName) return fileName end,
+})
+local function Greet(guid, sex)
+    local data = { event = VO.Enums.SoundEvent.Gossip, unitGUID = guid, text = "Well met.", npcSex = sex }
+    return VO.DataModules:PrepareSound(data) and data.fileName or nil, VO.DataModules:IsOtherSex(data)
+end
+local function Accept(guid, sex)
+    local data = { event = VO.Enums.SoundEvent.QuestAccept, questID = 109, unitGUID = guid, npcSex = sex }
+    return VO.DataModules:PrepareSound(data) and data.fileName or nil
+end
+Expect("a split NPC drawn as a woman hears the woman's file", Greet(GUARD, 3), LINE .. "-human-female-official")
+Expect("drawn as a man, the man's", Greet(GUARD, 2), LINE)
+Expect("with its sex unknown, the line's own", Greet(GUARD, 1), LINE)
+Expect("a split NPC's quest line is the sex's too", Accept(GUARD, 3), "109-accept-human-female-official")
+Expect("and the line's own for the sex no file names", Accept(GUARD, 2), "109-accept")
+Expect("a split NPC is no other sex's", select(2, Greet(GUARD, 3)), false)
+Expect("an NPC voiced as a man and drawn as a woman is the other sex", select(2, Greet(CLERK, 3)), true)
+Expect("and still plays the man's line", Greet(CLERK, 3), LINE)
+Expect("drawn as the sex it is voiced as, it is not", select(2, Greet(CLERK, 2)), false)
+
 stub.SetLocale("enUS")
 stub.ResetAddOns()
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
