@@ -38,3 +38,21 @@ export type Provenance = (typeof PROVENANCES)[number];
 export function isProvenance(value: unknown): value is Provenance {
   return typeof value === "string" && (PROVENANCES as readonly string[]).includes(value);
 }
+
+/** UnitSex's answer for a man and a woman, the two an NPC can be split by (migration 0072). */
+export type Sex = 2 | 3;
+
+export function isSex(value: unknown): value is Sex {
+  return value === 2 || value === 3;
+}
+
+/** The gender a sex is voiced in, and the sex a gendered answer is drawn as. */
+export const SEX_GENDER: Record<Sex, "male" | "female"> = { 2: "male", 3: "female" };
+
+export function sexOf(gender: string | null | undefined): Sex | null {
+  return gender === "male" ? 2 : gender === "female" ? 3 : null;
+}
+
+export function oppositeSex(sex: Sex): Sex {
+  return sex === 2 ? 3 : 2;
+}

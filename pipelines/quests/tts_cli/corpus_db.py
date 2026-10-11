@@ -201,6 +201,15 @@ def retyped(npcs) -> list:
             for npc in npcs]
 
 
+def _with_default(answer, defaults) -> tuple:
+    """An answer's (flavor, provenance, doubtful): the extract's own flavorless answer takes its
+    race-gender's default from `defaults`, marked doubtful; anybody else's is as they gave it."""
+    provenance = answer.get("provenance", "corpus")
+    guess = None if answer["flavor"] or provenance != "corpus" else \
+        defaults.get(f'{answer["race"]}-{answer["gender"]}')
+    return answer["flavor"] or guess, provenance, guess is not None
+
+
 def npc_answers(npcs) -> list:
     """The file's NPCs as npc rows, (kind, id, race, gender, flavor, provenance, doubtful).
 
@@ -214,11 +223,8 @@ def npc_answers(npcs) -> list:
     defaults = fallback_flavors((f'{npc["race"]}-{npc["gender"]}', npc["flavor"]) for npc in npcs)
     rows = []
     for npc in npcs:
-        provenance = npc.get("provenance", "corpus")
-        guess = None if npc["flavor"] or provenance != "corpus" else \
-            defaults.get(f'{npc["race"]}-{npc["gender"]}')
         rows.append((npc["npcType"], npc["npcId"], npc["race"], npc["gender"],
-                     npc["flavor"] or guess, provenance, guess is not None))
+                     *_with_default(npc, defaults)))
     return rows
 
 
@@ -303,6 +309,86 @@ def _import_npcs(cur, npc_rows):
                                     excluded."provenance")""".format(
             replaces=_REPLACES.format(old="n", new="excluded")))
     return kept
+
+
+def npc_sex_answers(npc_sexes, npcs) -> list:
+    """The file's split NPCs as npc_sex rows, (kind, id, sex, race, flavor, provenance,
+    doubtful). A moderator's answer for the NPC becomes its own sex's, so splitting never takes
+    back a voice someone chose."""
+    chosen = {(npc["npcType"], npc["npcId"]): npc for npc in npcs
+              if npc.get("provenance") == "moderator" and npc.get("race")}
+    defaults = fallback_flavors(
+        [(f'{npc["race"]}-{npc["gender"]}', npc["flavor"]) for npc in retyped(npcs)]
+        + [(f'{row["race"]}-{row["gender"]}', row["flavor"]) for row in npc_sexes])
+    rows = []
+    for row in npc_sexes:
+        npc = chosen.get((row["npcType"], row["npcId"]))
+        if row.get("provenance", "corpus") == "corpus" and npc and npc.get("gender") == row["gender"]:
+            rows.append((row["npcType"], row["npcId"], row["sex"], npc["race"], npc["flavor"],
+                         "moderator", bool(npc.get("doubtful"))))
+            continue
+        rows.append((row["npcType"], row["npcId"], row["sex"], row["race"],
+                     *_with_default(row, defaults)))
+    return rows
+
+
+def _import_npc_sexes(cur, rows):
+    """The file's split NPCs into npc_sex. An answer lands over one ranked no higher, a
+    moderator's stays unless marked doubtful, and a `corpus` sex the file no longer carries goes.
+    A sex of an NPC with no npc row is skipped."""
+    cur.execute("""create temporary table "npc_sex_import" ("npcKind" text, "npcId" integer,
+                     "sex" smallint, "race" text, "flavor" text, "provenance" text,
+                     "doubtful" boolean) on commit drop""")
+    if rows:
+        _bulk(cur, "npc_sex_import", rows,
+              """insert into "npc_sex_import" ("npcKind", "npcId", "sex", "race", "flavor",
+                                               "provenance", "doubtful") values %s""")
+    cur.execute(
+        """delete from "npc_sex" x
+            where x."provenance" = 'corpus'
+              and not exists (select 1 from "npc_sex_import" i
+                               where i."npcKind" = x."npcKind" and i."npcId" = x."npcId"
+                                 and i."sex" = x."sex")""")
+    cur.execute(
+        """insert into "npc_sex" as x ("npcKind", "npcId", "sex", "race", "flavor", "provenance",
+                                        "confirmed", "doubtful")
+            select i."npcKind", i."npcId", i."sex", i."race", i."flavor", i."provenance",
+                   i."provenance" in ('corpus', 'display', 'moderator') and not i."doubtful",
+                   i."doubtful"
+              from "npc_sex_import" i
+              join "npc" n on n."npcKind" = i."npcKind" and n."npcId" = i."npcId"
+            on conflict ("npcKind", "npcId", "sex") do update
+              set "race" = excluded."race", "flavor" = excluded."flavor",
+                  "provenance" = excluded."provenance", "confirmed" = excluded."confirmed",
+                  "doubtful" = excluded."doubtful", "updatedAt" = now()
+            where {replaces}
+              and (x."race", x."flavor", x."provenance", x."doubtful")
+                  is distinct from (excluded."race", excluded."flavor", excluded."provenance",
+                                    excluded."doubtful")""".format(
+            replaces=_REPLACES.format(old="x", new="excluded")))
+
+
+def import_npc_sexes(display_rows, verbose=True) -> list:
+    """The world database's split NPCs into a filled database's npc_sex, without a whole
+    extract. Returns the rows written."""
+    from tts_cli.npc_sexes import npc_sexes
+
+    conn = connect()
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute("""select "npcKind", "npcId", "race", "gender", "flavor", "provenance",
+                                  "doubtful"
+                             from "npc" where "npcKind" = 'creature' order by "npcId" """)
+            npcs = [{"npcType": kind, "npcId": npc_id, "race": race, "gender": gender,
+                     "flavor": flavor, "provenance": provenance, "doubtful": doubtful}
+                    for kind, npc_id, race, gender, flavor, provenance, doubtful in cur.fetchall()]
+            rows = npc_sex_answers(npc_sexes(display_rows, npcs), npcs)
+            _import_npc_sexes(cur, rows)
+    finally:
+        conn.close()
+    if verbose:
+        print(f"{len({(row[0], row[1]) for row in rows})} NPCs split by sex, {len(rows)} sexes")
+    return rows
 
 
 class DatabaseNotEmpty(Exception):
@@ -498,6 +584,9 @@ def import_corpus_data(corpus, verbose=True):
                 kept_npcs = _import_npcs(cur, npc_rows)
                 # The site reads an NPC's voice from npc alone (apps/web migration 0071).
                 cur.execute("""select "npc_from_speakers"()""")
+            sex_rows = npc_sex_answers(corpus.get("npcSexes", []), corpus.get("npcs", []))
+            if "npcSexes" in corpus:
+                _import_npc_sexes(cur, sex_rows)
 
             # Only from a marked file: in an older one, the rows that would match are the
             # contributed speakers' own round-tripped copies, skipped above or not.
@@ -549,7 +638,8 @@ def import_corpus_data(corpus, verbose=True):
             f"{counts['record']} recorded without promoting (edited here), "
             f"{counts['skip']} unchanged"
         )
-        print(f"{len(speaker_rows)} speakers, {len(npc_rows)} NPCs, {len(spawn_rows)} spawn points")
+        print(f"{len(speaker_rows)} speakers, {len(npc_rows)} NPCs ({len(sex_rows)} sexes of split "
+              f"ones), {len(spawn_rows)} spawn points")
         print(f"{answered} model rows spoken in the voice their NPC is already answered with")
         print(f"{len(kept_npcs)} NPC answers kept over a different one in the file"
               + (":" if kept_npcs else ""))
@@ -657,6 +747,14 @@ def export_corpus(path, check=False, verbose=True):
                     order by "npcKind", "npcId" """
             )
             npc_rows = cur.fetchall()
+
+            cur.execute(
+                """select "npcKind", "npcId", "sex", "race", "gender",
+                          case when "provenance" = 'corpus' and "doubtful" then null else "flavor" end,
+                          "provenance", voice_for("race", "gender", "flavor") from "npc_sex"
+                    order by "npcKind", "npcId", "sex" """
+            )
+            sex_rows = cur.fetchall()
     finally:
         conn.close()
 
@@ -708,6 +806,11 @@ def export_corpus(path, check=False, verbose=True):
             {"npcType": kind, "npcId": npc_id, "race": race, "gender": gender, "flavor": flavor,
              "provenance": provenance, "voice": voice}
             for kind, npc_id, race, gender, flavor, provenance, voice in npc_rows
+        ],
+        "npcSexes": [
+            {"npcType": kind, "npcId": npc_id, "sex": sex, "race": race, "gender": gender,
+             "flavor": flavor, "provenance": provenance, "voice": voice}
+            for kind, npc_id, sex, race, gender, flavor, provenance, voice in sex_rows
         ],
     }
 
@@ -883,6 +986,12 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
             for line_id, *speaker in cur.fetchall():
                 speakers.setdefault(line_id, []).append(tuple(speaker))
 
+            # A split NPC shows each sex its own form of a BroadcastText row.
+            cur.execute("""select "npcKind", "npcId", "gender" from "npc_sex" order by 1, 2, 3""")
+            sexes = {}
+            for kind, npc_id, gender in cur.fetchall():
+                sexes.setdefault((kind, npc_id), []).append(gender)
+
             cur.execute(
                 """select "lineId", "originalText" from "quest_line"
                     where "isCurrent" and "source" = 'gossip' and "lang" = %s""", (LANG,))
@@ -930,7 +1039,11 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
         conn.close()
 
     ignored = ignored_line_ids()
-    tables = gossip_text_tables(speakers, english, translations, natives, broadcast_ids,
+    shown = {line_id: rows + [(kind, npc_id, race, other, flavor)
+                              for kind, npc_id, race, gender, flavor in rows
+                              for other in sexes.get((kind, npc_id), ()) if other != gender]
+             for line_id, rows in speakers.items()}
+    tables = gossip_text_tables(shown, english, translations, natives, broadcast_ids,
                                 broadcast_texts, ignored)
     aliases = gossip_aliases(speakers, broadcast_ids, ignored, merges)
     write_gossip_text(out_dir, tables, aliases)

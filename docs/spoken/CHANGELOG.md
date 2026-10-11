@@ -2,6 +2,44 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## Unreleased
+
+- **A character is greeted by its zone only once, in its starting area.** An existing
+  character could hear the lore of wherever it logged in, such as a level 1 character parked in
+  Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
+  login greeting now plays only for a level 1 character in the valley it started in.
+- **Spoken's Play, Skip and Report sit at the top right of DialogueUI's quest window.** Play
+  turns to Stop while its line speaks and is greyed where no pack has the line, where Report
+  offers Contribute in place of the old "No voice-over playing?" line. A close button sits
+  beside them. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI settings are on Spoken's page, with the other narrator styles'.** They show when
+  DialogueUI is the narrator style, and every style's settings come in the same order: Size and
+  Position, Look, Words. Show Sample Subtitle is gone, as Preview shows every style.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Subtitles get the windows' settings, and the windows type by letter.** Subtitles gain Show Name
+  and Title, Highlight Words, Auto-Scroll line by line or page by page, Text Size and Hide Portrait.
+  Type By sets whether a window types out words or letters. *([Nucabe](https://github.com/Nucabe))*
+- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles and every
+  window, and Voice Only shows none of the words' settings. Spoken Quests' DialogueUI switches have
+  a DialogueUI section of their own after the narrator style's settings. On Forever, Bronze Border
+  has left the narrator style's settings for a Colours section: it colours every round button Spoken
+  draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
+- **The large window is the game's Talking Head frame.** Its words sit inside the box, under the
+  speaker's gold name, beside the portrait (a 3D model where there is one). Stopped and a count of
+  the lines waiting follow the name in place of the queue's rows, Stop, Skip and Report take the
+  close button's corner, and a progress line runs under the words. It fades in and out, from one
+  line to the next too, and goes while a DialogueUI dialog hides the interface, where its 3D
+  portrait stayed behind. Clients without the Talking Head's art draw Spoken's own in the same
+  places. *([Nucabe](https://github.com/Nucabe))*
+- **The small window has the DialogueUI window's controls, on parchment.** Stop or Replay, Skip
+  and Report are round buttons in its header, a progress line runs under the words, and the title
+  says "• (Stopped)" and how many lines wait, in place of the list. Its new Background setting
+  draws it on parchment, the default, or on the dark rock it had. It fades in and out more
+  slowly, from one line to the next too, and goes while a DialogueUI dialog hides the interface. *([Nucabe](https://github.com/Nucabe))*
+- **Guards and other NPCs that come as a man or a woman speak in the voice of the one in front of
+  you.** A Stormwind City Guard, an Orgrimmar Grunt or a Bluffwatcher can be either, and every
+  one of them spoke in a man's voice. Until a pack has the other voice, the line plays as before.
+
 ## 3.3.1 — 2026-10-11
 
 - **Fixed: contributing a quest started from an item in your bags sent no item.** The
@@ -41,6 +79,17 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   *([svengabr](https://github.com/svengabr))*
 - **Spoken Zones no longer raises a Lua error on chat messages the game keeps hidden from addons**,
   as in a dungeon group. *([svengabr](https://github.com/svengabr))*
+- **Captions fade at their edges as they glide.** The line leaving at the top fades out and the
+  line coming in at the bottom fades in, where they were cut off at the edge.
+  *([Nucabe](https://github.com/Nucabe))*
+- **With the DialogueUI narrator style, Spoken's small window takes DialogueUI's look.** When a
+  dialog closes on a line still playing, the window slides out of it, with Stop, Skip and Report in
+  its header and a place's picture over its words. *([Nucabe](https://github.com/Nucabe))*
+- **With the DialogueUI narrator style, books show in DialogueUI's paper and plaques and gravestones
+  in its stone.** Spoken's window stays hidden while DialogueUI's book view is open and slides out
+  of it when it closes. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI window settles into place with animation.** A queued line's page tucks behind the
+  window, and the words fade from one line to the next. *([Nucabe](https://github.com/Nucabe))*
 - **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
   Spoken's voice when you switch away. The line now stops instead of running on in silence, and
   Replay plays it from the start. *([svengabr](https://github.com/svengabr))*

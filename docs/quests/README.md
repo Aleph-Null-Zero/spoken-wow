@@ -909,13 +909,15 @@ that loads it (the 1.12 client's Lua 5.0 could not parse it anyway). A player wh
 Spoken Player settings, one switch for the quests, books and zones buttons alike; each addon
 asks `Spoken:AreContributeButtonsHidden()` in its gap check and refreshes on the player's
 `CONTRIBUTE_SETTINGS_CHANGED` callback, since toggling it fires no game event.
-With DialogueUI, which never shows the game's quest and gossip frames, its window carries a
-Report icon under its Decline button instead, faint on every page and in full beside
-**No voice-over playing? Contribute!** when a line is missing (see
-[`DIALOGUEUI-BRIDGE.md`](DIALOGUEUI-BRIDGE.md)). **Hide Report Buttons**, in the same settings,
-takes away the faint icon with every other Report button, the quest log's included; each addon
-asks `Spoken:AreReportButtonsHidden()` and redraws on the player's `REPORT_SETTINGS_CHANGED`
-callback. The icon beside the Contribute words stays.
+With DialogueUI, which never shows the game's quest and gossip frames, the Report icon goes
+in Spoken Quests' row of controls on the window's title line instead, right of Play and Skip
+and left of a close button, the window's text moved down to make room. It reports on every
+page and contributes where a line is missing. The words in that window are marked as they are
+read through `Spoken:WordMarks()`, the captions' matching kept in Spoken (see
+[`DIALOGUEUI-BRIDGE.md`](DIALOGUEUI-BRIDGE.md)).
+**Hide Report Buttons**, in the same settings, takes the icon away with every other Report button,
+the quest log's included, except where it contributes; each addon asks
+`Spoken:AreReportButtonsHidden()` and redraws on the player's `REPORT_SETTINGS_CHANGED` callback.
 
 Clicking it opens the same copy box `ReportButton.lua` uses, holding a plain-text envelope
 instead of an address: the addon, the build, the locale, the quest or NPC, and the text
@@ -1088,6 +1090,47 @@ store (`tts_cli/voice_files.py`). A quest giver is found through `QuestFileLooku
 installed pack has it; a greeting's speaker and a follow-up's are looked up per NPC already, so
 their tables simply name the speaker's own file. The greeting tables keyed by NPC name, used when
 the addon has no id, name the line's own file, since same-named NPCs can differ in voice. Progress text is never voiced and never split.
+
+An NPC can be split by sex. One creature id can be drawn as a man or a woman: a Stormwind City
+Guard is either, at even odds. The `npc` row answers one race, gender and flavor for the id, so
+both used to speak in the man's voice. A split NPC has a row per sex in `npc_sex` (migration
+0072), keyed on the sex the client's `UnitSex` reports (2 for a man, 3 for a woman), and each
+row answers that sex's race and flavor under `npc`'s provenance rules. Its gender is the sex's.
+Every line the NPC speaks is then spoken once per sex, by the rule above: the sex whose voice
+made the file keeps it, and the other speaks `{lineId}~{voice}`. The `npc` row stays the answer
+for whatever does not know the sex. The corpus file carries the rows as `npcSexes` (schema 5),
+and deleting them unsplits the NPC.
+
+The extract finds them in the game's data (`tts_cli/npc_sexes.py`). A creature has up to four
+displays, each drawn by its probability and each with a sex, and the rest of the extract reads
+only `display_id1`. A speaking creature whose displays include both sexes is split: 58 of them
+in the classic dump, guards for the most part. Each sex takes the race of its likeliest display
+and the flavor its displays' greeting sounds name most. A sex with no greeting sound gets its
+race-gender's default, marked doubtful, as an NPC does. `make quests-import-npc-sexes` writes
+the same rows into a database that is already filled, production included, without a whole
+extract; it keeps a moderator's answer.
+
+A contribution splits the NPCs the dump does not know. A greeting from a creature drawn as the
+sex its voice is not (the envelope's `sex` against the `npc` row's gender) is not dropped as
+known, even when the NPC already says it, and storing it splits the NPC (`npc/split.ts`): the
+NPC's answer becomes its own sex's, and the sex the player saw is answered as `resolveNpc`
+answers from the client, from the appearances drawn with the reported body, else that body's
+race and a default flavor, unconfirmed. Once the NPC is split the row reads as known again and
+leaves the queue. On `/npcs` an admin sees each sex under its NPC, answers it, and can split or
+unsplit any creature by hand (`api/npcs/sex`).
+
+A pack finds a split NPC's line as it always has, by its text, under the line's own stem, and
+then asks the sex: `GossipFileLookupByNPCSex[npcId][sex][stem]` and
+`QuestFileLookupByNPCSex[stem][npcId][sex]` name the file each sex hears. A sex keeps the
+line's own file until its voice's has audio in the store, as any NPC does. An addon that
+predates the split never reads those tables and plays the line's own file. `NPCSexByNPCID`
+gives the sex every other speaking creature is answered with, so the addon can tell when it is
+drawn as the other one: the line still plays in the voice it has, and the Contribute button
+offers it, so the site hears that the NPC comes in both sexes. A follow-up is said in chat:
+`FollowupLookupByNPCSex[npcId][broadcastId][sex]` names each sex's file, which plays when the
+speaker is a unit the player has up (the dialog's NPC, the target, the mouseover), and
+`FollowupLookup` names the man's for when its sex cannot be read. The addon's gossip text (`gossip_text.py`) gives a split
+NPC both forms of a BroadcastText row.
 
 `npc` also keeps what the client
 reported even when a moderator overrules it — evidence about the NPC is worth more than the

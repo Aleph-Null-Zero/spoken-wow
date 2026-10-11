@@ -26,6 +26,7 @@ import "server-only";
 
 import { query } from "@/lib/db";
 import { memoByLang } from "@/lib/memo";
+import { isSex } from "@/lib/npc/npc";
 import { nameStamp, versionStamp } from "@/lib/stamp";
 import type { Corpus, CorpusLine } from "@/lib/corpus";
 import { BASE_LANG, type Lang } from "@/lib/lang";
@@ -72,6 +73,7 @@ export function isCorpusEmpty(error: unknown): boolean {
  */
 const SPEAKER_STAMP = `(select coalesce(max("id"), 0) || ':' || count(*) from "quest_line_speaker") || '/' ||
   (select coalesce(max("updatedAt")::text, '') || ':' || count(*) from "npc") || '/' ||
+  (select coalesce(max("updatedAt")::text, '') || ':' || count(*) from "npc_sex") || '/' ||
   ${ROSTER_STAMP}`;
 
 async function stampOf(lang: Lang): Promise<string> {
@@ -106,15 +108,17 @@ const SPEAKER_NAME = `case when r."lang" = '${BASE_LANG}' then r."npcName" else 
  *
  * Race, gender and flavor are the NPC's and nobody else's (migration 0070), so an answer given
  * for an NPC voices every line it speaks. Migration 0071 gave every speaker's NPC an answer; one
- * that still has no type has no voice.
+ * that still has no type has no voice. An NPC split by sex (migration 0072) is a speaker per sex,
+ * each with that sex's answer.
  */
 function speakersBy(key: string): string {
   return `(
   select r."id", r."key", r."lineId", r."variant", r."lang", r."ord", r."npcType", r."npcId", ${SPEAKER_NAME} as "npcName",
          r."contributionId", r."voice" as "writtenVoice",
-         coalesce(n."race", '') as "race",
-         coalesce(n."gender", '') as "gender",
-         n."flavor" as "flavor"
+         coalesce(x."race", n."race", '') as "race",
+         coalesce(x."gender", n."gender", '') as "gender",
+         case when x."sex" is null then n."flavor" else x."flavor" end as "flavor",
+         x."sex"::int as "npcSex"
     from (
       select s.*, ${key} as "key",
              bool_or(s."lang" = '${BASE_LANG}') over (partition by ${key}, s."variant") as "hasEnglish",
@@ -129,6 +133,8 @@ function speakersBy(key: string): string {
     ) r
     left join "npc" n
       on n."npcKind" = r."npcType" and n."npcId" = r."npcId"
+    left join "npc_sex" x
+      on x."npcKind" = r."npcType" and x."npcId" = r."npcId"
    where case when r."hasEnglish" then r."lang" = '${BASE_LANG}' and r."lineId" = r."firstLine" else r."nth" = 1 end
 )`;
 }
@@ -154,6 +160,9 @@ const OWN_VOICE_SOURCES: ReadonlySet<string> = new Set(["accept", "complete", "g
 type Speaking = {
   lineId: string;
   variant: number;
+  npcType: string;
+  npcId: number;
+  npcSex: number | null;
   source: string;
   race: string;
   gender: string;
@@ -169,6 +178,9 @@ function voiced<T extends Speaking>(rows: T[], roster: Roster): (T & { voice: st
   const lineOf = (row: T) => `${row.lineId}|${row.variant}`;
   for (const row of rows) if (!written.has(lineOf(row))) written.set(lineOf(row), row.writtenVoice);
 
+  // Both sexes of a split NPC answered with one voice speak one line, listed once, and a line
+  // nobody voices (progress text) is listed once whatever the sexes' voices.
+  const seen = new Set<string>();
   return rows.map((row) => {
     // An NPC with no type has no voice to move to: its file stays, and nothing can make it again
     // until somebody says who the NPC is.
@@ -188,6 +200,12 @@ function voiced<T extends Speaking>(rows: T[], roster: Roster): (T & { voice: st
       fileName: variantFileName(row.fileName, voice),
       ...(row.generatable && !roster.isVoice(voice) ? { generatable: false, skipReason: "no-voice" } : {}),
     };
+  }).filter((row) => {
+    if (row.npcSex === null) return true;
+    const key = `${lineOf(row)}|${row.npcType}:${row.npcId}|${OWN_VOICE_SOURCES.has(row.source) ? row.voice : ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
 }
 
@@ -205,6 +223,7 @@ type Row = {
   flavor: string | null;
   /** The voice the speaker row was written with: the one the line's own file was made in. */
   writtenVoice: string;
+  npcSex: number | null;
   playerGender: string | null;
   text: string;
   originalText: string;
@@ -226,20 +245,21 @@ async function build(lang: Lang): Promise<CorpusLine[]> {
   const rows = await query<Row>(
     `select l."lineId", l."variant", l."source", l."questId", l."questTitle",
             s."npcId", s."npcName", s."npcType", s."race", s."gender", s."flavor", s."writtenVoice",
-            l."playerGender", l."text", l."originalText", l."fileName",
+            s."npcSex", l."playerGender", l."text", l."originalText", l."fileName",
             l."generatable", l."skipReason", s."contributionId"
        from ${SPEAKERS} s
        join "quest_line" l
          on l."lineId" = s."lineId" and l."variant" = s."variant"
         and l."lang" = $1 and l."isCurrent"
-      order by s."lang" <> $1, s."ord"`,
+      order by s."lang" <> $1, s."ord", s."npcSex"`,
     [lang],
   );
 
   if (rows.length === 0) throw new CorpusEmpty(lang);
 
-  return voiced(rows, await loadRoster()).map(({ writtenVoice: _written, ...row }) => ({
+  return voiced(rows, await loadRoster()).map(({ writtenVoice: _written, npcSex, ...row }) => ({
     ...row,
+    ...(isSex(npcSex) ? { npcSex } : {}),
     npcType: row.npcType as CorpusLine["npcType"],
     source: row.source as CorpusLine["source"],
     playerGender: row.playerGender as CorpusLine["playerGender"],
@@ -291,7 +311,7 @@ async function buildTranslated(lang: Lang): Promise<CorpusLine[]> {
             coalesce(t."questId", e."questId") as "questId",
             coalesce(qn."name", t."questTitle", e."questTitle") as "questTitle",
             s."npcId", coalesce(nn."name", s."npcName") as "npcName", s."npcType",
-            s."race", s."gender", s."flavor", s."writtenVoice",
+            s."race", s."gender", s."flavor", s."writtenVoice", s."npcSex",
             coalesce(t."playerGender", e."playerGender") as "playerGender",
             coalesce(t."text", e."text") as "text",
             coalesce(e."originalText", t."originalText") as "originalText",
@@ -321,16 +341,17 @@ async function buildTranslated(lang: Lang): Promise<CorpusLine[]> {
        left join "entity_name" nn
          on nn."kind" = s."npcType" and nn."entityId" = s."npcId"::text
         and nn."lang" = $1 and nn."isCurrent"
-      order by s."lang" <> '${BASE_LANG}', s."ord", ln."lineId"`,
+      order by s."lang" <> '${BASE_LANG}', s."ord", ln."lineId", s."npcSex"`,
     [lang],
   );
 
   if (rows.length === 0) throw new CorpusEmpty();
 
   return voiced(rows, await loadRoster()).map((raw) => {
-    const { textMissing, titleMissing, nameMissing, native, englishTitle, englishName, writtenVoice: _written, ...row } = raw;
+    const { textMissing, titleMissing, nameMissing, native, englishTitle, englishName, writtenVoice: _written, npcSex, ...row } = raw;
     return {
       ...row,
+      ...(isSex(npcSex) ? { npcSex } : {}),
       lang,
       ...(native ? {} : { english: { questTitle: englishTitle, npcName: englishName } }),
       npcType: row.npcType as CorpusLine["npcType"],

@@ -8,7 +8,9 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
 
-import { getResolution, getResolutionsById, listResolutions, PROVENANCES, upsertResolution } from "./store";
+import {
+  getResolution, getResolutionsById, getSexes, listResolutions, listSexes, PROVENANCES, unsplit, upsertResolution, upsertSex,
+} from "./store";
 
 // A bucket no other run shares: these ids are the primary key, so a fixed one would collide
 // between concurrent runs against the shared dev database.
@@ -281,5 +283,50 @@ describe("npc invariants", () => {
         ["creature", npcId],
       ),
     ).rejects.toThrow(/npc_none_is_empty_check/);
+  });
+});
+
+describe("upsertSex", () => {
+  function sex(overrides: Record<string, unknown> = {}) {
+    return {
+      npcKind: "creature" as const,
+      npcId,
+      sex: 3 as const,
+      race: "human",
+      flavor: "official",
+      provenance: "corpus" as const,
+      confirmed: true,
+      doubtful: false,
+      note: null,
+      resolvedBy: null,
+      ...overrides,
+    };
+  }
+
+  it("answers a sex of an NPC, gendered by the sex", async () => {
+    await upsertResolution(resolution({ race: "human", flavor: "official" }));
+    const stored = await upsertSex(sex());
+    expect(stored).toMatchObject({ sex: 3, gender: "female", race: "human", flavor: "official" });
+    expect((await listSexes()).get(`creature:${npcId}`)?.map((row) => row.sex)).toEqual([3]);
+  });
+
+  it("refuses a sex of an NPC nobody answered for", async () => {
+    await expect(upsertSex(sex())).rejects.toThrow();
+  });
+
+  it("keeps a moderator's answer over a client's", async () => {
+    await upsertResolution(resolution());
+    await upsertSex(sex({ provenance: "moderator", flavor: "warrior" }));
+    const stored = await upsertSex(sex({ provenance: "client", confirmed: false, flavor: "standard" }));
+    expect(stored.flavor).toBe("warrior");
+  });
+
+  it("goes with the NPC, and unsplit takes every sex away", async () => {
+    await upsertResolution(resolution());
+    await upsertSex(sex({ sex: 2 }));
+    await upsertSex(sex());
+    expect((await getSexes("creature", npcId)).map((row) => row.gender)).toEqual(["male", "female"]);
+    await unsplit("creature", npcId);
+    expect(await getSexes("creature", npcId)).toEqual([]);
   });
 });

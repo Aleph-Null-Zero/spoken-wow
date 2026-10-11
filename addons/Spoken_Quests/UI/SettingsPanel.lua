@@ -122,12 +122,12 @@ function SettingsPanel:Setup()
         function() return audio().OGThrall end,
         function(value) audio().OGThrall = value end)
 
-    -- Only with DialogueUI installed: on Spoken's DialogueUI page, or here with a Spoken too old
-    -- to have that page.
+    -- Only with DialogueUI installed: on Spoken's page, or here with a Spoken too old to have
+    -- room for them.
     if DialogueUIBridge and DialogueUIBridge.Problem and IsAddOnLoaded and IsAddOnLoaded("DialogueUI") then
         if Spoken and Spoken.AddDialogueUISettings then
             Spoken:AddDialogueUISettings(function(page)
-                return SettingsPanel:DialogueUIRows(page, L.OPT_PAGE_TITLE)
+                return SettingsPanel:DialogueUIRows(page, L.OPT_SECTION_DIALOGUEUI)
             end)
         else
             self:DialogueUIRows(layout, L.OPT_SECTION_DIALOGUEUI, L.OPT_DUI_NOTE)
@@ -302,7 +302,11 @@ function SettingsPanel:DialogueUIRows(layout, title, note)
     layout:Requires(Box("AutoScroll", L.OPT_DUI_AUTOSCROLL, L.OPT_DUI_AUTOSCROLL_TIP),
         function() return dui().Captions end, L.REASON_DUI_CAPTIONS)
     layout:Outdent()
-    Box("ShowPlayer", L.OPT_DUI_SHOW_PLAYER, L.OPT_DUI_SHOW_PLAYER_TIP)
+    local showPlayer = Box("ShowPlayer", L.OPT_DUI_SHOW_PLAYER, L.OPT_DUI_SHOW_PLAYER_TIP)
+    -- It keeps Spoken's window or subtitles on screen, and Voice Only has neither.
+    if Spoken and Spoken.GetPlayerStyle then
+        layout:ShowWhen(showPlayer, function() return Spoken:GetPlayerStyle() ~= "none" end)
+    end
     Box("PlayButton", L.OPT_DUI_PLAY_BUTTON, L.OPT_DUI_PLAY_BUTTON_TIP)
     return function()
         for key, value in pairs(Addon.DialogueUIDefaults) do dui()[key] = value end

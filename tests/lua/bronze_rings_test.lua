@@ -38,5 +38,15 @@ frame.BronzeTint = true
 env.PlayerFrame:RefreshConfig()
 Expect("...and bronze again when it is turned back on, through the player's refresh", rings[1].colour, "0.95 0.68 0.35")
 
+-- Classic Era (1.15.9, interface 11509): no bronze frames to match, so the rings stay their own.
+stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.LoadSpoken(SPOKEN)
+env = _G.SpokenEnv
+env.Addon:Enable()
+env.Addon.db.profile.Frame.BronzeTint = true
+local era = Recorded(_G.Spoken:CreateRoundButton(UIParent, "play"))
+env.Actions.RefreshRings()
+Expect("on Classic Era, with Bronze Border on, a round button's ring keeps its own colour", era.colour, "1.00 1.00 1.00")
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll bronze ring tests passed")

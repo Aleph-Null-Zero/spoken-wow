@@ -202,9 +202,13 @@ function describe(row: ActivityRow): { what: string; quote: string | null } {
         quote: files.join(", ") || null,
       };
     }
+    case "npc.split":
+      return { what: `split ${str(d.npcName) ?? row.subject} into a man and a woman`, quote: null };
+    case "npc.unsplit":
+      return { what: `gave ${str(d.npcName) ?? row.subject} one voice again`, quote: null };
     case "npc.resolved":
       return {
-        what: `set who ${str(d.npcName) ?? row.subject} is`,
+        what: `set who ${str(d.npcName) ?? row.subject} is${num(d.sex) === 3 ? " as a woman" : num(d.sex) === 2 ? " as a man" : ""}`,
         quote: [str(d.race), str(d.gender), str(d.flavor)].filter(Boolean).join(" · ") || null,
       };
     case "type.changed":

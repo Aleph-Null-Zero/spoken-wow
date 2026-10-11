@@ -49,6 +49,13 @@ function SpokenBooks:PagePicture()
 	return { kind = "texture", texture = BOOK_TEXTURE }
 end
 
+--- What the open page is written on (ItemTextGetMaterial: Parchment, Stone, Marble...), or nil
+--- with nothing open.
+function SpokenBooks:PageMaterial()
+	if not self.lastPage then return nil end
+	return ItemTextGetMaterial and ItemTextGetMaterial() or nil
+end
+
 -- What a readable can be (Data/Places.lua's `type`), in the order the Compendium lists them,
 -- and the keys of its names: `one` of it, over its line in the queue, and `all`, the Compendium's.
 SpokenBooks.TYPES = { "book", "letter", "note", "scroll", "tablet", "plaque", "grave", "exhibit", "other" }
@@ -180,6 +187,7 @@ function SpokenBooks:ClipFor(pageId)
 							or ((book and #book.pages > 1)
 								and format(L.OPT_PAGE_COUNT_FMT, place.number, #book.pages) or nil),
 						bullet = "book",
+						material = self:PageMaterial(),
 						portrait = self:PagePicture(),
 						actions = ACTIONS,
 					},

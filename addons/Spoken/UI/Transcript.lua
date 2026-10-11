@@ -9,6 +9,7 @@ local GAP = 4
 local EXPANDED_LINES = 8
 local BUTTON_SIZE = 14
 local HIGHLIGHT = "|cffffd100"
+Transcript.HIGHLIGHT = HIGHLIGHT
 local UTF8_CHAR = "[%z\1-\127\194-\244][\128-\191]*"
 local function Clamp(value, low, high)
     return math.max(low, math.min(high, value))
@@ -51,6 +52,16 @@ local function CharacterCount(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return math.max(1, count)
 end
+--- The first `count` characters of `text`, whole UTF-8 characters.
+function Transcript.Prefix(text, count)
+    local parts = {}
+    for char in text:gmatch(UTF8_CHAR) do
+        if #parts >= count then break end
+        parts[#parts + 1] = char
+    end
+    return table.concat(parts)
+end
+local Prefix = Transcript.Prefix
 -- Trailing punctuation lengthens a word's share of the recording.
 local STOPS = { ["."] = 0.7, ["!"] = 0.7, ["?"] = 0.7, ["。"] = 0.7, ["！"] = 0.7, ["？"] = 0.7,
     [","] = 0.35, [";"] = 0.35, [":"] = 0.35, ["，"] = 0.35, ["、"] = 0.35, ["；"] = 0.35, ["："] = 0.35 }
@@ -217,7 +228,37 @@ function Transcript:SetClip(clip)
     self:Reflow()
 end
 
+--- Held while the window the captions are in is drawn as one image: nothing in that image may
+--- change, or the client crashes (ASSERT(!m_deleted), CSimpleRender.cpp). The line that ends as
+--- the window fades out keeps its words, which fade with it; whatever came meanwhile is caught up
+--- on Release.
+function Transcript:Hold()
+    self.held = true
+end
+
+function Transcript:Release()
+    if not self.held then return end
+    self.held = nil
+    local start = self.heldStart
+    self.heldStart = nil
+    if start then
+        self:Started(start.clip)
+        self.startedAt = start.at
+    end
+    self:Sync()
+end
+
+--- A window that turns to the next line by fading out first sets this: fn(clip) is true while it
+--- will, and the captions keep the words showing until it has faded (it releases them).
+Transcript.holdFor = nil
+
+local function HeldFor(self, clip)
+    return clip ~= nil and clip ~= self.clip and self.holdFor ~= nil and self.holdFor(clip) and true or false
+end
+
 function Transcript:Started(clip)
+    if not self.held and HeldFor(self, clip) then self.held = true end
+    if self.held then self.heldStart = { clip = clip, at = GetTime() }; return end
     self.elapsed, self.startedAt = -(clip.delay or 0), GetTime()
     self:SetClip(clip)
     self.hasStarted = true
@@ -227,7 +268,14 @@ function Transcript:Started(clip)
 end
 
 function Transcript:Sync()
-    local current = SoundQueue:GetCurrentSound()
+    if self.held then return end
+    -- The line playing, or the sample a window previews.
+    local current = PlayerFrame and PlayerFrame:Current() or SoundQueue:GetCurrentSound()
+    -- A window turning to it by fading out first: these words stay until it has.
+    if HeldFor(self, current) then
+        self.held, self.heldStart = true, { clip = current, at = GetTime() }
+        return
+    end
     if current ~= self.clip then
         self.elapsed, self.startedAt = 0, nil
         self:SetClip(current)
@@ -408,14 +456,22 @@ function Transcript:Render()
     end
     -- Typed out, as the subtitle is: the words up to the one being read, the rest still to
     -- come. Nothing before the voice starts; the whole line once it has finished.
-    local typedTo
+    local typedTo, typedPiece, typedChars
     -- Only with a length to time it by: a clip with none shows its whole line, as before.
     if cfg.Typewriter and progress then
-        if inSpeech then typedTo = self.activeWord
+        if inSpeech then
+            typedTo = self.activeWord
+            -- By letter, the piece being read is typed only as far as the voice has got.
+            if (cfg.TypewriterBy or "letter") == "letter" and segment then
+                local share = (progress * self.totalWeight - segment.start) / math.max(1e-6, segment.finish - segment.start)
+                typedPiece = segment.index
+                typedChars = math.max(1, math.ceil(Clamp(share, 0, 1) * CharacterCount(segment.text)))
+            end
         elseif not (progress and progress >= 1) then typedTo = 0 end
     end
     local first = math.floor(self.top)
-    local key = format("%d:%d:%d:%d:%d", first, highlighted or 0, neighbor or 0, n, typedTo or -1)
+    local key = format("%d:%d:%d:%d:%d:%d:%d", first, highlighted or 0, neighbor or 0, n, typedTo or -1,
+        typedPiece or 0, typedChars or 0)
     if self.renderedKey ~= key then
         self.renderedKey = key
         local color = self.style and self.style.highlight or HIGHLIGHT
@@ -425,8 +481,10 @@ function Transcript:Render()
             local parts = {}
             for _, piece in ipairs(line or {}) do
                 if typedTo and piece.word > typedTo then break end
+                if typedPiece and piece.index > typedPiece then break end
+                local text = piece.index == typedPiece and Prefix(piece.text, typedChars) or piece.text
                 parts[#parts + 1] = piece.prefix .. ((piece.word == highlighted or piece.word == neighbor)
-                    and color .. piece.text .. "|r" or piece.text)
+                    and color .. text .. "|r" or text)
             end
             label:SetText(table.concat(parts))
         end
@@ -444,9 +502,12 @@ function Transcript:Place()
     local placed = format("%.4f:%d:%d:%d", top, step, n, #(self.lines or {}))
     if self.placedKey == placed then return end
     self.placedKey = placed
+    -- Room over the first line (style.padTop): the DialogueUI window leaves a line's room over
+    -- and under the words, which a line gliding out or in fades through before it reaches the edge.
+    local padTop = self.style and self.style.padTop
     for row, label in ipairs(self.labels) do
         label:ClearAllPoints()
-        label:SetPoint("TOPLEFT", 0, -((row - 1) - fraction) * step)
+        label:SetPoint("TOPLEFT", 0, -((padTop or 0) + ((row - 1) - fraction) * step))
         local line = self.lines and self.lines[first + row - 1]
         label:SetShown(line ~= nil and (row <= n or (row == n + 1 and fraction > 0)))
         -- As much of the row as is inside the clipped frame, so a line half past an edge does not
@@ -535,7 +596,7 @@ function Transcript:Dock(parent, anchor, point, x, y, width, height)
 end
 
 function Transcript:Update()
-    if not self.frame then return end
+    if not self.frame or self.held then return end
     self:Render()
     self.frame:SetShown(Config().Enabled and Addon:DisplayStyle() ~= "subtitle" and self.clip ~= nil and self.text ~= "")
     Subtitle:Update()
@@ -547,7 +608,8 @@ function Transcript:Reset()
     -- is the choice of where captions go, not a tweak.
     local defaults = Defaults.profile.Transcript
     for _, key in ipairs({ "Lines", "FontSize", "ScrollMode", "HighlightWord", "Typewriter", "TypewriterBy",
-        "SubtitleShadow", "SubtitleScale" }) do
+        "SubtitleShadow", "SubtitleScale", "SubtitleProgress", "SubtitleName", "SubtitleScroll",
+        "SubtitleSentences" }) do
         cfg[key] = defaults[key]
     end
     Subtitle:Reset()
@@ -566,7 +628,8 @@ local function SameStyle(a, b)
     if a == b then return true end
     if not a or not b then return false end
     if a.font ~= b.font or a.shadow ~= b.shadow or a.highlight ~= b.highlight or a.lines ~= b.lines
-        or a.size ~= b.size or a.lineGap ~= b.lineGap or a.paragraphs ~= b.paragraphs then return false end
+        or a.size ~= b.size or a.lineGap ~= b.lineGap or a.paragraphs ~= b.paragraphs
+        or a.padTop ~= b.padTop then return false end
     local ca, cb = a.color or {}, b.color or {}
     return ca[1] == cb[1] and ca[2] == cb[2] and ca[3] == cb[3]
 end
@@ -696,6 +759,7 @@ function Transcript:Initialize()
     frame:SetScript("OnSizeChanged", function() self:Reflow() end)
     local accumulated = 0
     frame:SetScript("OnUpdate", function(_, elapsed)
+        if self.held then return end
         self:Glide(elapsed)
         accumulated = accumulated + elapsed
         if accumulated >= 0.05 then accumulated = 0; self:Update() end

@@ -33,7 +33,7 @@ afterAll(closeDb);
 /** An English line spoken by `speakers`, each written with the voice the extract gave it. */
 async function line(
   speakers: { npcId: number; race: string; gender: string; flavor: string | null }[],
-  source: "accept" | "gossip" = "accept",
+  source: "accept" | "gossip" | "progress" = "accept",
 ) {
   await db().query(
     `insert into "quest_line"
@@ -158,6 +158,77 @@ describe("a greeting's voice", WHOLE_CORPUS, () => {
       `${lineId}~human-male-warrior ${questId}-accept-human-male-warrior human-male-warrior`,
       `${lineId} ${questId}-accept human-male-official`,
       `${lineId} ${questId}-accept human-male-official`,
+    ]);
+  });
+});
+
+describe("an NPC split by sex", WHOLE_CORPUS, () => {
+  async function sex(npcId: number, value: 2 | 3, race: string, flavor: string | null) {
+    await db().query(
+      `insert into "npc_sex" ("npcKind", "npcId", "sex", "race", "flavor", "provenance", "confirmed")
+       values ('creature', $1, $2, $3, $4, 'corpus', true)`,
+      [npcId, value, race, flavor],
+    );
+  }
+
+  /** As spoken(), with the sex each row is the NPC drawn as. */
+  async function bySex(): Promise<string[]> {
+    return (await corpus()).lines
+      .filter((candidate) => candidate.lineId === lineId || candidate.lineId.startsWith(`${lineId}~`))
+      .sort((a, b) => a.npcId - b.npcId || (a.npcSex ?? 0) - (b.npcSex ?? 0))
+      .map((l) => `${l.npcSex ?? "-"} ${l.lineId} ${l.voice}`);
+  }
+
+  it("speaks each line once per sex, the other sex's in a file of its own voice", async () => {
+    await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "gossip");
+    await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await sex(npcIds[0], 2, "human", "official");
+    await sex(npcIds[0], 3, "human", "official");
+
+    expect(await bySex()).toEqual([
+      `2 ${lineId} human-male-official`,
+      `3 ${lineId}~human-female-official human-female-official`,
+    ]);
+  });
+
+  it("lists a line once when both sexes are read by one voice", async () => {
+    await line([{ npcId: npcIds[0], race: "orc", gender: "male", flavor: "guard" }], "gossip");
+    await npc(npcIds[0], { race: "orc", gender: "male", flavor: "guard", provenance: "corpus" });
+    // A race with no genders is read by one voice whatever the sex.
+    const type = `t${questId}`;
+    await db().query(`insert into "race" ("key") values ($1)`, [type]);
+    await db().query(`insert into "voice" ("name", "race", "gender") values ($1, $1, '')`, [type]);
+    await db().query(`insert into "voice_assignment" ("race", "voice") values ($1, $1)`, [type]);
+    try {
+      await sex(npcIds[0], 2, type, null);
+      await sex(npcIds[0], 3, type, null);
+      expect(await bySex()).toEqual([`2 ${lineId}~${type} ${type}`]);
+    } finally {
+      await db().query(`delete from "npc" where "npcId" = $1`, [npcIds[0]]);
+      await db().query(`delete from "voice_assignment" where "race" = $1`, [type]);
+      await db().query(`delete from "voice" where "name" = $1`, [type]);
+      await db().query(`delete from "race" where "key" = $1`, [type]);
+    }
+  });
+
+  it("lists a line nobody voices once", async () => {
+    await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "progress");
+    await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await sex(npcIds[0], 2, "human", "official");
+    await sex(npcIds[0], 3, "human", "official");
+
+    expect(await bySex()).toEqual([`2 ${lineId} human-male-official`]);
+  });
+
+  it("leaves the NPC's other speakers in one voice", async () => {
+    await line(npcIds.slice(0, 2).map((npcId) => ({ npcId, race: "human", gender: "male", flavor: "official" })), "gossip");
+    await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await npc(npcIds[1], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await sex(npcIds[0], 3, "human", "warrior");
+
+    expect(await bySex()).toEqual([
+      `3 ${lineId}~human-female-warrior human-female-warrior`,
+      `- ${lineId} human-male-official`,
     ]);
   });
 });

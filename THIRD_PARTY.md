@@ -82,6 +82,8 @@ None of this is the project's to license, and the MIT grant does not reach it.
 - **Lore page art** (`addons/Spoken_Zones/Textures/Art/*.tga`): the spellbook's parchment,
   divider and backplate, and the quest log's details page and frame, cut from the game's UI
   files (Forever client) so the page looks the same on every client. They are Blizzard's.
+- **Small window parchment** (`addons/Spoken/Textures/MinimalParchment.tga`): a band of the same
+  spellbook page, cut to the small window's shape. Blizzard's.
 - **Subtitle background and progress line** (`addons/Spoken/Textures/SubtitleBand.tga`,
   `SubtitleLine.tga`): the band shade and the line's gold fill from shorley's
   [Spoken Subtitles](https://github.com/shorley-gm/spoken-subtitles) (MIT), used as they are

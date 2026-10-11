@@ -584,8 +584,10 @@ function Contribute:Capture()
         fields[#fields + 1] = { "npc", NPCField() }
         Observations(fields)
         -- An NPC can say several different things, so gossip is keyed on the words as well.
+        -- Keyed on the sex too, so a man and a woman saying the same words are two lines.
+        local sex = UnitSex and UnitSex("npc")
         return Spoken.Contribute:Envelope("quests", fields, gossip),
-            format("g:%d:%d", NPCID(), Spoken.Contribute:Checksum(gossip))
+            format("g:%d:%d%s", NPCID(), Spoken.Contribute:Checksum(gossip), sex == 3 and ":f" or "")
     end
 
     return nil
@@ -614,13 +616,15 @@ local function HasSoundForCurrent()
     -- GUID, and hands that name to string.gsub, so a nil one is an error thrown at a player
     -- who only walked away from a conversation.
     if gossip and gossip ~= "" and (guid or name) then
-        return DataModules:PrepareSound({
+        local soundData = {
             event = Enums.SoundEvent.Gossip,
             unitGUID = guid,
             name = name,
             unitIsObjectOrItem = Utils:IsNPCObjectOrItem(),
             text = gossip,
-        })
+        }
+        -- A woman speaking in the man's voice plays, and is still a line the site lacks.
+        return DataModules:PrepareSound(soundData) and not DataModules:IsOtherSex(soundData)
     end
 
     return false
