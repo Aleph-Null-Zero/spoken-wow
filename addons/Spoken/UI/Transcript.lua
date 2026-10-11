@@ -259,7 +259,7 @@ end
 function Transcript:Sync()
     if self.held then return end
     -- The line playing, or the sample a window previews.
-    local current = SoundQueue:GetCurrentSound() or (PlayerFrame and PlayerFrame.sample)
+    local current = PlayerFrame and PlayerFrame:Current() or SoundQueue:GetCurrentSound()
     -- A window turning to it by fading out first: these words stay until it has.
     if HeldFor(self, current) then
         self.held, self.heldStart = true, { clip = current, at = GetTime() }
