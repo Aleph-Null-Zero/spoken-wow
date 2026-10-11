@@ -17,6 +17,7 @@ from tts_cli.ignores import ignored_files
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
                             moment_of, split_voice, subfolder_from_line_id, variant_file_name)
+from tts_cli.npc_sexes import SEX_GENDER
 from tts_cli.store import SUBFOLDERS, audio_extension, stored_files
 from tts_cli.utils import (get_first_n_words, get_last_n_words,
                            replace_dollar_bs_with_space)
@@ -175,7 +176,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
     followup_by_sex = {}
     # Which sex each other speaking creature is drawn as, so the addon can tell a man's voice
     # given to a woman, and offer her line for contribution.
-    unit_sex = {"male": 2, "female": 3}
+    unit_sex = {gender: sex for sex, gender in SEX_GENDER.items()}
     split = {(row["npcType"], row["npcId"]) for row in corpus.get("npcSexes", [])}
     npc_sex = {npc["npcId"]: unit_sex[npc["gender"]] for npc in corpus.get("npcs", [])
                if npc["npcType"] == "creature" and npc.get("gender") in unit_sex
@@ -203,9 +204,11 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             if line.get("npcSex"):
                 followup_by_sex.setdefault(line["npcId"], {}).setdefault(broadcast, {})[
                     line["npcSex"]] = stem
-                if line["npcSex"] == 2:
-                    followup.setdefault(line["npcId"], {})[broadcast] = stem
-            followup.setdefault(line["npcId"], {}).setdefault(broadcast, stem)
+            files = followup.setdefault(line["npcId"], {})
+            if line.get("npcSex") == 2:
+                files[broadcast] = stem
+            else:
+                files.setdefault(broadcast, stem)
             continue
 
         if line["source"] == "gossip":
@@ -214,17 +217,17 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             text = escape_lua_string(line["originalText"])
             # The bare hash: the addon adds the gender prefix when resolving.
             digest = gossip_hash_from_line_id(line["lineId"])
+            own = gossip_hash_from_line_id(base_id)
             if line.get("npcSex") and kind == "creature":
-                gossip_by_sex.setdefault(line["npcId"], {}).setdefault(line["npcSex"], {})[
-                    gossip_hash_from_line_id(base_id)] = digest
-                digest = gossip_hash_from_line_id(base_id)
+                gossip_by_sex.setdefault(line["npcId"], {}).setdefault(line["npcSex"], {})[own] = digest
+                digest = own
             elif kind == "creature" and line["npcId"] in npc_sex:
                 sex_of[line["npcId"]] = npc_sex[line["npcId"]]
             gossip_by_id[kind].setdefault(line["npcId"], {})[text] = digest
             # Same-named NPCs of different voices share one entry here, so it names the line's
             # own file, never a voice's that only some of them speak.
             gossip_by_name[kind].setdefault(
-                escape_lua_string(line["npcName"]), {})[text] = gossip_hash_from_line_id(base_id)
+                escape_lua_string(line["npcName"]), {})[text] = own
             continue
 
         # Progress text is never voiced, so an entry would resolve to silence.
