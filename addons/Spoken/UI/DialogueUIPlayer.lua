@@ -784,7 +784,7 @@ end
 
 --- Still a while, and nothing in it loading: it may become one image.
 function Skin:Still()
-    if self.settling or self.landing then return false end
+    if self.settling or self.landing or self.tuck then return false end
     if (self.stillFor or STILL) < STILL then return false end
     local viewport = self.viewport
     return not (Loading(self.picture) or Loading(self.badge)
@@ -844,7 +844,9 @@ function Skin:Buffer()
     local frame = self.frame
     if self.buffered then return true end
     if not frame.SetIsFrameBuffer then return false end
-    -- Its own small animations finished first.
+    -- Its own small animations finished first, and a tuck that outlasted the wait (ARM_MOST): it
+    -- may not move as one image.
+    self:StopTuck()
     self.lineFade, self.countFade = nil, nil
     if self.count then
         self.stoppedAlpha = self.shownStopped and 1 or 0
@@ -1154,8 +1156,7 @@ function Skin:Settle(dialog)
     self:StopTuck()
     self:StopLanding()
     if self.wordsHidden then self:ShowWords(1) end
-    self.arming, self.preparing = nil, nil
-    self:Undeafen()
+    -- Coming back as it is: a fade under way goes on, and Update hands it the line.
     if not self:Owns(dialog) then
         local queued = self:QueuedBy(dialog)
         self:Update()
@@ -1170,6 +1171,10 @@ function Skin:Settle(dialog)
         return
     end
     self.justClosed = nil
+    -- In full at once: no fade, nor a turn, waits to run, and its words are its line's.
+    self.arming, self.preparing, self.turning = nil, nil, nil
+    self:Undeafen()
+    Transcript:Release()
     local ok, err = pcall(self.StartSettle, self, dialog)
     if not ok then
         self.settling = nil

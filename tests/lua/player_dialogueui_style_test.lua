@@ -1161,6 +1161,25 @@ CloseDialog()
 stub.Advance(1.5)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Late", portrait = { kind = "none" } } }))
 Expect("...nor a quest's line queued long after", tostring(Skin.settling) .. " " .. tostring(Skin.tuck), "nil nil")
+-- Coming back from nothing on another's line, and the quest's line queued while it waits to fade
+-- in: its page goes behind, and the window still fades in, after the page.
+Spoken:StopAll()
+for _ = 1, 40 do Skin:Tick(0.05) end
+stub.Advance(2)
+zones:Enqueue({ key = "z:98", path = "z98.ogg", length = 30, present = { header = "Mulgore", label = "Thunder Bluff", transcript = "Lore." } })
+stub.Advance(1)
+OpenDialog()
+CloseDialog()
+Expect("closed on another's line, the window waits unseen to fade in",
+    tostring(Skin.preparing ~= nil) .. " " .. Skin.level, "true 0")
+stub.Advance(0.4)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Quick Third", portrait = { kind = "none" } } }))
+Expect("...a quest's line queued then goes behind it, the fade still to come",
+    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.preparing ~= nil), "true true")
+Skin.stillFor = 1
+Expect("...not as one image while the page flies", Skin:Still(), false)
+for _ = 1, 40 do Skin:TuckStep(0.05); Skin:Tick(0.05) end
+Expect("...and in once it has", tostring(Skin.tuck) .. " " .. Skin.level, "nil 1")
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 
