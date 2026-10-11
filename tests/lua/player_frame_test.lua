@@ -197,6 +197,12 @@ zones:Enqueue(H.Clip({ present = { header = "Durotar", bullet = "zone", portrait
 ExpectOf("a held line says why after its name", function()
     return tostring(F.held:IsShown()) .. " " .. F.held:GetText()
 end, "true • (in combat)")
+env.Addon.db.profile.Transcript.SubtitleProgress = false
+F:RefreshConfig()
+Expect("Show Progress off hides the large window's progress line", F.progress.track:IsShown(), false)
+env.Addon.db.profile.Transcript.SubtitleProgress = true
+F:RefreshConfig()
+Expect("...and on shows it", F.progress.track:IsShown(), true)
 
 ---------------------------------------------------------------- portrait dispatch
 env, quests, zones = Boot(); F = env.PlayerFrame

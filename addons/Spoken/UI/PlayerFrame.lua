@@ -339,6 +339,7 @@ function PlayerFrame:Layout()
         words > 0 and words + 2 * lineHeight or 0)
 
     self.progress.track:SetWidth(width)
+    self.progress.track:SetShown(Addon:Profile("Transcript").SubtitleProgress ~= false)
     self:LayoutHeader()
     self.laying = nil
 end
