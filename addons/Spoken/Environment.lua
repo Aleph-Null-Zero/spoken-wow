@@ -24,7 +24,7 @@ SpokenEnv = setmetatable({
     AddonFolder = "Spoken",
     -- A literal because this file loads before any metadata API exists;
     -- scripts/quests/package.sh refuses to build when it disagrees with the .toc.
-    AddonVersion = "3.3.0",
+    AddonVersion = "3.4.0-alpha.1",
 }, { __index = _G })
 
 -- Created here, filled by API.lua. Reusing an existing table keeps a feature addon's
