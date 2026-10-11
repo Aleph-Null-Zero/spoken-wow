@@ -203,8 +203,8 @@ end, _G)
 
 local function FrameProgress(bar, left, right, middle, yellow)
     local track, fill = bar.track, bar.fill
-    -- As the cards' meter lays the art out: the fill 8 inside the border's ends and 2 short of
-    -- the background's, the border's own 31 rows scaled to PROGRESS_HEIGHT.
+    -- The fill 8 inside the border's ends and 2 short of the background's, the border's own 31
+    -- rows scaled to PROGRESS_HEIGHT.
     local k = PROGRESS_HEIGHT / (middle.height > 0 and middle.height or 31)
     track:SetHeight(PROGRESS_HEIGHT)
     local function Piece(atlas, layer, width)
