@@ -12,7 +12,7 @@ import Key from "@/components/Key";
 import Pagination from "@/components/Pagination";
 import { Loading, Refreshing } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
-import RegenerateDialog from "@/components/RegenerateDialog";
+import RegenerateDialog, { type PendingBatch } from "@/components/RegenerateDialog";
 import RegenerationPanel from "@/components/RegenerationPanel";
 import { LineRow, type RowState } from "@/components/zones/LineRow";
 import { LoreDialog } from "@/components/zones/LoreDialog";
@@ -20,7 +20,7 @@ import { Player } from "@/components/zones/Player";
 import ReportDialog from "@/components/ReportDialog";
 import { SearchBar } from "@/components/zones/SearchBar";
 import { Contained, Wide } from "@/components/Width";
-import { totals as estimateTotals, LIST_RATE, type Estimate } from "@/lib/generation/billing";
+import { totals as estimateTotals, LIST_RATE } from "@/lib/generation/billing";
 import {
   fetchGenerationStatus,
   fetchQueue,
@@ -41,6 +41,8 @@ import * as echo from "@/lib/url-echo";
 // is the pause after the last one, not a rate limit. Anyone who wants results before it
 // elapses presses Enter, which fires the search immediately.
 const DEBOUNCE_MS = 500;
+
+type Batch = PendingBatch & { lineIds: string[] };
 
 export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   const lang = useLang();
@@ -100,11 +102,10 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
    * search box keeps being typed into, and spending on a set nobody was shown is the
    * failure to avoid.
    */
-  const [pendingBatch, setPendingBatch] = useState<{
-    label: string;
-    estimate: Estimate;
-    lineIds: string[];
-  } | null>(null);
+  const [pendingBatch, setPendingBatch] = useState<Batch | null>(null);
+  // Which click the open dialog belongs to, so a set that lands after a cancel or a later
+  // click is dropped rather than shown.
+  const batchRequest = useRef(0);
 
   // The shared queue, which both sections poll. A batch someone else started is spending
   // the same plan's credits, so it belongs on this screen too.
@@ -364,13 +365,21 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
    */
   const askToRegenerateAll = useCallback(() => {
     if (!result || result.total === 0) return;
+    const request = ++batchRequest.current;
+    // Open on the click, with the button's count, and fill it in when the ids land.
+    setPendingBatch({
+      label: `all ${result.total.toLocaleString()} filtered lines`,
+      estimate: null,
+      lineIds: [],
+    });
+    const settle = (next: (open: Batch) => Batch) =>
+      setPendingBatch((open) => (open && request === batchRequest.current ? next(open) : open));
 
     fetch(withLang(lang, `/api/zones/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
       .then((response) => response.json())
       .then(({ ids, totalChars }: { ids: string[]; totalChars: number }) => {
-        if (ids.length === 0) return;
         const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
-        setPendingBatch({
+        settle(() => ({
           label: `all ${ids.length.toLocaleString()} filtered lines`,
           // Lines and files are the same count here: naming.mjs gives every line a file of
           // its own. The quests side has to tell them apart because 1,076 of its files are
@@ -380,9 +389,9 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
             rate,
           ),
           lineIds: ids,
-        });
+        }));
       })
-      .catch(() => {});
+      .catch(() => settle((open) => ({ ...open, failed: true })));
   }, [result, status, lang]);
 
   /**
@@ -393,7 +402,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
    * the snapshot exists at all.
    */
   const startBatch = useCallback(async () => {
-    if (!pendingBatch) return;
+    if (!pendingBatch?.estimate) return;
     const { lineIds } = pendingBatch;
     setPendingBatch(null);
     setQueueNote(null);

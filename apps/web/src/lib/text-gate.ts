@@ -61,19 +61,30 @@ export function hasInvalidChars(text: string): boolean {
  * English, shown so the explorer has something to show, and voicing it would file an English
  * recording under another language.
  */
-export function isVoiceable(
-  line: { skipReason: string | null; voice?: string; lang?: Lang; playerGender?: "m" | "f" | null },
-  effectiveText: string,
-): boolean {
-  if (line.skipReason === "progress" || line.skipReason === "untranslated") return false;
+export function isVoiceable(line: GatedLine, effectiveText: string): boolean {
+  return unvoicedReason(line, effectiveText) === null;
+}
+
+type GatedLine = {
+  skipReason: string | null;
+  voice?: string;
+  lang?: Lang;
+  playerGender?: "m" | "f" | null;
+};
+
+export type UnvoicedReason = "progress" | "untranslated" | "no-voice" | "invalid-chars";
+
+/** Why isVoiceable says no, or null when it says yes. */
+export function unvoicedReason(line: GatedLine, effectiveText: string): UnvoicedReason | null {
+  if (line.skipReason === "progress" || line.skipReason === "untranslated") return line.skipReason;
   // A model slot has no voice chosen yet (voices.ts isModelVoice). Asked of the voice rather
   // than of the corpus's "no-voice" skipReason, because a translation's row carries its own
   // skipReason, decided from its text alone, and would otherwise be voiced in English's stead.
-  if (line.voice !== undefined && isModelVoice(line.voice)) return false;
+  if (line.voice !== undefined && isModelVoice(line.voice)) return "no-voice";
   // Judged on what would be sent: a translation's $N is spoken as its language's word
   // (player-words.ts), so it is not what stops the line.
   const spoken = speakPlayerTokens(effectiveText, line.lang ?? BASE_LANG, line.playerGender ?? null);
-  return !hasInvalidChars(spoken);
+  return hasInvalidChars(spoken) ? "invalid-chars" : null;
 }
 
 /**
