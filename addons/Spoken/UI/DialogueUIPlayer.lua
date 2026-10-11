@@ -387,7 +387,6 @@ function Skin:Initialize()
     end
 
     self.progress = Actions.ProgressBar(content)
-    -- At the header's right end: Stop or Replay, Skip, then Report.
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(1)
     local play = Actions.RoundButton(self.controls, 12)
