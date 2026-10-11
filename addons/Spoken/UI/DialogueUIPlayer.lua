@@ -1086,10 +1086,15 @@ function Skin:Settle(dialog)
     if self:Defer("update") then return end
     self:StopTuck()
     self:StopLanding()
-    -- Coming back as it is: a fade under way goes on, and Update hands it the line. Not for a line
-    -- an earlier page of this dialog queued (the greeting before a quest): this window never
-    -- showed it, so it settles out of the dialog with it, the later pages' lines counted after it.
-    if not self:Owns(dialog) and not self:OwnedEarlier(dialog) then
+    -- The line playing came from an earlier page of this dialog (the greeting before a quest), so
+    -- this window never showed it: it settles out of the dialog with it, and the page this one
+    -- queued goes behind once it has landed.
+    self.tuckAfter = nil
+    if not self:Owns(dialog) and self:OwnedEarlier(dialog) then
+        local queued = self:QueuedBy(dialog)
+        self.tuckAfter = queued and { dialog = dialog, clip = queued } or nil
+    -- Coming back as it is: a fade under way goes on, and Update hands it the line.
+    elseif not self:Owns(dialog) then
         local queued = self:QueuedBy(dialog)
         self:Update()
         if queued then
@@ -1249,7 +1254,22 @@ function Skin:LandStep(elapsed)
     self:Give(landing, Bounce(t))
     local shadow = 1 - Smooth(Clamp(t / 0.25, 0, 1))
     self:ShadowUnder(0.3 * shadow, 0.35 * shadow)
-    if t >= LAND_TIME then self:StopLanding() end
+    if t >= LAND_TIME then
+        local after = self:StopLanding()
+        -- Still waiting behind the line this window landed with: its page goes behind it now.
+        if after and PlayerFrame:Current() ~= after.clip then
+            for index, clip in ipairs(SoundQueue.sounds) do
+                if index > 1 and clip == after.clip then
+                    local ok, err = pcall(self.StartTuck, self, after.dialog, after.clip)
+                    if not ok then
+                        self:StopTuck()
+                        if geterrorhandler then geterrorhandler()(err) end
+                    end
+                    break
+                end
+            end
+        end
+    end
 end
 
 --- The flight from the dialog cut short: where it rests at once, at its own size.
@@ -1263,12 +1283,15 @@ function Skin:StopSettle()
     if not self:Defer("refresh") then self:Layout() end
 end
 
+--- Puts the landing at its end. Returns the page waiting to go behind once it landed, which only
+--- a landing that ran its course sends (LandStep).
 function Skin:StopLanding()
-    local landing = self.landing
-    self.landing = nil
+    local landing, after = self.landing, self.tuckAfter
+    self.landing, self.tuckAfter = nil, nil
     if self.wordsHidden then self:ShowWords(1) end
     if self.shadow then self.shadow:Hide() end
     if landing then self:Rest(landing) end
+    return after
 end
 
 --- This window's own shadow, `reach` of the way thrown (down and right) and `alpha` dark: a frame

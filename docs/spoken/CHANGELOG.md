@@ -6,8 +6,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 - **Fixed: closing DialogueUI on a giver's greeting after taking a quest showed the queue's
   animation with no window.** The quest's page went behind a window that was not on screen.
-  Now the window flies out of the dialog with the greeting, the quest counted after its title.
-  *([Nucabe](https://github.com/Nucabe))*
+  Now the window flies out of the dialog with the greeting, and the quest's page goes behind it
+  once it has landed. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
