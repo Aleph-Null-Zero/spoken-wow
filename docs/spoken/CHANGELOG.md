@@ -19,12 +19,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Subtitles get the windows' settings, and the windows type by letter.** Subtitles gain Show Name
   and Title, Highlight Words, Auto-Scroll line by line or page by page, Text Size and Hide Portrait.
   Type By sets whether a window types out words or letters. *([Nucabe](https://github.com/Nucabe))*
-- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles, the
-  DialogueUI window and the large window, and Voice Only shows none of the words' settings. Spoken
-  Quests' DialogueUI switches have a DialogueUI section of their own after the narrator style's
-  settings. On Forever, Bronze Border has left the narrator style's settings for a Colours section:
-  it colours every round button Spoken draws and the small window's metal.
-  *([Nucabe](https://github.com/Nucabe))*
+- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles and every
+  window, and Voice Only shows none of the words' settings. Spoken Quests' DialogueUI switches have
+  a DialogueUI section of their own after the narrator style's settings. On Forever, Bronze Border
+  has left the narrator style's settings for a Colours section: it colours every round button Spoken
+  draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
 - **The large window is the game's Talking Head frame.** Its words sit inside the box, under the
   speaker's gold name, beside the portrait (a 3D model where there is one). Stopped and a count of
   the lines waiting follow the name in place of the queue's rows, Stop, Skip and Report take the
@@ -32,6 +31,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   line to the next too, and goes while a DialogueUI dialog hides the interface, where its 3D
   portrait stayed behind. Clients without the Talking Head's art draw Spoken's own in the same
   places. *([Nucabe](https://github.com/Nucabe))*
+- **The small window has the DialogueUI window's controls, on parchment.** Stop or Replay, Skip
+  and Report are round buttons in its header, a progress line runs under the words, and the title
+  says "• (Stopped)" and how many lines wait, in place of the list. Its new Background setting
+  draws it on parchment, the default, or on the dark rock it had. It fades in and out more
+  slowly, from one line to the next too, and goes while a DialogueUI dialog hides the interface. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.0 — 2026-10-11
 

@@ -72,6 +72,8 @@ E.Minimap={Setup=function() end}; E.Options={Setup=function() end}
 -- below, and the defaults themselves are pinned in defaults_test.
 E.Addon:InitDB()
 E.Addon.db.profile.Frame.Style='minimal'
+-- The dark background keeps the gold highlight the checks below expect.
+E.Addon.db.profile.Frame.MinimalBackground='dark'
 E.Addon.db.profile.Audio.LineGap=0
 E.Addon.db.profile.Transcript.HighlightWord=true
 E.Addon:Enable()
@@ -97,6 +99,9 @@ local function Advance(seconds)
     clock=target
     T:Update()
     M:Tick(seconds)
+    -- Each fader runs on its own driver frame, so it is stepped here too.
+    if M.fader then M.fader:Step(seconds) end
+    if E.PlayerFrame.fader then E.PlayerFrame.fader:Step(seconds) end
 end
 local function Clip(key,text,length)
     return {key=key,path=key,length=length or 60,text=text,
@@ -132,7 +137,8 @@ source:Enqueue(a); source:Enqueue(b)
 Check(T.frame:IsShown(),'transcript appears for a narrated quest')
 Check(T.frame:GetParent()==M.frame and T.frame:IsVisible(),'captions belong to the visible portrait player')
 Check(math.abs(M.frame:GetTop()-initialTop)<.001,'adding captions preserves the portrait position')
-Check(T.frame:GetTop()<M.bar:GetBottom(),'captions sit below the existing progress bar')
+Check(T.frame:GetTop()<=M.title:GetBottom(),'captions sit below the line title')
+Check(M.progress.track:GetTop()<=T.frame:GetBottom(),'the progress line runs along the foot of the captions')
 Check(T.frame:GetBottom()>M.panel:GetBottom(),'caption text fits inside the existing stone panel')
 Check(T.frame:GetLeft()==M.content:GetLeft(),'captions align with the player name and title')
 Check(not T.frame.backdrop and not T.speaker and not T.status,'captions have no independent window chrome')
@@ -181,7 +187,9 @@ Check(not T.frame:IsShown() and Q:IsPlaying(a),'hiding captions leaves audio pla
 T:SetEnabled(true)
 Check(T.frame:IsShown() and T:GetElapsed()==10 and HighlightCount()>=1,'reopening catches up to current narration')
 Q:Skip()
-Check(T.clip==b and Plain(Captions())=='Second quest text','skip switches to the next queued clip')
+Check(T.clip==a and T.held,'skip keeps the first line words while the window fades out')
+M.fader:Step(1)
+Check(T.clip==b and Plain(Captions())=='Second quest text','skip switches to the next queued clip once it has')
 Check(T:GetElapsed()==0 and T.activeWord==1,'new clip begins at its first word')
 Check(Captions()=='|cffffd100Second|r |cffffd100quest|r text','current and next word are highlighted together')
 Advance(19)
@@ -206,7 +214,8 @@ Q:RemoveAllSoundsFromQueue()
 
 source:Enqueue(Clip('c',long,30)); Advance(12)
 source:Enqueue(Clip('no-text',nil,5)); Q:Skip()
-Check(not T.frame:IsShown() and Captions()=='','a clip without text never shows previous captions')
+M.fader:Step(1)
+Check(not T.frame:IsShown() and Captions()=='','a clip without text never shows previous captions once the window has turned to it')
 Q:RemoveAllSoundsFromQueue()
 Check(not T.frame:IsShown(),'Stop clears captions')
 source:Enqueue(Clip('d',long,60)); Advance(30)
@@ -262,6 +271,8 @@ Check(HighlightCount()==0 and T.activeWord==nil,'waiting clips do not claim a wo
 held=false; Advance(1)
 Check(Q:IsPlaying() and T:GetElapsed()==0 and T.activeWord==1,'gated clip begins highlighting only when audio starts')
 Q:RemoveAllSoundsFromQueue()
+-- The window fades out first, keeping its words until it has.
+Advance(1)
 local failed=Clip('failed','Not playable',10); failed.path='missing'
 source:Enqueue(failed)
 Check(not T.frame:IsShown(),'rejected audio leaves no stale captions')
@@ -279,7 +290,8 @@ Check(not cfg.Enabled,'slash command disables captions')
 SlashCmdList.SPOKEN('transcript on')
 Check(cfg.Enabled,'slash command enables captions')
 SlashCmdList.SPOKEN('stop')
-Check(not T.frame:IsShown(),'slash stop clears display')
+Advance(1)
+Check(not T.frame:IsShown(),'slash stop clears display once the window has faded out')
 Check(T:CleanText('|cffff0000Hello|r |Hitem:1|h[sword]|h|n|Ticon:16|tWorld')=='Hello [sword]\nWorld','markup is normalized without losing visible text')
 Check(T:CleanText('Привет 世界')=='Привет 世界','UTF-8 text remains intact')
 
@@ -298,24 +310,14 @@ cfg.HighlightWord=true; T:RefreshConfig()
 local playerTop=M.frame:GetTop()
 local extra={}
 for i=1,6 do extra[i]=Clip('extra'..i,'Later dialogue',10); source:Enqueue(extra[i]) end
-M:ToggleQueue()
-Check(M.drawer:IsShown() and M.queueNote:IsShown(),'expanded queue still displays rows and its paging note')
-Check(M.drawer:GetTop()<T.frame:GetBottom(),'downward queue drawer cannot overlap captions')
+M:UpdateControls()
+Check(M.count:IsShown() and M.count:GetText()=='• +6' and M.drawer==nil,'the title counts the lines waiting, with no list of them')
 T.expand:Fire('OnClick')
-Check(M.drawer:GetTop()<T.frame:GetBottom() or M.drawer:GetBottom()>T.frame:GetTop(),
-    'the open queue stays clear of expanded captions, including when it flips upward')
-Check(T.frame:GetBottom()>M.panel:GetBottom(),'the panel encloses expanded captions and queue')
+Check(T.frame:GetBottom()>M.panel:GetBottom() and M.progress.track:GetBottom()>M.panel:GetBottom(),
+    'the panel encloses expanded captions and the progress line under them')
 T.expand:Fire('OnClick')
-Check(M.panel:GetBottom()<M.drawer:GetBottom(),'the shared background encloses the expanded queue')
-Check(math.abs(M.frame:GetTop()-playerTop)<.001,'opening the queue leaves the unit icon in place')
-local anchor={M.frame:GetPoint(1)}
-M.frame:ClearAllPoints(); M.frame:SetPoint('BOTTOM',UIParent,'BOTTOM',0,20)
-M:LayoutQueue()
-Check(M.drawer:GetBottom()>M.header:GetTop(),'near the bottom of the screen the queue opens above the speaker name')
-Check(T.frame:GetTop()<M.bar:GetBottom(),'queue opening upwards leaves captions beneath the progress bar')
-M.frame:ClearAllPoints(); M.frame:SetPoint(unpack(anchor))
+Check(math.abs(M.frame:GetTop()-playerTop)<.001,'lines waiting leave the unit icon in place')
 for _,clip in ipairs(extra) do source:Remove(clip) end
-M:ToggleQueue()
 frameCfg.HidePortrait=true; E.PlayerFrame:RefreshConfig()
 Check(not M.portrait:IsShown() and math.abs(T.frame:GetLeft()-M.content:GetLeft())<.001,'hide-portrait mode keeps captions aligned')
 frameCfg.HidePortrait=false; frameCfg.FrameScale=1.1; E.PlayerFrame:RefreshConfig()
