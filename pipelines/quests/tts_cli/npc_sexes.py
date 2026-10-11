@@ -23,6 +23,8 @@ from tts_cli.flavors import busiest, flavor_from_sound_name, voice_name
 UNIT_SEX = {0: 2, 1: 3}
 #: The gender each UnitSex is voiced in.
 SEX_GENDER = {UNIT_SEX[sex_id]: gender for sex_id, gender in GENDER_DICT.items()}
+#: The UnitSex a gender is drawn as.
+GENDER_SEX = {gender: sex for sex, gender in SEX_GENDER.items()}
 
 
 class Display(NamedTuple):

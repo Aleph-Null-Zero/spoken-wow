@@ -201,6 +201,15 @@ def retyped(npcs) -> list:
             for npc in npcs]
 
 
+def _with_default(answer, defaults) -> tuple:
+    """An answer's (flavor, provenance, doubtful): the extract's own flavorless answer takes its
+    race-gender's default from `defaults`, marked doubtful; anybody else's is as they gave it."""
+    provenance = answer.get("provenance", "corpus")
+    guess = None if answer["flavor"] or provenance != "corpus" else \
+        defaults.get(f'{answer["race"]}-{answer["gender"]}')
+    return answer["flavor"] or guess, provenance, guess is not None
+
+
 def npc_answers(npcs) -> list:
     """The file's NPCs as npc rows, (kind, id, race, gender, flavor, provenance, doubtful).
 
@@ -214,11 +223,8 @@ def npc_answers(npcs) -> list:
     defaults = fallback_flavors((f'{npc["race"]}-{npc["gender"]}', npc["flavor"]) for npc in npcs)
     rows = []
     for npc in npcs:
-        provenance = npc.get("provenance", "corpus")
-        guess = None if npc["flavor"] or provenance != "corpus" else \
-            defaults.get(f'{npc["race"]}-{npc["gender"]}')
         rows.append((npc["npcType"], npc["npcId"], npc["race"], npc["gender"],
-                     npc["flavor"] or guess, provenance, guess is not None))
+                     *_with_default(npc, defaults)))
     return rows
 
 
@@ -317,16 +323,13 @@ def npc_sex_answers(npc_sexes, npcs) -> list:
         + [(f'{row["race"]}-{row["gender"]}', row["flavor"]) for row in npc_sexes])
     rows = []
     for row in npc_sexes:
-        provenance = row.get("provenance", "corpus")
         npc = chosen.get((row["npcType"], row["npcId"]))
-        if provenance == "corpus" and npc and npc.get("gender") == row["gender"]:
+        if row.get("provenance", "corpus") == "corpus" and npc and npc.get("gender") == row["gender"]:
             rows.append((row["npcType"], row["npcId"], row["sex"], npc["race"], npc["flavor"],
                          "moderator", bool(npc.get("doubtful"))))
             continue
-        guess = None if row["flavor"] or provenance != "corpus" else \
-            defaults.get(f'{row["race"]}-{row["gender"]}')
         rows.append((row["npcType"], row["npcId"], row["sex"], row["race"],
-                     row["flavor"] or guess, provenance, guess is not None))
+                     *_with_default(row, defaults)))
     return rows
 
 
@@ -359,12 +362,11 @@ def _import_npc_sexes(cur, rows):
               set "race" = excluded."race", "flavor" = excluded."flavor",
                   "provenance" = excluded."provenance", "confirmed" = excluded."confirmed",
                   "doubtful" = excluded."doubtful", "updatedAt" = now()
-            where (case when x."provenance" = 'moderator' then x."doubtful"
-                        else "npc_provenance_rank"(x."provenance")
-                             <= "npc_provenance_rank"(excluded."provenance") end)
+            where {replaces}
               and (x."race", x."flavor", x."provenance", x."doubtful")
                   is distinct from (excluded."race", excluded."flavor", excluded."provenance",
-                                    excluded."doubtful")""")
+                                    excluded."doubtful")""".format(
+            replaces=_REPLACES.format(old="x", new="excluded")))
 
 
 def import_npc_sexes(display_rows, verbose=True) -> list:
