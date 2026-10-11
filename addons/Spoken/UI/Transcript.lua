@@ -237,7 +237,16 @@ function Transcript:Release()
     self:Sync()
 end
 
+--- A window that turns to the next line by fading out first sets this: fn(clip) is true while it
+--- will, and the captions keep the words showing until it has faded (it releases them).
+Transcript.holdFor = nil
+
+local function HeldFor(self, clip)
+    return clip ~= nil and clip ~= self.clip and self.holdFor ~= nil and self.holdFor(clip) and true or false
+end
+
 function Transcript:Started(clip)
+    if not self.held and HeldFor(self, clip) then self.held = true end
     if self.held then self.heldStart = { clip = clip, at = GetTime() }; return end
     self.elapsed, self.startedAt = -(clip.delay or 0), GetTime()
     self:SetClip(clip)
@@ -251,6 +260,11 @@ function Transcript:Sync()
     if self.held then return end
     -- The line playing, or the sample a window previews.
     local current = PlayerFrame and PlayerFrame:Current() or SoundQueue:GetCurrentSound()
+    -- A window turning to it by fading out first: these words stay until it has.
+    if HeldFor(self, current) then
+        self.held, self.heldStart = true, { clip = current, at = GetTime() }
+        return
+    end
     if current ~= self.clip then
         self.elapsed, self.startedAt = 0, nil
         self:SetClip(current)
