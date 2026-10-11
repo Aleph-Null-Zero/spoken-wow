@@ -174,7 +174,9 @@ function MinimalPlayer:Initialize(original)
     self.stopped:Hide()
     self.count = Font(self.title, 12, .62, .58, .46)
     self.count:Hide()
-    self.tail = Actions.Tail(self.stopped, self.count)
+    self.held = Font(self.title, 12, .62, .58, .46)
+    self.held:Hide()
+    self.tail = Actions.Tail(self.stopped, self.count, self.held)
 
     self.progress = Actions.ProgressBar(content)
 
@@ -400,6 +402,7 @@ function MinimalPlayer:UpdateControls()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
     self.title.text:SetText(Label(self.clip))
     Addon:ClipFont(self.title.text, self.clip)
+    self.tail:SetHeld(SoundQueue:GetHeldReason(self.clip))
     self.tail:SetStopped(paused)
     self:Count(Waiting())
     local pausable = SoundQueue:CanBePaused()
@@ -414,7 +417,7 @@ function MinimalPlayer:UpdateControls()
     end
 end
 
---- Puts "• (Stopped)" and the lines waiting, "• +N", after the title. The title is cut short,
+--- Puts why the line is held, "• (Stopped)" and the lines waiting, "• +N", after the title. The title is cut short,
 --- not these.
 function MinimalPlayer:Count(waiting)
     local tail = self.tail

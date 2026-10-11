@@ -159,6 +159,17 @@ main:Refresh()
 Expect("Show Progress is offered for the small window, which has the progress line",
     Row(L.OPT_SUBTITLE_PROGRESS) ~= nil and Row(L.OPT_SUBTITLE_PROGRESS):IsShown(), true)
 
+---------------------------------------------------------------- held
+-- A line held at the head says why after its title, or it looks like narration that failed.
+env, quests = Boot()
+M = env.MinimalPlayer
+quests:AddGate(function() return "in combat" end)
+quests:Enqueue(Line("One"))
+Expect("a held line says why after its title", Try(function()
+    return tostring(M.held:IsShown()) .. " " .. M.held:GetText()
+end), "true • (in combat)")
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
 ---------------------------------------------------------------- bronze
 -- Bronze Border on Forever: the small window's border, progress line and portrait ring.
 local BRONZE, WHITE = "0.95 0.68 0.35", "1.00 1.00 1.00"
