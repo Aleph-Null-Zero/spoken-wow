@@ -518,6 +518,9 @@ end
 -- the left of it: the text fills in without re-centring or wobbling as it grows.
 function Subtitle:Layout(text)
     local path, size = Measure(self)
+    -- Measure puts the words' face back; a clip's own goes over it, or lines are cut to the
+    -- wrong width.
+    Addon:ClipFont(self.measure, self.clip)
     self.measure:SetText("Ag")
     local lineHeight = self.measure:GetStringHeight()
     local named = self:NameShown()
