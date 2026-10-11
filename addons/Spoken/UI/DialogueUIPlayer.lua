@@ -258,7 +258,6 @@ function Skin:Initialize()
     end
 
     self.progress = Actions.ProgressBar(content)
-    -- At the header's right end: Stop or Replay, Skip, then Report.
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(1)
     local play = Actions.RoundButton(self.controls, 12)
@@ -931,7 +930,6 @@ function Skin:Tick(elapsed)
                 -- Held from the start of the fade-out, frame buffer or not.
                 Transcript:Release()
             end
-            -- Faded: itself again, catching up on what waited.
             self:Unbuffer()
             if not self.wanted then return end
         end
