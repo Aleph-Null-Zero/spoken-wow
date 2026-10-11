@@ -513,10 +513,12 @@ local function Build(canvas)
     layout:EndGroup()
 
     -- Every frame Spoken draws, whatever the style: the round buttons' rings and the small
-    -- window's metal.
-    layout:Section(L.OPT_COLOURS_TITLE)
-    layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
-        function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
+    -- window's metal. Forever's own frames are bronze; elsewhere it would match nothing.
+    if Version.IsCamelot then
+        layout:Section(L.OPT_COLOURS_TITLE)
+        layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
+            function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
+    end
 
     DialogueUIOptions:Place(layout)
 

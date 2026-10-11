@@ -21,9 +21,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Type By sets whether a window types out words or letters. *([Nucabe](https://github.com/Nucabe))*
 - **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles and the
   DialogueUI window, and Voice Only shows none of the words' settings. Spoken Quests' DialogueUI
-  switches have a DialogueUI section of their own after the narrator style's settings. Bronze
-  Border has left the narrator style's settings for a Colours section, on every client: it colours
-  every round button Spoken draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
+  switches have a DialogueUI section of their own after the narrator style's settings. On Forever,
+  Bronze Border has left the narrator style's settings for a Colours section: it colours every
+  round button Spoken draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.0 — 2026-10-11
 

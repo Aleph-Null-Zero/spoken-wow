@@ -54,7 +54,7 @@ end
 local RING = [[Interface\AddOns\Spoken\Textures\SettingsButton]]
 -- The Forever client's bronze, as its own frames wear it (MinimalPlayer's): the round buttons' rings
 -- take it while Bronze Border is on. Every ring made, to tint again when the setting changes.
-local BRONZE = { .95, .68, .35 }
+local BRONZE = Version.IsCamelot and { .95, .68, .35 } or nil
 local rings = setmetatable({}, { __mode = "k" })
 
 local function TintRing(ring)

@@ -194,7 +194,8 @@ do
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end
 
--- Bronze Border is for every frame Spoken draws, so it sits outside the narrator style's settings.
+-- Bronze Border matches Forever's own frames, so a Classic Era client has no row for it. On Forever
+-- it sits outside the narrator style's settings, since it colours every frame Spoken draws.
 do
     local function Placed()
         local inGroup, section, found = false, nil, nil
@@ -212,8 +213,7 @@ do
     end
     for _, style in ipairs({ "minimal", "none" }) do
         env.Addon:SetPlayerStyle(style); Options:UpdateRows()
-        Expect("Bronze Border outside the narrator style's settings, under Colours, shown with " .. style, Placed(),
-            "false " .. L.OPT_COLOURS_TITLE .. " true")
+        Expect("no Bronze Border row on Classic Era, with " .. style, Placed(), "missing")
     end
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end

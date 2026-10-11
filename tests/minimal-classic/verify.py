@@ -277,7 +277,7 @@ assert(tint(E.MinimalPlayer)=="1.00 1.00 1.00|1.00 1.00 1.00|1.00 1.00 1.00","th
 A.db.profile.Frame.BronzeTint=true;E.PlayerFrame:RefreshConfig()
 assert(tint(E.MinimalPlayer)==bronze,"and puts it back")
 E.Version.IsCamelot=nil
-print("PASS: bronze tint on border, bar trim and portrait ring, behind its setting")
+print("PASS: Forever bronze tint on border, bar trim and portrait ring, behind its setting; other clients untouched")
 ''')
 for path in (addon/'Textures').glob('Minimal*.tga'):
     image=Image.open(path)
