@@ -388,20 +388,30 @@ local function SeedLoginArea(attempt)
 	-- fresh character.
 	local playerMap = SpokenZones:GetPlayerMapID()
 	local _, mapID = SpokenZones:GetLoreWithFallback(playerMap)
+	local subZone = GetSubZoneText()
 	if debugOn then
 		SpokenZones:Print("greeting %d: player map %s (%s), resolved %s (%s), subzone \"%s\"",
 			attempt or 0, tostring(playerMap), tostring(SpokenZones:GetMapName(playerMap)),
 			tostring(mapID), tostring(mapID and SpokenZones:GetMapName(mapID)),
-			tostring(GetSubZoneText()))
+			tostring(subZone))
 	end
-	-- The continent, or a subzone not filled in yet: the map has not settled, so ask again.
-	local subZone = GetSubZoneText()
-	if not mapID or not IsAutoplayableMap(mapID) or not subZone or subZone == "" then
+	-- The continent: the map has not settled, so ask again.
+	if not mapID or not IsAutoplayableMap(mapID) then
+		return false
+	end
+	if not STARTING_AREAS[mapID] then
+		if debugOn then
+			SpokenZones:Print("greeting: map %s is not a starting zone -- not a new character", tostring(mapID))
+		end
+		return true
+	end
+	-- The subzone not filled in yet: ask again.
+	if not subZone or subZone == "" then
 		return false
 	end
 
 	local entry, key = SpokenZones:GetSubzoneLore(mapID, subZone)
-	if not STARTING_AREAS[mapID] or key ~= STARTING_AREAS[mapID] then
+	if key ~= STARTING_AREAS[mapID] then
 		if debugOn then
 			SpokenZones:Print("greeting: \"%s\" is not a starting area -- not a new character", subZone)
 		end
@@ -420,8 +430,8 @@ local function SeedLoginArea(attempt)
 		return true
 	end
 
-	-- Nothing queued, on a taxi or with no clip installed. Worth another look, and the flag
-	-- stays unset so a later login still greets if this one never resolves.
+	-- Nothing queued: no clip installed. Worth another look, and the flag stays unset so a
+	-- later login still greets if this one never resolves.
 	if debugOn then
 		SpokenZones:Print("greeting %d: nothing queued for map %s -- retrying", attempt or 0, tostring(mapID))
 	end

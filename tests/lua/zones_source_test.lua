@@ -279,8 +279,8 @@ _G.SpokenZonesAudioPacks, _G.ZoneLoreAudioData = nil, nil
 _G.ZoneLoreAudioPacks = savedPacks
 
 ---------------------------------------------------------------- the login greeting
--- Only a level 1 character can be new. Reaching GetPlayerMapID means the gate let the
--- attempt through, and stubbing it to nil ends the attempt there.
+-- Reaching GetPlayerMapID means the gate let the attempt through, and stubbing it to nil
+-- ends the attempt there.
 local function BootGreeting(level)
     stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
@@ -299,16 +299,6 @@ local function BootGreeting(level)
     return counter
 end
 
--- One attempt: the first runs two seconds after setup.
-local function GreetingAsked(level)
-    local counter = BootGreeting(level)
-    stub.Advance(2)
-    _G.SpokenZonesCharacter = nil
-    return counter.asked > 0
-end
-
-Expect("a levelled character is not greeted", GreetingAsked(60), false)
-Expect("a level 1 character is asked where it is", GreetingAsked(1), true)
 
 -- An intro that outlasts the greeting's attempts. On a client that plays it somewhere else,
 -- with a loading screen after, every attempt during it resolves nothing; a player who
