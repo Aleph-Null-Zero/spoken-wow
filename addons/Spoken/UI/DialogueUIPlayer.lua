@@ -53,6 +53,11 @@ local STONE = { Stone = true, Marble = true, Silver = true, Bronze = true, Proge
 local BOOK_DIVIDER = { 0, 768 / 1024, 1520 / 2048, 1552 / 2048 }
 local BOOK_RING, RING_OPENING = { 768 / 1024, 864 / 1024, 1616 / 2048, 1712 / 2048 }, 56 / 96
 
+--- A look's paper: a book's own art, or the quest parchment of DialogueUI's theme.
+local function PaperOf(look)
+    return look.file or Theme:TexturePath() .. "Parchment.png"
+end
+
 --- A look's cap size for a window `width` wide: a book's puts its paper on that width; the quest
 --- parchment's is DialogueUI's, at `q` of it.
 local function CapSize(look, width, q)
@@ -302,7 +307,7 @@ function Skin:Layout()
     local frame, cfg = self.frame, Theme:Config()
     local look = self:Look()
     self.look = look
-    local parchment = look.file or Theme:TexturePath() .. "Parchment.png"
+    local parchment = PaperOf(look)
     -- Laid out at DialogueUI's own size, paddings and text; Window Size then scales the
     -- whole frame from BASE_SCALE.
     local scale = BASE_SCALE * (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE
@@ -413,7 +418,7 @@ function Skin:Layout()
         self.headerDivider:SetTexCoord(BOOK_DIVIDER[1], BOOK_DIVIDER[2], BOOK_DIVIDER[3], BOOK_DIVIDER[4])
         self.headerDivider:SetSize(inner, lineHeightArt)
         self.headerDivider:SetPoint("CENTER", content, "TOP", 0,
-            -(Round(stripHeight * DIVIDER_LINE) - Round(lineHeightArt / 2)))
+            -(lineBottom - Round(lineHeightArt / 2)))
     else
         local socketU = HEADER_DIVIDER[1] + (HEADER_DIVIDER[2] - HEADER_DIVIDER[1]) * SOCKET_WIDTH / HEADER_DIVIDER[5]
         self.headerSocket:SetTexCoord(HEADER_DIVIDER[1], socketU, HEADER_DIVIDER[3], HEADER_DIVIDER[4])
@@ -475,10 +480,8 @@ function Skin:Layout()
 end
 
 function Skin:Dress()
-    local look = self.look or LOOKS.quest
+    local look, fonts = self.look, self.fonts
     local colors = Theme:Colors(look.palette)
-    local fonts = self.fonts or Theme:Fonts(look.book)
-    local body = fonts.paragraphSize
     -- On stone, the book view's shadow under its pale text.
     local shadow = look.shadow and 1 or 0
     local function Paint(text, face, size, color)
@@ -497,8 +500,7 @@ function Skin:Dress()
     self.colors = colors
     local tint = colors.portraitTint
     if self.viewport.texture then self.viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
-    local captionSize = self.captionSize or body
-    Transcript:SetStyle({ font = fonts.paragraph, size = captionSize, lineGap = self.lineGap or Round(0.35 * captionSize),
+    Transcript:SetStyle({ font = fonts.paragraph, size = self.captionSize, lineGap = self.lineGap,
         paragraphs = true, color = colors.paragraph, shadow = look.shadow and true or false,
         highlight = colors.highlight, lines = self.lines, padTop = self.lineRoom })
 end
