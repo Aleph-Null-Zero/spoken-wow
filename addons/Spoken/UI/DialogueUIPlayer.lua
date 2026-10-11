@@ -686,7 +686,6 @@ function Skin:UpdateControls(relayout)
     -- The line's name alone, not why it waits (the NPC's own greeting first, a fight).
     self.title.text:SetText(Label(self.clip))
     Addon:ClipFont(self.title.text, self.clip)
-    -- Stopped, said after its name, as the subtitle does.
     self.tail:SetStopped(paused)
     self:Count(Waiting())
     Actions.SetPausable(self.buttons)
