@@ -77,8 +77,9 @@ def test_only_the_extracts_own_flavorless_answer_gets_the_default():
 
 
 def sex(npc_id, value, race, flavor, **extra):
-    return {"npcType": "creature", "npcId": npc_id, "sex": value, "race": race, "flavor": flavor,
-            **extra}
+    from tts_cli.npc_sexes import SEX_GENDER
+    return {"npcType": "creature", "npcId": npc_id, "sex": value, "race": race,
+            "gender": SEX_GENDER[value], "flavor": flavor, **extra}
 
 
 def test_a_sex_the_game_names_no_flavor_for_gets_its_race_genders_default_marked_doubtful():

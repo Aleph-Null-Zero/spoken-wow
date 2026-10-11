@@ -121,10 +121,13 @@ def consensus_flavor(flavors: Iterable[str | None]) -> str | None:
     existing files and orphan the audio already generated for them. See tts_cli/naming.py
     for why a filename is not free to change.
     """
-    tally = Counter(f for f in flavors if f)
-    if not tally:
-        return None
-    return min(tally.items(), key=lambda kv: (-kv[1], kv[0]))[0]
+    return busiest(Counter(f for f in flavors if f))
+
+
+def busiest(tally: Mapping[str, float]) -> str | None:
+    """The flavor with the most weight, ties broken alphabetically so the choice does not drift
+    between runs; None for an empty tally."""
+    return min(tally.items(), key=lambda kv: (-kv[1], kv[0]))[0] if tally else None
 
 
 #: A voice keyed by the creature's model rather than by a humanoid race: `model-{ModelID}`.

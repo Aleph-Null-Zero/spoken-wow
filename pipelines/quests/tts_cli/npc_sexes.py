@@ -14,12 +14,23 @@ as it does an NPC. Free of SQL so it can be tested on its own.
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import NamedTuple
 
 from tts_cli.consts import GENDER_DICT, RACE_DICT
-from tts_cli.flavors import flavor_from_sound_name, voice_name
+from tts_cli.flavors import busiest, flavor_from_sound_name, voice_name
 
 #: UnitSex's answer for each DisplaySexID: what the addon reports and npc_sex is keyed on.
 UNIT_SEX = {0: 2, 1: 3}
+#: The gender each UnitSex is voiced in.
+SEX_GENDER = {UNIT_SEX[sex_id]: gender for sex_id, gender in GENDER_DICT.items()}
+
+
+class Display(NamedTuple):
+    slot: int
+    weight: int
+    race: str
+    sex_id: int
+    sound: str | None
 
 
 def npc_sexes(display_rows, npcs) -> list:
@@ -33,28 +44,29 @@ def npc_sexes(display_rows, npcs) -> list:
     for entry, slot, probability, race_id, sex_id, sound in display_rows:
         race = RACE_DICT.get(int(race_id))
         if race and int(sex_id) in UNIT_SEX:
-            displays[int(entry)].append((int(slot), int(probability or 0), race,
-                                         int(sex_id), sound))
+            displays[int(entry)].append(Display(int(slot), int(probability or 0), race,
+                                                int(sex_id), sound))
 
     split = []
     for npc in npcs:
         if npc["npcType"] != "creature" or npc.get("gender") not in ("male", "female"):
             continue
         rows = displays.get(npc["npcId"], [])
-        if len({row[3] for row in rows}) < 2:
+        if len({row.sex_id for row in rows}) < 2:
             continue
         # vmangos leaves every probability 0 for a creature drawn at even odds.
-        weight = (lambda row: row[1]) if any(row[1] for row in rows) else (lambda row: 1)
+        even = not any(row.weight for row in rows)
+        rows = [row._replace(weight=1) for row in rows] if even else rows
         for sex_id in sorted(UNIT_SEX):
-            mine = [row for row in rows if row[3] == sex_id]
-            race = min(mine, key=lambda row: (-weight(row), row[0]))[2]
+            mine = [row for row in rows if row.sex_id == sex_id]
+            race = min(mine, key=lambda row: (-row.weight, row.slot)).race
             gender = GENDER_DICT[sex_id]
             tally = defaultdict(int)
             for row in mine:
-                flavor = flavor_from_sound_name(row[4], f"{race}-{gender}") if row[2] == race else None
+                flavor = flavor_from_sound_name(row.sound, f"{race}-{gender}") if row.race == race else None
                 if flavor:
-                    tally[flavor] += weight(row)
-            flavor = min(tally.items(), key=lambda kv: (-kv[1], kv[0]))[0] if tally else None
+                    tally[flavor] += row.weight
+            flavor = busiest(tally)
             split.append({"npcType": "creature", "npcId": npc["npcId"], "sex": UNIT_SEX[sex_id],
                           "race": race, "gender": gender, "flavor": flavor,
                           "provenance": "corpus", "voice": voice_name(race, gender, flavor)})

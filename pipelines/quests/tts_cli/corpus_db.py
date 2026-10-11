@@ -310,22 +310,21 @@ def npc_sex_answers(npc_sexes, npcs) -> list:
     doubtful), the extract's flavorless sex given its race-gender's default as npc_answers
     gives an NPC's. A moderator's answer for the NPC is its own sex's: the extract reads the
     sex's voice off the displays, and splitting must not take back a voice someone chose."""
-    gender = {2: "male", 3: "female"}
     chosen = {(npc["npcType"], npc["npcId"]): npc for npc in npcs
               if npc.get("provenance") == "moderator" and npc.get("race")}
     defaults = fallback_flavors(
         [(f'{npc["race"]}-{npc["gender"]}', npc["flavor"]) for npc in retyped(npcs)]
-        + [(f'{row["race"]}-{gender[row["sex"]]}', row["flavor"]) for row in npc_sexes])
+        + [(f'{row["race"]}-{row["gender"]}', row["flavor"]) for row in npc_sexes])
     rows = []
     for row in npc_sexes:
         provenance = row.get("provenance", "corpus")
         npc = chosen.get((row["npcType"], row["npcId"]))
-        if provenance == "corpus" and npc and npc.get("gender") == gender[row["sex"]]:
+        if provenance == "corpus" and npc and npc.get("gender") == row["gender"]:
             rows.append((row["npcType"], row["npcId"], row["sex"], npc["race"], npc["flavor"],
                          "moderator", bool(npc.get("doubtful"))))
             continue
         guess = None if row["flavor"] or provenance != "corpus" else \
-            defaults.get(f'{row["race"]}-{gender[row["sex"]]}')
+            defaults.get(f'{row["race"]}-{row["gender"]}')
         rows.append((row["npcType"], row["npcId"], row["sex"], row["race"],
                      row["flavor"] or guess, provenance, guess is not None))
     return rows
