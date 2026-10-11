@@ -994,7 +994,8 @@ A line still needs a voice, and a voice name is `race-gender-flavor`. The corpus
 for every NPC it carries. For one it has never seen, the answer has to come from somewhere, and
 the client can supply two thirds of it.
 
-The addon reports what it can see and nothing more: `kind` (creature or gameobject), `model` —
+The addon reports what it can see and nothing more: `kind` (creature, gameobject or item: an
+item's GUID holds no item id, so the id is the bag item whose quest is on screen), `model` —
 the model file id a `PlayerModel` frame answers for the unit — `sex` from `UnitSex`, and
 `creature` from `UnitCreatureType`. It carries no race table. `apps/web/src/lib/npc/models.ts`
 holds that instead, 81 character models across 32 races, and maps `122055` to
