@@ -16,11 +16,11 @@ import { saveName } from "@/lib/names/store";
 // (not just re-exported) so this file can still use them as it always did, and re-exported so
 // every existing import of these from this module keeps working unchanged.
 import {
-  NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, SEXES, isProvenance, isSex, type NpcKind, type NpcRowKind, type Provenance, type Sex,
+  NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, isProvenance, type NpcKind, type NpcRowKind, type Provenance, type Sex,
 } from "./npc";
 
-export { NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, SEXES, isProvenance, isSex };
-export type { NpcKind, NpcRowKind, Provenance, Sex };
+export { NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, isProvenance };
+export type { NpcKind, NpcRowKind, Provenance };
 
 export type NpcResolution = {
   npcKind: NpcRowKind;

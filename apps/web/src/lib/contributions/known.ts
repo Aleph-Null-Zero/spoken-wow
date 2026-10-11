@@ -25,7 +25,7 @@
  */
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
-import { isSex } from "@/lib/npc/npc";
+import { isSex, sexOf } from "@/lib/npc/npc";
 
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
@@ -62,7 +62,8 @@ function seenSex(row: Comparable): number | null {
 
 /** Whether a creature's greeting was seen drawn as the other sex from the one it is voiced in. */
 function otherSex(row: Comparable, voiced: number | undefined): boolean {
-  return voiced !== undefined && seenSex(row) !== null && seenSex(row) !== voiced;
+  const seen = seenSex(row);
+  return voiced !== undefined && seen !== null && seen !== voiced;
 }
 
 type CorpusText = { lineId: string; variant: number; text: string };
@@ -121,15 +122,15 @@ async function greetingTexts(pairs: { locale: string; npcId: number }[]): Promis
  */
 async function oneSexOf(npcIds: number[]): Promise<Map<number, number>> {
   if (npcIds.length === 0) return new Map();
-  const { rows } = await db().query<{ npcId: number; sex: number }>(
-    `select n."npcId", case n."gender" when 'male' then 2 else 3 end as "sex"
+  const { rows } = await db().query<{ npcId: number; gender: string }>(
+    `select n."npcId", n."gender"
        from "npc" n
       where n."npcKind" = 'creature' and n."npcId" = any($1::int[]) and n."gender" in ('male', 'female')
         and n."race" is not null and n."provenance" <> 'none'
         and not exists (select 1 from "npc_sex" x where x."npcKind" = n."npcKind" and x."npcId" = n."npcId")`,
     [npcIds],
   );
-  return new Map(rows.map((row) => [row.npcId, row.sex]));
+  return new Map(rows.map((row) => [row.npcId, sexOf(row.gender) as number]));
 }
 
 /** Each contribution's LineState, in the order given: three queries for the lot. */

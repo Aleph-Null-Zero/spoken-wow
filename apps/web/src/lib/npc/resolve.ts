@@ -120,15 +120,9 @@ export async function resolveNpc(observed: Observed, lang: Lang | null): Promise
   // a gameobject filed under a creature id. The player's next submission, after an addon
   // update, resolves properly.
   if (!npcKind || npcId === null) return null;
+
   const existing = await getResolution(npcKind, npcId);
-  if ((await splitBySex(observed, existing)).length) return existing;
-  return answer({ ...observed, npcKind, npcId }, lang, existing);
-}
-
-type Identified = Observed & { npcKind: NonNullable<Observed["npcKind"]>; npcId: number };
-
-async function answer(observed: Identified, lang: Lang | null, existing: NpcResolution | null): Promise<NpcResolution | null> {
-  const { npcKind, npcId } = observed;
+  if (await splitBySex(observed, existing)) return existing;
   // The store's upsert already ranks provenance and would refuse a lower-ranked write on its
   // own, so this is not what keeps a moderator's answer safe -- it is here so a moderator-owned
   // NPC skips the write entirely, rather than arriving back where it started.

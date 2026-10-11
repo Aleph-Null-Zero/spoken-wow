@@ -50,12 +50,12 @@ export async function POST(request: Request) {
     const own = sexOf(npc.gender);
     if (!npc.race || own === null) return Response.json({ error: "answer the NPC as a man or a woman first" }, { status: 400 });
     const other = oppositeSex(own);
-    const sexes = await splitNpc(npc, {
+    await splitNpc(npc, {
       npcKind, npcId, sex: other, race: npc.race, flavor: await defaultFlavorFor(npc.race, SEX_GENDER[other]),
       provenance: "moderator", confirmed: true, doubtful: true, note: null, resolvedBy: session.user.id,
     }, { provenance: "moderator", confirmed: true, doubtful: false, resolvedBy: session.user.id });
     await recordActivity({ kind: "npc.split", lang, actorId: session.user.id, subject, detail: { npcName: npc.npcName } });
-    return Response.json({ sexes });
+    return Response.json({ sexes: await getSexes(npcKind, npcId) });
   }
 
   const sex = Number(body.sex);

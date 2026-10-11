@@ -356,8 +356,7 @@ describe("splitting by sex", () => {
   // as high as the guess -- and the NPC would flip rather than split.
   it("splits an NPC only a client's guess knows, rather than retyping it as the sex seen", async () => {
     vi.mocked(getResolution).mockResolvedValue({ ...corpusGuard, provenance: "client", confirmed: false });
-    const split = [2, 3].map((sex) => ({ ...corpusGuard, sex: sex as 2 | 3, provenance: "client" as const }));
-    vi.mocked(getSexes).mockResolvedValueOnce([]).mockResolvedValueOnce(split);
+    vi.mocked(getSexes).mockResolvedValueOnce([]);
     vi.mocked(upsertResolution).mockClear();
     vi.mocked(upsertSex).mockClear();
     vi.mocked(voiceFromDisplays).mockResolvedValue(null);
