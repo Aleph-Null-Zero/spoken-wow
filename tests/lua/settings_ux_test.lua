@@ -65,7 +65,6 @@ Expect("subtitles have Highlight Words, waiting while their words are typed out"
 words.Typewriter = false; Options:UpdateRows()
 Expect("...and live with them shown whole", lit.layoutReason, nil)
 words.Typewriter = true; Options:UpdateRows()
--- The subtitle's Auto-Scroll: pages show Sentences at Once, line by line Lines Shown.
 local function ByTip(tip)
     for _, entry in ipairs(home.entries) do if entry.tooltip == tip then return entry.frame end end
 end
@@ -137,9 +136,8 @@ env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 Expect("choosing a window shows it again", env.Addon:PlayerStyle(), "minimal")
 
 ---------------------------------------------------------------- each style's rows
--- Under Narrator Style Settings, each style shows the rows its own code reads, and only those.
--- Named as the page names them; a note by what it says. No addon here declares an optional
--- button before the page is built, so no Hide ... Button row.
+-- Rows by their label, notes by what they say. No addon here declares an optional button before
+-- the page is built, so no Hide ... Button row.
 local function StyleRows()
     local names, inGroup, byFrame = {}, false, {}
     for _, entry in ipairs(home.entries) do byFrame[entry.frame] = entry end
@@ -169,8 +167,8 @@ do
     local WINDOW = "Window Size, Lock Position, Reset Positions, Hide Portrait, Show Words, "
         .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By"
     local ROWS = {
-        minimal = "Window Size, Lock Position, Reset Positions, Background, Show Progress, Hide Portrait, Show Words, "
-            .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By",
+        -- The small window's own Background, and the progress line it draws.
+        minimal = (WINDOW:gsub("Reset Positions, ", "Reset Positions, Background, Show Progress, ")),
         -- The large window shows what fits in its fixed box, not Lines Shown.
         classic = (WINDOW:gsub("Lines Shown, ", "")),
         subtitle = "Subtitle Size, Lock Position, Reset Positions, Background Darkness, Show Name and Title, Show Progress, "
@@ -182,7 +180,6 @@ do
         env.Addon:SetPlayerStyle(style); Options:UpdateRows()
         Expect("the " .. style .. " style shows the rows it reads", StyleRows(), ROWS[style])
     end
-    -- With DialogueUI: its window. Voice Only shows nothing, DialogueUI or not.
     local Theme, playerStyle, chosen = env.DialogueUITheme, env.Addon.PlayerStyle, "dialogueui"
     local available = Theme.Available
     Theme.Available = function() return true end
@@ -190,7 +187,7 @@ do
     Options:UpdateRows()
     Expect("the dialogueui style shows the rows it reads", StyleRows(),
         "Window Size, Lock Position, Reset Positions, wheel note, Follow DialogueUI's Theme, Theme, "
-        .. "Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
+        .. "Show Progress, Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
         .. "Highlight Words, Type Words Out, Type By")
     chosen = "none"; Options:UpdateRows()
     Expect("voice only, with DialogueUI, shows no words' rows: nothing of Spoken's is on screen", StyleRows(), "")
@@ -199,8 +196,7 @@ do
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end
 
--- Bronze Border is for every frame Spoken draws: a section of its own after the narrator style's
--- settings, on every client, whatever the style.
+-- Bronze Border is for every frame Spoken draws, so it sits outside the narrator style's settings.
 do
     local function Placed()
         local inGroup, section, found = false, nil, nil

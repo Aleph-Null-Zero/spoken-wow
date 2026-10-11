@@ -106,13 +106,18 @@ function Sources:Iterate()
     end
 end
 
---- The channel a clip from this source plays on: its own if it names one, else the
---- player's setting. Strings throughout, because that is what PlaySoundFile takes.
+--- The channel the player chose for Spoken's voices. Always Master on the legacy clients, whose
+--- playback ignores the channel, so a choice saved elsewhere does not change what they mute.
+function Sources:PlayerChannel()
+    return Version.IsAnyLegacy and "Master" or Addon.db.profile.Audio.SoundChannel
+end
+
+--- The channel a clip from this source plays on: its own if it names one, else the player's.
 function SourceMethods:GetChannel()
     if self.channel then
         return self.channel()
     end
-    return Addon.db.profile.Audio.SoundChannel
+    return Sources:PlayerChannel()
 end
 
 -- A line the queue would not take, in the debug log: the refusals that fire no CLIP_DROPPED

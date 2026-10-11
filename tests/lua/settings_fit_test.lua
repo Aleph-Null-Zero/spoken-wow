@@ -96,8 +96,7 @@ local pages = { { name = "General", layout = _G.SpokenOptionsPanel.layout } }
 for _, page in ipairs(env.Options.pages or {}) do
     table.insert(pages, { name = page.name, layout = page.layout })
 end
--- The Developer page, which the Spoken_Developer module adds. The DialogueUI settings are on
--- Spoken's page.
+-- The Developer page is the Spoken_Developer module's.
 Expect("General, the four parts' pages and the Developer page are all here", #pages, 6)
 
 local BOX = Layout.BOX_MARGIN

@@ -21,6 +21,14 @@ local pendingLinks = {}
 local Layout = SpokenLayout
 
 local CHANNELS = { "Master", "SFX", "Music", "Ambience", "Dialog" }
+-- Stored names stay English: playback passes them to the sound API.
+local CHANNEL_LABELS = {
+    Master = L.OPT_CHANNEL_MASTER,
+    SFX = L.OPT_CHANNEL_SFX,
+    Music = L.OPT_CHANNEL_MUSIC,
+    Ambience = L.OPT_CHANNEL_AMBIENCE,
+    Dialog = L.OPT_CHANNEL_DIALOG,
+}
 
 -- The ways of showing a line, by the name Addon:PlayerStyle gives each.
 local STYLE_LABELS = {
@@ -224,16 +232,6 @@ function Options:Styles()
     return styles
 end
 
--- Display labels for the values above, which stay English internally: the stored
--- channel name is what playback passes to the sound API.
-local CHANNEL_LABELS = {
-    Master = L.OPT_CHANNEL_MASTER,
-    SFX = L.OPT_CHANNEL_SFX,
-    Music = L.OPT_CHANNEL_MUSIC,
-    Ambience = L.OPT_CHANNEL_AMBIENCE,
-    Dialog = L.OPT_CHANNEL_DIALOG,
-}
-
 local function Build(canvas)
     panel = CreateFrame("Frame", "SpokenOptionsPanel", UIParent)
     -- The family's one entry in the game's settings. This page is its Home; each feature
@@ -351,9 +349,8 @@ local function Build(canvas)
     else
         layout:Group(L.OPT_NARRATOR_SETTINGS)
     end
-    -- The same three parts whatever the style, each style's rows in the same places: where it
-    -- sits and how large, how it looks, and its words. A row the chosen style has no use for is
-    -- hidden. Without captions (1.12's Transcript is a stub) the words' rows are not built.
+    -- Every style has the same three sections; a row the chosen style has no use for is hidden.
+    -- Without captions (1.12's Transcript is a stub) the words' rows are not built.
     local captions = not Transcript.unavailable
     local function DUI() return Style() == "dialogueui" end
     local function ForDUI(row) return Only(row, DUI) end
@@ -398,17 +395,15 @@ local function Build(canvas)
         ForSubtitles(layout:Slider(L.TRANSCRIPT_SHADOW, 0, 1, 0.05,
             function() return transcript().SubtitleShadow end,
             function(v) transcript().SubtitleShadow = v end, refreshSubtitle, nil, L.TRANSCRIPT_SHADOW_TIP))
-        -- The row over the words, which a player wanting a film's subtitles turns off (issue #288).
         Only(layout:Checkbox(L.OPT_SUBTITLE_NAME, L.OPT_SUBTITLE_NAME_TIP,
             function() return transcript().SubtitleName ~= false end,
             function(v) transcript().SubtitleName = v end, refreshSubtitle), Subtitles)
     end
     if captions then
-        -- The subtitle's progress line, and the small window'.
         local progress = layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
-        Only(progress, function() return Subtitles() or Small() end)
+        Only(progress, function() return Subtitles() or DUI() or Small() end)
         Requires(progress, function() return not Subtitles() or Words() end, L.REASON_WORDS)
     end
     -- Hiding the portrait and hiding a button are one kind of choice, so they sit together. Not
@@ -451,9 +446,8 @@ local function Build(canvas)
     -- lines like the others, chosen with them above.
 
     if captions then
-        -- DialogueUI's own quest text follows Show Words, Highlight Words and Type Words Out too
-        -- (Spoken:GetCaptionOptions), and their tooltips say so where DialogueUI is installed.
-        -- The legacy clients' stub has no Installed: no DialogueUI there.
+        -- DialogueUI's quest text follows Show Words, Highlight Words and Type Words Out too, so
+        -- their tooltips say so where it is installed. The legacy clients' stub has no Installed.
         local withDUI = DialogueUITheme ~= nil and DialogueUITheme.Installed ~= nil and DialogueUITheme:Installed()
         local function Tip(tip, extra) return withDUI and tip .. " " .. extra or tip end
         -- Show Words first: everything under it waits on it.
@@ -472,8 +466,7 @@ local function Build(canvas)
             Layout.Number, L.TRANSCRIPT_SIZE_TIP)
         Only(size, function() return InWindow() or Subtitles() end)
         Requires(size, Words, L.REASON_WORDS)
-        -- How much shows at once: lines in a window and in a subtitle that scrolls line by line,
-        -- sentences in one that turns pages.
+        -- How much shows at once: lines in a window or a line-by-line subtitle, sentences in a paged one.
         local function Rolling() return transcript().SubtitleScroll == "line" end
         local lines = layout:Slider(L.TRANSCRIPT_LINES, 1, 2, 1,
             function() return transcript().Lines end,
@@ -493,14 +486,13 @@ local function Build(canvas)
             function() return Transcript:ScrollMode() end,
             function(v) transcript().ScrollMode = v; Transcript.manualScroll = false end, refreshTranscript,
             function(v) return SCROLL_LABELS[v] or v end))
-        -- The subtitle's own: line by line through a window of Lines Shown, or pages of whole
-        -- sentences. It cannot be scrolled by hand, so it has no Off.
+        -- The subtitle's Auto-Scroll has no Off: it cannot be scrolled by hand.
         ForSubtitles(layout:Dropdown(L.TRANSCRIPT_SCROLL, L.OPT_SUBTITLE_SCROLL_TIP, { "line", "page" },
             function() return transcript().SubtitleScroll or "page" end,
             function(v) transcript().SubtitleScroll = v end, function() refreshSubtitle(); Options:UpdateRows() end,
             function(v) return SCROLL_LABELS[v] or v end))
-        -- The word being read lit. The subtitle lights it only while it shows its words whole:
-        -- typed at their own pace, an estimated word timing would show every miss.
+        -- The subtitle lights the word only while its words show whole: typed at their own pace, an
+        -- estimated word timing would show every miss.
         local highlight = layout:Checkbox(L.TRANSCRIPT_HIGHLIGHT, Tip(L.TRANSCRIPT_HIGHLIGHT_TIP, L.TRANSCRIPT_DUI_TIP),
             function() return transcript().HighlightWord end,
             function(v) transcript().HighlightWord = v end, refreshTranscript)
@@ -512,7 +504,6 @@ local function Build(canvas)
             function(v) transcript().Typewriter = v end, refreshTranscript)
         Only(typewriter, Shown)
         Requires(typewriter, Words, L.REASON_WORDS)
-        -- How the words are typed, under it: letter by letter, or whole words.
         layout:Indent()
         local by = layout:Dropdown(L.TRANSCRIPT_TYPEWRITER_BY, L.TRANSCRIPT_TYPEWRITER_BY_TIP, { "word", "letter" },
             function() return transcript().TypewriterBy or "letter" end,
@@ -532,8 +523,6 @@ local function Build(canvas)
     layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
         function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
 
-    -- What the feature addons do in DialogueUI's own quest window, which is there whatever the
-    -- style: a section of their own, under DialogueUI's name.
     DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each
@@ -605,16 +594,19 @@ local function Build(canvas)
         function(code) return code == "none" and L.OPT_FALLBACK_NONE or Native(code) end)
 
     layout:Section(L.OPT_AUDIO_TITLE)
-    layout:Dropdown(L.OPT_CHANNEL, L.OPT_CHANNEL_TIP, CHANNELS,
-        function() return audio().SoundChannel end,
-        function(v) audio().SoundChannel = v end,
-        -- The handle belongs to the old channel, so a line already speaking cannot move.
-        function() SoundQueue:RemoveAllSoundsFromQueue(); Options:UpdateRows() end,
-        function(channel) return CHANNEL_LABELS[channel] or channel end)
-    -- Any channel may be chosen, but on Dialog the NPCs' voices and Spoken's are one sound.
-    local dialogWarning = layout:Note(L.OPT_CHANNEL_DIALOG_WARN, nil, 32)
-    dialogWarning:SetTextColor(1, 0.5, 0.25)
-    layout:ShowWhen(dialogWarning, function() return audio().SoundChannel == "Dialog" end)
+    -- Legacy clients' playback (Compat.lua) ignores the channel, so there is nothing to choose.
+    if not Version.IsAnyLegacy then
+        layout:Dropdown(L.OPT_CHANNEL, L.OPT_CHANNEL_TIP, CHANNELS,
+            function() return audio().SoundChannel end,
+            function(v) audio().SoundChannel = v end,
+            -- The handle belongs to the old channel, so a line already speaking cannot move.
+            function() SoundQueue:RemoveAllSoundsFromQueue(); Options:UpdateRows() end,
+            function(channel) return CHANNEL_LABELS[channel] end)
+        -- On Dialog, NPC voices and Spoken's are one sound.
+        local dialogWarning = layout:Note(L.OPT_CHANNEL_DIALOG_WARN, nil, 32)
+        dialogWarning:SetTextColor(1, 0.5, 0.25)
+        layout:ShowWhen(dialogWarning, function() return audio().SoundChannel == "Dialog" end)
+    end
     if audio().AutoToggleDialog ~= nil then
         local silence = layout:Checkbox(L.OPT_MUTE_DIALOGUE,
             Version.IsLegacyVanilla and L.OPT_MUTE_DIALOGUE_TIP_VANILLA or L.OPT_MUTE_DIALOGUE_TIP,
@@ -627,7 +619,7 @@ local function Build(canvas)
                 end
             end, function() Options:UpdateRows() end)
         -- Muting Dialog would mute Spoken's own line, so on Dialog the queue never does.
-        Requires(silence, function() return audio().SoundChannel ~= "Dialog" end, L.REASON_DIALOG_CHANNEL)
+        Requires(silence, function() return Sources:PlayerChannel() ~= "Dialog" end, L.REASON_DIALOG_CHANNEL)
     end
     layout:Checkbox(L.OPT_GREETING_FIRST, L.OPT_GREETING_FIRST_TIP,
         function() return audio().GreetingFirst end,
@@ -659,7 +651,7 @@ local function Build(canvas)
                 nil, row[3])
             Requires(slider, function() return lower().Enabled end, L.REASON_LOWER)
             -- Never lowered while it carries the voices.
-            Requires(slider, function() return audio().SoundChannel ~= channel end, L.REASON_VOICE_CHANNEL)
+            Requires(slider, function() return Sources:PlayerChannel() ~= channel end, L.REASON_VOICE_CHANNEL)
             if channel == "Dialog" then
                 -- With the game's dialogue silenced outright, there is no level to set.
                 Requires(slider, function() return not audio().AutoToggleDialog end, L.REASON_DIALOG_MUTED)

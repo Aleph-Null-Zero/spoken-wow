@@ -100,9 +100,8 @@ world.cvars.Sound_EnableDialog = "0"
 Expect("a channel the user disabled is still inaudible", (onDialog:Enqueue(H.Clip())), nil)
 
 ---------------------------------------------------------------- one sound channel, the player's
--- Every addon speaks on the channel chosen once, in the player's settings. A source may
--- still declare its own -- the API keeps the field -- but none of the shipped modules does,
--- so there is one control rather than one per module.
+-- Every addon speaks on the player's channel. A source may still declare its own, but no
+-- shipped module does.
 env, quests, zones = H.Fresh(stub, SPOKEN)
 env.Addon.db.profile.Audio.SoundChannel = "Dialog"
 Expect("the quests source reads the player's channel", quests:GetChannel(), "Dialog")

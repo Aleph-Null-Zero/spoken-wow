@@ -1,8 +1,8 @@
 setfenv(1, SpokenEnv)
 
 -- The "minimal" narrator style, the Small Window: the speaker's portrait beside a panel with the
--- name, the line's title and its words, and the round controls the DialogueUI window and the
--- subtitle have. Playback and source-owned actions still belong to the queue and actions services.
+-- name, the line's title, its words and the round controls. Playback and source-owned actions
+-- belong to the queue and actions services.
 MinimalPlayer = {}
 local ART = [[Interface\AddOns\Spoken\Textures\]]
 local HEIGHT, WIDTH = 98, 380
@@ -13,21 +13,19 @@ local NAME_HEIGHT, TITLE_HEIGHT = 21, 19
 local WORDS_TOP, PROGRESS_GAP, FOOT = 44, 6, 27
 -- The content's inset from the frame's top and right; its left edge clears the portrait.
 local INSET, BESIDE_PORTRAIT, NO_PORTRAIT = 18, 96, 16
--- Between the name or the title and the header's buttons; between the buttons, as the subtitle's.
+-- Between the name or the title and the header's buttons; between the buttons.
 local CONTROLS_CLEAR, ROUND_GAP = 8, 4
--- The bronze the Forever client's frames wear (Bronze Border): the border, the progress line and
--- the portrait's ring take it.
+-- The bronze the Forever client's frames wear, for Bronze Border.
 local BRONZE = { .95, .68, .35 }
--- The panel's backgrounds (Frame.MinimalBackground). On parchment, the DialogueUI window's
--- parchment ink (DialogueUITheme's first palette), with no shadow; on the dark rock, the light
--- colours the window always had.
+-- The text colours for each background (Frame.MinimalBackground): dark ink with no shadow on
+-- parchment, light text on the rock.
 local LOOKS = {
     parchment = { name = { .19, .17, .13 }, title = { .19, .17, .13 }, tail = { .50, .36, .24 }, shadow = 0,
         words = { color = { .19, .17, .13 }, shadow = false, highlight = "|cff9c1a1a" } },
     dark = { name = { 1, .82, 0 }, title = { .88, .84, .76 }, tail = { .62, .58, .46 }, shadow = 1 },
 }
--- The parchment: a band of the spellbook's page, shipped with Spoken. The retail parchment atlases
--- are listed by the Classic clients without their art, and drew nothing.
+-- Shipped with Spoken: the Classic clients list the retail parchment atlases without their art,
+-- so those draw nothing.
 local PARCHMENT = ART .. "MinimalParchment"
 -- Portrait badges by bullet id. Quests use trimmed copies of their own glyphs; books
 -- and zones take native ones, since their registered bullet (or none) is not a badge.
@@ -48,6 +46,11 @@ local function Waiting() return math.max(0, SoundQueue:GetQueueSize() - 1) end
 local function Label(clip)
     local present = clip and clip.present
     return clip and (present and (present.label or present.header) or clip.key) or ""
+end
+-- The name over the title: the header, unless it is already the title (a line with no label).
+local function Name(clip)
+    local present = clip and clip.present
+    return present and present.label and present.header or ""
 end
 local function Font(parent, size, r, g, b)
     local text = parent:CreateFontString(nil, "OVERLAY")
@@ -72,7 +75,8 @@ function MinimalPlayer:IsEnabled()
 end
 
 -- Shared with the DialogueUI window, so both windows' text behaves alike.
-MinimalPlayer.parts = { Font = Font, Label = Label, Clamp = Clamp, Waiting = Waiting, BelongsTo = BelongsTo }
+MinimalPlayer.parts = { Font = Font, Label = Label, Name = Name, Clamp = Clamp, Waiting = Waiting,
+    BelongsTo = BelongsTo }
 
 function MinimalPlayer:HideTooltip()
     local owner = GameTooltip:GetOwner()
@@ -106,7 +110,7 @@ function MinimalPlayer:Initialize(original)
     end)
     frame:Hide()
     self.fader = Actions.Fader(frame, function() return { self.viewport and self.viewport.model } end, function()
-        -- Faded out to turn to the next line: now it comes in.
+        -- Faded out for a turn: show the next line.
         if self.turning then self.turning = nil; self:Update() end
     end)
 
@@ -115,8 +119,8 @@ function MinimalPlayer:Initialize(original)
         edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]], edgeSize = 24,
         insets = { left = 7, right = 7, top = 7, bottom = 7 },
     })
-    -- Inside the 7px inset: the parchment, or the rock tiled by hand (Dress), since the
-    -- backdrop's own tiling stretched it once the words made the panel taller.
+    -- The rock is tiled by hand: the backdrop's own tiling stretches it when the words make the
+    -- panel taller.
     self.paper = self.panel:CreateTexture(nil, "BACKGROUND")
     self.paper:SetPoint("TOPLEFT", 7, -7)
     self.paper:SetPoint("BOTTOMRIGHT", -7, 7)
@@ -127,7 +131,6 @@ function MinimalPlayer:Initialize(original)
     content:SetHeight(76)
     content:SetFrameLevel(self.panel:GetFrameLevel() + 1)
     content.buttons = {}
-    -- The name and the title's rows: dragged to move the window, right-clicked for the menu.
     self.header = CreateFrame("Button", nil, content)
     self.header:SetPoint("TOPLEFT")
     self.header:SetPoint("TOPRIGHT")
@@ -146,7 +149,7 @@ function MinimalPlayer:Initialize(original)
     end)
     self.header:SetScript("OnLeave", function() self:HideTooltip() end)
 
-    -- Stop or Replay, Skip, then Report, at the header's right, as the DialogueUI window has them.
+    -- Stop or Replay, Skip, then Report, at the header's right.
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(1)
     self.controls:SetFrameLevel(content:GetFrameLevel() + 3)
@@ -161,13 +164,11 @@ function MinimalPlayer:Initialize(original)
     self.name:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     self.name:SetPoint("RIGHT", self.controls, "LEFT", -CONTROLS_CLEAR, 0)
     content.name = self.name -- Actions' header anchor contract.
-    -- The line's name, nothing to click: Skip takes a line away, as on the subtitle.
     self.title = CreateFrame("Frame", nil, content)
     self.title:SetHeight(TITLE_HEIGHT)
     self.title:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -NAME_HEIGHT)
     self.title:SetPoint("RIGHT", self.controls, "LEFT", -CONTROLS_CLEAR, 0)
     self.title.text = Font(self.title, 12, .88, .84, .76)
-    -- Stopped and the lines waiting, after the title, each fading by itself.
     self.stopped = Font(self.title, 12, .62, .58, .46)
     self.stopped:SetText(format("• (%s)", L.SUBTITLE_STOPPED))
     self.stopped:Hide()
@@ -175,7 +176,6 @@ function MinimalPlayer:Initialize(original)
     self.count:Hide()
     self.tail = Actions.Tail(self.stopped, self.count)
 
-    -- The subtitle's progress line, along the foot of the words (MinimalPlayer:Layout).
     self.progress = Actions.ProgressBar(content)
 
     self:BuildPortrait()
@@ -205,8 +205,6 @@ function MinimalPlayer:Initialize(original)
     end)
 end
 
--- The speaker's face in its ring. No Stop on it: the header's is the one, as the DialogueUI window
--- and the subtitle have one.
 function MinimalPlayer:BuildPortrait()
     local host = CreateFrame("Frame", nil, self.frame)
     self.portrait, self.frame.portrait = host, host
@@ -290,8 +288,7 @@ function MinimalPlayer:MenuItem(index, fn)
     return button
 end
 
---- An icon action that names itself gets a menu row, "[icon] label", besides its button in the
---- header.
+--- An icon action that names itself also gets a menu row, "[icon] label".
 function MinimalPlayer:ActionRow(index)
     local row = self.actionRows[index]
     if row then return row end
@@ -373,7 +370,7 @@ function MinimalPlayer:TileRock()
     self.paper:SetTexCoord(0, math.max(0, width - 14) / 256, 0, math.max(0, height - 14) / 256)
 end
 
---- The panel in its background, and the name, the title and the words in colours that read on it.
+--- Paints the panel's background, and the text in colours that read on it.
 function MinimalPlayer:Dress()
     local dark = Config().MinimalBackground == "dark"
     local look = dark and LOOKS.dark or LOOKS.parchment
@@ -401,8 +398,8 @@ function MinimalPlayer:UpdateControls()
     if not self.clip then return end
     local paused = SoundQueue:IsPaused()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
-    -- The line's name alone, as the subtitle shows it: not why it waits.
     self.title.text:SetText(Label(self.clip))
+    Addon:ClipFont(self.title.text, self.clip)
     self.tail:SetStopped(paused)
     self:Count(Waiting())
     local pausable = SoundQueue:CanBePaused()
@@ -417,8 +414,8 @@ function MinimalPlayer:UpdateControls()
     end
 end
 
---- After the title, as the subtitle has them: "• (Stopped)" while the line is stopped, and the
---- lines waiting behind it, "• +N" (Actions.Tail). The title is cut short, not these.
+--- Puts "• (Stopped)" and the lines waiting, "• +N", after the title. The title is cut short,
+--- not these.
 function MinimalPlayer:Count(waiting)
     local tail = self.tail
     tail:SetCount(waiting)
@@ -435,19 +432,17 @@ end
 function MinimalPlayer:UpdateProgress()
     local clip = self.clip
     if not clip then return end
-    local duration = tonumber(clip.length) or 0
     self.seconds = Actions.Elapsed(clip, self.seconds)
-    Actions.SetProgress(self.progress, duration > 0 and (self.seconds or 0) / duration or 0)
+    Actions.SetProgress(self.progress, SoundQueue:Share(clip, self.seconds))
 end
 
---- The window as tall as its words: the name and the title, the words under them in the panel's
---- width, and the progress line along their foot.
+--- The window as tall as its words, with the progress line along their foot.
 function MinimalPlayer:Layout()
     if not self.frame or self.layingOut then return end
     self.layingOut = true
     local cfg = Config()
     local words = Transcript:HeightForClip(self.clip)
-    -- Show Progress, as the subtitle and the DialogueUI window have it.
+    -- Show Progress, one setting for every window.
     local progress = Addon:Profile("Transcript").SubtitleProgress ~= false
     local width = math.max(1, self.frame:GetWidth() - (cfg.HidePortrait and NO_PORTRAIT or BESIDE_PORTRAIT) - INSET)
     local bottom = words > 0 and WORDS_TOP + words or NAME_HEIGHT + TITLE_HEIGHT
@@ -477,7 +472,7 @@ end
 
 function MinimalPlayer:Tick(elapsed)
     if not self.wanted then return end
-    -- Stopped faded out: its room given back.
+    -- Once "(Stopped)" has faded out, the title gets its room back.
     if self.tail:Step(elapsed) then self:Count(Waiting()) end
     if StaticPortrait:Resolved() then self:ConfigurePortrait() end
     self:UpdateProgress()
@@ -519,7 +514,7 @@ function MinimalPlayer:RefreshConfig(original)
     self:Update()
 end
 
---- Whether this window, showing a line, will fade out to turn to `clip` (MinimalPlayer:Update).
+--- Whether this window, showing a line, will fade out before it shows `clip`.
 function MinimalPlayer:WillTurn(clip)
     return self:IsEnabled() and self.frame ~= nil and self.clip ~= nil and clip ~= self.clip and self.wanted
         and self.frame:IsShown() and not Actions.DialogCovers() and true or false
@@ -528,13 +523,11 @@ end
 function MinimalPlayer:Update()
     if not self.frame then return end
     if not self:IsEnabled() then self.turning = nil; self:SetVisible(false, true); return end
-    -- Faded out with nothing to say, or while a DialogueUI dialog hides the interface.
     local clip = PlayerFrame:Current()
     if not clip or Actions.DialogCovers() then self.turning = nil; self:SetVisible(false); return end
-    -- Fading out to turn to the next line: it comes in once faded (the fader's faded).
+    -- Mid-turn: the fader's callback shows the next line once faded out.
     if self.turning and self.frame:IsShown() then return end
-    -- Following another line on screen: this one fades out whole, as the window does when the
-    -- queue ends, and the next fades in from nothing once it has, all changed unseen.
+    -- A new line while one shows: fade out whole first, so the change happens unseen.
     if clip ~= self.clip and self.clip and self.wanted and self.frame:IsShown() then
         self.turning = true
         self:SetVisible(false)
@@ -546,9 +539,10 @@ function MinimalPlayer:Update()
         self.clip, self.seconds = clip, 0
     end
     self:SetVisible(true)
-    -- Said once: a name the same as the line's own is left off, as the subtitle leaves it.
-    local header = clip.present and clip.present.header
-    self.name:SetText(header ~= Label(clip) and header or "")
+    -- A speaker name the same as the line's own is left off, so it is not said twice.
+    local name = Name(clip)
+    self.name:SetText(name ~= Label(clip) and name or "")
+    Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
     self:Layout()

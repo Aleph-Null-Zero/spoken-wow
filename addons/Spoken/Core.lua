@@ -26,10 +26,10 @@ Defaults = {
             -- "subtitle", "minimal" (Small Window), "classic" (Large Window), "dialogueui" or
             -- "none" (the voice alone). Legacy clients start in the window they always had.
             Style = Version.IsAnyLegacy and "classic" or "subtitle",
-            -- The bronze the Forever client's frames wear, on the windows' metal (Addon:Bronze).
+            -- The windows' metal in the bronze the Forever client's frames wear.
             BronzeTint = true,
             MinimalWidth = 380,
-            -- What the small window is drawn on: "parchment" or "dark", the rock it had before.
+            -- The small window's background: "parchment" or "dark" (the rock).
             MinimalBackground = "parchment",
             -- Per action id, for the ones an addon declared optional. Absent means shown.
             HiddenActions = {},
@@ -201,6 +201,32 @@ function Addon:Profile(section)
     return self.db and self.db.profile[section] or Defaults.profile[section]
 end
 
+--- Draws a clip's text in its `present.font`, for a script the game's font has no glyphs for
+--- (Czech on a Western client), and any other clip's in the font string's own face. The size
+--- and flags stay the player's.
+function Addon:ClipFont(fontString, clip)
+    local face, size, flags = fontString:GetFont()
+    if not face then return end
+    -- Anything but the face this set last is the player's own (a skin, a resize), so it is
+    -- the one to go back to.
+    if face ~= fontString.spokenClipFace then fontString.spokenOwnFace = face end
+    local want = clip and clip.present and clip.present.font or fontString.spokenOwnFace
+    -- Asked for last time and still on: done, also when that face failed and the player's
+    -- own stands in, rather than trying it again on every update.
+    if face == fontString.spokenClipFace and want == fontString.spokenClipWant then return end
+    local asked = want
+    -- A face the client cannot load: current clients answer false, older ones nil or nothing, so
+    -- the face it reports afterwards is asked too. Back to the player's own rather than a
+    -- string with no font.
+    if want ~= face and (fontString:SetFont(want, size, flags or "") == false or not fontString:GetFont()) then
+        want = fontString.spokenOwnFace
+        fontString:SetFont(want, size, flags or "")
+    end
+    -- The face as the client reports it, since that is what the next call reads back, and the
+    -- client need not spell a path the way it was given.
+    fontString.spokenClipWant, fontString.spokenClipFace = asked, fontString:GetFont() or want
+end
+
 --- Where each player window sits, how wide it is, and whether the captions are expanded.
 --- Account-wide, in global rather than the profile: AceDB names the profile after
 --- UnitName("player") when its file loads, and the Forever client answers "Unknown" (in
@@ -250,8 +276,13 @@ end
 --- spokenBaseStrata give a frame's own scale and strata (the subtitles).
 function Addon:ApplyHost(frame)
     if not frame then return end
-    -- A window drawn as one image while it fades moves once it is itself again (DialogueUIPlayer).
-    if frame.spokenFrozen then frame.spokenHostPending = true; return end
+    -- A window drawn as one image must not move while it fades: it moves once it is itself again.
+    if frame.spokenFrozen then
+        frame.spokenHostPending = true
+        -- Hidden with the host it leaves, it never ticks to its fade's end: ended now, unseen.
+        if frame.spokenEndFade and not frame:IsVisible() then frame.spokenEndFade() end
+        return
+    end
     local host, cfg = self.playerHost, self:Profile("Frame")
     local base = frame.spokenBaseScale or cfg.FrameScale
     if host then

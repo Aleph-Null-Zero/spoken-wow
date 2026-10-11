@@ -4,29 +4,30 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Spoken's Play, Skip and Report sit at the top right of DialogueUI's quest window.** Play
+  turns to Stop while its line speaks and is greyed where no pack has the line, where Report
+  offers Contribute in place of the old "No voice-over playing?" line. A close button sits
+  beside them. *([Nucabe](https://github.com/Nucabe))*
 - **The small window has the DialogueUI window's controls, on parchment.** Stop or Replay, Skip
   and Report are round buttons in its header, a progress line runs under the words, and the title
   says "• (Stopped)" and how many lines wait, in place of the list. Its new Background setting
   draws it on parchment, the default, or on the dark rock it had. It fades in and out more
   slowly, from one line to the next too, and goes while a DialogueUI dialog hides the interface. *([Nucabe](https://github.com/Nucabe))*
-
-## 3.3.0 — 2026-10-09
-
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
   voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
   that voice, the quest plays as before.
-- **With the DialogueUI narrator style, Spoken's small window takes DialogueUI's look.** When a
-  dialog closes on a line still playing, the window slides out of it, with Stop, Skip and Report in
-  its header and a place's picture over its words. *([Nucabe](https://github.com/Nucabe))*
-- **With the DialogueUI narrator style, books show in DialogueUI's paper and plaques and gravestones
-  in its stone.** Spoken's window stays hidden while DialogueUI's book view is open and slides out
-  of it when it closes. *([Nucabe](https://github.com/Nucabe))*
-- **The DialogueUI window settles into place with animation.** A queued line's page tucks behind the
-  window, and the words fade from one line to the next. *([Nucabe](https://github.com/Nucabe))*
+- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles alone,
+  and Voice Only shows none of the words' settings. Spoken Quests' DialogueUI switches have a
+  DialogueUI section of their own after the narrator style's settings. Bronze Border has left the
+  narrator style's settings for a Colours section, on every client: it colours every round button
+  Spoken draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
 - **Abandoning a quest while its voice speaks fades the voice out.** Before, it was cut off
   mid-word and the quest's next line started for a moment. *([Nucabe](https://github.com/Nucabe))*
 - **Fixed: Books and Zones said "Not installed" in Spoken's module list after login**, and a
   module's settings page could show it switched off after it was switched on from Spoken's page.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Volume Follows is back.** Choose which volume slider Spoken's voices follow: Master, Effects,
+  Music, Ambience or Dialog. On Dialog, a note says which features stop working there.
   *([Nucabe](https://github.com/Nucabe))*
 - **Hide Report Buttons hides every Report button.** It sits beside Hide Contribute Buttons and
   also takes Report off the quest log, DialogueUI's window, the lore beside the map and the
@@ -42,6 +43,17 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   letter opened while a book is read waits behind it instead of replacing it. The windows show
   the readable's kind over its name, such as Book or Gravestone, in place of the page count.
   *([Nucabe](https://github.com/Nucabe))*
+- **Captions fade at their edges as they glide.** The line leaving at the top fades out and the
+  line coming in at the bottom fades in, where they were cut off at the edge.
+  *([Nucabe](https://github.com/Nucabe))*
+- **With the DialogueUI narrator style, Spoken's small window takes DialogueUI's look.** When a
+  dialog closes on a line still playing, the window slides out of it, with Stop, Skip and Report in
+  its header and a place's picture over its words. *([Nucabe](https://github.com/Nucabe))*
+- **With the DialogueUI narrator style, books show in DialogueUI's paper and plaques and gravestones
+  in its stone.** Spoken's window stays hidden while DialogueUI's book view is open and slides out
+  of it when it closes. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI window settles into place with animation.** A queued line's page tucks behind the
+  window, and the words fade from one line to the next. *([Nucabe](https://github.com/Nucabe))*
 - **The DialogueUI settings are on Spoken's page, with the other narrator styles'.** They show when
   DialogueUI is the narrator style, and every style's settings come in the same order: Size and
   Position, Look, Words. Show Sample Subtitle is gone, as Preview shows every style.
@@ -49,29 +61,32 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Subtitles get the windows' settings, and the windows type by letter.** Subtitles gain Show Name
   and Title, Highlight Words, Auto-Scroll line by line or page by page, Text Size and Hide Portrait.
   Type By sets whether a window types out words or letters. *([Nucabe](https://github.com/Nucabe))*
-- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles alone,
-  and Voice Only shows none of the words' settings. Spoken Quests' DialogueUI switches have a
-  DialogueUI section of their own after the narrator style's settings. Bronze Border has left the
-  narrator style's settings for a Colours section, on every client: it colours every round button
-  Spoken draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
 - **The large window is the game's Talking Head frame.** Its words sit inside the box, under the
   speaker's gold name, beside the portrait (a 3D model where there is one). Stopped and a count of
   the lines waiting follow the name in place of the queue's rows, Stop, Skip and Report take the
   close button's corner, and a progress line runs under the words. It fades in and out, from one
-  line to the next too, and goes
-  while a DialogueUI dialog hides the interface, where its 3D portrait stayed behind. Clients
-  without the Talking Head's art draw Spoken's own in the same places. *([Nucabe](https://github.com/Nucabe))*
-- **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
-  written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
-- **Volume Follows is back.** Choose which volume slider Spoken's voices follow: Master, Effects,
-  Music, Ambience or Dialog. On Dialog, a note says which features stop working there.
-  *([Nucabe](https://github.com/Nucabe))*
+  line to the next too, and goes while a DialogueUI dialog hides the interface, where its 3D
+  portrait stayed behind. Clients without the Talking Head's art draw Spoken's own in the same
+  places. *([Nucabe](https://github.com/Nucabe))*
 - **Alt-tabbing no longer loses the line.** With Sound in Background off, the game silences
   Spoken's voice when you switch away. The line now stops instead of running on in silence, and
   Replay plays it from the start. *([svengabr](https://github.com/svengabr))*
 - **A zone's story is headed by the place it is in.** It showed its own name twice, as
   "Mulgore / Mulgore". The narrator now shows a zone's continent over it and a city's zone, and
   the Compendium's "In ..." line names the same place. *([Nucabe](https://github.com/Nucabe))*
+- **Books can close themselves once read.** Turn on *Close Book When Done Reading* (or `/spb close`)
+  and a book, letter or plaque shuts after its last page has been read aloud. With DialogueUI's
+  book view, that brings back the interface it hides. The Spoken window now shows a book's title in
+  your client's language, and names a one-page letter by its title instead of an internal key.
+  *([earlsinclairdino](https://github.com/earlsinclairdino))*
+- For feature addons: `present.font` on a clip draws its speaker, title, queue row, captions and
+  subtitle in that face, for a script the game's font has no glyphs for. A face the client cannot
+  load leaves the player's own. *([damesene](https://github.com/damesene))*
+- **Zone Lore offers Korean, Chinese and Russian on every client.** The lore and its captions are
+  written in the game's own fonts for those languages. *([Nucabe](https://github.com/Nucabe))*
+- For feature addons: `present.timings` on a clip, the time each word of its transcript starts,
+  moves the captions and subtitle with the voice instead of the estimate. `Spoken:CaptionWords`
+  lists the words to time; a list that does not match them is ignored. *([damesene](https://github.com/damesene))*
 
 ## 3.2.0 — 2026-10-08
 

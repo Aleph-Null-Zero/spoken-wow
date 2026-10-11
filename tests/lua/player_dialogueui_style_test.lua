@@ -25,16 +25,16 @@ local function FakeDialogueUI()
     frame.Parchments = { cap }
     function frame:LoadTheme() end
     function frame:UpdateFrameSize() end
-    -- Showing a page: Spoken hooks it to hear another page shown in a window still open.
-    function frame:ShowUI() end
+    -- Showing a page: Spoken hooks it to hear another page shown in a window still open. A test
+    -- may have it hide the window, as DialogueUI's does during a cutscene.
+    function frame:ShowUI(...) if self.onShowUI then self.onShowUI(self, ...) end end
     -- Closed until a dialog opens.
     frame:Hide()
     _G.DUIQuestFrame = frame
     local font = stub.Widget("Font")
     function font:GetFont() return "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf", 14 end
     _G.DUIFont_Quest_Paragraph = font
-    -- Its book view: no parent either, drawn at 0.8, its paper the frame, 409.6 by 477.87 with
-    -- its bottom left at 200, 100. Closed until a book opens.
+    -- Its book view, its paper the frame, closed until a book opens.
     local book = stub.Widget("Frame")
     book.GetEffectiveScale = function() return 0.8 end
     book.GetRect = function() return 200, 100, 409.6, 477.87 end
@@ -290,13 +290,30 @@ quests:Enqueue(H.Clip({ present = { header = "Eagan", label = "Second", portrait
 Expect("a waiting line gets no row, the title counts it", tostring(Skin.rows) .. " " .. Skin.count:GetText(), "nil • +1")
 Spoken:StopAll()
 
+-- A clip that names its own face (present.font) keeps it when the window is laid out again,
+-- which repaints every string in the theme's face.
+local function Faced(text) -- keeps the face it is given, as the client's font strings do
+    local face = "Fonts\\FRIZQT__.TTF"
+    function text:SetFont(f) face = f; return true end
+    function text:GetFont() return face, 12 end
+end
+local NOTO = [[Interface\AddOns\Pack\NotoSerif.ttf]]
+Faced(Skin.name); Faced(Skin.title.text)
+quests:Enqueue(H.Clip({ present = { header = "Příliš", label = "Žluťoučký", font = NOTO, portrait = { kind = "none" } } }))
+quests:Enqueue(H.Clip({ present = { header = "Kůň", label = "Úpěl", font = NOTO, portrait = { kind = "none" } } }))
+local function Faces() return Skin.name:GetFont() .. "|" .. Skin.title.text:GetFont() end
+Expect("a clip naming its own face is drawn in it", Faces(), NOTO .. "|" .. NOTO)
+Skin:Layout()
+Expect("...and keeps it when the window is laid out again", Faces(), NOTO .. "|" .. NOTO)
+Spoken:StopAll()
+
 -- A book page and a zone's lore, queued as Spoken_Books and Spoken_Zones queue them.
 local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Books", order = 3 })
 books:Enqueue({ key = "b:1", path = "b1.mp3", length = 6, present = { header = "A Letter Home", transcript = "Dear mother, the war goes well.",
     bullet = "book", portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 Expect("a book page shows the window", Skin.wanted, true)
-Expect("...titled by the book, said once: the line is named by it too", Skin.name:GetText(), "")
-Expect("...and named by it when it has no page label, never by its key", Skin.title.text:GetText(), "A Letter Home")
+Expect("...titled by the book, never by its key", Skin.title.text:GetText(), "A Letter Home")
+Expect("...said once: no name over it", Skin.name:GetText(), "")
 Expect("...the book for a face", Skin.viewport.active, "texture")
 Expect("...badged as a book, as the subtitle badges it", tostring(Skin.badge:IsShown()) .. " " .. tostring(Skin.badge.texture),
     "true " .. tostring(env.MinimalPlayer.BADGES.book))
@@ -427,7 +444,19 @@ end
 local report = Skin.row[3]
 Expect("...Report after Skip, as large and as strong, as the subtitle shows it", report ~= nil and report:GetParent() == Skin.controls
     and report:GetWidth() == Skin.play:GetWidth() and report:GetAlpha() == 1, true)
-Expect("...and no fold or close button", Skin.fold == nil and Skin.close == nil, true)
+local extra = {}
+local function Walk(frame)
+    for _, child in ipairs({ frame:GetChildren() }) do
+        if child:GetObjectType() == "Button" then
+            local known = false
+            for _, button in ipairs(Skin.row) do known = known or button == child end
+            if not known then table.insert(extra, child) end
+        end
+        Walk(child)
+    end
+end
+Walk(Skin.frame)
+Expect("...and no other button on it: no fold, close button or resize handle", #extra, 0)
 Expect("...nor a second Stop on the face: the header's is the one, as the subtitle has one", Skin.pause, nil)
 Expect("the line's title is a name, nothing to click: Skip takes a line away",
     Skin.title:GetObjectType() .. " " .. tostring(Skin.title.scripts.OnClick) .. " " .. tostring(Skin.title.scripts.OnEnter),
@@ -499,7 +528,7 @@ do
 end
 Expect("...the count gone with no line waiting", Skin.count:IsShown(), false)
 -- Every fade is of the window as one image (a frame buffer, as the world map is), and nothing in
--- it changes while it is one: the client crashed on that.
+-- it changes while it is one: the client crashes otherwise.
 Expect("shown, it is not one image: things change in it", Skin.frame:IsFrameBuffer(), false)
 Skin:Tick(1) -- shown, and still a while
 Skin.skip:EnableMouse(true) -- as a button is in the client; the stub's start without
@@ -685,6 +714,53 @@ Spoken:SetPlayerHost(nil)
 DUI:Hide()
 Skin:CloseStep(1)
 Spoken:StopAll()
+Skin:Tick(1)
+
+---------------------------------------------------------------- the host leaving mid-fade
+-- On DialogueUI's window, fading in as one image, when the window closes: hidden with it, the
+-- window never ticks again, so its fade ends there and it comes back to the screen.
+Spoken:SetPlayerHost(DUI)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Four", portrait = { kind = "none" } } }))
+Skin:Tick(0.1)
+Expect("hosted, a line fades in as one image", tostring(Skin.buffered) .. " " .. tostring(Skin.fadeTime ~= nil), "true true")
+local IsVisible = Skin.frame.IsVisible
+Skin.frame.IsVisible = function() return false end
+Spoken:SetPlayerHost(nil)
+Skin.frame.IsVisible = IsVisible
+Expect("...the host closing ends the fade at once, the window itself again and back on the screen",
+    tostring(Skin.buffered) .. " " .. tostring(Skin.frame:GetParent() == _G.UIParent) .. " " .. Skin.level, "nil true 1")
+Spoken:StopAll()
+Skin:Tick(1)
+
+---------------------------------------------------------------- a face found while it fades in
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Five", portrait = { kind = "none" } } }))
+Skin:Tick(0.1)
+local painted = 0
+local Configure = env.StaticPortrait.Configure
+env.StaticPortrait.Configure = function(...) painted = painted + 1; return Configure(...) end
+Skin:ConfigurePortrait()
+Expect("a face found while the window is one image is not painted into it",
+    tostring(Skin.buffered) .. " " .. painted .. " " .. tostring(Skin.pending), "true 0 update")
+Skin:Tick(1)
+Expect("...but once the fade ends", tostring(Skin.buffered) .. " " .. tostring(painted > 0), "nil true")
+env.StaticPortrait.Configure = Configure
+Spoken:StopAll()
+Skin:Tick(1)
+
+---------------------------------------------------------------- a picture that never loads
+local Still = Skin.Still
+Skin.Still = function() return false end
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Six", portrait = { kind = "none" } } }))
+Skin:Tick(0.5); Skin:Tick(0.4)
+Expect("a picture still loading keeps the window unseen a moment", tostring(Skin.preparing ~= nil) .. " " .. Skin.level, "true 0")
+Skin:Tick(0.11)
+Expect("...but not for good: it fades in as itself, not one image a late load could crash",
+    tostring(Skin.preparing) .. " " .. tostring(Skin.buffered) .. " " .. tostring(Skin.fadeTime ~= nil), "nil nil true")
+Skin:Tick(1)
+Expect("...all the way", Skin.level, 1)
+Skin.Still = Still
+Spoken:StopAll()
+Skin:Tick(1)
 
 ---------------------------------------------------------------- from the dialog to the top left
 -- DialogueUI's window closes on a line that plays on: the window starts where the dialog was, as
@@ -737,8 +813,7 @@ DUI:SetScript("OnHide", function() end)
 Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
 DUI.BackgroundFrame = nil
 -- A quest page closing where DialogueUI may show another page (it does not say otherwise): the
--- page stays as it is, words and all, until DialogueUI closes it; fading them first left bare
--- paper standing for up to a second.
+-- page stays as it is, words and all, until DialogueUI closes it.
 OpenDialog()
 Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
 for _ = 1, 30 do Skin:CloseStep(0.05) end
@@ -865,10 +940,56 @@ do
     Expect("...then closes the second", table.concat(hid, ","), "first,second")
 end
 
+-- The flight cut short: by the line stopping, by another dialog opening over it, by a setting.
+local function FlyOut()
+    Spoken:StopAll()
+    for _ = 1, 40 do Skin:Tick(0.05) end
+    OpenDialog()
+    quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
+    Skin.questEvents.scripts.OnEvent(Skin.questEvents, "QUEST_FINISHED")
+    DUI:Hide()
+    Skin:CloseStep(0.12)
+    Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
+    Skin:Tick(0.2)
+    return Skin.settling ~= nil
+end
+local function Landed()
+    return Skin.settling == nil and Skin.landing == nil and Near(Skin.frame.scale, Skin.frame.spokenBaseScale)
+end
+Expect("stopped as it flies", FlyOut(), true)
+Spoken:StopAll()
+Expect("...it lands at once, where it rests", Landed() and AtTopLeft(), true)
+local flewBuffered = false
+for _ = 1, 20 do
+    Skin:Tick(0.05)
+    flewBuffered = flewBuffered or (Skin.buffered and (Skin.settling or Skin.landing)) and true or false
+end
+Expect("...and fades out as one image with nothing in it moving", flewBuffered, false)
+Expect("a dialog opening over it as it flies", FlyOut(), true)
+OpenDialog()
+Expect("...ends the flight, so the next show does not fly on from the old dialog", Landed(), true)
+Spoken:StopAll()
+DUI.hooks = {}
+DUI:Hide()
+Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
+Expect("a setting changed as it flies", FlyOut(), true)
+env.PlayerFrame:RefreshConfig()
+Expect("...lands it at once, so the flight does not undo the change", Landed() and AtTopLeft(), true)
+Spoken:StopAll()
+for _ = 1, 40 do Skin:Tick(0.05) end
+-- DialogueUI hides its window from ShowUI itself during a cutscene: ShowUI's end must not take that
+-- for another page and keep the window open.
+OpenDialog()
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
+DUI.onShowUI = function(frame) frame:Hide() end
+DUI:ShowUI("QUEST_DETAIL")
+DUI.onShowUI = nil
+Expect("DialogueUI hiding its window from ShowUI hides it at once", tostring(DUI:IsShown()) .. " " .. tostring(Skin.closing), "false nil")
+Skin.dialogWatches[DUI].scripts.OnHide(Skin.dialogWatches[DUI])
+Spoken:StopAll()
+for _ = 1, 40 do Skin:Tick(0.05) end
+
 ---------------------------------------------------------------- books and stones
--- Spoken Books' pages, in the art DialogueUI's book view draws them in: its paper for books and
--- letters, its stone for the materials it draws in stone. Every other line keeps the quest
--- window's parchment.
 local BOOK = "Interface/AddOns/DialogueUI/Art/Book/TextureKit-"
 local function Page(material)
     return H.Clip({ length = 30, present = { header = "Beyond the Dark Portal", label = "Page 1 of 4", bullet = "book",
@@ -917,8 +1038,6 @@ Expect("...then the quest's comes in on its own paper, at its own height, never 
     BROWN .. "Parchment.png nil true")
 Spoken:StopAll()
 
--- The book view open: this window steps aside; closed on a page that reads on, the window takes
--- the book's place and size and goes to the top left, as from the quest window.
 local BookView = _G.DUIBookFrame
 local bookWatch = Skin.dialogWatches and Skin.dialogWatches[BookView]
 Expect("the book view is watched, as the quest window is", bookWatch ~= nil, true)
@@ -946,9 +1065,7 @@ end
 
 ---------------------------------------------------------------- a dialog's line joining the queue
 -- A quest's line playing on, and a gravestone read meanwhile: closing the stone does not hand
--- this window its place (it turned from stone to parchment on its way); this window comes back as
--- it is, and the stone's page goes behind it: lifted off where the stone was, flown over, slid
--- under.
+-- this window its place; this window comes back as it is, and the stone's page goes behind it.
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
 OpenDialog()
 CloseDialog()

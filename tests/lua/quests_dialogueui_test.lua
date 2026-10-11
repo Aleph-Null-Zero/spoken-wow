@@ -423,7 +423,7 @@ _G.DialogueUI_DB = nil
 
 ---------------------------------------------------------------- Spoken's controls on DialogueUI's title line
 -- DialogueUI draws its own Play only with its Text To Speech on; Spoken's round Play and Skip are
--- there either way, on the title line, as Spoken's DialogueUI window shows them.
+-- there either way, on the title line.
 world.questID = 101
 DUI.handler = "HandleQuestDetail"
 DUI:HandleQuestDetail()
@@ -479,7 +479,6 @@ Expect("...the title left as DialogueUI lays it out", header.Title.anchor and he
     and header.Title.anchor.x .. " " .. header.Title.anchor.y, "-8 2")
 Expect("...in the paper's art on DialogueUI's parchment", closeButton.file,
     "Interface/AddOns/DialogueUI/Art/Book/TextureKit-Parchment.png")
--- A gossip page has no header to show: nothing moves.
 DUI.handler = "HandleGossip"
 DUI:HandleGossip()
 Bridge:RefreshPlayButton("GOSSIP_SHOW")
@@ -492,7 +491,6 @@ Expect("...and on a gossip page its text starts 36 under the line, its own line 
 Expect("on a gossip page the close button and the row stay where they were", Anchor(closeButton) .. " "
     .. tostring(controls.frame.anchor ~= nil and controls.frame.anchor.relativeTo == closeButton),
     "RIGHT window TOPRIGHT " .. (-26 * 0.53333) .. " " .. middle .. " true")
--- DialogueUI's Copy Text button, which it puts in that corner, goes left of the row.
 local copyText = stub.Widget("Button")
 copyText:SetPoint("TOPRIGHT", DUI, "TOPRIGHT", -8, -8)
 copyText:Show()
@@ -875,8 +873,7 @@ Expect("the place has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_
 local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end
 layout:Refresh()
--- They change DialogueUI's quest window, which is there whatever the narrator style: a section of
--- their own under DialogueUI's name, after the narrator style's settings, before the Compendium.
+-- They change DialogueUI's quest window, which is there whatever the narrator style.
 local narratorEnd, section, compendium
 for index, item in ipairs(layout.items) do
     if item.kind == "groupEnd" and item.group.text == env.L.OPT_NARRATOR_SETTINGS then narratorEnd = index end
@@ -899,8 +896,7 @@ for _, style in ipairs({ "subtitle", "minimal", "classic", "dialogueui" }) do
     layout:Refresh()
     Expect("...and is with the " .. style .. " style", showPlayer:IsShown(), true)
 end
--- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked,
--- and say so.
+-- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked.
 for _, label in ipairs({ env.L.TRANSCRIPT_SHOW, env.L.TRANSCRIPT_HIGHLIGHT, env.L.TRANSCRIPT_TYPEWRITER }) do
     local tip
     for _, entry in ipairs(layout.entries) do
