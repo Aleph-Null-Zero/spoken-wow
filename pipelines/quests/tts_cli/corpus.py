@@ -27,7 +27,9 @@ from tts_cli.naming import filename_for_row, line_id_for_row
 #: 4: "npcs", each NPC once with its own race, gender and flavor and whose answer that is
 #: (`provenance`), which every line the NPC speaks is voiced in (the npc table, migration 0070).
 #: The extract's are `corpus`; an export carries every answer the site has.
-SCHEMA_VERSION = 4
+#: 5: "npcSexes", each sex of an NPC drawn as a man and as a woman under one id, answered as an
+#: NPC is (the npc_sex table, migration 0072). Every line such an NPC speaks is voiced per sex.
+SCHEMA_VERSION = 5
 DEFAULT_CORPUS_PATH = "corpus/corpus.json.gz"
 INVALID_CHARS = "$<>"
 #: The skipReason of a line whose voice is a model slot nobody has chosen a voice for yet.
@@ -106,6 +108,7 @@ def build_corpus(df, spawn_rows) -> dict:
         "lines": lines,
         "spawns": spawns,
         "npcs": npcs_of(df),
+        "npcSexes": [],
     }
 
 

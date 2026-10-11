@@ -305,6 +305,62 @@ def _import_npcs(cur, npc_rows):
     return kept
 
 
+def npc_sex_answers(npc_sexes, npcs) -> list:
+    """The file's split NPCs as npc_sex rows, (kind, id, sex, race, flavor, provenance,
+    doubtful), the extract's flavorless sex given its race-gender's default as npc_answers
+    gives an NPC's."""
+    gender = {2: "male", 3: "female"}
+    defaults = fallback_flavors(
+        [(f'{npc["race"]}-{npc["gender"]}', npc["flavor"]) for npc in retyped(npcs)]
+        + [(f'{row["race"]}-{gender[row["sex"]]}', row["flavor"]) for row in npc_sexes])
+    rows = []
+    for row in npc_sexes:
+        provenance = row.get("provenance", "corpus")
+        guess = None if row["flavor"] or provenance != "corpus" else \
+            defaults.get(f'{row["race"]}-{gender[row["sex"]]}')
+        rows.append((row["npcType"], row["npcId"], row["sex"], row["race"],
+                     row["flavor"] or guess, provenance, guess is not None))
+    return rows
+
+
+def _import_npc_sexes(cur, rows):
+    """The file's split NPCs into npc_sex (apps/web migration 0072), by _import_npcs' rules: an
+    answer lands over one ranked no higher, a moderator's stays unless marked doubtful, and a
+    `corpus` sex the file no longer carries goes. A sex of an NPC with no npc row is skipped:
+    the split is of an NPC, and the file names every NPC it splits."""
+    cur.execute("""create temporary table "npc_sex_import" ("npcKind" text, "npcId" integer,
+                     "sex" smallint, "race" text, "flavor" text, "provenance" text,
+                     "doubtful" boolean) on commit drop""")
+    if rows:
+        _bulk(cur, "npc_sex_import", rows,
+              """insert into "npc_sex_import" ("npcKind", "npcId", "sex", "race", "flavor",
+                                               "provenance", "doubtful") values %s""")
+    cur.execute(
+        """delete from "npc_sex" x
+            where x."provenance" = 'corpus'
+              and not exists (select 1 from "npc_sex_import" i
+                               where i."npcKind" = x."npcKind" and i."npcId" = x."npcId"
+                                 and i."sex" = x."sex")""")
+    cur.execute(
+        """insert into "npc_sex" as x ("npcKind", "npcId", "sex", "race", "flavor", "provenance",
+                                        "confirmed", "doubtful")
+            select i."npcKind", i."npcId", i."sex", i."race", i."flavor", i."provenance",
+                   i."provenance" in ('corpus', 'display', 'moderator') and not i."doubtful",
+                   i."doubtful"
+              from "npc_sex_import" i
+              join "npc" n on n."npcKind" = i."npcKind" and n."npcId" = i."npcId"
+            on conflict ("npcKind", "npcId", "sex") do update
+              set "race" = excluded."race", "flavor" = excluded."flavor",
+                  "provenance" = excluded."provenance", "confirmed" = excluded."confirmed",
+                  "doubtful" = excluded."doubtful", "updatedAt" = now()
+            where (case when x."provenance" = 'moderator' then x."doubtful"
+                        else "npc_provenance_rank"(x."provenance")
+                             <= "npc_provenance_rank"(excluded."provenance") end)
+              and (x."race", x."flavor", x."provenance", x."doubtful")
+                  is distinct from (excluded."race", excluded."flavor", excluded."provenance",
+                                    excluded."doubtful")""")
+
+
 class DatabaseNotEmpty(Exception):
     """import-corpus was pointed at a database that already holds the corpus."""
 
@@ -498,6 +554,9 @@ def import_corpus_data(corpus, verbose=True):
                 kept_npcs = _import_npcs(cur, npc_rows)
                 # The site reads an NPC's voice from npc alone (apps/web migration 0071).
                 cur.execute("""select "npc_from_speakers"()""")
+            sex_rows = npc_sex_answers(corpus.get("npcSexes", []), corpus.get("npcs", []))
+            if "npcSexes" in corpus:
+                _import_npc_sexes(cur, sex_rows)
 
             # Only from a marked file: in an older one, the rows that would match are the
             # contributed speakers' own round-tripped copies, skipped above or not.
@@ -549,7 +608,8 @@ def import_corpus_data(corpus, verbose=True):
             f"{counts['record']} recorded without promoting (edited here), "
             f"{counts['skip']} unchanged"
         )
-        print(f"{len(speaker_rows)} speakers, {len(npc_rows)} NPCs, {len(spawn_rows)} spawn points")
+        print(f"{len(speaker_rows)} speakers, {len(npc_rows)} NPCs ({len(sex_rows)} sexes of split "
+              f"ones), {len(spawn_rows)} spawn points")
         print(f"{answered} model rows spoken in the voice their NPC is already answered with")
         print(f"{len(kept_npcs)} NPC answers kept over a different one in the file"
               + (":" if kept_npcs else ""))
@@ -657,6 +717,14 @@ def export_corpus(path, check=False, verbose=True):
                     order by "npcKind", "npcId" """
             )
             npc_rows = cur.fetchall()
+
+            cur.execute(
+                """select "npcKind", "npcId", "sex", "race", "gender",
+                          case when "provenance" = 'corpus' and "doubtful" then null else "flavor" end,
+                          "provenance", voice_for("race", "gender", "flavor") from "npc_sex"
+                    order by "npcKind", "npcId", "sex" """
+            )
+            sex_rows = cur.fetchall()
     finally:
         conn.close()
 
@@ -708,6 +776,11 @@ def export_corpus(path, check=False, verbose=True):
             {"npcType": kind, "npcId": npc_id, "race": race, "gender": gender, "flavor": flavor,
              "provenance": provenance, "voice": voice}
             for kind, npc_id, race, gender, flavor, provenance, voice in npc_rows
+        ],
+        "npcSexes": [
+            {"npcType": kind, "npcId": npc_id, "sex": sex, "race": race, "gender": gender,
+             "flavor": flavor, "provenance": provenance, "voice": voice}
+            for kind, npc_id, sex, race, gender, flavor, provenance, voice in sex_rows
         ],
     }
 

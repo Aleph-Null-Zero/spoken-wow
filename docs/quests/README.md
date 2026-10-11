@@ -1090,6 +1090,16 @@ installed pack has it; a greeting's speaker and a follow-up's are looked up per 
 their tables simply name the speaker's own file. The greeting tables keyed by NPC name, used when
 the addon has no id, name the line's own file, since same-named NPCs can differ in voice. Progress text is never voiced and never split.
 
+An NPC can be split by sex. One creature id can be drawn as a man or a woman: a Stormwind City
+Guard is either, at even odds. The `npc` row answers one race, gender and flavor for the id, so
+both used to speak in the man's voice. A split NPC has a row per sex in `npc_sex` (migration
+0072), keyed on the sex the client's `UnitSex` reports (2 for a man, 3 for a woman), and each
+row answers that sex's race and flavor under `npc`'s provenance rules. Its gender is the sex's.
+Every line the NPC speaks is then spoken once per sex, by the rule above: the sex whose voice
+made the file keeps it, and the other speaks `{lineId}~{voice}`. The `npc` row stays the answer
+for whatever does not know the sex. The corpus file carries the rows as `npcSexes` (schema 5),
+and deleting them unsplits the NPC.
+
 `npc` also keeps what the client
 reported even when a moderator overrules it — evidence about the NPC is worth more than the
 guess it produced — along with the client build, since model ids are per-build data.

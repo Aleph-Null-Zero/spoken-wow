@@ -74,3 +74,21 @@ def test_only_the_extracts_own_flavorless_answer_gets_the_default():
     rows = npc_answers([npc(1, "human", "male", "standard"),
                         dict(npc(2, "human", "male", None), provenance="moderator")])
     assert rows[1] == ("creature", 2, "human", "male", None, "moderator", False)
+
+
+def sex(npc_id, value, race, flavor, **extra):
+    return {"npcType": "creature", "npcId": npc_id, "sex": value, "race": race, "flavor": flavor,
+            **extra}
+
+
+def test_a_sex_the_game_names_no_flavor_for_gets_its_race_genders_default_marked_doubtful():
+    from tts_cli.corpus_db import npc_sex_answers
+    rows = npc_sex_answers(
+        [sex(1, 2, "human", "official"), sex(1, 3, "human", None),
+         sex(2, 3, "human", None, provenance="moderator")],
+        [npc(1, "human", "male", "official"), npc(3, "human", "female", "standard")])
+    assert rows == [
+        ("creature", 1, 2, "human", "official", "corpus", False),
+        ("creature", 1, 3, "human", "standard", "corpus", True),
+        ("creature", 2, 3, "human", None, "moderator", False),
+    ]

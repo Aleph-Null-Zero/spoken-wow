@@ -59,6 +59,11 @@ export type CorpusLine = {
    */
   lang?: Lang;
   /**
+   * The sex this row is the NPC drawn as, where the NPC is split by sex (migration 0072):
+   * 2 for a man, 3 for a woman. Absent for every NPC that speaks in one voice.
+   */
+  npcSex?: 2 | 3;
+  /**
    * The English names, for a translator to work from. Absent when reading English, and on a
    * line only this language has.
    */
