@@ -289,7 +289,7 @@ export async function listSexes(): Promise<Map<string, NpcSexAnswer[]>> {
 export async function upsertSex(
   input: Omit<NpcSexAnswer, "gender" | "updatedAt">,
 ): Promise<NpcSexAnswer> {
-  await db().query(
+  const { rows } = await db().query<NpcSexAnswer>(
     `insert into "npc_sex" as x
        ("npcKind", "npcId", "sex", "race", "flavor", "provenance", "confirmed", "doubtful",
         "note", "resolvedBy")
@@ -307,12 +307,15 @@ export async function upsertSex(
          and (x."race", x."flavor", x."provenance", x."confirmed", x."doubtful", x."note", x."resolvedBy")
              is distinct from
              (excluded."race", excluded."flavor", excluded."provenance", excluded."confirmed",
-              excluded."doubtful", excluded."note", excluded."resolvedBy")`,
+              excluded."doubtful", excluded."note", excluded."resolvedBy")
+     returning ${SEX_COLUMNS}`,
     [
       input.npcKind, input.npcId, input.sex, input.race, input.flavor, input.provenance,
       input.confirmed, input.doubtful, input.note, input.resolvedBy,
     ],
   );
+  // No row back where the ranking refused the write or nothing changed: the stored one stands.
+  if (rows[0]) return rows[0];
   const stored = (await getSexes(input.npcKind, input.npcId)).find((row) => row.sex === input.sex);
   if (!stored) throw new Error(`upsertSex: no row for ${input.npcKind}/${input.npcId}/${input.sex}`);
   return stored;

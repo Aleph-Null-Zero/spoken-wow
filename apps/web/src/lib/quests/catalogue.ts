@@ -26,6 +26,7 @@ import "server-only";
 
 import { query } from "@/lib/db";
 import { memoByLang } from "@/lib/memo";
+import { isSex } from "@/lib/npc/store";
 import { nameStamp, versionStamp } from "@/lib/stamp";
 import type { Corpus, CorpusLine } from "@/lib/corpus";
 import { BASE_LANG, type Lang } from "@/lib/lang";
@@ -258,7 +259,7 @@ async function build(lang: Lang): Promise<CorpusLine[]> {
 
   return voiced(rows, await loadRoster()).map(({ writtenVoice: _written, npcSex, ...row }) => ({
     ...row,
-    ...(npcSex === 2 || npcSex === 3 ? { npcSex } : {}),
+    ...(isSex(npcSex) ? { npcSex } : {}),
     npcType: row.npcType as CorpusLine["npcType"],
     source: row.source as CorpusLine["source"],
     playerGender: row.playerGender as CorpusLine["playerGender"],
@@ -350,7 +351,7 @@ async function buildTranslated(lang: Lang): Promise<CorpusLine[]> {
     const { textMissing, titleMissing, nameMissing, native, englishTitle, englishName, writtenVoice: _written, npcSex, ...row } = raw;
     return {
       ...row,
-      ...(npcSex === 2 || npcSex === 3 ? { npcSex } : {}),
+      ...(isSex(npcSex) ? { npcSex } : {}),
       lang,
       ...(native ? {} : { english: { questTitle: englishTitle, npcName: englishName } }),
       npcType: row.npcType as CorpusLine["npcType"],
