@@ -1125,8 +1125,8 @@ Expect("...and closing, having queued nothing, sends nothing after it", tostring
     .. tostring(Skin.settling), "nil nil")
 -- One quest giver's greeting, or its first quest, then another quest: the quest window turns to
 -- another page while the first line plays on, a line this window never showed. Closing on it,
--- this window settles out of the dialog with that line, and the second's page goes behind it once
--- it has landed, never behind a window that is not there.
+-- this window settles out of the dialog with that line, the second counted after it: no page
+-- goes behind a window that is not there, nor after it lands.
 Spoken:StopAll()
 stub.Advance(2)
 OpenDialog()
@@ -1135,13 +1135,12 @@ stub.Advance(2)
 DUI:ShowUI()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Second", portrait = { kind = "none" } } }))
 CloseDialog()
-Expect("a line from an earlier page of the closing dialog: this window settles out of it, nothing tucked yet",
+Expect("a line from an earlier page of the closing dialog: this window settles out of it, nothing tucked",
     tostring(Skin.settling ~= nil) .. " " .. tostring(Skin.tuck), "true nil")
 for _ = 1, 40 do Skin:Tick(0.05) end
-Expect("...the next page's line going behind it once it has landed",
-    tostring(Skin.settling) .. " " .. tostring(Skin.landing) .. " " .. tostring(Skin.tuck ~= nil) .. " " .. tostring(card:IsShown()),
-    "nil nil true true")
-Skin:TuckStep(1)
+Expect("...nor once it has landed: the next page's line is counted after the title",
+    tostring(Skin.settling) .. " " .. tostring(Skin.landing) .. " " .. tostring(Skin.tuck) .. " " .. Skin.count:GetText(),
+    "nil nil nil • +1")
 Expect("...this window showing the first quest's line as it was", Skin.title.text:GetText(), "First")
 -- A quest accepted at once (the space bar): the window closes before its line is read, and the
 -- line joins the queue just after. It is still the dialog's: it settles out of where the dialog
