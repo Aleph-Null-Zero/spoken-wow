@@ -17,6 +17,7 @@ from tts_cli.ignores import ignored_files
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
                             moment_of, split_voice, subfolder_from_line_id, variant_file_name)
+from tts_cli.npc_sexes import GENDER_SEX
 from tts_cli.store import SUBFOLDERS, audio_extension, stored_files
 from tts_cli.utils import (get_first_n_words, get_last_n_words,
                            replace_dollar_bs_with_space)
@@ -168,6 +169,18 @@ def build_tables(corpus: dict, ignored=()) -> dict:
     # own (tts_cli/voice_files.py): keyed by the moment's file and the giver, since the addon
     # names a quest's file from its id and event and knows who is giving it.
     quest_files = {"creature": {}, "gameobject": {}}
+    # A split NPC's file per sex, keyed by the line's own stem: the addon finds the line as
+    # before, then asks the sex.
+    gossip_by_sex = {}
+    quest_files_by_sex = {}
+    followup_by_sex = {}
+    # Which sex each other speaking creature is drawn as, so the addon can tell a man's voice
+    # given to a woman, and offer her line for contribution.
+    split = {(row["npcType"], row["npcId"]) for row in corpus.get("npcSexes", [])}
+    npc_sex = {npc["npcId"]: GENDER_SEX[npc["gender"]] for npc in corpus.get("npcs", [])
+               if npc["npcType"] == "creature" and npc.get("gender") in GENDER_SEX
+               and ("creature", npc["npcId"]) not in split}
+    sex_of = {}
 
     for line in corpus["lines"]:
         base_id, voice = split_voice(line["lineId"])
@@ -182,8 +195,19 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         # there would answer the wrong question. The addon knows the speaker and the
         # broadcast_text id from its own export, which is all this table is keyed on.
         if line["source"] == FOLLOWUP:
-            followup.setdefault(line["npcId"], {}).setdefault(
-                int(line["lineId"].split(":")[1]), followup_stem_from_line_id(line["lineId"]))
+            broadcast = int(line["lineId"].split(":")[1])
+            stem = followup_stem_from_line_id(line["lineId"])
+            # A split NPC's follow-up is a file per sex. The chat event names the speaker, but
+            # its sex is readable only while the speaker is a unit the player has up, so the
+            # man's file stays the line's for when it is not.
+            if line.get("npcSex"):
+                followup_by_sex.setdefault(line["npcId"], {}).setdefault(broadcast, {})[
+                    line["npcSex"]] = stem
+            files = followup.setdefault(line["npcId"], {})
+            if line.get("npcSex") == 2:
+                files[broadcast] = stem
+            else:
+                files.setdefault(broadcast, stem)
             continue
 
         if line["source"] == "gossip":
@@ -192,11 +216,17 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             text = escape_lua_string(line["originalText"])
             # The bare hash: the addon adds the gender prefix when resolving.
             digest = gossip_hash_from_line_id(line["lineId"])
+            own = gossip_hash_from_line_id(base_id)
+            if line.get("npcSex") and kind == "creature":
+                gossip_by_sex.setdefault(line["npcId"], {}).setdefault(line["npcSex"], {})[own] = digest
+                digest = own
+            elif kind == "creature" and line["npcId"] in npc_sex:
+                sex_of[line["npcId"]] = npc_sex[line["npcId"]]
             gossip_by_id[kind].setdefault(line["npcId"], {})[text] = digest
             # Same-named NPCs of different voices share one entry here, so it names the line's
             # own file, never a voice's that only some of them speak.
             gossip_by_name[kind].setdefault(
-                escape_lua_string(line["npcName"]), {})[text] = gossip_hash_from_line_id(base_id)
+                escape_lua_string(line["npcName"]), {})[text] = own
             continue
 
         # Progress text is never voiced, so an entry would resolve to silence.
@@ -206,7 +236,11 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         if line["source"] == "accept" and kind in questlog:
             questlog[kind][line["questId"]] = line["npcId"]
 
-        if voice and kind in quest_files:
+        if line.get("npcSex") and kind == "creature":
+            stem = f'{line["questId"]}-{line["source"]}'
+            quest_files_by_sex.setdefault(stem, {}).setdefault(line["npcId"], {})[
+                line["npcSex"]] = variant_file_name(stem, voice) if voice else stem
+        elif voice and kind in quest_files:
             stem = f'{line["questId"]}-{line["source"]}'
             quest_files[kind].setdefault(stem, {})[line["npcId"]] = variant_file_name(stem, voice)
 
@@ -231,6 +265,10 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         "followup_lookups": ("FollowupLookup", followup),
         "npc_quest_file_lookups": ("QuestFileLookupByNPCID", quest_files["creature"]),
         "object_quest_file_lookups": ("QuestFileLookupByObjectID", quest_files["gameobject"]),
+        "npc_sex_gossip_file_lookups": ("GossipFileLookupByNPCSex", gossip_by_sex),
+        "npc_sex_quest_file_lookups": ("QuestFileLookupByNPCSex", quest_files_by_sex),
+        "npc_sex_lookups": ("NPCSexByNPCID", sex_of),
+        "npc_sex_followup_lookups": ("FollowupLookupByNPCSex", followup_by_sex),
     }
 
 
@@ -265,9 +303,10 @@ def locale_tables(corpus: dict, rows: list, ignored=()) -> dict:
         kind = line["npcType"]
         if kind not in tables:
             continue
+        # A split NPC's sexes find the line's own stem, and GossipFileLookupByNPCSex the rest.
+        stem = gossip_hash_from_line_id(base_id if line.get("npcSex") else line["lineId"])
         for text in texts.get((moment_of(base_id), line["originalText"]), ()):
-            tables[kind].setdefault(line["npcId"], {})[escape_lua_string(text)] = \
-                gossip_hash_from_line_id(line["lineId"])
+            tables[kind].setdefault(line["npcId"], {})[escape_lua_string(text)] = stem
     return {filename: (table_name, tables[kind])
             for kind, (filename, table_name) in LOCALE_TABLES.items()}
 

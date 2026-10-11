@@ -21,6 +21,7 @@ import { isGenericCreatureType } from "./creature-types";
 import { voiceFromDisplays } from "./display-voices";
 import { raceForModel } from "./models";
 import { INT32_MAX } from "./npc";
+import { splitBySex } from "./split";
 import { getResolution, NPC_KINDS, upsertResolution, type NpcKind, type NpcResolution } from "./store";
 
 // The three integer columns npc and contribution both ultimately feed from an
@@ -104,7 +105,11 @@ export function observedFrom(meta: Record<string, string>): Observed {
   };
 }
 
-/** `lang` is the language of the client that observed the NPC, and so of its name. */
+/**
+ * `lang` is the language of the client that observed the NPC, and so of its name. An NPC seen
+ * drawn as the sex its voice is not is split by sex instead: answered, a client's guess would be
+ * retyped as the sex just seen, and its voice would flip with every report.
+ */
 export async function resolveNpc(observed: Observed, lang: Lang | null): Promise<NpcResolution | null> {
   const { npcKind, npcId } = observed;
   // `npcId === null`, not a truthiness check: id 0 is a real id and must not be mistaken for
@@ -117,6 +122,7 @@ export async function resolveNpc(observed: Observed, lang: Lang | null): Promise
   if (!npcKind || npcId === null) return null;
 
   const existing = await getResolution(npcKind, npcId);
+  if (await splitBySex(observed, existing)) return existing;
   // The store's upsert already ranks provenance and would refuse a lower-ranked write on its
   // own, so this is not what keeps a moderator's answer safe -- it is here so a moderator-owned
   // NPC skips the write entirely, rather than arriving back where it started.
