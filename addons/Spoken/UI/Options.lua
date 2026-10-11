@@ -412,11 +412,6 @@ local function Build(canvas)
         function() return cfg().HidePortrait end, function(v) cfg().HidePortrait = v end,
         function() refresh(); if Subtitle then Subtitle:Update() end end),
         function() return (InWindow() and not DUI()) or Subtitles() end)
-    -- The small window's metal and every round button's ring: offered whatever the style.
-    if Version.IsCamelot then
-        layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
-            function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
-    end
     -- One row per action an addon declared optional, named by that addon. The player is
     -- not told what any of them do. The subtitle shows the corner icon too, so the row is
     -- there with subtitles as well as with a window. Report is not the window's alone (the
@@ -451,9 +446,13 @@ local function Build(canvas)
     -- lines like the others, chosen with them above.
 
     if captions then
+        -- DialogueUI's quest text follows Show Words, Highlight Words and Type Words Out too, so
+        -- their tooltips say so where it is installed. The legacy clients' stub has no Installed.
+        local withDUI = DialogueUITheme ~= nil and DialogueUITheme.Installed ~= nil and DialogueUITheme:Installed()
+        local function Tip(tip, extra) return withDUI and tip .. " " .. extra or tip end
         -- Show Words first: everything under it waits on it.
         layout:Section(L.OPT_TEXT_TITLE)
-        Only(layout:Checkbox(L.TRANSCRIPT_SHOW, L.TRANSCRIPT_SHOW_TIP,
+        Only(layout:Checkbox(L.TRANSCRIPT_SHOW, Tip(L.TRANSCRIPT_SHOW_TIP, L.TRANSCRIPT_SHOW_DUI_TIP),
             function() return transcript().Enabled end,
             function(v) Transcript:SetEnabled(v) end, function() Options:UpdateRows() end), Shown)
         local function InWindowText(row)
@@ -493,15 +492,14 @@ local function Build(canvas)
             function(v) transcript().SubtitleScroll = v end, function() refreshSubtitle(); Options:UpdateRows() end,
             function(v) return SCROLL_LABELS[v] or v end))
         -- The subtitle lights the word only while its words show whole: typed at their own pace, an
-        -- estimated word timing would show every miss. With DialogueUI installed, also for the quest
-        -- text Spoken Quests marks there, under any style.
-        local highlight = layout:Checkbox(L.TRANSCRIPT_HIGHLIGHT, L.TRANSCRIPT_HIGHLIGHT_TIP,
+        -- estimated word timing would show every miss.
+        local highlight = layout:Checkbox(L.TRANSCRIPT_HIGHLIGHT, Tip(L.TRANSCRIPT_HIGHLIGHT_TIP, L.TRANSCRIPT_DUI_TIP),
             function() return transcript().HighlightWord end,
             function(v) transcript().HighlightWord = v end, refreshTranscript)
-        Only(highlight, function() return InWindow() or Subtitles() or DialogueUITheme:Available() end)
+        Only(highlight, Shown)
         Requires(highlight, Words, L.REASON_WORDS)
         Requires(highlight, function() return not (Subtitles() and transcript().Typewriter) end, L.REASON_UNTYPED)
-        local typewriter = layout:Checkbox(L.TRANSCRIPT_TYPEWRITER, L.TRANSCRIPT_TYPEWRITER_TIP,
+        local typewriter = layout:Checkbox(L.TRANSCRIPT_TYPEWRITER, Tip(L.TRANSCRIPT_TYPEWRITER_TIP, L.TRANSCRIPT_DUI_TIP),
             function() return transcript().Typewriter end,
             function(v) transcript().Typewriter = v end, refreshTranscript)
         Only(typewriter, Shown)
@@ -516,10 +514,16 @@ local function Build(canvas)
         Requires(by, function() return Words() and transcript().Typewriter end, L.REASON_TYPEWRITER)
     end
 
-    DialogueUIOptions:Place(layout)
-
     -- The narrator style's settings end here; what follows is Spoken's whatever the style.
     layout:EndGroup()
+
+    -- Every frame Spoken draws, whatever the style: the round buttons' rings and the small
+    -- window's metal.
+    layout:Section(L.OPT_COLOURS_TITLE)
+    layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
+        function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
+
+    DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each
     -- add a tab to, opened here and from the minimap menu, with each tab's Unlock switch. The tabs

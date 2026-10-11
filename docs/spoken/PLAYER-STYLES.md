@@ -67,7 +67,7 @@ It follows the player's own settings on Spoken's page, as the other windows do:
 What only this window has is on Spoken's page, among the other styles' settings, built only
 with DialogueUI installed (`addons/Spoken/UI/DialogueUIOptions.lua`) and shown while this style
 is chosen: the wheel note under Size and Position, the theme under Look and Fit to the Words
-under Words. Last among the narrator style's settings comes a section from each module that
+under Words. After the narrator style's settings comes a section from each module that
 registered one with `Spoken:AddDialogueUISettings(build)`, shown under every style since it
 changes DialogueUI's own window: Spoken Quests puts its DialogueUI switches there (see
 [`docs/quests/DIALOGUEUI-BRIDGE.md`](../quests/DIALOGUEUI-BRIDGE.md)). Spoken's Start Over puts

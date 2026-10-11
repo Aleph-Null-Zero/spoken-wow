@@ -135,6 +135,91 @@ Expect("...nor leaves anything to lock in place", Shown(Row(home, "Lock Position
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 Expect("choosing a window shows it again", env.Addon:PlayerStyle(), "minimal")
 
+---------------------------------------------------------------- each style's rows
+-- Rows by their label, notes by what they say. No addon here declares an optional button before
+-- the page is built, so no Hide ... Button row.
+local function StyleRows()
+    local names, inGroup, byFrame = {}, false, {}
+    for _, entry in ipairs(home.entries) do byFrame[entry.frame] = entry end
+    for _, item in ipairs(home.items) do
+        if item.kind == "group" then
+            inGroup = item.text == L.OPT_NARRATOR_SETTINGS
+        elseif item.kind == "groupEnd" then
+            inGroup = false
+        elseif inGroup and item.rows then
+            for _, row in ipairs(item.rows) do
+                if row.shown then
+                    local entry = byFrame[row.control]
+                    local name = entry and entry.label or row.control.text
+                    if entry and entry.tooltip == L.OPT_SUBTITLE_SCROLL_TIP then name = name .. " (subtitles)" end
+                    if row.control.text == L.DUI_WHEEL_HINT then name = "wheel note" end
+                    table.insert(names, name)
+                end
+            end
+        end
+    end
+    return table.concat(names, ", ")
+end
+do
+    local words = env.Addon.db.profile.Transcript
+    local saved = { words.Enabled, words.Typewriter, words.SubtitleScroll }
+    words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
+    local WINDOW = "Window Size, Lock Position, Reset Positions, Hide Portrait, Show Words, "
+        .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By"
+    local ROWS = {
+        -- The small window's own Background, and the progress line it draws.
+        minimal = (WINDOW:gsub("Reset Positions, ", "Reset Positions, Background, Show Progress, ")),
+        -- The large window shows what fits in its fixed box, not Lines Shown.
+        classic = (WINDOW:gsub("Lines Shown, ", "")),
+        subtitle = "Subtitle Size, Lock Position, Reset Positions, Background Darkness, Show Name and Title, Show Progress, "
+            .. "Hide Portrait, Show Words, Text Size, Sentences at Once, Auto-Scroll (subtitles), "
+            .. "Highlight Words, Type Words Out, Type By",
+        none = "",
+    }
+    for _, style in ipairs({ "minimal", "classic", "subtitle", "none" }) do
+        env.Addon:SetPlayerStyle(style); Options:UpdateRows()
+        Expect("the " .. style .. " style shows the rows it reads", StyleRows(), ROWS[style])
+    end
+    local Theme, playerStyle, chosen = env.DialogueUITheme, env.Addon.PlayerStyle, "dialogueui"
+    local available = Theme.Available
+    Theme.Available = function() return true end
+    env.Addon.PlayerStyle = function() return chosen end
+    Options:UpdateRows()
+    Expect("the dialogueui style shows the rows it reads", StyleRows(),
+        "Window Size, Lock Position, Reset Positions, wheel note, Follow DialogueUI's Theme, Theme, "
+        .. "Show Progress, Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
+        .. "Highlight Words, Type Words Out, Type By")
+    chosen = "none"; Options:UpdateRows()
+    Expect("voice only, with DialogueUI, shows no words' rows: nothing of Spoken's is on screen", StyleRows(), "")
+    Theme.Available, env.Addon.PlayerStyle = available, playerStyle
+    words.Enabled, words.Typewriter, words.SubtitleScroll = saved[1], saved[2], saved[3]
+    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+end
+
+-- Bronze Border is for every frame Spoken draws, so it sits outside the narrator style's settings.
+do
+    local function Placed()
+        local inGroup, section, found = false, nil, nil
+        for _, item in ipairs(home.items) do
+            if item.kind == "group" then inGroup = item.text == L.OPT_NARRATOR_SETTINGS
+            elseif item.kind == "groupEnd" then inGroup = false
+            elseif item.rows then
+                if item.kind == "section" then section = item.text end
+                for _, row in ipairs(item.rows) do
+                    if row.control == Row(home, L.OPT_BRONZE_TINT) then found = { inGroup, section, row.shown } end
+                end
+            end
+        end
+        return found and (tostring(found[1]) .. " " .. tostring(found[2]) .. " " .. tostring(found[3])) or "missing"
+    end
+    for _, style in ipairs({ "minimal", "none" }) do
+        env.Addon:SetPlayerStyle(style); Options:UpdateRows()
+        Expect("Bronze Border outside the narrator style's settings, under Colours, shown with " .. style, Placed(),
+            "false " .. L.OPT_COLOURS_TITLE .. " true")
+    end
+    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+end
+
 ---------------------------------------------------------------- keys
 local bindings = assert(io.open(SPOKEN .. "Bindings.xml")):read("*a")
 for _, name in ipairs({ "SPOKEN_PLAYPAUSE", "SPOKEN_SKIP", "SPOKEN_STOP" }) do

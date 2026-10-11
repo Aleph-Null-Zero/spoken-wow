@@ -16,6 +16,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
   voice among them, and Spoken plays the one for the NPC you are talking to. Until a pack has
   that voice, the quest plays as before.
+- **Each narrator style shows only the settings it uses.** Show Progress is for Subtitles alone,
+  and Voice Only shows none of the words' settings. Spoken Quests' DialogueUI switches have a
+  DialogueUI section of their own after the narrator style's settings. Bronze Border has left the
+  narrator style's settings for a Colours section, on every client: it colours every round button
+  Spoken draws and the small window's metal. *([Nucabe](https://github.com/Nucabe))*
 - **Abandoning a quest while its voice speaks fades the voice out.** Before, it was cut off
   mid-word and the quest's next line started for a moment. *([Nucabe](https://github.com/Nucabe))*
 - **Fixed: Books and Zones said "Not installed" in Spoken's module list after login**, and a
