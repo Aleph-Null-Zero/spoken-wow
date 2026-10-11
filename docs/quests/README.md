@@ -1109,6 +1109,16 @@ race-gender's default, marked doubtful, as an NPC does. `make quests-import-npc-
 the same rows into a database that is already filled, production included, without a whole
 extract; it keeps a moderator's answer.
 
+A pack finds a split NPC's line as it always has, by its text, under the line's own stem, and
+then asks the sex: `GossipFileLookupByNPCSex[npcId][sex][stem]` and
+`QuestFileLookupByNPCSex[stem][npcId][sex]` name the file each sex hears. A sex keeps the
+line's own file until its voice's has audio in the store, as any NPC does. An addon that
+predates the split never reads those tables and plays the line's own file. `NPCSexByNPCID`
+gives the sex every other speaking creature is answered with, so the addon can tell when it is
+drawn as the other one. A follow-up is said in chat, where no unit's sex can be read, so a
+split NPC's follow-ups are its man's. The addon's gossip text (`gossip_text.py`) gives a split
+NPC both forms of a BroadcastText row.
+
 `npc` also keeps what the client
 reported even when a moderator overrules it — evidence about the NPC is worth more than the
 guess it produced — along with the client build, since model ids are per-build data.

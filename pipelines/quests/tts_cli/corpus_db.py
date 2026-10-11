@@ -986,6 +986,12 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
             for line_id, *speaker in cur.fetchall():
                 speakers.setdefault(line_id, []).append(tuple(speaker))
 
+            # A split NPC shows each sex its own form of a BroadcastText row.
+            cur.execute("""select "npcKind", "npcId", "gender" from "npc_sex" order by 1, 2, 3""")
+            sexes = {}
+            for kind, npc_id, gender in cur.fetchall():
+                sexes.setdefault((kind, npc_id), []).append(gender)
+
             cur.execute(
                 """select "lineId", "originalText" from "quest_line"
                     where "isCurrent" and "source" = 'gossip' and "lang" = %s""", (LANG,))
@@ -1033,7 +1039,11 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
         conn.close()
 
     ignored = ignored_line_ids()
-    tables = gossip_text_tables(speakers, english, translations, natives, broadcast_ids,
+    shown = {line_id: rows + [(kind, npc_id, race, other, flavor)
+                              for kind, npc_id, race, gender, flavor in rows
+                              for other in sexes.get((kind, npc_id), ()) if other != gender]
+             for line_id, rows in speakers.items()}
+    tables = gossip_text_tables(shown, english, translations, natives, broadcast_ids,
                                 broadcast_texts, ignored)
     aliases = gossip_aliases(speakers, broadcast_ids, ignored, merges)
     write_gossip_text(out_dir, tables, aliases)
