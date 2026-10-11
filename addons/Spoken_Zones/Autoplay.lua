@@ -331,20 +331,15 @@ end
 -- The one discovery that cannot be placed
 --------------------------------------------------------------------------------
 --
--- A new character's spawn area is announced a second or so into the first login, while
--- the player's map is still the continent, so OnAreaDiscovered finds no lore for it and
--- a new orc stands in Valley of Trials in silence -- the first thing this feature should
--- ever have to say.
+-- A new character's spawn area is announced while the player's map is still the
+-- continent, so OnAreaDiscovered finds no lore for it. The greeting narrates it instead.
 --
--- So the spawn area is seeded once, guarded by a per-character boolean. The boolean
--- alone is not enough: it lives in saved variables, which a crash, a wiped WTF folder or
--- the 3.0 folder rename lose, and then a character parked in Stormwind is "greeted" with
--- Stormwind. So the greeting also needs the character to be level 1 and standing in a
--- starting area, which is the only place a first login ever happens.
+-- Its once-per-character flag is a saved variable, which a crash or a wiped WTF folder
+-- loses. So it also needs level 1 in a starting area, or a character parked in Stormwind
+-- is greeted with Stormwind.
 
 local LOGIN_SEED_DELAY = 2
 
--- Each starting zone's map and the area a new character spawns in.
 local STARTING_AREAS = {
 	[1411] = "valley of trials", -- Durotar
 	[1412] = "camp narache", -- Mulgore

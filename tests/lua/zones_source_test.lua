@@ -279,10 +279,8 @@ _G.SpokenZonesAudioPacks, _G.ZoneLoreAudioData = nil, nil
 _G.ZoneLoreAudioPacks = savedPacks
 
 ---------------------------------------------------------------- the login greeting
--- Only a level 1 character can be new. Asked by the question the greeting puts first after
--- that, rather than by what ends up in the queue: reaching GetPlayerMapID is exactly "the
--- gate let me through", and stubbing it to nil ends the attempt there without needing lore,
--- audio or a map behind it.
+-- Only a level 1 character can be new. Reaching GetPlayerMapID means the gate let the
+-- attempt through, and stubbing it to nil ends the attempt there.
 local function BootGreeting(level)
     stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}

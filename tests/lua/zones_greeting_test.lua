@@ -1,6 +1,5 @@
--- The login greeting: a new character hears the valley it woke up in, once. Its memory is a
--- saved variable, and saved variables get lost, so it also asks for level 1 in a starting
--- area -- a character parked in a city must not be greeted with the city.
+-- The login greeting: a new character hears its starting area once, and a character whose
+-- saved record was lost is still not greeted with wherever it logs in.
 -- Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -58,7 +57,7 @@ Boot(VALLEY, 1, { greeted = true })
 stub.Advance(20)
 Expect("a character greeted before is not greeted again", Spoken:GetQueueSize(), 0)
 
--- The record lost: a crash before logout, a wiped WTF folder, the 3.0 folder rename.
+-- The record lost, as after a crash before logout.
 Boot({ map = 1453, zone = "Stormwind City", subzone = "Trade District" }, 1, nil)
 stub.Advance(20)
 Expect("a level 1 character parked in a city is not greeted", Spoken:GetQueueSize(), 0)
