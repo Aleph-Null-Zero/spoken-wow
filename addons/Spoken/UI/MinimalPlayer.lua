@@ -432,7 +432,6 @@ end
 function MinimalPlayer:UpdateProgress()
     local clip = self.clip
     if not clip then return end
-    local duration = tonumber(clip.length) or 0
     self.seconds = Actions.Elapsed(clip, self.seconds)
     Actions.SetProgress(self.progress, SoundQueue:Share(clip, self.seconds))
 end
@@ -541,8 +540,8 @@ function MinimalPlayer:Update()
     end
     self:SetVisible(true)
     -- A speaker name the same as the line's own is left off, so it is not said twice.
-    local header = clip.present and clip.present.header
-    self.name:SetText(header ~= Label(clip) and header or "")
+    local name = Name(clip)
+    self.name:SetText(name ~= Label(clip) and name or "")
     Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
