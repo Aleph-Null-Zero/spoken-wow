@@ -169,8 +169,8 @@ def build_tables(corpus: dict, ignored=()) -> dict:
     # own (tts_cli/voice_files.py): keyed by the moment's file and the giver, since the addon
     # names a quest's file from its id and event and knows who is giving it.
     quest_files = {"creature": {}, "gameobject": {}}
-    # An NPC split by sex speaks a line per sex (voice_files.py): the file each sex hears, keyed
-    # by the line's own stem, so the addon finds the line as it always has and then asks the sex.
+    # A split NPC's file per sex, keyed by the line's own stem: the addon finds the line as
+    # before, then asks the sex.
     gossip_by_sex = {}
     quest_files_by_sex = {}
     followup_by_sex = {}
