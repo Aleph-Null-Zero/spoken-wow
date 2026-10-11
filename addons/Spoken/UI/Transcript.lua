@@ -250,7 +250,7 @@ end
 function Transcript:Sync()
     if self.held then return end
     -- The line playing, or the sample a window previews.
-    local current = SoundQueue:GetCurrentSound() or (PlayerFrame and PlayerFrame.sample)
+    local current = PlayerFrame and PlayerFrame:Current() or SoundQueue:GetCurrentSound()
     if current ~= self.clip then
         self.elapsed, self.startedAt = 0, nil
         self:SetClip(current)
