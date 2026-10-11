@@ -512,8 +512,8 @@ local function Build(canvas)
     -- The narrator style's settings end here; what follows is Spoken's whatever the style.
     layout:EndGroup()
 
-    -- Every frame Spoken draws, whatever the style: the round buttons' rings and the small
-    -- window's metal. Forever's own frames are bronze; elsewhere it would match nothing.
+    -- Outside the narrator style's settings, as it colours every frame Spoken draws. Forever only:
+    -- elsewhere bronze matches nothing.
     if Version.IsCamelot then
         layout:Section(L.OPT_COLOURS_TITLE)
         layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
