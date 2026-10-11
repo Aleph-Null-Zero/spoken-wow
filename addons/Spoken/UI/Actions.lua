@@ -200,6 +200,126 @@ function Actions.SkipButton(parent, name)
     return skip
 end
 
+--- Stop or Replay for the line at the head. `allowed()`, optional, says whether the window has
+--- a line to act on; `after()`, optional, runs once it has acted.
+function Actions.StopButton(parent, allowed, after)
+    local play = Actions.RoundButton(parent, 12)
+    play:SetScript("OnClick", function()
+        if (allowed and not allowed()) or not SoundQueue:CanBePaused() then return end
+        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
+        SoundQueue:TogglePauseQueue()
+        if after then after() end
+    end)
+    play:SetScript("OnEnter", function()
+        play.glyph:SetAlpha(1)
+        GameTooltip:SetOwner(play, "ANCHOR_TOP")
+        GameTooltip:SetText(SoundQueue:IsPaused() and L.REPLAY or L.STOP)
+        GameTooltip:Show()
+    end)
+    return play
+end
+
+--- A row of round buttons laid out left to right in `controls`, `gap` apart, which takes their size.
+function Actions.LayOutRow(controls, row, gap)
+    local x, tallest = 0, 1
+    for _, button in ipairs(row) do
+        button:ClearAllPoints()
+        button:SetPoint("LEFT", controls, "LEFT", x, 0)
+        x = x + button:GetWidth() + gap
+        tallest = math.max(tallest, button:GetHeight())
+    end
+    controls:SetSize(math.max(1, x - gap), tallest)
+end
+
+-- What follows a window's title: why the line is held, "• (Stopped)" while it is stopped and the
+-- lines waiting, "• +N", TAIL_GAP after it. One more fades the count in over TAIL_IN; Stopped fades in and
+-- out, and keeps its room until it has faded.
+local TAIL_GAP, TAIL_IN = 6, .25
+local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
+
+local Tail = {}
+
+--- The tail for the font strings the window made: `stopped`, its text already set, `count`, and
+--- `held` where the window says why a line has not started.
+function Actions.Tail(stopped, count, held)
+    local tail = { stopped = stopped, count = count, held = held, alpha = 0, want = false, parts = {} }
+    for key, fn in pairs(Tail) do tail[key] = fn end
+    return tail
+end
+
+--- Whether Stopped should show; Step fades it in or out.
+function Tail:SetStopped(stopped)
+    self.want = stopped and true or false
+end
+
+--- Why the line is held back, "• (in combat)", or nil once it may play. A held line with no
+--- reason looks exactly like narration that failed.
+function Tail:SetHeld(reason)
+    if not self.held or reason == self.reason then return end
+    self.reason = reason
+    self.held:SetText(reason and "• (" .. reason .. ")" or "")
+end
+
+--- `waiting` lines behind the one playing: the count says it, fading in when it grew.
+function Tail:SetCount(waiting)
+    if waiting ~= self.counted then
+        if waiting > (self.counted or 0) then self.fade = 0 end
+        self.counted = waiting
+        self.count:SetText(waiting > 0 and "• +" .. waiting or "")
+    end
+    self.parts = {}
+    if self.held then
+        self.held:SetShown(self.reason ~= nil)
+        if self.reason then table.insert(self.parts, self.held) end
+    end
+    local stoppedShown = self.want or self.alpha > 0
+    self.stopped:SetShown(stoppedShown)
+    if stoppedShown then table.insert(self.parts, self.stopped) end
+    self.count:SetShown(waiting > 0)
+    if waiting > 0 then table.insert(self.parts, self.count) end
+end
+
+function Tail:Room()
+    local room = 0
+    for _, part in ipairs(self.parts) do room = room + (part:GetStringWidth() or 0) + TAIL_GAP end
+    return room
+end
+
+--- Each part after the last, from `x` along `text`, where the title's words end.
+function Tail:Place(text, x)
+    for _, part in ipairs(self.parts) do
+        part:ClearAllPoints()
+        part:SetPoint("LEFT", text, "LEFT", x + TAIL_GAP, 0)
+        x = x + TAIL_GAP + (part:GetStringWidth() or 0)
+    end
+end
+
+function Tail:Paint()
+    self.count:SetAlpha(EaseOut(self.fade and math.min(1, self.fade / TAIL_IN) or 1))
+    self.stopped:SetAlpha(EaseOut(self.alpha))
+end
+
+--- The fades, `elapsed` on. True when Stopped has faded out and its room is to be given back.
+function Tail:Step(elapsed)
+    if self.fade then
+        self.fade = self.fade + elapsed
+        self:Paint()
+        if self.fade >= TAIL_IN then self.fade = nil end
+    end
+    local want = self.want and 1 or 0
+    if self.alpha == want then return false end
+    local step = elapsed / TAIL_IN
+    self.alpha = want > self.alpha and math.min(1, self.alpha + step) or math.max(0, self.alpha - step)
+    self:Paint()
+    return self.alpha == 0
+end
+
+--- The fades at their ends at once.
+function Tail:Finish()
+    self.fade = nil
+    self.alpha = self.want and 1 or 0
+end
+
 -- The progress line: Spoken Subtitles' layout and spark, framed as the game frames a status bar
 -- (UIWidgetTemplateStatusBar). Without that art, Spoken Subtitles' own hairline.
 local PROGRESS_HEIGHT = 7
@@ -210,6 +330,11 @@ local SPARK = [[Interface\CastingBar\UI-CastingBar-Spark]]
 local AtlasInfo = setfenv(function(name)
     return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) or nil
 end, _G)
+
+--- Whether the client has the atlas `name`; the legacy clients have none.
+function Actions.HasAtlas(name)
+    return AtlasInfo(name) ~= nil
+end
 
 local function FrameProgress(bar, left, right, middle, yellow)
     local track, fill = bar.track, bar.fill
@@ -285,6 +410,15 @@ end
 function Actions.SetProgress(bar, share)
     local room = math.max(0, (bar.track:GetWidth() or 0) - 2 * bar.room)
     bar.fill:SetWidth(math.max(0.01, room * Clamp01(share)))
+end
+
+--- How far into `clip` its voice is, in seconds, for its progress line: `seconds`, what was shown
+--- last, kept while it is stopped.
+function Actions.Elapsed(clip, seconds)
+    local duration = tonumber(clip.length) or 0
+    if clip.nextSoundTimer and duration > 0 then return SoundQueue:VoiceElapsed(clip) end
+    if not SoundQueue:IsPaused() then return 0 end
+    return seconds
 end
 
 local PORTRAIT_MASK = [[Interface\CharacterFrame\TempPortraitAlphaMask]]
@@ -494,4 +628,124 @@ function Actions:Configure(frame, clip)
     end
     frame.actions.shown = shown
     return shown
+end
+
+--- The actions for `clip` in `controls`, after `first` (its Stop or Replay and Skip) and as large
+--- and as strong. An action anchored to the header (Stop Gossip) is left off: Skip does its work.
+--- Returns the buttons shown, in order.
+function Actions:HeaderControls(frame, controls, first, clip)
+    self:Configure(frame, clip)
+    local row = {}
+    for _, button in ipairs(first) do table.insert(row, button) end
+    for _, button in ipairs(frame.actions.buttons) do
+        if button.action.anchor == "header" then
+            button:Hide()
+        else
+            button:SetParent(controls)
+            button:SetFrameLevel(controls:GetFrameLevel() + 1)
+            if button.showsIcon then button:SetSize(first[1]:GetWidth(), first[1]:GetHeight()) end
+            button:SetAlpha(1)
+            if button:IsShown() then table.insert(row, button) end
+        end
+    end
+    return row
+end
+
+--- Whether a DialogueUI dialog (its quest window or its book view) is open with the windows not
+--- put over it (Show Spoken Over DialogueUI off): DialogueUI then hides the interface, and a window
+--- left showing would leave its 3D portrait over the dialog, which takes no alpha from it.
+function Actions.DialogCovers()
+    if Addon.playerHost then return false end
+    for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
+        local dialog = _G[name]
+        if type(dialog) == "table" and dialog.IsShown and dialog:IsShown() then return true end
+    end
+    return false
+end
+
+--- Calls `fn` a frame after a DialogueUI dialog opens or closes, once DialogueUI's bridge has put
+--- the windows over it or not.
+function Actions.WatchDialogs(fn)
+    local function Later()
+        if C_Timer and C_Timer.After then C_Timer.After(0, fn) else fn() end
+    end
+    for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
+        local dialog = _G[name]
+        if type(dialog) == "table" and dialog.GetEffectiveScale then
+            local watch = CreateFrame("Frame", nil, dialog)
+            watch:SetScript("OnShow", Later)
+            watch:SetScript("OnHide", Later)
+        end
+    end
+end
+
+-- A window fading in, and out: the Talking Head's words take a quarter second to show.
+local FADE_IN, FADE_OUT = .25, .4
+
+local Fader = {}
+
+--- Shows and hides `frame` by fading it (Fader:Set), with the models `models()` lists: a model
+--- takes no alpha from its parent. While it fades out the captions keep the words it had;
+--- `faded()` is called once it has gone.
+function Actions.Fader(frame, models, faded)
+    local fader = { frame = frame, models = models, faded = faded, alpha = 0, want = false }
+    for key, fn in pairs(Fader) do fader[key] = fn end
+    fader.driver = CreateFrame("Frame")
+    fader.driver:Hide()
+    fader.driver:SetScript("OnUpdate", function(_, elapsed) fader:Step(elapsed) end)
+    return fader
+end
+
+function Fader:Paint()
+    local a = self.alpha
+    local eased = a * a * (3 - 2 * a)
+    self.frame:SetAlpha(eased)
+    for _, model in ipairs(self.models and self.models() or {}) do
+        if model.SetAlpha then model:SetAlpha(eased) end
+    end
+end
+
+--- Fades the frame in or out; `immediate` shows or hides it at once.
+function Fader:Set(shown, immediate)
+    shown = shown and true or false
+    if not self.frame:IsShown() then self.alpha = 0 end
+    if shown then
+        self:Release()
+        self.frame:Show()
+    elseif self.frame:IsShown() and not immediate and not self.holding and Transcript.Hold then
+        -- The words stay for the fade; a line that comes meanwhile releases them.
+        Transcript:Hold()
+        self.holding = true
+    end
+    self.want = shown
+    if immediate then self.alpha = shown and 1 or 0 end
+    self:Step(0)
+end
+
+function Fader:Release()
+    if not self.holding then return end
+    self.holding = nil
+    Transcript:Release()
+end
+
+--- Whether the frame is fading out, or out of sight.
+function Fader:Leaving()
+    return not self.want
+end
+
+function Fader:Step(elapsed)
+    local target = self.want and 1 or 0
+    if self.alpha < target then
+        self.alpha = math.min(target, self.alpha + elapsed / FADE_IN)
+    elseif self.alpha > target then
+        self.alpha = math.max(target, self.alpha - elapsed / FADE_OUT)
+    end
+    self:Paint()
+    if self.alpha ~= target then self.driver:Show(); return end
+    self.driver:Hide()
+    if not self.want and self.frame:IsShown() then
+        self.frame:Hide()
+        self:Release()
+        if self.faded then self.faded() end
+    end
 end

@@ -115,7 +115,7 @@ local function HighlightCount()
 end
 local function CheckLayout()
     local _,count=Captions()
-    Check(count<=(E.Addon:Layout().CaptionsExpanded and 8 or cfg.Lines),'only the requested number of lines is visible')
+    Check(count<=(E.Addon:Layout().CaptionsExpanded and 8 or (T.style and T.style.lines) or cfg.Lines),'only the lines the window asks for are visible')
     for _,label in ipairs(T.labels) do
         if label:IsShown() then
             Check(not label.wordWrap and not label:GetText():find('\n'),'each caption label is exactly one non-wrapping line')
@@ -343,17 +343,15 @@ Check(M.frame.moving,'the existing header still moves the whole player')
 M.header:Fire('OnDragStop')
 frameCfg.Style='classic'; E.PlayerFrame:RefreshConfig()
 local original=E.PlayerFrame.frame
-Check(T.frame:GetParent()==original and original:IsShown() and not M.frame:IsShown(),'switching skins attaches captions to the original player')
-Check(T.frame:GetTop()<original.portrait:GetBottom(),'original-skin captions stay below portrait and action controls')
-Check(T.frame:GetBottom()>original.background:GetBottom(),'original background extends behind the captions')
-local originalTop=original:GetTop()
-T.expand:Fire('OnClick')
-Check(select(2,Captions())==8 and T.frame:GetBottom()>original.background:GetBottom(),'the floating-head layout encloses expanded captions')
-Check(math.abs(original:GetTop()-originalTop)<.001,'expanding preserves the floating head position')
-T.expand:Fire('OnClick')
-local previousWidth=T.frame:GetWidth()
-original:SetWidth(620)
-Check(T.frame:GetWidth()>previousWidth,'resizing the original player reflows the attached text')
+Check(T.frame:GetParent()==original.container and original:IsShown() and not M.frame:IsShown(),
+    'switching skins puts the captions in the large window\'s column')
+Check(T.frame:GetLeft()>original.portrait:GetRight() and T.frame:GetTop()-T.style.padTop<=original.container.name:GetBottom(),
+    'the large window\'s words sit beside the portrait, under the speaker\'s name')
+Check(T.frame:GetBottom()+T.style.padTop>original.background:GetBottom() and T.frame:GetLeft()>=original.background:GetLeft(),
+    'the large window\'s box encloses its words')
+Check(not T.expand:IsShown() and select(2,Captions())<=3,'the large window shows up to three lines, with no expand button')
+Check(original:GetWidth()==570 and original:GetHeight()==155 and T.frame:GetWidth()==original.container:GetWidth(),
+    'the large window keeps the size of the Talking Head, the words as wide as its column')
 CheckLayout()
 frameCfg.Style='minimal'; frameCfg.FrameScale=.7; E.PlayerFrame:RefreshConfig()
 Check(T.frame:GetParent()==M.frame and not original:IsShown(),'switching back restores attachment to the portrait player')
@@ -672,7 +670,7 @@ source:Enqueue(Clip('back',line,10))
 Check(T.frame:IsShown() and not S.frame:IsShown() and M.frame:IsShown() and M.frame:GetHeight()>98,
     'the words return to the small window')
 SlashCmdList.SPOKEN('player classic')
-Check(E.PlayerFrame.frame:IsShown() and not M.frame:IsShown() and T.frame:GetParent()==E.PlayerFrame.frame,
+Check(E.PlayerFrame.frame:IsShown() and not M.frame:IsShown() and T.frame:GetParent()==E.PlayerFrame.frame.container,
     'the slash command picks the large window, with the words inside it')
 SlashCmdList.SPOKEN('player subtitle')
 Check(S.frame:IsShown() and not T.frame:IsShown() and not E.PlayerFrame.frame:IsShown(),

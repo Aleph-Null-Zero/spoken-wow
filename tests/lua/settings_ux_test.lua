@@ -168,7 +168,9 @@ do
         .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By"
     local ROWS = {
         minimal = WINDOW,
-        classic = WINDOW,
+        -- The large window's words fill the box, so no Lines Shown.
+        classic = "Window Size, Lock Position, Reset Positions, Show Progress, Hide Portrait, Show Words, "
+            .. "Text Size, Auto-Scroll, Highlight Words, Type Words Out, Type By",
         subtitle = "Subtitle Size, Lock Position, Reset Positions, Background Darkness, Show Name and Title, Show Progress, "
             .. "Hide Portrait, Show Words, Text Size, Sentences at Once, Auto-Scroll (subtitles), "
             .. "Highlight Words, Type Words Out, Type By",

@@ -124,9 +124,6 @@ local LINE_IN, SIZE_EASE = .28, 10
 -- says it has loaded would keep it unseen: after PREPARE_MOST it fades in as itself, not one image,
 -- so a late load cannot crash it.
 local STILL, ARM_FRAMES, ARM_MOST, PREPARE_MOST = 0.1, 2, 0.5, 1
--- What follows the title, "• (Stopped)" and the waiting count "• +N": this far after it, fading
--- over COUNT_IN, Stopped in and out as the line stops and plays, the count in as a line is added.
-local COUNT_GAP, COUNT_IN = 6, .25
 -- The gap between the round controls in the header, and the buttons' size, which is also the
 -- least room between them and the title's end, so a long title cut short does not crowd them.
 local ROUND_GAP, ROUND_SIZE = 4, 24
@@ -308,9 +305,6 @@ function Skin:Initialize()
         end
     end
     Callbacks:Register("CLIP_QUEUED", function(clip) self:Queued(clip) end)
-    -- Turning to the next line, this window fades out with the words it shows: the captions wait
-    -- for it rather than taking the next line's first (Skin:WillTurn).
-    Transcript.holdFor = function(clip) return self:WillTurn(clip) end
     -- A quest page with no page to follow closes at once, not after DialogueUI's wait
     -- (Skin:QuestFinished).
     local quest = _G.DUIQuestFrame
@@ -372,9 +366,9 @@ function Skin:Initialize()
     self.stopped = Font(self.title, 12, 1, 1, 1)
     self.stopped:SetText(format("• (%s)", L.SUBTITLE_STOPPED))
     self.stopped:Hide()
-    self.stoppedAlpha = 0
     self.count = Font(self.title, 12, 1, 1, 1)
     self.count:Hide()
+    self.tail = Actions.Tail(self.stopped, self.count)
 
     self.picture = content:CreateTexture(nil, "ARTWORK")
     self.picture:SetAlpha(PICTURE_ALPHA)
@@ -389,19 +383,8 @@ function Skin:Initialize()
     self.progress = Actions.ProgressBar(content)
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(1)
-    local play = Actions.RoundButton(self.controls, 12)
-    play:SetScript("OnClick", function()
-        if not (self:HasClip() and SoundQueue:CanBePaused()) then return end
-        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-        SoundQueue:TogglePauseQueue()
-        self:UpdateControls()
-    end)
-    play:SetScript("OnEnter", function()
-        play.glyph:SetAlpha(1)
-        GameTooltip:SetOwner(play, "ANCHOR_TOP")
-        GameTooltip:SetText(SoundQueue:IsPaused() and L.REPLAY or L.STOP)
-        GameTooltip:Show()
-    end)
+    local play = Actions.StopButton(self.controls, function() return self:HasClip() end,
+        function() self:UpdateControls() end)
     self.play, self.skip = play, Actions.SkipButton(self.controls)
     self.buttons = { self.play, self.skip }
     Actions:Build(frame)
@@ -653,21 +636,7 @@ function Skin:ConfigurePortrait()
 end
 
 function Skin:ConfigureActions()
-    Actions:Configure(self.frame, self.clip)
-    local row = { self.play, self.skip }
-    for _, button in ipairs(self.frame.actions.buttons) do
-        if button.action.anchor == "header" then
-            button:Hide()
-        else
-            -- Report and anything else a line offers, after Skip and as strong as it.
-            button:SetParent(self.controls)
-            button:SetFrameLevel(self.controls:GetFrameLevel() + 1)
-            if button.showsIcon then button:SetSize(self.play:GetWidth(), self.play:GetHeight()) end
-            button:SetAlpha(1)
-            if button:IsShown() then table.insert(row, button) end
-        end
-    end
-    self.row = row
+    self.row = Actions:HeaderControls(self.frame, self.controls, { self.play, self.skip }, self.clip)
     self:LayoutControls()
 end
 
@@ -705,14 +674,7 @@ function Skin:Wheel(delta)
 end
 
 function Skin:LayoutControls()
-    local x, tallest = 0, 1
-    for _, button in ipairs(self.row or self.buttons) do
-        button:ClearAllPoints()
-        button:SetPoint("LEFT", self.controls, "LEFT", x, 0)
-        x = x + button:GetWidth() + ROUND_GAP
-        tallest = math.max(tallest, button:GetHeight())
-    end
-    self.controls:SetSize(math.max(1, x - ROUND_GAP), tallest)
+    Actions.LayOutRow(self.controls, self.row or self.buttons, ROUND_GAP)
 end
 
 --- `relayout` when the row's buttons may have changed (Update); otherwise the row is laid out
@@ -724,7 +686,7 @@ function Skin:UpdateControls(relayout)
     -- The line's name alone, not why it waits (the NPC's own greeting first, a fight).
     self.title.text:SetText(Label(self.clip))
     Addon:ClipFont(self.title.text, self.clip)
-    self.shownStopped = paused
+    self.tail:SetStopped(paused)
     self:Count(Waiting())
     Actions.SetPausable(self.buttons)
     if relayout then self:LayoutControls() end
@@ -733,10 +695,7 @@ end
 function Skin:UpdateProgress()
     local clip = self.clip
     if not clip then return end
-    local duration = tonumber(clip.length) or 0
-    if clip.nextSoundTimer and duration > 0 then
-        self.seconds = SoundQueue:VoiceElapsed(clip)
-    elseif not SoundQueue:IsPaused() then self.seconds = 0 end
+    self.seconds = Actions.Elapsed(clip, self.seconds)
     Actions.SetProgress(self.progress, SoundQueue:Share(clip, self.seconds))
 end
 
@@ -847,10 +806,10 @@ function Skin:Buffer()
     -- Its own small animations finished first, and a tuck that outlasted the wait (ARM_MOST): it
     -- may not move as one image.
     self:StopTuck()
-    self.lineFade, self.countFade = nil, nil
-    if self.count then
-        self.stoppedAlpha = self.shownStopped and 1 or 0
-        self:Count(self.counted or 0)
+    self.lineFade = nil
+    if self.tail then
+        self.tail:Finish()
+        self:Count(self.tail.counted or 0)
     end
     if self.heightWant then frame:SetHeight(self.heightWant); self.heightWant = nil end
     self:Deafen()
@@ -986,48 +945,27 @@ function Skin:EndFade()
 end
 
 --- After the title: "• (Stopped)" while the line is stopped, and the lines waiting behind it,
---- "• +N". One more fades the count in; Stopped fades in and out, and keeps its room until it has
---- faded. The title is cut short, not these.
+--- "• +N". The title is cut short, not these.
 function Skin:Count(waiting)
-    local count, stopped = self.count, self.stopped
-    if waiting ~= self.counted then
-        if waiting > (self.counted or 0) then self.countFade = 0 end
-        self.counted = waiting
-        count:SetText(waiting > 0 and "• +" .. waiting or "")
-    end
-    local stoppedShown = self.shownStopped or self.stoppedAlpha > 0
+    local tail = self.tail
+    tail:SetCount(waiting)
     local text, width = self.title.text, self.title:GetWidth() or 0
+    local stoppedShown = tail.want or tail.alpha > 0
     -- Polled while a line plays: laid out again only when something moved.
     local laid = self.countLaid
     if laid and laid.waiting == waiting and laid.stopped == stoppedShown and laid.text == text:GetText()
         and laid.width == width then
-        if stoppedShown or waiting > 0 then self:PaintCount() end
+        if stoppedShown or waiting > 0 then tail:Paint() end
         return
     end
     self.countLaid = { waiting = waiting, stopped = stoppedShown, text = text:GetText(), width = width }
-    local tail = {}
-    stopped:SetShown(stoppedShown)
-    if stoppedShown then table.insert(tail, stopped) end
-    count:SetShown(waiting > 0)
-    if waiting > 0 then table.insert(tail, count) end
-    local room = 0
-    for _, part in ipairs(tail) do room = room + (part:GetStringWidth() or 0) + COUNT_GAP end
+    local room = tail:Room()
     text:ClearAllPoints()
     text:SetPoint("TOPLEFT")
     text:SetPoint("BOTTOMRIGHT", -room, 0)
-    if #tail == 0 then return end
-    local x = math.min(text:GetStringWidth() or 0, math.max(0, width - room))
-    for _, part in ipairs(tail) do
-        part:ClearAllPoints()
-        part:SetPoint("LEFT", text, "LEFT", x + COUNT_GAP, 0)
-        x = x + COUNT_GAP + (part:GetStringWidth() or 0)
-    end
-    self:PaintCount()
-end
-
-function Skin:PaintCount()
-    self.count:SetAlpha(EaseOut(self.countFade and Clamp(self.countFade / COUNT_IN, 0, 1) or 1))
-    self.stopped:SetAlpha(EaseOut(self.stoppedAlpha))
+    if room == 0 then return end
+    tail:Place(text, math.min(text:GetStringWidth() or 0, math.max(0, width - room)))
+    tail:Paint()
 end
 
 function Skin:Tick(elapsed)
@@ -1053,20 +991,8 @@ function Skin:Tick(elapsed)
             self:StartFade()
         end
     end
-    if self.countFade then
-        self.countFade = self.countFade + elapsed
-        self:PaintCount()
-        if self.countFade >= COUNT_IN then self.countFade = nil end
-    end
-    local stoppedWant = self.shownStopped and 1 or 0
-    if self.stopped and self.stoppedAlpha ~= stoppedWant then
-        local step = elapsed / COUNT_IN
-        self.stoppedAlpha = stoppedWant > self.stoppedAlpha and math.min(1, self.stoppedAlpha + step)
-            or math.max(0, self.stoppedAlpha - step)
-        self:PaintCount()
-        -- Faded out: its room given back.
-        if self.stoppedAlpha == 0 then self:Count(self.counted or 0) end
-    end
+    -- Stopped faded out: its room given back.
+    if self.tail and self.tail:Step(elapsed) then self:Count(self.tail.counted or 0) end
     if self.lineFade then
         self.lineFade = self.lineFade + elapsed
         if self.lineFade >= LINE_IN then self.lineFade = nil end
@@ -1698,7 +1624,7 @@ function Skin:StartRipple()
     local scale = frame:GetScale() or 1
     local count = self.count
     local cx, cy
-    if count and count:IsShown() and (self.counted or 0) > 0 and count.GetCenter then cx, cy = count:GetCenter() end
+    if count and count:IsShown() and (self.tail.counted or 0) > 0 and count.GetCenter then cx, cy = count:GetCenter() end
     if type(cx) ~= "number" or type(cy) ~= "number" then return end
     local ui = UIParent:GetEffectiveScale()
     local pixels = frame:GetEffectiveScale()

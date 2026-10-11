@@ -398,7 +398,7 @@ local function Build(canvas)
         local progress = layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
-        Only(progress, function() return Subtitles() or DUI() end)
+        Only(progress, function() return Subtitles() or DUI() or Style() == "classic" end)
         Requires(progress, function() return not Subtitles() or Words() end, L.REASON_WORDS)
     end
     -- Hiding the portrait and hiding a button are one kind of choice, so they sit together. Not
@@ -467,7 +467,7 @@ local function Build(canvas)
             function() return transcript().Lines end,
             function(v) transcript().Lines = v end, function() refreshTranscript(); refreshSubtitle() end,
             Layout.Number, L.TRANSCRIPT_LINES_TIP)
-        Only(lines, function() return InWindow() or (Subtitles() and Rolling()) end)
+        Only(lines, function() return (InWindow() and Style() ~= "classic") or (Subtitles() and Rolling()) end)
         Requires(lines, Words, L.REASON_WORDS)
         Only(ForSubtitles(layout:Slider(L.OPT_SUBTITLE_SENTENCES, 1, 4, 1,
             function() return transcript().SubtitleSentences or 3 end,
