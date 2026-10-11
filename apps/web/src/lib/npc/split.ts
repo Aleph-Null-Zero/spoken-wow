@@ -1,11 +1,7 @@
 /**
- * Splitting an NPC by sex when a player sees it drawn as the sex its voice is not.
- *
- * One creature id can be a man or a woman (migration 0072). The extract splits every such NPC
- * the world database knows (tts_cli/npc_sexes.py); a contribution splits the ones it does not:
- * another client's data, a server's own creatures. The NPC's own answer becomes its sex's, and
- * the sex the player saw is answered as resolve.ts answers an NPC from the client: the
- * appearances drawn with the reported body, else that body's race and a default flavor.
+ * Splitting an NPC by sex when a player sees it drawn as the sex its voice is not. The extract
+ * splits the NPCs the world database knows; a contribution splits the rest. The NPC's own answer
+ * becomes its sex's, and the sex seen is answered from the client's report.
  */
 import { defaultFlavorFor } from "@/lib/quests/catalogue";
 
@@ -75,10 +71,9 @@ export async function splitNpc(
 }
 
 /**
- * Split `npc` if the player saw it drawn as the sex its voice is not, and answer the sex they
- * saw where it is split already. Whether the NPC is split: not where the player saw the sex it
- * is voiced in, since a split NPC has that sex's answer from its split, and resolve.ts answers
- * the NPC as before.
+ * Split `npc` if the player saw it drawn as the sex its voice is not, or answer the sex seen on
+ * an NPC split already. Returns whether the NPC is split; false where the player saw the sex it
+ * is voiced in, which a split NPC has answered already.
  */
 export async function splitBySex(observed: Observed, npc: NpcResolution | null): Promise<boolean> {
   const sex = observed.sex;

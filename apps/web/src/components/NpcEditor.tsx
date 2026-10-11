@@ -183,10 +183,7 @@ function lookups(npcId: number, client: ClientFilter): { label: string; path: st
 
 const SEX_LABELS: Record<number, string> = { 2: "As a man", 3: "As a woman" };
 
-/**
- * A creature's split by sex (migration 0072): each sex's answer with its own Edit, and the
- * button that splits or unsplits it. Every line the NPC speaks is voiced once per sex.
- */
+/** A creature's split by sex: each sex's answer with its own Edit, and Split or Unsplit. */
 function SexCells({
   npc,
   sexes,
@@ -202,7 +199,6 @@ function SexCells({
   busy: boolean;
   onPost: (body: Record<string, unknown>) => void;
 }) {
-  // Only a man or a woman splits (api/npcs/sex).
   if (npc.npcKind !== "creature" || !npc.race || sexOf(npc.gender) === null) return null;
   if (!sexes.length) {
     return (

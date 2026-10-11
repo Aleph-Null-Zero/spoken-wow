@@ -1,14 +1,12 @@
 /**
- * An admin's answer for one sex of an NPC drawn as both (migration 0072), and splitting or
- * unsplitting it. /npcs posts here.
+ * An admin's answer for one sex of a split NPC, and splitting or unsplitting it.
  *
- *   { npcKind, npcId, action: "split" }    a sex each, the NPC's own answer for its own sex and
- *                                           the other sex's default flavor, both to be confirmed
+ *   { npcKind, npcId, action: "split" }    a sex each: the NPC's own answer for its sex, the
+ *                                           other sex's default flavor marked doubtful
  *   { npcKind, npcId, action: "unsplit" }  every line back to the NPC's one voice
  *   { npcKind, npcId, sex, race, flavor, doubtful }  a moderator's answer for that sex
  *
- * Admin only, for api/npcs's reason: the answer voices every line the NPC speaks, in every
- * language. Refused where the roster has no place for it, as api/npcs refuses.
+ * Admin only: the answer voices every line the NPC speaks, in every language.
  */
 import { recordActivity } from "@/lib/activity/store";
 import { requireAdmin } from "@/lib/generation/authz";

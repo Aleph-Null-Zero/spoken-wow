@@ -17,8 +17,8 @@
  * match on (its id hashes the English text and the speaker's voice), so it is only ever known
  * or missing: known when the NPC that sent it already speaks a line saying it. A different
  * greeting from the same NPC is another line, never a correction of one. Spoken by an NPC drawn
- * as the sex its voice is not, it is missing until the NPC is split by sex (npc/split.ts): the
- * voice the site has is the wrong one, and storing the row is what splits it.
+ * as the sex its voice is not, it is missing until the NPC is split by sex: the voice the site
+ * has is the wrong one, and storing the row is what splits it.
  *
  * Zones and books are not compared here: a zone has no text to compare, and the table already
  * shows a book page's corpus text beside the contribution (page.tsx's existingTextFor).

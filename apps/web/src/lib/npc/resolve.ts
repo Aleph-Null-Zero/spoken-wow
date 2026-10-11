@@ -107,8 +107,8 @@ export function observedFrom(meta: Record<string, string>): Observed {
 
 /**
  * `lang` is the language of the client that observed the NPC, and so of its name. An NPC seen
- * drawn as the sex its voice is not is split by sex instead (split.ts): answered, a client's
- * guess would be retyped as the sex just seen, and its voice would flip with every report.
+ * drawn as the sex its voice is not is split by sex instead: answered, a client's guess would be
+ * retyped as the sex just seen, and its voice would flip with every report.
  */
 export async function resolveNpc(observed: Observed, lang: Lang | null): Promise<NpcResolution | null> {
   const { npcKind, npcId } = observed;
