@@ -12,7 +12,7 @@
  */
 import { recordActivity } from "@/lib/activity/store";
 import { requireAdmin } from "@/lib/generation/authz";
-import { INT32_MAX, isSex, SEX_GENDER, sexOf } from "@/lib/npc/npc";
+import { INT32_MAX, isSex, oppositeSex, SEX_GENDER, sexOf } from "@/lib/npc/npc";
 import { splitNpc } from "@/lib/npc/split";
 import {
   getResolution, getSexes, resolutionKey, unsplit, upsertSex, type NpcRowKind,
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     // the roster no voice for either sex of it.
     const own = sexOf(npc.gender);
     if (!npc.race || own === null) return Response.json({ error: "answer the NPC as a man or a woman first" }, { status: 400 });
-    const other = own === 2 ? 3 : 2;
+    const other = oppositeSex(own);
     const sexes = await splitNpc(npc, {
       npcKind, npcId, sex: other, race: npc.race, flavor: await defaultFlavorFor(npc.race, SEX_GENDER[other]),
       provenance: "moderator", confirmed: true, doubtful: true, note: null, resolvedBy: session.user.id,
@@ -62,9 +62,8 @@ export async function POST(request: Request) {
   if (!isSex(sex)) return Response.json({ error: "sex is 2 or 3" }, { status: 400 });
   // An answer for one sex of an NPC that is not split would leave it half split, the other
   // sex voiceless: the split comes first, and writes both.
-  if (!(await getSexes(npcKind, npcId)).length) {
-    return Response.json({ error: "split the NPC first" }, { status: 400 });
-  }
+  const sexes = await getSexes(npcKind, npcId);
+  if (!sexes.length) return Response.json({ error: "split the NPC first" }, { status: 400 });
   const text = (value: unknown, max: number) =>
     typeof value === "string" && value.trim() ? value.trim().slice(0, max) : null;
   const race = text(body.race, 64);
@@ -81,5 +80,5 @@ export async function POST(request: Request) {
     kind: "npc.resolved", lang, actorId: session.user.id, subject,
     detail: { npcName: npc.npcName, sex, race: row.race, gender: row.gender, flavor: row.flavor, doubtful: row.doubtful },
   });
-  return Response.json({ sexes: await getSexes(npcKind, npcId) });
+  return Response.json({ sexes: sexes.map((answer) => (answer.sex === sex ? row : answer)) });
 }

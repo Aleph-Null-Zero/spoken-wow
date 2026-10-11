@@ -51,3 +51,7 @@ export const SEX_GENDER: Record<Sex, "male" | "female"> = { 2: "male", 3: "femal
 export function sexOf(gender: string | null | undefined): Sex | null {
   return gender === "male" ? 2 : gender === "female" ? 3 : null;
 }
+
+export function oppositeSex(sex: Sex): Sex {
+  return sex === 2 ? 3 : 2;
+}

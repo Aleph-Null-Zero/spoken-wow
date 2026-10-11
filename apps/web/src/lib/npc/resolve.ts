@@ -112,14 +112,6 @@ export function observedFrom(meta: Record<string, string>): Observed {
  */
 export async function resolveNpc(observed: Observed, lang: Lang | null): Promise<NpcResolution | null> {
   const { npcKind, npcId } = observed;
-  if (!npcKind || npcId === null) return null;
-  const existing = await getResolution(npcKind, npcId);
-  if ((await splitBySex(observed, existing)).length) return existing;
-  return answer(observed, lang, existing);
-}
-
-async function answer(observed: Observed, lang: Lang | null, existing: NpcResolution | null): Promise<NpcResolution | null> {
-  const { npcKind, npcId } = observed;
   // `npcId === null`, not a truthiness check: id 0 is a real id and must not be mistaken for
   // "no npc at all". A kind-less envelope (see observedFrom) also fails here since npcKind is
   // null in that case -- an envelope old enough to lack `kind` also lacks `model`, so the best
@@ -128,7 +120,15 @@ async function answer(observed: Observed, lang: Lang | null, existing: NpcResolu
   // a gameobject filed under a creature id. The player's next submission, after an addon
   // update, resolves properly.
   if (!npcKind || npcId === null) return null;
+  const existing = await getResolution(npcKind, npcId);
+  if ((await splitBySex(observed, existing)).length) return existing;
+  return answer({ ...observed, npcKind, npcId }, lang, existing);
+}
 
+type Identified = Observed & { npcKind: NonNullable<Observed["npcKind"]>; npcId: number };
+
+async function answer(observed: Identified, lang: Lang | null, existing: NpcResolution | null): Promise<NpcResolution | null> {
+  const { npcKind, npcId } = observed;
   // The store's upsert already ranks provenance and would refuse a lower-ranked write on its
   // own, so this is not what keeps a moderator's answer safe -- it is here so a moderator-owned
   // NPC skips the write entirely, rather than arriving back where it started.

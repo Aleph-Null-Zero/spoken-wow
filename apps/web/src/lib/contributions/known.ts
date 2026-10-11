@@ -25,6 +25,7 @@
  */
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
+import { isSex } from "@/lib/npc/npc";
 
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
@@ -53,10 +54,15 @@ function npcOf(row: Comparable): number | null {
   return id && Number(id) <= 2_147_483_647 ? Number(id) : null;
 }
 
+/** The sex a creature's greeting was seen drawn as, or null for none reported. */
+function seenSex(row: Comparable): number | null {
+  const seen = Number(row.meta.sex);
+  return row.meta.kind !== "gameobject" && isSex(seen) ? seen : null;
+}
+
 /** Whether a creature's greeting was seen drawn as the other sex from the one it is voiced in. */
 function otherSex(row: Comparable, voiced: number | undefined): boolean {
-  const seen = row.meta.sex;
-  return voiced !== undefined && row.meta.kind !== "gameobject" && (seen === "2" || seen === "3") && Number(seen) !== voiced;
+  return voiced !== undefined && seenSex(row) !== null && seenSex(row) !== voiced;
 }
 
 type CorpusText = { lineId: string; variant: number; text: string };
@@ -119,6 +125,7 @@ async function oneSexOf(npcIds: number[]): Promise<Map<number, number>> {
     `select n."npcId", case n."gender" when 'male' then 2 else 3 end as "sex"
        from "npc" n
       where n."npcKind" = 'creature' and n."npcId" = any($1::int[]) and n."gender" in ('male', 'female')
+        and n."race" is not null and n."provenance" <> 'none'
         and not exists (select 1 from "npc_sex" x where x."npcKind" = n."npcKind" and x."npcId" = n."npcId")`,
     [npcIds],
   );
@@ -129,17 +136,22 @@ async function oneSexOf(npcIds: number[]): Promise<Map<number, number>> {
 export async function lineStates(rows: readonly Comparable[]): Promise<LineState[]> {
   const moments: { locale: string; moment: string }[] = [];
   const greetings: { locale: string; npcId: number }[] = [];
+  // Only a greeting that reports a sex can be seen as the other one, as only such a row splits.
+  const sexed = new Set<number>();
   for (const row of rows) {
     if (row.source !== "quests" || !row.text) continue;
     const moment = momentOf(row);
     const npcId = moment ? null : npcOf(row);
     if (moment) moments.push({ locale: row.locale, moment });
-    else if (npcId !== null) greetings.push({ locale: row.locale, npcId });
+    else if (npcId !== null) {
+      greetings.push({ locale: row.locale, npcId });
+      if (seenSex(row) !== null) sexed.add(npcId);
+    }
   }
   const [byMoment, byNpc, sexes] = await Promise.all([
     momentTexts(moments),
     greetingTexts(greetings),
-    oneSexOf([...new Set(greetings.map((g) => g.npcId))]),
+    oneSexOf([...sexed]),
   ]);
 
   return rows.map((row) => {

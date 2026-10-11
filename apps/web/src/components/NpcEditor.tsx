@@ -25,7 +25,7 @@ import { flavorOptionsFor, summaryFromResolution, summaryFromSex } from "@/lib/c
 import type { Roster, RosterData } from "@/lib/voices/roster";
 import type { NpcSummary } from "@/lib/contributions/triage";
 import { localeHref } from "@/lib/lang";
-import { isProvenance, PROVENANCES, type NpcRowKind, type Provenance } from "@/lib/npc/npc";
+import { isProvenance, PROVENANCES, sexOf, type NpcRowKind, type Provenance } from "@/lib/npc/npc";
 import type { NpcResolution, NpcSexAnswer } from "@/lib/npc/store";
 import { wowheadEntityUrl, wowheadForeverUrl } from "@/lib/wowhead";
 
@@ -203,7 +203,7 @@ function SexCells({
   onPost: (body: Record<string, unknown>) => void;
 }) {
   // Only a man or a woman splits (api/npcs/sex).
-  if (npc.npcKind !== "creature" || !npc.race || (npc.gender !== "male" && npc.gender !== "female")) return null;
+  if (npc.npcKind !== "creature" || !npc.race || sexOf(npc.gender) === null) return null;
   if (!sexes.length) {
     return (
       <LiteButton className={`${ROW_BUTTON} mt-1`} disabled={busy} onClick={() => onPost({ action: "split" })}

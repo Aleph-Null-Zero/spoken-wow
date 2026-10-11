@@ -357,7 +357,7 @@ describe("splitting by sex", () => {
   it("splits an NPC only a client's guess knows, rather than retyping it as the sex seen", async () => {
     vi.mocked(getResolution).mockResolvedValue({ ...corpusGuard, provenance: "client", confirmed: false });
     const split = [2, 3].map((sex) => ({ ...corpusGuard, sex: sex as 2 | 3, provenance: "client" as const }));
-    vi.mocked(getSexes).mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce(split);
+    vi.mocked(getSexes).mockResolvedValueOnce([]).mockResolvedValueOnce(split);
     vi.mocked(upsertResolution).mockClear();
     vi.mocked(upsertSex).mockClear();
     vi.mocked(voiceFromDisplays).mockResolvedValue(null);
@@ -374,7 +374,7 @@ describe("splitting by sex", () => {
   it("answers only the sex it lacks for an NPC split already", async () => {
     vi.mocked(getResolution).mockResolvedValue(corpusGuard);
     const man = { ...corpusGuard, sex: 2 as const, gender: "male" as const, race: "human", provenance: "corpus" as const };
-    vi.mocked(getSexes).mockResolvedValueOnce([man]).mockResolvedValueOnce([man]);
+    vi.mocked(getSexes).mockResolvedValueOnce([man]);
     vi.mocked(upsertSex).mockClear();
     vi.mocked(voiceFromDisplays).mockResolvedValue(null);
     await resolveNpc(woman, "enUS");

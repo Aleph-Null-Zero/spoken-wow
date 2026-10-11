@@ -26,7 +26,7 @@ import "server-only";
 
 import { query } from "@/lib/db";
 import { memoByLang } from "@/lib/memo";
-import { isSex } from "@/lib/npc/store";
+import { isSex } from "@/lib/npc/npc";
 import { nameStamp, versionStamp } from "@/lib/stamp";
 import type { Corpus, CorpusLine } from "@/lib/corpus";
 import { BASE_LANG, type Lang } from "@/lib/lang";

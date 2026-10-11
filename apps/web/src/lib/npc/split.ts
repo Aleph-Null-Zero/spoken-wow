@@ -48,10 +48,15 @@ async function answerFor(observed: Observed, sex: Sex, race: string): Promise<Se
  * answer, as `own` restamps it, for the sex it is -- unless that sex is answered already. Every
  * split goes through here, so a split NPC always has its own sex's row. Returns its sexes.
  */
-export async function splitNpc(npc: NpcResolution, other: SexInput, own: Partial<SexInput> = {}): Promise<NpcSexAnswer[]> {
+export async function splitNpc(
+  npc: NpcResolution,
+  other: SexInput,
+  own: Partial<SexInput> = {},
+  sexes?: NpcSexAnswer[],
+): Promise<NpcSexAnswer[]> {
   const sex = sexOf(npc.gender);
   if (sex === null || !npc.race || other.sex === sex) throw new Error(`splitNpc: ${npc.npcKind}/${npc.npcId} is not the other sex`);
-  if (!(await getSexes(npc.npcKind, npc.npcId)).some((row) => row.sex === sex)) {
+  if (!(sexes ?? (await getSexes(npc.npcKind, npc.npcId))).some((row) => row.sex === sex)) {
     await upsertSex({
       npcKind: npc.npcKind,
       npcId: npc.npcId,
@@ -83,5 +88,5 @@ export async function splitBySex(observed: Observed, npc: NpcResolution | null):
   if (own === null || own === sex || npc.provenance === "none") return [];
   const sexes = await getSexes("creature", observed.npcId);
   if (sexes.some((row) => row.sex === sex)) return sexes;
-  return splitNpc(npc, await answerFor(observed, sex, npc.race));
+  return splitNpc(npc, await answerFor(observed, sex, npc.race), {}, sexes);
 }
