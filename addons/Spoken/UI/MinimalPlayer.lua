@@ -15,8 +15,8 @@ local WORDS_TOP, PROGRESS_GAP, FOOT = 44, 6, 27
 local INSET, BESIDE_PORTRAIT, NO_PORTRAIT = 18, 96, 16
 -- Between the name or the title and the header's buttons; between the buttons.
 local CONTROLS_CLEAR, ROUND_GAP = 8, 4
--- The bronze the Forever client's frames wear, for Bronze Border.
-local BRONZE = { .95, .68, .35 }
+-- The bronze the Forever client's frames wear, for Bronze Border. Elsewhere it would match nothing.
+local BRONZE = Version.IsCamelot and { .95, .68, .35 } or nil
 -- The text colours for each background (Frame.MinimalBackground): dark ink with no shadow on
 -- parchment, light text on the rock.
 local LOOKS = {
@@ -497,7 +497,7 @@ function MinimalPlayer:RefreshConfig(original)
     self.content:SetPoint("TOPRIGHT", -INSET, -INSET)
     self.portrait:SetShown(not cfg.HidePortrait)
     local r, g, b = 1, 1, 1
-    if Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
+    if BRONZE and Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
     self.panel:SetBackdropBorderColor(r, g, b)
     Actions.TintProgress(self.progress, r, g, b)
     self.ring:SetVertexColor(r, g, b)
