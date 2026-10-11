@@ -80,6 +80,11 @@ local STONE = { Stone = true, Marble = true, Silver = true, Bronze = true, Proge
 local BOOK_DIVIDER = { 0, 768 / 1024, 1520 / 2048, 1552 / 2048 }
 local BOOK_RING, RING_OPENING = { 768 / 1024, 864 / 1024, 1616 / 2048, 1712 / 2048 }, 56 / 96
 
+--- A look's paper: a book's own art, or the quest parchment of DialogueUI's theme.
+local function PaperOf(look)
+    return look.file or Theme:TexturePath() .. "Parchment.png"
+end
+
 --- A look's cap size for a window `width` wide: a book's puts its paper on that width; the quest
 --- parchment's is DialogueUI's, at `q` of it.
 local function CapSize(look, width, q)
@@ -329,7 +334,6 @@ function Skin:Initialize()
     self.content, frame.container = content, content
     -- The captions are docked here and hand Ctrl-wheel to their parent.
     content.spokenWheel = frame.spokenWheel
-    content.buttons = {}
 
     -- The face and the title are placed on this, whatever the look.
     self.header = CreateFrame("Frame", nil, content)
@@ -354,7 +358,6 @@ function Skin:Initialize()
     self.badge = chrome:CreateTexture(nil, "OVERLAY")
     self.name = Font(content, 18, 1, 1, 1)
     content.name = self.name -- Actions' header anchor contract.
-    self.name:SetHeight(20)
     -- The line's name, nothing to click: Skip takes a line away.
     self.title = CreateFrame("Frame", nil, content)
     self.title.text = Font(self.title, 12, 1, 1, 1)
@@ -428,7 +431,7 @@ function Skin:Layout()
     local frame, cfg = self.frame, Theme:Config()
     local look = self:Look()
     self.look = look
-    local parchment = look.file or Theme:TexturePath() .. "Parchment.png"
+    local parchment = PaperOf(look)
     -- Laid out at DialogueUI's own size, paddings and text; Window Size then scales the
     -- whole frame from BASE_SCALE.
     local scale = BASE_SCALE * (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE
@@ -475,7 +478,8 @@ function Skin:Layout()
     -- Show Progress off: the bar goes and the window closes up under the words.
     local progress = Addon:Profile("Transcript").SubtitleProgress ~= false
     self.progress.track:SetShown(progress)
-    local footerHeight = (progress and self.progress.height + 6 or 0) + math.max(0, textGap - lineGap)
+    local footGap = math.max(0, textGap - lineGap)
+    local footerHeight = (progress and self.progress.height + 6 or 0) + footGap
     -- A line's room over and under the words, which a line gliding out or in fades through, so no
     -- line is seen cut at the edge. It lies over the gaps there and adds none: the words keep
     -- their place.
@@ -484,7 +488,7 @@ function Skin:Layout()
     local capWidth, capHeight = CapSize(look, width)
     local barLift = 0
     if progress then
-        local above = 6 + math.max(0, textGap - lineGap) + lineGap
+        local above = 6 + footGap + lineGap
         local foot = capHeight * look.foot / 256
         barLift = Round(above - (padBottom - foot))
         footerHeight = footerHeight + barLift
@@ -537,7 +541,7 @@ function Skin:Layout()
         self.headerDivider:SetTexCoord(BOOK_DIVIDER[1], BOOK_DIVIDER[2], BOOK_DIVIDER[3], BOOK_DIVIDER[4])
         self.headerDivider:SetSize(inner, lineHeightArt)
         self.headerDivider:SetPoint("CENTER", content, "TOP", 0,
-            -(Round(stripHeight * DIVIDER_LINE) - Round(lineHeightArt / 2)))
+            -(lineBottom - Round(lineHeightArt / 2)))
     else
         local socketU = HEADER_DIVIDER[1] + (HEADER_DIVIDER[2] - HEADER_DIVIDER[1]) * SOCKET_WIDTH / HEADER_DIVIDER[5]
         self.headerSocket:SetTexCoord(HEADER_DIVIDER[1], socketU, HEADER_DIVIDER[3], HEADER_DIVIDER[4])
@@ -567,10 +571,10 @@ function Skin:Layout()
     self.name:ClearAllPoints()
     self.name:SetPoint("BOTTOMLEFT", self.title, "TOPLEFT", 0, 2)
     self.name:SetPoint("RIGHT", self.controls, "LEFT", -clear, 0)
-    self.name:SetHeight(fonts.subtitleSize + 2)
+    local nameHeight = fonts.subtitleSize + 2
+    self.name:SetHeight(nameHeight)
     -- Centred on the speaker's name and the line's title together: the title sits on the
     -- socket's middle, 2 up, and the name above it.
-    local nameHeight = fonts.subtitleSize + 2
     local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
     self.controlsMiddle = middle
     self:FitControls()
@@ -600,10 +604,8 @@ function Skin:Layout()
 end
 
 function Skin:Dress()
-    local look = self.look or LOOKS.quest
+    local look, fonts = self.look, self.fonts
     local colors = Theme:Colors(look.palette)
-    local fonts = self.fonts or Theme:Fonts(look.book)
-    local body = fonts.paragraphSize
     -- On stone, the book view's shadow under its pale text.
     local shadow = look.shadow and 1 or 0
     local function Paint(text, face, size, color)
@@ -616,15 +618,13 @@ function Skin:Dress()
     Paint(self.title.text, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.title)
     Paint(self.count, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
     Paint(self.stopped, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
-    self.title.color = colors.title
     -- A clip's own face goes back on over the theme's (Addon:ClipFont).
     Addon:ClipFont(self.name, self.clip)
     Addon:ClipFont(self.title.text, self.clip)
     self.colors = colors
     local tint = colors.portraitTint
     if self.viewport.texture then self.viewport.texture:SetVertexColor(tint[1], tint[2], tint[3]) end
-    local captionSize = self.captionSize or body
-    Transcript:SetStyle({ font = fonts.paragraph, size = captionSize, lineGap = self.lineGap or Round(0.35 * captionSize),
+    Transcript:SetStyle({ font = fonts.paragraph, size = self.captionSize, lineGap = self.lineGap,
         paragraphs = true, color = colors.paragraph, shadow = look.shadow and true or false,
         highlight = colors.highlight, lines = self.lines, padTop = self.lineRoom })
 end
@@ -1787,7 +1787,7 @@ function Skin:Update()
     -- arriving late. Its art too: a stone page after a paper one with as many lines is redrawn.
     local textLines = Transcript.clip == clip and Transcript.lines and #Transcript.lines or 0
     local picture = clip.present and clip.present.picture
-    local key = textLines .. ":" .. (picture and picture.file .. ":" .. (picture.pixels or "") or "")
+    local key = textLines .. ":" .. (picture and picture.file or "")
         .. ":" .. (self:Look().file or "quest")
     if key ~= self.laidOutFor then
         self.laidOutFor = key
