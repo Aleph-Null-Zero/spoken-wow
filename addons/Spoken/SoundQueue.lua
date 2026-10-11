@@ -371,10 +371,6 @@ function SoundQueue:MuteGameDialogueAhead(speakingOn)
     if self:IsPaused() then
         return
     end
-    -- Game Greeting First: nothing is cut, and the line waits for the greeting instead.
-    if GreetingFirst and GreetingFirst:IsOn() then
-        return
-    end
     -- On 1.12 muting is cutting every sound, which would cut a line already speaking.
     if Version.IsLegacyVanilla and not self:IsEmpty() then
         return
@@ -497,9 +493,7 @@ function SoundQueue:PlaySound(clip)
     end
 
     -- A line read off an NPC's window cuts its voice; one starting elsewhere (a zone's story) fades it.
-    -- With Game Greeting First the NPC has had its say, so it is faded too, should the wait for
-    -- its greeting have been too short.
-    self:MuteGameDialogue(channel, clip.cutsGameDialogue and not (GreetingFirst and GreetingFirst:IsOn()))
+    self:MuteGameDialogue(channel, clip.cutsGameDialogue)
 
     if clip.startCallback then
         clip.startCallback(clip)

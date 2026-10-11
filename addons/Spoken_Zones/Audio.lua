@@ -222,7 +222,7 @@ function SpokenZones:SetupAudio()
 	self.source = Spoken:RegisterSource("zones", {
 		title = "Spoken Zones",
 		addon = ADDON_NAME,
-		order = 3,
+		order = 2,
 		-- How many clips may wait behind the one speaking. Discoveries arrive in
 		-- bursts when crossing a cluster of small subzones, and narration that has
 		-- fallen minutes behind is describing somewhere the player already left.

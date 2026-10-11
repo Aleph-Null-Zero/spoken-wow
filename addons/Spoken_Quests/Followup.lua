@@ -1,4 +1,3 @@
-if not (VoiceOver and VoiceOver.SpokenDialogue) then return end
 setfenv(1, VoiceOver)
 
 -- What an NPC says in /say, /yell or a whisper after a quest is accepted or turned in. The world DB's

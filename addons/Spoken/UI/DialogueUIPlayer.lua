@@ -924,13 +924,13 @@ end
 --- Start the fade, as one image where the client can draw one, unless asked not to.
 function Skin:StartFade(asItself)
     if not asItself then self:Buffer() end
-    self.fadeFrom, self.fadeTime = self.level or 0, 0
+    self.fadeFrom, self.fadeTime, self.fadeSlow = self.level or 0, 0, nil
 end
 
 --- The fade at its end: hidden if it went out, itself again, and the next line in if it turned.
 function Skin:EndFade()
     self:SetLevel(self.wanted and 1 or 0)
-    self.fadeTime = nil
+    self.fadeTime, self.fadeSlow = nil, nil
     if not self.wanted then
         self.frame:Hide()
         self:Undeafen()
@@ -1016,7 +1016,7 @@ function Skin:Tick(elapsed)
     end
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
-        local t = Clamp(self.fadeTime / (self.wanted and FADE_IN or FADE_OUT), 0, 1)
+        local t = Clamp(self.fadeTime / ((self.wanted and FADE_IN or FADE_OUT) * (self.fadeSlow or 1)), 0, 1)
         local eased = Smooth(t)
         self:SetLevel(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
         if t == 1 then
@@ -1650,7 +1650,9 @@ end
 
 --- Done, or cut short (a dialog opening, another closing): the page and the ripple gone, this
 --- window where it rests.
---- Fading in from where it is, now and as itself, not one image: no wait to be still.
+--- Fading in from where it is, now and as itself, not one image: no wait to be still. As itself
+--- the paper comes in over the first half and the rest over the second, so it takes twice as long
+--- as a fade as one image, each half as long as that whole fade.
 function Skin:FadeInAsItself()
     self.preparing, self.arming, self.turning = nil, nil, nil
     self.wanted = true
@@ -1659,6 +1661,7 @@ function Skin:FadeInAsItself()
     Transcript:Release()
     self.frame:Show()
     self:StartFade(true)
+    self.fadeSlow = 2
 end
 
 --- Whether this window is coming in or in, and itself, not one image: a tuck may run against it.
