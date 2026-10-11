@@ -1,7 +1,8 @@
 setfenv(1, SpokenEnv)
 
 -- The DialogueUI settings on Spoken's page: the window's own rows, shown only with the
--- DialogueUI style, then the rows feature addons add through Spoken:AddDialogueUISettings.
+-- DialogueUI style, then, after the narrator style's settings, the rows feature addons add
+-- through Spoken:AddDialogueUISettings, shown under any style.
 --
 -- Parsed by the 1.12 client too (addon.xml is shared), so Lua 5.0 syntax throughout; that
 -- client has no DialogueUI and returns below.
@@ -67,8 +68,8 @@ function Page:FitRow(layout, only, refresh)
         function() return Panel().FitText ~= false end, function(v) Panel().FitText = v end, refresh))
 end
 
---- Where the feature addons' rows go, now or whenever they arrive. They show under any style,
---- since they change DialogueUI's own quest window.
+--- Where the feature addons' rows go, after the narrator style's settings, now or whenever they
+--- arrive. They show under any style, since they change DialogueUI's own quest window.
 function Page:Place(layout)
     if not DialogueUITheme:Installed() then return end
     self.layout = layout
