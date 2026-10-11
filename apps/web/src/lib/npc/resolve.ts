@@ -17,6 +17,7 @@
 import type { Lang } from "@/lib/lang";
 import { defaultFlavorFor } from "@/lib/quests/catalogue";
 
+import { isGenericCreatureType } from "./creature-types";
 import { voiceFromDisplays } from "./display-voices";
 import { raceForModel } from "./models";
 import { INT32_MAX } from "./npc";
@@ -124,7 +125,11 @@ export async function resolveNpc(observed: Observed, lang: Lang | null): Promise
   // The extract's answer is the npc table's `corpus` row (migration 0070). Only extracted NPCs
   // have one: an NPC a contribution named was answered from its own resolution at the time, and
   // reading that back as the corpus would confirm a guess. Its name is in entity_name already.
-  const corpus = existing?.provenance === "corpus" && existing.race && existing.gender ? existing : null;
+  // A generic corpus row -- a gameobject, or a creature typed `creature` -- has no gender: its
+  // type is its kind, and the type has none.
+  const corpus = existing?.provenance === "corpus" && existing.race && (existing.gender || existing.race === npcKind)
+    ? existing
+    : null;
   if (corpus) {
     return upsertResolution({
       npcKind,
@@ -145,15 +150,38 @@ export async function resolveNpc(observed: Observed, lang: Lang | null): Promise
     });
   }
 
+  // A gameobject is read as one whatever it looks like, as the corpus types its own
+  // (tts_cli/corpus.py GENERIC_TYPES). Not confirmed: the kind is the envelope's word.
+  if (npcKind === "gameobject") {
+    return upsertResolution({
+      npcKind,
+      npcId,
+      npcName: lang ? observed.npcName : null,
+      nameLang: lang ?? undefined,
+      race: "gameobject",
+      gender: null,
+      flavor: null,
+      provenance: "client",
+      confirmed: false,
+      doubtful: false,
+      modelFileId: observed.modelFileId,
+      sex: observed.sex,
+      creatureType: observed.creatureType,
+      build: observed.build,
+      note: null,
+      resolvedBy: null,
+    });
+  }
+
   // The appearances the addon rolled, filtered to the body the player saw. One voice left is
   // the game's own answer, as exact as the corpus: display-voices.json reads it from the same
   // NPCSounds data tts_cli/flavors.py reads for the corpus.
   //
-  // Creatures only: a gameobject id is its own id space, and SetCreature would have described
-  // whichever creature shares the number. And confirmed only with a body the server knows: the
-  // envelope is unauthenticated, and appearances alone would let a hand-edited one plant a
-  // confirmed voice that no player report can ever outrank.
-  const fromDisplays = npcKind === "creature" && observed.displayIds.length
+  // Only creatures get here: a gameobject id is its own id space, and SetCreature would have
+  // described whichever creature shares the number. And confirmed only with a body the server
+  // knows: the envelope is unauthenticated, and appearances alone would let a hand-edited one
+  // plant a confirmed voice that no player report can ever outrank.
+  const fromDisplays = observed.displayIds.length
     ? await voiceFromDisplays(observed.displayIds, observed.modelFileId)
     : null;
   const body = raceForModel(observed.modelFileId);
@@ -195,15 +223,17 @@ export async function resolveNpc(observed: Observed, lang: Lang | null): Promise
   // agree wherever they can.
   const offered = narrowed?.flavors ?? [];
   const flavor = offered.length && !offered.includes(fallback ?? "") ? offered[0] : fallback;
+  // No race from the body, but an animal or a thing by its type: read as a generic creature.
+  const generic = !fromModel && isGenericCreatureType(observed.creatureType);
   return upsertResolution({
     npcKind,
     npcId,
     npcName: lang ? observed.npcName : null,
     nameLang: lang ?? undefined,
-    race: fromModel?.race ?? null,
+    race: fromModel?.race ?? (generic ? "creature" : null),
     gender: fromModel?.gender ?? null,
     flavor,
-    provenance: fromModel ? "client" : "none",
+    provenance: fromModel || generic ? "client" : "none",
     confirmed: false,
     doubtful: false,
     modelFileId: observed.modelFileId,
