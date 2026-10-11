@@ -420,13 +420,15 @@ function Subtitle:NameShown()
 end
 
 function Subtitle:RowHeight()
-    if not self:NameShown() then return 0 end
+    if not self:NameShown() then return self.shownPaused and (self.pausedLabel:GetStringHeight() or 0) or 0 end
     return math.max(Pictured() and PICTURE or 0, self.title:GetStringHeight() or 0)
 end
 
 --- The row's visible width, so it centres on what shows. The title is cut to keep it within WIDTH.
 function Subtitle:RowWidth(paused)
-    if not self:NameShown() then return 0 end
+    -- Show Name off still shows Stopped: Wanted keeps a stopped line on screen to say why it is
+    -- not being read.
+    if not self:NameShown() then return paused and (self.pausedLabel:GetStringWidth() or 0) or 0 end
     local start = (Pictured() and PICTURE + PICTURE_GAP or 0) + (self.title:GetStringWidth() or 0)
     -- The waiting count's room, taken first so a long title is cut rather than the count.
     local more = 0
@@ -448,8 +450,9 @@ end
 function Subtitle:PlaceRow(left)
     left = math.floor(left + .5)
     local textY = -TOP_PAD - math.floor((self:RowHeight() - (self.title:GetStringHeight() or 0)) / 2)
-    local pictured = Pictured()
-    self.picture:SetShown(pictured)
+    local named, pictured = self:NameShown(), Pictured()
+    self.picture:SetShown(pictured and named)
+    for _, part in ipairs({ self.title, self.dot, self.label }) do part:SetShown(named) end
     self.picture:ClearAllPoints()
     self.picture:SetPoint("TOPLEFT", self.frame, "TOP", left, -TOP_PAD)
     self.title:ClearAllPoints()
@@ -459,9 +462,13 @@ function Subtitle:PlaceRow(left)
     self.label:ClearAllPoints()
     self.label:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
     self.pausedLabel:ClearAllPoints()
-    self.pausedLabel:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
+    if named then
+        self.pausedLabel:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
+    else
+        self.pausedLabel:SetPoint("TOPLEFT", self.frame, "TOP", left, textY)
+    end
     local last = self.shownPaused and self.pausedLabel or (self.labelText and self.label or self.title)
-    local shown = (self.waiting or 0) > 0
+    local shown = named and (self.waiting or 0) > 0
     self.moreDot:SetShown(shown)
     self.more:SetShown(shown)
     self.moreDot:ClearAllPoints()
@@ -524,9 +531,9 @@ function Subtitle:Layout(text)
     self.measure:SetText("Ag")
     local lineHeight = self.measure:GetStringHeight()
     local named = self:NameShown()
-    self.nameRow:SetShown(named)
+    self.nameRow:SetShown(named or self.shownPaused)
     local titleHeight, widest = self:RowHeight(), self:RowWidth(self.shownPaused)
-    local titleGap = named and TITLE_GAP or 0
+    local titleGap = titleHeight > 0 and TITLE_GAP or 0
     self.rows = {}
     for index, wrapped in ipairs(self:Wrap(text)) do
         local width = self:Width(wrapped)
@@ -574,6 +581,13 @@ function Subtitle:Layout(text)
         self.wordEnds[n], n = finish, n + 1
     end
     self.revealed = nil
+end
+
+--- The page on screen laid out again where it has scrolled to.
+function Subtitle:Relayout()
+    local top, target = self.rollTop, self.rollTarget
+    self:Layout(self.pages[self.page].text)
+    self.rollTop, self.rollTarget = top, target
 end
 
 --- Line by line, the row leaving at the top fades out as it glides up and the one coming in fades
@@ -758,7 +772,8 @@ function Subtitle:Render()
     local paused = SoundQueue:IsPaused() and not self.sample
     if paused ~= self.shownPaused then
         self.shownPaused = paused
-        self:Fit()
+        -- With Show Name off the row is there only while stopped, so the words move for it.
+        if self:NameShown() or not self.page then self:Fit() else self:Relayout() end
     end
     local elapsed = self.sample and 0 or Transcript:AudioElapsed()
     local index = 1
