@@ -75,6 +75,9 @@ local LOAD_ALL_MODULES = true
 ---@field SoundLengthLookupByFileName table<string, number> Maps sound filenames to their duration in seconds
 ---@field QuestFileLookupByNPCID? table<string, table<number, string>> Maps a quest line's filename and its giver's Creature ID to the line in that giver's own voice, where it differs
 ---@field QuestFileLookupByObjectID? table<string, table<number, string>> Maps a quest line's filename and its giver's GameObject ID to the line in that giver's own voice, where it differs
+---@field GossipFileLookupByNPCSex? table<number, table<number, table<string, string>>> Maps a split Creature ID, the sex it is drawn as (UnitSex) and a gossip line's hash to the file that sex hears
+---@field QuestFileLookupByNPCSex? table<string, table<number, table<number, string>>> Maps a quest line's filename, its split giver's Creature ID and the sex it is drawn as to the file that sex hears
+---@field NPCSexByNPCID? table<number, number> Maps every other speaking Creature ID to the sex (UnitSex) it is voiced as
 
 ---@class AvailableDataModule
 ---@field AddonName string Addon name
@@ -745,6 +748,67 @@ function DataModules:GetQuestFileForGiver(soundData)
     end
 end
 
+--- The creature a GUID names, its id and the sex it is drawn as, for the tables keyed on both.
+---@param soundData SoundData
+---@return number|nil id
+---@return number|nil sex
+local function CreatureSex(soundData)
+    local id = Utils:GetCreatureIDFromGUID(soundData.unitGUID)
+    if not id then
+        return
+    end
+    soundData.npcSex = soundData.npcSex or Utils:GetSexForGUID(soundData.unitGUID)
+    return id, soundData.npcSex
+end
+
+--- The file a line is in for the sex its NPC is drawn as, for an NPC split by sex.
+---@param soundData SoundData
+---@param line string The line's own file
+---@return string|nil
+function DataModules:GetFileForSex(soundData, line)
+    local id, sex = CreatureSex(soundData)
+    if not id or not sex then
+        return
+    end
+    local quest = Enums.SoundEvent:IsQuestEvent(soundData.event)
+    for _, module in self:GetModules() do
+        local file
+        if quest then
+            local byGiver = module.QuestFileLookupByNPCSex and module.QuestFileLookupByNPCSex[line]
+            file = byGiver and byGiver[id] and byGiver[id][sex]
+        else
+            local bySex = module.GossipFileLookupByNPCSex and module.GossipFileLookupByNPCSex[id]
+            file = bySex and bySex[sex] and bySex[sex][line]
+        end
+        if file then
+            return file
+        end
+    end
+end
+
+--- Whether an unsplit NPC is drawn as the sex its voice is not. Its line still plays, and the
+--- site has to hear about it to give the other sex a voice.
+---@param soundData SoundData
+---@return boolean
+function DataModules:IsOtherSex(soundData)
+    local id, sex = CreatureSex(soundData)
+    if not id or (sex ~= 2 and sex ~= 3) then
+        return false
+    end
+    for _, module in self:GetModules() do
+        if module.GossipFileLookupByNPCSex and module.GossipFileLookupByNPCSex[id] then
+            return false
+        end
+    end
+    for _, module in self:GetModules() do
+        local voiced = module.NPCSexByNPCID and module.NPCSexByNPCID[id]
+        if voiced then
+            return voiced ~= sex
+        end
+    end
+    return false
+end
+
 --- A greeting's table names its speaker's own voice's file, `{hash}-{voice}`: the line's own
 --- file is the hash, tried in each language before the next.
 ---@param fileName string
@@ -776,8 +840,8 @@ function DataModules:PrepareSound(soundData)
     -- A quest given by NPCs of different voices is a file per voice: this giver's own first,
     -- then the line's, in each language before the next, so a voice no pack in the player's
     -- language has yet plays the line in that language rather than the voice in another.
-    local own = self:GetQuestFileForGiver(soundData)
     local line = soundData.fileName
+    local own = self:GetFileForSex(soundData, line) or self:GetQuestFileForGiver(soundData)
     soundData.fileName = own or line
     if self:ResolveSoundFile(soundData, own and line or GreetingOfVoice(line)) then
         return true

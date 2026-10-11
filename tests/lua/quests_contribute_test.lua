@@ -529,6 +529,40 @@ local object = VoiceOver.Contribute:Capture()
 Expect("a gameobject is never rolled", stub.SetCreatureCount(), objectRolls)
 Expect("...and sends no appearances", object:match("\ndisplays=") == nil, true)
 
+-- An item's GUID names a spawn, not the item, so the bags say which item starts the quest.
+stub.HidePanels()
+world.questID = 96391
+world.npcGUID, world.npcName = "Item-4372-0-400000033D4D1C15", nil
+local bags = { [0] = { [3] = { questID = 4242, link = "|cffffffff|Hitem:7000::::::::|h[Other Note]|h|r" },
+                       [5] = { questID = 96391, link = "|cffffffff|Hitem:211315::::::::|h[Underground Map]|h|r" } } }
+_G.C_Container = {
+    GetContainerNumSlots = function(bag) return bags[bag] and 16 or 0 end,
+    GetContainerItemInfo = function(bag, slot)
+        local item = bags[bag] and bags[bag][slot]
+        return item and { iconFileID = 1, hyperlink = item.link } or nil
+    end,
+    GetContainerItemQuestInfo = function(bag, slot)
+        local item = bags[bag] and bags[bag][slot]
+        return { questID = item and item.questID }
+    end,
+}
+stub.ShowPanel("QuestFrameDetailPanel")
+local item = VoiceOver.Contribute:Capture()
+Expect("an item that starts the quest is reported as an item", item:match("\nkind=item\n") ~= nil, true)
+Expect("...named by the bag item whose quest is on screen",
+    item:match("\nnpc=211315 Underground Map\n") ~= nil, true)
+
+world.npcGUID = "Creature-0-0-0-0-12345-0"
+local giver = VoiceOver.Contribute:Capture()
+Expect("a creature offering a quest a carried item also starts stays the creature",
+    giver:match("\nkind=creature\n") ~= nil and giver:match("\nnpc=12345") ~= nil, true)
+
+world.npcGUID, world.questID = "Item-4372-0-400000033D4D1C15", 9123
+local unknown = VoiceOver.Contribute:Capture()
+Expect("an item no bag slot starts the quest of names no npc and no kind",
+    unknown:match("\nnpc=%d") == nil and unknown:match("\nkind=") == nil, true)
+_G.C_Container = nil
+
 ------------------------------------------------------------------ a closed window keeps no button
 -- Walking away from an NPC closes the gossip window with none of the refresh events, and the
 -- client goes on answering GetGossipText with the last words. The button used to stay up,

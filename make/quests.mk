@@ -59,7 +59,7 @@ endef
         package-audio-complete package-meta push-complete icon \
         downloads-status \
         factions followup-lines release release-audio release-audio-dry release-wago release-curse \
-        release-dry import-corpus import-locale fill-locales import-questit export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
+        release-dry import-corpus import-locale import-npc-sexes fill-locales import-questit export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
         sync check-synced full-release
 
 help: ## Show this help
@@ -372,6 +372,11 @@ import-corpus: ## DANGEROUS: seed an EMPTY database from corpus/corpus.json.gz, 
 import-locale: ## vmangos *_locN -> quest_line + entity_name (LOCALE=deDE; needs MySQL and DATABASE_URL)
 	@test -n "$(LOCALE)" || { echo "import-locale: set LOCALE, e.g. LOCALE=deDE"; exit 2; }
 	@$(QUESTS_CLI) import-locale --lang $(LOCALE)
+
+# Straight into Postgres, since production is never extracted into. Rerunnable; a moderator's
+# answer is kept.
+import-npc-sexes: ## vmangos creature displays -> npc_sex, splitting each NPC drawn as both sexes (needs MySQL and DATABASE_URL)
+	@$(QUESTS_CLI) import-npc-sexes
 
 # The gaps vmangos leaves -- esMX, zhTW and zhCN text it lacks, and ptBR, which it has no
 # column for -- filled in the local dump from TrinityCore's releases, before import-locale.

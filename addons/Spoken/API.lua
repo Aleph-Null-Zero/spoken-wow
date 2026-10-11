@@ -328,6 +328,22 @@ function Spoken:QuestItemIcon(questID)
     return BagIcon(function(bag, slot) return SlotQuest(bag, slot) == questID end)
 end
 
+--- The id and name of the bag item that starts `questID`, read from its link: an item's GUID
+--- carries no item id, so the bags are the only place a quest panel's item can be named.
+function Spoken:QuestItem(questID)
+    if not questID then return nil end
+    for bag = 0, NUM_BAG_SLOTS or 4 do
+        for slot = 1, BagSlots(bag) do
+            if SlotQuest(bag, slot) == questID then
+                local _, link = SlotItem(bag, slot)
+                local id = link and tonumber(string.match(link, "item:(%d+)"))
+                if id then return id, string.match(link, "%[(.-)%]") end
+            end
+        end
+    end
+    return nil
+end
+
 --- The icon of the bag item named `name`, with its crop.
 function Spoken:BagItemIcon(name)
     if not name or name == "" then return nil end

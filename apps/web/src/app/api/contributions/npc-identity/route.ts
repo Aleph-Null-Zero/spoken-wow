@@ -13,7 +13,7 @@
 import { requireAdminSession } from "@/lib/generation/authz";
 import { contributionLocale, observationMeta, setContributionNpc } from "@/lib/contributions/store";
 import { isLang } from "@/lib/lang";
-import { INT32_MAX, NPC_KINDS, type NpcKind } from "@/lib/npc/npc";
+import { INT32_MAX, NPC_ROW_KINDS, type NpcRowKind } from "@/lib/npc/npc";
 import { observedFrom, resolveNpc } from "@/lib/npc/resolve";
 import type { NpcResolution } from "@/lib/npc/store";
 
@@ -26,10 +26,10 @@ export async function POST(request: Request) {
   if (!Number.isInteger(id) || id <= 0 || id > INT32_MAX) {
     return Response.json({ error: "unknown contribution" }, { status: 404 });
   }
-  if (!(NPC_KINDS as readonly unknown[]).includes(body.npcKind)) {
+  if (!(NPC_ROW_KINDS as readonly unknown[]).includes(body.npcKind)) {
     return Response.json({ error: "unknown kind" }, { status: 400 });
   }
-  const npcKind = body.npcKind as NpcKind;
+  const npcKind = body.npcKind as NpcRowKind;
   // `< 0`, not `<= 0` -- id 0 is a real NPC id (see ../npc).
   const npcId = body.npcId;
   if (typeof npcId !== "number" || !Number.isInteger(npcId) || npcId < 0 || npcId > INT32_MAX) {

@@ -15,7 +15,9 @@ import { saveName } from "@/lib/names/store";
 // importing one out of a module that reaches for `@/lib/db` fails the client build). Imported
 // (not just re-exported) so this file can still use them as it always did, and re-exported so
 // every existing import of these from this module keeps working unchanged.
-import { NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, isProvenance, type NpcKind, type NpcRowKind, type Provenance } from "./npc";
+import {
+  NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, isProvenance, type NpcKind, type NpcRowKind, type Provenance, type Sex,
+} from "./npc";
 
 export { NPC_KINDS, NPC_ROW_KINDS, PROVENANCES, isProvenance };
 export type { NpcKind, NpcRowKind, Provenance };
@@ -190,7 +192,7 @@ export function resolutionKey(npcKind: NpcRowKind, npcId: number): string {
  * the table's own two-column key, in a single query.
  */
 export async function getResolutions(
-  keys: { npcKind: NpcKind; npcId: number }[],
+  keys: { npcKind: NpcRowKind; npcId: number }[],
 ): Promise<Map<string, NpcResolution>> {
   if (keys.length === 0) return new Map();
 
@@ -229,4 +231,91 @@ export async function listUnconfirmed(kind: NpcKind): Promise<NpcResolution[]> {
     [kind],
   );
   return rows;
+}
+
+/** One sex of a split NPC: who it is when the client draws it as that sex. */
+export type NpcSexAnswer = {
+  npcKind: NpcRowKind;
+  npcId: number;
+  sex: Sex;
+  /** The sex's, always: male for 2, female for 3. */
+  gender: string;
+  race: string;
+  flavor: string | null;
+  provenance: Exclude<Provenance, "none">;
+  confirmed: boolean;
+  doubtful: boolean;
+  note: string | null;
+  resolvedBy: string | null;
+  updatedAt: string;
+};
+
+const SEX_COLUMNS = `x."npcKind", x."npcId", x."sex"::int as "sex", x."gender", x."race", x."flavor",
+                     x."provenance", x."confirmed", x."doubtful", x."note", x."resolvedBy",
+                     x."updatedAt"::text`;
+
+/** An NPC's sexes, man first; none for an NPC that is not split. */
+export async function getSexes(kind: NpcRowKind, npcId: number): Promise<NpcSexAnswer[]> {
+  const { rows } = await db().query<NpcSexAnswer>(
+    `select ${SEX_COLUMNS} from "npc_sex" x where x."npcKind" = $1 and x."npcId" = $2 order by x."sex"`,
+    [kind, npcId],
+  );
+  return rows;
+}
+
+/** Every split NPC's sexes, keyed by resolutionKey. */
+export async function listSexes(): Promise<Map<string, NpcSexAnswer[]>> {
+  const { rows } = await db().query<NpcSexAnswer>(
+    `select ${SEX_COLUMNS} from "npc_sex" x order by x."npcKind", x."npcId", x."sex"`,
+  );
+  const grouped = new Map<string, NpcSexAnswer[]>();
+  for (const row of rows) {
+    const key = resolutionKey(row.npcKind, row.npcId);
+    grouped.set(key, [...(grouped.get(key) ?? []), row]);
+  }
+  return grouped;
+}
+
+/**
+ * One sex's answer. It lands only over an answer ranked no higher (npc_provenance_rank). The NPC
+ * must have an npc row.
+ */
+export async function upsertSex(
+  input: Omit<NpcSexAnswer, "gender" | "updatedAt">,
+): Promise<NpcSexAnswer> {
+  const { rows } = await db().query<NpcSexAnswer>(
+    `insert into "npc_sex" as x
+       ("npcKind", "npcId", "sex", "race", "flavor", "provenance", "confirmed", "doubtful",
+        "note", "resolvedBy")
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     on conflict ("npcKind", "npcId", "sex") do update
+       set "race" = excluded."race",
+           "flavor" = excluded."flavor",
+           "provenance" = excluded."provenance",
+           "confirmed" = excluded."confirmed",
+           "doubtful" = excluded."doubtful",
+           "note" = excluded."note",
+           "resolvedBy" = excluded."resolvedBy",
+           "updatedAt" = now()
+       where "npc_provenance_rank"(x."provenance") <= "npc_provenance_rank"(excluded."provenance")
+         and (x."race", x."flavor", x."provenance", x."confirmed", x."doubtful", x."note", x."resolvedBy")
+             is distinct from
+             (excluded."race", excluded."flavor", excluded."provenance", excluded."confirmed",
+              excluded."doubtful", excluded."note", excluded."resolvedBy")
+     returning ${SEX_COLUMNS}`,
+    [
+      input.npcKind, input.npcId, input.sex, input.race, input.flavor, input.provenance,
+      input.confirmed, input.doubtful, input.note, input.resolvedBy,
+    ],
+  );
+  // No row back where the ranking refused the write or nothing changed: the stored one stands.
+  if (rows[0]) return rows[0];
+  const stored = (await getSexes(input.npcKind, input.npcId)).find((row) => row.sex === input.sex);
+  if (!stored) throw new Error(`upsertSex: no row for ${input.npcKind}/${input.npcId}/${input.sex}`);
+  return stored;
+}
+
+/** A moderator's "one voice after all": every line of the NPC goes back to its npc row's. */
+export async function unsplit(kind: NpcRowKind, npcId: number): Promise<void> {
+  await db().query(`delete from "npc_sex" where "npcKind" = $1 and "npcId" = $2`, [kind, npcId]);
 }

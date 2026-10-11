@@ -58,6 +58,8 @@ export type CorpusLine = {
    * language's word (player-words.ts), so the gate has to know which. Absent means English.
    */
   lang?: Lang;
+  /** The sex this row is for (2 man, 3 woman), on an NPC split by sex only. */
+  npcSex?: 2 | 3;
   /**
    * The English names, for a translator to work from. Absent when reading English, and on a
    * line only this language has.

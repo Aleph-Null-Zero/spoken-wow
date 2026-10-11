@@ -28,18 +28,50 @@ local EVENT_PATHS =
 
 Contribute = {}
 
-local function NPCID()
+local function GUIDType()
     local guid = Utils:GetNPCGUID()
-    if not guid or not Utils.GetIDFromGUID then
+    if not guid or not Utils.GetGUIDType then
         return nil
     end
-    local ok, read = pcall(Utils.GetIDFromGUID, Utils, guid)
-    return ok and read or nil
+    local ok, guidType = pcall(Utils.GetGUIDType, Utils, guid)
+    return ok and guidType or nil
+end
+
+--- The bag item that offered the quest on screen, as its id and name.
+---
+--- An item's GUID is a spawn, not an item id, so GetIDFromGUID refuses it and the speaker used
+--- to go out as nothing at all. The bags still hold the item while its quest is offered, and
+--- know which quest each one starts. A creature or gameobject is never asked about: it names
+--- itself, and a quest it offers may also be one a carried item starts.
+local function QuestItem()
+    local guidType = GUIDType()
+    if guidType ~= nil and guidType ~= Enums.GUID.Item then
+        return nil
+    end
+    local questID = GetQuestID and GetQuestID() or 0
+    if not (questID and questID > 0 and Spoken and Spoken.QuestItem) then
+        return nil
+    end
+    return Spoken:QuestItem(questID)
+end
+
+local function NPCID()
+    local guid = Utils:GetNPCGUID()
+    if guid and Utils.GetIDFromGUID then
+        local ok, read = pcall(Utils.GetIDFromGUID, Utils, guid)
+        if ok and read then
+            return read
+        end
+    end
+    return (QuestItem())
 end
 
 local function NPCField()
     local id = NPCID()
     local name = UnitName and UnitName("npc") or nil
+    if not name then
+        name = select(2, QuestItem())
+    end
     if id and name then
         return format("%d %s", id, name)
     end
@@ -52,18 +84,14 @@ end
 --- is a Wanted Poster -- so the site cannot key on the number alone. Enums.GUID already knows
 --- the difference and ReportButton reads it the same way.
 local function NPCKind()
-    local guid = Utils:GetNPCGUID()
-    if not guid or not Utils.GetGUIDType then
-        return nil
-    end
-    local ok, guidType = pcall(Utils.GetGUIDType, Utils, guid)
-    if not ok or not guidType then
-        return nil
-    end
+    local guidType = GUIDType()
     if guidType == Enums.GUID.GameObject then
         return "gameobject"
     end
-    return Enums.GUID:IsCreature(guidType) and "creature" or nil
+    if guidType and Enums.GUID:IsCreature(guidType) then
+        return "creature"
+    end
+    return QuestItem() and "item" or nil
 end
 
 -- PlayerModel loads asynchronously: probed against a live client, SetUnit followed
@@ -560,8 +588,10 @@ function Contribute:Capture()
         fields[#fields + 1] = { "npc", NPCField() }
         Observations(fields)
         -- An NPC can say several different things, so gossip is keyed on the words as well.
+        -- Keyed on the sex too, so a man and a woman saying the same words are two lines.
+        local sex = UnitSex and UnitSex("npc")
         return Spoken.Contribute:Envelope("quests", fields, gossip),
-            format("g:%d:%d", NPCID(), Spoken.Contribute:Checksum(gossip))
+            format("g:%d:%d%s", NPCID(), Spoken.Contribute:Checksum(gossip), sex == 3 and ":f" or "")
     end
 
     return nil
@@ -590,13 +620,15 @@ local function HasSoundForCurrent()
     -- GUID, and hands that name to string.gsub, so a nil one is an error thrown at a player
     -- who only walked away from a conversation.
     if gossip and gossip ~= "" and (guid or name) then
-        return DataModules:PrepareSound({
+        local soundData = {
             event = Enums.SoundEvent.Gossip,
             unitGUID = guid,
             name = name,
             unitIsObjectOrItem = Utils:IsNPCObjectOrItem(),
             text = gossip,
-        })
+        }
+        -- A woman speaking in the man's voice plays, and is still a line the site lacks.
+        return DataModules:PrepareSound(soundData) and not DataModules:IsOtherSex(soundData)
     end
 
     return false

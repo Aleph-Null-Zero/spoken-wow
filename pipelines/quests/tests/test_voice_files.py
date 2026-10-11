@@ -1,5 +1,6 @@
 from tts_cli.build import build_tables, locale_tables
 from tts_cli.ignores import ignored_files
+from tts_cli.npc_sexes import SEX_GENDER
 from tts_cli.voice_files import npc_voices, stored_stems, with_voice_files
 
 
@@ -191,3 +192,74 @@ def test_a_languages_greeting_joins_english_by_moment_whatever_its_own_shape():
     rows = [{"lineId": "g:abc", "originalText": "Go to Gryan.", "localeText": "Geh zu Gryan."}]
     tables = locale_tables(corpus, rows)
     assert tables["npc_gossip_file_lookups"][1] == {5: {"Geh zu Gryan.": "abc"}}
+
+
+def sex(npc_id, value, race, flavor):
+    gender = SEX_GENDER[value]
+    return {"npcType": "creature", "npcId": npc_id, "sex": value, "race": race, "gender": gender,
+            "flavor": flavor, "provenance": "corpus", "voice": f"{race}-{gender}-{flavor}"}
+
+
+GUARD = {
+    "lines": [
+        line(68, "human-male-official", line_id="g:abc", file_name="abc", source="gossip"),
+        line(68, "human-male-official"),
+        line(68, "human-male-official", line_id="q:109:progress", file_name="109-progress",
+             source="progress"),
+        line(7, "human-male-official", line_id="g:abc", file_name="abc", source="gossip"),
+    ],
+    "npcs": [npc(68, "human", "male", "official"), npc(7, "human", "female", "official")],
+    "npcSexes": [sex(68, 2, "human", "official"), sex(68, 3, "human", "official")],
+}
+
+
+def test_a_split_npc_speaks_a_line_per_sex_the_other_sexs_once_its_file_is_stored():
+    stems = stored_stems(["gossip/abc.mp3", "gossip/abc-human-female-official.mp3",
+                          "quests/109-accept.mp3"])
+    rows = [(row["npcId"], row.get("npcSex"), row["lineId"])
+            for row in with_voice_files(GUARD, stems)["lines"]]
+    assert rows == [
+        (68, 2, "g:abc"),
+        (68, 3, "g:abc~human-female-official"),
+        (68, 2, "q:109:accept"),
+        # Not stored yet: the man's file until it is.
+        (68, 3, "q:109:accept"),
+        # Never voiced, so never split.
+        (68, None, "q:109:progress"),
+        # Somebody else's NPC is as it was.
+        (7, None, "g:abc~human-female-official"),
+    ]
+
+
+def test_a_split_npcs_line_is_found_by_its_own_stem_and_each_sex_asked_after():
+    stems = stored_stems(["gossip/abc.mp3", "gossip/abc-human-female-official.mp3",
+                          "quests/109-accept.mp3", "quests/109-accept-human-female-official.mp3"])
+    tables = build_tables(with_voice_files(GUARD, stems))
+    assert tables["npc_gossip_file_lookups"][1][68] == {"Go to Gryan.": "abc"}
+    assert tables["npc_sex_gossip_file_lookups"][1] == {
+        68: {2: {"abc": "abc"}, 3: {"abc": "abc-human-female-official"}}}
+    assert tables["npc_sex_quest_file_lookups"][1] == {
+        "109-accept": {68: {2: "109-accept", 3: "109-accept-human-female-official"}}}
+    # The giver table an older addon reads still names no voice for the split NPC.
+    assert tables["npc_quest_file_lookups"][1] == {}
+    # Every other creature's sex, for the addon to notice a voice of the wrong one.
+    assert tables["npc_sex_lookups"][1] == {7: 3}
+
+
+def test_a_split_npcs_follow_up_is_a_file_per_sex_and_the_mans_without_one():
+    followup = line(68, "human-male-official", line_id="f:4377:human-male-official",
+                    file_name="4377-human-male-official", source="followup")
+    corpus = {**GUARD, "lines": [followup]}
+    stems = stored_stems(["followup/4377-human-male-official.mp3",
+                          "followup/4377-human-male-official-human-female-official.mp3"])
+    tables = build_tables(with_voice_files(corpus, stems))
+    assert tables["followup_lookups"][1] == {68: {4377: "4377-human-male-official"}}
+    assert tables["npc_sex_followup_lookups"][1] == {68: {4377: {
+        2: "4377-human-male-official", 3: "4377-human-male-official-human-female-official"}}}
+
+
+def test_a_split_npcs_line_in_a_client_locale_is_its_own_stem():
+    stems = stored_stems(["gossip/abc-human-female-official.mp3"])
+    rows = [{"lineId": "g:abc", "originalText": "Go to Gryan.", "localeText": "Geht zu Gryan."}]
+    tables = locale_tables(with_voice_files(GUARD, stems), rows)
+    assert tables["npc_gossip_file_lookups"][1][68] == {"Geht zu Gryan.": "abc"}
