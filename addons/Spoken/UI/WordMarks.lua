@@ -53,25 +53,31 @@ function Marks.MarkLinks(text, words)
     end
 end
 
---- Match the caption's words to the paragraphs' from paragraph `first` on. Each caption word is
---- looked for a few words past the last match; the first only within paragraph `first`.
---- Returns map[i] = { p = paragraph, w = word } for the words found, how many were found, and
---- how many could have been.
-function Marks.AlignFrom(words, paragraphs, first)
-    local tokens = {}
-    local firstEnd = 0
-    for p = first, table.getn(paragraphs) do
+--- Every paragraph's words as compared, in one run: tokens[t] = { p, w, key }, and starts[p] the
+--- first token of paragraph p (starts[n + 1] one past the last).
+local function Tokens(paragraphs)
+    local tokens, starts = {}, {}
+    local n = table.getn(paragraphs)
+    for p = 1, n do
+        starts[p] = table.getn(tokens) + 1
         for w, word in ipairs(paragraphs[p].words) do
             table.insert(tokens, { p = p, w = w, key = not word.inLink and Marks.Key(word.text) or nil })
         end
-        if p == first then
-            firstEnd = table.getn(tokens)
-        end
     end
-    local map, found, counted, nextToken = {}, 0, 0, 1
+    starts[n + 1] = table.getn(tokens) + 1
+    return tokens, starts
+end
+
+--- Match the caption's words (`keys`, theirs as compared) to the tokens from paragraph `first` on.
+--- Each caption word is looked for a few words past the last match; the first only within
+--- paragraph `first`. Returns map[i] = { p = paragraph, w = word } for the words found, how many
+--- were found, and how many could have been.
+local function AlignFrom(keys, count, tokens, starts, first)
+    local firstEnd = starts[first + 1] - 1
+    local map, found, counted, nextToken = {}, 0, 0, starts[first]
     local total = table.getn(tokens)
-    for i, word in ipairs(words) do
-        local key = Marks.Key(word.text)
+    for i = 1, count do
+        local key = keys[i]
         if key then
             counted = counted + 1
             local last = math.min(total, found == 0 and firstEnd + Marks.LOOKAHEAD or nextToken + Marks.LOOKAHEAD)
@@ -92,9 +98,14 @@ end
 --- keep earlier text and a hint above the line, so the later start wins a tie. The second value
 --- is the span of paragraphs matched, { first, last }: only those are typed out.
 function Marks.Align(words, paragraphs)
+    local tokens, starts = Tokens(paragraphs)
+    local keys, count = {}, table.getn(words)
+    for i = 1, count do
+        keys[i] = Marks.Key(words[i].text) or false
+    end
     local bestMap, bestFound, bestCounted = nil, 0, 0
     for first = 1, table.getn(paragraphs) do
-        local map, found, counted = Marks.AlignFrom(words, paragraphs, first)
+        local map, found, counted = AlignFrom(keys, count, tokens, starts, first)
         if found > 0 and found >= bestFound then
             bestMap, bestFound, bestCounted = map, found, counted
         end
