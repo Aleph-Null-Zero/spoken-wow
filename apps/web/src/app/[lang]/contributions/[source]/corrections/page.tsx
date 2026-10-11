@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import ContributionsTabs from "@/components/ContributionsTabs";
 import CorrectionTable, { type CorrectionRow } from "@/components/CorrectionTable";
 import { auth } from "@/lib/auth";
-import { clientOf, isClientFamily } from "@/lib/contributions/client";
+import { clientFilterOf, clientOf, matchesClient } from "@/lib/contributions/client";
 import { readable } from "@/lib/contributions/compare";
 import { isStatus, type ContributionStatus } from "@/lib/contributions/contributions";
 import { lineStates, tabOf } from "@/lib/contributions/known";
@@ -55,15 +55,15 @@ export default async function Page({
 
   const { status: rawStatus, client: rawClient, stage: rawStage, q: rawQ, filter: rawFilter } = await searchParams;
   const status: ContributionStatus = isStatus(rawStatus) ? rawStatus : "new";
-  // Forever by default: nearly every envelope comes from it.
-  const client: ClientFilter = isClientFamily(rawClient) ? rawClient : rawClient === "all" ? "all" : "forever";
+  // Era and Forever by default: every other client is the low-effort bin, shown only on request.
+  const client: ClientFilter = clientFilterOf(rawClient);
   // Gossip has no quest moment to correct, so only the three panels are offered.
   const stage: StageFilter = isQuestStage(rawStage) ? rawStage : "all";
   const q = typeof rawQ === "string" ? rawQ.trim() : "";
   const searchIn = isSearchIn(rawFilter) ? rawFilter : "any";
 
   const listed = (await listContributions(status, lang, undefined, "quests")).filter(
-    (row) => client === "all" || clientOf(row.build).family === client,
+    (row) => matchesClient(clientOf(row.build).family, client),
   );
   const states = await lineStates(listed);
 

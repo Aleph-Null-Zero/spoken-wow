@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import ApiKeyRequiredDialog from "@/components/ApiKeyRequiredDialog";
 import Pagination from "@/components/Pagination";
-import RegenerateDialog from "@/components/RegenerateDialog";
+import RegenerateDialog, { type PendingBatch } from "@/components/RegenerateDialog";
 import RegenerationPanel from "@/components/RegenerationPanel";
 import { BookList } from "@/components/books/BookList";
 import RecordingDropZone from "@/components/RecordingDropZone";
@@ -30,7 +30,7 @@ import {
   type PageFilters,
 } from "@/lib/books/filters";
 import type { ResultLine, SearchResult } from "@/lib/books/search";
-import { totals as estimateTotals, LIST_RATE, type Estimate } from "@/lib/generation/billing";
+import { totals as estimateTotals, LIST_RATE } from "@/lib/generation/billing";
 import {
   fetchGenerationStatus,
   fetchQueue,
@@ -46,6 +46,8 @@ import * as echo from "@/lib/url-echo";
 // Long enough to hold a whole typed word: the timer restarts on every keystroke, so this is
 // the pause after the last one rather than a rate limit. Enter fires the search immediately.
 const DEBOUNCE_MS = 500;
+
+type Batch = PendingBatch & { lineIds: string[] };
 
 export function Explorer({ books }: { books: BookFacet[] }) {
   const lang = useLang();
@@ -92,11 +94,10 @@ export function Explorer({ books }: { books: BookFacet[] }) {
    * search box keeps being typed into, and spending on a set nobody was shown is the
    * failure to avoid.
    */
-  const [pendingBatch, setPendingBatch] = useState<{
-    label: string;
-    estimate: Estimate;
-    lineIds: string[];
-  } | null>(null);
+  const [pendingBatch, setPendingBatch] = useState<Batch | null>(null);
+  // Which click the open dialog belongs to, so a set that lands after a cancel or a later
+  // click is dropped rather than shown.
+  const batchRequest = useRef(0);
 
   // The shared queue, which all three sections poll. A batch someone else started is
   // spending the same plan's credits, so it belongs on this screen too.
@@ -324,13 +325,21 @@ export function Explorer({ books }: { books: BookFacet[] }) {
 
   const askToRegenerateAll = useCallback(() => {
     if (!result || result.total === 0) return;
+    const request = ++batchRequest.current;
+    // Open on the click, with the button's count, and fill it in when the ids land.
+    setPendingBatch({
+      label: `all ${result.total.toLocaleString()} voiceable pages`,
+      estimate: null,
+      lineIds: [],
+    });
+    const settle = (next: (open: Batch) => Batch) =>
+      setPendingBatch((open) => (open && request === batchRequest.current ? next(open) : open));
 
     fetch(withLang(lang, `/api/books/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
       .then((response) => response.json())
       .then(({ ids, totalChars }: { ids: string[]; totalChars: number }) => {
-        if (ids.length === 0) return;
         const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
-        setPendingBatch({
+        settle(() => ({
           label: `all ${ids.length.toLocaleString()} voiceable pages`,
           // Pages and files are the same count: one page is one file. The quests side has
           // to tell them apart because many of its files are spoken by several NPCs.
@@ -339,14 +348,14 @@ export function Explorer({ books }: { books: BookFacet[] }) {
             rate,
           ),
           lineIds: ids,
-        });
+        }));
       })
-      .catch(() => {});
+      .catch(() => settle((open) => ({ ...open, failed: true })));
   }, [result, status, lang]);
 
   /** Hand the batch to the queue. The ids are the ones the estimate was built from. */
   const startBatch = useCallback(async () => {
-    if (!pendingBatch) return;
+    if (!pendingBatch?.estimate) return;
     const { lineIds, label } = pendingBatch;
     setPendingBatch(null);
     setQueueNote(null);

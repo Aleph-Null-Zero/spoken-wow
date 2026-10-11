@@ -8,7 +8,7 @@ import ContributionTable, { type ContributionRow } from "@/components/Contributi
 import ContributionsTabs from "@/components/ContributionsTabs";
 import { auth } from "@/lib/auth";
 import { bookFacets, catalogue, pageById } from "@/lib/books/catalogue";
-import { clientOf, isClientFamily } from "@/lib/contributions/client";
+import { clientFilterOf, clientOf, matchesClient } from "@/lib/contributions/client";
 import { corpusLookup } from "@/lib/contributions/existing";
 import { lineStates, tabOf } from "@/lib/contributions/known";
 import { isStatus, type ContributionStatus } from "@/lib/contributions/contributions";
@@ -261,8 +261,8 @@ export default async function Page({
   const bucket: Bucket = namesSpeaker(source) && isBucket(rawBucket) ? rawBucket : "ready";
 
   // Which game the text came from, read off `build` (lib/contributions/client.ts). Defaults to
-  // the Forever beta, the client nearly all of this queue comes from; "all" has to be asked for.
-  const client: ClientFilter = isClientFamily(rawClient) ? rawClient : rawClient === "all" ? "all" : "forever";
+  // Era and Forever: every other client is the low-effort bin, shown only on request.
+  const client: ClientFilter = clientFilterOf(rawClient);
 
   // Which quest panel the text was read off -- accept, progress or complete -- or gossip.
   const stage: StageFilter = source === "quests" && isStageFilter(rawStage) ? rawStage : "all";
@@ -286,7 +286,7 @@ export default async function Page({
   const npcs = await npcFor(contributions);
 
   const filtered = contributions
-    .filter((row) => client === "all" || clientOf(row.build).family === client)
+    .filter((row) => matchesClient(clientOf(row.build).family, client))
     .filter((row) => matchesStage(questFor(row), stage))
     .filter((row) => matchesSearch({ text: row.text, npc: npcs[row.id], quest: questFor(row) }, q, searchIn));
 
