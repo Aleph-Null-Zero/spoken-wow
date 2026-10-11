@@ -328,19 +328,31 @@ local function NarrateUnheard()
 end
 
 --------------------------------------------------------------------------------
--- The one discovery the client never announces
+-- The one discovery that cannot be placed
 --------------------------------------------------------------------------------
 --
--- Where a character spawns is either already explored when it is created, or is
--- announced while the intro cinematic is up and before this addon has registered
--- anything. Either way a new orc stands in Valley of Trials in silence -- and that
--- is the first thing this feature should ever have to say.
+-- A new character's spawn area is announced a second or so into the first login, while
+-- the player's map is still the continent, so OnAreaDiscovered finds no lore for it and
+-- a new orc stands in Valley of Trials in silence -- the first thing this feature should
+-- ever have to say.
 --
--- So the spawn area is seeded once, guarded by a single per-character boolean.
--- This is a greeting, not a rule: it must not fire on every login, and it is the
--- only place left that guesses at a first visit rather than being told about one.
+-- So the spawn area is seeded once, guarded by a per-character boolean. The boolean
+-- alone is not enough: it lives in saved variables, which a crash, a wiped WTF folder or
+-- the 3.0 folder rename lose, and then a character parked in Stormwind is "greeted" with
+-- Stormwind. So the greeting also needs the character to be level 1 and standing in a
+-- starting area, which is the only place a first login ever happens.
 
 local LOGIN_SEED_DELAY = 2
+
+-- Each starting zone's map and the area a new character spawns in.
+local STARTING_AREAS = {
+	[1411] = "valley of trials", -- Durotar
+	[1412] = "camp narache", -- Mulgore
+	[1420] = "deathknell", -- Tirisfal Glades
+	[1426] = "coldridge valley", -- Dun Morogh
+	[1429] = "northshire valley", -- Elwynn Forest
+	[1438] = "shadowglen", -- Teldrassil
+}
 
 -- A brand-new character is the worst case for asking the client where it is: the world
 -- is still loading, the intro cinematic is up, and GetBestMapForUnit answers with the
@@ -359,22 +371,9 @@ local function SeedLoginArea(attempt)
 		return true
 	end
 
-	-- A client that restored nothing cannot remember a greeting either. db.greeted was
-	-- written last session and came back empty, so without this the greeting is not a
-	-- greeting: it narrates the current zone at every single login, forever.
-	--
-	-- Level 1 is the exception, because it is the case this whole function exists for -- a
-	-- character standing in the valley it woke up in, which the client never announces. A
-	-- new character on a client that cannot remember hears it once per login while it is
-	-- level 1 and never again; every other character hears nothing rather than everything.
-	--
-	-- Evidence rather than a client check: it clears itself the day the client starts
-	-- restoring saved variables, and it also covers an installation where the WTF folder is
-	-- unwritable, which looks identical from in here.
-	if not SpokenZones.savedVariablesRestored and (UnitLevel("player") or 1) > 1 then
+	if (UnitLevel("player") or 1) > 1 then
 		if debugOn then
-			SpokenZones:Print("greeting: the client restored no saved variables -- skipping, "
-				.. "since nothing here can remember having greeted this character")
+			SpokenZones:Print("greeting: level %d -- not a new character", UnitLevel("player"))
 		end
 		return true
 	end
@@ -400,19 +399,25 @@ local function SeedLoginArea(attempt)
 			tostring(mapID), tostring(mapID and SpokenZones:GetMapName(mapID)),
 			tostring(GetSubZoneText()))
 	end
-	if not mapID then
+	-- The continent, or a subzone not filled in yet: the map has not settled, so ask again.
+	local subZone = GetSubZoneText()
+	if not mapID or not IsAutoplayableMap(mapID) or not subZone or subZone == "" then
 		return false
+	end
+
+	local entry, key = SpokenZones:GetSubzoneLore(mapID, subZone)
+	if not STARTING_AREAS[mapID] or key ~= STARTING_AREAS[mapID] then
+		if debugOn then
+			SpokenZones:Print("greeting: \"%s\" is not a starting area -- not a new character", subZone)
+		end
+		return true
 	end
 
 	-- The subzone is the more specific answer, the same preference /spz play and the
 	-- lore window both apply.
-	local subZone = GetSubZoneText()
-	if subZone and subZone ~= "" and SpokenZones:Get("autoplaySubzones") then
-		local entry, key = SpokenZones:GetSubzoneLore(mapID, subZone)
-		if entry and key and Enqueue(mapID, key) then
-			db.greeted = true
-			return true
-		end
+	if SpokenZones:Get("autoplaySubzones") and entry and Enqueue(mapID, key) then
+		db.greeted = true
+		return true
 	end
 
 	if SpokenZones:GetLore(mapID) and Enqueue(mapID, nil) then
@@ -420,9 +425,8 @@ local function SeedLoginArea(attempt)
 		return true
 	end
 
-	-- Nothing queued: either the map has not settled yet, or it settled on a continent.
-	-- Both are worth another look, and the flag stays unset so a later login still
-	-- greets if this one never resolves.
+	-- Nothing queued, on a taxi or with no clip installed. Worth another look, and the flag
+	-- stays unset so a later login still greets if this one never resolves.
 	if debugOn then
 		SpokenZones:Print("greeting %d: nothing queued for map %s -- retrying", attempt or 0, tostring(mapID))
 	end

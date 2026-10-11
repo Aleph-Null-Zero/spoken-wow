@@ -2,6 +2,13 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## Unreleased
+
+- **A character is greeted by its zone only once, in its starting area.** An existing
+  character could hear the lore of wherever it logged in, such as a level 1 character parked in
+  Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
+  login greeting now plays only for a level 1 character in the valley it started in.
+
 ## 3.3.0 — 2026-10-11
 
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
