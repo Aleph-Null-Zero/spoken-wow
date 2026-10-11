@@ -26,9 +26,11 @@ Defaults = {
             -- "subtitle", "minimal" (Small Window), "classic" (Large Window), "dialogueui" or
             -- "none" (the voice alone). Legacy clients start in the window they always had.
             Style = Version.IsAnyLegacy and "classic" or "subtitle",
-            -- Forever only: the bronze its own frames wear, on the minimal player's metal.
+            -- The windows' metal in the bronze the Forever client's frames wear.
             BronzeTint = true,
             MinimalWidth = 380,
+            -- The small window's background: "parchment" or "dark" (the rock).
+            MinimalBackground = "parchment",
             -- Per action id, for the ones an addon declared optional. Absent means shown.
             HiddenActions = {},
             DialogueUI = {
@@ -106,6 +108,8 @@ Defaults = {
             TypewriterBy = "letter",
             SubtitleShadow = 0.6,
             SubtitleProgress = true,
+            SubtitleName = true,
+            SubtitleScroll = "page",
             SubtitleScale = 1,
             -- How many sentences the subtitle shows at once, 1 to 4; longer text turns pages.
             SubtitleSentences = 3,
@@ -260,12 +264,23 @@ function Addon:IsFrameLocked()
     return self:Profile("Frame").LockFrame
 end
 
+function Addon:Bronze()
+    return self:Profile("Frame").BronzeTint ~= false
+end
+
 --- Put a player frame on the host, or back on UIParent, since a host that hides UIParent
 --- (DialogueUI) would hide the player too. The anchor stays on UIParent and the scale keeps
 --- the effective scale, so the frame keeps its exact place on screen. spokenBaseScale /
 --- spokenBaseStrata give a frame's own scale and strata (the subtitles).
 function Addon:ApplyHost(frame)
     if not frame then return end
+    -- A window drawn as one image must not move while it fades: it moves once it is itself again.
+    if frame.spokenFrozen then
+        frame.spokenHostPending = true
+        -- Hidden with the host it leaves, it never ticks to its fade's end: ended now, unseen.
+        if frame.spokenEndFade and not frame:IsVisible() then frame.spokenEndFade() end
+        return
+    end
     local host, cfg = self.playerHost, self:Profile("Frame")
     local base = frame.spokenBaseScale or cfg.FrameScale
     if host then

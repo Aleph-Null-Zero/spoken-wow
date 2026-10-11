@@ -74,6 +74,12 @@ local sub = Z:NewLoreSound(1411, "valley of trials")
 Expect("a subzone clip keeps the frozen line id", sub.key, "s:1411:valley of trials")
 Expect("...header is the zone, label the subzone", sub.present.header .. " / " .. sub.present.label, "Durotar / Valley of Trials")
 Expect("no pack entry, no clip", Z:NewLoreSound(1426, nil), nil)
+Expect("a place with no picture sends none", zone.present.picture, nil)
+Z.Picture = function(_, mapID, key) if mapID == 1411 and not key then return "Pictures/1411", "Pictures/Mask3" end end
+local pictured = Z:NewLoreSound(1411, nil)
+Expect("...one with a picture sends it and its frayed edge, for a window to show",
+    pictured.present.picture and (pictured.present.picture.file .. " " .. pictured.present.picture.mask), "Pictures/1411 Pictures/Mask3")
+Z.Picture = nil
 Z.GetMapName = GetMapName
 
 ---------------------------------------------------------------- playing through the player
@@ -95,11 +101,12 @@ Expect("starting marks the area heard in the per-character record", Z:HasHeard(1
 local F = env.PlayerFrame
 Expect("the player frame shows where the zone is, over its name", F.frame.container.name:GetText(), "Kalimdor")
 Z.GetMapName = GetMapName
--- Report only, as an icon in the corner. Reading the text is reached from the map, the
--- minimap menu and /spz; a button on the player that opened a window over the thing being
+-- Report only, as an icon among the header's controls. Reading the text is reached from the map,
+-- the minimap menu and /spz; a button on the player that opened a window over the thing being
 -- read was one way too many.
 Expect("...and no strip of buttons", F.frame.actions.shown, 0)
-Expect("...but Report in the corner", F.frame.actions.buttons[1].anchor.point, "TOPRIGHT")
+Expect("...but Report in the header after Skip", F.row and F.row[3] == F.frame.actions.buttons[1]
+    and F.frame.actions.buttons[1]:GetParent() == F.controls, true)
 
 env, Z = Boot(); Spoken = _G.Spoken
 Z:PlayLore(1411, nil)

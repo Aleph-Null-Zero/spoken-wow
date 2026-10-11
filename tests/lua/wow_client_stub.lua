@@ -195,6 +195,11 @@ local function Widget(kind, name)
     function w:GetRight() return self.width end
     function w:SetAlpha(v) self.alpha = v end
     function w:GetAlpha() return self.alpha end
+    -- Drawn as one image, and parts that take no alpha from their parent.
+    function w:SetIsFrameBuffer(v) self.frameBuffer = v and true or false end
+    function w:IsFrameBuffer() return self.frameBuffer or false end
+    function w:SetIgnoreParentAlpha(v) self.ignoreParentAlpha = v and true or false end
+    function w:IsIgnoringParentAlpha() return self.ignoreParentAlpha or false end
     function w:SetID(v) self.id = v end
     function w:GetID() return self.id end
     function w:SetParent(p) self.parent = p end
@@ -209,8 +214,11 @@ local function Widget(kind, name)
     function w:GetObjectType() return self.frameType or self.kind end
     function w:GetChildren() return unpack(self.children) end
     function w:GetFrameLevel() return 1 end
-    function w:SetTexture(t) self.texture = t; return true end
+    -- A texture shows a file or an atlas, whichever was set last.
+    function w:SetTexture(t) self.texture = t; self.atlas = nil; return true end
     function w:GetTexture() return self.texture end
+    function w:SetAtlas(name) self.atlas = name; self.texture = nil end
+    function w:GetAtlas() return self.atlas end
     function w:SetTexCoord(...) self.texCoord = { ... } end
     function w:CreateTexture(n, layer) local t = Widget("Texture", n); t.parent = self; t.layer = layer; return t end
     -- A mask, as the client hands one back: the small window rounds a portrait with it.
@@ -1125,7 +1133,7 @@ local DIALOGUE_CORE = { "Environment", "Version", "Enums", "Utils", "Language", 
 function M.LoadSpoken(addonDirectory)
     for _, file in ipairs({ "Environment", "Version", "Core", "SoundUtils", "Callbacks", "SoundQueue", "Sources", "Developer", "OtherSounds",
         "Strings", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU", "Locale/koKR", "Locale/zhCN",
-        "Locale/zhTW", "UI/Layout", "UI/DialogueUITheme", "UI/Transcript", "UI/Subtitle", "UI/Search", "UI/Portrait", "UI/StaticPortrait", "UI/Actions", "UI/PlayerFrame",
+        "Locale/zhTW", "UI/Layout", "UI/DialogueUITheme", "UI/Transcript", "UI/Subtitle", "UI/WordMarks", "UI/Search", "UI/Portrait", "UI/StaticPortrait", "UI/Actions", "UI/PlayerFrame",
         "UI/MinimalPlayer", "UI/DialogueUIPlayer", "UI/MinimapButton",
         -- Real LibDeflate, not a hand-faked stub library: Contribute:Encode's round trip through
         -- actual compression is the point of testing it at all.
