@@ -230,10 +230,8 @@ async function buildTranslated(lang: Lang): Promise<CorpusLine[]> {
   });
 }
 
-/**
- * Each line with the zones its speaker spawns in. quest_spawn is replaced in the same import
- * as the speakers, so the speaker stamp already moves when it does.
- */
+// quest_spawn is replaced in the same import as the speakers, so the speaker stamp already
+// moves when it does.
 async function withZones(lines: CorpusLine[]): Promise<CorpusLine[]> {
   const zones = zonesBySpeaker(await query<Spawn>(`select "npcType", "npcId", "map", "x", "y" from "quest_spawn"`));
   return lines.map((line) => {

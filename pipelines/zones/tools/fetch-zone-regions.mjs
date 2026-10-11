@@ -4,11 +4,8 @@
 //   node tools/fetch-zone-regions.mjs                     # pinned build
 //   node tools/fetch-zone-regions.mjs --build 1.15.9.69109
 //
-// What lib/zone-at.mjs places a spawn with, because the server leaves its zone columns at 0:
-// the rectangle each zone's map covers in world coordinates, and the explored-area overlays
-// drawn on it, each under the zone its area belongs to. The rectangles are map frames and
-// overlap heavily (the Crossroads is inside Durotar's), so the overlays are what decides.
-// Committed, so the site answers "which zone?" offline.
+// The server leaves its zone columns at 0, so spawns are placed against each zone map's
+// world rectangle and its explored-area overlays. Committed, so the site needs no network.
 
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";

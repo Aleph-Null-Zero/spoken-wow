@@ -1,10 +1,7 @@
-// The zone a point in the world stands in, as a uiMapID.
-//
-// From seed/zone-regions.json, because the server leaves its zone columns at 0. The zone
-// maps' rectangles overlap heavily (the Crossroads is inside Durotar's), so where several
-// hold the point a city's wins, then whichever zone owns most of the explored-area overlays
-// drawn under it, the smaller subzone on a tie. A heuristic: the client keeps the true area
-// of a point only in its terrain.
+// The zone a world point stands in, as a uiMapID. The server leaves its zone columns at 0.
+// Zone rectangles overlap heavily (the Crossroads is inside Durotar's), so a city wins, then
+// the zone owning most explored-area overlays under the point, the smaller subzone on a tie.
+// A heuristic: only the client's terrain knows a point's true area.
 
 import seed from "../seed/zone-regions.json" with { type: "json" };
 
@@ -46,7 +43,6 @@ export const ZONE_REGIONS = seed.regions;
 const area = (region) => (region.x[1] - region.x[0]) * (region.y[1] - region.y[0]);
 const smallest = (regions) => regions.reduce((best, region) => (area(region) < area(best) ? region : best));
 
-/** The overlays of a region's map that cover the point, as the zones they belong to. */
 function overlaysAt(region, x, y) {
   // North is +x and west is +y, so the map's left edge is the largest y and its top the largest x.
   const px = ((region.y[1] - y) / (region.y[1] - region.y[0])) * region.canvas[0];
@@ -54,7 +50,6 @@ function overlaysAt(region, x, y) {
   return region.overlays.filter((o) => px >= o.left && px <= o.left + o.width && py >= o.top && py <= o.top + o.height);
 }
 
-/** The uiMapID at (map, x, y), or undefined where no zone covers it. */
 export function zoneAt(map, x, y) {
   if (INSTANCE_ZONE[map]) return INSTANCE_ZONE[map];
   const holding = ZONE_REGIONS.filter(

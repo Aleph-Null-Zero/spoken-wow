@@ -63,7 +63,7 @@ export type CorpusLine = {
    * line only this language has.
    */
   english?: { questTitle: string | null; npcName: string };
-  /** uiMapIDs. Absent for a speaker with no spawn, and on CorpusLines tests build by hand. */
+  /** uiMapIDs the speaker spawns in. Absent when it spawns in none. */
   zones?: number[];
 };
 

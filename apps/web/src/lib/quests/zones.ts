@@ -11,10 +11,7 @@ export const QUEST_ZONES: QuestZone[] = (ZONE_REGIONS as QuestZone[])
   .map(({ uiMapID, name }) => ({ uiMapID, name }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
-/**
- * npcKey -> the zones its spawns stand in, in uiMapID order. A speaker with no spawn in any
- * zone (an item, an unspawned object) has no entry.
- */
+/** Zones in uiMapID order. A speaker with no spawn in any zone has no entry. */
 export function zonesBySpeaker(spawns: Iterable<Spawn>): Map<string, number[]> {
   const sets = new Map<string, Set<number>>();
   for (const spawn of spawns) {
