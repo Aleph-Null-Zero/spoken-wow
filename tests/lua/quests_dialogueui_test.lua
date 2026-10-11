@@ -570,6 +570,18 @@ Expect("...and DialogueUI's own button is given back", DUI.TTSButton:GetAlpha(),
 Expect("...Skip moving up to the row's left end", controls.frame:GetWidth(), 24 * round)
 dui.PlayButton = true
 Bridge:Refresh()
+-- Spoken Quests off: DialogueUI's window as DialogueUI draws it.
+_G.Spoken:SetPartOn("quests", false)
+Bridge:RefreshPlayButton()
+Expect("with Spoken Quests off the row and the close button go",
+    tostring(controls.frame:IsShown()) .. " " .. tostring(closeButton:IsShown()), "false false")
+Expect("...and DialogueUI's own button is given back", DUI.TTSButton:GetAlpha(), 0.6)
+header:SetPoint("TOP", DUI.FrontFrame, "TOP", 0, -28)
+DUI:UseQuestLayout(true)
+Expect("...and its header is left where DialogueUI puts it", header.anchor.y, -28)
+_G.Spoken:SetPartOn("quests", true)
+Bridge:RefreshPlayButton()
+Expect("back on, the row is back", controls.frame:IsShown() and closeButton:IsShown(), true)
 DUI.TTSButton = nil
 DUI:Hide()
 driver.scripts.OnHide(driver)
