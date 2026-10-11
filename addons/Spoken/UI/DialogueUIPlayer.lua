@@ -1173,7 +1173,7 @@ function Skin:Settle(dialog)
         return
     end
     self.justClosed = nil
-    -- In full at once: no fade, nor a turn, waits to run, and its words are its line's.
+    -- Shown in full at once: no fade or turn left waiting, and the captions free for its line.
     self.arming, self.preparing, self.turning = nil, nil, nil
     self:Undeafen()
     Transcript:Release()
@@ -1664,7 +1664,6 @@ function Skin:DrawTuck(tuck)
 
     card:SetAlpha(1 - Smooth(Clamp((t - landed - TUCK_SLIDE * 0.3) / (TUCK_SLIDE * 0.7), 0, 1)))
 
-    -- Its shadow: thrown as it is lifted, drawn back in as it comes down.
     local reach = (1 - fly * 0.7) * lift
     PlaceShadow(card.shadow, card, 7 * reach, -10 * reach, 16, scale)
     card.shadow:SetAlpha(0.55 * lift * (1 - 0.45 * fly) * (1 - slide))
@@ -1677,7 +1676,6 @@ function Skin:DrawTuck(tuck)
         self:Rest(tuck)
     end
 
-    -- Taken: its count ripples out.
     local taken = t - (landed + TUCK_SLIDE * 0.45)
     if taken >= 0 then
         if not tuck.taken then
