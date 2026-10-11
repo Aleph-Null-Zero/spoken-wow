@@ -35,6 +35,8 @@ setfenv(1, SpokenEnv)
 ---@field delay? number       Silence before the clip. Only the 2.4.3/3.3.5 path sets it.
 ---@field priority? string    "normal" (default) or "low".
 ---@field group? string       Clips of one item, e.g. a book's pages. No pause or cue between them.
+---@field continues? boolean  Its next part is put in as it ends (source:Continue). No pause or cue after it.
+---@field span? table         { before, total }: seconds of its item before it, and in all (SoundQueue:Share).
 ---@field present table       See API.lua.
 ---@field addedCallback? fun(clip)
 ---@field startCallback? fun(clip)
@@ -421,18 +423,19 @@ end
 
 -- `clip`'s voice has ended. The pause after it, and the cue halfway through that pause, only
 -- separate it from a line that will play next: the last line ends with its voice, and one a
--- gate holds waits out the gate, which separates it well enough.
+-- gate holds waits out the gate, which separates it well enough. A clip that continues is
+-- followed by its own next part, which is not in the queue yet, so what waits now is not next.
 local function AfterSpoken(clip)
     local function Finish()
         SoundQueue:RemoveSoundFromQueue(clip, true)
     end
     local _, nextClip = FirstPlayable(2)
-    if not nextClip then
+    if not nextClip and not clip.continues then
         Finish()
         return
     end
     local audio = Addon.db.profile.Audio
-    local sameItem = SameItem(clip, nextClip)
+    local sameItem = clip.continues or SameItem(clip, nextClip)
     local gap = (clip.source.interClipGap or 0) + (sameItem and 0 or audio.LineGap or 0)
     if gap <= 0 then
         Finish()
@@ -449,6 +452,38 @@ local function AfterSpoken(clip)
             clip.nextSoundTimer = Addon:ScheduleTimer(Finish, gap / 2)
         end, gap / 2)
     end
+end
+
+-- The client can stop our voice unannounced (alt-tab without Sound in Background, a cinematic),
+-- leaving the timer and bar to run on in silence, so a voice gone early is stopped as Stop does.
+-- The margin keeps a voice slightly shorter than its recorded length from reading as a cut.
+local CUT_POLL, CUT_MARGIN = 0.5, 0.5
+
+local function StopWatching(clip)
+    if clip.cutWatch then
+        Addon:CancelTimer(clip.cutWatch)
+        clip.cutWatch = nil
+    end
+end
+
+local function WatchForCut(clip)
+    StopWatching(clip)
+    if not (C_Sound and C_Sound.IsPlaying) or type(clip.handle) ~= "number" then
+        return
+    end
+    local handle = clip.handle
+    clip.cutWatch = Addon:ScheduleRepeatingTimer(function()
+        if not SoundQueue:IsPlaying(clip) or GetTime() >= clip.spokenAt - CUT_MARGIN then
+            StopWatching(clip)
+            return
+        end
+        local ok, playing = pcall(C_Sound.IsPlaying, handle)
+        if ok and playing == false then
+            StopWatching(clip)
+            if Developer then Developer:Log("player", "voice cut by the client, line stopped") end
+            SoundQueue:PauseQueue()
+        end
+    end, CUT_POLL)
 end
 
 ---@param clip SpokenClip
@@ -477,9 +512,22 @@ function SoundQueue:PlaySound(clip)
     clip.nextSoundTimer = Addon:ScheduleTimer(function()
         AfterSpoken(clip)
     end, (clip.delay or 0) + clip.length)
+    WatchForCut(clip)
 end
 
 --- Seconds of `clip`'s voice heard so far: 0 before it starts, its length once it has ended.
+--- How far through `clip` is, 0 to 1, `elapsed` seconds into its voice: through the whole item
+--- where the clip is one part of it (clip.span, a book read as one line), else through itself.
+function SoundQueue:Share(clip, elapsed)
+    local length = tonumber(clip and clip.length) or 0
+    if length <= 0 then return 0 end
+    elapsed = math.max(0, math.min(length, elapsed or 0))
+    local span = clip.span
+    local share = span and span.total and span.total > 0 and (span.before + elapsed) / span.total
+        or elapsed / length
+    return math.max(0, math.min(1, share))
+end
+
 function SoundQueue:VoiceElapsed(clip)
     local length = tonumber(clip.length) or 0
     return math.max(0, math.min(length, length - (clip.spokenAt - GetTime())))

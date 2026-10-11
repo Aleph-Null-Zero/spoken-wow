@@ -361,7 +361,7 @@ endif
 # silent in game.
 QUESTS_CLI = cd $(QUESTS_DIR) && DATABASE_URL="$(or $(DATABASE_URL),$(LOCAL_DB))" $(abspath $(PYTHON)) cli-main.py
 
-import-corpus: ## corpus/corpus.json.gz -> quest_line (needs DATABASE_URL and psycopg2)
+import-corpus: ## DANGEROUS: seed an EMPTY database from corpus/corpus.json.gz, once (refuses a filled one)
 	@$(QUESTS_CLI) import-corpus
 
 # A translation goes from the world database straight into Postgres: it has no committed file

@@ -65,6 +65,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/other_sounds_test.lua
 	@$(LUA) tests/lua/parts_test.lua
 	@$(LUA) tests/lua/settings_ux_test.lua
+	@$(LUA) tests/lua/settings_legacy_test.lua
 	@$(LUA) tests/lua/settings_art_test.lua
 	@for lang in enUS deDE esES frFR ptBR ruRU koKR zhCN zhTW; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
 	@$(LUA) tests/lua/settings_audit_test.lua
@@ -113,6 +114,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/books_reader_test.lua
 	@$(LUA) tests/lua/books_playlist_test.lua
 	@$(LUA) tests/lua/books_events_test.lua
+	@$(LUA) tests/lua/books_close_test.lua
 	@$(LUA) tests/lua/books_contribute_test.lua
 	@$(LUA) tests/lua/books_readables_test.lua
 	@$(LUA) tests/lua/books_language_test.lua

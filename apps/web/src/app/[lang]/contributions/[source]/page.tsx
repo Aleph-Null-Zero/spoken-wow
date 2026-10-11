@@ -8,7 +8,7 @@ import ContributionTable, { type ContributionRow } from "@/components/Contributi
 import ContributionsTabs from "@/components/ContributionsTabs";
 import { auth } from "@/lib/auth";
 import { bookFacets, catalogue, pageById } from "@/lib/books/catalogue";
-import { clientOf, isClientFamily } from "@/lib/contributions/client";
+import { clientFilterOf, clientOf, matchesClient } from "@/lib/contributions/client";
 import { corpusLookup } from "@/lib/contributions/existing";
 import { lineStates, tabOf } from "@/lib/contributions/known";
 import { isStatus, type ContributionStatus } from "@/lib/contributions/contributions";
@@ -42,11 +42,11 @@ import {
   type BookMatch,
   type NpcSummary,
 } from "@/lib/contributions/triage";
-import { facets } from "@/lib/facets";
 import { observedFrom, resolveNpc } from "@/lib/npc/resolve";
 import { getResolutions, getResolutionsById, resolutionKey, type NpcKind } from "@/lib/npc/store";
 import { BASE_LANG, isClientLang, isLang, langName, type Lang } from "@/lib/lang";
-import { can } from "@/lib/permissions";
+import { loadRoster } from "@/lib/voices/roster-store";
+import { can, isAdmin } from "@/lib/permissions";
 import { lineByPath } from "@/lib/zones/catalogue";
 import { Contained, Wide } from "@/components/Width";
 
@@ -238,7 +238,6 @@ export default async function Page({
             lang={lang}
             section={source}
             view="contributions"
-            showNpcs={can(viewer, "regenerate", BASE_LANG)}
           />
         </Contained>
       </main>
@@ -262,8 +261,8 @@ export default async function Page({
   const bucket: Bucket = namesSpeaker(source) && isBucket(rawBucket) ? rawBucket : "ready";
 
   // Which game the text came from, read off `build` (lib/contributions/client.ts). Defaults to
-  // the Forever beta, the client nearly all of this queue comes from; "all" has to be asked for.
-  const client: ClientFilter = isClientFamily(rawClient) ? rawClient : rawClient === "all" ? "all" : "forever";
+  // Era and Forever: every other client is the low-effort bin, shown only on request.
+  const client: ClientFilter = clientFilterOf(rawClient);
 
   // Which quest panel the text was read off -- accept, progress or complete -- or gossip.
   const stage: StageFilter = source === "quests" && isStageFilter(rawStage) ? rawStage : "all";
@@ -287,15 +286,16 @@ export default async function Page({
   const npcs = await npcFor(contributions);
 
   const filtered = contributions
-    .filter((row) => client === "all" || clientOf(row.build).family === client)
+    .filter((row) => matchesClient(clientOf(row.build).family, client))
     .filter((row) => matchesStage(questFor(row), stage))
     .filter((row) => matchesSearch({ text: row.text, npc: npcs[row.id], quest: questFor(row) }, q, searchIn));
 
   // Counted after the other filters, so each tab's count matches what it shows.
   const hasSpeaker = await momentHasSpeaker(filtered);
+  const roster = await loadRoster();
   const bucketCounts: Record<Bucket, number> = { ready: 0, blocked: 0 };
   const matching = filtered.filter((row) => {
-    const own = bucketOf({ ...row, quest: questFor(row), hasSpeaker: hasSpeaker.has(row.id) }, npcs[row.id] ?? null);
+    const own = bucketOf({ ...row, quest: questFor(row), hasSpeaker: hasSpeaker.has(row.id) }, npcs[row.id] ?? null, roster);
     bucketCounts[own]++;
     return status !== "new" || own === bucket;
   });
@@ -342,7 +342,6 @@ export default async function Page({
     place: placeOf(row),
   }));
 
-  const facetValues = await facets();
 
   return (
     <main className="pt-6 pb-24">
@@ -359,7 +358,6 @@ export default async function Page({
           lang={lang}
           section={source}
           view="contributions"
-          showNpcs={can(viewer, "regenerate", BASE_LANG)}
         />
         <ContributionTable
           initial={rows}
@@ -379,11 +377,11 @@ export default async function Page({
           searchIn={searchIn}
           existing={existing}
           books={books}
-          flavorScopes={facetValues.flavorScopes}
+          roster={roster.data}
           // What api/contributions/npc asks, so the speaker controls are offered only to
-          // somebody it will answer. An NPC's race and gender decide its voice in every
-          // language, so that stays narrower than triaging this language's text.
-          canAnswerNpc={can(viewer, "regenerate", lang)}
+          // somebody it will answer. Who an NPC is decides its voice in every language, so it
+          // is the global admin's alone; everyone else sees where it stands.
+          canAnswerNpc={isAdmin(session.user.role)}
         />
       </Wide>
     </main>

@@ -321,7 +321,8 @@ function Minimap:Setup()
             tooltip:SetText("Spoken")
             local head = SoundQueue:GetCurrentSound()
             if head and head.present then
-                tooltip:AddLine(head.present.header or "", 1, 0.82, 0)
+                -- Nothing is over the world's own story, and an empty line would show.
+                if head.present.header then tooltip:AddLine(head.present.header, 1, 0.82, 0) end
                 tooltip:AddLine(head.present.label or "", 0.8, 0.8, 0.8)
             end
             tooltip:AddLine(" ")
