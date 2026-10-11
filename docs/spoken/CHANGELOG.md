@@ -2,6 +2,12 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## 3.3.1 — 2026-10-11
+
+- **Fixed: contributing a quest started from an item in your bags sent no item.** The
+  contribution now names the item, so its quest can be voiced without someone looking the item
+  up by hand.
+
 ## 3.3.0 — 2026-10-11
 
 - **Each quest giver is heard in its own voice.** A quest several NPCs give is recorded once per
