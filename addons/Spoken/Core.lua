@@ -26,9 +26,11 @@ Defaults = {
             -- "subtitle", "minimal" (Small Window), "classic" (Large Window), "dialogueui" or
             -- "none" (the voice alone). Legacy clients start in the window they always had.
             Style = Version.IsAnyLegacy and "classic" or "subtitle",
-            -- Forever only: the bronze its own frames wear, on the minimal player's metal.
+            -- The windows' metal in the bronze the Forever client's frames wear.
             BronzeTint = true,
             MinimalWidth = 380,
+            -- The small window's background: "parchment" or "dark" (the rock).
+            MinimalBackground = "parchment",
             -- Per action id, for the ones an addon declared optional. Absent means shown.
             HiddenActions = {},
             DialogueUI = {
@@ -45,6 +47,8 @@ Defaults = {
         -- Unset, each module keeps the choice it had before there was one setting for all.
         Language = {},
         Audio = {
+            -- A string, because that is what PlaySoundFile takes.
+            SoundChannel = "Master",
             -- Seconds of quiet between one line and the next, on top of each module's own short
             -- gap: back to back, a new line started before the last had settled.
             LineGap = 1,
@@ -101,6 +105,8 @@ Defaults = {
             TypewriterBy = "letter",
             SubtitleShadow = 0.6,
             SubtitleProgress = true,
+            SubtitleName = true,
+            SubtitleScroll = "page",
             SubtitleScale = 1,
             -- How many sentences the subtitle shows at once, 1 to 4; longer text turns pages.
             SubtitleSentences = 3,
@@ -166,8 +172,8 @@ function Addon:InitDB()
 end
 
 --- Put the profile's settings into effect: the window or subtitles, the captions, the minimap
---- button, the other sounds' levels and the settings page. Each only where it is loaded on this
---- client, and only once Enable has built them.
+--- button, the other sounds' levels, the feature addons' Report and Contribute buttons and the
+--- settings page. Each only where it is loaded on this client, and only once Enable has built them.
 function Addon:ApplyProfile()
     if not self.enabled then return end
     if PlayerFrame and PlayerFrame.RefreshConfig then PlayerFrame:RefreshConfig() end
@@ -179,6 +185,9 @@ function Addon:ApplyProfile()
     -- Which modules are on is the profile's too: each puts its buttons back or takes them off,
     -- and what one now off had queued goes, as switching it off on Spoken's page does.
     for key in Sources:Iterate() do Sources:Apply(key) end
+    -- The addons that draw their own Report and Contribute buttons redraw only when told.
+    Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+    Callbacks:Fire("CONTRIBUTE_SETTINGS_CHANGED")
     if Options and Options.UpdateRows then Options:UpdateRows() end
 end
 
@@ -187,6 +196,32 @@ end
 --- updating while the UI is torn down after that; before InitDB there is no profile at all.
 function Addon:Profile(section)
     return self.db and self.db.profile[section] or Defaults.profile[section]
+end
+
+--- Draws a clip's text in its `present.font`, for a script the game's font has no glyphs for
+--- (Czech on a Western client), and any other clip's in the font string's own face. The size
+--- and flags stay the player's.
+function Addon:ClipFont(fontString, clip)
+    local face, size, flags = fontString:GetFont()
+    if not face then return end
+    -- Anything but the face this set last is the player's own (a skin, a resize), so it is
+    -- the one to go back to.
+    if face ~= fontString.spokenClipFace then fontString.spokenOwnFace = face end
+    local want = clip and clip.present and clip.present.font or fontString.spokenOwnFace
+    -- Asked for last time and still on: done, also when that face failed and the player's
+    -- own stands in, rather than trying it again on every update.
+    if face == fontString.spokenClipFace and want == fontString.spokenClipWant then return end
+    local asked = want
+    -- A face the client cannot load: current clients answer false, older ones nil or nothing, so
+    -- the face it reports afterwards is asked too. Back to the player's own rather than a
+    -- string with no font.
+    if want ~= face and (fontString:SetFont(want, size, flags or "") == false or not fontString:GetFont()) then
+        want = fontString.spokenOwnFace
+        fontString:SetFont(want, size, flags or "")
+    end
+    -- The face as the client reports it, since that is what the next call reads back, and the
+    -- client need not spell a path the way it was given.
+    fontString.spokenClipWant, fontString.spokenClipFace = asked, fontString:GetFont() or want
 end
 
 --- Where each player window sits, how wide it is, and whether the captions are expanded.
@@ -226,12 +261,23 @@ function Addon:IsFrameLocked()
     return self:Profile("Frame").LockFrame
 end
 
+function Addon:Bronze()
+    return self:Profile("Frame").BronzeTint ~= false
+end
+
 --- Put a player frame on the host, or back on UIParent, since a host that hides UIParent
 --- (DialogueUI) would hide the player too. The anchor stays on UIParent and the scale keeps
 --- the effective scale, so the frame keeps its exact place on screen. spokenBaseScale /
 --- spokenBaseStrata give a frame's own scale and strata (the subtitles).
 function Addon:ApplyHost(frame)
     if not frame then return end
+    -- A window drawn as one image must not move while it fades: it moves once it is itself again.
+    if frame.spokenFrozen then
+        frame.spokenHostPending = true
+        -- Hidden with the host it leaves, it never ticks to its fade's end: ended now, unseen.
+        if frame.spokenEndFade and not frame:IsVisible() then frame.spokenEndFade() end
+        return
+    end
     local host, cfg = self.playerHost, self:Profile("Frame")
     local base = frame.spokenBaseScale or cfg.FrameScale
     if host then

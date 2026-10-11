@@ -54,11 +54,13 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/gossip_frequency_test.lua
 	@$(LUA) tests/lua/quest_overlay_test.lua
 	@$(LUA) tests/lua/quest_followup_test.lua
+	@$(LUA) tests/lua/quest_abandon_test.lua
 	@$(LUA) tests/lua/easter_egg_test.lua
 	@$(LUA) tests/lua/sound_utils_test.lua
 	@$(LUA) tests/lua/other_sounds_test.lua
 	@$(LUA) tests/lua/parts_test.lua
 	@$(LUA) tests/lua/settings_ux_test.lua
+	@$(LUA) tests/lua/settings_legacy_test.lua
 	@$(LUA) tests/lua/settings_art_test.lua
 	@for lang in enUS deDE esES frFR ptBR ruRU koKR zhCN zhTW; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
 	@$(LUA) tests/lua/settings_audit_test.lua
@@ -75,15 +77,18 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/quests_contribute_test.lua
 	@$(LUA) tests/lua/player_frame_test.lua
 	@$(LUA) tests/lua/player_dialogueui_style_test.lua
+	@$(LUA) tests/lua/minimal_window_test.lua
 	@$(LUA) tests/captions/verify.lua
 	@$(LUA) tests/lua/zones_source_test.lua
 	@$(LUA) tests/lua/zones_flight_test.lua
+	@$(LUA) tests/lua/zones_greeting_test.lua
 	@$(LUA) tests/lua/zones_pending_test.lua
 	@$(LUA) tests/lua/quests_source_test.lua
 	@$(LUA) tests/lua/quest_npc_silence_test.lua
 	@$(LUA) tests/lua/quest_greeting_first_test.lua
 	@$(LUA) tests/lua/data_modules_test.lua
 	@$(LUA) tests/lua/quests_language_test.lua
+	@$(LUA) tests/lua/quest_voice_files_test.lua
 	@$(LUA) tests/lua/player_required_test.lua
 	@$(LUA) tests/lua/duplicate_player_test.lua
 	@$(LUA) tests/lua/zones_options_test.lua
@@ -105,7 +110,9 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/books_options_test.lua
 	@$(LUA) tests/lua/books_reader_test.lua
 	@$(LUA) tests/lua/books_playlist_test.lua
+	@$(LUA) tests/lua/books_dialogueui_test.lua
 	@$(LUA) tests/lua/books_events_test.lua
+	@$(LUA) tests/lua/books_close_test.lua
 	@$(LUA) tests/lua/books_contribute_test.lua
 	@$(LUA) tests/lua/books_readables_test.lua
 	@$(LUA) tests/lua/books_language_test.lua

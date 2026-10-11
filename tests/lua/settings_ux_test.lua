@@ -38,7 +38,8 @@ end
 
 ---------------------------------------------------------------- hidden when another way is chosen
 -- A setting for another way of showing lines is hidden, and the page closes up round it.
-local function Shown(control) return control.layoutRow.shown end
+-- nil for a row the page does not have, so a missing one fails rather than aborting.
+local function Shown(control) return control and control.layoutRow.shown end
 local function Box(text)
     for _, box in ipairs(home.boxes) do if box.section.text == text then return box end end
 end
@@ -46,15 +47,37 @@ env.Addon:SetPlayerStyle("subtitle"); Options:UpdateRows()
 local size = Row(home, "Window Size")
 local typing = Row(home, "Subtitle Size")
 Expect("a window setting is hidden once subtitles replace the window", Shown(size), false)
-Expect("...and so is its section, with nothing left in it", Box(L.OPT_WINDOW_TITLE).shown, false)
+Expect("...its part, Size and Position, kept: every style has the same three", Box(L.OPT_PLACE_TITLE).shown
+    and Box(L.OPT_LOOK_TITLE).shown and Box(L.OPT_TEXT_TITLE).shown, true)
 Expect("the subtitle settings appear with subtitles chosen", Shown(typing), true)
 local subtitlesTop = typing.layoutY
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 Expect("choosing the window brings its settings back", Shown(size), true)
 Expect("...and hides the subtitles'", Shown(typing), false)
-Expect("the rows below move up into the space", Row(home, "Silence NPC Voices").layoutY > -100000, true)
+Expect("the rows below move up into the space", Row(home, "Volume Follows").layoutY > -100000, true)
 env.Addon:SetPlayerStyle("subtitle"); Options:UpdateRows()
 Expect("...and back down when subtitles return", typing.layoutY, subtitlesTop)
+local lit = Row(home, "Highlight Words")
+local words = env.Addon.db.profile.Transcript
+words.Typewriter = true; Options:UpdateRows()
+Expect("subtitles have Highlight Words, waiting while their words are typed out", tostring(Shown(lit)) .. " "
+    .. tostring(lit.layoutReason), "true " .. tostring(L.REASON_UNTYPED))
+words.Typewriter = false; Options:UpdateRows()
+Expect("...and live with them shown whole", lit.layoutReason, nil)
+words.Typewriter = true; Options:UpdateRows()
+local function ByTip(tip)
+    for _, entry in ipairs(home.entries) do if entry.tooltip == tip then return entry.frame end end
+end
+local scroll, sentences, linesRow = ByTip(L.OPT_SUBTITLE_SCROLL_TIP), Row(home, "Sentences at Once"), Row(home, "Lines Shown")
+words.SubtitleScroll = "page"; Options:UpdateRows()
+Expect("subtitles have their own Auto-Scroll, by pages showing Sentences at Once",
+    tostring(Shown(scroll)) .. " " .. tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)), "true true false")
+words.SubtitleScroll = "line"; Options:UpdateRows()
+Expect("...and line by line, Lines Shown in its place", tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)),
+    "false true")
+words.SubtitleScroll = "page"; Options:UpdateRows()
+Expect("subtitles have Text Size and Hide Portrait, as the windows do",
+    tostring(Shown(Row(home, "Text Size"))) .. " " .. tostring(Shown(Row(home, "Hide Portrait"))), "true true")
 
 ---------------------------------------------------------------- greyed out, and why
 -- A setting waiting on a switch beside it stays, greyed, saying which switch.
@@ -72,8 +95,33 @@ local music = Row(home, "Music")
 env.Addon.db.profile.Audio.LowerOthers.Enabled = false; Options:UpdateRows()
 Expect("the music level waits for its switch", music.layoutReason, L.REASON_LOWER)
 env.Addon.db.profile.Audio.LowerOthers.Enabled = true
-Options:UpdateRows()
-Expect("...and is offered with it on", music.layoutReason, nil)
+env.Addon.db.profile.Audio.SoundChannel = "Music"; Options:UpdateRows()
+Expect("...and is never offered while the voices play through music", music.layoutReason, L.REASON_VOICE_CHANNEL)
+env.Addon.db.profile.Audio.SoundChannel = "Master"; Options:UpdateRows()
+Expect("...but is with them on Master", music.layoutReason, nil)
+
+-- Any channel may be chosen; on Dialog a warning under it says what stops working.
+local function WarningShown()
+    for _, item in ipairs(home.items) do
+        for _, row in ipairs(item.rows or {}) do
+            if row.control.GetText and row.control:GetText() == L.OPT_CHANNEL_DIALOG_WARN then return row.shown == true end
+        end
+    end
+    return false
+end
+Expect("no warning on Master", WarningShown(), false)
+env.Addon.db.profile.Audio.SoundChannel = "Dialog"; Options:UpdateRows()
+Expect("Dialog can be chosen, with a warning under it", WarningShown(), true)
+env.Addon.db.profile.Audio.SoundChannel = "Master"; Options:UpdateRows()
+Expect("...which goes with Master again", WarningShown(), false)
+
+-- On Dialog, Silence NPC Voices would silence Spoken's voices too, so the queue never mutes it.
+local silence = Row(home, "Silence NPC Voices")
+Expect("Silence NPC Voices is offered on Master", silence.layoutReason, nil)
+env.Addon.db.profile.Audio.SoundChannel = "Dialog"; Options:UpdateRows()
+Expect("...and greyed on Dialog, saying why", silence.layoutReason, L.REASON_DIALOG_CHANNEL)
+env.Addon.db.profile.Audio.SoundChannel = "Master"; Options:UpdateRows()
+Expect("...and offered again on Master", silence.layoutReason, nil)
 
 ---------------------------------------------------------------- voice only
 -- Nothing on screen is a way of showing lines like the other three, not a switch apart.
@@ -86,6 +134,90 @@ Expect("...nor shows words to type out", Shown(Row(home, "Type Words Out")), fal
 Expect("...nor leaves anything to lock in place", Shown(Row(home, "Lock Position")), false)
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 Expect("choosing a window shows it again", env.Addon:PlayerStyle(), "minimal")
+
+---------------------------------------------------------------- each style's rows
+-- Rows by their label, notes by what they say. No addon here declares an optional button before
+-- the page is built, so no Hide ... Button row.
+local function StyleRows()
+    local names, inGroup, byFrame = {}, false, {}
+    for _, entry in ipairs(home.entries) do byFrame[entry.frame] = entry end
+    for _, item in ipairs(home.items) do
+        if item.kind == "group" then
+            inGroup = item.text == L.OPT_NARRATOR_SETTINGS
+        elseif item.kind == "groupEnd" then
+            inGroup = false
+        elseif inGroup and item.rows then
+            for _, row in ipairs(item.rows) do
+                if row.shown then
+                    local entry = byFrame[row.control]
+                    local name = entry and entry.label or row.control.text
+                    if entry and entry.tooltip == L.OPT_SUBTITLE_SCROLL_TIP then name = name .. " (subtitles)" end
+                    if row.control.text == L.DUI_WHEEL_HINT then name = "wheel note" end
+                    table.insert(names, name)
+                end
+            end
+        end
+    end
+    return table.concat(names, ", ")
+end
+do
+    local words = env.Addon.db.profile.Transcript
+    local saved = { words.Enabled, words.Typewriter, words.SubtitleScroll }
+    words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
+    local ROWS = {
+        minimal = "Window Size, Lock Position, Reset Positions, Background, Show Progress, Hide Portrait, "
+            .. "Show Words, Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By",
+        -- The large window's words fill the box, so no Lines Shown.
+        classic = "Window Size, Lock Position, Reset Positions, Show Progress, Hide Portrait, Show Words, "
+            .. "Text Size, Auto-Scroll, Highlight Words, Type Words Out, Type By",
+        subtitle = "Subtitle Size, Lock Position, Reset Positions, Background Darkness, Show Name and Title, Show Progress, "
+            .. "Hide Portrait, Show Words, Text Size, Sentences at Once, Auto-Scroll (subtitles), "
+            .. "Highlight Words, Type Words Out, Type By",
+        none = "",
+    }
+    for _, style in ipairs({ "minimal", "classic", "subtitle", "none" }) do
+        env.Addon:SetPlayerStyle(style); Options:UpdateRows()
+        Expect("the " .. style .. " style shows the rows it reads", StyleRows(), ROWS[style])
+    end
+    local Theme, playerStyle, chosen = env.DialogueUITheme, env.Addon.PlayerStyle, "dialogueui"
+    local available = Theme.Available
+    Theme.Available = function() return true end
+    env.Addon.PlayerStyle = function() return chosen end
+    Options:UpdateRows()
+    Expect("the dialogueui style shows the rows it reads", StyleRows(),
+        "Window Size, Lock Position, Reset Positions, wheel note, Follow DialogueUI's Theme, Theme, "
+        .. "Show Progress, Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
+        .. "Highlight Words, Type Words Out, Type By")
+    chosen = "none"; Options:UpdateRows()
+    Expect("voice only, with DialogueUI, shows no words' rows: nothing of Spoken's is on screen", StyleRows(), "")
+    Theme.Available, env.Addon.PlayerStyle = available, playerStyle
+    words.Enabled, words.Typewriter, words.SubtitleScroll = saved[1], saved[2], saved[3]
+    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+end
+
+-- Bronze Border matches Forever's own frames, so a Classic Era client has no row for it. On Forever
+-- it sits outside the narrator style's settings, since it colours every frame Spoken draws.
+do
+    local function Placed()
+        local inGroup, section, found = false, nil, nil
+        for _, item in ipairs(home.items) do
+            if item.kind == "group" then inGroup = item.text == L.OPT_NARRATOR_SETTINGS
+            elseif item.kind == "groupEnd" then inGroup = false
+            elseif item.rows then
+                if item.kind == "section" then section = item.text end
+                for _, row in ipairs(item.rows) do
+                    if row.control == Row(home, L.OPT_BRONZE_TINT) then found = { inGroup, section, row.shown } end
+                end
+            end
+        end
+        return found and (tostring(found[1]) .. " " .. tostring(found[2]) .. " " .. tostring(found[3])) or "missing"
+    end
+    for _, style in ipairs({ "minimal", "none" }) do
+        env.Addon:SetPlayerStyle(style); Options:UpdateRows()
+        Expect("no Bronze Border row on Classic Era, with " .. style, Placed(), "missing")
+    end
+    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+end
 
 ---------------------------------------------------------------- keys
 local bindings = assert(io.open(SPOKEN .. "Bindings.xml")):read("*a")
@@ -127,9 +259,10 @@ do
     Expect("...one not installed has a Download button in place of its version",
         horde.layoutGet and horde.layoutButton.text, "Download")
 end
-_G.Spoken:SetPartOn("quests", false); Options:UpdateRows(); quests:Refresh()
+-- Switched from Spoken's page while the Quests page is hidden: the page is drawn again for it.
+_G.Spoken:SetPartOn("quests", false)
 local autoplay = Row(quests, VO.L.OPT_PANEL_AUTOPLAY)
-Expect("switching Quests off greys out its page", autoplay.layoutReason, VO.L.REASON_PART_OFF)
+Expect("switching Quests off from Spoken's page greys out its page at once", autoplay.layoutReason, VO.L.REASON_PART_OFF)
 Expect("...a checkbox's label in the game's grey with its box", autoplay.alpha < 1 and autoplay.text.layoutGreyed, true)
 Expect("...the titles of its groups with it", Group(quests, VO.L.OPT_SECTION_DIALOGUE).greyed, true)
 Expect("...and everything else on it: fixing a problem", Row(quests, VO.L.OPT_PRINT_DIAG).layoutReason, VO.L.REASON_PART_OFF)
@@ -402,6 +535,17 @@ do
     registered.OnProfileChanged("OnProfileChanged", env.Addon.db, "Other")
     Expect("...and every module, a module the profile has off told it is off", told[quests], false)
     env.Addon.db.profile.Parts[quests] = nil
+    -- Hide Report Buttons and Hide Contribute Buttons are the profile's too, and the addons
+    -- that draw those buttons redraw only when told.
+    local heard = { REPORT_SETTINGS_CHANGED = 0, CONTRIBUTE_SETTINGS_CHANGED = 0 }
+    local handles = {}
+    for event in pairs(heard) do
+        handles[event] = _G.Spoken:RegisterCallback(event, function() heard[event] = heard[event] + 1 end)
+    end
+    registered.OnProfileChanged("OnProfileChanged", env.Addon.db, "Other")
+    Expect("...and the addons' Report and Contribute buttons, told to ask again",
+        heard.REPORT_SETTINGS_CHANGED .. "," .. heard.CONTRIBUTE_SETTINGS_CHANGED, "1,1")
+    for _, handle in pairs(handles) do _G.Spoken:UnregisterCallback(handle) end
     for _, restore in ipairs(undo) do restore() end
     env.Addon.db = keep
     Options:UpdateRows()

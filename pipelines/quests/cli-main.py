@@ -4,11 +4,12 @@ Audio is not made here: every take is cut by the site and archived there. What i
 the corpus, and building a pack from audio/ once `make quests-sounds` has assembled it:
 
     init-db       download and import the vmangos dump      maintainer, rare
-    extract       world DB -> corpus/corpus.json.gz         maintainer, rare
-    import-corpus corpus/corpus.json.gz -> Postgres         after an extract
-    export-corpus Postgres -> corpus/corpus.json.gz         before a build
+    extract       world DB -> Postgres                      maintainer, rare
+    import-corpus corpus/corpus.json.gz -> Postgres         DANGEROUS: once, into an empty database
+    export-corpus Postgres -> corpus/corpus.json.gz         before a build; its only writer
     export-locale-text  Postgres -> one language's gossip text   before its Gossip pack
     export-giver-names  Postgres -> the addon's translated quest-giver names   after import-locale
+    export-gossip-text  Postgres -> the addon's gossip text per client locale, and aliases
     build         corpus + audio/ -> dist/<module>          per release
     install       dist/<module> -> WoW AddOns               per release
 """
@@ -19,6 +20,7 @@ from tts_cli.build import (DEFAULT_ADDONS_DIR, DEFAULT_DIST_DIR,
 from tts_cli.corpus import DEFAULT_CORPUS_PATH, load_corpus
 from tts_cli.factions import (DEFAULT_FACTIONS_PATH, PACKS, load_sides, pack_stems,
                               pack_title)
+from tts_cli.gossip_text import DEFAULT_ALIASES_PATH, load_aliases
 from tts_cli.ignores import DEFAULT_IGNORED_PATH, load_ignored
 from tts_cli.locale_text import load_locale_text
 from tts_cli.store import DEFAULT_STORE_DIR
@@ -34,12 +36,16 @@ subparsers.add_parser(
     help="Download the vmangos dump and import it. Needed only before 'extract'.")
 subparsers.add_parser(
     "extract",
-    help="Query the world DB and write the committed corpus. The only stage needing MySQL.") \
-    .add_argument("--out", default=DEFAULT_CORPUS_PATH)
-subparsers.add_parser(
+    help="Query the world DB into Postgres; export-corpus then writes the file. Needs MySQL "
+         "and DATABASE_URL.")
+imp = subparsers.add_parser(
     "import-corpus",
-    help="corpus.json.gz -> Postgres. Needed by a maintainer, not to produce audio.") \
-    .add_argument("--corpus", default=DEFAULT_CORPUS_PATH)
+    help="DANGEROUS. corpus.json.gz -> Postgres, once, to seed an empty database. Refuses a "
+         "database that already holds the corpus.")
+imp.add_argument("--corpus", default=DEFAULT_CORPUS_PATH)
+imp.add_argument("--force", action="store_true",
+                 help="Import into a filled database anyway, putting back the file's text and "
+                      "speakers. Only to rebuild a database on purpose.")
 loc = subparsers.add_parser(
     "import-locale",
     help="The world DB's *_locN text for one language -> Postgres. Needs MySQL and DATABASE_URL.")
@@ -70,6 +76,13 @@ gvn = subparsers.add_parser(
 gvn.add_argument("--corpus", default=DEFAULT_CORPUS_PATH)
 gvn.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Quests/Locale/Names")
 
+gst = subparsers.add_parser(
+    "export-gossip-text",
+    help="Every client locale's gossip text and the moments' aliases -> the addon's Gossip/.")
+gst.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Quests/Gossip")
+gst.add_argument("--aliases", default=DEFAULT_ALIASES_PATH,
+                 help="Where the pack build reads the aliases from")
+
 bld = subparsers.add_parser(
     "build",
     help="Assemble the addon data module from the corpus and audio/ (make quests-sounds).")
@@ -82,6 +95,7 @@ bld.add_argument("--ignored", default=DEFAULT_IGNORED_PATH)
 bld.add_argument("--pack", default="all", choices=PACKS,
                  help="which slice of the audio to ship (default: all)")
 bld.add_argument("--factions", default=DEFAULT_FACTIONS_PATH)
+bld.add_argument("--aliases", default=DEFAULT_ALIASES_PATH)
 bld.add_argument("--module-title", default=None,
                  help="TOC title; defaults to one naming the pack")
 bld.add_argument("--language", default=None,
@@ -110,16 +124,21 @@ if args.mode == "init-db":
 
 elif args.mode == "extract":
     from tts_cli.corpus import extract
-    corpus = extract(args.out)
-    print(f"Wrote {corpus['lineCount']} lines "
-          f"and spawns for {len(corpus['spawns'])} NPCs to {args.out}")
+    from tts_cli.corpus_db import import_corpus_data
+    corpus = extract()
+    print(f"Extracted {corpus['lineCount']} lines and spawns for {len(corpus['spawns'])} NPCs")
+    import_corpus_data(corpus)
+    print("Now write the committed file from the database: make quests-export-corpus")
 
 elif args.mode == "import-corpus":
     # Imported here rather than at the top, the way extract is: psycopg2 is in
     # requirements-extract.txt, and the everyday path deliberately installs no database
     # client at all.
-    from tts_cli.corpus_db import import_corpus
-    import_corpus(args.corpus)
+    from tts_cli.corpus_db import DatabaseNotEmpty, import_corpus
+    try:
+        import_corpus(args.corpus, force=args.force)
+    except DatabaseNotEmpty as refused:
+        raise SystemExit(f"refused: {refused}")
 
 elif args.mode == "import-locale":
     # Imported here, the way import-corpus is: it needs PyMySQL, pandas and psycopg2, none
@@ -150,6 +169,10 @@ elif args.mode == "export-giver-names":
     from tts_cli.corpus_db import export_giver_names
     export_giver_names(args.corpus, args.out_dir)
 
+elif args.mode == "export-gossip-text":
+    from tts_cli.corpus_db import export_gossip_text
+    export_gossip_text(args.out_dir, args.aliases)
+
 elif args.mode == "build":
     locale_text = None
     if args.locale_text:
@@ -165,11 +188,14 @@ elif args.mode == "build":
         if not locale_text:
             print(f"warning: no {lang} gossip lines with client text; on a {lang} client "
                   "gossip will be matched against the English text")
-    corpus = load_corpus(args.corpus)
+    from tts_cli.store import stored_files
+    from tts_cli.voice_files import stored_stems, with_voice_files
+    # Each NPC in its own voice's file, wherever the store has that file's audio.
+    corpus = with_voice_files(load_corpus(args.corpus), stored_stems(stored_files(args.store)))
     # None for the whole store rather than the 'all' stem set, so a store file the corpus
     # cannot address still ships in the complete pack the way it always has.
     include = None if args.pack == "all" else \
-        pack_stems(corpus, load_sides(args.factions), args.pack)
+        pack_stems(corpus, load_sides(args.factions), args.pack, load_aliases(args.aliases))
     report = build_module(corpus, args.store, args.dist,
                           args.module, args.version, progress=True,
                           ignored=load_ignored(args.ignored), include=include,

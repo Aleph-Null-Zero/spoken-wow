@@ -13,7 +13,7 @@ import Player from "./Player";
 import IgnoreDialog from "./IgnoreDialog";
 import ReportDialog from "./ReportDialog";
 import OverrideDialog from "./OverrideDialog";
-import RegenerateDialog from "./RegenerateDialog";
+import RegenerateDialog, { type PendingBatch } from "./RegenerateDialog";
 import RegenerationPanel from "./RegenerationPanel";
 import SearchBar from "./SearchBar";
 import { Contained, Wide } from "./Width";
@@ -23,6 +23,7 @@ import { audioStateFromParams } from "@/lib/audio-state";
 import { useSession } from "@/lib/auth-client";
 import RecordingDropZone from "@/components/RecordingDropZone";
 import { RECORDED, type Recorded } from "@/lib/recordings/live";
+import { BROADCAST_STATUSES } from "@/lib/broadcast/status";
 import type { Facets } from "@/lib/facets";
 import type { Kind } from "@/lib/line-fields";
 import { NARRATOR_VOICE } from "@/lib/generation/narration";
@@ -34,11 +35,10 @@ import {
   queueBatch,
   regenerate,
   stopQueue,
-  type BatchJob,
   type GenerationStatusResponse,
   type QueueSnapshot,
 } from "@/lib/generation/client";
-import { estimate as estimateBatch, LIST_RATE, type Estimate } from "@/lib/generation/billing";
+import { estimate as estimateBatch, LIST_RATE } from "@/lib/generation/billing";
 import { useClearDirty } from "@/lib/generation/use-clear-dirty";
 import { useCan } from "@/components/useCan";
 import { canConfigureGeneration } from "@/lib/permissions";
@@ -85,7 +85,26 @@ function filterParams(filters: LineFilters): URLSearchParams {
   if (filters.model) params.set("model", filters.model);
   if (filters.author) params.set("author", filters.author);
   if (filters.recorded) params.set("rec", filters.recorded);
+  if (filters.broadcast) params.set("bt", filters.broadcast);
   return params;
+}
+
+/**
+ * How many rows each row's speaker cells span: adjacent rows of one line and speaker are its
+ * player-gender wordings, and say the same thing in every column but the text.
+ */
+function speakerSpans(lines: ResultLine[]): number[] {
+  // A $g line's two rows are <id>:m and <id>:f.
+  const key = (line: ResultLine) =>
+    `${line.playerGender ? line.lineId.replace(/:[mf]$/, "") : line.lineId}|${line.npcType}|${line.npcId}|${line.voice}`;
+  const spans = lines.map(() => 1);
+  for (let start = 0; start < lines.length; ) {
+    let end = start + 1;
+    while (end < lines.length && key(lines[end]) === key(lines[start])) spans[end++] = 0;
+    spans[start] = end - start;
+    start = end;
+  }
+  return spans;
 }
 
 export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind }) {
@@ -139,6 +158,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
       model: params.get("model") ?? undefined,
       author: params.get("author") ?? undefined,
       recorded: RECORDED.find((value) => value === params.get("rec")),
+      broadcast: BROADCAST_STATUSES.find((value) => value === params.get("bt")),
     }),
     [kind, params, urlQuery],
   );
@@ -213,17 +233,18 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
   const [ignoring, setIgnoring] = useState<ResultLine | null>(null);
   // Anyone can open this one, signed in or not - see ReportDialog.
   const [reporting, setReporting] = useState<ResultLine | null>(null);
-  const [pendingBatch, setPendingBatch] = useState<{
-    label: string;
-    /**
-     * The filters the estimate was quoted for, carried rather than re-read at confirm time.
-     * The dialog can sit open while someone keeps typing, and enqueuing whatever the search
-     * box says at the moment of the click would spend money on a set nobody was shown.
-     */
-    filters: string;
-    jobs: BatchJob[];
-    estimate: Estimate;
-  } | null>(null);
+  const [pendingBatch, setPendingBatch] = useState<
+    | (PendingBatch & {
+        /**
+         * The filters the estimate was quoted for, carried rather than re-read at confirm
+         * time. The dialog can sit open while someone keeps typing, and enqueuing whatever
+         * the search box says at the moment of the click would spend money on a set nobody
+         * was shown.
+         */
+        filters: string;
+      })
+    | null
+  >(null);
   // The queue, as the server sees it. Null until the first poll answers.
   const [queue, setQueue] = useState<QueueSnapshot | null>(null);
   // What the enqueue request itself answered, as opposed to what the queue is doing: a
@@ -303,6 +324,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
         ...("model" in next ? { model: next.model } : {}),
         ...("author" in next ? { author: next.author } : {}),
         ...("recorded" in next ? { rec: next.recorded } : {}),
+        ...("broadcast" in next ? { bt: next.broadcast } : {}),
       });
     },
     [updateUrl],
@@ -607,21 +629,28 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
    */
   const requestBatch = useCallback(async () => {
     const quoted = filterQuery;
-    const jobs = await fetchBatchJobs(new URLSearchParams(quoted), undefined, lang);
-    if (!jobs || jobs.length === 0) return;
+    // Open on the click: on the whole corpus the set takes seconds to come back.
+    setPendingBatch({ label: "every line this search matches", filters: quoted, estimate: null });
+    const batch = await fetchBatchJobs(new URLSearchParams(quoted), undefined, lang);
 
-    // The same arithmetic the server would do, from the rate it reported. Falls back to
-    // the list rate, which overstates - the right direction for a number meant to give
-    // someone pause.
-    const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
-    setPendingBatch({
-      label: `every line this search matches`,
-      filters: quoted,
-      jobs,
-      estimate: estimateBatch(
-        jobs.map((job) => ({ file: job.audioPath, characters: job.characters })),
-        rate,
-      ),
+    // Only into the dialog this request opened, which may have been cancelled, or replaced
+    // by a later click, while the set was on its way.
+    setPendingBatch((open) => {
+      if (open?.filters !== quoted || open.estimate) return open;
+      if (!batch) return { ...open, failed: true };
+      // The same arithmetic the server would do, from the rate it reported. Falls back to
+      // the list rate, which overstates - the right direction for a number meant to give
+      // someone pause.
+      const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
+      return {
+        ...open,
+        matched: batch.matched,
+        skipped: batch.skipped,
+        estimate: estimateBatch(
+          batch.jobs.map((job) => ({ file: job.audioPath, characters: job.characters })),
+          rate,
+        ),
+      };
     });
   }, [filterQuery, status, lang]);
 
@@ -634,7 +663,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
    * which may have moved on while the dialog was open.
    */
   const startBatch = useCallback(async () => {
-    if (!pendingBatch) return;
+    if (!pendingBatch?.estimate) return;
     setPendingBatch(null);
     setQueueNote(null);
 
@@ -759,6 +788,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
   }, [current]);
 
   const pageCount = result ? Math.max(1, Math.ceil(result.total / result.limit)) : 1;
+  const groupSpans = speakerSpans(result?.lines ?? []);
   // This page's marks, minus what has been cleared without a refetch since.
   const marked = new Set(
     (result?.lines ?? [])
@@ -784,6 +814,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
           canTriage={showRegenerate}
           madeBy={result?.madeBy}
           recordable={showRecordings}
+          broadcastable={kind === "gossip"}
         />
 
         {showRecordings && <RecordingDropZone source="quests" onUploaded={refetch} />}
@@ -849,6 +880,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
             <colgroup>
               <col className="w-52" />
               {kind !== "gossip" && <col className="w-48" />}
+              {kind === "gossip" && <col className="w-24" />}
               <col className="w-32" />
               {/* The line text takes whatever the named columns leave, which is what anyone
                   here to read came for. */}
@@ -870,6 +902,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
               <tr className="text-muted-foreground border-border border-b text-left text-xs">
                 <th className="px-2 pb-1 font-medium">NPC / object</th>
                 {kind !== "gossip" && <th className="px-2 pb-1 font-medium">Quest</th>}
+                {kind === "gossip" && <th className="px-2 pb-1 font-medium">Broadcast</th>}
                 <th className="px-2 pb-1 font-medium">Race / gender / flavor</th>
                 <th className="px-2 pb-1 font-medium">Line</th>
                 <th className="px-2 pb-1 font-medium">Audio</th>
@@ -879,7 +912,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
               </tr>
             </thead>
             <tbody>
-              {result.lines.map((line) => (
+              {result.lines.map((line, index) => (
                 <LineRow
                   key={line.key}
                   line={line}
@@ -906,6 +939,8 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
                   onRestored={handleRestored}
                   onNarrowToNpc={narrowToNpc}
                   showQuest={kind !== "gossip"}
+                  showBroadcast={kind === "gossip"}
+                  groupSpan={groupSpans[index]}
                   onNarrowToQuest={narrowToQuest}
                 />
               ))}

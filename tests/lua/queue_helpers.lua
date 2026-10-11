@@ -68,12 +68,13 @@ end
 --- which loads only Audio/ReportButton/Autoplay against a hand-built fake table for playback
 --- tests. Contribute.lua needs the real GetPlayerMapID, GetLoreWithFallback, GetSubzoneLore,
 --- GetLore and IsPending, all of which live in Core.lua, so this loads that too, and the
---- language and pack answers it sends, from Language.lua and Audio.lua.
+--- language and pack answers it sends, from Language.lua and Audio.lua. UI/Compendium.lua
+--- too, as the toc loads it: a clip's header is the place above, from its tree.
 --- `seed` is the addon table as it stands before Language.lua runs, for what the
 --- generated data would have put there first (SpokenZones.Languages).
 function M.LoadZones(addonDirectory, seed)
     local SpokenZones = seed or {}
-    for _, file in ipairs({ "Language", "Core", "Audio", "Contribute" }) do
+    for _, file in ipairs({ "Language", "Core", "Audio", "Contribute", "UI/Compendium" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
         chunk("Spoken_Zones", SpokenZones)
     end

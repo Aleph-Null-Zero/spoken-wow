@@ -90,10 +90,33 @@ end
 --- one. That is what keeps `/spb read` with no book open a no-op rather than a re-reading of
 --- whatever was last closed.
 function SpokenBooks:OnTextClosed()
+	local book = self:PlaceOf(self.lastPage)
 	self.lastPage = nil
-	if SpokenBooksSettings and SpokenBooksSettings.stopOnClose then
-		self:StopReading()
+	if book and SpokenBooksSettings and SpokenBooksSettings.stopOnClose then
+		self:StopReading(book)
 	end
+end
+
+--- A page was heard to its end. With Close Book When Done Reading on, the book shuts once
+--- nothing of it is left to hear and it is still the one open. A later page with a voice keeps
+--- it open: with Read Whole Book off, the reader is about to turn to it. CloseItemText reaches
+--- DialogueUI's book view too, through the ITEM_TEXT_CLOSED every book window listens to.
+function SpokenBooks:OnPageFinished(clip)
+	if not (SpokenBooksSettings and SpokenBooksSettings.closeWhenRead) then
+		return
+	end
+	local book = self:PlaceOf(clip.pageId)
+	if self:PlaceOf(self.lastPage) ~= book or self:IsNarrating(book) then
+		return
+	end
+	local later = self:PagesFrom(clip.pageId)
+	for i = 2, #later do
+		if self:HasAudio(later[i]) then
+			return
+		end
+	end
+	self:Explain("closing the book: its last page has been read")
+	CloseItemText()
 end
 
 frame:SetScript("OnEvent", function(_, event, arg1)
@@ -133,6 +156,9 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 		-- them is missing, and what lets a test load the wiring without the UI.
 		if SpokenBooks.SetupPlayButton then
 			SpokenBooks:SetupPlayButton()
+		end
+		if SpokenBooks.SetupDialogueUIBook then
+			SpokenBooks:SetupDialogueUIBook()
 		end
 		-- The panel is registered here rather than at ADDON_LOADED because the Settings API
 		-- is what the client offers late, and because a panel nobody opens costs nothing to

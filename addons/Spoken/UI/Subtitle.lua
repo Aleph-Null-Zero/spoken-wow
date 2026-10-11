@@ -28,23 +28,16 @@ local SHADOW_REACH = 40
 local TEXTURES = [[Interface\AddOns\Spoken\Textures\]]
 -- A page fades out before the next fades in; the shadow eases to the new page's size.
 local PAGE_OUT, PAGE_IN = .18, .28
+-- Line by line, how fast the words glide up to the next line.
+local GLIDE = 0.09
 local PAUSED_FADE = .25
 local PICTURE, PICTURE_GAP, LABEL_GAP = 36, 8, 6
--- The progress line follows Spoken Subtitles' layout and spark, framed as the game frames a status
--- bar (UIWidgetTemplateStatusBar). Without that art, Spoken Subtitles' own hairline.
-local PROGRESS_SHARE, PROGRESS_HEIGHT = 0.45, 7
-local PROGRESS_LINE = [[Interface\AddOns\Spoken\Textures\SubtitleLine]]
-local SPARK = [[Interface\CastingBar\UI-CastingBar-Spark]]
--- Called through the global environment: the client looks up Vector2DMixin in the caller's
--- environment, and from SpokenEnv it fails with "unable to find mixin or metatable".
-local AtlasInfo = setfenv(function(name)
-    return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) or nil
-end, _G)
+-- The progress line spans this share of the band.
+local PROGRESS_SHARE = 0.45
 local SIZE_EASE = 10
 -- The controls shown on hover: the windows' round pause button, skip, and Report.
 local CONTROL_SIZE, CONTROL_GAP = 24, 4
 local CONTROLS_FADE = .15
-local PORTRAIT_ATLAS_SIZE = 512
 local UTF8_CHAR = "[%z\1-\127\194-\244][\128-\191]*"
 
 local function Config()
@@ -65,19 +58,39 @@ local function Characters(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return count
 end
+-- Auto-Scroll line by line: the words glide up through Lines Shown lines instead of turning pages.
+local function Rolling() return Config().SubtitleScroll == "line" end
+local function Shown() return math.max(1, tonumber(Config().Lines) or 2) end
+
+local function WordsFont()
+    local font = _G.QuestFont
+    if not (font and font.GetFont) then return nil end
+    local path, size = font:GetFont()
+    if not (path and size) then return nil end
+    return path, math.max(6, math.floor(size * (tonumber(Config().FontSize) or 16) / 16 + .5))
+end
+local function Pictured() return not Addon:Profile("Frame").HidePortrait end
+-- The words' face on the measuring string, so wrapping and paging measure at Text Size.
+local function Measure(subtitle)
+    local path, size = WordsFont()
+    if path then subtitle.measure:SetFont(path, size, "") end
+    return path, size
+end
+
 local function Words(text)
     local count = 0
     for _ in text:gmatch("%S+") do count = count + 1 end
     return count
 end
 
-local function Prefix(text, count)
-    local parts = {}
-    for char in text:gmatch(UTF8_CHAR) do
-        if #parts >= count then break end
-        parts[#parts + 1] = char
-    end
-    return table.concat(parts)
+local Prefix = Transcript.Prefix
+
+local HIGHLIGHT = Transcript.HIGHLIGHT
+-- `text` with its characters `from` (after that many) through `to` lit.
+local function Light(text, from, to)
+    local head = Prefix(text, math.max(0, from))
+    local through = Prefix(text, to)
+    return head .. HIGHLIGHT .. through:sub(#head + 1) .. "|r" .. text:sub(#through + 1)
 end
 
 -- Sentences with their trailing space kept, so joining them gives back the text exactly.
@@ -279,25 +292,29 @@ function Subtitle:Build()
     -- Hung from the background's foot, so the buttons follow it as it eases to a new size.
     self.controls:SetPoint("TOP", self.shadow, "BOTTOM", 0, -2)
 
-    self.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    -- One frame for the row over the words, so Show Name and Title hides it whole.
+    local row = CreateFrame("Frame", nil, frame)
+    row:SetAllPoints()
+    self.nameRow = row
+    self.title = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.title:SetJustifyH("LEFT")
     self.title:SetTextColor(1, .82, 0)
     self.title:SetShadowColor(0, 0, 0, 1)
     self.title:SetShadowOffset(1, -1)
-    self.dot = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.dot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.dot:SetTextColor(.62, .62, .62)
     self.dot:SetShadowColor(0, 0, 0, 1)
     self.dot:SetShadowOffset(1, -1)
     self.dot:SetText("•")
     -- Cut short with an ellipsis where the row would run too wide.
-    self.label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.label:SetJustifyH("LEFT")
     self.label:SetWordWrap(false)
     self.label:SetTextColor(.62, .62, .62)
     self.label:SetShadowColor(0, 0, 0, 1)
     self.label:SetShadowOffset(1, -1)
     -- No window shows the stop, so "(paused)" takes the label's place, fading across.
-    self.pausedLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.pausedLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.pausedLabel:SetJustifyH("LEFT")
     self.pausedLabel:SetTextColor(.62, .62, .62)
     self.pausedLabel:SetShadowColor(0, 0, 0, 1)
@@ -318,8 +335,8 @@ function Subtitle:Build()
         self.fillRoom, self.progressHeight, self.progressBroken = 0, 0, true
     end
 
-    self.moreDot = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    self.more = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.moreDot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.more = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     for _, part in ipairs({ self.moreDot, self.more }) do
         part:SetTextColor(.62, .62, .62)
         part:SetShadowColor(0, 0, 0, 1)
@@ -327,6 +344,11 @@ function Subtitle:Build()
     end
     self.moreDot:SetText("•")
     self.waiting = 0
+
+    -- Clips the words, so a line gliding past an edge is cut there, not drawn over the name row or
+    -- the progress line.
+    self.words = CreateFrame("Frame", nil, frame)
+    if self.words.SetClipsChildren then self.words:SetClipsChildren(true) end
 
     -- Unwrapped, so its width is the true width of a candidate line.
     self.measure = frame:CreateFontString(nil, "OVERLAY", "QuestFont")
@@ -338,79 +360,16 @@ end
 
 --- `self.track` is the frame the fill runs along; `self.fillRoom`, how far in from each end it runs.
 function Subtitle:BuildProgress()
-    local frame = self.frame
-    local track = CreateFrame("Frame", nil, frame)
-    local fill = track:CreateTexture(nil, "ARTWORK")
-    local left, right, middle = AtlasInfo("widgetstatusbar-borderleft"), AtlasInfo("widgetstatusbar-borderright"),
-        AtlasInfo("widgetstatusbar-bordercenter")
-    local yellow = AtlasInfo("widgetstatusbar-fill-yellow")
-    self.fillRoom = 0
-    local framed = left and right and middle and yellow and fill.SetAtlas
-        and tonumber(middle.height) and tonumber(left.width) and tonumber(right.width) and true or false
-    if framed then
-        local ok, err = pcall(self.FrameProgress, self, track, fill, left, right, middle, yellow)
-        if not ok then
-            framed = false
-            if geterrorhandler then geterrorhandler()(err) end
-        end
-    end
-    if not framed then
-        self.fillRoom = 0
-        local back = track:CreateTexture(nil, "BACKGROUND")
-        back:SetAllPoints()
-        if back.SetColorTexture then back:SetColorTexture(0, 0, 0, 0.5) end
-        track:SetHeight(1.5)
-        fill:SetTexture(PROGRESS_LINE)
-        fill:SetHeight(1.5)
-        self.progressHeight = 2
-    end
-    fill:SetPoint("LEFT", track, "LEFT", self.fillRoom, 0)
+    local bar = Actions.ProgressBar(self.frame)
     -- Hung from the background's foot, so the bar follows it as it eases.
-    track:SetPoint("BOTTOM", self.shadow, "BOTTOM", 0, BOTTOM_PAD)
-    local spark = track:CreateTexture(nil, "OVERLAY", nil, 1)
-    spark:SetTexture(SPARK)
-    if spark.SetBlendMode then spark:SetBlendMode("ADD") end
-    -- Taller than the bar, so its glow reaches past the frame.
-    spark:SetSize(12, framed and self.progressHeight + 9 or 14)
-    spark:SetPoint("CENTER", fill, "RIGHT")
-    self.track, self.fill, self.spark = track, fill, spark
-end
-
-function Subtitle:FrameProgress(track, fill, left, right, middle, yellow)
-    do
-        -- As the cards' meter lays the art out: the fill 8 inside the border's ends and 2 short of
-        -- the background's, the border's own 31 rows scaled to PROGRESS_HEIGHT.
-        local k = PROGRESS_HEIGHT / (middle.height > 0 and middle.height or 31)
-        track:SetHeight(PROGRESS_HEIGHT)
-        local function Piece(atlas, layer, width)
-            local texture = track:CreateTexture(nil, layer)
-            texture:SetAtlas(atlas)
-            texture:SetHeight(PROGRESS_HEIGHT)
-            if width then texture:SetWidth(width * k) end
-            return texture
-        end
-        local l = Piece("widgetstatusbar-borderleft", "OVERLAY", left.width)
-        local r = Piece("widgetstatusbar-borderright", "OVERLAY", right.width)
-        local m = Piece("widgetstatusbar-bordercenter", "OVERLAY")
-        l:SetPoint("LEFT", track, "LEFT", 0, 0)
-        r:SetPoint("RIGHT", track, "RIGHT", 0, 0)
-        m:SetPoint("LEFT", l, "RIGHT", 0, 0)
-        m:SetPoint("RIGHT", r, "LEFT", 0, 0)
-        self.fillRoom = 8 * k
-        local back = track:CreateTexture(nil, "BACKGROUND")
-        if AtlasInfo("widgetstatusbar-bgcenter") then back:SetAtlas("widgetstatusbar-bgcenter")
-        elseif back.SetColorTexture then back:SetColorTexture(0, 0, 0, 0.6) end
-        back:SetPoint("TOPLEFT", track, "TOPLEFT", self.fillRoom - 2 * k, -2 * k)
-        back:SetPoint("BOTTOMRIGHT", track, "BOTTOMRIGHT", -(self.fillRoom - 2 * k), 2 * k)
-        fill:SetAtlas("widgetstatusbar-fill-yellow")
-        fill:SetHeight(math.min(tonumber(yellow.height) or 15, middle.height - 4) * k)
-        self.progressHeight = PROGRESS_HEIGHT
-    end
+    bar.track:SetPoint("BOTTOM", self.shadow, "BOTTOM", 0, BOTTOM_PAD)
+    self.track, self.fill, self.spark = bar.track, bar.fill, bar.spark
+    self.fillRoom, self.progressHeight = bar.room, bar.height
 end
 
 function Subtitle:BuildPicture()
     local k = PICTURE / 90
-    local host = CreateFrame("Frame", nil, self.frame)
+    local host = CreateFrame("Frame", nil, self.nameRow)
     host:SetSize(PICTURE, PICTURE)
     local background = host:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
@@ -449,13 +408,21 @@ function Subtitle:ConfigurePicture(clip)
     self.badge:SetShown(texture ~= nil)
 end
 
+function Subtitle:NameShown()
+    return Config().SubtitleName ~= false
+end
+
 function Subtitle:RowHeight()
-    return math.max(PICTURE, self.title:GetStringHeight() or 0)
+    if not self:NameShown() then return self.shownPaused and (self.pausedLabel:GetStringHeight() or 0) or 0 end
+    return math.max(Pictured() and PICTURE or 0, self.title:GetStringHeight() or 0)
 end
 
 --- The row's visible width, so it centres on what shows. The title is cut to keep it within WIDTH.
 function Subtitle:RowWidth(paused)
-    local start = PICTURE + PICTURE_GAP + (self.title:GetStringWidth() or 0)
+    -- Show Name off still shows Stopped: Wanted keeps a stopped line on screen to say why it is
+    -- not being read.
+    if not self:NameShown() then return paused and (self.pausedLabel:GetStringWidth() or 0) or 0 end
+    local start = (Pictured() and PICTURE + PICTURE_GAP or 0) + (self.title:GetStringWidth() or 0)
     -- The waiting count's room, taken first so a long title is cut rather than the count.
     local more = 0
     if (self.waiting or 0) > 0 then
@@ -468,24 +435,33 @@ function Subtitle:RowWidth(paused)
         self.label:SetWidth(math.max(1, label))
         return start + lead + (paused and (self.pausedLabel:GetStringWidth() or 0) or label) + more
     end
-    return start + (paused and LABEL_GAP + (self.pausedLabel:GetStringWidth() or 0) or 0) + more
+    -- With no label, Stopped follows a dot of its own.
+    local dot = LABEL_GAP + (self.dot:GetStringWidth() or 0) + LABEL_GAP
+    return start + (paused and dot + (self.pausedLabel:GetStringWidth() or 0) or 0) + more
 end
 
 function Subtitle:PlaceRow(left)
     left = math.floor(left + .5)
     local textY = -TOP_PAD - math.floor((self:RowHeight() - (self.title:GetStringHeight() or 0)) / 2)
+    local named, pictured = self:NameShown(), Pictured()
+    self.picture:SetShown(pictured and named)
+    for _, part in ipairs({ self.title, self.dot, self.label }) do part:SetShown(named) end
     self.picture:ClearAllPoints()
     self.picture:SetPoint("TOPLEFT", self.frame, "TOP", left, -TOP_PAD)
     self.title:ClearAllPoints()
-    self.title:SetPoint("TOPLEFT", self.frame, "TOP", left + PICTURE + PICTURE_GAP, textY)
+    self.title:SetPoint("TOPLEFT", self.frame, "TOP", left + (pictured and PICTURE + PICTURE_GAP or 0), textY)
     self.dot:ClearAllPoints()
     self.dot:SetPoint("LEFT", self.title, "RIGHT", LABEL_GAP, 0)
     self.label:ClearAllPoints()
     self.label:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
     self.pausedLabel:ClearAllPoints()
-    self.pausedLabel:SetPoint("LEFT", self.labelText and self.dot or self.title, "RIGHT", LABEL_GAP, 0)
+    if named then
+        self.pausedLabel:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
+    else
+        self.pausedLabel:SetPoint("TOPLEFT", self.frame, "TOP", left, textY)
+    end
     local last = self.shownPaused and self.pausedLabel or (self.labelText and self.label or self.title)
-    local shown = (self.waiting or 0) > 0
+    local shown = named and (self.waiting or 0) > 0
     self.moreDot:SetShown(shown)
     self.more:SetShown(shown)
     self.moreDot:ClearAllPoints()
@@ -527,7 +503,7 @@ end
 function Subtitle:Line(index)
     local line = self.lines[index]
     if line then return line end
-    line = self.frame:CreateFontString(nil, "OVERLAY", "QuestFont")
+    line = self.words:CreateFontString(nil, "OVERLAY", "QuestFont")
     line:SetJustifyH("LEFT")
     line:SetJustifyV("TOP")
     line:SetWordWrap(false)
@@ -541,32 +517,50 @@ end
 -- Each line gets a slot of its finished width, centred, and its letters are typed in from
 -- the left of it: the text fills in without re-centring or wobbling as it grows.
 function Subtitle:Layout(text)
+    local path, size = Measure(self)
+    -- Measure puts the words' face back; a clip's own goes over it, or lines are cut to the
+    -- wrong width.
+    Addon:ClipFont(self.measure, self.clip)
     self.measure:SetText("Ag")
     local lineHeight = self.measure:GetStringHeight()
+    local named = self:NameShown()
+    self.nameRow:SetShown(named or self.shownPaused)
     local titleHeight, widest = self:RowHeight(), self:RowWidth(self.shownPaused)
+    local titleGap = titleHeight > 0 and TITLE_GAP or 0
     self.rows = {}
     for index, wrapped in ipairs(self:Wrap(text)) do
         local width = self:Width(wrapped)
         widest = math.max(widest, width)
         self.rows[index] = { text = wrapped, count = Characters(wrapped) }
         local line = self:Line(index)
+        if path then line:SetFont(path, size, "") end
+        Addon:ClipFont(line, self.clip)
         line:SetWidth(width + 2)
-        line:ClearAllPoints()
-        line:SetPoint("TOP", self.frame, "TOP", 0,
-            -(TOP_PAD + titleHeight + TITLE_GAP + (index - 1) * (lineHeight + LINE_GAP)))
         line:SetText("")
-        line:Show()
     end
     for index = #self.rows + 1, #self.lines do
         self.lines[index]:SetText("")
         self.lines[index]:Hide()
     end
-    local wordsBottom = TOP_PAD + titleHeight + TITLE_GAP + #self.rows * (lineHeight + LINE_GAP) - LINE_GAP
+    self.shownRows = Rolling() and math.min(#self.rows, Shown()) or #self.rows
+    self.lineStep, self.wordsTop = lineHeight + LINE_GAP, TOP_PAD + titleHeight + titleGap
+    self.rollTop, self.rollTarget = 1, 1
+    local wordsHeight = self.shownRows * self.lineStep - LINE_GAP
+    -- Line by line, the clip reaches a line past the words each way, over the gaps to the name and
+    -- the progress line, so a line gliding out or in has faded to nothing before the edge cuts it.
+    -- Otherwise a few pixels, for the letters' tops and tails.
+    local room = Rolling() and self.lineStep or 4
+    self.words:ClearAllPoints()
+    self.words:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -(self.wordsTop - room))
+    self.words:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", 0, -(self.wordsTop - room))
+    self.words:SetHeight(wordsHeight + 2 * room)
+    self:PlaceLines()
+    local wordsBottom = self.wordsTop + wordsHeight
     self.progressShown = self:ProgressWanted()
     for _, part in ipairs({ self.track, self.fill, self.spark }) do part:SetShown(self.progressShown) end
     -- As far under the words as the words are under the name: the name sits in the middle of the
     -- picture's height, so its gap is the row's spare half and TITLE_GAP.
-    local gap = TITLE_GAP + math.floor((titleHeight - (self.title:GetStringHeight() or 0)) / 2)
+    local gap = TITLE_GAP + (named and math.floor((titleHeight - (self.title:GetStringHeight() or 0)) / 2) or 0)
     self.progressGap = gap
     if self.progressShown then wordsBottom = wordsBottom + gap + self.progressHeight end
     self.rowsWidest, self.rowsHeight = widest, wordsBottom + BOTTOM_PAD
@@ -580,6 +574,52 @@ function Subtitle:Layout(text)
         self.wordEnds[n], n = finish, n + 1
     end
     self.revealed = nil
+end
+
+--- The page on screen laid out again where it has scrolled to.
+function Subtitle:Relayout()
+    local top, target = self.rollTop, self.rollTarget
+    self:Layout(self.pages[self.page].text)
+    self.rollTop, self.rollTarget = top, target
+end
+
+--- Line by line, the row leaving at the top fades out as it glides up and the one coming in fades
+--- in; rows outside the window are hidden. The page's own fade multiplies over that.
+function Subtitle:PlaceLines()
+    local top = self.rollTop or 1
+    local first = math.floor(top)
+    local fraction = top - first
+    local shown, step, fade = self.shownRows or 0, self.lineStep or 0, self.lineAlpha or 1
+    for index, line in ipairs(self.lines) do
+        local row = index - first
+        local visible = self.rows and index <= #self.rows and row >= 0
+            and (row < shown or (row == shown and fraction > 0))
+        if visible then
+            line:ClearAllPoints()
+            line:SetPoint("TOP", self.frame, "TOP", 0, -(self.wordsTop + (row - fraction) * step))
+            line:SetAlpha(fade * (row == 0 and 1 - fraction or row == shown and fraction or 1))
+        end
+        line:SetShown(visible and true or false)
+    end
+end
+
+--- The row holding the page's character `n`, counted from 0.
+function Subtitle:RowOf(n)
+    local total = 0
+    for index, row in ipairs(self.rows or {}) do
+        total = total + row.count
+        if n < total then return index end
+    end
+    return math.max(1, #(self.rows or {}))
+end
+
+--- Line by line, scrolls so the row holding character `at` sits at the window's foot, never past
+--- the last row.
+function Subtitle:Follow(at)
+    if not Rolling() then return end
+    local rows, shown = #(self.rows or {}), self.shownRows or 1
+    local row = self:RowOf(math.max(0, at))
+    self.rollTarget = math.max(1, math.min(row - shown + 1, rows - shown + 1))
 end
 
 function Subtitle:Fit()
@@ -622,18 +662,47 @@ function Subtitle:CharsSpan(n)
 end
 
 --- The rows as the typing has them: each holds the letters typed so far, so nothing yet to come
---- is ever on screen. The subtitle lights no word: the word timing is an estimate, and typed in
---- front of the reader it showed every miss. The windows light it (Transcript).
-function Subtitle:Reveal(count)
-    if count == self.revealed then return end
-    self.revealed = count
+--- is ever on screen. `lit` is the page's word to light, passed only while the words show whole:
+--- an estimated word timing typed in front of the reader shows every miss.
+function Subtitle:Reveal(count, lit)
+    if count == self.revealed and (lit or 0) == self.revealedLit then return end
+    self.revealed, self.revealedLit = count, lit or 0
+    local from, to
+    if lit then from, to = self:CharsSpan(lit) end
+    local offset = 0
     for index, row in ipairs(self.rows) do
-        self.lines[index]:SetText(count >= row.count and row.text or Prefix(row.text, count))
+        local text = count >= row.count and row.text or Prefix(row.text, count)
+        if from and to > offset and from < offset + row.count then
+            text = Light(text, from - offset, to - offset)
+        end
+        self.lines[index]:SetText(text)
         count = math.max(0, count - row.count)
+        offset = offset + row.count
     end
 end
 
+--- The page's word the voice is on, by its share of the page's time, while Highlight Words is on;
+--- nil before the voice reaches the page and once it has read it.
+function Subtitle:LitWord(page, elapsed)
+    if self.sample or not Config().HighlightWord then return nil end
+    local at = (elapsed - page.start) / math.max(.5, page.length) * page.count
+    if at < 0 or at >= page.count then return nil end
+    for n, finish in ipairs(self.wordEnds or {}) do
+        if at < finish then return n end
+    end
+end
+
+--- Every setting Prepare and Layout read, as one string: when it changes, Update lays the line out
+--- again.
+function Subtitle:LayoutKey()
+    local _, size = WordsFont()
+    return PageSentences() .. ":" .. tostring(Rolling()) .. ":" .. Shown() .. ":" .. tostring(size)
+        .. ":" .. tostring(self:NameShown()) .. ":" .. tostring(Pictured()) .. ":" .. tostring(self:ProgressWanted())
+end
+
 function Subtitle:Prepare(clip, text)
+    Measure(self)
+    self.layoutKey, self.resumeTyping = self:LayoutKey(), nil
     self.clip, self.page = clip, nil
     self.pageFade, self.shadowSize = nil, nil
     for _, line in ipairs(self.lines or {}) do line:SetAlpha(1) end
@@ -647,9 +716,12 @@ function Subtitle:Prepare(clip, text)
     -- the count already in, rather than sliding as if lines had just been added.
     self.rowLeft, self.share = nil, 0
     self:SetWaiting(self:Waiting())
+    -- The measure too: pages are cut by the width of the text in the face it is drawn in.
+    for _, text in ipairs({ self.title, self.label, self.measure }) do Addon:ClipFont(text, clip) end
     self.title:SetText(title)
     self.label:SetText(label or "")
-    self.dot:SetShown(label ~= nil)
+    -- With no label the dot is Stopped's, fading with it.
+    self.dot:SetAlpha(label and 1 or self.pausedAlpha or 0)
     self:ConfigurePicture(clip)
     -- A clip with no usable length still pages and types, at LoreTeller's reading pace.
     local duration = tonumber(clip.length)
@@ -657,13 +729,33 @@ function Subtitle:Prepare(clip, text)
     local total = math.max(1, Characters(text))
     self.pages = {}
     local start = 0
-    for index, page in ipairs(self:Paginate(text)) do
+    for index, page in ipairs(Rolling() and { text } or self:Paginate(text)) do
         local count = Characters(page)
         local length = duration * count / total
         -- Never turned in under a second, however short the first half.
         if index > 1 then start = math.max(1, start) end
         self.pages[index] = { text = page, count = count, start = start, length = length }
         start = start + length
+    end
+    if Transcript.timed and Transcript.clip == clip and Transcript.text == text then
+        self:TimePages(Transcript.words, duration)
+    end
+end
+
+--- With the clip's own word times, each page turns when the voice reaches its first word. A page
+--- cut inside a word counts that word twice; the totals then disagree and the estimate stays.
+function Subtitle:TimePages(words, duration)
+    local starts, word = { 0 }, 1
+    for index, page in ipairs(self.pages) do
+        if index > 1 then
+            if not words[word] then return end
+            starts[index] = words[word].start
+        end
+        word = word + #Transcript:Split(page.text)
+    end
+    if word - 1 ~= #words then return end
+    for index, page in ipairs(self.pages) do
+        page.start, page.length = starts[index], (starts[index + 1] or duration) - starts[index]
     end
 end
 
@@ -672,7 +764,8 @@ function Subtitle:Render()
     local paused = SoundQueue:IsPaused() and not self.sample
     if paused ~= self.shownPaused then
         self.shownPaused = paused
-        self:Fit()
+        -- With Show Name off the row is there only while stopped, so the words move for it.
+        if self:NameShown() or not self.page then self:Fit() else self:Relayout() end
     end
     local elapsed = self.sample and 0 or Transcript:AudioElapsed()
     local index = 1
@@ -694,13 +787,15 @@ function Subtitle:Render()
             index = self.page
         else
             self.page = index
-            self.turnedAt = elapsed
+            self.turnedAt = not self.resumeTyping and elapsed or nil
+            self.resumeTyping = nil
             self:Layout(self.pages[index].text)
         end
     end
     local page = self.pages[index]
     if self.sample or not Config().Typewriter then
-        self:Reveal(page.count)
+        self:Follow((elapsed - page.start) / math.max(.5, page.length) * page.count)
+        self:Reveal(page.count, self:LitWord(page, elapsed))
         return
     end
     -- LoreTeller's pace: a little ahead of the voice, so each page is whole a moment before the
@@ -714,6 +809,7 @@ function Subtitle:Render()
     local rate = page.count / math.max(.5, page.length - .4) + 10
     local typed = math.floor(math.max(0, elapsed - math.max(page.start, self.turnedAt or 0)) * rate)
     if Config().TypewriterBy == "word" then typed = self:WholeWords(typed) end
+    self:Follow(typed - 1)
     self:Reveal(typed)
 end
 
@@ -769,16 +865,10 @@ function Subtitle:Update()
         self:Place()
     end
     local clip = speaking and Transcript.clip or self.sample
-    -- The sentences at once changed in the settings: the line paged again, from where the voice is.
-    if self.clip and self.pages and self.pageSentences and self.pageSentences ~= PageSentences() then
+    if self.clip and self.pages and self.layoutKey ~= self:LayoutKey() then
         self:Prepare(self.clip, self.sample and L.SUBTITLE_SAMPLE_TEXT or Transcript.text)
-        self.revealed = nil
-    end
-    -- The progress line turned on or off in the settings: the page laid out again with or without it.
-    if self.page and self.pages and self.pages[self.page]
-        and self:ProgressWanted() ~= self.progressShown then
-        self:Layout(self.pages[self.page].text)
-        self.revealed = nil
+        -- Typed on from where the voice is, not from the page's start again.
+        self.resumeTyping, self.revealed = true, nil
     end
     if wanted and clip ~= self.clip then
         -- A line still on screen fades out first, as when it ends, and the new one fades in after it.
@@ -839,44 +929,13 @@ function Subtitle:BuildControls()
     controls:Hide()
     self.controls, self.controlsAlpha = controls, 0
 
-    local pause = RoundButton(controls, 12)
+    local pause = Actions.StopButton(controls, nil, function() self:UpdatePause() end)
     pause:SetPoint("LEFT", controls, "LEFT", 0, 0)
-    pause:SetScript("OnClick", function()
-        if not SoundQueue:CanBePaused() then return end
-        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-        SoundQueue:TogglePauseQueue()
-        self:UpdatePause()
-    end)
-    pause:SetScript("OnEnter", function()
-        pause.glyph:SetAlpha(1)
-        GameTooltip:SetOwner(pause, "ANCHOR_TOP")
-        GameTooltip:SetText(SoundQueue:IsPaused() and L.REPLAY or L.STOP)
-        GameTooltip:Show()
-    end)
     self.pause = pause
     self:UpdatePause()
 
-    -- Skip, as the windows' queue offers: the play glyph against a bar, the usual "next" mark.
-    local skip = RoundButton(controls, 10)
+    local skip = Actions.SkipButton(controls)
     skip:SetPoint("LEFT", pause, "RIGHT", CONTROL_GAP, 0)
-    skip.glyph:SetTexture(TEXTURES .. "PortraitFrameAtlas")
-    skip.glyph:SetTexCoord(0, 93 / PORTRAIT_ATLAS_SIZE, 419 / PORTRAIT_ATLAS_SIZE, 1)
-    skip.glyph:ClearAllPoints()
-    skip.glyph:SetPoint("CENTER", -2, 0)
-    skip.bar = skip:CreateTexture(nil, "ARTWORK")
-    skip.bar:SetSize(2, 9)
-    skip.bar:SetPoint("LEFT", skip.glyph, "RIGHT", 0, 0)
-    if skip.bar.SetColorTexture then skip.bar:SetColorTexture(1, 0.82, 0, 0.85) end
-    skip:SetScript("OnClick", function()
-        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-        SoundQueue:Skip()
-    end)
-    skip:SetScript("OnEnter", function()
-        skip.glyph:SetAlpha(1)
-        GameTooltip:SetOwner(skip, "ANCHOR_TOP")
-        GameTooltip:SetText(L.BIND_SKIP)
-        GameTooltip:Show()
-    end)
     self.skip = skip
 
     -- Report, in the same ring, with the action's own bug icon: what the windows show in their
@@ -902,6 +961,7 @@ end
 
 function Subtitle:UpdatePause()
     Actions.SetPlayGlyph(self.pause, Actions.HeadState())
+    Actions.SetPausable({ self.pause, self.skip })
 end
 
 -- Locked, the subtitle lets clicks through to the world but still knows the pointer is over
@@ -970,7 +1030,7 @@ function Subtitle:ShowProgress()
     -- Read only while this line speaks, so the bar fades out where the voice left it.
     local length = self.clip and tonumber(self.clip.length) or 0
     if self.wanted and not self.sample and length > 0 and Transcript.clip == self.clip then
-        self.share = math.max(0, math.min(1, Transcript:AudioElapsed() / length))
+        self.share = SoundQueue:Share(self.clip, Transcript:AudioElapsed())
     end
     local size = self.shadowSize or self.shadowWant
     local width = size and math.floor(size.w * PROGRESS_SHARE)
@@ -1032,6 +1092,7 @@ function Subtitle:Animate(elapsed)
             or math.max(0, self.pausedAlpha - step)
         self.pausedLabel:SetAlpha(self.pausedAlpha)
         self.label:SetAlpha(1 - self.pausedAlpha)
+        if not self.labelText then self.dot:SetAlpha(self.pausedAlpha) end
     end
     if self.rowWant and self.rowLeft and self.rowLeft ~= self.rowWant then
         local k = math.min(1, elapsed * SIZE_EASE)
@@ -1039,7 +1100,14 @@ function Subtitle:Animate(elapsed)
         if math.abs(self.rowLeft - self.rowWant) < .5 then self.rowLeft = self.rowWant end
         self:PlaceRow(self.rowLeft)
     end
-    for _, line in ipairs(self.lines) do line:SetAlpha(alpha) end
+    local top, target = self.rollTop, self.rollTarget
+    if top and target and top ~= target then
+        local moved = top + (target - top) * (1 - math.exp(-elapsed / GLIDE))
+        if math.abs(target - moved) < 0.01 then moved = target end
+        self.rollTop = moved
+    end
+    self.lineAlpha = alpha
+    self:PlaceLines()
 
     local want, size = self.shadowWant, self.shadowSize
     if want and size and (size.w ~= want.w or size.h ~= want.h) then

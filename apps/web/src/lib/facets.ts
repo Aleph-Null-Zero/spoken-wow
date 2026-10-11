@@ -1,9 +1,9 @@
 /**
  * The values the filter dropdowns can offer.
  *
- * The roster in lib/voices/voices.ts, so a voice added there is filterable before any line
- * uses it, and the filters, /voices and the triage selects always offer the same set. Zones
- * come from the committed zone-regions seed, so a zone with no line yet is still offered.
+ * The roster (migration 0071, roster-store.ts), so a type or voice an admin adds is filterable
+ * before any line uses it, and the filters, /voices and the triage selects offer the same set.
+ * Zones come from the committed zone-regions seed, so a zone with no line yet is still offered.
  *
  * Being closed sets also makes them a whitelist, which is what lets /api/search take these
  * straight from a query string.
@@ -12,7 +12,9 @@
  * their lists live next to the type in lib/search.ts.
  */
 import { QUEST_ZONES, type QuestZone } from "./quests/zones";
-import { flavorScopes, GENDERS, RACES, VOICE_NAMES, VOICES } from "./voices/voices";
+import type { Roster } from "./voices/roster";
+import { loadRoster } from "./voices/roster-store";
+import { GENDERS } from "./voices/voices";
 
 export type Facets = {
   races: string[];
@@ -33,21 +35,23 @@ export type Facets = {
 
 const sorted = (values: Iterable<string>) => [...new Set(values)].sort((a, b) => a.localeCompare(b));
 
-const FACETS: Facets = {
-  races: [...RACES],
-  genders: [...GENDERS],
-  flavors: sorted(VOICES.flatMap((voice) => (voice.flavor ? [voice.flavor] : []))),
-  voices: sorted(VOICE_NAMES),
-  flavorScopes: flavorScopes().sort(
-    (a, b) =>
-      a.race.localeCompare(b.race) ||
-      a.gender.localeCompare(b.gender) ||
-      a.flavor.localeCompare(b.flavor),
-  ),
-  zones: QUEST_ZONES,
-};
+/** Per roster: /api/search asks on every request, and the roster is one instance until it moves. */
+const built = new WeakMap<Roster, Facets>();
 
-/** Async because it used to be read off the corpus; kept so no caller has to change. */
 export async function facets(): Promise<Facets> {
-  return FACETS;
+  const roster = await loadRoster();
+  let value = built.get(roster);
+  if (!value) {
+    value = {
+      races: roster.races,
+      genders: [...GENDERS],
+      flavors: sorted(roster.data.flavors.map((flavor) => flavor.flavor)),
+      voices: roster.voiceNames,
+      // A genderless type's flavors match a race with no gender chosen.
+      flavorScopes: roster.flavorScopes().map((scope) => ({ ...scope, gender: scope.gender ?? "" })),
+      zones: QUEST_ZONES,
+    };
+    built.set(roster, value);
+  }
+  return value;
 }

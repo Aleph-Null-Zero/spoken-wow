@@ -411,9 +411,11 @@ how much of the lore and how many interface strings exist and whether an alias
 table is present. `ready` is lore complete plus an alias table; interface strings
 are counted but not required, since they fall back to English per key and an
 English options panel over a German corpus is worth shipping. The switcher only
-offers languages that are ready **and** whose script the client can draw — `UI/TextView.lua` takes
-its font from `GameFontHighlight`, which is the client's font, so Chinese lore on
-a German client is a screen of boxes.
+offers languages that are ready **and** whose script the client can draw. The lore pages and
+Spoken's captions set font files, which lack the font objects' fallbacks, so where the client's
+file has no glyphs for the lore's script, `FontFor` (`Language.lua`) picks the font the client
+ships for it: `2002.TTF` for Korean, `ARKai_T.ttf` and `blei00d.TTF` for Chinese,
+`FRIZQT___CYR.TTF` for Cyrillic. A language that neither draws is not offered.
 
 A player who never chose reads their client's language the day it becomes ready;
 one who picked English keeps English. That is why the stored preference is absent
@@ -707,16 +709,15 @@ The consequence is that a character who has already explored the world will neve
 autoplay anything — the discoveries have all happened. `/spz discover [area]`
 simulates one, which is the only way to test this without rolling an alt.
 
-#### The spawn area, which is never announced
+#### The spawn area, which cannot be placed
 
-Where a character starts is the one discovery the client never reports: it is
-either already explored the moment the character is created, or announced while the
-intro cinematic is up, before any addon has registered an event. Either way a new
-orc stands in Valley of Trials in silence — which is the first thing this feature
+Where a character starts is announced a second or so into its first login, while the
+player's map is still the continent, so the discovery finds no lore and is dropped. A
+new orc stands in Valley of Trials in silence — which is the first thing this feature
 should ever have to say.
 
 So the spawn area is seeded two seconds after entering the world, guarded by one
-per-character boolean (`ZoneLoreCharDB.greeted`). This is a greeting rather than a
+per-character boolean (`SpokenZonesCharacter.greeted`). This is a greeting rather than a
 rule: it fires once per character and is the only place left that infers a first
 visit instead of being told about one. The greeting queues immediately and the
 queue holds it until the intro ends — but two seconds is not always before the intro
@@ -725,6 +726,12 @@ and keep it queued, to replay from the start once the intro is over. The greetin
 attempts are not spent while an intro plays: on clients that play it somewhere else,
 with a loading screen after it, every answer during it is wrong, and a player who
 watched it to the end used to arrive after the last attempt.
+
+The boolean is a saved variable, and saved variables get lost: a crash before logout,
+a wiped WTF folder, the 3.0 rename of the addon's folder. So the greeting also needs
+the character to be level 1 and standing in one of the six starting areas
+(`STARTING_AREAS` in `Autoplay.lua`). A character parked in Stormwind, or one that has
+left its valley, is never greeted, whatever the record says.
 
 The flag is set *after* the enabled check, so turning autoplay on later still
 greets rather than having silently spent its turn. `/spz forget` clears it.

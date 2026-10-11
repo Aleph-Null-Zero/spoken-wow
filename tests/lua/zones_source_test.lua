@@ -47,11 +47,21 @@ Expect("...on the player's channel", Z.source:GetChannel(), "Master")
 Expect("...SpokenZones's queue limit", Z.source.queueLimit, 3)
 Expect("...and its own gap", Z.source.interClipGap, 0.25)
 
+-- Durotar on Kalimdor and Orgrimmar in it, as Azeroth's Compendium nests them.
+local names = { [947] = "Azeroth", [1414] = "Kalimdor", [1411] = "Durotar", [1454] = "Orgrimmar" }
+local GetMapName = Z.GetMapName
+Z.GetMapName = function(_, id) return names[id] end
 local zone = Z:NewLoreSound(1411, nil)
 Expect("a zone clip keeps the frozen line id as its key", zone.key, "z:1411")
 Expect("...resolves the pack path", zone.path, [[Interface\AddOns\ZoneLoreAudio\Sounds\1411\zone.mp3]])
 Expect("...and the pack's duration", zone.length, 81.9)
-Expect("...header is the zone", zone.present.header, "Durotar")
+Expect("...headed by where the zone is, its continent, not its own name twice", zone.present.header, "Kalimdor")
+local packZones = _G.ZoneLoreAudioPacks.ZoneLoreAudio.zones
+for _, id in ipairs({ 1454, 1414, 947 }) do packZones[id] = { file = id .. "\\zone", len = 10 } end
+local function Header(id) return tostring(Z:NewLoreSound(id, nil).present.header) end
+Expect("a city is headed by the zone around it, a continent by the world, the world by nothing",
+    Header(1454) .. " " .. Header(1414) .. " " .. Header(947), "Durotar Azeroth nil")
+for _, id in ipairs({ 1454, 1414, 947 }) do packZones[id] = nil end
 Expect("...label is the zone too", zone.present.label, "Durotar")
 Expect("...portrait is the zone's icon, trimmed of its border", zone.present.portrait.kind .. ":" .. zone.present.portrait.texture
     .. ":" .. table.concat(zone.present.portrait.texCoord, ","), "texture:" .. [[Interface\AddOns\Spoken\Textures\Zones\Durotar]] .. ":0.08,0.92,0.08,0.92")
@@ -64,11 +74,20 @@ local sub = Z:NewLoreSound(1411, "valley of trials")
 Expect("a subzone clip keeps the frozen line id", sub.key, "s:1411:valley of trials")
 Expect("...header is the zone, label the subzone", sub.present.header .. " / " .. sub.present.label, "Durotar / Valley of Trials")
 Expect("no pack entry, no clip", Z:NewLoreSound(1426, nil), nil)
+Expect("a place with no picture sends none", zone.present.picture, nil)
+Z.Picture = function(_, mapID, key) if mapID == 1411 and not key then return "Pictures/1411", "Pictures/Mask3" end end
+local pictured = Z:NewLoreSound(1411, nil)
+Expect("...one with a picture sends it and its frayed edge, for a window to show",
+    pictured.present.picture and (pictured.present.picture.file .. " " .. pictured.present.picture.mask), "Pictures/1411 Pictures/Mask3")
+Z.Picture = nil
+Z.GetMapName = GetMapName
 
 ---------------------------------------------------------------- playing through the player
 env, Z = Boot(); Spoken = _G.Spoken
 local changed = 0
 Z:OnAudioChanged(function() changed = changed + 1 end)
+GetMapName = Z.GetMapName
+Z.GetMapName = function(_, id) return names[id] end
 Expect("PlayLore plays", Z:PlayLore(1411, nil), true)
 Expect("...through the player", Spoken:IsPlaying(), true)
 Expect("...on the player's channel", world.playedChannels[1], "Master")
@@ -80,12 +99,14 @@ Expect("the player's AUDIO_CHANGED reaches SpokenZones's own listeners", changed
 Expect("starting marks the area heard in the per-character record", Z:HasHeard(1411, nil), true)
 
 local F = env.PlayerFrame
-Expect("the player frame shows the zone", F.frame.container.name:GetText(), "Durotar")
--- Report only, as an icon in the corner. Reading the text is reached from the map, the
--- minimap menu and /spz; a button on the player that opened a window over the thing being
+Expect("the player frame shows where the zone is, over its name", F.frame.container.name:GetText(), "Kalimdor")
+Z.GetMapName = GetMapName
+-- Report only, as an icon among the header's controls. Reading the text is reached from the map,
+-- the minimap menu and /spz; a button on the player that opened a window over the thing being
 -- read was one way too many.
 Expect("...and no strip of buttons", F.frame.actions.shown, 0)
-Expect("...but Report in the corner", F.frame.actions.buttons[1].anchor.point, "TOPRIGHT")
+Expect("...but Report in the header after Skip", F.row and F.row[3] == F.frame.actions.buttons[1]
+    and F.frame.actions.buttons[1]:GetParent() == F.controls, true)
 
 env, Z = Boot(); Spoken = _G.Spoken
 Z:PlayLore(1411, nil)
@@ -265,19 +286,9 @@ _G.SpokenZonesAudioPacks, _G.ZoneLoreAudioData = nil, nil
 _G.ZoneLoreAudioPacks = savedPacks
 
 ---------------------------------------------------------------- the login greeting
--- The greeting is the one thing here that needs a memory: "have I greeted this character"
--- is not a question the client can answer. On a client that restores no saved variables --
--- the 1.60.1 beta writes both files every logout and reads neither back, for every addon --
--- that memory is always empty, and the greeting stops being a greeting: it narrates the
--- current zone at every login instead of once per character.
---
--- Asked by the question the greeting puts first, rather than by what ends up in the queue:
--- reaching GetPlayerMapID is exactly "the gate let me through", and stubbing it to nil ends
--- the attempt there without needing lore, audio or a map behind it.
--- Boots the greeting with GetPlayerMapID counting how often it is asked. Answering nil ends
--- each attempt on the next line, which is all these need: the question is whether the gate
--- let an attempt get this far, not what it would have narrated.
-local function BootGreeting(restored, level)
+-- Reaching GetPlayerMapID means the gate let the attempt through, and stubbing it to nil
+-- ends the attempt there.
+local function BootGreeting(level)
     stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     world.inCombat = false
@@ -286,7 +297,6 @@ local function BootGreeting(restored, level)
     env.Addon:Enable()
     _G.C_Timer.After = StubAfter
     local Z = stub.LoadZones(ZONES, NewZoneLore())
-    Z.savedVariablesRestored = restored
     local counter = { asked = 0 }
     Z.GetPlayerMapID = function() counter.asked = counter.asked + 1 end
     Z.GetLoreWithFallback = function() return nil, nil end
@@ -296,26 +306,13 @@ local function BootGreeting(restored, level)
     return counter
 end
 
--- One attempt: the first runs two seconds after setup.
-local function GreetingAsked(restored, level)
-    local counter = BootGreeting(restored, level)
-    stub.Advance(2)
-    _G.SpokenZonesCharacter = nil
-    return counter.asked > 0
-end
-
-Expect("a client that restored nothing is not greeted", GreetingAsked(false, 60), false)
--- The case the greeting exists for: a character standing in the valley it woke up in, which
--- the client never announces. Worth hearing once per login on a client that cannot remember.
-Expect("...unless the character is new", GreetingAsked(false, 1), true)
-Expect("a greeting runs as before once something was restored", GreetingAsked(true, 60), true)
 
 -- An intro that outlasts the greeting's attempts. On a client that plays it somewhere else,
 -- with a loading screen after, every attempt during it resolves nothing; a player who
 -- watched it to the end arrived after the last one and was greeted by nothing.
 local cinematic = true
 _G.InCinematic = function() return cinematic end
-local counter = BootGreeting(true, 1)
+local counter = BootGreeting(1)
 stub.Advance(60)
 Expect("the greeting does not ask where the player is during an intro", counter.asked, 0)
 cinematic = false

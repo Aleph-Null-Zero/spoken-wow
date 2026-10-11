@@ -5,9 +5,14 @@ the modern clients, shipped in the player since 2.2.0. Contributed by
 [shorley-gm](https://github.com/shorley-gm), written against 2.0.4 and ported
 onto 2.1.0 before it was merged.
 
-The player shows a round native still portrait, gold speaker name, narration
-title and narrow cast-style progress bar. There is no permanent button row.
-The dark rock background and metal trim use WoW artwork.
+The player shows a round native still portrait, the speaker name, the narration
+title and its words, with the progress line along their foot. Stop or Replay,
+Skip and Report are round buttons in the header, as in the DialogueUI window
+and the subtitles. Its Background setting draws it on parchment, the
+default, with dark words, or on the dark rock, with light words. The
+parchment is a band of the spellbook's page shipped with Spoken
+(`Textures/MinimalParchment.tga`); it, the rock and the metal trim are WoW
+artwork. The window fades in and out, and from one line to the next.
 
 Nothing is installed separately: it is part of the player's zip. Choose it as
 the narrator style on Spoken's settings page, in the welcome window, or with
@@ -23,12 +28,11 @@ flavors have not been visually verified.
 
 | Interaction | Action |
 |---|---|
-| Click portrait | Stop the line, or Replay it from the beginning |
-| Click narration title | Skip the line, as in the original player |
-| Click plus/minus button | Expand/collapse the waiting queue; the number beside it counts waiting lines |
-| Scroll expanded queue | Browse more than four waiting lines |
-| Click waiting line | Remove it from the queue |
-| Right-click portrait, speaker, title or panel | Playback menu and source actions, including Report/Stop Gossip |
+| Stop or Replay button | Stop the line, or Replay it from the beginning; "• (Stopped)" follows the title meanwhile |
+| Skip button | Skip the line |
+| Report button | Report a problem with the line, where its module offers it |
+| "• +N" after the title | How many lines wait behind this one |
+| Right-click portrait, speaker, title or panel | Playback menu and source actions |
 | Drag speaker name or panel | Move the unlocked player |
 | Hover collapsed player | Reveal the resize grip |
 | `/sp options` | Narrator style, scale, lock and the window's other settings |
@@ -55,8 +59,8 @@ not captures of the WoW client. Actual portrait appearance comes from the game.
 
 ## Implementation
 
-- `addons/Spoken/UI/MinimalPlayer.lua`: layout, menu, queue drawer,
-  progress and fades over the existing queue/actions services.
+- `addons/Spoken/UI/MinimalPlayer.lua`: layout, menu, progress and fades over
+  the existing queue/actions services.
 - `addons/Spoken/UI/StaticPortrait.lua`: native `SetPortraitTexture`
   snapshots captured while the speaker's unit token still exists.
 - Small integration changes in `addon.xml`, `API.lua`, `Core.lua`,

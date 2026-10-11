@@ -14,6 +14,8 @@ setfenv(1, SpokenEnv)
 -- it now stands beside.
 Actions = {}
 
+local function Clamp01(n) return math.max(0, math.min(1, tonumber(n) or 0)) end
+
 local ACTION_WIDTH = 70
 local ACTION_HEIGHT = 18
 -- Big enough to aim at and to read as a bug rather than a smudge.
@@ -50,9 +52,11 @@ function Actions:Build(frame)
 end
 
 local RING = [[Interface\AddOns\Spoken\Textures\SettingsButton]]
--- The Forever client's bronze, as its own frames wear it (MinimalPlayer's): the round buttons' rings
--- take it while Bronze Border is on. Every ring made, to tint again when the setting changes.
+-- The Forever client's bronze, as its own frames wear it: the round buttons' rings and the small
+-- window's metal take it while Bronze Border is on. Every ring made, to tint again when the setting
+-- changes.
 local BRONZE = Version.IsCamelot and { .95, .68, .35 } or nil
+Actions.BRONZE = BRONZE
 local rings = setmetatable({}, { __mode = "k" })
 
 local function TintRing(ring)
@@ -165,6 +169,268 @@ function Actions.SetPlayGlyph(button, state)
     button.state, button.playing = state, state == "stop"
 end
 
+--- Dims and disables `buttons` while the line at the head cannot be stopped. Returns whether it can.
+function Actions.SetPausable(buttons)
+    local pausable = SoundQueue:CanBePaused()
+    for _, button in ipairs(buttons) do
+        button:SetAlpha(pausable and 1 or .4)
+        if pausable then button:Enable() else button:Disable() end
+    end
+    return pausable
+end
+
+--- Skip: the round button with the play glyph against a bar, the usual "next" mark.
+function Actions.SkipButton(parent, name)
+    local skip = Actions.RoundButton(parent, 10, name)
+    Actions.Glyph(skip.glyph, "play")
+    skip.glyph:ClearAllPoints()
+    skip.glyph:SetPoint("CENTER", -2, 0)
+    skip.bar = skip:CreateTexture(nil, "ARTWORK")
+    skip.bar:SetSize(2, 9)
+    skip.bar:SetPoint("LEFT", skip.glyph, "RIGHT", 0, 0)
+    if skip.bar.SetColorTexture then skip.bar:SetColorTexture(1, 0.82, 0, 0.85) end
+    skip:SetScript("OnClick", function()
+        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
+        SoundQueue:Skip()
+    end)
+    skip:SetScript("OnEnter", function()
+        skip.glyph:SetAlpha(1)
+        GameTooltip:SetOwner(skip, "ANCHOR_TOP")
+        GameTooltip:SetText(L.BIND_SKIP)
+        GameTooltip:Show()
+    end)
+    return skip
+end
+
+--- Stop or Replay for the line at the head. `allowed()`, optional, says whether the window has
+--- a line to act on; `after()`, optional, runs once it has acted.
+function Actions.StopButton(parent, allowed, after)
+    local play = Actions.RoundButton(parent, 12)
+    play:SetScript("OnClick", function()
+        if (allowed and not allowed()) or not SoundQueue:CanBePaused() then return end
+        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
+        SoundQueue:TogglePauseQueue()
+        if after then after() end
+    end)
+    play:SetScript("OnEnter", function()
+        play.glyph:SetAlpha(1)
+        GameTooltip:SetOwner(play, "ANCHOR_TOP")
+        GameTooltip:SetText(SoundQueue:IsPaused() and L.REPLAY or L.STOP)
+        GameTooltip:Show()
+    end)
+    return play
+end
+
+--- A row of round buttons laid out left to right in `controls`, `gap` apart, which takes their size.
+function Actions.LayOutRow(controls, row, gap)
+    local x, tallest = 0, 1
+    for _, button in ipairs(row) do
+        button:ClearAllPoints()
+        button:SetPoint("LEFT", controls, "LEFT", x, 0)
+        x = x + button:GetWidth() + gap
+        tallest = math.max(tallest, button:GetHeight())
+    end
+    controls:SetSize(math.max(1, x - gap), tallest)
+end
+
+-- What follows a window's title: why the line is held, "• (Stopped)" while it is stopped and the
+-- lines waiting, "• +N", TAIL_GAP after it. One more fades the count in over TAIL_IN; Stopped fades in and
+-- out, and keeps its room until it has faded.
+local TAIL_GAP, TAIL_IN = 6, .25
+local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
+
+local Tail = {}
+
+--- The tail for the font strings the window made: `stopped`, its text already set, `count`, and
+--- `held` where the window says why a line has not started.
+function Actions.Tail(stopped, count, held)
+    local tail = { stopped = stopped, count = count, held = held, alpha = 0, want = false, parts = {} }
+    for key, fn in pairs(Tail) do tail[key] = fn end
+    return tail
+end
+
+--- Whether Stopped should show; Step fades it in or out.
+function Tail:SetStopped(stopped)
+    self.want = stopped and true or false
+end
+
+--- Why the line is held back, "• (in combat)", or nil once it may play. A held line with no
+--- reason looks exactly like narration that failed.
+function Tail:SetHeld(reason)
+    if not self.held or reason == self.reason then return end
+    self.reason = reason
+    self.held:SetText(reason and "• (" .. reason .. ")" or "")
+end
+
+--- `waiting` lines behind the one playing: the count says it, fading in when it grew.
+function Tail:SetCount(waiting)
+    if waiting ~= self.counted then
+        if waiting > (self.counted or 0) then self.fade = 0 end
+        self.counted = waiting
+        self.count:SetText(waiting > 0 and "• +" .. waiting or "")
+    end
+    self.parts = {}
+    if self.held then
+        self.held:SetShown(self.reason ~= nil)
+        if self.reason then table.insert(self.parts, self.held) end
+    end
+    local stoppedShown = self.want or self.alpha > 0
+    self.stopped:SetShown(stoppedShown)
+    if stoppedShown then table.insert(self.parts, self.stopped) end
+    self.count:SetShown(waiting > 0)
+    if waiting > 0 then table.insert(self.parts, self.count) end
+end
+
+function Tail:Room()
+    local room = 0
+    for _, part in ipairs(self.parts) do room = room + (part:GetStringWidth() or 0) + TAIL_GAP end
+    return room
+end
+
+--- Each part after the last, from `x` along `text`, where the title's words end.
+function Tail:Place(text, x)
+    for _, part in ipairs(self.parts) do
+        part:ClearAllPoints()
+        part:SetPoint("LEFT", text, "LEFT", x + TAIL_GAP, 0)
+        x = x + TAIL_GAP + (part:GetStringWidth() or 0)
+    end
+end
+
+function Tail:Paint()
+    self.count:SetAlpha(EaseOut(self.fade and math.min(1, self.fade / TAIL_IN) or 1))
+    self.stopped:SetAlpha(EaseOut(self.alpha))
+end
+
+--- The fades, `elapsed` on. True when Stopped has faded out and its room is to be given back.
+function Tail:Step(elapsed)
+    if self.fade then
+        self.fade = self.fade + elapsed
+        self:Paint()
+        if self.fade >= TAIL_IN then self.fade = nil end
+    end
+    local want = self.want and 1 or 0
+    if self.alpha == want then return false end
+    local step = elapsed / TAIL_IN
+    self.alpha = want > self.alpha and math.min(1, self.alpha + step) or math.max(0, self.alpha - step)
+    self:Paint()
+    return self.alpha == 0
+end
+
+--- The fades at their ends at once.
+function Tail:Finish()
+    self.fade = nil
+    self.alpha = self.want and 1 or 0
+end
+
+-- The progress line: Spoken Subtitles' layout and spark, framed as the game frames a status bar
+-- (UIWidgetTemplateStatusBar). Without that art, Spoken Subtitles' own hairline.
+local PROGRESS_HEIGHT = 7
+local PROGRESS_LINE = [[Interface\AddOns\Spoken\Textures\SubtitleLine]]
+local SPARK = [[Interface\CastingBar\UI-CastingBar-Spark]]
+-- Called through the global environment: the client looks up Vector2DMixin in the caller's
+-- environment, and from SpokenEnv it fails with "unable to find mixin or metatable".
+local AtlasInfo = setfenv(function(name)
+    return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) or nil
+end, _G)
+
+--- Whether the client has the atlas `name`; the legacy clients have none.
+function Actions.HasAtlas(name)
+    return AtlasInfo(name) ~= nil
+end
+
+local function FrameProgress(bar, left, right, middle, yellow)
+    local track, fill = bar.track, bar.fill
+    -- The fill 8 inside the border's ends and 2 short of the background's, the border's own 31
+    -- rows scaled to PROGRESS_HEIGHT.
+    local k = PROGRESS_HEIGHT / (middle.height > 0 and middle.height or 31)
+    track:SetHeight(PROGRESS_HEIGHT)
+    local function Piece(atlas, layer, width)
+        local texture = track:CreateTexture(nil, layer)
+        texture:SetAtlas(atlas)
+        texture:SetHeight(PROGRESS_HEIGHT)
+        if width then texture:SetWidth(width * k) end
+        return texture
+    end
+    local l = Piece("widgetstatusbar-borderleft", "OVERLAY", left.width)
+    local r = Piece("widgetstatusbar-borderright", "OVERLAY", right.width)
+    local m = Piece("widgetstatusbar-bordercenter", "OVERLAY")
+    l:SetPoint("LEFT", track, "LEFT", 0, 0)
+    r:SetPoint("RIGHT", track, "RIGHT", 0, 0)
+    m:SetPoint("LEFT", l, "RIGHT", 0, 0)
+    m:SetPoint("RIGHT", r, "LEFT", 0, 0)
+    bar.border = { l, m, r }
+    bar.room = 8 * k
+    local back = track:CreateTexture(nil, "BACKGROUND")
+    if AtlasInfo("widgetstatusbar-bgcenter") then back:SetAtlas("widgetstatusbar-bgcenter")
+    elseif back.SetColorTexture then back:SetColorTexture(0, 0, 0, 0.6) end
+    back:SetPoint("TOPLEFT", track, "TOPLEFT", bar.room - 2 * k, -2 * k)
+    back:SetPoint("BOTTOMRIGHT", track, "BOTTOMRIGHT", -(bar.room - 2 * k), 2 * k)
+    fill:SetAtlas("widgetstatusbar-fill-yellow")
+    fill:SetHeight(math.min(tonumber(yellow.height) or 15, middle.height - 4) * k)
+    bar.height = PROGRESS_HEIGHT
+end
+
+--- A progress line on `parent`: `track`, the frame to size and place; `fill`, running along it
+--- `room` in from each end; `spark` at the fill's end; `height`, how tall it is drawn. Art that
+--- fails to build leaves the hairline, and its error goes to the error handler.
+function Actions.ProgressBar(parent)
+    local track = CreateFrame("Frame", nil, parent)
+    local bar = { track = track, fill = track:CreateTexture(nil, "ARTWORK"), room = 0 }
+    local left, right, middle = AtlasInfo("widgetstatusbar-borderleft"), AtlasInfo("widgetstatusbar-borderright"),
+        AtlasInfo("widgetstatusbar-bordercenter")
+    local yellow = AtlasInfo("widgetstatusbar-fill-yellow")
+    local framed = left and right and middle and yellow and bar.fill.SetAtlas
+        and tonumber(middle.height) and tonumber(left.width) and tonumber(right.width) and true or false
+    if framed then
+        local ok, err = pcall(FrameProgress, bar, left, right, middle, yellow)
+        if not ok then
+            framed = false
+            if geterrorhandler then geterrorhandler()(err) end
+        end
+    end
+    if not framed then
+        bar.room = 0
+        local back = track:CreateTexture(nil, "BACKGROUND")
+        back:SetAllPoints()
+        if back.SetColorTexture then back:SetColorTexture(0, 0, 0, 0.5) end
+        track:SetHeight(1.5)
+        bar.fill:SetTexture(PROGRESS_LINE)
+        bar.fill:SetHeight(1.5)
+        bar.height = 2
+    end
+    bar.fill:SetPoint("LEFT", track, "LEFT", bar.room, 0)
+    local spark = track:CreateTexture(nil, "OVERLAY", nil, 1)
+    spark:SetTexture(SPARK)
+    if spark.SetBlendMode then spark:SetBlendMode("ADD") end
+    -- Taller than the bar, so its glow reaches past the frame.
+    spark:SetSize(12, framed and bar.height + 9 or 14)
+    spark:SetPoint("CENTER", bar.fill, "RIGHT")
+    bar.spark = spark
+    return bar
+end
+
+--- Fills `share` (0 to 1) of a ProgressBar.
+function Actions.SetProgress(bar, share)
+    local room = math.max(0, (bar.track:GetWidth() or 0) - 2 * bar.room)
+    bar.fill:SetWidth(math.max(0.01, room * Clamp01(share)))
+end
+
+--- A ProgressBar's frame in `r, g, b` (1, 1, 1 for its own colours); the hairline, which has
+--- none, takes it on its fill.
+function Actions.TintProgress(bar, r, g, b)
+    for _, part in ipairs(bar.border or { bar.fill }) do part:SetVertexColor(r, g, b) end
+    bar.tint = { r, g, b }
+end
+
+--- How far into `clip` its voice is, in seconds, for its progress line: `seconds`, what was shown
+--- last, kept while it is stopped.
+function Actions.Elapsed(clip, seconds)
+    local duration = tonumber(clip.length) or 0
+    if clip.nextSoundTimer and duration > 0 then return SoundQueue:VoiceElapsed(clip) end
+    if not SoundQueue:IsPaused() then return 0 end
+    return seconds
+end
+
 local PORTRAIT_MASK = [[Interface\CharacterFrame\TempPortraitAlphaMask]]
 local VIGNETTE = [[Interface\AddOns\Spoken\Textures\RoundVignette]]
 
@@ -196,8 +462,20 @@ function Actions.RoundPicture(button, icon)
     button.vignette = vignette
 end
 
---- The round Play and Report buttons, as feature addons ask for them (Spoken:CreateRoundButton),
---- and "icon", with `icon` in the ring, cut round to sit inside it.
+-- Greyed while disabled, as a button with nothing to play or skip.
+local function Greys(button)
+    local function Paint(self, on)
+        for _, texture in ipairs({ self.glyph, self.bar }) do
+            if texture.SetDesaturated then texture:SetDesaturated(not on) end
+            texture:SetAlpha(on and 0.85 or 0.4)
+        end
+    end
+    button:HookScript("OnDisable", function(self) Paint(self, false) end)
+    button:HookScript("OnEnable", function(self) Paint(self, true) end)
+end
+
+--- The round Play, Skip and Report buttons, as feature addons ask for them
+--- (Spoken:CreateRoundButton), and "icon", with `icon` in the ring, cut round to sit inside it.
 function Actions.NewRound(parent, kind, name, icon)
     if kind == "play" then
         local button = Actions.RoundButton(parent, 12, name)
@@ -205,15 +483,12 @@ function Actions.NewRound(parent, kind, name, icon)
         --- "play", "stop" or "replay".
         function button:SetState(state) Actions.SetPlayGlyph(self, state) end
         function button:SetPlaying(playing) Actions.SetPlayGlyph(self, playing and "stop" or "play") end
-        -- Greyed, as a button with nothing to play.
-        button:HookScript("OnDisable", function(self)
-            if self.glyph.SetDesaturated then self.glyph:SetDesaturated(true) end
-            self.glyph:SetAlpha(0.4)
-        end)
-        button:HookScript("OnEnable", function(self)
-            if self.glyph.SetDesaturated then self.glyph:SetDesaturated(false) end
-            self.glyph:SetAlpha(0.85)
-        end)
+        Greys(button)
+        return button
+    end
+    if kind == "skip" then
+        local button = Actions.SkipButton(parent, name)
+        Greys(button)
         return button
     end
     local button = Actions.RoundButton(parent, nil, name)
@@ -363,4 +638,124 @@ function Actions:Configure(frame, clip)
     end
     frame.actions.shown = shown
     return shown
+end
+
+--- The actions for `clip` in `controls`, after `first` (its Stop or Replay and Skip) and as large
+--- and as strong. An action anchored to the header (Stop Gossip) is left off: Skip does its work.
+--- Returns the buttons shown, in order.
+function Actions:HeaderControls(frame, controls, first, clip)
+    self:Configure(frame, clip)
+    local row = {}
+    for _, button in ipairs(first) do table.insert(row, button) end
+    for _, button in ipairs(frame.actions.buttons) do
+        if button.action.anchor == "header" then
+            button:Hide()
+        else
+            button:SetParent(controls)
+            button:SetFrameLevel(controls:GetFrameLevel() + 1)
+            if button.showsIcon then button:SetSize(first[1]:GetWidth(), first[1]:GetHeight()) end
+            button:SetAlpha(1)
+            if button:IsShown() then table.insert(row, button) end
+        end
+    end
+    return row
+end
+
+--- Whether a DialogueUI dialog (its quest window or its book view) is open with the windows not
+--- put over it (Show Spoken Over DialogueUI off): DialogueUI then hides the interface, and a window
+--- left showing would leave its 3D portrait over the dialog, which takes no alpha from it.
+function Actions.DialogCovers()
+    if Addon.playerHost then return false end
+    for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
+        local dialog = _G[name]
+        if type(dialog) == "table" and dialog.IsShown and dialog:IsShown() then return true end
+    end
+    return false
+end
+
+--- Calls `fn` a frame after a DialogueUI dialog opens or closes, once DialogueUI's bridge has put
+--- the windows over it or not.
+function Actions.WatchDialogs(fn)
+    local function Later()
+        if C_Timer and C_Timer.After then C_Timer.After(0, fn) else fn() end
+    end
+    for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
+        local dialog = _G[name]
+        if type(dialog) == "table" and dialog.GetEffectiveScale then
+            local watch = CreateFrame("Frame", nil, dialog)
+            watch:SetScript("OnShow", Later)
+            watch:SetScript("OnHide", Later)
+        end
+    end
+end
+
+-- A window fading in, and out: the Talking Head's words take a quarter second to show.
+local FADE_IN, FADE_OUT = .25, .4
+
+local Fader = {}
+
+--- Shows and hides `frame` by fading it (Fader:Set), with the models `models()` lists: a model
+--- takes no alpha from its parent. While it fades out the captions keep the words it had;
+--- `faded()` is called once it has gone.
+function Actions.Fader(frame, models, faded)
+    local fader = { frame = frame, models = models, faded = faded, alpha = 0, want = false }
+    for key, fn in pairs(Fader) do fader[key] = fn end
+    fader.driver = CreateFrame("Frame")
+    fader.driver:Hide()
+    fader.driver:SetScript("OnUpdate", function(_, elapsed) fader:Step(elapsed) end)
+    return fader
+end
+
+function Fader:Paint()
+    local a = self.alpha
+    local eased = a * a * (3 - 2 * a)
+    self.frame:SetAlpha(eased)
+    for _, model in ipairs(self.models and self.models() or {}) do
+        if model.SetAlpha then model:SetAlpha(eased) end
+    end
+end
+
+--- Fades the frame in or out; `immediate` shows or hides it at once.
+function Fader:Set(shown, immediate)
+    shown = shown and true or false
+    if not self.frame:IsShown() then self.alpha = 0 end
+    if shown then
+        self:Release()
+        self.frame:Show()
+    elseif self.frame:IsShown() and not immediate and not self.holding and Transcript.Hold then
+        -- The words stay for the fade; a line that comes meanwhile releases them.
+        Transcript:Hold()
+        self.holding = true
+    end
+    self.want = shown
+    if immediate then self.alpha = shown and 1 or 0 end
+    self:Step(0)
+end
+
+function Fader:Release()
+    if not self.holding then return end
+    self.holding = nil
+    Transcript:Release()
+end
+
+--- Whether the frame is fading out, or out of sight.
+function Fader:Leaving()
+    return not self.want
+end
+
+function Fader:Step(elapsed)
+    local target = self.want and 1 or 0
+    if self.alpha < target then
+        self.alpha = math.min(target, self.alpha + elapsed / FADE_IN)
+    elseif self.alpha > target then
+        self.alpha = math.max(target, self.alpha - elapsed / FADE_OUT)
+    end
+    self:Paint()
+    if self.alpha ~= target then self.driver:Show(); return end
+    self.driver:Hide()
+    if not self.want and self.frame:IsShown() then
+        self.frame:Hide()
+        self:Release()
+        if self.faded then self.faded() end
+    end
 end
