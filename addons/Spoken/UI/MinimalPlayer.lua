@@ -149,7 +149,6 @@ function MinimalPlayer:Initialize(original)
     end)
     self.header:SetScript("OnLeave", function() self:HideTooltip() end)
 
-    -- Stop or Replay, Skip, then Report, at the header's right.
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(1)
     self.controls:SetFrameLevel(content:GetFrameLevel() + 3)
@@ -417,8 +416,7 @@ function MinimalPlayer:UpdateControls()
     end
 end
 
---- Puts why the line is held, "• (Stopped)" and the lines waiting, "• +N", after the title. The title is cut short,
---- not these.
+--- Puts the tail after the title: the title is cut short, not it.
 function MinimalPlayer:Count(waiting)
     local tail = self.tail
     tail:SetCount(waiting)
