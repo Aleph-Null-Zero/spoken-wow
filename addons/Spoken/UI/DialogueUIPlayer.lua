@@ -726,11 +726,7 @@ function Skin:UpdateControls(relayout)
     Addon:ClipFont(self.title.text, self.clip)
     self.shownStopped = paused
     self:Count(Waiting())
-    local pausable = SoundQueue:CanBePaused()
-    for _, button in ipairs(self.buttons) do
-        button:SetAlpha(pausable and 1 or .4)
-        if pausable then button:Enable() else button:Disable() end
-    end
+    Actions.SetPausable(self.buttons)
     if relayout then self:LayoutControls() end
 end
 

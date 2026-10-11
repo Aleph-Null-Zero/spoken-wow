@@ -9,6 +9,7 @@ local GAP = 4
 local EXPANDED_LINES = 8
 local BUTTON_SIZE = 14
 local HIGHLIGHT = "|cffffd100"
+Transcript.HIGHLIGHT = HIGHLIGHT
 local UTF8_CHAR = "[%z\1-\127\194-\244][\128-\191]*"
 local function Clamp(value, low, high)
     return math.max(low, math.min(high, value))

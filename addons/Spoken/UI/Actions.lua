@@ -167,6 +167,16 @@ function Actions.SetPlayGlyph(button, state)
     button.state, button.playing = state, state == "stop"
 end
 
+--- Dims and disables `buttons` while the line at the head cannot be stopped. Returns whether it can.
+function Actions.SetPausable(buttons)
+    local pausable = SoundQueue:CanBePaused()
+    for _, button in ipairs(buttons) do
+        button:SetAlpha(pausable and 1 or .4)
+        if pausable then button:Enable() else button:Disable() end
+    end
+    return pausable
+end
+
 --- Skip: the round button with the play glyph against a bar, the usual "next" mark.
 function Actions.SkipButton(parent, name)
     local skip = Actions.RoundButton(parent, 10, name)

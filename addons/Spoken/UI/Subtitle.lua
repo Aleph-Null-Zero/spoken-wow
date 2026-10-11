@@ -85,7 +85,7 @@ end
 
 local Prefix = Transcript.Prefix
 
-local HIGHLIGHT = "|cffffd100"
+local HIGHLIGHT = Transcript.HIGHLIGHT
 -- `text` with its characters `from` (after that many) through `to` lit.
 local function Light(text, from, to)
     local head = Prefix(text, math.max(0, from))
@@ -665,9 +665,8 @@ end
 --- is ever on screen. `lit` is the page's word to light, passed only while the words show whole:
 --- an estimated word timing typed in front of the reader shows every miss.
 function Subtitle:Reveal(count, lit)
-    local key = count .. ":" .. (lit or 0)
-    if key == self.revealed then return end
-    self.revealed = key
+    if count == self.revealed and (lit or 0) == self.revealedLit then return end
+    self.revealed, self.revealedLit = count, lit or 0
     local from, to
     if lit then from, to = self:CharsSpan(lit) end
     local offset = 0
@@ -974,11 +973,7 @@ end
 
 function Subtitle:UpdatePause()
     Actions.SetPlayGlyph(self.pause, Actions.HeadState())
-    local pausable = SoundQueue:CanBePaused()
-    for _, button in ipairs({ self.pause, self.skip }) do
-        button:SetAlpha(pausable and 1 or .4)
-        if pausable then button:Enable() else button:Disable() end
-    end
+    Actions.SetPausable({ self.pause, self.skip })
 end
 
 -- Locked, the subtitle lets clicks through to the world but still knows the pointer is over
