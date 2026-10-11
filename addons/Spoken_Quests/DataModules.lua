@@ -746,10 +746,9 @@ local function CreatureSex(soundData)
     return id, soundData.npcSex
 end
 
---- The file a line is in for the sex its NPC is drawn as, where the NPC is split by sex: one
---- creature id drawn as a man or a woman speaks each line in both voices.
+--- The file a line is in for the sex its NPC is drawn as, for an NPC split by sex.
 ---@param soundData SoundData
----@param line string The line's own file, as getFileNameForEvent names it
+---@param line string The line's own file
 ---@return string|nil
 function DataModules:GetFileForSex(soundData, line)
     local id, sex = CreatureSex(soundData)
@@ -772,9 +771,8 @@ function DataModules:GetFileForSex(soundData, line)
     end
 end
 
---- Whether the NPC is drawn as the sex its voice is not: a creature every pack answers as one
---- sex, shown as the other, which no pack has split yet. Its line still plays, in the voice it
---- was answered with, and the site has to hear about it to give the other sex a voice.
+--- Whether an unsplit NPC is drawn as the sex its voice is not. Its line still plays, and the
+--- site has to hear about it to give the other sex a voice.
 ---@param soundData SoundData
 ---@return boolean
 function DataModules:IsOtherSex(soundData)
