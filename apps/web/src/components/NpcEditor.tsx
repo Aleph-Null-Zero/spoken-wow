@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import Pagination from "@/components/Pagination";
+import ClientSelect from "@/components/ClientSelect";
+import { clientFilterOf, DEFAULT_CLIENT_FILTER, matchesClient, type ClientFamily, type ClientFilter } from "@/lib/contributions/client";
 import { flavorOptionsFor, summaryFromResolution } from "@/lib/contributions/speaker";
 import type { Roster, RosterData } from "@/lib/voices/roster";
 import type { NpcSummary } from "@/lib/contributions/triage";
@@ -164,11 +166,27 @@ function NameCell({
   );
 }
 
+/**
+ * Where an NPC's lines can be looked up: both explorers, and both contribution sections. The
+ * contribution links carry this page's client filter, since the two pages read it the same way.
+ */
+function lookups(npcId: number, client: ClientFilter): { label: string; path: string; where: string }[] {
+  const search = `q=${npcId}&filter=npc`;
+  const contributed = client === DEFAULT_CLIENT_FILTER ? search : `${search}&client=${client}`;
+  return [
+    { label: "Q", path: `/quests?${search}`, where: "the quests explorer" },
+    { label: "G", path: `/gossip?${search}`, where: "the gossip explorer" },
+    { label: "CQ", path: `/contributions/quests?${contributed}`, where: "quest contributions" },
+    { label: "CG", path: `/contributions/gossip?${contributed}`, where: "gossip contributions" },
+  ];
+}
+
 export default function NpcEditor({
   initial,
   roster: rosterData,
 }: {
-  initial: NpcSummary[];
+  /** Each with the client family whose guess filed it, null for one only the extract names. */
+  initial: (NpcSummary & { client: ClientFamily | null })[];
   /** The roster, for SpeakerCell's pickers, and grown by their "New" entries. */
   roster: RosterData;
 }) {
@@ -185,6 +203,8 @@ export default function NpcEditor({
   const provenance = isProvenance(speakerParam) ? speakerParam : undefined;
   const progressParam = params.get("progress");
   const progress = isProgress(progressParam) ? progressParam : undefined;
+  // Absent is the default bin, so "all" is written out.
+  const client = clientFilterOf(params.get("client"));
   const sortValue = params.get("sort");
   const sort = useMemo(() => sortOf(sortValue), [sortValue]);
   const setParam = useCallback(
@@ -274,6 +294,7 @@ export default function NpcEditor({
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return initial
+      .filter((npc) => matchesClient(npc.client, client))
       .map((npc) => saved[key(npc.npcKind, npc.npcId)] ?? npc)
       .filter(
         (npc) =>
@@ -282,7 +303,7 @@ export default function NpcEditor({
       .filter((npc) => !provenance || npc.provenance === provenance)
       .filter((npc) => !progress || progressOf(npc, roster) === progress)
       .sort(compare(sort));
-  }, [initial, saved, query, provenance, progress, sort, roster]);
+  }, [initial, client, saved, query, provenance, progress, sort, roster]);
 
   // A page at a time: every row is a SpeakerCell with its own selects, and all of them at once
   // made the first load and every tick slow.
@@ -336,6 +357,10 @@ export default function NpcEditor({
         <span className="text-muted-foreground text-xs">
           {rows.length} of {initial.length}
         </span>
+        <ClientSelect
+          value={client}
+          onChange={(next) => setParam("client", next === DEFAULT_CLIENT_FILTER ? undefined : next)}
+        />
       </div>
 
       {rows.length > 0 ? (
@@ -471,15 +496,19 @@ export default function NpcEditor({
                       <p className="text-destructive mt-1">That didn&apos;t go through -- try again.</p>
                     ) : null}
                   </td>
-                  <td className="text-right">
-                    <a
-                      href={localeHref(lang, `/quests?q=${npc.npcId}&filter=npc`)}
-                      title="Find this NPC's lines in the quests explorer"
-                      aria-label={`Find ${npc.npcName ?? npc.npcId} in the quests explorer`}
-                      className="text-muted-foreground hover:text-foreground inline-flex p-1"
-                    >
-                      <SearchIcon className="size-4" />
-                    </a>
+                  <td className="text-right whitespace-nowrap">
+                    {lookups(npc.npcId, client).map(({ label, path, where }) => (
+                      <a
+                        key={label}
+                        href={localeHref(lang, path)}
+                        title={`Find this NPC's lines in ${where}`}
+                        aria-label={`Find ${npc.npcName ?? npc.npcId} in ${where}`}
+                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 p-1 text-xs"
+                      >
+                        <SearchIcon className="size-3.5" />
+                        {label}
+                      </a>
+                    ))}
                   </td>
                 </tr>
               );

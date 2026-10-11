@@ -83,16 +83,9 @@ local function Words(text)
     return count
 end
 
-local function Prefix(text, count)
-    local parts = {}
-    for char in text:gmatch(UTF8_CHAR) do
-        if #parts >= count then break end
-        parts[#parts + 1] = char
-    end
-    return table.concat(parts)
-end
+local Prefix = Transcript.Prefix
 
-local HIGHLIGHT = "|cffffd100"
+local HIGHLIGHT = Transcript.HIGHLIGHT
 -- `text` with its characters `from` (after that many) through `to` lit.
 local function Light(text, from, to)
     local head = Prefix(text, math.max(0, from))
@@ -420,13 +413,15 @@ function Subtitle:NameShown()
 end
 
 function Subtitle:RowHeight()
-    if not self:NameShown() then return 0 end
+    if not self:NameShown() then return self.shownPaused and (self.pausedLabel:GetStringHeight() or 0) or 0 end
     return math.max(Pictured() and PICTURE or 0, self.title:GetStringHeight() or 0)
 end
 
 --- The row's visible width, so it centres on what shows. The title is cut to keep it within WIDTH.
 function Subtitle:RowWidth(paused)
-    if not self:NameShown() then return 0 end
+    -- Show Name off still shows Stopped: Wanted keeps a stopped line on screen to say why it is
+    -- not being read.
+    if not self:NameShown() then return paused and (self.pausedLabel:GetStringWidth() or 0) or 0 end
     local start = (Pictured() and PICTURE + PICTURE_GAP or 0) + (self.title:GetStringWidth() or 0)
     -- The waiting count's room, taken first so a long title is cut rather than the count.
     local more = 0
@@ -448,8 +443,9 @@ end
 function Subtitle:PlaceRow(left)
     left = math.floor(left + .5)
     local textY = -TOP_PAD - math.floor((self:RowHeight() - (self.title:GetStringHeight() or 0)) / 2)
-    local pictured = Pictured()
-    self.picture:SetShown(pictured)
+    local named, pictured = self:NameShown(), Pictured()
+    self.picture:SetShown(pictured and named)
+    for _, part in ipairs({ self.title, self.dot, self.label }) do part:SetShown(named) end
     self.picture:ClearAllPoints()
     self.picture:SetPoint("TOPLEFT", self.frame, "TOP", left, -TOP_PAD)
     self.title:ClearAllPoints()
@@ -459,9 +455,13 @@ function Subtitle:PlaceRow(left)
     self.label:ClearAllPoints()
     self.label:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
     self.pausedLabel:ClearAllPoints()
-    self.pausedLabel:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
+    if named then
+        self.pausedLabel:SetPoint("LEFT", self.dot, "RIGHT", LABEL_GAP, 0)
+    else
+        self.pausedLabel:SetPoint("TOPLEFT", self.frame, "TOP", left, textY)
+    end
     local last = self.shownPaused and self.pausedLabel or (self.labelText and self.label or self.title)
-    local shown = (self.waiting or 0) > 0
+    local shown = named and (self.waiting or 0) > 0
     self.moreDot:SetShown(shown)
     self.more:SetShown(shown)
     self.moreDot:ClearAllPoints()
@@ -518,12 +518,15 @@ end
 -- the left of it: the text fills in without re-centring or wobbling as it grows.
 function Subtitle:Layout(text)
     local path, size = Measure(self)
+    -- Measure puts the words' face back; a clip's own goes over it, or lines are cut to the
+    -- wrong width.
+    Addon:ClipFont(self.measure, self.clip)
     self.measure:SetText("Ag")
     local lineHeight = self.measure:GetStringHeight()
     local named = self:NameShown()
-    self.nameRow:SetShown(named)
+    self.nameRow:SetShown(named or self.shownPaused)
     local titleHeight, widest = self:RowHeight(), self:RowWidth(self.shownPaused)
-    local titleGap = named and TITLE_GAP or 0
+    local titleGap = titleHeight > 0 and TITLE_GAP or 0
     self.rows = {}
     for index, wrapped in ipairs(self:Wrap(text)) do
         local width = self:Width(wrapped)
@@ -571,6 +574,13 @@ function Subtitle:Layout(text)
         self.wordEnds[n], n = finish, n + 1
     end
     self.revealed = nil
+end
+
+--- The page on screen laid out again where it has scrolled to.
+function Subtitle:Relayout()
+    local top, target = self.rollTop, self.rollTarget
+    self:Layout(self.pages[self.page].text)
+    self.rollTop, self.rollTarget = top, target
 end
 
 --- Line by line, the row leaving at the top fades out as it glides up and the one coming in fades
@@ -655,9 +665,8 @@ end
 --- is ever on screen. `lit` is the page's word to light, passed only while the words show whole:
 --- an estimated word timing typed in front of the reader shows every miss.
 function Subtitle:Reveal(count, lit)
-    local key = count .. ":" .. (lit or 0)
-    if key == self.revealed then return end
-    self.revealed = key
+    if count == self.revealed and (lit or 0) == self.revealedLit then return end
+    self.revealed, self.revealedLit = count, lit or 0
     local from, to
     if lit then from, to = self:CharsSpan(lit) end
     local offset = 0
@@ -755,7 +764,8 @@ function Subtitle:Render()
     local paused = SoundQueue:IsPaused() and not self.sample
     if paused ~= self.shownPaused then
         self.shownPaused = paused
-        self:Fit()
+        -- With Show Name off the row is there only while stopped, so the words move for it.
+        if self:NameShown() or not self.page then self:Fit() else self:Relayout() end
     end
     local elapsed = self.sample and 0 or Transcript:AudioElapsed()
     local index = 1
@@ -919,20 +929,8 @@ function Subtitle:BuildControls()
     controls:Hide()
     self.controls, self.controlsAlpha = controls, 0
 
-    local pause = RoundButton(controls, 12)
+    local pause = Actions.StopButton(controls, nil, function() self:UpdatePause() end)
     pause:SetPoint("LEFT", controls, "LEFT", 0, 0)
-    pause:SetScript("OnClick", function()
-        if not SoundQueue:CanBePaused() then return end
-        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-        SoundQueue:TogglePauseQueue()
-        self:UpdatePause()
-    end)
-    pause:SetScript("OnEnter", function()
-        pause.glyph:SetAlpha(1)
-        GameTooltip:SetOwner(pause, "ANCHOR_TOP")
-        GameTooltip:SetText(SoundQueue:IsPaused() and L.REPLAY or L.STOP)
-        GameTooltip:Show()
-    end)
     self.pause = pause
     self:UpdatePause()
 
@@ -963,11 +961,7 @@ end
 
 function Subtitle:UpdatePause()
     Actions.SetPlayGlyph(self.pause, Actions.HeadState())
-    local pausable = SoundQueue:CanBePaused()
-    for _, button in ipairs({ self.pause, self.skip }) do
-        button:SetAlpha(pausable and 1 or .4)
-        if pausable then button:Enable() else button:Disable() end
-    end
+    Actions.SetPausable({ self.pause, self.skip })
 end
 
 -- Locked, the subtitle lets clicks through to the world but still knows the pointer is over

@@ -682,16 +682,12 @@ Q:RemoveAllSoundsFromQueue()
 Check(#E.Callbacks.errors==0,table.concat(E.Callbacks.errors,'\n'))
 
 -- Exercise the actual quest adapter and log-text helper, including reward text.
--- The dialogue core Spoken carries, then the quests module on top of it.
-dofile(addons .. 'Spoken/Dialogue/Environment.lua')
 dofile(addons .. 'Spoken_Quests/Environment.lua')
 -- Player.lua names its report action at load time, so it needs the string table.
 dofile(addons .. 'Spoken_Quests/Strings.lua')
 VoiceOver.Version=E.Version
-dofile(addons .. 'Spoken/Dialogue/Enums.lua')
-dofile(addons .. 'Spoken/Dialogue/Contribute.lua')
--- The speaker's portrait and the Report action Player.lua hands the player.
-dofile(addons .. 'Spoken/Dialogue/Present.lua')
+dofile(addons .. 'Spoken_Quests/Enums.lua')
+dofile(addons .. 'Spoken_Quests/Contribute.lua')
 dofile(addons .. 'Spoken_Quests/Player.lua')
 local V=VoiceOver
 C_QuestLog={GetLogIndexForQuestID=function(id) return id==33 and 7 or nil end}
@@ -773,68 +769,6 @@ do
     cfg.SubtitleSentences=1; S:Update(); Play(.1)
     Check(#S.rows==1 and S.pageSentences==1,'set to one, the line on screen is paged again a sentence at a time')
     cfg.SubtitleSentences=3; S:Update()
-    Q:RemoveAllSoundsFromQueue(); Play(.6)
-    E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
-end
--- The subtitle's Auto-Scroll, line by line.
-do
-    local style=E.Addon.db.profile.Frame.Style
-    E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
-    local before,lines=cfg.SubtitleScroll,cfg.Lines
-    cfg.SubtitleScroll='line'; cfg.Lines=2
-    local rolling=('A long line of words that keeps on going for a while. '):rep(8)
-    Q:RemoveAllSoundsFromQueue(); Play(1)
-    source:Enqueue(Clip('roll',rolling,40)); Play(1)
-    Check(#S.rows>2 and S.shownRows==2 and #S.pages==1,'line by line the whole line is one page, two of its lines on show')
-    local shown=0
-    for _,line in ipairs(S.lines) do if line:IsShown() then shown=shown+1 end end
-    Check(shown==2 and S.rollTop==1,'...from its first line')
-    Play(20)
-    Check(S.rollTarget>1 and S.rollTop==S.rollTarget,'...gliding on to keep the line being read at the foot')
-    local _,_,_,_,clipY=S.words:GetPoint(1)
-    Check(math.abs((S.wordsTop+clipY)-S.lineStep)<1e-6 and math.abs(S.words:GetHeight()-(S.shownRows*S.lineStep-2+2*S.lineStep))<1e-6,
-        "...a line's room over and under them, where a line gliding out or in fades to nothing before the edge")
-    local rollingTop,rollingHeight=S.wordsTop,S.rowsHeight
-    S.rollTop=S.rollTarget-.25; S:PlaceLines()
-    local first=math.floor(S.rollTop)
-    Check(math.abs(S.lines[first]:GetAlpha()-.25)<1e-6 and math.abs(S.lines[first+2]:GetAlpha()-.75)<1e-6
-        and S.lines[first+1]:GetAlpha()==1,'mid-glide the line leaving fades out and the one coming in fades in')
-    cfg.SubtitleScroll='page'; S:Layout(rolling)
-    Check(S.wordsTop==rollingTop and S.rowsHeight-(S.shownRows-2)*S.lineStep==rollingHeight,
-        '...its room reaching over the gaps to the name and the progress line: the words where they are page by page')
-    cfg.SubtitleScroll,cfg.Lines=before,lines
-    Q:RemoveAllSoundsFromQueue(); Play(.6)
-    E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
-end
--- The subtitle's Hide Portrait, Text Size, and buttons for a line that cannot be stopped.
-do
-    local style=E.Addon.db.profile.Frame.Style
-    E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
-    source:Enqueue(Clip('parity','A line to show the subtitle with.',20)); Play(1)
-    local frameCfg=E.Addon.db.profile.Frame
-    frameCfg.HidePortrait=true; S:Update(); S:Fit()
-    local _,_,_,titleX=S.title:GetPoint(1)
-    Check(not S.picture:IsShown() and titleX==math.floor(S.rowLeft+.5),'Hide Portrait leaves the picture out, the name where it was')
-    frameCfg.HidePortrait=false; S:Update(); S:Fit()
-    Check(S.picture:IsShown(),'...and brings it back')
-    local quest=QuestFont
-    QuestFont={GetFont=function() return 'quest.ttf',13 end}
-    cfg.FontSize=24; S.revealed=nil; S:Layout(S.pages[S.page].text)
-    Check(S.lines[1].fontSize==math.floor(13*24/16+.5) and S.measure.fontSize==S.lines[1].fontSize,
-        'Text Size sizes the words, and what they are measured by, from the quest text at 16')
-    cfg.FontSize=16; S:Layout(S.pages[S.page].text)
-    QuestFont=quest
-    local CanBePaused=Q.CanBePaused
-    for _,button in ipairs({S.pause,S.skip}) do
-        button.Enable=function(b) b.enabled=true end
-        button.Disable=function(b) b.enabled=false end
-    end
-    Q.CanBePaused=function() return false end
-    S:UpdatePause()
-    Check(S.pause:GetAlpha()==.4 and S.pause.enabled==false and S.skip:GetAlpha()==.4 and S.skip.enabled==false,
-        'a line the client cannot stop leaves its buttons faint and still')
-    Q.CanBePaused=CanBePaused; S:UpdatePause()
-    Check(S.pause:GetAlpha()==1 and S.pause.enabled==true,'...and live again with one it can')
     Q:RemoveAllSoundsFromQueue(); Play(.6)
     E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
 end
@@ -932,6 +866,68 @@ do
     Check(T.timed and #S.pages==4,'a timed line is paged a sentence at a time')
     Check(math.abs(S.pages[2].start-timings[13])<1e-9,"...and its second page turns at its first word's time")
     cfg.SubtitleSentences=3
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+end
+-- The subtitle's Auto-Scroll, line by line.
+do
+    local style=E.Addon.db.profile.Frame.Style
+    E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+    local before,lines=cfg.SubtitleScroll,cfg.Lines
+    cfg.SubtitleScroll='line'; cfg.Lines=2
+    local rolling=('A long line of words that keeps on going for a while. '):rep(8)
+    Q:RemoveAllSoundsFromQueue(); Play(1)
+    source:Enqueue(Clip('roll',rolling,40)); Play(1)
+    Check(#S.rows>2 and S.shownRows==2 and #S.pages==1,'line by line the whole line is one page, two of its lines on show')
+    local shown=0
+    for _,line in ipairs(S.lines) do if line:IsShown() then shown=shown+1 end end
+    Check(shown==2 and S.rollTop==1,'...from its first line')
+    Play(20)
+    Check(S.rollTarget>1 and S.rollTop==S.rollTarget,'...gliding on to keep the line being read at the foot')
+    local _,_,_,_,clipY=S.words:GetPoint(1)
+    Check(math.abs((S.wordsTop+clipY)-S.lineStep)<1e-6 and math.abs(S.words:GetHeight()-(S.shownRows*S.lineStep-2+2*S.lineStep))<1e-6,
+        "...a line's room over and under them, where a line gliding out or in fades to nothing before the edge")
+    local rollingTop,rollingHeight=S.wordsTop,S.rowsHeight
+    S.rollTop=S.rollTarget-.25; S:PlaceLines()
+    local first=math.floor(S.rollTop)
+    Check(math.abs(S.lines[first]:GetAlpha()-.25)<1e-6 and math.abs(S.lines[first+2]:GetAlpha()-.75)<1e-6
+        and S.lines[first+1]:GetAlpha()==1,'mid-glide the line leaving fades out and the one coming in fades in')
+    cfg.SubtitleScroll='page'; S:Layout(rolling)
+    Check(S.wordsTop==rollingTop and S.rowsHeight-(S.shownRows-2)*S.lineStep==rollingHeight,
+        '...its room reaching over the gaps to the name and the progress line: the words where they are page by page')
+    cfg.SubtitleScroll,cfg.Lines=before,lines
+    Q:RemoveAllSoundsFromQueue(); Play(.6)
+    E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+end
+-- The subtitle's Hide Portrait, Text Size, and buttons for a line that cannot be stopped.
+do
+    local style=E.Addon.db.profile.Frame.Style
+    E.Addon:SetPlayerStyle('subtitle'); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
+    source:Enqueue(Clip('parity','A line to show the subtitle with.',20)); Play(1)
+    local frameCfg=E.Addon.db.profile.Frame
+    frameCfg.HidePortrait=true; S:Update(); S:Fit()
+    local _,_,_,titleX=S.title:GetPoint(1)
+    Check(not S.picture:IsShown() and titleX==math.floor(S.rowLeft+.5),'Hide Portrait leaves the picture out, the name where it was')
+    frameCfg.HidePortrait=false; S:Update(); S:Fit()
+    Check(S.picture:IsShown(),'...and brings it back')
+    local quest=QuestFont
+    QuestFont={GetFont=function() return 'quest.ttf',13 end}
+    cfg.FontSize=24; S.revealed=nil; S:Layout(S.pages[S.page].text)
+    Check(S.lines[1].fontSize==math.floor(13*24/16+.5) and S.measure.fontSize==S.lines[1].fontSize,
+        'Text Size sizes the words, and what they are measured by, from the quest text at 16')
+    cfg.FontSize=16; S:Layout(S.pages[S.page].text)
+    QuestFont=quest
+    local CanBePaused=Q.CanBePaused
+    for _,button in ipairs({S.pause,S.skip}) do
+        button.Enable=function(b) b.enabled=true end
+        button.Disable=function(b) b.enabled=false end
+    end
+    Q.CanBePaused=function() return false end
+    S:UpdatePause()
+    Check(S.pause:GetAlpha()==.4 and S.pause.enabled==false and S.skip:GetAlpha()==.4 and S.skip.enabled==false,
+        'a line the client cannot stop leaves its buttons faint and still')
+    Q.CanBePaused=CanBePaused; S:UpdatePause()
+    Check(S.pause:GetAlpha()==1 and S.pause.enabled==true,'...and live again with one it can')
     Q:RemoveAllSoundsFromQueue(); Play(.6)
     E.Addon:SetPlayerStyle(style); E.PlayerFrame:RefreshConfig(); T:RefreshConfig()
 end

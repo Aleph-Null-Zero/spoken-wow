@@ -9,6 +9,7 @@ local GAP = 4
 local EXPANDED_LINES = 8
 local BUTTON_SIZE = 14
 local HIGHLIGHT = "|cffffd100"
+Transcript.HIGHLIGHT = HIGHLIGHT
 local UTF8_CHAR = "[%z\1-\127\194-\244][\128-\191]*"
 local function Clamp(value, low, high)
     return math.max(low, math.min(high, value))
@@ -51,7 +52,8 @@ local function CharacterCount(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return math.max(1, count)
 end
-local function Prefix(text, count)
+--- The first `count` characters of `text`, whole UTF-8 characters.
+function Transcript.Prefix(text, count)
     local parts = {}
     for char in text:gmatch(UTF8_CHAR) do
         if #parts >= count then break end
@@ -59,6 +61,7 @@ local function Prefix(text, count)
     end
     return table.concat(parts)
 end
+local Prefix = Transcript.Prefix
 -- Trailing punctuation lengthens a word's share of the recording.
 local STOPS = { ["."] = 0.7, ["!"] = 0.7, ["?"] = 0.7, ["。"] = 0.7, ["！"] = 0.7, ["？"] = 0.7,
     [","] = 0.35, [";"] = 0.35, [":"] = 0.35, ["，"] = 0.35, ["、"] = 0.35, ["；"] = 0.35, ["："] = 0.35 }
@@ -267,7 +270,7 @@ end
 function Transcript:Sync()
     if self.held then return end
     -- The line playing, or the sample a window previews.
-    local current = SoundQueue:GetCurrentSound() or (PlayerFrame and PlayerFrame.sample)
+    local current = PlayerFrame and PlayerFrame:Current() or SoundQueue:GetCurrentSound()
     -- A window turning to it by fading out first: these words stay until it has.
     if HeldFor(self, current) then
         self.held, self.heldStart = true, { clip = current, at = GetTime() }
@@ -605,7 +608,8 @@ function Transcript:Reset()
     -- is the choice of where captions go, not a tweak.
     local defaults = Defaults.profile.Transcript
     for _, key in ipairs({ "Lines", "FontSize", "ScrollMode", "HighlightWord", "Typewriter", "TypewriterBy",
-        "SubtitleShadow", "SubtitleScale" }) do
+        "SubtitleShadow", "SubtitleScale", "SubtitleProgress", "SubtitleName", "SubtitleScroll",
+        "SubtitleSentences" }) do
         cfg[key] = defaults[key]
     end
     Subtitle:Reset()

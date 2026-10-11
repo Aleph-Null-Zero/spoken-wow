@@ -119,7 +119,6 @@ function PlayerFrame:InitDisplay()
     self.frame.background = self.frame:CreateTexture(nil, "BACKGROUND")
     self.frame.background:SetAllPoints()
 
-    -- The column right of the portrait: the name, the words under it, the progress line at its foot.
     self.frame.container = CreateFrame("Frame", nil, self.frame)
 
     self.frame:SetScript("OnUpdate", function(_, elapsed) self:Tick(elapsed) end)
@@ -140,8 +139,6 @@ function PlayerFrame:InitPortrait()
     self.frame.portrait.border.texture = self.frame.portrait.border:CreateTexture(nil, "OVERLAY")
 end
 
---- The name, Stopped and the count after it, the round controls in the top right corner, and the
---- progress line.
 function PlayerFrame:InitHeader()
     local container = self.frame.container
     container.name = container:CreateFontString(nil, "ARTWORK", "SpokenNameFont")
@@ -160,10 +157,13 @@ function PlayerFrame:InitHeader()
     self.count = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
     self.count:SetWordWrap(false)
     self.count:Hide()
-    for _, text in ipairs({ self.stopped, self.count }) do
+    self.held = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
+    self.held:SetWordWrap(false)
+    self.held:Hide()
+    for _, text in ipairs({ self.stopped, self.count, self.held }) do
         text:SetTextColor(TAIL_COLOR[1], TAIL_COLOR[2], TAIL_COLOR[3])
     end
-    self.tail = Actions.Tail(self.stopped, self.count)
+    self.tail = Actions.Tail(self.stopped, self.count, self.held)
 
     self.controls = CreateFrame("Frame", nil, container)
     self.controls:SetHeight(1)
@@ -303,6 +303,9 @@ function PlayerFrame:RefreshConfig()
     self:Update()
 end
 
+--- Where the name and the words start: past the portrait, or BARE_LEFT with it hidden.
+local function Left() return FrameConfig().HidePortrait and BARE_LEFT or NAME_X end
+
 --- The lines of words that fit between the name and the progress line, up to MOST_LINES, and a
 --- line's height; no lines where the line has no words to show (Show Words off, none written, or
 --- 1.12, which has no captions).
@@ -318,7 +321,7 @@ function PlayerFrame:Layout()
     if self.laying or not self:IsShowing() then return end
     self.laying = true
     local frame, container = self.frame, self.frame.container
-    local left = FrameConfig().HidePortrait and BARE_LEFT or NAME_X
+    local left = Left()
     container:ClearAllPoints()
     container:SetPoint("TOPLEFT", frame, "TOPLEFT", left, NAME_Y)
     container:SetWidth(FRAME_WIDTH - left - RIGHT)
@@ -336,15 +339,16 @@ function PlayerFrame:Layout()
         words > 0 and words + 2 * lineHeight or 0)
 
     self.progress.track:SetWidth(width)
+    self.progress.track:SetShown(Addon:Profile("Transcript").SubtitleProgress ~= false)
     self:LayoutHeader()
     self.laying = nil
 end
 
---- The name in full where it fits, then Stopped and the count after it, all short of the controls.
+--- The name in full where it fits, then the tail, all short of the controls.
 function PlayerFrame:LayoutHeader()
     local container = self.frame.container
     local name, tail = container.name, self.tail
-    local left = FrameConfig().HidePortrait and BARE_LEFT or NAME_X
+    local left = Left()
     local room = math.max(1, FRAME_WIDTH - CORNER_X - self.controls:GetWidth() - NAME_GAP - left)
     local tailRoom = tail:Room()
     -- Unbounded first, so the width measured is the text's own.
@@ -364,15 +368,13 @@ function PlayerFrame:ConfigureActions(clip)
 end
 
 function PlayerFrame:UpdateControls()
-    if not self:Current() then return end
+    local head = self:Current()
+    if not head then return end
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
+    self.tail:SetHeld(SoundQueue:GetHeldReason(head))
     self.tail:SetStopped(SoundQueue:IsPaused())
     self.tail:SetCount(Waiting())
-    local pausable = SoundQueue:CanBePaused()
-    for _, button in ipairs(self.buttons) do
-        button:SetAlpha(pausable and 1 or .4)
-        if pausable then button:Enable() else button:Disable() end
-    end
+    Actions.SetPausable(self.buttons)
     self:LayoutHeader()
 end
 

@@ -52,9 +52,11 @@ function Actions:Build(frame)
 end
 
 local RING = [[Interface\AddOns\Spoken\Textures\SettingsButton]]
--- The Forever client's bronze, as its own frames wear it (MinimalPlayer's): the round buttons' rings
--- take it while Bronze Border is on. Every ring made, to tint again when the setting changes.
-local BRONZE = { .95, .68, .35 }
+-- The Forever client's bronze, as its own frames wear it: the round buttons' rings and the small
+-- window's metal take it while Bronze Border is on. Every ring made, to tint again when the setting
+-- changes.
+local BRONZE = Version.IsCamelot and { .95, .68, .35 } or nil
+Actions.BRONZE = BRONZE
 local rings = setmetatable({}, { __mode = "k" })
 
 local function TintRing(ring)
@@ -167,6 +169,16 @@ function Actions.SetPlayGlyph(button, state)
     button.state, button.playing = state, state == "stop"
 end
 
+--- Dims and disables `buttons` while the line at the head cannot be stopped. Returns whether it can.
+function Actions.SetPausable(buttons)
+    local pausable = SoundQueue:CanBePaused()
+    for _, button in ipairs(buttons) do
+        button:SetAlpha(pausable and 1 or .4)
+        if pausable then button:Enable() else button:Disable() end
+    end
+    return pausable
+end
+
 --- Skip: the round button with the play glyph against a bar, the usual "next" mark.
 function Actions.SkipButton(parent, name)
     local skip = Actions.RoundButton(parent, 10, name)
@@ -221,17 +233,18 @@ function Actions.LayOutRow(controls, row, gap)
     controls:SetSize(math.max(1, x - gap), tallest)
 end
 
--- What follows a window's title: "• (Stopped)" while the line is stopped and the lines waiting,
--- "• +N", TAIL_GAP after it. One more fades the count in over TAIL_IN; Stopped fades in and
+-- What follows a window's title: why the line is held, "• (Stopped)" while it is stopped and the
+-- lines waiting, "• +N", TAIL_GAP after it. One more fades the count in over TAIL_IN; Stopped fades in and
 -- out, and keeps its room until it has faded.
 local TAIL_GAP, TAIL_IN = 6, .25
 local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
 
 local Tail = {}
 
---- The tail for two font strings the window made: `stopped`, its text already set, and `count`.
-function Actions.Tail(stopped, count)
-    local tail = { stopped = stopped, count = count, alpha = 0, want = false, parts = {} }
+--- The tail for the font strings the window made: `stopped`, its text already set, `count`, and
+--- `held` where the window says why a line has not started.
+function Actions.Tail(stopped, count, held)
+    local tail = { stopped = stopped, count = count, held = held, alpha = 0, want = false, parts = {} }
     for key, fn in pairs(Tail) do tail[key] = fn end
     return tail
 end
@@ -239,6 +252,14 @@ end
 --- Whether Stopped should show; Step fades it in or out.
 function Tail:SetStopped(stopped)
     self.want = stopped and true or false
+end
+
+--- Why the line is held back, "• (in combat)", or nil once it may play. A held line with no
+--- reason looks exactly like narration that failed.
+function Tail:SetHeld(reason)
+    if not self.held or reason == self.reason then return end
+    self.reason = reason
+    self.held:SetText(reason and "• (" .. reason .. ")" or "")
 end
 
 --- `waiting` lines behind the one playing: the count says it, fading in when it grew.
@@ -249,6 +270,10 @@ function Tail:SetCount(waiting)
         self.count:SetText(waiting > 0 and "• +" .. waiting or "")
     end
     self.parts = {}
+    if self.held then
+        self.held:SetShown(self.reason ~= nil)
+        if self.reason then table.insert(self.parts, self.held) end
+    end
     local stoppedShown = self.want or self.alpha > 0
     self.stopped:SetShown(stoppedShown)
     if stoppedShown then table.insert(self.parts, self.stopped) end
@@ -256,7 +281,6 @@ function Tail:SetCount(waiting)
     if waiting > 0 then table.insert(self.parts, self.count) end
 end
 
---- The width the tail takes after the title; 0 with nothing to show.
 function Tail:Room()
     local room = 0
     for _, part in ipairs(self.parts) do room = room + (part:GetStringWidth() or 0) + TAIL_GAP end
@@ -316,8 +340,8 @@ end
 
 local function FrameProgress(bar, left, right, middle, yellow)
     local track, fill = bar.track, bar.fill
-    -- As the cards' meter lays the art out: the fill 8 inside the border's ends and 2 short of
-    -- the background's, the border's own 31 rows scaled to PROGRESS_HEIGHT.
+    -- The fill 8 inside the border's ends and 2 short of the background's, the border's own 31
+    -- rows scaled to PROGRESS_HEIGHT.
     local k = PROGRESS_HEIGHT / (middle.height > 0 and middle.height or 31)
     track:SetHeight(PROGRESS_HEIGHT)
     local function Piece(atlas, layer, width)

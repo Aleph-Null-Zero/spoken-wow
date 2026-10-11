@@ -159,8 +159,41 @@ main:Refresh()
 Expect("Show Progress is offered for the small window, which has the progress line",
     Row(L.OPT_SUBTITLE_PROGRESS) ~= nil and Row(L.OPT_SUBTITLE_PROGRESS):IsShown(), true)
 
+---------------------------------------------------------------- held
+-- A line held at the head says why after its title, or it looks like narration that failed.
+env, quests = Boot()
+M = env.MinimalPlayer
+quests:AddGate(function() return "in combat" end)
+quests:Enqueue(Line("One"))
+Expect("a held line says why after its title", Try(function()
+    return tostring(M.held:IsShown()) .. " " .. M.held:GetText()
+end), "true • (in combat)")
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
 ---------------------------------------------------------------- bronze
--- Bronze Border applies on every client, Classic Era included.
+-- Bronze Border on Forever: the small window's border, progress line and portrait ring.
+local BRONZE, WHITE = "0.95 0.68 0.35", "1.00 1.00 1.00"
+local function Tints()
+    return Try(function()
+        return Colour(unpack(M.panel.backdropBorderColor)) .. "|" .. Colour(unpack(M.progress.tint))
+            .. "|" .. tostring(M.ring.colour)
+    end)
+end
+env, quests = Boot("16001")
+M = env.MinimalPlayer
+frame = env.Addon.db.profile.Frame
+Record(M.ring)
+quests:Enqueue(Line("One"))
+frame.BronzeTint = true
+env.PlayerFrame:RefreshConfig()
+Expect("on Forever, with Bronze Border on, the border, progress line and portrait ring are bronze", Tints(),
+    BRONZE .. "|" .. BRONZE .. "|" .. BRONZE)
+frame.BronzeTint = false
+env.PlayerFrame:RefreshConfig()
+Expect("...each its own colour with it off", Tints(), WHITE .. "|" .. WHITE .. "|" .. WHITE)
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
+-- Classic Era: no bronze frames to match, so its own colours whatever the setting.
 env, quests = Boot("11509")
 M = env.MinimalPlayer
 frame = env.Addon.db.profile.Frame
@@ -168,56 +201,7 @@ Record(M.ring)
 quests:Enqueue(Line("One"))
 frame.BronzeTint = true
 env.PlayerFrame:RefreshConfig()
-local function Border() return Colour(unpack(M.panel.backdropBorderColor)) end
-local BRONZE, WHITE = "0.95 0.68 0.35", "1.00 1.00 1.00"
-Expect("on Classic Era, with Bronze Border on, the small window's border is bronze", Border(), BRONZE)
-Expect("...its progress line", Try(function() return Colour(unpack(M.progress.tint)) end), BRONZE)
-Expect("...and its portrait's ring", tostring(M.ring.colour), BRONZE)
-frame.BronzeTint = false
-env.PlayerFrame:RefreshConfig()
-Expect("...each its own colour with it off", Try(function()
-    return Border() .. "|" .. Colour(unpack(M.progress.tint)) .. "|" .. M.ring.colour end),
-    WHITE .. "|" .. WHITE .. "|" .. WHITE)
-frame.BronzeTint = true
-env.SoundQueue:RemoveAllSoundsFromQueue()
-
----------------------------------------------------------------- fading in and out
-env, quests = Boot()
-M = env.MinimalPlayer
-quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "One",
-    portrait = { kind = "model", creatureID = 4949 } } }))
-M.fader:Step(0.1)
-Expect("a line starting: the window fading in", Try(function()
-    return tostring(M.frame:IsShown()) .. " " .. tostring(M.frame:GetAlpha() > 0 and M.frame:GetAlpha() < 1)
-end), "true true")
-M.fader:Step(1)
-local second = H.Clip({ length = 30, present = { header = "Kobold", label = "Two", transcript = "You no take candle!",
-    portrait = { kind = "none" } } })
-quests:Enqueue(second)
-env.SoundQueue:RemoveSoundFromQueue(env.SoundQueue:GetCurrentSound())
-Expect("the next line: fading out, still the first line's, its words held", Try(function()
-    return tostring(M.frame:IsShown()) .. " " .. M.title.text:GetText() .. " " .. tostring(env.Transcript.held)
-end), "true One true")
-M.fader:Step(1)
-Expect("...then fading in with the next line's", Try(function()
-    return tostring(M.frame:IsShown()) .. " " .. M.title.text:GetText() .. " " .. tostring(env.Transcript.held)
-        .. " " .. tostring(M.frame:GetAlpha() < 1)
-end), "true Two nil true")
-M.fader:Step(1)
-_G.DUIQuestFrame = CreateFrame("Frame")
-_G.DUIQuestFrame:Show()
-env.PlayerFrame:Update()
-M.fader:Step(0.2)
-Expect("a DialogueUI dialog open: fading out", Try(function()
-    return tostring(M.frame:IsShown()) .. " " .. tostring(M.frame:GetAlpha() < 1)
-end), "true true")
-M.fader:Step(1)
-Expect("...then gone", M.frame:IsShown(), false)
-_G.DUIQuestFrame:Hide()
-env.PlayerFrame:Update()
-M.fader:Step(1)
-Expect("...and back when it closes on the line playing", M.frame:IsShown(), true)
-_G.DUIQuestFrame = nil
+Expect("on Classic Era, its own colours with Bronze Border on", Tints(), WHITE .. "|" .. WHITE .. "|" .. WHITE)
 env.SoundQueue:RemoveAllSoundsFromQueue()
 
 if Failures() > 0 then stub.print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

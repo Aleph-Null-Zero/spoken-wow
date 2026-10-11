@@ -197,7 +197,7 @@ function SpokenBooks:SetupSource()
 	self.source = Spoken:RegisterSource("books", {
 		title = "Spoken Books",
 		addon = ADDON_NAME,
-		order = 4,
+		order = 3,
 		-- No limit, unlike the zones source. Zone lore arrives in bursts nobody asked for --
 		-- crossing a cluster of small subzones queues narration about places the player has
 		-- already left -- so it caps the backlog and drops the oldest. A readable is one the

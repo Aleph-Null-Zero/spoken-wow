@@ -8,7 +8,6 @@ local print = stub.print
 local world = stub.world
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
 local SPOKEN = here .. "/../../addons/Spoken/"
-local GOSSIP = here .. "/../../addons/Spoken_Gossip/"
 local Expect, Failures = H.Expecter(print)
 
 local GOLD, RED = "|cffffd100", "|cff9c1a1a"
@@ -93,18 +92,14 @@ local VO, env = stub.LoadQuests(QUESTS, SPOKEN)
 dofile(QUESTS .. "UI/DialogueUIBridge.lua")
 local Bridge = VO.DialogueUIBridge
 VO.Addon:OnInitialize()
--- The gossip module too: gossip and greetings on DialogueUI's window are its to read.
-local G = stub.LoadGossip(GOSSIP, SPOKEN, true)
-G.Addon:OnInitialize()
 VO.DataModules:Register("TestPack", {
-    SoundLengthLookupByFileName = { ["101-accept"] = 12, ["101-progress"] = 2, ["gossip-hello"] = 3,
+    SoundLengthLookupByFileName = { ["101-accept"] = 12, ["101-progress"] = 2,
         ["guard-greeting"] = 2, ["guard-directions"] = 2 },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
     GossipLookupByNPCID = {
-        -- A speaker the pack knows, whose one line has no recording in it; and one whose lines have.
+        -- A speaker the pack knows, whose one line has no recording in it.
         [5678] = { ["Hail, friend. The roads are long."] = "gossip-missing" },
-        [4321] = { ["Well met, traveller."] = "gossip-hello", [GREETING] = "guard-greeting",
-            [DIRECTIONS] = "guard-directions" },
+        [4321] = { [GREETING] = "guard-greeting", [DIRECTIONS] = "guard-directions" },
     },
 })
 stub.Advance(2)
@@ -126,45 +121,46 @@ local function Tick(seconds)
 end
 
 ---------------------------------------------------------------- matching, as pure functions
+local Marks = Spoken:WordMarks()
 local function Paras(...)
     local list = {}
     for _, text in ipairs({ ... }) do
-        table.insert(list, { text = text, words = Bridge.MarkLinks(text, Spoken:SplitCaption(text)) })
+        table.insert(list, { text = text, words = Marks.MarkLinks(text, Spoken:SplitCaption(text)) })
     end
     return list
 end
 local caption = Spoken:SplitCaption("Hello there, traveller. Safe roads.")
-local map, span = Bridge.Align(caption, Paras("Farmer Test: Hello there, traveller.", "Safe roads."))
+local map, span = Marks.Align(caption, Paras("Farmer Test: Hello there, traveller.", "Safe roads."))
 Expect("the NPC name DialogueUI puts in front is skipped", map and map[1] and map[1].p .. ":" .. map[1].w, "1:3")
 Expect("...and the next paragraph continues the match", map and map[4] and map[4].p .. ":" .. map[4].w, "2:1")
 Expect("...the line covers both paragraphs", span and span.first .. "-" .. span.last, "1-2")
-map, span = Bridge.Align(caption, Paras("Hello there, traveller. Safe roads.", "Hello there, traveller. Safe roads."))
+map, span = Marks.Align(caption, Paras("Hello there, traveller. Safe roads.", "Hello there, traveller. Safe roads."))
 Expect("with gossip history kept above, the current page is the one matched", map and map[1] and map[1].p, 2)
 Expect("...and only it is the line's", span and span.first .. "-" .. span.last, "2-2")
 Expect("a line DialogueUI is not showing matches nothing",
-    Bridge.Align(caption, Paras("The Barrens are wide and dry.")), nil)
+    Marks.Align(caption, Paras("The Barrens are wide and dry.")), nil)
 local chinese = Spoken:SplitCaption("你好，勇士。")
-map = Bridge.Align(chinese, Paras("农夫：你好，勇士。"))
+map = Marks.Align(chinese, Paras("农夫：你好，勇士。"))
 Expect("Chinese matches character by character", map and map[1] and map[1].w, 3)
-Expect("a word carrying a link or colour is never compared", Bridge.Key("|cffff0000Name|r"), nil)
-Expect("...nor is bare punctuation", Bridge.Key("--"), nil)
+Expect("a word carrying a link or colour is never compared", Marks.Key("|cffff0000Name|r"), nil)
+Expect("...nor is bare punctuation", Marks.Key("--"), nil)
 local linked = Paras("Bring me the |Hitem:1|h[Linen Bolt of Cloth]|h today.")[1].words
 Expect("the words inside a link are never matched either", linked[5].inLink and linked[6].inLink, true)
 Expect("...but those after it are", linked[8].inLink, nil)
-Expect("dark text gets the red highlight", Bridge.ColorFor(0.2, 0.1, 0.05), RED)
-Expect("light text gets the captions' gold", Bridge.ColorFor(0.9, 0.85, 0.8), GOLD)
+Expect("dark text gets the red highlight", Marks.ColorFor(0.2, 0.1, 0.05), RED)
+Expect("light text gets the captions' gold", Marks.ColorFor(0.9, 0.85, 0.8), GOLD)
 Expect("a word and its neighbour are wrapped, nothing else",
-    Bridge.Wrap("a bc d", { { first = 3, last = 4 } }, GOLD), "a " .. GOLD .. "bc|r d")
+    Marks.Wrap("a bc d", { { first = 3, last = 4 } }, GOLD), "a " .. GOLD .. "bc|r d")
 Expect("the last word of a paragraph keeps the one before it lit",
-    table.concat({ Bridge.Pick({ [1] = { p = 1 }, [2] = { p = 1 }, [3] = { p = 2 } }, 2) }, ","), "2,1")
+    table.concat({ Marks.Pick({ [1] = { p = 1 }, [2] = { p = 1 }, [3] = { p = 2 } }, 2) }, ","), "2,1")
 Expect("a word the window lacks lights the last one it has",
-    table.concat({ Bridge.Pick({ [1] = { p = 1 }, [2] = { p = 1 } }, 3) }, ","), "2,1")
+    table.concat({ Marks.Pick({ [1] = { p = 1 }, [2] = { p = 1 } }, 3) }, ","), "2,1")
 
 local paras = Paras("Farmer Test: Hello there, traveller.", "Safe roads.")
-map, span = Bridge.Align(caption, paras)
+map, span = Marks.Align(caption, paras)
 local function Cut(fields)
     fields.typewriter = fields.typewriter ~= false
-    local p, byte = Bridge.Cut(fields, map, span, paras)
+    local p, byte = Marks.Cut(fields, map, span, paras)
     return p and (p .. ":" .. byte) or "all"
 end
 Expect("before the voice starts nothing of the line shows", Cut({ progress = 0, speaking = false }), "1:0")
@@ -275,22 +271,21 @@ world.gossipText = "Hail, friend. The roads are long."
 DUI.handler = "HandleGossip"
 DUI:HandleGossip()
 Expect("gossip whose recording is missing shows whole at once", Paragraph(1) ~= "" and Paragraph(1) ~= nil, true)
--- Gossip is the gossip module's: the bridge asks it for the words its line will carry.
-local gossipHandler, expectedLine = G.Addon.GOSSIP_SHOW, G.Addon.ExpectedLine
-G.Addon.GOSSIP_SHOW = function() end
-G.Addon.ExpectedLine = function() return world.gossipText end
+local gossipHandler, expectedLine = VO.Addon.GOSSIP_SHOW, VO.Addon.ExpectedLine
+VO.Addon.GOSSIP_SHOW = function() end
+VO.Addon.ExpectedLine = function() return world.gossipText end
 DUI:HandleGossip()
-Expect("a gossip page kept blank for the gossip module's line", Paragraph(1), "")
-G.Addon:InvokeHandler("GOSSIP_SHOW", "test")
+Expect("a page kept blank for its line", Paragraph(1), "")
+VO.Addon:InvokeQuestHandler("GOSSIP_SHOW", "test")
 Tick(0)
 Expect("...shows whole once the read queues nothing, not after the wait", Paragraph(1) ~= "", true)
-G.Addon.GOSSIP_SHOW, G.Addon.ExpectedLine = gossipHandler, expectedLine
+VO.Addon.GOSSIP_SHOW, VO.Addon.ExpectedLine = gossipHandler, expectedLine
 
 -- Once per NPC, a guard already heard: the greeting stays quiet, the directions picked from it
--- do not. DialogueUI can draw the directions before Spoken Gossip notes the page or after.
+-- do not. DialogueUI can draw the directions before Spoken Quests notes the page or after.
 world.npcGUID = "Creature-0-0-0-0-4321-0"
-G.Addon.db.profile.Audio.GossipFrequency = G.Enums.GossipFrequency.OncePerNPC
-G.Addon.db.char.hasSeenGossipForNPC[world.npcGUID] = true
+VO.Addon.db.profile.Audio.GossipFrequency = VO.Enums.GossipFrequency.OncePerNPC
+VO.Addon.db.char.hasSeenGossipForNPC[world.npcGUID] = true
 local function Greet()
     Spoken:StopAll()
     stub.ShowGossip(GREETING, { "Where is the bank?" })
@@ -303,7 +298,7 @@ Expect("a greeting heard before shows whole at once", Paragraph(1), GREETING)
 stub.SelectGossipOption("Where is the bank?")
 stub.ShowGossip(DIRECTIONS)
 DUI:HandleGossip()
-Expect("directions drawn before Spoken Gossip sees the page are kept blank for their line",
+Expect("directions drawn before Spoken Quests sees the page are kept blank for their line",
     Paragraph(1), "")
 stub.FireEvent("GOSSIP_SHOW")
 stub.Advance(1)
@@ -313,12 +308,12 @@ Greet()
 stub.PickGossipOption("Where is the bank?", DIRECTIONS)
 stub.Advance(0.6)
 Spoken:StopAll()
-Expect("...and so are directions drawn after it", G.Addon:ExpectedLine("GOSSIP_SHOW", true), DIRECTIONS)
+Expect("...and so are directions drawn after it", VO.Addon:ExpectedLine("GOSSIP_SHOW", true), DIRECTIONS)
 Spoken:StopAll()
 stub.HidePanels()
 stub.FireEvent("GOSSIP_CLOSED")
 Greet()
-Expect("...but not the greeting on the next visit", G.Addon:ExpectedLine("GOSSIP_SHOW", true), nil)
+Expect("...but not the greeting on the next visit", VO.Addon:ExpectedLine("GOSSIP_SHOW", true), nil)
 stub.HidePanels()
 stub.FireEvent("GOSSIP_CLOSED")
 Spoken:StopAll()
@@ -526,7 +521,7 @@ Expect("...and Play turns to Stop while it speaks", play.state, "stop")
 Expect("...and Skip can skip it", skip:IsEnabled(), true)
 play.scripts.OnEnter(play)
 local tip = play.tooltip
-Expect("its tooltip says a click stops it", tip and tip.text, _G.SpokenEnv.L.DIALOGUE_STOP)
+Expect("its tooltip says a click stops it", tip and tip.text, VO.L.OPT_STOP)
 local saysRightClick = false
 for _, text in ipairs(tip and tip.lines or {}) do
     if text == VO.L.OPT_DUI_PLAY_RIGHT_CLICK then saysRightClick = true end
@@ -548,41 +543,6 @@ play.scripts.OnClick(play, "LeftButton")
 skip.scripts.OnClick(skip)
 Expect("Skip skips what speaks", Spoken:GetCurrent() == nil or Spoken:GetCurrent().fileName ~= "101-accept", true)
 Spoken:StopAll()
-
--- On a gossip page Play reads the gossip module's line: the bridge asks the module the page
--- belongs to. Gossip has no Read Automatically, so its tooltip says nothing of it and a
--- right-click leaves the quests module's alone.
-Spoken:StopAll()
-local questNPC = world.npcGUID
-world.npcGUID, world.gossipText = "Creature-0-0-0-0-4321-0", "Well met, traveller."
-DUI.handler = "HandleGossip"
-DUI:HandleGossip()
-Bridge:RefreshPlayButton("GOSSIP_SHOW")
-local _, gossipLine = Bridge:PlayButtonState()
-Expect("a gossip page with a recording shows the Play button, for the gossip module's line",
-    play:IsShown() and gossipLine and gossipLine.fileName, "gossip-hello")
-Expect("...the row in its place beside the close button", controls.frame.anchor and controls.frame.anchor.relativeTo, closeButton)
-Expect("...the line the Report button asks the bridge for", Bridge:LineFor("GOSSIP_SHOW") and
-    Bridge:LineFor("GOSSIP_SHOW").fileName, "gossip-hello")
-play.scripts.OnClick(play, "LeftButton")
-local playing = Spoken:GetCurrent()
-Expect("left-click plays it, from the gossip module", playing and playing.fileName .. " " ..
-    tostring(playing.source == G.Player.source), "gossip-hello true")
-play.scripts.OnEnter(play)
-local gossipTip = play.tooltip
-local mentionsAutoplay = false
-for _, text in ipairs(gossipTip and gossipTip.lines or {}) do
-    if text == VO.L.OPT_DUI_PLAY_RIGHT_CLICK or text == VO.L.OPT_PANEL_AUTOPLAY then mentionsAutoplay = true end
-end
-Expect("...its tooltip says nothing of Read Automatically, which is the quests module's", mentionsAutoplay, false)
-play.scripts.OnLeave(play)
-play.scripts.OnClick(play, "RightButton")
-Expect("...and a right-click leaves Read Automatically as it was", audio.Autoplay, true)
-Spoken:StopAll()
-world.npcGUID, world.gossipText = questNPC, nil
-DUI.handler = "HandleQuestDetail"
-DUI:HandleQuestDetail()
-Bridge:RefreshPlayButton("QUEST_DETAIL")
 zones:Enqueue({ key = "z:16", path = "z16.ogg", length = 12,
     present = { header = "Duskwood", transcript = "Lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
@@ -610,6 +570,18 @@ Expect("...and DialogueUI's own button is given back", DUI.TTSButton:GetAlpha(),
 Expect("...Skip moving up to the row's left end", controls.frame:GetWidth(), 24 * round)
 dui.PlayButton = true
 Bridge:Refresh()
+-- Spoken Quests off: DialogueUI's window as DialogueUI draws it.
+_G.Spoken:SetPartOn("quests", false)
+Bridge:RefreshPlayButton()
+Expect("with Spoken Quests off the row and the close button go",
+    tostring(controls.frame:IsShown()) .. " " .. tostring(closeButton:IsShown()), "false false")
+Expect("...and DialogueUI's own button is given back", DUI.TTSButton:GetAlpha(), 0.6)
+header:SetPoint("TOP", DUI.FrontFrame, "TOP", 0, -28)
+DUI:UseQuestLayout(true)
+Expect("...and its header is left where DialogueUI puts it", header.anchor.y, -28)
+_G.Spoken:SetPartOn("quests", true)
+Bridge:RefreshPlayButton()
+Expect("back on, the row is back", controls.frame:IsShown() and closeButton:IsShown(), true)
 DUI.TTSButton = nil
 DUI:Hide()
 driver.scripts.OnHide(driver)
@@ -723,7 +695,7 @@ env.Addon:SetPlayerStyle("classic")
 driver:Show()
 
 ---------------------------------------------------------------- Report and Contribute
-dofile(SPOKEN .. "Dialogue/ContributeButton.lua")
+dofile(QUESTS .. "UI/ContributeButton.lua")
 local Contribute = VO.ContributeButton
 Contribute:Setup()
 local panelButton = Contribute.button
@@ -764,7 +736,7 @@ Expect("...full under the pointer", icon:GetAlpha(), 1)
 local tip = Contribute.tooltip
 Expect("...with a tooltip of its own on DialogueUI's window, which UIParent's hiding leaves up",
     tip ~= nil and tip:GetParent() == DUI and tip:IsShown(), true)
-Expect("...saying what Report is for", tip and tip.lines and tip.lines[1], _G.SpokenEnv.L.DIALOGUE_REPORT_PROBLEM)
+Expect("...saying what Report is for", tip and tip.lines and tip.lines[1], VO.L.OPT_REPORT_PROBLEM)
 Expect("...at the size the game's tooltip would be", tip and tip:GetScale(), 1 / 0.8)
 Fire(icon, "OnLeave")
 Expect("...still in full after", icon:GetAlpha(), 1)
@@ -799,7 +771,7 @@ DUI:HandleQuestDetail()
 Expect("a quest no pack voices keeps the icon in the row, in full, to contribute",
     tostring(icon:IsShown() and icon:GetAlpha()) .. " " .. tostring(corner.missing), "1 true")
 Fire(icon, "OnEnter")
-Expect("...its tooltip saying what is missing", tip and tip.lines and tip.lines[1], _G.SpokenEnv.L.DIALOGUE_CONTRIBUTE_TIP_QUEST)
+Expect("...its tooltip saying what is missing", tip and tip.lines and tip.lines[1], VO.L.OPT_CONTRIBUTE_TIP_QUEST)
 Fire(icon, "OnLeave")
 Expect("...still in full once the pointer leaves", icon:GetAlpha(), 1)
 local envelope = VO.Contribute:Capture()
@@ -817,25 +789,6 @@ Expect("...for the gossip line", Contribute.gossip, true)
 local gossip = VO.Contribute:Capture()
 Expect("...and it sends the words DialogueUI shows", gossip and gossip:match("\nquest=") == nil
     and gossip:match("\nStrange times, friend%.\n") ~= nil, true)
--- Each page is its own module's: Gossip off takes the corner from gossip pages only, Quests off from
--- quest pages only. DialogueUI hides Blizzard's panels, so the page it shows tells which.
-_G.Spoken:SetPartOn("gossip", false)
-DUI:HandleGossip()
-local onGossip = icon:IsShown()
-DUI.handler = "HandleQuestDetail"
-DUI:HandleQuestDetail()
-Expect("with Gossip off, the corner leaves gossip pages but stays on quest pages",
-    tostring(onGossip) .. " " .. tostring(icon:IsShown()), "false true")
-_G.Spoken:SetPartOn("gossip", true)
-_G.Spoken:SetPartOn("quests", false)
-DUI:HandleQuestDetail()
-local onQuest = icon:IsShown()
-DUI.handler = "HandleGossip"
-DUI:HandleGossip()
-Expect("...and with Quests off, it leaves quest pages but stays on gossip pages",
-    tostring(onQuest) .. " " .. tostring(icon:IsShown()), "false true")
-_G.Spoken:SetPartOn("quests", true)
-DUI:HandleGossip()
 Fire(icon, "OnClick")
 Expect("the copy box opens over DialogueUI's window", box and box.frame:IsShown() and box.frame:GetParent(), DUI)
 Expect("...the same size on screen", box and box.frame:GetScale(), 1 / 0.8)

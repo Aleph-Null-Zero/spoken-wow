@@ -55,12 +55,10 @@ local BINDINGS = {
 local PARTS = {
     { key = "quests", label = L.OPT_PART_QUESTS, text = L.OPT_PART_QUESTS_TEXT, tip = L.OPT_PART_QUESTS_TIP,
         icon = [[Interface\Icons\INV_Scroll_03]], order = 1 },
-    { key = "gossip", label = L.OPT_PART_GOSSIP, text = L.OPT_PART_GOSSIP_TEXT, tip = L.OPT_PART_GOSSIP_TIP,
-        icon = [[Interface\Icons\UI_Chat]], order = 2 },
     { key = "books", label = L.OPT_PART_BOOKS, text = L.OPT_PART_BOOKS_TEXT, tip = L.OPT_PART_BOOKS_TIP,
-        icon = [[Interface\Icons\INV_Misc_Book_09]], order = 3 },
+        icon = [[Interface\Icons\INV_Misc_Book_09]], order = 2 },
     { key = "zones", label = L.OPT_PART_ZONES, text = L.OPT_PART_ZONES_TEXT, tip = L.OPT_PART_ZONES_TIP,
-        icon = [[Interface\Icons\INV_Misc_Map02]], order = 4 },
+        icon = [[Interface\Icons\INV_Misc_Map02]], order = 3 },
 }
 
 -- Sketches of the ways of showing a line, in flat colour, for their tiles: a portrait in
@@ -403,7 +401,7 @@ local function Build(canvas)
         local progress = layout:Checkbox(L.OPT_SUBTITLE_PROGRESS, L.OPT_SUBTITLE_PROGRESS_TIP,
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
-        Only(progress, function() return Subtitles() or DUI() or Small() end)
+        Only(progress, function() return Subtitles() or InWindow() end)
         Requires(progress, function() return not Subtitles() or Words() end, L.REASON_WORDS)
     end
     -- Hiding the portrait and hiding a button are one kind of choice, so they sit together. Not
@@ -517,11 +515,13 @@ local function Build(canvas)
     -- The narrator style's settings end here; what follows is Spoken's whatever the style.
     layout:EndGroup()
 
-    -- Every frame Spoken draws, whatever the style: the round buttons' rings and the small
-    -- window's metal.
-    layout:Section(L.OPT_COLOURS_TITLE)
-    layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
-        function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
+    -- Outside the narrator style's settings, as it colours every frame Spoken draws. Forever only:
+    -- elsewhere bronze matches nothing.
+    if Version.IsCamelot then
+        layout:Section(L.OPT_COLOURS_TITLE)
+        layout:Checkbox(L.OPT_BRONZE_TINT, L.OPT_BRONZE_TINT_TIP,
+            function() return cfg().BronzeTint end, function(v) cfg().BronzeTint = v end, refresh)
+    end
 
     DialogueUIOptions:Place(layout)
 
@@ -621,12 +621,6 @@ local function Build(canvas)
         -- Muting Dialog would mute Spoken's own line, so on Dialog the queue never does.
         Requires(silence, function() return Sources:PlayerChannel() ~= "Dialog" end, L.REASON_DIALOG_CHANNEL)
     end
-    layout:Checkbox(L.OPT_GREETING_FIRST, L.OPT_GREETING_FIRST_TIP,
-        function() return audio().GreetingFirst end,
-        function(v)
-            audio().GreetingFirst = v
-            if v then GreetingFirst:SetDialogApart() end
-        end)
     layout:Slider(L.OPT_LINE_GAP, 0, 5, 0.25,
         function() return audio().LineGap or 0 end, function(v) audio().LineGap = v end,
         nil, Layout.Seconds, L.OPT_LINE_GAP_TIP)

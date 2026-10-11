@@ -15,8 +15,10 @@ local WORDS_TOP, PROGRESS_GAP, FOOT = 44, 6, 27
 local INSET, BESIDE_PORTRAIT, NO_PORTRAIT = 18, 96, 16
 -- Between the name or the title and the header's buttons; between the buttons.
 local CONTROLS_CLEAR, ROUND_GAP = 8, 4
--- The bronze the Forever client's frames wear, for Bronze Border.
-local BRONZE = { .95, .68, .35 }
+local BRONZE = Actions.BRONZE
+-- The narrowest the window goes, and the room the portrait takes left of the panel.
+local function MinWidth() return Addon:Profile("Frame").HidePortrait and 200 or 280 end
+local function PortraitWidth() return Addon:Profile("Frame").HidePortrait and 80 or 0 end
 -- The text colours for each background (Frame.MinimalBackground): dark ink with no shadow on
 -- parchment, light text on the rock.
 local LOOKS = {
@@ -130,7 +132,6 @@ function MinimalPlayer:Initialize(original)
     self.content, frame.container = content, content
     content:SetHeight(76)
     content:SetFrameLevel(self.panel:GetFrameLevel() + 1)
-    content.buttons = {}
     self.header = CreateFrame("Button", nil, content)
     self.header:SetPoint("TOPLEFT")
     self.header:SetPoint("TOPRIGHT")
@@ -149,7 +150,6 @@ function MinimalPlayer:Initialize(original)
     end)
     self.header:SetScript("OnLeave", function() self:HideTooltip() end)
 
-    -- Stop or Replay, Skip, then Report, at the header's right.
     self.controls = CreateFrame("Frame", nil, content)
     self.controls:SetHeight(1)
     self.controls:SetFrameLevel(content:GetFrameLevel() + 3)
@@ -174,7 +174,9 @@ function MinimalPlayer:Initialize(original)
     self.stopped:Hide()
     self.count = Font(self.title, 12, .62, .58, .46)
     self.count:Hide()
-    self.tail = Actions.Tail(self.stopped, self.count)
+    self.held = Font(self.title, 12, .62, .58, .46)
+    self.held:Hide()
+    self.tail = Actions.Tail(self.stopped, self.count, self.held)
 
     self.progress = Actions.ProgressBar(content)
 
@@ -349,7 +351,7 @@ end
 
 -- Saved as the width with the portrait, which RefreshConfig takes off when hidden.
 function MinimalPlayer:SaveLayout()
-    Addon:SaveLayout("Minimal", self.frame, self.frame:GetWidth() + (Config().HidePortrait and 80 or 0))
+    Addon:SaveLayout("Minimal", self.frame, self.frame:GetWidth() + PortraitWidth())
 end
 
 function MinimalPlayer:ConfigurePortrait()
@@ -391,6 +393,7 @@ function MinimalPlayer:Dress()
     Ink(self.title.text, look.title)
     Ink(self.stopped, look.tail)
     Ink(self.count, look.tail)
+    Ink(self.held, look.tail)
     Transcript:SetStyle(look.words)
 end
 
@@ -400,22 +403,18 @@ function MinimalPlayer:UpdateControls()
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
     self.title.text:SetText(Label(self.clip))
     Addon:ClipFont(self.title.text, self.clip)
+    self.tail:SetHeld(SoundQueue:GetHeldReason(self.clip))
     self.tail:SetStopped(paused)
     self:Count(Waiting())
-    local pausable = SoundQueue:CanBePaused()
-    for _, button in ipairs(self.buttons) do
-        button:SetAlpha(pausable and 1 or .4)
-        if pausable then button:Enable() else button:Disable() end
-    end
+    local pausable = Actions.SetPausable(self.buttons)
     self.menuPlay.text:SetText(paused and L.REPLAY or L.STOP)
     for _, button in ipairs({ self.menuPlay, self.menuSkip, self.menuStop }) do
-        if SoundQueue:CanBePaused() then button:Enable(); button.text:SetAlpha(1)
+        if pausable then button:Enable(); button.text:SetAlpha(1)
         else button:Disable(); button.text:SetAlpha(.35) end
     end
 end
 
---- Puts "• (Stopped)" and the lines waiting, "• +N", after the title. The title is cut short,
---- not these.
+--- Puts the tail after the title: the title is cut short, not it.
 function MinimalPlayer:Count(waiting)
     local tail = self.tail
     tail:SetCount(waiting)
@@ -448,7 +447,7 @@ function MinimalPlayer:Layout()
     local bottom = words > 0 and WORDS_TOP + words or NAME_HEIGHT + TITLE_HEIGHT
     local barTop = bottom + PROGRESS_GAP
     if progress then bottom = barTop + self.progress.height end
-    Transcript:ResizePlayer(self.frame, math.max(HEIGHT, INSET + bottom + FOOT), cfg.HidePortrait and 200 or 280, 1000)
+    Transcript:ResizePlayer(self.frame, math.max(HEIGHT, INSET + bottom + FOOT), MinWidth(), 1000)
     Transcript:Dock(self.frame, self.content, "TOPLEFT", 0, -WORDS_TOP, width, words)
     self.progress.track:SetShown(progress)
     self.progress.track:ClearAllPoints()
@@ -489,15 +488,15 @@ function MinimalPlayer:RefreshConfig(original)
     local cfg, frame = Config(), self.frame
     frame:SetScale(cfg.FrameScale)
     frame:SetFrameStrata(cfg.FrameStrata)
-    frame:SetResizeBounds(cfg.HidePortrait and 200 or 280, frame:GetHeight(), 1000, frame:GetHeight())
+    frame:SetResizeBounds(MinWidth(), frame:GetHeight(), 1000, frame:GetHeight())
     local saved = Addon:Layout().Minimal
-    frame:SetWidth(Clamp((saved and saved.width or cfg.MinimalWidth or WIDTH) - (cfg.HidePortrait and 80 or 0), cfg.HidePortrait and 200 or 280, 1000))
+    frame:SetWidth(Clamp((saved and saved.width or cfg.MinimalWidth or WIDTH) - PortraitWidth(), MinWidth(), 1000))
     self.content:ClearAllPoints()
     self.content:SetPoint("TOPLEFT", cfg.HidePortrait and NO_PORTRAIT or BESIDE_PORTRAIT, -INSET)
     self.content:SetPoint("TOPRIGHT", -INSET, -INSET)
     self.portrait:SetShown(not cfg.HidePortrait)
     local r, g, b = 1, 1, 1
-    if Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
+    if BRONZE and Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
     self.panel:SetBackdropBorderColor(r, g, b)
     Actions.TintProgress(self.progress, r, g, b)
     self.ring:SetVertexColor(r, g, b)

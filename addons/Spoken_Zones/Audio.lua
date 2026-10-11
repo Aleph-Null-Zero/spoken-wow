@@ -222,7 +222,7 @@ function SpokenZones:SetupAudio()
 	self.source = Spoken:RegisterSource("zones", {
 		title = "Spoken Zones",
 		addon = ADDON_NAME,
-		order = 3,
+		order = 2,
 		-- How many clips may wait behind the one speaking. Discoveries arrive in
 		-- bursts when crossing a cluster of small subzones, and narration that has
 		-- fallen minutes behind is describing somewhere the player already left.
@@ -538,18 +538,6 @@ local ACTIONS = {
 	}
 }
 
---- How wide Place Lore draws a picture beside the map, in the screen's pixels: its text column
---- (the panel less its margins and scroll bar, TextView's 400 at most), at the map's scale. A
---- window showing the picture over a line's words draws it this large too.
-function SpokenZones:PicturePixels()
-	local panel = self.Get and tonumber(self:Get("panelWidth")) or 360
-	local width = math.min(400, panel - 66)
-	local map, scale = _G.WorldMapFrame, nil
-	if map and map.GetEffectiveScale then scale = map:GetEffectiveScale() end
-	if not (type(scale) == "number" and scale > 0) then scale = UIParent:GetEffectiveScale() end
-	return width * scale
-end
-
 --- The place one level up from a zone, as Azeroth's Compendium nests them: a city's zone, a
 --- zone's continent, a continent's world. Nil for the world.
 function SpokenZones:PlaceAbove(mapID)
@@ -604,7 +592,7 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 			font = font,
 			bullet = "zone",
 			portrait = self:Portrait(mapID),
-			picture = picture and { file = picture, mask = mask, pixels = self:PicturePixels() } or nil,
+			picture = picture and { file = picture, mask = mask } or nil,
 			actions = ACTIONS,
 		},
 		-- Recorded when the clip starts rather than when it is queued, so that

@@ -7,8 +7,7 @@ local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local print = stub.print
--- The gossip module's: Thrall's line is what he says when you talk to him.
-local G = stub.LoadGossip(here .. "/../../addons/Spoken_Gossip/", here .. "/../../addons/Spoken/")
+local VO = stub.LoadPlayer(here .. "/../../addons/Spoken_Quests/")
 
 local failures = 0
 
@@ -22,45 +21,45 @@ local function Expect(scenario, actual, expected)
     end
 end
 
-G.Addon:OnInitialize()
+VO.Addon:OnInitialize()
 stub.Advance(2) -- Wait out the deferred data module load that OnInitialize schedules.
 
 local THRALL = "9fdeb82237b72e8801030487901e690f"
-local EGG_PATH = [[Interface\AddOns\Spoken_Gossip\Sounds\og-thrall.mp3]]
+local EGG_PATH = [[Interface\AddOns\Spoken_Quests\Sounds\og-thrall.mp3]]
 
 -- The option ships off, so a fresh install hears whatever the pack holds.
 local soundData = { fileName = THRALL, filePath = "pack-path" }
-Expect("option off leaves the line alone", G.EasterEggs:Apply(soundData), false)
+Expect("option off leaves the line alone", VO.EasterEggs:Apply(soundData), false)
 Expect("option off keeps the pack's path", soundData.filePath, "pack-path")
 
-G.Addon.db.profile.Audio.OGThrall = true
+VO.Addon.db.profile.Audio.OGThrall = true
 
 soundData = { fileName = THRALL, filePath = "pack-path", length = 1,
     module = { METADATA = { AddonName = "TestPack" } } }
-Expect("option on swaps the path", G.EasterEggs:Apply(soundData) and soundData.filePath, EGG_PATH)
+Expect("option on swaps the path", VO.EasterEggs:Apply(soundData) and soundData.filePath, EGG_PATH)
 Expect("option on swaps the length", soundData.length, 33.802375)
 
 -- A line nobody wrote an egg for keeps whatever the pack resolved.
 soundData = { fileName = "1234-accept", filePath = "pack-path" }
-Expect("other lines untouched", G.EasterEggs:Apply(soundData) or soundData.filePath, "pack-path")
+Expect("other lines untouched", VO.EasterEggs:Apply(soundData) or soundData.filePath, "pack-path")
 
 -- No pack holds the line - an Alliance-only install, say. The egg still plays, and names an
 -- addon, because SoundQueue logs the module a sound came from.
 soundData = { fileName = THRALL }
-G.EasterEggs:Apply(soundData)
-Expect("egg without a pack names an addon", soundData.module.METADATA.AddonName, "Spoken_Gossip")
+VO.EasterEggs:Apply(soundData)
+Expect("egg without a pack names an addon", soundData.module.METADATA.AddonName, "Spoken_Quests")
 
 -- And the swap is actually wired into the resolve, not just callable on its own. Keyed on a
 -- quest file name here only because that is the one PrepareSound can be handed directly.
-G.DataModules:Register("TestPack", {
+VO.DataModules:Register("TestPack", {
     SoundLengthLookupByFileName = { ["4949-accept"] = 1 },
     GetSoundPath = function(_, fileName) return "quests\\" .. fileName .. ".ogg" end,
 })
-G.EasterEggs.alternates["4949-accept"] =
+VO.EasterEggs.alternates["4949-accept"] =
     { path = [[Sounds\og-thrall.mp3]], length = 33.802375, option = "OGThrall" }
-soundData = { event = G.Enums.SoundEvent.QuestAccept, questID = 4949 }
+soundData = { event = VO.Enums.SoundEvent.QuestAccept, questID = 4949 }
 Expect("PrepareSound applies the swap",
-    G.DataModules:PrepareSound(soundData) and soundData.filePath, EGG_PATH)
+    VO.DataModules:PrepareSound(soundData) and soundData.filePath, EGG_PATH)
 
 print(failures == 0 and "\nAll easter egg tests passed" or string.format("\n%d test(s) failed", failures))
 os.exit(failures == 0 and 0 or 1)

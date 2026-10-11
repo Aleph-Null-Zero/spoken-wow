@@ -164,13 +164,12 @@ do
     local words = env.Addon.db.profile.Transcript
     local saved = { words.Enabled, words.Typewriter, words.SubtitleScroll }
     words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
-    local WINDOW = "Window Size, Lock Position, Reset Positions, Hide Portrait, Show Words, "
-        .. "Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By"
     local ROWS = {
-        -- The small window's own Background, and the progress line it draws.
-        minimal = (WINDOW:gsub("Reset Positions, ", "Reset Positions, Background, Show Progress, ")),
-        -- The large window shows what fits in its fixed box, not Lines Shown.
-        classic = (WINDOW:gsub("Lines Shown, ", "")),
+        minimal = "Window Size, Lock Position, Reset Positions, Background, Show Progress, Hide Portrait, "
+            .. "Show Words, Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By",
+        -- The large window's words fill the box, so no Lines Shown.
+        classic = "Window Size, Lock Position, Reset Positions, Show Progress, Hide Portrait, Show Words, "
+            .. "Text Size, Auto-Scroll, Highlight Words, Type Words Out, Type By",
         subtitle = "Subtitle Size, Lock Position, Reset Positions, Background Darkness, Show Name and Title, Show Progress, "
             .. "Hide Portrait, Show Words, Text Size, Sentences at Once, Auto-Scroll (subtitles), "
             .. "Highlight Words, Type Words Out, Type By",
@@ -196,7 +195,8 @@ do
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end
 
--- Bronze Border is for every frame Spoken draws, so it sits outside the narrator style's settings.
+-- Bronze Border matches Forever's own frames, so a Classic Era client has no row for it. On Forever
+-- it sits outside the narrator style's settings, since it colours every frame Spoken draws.
 do
     local function Placed()
         local inGroup, section, found = false, nil, nil
@@ -214,8 +214,7 @@ do
     end
     for _, style in ipairs({ "minimal", "none" }) do
         env.Addon:SetPlayerStyle(style); Options:UpdateRows()
-        Expect("Bronze Border outside the narrator style's settings, under Colours, shown with " .. style, Placed(),
-            "false " .. L.OPT_COLOURS_TITLE .. " true")
+        Expect("no Bronze Border row on Classic Era, with " .. style, Placed(), "missing")
     end
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end
@@ -332,7 +331,7 @@ env.Addon:SetPlayerStyle("subtitle"); Options:UpdateRows()
 local found = Search:Find("subtitle size")
 Expect("search finds a setting by its name", found[1] and found[1].entry.label, "Subtitle Size")
 Expect("...on the page it is on", found[1] and found[1].page.name, L.OPT_HOME_TITLE)
-found = Search:Find("automatically")
+found = Search:Find("greetings")
 Expect("search reaches the pages under Spoken too", found[1] and found[1].page.name, "Quests")
 Expect("a word from a tooltip is enough", Search:Find("footsteps")[1] and Search:Find("footsteps")[1].entry.label, "Effects")
 Expect("every word must match", #Search:Find("subtitle footsteps"), 0)
@@ -354,11 +353,11 @@ for _, query in ipairs({ L.OPT_PART_BOOKS, L.OPT_STYLE_NONE }) do
 end
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 
-Search.box:SetText("automatically"); Search.box.handlers.OnTextChanged(Search.box)
+Search.box:SetText("greetings"); Search.box.handlers.OnTextChanged(Search.box)
 Expect("typing lists the results", Search.results:IsShown(), true)
 Search.box:SetText("zzzz"); Search.box.handlers.OnTextChanged(Search.box)
 Expect("...and says so when nothing matches", Search.rows[1].text.text:find(L.SEARCH_NONE, 1, true) ~= nil, true)
-Search.box:SetText("automatically"); Search.box.handlers.OnTextChanged(Search.box)
+Search.box:SetText("greetings"); Search.box.handlers.OnTextChanged(Search.box)
 Search.box.handlers.OnEnterPressed(Search.box)
 local last = opened[#opened]
 Expect("Enter opens the first result's own page", type(last) == "table" and last.name or last, "Quests")
@@ -417,8 +416,7 @@ env.Addon.db.global.Welcomed = nil
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 stub.Advance(2.1)
 Expect("the welcome opens at the first login after it ships", Welcome.frame and Welcome.frame:IsShown(), true)
--- Quests, Gossip, Books and Zones.
-Expect("it offers the parts as a list, as Home does", #Welcome.modules, 4)
+Expect("it offers the parts as a list, as Home does", #Welcome.modules, 3)
 Expect("...under its header, the paragraph saying what the window is for",
     Welcome.layout.intro.text ~= nil and Welcome.layout.intro.text.text, L.WELCOME_INTRO)
 Expect("...which the settings pages, like the game's own, do without", home.intro.text, nil)

@@ -5,6 +5,7 @@ import NpcEditor from "@/components/NpcEditor";
 import { LinkTabs } from "@/components/StatusTabs";
 import TypesEditor from "@/components/TypesEditor";
 import { Contained, Wide } from "@/components/Width";
+import { clientOf } from "@/lib/contributions/client";
 import { summaryFromResolution } from "@/lib/contributions/speaker";
 import { localeHref } from "@/lib/lang";
 import { pageLang } from "@/lib/lang-server";
@@ -58,7 +59,11 @@ export default async function Page({
           <TypesEditor initial={roster.data} />
         ) : (
           <NpcEditor
-            initial={(await listResolutions()).map((row) => summaryFromResolution(row, roster))}
+            initial={(await listResolutions()).map((row) => ({
+              ...summaryFromResolution(row, roster),
+              // The client whose guess filed the NPC; none for one only the extract names.
+              client: row.build ? clientOf(row.build).family : null,
+            }))}
             roster={roster.data}
           />
         )}

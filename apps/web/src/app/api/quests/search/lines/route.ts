@@ -14,7 +14,7 @@ import { searchContext } from "@/lib/quests/context";
 import { broadcastStatuses } from "@/lib/broadcast/store";
 import { recordingsFor } from "@/lib/recordings/store";
 import { filtersFromParams, needsStale, withoutMadeBy } from "@/lib/search-request";
-import { batchJobs, matchingLines } from "@/lib/search";
+import { batchPlan, matchingLines } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
 
@@ -38,5 +38,7 @@ export async function GET(request: NextRequest) {
   const lines = matchingLines(catalogue, voiced, filters, { ...context, recordings, broadcast });
   // The same overrides the estimate is built from, so the quote prices the text that will
   // actually be sent rather than the text the corpus happens to hold.
-  return NextResponse.json({ jobs: batchJobs(lines, context.overrides) });
+  // `matched` and `skipped` account for the gap between the button's count and the jobs.
+  const { jobs, skipped } = batchPlan(lines, context.overrides);
+  return NextResponse.json({ jobs, matched: lines.length, skipped });
 }

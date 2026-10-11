@@ -1,4 +1,3 @@
-if not (VoiceOver and VoiceOver.SpokenDialogue) then return end
 setfenv(1, VoiceOver)
 
 local TEXTURES = format([[Interface\AddOns\%s\Textures\]], AddonFolder)
