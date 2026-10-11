@@ -109,6 +109,17 @@ export type BatchJob = {
   preview: string;
 };
 
+/** Mirrors BatchSkip in lib/search.ts. */
+export type BatchSkip = "progress" | "untranslated" | "no-voice" | "invalid-chars" | "shared-file";
+
+export type BatchJobs = {
+  jobs: BatchJob[];
+  /** Lines the filters matched, which is what the button counts. */
+  matched: number;
+  /** The matched lines that are not a job of their own, by reason. */
+  skipped: Partial<Record<BatchSkip, number>>;
+};
+
 /**
  * Every job a set of filters would regenerate.
  *
@@ -119,11 +130,11 @@ export async function fetchBatchJobs(
   params: URLSearchParams,
   signal?: AbortSignal,
   lang: Lang = BASE_LANG,
-): Promise<BatchJob[] | null> {
+): Promise<BatchJobs | null> {
   try {
     const response = await fetch(withLang(lang, `/api/quests/search/lines?${params}`), { signal });
     if (!response.ok) return null;
-    return ((await response.json()) as { jobs: BatchJob[] }).jobs;
+    return (await response.json()) as BatchJobs;
   } catch {
     return null;
   }
