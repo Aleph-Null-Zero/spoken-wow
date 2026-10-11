@@ -151,8 +151,16 @@ function SpokenBooks:IsNarrating(book)
 		return false
 	end
 
+	if not self.source or not _G.Spoken or not Spoken.GetQueue then
+		return false
+	end
+	-- One copy of the queue for the whole book: DialogueUI's book view asks several times a second.
+	local queued = {}
+	for _, clip in ipairs(Spoken:GetQueue()) do
+		if clip.key then queued[clip.key] = true end
+	end
 	for _, id in ipairs(entry.pages) do
-		if self:IsQueued(id) then
+		if queued["b:" .. id] then
 			return true
 		end
 	end
