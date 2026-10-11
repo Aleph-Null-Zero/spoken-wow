@@ -160,10 +160,13 @@ function PlayerFrame:InitHeader()
     self.count = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
     self.count:SetWordWrap(false)
     self.count:Hide()
-    for _, text in ipairs({ self.stopped, self.count }) do
+    self.held = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
+    self.held:SetWordWrap(false)
+    self.held:Hide()
+    for _, text in ipairs({ self.stopped, self.count, self.held }) do
         text:SetTextColor(TAIL_COLOR[1], TAIL_COLOR[2], TAIL_COLOR[3])
     end
-    self.tail = Actions.Tail(self.stopped, self.count)
+    self.tail = Actions.Tail(self.stopped, self.count, self.held)
 
     self.controls = CreateFrame("Frame", nil, container)
     self.controls:SetHeight(1)
@@ -364,8 +367,10 @@ function PlayerFrame:ConfigureActions(clip)
 end
 
 function PlayerFrame:UpdateControls()
-    if not self:Current() then return end
+    local head = self:Current()
+    if not head then return end
     Actions.SetPlayGlyph(self.play, Actions.HeadState())
+    self.tail:SetHeld(SoundQueue:GetHeldReason(head))
     self.tail:SetStopped(SoundQueue:IsPaused())
     self.tail:SetCount(Waiting())
     local pausable = SoundQueue:CanBePaused()

@@ -239,9 +239,10 @@ local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
 
 local Tail = {}
 
---- The tail for two font strings the window made: `stopped`, its text already set, and `count`.
-function Actions.Tail(stopped, count)
-    local tail = { stopped = stopped, count = count, alpha = 0, want = false, parts = {} }
+--- The tail for the font strings the window made: `stopped`, its text already set, `count`, and
+--- `held` where the window says why a line has not started.
+function Actions.Tail(stopped, count, held)
+    local tail = { stopped = stopped, count = count, held = held, alpha = 0, want = false, parts = {} }
     for key, fn in pairs(Tail) do tail[key] = fn end
     return tail
 end
@@ -249,6 +250,14 @@ end
 --- Whether Stopped should show; Step fades it in or out.
 function Tail:SetStopped(stopped)
     self.want = stopped and true or false
+end
+
+--- Why the line is held back, "• (in combat)", or nil once it may play. A held line with no
+--- reason looks exactly like narration that failed.
+function Tail:SetHeld(reason)
+    if not self.held then return end
+    self.reason = reason
+    self.held:SetText(reason and "• (" .. reason .. ")" or "")
 end
 
 --- `waiting` lines behind the one playing: the count says it, fading in when it grew.
@@ -259,6 +268,10 @@ function Tail:SetCount(waiting)
         self.count:SetText(waiting > 0 and "• +" .. waiting or "")
     end
     self.parts = {}
+    if self.held then
+        self.held:SetShown(self.reason ~= nil)
+        if self.reason then table.insert(self.parts, self.held) end
+    end
     local stoppedShown = self.want or self.alpha > 0
     self.stopped:SetShown(stoppedShown)
     if stoppedShown then table.insert(self.parts, self.stopped) end
