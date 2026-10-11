@@ -48,19 +48,23 @@ view.Header = stub.Widget("Frame")
 view.Header.Title = stub.Widget("FontString")
 view.Header.Title:Show()
 view.Header.Title.GetTop = function() return 552 end
--- How DialogueUI lays a short page out: the line under the title hung off the top, the text under
--- it, the frame as tall as they need.
+-- How DialogueUI lays a page out: the line under the title hung off the top, the text under it.
+-- A page that fits gets a frame as tall as it needs, 200 over its text; one that does not gets the
+-- tallest frame, 500, and scrolls by what is left over.
+local FRAME_MAX, AROUND = 500, 200
 view.Header.HeaderDivider = stub.Widget("Texture")
 view.ScrollFrame = stub.Widget("Frame")
 view.ContentFrame = stub.Widget("Frame")
 view:SetHeight(300)
-function view:SetFrameHeight(height) self:SetHeight(height) end
-function view:SetScrollContentHeight()
+function view:SetFrameHeight(height) self:SetHeight(math.min(height, FRAME_MAX)) end
+function view:SetScrollContentHeight(contentHeight)
     self.Header.Title:SetPoint("TOP", self, "TOP", 0, -90 * 0.53333)
     self.Header.HeaderDivider:SetPoint("CENTER", self, "TOP", 0, -60)
     self.ScrollFrame:SetPoint("TOPLEFT", self, "TOPLEFT", 0, -70)
     self.ContentFrame:SetPoint("TOP", self, "TOP", 0, -70)
-    self:SetHeight(300)
+    self.scrollable = contentHeight + AROUND > FRAME_MAX
+    self.range = self.scrollable and contentHeight + AROUND - FRAME_MAX or 0
+    self:SetHeight(self.scrollable and FRAME_MAX or contentHeight + AROUND)
 end
 view.TTSButton = stub.Widget("Button")
 view.TTSButton:SetAlpha(0.6)
@@ -102,6 +106,16 @@ Expect("the title moved down to leave 36 over and under the controls' line", vie
 Expect("...its line and the text with it", view.Header.HeaderDivider.anchor.y .. " " .. view.ScrollFrame.anchor.y
     .. " " .. view.ContentFrame.anchor.y, (-60 - shift) .. " " .. (-70 - shift) .. " " .. (-70 - shift))
 Expect("...a short page's frame taller by as much", view:GetHeight(), 300 + shift)
+Expect("...and not scrolling", view.scrollable, false)
+-- A page that only just fits without the controls, so the frame cannot grow by the move.
+view:SetScrollContentHeight(FRAME_MAX - AROUND - shift / 2, 1)
+Expect("a page that fitted only without the room for the controls scrolls instead of losing its end",
+    tostring(view.scrollable) .. " " .. view:GetHeight(), "true " .. FRAME_MAX)
+Expect("...by the move's height that no longer fits", string.format("%.3f", view.range), string.format("%.3f", shift / 2))
+Expect("...its text not moved a second time, the scroll frame carrying it",
+    view.ScrollFrame.anchor.y .. " " .. view.ContentFrame.anchor.y, (-70 - shift) .. " -70")
+view:SetScrollContentHeight(FRAME_MAX, 1)
+Expect("a long page scrolls further by the move", string.format("%.3f", view.range), string.format("%.3f", AROUND + shift))
 view.ScrollFrame, view.ContentFrame = nil, nil
 
 ---------------------------------------------------------------- the row

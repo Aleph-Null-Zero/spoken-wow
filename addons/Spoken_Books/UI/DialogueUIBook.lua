@@ -195,10 +195,17 @@ local CLOSE_SIZE, CLOSE_INSET, TITLE_TOP = 64, 26, 90
 -- ROUND is. The title and the text under it move down to make it.
 local LINE_ROOM = 36
 
+local lowering = false
+
 --- DialogueUI's title, the line under it and the text moved down so the controls' line has
---- LINE_ROOM over and under it: a short page's frame taller by as much, a long one's scroll longer.
---- Run after SetScrollContentHeight, which puts all but the title back where DialogueUI had them.
-function Book:Lower()
+--- LINE_ROOM over and under it. Run after SetScrollContentHeight, which puts all but the title back
+--- where DialogueUI had them. The page is laid out again with its content taller by the move, so
+--- DialogueUI itself decides whether it still fits or now scrolls: a frame at its tallest cannot
+--- grow, and a page that only just fitted would lose its last lines under the footer.
+function Book:Lower(contentHeight, maxPage)
+	if lowering then
+		return
+	end
 	local view = View()
 	local close, header, scroll = view.CloseButton, view.Header, view.ScrollFrame
 	if not (SpokenBooks:IsPartOn() and type(close) == "table" and close.GetWidth and type(header) == "table"
@@ -211,6 +218,15 @@ function Book:Lower()
 	if shift <= 0 then
 		return
 	end
+	if type(contentHeight) == "number" then
+		lowering = true
+		local ok, err = pcall(view.SetScrollContentHeight, view, contentHeight + shift, maxPage)
+		lowering = false
+		if not ok then
+			geterrorhandler()(err)
+			return
+		end
+	end
 	header.Title:SetPoint("TOP", view, "TOP", 0, -(TITLE_TOP * pixel + shift))
 	-- The line under the title, where DialogueUI hangs it off the top rather than the title.
 	local divider = header.HeaderDivider
@@ -222,15 +238,12 @@ function Book:Lower()
 	end
 	local _, _, _, scrollX, scrollY = scroll:GetPoint(1)
 	scroll:SetPoint("TOPLEFT", view, "TOPLEFT", scrollX or 0, (scrollY or 0) - shift)
-	if view.scrollable then
-		if scroll.SetScrollRange then scroll:SetScrollRange((tonumber(scroll.range) or 0) + shift) end
-	else
+	if not view.scrollable then
 		local content = view.ContentFrame
 		if type(content) == "table" then
 			local _, _, _, x, y = content:GetPoint(1)
 			content:SetPoint("TOP", view, "TOP", x or 0, (y or 0) - shift)
 		end
-		if view.SetFrameHeight then view:SetFrameHeight((view:GetHeight() or 0) + shift, false) end
 	end
 end
 
@@ -507,6 +520,8 @@ function Book:Mark()
 end
 
 --- A FontString handed to a paragraph as the view scrolls: it shows that paragraph as marked.
+--- One DialogueUI makes anew comes without it and shows the paragraph unmarked until the next
+--- word is read, a moment at most.
 local function Handed(_, fs, _, index)
 	local p = words.byIndex and words.byIndex[index]
 	local want = p and words.want[p]
@@ -559,7 +574,9 @@ function SpokenBooks:SetupDialogueUIBook()
 		hooksecurefunc(view, "LayoutWidgets", function() Book:PlaceTheirs() end)
 	end
 	if type(view.SetScrollContentHeight) == "function" then
-		hooksecurefunc(view, "SetScrollContentHeight", function() Book:Lower() end)
+		hooksecurefunc(view, "SetScrollContentHeight", function(_, contentHeight, maxPage)
+			Book:Lower(contentHeight, maxPage)
+		end)
 	end
 	-- Hide Report Buttons, in Spoken's settings, fires no game event.
 	if Spoken.RegisterCallback then
