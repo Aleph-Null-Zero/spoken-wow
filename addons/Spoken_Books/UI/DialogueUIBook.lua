@@ -289,16 +289,21 @@ function Book:RestoreClose()
 	close:SetPoint("TOPRIGHT", view, "TOPRIGHT", -CLOSE_INSET * pixel, -CLOSE_INSET * pixel)
 end
 
+-- Reused on every Draw, which runs while the book view is open.
+local list = {}
+
 --- Right to left from the book's close button, centred on it: Report, Skip, Play, whichever show,
 --- the same size on screen whatever DialogueUI's book scale.
 function Book:Place()
 	local view, row = View(), self.row
 	local scale = UIParent:GetEffectiveScale() / math.max(0.01, view:GetEffectiveScale() or 1)
-	local list = {}
-	for _, button in ipairs({ row.report, row.skip, row.play }) do
-		if button:IsShown() then table.insert(list, button) end
+	for i = #list, 1, -1 do
+		list[i] = nil
 	end
-	local key = #list .. " " .. format("%.3f", scale)
+	if row.report:IsShown() then table.insert(list, row.report) end
+	if row.skip:IsShown() then table.insert(list, row.skip) end
+	if row.play:IsShown() then table.insert(list, row.play) end
+	local key = #list * 100000 + math.floor(scale * 1000 + 0.5)
 	if key == self.placedKey then
 		return
 	end
@@ -474,14 +479,14 @@ function Book:Mark()
 	if not (marks and view and view:IsShown() and Spoken.GetCaption and Spoken.SplitCaption and Scroll()) then
 		return
 	end
-	if not words.paragraphs then
-		words.paragraphs, words.byIndex = Collect(marks)
-		words.clip = nil
-	end
 	local caption = Spoken:GetCaption()
 	local clip = caption and caption.clip
 	if Mine(clip) then
 		if clip ~= words.clip then
+			-- Split only once this book is read: one opened and not listened to never is.
+			if not words.paragraphs then
+				words.paragraphs, words.byIndex = Collect(marks)
+			end
 			-- Put back and marked again in this one call: nothing shows in between.
 			Restore()
 			words.clip, words.scrolledTo = clip, nil
