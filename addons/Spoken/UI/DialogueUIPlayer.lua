@@ -1096,6 +1096,9 @@ function Skin:Settle(dialog)
         self:Update()
         if queued then
             self.justClosed = nil
+            -- Back in full at once, so the page goes behind a window that is there, as when it
+            -- was on screen all along.
+            self:ShowAtOnce()
             self:TuckWhenShown(dialog, queued)
         end
         return
@@ -1647,6 +1650,17 @@ end
 
 --- Done, or cut short (a dialog opening, another closing): the page and the ripple gone, this
 --- window where it rests.
+--- In full at once and itself, not one image: no fade waits or runs.
+function Skin:ShowAtOnce()
+    self.preparing, self.arming, self.fadeTime, self.turning = nil, nil, nil, nil
+    self.wanted = true
+    self:Unbuffer()
+    self:Undeafen()
+    Transcript:Release()
+    self.frame:Show()
+    self:SetLevel(1)
+end
+
 --- Whether this window shows in full and is itself, not one image: a tuck may run against it.
 function Skin:Settled()
     return self.wanted and self.frame:IsShown() and (self.level or 0) >= 1 and not self.buffered
