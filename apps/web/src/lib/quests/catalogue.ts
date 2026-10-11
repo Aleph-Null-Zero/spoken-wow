@@ -177,7 +177,8 @@ function voiced<T extends Speaking>(rows: T[], roster: Roster): (T & { voice: st
   const lineOf = (row: T) => `${row.lineId}|${row.variant}`;
   for (const row of rows) if (!written.has(lineOf(row))) written.set(lineOf(row), row.writtenVoice);
 
-  // Both sexes of a split NPC answered with one voice speak one line, listed once.
+  // Both sexes of a split NPC answered with one voice speak one line, listed once, and a line
+  // nobody voices (progress text) is listed once whatever the sexes' voices.
   const seen = new Set<string>();
   return rows.map((row) => {
     // An NPC with no type has no voice to move to: its file stays, and nothing can make it again
@@ -200,7 +201,7 @@ function voiced<T extends Speaking>(rows: T[], roster: Roster): (T & { voice: st
     };
   }).filter((row) => {
     if (row.npcSex === null) return true;
-    const key = `${lineOf(row)}|${row.npcType}:${row.npcId}|${row.voice}`;
+    const key = `${lineOf(row)}|${row.npcType}:${row.npcId}|${OWN_VOICE_SOURCES.has(row.source) ? row.voice : ""}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

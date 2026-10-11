@@ -33,7 +33,7 @@ afterAll(closeDb);
 /** An English line spoken by `speakers`, each written with the voice the extract gave it. */
 async function line(
   speakers: { npcId: number; race: string; gender: string; flavor: string | null }[],
-  source: "accept" | "gossip" = "accept",
+  source: "accept" | "gossip" | "progress" = "accept",
 ) {
   await db().query(
     `insert into "quest_line"
@@ -209,6 +209,15 @@ describe("an NPC split by sex", WHOLE_CORPUS, () => {
       await db().query(`delete from "voice" where "name" = $1`, [type]);
       await db().query(`delete from "race" where "key" = $1`, [type]);
     }
+  });
+
+  it("lists a line nobody voices once", async () => {
+    await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "progress");
+    await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await sex(npcIds[0], 2, "human", "official");
+    await sex(npcIds[0], 3, "human", "official");
+
+    expect(await bySex()).toEqual([`2 ${lineId} human-male-official`]);
   });
 
   it("leaves the NPC's other speakers in one voice", async () => {
