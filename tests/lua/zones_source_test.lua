@@ -279,19 +279,9 @@ _G.SpokenZonesAudioPacks, _G.ZoneLoreAudioData = nil, nil
 _G.ZoneLoreAudioPacks = savedPacks
 
 ---------------------------------------------------------------- the login greeting
--- The greeting is the one thing here that needs a memory: "have I greeted this character"
--- is not a question the client can answer. On a client that restores no saved variables --
--- the 1.60.1 beta writes both files every logout and reads neither back, for every addon --
--- that memory is always empty, and the greeting stops being a greeting: it narrates the
--- current zone at every login instead of once per character.
---
--- Asked by the question the greeting puts first, rather than by what ends up in the queue:
--- reaching GetPlayerMapID is exactly "the gate let me through", and stubbing it to nil ends
--- the attempt there without needing lore, audio or a map behind it.
--- Boots the greeting with GetPlayerMapID counting how often it is asked. Answering nil ends
--- each attempt on the next line, which is all these need: the question is whether the gate
--- let an attempt get this far, not what it would have narrated.
-local function BootGreeting(restored, level)
+-- Reaching GetPlayerMapID means the gate let the attempt through, and stubbing it to nil
+-- ends the attempt there.
+local function BootGreeting(level)
     stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     world.inCombat = false
@@ -300,7 +290,6 @@ local function BootGreeting(restored, level)
     env.Addon:Enable()
     _G.C_Timer.After = StubAfter
     local Z = stub.LoadZones(ZONES, NewZoneLore())
-    Z.savedVariablesRestored = restored
     local counter = { asked = 0 }
     Z.GetPlayerMapID = function() counter.asked = counter.asked + 1 end
     Z.GetLoreWithFallback = function() return nil, nil end
@@ -310,26 +299,13 @@ local function BootGreeting(restored, level)
     return counter
 end
 
--- One attempt: the first runs two seconds after setup.
-local function GreetingAsked(restored, level)
-    local counter = BootGreeting(restored, level)
-    stub.Advance(2)
-    _G.SpokenZonesCharacter = nil
-    return counter.asked > 0
-end
-
-Expect("a client that restored nothing is not greeted", GreetingAsked(false, 60), false)
--- The case the greeting exists for: a character standing in the valley it woke up in, which
--- the client never announces. Worth hearing once per login on a client that cannot remember.
-Expect("...unless the character is new", GreetingAsked(false, 1), true)
-Expect("a greeting runs as before once something was restored", GreetingAsked(true, 60), true)
 
 -- An intro that outlasts the greeting's attempts. On a client that plays it somewhere else,
 -- with a loading screen after, every attempt during it resolves nothing; a player who
 -- watched it to the end arrived after the last one and was greeted by nothing.
 local cinematic = true
 _G.InCinematic = function() return cinematic end
-local counter = BootGreeting(true, 1)
+local counter = BootGreeting(1)
 stub.Advance(60)
 Expect("the greeting does not ask where the player is during an intro", counter.asked, 0)
 cinematic = false
