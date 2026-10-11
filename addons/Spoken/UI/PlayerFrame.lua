@@ -303,6 +303,9 @@ function PlayerFrame:RefreshConfig()
     self:Update()
 end
 
+--- Where the name and the words start: past the portrait, or BARE_LEFT with it hidden.
+local function Left() return FrameConfig().HidePortrait and BARE_LEFT or NAME_X end
+
 --- The lines of words that fit between the name and the progress line, up to MOST_LINES, and a
 --- line's height; no lines where the line has no words to show (Show Words off, none written, or
 --- 1.12, which has no captions).
@@ -318,7 +321,7 @@ function PlayerFrame:Layout()
     if self.laying or not self:IsShowing() then return end
     self.laying = true
     local frame, container = self.frame, self.frame.container
-    local left = FrameConfig().HidePortrait and BARE_LEFT or NAME_X
+    local left = Left()
     container:ClearAllPoints()
     container:SetPoint("TOPLEFT", frame, "TOPLEFT", left, NAME_Y)
     container:SetWidth(FRAME_WIDTH - left - RIGHT)
@@ -345,7 +348,7 @@ end
 function PlayerFrame:LayoutHeader()
     local container = self.frame.container
     local name, tail = container.name, self.tail
-    local left = FrameConfig().HidePortrait and BARE_LEFT or NAME_X
+    local left = Left()
     local room = math.max(1, FRAME_WIDTH - CORNER_X - self.controls:GetWidth() - NAME_GAP - left)
     local tailRoom = tail:Room()
     -- Unbounded first, so the width measured is the text's own.
@@ -371,11 +374,7 @@ function PlayerFrame:UpdateControls()
     self.tail:SetHeld(SoundQueue:GetHeldReason(head))
     self.tail:SetStopped(SoundQueue:IsPaused())
     self.tail:SetCount(Waiting())
-    local pausable = SoundQueue:CanBePaused()
-    for _, button in ipairs(self.buttons) do
-        button:SetAlpha(pausable and 1 or .4)
-        if pausable then button:Enable() else button:Disable() end
-    end
+    Actions.SetPausable(self.buttons)
     self:LayoutHeader()
 end
 

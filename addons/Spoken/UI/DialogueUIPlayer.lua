@@ -695,7 +695,6 @@ end
 function Skin:UpdateProgress()
     local clip = self.clip
     if not clip then return end
-    local duration = tonumber(clip.length) or 0
     self.seconds = Actions.Elapsed(clip, self.seconds)
     Actions.SetProgress(self.progress, SoundQueue:Share(clip, self.seconds))
 end

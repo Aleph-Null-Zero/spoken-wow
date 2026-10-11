@@ -255,7 +255,7 @@ end
 --- Why the line is held back, "• (in combat)", or nil once it may play. A held line with no
 --- reason looks exactly like narration that failed.
 function Tail:SetHeld(reason)
-    if not self.held then return end
+    if not self.held or reason == self.reason then return end
     self.reason = reason
     self.held:SetText(reason and "• (" .. reason .. ")" or "")
 end

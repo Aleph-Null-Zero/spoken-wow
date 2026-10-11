@@ -929,20 +929,8 @@ function Subtitle:BuildControls()
     controls:Hide()
     self.controls, self.controlsAlpha = controls, 0
 
-    local pause = RoundButton(controls, 12)
+    local pause = Actions.StopButton(controls, nil, function() self:UpdatePause() end)
     pause:SetPoint("LEFT", controls, "LEFT", 0, 0)
-    pause:SetScript("OnClick", function()
-        if not SoundQueue:CanBePaused() then return end
-        SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-        SoundQueue:TogglePauseQueue()
-        self:UpdatePause()
-    end)
-    pause:SetScript("OnEnter", function()
-        pause.glyph:SetAlpha(1)
-        GameTooltip:SetOwner(pause, "ANCHOR_TOP")
-        GameTooltip:SetText(SoundQueue:IsPaused() and L.REPLAY or L.STOP)
-        GameTooltip:Show()
-    end)
     self.pause = pause
     self:UpdatePause()
 
