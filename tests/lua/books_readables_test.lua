@@ -109,6 +109,7 @@ Click("Kurdran Wildhammer")
 local page = panel.page
 Expect("a readable's page: its title", page.title.text, "Kurdran Wildhammer")
 Expect("...where it is", page.sub.text, L.KIND_WORLD .. " · Stormwind City")
+Expect("...on one line, cut short where it names many places", page.sub.wordWrap, false)
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)
 Click("Ranger Captain Alleria Windrunner")
 Expect("a readable not found does not open", page.title.text, "Kurdran Wildhammer")
