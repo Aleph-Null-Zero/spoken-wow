@@ -1380,6 +1380,11 @@ Two generated files feed it, both committed so the addon never needs a database:
   0xFFFFFFFF as everyone), and one side's four Classic races are that side's Skyborne too. The
   tab tests the bit with arithmetic, `bit.band` being 32-bit, and maps race ids
   95 and 96 to bits 32 and 33 (`Has` in `UI/QuestsTab.lua`).
+  Most quests one side's giver hands out are open to every race in the DB (`AllowableRaces` 0 or
+  all), so where the DB says anyone, the quest takes the side `corpus/factions.json` gives it,
+  and failing that the side of the quest before it in its chain: a follow-up is reached only
+  through that quest (`quest_races`). The export prints how many quests are still not on the
+  side of the quest before them (`side_leaks`, the audit's leak check).
   Each quest that follows another in a chain has `prev`, the quest before it, from the same DB's
   `quest_template_addon` (`chain_links`): a positive `PrevQuestID`; else the lowest quest whose
   `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb

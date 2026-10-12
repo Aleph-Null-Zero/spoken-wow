@@ -11,7 +11,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   instead (a negative QuestSortID), named as the client names it, in every language.
 - Who: the races and classes allowed to take it (quest_template.AllowableRaces,
   quest_template_addon.AllowableClasses) are read from a TrinityCore world DB (the Forever
-  repack's), which the vmangos extraction does not keep.
+  repack's), which the vmangos extraction does not keep. Where the DB opens a quest to every
+  race, it is one side's if corpus/factions.json says so, else if the quest before it in its
+  chain is (quest_races below).
 - Chains: the quest before each one in its storyline (`prev`), from the same DB's
   quest_template_addon (chain_links below), so the tab can group a zone's quests into their chains.
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
@@ -250,6 +252,73 @@ def db_races(mask):
     return playable_races(races)
 
 
+def side_of(races):
+    """The side a race mask is wholly on ("alliance" or "horde"), else None."""
+    for side, mask in SIDE_RACES.items():
+        if races and not races & ~mask:
+            return side
+    return None
+
+
+def gates(rows):
+    """{questID: the quests that open it}, from quest_template_addon as chain_links reads it: its
+    PrevQuestID, else every quest whose NextQuestID names it (an ExclusiveGroup's alternatives, or
+    all of them). A breadcrumb opens nothing: its quest can be taken without it."""
+    out, opened = {}, {}
+    for qid, row in rows.items():
+        if (row.get("prev") or 0) > 0:
+            out[qid] = {row["prev"]}
+        target = row.get("next") or 0
+        if target > 0 and target != qid:
+            opened.setdefault(target, set()).add(qid)
+    for target, qids in opened.items():
+        out.setdefault(target, qids)
+    return out
+
+
+def quest_races(masks, sides, opened_by):
+    """{questID: the races that may take it, 0 for anyone}, for the quests of `masks`
+    ({questID: its race mask as the client has it: db_races of the DB's AllowableRaces}).
+
+    - The DB's mask, where it limits who may take the quest.
+    - Else the side corpus/factions.json gives the quest (its giver's): the DB leaves AllowableRaces
+      0 or all for most quests that only one side's giver hands out.
+    - Else the side of the quests that open it (`opened_by`, from gates), where they are all one
+      side's: a follow-up the DB opens to everyone is still reached only through them. A quest one
+      side's quest and the other's both open (The Stone Watcher, after either Seeing What Happens)
+      stays open to both. A quest the corpus lacks is passed through to the quests opening it.
+    """
+    own = {qid: playable_races(mask) or SIDE_RACES.get(sides.get(str(qid)), 0) for qid, mask in masks.items()}
+    races = {}
+
+    def side_before(qid, seen):
+        found = set()
+        for gate in opened_by.get(qid, ()):
+            if gate in seen:
+                return None
+            side = side_of(of(gate, seen)) if gate in own else side_before(gate, seen | {gate})
+            if side is None:
+                return None
+            found.add(side)
+        return found.pop() if len(found) == 1 else None
+
+    def of(qid, seen=frozenset()):
+        if qid not in races:
+            races[qid] = own[qid] or SIDE_RACES.get(side_before(qid, seen | {qid}), 0)
+        return races[qid]
+
+    for qid in own:
+        of(qid)
+    return races
+
+
+def side_leaks(races, links):
+    """[(questID, the quest before it)] where the one before is one side's and the quest is not
+    that side's alone: a chain leaking to the other side. The audit's leak check."""
+    return [(qid, prev) for qid, prev in sorted(links.items())
+            if side_of(races.get(prev, 0)) and side_of(races.get(qid, 0)) != side_of(races.get(prev, 0))]
+
+
 def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None):
     parts = [lua_string(title)]
     if zones:
@@ -358,6 +427,10 @@ def with_db(args):
                 for qid, prev, nxt, group, crumb in cur.fetchall()}
     db.close()
     links = chain_links(rows, set(ids))
+    with open(FACTIONS, encoding="utf-8") as f:
+        sides = json.load(f).get("sides", {})
+    races = quest_races({qid: quests[qid].get("races", 0) for qid in ids}, sides, gates(rows))
+    leaks = side_leaks(races, links)
 
     sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
                         for locale in ["enUS"] + LOCALES})
@@ -384,7 +457,7 @@ def with_db(args):
             by_sort += 1
         else:
             unplaced += 1
-        quest_lines[qid] = quest_line(qid, q["title"], zones, group, q.get("races", 0), q.get("classes", 0),
+        quest_lines[qid] = quest_line(qid, q["title"], zones, group, races[qid], q.get("classes", 0),
                                       links.get(qid))
 
     sort_lines = {}
@@ -394,7 +467,9 @@ def with_db(args):
         sort_lines[sid] = f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
     return quest_lines, sort_lines, (f"{placed} in a zone, {by_sort} under a class, profession or season, "
                                      f"{unplaced} with no place; {len(used_sorts)} sorts; "
-                                     f"{len(links)} after another in a chain")
+                                     f"{len(links)} after another in a chain; "
+                                     f"{sum(1 for m in races.values() if m)} limited by race, "
+                                     f"{len(leaks)} not on the side of the quest before them")
 
 
 def main():
