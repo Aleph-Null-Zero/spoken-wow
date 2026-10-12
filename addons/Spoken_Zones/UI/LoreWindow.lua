@@ -803,6 +803,14 @@ function SpokenZones:SetupLoreWindow()
 			end,
 		},
 	})
+	-- Text Size, on Spoken's page, fires no game event: the story here and beside the map drawn
+	-- again at the new size.
+	if _G.Spoken and Spoken.RegisterCallback then
+		Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", function()
+			if SpokenZones.ApplyPanelOptions then SpokenZones:ApplyPanelOptions() end
+			SpokenZones:RefreshLoreWindow()
+		end)
+	end
 	-- Built now, hidden, so the map's panel and the settings can open it at once, as the Compendium
 	-- builds a tab's panel. Not chosen: Select would make it the tab the window first opens on,
 	-- not the first tab.

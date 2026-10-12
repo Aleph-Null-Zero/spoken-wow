@@ -678,5 +678,23 @@ partOn = false
 late = NewSession()
 late:ToggleLoreWindow()
 Expect("...while Zones stays off, nothing opens", _G.SpokenCompendium:IsOpen(), false)
+
+-- Text Size, on Spoken's page: Spoken says when it changes, and the story is drawn again at it.
+partOn = true
+local said = {}
+_G.Spoken = setmetatable({ RegisterCallback = function(_, event, fn) said[event] = fn end }, { __index = spoken })
+local sized = NewSession()
+_G.Spoken = spoken
+sized:ToggleLoreWindow()
+local body = sized.window.page.body.text
+local setFont, drawnAt = body.SetFont, nil
+body.SetFont = function(self, face, size, ...) drawnAt = size; if setFont then return setFont(self, face, size, ...) end end
+Z:Set("fontSize", 16)
+Expect("Zones listens for Spoken's COMPENDIUM_FONT_CHANGED", said.COMPENDIUM_FONT_CHANGED ~= nil, true)
+said.COMPENDIUM_FONT_CHANGED()
+-- The parchment's ink is drawn a point larger than the Text Size.
+Expect("...and draws the story again at the new Text Size", drawnAt, 16 + 1)
+body.SetFont = setFont
+Z:Set("fontSize", 12)
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll zones lore window tests passed")

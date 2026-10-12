@@ -98,6 +98,10 @@ end
 
 -- Safe before ADDON_LOADED has run.
 function SpokenZones:Get(key)
+	-- Text Size is Azeroth's Compendium's, on Spoken's page, where Spoken is installed.
+	if key == "fontSize" and Spoken and Spoken.CompendiumFontSize then
+		return Spoken:CompendiumFontSize()
+	end
 	if SpokenZonesSettings == nil then
 		return defaults[key]
 	end
@@ -123,8 +127,9 @@ end
 --- narrated are not settings in that sense, and stay.
 function SpokenZones:ResetOptions()
 	if SpokenZonesSettings == nil then return end
-	-- Unlock Undiscovered Zones is on Spoken's page where Spoken is installed, and not this one's.
-	local elsewhere = Spoken and Spoken.ShowsCompendium and { showUndiscovered = true } or {}
+	-- Unlock Undiscovered Zones and Text Size are on Spoken's page where Spoken is installed, and
+	-- not this one's.
+	local elsewhere = Spoken and Spoken.ShowsCompendium and { showUndiscovered = true, fontSize = true } or {}
 	for key, value in pairs(defaults) do
 		if not elsewhere[key] then SpokenZonesSettings[key] = value end
 	end
