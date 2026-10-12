@@ -58,7 +58,7 @@ endef
         pull-history pull-live pull-recorded package-acted acted history-status sounds package package-audio \
         package-audio-complete package-meta push-complete icon \
         downloads-status \
-        factions followup-lines compendium-text release release-audio release-audio-dry release-wago release-curse \
+        factions followup-lines compendium-text compendium release release-audio release-audio-dry release-wago release-curse \
         release-dry import-corpus import-locale import-npc-sexes fill-locales import-questit export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
         sync check-synced full-release
 
@@ -265,6 +265,14 @@ followup-lines: ## Re-export addons/Spoken_Quests/FollowupLines.lua from the wor
 
 compendium-text: ## Re-export addons/Spoken_Quests/Data/QuestText.lua from the corpus
 	@$(PYTHON) pipelines/quests/tools/export_quest_text.py
+
+# Where each quest is and who may take it, for the same tab, committed for the reason
+# factions.json is: the addon must never need MySQL. The vmangos extraction keeps neither the
+# quest log's zone nor who may take a quest, so this reads the Forever repack's TrinityCore DB
+# (COMPENDIUM_MYSQL_*). ARGS=--no-db adds the corpus's new quests without it.
+
+compendium: ## Re-export addons/Spoken_Quests/Data/Compendium.lua (needs the repack's MySQL; ARGS=--no-db without it)
+	@$(PYTHON) pipelines/quests/tools/export_compendium.py $(ARGS)
 
 release-dry: ## Show what `make release` would upload to CurseForge and Wago
 	@./scripts/quests/release.sh --dry-run
