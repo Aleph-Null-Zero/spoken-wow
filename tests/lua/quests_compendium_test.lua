@@ -88,16 +88,22 @@ for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/
 end
 -- The shipped data links each quest to the one before it in its chain: Lost Necklace, Pie for
 -- Billy, Back to Billy, then Goldtooth. Only that chain is kept here, so the rest of the tree
--- reads as single quests.
+-- reads as single quests; and one made up, crossing from Elwynn Forest into Westfall: The
+-- Jasperlode Mine, then Westfall Stew and Goretusk Liver Pie.
 local NECKLACE, PIE, BACK, GOLDTOOTH = 85, 86, 84, 87
+local JASPERLODE, STEW, LIVER_PIE = 76, 36, 22
 local shipped = SpokenQuestsCompendium.quests
 local linked = shipped[PIE].prev == NECKLACE and shipped[BACK].prev == PIE and shipped[GOLDTOOTH].prev == BACK
-for _, quest in pairs(shipped) do quest.prev = nil end
+-- Speak with Ruga, the breadcrumb Brutal Armor's chain starts with, names it after that quest.
+local namedByHand = shipped[1823] and shipped[1823].name == 1838
+for _, quest in pairs(shipped) do quest.prev, quest.name = nil, nil end
 SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
 SpokenQuestsCompendium.quests[BACK].prev = PIE
 SpokenQuestsCompendium.quests[GOLDTOOTH].prev = BACK
+shipped[STEW].prev, shipped[LIVER_PIE].prev = JASPERLODE, STEW
 local L, Tab = VO.L, VO.QuestsTab
 Expect("the shipped data has the quests' chains, from the world DB", linked, true)
+Expect("...and the names of chains given by hand, on their first quest", namedByHand, true)
 local C = _G.SpokenCompendium
 
 Expect("no tab before the world is up", C:Tab("quests"), nil)
@@ -463,6 +469,30 @@ Tab:Refresh()
 Expect("Started Only leaves out a chain with nothing started", ChainRow("Lost Necklace"), nil)
 VO.Addon.db.global.Compendium.FoundOnly = false
 Tab:Refresh()
+
+-- A chain's name is the same in every zone it crosses: its first quest's, though that quest is in
+-- another zone, or the name the data gives that quest.
+Click("Westfall")
+Expect("a chain's card in a zone it crosses into has the chain's name: its first quest's, from another zone",
+    ChainRow("The Jasperlode Mine") ~= nil and ChainRow("The Jasperlode Mine").row.nest == 1
+    and ChainRow("Westfall Stew"), nil)
+shipped[JASPERLODE].name = 64 -- The Forgotten Heirloom
+Tab:Refresh()
+Expect("...or the quest whose title the data names it after", ChainRow("The Forgotten Heirloom") ~= nil
+    and ChainRow("The Jasperlode Mine"), nil)
+shipped[JASPERLODE].name = { "Mine and Stew", deDE = "Mine und Eintopf" }
+Tab:Refresh()
+Expect("...or words of its own", ChainRow("Mine and Stew") ~= nil, true)
+ClickChain("Mine and Stew")
+Expect("...its page under that name", page.title.text, "Mine and Stew")
+stub.SetLocale("deDE")
+Tab:Refresh()
+Expect("...in the client's language where the data has it", ChainRow("Mine und Eintopf") ~= nil, true)
+stub.SetLocale("enUS")
+shipped[JASPERLODE].name = nil
+Tab:Refresh()
+ClickChain("The Jasperlode Mine")
+Click("Elwynn Forest")
 
 -- Play: the first part the voice packs have of the quest, with its words.
 VO.DataModules:Register("TestPack", {

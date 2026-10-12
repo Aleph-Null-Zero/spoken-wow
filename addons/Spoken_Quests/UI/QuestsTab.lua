@@ -10,9 +10,10 @@
 -- small card for each class, profession, event or other kind of quest. A
 -- card says how many of its quests are completed and how many in progress, with a bar. Inside a
 -- zone's card, its dungeons' and raids' quests are a small card of their own, with a small card
--- for each dungeon where the zone has several. Inside a place, the quests that follow one another (`prev` in the data) are a small card for their chain,
--- named after the first of them; the rest are rows of their own. A chain's page lists its quests
--- in order with the start of each one's offer.
+-- for each dungeon where the zone has several. Inside a place, the quests that follow one
+-- another (`prev` in the data) are a small card for their chain, with the chain's name (the
+-- data's, else its first quest's title) in every zone it crosses; the rest are rows of their own.
+-- A chain's page lists its quests in order with the start of each one's offer.
 --
 -- On a client in another language, the words and title each quest's window showed are kept for
 -- the whole account and shown over the English.
@@ -404,6 +405,17 @@ local function First(id)
     return at, steps
 end
 
+-- A chain's name: the one the data gives its first quest (`name`: a quest's id, whose title the
+-- client gives in its own language, or words by language), else the first quest's title. The
+-- same in every zone the chain crosses, where each zone's card holds only its quests there.
+local function ChainName(first, ask)
+    local quest = Quests()[first]
+    local name = quest and quest.name
+    if type(name) == "number" and Quests()[name] then return Title(name, ask) end
+    if type(name) == "table" then return name[Locale()] or name[1] end
+    return Title(first, ask)
+end
+
 -- In the order they are taken: by how far down the chain, then by id.
 local function InOrder(ids)
     table.sort(ids, function(a, b)
@@ -460,11 +472,11 @@ local function Card(item, found, total, going)
     return item
 end
 
--- A chain's quests in one place, under a small card named after the first of them.
+-- A chain's quests in one place, under a small card with the chain's name.
 local function ChainRows(where, first, ids, nest)
     InOrder(ids)
     local key = where .. ":" .. first
-    local label = Title(ids[1], filter == "")
+    local label = ChainName(first, filter == "")
     local found, total, going = Tally(SetOf(ids))
     if OnlyFound() and found == 0 then return {} end
     local named = filter ~= "" and Matches(label)
@@ -477,7 +489,7 @@ local function ChainRows(where, first, ids, nest)
         end
     end
     if filter ~= "" and #inside == 0 then return {} end
-    local rows = { Card({ kind = "chain", small = true, key = key, ids = ids, label = label, nest = nest,
+    local rows = { Card({ kind = "chain", small = true, key = key, ids = ids, first = first, label = label, nest = nest,
         open = #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
@@ -499,7 +511,7 @@ local function Leaves(ids, nest, into, where)
     local groups = {}
     for first, members in pairs(chains) do
         if #members > 1 then
-            table.insert(groups, { first = first, ids = members, name = Title(InOrder(members)[1]) })
+            table.insert(groups, { first = first, ids = members, name = ChainName(first) })
         else
             table.insert(single, members[1])
         end
@@ -1000,7 +1012,8 @@ local function ShowEntry()
     end
     if selection.chain then
         local ids = selection.ids
-        page:Show({ title = Title(ids[1]), subtitle = Count(SetOf(ids)), text = ChainText(ids), target = ChainTarget(ids) })
+        page:Show({ title = ChainName(selection.first or First(ids[1])), subtitle = Count(SetOf(ids)), text = ChainText(ids),
+            target = ChainTarget(ids) })
         return
     end
     if selection.quest then
@@ -1063,7 +1076,7 @@ local function OnClick(row)
         selection = { quest = row.quest }
     elseif row.kind == "chain" then
         if filter == "" then chainOpen[row.key] = not chainOpen[row.key] end
-        selection = { chain = row.key, ids = row.ids }
+        selection = { chain = row.key, ids = row.ids, first = row.first }
     elseif row.kind == "dungeons" or row.kind == "dungeon" then
         if filter == "" then dungeonOpen[row.key] = not dungeonOpen[row.key] end
         selection = { dungeon = row.key, ids = row.ids, label = row.label }

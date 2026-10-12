@@ -1478,7 +1478,9 @@ all. A quest's row has the gold tick once completed and the quest mark while in 
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
 there, linked by `prev`) are a small card of their own, before the quests in no chain. The card
-is named after the first of them, taken in order (how many quests before each, then id); its
+has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
+chain's first quest (a quest's id, whose title the client gives in its own language, or words by
+language), else the first quest's title, wherever that quest is (`ChainName`). Its
 badge is the quest log's storyline mark, its line counts its quests completed out of all with how
 many are in progress, and its bar and share how many are completed. A chain that runs through
 several zones has a card in each, for its quests there. Chosen, a chain's page lists its quests in
