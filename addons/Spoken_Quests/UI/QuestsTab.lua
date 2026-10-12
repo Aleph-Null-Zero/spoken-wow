@@ -494,7 +494,9 @@ local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
 -- progress. Its badge: a zone's painting, a chain's storyline mark, a scroll for the rest.
 local function Card(item, found, total, going)
     local done = found - going
-    item.style = "card"
+    -- Places are cards (zones, cities, dungeons, and what a section holds); a chain is a line of
+    -- the list inside one, its quests under it.
+    item.style = item.kind == "chain" and "group" or "card"
     item.count, item.total, item.goingCount = done, total, going
     item.shut = shut
     if item.kind == "zone" then

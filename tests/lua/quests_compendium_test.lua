@@ -489,12 +489,12 @@ local function RowOfQuest(id)
     for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.quest == id then return row end end
 end
 list = Shown()
-Expect("a chain is a card in its zone's card, named after its first quest", ChainRow("Lost Necklace") ~= nil
-    and ChainRow("Lost Necklace").row.style == "card" and ChainRow("Lost Necklace").row.nest, 1)
+Expect("a chain is a line of the list in its zone's card, named after its first quest", ChainRow("Lost Necklace") ~= nil
+    and ChainRow("Lost Necklace").row.style == "group" and ChainRow("Lost Necklace").row.nest, 1)
 Expect("...its quests inside it, not beside it", RowOfQuest(NECKLACE) or Has(list, "Pie for Billy") or Has(list, "Goldtooth"), false)
 Expect("...a quest in no chain still a row of its own", Has(list, "Kobold Camp Cleanup"), true)
-Expect("...its badge the game's quest scroll", ChainRow("Lost Necklace").icon.texture,
-    [[Interface\Icons\INV_Inscription_Scroll]])
+Expect("...its plus or minus before its name, no badge", ChainRow("Lost Necklace").toggle:IsShown()
+    and not ChainRow("Lost Necklace").icon:IsShown(), true)
 Expect("...its quests completed out of all and the share, beside its name", ChainRow("Lost Necklace").count.text, "0/4 • 0%")
 Expect("...none completed, none of the share", ChainRow("Lost Necklace").row.none
     and ChainRow("Lost Necklace").count.text:match("• (%d+)%%$"), "0")
@@ -507,8 +507,7 @@ questLog = { BACK }
 Tab:Refresh()
 Expect("...how many are in progress before them, by the quest mark", ChainRow("Lost Necklace").count.text,
     "|TInterface\\GossipFrame\\ActiveQuestIcon:12:12:0:0|t1   2/4 • 50%")
-local track, fill = ChainRow("Lost Necklace").track, ChainRow("Lost Necklace").fill
-Expect("...and its bar filled as far as completed", fill:IsShown() and math.floor(fill.width / track.width * 100 + 0.5), 50)
+Expect("...and no bar: one line of the list", ChainRow("Lost Necklace").fill:IsShown(), false)
 ClickChain("Lost Necklace")
 list = Shown()
 Expect("a chain opens on its quests, in the order they are taken",
@@ -521,10 +520,10 @@ Expect("...nothing to play on it", page.play:IsShown(), false)
 completed[BACK], completed[GOLDTOOTH] = true, true
 questLog = {}
 Tab:Refresh()
-Expect("a chain all completed gets the gold tick after its numbers, no share", ChainRow("Lost Necklace").tick:IsShown()
+Expect("a chain all completed gets the gold tick after its numbers, no share", ChainRow("Lost Necklace").status:IsShown()
     and ChainRow("Lost Necklace").count.text, "4/4")
-Expect("...the quest log's gold tick", ChainRow("Lost Necklace").row.tick and ChainRow("Lost Necklace").tick.atlas,
-    "questlog-icon-checkmark-yellow")
+Expect("...the quest log's gold tick, where a single quest's goes", ChainRow("Lost Necklace").row.tick
+    and ChainRow("Lost Necklace").status.atlas, "questlog-icon-checkmark-yellow")
 ClickChain("Lost Necklace")
 Expect("...and closes again", Has(Shown(), "Pie for Billy"), false)
 Tab:Open(PIE)

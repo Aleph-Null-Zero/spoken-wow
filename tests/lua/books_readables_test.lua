@@ -182,9 +182,10 @@ Click("Stormwind City")
 list = Shown()
 Expect("the city opens inside its zone, its readables by what they are", Has(list, L.TYPE_PLAQUE) and Has(list, "Kurdran Wildhammer"), true)
 Expect("...the city a card inside its zone's card", RowFor("Stormwind City").row.nest, 1)
-Expect("...each kind a card inside the city's", RowFor(L.TYPE_PLAQUE).row.nest, 2)
-Expect("...its badge what that kind of writing looks like, in the same frame", RowFor(L.TYPE_PLAQUE).icon.texture
-    .. " " .. RowFor(L.TYPE_PLAQUE).iconFrame.atlas, [[Interface\Icons\INV_Misc_StoneTablet_03]] .. " collections-itemborder-collected")
+Expect("...each kind a line of the list inside the city's card, not a card", RowFor(L.TYPE_PLAQUE).row.nest == 2
+    and RowFor(L.TYPE_PLAQUE).row.style, "group")
+Expect("...with its plus or minus and no badge", RowFor(L.TYPE_PLAQUE).toggle:IsShown()
+    and not RowFor(L.TYPE_PLAQUE).icon:IsShown(), true)
 Expect("...its writings rows inside that", RowFor("Kurdran Wildhammer").row.leaf and RowFor("Kurdran Wildhammer").row.nest, 3)
 Expect("...a line down each open card's contents beside them, a step in from the banner",
     RowFor("Kurdran Wildhammer").rails[3] ~= nil

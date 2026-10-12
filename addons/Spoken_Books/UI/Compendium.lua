@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 24
+local VERSION = 25
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -56,6 +56,10 @@ local UNDER_BANNER = 0        -- between a banner and the first card in it
 local CARD_ROW = 50
 local CARD_GAP = -1           -- between a card and the card above it (their rows overlap)
 local LEAF_ROW = 22
+-- A group inside a card (a quest chain, a zone's dungeons, a zone's letters): one line, its plus or
+-- minus on the line down its contents, its name over theirs, its numbers on the right.
+local GROUP_ROW = 24
+local GROUP_FOOT = 6          -- under its plus or minus, where the line down its contents starts
 local LEAF_GAP = 4            -- between a card and a single row next to it
 local NEST_AFTER = 2          -- more under an open card's contents, for each card closed there
 local NEST_STEP = 16          -- each card's contents in, under the open card they belong to
@@ -745,7 +749,8 @@ end
 local function Light(row)
 	local style = row.row and row.row.style
 	local over, chosen = row.over and true or false, row.selected and true or false
-	local flat = style == nil or (style == "card" and not row.cardArt) or (style == "banner" and not row.bannerArt)
+	local flat = style == nil or style == "group" or (style == "card" and not row.cardArt)
+		or (style == "banner" and not row.bannerArt)
 	row.wash:SetShown(flat and (over or chosen))
 	row.wash:SetAlpha(chosen and 1 or 0.55)
 	row.edge:SetShown(flat and chosen)
@@ -1062,7 +1067,7 @@ end
 -- The faint line down the left of each open card's contents, one for every card a row is inside.
 -- Each row draws its share of the line, `gap` up to the row above; a card's or banner's first row
 -- draws it on up to that card's or banner's frame.
-local function Rails(row, count, gap, held, underBanner, afterBanner)
+local function Rails(row, count, gap, held, underBanner, afterBanner, foot)
 	if underBanner and not row.bannerRail then
 		row.bannerRail = row:CreateTexture(nil, "BORDER")
 		row.bannerRail:SetWidth(1)
@@ -1086,7 +1091,7 @@ local function Rails(row, count, gap, held, underBanner, afterBanner)
 			end
 			local x = (underBanner and UNDER_BANNER_IN or 0) + (i - 1) * NEST_STEP + RAIL_X
 			rail:ClearAllPoints()
-			rail:SetPoint("TOPLEFT", row, "TOPLEFT", x, i <= held and gap or gap + FOOT)
+			rail:SetPoint("TOPLEFT", row, "TOPLEFT", x, i <= held and gap or gap + (foot or FOOT))
 			rail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", x, 0)
 			rail:Show()
 		elseif rail then
@@ -1115,15 +1120,23 @@ local function Toggle(row, item, onlyFound)
 	row.toggle:Show()
 end
 
+-- One line, a single thing or a group: no frame round it.
+local function Flat(item)
+	return item.leaf or item.style == "group"
+end
+
 -- The room above the row for `items[i]`, and how many open cards hold both it and the row above.
 local function GapAbove(items, i)
 	local item, before = items[i], items[i - 1]
 	if not before then return FIRST_GAP, 0 end
 	if item.style == "banner" then return BANNER_GAP, 0 end
-	if before.style == "banner" then return item.leaf and LEAF_GAP or UNDER_BANNER, 0 end
+	if before.style == "banner" then return Flat(item) and LEAF_GAP or UNDER_BANNER, 0 end
 	local was, now = before.nest or 0, item.nest or 0
-	if item.leaf and before.leaf and now == was then return 0, now end
-	local between = (item.leaf or before.leaf) and LEAF_GAP or CARD_GAP
+	-- Lines one under another, as a list: none between them, a little where a group closes.
+	if Flat(item) and Flat(before) then
+		return now < was and (was - now) * NEST_AFTER or 0, math.min(now, was)
+	end
+	local between = (Flat(item) or Flat(before)) and LEAF_GAP or CARD_GAP
 	if now > was then return between, was end
 	return (was - now) * NEST_AFTER + between, now
 end
@@ -1131,6 +1144,7 @@ end
 local function RowHeight(item)
 	if item.style == "banner" then return BANNER_ROW end
 	if item.style == "card" then return CARD_ROW end
+	if item.style == "group" then return GROUP_ROW end
 	return LEAF_ROW
 end
 
@@ -1328,6 +1342,65 @@ local function DrawCard(row, item, indent, width)
 	Silver(row.barCaps)
 end
 
+-- A group inside a card: its plus or minus on the line down what it holds, its name in gold over
+-- the names of what it holds, and on the right what is found out of all and the share, the quest
+-- mark with how many are under way, a tick once all are found, a padlock on what does not open.
+local function DrawGroup(row, item, indent, onlyFound)
+	Toggle(row, item, onlyFound)
+	row.toggle:ClearAllPoints()
+	row.toggle:SetPoint("CENTER", row, "LEFT", indent + RAIL_X, 0)
+
+	local locked = item.locked and row.hasLock
+	local total = item.total or 0
+	local ratio = item.ratio
+	if ratio == nil and total > 0 then ratio = (item.count or 0) / total end
+	ratio = math.max(0, math.min(1, ratio or 0))
+	local ticked = not locked and item.tick and true or false
+	local edge = -(CARD_END + 6)
+	row.lock:SetPoint("CENTER", row, "RIGHT", edge, 0)
+	row.lock:SetShown(locked and true or false)
+	if ticked then
+		if Atlas(row.status, CHECK) then
+			row.status:SetSize(13, 11)
+		else
+			row.status:SetTexture(READY)
+			row.status:SetSize(14, 14)
+		end
+		row.status:ClearAllPoints()
+		row.status:SetPoint("CENTER", row, "RIGHT", edge, 0)
+	end
+	row.status:SetShown(ticked)
+	row.count:SetFontObject("GameFontHighlightSmall")
+	Tint(row.count, SHARE_INK)
+	if ticked then
+		row.count:SetPoint("RIGHT", row.status, "LEFT", -4, 0)
+	else
+		row.count:SetPoint("RIGHT", row, "RIGHT", -CARD_END, 0)
+	end
+	local numbers = ""
+	if total > 0 then
+		numbers = ticked and string.format("%d/%d", item.count or 0, total)
+			or string.format("%d/%d \226\128\162 %d%%", item.count or 0, total, math.floor(100 * ratio + 1e-6))
+		local going = item.goingCount or 0
+		if going > 0 then numbers = "|T" .. ACTIVE .. ":12:12:0:0|t" .. going .. "   " .. numbers end
+	end
+	row.count:SetText(numbers)
+	row.count:SetShown(not locked and numbers ~= "")
+
+	row.label:SetFontObject("GameFontNormal")
+	row.label:SetPoint("LEFT", row, "LEFT", indent + NEST_STEP + 12, 0)
+	row.label:SetPoint("RIGHT", locked and row.lock or (numbers ~= "" and row.count) or row, locked and "LEFT"
+		or (numbers ~= "" and "LEFT") or "RIGHT", -8, 0)
+	if item.locked then
+		Tint(row.label, LOCKED_INK)
+	elseif item.none or item.missing then
+		row.label:SetTextColor(0.84, 0.71, 0.31)
+	else
+		row.label:SetTextColor(1, 0.82, 0)
+	end
+	row.label:SetText(item.label)
+end
+
 -- One thing on its own: its tick once completed or the quest mark while under way, its name, and
 -- a padlock on what is not found yet.
 local function DrawLeaf(row, item, indent)
@@ -1393,8 +1466,9 @@ function List:Render()
 
 		ShowStyle(row, item.style)
 		local nest = item.style ~= "banner" and item.nest or 0
+		local before = items[i - 1]
 		Rails(row, nest, gap, held, item.style ~= "banner" and underBanner,
-			items[i - 1] and items[i - 1].style == "banner")
+			before and before.style == "banner", before and before.style == "group" and GROUP_FOOT or FOOT)
 		local indent = (underBanner and UNDER_BANNER_IN or 0) + nest * NEST_STEP
 		row.indent = indent
 		row.barLeft = nil
@@ -1406,12 +1480,14 @@ function List:Render()
 			DrawBanner(row, item, onlyFound)
 		elseif item.style == "card" then
 			DrawCard(row, item, indent, width)
+		elseif item.style == "group" then
+			DrawGroup(row, item, indent, onlyFound)
 		else
 			DrawLeaf(row, item, indent)
 		end
 		-- A single row's light starts on the line down its left, its gold edge over that line.
 		local lit = indent
-		if item.leaf and (nest > 0 or underBanner) then lit = indent - (NEST_STEP - RAIL_X) - 0.5 end
+		if Flat(item) and (nest > 0 or underBanner) then lit = indent - (NEST_STEP - RAIL_X) - 0.5 end
 		row.wash:ClearAllPoints()
 		row.wash:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
 		row.wash:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)

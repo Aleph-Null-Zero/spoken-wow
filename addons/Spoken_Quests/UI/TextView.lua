@@ -76,6 +76,13 @@ function TextView:UpdateScrollBar()
 		self.frame:SetVerticalScroll(limit)
 	end
 
+	-- A caller's scroll child (AddScrollBar) as wide as the frame, less the bar's room only while
+	-- there is something to scroll: rows reach the edge when the bar is not there.
+	if self.fitsChild then
+		local width = (self.frame:GetWidth() or 0) - (scrollable and (self.barWidth + 6) or 0)
+		if width > 0 and math.abs((self.child:GetWidth() or 0) - width) > 0.5 then self.child:SetWidth(width) end
+	end
+
 	-- Nothing to scroll: keep the bar out of the way entirely.
 	if not scrollable then
 		self.range = 0
@@ -491,9 +498,9 @@ end
 function Addon:AddScrollBar(scroll, child, parent)
 	local view = setmetatable({ frame = scroll, child = child, range = 0 }, TextView)
 	BuildScrollBar(view, parent)
+	-- The child as wide as the frame, but for the bar's room while the bar shows (UpdateScrollBar).
+	view.fitsChild = true
 	local function Fit()
-		local width = scroll:GetWidth() or 0
-		if width > 0 then child:SetWidth(width - view.barWidth - 6) end
 		view:UpdateScrollBar()
 	end
 	scroll:HookScript("OnSizeChanged", Fit)

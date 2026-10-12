@@ -292,7 +292,9 @@ local KIND_ICON = {
 -- A card's numbers: the found out of all on its line, the share and the bar. Its badge: a zone's
 -- painting, or what its kind of writing looks like.
 local function Card(item, found, total)
-	item.style = "card"
+	-- Places are cards (zones, cities, and what a banner holds); a zone's kinds of writing are lines
+	-- of the list inside it, their readables under them.
+	item.style = (item.kind == "group" and item.mapID) and "group" or "card"
 	item.count, item.total = found, total
 	item.asLeft = asLeft
 	if item.kind == "zone" then

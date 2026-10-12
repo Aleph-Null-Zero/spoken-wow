@@ -12,9 +12,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   same on Quests and Books, and the filters and Unlock switches are worded alike. Play on a quest's
   or book's page names itself in its tooltip. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium lists everything as cards.** In Quests, Zones and Books each continent is
-  a banner, and each zone a card showing how much of it you have found, with a bar; quest chains,
-  cities and kinds of writing are smaller cards inside, and single quests, places and writings
-  rows under them. A quest chain is named after its first quest, and its page shows how many of
+  a banner, and each zone a card showing how much of it you have found, with a bar; its cities and
+  dungeons are cards inside it. Quest chains and a zone's kinds of writing are lines of the list,
+  with their quests and writings under them, and single quests, places and writings are rows. A quest chain is named after its first quest, and its page shows how many of
   its quests you have completed and asks you to choose one. The list is drawn in the game's own
   art: your faction's campaign header for each banner, and Classic's character select card for
   each card, with the zone's painting in a silver frame and the Pet Journal's progress bar. *([Nucabe](https://github.com/Nucabe))*
