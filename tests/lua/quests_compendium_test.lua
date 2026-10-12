@@ -628,6 +628,11 @@ Expect("...and says so", tooltip.title, L.OPEN_IN_COMPENDIUM)
 stub.world.questID = 999999
 stub.FireEvent("QUEST_DETAIL")
 Expect("...not for a quest the tab does not list", giver:IsShown(), false)
+completed[SHARPTALON] = true
+stub.world.questID = SHARPTALON
+stub.FireEvent("QUEST_DETAIL")
+Expect("...nor for one of another race's, the list leaving it out for this character", giver:IsShown(), false)
+completed[SHARPTALON] = nil
 stub.world.questID = 0
 stub.ShowPanel(nil)
 stub.FireEvent("QUEST_FINISHED")

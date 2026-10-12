@@ -1177,9 +1177,10 @@ local function Build(panel)
     QuestsTab.panel = panel
 end
 
---- Whether `questID` can be opened in the tab: it is there, its part is on, and it lists the quest.
+--- Whether `questID` can be opened in the tab: it is there, its part is on, and it lists the quest
+--- for this character's race and class.
 function QuestsTab:Has(questID)
-    return C ~= nil and C:Tab("quests") ~= nil and VO.Addon:IsPartOn() and questID ~= nil and Quests()[questID] ~= nil
+    return C ~= nil and C:Tab("quests") ~= nil and VO.Addon:IsPartOn() and questID ~= nil and Index().all[questID] == true
 end
 
 -- Whether this character has started `id`, asked now: what the tab last read may be from before
