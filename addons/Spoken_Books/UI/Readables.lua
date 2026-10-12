@@ -90,7 +90,15 @@ local function Index()
 			elseif place and place.wide then
 				table.insert(index.wide, id)
 			elseif place and place.zones and #place.zones > 0 then
-				for _, mapID in ipairs(place.zones) do Add(mapID, type, id) end
+				-- One in a city and in the zone around it is listed in the city alone: the zone's
+				-- card holds the city's, and would list it twice.
+				local cityIn = {}
+				for _, mapID in ipairs(place.zones) do
+					if CITY_IN[mapID] then cityIn[CITY_IN[mapID]] = true end
+				end
+				for _, mapID in ipairs(place.zones) do
+					if not cityIn[mapID] then Add(mapID, type, id) end
+				end
 			else
 				table.insert(index.unknown, id)
 			end

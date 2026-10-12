@@ -232,6 +232,38 @@ Click(L.TYPE_GRAVE)
 Click("Alterac Valley")
 Click(L.GROUP_BATTLEGROUNDS)
 
+-- A readable in a city and in the zone around it (a book shelved in Ironforge and Dun Morogh) is
+-- listed once, in the city: the zone's card counts the rows under it.
+do
+    Click("Dun Morogh")
+    Click("Ironforge")
+    local function Closed()
+        Shown()
+        for _, row in ipairs(rows) do
+            if row.shown ~= false and row.row and row.row.kind == "group" and (row.row.mapID == 1426
+                or row.row.mapID == 1455) and not row.row.open then return row end
+        end
+    end
+    for _ = 1, 40 do
+        local row = Closed()
+        if not row then break end
+        row.scripts.OnClick(row)
+    end
+    local leaves, inside, twice = 0, false, 0
+    for _, row in ipairs(rows) do
+        if row.shown ~= false and row.row then
+            if row.row.label == "Dun Morogh" then inside = true
+            elseif inside and row.row.nest == 0 then inside = false end
+            if inside and row.row.leaf then leaves = leaves + 1 end
+            if row.row.book == 1976 then twice = twice + 1 end
+        end
+    end
+    Expect("a readable in a city and in the zone around it is listed once, in the city", twice, 1)
+    Expect("...so the zone's card counts the rows under it", leaves, RowFor("Dun Morogh").row.total)
+    Click("Ironforge")
+    Click("Dun Morogh")
+end
+
 Click("Westfall")
 Click("Elwynn Forest")
 Expect("a click on a second zone's card opens it beside the first, both open",
