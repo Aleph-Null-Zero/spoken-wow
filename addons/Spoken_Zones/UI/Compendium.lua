@@ -6,12 +6,13 @@
 -- own and both together share one window: the newest copy loaded wins (VERSION), and a tab
 -- registered by any copy is kept. The window is the game's portrait frame, resizable from its corner
 -- and folding down to the list. The list is a search box over an inset of rows, with Discovered Only
--- and the tab's other switches in the filter menu beside the search. Its rows are drawn as the
--- Chronicle addon draws its own: a dark banner across the list for each group (a continent), a card
--- of two lines for each place or set inside one (a diamond with a number, the name, a grey line
--- under it, the share found and a bar), and a plain row for each single thing, a padlock on what is
--- not found yet. What is inside an open card is indented under it, a faint line down its left. What
--- the rows are, what a click does and the page beside them are each tab's own.
+-- and the tab's other switches in the filter menu beside the search. Its rows are drawn in the
+-- game's own art: the objective tracker's campaign bar across the list for each group (a
+-- continent), the character select card for each place or set inside one (its painting in the
+-- collections window's gold frame, the name, a grey line under it, the share found and the Pet
+-- Journal's bar), and a plain row for each single thing, a padlock on what is not found yet. What
+-- is inside an open card is indented under it, a faint gold line down its left. What the rows are,
+-- what a click does and the page beside them are each tab's own.
 --
 -- A tab: SpokenCompendium:Register(key, { label, order, title, build(panel), onShow(panel),
 -- store = { get(key), set(key, value) }, open(), enabled(), unlock = { get(), set(value) } }).
@@ -23,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 8
+local VERSION = 9
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -42,17 +43,21 @@ local WINDOW_MIN_HEIGHT = 360
 local LIST_WIDTH = 345
 -- The narrowest the page beside the list lays out at.
 local PAGE_MIN_WIDTH = 278
-local BRANCH_ROW = 24
-local LEAF_ROW = 20
-local DEPTH_STEP = 14         -- each level in, under the one it belongs to
-local BANNER_ROW = 28
-local BANNER_GAP = 4          -- above each banner but the first
-local CARD_ROW = 40
-local SMALL_CARD_ROW = 34
-local NEST_STEP = 16          -- each card in, under the open card it belongs to
-local RAIL_X = 8              -- the line down an open card's contents, this far into the step
-local CARD_TEXT_X = 34        -- a card's name and line, after its diamond
-local CARD_RIGHT = 50         -- what a card's share or tick keeps clear on its right
+local BANNER_ROW = 36
+local BANNER_GAP = 14         -- above each banner but the first
+local FIRST_GAP = 2           -- above the first row
+local UNDER_BANNER = 8        -- between a banner and the first card in it
+local CARD_ROW = 60
+local SMALL_CARD_ROW = 52
+local CARD_GAP = 6            -- between cards under a banner
+local LEAF_ROW = 26
+local NEST_GAP = 5            -- between the rows inside an open card
+local NEST_PAD = 2            -- inside the line down an open card's contents, above and below them
+local NEST_AFTER = 6          -- under an open card's contents
+local NEST_STEP = 28          -- each card's contents in, under the open card they belong to
+local RAIL_X = 16             -- the line down an open card's contents, this far into the step
+local LIST_LEFT, LIST_RIGHT = 7, 2 -- room in the list for a chosen card's glow
+local LIST_TOP, LIST_FOOT = 6, 8
 local SCROLL_STEP = 60
 local GRABBER_SIZE = 16
 local FILTER_ROOM = 26       -- what the search box gives up for the filter menu's arrow beside it
@@ -77,6 +82,7 @@ local PANEL_HI = [[Interface\Buttons\UI-Panel-MinimizeButton-Highlight]]
 local function HasAtlas(name)
 	return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) ~= nil or false
 end
+C.HasAtlas = HasAtlas
 
 -- Paint `texture` with the game's atlas and say so, or leave it alone and say not: a missing
 -- atlas draws nothing at all.
@@ -86,6 +92,28 @@ local function Atlas(texture, atlas, useAtlasSize)
 		return true
 	end
 	return false
+end
+
+-- Where `atlas` sits in its file, for drawing a piece of it: nil where the client has not got it,
+-- or does not say.
+local function AtlasSpot(atlas)
+	local info = C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas)
+	local file = info and (info.file or info.filename)
+	if not file or not info.leftTexCoord or not info.rightTexCoord or not info.topTexCoord
+		or not info.bottomTexCoord or (info.width or 0) <= 0 or (info.height or 0) <= 0 then
+		return nil
+	end
+	return info
+end
+
+-- `texture` showing the part of the atlas at `spot` from x1 to x2 and y1 to y2, in the atlas's own
+-- pixels; turned left to right with `mirror`.
+local function AtlasCut(texture, spot, x1, x2, y1, y2, mirror)
+	local l, r, t, b = spot.leftTexCoord, spot.rightTexCoord, spot.topTexCoord, spot.bottomTexCoord
+	local u1, u2 = l + (r - l) * x1 / spot.width, l + (r - l) * x2 / spot.width
+	if mirror then u1, u2 = u2, u1 end
+	texture:SetTexture(spot.file or spot.filename)
+	texture:SetTexCoord(u1, u2, t + (b - t) * y1 / spot.height, t + (b - t) * y2 / spot.height)
 end
 
 local function Sound(kit)
@@ -561,18 +589,121 @@ end
 -- The list
 --------------------------------------------------------------------------------
 
--- A row's light: the professions list's own, faint under the pointer and full when chosen, with a
--- gold edge on the chosen one. A flat wash where the client has not got it.
+local PLUS = [[Interface\Buttons\UI-PlusButton-Up]]
+local MINUS = [[Interface\Buttons\UI-MinusButton-Up]]
+local PLUS_OFF = [[Interface\Buttons\UI-PlusButton-Disabled]]
+local READY = [[Interface\RaidFrame\ReadyCheck-Ready]]
+local ACTIVE = [[Interface\GossipFrame\ActiveQuestIcon]]
+-- A card's badge where it has no painting of its own: a map; a chain's where the storyline's mark
+-- is missing, a scroll.
+local MAP_ICON = [[Interface\Icons\INV_Misc_Map_01]]
+local STORY_ICON = [[Interface\Icons\INV_Scroll_03]]
+local CHECK = "questlog-icon-checkmark-yellow"
+-- The icons' bevelled border, trimmed inside the gold frame.
+local ICON_CROP = { 0.08, 0.92, 0.08, 0.92 }
+
+-- The campaign header's bar, in its atlas's own pixels: its crest sits half outside the bar at
+-- the left end and looked cut off, so the left end is the right one turned round.
+local BAR_HORDE, BAR_ALLIANCE = "Objective-Header-CampaignHorde", "Objective-Header-CampaignAlliance"
+local BAR_TOP, BAR_BOTTOM = 3, 40
+local BAR_MIDDLE, BAR_END = 64, 250
+
+-- Classic's character select card: its corners are `cut` pixels of the atlas drawn `size` across.
+-- The chosen one carries its glow round it, `out` beyond the card.
+local CARD_ART = {
+	normal = { atlas = "glues-characterselect-card-singles-c60", cut = 16, size = 11, out = 0 },
+	hover = { atlas = "glues-characterselect-card-singles-hover-c60", cut = 16, size = 11, out = 0 },
+	selected = { atlas = "glues-characterselect-card-selected-c60", cut = 30, size = 19, out = 7 },
+}
+local CARD_RIGHT = 56         -- what a card's share or tick keeps clear on its right
+local CARD_INK = { 0.73, 0.70, 0.65 }
+local SHARE_INK = { 0.80, 0.76, 0.70 }
+local BANNER_INK = { 0.85, 0.81, 0.73 }
+local LOCKED_INK = { 0.50, 0.48, 0.45 }
+
+-- A gold wash fading from `from` on the left to `to` on the right, as alpha; even where the client
+-- cannot fade one.
+local function GoldWash(texture, from, to)
+	texture:SetColorTexture(1, 1, 1, 1)
+	if CreateColor and texture.SetGradient and pcall(texture.SetGradient, texture, "HORIZONTAL",
+		CreateColor(1, 0.82, 0, from), CreateColor(1, 0.82, 0, to)) then
+		return
+	end
+	if texture.SetGradientAlpha then
+		texture:SetGradientAlpha("HORIZONTAL", 1, 0.82, 0, from, 1, 0.82, 0, to)
+		return
+	end
+	texture:SetColorTexture(1, 0.82, 0, (from + to) / 2)
+end
+
+local function Tint(fontString, colour)
+	fontString:SetTextColor(colour[1], colour[2], colour[3])
+end
+
+local function NewNine(row, layer, sublevel)
+	local parts = {}
+	for i = 1, 9 do parts[i] = row:CreateTexture(nil, layer, nil, sublevel) end
+	return parts
+end
+
+-- `parts` drawn from the card art `art` round the box `left`, `top`, `right`, `bottom` of `row`
+-- (offsets as SetPoint takes them): its corners as they are, its sides and middle stretched.
+-- False, and nothing changed, where the client has not got the atlas.
+local function SetNine(parts, art, row, left, top, right, bottom)
+	local spot = AtlasSpot(art.atlas)
+	if not spot then return false end
+	local cut, size, out = art.cut, art.size, art.out
+	local xs = { 0, cut, spot.width - cut, spot.width }
+	local ys = { 0, cut, spot.height - cut, spot.height }
+	for r = 1, 3 do
+		for c = 1, 3 do
+			local part = parts[(r - 1) * 3 + c]
+			AtlasCut(part, spot, xs[c], xs[c + 1], ys[r], ys[r + 1])
+			part:ClearAllPoints()
+		end
+	end
+	local tl, tr, bl, br = parts[1], parts[3], parts[7], parts[9]
+	for _, corner in ipairs({ tl, tr, bl, br }) do corner:SetSize(size, size) end
+	tl:SetPoint("TOPLEFT", row, "TOPLEFT", left - out, top + out)
+	tr:SetPoint("TOPRIGHT", row, "TOPRIGHT", right + out, top + out)
+	bl:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", left - out, bottom - out)
+	br:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", right + out, bottom - out)
+	parts[2]:SetPoint("TOPLEFT", tl, "TOPRIGHT")
+	parts[2]:SetPoint("BOTTOMRIGHT", tr, "BOTTOMLEFT")
+	parts[4]:SetPoint("TOPLEFT", tl, "BOTTOMLEFT")
+	parts[4]:SetPoint("BOTTOMRIGHT", bl, "TOPRIGHT")
+	parts[5]:SetPoint("TOPLEFT", tl, "BOTTOMRIGHT")
+	parts[5]:SetPoint("BOTTOMRIGHT", br, "TOPLEFT")
+	parts[6]:SetPoint("TOPLEFT", tr, "BOTTOMLEFT")
+	parts[6]:SetPoint("BOTTOMRIGHT", br, "TOPRIGHT")
+	parts[8]:SetPoint("TOPLEFT", bl, "TOPRIGHT")
+	parts[8]:SetPoint("BOTTOMRIGHT", br, "BOTTOMLEFT")
+	return true
+end
+
+local function ShowAll(parts, shown)
+	for _, part in ipairs(parts) do part:SetShown(shown and true or false) end
+end
+
+-- A row's light. A banner brightens and a card turns to its hover or chosen card; a plain row, or
+-- one drawn without the game's art, takes a gold wash, stronger when chosen with a gold edge.
 local function Light(row)
-	local wash = row.wash
-	if row.selected then
-		wash:Show(); wash:SetAlpha(1); row.edge:Show()
-	elseif row.over then
-		wash:Show(); wash:SetAlpha(0.55); row.edge:Hide()
-	else
-		wash:Hide(); row.edge:Hide()
+	local style = row.row and row.row.style
+	local over, chosen = row.over and true or false, row.selected and true or false
+	local flat = style == nil or (style == "card" and not row.cardArt) or (style == "banner" and not row.bannerArt)
+	row.wash:SetShown(flat and over and not chosen)
+	row.chosen:SetShown(flat and chosen)
+	row.edge:SetShown(flat and chosen)
+	if row.glow then
+		ShowAll(row.glow, style == "banner" and row.bannerArt and (over or chosen))
+		for _, part in ipairs(row.glow) do part:SetAlpha(chosen and 0.25 or 0.15) end
+	end
+	if row.lift then
+		local art = style == "card" and row.cardArt and (chosen and CARD_ART.selected or over and CARD_ART.hover) or nil
+		ShowAll(row.lift, art ~= nil and SetNine(row.lift, art, row, row.indent or 0, 0, 0, 0))
 	end
 end
+
 
 local List = {}
 List.__index = List
@@ -585,12 +716,12 @@ List.__index = List
 --- menu is the spellbook's, the arrow beside its search box: the tab's only switch (Discovered Only,
 --- Found Only) and any other checks as checkboxes, and where the tab can arrange its tree more than
 --- one way, those ways under a divider. An item is { label, count, total, open, locked, missing } and one of:
---- - style = "banner": a group across the list, its plus or minus, the name in capitals, count/total.
---- - style = "card", small = bool: two lines, a diamond with `badge` on it (grey with `none`, gold
----   with `tick`), the name, `sub` under it, the share or a tick, and a bar filled to `ratio`.
---- - leaf = true: one line, the name; with `nest`, inside a card.
---- Cards and leaves give `nest`, how many open cards hold them; anything else is the older tree's,
---- a branch or a leaf at `depth`, a branch showing its plus or minus where it has something to open.
+--- - style = "banner": a group across the list, its plus or minus, the name, count/total.
+--- - style = "card", small = bool: a badge (`icon` with its `iconCrop` in a gold frame, greyed with
+---   `none`; the storyline's mark instead with `story`), the name, `sub` under it, the share or a
+---   tick with `tick`, and a bar filled to `ratio`.
+--- - leaf = true: one line, the name, a tick before it with `done` or the quest mark with `going`.
+--- Cards and leaves give `nest`, how many open cards hold them.
 function C.NewList(panel, opts)
 	local list = setmetatable({ panel = panel, opts = opts, rows = {}, filter = "" }, List)
 	local left, _, top = C.Margins()
@@ -732,6 +863,8 @@ local function OnRowClick(self)
 	if list.opts.onClick then list.opts.onClick(item) end
 end
 
+local FitBar
+
 function List:AcquireRow(index)
 	local row = self.rows[index]
 	if row then
@@ -741,135 +874,125 @@ function List:AcquireRow(index)
 	row.list = self
 
 	row.wash = row:CreateTexture(nil, "BACKGROUND")
-	if not Atlas(row.wash, "Professions_Recipe_Hover", false) then
-		row.wash:SetColorTexture(1, 1, 1, 0.1)
-	end
+	GoldWash(row.wash, 0.11, 0.016)
 	row.wash:Hide()
-
+	row.chosen = row:CreateTexture(nil, "BACKGROUND")
+	GoldWash(row.chosen, 0.2, 0.03)
+	row.chosen:Hide()
 	row.edge = row:CreateTexture(nil, "ARTWORK")
 	row.edge:SetWidth(2)
-	row.edge:SetColorTexture(1, 0.82, 0, 0.9)
+	row.edge:SetColorTexture(1, 0.82, 0, 1)
 	row.edge:Hide()
 
-	row.toggle = row:CreateTexture(nil, "ARTWORK")
-	row.toggle:SetSize(14, 14)
-	row.toggle:SetPoint("LEFT", row, "LEFT", 8, 0)
+	-- A plain row's tick or quest mark, before its name.
+	row.status = row:CreateTexture(nil, "ARTWORK")
+	row.status:Hide()
 
-	row.label = row:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+	row.toggle = row:CreateTexture(nil, "ARTWORK")
+	row.toggle:SetSize(16, 16)
+
+	row.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	row.label:SetJustifyH("LEFT")
 	if row.label.SetWordWrap then row.label:SetWordWrap(false) end
 
-	row.count = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+	row.count = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	row.count:SetJustifyH("RIGHT")
 
-	-- A padlock where the count goes, on what is not found yet: the group finder's own, grey.
-	-- None where the client has not got it; the grey name still says it.
+	-- A padlock where the count goes, on what is not found yet: the group finder's own. None where
+	-- the client has not got it; the grey name still says it.
 	row.lock = row:CreateTexture(nil, "ARTWORK")
-	row.lock:SetSize(10, 12)
+	row.lock:SetSize(12, 14)
 	row.hasLock = Atlas(row.lock, "LFG-lock", false)
-	if row.lock.SetDesaturated then row.lock:SetDesaturated(true) end
-	row.lock:SetAlpha(0.6)
+	row.lock:SetAlpha(0.7)
 	row.lock:Hide()
 
 	row:SetScript("OnClick", OnRowClick)
 	row:SetScript("OnEnter", function(self) self.over = not (self.row and self.row.locked); Light(self) end)
 	row:SetScript("OnLeave", function(self) self.over = false; Light(self) end)
+	row:SetScript("OnSizeChanged", function(self, width) FitBar(self, width) end)
 
 	self.rows[index] = row
 	return row
 end
 
-local PLUS = [[Interface\Buttons\UI-PlusButton-Up]]
-local MINUS = [[Interface\Buttons\UI-MinusButton-Up]]
-local PLUS_OFF = [[Interface\Buttons\UI-PlusButton-Disabled]]
-local READY = [[Interface\RaidFrame\ReadyCheck-Ready]]
--- The diamond's edge and fill: green with something found, grey with nothing, gold with all.
-local DIAMOND = {
-	found = { 0.66, 0.82, 0.55, 0.22, 0.38, 0.18 },
-	none = { 0.54, 0.52, 0.48, 0.25, 0.24, 0.22 },
-	all = { 1, 0.82, 0, 0.45, 0.33, 0.06 },
-}
-
--- Capitals for a banner. string.upper changes ASCII alone, which would leave "Östliche" with a
--- small ö: the accented Latin letters and Cyrillic are raised here. Korean and Chinese have none.
-local function Upper(text)
-	text = string.upper(text or "")
-	text = text:gsub("\195([\160-\190])", function(c)
-		if c == "\183" then return nil end -- the division sign
-		return "\195" .. string.char(c:byte() - 32)
-	end)
-	text = text:gsub("\197\147", "\197\146") -- oe
-	text = text:gsub("\208([\176-\191])", function(c) return "\208" .. string.char(c:byte() - 32) end)
-	text = text:gsub("\209([\128-\143])", function(c) return "\208" .. string.char(c:byte() + 32) end)
-	text = text:gsub("\209\145", "\208\129") -- yo
-	return text
-end
-C.Upper = Upper
-
--- The parts only a banner or a card has, made the first time a row is drawn as one: most rows
--- in a long list are plain ones and never need them.
+-- The parts only a banner or a card has, made the first time a row is drawn as one: most rows in a
+-- long list are plain ones and never need them.
 local function BannerParts(row)
-	if row.bannerFill then return end
+	if row.bannerParts then return end
+	row.headLeft = row:CreateTexture(nil, "BACKGROUND")
+	row.headMiddle = row:CreateTexture(nil, "BACKGROUND")
+	row.headRight = row:CreateTexture(nil, "BACKGROUND")
+	row.glow = {}
+	for i = 1, 3 do
+		local glow = row:CreateTexture(nil, "BORDER")
+		if glow.SetBlendMode then glow:SetBlendMode("ADD") end
+		glow:Hide()
+		row.glow[i] = glow
+	end
+	-- Where the client has not got the bar: a dark band, a gold line along each edge.
 	row.bannerFill = row:CreateTexture(nil, "BACKGROUND", nil, -1)
 	row.bannerFill:SetColorTexture(0.17, 0.11, 0.06, 0.95)
+	row.bannerFill:SetAllPoints(row)
 	row.bannerTop = row:CreateTexture(nil, "BORDER")
 	row.bannerTop:SetHeight(1)
 	row.bannerTop:SetColorTexture(0.79, 0.63, 0.31, 0.8)
+	row.bannerTop:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+	row.bannerTop:SetPoint("TOPRIGHT", row, "TOPRIGHT", 0, 0)
 	row.bannerBottom = row:CreateTexture(nil, "BORDER")
 	row.bannerBottom:SetHeight(1)
 	row.bannerBottom:SetColorTexture(0.79, 0.63, 0.31, 0.45)
+	row.bannerBottom:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
+	row.bannerBottom:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+	row.bannerParts = { row.headLeft, row.headMiddle, row.headRight, row.bannerFill, row.bannerTop, row.bannerBottom,
+		row.glow[1], row.glow[2], row.glow[3] }
 end
 
 local function CardParts(row)
-	if row.cardFill then return end
+	if row.cardParts then return end
+	row.face = NewNine(row, "BACKGROUND", 0)
+	row.lift = NewNine(row, "BACKGROUND", 1)
+	ShowAll(row.lift, false)
+	-- Where the client has not got the card: a faint fill.
 	row.cardFill = row:CreateTexture(nil, "BACKGROUND", nil, -1)
 	row.cardFill:SetColorTexture(1, 1, 1, 0.04)
-	row.diamondEdge = row:CreateTexture(nil, "BORDER")
-	row.diamond = row:CreateTexture(nil, "ARTWORK")
-	-- A square turned to a diamond where the client turns textures; left square where it does not.
-	if row.diamond.SetRotation then
-		row.diamondEdge:SetRotation(math.pi / 4)
-		row.diamond:SetRotation(math.pi / 4)
-	end
-	row.badge = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	row.badge:SetPoint("CENTER", row.diamond, "CENTER", 0, 0)
-	row.sub = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+	row.icon = row:CreateTexture(nil, "ARTWORK")
+	row.iconFrame = row:CreateTexture(nil, "ARTWORK", nil, 2)
+	row.story = row:CreateTexture(nil, "ARTWORK")
+	row.sub = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	row.sub:SetJustifyH("LEFT")
 	if row.sub.SetWordWrap then row.sub:SetWordWrap(false) end
 	if row.sub.SetMaxLines then row.sub:SetMaxLines(1) end
-	row.track = row:CreateTexture(nil, "ARTWORK")
-	row.track:SetHeight(2)
-	row.track:SetColorTexture(0, 0, 0, 0.5)
-	row.fill = row:CreateTexture(nil, "OVERLAY")
-	row.fill:SetHeight(2)
-	row.fill:SetColorTexture(1, 0.82, 0, 0.85)
+	Tint(row.sub, CARD_INK)
 	row.tick = row:CreateTexture(nil, "ARTWORK")
-	row.tick:SetSize(14, 14)
-	row.tick:SetPoint("RIGHT", row, "RIGHT", -12, 0)
-	row.tick:SetTexture(READY)
+	row.track = row:CreateTexture(nil, "ARTWORK")
+	row.track:SetColorTexture(0.04, 0.035, 0.024, 1)
+	row.fill = row:CreateTexture(nil, "ARTWORK", nil, 1)
+	row.barCaps = {}
+	for i, atlas in ipairs({ "PetJournal-ExpBar-Left", "PetJournal-ExpBar-Mid", "PetJournal-ExpBar-Right" }) do
+		local cap = row:CreateTexture(nil, "ARTWORK", nil, 2)
+		row.barCaps[i] = cap
+		row.hasBarFrame = Atlas(cap, atlas) and (i == 1 or row.hasBarFrame)
+	end
+	row.cardParts = { row.cardFill, row.icon, row.iconFrame, row.story, row.sub, row.tick, row.track, row.fill }
+	for _, list in ipairs({ row.face, row.lift, row.barCaps }) do
+		for _, part in ipairs(list) do table.insert(row.cardParts, part) end
+	end
 end
 
 -- Only the parts of the style a row is drawn in: a row drawn as a card before and reused for a
--- banner would otherwise keep the card's diamond and bar.
+-- banner would otherwise keep the card's badge and bar.
 local function ShowStyle(row, style)
-	if row.bannerFill then
-		local banner = style == "banner"
-		row.bannerFill:SetShown(banner)
-		row.bannerTop:SetShown(banner)
-		row.bannerBottom:SetShown(banner)
-	end
-	if row.cardFill then
-		local card = style == "card"
-		for _, part in ipairs({ row.cardFill, row.diamondEdge, row.diamond, row.badge, row.sub, row.track, row.fill,
-			row.tick }) do
-			part:SetShown(card)
-		end
-	end
+	if row.bannerParts and style ~= "banner" then ShowAll(row.bannerParts, false) end
+	if row.cardParts and style ~= "card" then ShowAll(row.cardParts, false) end
+	if style ~= nil then row.status:Hide() end
+	row.bannerArt = style == "banner" and row.bannerArt
+	row.cardArt = style == "card" and row.cardArt
 end
 
 -- The faint line down the left of each open card's contents, one for every card a row is inside.
--- Each row draws its own share of the line, its whole height, so the rows join it up.
-local function Rails(row, count)
+-- Each row draws its share of the line, from the row above: `gap` up for the cards that held that
+-- row too, just above itself for a card's first.
+local function Rails(row, count, gap, held)
 	row.rails = row.rails or {}
 	for i = 1, math.max(count, #row.rails) do
 		local rail = row.rails[i]
@@ -877,12 +1000,12 @@ local function Rails(row, count)
 			if not rail then
 				rail = row:CreateTexture(nil, "BORDER")
 				rail:SetWidth(1)
-				rail:SetColorTexture(0.42, 0.32, 0.2, 0.55)
+				rail:SetColorTexture(0.84, 0.71, 0.31, 0.2)
 				row.rails[i] = rail
 			end
 			local x = (i - 1) * NEST_STEP + RAIL_X
 			rail:ClearAllPoints()
-			rail:SetPoint("TOPLEFT", row, "TOPLEFT", x, 0)
+			rail:SetPoint("TOPLEFT", row, "TOPLEFT", x, i <= held and gap or NEST_PAD)
 			rail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", x, 0)
 			rail:Show()
 		elseif rail then
@@ -891,93 +1014,159 @@ local function Rails(row, count)
 	end
 end
 
--- The game's own plus and minus, for anything with something inside to open. Where nothing
--- inside opens -- locked, empty (Thunder Bluff, with no areas of its own), or none found with
--- Discovered Only on -- the plus greyed, as the name beside it is. `found`, where an item counts
+-- The quest log's own expand and collapse, for anything with something inside to open. Where
+-- nothing inside opens -- locked, empty (Thunder Bluff, with no areas of its own), or none found
+-- with Discovered Only on -- greyed, as the name beside it is. `found`, where an item counts
 -- something narrower than what it holds (the quests completed, not those in progress too).
 local function Toggle(row, item, onlyFound)
 	local count = item.found or item.count or 0
-	if ((item.total or count) > 0) and not item.locked and not (onlyFound and count == 0) then
-		row.toggle:SetTexture(item.open and MINUS or PLUS)
+	local opens = ((item.total or count) > 0) and not item.locked and not (onlyFound and count == 0)
+	local atlas = opens and item.open and "questlog-icon-shrink" or "questlog-icon-expand"
+	if Atlas(row.toggle, atlas) then
+		if row.toggle.SetDesaturated then row.toggle:SetDesaturated(not opens) end
+		row.toggle:SetAlpha(opens and 0.9 or 0.45)
 	else
-		row.toggle:SetTexture(PLUS_OFF)
+		if row.toggle.SetDesaturated then row.toggle:SetDesaturated(false) end
+		row.toggle:SetAlpha(1)
+		row.toggle:SetTexture(opens and (item.open and MINUS or PLUS) or PLUS_OFF)
+		row.toggle:SetTexCoord(0, 1, 0, 1)
 	end
 	row.toggle:Show()
 end
 
-local function BannerGap(index)
-	return index > 1 and BANNER_GAP or 0
+local function Inner(nest)
+	return nest > 0 and NEST_GAP or CARD_GAP
 end
 
-local function RowHeight(item, index)
-	if item.style == "banner" then return BANNER_ROW + BannerGap(index or 1) end
+-- The room above the row for `items[i]`, and how many open cards hold both it and the row above.
+local function GapAbove(items, i)
+	local item, before = items[i], items[i - 1]
+	if not before then return FIRST_GAP, 0 end
+	if item.style == "banner" then return BANNER_GAP, 0 end
+	if before.style == "banner" then return UNDER_BANNER, 0 end
+	local was, now = before.nest or 0, item.nest or 0
+	if now > was then return Inner(was) + NEST_PAD, was end
+	return (was - now) * (NEST_PAD + NEST_AFTER) + Inner(now), now
+end
+
+local function RowHeight(item)
+	if item.style == "banner" then return BANNER_ROW end
 	if item.style == "card" then return item.small and SMALL_CARD_ROW or CARD_ROW end
-	return item.leaf and LEAF_ROW or BRANCH_ROW
+	return LEAF_ROW
 end
 
-local function DrawBanner(row, item, gap, onlyFound)
+local function DrawBanner(row, item, onlyFound)
 	BannerParts(row)
-	row.bannerFill:ClearAllPoints()
-	row.bannerFill:SetPoint("TOPLEFT", row, "TOPLEFT", 0, -gap)
-	row.bannerFill:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
-	row.bannerTop:ClearAllPoints()
-	row.bannerTop:SetPoint("TOPLEFT", row.bannerFill, "TOPLEFT", 0, 0)
-	row.bannerTop:SetPoint("TOPRIGHT", row.bannerFill, "TOPRIGHT", 0, 0)
-	row.bannerBottom:ClearAllPoints()
-	row.bannerBottom:SetPoint("BOTTOMLEFT", row.bannerFill, "BOTTOMLEFT", 0, 0)
-	row.bannerBottom:SetPoint("BOTTOMRIGHT", row.bannerFill, "BOTTOMRIGHT", 0, 0)
-	-- Level with the band, not with the gap above it.
-	local mid = -gap / 2
+	local horde = UnitFactionGroup and UnitFactionGroup("player") == "Horde"
+	local spot = AtlasSpot(horde and BAR_HORDE or BAR_ALLIANCE)
+	row.bannerArt = spot ~= nil
+	if spot then
+		local width = spot.width
+		local cap = math.floor((width - BAR_END) * BANNER_ROW / (BAR_BOTTOM - BAR_TOP) + 0.5)
+		local pieces = { { row.headLeft, BAR_END, width, true }, { row.headMiddle, BAR_MIDDLE, BAR_END },
+			{ row.headRight, BAR_END, width } }
+		for i, piece in ipairs(pieces) do
+			AtlasCut(piece[1], spot, piece[2], piece[3], BAR_TOP, BAR_BOTTOM, piece[4])
+			AtlasCut(row.glow[i], spot, piece[2], piece[3], BAR_TOP, BAR_BOTTOM, piece[4])
+			piece[1]:ClearAllPoints()
+		end
+		row.headLeft:SetSize(cap, BANNER_ROW)
+		row.headLeft:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+		row.headRight:SetSize(cap, BANNER_ROW)
+		row.headRight:SetPoint("TOPRIGHT", row, "TOPRIGHT", 0, 0)
+		row.headMiddle:SetPoint("TOPLEFT", row.headLeft, "TOPRIGHT", 0, 0)
+		row.headMiddle:SetPoint("BOTTOMRIGHT", row.headRight, "BOTTOMLEFT", 0, 0)
+		for i, piece in ipairs(pieces) do row.glow[i]:SetAllPoints(piece[1]) end
+	end
+	ShowAll({ row.headLeft, row.headMiddle, row.headRight }, spot ~= nil)
+	ShowAll({ row.bannerFill, row.bannerTop, row.bannerBottom }, spot == nil)
+
 	row.toggle:ClearAllPoints()
-	row.toggle:SetPoint("LEFT", row, "LEFT", 8, mid)
+	row.toggle:SetPoint("LEFT", row, "LEFT", 18, 0)
 	Toggle(row, item, onlyFound)
-	row.lock:ClearAllPoints()
-	row.lock:SetPoint("RIGHT", row, "RIGHT", -10, mid)
-	row.count:ClearAllPoints()
-	row.count:SetPoint("RIGHT", row, "RIGHT", -10, mid)
 	local locked = item.locked and row.hasLock
+	row.lock:SetPoint("RIGHT", row, "RIGHT", -16, 0)
+	row.count:SetPoint("RIGHT", row, "RIGHT", -16, 0)
 	row.lock:SetShown(locked and true or false)
 	row.count:SetShown(not locked)
+	row.count:SetFontObject("GameFontHighlightSmall")
+	Tint(row.count, BANNER_INK)
 	row.count:SetText(item.total and item.total > 0 and string.format("%d/%d", item.count or 0, item.total) or "")
-	row.label:SetFontObject("GameFontNormalSmall")
-	row.label:SetPoint("RIGHT", locked and row.lock or row.count, "LEFT", -6, 0)
-	row.label:SetPoint("LEFT", row, "LEFT", 28, mid)
-	if item.locked then
-		row.label:SetTextColor(0.42, 0.42, 0.42)
-	else
-		row.label:SetTextColor(0.85, 0.7, 0.29)
-	end
-	row.label:SetText(Upper(item.label))
+	row.label:SetFontObject("GameFontNormal")
+	row.label:SetPoint("LEFT", row, "LEFT", 44, 0)
+	row.label:SetPoint("RIGHT", locked and row.lock or row.count, "LEFT", -8, 0)
+	if item.locked then Tint(row.label, LOCKED_INK) else row.label:SetTextColor(1, 0.82, 0) end
+	row.label:SetShadowColor(0, 0, 0, 1)
+	row.label:SetShadowOffset(0, -1)
+	row.label:SetText(item.label)
 end
 
-local function DrawCard(row, item, indent)
+-- The fill of a card's bar as far along it as its share, for the row's width: the rows are as
+-- wide as the list, which settles after they are drawn.
+FitBar = function(row, width)
+	if not row.barLeft or not width or width <= 0 then return end
+	local track = math.max(1, width - row.barLeft - 16 - 4)
+	row.track:SetWidth(track)
+	row.fill:SetWidth(math.max(0.01, track * (row.ratio or 0)))
+end
+
+local function DrawCard(row, item, indent, width)
 	CardParts(row)
 	local small = item.small
 	row.toggle:Hide()
+	row.cardArt = SetNine(row.face, CARD_ART.normal, row, indent, 0, 0, 0)
+	ShowAll(row.face, row.cardArt)
 	row.cardFill:ClearAllPoints()
-	row.cardFill:SetPoint("TOPLEFT", row, "TOPLEFT", indent, -1)
-	row.cardFill:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 1)
+	row.cardFill:SetPoint("TOPLEFT", row, "TOPLEFT", indent, 0)
+	row.cardFill:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+	row.cardFill:SetShown(not row.cardArt)
 
-	local side = small and 15 or 17
-	local colour = item.tick and DIAMOND.all or (item.none or item.locked) and DIAMOND.none or DIAMOND.found
-	row.diamondEdge:ClearAllPoints()
-	row.diamondEdge:SetPoint("CENTER", row, "LEFT", indent + 17, 1)
-	row.diamondEdge:SetSize(side + 2, side + 2)
-	row.diamondEdge:SetColorTexture(colour[1], colour[2], colour[3], 1)
-	row.diamond:ClearAllPoints()
-	row.diamond:SetPoint("CENTER", row.diamondEdge, "CENTER", 0, 0)
-	row.diamond:SetSize(side, side)
-	row.diamond:SetColorTexture(colour[4], colour[5], colour[6], 1)
-	row.badge:SetText(item.badge ~= nil and tostring(item.badge) or "")
+	-- The badge, level with the name and its line above the bar: the zone's painting or what the
+	-- card holds in the collections window's gold frame, greyed with nothing found; a chain's the
+	-- storyline's mark.
+	local side = small and 30 or 38
+	local middle = small and -18 or -21
+	local centre = indent + 12 + side / 2
+	local none = item.none or item.locked
+	local story = item.story and Atlas(row.story, "questlog-storylineicon")
+	local icon = item.icon or (item.story and STORY_ICON) or MAP_ICON
+	row.story:SetShown(story and true or false)
+	if story then
+		row.story:SetSize(24, 24)
+		row.story:ClearAllPoints()
+		row.story:SetPoint("CENTER", row, "TOPLEFT", centre, middle)
+		row.icon:Hide()
+		row.iconFrame:Hide()
+	else
+		local inset = small and 3 or 4
+		local crop = item.iconCrop or ICON_CROP
+		row.icon:SetTexture(icon)
+		row.icon:SetTexCoord(crop[1], crop[2], crop[3], crop[4])
+		row.icon:SetSize(side - 2 * inset, side - 2 * inset)
+		row.icon:ClearAllPoints()
+		row.icon:SetPoint("CENTER", row, "TOPLEFT", centre, middle)
+		if row.icon.SetDesaturated then row.icon:SetDesaturated(none and true or false) end
+		local shade = none and 0.7 or 1
+		row.icon:SetVertexColor(shade, shade, shade)
+		row.icon:Show()
+		local framed = Atlas(row.iconFrame, "collections-itemborder-collected")
+		row.iconFrame:SetShown(framed)
+		if framed then
+			row.iconFrame:SetSize(side, side)
+			row.iconFrame:ClearAllPoints()
+			row.iconFrame:SetPoint("CENTER", row.icon, "CENTER", 0, 0)
+		end
+	end
 
-	local top = small and 4 or 6
+	local top = small and 6 or 8
+	local left = indent + 12 + side + 12
 	row.label:SetFontObject("GameFontNormal")
-	row.label:SetPoint("TOPLEFT", row, "TOPLEFT", indent + CARD_TEXT_X, -top)
+	row.label:SetPoint("TOPLEFT", row, "TOPLEFT", left, -top)
 	row.label:SetPoint("TOPRIGHT", row, "TOPRIGHT", -CARD_RIGHT, -top)
 	if item.locked then
-		row.label:SetTextColor(0.42, 0.42, 0.42)
+		Tint(row.label, LOCKED_INK)
 	elseif item.none or item.missing then
-		row.label:SetTextColor(0.62, 0.55, 0.36)
+		row.label:SetTextColor(0.84, 0.71, 0.31)
 	else
 		row.label:SetTextColor(1, 0.82, 0)
 	end
@@ -986,72 +1175,107 @@ local function DrawCard(row, item, indent)
 	row.sub:SetPoint("TOPLEFT", row.label, "BOTTOMLEFT", 0, -2)
 	row.sub:SetPoint("TOPRIGHT", row.label, "BOTTOMRIGHT", 0, -2)
 	row.sub:SetText(item.sub or "")
+	row.sub:Show()
 
-	-- On the right the padlock, the tick once all are found, or the share found.
+	-- On the right the padlock, the gold tick once all are found, or the share found.
 	local locked = item.locked and row.hasLock
 	local ratio = item.ratio
 	if ratio == nil and item.total and item.total > 0 then ratio = (item.count or 0) / item.total end
 	ratio = math.max(0, math.min(1, ratio or 0))
+	local ticked = not locked and item.tick and true or false
+	row.lock:SetPoint("RIGHT", row, "TOPRIGHT", -16, middle)
 	row.lock:SetShown(locked and true or false)
-	row.tick:SetShown(not locked and item.tick and true or false)
+	row.tick:SetShown(ticked)
+	if ticked then
+		if Atlas(row.tick, CHECK) then
+			row.tick:SetSize(18, 15)
+		else
+			row.tick:SetTexture(READY)
+			row.tick:SetSize(14, 14)
+		end
+		row.tick:ClearAllPoints()
+		row.tick:SetPoint("RIGHT", row, "TOPRIGHT", -16, middle)
+	end
+	row.count:SetFontObject("GameFontHighlightSmall")
+	Tint(row.count, SHARE_INK)
+	row.count:SetPoint("RIGHT", row, "TOPRIGHT", -16, middle)
 	row.count:SetShown(not locked and not item.tick)
 	row.count:SetText((item.total or 0) > 0 and string.format("%d%%", math.floor(100 * ratio + 1e-6)) or "")
 
-	local left = indent + CARD_TEXT_X
-	local width = math.max(1, LIST_WIDTH - 8 - left - 12)
+	-- The bar along its foot, under the name: a dark track, the game's yellow as far as the share,
+	-- cut rather than squeezed, in the Pet Journal's frame. None on a card with nothing to count.
+	local barred = (item.total or 0) > 0
+	local barLeft, barBottom, barHeight = indent + (small and 54 or 62), small and 9 or 11, small and 7 or 8
+	row.barLeft, row.ratio = barLeft, ratio
 	row.track:ClearAllPoints()
-	row.track:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", left, 4)
-	row.track:SetWidth(width)
+	row.track:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft + 2, barBottom + 1)
+	row.track:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -16 - 2, barBottom + 1)
+	row.track:SetHeight(barHeight - 2)
+	row.track:SetShown(barred)
 	row.fill:ClearAllPoints()
 	row.fill:SetPoint("BOTTOMLEFT", row.track, "BOTTOMLEFT", 0, 0)
-	row.fill:SetWidth(math.max(0.01, width * ratio))
-	row.fill:SetShown(ratio > 0)
+	row.fill:SetHeight(barHeight - 2)
+	local spot = AtlasSpot("ui-frame-bar-fill-yellow")
+	if spot then
+		AtlasCut(row.fill, spot, 0, spot.width * ratio, 0, spot.height)
+	else
+		row.fill:SetColorTexture(1, 0.82, 0, 0.85)
+	end
+	row.fill:SetShown(barred and ratio > 0)
+	FitBar(row, width)
+	local capLeft, capMiddle, capRight = row.barCaps[1], row.barCaps[2], row.barCaps[3]
+	for _, cap in ipairs(row.barCaps) do cap:ClearAllPoints() end
+	capLeft:SetSize(6, barHeight)
+	capLeft:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft, barBottom)
+	capRight:SetSize(6, barHeight)
+	capRight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -16, barBottom)
+	capMiddle:SetPoint("TOPLEFT", capLeft, "TOPRIGHT", 0, 0)
+	capMiddle:SetPoint("BOTTOMRIGHT", capRight, "BOTTOMLEFT", 0, 0)
+	ShowAll(row.barCaps, barred and row.hasBarFrame)
 end
 
--- The older tree's rows: a branch with its plus or minus and count/total • share, or a leaf.
-local function DrawTreeRow(row, item, onlyFound)
+-- One thing on its own: its tick once completed or the quest mark while under way, its name, and
+-- a padlock on what is not found yet.
+local function DrawLeaf(row, item, indent)
+	row.toggle:Hide()
+	local status = item.done and "done" or item.going and "going" or nil
+	if status == "done" then
+		if Atlas(row.status, CHECK) then
+			row.status:SetSize(13, 11)
+		else
+			row.status:SetTexture(READY)
+			row.status:SetSize(14, 14)
+		end
+	elseif status == "going" then
+		-- A file after an atlas keeps the atlas's tex coords.
+		row.status:SetTexture(ACTIVE)
+		row.status:SetTexCoord(0, 1, 0, 1)
+		row.status:SetSize(15, 15)
+	end
+	row.status:ClearAllPoints()
+	row.status:SetPoint("CENTER", row, "LEFT", indent + 16, 0)
+	row.status:SetShown(status ~= nil)
+
 	local locked = item.locked and row.hasLock
+	row.lock:SetPoint("RIGHT", row, "RIGHT", -12, 0)
 	row.lock:SetShown(locked and true or false)
-	row.count:SetShown(not locked)
-	row.label:SetPoint("RIGHT", locked and row.lock or row.count, "LEFT", -6, 0)
-	local indent = (item.depth or 0) * DEPTH_STEP
-	if not item.leaf then
-		row.label:SetFontObject("GameFontNormal")
-		row.label:SetPoint("LEFT", row, "LEFT", 28 + indent, 0)
-		row.toggle:ClearAllPoints()
-		row.toggle:SetPoint("LEFT", row, "LEFT", 8 + indent, 0)
-		Toggle(row, item, onlyFound)
-		-- Found out of all, and how much of it that is: 5/27 • 18%.
-		local count = item.count or 0
-		if item.total and item.total > 0 then
-			row.count:SetText(string.format("%d/%d • %d%%", count, item.total,
-				math.floor(100 * count / item.total)))
-		else
-			row.count:SetText(count > 0 and count or "")
-		end
-		if item.locked then
-			row.label:SetTextColor(0.42, 0.42, 0.42)
-		elseif item.missing then
-			row.label:SetTextColor(0.62, 0.55, 0.36)
-		else
-			row.label:SetTextColor(1, 0.82, 0)
-		end
+	row.count:SetText("")
+	row.count:Hide()
+	row.label:SetFontObject("GameFontHighlight")
+	row.label:SetPoint("LEFT", row, "LEFT", indent + 32, 0)
+	if locked then
+		row.label:SetPoint("RIGHT", row.lock, "LEFT", -6, 0)
 	else
-		row.label:SetFontObject("GameFontHighlightSmall")
-		-- Inside a card, just in from its line; in the older tree, under its branch's name.
-		local x = item.nest ~= nil and (item.nest * NEST_STEP + 8) or (36 + indent)
-		row.label:SetPoint("LEFT", row, "LEFT", x, 0)
-		row.toggle:Hide()
-		row.count:SetText("")
-		-- Something with nothing to read yet, greyed: still there to choose. One not yet found,
-		-- darker still: listed, but it does not open.
-		if item.locked then
-			row.label:SetTextColor(0.32, 0.32, 0.32)
-		elseif item.missing then
-			row.label:SetTextColor(0.5, 0.5, 0.5)
-		else
-			row.label:SetTextColor(0.92, 0.92, 0.92)
-		end
+		row.label:SetPoint("RIGHT", row, "RIGHT", -12, 0)
+	end
+	-- Something with nothing to read yet, greyed a little: still there to choose. One not yet
+	-- found, greyer: listed, but it does not open.
+	if item.locked then
+		Tint(row.label, LOCKED_INK)
+	elseif item.missing then
+		row.label:SetTextColor(0.66, 0.64, 0.60)
+	else
+		row.label:SetTextColor(0.94, 0.93, 0.89)
 	end
 	row.label:SetText(item.label)
 end
@@ -1060,42 +1284,47 @@ end
 function List:Render()
 	local items = self.opts.build()
 	local onlyFound = self.opts.onlyGet and self.opts.onlyGet()
-	local y = 0
+	local width = (self.child:GetWidth() or (LIST_WIDTH - 8)) - LIST_LEFT - LIST_RIGHT
+	local y = LIST_TOP
 	for i, item in ipairs(items) do
 		local row = self:AcquireRow(i)
 		row.row = item
-		local height = RowHeight(item, i)
+		local gap, held = GapAbove(items, i)
+		local height = RowHeight(item)
+		y = y + gap
 		row:SetHeight(height)
 		row:ClearAllPoints()
-		row:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -y)
-		row:SetPoint("TOPRIGHT", self.child, "TOPRIGHT", 0, -y)
+		row:SetPoint("TOPLEFT", self.child, "TOPLEFT", LIST_LEFT, -y)
+		row:SetPoint("TOPRIGHT", self.child, "TOPRIGHT", -LIST_RIGHT, -y)
 		y = y + height
 
 		ShowStyle(row, item.style)
-		Rails(row, item.style ~= "banner" and item.nest or 0)
+		local nest = item.style ~= "banner" and item.nest or 0
+		Rails(row, nest, gap, held)
+		local indent = nest * NEST_STEP
+		row.indent = indent
+		row.barLeft = nil
 		row.label:ClearAllPoints()
 		row.lock:ClearAllPoints()
-		row.lock:SetPoint("RIGHT", row, "RIGHT", -10, 0)
 		row.count:ClearAllPoints()
-		row.count:SetPoint("RIGHT", row, "RIGHT", -10, 0)
-		-- Where the light falls: the band of a banner, the card, or the row from its indent.
-		local left, top, bottom = 0, 0, 0
 		if item.style == "banner" then
-			top = BannerGap(i)
-			DrawBanner(row, item, top, onlyFound)
+			indent = 0
+			DrawBanner(row, item, onlyFound)
 		elseif item.style == "card" then
-			left, top, bottom = (item.nest or 0) * NEST_STEP, 1, 1
-			DrawCard(row, item, left)
+			DrawCard(row, item, indent, width)
 		else
-			left = item.nest ~= nil and item.nest * NEST_STEP or 0
-			DrawTreeRow(row, item, onlyFound)
+			DrawLeaf(row, item, indent)
 		end
-		row.wash:ClearAllPoints()
-		row.wash:SetPoint("TOPLEFT", row, "TOPLEFT", left, -top)
-		row.wash:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, bottom)
+		for _, light in ipairs({ row.wash, row.chosen }) do
+			light:ClearAllPoints()
+			light:SetPoint("TOPLEFT", row, "TOPLEFT", indent, 0)
+			light:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+		end
 		row.edge:ClearAllPoints()
-		row.edge:SetPoint("TOPLEFT", row, "TOPLEFT", left, -top)
-		row.edge:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", left, bottom)
+		row.edge:SetPoint("TOPLEFT", row, "TOPLEFT", indent, 0)
+		row.edge:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", indent, 0)
+		-- Clicks on the card or row, not on the room beside its line.
+		if row.SetHitRectInsets then row:SetHitRectInsets(indent, 0, 0, 0) end
 
 		row.selected = self.opts.isSelected and self.opts.isSelected(item) or false
 		Light(row)
@@ -1107,7 +1336,7 @@ function List:Render()
 		self.rows[i].row = nil
 	end
 
-	self.child:SetHeight(math.max(y, 1))
+	self.child:SetHeight(math.max(y + LIST_FOOT, 1))
 	self.noMatch:SetShown(#items == 0)
 	return items
 end
@@ -1115,9 +1344,10 @@ end
 --- Bring the chosen row into view. Only when a tab opens on something: doing it on every
 --- refresh would yank the list out from under a click.
 function List:ScrollToSelection(items)
-	local y = 0
+	local y = LIST_TOP
 	for i, item in ipairs(items) do
-		local height = RowHeight(item, i)
+		y = y + GapAbove(items, i)
+		local height = RowHeight(item)
 		if self.opts.isSelected and self.opts.isSelected(item) then
 			local viewHeight = self.scroll:GetHeight() or 0
 			-- GetVerticalScrollRange is stale until the next layout pass, right after

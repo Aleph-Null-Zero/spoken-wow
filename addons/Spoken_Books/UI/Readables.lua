@@ -207,11 +207,26 @@ local function Leaves(ids, nest, into)
 	end
 end
 
--- A card's numbers: the found on its diamond, out of all on its line, the share and the bar.
+-- What each kind of writing shows on its card; a book for the rest.
+local KIND_ICON = {
+	book = [[Interface\Icons\INV_Misc_Book_09]],
+	letter = [[Interface\Icons\INV_Letter_15]],
+	note = [[Interface\Icons\INV_Misc_Note_01]],
+	scroll = [[Interface\Icons\INV_Scroll_03]],
+	tablet = [[Interface\Icons\INV_Misc_StoneTablet_05]],
+	plaque = [[Interface\Icons\INV_Misc_StoneTablet_05]],
+}
+
+-- A card's numbers: the found out of all on its line, the share and the bar. Its badge: a zone's
+-- painting, or what its kind of writing looks like.
 local function Card(item, found, total)
 	item.style = "card"
 	item.count, item.total = found, total
-	item.badge = found
+	if item.kind == "zone" then
+		if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
+	else
+		item.icon = KIND_ICON[item.which] or KIND_ICON.book
+	end
 	item.sub = L.FOUND_FMT:format(found, total)
 	item.ratio = total > 0 and found / total or 0
 	item.tick = total > 0 and found == total

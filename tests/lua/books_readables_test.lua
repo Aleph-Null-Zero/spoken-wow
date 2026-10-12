@@ -23,7 +23,7 @@ _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
 end
-_G.C_Texture = { GetAtlasInfo = function(name) return (name == "LFG-lock" or name == "Professions_Recipe_Hover") and {} or nil end }
+_G.C_Texture = { GetAtlasInfo = stub.ListAtlas }
 _G.GetLocale = function() return "enUS" end
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 -- The game's portrait frame, its title kept to be read back, and each frame's template.
@@ -97,14 +97,17 @@ end
 local list = Shown()
 Expect("the list is laid out as the places': a banner for each continent, no Azeroth above them",
     RowFor("Eastern Kingdoms") ~= nil and RowFor("Eastern Kingdoms").row.style == "banner" and not Has(list, "Azeroth"), true)
-Expect("...its name in capitals", RowFor("Eastern Kingdoms").label.text, "EASTERN KINGDOMS")
+Expect("...its name as it is", RowFor("Eastern Kingdoms").label.text, "Eastern Kingdoms")
 Expect("...a card under it for each zone", Has(list, "Elwynn Forest") and Has(list, "Westfall")
     and RowFor("Elwynn Forest").row.style == "card" and RowFor("Elwynn Forest").row.nest, 0)
 Expect("...a city inside the zone around it, not beside it", Has(list, "Stormwind City"), false)
 Expect("...the readables after the continents, a banner each: those found across Azeroth and those of no known origin",
     RowFor(L.GROUP_WIDE).row.style == "banner" and RowFor(L.GROUP_UNKNOWN).row.style, "banner")
 Expect("...each zone's card counting what is found out of all, its city's included",
-    RowFor("Elwynn Forest").sub.text:match("^1 of %d+ found$") ~= nil and RowFor("Elwynn Forest").badge.text, "1")
+    RowFor("Elwynn Forest").sub.text:match("^1 of %d+ found$") ~= nil, true)
+Expect("...its badge the zone's painting in the collections window's gold frame", RowFor("Elwynn Forest").icon.texture
+    == _G.Spoken:ZoneIcon(1429) and RowFor("Elwynn Forest").iconFrame:IsShown() and RowFor("Elwynn Forest").iconFrame.atlas,
+    "collections-itemborder-collected")
 
 Click("Elwynn Forest")
 Click("Stormwind City")
@@ -112,9 +115,11 @@ list = Shown()
 Expect("the city opens inside its zone, its readables by what they are", Has(list, L.TYPE_PLAQUE) and Has(list, "Kurdran Wildhammer"), true)
 Expect("...the city a small card inside its zone's card", RowFor("Stormwind City").row.small and RowFor("Stormwind City").row.nest, 1)
 Expect("...each kind a small card inside the city's", RowFor(L.TYPE_PLAQUE).row.small and RowFor(L.TYPE_PLAQUE).row.nest, 2)
+Expect("...its badge what that kind of writing looks like, in the same frame", RowFor(L.TYPE_PLAQUE).icon.texture
+    .. " " .. RowFor(L.TYPE_PLAQUE).iconFrame.atlas, [[Interface\Icons\INV_Misc_StoneTablet_05]] .. " collections-itemborder-collected")
 Expect("...its writings rows inside that", RowFor("Kurdran Wildhammer").row.leaf and RowFor("Kurdran Wildhammer").row.nest, 3)
 Expect("...a line down each open card's contents beside them", RowFor("Kurdran Wildhammer").rails[3] ~= nil
-    and RowFor("Kurdran Wildhammer").rails[3]:IsShown() and RowFor("Kurdran Wildhammer").rails[3].anchor.x, 40)
+    and RowFor("Kurdran Wildhammer").rails[3]:IsShown() and RowFor("Kurdran Wildhammer").rails[3].anchor.x, 72)
 Expect("...a readable not found greyed, with the padlock", RowFor("Ranger Captain Alleria Windrunner").row.locked, true)
 Expect("...one found open to read", RowFor("Kurdran Wildhammer").row.locked, false)
 

@@ -14,9 +14,8 @@ stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames
 
 -- The atlases the client has, as Blizzard's own frames use them (wow-ui-source, forever).
 local ATLASES = { ["spellbook-Page-Right-C60"] = true, ["spellbook-divider"] = true, ["LFG-lock"] = true,
-    ["QuestDetailsBackgrounds"] = true, ["questlog-frame"] = true, ["questlog-frame-filigree"] = true,
-    ["Professions_Recipe_Hover"] = true }
-_G.C_Texture = { GetAtlasInfo = function(name) return ATLASES[name] and { width = 64, height = 11 } or nil end }
+    ["QuestDetailsBackgrounds"] = true, ["questlog-frame"] = true, ["questlog-frame-filigree"] = true }
+_G.C_Texture = { GetAtlasInfo = function(name) return stub.ListAtlas(name) or ATLASES[name] and { width = 64, height = 11 } or nil end }
 _G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 
 -- The game's portrait frame: its title and portrait, as PortraitFrameMixin has them.
@@ -173,12 +172,13 @@ local function Shown()
     for _, row in ipairs(rows) do if row.shown ~= false and row.row then table.insert(labels, row.row.label) end end
     return table.concat(labels, "|")
 end
-Expect("a continent is a banner across the list, its name in capitals", RowFor("Kalimdor").row.style == "banner"
-    and RowFor("Kalimdor").label.text, "KALIMDOR")
+Expect("a continent is a banner across the list, its name as it is", RowFor("Kalimdor").row.style == "banner"
+    and RowFor("Kalimdor").label.text, "Kalimdor")
 Expect("a zone is a card under it", RowFor("Durotar").row.style == "card" and RowFor("Durotar").row.nest, 0)
 Expect("...the places found in it out of all on the line under its name", RowFor("Durotar").sub.text,
     "0 of 3 places found")
-Expect("...the found on its diamond, grey with none", RowFor("Durotar").badge.text == "0" and RowFor("Durotar").row.none, true)
+Expect("...its badge greyed and darker with none found", RowFor("Durotar").icon.desaturated
+    and RowFor("Durotar").icon.vertexColor[1] == 0.7 and RowFor("Durotar").row.none, true)
 Expect("...the share on its right, and its bar empty", RowFor("Durotar").count.text == "0%"
     and RowFor("Durotar").fill:IsShown(), false)
 Expect("...its areas rows inside it", RowFor("Valley of Trials").row.leaf and RowFor("Valley of Trials").row.nest, 1)
@@ -202,12 +202,13 @@ RowFor("Orgrimmar").scripts.OnClick(RowFor("Orgrimmar"))
 Expect("a city is listed inside the zone around it", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 Expect("...a small card, one level in, as an area is", RowFor("Orgrimmar").row.small and RowFor("Orgrimmar").row.nest,
     RowFor("Valley of Trials").row.nest)
-Expect("...indented under its zone's card, its diamond further in",
-    RowFor("Orgrimmar").diamondEdge.anchor.x - RowFor("Durotar").diamondEdge.anchor.x, 16)
+Expect("...indented under its zone's card, its card further in",
+    RowFor("Orgrimmar").face[1].anchor.x - RowFor("Durotar").face[1].anchor.x, 28)
 Expect("...with the line down the open card's contents beside it", RowFor("Orgrimmar").rails[1]:IsShown()
     and RowFor("Valley of Trials").rails[1]:IsShown(), true)
-Expect("...and with no areas of its own, no number, line or share on it", RowFor("Orgrimmar").badge.text
-    .. RowFor("Orgrimmar").sub.text .. RowFor("Orgrimmar").count.text, "")
+Expect("...and with no areas of its own, no line, share or bar on it", RowFor("Orgrimmar").sub.text
+    .. RowFor("Orgrimmar").count.text, "")
+Expect("...no bar", RowFor("Orgrimmar").track:IsShown() or RowFor("Orgrimmar").barCaps[1]:IsShown(), false)
 Expect("...counted with the zone's areas", RowFor("Durotar").sub.text:match("of (%d+)"), "3")
 Expect("...and not beside it on the continent", RowFor("Kalimdor").count.text:match("/(%d+)"), "1")
 Expect("...its page says the zone it is in", page.title.text .. ": " .. page.sub.text.text, "Orgrimmar: in Durotar")
@@ -426,7 +427,7 @@ RowFor("Sen'jin Village").scripts.OnEnter(RowFor("Sen'jin Village"))
 Expect("...not lit under the pointer", RowFor("Sen'jin Village").over, false)
 Expect("...a zone's card its areas found out of all, and the share of them", RowFor("Durotar").sub.text .. " "
     .. RowFor("Durotar").count.text, "1 of 3 places found 33%")
-Expect("...the found on its diamond, green with some", RowFor("Durotar").badge.text == "1" and RowFor("Durotar").row.none, false)
+Expect("...its badge in colour with some found", RowFor("Durotar").icon.desaturated or RowFor("Durotar").row.none, false)
 Expect("...a continent's banner its zones found", RowFor("Kalimdor").count.text, "1/1")
 RowFor("Eastern Kingdoms").scripts.OnClick(RowFor("Eastern Kingdoms"))
 Expect("a locked continent does not open", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
@@ -475,8 +476,8 @@ Expect("...and ticked in the menu", Only().checked, true)
 Only().func()
 Expect("...off, they are listed again", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 Expect("...greyed out", Locked(), "Eastern Kingdoms|Orgrimmar|Sen'jin Village")
-Expect("...a locked branch with its plus greyed as its name is, as every branch with nothing to open",
-    RowFor("Eastern Kingdoms").toggle.texture, [[Interface\Buttons\UI-PlusButton-Disabled]])
+Expect("...a locked branch with the quest log's expand greyed as its name is, as every branch with nothing to open",
+    RowFor("Eastern Kingdoms").toggle.atlas == "questlog-icon-expand" and RowFor("Eastern Kingdoms").toggle.desaturated, true)
 
 -- Voiced Only, after it in the same menu: what no installed voice pack reads is left out, and a
 -- zone stays while an area in it has a recording.

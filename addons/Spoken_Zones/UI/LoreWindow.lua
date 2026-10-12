@@ -249,9 +249,11 @@ local function ZoneRows(mapID, nest, small)
 		end
 	end
 	if filter ~= "" and not Matches(zoneName) and #inside == 0 then return {} end
-	-- With no areas of its own (Thunder Bluff), nothing to count: no number, line or share.
+	-- With no areas of its own (Thunder Bluff), nothing to count: no line, share or bar.
+	local icon, iconCrop
+	if Spoken and Spoken.ZoneIcon then icon, iconCrop = Spoken:ZoneIcon(mapID) end
 	local rows = { { style = "card", small = small, kind = "zone", mapID = mapID, label = zoneName, nest = nest,
-		count = found, total = total, badge = total > 0 and found or nil,
+		count = found, total = total, icon = icon, iconCrop = iconCrop,
 		sub = total > 0 and L.PLACES_FOUND_FMT:format(found, total) or nil,
 		ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
 		none = found == 0 and not Found(mapID),

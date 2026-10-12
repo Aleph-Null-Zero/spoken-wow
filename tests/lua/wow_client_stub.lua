@@ -220,6 +220,10 @@ local function Widget(kind, name)
     function w:SetAtlas(name) self.atlas = name; self.texture = nil end
     function w:GetAtlas() return self.atlas end
     function w:SetTexCoord(...) self.texCoord = { ... } end
+    -- Recorded: a greyed badge or toggle is all that says nothing is found or opens.
+    function w:SetDesaturated(v) self.desaturated = v and true or false end
+    function w:IsDesaturated() return self.desaturated or false end
+    function w:SetVertexColor(r, g, b, a) self.vertexColor = { r, g, b, a } end
     function w:CreateTexture(n, layer) local t = Widget("Texture", n); t.parent = self; t.layer = layer; return t end
     -- A mask, as the client hands one back: the small window rounds a portrait with it.
     function w:CreateMaskTexture(n) local t = Widget("MaskTexture", n); t.parent = self; return t end
@@ -294,6 +298,27 @@ local function Widget(kind, name)
     return w
 end
 M.Widget = Widget
+
+-- The atlases the Compendium's list draws, at Forever's sizes, as C_Texture.GetAtlasInfo gives
+-- them: each the whole of a file named after it, so a test reads which piece of which was drawn
+-- from a texture's file and tex coords.
+local LIST_ATLASES = {
+    ["Objective-Header-CampaignHorde"] = { 274, 42 }, ["Objective-Header-CampaignAlliance"] = { 274, 42 },
+    ["glues-characterselect-card-singles-c60"] = { 321, 100 },
+    ["glues-characterselect-card-singles-hover-c60"] = { 321, 100 },
+    ["glues-characterselect-card-selected-c60"] = { 342, 122 },
+    ["collections-itemborder-collected"] = { 56, 56 }, ["questlog-storylineicon"] = { 22, 22 },
+    ["ui-frame-bar-fill-yellow"] = { 256, 17 }, ["PetJournal-ExpBar-Left"] = { 11, 11 },
+    ["PetJournal-ExpBar-Mid"] = { 11, 11 }, ["PetJournal-ExpBar-Right"] = { 11, 11 },
+    ["questlog-icon-expand"] = { 18, 18 }, ["questlog-icon-shrink"] = { 18, 18 },
+    ["questlog-icon-checkmark-yellow"] = { 17, 14 }, ["LFG-lock"] = { 17, 21 },
+}
+function M.ListAtlas(name)
+    local size = LIST_ATLASES[name]
+    if not size then return nil end
+    return { width = size[1], height = size[2], file = "file:" .. name,
+        leftTexCoord = 0, rightTexCoord = 1, topTexCoord = 0, bottomTexCoord = 1 }
+end
 
 local function MakeFrame(name)
     return Widget("Frame", name)

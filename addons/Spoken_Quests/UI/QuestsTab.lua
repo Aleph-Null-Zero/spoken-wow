@@ -315,10 +315,6 @@ end
 -- The gossip window's mark for a quest under way, before the title of one in progress.
 local IN_PROGRESS_MARK = "|TInterface\\GossipFrame\\ActiveQuestIcon:0|t "
 
-local function Marked(id, label)
-    return InProgress(id) and IN_PROGRESS_MARK .. label or label
-end
-
 --------------------------------------------------------------------------------
 -- The chains
 --------------------------------------------------------------------------------
@@ -375,8 +371,8 @@ local chainOpen = {}
 --------------------------------------------------------------------------------
 
 local function QuestRow(id, nest)
-    return { kind = "quest", leaf = true, quest = id, label = Marked(id, Title(id, filter == "")),
-        nest = nest, locked = not Found(id) and not Unlocked(), going = InProgress(id) }
+    return { kind = "quest", leaf = true, quest = id, label = Title(id, filter == ""),
+        nest = nest, locked = not Found(id) and not Unlocked(), going = InProgress(id), done = Completed(id) }
 end
 
 local function Shows(id)
@@ -384,15 +380,24 @@ local function Shows(id)
     return not (OnlyFound() and not Found(id)) and (filter == "" or Matches(Title(id)) or Matches(english))
 end
 
--- A card's numbers: the completed (its badge, its share and its bar) out of all, and how many
--- more are in progress. A chain's line leaves its count to the badge: "of 7 quests".
-local function Card(item, found, total, going, chain)
+-- What a class, profession, event or other kind of quest shows on its card.
+local SORT_ICON = [[Interface\Icons\INV_Scroll_03]]
+
+-- A card's numbers: the completed (its share and its bar) out of all, and how many more are in
+-- progress. Its badge: a zone's painting, a chain's storyline mark, a scroll for the rest.
+local function Card(item, found, total, going)
     local done = found - going
-    local sub = chain and L.QUESTS_CHAIN_CARD_FMT:format(total) or L.QUESTS_CARD_FMT:format(done, total)
+    local sub = L.QUESTS_CARD_FMT:format(done, total)
     if going > 0 then sub = sub .. " · " .. L.QUESTS_CARD_GOING_FMT:format(going) end
     item.style = "card"
     item.count, item.total = done, total
-    item.badge = chain and total or done
+    if item.kind == "zone" then
+        if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
+    elseif item.kind == "chain" then
+        item.story = true
+    else
+        item.icon = SORT_ICON
+    end
     item.sub = sub
     item.ratio = total > 0 and done / total or 0
     item.tick = total > 0 and done == total
@@ -418,7 +423,7 @@ local function ChainRows(where, first, ids, nest)
     end
     if filter ~= "" and #inside == 0 then return {} end
     local rows = { Card({ kind = "chain", small = true, key = key, ids = ids, label = label, nest = nest,
-        open = #inside > 0 }, found, total, going, true) }
+        open = #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
@@ -587,8 +592,14 @@ local function IsSelected(row)
     return selection.mapID ~= nil and selection.mapID == row.mapID
 end
 
--- The tick a quest completed has on a chain's page.
-local TICK = "|TInterface\\Buttons\\UI-CheckBox-Check:0|t"
+-- A chain's page marks each quest as its row does: the quest log's gold tick once completed, the
+-- quest mark while under way, a padlock until started. Where the client has not got the atlases,
+-- the checkbox's tick and no padlock.
+local TICK = "|TInterface\\Buttons\\UI-CheckBox-Check:0|t "
+local function AtlasMark(atlas, height, width, fallback)
+    if C and C.HasAtlas and C.HasAtlas(atlas) then return ("|A:%s:%d:%d|a "):format(atlas, height, width) end
+    return fallback
+end
 
 --------------------------------------------------------------------------------
 -- The words
@@ -794,13 +805,20 @@ local function Excerpt(text)
     return (head:match("^(.*%S)%s") or head) .. "…"
 end
 
--- A chain's quests in the order they are taken: each one's tick once completed, the quest mark
--- while in progress, or "Not started"; its title; and the start of its offer where it can be read.
+-- A chain's quests in the order they are taken: each one's mark and title, "Not started" under one
+-- not started yet, and the start of its offer where it can be read; a blank line between them.
 local function ChainText(ids)
     local blocks = {}
-    for i, id in ipairs(ids) do
-        local mark = Completed(id) and (TICK .. " ") or (InProgress(id) and IN_PROGRESS_MARK) or ""
-        local lines = { i .. ". " .. mark .. Title(id) }
+    for _, id in ipairs(ids) do
+        local mark
+        if Completed(id) then
+            mark = AtlasMark("questlog-icon-checkmark-yellow", 14, 17, TICK)
+        elseif InProgress(id) then
+            mark = IN_PROGRESS_MARK
+        else
+            mark = AtlasMark("LFG-lock", 16, 13, "")
+        end
+        local lines = { mark .. Title(id) }
         if not Found(id) then table.insert(lines, L.QUEST_NOT_STARTED) end
         if Found(id) or Unlocked() then
             local offer = PartText(id, "accept")

@@ -25,7 +25,9 @@ _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
 end
-_G.C_Texture = { GetAtlasInfo = function(name) return (name == "LFG-lock" or name == "Professions_Recipe_Hover") and {} or nil end }
+_G.C_Texture = { GetAtlasInfo = stub.ListAtlas }
+local faction = "Alliance"
+_G.UnitFactionGroup = function() return faction, faction end
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 local createFrame = _G.CreateFrame
 _G.CreateFrame = function(kind, name, parent, template)
@@ -117,7 +119,7 @@ local function Collect(frame)
         Collect(child)
     end
 end
--- By each item's own name: a banner draws its name in capitals.
+-- By each item's own name.
 local function Shown()
     rows = {}
     Collect(panel)
@@ -130,22 +132,24 @@ local function RowFor(label)
     for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.label == label then return row end end
 end
 -- Parts drawn for a style the row is not in now: a row reused from a card for a banner or a
--- quest must not keep the card's diamond, line or bar.
+-- quest must not keep the card's badge, line or bar.
 local function Leftovers()
     Shown()
     local out, reused = {}, 0
     for _, row in ipairs(rows) do
         local item = row.shown ~= false and row.row
         if item then
-            if row.cardFill and item.style ~= "card" then
+            if row.cardParts and item.style ~= "card" then
                 reused = reused + 1
-                for _, part in ipairs({ "cardFill", "diamond", "diamondEdge", "badge", "sub", "track", "fill", "tick" }) do
-                    if row[part].shown ~= false then table.insert(out, item.label .. " " .. part) end
+                for i, part in ipairs(row.cardParts) do
+                    if part.shown ~= false then table.insert(out, item.label .. " card part " .. i) end
                 end
             end
-            if row.bannerFill and item.style ~= "banner" then
+            if row.bannerParts and item.style ~= "banner" then
                 reused = reused + 1
-                if row.bannerFill.shown ~= false then table.insert(out, item.label .. " bannerFill") end
+                for i, part in ipairs(row.bannerParts) do
+                    if part.shown ~= false then table.insert(out, item.label .. " banner part " .. i) end
+                end
             end
             for i, rail in ipairs(row.rails or {}) do
                 if rail.shown ~= false and i > (item.style ~= "banner" and item.nest or 0) then
@@ -168,9 +172,22 @@ end
 local list = Shown()
 Expect("the list opens on the continents' banners, no Azeroth above them", list:find("^Eastern Kingdoms|") ~= nil
     and Has(list, "Kalimdor") and not Has(list, "Azeroth"), true)
-Expect("...a banner across the list, its name in capitals", RowFor("Eastern Kingdoms").row.style == "banner"
-    and RowFor("Eastern Kingdoms").label.text, "EASTERN KINGDOMS")
+Expect("...a banner across the list, its name as it is", RowFor("Eastern Kingdoms").row.style == "banner"
+    and RowFor("Eastern Kingdoms").label.text, "Eastern Kingdoms")
 Expect("...counting the quests completed out of all", RowFor("Eastern Kingdoms").count.text:match("^1/%d+$") ~= nil, true)
+local banner = RowFor("Eastern Kingdoms")
+Expect("...drawn as the objective tracker's campaign header, the Alliance's for an Alliance character",
+    banner.headMiddle:IsShown() and banner.headMiddle.texture, "file:Objective-Header-CampaignAlliance")
+Expect("...without the crest at its left end: its middle from past it", banner.headMiddle.texCoord[1], 64 / 274)
+Expect("...its left end the right one turned round", banner.headLeft.texCoord[1] == banner.headRight.texCoord[2]
+    and banner.headLeft.texCoord[2] == banner.headRight.texCoord[1] and banner.headLeft.texCoord[1] > banner.headLeft.texCoord[2]
+    and banner.headLeft:IsShown() and banner.headRight:IsShown(), true)
+Expect("...the quest log's collapse on it while open", banner.toggle.atlas, "questlog-icon-shrink")
+faction = "Horde"
+Tab:Refresh()
+Expect("...the Horde's for a Horde character", RowFor("Eastern Kingdoms").headMiddle.texture, "file:Objective-Header-CampaignHorde")
+faction = "Alliance"
+Tab:Refresh()
 Expect("...each zone a card inside it", RowFor("Elwynn Forest").row.style == "card" and RowFor("Elwynn Forest").row.nest, 0)
 Expect("...then a banner each for the quests no zone holds: Classes, Professions, Events, Other",
     list:find("|Classes|Professions|Events|Other$") ~= nil and not Has(list, "Mage")
@@ -178,16 +195,37 @@ Expect("...then a banner each for the quests no zone holds: Classes, Professions
 local elwynn = RowFor("Elwynn Forest")
 Expect("a zone's card: its quests completed out of all on the line under its name",
     elwynn.sub.text:match("^1 of %d+ quests$") ~= nil, true)
-Expect("...the completed on its diamond", elwynn.badge.text, "1")
+Expect("...drawn as Classic's character select card", elwynn.face[5]:IsShown() and elwynn.face[5].texture,
+    "file:glues-characterselect-card-singles-c60")
+Expect("...its corners 16 pixels of the card drawn 11 across", elwynn.face[1].width == 11 and elwynn.face[1].texCoord[2],
+    16 / 321)
+Expect("...its badge the zone's painting", elwynn.icon:IsShown() and elwynn.icon.texture, (Spoken:ZoneIcon(1429)))
+Expect("...in the collections window's gold frame", elwynn.iconFrame:IsShown() and elwynn.iconFrame.atlas,
+    "collections-itemborder-collected")
+Expect("...in colour with some completed", elwynn.icon.desaturated, false)
+Expect("...chosen, the chosen card over it, its glow round it", elwynn.lift[5]:IsShown() and elwynn.lift[5].texture,
+    "file:glues-characterselect-card-selected-c60")
+Expect("...7 beyond the card, its corners 30 pixels drawn 19 across", elwynn.lift[1].anchor.x == -7
+    and elwynn.lift[1].width == 19 and elwynn.lift[1].texCoord[2], 30 / 342)
 local elwynnTotal = tonumber(elwynn.sub.text:match("of (%d+)"))
 Expect("...the share completed on its right", elwynn.count.text, math.floor(100 / elwynnTotal) .. "%")
 Expect("...and its bar filled as far", elwynn.fill:IsShown() and math.floor(elwynn.fill.width / elwynn.track.width
     * elwynnTotal + 0.5), 1)
+Expect("...with the game's yellow cut to the same share, not squeezed", elwynn.fill.texture == "file:ui-frame-bar-fill-yellow"
+    and math.abs(elwynn.fill.texCoord[2] - 1 / elwynnTotal) < 1e-9, true)
+Expect("...in the Pet Journal's bar frame", elwynn.barCaps[1]:IsShown() and elwynn.barCaps[1].atlas .. " "
+    .. elwynn.barCaps[2].atlas .. " " .. elwynn.barCaps[3].atlas, "PetJournal-ExpBar-Left PetJournal-ExpBar-Mid PetJournal-ExpBar-Right")
 Expect("...its page counting its quests", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
 local city = RowFor("Stormwind City")
 Expect("a city is a small card inside its zone's card", city ~= nil and city.row.small and city.row.nest, 1)
-Expect("...indented under it, its diamond further in", city.diamondEdge.anchor.x - elwynn.diamondEdge.anchor.x, 16)
-Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 8)
+Expect("...indented under it, its card further in", city.face[1].anchor.x - elwynn.face[1].anchor.x, 28)
+Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 16)
+Expect("...not chosen, the plain card alone", city.lift[5]:IsShown(), false)
+city.scripts.OnEnter(city)
+Expect("...under the pointer, the hover card over it", city.lift[5]:IsShown() and city.lift[5].texture,
+    "file:glues-characterselect-card-singles-hover-c60")
+city.scripts.OnLeave(city)
+Expect("...and gone again after", city.lift[5]:IsShown(), false)
 Expect("...a quest in the zone a row, as far in", RowFor("Kobold Camp Cleanup").row.leaf and RowFor("Kobold Camp Cleanup").row.nest, 1)
 Click("Classes")
 list = Shown()
@@ -239,11 +277,13 @@ end
 questLog = { CANDLES }
 Tab:Refresh()
 Expect("a quest in the quest log opens", RowOf(CANDLES).row.locked, false)
-Expect("...its row marked in progress", RowOf(CANDLES).label.text:find("ActiveQuestIcon", 1, true) ~= nil
-    and RowOf(CANDLES).label.text:find("Kobold Candles", 1, true) ~= nil, true)
-Expect("...a completed one's not", RowFor("Kobold Camp Cleanup").label.text, "Kobold Camp Cleanup")
+Expect("...its row marked in progress, the quest mark before its name", RowOf(CANDLES).status:IsShown()
+    and RowOf(CANDLES).status.texture .. " " .. RowOf(CANDLES).label.text, [[Interface\GossipFrame\ActiveQuestIcon]] .. " Kobold Candles")
+Expect("...a completed one the quest log's gold tick", RowFor("Kobold Camp Cleanup").status:IsShown()
+    and RowFor("Kobold Camp Cleanup").status.atlas .. " " .. RowFor("Kobold Camp Cleanup").label.text,
+    "questlog-icon-checkmark-yellow Kobold Camp Cleanup")
 Expect("...and its zone's card counts it in progress, apart from the completed",
-    RowFor("Elwynn Forest").sub.text:match("^1 of %d+ quests · 1 in progress$") ~= nil and RowFor("Elwynn Forest").badge.text, "1")
+    RowFor("Elwynn Forest").sub.text:match("^1 of %d+ quests · 1 in progress$") ~= nil, true)
 RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
 Expect("...in progress, then where it is", page.sub.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
@@ -273,7 +313,7 @@ Tab:Refresh()
 completed[CANDLES] = true
 Tab:Refresh()
 Expect("a quest completed since opens", RowFor("Kobold Candles").row.locked, false)
-Expect("...and is counted", RowFor("Elwynn Forest").sub.text:match("^2 of ") ~= nil and RowFor("Elwynn Forest").badge.text, "2")
+Expect("...and is counted", RowFor("Elwynn Forest").sub.text:match("^2 of ") ~= nil, true)
 
 -- Started Only.
 VO.Addon.db.global.Compendium.FoundOnly = true
@@ -319,15 +359,19 @@ Expect("a chain is a small card in its zone's card, named after its first quest"
     and ChainRow("Lost Necklace").row.small and ChainRow("Lost Necklace").row.nest, 1)
 Expect("...its quests inside it, not beside it", RowOfQuest(NECKLACE) or Has(list, "Pie for Billy") or Has(list, "Goldtooth"), false)
 Expect("...a quest in no chain still a row of its own", Has(list, "Kobold Camp Cleanup"), true)
-Expect("...how many quests it holds on its diamond", ChainRow("Lost Necklace").badge.text, "4")
-Expect("...and on the line under its name", ChainRow("Lost Necklace").sub.text, "of 4 quests")
-Expect("...none completed, a grey diamond and none of the share", ChainRow("Lost Necklace").row.none
+Expect("...its badge the storyline's mark, with no frame", ChainRow("Lost Necklace").story:IsShown()
+    and ChainRow("Lost Necklace").story.atlas == "questlog-storylineicon" and ChainRow("Lost Necklace").iconFrame:IsShown(), false)
+Expect("...its quests completed out of all on the line under its name", ChainRow("Lost Necklace").sub.text, "0 of 4 quests")
+Expect("...none completed, none of the share", ChainRow("Lost Necklace").row.none
     and ChainRow("Lost Necklace").count.text, "0%")
 Expect("...its bar empty", ChainRow("Lost Necklace").fill:IsShown(), false)
+local zoneRow = RowFor("Westfall")
+Expect("a zone with none completed: its painting greyed and darker", zoneRow ~= nil and zoneRow.row.none
+    and zoneRow.icon.desaturated and zoneRow.icon.vertexColor[1], 0.7)
 completed[NECKLACE], completed[PIE] = true, true
 questLog = { BACK }
 Tab:Refresh()
-Expect("...how many are in progress on its line", ChainRow("Lost Necklace").sub.text, "of 4 quests · 1 in progress")
+Expect("...how many are in progress on its line", ChainRow("Lost Necklace").sub.text, "2 of 4 quests · 1 in progress")
 Expect("...the share completed", ChainRow("Lost Necklace").count.text, "50%")
 local track, fill = ChainRow("Lost Necklace").track, ChainRow("Lost Necklace").fill
 Expect("...and its bar filled as far as completed", fill:IsShown() and math.floor(fill.width / track.width * 100 + 0.5), 50)
@@ -339,8 +383,10 @@ Expect("...rows one step further in", RowOfQuest(PIE).row.nest, 2)
 Expect("...chosen, its page has the chain's name", page.title.text, "Lost Necklace")
 Expect("...its count", page.sub.text, "2 of 4 completed, 1 in progress")
 local text = page.body.text.text or ""
-Expect("...and its quests in order, each marked", text:find("^1%. .*Lost Necklace\n.-\n\n2%. .*Pie for Billy\n.-\n\n3%. "
-    .. ".*ActiveQuestIcon.*Back to Billy\n.-\n\n4%. Goldtooth\n" .. L.QUEST_NOT_STARTED .. "$") ~= nil, true)
+local DONE = "|A:questlog%-icon%-checkmark%-yellow:14:17|a "
+Expect("...and its quests in order, each marked: the quest log's gold tick, the quest mark, the padlock",
+    text:find("^" .. DONE .. "Lost Necklace\n.-\n\n" .. DONE .. "Pie for Billy\n.-\n\n|TInterface\\GossipFrame\\ActiveQuestIcon:0|t "
+    .. "Back to Billy\n.-\n\n|A:LFG%-lock:16:13|a Goldtooth\n" .. L.QUEST_NOT_STARTED .. "$") ~= nil, true)
 Expect("...each one started with the first sentence or two of its offer", text:find("Lost Necklace\nI lost my necklace, and "
     .. "think that guttersnipe Billy Maclure took it! He's usually scuttling like a rat around the Maclure vineyards east "
     .. "of here.\n\n", 1, true) ~= nil, true)
@@ -351,7 +397,8 @@ questLog = {}
 Tab:Refresh()
 Expect("a chain all completed gets a tick in place of its share", ChainRow("Lost Necklace").tick:IsShown()
     and ChainRow("Lost Necklace").count:IsShown(), false)
-Expect("...and a gold diamond", ChainRow("Lost Necklace").row.tick, true)
+Expect("...the quest log's gold tick", ChainRow("Lost Necklace").row.tick and ChainRow("Lost Necklace").tick.atlas,
+    "questlog-icon-checkmark-yellow")
 ClickChain("Lost Necklace")
 Expect("...and closes again", Has(Shown(), "Pie for Billy"), false)
 Tab:Open(PIE)
@@ -561,6 +608,21 @@ stub.world.questID = CANDLES
 stub.FireEvent("QUEST_DETAIL")
 stub.world.questID = 0
 Expect("an English client keeps nothing: the English ships", VO.Addon.db.global.CompendiumText.enUS, nil)
+
+-- A client without the art: the list is drawn in plain colours instead, and still works.
+_G.C_Texture = { GetAtlasInfo = function() return nil end }
+Tab:Open(KOBOLDS)
+local plainBanner, plainCard = RowFor("Eastern Kingdoms"), RowFor("Elwynn Forest")
+Expect("with no campaign header, a banner is a dark band with gold edges", plainBanner.bannerFill:IsShown()
+    and plainBanner.headMiddle:IsShown(), false)
+Expect("...its plus or minus the older buttons", plainBanner.toggle.texture, [[Interface\Buttons\UI-MinusButton-Up]])
+Expect("with no character select card, a card a faint fill", plainCard.cardFill:IsShown() and plainCard.face[5]:IsShown(), false)
+Expect("...its painting without the frame", plainCard.icon:IsShown() and plainCard.iconFrame:IsShown(), false)
+Expect("...its bar a flat yellow, no frame", plainCard.fill.texture == nil and plainCard.barCaps[1]:IsShown(), false)
+Click("Elwynn Forest")
+plainCard = RowFor("Elwynn Forest")
+Expect("...chosen, a gold wash with its edge", plainCard.selected and plainCard.chosen:IsShown() and plainCard.edge:IsShown(), true)
+_G.C_Texture = { GetAtlasInfo = stub.ListAtlas }
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll quests compendium tests passed")

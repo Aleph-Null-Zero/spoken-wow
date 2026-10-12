@@ -21,7 +21,7 @@ _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
 end
-_G.C_Texture = { GetAtlasInfo = function(name) return (name == "LFG-lock" or name == "Professions_Recipe_Hover") and {} or nil end }
+_G.C_Texture = { GetAtlasInfo = stub.ListAtlas }
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 local createFrame = _G.CreateFrame
 _G.CreateFrame = function(kind, name, parent, template)
