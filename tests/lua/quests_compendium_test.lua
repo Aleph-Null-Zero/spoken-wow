@@ -97,11 +97,16 @@ local C = _G.SpokenCompendium
 Expect("no tab before the world is up", C:Tab("quests"), nil)
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 Expect("the quests are a tab of Azeroth's Compendium once it is", C:Tab("quests") ~= nil and C:Tab("quests").label, L.COMPENDIUM_QUESTS)
-stub.world.playerMapID = 1429
+-- A map with no quests and nothing above it.
+stub.world.playerMapID = 9999
 Tab:Open()
 local panel = Tab.panel
 local page = panel.page
 Expect("...and open on it", C:IsOpen("quests"), true)
+Expect("...where the player's zone is not known, on the first continent, as there is no Azeroth to land on",
+    page.title.text, "Eastern Kingdoms")
+stub.world.playerMapID = 1429
+Tab:Open()
 Expect("...on the zone the player stands in, never an empty page", page.title.text, "Elwynn Forest")
 stub.world.playerMapID = nil
 
