@@ -604,7 +604,8 @@ right, on the spellbook's parchment (`UI/LorePage.lua`).
 The list has a banner for each continent, Kalimdor and the Eastern Kingdoms, each
 opening and closing on its own. Under a continent each zone is a card: its painting,
 its name, and its places found out of all with the share and a bar. A zone's places are
-its city, where it holds one, and its areas; its page counts the same. A click on a
+its city, where it holds one, and its areas; its page counts the same, and a banner
+counts what its zones' cards count, of the cards the filters leave listed. A click on a
 zone's card chooses it and opens it: its city as a small card with its own areas, and
 its areas as rows, a tick on each one found. One zone is open at a time. After the
 continents come two more banners: Other Lands, for the zones on no continent the client

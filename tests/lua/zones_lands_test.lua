@@ -137,8 +137,8 @@ Expect("standing in a battleground, the tab lands on it, under the Battlegrounds
     page.title.text .. "|" .. Shown(), "Darkspear Islands|Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|" .. L.OTHER_LANDS .. "|"
     .. L.BATTLEGROUNDS .. "|Darkspear Islands|Warsong Gulch")
 Expect("...a banner", RowFor(L.BATTLEGROUNDS).row.style, "banner")
-Expect("...one hung under a continent not listed there, one on none not under Other Lands",
-    RowFor("Kalimdor").row.total .. "|" .. RowFor(L.OTHER_LANDS).row.total, "1|1")
+Expect("...one hung under a continent not counted there, one on none not under Other Lands: each banner counts its own zones' cards",
+    RowFor("Kalimdor").row.total .. "|" .. RowFor(L.OTHER_LANDS).row.total, RowFor("Durotar").row.total .. "|0")
 playerMap = 1411
 _G.SpokenCompendium:Hide()
 Z:ToggleLoreWindow()

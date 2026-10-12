@@ -323,6 +323,22 @@ local function ZoneRows(mapID, nest, small)
 	return rows
 end
 
+-- What a banner counts: the places its zones' cards count, found out of all, of the cards Discovered
+-- Only and Voiced Only list. Also how many cards it lists, and whether any of its zones is found,
+-- listed or not, which unlocks it.
+local function BannerCount(zones)
+	local found, total, listed, anyFound = 0, 0, 0, false
+	for _, mapID in ipairs(zones) do
+		local isFound = Found(mapID)
+		anyFound = anyFound or isFound
+		if not (OnlyFound() and not isFound) and not (OnlyVoiced() and not AnyVoiced(mapID)) then
+			local f, t = Places(mapID)
+			found, total, listed = found + f, total + t, listed + 1
+		end
+	end
+	return found, total, listed, anyFound
+end
+
 -- The list: a banner for each continent, its zones' cards under it, and the opened zone's
 -- areas. While searching, every match a click could reach, with what holds it opened to show it.
 local function BuildRowList()
@@ -332,16 +348,7 @@ local function BuildRowList()
 
 	for _, continent in ipairs(Continents()) do
 		local name = ZoneName(continent)
-		-- Counted as a zone's are, of the zones listed; locked by all of them, listed or not.
-		local found, total, anyFound = 0, 0, false
-		for _, mapID in ipairs(ZonesOf(continent)) do
-			local isFound = Found(mapID)
-			anyFound = anyFound or isFound
-			if not OnlyVoiced() or AnyVoiced(mapID) then
-				total = total + 1
-				if isFound then found = found + 1 end
-			end
-		end
+		local found, total, listed, anyFound = BannerCount(ZonesOf(continent))
 		-- A continent with none of its zones found yet is listed locked, and does not open; with
 		-- Discovered Only it is left out. Found through its zones alone: finding Brill finds the
 		-- Eastern Kingdoms.
@@ -356,7 +363,7 @@ local function BuildRowList()
 				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
 			end
 		end
-		local voiced = not OnlyVoiced() or total > 0
+		local voiced = not OnlyVoiced() or listed > 0
 		if (not searching or Matches(name) or #zones > 0) and not (unfound and OnlyFound()) and voiced then
 			local open = searching and #zones > 0 or (not searching and continentOpen[continent] and not locked)
 			table.insert(list, { style = "banner", kind = "continent", mapID = continent, label = name,
@@ -370,15 +377,7 @@ local function BuildRowList()
 	for _, group in ipairs(GROUPS) do
 		local members = group.zones()
 		local label = group.label()
-		local found, total, anyFound = 0, 0, false
-		for _, mapID in ipairs(members) do
-			local isFound = Found(mapID)
-			anyFound = anyFound or isFound
-			if not OnlyVoiced() or AnyVoiced(mapID) then
-				total = total + 1
-				if isFound then found = found + 1 end
-			end
-		end
+		local found, total, listed, anyFound = BannerCount(members)
 		local locked = not anyFound and not SpokenZones:ShowsUndiscovered()
 		local zones = {}
 		if not locked and (searching or groupOpen[group.key]) then
@@ -386,7 +385,7 @@ local function BuildRowList()
 				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
 			end
 		end
-		local voiced = not OnlyVoiced() or total > 0
+		local voiced = not OnlyVoiced() or listed > 0
 		if #members > 0 and (not searching or Matches(label) or #zones > 0) and not (not anyFound and OnlyFound())
 			and voiced then
 			local open = searching and #zones > 0 or (not searching and groupOpen[group.key] and not locked)
