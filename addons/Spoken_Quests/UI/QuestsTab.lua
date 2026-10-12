@@ -597,13 +597,11 @@ local function Shows(id)
         and (not Filtering() or Matches(Title(id)) or Matches(english))
 end
 
--- What a class, profession, event or other kind of quest shows on its card.
-local SORT_ICON = [[Interface\Icons\INV_Scroll_03]]
--- And a dungeon's or a raid's, or a zone's card of them: a key, as to a door below.
+-- A dungeon's or a raid's card's badge: a key, as to a door below.
 local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
 
--- A card's numbers: the completed (its share and its bar) out of all, and how many more are in
--- progress. Its badge: a zone's painting, a chain's storyline mark, a scroll for the rest.
+-- A card's or a line's numbers: the completed (a card's share and its bar) out of all, and how
+-- many more are in progress. A card's badge: a zone's painting, a dungeon's key. A line has none.
 local function Card(item, found, total, going)
     local done = found - going
     -- Places are cards: zones, cities, dungeons. A kind of quest (a class, a profession, a holiday,
@@ -615,12 +613,8 @@ local function Card(item, found, total, going)
     item.shut = shut
     if item.kind == "zone" then
         if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
-    elseif item.kind == "chain" then
-        item.story = true
     elseif item.kind == "dungeons" or item.kind == "dungeon" then
         item.icon = DUNGEON_ICON
-    else
-        item.icon = SORT_ICON
     end
     item.ratio = total > 0 and done / total or 0
     item.tick = total > 0 and done == total
@@ -628,7 +622,7 @@ local function Card(item, found, total, going)
     return item
 end
 
--- A chain's quests in one place, under a card with the chain's name.
+-- A chain's quests in one place, under a line with the chain's name.
 local function ChainRows(where, first, ids, nest, nth)
     InOrder(ids)
     local key = where .. ":" .. first
@@ -697,7 +691,7 @@ local function Leaves(ids, nest, into, where)
     end
 end
 
--- The chain `id` is listed in, where it is listed: the key of its card, or nil where it is listed
+-- The chain `id` is listed in, where it is listed: the key of its line, or nil where it is listed
 -- on its own.
 local function ChainKey(id, where, ids)
     if not InChain(id) then return nil end
@@ -739,9 +733,9 @@ end
 
 local dungeonOpen = {}
 
--- A zone's dungeons' and raids' quests under one card: named after the dungeon where the zone
--- has one, else Dungeons and Raids, with a card for each dungeon inside it (Blackrock Mountain's
--- four, in Searing Gorge).
+-- A zone's dungeons' and raids' quests: the dungeon's card where the zone has one, else a line,
+-- Dungeons and Raids, with a card for each dungeon under it (Blackrock Mountain's four, in Searing
+-- Gorge).
 local function DungeonRows(mapID, byDungeon, nest)
     local all, dungeons = {}, {}
     for dungeon, ids in pairs(byDungeon) do
@@ -787,9 +781,9 @@ local function DungeonRows(mapID, byDungeon, nest)
         open = #inside > 0 }, found, total, going), inside, "d" .. key)
 end
 
--- A zone's card, and under it when it is open its city's card, its dungeons' and raids'
--- card, its chains and its quests. A city's card opens on its own, and shows only while its zone is
--- open.
+-- A zone's card, and under it when it is open its city's card, its dungeons' and raids' card or
+-- line, its chains' lines and its quests. A city's card opens on its own, and shows only while its
+-- zone is open.
 local function ZoneRows(mapID, nest)
     local found, total, going = Tally(QuestsIn(mapID))
     if Unlisted(found, total) then return {} end
@@ -812,7 +806,7 @@ local function ZoneRows(mapID, nest)
         open = (open or Searched()) and #inside > 0 }, found, total, going), inside, "z" .. mapID)
 end
 
--- A sort's card in its section's banner (Mage, Cooking, Lunar Festival), or Place Unknown's.
+-- A sort's line in its section's banner (Mage, Cooking, Lunar Festival), or Place Unknown's.
 local function GroupRows(kind, key, label, ids)
     if not ids or #ids == 0 then return {} end
     local found, total, going = Tally(SetOf(ids))
@@ -1598,9 +1592,6 @@ local function Build(panel)
     if Spoken and Spoken.RegisterCallback then
         Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", function() ShowEntry() end)
     end
-    -- One line, cut short: a quest given in several zones names them all.
-    if page.sub.SetWordWrap then page.sub:SetWordWrap(false) end
-    if page.sub.SetMaxLines then page.sub:SetMaxLines(1) end
     if type(pageInset.NineSlice) == "table" and pageInset.NineSlice.SetFrameLevel then
         pageInset.NineSlice:SetFrameLevel(holder:GetFrameLevel() + 5)
     end

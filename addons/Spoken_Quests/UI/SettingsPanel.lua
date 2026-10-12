@@ -209,6 +209,12 @@ function SettingsPanel:Setup()
         layout:StartOver(L.OPT_SECTION_START_OVER, L.OPT_RESET_PROFILE, function()
             SpokenLayout.Confirm(L.OPT_RESET_PROFILE_CONFIRM, L.OPT_RESET, L.OPT_CANCEL, function()
                 db:ResetProfile()
+                -- The Compendium's filters are the account's (db.global), which a profile's reset
+                -- leaves as they were.
+                local filters = db.global and db.global.Compendium
+                if filters then filters.FoundOnly, filters.VoicedOnly = nil, nil end
+                local tab = rawget(VoiceOver, "QuestsTab")
+                if tab and tab.panel and tab.panel:IsVisible() then tab:Refresh() end
                 layout:Refresh()
             end)
         end, L.OPT_RESET_PROFILE_TIP)

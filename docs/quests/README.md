@@ -1507,16 +1507,15 @@ zone, dungeon or group, a dungeon's zone, a city's zone, a zone's continent or b
 section. A continent's, a banner's and a section's line goes nowhere.
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
-there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The card
-has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
+there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The
+line has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
 chain's first quest (a quest's id, whose title the client gives in its own language, or words by
 language), else the title of the chain's first quest this character may take, wherever that
-quest is (`ChainName`): Rude Awakening, the Undead's, does not name the chain an Orc joins later. Where one place
-has two or more chains of one name (Warsong Gulch's six Fight for Warsong Gulch), each is numbered
-on its line and its page, "Fight for Warsong Gulch (2)", in the order of their first quests' ids.
-Its badge is the
-game's quest scroll, and its numbers and bar count its quests as a zone's card does. A chain that
-runs through several zones has a card in each, for its quests there. Chosen, a chain's page has
+quest is (`ChainName`): Rude Awakening, the Undead's, does not name the chain an Orc joins later.
+Where one place has two or more chains of one name (Warsong Gulch's six Fight for Warsong Gulch),
+each is numbered on its line and its page, "Fight for Warsong Gulch (2)", in the order of their
+first quests' ids. The line has no badge or bar; its numbers count its quests as a zone's card
+does. A chain that runs through several zones has a line in each, for its quests there. Chosen, a chain's page has
 its name, what lists it (the zone, dungeon or group that holds it) and how many of its quests
 are completed and in progress, and asks for one of its quests
 to be chosen from the list; it has no Play. The client has no chain of its own, so without `prev`
