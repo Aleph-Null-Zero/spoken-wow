@@ -28,6 +28,7 @@ end
 
 local list, page
 local selection          -- { quest = id } | { mapID = id } | { sort = id } | { group = "elsewhere" } | nil
+local landed             -- the selection made for the player, where they stood; any other they chose
 local expandedZone
 local worldOpen = true
 local continentOpen = { [1414] = true, [1415] = true }
@@ -554,9 +555,41 @@ local function OnClick(row)
     QuestsTab:Refresh()
 end
 
+-- The zone the player stands in that has quests listed, walking up from an inn's or a cave's
+-- map, or nil.
+local function PlayerZone()
+    local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+    local steps = 0
+    while map and steps < 8 do
+        if Index().zones[map] then return map end
+        local info = C_Map.GetMapInfo and C_Map.GetMapInfo(map)
+        map, steps = info and info.parentMapID, steps + 1
+    end
+end
+
+-- Choose where the player stands: their zone, opened, else the whole world. The tab never shows
+-- a page with nothing chosen.
+local function LandOnPlayer()
+    local zone = PlayerZone()
+    if zone then
+        selection = { mapID = zone }
+        expandedZone = zone
+        worldOpen = true
+        local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
+        if continent then continentOpen[continent] = true end
+    else
+        selection = { mapID = C.WORLD }
+    end
+    landed = selection
+end
+
 function QuestsTab:Refresh(scrollToSelection)
     if not list then return end
     ReadCompleted()
+    if not selection then
+        LandOnPlayer()
+        scrollToSelection = true
+    end
     local items = list:Render()
     if scrollToSelection and selection then list:ScrollToSelection(items) end
     ShowEntry()
@@ -622,6 +655,9 @@ function QuestsTab:Open(questID)
         else
             groupOpen[quest.sort or "elsewhere"] = true
         end
+    elseif selection == landed then
+        -- Opened from the minimap, on where the player stands now.
+        selection = nil
     end
     if list then
         list:ClearSearch()
@@ -668,6 +704,8 @@ function QuestsTab:Setup()
         title = L.COMPENDIUM_TITLE,
         build = Build,
         open = function() QuestsTab:Open() end,
+        -- Come back to from another tab: where the player stands now, unless they chose here.
+        onShow = function() if selection == landed then selection = nil end end,
         enabled = function() return VO.Addon:IsPartOn() end,
         -- Unlock Uncompleted Quests, on Spoken's page.
         unlock = {
