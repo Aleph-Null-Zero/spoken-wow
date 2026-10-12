@@ -17,6 +17,8 @@
 local ADDON_NAME, Addon = ...
 
 local SCROLL_STEP = 28
+-- Between the words (and a part's buttons) and the scroll bar, while the bar shows.
+local BAR_GAP = 14
 local BAR_WIDTH = 6
 local MIN_THUMB = 20
 -- The fade at each edge of the text, from the text outward: three strips easing from clear to
@@ -85,7 +87,7 @@ function TextView:UpdateScrollBar()
 	-- A caller's scroll child (AddScrollBar) as wide as the frame, less the bar's room only while
 	-- there is something to scroll: rows reach the edge when the bar is not there.
 	if self.fitsChild then
-		local width = (self.frame:GetWidth() or 0) - (scrollable and self:BarRoom() or 0)
+		local width = (self.frame:GetWidth() or 0) - (scrollable and (self.barWidth + 6) or 0)
 		if width > 0 and math.abs((self.child:GetWidth() or 0) - width) > 0.5 then self.child:SetWidth(width) end
 	end
 
@@ -112,9 +114,25 @@ function TextView:UpdateScrollBar()
 end
 
 --- What the text leaves free on its right for the scroll bar: the words, and a part's buttons,
---- end this far inside the view's right edge, whether or not the bar shows.
+--- end this far inside the view's right edge. None while they fit and the bar is not there; the
+--- bar's width and BAR_GAP while they run past the view.
 function TextView:BarRoom()
-	return self.barWidth + 6
+	return self.room or 0
+end
+
+-- After laying the words out: room for the bar where they run past the view, none where they fit,
+-- and laid out once more (`again`) where that changed. `onRoom(room)` tells the page, whose
+-- header buttons stand over the words' right edge.
+function TextView:Settle(again)
+	local high = self.frame:GetHeight() or 0
+	local runsPast = high > 0 and (self.child:GetHeight() or 0) - high > 1
+	local need = runsPast and (self.barWidth + BAR_GAP) or 0
+	if need == (self.room or 0) or self.settling then return end
+	self.room = need
+	self.settling = true
+	again()
+	self.settling = false
+	if self.onRoom then self.onRoom(need) end
 end
 
 function TextView:ScrollTo(value)
@@ -429,7 +447,8 @@ function Addon:CreateTextView(parent)
 	-- the ScrollFrame, so this cannot recurse.
 	scroll:SetScript("OnSizeChanged", function(self)
 		local width = self:GetWidth() or 0
-		if width > 0 and width ~= view.wrappedAt then
+		-- Taller or shorter too: the words may run past the view now, or fit.
+		if width > 0 and (width ~= view.wrappedAt or (self:GetHeight() or 0) ~= view.wrappedHigh) then
 			if view.lastParts then
 				view:SetParts(view.lastParts)
 			elseif view.lastText then
@@ -452,13 +471,13 @@ function TextView:SetText(str)
 	self.text:Show()
 
 	-- The scroll child does not inherit the ScrollFrame's width, so both it and
-	-- the FontString have to be told, or the text will not wrap. Leave room for
-	-- the scrollbar so it never sits on top of the last few characters.
+	-- the FontString have to be told, or the text will not wrap. Room for the
+	-- scrollbar only where the words run past the view (Settle).
 	local width = (self.frame:GetWidth() or 0) - self:BarRoom()
 	if width > 0 then
 		self.child:SetWidth(width)
 		self.text:SetWidth(width)
-		self.wrappedAt = self.frame:GetWidth()
+		self.wrappedAt, self.wrappedHigh = self.frame:GetWidth(), self.frame:GetHeight()
 	end
 
 	self.text:SetText(self.lastText)
@@ -499,6 +518,7 @@ function TextView:SetText(str)
 	end
 
 	self.child:SetHeight((self.text:GetStringHeight() or 0) + pictureRoom + PAD_TOP + PAD_BOTTOM)
+	self:Settle(function() self:SetText(self.lastText) end)
 	self.frame:SetVerticalScroll(0)
 	self:UpdateScrollBar()
 	self:UpdateFade()
@@ -569,7 +589,7 @@ function TextView:SetParts(parts)
 	local width = (self.frame:GetWidth() or 0) - self:BarRoom()
 	if width > 0 then
 		self.child:SetWidth(width)
-		self.wrappedAt = self.frame:GetWidth()
+		self.wrappedAt, self.wrappedHigh = self.frame:GetWidth(), self.frame:GetHeight()
 	end
 	local titleFace = _G.QuestTitleFont and _G.QuestTitleFont.GetFont and _G.QuestTitleFont:GetFont()
 	local shown = {}
@@ -632,6 +652,7 @@ function TextView:SetParts(parts)
 	self.partButtons = shown
 
 	self.child:SetHeight(y + PAD_BOTTOM)
+	self:Settle(function() self:SetParts(parts) end)
 	self.frame:SetVerticalScroll(0)
 	self:UpdateScrollBar()
 	self:UpdateFade()

@@ -311,6 +311,11 @@ function SpokenZones:CreateLorePage(parent, style)
 	local buttonsX = -(inset.right + body:BarRoom())
 	report:SetPoint("TOPRIGHT", frame, "TOPRIGHT", buttonsX, -inset.top - titleSize / 2 + 12)
 	report.layoutX, report.layoutY = buttonsX, -inset.top - titleSize / 2 + 12
+	-- The words' right edge moves as the scroll bar comes and goes; the buttons follow it.
+	body.onRoom = function(room)
+		report.layoutX = -(inset.right + room)
+		page:PlaceButtons()
+	end
 
 	-- Under the sentence that says a place has no story yet, so it reads as the answer to it.
 	local contribute = SpokenZones:CreateContributeButton(body.child)

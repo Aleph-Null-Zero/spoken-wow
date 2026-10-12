@@ -736,5 +736,25 @@ said.COMPENDIUM_FONT_CHANGED()
 Expect("...and draws the story again at the new Text Size", drawnAt, 16 + 1)
 body.SetFont = setFont
 Z:Set("fontSize", 12)
+-- The words run to the page's edge while they fit, and leave the scroll bar room, with a gap,
+-- only while they run past the view; the header's buttons follow the words' right edge.
+do
+    local body = page.body
+    local stringHeight = body.text.GetStringHeight
+    body.frame:SetWidth(300)
+    body.frame:SetHeight(1000)
+    body.text.GetStringHeight = function() return 20 end
+    body:SetText("Short.")
+    Expect("words that fit leave no room for a scroll bar", body:BarRoom(), 0)
+    local fitX = page.report.layoutX
+    body.frame:SetHeight(100)
+    body.text.GetStringHeight = function() return 400 end
+    body:SetText("Long.")
+    Expect("...words that run past the view leave the bar its room and a gap", body:BarRoom() > body.barWidth, true)
+    Expect("...the words that much narrower", body.text.width, 300 - body:BarRoom())
+    Expect("...and the header's buttons moved in with them", page.report.layoutX, fitX - body:BarRoom())
+    body.text.GetStringHeight = stringHeight
+end
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll zones lore window tests passed")

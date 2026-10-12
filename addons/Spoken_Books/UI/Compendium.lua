@@ -26,7 +26,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 46
+local VERSION = 47
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1892,6 +1892,8 @@ function C.NewPage(parent, addon, play, report)
 	body:SetThumbColor(INK[1], INK[2], INK[3])
 	if file then body:SetFadeSource(frame, file, coords) end
 	self.body = body
+	-- The header's buttons stand over the words' right edge, which moves as the bar comes and goes.
+	body.onRoom = function() self:RefreshPlay() end
 
 	-- Report in the heading's corner, the game's bug in the player's round button, as the places'
 	-- page has it.
