@@ -216,6 +216,12 @@ local function AfterRemoval()
     if SoundQueue:IsEmpty() then
         StopRetryTicker()
         SoundQueue:MuteGameDialogue(nil)
+        -- Nothing is left to hold: a queue left stopped would hold the next line it is given,
+        -- silent, under a Stop the player can no longer see.
+        if SoundQueue:IsPaused() then
+            SoundQueue:SetPaused(false)
+            Callbacks:Fire("AUDIO_CHANGED")
+        end
         Callbacks:Fire("QUEUE_EMPTY")
     end
 end
@@ -768,10 +774,8 @@ function SoundQueue:PauseQueue()
     -- next one Stop holds. Replay then plays the next line rather than the one already heard.
     if head and head.nextSoundTimer and head.spokenAt and GetTime() >= head.spokenAt then
         self:RemoveSoundFromQueue(head, true)
-        -- It was the last: there is nothing left to hold, and nothing for the queue to stay stopped on.
+        -- It was the last: there is nothing left to hold, and the removal took the stop off.
         if self:IsEmpty() then
-            self:SetPaused(false)
-            Callbacks:Fire("AUDIO_CHANGED")
             return true
         end
         head = self:GetCurrentSound()

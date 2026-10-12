@@ -449,5 +449,29 @@ Expect("a voice a little shorter than its length is not a cut", Q:IsPaused(), fa
 
 _G.C_Sound = nil
 
+---------------------------------------------------------------- an empty queue is not left stopped
+Fresh()
+local stopped = H.Clip({ length = 5 })
+quests:Enqueue(stopped)
+stub.Advance(1)
+Q:PauseQueue()
+local stoppedWhenTold
+env.Callbacks:Register("AUDIO_CHANGED", function() stoppedWhenTold = Q:IsPaused() end)
+quests:Remove(stopped)
+Expect("a stopped line taken out of the queue leaves it empty and not stopped", Q:IsEmpty() and Q:IsPaused(), false)
+Expect("...and says so", stoppedWhenTold, false)
+local next = H.Clip()
+quests:Enqueue(next)
+Expect("...so the next line queued plays", Q:IsPlaying(next), true)
+
+Fresh()
+local first, waiting = H.Clip({ length = 5 }), H.Clip()
+quests:Enqueue(first); quests:Enqueue(waiting)
+stub.Advance(1)
+Q:PauseQueue()
+quests:Remove(first)
+Expect("a stopped line taken out with another waiting leaves the queue stopped", Q:IsPaused(), true)
+Expect("...the waiting line held, not played", Q:IsPlaying(), false)
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll queue tests passed")
