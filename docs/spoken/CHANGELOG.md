@@ -39,6 +39,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Guards and other NPCs that come as a man or a woman speak in the voice of the one in front of
   you.** A Stormwind City Guard, an Orgrimmar Grunt or a Bluffwatcher can be either, and every
   one of them spoke in a man's voice. Until a pack has the other voice, the line plays as before.
+- **Fixed: readables near a zone's border were listed under the zone next door** in the
+  Compendium. The letters handed out in Darkshire were under Deadwind Pass, Nesingwary's Green
+  Hills chapters under Westfall and Ratchet's manuals under Durotar. Each is now under the zone
+  where it is found. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.1 — 2026-10-11
 
