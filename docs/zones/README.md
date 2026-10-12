@@ -624,8 +624,12 @@ still say what this character has found. The filter menu beside the search box h
 **Discovered Only**, which leaves out the places not found, and **Voiced Only**, which
 leaves out what no installed voice pack reads and counts only what it lists; a zone
 stays while an area in it has a recording. A search lists every match a click could
-reach, with what holds it opened, and opens nothing locked. Changing a filter or
-clearing the search keeps the chosen row in view.
+reach, with what holds it opened, and opens nothing locked. A search naming a zone or a
+city lists all its areas; one naming a banner (a continent, Other Lands, Battlegrounds)
+lists its zones' cards as the player left them, each opening and closing on a click as
+it does unsearched. A click on a card the search opened closes it for that search, and
+another opens it again; a new search opens it again too. Changing a filter or clearing
+the search keeps the chosen row in view.
 
 The tab opens on where the player stands and scrolls that row into view: the area they
 are in where it has a story of its own, else its zone, opened, else their continent.
