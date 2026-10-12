@@ -1454,7 +1454,7 @@ are in progress. The list follows the log while it is open (`QUEST_LOG_UPDATE`,
 `QUEST_ACCEPTED`, `QUEST_REMOVED`, drawn again once a burst is over and only when the log's
 quests changed). The rest are locked unless Unlock Unstarted Quests is on, which Spoken's page
 shows in its Compendium section. The filter menu holds Started Only and Voiced Only, which leaves
-out the quests no voice pack has a part of, with any card or banner left with nothing, and counts
+out the quests no voice pack has the offer or the hand-in of, with any card or banner left with nothing, and counts
 only what it lists. That switch and both filters are kept in
 `SpokenQuestsSettings.global.Compendium`.
 
@@ -1522,15 +1522,16 @@ to be chosen from the list; it has no Play. The client has no chain of its own, 
 in the data every quest is a row of its own.
 
 The page fills the placeholders for the player as the client does. A started quest's page shows
-its offer and its progress; its hand-in, with its Play and Report, shows only once the quest is
-completed, or with Unlock Unstarted Quests on, since it tells how the quest ends. Play plays the
-quest's first part shown that a pack voices (its accept line, else its progress, else its
-complete line), and each part's Play that part. A part is named and pictured for who says it:
-the offer for the quest's giver, as the quest log's Play is, and the progress and the hand-in for
-the one it is handed in to (`ender` or `enderObject`, else the giver). Shift-click on a quest's
-row hands that part to `Player:Enqueue`, behind what the queue holds, and leaves the selection
-and the page as they were; a line already queued is not queued again. The page shown with no
-quest chosen says so.
+its offer; its hand-in, with its Play and Report, shows only once the quest is completed, or with
+Unlock Unstarted Quests on, since it tells how the quest ends. The progress, said while the quest
+is under way, has no part on the page: it is not shown or played there, and Voiced Only counts
+only the offer and the hand-in, so a quest voiced only in its progress counts as unvoiced. Each
+part's Play plays that part. A part is named and pictured for who says it: the offer for the
+quest's giver, as the quest log's Play is, and the hand-in for the one it is handed in to
+(`ender` or `enderObject`, else the giver). Shift-click on a quest's row hands its first part
+shown that a pack voices (its accept line, else its complete line) to `Player:Enqueue`, behind
+what the queue holds, and leaves the selection and the page as they were; a line already queued
+is not queued again. The page shown with no quest chosen says so.
 
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
@@ -1545,9 +1546,9 @@ view's Play, Report or Contribute; and in DialogueUI's window, at the left end o
 a quest page (`UI/DialogueUIBridge.lua`). DialogueUI hides the rest of the interface while it is
 up, so that one closes DialogueUI's window before the Compendium opens.
 
-On a client in another language, `QUEST_DETAIL`, `QUEST_PROGRESS` and `QUEST_COMPLETE` keep the
-window's title and words in `SpokenQuestsSettings.global.CompendiumText[locale][questID]`, shown
-over the English. The player's name, class and race go back to `$N`, `$C` and `$R` where the
+On a client in another language, `QUEST_DETAIL` and `QUEST_COMPLETE` keep the window's title and
+words in `SpokenQuestsSettings.global.CompendiumText[locale][questID]`, shown over the English;
+`QUEST_PROGRESS` keeps the title alone. The player's name, class and race go back to `$N`, `$C` and `$R` where the
 English has them, so another character sees its own. A text kept by a character of the other sex
 is not shown where the English has a `$G`. An English client keeps nothing.
 

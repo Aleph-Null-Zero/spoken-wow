@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **A quest's page in Azeroth's Compendium shows its offer and its completion, without the
+  progress.** Voiced Only and shift-click on a quest's row count only those two parts, so a quest
+  voiced only in its progress counts as unvoiced. *([Nucabe](https://github.com/Nucabe))*
 - **Books in Azeroth's Compendium files what is found inside a dungeon or raid under its card**,
   in the zone of its entrance, as Quests does: the Dark Keeper nameplates under Blackrock Depths,
   the lore books under Scholomance and the Scarlet Monastery. A zone with several dungeons holds

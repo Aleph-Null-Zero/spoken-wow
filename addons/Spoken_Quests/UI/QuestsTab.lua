@@ -99,8 +99,10 @@ local function SectionOf(sort)
 end
 local filter = ""
 
-local MOMENTS = { "accept", "progress", "complete" }
-local HEADINGS = { accept = "QUEST_PART_ACCEPT", progress = "QUEST_PART_PROGRESS", complete = "QUEST_PART_COMPLETE" }
+-- What a quest's page shows and plays: the offer and the hand-in. The progress, said while the
+-- quest is under way, is left out.
+local MOMENTS = { "accept", "complete" }
+local HEADINGS = { accept = "QUEST_PART_ACCEPT", complete = "QUEST_PART_COMPLETE" }
 
 --------------------------------------------------------------------------------
 -- What there is
@@ -1053,7 +1055,7 @@ local function Shows(id, moment)
     return moment ~= "complete" or Completed(id) or Unlocked()
 end
 
--- Who says one moment of a quest: the progress and the hand-in are said by the one it is handed
+-- Who says one moment of a quest: the hand-in is said by the one it is handed
 -- in to (`ender`, `enderObject` in the data, absent where that is the giver), the offer by its
 -- giver, as the quest log's Play names it.
 local function Speaker(id, moment)
@@ -1075,8 +1077,9 @@ local function SoundData(id, moment, origin)
 end
 
 -- Whether a voice pack has any of a quest (Voiced Only), and a quest played from its row
--- (shift-click): what is said when it is offered, under way and handed in, as far as the voice
--- packs have it, named for who says it. The quest's page plays each part from its own Play.
+-- (shift-click): what is said when it is offered and handed in, as far as the voice packs have
+-- it, named for who says it. A quest voiced only in its progress counts as unvoiced. The quest's
+-- page plays each part from its own Play.
 local PLAY = {
     has = function(id)
         for _, moment in ipairs(MOMENTS) do
@@ -1084,7 +1087,7 @@ local PLAY = {
         end
         return false
     end,
-    -- One part, the first a pack voices: the offer, the progress and the hand-in are said at
+    -- One part, the first a pack voices: the offer and the hand-in are said at
     -- different times, not as one speech. Its words go with it, for the window to show. Nothing
     -- where a part of the quest is queued already: one part of a quest at a time.
     -- `queued`: behind what the queue already holds, not played at once.
@@ -1150,7 +1153,7 @@ local function PartButtons(moment)
     return partButtons[moment]
 end
 
--- A quest's words in parts, the offer, the progress and the hand-in each under its heading, with
+-- A quest's words in parts, the offer and the hand-in each under its heading, with
 -- Play and Report for that part where a pack voices it; the hand-in only where it Shows. A part a
 -- pack voices whose words are not known says so, and is there to be played and reported. nil with
 -- no words and nothing voiced.
@@ -1672,7 +1675,8 @@ local function OnEvent(_, event, a)
     if event == "QUEST_DETAIL" then
         QuestsTab:Keep("accept", GetQuestText and GetQuestText(), GetTitleText and GetTitleText())
     elseif event == "QUEST_PROGRESS" then
-        QuestsTab:Keep("progress", GetProgressText and GetProgressText(), GetTitleText and GetTitleText())
+        -- Its title alone: the page has no progress part to show its words.
+        QuestsTab:Keep("progress", nil, GetTitleText and GetTitleText())
     elseif event == "QUEST_COMPLETE" then
         QuestsTab:Keep("complete", GetRewardText and GetRewardText(), GetTitleText and GetTitleText())
     elseif event == "QUEST_TURNED_IN" then

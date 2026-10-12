@@ -521,7 +521,9 @@ RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
 Expect("...where it is, then the quest mark and In progress", page.sub.text.text,
     "In Elwynn Forest · |TInterface\\GossipFrame\\ActiveQuestIcon:0|t " .. L.QUEST_IN_PROGRESS)
-Expect("...and its words, offered and under way", (PageWords() or ""):find("Did you gather those candles yet?", 1, true) ~= nil, true)
+Expect("...and its offer alone: no part for its progress", #page.body.lastParts .. " "
+    .. page.body.lastParts[1].heading .. " "
+    .. tostring((PageWords() or ""):find("Did you gather those candles yet?", 1, true)), "1 " .. L.QUEST_PART_ACCEPT .. " nil")
 Expect("...not the hand-in before it is completed: it tells how the quest ends",
     (PageWords() or ""):find("Thanks for the candles", 1, true) == nil
     and page.body.lastParts[#page.body.lastParts].heading ~= L.QUEST_PART_COMPLETE, true)
@@ -758,12 +760,13 @@ Click(C.MapName(REDRIDGE))
 -- made here to be handed in to another than its giver: Marshal McBride offers it, Marshal Dughan
 -- takes it in.
 local MCBRIDE, DUGHAN = 197, 240
-VO.DataModules:Register("TestPack", {
+local testPack = {
     SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2, ["85-accept"] = 2, ["85-complete"] = 2 },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
     NPCIDLookupByQuestID = { [KOBOLDS] = MCBRIDE },
     NPCNameLookupByNPCID = { [MCBRIDE] = "Marshal McBride", [DUGHAN] = "Marshal Dughan" },
-})
+}
+VO.DataModules:Register("TestPack", testPack)
 SpokenQuestsCompendium.quests[KOBOLDS].ender = DUGHAN
 local function Who()
     local clip = Spoken:GetQueue()[1]
@@ -893,12 +896,12 @@ do
     Expect("...its Play playing it", Spoken:GetNowPlaying() and Spoken:GetNowPlaying().fileName, "7-complete")
     Spoken:StopAll()
     SpokenQuestsText[KOBOLDS].complete = words
-    local progress = SpokenQuestsText[CANDLES].progress
-    SpokenQuestsText[CANDLES].progress = nil
+    local handInWords = SpokenQuestsText[CANDLES].complete
+    SpokenQuestsText[CANDLES].complete = nil
     Click("Kobold Candles")
     Expect("a part with no words known that no pack voices is left out", #page.body.lastParts .. " "
-        .. page.body.lastParts[2].heading, "2 " .. L.QUEST_PART_COMPLETE)
-    SpokenQuestsText[CANDLES].progress = progress
+        .. page.body.lastParts[1].heading, "1 " .. L.QUEST_PART_ACCEPT)
+    SpokenQuestsText[CANDLES].complete = handInWords
 end
 ClickChain("Lost Necklace")
 completed[NECKLACE] = true
@@ -936,6 +939,26 @@ Expect("...on its page, the list keeping the filter and leaving its row out", pa
 _, choices = Menu()
 choices[2].func()
 Expect("...off, everything again", Has(Shown(), "Kobold Candles") and Has(Shown(), "Westfall") and Tab:Has(CANDLES), true)
+-- The page has no progress part, so a quest a pack voices only in its progress counts as unvoiced.
+do
+    testPack.SoundLengthLookupByFileName["60-progress"] = 2
+    testPack.NPCIDLookupByQuestID[CANDLES] = MCBRIDE
+    Expect("(a pack voicing Kobold Candles' progress)",
+        VO.DataModules:PrepareSound({ event = VO.Enums.SoundEvent.QuestProgress, questID = CANDLES }) and true, true)
+    _, choices = Menu()
+    choices[2].func()
+    Expect("a quest a pack voices only in its progress is left out by Voiced Only", Has(Shown(), "Kobold Candles"), false)
+    _, choices = Menu()
+    choices[2].func()
+    local shift = _G.IsShiftKeyDown
+    _G.IsShiftKeyDown = function() return true end
+    Spoken:StopAll()
+    Click("Kobold Candles")
+    Expect("...and shift-click on its row plays nothing", Spoken:GetQueueSize(), 0)
+    _G.IsShiftKeyDown = shift
+    testPack.SoundLengthLookupByFileName["60-progress"] = nil
+    testPack.NPCIDLookupByQuestID[CANDLES] = nil
+end
 -- A switch in the filter menu leaving out the chosen row tells the tab (onHidden), which says what
 -- the page shows in its place.
 do
