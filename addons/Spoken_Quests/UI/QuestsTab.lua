@@ -850,6 +850,7 @@ function QuestsTab:Refresh(scrollToSelection)
     Decorate(items)
     if scrollToSelection and selection then list:ScrollToSelection(items) end
     ShowEntry()
+    if self.MarkHeard then self:MarkHeard(list, items, page, selection and selection.quest) end
 end
 
 local function Build(panel)

@@ -1407,6 +1407,15 @@ every quest is a row of its own.
 The page fills the placeholders for the player as the client does. Play queues the quest's accept, progress and
 complete lines, whichever the packs have, named for its giver as the quest log's Play is.
 
+A quest heard through gets a grey tick on its row and one under Play on its page, with a tooltip
+(`UI/QuestsHeard.lua`). Spoken's `CLIP_STOPPED` keeps each accept, progress or complete clip of
+this addon that played to its end, or was skipped with 80% of its length heard, in
+`SpokenQuestsSettings.global.CompendiumHeard[questID][moment]`, for the whole account: what the
+mark answers is whether the player has heard the recording, whichever character played it. A
+clip taken away while playback is stopped does not count, since the client cannot say how far
+it got. The quest is heard once every moment the installed packs voice is kept, so a pack that
+adds a moment takes the mark away until that moment is heard.
+
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
 zone, continent or group opened and its page shown (`QuestsTab:Open(questID)`). It shows only for
