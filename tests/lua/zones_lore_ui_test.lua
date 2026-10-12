@@ -140,6 +140,8 @@ Expect("Hide Report Buttons, in Spoken's settings, takes Report off the Compendi
     page.report:IsShown(), false)
 Expect("...Play taking its corner", page.play.anchor.point .. " " .. tostring(page.play.anchor.relativeTo == page.frame),
     "TOPRIGHT true")
+Expect("...over the words' right edge, the scroll bar's room in, the column Quests' and Books' pages put Play in",
+    page.play.anchor.x, -(page.inset.right + page.body:BarRoom()))
 reportsHidden = false
 Z:RefreshLoreWindow()
 Expect("...and gives it back when it is off", page.report:IsShown(), true)
