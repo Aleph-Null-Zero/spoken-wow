@@ -85,6 +85,20 @@ const INSTANCE_ZONE = {
 // Text objects the server has and never spawns, placed by hand: the nameplates in Blackrock
 // Depths' Dark Keeper vault.
 const UNSPAWNED = { "Dark Keeper Nameplate": 230 };
+// Sources the world DB cannot see, by book id: an item a spell or a machine makes, a quest whose
+// giver it does not spawn. Each names a quest or an object, for its name in every language, and
+// the zones, where the object's spawns do not give them.
+const SOURCES_BY_HAND = {
+  394: [{ how: "quest", quest: 1016, zones: [1440] }], // Divined Scroll: the Divining Scroll, used in Ashenvale
+  1171: [{ how: "quest", quest: 2944, zones: [1425] }], // Snapshot of Gammerita: taken in the Hinterlands
+  // Gnomeregan's punch cards, each made from the one before at a Matrix Punchograph.
+  1191: [{ how: "object", object: 142345 }], // 3005-A
+  1192: [{ how: "object", object: 142475 }], // 3005-B
+  1193: [{ how: "object", object: 142476 }], // 3005-C
+  1194: [{ how: "object", object: 142696 }], // 3005-D
+  2671: [{ how: "quest start", quest: 7636, zones: [1448] }], // Petrified Bark: Vartrus the Ancient, Felwood
+  2859: [{ how: "quest reward", quest: 8996, zones: [1427] }], // Brazier of Invocation: Bodley, Blackrock Mountain
+};
 // Readables with words that no one can have: the Forsaken class letters that were never given out
 // (the Musty Note, Parchment, Scroll, Letter and Missive). No loot, quest, vendor or mail names
 // their items.
@@ -413,6 +427,20 @@ try {
     const book = itemBook.get(Number(r.Item));
     const zones = new Set((viaContainer.get(Number(r.Entry)) ?? []).flatMap((s) => s.zones));
     add(book, "container", { enUS: containerNames.get(Number(r.Entry)) ?? `item ${r.Entry}` }, zones);
+  }
+
+  // And what the DB cannot see. A hand source that matches one the DB found gives it its zones.
+  const hand = Object.values(SOURCES_BY_HAND).flat();
+  const handQuests = await names(QUEST, "ID", "LogTitle", hand.filter((s) => s.quest).map((s) => s.quest));
+  const handObjects = await names(OBJECT, "entry", "name", hand.filter((s) => s.object).map((s) => s.object));
+  const handObjectZones = await spawnZones("gameobject", hand.filter((s) => s.object).map((s) => s.object));
+  for (const [book, list_] of Object.entries(SOURCES_BY_HAND)) {
+    for (const s of list_) {
+      const name = s.quest ? handQuests.get(s.quest) : handObjects.get(s.object);
+      if (!name) throw new Error(`book ${book}: no ${s.quest ? `quest ${s.quest}` : `object ${s.object}`} in the world DB`);
+      add(Number(book), s.how, name, s.zones ?? handObjectZones.get(s.object) ?? []);
+    }
+    if (!kind.has(Number(book))) kind.set(Number(book), "carried");
   }
 } finally {
   await db.end();
