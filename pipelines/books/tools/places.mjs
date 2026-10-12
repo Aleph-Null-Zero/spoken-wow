@@ -85,6 +85,28 @@ const INSTANCE_ZONE = {
 // Text objects the server has and never spawns, placed by hand: the nameplates in Blackrock
 // Depths' Dark Keeper vault.
 const UNSPAWNED = { "Dark Keeper Nameplate": 230 };
+// Types no title, icon or first page gives away, by book id: read off the words or the wiki.
+const TYPE_BY_HAND = {
+  15: "letter", // William's Shipment: "Hello Morgan, ..."
+  29: "note", // Crate of Horseshoes: "A note is attached to the crate."
+  58: "tablet", 62: "tablet", 285: "tablet", 324: "tablet", // the Troll Legends, from stone tablets
+  73: "journal", // Book from Sven's Farm: Stalvan's diary
+  153: "book", 161: "book", 169: "book", 177: "book", // Green Hills chapters, bound
+  336: "letter", // Cloth Request: "To the Schneiders, ..."
+  439: "letter", // Kravel's Scheme: "Mr. Fizzlebub, the bearer of this letter..."
+  711: "letter", // Neeka's Report: "Helgrum, my compliments..."
+  794: "book", // Lorgalis Manuscript: a four-page history
+  1392: "letter", // Grape Manifest: "Brother Neals, ..."
+  1591: "plaque", // Etched Note: a sign on Jordan Stilwell's anvil
+  2271: "letter", // Cliffwatcher Longhorn Report: "Nataka, ..."
+  2514: "note", // Brock's List: a list of students
+  2807: "journal", // Decoded Tablet Transcription: a diary, "Day 1..."
+  2838: "letter", // From the Desk of Lord Victor Nefarius: "To Whom It May Concern, ..."
+  // The soldiers' letters from the Scourge invasion, and the reports the Keeper of the Rolls
+  // mails back for them.
+  2882: "letter", 2883: "letter", 2884: "letter",
+  2885: "letter", 2886: "letter", 2887: "letter", 2888: "letter", 2889: "letter", 2890: "letter",
+};
 // The order sources are listed in on a page: how the readable is had, most specific first.
 const ORDER = ["quest start", "quest reward", "mail", "quest", "drop", "object", "container", "fishing", "vendor", "pickpocket"];
 
@@ -418,7 +440,7 @@ for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
   const wide = zones.size > WIDE;
   counts[k]++;
   if (wide) counts.wide++;
-  const type = typeOf({ title: book.title, world: k === "world", texts: book.pages.map((page) => pageText.get(page) ?? ""),
+  const type = TYPE_BY_HAND[id] ?? typeOf({ title: book.title, world: k === "world", texts: book.pages.map((page) => pageText.get(page) ?? ""),
     icons: (bookItems.get(id) ?? []).map((item) => itemIcon.get(item) ?? "") });
   counts.types[type] = (counts.types[type] ?? 0) + 1;
   const parts = [`kind = "${k}"`, `type = "${type}"`];
