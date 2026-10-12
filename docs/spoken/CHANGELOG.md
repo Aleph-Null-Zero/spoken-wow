@@ -12,6 +12,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   language once you have seen its window. Open in Azeroth's Compendium, on the quest giver's
   window, the quest log's details and DialogueUI's window, opens the tab on that quest.
   *([Nucabe](https://github.com/Nucabe))*
+- **The Quests tab marks the quests you have heard.** A small tick on the quest's row and on its
+  page, once every part of its recording has played to the end on any of your characters.
+  *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing

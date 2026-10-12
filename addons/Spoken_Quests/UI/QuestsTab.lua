@@ -554,6 +554,7 @@ function QuestsTab:Refresh(scrollToSelection)
     local items = list:Render()
     if scrollToSelection and selection then list:ScrollToSelection(items) end
     ShowEntry()
+    if self.MarkHeard then self:MarkHeard(list, items, page, selection and selection.quest) end
 end
 
 local function Build(panel)

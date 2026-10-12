@@ -16,6 +16,7 @@ setfenv(1, VoiceOver)
 --   ReportButton.lua       the copy-link dialog for reporting a line
 --   Player.lua             minimap menu entries and player settings link
 --   UI/QuestsTab.lua       the Quests tab of Azeroth's Compendium
+--   UI/QuestsHeard.lua     the mark on quests heard through, in that tab
 --
 -- FORMAT ARGUMENTS ARE POSITIONAL (%1$s, %2$d), even where there is only one and
 -- the position is obvious. Word order is the thing a translator most often has to
@@ -248,3 +249,5 @@ L.QUEST_PART_ACCEPT = "Offer"
 L.QUEST_PART_PROGRESS = "Progress"
 L.QUEST_PART_COMPLETE = "Completion"
 L.QUEST_NO_TEXT = "No words are known for this quest."
+L.QUEST_HEARD = "Heard"
+L.QUEST_HEARD_TIP = "Every part of this quest's recording has played to the end, on this character or another of yours."
