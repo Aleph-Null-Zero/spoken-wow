@@ -489,6 +489,26 @@ Expect("...or a zone on a continent with none found", RowFor("Eastern Kingdoms")
 Z:ShowLoreFor(1411, nil)
 showAll = false
 
+-- A search lists only what a click could reach. With Durotar not found, Kalimdor is locked: an
+-- area found in it is not listed, and the banner matching by name stays locked and closed.
+local wasFound = found
+found = { ["1411/valley of trials"] = true }
+local function Search(text)
+    search:SetText(text)
+    search.hooks.OnTextChanged[1](search)
+    return Shown()
+end
+Expect("a search lists nothing inside a locked continent, even an area found there", Search("trials"), "")
+Expect("...and says nothing matches", window.noMatch.shown, true)
+Expect("...a locked continent matching by name listed alone, closed", Search("kalimdor"), "Kalimdor")
+Expect("...still locked", RowFor("Kalimdor").row.locked and not RowFor("Kalimdor").row.open, true)
+found = { ["1411"] = true, ["1411/valley of trials"] = true }
+Expect("...a locked city in an open zone listed closed, as browsing shows it", Search("orgrimmar"), "Kalimdor|Durotar|Orgrimmar")
+Expect("...still locked", RowFor("Orgrimmar").row.locked and not RowFor("Orgrimmar").row.open, true)
+Search("")
+found = wasFound
+Z:RefreshLoreWindow(); Shown()
+
 -- Discovered Only, in the filter menu beside the search box, leaves the places not found out of it.
 local function Only() return stub.OpenDropdown(window.filterMenu)[1] end
 Expect("the filter menu holds Discovered Only, a checkbox", Only().text == Z.L.LORE_DISCOVERED_ONLY and Only().isNotRadio, true)

@@ -227,7 +227,8 @@ end
 -- One zone's card, and under it when it is open its city's small card (a zone of its own, with
 -- its own areas) and its areas' rows; while searching, the ones that match. Nothing when neither
 -- it nor anything inside matches the search. A zone stays open while its city is. A zone not yet
--- discovered is listed locked: greyed out, and it does not open.
+-- discovered is listed locked: greyed out, and it does not open, to a search either, so a search
+-- lists nothing that browsing could not reach.
 local function ZoneRows(mapID, nest, small)
 	if OnlyFound() and not Found(mapID) then return {} end
 	if OnlyVoiced() and not AnyVoiced(mapID) then return {} end
@@ -245,7 +246,7 @@ local function ZoneRows(mapID, nest, small)
 			total = total + 1
 			if Found(city) then found = found + 1 end
 		end
-		if filter ~= "" or open then
+		if filter ~= "" and not locked or open then
 			for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
 		end
 	end
@@ -258,7 +259,7 @@ local function ZoneRows(mapID, nest, small)
 			end
 			local entry = SpokenZones.Subzones[mapID][key]
 			local name = entry.name or key
-			local shown = filter == "" and open or filter ~= "" and Matches(name)
+			local shown = filter == "" and open or filter ~= "" and not locked and Matches(name)
 			if shown and (isFound or not OnlyFound()) and (not OnlyVoiced() or Voiced(mapID, key)) then
 				table.insert(inside, { kind = "subzone", leaf = true, mapID = mapID, key = key, label = name,
 					nest = nest + 1, missing = SpokenZones:IsPending(entry), locked = not Discovered(mapID, key),
@@ -282,22 +283,13 @@ local function ZoneRows(mapID, nest, small)
 end
 
 -- The list: a banner for each continent, its zones' cards under it, and the opened zone's
--- areas. While searching, every match with what holds it, opened to show it.
+-- areas. While searching, every match a click could reach, with what holds it opened to show it.
 local function BuildRowList()
 	local list = {}
 	local function Add(rows) for _, row in ipairs(rows) do table.insert(list, row) end end
 	local searching = filter ~= ""
 
 	for _, continent in ipairs(Continents()) do
-		-- A closed continent's zones are never shown, and its count comes from ZonesOf: only
-		-- a search, which can open it, needs them built.
-		local zones = {}
-		if searching or continentOpen[continent] then
-			for _, mapID in ipairs(ZonesOf(continent)) do
-				local rows = ZoneRows(mapID, 0)
-				for _, row in ipairs(rows) do table.insert(zones, row) end
-			end
-		end
 		local name = ZoneName(continent)
 		-- Counted as a zone's are, of the zones listed; locked by all of them, listed or not.
 		local found, total, anyFound = 0, 0, false
@@ -314,6 +306,15 @@ local function BuildRowList()
 		-- Eastern Kingdoms.
 		local unfound = not anyFound
 		local locked = unfound and not SpokenZones:ShowsUndiscovered()
+		-- A closed continent's zones are never shown, and its count comes from ZonesOf: only a
+		-- search, which can open it, needs them built. A locked one opens to a search no more
+		-- than to a click.
+		local zones = {}
+		if not locked and (searching or continentOpen[continent]) then
+			for _, mapID in ipairs(ZonesOf(continent)) do
+				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
+			end
+		end
 		local voiced = not OnlyVoiced() or total > 0
 		if (not searching or Matches(name) or #zones > 0) and not (unfound and OnlyFound()) and voiced then
 			local open = searching and #zones > 0 or (not searching and continentOpen[continent] and not locked)
@@ -327,12 +328,6 @@ local function BuildRowList()
 	-- and locked as a continent is.
 	local loose = LooseZones()
 	if #loose > 0 then
-		local zones = {}
-		if searching or landsOpen then
-			for _, mapID in ipairs(loose) do
-				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
-			end
-		end
 		local found, total, anyFound = 0, 0, false
 		for _, mapID in ipairs(loose) do
 			local isFound = Found(mapID)
@@ -343,6 +338,12 @@ local function BuildRowList()
 			end
 		end
 		local locked = not anyFound and not SpokenZones:ShowsUndiscovered()
+		local zones = {}
+		if not locked and (searching or landsOpen) then
+			for _, mapID in ipairs(loose) do
+				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
+			end
+		end
 		local voiced = not OnlyVoiced() or total > 0
 		if (not searching or Matches(L.OTHER_LANDS) or #zones > 0) and not (not anyFound and OnlyFound()) and voiced then
 			local open = searching and #zones > 0 or (not searching and landsOpen and not locked)
