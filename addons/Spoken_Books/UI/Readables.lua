@@ -207,14 +207,24 @@ local function Leaves(ids, nest, into)
 	end
 end
 
--- What each kind of writing shows on its card; a book for the rest.
+-- What each kind of writing shows on its card, from the game's own icons; plain parchment for the
+-- rest.
 local KIND_ICON = {
 	book = [[Interface\Icons\INV_Misc_Book_09]],
-	letter = [[Interface\Icons\INV_Letter_15]],
+	letter = [[Interface\Icons\INV_Letter_04]],
 	note = [[Interface\Icons\INV_Misc_Note_01]],
 	scroll = [[Interface\Icons\INV_Scroll_03]],
-	tablet = [[Interface\Icons\INV_Misc_StoneTablet_05]],
-	plaque = [[Interface\Icons\INV_Misc_StoneTablet_05]],
+	tablet = [[Interface\Icons\INV_Misc_StoneTablet_04]],
+	rune = [[Interface\Icons\INV_Misc_Rune_06]],
+	plaque = [[Interface\Icons\INV_Misc_StoneTablet_03]],
+	sign = [[Interface\Icons\INV_Misc_StoneTablet_06]],
+	grave = [[Interface\Icons\INV_Misc_StoneTablet_02]],
+	exhibit = [[Interface\Icons\INV_Misc_Statue_02]],
+	journal = [[Interface\Icons\INV_Misc_Book_11]],
+	diary = [[Interface\Icons\INV_Misc_Book_11]],
+	picture = [[Interface\Icons\INV_Misc_Map_01]],
+	map = [[Interface\Icons\INV_Misc_Map_01]],
+	other = [[Interface\Icons\INV_Scroll_08]],
 }
 
 -- A card's numbers: the found out of all on its line, the share and the bar. Its badge: a zone's
@@ -225,7 +235,7 @@ local function Card(item, found, total)
 	if item.kind == "zone" then
 		if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
 	else
-		item.icon = KIND_ICON[item.which] or KIND_ICON.book
+		item.icon = KIND_ICON[item.which] or KIND_ICON.other
 	end
 	item.sub = L.FOUND_FMT:format(found, total)
 	item.ratio = total > 0 and found / total or 0

@@ -116,10 +116,11 @@ Expect("the city opens inside its zone, its readables by what they are", Has(lis
 Expect("...the city a small card inside its zone's card", RowFor("Stormwind City").row.small and RowFor("Stormwind City").row.nest, 1)
 Expect("...each kind a small card inside the city's", RowFor(L.TYPE_PLAQUE).row.small and RowFor(L.TYPE_PLAQUE).row.nest, 2)
 Expect("...its badge what that kind of writing looks like, in the same frame", RowFor(L.TYPE_PLAQUE).icon.texture
-    .. " " .. RowFor(L.TYPE_PLAQUE).iconFrame.atlas, [[Interface\Icons\INV_Misc_StoneTablet_05]] .. " collections-itemborder-collected")
+    .. " " .. RowFor(L.TYPE_PLAQUE).iconFrame.atlas, [[Interface\Icons\INV_Misc_StoneTablet_03]] .. " collections-itemborder-collected")
 Expect("...its writings rows inside that", RowFor("Kurdran Wildhammer").row.leaf and RowFor("Kurdran Wildhammer").row.nest, 3)
-Expect("...a line down each open card's contents beside them", RowFor("Kurdran Wildhammer").rails[3] ~= nil
-    and RowFor("Kurdran Wildhammer").rails[3]:IsShown() and RowFor("Kurdran Wildhammer").rails[3].anchor.x, 72)
+Expect("...a line down each open card's contents beside them, a step in from the banner",
+    RowFor("Kurdran Wildhammer").rails[3] ~= nil
+    and RowFor("Kurdran Wildhammer").rails[3]:IsShown() and RowFor("Kurdran Wildhammer").rails[3].anchor.x, 86)
 Expect("...a readable not found greyed, with the padlock", RowFor("Ranger Captain Alleria Windrunner").row.locked, true)
 Expect("...one found open to read", RowFor("Kurdran Wildhammer").row.locked, false)
 
