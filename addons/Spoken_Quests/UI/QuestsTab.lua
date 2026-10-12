@@ -3,14 +3,14 @@
 -- completed, or in its quest log, which is marked in progress on its row and its page. Until then
 -- it is greyed and does not open, unless Unlock Unstarted Quests is on.
 --
--- The list is the Compendium's banners and cards. The banners, in order: one for each continent,
--- Other Lands for the zones on no continent, Battlegrounds, then the sections Classes,
--- Professions, Events and Other. Inside a zones' banner, a card for each zone; inside a section's,
--- a card for each class, profession, event or other kind of quest, and Place Unknown in Other.
--- A zone's card holds its city's card, a card of its dungeons' and raids' quests (named after the
--- dungeon where there is one, else Dungeons and Raids with a card for each dungeon), then its
--- chains and its quests. The quests that follow one another (`prev` in the data) are a card for
--- their chain, with the same name in every zone it crosses; the rest are the leaves, a row each.
+-- The list is the Compendium's banners, cards and lines. Banners are for continents and types:
+-- one for each continent, Other Lands for the zones on no continent, Battlegrounds, then the
+-- sections Classes, Professions, Holidays and Events and Other. Cards are for places alone: a
+-- zone, its city, a dungeon. Everything else is a line of the list with what it holds under it: a
+-- class, profession, holiday or other kind of quest and Place Unknown in a section's banner, a
+-- zone's Dungeons and Raids where it has several (a card for each dungeon under it; a zone with
+-- one has that dungeon's card), and a chain, the quests that follow one another (`prev` in the
+-- data), with the same name in every zone it crosses. The rest are the leaves, a row each.
 -- Every card and banner counts its quests completed out of all and those in progress; Voiced Only
 -- leaves the quests no voice pack has out of the counts as it does out of the list.
 --
@@ -538,9 +538,10 @@ local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
 -- progress. Its badge: a zone's painting, a chain's storyline mark, a scroll for the rest.
 local function Card(item, found, total, going)
     local done = found - going
-    -- Places are cards (zones, cities, dungeons, and what a section holds); a chain is a line of
-    -- the list inside one, its quests under it.
-    item.style = item.kind == "chain" and "group" or "card"
+    -- Places are cards: zones, cities, dungeons. A kind of quest (a class, a profession, a holiday,
+    -- a zone's several dungeons) and a chain are lines of the list, what they hold under them.
+    local place = item.kind == "zone" or item.kind == "dungeon" or (item.kind == "dungeons" and item.place)
+    item.style = place and "card" or "group"
     -- `found`, completed or under way, is what opens: a chain with one quest started has that to show.
     item.count, item.total, item.goingCount, item.found = done, total, going, found
     item.shut = shut
@@ -704,7 +705,7 @@ local function DungeonRows(mapID, byDungeon, nest)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    return Rows(Card({ kind = "dungeons", key = key, ids = all, label = label, nest = nest,
+    return Rows(Card({ kind = "dungeons", key = key, ids = all, label = label, nest = nest, place = #dungeons == 1,
         open = #inside > 0 }, found, total, going), inside, "d" .. key)
 end
 

@@ -328,7 +328,7 @@ Expect("...a quest in the zone a row, as far in", RowFor("Kobold Camp Cleanup").
 Click("Classes")
 list = Shown()
 Expect("...Classes opening on a class's quests under its name, this character's class only", Has(list, "Mage") and not Has(list, "Warlock"), true)
-Expect("...a card for it", RowFor("Mage").row.style, "card")
+Expect("...a line of the list for it, a class being no place", RowFor("Mage").row.style, "group")
 Expect("...Classes' page its count alone, being no place", page.title.text == "Classes"
     and page.sub.text:match("^%d+ of %d+ completed$") ~= nil, true)
 Click("Mage")

@@ -307,9 +307,9 @@ local KIND_ICON = {
 -- A card's numbers: the found out of all on its line, the share and the bar. Its badge: a zone's
 -- painting, or what its kind of writing looks like.
 local function Card(item, found, total)
-	-- Places are cards (zones, cities, and what a banner holds); a zone's kinds of writing are lines
-	-- of the list inside it, their readables under them.
-	item.style = (item.kind == "group" and item.mapID) and "group" or "card"
+	-- Places are cards: zones and cities. A kind of writing is a line of the list, its readables
+	-- under it.
+	item.style = item.kind == "zone" and "card" or "group"
 	item.count, item.total = found, total
 	item.asLeft = asLeft
 	if item.kind == "zone" then
@@ -427,12 +427,13 @@ local function TypeRows()
 			for _, id in ipairs(ids) do set[id] = true end
 			local found, total = Tally(set)
 			local leaves = {}
-			if typeOpen[type] or filter ~= "" then Leaves(ids, 1, leaves, Named(TypeLabel(type))) end
+			if typeOpen[type] or filter ~= "" then Leaves(ids, 0, leaves, Named(TypeLabel(type))) end
 			if not (OnlyFound() and found == 0) and Listed(set) and (filter == "" or #leaves > 0) then
-				-- Closed with a click during this search: the card alone.
+				-- A kind of writing is a type: a banner, as the continents are By Zone. Closed with a
+				-- click during this search: the banner alone.
 				local shown = filter == "" or SearchOpens("t" .. type)
-				table.insert(out, Card({ kind = "type", which = type, nest = 0, label = TypeLabel(type),
-					open = shown and #leaves > 0, closeKey = "t" .. type }, found, total))
+				table.insert(out, { style = "banner", kind = "type", which = type, label = TypeLabel(type),
+					count = found, total = total, open = shown and #leaves > 0, closeKey = "t" .. type })
 				if shown then
 					for _, row in ipairs(leaves) do table.insert(out, row) end
 				end

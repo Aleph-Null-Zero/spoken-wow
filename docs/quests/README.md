@@ -1459,21 +1459,24 @@ Azeroth), as the Zones tab lists them; a Battlegrounds banner holding Alterac Va
 Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
 Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
 it); then a banner each for Classes, Professions (Camping, 666, with them: its quests are Camping
-101 for one profession or another), Events and Other, holding a small card for each class, profession, season
-or other QuestSort, and Place Unknown under Other. The tab names some groups itself
+101 for one profession or another), Holidays and Events and Other, holding a line of the list for
+each class, profession, season or other QuestSort, and Place Unknown under Other. Banners are for
+continents and types, cards for places alone (zones, cities, dungeons), and everything else is a
+line of the list with what it holds under it. The tab names some groups itself
 (`GROUP_NAMES`): Special (284) is Children's Week, under Events, as it holds nothing else;
 Reputation (367) is Commendation Signets, its hand-ins; and the groups the client has no QuestSort
 for, a word in the data (`winterveil`, `hallowsend`, `loveisintheair` and `harvestfestival` under
 Events, `argentdawn` and `library` under Other), take their names from the strings. Inside a
-zone's card, its dungeons' and raids' quests (those with `dungeon`) are a small card, Dungeons
-and Raids, with a small card for each dungeon, named as the data's `dungeons` names it in the
-client's language, where the zone has several (Searing Gorge holds Blackrock Mountain's four).
+zone's card, its dungeons' and raids' quests (those with `dungeon`) are the dungeon's card, named
+as the data's `dungeons` names it in the client's language; where the zone has several (Searing
+Gorge holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a card
+for each dungeon under it.
 There is no Azeroth row; with the player's zone unknown the tab lands on the first continent. The list is drawn in the game's own art
 (`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
 tracker's campaign header for the player's faction, without its crest, and a card is Classic's
 character select card, both silvered. A zone's card shows its painting (`Spoken:ZoneIcon`) in the
 collections window's frame, silvered as the card is, greyed with none started; a dungeon's card a
-key and a class, profession, season or other QuestSort a scroll in the same frame. On the card's
+key in the same frame. On the card's
 right, level with its name, are the quest mark with how many of its quests
 are in progress, the quests completed out of all and the share completed (or, once all are, the
 quest log's gold tick), and the Pet Journal's bar along its foot is filled as far. A banner counts
@@ -1485,7 +1488,7 @@ entrance and a class's, profession's or season's card in its section. The sectio
 Unknown are no place, and their line is the count alone.
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
-there, linked by `prev`) are a small card of their own, before the quests in no chain. The card
+there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The card
 has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
 chain's first quest (a quest's id, whose title the client gives in its own language, or words by
 language), else the first quest's title, wherever that quest is (`ChainName`). Its badge is the

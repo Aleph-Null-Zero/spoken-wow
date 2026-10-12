@@ -432,9 +432,10 @@ Expect("...a search naming a kind lists every one of it", Has(Search(L.TYPE_PLAQ
 Search("")
 Click(L.TYPE_PLAQUE)
 Expect("...a type opens on its readables", Has(Shown(), "Kurdran Wildhammer"), true)
-Expect("...each a card, counted found out of all", RowFor(L.TYPE_PLAQUE).row.style == "card"
-    and RowFor(L.TYPE_PLAQUE).count.text:match("^2/%d+ • ") ~= nil, true)
-Expect("...with no banner above them, not set in", RowFor(L.TYPE_PLAQUE).face[1].anchor.x, 0)
+Expect("...each a banner, being a type, counted found out of all", RowFor(L.TYPE_PLAQUE).row.style == "banner"
+    and RowFor(L.TYPE_PLAQUE).count.text:match("^2/%d+$") ~= nil, true)
+Expect("...its readables rows under it, a step in", RowFor("Kurdran Wildhammer").row.leaf
+    and RowFor("Kurdran Wildhammer").row.nest, 0)
 list = Shown()
 Expect("...journals and diaries a type of their own, after books, and pictures and maps one too",
     Has(list, L.TYPE_JOURNAL) and Has(list, L.TYPE_PICTURE)
@@ -456,7 +457,7 @@ local kindRow
 for _, row in ipairs(rows) do
     if row.shown ~= false and row.row and row.row.kind == "kind" and row.row.group == "wide" then kindRow = kindRow or row end
 end
-Expect("a group's banner opens on a card for each kind of writing in it", kindRow ~= nil and kindRow.row.style == "card"
+Expect("a group's banner opens on a line of the list for each kind of writing in it", kindRow ~= nil and kindRow.row.style == "group"
     and kindRow.row.nest, 0)
 Expect("...each closed", kindRow.row.open or Has(list, "An Exotic Cookbook"), false)
 OpenKinds("wide")
