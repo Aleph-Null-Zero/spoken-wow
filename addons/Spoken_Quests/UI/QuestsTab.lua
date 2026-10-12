@@ -28,6 +28,7 @@ end
 
 local list, page
 local selection          -- { quest = id } | { mapID = id } | { sort = id } | { group = "elsewhere" } | nil
+local landed             -- the selection made for the player, where they stood; any other they chose
 local expandedZone
 local worldOpen = true
 local continentOpen = { [1414] = true, [1415] = true }
@@ -382,21 +383,27 @@ end
 
 -- Each moment's words: those kept in this client's language, else the English. Kept words
 -- filled for the other sex are not used where the English has a word for each.
-local function Words(id)
+-- One part's words, in the client's language where its window was seen, or nil.
+local function PartText(id, moment)
     local english = English(id)
     local kept = Kept()
     kept = kept and kept[id]
+    local text
+    local own = kept and kept[moment]
+    if type(own) == "table" and own.text and not (own.sex ~= Sex() and (english[moment] or ""):find("%$[Gg]")) then
+        text = own.text
+    end
+    text = text or english[moment]
+    if text and text ~= "" then return QuestsTab:Fill(text) end
+end
+
+local function Words(id)
     local parts = {}
     for _, moment in ipairs(MOMENTS) do
-        local text
-        local own = kept and kept[moment]
-        if type(own) == "table" and own.text and not (own.sex ~= Sex() and (english[moment] or ""):find("%$[Gg]")) then
-            text = own.text
-        end
-        text = text or english[moment]
-        if text and text ~= "" then
+        local text = PartText(id, moment)
+        if text then
             table.insert(parts, L[HEADINGS[moment]])
-            table.insert(parts, QuestsTab:Fill(text))
+            table.insert(parts, text)
         end
     end
     return #parts > 0 and table.concat(parts, "\n\n") or L.QUEST_NO_TEXT
@@ -449,19 +456,20 @@ local PLAY = {
         return false
     end,
     playing = function(id) return #Clips(id) > 0 end,
-    -- `queued`: every line behind what the queue already holds, none played at once.
+    -- One part, the first a pack voices: the offer, the progress and the hand-in are said at
+    -- different times, not as one speech. Its words go with it, for the window to show.
+    -- `queued`: behind what the queue already holds, not played at once.
     start = function(id, queued)
         local DataModules, Enums = VO.DataModules, VO.Enums
         local kind, giver = DataModules:GetQuestLogQuestGiverTypeAndID(id)
         local name = giver and DataModules:GetObjectName(kind, giver) or Title(id)
         local guid = giver and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, giver) or nil
-        local first = true
         for _, moment in ipairs(MOMENTS) do
             if Voiced(id, moment) then
                 local soundData = { event = EVENTS[moment], questID = id, title = Title(id), name = name,
-                    unitGUID = guid, origin = "Azeroth's Compendium" }
-                if first and not queued then VO.Player:PlayNow(soundData) else VO.Player:Enqueue(soundData) end
-                first = false
+                    unitGUID = guid, text = PartText(id, moment), origin = "Azeroth's Compendium" }
+                if queued then VO.Player:Enqueue(soundData) else VO.Player:PlayNow(soundData) end
+                return
             end
         end
     end,
@@ -553,9 +561,41 @@ local function OnClick(row)
     QuestsTab:Refresh()
 end
 
+-- The zone the player stands in that has quests listed, walking up from an inn's or a cave's
+-- map, or nil.
+local function PlayerZone()
+    local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+    local steps = 0
+    while map and steps < 8 do
+        if Index().zones[map] then return map end
+        local info = C_Map.GetMapInfo and C_Map.GetMapInfo(map)
+        map, steps = info and info.parentMapID, steps + 1
+    end
+end
+
+-- Choose where the player stands: their zone, opened, else the whole world. The tab never shows
+-- a page with nothing chosen.
+local function LandOnPlayer()
+    local zone = PlayerZone()
+    if zone then
+        selection = { mapID = zone }
+        expandedZone = zone
+        worldOpen = true
+        local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
+        if continent then continentOpen[continent] = true end
+    else
+        selection = { mapID = C.WORLD }
+    end
+    landed = selection
+end
+
 function QuestsTab:Refresh(scrollToSelection)
     if not list then return end
     ReadCompleted()
+    if not selection then
+        LandOnPlayer()
+        scrollToSelection = true
+    end
     local items = list:Render()
     if scrollToSelection and selection then list:ScrollToSelection(items) end
     ShowEntry()
@@ -621,6 +661,9 @@ function QuestsTab:Open(questID)
         else
             groupOpen[quest.sort or "elsewhere"] = true
         end
+    elseif selection == landed then
+        -- Opened from the minimap, on where the player stands now.
+        selection = nil
     end
     if list then
         list:ClearSearch()
@@ -667,6 +710,8 @@ function QuestsTab:Setup()
         title = L.COMPENDIUM_TITLE,
         build = Build,
         open = function() QuestsTab:Open() end,
+        -- Come back to from another tab: where the player stands now, unless they chose here.
+        onShow = function() if selection == landed then selection = nil end end,
         enabled = function() return VO.Addon:IsPartOn() end,
         -- Unlock Uncompleted Quests, on Spoken's page.
         unlock = {

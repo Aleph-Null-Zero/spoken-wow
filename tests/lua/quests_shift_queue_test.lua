@@ -86,16 +86,16 @@ Expect("with nothing chosen, the page says shift-click queues a quest", page.bod
 Click("Elwynn Forest")
 Click("Kobold Camp Cleanup")
 page.play.scripts.OnClick(page.play)
-Expect("Play on a quest's page plays it", Queued(), "7-accept,7-complete")
+Expect("Play on a quest's page plays it", Queued(), "7-accept")
 
 Click("Kobold Candles", true)
 Expect("a shift-click on another quest queues its recording after what is playing", Queued(),
-    "7-accept,7-complete,60-accept")
+    "7-accept,60-accept")
 Expect("...the line speaking left speaking", Spoken:GetCurrent() and Spoken:GetCurrent().fileName, "7-accept")
 Expect("...and the quest chosen still chosen", page.title.text, "Kobold Camp Cleanup")
 Expect("...its row still the chosen one", RowFor("Kobold Camp Cleanup").selected and not RowFor("Kobold Candles").selected, true)
 Click("Kobold Candles", true)
-Expect("a second shift-click does not queue it twice", Queued(), "7-accept,7-complete,60-accept")
+Expect("a second shift-click does not queue it twice", Queued(), "7-accept,60-accept")
 
 Spoken:StopAll()
 Click("Kobold Candles", true)
