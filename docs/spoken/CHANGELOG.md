@@ -5,7 +5,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 ## Unreleased
 
 - **Azeroth's Compendium has a Quests tab, its first.** Every quest your character's race and
-  class can take, by zone, then by class, profession or season, with what its NPC says when
+  class can take, by zone, with class, profession, event and other quests apart, with what its NPC says when
   offering it, while it is under way and when you hand it in, and Play for its voice. Quests you
   have completed open; the rest are greyed until Unlock Unstarted Quests is on, in the
   Compendium section of Spoken's page. On a client in another language, a quest shows in that
