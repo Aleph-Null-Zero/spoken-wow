@@ -11,11 +11,13 @@
 -- dungeon where there is one, else Dungeons and Raids with a card for each dungeon), then its
 -- chains and its quests. The quests that follow one another (`prev` in the data) are a card for
 -- their chain, with the same name in every zone it crosses; the rest are the leaves, a row each.
--- Every card and banner counts its quests completed out of all and those in progress.
+-- Every card and banner counts its quests completed out of all and those in progress; Voiced Only
+-- leaves the quests no voice pack has out of the counts as it does out of the list.
 --
 -- The page shows what is chosen. A quest's is its title, where it is and its words, with Play
 -- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. A banner's, card's or
--- chain's is its name, its count and L.QUESTS_PICK, the quests being on the left to choose.
+-- chain's is its name, where it is and its count on one line, and L.QUESTS_PICK, the quests being
+-- on the left to choose. The sections and Place Unknown are no place: their line is the count.
 --
 -- A search lists what matches under what holds it. Where it matches the name of a banner, a card
 -- or a chain, everything inside that one is listed.
@@ -45,7 +47,7 @@ end
 
 local list, page
 local selection          -- { quest = id } | { mapID = id } | { sort = id } | { group = "elsewhere" }
-                         -- | { chain = key, ids = { id... } } | nil
+                         -- | { chain = key, ids = { id... }, first = id, where = key } | nil
 local landed             -- the selection made for the player, where they stood; any other they chose
 local expandedZone
 local continentOpen = { [1414] = true, [1415] = true }
@@ -127,6 +129,15 @@ end
 local function OnlyFound()
     return Global().FoundOnly == true
 end
+
+-- Voiced Only, after Started Only in the filter menu: the quests no installed voice pack has a part
+-- of are left out, and with them any card or banner left with nothing.
+local function OnlyVoiced()
+    return Global().VoicedOnly == true
+end
+
+-- Whether a voice pack has a part of a quest, as its page's Play finds one.
+local AnyVoiced
 
 -- The words and titles kept in this client's language, by quest: { title, accept = { text, sex } ... }.
 -- None on an English client: the English shipped is what it would keep.
@@ -395,15 +406,25 @@ local function SetOf(ids)
     return set
 end
 
--- Found out of all, and how many of the found are in progress.
+-- Found out of all, and how many of the found are in progress. Of what is listed: under Voiced
+-- Only, the quests no pack has are left out of the count as they are of the rows.
 local function Tally(set)
     local found, total, going = 0, 0, 0
+    local voicedOnly = OnlyVoiced()
     for id in pairs(set) do
-        total = total + 1
-        if Found(id) then found = found + 1 end
-        if InProgress(id) then going = going + 1 end
+        if not voicedOnly or AnyVoiced(id) then
+            total = total + 1
+            if Found(id) then found = found + 1 end
+            if InProgress(id) then going = going + 1 end
+        end
     end
     return found, total, going
+end
+
+-- Whether a card or banner counting `found` of `total` is left out: Started Only with none
+-- started, or Voiced Only with none voiced.
+local function Unlisted(found, total)
+    return (OnlyFound() and found == 0) or (OnlyVoiced() and total == 0)
 end
 
 -- The gossip window's mark for a quest under way, before the title of one in progress.
@@ -482,7 +503,8 @@ end
 
 local function Shows(id)
     local english = Quests()[id] and Quests()[id][1]
-    return not (OnlyFound() and not Found(id)) and (not Filtering() or Matches(Title(id)) or Matches(english))
+    return not (OnlyFound() and not Found(id)) and not (OnlyVoiced() and not AnyVoiced(id))
+        and (not Filtering() or Matches(Title(id)) or Matches(english))
 end
 
 -- What a class, profession, event or other kind of quest shows on its card.
@@ -520,7 +542,7 @@ local function ChainRows(where, first, ids, nest)
     local key = where .. ":" .. first
     local label = ChainName(first, filter == "")
     local found, total, going = Tally(SetOf(ids))
-    if OnlyFound() and found == 0 then return {} end
+    if Unlisted(found, total) then return {} end
     local inside = Whole(filter ~= "" and Matches(label), function()
         local out = {}
         if chainOpen[key] or Searched() then
@@ -532,7 +554,7 @@ local function ChainRows(where, first, ids, nest)
     end)
     if Filtering() and #inside == 0 then return {} end
     local rows = { Card({ kind = "chain", key = key, ids = ids, first = first, label = label, nest = nest,
-        open = #inside > 0 }, found, total, going) }
+        where = where, open = #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
@@ -633,7 +655,7 @@ local function DungeonRows(mapID, byDungeon, nest)
         return na < nb
     end)
     local found, total, going = Tally(SetOf(all))
-    if OnlyFound() and found == 0 then return {} end
+    if Unlisted(found, total) then return {} end
     local key, searching = DungeonKey(mapID), filter ~= ""
     local label = #dungeons == 1 and DungeonName(dungeons[1]) or L.QUESTS_DUNGEONS
     local inside = Whole(searching and Matches(label), function()
@@ -651,7 +673,7 @@ local function DungeonRows(mapID, byDungeon, nest)
                 if dungeonOpen[dkey] or Searched() then Leaves(ids, nest + 2, rows, dkey) end
                 return rows
             end)
-            if not (OnlyFound() and f == 0) and not (Filtering() and #leaves == 0) then
+            if not Unlisted(f, t) and not (Filtering() and #leaves == 0) then
                 table.insert(out, Card({ kind = "dungeon", key = dkey, ids = ids, label = name,
                     nest = nest + 1, open = #leaves > 0 }, f, t, g))
                 for _, row in ipairs(leaves) do table.insert(out, row) end
@@ -670,7 +692,7 @@ end
 -- card, its chains and its quests.
 local function ZoneRows(mapID, nest)
     local found, total, going = Tally(QuestsIn(mapID))
-    if OnlyFound() and found == 0 then return {} end
+    if Unlisted(found, total) then return {} end
     local open = expandedZone == mapID or C.CITY_IN[expandedZone] == mapID
     local inside = Whole(filter ~= "" and Matches(C.MapName(mapID)), function()
         local out = {}
@@ -696,7 +718,7 @@ end
 local function GroupRows(kind, key, label, ids)
     if not ids or #ids == 0 then return {} end
     local found, total, going = Tally(SetOf(ids))
-    if OnlyFound() and found == 0 then return {} end
+    if Unlisted(found, total) then return {} end
     local leaves = Whole(filter ~= "" and Matches(label), function()
         local out = {}
         if groupOpen[key] or Searched() then Leaves(ids, 1, out, "s" .. key) end
@@ -728,7 +750,7 @@ end
 local function SectionRows(section)
     local set, sorts = SectionSet(section.key)
     local found, total, going = Tally(set)
-    if total == 0 or (OnlyFound() and found == 0) then return {} end
+    if total == 0 or Unlisted(found, total) then return {} end
     local searching = filter ~= ""
     local inside = Listed(searching and Matches(L[section.label]), function()
         local out = {}
@@ -761,7 +783,7 @@ local function ZoneBanner(key, label, zones)
     local set = {}
     for _, mapID in ipairs(zones) do QuestsIn(mapID, set) end
     local found, total, going = Tally(set)
-    if total == 0 or (OnlyFound() and found == 0) then return {} end
+    if total == 0 or Unlisted(found, total) then return {} end
     local searching = filter ~= ""
     local inside = Listed(searching and Matches(label), function()
         local out = {}
@@ -806,7 +828,7 @@ local function BuildRows()
             end
             return out
         end)
-        if not (OnlyFound() and found == 0) and (not searching or #rows > 0) then
+        if not Unlisted(found, total) and (not searching or #rows > 0) then
             table.insert(out, { style = "banner", kind = "continent", mapID = continent, label = C.MapName(continent),
                 count = found - going, found = found, total = total, open = #rows > 0 })
             Add(rows)
@@ -1058,6 +1080,14 @@ local function Parts(id)
     return #parts > 0 and parts or nil
 end
 
+-- Asked once a refresh: Voiced Only asks it of every quest under every banner, and the packs
+-- do not change while the list is drawn.
+local voicedSeen = {}
+AnyVoiced = function(id)
+    if voicedSeen[id] == nil then voicedSeen[id] = PLAY.has(id) end
+    return voicedSeen[id]
+end
+
 local function Where(id)
     local quest = Quests()[id] or {}
     if quest.zones and #quest.zones > 0 then
@@ -1075,6 +1105,33 @@ local function Count(set)
     return L.QUESTS_FOUND_FMT:format(found, total)
 end
 
+-- The place one level up from a zone, as the Zones tab nests them: a city's zone, a zone's
+-- continent, and the world for a continent or a zone on none.
+local function Above(mapID)
+    for _, continent in ipairs(C.CONTINENTS) do
+        if continent == mapID then return C.WORLD end
+    end
+    return C.CITY_IN[mapID] or C.ContinentOf(mapID) or C.WORLD
+end
+
+-- What lists a chain, from where its card is (Leaves' `where`): a zone, a dungeon, a class's,
+-- profession's or event's card, or Place Unknown.
+local function HolderName(where)
+    local zone = where:match("^z(%d+)$")
+    if zone then return C.MapName(tonumber(zone)) end
+    local dungeon = where:match("^d%d+:(%d+)$")
+    if dungeon then return DungeonName(tonumber(dungeon)) end
+    local sort = where:match("^s(.+)$")
+    if sort == "elsewhere" then return L.QUESTS_ELSEWHERE end
+    if sort then return SortName(tonumber(sort) or sort) end
+end
+
+-- A page's line: where it is and its count, one line, or the count alone with nowhere to name.
+local function Line(where, set)
+    if not where then return Count(set) end
+    return L.QUESTS_IN_FMT:format(where) .. " · " .. Count(set)
+end
+
 -- In progress, before where it is: the line is cut short where a quest is given in several zones.
 local function Subtitle(id)
     if InProgress(id) then return IN_PROGRESS_MARK .. L.QUEST_IN_PROGRESS .. " • " .. Where(id) end
@@ -1089,8 +1146,9 @@ local function ShowEntry()
     end
     if selection.chain then
         local ids = selection.ids
-        -- As a zone's page: its name, its count, and the quests on the left to choose.
-        page:Show({ title = ChainName(selection.first or First(ids[1])), subtitle = Count(SetOf(ids)), text = L.QUESTS_PICK })
+        -- As a zone's page: its name, where it is and its count, and the quests on the left to choose.
+        page:Show({ title = ChainName(selection.first or First(ids[1])),
+            subtitle = Line(selection.where and HolderName(selection.where), SetOf(ids)), text = L.QUESTS_PICK })
         return
     end
     if selection.quest then
@@ -1104,16 +1162,20 @@ local function ShowEntry()
         return
     end
     if selection.dungeon then
-        page:Show({ title = selection.label, subtitle = Count(SetOf(selection.ids)), text = L.QUESTS_PICK })
+        -- In the zone of its entrance, whose card holds it.
+        local zone = tonumber(selection.dungeon:match("^d(%d+)"))
+        page:Show({ title = selection.label, subtitle = Line(zone and C.MapName(zone), SetOf(selection.ids)),
+            text = L.QUESTS_PICK })
         return
     end
     local banner = selection.section and ZONE_BANNERS[selection.section]
     if banner then
         local set = {}
         for _, mapID in ipairs(banner.zones()) do QuestsIn(mapID, set) end
-        page:Show({ title = L[banner.label], subtitle = Count(set), text = L.QUESTS_PICK })
+        page:Show({ title = L[banner.label], subtitle = Line(C.MapName(C.WORLD), set), text = L.QUESTS_PICK })
         return
     end
+    -- Classes, Professions, Holidays and Events and Other are no place: their count alone.
     if selection.section then
         for _, section in ipairs(SECTIONS) do
             if section.key == selection.section then
@@ -1123,7 +1185,11 @@ local function ShowEntry()
         return
     end
     if selection.sort then
-        page:Show({ title = SortName(selection.sort), subtitle = Count(SetOf(Index().sorts[selection.sort])),
+        local section
+        for _, each in ipairs(SECTIONS) do
+            if each.key == SectionOf(selection.sort) then section = L[each.label] end
+        end
+        page:Show({ title = SortName(selection.sort), subtitle = Line(section, SetOf(Index().sorts[selection.sort])),
             text = L.QUESTS_PICK })
         return
     end
@@ -1137,7 +1203,8 @@ local function ShowEntry()
     else
         QuestsIn(selection.mapID, set)
     end
-    page:Show({ title = C.MapName(selection.mapID), subtitle = Count(set), text = L.QUESTS_PICK })
+    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(C.MapName(Above(selection.mapID)), set),
+        text = L.QUESTS_PICK })
 end
 
 --------------------------------------------------------------------------------
@@ -1153,7 +1220,7 @@ local function OnClick(row)
         selection = { quest = row.quest }
     elseif row.kind == "chain" then
         if filter == "" or row.shut then chainOpen[row.key] = not chainOpen[row.key] end
-        selection = { chain = row.key, ids = row.ids, first = row.first }
+        selection = { chain = row.key, ids = row.ids, first = row.first, where = row.where }
     elseif row.kind == "dungeons" or row.kind == "dungeon" then
         if filter == "" or row.shut then dungeonOpen[row.key] = not dungeonOpen[row.key] end
         selection = { dungeon = row.key, ids = row.ids, label = row.label }
@@ -1221,16 +1288,31 @@ local function LandOnPlayer()
     landed = selection
 end
 
+-- The chosen row brought into view. The client's scroll frame takes an offset only within the
+-- range it last measured, and a list drawn for the first time has none measured yet; nor has the
+-- frame a height until the window is first laid out. Either left the list at its top, the chosen
+-- zone off screen: the range is measured now, and the row brought into view again a frame later.
+local function ScrollToChosen(items)
+    if list.scroll.UpdateScrollChildRect then list.scroll:UpdateScrollChildRect() end
+    list:ScrollToSelection(items)
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0, function()
+            if filter == "" and list.items then list:ScrollToSelection(list.items) end
+        end)
+    end
+end
+
 function QuestsTab:Refresh(scrollToSelection)
     if not list then return end
     ReadCompleted()
     ReadLog()
+    voicedSeen = {}
     if not selection then
         LandOnPlayer()
         scrollToSelection = true
     end
     local items = list:Render()
-    if scrollToSelection and selection then list:ScrollToSelection(items) end
+    if scrollToSelection and selection then ScrollToChosen(items) end
     ShowEntry()
 end
 
@@ -1241,6 +1323,7 @@ local function Build(panel)
         only = L.QUESTS_FOUND_ONLY,
         onlyGet = OnlyFound,
         onlySet = function(on) Global().FoundOnly = on end,
+        checks = { { label = L.QUESTS_VOICED_ONLY, get = OnlyVoiced, set = function(on) Global().VoicedOnly = on end } },
         build = BuildRows,
         isSelected = IsSelected,
         onClick = OnClick,
@@ -1304,9 +1387,11 @@ function QuestsTab:Lists(questID)
 end
 
 --- Whether opening the tab on `questID` shows its page: the list shows the quest (Started Only
---- leaves out one not started) and it is started, or Unlock Unstarted Quests is on.
+--- leaves out one not started, Voiced Only one no pack has) and it is started, or Unlock Unstarted
+--- Quests is on.
 function QuestsTab:Has(questID)
     if not self:Lists(questID) then return false end
+    if OnlyVoiced() and not PLAY.has(questID) then return false end
     if StartedNow(questID) then return true end
     return Unlocked() and not OnlyFound()
 end

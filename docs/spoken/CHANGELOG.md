@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Azeroth's Compendium opens scrolled to where you are**, and every page's line under its
+  title says where it is and how much of it you have found ("In Kalimdor · 1 of 88 completed").
+  Quests has Voiced Only, as Zones and Books do; a continent's banner on Zones counts its areas,
+  as its zones' cards do; a zone's kinds of writing on Books start closed. *([Nucabe](https://github.com/Nucabe))*
 - **A quest's page in Azeroth's Compendium sets its offer, progress and hand-in apart.** Each part
   has its own heading, larger and darker than the words, with Play and Report for that part on the
   heading's line. A book's page has Report beside Play, as a zone's page does. *([Nucabe](https://github.com/Nucabe))*

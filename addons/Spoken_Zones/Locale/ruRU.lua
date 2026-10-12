@@ -55,6 +55,7 @@ L.CONTRIBUTE_BUTTON = "Помочь"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "У Spoken Zones нет истории для этого места"
 L.CONTRIBUTE_BUTTON_TIP = "Помогите, описав его: что это, кто там живёт, что там случилось."
 L.IN_ZONE_FMT = "Расположение: %1$s"
+L.DISCOVERED_FMT = "Открыто %1$d из %2$d"
 
 L.PLAY = "Слушать"
 L.STOP = "Стоп"
@@ -87,7 +88,6 @@ L.CMD_DEBUG = "  /spz debug      -- сообщать имена при клик�
 L.CMD_VERIFY = "  /spz verify     -- проверить данные"
 L.CMD_DUMP = "  /spz dump       -- перечислить дерево карт (dev)"
 
-L.SUBZONE_COUNT_FMT = "областей: %1$d"
 
 -- Added for Lore of Azeroth, Zone Lore, voice packs and the settings page.
 L.REASON_VOICE = "Включите «Читать истории вслух», чтобы пользоваться этим."
@@ -111,7 +111,6 @@ L.OPT_SECTION_LORE = "Компендиум Азерота"
 L.OPT_LORE_WINDOW_TIP = "Истории всех зон и областей: читайте и слушайте их, где бы вы ни были. Зоны и области, которые вы ещё не открыли, показаны серым."
 L.OPT_SHOW_UNDISCOVERED = "Доступ к неоткрытым зонам"
 L.OPT_SHOW_UNDISCOVERED_TIP = "Делает доступными все зоны и области, в том числе те, что вы ещё не открыли. Если выключено, они показаны серым."
-L.SUBZONE_COUNT_ONE = "1 область"
 L.ZONE_COUNT_FMT = "зон: %1$d"
 L.ZONE_COUNT_ONE = "1 зона"
 L.OTHER_LANDS = "Другие земли"

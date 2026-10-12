@@ -41,8 +41,8 @@ for _, mapID in ipairs(BATTLEGROUNDS) do IS_BATTLEGROUND[mapID] = true end
 local groupOpen = { events = false, wide = false, unknown = false }
 local GROUP_LABEL = { events = "GROUP_EVENTS", wide = "GROUP_WIDE", unknown = "GROUP_UNKNOWN" }
 local typeOpen = {}
-local zoneTypeShut = {}       -- ["mapID:type"] = true: a zone's Books, Notes and the rest, closed
-local groupTypeShut = {}      -- ["wide:type"] = true: the same in a group's banner
+local zoneTypeOpen = {}       -- ["mapID:type"] = true: a zone's Books, Notes and the rest, opened
+local groupTypeOpen = {}      -- ["wide:type"] = true: the same in a group's banner
 local TYPES, TYPE_NAMES = SpokenBooks.TYPES, SpokenBooks.TYPE_NAMES
 local function TypeLabel(type) return L[(TYPE_NAMES[type] or TYPE_NAMES.other).all] end
 local filter = ""
@@ -309,9 +309,9 @@ local function Card(item, found, total)
 end
 
 -- A card for each kind of writing in `byType` ({ [type] = ids }) with something listed, and its
--- writings under it while it is open: open until closed, and always while searching. `item`
--- makes each card's own fields.
-local function KindCards(byType, nest, into, item, shut, whole)
+-- writings under it while it is open: closed until opened, as Quests' chains are, and always open
+-- while searching. `item` makes each card's own fields.
+local function KindCards(byType, nest, into, item, opened, whole)
 	for _, type in ipairs(TYPES) do
 		local ids = byType[type] or {}
 		if #ids > 0 then
@@ -320,7 +320,7 @@ local function KindCards(byType, nest, into, item, shut, whole)
 			if #leaves > 0 then
 				local set = {}
 				for _, id in ipairs(ids) do set[id] = true end
-				local closed = (filter == "" or asLeft) and shut(type)
+				local closed = (filter == "" or asLeft) and not opened(type)
 				local card = item(type)
 				card.label, card.nest, card.open = TypeLabel(type), nest, not closed
 				table.insert(into, Card(card, Tally(set)))
@@ -350,7 +350,7 @@ local function ZoneRows(mapID, nest, whole)
 		end
 		KindCards(Index().zones[mapID] or {}, nest + 1, inside,
 			function(type) return { kind = "group", which = type, mapID = mapID } end,
-			function(type) return zoneTypeShut[mapID .. ":" .. type] end, whole)
+			function(type) return zoneTypeOpen[mapID .. ":" .. type] end, whole)
 	end
 	if filter ~= "" and #inside == 0 and not whole then return {} end
 	local rows = { Card({ kind = "zone", mapID = mapID, label = MapName(mapID), nest = nest,
@@ -379,7 +379,7 @@ local function GroupRows(key, label, ids)
 		AsLeft(whole, function()
 			KindCards(byType, 0, inside,
 				function(type) return { kind = "kind", which = type, group = key } end,
-				function(type) return groupTypeShut[key .. ":" .. type] end, whole)
+				function(type) return groupTypeOpen[key .. ":" .. type] end, whole)
 		end)
 	end
 	if filter ~= "" and #inside == 0 then return {} end
@@ -561,6 +561,20 @@ local function Count(found, total)
 	return L.FOUND_FMT:format(found, total)
 end
 
+-- A page's line: where it is and what it counts, one line.
+local function InAndCount(where, found, total)
+	return L.READABLES_IN_FMT:format(where) .. " · " .. Count(found, total)
+end
+
+-- The place one level up from a zone, as the Zones tab nests them: a city's zone, a zone's
+-- continent, and the world for a continent or a zone on none.
+local function Above(mapID)
+	for _, continent in ipairs(CONTINENTS) do
+		if continent == mapID then return C.WORLD end
+	end
+	return CITY_IN[mapID] or ContinentOf(mapID) or C.WORLD
+end
+
 local function ShowEntry()
 	if not page then return end
 	if not selection then
@@ -595,7 +609,8 @@ local function ShowEntry()
 		page:Show({ title = Title(id), subtitle = where, text = table.concat(parts, "\n\n"), target = id })
 		return
 	end
-	-- A zone, a continent, a group, a type: what it holds.
+	-- A zone, a continent, a group, a type: where it is and what it holds. A kind of writing across
+	-- every place (By Type) and the groups after the zones are no place: their count alone.
 	local set = {}
 	if selection.type and not selection.group then
 		for _, id in ipairs(Index().types[selection.type] or {}) do set[id] = true end
@@ -604,7 +619,7 @@ local function ShowEntry()
 	end
 	if selection.group and selection.mapID and TYPE_NAMES[selection.group] then
 		for _, id in ipairs((Index().zones[selection.mapID] or {})[selection.group] or {}) do set[id] = true end
-		page:Show({ title = TypeLabel(selection.group), subtitle = MapName(selection.mapID) .. " · " .. Count(Tally(set)),
+		page:Show({ title = TypeLabel(selection.group), subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
@@ -613,13 +628,14 @@ local function ShowEntry()
 		for _, id in ipairs(Index()[selection.group]) do
 			if Index().typeOf[id] == selection.type then set[id] = true end
 		end
-		page:Show({ title = TypeLabel(selection.type), subtitle = where .. " · " .. Count(Tally(set)),
+		page:Show({ title = TypeLabel(selection.type), subtitle = InAndCount(where, Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
 	if selection.zones then
 		for _, mapID in ipairs(ZONES_OF[selection.zones]()) do ReadablesIn(mapID, set) end
-		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = InAndCount(MapName(C.WORLD), Tally(set)),
+			text = L.READABLES_PICK })
 		return
 	end
 	if GROUP_LABEL[selection.group] then
@@ -632,7 +648,8 @@ local function ShowEntry()
 	else
 		ReadablesIn(selection.mapID, set)
 	end
-	page:Show({ title = MapName(selection.mapID), subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+	page:Show({ title = MapName(selection.mapID), subtitle = InAndCount(MapName(Above(selection.mapID)), Tally(set)),
+		text = L.READABLES_PICK })
 end
 
 --------------------------------------------------------------------------------
@@ -709,9 +726,9 @@ local function OnClick(row)
 		if filter == "" then typeOpen[row.which] = not typeOpen[row.which] end
 		selection = { type = row.which }
 	elseif row.kind == "kind" then
-		-- A group's Books, Notes and the rest: closed and opened again, as a zone's are.
+		-- A group's Books, Notes and the rest: opened and closed again, as a zone's are.
 		local key = row.group .. ":" .. row.which
-		if filter == "" or row.asLeft then groupTypeShut[key] = not groupTypeShut[key] or nil end
+		if filter == "" or row.asLeft then groupTypeOpen[key] = not groupTypeOpen[key] or nil end
 		selection = { group = row.group, type = row.which }
 	elseif filter ~= "" and not row.asLeft then
 		selection = { mapID = row.mapID, group = row.kind == "group" and row.which or nil }
@@ -729,12 +746,26 @@ local function OnClick(row)
 		groupOpen[row.which] = not groupOpen[row.which]
 		selection = { group = row.which }
 	else
-		-- A zone's Books, Notes and the rest: closed and opened again, as the zone is.
+		-- A zone's Books, Notes and the rest: opened and closed again, as the zone is.
 		local key = row.mapID .. ":" .. row.which
-		zoneTypeShut[key] = not zoneTypeShut[key] or nil
+		zoneTypeOpen[key] = not zoneTypeOpen[key] or nil
 		selection = { mapID = row.mapID, group = row.which }
 	end
 	SpokenBooks:RefreshReadables()
+end
+
+-- The chosen row brought into view. The client's scroll frame takes an offset only within the
+-- range it last measured, and a list drawn for the first time has none measured yet; nor has the
+-- frame a height until the window is first laid out. Either left the list at its top, the chosen
+-- zone off screen: the range is measured now, and the row brought into view again a frame later.
+local function ScrollToChosen(items)
+	if list.scroll.UpdateScrollChildRect then list.scroll:UpdateScrollChildRect() end
+	list:ScrollToSelection(items)
+	if C_Timer and C_Timer.After then
+		C_Timer.After(0, function()
+			if filter == "" and list.items then list:ScrollToSelection(list.items) end
+		end)
+	end
 end
 
 function SpokenBooks:RefreshReadables(scrollToSelection)
@@ -744,7 +775,7 @@ function SpokenBooks:RefreshReadables(scrollToSelection)
 		scrollToSelection = true
 	end
 	local items = list:Render()
-	if scrollToSelection and selection then list:ScrollToSelection(items) end
+	if scrollToSelection and selection then ScrollToChosen(items) end
 	ShowEntry()
 end
 

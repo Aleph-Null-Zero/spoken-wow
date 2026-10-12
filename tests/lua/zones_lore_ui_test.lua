@@ -217,7 +217,8 @@ Expect("...a line down the left of what a continent's banner holds, as down an o
 Expect("...a found area's tick at the end of its row, where a padlock goes", RowFor("Valley of Trials").status.anchor.point,
     "CENTER")
 Expect("...counted with the zone's areas", RowFor("Durotar").count.text:match("/(%d+)"), "3")
-Expect("...and not beside it on the continent", RowFor("Kalimdor").count.text:match("/(%d+)"), "1")
+Expect("...the continent's banner counting what its zones' cards count, the city once",
+    RowFor("Kalimdor").count.text:match("/(%d+)"), "3")
 Expect("...its page says the zone it is in", page.title.text .. ": " .. page.sub.text.text, "Orgrimmar: In Durotar")
 page.sub.scripts.OnClick(page.sub)
 Expect("...which leads back to the zone", page.title.text, "Durotar")
@@ -231,11 +232,11 @@ Expect("choosing an area shows its story", page.title.text .. ": " .. page.body.
 Expect("...says which zone it is in, and leads back to it", page.sub.text.text, "In Durotar")
 page.sub.scripts.OnClick(page.sub)
 Expect("...which goes back to the zone", page.title.text, "Durotar")
-Expect("a zone says which continent it is on, and how many places it holds, its city with its areas as its card counts",
-    page.sub.text.text .. "|" .. RowFor("Durotar").count.text:match("/(%d+)"), "In Kalimdor · 3 areas|3")
+Expect("a zone says which continent it is on, and its places discovered out of all, its city one of them, as its card counts",
+    page.sub.text.text .. "|" .. RowFor("Durotar").count.text:match("/(%d+)"), "In Kalimdor · 0 of 3 discovered|3")
 page.sub.scripts.OnClick(page.sub)
 Expect("...leading up to the continent", page.title.text, "Kalimdor")
-Expect("a continent says it is in Azeroth, and how many zones it holds", page.sub.text.text, "In Azeroth · 1 zone")
+Expect("a continent says it is in Azeroth, and what its banner counts", page.sub.text.text, "In Azeroth · 0 of 3 discovered")
 page.sub.scripts.OnClick(page.sub)
 Expect("...leading up to Azeroth", page.title.text, "Azeroth")
 Expect("Azeroth sits in nothing: it says what it holds", page.sub.text.text, "2 continents, 3 zones")
@@ -287,6 +288,27 @@ Expect("a list shorter than where it was scrolled comes back to its end", listBa
 listBar.child:SetHeight(50)
 listBar:UpdateScrollBar()
 Expect("...and to the top when it no longer scrolls", listBar.frame:GetVerticalScroll(), 0)
+
+-- Opened on a place far down the list, from the window closed and never laid out: the client's
+-- scroll frame takes an offset only within the range it last measured, and has no height until
+-- the window is laid out, a frame after it is shown.
+do
+    local scroll, measured = listBar.frame, 0
+    local setScroll = scroll.SetVerticalScroll
+    _G.SpokenCompendium:Hide()
+    scroll.height, scroll.verticalScroll = 0, 0
+    function scroll:UpdateScrollChildRect() measured = math.max(0, self.scrollChild.height - self.height) end
+    function scroll:SetVerticalScroll(v) setScroll(self, math.min(v, measured)) end
+    Z:ShowLoreFor(1411, "valley of trials")
+    scroll.height = 60
+    stub.Advance(0.1)
+    Shown()
+    local row = RowFor("Valley of Trials")
+    local top, offset = -row.anchor.y, scroll:GetVerticalScroll()
+    Expect("opened on a place far down the list, a frame later its row is in view",
+        offset > 0 and top >= offset and top + row.height <= offset + scroll.height, true)
+    scroll.SetVerticalScroll, scroll.UpdateScrollChildRect, scroll.height = setScroll, nil, 120
+end
 
 ---------------------------------------------------------------- search
 local search
@@ -456,7 +478,7 @@ RowFor("Sen'jin Village").scripts.OnEnter(RowFor("Sen'jin Village"))
 Expect("...not lit under the pointer", RowFor("Sen'jin Village").over, false)
 Expect("...a zone's card its areas found out of all, and the share of them", RowFor("Durotar").count.text, "1/3 • 33%")
 Expect("...its badge in colour with some found", RowFor("Durotar").icon.desaturated or RowFor("Durotar").row.none, false)
-Expect("...a continent's banner its zones found", RowFor("Kalimdor").count.text, "1/1")
+Expect("...a continent's banner the places its zones' cards count, found out of all", RowFor("Kalimdor").count.text, "1/3")
 RowFor("Eastern Kingdoms").scripts.OnClick(RowFor("Eastern Kingdoms"))
 Expect("a locked continent does not open", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
@@ -490,7 +512,7 @@ Expect("...the counts still what this character has found", RowFor("Durotar").co
 RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
 Expect("...and when a place not found is chosen", RowFor("Durotar").count.text, "1/3 • 33%")
 RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
-Expect("...or a zone on a continent with none found", RowFor("Eastern Kingdoms").count.text:match("^0/") ~= nil, true)
+Expect("...or a zone on a continent with none found, whose zones have no areas to count", RowFor("Eastern Kingdoms").count.text, "")
 Z:ShowLoreFor(1411, nil)
 showAll = false
 
@@ -540,6 +562,7 @@ Expect("the filter menu holds Voiced Only after Discovered Only", Voiced().text 
 Voiced().func()
 Expect("...on, only what has a recording is listed, with the zone that holds it", Shown(), "Kalimdor|Durotar|Valley of Trials")
 Expect("...counting only what it lists", RowFor("Durotar").count.text, "1/1")
+Expect("...its continent's banner the same", RowFor("Kalimdor").count.text, "1/1")
 Expect("...all of it found: the gold tick after its numbers, no share", RowFor("Durotar").tick:IsShown()
     and RowFor("Durotar").count.text == "1/1" and RowFor("Durotar").row.tick, true)
 Expect("...and is remembered", Z:Get("loreVoicedOnly"), true)

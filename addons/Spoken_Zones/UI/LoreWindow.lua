@@ -323,6 +323,22 @@ local function ZoneRows(mapID, nest, small)
 	return rows
 end
 
+-- What a banner counts: the places its zones' cards count, found out of all, of the cards Discovered
+-- Only and Voiced Only list. Also how many cards it lists, and whether any of its zones is found,
+-- listed or not, which unlocks it.
+local function BannerCount(zones)
+	local found, total, listed, anyFound = 0, 0, 0, false
+	for _, mapID in ipairs(zones) do
+		local isFound = Found(mapID)
+		anyFound = anyFound or isFound
+		if not (OnlyFound() and not isFound) and not (OnlyVoiced() and not AnyVoiced(mapID)) then
+			local f, t = Places(mapID)
+			found, total, listed = found + f, total + t, listed + 1
+		end
+	end
+	return found, total, listed, anyFound
+end
+
 -- The list: a banner for each continent, its zones' cards under it, and the opened zone's
 -- areas. While searching, every match a click could reach, with what holds it opened to show it.
 local function BuildRowList()
@@ -332,16 +348,7 @@ local function BuildRowList()
 
 	for _, continent in ipairs(Continents()) do
 		local name = ZoneName(continent)
-		-- Counted as a zone's are, of the zones listed; locked by all of them, listed or not.
-		local found, total, anyFound = 0, 0, false
-		for _, mapID in ipairs(ZonesOf(continent)) do
-			local isFound = Found(mapID)
-			anyFound = anyFound or isFound
-			if not OnlyVoiced() or AnyVoiced(mapID) then
-				total = total + 1
-				if isFound then found = found + 1 end
-			end
-		end
+		local found, total, listed, anyFound = BannerCount(ZonesOf(continent))
 		-- A continent with none of its zones found yet is listed locked, and does not open; with
 		-- Discovered Only it is left out. Found through its zones alone: finding Brill finds the
 		-- Eastern Kingdoms.
@@ -356,7 +363,7 @@ local function BuildRowList()
 				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
 			end
 		end
-		local voiced = not OnlyVoiced() or total > 0
+		local voiced = not OnlyVoiced() or listed > 0
 		if (not searching or Matches(name) or #zones > 0) and not (unfound and OnlyFound()) and voiced then
 			local open = searching and #zones > 0 or (not searching and continentOpen[continent] and not locked)
 			table.insert(list, { style = "banner", kind = "continent", mapID = continent, label = name,
@@ -370,15 +377,7 @@ local function BuildRowList()
 	for _, group in ipairs(GROUPS) do
 		local members = group.zones()
 		local label = group.label()
-		local found, total, anyFound = 0, 0, false
-		for _, mapID in ipairs(members) do
-			local isFound = Found(mapID)
-			anyFound = anyFound or isFound
-			if not OnlyVoiced() or AnyVoiced(mapID) then
-				total = total + 1
-				if isFound then found = found + 1 end
-			end
-		end
+		local found, total, listed, anyFound = BannerCount(members)
 		local locked = not anyFound and not SpokenZones:ShowsUndiscovered()
 		local zones = {}
 		if not locked and (searching or groupOpen[group.key]) then
@@ -386,7 +385,7 @@ local function BuildRowList()
 				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
 			end
 		end
-		local voiced = not OnlyVoiced() or total > 0
+		local voiced = not OnlyVoiced() or listed > 0
 		if #members > 0 and (not searching or Matches(label) or #zones > 0) and not (not anyFound and OnlyFound())
 			and voiced then
 			local open = searching and #zones > 0 or (not searching and groupOpen[group.key] and not locked)
@@ -446,11 +445,24 @@ local function LandOnPlayer()
 	landed = selection
 end
 
+-- Where a place sits, and what its card or banner counts found out of all, as "1 of 7
+-- discovered"; no count where there is nothing to count.
+local function InAndCount(where, found, total)
+	local line = string.format(L.IN_ZONE_FMT, ZoneName(where))
+	if total > 0 then line = line .. " · " .. string.format(L.DISCOVERED_FMT, found, total) end
+	return line
+end
+
 local function ShowEntry()
 	if selection.group then
+		-- In Azeroth, as a continent is, a click away.
 		local group = Group(selection.group)
-		local count = #group.zones()
-		page:Show({ title = group.label(), subtitle = count == 1 and L.ZONE_COUNT_ONE or string.format(L.ZONE_COUNT_FMT, count),
+		local found, total = BannerCount(group.zones())
+		page:Show({ title = group.label(), subtitle = InAndCount(WORLD, found, total),
+			onSubtitle = function()
+				selection = { mapID = WORLD, key = nil }
+				SpokenZones:RefreshLoreWindow()
+			end,
 			text = L.ZONES_PICK })
 		return
 	end
@@ -509,8 +521,8 @@ end
 
 local function Count(n, many, one) return n == 1 and one or string.format(many, n) end
 
---- The line under a place's name: where it sits and how many places it holds. Also returns the
---- map one level up, which a click on the line opens (nil for Azeroth).
+--- The line under a place's name: where it sits and what its card or banner counts. Also returns
+--- the map one level up, which a click on the line opens (nil for Azeroth).
 function SpokenZones:PlaceLine(mapID, key)
 	if key then return string.format(L.IN_ZONE_FMT, ZoneName(mapID)), mapID end
 	local parent = self:PlaceAbove(mapID)
@@ -518,15 +530,10 @@ function SpokenZones:PlaceLine(mapID, key)
 		return Count(#Continents(), L.CONTINENT_COUNT_FMT, L.CONTINENT_COUNT_ONE) .. ", "
 			.. Count(#ZoneIDs(), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), nil
 	elseif IsContinent(mapID) then
-		return string.format(L.IN_ZONE_FMT, ZoneName(parent)) .. " · "
-			.. Count(#ZonesOf(mapID), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), parent
+		local found, total = BannerCount(ZonesOf(mapID))
+		return InAndCount(parent, found, total), parent
 	end
-	local _, total = Places(mapID)
-	local line = string.format(L.IN_ZONE_FMT, ZoneName(parent))
-	if total > 0 then
-		line = line .. " · " .. Count(total, L.SUBZONE_COUNT_FMT, L.SUBZONE_COUNT_ONE)
-	end
-	return line, parent
+	return InAndCount(parent, Places(mapID)), parent
 end
 
 --------------------------------------------------------------------------------
@@ -572,6 +579,20 @@ local function OnRowClick(row)
 	SpokenZones:RefreshLoreWindow()
 end
 
+-- The chosen row brought into view. The client's scroll frame takes an offset only within the
+-- range it last measured, which a list just drawn longer has not measured yet; nor has the frame
+-- a height until the window is first laid out. Either left the list at its top, the chosen place
+-- off screen: the range is measured now, and the row brought into view again a frame later.
+local function ScrollToChosen(items)
+	if list.scroll.UpdateScrollChildRect then list.scroll:UpdateScrollChildRect() end
+	list:ScrollToSelection(items)
+	if C_Timer and C_Timer.After then
+		C_Timer.After(0, function()
+			if filter == "" and list.items then list:ScrollToSelection(list.items) end
+		end)
+	end
+end
+
 function SpokenZones:RefreshLoreWindow(scrollToSelection)
 	if not list then
 		return
@@ -582,7 +603,7 @@ function SpokenZones:RefreshLoreWindow(scrollToSelection)
 	end
 	local items = list:Render()
 	if scrollToSelection and selection then
-		list:ScrollToSelection(items)
+		ScrollToChosen(items)
 	end
 	ShowEntry()
 end

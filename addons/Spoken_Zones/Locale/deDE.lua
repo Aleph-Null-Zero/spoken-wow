@@ -55,6 +55,7 @@ L.CONTRIBUTE_BUTTON = "Mitwirken"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones hat keine Geschichte für diesen Ort"
 L.CONTRIBUTE_BUTTON_TIP = "Wirke mit, indem du ihn beschreibst: was es ist, wer dort lebt, was dort geschah."
 L.IN_ZONE_FMT = "Lage: %1$s"
+L.DISCOVERED_FMT = "%1$d von %2$d entdeckt"
 
 L.PLAY = "Abspielen"
 L.STOP = "Stopp"
@@ -87,7 +88,6 @@ L.CMD_DEBUG = "  /spz debug      -- meldet Gebietsnamen bei Kartenklick"
 L.CMD_VERIFY = "  /spz verify     -- prüft Daten gegen diesen Client"
 L.CMD_DUMP = "  /spz dump       -- listet den Kartenbaum auf (dev)"
 
-L.SUBZONE_COUNT_FMT = "%1$d Gebiete"
 
 -- Added in this release (deDE).
 L.REASON_VOICE = "Schalte „Geschichten vorlesen“ ein, um dies zu nutzen."
@@ -111,7 +111,6 @@ L.OPT_SECTION_LORE = "Kompendium von Azeroth"
 L.OPT_LORE_WINDOW_TIP = "Die Geschichte jeder Zone und jedes Gebiets, zum Stöbern und Anhören, wo immer du bist. Zonen und Gebiete, die du noch nicht entdeckt hast, sind ausgegraut."
 L.OPT_SHOW_UNDISCOVERED = "Unentdeckte Zonen freischalten"
 L.OPT_SHOW_UNDISCOVERED_TIP = "Lässt dich jede Zone und jedes Gebiet öffnen, auch die, die du noch nicht entdeckt hast. Ist die Option aus, sind sie ausgegraut."
-L.SUBZONE_COUNT_ONE = "1 Gebiet"
 L.ZONE_COUNT_FMT = "%1$d Zonen"
 L.ZONE_COUNT_ONE = "1 Zone"
 L.OTHER_LANDS = "Andere Länder"

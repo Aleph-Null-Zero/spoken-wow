@@ -55,6 +55,7 @@ L.CONTRIBUTE_BUTTON = "Contribuir"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "O Spoken Zones não tem história para este lugar"
 L.CONTRIBUTE_BUTTON_TIP = "Contribua descrevendo-o: o que é, quem mora lá, o que aconteceu lá."
 L.IN_ZONE_FMT = "Local: %1$s"
+L.DISCOVERED_FMT = "%1$d de %2$d descobertas"
 
 L.PLAY = "Reproduzir"
 L.STOP = "Parar"
@@ -87,7 +88,6 @@ L.CMD_DEBUG = "  /spz debug      -- informa nomes de área ao clicar"
 L.CMD_VERIFY = "  /spz verify     -- verifica os dados contra este cliente"
 L.CMD_DUMP = "  /spz dump       -- enumera a árvore de mapas (dev)"
 
-L.SUBZONE_COUNT_FMT = "%1$d áreas"
 
 -- Added in this release.
 L.REASON_VOICE = "Marque Ler histórias em voz alta para usar isto."
@@ -111,7 +111,6 @@ L.OPT_SECTION_LORE = "Compêndio de Azeroth"
 L.OPT_LORE_WINDOW_TIP = "A história de cada zona e área, para navegar e ouvir onde você estiver. As zonas e áreas que você ainda não descobriu ficam em cinza."
 L.OPT_SHOW_UNDISCOVERED = "Liberar zonas não descobertas"
 L.OPT_SHOW_UNDISCOVERED_TIP = "Permite abrir todas as zonas e áreas, inclusive as que você ainda não descobriu. Desligado, elas ficam em cinza."
-L.SUBZONE_COUNT_ONE = "1 área"
 L.ZONE_COUNT_FMT = "%1$d zonas"
 L.ZONE_COUNT_ONE = "1 zona"
 L.OTHER_LANDS = "Outras terras"

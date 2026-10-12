@@ -55,6 +55,7 @@ L.CONTRIBUTE_BUTTON = "기여하기"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones에 이곳의 전승이 없습니다"
 L.CONTRIBUTE_BUTTON_TIP = "이곳을 설명하여 기여하세요: 무엇인지, 누가 사는지, 무슨 일이 있었는지."
 L.IN_ZONE_FMT = "위치: %1$s"
+L.DISCOVERED_FMT = "%2$d곳 중 %1$d곳 발견"
 
 L.PLAY = "재생"
 L.STOP = "정지"
@@ -87,7 +88,6 @@ L.CMD_DEBUG = "  /spz debug      -- 맵 클릭 시 지역 이름 보고"
 L.CMD_VERIFY = "  /spz verify     -- 데이터 검증"
 L.CMD_DUMP = "  /spz dump       -- 맵 트리 열거(dev)"
 
-L.SUBZONE_COUNT_FMT = "세부 지역 %1$d곳"
 
 -- Added in this release: settings pages, subtitles, voice packs, profiles and module switches.
 L.REASON_VOICE = "이 기능을 쓰려면 '이야기 소리 내어 읽기'를 켜세요."
@@ -111,7 +111,6 @@ L.OPT_SECTION_LORE = "아제로스 백과사전"
 L.OPT_LORE_WINDOW_TIP = "모든 지역과 세부 지역의 이야기를 어디에 있든 둘러보고 들을 수 있습니다. 아직 발견하지 못한 지역은 회색으로 표시됩니다."
 L.OPT_SHOW_UNDISCOVERED = "발견하지 못한 지역 열기"
 L.OPT_SHOW_UNDISCOVERED_TIP = "아직 발견하지 못한 곳을 포함해 모든 지역과 세부 지역을 열 수 있습니다. 끄면 회색으로 표시됩니다."
-L.SUBZONE_COUNT_ONE = "세부 지역 1곳"
 L.ZONE_COUNT_FMT = "지역 %1$d곳"
 L.ZONE_COUNT_ONE = "지역 1곳"
 L.OTHER_LANDS = "기타 지역"

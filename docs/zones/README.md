@@ -604,14 +604,15 @@ right, on the spellbook's parchment (`UI/LorePage.lua`).
 The list has a banner for each continent, Kalimdor and the Eastern Kingdoms, each
 opening and closing on its own. Under a continent each zone is a card: its painting,
 its name, and its places found out of all with the share and a bar. A zone's places are
-its city, where it holds one, and its areas; its page counts the same. A click on a
+its city, where it holds one, and its areas; its page counts the same, and a banner
+counts what its zones' cards count, of the cards the filters leave listed. A click on a
 zone's card chooses it and opens it: its city as a small card with its own areas, and
 its areas as rows, a tick on each one found. One zone is open at a time. After the
 continents come two more banners: Other Lands, for the zones on no continent the client
 knows (Forever's Zephras Isle), and Battlegrounds, for Alterac Valley, Warsong Gulch,
 Arathi Basin and Darkspear Islands wherever the client hangs their maps. Each lists only
-the places with a story on this client. Chosen, a banner's page counts its zones and
-asks for one to be chosen.
+the places with a story on this client. Chosen, a banner's page says it is in Azeroth,
+with its banner's count, and asks for one to be chosen.
 
 A place not yet discovered is listed greyed, with a padlock, and does not open; a
 continent or banner stays locked until one of its zones is found. **Unlock Undiscovered
@@ -631,8 +632,8 @@ which is not itself a key in `Zones`. Opened again, or come back to from another
 it lands again only while the selection is still the one it landed on: a place the
 player chose stays chosen. Opened from the map's panel, it opens on that place.
 
-The page has the place's name, the line under it (where it sits, a click away, and how
-many places it holds), its picture and its story, with **Play** and **Report** on the
+The page has the place's name, the line under it (where it sits, a click away, and its
+card's or banner's count, as "In Kalimdor · 3 of 12 discovered"), its picture and its story, with **Play** and **Report** on the
 title's right. A place with no story yet says so and offers Contribute. A place not yet
 discovered, opened from the map's panel, says to travel there to discover it.
 
