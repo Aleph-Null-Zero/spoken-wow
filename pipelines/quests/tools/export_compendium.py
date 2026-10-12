@@ -69,6 +69,9 @@ INSTANCE_ZONE = {
     33: 1421, 34: 1453, 36: 1436, 43: 1413, 47: 1413, 48: 1440, 70: 1418, 90: 1426, 109: 1435,
     129: 1413, 189: 1420, 209: 1446, 229: 1427, 230: 1427, 249: 1445, 289: 1422, 309: 1434,
     329: 1423, 349: 1443, 389: 1454, 409: 1427, 429: 1444, 469: 1427, 509: 1451, 531: 1451, 533: 1423,
+    # Forever's: the Excavation Site in the Wetlands, and the Hall of Thanes under Ironforge. Their
+    # areas have no map of their own, so their quests resolved to no zone.
+    2998: 1437, 3065: 1455,
 }
 # The corpus's quest lines.
 SOURCES = ["accept", "progress", "complete"]

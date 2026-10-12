@@ -26,7 +26,8 @@ def _area(area, parent=0, continent=0):
 TABLES = {
     ("UiMap", BUILD): _uimap(1429, 2521),
     ("UiMapAssignment", BUILD): [_assign(1429, 12, 0, (-100, -100, 0, 100, 100, 0)), _assign(2521, 15912)],
-    ("AreaTable", BUILD): [_area(12), _area(15912), _area(15913, parent=15912)],
+    ("AreaTable", BUILD): [_area(12), _area(15912), _area(15913, parent=15912), _area(16732, continent=2998),
+                           _area(16919, continent=3065)],
     ("UiMap", ERA_BUILD): _uimap(1429, 1437),
     ("UiMapAssignment", ERA_BUILD): [_assign(1429, 12), _assign(1437, 9999, 0, (200, 200, 0, 300, 300, 0))],
     ("AreaTable", ERA_BUILD): [_area(12), _area(9999)],
@@ -55,3 +56,11 @@ def test_a_sorts_name_is_forevers_and_eras_fills_what_it_lacks():
     forever = [{"ID": "666", "SortName_lang": "Camping"}, {"ID": "61", "SortName_lang": ""}]
     era = [{"ID": "61", "SortName_lang": "Warlock"}, {"ID": "666", "SortName_lang": "old"}]
     assert sort_names({"enUS": [forever, era]}) == {666: {"enUS": "Camping"}, 61: {"enUS": "Warlock"}}
+
+
+def test_forevers_instanced_places_are_filed_under_the_zone_around_them(monkeypatch):
+    # Excavation Site: Wetlands and The Hall of Thanes, areas of instance maps with no map of
+    # their own.
+    maps = _maps(monkeypatch)
+    assert maps.zone_of_area(16732) == 1437
+    assert maps.zone_of_area(16919) == 1455
