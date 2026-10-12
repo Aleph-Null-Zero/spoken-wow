@@ -541,7 +541,8 @@ local function Card(item, found, total, going)
     -- Places are cards (zones, cities, dungeons, and what a section holds); a chain is a line of
     -- the list inside one, its quests under it.
     item.style = item.kind == "chain" and "group" or "card"
-    item.count, item.total, item.goingCount = done, total, going
+    -- `found`, completed or under way, is what opens: a chain with one quest started has that to show.
+    item.count, item.total, item.goingCount, item.found = done, total, going, found
     item.shut = shut
     if item.kind == "zone" then
         if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end

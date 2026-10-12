@@ -39,8 +39,10 @@ local PAD_TOP, PAD_BOTTOM = FADE * TOP_SCALE + SOLID, FADE + SOLID
 local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
 -- A part's heading (SetParts): the title's face, larger than the words and darker, on a line as
 -- tall as its round buttons; the words HEAD_GAP under it, PART_GAP between one part and the next.
-local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 5, 26, 4, 18, 4
-local HEAD_INK = { 0.15, 0.08, 0.02 }
+-- Under it a hairline of the same ink, fading out to the right: plainer than the page's divider.
+local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 18, 4
+local HEAD_INK = { 0.25, 0.16, 0.08 }
+local RULE_ALPHA = 0.45
 
 local TextView = {}
 TextView.__index = TextView
@@ -530,6 +532,7 @@ function TextView:HideParts(keep)
 	for _, part in ipairs(self.parts or {}) do
 		part.heading:Hide()
 		part.words:Hide()
+		part.rule:Hide()
 	end
 	for _, button in ipairs(self.partButtons or {}) do
 		if not (keep and keep[button]) then button:Hide() end
@@ -566,7 +569,19 @@ function TextView:SetParts(parts)
 		local slot = self.parts[i]
 		if not slot then
 			slot = { heading = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge"),
-				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight") }
+				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight"),
+				rule = self.child:CreateTexture(nil, "ARTWORK") }
+			slot.rule:SetHeight(1)
+			slot.rule:SetColorTexture(1, 1, 1, 1)
+			local r, g, b = HEAD_INK[1], HEAD_INK[2], HEAD_INK[3]
+			if not (CreateColor and slot.rule.SetGradient and pcall(slot.rule.SetGradient, slot.rule, "HORIZONTAL",
+				CreateColor(r, g, b, RULE_ALPHA), CreateColor(r, g, b, 0))) then
+				if slot.rule.SetGradientAlpha then
+					slot.rule:SetGradientAlpha("HORIZONTAL", r, g, b, RULE_ALPHA, r, g, b, 0)
+				else
+					slot.rule:SetColorTexture(r, g, b, RULE_ALPHA / 2)
+				end
+			end
 			slot.heading:SetJustifyH("LEFT")
 			if slot.heading.SetWordWrap then slot.heading:SetWordWrap(false) end
 			slot.words:SetJustifyH("LEFT")
@@ -578,8 +593,11 @@ function TextView:SetParts(parts)
 		if i > 1 then y = y + PART_GAP end
 		local face = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
 		if face then slot.heading:SetFont(face, Addon:Get("fontSize") + HEAD_SIZE, "") end
+		-- The title's ink, its thin strokes thickened by a faint copy a pixel to the right, so the
+		-- heading reads as dark as the title does at its larger size.
 		slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
-		slot.heading:SetShadowColor(0, 0, 0, 0)
+		slot.heading:SetShadowColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3], 0.6)
+		slot.heading:SetShadowOffset(1, 0)
 		slot.heading:SetText(part.heading or "")
 		-- The buttons from the right, BUTTON_GAP apart, centred on the heading's line.
 		local previous
@@ -603,7 +621,12 @@ function TextView:SetParts(parts)
 			slot.heading:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -(y + HEAD_LINE / 2))
 		end
 		slot.heading:Show()
-		y = y + HEAD_LINE + HEAD_GAP
+		y = y + HEAD_LINE
+		slot.rule:ClearAllPoints()
+		slot.rule:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -y)
+		slot.rule:SetWidth(math.max(width, 1))
+		slot.rule:Show()
+		y = y + 1 + HEAD_GAP
 
 		self:Paint(slot.words)
 		slot.words:ClearAllPoints()
@@ -616,6 +639,7 @@ function TextView:SetParts(parts)
 	for i = #parts + 1, #self.parts do
 		self.parts[i].heading:Hide()
 		self.parts[i].words:Hide()
+		self.parts[i].rule:Hide()
 	end
 	self.partButtons = shown
 

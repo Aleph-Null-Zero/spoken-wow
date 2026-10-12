@@ -580,6 +580,8 @@ Tab:Refresh()
 Expect("...how many are in progress before them, by the quest mark", ChainRow("Lost Necklace").count.text,
     "|TInterface\\GossipFrame\\ActiveQuestIcon:12:12:0:0|t1   2/4 • 50%")
 Expect("...and no bar: one line of the list", ChainRow("Lost Necklace").fill:IsShown(), false)
+Expect("...its plus counting what is under way as well as completed, so it opens as Started Only lists it",
+    ChainRow("Lost Necklace").row.found == 3 and not ChainRow("Lost Necklace").toggle.desaturated, true)
 ClickChain("Lost Necklace")
 list = Shown()
 Expect("a chain opens on its quests, in the order they are taken",
