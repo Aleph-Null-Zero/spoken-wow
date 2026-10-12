@@ -576,6 +576,32 @@ Expect("a chain's page has no Play, even with a voiced quest started: its quests
 completed[NECKLACE] = nil
 ClickChain("Lost Necklace")
 
+-- Voiced Only, after Started Only in the filter menu: the quests no voice pack has are left out,
+-- with any card or banner left with nothing, and out of the counts. The test pack has Kobold Camp
+-- Cleanup and Lost Necklace.
+local function Menu()
+    local entries = {}
+    for _, info in ipairs(stub.OpenDropdown(panel.filterMenu)) do table.insert(entries, info.text) end
+    return table.concat(entries, "|"), stub.OpenDropdown(panel.filterMenu)
+end
+Expect("the filter menu holds Started Only, then Voiced Only", (Menu()), L.QUESTS_FOUND_ONLY .. "|" .. L.QUESTS_VOICED_ONLY)
+local _, choices = Menu()
+choices[2].func()
+list = Shown()
+Expect("Voiced Only leaves out the quests no pack has", Has(list, "Kobold Candles"), false)
+Expect("...and keeps those it has, in what holds them", Has(list, "Kobold Camp Cleanup") and Has(list, "Elwynn Forest")
+    and ChainRow("Lost Necklace") ~= nil, true)
+Expect("...leaving out a zone, a continent and a section with none", Has(list, "Westfall") or Has(list, "Kalimdor")
+    or Has(list, "Classes"), false)
+Expect("...each card counting only the quests it lists", RowFor("Elwynn Forest").count.text:match("^1/2 ") ~= nil
+    and ChainRow("Lost Necklace").count.text, "0/1 • 0%")
+Expect("...and each banner", RowFor("Eastern Kingdoms").count.text, "1/2")
+Expect("...and is remembered", VO.Addon.db.global.Compendium.VoicedOnly, true)
+Expect("...a started quest it leaves out not opened in the Compendium", Tab:Has(CANDLES), false)
+_, choices = Menu()
+choices[2].func()
+Expect("...off, everything again", Has(Shown(), "Kobold Candles") and Has(Shown(), "Westfall") and Tab:Has(CANDLES), true)
+
 -- The part switched off takes its tab away.
 Spoken:SetPartOn("quests", false)
 Expect("with Quests off, the tab is not offered", C:Select("quests"), nil)

@@ -150,6 +150,7 @@ L.QUEST_PREVIOUSLY_TIP = "이전 퀘스트의 마지막 대사를 재생합니�
 L.QUESTS_SEARCH = "퀘스트 검색"
 L.QUESTS_NONE = "일치하는 항목이 없습니다."
 L.QUESTS_FOUND_ONLY = "시작한 것만"
+L.QUESTS_VOICED_ONLY = "음성이 있는 것만"
 L.QUESTS_PICK = "왼쪽에서 퀘스트를 골라 읽으세요. 퀘스트를 Shift-클릭하면 지금 재생 중인 것 다음에 그 녹음을 대기열에 넣습니다."
 L.QUESTS_ELSEWHERE = "장소 불명"
 L.QUESTS_SECTION_CLASSES = "직업"

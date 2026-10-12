@@ -150,6 +150,7 @@ L.QUEST_PREVIOUSLY_TIP = "Воспроизводит концовку преды
 L.QUESTS_SEARCH = "Поиск заданий"
 L.QUESTS_NONE = "Ничего не найдено."
 L.QUESTS_FOUND_ONLY = "Только начатые"
+L.QUESTS_VOICED_ONLY = "Только озвученные"
 L.QUESTS_PICK = "Выберите слева задание, чтобы прочитать его. Shift-щелчок по заданию ставит его запись в очередь после того, что звучит сейчас."
 L.QUESTS_ELSEWHERE = "Место неизвестно"
 L.QUESTS_SECTION_CLASSES = "Классы"

@@ -11,7 +11,8 @@
 -- dungeon where there is one, else Dungeons and Raids with a card for each dungeon), then its
 -- chains and its quests. The quests that follow one another (`prev` in the data) are a card for
 -- their chain, with the same name in every zone it crosses; the rest are the leaves, a row each.
--- Every card and banner counts its quests completed out of all and those in progress.
+-- Every card and banner counts its quests completed out of all and those in progress; Voiced Only
+-- leaves the quests no voice pack has out of the counts as it does out of the list.
 --
 -- The page shows what is chosen. A quest's is its title, where it is and its words, with Play
 -- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. A banner's, card's or
@@ -127,6 +128,15 @@ end
 local function OnlyFound()
     return Global().FoundOnly == true
 end
+
+-- Voiced Only, after Started Only in the filter menu: the quests no installed voice pack has a part
+-- of are left out, and with them any card or banner left with nothing.
+local function OnlyVoiced()
+    return Global().VoicedOnly == true
+end
+
+-- Whether a voice pack has a part of a quest, as its page's Play finds one.
+local AnyVoiced
 
 -- The words and titles kept in this client's language, by quest: { title, accept = { text, sex } ... }.
 -- None on an English client: the English shipped is what it would keep.
@@ -395,15 +405,25 @@ local function SetOf(ids)
     return set
 end
 
--- Found out of all, and how many of the found are in progress.
+-- Found out of all, and how many of the found are in progress. Of what is listed: under Voiced
+-- Only, the quests no pack has are left out of the count as they are of the rows.
 local function Tally(set)
     local found, total, going = 0, 0, 0
+    local voicedOnly = OnlyVoiced()
     for id in pairs(set) do
-        total = total + 1
-        if Found(id) then found = found + 1 end
-        if InProgress(id) then going = going + 1 end
+        if not voicedOnly or AnyVoiced(id) then
+            total = total + 1
+            if Found(id) then found = found + 1 end
+            if InProgress(id) then going = going + 1 end
+        end
     end
     return found, total, going
+end
+
+-- Whether a card or banner counting `found` of `total` is left out: Started Only with none
+-- started, or Voiced Only with none voiced.
+local function Unlisted(found, total)
+    return (OnlyFound() and found == 0) or (OnlyVoiced() and total == 0)
 end
 
 -- The gossip window's mark for a quest under way, before the title of one in progress.
@@ -482,7 +502,8 @@ end
 
 local function Shows(id)
     local english = Quests()[id] and Quests()[id][1]
-    return not (OnlyFound() and not Found(id)) and (not Filtering() or Matches(Title(id)) or Matches(english))
+    return not (OnlyFound() and not Found(id)) and not (OnlyVoiced() and not AnyVoiced(id))
+        and (not Filtering() or Matches(Title(id)) or Matches(english))
 end
 
 -- What a class, profession, event or other kind of quest shows on its card.
@@ -518,7 +539,7 @@ local function ChainRows(where, first, ids, nest)
     local key = where .. ":" .. first
     local label = ChainName(first, filter == "")
     local found, total, going = Tally(SetOf(ids))
-    if OnlyFound() and found == 0 then return {} end
+    if Unlisted(found, total) then return {} end
     local inside = Whole(filter ~= "" and Matches(label), function()
         local out = {}
         if chainOpen[key] or Searched() then
@@ -631,7 +652,7 @@ local function DungeonRows(mapID, byDungeon, nest)
         return na < nb
     end)
     local found, total, going = Tally(SetOf(all))
-    if OnlyFound() and found == 0 then return {} end
+    if Unlisted(found, total) then return {} end
     local key, searching = DungeonKey(mapID), filter ~= ""
     local label = #dungeons == 1 and DungeonName(dungeons[1]) or L.QUESTS_DUNGEONS
     local inside = Whole(searching and Matches(label), function()
@@ -649,7 +670,7 @@ local function DungeonRows(mapID, byDungeon, nest)
                 if dungeonOpen[dkey] or Searched() then Leaves(ids, nest + 2, rows, dkey) end
                 return rows
             end)
-            if not (OnlyFound() and f == 0) and not (Filtering() and #leaves == 0) then
+            if not Unlisted(f, t) and not (Filtering() and #leaves == 0) then
                 table.insert(out, Card({ kind = "dungeon", key = dkey, ids = ids, label = name,
                     nest = nest + 1, open = #leaves > 0 }, f, t, g))
                 for _, row in ipairs(leaves) do table.insert(out, row) end
@@ -668,7 +689,7 @@ end
 -- card, its chains and its quests.
 local function ZoneRows(mapID, nest)
     local found, total, going = Tally(QuestsIn(mapID))
-    if OnlyFound() and found == 0 then return {} end
+    if Unlisted(found, total) then return {} end
     local open = expandedZone == mapID or C.CITY_IN[expandedZone] == mapID
     local inside = Whole(filter ~= "" and Matches(C.MapName(mapID)), function()
         local out = {}
@@ -694,7 +715,7 @@ end
 local function GroupRows(kind, key, label, ids)
     if not ids or #ids == 0 then return {} end
     local found, total, going = Tally(SetOf(ids))
-    if OnlyFound() and found == 0 then return {} end
+    if Unlisted(found, total) then return {} end
     local leaves = Whole(filter ~= "" and Matches(label), function()
         local out = {}
         if groupOpen[key] or Searched() then Leaves(ids, 1, out, "s" .. key) end
@@ -726,7 +747,7 @@ end
 local function SectionRows(section)
     local set, sorts = SectionSet(section.key)
     local found, total, going = Tally(set)
-    if total == 0 or (OnlyFound() and found == 0) then return {} end
+    if total == 0 or Unlisted(found, total) then return {} end
     local searching = filter ~= ""
     local inside = Listed(searching and Matches(L[section.label]), function()
         local out = {}
@@ -759,7 +780,7 @@ local function ZoneBanner(key, label, zones)
     local set = {}
     for _, mapID in ipairs(zones) do QuestsIn(mapID, set) end
     local found, total, going = Tally(set)
-    if total == 0 or (OnlyFound() and found == 0) then return {} end
+    if total == 0 or Unlisted(found, total) then return {} end
     local searching = filter ~= ""
     local inside = Listed(searching and Matches(label), function()
         local out = {}
@@ -804,7 +825,7 @@ local function BuildRows()
             end
             return out
         end)
-        if not (OnlyFound() and found == 0) and (not searching or #rows > 0) then
+        if not Unlisted(found, total) and (not searching or #rows > 0) then
             table.insert(out, { style = "banner", kind = "continent", mapID = continent, label = C.MapName(continent),
                 count = found - going, found = found, total = total, open = #rows > 0 })
             Add(rows)
@@ -982,6 +1003,14 @@ local PLAY = {
     end,
 }
 
+-- Asked once a refresh: Voiced Only asks it of every quest under every banner, and the packs
+-- do not change while the list is drawn.
+local voicedSeen = {}
+AnyVoiced = function(id)
+    if voicedSeen[id] == nil then voicedSeen[id] = PLAY.has(id) end
+    return voicedSeen[id]
+end
+
 local function Where(id)
     local quest = Quests()[id] or {}
     if quest.zones and #quest.zones > 0 then
@@ -1148,6 +1177,7 @@ function QuestsTab:Refresh(scrollToSelection)
     if not list then return end
     ReadCompleted()
     ReadLog()
+    voicedSeen = {}
     if not selection then
         LandOnPlayer()
         scrollToSelection = true
@@ -1164,6 +1194,7 @@ local function Build(panel)
         only = L.QUESTS_FOUND_ONLY,
         onlyGet = OnlyFound,
         onlySet = function(on) Global().FoundOnly = on end,
+        checks = { { label = L.QUESTS_VOICED_ONLY, get = OnlyVoiced, set = function(on) Global().VoicedOnly = on end } },
         build = BuildRows,
         isSelected = IsSelected,
         onClick = OnClick,
@@ -1218,9 +1249,11 @@ function QuestsTab:Lists(questID)
 end
 
 --- Whether opening the tab on `questID` shows its page: the list shows the quest (Started Only
---- leaves out one not started) and it is started, or Unlock Unstarted Quests is on.
+--- leaves out one not started, Voiced Only one no pack has) and it is started, or Unlock Unstarted
+--- Quests is on.
 function QuestsTab:Has(questID)
     if not self:Lists(questID) then return false end
+    if OnlyVoiced() and not PLAY.has(questID) then return false end
     if StartedNow(questID) then return true end
     return Unlocked() and not OnlyFound()
 end
