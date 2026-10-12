@@ -390,7 +390,7 @@ local function Card(item, found, total, going)
     local sub = L.QUESTS_CARD_FMT:format(done, total)
     if going > 0 then sub = sub .. " · " .. L.QUESTS_CARD_GOING_FMT:format(going) end
     item.style = "card"
-    item.count, item.total = done, total
+    item.count, item.total, item.goingCount = done, total, going
     if item.kind == "zone" then
         if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
     elseif item.kind == "chain" then

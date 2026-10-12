@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 12
+local VERSION = 14
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -47,10 +47,10 @@ local BANNER_ROW = 36
 local BANNER_GAP = 14         -- above each banner but the first
 local FIRST_GAP = 2           -- above the first row
 local UNDER_BANNER = 8        -- between a banner and the first card in it
-local CARD_ROW = 64
-local SMALL_CARD_ROW = 54
+local CARD_ROW = 48
+local SMALL_CARD_ROW = 40
 local CARD_GAP = 6            -- between cards under a banner
-local LEAF_ROW = 26
+local LEAF_ROW = 22
 local NEST_GAP = 5            -- between the rows inside an open card
 local NEST_PAD = 2            -- inside the line down an open card's contents, above and below them
 local NEST_AFTER = 6          -- under an open card's contents
@@ -59,6 +59,8 @@ local RAIL_X = 16             -- the line down an open card's contents, this far
 local LIST_LEFT, LIST_RIGHT = 3, 2
 -- What a banner holds sits this far in from it, one step down the tree.
 local UNDER_BANNER_IN = 14
+-- The line down what a banner holds, this far in.
+local BANNER_RAIL_X = 6
 local LIST_TOP, LIST_FOOT = 6, 8
 local SCROLL_STEP = 60
 local GRABBER_SIZE = 16
@@ -731,8 +733,9 @@ local function Light(row)
 	local style = row.row and row.row.style
 	local over, chosen = row.over and true or false, row.selected and true or false
 	local flat = style == nil or (style == "card" and not row.cardArt) or (style == "banner" and not row.bannerArt)
-	row.wash:SetShown(flat and over and not chosen)
-	row.chosen:SetShown(flat and chosen)
+	row.wash:SetShown(flat and (over or chosen))
+	row.wash:SetAlpha(chosen and 1 or 0.55)
+	row.chosen:Hide()
 	row.edge:SetShown(flat and chosen)
 	if row.glow then
 		ShowAll(row.glow, style == "banner" and row.bannerArt and (over or chosen))
@@ -783,9 +786,9 @@ function C.NewList(panel, opts)
 
 	local ok, inset = pcall(CreateFrame, "Frame", nil, panel, "InsetFrameTemplate")
 	if not ok or not inset then inset = CreateFrame("Frame", nil, panel) end
-	-- The game's marble under the list, at its own colour, as the spellbook's lists have it.
+	-- The game's grey stone under the list: its marble is near black.
 	if type(inset.Bg) == "table" and inset.Bg.SetTexture then
-		inset.Bg:SetTexture([[Interface\FrameGeneral\UI-Background-Marble]], "REPEAT", "REPEAT")
+		inset.Bg:SetTexture([[Interface\FrameGeneral\UI-Background-Rock]], "REPEAT", "REPEAT")
 		if inset.Bg.SetHorizTile then inset.Bg:SetHorizTile(true); inset.Bg:SetVertTile(true) end
 		if inset.Bg.SetVertexColor then inset.Bg:SetVertexColor(1, 1, 1, 1) end
 	end
@@ -922,15 +925,18 @@ function List:AcquireRow(index)
 	row = CreateFrame("Button", nil, self.child)
 	row.list = self
 
+	-- A row's light: the professions list's own, faint under the pointer and full when chosen, with
+	-- a gold edge on the chosen one. A flat wash where the client has not got it.
 	row.wash = row:CreateTexture(nil, "BACKGROUND")
-	GoldWash(row.wash, 0.11, 0.016)
+	if not Atlas(row.wash, "Professions_Recipe_Hover", false) then
+		row.wash:SetColorTexture(1, 1, 1, 0.1)
+	end
 	row.wash:Hide()
 	row.chosen = row:CreateTexture(nil, "BACKGROUND")
-	GoldWash(row.chosen, 0.2, 0.03)
 	row.chosen:Hide()
 	row.edge = row:CreateTexture(nil, "ARTWORK")
 	row.edge:SetWidth(2)
-	row.edge:SetColorTexture(1, 0.82, 0, 1)
+	row.edge:SetColorTexture(1, 0.82, 0, 0.9)
 	row.edge:Hide()
 
 	-- A plain row's tick or quest mark, before its name.
@@ -1043,7 +1049,18 @@ end
 -- The faint line down the left of each open card's contents, one for every card a row is inside.
 -- Each row draws its share of the line, from the row above: `gap` up for the cards that held that
 -- row too, just above itself for a card's first.
-local function Rails(row, count, gap, held)
+local function Rails(row, count, gap, held, underBanner)
+	if underBanner and not row.bannerRail then
+		row.bannerRail = row:CreateTexture(nil, "BORDER")
+		row.bannerRail:SetWidth(1)
+		row.bannerRail:SetColorTexture(0.84, 0.71, 0.31, 0.2)
+	end
+	if row.bannerRail then
+		row.bannerRail:ClearAllPoints()
+		row.bannerRail:SetPoint("TOPLEFT", row, "TOPLEFT", BANNER_RAIL_X, gap)
+		row.bannerRail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", BANNER_RAIL_X, 0)
+		row.bannerRail:SetShown(underBanner and true or false)
+	end
 	row.rails = row.rails or {}
 	for i = 1, math.max(count, #row.rails) do
 		local rail = row.rails[i]
@@ -1096,6 +1113,7 @@ local function GapAbove(items, i)
 	if item.style == "banner" then return BANNER_GAP, 0 end
 	if before.style == "banner" then return UNDER_BANNER, 0 end
 	local was, now = before.nest or 0, item.nest or 0
+	if item.leaf and before.leaf and now == was then return 0, now end
 	if now > was then return Inner(was) + NEST_PAD, was end
 	return (was - now) * (NEST_PAD + NEST_AFTER) + Inner(now), now
 end
@@ -1173,24 +1191,20 @@ local function DrawCard(row, item, indent, width)
 	row.cardFill:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
 	row.cardFill:SetShown(not row.cardArt)
 
-	-- The badge, level with the name and its line above the bar: the zone's painting or what the
-	-- card holds in the collections window's gold frame, greyed with nothing found; a chain's the
-	-- storyline's mark.
-	local side = small and 32 or 40
-	local middle = small and -27 or -32
+	-- The badge, centred down the card: the zone's painting or what the card holds, in a silver
+	-- frame, greyed with nothing found. A chain has none: its name and bar start at the card's left.
+	local badged = not item.story
+	local side = badged and (small and 26 or 32) or 0
+	local middle = small and -20 or -24
 	local centre = indent + 12 + side / 2
 	local none = item.none or item.locked
-	local story = item.story and Atlas(row.story, "questlog-storylineicon")
-	local icon = item.icon or (item.story and STORY_ICON) or MAP_ICON
-	row.story:SetShown(story and true or false)
-	if story then
-		row.story:SetSize(26, 26)
-		row.story:ClearAllPoints()
-		row.story:SetPoint("CENTER", row, "TOPLEFT", centre, middle)
+	local icon = item.icon or MAP_ICON
+	row.story:Hide()
+	if not badged then
 		row.icon:Hide()
 		row.iconFrame:Hide()
 	else
-		local inset = small and 3 or 4
+		local inset = small and 2 or 3
 		local crop = item.iconCrop or ICON_CROP
 		row.icon:SetTexture(icon)
 		row.icon:SetTexCoord(crop[1], crop[2], crop[3], crop[4])
@@ -1212,13 +1226,13 @@ local function DrawCard(row, item, indent, width)
 		end
 	end
 
-	local top = small and 11 or 14
-	-- The share or tick, level with the name.
+	-- One line, as the list's rows had it before the cards: the name on the left and on the right
+	-- what is found out of all and the share, 5/27 • 18%, with the bar under them.
+	local top = small and 8 or 10
 	local level = -(top + 7)
-	local left = indent + 12 + side + 12
+	local left = indent + (badged and 12 + side + 10 or 16)
 	row.label:SetFontObject("GameFontNormal")
 	row.label:SetPoint("TOPLEFT", row, "TOPLEFT", left, -top)
-	row.label:SetPoint("TOPRIGHT", row, "TOPRIGHT", -CARD_RIGHT, -top)
 	if item.locked then
 		Tint(row.label, LOCKED_INK)
 	elseif item.none or item.missing then
@@ -1227,13 +1241,10 @@ local function DrawCard(row, item, indent, width)
 		row.label:SetTextColor(1, 0.82, 0)
 	end
 	row.label:SetText(item.label)
-	row.sub:ClearAllPoints()
-	row.sub:SetPoint("TOPLEFT", row.label, "BOTTOMLEFT", 0, -3)
-	row.sub:SetPoint("TOPRIGHT", row.label, "BOTTOMRIGHT", 0, -3)
-	row.sub:SetText(item.sub or "")
-	row.sub:Show()
+	row.sub:Hide()
 
-	-- On the right the padlock, the gold tick once all are found, or the share found.
+	-- On the right the padlock, or the numbers, with the gold tick after them once all are found
+	-- and the quest mark before them with how many are under way.
 	local locked = item.locked and row.hasLock
 	local ratio = item.ratio
 	if ratio == nil and item.total and item.total > 0 then ratio = (item.count or 0) / item.total end
@@ -1250,18 +1261,38 @@ local function DrawCard(row, item, indent, width)
 			row.tick:SetSize(14, 14)
 		end
 		row.tick:ClearAllPoints()
-		row.tick:SetPoint("RIGHT", row, "TOPRIGHT", -16, level)
+		row.tick:SetPoint("RIGHT", row, "TOPRIGHT", -14, level)
 	end
 	row.count:SetFontObject("GameFontHighlightSmall")
 	Tint(row.count, SHARE_INK)
-	row.count:SetPoint("RIGHT", row, "TOPRIGHT", -16, level)
-	row.count:SetShown(not locked and not item.tick)
-	row.count:SetText((item.total or 0) > 0 and string.format("%d%%", math.floor(100 * ratio + 1e-6)) or "")
+	row.count:ClearAllPoints()
+	if ticked then
+		row.count:SetPoint("RIGHT", row.tick, "LEFT", -3, 0)
+	else
+		row.count:SetPoint("RIGHT", row, "TOPRIGHT", -16, level)
+	end
+	local total = item.total or 0
+	local numbers = ""
+	if total > 0 then
+		numbers = ticked and string.format("%d/%d", item.count or 0, total)
+			or string.format("%d/%d \226\128\162 %d%%", item.count or 0, total, math.floor(100 * ratio + 1e-6))
+		local going = item.goingCount or 0
+		if going > 0 then numbers = "|T" .. ACTIVE .. ":12:12:0:0|t" .. going .. "   " .. numbers end
+	end
+	row.count:SetText(numbers)
+	row.count:SetShown(not locked and numbers ~= "")
+	if locked then
+		row.label:SetPoint("RIGHT", row.lock, "LEFT", -8, 0)
+	elseif numbers ~= "" then
+		row.label:SetPoint("RIGHT", row.count, "LEFT", -8, 0)
+	else
+		row.label:SetPoint("RIGHT", row, "RIGHT", -16, 0)
+	end
 
 	-- The bar along its foot, under the name: a dark track, the game's yellow as far as the share,
 	-- cut rather than squeezed, in the Pet Journal's frame. None on a card with nothing to count.
 	local barred = (item.total or 0) > 0
-	local barLeft, barBottom, barHeight = indent + 12 + side + 12, small and 9 or 11, small and 6 or 7
+	local barLeft, barBottom, barHeight = left, small and 8 or 10, small and 5 or 6
 	row.barLeft, row.ratio = barLeft, ratio
 	row.track:ClearAllPoints()
 	row.track:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft + 2, barBottom + 1)
@@ -1309,22 +1340,19 @@ local function DrawLeaf(row, item, indent)
 		row.status:SetTexCoord(0, 1, 0, 1)
 		row.status:SetSize(15, 15)
 	end
+	-- At the row's end, where a padlock goes: one place for what a row's state is.
 	row.status:ClearAllPoints()
-	row.status:SetPoint("CENTER", row, "LEFT", indent + 16, 0)
+	row.status:SetPoint("CENTER", row, "RIGHT", -18, 0)
 	row.status:SetShown(status ~= nil)
 
 	local locked = item.locked and row.hasLock
-	row.lock:SetPoint("RIGHT", row, "RIGHT", -12, 0)
+	row.lock:SetPoint("CENTER", row, "RIGHT", -18, 0)
 	row.lock:SetShown(locked and true or false)
 	row.count:SetText("")
 	row.count:Hide()
 	row.label:SetFontObject("GameFontHighlight")
-	row.label:SetPoint("LEFT", row, "LEFT", indent + 32, 0)
-	if locked then
-		row.label:SetPoint("RIGHT", row.lock, "LEFT", -6, 0)
-	else
-		row.label:SetPoint("RIGHT", row, "RIGHT", -12, 0)
-	end
+	row.label:SetPoint("LEFT", row, "LEFT", indent + 12, 0)
+	row.label:SetPoint("RIGHT", row, "RIGHT", -32, 0)
 	-- Something with nothing to read yet, greyed a little: still there to choose. One not yet
 	-- found, greyer: listed, but it does not open.
 	if item.locked then
@@ -1343,7 +1371,9 @@ function List:Render()
 	local onlyFound = self.opts.onlyGet and self.opts.onlyGet()
 	local width = (self.child:GetWidth() or (LIST_WIDTH - 8)) - LIST_LEFT - LIST_RIGHT
 	local y = LIST_TOP
+	local underBanner = false
 	for i, item in ipairs(items) do
+		if item.style == "banner" then underBanner = true end
 		local row = self:AcquireRow(i)
 		row.row = item
 		local gap, held = GapAbove(items, i)
@@ -1357,7 +1387,7 @@ function List:Render()
 
 		ShowStyle(row, item.style)
 		local nest = item.style ~= "banner" and item.nest or 0
-		Rails(row, nest, gap, held)
+		Rails(row, nest, gap, held, item.style ~= "banner" and underBanner)
 		local indent = UNDER_BANNER_IN + nest * NEST_STEP
 		row.indent = indent
 		row.barLeft = nil
