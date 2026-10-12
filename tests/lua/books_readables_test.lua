@@ -553,7 +553,7 @@ on.readables = true
 -- reads itself the first time it is opened in the world.
 do
     local source, clipFor, isQueued = B.source, B.ClipFor, B.IsQueued
-    B.source = { Enqueue = function() return true end, StopAll = function() end }
+    B.source = { Enqueue = function() return true end, PlayNow = function() return true end, StopAll = function() end }
     B.ClipFor = function() return {} end
     B.IsQueued = function() return false end
     SpokenBooksCharacter.read[KURDRAN] = nil
