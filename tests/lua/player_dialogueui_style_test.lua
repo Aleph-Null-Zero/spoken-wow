@@ -286,6 +286,56 @@ quests:Enqueue(clip)
 Expect("a queued line shows the window", Skin.wanted, true)
 Expect("...naming the speaker", Skin.name:GetText(), "Eagan Peltskinner")
 Expect("...and the line", Skin.title.text:GetText(), "Wolves Across the Border")
+
+-- The card's header on a page of a feature addon's (Spoken:CreateDialogueHeader): at the card's
+-- column it is the card's, at another width the card's grown to it.
+do
+    local page = CreateFrame("Frame", nil, UIParent)
+    local header = Spoken:CreateDialogueHeader(page)
+    local inner = Skin.headerSocket:GetWidth() + Skin.headerDivider:GetWidth()
+    local room = Skin.controls:GetWidth() * Skin.controls:GetScale()
+    local height, middle, line = header:Layout(inner, room)
+    local function Coords(texture) return table.concat(texture.texCoord, ",") end
+    Expect("a page's header at the card's column is the card's strip, socket and line",
+        height .. " " .. Coords(header.socket) .. " " .. Coords(header.divider) .. " " .. header.divider:GetWidth(),
+        Skin.headerSocket:GetHeight() .. " " .. Coords(Skin.headerSocket) .. " " .. Coords(Skin.headerDivider)
+        .. " " .. Skin.headerDivider:GetWidth())
+    Expect("...in DialogueUI's own parchment", header.socket.texture, BROWN .. "Parchment.png")
+    Expect("...the card's face in its socket", header.portrait:GetWidth() .. " " .. header.portrait.anchor.x .. " "
+        .. header.portrait.anchor.y, Skin.portrait:GetWidth() .. " " .. Skin.portrait.anchor.x .. " " .. Skin.portrait.anchor.y)
+    Expect("...its badge where the card's is", header.badge:GetWidth() .. " " .. header.badge.anchor.x,
+        Skin.badge:GetWidth() .. " " .. Skin.badge.anchor.x)
+    Expect("...the name and the title as tall as the card's", header.name:GetHeight() .. " " .. header.title:GetHeight(),
+        Skin.name:GetHeight() .. " " .. Skin.title:GetHeight())
+    Expect("...its controls' middle the card's", middle, Skin.controlsMiddle)
+    Expect("...the strip's line ending 0.8 down it", line, math.floor(height * 0.8 + 0.5))
+    Expect("...the title stopping a round button's width short of the controls' room, on their middle",
+        header.title.anchor.point .. " " .. tostring(header.title.anchor.relativeTo == header.frame) .. " "
+        .. header.title.anchor.relativePoint .. " " .. header.title.anchor.x .. " " .. header.title.anchor.y,
+        "RIGHT true TOPRIGHT " .. -(room + 24) .. " " .. -middle)
+    Expect("...its frame the column's width and the strip's height", header.frame:GetWidth() .. " " .. header.frame:GetHeight(),
+        inner .. " " .. height)
+    local wide = header:Layout(inner * 2, room)
+    -- The strip art is 358 by 51, and the title DialogueUI's 18 at 0.85, on a line 4 taller.
+    Expect("twice as wide, the strip twice as tall and the title's line with it",
+        wide .. " " .. header.title:GetHeight(), math.floor(51 * inner * 2 / 358 + 0.5) .. " " .. (math.floor(18 * 0.85 * 2 + 0.5) + 4))
+    _G.DialogueUI_DB.Theme = 2
+    header:Layout(inner, room)
+    Expect("with DialogueUI's dark theme, still its brown parchment: the page is parchment", header.socket.texture,
+        BROWN .. "Parchment.png")
+    _G.DialogueUI_DB.Theme = 1
+    header:SetTexts("Eagan Peltskinner", "Description")
+    Expect("the speaker's name over the part's title", header.name:GetText() .. "|" .. header.title.text:GetText(),
+        "Eagan Peltskinner|Description")
+    header:SetTexts("Mulgore", "Mulgore")
+    Expect("...a name the same as the title said once", header.name:GetText() .. "|" .. header.title.text:GetText(), "|Mulgore")
+    header:SetSpeaker({ bullet = "quest-complete" })
+    Expect("the line's badge on its disc", tostring(header.badge:IsShown()) .. " " .. tostring(header.badgeDisc:IsShown())
+        .. " " .. header.badge:GetTexture(), "true true " .. env.MinimalPlayer.BADGES["quest-complete"])
+    Expect("...no one speaking: the book, tinted as the card tints it",
+        header.viewport.texture:GetTexture() .. " " .. table.concat(header.viewport.texture.vertexColor, ",", 1, 3),
+        [[Interface\AddOns\Spoken\Textures\Book]] .. " 1,0.9,0.78")
+end
 quests:Enqueue(H.Clip({ present = { header = "Eagan", label = "Second", portrait = { kind = "none" } } }))
 Expect("a waiting line gets no row, the title counts it", tostring(Skin.rows) .. " " .. Skin.count:GetText(), "nil • +1")
 Spoken:StopAll()

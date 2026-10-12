@@ -1179,6 +1179,34 @@ local function PartFace(moment)
     return face
 end
 
+-- Each part's header where DialogueUI is installed: the top of Spoken's DialogueUI window, with
+-- who says the part and the part's name. Made once, given the quest shown. false where it failed
+-- to build; nil (asked again) where Spoken draws none, and the part has its face instead.
+local partHeaders = {}
+
+local function PartHeader(moment)
+    if partHeaders[moment] ~= nil then return partHeaders[moment] or nil end
+    if not (page and Spoken and Spoken.CreateDialogueHeader) then return nil end
+    local ok, header = pcall(Spoken.CreateDialogueHeader, Spoken, page.body.child)
+    if not ok then
+        print("|cffff5555Spoken Quests|r: " .. tostring(header))
+        partHeaders[moment] = false
+        return nil
+    end
+    if not header then return nil end
+    header.frame:Hide()
+    partHeaders[moment] = header
+    return header
+end
+
+-- A part's name: the offer is the quest's description, by the word the client's quest window
+-- heads it with where the client has one; the hand-in its completion.
+local function PartName(moment)
+    local description = moment == "accept" and _G.QUEST_DESCRIPTION
+    if type(description) == "string" and description ~= "" then return description end
+    return L[HEADINGS[moment]]
+end
+
 -- Who says one moment, for its face: the creature SoundData names, else the object or item with
 -- the quest's item where an item offers it, else no one (the book).
 local function FaceSpeaker(id, moment)
@@ -1191,9 +1219,10 @@ local function FaceSpeaker(id, moment)
     return { objectOrItem = true, icon = icon, bullet = bullet }
 end
 
--- A quest's words in parts, the offer and the hand-in each under its heading, with the face and
--- name of who says it beside the heading, and Play and Report for that part where a pack voices
--- it; the hand-in only where it Shows. A part a pack voices whose words are not known says so,
+-- A quest's words in parts, the offer and the hand-in each under its header, with the face and
+-- name of who says it and the part's name, and Play and Report for that part where a pack voices
+-- it; the hand-in only where it Shows. Without DialogueUI, the header is the face beside the name
+-- over the part's heading. A part a pack voices whose words are not known says so,
 -- and is there to be played and reported. nil with no words and nothing voiced.
 local function Parts(id)
     local parts = {}
@@ -1212,10 +1241,17 @@ local function Parts(id)
                 PaintPartPlay(buttons.play)
                 list = { buttons.report, buttons.play }
             end
-            local face = PartFace(moment)
-            if face then face:SetSpeaker(FaceSpeaker(id, moment)) end
-            table.insert(parts, { heading = L[HEADINGS[moment]], text = text, buttons = list, face = face,
-                caption = face and SpeakerName(Speaker(id, moment)) or nil })
+            local name, speaker = PartName(moment), SpeakerName(Speaker(id, moment))
+            local header = PartHeader(moment)
+            local face = not header and PartFace(moment) or nil
+            if header then
+                header:SetSpeaker(FaceSpeaker(id, moment))
+                header:SetTexts(speaker, name)
+            elseif face then
+                face:SetSpeaker(FaceSpeaker(id, moment))
+            end
+            table.insert(parts, { heading = name, text = text, buttons = list, header = header, face = face,
+                caption = face and speaker or nil })
         end
     end
     return #parts > 0 and parts or nil

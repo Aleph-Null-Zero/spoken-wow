@@ -775,8 +775,8 @@ end
 local function Npc(name, id) return name .. " " .. VO.Utils:MakeGUID(VO.Enums.GUID.Creature, id) end
 stub.world.creatureDisplays[MCBRIDE], stub.world.creatureDisplays[DUGHAN] = { 3258 }, { 1990 }
 Click("Kobold Camp Cleanup")
--- Each part's header is the Small Window's: the face of who says it with the part's badge, their
--- name over the part's name.
+-- Without DialogueUI, each part's header is the Small Window's: the face of who says it with the
+-- part's badge, their name over the part's name.
 local function PartOf(heading)
     for _, part in ipairs(page.body.lastParts or {}) do if part.heading == heading then return part end end
 end
@@ -789,6 +789,10 @@ local function Face(part)
     return drawn .. " " .. tostring(face.badge:GetTexture()) .. " " .. tostring(part.caption)
 end
 local BADGES = SpokenEnv.MinimalPlayer.BADGES
+Expect("without DialogueUI, no DialogueUI header on either part",
+    tostring(PartOf(L.QUEST_PART_ACCEPT).header) .. " " .. tostring(PartOf(L.QUEST_PART_COMPLETE).header), "nil nil")
+Expect("the offer is named its description, the hand-in its completion",
+    L.QUEST_PART_ACCEPT .. "|" .. L.QUEST_PART_COMPLETE, "Description|Completion")
 Expect("the offer's header: its giver's face with the offer's badge, and its giver's name",
     Face(PartOf(L.QUEST_PART_ACCEPT)), "still 3258 " .. BADGES["quest-accept"] .. " Marshal McBride")
 Expect("...the completion's: the face and name of the one it is handed in to, with the completion's badge",
@@ -872,6 +876,43 @@ do
         tostring(slot.caption:IsShown()) .. " " .. points["heading LEFT"] .. " " .. tostring(face:IsShown()), "false 0,-27 false")
     for region, set in pairs(restore) do region.SetPoint = set end
     slot.heading.GetStringHeight, slot.caption.GetStringHeight = nil, nil
+    body:SetParts(parts)
+end
+-- A part with a header (Spoken:CreateDialogueHeader): drawn across the part's top in place of the
+-- heading, the face and the caption, its buttons on its controls' middle, the words under its line.
+do
+    local body, report, play = page.body, PartButton(L.QUEST_PART_ACCEPT, "report"), PartButton(L.QUEST_PART_ACCEPT, "play")
+    local parts = body.lastParts
+    -- Put away by the part above, which had Report alone.
+    play:Show()
+    local header = { frame = CreateFrame("Frame", nil, body.child) }
+    function header:Layout(width, room)
+        self.laidOut = width .. "," .. room
+        return 60, 25, 48
+    end
+    local slot = body.parts[1]
+    local width = body.frame.width
+    body.frame.width = 400
+    body:SetParts({ { heading = L.QUEST_PART_ACCEPT, text = "Words.", header = header, buttons = { report, play } },
+        { heading = L.QUEST_PART_COMPLETE, text = "More words.", header = { frame = CreateFrame("Frame", nil, body.child),
+            Layout = function() return 60, 25, 48 end } } })
+    local full = 400 - body:BarRoom()
+    local size = ns:Get("fontSize") + 1
+    Expect("a part's header laid out across the words' width, told the room its buttons take",
+        header.laidOut, full .. "," .. (report:GetWidth() + 4 + play:GetWidth()))
+    Expect("...at the part's top, where a page's words start", header.frame:IsShown() and header.frame.anchor.point .. " "
+        .. header.frame.anchor.x .. "," .. header.frame.anchor.y, "TOPLEFT 0,-18")
+    Expect("...its buttons centred on its controls' middle at the right", report.anchor.relativePoint .. " "
+        .. report.anchor.x .. "," .. report.anchor.y, "TOPLEFT " .. full .. "," .. -(18 + 25))
+    Expect("...the heading and caption not drawn", tostring(slot.heading:IsShown()) .. " " .. tostring(slot.caption:IsShown()),
+        "false false")
+    Expect("...the words 1.4 of their size under the header strip's line", body.parts[1].words.anchor.y,
+        -(18 + 48 + math.floor(1.4 * size + 0.5)))
+    Expect("...and 34 between one part and the next header", body.parts[2].words.anchor.y - body.parts[1].words.anchor.y
+        + (body.parts[1].words:GetStringHeight() or 0), -(34 + 48 + math.floor(1.4 * size + 0.5)))
+    body:SetParts(parts)
+    Expect("a header no longer in the parts put away", header.frame:IsShown(), false)
+    body.frame.width = width
     body:SetParts(parts)
 end
 play.scripts.OnClick(play)
@@ -1310,6 +1351,40 @@ stub.world.questID = CANDLES
 stub.FireEvent("QUEST_DETAIL")
 stub.world.questID = 0
 Expect("an English client keeps nothing: the English ships", VO.Addon.db.global.CompendiumText.enUS, nil)
+
+-- With DialogueUI, each part's header is the top of Spoken's DialogueUI window: who says it, and
+-- the part's name where the window has the quest's.
+do
+    local isLoaded = _G.IsAddOnLoaded
+    _G.IsAddOnLoaded = function(name) return name == "DialogueUI" or (isLoaded ~= nil and isLoaded(name)) end
+    _G.DialogueUI_DB = { Theme = 1, FrameSize = 2 }
+    _G.DUIQuestFrame = CreateFrame("Frame")
+    _G.DUIQuestFrame.frameWidth, _G.DUIQuestFrame.frameHeight = 624, 734
+    _G.DUIFont_Quest_Paragraph = { GetFont = function() return "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf", 14 end }
+    -- The client's own heading for a quest's text, in its quest window.
+    _G.QUEST_DESCRIPTION = "Quest Description"
+    SpokenQuestsCompendium.quests[KOBOLDS].ender = DUGHAN
+    Tab:Open(KOBOLDS)
+    local offer, handIn = page.body.lastParts[1], page.body.lastParts[#page.body.lastParts]
+    local function Header(part)
+        local header = part.header
+        if not header then return "no header" end
+        local still = header.portrait.still
+        return tostring(header.frame:IsShown()) .. " " .. (still:IsShown() and "still " .. tostring(still.display) or "no still")
+            .. " " .. tostring(header.badge:GetTexture()) .. " " .. header.name:GetText() .. "|" .. header.title.text:GetText()
+    end
+    Expect("with DialogueUI, the offer under the DialogueUI window's header: its giver, named, and the client's word for it",
+        Header(offer), "true still 3258 " .. BADGES["quest-accept"] .. " Marshal McBride|Quest Description")
+    Expect("...the hand-in under its own: the one it is handed in to, and its completion",
+        Header(handIn), "true still 1990 " .. BADGES["quest-complete"] .. " Marshal Dughan|" .. L.QUEST_PART_COMPLETE)
+    Expect("...on the page, in place of the Small Window's face", tostring(offer.header.frame:GetParent() == page.body.child)
+        .. " " .. tostring(offer.face) .. " " .. tostring(handIn.face), "true nil nil")
+    Expect("...its words named after it too", offer.heading, "Quest Description")
+    _G.QUEST_DESCRIPTION = nil
+    Tab:Refresh()
+    Expect("a client with no word for it: Spoken's", page.body.lastParts[1].header.title.text:GetText(), L.QUEST_PART_ACCEPT)
+    _G.IsAddOnLoaded, _G.DialogueUI_DB, _G.DUIQuestFrame, _G.DUIFont_Quest_Paragraph = isLoaded, nil, nil, nil
+end
 
 -- A client without the art: the list is drawn in plain colours instead, and still works.
 _G.C_Texture = { GetAtlasInfo = function() return nil end }

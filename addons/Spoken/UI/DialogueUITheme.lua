@@ -81,9 +81,9 @@ function Theme:ThemeID()
 end
 
 --- Built from the id, not read off DialogueUI's window, so overriding its theme shows the
---- other folder.
-function Theme:TexturePath()
-    return ART .. (self:ThemeID() == 2 and "Theme_Dark/" or "Theme_Brown/")
+--- other folder. `themeID` names a theme's folder whatever the theme in use.
+function Theme:TexturePath(themeID)
+    return ART .. ((themeID or self:ThemeID()) == 2 and "Theme_Dark/" or "Theme_Brown/")
 end
 
 --- The text colours: `palette` 1 or 2 where a look fixes it (a book's paper or stone), otherwise
