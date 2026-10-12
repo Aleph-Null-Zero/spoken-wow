@@ -426,6 +426,9 @@ Expect("...off, everything again", Has(Shown(), "Westfall"), true)
 page:Show({ title = "Ranger Captain Alleria Windrunner", target = ALLERIA })
 Expect("a voiced readable's page has Report", page.report ~= nil and page.report:IsShown(), true)
 Expect("...in the corner, Play to its left", select(2, page.play:GetPoint(1)) == page.report, true)
+-- 36 is the text's right inset on the page; a quest's part buttons end at the same column.
+Expect("...the corner over the words' right edge, where a part's buttons end",
+    page.report.anchor.point .. " " .. page.report.anchor.x, "TOPRIGHT " .. -(36 + page.body:BarRoom()))
 local copied
 local showCopyLink = B.ShowCopyLink
 B.ShowCopyLink = function(_, url) copied = url end

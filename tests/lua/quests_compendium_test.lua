@@ -693,6 +693,19 @@ local play = PartButton(L.QUEST_PART_ACCEPT, "play")
 Expect("a voiced part has Play on its heading's line", play ~= nil and play:IsShown(), true)
 Expect("...and Report beside it", PartButton(L.QUEST_PART_ACCEPT, "report") ~= nil
     and PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
+do
+    -- The page's own buttons end over the words' right edge, 36 + the bar's room from the
+    -- page's right: a part's rightmost ends there too.
+    local body, report = page.body, PartButton(L.QUEST_PART_ACCEPT, "report")
+    local width = body.frame.width
+    body.frame.width = 400
+    body:SetParts(body.lastParts)
+    local fromPageRight = body.frame.anchor.x - (400 - report.anchor.x)
+    Expect("...ending in the column the page's own Play and Report end in",
+        report.anchor.relativeTo == body.child and fromPageRight, -(36 + body:BarRoom()))
+    body.frame.width = width
+    body:SetParts(body.lastParts)
+end
 play.scripts.OnClick(play)
 local queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end

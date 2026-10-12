@@ -83,7 +83,7 @@ function TextView:UpdateScrollBar()
 	-- A caller's scroll child (AddScrollBar) as wide as the frame, less the bar's room only while
 	-- there is something to scroll: rows reach the edge when the bar is not there.
 	if self.fitsChild then
-		local width = (self.frame:GetWidth() or 0) - (scrollable and (self.barWidth + 6) or 0)
+		local width = (self.frame:GetWidth() or 0) - (scrollable and self:BarRoom() or 0)
 		if width > 0 and math.abs((self.child:GetWidth() or 0) - width) > 0.5 then self.child:SetWidth(width) end
 	end
 
@@ -107,6 +107,12 @@ function TextView:UpdateScrollBar()
 	self.thumb:ClearAllPoints()
 	self.thumb:SetPoint("TOP", self.bar, "TOP", 0, -Clamp(fraction * travel, 0, travel))
 	self:UpdateFade()
+end
+
+--- What the text leaves free on its right for the scroll bar: the words, and a part's buttons,
+--- end this far inside the view's right edge, whether or not the bar shows.
+function TextView:BarRoom()
+	return self.barWidth + 6
 end
 
 function TextView:ScrollTo(value)
@@ -446,7 +452,7 @@ function TextView:SetText(str)
 	-- The scroll child does not inherit the ScrollFrame's width, so both it and
 	-- the FontString have to be told, or the text will not wrap. Leave room for
 	-- the scrollbar so it never sits on top of the last few characters.
-	local width = (self.frame:GetWidth() or 0) - (self.barWidth + 6)
+	local width = (self.frame:GetWidth() or 0) - self:BarRoom()
 	if width > 0 then
 		self.child:SetWidth(width)
 		self.text:SetWidth(width)
@@ -559,7 +565,7 @@ function TextView:SetParts(parts)
 	self.picture:Hide()
 	self.parts = self.parts or {}
 
-	local width = (self.frame:GetWidth() or 0) - (self.barWidth + 6)
+	local width = (self.frame:GetWidth() or 0) - self:BarRoom()
 	if width > 0 then
 		self.child:SetWidth(width)
 		self.wrappedAt = self.frame:GetWidth()

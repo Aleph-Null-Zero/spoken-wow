@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 35
+local VERSION = 36
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1843,7 +1843,9 @@ function Page:RefreshPlay()
 			if button.SetState then button:SetState(button.pageState) end
 		end
 	end
-	-- Level with the title's first line, from the corner leftward, 4 apart.
+	-- Level with the title's first line, from the words' right edge leftward, 4 apart: one column
+	-- with a part's buttons (TextView:SetParts), which end there.
+	local edge = RIGHT + (self.body.BarRoom and self.body:BarRoom() or 14)
 	local previous
 	for _, shown in ipairs({ report, button }) do
 		if shown and shown:IsShown() then
@@ -1851,7 +1853,7 @@ function Page:RefreshPlay()
 			if previous then
 				shown:SetPoint("RIGHT", previous, "LEFT", -4, 0)
 			else
-				shown:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -RIGHT, -TOP - 1)
+				shown:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -edge, -TOP - 1)
 			end
 			previous = shown
 		end
