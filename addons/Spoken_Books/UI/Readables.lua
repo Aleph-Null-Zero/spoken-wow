@@ -3,13 +3,13 @@
 --
 -- The list is laid out as the places' (Spoken Zones' tab): a banner for each continent, a card for
 -- each of its zones (how many of its writings are found, with a bar), a city a card inside the
--- zone around it; in an opened zone a card for each kind of writing -- books, journals, letters,
+-- zone around it; in an opened zone a line for each kind of writing -- books, journals, letters,
 -- notes, scrolls, tablets, plaques, gravestones, exhibits, pictures -- and the writings under it.
 -- After the continents, Other Lands' banner for the zones on none and Battlegrounds', each with a
 -- card for each of its zones; then a banner each for the seasonal events' readables, for those had
--- in too many zones to list under each and for those whose origin is not known, with a card for
--- each kind inside. With By Zone off, the list is a card for each kind alone, every readable under
--- its own. Where each is comes from Data/Places.lua; what this character has found, from
+-- in too many zones to list under each and for those whose origin is not known, with a line for
+-- each kind inside. With By Zone off, the list is a banner for each kind alone, every readable
+-- under its own. Where each is comes from Data/Places.lua; what this character has found, from
 -- SpokenBooksCharacter (Core.lua). A readable not found yet is listed greyed, with a padlock, and
 -- does not open, unless Unlock Unfound Books is on. On the right its pages, on parchment, with
 -- where it comes from and Play.
@@ -288,7 +288,7 @@ local function Named(label, whole)
 	return whole or (filter ~= "" and Matches(label))
 end
 
--- Set while the cards under a banner whose name the search matches are built: each is listed,
+-- Set while the rows under a banner whose name the search matches are built: each is listed,
 -- closed or open as the player left it, and opens and closes on a click as it does unsearched. A
 -- continent's every readable at once would be too long a list to read.
 local asLeft = false
@@ -301,7 +301,7 @@ local function SearchOpens(key)
 	return filter ~= "" and not asLeft and not searchClosed[key]
 end
 
--- While a search opens everything it finds, a click on an open card closes it, and opens it again.
+-- While a search opens everything it finds, a click on an open row closes it, and opens it again.
 local function SearchFold(row)
 	if filter == "" or row.asLeft or not row.closeKey then return false end
 	searchClosed[row.closeKey] = not searchClosed[row.closeKey] or nil
@@ -333,34 +333,14 @@ local function Leaves(ids, nest, into, whole)
 	end
 end
 
--- What each kind of writing shows on its card, from the game's own icons; plain parchment for the
--- rest.
-local KIND_ICON = {
-	book = [[Interface\Icons\INV_Misc_Book_09]],
-	letter = [[Interface\Icons\INV_Letter_04]],
-	note = [[Interface\Icons\INV_Misc_Note_01]],
-	scroll = [[Interface\Icons\INV_Scroll_03]],
-	tablet = [[Interface\Icons\INV_Misc_StoneTablet_04]],
-	plaque = [[Interface\Icons\INV_Misc_StoneTablet_03]],
-	grave = [[Interface\Icons\INV_Misc_StoneTablet_02]],
-	exhibit = [[Interface\Icons\INV_Misc_Statue_02]],
-	journal = [[Interface\Icons\INV_Misc_Book_11]],
-	picture = [[Interface\Icons\INV_Misc_Map_01]],
-	other = [[Interface\Icons\INV_Scroll_08]],
-}
-
--- A card's numbers: the found out of all on its line, the share and the bar. Its badge: a zone's
--- painting, or what its kind of writing looks like.
+-- A zone's card or a kind's line, with its numbers: the found out of all, the share and the bar.
+-- A zone's card has the zone's painting for a badge; a kind's line has none.
 local function Card(item, found, total)
-	-- Places are cards: zones and cities. A kind of writing is a line of the list, its readables
-	-- under it.
 	item.style = item.kind == "zone" and "card" or "group"
 	item.count, item.total = found, total
 	item.asLeft = asLeft
-	if item.kind == "zone" then
-		if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
-	else
-		item.icon = KIND_ICON[item.which] or KIND_ICON.other
+	if item.kind == "zone" and Spoken and Spoken.ZoneIcon then
+		item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID)
 	end
 	item.ratio = total > 0 and found / total or 0
 	item.tick = total > 0 and found == total
@@ -368,9 +348,9 @@ local function Card(item, found, total)
 	return item
 end
 
--- A card for each kind of writing in `byType` ({ [type] = ids }) with something listed, and its
+-- A line for each kind of writing in `byType` ({ [type] = ids }) with something listed, and its
 -- writings under it while it is open: closed until opened, as Quests' chains are, and always open
--- while searching. `item` makes each card's own fields.
+-- while searching. `item` makes each line's own fields.
 local function KindCards(byType, nest, into, item, opened, whole)
 	for _, type in ipairs(TYPES) do
 		local ids = byType[type] or {}
@@ -399,7 +379,7 @@ local function KindCards(byType, nest, into, item, opened, whole)
 end
 
 -- A zone's card, and when it is open (or a search finds something in it) its city's card, then a
--- card for each kind of writing in it. A city's card opens on its own, and shows only while its
+-- line for each kind of writing in it. A city's card opens on its own, and shows only while its
 -- zone is open.
 local function ZoneRows(mapID, nest, whole)
 	whole = Named(MapName(mapID), whole)
@@ -434,7 +414,7 @@ local function ZoneRows(mapID, nest, whole)
 end
 
 -- A group's readables (the seasonal events', those found across Azeroth or those of no known
--- origin): a banner of their own after the zones', holding a card for each kind of writing.
+-- origin): a banner of their own after the zones', holding a line for each kind of writing.
 local function GroupRows(key, label, ids)
 	if #ids == 0 then return {} end
 	local set, byType = {}, {}
@@ -463,7 +443,7 @@ local function GroupRows(key, label, ids)
 	return rows
 end
 
--- By Zone off: a card for each kind of writing, every one of it under it.
+-- By Zone off: a banner for each kind of writing, every one of it under it.
 local function TypeRows()
 	local out = {}
 	for _, type in ipairs(TYPES) do

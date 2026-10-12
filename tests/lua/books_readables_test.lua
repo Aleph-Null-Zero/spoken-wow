@@ -1,5 +1,5 @@
 -- The readables in Azeroth's Compendium: every book, letter, note and plaque, in a card for the
--- zone it is in under its continent's banner and a card for what it is, or by what it is
+-- zone it is in under its continent's banner and a line for what it is, or by what it is
 -- alone, found or not; a readable's page with
 -- where it comes from; the search, Found Only and Unlock Unfound Books; and the tabs once the
 -- places are there too. Against the shipped data (Data/Books.lua, Data/Places.lua). Run with

@@ -218,6 +218,9 @@ function SpokenBooks:SetupOptions()
 		SpokenLayout.Confirm(L.OPT_RESET_PAGE_CONFIRM, L.OPT_RESET, L.OPT_CANCEL, function()
 			SpokenBooks:ResetOptions()
 			layout:Refresh()
+			-- Found Only, Voiced Only and By Zone are among them: a Books tab open beside this page
+			-- is drawn again for them.
+			if SpokenBooks.RefreshReadables then SpokenBooks:RefreshReadables() end
 		end)
 	end, L.OPT_RESET_PAGE_TIP)
 	-- Switched off, the module is off: everything on its page greys out but its own switch.
