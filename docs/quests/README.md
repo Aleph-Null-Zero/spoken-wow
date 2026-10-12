@@ -1391,6 +1391,18 @@ Two generated files feed it, both committed so the addon never needs a database:
   whose `BreadcrumbForQuestId` names it, where the DB has that column. A negative `PrevQuestID`
   (the other quest only has to be in the log) is no link. Quests the corpus lacks are passed
   through, and a link closing a loop is dropped. `--no-db` keeps the links already written.
+  The DB has almost none of Forever's own quests, so after it comes Forever's client, as players
+  recorded it: Efficient Games' open data ([EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf),
+  CC BY 4.0, credited in `THIRD_PARTY.md`), `quests.enUS.json` and `npcs.json` of every
+  `wow_classic_beta` build, the latest build's record of a quest winning. Its `zoneAreaId` (a zone
+  through Forever's tables) or `categoryId` (a QuestSort) places a quest the DB does not, before
+  the giver's spawn; a `zoneAreaId` of a Forever area no map shows is placed where players saw
+  its giver (`npcs.json` `offers`, else `takes`, by `positions[].uiMap`). Its `raceMask` limits a
+  quest the DB opens to everyone, before `factions.json`, and its `nextQuestId` links a quest no
+  DB link reaches. It adds and never changes what the DB says. The files are cached in
+  `tools/cache/efficient-games/<build>/` under each one's last collection day, so a run fetches
+  only the index and what changed, and reads the cache offline. `--without-efficient-games`
+  leaves it out.
 - `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
   `tts_cli/quest_text.py`): each quest's accept, progress and complete text, the corpus's
   `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one

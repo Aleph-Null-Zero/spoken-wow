@@ -16,6 +16,12 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   chain is (quest_races below).
 - Chains: the quest before each one in its storyline (`prev`), from the same DB's
   quest_template_addon (chain_links below), so the tab can group a zone's quests into their chains.
+- Forever's own quests are almost all missing from the DB, so after it comes what Forever's
+  client says of each quest, as players recorded it: Efficient Games' open data (EG Link,
+  github.com/JIVESCORP/eg-link-output-wowf, CC BY 4.0; quests.enUS.json and npcs.json, the
+  latest build's record of each quest, cached in cache/efficient-games/). Its zone or quest
+  sort, race mask and nextQuestId fill in where the DB has none, and change nothing it has.
+  --without-efficient-games leaves it out.
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
   Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
@@ -51,6 +57,11 @@ CACHE = os.path.join(HERE, "cache")
 # own zones and sorts resolve to nothing, even where the DB names them.
 BUILD = "1.60.1.70338"
 ERA_BUILD = "1.15.9.69109"
+# Efficient Games' Forever data: what players' Forever clients recorded, per client build (EG Link,
+# CC BY 4.0, credited in THIRD_PARTY.md). Cached in cache/efficient-games/.
+EG_DATA = "https://raw.githubusercontent.com/JIVESCORP/eg-link-output-wowf/main/data"
+EG_PRODUCT = "wow_classic_beta"
+EG_CACHE = os.path.join(CACHE, "efficient-games")
 LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"]
 
 # The dungeons, under the zone their entrance is in (as the books' places have them).
@@ -109,14 +120,29 @@ class Maps:
     Era's for an area or a point Forever's do not place."""
 
     def __init__(self, builds=(BUILD, ERA_BUILD)):
-        self.assign_sets, self.area_zone, self.areas = [], {}, {}
+        self.assign_sets, self.area_zone, self.areas, self.uimaps = [], {}, {}, {}
         for build in builds:
-            assigns, area_zone = zone_assignments(table("UiMap", build=build), table("UiMapAssignment", build=build))
+            uimaps = table("UiMap", build=build)
+            assigns, area_zone = zone_assignments(uimaps, table("UiMapAssignment", build=build))
             self.assign_sets.append(assigns)
             for area, zone in area_zone.items():
                 self.area_zone.setdefault(area, zone)
             for r in table("AreaTable", build=build):
                 self.areas.setdefault(int(r["ID"]), r)
+            for r in uimaps:
+                self.uimaps.setdefault(int(r["ID"]), r)
+
+    def zone_of_uimap(self, uimap):
+        """The zone map (Type 3) a map is or lies in: a city's district or a dungeon's floor is in
+        its zone. None for a continent or the world."""
+        for _ in range(6):
+            row = self.uimaps.get(uimap)
+            if not row or row["Type"] in ("0", "1", "2"):
+                return None
+            if row["Type"] == "3":
+                return uimap
+            uimap = int(row["ParentUiMapID"])
+        return None
 
     def zone_of_area(self, area):
         for _ in range(4):
@@ -177,7 +203,115 @@ def corpus_quests():
     return quests, givers, corpus.get("spawns", {})
 
 
-def chain_links(rows, known):
+def fetch(url, path):
+    request = urllib.request.Request(url, headers={"User-Agent": "curl/8.0"})
+    with urllib.request.urlopen(request) as response:
+        data = response.read()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as out:
+        out.write(data)
+
+
+def eg_datasets(name):
+    """{build: Efficient Games' `name` dataset of that Forever build}, oldest build first.
+
+    The index is read afresh when it can be, since a build's files grow as players send more,
+    else from the cache. A build's file is cached under its last collection day and record count,
+    so a file that changed is fetched again and one that did not is not."""
+    index_path = os.path.join(EG_CACHE, "index.json")
+    try:
+        fetch(f"{EG_DATA}/index.json", index_path)
+    except OSError as e:
+        if not os.path.exists(index_path):
+            raise
+        print(f"Efficient Games' index not reached ({e}); the cached one is read")
+    with open(index_path, encoding="utf-8") as f:
+        builds = json.load(f)["products"].get(EG_PRODUCT, {})
+    out = {}
+    for build in sorted(builds, key=lambda b: tuple(int(n) for n in b.split("."))):
+        entry = builds[build].get(name)
+        if not entry:
+            continue
+        path = os.path.join(EG_CACHE, build, f"{name}-{entry['lastCollectedOn']}-{entry['records']}.json")
+        if not os.path.exists(path):
+            fetch(f"{EG_DATA}/{EG_PRODUCT}/{build}/{name}.json", path)
+        with open(path, encoding="utf-8") as f:
+            out[build] = json.load(f)
+    return out
+
+
+def forever_quests(quest_sets, npc_sets):
+    """Forever's quests as its client has them, from Efficient Games' datasets ({build: data},
+    oldest first): {questID: the latest build's record}, and {questID: [uiMapIDs]} where players
+    saw an NPC or object offer the quest, else take it in."""
+    quests = {}
+    for data in quest_sets.values():
+        for qid, q in data.get("quests", {}).items():
+            quests[int(qid)] = q
+    seen = {"offers": {}, "takes": {}}
+    for data in npc_sets.values():
+        for kind in ("npcs", "objects"):
+            for rec in data.get(kind, {}).values():
+                maps = {p["uiMap"] for p in rec.get("positions", []) if p.get("uiMap")}
+                for key, into in seen.items():
+                    for qid in rec.get(key, {}):
+                        into.setdefault(int(qid), set()).update(maps)
+    where = {}
+    for qid in set(seen["offers"]) | set(seen["takes"]):
+        maps = seen["offers"].get(qid) or seen["takes"].get(qid)
+        if maps:
+            where[qid] = sorted(maps)
+    return quests, where
+
+
+def eg_races(q):
+    """A quest's raceMask (16 hex digits, PlayableRaceBit) as a number, 0 where it has none."""
+    return int(q.get("raceMask") or "0", 16)
+
+
+def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
+    """(zones, sort, which source placed it) for a quest, the first that has an answer:
+
+    - the DB's QuestSortID: an area's zone, or a sort the client names (negative);
+    - Forever's client (`eg`, its Efficient Games record): its zoneAreaId's zone, or its
+      categoryId's sort. A zoneAreaId of a Forever area no map shows (Ruins of Lordaeron, the
+      Excavation Site in the Wetlands) is placed where players saw its giver (`seen`, uiMapIDs);
+    - where its giver stands (`giver_zones`, from the corpus's spawns);
+    - where players saw its giver.
+    """
+    if sort > 0:
+        zone = maps.zone_of_area(sort)
+        if zone:
+            return [zone], None, "db"
+    elif sort < 0 and -sort in sorts:
+        return [], -sort, "db"
+
+    def seen_zones():
+        zones = []
+        for uimap in seen:
+            zone = maps.zone_of_uimap(uimap)
+            if zone and zone not in zones:
+                zones.append(zone)
+        return zones
+
+    if eg:
+        area, category = eg.get("zoneAreaId") or 0, eg.get("categoryId") or 0
+        zone = area > 0 and maps.zone_of_area(area)
+        if zone:
+            return [zone], None, "client"
+        if category > 0 and category in sorts:
+            return [], category, "client"
+        if area > 0 and seen_zones():
+            return seen_zones(), None, "client"
+    zones = giver_zones()
+    if zones:
+        return zones, None, "giver"
+    if seen_zones():
+        return seen_zones(), None, "client"
+    return [], None, None
+
+
+def chain_links(rows, known, later=None):
     """{questID: the quest before it in its storyline}, for the quests in `known`.
 
     `rows` is quest_template_addon as {questID: {"prev", "next", "group", "breadcrumb"}}:
@@ -188,6 +322,8 @@ def chain_links(rows, known):
       of them) leave the lowest id as the one before.
     - BreadcrumbForQuestId: a breadcrumb leads to its quest, which comes after it where nothing
       else does.
+    - `later` ({questID: the quest it opens}, Forever's client's nextQuestId) links a quest only
+      where no link of the DB's reaches a quest the corpus has.
     A quest the corpus lacks is passed through to the one before it, and a link that would close a
     loop is dropped, so every chain has a first quest.
     """
@@ -195,24 +331,30 @@ def chain_links(rows, known):
     for qid, row in rows.items():
         if (row.get("prev") or 0) > 0:
             before[qid] = row["prev"]
-    for kind in ("next", "breadcrumb"):
+    client_before = {}
+    nexts = [{qid: row.get(kind) or 0 for qid, row in rows.items()} for kind in ("next", "breadcrumb")]
+    for opens, into in [(n, before) for n in nexts] + [(later or {}, client_before)]:
         opened = {}
-        for qid, row in sorted(rows.items()):
-            target = row.get(kind) or 0
+        for qid, target in sorted(opens.items()):
             if target > 0 and target != qid:
                 opened.setdefault(target, qid)
         for target, qid in opened.items():
-            before.setdefault(target, qid)
+            into.setdefault(target, qid)
 
+    # The DB's links first; the client's where the DB's lead to no quest the corpus has (a
+    # breadcrumb it lacks, say) or to none at all.
     def known_before(qid):
-        seen = {qid}
-        step = before.get(qid)
-        while step is not None and step not in known:
-            if step in seen:
-                return None
-            seen.add(step)
-            step = before.get(step)
-        return step
+        for first in (before.get(qid), client_before.get(qid)):
+            seen, step = {qid}, first
+            while step is not None and step not in known:
+                if step in seen:
+                    step = None
+                    break
+                seen.add(step)
+                step = before.get(step, client_before.get(step))
+            if step is not None:
+                return step
+        return None
 
     links = {}
     for qid in sorted(known):
@@ -260,19 +402,22 @@ def side_of(races):
     return None
 
 
-def gates(rows):
+def gates(rows, later=None):
     """{questID: the quests that open it}, from quest_template_addon as chain_links reads it: its
     PrevQuestID, else every quest whose NextQuestID names it (an ExclusiveGroup's alternatives, or
-    all of them). A breadcrumb opens nothing: its quest can be taken without it."""
-    out, opened = {}, {}
+    all of them), else every quest whose nextQuestId in `later` (Forever's client) names it. A
+    breadcrumb opens nothing: its quest can be taken without it."""
+    out = {}
     for qid, row in rows.items():
         if (row.get("prev") or 0) > 0:
             out[qid] = {row["prev"]}
-        target = row.get("next") or 0
-        if target > 0 and target != qid:
-            opened.setdefault(target, set()).add(qid)
-    for target, qids in opened.items():
-        out.setdefault(target, qids)
+    for opens in ({qid: row.get("next") or 0 for qid, row in rows.items()}, later or {}):
+        opened = {}
+        for qid, target in opens.items():
+            if target > 0 and target != qid:
+                opened.setdefault(target, set()).add(qid)
+        for target, qids in opened.items():
+            out.setdefault(target, qids)
     return out
 
 
@@ -426,39 +571,47 @@ def with_db(args):
                            "breadcrumb": int(crumb or 0)}
                 for qid, prev, nxt, group, crumb in cur.fetchall()}
     db.close()
-    links = chain_links(rows, set(ids))
+    # Forever's client after the DB, which has almost none of Forever's own quests: it adds
+    # links, races and places where the DB has none, and changes none the DB has.
+    if args.without_efficient_games:
+        client, seen = {}, {}
+    else:
+        client, seen = forever_quests(eg_datasets("quests.enUS"), eg_datasets("npcs"))
+    client_next = {qid: int(q["nextQuestId"]) for qid, q in client.items() if q.get("nextQuestId")}
+    links = chain_links(rows, set(ids), client_next)
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
-    races = quest_races({qid: quests[qid].get("races", 0) for qid in ids}, sides, gates(rows))
+    masks = {}
+    for qid in ids:
+        masks[qid] = quests[qid].get("races", 0)
+        if not playable_races(masks[qid]) and qid in client:
+            masks[qid] = eg_races(client[qid])
+    races = quest_races(masks, sides, gates(rows, client_next))
     leaks = side_leaks(races, links)
 
     sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
                         for locale in ["enUS"] + LOCALES})
 
-    placed = unplaced = by_sort = 0
+    placed = unplaced = by_sort = by_client = 0
     quest_lines, used_sorts = {}, set()
     for qid in ids:
         q = quests[qid]
-        sort = q.get("sort", 0)
-        zones = []
-        group = None
-        if sort > 0:
-            z = maps.zone_of_area(sort)
-            if z:
-                zones = [z]
-        elif sort < 0 and -sort in sorts:
-            group = -sort
+        zones, group, source = place(
+            q.get("sort", 0), maps, sorts, client.get(qid), seen.get(qid, ()),
+            lambda: maps.giver_zones(givers[qid], spawns) if qid in givers else [])
+        if group:
             used_sorts.add(group)
-        if not zones and group is None and qid in givers:
-            zones = maps.giver_zones(givers[qid], spawns)
         if zones:
             placed += 1
         elif group:
             by_sort += 1
         else:
             unplaced += 1
-        quest_lines[qid] = quest_line(qid, q["title"], zones, group, races[qid], q.get("classes", 0),
-                                      links.get(qid))
+        by_client += 1 if source == "client" else 0
+        title = q["title"]
+        if title == str(qid) and client.get(qid, {}).get("title"):
+            title = client[qid]["title"]
+        quest_lines[qid] = quest_line(qid, title, zones, group, races[qid], q.get("classes", 0), links.get(qid))
 
     sort_lines = {}
     for sid in sorted(used_sorts):
@@ -466,7 +619,8 @@ def with_db(args):
         locs = [f"{l} = {lua_string(names[l])}" for l in LOCALES if names.get(l) and names[l] != names.get("enUS")]
         sort_lines[sid] = f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
     return quest_lines, sort_lines, (f"{placed} in a zone, {by_sort} under a class, profession or season, "
-                                     f"{unplaced} with no place; {len(used_sorts)} sorts; "
+                                     f"{unplaced} with no place ({by_client} placed by Forever's client); "
+                                     f"{len(used_sorts)} sorts; "
                                      f"{len(links)} after another in a chain; "
                                      f"{sum(1 for m in races.values() if m)} limited by race, "
                                      f"{len(leaks)} not on the side of the quest before them")
@@ -475,6 +629,8 @@ def with_db(args):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--no-db", action="store_true", help="add the corpus's new quests without a database")
+    ap.add_argument("--without-efficient-games", action="store_true",
+                    help="leave Efficient Games' Forever client data out: the DB and the corpus alone")
     ap.add_argument("--host", default=os.environ.get("COMPENDIUM_MYSQL_HOST", "127.0.0.1"))
     ap.add_argument("--port", type=int, default=int(os.environ.get("COMPENDIUM_MYSQL_PORT", "3317")))
     ap.add_argument("--user", default=os.environ.get("COMPENDIUM_MYSQL_USER", "root"))
