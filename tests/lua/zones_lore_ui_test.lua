@@ -464,7 +464,9 @@ Expect("a city not discovered is in its zone, not its continent",
     page.title.text .. "|" .. page.sub.text.text, "Orgrimmar|" .. Z.L.IN_ZONE_FMT:format("Durotar"))
 -- Opened from the map's panel, a place not discovered says so instead of telling its story.
 Z:ShowLoreFor(1411, "sen'jin village")
-Expect("a place not discovered, opened from elsewhere, says so", page.title.text .. ": " .. page.body.text.text, "Sen'jin Village: " .. Z.L.NOT_DISCOVERED)
+Expect("a place not discovered, opened from elsewhere, says so and to travel there to discover it",
+    page.title.text .. ": " .. page.body.text.text,
+    "Sen'jin Village: You have not discovered this place yet. Travel there to discover it.")
 Expect("...with nothing to play", page.play.mapID, nil)
 Shown()
 Expect("...and is not counted found for being chosen", RowFor("Durotar").count.text, "1/3 • 33%")
