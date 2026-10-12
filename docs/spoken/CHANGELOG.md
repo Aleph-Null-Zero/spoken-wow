@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The Compendium's Books and Quests pages are written in the same dark ink as Zones'**, with
+  the same faint band behind the title. Their words were a lighter brown that looked greyed out.
+  *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's line under a book's title stays on one line.** A book found in several places
   listed them all over two lines; the line is now cut short. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing

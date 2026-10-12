@@ -40,6 +40,8 @@ end
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 _G.SpokenBooksSettings, _G.SpokenBooksCharacter = nil, nil
+-- The spellbook's colour, which the places' page writes in too.
+_G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.2, 0.09, 0 end }
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Layout", "UI/TextView", "UI/Compendium", "UI/Readables", "Events", "Commands" }) do
@@ -108,6 +110,7 @@ Expect("...one found open to read", RowFor("Kurdran Wildhammer").row.locked, fal
 Click("Kurdran Wildhammer")
 local page = panel.page
 Expect("a readable's page: its title", page.title.text, "Kurdran Wildhammer")
+Expect("...in the spellbook's ink, as the places' page is", page.body.ink and page.body.ink[1], 0.2)
 Expect("...where it is", page.sub.text, L.KIND_WORLD .. " · Stormwind City")
 Expect("...on one line, cut short where it names many places", page.sub.wordWrap, false)
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)

@@ -20,7 +20,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 6
+local VERSION = 7
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -933,8 +933,14 @@ end
 local ZONES_ART = "Interface\\AddOns\\Spoken_Zones\\Textures\\Art\\"
 -- One ink for every word on the page: a lighter one for the line under the title and for a page
 -- with nothing chosen read as greyed out, and was hard to make out on the parchment.
+-- The spellbook's own, as the places' page has it: the game's colour is darker than the brown
+-- this falls back to.
 local INK = { 0.25, 0.16, 0.08 }
+if _G.SPELLBOOK_FONT_COLOR and SPELLBOOK_FONT_COLOR.GetRGB then INK = { SPELLBOOK_FONT_COLOR:GetRGB() } end
 local PAD, TOP, RIGHT = 24, 36, 36
+-- The spellbook header's backplate behind the title, as the places' page lays it: laid out as if it
+-- started this far left of the page, and cut there.
+local BACKPLATE_CUT, BACKPLATE_FULL = 40, 460
 
 local function ZonesLoaded()
 	if C_AddOns and C_AddOns.IsAddOnLoaded then return C_AddOns.IsAddOnLoaded("Spoken_Zones") end
@@ -971,6 +977,26 @@ function C.NewPage(parent, addon, play)
 		bg:SetColorTexture(0.86, 0.76, 0.56, 1)
 	end
 	self.bg, self.bgFile, self.bgCoords = bg, file, coords
+
+	if ZonesLoaded() then
+		local backplate = frame:CreateTexture(nil, "BORDER")
+		backplate:SetTexture(ZONES_ART .. "spellbook-list-backplate")
+		backplate:SetHeight(110)
+		backplate:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 28 - TOP)
+		backplate:SetAlpha(0.55)
+		local right, bottom = 0.617188, 0.828125
+		local function Fit()
+			local shown = BACKPLATE_FULL - BACKPLATE_CUT
+			local room = frame:GetWidth() or 0
+			if room > 0 then shown = math.min(shown, room) end
+			backplate:SetWidth(shown)
+			backplate:SetTexCoord(right * BACKPLATE_CUT / BACKPLATE_FULL,
+				right * (BACKPLATE_CUT + shown) / BACKPLATE_FULL, 0, bottom)
+		end
+		frame:HookScript("OnSizeChanged", Fit)
+		Fit()
+		self.backplate = backplate
+	end
 
 	local title = frame:CreateFontString(nil, "ARTWORK", _G.QuestTitleFont and "QuestTitleFont" or "GameFontNormalLarge")
 	local face = _G.QuestTitleFont and _G.QuestTitleFont.GetFont and _G.QuestTitleFont:GetFont()
