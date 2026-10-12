@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Books in Azeroth's Compendium files what is found inside a dungeon or raid under its card**,
+  in the zone of its entrance, as Quests does: the Dark Keeper nameplates under Blackrock Depths,
+  the lore books under Scholomance and the Scarlet Monastery. A zone with several dungeons holds
+  them under a Dungeons and Raids line. Searching for a dungeon's name lists all it holds, and
+  inside a dungeon the tab opens on its card. *([Nucabe](https://github.com/Nucabe))*
 - **Play in Azeroth's Compendium works as the quest log's.** It shows Stop while its part or book
   is read and Replay once you stop it; Stop no longer takes the line out of the queue, and Play
   while the queue is stopped plays at once. A queue emptied while stopped no longer stays stopped,

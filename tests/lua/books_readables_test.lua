@@ -24,7 +24,9 @@ local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "
     [1459] = { "Alterac Valley", 947 }, [1440] = { "Ashenvale", 1414 }, [1460] = { "Warsong Gulch", 1440 },
     [9001] = { "Zephras Isle", 947 },
     -- A hill on Kalimdor with nothing to read, and a map on no continent with nothing either.
-    [9002] = { "Bare Hills", 1414 }, [9003] = { "Empty Sea", 947 } }
+    [9002] = { "Bare Hills", 1414 }, [9003] = { "Empty Sea", 947 },
+    -- Two zones on Kalimdor with dungeons: Cragmoor two, Fenwatch one.
+    [9004] = { "Cragmoor", 1414 }, [9005] = { "Fenwatch", 1414 } }
 _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
@@ -66,6 +68,22 @@ for id, place in pairs({ [ISLE_NOTE] = { "Isle Tide Tables", 9001 }, [GULCH_NOTE
     SpokenBooksData.pages[id] = { book = id, number = 1, text = "Words of " .. place[1] .. "." }
     SpokenBooksData.books[id] = { title = place[1], pages = { id } }
     SpokenBooksPlaces.books[id] = { kind = "world", type = "note", zones = { place[2] } }
+end
+-- Cragmoor's two dungeons and Fenwatch's one, a readable inside each, a plaque outside in Cragmoor,
+-- and an epitaph had inside Fenwatch's dungeon and outside in Cragmoor.
+SpokenBooksPlaces.dungeons[9101] = { zone = 9004, "Hollow Vault", deDE = "Hohles Gewölbe" }
+SpokenBooksPlaces.dungeons[9102] = { zone = 9004, "Ember Halls" }
+SpokenBooksPlaces.dungeons[9103] = { zone = 9005, "Sunken Crypt" }
+local LEDGER, RUNE, SIGNPOST, EPITAPH = 990003, 990004, 990005, 990006
+for id, place in pairs({
+    [LEDGER] = { "Vault Ledger", "note", { 9004 }, { 9101 } },
+    [RUNE] = { "Ember Rune", "tablet", { 9004 }, { 9102 } },
+    [SIGNPOST] = { "Cragmoor Signpost", "plaque", { 9004 } },
+    [EPITAPH] = { "Crypt Epitaph", "grave", { 9004, 9005 }, { 9103 } },
+}) do
+    SpokenBooksData.pages[id] = { book = id, number = 1, text = "Words of " .. place[1] .. "." }
+    SpokenBooksData.books[id] = { title = place[1], pages = { id } }
+    SpokenBooksPlaces.books[id] = { kind = "world", type = place[2], zones = place[3], dungeons = place[4] }
 end
 
 -- Kurdran Wildhammer and Alleria Windrunner stand in Stormwind; A Dusty Unsent Letter is carried
@@ -128,6 +146,16 @@ Expect("...where their zone has nothing to read, their continent's banner", pane
 Expect("...its page in Azeroth, with what is found of it", panel.page.sub.text.text:match("^In Azeroth · %d+ of %d+ found$") ~= nil, true)
 Reopen(9003)
 Expect("...on no continent, the first continent's", panel.page.title.text, "Eastern Kingdoms")
+_G.GetInstanceInfo = function() return "Hollow Vault", "party", 1, "Normal", 5, 0, false, 9101 end
+Reopen(9004)
+Expect("...inside a dungeon, on its card, opened inside its zone's and its Dungeons and Raids line",
+    panel.page.title.text .. "|" .. tostring(RowFor("Cragmoor").row.open and RowFor(L.GROUP_DUNGEONS).row.open
+    and RowFor("Hollow Vault").row.open), "Hollow Vault|true")
+_G.GetInstanceInfo = function() return "Ember Halls", "party", 1, "Normal", 5, 0, false, 9999 end
+Reopen(9004)
+Expect("...inside one with nothing to read, on the zone", panel.page.title.text, "Cragmoor")
+_G.GetInstanceInfo = nil
+Reopen(9003)
 -- Landing far down the list, from the window closed and never laid out: the client's scroll frame
 -- takes an offset only within the range it last measured, and has no height until the window is
 -- laid out, a frame after it is shown.
@@ -181,6 +209,10 @@ do
     SpokenBooksSettings.compendiumFoundOnly = nil
     Reopen(9003)
 end
+-- Left open by the landing inside Hollow Vault: closed, so the list starts folded.
+Click("Hollow Vault")
+Click(L.GROUP_DUNGEONS)
+Click("Cragmoor")
 Click("Westfall")
 Reopen(1453)
 Expect("...and what the player chose, kept on reopening", panel.page.title.text, "Westfall")
@@ -271,14 +303,15 @@ end
 Click(L.GROUP_BATTLEGROUNDS)
 
 -- A readable in a city and in the zone around it (a book shelved in Ironforge and Dun Morogh) is
--- listed once, in the city: the zone's card counts the rows under it.
+-- listed once, in the city: the zone's card counts the rows under it, its dungeon's (Gnomeregan's)
+-- included.
 do
     Click("Dun Morogh")
     Click("Ironforge")
     local function Closed()
         Shown()
         for _, row in ipairs(rows) do
-            if row.shown ~= false and row.row and row.row.kind == "group" and (row.row.mapID == 1426
+            if row.shown ~= false and row.row and (row.row.kind == "group" or row.row.kind == "dungeon") and (row.row.mapID == 1426
                 or row.row.mapID == 1455) and not row.row.open then return row end
         end
     end
@@ -300,6 +333,121 @@ do
     Expect("...so the zone's card counts the rows under it", leaves, RowFor("Dun Morogh").row.total)
     Click("Ironforge")
     Click("Dun Morogh")
+end
+
+-- What is had inside a dungeon or a raid is under its card, in the zone of its entrance, as the
+-- Quests tab files the dungeon's quests: a zone with one dungeon has its card, a zone with several
+-- a Dungeons and Raids line holding a card for each.
+do
+    -- The row labelled `label` whose item passes `test`.
+    local function RowWhere(label, test)
+        Shown()
+        for _, row in ipairs(rows) do
+            if row.shown ~= false and row.row and row.row.label == label and test(row.row) then return row end
+        end
+    end
+    local function KindIn(label, mapID, dungeon)
+        return RowWhere(label, function(item) return item.kind == "group" and item.mapID == mapID and item.dungeon == dungeon end)
+    end
+    local function Press(row)
+        assert(row, "no such row")
+        row.scripts.OnClick(row)
+    end
+    Click("Cragmoor")
+    list = Shown()
+    Expect("a zone with several dungeons: a Dungeons and Raids line after the city, before its kinds of writing",
+        RowFor(L.GROUP_DUNGEONS) ~= nil and RowFor(L.GROUP_DUNGEONS).row.style == "group"
+        and RowFor(L.GROUP_DUNGEONS).row.nest == 1 and At(list, L.GROUP_DUNGEONS) < At(list, L.TYPE_PLAQUE), true)
+    Expect("...closed at first, without the toggle's badge", RowFor(L.GROUP_DUNGEONS).row.open == false
+        and not Has(list, "Hollow Vault") and not RowFor(L.GROUP_DUNGEONS).icon:IsShown(), true)
+    Expect("...what is had inside them gone from the zone's own kinds", KindIn(L.TYPE_NOTE, 9004) == nil
+        and KindIn(L.TYPE_TABLET, 9004) == nil and KindIn(L.TYPE_PLAQUE, 9004) ~= nil, true)
+    Expect("...the zone's card counting them still", RowFor("Cragmoor").row.total, 4)
+    Click(L.GROUP_DUNGEONS)
+    list = Shown()
+    Expect("...opened, a card for each dungeon by name", At(list, "Ember Halls") ~= nil
+        and At(list, "Ember Halls") < At(list, "Hollow Vault") and RowFor("Hollow Vault").row.style == "card"
+        and RowFor("Hollow Vault").row.nest, 2)
+    Expect("...its badge the Quests tab's key", RowFor("Hollow Vault").icon.texture, [[Interface\Icons\INV_Misc_Key_03]])
+    Expect("...the line's page its name in the zone, with what is found of it", panel.page.title.text .. "|"
+        .. panel.page.sub.text.text, L.GROUP_DUNGEONS .. "|" .. L.READABLES_IN_FMT:format("Cragmoor") .. " · "
+        .. L.FOUND_FMT:format(0, 2))
+    Click("Hollow Vault")
+    Expect("a dungeon's card opens on its kinds of writing, closed", KindIn(L.TYPE_NOTE, 9004, 9101) ~= nil
+        and KindIn(L.TYPE_NOTE, 9004, 9101).row.nest == 3 and not Has(Shown(), "Vault Ledger"), true)
+    Expect("...its page in the zone of its entrance", panel.page.title.text .. "|" .. panel.page.sub.text.text,
+        "Hollow Vault|" .. L.READABLES_IN_FMT:format("Cragmoor") .. " · " .. L.FOUND_FMT:format(0, 1))
+    Expect("...chosen, its card alone marked", RowFor("Hollow Vault").selected == true
+        and RowFor("Cragmoor").selected == false and RowFor(L.GROUP_DUNGEONS).selected == false, true)
+    Press(KindIn(L.TYPE_NOTE, 9004, 9101))
+    Expect("...a kind opening on its writings", Has(Shown(), "Vault Ledger") and RowFor("Vault Ledger").row.nest, 4)
+    Expect("...its page in the dungeon", panel.page.sub.text.text, L.READABLES_IN_FMT:format("Hollow Vault") .. " · "
+        .. L.FOUND_FMT:format(0, 1))
+    Press(KindIn(L.TYPE_NOTE, 9004, 9101))
+    Expect("...and closing again", Has(Shown(), "Vault Ledger"), false)
+    Click("Hollow Vault")
+    Expect("...the card closing on a click", Has(Shown(), "Hollow Vault") and KindIn(L.TYPE_NOTE, 9004, 9101) == nil, true)
+
+    Click("Fenwatch")
+    Expect("a zone with one dungeon has its card, no line", RowFor("Sunken Crypt") ~= nil
+        and RowFor("Sunken Crypt").row.style == "card" and RowFor("Sunken Crypt").row.nest == 1
+        and RowWhere(L.GROUP_DUNGEONS, function(item) return item.mapID == 9005 end) == nil, true)
+    Click("Sunken Crypt")
+    Press(KindIn(L.TYPE_GRAVE, 9005, 9103))
+    Press(KindIn(L.TYPE_GRAVE, 9004))
+    local twice = 0
+    for _, row in ipairs(rows) do
+        if row.shown ~= false and row.row and row.row.book == EPITAPH then twice = twice + 1 end
+    end
+    Expect("a readable had in a dungeon and outside it in another zone is listed in each", twice, 2)
+    Press(KindIn(L.TYPE_GRAVE, 9004))
+    Press(KindIn(L.TYPE_GRAVE, 9005, 9103))
+    Click("Sunken Crypt")
+    Click("Fenwatch")
+
+    -- The search: a dungeon named lists all it holds; a title inside one is found under its card.
+    local box
+    for _, child in ipairs(panel.children or {}) do if child.template == "SearchBoxTemplate" then box = child end end
+    local function Find(text)
+        box:SetText(text)
+        box.hooks.OnTextChanged[1](box)
+        return Shown()
+    end
+    list = Find("hollow vault")
+    Expect("a search naming a dungeon lists all it holds, under its zone and its line",
+        Has(list, "Cragmoor") and Has(list, L.GROUP_DUNGEONS) and Has(list, "Vault Ledger") and not Has(list, "Ember Rune")
+        and RowFor("Hollow Vault").row.open, true)
+    list = Find("ember rune")
+    Expect("...a title inside one found under its card", At(list, "Cragmoor") < At(list, "Ember Halls")
+        and At(list, "Ember Halls") < At(list, "Ember Rune") and not Has(list, "Hollow Vault"), true)
+    Click("Ember Halls")
+    Expect("...the card the search opened closing on a click", Has(Shown(), "Ember Halls")
+        and not Has(Shown(), "Ember Rune"), true)
+    list = Find("blackrock depths")
+    Expect("...the shipped nameplates under Blackrock Depths", Has(list, "Blackrock Depths")
+        and Has(list, "Dark Keeper Nameplate (1)"), true)
+    Find("")
+
+    -- Found Only and Voiced Only leave out a dungeon with nothing found or voiced, as a zone.
+    SpokenBooksCharacter.found[LEDGER] = true
+    SpokenBooksSettings.compendiumFoundOnly = true
+    B:RefreshReadables()
+    list = Shown()
+    Expect("Found Only keeps a dungeon with something found and leaves out one with nothing",
+        Has(list, "Hollow Vault") and not Has(list, "Ember Halls"), true)
+    SpokenBooksSettings.compendiumFoundOnly = false
+    local hasAudio = B.HasAudio
+    B.HasAudio = function(_, p) return p == RUNE end
+    SpokenBooksSettings.compendiumVoicedOnly = true
+    B:RefreshReadables()
+    list = Shown()
+    Expect("...Voiced Only one with nothing voiced", Has(list, "Ember Halls") and not Has(list, "Hollow Vault"), true)
+    SpokenBooksSettings.compendiumVoicedOnly = false
+    B.HasAudio = hasAudio
+    SpokenBooksCharacter.found[LEDGER] = nil
+    Click(L.GROUP_DUNGEONS)
+    Click("Cragmoor")
+
 end
 
 Click("Westfall")

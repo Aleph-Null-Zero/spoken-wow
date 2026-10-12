@@ -16,7 +16,9 @@
 // which database they read. Zones come from where each spawn stands: the area the server's own
 // map files put the point in (PLACES_MAPS), up to its zone through the client's AreaTable and
 // UiMapAssignment (wago.tools), because the server leaves its zone columns at 0. A dungeon is
-// under the zone its entrance is in (INSTANCE_ZONE).
+// under the zone its entrance is in (INSTANCE_ZONE), and a readable had there only from inside
+// a dungeon or raid names it (`dungeons`), so the Compendium files it under the dungeon's card as
+// the Quests tab files that dungeon's quests, by the same names (Spoken_Quests' `dungeons`).
 //
 // Committed, as Books.lua is: the addon builds on a clone with no database.
 
@@ -31,11 +33,12 @@ import mysql from "mysql2/promise";
 import { loadEnv } from "../../lib/env.mjs";
 import { areaReader } from "./lib/area.mjs";
 import { quote } from "./lib/lua.mjs";
-import { cannotBeHad, isTemplateCopy, typeOf } from "./lib/places.mjs";
+import { cannotBeHad, dungeonsOf, isTemplateCopy, typeOf } from "./lib/places.mjs";
 
 await loadEnv("books");
 
 const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Books.lua", import.meta.url));
+const QUESTS = fileURLToPath(new URL("../../../addons/Spoken_Quests/Data/Compendium.lua", import.meta.url));
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Places.lua", import.meta.url));
 const CACHE = fileURLToPath(new URL("./cache/", import.meta.url));
 // Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
@@ -82,6 +85,19 @@ const INSTANCE_ZONE = {
   489: 1460, // Warsong Gulch
   529: 1461, // Arathi Basin
 };
+// The dungeons and raids, by the names the Quests tab gives their cards: each line of
+// Spoken_Quests' `dungeons` table, Lua as it is there. An instance it does not name (the
+// battlegrounds, the PvP halls) is no dungeon here either, and stays its zone's.
+const questsLua = await readFile(QUESTS, "utf8");
+const dungeonPart = questsLua.slice(questsLua.indexOf("\tdungeons = {"));
+const DUNGEON_NAMES = new Map();
+for (const m of dungeonPart.slice(0, dungeonPart.indexOf("\n\t},")).matchAll(/^\t\t\[(\d+)\] = \{ (.*) \},\r?$/gm)) {
+  if (INSTANCE_ZONE[m[1]]) DUNGEON_NAMES.set(Number(m[1]), m[2]);
+}
+if (DUNGEON_NAMES.size === 0) throw new Error(`no dungeons read from ${QUESTS}`);
+// A spawn inside a dungeon is placed at -map until the file is written, so a readable's zones
+// still say which of them it is had in only from inside one.
+const placeOf = (z) => (z < 0 ? INSTANCE_ZONE[-z] : z);
 // Text objects the server has and never spawns, placed by hand: the nameplates in Blackrock
 // Depths' Dark Keeper vault.
 const UNSPAWNED = { "Dark Keeper Nameplate": 230 };
@@ -213,7 +229,7 @@ const CITY_IN = { 1453: 1429, 1454: 1411, 1455: 1426, 1456: 1412, 1457: 1438, 14
 const areaAt = areaReader(MAPS);
 
 function zoneAt(map, x, y) {
-  if (INSTANCE_ZONE[map]) return INSTANCE_ZONE[map];
+  if (INSTANCE_ZONE[map]) return DUNGEON_NAMES.has(map) ? -map : INSTANCE_ZONE[map];
   const box = boxAt(map, x, y);
   const area = areaAt(map, x, y);
   const zone = area && zoneOfArea(area);
@@ -300,7 +316,7 @@ try {
   for (const r of texts) {
     const book = pageBook.get(Number(r.page));
     let zones = textZones.get(Number(r.entry));
-    if (!zones && UNSPAWNED[r.name]) zones = new Set([INSTANCE_ZONE[UNSPAWNED[r.name]]]);
+    if (!zones && UNSPAWNED[r.name]) zones = new Set([-UNSPAWNED[r.name]]);
     if (!zones) continue;
     kind.set(book, "world");
     if (!where.has(book)) where.set(book, new Set());
@@ -470,14 +486,17 @@ function nameRef(name) {
 }
 
 const lines = [];
-const counts = { world: 0, carried: 0, wide: 0, event: 0, nowhere: 0, gone: 0, types: {} };
+const counts = { world: 0, carried: 0, wide: 0, event: 0, nowhere: 0, gone: 0, types: {}, inDungeon: 0, dungeons: new Map() };
 for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
   if (gone(id, book)) { counts.gone++; continue; }
   const k = kind.get(id);
   if (!k) { counts.nowhere++; continue; }
   const list_ = [...(sources.get(id)?.values() ?? [])]
+    .map((s) => ({ ...s, spots: s.zones, zones: new Set([...s.zones].map(placeOf)) }))
     .sort((a, b) => ORDER.indexOf(a.how) - ORDER.indexOf(b.how) || a.zones.size - b.zones.size || (a.name?.enUS ?? "").localeCompare(b.name?.enUS ?? ""));
-  const zones = new Set(k === "world" ? where.get(id) : list_.flatMap((s) => [...s.zones]));
+  const spots = new Set(k === "world" ? where.get(id) : list_.flatMap((s) => [...s.spots]));
+  const zones = new Set([...spots].map(placeOf));
+  const dungeons = dungeonsOf(spots, INSTANCE_ZONE);
   const wide = zones.size > WIDE;
   counts[k]++;
   if (wide) counts.wide++;
@@ -487,7 +506,14 @@ for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
   const parts = [`kind = "${k}"`, `type = "${type}"`];
   if (EVENTS.has(id)) { parts.push("event = true"); counts.event++; }
   if (wide) parts.push("wide = true");
-  else if (zones.size) parts.push(`zones = { ${[...zones].sort((a, b) => a - b).join(", ")} }`);
+  else if (zones.size) {
+    parts.push(`zones = { ${[...zones].sort((a, b) => a - b).join(", ")} }`);
+    if (dungeons.length) {
+      parts.push(`dungeons = { ${dungeons.join(", ")} }`);
+      counts.inDungeon++;
+      for (const d of dungeons) counts.dungeons.set(d, (counts.dungeons.get(d) ?? 0) + 1);
+    }
+  }
   if (k === "carried" && list_.length) {
     const from = list_.slice(0, SOURCES).map((s) => {
       const ref = nameRef(s.name);
@@ -503,6 +529,8 @@ const nameLines = nameList.map((n, i) => {
   const locs = LOCALES.filter((l) => n[l] && n[l] !== n.enUS).map((l) => `${l} = ${quote(n[l])}`);
   return `\t\t[${i + 1}] = { ${[quote(n.enUS), ...locs].join(", ")} },`;
 });
+const dungeonLines = [...DUNGEON_NAMES].sort((a, b) => a[0] - b[0])
+  .map(([map, names]) => `\t\t[${map}] = { zone = ${INSTANCE_ZONE[map]}, ${names} },`);
 
 const out = `-- AUTO-GENERATED by pipelines/books/tools/places.mjs. Do not edit by hand.
 --
@@ -512,7 +540,10 @@ const out = `-- AUTO-GENERATED by pipelines/books/tools/places.mjs. Do not edit 
 -- exhibit, picture or other. \`from\` names how a carried one is had, most specific first: { how, name, zone... }, the name an index
 -- into \`names\` (false where there is none, as for fishing). \`wide\` is a readable had in too many
 -- zones to list under each. \`event\` is one had only during a seasonal event, listed under
--- Holidays and Events rather than its zones. Zones are uiMapIDs. Regenerate with:  make books-places
+-- Holidays and Events rather than its zones. Zones are uiMapIDs. \`dungeons\` are the instance maps
+-- of the dungeons and raids a readable is had in from inside alone, in a zone it is had nowhere
+-- else in; the \`dungeons\` table below names each, with the zone its entrance is in. Regenerate
+-- with:  make books-places
 --
 -- A global rather than a private namespace, as Books.lua is: a data file cannot reach into the
 -- addon's environment.
@@ -527,11 +558,17 @@ ${lines.join("\n")}
 \tnames = {
 ${nameLines.join("\n")}
 \t},
+
+\tdungeons = {
+${dungeonLines.join("\n")}
+\t},
 }
 `;
 await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, out);
 console.log(`${counts.world} in the world, ${counts.carried} carried (${counts.wide} across Azeroth, ${counts.event} at events), ` +
   `${counts.nowhere} with no place, ${counts.gone} that cannot be had; ${nameList.length} names`);
+console.log(`${counts.inDungeon} in dungeons: ` + [...counts.dungeons].sort((a, b) => a[0] - b[0])
+  .map(([d, n]) => `${n} in ${DUNGEON_NAMES.get(d).match(/^"([^"]*)"/)[1]}`).join(", "));
 console.log(Object.entries(counts.types).map(([t, n]) => `${n} ${t}`).join(", "));
 console.log(`wrote ${OUT}`);

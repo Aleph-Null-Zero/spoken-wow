@@ -228,6 +228,14 @@ box, opens `spoken.rusty.one/contribute`, pastes, and sees exactly what is about
 before it goes — the same page, submitted again by the same or another reader, bumps a count
 on one row at `/contributions` rather than filing a second.
 
+**Azeroth's Compendium lists a readable in every zone it is had in.** A lore book shelved in
+Stormwind and in Scholomance is under both cards, because a player looking through either place
+expects to find it there. Inside a zone it is listed once: under the city where it is also in the
+zone around it, under the dungeon's card where it is had only from inside a dungeon whose entrance
+is in that zone (`dungeons` in `Data/Places.lua`). One had in more than eight zones goes under
+Across Azeroth instead. A continent's banner counts each readable once, so its count can be less
+than the sum of its zone cards.
+
 `UI/Layout.lua` is the fourth copy of a file that must stay byte-identical across
 Spoken, SpokenQuests, SpokenZones and SpokenBooks;
 `pipelines/quests/tests/test_package.py` is what enforces that.
