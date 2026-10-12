@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 36
+local VERSION = 37
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -636,6 +636,8 @@ local MAP_ICON = [[Interface\Icons\INV_Misc_Map_01]]
 -- A chain of quests: the game's quest scroll.
 local CHAIN_ICON = [[Interface\Icons\INV_Inscription_Scroll]]
 local CHECK = "questlog-icon-checkmark-yellow"
+-- One size for every tick in the column down the list's right, on cards and lines alike.
+local TICK_WIDTH, TICK_HEIGHT = 15, 13
 -- The icons' bevelled border, trimmed inside the badge's frame.
 local ICON_CROP = { 0.08, 0.92, 0.08, 0.92 }
 
@@ -1321,7 +1323,7 @@ local function DrawCard(row, item, indent, width)
 	row.tick:SetShown(ticked)
 	if ticked then
 		if Atlas(row.tick, CHECK) then
-			row.tick:SetSize(18, 15)
+			row.tick:SetSize(TICK_WIDTH, TICK_HEIGHT)
 		else
 			row.tick:SetTexture(READY)
 			row.tick:SetSize(14, 14)
@@ -1407,7 +1409,7 @@ local function DrawGroup(row, item, indent, onlyFound)
 	row.lock:SetShown(locked and true or false)
 	if ticked then
 		if Atlas(row.status, CHECK) then
-			row.status:SetSize(13, 11)
+			row.status:SetSize(TICK_WIDTH, TICK_HEIGHT)
 		else
 			row.status:SetTexture(READY)
 			row.status:SetSize(14, 14)
@@ -1454,7 +1456,7 @@ local function DrawLeaf(row, item, indent)
 	local status = item.done and "done" or item.going and "going" or nil
 	if status == "done" then
 		if Atlas(row.status, CHECK) then
-			row.status:SetSize(13, 11)
+			row.status:SetSize(TICK_WIDTH, TICK_HEIGHT)
 		else
 			row.status:SetTexture(READY)
 			row.status:SetSize(14, 14)
