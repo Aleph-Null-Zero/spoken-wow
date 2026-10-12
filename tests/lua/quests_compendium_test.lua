@@ -73,6 +73,10 @@ _G.GetQuestLogTitle = function(index)
     local id = questLog[index - 1]
     if id then return "A quest", 1, nil, false, false, false, 0, id end
 end
+_G.GetQuestLogIndexByID = function(id)
+    for i, logged in ipairs(questLog) do if logged == id then return i + 1 end end
+    return 0
+end
 _G.GetQuestLogSelection = function()
     for i, id in ipairs(questLog) do if id == logQuest then return i + 1 end end
     return 0
@@ -633,6 +637,25 @@ stub.world.questID = SHARPTALON
 stub.FireEvent("QUEST_DETAIL")
 Expect("...nor for one of another race's, the list leaving it out for this character", giver:IsShown(), false)
 completed[SHARPTALON] = nil
+-- Offered and not started, a quest's page is the padlock: no Open, unless it would show the words.
+local WOLVES = 33
+stub.world.questID = WOLVES
+stub.FireEvent("QUEST_DETAIL")
+Expect("...nor on the offer of a quest not started, whose page is locked", giver:IsShown(), false)
+C:Tab("quests").unlock.set(true)
+stub.FireEvent("QUEST_DETAIL")
+Expect("...but there with Unlock Unstarted Quests on", giver:IsShown() and giver.questID, WOLVES)
+VO.Addon.db.global.Compendium.FoundOnly = true
+stub.FireEvent("QUEST_DETAIL")
+Expect("...and not with Started Only on, which leaves the quest out of the list", giver:IsShown(), false)
+VO.Addon.db.global.Compendium.FoundOnly = false
+C:Tab("quests").unlock.set(false)
+questLog = { WOLVES }
+stub.ShowPanel("QuestFrameProgressPanel")
+stub.FireEvent("QUEST_PROGRESS")
+Expect("...there once the quest is in the quest log", giver:IsShown() and giver.questID, WOLVES)
+questLog = {}
+stub.ShowPanel("QuestFrameDetailPanel")
 stub.world.questID = 0
 stub.ShowPanel(nil)
 stub.FireEvent("QUEST_FINISHED")
@@ -651,12 +674,16 @@ Expect("...and open the quest", page.title.text, "Kobold Candles")
 questLog, logQuest = {}, nil
 QuestLog_UpdateQuestDetails()
 Expect("...not with no quest chosen", Tab.logButton:IsShown(), false)
+questLog = { HEIRLOOM }
 QuestMapFrame_ShowQuestDetails(HEIRLOOM)
 Expect("the map's quest log details have it", Tab.mapButton:IsShown() and Tab.mapButton.questID, HEIRLOOM)
 Spoken:SetPartOn("quests", false)
 QuestMapFrame_ShowQuestDetails(HEIRLOOM)
 Expect("...not with Quests off", Tab.mapButton:IsShown(), false)
 Spoken:SetPartOn("quests", true)
+questLog = {}
+QuestMapFrame_ShowQuestDetails(HEIRLOOM)
+Expect("...nor for a quest not started", Tab.mapButton:IsShown(), false)
 
 ---------------------------------------------------------------- Previously
 -- Left of Open in Azeroth's Compendium, on a quest that follows one this character has started:
@@ -670,8 +697,15 @@ Expect("no Previously while the quest before is not started", previously ~= nil 
 completed[NECKLACE] = true
 stub.FireEvent("QUEST_DETAIL")
 Expect("the quest giver's window has Previously once it is", previously:IsShown(), true)
-Expect("...left of Open in Azeroth's Compendium", previously.anchor ~= nil and previously.anchor.relativeTo == giver
+Expect("...in the place of Open in Azeroth's Compendium, hidden on the offer of a quest not started",
+    giver:IsShown() == false and previously.anchor ~= nil and previously.anchor.relativeTo == giver
+    and previously.anchor.point, "CENTER")
+C:Tab("quests").unlock.set(true)
+stub.FireEvent("QUEST_DETAIL")
+Expect("...left of it where it is shown", giver:IsShown() and previously.anchor.relativeTo == giver
     and previously.anchor.point == "RIGHT", true)
+C:Tab("quests").unlock.set(false)
+stub.FireEvent("QUEST_DETAIL")
 tooltip = {}
 _G.GameTooltip = { SetOwner = function() end, SetText = function(_, text) tooltip.title = text end,
     AddLine = function(_, text) tooltip.line = text end, Show = function() end, Hide = function() end }

@@ -1177,12 +1177,6 @@ local function Build(panel)
     QuestsTab.panel = panel
 end
 
---- Whether `questID` can be opened in the tab: it is there, its part is on, and it lists the quest
---- for this character's race and class.
-function QuestsTab:Has(questID)
-    return C ~= nil and C:Tab("quests") ~= nil and VO.Addon:IsPartOn() and questID ~= nil and Index().all[questID] == true
-end
-
 -- Whether this character has started `id`, asked now: what the tab last read may be from before
 -- the quest was handed in.
 local function StartedNow(id)
@@ -1195,6 +1189,20 @@ local function StartedNow(id)
     end
     if C_QuestLog and C_QuestLog.IsOnQuest then return C_QuestLog.IsOnQuest(id) and true or false end
     return GetQuestLogIndexByID ~= nil and (GetQuestLogIndexByID(id) or 0) > 0
+end
+
+--- Whether the tab is there, its part is on, and it lists `questID` for this character's race and
+--- class.
+function QuestsTab:Lists(questID)
+    return C ~= nil and C:Tab("quests") ~= nil and VO.Addon:IsPartOn() and questID ~= nil and Index().all[questID] == true
+end
+
+--- Whether opening the tab on `questID` shows its page: the list shows the quest (Started Only
+--- leaves out one not started) and it is started, or Unlock Unstarted Quests is on.
+function QuestsTab:Has(questID)
+    if not self:Lists(questID) then return false end
+    if StartedNow(questID) then return true end
+    return Unlocked() and not OnlyFound()
 end
 
 --- The quest before `questID` in its chain, where this character has started it and a voice pack

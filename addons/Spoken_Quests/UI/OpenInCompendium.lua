@@ -1,10 +1,13 @@
 -- Open in Azeroth's Compendium, where a player reads a quest: the quest giver's window, the
 -- quest log's details, and DialogueUI's window (UI/DialogueUIBridge.lua puts it in its row). The
--- button Spoken Zones' lore page has: the Compendium's tome in the player's round button.
+-- button Spoken Zones' lore page has: the Compendium's tome in the player's round button. Shown
+-- only for a quest whose page it would open: one the list shows this character, started, or any
+-- it shows with Unlock Unstarted Quests on.
 --
--- Left of it on the quest giver's window and in the quest logs, Previously: where the quest
--- follows another in its chain that this character has started, it plays what was said when that
--- one was handed in, as the Compendium's Play would, and stops it on a second click.
+-- Left of it on the quest giver's window and in the quest logs, or in its place where it is
+-- hidden, Previously: where the quest follows another in its chain that this character has
+-- started, it plays what was said when that one was handed in, as the Compendium's Play would,
+-- and stops it on a second click.
 --
 -- Not under setfenv(1, VoiceOver), for UI/QuestsTab.lua's reason.
 
@@ -91,11 +94,12 @@ local function NewPrevious(open, parent, tooltip)
     open.previous = button
 end
 
--- Shown left of `open` while `open` shows a quest that follows one with a recording to play.
-local function RefreshPrevious(open)
+-- Shown while the window shows `questID`, a quest the tab lists that follows one with a recording
+-- to play: left of `open`, or in its place where `open` is hidden because the quest would not open.
+local function RefreshPrevious(open, questID)
     local button = open and open.previous
     if not button then return end
-    local prev = open:IsShown() and QuestsTab:Previous(open.questID)
+    local prev = QuestsTab:Lists(questID) and QuestsTab:Previous(questID)
     if not prev then
         button.questID = nil
         button:Hide()
@@ -103,7 +107,11 @@ local function RefreshPrevious(open)
     end
     button.questID = prev
     button:ClearAllPoints()
-    button:SetPoint("RIGHT", open, "LEFT", -GAP, 0)
+    if open:IsShown() then
+        button:SetPoint("RIGHT", open, "LEFT", -GAP, 0)
+    else
+        button:SetPoint("CENTER", open, "CENTER")
+    end
     button:SetFrameLevel(open:GetFrameLevel())
     PreviousState(button)
     button:Show()
@@ -146,15 +154,13 @@ end
 
 function QuestsTab:RefreshGiverButton()
     if not giver then return end
-    local id = GetQuestID and GetQuestID()
-    if GiverQuestOnScreen() and self:Has(id) then
-        giver.questID = id
-        PlaceGiver()
-        giver:Show()
-    else
-        giver:Hide()
-    end
-    RefreshPrevious(giver)
+    local id = GiverQuestOnScreen() and GetQuestID and GetQuestID() or nil
+    local shown = self:Has(id)
+    giver.questID = shown and id or nil
+    -- Placed even while hidden: Previously takes its place then.
+    if id then PlaceGiver() end
+    giver:SetShown(shown)
+    RefreshPrevious(giver, id)
 end
 
 local function SetupGiver()
@@ -197,14 +203,11 @@ local logButton
 function QuestsTab:RefreshLogButton()
     if not logButton then return end
     local index = GetQuestLogSelection and GetQuestLogSelection()
-    local id = index and index > 0 and select(8, GetQuestLogTitle(index))
-    if Visible(_G.QuestLogDetailScrollFrame) and self:Has(id) then
-        logButton.questID = id
-        logButton:Show()
-    else
-        logButton:Hide()
-    end
-    RefreshPrevious(logButton)
+    local id = Visible(_G.QuestLogDetailScrollFrame) and index and index > 0 and select(8, GetQuestLogTitle(index)) or nil
+    local shown = self:Has(id)
+    logButton.questID = shown and id or nil
+    logButton:SetShown(shown)
+    RefreshPrevious(logButton, id)
 end
 
 local function SetupLog()
@@ -230,12 +233,8 @@ function QuestsTab:RefreshMapButton()
     if not mapButton then return end
     local details = QuestMapFrame.DetailsFrame
     local id = details.questID or (C_QuestLog and C_QuestLog.GetSelectedQuest and C_QuestLog.GetSelectedQuest())
-    if not self:Has(id) then
-        mapButton:Hide()
-        RefreshPrevious(mapButton)
-        return
-    end
-    mapButton.questID = id
+    local shown = self:Has(id)
+    mapButton.questID = shown and id or nil
     mapButton:ClearAllPoints()
     local overlay = VO.QuestOverlayUI
     local header = details.BackFrame or details
@@ -254,8 +253,8 @@ function QuestsTab:RefreshMapButton()
         local _, _, _, backInset, backOffset = back and back:GetPoint(1)
         mapButton:SetPoint("RIGHT", header, "RIGHT", -(backInset or INSET), backOffset or 4)
     end
-    mapButton:Show()
-    RefreshPrevious(mapButton)
+    mapButton:SetShown(shown)
+    RefreshPrevious(mapButton, id)
 end
 
 local function SetupMap()
