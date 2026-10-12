@@ -19,13 +19,16 @@ stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames
 stub.world.questID = 0; stub.ShowPanel(nil)
 
 -- Alterac Valley as Forever's newer client hangs it, in Hillsbrad Foothills; the other
--- battlegrounds and Zephras Isle under Azeroth itself.
+-- battlegrounds and Zephras Isle under Azeroth itself. Forever's Darkspear Islands is a map this
+-- client (Era's) has never heard of.
 local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "Eastern Kingdoms", 947 },
     [1429] = { "Elwynn Forest", 1415 }, [1453] = { "Stormwind City", 1415 }, [1436] = { "Westfall", 1415 },
     [1440] = { "Ashenvale", 1414 }, [1424] = { "Hillsbrad Foothills", 1415 }, [1459] = { "Alterac Valley", 1424 },
-    [1460] = { "Warsong Gulch", 947 }, [1461] = { "Arathi Basin", 947 }, [2524] = { "Darkspear Islands", 947 },
+    [1460] = { "Warsong Gulch", 947 }, [1461] = { "Arathi Basin", 947 },
     [2521] = { "Zephras Isle", 947 }, [2548] = { "Riverglades", 1415 }, [1427] = { "Searing Gorge", 1415 } }
+local UNKNOWN_MAP = 2524
 _G.C_Map.GetMapInfo = function(id)
+    if id == UNKNOWN_MAP then return nil end
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
 end
@@ -105,6 +108,17 @@ SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
 SpokenQuestsCompendium.quests[BACK].prev = PIE
 SpokenQuestsCompendium.quests[GOLDTOOTH].prev = BACK
 shipped[STEW].prev, shipped[LIVER_PIE].prev = JASPERLODE, STEW
+-- A mage's chain, in the Mage group: Speak with Bink, then Mage-tastic Gizmonitor.
+local BINK_CHAIN = "Speak with Bink"
+shipped[1880].prev = 1879
+-- Two chains of one name in Redridge Mountains: The Price of Shoes, then Return to Verner, named
+-- after Messenger to Stormwind, as the chain of that quest and the next is.
+local SHOES, VERNER, MESSENGER, MESSENGER_2, REDRIDGE = 118, 119, 120, 121, 1433
+shipped[VERNER].prev, shipped[MESSENGER_2].prev, shipped[SHOES].name = SHOES, MESSENGER, MESSENGER
+-- And a chain that starts with a quest this human cannot take, made an orc's here: Redridge
+-- Goulash, then A Watchful Eye and Looking Further.
+local GOULASH, WATCHFUL, FURTHER = 92, 94, 248
+shipped[GOULASH].races, shipped[WATCHFUL].prev, shipped[FURTHER].prev = 2, GOULASH, WATCHFUL
 local L, Tab = VO.L, VO.QuestsTab
 Expect("the shipped data has the quests' chains, from the world DB", linked, true)
 Expect("...and the names of chains given by hand, on their first quest", namedByHand, true)
@@ -142,8 +156,13 @@ local function PartButton(heading, kind)
     end
 end
 Expect("...and open on it", C:IsOpen("quests"), true)
-Expect("...where the player's zone is not known, on the first continent, as there is no Azeroth to land on",
+Expect("...where the player's continent is not known, on the first continent, as there is no Azeroth to land on",
     page.title.text, "Eastern Kingdoms")
+MAPS[9998] = { "An inn in Kalimdor", 1414 }
+stub.world.playerMapID = 9998
+Tab:Open()
+Expect("...where the player is on a continent and in no zone with quests, on that continent, as Zones and Books land",
+    page.title.text, "Kalimdor")
 
 -- The client's scroll frame: an offset only within the range it last measured, which it measures
 -- when asked or a frame after it is laid out, and no height until the window is first laid out.
@@ -371,7 +390,11 @@ Expect("...a line of the list for it, a class being no place", RowFor("Mage").ro
 Expect("...Classes' page its count alone, being no place", page.title.text == "Classes"
     and page.sub.text.text:match("^%d+ of %d+ completed$") ~= nil, true)
 Click("Mage")
-Expect("...a class's page in Classes, with its count", page.sub.text.text:match("^In Classes · %d+ of %d+ completed$") ~= nil, true)
+Expect("...a class's page naming Classes, not \"In\" it, with its count",
+    page.sub.text.text:match("^Classes · %d+ of %d+ completed$") ~= nil, true)
+Click(BINK_CHAIN)
+Expect("...a chain in a class naming the class, not \"In\" it", page.title.text .. "|" .. page.sub.text.text,
+    BINK_CHAIN .. "|Mage · 0 of 2 completed")
 Click("Mage")
 Click("Holidays and Events")
 Expect("...Events on the festivals and the Darkmoon Faire", Has(Shown(), "Lunar Festival") and Has(Shown(), "Darkmoon Faire"), true)
@@ -394,8 +417,8 @@ Expect("Other holds the Commendation Signets' hand-ins, the Argent Dawn's and th
     Has(list, "Commendation Signets") and Has(list, "Argent Dawn") and Has(list, "Library Books")
     and not Has(list, "Reputation"), true)
 Click(L.QUESTS_ELSEWHERE)
-Expect("...Place Unknown's page its count alone", page.title.text == L.QUESTS_ELSEWHERE
-    and page.sub.text.text:match("^%d+ of %d+ completed$") ~= nil, true)
+Expect("...Place Unknown's page naming Other, which holds it, with its count", page.title.text == L.QUESTS_ELSEWHERE
+    and page.sub.text.text:match("^Other · %d+ of %d+ completed$") ~= nil, true)
 Click(L.QUESTS_ELSEWHERE)
 Click("Other")
 Click("Kalimdor")
@@ -424,7 +447,11 @@ Expect("...no battleground among its continent's zones", Has(list, "Alterac Vall
 Click("Battlegrounds")
 list = Shown()
 Expect("...opening on a card for each battleground", Has(list, "Alterac Valley") and Has(list, "Warsong Gulch")
-    and Has(list, "Arathi Basin") and Has(list, "Darkspear Islands") and RowFor("Alterac Valley").row.style, "card")
+    and Has(list, "Arathi Basin") and RowFor("Alterac Valley").row.style, "card")
+Expect("...but none for a map this client has never heard of", Has(list, "Darkspear Islands") or Has(list, tostring(UNKNOWN_MAP)), false)
+local DARKSPEAR_QUEST = 98888 -- Conflict at Darkspear Islands
+Expect("...nor a quest there counted or opened in the Compendium", SpokenQuestsCompendium.quests[DARKSPEAR_QUEST].zones[1]
+    .. " " .. tostring(Tab:Lists(DARKSPEAR_QUEST)), UNKNOWN_MAP .. " false")
 Expect("...its page in Azeroth, counting their quests", page.title.text == L.QUESTS_SECTION_BATTLEGROUNDS
     and page.sub.text.text:match("^In Azeroth · 0 of %d+ completed$") ~= nil, true)
 Click("Battlegrounds")
@@ -435,8 +462,17 @@ Expect("...one not completed greyed, with the padlock", RowFor("Kobold Candles")
 
 Click("Kobold Camp Cleanup")
 Expect("a quest's page: its title", page.title.text, "Kobold Camp Cleanup")
-Expect("...where it is", page.sub.text.text, "Elwynn Forest")
+Expect("...in its zone", page.sub.text.text, "In Elwynn Forest")
 Expect("...on one line, cut short", page.sub.text.wordWrap, false)
+do
+    local zones = shipped[KOBOLDS].zones
+    shipped[KOBOLDS].zones = { 1429, 1436, ASHENVALE }
+    Tab:Refresh()
+    Expect("...a quest in several zones naming the first two and how many more", page.sub.text.text,
+        "In Elwynn Forest, Westfall and 1 more")
+    shipped[KOBOLDS].zones = zones
+    Tab:Refresh()
+end
 local words = PageWords() or ""
 Expect("...its words in parts, offered then handed in, each under its heading",
     page.body.lastParts ~= nil and page.body.lastParts[1].heading == L.QUEST_PART_ACCEPT
@@ -483,7 +519,8 @@ Expect("...and its zone's card counts it in progress, apart from the completed",
     RowFor("Elwynn Forest").count.text:match("ActiveQuestIcon.-|t1 +1/%d+ • ") ~= nil, true)
 RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
-Expect("...in progress, then where it is", page.sub.text.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
+Expect("...where it is, then the quest mark and In progress", page.sub.text.text,
+    "In Elwynn Forest · |TInterface\\GossipFrame\\ActiveQuestIcon:0|t " .. L.QUEST_IN_PROGRESS)
 Expect("...and its words, offered and under way", (PageWords() or ""):find("Did you gather those candles yet?", 1, true) ~= nil, true)
 Expect("...not the hand-in before it is completed: it tells how the quest ends",
     (PageWords() or ""):find("Thanks for the candles", 1, true) == nil
@@ -698,6 +735,25 @@ ClickChain("The Jasperlode Mine")
 Click("Westfall")
 Click("Elwynn Forest")
 
+-- Chains of one name side by side in one place are told apart by a number.
+Tab:Open(VERNER)
+do
+    local first, second = ChainRow("Messenger to Stormwind (1)"), ChainRow("Messenger to Stormwind (2)")
+    Expect("chains of one name in one place are numbered, in the order of their first quests' ids",
+        first and second and (first.row.first .. "|" .. second.row.first), SHOES .. "|" .. MESSENGER)
+end
+ClickChain("Messenger to Stormwind (2)")
+Expect("...the number on the chain's page too", page.title.text, "Messenger to Stormwind (2)")
+ClickChain("Messenger to Stormwind (2)")
+Expect("a chain whose first quest this character may not take is named after the first it may",
+    ChainRow("A Watchful Eye") ~= nil and ChainRow("Redridge Goulash"), nil)
+shipped[GOULASH].name = { "Goulash and After" }
+Tab:Refresh()
+Expect("...unless the data gives the chain a name", ChainRow("Goulash and After") ~= nil and ChainRow("A Watchful Eye"), nil)
+shipped[GOULASH].name = nil
+Tab:Refresh()
+Click(C.MapName(REDRIDGE))
+
 -- Play: the first part the voice packs have of the quest, with its words. Kobold Camp Cleanup is
 -- made here to be handed in to another than its giver: Marshal McBride offers it, Marshal Dughan
 -- takes it in.
@@ -872,7 +928,11 @@ Expect("...each card counting only the quests it lists", RowFor("Elwynn Forest")
     and ChainRow("Lost Necklace").count.text, "0/1 • 0%")
 Expect("...and each banner", RowFor("Eastern Kingdoms").count.text, "1/2")
 Expect("...and is remembered", VO.Addon.db.global.Compendium.VoicedOnly, true)
-Expect("...a started quest it leaves out not opened in the Compendium", Tab:Has(CANDLES), false)
+Expect("...a started quest it leaves out still opened in the Compendium", Tab:Has(CANDLES), true)
+Tab:Open(CANDLES)
+Expect("...on its page, the list keeping the filter and leaving its row out", page.title.text .. "|"
+    .. tostring(VO.Addon.db.global.Compendium.VoicedOnly) .. "|" .. tostring(Has(Shown(), "Kobold Candles")),
+    "Kobold Candles|true|false")
 _, choices = Menu()
 choices[2].func()
 Expect("...off, everything again", Has(Shown(), "Kobold Candles") and Has(Shown(), "Westfall") and Tab:Has(CANDLES), true)
@@ -880,7 +940,8 @@ Expect("...off, everything again", Has(Shown(), "Kobold Candles") and Has(Shown(
 -- the page shows in its place.
 do
     local listObject = RowFor("Eastern Kingdoms").list
-    local hidden = 0
+    local hidden, onHidden = 0, listObject.opts.onHidden
+    Expect("the tab answers the list's onHidden", type(onHidden), "function")
     listObject.opts.onHidden = function() hidden = hidden + 1 end
     local wasOpen = RowFor("Classes").row.open
     Click("Classes")
@@ -891,12 +952,55 @@ do
     _, choices = Menu()
     choices[2].func()
     Expect("...and one that leaves it in does not", hidden, 1)
-    listObject.opts.onHidden = nil
+    listObject.opts.onHidden = onHidden
     if RowFor("Classes").row.open ~= wasOpen then Click("Classes") end
+end
+-- What the page shows then: the nearest row above the one chosen that the list still shows.
+local WOLVES = 33 -- Wolves Across the Border, in Elwynn Forest, not started
+Tab:Open(WOLVES)
+_, choices = Menu()
+choices[1].func()
+Expect("Started Only leaving out the quest chosen, its zone is chosen, which the list still shows", page.title.text,
+    "Elwynn Forest")
+_, choices = Menu()
+choices[1].func()
+-- Where the tab chose for the player, it lands again. Classes chosen and left out, there is nothing
+-- above it: the tab lands, the player in Westfall, where no pack has a quest.
+stub.world.playerMapID = 1436
+Click("Classes")
+_, choices = Menu()
+choices[2].func()
+Expect("landing, never on a zone Voiced Only leaves out: on its continent", page.title.text, "Eastern Kingdoms")
+_, choices = Menu()
+choices[2].func()
+Tab:Open()
+Expect("...on the zone itself with the filter off", page.title.text, "Westfall")
+_, choices = Menu()
+choices[2].func()
+Expect("...and a filter leaving out the zone landed on lands again, on its continent", page.title.text, "Eastern Kingdoms")
+_, choices = Menu()
+choices[2].func()
+stub.world.playerMapID = nil
+if RowFor("Classes").row.open then Click("Classes") end
+
+-- Text Size, on Spoken's page: the words read at it, and drawn again when it changes.
+do
+    local text, questFont = page.body.text, _G.QuestFont
+    _G.QuestFont = { GetFont = function() return "Fonts/FRIZQT__.TTF", 12 end }
+    local setFont, drawnAt = text.SetFont, nil
+    text.SetFont = function(self, face, size, ...) drawnAt = size; if setFont then return setFont(self, face, size, ...) end end
+    Spoken:SetCompendiumFontSize(16)
+    -- The parchment's ink is drawn a point larger than the Text Size.
+    Expect("the page's words at the Compendium's Text Size, drawn again when it changes",
+        ns:Get("fontSize") .. "|" .. tostring(drawnAt), "16|" .. (16 + 1))
+    text.SetFont, _G.QuestFont = setFont, questFont
+    Spoken:SetCompendiumFontSize(12)
 end
 
 -- The part switched off takes its tab away.
+C:Open("quests")
 Spoken:SetPartOn("quests", false)
+Expect("Quests switched off while the window shows its tab, the window closes", C:IsOpen(), false)
 Expect("with Quests off, the tab is not offered", C:Select("quests"), nil)
 Spoken:SetPartOn("quests", true)
 
@@ -930,6 +1034,7 @@ Expect("...the quest chosen", RowFor("The Forgotten Heirloom").selected, true)
 Expect("...and its page shown", page.title.text, "The Forgotten Heirloom")
 Tab:Open(JENNEA)
 Expect("a class's quest opens under its class", Has(Shown(), "Speak with Jennea") and page.title.text, "Speak with Jennea")
+Expect("...its page naming its section and its class, neither a place", page.sub.text.text, "Classes · Mage")
 local IRONDEEP = 5892
 Tab:Open(IRONDEEP)
 Expect("a battleground's quest opens under the battlegrounds' banner", Has(Shown(), "Irondeep Supplies")
@@ -975,6 +1080,28 @@ Click("Blackrock Spire")
 Expect("...a dungeon's page in the zone of its entrance, counting its quests", page.title.text == "Blackrock Spire"
     and page.sub.text.text:match("^In Searing Gorge · 0 of %d+ completed$") ~= nil, true)
 
+-- The line under a page's title goes up a level, to what holds what the page is of.
+local function Up()
+    if not page.sub.onClick then return nil end
+    page.sub.scripts.OnClick(page.sub)
+    return page.title.text
+end
+Expect("a click on a dungeon's line goes to its zone", Up(), "Searing Gorge")
+Expect("...on a zone's, to its continent", Up(), "Eastern Kingdoms")
+Expect("...and a continent's goes nowhere, Azeroth being no row", Up(), nil)
+Tab:Open(STOCKADE)
+Expect("...a quest's to its zone, a city's to the zone around it", Up() .. "|" .. Up(), "Stormwind City|Elwynn Forest")
+Tab:Open(PIE)
+ClickChain("Lost Necklace")
+Expect("...a chain's to the zone that holds it", Up(), "Elwynn Forest")
+Tab:Open(JENNEA)
+Expect("...a class's quest's to its class, and the class's to its section", Up() .. "|" .. Up(), "Mage|Classes")
+Expect("...whose line, the count alone, goes nowhere", Up(), nil)
+Tab:Open(IRONDEEP)
+Up()
+Expect("...a battleground's page in the Battlegrounds, its line going there", page.sub.text.text:match("^In Battlegrounds · ")
+    ~= nil and Up(), L.QUESTS_SECTION_BATTLEGROUNDS)
+
 -- The quest giver's window: the Compendium's tome beside its controls, for a quest the tab lists.
 local giver = Tab.giverButton
 stub.world.questID = KOBOLDS
@@ -1000,18 +1127,19 @@ stub.FireEvent("QUEST_DETAIL")
 Expect("...nor for one of another race's, the list leaving it out for this character", giver:IsShown(), false)
 completed[SHARPTALON] = nil
 -- Offered and not started, a quest's page is the padlock: no Open, unless it would show the words.
-local WOLVES = 33
 stub.world.questID = WOLVES
 stub.FireEvent("QUEST_DETAIL")
 Expect("...nor on the offer of a quest not started, whose page is locked", giver:IsShown(), false)
 C:Tab("quests").unlock.set(true)
-stub.FireEvent("QUEST_DETAIL")
-Expect("...but there with Unlock Unstarted Quests on", giver:IsShown() and giver.questID, WOLVES)
+Expect("...but there once Unlock Unstarted Quests is switched on, the window still open", giver:IsShown()
+    and giver.questID, WOLVES)
 VO.Addon.db.global.Compendium.FoundOnly = true
 stub.FireEvent("QUEST_DETAIL")
-Expect("...and not with Started Only on, which leaves the quest out of the list", giver:IsShown(), false)
+Expect("...and with Started Only on too: the page opens though the list leaves the quest's row out",
+    giver:IsShown() and giver.questID, WOLVES)
 VO.Addon.db.global.Compendium.FoundOnly = false
 C:Tab("quests").unlock.set(false)
+Expect("...and gone once Unlock Unstarted Quests is switched off", giver:IsShown(), false)
 questLog = { WOLVES }
 stub.ShowPanel("QuestFrameProgressPanel")
 stub.FireEvent("QUEST_PROGRESS")

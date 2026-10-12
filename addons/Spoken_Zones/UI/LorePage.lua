@@ -209,9 +209,6 @@ function SpokenZones:CreateLorePage(parent, style)
 	-- Centred on the title's first line.
 	local titleSize = style == "book" and 26 or 20
 	local report = SpokenZones:CreateReportIcon(frame)
-	report:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -inset.right, -inset.top - titleSize / 2 + 12)
-	-- Where the first shown button goes (Page:PlaceButtons).
-	report.layoutX, report.layoutY = -inset.right, -inset.top - titleSize / 2 + 12
 	page.inset = inset
 	page.report = report
 	local play = SpokenZones:CreateAudioButton(frame)
@@ -308,6 +305,12 @@ function SpokenZones:CreateLorePage(parent, style)
 	-- Text cut off at an edge fades into the parchment under it.
 	body:SetFadeSource(frame, page.bgFile, page.bgCoords)
 	page.body = body
+
+	-- Where the first shown button goes (Page:PlaceButtons): its right edge over the words' right
+	-- edge, the scroll bar's room in from the page's, as on the Quests and Books pages.
+	local buttonsX = -(inset.right + body:BarRoom())
+	report:SetPoint("TOPRIGHT", frame, "TOPRIGHT", buttonsX, -inset.top - titleSize / 2 + 12)
+	report.layoutX, report.layoutY = buttonsX, -inset.top - titleSize / 2 + 12
 
 	-- Under the sentence that says a place has no story yet, so it reads as the answer to it.
 	local contribute = SpokenZones:CreateContributeButton(body.child)

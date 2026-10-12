@@ -948,6 +948,8 @@ local function Build(panel)
 	holder:SetPoint("TOPLEFT", pageInset, "TOPLEFT", 3, -3)
 	holder:SetPoint("BOTTOMRIGHT", pageInset, "BOTTOMRIGHT", -3, 3)
 	page = C.NewPage(holder, SpokenBooks, PLAY, REPORT)
+	-- Text Size, on Spoken's page, fires no game event: the page is drawn again at the new size.
+	if Spoken and Spoken.RegisterCallback then Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", ShowEntry) end
 	if type(pageInset.NineSlice) == "table" and pageInset.NineSlice.SetFrameLevel then
 		pageInset.NineSlice:SetFrameLevel(holder:GetFrameLevel() + 5)
 	end

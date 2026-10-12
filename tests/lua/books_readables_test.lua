@@ -759,5 +759,19 @@ B.lastPage = FirstPage(LETTER)
 Expect("...and another page open in the world lends it nothing", B:PageMaterial(FirstPage(2731)), "Stone")
 B.lastPage = nil
 
+-- Text Size, on Spoken's page: the words read at it, and drawn again when it changes.
+do
+    local text, questFont = panel.page.body.text, _G.QuestFont
+    _G.QuestFont = { GetFont = function() return "Fonts/FRIZQT__.TTF", 12 end }
+    local setFont, drawnAt = text.SetFont, nil
+    text.SetFont = function(self, face, size, ...) drawnAt = size; if setFont then return setFont(self, face, size, ...) end end
+    _G.Spoken:SetCompendiumFontSize(16)
+    -- The parchment's ink is drawn a point larger than the Text Size.
+    Expect("the page's words at the Compendium's Text Size, drawn again when it changes",
+        B:Get("fontSize") .. "|" .. tostring(drawnAt), "16|" .. (16 + 1))
+    text.SetFont, _G.QuestFont = setFont, questFont
+    _G.Spoken:SetCompendiumFontSize(12)
+end
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll readables tests passed")
