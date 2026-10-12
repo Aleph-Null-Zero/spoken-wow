@@ -303,7 +303,7 @@ Expect("...chosen, the chosen card's warm leather inside its frame", elwynn.warm
     "file:glues-characterselect-card-selected-c60")
 Expect("...with none of the glow that card throws round itself", elwynn.lift[1]:IsShown(), false)
 Expect("...in the sidebar's silver, not the card's bronze", elwynn.face[5].desaturated and elwynn.warm.desaturated, true)
-Expect("...a step in from the continent's banner", elwynn.face[1].anchor.x, 16)
+Expect("...a step in from the continent's banner", elwynn.face[1].anchor.x, 20.4)
 local elwynnTotal = tonumber(elwynn.count.text:match("/(%d+)"))
 Expect("...the share completed after them", elwynn.count.text, "1/" .. elwynnTotal .. " • " .. math.floor(100 / elwynnTotal) .. "%")
 Expect("...and its bar filled as far", elwynn.fill:IsShown() and math.floor(elwynn.fill.width / elwynn.track.width
@@ -317,7 +317,7 @@ Expect("...its page saying where it is and counting its quests, on one line",
 local city = RowFor("Stormwind City")
 Expect("a city is a card inside its zone's card", city ~= nil and city.row.style == "card" and city.row.nest, 1)
 Expect("...indented under it, its card further in", city.face[1].anchor.x - elwynn.face[1].anchor.x, 16)
-Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 28)
+Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 32.4)
 Expect("...not chosen, the plain card alone", city.lift[5]:IsShown(), false)
 city.scripts.OnEnter(city)
 Expect("...under the pointer, the hover card over it", city.lift[5]:IsShown() and city.lift[5].texture,
@@ -502,7 +502,8 @@ Expect("...with what holds them inside it, a chain from another zone among them"
 Expect("...and no zone that does not match", Has(list, "Elwynn Forest"), false)
 Click("Westfall")
 Expect("...a click choosing the zone while searching, its page shown", page.title.text, "Westfall")
-Expect("...and its quests still listed", Has(Shown(), "The Killing Fields"), true)
+Expect("...and closing what the search opened, as a click does unsearched", Has(Shown(), "The Killing Fields"), false)
+Click("Westfall")
 list = Search("mage")
 Expect("a search matching a class lists all that class's quests", Has(list, "Mage") and Has(list, "Speak with Jennea")
     and RowFor("Mage").row.open, true)
@@ -531,6 +532,14 @@ Expect("...and one matching Dungeons and Raids all of a zone's dungeons", Has(li
 list = Search("killing fields")
 Expect("a title's match inside a zone that does not match still lists that quest alone",
     Has(list, "Westfall") and Has(list, "The Killing Fields") and not Has(list, "Goretusk Liver Pie"), true)
+Click("Westfall")
+Expect("...a click on the zone the search opened closes it, its quest hidden", Has(Shown(), "Westfall")
+    and not Has(Shown(), "The Killing Fields") and RowFor("Westfall").row.open, false)
+Click("Westfall")
+Expect("...and another opens it again", Has(Shown(), "The Killing Fields"), true)
+Click("Westfall")
+list = Search("killing field")
+Expect("...a new search opening all it finds again", Has(list, "The Killing Fields"), true)
 box:SetText("")
 box.hooks.OnTextChanged[1](box)
 

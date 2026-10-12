@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 26
+local VERSION = 27
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -47,7 +47,7 @@ local BANNER_ROW = 36
 local BANNER_GAP = 14         -- above each banner but the first
 local BANNER_IN = 10          -- a banner's plus or minus, and its count, from its sides
 local BANNER_DROP = 1.5       -- the banner's art sits this much under its row's middle
-local BANNER_TEXT = 28        -- a banner's name from its left
+local BANNER_TEXT = 32        -- a banner's name from its left
 local FIRST_GAP = 2           -- above the first row
 -- The rows are spaced by what shows of them: a card's frame starts 5.4 below its row's top and ends
 -- 3 above its foot, a banner's 2.5 above its foot. Every card is as far from the card or banner
@@ -59,7 +59,10 @@ local LEAF_ROW = 22
 -- A group inside a card (a quest chain, a zone's dungeons, a zone's letters): one line, its plus or
 -- minus on the line down its contents, its name over theirs, its numbers on the right.
 local GROUP_ROW = 24
-local GROUP_FOOT = 6          -- under its plus or minus, where the line down its contents starts
+local GROUP_FOOT = 9          -- under its plus or minus, where the line down its contents starts
+-- The quest log's plus and minus are drawn 2 left of their picture's middle: the picture moves
+-- right by that, so the sign sits on the line down what it opens.
+local TOGGLE_SHIFT = 2
 local LEAF_GAP = 4            -- between a card and a single row next to it
 local NEST_AFTER = 2          -- more under an open card's contents, for each card closed there
 local NEST_STEP = 16          -- each card's contents in, under the open card they belong to
@@ -70,9 +73,9 @@ local FOOT, BANNER_FOOT = 3, 2.5
 local LIST_LEFT, LIST_RIGHT = 3, 2
 -- What a banner holds sits this far in from it, one step down the tree; with no banners, nothing
 -- is set in.
-local UNDER_BANNER_IN = 16
+local UNDER_BANNER_IN = 20.4
 -- The line down what a banner holds, this far in.
-local BANNER_RAIL_X = 12
+local BANNER_RAIL_X = 16.4
 local LIST_TOP, LIST_FOOT = 6, 8
 local SCROLL_STEP = 60
 local GRABBER_SIZE = 16
@@ -1369,7 +1372,7 @@ end
 local function DrawGroup(row, item, indent, onlyFound)
 	Toggle(row, item, onlyFound)
 	row.toggle:ClearAllPoints()
-	row.toggle:SetPoint("CENTER", row, "LEFT", indent + RAIL_X, 0)
+	row.toggle:SetPoint("CENTER", row, "LEFT", indent + RAIL_X + TOGGLE_SHIFT, 0)
 
 	local locked = item.locked and row.hasLock
 	local total = item.total or 0

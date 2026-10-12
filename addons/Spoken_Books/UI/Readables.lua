@@ -248,6 +248,21 @@ end
 -- continent's every readable at once would be too long a list to read.
 local asLeft = false
 
+-- What a search opened and the player closed again with a click, by row; a new search opens all.
+local searchClosed = {}
+
+-- Whether the search opens the row closed under `key`: not where the player closed it.
+local function SearchOpens(key)
+	return filter ~= "" and not asLeft and not searchClosed[key]
+end
+
+-- While a search opens everything it finds, a click on an open card closes it, and opens it again.
+local function SearchFold(row)
+	if filter == "" or row.asLeft or not row.closeKey then return false end
+	searchClosed[row.closeKey] = not searchClosed[row.closeKey] or nil
+	return true
+end
+
 -- The rows `build` returns, built with asLeft set where `named`.
 local function AsLeft(named, build)
 	local before = asLeft
@@ -320,8 +335,14 @@ local function KindCards(byType, nest, into, item, opened, whole)
 			if #leaves > 0 then
 				local set = {}
 				for _, id in ipairs(ids) do set[id] = true end
-				local closed = (filter == "" or asLeft) and not opened(type)
 				local card = item(type)
+				card.closeKey = (card.mapID and ("k" .. card.mapID) or ("g" .. tostring(card.group))) .. ":" .. type
+				local closed
+				if filter == "" or asLeft then
+					closed = not opened(type)
+				else
+					closed = not SearchOpens(card.closeKey)
+				end
 				card.label, card.nest, card.open = TypeLabel(type), nest, not closed
 				table.insert(into, Card(card, Tally(set)))
 				if not closed then
@@ -342,6 +363,7 @@ local function ZoneRows(mapID, nest, whole)
 	if not Listed(all) then return {} end
 	local open = expandedZone == mapID or CITY_IN[expandedZone] == mapID
 	local inside = {}
+	local searched = SearchOpens("z" .. mapID)
 	if open or (filter ~= "" and not asLeft) then
 		for city, around in pairs(CITY_IN) do
 			if around == mapID and Index().zones[city] then
@@ -353,9 +375,15 @@ local function ZoneRows(mapID, nest, whole)
 			function(type) return zoneTypeOpen[mapID .. ":" .. type] end, whole)
 	end
 	if filter ~= "" and #inside == 0 and not whole then return {} end
-	local rows = { Card({ kind = "zone", mapID = mapID, label = MapName(mapID), nest = nest,
-		open = (open or (filter ~= "" and not asLeft)) and #inside > 0 }, found, total) }
-	for _, row in ipairs(inside) do table.insert(rows, row) end
+	-- Closed with a click during this search: the card alone.
+	local shown
+	if filter ~= "" and not asLeft then shown = searched else shown = open end
+	local card = Card({ kind = "zone", mapID = mapID, label = MapName(mapID), nest = nest,
+		open = shown and #inside > 0, closeKey = "z" .. mapID }, found, total)
+	local rows = { card }
+	if shown then
+		for _, row in ipairs(inside) do table.insert(rows, row) end
+	end
 	return rows
 end
 
@@ -401,9 +429,13 @@ local function TypeRows()
 			local leaves = {}
 			if typeOpen[type] or filter ~= "" then Leaves(ids, 1, leaves, Named(TypeLabel(type))) end
 			if not (OnlyFound() and found == 0) and Listed(set) and (filter == "" or #leaves > 0) then
+				-- Closed with a click during this search: the card alone.
+				local shown = filter == "" or SearchOpens("t" .. type)
 				table.insert(out, Card({ kind = "type", which = type, nest = 0, label = TypeLabel(type),
-					open = #leaves > 0 }, found, total))
-				for _, row in ipairs(leaves) do table.insert(out, row) end
+					open = shown and #leaves > 0, closeKey = "t" .. type }, found, total))
+				if shown then
+					for _, row in ipairs(leaves) do table.insert(out, row) end
+				end
 			end
 		end
 	end
@@ -717,18 +749,19 @@ local function LandOnPlayer()
 end
 
 local function OnClick(row)
+	local folded = SearchFold(row)
 	if row.kind == "readable" then
 		selection = { book = row.book }
 	elseif row.kind == "zones" then
 		if filter == "" then zonesOpen[row.key] = not zonesOpen[row.key] end
 		selection = { zones = row.key }
 	elseif row.kind == "type" then
-		if filter == "" then typeOpen[row.which] = not typeOpen[row.which] end
+		if filter == "" and not folded then typeOpen[row.which] = not typeOpen[row.which] end
 		selection = { type = row.which }
 	elseif row.kind == "kind" then
 		-- A group's Books, Notes and the rest: opened and closed again, as a zone's are.
 		local key = row.group .. ":" .. row.which
-		if filter == "" or row.asLeft then groupTypeOpen[key] = not groupTypeOpen[key] or nil end
+		if not folded and (filter == "" or row.asLeft) then groupTypeOpen[key] = not groupTypeOpen[key] or nil end
 		selection = { group = row.group, type = row.which }
 	elseif filter ~= "" and not row.asLeft then
 		selection = { mapID = row.mapID, group = row.kind == "group" and row.which or nil }
@@ -800,6 +833,7 @@ local function Build(panel)
 		onClick = OnClick,
 		onSearch = function(text)
 			filter = text
+			searchClosed = {}
 			SpokenBooks:RefreshReadables()
 		end,
 		addScrollBar = function(scroll, child, inset) return SpokenBooks:AddScrollBar(scroll, child, inset) end,

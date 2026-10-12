@@ -307,6 +307,28 @@ local function Searched()
     return filter ~= "" and not shut
 end
 
+-- What a search opened and the player closed again with a click, by row; a new search opens all.
+local searchClosed = {}
+
+-- A card's rows: the card, and what it holds unless the player closed it during this search.
+local function Rows(card, inside, key)
+    card.closeKey = key
+    if Searched() and searchClosed[key] then
+        card.open = false
+        return { card }
+    end
+    local rows = { card }
+    for _, row in ipairs(inside) do table.insert(rows, row) end
+    return rows
+end
+
+-- While a search opens everything it finds, a click on an open card closes it, and opens it again.
+local function SearchFold(row)
+    if filter == "" or row.shut or not row.closeKey then return false end
+    searchClosed[row.closeKey] = not searchClosed[row.closeKey] or nil
+    return true
+end
+
 -- As Whole, for a banner: its cards listed, each as the player left it.
 local function Listed(named, build)
     local before = shut
@@ -553,10 +575,8 @@ local function ChainRows(where, first, ids, nest)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    local rows = { Card({ kind = "chain", key = key, ids = ids, first = first, label = label, nest = nest,
-        where = where, open = #inside > 0 }, found, total, going) }
-    for _, row in ipairs(inside) do table.insert(rows, row) end
-    return rows
+    return Rows(Card({ kind = "chain", key = key, ids = ids, first = first, label = label, nest = nest,
+        where = where, open = #inside > 0 }, found, total, going), inside, "c" .. key)
 end
 
 -- The quests in one place (`where`): each chain of two or more of them first, by name, then the
@@ -674,18 +694,17 @@ local function DungeonRows(mapID, byDungeon, nest)
                 return rows
             end)
             if not Unlisted(f, t) and not (Filtering() and #leaves == 0) then
-                table.insert(out, Card({ kind = "dungeon", key = dkey, ids = ids, label = name,
-                    nest = nest + 1, open = #leaves > 0 }, f, t, g))
-                for _, row in ipairs(leaves) do table.insert(out, row) end
+                for _, row in ipairs(Rows(Card({ kind = "dungeon", key = dkey, ids = ids, label = name,
+                    nest = nest + 1, open = #leaves > 0 }, f, t, g), leaves, "d" .. dkey)) do
+                    table.insert(out, row)
+                end
             end
         end
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    local rows = { Card({ kind = "dungeons", key = key, ids = all, label = label, nest = nest,
-        open = #inside > 0 }, found, total, going) }
-    for _, row in ipairs(inside) do table.insert(rows, row) end
-    return rows
+    return Rows(Card({ kind = "dungeons", key = key, ids = all, label = label, nest = nest,
+        open = #inside > 0 }, found, total, going), inside, "d" .. key)
 end
 
 -- A zone's card, and under it when it is open its city's card, its dungeons' and raids'
@@ -708,10 +727,8 @@ local function ZoneRows(mapID, nest)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    local rows = { Card({ kind = "zone", mapID = mapID, label = C.MapName(mapID), nest = nest,
-        open = (open or Searched()) and #inside > 0 }, found, total, going) }
-    for _, row in ipairs(inside) do table.insert(rows, row) end
-    return rows
+    return Rows(Card({ kind = "zone", mapID = mapID, label = C.MapName(mapID), nest = nest,
+        open = (open or Searched()) and #inside > 0 }, found, total, going), inside, "z" .. mapID)
 end
 
 -- A sort's card in its section's banner (Mage, Cooking, Lunar Festival), or Place Unknown's.
@@ -725,10 +742,8 @@ local function GroupRows(kind, key, label, ids)
         return out
     end)
     if Filtering() and #leaves == 0 then return {} end
-    local rows = { Card({ kind = kind, key = key, label = label, nest = 0, open = #leaves > 0 },
-        found, total, going) }
-    for _, row in ipairs(leaves) do table.insert(rows, row) end
-    return rows
+    return Rows(Card({ kind = kind, key = key, label = label, nest = 0, open = #leaves > 0 },
+        found, total, going), leaves, "g" .. key)
 end
 
 -- A section's quests, and the sorts it holds.
@@ -1219,18 +1234,19 @@ local function OnClick(row)
     if row.kind == "quest" then
         selection = { quest = row.quest }
     elseif row.kind == "chain" then
-        if filter == "" or row.shut then chainOpen[row.key] = not chainOpen[row.key] end
+        if not SearchFold(row) and (filter == "" or row.shut) then chainOpen[row.key] = not chainOpen[row.key] end
         selection = { chain = row.key, ids = row.ids, first = row.first, where = row.where }
     elseif row.kind == "dungeons" or row.kind == "dungeon" then
-        if filter == "" or row.shut then dungeonOpen[row.key] = not dungeonOpen[row.key] end
+        if not SearchFold(row) and (filter == "" or row.shut) then dungeonOpen[row.key] = not dungeonOpen[row.key] end
         selection = { dungeon = row.key, ids = row.ids, label = row.label }
     elseif row.kind == "section" then
         if filter == "" then sectionOpen[row.key] = not sectionOpen[row.key] end
         selection = { section = row.key }
     elseif row.kind == "sort" or row.kind == "elsewhere" then
-        if filter == "" or row.shut then groupOpen[row.key] = not groupOpen[row.key] end
+        if not SearchFold(row) and (filter == "" or row.shut) then groupOpen[row.key] = not groupOpen[row.key] end
         selection = row.kind == "sort" and { sort = row.key } or { group = "elsewhere" }
     elseif filter ~= "" and not row.shut then
+        SearchFold(row)
         selection = { mapID = row.mapID }
     elseif row.kind == "continent" then
         continentOpen[row.mapID] = not continentOpen[row.mapID]
@@ -1329,6 +1345,7 @@ local function Build(panel)
         onClick = OnClick,
         onSearch = function(text)
             filter = text
+            searchClosed = {}
             QuestsTab:Refresh()
         end,
         addScrollBar = function(scroll, child, inset) return ns:AddScrollBar(scroll, child, inset) end,
