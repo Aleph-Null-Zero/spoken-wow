@@ -775,8 +775,8 @@ end
 local function Npc(name, id) return name .. " " .. VO.Utils:MakeGUID(VO.Enums.GUID.Creature, id) end
 stub.world.creatureDisplays[MCBRIDE], stub.world.creatureDisplays[DUGHAN] = { 3258 }, { 1990 }
 Click("Kobold Camp Cleanup")
--- Each part's header is the Small Window's: the face of who says it with the part's badge, their
--- name over the part's name.
+-- Without DialogueUI, each part's header is the Small Window's: the face of who says it with the
+-- part's badge, their name over the part's name.
 local function PartOf(heading)
     for _, part in ipairs(page.body.lastParts or {}) do if part.heading == heading then return part end end
 end
@@ -789,6 +789,10 @@ local function Face(part)
     return drawn .. " " .. tostring(face.badge:GetTexture()) .. " " .. tostring(part.caption)
 end
 local BADGES = SpokenEnv.MinimalPlayer.BADGES
+Expect("without DialogueUI, no DialogueUI header on either part",
+    tostring(PartOf(L.QUEST_PART_ACCEPT).header) .. " " .. tostring(PartOf(L.QUEST_PART_COMPLETE).header), "nil nil")
+Expect("the offer is named its description, the hand-in its completion",
+    L.QUEST_PART_ACCEPT .. "|" .. L.QUEST_PART_COMPLETE, "Description|Completion")
 Expect("the offer's header: its giver's face with the offer's badge, and its giver's name",
     Face(PartOf(L.QUEST_PART_ACCEPT)), "still 3258 " .. BADGES["quest-accept"] .. " Marshal McBride")
 Expect("...the completion's: the face and name of the one it is handed in to, with the completion's badge",
@@ -1347,6 +1351,40 @@ stub.world.questID = CANDLES
 stub.FireEvent("QUEST_DETAIL")
 stub.world.questID = 0
 Expect("an English client keeps nothing: the English ships", VO.Addon.db.global.CompendiumText.enUS, nil)
+
+-- With DialogueUI, each part's header is the top of Spoken's DialogueUI window: who says it, and
+-- the part's name where the window has the quest's.
+do
+    local isLoaded = _G.IsAddOnLoaded
+    _G.IsAddOnLoaded = function(name) return name == "DialogueUI" or (isLoaded ~= nil and isLoaded(name)) end
+    _G.DialogueUI_DB = { Theme = 1, FrameSize = 2 }
+    _G.DUIQuestFrame = CreateFrame("Frame")
+    _G.DUIQuestFrame.frameWidth, _G.DUIQuestFrame.frameHeight = 624, 734
+    _G.DUIFont_Quest_Paragraph = { GetFont = function() return "Interface/AddOns/DialogueUI/Fonts/frizqt__.ttf", 14 end }
+    -- The client's own heading for a quest's text, in its quest window.
+    _G.QUEST_DESCRIPTION = "Quest Description"
+    SpokenQuestsCompendium.quests[KOBOLDS].ender = DUGHAN
+    Tab:Open(KOBOLDS)
+    local offer, handIn = page.body.lastParts[1], page.body.lastParts[#page.body.lastParts]
+    local function Header(part)
+        local header = part.header
+        if not header then return "no header" end
+        local still = header.portrait.still
+        return tostring(header.frame:IsShown()) .. " " .. (still:IsShown() and "still " .. tostring(still.display) or "no still")
+            .. " " .. tostring(header.badge:GetTexture()) .. " " .. header.name:GetText() .. "|" .. header.title.text:GetText()
+    end
+    Expect("with DialogueUI, the offer under the DialogueUI window's header: its giver, named, and the client's word for it",
+        Header(offer), "true still 3258 " .. BADGES["quest-accept"] .. " Marshal McBride|Quest Description")
+    Expect("...the hand-in under its own: the one it is handed in to, and its completion",
+        Header(handIn), "true still 1990 " .. BADGES["quest-complete"] .. " Marshal Dughan|" .. L.QUEST_PART_COMPLETE)
+    Expect("...on the page, in place of the Small Window's face", tostring(offer.header.frame:GetParent() == page.body.child)
+        .. " " .. tostring(offer.face) .. " " .. tostring(handIn.face), "true nil nil")
+    Expect("...its words named after it too", offer.heading, "Quest Description")
+    _G.QUEST_DESCRIPTION = nil
+    Tab:Refresh()
+    Expect("a client with no word for it: Spoken's", page.body.lastParts[1].header.title.text:GetText(), L.QUEST_PART_ACCEPT)
+    _G.IsAddOnLoaded, _G.DialogueUI_DB, _G.DUIQuestFrame, _G.DUIFont_Quest_Paragraph = isLoaded, nil, nil, nil
+end
 
 -- A client without the art: the list is drawn in plain colours instead, and still works.
 _G.C_Texture = { GetAtlasInfo = function() return nil end }
