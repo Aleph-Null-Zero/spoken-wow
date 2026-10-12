@@ -8,4 +8,5 @@
     <Include file="Data\QuestText.lua"/>
     <Include file="UI\TextView.lua"/>
     <Include file="UI\QuestsTab.lua"/>
+    <Include file="UI\OpenInCompendium.lua"/>
 </Ui>

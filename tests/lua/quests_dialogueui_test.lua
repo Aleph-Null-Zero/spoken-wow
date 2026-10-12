@@ -96,6 +96,10 @@ VO.Addon:OnInitialize()
 -- The gossip module too: gossip and greetings on DialogueUI's window are its to read.
 local G = stub.LoadGossip(GOSSIP, SPOKEN, true)
 G.Addon:OnInitialize()
+-- The Compendium's Quests tab, standing in for UI/QuestsTab.lua: it lists quest 101.
+local opened = {}
+VO.QuestsTab = { Has = function(_, id) return id == 101 end, Open = function(_, id) table.insert(opened, id) end }
+assert(loadfile(QUESTS .. "UI/OpenInCompendium.lua"))("Spoken_Quests", {})
 VO.DataModules:Register("TestPack", {
     SoundLengthLookupByFileName = { ["101-accept"] = 12, ["101-progress"] = 2, ["gossip-hello"] = 3,
         ["guard-greeting"] = 2, ["guard-directions"] = 2 },
@@ -473,6 +477,17 @@ Expect("...the row just left of it, on its middle", controls.frame.anchor and co
     and controls.frame.anchor.point .. " " .. controls.frame.anchor.relativePoint .. " " .. controls.frame.anchor.x
     .. " " .. controls.frame.anchor.y, "RIGHT LEFT -4 0")
 Expect("...Play left of Skip", play.anchor and play.anchor.relativeTo == skip and play.anchor.relativePoint, "LEFT")
+local open = controls.open
+Expect("...and left of Play, Open in Azeroth's Compendium, for a quest the tab lists", open ~= nil and open:IsShown()
+    and open.anchor and open.anchor.relativeTo == play and open.questID, 101)
+if open then
+    local hidUI = false
+    DUI.HideUI = function() hidUI = true end
+    open.scripts.OnClick(open)
+    DUI.HideUI = nil
+    Expect("...which closes DialogueUI's window, as the interface is hidden while it is up, and opens the quest",
+        hidUI and opened[#opened], 101)
+end
 local round = UIParent:GetEffectiveScale() / DUI:GetEffectiveScale()
 Expect("...as large on screen as Place Lore draws them, 24 at UIParent's scale, whatever DialogueUI's size",
     play:GetWidth() .. " " .. play:GetScale() .. " " .. skip:GetScale(), "24 " .. round .. " " .. round)
@@ -483,6 +498,7 @@ Expect("...in the paper's art on DialogueUI's parchment", closeButton.file,
 DUI.handler = "HandleGossip"
 DUI:HandleGossip()
 Bridge:RefreshPlayButton("GOSSIP_SHOW")
+Expect("a gossip page has no Open in Azeroth's Compendium", open ~= nil and open:IsShown(), false)
 -- The gossip text's top 36 under the line too, not the quest header's distance.
 local gossipShift = (2 * 36 + 24) * lineScale - 42
 Expect("...and on a gossip page its text starts 36 under the line, its own line moved with it",
@@ -605,7 +621,9 @@ dui.PlayButton = false
 Bridge:Refresh()
 Expect("with the setting off Play is not there", play:IsShown(), false)
 Expect("...and DialogueUI's own button is given back", DUI.TTSButton:GetAlpha(), 0.6)
-Expect("...Skip moving up to the row's left end", controls.frame:GetWidth(), 24 * round)
+Expect("...the row one button narrower, Open in Azeroth's Compendium moving up beside Skip",
+    controls.frame:GetWidth() .. " " .. tostring(open and open.anchor and open.anchor.relativeTo == skip),
+    (2 * 24 + 4) * round .. " true")
 dui.PlayButton = true
 Bridge:Refresh()
 -- Spoken Quests off: DialogueUI's window as DialogueUI draws it.
