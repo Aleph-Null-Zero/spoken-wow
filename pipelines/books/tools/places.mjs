@@ -32,7 +32,7 @@ import mysql from "mysql2/promise";
 import { loadEnv } from "../../lib/env.mjs";
 import { areaReader } from "./lib/area.mjs";
 import { quote } from "./lib/lua.mjs";
-import { isTemplateCopy } from "./lib/places.mjs";
+import { isTemplateCopy, typeOf } from "./lib/places.mjs";
 
 await loadEnv("books");
 
@@ -180,35 +180,10 @@ function boxAt(map, x, y) {
   return best?.zone;
 }
 
-// ---------------------------------------------------------------- what each is
+// ---------------------------------------------------------------- what each is (lib/places.mjs)
 
 const iconPath = new Map((await table("ManifestInterfaceData")).map((r) => [Number(r.ID), (r.FilePath + r.FileName).toLowerCase()]));
 const itemIcon = new Map((await table("Item")).map((r) => [Number(r.ID), iconPath.get(Number(r.IconFileDataID)) ?? ""]));
-
-// In the order a carried one is tried: its icon first, then its name.
-const ICON_TYPE = [
-  [/inv_misc_book/, "book"], [/inv_letter/, "letter"], [/inv_misc_note|leatherscrap|bandage/, "note"],
-  [/inv_scroll/, "scroll"], [/stonetablet|inv_misc_rune/, "tablet"],
-];
-const TITLE_TYPE = [
-  [/letter|missive|envelope/i, "letter"], [/note|page|parchment|diary/i, "note"],
-  [/book|tome|journal|manual|codex|libram|guide/i, "book"], [/scroll|orders|report|deed|writ|plans/i, "scroll"],
-];
-function typeOf(title, pages, world, items) {
-  if (world) {
-    if (/tombstone|headstone|here lies|in loving memory|\bgrave/i.test(title)) return "grave";
-    if (/skeleton|\begg\b|talon|skull of|astrolabe|catapult|armor of|relics|reliefs/i.test(title)) return "exhibit";
-    if (pages > 1 || /journal/i.test(title)) return "book";
-    if (/\bnote\b/i.test(title)) return "note";
-    return "plaque";
-  }
-  for (const item of items) {
-    const icon = itemIcon.get(item) ?? "";
-    for (const [pattern, type] of ICON_TYPE) if (pattern.test(icon)) return type;
-  }
-  for (const [pattern, type] of TITLE_TYPE) if (pattern.test(title)) return type;
-  return "other";
-}
 
 // ---------------------------------------------------------------- the world DB
 
@@ -438,7 +413,8 @@ for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
   const wide = zones.size > WIDE;
   counts[k]++;
   if (wide) counts.wide++;
-  const type = typeOf(book.title, book.pages.length, k === "world", bookItems.get(id) ?? []);
+  const type = typeOf({ title: book.title, pages: book.pages.length, world: k === "world",
+    icons: (bookItems.get(id) ?? []).map((item) => itemIcon.get(item) ?? "") });
   counts.types[type] = (counts.types[type] ?? 0) + 1;
   const parts = [`kind = "${k}"`, `type = "${type}"`];
   if (wide) parts.push("wide = true");
