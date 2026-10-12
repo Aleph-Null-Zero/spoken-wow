@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 38
+local VERSION = 39
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -661,6 +661,7 @@ local CARD_RIGHT = 56         -- what a card's share or tick keeps clear on its 
 -- right as well.
 local CARD_PAD = 10           -- from a card's left side to its badge
 local CARD_END = 12           -- from a card's right side to its numbers and bar
+local FILL_LEAST = 3          -- the narrowest a card's bar fills, for any share above none
 local SHARE_INK = { 0.80, 0.76, 0.70 }
 local BANNER_INK = { 0.85, 0.81, 0.73 }
 local LOCKED_INK = { 0.50, 0.48, 0.45 }
@@ -703,6 +704,26 @@ end
 
 local function Tint(fontString, colour)
 	fontString:SetTextColor(colour[1], colour[2], colour[3])
+end
+
+-- A count as the game writes numbers in the player's language: 1,054 rather than 1054.
+local function Number(n)
+	n = math.floor((n or 0) + 0.5)
+	if BreakUpLargeNumbers then return BreakUpLargeNumbers(n) end
+	return string.format("%d", n)
+end
+
+-- A card's or a line's numbers: what is found out of all and the share, 5/27 and 18%, or only what
+-- is found out of all once ticked; the quest mark first with how many are under way.
+local function Numbers(item, total, ratio, ticked)
+	if total <= 0 then return "" end
+	local numbers = Number(item.count) .. "/" .. Number(total)
+	if not ticked then
+		numbers = numbers .. string.format(" \226\128\162 %d%%", math.floor(100 * ratio + 1e-6))
+	end
+	local going = item.goingCount or 0
+	if going > 0 then numbers = "|T" .. ACTIVE .. ":12:12:0:0|t" .. Number(going) .. "   " .. numbers end
+	return numbers
 end
 
 local function NewNine(row, layer, sublevel)
@@ -1234,7 +1255,7 @@ local function DrawBanner(row, item, onlyFound)
 	row.count:SetShown(not locked)
 	row.count:SetFontObject("GameFontHighlightSmall")
 	Tint(row.count, BANNER_INK)
-	row.count:SetText(item.total and item.total > 0 and string.format("%d/%d", item.count or 0, item.total) or "")
+	row.count:SetText(item.total and item.total > 0 and (Number(item.count) .. "/" .. Number(item.total)) or "")
 	row.label:SetFontObject("GameFontNormal")
 	-- The name over its cards' badges.
 	row.label:SetPoint("LEFT", row, "LEFT", BANNER_TEXT, -1)
@@ -1251,7 +1272,12 @@ FitBar = function(row, width)
 	if not row.barLeft or not width or width <= 0 then return end
 	local track = math.max(1, width - row.barLeft - CARD_END - 4)
 	row.track:SetWidth(track)
-	row.fill:SetWidth(math.max(0.01, track * (row.ratio or 0)))
+	local ratio = row.ratio or 0
+	-- Any share at all at least FILL_LEAST across: 1% filled a single dot.
+	local filled = ratio > 0 and math.min(track, math.max(track * ratio, FILL_LEAST)) or 0.01
+	row.fill:SetWidth(filled)
+	local spot = row.fillSpot
+	if spot then AtlasCut(row.fill, spot, 0, spot.width * filled / track, 0, spot.height) end
 end
 
 local function DrawCard(row, item, indent, width)
@@ -1339,14 +1365,7 @@ local function DrawCard(row, item, indent, width)
 	else
 		row.count:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_END, level)
 	end
-	local total = item.total or 0
-	local numbers = ""
-	if total > 0 then
-		numbers = ticked and string.format("%d/%d", item.count or 0, total)
-			or string.format("%d/%d \226\128\162 %d%%", item.count or 0, total, math.floor(100 * ratio + 1e-6))
-		local going = item.goingCount or 0
-		if going > 0 then numbers = "|T" .. ACTIVE .. ":12:12:0:0|t" .. going .. "   " .. numbers end
-	end
+	local numbers = Numbers(item, item.total or 0, ratio, ticked)
 	row.count:SetText(numbers)
 	row.count:SetShown(not locked and numbers ~= "")
 	if locked then
@@ -1371,6 +1390,7 @@ local function DrawCard(row, item, indent, width)
 	row.fill:SetPoint("BOTTOMLEFT", row.track, "BOTTOMLEFT", 0, 0)
 	row.fill:SetHeight(barHeight - 2)
 	local spot = AtlasSpot("ui-frame-bar-fill-yellow")
+	row.fillSpot = spot
 	if spot then
 		AtlasCut(row.fill, spot, 0, spot.width * ratio, 0, spot.height)
 	else
@@ -1425,13 +1445,7 @@ local function DrawGroup(row, item, indent, onlyFound)
 	else
 		row.count:SetPoint("RIGHT", row, "RIGHT", -CARD_END, 0)
 	end
-	local numbers = ""
-	if total > 0 then
-		numbers = ticked and string.format("%d/%d", item.count or 0, total)
-			or string.format("%d/%d \226\128\162 %d%%", item.count or 0, total, math.floor(100 * ratio + 1e-6))
-		local going = item.goingCount or 0
-		if going > 0 then numbers = "|T" .. ACTIVE .. ":12:12:0:0|t" .. going .. "   " .. numbers end
-	end
+	local numbers = Numbers(item, total, ratio, ticked)
 	row.count:SetText(numbers)
 	row.count:SetShown(not locked and numbers ~= "")
 

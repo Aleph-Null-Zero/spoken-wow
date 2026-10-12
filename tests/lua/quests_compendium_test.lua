@@ -315,10 +315,19 @@ Expect("...in the sidebar's silver, not the card's bronze", elwynn.face[5].desat
 Expect("...a step in from the continent's banner", elwynn.face[1].anchor.x, 20.4)
 local elwynnTotal = tonumber(elwynn.count.text:match("/(%d+)"))
 Expect("...the share completed after them", elwynn.count.text, "1/" .. elwynnTotal .. " • " .. math.floor(100 / elwynnTotal) .. "%")
-Expect("...and its bar filled as far", elwynn.fill:IsShown() and math.floor(elwynn.fill.width / elwynn.track.width
-    * elwynnTotal + 0.5), 1)
-Expect("...with the game's yellow cut to the same share, not squeezed", elwynn.fill.texture == "file:ui-frame-bar-fill-yellow"
-    and math.abs(elwynn.fill.texCoord[2] - 1 / elwynnTotal) < 1e-9, true)
+local filled = math.max(3, elwynn.track.width / elwynnTotal)
+Expect("...and its bar filled as far, never narrower than 3 so a small share shows",
+    elwynn.fill:IsShown() and math.abs(elwynn.fill.width - filled) < 1e-9, true)
+Expect("...with the game's yellow cut to what it fills, not squeezed", elwynn.fill.texture == "file:ui-frame-bar-fill-yellow"
+    and math.abs(elwynn.fill.texCoord[2] - filled / elwynn.track.width) < 1e-9, true)
+_G.BreakUpLargeNumbers = function(n) return "<" .. n .. ">" end
+Tab:Refresh()
+Expect("numbers written as the game writes them in the player's language, on banners and cards",
+    RowFor("Eastern Kingdoms").count.text:match("^<1>/<%d+>$") ~= nil
+    and RowFor("Elwynn Forest").count.text:match("^<1>/<%d+> • %d+%%$") ~= nil, true)
+_G.BreakUpLargeNumbers = nil
+Tab:Refresh()
+elwynn = RowFor("Elwynn Forest")
 Expect("...in the Pet Journal's bar frame", elwynn.barCaps[1]:IsShown() and elwynn.barCaps[1].atlas .. " "
     .. elwynn.barCaps[2].atlas .. " " .. elwynn.barCaps[3].atlas, "PetJournal-ExpBar-Left PetJournal-ExpBar-Mid PetJournal-ExpBar-Right")
 Expect("...its page saying where it is and counting its quests, on one line",
