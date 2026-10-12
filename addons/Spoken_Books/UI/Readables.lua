@@ -243,6 +243,20 @@ local function Named(label, whole)
 	return whole or (filter ~= "" and Matches(label))
 end
 
+-- Set while the cards under a banner whose name the search matches are built: each is listed,
+-- closed or open as the player left it, and opens and closes on a click as it does unsearched. A
+-- continent's every readable at once would be too long a list to read.
+local asLeft = false
+
+-- The rows `build` returns, built with asLeft set where `named`.
+local function AsLeft(named, build)
+	local before = asLeft
+	asLeft = before or named
+	local rows = build()
+	asLeft = before
+	return rows
+end
+
 -- A readable's row, or nil where it is not listed. `whole`: what holds it was named by the search.
 local function Leaf(id, nest, whole)
 	if OnlyFound() and not Found(id) then return nil end
@@ -280,6 +294,7 @@ local KIND_ICON = {
 local function Card(item, found, total)
 	item.style = "card"
 	item.count, item.total = found, total
+	item.asLeft = asLeft
 	if item.kind == "zone" then
 		if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
 	else
@@ -303,7 +318,7 @@ local function KindCards(byType, nest, into, item, shut, whole)
 			if #leaves > 0 then
 				local set = {}
 				for _, id in ipairs(ids) do set[id] = true end
-				local closed = filter == "" and shut(type)
+				local closed = (filter == "" or asLeft) and shut(type)
 				local card = item(type)
 				card.label, card.nest, card.open = TypeLabel(type), nest, not closed
 				table.insert(into, Card(card, Tally(set)))
@@ -325,7 +340,7 @@ local function ZoneRows(mapID, nest, whole)
 	if not Listed(all) then return {} end
 	local open = expandedZone == mapID or CITY_IN[expandedZone] == mapID
 	local inside = {}
-	if open or filter ~= "" then
+	if open or (filter ~= "" and not asLeft) then
 		for city, around in pairs(CITY_IN) do
 			if around == mapID and Index().zones[city] then
 				for _, row in ipairs(ZoneRows(city, nest + 1, whole)) do table.insert(inside, row) end
@@ -337,7 +352,7 @@ local function ZoneRows(mapID, nest, whole)
 	end
 	if filter ~= "" and #inside == 0 and not whole then return {} end
 	local rows = { Card({ kind = "zone", mapID = mapID, label = MapName(mapID), nest = nest,
-		open = (open or filter ~= "") and #inside > 0 }, found, total) }
+		open = (open or (filter ~= "" and not asLeft)) and #inside > 0 }, found, total) }
 	for _, row in ipairs(inside) do table.insert(rows, row) end
 	return rows
 end
@@ -358,9 +373,12 @@ local function GroupRows(key, label, ids)
 	if not Listed(set) then return {} end
 	local inside = {}
 	if groupOpen[key] or filter ~= "" then
-		KindCards(byType, 0, inside,
-			function(type) return { kind = "kind", which = type, group = key } end,
-			function(type) return groupTypeShut[key .. ":" .. type] end, Named(label))
+		local whole = Named(label)
+		AsLeft(whole, function()
+			KindCards(byType, 0, inside,
+				function(type) return { kind = "kind", which = type, group = key } end,
+				function(type) return groupTypeShut[key .. ":" .. type] end, whole)
+		end)
 	end
 	if filter ~= "" and #inside == 0 then return {} end
 	local rows = { { style = "banner", kind = "group", which = key, label = label, count = found, total = total,
@@ -403,9 +421,11 @@ local function ZoneBanner(key)
 	local inside = {}
 	if searching or zonesOpen[key] then
 		local whole = Named(L[ZONES_LABEL[key]])
-		for _, mapID in ipairs(zones) do
-			for _, row in ipairs(ZoneRows(mapID, 0, whole)) do table.insert(inside, row) end
-		end
+		AsLeft(whole, function()
+			for _, mapID in ipairs(zones) do
+				for _, row in ipairs(ZoneRows(mapID, 0, whole)) do table.insert(inside, row) end
+			end
+		end)
 	end
 	if searching and #inside == 0 then return {} end
 	local rows = { { style = "banner", kind = "zones", key = key, label = L[ZONES_LABEL[key]], count = found,
@@ -431,9 +451,11 @@ local function BuildRows()
 			local rows = {}
 			if searching or continentOpen[continent] then
 				local whole = Named(MapName(continent))
-				for _, mapID in ipairs(zones) do
-					for _, row in ipairs(ZoneRows(mapID, 0, whole)) do table.insert(rows, row) end
-				end
+				AsLeft(whole, function()
+					for _, mapID in ipairs(zones) do
+						for _, row in ipairs(ZoneRows(mapID, 0, whole)) do table.insert(rows, row) end
+					end
+				end)
 			end
 			if not (OnlyFound() and found == 0) and Listed(set) and (not searching or #rows > 0) then
 				table.insert(continents, { style = "banner", kind = "continent", mapID = continent,
@@ -672,9 +694,9 @@ local function OnClick(row)
 	elseif row.kind == "kind" then
 		-- A group's Books, Notes and the rest: closed and opened again, as a zone's are.
 		local key = row.group .. ":" .. row.which
-		if filter == "" then groupTypeShut[key] = not groupTypeShut[key] or nil end
+		if filter == "" or row.asLeft then groupTypeShut[key] = not groupTypeShut[key] or nil end
 		selection = { group = row.group, type = row.which }
-	elseif filter ~= "" then
+	elseif filter ~= "" and not row.asLeft then
 		selection = { mapID = row.mapID, group = row.kind == "group" and row.which or nil }
 	elseif row.kind == "continent" then
 		continentOpen[row.mapID] = not continentOpen[row.mapID]
