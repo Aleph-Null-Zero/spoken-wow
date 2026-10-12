@@ -43,6 +43,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **The Quests tab marks the quests you have heard.** A small tick on the quest's row and on its
   page, once every part of its recording has played to the end on any of your characters.
   *([Nucabe](https://github.com/Nucabe))*
+- **Shift-click a quest in the Quests tab to queue its recording** after what is playing,
+  without leaving the quest you are reading. *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's Zones tab is always on a place.** Reached from another tab, it showed an

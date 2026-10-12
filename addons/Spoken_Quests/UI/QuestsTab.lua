@@ -691,10 +691,12 @@ local PLAY = {
     playing = function(id) return #Clips(id) > 0 end,
     -- One part, the first a pack voices: the offer, the progress and the hand-in are said at
     -- different times, not as one speech. Its words go with it, for the window to show.
-    start = function(id)
+    -- `queued`: behind what the queue already holds, not played at once.
+    start = function(id, queued)
         for _, moment in ipairs(MOMENTS) do
             if Voiced(id, moment) then
-                VO.Player:PlayNow(SoundData(id, moment, "Azeroth's Compendium"))
+                local soundData = SoundData(id, moment, "Azeroth's Compendium")
+                if queued then VO.Player:Enqueue(soundData) else VO.Player:PlayNow(soundData) end
                 return
             end
         end
@@ -783,6 +785,10 @@ end
 --------------------------------------------------------------------------------
 
 local function OnClick(row)
+    if row.kind == "quest" and IsShiftKeyDown and IsShiftKeyDown() then
+        PLAY.start(row.quest, true)
+        return
+    end
     if row.kind == "quest" then
         selection = { quest = row.quest }
     elseif row.kind == "chain" then

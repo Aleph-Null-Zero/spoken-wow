@@ -1406,6 +1406,9 @@ every quest is a row of its own.
 
 The page fills the placeholders for the player as the client does. Play queues the quest's accept, progress and
 complete lines, whichever the packs have, named for its giver as the quest log's Play is.
+Shift-click on a quest's row hands the same lines to `Player:Enqueue`, every one behind what the
+queue holds, and leaves the selection and the page as they were; a line already queued is not
+queued again. The page shown with no quest chosen says so.
 
 A quest heard through gets a grey tick on its row and one under Play on its page, with a tooltip
 (`UI/QuestsHeard.lua`). Spoken's `CLIP_STOPPED` keeps each accept, progress or complete clip of
