@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 33
+local VERSION = 34
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -63,7 +63,10 @@ local GROUP_FOOT = 0          -- the line down its contents starts under the row
 -- The quest log's plus and minus are drawn 2 left of their picture's middle: the picture moves
 -- right by that, so the sign sits on the line down what it opens.
 local TOGGLE_SHIFT = 2
-local LEAF_GAP = 4            -- between a card and a single row next to it
+local LEAF_GAP = 4            -- between a card and a single row under it
+-- Between a single row and a card under it: the card's frame as far under the row's foot as under
+-- the frame of a card above it (CARD_GAP + FOOT + 5.4).
+local LINE_TO_CARD = 2
 local NEST_AFTER = 2          -- more under an open card's contents, for each card closed there
 local NEST_STEP = 16          -- each card's contents in, under the open card they belong to
 -- The line down an open card's contents, this far into the step: halfway between the card's frame
@@ -1178,7 +1181,7 @@ local function GapAbove(items, i)
 	if Flat(item) and Flat(before) then
 		return now < was and (was - now) * NEST_AFTER or 0, math.min(now, was)
 	end
-	local between = (Flat(item) or Flat(before)) and LEAF_GAP or CARD_GAP
+	local between = Flat(before) and LINE_TO_CARD or Flat(item) and LEAF_GAP or CARD_GAP
 	if now > was then return between, was end
 	return (was - now) * NEST_AFTER + between, now
 end

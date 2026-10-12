@@ -332,6 +332,27 @@ Expect("...under the pointer, the hover card over it", city.lift[5]:IsShown() an
 city.scripts.OnLeave(city)
 Expect("...and gone again after", city.lift[5]:IsShown(), false)
 Expect("...a quest in the zone a row, as far in", RowFor("Kobold Camp Cleanup").row.leaf and RowFor("Kobold Camp Cleanup").row.nest, 1)
+-- A card under a single row: its frame, 5.4 under its row's top, as far under the row's foot as
+-- a card's frame is under the frame of the card above it (3 above its foot, rows 1 apart): 7.4,
+-- 2 more for each open card closed between them.
+do
+    Shown()
+    local ordered = {}
+    for _, row in ipairs(rows) do if row.shown ~= false and row.row then table.insert(ordered, row) end end
+    table.sort(ordered, function(a, b) return a.anchor.y > b.anchor.y end)
+    local found, wrong = 0, {}
+    for i = 2, #ordered do
+        local above, row = ordered[i - 1], ordered[i]
+        local flat = above.row.leaf or above.row.style == "group"
+        if flat and row.row.style == "card" then
+            found = found + 1
+            local gap = (-row.anchor.y) - (-above.anchor.y + above.height)
+            local closed = math.max(0, (above.row.nest or 0) - (row.row.nest or 0))
+            if math.abs(gap + 5.4 - (7.4 + 2 * closed)) > 1e-9 then table.insert(wrong, row.row.label .. " " .. gap) end
+        end
+    end
+    Expect("a card under a single row as far from it as from a card above it", found > 0 and table.concat(wrong, ", "), "")
+end
 Click("Classes")
 list = Shown()
 Expect("...Classes opening on a class's quests under its name, this character's class only", Has(list, "Mage") and not Has(list, "Warlock"), true)
