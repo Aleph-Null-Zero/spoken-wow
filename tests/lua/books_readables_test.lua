@@ -120,7 +120,7 @@ Expect("...its badge what that kind of writing looks like, in the same frame", R
 Expect("...its writings rows inside that", RowFor("Kurdran Wildhammer").row.leaf and RowFor("Kurdran Wildhammer").row.nest, 3)
 Expect("...a line down each open card's contents beside them, a step in from the banner",
     RowFor("Kurdran Wildhammer").rails[3] ~= nil
-    and RowFor("Kurdran Wildhammer").rails[3]:IsShown() and RowFor("Kurdran Wildhammer").rails[3].anchor.x, 86)
+    and RowFor("Kurdran Wildhammer").rails[3]:IsShown() and RowFor("Kurdran Wildhammer").rails[3].anchor.x, 60)
 Expect("...a readable not found greyed, with the padlock", RowFor("Ranger Captain Alleria Windrunner").row.locked, true)
 Expect("...one found open to read", RowFor("Kurdran Wildhammer").row.locked, false)
 
@@ -242,6 +242,7 @@ Click(L.TYPE_PLAQUE)
 Expect("...a type opens on its readables", Has(Shown(), "Kurdran Wildhammer"), true)
 Expect("...each a card, counted found out of all", RowFor(L.TYPE_PLAQUE).row.style == "card"
     and RowFor(L.TYPE_PLAQUE).count.text:match("^2/%d+ • ") ~= nil, true)
+Expect("...with no banner above them, not set in", RowFor(L.TYPE_PLAQUE).face[1].anchor.x, 0)
 _, choices = Menu()
 choices[4].func()
 Expect("...and By Zone again, the zones", Has(Shown(), "Elwynn Forest"), true)

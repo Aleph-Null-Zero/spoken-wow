@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 18
+local VERSION = 19
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -46,20 +46,26 @@ local PAGE_MIN_WIDTH = 278
 local BANNER_ROW = 36
 local BANNER_GAP = 14         -- above each banner but the first
 local FIRST_GAP = 2           -- above the first row
-local UNDER_BANNER = 8        -- between a banner and the first card in it
+-- The rows are spaced by what shows of them: a card's frame starts 5.4 below its row's top and ends
+-- 3 above its foot, a banner's 3.5 above its foot. Every card is then as far from the card or
+-- banner above it as from the one before it.
+local UNDER_BANNER = 5        -- between a banner and the first card in it
 local CARD_ROW = 50
 local CARD_GAP = 6            -- between cards under a banner
 local LEAF_ROW = 22
-local NEST_GAP = 5            -- between the rows inside an open card
-local NEST_PAD = 2            -- inside the line down an open card's contents, above and below them
-local NEST_AFTER = 6          -- under an open card's contents
-local NEST_STEP = 28          -- each card's contents in, under the open card they belong to
-local RAIL_X = 16             -- the line down an open card's contents, this far into the step
+local LEAF_GAP = 4            -- between a card and a single row next to it
+local NEST_AFTER = 2          -- more under an open card's contents, for each card closed there
+local NEST_STEP = 16          -- each card's contents in, under the open card they belong to
+-- The line down an open card's contents, this far into the step: halfway between the card's frame
+-- and its contents' frames. It starts at the card's frame (FOOT above its row's foot).
+local RAIL_X = 12
+local FOOT, BANNER_FOOT = 3, 3.5
 local LIST_LEFT, LIST_RIGHT = 3, 2
--- What a banner holds sits this far in from it, one step down the tree.
-local UNDER_BANNER_IN = 14
+-- What a banner holds sits this far in from it, one step down the tree; with no banners, nothing
+-- is set in.
+local UNDER_BANNER_IN = 16
 -- The line down what a banner holds, this far in.
-local BANNER_RAIL_X = 6
+local BANNER_RAIL_X = 12
 local LIST_TOP, LIST_FOOT = 6, 8
 local SCROLL_STEP = 60
 local GRABBER_SIZE = 16
@@ -636,11 +642,12 @@ local CARD_ART = {
 	selected = { atlas = "glues-characterselect-card-selected-c60", cut = 30, size = 19, out = 7 },
 }
 local CARD_RIGHT = 56         -- what a card's share or tick keeps clear on its right
--- Inside a card's frame (5 in from its sides, 6 below its top, 2.5 above its foot) the badge has
--- the same 5 above, below and to its left. The name and bar are a shorter block centred on the
--- badge, and the room above and below that block is kept on the right as well.
+-- A card's frame shows 4.4 in from its left, 3.5 from its right, 5.4 below its top and 3 above its
+-- foot. The badge has the same room above, below and to its left of it; the name and bar are a
+-- shorter block centred on the badge, and the room above and below that block is kept on the
+-- right as well.
 local CARD_PAD = 10           -- from a card's left side to its badge
-local CARD_END = 15           -- from a card's right side to its numbers and bar
+local CARD_END = 12           -- from a card's right side to its numbers and bar
 local CARD_INK = { 0.73, 0.70, 0.65 }
 local SHARE_INK = { 0.80, 0.76, 0.70 }
 local BANNER_INK = { 0.85, 0.81, 0.73 }
@@ -782,7 +789,8 @@ function C.NewList(panel, opts)
 
 	local searchBox = CreateFrame("EditBox", nil, panel, "SearchBoxTemplate")
 	searchBox:SetSize(LIST_WIDTH - 66 - (filtered and FILTER_ROOM or 0), 20)
-	searchBox:SetPoint("TOPLEFT", panel, "TOPLEFT", left + 66, top - 8)
+	-- Halfway down the strip of the window between its title bar and the list.
+	searchBox:SetPoint("TOPLEFT", panel, "TOPLEFT", left + 66, top - 11.5)
 	if type(searchBox.Instructions) == "table" then searchBox.Instructions:SetText(opts.search or "") end
 	searchBox:HookScript("OnTextChanged", function(self)
 		list.filter = string.lower(strtrim and strtrim(self:GetText() or "") or (self:GetText() or ""))
@@ -1054,9 +1062,9 @@ local function ShowStyle(row, style)
 end
 
 -- The faint line down the left of each open card's contents, one for every card a row is inside.
--- Each row draws its share of the line, from the row above: `gap` up for the cards that held that
--- row too, just above itself for a card's first.
-local function Rails(row, count, gap, held, underBanner)
+-- Each row draws its share of the line, `gap` up to the row above; a card's or banner's first row
+-- draws it on up to that card's or banner's frame.
+local function Rails(row, count, gap, held, underBanner, afterBanner)
 	if underBanner and not row.bannerRail then
 		row.bannerRail = row:CreateTexture(nil, "BORDER")
 		row.bannerRail:SetWidth(1)
@@ -1064,7 +1072,7 @@ local function Rails(row, count, gap, held, underBanner)
 	end
 	if row.bannerRail then
 		row.bannerRail:ClearAllPoints()
-		row.bannerRail:SetPoint("TOPLEFT", row, "TOPLEFT", BANNER_RAIL_X, gap)
+		row.bannerRail:SetPoint("TOPLEFT", row, "TOPLEFT", BANNER_RAIL_X, gap + (afterBanner and BANNER_FOOT or 0))
 		row.bannerRail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", BANNER_RAIL_X, 0)
 		row.bannerRail:SetShown(underBanner and true or false)
 	end
@@ -1078,9 +1086,9 @@ local function Rails(row, count, gap, held, underBanner)
 				rail:SetColorTexture(0.84, 0.71, 0.31, 0.2)
 				row.rails[i] = rail
 			end
-			local x = UNDER_BANNER_IN + (i - 1) * NEST_STEP + RAIL_X
+			local x = (underBanner and UNDER_BANNER_IN or 0) + (i - 1) * NEST_STEP + RAIL_X
 			rail:ClearAllPoints()
-			rail:SetPoint("TOPLEFT", row, "TOPLEFT", x, i <= held and gap or NEST_PAD)
+			rail:SetPoint("TOPLEFT", row, "TOPLEFT", x, i <= held and gap or gap + FOOT)
 			rail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", x, 0)
 			rail:Show()
 		elseif rail then
@@ -1109,10 +1117,6 @@ local function Toggle(row, item, onlyFound)
 	row.toggle:Show()
 end
 
-local function Inner(nest)
-	return nest > 0 and NEST_GAP or CARD_GAP
-end
-
 -- The room above the row for `items[i]`, and how many open cards hold both it and the row above.
 local function GapAbove(items, i)
 	local item, before = items[i], items[i - 1]
@@ -1121,8 +1125,9 @@ local function GapAbove(items, i)
 	if before.style == "banner" then return UNDER_BANNER, 0 end
 	local was, now = before.nest or 0, item.nest or 0
 	if item.leaf and before.leaf and now == was then return 0, now end
-	if now > was then return Inner(was) + NEST_PAD, was end
-	return (was - now) * (NEST_PAD + NEST_AFTER) + Inner(now), now
+	local between = (item.leaf or before.leaf) and LEAF_GAP or CARD_GAP
+	if now > was then return between, was end
+	return (was - now) * NEST_AFTER + between, now
 end
 
 local function RowHeight(item)
@@ -1200,7 +1205,7 @@ local function DrawCard(row, item, indent, width)
 	-- The badge, centred in the card's frame: the zone's painting or what the card holds, in a
 	-- silver frame, greyed with nothing found.
 	local side = 32
-	local middle = -27
+	local middle = -26
 	local centre = indent + CARD_PAD + side / 2
 	local none = item.none or item.locked
 	local icon = item.icon or (item.story and CHAIN_ICON) or MAP_ICON
@@ -1230,7 +1235,7 @@ local function DrawCard(row, item, indent, width)
 
 	-- One line, as the list's rows had it before the cards: the name on the left and on the right
 	-- what is found out of all and the share, 5/27 • 18%, with the bar under them.
-	local top = 16
+	local top = 12
 	local level = -(top + 7)
 	local left = indent + CARD_PAD + side + 10
 	row.label:SetFontObject("GameFontNormal")
@@ -1291,10 +1296,10 @@ local function DrawCard(row, item, indent, width)
 		row.label:SetPoint("RIGHT", row, "RIGHT", -16, 0)
 	end
 
-	-- The bar 2 under the name's line: a dark track, the game's yellow as far as the share,
+	-- The bar under the name, clear of its descenders: a dark track, the game's yellow as far as the share,
 	-- cut rather than squeezed, in the Pet Journal's frame. None on a card with nothing to count.
 	local barred = (item.total or 0) > 0
-	local barLeft, barBottom, barHeight = left, 13, 6
+	local barLeft, barBottom, barHeight = left, 14, 6
 	row.barLeft, row.ratio = barLeft, ratio
 	row.track:ClearAllPoints()
 	row.track:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft + 2, barBottom + 1)
@@ -1344,11 +1349,11 @@ local function DrawLeaf(row, item, indent)
 	end
 	-- At the row's end, where a padlock goes: one place for what a row's state is.
 	row.status:ClearAllPoints()
-	row.status:SetPoint("CENTER", row, "RIGHT", -18, 0)
+	row.status:SetPoint("CENTER", row, "RIGHT", -(CARD_END + 6), 0)
 	row.status:SetShown(status ~= nil)
 
 	local locked = item.locked and row.hasLock
-	row.lock:SetPoint("CENTER", row, "RIGHT", -18, 0)
+	row.lock:SetPoint("CENTER", row, "RIGHT", -(CARD_END + 6), 0)
 	row.lock:SetShown(locked and true or false)
 	row.count:SetText("")
 	row.count:Hide()
@@ -1389,8 +1394,9 @@ function List:Render()
 
 		ShowStyle(row, item.style)
 		local nest = item.style ~= "banner" and item.nest or 0
-		Rails(row, nest, gap, held, item.style ~= "banner" and underBanner)
-		local indent = UNDER_BANNER_IN + nest * NEST_STEP
+		Rails(row, nest, gap, held, item.style ~= "banner" and underBanner,
+			items[i - 1] and items[i - 1].style == "banner")
+		local indent = (underBanner and UNDER_BANNER_IN or 0) + nest * NEST_STEP
 		row.indent = indent
 		row.barLeft = nil
 		row.label:ClearAllPoints()
