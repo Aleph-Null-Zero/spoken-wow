@@ -936,7 +936,9 @@ do
 end
 
 -- The part switched off takes its tab away.
+C:Open("quests")
 Spoken:SetPartOn("quests", false)
+Expect("Quests switched off while the window shows its tab, the window closes", C:IsOpen(), false)
 Expect("with Quests off, the tab is not offered", C:Select("quests"), nil)
 Spoken:SetPartOn("quests", true)
 
