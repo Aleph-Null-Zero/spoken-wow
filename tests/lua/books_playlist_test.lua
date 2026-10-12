@@ -88,6 +88,16 @@ Expect("...named by the book, whatever page of it this is: the book is one line"
     "Hillsbrad Town Registry")
 Expect("a page the pack does not carry has no clip", B:ClipFor(263), nil)
 local letter = B:ClipFor(15)
+-- A first page that does not open with its title is read after it: the narration reads the title
+-- first, and the captions' words start once it is said.
+local timings = letter.present.timings
+Expect("a letter's words start after its title, which its recording reads first",
+    timings ~= nil and #timings == #(_G.Spoken:CaptionWords(letter.present.transcript)) and timings[1] > 0, true)
+local rising = timings ~= nil
+for i = 2, #(timings or {}) do rising = rising and timings[i] > timings[i - 1] end
+Expect("...each word after the last, all within the recording", rising and timings[#timings] < letter.length, true)
+Expect("a first page opening with its own title starts its words at once", clip.present.timings, nil)
+Expect("...and a later page, read without its title, too", B:ClipFor(262).present.timings, nil)
 Expect("a one-page letter is named by its title, under what it is", letter.present.label .. " " .. tostring(letter.present.header ~= letter.present.label),
     "William's Shipment true")
 
