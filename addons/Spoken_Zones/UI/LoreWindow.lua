@@ -722,12 +722,19 @@ end
 -- Public
 --------------------------------------------------------------------------------
 
+-- The tab's list, built now where Zones was off at login and has been switched on since; nil
+-- while Zones is off.
+local function Built()
+	if not list then SpokenCompendium:Select("places") end
+	return list
+end
+
 function SpokenZones:ToggleLoreWindow()
-	if not list then
-		return
-	end
 	if SpokenCompendium:IsOpen("places") then
 		SpokenCompendium:Hide()
+		return
+	end
+	if not Built() then
 		return
 	end
 
@@ -747,7 +754,7 @@ end
 -- ToggleLoreWindow, which can land on where the player stands: narration outlives the zone you
 -- started it in.
 function SpokenZones:ShowLoreFor(mapID, areaKey)
-	if not list or not mapID then
+	if not mapID or not Built() then
 		return
 	end
 	OpenZone(mapID)
@@ -796,6 +803,17 @@ function SpokenZones:SetupLoreWindow()
 			end,
 		},
 	})
-	-- Built now, hidden, so the map's panel and the settings can open it at once.
-	SpokenCompendium:Select("places")
+	-- Built now, hidden, so the map's panel and the settings can open it at once, as the Compendium
+	-- builds a tab's panel. Not chosen: Select would make it the tab the window first opens on,
+	-- not the first tab.
+	local tab = SpokenCompendium:Tab("places")
+	if SpokenZones:IsPartOn() and not tab.panel then
+		local window = SpokenCompendium:Window()
+		local p = CreateFrame("Frame", nil, window)
+		p:SetAllPoints(window)
+		p:Hide()
+		tab.panel = p
+		BuildPanel(p)
+		p:Refresh()
+	end
 end

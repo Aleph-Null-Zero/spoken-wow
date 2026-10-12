@@ -104,11 +104,12 @@ Z:SetupLoreWindow()
 -- The places are a tab of Azeroth's Compendium (UI/Compendium.lua); Z.window is the tab.
 local compendium = _G.SpokenCompendium.window
 local window = Z.window
+Expect("built at login, hidden, and not made the tab the window first opens on",
+    tostring(window ~= nil) .. "|" .. tostring(compendium:IsShown()) .. "|" .. tostring(_G.SpokenCompendium:Active()), "true|false|nil")
 Expect("the places are a tab of Azeroth's Compendium, the game's portrait frame", compendium.template, "PortraitFrameTemplate")
 Expect("...titled, with the Compendium's tome in its portrait", compendium.title .. "|" .. tostring(compendium.portrait),
     Z.L.LORE_WINDOW_TITLE .. "|Interface\\Icons\\INV_Misc_Book_11")
 Expect("...closed by Escape", _G.UISpecialFrames[#_G.UISpecialFrames], "SpokenCompendiumWindow")
-Expect("...with no tabs while the places are its only one", _G.SpokenCompendiumWindowTab1:IsShown(), false)
 local page = window.page
 Expect("its story is on the spellbook's parchment", page.parchment, "spellbook-Page-Right-C60")
 Expect("...in an inset of its own, as the list is, so their borders part them", window.pageInset.template, "InsetFrameTemplate")
@@ -123,6 +124,7 @@ local withFallback = Z.GetLoreWithFallback
 Z.GetLoreWithFallback = function() return nil end
 Z:ToggleLoreWindow()
 Expect("with no story where the player stands, it lands on the continent they are on", page.title.text, "Kalimdor")
+Expect("...the window with no tabs while the places are its only one", _G.SpokenCompendiumWindowTab1:IsShown(), false)
 Z.GetLoreWithFallback = withFallback
 _G.SpokenCompendium:Hide()
 Z:ToggleLoreWindow()
@@ -640,5 +642,41 @@ Expect("...and is remembered", Z:Get("loreVoicedOnly"), true)
 Voiced().func()
 Expect("...off, everything again", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 Z.HasAudio = hasAudio
+
+---------------------------------------------------------------- a new session
+-- A fresh Compendium with a first tab before the places, and Zones' tab set up again in it.
+local partOn = true
+local function NewSession()
+    _G.SpokenCompendium:Hide()
+    _G.SpokenCompendium = nil
+    local session = setmetatable({}, { __index = Z })
+    function session:IsPartOn() return partOn end
+    assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", session)
+    assert(loadfile(ZONES .. "UI/LoreWindow.lua"))("Spoken_Zones", session)
+    _G.SpokenCompendium:Register("first", { label = "First", order = 0, build = function() end })
+    session:SetupLoreWindow()
+    return session
+end
+NewSession()
+_G.SpokenCompendium:Toggle()
+Expect("the Compendium first opened from the minimap or Spoken's page opens on its first tab, not the places",
+    _G.SpokenCompendium:Active(), "first")
+partOn = false
+local late = NewSession()
+Expect("with Zones off at login, the places' tab is not built", rawget(late, "window"), nil)
+partOn = true
+late:ToggleLoreWindow()
+Expect("...switched on later, opening it builds the tab and opens it on where the player stands",
+    tostring(_G.SpokenCompendium:IsOpen("places")) .. "|" .. late.window.page.title.text, "true|Durotar")
+partOn = false
+late = NewSession()
+partOn = true
+late:ShowLoreFor(1411, "valley of trials")
+Expect("...and the map's panel opens it on a place", tostring(_G.SpokenCompendium:IsOpen("places")) .. "|"
+    .. late.window.page.title.text, "true|Valley of Trials")
+partOn = false
+late = NewSession()
+late:ToggleLoreWindow()
+Expect("...while Zones stays off, nothing opens", _G.SpokenCompendium:IsOpen(), false)
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll zones lore window tests passed")
