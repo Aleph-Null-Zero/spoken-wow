@@ -1373,6 +1373,13 @@ Two generated files feed it, both committed so the addon never needs a database:
   (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
   quests already listed and adds the corpus's new ones, placed by their giver's spawn and open to
   the races of the side `corpus/factions.json` gives them.
+  `races` keeps a mask's playable bits (`ChrRaces.PlayableRaceBit`): Classic's eight, bits 0-7,
+  and Forever's Skyborne, 32 (High Order, Alliance) and 33 (Windshaper, Horde), all below 2^53 so
+  a Lua number holds them exactly. The DB's masks are read as Forever's client has them
+  (`db_races`): one naming every Classic race is anyone (the client has the DB's 0xFF and
+  0xFFFFFFFF as everyone), and one side's four Classic races are that side's Skyborne too. The
+  tab tests the bit with arithmetic, `bit.band` being 32-bit, and maps race ids
+  95 and 96 to bits 32 and 33 (`Has` in `UI/QuestsTab.lua`).
   Each quest that follows another in a chain has `prev`, the quest before it, from the same DB's
   `quest_template_addon` (`chain_links`): a positive `PrevQuestID`; else the lowest quest whose
   `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb

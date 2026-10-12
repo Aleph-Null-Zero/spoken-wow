@@ -59,9 +59,12 @@ INSTANCE_ZONE = {
 }
 # The corpus's quest lines.
 SOURCES = ["accept", "progress", "complete"]
-# Classic's races by side, as AllowableRaces bits (race id less one): Human, Dwarf, Night Elf and
-# Gnome; Orc, Undead, Tauren and Troll.
-SIDE_RACES = {"alliance": 1 | 4 | 8 | 64, "horde": 2 | 16 | 32 | 128}
+# The races by side, as AllowableRaces bits (ChrRaces.PlayableRaceBit): Human, Dwarf, Night Elf,
+# Gnome and High Order Skyborne; Orc, Undead, Tauren, Troll and Windshaper Skyborne. Classic's
+# eight are bits 0-7 (race id less one), Forever's Skyborne 32 and 33.
+CLASSIC_RACES = 0xFF
+SIDE_RACES = {"alliance": 1 | 4 | 8 | 64 | 1 << 32, "horde": 2 | 16 | 32 | 128 | 1 << 33}
+PLAYABLE_RACES = SIDE_RACES["alliance"] | SIDE_RACES["horde"]
 
 
 def table(name, locale="enUS", build=BUILD):
@@ -223,6 +226,30 @@ def chain_links(rows, known):
     return links
 
 
+def playable_races(mask):
+    """The playable races a race mask (PlayableRaceBit, as Forever's client has it) lets take a
+    quest, 0 for anyone. The bits kept are all below 2^53, so a Lua number holds the mask exactly."""
+    races = mask & PLAYABLE_RACES
+    return 0 if races == PLAYABLE_RACES else races
+
+
+def db_races(mask):
+    """A DB AllowableRaces as Forever's client has the quest's races.
+
+    The DB's masks are retail's 64 bits, many written before the Skyborne. A mask naming every
+    Classic race is anyone, whatever it says of the races past them: the client has the DB's 0xFF
+    and 0xFFFFFFFF as everyone. A mask of one side's Classic races is that side's Skyborne too, as
+    the client has the DB's 0x4D and 0xB2.
+    """
+    races = mask & PLAYABLE_RACES
+    if races & CLASSIC_RACES == CLASSIC_RACES:
+        return 0
+    for side in SIDE_RACES.values():
+        if races & CLASSIC_RACES == side & CLASSIC_RACES:
+            races |= side
+    return playable_races(races)
+
+
 def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None):
     parts = [lua_string(title)]
     if zones:
@@ -231,10 +258,10 @@ def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None):
         parts.append(f"sort = {group}")
     if prev:
         parts.append(f"prev = {prev}")
-    # Classic's eight races and nine classes (bits by id less one); every one of them, or
-    # none named, is anyone, and goes unsaid. The DB's "all" is every bit set.
-    races = races & 0xFF
-    if races and races != 0xFF:
+    # Every race or class, or none named, is anyone, and goes unsaid. Classes are Classic's nine
+    # (bits by id less one); the DB's "all" is every bit set.
+    races = playable_races(races)
+    if races:
         parts.append(f"races = {races}")
     classes = classes & 0x5DF
     if classes and classes != 0x5DF:
@@ -247,8 +274,9 @@ def render(quest_lines, sort_lines):
 --
 -- Every quest the voice packs were made from, for the Quests tab of Azeroth's Compendium:
 -- {{ English title, zones = {{ uiMapID... }} or sort = a QuestSort (a class, a profession, a
--- season), races and classes = who may take it (bit masks, absent for anyone), prev = the quest
--- before it in its chain }}. The words are Data/QuestText.lua's. Regenerate with the Forever
+-- season), races and classes = who may take it (bit masks: a race's PlayableRaceBit, Skyborne's
+-- 32 and 33, and a class's id less one; absent for anyone), prev = the quest before it in its
+-- chain }}. The words are Data/QuestText.lua's. Regenerate with the Forever
 -- repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
@@ -316,7 +344,7 @@ def with_db(args):
     with db.cursor() as cur:
         cur.execute(f"SELECT ID, QuestSortID, AllowableRaces FROM quest_template WHERE ID IN ({marks})", ids)
         for qid, sort, races in cur.fetchall():
-            quests[qid]["sort"], quests[qid]["races"] = int(sort), int(races or 0)
+            quests[qid]["sort"], quests[qid]["races"] = int(sort), db_races(int(races or 0))
         cur.execute(f"SELECT ID, AllowableClasses FROM quest_template_addon WHERE ID IN ({marks})", ids)
         for qid, classes in cur.fetchall():
             quests[qid]["classes"] = int(classes or 0)
