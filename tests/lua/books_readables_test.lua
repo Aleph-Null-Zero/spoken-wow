@@ -1,7 +1,7 @@
 -- The readables in Azeroth's Compendium: every book, letter, note and plaque, in a card for the
--- zone it is in under its continent's banner and a small card for what it is, or by what it is
+-- zone it is in under its continent's banner and a card for what it is, or by what it is
 -- alone, found or not; a readable's page with
--- where it comes from; the search, Found Only and Unlock Unfound Readables; and the tabs once the
+-- where it comes from; the search, Found Only and Unlock Unfound Books; and the tabs once the
 -- places are there too. Against the shipped data (Data/Books.lua, Data/Places.lua). Run with
 -- `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
@@ -18,7 +18,13 @@ stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames
 -- The maps the client names, and where each is.
 local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "Eastern Kingdoms", 947 },
     [1429] = { "Elwynn Forest", 1415 }, [1453] = { "Stormwind City", 1415 }, [1436] = { "Westfall", 1415 },
-    [1455] = { "Ironforge", 1415 }, [1426] = { "Dun Morogh", 1415 } }
+    [1455] = { "Ironforge", 1415 }, [1426] = { "Dun Morogh", 1415 },
+    -- Alterac Valley under Azeroth, as one client hangs it; Warsong Gulch in Ashenvale; an isle on
+    -- no continent.
+    [1459] = { "Alterac Valley", 947 }, [1440] = { "Ashenvale", 1414 }, [1460] = { "Warsong Gulch", 1440 },
+    [9001] = { "Zephras Isle", 947 },
+    -- A hill on Kalimdor with nothing to read, and a map on no continent with nothing either.
+    [9002] = { "Bare Hills", 1414 }, [9003] = { "Empty Sea", 947 } }
 _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
@@ -54,12 +60,21 @@ dofile(BOOKS .. "Data/Books.lua")
 dofile(BOOKS .. "Data/Places.lua")
 local L = B.L
 
+-- A note on the isle, and one in Warsong Gulch: the shipped data has neither.
+local ISLE_NOTE, GULCH_NOTE = 990001, 990002
+for id, place in pairs({ [ISLE_NOTE] = { "Isle Tide Tables", 9001 }, [GULCH_NOTE] = { "Gulch Orders", 1460 } }) do
+    SpokenBooksData.pages[id] = { book = id, number = 1, text = "Words of " .. place[1] .. "." }
+    SpokenBooksData.books[id] = { title = place[1], pages = { id } }
+    SpokenBooksPlaces.books[id] = { kind = "world", type = "note", zones = { place[2] } }
+end
+
 -- Kurdran Wildhammer and Alleria Windrunner stand in Stormwind; A Dusty Unsent Letter is carried
 -- from Westfall; An Exotic Cookbook is had across Azeroth.
 local KURDRAN, ALLERIA, LETTER, COOKBOOK = 287, 288, 16, 410
 SpokenBooksCharacter.found[KURDRAN] = true
 
 B:SetupReadables()
+stub.SetZone({ map = 1436 })
 B:ShowReadables()
 local window = _G.SpokenCompendium.window
 local panel = B.readables
@@ -94,6 +109,26 @@ local function Has(list, label)
     return ("|" .. list .. "|"):find("|" .. label .. "|", 1, true) ~= nil
 end
 
+-- Opened with nothing chosen, or still on where it landed, the tab lands on where the player stands.
+local function Reopen(map)
+    window:Hide()
+    stub.SetZone({ map = map })
+    B:ShowReadables()
+end
+Expect("opened, the tab lands on the player's zone", panel.page.title.text, "Westfall")
+Expect("...its card open on what is in it", RowFor("Westfall").row.open and Has(Shown(), "A Dusty Unsent Letter"), true)
+Reopen(1453)
+Expect("...reopened elsewhere, on the zone the player stands in now", panel.page.title.text, "Stormwind City")
+Expect("...a city's card opened inside its zone's", RowFor("Elwynn Forest").row.open and Has(Shown(), "Kurdran Wildhammer"), true)
+Reopen(9002)
+Expect("...where their zone has nothing to read, their continent's banner", panel.page.title.text, "Kalimdor")
+Reopen(9003)
+Expect("...on no continent, the first continent's", panel.page.title.text, "Eastern Kingdoms")
+Click("Westfall")
+Reopen(1453)
+Expect("...and what the player chose, kept on reopening", panel.page.title.text, "Westfall")
+Click("Westfall")
+
 local list = Shown()
 Expect("the list is laid out as the places': a banner for each continent, no Azeroth above them",
     RowFor("Eastern Kingdoms") ~= nil and RowFor("Eastern Kingdoms").row.style == "banner" and not Has(list, "Azeroth"), true)
@@ -115,12 +150,39 @@ Expect("...which opens on them, the Winter Veil feast it once listed in the citi
     Has(Shown(), "The Feast of Winter Veil") and Has(Shown(), "A Bloodstained Envelope"), true)
 Click(L.GROUP_EVENTS)
 
+-- The zones on no continent, then the battlegrounds wherever the client hangs them, each under a
+-- banner of their own after the continents.
+local function At(list, label) return ("|" .. list .. "|"):find("|" .. label .. "|", 1, true) end
+list = Shown()
+Expect("Other Lands then Battlegrounds, each a banner, after the continents and before the groups",
+    RowFor(L.GROUP_LANDS).row.style == "banner" and RowFor(L.GROUP_BATTLEGROUNDS).row.style == "banner"
+    and At(list, "Kalimdor") < At(list, L.GROUP_LANDS) and At(list, L.GROUP_LANDS) < At(list, L.GROUP_BATTLEGROUNDS)
+    and At(list, L.GROUP_BATTLEGROUNDS) < At(list, L.GROUP_EVENTS), true)
+Expect("...closed at first", Has(list, "Zephras Isle") or Has(list, "Alterac Valley"), false)
+Expect("...a battleground hung under a continent not listed under it", Has(list, "Warsong Gulch"), false)
+Click(L.GROUP_LANDS)
+Expect("Other Lands opens on a card for each zone on no continent", RowFor("Zephras Isle") ~= nil
+    and RowFor("Zephras Isle").row.style == "card" and RowFor("Zephras Isle").row.nest, 0)
+Expect("...its page its name, what is found of it, and the words to choose one",
+    panel.page.title.text .. "|" .. panel.page.sub.text .. "|" .. panel.page.body.text.text,
+    L.GROUP_LANDS .. "|" .. L.FOUND_FMT:format(0, 1) .. "|" .. L.READABLES_PICK)
+Click(L.GROUP_LANDS)
+Expect("...and closes again", Has(Shown(), "Zephras Isle"), false)
+Click(L.GROUP_BATTLEGROUNDS)
+Expect("Battlegrounds opens on Alterac Valley under Azeroth and Warsong Gulch under Ashenvale",
+    Has(Shown(), "Alterac Valley") and Has(Shown(), "Warsong Gulch"), true)
+Expect("...its page its name", panel.page.title.text, L.GROUP_BATTLEGROUNDS)
+Click("Alterac Valley")
+Expect("...Alterac Valley's gravestone listed in it", Has(Shown(), "Rock of Durotan"), true)
+Click("Alterac Valley")
+Click(L.GROUP_BATTLEGROUNDS)
+
 Click("Elwynn Forest")
 Click("Stormwind City")
 list = Shown()
 Expect("the city opens inside its zone, its readables by what they are", Has(list, L.TYPE_PLAQUE) and Has(list, "Kurdran Wildhammer"), true)
-Expect("...the city a small card inside its zone's card", RowFor("Stormwind City").row.small and RowFor("Stormwind City").row.nest, 1)
-Expect("...each kind a small card inside the city's", RowFor(L.TYPE_PLAQUE).row.small and RowFor(L.TYPE_PLAQUE).row.nest, 2)
+Expect("...the city a card inside its zone's card", RowFor("Stormwind City").row.nest, 1)
+Expect("...each kind a card inside the city's", RowFor(L.TYPE_PLAQUE).row.nest, 2)
 Expect("...its badge what that kind of writing looks like, in the same frame", RowFor(L.TYPE_PLAQUE).icon.texture
     .. " " .. RowFor(L.TYPE_PLAQUE).iconFrame.atlas, [[Interface\Icons\INV_Misc_StoneTablet_03]] .. " collections-itemborder-collected")
 Expect("...its writings rows inside that", RowFor("Kurdran Wildhammer").row.leaf and RowFor("Kurdran Wildhammer").row.nest, 3)
@@ -142,7 +204,7 @@ Expect("a readable not found does not open", page.title.text, "Kurdran Wildhamme
 
 SpokenBooksSettings.unlockUnfound = true
 B:RefreshReadables()
-Expect("Unlock Unfound Readables opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
+Expect("Unlock Unfound Books opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
 -- Opening one is not finding it: the counts stay what the character has found.
 local before = RowFor("Stormwind City").count.text
 Click("Ranger Captain Alleria Windrunner")
@@ -165,22 +227,48 @@ box.hooks.OnTextChanged[1](box)
 list = Shown()
 Expect("a search shows what matches, under what holds it", Has(list, L.GROUP_WIDE) and Has(list, "An Exotic Cookbook")
     and not Has(list, "Kurdran Wildhammer"), true)
-box:SetText("")
-box.hooks.OnTextChanged[1](box)
+local function Search(text)
+    box:SetText(text)
+    box.hooks.OnTextChanged[1](box)
+    return Shown()
+end
+-- A search naming what holds readables lists all it holds, the titles matching or not.
+list = Search("alterac")
+Expect("a search naming a zone lists all it holds, its card open", Has(list, "Rock of Durotan")
+    and RowFor("Alterac Valley").row.open, true)
+list = Search(L.TYPE_GRAVE:lower())
+Expect("...naming a kind, every one of that kind", Has(list, "Rock of Durotan") and not Has(list, "Kurdran Wildhammer"), true)
+list = Search(L.GROUP_LANDS:lower())
+Expect("...naming Other Lands, its zones and their readables", Has(list, "Zephras Isle") and Has(list, "Isle Tide Tables"), true)
+list = Search(L.GROUP_WIDE:lower())
+Expect("...naming a group, its readables", Has(list, "An Exotic Cookbook"), true)
+list = Search("eastern kingdoms")
+Expect("...naming a continent, its zones and their readables", Has(list, "Westfall") and Has(list, "Kurdran Wildhammer")
+    and not Has(list, "Rock of Durotan"), true)
+Click("Westfall")
+Expect("...a card in it chosen, its page shows", page.title.text, "Westfall")
+Search("")
 
 -- Found Only: the readables not found, and what holds none found, left out.
 SpokenBooksSettings.compendiumFoundOnly = true
 B:RefreshReadables()
 list = Shown()
 Expect("Found Only leaves out what is not found", Has(list, "Ranger Captain Alleria Windrunner") or Has(list, L.GROUP_UNKNOWN), false)
+Expect("...Other Lands' and Battlegrounds' banners too, holding nothing found",
+    Has(list, L.GROUP_LANDS) or Has(list, L.GROUP_BATTLEGROUNDS), false)
 Expect("...and keeps what is", Has(list, "Westfall") and Has(list, "Elwynn Forest"), true)
 SpokenBooksSettings.compendiumFoundOnly = false
 
--- Opening one in the world finds it, and the tree says so.
-SpokenBooksCharacter.found[ALLERIA] = true
+-- Opening one in the world finds it, and the tab open meanwhile says so at once.
 Click("Elwynn Forest")
 Click("Stormwind City")
-Expect("a readable found since opens", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
+local function Counted(text) return tonumber(text:match("^(%d+)/")) end
+local cardBefore, pageBefore = Counted(RowFor("Stormwind City").count.text), panel.page.sub.text
+B:MarkBookFound(ALLERIA)
+Expect("a readable found while the tab is open opens at once", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
+Expect("...ticked", RowFor("Ranger Captain Alleria Windrunner").row.done, true)
+Expect("...counted on its zone's card", Counted(RowFor("Stormwind City").count.text), cardBefore + 1)
+Expect("...and on the page", panel.page.sub.text ~= pageBefore and panel.page.sub.text:find(tostring(cardBefore + 1), 1, true) ~= nil, true)
 
 -- The type it is listed under closes and opens again, as the zone does.
 local typeRow
@@ -191,7 +279,7 @@ do
         if row.row and row.label.text == "Ranger Captain Alleria Windrunner" then break end
     end
 end
-Expect("a zone's readables are under a small card for their kind, open", typeRow ~= nil and RowFor(typeRow).row.open, true)
+Expect("a zone's readables are under a card for their kind, open", typeRow ~= nil and RowFor(typeRow).row.open, true)
 Click(typeRow)
 Expect("...a click closes the type", Has(Shown(), "Ranger Captain Alleria Windrunner") or RowFor(typeRow).row.open, false)
 Click(typeRow)
@@ -244,6 +332,8 @@ Click(L.TYPE_OTHER)
 Expect("By Type: the list is a card for each kind alone", Has(list, L.TYPE_PLAQUE) and Has(list, L.TYPE_LETTER) and not Has(list, "Elwynn Forest"), true)
 _, choices = Menu()
 Expect("...and the menu says so", choices[5].checked and not choices[4].checked, true)
+Expect("...a search naming a kind lists every one of it", Has(Search(L.TYPE_PLAQUE:lower()), "Kurdran Wildhammer"), true)
+Search("")
 Click(L.TYPE_PLAQUE)
 Expect("...a type opens on its readables", Has(Shown(), "Kurdran Wildhammer"), true)
 Expect("...each a card, counted found out of all", RowFor(L.TYPE_PLAQUE).row.style == "card"

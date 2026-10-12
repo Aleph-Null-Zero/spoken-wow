@@ -2,31 +2,42 @@
 -- note and plaque Spoken Books reads, found or not, to read and listen to anywhere.
 --
 -- The list is laid out as the places' (Spoken Zones' tab): a banner for each continent, a card for
--- each of its zones (how many of its writings are found, with a bar), a city a small card inside
--- the zone around it; in an opened zone a small card for each kind of writing -- books, journals,
--- letters, notes, scrolls, tablets, plaques, gravestones, exhibits, pictures -- and the writings
--- under it. After the continents, a banner each for the seasonal events' readables, for those had
+-- each of its zones (how many of its writings are found, with a bar), a city a card inside the
+-- zone around it; in an opened zone a card for each kind of writing -- books, journals, letters,
+-- notes, scrolls, tablets, plaques, gravestones, exhibits, pictures -- and the writings under it.
+-- After the continents, Other Lands' banner for the zones on none and Battlegrounds', each with a
+-- card for each of its zones; then a banner each for the seasonal events' readables, for those had
 -- in too many zones to list under each and for those whose origin is not known, with a card for
 -- each kind inside. With By Zone off, the list is a card for each kind alone, every readable under
--- its own. Where each is comes from
--- Data/Places.lua; what this character has found, from SpokenBooksCharacter (Core.lua). A readable
--- not found yet is listed greyed, with a padlock, and does not open, unless Unlock Unfound
--- Readables is on. On the right its pages, on parchment, with where it comes from and Play.
+-- its own. Where each is comes from Data/Places.lua; what this character has found, from
+-- SpokenBooksCharacter (Core.lua). A readable not found yet is listed greyed, with a padlock, and
+-- does not open, unless Unlock Unfound Books is on. On the right its pages, on parchment, with
+-- where it comes from and Play.
 
 local ADDON_NAME, SpokenBooks = ...
 
 local L = SpokenBooks.L
 
 local C = SpokenCompendium
-local WORLD, CONTINENTS, CITY_IN = C.WORLD, C.CONTINENTS, C.CITY_IN
+local CONTINENTS, CITY_IN = C.CONTINENTS, C.CITY_IN
 local MapName, ContinentOf = C.MapName, C.ContinentOf
 
 local list, page
 local selection          -- { book = id } | { mapID = id } | { mapID = id, group = type }
                          -- | { group = "events"|"wide"|"unknown" }
-                         -- | { group = "events"|"wide"|"unknown", type = type } | { type = type } | nil
+                         -- | { group = "events"|"wide"|"unknown", type = type } | { type = type }
+                         -- | { zones = "lands"|"battlegrounds" } | nil
+local landed             -- the selection made for the player, where they stood; any other they chose
 local expandedZone
 local continentOpen = { [1414] = true, [1415] = true }
+local zonesOpen = {}          -- [key] = true: Other Lands' or Battlegrounds' banner, opened
+local ZONES_LABEL = { lands = "GROUP_LANDS", battlegrounds = "GROUP_BATTLEGROUNDS" }
+-- The battlegrounds, under a banner of their own after the continents, whatever map the client
+-- hangs them under: one client puts Alterac Valley in Hillsbrad Foothills, another under Azeroth,
+-- where no continent's list reached it.
+local BATTLEGROUNDS = { 1459, 1460, 1461, 2524 } -- Alterac Valley, Warsong Gulch, Arathi Basin, Darkspear Islands
+local IS_BATTLEGROUND = {}
+for _, mapID in ipairs(BATTLEGROUNDS) do IS_BATTLEGROUND[mapID] = true end
 local groupOpen = { events = false, wide = false, unknown = false }
 local GROUP_LABEL = { events = "GROUP_EVENTS", wide = "GROUP_WIDE", unknown = "GROUP_UNKNOWN" }
 local typeOpen = {}
@@ -50,7 +61,7 @@ local function Title(id)
 	return book and book.title or tostring(id)
 end
 
--- Every readable by where it is: index.zones[mapID] = { [type] = { ids } }, the two groups, the
+-- Every readable by where it is: index.zones[mapID] = { [type] = { ids } }, the three groups, the
 -- types, and `all`, what every count is out of. A readable Data/Places.lua does not carry is left
 -- out everywhere: places.mjs drops the Deprecated and TEST items no one can find, and counting
 -- them would keep every total out of reach. Built once: the data is fixed for the session.
@@ -133,7 +144,7 @@ local function Listed(set)
 	return false
 end
 
--- By Zone, under the list: on, zones then types; off, the types alone.
+-- By Zone, in the filter menu: on, zones then types; off, the types alone.
 local function ByZone()
 	return not (SpokenBooksSettings and SpokenBooksSettings.compendiumByZone == false)
 end
@@ -148,11 +159,14 @@ local function ByName(a, b)
 	return na < nb
 end
 
--- The zones on `continent` that have readables, cities left to the zone around them.
+-- The zones on `continent` that have readables, cities left to the zone around them and
+-- battlegrounds to their banner.
 local function ZonesOn(continent)
 	local out = {}
 	for mapID in pairs(Index().zones) do
-		if not CITY_IN[mapID] and ContinentOf(mapID) == continent then table.insert(out, mapID) end
+		if not CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] and ContinentOf(mapID) == continent then
+			table.insert(out, mapID)
+		end
 	end
 	-- A zone with no readables of its own but a city that has some.
 	for city, zone in pairs(CITY_IN) do
@@ -165,6 +179,32 @@ local function ZonesOn(continent)
 	table.sort(out, ByName)
 	return out
 end
+
+-- The zones with readables on no continent, under Other Lands after the continents. Not a map
+-- this client has never heard of: its card would lead nowhere.
+local function LooseZones()
+	local out = {}
+	for mapID in pairs(Index().zones) do
+		if not CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] and not ContinentOf(mapID)
+			and not (C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID) == nil) then
+			table.insert(out, mapID)
+		end
+	end
+	table.sort(out, ByName)
+	return out
+end
+
+-- The battlegrounds with readables, by name.
+local function Battlegrounds()
+	local out = {}
+	for _, mapID in ipairs(BATTLEGROUNDS) do
+		if Index().zones[mapID] then table.insert(out, mapID) end
+	end
+	table.sort(out, ByName)
+	return out
+end
+
+local ZONES_OF = { lands = LooseZones, battlegrounds = Battlegrounds }
 
 -- Every readable under `mapID`, its city's included, each once.
 local function ReadablesIn(mapID, into)
@@ -198,17 +238,23 @@ end
 -- The rows
 --------------------------------------------------------------------------------
 
-local function Leaf(id, nest)
+-- Whether a search names what holds `label`: then all it holds is listed, each title matching or not.
+local function Named(label, whole)
+	return whole or (filter ~= "" and Matches(label))
+end
+
+-- A readable's row, or nil where it is not listed. `whole`: what holds it was named by the search.
+local function Leaf(id, nest, whole)
 	if OnlyFound() and not Found(id) then return nil end
 	if OnlyVoiced() and not Voiced(id) then return nil end
-	if filter ~= "" and not Matches(Title(id)) then return nil end
+	if filter ~= "" and not whole and not Matches(Title(id)) then return nil end
 	return { kind = "readable", leaf = true, book = id, label = Title(id), nest = nest,
 		locked = not Found(id) and not Unlocked(), done = Found(id) and true or false }
 end
 
-local function Leaves(ids, nest, into)
+local function Leaves(ids, nest, into, whole)
 	for _, id in ipairs(ids) do
-		local row = Leaf(id, nest)
+		local row = Leaf(id, nest, whole)
 		if row then table.insert(into, row) end
 	end
 end
@@ -221,15 +267,11 @@ local KIND_ICON = {
 	note = [[Interface\Icons\INV_Misc_Note_01]],
 	scroll = [[Interface\Icons\INV_Scroll_03]],
 	tablet = [[Interface\Icons\INV_Misc_StoneTablet_04]],
-	rune = [[Interface\Icons\INV_Misc_Rune_06]],
 	plaque = [[Interface\Icons\INV_Misc_StoneTablet_03]],
-	sign = [[Interface\Icons\INV_Misc_StoneTablet_06]],
 	grave = [[Interface\Icons\INV_Misc_StoneTablet_02]],
 	exhibit = [[Interface\Icons\INV_Misc_Statue_02]],
 	journal = [[Interface\Icons\INV_Misc_Book_11]],
-	diary = [[Interface\Icons\INV_Misc_Book_11]],
 	picture = [[Interface\Icons\INV_Misc_Map_01]],
-	map = [[Interface\Icons\INV_Misc_Map_01]],
 	other = [[Interface\Icons\INV_Scroll_08]],
 }
 
@@ -243,7 +285,6 @@ local function Card(item, found, total)
 	else
 		item.icon = KIND_ICON[item.which] or KIND_ICON.other
 	end
-	item.sub = L.FOUND_FMT:format(found, total)
 	item.ratio = total > 0 and found / total or 0
 	item.tick = total > 0 and found == total
 	item.none = found == 0
@@ -253,12 +294,12 @@ end
 -- A card for each kind of writing in `byType` ({ [type] = ids }) with something listed, and its
 -- writings under it while it is open: open until closed, and always while searching. `item`
 -- makes each card's own fields.
-local function KindCards(byType, nest, into, item, shut)
+local function KindCards(byType, nest, into, item, shut, whole)
 	for _, type in ipairs(TYPES) do
 		local ids = byType[type] or {}
 		if #ids > 0 then
 			local leaves = {}
-			Leaves(ids, nest + 1, leaves)
+			Leaves(ids, nest + 1, leaves, Named(TypeLabel(type), whole))
 			if #leaves > 0 then
 				local set = {}
 				for _, id in ipairs(ids) do set[id] = true end
@@ -274,9 +315,10 @@ local function KindCards(byType, nest, into, item, shut)
 	end
 end
 
--- A zone's card, and when it is open (or a search finds something in it) its city's small card,
--- then a small card for each kind of writing in it.
-local function ZoneRows(mapID, nest, small)
+-- A zone's card, and when it is open (or a search finds something in it) its city's card, then a
+-- card for each kind of writing in it.
+local function ZoneRows(mapID, nest, whole)
+	whole = Named(MapName(mapID), whole)
 	local all = ReadablesIn(mapID)
 	local found, total = Tally(all)
 	if OnlyFound() and found == 0 then return {} end
@@ -286,22 +328,22 @@ local function ZoneRows(mapID, nest, small)
 	if open or filter ~= "" then
 		for city, around in pairs(CITY_IN) do
 			if around == mapID and Index().zones[city] then
-				for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
+				for _, row in ipairs(ZoneRows(city, nest + 1, whole)) do table.insert(inside, row) end
 			end
 		end
 		KindCards(Index().zones[mapID] or {}, nest + 1, inside,
-			function(type) return { kind = "group", which = type, mapID = mapID, small = true } end,
-			function(type) return zoneTypeShut[mapID .. ":" .. type] end)
+			function(type) return { kind = "group", which = type, mapID = mapID } end,
+			function(type) return zoneTypeShut[mapID .. ":" .. type] end, whole)
 	end
-	if filter ~= "" and #inside == 0 and not Matches(MapName(mapID)) then return {} end
-	local rows = { Card({ kind = "zone", small = small, mapID = mapID, label = MapName(mapID), nest = nest,
+	if filter ~= "" and #inside == 0 and not whole then return {} end
+	local rows = { Card({ kind = "zone", mapID = mapID, label = MapName(mapID), nest = nest,
 		open = (open or filter ~= "") and #inside > 0 }, found, total) }
 	for _, row in ipairs(inside) do table.insert(rows, row) end
 	return rows
 end
 
--- Those found across Azeroth, or of no known origin: a banner of their own after the continents,
--- holding a card for each kind of writing.
+-- A group's readables (the seasonal events', those found across Azeroth or those of no known
+-- origin): a banner of their own after the zones', holding a card for each kind of writing.
 local function GroupRows(key, label, ids)
 	if #ids == 0 then return {} end
 	local set, byType = {}, {}
@@ -318,7 +360,7 @@ local function GroupRows(key, label, ids)
 	if groupOpen[key] or filter ~= "" then
 		KindCards(byType, 0, inside,
 			function(type) return { kind = "kind", which = type, group = key } end,
-			function(type) return groupTypeShut[key .. ":" .. type] end)
+			function(type) return groupTypeShut[key .. ":" .. type] end, Named(label))
 	end
 	if filter ~= "" and #inside == 0 then return {} end
 	local rows = { { style = "banner", kind = "group", which = key, label = label, count = found, total = total,
@@ -337,7 +379,7 @@ local function TypeRows()
 			for _, id in ipairs(ids) do set[id] = true end
 			local found, total = Tally(set)
 			local leaves = {}
-			if typeOpen[type] or filter ~= "" then Leaves(ids, 1, leaves) end
+			if typeOpen[type] or filter ~= "" then Leaves(ids, 1, leaves, Named(TypeLabel(type))) end
 			if not (OnlyFound() and found == 0) and Listed(set) and (filter == "" or #leaves > 0) then
 				table.insert(out, Card({ kind = "type", which = type, nest = 0, label = TypeLabel(type),
 					open = #leaves > 0 }, found, total))
@@ -348,7 +390,32 @@ local function TypeRows()
 	return out
 end
 
--- A banner for each continent, its zones' cards under it; then the two groups' banners.
+-- Other Lands' or Battlegrounds' banner, a card for each of its zones under it, opened and chosen
+-- as a continent's.
+local function ZoneBanner(key)
+	local zones = ZONES_OF[key]()
+	if #zones == 0 then return {} end
+	local set = {}
+	for _, mapID in ipairs(zones) do ReadablesIn(mapID, set) end
+	local found, total = Tally(set)
+	if (OnlyFound() and found == 0) or not Listed(set) then return {} end
+	local searching = filter ~= ""
+	local inside = {}
+	if searching or zonesOpen[key] then
+		local whole = Named(L[ZONES_LABEL[key]])
+		for _, mapID in ipairs(zones) do
+			for _, row in ipairs(ZoneRows(mapID, 0, whole)) do table.insert(inside, row) end
+		end
+	end
+	if searching and #inside == 0 then return {} end
+	local rows = { { style = "banner", kind = "zones", key = key, label = L[ZONES_LABEL[key]], count = found,
+		total = total, open = #inside > 0 } }
+	for _, row in ipairs(inside) do table.insert(rows, row) end
+	return rows
+end
+
+-- A banner for each continent, its zones' cards under it; Other Lands' and Battlegrounds'; then
+-- the groups' banners.
 local function BuildRows()
 	if not ByZone() then return TypeRows() end
 	local out = {}
@@ -363,8 +430,9 @@ local function BuildRows()
 			local found, total = Tally(set)
 			local rows = {}
 			if searching or continentOpen[continent] then
+				local whole = Named(MapName(continent))
 				for _, mapID in ipairs(zones) do
-					for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(rows, row) end
+					for _, row in ipairs(ZoneRows(mapID, 0, whole)) do table.insert(rows, row) end
 				end
 			end
 			if not (OnlyFound() and found == 0) and Listed(set) and (not searching or #rows > 0) then
@@ -378,6 +446,8 @@ local function BuildRows()
 		table.insert(out, continent)
 		Add(continent.rows)
 	end
+	Add(ZoneBanner("lands"))
+	Add(ZoneBanner("battlegrounds"))
 	Add(GroupRows("events", L.GROUP_EVENTS, Index().events))
 	Add(GroupRows("wide", L.GROUP_WIDE, Index().wide))
 	Add(GroupRows("unknown", L.GROUP_UNKNOWN, Index().unknown))
@@ -386,6 +456,7 @@ end
 
 local function IsSelected(row)
 	if not selection then return false end
+	if row.kind == "zones" then return selection.zones == row.key end
 	if row.kind == "readable" then return selection.book == row.book end
 	if row.kind == "kind" then return selection.group == row.group and selection.type == row.which end
 	if row.kind == "group" then
@@ -507,14 +578,17 @@ local function ShowEntry()
 			text = L.READABLES_PICK })
 		return
 	end
+	if selection.zones then
+		for _, mapID in ipairs(ZONES_OF[selection.zones]()) do ReadablesIn(mapID, set) end
+		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+		return
+	end
 	if GROUP_LABEL[selection.group] then
 		for _, id in ipairs(Index()[selection.group]) do set[id] = true end
 		page:Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
-	if selection.mapID == WORLD then
-		set = Index().all
-	elseif selection.mapID == 1414 or selection.mapID == 1415 then
+	if selection.mapID == 1414 or selection.mapID == 1415 then
 		for _, mapID in ipairs(ZonesOn(selection.mapID)) do ReadablesIn(mapID, set) end
 	else
 		ReadablesIn(selection.mapID, set)
@@ -526,9 +600,72 @@ end
 -- The tab
 --------------------------------------------------------------------------------
 
+-- The continents with readables, by name, as the list has them.
+local function Continents()
+	local out = {}
+	for _, continent in ipairs(CONTINENTS) do
+		if #ZonesOn(continent) > 0 then table.insert(out, continent) end
+	end
+	table.sort(out, ByName)
+	return out
+end
+
+-- The zone the player stands in that has a card, walking up from an inn's or a cave's map, or nil.
+local function PlayerZone()
+	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local steps = 0
+	while map and steps < 8 do
+		if next(ReadablesIn(map)) then return map end
+		local info = C_Map.GetMapInfo and C_Map.GetMapInfo(map)
+		map, steps = info and info.parentMapID, steps + 1
+	end
+end
+
+-- The continent the player is on where it has readables, else the first that has.
+local function PlayerContinent()
+	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local listed = Continents()
+	for _, continent in ipairs(listed) do
+		if map == continent or (map and ContinentOf(map) == continent) then return continent end
+	end
+	return listed[1]
+end
+
+-- Open what holds a zone's card: Battlegrounds' banner, its continent's, or Other Lands'.
+local function OpenAround(zone)
+	if IS_BATTLEGROUND[zone] then
+		zonesOpen.battlegrounds = true
+		return
+	end
+	local continent = ContinentOf(CITY_IN[zone] or zone)
+	if continent then
+		continentOpen[continent] = true
+	else
+		zonesOpen.lands = true
+	end
+end
+
+-- Choose where the player stands: their zone's card, opened, else their continent's banner. The tab
+-- never shows a page with nothing chosen.
+local function LandOnPlayer()
+	local zone = PlayerZone()
+	if zone then
+		selection = { mapID = zone }
+		expandedZone = zone
+		OpenAround(zone)
+	else
+		local continent = PlayerContinent()
+		selection = continent and { mapID = continent } or nil
+	end
+	landed = selection
+end
+
 local function OnClick(row)
 	if row.kind == "readable" then
 		selection = { book = row.book }
+	elseif row.kind == "zones" then
+		if filter == "" then zonesOpen[row.key] = not zonesOpen[row.key] end
+		selection = { zones = row.key }
 	elseif row.kind == "type" then
 		if filter == "" then typeOpen[row.which] = not typeOpen[row.which] end
 		selection = { type = row.which }
@@ -563,6 +700,10 @@ end
 
 function SpokenBooks:RefreshReadables(scrollToSelection)
 	if not list then return end
+	if not selection then
+		LandOnPlayer()
+		scrollToSelection = true
+	end
 	local items = list:Render()
 	if scrollToSelection and selection then list:ScrollToSelection(items) end
 	ShowEntry()
@@ -617,6 +758,8 @@ end
 --- Open the readables.
 function SpokenBooks:ShowReadables()
 	if not SpokenCompendium then return end
+	-- On where the player stands now, unless they chose something here.
+	if selection == landed then selection = nil end
 	if list then
 		list:ClearSearch()
 		filter = ""
@@ -642,6 +785,8 @@ function SpokenBooks:SetupReadables()
 			set = function(key, value) if SpokenBooksSettings then SpokenBooksSettings[SIZE_KEYS[key]] = value end end,
 		},
 		open = function() SpokenBooks:ShowReadables() end,
+		-- Come back to from another tab: where the player stands now, unless they chose here.
+		onShow = function() if selection == landed then selection = nil end end,
 		enabled = function() return SpokenBooks:IsPartOn() end,
 		-- Unlock Unfound Books, on Spoken's page.
 		unlock = {
