@@ -31,7 +31,7 @@ import mysql from "mysql2/promise";
 import { loadEnv } from "../../lib/env.mjs";
 import { areaReader } from "./lib/area.mjs";
 import { quote } from "./lib/lua.mjs";
-import { isTemplateCopy, typeOf } from "./lib/places.mjs";
+import { cannotBeHad, isTemplateCopy, typeOf } from "./lib/places.mjs";
 
 await loadEnv("books");
 
@@ -85,6 +85,10 @@ const INSTANCE_ZONE = {
 // Text objects the server has and never spawns, placed by hand: the nameplates in Blackrock
 // Depths' Dark Keeper vault.
 const UNSPAWNED = { "Dark Keeper Nameplate": 230 };
+// Readables with words that no one can have: the Forsaken class letters that were never given out
+// (the Musty Note, Parchment, Scroll, Letter and Missive). No loot, quest, vendor or mail names
+// their items.
+const NEVER_HAD = new Set([691, 692, 693, 694, 695]);
 // Types no title, icon or first page gives away, by book id: read off the words or the wiki.
 const TYPE_BY_HAND = {
   15: "letter", // William's Shipment: "Hello Morgan, ..."
@@ -416,8 +420,7 @@ try {
 
 // ---------------------------------------------------------------- the file
 
-// Readables nobody can have: test items and the ones the game retired.
-const gone = (title) => /^(Deprecated|TEST |Test )/.test(title) || /\(old\)$/.test(title);
+const gone = (id, book) => NEVER_HAD.has(id) || cannotBeHad(book.title, book.pages.map((page) => pageText.get(page) ?? ""));
 
 const nameIndex = new Map();
 const nameList = [];
@@ -431,7 +434,7 @@ function nameRef(name) {
 const lines = [];
 const counts = { world: 0, carried: 0, wide: 0, nowhere: 0, gone: 0, types: {} };
 for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
-  if (gone(book.title)) { counts.gone++; continue; }
+  if (gone(id, book)) { counts.gone++; continue; }
   const k = kind.get(id);
   if (!k) { counts.nowhere++; continue; }
   const list_ = [...(sources.get(id)?.values() ?? [])]

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { isTemplateCopy, typeOf } from "./places.mjs";
+import { cannotBeHad, isTemplateCopy, typeOf } from "./places.mjs";
 
 test("a difficulty or test copy of a creature is not a source", () => {
   assert.equal(isTemplateCopy("Alliance Sentinel (1)"), true);
@@ -71,4 +71,17 @@ test("a readable with no words on any page is a picture", () => {
   assert.equal(typeOf({ title: "Snapshot of Gammerita", texts: [""] }), "picture");
   assert.equal(typeOf({ title: "Of Love and Family", icons: [SCROLL], texts: [""] }), "picture");
   assert.equal(typeOf({ title: "Book from Sven's Farm", icons: [BOOK], texts: ["Sven's journal", ""] }), "book");
+});
+
+test("a readable whose every page is Missing Text cannot be had", () => {
+  assert.equal(cannotBeHad("Sam's Tome", ["Missing Text"]), true);
+  assert.equal(cannotBeHad("Inscribed Kodo Leather", ["Missing Text", "Missing Text"]), true);
+  assert.equal(cannotBeHad("Book from Sven's Farm", ["Missing Text", "Stalvan's words"]), false);
+});
+
+test("test and retired items cannot be had, by their titles", () => {
+  assert.equal(cannotBeHad("Deprecated Tome of the Cabal", ["Some words"]), true);
+  assert.equal(cannotBeHad("TEST Language Item", ["Some words"]), true);
+  assert.equal(cannotBeHad("Old Letter (old)", ["Some words"]), true);
+  assert.equal(cannotBeHad("Letter to Ello", ["Some words"]), false);
 });

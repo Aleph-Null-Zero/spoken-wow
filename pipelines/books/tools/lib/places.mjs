@@ -8,6 +8,14 @@ export function isTemplateCopy(name) {
   return / \(\d+\)$/.test(name ?? "") || /<old>/i.test(name ?? "");
 }
 
+// A readable nobody can have, which would keep every "found X of Y" out of reach: a test item, one
+// the game retired, or one whose every page is the server's "Missing Text", left where a beta
+// item's words were never written.
+export function cannotBeHad(title, texts = []) {
+  if (/^(Deprecated|TEST |Test )/.test(title) || /\(old\)$/.test(title)) return true;
+  return texts.length > 0 && texts.every((text) => text.trim() === "Missing Text");
+}
+
 // A title that names its own form says what it is better than its item's icon does: the game
 // gave "Maybell's Love Letter" a scroll's icon and "Crystallized Note" a tablet's.
 const FORM_TYPE = [
