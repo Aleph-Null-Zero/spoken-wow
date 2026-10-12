@@ -61,7 +61,23 @@
     {"ids": [6661, 6662], "zones": [1455], "source": "QD3: Monty and Nipsy stand in the Deeprun Tram (map 369), which no map of its own shows; Ironforge is the city it joins"},
     {"id": 91904, "zones": [1433], "source": "QD3: Marcy Baker and Magistrate Solomon in Lakeshire; LoreTeller files it under Redridge Mountains"},
     {"id": 95189, "zones": [1453], "source": "QD3: ends at Lady Dena Kennedy or General Marcus Jonathan in Stormwind, as its Alliance sibling 95195 is filed; its Horde twin 95204 is under Undercity"},
-    {"id": 98372, "zones": [1431], "source": "QD3: ends at a Night Watch Guard in Darkshire"}
+    {"id": 98372, "zones": [1431], "source": "QD3: ends at a Night Watch Guard in Darkshire"},
+    {"id": 1642, "prev": 1641, "source": "QD6: https://warcraft.wiki.gg/wiki/The_Tome_of_Divinity_(human_2); the DB has no link"},
+    {"id": 1641, "prev": 2998, "source": "QD6: https://warcraft.wiki.gg/wiki/The_Tome_of_Divinity_(human_1), after Brother Wilhelm's Tome of Divinity"},
+    {"id": 3681, "prev": 2998, "source": "QD6/QD8: https://warcraft.wiki.gg/wiki/The_Tome_of_Divinity_(human_1) names 3681 as the alternate to 2998; an alternate start of the same quest, from another trainer; linked to the chain's first quest so it sits in its chain"},
+    {"id": 1646, "prev": 1645, "source": "QD6: as the human chain (1641 to 1642) has it; the DB has no link"},
+    {"id": 1645, "prev": 2997, "source": "QD6: as the human chain (2998 to 1641) has it"},
+    {"ids": [2999, 3000], "prev": 2997, "source": "QD6/QD8: the dwarf paladin's alternate Tome of Divinity starts; an alternate start of the same quest, from another trainer; linked to the chain's first quest so it sits in its chain"},
+    {"id": 518, "prev": 495, "source": "QD6: https://warcraft.wiki.gg/wiki/The_Crown_of_Will; the DB has no link"},
+    {"id": 9052, "prev": 9063, "source": "QD6: https://warcraft.wiki.gg/wiki/Toxic_Test"},
+    {"ids": [5924, 5925], "prev": 5923, "source": "QD6: https://warcraft.wiki.gg/wiki/Heeding_the_Call names them alternates of 5923; an alternate start of the same quest, from another trainer; linked to the chain's first quest so it sits in its chain"},
+    {"id": 6383, "prev": 235, "source": "QD6: https://warcraft.wiki.gg/wiki/The_Ashenvale_Hunt_(Orgrimmar) (alternates 742 and 6382 stand in other zones)"},
+    {"id": 1801, "prev": 2996, "source": "QD6: https://warcraft.wiki.gg/wiki/Tome_of_the_Cabal_(Horde,_2) follows Seeking Strahad; of its three, 1798 is the Alliance's (it leads to 1758), so the Horde's 2996"},
+    {"id": 3001, "prev": 2996, "source": "QD6: the Horde's other Seeking Strahad; an alternate start of the same quest, from another trainer; linked to the chain's first quest so it sits in its chain"},
+    {"ids": [5543, 5544], "prev": 5542, "source": "QD6/QE8: Redemption (5742) needs Demon Dogs, Blood Tinged Skies and Carrion Grubbage handed in (https://warcraft.wiki.gg/wiki/Redemption_(Classic)); linked beside Demon Dogs, under the same first quest"},
+    {"id": 5092, "prev": 5066, "source": "QD8: A Call to Arms: The Plaguelands! leads to Commander Ashlam Valorfist's Clear the Way (https://warcraft.wiki.gg/wiki/Clear_the_Way); 5090 and 5091 are the same breadcrumb from other capitals"},
+    {"id": 5096, "prev": 5093, "source": "QD8: A Call to Arms: The Plaguelands! leads to High Executor Derrington's Scarlet Diversions (https://warcraft.wiki.gg/wiki/Scarlet_Diversions)"},
+    {"ids": [5094, 5095], "prev": 5093, "source": "QD8: the Horde's other A Call to Arms: The Plaguelands!, in the same zone; an alternate start of the same quest, from another trainer; linked to the chain's first quest so it sits in its chain"}
   ],
   "chains": []
 }
