@@ -32,6 +32,7 @@ import mysql from "mysql2/promise";
 import { loadEnv } from "../../lib/env.mjs";
 import { areaReader } from "./lib/area.mjs";
 import { quote } from "./lib/lua.mjs";
+import { isTemplateCopy } from "./lib/places.mjs";
 
 await loadEnv("books");
 
@@ -326,7 +327,10 @@ try {
       }
       const named = await names(CREATURE, "entry", "name", [...creatures.keys()]);
       const zones = await spawnZones("creature", [...creatures.keys()]);
-      for (const [c, its] of creatures) for (const i of its) put(i, how, named.get(c), zones.get(c));
+      for (const [c, its] of creatures) {
+        if (isTemplateCopy(named.get(c)?.enUS)) continue;
+        for (const i of its) put(i, how, named.get(c), zones.get(c));
+      }
     }
     // Chests and other objects that hold them.
     const gloot = await lootEntries("gameobject_loot_template", wanted);
@@ -383,7 +387,10 @@ try {
     const vendors = await q("SELECT entry, item FROM npc_vendor WHERE item IN (?)", [list(wanted)]);
     const vendorNames = await names(CREATURE, "entry", "name", vendors.map((r) => Number(r.entry)));
     const vendorZones = await spawnZones("creature", vendors.map((r) => Number(r.entry)));
-    for (const r of vendors) put(Number(r.item), "vendor", vendorNames.get(Number(r.entry)), vendorZones.get(Number(r.entry)));
+    for (const r of vendors) {
+      if (isTemplateCopy(vendorNames.get(Number(r.entry))?.enUS)) continue;
+      put(Number(r.item), "vendor", vendorNames.get(Number(r.entry)), vendorZones.get(Number(r.entry)));
+    }
     return out;
   }
 
