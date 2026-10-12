@@ -43,6 +43,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Compendium. The letters handed out in Darkshire were under Deadwind Pass, Nesingwary's Green
   Hills chapters under Westfall and Ratchet's manuals under Durotar. Each is now under the zone
   where it is found. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: the Librams and Nat Pagle's guide said "Dropped by Alliance Sentinel (1)"** in the
+  Compendium, naming the server's copies of a creature. They name the creatures you meet.
+  *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.1 — 2026-10-11
 
