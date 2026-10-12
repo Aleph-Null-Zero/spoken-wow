@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **A quest's progress and hand-in in Azeroth's Compendium play under the NPC you hand it in to**,
+  with that NPC's name and portrait, not the quest giver's. The hand-in stays hidden until you
+  have completed the quest, unless Unlock Unstarted Quests is on. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium opens scrolled to where you are**, and every page's line under its
   title says where it is and how much of it you have found ("In Kalimdor · 1 of 88 completed").
   Quests has Voiced Only, as Zones and Books do; a continent's banner on Zones counts its areas,
