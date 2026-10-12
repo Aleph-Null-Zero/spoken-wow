@@ -577,6 +577,56 @@ Expect("...none with Hide Report Buttons on", page.report:IsShown(), false)
 _G.Spoken = spoken
 B.HasAudio = hasAudio
 
+-- Play on a readable's page as the quest log's Play: Stop while it is read, Replay once stopped,
+-- and Play otherwise; behind another line, left waiting while that speaks, played once it is stopped.
+do
+    local kurdranPage = B:Data().books[KURDRAN].pages[1]
+    local clipFor, voiced = B.ClipFor, { [alleriaPage] = true, [kurdranPage] = true }
+    B.HasAudio = function(_, p) return voiced[p] == true end
+    B.ClipFor = function(_, p)
+        if not voiced[p] then return nil end
+        return { key = "b:" .. p, path = "page" .. p .. ".mp3", length = 5, pageId = p, present = { header = "" } }
+    end
+    local function Tip()
+        GameTooltip.text = nil
+        for _, hook in ipairs(page.play.hooks.OnEnter) do hook(page.play) end
+        return GameTooltip.text
+    end
+    local function Head() return Spoken:GetCurrent() and Spoken:GetCurrent().pageId end
+    page:Show({ title = "Ranger Captain Alleria Windrunner", target = ALLERIA })
+    Expect("a readable not being read: Play", page.play.pageState .. " " .. Tip(), "play " .. SpokenEnv.L.PLAY)
+    page.play.scripts.OnClick(page.play)
+    Expect("...a click reads it", Spoken:GetNowPlaying() and Spoken:GetNowPlaying().pageId, alleriaPage)
+    Expect("...its Play showing Stop", page.play.pageState .. " " .. Tip(), "stop " .. SpokenEnv.L.STOP)
+    page.play.scripts.OnClick(page.play)
+    Expect("...Stop stops it and keeps it at the head", tostring(Spoken:IsPaused()) .. " " .. tostring(Head()),
+        "true " .. alleriaPage)
+    Expect("...showing Replay", page.play.pageState .. " " .. Tip(), "replay " .. SpokenEnv.L.REPLAY)
+    page.play.scripts.OnClick(page.play)
+    Expect("...Replay reads it again from the start", not Spoken:IsPaused() and Spoken:GetNowPlaying()
+        and Spoken:GetNowPlaying().pageId, alleriaPage)
+    Expect("...showing Stop again", page.play.pageState, "stop")
+    Spoken:StopAll()
+    B.following = {}
+    B.source:Enqueue(B:ClipFor(kurdranPage))
+    page.play.scripts.OnClick(page.play)
+    Expect("behind another line speaking, Play queues it behind that", Spoken:GetQueueSize() .. " " .. tostring(Head()),
+        "2 " .. kurdranPage)
+    Expect("...still Play", page.play.pageState, "play")
+    page.play.scripts.OnClick(page.play)
+    Expect("...a second click leaving it where it is", Spoken:GetQueueSize() .. " " .. tostring(Head()), "2 " .. kurdranPage)
+    Spoken:Pause()
+    Expect("...still Play once that line is stopped", page.play.pageState, "play")
+    page.play.scripts.OnClick(page.play)
+    Expect("...and a click then reads it at once", tostring(Spoken:IsPaused()) .. " "
+        .. tostring(Spoken:GetNowPlaying() and Spoken:GetNowPlaying().pageId), "false " .. alleriaPage)
+    Expect("...still followed as the book being read", B.following[ALLERIA] ~= nil
+        and B.following[ALLERIA].clip == Spoken:GetCurrent(), true)
+    Spoken:StopAll()
+    B.following = {}
+    B.ClipFor, B.HasAudio = clipFor, hasAudio
+end
+
 -- The readables places.mjs leaves out (the Deprecated and TEST items, whose page is "Missing
 -- Text") are neither listed nor counted, so every count can reach all.
 local placed = 0

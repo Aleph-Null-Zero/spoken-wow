@@ -553,13 +553,20 @@ end
 -- The page
 --------------------------------------------------------------------------------
 
--- Play on a readable's page: the book from its first voiced page, or stop it.
+-- Play on a readable's page: the book from its first voiced page, and Stop and Replay while it is
+-- read (SpokenCompendium.PlayState).
 local PLAY = {
 	has = function(id) return Voiced(id) end,
-	playing = function(id) return SpokenBooks:IsNarrating(id) end,
+	-- The book's page nearest the head of the queue: read as one line, its one page there; page by
+	-- page, the first of its pages still to read.
+	find = function(id)
+		if not (_G.Spoken and Spoken.GetQueue) then return nil end
+		for _, clip in ipairs(Spoken:GetQueue()) do
+			if clip.pageId and SpokenBooks:PlaceOf(clip.pageId) == id then return clip end
+		end
+	end,
 	-- Browsing: heard here is not heard in the world (Read Only Once), nor found.
 	start = function(id) SpokenBooks:SyncTo(FirstVoiced(id), true) end,
-	stop = function(id) SpokenBooks:StopReading(id) end,
 }
 
 -- The page of a readable being read: the one of it in the queue. Nil where none is.

@@ -473,5 +473,19 @@ quests:Remove(first)
 Expect("a stopped line taken out with another waiting leaves the queue stopped", Q:IsPaused(), true)
 Expect("...the waiting line held, not played", Q:IsPlaying(), false)
 
+---------------------------------------------------------------- Play on a line waiting behind a stopped one
+Fresh()
+local held, behind = H.Clip({ length = 5 }), H.Clip({ length = 5 })
+local behindStopped = 0
+behind.stopCallback = function() behindStopped = behindStopped + 1 end
+quests:Enqueue(held); quests:Enqueue(behind)
+stub.Advance(1)
+Q:PauseQueue()
+quests:PlayNow(behind)
+Expect("Play on a line waiting behind a stopped one plays it", Q:IsPlaying(behind), true)
+Expect("...the stop taken off", Q:IsPaused(), false)
+Expect("...moved to the front as it is, never stopped on the way", behindStopped, 0)
+Expect("...the stopped line kept behind it", Q:GetQueue()[2], held)
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll queue tests passed")

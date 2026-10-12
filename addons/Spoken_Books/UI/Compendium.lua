@@ -26,7 +26,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 43
+local VERSION = 44
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1706,14 +1706,45 @@ local function Ink(fontString, color)
 	fontString:SetShadowColor(0, 0, 0, 0)
 end
 
+--- A Play button's state for `clip`, the line it plays as the queue holds it (nil when not queued),
+--- as the quest log's Play and the subtitle have it: "stop" while it is the head and speaking,
+--- "replay" while it is the head and the queue is stopped, "play" otherwise (not queued, waiting,
+--- or held by a gate).
+function C.PlayState(clip)
+	local spoken = _G.Spoken
+	if not (clip and spoken and spoken.GetCurrent) or spoken:GetCurrent() ~= clip then return "play" end
+	if spoken:IsPaused() then return "replay" end
+	if spoken:GetNowPlaying() == clip then return "stop" end
+	return "play"
+end
+
+--- A click on a Play button whose line is `clip` (nil when not queued): Stop and Replay stop the
+--- queue and play the line again; a line waiting behind a stopped one plays now; one not queued is
+--- started with `start()`; one waiting behind a line speaking is left where it is.
+function C.PlayClick(clip, start)
+	local spoken = _G.Spoken
+	if not spoken then return end
+	local state = C.PlayState(clip)
+	if state == "stop" or state == "replay" then
+		Sound("U_CHAT_SCROLL_BUTTON")
+		spoken:TogglePause()
+	elseif clip and spoken:IsPaused() then
+		Sound("U_CHAT_SCROLL_BUTTON")
+		if clip.source and clip.source.PlayNow then clip.source:PlayNow(clip) end
+	elseif not clip then
+		start()
+	end
+end
+
 local Page = {}
 Page.__index = Page
 
 --- A page of parchment filling `parent`: a title, the line under it, the divider, the words in a
 --- scrolling view (`addon`'s UI/TextView.lua), and Report and Play on the title's right, as the
---- places' page has them. `play` = { has(target), playing(target), start(target), stop(target) },
---- what Play does for whatever Show was given; `report` = { has(target), open(target), title, tip },
---- what Report does, hidden where it has nothing to report or the player hides Report buttons.
+--- places' page has them. `play` = { has(target), find(target) -> the line in the queue or nil,
+--- start(target), tip }, what Play does for whatever Show was given (C.PlayState, C.PlayClick);
+--- `report` = { has(target), open(target), title, tip }, what Report does, hidden where it has
+--- nothing to report or the player hides Report buttons.
 function C.NewPage(parent, addon, play, report)
 	local self = setmetatable({ playing = play, reporting = report }, Page)
 	local frame = CreateFrame("Frame", nil, parent)
@@ -1859,7 +1890,8 @@ function C.NewPage(parent, addon, play, report)
 		button:SetScript("OnClick", function()
 			local target = self.target
 			if target == nil then return end
-			if play.playing(target) then play.stop(target) else play.start(target) end
+			-- Looked up each click: a line that has since finished is no longer in the queue.
+			C.PlayClick(play.find(target), function() play.start(target) end)
 			self:RefreshPlay()
 		end)
 		-- Named in its tooltip, as every Play and Stop of Spoken's is, in Spoken's words.
@@ -1867,7 +1899,7 @@ function C.NewPage(parent, addon, play, report)
 			local words = _G.SpokenEnv and _G.SpokenEnv.L
 			if not (words and GameTooltip) then return end
 			GameTooltip:SetOwner(b, "ANCHOR_LEFT")
-			GameTooltip:SetText(b.pageState == "stop" and words.STOP or words.PLAY)
+			GameTooltip:SetText(b.pageState == "stop" and words.STOP or b.pageState == "replay" and words.REPLAY or words.PLAY)
 			GameTooltip:Show()
 		end)
 		button:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
@@ -1893,7 +1925,7 @@ function Page:RefreshPlay()
 		local has = target ~= nil and self.playing.has(target)
 		button:SetShown(has and true or false)
 		if has then
-			button.pageState = self.playing.playing(target) and "stop" or "play"
+			button.pageState = C.PlayState(self.playing.find(target))
 			if button.SetState then button:SetState(button.pageState) end
 		end
 	end

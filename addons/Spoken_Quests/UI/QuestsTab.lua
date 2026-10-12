@@ -1034,10 +1034,11 @@ local PLAY = {
 -- quest shown.
 local partButtons = {}
 
-local function PartPlaying(id, moment) return #Clips(id, moment) > 0 end
+-- The part's line in the queue, nearest the head, or nil.
+local function PartPlaying(id, moment) return Clips(id, moment)[1] end
 
 local function PaintPartPlay(button)
-    button.pageState = button.questID and PartPlaying(button.questID, button.moment) and "stop" or "play"
+    button.pageState = C.PlayState(button.questID and PartPlaying(button.questID, button.moment))
     if button.SetState then button:SetState(button.pageState) end
 end
 
@@ -1047,23 +1048,23 @@ local function PartButtons(moment)
     local child = page.body.child
     local play = Spoken:CreateRoundButton(child, "play")
     play.moment = moment
+    -- Stop and Replay while this part is the head, as the quest log's Play (C.PlayClick).
     play:SetScript("OnClick", function(self)
         local id = self.questID
         if not id then return end
-        if PartPlaying(id, moment) then
-            for _, clip in ipairs(Clips(id, moment)) do VO.Player:Remove(clip) end
-        else
-            -- One part of a quest at a time: another part playing gives way.
+        C.PlayClick(PartPlaying(id, moment), function()
+            -- One part of a quest at a time: another part queued gives way.
             for _, clip in ipairs(Clips(id)) do VO.Player:Remove(clip) end
             VO.Player:PlayNow(SoundData(id, moment, "Azeroth's Compendium"))
-        end
+        end)
         PaintPartPlay(self)
     end)
     play:HookScript("OnEnter", function(self)
         local words = _G.SpokenEnv and _G.SpokenEnv.L
         if not (words and GameTooltip) then return end
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:SetText(self.pageState == "stop" and words.STOP or words.PLAY)
+        GameTooltip:SetText(self.pageState == "stop" and words.STOP or self.pageState == "replay" and words.REPLAY
+            or words.PLAY)
         GameTooltip:Show()
     end)
     play:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)

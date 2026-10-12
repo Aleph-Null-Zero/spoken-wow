@@ -773,15 +773,47 @@ queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
 Expect("...the hand-in's Play playing the hand-in in its place", queued[1], "7-complete")
 Expect("...named and pictured for the one it is handed in to, not its giver", Who(), Npc("Marshal Dughan", DUGHAN))
+local function Names()
+    local names = {}
+    for _, clip in ipairs(Spoken:GetQueue()) do table.insert(names, clip.fileName) end
+    return table.concat(names, ",")
+end
+-- Stop and Replay, as the quest log's Play and the subtitle have them.
 handIn.scripts.OnClick(handIn)
+Expect("a part's Stop stops it and keeps it at the head", tostring(Spoken:IsPaused()) .. " " .. Names(), "true 7-complete")
+Expect("...its Play showing Replay", handIn.pageState, "replay")
+Expect("...named Replay in its tooltip", (function()
+    GameTooltip.text = nil
+    for _, hook in ipairs(handIn.hooks.OnEnter) do hook(handIn) end
+    return GameTooltip.text
+end)(), SpokenEnv.L.REPLAY)
+handIn.scripts.OnClick(handIn)
+Expect("...Replay plays it again from the start", not Spoken:IsPaused() and Spoken:GetNowPlaying()
+    and Spoken:GetNowPlaying().fileName, "7-complete")
+Expect("...and shows Stop again", handIn.pageState, "stop")
+-- Another part, not queued: it starts and the part playing gives way, one part of a quest at a time.
+play.scripts.OnClick(play)
+Expect("Play on another part of the quest plays it in place of the part playing", Names(), "7-accept")
 SpokenQuestsCompendium.quests[KOBOLDS].ender = nil
 handIn.scripts.OnClick(handIn)
 Expect("...and for its giver where the data names no one else", Who(), Npc("Marshal McBride", MCBRIDE))
-handIn.scripts.OnClick(handIn)
+-- Waiting behind another quest's line: left where it is while that speaks, played at once once it is
+-- stopped.
+Spoken:StopAll()
+VO.Player:PlayNow({ event = VO.Enums.SoundEvent.QuestAccept, questID = NECKLACE })
 play.scripts.OnClick(play)
+Expect("a part played while another quest's line speaks waits behind it", Names(), "85-accept,7-accept")
+Expect("...its Play still Play", play.pageState, "play")
 play.scripts.OnClick(play)
-Expect("...and again, stops them", #VO.Player:Queued(), 0)
-Expect("...its tooltip naming Play once stopped", PlayTip(), SpokenEnv.L.PLAY)
+Expect("...a second click leaving it where it is", Names(), "85-accept,7-accept")
+Spoken:Pause()
+Expect("...still Play behind the line once that is stopped", play.pageState, "play")
+play.scripts.OnClick(play)
+Expect("...and then a click plays it at once, the stopped line kept behind it", tostring(Spoken:IsPaused()) .. " "
+    .. Names() .. " " .. tostring(Spoken:GetNowPlaying() and Spoken:GetNowPlaying().fileName), "false 7-accept,85-accept 7-accept")
+Expect("...showing Stop", play.pageState, "stop")
+Spoken:StopAll()
+Expect("...Play again once nothing is queued", play.pageState .. " " .. PlayTip(), "play " .. SpokenEnv.L.PLAY)
 Click("Kobold Candles")
 Expect("a quest no pack has has no Play", PartButton(L.QUEST_PART_ACCEPT, "play") == nil
     or not PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown(), true)
