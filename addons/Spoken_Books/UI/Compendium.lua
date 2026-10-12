@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 29
+local VERSION = 30
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -59,7 +59,7 @@ local LEAF_ROW = 22
 -- A group inside a card (a quest chain, a zone's dungeons, a zone's letters): one line, its plus or
 -- minus on the line down its contents, its name over theirs, its numbers on the right.
 local GROUP_ROW = 24
-local GROUP_FOOT = 9          -- under its plus or minus, where the line down its contents starts
+local GROUP_FOOT = 0          -- the line down its contents starts under the row, clear of its light
 -- The quest log's plus and minus are drawn 2 left of their picture's middle: the picture moves
 -- right by that, so the sign sits on the line down what it opens.
 local TOGGLE_SHIFT = 2
