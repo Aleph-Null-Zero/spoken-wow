@@ -59,3 +59,19 @@ export function typeOf({ title, world = false, texts = [], icons = [] }) {
   for (const [pattern, type] of TITLE_TYPE) if (pattern.test(title)) return type;
   return "other";
 }
+
+// The dungeons and raids a readable is had in from inside alone, by map: `spots` are where it is
+// had, a uiMapID for a zone and -map for a spawn inside a dungeon, and `entrance` gives each
+// dungeon's map the zone its entrance is in. A zone it is also had in outside keeps it in the zone:
+// the Bloodstained Journal, dropped in Uldaman and in the Badlands around it, is the Badlands'.
+export function dungeonsOf(spots, entrance) {
+  const inZone = new Map();
+  for (const spot of spots) {
+    const zone = spot < 0 ? entrance[-spot] : spot;
+    if (!inZone.has(zone)) inZone.set(zone, new Set());
+    inZone.get(zone).add(spot < 0 ? -spot : 0);
+  }
+  const out = [];
+  for (const maps of inZone.values()) if (!maps.has(0)) out.push(...maps);
+  return out.sort((a, b) => a - b);
+}

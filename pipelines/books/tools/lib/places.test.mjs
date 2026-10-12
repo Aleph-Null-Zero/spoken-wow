@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { cannotBeHad, isTemplateCopy, typeOf } from "./places.mjs";
+import { cannotBeHad, dungeonsOf, isTemplateCopy, typeOf } from "./places.mjs";
 
 test("a difficulty or test copy of a creature is not a source", () => {
   assert.equal(isTemplateCopy("Alliance Sentinel (1)"), true);
@@ -84,4 +84,18 @@ test("test and retired items cannot be had, by their titles", () => {
   assert.equal(cannotBeHad("TEST Language Item", ["Some words"]), true);
   assert.equal(cannotBeHad("Old Letter (old)", ["Some words"]), true);
   assert.equal(cannotBeHad("Letter to Ello", ["Some words"]), false);
+});
+
+test("a readable had only inside a dungeon names it, one per zone", () => {
+  const entrance = { 230: 1427, 229: 1427, 289: 1422, 70: 1418 };
+  assert.deepEqual(dungeonsOf(new Set([-230]), entrance), [230]);
+  assert.deepEqual(dungeonsOf(new Set([1455, -289, -230, 1457]), entrance), [230, 289]);
+  assert.deepEqual(dungeonsOf(new Set([-230, -229]), entrance), [229, 230]);
+});
+
+test("a readable had in a dungeon and outside it in the same zone is the zone's", () => {
+  const entrance = { 70: 1418, 289: 1422 };
+  assert.deepEqual(dungeonsOf(new Set([-70, 1418]), entrance), []);
+  assert.deepEqual(dungeonsOf(new Set([1418, -70, -289]), entrance), [289]);
+  assert.deepEqual(dungeonsOf(new Set([1453, 1429]), entrance), []);
 });
