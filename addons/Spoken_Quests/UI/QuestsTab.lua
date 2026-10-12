@@ -527,6 +527,12 @@ local function ChainName(first, ask)
     return Title(first, ask)
 end
 
+-- A chain's name on its line and its page: numbered (`nth`) where its place has others of that name.
+local function ChainLabel(first, nth, ask)
+    local name = ChainName(first, ask)
+    return nth and L.QUESTS_TITLE_NTH_FMT:format(name, nth) or name
+end
+
 -- In the order they are taken: by how far down the chain, then by id.
 local function InOrder(ids)
     table.sort(ids, function(a, b)
@@ -587,10 +593,10 @@ local function Card(item, found, total, going)
 end
 
 -- A chain's quests in one place, under a card with the chain's name.
-local function ChainRows(where, first, ids, nest)
+local function ChainRows(where, first, ids, nest, nth)
     InOrder(ids)
     local key = where .. ":" .. first
-    local label = ChainName(first, filter == "")
+    local label = ChainLabel(first, nth, filter == "")
     local found, total, going = Tally(SetOf(ids))
     if Unlisted(found, total) then return {} end
     local inside = Whole(filter ~= "" and Matches(label), function()
@@ -603,7 +609,7 @@ local function ChainRows(where, first, ids, nest)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    return Rows(Card({ kind = "chain", key = key, ids = ids, first = first, label = label, nest = nest,
+    return Rows(Card({ kind = "chain", key = key, ids = ids, first = first, nth = nth, label = label, nest = nest,
         where = where, open = #inside > 0 }, found, total, going), inside, "c" .. key)
 end
 
@@ -632,8 +638,18 @@ local function Leaves(ids, nest, into, where)
         if a.name == b.name then return a.first < b.first end
         return a.name < b.name
     end)
+    -- Chains here of one name (Warsong Gulch's six Fight for Warsong Gulch) are told apart by a
+    -- number, in the order of their first quests' ids.
+    local named, nth = {}, {}
+    for _, group in ipairs(groups) do named[group.name] = (named[group.name] or 0) + 1 end
     for _, group in ipairs(groups) do
-        for _, row in ipairs(ChainRows(where, group.first, group.ids, nest)) do table.insert(into, row) end
+        if named[group.name] > 1 then
+            nth[group.name] = (nth[group.name] or 0) + 1
+            group.nth = nth[group.name]
+        end
+    end
+    for _, group in ipairs(groups) do
+        for _, row in ipairs(ChainRows(where, group.first, group.ids, nest, group.nth)) do table.insert(into, row) end
     end
     table.sort(single, function(a, b)
         local ta, tb = Title(a), Title(b)
@@ -1222,7 +1238,7 @@ local function ShowEntry()
         -- As a zone's page: its name, what holds it and its count, and the quests on the left to choose.
         local holder, place
         if selection.where then holder, place = HolderName(selection.where) end
-        page:Show({ title = ChainName(selection.first or First(ids[1])),
+        page:Show({ title = ChainLabel(selection.first or First(ids[1]), selection.nth),
             subtitle = Line(SetOf(ids), holder, place), text = L.QUESTS_PICK })
         return
     end
@@ -1294,7 +1310,7 @@ local function OnClick(row)
         selection = { quest = row.quest }
     elseif row.kind == "chain" then
         if not SearchFold(row) and (filter == "" or row.shut) then chainOpen[row.key] = not chainOpen[row.key] end
-        selection = { chain = row.key, ids = row.ids, first = row.first, where = row.where }
+        selection = { chain = row.key, ids = row.ids, first = row.first, nth = row.nth, where = row.where }
     elseif row.kind == "dungeons" or row.kind == "dungeon" then
         if not SearchFold(row) and (filter == "" or row.shut) then dungeonOpen[row.key] = not dungeonOpen[row.key] end
         selection = { dungeon = row.key, ids = row.ids, label = row.label }

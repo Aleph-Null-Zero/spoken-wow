@@ -111,6 +111,10 @@ shipped[STEW].prev, shipped[LIVER_PIE].prev = JASPERLODE, STEW
 -- A mage's chain, in the Mage group: Speak with Bink, then Mage-tastic Gizmonitor.
 local BINK_CHAIN = "Speak with Bink"
 shipped[1880].prev = 1879
+-- Two chains of one name in Redridge Mountains: The Price of Shoes, then Return to Verner, named
+-- after Messenger to Stormwind, as the chain of that quest and the next is.
+local SHOES, VERNER, MESSENGER, MESSENGER_2, REDRIDGE = 118, 119, 120, 121, 1433
+shipped[VERNER].prev, shipped[MESSENGER_2].prev, shipped[SHOES].name = SHOES, MESSENGER, MESSENGER
 local L, Tab = VO.L, VO.QuestsTab
 Expect("the shipped data has the quests' chains, from the world DB", linked, true)
 Expect("...and the names of chains given by hand, on their first quest", namedByHand, true)
@@ -720,6 +724,18 @@ Tab:Refresh()
 ClickChain("The Jasperlode Mine")
 Click("Westfall")
 Click("Elwynn Forest")
+
+-- Chains of one name side by side in one place are told apart by a number.
+Tab:Open(VERNER)
+do
+    local first, second = ChainRow("Messenger to Stormwind (1)"), ChainRow("Messenger to Stormwind (2)")
+    Expect("chains of one name in one place are numbered, in the order of their first quests' ids",
+        first and second and (first.row.first .. "|" .. second.row.first), SHOES .. "|" .. MESSENGER)
+end
+ClickChain("Messenger to Stormwind (2)")
+Expect("...the number on the chain's page too", page.title.text, "Messenger to Stormwind (2)")
+ClickChain("Messenger to Stormwind (2)")
+Click(C.MapName(REDRIDGE))
 
 -- Play: the first part the voice packs have of the quest, with its words. Kobold Camp Cleanup is
 -- made here to be handed in to another than its giver: Marshal McBride offers it, Marshal Dughan

@@ -1503,7 +1503,10 @@ In each zone, class, profession, season or Place Unknown, the quests of one chai
 there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The card
 has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
 chain's first quest (a quest's id, whose title the client gives in its own language, or words by
-language), else the first quest's title, wherever that quest is (`ChainName`). Its badge is the
+language), else the first quest's title, wherever that quest is (`ChainName`). Where one place
+has two or more chains of one name (Warsong Gulch's six Fight for Warsong Gulch), each is numbered
+on its line and its page, "Fight for Warsong Gulch (2)", in the order of their first quests' ids.
+Its badge is the
 game's quest scroll, and its numbers and bar count its quests as a zone's card does. A chain that
 runs through several zones has a card in each, for its quests there. Chosen, a chain's page has
 its name, what lists it (the zone, dungeon or group that holds it) and how many of its quests
