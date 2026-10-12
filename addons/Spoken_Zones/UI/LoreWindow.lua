@@ -22,6 +22,8 @@ local expandedZone = nil
 local worldOpen = true
 local continentOpen = { [1414] = true, [1415] = true }
 local selection = nil -- { mapID = , key = nil|string }
+-- The selection made for the player, where they stood; any other is one they chose.
+local landed = nil
 -- Sorted once, as sortedZoneIDs is: the tree is rebuilt on every click and keystroke, and the
 -- data under it is fixed for the session (a language change reloads the interface).
 local sortedZoneIDs = nil
@@ -329,12 +331,39 @@ end
 -- The page
 --------------------------------------------------------------------------------
 
-local function ShowEntry()
-	if not selection then
-		page:Show({ title = L.LORE_PICK, text = L.LORE_WINDOW_EMPTY, empty = true })
+-- The zone the player is standing in, resolved to something we actually have lore for.
+-- C_Map.GetBestMapForUnit can return an indoor or micro map (an inn, a dungeon) that is not
+-- itself a key in Zones, so walk up to its parent.
+local function CurrentZoneID()
+	local playerMap = SpokenZones:GetPlayerMapID()
+	if not playerMap then
+		return nil
+	end
+	local _, resolved = SpokenZones:GetLoreWithFallback(playerMap)
+	return resolved
+end
+
+-- Choose where the player stands: the area they are in where it has a story of its own, else its
+-- zone, opened; Azeroth where neither resolves. The tab never shows a page with nothing chosen.
+local function LandOnPlayer()
+	local current = CurrentZoneID()
+	if not current then
+		selection = { mapID = WORLD, key = nil }
+		landed = selection
 		return
 	end
+	local subZone = GetSubZoneText()
+	local subEntry, subKey
+	if subZone and subZone ~= "" then
+		subEntry, subKey = SpokenZones:GetSubzoneLore(current, subZone)
+	end
+	expandedZone = current
+	Reveal(current)
+	selection = { mapID = current, key = subEntry and subKey or nil }
+	landed = selection
+end
 
+local function ShowEntry()
 	local mapID, key = selection.mapID, selection.key
 	-- Chosen from elsewhere (the map's panel), a place not found yet: named, and no more.
 	if SpokenZones:IsLocked(mapID, key) then
@@ -456,6 +485,10 @@ function SpokenZones:RefreshLoreWindow(scrollToSelection)
 	if not list then
 		return
 	end
+	if not selection then
+		LandOnPlayer()
+		scrollToSelection = true
+	end
 	local items = list:Render()
 	if scrollToSelection and selection then
 		list:ScrollToSelection(items)
@@ -528,18 +561,6 @@ end
 -- Public
 --------------------------------------------------------------------------------
 
--- The zone the player is standing in, resolved to something we actually have lore for.
--- C_Map.GetBestMapForUnit can return an indoor or micro map (an inn, a dungeon) that is not
--- itself a key in Zones, so walk up to its parent.
-local function CurrentZoneID()
-	local playerMap = SpokenZones:GetPlayerMapID()
-	if not playerMap then
-		return nil
-	end
-	local _, resolved = SpokenZones:GetLoreWithFallback(playerMap)
-	return resolved
-end
-
 function SpokenZones:ToggleLoreWindow()
 	if not list then
 		return
@@ -551,19 +572,7 @@ function SpokenZones:ToggleLoreWindow()
 
 	-- Re-sync to where the player is standing on every open, not just the first: opening from the
 	-- minimap should land on the current zone, not wherever the last browse ended.
-	local current = CurrentZoneID()
-	if current then
-		-- Standing in an area with lore of its own is more specific than the zone, so prefer it.
-		-- Either way the zone is opened.
-		local subZone = GetSubZoneText()
-		local subEntry, subKey
-		if subZone and subZone ~= "" then
-			subEntry, subKey = SpokenZones:GetSubzoneLore(current, subZone)
-		end
-		expandedZone = current
-		Reveal(current)
-		selection = { mapID = current, key = subEntry and subKey or nil }
-	end
+	LandOnPlayer()
 
 	list:ClearSearch()
 	filter = ""
@@ -601,8 +610,12 @@ function SpokenZones:SetupLoreWindow()
 		order = 1,
 		title = L.LORE_WINDOW_TITLE,
 		build = BuildPanel,
-		-- A place found since the window last opened is listed now.
-		onShow = function() if SpokenZones.RefreshFound then SpokenZones:RefreshFound() end end,
+		-- A place found since the window last opened is listed now. Come back to from another tab,
+		-- the tab is on where the player stands now, unless they chose a place here.
+		onShow = function()
+			if SpokenZones.RefreshFound then SpokenZones:RefreshFound() end
+			if selection == landed then selection = nil end
+		end,
 		store = {
 			get = function(key) return SpokenZones:Get(SIZE_KEYS[key]) end,
 			set = function(key, value) SpokenZones:Set(SIZE_KEYS[key], value) end,

@@ -113,6 +113,7 @@ Expect("...in an inset of its own, as the list is, so their borders part them", 
 Expect("...with no credit line on the page", page.credit, nil)
 Expect("Report is the player's round button, the ring round the bug", page.report.ring ~= nil and page.report.glyph ~= nil, true)
 Expect("...under the spellbook's divider", page.divider.atlas or page.divider.layoutAtlas or true, true)
+Expect("built with nothing chosen, it is on where the player stands, never an empty page", page.title.text, "Durotar")
 
 Z:ToggleLoreWindow()
 Expect("opening it lands on where the player stands", page.title.text, "Durotar")
@@ -212,6 +213,8 @@ RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
 Expect("a place with no story says so", page.body.text.text, Z.L.LORE_NOT_WRITTEN:format("Sen'jin Village"))
 Expect("...offers to Contribute one", page.contribute.mapID, 1411)
 Expect("...and has nothing to play or report", page.play.mapID == nil and page.report.mapID == nil, true)
+_G.SpokenCompendium.tabs.places.onShow(window); window.Refresh()
+Expect("come back to from another tab, a place the player chose stays chosen", page.title.text, "Sen'jin Village")
 
 -- In the ink like every other page, not a lighter one that was hard to read, and still in it
 -- after a re-wrap, which sets the text again.

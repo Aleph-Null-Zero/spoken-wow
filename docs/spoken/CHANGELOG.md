@@ -32,6 +32,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's Zones tab is always on a place.** Reached from another tab, it showed an
+  empty page asking to choose a place; it now shows where the player stands, and keeps a place the
+  player chose. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
