@@ -134,7 +134,7 @@ L.OPT_LATER = "Plus tard"
 -- Lore of Azeroth and Zone Lore
 L.OPT_SECTION_LORE = "Compendium d'Azeroth"
 L.OPT_LORE_WINDOW_TIP = "Le récit de chaque zone et sous-zone, à parcourir et à écouter où que vous soyez. Les zones et sous-zones que vous n'avez pas encore découvertes sont grisées."
-L.OPT_SHOW_UNDISCOVERED = "Débloquer les zones non découvertes"
+L.OPT_SHOW_UNDISCOVERED = "Débloquer toutes les zones"
 L.OPT_SHOW_UNDISCOVERED_TIP = "Permet d'ouvrir toutes les zones et sous-zones, y compris celles que vous n'avez pas encore découvertes. Sinon, elles sont grisées."
 L.OPEN_IN_LORE_TIP = "Le récit de ce lieu dans le Compendium d'Azeroth, avec ceux de toutes les autres zones et sous-zones."
 L.LORE_WINDOW_TITLE = "Compendium d'Azeroth"
