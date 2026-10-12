@@ -231,7 +231,8 @@ Expect("choosing an area shows its story", page.title.text .. ": " .. page.body.
 Expect("...says which zone it is in, and leads back to it", page.sub.text.text, "in Durotar")
 page.sub.scripts.OnClick(page.sub)
 Expect("...which goes back to the zone", page.title.text, "Durotar")
-Expect("a zone says which continent it is on, and how many areas it holds", page.sub.text.text, "in Kalimdor · 2 areas")
+Expect("a zone says which continent it is on, and how many places it holds, its city with its areas as its card counts",
+    page.sub.text.text .. "|" .. RowFor("Durotar").count.text:match("/(%d+)"), "in Kalimdor · 3 areas|3")
 page.sub.scripts.OnClick(page.sub)
 Expect("...leading up to the continent", page.title.text, "Kalimdor")
 Expect("a continent says it is in Azeroth, and how many zones it holds", page.sub.text.text, "in Azeroth · 1 zone")

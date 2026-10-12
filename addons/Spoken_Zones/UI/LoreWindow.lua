@@ -257,6 +257,26 @@ local function Missing(mapID)
 	return not entry or SpokenZones:IsPending(entry)
 end
 
+-- What a zone holds, found out of all: its city and its areas. Of what is listed: under Voiced
+-- Only, what no voice pack reads is left out of the count as it is of the rows, so the card's
+-- number is of the rows beneath it. Its page counts the same.
+local function Places(mapID)
+	local found, total = 0, 0
+	for _, city in ipairs(CitiesIn(mapID)) do
+		if not OnlyVoiced() or AnyVoiced(city) then
+			total = total + 1
+			if Found(city) then found = found + 1 end
+		end
+	end
+	for _, key in ipairs(SubzoneKeys(mapID) or {}) do
+		if not OnlyVoiced() or Voiced(mapID, key) then
+			total = total + 1
+			if Found(mapID, key) then found = found + 1 end
+		end
+	end
+	return found, total
+end
+
 -- One zone's card, and under it when it is open its city's small card (a zone of its own, with
 -- its own areas) and its areas' rows; while searching, the ones that match. Nothing when neither
 -- it nor anything inside matches the search. A zone stays open while its city is. A zone not yet
@@ -269,27 +289,16 @@ local function ZoneRows(mapID, nest, small)
 	local subKeys = SubzoneKeys(mapID)
 	local zoneName = ZoneName(mapID)
 	local open = (expandedZone == mapID or CITY_IN[expandedZone] == mapID) and not locked
-	local cities = CitiesIn(mapID)
 	local inside = {}
-	-- Found out of all, of what is listed: under Voiced Only, what no voice pack reads is left
-	-- out of the count as it is of the rows, so the number is of the rows beneath it.
-	local found, total = 0, 0
-	for _, city in ipairs(cities) do
-		if not OnlyVoiced() or AnyVoiced(city) then
-			total = total + 1
-			if Found(city) then found = found + 1 end
-		end
-		if filter ~= "" and not locked or open then
+	local found, total = Places(mapID)
+	if filter ~= "" and not locked or open then
+		for _, city in ipairs(CitiesIn(mapID)) do
 			for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
 		end
 	end
 	if subKeys then
 		for _, key in ipairs(subKeys) do
 			local isFound = Found(mapID, key)
-			if not OnlyVoiced() or Voiced(mapID, key) then
-				total = total + 1
-				if isFound then found = found + 1 end
-			end
 			local entry = SpokenZones.Subzones[mapID][key]
 			local name = entry.name or key
 			local shown = filter == "" and open or filter ~= "" and not locked and Matches(name)
@@ -513,10 +522,10 @@ function SpokenZones:PlaceLine(mapID, key)
 		return string.format(L.IN_ZONE_FMT, ZoneName(parent)) .. " · "
 			.. Count(#ZonesOf(mapID), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), parent
 	end
-	local subKeys = SubzoneKeys(mapID)
+	local _, total = Places(mapID)
 	local line = string.format(L.IN_ZONE_FMT, ZoneName(parent))
-	if subKeys then
-		line = line .. " · " .. Count(#subKeys, L.SUBZONE_COUNT_FMT, L.SUBZONE_COUNT_ONE)
+	if total > 0 then
+		line = line .. " · " .. Count(total, L.SUBZONE_COUNT_FMT, L.SUBZONE_COUNT_ONE)
 	end
 	return line, parent
 end
