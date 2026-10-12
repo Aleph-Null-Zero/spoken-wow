@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 19
+local VERSION = 20
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -47,9 +47,10 @@ local BANNER_ROW = 36
 local BANNER_GAP = 14         -- above each banner but the first
 local FIRST_GAP = 2           -- above the first row
 -- The rows are spaced by what shows of them: a card's frame starts 5.4 below its row's top and ends
--- 3 above its foot, a banner's 3.5 above its foot. Every card is then as far from the card or
--- banner above it as from the one before it.
-local UNDER_BANNER = 5        -- between a banner and the first card in it
+-- 3 above its foot, a banner's 3.5 above its foot. The first card inside a banner or an open card
+-- is as far below it as it is from the line down its left; cards side by side are further apart.
+local UNDER_BANNER = -1       -- between a banner and the first card in it (their rows overlap)
+local UNDER_CARD = 0          -- between an open card and the first card in it
 local CARD_ROW = 50
 local CARD_GAP = 6            -- between cards under a banner
 local LEAF_ROW = 22
@@ -1122,11 +1123,11 @@ local function GapAbove(items, i)
 	local item, before = items[i], items[i - 1]
 	if not before then return FIRST_GAP, 0 end
 	if item.style == "banner" then return BANNER_GAP, 0 end
-	if before.style == "banner" then return UNDER_BANNER, 0 end
+	if before.style == "banner" then return item.leaf and LEAF_GAP or UNDER_BANNER, 0 end
 	local was, now = before.nest or 0, item.nest or 0
 	if item.leaf and before.leaf and now == was then return 0, now end
 	local between = (item.leaf or before.leaf) and LEAF_GAP or CARD_GAP
-	if now > was then return between, was end
+	if now > was then return item.leaf and LEAF_GAP or UNDER_CARD, was end
 	return (was - now) * NEST_AFTER + between, now
 end
 
