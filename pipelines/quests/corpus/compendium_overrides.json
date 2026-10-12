@@ -1,5 +1,15 @@
 {
   "about": "Hand corrections to the Compendium's quests, applied last by pipelines/quests/tools/export_compendium.py (load_overrides says what each field does). Each entry has its source: a wiki page, or why.",
-  "quests": [],
+  "quests": [
+    {"id": 8325, "remove": true, "source": "QD4: a TBC blood elf quest, not in Forever's client: https://warcraft.wiki.gg/wiki/Reclaiming_Sunstrider_Isle; the repack's DB has no spawned NPC or object starting it (DB check 1, 2026-10-12)"},
+    {"id": 236, "remove": true, "source": "QD4: removed in the vanilla beta: https://warcraft.wiki.gg/wiki/Awaiting_Word; the repack's DB has no spawned NPC or object starting it (DB check 1, 2026-10-12)"},
+    {"id": 3111, "remove": true, "source": "QD4: removed in the vanilla beta: https://warcraft.wiki.gg/wiki/Glyphic_Rune; the repack's DB has no spawned NPC or object starting it (DB check 1, 2026-10-12)"},
+    {"ids": [708, 909, 6131, 6221, 6241], "remove": true, "source": "QD4: Questie's blacklist's [OLD] quests, the live ones having other ids (909 is 6922 now); the repack's DB has no spawned NPC or object starting it (DB check 1, 2026-10-12)"},
+    {"id": 620, "remove": true, "source": "QD4: an unused copy of 8552 The Monogrammed Sash (Questie's blacklist); the repack's DB has no spawned NPC or object starting it (DB check 1, 2026-10-12)"},
+    {"ids": [614, 615, 618, 7462], "remove": true, "source": "QD4: copies of 8551, 8553, 8554 and 7877, which are listed (Questie's blacklist); the repack's DB has no spawned NPC or object starting it (DB check 1, 2026-10-12)"},
+    {"ids": [7478, 7479, 7480], "remove": true, "source": "QD4: the same title, zone and words as 7483-7485, and not in QuestieDB Forever; the repack's DB has no such quest"},
+    {"id": 9247, "remove": true, "source": "QD4: never put in the game in Era (Questie's blacklist: 'Blizzard forgot to implement'); the repack's DB has no spawned NPC or object starting it (DB check 1, 2026-10-12)"},
+    {"ids": [5805, 5841, 5842, 5843, 5844, 5847], "remove": true, "source": "QD4: Collector's Edition quests Questie's blacklist hides on Era; Forever has its own Welcome! (92454); the repack's DB has no spawned NPC or object starting it (DB check 1, 2026-10-12)"}
+  ],
   "chains": []
 }
