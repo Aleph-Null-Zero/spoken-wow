@@ -19,6 +19,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Azeroth's Compendium groups each zone's quests into their chains.** A chain's row is named
   after its last quest and shows how many of its quests you have completed, how many are in
   progress, and a bar; a chain you have finished gets a tick. *([Nucabe](https://github.com/Nucabe))*
+- **Previously, on the quest giver's window and in the quest log**, plays what was said when you
+  handed in the quest before this one in its chain. It shows when you have started that quest
+  and a voice pack has its hand-in. *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing

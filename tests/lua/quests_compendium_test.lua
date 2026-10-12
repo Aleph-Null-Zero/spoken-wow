@@ -283,7 +283,7 @@ Tab:Refresh()
 
 -- Play: what the voice packs have of the quest, from the offer on.
 VO.DataModules:Register("TestPack", {
-    SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2 },
+    SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2, ["85-accept"] = 2, ["85-complete"] = 2 },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
 })
 Click("Kobold Camp Cleanup")
@@ -365,6 +365,56 @@ Spoken:SetPartOn("quests", false)
 QuestMapFrame_ShowQuestDetails(HEIRLOOM)
 Expect("...not with Quests off", Tab.mapButton:IsShown(), false)
 Spoken:SetPartOn("quests", true)
+
+---------------------------------------------------------------- Previously
+-- Left of Open in Azeroth's Compendium, on a quest that follows one this character has started:
+-- what was said when that one was handed in.
+-- The test pack has Lost Necklace's hand-in, and its offer.
+local previously = giver.previous
+stub.world.questID = PIE
+stub.ShowPanel("QuestFrameDetailPanel")
+stub.FireEvent("QUEST_DETAIL")
+Expect("no Previously while the quest before is not started", previously ~= nil and previously:IsShown(), false)
+completed[NECKLACE] = true
+stub.FireEvent("QUEST_DETAIL")
+Expect("the quest giver's window has Previously once it is", previously:IsShown(), true)
+Expect("...left of Open in Azeroth's Compendium", previously.anchor ~= nil and previously.anchor.relativeTo == giver
+    and previously.anchor.point == "RIGHT", true)
+tooltip = {}
+_G.GameTooltip = { SetOwner = function() end, SetText = function(_, text) tooltip.title = text end,
+    AddLine = function(_, text) tooltip.line = text end, Show = function() end, Hide = function() end }
+for _, handler in ipairs(previously.hooks and previously.hooks.OnEnter or {}) do handler(previously) end
+_G.GameTooltip = gameTooltip
+Expect("...which says so, naming the quest before", tooltip.title == L.QUEST_PREVIOUSLY
+    and tooltip.line:find("Lost Necklace", 1, true) ~= nil, true)
+Spoken:StopAll()
+previously.scripts.OnClick(previously)
+queued = {}
+for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
+Expect("...and plays what was said when that one was handed in, only that", table.concat(queued, ","), "85-complete")
+Expect("...as Stop while it plays", previously.state, "stop")
+previously.scripts.OnClick(previously)
+Expect("...which stops it", #VO.Player:Queued(), 0)
+stub.world.questID = BACK
+completed[PIE] = true
+stub.FireEvent("QUEST_DETAIL")
+Expect("no Previously where no pack has the quest before's hand-in", previously:IsShown(), false)
+stub.world.questID = KOBOLDS
+stub.FireEvent("QUEST_DETAIL")
+Expect("...nor on a quest that follows none", previously:IsShown(), false)
+stub.world.questID = 0
+stub.ShowPanel(nil)
+stub.FireEvent("QUEST_FINISHED")
+questLog, logQuest = { PIE }, PIE
+QuestLog_UpdateQuestDetails()
+Expect("the quest log's details have Previously too", Tab.logButton.previous:IsShown()
+    and Tab.logButton.previous.questID, NECKLACE)
+questLog, logQuest = {}, nil
+QuestLog_UpdateQuestDetails()
+Expect("...not with no quest chosen", Tab.logButton.previous:IsShown(), false)
+QuestMapFrame_ShowQuestDetails(PIE)
+Expect("and the map's quest log's", Tab.mapButton.previous:IsShown(), true)
+completed[NECKLACE], completed[PIE] = nil, nil
 
 ---------------------------------------------------------------- another language
 -- A German client: the words and the title the quest's window shows are kept, for every

@@ -645,11 +645,12 @@ end
 local EVENTS = { accept = VO.Enums.SoundEvent.QuestAccept, progress = VO.Enums.SoundEvent.QuestProgress,
     complete = VO.Enums.SoundEvent.QuestComplete }
 
-local function Clips(id)
+-- The quest's clips queued, of one moment where `moment` is given.
+local function Clips(id, moment)
     local out = {}
     for _, clip in ipairs(VO.Player:Queued()) do
-        if clip.questID == id and (clip.event == EVENTS.accept or clip.event == EVENTS.progress
-            or clip.event == EVENTS.complete) then
+        if clip.questID == id and (moment and clip.event == EVENTS[moment] or not moment and (clip.event == EVENTS.accept
+            or clip.event == EVENTS.progress or clip.event == EVENTS.complete)) then
             table.insert(out, clip)
         end
     end
@@ -658,6 +659,16 @@ end
 
 local function Voiced(id, moment)
     return VO.DataModules:PrepareSound({ event = EVENTS[moment], questID = id }) and true or false
+end
+
+-- What the player is given to play one moment of a quest, named for its giver as the quest log's
+-- Play names it.
+local function SoundData(id, moment, origin)
+    local DataModules, Enums = VO.DataModules, VO.Enums
+    local kind, giver = DataModules:GetQuestLogQuestGiverTypeAndID(id)
+    local name = giver and DataModules:GetObjectName(kind, giver) or Title(id)
+    local guid = giver and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, giver) or nil
+    return { event = EVENTS[moment], questID = id, title = Title(id), name = name, unitGUID = guid, origin = origin }
 end
 
 -- Play on a quest's page: what is said when it is offered, under way and handed in, as far as the
@@ -671,15 +682,10 @@ local PLAY = {
     end,
     playing = function(id) return #Clips(id) > 0 end,
     start = function(id)
-        local DataModules, Enums = VO.DataModules, VO.Enums
-        local kind, giver = DataModules:GetQuestLogQuestGiverTypeAndID(id)
-        local name = giver and DataModules:GetObjectName(kind, giver) or Title(id)
-        local guid = giver and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, giver) or nil
         local first = true
         for _, moment in ipairs(MOMENTS) do
             if Voiced(id, moment) then
-                local soundData = { event = EVENTS[moment], questID = id, title = Title(id), name = name,
-                    unitGUID = guid, origin = "Azeroth's Compendium" }
+                local soundData = SoundData(id, moment, "Azeroth's Compendium")
                 if first then VO.Player:PlayNow(soundData) else VO.Player:Enqueue(soundData) end
                 first = false
             end
@@ -849,6 +855,50 @@ end
 --- Whether `questID` can be opened in the tab: it is there, its part is on, and it lists the quest.
 function QuestsTab:Has(questID)
     return C ~= nil and C:Tab("quests") ~= nil and VO.Addon:IsPartOn() and questID ~= nil and Quests()[questID] ~= nil
+end
+
+-- Whether this character has started `id`, asked now: what the tab last read may be from before
+-- the quest was handed in.
+local function StartedNow(id)
+    local ask = (C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) or IsQuestFlaggedCompleted
+    if ask then
+        if ask(id) then return true end
+    else
+        local done = GetQuestsCompleted and GetQuestsCompleted()
+        if type(done) == "table" and done[id] then return true end
+    end
+    if C_QuestLog and C_QuestLog.IsOnQuest then return C_QuestLog.IsOnQuest(id) and true or false end
+    return GetQuestLogIndexByID ~= nil and (GetQuestLogIndexByID(id) or 0) > 0
+end
+
+--- The quest before `questID` in its chain, where this character has started it and a voice pack
+--- has what is said when it is handed in: what Previously plays. Nil otherwise.
+function QuestsTab:Previous(questID)
+    local prev = questID and Prev(questID)
+    if not prev or not StartedNow(prev) or not Voiced(prev, "complete") then return nil end
+    return prev
+end
+
+--- Play one moment of a quest, `moment` "accept", "progress" or "complete", as the tab's Play
+--- plays each; or stop it where it is playing. Returns whether it is playing now.
+function QuestsTab:TogglePart(questID, moment, origin)
+    local clips = Clips(questID, moment)
+    if #clips > 0 then
+        for _, clip in ipairs(clips) do VO.Player:Remove(clip) end
+        return false
+    end
+    if not Voiced(questID, moment) then return false end
+    VO.Player:PlayNow(SoundData(questID, moment, origin))
+    return true
+end
+
+function QuestsTab:IsPartPlaying(questID, moment)
+    return #Clips(questID, moment) > 0
+end
+
+--- A quest's title in the client's language once it is known, else the English.
+function QuestsTab:Title(questID)
+    return Title(questID)
 end
 
 --- Open the quests, on `questID` when one is given: chosen, with what holds it opened.

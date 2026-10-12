@@ -1417,6 +1417,14 @@ view's Play, Report or Contribute; and in DialogueUI's window, at the left end o
 a quest page (`UI/DialogueUIBridge.lua`). DialogueUI hides the rest of the interface while it is
 up, so that one closes DialogueUI's window before the Compendium opens.
 
+Previously sits left of that button on the quest giver's window and in both quest logs (not in
+DialogueUI's window): the player's round Play, its replay glyph turning to Stop while it plays.
+It shows where the quest has a `prev` in `Data/Compendium.lua`, this character has started that
+quest (asked of the client when the window shows, not from the tab's last read) and a pack has
+what was said when it was handed in. A click plays that one line, `q:{prev}:complete`, as the
+tab's Play queues a moment (`QuestsTab:TogglePart`), and a second click stops it. The client has
+no chain of its own, so without `prev` in the data it never shows.
+
 On a client in another language, `QUEST_DETAIL`, `QUEST_PROGRESS` and `QUEST_COMPLETE` keep the
 window's title and words in `SpokenQuestsSettings.global.CompendiumText[locale][questID]`, shown
 over the English. The player's name, class and race go back to `$N`, `$C` and `$R` where the
