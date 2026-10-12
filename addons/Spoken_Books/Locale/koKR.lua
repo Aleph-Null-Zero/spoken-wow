@@ -125,6 +125,7 @@ L.READABLES_PICK = "왼쪽에서 책, 편지, 쪽지, 명판을 골라 읽으세
 L.READABLE_NOT_FOUND = "아직 찾지 못한 것입니다. 세상에서 열어 보면 여기서도 읽을 수 있습니다."
 L.FOUND_FMT = "%2$d개 중 %1$d개 찾음"
 L.READABLES_IN_FMT = "위치: %1$s"
+L.BOOKS_TITLE_NTH_FMT = "%1$s (%2$d)"
 L.FROM_DROP = "%1$s 처치 시 획득"
 L.FROM_PICKPOCKET = "%1$s에게서 소매치기"
 L.FROM_QUEST_START = "%1$s 퀘스트를 받을 때 받음"

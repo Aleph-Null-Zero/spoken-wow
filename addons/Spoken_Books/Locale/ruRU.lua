@@ -125,6 +125,7 @@ L.READABLES_PICK = "Выберите слева книгу, письмо, зап
 L.READABLE_NOT_FOUND = "Вы ещё не нашли это. Откройте это в мире, чтобы прочитать здесь."
 L.FOUND_FMT = "Найдено %1$d из %2$d"
 L.READABLES_IN_FMT = "Расположение: %1$s"
+L.BOOKS_TITLE_NTH_FMT = "%1$s (%2$d)"
 L.FROM_DROP = "Добыча: %1$s"
 L.FROM_PICKPOCKET = "Можно украсть у: %1$s"
 L.FROM_QUEST_START = "Выдаётся с заданием «%1$s»"

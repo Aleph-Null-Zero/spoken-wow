@@ -125,6 +125,7 @@ L.READABLES_PICK = "在左侧选择一本书、一封信、一张笔记或一块
 L.READABLE_NOT_FOUND = "你还没有找到它。在世界中打开它后即可在此阅读。"
 L.FOUND_FMT = "已找到 %1$d / %2$d"
 L.READABLES_IN_FMT = "位于%1$s"
+L.BOOKS_TITLE_NTH_FMT = "%1$s（%2$d）"
 L.FROM_DROP = "掉落自：%1$s"
 L.FROM_PICKPOCKET = "偷窃自：%1$s"
 L.FROM_QUEST_START = "接受任务“%1$s”时获得"

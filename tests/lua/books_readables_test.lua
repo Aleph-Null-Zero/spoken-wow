@@ -372,6 +372,15 @@ Expect("...naming a continent, its zones' cards, closed", Has(list, "Westfall") 
 Click("Westfall")
 Expect("...a card in it chosen, its page shows", page.title.text, "Westfall")
 Click("Westfall")
+list = Search("dark keeper nameplate")
+Expect("readables sharing a title are numbered in id order, so no two rows read the same",
+    Has(list, "Dark Keeper Nameplate (1)") and Has(list, "Dark Keeper Nameplate (6)")
+    and not Has(list, "Dark Keeper Nameplate") and RowFor("Dark Keeper Nameplate (2)").row.book, 1432)
+SpokenBooksSettings.unlockUnfound = true
+B:RefreshReadables()
+Click("Dark Keeper Nameplate (2)")
+Expect("...and so is its page's title", page.title.text, "Dark Keeper Nameplate (2)")
+SpokenBooksSettings.unlockUnfound = false
 Search("")
 
 -- Found Only: the readables not found, and what holds none found, left out.

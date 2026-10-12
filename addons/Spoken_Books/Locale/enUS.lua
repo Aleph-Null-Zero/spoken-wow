@@ -132,6 +132,7 @@ L.READABLES_PICK = "Choose a book, letter, note or plaque on the left to read it
 L.READABLE_NOT_FOUND = "You have not found this one yet. Open it in the world to read it here."
 L.FOUND_FMT = "%1$d of %2$d found"
 L.READABLES_IN_FMT = "In %1$s"
+L.BOOKS_TITLE_NTH_FMT = "%1$s (%2$d)"
 L.FROM_DROP = "Dropped by %1$s"
 L.FROM_PICKPOCKET = "Pickpocketed from %1$s"
 L.FROM_QUEST_START = "Given with the quest %1$s"

@@ -119,6 +119,33 @@ local function Index()
 	return index
 end
 
+-- Each readable that shares its title with others ("Dark Keeper Nameplate", six of them) by its
+-- place among them in id order, so no two rows read the same.
+local nth
+local function Nth()
+	if nth then return nth end
+	nth = {}
+	local byTitle = {}
+	for id in pairs(Index().all) do
+		local title = Title(id)
+		byTitle[title] = byTitle[title] or {}
+		table.insert(byTitle[title], id)
+	end
+	for _, ids in pairs(byTitle) do
+		if #ids > 1 then
+			table.sort(ids)
+			for i, id in ipairs(ids) do nth[id] = i end
+		end
+	end
+	return nth
+end
+
+-- A readable's name in the list and on its page: its title, numbered where others share it.
+local function Name(id)
+	local n = Nth()[id]
+	return n and L.BOOKS_TITLE_NTH_FMT:format(Title(id), n) or Title(id)
+end
+
 local function Found(id)
 	return SpokenBooks:IsBookFound(id)
 end
@@ -285,7 +312,7 @@ local function Leaf(id, nest, whole)
 	if OnlyFound() and not Found(id) then return nil end
 	if OnlyVoiced() and not Voiced(id) then return nil end
 	if filter ~= "" and not whole and not Matches(Title(id)) then return nil end
-	return { kind = "readable", leaf = true, book = id, label = Title(id), nest = nest,
+	return { kind = "readable", leaf = true, book = id, label = Name(id), nest = nest,
 		locked = not Found(id) and not Unlocked(), done = Found(id) and true or false }
 end
 
@@ -637,7 +664,7 @@ local function ShowEntry()
 			where = L.GROUP_UNKNOWN
 		end
 		if not Found(id) and not Unlocked() then
-			page:Show({ title = Title(id), subtitle = where, text = L.READABLE_NOT_FOUND })
+			page:Show({ title = Name(id), subtitle = where, text = L.READABLE_NOT_FOUND })
 			return
 		end
 		local parts = {}
@@ -648,7 +675,7 @@ local function ShowEntry()
 			local text = data.pages[pageId] and data.pages[pageId].text
 			if text and text ~= "" then table.insert(parts, text) end
 		end
-		page:Show({ title = Title(id), subtitle = where, text = table.concat(parts, "\n\n"), target = id })
+		page:Show({ title = Name(id), subtitle = where, text = table.concat(parts, "\n\n"), target = id })
 		return
 	end
 	-- A zone, a continent, a group, a type: where it is and what it holds. A kind of writing across

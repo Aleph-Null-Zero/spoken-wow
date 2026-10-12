@@ -131,6 +131,7 @@ L.READABLES_PICK = "Choisissez à gauche un livre, une lettre, une note ou une p
 L.READABLE_NOT_FOUND = "Vous ne l'avez pas encore trouvé. Ouvrez-le dans le monde pour le lire ici."
 L.FOUND_FMT = "%1$d sur %2$d trouvés"
 L.READABLES_IN_FMT = "Emplacement : %1$s"
+L.BOOKS_TITLE_NTH_FMT = "%1$s (%2$d)"
 L.FROM_DROP = "Butin de %1$s"
 L.FROM_PICKPOCKET = "Volé à %1$s"
 L.FROM_QUEST_START = "Remis avec la quête %1$s"
