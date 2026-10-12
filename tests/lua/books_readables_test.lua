@@ -22,7 +22,9 @@ local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "
     -- Alterac Valley under Azeroth, as one client hangs it; Warsong Gulch in Ashenvale; an isle on
     -- no continent.
     [1459] = { "Alterac Valley", 947 }, [1440] = { "Ashenvale", 1414 }, [1460] = { "Warsong Gulch", 1440 },
-    [9001] = { "Zephras Isle", 947 } }
+    [9001] = { "Zephras Isle", 947 },
+    -- A hill on Kalimdor with nothing to read, and a map on no continent with nothing either.
+    [9002] = { "Bare Hills", 1414 }, [9003] = { "Empty Sea", 947 } }
 _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
@@ -72,6 +74,7 @@ local KURDRAN, ALLERIA, LETTER, COOKBOOK = 287, 288, 16, 410
 SpokenBooksCharacter.found[KURDRAN] = true
 
 B:SetupReadables()
+stub.SetZone({ map = 1436 })
 B:ShowReadables()
 local window = _G.SpokenCompendium.window
 local panel = B.readables
@@ -105,6 +108,26 @@ end
 local function Has(list, label)
     return ("|" .. list .. "|"):find("|" .. label .. "|", 1, true) ~= nil
 end
+
+-- Opened with nothing chosen, or still on where it landed, the tab lands on where the player stands.
+local function Reopen(map)
+    window:Hide()
+    stub.SetZone({ map = map })
+    B:ShowReadables()
+end
+Expect("opened, the tab lands on the player's zone", panel.page.title.text, "Westfall")
+Expect("...its card open on what is in it", RowFor("Westfall").row.open and Has(Shown(), "A Dusty Unsent Letter"), true)
+Reopen(1453)
+Expect("...reopened elsewhere, on the zone the player stands in now", panel.page.title.text, "Stormwind City")
+Expect("...a city's card opened inside its zone's", RowFor("Elwynn Forest").row.open and Has(Shown(), "Kurdran Wildhammer"), true)
+Reopen(9002)
+Expect("...where their zone has nothing to read, their continent's banner", panel.page.title.text, "Kalimdor")
+Reopen(9003)
+Expect("...on no continent, the first continent's", panel.page.title.text, "Eastern Kingdoms")
+Click("Westfall")
+Reopen(1453)
+Expect("...and what the player chose, kept on reopening", panel.page.title.text, "Westfall")
+Click("Westfall")
 
 local list = Shown()
 Expect("the list is laid out as the places': a banner for each continent, no Azeroth above them",

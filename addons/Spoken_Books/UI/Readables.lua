@@ -26,6 +26,7 @@ local selection          -- { book = id } | { mapID = id } | { mapID = id, group
                          -- | { group = "events"|"wide"|"unknown" }
                          -- | { group = "events"|"wide"|"unknown", type = type } | { type = type }
                          -- | { zones = "lands"|"battlegrounds" } | nil
+local landed             -- the selection made for the player, where they stood; any other they chose
 local expandedZone
 local continentOpen = { [1414] = true, [1415] = true }
 local zonesOpen = {}          -- [key] = true: Other Lands' or Battlegrounds' banner, opened
@@ -605,6 +606,66 @@ end
 -- The tab
 --------------------------------------------------------------------------------
 
+-- The continents with readables, by name, as the list has them.
+local function Continents()
+	local out = {}
+	for _, continent in ipairs(CONTINENTS) do
+		if #ZonesOn(continent) > 0 then table.insert(out, continent) end
+	end
+	table.sort(out, ByName)
+	return out
+end
+
+-- The zone the player stands in that has a card, walking up from an inn's or a cave's map, or nil.
+local function PlayerZone()
+	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local steps = 0
+	while map and steps < 8 do
+		if next(ReadablesIn(map)) then return map end
+		local info = C_Map.GetMapInfo and C_Map.GetMapInfo(map)
+		map, steps = info and info.parentMapID, steps + 1
+	end
+end
+
+-- The continent the player is on where it has readables, else the first that has.
+local function PlayerContinent()
+	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local listed = Continents()
+	for _, continent in ipairs(listed) do
+		if map == continent or (map and ContinentOf(map) == continent) then return continent end
+	end
+	return listed[1]
+end
+
+-- Open what holds a zone's card: Battlegrounds' banner, its continent's, or Other Lands'.
+local function OpenAround(zone)
+	if IS_BATTLEGROUND[zone] then
+		zonesOpen.battlegrounds = true
+		return
+	end
+	local continent = ContinentOf(CITY_IN[zone] or zone)
+	if continent then
+		continentOpen[continent] = true
+	else
+		zonesOpen.lands = true
+	end
+end
+
+-- Choose where the player stands: their zone's card, opened, else their continent's banner. The tab
+-- never shows a page with nothing chosen.
+local function LandOnPlayer()
+	local zone = PlayerZone()
+	if zone then
+		selection = { mapID = zone }
+		expandedZone = zone
+		OpenAround(zone)
+	else
+		local continent = PlayerContinent()
+		selection = continent and { mapID = continent } or nil
+	end
+	landed = selection
+end
+
 local function OnClick(row)
 	if row.kind == "readable" then
 		selection = { book = row.book }
@@ -645,6 +706,10 @@ end
 
 function SpokenBooks:RefreshReadables(scrollToSelection)
 	if not list then return end
+	if not selection then
+		LandOnPlayer()
+		scrollToSelection = true
+	end
 	local items = list:Render()
 	if scrollToSelection and selection then list:ScrollToSelection(items) end
 	ShowEntry()
@@ -699,6 +764,8 @@ end
 --- Open the readables.
 function SpokenBooks:ShowReadables()
 	if not SpokenCompendium then return end
+	-- On where the player stands now, unless they chose something here.
+	if selection == landed then selection = nil end
 	if list then
 		list:ClearSearch()
 		filter = ""
@@ -724,6 +791,8 @@ function SpokenBooks:SetupReadables()
 			set = function(key, value) if SpokenBooksSettings then SpokenBooksSettings[SIZE_KEYS[key]] = value end end,
 		},
 		open = function() SpokenBooks:ShowReadables() end,
+		-- Come back to from another tab: where the player stands now, unless they chose here.
+		onShow = function() if selection == landed then selection = nil end end,
 		enabled = function() return SpokenBooks:IsPartOn() end,
 		-- Unlock Unfound Books, on Spoken's page.
 		unlock = {
