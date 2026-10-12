@@ -43,11 +43,11 @@ for _, file in ipairs({ "UI/Layout", "UI/Options" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 Z:SetupOptions()
--- Azeroth's Compendium, with the two tabs Spoken's page shows an Unlock switch for: stand-ins
--- that keep the switch, as Places' and Writings' real tabs keep it in their settings.
+-- Azeroth's Compendium, with the three tabs Spoken's page shows an Unlock switch for: stand-ins
+-- that keep the switch, as the real tabs keep it in their settings.
 assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", Z)
 local unlocked = {}
-for _, key in ipairs({ "places", "readables" }) do
+for _, key in ipairs({ "places", "readables", "quests" }) do
     SpokenCompendium:Register(key, { label = key, order = 1, build = function() end, open = function() end,
         unlock = { get = function() return unlocked[key] == true end, set = function(v) unlocked[key] = v end } })
 end
@@ -208,10 +208,10 @@ end
 
 ---------------------------------------------------------------- Reset All and the Unlock switches
 -- Kept with each part's settings, so Spoken's profile reset would not reach them.
-unlocked.places, unlocked.readables = true, true
+unlocked.places, unlocked.readables, unlocked.quests = true, true, true
 local reset = _G.SpokenOptionsPanel.layout.defaults
 reset.scripts.OnClick(reset)
 stub.popups[#stub.popups].dialog.OnAccept()
-Expect("Reset All turns both Unlock switches off", (unlocked.places or unlocked.readables) and true or false, false)
+Expect("Reset All turns every Unlock switch off", (unlocked.places or unlocked.readables or unlocked.quests) and true or false, false)
 
 os.exit(Failures() == 0 and 0 or 1)
