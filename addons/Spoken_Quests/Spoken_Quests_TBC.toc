@@ -25,4 +25,5 @@
 embeds.xml
 addon.xml
 Contribute.xml
+Compendium.xml
 Gossip\Gossip.xml

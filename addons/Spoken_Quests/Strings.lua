@@ -15,6 +15,7 @@ setfenv(1, VoiceOver)
 --   Contribute.lua         Contribute button tooltip
 --   ReportButton.lua       the copy-link dialog for reporting a line
 --   Player.lua             minimap menu entries and player settings link
+--   UI/QuestsTab.lua       the Quests tab of Azeroth's Compendium
 --
 -- FORMAT ARGUMENTS ARE POSITIONAL (%1$s, %2$d), even where there is only one and
 -- the position is obvious. Word order is the thing a translator most often has to
@@ -227,3 +228,20 @@ L.OPT_REPORT_LINE_TIP = "Get a link to report a wrong reading or a mispronounced
 L.OPT_REPORT_NO_LINE = "This client cannot tell which line that was, so there is no address to report."
 L.OPT_STOP_GOSSIP = "Stop Gossip"
 L.OPT_NEXT_GOSSIP = "Next Gossip"
+
+--------------------------------------------------------------------------------
+-- Azeroth's Compendium: the Quests tab (UI/QuestsTab.lua)
+--------------------------------------------------------------------------------
+
+L.COMPENDIUM_QUESTS = "Quests"
+L.QUESTS_SEARCH = "Search quests"
+L.QUESTS_NONE = "Nothing matches."
+L.QUESTS_FOUND_ONLY = "Completed Only"
+L.QUESTS_PICK = "Choose a quest on the left to read it."
+L.QUESTS_ELSEWHERE = "Place Unknown"
+L.QUEST_NOT_FOUND = "You have not completed this quest yet. Complete it in the world to read it here."
+L.QUESTS_FOUND_FMT = "%1$d of %2$d completed"
+L.QUEST_PART_ACCEPT = "Offer"
+L.QUEST_PART_PROGRESS = "Progress"
+L.QUEST_PART_COMPLETE = "Completion"
+L.QUEST_NO_TEXT = "No words are known for this quest."

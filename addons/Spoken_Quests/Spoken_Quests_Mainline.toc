@@ -25,6 +25,7 @@
 embeds.xml
 addon.xml
 Contribute.xml
+Compendium.xml
 # Gossip text for the client's own locale only: each file is ~2 MB of Lua, and a guard inside
 # one returns only after the client has parsed it. AllowLoadTextLocale is a per-file directive
 # from 11.1.5. The classic and legacy .toc files load Gossip\Gossip.xml instead: every locale,
