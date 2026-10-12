@@ -1365,7 +1365,10 @@ Two generated files feed it, both committed so the addon never needs a database:
 - `Data/Compendium.lua` (`make quests-compendium`, `tools/export_compendium.py`): every corpus
   quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
   the zone of its entrance, else where its giver stands), or the QuestSort of a class, profession
-  or season with its name in every language, and the races and classes allowed to take it. The
+  or season with its name in every language, and the races and classes allowed to take it. Areas,
+  zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, cached
+  in `tools/cache/`), which have Forever's zones and sorts (Zephras Isle, Darkspear Islands,
+  Camping, The High Order); Era's (1.15.9.69109) fill in anything they lack. The
   zone and who may take it come from the Forever repack's TrinityCore world DB
   (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
   quests already listed and adds the corpus's new ones, placed by their giver's spawn and open to

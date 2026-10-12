@@ -14,7 +14,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   repack's), which the vmangos extraction does not keep.
 - Chains: the quest before each one in its storyline (`prev`), from the same DB's
   quest_template_addon (chain_links below), so the tab can group a zone's quests into their chains.
-- The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/).
+- The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
+  Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
+  Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
 
 With the repack's server up:  make quests-compendium
 
@@ -43,7 +45,10 @@ CORPUS = os.path.join(QUESTS, "corpus", "corpus.json.gz")
 FACTIONS = os.path.join(QUESTS, "corpus", "factions.json")
 OUT = os.path.join(ROOT, "addons", "Spoken_Quests", "Data", "Compendium.lua")
 CACHE = os.path.join(HERE, "cache")
-BUILD = "1.15.9.69109"
+# Forever's client (wago.tools' wow_classic_beta), and Classic Era's. With Era's alone, Forever's
+# own zones and sorts resolve to nothing, even where the DB names them.
+BUILD = "1.60.1.70338"
+ERA_BUILD = "1.15.9.69109"
 LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"]
 
 # The dungeons, under the zone their entrance is in (as the books' places have them).
@@ -59,11 +64,11 @@ SOURCES = ["accept", "progress", "complete"]
 SIDE_RACES = {"alliance": 1 | 4 | 8 | 64, "horde": 2 | 16 | 32 | 128}
 
 
-def table(name, locale="enUS"):
+def table(name, locale="enUS", build=BUILD):
     os.makedirs(CACHE, exist_ok=True)
-    path = os.path.join(CACHE, f"{name}-{locale}-{BUILD}.csv")
+    path = os.path.join(CACHE, f"{name}-{locale}-{build}.csv")
     if not os.path.exists(path):
-        url = f"https://wago.tools/db2/{name}/csv?build={BUILD}&locale={locale}"
+        url = f"https://wago.tools/db2/{name}/csv?build={build}&locale={locale}"
         request = urllib.request.Request(url, headers={"User-Agent": "curl/8.0"})
         with urllib.request.urlopen(request) as response, open(path, "wb") as out:
             out.write(response.read())
@@ -71,18 +76,42 @@ def table(name, locale="enUS"):
         return list(csv.DictReader(f))
 
 
-class Maps:
-    """The client's zones: which an area is in, and which a point stands in."""
+def zone_assignments(uimap_rows, assign_rows):
+    """The UiMapAssignment rows of zone maps (UiMap Type 3), and the zone of each area they name."""
+    uimap = {int(r["ID"]): r for r in uimap_rows}
+    assigns = [a for a in assign_rows if uimap.get(int(a["UiMapID"]), {}).get("Type") == "3"]
+    area_zone = {}
+    for a in assigns:
+        if int(a["AreaID"]) > 0:
+            area_zone.setdefault(int(a["AreaID"]), int(a["UiMapID"]))
+    return assigns, area_zone
 
-    def __init__(self):
-        uimap = {int(r["ID"]): r for r in table("UiMap")}
-        self.assigns = [a for a in table("UiMapAssignment")
-                        if uimap.get(int(a["UiMapID"]), {}).get("Type") == "3"]
-        self.area_zone = {}
-        for a in self.assigns:
-            if int(a["AreaID"]) > 0:
-                self.area_zone.setdefault(int(a["AreaID"]), int(a["UiMapID"]))
-        self.areas = {int(r["ID"]): r for r in table("AreaTable")}
+
+def sort_names(rows_by_locale):
+    """{sort: {locale: name}} from each build's QuestSort, the first build's first: a name the
+    first leaves out or empty is the next's."""
+    sorts = {}
+    for locale, builds in rows_by_locale.items():
+        for rows in builds:
+            for r in rows:
+                if r["SortName_lang"]:
+                    sorts.setdefault(int(r["ID"]), {}).setdefault(locale, r["SortName_lang"])
+    return sorts
+
+
+class Maps:
+    """The client's zones: which an area is in, and which a point stands in. Forever's tables, then
+    Era's for an area or a point Forever's do not place."""
+
+    def __init__(self, builds=(BUILD, ERA_BUILD)):
+        self.assign_sets, self.area_zone, self.areas = [], {}, {}
+        for build in builds:
+            assigns, area_zone = zone_assignments(table("UiMap", build=build), table("UiMapAssignment", build=build))
+            self.assign_sets.append(assigns)
+            for area, zone in area_zone.items():
+                self.area_zone.setdefault(area, zone)
+            for r in table("AreaTable", build=build):
+                self.areas.setdefault(int(r["ID"]), r)
 
     def zone_of_area(self, area):
         for _ in range(4):
@@ -99,16 +128,19 @@ class Maps:
     def zone_at(self, mapid, x, y):
         if mapid in INSTANCE_ZONE:
             return INSTANCE_ZONE[mapid]
-        best = None
-        for a in self.assigns:
-            if int(a["MapID"]) != mapid:
-                continue
-            x0, y0, x1, y1 = (float(a["Region_0"]), float(a["Region_1"]), float(a["Region_3"]), float(a["Region_4"]))
-            if min(x0, x1) <= x <= max(x0, x1) and min(y0, y1) <= y <= max(y0, y1):
-                size = abs(x1 - x0) * abs(y1 - y0)
-                if best is None or size < best[0]:
-                    best = (size, int(a["UiMapID"]))
-        return best and best[1]
+        for assigns in self.assign_sets:
+            best = None
+            for a in assigns:
+                if int(a["MapID"]) != mapid:
+                    continue
+                x0, y0, x1, y1 = (float(a["Region_0"]), float(a["Region_1"]), float(a["Region_3"]), float(a["Region_4"]))
+                if min(x0, x1) <= x <= max(x0, x1) and min(y0, y1) <= y <= max(y0, y1):
+                    size = abs(x1 - x0) * abs(y1 - y0)
+                    if best is None or size < best[0]:
+                        best = (size, int(a["UiMapID"]))
+            if best:
+                return best[1]
+        return None
 
     def giver_zones(self, giver, spawns):
         zones = []
@@ -299,10 +331,8 @@ def with_db(args):
     db.close()
     links = chain_links(rows, set(ids))
 
-    sorts = {}
-    for locale in ["enUS"] + LOCALES:
-        for r in table("QuestSort", locale):
-            sorts.setdefault(int(r["ID"]), {})[locale] = r["SortName_lang"]
+    sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
+                        for locale in ["enUS"] + LOCALES})
 
     placed = unplaced = by_sort = 0
     quest_lines, used_sorts = {}, set()
