@@ -1402,19 +1402,118 @@ local function OpenZone(zone)
     if C.CITY_IN[zone] then openZones[C.CITY_IN[zone]] = true end
 end
 
--- Choose where the player stands: their zone, opened, else the first continent. The tab never
--- shows a page with nothing chosen.
+-- Whether the list shows what holds `set` ({ [id] = true }): Started Only leaves out one with
+-- nothing started, Voiced Only one with nothing voiced.
+local function SetListed(set)
+    local found, total = Tally(set)
+    return total > 0 and not Unlisted(found, total)
+end
+
+-- The quests a continent's banner holds.
+local function ContinentSet(continent)
+    local set = {}
+    for _, mapID in ipairs(ZonesOn(continent)) do QuestsIn(mapID, set) end
+    return set
+end
+
+-- The continent the player is on where the list shows it, else the first it shows.
+local function PlayerContinent()
+    local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+    local listed = {}
+    for _, continent in ipairs(Continents()) do
+        if SetListed(ContinentSet(continent)) then table.insert(listed, continent) end
+    end
+    for _, continent in ipairs(listed) do
+        if map == continent or (map and C.ContinentOf(map) == continent) then return continent end
+    end
+    return listed[1]
+end
+
+-- Choose where the player stands: their zone, opened, else their continent, as Zones and Books
+-- land. Never a zone the list does not show (Started Only, Voiced Only): the page would be for no
+-- row. With nothing listed at all, nothing is chosen and the page counts the quests.
 local function LandOnPlayer()
     local zone = PlayerZone()
-    if zone then
+    if zone and SetListed(QuestsIn(zone)) then
         selection = { mapID = zone }
         OpenZone(zone)
         OpenAround(zone)
     else
-        local first = Continents()[1]
-        selection = first and { mapID = first } or nil
+        local continent = PlayerContinent()
+        selection = continent and { mapID = continent } or nil
     end
     landed = selection
+end
+
+-- What holds a selection, one level up the list, or nil for a banner: a quest's zone or sort, a
+-- chain's zone, dungeon or sort, a dungeon's zone, a city's zone, a zone's continent or banner, and
+-- a sort's section.
+local function Holder(chosen)
+    if chosen.quest then
+        local quest = Quests()[chosen.quest] or {}
+        local zone = KnownZones(quest)[1]
+        if zone then return { mapID = zone } end
+        if Named(quest.sort) then return { sort = quest.sort } end
+        return { group = "elsewhere" }
+    end
+    if chosen.chain then
+        local where = chosen.where or ""
+        local zone = where:match("^z(%d+)$")
+        if zone then return { mapID = tonumber(zone) } end
+        local mapID, dungeon = where:match("^d(%d+):(%d+)$")
+        if mapID then
+            mapID, dungeon = tonumber(mapID), tonumber(dungeon)
+            local _, byDungeon = ZoneParts(mapID)
+            local several = next(byDungeon, next(byDungeon)) ~= nil
+            local key = several and DungeonKey(mapID, dungeon) or DungeonKey(mapID)
+            return { dungeon = key, ids = byDungeon[dungeon] or {}, label = DungeonName(dungeon) }
+        end
+        local sort = where:match("^s(.+)$")
+        if sort == "elsewhere" then return { group = "elsewhere" } end
+        if sort then return { sort = tonumber(sort) or sort } end
+        return nil
+    end
+    if chosen.dungeon then return { mapID = tonumber(chosen.dungeon:match("^d(%d+)")) } end
+    if chosen.sort then return { section = SectionOf(chosen.sort) } end
+    if chosen.group == "elsewhere" then return { section = "other" } end
+    local mapID = chosen.mapID
+    if not mapID or mapID == 1414 or mapID == 1415 then return nil end
+    if C.CITY_IN[mapID] then return { mapID = C.CITY_IN[mapID] } end
+    if IS_BATTLEGROUND[mapID] then return { section = "battlegrounds" } end
+    local continent = C.ContinentOf(mapID)
+    if continent then return { mapID = continent } end
+    return { section = "lands" }
+end
+
+-- Whether the list shows a selection's row, as far as the filters go.
+local function SelectionListed(chosen)
+    if chosen.quest then return SetListed({ [chosen.quest] = true }) end
+    if chosen.chain or chosen.dungeon then return SetListed(SetOf(chosen.ids)) end
+    if chosen.sort then return SetListed(SetOf(Index().sorts[chosen.sort])) end
+    if chosen.group == "elsewhere" then return SetListed(SetOf(Index().elsewhere)) end
+    if chosen.section then
+        local banner = ZONE_BANNERS[chosen.section]
+        if not banner then return SetListed((SectionSet(chosen.section))) end
+        local set = {}
+        for _, mapID in ipairs(banner.zones()) do QuestsIn(mapID, set) end
+        return SetListed(set)
+    end
+    if chosen.mapID == 1414 or chosen.mapID == 1415 then return SetListed(ContinentSet(chosen.mapID)) end
+    return SetListed(QuestsIn(chosen.mapID))
+end
+
+-- A filter in the menu left the chosen row out of the list. Where the tab chose it for the player,
+-- it lands again; where the player chose it, the nearest row above it the list still shows is
+-- chosen, else it lands.
+local function OnHidden()
+    if selection ~= landed then
+        local up = selection and Holder(selection)
+        while up and not SelectionListed(up) do up = Holder(up) end
+        selection = up
+    else
+        selection = nil
+    end
+    QuestsTab:Refresh(true)
 end
 
 -- The chosen row brought into view. The client's scroll frame takes an offset only within the
@@ -1456,6 +1555,7 @@ local function Build(panel)
         build = BuildRows,
         isSelected = IsSelected,
         onClick = OnClick,
+        onHidden = OnHidden,
         onSearch = function(text)
             filter = text
             searchClosed = {}

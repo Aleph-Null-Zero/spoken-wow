@@ -1479,7 +1479,11 @@ zone's card, its dungeons' and raids' quests (those with `dungeon`) are the dung
 as the data's `dungeons` names it in the client's language; where the zone has several (Searing
 Gorge holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a card
 for each dungeon under it.
-There is no Azeroth row; with the player's zone unknown the tab lands on the first continent. The list is drawn in the game's own art
+The tab lands on the player's zone, opened; where it has no quests, or Started Only or Voiced
+Only leaves it out, on the player's continent, as Zones and Books land, else on the first continent
+listed (there is no Azeroth row). A switch in the filter menu that leaves out the chosen row
+(`onHidden`) lands again where the tab chose it, and otherwise chooses the nearest row above it
+that is still listed: a quest's zone or group, a zone's continent. The list is drawn in the game's own art
 (`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
 tracker's campaign header for the player's faction, without its crest, and a card is Classic's
 character select card, both silvered. A zone's card shows its painting (`Spoken:ZoneIcon`) in the

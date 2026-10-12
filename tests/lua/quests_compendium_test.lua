@@ -156,8 +156,13 @@ local function PartButton(heading, kind)
     end
 end
 Expect("...and open on it", C:IsOpen("quests"), true)
-Expect("...where the player's zone is not known, on the first continent, as there is no Azeroth to land on",
+Expect("...where the player's continent is not known, on the first continent, as there is no Azeroth to land on",
     page.title.text, "Eastern Kingdoms")
+MAPS[9998] = { "An inn in Kalimdor", 1414 }
+stub.world.playerMapID = 9998
+Tab:Open()
+Expect("...where the player is on a continent and in no zone with quests, on that continent, as Zones and Books land",
+    page.title.text, "Kalimdor")
 
 -- The client's scroll frame: an offset only within the range it last measured, which it measures
 -- when asked or a frame after it is laid out, and no height until the window is first laid out.
@@ -869,7 +874,8 @@ Expect("...off, everything again", Has(Shown(), "Kobold Candles") and Has(Shown(
 -- the page shows in its place.
 do
     local listObject = RowFor("Eastern Kingdoms").list
-    local hidden = 0
+    local hidden, onHidden = 0, listObject.opts.onHidden
+    Expect("the tab answers the list's onHidden", type(onHidden), "function")
     listObject.opts.onHidden = function() hidden = hidden + 1 end
     local wasOpen = RowFor("Classes").row.open
     Click("Classes")
@@ -880,9 +886,36 @@ do
     _, choices = Menu()
     choices[2].func()
     Expect("...and one that leaves it in does not", hidden, 1)
-    listObject.opts.onHidden = nil
+    listObject.opts.onHidden = onHidden
     if RowFor("Classes").row.open ~= wasOpen then Click("Classes") end
 end
+-- What the page shows then: the nearest row above the one chosen that the list still shows.
+local WOLVES = 33 -- Wolves Across the Border, in Elwynn Forest, not started
+Tab:Open(WOLVES)
+_, choices = Menu()
+choices[1].func()
+Expect("Started Only leaving out the quest chosen, its zone is chosen, which the list still shows", page.title.text,
+    "Elwynn Forest")
+_, choices = Menu()
+choices[1].func()
+-- Where the tab chose for the player, it lands again. Classes chosen and left out, there is nothing
+-- above it: the tab lands, the player in Westfall, where no pack has a quest.
+stub.world.playerMapID = 1436
+Click("Classes")
+_, choices = Menu()
+choices[2].func()
+Expect("landing, never on a zone Voiced Only leaves out: on its continent", page.title.text, "Eastern Kingdoms")
+_, choices = Menu()
+choices[2].func()
+Tab:Open()
+Expect("...on the zone itself with the filter off", page.title.text, "Westfall")
+_, choices = Menu()
+choices[2].func()
+Expect("...and a filter leaving out the zone landed on lands again, on its continent", page.title.text, "Eastern Kingdoms")
+_, choices = Menu()
+choices[2].func()
+stub.world.playerMapID = nil
+if RowFor("Classes").row.open then Click("Classes") end
 
 -- The part switched off takes its tab away.
 Spoken:SetPartOn("quests", false)
@@ -990,7 +1023,6 @@ stub.FireEvent("QUEST_DETAIL")
 Expect("...nor for one of another race's, the list leaving it out for this character", giver:IsShown(), false)
 completed[SHARPTALON] = nil
 -- Offered and not started, a quest's page is the padlock: no Open, unless it would show the words.
-local WOLVES = 33
 stub.world.questID = WOLVES
 stub.FireEvent("QUEST_DETAIL")
 Expect("...nor on the offer of a quest not started, whose page is locked", giver:IsShown(), false)
