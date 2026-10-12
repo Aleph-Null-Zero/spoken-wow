@@ -1,7 +1,8 @@
 -- The quests in Azeroth's Compendium: every quest this character's race and class may take, by
 -- the zone it is in, or under its class, profession or season; a quest's page with its words, its
--- placeholders filled for the player; found once completed; Completed Only, the search and Unlock
--- Uncompleted Quests; Play; and on a client in another language, the words its windows showed.
+-- placeholders filled for the player; found once completed or in the quest log, marked in progress
+-- then; Started Only, the search and Unlock Unstarted Quests; Play; and on a client in another
+-- language, the words its windows showed.
 -- Against the shipped data (Data/Compendium.lua, Data/QuestText.lua). Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -52,14 +53,23 @@ local B = {}
 for _, file in ipairs({ "Locale/enUS", "UI/Layout", "UI/TextView", "UI/Compendium" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
--- Where a quest is read: Classic Era's quest log, with the selected quest's details beside the
--- list, and the map's quest log of Forever, with its details view.
-local logQuest
+-- Where a quest is read: Classic Era's quest log, a zone's header then its quests, with the
+-- selected quest's details beside the list, and the map's quest log of Forever, with its details
+-- view.
+local questLog, logQuest = {}, nil
 _G.QuestLogFrame = CreateFrame("Frame", "QuestLogFrame")
 _G.QuestLogDetailScrollFrame = CreateFrame("ScrollFrame", "QuestLogDetailScrollFrame", QuestLogFrame)
 function QuestLogDetailScrollFrame:IsVisible() return logQuest ~= nil end
-_G.GetQuestLogSelection = function() return logQuest and 1 or 0 end
-_G.GetQuestLogTitle = function() return "A quest", 1, nil, false, false, false, 0, logQuest end
+_G.GetNumQuestLogEntries = function() return #questLog + 1, #questLog end
+_G.GetQuestLogTitle = function(index)
+    if index == 1 then return "Elwynn Forest", 0, nil, true, false end
+    local id = questLog[index - 1]
+    if id then return "A quest", 1, nil, false, false, false, 0, id end
+end
+_G.GetQuestLogSelection = function()
+    for i, id in ipairs(questLog) do if id == logQuest then return i + 1 end end
+    return 0
+end
 _G.QuestLog_UpdateQuestDetails = function() end
 _G.QuestMapFrame = CreateFrame("Frame", "QuestMapFrame")
 QuestMapFrame.DetailsFrame = CreateFrame("Frame", nil, QuestMapFrame)
@@ -131,9 +141,9 @@ Expect("...no placeholder left in them", words:find("$", 1, true), nil)
 Click("Kobold Candles")
 Expect("a quest not completed does not open", page.title.text, "Kobold Camp Cleanup")
 
--- Unlock Uncompleted Quests, the switch Spoken's page shows.
+-- Unlock Unstarted Quests, the switch Spoken's page shows.
 C:Tab("quests").unlock.set(true)
-Expect("Unlock Uncompleted Quests opens it", RowFor("Kobold Candles").row.locked, false)
+Expect("Unlock Unstarted Quests opens it", RowFor("Kobold Candles").row.locked, false)
 Click("Kobold Candles")
 words = page.body.text.text or ""
 Expect("...its words filled for the player: the word for his sex", words:find("Hello, good sir!", 1, true) ~= nil, true)
@@ -146,17 +156,54 @@ stub.world.unitSex = 2
 Expect("...choosing it leaves the counts as they were", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
 C:Tab("quests").unlock.set(false)
 
+-- A quest in the quest log is found too, marked in progress.
+local function RowOf(id)
+    Shown()
+    for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.quest == id then return row end end
+end
+questLog = { CANDLES }
+Tab:Refresh()
+Expect("a quest in the quest log opens", RowOf(CANDLES).row.locked, false)
+Expect("...its row marked in progress", RowOf(CANDLES).label.text:find("ActiveQuestIcon", 1, true) ~= nil
+    and RowOf(CANDLES).label.text:find("Kobold Candles", 1, true) ~= nil, true)
+Expect("...a completed one's not", RowFor("Kobold Camp Cleanup").label.text, "Kobold Camp Cleanup")
+Expect("...and it is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
+RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
+Expect("its page: its title", page.title.text, "Kobold Candles")
+Expect("...in progress, then where it is", page.sub.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
+Expect("...and its words", (page.body.text.text or ""):find("Thanks for the candles", 1, true) ~= nil, true)
+Click("Elwynn Forest")
+Expect("a zone's page counts it apart from the completed", page.sub.text:match("^1 of %d+ completed, 1 in progress$") ~= nil, true)
+Click("Elwynn Forest")
+VO.Addon.db.global.Compendium.FoundOnly = true
+Tab:Refresh()
+Expect("Started Only keeps it", RowOf(CANDLES) ~= nil, true)
+VO.Addon.db.global.Compendium.FoundOnly = false
+-- The list follows the quest log while it is open, once a burst of events is over.
+questLog = {}
+stub.FireEvent("QUEST_REMOVED", CANDLES)
+stub.FireEvent("QUEST_LOG_UPDATE")
+Expect("a quest dropped from the log stays until the events settle", RowOf(CANDLES).row.locked, false)
+stub.Advance(0.5)
+Expect("...then is greyed again", RowOf(CANDLES).row.locked, true)
+questLog = { CANDLES }
+stub.FireEvent("QUEST_ACCEPTED", 1, CANDLES)
+stub.Advance(0.5)
+Expect("a quest accepted opens", RowOf(CANDLES).row.locked, false)
+questLog = {}
+Tab:Refresh()
+
 -- Completing one in the world finds it.
 completed[CANDLES] = true
 Tab:Refresh()
 Expect("a quest completed since opens", RowFor("Kobold Candles").row.locked, false)
 Expect("...and is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
 
--- Completed Only.
+-- Started Only.
 VO.Addon.db.global.Compendium.FoundOnly = true
 Tab:Refresh()
 list = Shown()
-Expect("Completed Only leaves out what is not completed", Has(list, "Wolves Across the Border") or Has(list, "Mage"), false)
+Expect("Started Only leaves out what is not started", Has(list, "Wolves Across the Border") or Has(list, "Mage"), false)
 Expect("...and keeps what is", Has(list, "Kobold Candles"), true)
 VO.Addon.db.global.Compendium.FoundOnly = false
 
@@ -239,12 +286,17 @@ stub.ShowPanel(nil)
 stub.FireEvent("QUEST_FINISHED")
 
 -- The quest log's details, on either log.
+questLog, logQuest = { HEIRLOOM, CANDLES }, HEIRLOOM
+QuestLog_UpdateQuestDetails()
+Tab.logButton.scripts.OnClick(Tab.logButton)
+Expect("the quest log's Open on a quest in progress shows its words", page.title.text == "The Forgotten Heirloom"
+    and page.body.text.text ~= L.QUEST_NOT_FOUND, true)
 logQuest = CANDLES
 QuestLog_UpdateQuestDetails()
 Expect("Classic Era's quest log details have it", Tab.logButton:IsShown() and Tab.logButton.questID, CANDLES)
 Tab.logButton.scripts.OnClick(Tab.logButton)
 Expect("...and open the quest", page.title.text, "Kobold Candles")
-logQuest = nil
+questLog, logQuest = {}, nil
 QuestLog_UpdateQuestDetails()
 Expect("...not with no quest chosen", Tab.logButton:IsShown(), false)
 QuestMapFrame_ShowQuestDetails(HEIRLOOM)

@@ -1,7 +1,8 @@
 -- The quests in Azeroth's Compendium, the window Spoken Books and Spoken Zones carry: every quest
 -- this character's race and class may take, by zone, then by class, profession or season. A quest
--- is found once this character has completed it; until then it is greyed and does not open,
--- unless Unlock Uncompleted Quests is on.
+-- is found once this character has started it: completed, or in its quest log, which is marked in
+-- progress on its row and its page. Until then it is greyed and does not open, unless Unlock
+-- Unstarted Quests is on.
 --
 -- On a client in another language, the words and title each quest's window showed are kept for
 -- the whole account and shown over the English.
@@ -147,10 +148,57 @@ local function ReadCompleted()
     end
 end
 
-local function Found(id)
+local function Completed(id)
     if completed then return completed[id] == true end
     local ask = (C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) or IsQuestFlaggedCompleted
     return ask ~= nil and ask(id) and true or false
+end
+
+-- The quests in this character's quest log, read again on each refresh.
+local inLog = {}
+local Index
+local function ReadLog()
+    local log, listed = {}, 0
+    local modern = C_QuestLog and C_QuestLog.GetNumQuestLogEntries and C_QuestLog.GetInfo
+    local entries, quests
+    if modern then
+        entries, quests = C_QuestLog.GetNumQuestLogEntries()
+    elseif GetNumQuestLogEntries and GetQuestLogTitle then
+        entries, quests = GetNumQuestLogEntries()
+    end
+    for i = 1, entries or 0 do
+        local id, header
+        if modern then
+            local info = C_QuestLog.GetInfo(i)
+            id, header = info and info.questID, info and info.isHeader
+        else
+            local _, _, _, isHeader, _, _, _, questID = GetQuestLogTitle(i)
+            id, header = questID, isHeader
+        end
+        if not header and type(id) == "number" and id > 0 then
+            log[id] = true
+            listed = listed + 1
+        end
+    end
+    -- Classic's log does not list the quests under a header the player has collapsed.
+    if type(quests) == "number" and listed < quests and C_QuestLog and C_QuestLog.IsOnQuest then
+        for id in pairs(Index().all) do
+            if C_QuestLog.IsOnQuest(id) then log[id] = true end
+        end
+    end
+    local changed = false
+    for id in pairs(log) do if not inLog[id] then changed = true end end
+    for id in pairs(inLog) do if not log[id] then changed = true end end
+    inLog = log
+    return changed
+end
+
+local function InProgress(id)
+    return inLog[id] == true and not Completed(id)
+end
+
+local function Found(id)
+    return Completed(id) or inLog[id] == true
 end
 
 local function Matches(text)
@@ -161,7 +209,7 @@ end
 -- index.elsewhere, and `all`. Built once: neither the data nor the character's race and class
 -- change in a session.
 local index
-local function Index()
+function Index()
     if index then return index end
     index = { zones = {}, sorts = {}, elsewhere = {}, all = {} }
     for id, quest in pairs(Quests()) do
@@ -219,13 +267,22 @@ local function SetOf(ids)
     return set
 end
 
+-- Found out of all, and how many of the found are in progress.
 local function Tally(set)
-    local found, total = 0, 0
+    local found, total, going = 0, 0, 0
     for id in pairs(set) do
         total = total + 1
         if Found(id) then found = found + 1 end
+        if InProgress(id) then going = going + 1 end
     end
-    return found, total
+    return found, total, going
+end
+
+-- The gossip window's mark for a quest under way, before the title of one in progress.
+local IN_PROGRESS_MARK = "|TInterface\\GossipFrame\\ActiveQuestIcon:0|t "
+
+local function Marked(id, label)
+    return InProgress(id) and IN_PROGRESS_MARK .. label or label
 end
 
 --------------------------------------------------------------------------------
@@ -244,8 +301,8 @@ local function Leaves(ids, depth, into)
     for _, id in ipairs(sorted) do
         local english = Quests()[id] and Quests()[id][1]
         if not (OnlyFound() and not Found(id)) and (filter == "" or Matches(Title(id)) or Matches(english)) then
-            table.insert(into, { kind = "quest", leaf = true, quest = id, label = Title(id, filter == ""),
-                depth = depth, locked = not Found(id) and not Unlocked() })
+            table.insert(into, { kind = "quest", leaf = true, quest = id, label = Marked(id, Title(id, filter == "")),
+                depth = depth, locked = not Found(id) and not Unlocked(), going = InProgress(id) })
         end
     end
 end
@@ -481,7 +538,15 @@ local function Where(id)
 end
 
 local function Count(set)
-    return L.QUESTS_FOUND_FMT:format(Tally(set))
+    local found, total, going = Tally(set)
+    if going > 0 then return L.QUESTS_FOUND_GOING_FMT:format(found - going, total, going) end
+    return L.QUESTS_FOUND_FMT:format(found, total)
+end
+
+-- In progress, before where it is: the line is cut short where a quest is given in several zones.
+local function Subtitle(id)
+    if InProgress(id) then return IN_PROGRESS_MARK .. L.QUEST_IN_PROGRESS .. " • " .. Where(id) end
+    return Where(id)
 end
 
 local function ShowEntry()
@@ -496,7 +561,7 @@ local function ShowEntry()
             page:Show({ title = Title(id), subtitle = Where(id), text = L.QUEST_NOT_FOUND })
             return
         end
-        page:Show({ title = Title(id), subtitle = Where(id), text = Words(id), target = id })
+        page:Show({ title = Title(id), subtitle = Subtitle(id), text = Words(id), target = id })
         return
     end
     if selection.sort then
@@ -551,6 +616,7 @@ end
 function QuestsTab:Refresh(scrollToSelection)
     if not list then return end
     ReadCompleted()
+    ReadLog()
     local items = list:Render()
     if scrollToSelection and selection then list:ScrollToSelection(items) end
     ShowEntry()
@@ -639,6 +705,16 @@ local function OnEvent(_, event, a)
         QuestsTab:Keep("complete", GetRewardText and GetRewardText(), GetTitleText and GetTitleText())
     elseif event == "QUEST_TURNED_IN" then
         if Visible() then QuestsTab:Refresh() end
+    elseif event == "QUEST_LOG_UPDATE" or event == "QUEST_ACCEPTED" or event == "QUEST_REMOVED" then
+        -- QUEST_LOG_UPDATE comes with every objective done, and in bursts: the list is drawn again
+        -- once, a moment after the last, and only when the quests in the log have changed.
+        if not QuestsTab.logPending and Visible() and C_Timer and C_Timer.After then
+            QuestsTab.logPending = true
+            C_Timer.After(0.3, function()
+                QuestsTab.logPending = false
+                if Visible() and ReadLog() then QuestsTab:Refresh() end
+            end)
+        end
     elseif event == "QUEST_DATA_LOAD_RESULT" then
         -- Titles arrive one by one: the list is drawn again once, a moment after the last.
         if asked[a] and not QuestsTab.pending and Visible() and C_Timer and C_Timer.After then
@@ -663,7 +739,7 @@ function QuestsTab:Setup()
         build = Build,
         open = function() QuestsTab:Open() end,
         enabled = function() return VO.Addon:IsPartOn() end,
-        -- Unlock Uncompleted Quests, on Spoken's page.
+        -- Unlock Unstarted Quests, on Spoken's page.
         unlock = {
             get = function() return Unlocked() end,
             set = function(value)
@@ -674,7 +750,7 @@ function QuestsTab:Setup()
     })
     local frame = CreateFrame("Frame")
     for _, event in ipairs({ "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "QUEST_TURNED_IN",
-        "QUEST_DATA_LOAD_RESULT" }) do
+        "QUEST_DATA_LOAD_RESULT", "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_REMOVED" }) do
         pcall(frame.RegisterEvent, frame, event)
     end
     frame:SetScript("OnEvent", OnEvent)

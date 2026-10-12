@@ -1378,9 +1378,16 @@ Two generated files feed it, both committed so the addon never needs a database:
 
 The tab lists only the quests this character's race and class may take. A quest is found once
 the client says it is completed (`C_QuestLog.GetAllCompletedQuestIDs`, else
-`GetQuestsCompleted`, else `IsQuestFlaggedCompleted` one at a time); the rest are locked unless
-Unlock Uncompleted Quests is on, which Spoken's page shows in its Compendium section. That switch
-and Completed Only are kept in `SpokenQuestsSettings.global.Compendium`. The page fills the
+`GetQuestsCompleted`, else `IsQuestFlaggedCompleted` one at a time) or while it is in the quest
+log (`C_QuestLog.GetInfo` where the client has it, else `GetQuestLogTitle`; where a collapsed
+header hides some, `C_QuestLog.IsOnQuest` for each quest). A quest in the log and not completed
+is in progress: the gossip window's quest mark before its title, and "In progress" before where
+it is on its page; zone and group counts include it, and a page's count says how many of them
+are in progress. The list follows the log while it is open (`QUEST_LOG_UPDATE`,
+`QUEST_ACCEPTED`, `QUEST_REMOVED`, drawn again once a burst is over and only when the log's
+quests changed). The rest are locked unless Unlock Unstarted Quests is on, which Spoken's page
+shows in its Compendium section. That switch and Started Only are kept in
+`SpokenQuestsSettings.global.Compendium`. The page fills the
 placeholders for the player as the client does. Play queues the quest's accept, progress and
 complete lines, whichever the packs have, named for its giver as the quest log's Play is.
 
