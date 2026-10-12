@@ -236,17 +236,23 @@ end
 -- The rows
 --------------------------------------------------------------------------------
 
-local function Leaf(id, nest)
+-- Whether a search names what holds `label`: then all it holds is listed, each title matching or not.
+local function Named(label, whole)
+	return whole or (filter ~= "" and Matches(label))
+end
+
+-- A readable's row, or nil where it is not listed. `whole`: what holds it was named by the search.
+local function Leaf(id, nest, whole)
 	if OnlyFound() and not Found(id) then return nil end
 	if OnlyVoiced() and not Voiced(id) then return nil end
-	if filter ~= "" and not Matches(Title(id)) then return nil end
+	if filter ~= "" and not whole and not Matches(Title(id)) then return nil end
 	return { kind = "readable", leaf = true, book = id, label = Title(id), nest = nest,
 		locked = not Found(id) and not Unlocked(), done = Found(id) and true or false }
 end
 
-local function Leaves(ids, nest, into)
+local function Leaves(ids, nest, into, whole)
 	for _, id in ipairs(ids) do
-		local row = Leaf(id, nest)
+		local row = Leaf(id, nest, whole)
 		if row then table.insert(into, row) end
 	end
 end
@@ -291,12 +297,12 @@ end
 -- A card for each kind of writing in `byType` ({ [type] = ids }) with something listed, and its
 -- writings under it while it is open: open until closed, and always while searching. `item`
 -- makes each card's own fields.
-local function KindCards(byType, nest, into, item, shut)
+local function KindCards(byType, nest, into, item, shut, whole)
 	for _, type in ipairs(TYPES) do
 		local ids = byType[type] or {}
 		if #ids > 0 then
 			local leaves = {}
-			Leaves(ids, nest + 1, leaves)
+			Leaves(ids, nest + 1, leaves, Named(TypeLabel(type), whole))
 			if #leaves > 0 then
 				local set = {}
 				for _, id in ipairs(ids) do set[id] = true end
@@ -314,7 +320,8 @@ end
 
 -- A zone's card, and when it is open (or a search finds something in it) its city's small card,
 -- then a small card for each kind of writing in it.
-local function ZoneRows(mapID, nest, small)
+local function ZoneRows(mapID, nest, small, whole)
+	whole = Named(MapName(mapID), whole)
 	local all = ReadablesIn(mapID)
 	local found, total = Tally(all)
 	if OnlyFound() and found == 0 then return {} end
@@ -324,14 +331,14 @@ local function ZoneRows(mapID, nest, small)
 	if open or filter ~= "" then
 		for city, around in pairs(CITY_IN) do
 			if around == mapID and Index().zones[city] then
-				for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
+				for _, row in ipairs(ZoneRows(city, nest + 1, true, whole)) do table.insert(inside, row) end
 			end
 		end
 		KindCards(Index().zones[mapID] or {}, nest + 1, inside,
 			function(type) return { kind = "group", which = type, mapID = mapID, small = true } end,
-			function(type) return zoneTypeShut[mapID .. ":" .. type] end)
+			function(type) return zoneTypeShut[mapID .. ":" .. type] end, whole)
 	end
-	if filter ~= "" and #inside == 0 and not Matches(MapName(mapID)) then return {} end
+	if filter ~= "" and #inside == 0 and not whole then return {} end
 	local rows = { Card({ kind = "zone", small = small, mapID = mapID, label = MapName(mapID), nest = nest,
 		open = (open or filter ~= "") and #inside > 0 }, found, total) }
 	for _, row in ipairs(inside) do table.insert(rows, row) end
@@ -356,7 +363,7 @@ local function GroupRows(key, label, ids)
 	if groupOpen[key] or filter ~= "" then
 		KindCards(byType, 0, inside,
 			function(type) return { kind = "kind", which = type, group = key } end,
-			function(type) return groupTypeShut[key .. ":" .. type] end)
+			function(type) return groupTypeShut[key .. ":" .. type] end, Named(label))
 	end
 	if filter ~= "" and #inside == 0 then return {} end
 	local rows = { { style = "banner", kind = "group", which = key, label = label, count = found, total = total,
@@ -375,7 +382,7 @@ local function TypeRows()
 			for _, id in ipairs(ids) do set[id] = true end
 			local found, total = Tally(set)
 			local leaves = {}
-			if typeOpen[type] or filter ~= "" then Leaves(ids, 1, leaves) end
+			if typeOpen[type] or filter ~= "" then Leaves(ids, 1, leaves, Named(TypeLabel(type))) end
 			if not (OnlyFound() and found == 0) and Listed(set) and (filter == "" or #leaves > 0) then
 				table.insert(out, Card({ kind = "type", which = type, nest = 0, label = TypeLabel(type),
 					open = #leaves > 0 }, found, total))
@@ -398,8 +405,9 @@ local function ZoneBanner(key)
 	local searching = filter ~= ""
 	local inside = {}
 	if searching or zonesOpen[key] then
+		local whole = Named(L[ZONES_LABEL[key]])
 		for _, mapID in ipairs(zones) do
-			for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(inside, row) end
+			for _, row in ipairs(ZoneRows(mapID, 0, false, whole)) do table.insert(inside, row) end
 		end
 	end
 	if searching and #inside == 0 then return {} end
@@ -425,8 +433,9 @@ local function BuildRows()
 			local found, total = Tally(set)
 			local rows = {}
 			if searching or continentOpen[continent] then
+				local whole = Named(MapName(continent))
 				for _, mapID in ipairs(zones) do
-					for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(rows, row) end
+					for _, row in ipairs(ZoneRows(mapID, 0, false, whole)) do table.insert(rows, row) end
 				end
 			end
 			if not (OnlyFound() and found == 0) and Listed(set) and (not searching or #rows > 0) then
