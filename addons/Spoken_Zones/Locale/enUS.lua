@@ -131,7 +131,7 @@ L.OPT_DIAGNOSTICS_TIP = "Lists your voice packs and reading settings in chat, fo
 L.OPT_REPORT_PROBLEM = "Report a Problem"
 L.OPT_REPORT_ADDRESS = "Copy this address and open it in your browser to send feedback about Spoken Zones."
 L.OPT_REPORT_NOTE = "For anything that isn't about one story; each story has its own Report button. Gives you an address to copy into your web browser."
-L.OPT_REPORT_LINE_TIP = "Wrong lore, a bad reading, a mispronounced name -- this gives you a link to say so."
+L.OPT_REPORT_LINE_TIP = "Get a link to report wrong lore, a wrong reading or a mispronounced name."
 L.OPT_REPORT_LINE_ADDRESS = "Copy this address and open it in your browser to report a problem with this entry."
 
 --------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ L.MENU_ZONE_SETTINGS = "Zones Settings"
 -- Lore window buttons
 --------------------------------------------------------------------------------
 
-L.AUDIO_READ_TIP = "Hear this story read aloud"
+L.AUDIO_READ_TIP = "Hear this story read aloud."
 L.REPORT_BUTTON = "Report"
 L.CONTRIBUTE_BUTTON = "Contribute"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones has no lore for this place"

@@ -46,10 +46,10 @@ L.OPT_REPORT_NOTE = "Pour tout ce qui ne concerne pas un seul récit ; chaque r�
 L.MENU_LORE_WINDOW = "Ouvrir le Compendium d'Azeroth"
 L.MENU_ZONE_SETTINGS = "Paramètres des Zones"
 
-L.OPT_REPORT_LINE_TIP = "Récit erroné, mauvaise lecture, nom mal prononcé : ceci donne un lien pour le signaler."
+L.OPT_REPORT_LINE_TIP = "Obtenez un lien pour signaler un récit erroné, une lecture erronée ou un nom mal prononcé."
 L.OPT_REPORT_LINE_ADDRESS = "Copiez cette adresse et ouvrez-la dans votre navigateur pour signaler un problème avec cette entrée."
 
-L.AUDIO_READ_TIP = "Écouter la lecture de ce récit"
+L.AUDIO_READ_TIP = "Écouter la lecture de ce récit."
 L.REPORT_BUTTON = "Signaler"
 L.CONTRIBUTE_BUTTON = "Contribuer"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones n'a pas de récit pour cet endroit"

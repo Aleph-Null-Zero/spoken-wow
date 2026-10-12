@@ -46,7 +46,7 @@ L.OPT_REPORT_NOTE = "이야기 하나에 관한 것이 아닌 문제용입니다
 L.MENU_LORE_WINDOW = "아제로스 백과사전 열기"
 L.MENU_ZONE_SETTINGS = "지역 설정"
 
-L.OPT_REPORT_LINE_TIP = "잘못된 전승, 잘못된 읽기, 잘못 발음된 이름 — 알릴 수 있는 링크입니다."
+L.OPT_REPORT_LINE_TIP = "잘못된 전승, 잘못 읽은 부분이나 잘못 발음된 이름을 신고할 링크를 받습니다."
 L.OPT_REPORT_LINE_ADDRESS = "이 주소를 복사하여 브라우저에서 열어 이 항목의 문제를 신고하세요."
 
 L.AUDIO_READ_TIP = "이 이야기를 소리로 듣기"

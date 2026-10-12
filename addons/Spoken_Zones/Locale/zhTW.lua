@@ -46,7 +46,7 @@ L.OPT_REPORT_NOTE = "用於與單段故事無關的問題；每段故事都有�
 L.MENU_LORE_WINDOW = "開啟艾澤拉斯百科"
 L.MENU_ZONE_SETTINGS = "地區設定"
 
-L.OPT_REPORT_LINE_TIP = "故事有誤、朗讀不佳、名字唸錯——可透過連結告知。"
+L.OPT_REPORT_LINE_TIP = "取得連結，回報故事有誤、朗讀錯誤或名字唸錯。"
 L.OPT_REPORT_LINE_ADDRESS = "複製此位址並在瀏覽器中開啟，以回報該條目的問題。"
 
 L.AUDIO_READ_TIP = "聆聽這段故事的朗讀"

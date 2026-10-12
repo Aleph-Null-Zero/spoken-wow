@@ -49,10 +49,10 @@ L.OPT_REPORT_NOTE = "Para todo lo que no sea sobre una sola historia; cada histo
 L.MENU_LORE_WINDOW = "Abrir Compendio de Azeroth"
 L.MENU_ZONE_SETTINGS = "Configuración de Zonas"
 
-L.OPT_REPORT_LINE_TIP = "Historia errónea, mala lectura, nombre mal pronunciado: esto te da un enlace para decirlo."
+L.OPT_REPORT_LINE_TIP = "Obtén un enlace para informar de una historia errónea, una lectura errónea o un nombre mal pronunciado."
 L.OPT_REPORT_LINE_ADDRESS = "Copia esta dirección y ábrela en tu navegador para informar de un problema con esta entrada."
 
-L.AUDIO_READ_TIP = "Escuchar esta historia en voz alta"
+L.AUDIO_READ_TIP = "Escuchar esta historia en voz alta."
 L.REPORT_BUTTON = "Informar"
 L.CONTRIBUTE_BUTTON = "Contribuir"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones no tiene historia para este lugar"
