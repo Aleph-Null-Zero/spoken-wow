@@ -96,6 +96,12 @@ Expect("the tree is the places': Azeroth, its continents, their zones", Has(list
 Expect("...a city inside the zone around it, not beside it", Has(list, "Stormwind City"), false)
 Expect("...the readables after the continents: those found across Azeroth and those of no known origin",
     Has(list, L.GROUP_WIDE) and Has(list, L.GROUP_UNKNOWN), true)
+Expect("...and the seasonal events' readables, in a group of their own before them",
+    Has(list, L.GROUP_EVENTS) and list:find(L.GROUP_EVENTS, 1, true) < list:find(L.GROUP_WIDE, 1, true), true)
+Click(L.GROUP_EVENTS)
+Expect("...which opens on them, the Winter Veil feast it once listed in the cities among them",
+    Has(Shown(), "The Feast of Winter Veil") and Has(Shown(), "A Bloodstained Envelope"), true)
+Click(L.GROUP_EVENTS)
 Expect("...each zone counted, found out of all, its city's included", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
 
 Click("Elwynn Forest")

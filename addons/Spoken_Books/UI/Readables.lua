@@ -3,8 +3,9 @@
 --
 -- The tree is the places' (Spoken Zones' tab): Azeroth, its continents, their zones, a city
 -- inside the zone around it; under an opened zone its readables by what they are -- books, letters,
--- notes, scrolls, tablets, plaques, gravestones, exhibits. After the continents, those had in too
--- many zones to list under each, and those whose origin is not known. With By Zone off, the tree is
+-- notes, scrolls, tablets, plaques, gravestones, exhibits. After the continents, those of the
+-- seasonal events, those had in too many zones to list under each, and those whose origin is not
+-- known. With By Zone off, the tree is
 -- the types alone, every readable under its own. Where each is comes from
 -- Data/Places.lua; what this character has found, from SpokenBooksCharacter (Core.lua). A readable
 -- not found yet is listed greyed, with a padlock, and does not open, unless Unlock Unfound
@@ -19,11 +20,12 @@ local WORLD, CONTINENTS, CITY_IN = C.WORLD, C.CONTINENTS, C.CITY_IN
 local MapName, ContinentOf = C.MapName, C.ContinentOf
 
 local list, page
-local selection          -- { book = id } | { mapID = id } | { group = "wide"|"unknown" } | nil
+local selection          -- { book = id } | { mapID = id } | { group = "events"|"wide"|"unknown" } | nil
 local expandedZone
 local worldOpen = true
 local continentOpen = { [1414] = true, [1415] = true }
-local groupOpen = { wide = false, unknown = false }
+local groupOpen = { events = false, wide = false, unknown = false }
+local GROUP_LABEL = { events = "GROUP_EVENTS", wide = "GROUP_WIDE", unknown = "GROUP_UNKNOWN" }
 local typeOpen = {}
 local zoneTypeShut = {}       -- ["mapID:type"] = true: a zone's Books, Notes and the rest, closed
 local TYPES, TYPE_NAMES = SpokenBooks.TYPES, SpokenBooks.TYPE_NAMES
@@ -51,7 +53,7 @@ end
 local index
 local function Index()
 	if index then return index end
-	index = { zones = {}, wide = {}, unknown = {}, types = {}, all = {} }
+	index = { zones = {}, events = {}, wide = {}, unknown = {}, types = {}, all = {} }
 	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books or {}
 	local function Add(mapID, type, id)
 		local zone = index.zones[mapID] or {}
@@ -66,7 +68,10 @@ local function Index()
 			local type = place and TYPE_NAMES[place.type] and place.type or "other"
 			index.types[type] = index.types[type] or {}
 			table.insert(index.types[type], id)
-			if place and place.wide then
+			-- A seasonal event's readable under the event, not where its NPCs stand.
+			if place and place.event then
+				table.insert(index.events, id)
+			elseif place and place.wide then
 				table.insert(index.wide, id)
 			elseif place and place.zones and #place.zones > 0 then
 				for _, mapID in ipairs(place.zones) do Add(mapID, type, id) end
@@ -84,6 +89,7 @@ local function Index()
 		for _, ids in pairs(zone) do table.sort(ids, ByTitle) end
 	end
 	for _, ids in pairs(index.types) do table.sort(ids, ByTitle) end
+	table.sort(index.events, ByTitle)
 	table.sort(index.wide, ByTitle)
 	table.sort(index.unknown, ByTitle)
 	return index
@@ -316,6 +322,7 @@ local function BuildRows()
 		table.insert(out, continent)
 		if continent.open then Add(continent.rows) end
 	end
+	Add(GroupRows("events", L.GROUP_EVENTS, Index().events))
 	Add(GroupRows("wide", L.GROUP_WIDE, Index().wide))
 	Add(GroupRows("unknown", L.GROUP_UNKNOWN, Index().unknown))
 	return out
@@ -395,7 +402,9 @@ local function ShowEntry()
 		local id = selection.book
 		local place = _G.SpokenBooksPlaces and SpokenBooksPlaces.books[id] or {}
 		local where
-		if place.wide then
+		if place.event then
+			where = L.GROUP_EVENTS
+		elseif place.wide then
 			where = L.GROUP_WIDE
 		elseif place.zones then
 			where = (place.kind == "world" and L.KIND_WORLD or L.KIND_CARRIED) .. " · " .. ZoneList(place.zones)
@@ -430,10 +439,9 @@ local function ShowEntry()
 			text = L.READABLES_PICK })
 		return
 	end
-	if selection.group == "wide" or selection.group == "unknown" then
+	if GROUP_LABEL[selection.group] then
 		for _, id in ipairs(Index()[selection.group]) do set[id] = true end
-		page:Show({ title = selection.group == "wide" and L.GROUP_WIDE or L.GROUP_UNKNOWN, subtitle = Count(Tally(set)),
-			text = L.READABLES_PICK })
+		page:Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if selection.mapID == WORLD then

@@ -56,6 +56,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   completed. They are gone, and eight readables that were there, such as Gnomeregan's punch cards
   and the Snapshot of Gammerita, are listed in the zone they come from.
   *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium lists the seasonal events' readables under Holidays and Events.** Winter
+  Veil's, the Harvest Festival's poems, the fishing tournament's flier and the Scourge invasion's
+  letters and reports were under Origin Unknown, or in the cities where the event's NPCs stand.
+  *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.1 — 2026-10-11
 
