@@ -199,6 +199,17 @@ Expect("...drawn as Classic's character select card", elwynn.face[5]:IsShown() a
     "file:glues-characterselect-card-singles-c60")
 Expect("...its corners 16 pixels of the card drawn 11 across", elwynn.face[1].width == 11 and elwynn.face[1].texCoord[2],
     16 / 321)
+-- In the world the game does not describe its login screens' art by name: the card is drawn
+-- from its file all the same.
+_G.C_Texture = { GetAtlasInfo = function(name) if not name:find("^glues%-") then return stub.ListAtlas(name) end end }
+Tab:Refresh()
+elwynn = RowFor("Elwynn Forest")
+Expect("...even where the game will not name the login screen's card: drawn from its file",
+    elwynn.face[5]:IsShown() and elwynn.face[5].texture, 8064271)
+Expect("...the faint fill under it still", elwynn.cardFill:IsShown(), true)
+_G.C_Texture = { GetAtlasInfo = stub.ListAtlas }
+Tab:Refresh()
+elwynn = RowFor("Elwynn Forest")
 Expect("...its badge the zone's painting", elwynn.icon:IsShown() and elwynn.icon.texture, (Spoken:ZoneIcon(1429)))
 Expect("...in the collections window's gold frame", elwynn.iconFrame:IsShown() and elwynn.iconFrame.atlas,
     "collections-itemborder-collected")

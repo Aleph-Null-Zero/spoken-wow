@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 9
+local VERSION = 10
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -94,10 +94,25 @@ local function Atlas(texture, atlas, useAtlasSize)
 	return false
 end
 
+-- Art the game draws on its login screens, which it does not describe by name once in the world:
+-- where it sits in its file, from the client's atlas tables (the same in Era 1.15 and 1.60).
+local LOGIN_ART = {
+	["glues-characterselect-card-singles-c60"] = { file = 8064271, width = 321, height = 100,
+		leftTexCoord = 1 / 1024, rightTexCoord = 322 / 1024, topTexCoord = 125 / 512, bottomTexCoord = 225 / 512 },
+	["glues-characterselect-card-singles-hover-c60"] = { file = 8064271, width = 321, height = 100,
+		leftTexCoord = 324 / 1024, rightTexCoord = 645 / 1024, topTexCoord = 125 / 512, bottomTexCoord = 225 / 512 },
+	["glues-characterselect-card-selected-c60"] = { file = 8064271, width = 342, height = 122,
+		leftTexCoord = 1 / 1024, rightTexCoord = 343 / 1024, topTexCoord = 1 / 512, bottomTexCoord = 123 / 512 },
+}
+
 -- Where `atlas` sits in its file, for drawing a piece of it: nil where the client has not got it,
 -- or does not say.
 local function AtlasSpot(atlas)
 	local info = C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(atlas)
+	-- Only on a client with the game's atlases at all: an older one has not got the file either.
+	if not info and C_Texture and C_Texture.GetAtlasInfo and HasAtlas("questlog-icon-checkmark-yellow") then
+		info = LOGIN_ART[atlas]
+	end
 	local file = info and (info.file or info.filename)
 	if not file or not info.leftTexCoord or not info.rightTexCoord or not info.topTexCoord
 		or not info.bottomTexCoord or (info.width or 0) <= 0 or (info.height or 0) <= 0 then
@@ -1119,7 +1134,8 @@ local function DrawCard(row, item, indent, width)
 	row.cardFill:ClearAllPoints()
 	row.cardFill:SetPoint("TOPLEFT", row, "TOPLEFT", indent, 0)
 	row.cardFill:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
-	row.cardFill:SetShown(not row.cardArt)
+	-- Under the art too: should the game not draw the card's file, the card still has its ground.
+	row.cardFill:SetShown(true)
 
 	-- The badge, level with the name and its line above the bar: the zone's painting or what the
 	-- card holds in the collections window's gold frame, greyed with nothing found; a chain's the
