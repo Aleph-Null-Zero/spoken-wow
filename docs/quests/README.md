@@ -1353,7 +1353,8 @@ the quest.
 
 Azeroth's Compendium is the window Spoken Zones and Spoken Books each carry
 (`UI/Compendium.lua` there). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
-wherever either addon has loaded it; Spoken Quests carries no copy of the window, only its own
+first, before Zones and Books, and the window takes its title from it. It goes wherever either
+addon has loaded the window; Spoken Quests carries no copy of the window, only its own
 copy of the text view the page scrolls in (`UI/TextView.lua`, kept byte for byte with the other
 two by `test_package.py`). `Compendium.xml` loads the tab and its data from the `.toc` files of
 the clients the window runs on (Classic Era, TBC Anniversary and Forever), not on Wrath or the
@@ -1382,6 +1383,16 @@ Unlock Uncompleted Quests is on, which Spoken's page shows in its Compendium sec
 and Completed Only are kept in `SpokenQuestsSettings.global.Compendium`. The page fills the
 placeholders for the player as the client does. Play queues the quest's accept, progress and
 complete lines, whichever the packs have, named for its giver as the quest log's Play is.
+
+Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
+quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
+zone, continent or group opened and its page shown (`QuestsTab:Open(questID)`). It shows only for
+a quest the tab lists, with Quests on: on the quest giver's window, left of Listen or Contribute
+in the strip under the close button, or in that corner; in Classic Era's quest log, at the top
+right of the selected quest's details; in the map's quest log (Forever), left of the details
+view's Play, Report or Contribute; and in DialogueUI's window, at the left end of Spoken's row on
+a quest page (`UI/DialogueUIBridge.lua`). DialogueUI hides the rest of the interface while it is
+up, so that one closes DialogueUI's window before the Compendium opens.
 
 On a client in another language, `QUEST_DETAIL`, `QUEST_PROGRESS` and `QUEST_COMPLETE` keep the
 window's title and words in `SpokenQuestsSettings.global.CompendiumText[locale][questID]`, shown

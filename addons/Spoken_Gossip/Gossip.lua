@@ -535,6 +535,28 @@ function Addon:ShouldPlayGossip(guid, text, manual, followsOption)
     return true, npcKey
 end
 
+--- The source that will read `unit`'s greeting, for Spoken to silence the game's own before its
+--- window opens: the same question MuteGreetingAhead asks of the window, asked of the NPC.
+---@param unit string
+function Addon:GreetingSourceFor(unit)
+    if DataModules:IsPending() or not Player.source then
+        return nil
+    end
+    local guid = UnitGUID(unit)
+    local speaker = { unitGUID = guid, name = UnitName(unit), unitIsObjectOrItem = false }
+    if not guid and not speaker.name then
+        return nil
+    end
+    if not self:ShouldPlayGossip(guid, nil, false, false) or not DataModules:HasGossipFor(speaker) then
+        return nil
+    end
+    return Player.source
+end
+
+if type(Spoken) == "table" and Spoken.AddGreetingCheck then
+    Spoken:AddGreetingCheck(function(unit) return Addon:GreetingSourceFor(unit) end)
+end
+
 --- An NPC's own greeting starts the moment its window opens, and the line that replaces it
 --- is read off the window a moment later (0.1s). The player muting the game's dialogue only
 --- once that line started is what cut the greeting off mid-word, so for a window that is going

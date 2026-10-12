@@ -593,6 +593,11 @@ function C.NewList(panel, opts)
 
 	local ok, inset = pcall(CreateFrame, "Frame", nil, panel, "InsetFrameTemplate")
 	if not ok or not inset then inset = CreateFrame("Frame", nil, panel) end
+	-- The window's dark rock under the list rather than the inset's lighter marble.
+	if type(inset.Bg) == "table" and inset.Bg.SetTexture then
+		inset.Bg:SetTexture([[Interface\FrameGeneral\UI-Background-Rock]], "REPEAT", "REPEAT")
+		if inset.Bg.SetHorizTile then inset.Bg:SetHorizTile(true); inset.Bg:SetVertTile(true) end
+	end
 	inset:SetPoint("TOPLEFT", panel, "TOPLEFT", left, top - 38)
 	-- Down to the window's foot, level with the page beside it.
 	inset:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", left, (window and window.templated) and 6 or 12)
