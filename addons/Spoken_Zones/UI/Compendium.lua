@@ -26,7 +26,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 44
+local VERSION = 45
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1736,6 +1736,39 @@ function C.PlayClick(clip, start)
 	end
 end
 
+--- A Play button's tooltip for `state`, as every Play of the Compendium's has it: the state's name
+--- in Spoken's words, and under it what a click does, `tip` for Play.
+function C.PlayTooltip(button, state, tip)
+	local words = _G.SpokenEnv and _G.SpokenEnv.L
+	if not (words and GameTooltip) then return end
+	GameTooltip:SetOwner(button, "ANCHOR_LEFT")
+	local line
+	if state == "stop" then
+		GameTooltip:SetText(words.STOP)
+		line = words.STOP_READING_TIP
+	elseif state == "replay" then
+		GameTooltip:SetText(words.REPLAY)
+		line = words.REPLAY_READING_TIP
+	else
+		GameTooltip:SetText(words.PLAY)
+		line = tip
+	end
+	if line then GameTooltip:AddLine(line, 1, 0.8, 0.2, true) end
+	GameTooltip:Show()
+end
+
+--- A Report button's tooltip: `title`, `tip` under it, and the line about its right-click where
+--- the debug log's menu is installed.
+function C.ReportTooltip(button, title, tip)
+	if not GameTooltip then return end
+	GameTooltip:SetOwner(button, "ANCHOR_LEFT")
+	GameTooltip:SetText(title or "")
+	if tip then GameTooltip:AddLine(tip, 1, 0.8, 0.2, true) end
+	local hint = _G.Spoken and Spoken.LogMenuHint and Spoken:LogMenuHint()
+	if hint then GameTooltip:AddLine(hint, 0.6, 0.6, 0.6, true) end
+	GameTooltip:Show()
+end
+
 local Page = {}
 Page.__index = Page
 
@@ -1869,13 +1902,7 @@ function C.NewPage(parent, addon, play, report)
 		button:SetScript("OnClick", function()
 			if self.target ~= nil then report.open(self.target) end
 		end)
-		button:HookScript("OnEnter", function(b)
-			if not GameTooltip then return end
-			GameTooltip:SetOwner(b, "ANCHOR_LEFT")
-			GameTooltip:SetText(report.title or "")
-			if report.tip then GameTooltip:AddLine(report.tip, 1, 0.8, 0.2, true) end
-			GameTooltip:Show()
-		end)
+		button:HookScript("OnEnter", function(b) C.ReportTooltip(b, report.title, report.tip) end)
 		button:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
 		button:Hide()
 		self.report = button
@@ -1893,15 +1920,9 @@ function C.NewPage(parent, addon, play, report)
 			-- Looked up each click: a line that has since finished is no longer in the queue.
 			C.PlayClick(play.find(target), function() play.start(target) end)
 			self:RefreshPlay()
+			if GameTooltip and GameTooltip:GetOwner() == button then C.PlayTooltip(button, button.pageState, play.tip) end
 		end)
-		-- Named in its tooltip, as every Play and Stop of Spoken's is, in Spoken's words.
-		button:HookScript("OnEnter", function(b)
-			local words = _G.SpokenEnv and _G.SpokenEnv.L
-			if not (words and GameTooltip) then return end
-			GameTooltip:SetOwner(b, "ANCHOR_LEFT")
-			GameTooltip:SetText(b.pageState == "stop" and words.STOP or b.pageState == "replay" and words.REPLAY or words.PLAY)
-			GameTooltip:Show()
-		end)
+		button:HookScript("OnEnter", function(b) C.PlayTooltip(b, b.pageState, play.tip) end)
 		button:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
 		button:Hide()
 		self.play = button

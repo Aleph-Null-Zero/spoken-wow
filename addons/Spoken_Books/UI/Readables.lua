@@ -567,6 +567,7 @@ local PLAY = {
 	end,
 	-- Browsing: heard here is not heard in the world (Read Only Once), nor found.
 	start = function(id) SpokenBooks:SyncTo(FirstVoiced(id), true) end,
+	tip = L.PLAY_TIP,
 }
 
 -- The page of a readable being read: the one of it in the queue. Nil where none is.

@@ -144,6 +144,43 @@ reportsHidden = false
 Z:RefreshLoreWindow()
 Expect("...and gives it back when it is off", page.report:IsShown(), true)
 _G.Spoken = spoken
+
+-- Play's tooltip as every Play of the Compendium's has it: Spoken's names, and under Stop and Replay
+-- Spoken's words for what they do; under Play, what is read. A click redraws it while the pointer is
+-- still on the button. Report's ends with the debug log's menu hint.
+do
+    local env, state = _G.SpokenEnv, { playing = false, atHead = false, paused = false }
+    _G.SpokenEnv = { L = { PLAY = "Spoken Play", STOP = "Spoken Stop", REPLAY = "Spoken Replay",
+        STOP_READING_TIP = "Stops the reading.", REPLAY_READING_TIP = "Reads it again." } }
+    local saved = { Z.IsPlayingLore, Z.IsLoreAtHead, Z.IsPaused, Z.PlayLore }
+    Z.IsPlayingLore = function() return state.playing end
+    Z.IsLoreAtHead = function() return state.atHead end
+    Z.IsPaused = function() return state.paused end
+    Z.PlayLore = function() state.playing, state.atHead = true, true end
+    _G.Spoken = setmetatable({ TogglePause = function() state.paused = not state.paused; state.playing = not state.paused end,
+        LogMenuHint = function() return "Right-click: the debug log" end }, { __index = spoken })
+    -- A button's tooltip, its lines as one, the pointer put on it; or as it stands, with `asIs`.
+    local function Tip(button, asIs)
+        if not asIs then
+            GameTooltip.lines = nil
+            if button.scripts.OnEnter then button.scripts.OnEnter(button) end
+            for _, hook in ipairs(button.hooks.OnEnter or {}) do hook(button) end
+        end
+        return table.concat(GameTooltip.lines or {}, "|")
+    end
+    page.play:Refresh()
+    Expect("Play's tooltip: Spoken's Play, and what it reads", Tip(page.play), "Spoken Play|" .. Z.L.AUDIO_READ_TIP)
+    page.play.scripts.OnClick(page.play)
+    Expect("...a click, the pointer still on it, redrawing it for Stop, in Spoken's words", Tip(page.play, true),
+        "Spoken Stop|Stops the reading.")
+    page.play.scripts.OnClick(page.play)
+    Expect("...and for Replay", Tip(page.play, true), "Spoken Replay|Reads it again.")
+    Expect("Report's tooltip ends with the debug log's menu hint", Tip(page.report),
+        Z.L.OPT_REPORT_PROBLEM .. "|" .. Z.L.OPT_REPORT_LINE_TIP .. "|Right-click: the debug log")
+    _G.Spoken, _G.SpokenEnv = spoken, env
+    Z.IsPlayingLore, Z.IsLoreAtHead, Z.IsPaused, Z.PlayLore = saved[1], saved[2], saved[3], saved[4]
+    page.play:Refresh()
+end
 Expect("...and the zone's picture above the story", page.body.picture:IsShown() and page.body.picture:GetTexture(), "Pictures/zone-1411")
 Expect("...its edge frayed by its mask", page.body.pictureMask:GetTexture(), "Pictures/Mask2")
 Expect("...a little see-through, so the parchment shows in it", page.body.picture:GetAlpha(), 0.95)

@@ -1058,15 +1058,9 @@ local function PartButtons(moment)
             VO.Player:PlayNow(SoundData(id, moment, "Azeroth's Compendium"))
         end)
         PaintPartPlay(self)
+        if GameTooltip and GameTooltip:GetOwner() == self then C.PlayTooltip(self, self.pageState, L.QUEST_PART_PLAY_TIP) end
     end)
-    play:HookScript("OnEnter", function(self)
-        local words = _G.SpokenEnv and _G.SpokenEnv.L
-        if not (words and GameTooltip) then return end
-        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:SetText(self.pageState == "stop" and words.STOP or self.pageState == "replay" and words.REPLAY
-            or words.PLAY)
-        GameTooltip:Show()
-    end)
+    play:HookScript("OnEnter", function(self) C.PlayTooltip(self, self.pageState, L.QUEST_PART_PLAY_TIP) end)
     play:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
     local report = Spoken:CreateRoundButton(child, "report")
     report:SetScript("OnClick", function(self)
@@ -1078,13 +1072,7 @@ local function PartButtons(moment)
         local language = VO.DataModules:PrepareSound(sound) and sound.language or nil
         if target then VO.ReportButton:ShowLink(target, language) end
     end)
-    report:HookScript("OnEnter", function(self)
-        if not GameTooltip then return end
-        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:SetText(L.OPT_REPORT_PROBLEM)
-        GameTooltip:AddLine(L.OPT_REPORT_QUEST_TIP, 1, 0.8, 0.2, true)
-        GameTooltip:Show()
-    end)
+    report:HookScript("OnEnter", function(self) C.ReportTooltip(self, L.OPT_REPORT_PROBLEM, L.OPT_REPORT_QUEST_TIP) end)
     report:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
     play:Hide()
     report:Hide()

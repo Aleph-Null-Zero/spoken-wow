@@ -587,21 +587,32 @@ do
         if not voiced[p] then return nil end
         return { key = "b:" .. p, path = "page" .. p .. ".mp3", length = 5, pageId = p, present = { header = "" } }
     end
-    local function Tip()
-        GameTooltip.text = nil
-        for _, hook in ipairs(page.play.hooks.OnEnter) do hook(page.play) end
-        return GameTooltip.text
+    -- Play's tooltip, its lines as one, the pointer put on it; or as it stands, with `asIs`.
+    local function Tip(asIs, button)
+        button = button or page.play
+        if not asIs then
+            GameTooltip.lines = nil
+            for _, hook in ipairs(button.hooks.OnEnter) do hook(button) end
+        end
+        return table.concat(GameTooltip.lines or {}, "|")
     end
+    local S = SpokenEnv.L
     local function Head() return Spoken:GetCurrent() and Spoken:GetCurrent().pageId end
     page:Show({ title = "Ranger Captain Alleria Windrunner", target = ALLERIA })
-    Expect("a readable not being read: Play", page.play.pageState .. " " .. Tip(), "play " .. SpokenEnv.L.PLAY)
+    Expect("a readable not being read: Play, its tooltip saying what it reads", page.play.pageState .. " " .. Tip(),
+        "play " .. S.PLAY .. "|" .. L.PLAY_TIP)
     page.play.scripts.OnClick(page.play)
     Expect("...a click reads it", Spoken:GetNowPlaying() and Spoken:GetNowPlaying().pageId, alleriaPage)
-    Expect("...its Play showing Stop", page.play.pageState .. " " .. Tip(), "stop " .. SpokenEnv.L.STOP)
+    Expect("...its tooltip, the pointer still on it, redrawn for Stop at once", Tip(true), S.STOP .. "|" .. S.STOP_READING_TIP)
+    Expect("...its Play showing Stop", page.play.pageState .. " " .. Tip(), "stop " .. S.STOP .. "|" .. S.STOP_READING_TIP)
     page.play.scripts.OnClick(page.play)
     Expect("...Stop stops it and keeps it at the head", tostring(Spoken:IsPaused()) .. " " .. tostring(Head()),
         "true " .. alleriaPage)
-    Expect("...showing Replay", page.play.pageState .. " " .. Tip(), "replay " .. SpokenEnv.L.REPLAY)
+    Expect("...showing Replay", page.play.pageState .. " " .. Tip(), "replay " .. S.REPLAY .. "|" .. S.REPLAY_READING_TIP)
+    Spoken:RegisterDeveloper({ MenuHint = function() return "Right-click: the debug log" end })
+    Expect("its Report's tooltip ends with the debug log's menu hint", Tip(false, page.report),
+        L.REPORT_PROBLEM .. "|" .. L.REPORT_LINE_TIP .. "|Right-click: the debug log")
+    Spoken:RegisterDeveloper(nil)
     page.play.scripts.OnClick(page.play)
     Expect("...Replay reads it again from the start", not Spoken:IsPaused() and Spoken:GetNowPlaying()
         and Spoken:GetNowPlaying().pageId, alleriaPage)
