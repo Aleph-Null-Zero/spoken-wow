@@ -193,8 +193,8 @@ Expect("...then a banner each for the quests no zone holds: Classes, Professions
     list:find("|Classes|Professions|Events|Other$") ~= nil and not Has(list, "Mage")
     and RowFor("Classes").row.style == "banner", true)
 local elwynn = RowFor("Elwynn Forest")
-Expect("a zone's card: its quests completed out of all on the line under its name",
-    elwynn.sub.text:match("^1 of %d+ quests$") ~= nil, true)
+Expect("a zone's card: its quests completed out of all and the share, on one line beside its name",
+    elwynn.count.text:match("^1/%d+ • %d+%%$") ~= nil and elwynn.sub:IsShown(), false)
 Expect("...drawn as Classic's character select card", elwynn.face[5]:IsShown() and elwynn.face[5].texture,
     "file:glues-characterselect-card-singles-c60")
 Expect("...its corners 16 pixels of the card drawn 11 across", elwynn.face[1].width == 11 and elwynn.face[1].texCoord[2],
@@ -219,8 +219,8 @@ Expect("...chosen, the chosen card's warm leather inside its frame", elwynn.warm
 Expect("...with none of the glow that card throws round itself", elwynn.lift[1]:IsShown(), false)
 Expect("...in the sidebar's silver, not the card's bronze", elwynn.face[5].desaturated and elwynn.warm.desaturated, true)
 Expect("...a step in from the continent's banner", elwynn.face[1].anchor.x, 14)
-local elwynnTotal = tonumber(elwynn.sub.text:match("of (%d+)"))
-Expect("...the share completed on its right", elwynn.count.text, math.floor(100 / elwynnTotal) .. "%")
+local elwynnTotal = tonumber(elwynn.count.text:match("/(%d+)"))
+Expect("...the share completed after them", elwynn.count.text, "1/" .. elwynnTotal .. " • " .. math.floor(100 / elwynnTotal) .. "%")
 Expect("...and its bar filled as far", elwynn.fill:IsShown() and math.floor(elwynn.fill.width / elwynn.track.width
     * elwynnTotal + 0.5), 1)
 Expect("...with the game's yellow cut to the same share, not squeezed", elwynn.fill.texture == "file:ui-frame-bar-fill-yellow"
@@ -278,7 +278,7 @@ stub.world.unitSex = 3
 Tab:Refresh()
 Expect("...and for hers", (page.body.text.text or ""):find("Hello, my lady!", 1, true) ~= nil, true)
 stub.world.unitSex = 2
-Expect("...choosing it leaves the counts as they were", RowFor("Elwynn Forest").sub.text:match("^1 of ") ~= nil, true)
+Expect("...choosing it leaves the counts as they were", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
 C:Tab("quests").unlock.set(false)
 
 -- A quest in the quest log is found too, marked in progress.
@@ -295,7 +295,7 @@ Expect("...a completed one the quest log's gold tick", RowFor("Kobold Camp Clean
     and RowFor("Kobold Camp Cleanup").status.atlas .. " " .. RowFor("Kobold Camp Cleanup").label.text,
     "questlog-icon-checkmark-yellow Kobold Camp Cleanup")
 Expect("...and its zone's card counts it in progress, apart from the completed",
-    RowFor("Elwynn Forest").sub.text:match("^1 of %d+ quests · 1 in progress$") ~= nil, true)
+    RowFor("Elwynn Forest").count.text:match("ActiveQuestIcon.-|t1 +1/%d+ • ") ~= nil, true)
 RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
 Expect("...in progress, then where it is", page.sub.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
@@ -325,7 +325,7 @@ Tab:Refresh()
 completed[CANDLES] = true
 Tab:Refresh()
 Expect("a quest completed since opens", RowFor("Kobold Candles").row.locked, false)
-Expect("...and is counted", RowFor("Elwynn Forest").sub.text:match("^2 of ") ~= nil, true)
+Expect("...and is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
 
 -- Started Only.
 VO.Addon.db.global.Compendium.FoundOnly = true
@@ -373,9 +373,9 @@ Expect("...its quests inside it, not beside it", RowOfQuest(NECKLACE) or Has(lis
 Expect("...a quest in no chain still a row of its own", Has(list, "Kobold Camp Cleanup"), true)
 Expect("...its badge the storyline's mark, with no frame", ChainRow("Lost Necklace").story:IsShown()
     and ChainRow("Lost Necklace").story.atlas == "questlog-storylineicon" and ChainRow("Lost Necklace").iconFrame:IsShown(), false)
-Expect("...its quests completed out of all on the line under its name", ChainRow("Lost Necklace").sub.text, "0 of 4 quests")
+Expect("...its quests completed out of all and the share, beside its name", ChainRow("Lost Necklace").count.text, "0/4 • 0%")
 Expect("...none completed, none of the share", ChainRow("Lost Necklace").row.none
-    and ChainRow("Lost Necklace").count.text, "0%")
+    and ChainRow("Lost Necklace").count.text:match("• (%d+)%%$"), "0")
 Expect("...its bar empty", ChainRow("Lost Necklace").fill:IsShown(), false)
 local zoneRow = RowFor("Westfall")
 Expect("a zone with none completed: its painting greyed and darker", zoneRow ~= nil and zoneRow.row.none
@@ -383,8 +383,8 @@ Expect("a zone with none completed: its painting greyed and darker", zoneRow ~= 
 completed[NECKLACE], completed[PIE] = true, true
 questLog = { BACK }
 Tab:Refresh()
-Expect("...how many are in progress on its line", ChainRow("Lost Necklace").sub.text, "2 of 4 quests · 1 in progress")
-Expect("...the share completed", ChainRow("Lost Necklace").count.text, "50%")
+Expect("...how many are in progress before them, by the quest mark", ChainRow("Lost Necklace").count.text,
+    "|TInterface\\GossipFrame\\ActiveQuestIcon:12:12:0:0|t1   2/4 • 50%")
 local track, fill = ChainRow("Lost Necklace").track, ChainRow("Lost Necklace").fill
 Expect("...and its bar filled as far as completed", fill:IsShown() and math.floor(fill.width / track.width * 100 + 0.5), 50)
 ClickChain("Lost Necklace")
@@ -407,8 +407,8 @@ Expect("...one not started without it", text:find("Goldtooth\n" .. L.QUEST_NOT_S
 completed[BACK], completed[GOLDTOOTH] = true, true
 questLog = {}
 Tab:Refresh()
-Expect("a chain all completed gets a tick in place of its share", ChainRow("Lost Necklace").tick:IsShown()
-    and ChainRow("Lost Necklace").count:IsShown(), false)
+Expect("a chain all completed gets the gold tick after its numbers, no share", ChainRow("Lost Necklace").tick:IsShown()
+    and ChainRow("Lost Necklace").count.text, "4/4")
 Expect("...the quest log's gold tick", ChainRow("Lost Necklace").row.tick and ChainRow("Lost Necklace").tick.atlas,
     "questlog-icon-checkmark-yellow")
 ClickChain("Lost Necklace")
@@ -633,7 +633,8 @@ Expect("...its painting without the frame", plainCard.icon:IsShown() and plainCa
 Expect("...its bar a flat yellow, no frame", plainCard.fill.texture == nil and plainCard.barCaps[1]:IsShown(), false)
 Click("Elwynn Forest")
 plainCard = RowFor("Elwynn Forest")
-Expect("...chosen, a gold wash with its edge", plainCard.selected and plainCard.chosen:IsShown() and plainCard.edge:IsShown(), true)
+Expect("...chosen, the list's own light full with its gold edge", plainCard.selected and plainCard.wash:IsShown()
+    and plainCard.wash.alpha == 1 and plainCard.edge:IsShown(), true)
 _G.C_Texture = { GetAtlasInfo = stub.ListAtlas }
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

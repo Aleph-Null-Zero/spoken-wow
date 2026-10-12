@@ -104,7 +104,7 @@ Expect("...a city inside the zone around it, not beside it", Has(list, "Stormwin
 Expect("...the readables after the continents, a banner each: those found across Azeroth and those of no known origin",
     RowFor(L.GROUP_WIDE).row.style == "banner" and RowFor(L.GROUP_UNKNOWN).row.style, "banner")
 Expect("...each zone's card counting what is found out of all, its city's included",
-    RowFor("Elwynn Forest").sub.text:match("^1 of %d+ found$") ~= nil, true)
+    RowFor("Elwynn Forest").count.text:match("^1/%d+ • %d+%%$") ~= nil, true)
 Expect("...its badge the zone's painting in the collections window's gold frame", RowFor("Elwynn Forest").icon.texture
     == _G.Spoken:ZoneIcon(1429) and RowFor("Elwynn Forest").iconFrame:IsShown() and RowFor("Elwynn Forest").iconFrame.atlas,
     "collections-itemborder-collected")
@@ -138,9 +138,9 @@ SpokenBooksSettings.unlockUnfound = true
 B:RefreshReadables()
 Expect("Unlock Unfound Readables opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
 -- Opening one is not finding it: the counts stay what the character has found.
-local before = RowFor("Stormwind City").sub.text
+local before = RowFor("Stormwind City").count.text
 Click("Ranger Captain Alleria Windrunner")
-Expect("...and choosing it leaves the counts as they were", RowFor("Stormwind City").sub.text, before)
+Expect("...and choosing it leaves the counts as they were", RowFor("Stormwind City").count.text, before)
 SpokenBooksSettings.unlockUnfound = false
 
 SpokenBooksCharacter.found[LETTER] = true
@@ -214,7 +214,7 @@ list = Shown()
 Expect("Voiced Only leaves out what has no recording", Has(list, "Kurdran Wildhammer") or Has(list, "Westfall"), false)
 Expect("...and keeps what has one, with the zone that holds it", Has(list, "Ranger Captain Alleria Windrunner")
     and Has(list, "Elwynn Forest"), true)
-Expect("...counting only what it lists", RowFor("Elwynn Forest").sub.text, "1 of 1 found")
+Expect("...counting only what it lists", RowFor("Elwynn Forest").count.text, "1/1")
 Expect("...and is remembered", SpokenBooksSettings.compendiumVoicedOnly, true)
 _, choices = Menu()
 choices[2].func()
@@ -241,7 +241,7 @@ Expect("...and the menu says so", choices[5].checked and not choices[4].checked,
 Click(L.TYPE_PLAQUE)
 Expect("...a type opens on its readables", Has(Shown(), "Kurdran Wildhammer"), true)
 Expect("...each a card, counted found out of all", RowFor(L.TYPE_PLAQUE).row.style == "card"
-    and RowFor(L.TYPE_PLAQUE).sub.text:match("^2 of %d+ found$") ~= nil, true)
+    and RowFor(L.TYPE_PLAQUE).count.text:match("^2/%d+ • ") ~= nil, true)
 _, choices = Menu()
 choices[4].func()
 Expect("...and By Zone again, the zones", Has(Shown(), "Elwynn Forest"), true)
