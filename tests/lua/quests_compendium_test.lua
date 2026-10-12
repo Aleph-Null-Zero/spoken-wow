@@ -866,7 +866,11 @@ Expect("...each card counting only the quests it lists", RowFor("Elwynn Forest")
     and ChainRow("Lost Necklace").count.text, "0/1 • 0%")
 Expect("...and each banner", RowFor("Eastern Kingdoms").count.text, "1/2")
 Expect("...and is remembered", VO.Addon.db.global.Compendium.VoicedOnly, true)
-Expect("...a started quest it leaves out not opened in the Compendium", Tab:Has(CANDLES), false)
+Expect("...a started quest it leaves out still opened in the Compendium", Tab:Has(CANDLES), true)
+Tab:Open(CANDLES)
+Expect("...on its page, the list keeping the filter and leaving its row out", page.title.text .. "|"
+    .. tostring(VO.Addon.db.global.Compendium.VoicedOnly) .. "|" .. tostring(Has(Shown(), "Kobold Candles")),
+    "Kobold Candles|true|false")
 _, choices = Menu()
 choices[2].func()
 Expect("...off, everything again", Has(Shown(), "Kobold Candles") and Has(Shown(), "Westfall") and Tab:Has(CANDLES), true)
@@ -1041,13 +1045,15 @@ stub.world.questID = WOLVES
 stub.FireEvent("QUEST_DETAIL")
 Expect("...nor on the offer of a quest not started, whose page is locked", giver:IsShown(), false)
 C:Tab("quests").unlock.set(true)
-stub.FireEvent("QUEST_DETAIL")
-Expect("...but there with Unlock Unstarted Quests on", giver:IsShown() and giver.questID, WOLVES)
+Expect("...but there once Unlock Unstarted Quests is switched on, the window still open", giver:IsShown()
+    and giver.questID, WOLVES)
 VO.Addon.db.global.Compendium.FoundOnly = true
 stub.FireEvent("QUEST_DETAIL")
-Expect("...and not with Started Only on, which leaves the quest out of the list", giver:IsShown(), false)
+Expect("...and with Started Only on too: the page opens though the list leaves the quest's row out",
+    giver:IsShown() and giver.questID, WOLVES)
 VO.Addon.db.global.Compendium.FoundOnly = false
 C:Tab("quests").unlock.set(false)
+Expect("...and gone once Unlock Unstarted Quests is switched off", giver:IsShown(), false)
 questLog = { WOLVES }
 stub.ShowPanel("QuestFrameProgressPanel")
 stub.FireEvent("QUEST_PROGRESS")

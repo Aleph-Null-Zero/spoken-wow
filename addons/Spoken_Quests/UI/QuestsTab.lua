@@ -1621,14 +1621,12 @@ function QuestsTab:Lists(questID)
     return C ~= nil and C:Tab("quests") ~= nil and VO.Addon:IsPartOn() and questID ~= nil and Index().all[questID] == true
 end
 
---- Whether opening the tab on `questID` shows its page: the list shows the quest (Started Only
---- leaves out one not started, Voiced Only one no pack has) and it is started, or Unlock Unstarted
---- Quests is on.
+--- Whether opening the tab on `questID` shows its words: this character may take it, and it is
+--- started or Unlock Unstarted Quests is on. Started Only and Voiced Only do not count: Open shows
+--- the page though they leave its row out of the list.
 function QuestsTab:Has(questID)
     if not self:Lists(questID) then return false end
-    if OnlyVoiced() and not PLAY.has(questID) then return false end
-    if StartedNow(questID) then return true end
-    return Unlocked() and not OnlyFound()
+    return StartedNow(questID) or Unlocked()
 end
 
 --- A quest's title in the client's language once it is known, else the English.
@@ -1636,7 +1634,8 @@ function QuestsTab:Title(questID)
     return Title(questID)
 end
 
---- Open the quests, on `questID` when one is given: chosen, with what holds it opened.
+--- Open the quests, on `questID` when one is given: chosen, with what holds it opened. Its page
+--- shows though Started Only or Voiced Only leaves its row out; the list keeps its filters.
 function QuestsTab:Open(questID)
     if not C then return end
     local quest = questID and Index().all[questID] and Quests()[questID]
@@ -1731,6 +1730,10 @@ function QuestsTab:Setup()
             set = function(value)
                 Global().UnlockUnfound = value and true or false
                 QuestsTab:Refresh()
+                -- Open in Azeroth's Compendium shows on an unstarted quest by it, on any window open.
+                for _, refresh in ipairs({ "RefreshGiverButton", "RefreshLogButton", "RefreshMapButton" }) do
+                    if QuestsTab[refresh] then QuestsTab[refresh](QuestsTab) end
+                end
             end,
         },
     })

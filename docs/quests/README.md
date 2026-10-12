@@ -1532,8 +1532,11 @@ quest chosen says so.
 
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
-zone, continent or group opened and its page shown (`QuestsTab:Open(questID)`). It shows only for
-a quest the tab lists, with Quests on: on the quest giver's window, left of Listen or Contribute
+zone, continent or group opened and its page shown (`QuestsTab:Open(questID)`), though Started
+Only or Voiced Only leaves its row out of the list, which keeps its filters. It shows, with Quests
+on, for a quest this character may take whose page shows its words: started, or any with Unlock
+Unstarted Quests on, and switching that refreshes the buttons on the windows open. It is on the
+quest giver's window, left of Listen or Contribute
 in the strip under the close button, or in that corner; in Classic Era's quest log, at the top
 right of the selected quest's details; in the map's quest log (Forever), left of the details
 view's Play, Report or Contribute; and in DialogueUI's window, at the left end of Spoken's row on
