@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Azeroth's Compendium lists everything as cards.** In Quests, Zones and Books each continent is
+  a banner, and each zone a card showing how much of it you have found, with a bar; quest chains,
+  cities and kinds of writing are smaller cards inside, and single quests, places and writings
+  rows under them. A quest chain is named after its first quest, and its page lists each quest
+  with the start of what its NPC says. *([Nucabe](https://github.com/Nucabe))*
 - **What NPCs say is its own module, Spoken Gossip, with its own switch and settings page.**
   Your gossip settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*
 - **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go

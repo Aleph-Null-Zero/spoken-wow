@@ -1395,14 +1395,24 @@ quests changed). The rest are locked unless Unlock Unstarted Quests is on, which
 shows in its Compendium section. That switch and Started Only are kept in
 `SpokenQuestsSettings.global.Compendium`.
 
+The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
+for each zone with quests (a city a small card inside its zone's), then a banner each for
+Classes, Professions, Events and Other, holding a small card for each class, profession, season
+or other QuestSort, and Place Unknown under Other. There is no Azeroth row; with the player's
+zone unknown the tab lands on the first continent. A card's diamond shows how many of its quests
+are completed (grey with none started, gold with all completed), the line under its name says so
+out of all with how many are in progress, and on its right are the share completed (or a tick)
+and a bar along its foot filled as far. A banner counts completed out of all.
+
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
-there, linked by `prev`) are listed under a row of their own, before the quests in no chain. The
-row is named after the last of them, taken in order (how many quests before each, then id); its
-count is completed out of all, with the quest mark and how many are in progress before it, or a
-tick once all are completed; and a thin bar under its name is filled as far as completed. A chain
-that runs through several zones has a row in each, for its quests there. Chosen, a chain's page
-lists its quests in order. The client has no chain of its own, so without `prev` in the data
-every quest is a row of its own.
+there, linked by `prev`) are a small card of their own, before the quests in no chain. The card
+is named after the first of them, taken in order (how many quests before each, then id); its
+diamond shows how many quests the chain holds, its line "of N quests" with how many are in
+progress, and its bar and share how many are completed. A chain that runs through several zones
+has a card in each, for its quests there. Chosen, a chain's page lists its quests in order, each
+with its tick, the quest mark or "Not started", and where it can be read the first sentence or
+two of its offer; Play there plays the first quest of it started that a pack voices. The client
+has no chain of its own, so without `prev` in the data every quest is a row of its own.
 
 The page fills the placeholders for the player as the client does. Play queues the quest's accept, progress and
 complete lines, whichever the packs have, named for its giver as the quest log's Play is.
