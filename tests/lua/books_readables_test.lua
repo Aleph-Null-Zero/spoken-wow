@@ -456,8 +456,33 @@ local copied
 local showCopyLink = B.ShowCopyLink
 B.ShowCopyLink = function(_, url) copied = url end
 page.report.scripts.OnClick(page.report)
-Expect("...a click giving the address to report its first page", copied ~= nil
+Expect("...a click giving the address to report its first voiced page", copied ~= nil
     and copied:find("/books/r/" .. alleriaPage, 1, true) ~= nil, true)
+-- A letter of two pages whose first has no recording: Play and Report are there for the second,
+-- and Play starts it there.
+do
+    local first, second = unpack(B:Data().books[LETTER].pages)
+    local voiced = { [second] = true }
+    B.HasAudio = function(_, p) return voiced[p] == true end
+    page:Show({ title = "A Dusty Unsent Letter", target = LETTER })
+    Expect("a readable whose first page has no recording and a later one has: Play and Report on its page",
+        page.play:IsShown() and page.report:IsShown(), true)
+    local syncTo, synced = B.SyncTo, nil
+    B.SyncTo = function(_, p) synced = p end
+    page.play.scripts.OnClick(page.play)
+    B.SyncTo = syncTo
+    Expect("...Play starting at its first voiced page", synced, second)
+    page.report.scripts.OnClick(page.report)
+    Expect("...Report filing that page", copied:find("/books/r/" .. second, 1, true) ~= nil, true)
+    voiced[first] = true
+    B.following[LETTER] = { clip = { pageId = second }, pages = {} }
+    page.report.scripts.OnClick(page.report)
+    Expect("...and while it is read, the page being read", copied:find("/books/r/" .. second, 1, true) ~= nil, true)
+    B.following[LETTER] = nil
+    page.report.scripts.OnClick(page.report)
+    Expect("...else its first voiced page", copied:find("/books/r/" .. first, 1, true) ~= nil, true)
+end
+B.HasAudio = function(_, p) return p == alleriaPage end
 B.ShowCopyLink = showCopyLink
 local spoken, hidden = _G.Spoken, true
 _G.Spoken = setmetatable({ AreReportButtonsHidden = function() return hidden end }, { __index = spoken })

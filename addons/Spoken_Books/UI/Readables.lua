@@ -159,15 +159,22 @@ local function OnlyFound()
 end
 
 -- Voiced Only, after Found Only in the filter menu: what no installed voice pack reads is left out,
--- and with it any zone, type or group left with nothing. A writing is voiced as Play finds it: its
--- first page has a recording.
+-- and with it any zone, type or group left with nothing. A writing is voiced as Play finds it: a
+-- page of it has a recording.
 local function OnlyVoiced()
 	return SpokenBooksSettings ~= nil and SpokenBooksSettings.compendiumVoicedOnly == true
 end
 
-local function Voiced(id)
+-- A readable's first page with a recording, where Play starts it, or nil.
+local function FirstVoiced(id)
 	local book = Books()[id]
-	return book ~= nil and SpokenBooks:HasAudio(book.pages[1]) and true or false
+	for _, pageId in ipairs(book and book.pages or {}) do
+		if SpokenBooks:HasAudio(pageId) then return pageId end
+	end
+end
+
+local function Voiced(id)
+	return FirstVoiced(id) ~= nil
 end
 
 -- Whether a set of writings ({ [id] = true }) has one to list under Voiced Only.
@@ -563,22 +570,33 @@ end
 -- The page
 --------------------------------------------------------------------------------
 
--- Play on a readable's page: the book from its first page, or stop it.
+-- Play on a readable's page: the book from its first voiced page, or stop it.
 local PLAY = {
-	has = function(id) local book = Books()[id] return book ~= nil and SpokenBooks:HasAudio(book.pages[1]) end,
+	has = function(id) return Voiced(id) end,
 	playing = function(id) return SpokenBooks:IsNarrating(id) end,
 	-- Browsing: heard here is not heard in the world (Read Only Once), nor found.
-	start = function(id) SpokenBooks:SyncTo(Books()[id].pages[1], true) end,
+	start = function(id) SpokenBooks:SyncTo(FirstVoiced(id), true) end,
 	stop = function(id) SpokenBooks:StopReading(id) end,
 }
 
--- Report on a readable's page: its first page's recording, filed under the language it plays in,
--- as the player's Report files a page.
+-- The page of a readable being read: the one of it in the queue. Nil where none is.
+local function PageReading(id)
+	local entry = SpokenBooks.following[id]
+	if entry and entry.clip and entry.clip.pageId then return entry.clip.pageId end
+	-- Read Book as One Line off: each page is a line of its own, the first in the queue the one read.
+	if _G.Spoken and Spoken.GetQueue then
+		for _, clip in ipairs(Spoken:GetQueue()) do
+			if clip.pageId and SpokenBooks:PlaceOf(clip.pageId) == id then return clip.pageId end
+		end
+	end
+end
+
+-- Report on a readable's page: the page being read, else its first voiced page, filed under the
+-- language it plays in, as the player's Report files a page.
 local REPORT = {
 	has = function(id) return PLAY.has(id) end,
 	open = function(id)
-		local book = Books()[id]
-		local pageId = book and book.pages[1]
+		local pageId = PageReading(id) or FirstVoiced(id)
 		local clip = pageId and SpokenBooks:ClipFor(pageId)
 		local url = pageId and SpokenBooks:ReportURL(pageId, clip and clip.language)
 		if url and SpokenBooks.ShowCopyLink then SpokenBooks:ShowCopyLink(url, L.REPORT_LINE_ADDRESS) end
