@@ -1464,7 +1464,9 @@ a card for each zone on no continent the client knows (Zephras Isle, whose map h
 Azeroth), as the Zones tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
 Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
 Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
-it); then a banner each for Classes, Professions (Camping, 666, with them: its quests are Camping
+it); a map the client has never heard of (Forever's Zephras Isle and Darkspear Islands on Era)
+has no card, and its quests are neither listed nor counted; then a banner each for Classes,
+Professions (Camping, 666, with them: its quests are Camping
 101 for one profession or another), Holidays and Events and Other, holding a line of the list for
 each class, profession, season or other QuestSort, and Place Unknown under Other. Banners are for
 continents and types, cards for places alone (zones, cities, dungeons), and everything else is a

@@ -339,9 +339,25 @@ local function Listed(named, build)
     return rows
 end
 
+-- Whether this client has heard of a map: Era's has not of Forever's Zephras Isle and Darkspear
+-- Islands, whose cards would lead nowhere.
+local function Known(mapID)
+    return not (C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID) == nil)
+end
+
+-- A quest's zones this client knows.
+local function KnownZones(quest)
+    local out = {}
+    for _, mapID in ipairs(quest.zones or {}) do
+        if Known(mapID) then table.insert(out, mapID) end
+    end
+    return out
+end
+
 -- Every quest this character may take, by where it is: index.zones[mapID], index.sorts[sort],
--- index.elsewhere, and `all`. Built once: neither the data nor the character's race and class
--- change in a session.
+-- index.elsewhere, and `all`. A quest only in zones this client does not know is in none of them:
+-- the list could never show it, so it counts nowhere. Built once: neither the data, the client's
+-- maps nor the character's race and class change in a session.
 local index
 function Index()
     if index then return index end
@@ -349,17 +365,20 @@ function Index()
     local named = _G.SpokenQuestsCompendium and SpokenQuestsCompendium.sorts or {}
     for id, quest in pairs(Quests()) do
         if Allowed(quest) then
-            index.all[id] = true
+            local zones = KnownZones(quest)
             if quest.zones and #quest.zones > 0 then
-                for _, mapID in ipairs(quest.zones) do
+                if #zones > 0 then index.all[id] = true end
+                for _, mapID in ipairs(zones) do
                     index.zones[mapID] = index.zones[mapID] or {}
                     table.insert(index.zones[mapID], id)
                 end
             -- A sort the data and the tab have no name for has no row of its own to go under.
             elseif quest.sort and (named[quest.sort] or GROUP_NAMES[quest.sort]) then
+                index.all[id] = true
                 index.sorts[quest.sort] = index.sorts[quest.sort] or {}
                 table.insert(index.sorts[quest.sort], id)
             else
+                index.all[id] = true
                 table.insert(index.elsewhere, id)
             end
         end
@@ -389,13 +408,11 @@ local function ZonesOn(continent)
 end
 
 -- The zones with quests on no continent (Forever's Zephras Isle, whose map hangs under Azeroth),
--- under a banner of their own after the continents, as the Zones tab lists them. Not a map this
--- client has never heard of: Forever's on Era would lead nowhere.
+-- under a banner of their own after the continents, as the Zones tab lists them.
 local function LooseZones()
     local out = {}
     for mapID in pairs(Index().zones) do
-        if not C.CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] and not C.ContinentOf(mapID)
-            and not (C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID) == nil) then
+        if not C.CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] and not C.ContinentOf(mapID) then
             table.insert(out, mapID)
         end
     end
@@ -403,7 +420,8 @@ local function LooseZones()
     return out
 end
 
--- The battlegrounds with quests, by name.
+-- The battlegrounds with quests, by name: the index holds only maps this client knows, so not
+-- Forever's Darkspear Islands on Era.
 local function Battlegrounds()
     local out = {}
     for _, mapID in ipairs(BATTLEGROUNDS) do
@@ -1445,10 +1463,10 @@ end
 --- Open the quests, on `questID` when one is given: chosen, with what holds it opened.
 function QuestsTab:Open(questID)
     if not C then return end
-    local quest = questID and Quests()[questID]
+    local quest = questID and Index().all[questID] and Quests()[questID]
     if quest then
         selection = { quest = questID }
-        local zone = quest.zones and quest.zones[1]
+        local zone = KnownZones(quest)[1]
         local chain
         if zone then
             OpenZone(zone)

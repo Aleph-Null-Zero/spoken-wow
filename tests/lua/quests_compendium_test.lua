@@ -19,13 +19,16 @@ stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames
 stub.world.questID = 0; stub.ShowPanel(nil)
 
 -- Alterac Valley as Forever's newer client hangs it, in Hillsbrad Foothills; the other
--- battlegrounds and Zephras Isle under Azeroth itself.
+-- battlegrounds and Zephras Isle under Azeroth itself. Forever's Darkspear Islands is a map this
+-- client (Era's) has never heard of.
 local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "Eastern Kingdoms", 947 },
     [1429] = { "Elwynn Forest", 1415 }, [1453] = { "Stormwind City", 1415 }, [1436] = { "Westfall", 1415 },
     [1440] = { "Ashenvale", 1414 }, [1424] = { "Hillsbrad Foothills", 1415 }, [1459] = { "Alterac Valley", 1424 },
-    [1460] = { "Warsong Gulch", 947 }, [1461] = { "Arathi Basin", 947 }, [2524] = { "Darkspear Islands", 947 },
+    [1460] = { "Warsong Gulch", 947 }, [1461] = { "Arathi Basin", 947 },
     [2521] = { "Zephras Isle", 947 }, [2548] = { "Riverglades", 1415 }, [1427] = { "Searing Gorge", 1415 } }
+local UNKNOWN_MAP = 2524
 _G.C_Map.GetMapInfo = function(id)
+    if id == UNKNOWN_MAP then return nil end
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
 end
@@ -424,7 +427,11 @@ Expect("...no battleground among its continent's zones", Has(list, "Alterac Vall
 Click("Battlegrounds")
 list = Shown()
 Expect("...opening on a card for each battleground", Has(list, "Alterac Valley") and Has(list, "Warsong Gulch")
-    and Has(list, "Arathi Basin") and Has(list, "Darkspear Islands") and RowFor("Alterac Valley").row.style, "card")
+    and Has(list, "Arathi Basin") and RowFor("Alterac Valley").row.style, "card")
+Expect("...but none for a map this client has never heard of", Has(list, "Darkspear Islands") or Has(list, tostring(UNKNOWN_MAP)), false)
+local DARKSPEAR_QUEST = 98888 -- Conflict at Darkspear Islands
+Expect("...nor a quest there counted or opened in the Compendium", SpokenQuestsCompendium.quests[DARKSPEAR_QUEST].zones[1]
+    .. " " .. tostring(Tab:Lists(DARKSPEAR_QUEST)), UNKNOWN_MAP .. " false")
 Expect("...its page in Azeroth, counting their quests", page.title.text == L.QUESTS_SECTION_BATTLEGROUNDS
     and page.sub.text.text:match("^In Azeroth · 0 of %d+ completed$") ~= nil, true)
 Click("Battlegrounds")
