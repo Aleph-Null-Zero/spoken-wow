@@ -79,5 +79,26 @@
     {"id": 5096, "prev": 5093, "source": "QD8: A Call to Arms: The Plaguelands! leads to High Executor Derrington's Scarlet Diversions (https://warcraft.wiki.gg/wiki/Scarlet_Diversions)"},
     {"ids": [5094, 5095], "prev": 5093, "source": "QD8: the Horde's other A Call to Arms: The Plaguelands!, in the same zone; an alternate start of the same quest, from another trainer; linked to the chain's first quest so it sits in its chain"}
   ],
-  "chains": []
+  "chains": [
+    {"quest": 1699, "name": 1701, "source": "QD7: https://warcraft.wiki.gg/wiki/Fire_Hardened_Mail; the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1824, "name": 1838, "source": "QD7: https://warcraft.wiki.gg/wiki/Brutal_Armor; the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1498, "name": 1503, "source": "QD7: https://warcraft.wiki.gg/wiki/Forged_Steel; the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1678, "name": 1682, "source": "QD7: https://warcraft.wiki.gg/wiki/Grey_Iron_Weapons; the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1501, "name": 1501, "source": "QD7: https://warcraft.wiki.gg/wiki/Creature_of_the_Void_(Orgrimmar); the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1473, "name": 1473, "source": "QD7: the Undercity's Creature of the Void, as https://warcraft.wiki.gg/wiki/Creature_of_the_Void_(Orgrimmar); the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1688, "name": 1688, "source": "QD7: Stormwind's voidwalker chain, after Gakin's Summons; the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1716, "name": 1716, "source": "QD7: Stormwind's succubus chain, Devourer of Souls as Orgrimmar's and the Undercity's are named; the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1801, "name": 1801, "source": "QD7: https://warcraft.wiki.gg/wiki/Tome_of_the_Cabal_(Horde,_2); the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 1758, "name": 1758, "source": "QD7: the Alliance's Tome of the Cabal after Seeking Strahad; the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 9052, "name": 9051, "source": "QD7: https://warcraft.wiki.gg/wiki/Toxic_Test; the chain starts with a trainer's breadcrumb, so it is named as the wiki names it"},
+    {"quest": 870, "name": 914, "source": "QD7: https://warcraft.wiki.gg/wiki/Leaders_of_the_Fang; the chain starts with the breadcrumb The Barrens Oases"},
+    {"quest": 969, "name": 975, "source": "QD7: https://warcraft.wiki.gg/wiki/Cache_of_Mau%27ari; the E'ko turn-ins after it are repeatables"},
+    {"quest": 8286, "name": "The Scepter of the Shifting Sands", "names": {"deDE": "Das Szepter der Sandstürme", "esES": "El Cetro de las Arenas Cambiantes", "esMX": "El Cetro de las Arenas Cambiantes", "frFR": "Le Sceptre des Sables changeants", "ptBR": "O Cetro das Areias Movediças", "ruRU": "Скипетр Зыбучих Песков", "koKR": "흐르는 모래의 홀", "zhCN": "流沙节杖", "zhTW": "流沙節杖", "itIT": "Lo Scettro delle Sabbie Mutevoli"}, "source": "QD7/QD8: one storyline under two first quests, joined at The Might of Kalimdor: https://warcraft.wiki.gg/wiki/The_Champion_Returns, https://warcraft.wiki.gg/wiki/The_Might_of_Kalimdor; the translations are the client's names of the Scepter"},
+    {"quest": 8575, "name": "The Scepter of the Shifting Sands", "names": {"deDE": "Das Szepter der Sandstürme", "esES": "El Cetro de las Arenas Cambiantes", "esMX": "El Cetro de las Arenas Cambiantes", "frFR": "Le Sceptre des Sables changeants", "ptBR": "O Cetro das Areias Movediças", "ruRU": "Скипетр Зыбучих Песков", "koKR": "흐르는 모래의 홀", "zhCN": "流沙节杖", "zhTW": "流沙節杖", "itIT": "Lo Scettro delle Sabbie Mutevoli"}, "source": "QD7/QD8: Azuregos's half of the same storyline: https://warcraft.wiki.gg/wiki/The_Might_of_Kalimdor"},
+    {"quest": 4903, "name": 6602, "source": "QD7: the Horde's Onyxia attunement: https://warcraft.wiki.gg/wiki/Blood_of_the_Black_Dragon_Champion_(quest)"},
+    {"quest": 4182, "name": 6403, "source": "QD7: the Alliance's Onyxia attunement, The Great Masquerade as the wiki's navbox names it: https://warcraft.wiki.gg/wiki/Drakefire_Amulet_(quest)"},
+    {"quest": 5542, "name": 5944, "source": "QD7: Tirion Fordring's chain: https://warcraft.wiki.gg/wiki/In_Dreams"},
+    {"quest": 5092, "name": 5092, "source": "QD7/QD8: https://warcraft.wiki.gg/wiki/Clear_the_Way; the chain starts with the breadcrumb A Call to Arms: The Plaguelands!"},
+    {"quest": 5096, "name": 5096, "source": "QD7/QD8: https://warcraft.wiki.gg/wiki/Scarlet_Diversions; the chain starts with the breadcrumb A Call to Arms: The Plaguelands!"}
+  ]
 }
