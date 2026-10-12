@@ -7,7 +7,8 @@
 -- The window, its list and its rows are the Compendium's; this is what goes in them. On the left,
 -- a banner for each continent, a card under it for each of its zones (how many of its places are
 -- found, with a bar), and the opened zone's areas as rows, its city a small card among them with
--- its own areas. On the right, the story on the spellbook's parchment (UI/LorePage.lua).
+-- its own areas; after the continents, a banner for the zones on none (Other Lands) and one for
+-- the battlegrounds. On the right, the story on the spellbook's parchment (UI/LorePage.lua).
 --
 -- Only one zone expands at a time, which caps the list at the zones plus one zone's areas, about a
 -- hundred rows -- few enough that every row can be a real button. A search shows every match
@@ -21,9 +22,9 @@ local panel, list, page
 local expandedZone = nil
 -- The continents start open, so the zones show; each opens and closes on its own.
 local continentOpen = { [1414] = true, [1415] = true }
--- Whether the banner of the zones on no continent is open.
-local landsOpen = false
-local selection = nil -- { mapID = , key = nil|string }
+-- Whether the banners after the continents are open: the zones on no continent, the battlegrounds.
+local groupOpen = { lands = false, battlegrounds = false }
+local selection = nil -- { mapID = , key = nil|string }, or { group = "lands"|"battlegrounds" }
 -- The selection made for the player, where they stood; any other is one they chose.
 local landed = nil
 -- Sorted once, as sortedZoneIDs is: the tree is rebuilt on every click and keystroke, and the
@@ -51,6 +52,10 @@ local function IsContinent(mapID)
 	return mapID == 1414 or mapID == 1415
 end
 
+-- Under a banner of their own, as the Quests tab lists them, wherever the client hangs their maps.
+local BATTLEGROUNDS = { 1459, 1460, 1461, 2524 } -- Alterac Valley, Warsong Gulch, Arathi Basin, Darkspear Islands
+local IS_BATTLEGROUND = {}
+for _, mapID in ipairs(BATTLEGROUNDS) do IS_BATTLEGROUND[mapID] = true end
 
 local function ByName(a, b)
 	local na, nb = ZoneName(a), ZoneName(b)
@@ -93,12 +98,14 @@ local function Continents()
 	return list
 end
 
---- A continent's zones, alphabetical; nil for the zones on no continent the game names.
+--- A continent's zones, alphabetical, its battlegrounds left to their banner.
 local function ZonesOf(continent)
 	if zonesOfContinent[continent] then return zonesOfContinent[continent] end
 	local list = {}
 	for _, mapID in ipairs(ZoneIDs()) do
-		if ContinentOf(mapID) == continent and not CITY_IN[mapID] then table.insert(list, mapID) end
+		if ContinentOf(mapID) == continent and not CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] then
+			table.insert(list, mapID)
+		end
 	end
 	zonesOfContinent[continent] = list
 	return list
@@ -110,9 +117,31 @@ local function LooseZones()
 	for _, continent in ipairs(Continents()) do listed[continent] = true end
 	local list = {}
 	for _, mapID in ipairs(ZoneIDs()) do
-		if not listed[ContinentOf(mapID) or 0] and not CITY_IN[mapID] then table.insert(list, mapID) end
+		if not listed[ContinentOf(mapID) or 0] and not CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] then
+			table.insert(list, mapID)
+		end
 	end
 	return list
+end
+
+--- The battlegrounds with a story on this client, alphabetical.
+local function Battlegrounds()
+	local list = {}
+	for _, mapID in ipairs(ZoneIDs()) do
+		if IS_BATTLEGROUND[mapID] then table.insert(list, mapID) end
+	end
+	return list
+end
+
+-- The banners after the continents, in order: what each holds and is called.
+local GROUPS = {
+	{ key = "lands", zones = LooseZones, label = function() return L.OTHER_LANDS end },
+	{ key = "battlegrounds", zones = Battlegrounds, label = function() return L.BATTLEGROUNDS end },
+}
+local function Group(key)
+	for _, group in ipairs(GROUPS) do
+		if group.key == key then return group end
+	end
 end
 
 --- The cities inside the zone `mapID`, alphabetical.
@@ -126,11 +155,15 @@ end
 
 --- Open what holds `mapID`, so opening on a place shows it.
 local function Reveal(mapID)
+	if IS_BATTLEGROUND[mapID] then
+		groupOpen.battlegrounds = true
+		return
+	end
 	local continent = IsContinent(mapID) and mapID or ContinentOf(mapID)
 	if continent then
 		continentOpen[continent] = true
 	elseif mapID ~= WORLD then
-		landsOpen = true
+		groupOpen.lands = true
 	end
 end
 
@@ -224,10 +257,31 @@ local function Missing(mapID)
 	return not entry or SpokenZones:IsPending(entry)
 end
 
+-- What a zone holds, found out of all: its city and its areas. Of what is listed: under Voiced
+-- Only, what no voice pack reads is left out of the count as it is of the rows, so the card's
+-- number is of the rows beneath it. Its page counts the same.
+local function Places(mapID)
+	local found, total = 0, 0
+	for _, city in ipairs(CitiesIn(mapID)) do
+		if not OnlyVoiced() or AnyVoiced(city) then
+			total = total + 1
+			if Found(city) then found = found + 1 end
+		end
+	end
+	for _, key in ipairs(SubzoneKeys(mapID) or {}) do
+		if not OnlyVoiced() or Voiced(mapID, key) then
+			total = total + 1
+			if Found(mapID, key) then found = found + 1 end
+		end
+	end
+	return found, total
+end
+
 -- One zone's card, and under it when it is open its city's small card (a zone of its own, with
 -- its own areas) and its areas' rows; while searching, the ones that match. Nothing when neither
 -- it nor anything inside matches the search. A zone stays open while its city is. A zone not yet
--- discovered is listed locked: greyed out, and it does not open.
+-- discovered is listed locked: greyed out, and it does not open, to a search either, so a search
+-- lists nothing that browsing could not reach.
 local function ZoneRows(mapID, nest, small)
 	if OnlyFound() and not Found(mapID) then return {} end
 	if OnlyVoiced() and not AnyVoiced(mapID) then return {} end
@@ -235,30 +289,19 @@ local function ZoneRows(mapID, nest, small)
 	local subKeys = SubzoneKeys(mapID)
 	local zoneName = ZoneName(mapID)
 	local open = (expandedZone == mapID or CITY_IN[expandedZone] == mapID) and not locked
-	local cities = CitiesIn(mapID)
 	local inside = {}
-	-- Found out of all, of what is listed: under Voiced Only, what no voice pack reads is left
-	-- out of the count as it is of the rows, so the number is of the rows beneath it.
-	local found, total = 0, 0
-	for _, city in ipairs(cities) do
-		if not OnlyVoiced() or AnyVoiced(city) then
-			total = total + 1
-			if Found(city) then found = found + 1 end
-		end
-		if filter ~= "" or open then
+	local found, total = Places(mapID)
+	if filter ~= "" and not locked or open then
+		for _, city in ipairs(CitiesIn(mapID)) do
 			for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
 		end
 	end
 	if subKeys then
 		for _, key in ipairs(subKeys) do
 			local isFound = Found(mapID, key)
-			if not OnlyVoiced() or Voiced(mapID, key) then
-				total = total + 1
-				if isFound then found = found + 1 end
-			end
 			local entry = SpokenZones.Subzones[mapID][key]
 			local name = entry.name or key
-			local shown = filter == "" and open or filter ~= "" and Matches(name)
+			local shown = filter == "" and open or filter ~= "" and not locked and Matches(name)
 			if shown and (isFound or not OnlyFound()) and (not OnlyVoiced() or Voiced(mapID, key)) then
 				table.insert(inside, { kind = "subzone", leaf = true, mapID = mapID, key = key, label = name,
 					nest = nest + 1, missing = SpokenZones:IsPending(entry), locked = not Discovered(mapID, key),
@@ -272,7 +315,6 @@ local function ZoneRows(mapID, nest, small)
 	if Spoken and Spoken.ZoneIcon then icon, iconCrop = Spoken:ZoneIcon(mapID) end
 	local rows = { { style = "card", small = small, kind = "zone", mapID = mapID, label = zoneName, nest = nest,
 		count = found, total = total, icon = icon, iconCrop = iconCrop,
-		sub = total > 0 and L.PLACES_FOUND_FMT:format(found, total) or nil,
 		ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
 		none = found == 0 and not Found(mapID),
 		open = filter ~= "" and #inside > 0 or open,
@@ -282,22 +324,13 @@ local function ZoneRows(mapID, nest, small)
 end
 
 -- The list: a banner for each continent, its zones' cards under it, and the opened zone's
--- areas. While searching, every match with what holds it, opened to show it.
+-- areas. While searching, every match a click could reach, with what holds it opened to show it.
 local function BuildRowList()
 	local list = {}
 	local function Add(rows) for _, row in ipairs(rows) do table.insert(list, row) end end
 	local searching = filter ~= ""
 
 	for _, continent in ipairs(Continents()) do
-		-- A closed continent's zones are never shown, and its count comes from ZonesOf: only
-		-- a search, which can open it, needs them built.
-		local zones = {}
-		if searching or continentOpen[continent] then
-			for _, mapID in ipairs(ZonesOf(continent)) do
-				local rows = ZoneRows(mapID, 0)
-				for _, row in ipairs(rows) do table.insert(zones, row) end
-			end
-		end
 		local name = ZoneName(continent)
 		-- Counted as a zone's are, of the zones listed; locked by all of them, listed or not.
 		local found, total, anyFound = 0, 0, false
@@ -314,6 +347,15 @@ local function BuildRowList()
 		-- Eastern Kingdoms.
 		local unfound = not anyFound
 		local locked = unfound and not SpokenZones:ShowsUndiscovered()
+		-- A closed continent's zones are never shown, and its count comes from ZonesOf: only a
+		-- search, which can open it, needs them built. A locked one opens to a search no more
+		-- than to a click.
+		local zones = {}
+		if not locked and (searching or continentOpen[continent]) then
+			for _, mapID in ipairs(ZonesOf(continent)) do
+				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
+			end
+		end
 		local voiced = not OnlyVoiced() or total > 0
 		if (not searching or Matches(name) or #zones > 0) and not (unfound and OnlyFound()) and voiced then
 			local open = searching and #zones > 0 or (not searching and continentOpen[continent] and not locked)
@@ -323,18 +365,13 @@ local function BuildRowList()
 			if open then Add(zones) end
 		end
 	end
-	-- Zones on neither continent with a story, under a banner of their own after them, counted
-	-- and locked as a continent is.
-	local loose = LooseZones()
-	if #loose > 0 then
-		local zones = {}
-		if searching or landsOpen then
-			for _, mapID in ipairs(loose) do
-				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
-			end
-		end
+	-- Zones on neither continent with a story, then the battlegrounds, each under a banner of
+	-- their own after them, counted and locked as a continent is.
+	for _, group in ipairs(GROUPS) do
+		local members = group.zones()
+		local label = group.label()
 		local found, total, anyFound = 0, 0, false
-		for _, mapID in ipairs(loose) do
+		for _, mapID in ipairs(members) do
 			local isFound = Found(mapID)
 			anyFound = anyFound or isFound
 			if not OnlyVoiced() or AnyVoiced(mapID) then
@@ -343,11 +380,18 @@ local function BuildRowList()
 			end
 		end
 		local locked = not anyFound and not SpokenZones:ShowsUndiscovered()
+		local zones = {}
+		if not locked and (searching or groupOpen[group.key]) then
+			for _, mapID in ipairs(members) do
+				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
+			end
+		end
 		local voiced = not OnlyVoiced() or total > 0
-		if (not searching or Matches(L.OTHER_LANDS) or #zones > 0) and not (not anyFound and OnlyFound()) and voiced then
-			local open = searching and #zones > 0 or (not searching and landsOpen and not locked)
-			table.insert(list, { style = "banner", kind = "lands", label = L.OTHER_LANDS, count = found, total = total,
-				open = open and true or false, locked = locked })
+		if #members > 0 and (not searching or Matches(label) or #zones > 0) and not (not anyFound and OnlyFound())
+			and voiced then
+			local open = searching and #zones > 0 or (not searching and groupOpen[group.key] and not locked)
+			table.insert(list, { style = "banner", kind = "group", group = group.key, label = label, count = found,
+				total = total, open = open and true or false, locked = locked })
 			if open then Add(zones) end
 		end
 	end
@@ -403,9 +447,10 @@ local function LandOnPlayer()
 end
 
 local function ShowEntry()
-	if selection.lands then
-		local count = #LooseZones()
-		page:Show({ title = L.OTHER_LANDS, subtitle = count == 1 and L.ZONE_COUNT_ONE or string.format(L.ZONE_COUNT_FMT, count),
+	if selection.group then
+		local group = Group(selection.group)
+		local count = #group.zones()
+		page:Show({ title = group.label(), subtitle = count == 1 and L.ZONE_COUNT_ONE or string.format(L.ZONE_COUNT_FMT, count),
 			text = L.ZONES_PICK })
 		return
 	end
@@ -421,7 +466,7 @@ local function ShowEntry()
 				selection = { mapID = up, key = nil }
 				SpokenZones:RefreshLoreWindow()
 			end or nil,
-			text = L.NOT_DISCOVERED, missing = true })
+			text = L.NOT_DISCOVERED })
 		return
 	end
 	if key then
@@ -435,7 +480,7 @@ local function ShowEntry()
 			end
 			if SpokenZones:IsPending(entry) then
 				page:Show({ title = name, subtitle = line, onSubtitle = back,
-					text = L.LORE_NOT_WRITTEN:format(name), missing = true, contribute = { mapID, name } })
+					text = L.LORE_NOT_WRITTEN:format(name), contribute = { mapID, name } })
 				return
 			end
 			-- Rows are keyed by the canonical form already, so this needs no normalising --
@@ -455,7 +500,7 @@ local function ShowEntry()
 	end or nil
 	if not entry or SpokenZones:IsPending(entry) then
 		page:Show({ title = name, subtitle = subtitle, onSubtitle = onSubtitle, text = L.LORE_NOT_WRITTEN:format(name),
-			missing = true, contribute = { mapID, nil } })
+			contribute = { mapID, nil } })
 		return
 	end
 	page:Show({ title = name, subtitle = subtitle, onSubtitle = onSubtitle, text = entry.full or entry.short or "",
@@ -476,10 +521,10 @@ function SpokenZones:PlaceLine(mapID, key)
 		return string.format(L.IN_ZONE_FMT, ZoneName(parent)) .. " · "
 			.. Count(#ZonesOf(mapID), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), parent
 	end
-	local subKeys = SubzoneKeys(mapID)
+	local _, total = Places(mapID)
 	local line = string.format(L.IN_ZONE_FMT, ZoneName(parent))
-	if subKeys then
-		line = line .. " · " .. Count(#subKeys, L.SUBZONE_COUNT_FMT, L.SUBZONE_COUNT_ONE)
+	if total > 0 then
+		line = line .. " · " .. Count(total, L.SUBZONE_COUNT_FMT, L.SUBZONE_COUNT_ONE)
 	end
 	return line, parent
 end
@@ -495,16 +540,16 @@ local function IsSelected(row)
 	if row.kind == "subzone" then
 		return selection.mapID == row.mapID and selection.key == row.key
 	end
-	if row.kind == "lands" or selection.lands then return row.kind == "lands" and selection.lands == true end
+	if row.kind == "group" or selection.group then return row.kind == "group" and selection.group == row.group end
 	return selection.mapID == row.mapID and selection.key == nil
 end
 
 local function OnRowClick(row)
 	-- While searching the list shows every match opened, whatever is open: a toggle would change
 	-- nothing there, only leave the tree folded when the search is cleared. Choose, and no more.
-	if row.kind == "lands" then
-		if filter == "" then landsOpen = not landsOpen end
-		selection = { lands = true }
+	if row.kind == "group" then
+		if filter == "" then groupOpen[row.group] = not groupOpen[row.group] end
+		selection = { group = row.group }
 	elseif filter ~= "" then
 		selection = { mapID = row.mapID, key = row.kind == "subzone" and row.key or nil }
 	elseif row.kind == "continent" then
@@ -616,18 +661,20 @@ function SpokenZones:ToggleLoreWindow()
 		return
 	end
 
-	-- Re-sync to where the player is standing on every open, not just the first: opening from the
-	-- minimap should land on the current zone, not wherever the last browse ended.
-	LandOnPlayer()
+	-- Opened on where the player stands now, unless they chose a place here: the refresh lands
+	-- again on a selection that was only ever where they stood.
+	if selection == landed then selection = nil end
 
 	list:ClearSearch()
 	filter = ""
 	SpokenCompendium:Open("places")
+	-- A window closed folded would reopen as the bare list.
+	SpokenCompendium:Expand()
 	SpokenZones:RefreshLoreWindow(true)
 end
 
 -- Open on a named entry rather than on the player's location. Not routed through
--- ToggleLoreWindow, which re-syncs to where the player stands: narration outlives the zone you
+-- ToggleLoreWindow, which can land on where the player stands: narration outlives the zone you
 -- started it in.
 function SpokenZones:ShowLoreFor(mapID, areaKey)
 	if not list or not mapID then

@@ -1,18 +1,18 @@
 -- Azeroth's Compendium: one window, a tab for each Spoken part that has something to browse --
--- the places (Spoken Zones), the writings (Spoken Books) -- each a list on the left and a page on
--- the right.
+-- the quests (Spoken Quests), the places (Spoken Zones), the writings (Spoken Books) -- each a
+-- list on the left and a page on the right.
 --
--- Carried byte for byte by every addon that adds a tab, as UI/Layout.lua is, so either works on its
--- own and both together share one window: the newest copy loaded wins (VERSION), and a tab
+-- Carried byte for byte by Spoken Zones and Spoken Books, as UI/Layout.lua is, so either works on
+-- its own and both together share one window: the newest copy loaded wins (VERSION), and a tab
 -- registered by any copy is kept. The window is the game's portrait frame, resizable from its corner
--- and folding down to the list. The list is a search box over an inset of rows, with Discovered Only
--- and the tab's other switches in the filter menu beside the search. Its rows are drawn in the
--- game's own art: the objective tracker's campaign bar across the list for each group (a
--- continent), the character select card for each place or set inside one (its painting in the
--- collections window's gold frame, the name, a grey line under it, the share found and the Pet
--- Journal's bar), and a plain row for each single thing, a padlock on what is not found yet. What
--- is inside an open card is indented under it, a faint gold line down its left. What the rows are,
--- what a click does and the page beside them are each tab's own.
+-- and folding down to the list. The list is a search box over an inset of rows, with the tab's
+-- switches (Started Only, Discovered Only, Found Only and the like) in the filter menu beside the
+-- search. Its rows are drawn in the game's own art: the objective tracker's campaign bar across
+-- the list for each group (a continent), the character select card for each place or set inside
+-- one (its painting in the collections window's frame, silvered, the name, the share found and
+-- the Pet Journal's bar), and a plain row for each single thing, a padlock on what is not found
+-- yet. What is inside an open card is indented under it, a faint gold line down its left. What
+-- the rows are, what a click does and the page beside them are each tab's own.
 --
 -- A tab: SpokenCompendium:Register(key, { label, order, title, build(panel), onShow(panel),
 -- store = { get(key), set(key, value) }, open(), enabled(), unlock = { get(), set(value) } }).
@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 21
+local VERSION = 22
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -618,14 +618,12 @@ local MINUS = [[Interface\Buttons\UI-MinusButton-Up]]
 local PLUS_OFF = [[Interface\Buttons\UI-PlusButton-Disabled]]
 local READY = [[Interface\RaidFrame\ReadyCheck-Ready]]
 local ACTIVE = [[Interface\GossipFrame\ActiveQuestIcon]]
--- A card's badge where it has no painting of its own: a map; a chain's where the storyline's mark
--- is missing, a scroll.
+-- A card's badge where it has no painting of its own: a map.
 local MAP_ICON = [[Interface\Icons\INV_Misc_Map_01]]
 -- A chain of quests: the game's quest scroll.
 local CHAIN_ICON = [[Interface\Icons\INV_Inscription_Scroll]]
-local STORY_ICON = [[Interface\Icons\INV_Scroll_03]]
 local CHECK = "questlog-icon-checkmark-yellow"
--- The icons' bevelled border, trimmed inside the gold frame.
+-- The icons' bevelled border, trimmed inside the badge's frame.
 local ICON_CROP = { 0.08, 0.92, 0.08, 0.92 }
 
 -- The campaign header's bar, in its atlas's own pixels: its crest sits half outside the bar at
@@ -648,7 +646,6 @@ local CARD_RIGHT = 56         -- what a card's share or tick keeps clear on its 
 -- right as well.
 local CARD_PAD = 10           -- from a card's left side to its badge
 local CARD_END = 12           -- from a card's right side to its numbers and bar
-local CARD_INK = { 0.73, 0.70, 0.65 }
 local SHARE_INK = { 0.80, 0.76, 0.70 }
 local BANNER_INK = { 0.85, 0.81, 0.73 }
 local LOCKED_INK = { 0.50, 0.48, 0.45 }
@@ -748,7 +745,6 @@ local function Light(row)
 	local flat = style == nil or (style == "card" and not row.cardArt) or (style == "banner" and not row.bannerArt)
 	row.wash:SetShown(flat and (over or chosen))
 	row.wash:SetAlpha(chosen and 1 or 0.55)
-	row.chosen:Hide()
 	row.edge:SetShown(flat and chosen)
 	if row.glow then
 		ShowAll(row.glow, style == "banner" and row.bannerArt and (over or chosen))
@@ -772,8 +768,8 @@ List.__index = List
 --- onlySet(on), checks = { { label, get(), set(on) }... }, arrange = { values, describe(value), get(),
 --- set(value) }, build() -> items,
 --- isSelected(item), onClick(item), onSearch(), addScrollBar(scroll, child, inset) }. The filter
---- menu is the spellbook's, the arrow beside its search box: the tab's only switch (Discovered Only,
---- Found Only) and any other checks as checkboxes, and where the tab can arrange its tree more than
+--- menu is the spellbook's, the arrow beside its search box: the tab's only switch (Started Only,
+--- Discovered Only, Found Only) and any other checks as checkboxes, and where the tab can arrange its tree more than
 --- one way, those ways under a divider. An item is { label, count, total, open, locked, missing } and one of:
 --- - style = "banner": a group across the list, its plus or minus, the name, count/total.
 --- - style = "card": a badge (`icon` with its `iconCrop`, a quest scroll for a chain with `story`,
@@ -792,10 +788,17 @@ function C.NewList(panel, opts)
 	-- Halfway down the strip of the window between its title bar and the list.
 	searchBox:SetPoint("TOPLEFT", panel, "TOPLEFT", left + 66, top - 11.5)
 	if type(searchBox.Instructions) == "table" then searchBox.Instructions:SetText(opts.search or "") end
+	-- Drawn again for a new search or filter: on the chosen row where it is still listed, else at
+	-- the top. A search's results start at the top.
+	local function Rescroll()
+		if list.filter ~= "" or not (list.items and list:ScrollToSelection(list.items)) then
+			list.scroll:SetVerticalScroll(0)
+		end
+	end
 	searchBox:HookScript("OnTextChanged", function(self)
 		list.filter = string.lower(strtrim and strtrim(self:GetText() or "") or (self:GetText() or ""))
-		list.scroll:SetVerticalScroll(0)
 		if opts.onSearch then opts.onSearch(list.filter) end
+		Rescroll()
 	end)
 	list.searchBox = searchBox
 
@@ -834,8 +837,8 @@ function C.NewList(panel, opts)
 
 	-- The filter menu.
 	local function Changed()
-		scroll:SetVerticalScroll(0)
 		if panel.Refresh then panel:Refresh() end
+		Rescroll()
 	end
 	local function OnlyOn() return opts.onlyGet ~= nil and opts.onlyGet() and true or false end
 	local function SetOnly(on)
@@ -947,8 +950,6 @@ function List:AcquireRow(index)
 		row.wash:SetColorTexture(1, 1, 1, 0.1)
 	end
 	row.wash:Hide()
-	row.chosen = row:CreateTexture(nil, "BACKGROUND")
-	row.chosen:Hide()
 	row.edge = row:CreateTexture(nil, "ARTWORK")
 	row.edge:SetWidth(2)
 	row.edge:SetColorTexture(1, 0.82, 0, 0.9)
@@ -1029,12 +1030,6 @@ local function CardParts(row)
 	row.cardFill:SetColorTexture(1, 1, 1, 0.04)
 	row.icon = row:CreateTexture(nil, "ARTWORK")
 	row.iconFrame = row:CreateTexture(nil, "ARTWORK", nil, 2)
-	row.story = row:CreateTexture(nil, "ARTWORK")
-	row.sub = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	row.sub:SetJustifyH("LEFT")
-	if row.sub.SetWordWrap then row.sub:SetWordWrap(false) end
-	if row.sub.SetMaxLines then row.sub:SetMaxLines(1) end
-	Tint(row.sub, CARD_INK)
 	row.tick = row:CreateTexture(nil, "ARTWORK")
 	row.track = row:CreateTexture(nil, "ARTWORK")
 	row.track:SetColorTexture(0.04, 0.035, 0.024, 1)
@@ -1045,7 +1040,7 @@ local function CardParts(row)
 		row.barCaps[i] = cap
 		row.hasBarFrame = Atlas(cap, atlas) and (i == 1 or row.hasBarFrame)
 	end
-	row.cardParts = { row.cardFill, row.warm, row.icon, row.iconFrame, row.story, row.sub, row.tick, row.track, row.fill }
+	row.cardParts = { row.cardFill, row.warm, row.icon, row.iconFrame, row.tick, row.track, row.fill }
 	for _, list in ipairs({ row.face, row.lift, row.barCaps }) do
 		for _, part in ipairs(list) do table.insert(row.cardParts, part) end
 	end
@@ -1097,10 +1092,10 @@ local function Rails(row, count, gap, held, underBanner, afterBanner)
 	end
 end
 
--- The quest log's own expand and collapse, for anything with something inside to open. Where
--- nothing inside opens -- locked, empty (Thunder Bluff, with no areas of its own), or none found
--- with Discovered Only on -- greyed, as the name beside it is. `found`, where an item counts
--- something narrower than what it holds (the quests completed, not those in progress too).
+-- The quest log's own expand and collapse, on a banner; a card has none. Where nothing inside
+-- opens -- locked, empty, or none found with the tab's only switch on -- greyed, as the name
+-- beside it is. `found`, where an item counts something narrower than what it holds (the quests
+-- completed, not those in progress too).
 local function Toggle(row, item, onlyFound)
 	local count = item.found or item.count or 0
 	local opens = ((item.total or count) > 0) and not item.locked and not (onlyFound and count == 0)
@@ -1209,7 +1204,6 @@ local function DrawCard(row, item, indent, width)
 	local centre = indent + CARD_PAD + side / 2
 	local none = item.none or item.locked
 	local icon = item.icon or (item.story and CHAIN_ICON) or MAP_ICON
-	row.story:Hide()
 	do
 		local inset = 3 -- the frame's own rim
 		local crop = item.iconCrop or ICON_CROP
@@ -1233,7 +1227,7 @@ local function DrawCard(row, item, indent, width)
 		end
 	end
 
-	-- One line, as the list's rows had it before the cards: the name on the left and on the right
+	-- One line: the name on the left and on the right
 	-- what is found out of all and the share, 5/27 • 18%, with the bar under them.
 	local top = 12
 	local level = -(top + 7)
@@ -1248,7 +1242,6 @@ local function DrawCard(row, item, indent, width)
 		row.label:SetTextColor(1, 0.82, 0)
 	end
 	row.label:SetText(item.label)
-	row.sub:Hide()
 
 	-- On the right the padlock, or the numbers, with the gold tick after them once all are found
 	-- and the quest mark before them with how many are under way.
@@ -1413,11 +1406,9 @@ function List:Render()
 		-- A single row's light starts on the line down its left, its gold edge over that line.
 		local lit = indent
 		if item.leaf and (nest > 0 or underBanner) then lit = indent - (NEST_STEP - RAIL_X) - 0.5 end
-		for _, light in ipairs({ row.wash, row.chosen }) do
-			light:ClearAllPoints()
-			light:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
-			light:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
-		end
+		row.wash:ClearAllPoints()
+		row.wash:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
+		row.wash:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
 		row.edge:ClearAllPoints()
 		row.edge:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
 		row.edge:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", lit, 0)
@@ -1436,11 +1427,13 @@ function List:Render()
 
 	self.child:SetHeight(math.max(y + LIST_FOOT, 1))
 	self.noMatch:SetShown(#items == 0)
+	self.items = items
 	return items
 end
 
---- Bring the chosen row into view. Only when a tab opens on something: doing it on every
---- refresh would yank the list out from under a click.
+--- Bring the chosen row into view, and say whether it is listed. Only when a tab opens on
+--- something or the list is filtered again: doing it on every refresh would yank the list out
+--- from under a click.
 function List:ScrollToSelection(items)
 	local y = LIST_TOP
 	for i, item in ipairs(items) do
@@ -1453,10 +1446,11 @@ function List:ScrollToSelection(items)
 			local range = math.max(0, (self.child:GetHeight() or 0) - viewHeight)
 			local target = y - (viewHeight / 2) + (height / 2)
 			self.scroll:SetVerticalScroll(math.max(0, math.min(range, target)))
-			return
+			return true
 		end
 		y = y + height
 	end
+	return false
 end
 
 function List:ClearSearch()

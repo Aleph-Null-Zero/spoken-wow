@@ -313,19 +313,6 @@ function SpokenZones:CreateLorePage(parent, style)
 	local contribute = SpokenZones:CreateContributeButton(body.child)
 	contribute:SetPoint("TOPLEFT", body.text, "BOTTOMLEFT", 0, -12)
 	page.contribute = contribute
-
-	-- With nothing chosen: the place's map, faint, behind a line saying what to do.
-	if style == "book" then
-		local mark = frame:CreateTexture(nil, "BORDER")
-		mark:SetSize(96, 96)
-		mark:SetPoint("CENTER", frame, "CENTER", 0, 40)
-		mark:SetTexture([[Interface\Icons\INV_Misc_Map02]])
-		mark:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-		if mark.SetDesaturated then mark:SetDesaturated(true) end
-		mark:SetAlpha(0.18)
-		mark:Hide()
-		page.mark = mark
-	end
 	return page
 end
 
@@ -359,9 +346,9 @@ function Page:PaintSubtitle()
 	Ink(self.sub.text, Art.INK)
 end
 
---- What the page shows: entry = { title, subtitle, onSubtitle = fn?, text, missing = bool,
+--- What the page shows: entry = { title, subtitle, onSubtitle = fn?, text,
 --- audio = { mapID, key }?, report = { mapID, key }?, contribute = { mapID, subzone }?,
---- empty = bool }. A missing story is said with Contribute under it.
+--- lore = { mapID, key }? }. A missing story is said with Contribute under it.
 function Page:Show(entry)
 	self.title:SetText(entry.title or "")
 	self.sub.text:SetText(entry.subtitle or "")
@@ -388,7 +375,4 @@ function Page:Show(entry)
 		if lore and lore[1] then self.open:Show() else self.open:Hide() end
 	end
 	self:PlaceButtons()
-	if self.mark then self.mark:SetShown(entry.empty and true or false) end
-	self.divider:SetShown(not entry.empty)
-	if self.backplate then self.backplate:SetShown(not entry.empty) end
 end

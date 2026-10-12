@@ -547,10 +547,11 @@ local function Build(canvas)
         local compendium = Compendium()
         return compendium ~= nil and compendium.Available ~= nil and compendium:Available()
     end, L.REASON_COMPENDIUM_OFF)
+    -- In the order of the window's tabs.
     for _, unlock in ipairs({
+        { tab = "quests", part = "quests", label = L.OPT_UNLOCK_QUESTS, tip = L.OPT_UNLOCK_QUESTS_TIP, module = L.OPT_PART_QUESTS },
         { tab = "places", part = "zones", label = L.OPT_UNLOCK_PLACES, tip = L.OPT_UNLOCK_PLACES_TIP, module = L.OPT_PART_ZONES },
         { tab = "readables", part = "books", label = L.OPT_UNLOCK_WRITINGS, tip = L.OPT_UNLOCK_WRITINGS_TIP, module = L.OPT_PART_BOOKS },
-        { tab = "quests", part = "quests", label = L.OPT_UNLOCK_QUESTS, tip = L.OPT_UNLOCK_QUESTS_TIP, module = L.OPT_PART_QUESTS },
     }) do
         local row = layout:Checkbox(unlock.label, unlock.tip,
             function() local tab = Tab(unlock.tab); return tab ~= nil and tab.unlock ~= nil and tab.unlock.get() end,
