@@ -6,9 +6,9 @@
 --
 -- The window, its list and its rows are the Compendium's; this is what goes in them. On the left,
 -- a banner for each continent, a card under it for each of its zones (how many of its places are
--- found, with a bar), and an opened zone's areas as rows, its city a small card among them with
--- its own areas; after the continents, a banner for the zones on none (Other Lands) and one for
--- the battlegrounds. On the right, the story on the spellbook's parchment (UI/LorePage.lua).
+-- found, with a bar), and under an opened zone its city's card, one level in, with its own areas,
+-- then the zone's areas as rows; after the continents, a banner for the zones on none (Other
+-- Lands) and one for the battlegrounds. On the right, the story on the spellbook's parchment (UI/LorePage.lua).
 --
 -- Each zone's and city's card opens and closes on its own click, and stays as the player left it
 -- for the session. A zone's areas are rows only while its card is open, so the list holds what
@@ -314,14 +314,14 @@ local function Places(mapID)
 	return found, total
 end
 
--- One zone's card, and under it when it is open its city's small card (a zone of its own, with
+-- One zone's card, and under it when it is open its city's card (a zone of its own, with
 -- its own areas) and its areas' rows. A search opens every card with a match inside and lists the
 -- areas that match, or all of them where it names the zone or a card around it (`whole`); a card
 -- it opened closes and opens again on a click. Nothing when neither the zone nor anything inside
 -- matches the search. A city's card opens on its own, and shows only while its zone is open. A
 -- zone not yet discovered is listed locked: greyed out, and it does not open, to a search either,
 -- so a search lists nothing that browsing could not reach.
-local function ZoneRows(mapID, nest, whole, small)
+local function ZoneRows(mapID, nest, whole)
 	if OnlyFound() and not Found(mapID) then return {} end
 	if OnlyVoiced() and not AnyVoiced(mapID) then return {} end
 	local locked = not Discovered(mapID)
@@ -335,7 +335,7 @@ local function ZoneRows(mapID, nest, whole, small)
 	local found, total = Places(mapID)
 	if not locked and (open or searched) then
 		for _, city in ipairs(CitiesIn(mapID)) do
-			for _, row in ipairs(ZoneRows(city, nest + 1, whole, true)) do table.insert(inside, row) end
+			for _, row in ipairs(ZoneRows(city, nest + 1, whole)) do table.insert(inside, row) end
 		end
 		for _, key in ipairs(subKeys or {}) do
 			local isFound = Found(mapID, key)
@@ -356,7 +356,7 @@ local function ZoneRows(mapID, nest, whole, small)
 	-- With no areas of its own (Thunder Bluff), nothing to count: no line, share or bar.
 	local icon, iconCrop
 	if Spoken and Spoken.ZoneIcon then icon, iconCrop = Spoken:ZoneIcon(mapID) end
-	local rows = { { style = "card", small = small, kind = "zone", mapID = mapID, label = zoneName, nest = nest,
+	local rows = { { style = "card", kind = "zone", mapID = mapID, label = zoneName, nest = nest,
 		count = found, total = total, icon = icon, iconCrop = iconCrop,
 		ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
 		none = found == 0 and not Found(mapID),

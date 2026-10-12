@@ -607,7 +607,7 @@ its name, and its places found out of all with the share and a bar. A zone's pla
 its areas and, where it holds one, its city and the city's areas, the city itself one
 place; its page counts the same, and a banner
 counts what its zones' cards count, of the cards the filters leave listed. A click on a
-zone's card chooses it and opens it: its city as a small card with its own areas, and
+zone's card chooses it and opens it: its city as a card one level in, with its own areas, and
 its areas as rows, a tick on each one found. Each zone's and city's card opens and
 closes on its own click, so several stay open together; a city's card shows only while
 its zone is open, and keeps its own state while the zone is closed. What is open lasts

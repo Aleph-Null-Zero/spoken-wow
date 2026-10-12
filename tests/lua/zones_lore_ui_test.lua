@@ -207,7 +207,7 @@ Shown()
 -- The city inside Durotar: chosen, it opens under Durotar, which stays open.
 RowFor("Orgrimmar").scripts.OnClick(RowFor("Orgrimmar"))
 Expect("a city is listed inside the zone around it", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
-Expect("...a small card, one level in, as an area is", RowFor("Orgrimmar").row.small and RowFor("Orgrimmar").row.nest,
+Expect("...a card, one level in, as an area is", RowFor("Orgrimmar").row.style == "card" and RowFor("Orgrimmar").row.nest,
     RowFor("Valley of Trials").row.nest)
 Expect("...indented under its zone's card, its card further in",
     RowFor("Orgrimmar").face[1].anchor.x - RowFor("Durotar").face[1].anchor.x, 16)
