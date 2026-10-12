@@ -40,17 +40,13 @@ local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
 -- A part's heading (SetParts): the title's face, larger than the words and darker, on a line as
 -- tall as its round buttons; the words HEAD_GAP under it, PART_GAP between one part and the next.
 -- In near-black, as the quest frame's own headings on parchment are, set apart by room alone.
-local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 44, 4
+local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 10, 34, 4
 -- No larger than HEAD_MOST, so a heading stays under the page's title (26) at any size of words.
 local HEAD_MOST = 20
 -- The first heading's line starts HEAD_LIFT into the text's top padding: its line is taller than
 -- its letters, which started lower than a page's first line of words does.
 local HEAD_LIFT = 4
 local HEAD_INK = { 0.06, 0.04, 0.02 }
--- Between one part and the next, in the middle of PART_GAP and of the words' width, the quest
--- frame's own break, at its own size: stretched, its flourishes widen.
-local BREAK = [[Interface\QuestFrame\UI-HorizontalBreak]]
-local BREAK_WIDTH, BREAK_HEIGHT = 128, 32
 
 local TextView = {}
 TextView.__index = TextView
@@ -546,7 +542,6 @@ function TextView:HideParts(keep)
 	for _, part in ipairs(self.parts or {}) do
 		part.heading:Hide()
 		part.words:Hide()
-		part.divider:Hide()
 	end
 	for _, button in ipairs(self.partButtons or {}) do
 		if not (keep and keep[button]) then button:Hide() end
@@ -583,8 +578,7 @@ function TextView:SetParts(parts)
 		local slot = self.parts[i]
 		if not slot then
 			slot = { heading = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge"),
-				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight"),
-				divider = self.child:CreateTexture(nil, "ARTWORK") }
+				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight") }
 			slot.heading:SetJustifyH("LEFT")
 			if slot.heading.SetWordWrap then slot.heading:SetWordWrap(false) end
 			slot.words:SetJustifyH("LEFT")
@@ -593,17 +587,7 @@ function TextView:SetParts(parts)
 			slot.words:SetSpacing(2)
 			self.parts[i] = slot
 		end
-		slot.divider:Hide()
-		if i > 1 then
-			if width > 0 then
-				slot.divider:SetTexture(BREAK)
-				slot.divider:SetSize(BREAK_WIDTH, BREAK_HEIGHT)
-				slot.divider:ClearAllPoints()
-				slot.divider:SetPoint("TOP", self.child, "TOPLEFT", width / 2, -(y + (PART_GAP - BREAK_HEIGHT) / 2))
-				slot.divider:Show()
-			end
-			y = y + PART_GAP
-		end
+		if i > 1 then y = y + PART_GAP end
 		local face = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
 		if face then slot.heading:SetFont(face, math.min(Addon:Get("fontSize") + HEAD_SIZE, HEAD_MOST), "") end
 		slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
@@ -644,7 +628,6 @@ function TextView:SetParts(parts)
 	for i = #parts + 1, #self.parts do
 		self.parts[i].heading:Hide()
 		self.parts[i].words:Hide()
-		self.parts[i].divider:Hide()
 	end
 	self.partButtons = shown
 
