@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 11
+local VERSION = 12
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1203,6 +1203,8 @@ local function DrawCard(row, item, indent, width)
 		row.icon:Show()
 		local framed = Atlas(row.iconFrame, "collections-itemborder-collected")
 		row.iconFrame:SetShown(framed)
+		-- Silver as the card round it, not the collections window's gold.
+		if framed then Silver({ row.iconFrame }) end
 		if framed then
 			row.iconFrame:SetSize(side, side)
 			row.iconFrame:ClearAllPoints()
