@@ -79,13 +79,18 @@ local ns = {}
 for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab", "UI/OpenInCompendium" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
 end
--- A chain, by hand: the shipped data may not have them yet (export_compendium.py writes `prev`
--- from the world DB). Lost Necklace, Pie for Billy, Back to Billy, then Goldtooth.
+-- The shipped data links each quest to the one before it in its chain: Lost Necklace, Pie for
+-- Billy, Back to Billy, then Goldtooth. Only that chain is kept here, so the rest of the tree
+-- reads as single quests.
 local NECKLACE, PIE, BACK, GOLDTOOTH = 85, 86, 84, 87
+local shipped = SpokenQuestsCompendium.quests
+local linked = shipped[PIE].prev == NECKLACE and shipped[BACK].prev == PIE and shipped[GOLDTOOTH].prev == BACK
+for _, quest in pairs(shipped) do quest.prev = nil end
 SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
 SpokenQuestsCompendium.quests[BACK].prev = PIE
 SpokenQuestsCompendium.quests[GOLDTOOTH].prev = BACK
 local L, Tab = VO.L, VO.QuestsTab
+Expect("the shipped data has the quests' chains, from the world DB", linked, true)
 local C = _G.SpokenCompendium
 
 Expect("no tab before the world is up", C:Tab("quests"), nil)
