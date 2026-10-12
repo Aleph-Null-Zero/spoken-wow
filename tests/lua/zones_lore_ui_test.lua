@@ -289,6 +289,27 @@ listBar.child:SetHeight(50)
 listBar:UpdateScrollBar()
 Expect("...and to the top when it no longer scrolls", listBar.frame:GetVerticalScroll(), 0)
 
+-- Opened on a place far down the list, from the window closed and never laid out: the client's
+-- scroll frame takes an offset only within the range it last measured, and has no height until
+-- the window is laid out, a frame after it is shown.
+do
+    local scroll, measured = listBar.frame, 0
+    local setScroll = scroll.SetVerticalScroll
+    _G.SpokenCompendium:Hide()
+    scroll.height, scroll.verticalScroll = 0, 0
+    function scroll:UpdateScrollChildRect() measured = math.max(0, self.scrollChild.height - self.height) end
+    function scroll:SetVerticalScroll(v) setScroll(self, math.min(v, measured)) end
+    Z:ShowLoreFor(1411, "valley of trials")
+    scroll.height = 60
+    stub.Advance(0.1)
+    Shown()
+    local row = RowFor("Valley of Trials")
+    local top, offset = -row.anchor.y, scroll:GetVerticalScroll()
+    Expect("opened on a place far down the list, a frame later its row is in view",
+        offset > 0 and top >= offset and top + row.height <= offset + scroll.height, true)
+    scroll.SetVerticalScroll, scroll.UpdateScrollChildRect, scroll.height = setScroll, nil, 120
+end
+
 ---------------------------------------------------------------- search
 local search
 for _, child in ipairs(window.children or {}) do if child.template == "SearchBoxTemplate" then search = child end end

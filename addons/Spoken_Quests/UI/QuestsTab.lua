@@ -1211,6 +1211,20 @@ local function LandOnPlayer()
     landed = selection
 end
 
+-- The chosen row brought into view. The client's scroll frame takes an offset only within the
+-- range it last measured, and a list drawn for the first time has none measured yet; nor has the
+-- frame a height until the window is first laid out. Either left the list at its top, the chosen
+-- zone off screen: the range is measured now, and the row brought into view again a frame later.
+local function ScrollToChosen(items)
+    if list.scroll.UpdateScrollChildRect then list.scroll:UpdateScrollChildRect() end
+    list:ScrollToSelection(items)
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0, function()
+            if filter == "" and list.items then list:ScrollToSelection(list.items) end
+        end)
+    end
+end
+
 function QuestsTab:Refresh(scrollToSelection)
     if not list then return end
     ReadCompleted()
@@ -1221,7 +1235,7 @@ function QuestsTab:Refresh(scrollToSelection)
         scrollToSelection = true
     end
     local items = list:Render()
-    if scrollToSelection and selection then list:ScrollToSelection(items) end
+    if scrollToSelection and selection then ScrollToChosen(items) end
     ShowEntry()
 end
 

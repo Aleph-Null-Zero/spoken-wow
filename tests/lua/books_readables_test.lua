@@ -127,6 +127,30 @@ Expect("...where their zone has nothing to read, their continent's banner", pane
 Expect("...its page in Azeroth, with what is found of it", panel.page.sub.text:match("^In Azeroth · %d+ of %d+ found$") ~= nil, true)
 Reopen(9003)
 Expect("...on no continent, the first continent's", panel.page.title.text, "Eastern Kingdoms")
+-- Landing far down the list, from the window closed and never laid out: the client's scroll frame
+-- takes an offset only within the range it last measured, and has no height until the window is
+-- laid out, a frame after it is shown.
+do
+    local scroll
+    for _, child in ipairs(panel.inset.children or {}) do
+        if child.frameType == "ScrollFrame" then scroll = child end
+    end
+    local measured, setScroll = 0, scroll.SetVerticalScroll
+    window:Hide()
+    scroll.height, scroll.verticalScroll = 0, 0
+    function scroll:UpdateScrollChildRect() measured = math.max(0, self.scrollChild.height - self.height) end
+    function scroll:SetVerticalScroll(v) setScroll(self, math.min(v, measured)) end
+    stub.SetZone({ map = 9002 })
+    B:ShowReadables()
+    scroll.height = 200
+    stub.Advance(0.1)
+    local row = RowFor("Kalimdor")
+    local top, offset = -row.anchor.y, scroll:GetVerticalScroll()
+    Expect("...landing on a banner far down the list, a frame later it is in view",
+        offset > 0 and top >= offset and top + row.height <= offset + scroll.height, true)
+    scroll.SetVerticalScroll, scroll.UpdateScrollChildRect, scroll.height = setScroll, nil, 120
+    Reopen(9003)
+end
 Click("Westfall")
 Reopen(1453)
 Expect("...and what the player chose, kept on reopening", panel.page.title.text, "Westfall")

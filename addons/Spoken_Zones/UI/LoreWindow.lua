@@ -579,6 +579,20 @@ local function OnRowClick(row)
 	SpokenZones:RefreshLoreWindow()
 end
 
+-- The chosen row brought into view. The client's scroll frame takes an offset only within the
+-- range it last measured, which a list just drawn longer has not measured yet; nor has the frame
+-- a height until the window is first laid out. Either left the list at its top, the chosen place
+-- off screen: the range is measured now, and the row brought into view again a frame later.
+local function ScrollToChosen(items)
+	if list.scroll.UpdateScrollChildRect then list.scroll:UpdateScrollChildRect() end
+	list:ScrollToSelection(items)
+	if C_Timer and C_Timer.After then
+		C_Timer.After(0, function()
+			if filter == "" and list.items then list:ScrollToSelection(list.items) end
+		end)
+	end
+end
+
 function SpokenZones:RefreshLoreWindow(scrollToSelection)
 	if not list then
 		return
@@ -589,7 +603,7 @@ function SpokenZones:RefreshLoreWindow(scrollToSelection)
 	end
 	local items = list:Render()
 	if scrollToSelection and selection then
-		list:ScrollToSelection(items)
+		ScrollToChosen(items)
 	end
 	ShowEntry()
 end

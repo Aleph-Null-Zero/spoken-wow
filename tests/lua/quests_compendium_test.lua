@@ -121,6 +121,54 @@ local page = panel.page
 Expect("...and open on it", C:IsOpen("quests"), true)
 Expect("...where the player's zone is not known, on the first continent, as there is no Azeroth to land on",
     page.title.text, "Eastern Kingdoms")
+
+-- The client's scroll frame: an offset only within the range it last measured, which it measures
+-- when asked or a frame after it is laid out, and no height until the window is first laid out.
+local listScroll
+for _, child in ipairs(panel.inset.children or {}) do
+    if child.frameType == "ScrollFrame" then listScroll = child end
+end
+local measured = 0
+local setScroll = listScroll.SetVerticalScroll
+-- From the window closed and never laid out: the list at its top, no range measured, no height.
+local function Unmeasured()
+    C:Hide()
+    listScroll.height, measured, listScroll.verticalScroll = 0, 0, 0
+    function listScroll:UpdateScrollChildRect() measured = math.max(0, self.scrollChild.height - self.height) end
+    function listScroll:SetVerticalScroll(v) setScroll(self, math.min(v, measured)) end
+end
+-- Laid out a frame after it is shown.
+local function LaidOut()
+    listScroll.height = 200
+    stub.Advance(0.1)
+end
+local function Measured()
+    listScroll.SetVerticalScroll, listScroll.UpdateScrollChildRect = setScroll, nil
+    listScroll.height = 120
+end
+-- Whether the row for `mapID`, or the quest `id`, is inside the list's view.
+local function InView(mapID, id)
+    local found
+    local function Walk(frame)
+        for _, child in ipairs(frame.children or {}) do
+            local item = child.shown ~= false and child.row
+            if item and (mapID and item.mapID == mapID and item.style == "card" or id and item.quest == id) then found = child end
+            Walk(child)
+        end
+    end
+    Walk(panel)
+    if not found then return false end
+    local top, offset = -found.anchor.y, listScroll:GetVerticalScroll()
+    return offset > 0 and top >= offset and top + found.height <= offset + listScroll.height
+end
+local ASHENVALE = 1440
+Unmeasured()
+stub.world.playerMapID = ASHENVALE
+Tab:Open()
+LaidOut()
+Expect("landing on a zone far down the list, a frame later its card is in view, the list scrolled to it",
+    page.title.text == "Ashenvale" and InView(ASHENVALE), true)
+Measured()
 stub.world.playerMapID = 1429
 Tab:Open()
 Expect("...on the zone the player stands in, never an empty page", page.title.text, "Elwynn Forest")
@@ -645,6 +693,17 @@ local IRONDEEP = 5892
 Tab:Open(IRONDEEP)
 Expect("a battleground's quest opens under the battlegrounds' banner", Has(Shown(), "Irondeep Supplies")
     and RowFor("Battlegrounds").row.open and page.title.text, "Irondeep Supplies")
+local ashenvaleQuest
+for id, quest in pairs(SpokenQuestsCompendium.quests) do
+    if not ashenvaleQuest and quest.zones and quest.zones[1] == ASHENVALE and Tab:Lists(id) and not quest.dungeon then
+        ashenvaleQuest = id
+    end
+end
+Unmeasured()
+Tab:Open(ashenvaleQuest)
+LaidOut()
+Expect("opened on a quest far down the list, a frame later its row is in view", InView(nil, ashenvaleQuest), true)
+Measured()
 
 -- A zone's dungeons' and raids' quests: a card inside its card, named after the dungeon
 -- where the zone has one; in a zone with several, Dungeons and Raids, a card for each
