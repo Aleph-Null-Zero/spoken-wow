@@ -626,8 +626,22 @@ local function ZoneList(zones)
 	return table.concat(names, ", ")
 end
 
+-- Where a readable is, under its title: its first two zones, and how many more. One line: a book
+-- shelved in seven zones would be cut short mid-name.
+local function InZones(zones)
+	local names = {}
+	for i = 1, math.min(2, #zones) do table.insert(names, MapName(zones[i])) end
+	local line = L.READABLES_IN_FMT:format(table.concat(names, ", "))
+	if #zones > 2 then line = line .. L.READABLES_MORE_FMT:format(#zones - 2) end
+	return line
+end
+
+local KIND = { world = "KIND_WORLD", carried = "KIND_CARRIED" }
+
+-- How a readable is had, at the top of its page: in the world or carried, then each source.
 local function Sources(place)
 	local lines = {}
+	if KIND[place.kind] then table.insert(lines, L[KIND[place.kind]]) end
 	for _, from in ipairs(place.from or {}) do
 		local key = HOW[from[1]]
 		if key and L[key] then
@@ -648,7 +662,7 @@ local function Count(found, total)
 	return L.FOUND_FMT:format(found, total)
 end
 
--- A page's line: where it is and what it counts, one line.
+-- A place's page line: the place that holds it and what it counts, one line.
 local function InAndCount(where, found, total)
 	return L.READABLES_IN_FMT:format(where) .. " · " .. Count(found, total)
 end
@@ -676,8 +690,8 @@ local function ShowEntry()
 			where = L.GROUP_EVENTS
 		elseif place.wide then
 			where = L.GROUP_WIDE
-		elseif place.zones then
-			where = (place.kind == "world" and L.KIND_WORLD or L.KIND_CARRIED) .. " · " .. ZoneList(place.zones)
+		elseif place.zones and #place.zones > 0 then
+			where = InZones(place.zones)
 		else
 			where = L.GROUP_UNKNOWN
 		end
@@ -711,12 +725,12 @@ local function ShowEntry()
 		return
 	end
 	if selection.type and selection.group then
-		local where = L[GROUP_LABEL[selection.group]]
+		-- A group is no place: its name, not "In" it.
 		for _, id in ipairs(Index()[selection.group]) do
 			if Index().typeOf[id] == selection.type then set[id] = true end
 		end
-		page:Show({ title = TypeLabel(selection.type), subtitle = InAndCount(where, Tally(set)),
-			text = L.READABLES_PICK })
+		page:Show({ title = TypeLabel(selection.type),
+			subtitle = L[GROUP_LABEL[selection.group]] .. " · " .. Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if selection.zones then

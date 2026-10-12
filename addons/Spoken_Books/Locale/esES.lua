@@ -134,6 +134,7 @@ L.READABLES_PICK = "Elige a la izquierda un libro, una carta, una nota o una pla
 L.READABLE_NOT_FOUND = "Aún no lo has encontrado. Ábrelo en el mundo para leerlo aquí."
 L.FOUND_FMT = "%1$d de %2$d encontrados"
 L.READABLES_IN_FMT = "Ubicación: %1$s"
+L.READABLES_MORE_FMT = " y %1$d más"
 L.BOOKS_TITLE_NTH_FMT = "%1$s (%2$d)"
 L.FROM_DROP = "Botín de %1$s"
 L.FROM_PICKPOCKET = "Robado a %1$s"

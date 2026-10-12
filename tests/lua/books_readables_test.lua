@@ -297,8 +297,9 @@ Click("Kurdran Wildhammer")
 local page = panel.page
 Expect("a readable's page: its title", page.title.text, "Kurdran Wildhammer")
 Expect("...in the spellbook's ink, as the places' page is", page.body.ink and page.body.ink[1], 0.2)
-Expect("...where it is", page.sub.text, L.KIND_WORLD .. " · Stormwind City")
-Expect("...on one line, cut short where it names many places", page.sub.wordWrap, false)
+Expect("...where it is", page.sub.text, L.READABLES_IN_FMT:format("Stormwind City"))
+Expect("...on one line", page.sub.wordWrap, false)
+Expect("...that it stands in the world, at the top of its words", (page.body.text.text or ""):find(L.KIND_WORLD .. "\n", 1, true), 1)
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)
 Click("Ranger Captain Alleria Windrunner")
 Expect("a readable not found does not open", page.title.text, "Kurdran Wildhammer")
@@ -320,9 +321,10 @@ Click("Westfall")
 Click(L.TYPE_LETTER)
 Click("A Dusty Unsent Letter")
 Expect("opened on a readable carried from a zone", page.title.text, "A Dusty Unsent Letter")
-Expect("...said to be carried, and from where", page.sub.text, L.KIND_CARRIED .. " · Westfall")
-Expect("...how it is had first, the name and the zone", (page.body.text.text or ""):find(
-    L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"), 1, true) == 1, true)
+Expect("...in the zone it is had in", page.sub.text, L.READABLES_IN_FMT:format("Westfall"))
+Expect("...its words opening on that it is carried, then how it is had, the name and the zone",
+    (page.body.text.text or ""):find(L.KIND_CARRIED .. "\n"
+    .. L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"), 1, true) == 1, true)
 
 -- The search: every match, with what holds it, opened.
 local box
@@ -380,6 +382,10 @@ SpokenBooksSettings.unlockUnfound = true
 B:RefreshReadables()
 Click("Dark Keeper Nameplate (2)")
 Expect("...and so is its page's title", page.title.text, "Dark Keeper Nameplate (2)")
+Search("civil war in the plaguelands")
+Click("Civil War in the Plaguelands")
+Expect("a readable in many zones: the line under its title names the first two and counts the rest",
+    page.sub.text, L.READABLES_IN_FMT:format("Map 1420, Map 1423") .. L.READABLES_MORE_FMT:format(5))
 SpokenBooksSettings.unlockUnfound = false
 Search("")
 
@@ -545,7 +551,9 @@ Expect("...a click opening it on the writings under it", Has(Shown(), "An Exotic
 local kindLabel = kindRow.row.label
 kindRow = KindRow("wide", kindLabel)
 Expect("...a kind chosen, its page names it and its group", page.title.text == kindLabel
-    and page.sub.text:find(L.READABLES_IN_FMT:format(L.GROUP_WIDE) .. " · ", 1, true) == 1, true)
+    and page.sub.text:find(L.GROUP_WIDE .. " · ", 1, true) == 1, true)
+Expect("...the group named as it is, not as a place a readable is in", page.sub.text:find(
+    L.READABLES_IN_FMT:format(L.GROUP_WIDE), 1, true), nil)
 kindRow.scripts.OnClick(kindRow)
 Expect("...and another click closes it", KindRow("wide", kindLabel).row.open, false)
 OpenKinds("wide")
