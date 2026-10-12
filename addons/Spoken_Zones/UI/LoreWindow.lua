@@ -616,18 +616,20 @@ function SpokenZones:ToggleLoreWindow()
 		return
 	end
 
-	-- Re-sync to where the player is standing on every open, not just the first: opening from the
-	-- minimap should land on the current zone, not wherever the last browse ended.
-	LandOnPlayer()
+	-- Opened on where the player stands now, unless they chose a place here: the refresh lands
+	-- again on a selection that was only ever where they stood.
+	if selection == landed then selection = nil end
 
 	list:ClearSearch()
 	filter = ""
 	SpokenCompendium:Open("places")
+	-- A window closed folded would reopen as the bare list.
+	SpokenCompendium:Expand()
 	SpokenZones:RefreshLoreWindow(true)
 end
 
 -- Open on a named entry rather than on the player's location. Not routed through
--- ToggleLoreWindow, which re-syncs to where the player stands: narration outlives the zone you
+-- ToggleLoreWindow, which can land on where the player stands: narration outlives the zone you
 -- started it in.
 function SpokenZones:ShowLoreFor(mapID, areaKey)
 	if not list or not mapID then

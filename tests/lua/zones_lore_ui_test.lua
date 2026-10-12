@@ -18,13 +18,16 @@ local ATLASES = { ["spellbook-Page-Right-C60"] = true, ["spellbook-divider"] = t
 _G.C_Texture = { GetAtlasInfo = function(name) return stub.ListAtlas(name) or ATLASES[name] and { width = 64, height = 11 } or nil end }
 _G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 
--- The game's portrait frame: its title and portrait, as PortraitFrameMixin has them.
+-- The game's portrait frame: its title, portrait and close button, as PortraitFrameMixin has them.
 local createFrame = _G.CreateFrame
 _G.CreateFrame = function(kind, name, parent, template)
     local frame = createFrame(kind, name, parent, template)
     if template == "PortraitFrameTemplate" then
         function frame:SetTitle(text) self.title = text end
         function frame:SetPortraitToAsset(path) self.portrait = path end
+        frame.CloseButton = createFrame("Button", nil, frame)
+    elseif template == "MaximizeMinimizeButtonFrameTemplate" then
+        frame.MinimizeButton, frame.MaximizeButton = createFrame("Button", nil, frame), createFrame("Button", nil, frame)
     end
     frame.template = template
     -- A colour painted on a texture, kept to be read back: a page with no art is one.
@@ -244,6 +247,23 @@ Expect("...offers to Contribute one", page.contribute.mapID, 1411)
 Expect("...and has nothing to play or report", page.play.mapID == nil and page.report.mapID == nil, true)
 _G.SpokenCompendium.tabs.places.onShow(window); window.Refresh()
 Expect("come back to from another tab, a place the player chose stays chosen", page.title.text, "Sen'jin Village")
+_G.SpokenCompendium:Hide()
+Z:ToggleLoreWindow()
+Expect("closed and opened again, a place the player chose stays chosen", page.title.text, "Sen'jin Village")
+-- The window's fold button: the game's template where the client has it, else the plain one.
+local function Fold()
+    for _, child in ipairs(compendium.children or {}) do
+        if type(child.MinimizeButton) == "table" then return child.MinimizeButton.scripts.OnClick(child.MinimizeButton) end
+        if child.normalTexture and tostring(child.normalTexture.texture):find("SmallerButton", 1, true) then
+            return child.scripts.OnClick(child)
+        end
+    end
+end
+Fold()
+Expect("folded, the window is the list without its page", window.pageInset:IsShown(), false)
+_G.SpokenCompendium:Hide()
+Z:ToggleLoreWindow()
+Expect("...and opened again, it unfolds to its page", window.pageInset:IsShown(), true)
 
 -- In the ink like every other page, not a lighter one that was hard to read, and still in it
 -- after a re-wrap, which sets the text again.
