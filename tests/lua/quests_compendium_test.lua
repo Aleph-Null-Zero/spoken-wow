@@ -412,6 +412,8 @@ C:Tab("quests").unlock.set(true)
 Expect("Unlock Unstarted Quests opens it", RowFor("Kobold Candles").row.locked, false)
 Click("Kobold Candles")
 words = PageWords() or ""
+Expect("...all its words, the hand-in too, though it is not completed",
+    page.body.lastParts[#page.body.lastParts].heading, L.QUEST_PART_COMPLETE)
 Expect("...its words filled for the player: the word for his sex", words:find("Hello, good sir!", 1, true) ~= nil, true)
 Expect("...and his name", words:find("Thanks for the candles, Tester,", 1, true) ~= nil, true)
 Expect("...and a line break for $B", words:find("moment?\n\nMy brother", 1, true) ~= nil, true)
@@ -440,7 +442,10 @@ Expect("...and its zone's card counts it in progress, apart from the completed",
 RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
 Expect("...in progress, then where it is", page.sub.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
-Expect("...and its words", (PageWords() or ""):find("Thanks for the candles", 1, true) ~= nil, true)
+Expect("...and its words, offered and under way", (PageWords() or ""):find("Did you gather those candles yet?", 1, true) ~= nil, true)
+Expect("...not the hand-in before it is completed: it tells how the quest ends",
+    (PageWords() or ""):find("Thanks for the candles", 1, true) == nil
+    and page.body.lastParts[#page.body.lastParts].heading ~= L.QUEST_PART_COMPLETE, true)
 Click("Elwynn Forest")
 Expect("a zone's page counts it apart from the completed",
     page.sub.text:match("^In Eastern Kingdoms · 1 of %d+ completed, 1 in progress$") ~= nil, true)
@@ -467,6 +472,9 @@ Tab:Refresh()
 completed[CANDLES] = true
 Tab:Refresh()
 Expect("a quest completed since opens", RowFor("Kobold Candles").row.locked, false)
+Click("Kobold Candles")
+Expect("...its page with the hand-in now", (PageWords() or ""):find("Thanks for the candles", 1, true) ~= nil, true)
+Click("Kobold Candles")
 Expect("...and is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
 
 -- Started Only.

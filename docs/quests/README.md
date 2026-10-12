@@ -1505,13 +1505,16 @@ are completed and in progress, and asks for one of its quests
 to be chosen from the list; it has no Play. The client has no chain of its own, so without `prev`
 in the data every quest is a row of its own.
 
-The page fills the placeholders for the player as the client does. Play plays the quest's first
-part a pack voices (its accept line, else its progress, else its complete line), and each part's
-Play that part. A part is named and pictured for who says it: the offer for the quest's giver, as
-the quest log's Play is, and the progress and the hand-in for the one it is handed in to (`ender`
-or `enderObject`, else the giver). Shift-click on a quest's row hands that part to
-`Player:Enqueue`, behind what the queue holds, and leaves the selection and the page as they were;
-a line already queued is not queued again. The page shown with no quest chosen says so.
+The page fills the placeholders for the player as the client does. A started quest's page shows
+its offer and its progress; its hand-in, with its Play and Report, shows only once the quest is
+completed, or with Unlock Unstarted Quests on, since it tells how the quest ends. Play plays the
+quest's first part shown that a pack voices (its accept line, else its progress, else its
+complete line), and each part's Play that part. A part is named and pictured for who says it:
+the offer for the quest's giver, as the quest log's Play is, and the progress and the hand-in for
+the one it is handed in to (`ender` or `enderObject`, else the giver). Shift-click on a quest's
+row hands that part to `Player:Enqueue`, behind what the queue holds, and leaves the selection
+and the page as they were; a line already queued is not queued again. The page shown with no
+quest chosen says so.
 
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
