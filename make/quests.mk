@@ -58,7 +58,7 @@ endef
         pull-history pull-live pull-recorded package-acted acted history-status sounds package package-audio \
         package-audio-complete package-meta push-complete icon \
         downloads-status \
-        factions followup-lines release release-audio release-audio-dry release-wago release-curse \
+        factions followup-lines compendium-text release release-audio release-audio-dry release-wago release-curse \
         release-dry import-corpus import-locale import-npc-sexes fill-locales import-questit export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
         sync check-synced full-release
 
@@ -258,6 +258,13 @@ factions: ## Re-export pipelines/quests/corpus/factions.json from the world DB (
 
 followup-lines: ## Re-export addons/Spoken_Quests/FollowupLines.lua from the world DB (needs MySQL)
 	@$(PYTHON) pipelines/quests/tools/export_followup_lines.py
+
+# Each quest's words, for its page in the Quests tab of Azeroth's Compendium: the client gives
+# them only while a quest's window is open, so a quest done before the addon was installed would
+# have none. Read from the committed corpus, so it needs no database; rerun after an export.
+
+compendium-text: ## Re-export addons/Spoken_Quests/Data/QuestText.lua from the corpus
+	@$(PYTHON) pipelines/quests/tools/export_quest_text.py
 
 release-dry: ## Show what `make release` would upload to CurseForge and Wago
 	@./scripts/quests/release.sh --dry-run
