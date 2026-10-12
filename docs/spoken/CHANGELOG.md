@@ -12,6 +12,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's line under a book's title stays on one line.** A book found in several places
   listed them all over two lines; the line is now cut short. *([Nucabe](https://github.com/Nucabe))*
+- **A book's highlighted word keeps pace with its voice from the start.** The recording of a
+  book's first page reads its title before the words, and the highlight began at once, running
+  ahead the whole page. It now starts once the title is said. Pages that open with their own
+  title, as gravestones do, start at once as before. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The

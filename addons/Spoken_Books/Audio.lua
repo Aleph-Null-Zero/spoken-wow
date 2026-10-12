@@ -140,6 +140,30 @@ end
 --- Language before pack order: a pack in the voice language answers before any other, and a
 --- page it lacks falls back to the fallback language's packs -- page by page, so a partial
 --- translation still reads what it has.
+-- Letters and digits only, for asking whether a page opens with its own title.
+local function Bare(text)
+	return (string.gsub(string.lower(text or ""), "[%s%p]", ""))
+end
+
+--- When each word of a book's first page is read. Its narration reads the title first, then a
+--- pause, unless the page opens with it (pipelines/books/tools/lib/text.mjs, spokenWithTitle), so
+--- the words start after the title's share of the recording, each at its share of the rest as the
+--- captions estimate it. Nil where nothing comes before the words, or the length is not known.
+local function TitleFirstTimings(title, text, length)
+	if not (length and length > 0 and title ~= "" and text and Spoken and Spoken.CaptionWords) then return nil end
+	local bare = Bare(title)
+	if bare == "" or string.sub(Bare(text), 1, string.len(bare)) == bare then return nil end
+	local words, total = Spoken:CaptionWords(text)
+	local _, heading = Spoken:CaptionWords(title .. ".")
+	if not (words and words[1] and total and total > 0 and heading and heading > 0) then return nil end
+	local lead = length * heading / (heading + total)
+	local timings = {}
+	for i, word in ipairs(words) do
+		timings[i] = lead + (length - lead) * word.start / total
+	end
+	return timings
+end
+
 function SpokenBooks:ClipFor(pageId)
 	local place = self:Data() and self:Data().pages[pageId]
 	if not place then
@@ -162,13 +186,14 @@ function SpokenBooks:ClipFor(pageId)
 				-- corpus's own is English.
 				local title = self.bookTitle and self.bookTitle[language] and self.bookTitle[language][place.book]
 					or (book and book.title) or ""
+				local length = (entry.len and entry.len > 0) and entry.len or nil
 				return {
 					key = "b:" .. pageId,
 					path = [[Interface\AddOns\]] .. pack.addon .. [[\Sounds\]] .. entry.file .. ".mp3",
 					-- 0 means the pack recorded no duration -- an imported take rather than one
 					-- this project cut. The player falls back to its own timer; a wrong number
 					-- here would reset the Play button mid-sentence.
-					length = (entry.len and entry.len > 0) and entry.len or nil,
+					length = length,
 					pageId = pageId,
 					-- A line per page: one book is one item to the player, its pages read on
 					-- with no pause or cue between.
@@ -183,6 +208,8 @@ function SpokenBooks:ClipFor(pageId)
 						-- a letter, which is most of this corpus).
 						header = oneLine and self:KindOf(place.book) or title,
 						transcript = text,
+						-- The first page's words start after its title is read.
+						timings = place.number == 1 and TitleFirstTimings(title, text, length) or nil,
 						label = oneLine and (title ~= "" and title or nil)
 							or ((book and #book.pages > 1)
 								and format(L.OPT_PAGE_COUNT_FMT, place.number, #book.pages) or nil),
