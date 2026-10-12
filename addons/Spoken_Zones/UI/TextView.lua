@@ -40,7 +40,7 @@ local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
 -- A part's heading (SetParts): the title's face, larger than the words and darker, on a line as
 -- tall as its round buttons; the words HEAD_GAP under it, PART_GAP between one part and the next.
 -- In near-black, as the quest frame's own headings on parchment are, set apart by room alone.
-local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 20, 4
+local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 34, 4
 local HEAD_INK = { 0.06, 0.04, 0.02 }
 
 local TextView = {}
