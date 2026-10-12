@@ -14,7 +14,8 @@
 // The world DB is TrinityCore's schema, as the Forever repack ships it, not the vmangos dump
 // extract.mjs reads: vmangos runs in Docker on the machine that has it, and this was written
 // where the repack ran instead. Its own PLACES_MYSQL_* variables, so the two never mix up
-// which database they read. Zones come from where each spawn stands, against the client's
+// which database they read. Zones come from where each spawn stands: the area the server's own
+// map files put the point in (PLACES_MAPS), up to its zone through the client's AreaTable and
 // UiMapAssignment (wago.tools), because the server leaves its zone columns at 0. A dungeon is
 // under the zone its entrance is in (INSTANCE_ZONE).
 //
@@ -29,6 +30,7 @@ import { fileURLToPath } from "node:url";
 import mysql from "mysql2/promise";
 
 import { loadEnv } from "../../lib/env.mjs";
+import { areaReader } from "./lib/area.mjs";
 import { quote } from "./lib/lua.mjs";
 
 await loadEnv("books");
@@ -37,6 +39,7 @@ const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Books.lua
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Places.lua", import.meta.url));
 const CACHE = fileURLToPath(new URL("./cache/", import.meta.url));
 const BUILD = process.env.PLACES_BUILD ?? "1.15.9.69109";
+const MAPS = process.env.PLACES_MAPS ?? "C:/Forever/ForeverRepack/data/maps";
 const SOURCES = 6;
 const WIDE = 8;
 const LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"];
@@ -140,8 +143,24 @@ function zoneOfArea(area) {
   return undefined;
 }
 
+// The cities, each inside the zone around it. Ironforge and the Undercity are buildings set into
+// the ground, and the map files give a point inside them the ground's area, Dun Morogh's or
+// Tirisfal's; there the rectangle, which says city, is kept.
+const CITY_IN = { 1453: 1429, 1454: 1411, 1455: 1426, 1456: 1412, 1457: 1438, 1458: 1420 };
+const areaAt = areaReader(MAPS);
+
 function zoneAt(map, x, y) {
   if (INSTANCE_ZONE[map]) return INSTANCE_ZONE[map];
+  const box = boxAt(map, x, y);
+  const area = areaAt(map, x, y);
+  const zone = area && zoneOfArea(area);
+  if (!zone || CITY_IN[box] === zone) return box;
+  return zone;
+}
+
+// The smallest zone rectangle the point is in: where the map files have no answer, and the city
+// test above.
+function boxAt(map, x, y) {
   let best;
   for (const a of assignments) {
     if (Number(a.MapID) !== map) continue;
