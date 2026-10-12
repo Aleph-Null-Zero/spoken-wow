@@ -604,11 +604,11 @@ right, on the spellbook's parchment (`UI/LorePage.lua`).
 The list has a banner for each continent, Kalimdor and the Eastern Kingdoms, each
 opening and closing on its own. Under a continent each zone is a card: its painting,
 its name, and its places found out of all with the share and a bar. A zone's places are
-its areas and, where it holds one, its city and the city's areas, the city itself one
-place; its page counts the same, and a banner
+its areas, its dungeons and raids, and, where it holds one, its city and the city's own, the
+city itself one place; its page counts the same, and a banner
 counts what its zones' cards count, of the cards the filters leave listed. A click on a
-zone's card chooses it and opens it: its city as a card one level in, with its own areas, and
-its areas as rows, a tick on each one found. Each zone's and city's card opens and
+zone's card chooses it and opens it: its city as a card one level in, with its own areas, then
+its dungeons and raids, then its areas as rows, a tick on each one found. Each zone's and city's card opens and
 closes on its own click, so several stay open together; a city's card shows only while
 its zone is open, and keeps its own state while the zone is closed. What is open lasts
 for the session and is not saved. After the
@@ -618,14 +618,32 @@ Arathi Basin and Darkspear Islands wherever the client hangs their maps. Each li
 the places with a story on this client. Chosen, a banner's page says it is in Azeroth,
 with its banner's count, and asks for one to be chosen.
 
-A place not yet discovered is listed greyed, with a padlock, and does not open; a
-continent or banner stays locked until one of its zones is found. **Unlock Undiscovered
-Zones**, in the Compendium section of Spoken's page, opens them all, and the counts
-still say what this character has found. The filter menu beside the search box holds
+A dungeon or a raid is a card inside the card of the zone of its entrance (a city's, for
+Ragefire Chasm), as the Quests tab files their quests: the Quests tab's key on its badge, its
+area's story as its page, a tick once found and no numbers. A zone with several has a
+**Dungeons and Raids** line, the Quests tab's words, with a card for each under it; the line
+counts them found out of all, opens and closes on a click, and chooses nothing.
+`Data/Dungeons.lua`, kept by hand, marks the 17 areas that are dungeons and raids, each with
+the instance's map the Quests data files its quests under (`dungeon` in
+`Spoken_Quests/Data/Compendium.lua`); `tests/lua/zones_dungeons_test.lua` checks it against
+the areas' stories and the Quests data. Razorfen Downs' story is under Thousand Needles, where
+the wiki has it, and its Classic entrance is in The Barrens: the story, its recording and its
+picture stay keyed `s:1441:razorfen downs`, frozen as every id is, and the tab lists it in The
+Barrens, where `Discovery.lua` also finds it. Blackrock Mountain's four, the Stockade,
+Razorfen Kraul, Maraudon, Ahn'Qiraj, Naxxramas and the Hall of Thanes have no area story of
+their own, so they have no card.
+
+Banners and cards list and open whether or not anything in them is found, as on the Quests
+and Books tabs. A zone's, city's or dungeon's card not yet discovered is greyed, as a card
+with none found is there, and its page, like a continent's with none of its zones found, says
+it is not discovered. An area not yet discovered is a row greyed with a padlock, listed by
+name, and does not open. **Unlock Undiscovered Zones**, in the Compendium section of Spoken's
+page, opens every area and tells every story, and the counts and the greyed cards still say
+what this character has found. The filter menu beside the search box holds
 **Discovered Only**, which leaves out the places not found, and **Voiced Only**, which
 leaves out what no installed voice pack reads and counts only what it lists; a zone
-stays while an area in it has a recording. A search lists every match a click could
-reach, with what holds it opened, and opens nothing locked. A search naming a zone or a
+stays while an area in it has a recording. A search lists every match, with what holds it
+opened, greyed as browsing lists it. A search naming a zone or a
 city lists all its areas; one naming a banner (a continent, Other Lands, Battlegrounds)
 lists its zones' cards as the player left them, each opening and closing on a click as
 it does unsearched. A click on a card the search opened closes it for that search, and
@@ -645,7 +663,7 @@ player chose stays chosen. Opened from the map's panel, it opens on that place.
 The page has the place's name, the line under it (where it sits, a click away, and its
 card's or banner's count, as "In Kalimdor · 3 of 12 discovered"), its picture and its story, with **Play** and **Report** on the
 title's right. A place with no story yet says so and offers Contribute. A place not yet
-discovered, opened from the map's panel, says to travel there to discover it.
+discovered, its card chosen or opened from the map's panel, says to travel there to discover it.
 
 ### Rows
 
