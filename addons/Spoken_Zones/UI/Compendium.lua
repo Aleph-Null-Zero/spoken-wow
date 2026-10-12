@@ -788,10 +788,17 @@ function C.NewList(panel, opts)
 	-- Halfway down the strip of the window between its title bar and the list.
 	searchBox:SetPoint("TOPLEFT", panel, "TOPLEFT", left + 66, top - 11.5)
 	if type(searchBox.Instructions) == "table" then searchBox.Instructions:SetText(opts.search or "") end
+	-- Drawn again for a new search or filter: on the chosen row where it is still listed, else at
+	-- the top. A search's results start at the top.
+	local function Rescroll()
+		if list.filter ~= "" or not (list.items and list:ScrollToSelection(list.items)) then
+			list.scroll:SetVerticalScroll(0)
+		end
+	end
 	searchBox:HookScript("OnTextChanged", function(self)
 		list.filter = string.lower(strtrim and strtrim(self:GetText() or "") or (self:GetText() or ""))
-		list.scroll:SetVerticalScroll(0)
 		if opts.onSearch then opts.onSearch(list.filter) end
+		Rescroll()
 	end)
 	list.searchBox = searchBox
 
@@ -830,8 +837,8 @@ function C.NewList(panel, opts)
 
 	-- The filter menu.
 	local function Changed()
-		scroll:SetVerticalScroll(0)
 		if panel.Refresh then panel:Refresh() end
+		Rescroll()
 	end
 	local function OnlyOn() return opts.onlyGet ~= nil and opts.onlyGet() and true or false end
 	local function SetOnly(on)
@@ -1420,11 +1427,13 @@ function List:Render()
 
 	self.child:SetHeight(math.max(y + LIST_FOOT, 1))
 	self.noMatch:SetShown(#items == 0)
+	self.items = items
 	return items
 end
 
---- Bring the chosen row into view. Only when a tab opens on something: doing it on every
---- refresh would yank the list out from under a click.
+--- Bring the chosen row into view, and say whether it is listed. Only when a tab opens on
+--- something or the list is filtered again: doing it on every refresh would yank the list out
+--- from under a click.
 function List:ScrollToSelection(items)
 	local y = LIST_TOP
 	for i, item in ipairs(items) do
@@ -1437,10 +1446,11 @@ function List:ScrollToSelection(items)
 			local range = math.max(0, (self.child:GetHeight() or 0) - viewHeight)
 			local target = y - (viewHeight / 2) + (height / 2)
 			self.scroll:SetVerticalScroll(math.max(0, math.min(range, target)))
-			return
+			return true
 		end
 		y = y + height
 	end
+	return false
 end
 
 function List:ClearSearch()
