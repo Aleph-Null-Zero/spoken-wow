@@ -218,6 +218,8 @@ local function Widget(kind, name)
     function w:SetTexture(t) self.texture = t; self.atlas = nil; return true end
     function w:GetTexture() return self.texture end
     function w:SetAtlas(name) self.atlas = name; self.texture = nil end
+    -- A gradient stays on a texture until another replaces it, as the client keeps it.
+    function w:SetGradient(orientation, from, to) self.gradient = { orientation = orientation, from = from, to = to } end
     function w:GetAtlas() return self.atlas end
     function w:SetTexCoord(...) self.texCoord = { ... } end
     -- Recorded: a greyed badge or toggle is all that says nothing is found or opens.
@@ -542,6 +544,7 @@ function M.LabelsUnder(frame, found)
 end
 function _G.CreateFont(name) return Widget("Font", name) end
 _G.GameFontNormal = Widget("Font", "GameFontNormal")
+_G.CreateColor = _G.CreateColor or function(r, g, b, a) return { r = r, g = g, b = b, a = a } end
 _G.GameTooltip = Widget("Frame", "GameTooltip")
 function _G.GameTooltip_Hide() end
 function _G.MouseIsOver() return false end

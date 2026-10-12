@@ -194,6 +194,8 @@ Expect("...and the zone still the one chosen", page.title.text, "Durotar")
 RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
 Expect("...and another opens it again", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 Expect("...open once more", RowFor("Durotar").row.open, true)
+Expect("...the banner's line beside it solid again, not left fading from when the card ended it",
+    RowFor("Durotar").bannerRail.gradient.from.a, RowFor("Durotar").bannerRail.gradient.to.a)
 RowFor("Valley of Trials").scripts.OnClick(RowFor("Valley of Trials"))
 RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
 Expect("an area chosen, a click on its zone's card still closes it", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar")

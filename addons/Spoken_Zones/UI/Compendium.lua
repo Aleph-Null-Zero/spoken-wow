@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 27
+local VERSION = 28
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -678,21 +678,22 @@ end
 -- A piece of the faint gold line down an open card's contents: solid, or where the line ends,
 -- fading out to its foot.
 local RAIL_INK = { 0.84, 0.71, 0.31, 0.2 }
+-- Both ends set every time, solid or not: a row drawn again keeps its texture, and a fade left on
+-- it from when it ended the line showed through once more rows came under it.
 local function PaintRail(texture, ends)
 	local r, g, b, a = RAIL_INK[1], RAIL_INK[2], RAIL_INK[3], RAIL_INK[4]
+	local foot = ends and 0 or a
 	texture.fades = ends and true or false
-	if ends then
-		texture:SetColorTexture(1, 1, 1, 1)
-		if CreateColor and texture.SetGradient and pcall(texture.SetGradient, texture, "VERTICAL",
-			CreateColor(r, g, b, 0), CreateColor(r, g, b, a)) then
-			return
-		end
-		if texture.SetGradientAlpha then
-			texture:SetGradientAlpha("VERTICAL", r, g, b, 0, r, g, b, a)
-			return
-		end
+	texture:SetColorTexture(1, 1, 1, 1)
+	if CreateColor and texture.SetGradient and pcall(texture.SetGradient, texture, "VERTICAL",
+		CreateColor(r, g, b, foot), CreateColor(r, g, b, a)) then
+		return
 	end
-	texture:SetColorTexture(r, g, b, a)
+	if texture.SetGradientAlpha then
+		texture:SetGradientAlpha("VERTICAL", r, g, b, foot, r, g, b, a)
+		return
+	end
+	texture:SetColorTexture(r, g, b, (foot + a) / 2)
 end
 
 local function Tint(fontString, colour)
