@@ -41,7 +41,27 @@
     {"id": 1251, "title": "The Black Shield", "source": "QD5: the DB's title ends in a space; QuestieDB has it trimmed"},
     {"id": 2866, "title": "The Ruins of Solarsal", "source": "QD5: the DB's title ends in a space; QuestieDB has it trimmed"},
     {"id": 5821, "title": "Bodyguard for Hire", "source": "QD5: the DB's title ends in a space; QuestieDB has it trimmed"},
-    {"id": 6143, "title": "Other Fish to Fry", "source": "QD5: the DB's title ends in a space; QuestieDB has it trimmed"}
+    {"id": 6143, "title": "Other Fish to Fry", "source": "QD5: the DB's title ends in a space; QuestieDB has it trimmed"},
+    {"id": 854, "zones": [1413], "source": "QD2: Journey to the Crossroads is given at Camp Taurajo, in The Barrens; the area grid of the Forever server's map files puts the giver there (audit zq_true.txt)"},
+    {"ids": [842, 924], "zones": [1413], "source": "QD2: given at Far Watch Post, in The Barrens; the area grid of the Forever server's map files puts the giver there (audit zq_true.txt)"},
+    {"id": 8464, "zones": [1452], "source": "QD2: Salfa stands on the Everlook road and the Winterfall are in Winterspring; the area grid of the Forever server's map files puts the giver there (audit zq_true.txt)"},
+    {"id": 3861, "sort": 0, "source": "QD2/QE9: CLUCK!'s giver is any chicken, so it has no zone; it was under Special, which holds Children's Week and the library books"},
+    {"ids": [7905, 7926], "sort": 364, "source": "QD2: breadcrumbs to the Darkmoon Faire: https://warcraft.wiki.gg/wiki/The_Darkmoon_Faire"},
+    {"ids": [98888, 98896], "zones": [2524], "source": "QD2: the progress text names the battleground; https://warcraft.wiki.gg/wiki/Darkspear_Islands is a Forever battleground"},
+    {"ids": [8371, 8367, 8388], "zones": [1459, 1460, 1461], "source": "QD2/QE10: Concerted Efforts and For Great Honor ask for the marks of all three battlegrounds: https://warcraft.wiki.gg/wiki/Concerted_Efforts, https://warcraft.wiki.gg/wiki/For_Great_Honor"},
+    {"ids": [8565, 8566], "zones": [1461], "source": "QD3: turned in for Arathi Basin marks: https://warcraft.wiki.gg/wiki/Past_Victories_in_Arathi"},
+    {"ids": [8567, 8568, 8569, 8570], "zones": [1460], "source": "QD3: turned in for Warsong Gulch marks: https://warcraft.wiki.gg/wiki/Past_Victories_in_Warsong_Gulch"},
+    {"id": 3906, "dungeon": 230, "source": "QD2: Disharmony of Flame is done in Blackrock Depths, as its sibling Disharmony of Fire (3907) is filed: https://warcraft.wiki.gg/wiki/Disharmony_of_Flame"},
+    {"id": 2882, "zones": [1446], "source": "QD3: Cuergo's Treasure Map leads to Lost Rigger Cove, Tanaris; the only quest of Treasure Map (221)"},
+    {"id": 8228, "sort": 101, "source": "QD3: the Alliance twin of 8229 Could I get a Fishing Flier?, which is under Fishing"},
+    {"ids": [8446, 8447], "zones": [1450], "source": "QD3: Keeper Remulos in Moonglade ends Shrouded in Nightmare and gives Waking Legends; sort 1 (Epic) held only these two: https://warcraft.wiki.gg/wiki/Shrouded_in_Nightmare"},
+    {"id": 8996, "dungeon": 229, "source": "QD3: Bodley stands in Blackrock Spire, where the rest of the chain is filed"},
+    {"ids": [94472, 94473, 94616], "sort": 82, "classes": 64, "source": "QD3: Earth, Fire and Water Sapta, as 1516-1536 in the Shaman group"},
+    {"id": 95042, "sort": 141, "classes": 2, "source": "QD3: the Forsaken paladins' Seeking the Kor Gem, counterpart of 1442 in the Paladin group"},
+    {"ids": [6661, 6662], "zones": [1455], "source": "QD3: Monty and Nipsy stand in the Deeprun Tram (map 369), which no map of its own shows; Ironforge is the city it joins"},
+    {"id": 91904, "zones": [1433], "source": "QD3: Marcy Baker and Magistrate Solomon in Lakeshire; LoreTeller files it under Redridge Mountains"},
+    {"id": 95189, "zones": [1453], "source": "QD3: ends at Lady Dena Kennedy or General Marcus Jonathan in Stormwind, as its Alliance sibling 95195 is filed; its Horde twin 95204 is under Undercity"},
+    {"id": 98372, "zones": [1431], "source": "QD3: ends at a Night Watch Guard in Darkshire"}
   ],
   "chains": []
 }
