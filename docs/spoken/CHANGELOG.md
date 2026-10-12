@@ -19,6 +19,14 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Azeroth's Compendium groups each zone's quests into their chains.** A chain's row is named
   after its last quest and shows how many of its quests you have completed, how many are in
   progress, and a bar; a chain you have finished gets a tick. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium files Forever's quests where Forever's own client files them.** Most of
+  the quests that were in Place Unknown are now under their zone, their class or a group of
+  their own such as Camping, and more quests are linked into their chains.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium lists only the quests your side, race and class can take.** One side's
+  quests no longer show for the other, a Skyborne character sees its side's quests and the
+  Skyborne's own, and a class's quests show for that class alone.
+  *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
