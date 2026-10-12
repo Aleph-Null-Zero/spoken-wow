@@ -109,9 +109,9 @@ end
 
 --- Start the client's round trip for a creature a portrait may soon be drawn from. Quest-log
 --- play buttons call it (Spoken:PrimePortrait) as the log draws them, so the wait is usually
---- over by the click.
+--- over by the click. Returns the creature's appearance once the client has it, else nil.
 function StaticPortrait:Prime(creature)
-    DisplayFor(creature)
+    return DisplayFor(creature)
 end
 
 --- Whether the creature the viewport fell back to the book for has an appearance now. Asked

@@ -14,8 +14,9 @@
 -- Every card and banner counts its quests completed out of all and those in progress; Voiced Only
 -- leaves the quests no voice pack has out of the counts as it does out of the list.
 --
--- The page shows what is chosen. A quest's is its title, where it is and its words, with Play
--- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. Its hand-in waits until
+-- The page shows what is chosen. A quest's is its title, where it is and its words, its offer and
+-- its hand-in each under the face and name of who says it, with Play where a voice pack has it,
+-- or L.QUEST_NOT_FOUND where it does not open. Its hand-in waits until
 -- it is completed, unless Unlock Unstarted Quests is on. A banner's, card's or line's is its name,
 -- what holds it and its count on one line, and L.QUESTS_PICK, the quests being on the left to
 -- choose. A place is "In" its holder; a section, a class, profession or event and Place Unknown
@@ -99,8 +100,10 @@ local function SectionOf(sort)
 end
 local filter = ""
 
-local MOMENTS = { "accept", "progress", "complete" }
-local HEADINGS = { accept = "QUEST_PART_ACCEPT", progress = "QUEST_PART_PROGRESS", complete = "QUEST_PART_COMPLETE" }
+-- What a quest's page shows and plays: the offer and the hand-in. The progress, said while the
+-- quest is under way, is left out.
+local MOMENTS = { "accept", "complete" }
+local HEADINGS = { accept = "QUEST_PART_ACCEPT", complete = "QUEST_PART_COMPLETE" }
 
 --------------------------------------------------------------------------------
 -- What there is
@@ -1053,7 +1056,7 @@ local function Shows(id, moment)
     return moment ~= "complete" or Completed(id) or Unlocked()
 end
 
--- Who says one moment of a quest: the progress and the hand-in are said by the one it is handed
+-- Who says one moment of a quest: the hand-in is said by the one it is handed
 -- in to (`ender`, `enderObject` in the data, absent where that is the giver), the offer by its
 -- giver, as the quest log's Play names it.
 local function Speaker(id, moment)
@@ -1064,19 +1067,25 @@ local function Speaker(id, moment)
     return DataModules:GetQuestLogQuestGiverTypeAndID(id)
 end
 
+-- The name of who says one moment, as the packs name them, or nil where none is known.
+local function SpeakerName(kind, speaker)
+    return speaker and VO.DataModules:GetObjectName(kind, speaker) or nil
+end
+
 -- What the player is given to play one moment of a quest, named and pictured for who says it.
 local function SoundData(id, moment, origin)
-    local DataModules, Enums = VO.DataModules, VO.Enums
+    local Enums = VO.Enums
     local kind, speaker = Speaker(id, moment)
-    local name = speaker and DataModules:GetObjectName(kind, speaker) or Title(id)
+    local name = SpeakerName(kind, speaker) or Title(id)
     local guid = speaker and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, speaker) or nil
     return { event = EVENTS[moment], questID = id, title = Title(id), name = name, unitGUID = guid,
         text = PartText(id, moment), origin = origin }
 end
 
 -- Whether a voice pack has any of a quest (Voiced Only), and a quest played from its row
--- (shift-click): what is said when it is offered, under way and handed in, as far as the voice
--- packs have it, named for who says it. The quest's page plays each part from its own Play.
+-- (shift-click): what is said when it is offered and handed in, as far as the voice packs have
+-- it, named for who says it. A quest voiced only in its progress counts as unvoiced. The quest's
+-- page plays each part from its own Play.
 local PLAY = {
     has = function(id)
         for _, moment in ipairs(MOMENTS) do
@@ -1084,7 +1093,7 @@ local PLAY = {
         end
         return false
     end,
-    -- One part, the first a pack voices: the offer, the progress and the hand-in are said at
+    -- One part, the first a pack voices: the offer and the hand-in are said at
     -- different times, not as one speech. Its words go with it, for the window to show. Nothing
     -- where a part of the quest is queued already: one part of a quest at a time.
     -- `queued`: behind what the queue already holds, not played at once.
@@ -1150,10 +1159,42 @@ local function PartButtons(moment)
     return partButtons[moment]
 end
 
--- A quest's words in parts, the offer, the progress and the hand-in each under its heading, with
--- Play and Report for that part where a pack voices it; the hand-in only where it Shows. A part a
--- pack voices whose words are not known says so, and is there to be played and reported. nil with
--- no words and nothing voiced.
+-- Each part's face, at the left of its heading's line, as the Small Window shows who speaks: made
+-- once, given the speaker of the quest shown. false where Spoken could not make one.
+local partFaces = {}
+local FACE_SIZE = 44
+local BULLETS = { accept = "quest-accept", complete = "quest-complete" }
+
+local function PartFace(moment)
+    if partFaces[moment] ~= nil then return partFaces[moment] or nil end
+    if not (page and Spoken and Spoken.CreateSpeakerFace) then return nil end
+    local ok, face = pcall(Spoken.CreateSpeakerFace, Spoken, page.body.child, FACE_SIZE)
+    if not ok then
+        print("|cffff5555Spoken Quests|r: " .. tostring(face))
+        partFaces[moment] = false
+        return nil
+    end
+    face:Hide()
+    partFaces[moment] = face
+    return face
+end
+
+-- Who says one moment, for its face: the creature SoundData names, else the object or item with
+-- the quest's item where an item offers it, else no one (the book).
+local function FaceSpeaker(id, moment)
+    local Enums = VO.Enums
+    local kind, speaker = Speaker(id, moment)
+    local bullet = BULLETS[moment]
+    if not speaker then return { bullet = bullet } end
+    if Enums.GUID:IsCreature(kind) then return { creatureID = speaker, bullet = bullet } end
+    local icon = kind == Enums.GUID.Item and Spoken.QuestItemIcon and Spoken:QuestItemIcon(id) or nil
+    return { objectOrItem = true, icon = icon, bullet = bullet }
+end
+
+-- A quest's words in parts, the offer and the hand-in each under its heading, with the face and
+-- name of who says it beside the heading, and Play and Report for that part where a pack voices
+-- it; the hand-in only where it Shows. A part a pack voices whose words are not known says so,
+-- and is there to be played and reported. nil with no words and nothing voiced.
 local function Parts(id)
     local parts = {}
     local reportsHidden = Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()
@@ -1171,7 +1212,10 @@ local function Parts(id)
                 PaintPartPlay(buttons.play)
                 list = { buttons.report, buttons.play }
             end
-            table.insert(parts, { heading = L[HEADINGS[moment]], text = text, buttons = list })
+            local face = PartFace(moment)
+            if face then face:SetSpeaker(FaceSpeaker(id, moment)) end
+            table.insert(parts, { heading = L[HEADINGS[moment]], text = text, buttons = list, face = face,
+                caption = face and SpeakerName(Speaker(id, moment)) or nil })
         end
     end
     return #parts > 0 and parts or nil
@@ -1672,7 +1716,8 @@ local function OnEvent(_, event, a)
     if event == "QUEST_DETAIL" then
         QuestsTab:Keep("accept", GetQuestText and GetQuestText(), GetTitleText and GetTitleText())
     elseif event == "QUEST_PROGRESS" then
-        QuestsTab:Keep("progress", GetProgressText and GetProgressText(), GetTitleText and GetTitleText())
+        -- Its title alone: the page has no progress part to show its words.
+        QuestsTab:Keep("progress", nil, GetTitleText and GetTitleText())
     elseif event == "QUEST_COMPLETE" then
         QuestsTab:Keep("complete", GetRewardText and GetRewardText(), GetTitleText and GetTitleText())
     elseif event == "QUEST_TURNED_IN" then

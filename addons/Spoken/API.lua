@@ -111,6 +111,27 @@ function Spoken:PrimePortrait(creatureID)
     if skin and StaticPortrait then StaticPortrait:Prime(creatureID) end
 end
 
+--- The Small Window's round portrait, `size` across, on `parent`: the speaker masked round in its
+--- ring, with a line's badge at the lower right, for a page of a feature addon's to show who says
+--- a line. Anchor it yourself. Additive: guard on the field.
+---
+---   face:SetSpeaker({
+---     creatureID   = 197,             -- the creature to draw, or nil
+---     guid         = "Creature-...",  -- optional; drawn from its unit while one is about
+---     objectOrItem = false,           -- an object or an item: its `icon`, else a posted notice
+---     icon         = [[...]],         -- optional; an object's or item's picture
+---     bullet       = "quest-accept",  -- optional; the badge, a RegisterBullet id or a quest moment's
+---   })
+---
+--- A creature the client has not cached yet shows the book and turns into its face once the client
+--- has it; one with no face to draw keeps the book, as the Small Window does.
+---@param parent table a frame
+---@param size number
+---@return table face  a Frame, with SetSpeaker
+function Spoken:CreateSpeakerFace(parent, size)
+    return MinimalPlayer:CreateFace(parent, size)
+end
+
 --- How lines are shown: "subtitle", "none", "minimal", "classic" or "dialogueui".
 --- Additive: guard on the field.
 function Spoken:GetPlayerStyle()
