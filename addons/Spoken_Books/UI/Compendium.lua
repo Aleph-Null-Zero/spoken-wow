@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 16
+local VERSION = 17
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1581,24 +1581,48 @@ function C.NewPage(parent, addon, play)
 	Ink(title, INK)
 	self.title = title
 
+	-- The line under the title as the places' page sets it: a line 16 high, its words in the middle,
+	-- 2 under the title; none at all where there is nothing to say.
 	local sub = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 	sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
 	sub:SetPoint("RIGHT", frame, "RIGHT", -RIGHT, 0)
+	sub:SetHeight(16)
 	sub:SetJustifyH("LEFT")
+	if sub.SetJustifyV then sub:SetJustifyV("MIDDLE") end
 	-- One line, cut short with an ellipsis: a book found in several places names them all.
 	if sub.SetWordWrap then sub:SetWordWrap(false) end
 	if sub.SetMaxLines then sub:SetMaxLines(1) end
 	Ink(sub, INK)
 	self.sub = sub
 
+	-- The spellbook's divider, as the places' page draws it: at its own size, cut short where the
+	-- page is narrower, never stretched (stretched, its flourish widens).
 	local divider = frame:CreateTexture(nil, "ARTWORK")
 	divider:SetHeight(11)
 	divider:SetPoint("TOPLEFT", sub, "BOTTOMLEFT", -6, -10)
-	divider:SetPoint("RIGHT", frame, "RIGHT", -RIGHT, 0)
+	local rule
 	if ZonesLoaded() then
-		divider:SetTexture(ZONES_ART .. "spellbook-divider")
-		divider:SetTexCoord(0, 0.641602, 0, 0.6875)
-	elseif not Atlas(divider, "spellbook-divider") then
+		rule = { file = ZONES_ART .. "spellbook-divider", width = 657, left = 0, right = 0.641602, top = 0, bottom = 0.6875 }
+	else
+		local spot = AtlasSpot("spellbook-divider")
+		if spot then
+			rule = { file = spot.file or spot.filename, width = spot.width, left = spot.leftTexCoord, right = spot.rightTexCoord,
+				top = spot.topTexCoord, bottom = spot.bottomTexCoord }
+		end
+	end
+	if rule then
+		divider:SetTexture(rule.file)
+		local function Fit()
+			local room = (frame:GetWidth() or 0) - (PAD - 6) - RIGHT
+			if room <= 0 then return end
+			local width = math.min(room, rule.width)
+			divider:SetWidth(width)
+			divider:SetTexCoord(rule.left, rule.left + (rule.right - rule.left) * width / rule.width, rule.top, rule.bottom)
+		end
+		frame:HookScript("OnSizeChanged", Fit)
+		Fit()
+	else
+		divider:SetPoint("RIGHT", frame, "RIGHT", -RIGHT, 0)
 		divider:SetColorTexture(INK[1], INK[2], INK[3], 0.35)
 		divider:SetHeight(1)
 	end
@@ -1615,7 +1639,8 @@ function C.NewPage(parent, addon, play)
 	-- Play, the player's round button, on the heading's right as the places' page has it.
 	if play and _G.Spoken and Spoken.CreateRoundButton then
 		local button = Spoken:CreateRoundButton(frame, "play")
-		button:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -RIGHT, -TOP + 1)
+		-- Where the places' page has it: level with the title's first line.
+		button:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -RIGHT, -TOP - 1)
 		button:SetScript("OnClick", function()
 			local target = self.target
 			if target == nil then return end
@@ -1646,6 +1671,7 @@ end
 function Page:Show(entry)
 	self.title:SetText(entry.title or "")
 	self.sub:SetText(entry.subtitle or "")
+	self.sub:SetHeight((entry.subtitle and entry.subtitle ~= "") and 16 or 1)
 	self.body:SetColor(INK[1], INK[2], INK[3])
 	self.body:SetText(entry.text or "")
 	self.target = entry.target
