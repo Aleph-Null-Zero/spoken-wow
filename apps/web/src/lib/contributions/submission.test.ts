@@ -76,6 +76,12 @@ describe("submissionFrom", () => {
     ).toBe(null);
   });
 
+  it("refuses text that is only whitespace, which normalises to nothing", () => {
+    expect(
+      submissionFrom({ source: "quests", fields: { quest: "1", event: "progress" }, text: " \n\t" }, "raw"),
+    ).toBe(null);
+  });
+
   it("dedups on the normalised text, so trailing whitespace is not a second row", () => {
     const spaced: Envelope = { ...quests, text: "Убей шестерых.   \n\n\n" };
     expect(submissionFrom(spaced, "raw")?.dedup).toBe(submissionFrom(quests, "raw")?.dedup);
