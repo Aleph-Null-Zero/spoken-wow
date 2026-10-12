@@ -16,6 +16,14 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   book's first page reads its title before the words, and the highlight began at once, running
   ahead the whole page. It now starts once the title is said. Pages that open with their own
   title, as gravestones do, start at once as before. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium has a Quests tab.** Every quest your character's race and class can take,
+  by zone, then by class, profession or season, with what its NPC says when offering it, while it
+  is under way and when you hand it in, and Play for its voice. Quests you have completed open; the
+  rest are greyed until Unlock Uncompleted Quests is on, in the Compendium section of Spoken's
+  page. On a client in another language, a quest shows in that language once you have seen its
+  window. *([Nucabe](https://github.com/Nucabe))*
+- **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
+  short. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The

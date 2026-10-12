@@ -1,7 +1,8 @@
 -- A scrolling block of wrapped text, with a scrollbar: Spoken Zones' stories, beside the map and in
--- Azeroth's Compendium, and Spoken Books' readables there, so all of them scroll and wrap alike.
+-- Azeroth's Compendium, and Spoken Books' readables and Spoken Quests' quests there, so all of them
+-- scroll and wrap alike.
 --
--- Carried byte for byte by both addons, as UI/Layout.lua is: what it makes goes on the addon that
+-- Carried byte for byte by all three addons, as UI/Layout.lua is: what it makes goes on the addon that
 -- loads it (`...`), which also answers the words' size (Addon:Get("fontSize")).
 --
 -- The scrollbar is built by hand from the game's minimal scroll bar art (MinimalScrollBar's

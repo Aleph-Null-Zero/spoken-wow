@@ -528,7 +528,8 @@ local function Build(canvas)
     DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each
-    -- add a tab to, opened here and from the minimap menu, with each tab's Unlock switch. The tabs
+    -- add a tab to, Quests too where either is there, opened here and from the minimap menu, with
+    -- each tab's Unlock switch. The tabs
     -- register once the world is up, after this page is built, so the rows ask for them each time
     -- they are drawn; with neither part installed the section has nothing showing and hides.
     local function Compendium() return _G.SpokenCompendium end
@@ -549,6 +550,7 @@ local function Build(canvas)
     for _, unlock in ipairs({
         { tab = "places", part = "zones", label = L.OPT_UNLOCK_PLACES, tip = L.OPT_UNLOCK_PLACES_TIP, module = L.OPT_PART_ZONES },
         { tab = "readables", part = "books", label = L.OPT_UNLOCK_WRITINGS, tip = L.OPT_UNLOCK_WRITINGS_TIP, module = L.OPT_PART_BOOKS },
+        { tab = "quests", part = "quests", label = L.OPT_UNLOCK_QUESTS, tip = L.OPT_UNLOCK_QUESTS_TIP, module = L.OPT_PART_QUESTS },
     }) do
         local row = layout:Checkbox(unlock.label, unlock.tip,
             function() local tab = Tab(unlock.tab); return tab ~= nil and tab.unlock ~= nil and tab.unlock.get() end,
@@ -798,7 +800,7 @@ local function Build(canvas)
         Layout.Confirm(L.OPT_RESET_ALL_CONFIRM, L.OPT_RESET_AND_RELOAD, L.CANCEL, function()
             -- The Unlock switches are on this page but kept with each part's settings, which
             -- ResetProfile does not reach, and each part's own Reset skips them.
-            for _, key in ipairs({ "places", "readables" }) do
+            for _, key in ipairs({ "places", "readables", "quests" }) do
                 local tab = Tab(key)
                 if tab and tab.unlock then tab.unlock.set(false) end
             end

@@ -13,6 +13,7 @@ setfenv(1, VoiceOver)
 --   UI/DialogPlayButton.lua  why the quest window did not read itself
 --   Compatibility.lua      Play/Stop, Contribute and Report on the quest-log details panel
 --   Player.lua             minimap menu entries and player settings link
+--   UI/QuestsTab.lua       the Quests tab of Azeroth's Compendium
 --
 -- What the gossip module shows too -- the windows' Listen and Contribute buttons, the Report
 -- action and its dialog -- is the dialogue core's, in Spoken's strings (DIALOGUE_*).
@@ -193,3 +194,19 @@ L.OPT_DUI_UNKNOWN = "This version of DialogueUI is not recognised."
 L.REASON_DUI_CAPTIONS = "Turn on Mark the Words Being Read to use this."
 
 L.OPT_SECTION_START_OVER = "Start Over"
+--------------------------------------------------------------------------------
+-- Azeroth's Compendium: the Quests tab (UI/QuestsTab.lua)
+--------------------------------------------------------------------------------
+
+L.COMPENDIUM_QUESTS = "Quests"
+L.QUESTS_SEARCH = "Search quests"
+L.QUESTS_NONE = "Nothing matches."
+L.QUESTS_FOUND_ONLY = "Completed Only"
+L.QUESTS_PICK = "Choose a quest on the left to read it."
+L.QUESTS_ELSEWHERE = "Place Unknown"
+L.QUEST_NOT_FOUND = "You have not completed this quest yet. Complete it in the world to read it here."
+L.QUESTS_FOUND_FMT = "%1$d of %2$d completed"
+L.QUEST_PART_ACCEPT = "Offer"
+L.QUEST_PART_PROGRESS = "Progress"
+L.QUEST_PART_COMPLETE = "Completion"
+L.QUEST_NO_TEXT = "No words are known for this quest."
