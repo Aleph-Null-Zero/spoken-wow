@@ -9,6 +9,12 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   the lore books under Scholomance and the Scarlet Monastery. A zone with several dungeons holds
   them under a Dungeons and Raids line. Searching for a dungeon's name lists all it holds, and
   inside a dungeon the tab opens on its card. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium's Zones tab lists dungeons and raids as cards, and opens every zone.**
+  Each dungeon or raid is a card inside the zone of its entrance, as on the Quests tab, under a
+  Dungeons and Raids line where the zone has several; Razorfen Downs is in The Barrens. Continents
+  and zones you have not discovered open as on Quests and Books: their cards are greyed and their
+  areas listed, those not found greyed with a padlock, and a search finds them too. Their stories
+  stay hidden until you discover them, unless Unlock Undiscovered Zones is on. *([Nucabe](https://github.com/Nucabe))*
 - **Play in Azeroth's Compendium works as the quest log's.** It shows Stop while its part or book
   is read and Replay once you stop it; Stop no longer takes the line out of the queue, and Play
   while the queue is stopped plays at once. A queue emptied while stopped no longer stays stopped,

@@ -106,6 +106,19 @@ where.map = 1426
 onZone()
 Expect("...a zone's still does", SpokenZonesCharacter.visited["1426"], true)
 
+-- Razorfen Downs: its story kept under Thousand Needles, its entrance in The Barrens, where the
+-- game reports it (Data/Dungeons.lua).
+function Z:DungeonOf(mapID, key) if mapID == 1441 and key == "razorfen downs" then return 1413, 129 end end
+Expect("a dungeon whose story is under another zone is not found before it is", Z:IsFound(1441, "razorfen downs"), false)
+SpokenZonesCharacter.visited["1413/razorfen downs"] = true
+Expect("...found stood in at its entrance", Z:IsFound(1441, "razorfen downs"), true)
+SpokenZonesCharacter.visited["1413/razorfen downs"] = nil
+OVERLAYS[1413], AREAS[5] = { { hitRect = { left = 0, right = 1000, top = 0, bottom = 500 }, area = 5 } }, "Razorfen Downs"
+Z:RefreshFound()
+Expect("...and explored on its entrance's map", Z:IsFound(1441, "razorfen downs"), true)
+OVERLAYS[1413], AREAS[5] = nil, nil
+Z:RefreshFound()
+
 Expect("undiscovered places hidden unless the setting says", Z:ShowsUndiscovered(), false)
 settings.showUndiscovered = true
 Expect("...shown when it does", Z:ShowsUndiscovered(), true)

@@ -115,6 +115,13 @@ function SpokenZones:IsFound(mapID, areaKey)
 	if areaKey then
 		if visited[VisitKey(mapID, areaKey)] then return true, "stood in" end
 		if Explored(mapID).keys[areaKey] then return true, "explored on the map" end
+		-- A dungeon whose story is kept under another zone than its entrance's (Razorfen Downs) is
+		-- stood in and explored on its entrance's map.
+		local entrance = self.DungeonOf and self:DungeonOf(mapID, areaKey)
+		if entrance and entrance ~= mapID then
+			if visited[VisitKey(entrance, areaKey)] then return true, "stood in" end
+			if Explored(entrance).keys[areaKey] then return true, "explored on its entrance's map" end
+		end
 		return false
 	end
 	if visited[VisitKey(mapID)] then return true, "stood in" end

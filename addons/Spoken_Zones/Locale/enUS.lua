@@ -143,7 +143,7 @@ L.OPEN_IN_LORE_TIP = "This place's story in Azeroth's Compendium, beside every o
 L.OPT_SECTION_LORE = "Azeroth's Compendium"
 L.OPT_LORE_WINDOW_TIP = "Every zone and area's story, to browse and listen to wherever you are. Zones and areas you have not discovered yet are greyed out."
 L.OPT_SHOW_UNDISCOVERED = "Unlock Undiscovered Zones"
-L.OPT_SHOW_UNDISCOVERED_TIP = "Lets you open every zone and area, including those you have not discovered yet. When off, they are greyed out."
+L.OPT_SHOW_UNDISCOVERED_TIP = "Lets you read the story of every zone and area, including those you have not discovered yet. When off, they are greyed out."
 L.MENU_ZONE_SETTINGS = "Zones Settings"
 
 --------------------------------------------------------------------------------
@@ -161,6 +161,8 @@ L.ZONE_COUNT_FMT = "%1$d zones"
 L.ZONE_COUNT_ONE = "1 zone"
 L.OTHER_LANDS = "Other Lands"
 L.BATTLEGROUNDS = "Battlegrounds"
+-- The line over a zone's dungeons' and raids' cards where it has several: the Quests tab's words.
+L.DUNGEONS = "Dungeons and Raids"
 L.ZONES_PICK = "Choose a zone on the left to read its story."
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
