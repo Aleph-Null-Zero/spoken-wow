@@ -1426,15 +1426,6 @@ Shift-click on a quest's row hands the same lines to `Player:Enqueue`, every one
 queue holds, and leaves the selection and the page as they were; a line already queued is not
 queued again. The page shown with no quest chosen says so.
 
-A quest heard through gets a grey tick on its row and one under Play on its page, with a tooltip
-(`UI/QuestsHeard.lua`). Spoken's `CLIP_STOPPED` keeps each accept, progress or complete clip of
-this addon that played to its end, or was skipped with 80% of its length heard, in
-`SpokenQuestsSettings.global.CompendiumHeard[questID][moment]`, for the whole account: what the
-mark answers is whether the player has heard the recording, whichever character played it. A
-clip taken away while playback is stopped does not count, since the client cannot say how far
-it got. The quest is heard once every moment the installed packs voice is kept, so a pack that
-adds a moment takes the mark away until that moment is heard.
-
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
 zone, continent or group opened and its page shown (`QuestsTab:Open(questID)`). It shows only for

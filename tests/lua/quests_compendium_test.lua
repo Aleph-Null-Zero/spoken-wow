@@ -394,16 +394,8 @@ Expect("a chain opens on its quests, in the order they are taken",
 Expect("...rows one step further in", RowOfQuest(PIE).row.nest, 2)
 Expect("...chosen, its page has the chain's name", page.title.text, "Lost Necklace")
 Expect("...its count", page.sub.text, "2 of 4 completed, 1 in progress")
-local text = page.body.text.text or ""
-local DONE = "|A:questlog%-icon%-checkmark%-yellow:14:17|a "
-Expect("...and its quests in order, each marked: the quest log's gold tick, the quest mark, the padlock",
-    text:find("^" .. DONE .. "Lost Necklace\n.-\n\n" .. DONE .. "Pie for Billy\n.-\n\n|TInterface\\GossipFrame\\ActiveQuestIcon:0|t "
-    .. "Back to Billy\n.-\n\n|A:LFG%-lock:16:13|a Goldtooth\n" .. L.QUEST_NOT_STARTED .. "$") ~= nil, true)
-Expect("...each one started with the first sentence or two of its offer", text:find("Lost Necklace\nI lost my necklace, and "
-    .. "think that guttersnipe Billy Maclure took it! He's usually scuttling like a rat around the Maclure vineyards east "
-    .. "of here.\n\n", 1, true) ~= nil, true)
-Expect("...one not started without it", text:find("Goldtooth\n" .. L.QUEST_NOT_STARTED .. "$") ~= nil
-    and text:find("Fargodeep", 1, true), nil)
+Expect("...and, as a zone's page, the quests on the left to choose", page.body.text.text, L.QUESTS_PICK)
+Expect("...nothing to play on it", page.play:IsShown(), false)
 completed[BACK], completed[GOLDTOOTH] = true, true
 questLog = {}
 Tab:Refresh()
@@ -449,15 +441,10 @@ Expect("...and again, stops them", #VO.Player:Queued(), 0)
 Click("Kobold Candles")
 Expect("a quest no pack has has no Play", page.play:IsShown(), false)
 ClickChain("Lost Necklace")
-Expect("a chain with nothing started has no Play", page.play:IsShown(), false)
 completed[NECKLACE] = true
 Tab:Refresh()
-Expect("...one with a voiced quest started has", page.play:IsShown(), true)
-page.play.scripts.OnClick(page.play)
-queued = {}
-for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
-Expect("...which plays that quest's first part", table.concat(queued, ","), "85-accept")
-page.play.scripts.OnClick(page.play)
+Expect("a chain's page has no Play, even with a voiced quest started: its quests are on the left",
+    page.play:IsShown(), false)
 completed[NECKLACE] = nil
 ClickChain("Lost Necklace")
 
