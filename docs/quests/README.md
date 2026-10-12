@@ -1469,31 +1469,30 @@ client's language, where the zone has several (Searing Gorge holds Blackrock Mou
 There is no Azeroth row; with the player's zone unknown the tab lands on the first continent. The list is drawn in the game's own art
 (`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
 tracker's campaign header for the player's faction, without its crest, and a card is Classic's
-character select card. A zone's card shows its painting (`Spoken:ZoneIcon`) in the collections
-window's gold frame, greyed with none started, and a class, profession, season or other QuestSort
-a scroll in the same frame. The line under a card's name counts the quests completed out of all
-with how many are in progress, and on its right are the share completed (or the quest log's gold
-tick) and the Pet Journal's bar along its foot filled as far. A banner counts completed out of
-all. A quest's row has the gold tick once completed and the quest mark while in progress.
+character select card, both silvered. A zone's card shows its painting (`Spoken:ZoneIcon`) in the
+collections window's frame, silvered as the card is, greyed with none started; a dungeon's card a
+key and a class, profession, season or other QuestSort a scroll in the same frame. On the card's
+right, level with its name, are the quest mark with how many of its quests
+are in progress, the quests completed out of all and the share completed (or, once all are, the
+quest log's gold tick), and the Pet Journal's bar along its foot is filled as far. A banner counts
+completed out of all. A quest's row has the gold tick once completed and the quest mark while in progress.
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
 there, linked by `prev`) are a small card of their own, before the quests in no chain. The card
 has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
 chain's first quest (a quest's id, whose title the client gives in its own language, or words by
-language), else the first quest's title, wherever that quest is (`ChainName`). Its
-badge is the quest log's storyline mark, its line counts its quests completed out of all with how
-many are in progress, and its bar and share how many are completed. A chain that runs through
-several zones has a card in each, for its quests there. Chosen, a chain's page lists its quests in
-order, each with the gold tick, the quest mark or a padlock before its title, then "Not started"
-or, where it can be read, the first sentence or two of its offer; Play there plays the first
-quest of it started that a pack voices. The client
-has no chain of its own, so without `prev` in the data every quest is a row of its own.
+language), else the first quest's title, wherever that quest is (`ChainName`). Its badge is the
+game's quest scroll, and its numbers and bar count its quests as a zone's card does. A chain that
+runs through several zones has a card in each, for its quests there. Chosen, a chain's page has
+its name and how many of its quests are completed and in progress, and asks for one of its quests
+to be chosen from the list; it has no Play. The client has no chain of its own, so without `prev`
+in the data every quest is a row of its own.
 
-The page fills the placeholders for the player as the client does. Play queues the quest's accept, progress and
-complete lines, whichever the packs have, named for its giver as the quest log's Play is.
-Shift-click on a quest's row hands the same lines to `Player:Enqueue`, every one behind what the
-queue holds, and leaves the selection and the page as they were; a line already queued is not
-queued again. The page shown with no quest chosen says so.
+The page fills the placeholders for the player as the client does. Play plays the quest's first
+part a pack voices (its accept line, else its progress, else its complete line), named for its
+giver as the quest log's Play is. Shift-click on a quest's row hands that part to
+`Player:Enqueue`, behind what the queue holds, and leaves the selection and the page as they were;
+a line already queued is not queued again. The page shown with no quest chosen says so.
 
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its

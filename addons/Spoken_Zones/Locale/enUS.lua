@@ -57,7 +57,7 @@ L.NO_LORE_FOR = "No lore recorded for %1$s yet."
 -- A place the client has that the corpus knows about but nobody has written. Distinct
 -- from NO_LORE_FOR, which is what an unknown place gets: this one we know exists.
 L.LORE_NOT_WRITTEN = "%1$s is on the map, but nobody has written its lore yet."
-L.NOT_DISCOVERED = "You have not discovered this place yet."
+L.NOT_DISCOVERED = "You have not discovered this place yet. Travel there to discover it."
 
 --------------------------------------------------------------------------------
 -- Slash commands
@@ -161,10 +161,10 @@ L.SUBZONE_COUNT_ONE = "1 area"
 L.ZONE_COUNT_FMT = "%1$d zones"
 L.ZONE_COUNT_ONE = "1 zone"
 L.OTHER_LANDS = "Other Lands"
+L.BATTLEGROUNDS = "Battlegrounds"
 L.ZONES_PICK = "Choose a place on the left to read its story."
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
-L.PLACES_FOUND_FMT = "%1$d of %2$d places found"
 -- The window browses every place; the panel beside the map tells the zone it shows.
 L.LORE_WINDOW_TITLE = "Azeroth's Compendium"
 L.COMPENDIUM_PLACES = "Zones"

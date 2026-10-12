@@ -7,10 +7,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Azeroth's Compendium lists everything as cards.** In Quests, Zones and Books each continent is
   a banner, and each zone a card showing how much of it you have found, with a bar; quest chains,
   cities and kinds of writing are smaller cards inside, and single quests, places and writings
-  rows under them. A quest chain is named after its first quest, and its page lists each quest
-  with the start of what its NPC says. The list is drawn in the game's own art: your faction's
-  campaign header for each banner, and Classic's character select card for each card, with the
-  zone's painting in a gold frame and the Pet Journal's progress bar. *([Nucabe](https://github.com/Nucabe))*
+  rows under them. A quest chain is named after its first quest, and its page shows how many of
+  its quests you have completed and asks you to choose one. The list is drawn in the game's own
+  art: your faction's campaign header for each banner, and Classic's character select card for
+  each card, with the zone's painting in a silver frame and the Pet Journal's progress bar. *([Nucabe](https://github.com/Nucabe))*
 - **What NPCs say is its own module, Spoken Gossip, with its own switch and settings page.**
   Your gossip settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*
 - **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go
@@ -25,17 +25,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   book's first page reads its title before the words, and the highlight began at once, running
   ahead the whole page. It now starts once the title is said. Pages that open with their own
   title, as gravestones do, start at once as before. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium has a Quests tab.** Every quest your character's race and class can take,
-  by zone, then by class, profession or season, with what its NPC says when offering it, while it
-  is under way and when you hand it in, and Play for its voice. Quests you have completed open; the
-  rest are greyed until Unlock Uncompleted Quests is on, in the Compendium section of Spoken's
-  page. On a client in another language, a quest shows in that language once you have seen its
-  window. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium has a Quests tab, its first.** Every quest your character's race and
-  class can take, by zone, with class, profession, event and other quests apart, with what its NPC says when
-  offering it, while it is under way and when you hand it in, and Play for its voice. Quests you
-  have completed open; the rest are greyed until Unlock Unstarted Quests is on, in the
-  Compendium section of Spoken's page. On a client in another language, a quest shows in that
+  class can take, by zone, with class, profession, event and other quests apart, with what its NPC
+  says when offering it, while it is under way and when you hand it in, and Play for its voice.
+  Quests you have started or completed open; the rest are greyed until Unlock Unstarted Quests is
+  on, in the Compendium section of Spoken's page. On a client in another language, a quest shows in that
   language once you have seen its window. Open in Azeroth's Compendium, on the quest giver's
   window, the quest log's details and DialogueUI's window, opens the tab on that quest.
   *([Nucabe](https://github.com/Nucabe))*
@@ -43,8 +37,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   and their page, and counted with the completed ones. Started Only keeps them, and the list
   follows your quest log while it is open. Open in Azeroth's Compendium on a quest you have
   accepted shows its words. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium groups each zone's quests into their chains.** A chain's row is named
-  after its last quest and shows how many of its quests you have completed, how many are in
+- **Azeroth's Compendium groups each zone's quests into their chains.** A chain's card is named
+  after its first quest and shows how many of its quests you have completed, how many are in
   progress, and a bar; a chain you have finished gets a tick. *([Nucabe](https://github.com/Nucabe))*
 - **Previously, on the quest giver's window and in the quest log**, plays what was said when you
   handed in the quest before this one in its chain. It shows when you have started that quest
@@ -59,8 +53,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   quests no longer show for the other, a Skyborne character sees its side's quests and the
   Skyborne's own, and a class's quests show for that class alone.
   *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium's Quests tab has a Battlegrounds banner, and Zephras Isle shows as a zone of
-  its own,** under an Other Lands banner, on the Zones tab too. Each zone with a dungeon or raid holds its quests in a Dungeons and Raids card.
+- **The Compendium's Quests and Zones tabs have a Battlegrounds banner, and Zephras Isle shows as
+  a zone of its own,** under an Other Lands banner on both. Each zone with a dungeon or raid holds its quests in a Dungeons and Raids card.
   Every holiday has its own group under Events, Children's Week included, Camping sits with the
   professions, and the Argent Dawn and the library books have groups under Other. A quest chain
   has one name in every zone it crosses. Quests no one can take are gone, and the audit's fixes
@@ -71,6 +65,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **The Compendium's Zones tab is always on a place.** Reached from another tab, it showed an
   empty page asking to choose a place; it now shows where the player stands, and keeps a place the
   player chose. *([Nucabe](https://github.com/Nucabe))*
+- **A place you have not discovered says how to discover it:** travel there. A search on the
+  Compendium's Zones tab no longer opens the continents and zones you have not discovered.
+  *([Nucabe](https://github.com/Nucabe))*
 - **Keep Talking in Background, a new Sound setting, lets you hear Spoken with the game window in
   the background.** While a line plays it turns on the game's Sound in Background, which plays
   the game's other sounds too, and puts your own setting back once the last line ends, after a

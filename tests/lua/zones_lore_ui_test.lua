@@ -18,13 +18,16 @@ local ATLASES = { ["spellbook-Page-Right-C60"] = true, ["spellbook-divider"] = t
 _G.C_Texture = { GetAtlasInfo = function(name) return stub.ListAtlas(name) or ATLASES[name] and { width = 64, height = 11 } or nil end }
 _G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 
--- The game's portrait frame: its title and portrait, as PortraitFrameMixin has them.
+-- The game's portrait frame: its title, portrait and close button, as PortraitFrameMixin has them.
 local createFrame = _G.CreateFrame
 _G.CreateFrame = function(kind, name, parent, template)
     local frame = createFrame(kind, name, parent, template)
     if template == "PortraitFrameTemplate" then
         function frame:SetTitle(text) self.title = text end
         function frame:SetPortraitToAsset(path) self.portrait = path end
+        frame.CloseButton = createFrame("Button", nil, frame)
+    elseif template == "MaximizeMinimizeButtonFrameTemplate" then
+        frame.MinimizeButton, frame.MaximizeButton = createFrame("Button", nil, frame), createFrame("Button", nil, frame)
     end
     frame.template = template
     -- A colour painted on a texture, kept to be read back: a page with no art is one.
@@ -228,7 +231,8 @@ Expect("choosing an area shows its story", page.title.text .. ": " .. page.body.
 Expect("...says which zone it is in, and leads back to it", page.sub.text.text, "in Durotar")
 page.sub.scripts.OnClick(page.sub)
 Expect("...which goes back to the zone", page.title.text, "Durotar")
-Expect("a zone says which continent it is on, and how many areas it holds", page.sub.text.text, "in Kalimdor · 2 areas")
+Expect("a zone says which continent it is on, and how many places it holds, its city with its areas as its card counts",
+    page.sub.text.text .. "|" .. RowFor("Durotar").count.text:match("/(%d+)"), "in Kalimdor · 3 areas|3")
 page.sub.scripts.OnClick(page.sub)
 Expect("...leading up to the continent", page.title.text, "Kalimdor")
 Expect("a continent says it is in Azeroth, and how many zones it holds", page.sub.text.text, "in Azeroth · 1 zone")
@@ -244,6 +248,23 @@ Expect("...offers to Contribute one", page.contribute.mapID, 1411)
 Expect("...and has nothing to play or report", page.play.mapID == nil and page.report.mapID == nil, true)
 _G.SpokenCompendium.tabs.places.onShow(window); window.Refresh()
 Expect("come back to from another tab, a place the player chose stays chosen", page.title.text, "Sen'jin Village")
+_G.SpokenCompendium:Hide()
+Z:ToggleLoreWindow()
+Expect("closed and opened again, a place the player chose stays chosen", page.title.text, "Sen'jin Village")
+-- The window's fold button: the game's template where the client has it, else the plain one.
+local function Fold()
+    for _, child in ipairs(compendium.children or {}) do
+        if type(child.MinimizeButton) == "table" then return child.MinimizeButton.scripts.OnClick(child.MinimizeButton) end
+        if child.normalTexture and tostring(child.normalTexture.texture):find("SmallerButton", 1, true) then
+            return child.scripts.OnClick(child)
+        end
+    end
+end
+Fold()
+Expect("folded, the window is the list without its page", window.pageInset:IsShown(), false)
+_G.SpokenCompendium:Hide()
+Z:ToggleLoreWindow()
+Expect("...and opened again, it unfolds to its page", window.pageInset:IsShown(), true)
 
 -- In the ink like every other page, not a lighter one that was hard to read, and still in it
 -- after a re-wrap, which sets the text again.
@@ -277,9 +298,11 @@ Expect("searching shows the matches, under their zone and continent", Shown(), "
 -- A row clicked in the results only chooses it: the tree under the search is left as it was.
 RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
 Expect("choosing a match shows its story", page.title.text, "Durotar")
+Expect("...the results from the top", listBar.frame:GetVerticalScroll(), 0)
 search:SetText("")
 search.hooks.OnTextChanged[1](search)
 Expect("...and the list comes back as it was before the search", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+Expect("...on the chosen place, not at the top", listBar.frame:GetVerticalScroll() > 0, true)
 search:SetText("nowhere")
 search.hooks.OnTextChanged[1](search)
 Expect("...and says when nothing matches", window.noMatch.shown, true)
@@ -444,7 +467,9 @@ Expect("a city not discovered is in its zone, not its continent",
     page.title.text .. "|" .. page.sub.text.text, "Orgrimmar|" .. Z.L.IN_ZONE_FMT:format("Durotar"))
 -- Opened from the map's panel, a place not discovered says so instead of telling its story.
 Z:ShowLoreFor(1411, "sen'jin village")
-Expect("a place not discovered, opened from elsewhere, says so", page.title.text .. ": " .. page.body.text.text, "Sen'jin Village: " .. Z.L.NOT_DISCOVERED)
+Expect("a place not discovered, opened from elsewhere, says so and to travel there to discover it",
+    page.title.text .. ": " .. page.body.text.text,
+    "Sen'jin Village: You have not discovered this place yet. Travel there to discover it.")
 Expect("...with nothing to play", page.play.mapID, nil)
 Shown()
 Expect("...and is not counted found for being chosen", RowFor("Durotar").count.text, "1/3 • 33%")
@@ -469,6 +494,26 @@ Expect("...or a zone on a continent with none found", RowFor("Eastern Kingdoms")
 Z:ShowLoreFor(1411, nil)
 showAll = false
 
+-- A search lists only what a click could reach. With Durotar not found, Kalimdor is locked: an
+-- area found in it is not listed, and the banner matching by name stays locked and closed.
+local wasFound = found
+found = { ["1411/valley of trials"] = true }
+local function Search(text)
+    search:SetText(text)
+    search.hooks.OnTextChanged[1](search)
+    return Shown()
+end
+Expect("a search lists nothing inside a locked continent, even an area found there", Search("trials"), "")
+Expect("...and says nothing matches", window.noMatch.shown, true)
+Expect("...a locked continent matching by name listed alone, closed", Search("kalimdor"), "Kalimdor")
+Expect("...still locked", RowFor("Kalimdor").row.locked and not RowFor("Kalimdor").row.open, true)
+found = { ["1411"] = true, ["1411/valley of trials"] = true }
+Expect("...a locked city in an open zone listed closed, as browsing shows it", Search("orgrimmar"), "Kalimdor|Durotar|Orgrimmar")
+Expect("...still locked", RowFor("Orgrimmar").row.locked and not RowFor("Orgrimmar").row.open, true)
+Search("")
+found = wasFound
+Z:RefreshLoreWindow(); Shown()
+
 -- Discovered Only, in the filter menu beside the search box, leaves the places not found out of it.
 local function Only() return stub.OpenDropdown(window.filterMenu)[1] end
 Expect("the filter menu holds Discovered Only, a checkbox", Only().text == Z.L.LORE_DISCOVERED_ONLY and Only().isNotRadio, true)
@@ -476,6 +521,8 @@ Expect("...which starts off", Only().checked and true or false, false)
 Expect("...and nothing is left under the list", window.discoveredOnly, nil)
 Only().func()
 Expect("...on, it leaves out what is not found: a continent, an area", Shown(), "Kalimdor|Durotar|Valley of Trials")
+Expect("...the list on the chosen place, still listed, not at the top", page.title.text .. "|"
+    .. tostring(listBar.frame:GetVerticalScroll() > 0), "Durotar|true")
 Expect("...and is remembered", Z:Get("loreDiscoveredOnly"), true)
 Expect("...and ticked in the menu", Only().checked, true)
 Only().func()

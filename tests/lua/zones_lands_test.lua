@@ -1,6 +1,7 @@
 -- The places' tab with a zone on neither continent (Forever's Zephras Isle, whose map hangs under
--- Azeroth): under a banner of its own after the continents, opened and closed as they are. The
--- set-up is the lore window's test's. Run with `make test-player`.
+-- Azeroth): under a banner of its own after the continents, opened and closed as they are. Then
+-- the battlegrounds, under a banner after it wherever the client hangs their maps. The set-up is
+-- the lore window's test's. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
@@ -51,11 +52,16 @@ Z.Zones = { [1411] = { name = "Durotar", full = "Durotar is a cracked, red land.
     [1415] = { name = "Eastern Kingdoms", full = "The eastern continent." },
     -- A map only another client has (Forever's, on Era): this client's C_Map has never heard of it.
     [2482] = { name = "Somewhere Else", full = "Another client's place." },
-    [2521] = { name = "Zephras Isle", full = "An isle of its own." } }
+    [2521] = { name = "Zephras Isle", full = "An isle of its own." },
+    -- Battlegrounds: one on no continent, one the client hangs under Kalimdor. Arathi Basin has
+    -- no story here, so it is not listed.
+    [1460] = { name = "Warsong Gulch", full = "A gulch in Ashenvale." },
+    [2524] = { name = "Darkspear Islands", full = "The trolls' isles." } }
 local getMapInfo = _G.C_Map.GetMapInfo
 _G.C_Map.GetMapInfo = function(id)
     if id == 2482 then return nil end
     if id == 2521 then return { mapType = 3, name = "Zephras Isle", parentMapID = 947 } end
+    if id == 2524 then return { mapType = 3, name = "Darkspear Islands", parentMapID = 1414 } end
     return getMapInfo(id)
 end
 Z.Subzones = { [1411] = { ["valley of trials"] = { name = "Valley of Trials", full = "Where the orcs learn." },
@@ -67,7 +73,8 @@ function Z:GetLore(mapID) return self.Zones[mapID] end
 function Z:IsPending(entry) return entry and entry.pending or false end
 function Z:GetSubzoneLore() return nil end
 function Z:GetLoreWithFallback(mapID) return self.Zones[mapID], mapID end
-function Z:GetPlayerMapID() return 1411 end
+local playerMap = 1411
+function Z:GetPlayerMapID() return playerMap end
 function Z:GetDisplayedMapID() return 1411 end
 function Z:IsVoiceEnabled() return true end
 function Z:HasAudio() return true end
@@ -120,14 +127,41 @@ local function Shown()
     for _, row in ipairs(rows) do if row.shown ~= false and row.row then table.insert(labels, row.row.label) end end
     return table.concat(labels, "|")
 end
-Z:ToggleLoreWindow()
 local L = Z.L
 
+---------------------------------------------------------------- the battlegrounds
+-- Standing in one, the tab lands on it with its banner open.
+playerMap = 2524
+Z:ToggleLoreWindow()
+Expect("standing in a battleground, the tab lands on it, under the Battlegrounds banner after Other Lands",
+    page.title.text .. "|" .. Shown(), "Darkspear Islands|Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|" .. L.OTHER_LANDS .. "|"
+    .. L.BATTLEGROUNDS .. "|Darkspear Islands|Warsong Gulch")
+Expect("...a banner", RowFor(L.BATTLEGROUNDS).row.style, "banner")
+Expect("...one hung under a continent not listed there, one on none not under Other Lands",
+    RowFor("Kalimdor").row.total .. "|" .. RowFor(L.OTHER_LANDS).row.total, "1|1")
+playerMap = 1411
+_G.SpokenCompendium:Hide()
+Z:ToggleLoreWindow()
+Shown()
+RowFor(L.BATTLEGROUNDS).scripts.OnClick(RowFor(L.BATTLEGROUNDS))
+Expect("...closed by a click, its cards gone", Shown():find("Warsong Gulch", 1, true), nil)
+Expect("...chosen, its page naming it and counting its battlegrounds, and asking for one",
+    page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
+    L.BATTLEGROUNDS .. "|" .. L.ZONE_COUNT_FMT:format(2) .. "|" .. L.ZONES_PICK)
+Expect("...the banner the chosen row", RowFor(L.BATTLEGROUNDS).selected, true)
+Z:ShowLoreFor(1460, nil)
+Expect("opened on a battleground, its banner opens to show it", Shown():match("|" .. L.BATTLEGROUNDS
+    .. "|Darkspear Islands|Warsong Gulch$") ~= nil and RowFor("Warsong Gulch").selected, true)
+RowFor(L.BATTLEGROUNDS).scripts.OnClick(RowFor(L.BATTLEGROUNDS))
+Z:ShowLoreFor(1411, nil)
+
+---------------------------------------------------------------- other lands
 Expect("a zone on neither continent is under a banner of its own after them, closed",
-    Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials|" .. L.OTHER_LANDS)
+    Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials|" .. L.OTHER_LANDS
+    .. "|" .. L.BATTLEGROUNDS)
 Expect("...a banner", RowFor(L.OTHER_LANDS).row.style, "banner")
 RowFor(L.OTHER_LANDS).scripts.OnClick(RowFor(L.OTHER_LANDS))
-Expect("...opened, its card inside it", Shown():match("|" .. L.OTHER_LANDS .. "|Zephras Isle$") ~= nil
+Expect("...opened, its card inside it", Shown():match("|" .. L.OTHER_LANDS .. "|Zephras Isle|" .. L.BATTLEGROUNDS .. "$") ~= nil
     and RowFor("Zephras Isle").row.style, "card")
 Expect("...chosen, its page naming it and counting its zones, and asking for one",
     page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
@@ -143,4 +177,4 @@ Shown()
 Expect("...the banner no longer the chosen row", RowFor(L.OTHER_LANDS).selected, false)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones other lands tests passed")
+print("\nAll zones other lands and battlegrounds tests passed")

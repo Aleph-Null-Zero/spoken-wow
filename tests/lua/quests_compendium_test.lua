@@ -208,7 +208,7 @@ Expect("...then a banner each for the quests no zone holds: Classes, Professions
     and RowFor("Classes").row.style == "banner", true)
 local elwynn = RowFor("Elwynn Forest")
 Expect("a zone's card: its quests completed out of all and the share, on one line beside its name",
-    elwynn.count.text:match("^1/%d+ • %d+%%$") ~= nil and elwynn.sub:IsShown(), false)
+    elwynn.count.text:match("^1/%d+ • %d+%%$") ~= nil, true)
 Expect("...drawn as Classic's character select card", elwynn.face[5]:IsShown() and elwynn.face[5].texture,
     "file:glues-characterselect-card-singles-c60")
 Expect("...its corners 16 pixels of the card drawn 11 across", elwynn.face[1].width == 11 and elwynn.face[1].texCoord[2],
@@ -468,8 +468,8 @@ Expect("a chain is a card in its zone's card, named after its first quest", Chai
     and ChainRow("Lost Necklace").row.style == "card" and ChainRow("Lost Necklace").row.nest, 1)
 Expect("...its quests inside it, not beside it", RowOfQuest(NECKLACE) or Has(list, "Pie for Billy") or Has(list, "Goldtooth"), false)
 Expect("...a quest in no chain still a row of its own", Has(list, "Kobold Camp Cleanup"), true)
-Expect("...its badge the storyline's mark, with no frame", ChainRow("Lost Necklace").story:IsShown()
-    and ChainRow("Lost Necklace").story.atlas == "questlog-storylineicon" and ChainRow("Lost Necklace").iconFrame:IsShown(), false)
+Expect("...its badge the game's quest scroll", ChainRow("Lost Necklace").icon.texture,
+    [[Interface\Icons\INV_Inscription_Scroll]])
 Expect("...its quests completed out of all and the share, beside its name", ChainRow("Lost Necklace").count.text, "0/4 • 0%")
 Expect("...none completed, none of the share", ChainRow("Lost Necklace").row.none
     and ChainRow("Lost Necklace").count.text:match("• (%d+)%%$"), "0")

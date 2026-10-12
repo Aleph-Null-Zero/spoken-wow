@@ -207,6 +207,14 @@ for _, key in ipairs({ "quests", "books", "zones" }) do
 end
 
 ---------------------------------------------------------------- Reset All and the Unlock switches
+local unlocks = {}
+for _, control in ipairs(Controls(pages[1].layout)) do
+    local name = Name(control)
+    if name:find("^Unlock ") then table.insert(unlocks, name) end
+end
+Expect("Spoken's page lists the Unlock switches in the order of the Compendium's tabs: Quests, Zones, Books",
+    table.concat(unlocks, "|"), "Unlock Unstarted Quests|Unlock Undiscovered Zones|Unlock Unfound Books")
+
 -- Kept with each part's settings, so Spoken's profile reset would not reach them.
 unlocked.places, unlocked.readables, unlocked.quests = true, true, true
 local reset = _G.SpokenOptionsPanel.layout.defaults
