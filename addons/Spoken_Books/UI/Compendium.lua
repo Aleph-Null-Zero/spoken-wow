@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 17
+local VERSION = 18
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -636,7 +636,11 @@ local CARD_ART = {
 	selected = { atlas = "glues-characterselect-card-selected-c60", cut = 30, size = 19, out = 7 },
 }
 local CARD_RIGHT = 56         -- what a card's share or tick keeps clear on its right
-local CARD_PAD = 8            -- from a card's side to what is in it: 7 inside the frame's line
+-- Inside a card's frame (5 in from its sides, 6 below its top, 2.5 above its foot) the badge has
+-- the same 5 above, below and to its left. The name and bar are a shorter block centred on the
+-- badge, and the room above and below that block is kept on the right as well.
+local CARD_PAD = 10           -- from a card's left side to its badge
+local CARD_END = 15           -- from a card's right side to its numbers and bar
 local CARD_INK = { 0.73, 0.70, 0.65 }
 local SHARE_INK = { 0.80, 0.76, 0.70 }
 local BANNER_INK = { 0.85, 0.81, 0.73 }
@@ -1177,7 +1181,7 @@ end
 -- wide as the list, which settles after they are drawn.
 FitBar = function(row, width)
 	if not row.barLeft or not width or width <= 0 then return end
-	local track = math.max(1, width - row.barLeft - 16 - 4)
+	local track = math.max(1, width - row.barLeft - CARD_END - 4)
 	row.track:SetWidth(track)
 	row.fill:SetWidth(math.max(0.01, track * (row.ratio or 0)))
 end
@@ -1193,12 +1197,10 @@ local function DrawCard(row, item, indent, width)
 	row.cardFill:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
 	row.cardFill:SetShown(not row.cardArt)
 
-	-- The badge, centred down the card: the zone's painting or what the card holds, in a silver
-	-- frame, greyed with nothing found. The same room between the card's frame and what is in it
-	-- on every side, 7 from the frame's line: the line sits 1 inside the card's sides, 3 below its
-	-- top and at its foot.
+	-- The badge, centred in the card's frame: the zone's painting or what the card holds, in a
+	-- silver frame, greyed with nothing found.
 	local side = 32
-	local middle = -26
+	local middle = -27
 	local centre = indent + CARD_PAD + side / 2
 	local none = item.none or item.locked
 	local icon = item.icon or (item.story and CHAIN_ICON) or MAP_ICON
@@ -1228,7 +1230,7 @@ local function DrawCard(row, item, indent, width)
 
 	-- One line, as the list's rows had it before the cards: the name on the left and on the right
 	-- what is found out of all and the share, 5/27 • 18%, with the bar under them.
-	local top = 8
+	local top = 16
 	local level = -(top + 7)
 	local left = indent + CARD_PAD + side + 10
 	row.label:SetFontObject("GameFontNormal")
@@ -1250,7 +1252,7 @@ local function DrawCard(row, item, indent, width)
 	if ratio == nil and item.total and item.total > 0 then ratio = (item.count or 0) / item.total end
 	ratio = math.max(0, math.min(1, ratio or 0))
 	local ticked = not locked and item.tick and true or false
-	row.lock:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_PAD, level)
+	row.lock:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_END, level)
 	row.lock:SetShown(locked and true or false)
 	row.tick:SetShown(ticked)
 	if ticked then
@@ -1261,7 +1263,7 @@ local function DrawCard(row, item, indent, width)
 			row.tick:SetSize(14, 14)
 		end
 		row.tick:ClearAllPoints()
-		row.tick:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_PAD, level)
+		row.tick:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_END, level)
 	end
 	row.count:SetFontObject("GameFontHighlightSmall")
 	Tint(row.count, SHARE_INK)
@@ -1269,7 +1271,7 @@ local function DrawCard(row, item, indent, width)
 	if ticked then
 		row.count:SetPoint("RIGHT", row.tick, "LEFT", -3, 0)
 	else
-		row.count:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_PAD, level)
+		row.count:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_END, level)
 	end
 	local total = item.total or 0
 	local numbers = ""
@@ -1289,14 +1291,14 @@ local function DrawCard(row, item, indent, width)
 		row.label:SetPoint("RIGHT", row, "RIGHT", -16, 0)
 	end
 
-	-- The bar along its foot, under the name: a dark track, the game's yellow as far as the share,
+	-- The bar 2 under the name's line: a dark track, the game's yellow as far as the share,
 	-- cut rather than squeezed, in the Pet Journal's frame. None on a card with nothing to count.
 	local barred = (item.total or 0) > 0
-	local barLeft, barBottom, barHeight = left, 8, 6
+	local barLeft, barBottom, barHeight = left, 13, 6
 	row.barLeft, row.ratio = barLeft, ratio
 	row.track:ClearAllPoints()
 	row.track:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft + 2, barBottom + 1)
-	row.track:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -CARD_PAD - 2, barBottom + 1)
+	row.track:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -CARD_END - 2, barBottom + 1)
 	row.track:SetHeight(barHeight - 2)
 	row.track:SetShown(barred)
 	row.fill:ClearAllPoints()
@@ -1315,7 +1317,7 @@ local function DrawCard(row, item, indent, width)
 	capLeft:SetSize(6, barHeight)
 	capLeft:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft, barBottom)
 	capRight:SetSize(6, barHeight)
-	capRight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -CARD_PAD, barBottom)
+	capRight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -CARD_END, barBottom)
 	capMiddle:SetPoint("TOPLEFT", capLeft, "TOPRIGHT", 0, 0)
 	capMiddle:SetPoint("BOTTOMRIGHT", capRight, "BOTTOMLEFT", 0, 0)
 	ShowAll(row.barCaps, barred and row.hasBarFrame)
