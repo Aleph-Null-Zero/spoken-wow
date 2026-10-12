@@ -206,7 +206,7 @@ Tab:Refresh()
 elwynn = RowFor("Elwynn Forest")
 Expect("...even where the game will not name the login screen's card: drawn from its file",
     elwynn.face[5]:IsShown() and elwynn.face[5].texture, 8064271)
-Expect("...the faint fill under it still", elwynn.cardFill:IsShown(), true)
+Expect("...and no plain fill round it", elwynn.cardFill:IsShown(), false)
 _G.C_Texture = { GetAtlasInfo = stub.ListAtlas }
 Tab:Refresh()
 elwynn = RowFor("Elwynn Forest")
@@ -214,10 +214,11 @@ Expect("...its badge the zone's painting", elwynn.icon:IsShown() and elwynn.icon
 Expect("...in the collections window's gold frame", elwynn.iconFrame:IsShown() and elwynn.iconFrame.atlas,
     "collections-itemborder-collected")
 Expect("...in colour with some completed", elwynn.icon.desaturated, false)
-Expect("...chosen, the chosen card over it, its glow round it", elwynn.lift[5]:IsShown() and elwynn.lift[5].texture,
+Expect("...chosen, the chosen card's warm leather inside its frame", elwynn.warm:IsShown() and elwynn.warm.texture,
     "file:glues-characterselect-card-selected-c60")
-Expect("...7 beyond the card, its corners 30 pixels drawn 19 across", elwynn.lift[1].anchor.x == -7
-    and elwynn.lift[1].width == 19 and elwynn.lift[1].texCoord[2], 30 / 342)
+Expect("...with none of the glow that card throws round itself", elwynn.lift[1]:IsShown(), false)
+Expect("...in the sidebar's silver, not the card's bronze", elwynn.face[5].desaturated and elwynn.warm.desaturated, true)
+Expect("...a step in from the continent's banner", elwynn.face[1].anchor.x, 14)
 local elwynnTotal = tonumber(elwynn.sub.text:match("of (%d+)"))
 Expect("...the share completed on its right", elwynn.count.text, math.floor(100 / elwynnTotal) .. "%")
 Expect("...and its bar filled as far", elwynn.fill:IsShown() and math.floor(elwynn.fill.width / elwynn.track.width
@@ -230,7 +231,7 @@ Expect("...its page counting its quests", page.sub.text:match("^1 of %d+ complet
 local city = RowFor("Stormwind City")
 Expect("a city is a small card inside its zone's card", city ~= nil and city.row.small and city.row.nest, 1)
 Expect("...indented under it, its card further in", city.face[1].anchor.x - elwynn.face[1].anchor.x, 28)
-Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 16)
+Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 30)
 Expect("...not chosen, the plain card alone", city.lift[5]:IsShown(), false)
 city.scripts.OnEnter(city)
 Expect("...under the pointer, the hover card over it", city.lift[5]:IsShown() and city.lift[5].texture,
