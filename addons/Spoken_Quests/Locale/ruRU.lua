@@ -177,6 +177,7 @@ L.OPT_STOP_GOSSIP = "Остановить разговор"
 L.OPT_NEXT_GOSSIP = "Следующий разговор"
 
 L.COMPENDIUM_QUESTS = "Задания"
+L.COMPENDIUM_TITLE = "Компендиум Азерота"
 L.QUESTS_SEARCH = "Поиск заданий"
 L.QUESTS_NONE = "Ничего не найдено."
 L.QUESTS_FOUND_ONLY = "Только выполненные"

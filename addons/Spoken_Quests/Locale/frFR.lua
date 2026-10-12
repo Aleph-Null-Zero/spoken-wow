@@ -187,6 +187,7 @@ L.OPT_STOP_GOSSIP = "Arrêter la discussion"
 L.OPT_NEXT_GOSSIP = "Discussion suivante"
 
 L.COMPENDIUM_QUESTS = "Quêtes"
+L.COMPENDIUM_TITLE = "Compendium d'Azeroth"
 L.QUESTS_SEARCH = "Rechercher une quête"
 L.QUESTS_NONE = "Aucun résultat."
 L.QUESTS_FOUND_ONLY = "Terminées seulement"

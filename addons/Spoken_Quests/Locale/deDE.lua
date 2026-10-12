@@ -177,6 +177,7 @@ L.OPT_STOP_GOSSIP = "Gespräch stoppen"
 L.OPT_NEXT_GOSSIP = "Nächstes Gespräch"
 
 L.COMPENDIUM_QUESTS = "Quests"
+L.COMPENDIUM_TITLE = "Kompendium von Azeroth"
 L.QUESTS_SEARCH = "Quests suchen"
 L.QUESTS_NONE = "Keine Treffer."
 L.QUESTS_FOUND_ONLY = "Nur abgeschlossene"

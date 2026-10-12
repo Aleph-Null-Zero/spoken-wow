@@ -177,6 +177,7 @@ L.OPT_STOP_GOSSIP = "停止闲聊"
 L.OPT_NEXT_GOSSIP = "下一段闲聊"
 
 L.COMPENDIUM_QUESTS = "任务"
+L.COMPENDIUM_TITLE = "艾泽拉斯百科"
 L.QUESTS_SEARCH = "搜索任务"
 L.QUESTS_NONE = "没有匹配的结果。"
 L.QUESTS_FOUND_ONLY = "仅显示已完成的"

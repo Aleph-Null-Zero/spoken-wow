@@ -192,6 +192,7 @@ L.OPT_STOP_GOSSIP = "Detener la charla"
 L.OPT_NEXT_GOSSIP = "Siguiente charla"
 
 L.COMPENDIUM_QUESTS = "Misiones"
+L.COMPENDIUM_TITLE = "Compendio de Azeroth"
 L.QUESTS_SEARCH = "Buscar misiones"
 L.QUESTS_NONE = "No hay coincidencias."
 L.QUESTS_FOUND_ONLY = "Solo completadas"

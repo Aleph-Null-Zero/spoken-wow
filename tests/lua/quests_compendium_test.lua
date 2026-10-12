@@ -182,6 +182,14 @@ Spoken:SetPartOn("quests", false)
 Expect("with Quests off, the tab is not offered", C:Select("quests"), nil)
 Spoken:SetPartOn("quests", true)
 
+-- Quests is the first tab, before Zones and Books, and gives the window its title.
+C:Register("places", { label = "Zones", order = 1, build = function() end })
+C:Register("readables", { label = "Books", order = 2, build = function() end })
+Expect("Quests is the first tab", _G.SpokenCompendiumWindowTab1:GetText(), L.COMPENDIUM_QUESTS)
+Expect("...Zones and Books after it", _G.SpokenCompendiumWindowTab2:GetText() .. "|" .. _G.SpokenCompendiumWindowTab3:GetText(),
+    "Zones|Books")
+Expect("...and the window has its title", C.window.title, L.COMPENDIUM_TITLE)
+
 ---------------------------------------------------------------- another language
 -- A German client: the words and the title the quest's window shows are kept, for every
 -- character, and shown over the English.

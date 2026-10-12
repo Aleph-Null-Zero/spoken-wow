@@ -639,7 +639,9 @@ function QuestsTab:Setup()
     if not C or C:Tab("quests") or not _G.SpokenQuestsCompendium then return end
     C:Register("quests", {
         label = L.COMPENDIUM_QUESTS,
-        order = 3,
+        -- The first tab, before Zones (1) and Books (2); the window takes its title from it.
+        order = 0,
+        title = L.COMPENDIUM_TITLE,
         build = Build,
         open = function() QuestsTab:Open() end,
         enabled = function() return VO.Addon:IsPartOn() end,

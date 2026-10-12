@@ -177,6 +177,7 @@ L.OPT_STOP_GOSSIP = "잡담 중지"
 L.OPT_NEXT_GOSSIP = "다음 잡담"
 
 L.COMPENDIUM_QUESTS = "퀘스트"
+L.COMPENDIUM_TITLE = "아제로스 백과사전"
 L.QUESTS_SEARCH = "퀘스트 검색"
 L.QUESTS_NONE = "일치하는 항목이 없습니다."
 L.QUESTS_FOUND_ONLY = "완료한 것만"
