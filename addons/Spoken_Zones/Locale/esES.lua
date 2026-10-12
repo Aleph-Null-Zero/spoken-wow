@@ -157,6 +157,7 @@ L.ZONE_COUNT_FMT = "%1$d zonas"
 L.ZONE_COUNT_ONE = "1 zona"
 L.CONTINENT_COUNT_FMT = "%1$d continentes"
 L.CONTINENT_COUNT_ONE = "1 continente"
+L.PLACES_FOUND_FMT = "%1$d de %2$d lugares descubiertos"
 
 L.OPEN_IN_COMPENDIUM = "Abrir en el Compendio de Azeroth"
 

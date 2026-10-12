@@ -5,8 +5,9 @@
 -- WorldMapFrame, so it works with the map closed.
 --
 -- The window, its list and its rows are the Compendium's; this is what goes in them. On the left,
--- the places as a tree: Azeroth, its two continents, each continent's zones, and the opened zone's
--- areas. On the right, the story on the spellbook's parchment (UI/LorePage.lua).
+-- a banner for each continent, a card under it for each of its zones (how many of its places are
+-- found, with a bar), and the opened zone's areas as rows, its city a small card among them with
+-- its own areas. On the right, the story on the spellbook's parchment (UI/LorePage.lua).
 --
 -- Only one zone expands at a time, which caps the list at the zones plus one zone's areas, about a
 -- hundred rows -- few enough that every row can be a real button. A search shows every match
@@ -18,8 +19,7 @@ local L = SpokenZones.L
 
 local panel, list, page
 local expandedZone = nil
--- Azeroth and its continents start open, so the zones show; each opens and closes on its own.
-local worldOpen = true
+-- The continents start open, so the zones show; each opens and closes on its own.
 local continentOpen = { [1414] = true, [1415] = true }
 local selection = nil -- { mapID = , key = nil|string }
 -- The selection made for the player, where they stood; any other is one they chose.
@@ -113,7 +113,6 @@ end
 
 --- Open what holds `mapID`, so opening on a place shows it.
 local function Reveal(mapID)
-	worldOpen = true
 	local continent = IsContinent(mapID) and mapID or ContinentOf(mapID)
 	if continent then continentOpen[continent] = true end
 end
@@ -208,11 +207,11 @@ local function Missing(mapID)
 	return not entry or SpokenZones:IsPending(entry)
 end
 
--- One zone's rows: itself, and under it when it is open its city (a zone of its own, with its
--- own areas) and its areas; while searching, the ones that match. Nothing when neither it nor
--- anything inside matches the search. A zone stays open while its city is. A zone not yet
+-- One zone's card, and under it when it is open its city's small card (a zone of its own, with
+-- its own areas) and its areas' rows; while searching, the ones that match. Nothing when neither
+-- it nor anything inside matches the search. A zone stays open while its city is. A zone not yet
 -- discovered is listed locked: greyed out, and it does not open.
-local function ZoneRows(mapID, depth)
+local function ZoneRows(mapID, nest, small)
 	if OnlyFound() and not Found(mapID) then return {} end
 	if OnlyVoiced() and not AnyVoiced(mapID) then return {} end
 	local locked = not Discovered(mapID)
@@ -230,7 +229,7 @@ local function ZoneRows(mapID, depth)
 			if Found(city) then found = found + 1 end
 		end
 		if filter ~= "" or open then
-			for _, row in ipairs(ZoneRows(city, depth + 1)) do table.insert(inside, row) end
+			for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
 		end
 	end
 	if subKeys then
@@ -245,35 +244,37 @@ local function ZoneRows(mapID, depth)
 			local shown = filter == "" and open or filter ~= "" and Matches(name)
 			if shown and (isFound or not OnlyFound()) and (not OnlyVoiced() or Voiced(mapID, key)) then
 				table.insert(inside, { kind = "subzone", leaf = true, mapID = mapID, key = key, label = name,
-					depth = depth + 1, missing = SpokenZones:IsPending(entry), locked = not Discovered(mapID, key) })
+					nest = nest + 1, missing = SpokenZones:IsPending(entry), locked = not Discovered(mapID, key) })
 			end
 		end
 	end
 	if filter ~= "" and not Matches(zoneName) and #inside == 0 then return {} end
-	local rows = { { kind = "zone", mapID = mapID, label = zoneName, depth = depth,
-		count = found, total = total,
+	-- With no areas of its own (Thunder Bluff), nothing to count: no number, line or share.
+	local rows = { { style = "card", small = small, kind = "zone", mapID = mapID, label = zoneName, nest = nest,
+		count = found, total = total, badge = total > 0 and found or nil,
+		sub = total > 0 and L.PLACES_FOUND_FMT:format(found, total) or nil,
+		ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
+		none = found == 0 and not Found(mapID),
 		open = filter ~= "" and #inside > 0 or open,
 		missing = Missing(mapID), locked = locked } }
 	for _, row in ipairs(inside) do table.insert(rows, row) end
 	return rows
 end
 
--- Flatten the tree into display rows: Azeroth, each continent under it, each continent's zones
--- under that, and the expanded zone's areas. While searching, every match with what holds it,
--- opened to show it.
+-- The list: a banner for each continent, its zones' cards under it, and the opened zone's
+-- areas. While searching, every match with what holds it, opened to show it.
 local function BuildRowList()
 	local list = {}
 	local function Add(rows) for _, row in ipairs(rows) do table.insert(list, row) end end
 	local searching = filter ~= ""
 
-	local continents = {}
 	for _, continent in ipairs(Continents()) do
 		-- A closed continent's zones are never shown, and its count comes from ZonesOf: only
 		-- a search, which can open it, needs them built.
 		local zones = {}
 		if searching or continentOpen[continent] then
 			for _, mapID in ipairs(ZonesOf(continent)) do
-				local rows = ZoneRows(mapID, 2)
+				local rows = ZoneRows(mapID, 0)
 				for _, row in ipairs(rows) do table.insert(zones, row) end
 			end
 		end
@@ -295,35 +296,19 @@ local function BuildRowList()
 		local locked = unfound and not SpokenZones:ShowsUndiscovered()
 		local voiced = not OnlyVoiced() or total > 0
 		if (not searching or Matches(name) or #zones > 0) and not (unfound and OnlyFound()) and voiced then
-			table.insert(continents, { kind = "continent", mapID = continent, label = name, depth = 1,
-				count = found, total = total,
-				open = searching and #zones > 0 or (not searching and continentOpen[continent] and not locked),
-				missing = Missing(continent), zones = zones, locked = locked })
+			local open = searching and #zones > 0 or (not searching and continentOpen[continent] and not locked)
+			table.insert(list, { style = "banner", kind = "continent", mapID = continent, label = name,
+				count = found, total = total, open = open and true or false, missing = Missing(continent),
+				locked = locked })
+			if open then Add(zones) end
 		end
 	end
-	-- Zones on neither continent with a story, under Azeroth after them.
+	-- Zones on neither continent with a story, as cards of their own after them.
 	local listed = {}
 	for _, continent in ipairs(Continents()) do listed[continent] = true end
-	local loose = {}
 	for _, mapID in ipairs(ZoneIDs()) do
-		if not listed[ContinentOf(mapID) or 0] then
-			for _, row in ipairs(ZoneRows(mapID, 1)) do table.insert(loose, row) end
-		end
+		if not listed[ContinentOf(mapID) or 0] then Add(ZoneRows(mapID, 0)) end
 	end
-
-	local worldName = ZoneName(WORLD)
-	local any = #continents > 0 or #loose > 0
-	if SpokenZones.Zones[WORLD] and (not searching or Matches(worldName) or any) then
-		local open = searching and any or (not searching and worldOpen)
-		table.insert(list, { kind = "world", mapID = WORLD, label = worldName, depth = 0,
-			count = #Continents(), open = open, missing = Missing(WORLD) })
-		if not open then return list end
-	end
-	for _, continent in ipairs(continents) do
-		table.insert(list, continent)
-		if continent.open then Add(continent.zones) end
-	end
-	Add(loose)
 	return list
 end
 
@@ -343,12 +328,24 @@ local function CurrentZoneID()
 	return resolved
 end
 
+-- The continent the player is on, else the first: where the tab lands when no zone of theirs has
+-- a story. Azeroth's own page is never chosen from the list.
+local function PlayerContinent()
+	local map = SpokenZones:GetPlayerMapID()
+	local continent = map and (IsContinent(map) and map or ContinentOf(map))
+	if continent and SpokenZones.Zones[continent] then return continent end
+	return Continents()[1]
+end
+
 -- Choose where the player stands: the area they are in where it has a story of its own, else its
--- zone, opened; Azeroth where neither resolves. The tab never shows a page with nothing chosen.
+-- zone, opened; their continent where neither resolves. The tab never shows a page with nothing
+-- chosen.
 local function LandOnPlayer()
 	local current = CurrentZoneID()
-	if not current then
-		selection = { mapID = WORLD, key = nil }
+	if not current or current == WORLD or IsContinent(current) then
+		local continent = current and IsContinent(current) and current or PlayerContinent()
+		if continent then Reveal(continent) end
+		selection = { mapID = continent or WORLD, key = nil }
 		landed = selection
 		return
 	end
@@ -458,11 +455,8 @@ local function OnRowClick(row)
 	-- nothing there, only leave the tree folded when the search is cleared. Choose, and no more.
 	if filter ~= "" then
 		selection = { mapID = row.mapID, key = row.kind == "subzone" and row.key or nil }
-	elseif row.kind == "world" then
-		-- Azeroth and each continent open and close on their own; a click also chooses them.
-		worldOpen = not worldOpen
-		selection = { mapID = row.mapID, key = nil }
 	elseif row.kind == "continent" then
+		-- Each continent opens and closes on its own; a click also chooses it.
 		continentOpen[row.mapID] = not continentOpen[row.mapID]
 		selection = { mapID = row.mapID, key = nil }
 	elseif row.kind == "zone" then

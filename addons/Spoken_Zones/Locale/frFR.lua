@@ -153,6 +153,7 @@ L.ZONE_COUNT_FMT = "%1$d zones"
 L.ZONE_COUNT_ONE = "1 zone"
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
+L.PLACES_FOUND_FMT = "%1$d lieux découverts sur %2$d"
 
 L.OPEN_IN_COMPENDIUM = "Ouvrir dans le Compendium d'Azeroth"
 
