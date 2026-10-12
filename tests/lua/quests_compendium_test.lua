@@ -441,7 +441,8 @@ local words = PageWords() or ""
 Expect("...its words in parts, offered then handed in, each under its heading",
     page.body.lastParts ~= nil and page.body.lastParts[1].heading == L.QUEST_PART_ACCEPT
     and page.body.lastParts[#page.body.lastParts].heading == L.QUEST_PART_COMPLETE, true)
-Expect("...no Play or Report in the page's corner: each part has its own", page.play:IsShown(), false)
+Expect("...no Play or Report in the page's corner: each part has its own", tostring(page.play) .. " " .. tostring(page.report),
+    "nil nil")
 -- The page's divider, as a client with the spellbook's art gives it.
 page.body:SetPartDivider({ file = "spellbook-divider", width = 657, left = 0, right = 0.64, top = 0, bottom = 0.69 })
 Click("Kobold Candles")
@@ -645,7 +646,7 @@ Expect("...rows one step further in", RowOfQuest(PIE).row.nest, 2)
 Expect("...chosen, its page has the chain's name", page.title.text, "Lost Necklace")
 Expect("...the zone it is listed in and its count", page.sub.text.text, "In Elwynn Forest · 2 of 4 completed, 1 in progress")
 Expect("...and, as a zone's page, the quests on the left to choose", PageWords(), L.QUESTS_PICK)
-Expect("...nothing to play on it", page.play:IsShown(), false)
+Expect("...nothing to play on it", page.play, nil)
 completed[BACK], completed[GOLDTOOTH] = true, true
 questLog = {}
 Tab:Refresh()
@@ -827,11 +828,32 @@ Expect("a quest no pack has has no Play", PartButton(L.QUEST_PART_ACCEPT, "play"
     or not PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown(), true)
 Expect("...nor Report", PartButton(L.QUEST_PART_ACCEPT, "report") == nil
     or not PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
+-- A part a pack voices whose words are not known: there, saying so, with its Play and Report.
+do
+    local words = SpokenQuestsText[KOBOLDS].complete
+    SpokenQuestsText[KOBOLDS].complete = nil
+    Click("Kobold Camp Cleanup")
+    local last = page.body.lastParts[#page.body.lastParts]
+    Expect("a voiced part with no words known keeps its part, saying no words are known",
+        last.heading .. "|" .. last.text, L.QUEST_PART_COMPLETE .. "|" .. L.QUEST_PART_NO_TEXT)
+    Expect("...with Play and Report", PartButton(L.QUEST_PART_COMPLETE, "play"):IsShown()
+        and PartButton(L.QUEST_PART_COMPLETE, "report"):IsShown(), true)
+    local handInPlay = PartButton(L.QUEST_PART_COMPLETE, "play")
+    handInPlay.scripts.OnClick(handInPlay)
+    Expect("...its Play playing it", Spoken:GetNowPlaying() and Spoken:GetNowPlaying().fileName, "7-complete")
+    Spoken:StopAll()
+    SpokenQuestsText[KOBOLDS].complete = words
+    local progress = SpokenQuestsText[CANDLES].progress
+    SpokenQuestsText[CANDLES].progress = nil
+    Click("Kobold Candles")
+    Expect("a part with no words known that no pack voices is left out", #page.body.lastParts .. " "
+        .. page.body.lastParts[2].heading, "2 " .. L.QUEST_PART_COMPLETE)
+    SpokenQuestsText[CANDLES].progress = progress
+end
 ClickChain("Lost Necklace")
 completed[NECKLACE] = true
 Tab:Refresh()
-Expect("a chain's page has no Play, even with a voiced quest started: its quests are on the left",
-    page.play:IsShown(), false)
+Expect("a chain's page has no Play, even with a voiced quest started: its quests are on the left", page.play, nil)
 completed[NECKLACE] = nil
 ClickChain("Lost Necklace")
 

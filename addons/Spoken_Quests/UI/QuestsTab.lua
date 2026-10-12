@@ -1003,8 +1003,9 @@ local function SoundData(id, moment, origin)
         text = PartText(id, moment), origin = origin }
 end
 
--- Play on a quest's page: what is said when it is offered, under way and handed in, as far as the
--- voice packs have it, named for who says it.
+-- Whether a voice pack has any of a quest (Voiced Only), and a quest played from its row
+-- (shift-click): what is said when it is offered, under way and handed in, as far as the voice
+-- packs have it, named for who says it. The quest's page plays each part from its own Play.
 local PLAY = {
     has = function(id)
         for _, moment in ipairs(MOMENTS) do
@@ -1012,7 +1013,6 @@ local PLAY = {
         end
         return false
     end,
-    playing = function(id) return #Clips(id) > 0 end,
     -- One part, the first a pack voices: the offer, the progress and the hand-in are said at
     -- different times, not as one speech. Its words go with it, for the window to show.
     -- `queued`: behind what the queue already holds, not played at once.
@@ -1024,9 +1024,6 @@ local PLAY = {
                 return
             end
         end
-    end,
-    stop = function(id)
-        for _, clip in ipairs(Clips(id)) do VO.Player:Remove(clip) end
     end,
 }
 
@@ -1081,18 +1078,20 @@ local function PartButtons(moment)
 end
 
 -- A quest's words in parts, the offer, the progress and the hand-in each under its heading, with
--- Play and Report for that part where a pack voices it; the hand-in only where it Shows. nil with
--- no words at all.
+-- Play and Report for that part where a pack voices it; the hand-in only where it Shows. A part a
+-- pack voices whose words are not known says so, and is there to be played and reported. nil with
+-- no words and nothing voiced.
 local function Parts(id)
     local parts = {}
     local reportsHidden = Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()
     for _, moment in ipairs(MOMENTS) do
-        local text = Shows(id, moment) and PartText(id, moment)
+        local shows = Shows(id, moment)
+        local voiced = shows and Voiced(id, moment)
+        local text = shows and PartText(id, moment) or voiced and L.QUEST_PART_NO_TEXT
         if text then
             local buttons = PartButtons(moment)
             local list = {}
             if buttons then
-                local voiced = Voiced(id, moment)
                 buttons.play.questID, buttons.report.questID = id, id
                 buttons.report:SetShown(voiced and not reportsHidden)
                 buttons.play:SetShown(voiced)
@@ -1376,7 +1375,8 @@ local function Build(panel)
     local holder = CreateFrame("Frame", nil, pageInset)
     holder:SetPoint("TOPLEFT", pageInset, "TOPLEFT", 3, -3)
     holder:SetPoint("BOTTOMRIGHT", pageInset, "BOTTOMRIGHT", -3, 3)
-    page = C.NewPage(holder, ns, PLAY)
+    -- No Play in the page's corner: each part is said at its own time, and has its own.
+    page = C.NewPage(holder, ns)
     -- The parts' Play show Stop while their part plays, and their Report follows Hide Report Buttons.
     if Spoken and Spoken.RegisterCallback then
         Spoken:RegisterCallback("AUDIO_CHANGED", function()
