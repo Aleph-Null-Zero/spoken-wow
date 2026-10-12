@@ -429,6 +429,12 @@ Expect("...in the corner, Play to its left", select(2, page.play:GetPoint(1)) ==
 -- 36 is the text's right inset on the page; a quest's part buttons end at the same column.
 Expect("...the corner over the words' right edge, where a part's buttons end",
     page.report.anchor.point .. " " .. page.report.anchor.x, "TOPRIGHT " .. -(36 + page.body:BarRoom()))
+do
+    local unsnapped
+    local addon = setmetatable({ Unsnap = function(_, texture) unsnapped = texture end }, { __index = B })
+    local fresh = _G.SpokenCompendium.NewPage(CreateFrame("Frame"), addon)
+    Expect("a page's parchment drawn off the pixel grid, as the fade cut from it is", unsnapped ~= nil and unsnapped == fresh.bg, true)
+end
 local copied
 local showCopyLink = B.ShowCopyLink
 B.ShowCopyLink = function(_, url) copied = url end

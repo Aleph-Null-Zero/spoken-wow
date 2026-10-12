@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 37
+local VERSION = 38
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1692,6 +1692,9 @@ function C.NewPage(parent, addon, play, report)
 		bg:SetColorTexture(0.86, 0.76, 0.56, 1)
 	end
 	self.bg, self.bgFile, self.bgCoords = bg, file, coords
+	-- Off the pixel grid, as the text's fade cut from the same picture is: snapped apart, the two
+	-- part by a pixel along the fade's edge.
+	if addon.Unsnap then addon:Unsnap(bg) end
 
 	if ZonesLoaded() then
 		local backplate = frame:CreateTexture(nil, "BORDER")
