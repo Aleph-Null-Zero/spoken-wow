@@ -42,6 +42,9 @@ local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
 -- In near-black, as the quest frame's own headings on parchment are, set apart by room alone.
 local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 34, 4
 local HEAD_INK = { 0.06, 0.04, 0.02 }
+-- Between one part and the next, in the middle of PART_GAP, the page's own divider at its own size,
+-- cut short to DIVIDER_MOST rather than stretched (SetPartDivider).
+local DIVIDER_MOST, DIVIDER_HEIGHT = 220, 11
 
 local TextView = {}
 TextView.__index = TextView
@@ -531,6 +534,7 @@ function TextView:HideParts(keep)
 	for _, part in ipairs(self.parts or {}) do
 		part.heading:Hide()
 		part.words:Hide()
+		part.divider:Hide()
 	end
 	for _, button in ipairs(self.partButtons or {}) do
 		if not (keep and keep[button]) then button:Hide() end
@@ -567,7 +571,8 @@ function TextView:SetParts(parts)
 		local slot = self.parts[i]
 		if not slot then
 			slot = { heading = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge"),
-				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight") }
+				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight"),
+				divider = self.child:CreateTexture(nil, "ARTWORK") }
 			slot.heading:SetJustifyH("LEFT")
 			if slot.heading.SetWordWrap then slot.heading:SetWordWrap(false) end
 			slot.words:SetJustifyH("LEFT")
@@ -576,7 +581,20 @@ function TextView:SetParts(parts)
 			slot.words:SetSpacing(2)
 			self.parts[i] = slot
 		end
-		if i > 1 then y = y + PART_GAP end
+		slot.divider:Hide()
+		if i > 1 then
+			local rule = self.partDivider
+			if rule and width > 0 then
+				local w = math.min(DIVIDER_MOST, width, rule.width)
+				slot.divider:SetTexture(rule.file)
+				slot.divider:SetTexCoord(rule.left, rule.left + (rule.right - rule.left) * w / rule.width, rule.top, rule.bottom)
+				slot.divider:SetSize(w, DIVIDER_HEIGHT)
+				slot.divider:ClearAllPoints()
+				slot.divider:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -(y + (PART_GAP - DIVIDER_HEIGHT) / 2))
+				slot.divider:Show()
+			end
+			y = y + PART_GAP
+		end
 		local face = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
 		if face then slot.heading:SetFont(face, Addon:Get("fontSize") + HEAD_SIZE, "") end
 		slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
@@ -617,6 +635,7 @@ function TextView:SetParts(parts)
 	for i = #parts + 1, #self.parts do
 		self.parts[i].heading:Hide()
 		self.parts[i].words:Hide()
+		self.parts[i].divider:Hide()
 	end
 	self.partButtons = shown
 
@@ -624,6 +643,12 @@ function TextView:SetParts(parts)
 	self.frame:SetVerticalScroll(0)
 	self:UpdateScrollBar()
 	self:UpdateFade()
+end
+
+--- The divider drawn between parts (SetParts): { file, width, left, right, top, bottom }, its
+--- picture and its own width; nil for none.
+function TextView:SetPartDivider(rule)
+	self.partDivider = rule
 end
 
 --- A picture above the text from the next SetText on: `file` a texture, `mask` the one fraying its
