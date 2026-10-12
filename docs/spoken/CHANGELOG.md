@@ -4,6 +4,14 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Azeroth's Compendium's Quests tab finds its way better.** The line under a page's title says
+  "In" only before a place ("In Mulgore", "Classes · Warrior") and a click on it goes up a level.
+  Chains of one name in one place are numbered, and a chain is named after its first quest you can
+  take. With no quests where you stand, or the filters hiding your zone, the tab opens on your
+  continent. Open in Azeroth's Compendium stays on a quest the filters hide, and follows Unlock
+  Unstarted Quests at once. Era no longer lists Forever's Darkspear Islands. Text Size applies to
+  Quests and Books, switching Quests off closes its tab, and Defaults turns off Started Only and
+  Voiced Only. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium keeps several zones open at once.** On Quests, Zones and Books a click
   on a zone's or city's card opens or closes that card alone, so opening Elwynn Forest no longer
   closes Alterac Mountains. A city's card stays as you left it while its zone is closed. *([Nucabe](https://github.com/Nucabe))*
