@@ -1406,6 +1406,20 @@ Two generated files feed it, both committed so the addon never needs a database:
   `tools/cache/efficient-games/<build>/` under each one's last collection day, so a run fetches
   only the index and what changed, and reads the cache offline. `--without-efficient-games`
   leaves it out.
+  Last come the hand corrections, `corpus/compendium_overrides.json` (`load_overrides`,
+  `apply_overrides`, `chain_names`): what neither the DB nor the client data can say, such as a
+  breadcrumb's link, a quest the beta removed, or a chain's name. Each `quests` entry names its
+  quest (`id`) or quests (`ids`) and sets any of `title`, `zones` (uiMapIDs, taking the quest out
+  of its sort), `sort` (a QuestSort, or the word of a group the client has none for, such as
+  `"winterveil"`; 0 for none), `prev` (0 for none), `races`, `classes` and `remove: true`; each
+  `chains` entry names a quest of a chain and the chain's `name`, a quest's id (the client gives
+  its title in its own language) or words with their translations in `names`. Every entry has a
+  `source`, the wiki page or the reason, for a reviewer to check; the export refuses one without.
+  Entries apply in order, so a later one wins. A quest dropped is passed through by the quests
+  after it; an entry for a quest the corpus lacks is printed, not applied, since a quest needs
+  its lines in the corpus before it can be listed. A chain's name is written as `name` on its
+  first quest, so it is the chain's in every zone it crosses. With `--no-db` the entries apply to
+  the quests added.
 - `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
   `tts_cli/quest_text.py`): each quest's accept, progress and complete text, the corpus's
   `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one

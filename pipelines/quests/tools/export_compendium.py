@@ -25,6 +25,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
   Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
+- Last, corpus/compendium_overrides.json: what no source above can say, corrected by hand, each
+  correction with its source (a wiki page, or why). It can move, retitle, link, restrict or drop a
+  quest, and name a chain (apply_overrides, chain_names below).
 
 With the repack's server up:  make quests-compendium
 
@@ -51,7 +54,8 @@ from tts_cli.quest_text import in_game, lua_string  # noqa: E402
 ROOT = os.path.normpath(os.path.join(QUESTS, "..", ".."))
 CORPUS = os.path.join(QUESTS, "corpus", "corpus.json.gz")
 FACTIONS = os.path.join(QUESTS, "corpus", "factions.json")
-OUT = os.path.join(ROOT, "addons", "Spoken_Quests", "Data", "Compendium.lua")
+OVERRIDES = os.path.join(QUESTS, "corpus", "compendium_overrides.json")
+OUT =os.path.join(ROOT, "addons", "Spoken_Quests", "Data", "Compendium.lua")
 CACHE = os.path.join(HERE, "cache")
 # Forever's client (wago.tools' wow_classic_beta), and Classic Era's. With Era's alone, Forever's
 # own zones and sorts resolve to nothing, even where the DB names them.
@@ -479,14 +483,130 @@ def side_leaks(races, links):
             if side_of(races.get(prev, 0)) and side_of(races.get(qid, 0)) != side_of(races.get(prev, 0))]
 
 
-def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None):
+QUEST_FIELDS = {"title", "zones", "sort", "prev", "races", "classes", "remove"}
+CHAIN_FIELDS = {"quest", "name", "names", "source"}
+
+
+def load_overrides(path=OVERRIDES):
+    """The hand corrections: {"quests": [entry...], "chains": [entry...]}, checked.
+
+    A quest entry names its quest (`id`) or quests (`ids`) and sets any of: `title`; `zones` (a
+    list of uiMapIDs, which takes the quest out of its sort); `sort` (a QuestSort, or the name of a
+    group the client has none for, such as "winterveil"; 0 for none, which takes it out of its
+    zones); `prev` (the quest before it, 0 for none); `races` and `classes` (masks as the data has
+    them); `remove` (true: the quest is left out). A chain entry names a quest of the chain
+    (`quest`) and the chain's `name`: a quest's id, whose title the client gives in its own
+    language, or words of its own with their translations in `names` ({locale: words}). Every
+    entry has a `source`: the wiki page that says so, or why."""
+    if not os.path.exists(path):
+        return {"quests": [], "chains": []}
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    for entry in data.get("quests", []):
+        unknown = set(entry) - QUEST_FIELDS - {"id", "ids", "source"}
+        if unknown or ("id" in entry) == ("ids" in entry) or not entry.get("source"):
+            raise ValueError(f"an override needs an id or ids, a source and known fields only: {entry}")
+    for entry in data.get("chains", []):
+        if set(entry) - CHAIN_FIELDS or "quest" not in entry or "name" not in entry or not entry.get("source"):
+            raise ValueError(f"a chain's name needs a quest, a name and a source: {entry}")
+    return {"quests": data.get("quests", []), "chains": data.get("chains", [])}
+
+
+def apply_overrides(records, entries):
+    """Apply the hand corrections' quest entries, in order, to `records` ({questID: {"title", "zones",
+    "sort", "prev", "races", "classes"}}), in place. A quest dropped is passed through by the quests
+    after it, as a quest the corpus lacks is. Returns what could not be applied, as notes."""
+    notes, removed = [], {}
+    for entry in entries:
+        for qid in [entry["id"]] if "id" in entry else entry["ids"]:
+            rec = records.get(qid)
+            if rec is None:
+                if qid not in removed:
+                    notes.append(f"{qid}: not in the corpus ({entry['source']})")
+                continue
+            if entry.get("remove"):
+                removed[qid] = rec.get("prev")
+                del records[qid]
+                continue
+            for field in ("title", "races", "classes"):
+                if field in entry:
+                    rec[field] = entry[field]
+            if "prev" in entry:
+                rec["prev"] = entry["prev"] or None
+            if "zones" in entry:
+                rec["zones"], rec["sort"] = list(entry["zones"]), None
+            if "sort" in entry:
+                rec["sort"] = entry["sort"] or None
+                rec["zones"] = []
+    for qid, rec in records.items():
+        prev, seen = rec.get("prev"), set()
+        while prev in removed and prev not in seen:
+            seen.add(prev)
+            prev = removed[prev]
+        if prev is not None and prev not in records:
+            notes.append(f"{qid}: the quest before it, {prev}, is not in the data")
+            prev = None
+        rec["prev"] = prev
+    for qid in records:
+        if first_of(records, qid) is None:
+            raise ValueError(f"the overrides close a loop of chain links through {qid}")
+    return notes
+
+
+def first_of(records, qid):
+    """The first quest of `qid`'s chain, None where the links loop."""
+    seen = {qid}
+    while records[qid].get("prev"):
+        qid = records[qid]["prev"]
+        if qid in seen:
+            return None
+        seen.add(qid)
+    return qid
+
+
+def chain_names(records, entries):
+    """{first quest of a chain: its name}, from the hand corrections' chain entries: one name for
+    the whole chain, in every zone it crosses. A name is a quest's id or {locale: words}. Returns
+    the names and what could not be applied, as notes."""
+    names, notes = {}, []
+    for entry in entries:
+        if entry["quest"] not in records:
+            notes.append(f"chain of {entry['quest']}: not in the data ({entry['source']})")
+            continue
+        name = entry["name"]
+        if isinstance(name, int):
+            if name not in records:
+                notes.append(f"chain of {entry['quest']}: its name's quest {name} is not in the data")
+                continue
+        else:
+            name = {"enUS": name, **entry.get("names", {})}
+        root = first_of(records, entry["quest"])
+        if root in names and names[root] != name:
+            notes.append(f"chain of {entry['quest']}: {root} is named already")
+            continue
+        names[root] = name
+    return names, notes
+
+
+def lua_name(name):
+    if isinstance(name, int):
+        return str(name)
+    locs = [f"{l} = {lua_string(name[l])}" for l in LOCALES if name.get(l)]
+    return "{ %s }" % ", ".join([lua_string(name["enUS"])] + locs)
+
+
+def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, name=None):
     parts = [lua_string(title)]
     if zones:
         parts.append("zones = { %s }" % ", ".join(str(z) for z in zones))
-    if group:
+    if isinstance(group, str):
+        parts.append(f"sort = {lua_string(group)}")
+    elif group:
         parts.append(f"sort = {group}")
     if prev:
         parts.append(f"prev = {prev}")
+    if name is not None:
+        parts.append(f"name = {lua_name(name)}")
     # Every race or class, or none named, is anyone, and goes unsaid. Classes are Classic's nine
     # (bits by id less one); the DB's "all" is every bit set.
     races = playable_races(races)
@@ -505,7 +625,9 @@ def render(quest_lines, sort_lines):
 -- {{ English title, zones = {{ uiMapID... }} or sort = a QuestSort (a class, a profession, a
 -- season), races and classes = who may take it (bit masks: a race's PlayableRaceBit, Skyborne's
 -- 32 and 33, and a class's id less one; absent for anyone), prev = the quest before it in its
--- chain }}. The words are Data/QuestText.lua's. Regenerate with the Forever
+-- chain, name = the chain's name on its first quest (a quest's id, whose title names it, or words
+-- by locale) }}. A sort that is a word is a group the client has no QuestSort for. The words are
+-- Data/QuestText.lua's. Regenerate with the Forever
 -- repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
@@ -551,14 +673,20 @@ def without_db(args):
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
     maps = Maps()
-    added = placed = 0
+    records = {}
     for qid in sorted(set(quests) - set(quest_lines)):
         zones = maps.giver_zones(givers[qid], spawns) if qid in givers else []
-        races = SIDE_RACES.get(sides.get(str(qid)), 0)
-        quest_lines[qid] = quest_line(qid, quests[qid]["title"], zones, races=races)
-        added += 1
-        placed += 1 if zones else 0
-    return quest_lines, sort_lines, f"{added} quests added, {placed} of them placed by their giver"
+        records[qid] = {"title": quests[qid]["title"], "zones": zones, "sort": None,
+                        "races": SIDE_RACES.get(sides.get(str(qid)), 0), "classes": 0, "prev": None}
+    # The hand corrections, for the quests added: the rest are as the last run with the DB left them.
+    added = set(records)
+    entries = [e for e in load_overrides()["quests"] if added & set([e["id"]] if "id" in e else e["ids"])]
+    apply_overrides(records, entries)
+    for qid, rec in records.items():
+        quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
+                                      rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None)
+    placed = sum(1 for rec in records.values() if rec["zones"])
+    return quest_lines, sort_lines, f"{len(records)} quests added, {placed} of them placed"
 
 
 def with_db(args):
@@ -607,27 +735,39 @@ def with_db(args):
     sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
                         for locale in ["enUS"] + LOCALES})
 
-    placed = unplaced = by_sort = by_client = 0
-    quest_lines, used_sorts = {}, set()
+    by_client = 0
+    records = {}
     for qid in ids:
         q = quests[qid]
         zones, group, source = place(
             q.get("sort", 0), maps, sorts, client.get(qid), seen.get(qid, ()),
             lambda: maps.giver_zones(givers[qid], spawns) if qid in givers else [])
-        if group:
-            used_sorts.add(group)
-        if zones:
-            placed += 1
-        elif group:
-            by_sort += 1
-        else:
-            unplaced += 1
         by_client += 1 if source == "client" else 0
         title = q["title"]
         if title == str(qid) and client.get(qid, {}).get("title"):
             title = client[qid]["title"]
-        quest_lines[qid] = quest_line(qid, title, zones, group, races[qid], quest_classes(q.get("classes", 0), group),
-                                      links.get(qid))
+        records[qid] = {"title": title, "zones": zones, "sort": group, "races": races[qid],
+                        "classes": quest_classes(q.get("classes", 0), group), "prev": links.get(qid)}
+
+    overrides = load_overrides()
+    notes = apply_overrides(records, overrides["quests"])
+    named, name_notes = chain_names(records, overrides["chains"])
+    for note in notes + name_notes:
+        print(f"override not applied: {note}")
+
+    placed = unplaced = by_sort = 0
+    quest_lines, used_sorts = {}, set()
+    for qid, rec in records.items():
+        if rec["sort"] and not isinstance(rec["sort"], str):
+            used_sorts.add(rec["sort"])
+        if rec["zones"]:
+            placed += 1
+        elif rec["sort"]:
+            by_sort += 1
+        else:
+            unplaced += 1
+        quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
+                                      rec["prev"], named.get(qid))
 
     sort_lines = {}
     for sid in sorted(used_sorts):
@@ -637,9 +777,11 @@ def with_db(args):
     return quest_lines, sort_lines, (f"{placed} in a zone, {by_sort} under a class, profession or season, "
                                      f"{unplaced} with no place ({by_client} placed by Forever's client); "
                                      f"{len(used_sorts)} sorts; "
-                                     f"{len(links)} after another in a chain; "
+                                     f"{sum(1 for r in records.values() if r['prev'])} after another in a chain, "
+                                     f"{len(named)} chains named by hand; "
                                      f"{sum(1 for m in races.values() if m)} limited by race, "
-                                     f"{len(leaks)} not on the side of the quest before them")
+                                     f"{len(leaks)} not on the side of the quest before them; "
+                                     f"{len(ids) - len(records)} dropped by hand")
 
 
 def main():

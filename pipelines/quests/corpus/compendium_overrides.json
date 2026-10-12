@@ -1,0 +1,5 @@
+{
+  "about": "Hand corrections to the Compendium's quests, applied last by pipelines/quests/tools/export_compendium.py (load_overrides says what each field does). Each entry has its source: a wiki page, or why.",
+  "quests": [],
+  "chains": []
+}
