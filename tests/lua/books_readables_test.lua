@@ -122,6 +122,7 @@ Reopen(1453)
 Expect("...reopened elsewhere, on the zone the player stands in now", panel.page.title.text, "Stormwind City")
 Expect("...a city's card opened inside its zone's", RowFor("Elwynn Forest").row.open and RowFor("Stormwind City").row.open
     and Has(Shown(), L.TYPE_PLAQUE), true)
+Expect("...the zone landed on before still open beside it", RowFor("Westfall").row.open, true)
 Reopen(9002)
 Expect("...where their zone has nothing to read, their continent's banner", panel.page.title.text, "Kalimdor")
 Expect("...its page in Azeroth, with what is found of it", panel.page.sub.text:match("^In Azeroth · %d+ of %d+ found$") ~= nil, true)
@@ -154,7 +155,10 @@ end
 Click("Westfall")
 Reopen(1453)
 Expect("...and what the player chose, kept on reopening", panel.page.title.text, "Westfall")
-Click("Westfall")
+-- Each card stays as it was left: the click above closed Westfall's, and the landing on Stormwind
+-- City opened it and Elwynn Forest's. Closed here, so the list starts folded.
+Click("Stormwind City")
+Click("Elwynn Forest")
 
 local list = Shown()
 Expect("the list is laid out as the places': a banner for each continent, no Azeroth above them",
@@ -228,7 +232,14 @@ Click(L.TYPE_GRAVE)
 Click("Alterac Valley")
 Click(L.GROUP_BATTLEGROUNDS)
 
+Click("Westfall")
 Click("Elwynn Forest")
+Expect("a click on a second zone's card opens it beside the first, both open",
+    RowFor("Westfall").row.open and RowFor("Elwynn Forest").row.open and Has(Shown(), L.TYPE_LETTER)
+    and Has(Shown(), "Stormwind City"), true)
+Click("Westfall")
+Expect("...and a click on one closes it alone", tostring(RowFor("Westfall").row.open) .. "|"
+    .. tostring(RowFor("Elwynn Forest").row.open), "false|true")
 Click("Stormwind City")
 list = Shown()
 Expect("a city's page in the zone around it, with what is found of it",
@@ -270,6 +281,9 @@ Expect("...and choosing it leaves the counts as they were", RowFor("Stormwind Ci
 SpokenBooksSettings.unlockUnfound = false
 
 SpokenBooksCharacter.found[LETTER] = true
+-- Stormwind City and Elwynn Forest closed, so the first Letters listed are Westfall's.
+Click("Stormwind City")
+Click("Elwynn Forest")
 Click("Westfall")
 Click(L.TYPE_LETTER)
 Click("A Dusty Unsent Letter")

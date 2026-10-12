@@ -28,7 +28,7 @@ local selection          -- { book = id } | { mapID = id } | { mapID = id, group
                          -- | { group = "events"|"wide"|"unknown", type = type } | { type = type }
                          -- | { zones = "lands"|"battlegrounds" } | nil
 local landed             -- the selection made for the player, where they stood; any other they chose
-local expandedZone
+local openZones = {}          -- [mapID] = true: a zone's or city's card, opened
 local continentOpen = { [1414] = true, [1415] = true }
 local zonesOpen = {}          -- [key] = true: Other Lands' or Battlegrounds' banner, opened
 local ZONES_LABEL = { lands = "GROUP_LANDS", battlegrounds = "GROUP_BATTLEGROUNDS" }
@@ -354,14 +354,15 @@ local function KindCards(byType, nest, into, item, opened, whole)
 end
 
 -- A zone's card, and when it is open (or a search finds something in it) its city's card, then a
--- card for each kind of writing in it.
+-- card for each kind of writing in it. A city's card opens on its own, and shows only while its
+-- zone is open.
 local function ZoneRows(mapID, nest, whole)
 	whole = Named(MapName(mapID), whole)
 	local all = ReadablesIn(mapID)
 	local found, total = Tally(all)
 	if OnlyFound() and found == 0 then return {} end
 	if not Listed(all) then return {} end
-	local open = expandedZone == mapID or CITY_IN[expandedZone] == mapID
+	local open = openZones[mapID] == true
 	local inside = {}
 	local searched = SearchOpens("z" .. mapID)
 	if open or (filter ~= "" and not asLeft) then
@@ -734,13 +735,19 @@ local function OpenAround(zone)
 	end
 end
 
+-- Open a zone's card and, for a city, the zone's around it, leaving the others as they are.
+local function OpenZone(zone)
+	openZones[zone] = true
+	if CITY_IN[zone] then openZones[CITY_IN[zone]] = true end
+end
+
 -- Choose where the player stands: their zone's card, opened, else their continent's banner. The tab
 -- never shows a page with nothing chosen.
 local function LandOnPlayer()
 	local zone = PlayerZone()
 	if zone then
 		selection = { mapID = zone }
-		expandedZone = zone
+		OpenZone(zone)
 		OpenAround(zone)
 	else
 		local continent = PlayerContinent()
@@ -770,11 +777,8 @@ local function OnClick(row)
 		continentOpen[row.mapID] = not continentOpen[row.mapID]
 		selection = { mapID = row.mapID }
 	elseif row.kind == "zone" then
-		if expandedZone == row.mapID or CITY_IN[expandedZone] == row.mapID then
-			expandedZone = CITY_IN[row.mapID]
-		else
-			expandedZone = row.mapID
-		end
+		-- A zone's or city's card opens and closes alone.
+		openZones[row.mapID] = not openZones[row.mapID] or nil
 		selection = { mapID = row.mapID }
 	elseif row.kind == "group" and not row.mapID then
 		groupOpen[row.which] = not groupOpen[row.which]
