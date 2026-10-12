@@ -15,7 +15,8 @@
 -- leaves the quests no voice pack has out of the counts as it does out of the list.
 --
 -- The page shows what is chosen. A quest's is its title, where it is and its words, with Play
--- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. A banner's, card's or
+-- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. Its hand-in waits until
+-- it is completed, unless Unlock Unstarted Quests is on. A banner's, card's or
 -- chain's is its name, where it is and its count on one line, and L.QUESTS_PICK, the quests being
 -- on the left to choose. The sections and Place Unknown are no place: their line is the count.
 --
@@ -975,19 +976,35 @@ local function Voiced(id, moment)
     return VO.DataModules:PrepareSound({ event = EVENTS[moment], questID = id }) and true or false
 end
 
--- What the player is given to play one moment of a quest, named for its giver as the quest log's
--- Play names it.
+-- The hand-in tells how a quest ends: it shows once the quest is completed, or with Unlock
+-- Unstarted Quests on, where the player chose to see everything.
+local function Shows(id, moment)
+    return moment ~= "complete" or Completed(id) or Unlocked()
+end
+
+-- Who says one moment of a quest: the progress and the hand-in are said by the one it is handed
+-- in to (`ender`, `enderObject` in the data, absent where that is the giver), the offer by its
+-- giver, as the quest log's Play names it.
+local function Speaker(id, moment)
+    local DataModules, Enums = VO.DataModules, VO.Enums
+    local quest = moment ~= "accept" and Quests()[id]
+    if quest and quest.ender then return Enums.GUID.Creature, quest.ender end
+    if quest and quest.enderObject then return Enums.GUID.GameObject, quest.enderObject end
+    return DataModules:GetQuestLogQuestGiverTypeAndID(id)
+end
+
+-- What the player is given to play one moment of a quest, named and pictured for who says it.
 local function SoundData(id, moment, origin)
     local DataModules, Enums = VO.DataModules, VO.Enums
-    local kind, giver = DataModules:GetQuestLogQuestGiverTypeAndID(id)
-    local name = giver and DataModules:GetObjectName(kind, giver) or Title(id)
-    local guid = giver and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, giver) or nil
+    local kind, speaker = Speaker(id, moment)
+    local name = speaker and DataModules:GetObjectName(kind, speaker) or Title(id)
+    local guid = speaker and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, speaker) or nil
     return { event = EVENTS[moment], questID = id, title = Title(id), name = name, unitGUID = guid,
         text = PartText(id, moment), origin = origin }
 end
 
 -- Play on a quest's page: what is said when it is offered, under way and handed in, as far as the
--- voice packs have it, named for its giver as the quest log's Play names it.
+-- voice packs have it, named for who says it.
 local PLAY = {
     has = function(id)
         for _, moment in ipairs(MOMENTS) do
@@ -1001,7 +1018,7 @@ local PLAY = {
     -- `queued`: behind what the queue already holds, not played at once.
     start = function(id, queued)
         for _, moment in ipairs(MOMENTS) do
-            if Voiced(id, moment) then
+            if Shows(id, moment) and Voiced(id, moment) then
                 local soundData = SoundData(id, moment, "Azeroth's Compendium")
                 if queued then VO.Player:Enqueue(soundData) else VO.Player:PlayNow(soundData) end
                 return
@@ -1075,12 +1092,13 @@ local function PartButtons(moment)
 end
 
 -- A quest's words in parts, the offer, the progress and the hand-in each under its heading, with
--- Play and Report for that part where a pack voices it. nil with no words at all.
+-- Play and Report for that part where a pack voices it; the hand-in only where it Shows. nil with
+-- no words at all.
 local function Parts(id)
     local parts = {}
     local reportsHidden = Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()
     for _, moment in ipairs(MOMENTS) do
-        local text = PartText(id, moment)
+        local text = Shows(id, moment) and PartText(id, moment)
         if text then
             local buttons = PartButtons(moment)
             local list = {}

@@ -457,6 +457,8 @@ C:Tab("quests").unlock.set(true)
 Expect("Unlock Unstarted Quests opens it", RowFor("Kobold Candles").row.locked, false)
 Click("Kobold Candles")
 words = PageWords() or ""
+Expect("...all its words, the hand-in too, though it is not completed",
+    page.body.lastParts[#page.body.lastParts].heading, L.QUEST_PART_COMPLETE)
 Expect("...its words filled for the player: the word for his sex", words:find("Hello, good sir!", 1, true) ~= nil, true)
 Expect("...and his name", words:find("Thanks for the candles, Tester,", 1, true) ~= nil, true)
 Expect("...and a line break for $B", words:find("moment?\n\nMy brother", 1, true) ~= nil, true)
@@ -487,7 +489,10 @@ Expect("...and its zone's card counts it in progress, apart from the completed",
 RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
 Expect("...in progress, then where it is", page.sub.text.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
-Expect("...and its words", (PageWords() or ""):find("Thanks for the candles", 1, true) ~= nil, true)
+Expect("...and its words, offered and under way", (PageWords() or ""):find("Did you gather those candles yet?", 1, true) ~= nil, true)
+Expect("...not the hand-in before it is completed: it tells how the quest ends",
+    (PageWords() or ""):find("Thanks for the candles", 1, true) == nil
+    and page.body.lastParts[#page.body.lastParts].heading ~= L.QUEST_PART_COMPLETE, true)
 Click("Elwynn Forest")
 Expect("a zone's page counts it apart from the completed",
     page.sub.text.text:match("^In Eastern Kingdoms · 1 of %d+ completed, 1 in progress$") ~= nil, true)
@@ -514,6 +519,9 @@ Tab:Refresh()
 completed[CANDLES] = true
 Tab:Refresh()
 Expect("a quest completed since opens", RowFor("Kobold Candles").row.locked, false)
+Click("Kobold Candles")
+Expect("...its page with the hand-in now", (PageWords() or ""):find("Thanks for the candles", 1, true) ~= nil, true)
+Click("Kobold Candles")
 Expect("...and is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
 
 -- Started Only.
@@ -695,11 +703,22 @@ ClickChain("The Jasperlode Mine")
 Click("Westfall")
 Click("Elwynn Forest")
 
--- Play: the first part the voice packs have of the quest, with its words.
+-- Play: the first part the voice packs have of the quest, with its words. Kobold Camp Cleanup is
+-- made here to be handed in to another than its giver: Marshal McBride offers it, Marshal Dughan
+-- takes it in.
+local MCBRIDE, DUGHAN = 197, 240
 VO.DataModules:Register("TestPack", {
     SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2, ["85-accept"] = 2, ["85-complete"] = 2 },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
+    NPCIDLookupByQuestID = { [KOBOLDS] = MCBRIDE },
+    NPCNameLookupByNPCID = { [MCBRIDE] = "Marshal McBride", [DUGHAN] = "Marshal Dughan" },
 })
+SpokenQuestsCompendium.quests[KOBOLDS].ender = DUGHAN
+local function Who()
+    local clip = Spoken:GetQueue()[1]
+    return clip and (tostring(clip.name) .. " " .. tostring(clip.unitGUID))
+end
+local function Npc(name, id) return name .. " " .. VO.Utils:MakeGUID(VO.Enums.GUID.Creature, id) end
 Click("Kobold Camp Cleanup")
 local play = PartButton(L.QUEST_PART_ACCEPT, "play")
 Expect("a voiced part has Play on its heading's line", play ~= nil and play:IsShown(), true)
@@ -738,6 +757,7 @@ play.scripts.OnClick(play)
 local queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
 Expect("...which plays that part alone, not the hand-in after it", table.concat(queued, ","), "7-accept")
+Expect("...named and pictured for its giver", Who(), Npc("Marshal McBride", MCBRIDE))
 local playing = Spoken:GetQueue()[1]
 Expect("...with the offer's words, for the window to show and highlight",
     playing and type(playing.text) == "string" and playing.text ~= "" and PageWords():find(playing.text, 1, true) ~= nil, true)
@@ -752,6 +772,11 @@ handIn.scripts.OnClick(handIn)
 queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
 Expect("...the hand-in's Play playing the hand-in in its place", queued[1], "7-complete")
+Expect("...named and pictured for the one it is handed in to, not its giver", Who(), Npc("Marshal Dughan", DUGHAN))
+handIn.scripts.OnClick(handIn)
+SpokenQuestsCompendium.quests[KOBOLDS].ender = nil
+handIn.scripts.OnClick(handIn)
+Expect("...and for its giver where the data names no one else", Who(), Npc("Marshal McBride", MCBRIDE))
 handIn.scripts.OnClick(handIn)
 play.scripts.OnClick(play)
 play.scripts.OnClick(play)
