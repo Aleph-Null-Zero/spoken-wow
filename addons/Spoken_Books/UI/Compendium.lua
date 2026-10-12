@@ -26,7 +26,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 42
+local VERSION = 43
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -165,6 +165,9 @@ end
 
 local window, tabButtons
 local active
+-- Whether the player has chosen a tab with the tabs along the window's foot this session: until
+-- then the window opens on the first tab (C:Toggle), not on whichever a part opened it on last.
+local picked = false
 local minimized = false
 local resizer, minimizeButton, minimizeFrame
 
@@ -452,6 +455,7 @@ local function LayOutTabs()
 		end
 		button:SetScript("OnClick", function(self)
 			Sound("igCharacterInfoTab")
+			picked = true
 			C:Select(self.key)
 		end)
 		button:SetShown(#list > 1)
@@ -585,7 +589,8 @@ function C:Active()
 end
 
 --- Lay the tabs out again when a part is switched on or off, and close the window if the tab it
---- shows is one switched off: left open, it would go on playing and listing a part turned off.
+--- shows is one switched off: left open, it would go on listing a part turned off. What is playing
+--- goes on, as it does whenever the window closes.
 function C:Relayout()
 	if not window then return end
 	LayOutTabs()
@@ -601,16 +606,17 @@ function C:Available()
 	return false
 end
 
---- Open the window, or close it when it is open: on the tab last looked at, else the first whose
---- part is on, through the tab's own open() where it has one (the places' lands on where the
---- player stands). Spoken's minimap menu and settings page open it this way.
+--- Open the window, or close it when it is open: on the first tab by order whose part is on
+--- (Quests), or once the player has chosen a tab this session, on the tab last looked at; through
+--- the tab's own open() where it has one (the places' lands on where the player stands). Spoken's
+--- minimap menu and settings page open it this way.
 function C:Toggle()
 	if window and window:IsShown() then
 		window:Hide()
 		return
 	end
 	local ordered = Ordered()
-	local tab = active and C.tabs[active]
+	local tab = picked and active and C.tabs[active]
 	if not (tab and Enabled(tab)) then
 		tab = nil
 		for _, each in ipairs(ordered) do

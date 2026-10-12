@@ -826,6 +826,17 @@ Expect("Quests is the first tab", _G.SpokenCompendiumWindowTab1:GetText(), L.COM
 Expect("...Zones and Books after it", _G.SpokenCompendiumWindowTab2:GetText() .. "|" .. _G.SpokenCompendiumWindowTab3:GetText(),
     "Zones|Books")
 Expect("...and the window has its title", C.window.title, L.COMPENDIUM_TITLE)
+-- Opened from the minimap menu, on the first tab until the player has chosen one with the tabs.
+C:Select("readables")
+C:Hide()
+C:Toggle()
+Expect("the window opened from the minimap opens on Quests, whichever tab a part showed last", C:IsOpen("quests"), true)
+_G.SpokenCompendiumWindowTab2.scripts.OnClick(_G.SpokenCompendiumWindowTab2)
+C:Hide()
+C:Toggle()
+Expect("...and once the player has chosen a tab, on that one", C:IsOpen("places"), true)
+C:Hide()
+C:Select("quests")
 
 ---------------------------------------------------------------- Open in Azeroth's Compendium
 -- Opened on a quest: chosen, with its zone, continent or group opened, and its page shown.
