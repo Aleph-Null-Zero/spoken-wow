@@ -315,7 +315,6 @@ local function ZoneRows(mapID, nest, small)
 	if Spoken and Spoken.ZoneIcon then icon, iconCrop = Spoken:ZoneIcon(mapID) end
 	local rows = { { style = "card", small = small, kind = "zone", mapID = mapID, label = zoneName, nest = nest,
 		count = found, total = total, icon = icon, iconCrop = iconCrop,
-		sub = total > 0 and L.PLACES_FOUND_FMT:format(found, total) or nil,
 		ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
 		none = found == 0 and not Found(mapID),
 		open = filter ~= "" and #inside > 0 or open,
@@ -467,7 +466,7 @@ local function ShowEntry()
 				selection = { mapID = up, key = nil }
 				SpokenZones:RefreshLoreWindow()
 			end or nil,
-			text = L.NOT_DISCOVERED, missing = true })
+			text = L.NOT_DISCOVERED })
 		return
 	end
 	if key then
@@ -481,7 +480,7 @@ local function ShowEntry()
 			end
 			if SpokenZones:IsPending(entry) then
 				page:Show({ title = name, subtitle = line, onSubtitle = back,
-					text = L.LORE_NOT_WRITTEN:format(name), missing = true, contribute = { mapID, name } })
+					text = L.LORE_NOT_WRITTEN:format(name), contribute = { mapID, name } })
 				return
 			end
 			-- Rows are keyed by the canonical form already, so this needs no normalising --
@@ -501,7 +500,7 @@ local function ShowEntry()
 	end or nil
 	if not entry or SpokenZones:IsPending(entry) then
 		page:Show({ title = name, subtitle = subtitle, onSubtitle = onSubtitle, text = L.LORE_NOT_WRITTEN:format(name),
-			missing = true, contribute = { mapID, nil } })
+			contribute = { mapID, nil } })
 		return
 	end
 	page:Show({ title = name, subtitle = subtitle, onSubtitle = onSubtitle, text = entry.full or entry.short or "",

@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 21
+local VERSION = 22
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -618,12 +618,10 @@ local MINUS = [[Interface\Buttons\UI-MinusButton-Up]]
 local PLUS_OFF = [[Interface\Buttons\UI-PlusButton-Disabled]]
 local READY = [[Interface\RaidFrame\ReadyCheck-Ready]]
 local ACTIVE = [[Interface\GossipFrame\ActiveQuestIcon]]
--- A card's badge where it has no painting of its own: a map; a chain's where the storyline's mark
--- is missing, a scroll.
+-- A card's badge where it has no painting of its own: a map.
 local MAP_ICON = [[Interface\Icons\INV_Misc_Map_01]]
 -- A chain of quests: the game's quest scroll.
 local CHAIN_ICON = [[Interface\Icons\INV_Inscription_Scroll]]
-local STORY_ICON = [[Interface\Icons\INV_Scroll_03]]
 local CHECK = "questlog-icon-checkmark-yellow"
 -- The icons' bevelled border, trimmed inside the gold frame.
 local ICON_CROP = { 0.08, 0.92, 0.08, 0.92 }
@@ -648,7 +646,6 @@ local CARD_RIGHT = 56         -- what a card's share or tick keeps clear on its 
 -- right as well.
 local CARD_PAD = 10           -- from a card's left side to its badge
 local CARD_END = 12           -- from a card's right side to its numbers and bar
-local CARD_INK = { 0.73, 0.70, 0.65 }
 local SHARE_INK = { 0.80, 0.76, 0.70 }
 local BANNER_INK = { 0.85, 0.81, 0.73 }
 local LOCKED_INK = { 0.50, 0.48, 0.45 }
@@ -748,7 +745,6 @@ local function Light(row)
 	local flat = style == nil or (style == "card" and not row.cardArt) or (style == "banner" and not row.bannerArt)
 	row.wash:SetShown(flat and (over or chosen))
 	row.wash:SetAlpha(chosen and 1 or 0.55)
-	row.chosen:Hide()
 	row.edge:SetShown(flat and chosen)
 	if row.glow then
 		ShowAll(row.glow, style == "banner" and row.bannerArt and (over or chosen))
@@ -947,8 +943,6 @@ function List:AcquireRow(index)
 		row.wash:SetColorTexture(1, 1, 1, 0.1)
 	end
 	row.wash:Hide()
-	row.chosen = row:CreateTexture(nil, "BACKGROUND")
-	row.chosen:Hide()
 	row.edge = row:CreateTexture(nil, "ARTWORK")
 	row.edge:SetWidth(2)
 	row.edge:SetColorTexture(1, 0.82, 0, 0.9)
@@ -1029,12 +1023,6 @@ local function CardParts(row)
 	row.cardFill:SetColorTexture(1, 1, 1, 0.04)
 	row.icon = row:CreateTexture(nil, "ARTWORK")
 	row.iconFrame = row:CreateTexture(nil, "ARTWORK", nil, 2)
-	row.story = row:CreateTexture(nil, "ARTWORK")
-	row.sub = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	row.sub:SetJustifyH("LEFT")
-	if row.sub.SetWordWrap then row.sub:SetWordWrap(false) end
-	if row.sub.SetMaxLines then row.sub:SetMaxLines(1) end
-	Tint(row.sub, CARD_INK)
 	row.tick = row:CreateTexture(nil, "ARTWORK")
 	row.track = row:CreateTexture(nil, "ARTWORK")
 	row.track:SetColorTexture(0.04, 0.035, 0.024, 1)
@@ -1045,7 +1033,7 @@ local function CardParts(row)
 		row.barCaps[i] = cap
 		row.hasBarFrame = Atlas(cap, atlas) and (i == 1 or row.hasBarFrame)
 	end
-	row.cardParts = { row.cardFill, row.warm, row.icon, row.iconFrame, row.story, row.sub, row.tick, row.track, row.fill }
+	row.cardParts = { row.cardFill, row.warm, row.icon, row.iconFrame, row.tick, row.track, row.fill }
 	for _, list in ipairs({ row.face, row.lift, row.barCaps }) do
 		for _, part in ipairs(list) do table.insert(row.cardParts, part) end
 	end
@@ -1209,7 +1197,6 @@ local function DrawCard(row, item, indent, width)
 	local centre = indent + CARD_PAD + side / 2
 	local none = item.none or item.locked
 	local icon = item.icon or (item.story and CHAIN_ICON) or MAP_ICON
-	row.story:Hide()
 	do
 		local inset = 3 -- the frame's own rim
 		local crop = item.iconCrop or ICON_CROP
@@ -1248,7 +1235,6 @@ local function DrawCard(row, item, indent, width)
 		row.label:SetTextColor(1, 0.82, 0)
 	end
 	row.label:SetText(item.label)
-	row.sub:Hide()
 
 	-- On the right the padlock, or the numbers, with the gold tick after them once all are found
 	-- and the quest mark before them with how many are under way.
@@ -1413,11 +1399,9 @@ function List:Render()
 		-- A single row's light starts on the line down its left, its gold edge over that line.
 		local lit = indent
 		if item.leaf and (nest > 0 or underBanner) then lit = indent - (NEST_STEP - RAIL_X) - 0.5 end
-		for _, light in ipairs({ row.wash, row.chosen }) do
-			light:ClearAllPoints()
-			light:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
-			light:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
-		end
+		row.wash:ClearAllPoints()
+		row.wash:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
+		row.wash:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
 		row.edge:ClearAllPoints()
 		row.edge:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
 		row.edge:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", lit, 0)

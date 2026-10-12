@@ -160,7 +160,6 @@ L.BATTLEGROUNDS = "Campos de batalla"
 L.ZONES_PICK = "Elige a la izquierda un lugar para leer su historia."
 L.CONTINENT_COUNT_FMT = "%1$d continentes"
 L.CONTINENT_COUNT_ONE = "1 continente"
-L.PLACES_FOUND_FMT = "%1$d de %2$d lugares descubiertos"
 
 L.OPEN_IN_COMPENDIUM = "Abrir en el Compendio de Azeroth"
 

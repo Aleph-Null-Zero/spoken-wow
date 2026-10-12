@@ -156,7 +156,6 @@ L.BATTLEGROUNDS = "Champs de bataille"
 L.ZONES_PICK = "Choisissez à gauche un lieu pour lire son histoire."
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
-L.PLACES_FOUND_FMT = "%1$d lieux découverts sur %2$d"
 
 L.OPEN_IN_COMPENDIUM = "Ouvrir dans le Compendium d'Azeroth"
 

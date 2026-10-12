@@ -165,7 +165,6 @@ L.BATTLEGROUNDS = "Battlegrounds"
 L.ZONES_PICK = "Choose a place on the left to read its story."
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
-L.PLACES_FOUND_FMT = "%1$d of %2$d places found"
 -- The window browses every place; the panel beside the map tells the zone it shows.
 L.LORE_WINDOW_TITLE = "Azeroth's Compendium"
 L.COMPENDIUM_PLACES = "Zones"
