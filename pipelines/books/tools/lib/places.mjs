@@ -11,7 +11,7 @@ export function isTemplateCopy(name) {
 // A title that names its own form says what it is better than its item's icon does: the game
 // gave "Maybell's Love Letter" a scroll's icon and "Crystallized Note" a tablet's.
 const FORM_TYPE = [
-  [/journal/i, "book"], [/diary/i, "note"], [/letter|missive|envelope/i, "letter"],
+  [/journal|diary/i, "journal"], [/letter|missive|envelope/i, "letter"],
   [/\bnote\b|parchment/i, "note"], [/scroll/i, "scroll"], [/tablet/i, "tablet"],
 ];
 // Then the icon, then the rest of the title.
@@ -24,19 +24,23 @@ const TITLE_TYPE = [
   [/orders|report|deed|writ|plans/i, "scroll"],
 ];
 
-// What a readable is. One standing in the world by its name, its first page and how many pages it
-// has (a gravestone, a museum's exhibit, a book on a shelf, else a plaque or a sign); a carried one
-// by the form its title names, else its item's icon, else the rest of its title.
+// What a readable is, from its title, its pages' words (`texts`, first page first) and its items'
+// icons. One with no words on any page is a picture or a map: the game draws it, as the Snapshot of
+// Gammerita and the Crude Map. One standing in the world by its name, its first page and how many
+// pages it has (a gravestone, a museum's exhibit, a book on a shelf, else a plaque or a sign); a
+// carried one by the form its title names, else its item's icon, else the rest of its title.
 //
 // A grave is known by its words too: Uther's, Durotan's and Grom's markers carry their names, not
 // "Tombstone", and open "Here lies". "In memory of" is left out: Horatio Montgomery's plaque in
 // Stormwind is a memorial, not a grave.
-export function typeOf({ title, pages = 1, world = false, text = "", icons = [] }) {
+export function typeOf({ title, world = false, texts = [], icons = [] }) {
+  if (texts.length && texts.every((text) => text.trim() === "")) return "picture";
   if (world) {
     if (/tombstone|headstone|here lies|in loving memory|\bgrave/i.test(title)) return "grave";
-    if (/^\s*(here lies|in loving memory)/i.test(text)) return "grave";
+    if (/^\s*(here lies|in loving memory)/i.test(texts[0] ?? "")) return "grave";
     if (/skeleton|\begg\b|talon|skull of|astrolabe|catapult|armor of|relics|reliefs|strider/i.test(title)) return "exhibit";
-    if (pages > 1 || /journal/i.test(title)) return "book";
+    if (/journal|diary/i.test(title)) return "journal";
+    if (texts.length > 1) return "book";
     if (/\bnote\b/i.test(title)) return "note";
     return "plaque";
   }

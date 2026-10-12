@@ -42,20 +42,33 @@ test("a carried readable whose title names no form goes by its icon, then its ti
 test("a readable in the world goes by its name and its pages", () => {
   assert.equal(typeOf({ title: "Eliza's Tombstone", world: true }), "grave");
   assert.equal(typeOf({ title: "Pteradon Skeleton", world: true }), "exhibit");
-  assert.equal(typeOf({ title: "Aftermath of the Second War", world: true, pages: 6 }), "book");
+  assert.equal(typeOf({ title: "Aftermath of the Second War", world: true, texts: ["The Second War", "", "", "", "", "Turalyon"] }), "book");
   assert.equal(typeOf({ title: "Kurdran Wildhammer", world: true }), "plaque");
 });
 
 test("a marker that opens \"Here lies\" is a grave, whatever its name", () => {
-  assert.equal(typeOf({ title: "Uther the Lightbringer", world: true, text: "Here lies Uther the Lightbringer" }), "grave");
-  assert.equal(typeOf({ title: "Rock of Durotan", world: true, text: "Here lies Durotan - first Chieftain" }), "grave");
-  assert.equal(typeOf({ title: "A Grave", world: true, text: "In loving memory of Jesse Morales" }), "grave");
+  assert.equal(typeOf({ title: "Uther the Lightbringer", world: true, texts: ["Here lies Uther the Lightbringer"] }), "grave");
+  assert.equal(typeOf({ title: "Rock of Durotan", world: true, texts: ["Here lies Durotan - first Chieftain"] }), "grave");
+  assert.equal(typeOf({ title: "A Grave", world: true, texts: ["In loving memory of Jesse Morales"] }), "grave");
 });
 
 test("a memorial is a plaque, not a grave", () => {
-  assert.equal(typeOf({ title: "Horatio Montgomery, M.D.", world: true, text: "In memory of my dear mentor" }), "plaque");
+  assert.equal(typeOf({ title: "Horatio Montgomery, M.D.", world: true, texts: ["In memory of my dear mentor"] }), "plaque");
 });
 
 test("the Hall of Explorers' Geru Strider is an exhibit", () => {
   assert.equal(typeOf({ title: "Geru Strider", world: true }), "exhibit");
+});
+
+test("journals and diaries are one type, carried or on a shelf", () => {
+  assert.equal(typeOf({ title: "A Faded Journal Page", icons: [NOTE] }), "journal");
+  assert.equal(typeOf({ title: "Damp Diary Page (Day 4)", icons: [NOTE] }), "journal");
+  assert.equal(typeOf({ title: "Diary of Weavil", icons: [BOOK] }), "journal");
+  assert.equal(typeOf({ title: "Baelog's Journal", world: true, texts: ["I've sent Eric and Olaf"] }), "journal");
+});
+
+test("a readable with no words on any page is a picture", () => {
+  assert.equal(typeOf({ title: "Snapshot of Gammerita", texts: [""] }), "picture");
+  assert.equal(typeOf({ title: "Of Love and Family", icons: [SCROLL], texts: [""] }), "picture");
+  assert.equal(typeOf({ title: "Book from Sven's Farm", icons: [BOOK], texts: ["Sven's journal", ""] }), "book");
 });

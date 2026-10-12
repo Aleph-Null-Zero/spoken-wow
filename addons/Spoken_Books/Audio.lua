@@ -58,9 +58,11 @@ end
 
 -- What a readable can be (Data/Places.lua's `type`), in the order the Compendium lists them,
 -- and the keys of its names: `one` of it, over its line in the queue, and `all`, the Compendium's.
-SpokenBooks.TYPES = { "book", "letter", "note", "scroll", "tablet", "plaque", "grave", "exhibit", "other" }
+SpokenBooks.TYPES = { "book", "journal", "letter", "note", "scroll", "tablet", "plaque", "grave", "exhibit",
+	"picture", "other" }
 SpokenBooks.TYPE_NAMES = {
 	book = { one = "READABLE_BOOK", all = "TYPE_BOOK" },
+	journal = { one = "READABLE_JOURNAL", all = "TYPE_JOURNAL" },
 	letter = { one = "READABLE_LETTER", all = "TYPE_LETTER" },
 	note = { one = "READABLE_NOTE", all = "TYPE_NOTE" },
 	scroll = { one = "READABLE_SCROLL", all = "TYPE_SCROLL" },
@@ -68,6 +70,7 @@ SpokenBooks.TYPE_NAMES = {
 	plaque = { one = "READABLE_PLAQUE", all = "TYPE_PLAQUE" },
 	grave = { one = "READABLE_GRAVE", all = "TYPE_GRAVE" },
 	exhibit = { one = "READABLE_EXHIBIT", all = "TYPE_EXHIBIT" },
+	picture = { one = "READABLE_PICTURE", all = "TYPE_PICTURE" },
 	other = { one = "READABLE_OTHER", all = "TYPE_OTHER" },
 }
 
