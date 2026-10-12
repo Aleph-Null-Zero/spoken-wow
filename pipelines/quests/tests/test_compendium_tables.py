@@ -72,3 +72,28 @@ def test_an_area_named_after_a_battleground_is_that_battleground(monkeypatch):
     assert maps.battleground_of_area(2597) == 1459
     assert maps.battleground_of_area(2839) == 1459
     assert maps.battleground_of_area(36) is None
+
+
+# Blackrock Depths (map 230) has its own area 1584, on the Eastern Kingdoms' map; Gnomeregan (90)
+# names its own area 721, and the quest log files its quests under 133, a Dun Morogh area of its
+# name; Shadowfang Keep's quests are under an area of its map, 209.
+DUNGEON_MAPS = {230: {"MapName_lang": "Blackrock Depths", "AreaTableID": "1584"},
+                90: {"MapName_lang": "Gnomeregan", "AreaTableID": "721"},
+                33: {"MapName_lang": "Shadowfang Keep", "AreaTableID": "0"}}
+
+
+def test_a_dungeons_quest_is_known_by_its_area_its_map_or_its_name(monkeypatch):
+    monkeypatch.setitem(TABLES, ("AreaTable", BUILD), TABLES[("AreaTable", BUILD)] + [
+        _area(1584, name="Blackrock Depths"), _area(1585, parent=1584), _area(133, parent=1, name="Gnomeregan"),
+        _area(1, name="Dun Morogh"), _area(209, continent=33, name="Shadowfang Keep")])
+    maps = _maps(monkeypatch)
+    assert maps.dungeon_of_area(1584, DUNGEON_MAPS) == 230
+    assert maps.dungeon_of_area(1585, DUNGEON_MAPS) == 230
+    assert maps.dungeon_of_area(133, DUNGEON_MAPS) == 90
+    assert maps.dungeon_of_area(209, DUNGEON_MAPS) == 33
+    assert maps.dungeon_of_area(1, DUNGEON_MAPS) is None
+    assert maps.dungeon_of_area(12, DUNGEON_MAPS) is None
+
+
+def test_the_excavation_site_is_the_wetlands_not_a_dungeon():
+    assert 2998 not in export_compendium.DUNGEONS and 3065 in export_compendium.DUNGEONS

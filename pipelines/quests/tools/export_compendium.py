@@ -25,6 +25,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
   Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
+- A dungeon's or a raid's quest (its QuestSortID is the dungeon) is filed under the zone of its
+  entrance with `dungeon`, the dungeon's map, so the tab can hold it apart there; the dungeons'
+  names in every language are the client's (its Map table).
 - Last, corpus/compendium_overrides.json: what no source above can say, corrected by hand, each
   correction with its source (a wiki page, or why). It can move, retitle, link, restrict or drop a
   quest, and name a chain (apply_overrides, chain_names below).
@@ -77,6 +80,9 @@ INSTANCE_ZONE = {
     # areas have no map of their own, so their quests resolved to no zone.
     2998: 1437, 3065: 1455,
 }
+# The dungeons and raids a quest is filed under (`dungeon`): those above, save the Excavation Site,
+# an instance of the Wetlands' own story (Caitlin Grassman's quests) and not a dungeon.
+DUNGEONS = set(INSTANCE_ZONE) - {2998}
 # The battlegrounds' maps, and the zone map of each: Alterac Valley, Warsong Gulch, Arathi Basin
 # and Forever's Darkspear Islands.
 BATTLEGROUND_ZONE = {30: 1459, 489: 1460, 529: 1461, 2997: 2524}
@@ -156,6 +162,24 @@ class Maps:
             continent = int(r.get("ContinentID") or 0)
             if continent in BATTLEGROUND_ZONE and not int(r.get("ParentAreaID") or 0) and r.get("AreaName_lang"):
                 self.battlegrounds[r["AreaName_lang"]] = BATTLEGROUND_ZONE[continent]
+
+    def dungeon_of_area(self, area, dungeons):
+        """The dungeon (its map) an area is, is in, or is named after, from `dungeons` ({map:
+        Map row}); None for any other. The quest log files a dungeon's quests under its own area,
+        under an area of the map outside it (Blackrock Depths', 1584, is on the Eastern Kingdoms
+        map), or under an area of its name (Gnomeregan, 133, in Dun Morogh)."""
+        by_area = {int(r.get("AreaTableID") or 0): m for m, r in dungeons.items()}
+        by_name = {r.get("MapName_lang"): m for m, r in dungeons.items()}
+        for _ in range(4):
+            row = area and self.areas.get(area)
+            if not row:
+                return None
+            continent = int(row.get("ContinentID") or 0)
+            found = (continent if continent in dungeons else None) or by_area.get(area) or by_name.get(row.get("AreaName_lang"))
+            if found:
+                return found
+            area = int(row.get("ParentAreaID") or 0)
+        return None
 
     def battleground_of_area(self, area):
         """The battleground an area is, or is named after; None for any other."""
@@ -521,7 +545,7 @@ def side_leaks(races, links):
             if side_of(races.get(prev, 0)) and side_of(races.get(qid, 0)) != side_of(races.get(prev, 0))]
 
 
-QUEST_FIELDS = {"title", "zones", "sort", "prev", "races", "classes", "remove"}
+QUEST_FIELDS = {"title", "zones", "sort", "dungeon", "prev", "races", "classes", "remove"}
 CHAIN_FIELDS = {"quest", "name", "names", "source"}
 
 
@@ -531,7 +555,8 @@ def load_overrides(path=OVERRIDES):
     A quest entry names its quest (`id`) or quests (`ids`) and sets any of: `title`; `zones` (a
     list of uiMapIDs, which takes the quest out of its sort); `sort` (a QuestSort, or the name of a
     group the client has none for, such as "winterveil"; 0 for none, which takes it out of its
-    zones); `prev` (the quest before it, 0 for none); `races` and `classes` (masks as the data has
+    zones); `dungeon` (the map of the dungeon it is filed under, in the zone of its entrance unless
+    `zones` says otherwise; 0 for none); `prev` (the quest before it, 0 for none); `races` and `classes` (masks as the data has
     them); `remove` (true: the quest is left out). A chain entry names a quest of the chain
     (`quest`) and the chain's `name`: a quest's id, whose title the client gives in its own
     language, or words of its own with their translations in `names` ({locale: words}). Every
@@ -552,7 +577,7 @@ def load_overrides(path=OVERRIDES):
 
 def apply_overrides(records, entries):
     """Apply the hand corrections' quest entries, in order, to `records` ({questID: {"title", "zones",
-    "sort", "prev", "races", "classes"}}), in place. A quest dropped is passed through by the quests
+    "sort", "dungeon", "prev", "races", "classes"}}), in place. A quest dropped is passed through by the quests
     after it, as a quest the corpus lacks is. Returns what could not be applied, as notes."""
     notes, removed = [], {}
     for entry in entries:
@@ -571,10 +596,14 @@ def apply_overrides(records, entries):
                     rec[field] = entry[field]
             if "prev" in entry:
                 rec["prev"] = entry["prev"] or None
+            if "dungeon" in entry:
+                rec["dungeon"] = entry["dungeon"] or None
+                if rec["dungeon"]:
+                    rec["zones"], rec["sort"] = [INSTANCE_ZONE[rec["dungeon"]]], None
             if "zones" in entry:
                 rec["zones"], rec["sort"] = list(entry["zones"]), None
             if "sort" in entry:
-                rec["sort"] = entry["sort"] or None
+                rec["sort"], rec["dungeon"] = entry["sort"] or None, None
                 rec["zones"] = []
     for qid, rec in records.items():
         prev, seen = rec.get("prev"), set()
@@ -633,10 +662,12 @@ def lua_name(name):
     return "{ %s }" % ", ".join([lua_string(name["enUS"])] + locs)
 
 
-def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, name=None):
+def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, name=None, dungeon=None):
     parts = [lua_string(title)]
     if zones:
         parts.append("zones = { %s }" % ", ".join(str(z) for z in zones))
+    if dungeon and zones:
+        parts.append(f"dungeon = {dungeon}")
     if isinstance(group, str):
         parts.append(f"sort = {lua_string(group)}")
     elif group:
@@ -656,7 +687,8 @@ def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, 
     return f"\t\t[{qid}] = {{ {', '.join(parts)} }},"
 
 
-def render(quest_lines, sort_lines):
+def render(quest_lines, sort_lines, dungeon_lines=None):
+    dungeon_lines = dungeon_lines or {}
     return f"""-- AUTO-GENERATED by pipelines/quests/tools/export_compendium.py. Do not edit by hand.
 --
 -- Every quest the voice packs were made from, for the Quests tab of Azeroth's Compendium:
@@ -664,7 +696,8 @@ def render(quest_lines, sort_lines):
 -- season), races and classes = who may take it (bit masks: a race's PlayableRaceBit, Skyborne's
 -- 32 and 33, and a class's id less one; absent for anyone), prev = the quest before it in its
 -- chain, name = the chain's name on its first quest (a quest's id, whose title names it, or words
--- by locale) }}. A sort that is a word is a group the client has no QuestSort for. The words are
+-- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
+-- its entrance }}. A sort that is a word is a group the client has no QuestSort for. The words are
 -- Data/QuestText.lua's. Regenerate with the Forever
 -- repack's world DB up:
 --   make quests-compendium
@@ -682,6 +715,10 @@ SpokenQuestsCompendium = {{
 \tsorts = {{
 {chr(10).join(line for _, line in sorted(sort_lines.items()))}
 \t}},
+
+\tdungeons = {{
+{chr(10).join(line for _, line in sorted(dungeon_lines.items()))}
+\t}},
 }}
 """
 
@@ -690,31 +727,33 @@ ENTRY = re.compile(r"^\t\t\[(-?\d+)\] = \{ .* \},$")
 
 
 def read_existing(path):
-    """The quest and sort lines of a file this wrote, as they are."""
-    quest_lines, sort_lines, into = {}, {}, None
+    """The quest, sort and dungeon lines of a file this wrote, as they are."""
+    quest_lines, sort_lines, dungeon_lines, into = {}, {}, {}, None
     with open(path, encoding="utf-8") as f:
         for line in f.read().splitlines():
             if line == "\tquests = {":
                 into = quest_lines
             elif line == "\tsorts = {":
                 into = sort_lines
+            elif line == "\tdungeons = {":
+                into = dungeon_lines
             elif line == "\t},":
                 into = None
             elif into is not None and ENTRY.match(line):
                 into[int(ENTRY.match(line).group(1))] = line
-    return quest_lines, sort_lines
+    return quest_lines, sort_lines, dungeon_lines
 
 
 def without_db(args):
     quests, givers, spawns = corpus_quests()
-    quest_lines, sort_lines = read_existing(args.out)
+    quest_lines, sort_lines, dungeon_lines = read_existing(args.out)
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
     maps = Maps()
     records = {}
     for qid in sorted(set(quests) - set(quest_lines)):
         zones = maps.giver_zones(givers[qid], spawns) if qid in givers else []
-        records[qid] = {"title": quests[qid]["title"], "zones": zones, "sort": None,
+        records[qid] = {"title": quests[qid]["title"], "zones": zones, "sort": None, "dungeon": None,
                         "races": SIDE_RACES.get(sides.get(str(qid)), 0), "classes": 0, "prev": None}
     # The hand corrections, for the quests added: the rest are as the last run with the DB left them.
     added = set(records)
@@ -724,7 +763,7 @@ def without_db(args):
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
                                       rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None)
     placed = sum(1 for rec in records.values() if rec["zones"])
-    return quest_lines, sort_lines, f"{len(records)} quests added, {placed} of them placed"
+    return quest_lines, sort_lines, dungeon_lines, f"{len(records)} quests added, {placed} of them placed"
 
 
 def with_db(args):
@@ -772,6 +811,7 @@ def with_db(args):
 
     sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
                         for locale in ["enUS"] + LOCALES})
+    dungeon_rows = {int(r["ID"]): r for r in table("Map") if int(r["ID"]) in DUNGEONS}
 
     by_client = 0
     records = {}
@@ -784,7 +824,15 @@ def with_db(args):
         title = q["title"]
         if title == str(qid) and client.get(qid, {}).get("title"):
             title = client[qid]["title"]
-        records[qid] = {"title": title, "zones": zones, "sort": group, "races": races[qid],
+        # A dungeon's quest, by the DB's QuestSortID, else the client's zone where the DB has
+        # none: in the zone of the dungeon's entrance, wherever its giver stands.
+        area = q.get("sort", 0) if q.get("sort", 0) > 0 else 0
+        if not area and not q.get("sort") and qid in client:
+            area = client[qid].get("zoneAreaId") or 0
+        dungeon = maps.dungeon_of_area(area, dungeon_rows) if area > 0 else None
+        if dungeon:
+            zones, group = [INSTANCE_ZONE[dungeon]], None
+        records[qid] = {"title": title, "zones": zones, "sort": group, "dungeon": dungeon, "races": races[qid],
                         "classes": quest_classes(q.get("classes", 0), group), "prev": links.get(qid)}
 
     battleground_follow_ups(records, givers)
@@ -795,8 +843,10 @@ def with_db(args):
         print(f"override not applied: {note}")
 
     placed = unplaced = by_sort = 0
-    quest_lines, used_sorts = {}, set()
+    quest_lines, used_sorts, used_dungeons = {}, set(), set()
     for qid, rec in records.items():
+        if rec.get("dungeon") and rec["zones"]:
+            used_dungeons.add(rec["dungeon"])
         if rec["sort"] and not isinstance(rec["sort"], str):
             used_sorts.add(rec["sort"])
         if rec["zones"]:
@@ -806,14 +856,23 @@ def with_db(args):
         else:
             unplaced += 1
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
-                                      rec["prev"], named.get(qid))
+                                      rec["prev"], named.get(qid), rec.get("dungeon"))
 
     sort_lines = {}
     for sid in sorted(used_sorts):
         names = sorts[sid]
         locs = [f"{l} = {lua_string(names[l])}" for l in LOCALES if names.get(l) and names[l] != names.get("enUS")]
         sort_lines[sid] = f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
-    return quest_lines, sort_lines, (f"{placed} in a zone, {by_sort} under a class, profession or season, "
+    dungeon_names = {locale: {int(r["ID"]): r["MapName_lang"] for r in table("Map", locale) if int(r["ID"]) in used_dungeons}
+                     for locale in ["enUS"] + LOCALES}
+    dungeon_lines = {}
+    for mid in sorted(used_dungeons):
+        english = dungeon_names["enUS"].get(mid) or str(mid)
+        locs = [f"{l} = {lua_string(dungeon_names[l][mid])}" for l in LOCALES
+                if dungeon_names[l].get(mid) and dungeon_names[l][mid] != english]
+        dungeon_lines[mid] = f"\t\t[{mid}] = {{ {', '.join([lua_string(english)] + locs)} }},"
+    return quest_lines, sort_lines, dungeon_lines, (f"{placed} in a zone ({sum(1 for r in records.values() if r.get('dungeon') and r['zones'])} "
+                                     f"of a dungeon or raid), {by_sort} under a class, profession or season, "
                                      f"{unplaced} with no place ({by_client} placed by Forever's client); "
                                      f"{len(used_sorts)} sorts; "
                                      f"{sum(1 for r in records.values() if r['prev'])} after another in a chain, "
@@ -836,10 +895,10 @@ def main():
     ap.add_argument("--out", default=OUT)
     args = ap.parse_args()
 
-    quest_lines, sort_lines, summary = (without_db if args.no_db else with_db)(args)
+    quest_lines, sort_lines, dungeon_lines, summary = (without_db if args.no_db else with_db)(args)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
-        f.write(render(quest_lines, sort_lines))
+        f.write(render(quest_lines, sort_lines, dungeon_lines))
     print(f"{len(quest_lines)} quests: {summary}; {os.path.getsize(args.out) // 1024} KB")
     print(f"wrote {args.out}")
 

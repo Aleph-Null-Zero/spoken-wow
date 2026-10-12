@@ -94,3 +94,11 @@ def test_an_entry_without_a_source_or_with_an_unknown_field_is_refused(tmp_path)
 def test_the_committed_corrections_are_well_formed_and_each_has_a_source():
     overrides = load_overrides(OVERRIDES)
     assert all(entry["source"].strip() for entry in overrides["quests"] + overrides["chains"])
+
+
+def test_a_dungeon_files_a_quest_in_the_zone_of_its_entrance_and_the_line_says_which():
+    records = _records()
+    apply_overrides(records, [{"id": 4, "dungeon": 230, "source": "wiki"}])
+    assert (records[4]["zones"], records[4]["sort"], records[4]["dungeon"]) == ([1427], None, 230)
+    assert quest_line(4, "Elsewhere", zones=[1427], dungeon=230) == \
+        '\t\t[4] = { "Elsewhere", zones = { 1427 }, dungeon = 230 },'

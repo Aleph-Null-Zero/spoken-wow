@@ -1373,6 +1373,17 @@ Two generated files feed it, both committed so the addon never needs a database:
   (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
   quests already listed and adds the corpus's new ones, placed by their giver's spawn and open to
   the races of the side `corpus/factions.json` gives them.
+  A quest the quest log files under a dungeon or a raid (`DUNGEONS`) is placed in the zone of its
+  entrance, wherever its giver stands, with `dungeon`, the dungeon's map: its QuestSortID is the
+  dungeon's own area, an area of its map, or an area of its name (Gnomeregan's quests are under
+  133, an area of Dun Morogh), else the client's `zoneAreaId` is (`Maps.dungeon_of_area`). The
+  dungeons' names in every language, from the client's `Map` table, are the data's `dungeons`. The
+  Excavation Site in the Wetlands is an instance of the Wetlands' own quests, not a dungeon.
+  Battleground quests are under the battleground: the quest log files a few under an area of its
+  name outside it (`Maps.battleground_of_area`), and a battlemaster's next quest, which it files
+  under no zone or his city, follows the one before it from him (`battleground_follow_ups`). A
+  giver found in four zones or more (any chicken, a battlemaster in every capital) places its
+  quest nowhere (`GENERIC_GIVER_ZONES`).
   `races` keeps a mask's playable bits (`ChrRaces.PlayableRaceBit`): Classic's eight, bits 0-7,
   and Forever's Skyborne, 32 (High Order, Alliance) and 33 (Windshaper, Horde), all below 2^53 so
   a Lua number holds them exactly. The DB's masks are read as Forever's client has them
