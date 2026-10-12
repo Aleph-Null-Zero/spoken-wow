@@ -607,7 +607,10 @@ its name, and its places found out of all with the share and a bar. A zone's pla
 its city, where it holds one, and its areas; its page counts the same, and a banner
 counts what its zones' cards count, of the cards the filters leave listed. A click on a
 zone's card chooses it and opens it: its city as a small card with its own areas, and
-its areas as rows, a tick on each one found. One zone is open at a time. After the
+its areas as rows, a tick on each one found. Each zone's and city's card opens and
+closes on its own click, so several stay open together; a city's card shows only while
+its zone is open, and keeps its own state while the zone is closed. What is open lasts
+for the session and is not saved. After the
 continents come two more banners: Other Lands, for the zones on no continent the client
 knows (Forever's Zephras Isle), and Battlegrounds, for Alterac Valley, Warsong Gulch,
 Arathi Basin and Darkspear Islands wherever the client hangs their maps. Each lists only
@@ -626,6 +629,8 @@ clearing the search keeps the chosen row in view.
 
 The tab opens on where the player stands and scrolls that row into view: the area they
 are in where it has a story of its own, else its zone, opened, else their continent.
+Landing there, or opening from the map's panel, opens the place's zone (and the zone
+around a city) without closing the others.
 The player's map is resolved through `GetLoreWithFallback`, because
 `C_Map.GetBestMapForUnit` can return an indoor or micro map -- an inn, a dungeon --
 which is not itself a key in `Zones`. Opened again, or come back to from another tab,
@@ -637,11 +642,11 @@ card's or banner's count, as "In Kalimdor · 3 of 12 discovered"), its picture a
 title's right. A place with no story yet says so and offers Contribute. A place not yet
 discovered, opened from the map's panel, says to travel there to discover it.
 
-### Why one zone at a time
+### Rows
 
-Only one zone opens at a time. That caps the row count at about 108 (49 zones plus
-Ashenvale's 59 subzones), few enough that every row can be a real button with no view
-virtualisation. Opening everything at once would be 1353 rows.
+Every row is a real button, with no view virtualisation. A zone's areas are rows only
+while its card is open, so the list holds the zones' cards plus what the player opened;
+opening everything at once would be 1353 rows.
 
 Zones are sorted alphabetically by the name the *client* reports, not by uiMapID,
 which is meaningless to a reader.

@@ -130,12 +130,13 @@ end
 local L = Z.L
 
 ---------------------------------------------------------------- the battlegrounds
--- Standing in one, the tab lands on it with its banner open.
+-- Standing in one, the tab lands on it with its banner open. Durotar, landed on when the tab was
+-- built, stays open beside it.
 playerMap = 2524
 Z:ToggleLoreWindow()
 Expect("standing in a battleground, the tab lands on it, under the Battlegrounds banner after Other Lands",
-    page.title.text .. "|" .. Shown(), "Darkspear Islands|Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|" .. L.OTHER_LANDS .. "|"
-    .. L.BATTLEGROUNDS .. "|Darkspear Islands|Warsong Gulch")
+    page.title.text .. "|" .. Shown(), "Darkspear Islands|Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|"
+    .. "Sen'jin Village|Valley of Trials|" .. L.OTHER_LANDS .. "|" .. L.BATTLEGROUNDS .. "|Darkspear Islands|Warsong Gulch")
 Expect("...a banner", RowFor(L.BATTLEGROUNDS).row.style, "banner")
 Expect("...one hung under a continent not counted there, one on none not under Other Lands: each banner counts its own zones' cards",
     RowFor("Kalimdor").row.total .. "|" .. RowFor(L.OTHER_LANDS).row.total, RowFor("Durotar").row.total .. "|0")

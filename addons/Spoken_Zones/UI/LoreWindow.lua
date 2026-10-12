@@ -6,20 +6,21 @@
 --
 -- The window, its list and its rows are the Compendium's; this is what goes in them. On the left,
 -- a banner for each continent, a card under it for each of its zones (how many of its places are
--- found, with a bar), and the opened zone's areas as rows, its city a small card among them with
+-- found, with a bar), and an opened zone's areas as rows, its city a small card among them with
 -- its own areas; after the continents, a banner for the zones on none (Other Lands) and one for
 -- the battlegrounds. On the right, the story on the spellbook's parchment (UI/LorePage.lua).
 --
--- Only one zone expands at a time, which caps the list at the zones plus one zone's areas, about a
--- hundred rows -- few enough that every row can be a real button. A search shows every match
--- instead, and is short by being a search.
+-- Each zone's and city's card opens and closes on its own click, and stays as the player left it
+-- for the session. A zone's areas are rows only while its card is open, so the list holds what
+-- the player opened. A search shows every match instead, and is short by being a search.
 
 local ADDON_NAME, SpokenZones = ...
 
 local L = SpokenZones.L
 
 local panel, list, page
-local expandedZone = nil
+-- The zones' and cities' cards open, by mapID: a city's keeps its state while its zone is closed.
+local openZones = {}
 -- The continents start open, so the zones show; each opens and closes on its own.
 local continentOpen = { [1414] = true, [1415] = true }
 -- Whether the banners after the continents are open: the zones on no continent, the battlegrounds.
@@ -167,6 +168,12 @@ local function Reveal(mapID)
 	end
 end
 
+--- Open the card of `mapID` and, for a city, the zone's around it, leaving the others as they are.
+local function OpenZone(mapID)
+	openZones[mapID] = true
+	if CITY_IN[mapID] then openZones[CITY_IN[mapID]] = true end
+end
+
 -- Whether this is the Forever client, which knows its own maps (Mount Hyjal's, 2482).
 local onForever
 local function OnForever()
@@ -279,16 +286,16 @@ end
 
 -- One zone's card, and under it when it is open its city's small card (a zone of its own, with
 -- its own areas) and its areas' rows; while searching, the ones that match. Nothing when neither
--- it nor anything inside matches the search. A zone stays open while its city is. A zone not yet
--- discovered is listed locked: greyed out, and it does not open, to a search either, so a search
--- lists nothing that browsing could not reach.
+-- it nor anything inside matches the search. A city's card opens on its own, and shows only while
+-- its zone is open. A zone not yet discovered is listed locked: greyed out, and it does not open,
+-- to a search either, so a search lists nothing that browsing could not reach.
 local function ZoneRows(mapID, nest, small)
 	if OnlyFound() and not Found(mapID) then return {} end
 	if OnlyVoiced() and not AnyVoiced(mapID) then return {} end
 	local locked = not Discovered(mapID)
 	local subKeys = SubzoneKeys(mapID)
 	local zoneName = ZoneName(mapID)
-	local open = (expandedZone == mapID or CITY_IN[expandedZone] == mapID) and not locked
+	local open = openZones[mapID] == true and not locked
 	local inside = {}
 	local found, total = Places(mapID)
 	if filter ~= "" and not locked or open then
@@ -339,7 +346,7 @@ local function BannerCount(zones)
 	return found, total, listed, anyFound
 end
 
--- The list: a banner for each continent, its zones' cards under it, and the opened zone's
+-- The list: a banner for each continent, its zones' cards under it, and the opened zones'
 -- areas. While searching, every match a click could reach, with what holds it opened to show it.
 local function BuildRowList()
 	local list = {}
@@ -439,7 +446,7 @@ local function LandOnPlayer()
 	if subZone and subZone ~= "" then
 		subEntry, subKey = SpokenZones:GetSubzoneLore(current, subZone)
 	end
-	expandedZone = current
+	OpenZone(current)
 	Reveal(current)
 	selection = { mapID = current, key = subEntry and subKey or nil }
 	landed = selection
@@ -564,14 +571,8 @@ local function OnRowClick(row)
 		continentOpen[row.mapID] = not continentOpen[row.mapID]
 		selection = { mapID = row.mapID, key = nil }
 	elseif row.kind == "zone" then
-		-- Clicking a zone both chooses it and opens or closes its areas: one zone at a time. Not
-		-- `open and nil or mapID`, which is mapID either way, so an open zone never closed.
-		-- A city closes back to the zone around it, which stays open; that zone closes with it.
-		if expandedZone == row.mapID or CITY_IN[expandedZone] == row.mapID then
-			expandedZone = CITY_IN[row.mapID]
-		else
-			expandedZone = row.mapID
-		end
+		-- Clicking a zone or a city both chooses it and opens or closes its card alone.
+		openZones[row.mapID] = not openZones[row.mapID] or nil
 		selection = { mapID = row.mapID, key = nil }
 	else
 		selection = { mapID = row.mapID, key = row.key }
@@ -701,7 +702,7 @@ function SpokenZones:ShowLoreFor(mapID, areaKey)
 	if not list or not mapID then
 		return
 	end
-	expandedZone = mapID
+	OpenZone(mapID)
 	Reveal(mapID)
 	selection = { mapID = mapID, key = areaKey }
 	list:ClearSearch()

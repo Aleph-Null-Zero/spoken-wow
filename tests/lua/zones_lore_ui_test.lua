@@ -232,6 +232,21 @@ RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
 Expect("a click on the zone's card closes it with its city", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar")
 RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
 Shown()
+Expect("...opened again, its city's card is open as it was left", RowFor("Orgrimmar").row.open, true)
+RowFor("Orgrimmar").scripts.OnClick(RowFor("Orgrimmar"))
+Expect("a click on the open city's card closes it alone, its zone still open",
+    tostring(RowFor("Orgrimmar").row.open) .. "|" .. tostring(RowFor("Durotar").row.open), "false|true")
+
+-- Dun Morogh given an area here, so its card has rows to open.
+Z.Subzones[1426] = { coldridge = { name = "Coldridge Valley", full = "Where the dwarves start." } }
+RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
+Expect("a click on another zone's card opens it beside the open one, both keeping their areas", Shown(),
+    "Eastern Kingdoms|Dun Morogh|Coldridge Valley|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
+Expect("...and closing it leaves the other open", Shown(),
+    "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+Z.Subzones[1426] = nil
+Z:RefreshLoreWindow(); Shown()
 
 RowFor("Valley of Trials").scripts.OnClick(RowFor("Valley of Trials"))
 Expect("choosing an area shows its story", page.title.text .. ": " .. page.body.text.text, "Valley of Trials: Where the orcs learn.")
