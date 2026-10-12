@@ -75,10 +75,13 @@ local C = _G.SpokenCompendium
 Expect("no tab before the world is up", C:Tab("quests"), nil)
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 Expect("the quests are a tab of Azeroth's Compendium once it is", C:Tab("quests") ~= nil and C:Tab("quests").label, L.COMPENDIUM_QUESTS)
+stub.world.playerMapID = 1429
 Tab:Open()
 local panel = Tab.panel
 local page = panel.page
 Expect("...and open on it", C:IsOpen("quests"), true)
+Expect("...on the zone the player stands in, never an empty page", page.title.text, "Elwynn Forest")
+stub.world.playerMapID = nil
 
 local rows
 local function Collect(frame)
@@ -112,10 +115,7 @@ Expect("the tree is the places': Azeroth, its continents, their zones", Has(list
     and Has(list, "Elwynn Forest"), true)
 Expect("...then a class's quests under its name, this character's class only", Has(list, "Mage") and not Has(list, "Warlock"), true)
 Expect("...each zone counted, completed out of all", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
-Expect("with nothing chosen, the page counts every quest", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
-
-Click("Elwynn Forest")
-list = Shown()
+Expect("...its page counting its quests", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
 Expect("a zone opens on its quests", Has(list, "Kobold Camp Cleanup") and Has(list, "Kobold Candles"), true)
 Expect("...a quest completed open to read", RowFor("Kobold Camp Cleanup").row.locked, false)
 Expect("...one not completed greyed, with the padlock", RowFor("Kobold Candles").row.locked, true)
@@ -174,7 +174,7 @@ Expect("...and never a quest of the other side", Has(Shown(), "Sharptalon's Claw
 box:SetText("")
 box.hooks.OnTextChanged[1](box)
 
--- Play: what the voice packs have of the quest, from the offer on.
+-- Play: the first part the voice packs have of the quest, with its words.
 VO.DataModules:Register("TestPack", {
     SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2 },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
@@ -184,7 +184,10 @@ Expect("a voiced quest's page has Play", page.play ~= nil and page.play:IsShown(
 page.play.scripts.OnClick(page.play)
 local queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
-Expect("...which plays its offer, then its hand-in", table.concat(queued, ","), "7-accept,7-complete")
+Expect("...which plays its offer alone, not the hand-in after it", table.concat(queued, ","), "7-accept")
+local playing = Spoken:GetQueue()[1]
+Expect("...with the offer's words, for the window to show and highlight",
+    playing and type(playing.text) == "string" and playing.text ~= "" and page.body.text.text:find(playing.text, 1, true) ~= nil, true)
 page.play.scripts.OnClick(page.play)
 Expect("...and again, stops them", #VO.Player:Queued(), 0)
 Click("Kobold Candles")

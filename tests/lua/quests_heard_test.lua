@@ -87,7 +87,8 @@ Click("Kobold Camp Cleanup")
 Expect("a quest not heard has no mark on its row", Marked("Kobold Camp Cleanup"), false)
 Expect("...nor on its page", PageMarked(), false)
 
--- Its offer heard to the end, its hand-in stopped at once.
+-- Its offer heard to the end through Play, which plays the offer alone; then the offer again,
+-- stopped at once.
 page.play.scripts.OnClick(page.play)
 stub.Advance(3)
 page.play.scripts.OnClick(page.play)
@@ -96,8 +97,8 @@ Expect("a part played to its end is kept, for the whole account", heard and hear
 Expect("...one stopped as it began is not", heard[KOBOLDS].complete, nil)
 Expect("with a part not heard, no mark", Marked("Kobold Camp Cleanup") or PageMarked(), false)
 
--- Played through.
-page.play.scripts.OnClick(page.play)
+-- Played through: the hand-in heard too, where the quest giver says it.
+VO.Player:PlayNow({ event = VO.Enums.SoundEvent.QuestComplete, questID = KOBOLDS, title = "Kobold Camp Cleanup" })
 stub.Advance(10)
 Expect("every part the packs have heard through: the mark on its row", Marked("Kobold Camp Cleanup"), true)
 Expect("...and on its page", PageMarked(), true)
