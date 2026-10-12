@@ -125,7 +125,7 @@ Expect("...a city's card opened inside its zone's", RowFor("Elwynn Forest").row.
 Expect("...the zone landed on before still open beside it", RowFor("Westfall").row.open, true)
 Reopen(9002)
 Expect("...where their zone has nothing to read, their continent's banner", panel.page.title.text, "Kalimdor")
-Expect("...its page in Azeroth, with what is found of it", panel.page.sub.text:match("^In Azeroth · %d+ of %d+ found$") ~= nil, true)
+Expect("...its page in Azeroth, with what is found of it", panel.page.sub.text.text:match("^In Azeroth · %d+ of %d+ found$") ~= nil, true)
 Reopen(9003)
 Expect("...on no continent, the first continent's", panel.page.title.text, "Eastern Kingdoms")
 -- Landing far down the list, from the window closed and never laid out: the client's scroll frame
@@ -177,7 +177,7 @@ Expect("...its badge the zone's painting in the collections window's gold frame"
 Expect("...and the seasonal events' readables, in a group of their own before them",
     Has(list, L.GROUP_EVENTS) and list:find(L.GROUP_EVENTS, 1, true) < list:find(L.GROUP_WIDE, 1, true), true)
 Click(L.GROUP_EVENTS)
-Expect("...its page what is found of it alone, being no place", panel.page.sub.text:match("^%d+ of %d+ found$") ~= nil, true)
+Expect("...its page what is found of it alone, being no place", panel.page.sub.text.text:match("^%d+ of %d+ found$") ~= nil, true)
 -- A click on each kind's card in a group's banner, which opens it.
 local function KindRow(group, label)
     Shown()
@@ -217,7 +217,7 @@ Click(L.GROUP_LANDS)
 Expect("Other Lands opens on a card for each zone on no continent", RowFor("Zephras Isle") ~= nil
     and RowFor("Zephras Isle").row.style == "card" and RowFor("Zephras Isle").row.nest, 0)
 Expect("...its page its name, in Azeroth as a continent is, what is found of it, and the words to choose one",
-    panel.page.title.text .. "|" .. panel.page.sub.text .. "|" .. panel.page.body.text.text,
+    panel.page.title.text .. "|" .. panel.page.sub.text.text .. "|" .. panel.page.body.text.text,
     L.GROUP_LANDS .. "|" .. L.READABLES_IN_FMT:format("Azeroth") .. " · " .. L.FOUND_FMT:format(0, 1) .. "|" .. L.READABLES_PICK)
 Click(L.GROUP_LANDS)
 Expect("...and closes again", Has(Shown(), "Zephras Isle"), false)
@@ -243,7 +243,7 @@ Expect("...and a click on one closes it alone", tostring(RowFor("Westfall").row.
 Click("Stormwind City")
 list = Shown()
 Expect("a city's page in the zone around it, with what is found of it",
-    panel.page.sub.text:find(L.READABLES_IN_FMT:format("Elwynn Forest") .. " · 1 of ", 1, true), 1)
+    panel.page.sub.text.text:find(L.READABLES_IN_FMT:format("Elwynn Forest") .. " · 1 of ", 1, true), 1)
 Expect("the city opens inside its zone, its readables by what they are", Has(list, L.TYPE_PLAQUE), true)
 Expect("...the city a card inside its zone's card", RowFor("Stormwind City").row.nest, 1)
 Expect("...each kind a line of the list inside the city's card, not a card", RowFor(L.TYPE_PLAQUE).row.nest == 2
@@ -252,7 +252,7 @@ Expect("...with its plus or minus and no badge", RowFor(L.TYPE_PLAQUE).toggle:Is
     and not RowFor(L.TYPE_PLAQUE).icon:IsShown(), true)
 Expect("...closed, as Quests' chains start", RowFor(L.TYPE_PLAQUE).row.open or Has(list, "Kurdran Wildhammer"), false)
 Click(L.TYPE_PLAQUE)
-Expect("...its page in the place that holds it", panel.page.sub.text:find(L.READABLES_IN_FMT:format("Stormwind City") .. " · ", 1, true), 1)
+Expect("...its page in the place that holds it", panel.page.sub.text.text:find(L.READABLES_IN_FMT:format("Stormwind City") .. " · ", 1, true), 1)
 Expect("...opened by a click on its writings", RowFor(L.TYPE_PLAQUE).row.open and Has(Shown(), "Kurdran Wildhammer"), true)
 Expect("...its writings rows inside that", RowFor("Kurdran Wildhammer").row.leaf and RowFor("Kurdran Wildhammer").row.nest, 3)
 Expect("...a line down each open card's contents beside them, a step in from the banner",
@@ -280,8 +280,8 @@ Click("Kurdran Wildhammer")
 local page = panel.page
 Expect("a readable's page: its title", page.title.text, "Kurdran Wildhammer")
 Expect("...in the spellbook's ink, as the places' page is", page.body.ink and page.body.ink[1], 0.2)
-Expect("...where it is", page.sub.text, L.KIND_WORLD .. " · Stormwind City")
-Expect("...on one line, cut short where it names many places", page.sub.wordWrap, false)
+Expect("...where it is", page.sub.text.text, L.KIND_WORLD .. " · Stormwind City")
+Expect("...on one line, cut short where it names many places", page.sub.text.wordWrap, false)
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)
 Click("Ranger Captain Alleria Windrunner")
 Expect("a readable not found does not open", page.title.text, "Kurdran Wildhammer")
@@ -303,7 +303,7 @@ Click("Westfall")
 Click(L.TYPE_LETTER)
 Click("A Dusty Unsent Letter")
 Expect("opened on a readable carried from a zone", page.title.text, "A Dusty Unsent Letter")
-Expect("...said to be carried, and from where", page.sub.text, L.KIND_CARRIED .. " · Westfall")
+Expect("...said to be carried, and from where", page.sub.text.text, L.KIND_CARRIED .. " · Westfall")
 Expect("...how it is had first, the name and the zone", (page.body.text.text or ""):find(
     L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"), 1, true) == 1, true)
 
@@ -371,12 +371,12 @@ SpokenBooksSettings.compendiumFoundOnly = false
 Click("Elwynn Forest")
 Click("Stormwind City")
 local function Counted(text) return tonumber(text:match("^(%d+)/")) end
-local cardBefore, pageBefore = Counted(RowFor("Stormwind City").count.text), panel.page.sub.text
+local cardBefore, pageBefore = Counted(RowFor("Stormwind City").count.text), panel.page.sub.text.text
 B:MarkBookFound(ALLERIA)
 Expect("a readable found while the tab is open opens at once", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
 Expect("...ticked", RowFor("Ranger Captain Alleria Windrunner").row.done, true)
 Expect("...counted on its zone's card", Counted(RowFor("Stormwind City").count.text), cardBefore + 1)
-Expect("...and on the page", panel.page.sub.text ~= pageBefore and panel.page.sub.text:find(tostring(cardBefore + 1), 1, true) ~= nil, true)
+Expect("...and on the page", panel.page.sub.text.text ~= pageBefore and panel.page.sub.text.text:find(tostring(cardBefore + 1), 1, true) ~= nil, true)
 
 -- The type it is listed under closes and opens again, as the zone does.
 local typeRow
@@ -434,6 +434,24 @@ do
     local addon = setmetatable({ Unsnap = function(_, texture) unsnapped = texture end }, { __index = B })
     local fresh = _G.SpokenCompendium.NewPage(CreateFrame("Frame"), addon)
     Expect("a page's parchment drawn off the pixel grid, as the fade cut from it is", unsnapped ~= nil and unsnapped == fresh.bg, true)
+
+    -- The line under the title: plain words, or where the tab gives one, a way up a level.
+    local sub, clicked, red = fresh.sub, 0, nil
+    sub.text.SetTextColor = function(_, r) red = r end
+    fresh:Show({ title = "Stormwind City", subtitle = "In Elwynn Forest" })
+    red = nil
+    sub.scripts.OnEnter(sub)
+    Expect("the line under a page's title, with no way up, stays in ink under the pointer",
+        sub:IsEnabled() == false and sub.text.text == "In Elwynn Forest" and red, nil)
+    sub:Click()
+    fresh:Show({ title = "Stormwind City", subtitle = "In Elwynn Forest", onSubtitle = function() clicked = clicked + 1 end })
+    sub.scripts.OnEnter(sub)
+    Expect("...given one, in the link's colour under the pointer", sub:IsEnabled() and red, 0.5)
+    sub:Click()
+    Expect("...a click going there", clicked, 1)
+    sub.scripts.OnLeave(sub)
+    Expect("...in ink again when the pointer leaves", red ~= 0.5, true)
+    Expect("...on one line, cut short", sub.text.wordWrap, false)
 end
 local copied
 local showCopyLink = B.ShowCopyLink
@@ -503,7 +521,7 @@ Expect("...a click opening it on the writings under it", Has(Shown(), "An Exotic
 local kindLabel = kindRow.row.label
 kindRow = KindRow("wide", kindLabel)
 Expect("...a kind chosen, its page names it and its group", page.title.text == kindLabel
-    and page.sub.text:find(L.READABLES_IN_FMT:format(L.GROUP_WIDE) .. " · ", 1, true) == 1, true)
+    and page.sub.text.text:find(L.READABLES_IN_FMT:format(L.GROUP_WIDE) .. " · ", 1, true) == 1, true)
 kindRow.scripts.OnClick(kindRow)
 Expect("...and another click closes it", KindRow("wide", kindLabel).row.open, false)
 OpenKinds("wide")

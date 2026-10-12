@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 39
+local VERSION = 40
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1664,6 +1664,9 @@ local ZONES_ART = "Interface\\AddOns\\Spoken_Zones\\Textures\\Art\\"
 -- this falls back to.
 local INK = { 0.25, 0.16, 0.08 }
 if _G.SPELLBOOK_FONT_COLOR and SPELLBOOK_FONT_COLOR.GetRGB then INK = { SPELLBOOK_FONT_COLOR:GetRGB() } end
+-- The line under the title under the pointer, where a click on it goes up a level: the places'
+-- page's link colour.
+local LINK = { 0.5, 0.12, 0.04 }
 local PAD, TOP, RIGHT = 24, 36, 36
 -- The spellbook header's backplate behind the title, as the places' page lays it: laid out as if it
 -- started this far left of the page, and cut there.
@@ -1740,17 +1743,25 @@ function C.NewPage(parent, addon, play, report)
 	self.title = title
 
 	-- The line under the title as the places' page sets it: a line 16 high, its words in the middle,
-	-- 2 under the title; none at all where there is nothing to say.
-	local sub = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+	-- 2 under the title; none at all where there is nothing to say. Where the tab gives it a way up
+	-- a level (Page:Show's onSubtitle), a click goes there and the pointer paints it as a link.
+	local sub = CreateFrame("Button", nil, frame)
 	sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
 	sub:SetPoint("RIGHT", frame, "RIGHT", -RIGHT, 0)
 	sub:SetHeight(16)
-	sub:SetJustifyH("LEFT")
-	if sub.SetJustifyV then sub:SetJustifyV("MIDDLE") end
+	local words = sub:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+	words:SetAllPoints()
+	words:SetJustifyH("LEFT")
+	if words.SetJustifyV then words:SetJustifyV("MIDDLE") end
 	-- One line, cut short with an ellipsis: a book found in several places names them all.
-	if sub.SetWordWrap then sub:SetWordWrap(false) end
-	if sub.SetMaxLines then sub:SetMaxLines(1) end
-	Ink(sub, INK)
+	if words.SetWordWrap then words:SetWordWrap(false) end
+	if words.SetMaxLines then words:SetMaxLines(1) end
+	Ink(words, INK)
+	sub.text = words
+	sub:SetScript("OnClick", function(b) if b.onClick then b.onClick() end end)
+	sub:SetScript("OnEnter", function(b) if b.onClick then Ink(b.text, LINK) end end)
+	sub:SetScript("OnLeave", function(b) Ink(b.text, INK) end)
+	sub:Disable()
 	self.sub = sub
 
 	-- The spellbook's divider, as the places' page draws it: at its own size, cut short where the
@@ -1880,13 +1891,18 @@ function Page:RefreshPlay()
 	self.title:SetPoint("RIGHT", previous or self.frame, previous and "LEFT" or "RIGHT", previous and -10 or -RIGHT, 0)
 end
 
---- entry = { title, subtitle, text, target = what Play and Report act on, or nil for none,
---- parts = { { heading, text, buttons } } in place of `text`: words in parts, each under its
---- heading with its own buttons (TextView:SetParts) }
+--- entry = { title, subtitle, onSubtitle, text, target = what Play and Report act on, or nil for
+--- none, parts = { { heading, text, buttons } } in place of `text`: words in parts, each under its
+--- heading with its own buttons (TextView:SetParts) }. onSubtitle(), where given, is what a click
+--- on the line under the title does (the places' page goes up a level with it); without it the
+--- line is plain words.
 function Page:Show(entry)
 	self.title:SetText(entry.title or "")
-	self.sub:SetText(entry.subtitle or "")
+	self.sub.text:SetText(entry.subtitle or "")
 	self.sub:SetHeight((entry.subtitle and entry.subtitle ~= "") and 16 or 1)
+	self.sub.onClick = entry.onSubtitle
+	if entry.onSubtitle then self.sub:Enable() else self.sub:Disable() end
+	Ink(self.sub.text, INK)
 	self.body:SetColor(INK[1], INK[2], INK[3])
 	if entry.parts and self.body.SetParts then
 		self.body:SetParts(entry.parts)
