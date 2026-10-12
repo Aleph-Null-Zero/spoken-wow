@@ -1,8 +1,8 @@
 -- The quests in Azeroth's Compendium, the window Spoken Books and Spoken Zones carry: every quest
--- this character's race and class may take, by zone, then by class, profession or season. A quest
--- is found once this character has started it: completed, or in its quest log, which is marked in
--- progress on its row and its page. Until then it is greyed and does not open, unless Unlock
--- Unstarted Quests is on.
+-- this character's race and class may take, by zone, with class, profession, event and other
+-- quests apart. A quest is found once this character has started it: completed, or in its quest
+-- log, which is marked in progress on its row and its page. Until then it is greyed and does not
+-- open, unless Unlock Unstarted Quests is on.
 --
 -- In each place, the quests that follow one another (`prev` in the data) are listed under one row
 -- for their chain, named after the last of them, with how many are completed and in progress and a
@@ -39,6 +39,28 @@ local expandedZone
 local worldOpen = true
 local continentOpen = { [1414] = true, [1415] = true }
 local groupOpen = {}
+local sectionOpen = {}
+
+-- The quests filed under no zone, apart from Azeroth's: by what their QuestSort is. Any other sort
+-- goes under Other, with the quests that have no place at all.
+local SECTIONS = {
+    { key = "classes", label = "QUESTS_SECTION_CLASSES",
+        sorts = { [61] = true, [81] = true, [82] = true, [141] = true, [161] = true, [162] = true, [261] = true,
+            [262] = true, [263] = true } },
+    { key = "professions", label = "QUESTS_SECTION_PROFESSIONS",
+        sorts = { [24] = true, [101] = true, [121] = true, [181] = true, [182] = true, [201] = true, [264] = true,
+            [304] = true, [324] = true } },
+    { key = "events", label = "QUESTS_SECTION_EVENTS",
+        sorts = { [22] = true, [364] = true, [365] = true, [366] = true, [368] = true, [369] = true } },
+    { key = "other", label = "QUESTS_SECTION_OTHER" },
+}
+
+local function SectionOf(sort)
+    for _, section in ipairs(SECTIONS) do
+        if section.sorts and section.sorts[sort] then return section.key end
+    end
+    return "other"
+end
 local filter = ""
 
 local MOMENTS = { "accept", "progress", "complete" }
@@ -217,16 +239,19 @@ end
 local index
 function Index()
     if index then return index end
-    index = { zones = {}, sorts = {}, elsewhere = {}, all = {} }
+    index = { zones = {}, sorts = {}, elsewhere = {}, all = {}, zoned = {} }
+    local named = _G.SpokenQuestsCompendium and SpokenQuestsCompendium.sorts or {}
     for id, quest in pairs(Quests()) do
         if Allowed(quest) then
             index.all[id] = true
             if quest.zones and #quest.zones > 0 then
+                index.zoned[id] = true
                 for _, mapID in ipairs(quest.zones) do
                     index.zones[mapID] = index.zones[mapID] or {}
                     table.insert(index.zones[mapID], id)
                 end
-            elseif quest.sort then
+            -- A sort the data has no name for has no row of its own to go under.
+            elseif quest.sort and named[quest.sort] then
                 index.sorts[quest.sort] = index.sorts[quest.sort] or {}
                 table.insert(index.sorts[quest.sort], id)
             else
@@ -461,6 +486,40 @@ local function GroupRows(kind, key, label, ids)
     return rows
 end
 
+-- A section's quests, and the sorts it holds.
+local function SectionSet(key)
+    local set, sorts = {}, {}
+    for sort, ids in pairs(Index().sorts) do
+        if SectionOf(sort) == key then
+            table.insert(sorts, sort)
+            for _, id in ipairs(ids) do set[id] = true end
+        end
+    end
+    if key == "other" then
+        for _, id in ipairs(Index().elsewhere) do set[id] = true end
+    end
+    table.sort(sorts, function(a, b) return SortName(a) < SortName(b) end)
+    return set, sorts
+end
+
+local function SectionRows(section)
+    local set, sorts = SectionSet(section.key)
+    local found, total = Tally(set)
+    if total == 0 or (OnlyFound() and found == 0) then return {} end
+    local searching = filter ~= ""
+    local inside = {}
+    local function Add(rows) for _, row in ipairs(rows) do table.insert(inside, row) end end
+    if searching or sectionOpen[section.key] then
+        for _, sort in ipairs(sorts) do Add(GroupRows("sort", sort, SortName(sort), Index().sorts[sort])) end
+        if section.key == "other" then Add(GroupRows("elsewhere", "elsewhere", L.QUESTS_ELSEWHERE, Index().elsewhere)) end
+    end
+    if searching and #inside == 0 then return {} end
+    local rows = { { kind = "section", key = section.key, depth = 0, label = L[section.label], count = found,
+        total = total, open = #inside > 0 } }
+    for _, row in ipairs(inside) do table.insert(rows, row) end
+    return rows
+end
+
 local function BuildRows()
     local out = {}
     local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
@@ -486,19 +545,17 @@ local function BuildRows()
         end
     end
     table.sort(continents, function(a, b) return a.label < b.label end)
-    local found, total = Tally(Index().all)
+    -- Azeroth holds the quests filed under a zone; the rest are in the sections after it.
+    local found, total = Tally(Index().zoned)
     table.insert(out, { kind = "world", mapID = C.WORLD, label = C.MapName(C.WORLD), depth = 0, count = found,
         total = total, open = searching or worldOpen })
-    if not (searching or worldOpen) then return out end
-    for _, continent in ipairs(continents) do
-        table.insert(out, continent)
-        if continent.open then Add(continent.rows) end
+    if searching or worldOpen then
+        for _, continent in ipairs(continents) do
+            table.insert(out, continent)
+            if continent.open then Add(continent.rows) end
+        end
     end
-    local sorts = {}
-    for sort in pairs(Index().sorts) do table.insert(sorts, sort) end
-    table.sort(sorts, function(a, b) return SortName(a) < SortName(b) end)
-    for _, sort in ipairs(sorts) do Add(GroupRows("sort", sort, SortName(sort), Index().sorts[sort])) end
-    Add(GroupRows("elsewhere", "elsewhere", L.QUESTS_ELSEWHERE, Index().elsewhere))
+    for _, section in ipairs(SECTIONS) do Add(SectionRows(section)) end
     return out
 end
 
@@ -506,6 +563,7 @@ local function IsSelected(row)
     if not selection then return false end
     if row.kind == "quest" then return selection.quest == row.quest end
     if row.kind == "sort" then return selection.sort == row.key end
+    if row.kind == "section" then return selection.section == row.key end
     if row.kind == "elsewhere" then return selection.group == "elsewhere" end
     if row.kind == "chain" then return selection.chain == row.key end
     return selection.mapID ~= nil and selection.mapID == row.mapID
@@ -760,6 +818,14 @@ local function ShowEntry()
         page:Show({ title = Title(id), subtitle = Subtitle(id), text = Words(id), target = id })
         return
     end
+    if selection.section then
+        for _, section in ipairs(SECTIONS) do
+            if section.key == selection.section then
+                page:Show({ title = L[section.label], subtitle = Count((SectionSet(section.key))), text = L.QUESTS_PICK })
+            end
+        end
+        return
+    end
     if selection.sort then
         page:Show({ title = SortName(selection.sort), subtitle = Count(SetOf(Index().sorts[selection.sort])),
             text = L.QUESTS_PICK })
@@ -771,7 +837,7 @@ local function ShowEntry()
     end
     local set = {}
     if selection.mapID == C.WORLD then
-        set = Index().all
+        set = Index().zoned
     elseif selection.mapID == 1414 or selection.mapID == 1415 then
         for _, mapID in ipairs(ZonesOn(selection.mapID)) do QuestsIn(mapID, set) end
     else
@@ -794,6 +860,9 @@ local function OnClick(row)
     elseif row.kind == "chain" then
         if filter == "" then chainOpen[row.key] = not chainOpen[row.key] end
         selection = { chain = row.key, ids = row.ids }
+    elseif row.kind == "section" then
+        if filter == "" then sectionOpen[row.key] = not sectionOpen[row.key] end
+        selection = { section = row.key }
     elseif row.kind == "sort" or row.kind == "elsewhere" then
         if filter == "" then groupOpen[row.key] = not groupOpen[row.key] end
         selection = row.kind == "sort" and { sort = row.key } or { group = "elsewhere" }
@@ -963,9 +1032,11 @@ function QuestsTab:Open(questID)
             if continent then continentOpen[continent] = true end
             chain = ChainKey(questID, "z" .. zone, Index().zones[zone])
         else
-            local key = quest.sort or "elsewhere"
+            local named = quest.sort and SpokenQuestsCompendium.sorts[quest.sort]
+            local key = named and quest.sort or "elsewhere"
             groupOpen[key] = true
-            chain = ChainKey(questID, "s" .. key, quest.sort and Index().sorts[quest.sort] or Index().elsewhere)
+            sectionOpen[named and SectionOf(quest.sort) or "other"] = true
+            chain = ChainKey(questID, "s" .. key, named and Index().sorts[quest.sort] or Index().elsewhere)
         end
         if chain then chainOpen[chain] = true end
     elseif selection == landed then
