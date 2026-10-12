@@ -7,14 +7,14 @@
 // A readable given in more than WIDE zones (a rogue's pickpocketed letter, the Librams) is
 // not listed under each: it is "found across Azeroth".
 //
-// And what each is (TYPE): a carried one by its item's icon (a letter's, a book's, a scroll's), one
-// standing in the world by its name and how many pages it has (a gravestone, a museum's exhibit, a
-// book on a shelf, else a plaque or a sign).
+// And what each is (typeOf, in lib/places.mjs): a book, a journal, a letter, a gravestone, a
+// picture with no words, by its title, its words and its item's icon.
 //
 // The world DB is TrinityCore's schema, as the Forever repack ships it, not the vmangos dump
 // extract.mjs reads: vmangos runs in Docker on the machine that has it, and this was written
 // where the repack ran instead. Its own PLACES_MYSQL_* variables, so the two never mix up
-// which database they read. Zones come from where each spawn stands, against the client's
+// which database they read. Zones come from where each spawn stands: the area the server's own
+// map files put the point in (PLACES_MAPS), up to its zone through the client's AreaTable and
 // UiMapAssignment (wago.tools), because the server leaves its zone columns at 0. A dungeon is
 // under the zone its entrance is in (INSTANCE_ZONE).
 //
@@ -29,14 +29,19 @@ import { fileURLToPath } from "node:url";
 import mysql from "mysql2/promise";
 
 import { loadEnv } from "../../lib/env.mjs";
+import { areaReader } from "./lib/area.mjs";
 import { quote } from "./lib/lua.mjs";
+import { cannotBeHad, isTemplateCopy, typeOf } from "./lib/places.mjs";
 
 await loadEnv("books");
 
 const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Books.lua", import.meta.url));
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Places.lua", import.meta.url));
 const CACHE = fileURLToPath(new URL("./cache/", import.meta.url));
-const BUILD = process.env.PLACES_BUILD ?? "1.15.9.69109";
+// Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
+// items, and one that shares a vanilla page id lent that book its sources and zones.
+const BUILD = process.env.PLACES_BUILD ?? "1.60.1.70338";
+const MAPS = process.env.PLACES_MAPS ?? "C:/Forever/ForeverRepack/data/maps";
 const SOURCES = 6;
 const WIDE = 8;
 const LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"];
@@ -71,10 +76,65 @@ const INSTANCE_ZONE = {
   509: 1451, // Ruins of Ahn'Qiraj: Silithus
   531: 1451, // Temple of Ahn'Qiraj: Silithus
   533: 1423, // Naxxramas: Eastern Plaguelands
+  // The battlegrounds are zones of their own. Forever's client files them as orphan maps, not
+  // zones, so nothing else would place Alterac Valley's Rock of Durotan.
+  30: 1459, // Alterac Valley
+  489: 1460, // Warsong Gulch
+  529: 1461, // Arathi Basin
 };
 // Text objects the server has and never spawns, placed by hand: the nameplates in Blackrock
 // Depths' Dark Keeper vault.
 const UNSPAWNED = { "Dark Keeper Nameplate": 230 };
+// Sources the world DB cannot see, by book id: an item a spell or a machine makes, a quest whose
+// giver it does not spawn. Each names a quest or an object, for its name in every language, and
+// the zones, where the object's spawns do not give them.
+const SOURCES_BY_HAND = {
+  394: [{ how: "quest", quest: 1016, zones: [1440] }], // Divined Scroll: the Divining Scroll, used in Ashenvale
+  1171: [{ how: "quest", quest: 2944, zones: [1425] }], // Snapshot of Gammerita: taken in the Hinterlands
+  // Gnomeregan's punch cards, each made from the one before at a Matrix Punchograph.
+  1191: [{ how: "object", object: 142345 }], // 3005-A
+  1192: [{ how: "object", object: 142475 }], // 3005-B
+  1193: [{ how: "object", object: 142476 }], // 3005-C
+  1194: [{ how: "object", object: 142696 }], // 3005-D
+  2671: [{ how: "quest start", quest: 7636, zones: [1448] }], // Petrified Bark: Vartrus the Ancient, Felwood
+  2859: [{ how: "quest reward", quest: 8996, zones: [1427] }], // Brazier of Invocation: Bodley, Blackrock Mountain
+};
+// Readables with words that no one can have: the Forsaken class letters that were never given out
+// (the Musty Note, Parchment, Scroll, Letter and Missive). No loot, quest, vendor or mail names
+// their items.
+const NEVER_HAD = new Set([691, 692, 693, 694, 695]);
+// The seasonal events' readables, had only while the event runs: the Compendium lists them under
+// Holidays and Events. Their NPCs are spawned by the event, and most have no spawn in the DB.
+const EVENTS = new Set([
+  2571, 2841, // Winter Veil: The Feast of Winter Veil, Metzen's Letters and Notes
+  2787, 2790, // Harvest Festival: the poems for Uther and Grom
+  2786, // Stranglethorn Fishing Extravaganza: the flier
+  // Scourge Invasion: the Call to Arms, the soldiers' letters by the Necrotic Shards, and the
+  // reports the Keeper of the Rolls mails back for them.
+  2872, 2878, 2880, 2881, 2882, 2883, 2884, 2885, 2886, 2887, 2888, 2889, 2890,
+]);
+// Types no title, icon or first page gives away, by book id: read off the words or the wiki.
+const TYPE_BY_HAND = {
+  15: "letter", // William's Shipment: "Hello Morgan, ..."
+  29: "note", // Crate of Horseshoes: "A note is attached to the crate."
+  58: "tablet", 62: "tablet", 285: "tablet", 324: "tablet", // the Troll Legends, from stone tablets
+  73: "journal", // Book from Sven's Farm: Stalvan's diary
+  153: "book", 161: "book", 169: "book", 177: "book", // Green Hills chapters, bound
+  336: "letter", // Cloth Request: "To the Schneiders, ..."
+  439: "letter", // Kravel's Scheme: "Mr. Fizzlebub, the bearer of this letter..."
+  711: "letter", // Neeka's Report: "Helgrum, my compliments..."
+  794: "book", // Lorgalis Manuscript: a four-page history
+  1392: "letter", // Grape Manifest: "Brother Neals, ..."
+  1591: "plaque", // Etched Note: a sign on Jordan Stilwell's anvil
+  2271: "letter", // Cliffwatcher Longhorn Report: "Nataka, ..."
+  2514: "note", // Brock's List: a list of students
+  2807: "journal", // Decoded Tablet Transcription: a diary, "Day 1..."
+  2838: "letter", // From the Desk of Lord Victor Nefarius: "To Whom It May Concern, ..."
+  // The soldiers' letters from the Scourge invasion, and the reports the Keeper of the Rolls
+  // mails back for them.
+  2882: "letter", 2883: "letter", 2884: "letter",
+  2885: "letter", 2886: "letter", 2887: "letter", 2888: "letter", 2889: "letter", 2890: "letter",
+};
 // The order sources are listed in on a page: how the readable is had, most specific first.
 const ORDER = ["quest start", "quest reward", "mail", "quest", "drop", "object", "container", "fishing", "vendor", "pickpocket"];
 
@@ -124,6 +184,12 @@ for (const m of bookPart.matchAll(/\[(\d+)\] = \{ title = "((?:[^"\\]|\\.)*)", p
 const pageBook = new Map();
 for (const [id, book] of books) for (const page of book.pages) pageBook.set(page, id);
 if (books.size === 0) throw new Error(`no books read from ${BOOKS}`);
+// Each page's words, as Lua source: what a gravestone says decides that it is one.
+const pageText = new Map();
+const pagePart = booksLua.slice(booksLua.indexOf("\tpages = {"), booksLua.indexOf("\tbooks = {"));
+for (const m of pagePart.matchAll(/\[(\d+)\] = \{ book = \d+, number = \d+, text = "((?:[^"\\]|\\.)*)"/g)) {
+  pageText.set(Number(m[1]), m[2]);
+}
 
 // ---------------------------------------------------------------- where on the map
 
@@ -140,8 +206,24 @@ function zoneOfArea(area) {
   return undefined;
 }
 
+// The cities, each inside the zone around it. Ironforge and the Undercity are buildings set into
+// the ground, and the map files give a point inside them the ground's area, Dun Morogh's or
+// Tirisfal's; there the rectangle, which says city, is kept.
+const CITY_IN = { 1453: 1429, 1454: 1411, 1455: 1426, 1456: 1412, 1457: 1438, 1458: 1420 };
+const areaAt = areaReader(MAPS);
+
 function zoneAt(map, x, y) {
   if (INSTANCE_ZONE[map]) return INSTANCE_ZONE[map];
+  const box = boxAt(map, x, y);
+  const area = areaAt(map, x, y);
+  const zone = area && zoneOfArea(area);
+  if (!zone || CITY_IN[box] === zone) return box;
+  return zone;
+}
+
+// The smallest zone rectangle the point is in: where the map files have no answer, and the city
+// test above.
+function boxAt(map, x, y) {
   let best;
   for (const a of assignments) {
     if (Number(a.MapID) !== map) continue;
@@ -153,35 +235,10 @@ function zoneAt(map, x, y) {
   return best?.zone;
 }
 
-// ---------------------------------------------------------------- what each is
+// ---------------------------------------------------------------- what each is (lib/places.mjs)
 
 const iconPath = new Map((await table("ManifestInterfaceData")).map((r) => [Number(r.ID), (r.FilePath + r.FileName).toLowerCase()]));
 const itemIcon = new Map((await table("Item")).map((r) => [Number(r.ID), iconPath.get(Number(r.IconFileDataID)) ?? ""]));
-
-// In the order a carried one is tried: its icon first, then its name.
-const ICON_TYPE = [
-  [/inv_misc_book/, "book"], [/inv_letter/, "letter"], [/inv_misc_note|leatherscrap|bandage/, "note"],
-  [/inv_scroll/, "scroll"], [/stonetablet|inv_misc_rune/, "tablet"],
-];
-const TITLE_TYPE = [
-  [/letter|missive|envelope/i, "letter"], [/note|page|parchment|diary/i, "note"],
-  [/book|tome|journal|manual|codex|libram|guide/i, "book"], [/scroll|orders|report|deed|writ|plans/i, "scroll"],
-];
-function typeOf(title, pages, world, items) {
-  if (world) {
-    if (/tombstone|headstone|here lies|in loving memory|\bgrave/i.test(title)) return "grave";
-    if (/skeleton|\begg\b|talon|skull of|astrolabe|catapult|armor of|relics|reliefs/i.test(title)) return "exhibit";
-    if (pages > 1 || /journal/i.test(title)) return "book";
-    if (/\bnote\b/i.test(title)) return "note";
-    return "plaque";
-  }
-  for (const item of items) {
-    const icon = itemIcon.get(item) ?? "";
-    for (const [pattern, type] of ICON_TYPE) if (pattern.test(icon)) return type;
-  }
-  for (const [pattern, type] of TITLE_TYPE) if (pattern.test(title)) return type;
-  return "other";
-}
 
 // ---------------------------------------------------------------- the world DB
 
@@ -300,7 +357,10 @@ try {
       }
       const named = await names(CREATURE, "entry", "name", [...creatures.keys()]);
       const zones = await spawnZones("creature", [...creatures.keys()]);
-      for (const [c, its] of creatures) for (const i of its) put(i, how, named.get(c), zones.get(c));
+      for (const [c, its] of creatures) {
+        if (isTemplateCopy(named.get(c)?.enUS)) continue;
+        for (const i of its) put(i, how, named.get(c), zones.get(c));
+      }
     }
     // Chests and other objects that hold them.
     const gloot = await lootEntries("gameobject_loot_template", wanted);
@@ -357,7 +417,10 @@ try {
     const vendors = await q("SELECT entry, item FROM npc_vendor WHERE item IN (?)", [list(wanted)]);
     const vendorNames = await names(CREATURE, "entry", "name", vendors.map((r) => Number(r.entry)));
     const vendorZones = await spawnZones("creature", vendors.map((r) => Number(r.entry)));
-    for (const r of vendors) put(Number(r.item), "vendor", vendorNames.get(Number(r.entry)), vendorZones.get(Number(r.entry)));
+    for (const r of vendors) {
+      if (isTemplateCopy(vendorNames.get(Number(r.entry))?.enUS)) continue;
+      put(Number(r.item), "vendor", vendorNames.get(Number(r.entry)), vendorZones.get(Number(r.entry)));
+    }
     return out;
   }
 
@@ -375,14 +438,27 @@ try {
     const zones = new Set((viaContainer.get(Number(r.Entry)) ?? []).flatMap((s) => s.zones));
     add(book, "container", { enUS: containerNames.get(Number(r.Entry)) ?? `item ${r.Entry}` }, zones);
   }
+
+  // And what the DB cannot see. A hand source that matches one the DB found gives it its zones.
+  const hand = Object.values(SOURCES_BY_HAND).flat();
+  const handQuests = await names(QUEST, "ID", "LogTitle", hand.filter((s) => s.quest).map((s) => s.quest));
+  const handObjects = await names(OBJECT, "entry", "name", hand.filter((s) => s.object).map((s) => s.object));
+  const handObjectZones = await spawnZones("gameobject", hand.filter((s) => s.object).map((s) => s.object));
+  for (const [book, list_] of Object.entries(SOURCES_BY_HAND)) {
+    for (const s of list_) {
+      const name = s.quest ? handQuests.get(s.quest) : handObjects.get(s.object);
+      if (!name) throw new Error(`book ${book}: no ${s.quest ? `quest ${s.quest}` : `object ${s.object}`} in the world DB`);
+      add(Number(book), s.how, name, s.zones ?? handObjectZones.get(s.object) ?? []);
+    }
+    if (!kind.has(Number(book))) kind.set(Number(book), "carried");
+  }
 } finally {
   await db.end();
 }
 
 // ---------------------------------------------------------------- the file
 
-// Readables nobody can have: test items and the ones the game retired.
-const gone = (title) => /^(Deprecated|TEST |Test )/.test(title) || /\(old\)$/.test(title);
+const gone = (id, book) => NEVER_HAD.has(id) || cannotBeHad(book.title, book.pages.map((page) => pageText.get(page) ?? ""));
 
 const nameIndex = new Map();
 const nameList = [];
@@ -394,9 +470,9 @@ function nameRef(name) {
 }
 
 const lines = [];
-const counts = { world: 0, carried: 0, wide: 0, nowhere: 0, gone: 0, types: {} };
+const counts = { world: 0, carried: 0, wide: 0, event: 0, nowhere: 0, gone: 0, types: {} };
 for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
-  if (gone(book.title)) { counts.gone++; continue; }
+  if (gone(id, book)) { counts.gone++; continue; }
   const k = kind.get(id);
   if (!k) { counts.nowhere++; continue; }
   const list_ = [...(sources.get(id)?.values() ?? [])]
@@ -405,9 +481,11 @@ for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
   const wide = zones.size > WIDE;
   counts[k]++;
   if (wide) counts.wide++;
-  const type = typeOf(book.title, book.pages.length, k === "world", bookItems.get(id) ?? []);
+  const type = TYPE_BY_HAND[id] ?? typeOf({ title: book.title, world: k === "world", texts: book.pages.map((page) => pageText.get(page) ?? ""),
+    icons: (bookItems.get(id) ?? []).map((item) => itemIcon.get(item) ?? "") });
   counts.types[type] = (counts.types[type] ?? 0) + 1;
   const parts = [`kind = "${k}"`, `type = "${type}"`];
+  if (EVENTS.has(id)) { parts.push("event = true"); counts.event++; }
   if (wide) parts.push("wide = true");
   else if (zones.size) parts.push(`zones = { ${[...zones].sort((a, b) => a - b).join(", ")} }`);
   if (k === "carried" && list_.length) {
@@ -430,10 +508,11 @@ const out = `-- AUTO-GENERATED by pipelines/books/tools/places.mjs. Do not edit 
 --
 -- Where each readable is, for Azeroth's Compendium: "world" ones stand in the zones listed (a
 -- plaque, a book on a shelf); "carried" ones are had in them (a letter dropped, a note handed
--- over). \`type\` is what it is: book, letter, note, scroll, tablet, plaque, grave, exhibit or
--- other. \`from\` names how a carried one is had, most specific first: { how, name, zone... }, the name an index
+-- over). \`type\` is what it is: book, journal, letter, note, scroll, tablet, plaque, grave,
+-- exhibit, picture or other. \`from\` names how a carried one is had, most specific first: { how, name, zone... }, the name an index
 -- into \`names\` (false where there is none, as for fishing). \`wide\` is a readable had in too many
--- zones to list under each. Zones are uiMapIDs. Regenerate with:  make books-places
+-- zones to list under each. \`event\` is one had only during a seasonal event, listed under
+-- Holidays and Events rather than its zones. Zones are uiMapIDs. Regenerate with:  make books-places
 --
 -- A global rather than a private namespace, as Books.lua is: a data file cannot reach into the
 -- addon's environment.
@@ -452,7 +531,7 @@ ${nameLines.join("\n")}
 `;
 await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, out);
-console.log(`${counts.world} in the world, ${counts.carried} carried (${counts.wide} across Azeroth), ` +
+console.log(`${counts.world} in the world, ${counts.carried} carried (${counts.wide} across Azeroth, ${counts.event} at events), ` +
   `${counts.nowhere} with no place, ${counts.gone} that cannot be had; ${nameList.length} names`);
 console.log(Object.entries(counts.types).map(([t, n]) => `${n} ${t}`).join(", "));
 console.log(`wrote ${OUT}`);

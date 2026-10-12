@@ -108,6 +108,12 @@ Expect("...each zone's card counting what is found out of all, its city's includ
 Expect("...its badge the zone's painting in the collections window's gold frame", RowFor("Elwynn Forest").icon.texture
     == _G.Spoken:ZoneIcon(1429) and RowFor("Elwynn Forest").iconFrame:IsShown() and RowFor("Elwynn Forest").iconFrame.atlas,
     "collections-itemborder-collected")
+Expect("...and the seasonal events' readables, in a group of their own before them",
+    Has(list, L.GROUP_EVENTS) and list:find(L.GROUP_EVENTS, 1, true) < list:find(L.GROUP_WIDE, 1, true), true)
+Click(L.GROUP_EVENTS)
+Expect("...which opens on them, the Winter Veil feast it once listed in the cities among them",
+    Has(Shown(), "The Feast of Winter Veil") and Has(Shown(), "A Bloodstained Envelope"), true)
+Click(L.GROUP_EVENTS)
 
 Click("Elwynn Forest")
 Click("Stormwind City")
@@ -242,6 +248,16 @@ Click(L.TYPE_PLAQUE)
 Expect("...a type opens on its readables", Has(Shown(), "Kurdran Wildhammer"), true)
 Expect("...each a card, counted found out of all", RowFor(L.TYPE_PLAQUE).row.style == "card"
     and RowFor(L.TYPE_PLAQUE).sub.text:match("^2 of %d+ found$") ~= nil, true)
+list = Shown()
+Expect("...journals and diaries a type of their own, after books, and pictures and maps one too",
+    Has(list, L.TYPE_JOURNAL) and Has(list, L.TYPE_PICTURE)
+    and list:find(L.TYPE_BOOK, 1, true) < list:find(L.TYPE_JOURNAL, 1, true), true)
+Click(L.TYPE_JOURNAL)
+Expect("...Stalvan's diary among the journals", Has(Shown(), "Book from Sven's Farm"), true)
+Click(L.TYPE_JOURNAL)
+Click(L.TYPE_PICTURE)
+Expect("...the Snapshot of Gammerita among the pictures", Has(Shown(), "Snapshot of Gammerita"), true)
+Click(L.TYPE_PICTURE)
 _, choices = Menu()
 choices[4].func()
 Expect("...and By Zone again, the zones", Has(Shown(), "Elwynn Forest"), true)
