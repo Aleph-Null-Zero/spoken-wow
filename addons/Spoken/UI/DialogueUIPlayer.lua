@@ -867,7 +867,7 @@ end
 
 function Skin:SetVisible(visible, immediate)
     if not self.frame then return end
-    if not visible then self:HideTooltip() end
+    if not visible then self:HideTooltip(); self.tuckWaiting = nil end
     if immediate then
         self.turning = nil
         self:StopTuck()
@@ -924,13 +924,13 @@ end
 --- Start the fade, as one image where the client can draw one, unless asked not to.
 function Skin:StartFade(asItself)
     if not asItself then self:Buffer() end
-    self.fadeFrom, self.fadeTime = self.level or 0, 0
+    self.fadeFrom, self.fadeTime, self.fadeSlow = self.level or 0, 0, nil
 end
 
 --- The fade at its end: hidden if it went out, itself again, and the next line in if it turned.
 function Skin:EndFade()
     self:SetLevel(self.wanted and 1 or 0)
-    self.fadeTime = nil
+    self.fadeTime, self.fadeSlow = nil, nil
     if not self.wanted then
         self.frame:Hide()
         self:Undeafen()
@@ -991,6 +991,15 @@ function Skin:Tick(elapsed)
             self:StartFade()
         end
     end
+    -- A page waiting for this window to fade in (Skin:TuckWhenShown): it goes behind it now, if its
+    -- line still waits behind the one playing.
+    local waiting = self.tuckWaiting
+    if waiting and self:Settled() then
+        self.tuckWaiting = nil
+        for index, clip in ipairs(SoundQueue.sounds) do
+            if index > 1 and clip == waiting.clip then self:TuckWhenShown(waiting.dialog, clip); break end
+        end
+    end
     -- Stopped faded out: its room given back.
     if self.tail and self.tail:Step(elapsed) then self:Count(self.tail.counted or 0) end
     if self.lineFade then
@@ -1007,7 +1016,7 @@ function Skin:Tick(elapsed)
     end
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
-        local t = Clamp(self.fadeTime / (self.wanted and FADE_IN or FADE_OUT), 0, 1)
+        local t = Clamp(self.fadeTime / ((self.wanted and FADE_IN or FADE_OUT) * (self.fadeSlow or 1)), 0, 1)
         local eased = Smooth(t)
         self:SetLevel(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
         if t == 1 then
@@ -1079,6 +1088,7 @@ function Skin:Settle(dialog)
     -- Fading as one image: it finishes, then shows the line as it does any.
     if self:Defer("update") then return end
     self:StopTuck()
+    self.tuckWaiting = nil
     self:StopLanding()
     -- Coming back as it is: a fade under way goes on, and Update hands it the line.
     if not self:Owns(dialog) then
@@ -1086,11 +1096,10 @@ function Skin:Settle(dialog)
         self:Update()
         if queued then
             self.justClosed = nil
-            local ok, err = pcall(self.StartTuck, self, dialog, queued)
-            if not ok then
-                self:StopTuck()
-                if geterrorhandler then geterrorhandler()(err) end
-            end
+            -- Fading in now as itself, not one image, so the page goes behind a window that is
+            -- coming in with it rather than one still waiting to.
+            self:FadeInAsItself()
+            self:TuckWhenShown(dialog, queued)
         end
         return
     end
@@ -1641,6 +1650,40 @@ end
 
 --- Done, or cut short (a dialog opening, another closing): the page and the ripple gone, this
 --- window where it rests.
+--- Fading in from where it is, now and as itself, not one image: no wait to be still. As itself
+--- the paper comes in over the first half and the rest over the second, so it takes twice as long
+--- as a fade as one image, each half as long as that whole fade.
+function Skin:FadeInAsItself()
+    self.preparing, self.arming, self.turning = nil, nil, nil
+    self.wanted = true
+    self:Unbuffer()
+    self:Undeafen()
+    Transcript:Release()
+    self.frame:Show()
+    self:StartFade(true)
+    self.fadeSlow = 2
+end
+
+--- Whether this window is coming in or in, and itself, not one image: a tuck may run against it.
+function Skin:Settled()
+    return self.wanted and self.frame:IsShown() and not self.buffered and not self.preparing and not self.arming
+end
+
+--- `clip`'s page from `dialog` goes behind this window: now if the window is itself, or once it
+--- is. As one image, or still waiting to fade in, nothing may move it.
+function Skin:TuckWhenShown(dialog, clip)
+    self.tuckWaiting = nil
+    if not self:Settled() then
+        self.tuckWaiting = { dialog = dialog, clip = clip }
+        return
+    end
+    local ok, err = pcall(self.StartTuck, self, dialog, clip)
+    if not ok then
+        self:StopTuck()
+        if geterrorhandler then geterrorhandler()(err) end
+    end
+end
+
 function Skin:StopTuck()
     local tuck = self.tuck
     self.tuck = nil
