@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 23
+local VERSION = 24
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -45,6 +45,9 @@ local LIST_WIDTH = 345
 local PAGE_MIN_WIDTH = 278
 local BANNER_ROW = 36
 local BANNER_GAP = 14         -- above each banner but the first
+local BANNER_IN = 10          -- a banner's plus or minus, and its count, from its sides
+local BANNER_DROP = 1.5       -- the banner's art sits this much under its row's middle
+local BANNER_TEXT = 28        -- a banner's name from its left
 local FIRST_GAP = 2           -- above the first row
 -- The rows are spaced by what shows of them: a card's frame starts 5.4 below its row's top and ends
 -- 3 above its foot, a banner's 2.5 above its foot. Every card is as far from the card or banner
@@ -1158,18 +1161,21 @@ local function DrawBanner(row, item, onlyFound)
 	ShowAll({ row.bannerFill, row.bannerTop, row.bannerBottom }, spot == nil)
 
 	row.toggle:ClearAllPoints()
-	row.toggle:SetPoint("LEFT", row, "LEFT", 18, 0)
+	-- The plus or minus as far in from the banner's edge as it is from its top and its foot, all
+	-- measured from the banner's gold line, whose middle is 1.5 under the row's.
+	row.toggle:SetPoint("LEFT", row, "LEFT", BANNER_IN, -BANNER_DROP)
 	Toggle(row, item, onlyFound)
 	local locked = item.locked and row.hasLock
-	row.lock:SetPoint("RIGHT", row, "RIGHT", -16, 0)
-	row.count:SetPoint("RIGHT", row, "RIGHT", -16, 0)
+	row.lock:SetPoint("RIGHT", row, "RIGHT", -BANNER_IN, -BANNER_DROP)
+	row.count:SetPoint("RIGHT", row, "RIGHT", -BANNER_IN, -1)
 	row.lock:SetShown(locked and true or false)
 	row.count:SetShown(not locked)
 	row.count:SetFontObject("GameFontHighlightSmall")
 	Tint(row.count, BANNER_INK)
 	row.count:SetText(item.total and item.total > 0 and string.format("%d/%d", item.count or 0, item.total) or "")
 	row.label:SetFontObject("GameFontNormal")
-	row.label:SetPoint("LEFT", row, "LEFT", 44, 0)
+	-- The name over its cards' badges.
+	row.label:SetPoint("LEFT", row, "LEFT", BANNER_TEXT, -1)
 	row.label:SetPoint("RIGHT", locked and row.lock or row.count, "LEFT", -8, 0)
 	if item.locked then Tint(row.label, LOCKED_INK) else row.label:SetTextColor(1, 0.82, 0) end
 	row.label:SetShadowColor(0, 0, 0, 1)
@@ -1535,10 +1541,12 @@ local Page = {}
 Page.__index = Page
 
 --- A page of parchment filling `parent`: a title, the line under it, the divider, the words in a
---- scrolling view (`addon`'s UI/TextView.lua), and Play on the title's right. `play` = { has(target),
---- playing(target), start(target), stop(target) }, what Play does for whatever Show was given.
-function C.NewPage(parent, addon, play)
-	local self = setmetatable({ playing = play }, Page)
+--- scrolling view (`addon`'s UI/TextView.lua), and Report and Play on the title's right, as the
+--- places' page has them. `play` = { has(target), playing(target), start(target), stop(target) },
+--- what Play does for whatever Show was given; `report` = { has(target), open(target), title, tip },
+--- what Report does, hidden where it has nothing to report or the player hides Report buttons.
+function C.NewPage(parent, addon, play, report)
+	local self = setmetatable({ playing = play, reporting = report }, Page)
 	local frame = CreateFrame("Frame", nil, parent)
 	frame:SetAllPoints()
 	self.frame = frame
@@ -1641,11 +1649,31 @@ function C.NewPage(parent, addon, play)
 	if file then body:SetFadeSource(frame, file, coords) end
 	self.body = body
 
-	-- Play, the player's round button, on the heading's right as the places' page has it.
+	-- Report in the heading's corner, the game's bug in the player's round button, as the places'
+	-- page has it.
+	if report and _G.Spoken and Spoken.CreateRoundButton then
+		local button = Spoken:CreateRoundButton(frame, "report")
+		button:SetScript("OnClick", function()
+			if self.target ~= nil then report.open(self.target) end
+		end)
+		button:HookScript("OnEnter", function(b)
+			if not GameTooltip then return end
+			GameTooltip:SetOwner(b, "ANCHOR_LEFT")
+			GameTooltip:SetText(report.title or "")
+			if report.tip then GameTooltip:AddLine(report.tip, 1, 0.8, 0.2, true) end
+			GameTooltip:Show()
+		end)
+		button:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+		button:Hide()
+		self.report = button
+		if Spoken.RegisterCallback then
+			Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function() self:RefreshPlay() end)
+		end
+	end
+
+	-- Play, the player's round button, beside Report as the places' page has it.
 	if play and _G.Spoken and Spoken.CreateRoundButton then
 		local button = Spoken:CreateRoundButton(frame, "play")
-		-- Where the places' page has it: level with the title's first line.
-		button:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -RIGHT, -TOP - 1)
 		button:SetScript("OnClick", function()
 			local target = self.target
 			if target == nil then return end
@@ -1670,25 +1698,52 @@ function C.NewPage(parent, addon, play)
 	return self
 end
 
+--- Report in the heading's corner and Play beside it, each only where it does something; the
+--- title stops 10 short of the last shown.
 function Page:RefreshPlay()
-	local button, target = self.play, self.target
-	if not button then return end
-	if target == nil or not self.playing.has(target) then
-		button:Hide()
-		return
+	local target = self.target
+	local report, button = self.report, self.play
+	if report then
+		local hidden = _G.Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()
+		report:SetShown(target ~= nil and not hidden and self.reporting.has(target) and true or false)
 	end
-	button:Show()
-	button.pageState = self.playing.playing(target) and "stop" or "play"
-	if button.SetState then button:SetState(button.pageState) end
+	if button then
+		local has = target ~= nil and self.playing.has(target)
+		button:SetShown(has and true or false)
+		if has then
+			button.pageState = self.playing.playing(target) and "stop" or "play"
+			if button.SetState then button:SetState(button.pageState) end
+		end
+	end
+	-- Level with the title's first line, from the corner leftward, 4 apart.
+	local previous
+	for _, shown in ipairs({ report, button }) do
+		if shown and shown:IsShown() then
+			shown:ClearAllPoints()
+			if previous then
+				shown:SetPoint("RIGHT", previous, "LEFT", -4, 0)
+			else
+				shown:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -RIGHT, -TOP - 1)
+			end
+			previous = shown
+		end
+	end
+	self.title:SetPoint("RIGHT", previous or self.frame, previous and "LEFT" or "RIGHT", previous and -10 or -RIGHT, 0)
 end
 
---- entry = { title, subtitle, text, target = what Play plays, or nil for none }
+--- entry = { title, subtitle, text, target = what Play and Report act on, or nil for none,
+--- parts = { { heading, text, buttons } } in place of `text`: words in parts, each under its
+--- heading with its own buttons (TextView:SetParts) }
 function Page:Show(entry)
 	self.title:SetText(entry.title or "")
 	self.sub:SetText(entry.subtitle or "")
 	self.sub:SetHeight((entry.subtitle and entry.subtitle ~= "") and 16 or 1)
 	self.body:SetColor(INK[1], INK[2], INK[3])
-	self.body:SetText(entry.text or "")
+	if entry.parts and self.body.SetParts then
+		self.body:SetParts(entry.parts)
+	else
+		self.body:SetText(entry.text or "")
+	end
 	self.target = entry.target
 	self:RefreshPlay()
 end

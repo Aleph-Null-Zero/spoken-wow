@@ -118,6 +118,29 @@ stub.world.playerMapID = 9999
 Tab:Open()
 local panel = Tab.panel
 local page = panel.page
+-- A page's words as one string: a quest's parts each under its heading, as one block reads.
+local function PageWords()
+    local parts = page.body.lastParts
+    if not parts then return page.body.text["text"] end
+    local out = {}
+    for _, part in ipairs(parts) do
+        table.insert(out, part.heading)
+        table.insert(out, part.text)
+    end
+    return table.concat(out, "\n\n")
+end
+-- A part's Play and Report on a quest's page, by its heading.
+local function PartButton(heading, kind)
+    for _, part in ipairs(page.body.lastParts or {}) do
+        if part.heading == heading then
+            for _, button in ipairs(part.buttons or {}) do
+                if button.kind == kind or (kind == "play" and button.moment) or (kind == "report" and not button.moment) then
+                    return button
+                end
+            end
+        end
+    end
+end
 Expect("...and open on it", C:IsOpen("quests"), true)
 Expect("...where the player's zone is not known, on the first continent, as there is no Azeroth to land on",
     page.title.text, "Eastern Kingdoms")
@@ -313,9 +336,11 @@ Click("Kobold Camp Cleanup")
 Expect("a quest's page: its title", page.title.text, "Kobold Camp Cleanup")
 Expect("...where it is", page.sub.text, "Elwynn Forest")
 Expect("...on one line, cut short", page.sub.wordWrap, false)
-local words = page.body.text.text or ""
-Expect("...its words, offered then handed in, each headed", words:find(L.QUEST_PART_ACCEPT .. "\n\n", 1, true) == 1
-    and words:find("\n\n" .. L.QUEST_PART_COMPLETE .. "\n\n", 1, true) ~= nil, true)
+local words = PageWords() or ""
+Expect("...its words in parts, offered then handed in, each under its heading",
+    page.body.lastParts ~= nil and page.body.lastParts[1].heading == L.QUEST_PART_ACCEPT
+    and page.body.lastParts[#page.body.lastParts].heading == L.QUEST_PART_COMPLETE, true)
+Expect("...no Play or Report in the page's corner: each part has its own", page.play:IsShown(), false)
 Expect("...no placeholder left in them", words:find("$", 1, true), nil)
 Click("Kobold Candles")
 Expect("a quest not completed does not open", page.title.text, "Kobold Camp Cleanup")
@@ -324,13 +349,13 @@ Expect("a quest not completed does not open", page.title.text, "Kobold Camp Clea
 C:Tab("quests").unlock.set(true)
 Expect("Unlock Unstarted Quests opens it", RowFor("Kobold Candles").row.locked, false)
 Click("Kobold Candles")
-words = page.body.text.text or ""
+words = PageWords() or ""
 Expect("...its words filled for the player: the word for his sex", words:find("Hello, good sir!", 1, true) ~= nil, true)
 Expect("...and his name", words:find("Thanks for the candles, Tester,", 1, true) ~= nil, true)
 Expect("...and a line break for $B", words:find("moment?\n\nMy brother", 1, true) ~= nil, true)
 stub.world.unitSex = 3
 Tab:Refresh()
-Expect("...and for hers", (page.body.text.text or ""):find("Hello, my lady!", 1, true) ~= nil, true)
+Expect("...and for hers", (PageWords() or ""):find("Hello, my lady!", 1, true) ~= nil, true)
 stub.world.unitSex = 2
 Expect("...choosing it leaves the counts as they were", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
 C:Tab("quests").unlock.set(false)
@@ -353,7 +378,7 @@ Expect("...and its zone's card counts it in progress, apart from the completed",
 RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
 Expect("...in progress, then where it is", page.sub.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
-Expect("...and its words", (page.body.text.text or ""):find("Thanks for the candles", 1, true) ~= nil, true)
+Expect("...and its words", (PageWords() or ""):find("Thanks for the candles", 1, true) ~= nil, true)
 Click("Elwynn Forest")
 Expect("a zone's page counts it apart from the completed", page.sub.text:match("^1 of %d+ completed, 1 in progress$") ~= nil, true)
 Click("Elwynn Forest")
@@ -491,7 +516,7 @@ Expect("a chain opens on its quests, in the order they are taken",
 Expect("...rows one step further in", RowOfQuest(PIE).row.nest, 2)
 Expect("...chosen, its page has the chain's name", page.title.text, "Lost Necklace")
 Expect("...its count", page.sub.text, "2 of 4 completed, 1 in progress")
-Expect("...and, as a zone's page, the quests on the left to choose", page.body.text.text, L.QUESTS_PICK)
+Expect("...and, as a zone's page, the quests on the left to choose", PageWords(), L.QUESTS_PICK)
 Expect("...nothing to play on it", page.play:IsShown(), false)
 completed[BACK], completed[GOLDTOOTH] = true, true
 questLog = {}
@@ -549,25 +574,38 @@ VO.DataModules:Register("TestPack", {
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
 })
 Click("Kobold Camp Cleanup")
-Expect("a voiced quest's page has Play", page.play ~= nil and page.play:IsShown(), true)
-page.play.scripts.OnClick(page.play)
+local play = PartButton(L.QUEST_PART_ACCEPT, "play")
+Expect("a voiced part has Play on its heading's line", play ~= nil and play:IsShown(), true)
+Expect("...and Report beside it", PartButton(L.QUEST_PART_ACCEPT, "report") ~= nil
+    and PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
+play.scripts.OnClick(play)
 local queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
-Expect("...which plays its offer alone, not the hand-in after it", table.concat(queued, ","), "7-accept")
+Expect("...which plays that part alone, not the hand-in after it", table.concat(queued, ","), "7-accept")
 local playing = Spoken:GetQueue()[1]
 Expect("...with the offer's words, for the window to show and highlight",
-    playing and type(playing.text) == "string" and playing.text ~= "" and page.body.text.text:find(playing.text, 1, true) ~= nil, true)
+    playing and type(playing.text) == "string" and playing.text ~= "" and PageWords():find(playing.text, 1, true) ~= nil, true)
 local function PlayTip()
     GameTooltip.text = nil
-    for _, hook in ipairs(page.play.hooks and page.play.hooks.OnEnter or {}) do hook(page.play) end
+    for _, hook in ipairs(play.hooks and play.hooks.OnEnter or {}) do hook(play) end
     return GameTooltip.text
 end
 Expect("...its tooltip naming Stop while it plays", PlayTip(), SpokenEnv.L.STOP)
-page.play.scripts.OnClick(page.play)
+local handIn = PartButton(L.QUEST_PART_COMPLETE, "play")
+handIn.scripts.OnClick(handIn)
+queued = {}
+for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
+Expect("...the hand-in's Play playing the hand-in in its place", queued[1], "7-complete")
+handIn.scripts.OnClick(handIn)
+play.scripts.OnClick(play)
+play.scripts.OnClick(play)
 Expect("...and again, stops them", #VO.Player:Queued(), 0)
 Expect("...its tooltip naming Play once stopped", PlayTip(), SpokenEnv.L.PLAY)
 Click("Kobold Candles")
-Expect("a quest no pack has has no Play", page.play:IsShown(), false)
+Expect("a quest no pack has has no Play", PartButton(L.QUEST_PART_ACCEPT, "play") == nil
+    or not PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown(), true)
+Expect("...nor Report", PartButton(L.QUEST_PART_ACCEPT, "report") == nil
+    or not PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
 ClickChain("Lost Necklace")
 completed[NECKLACE] = true
 Tab:Refresh()
@@ -686,7 +724,7 @@ questLog, logQuest = { HEIRLOOM, CANDLES }, HEIRLOOM
 QuestLog_UpdateQuestDetails()
 Tab.logButton.scripts.OnClick(Tab.logButton)
 Expect("the quest log's Open on a quest in progress shows its words", page.title.text == "The Forgotten Heirloom"
-    and page.body.text.text ~= L.QUEST_NOT_FOUND, true)
+    and PageWords() ~= L.QUEST_NOT_FOUND, true)
 logQuest = CANDLES
 QuestLog_UpdateQuestDetails()
 Expect("Classic Era's quest log details have it", Tab.logButton:IsShown() and Tab.logButton.questID, CANDLES)
@@ -774,14 +812,14 @@ stub.FireEvent("QUEST_DETAIL")
 stub.world.questID = 0
 Tab:Refresh()
 Click("Säuberung des Koboldlagers")
-words = page.body.text.text or ""
+words = PageWords() or ""
 Expect("the title the window showed", page.title.text, "Säuberung des Koboldlagers")
 Expect("...and its words, over the English", words:find("Ihr müsst die Kobolde vertreiben.", 1, true) ~= nil, true)
 Expect("...the moments the window has not shown yet still in English",
     words:find(SpokenQuestsText[KOBOLDS].complete:sub(1, 20), 1, true) ~= nil, true)
 stub.world.playerName = "Zweite"
 Tab:Refresh()
-Expect("...another character's name where the player's was", (page.body.text.text or ""):find("Zweite, Ihr müsst", 1, true) ~= nil, true)
+Expect("...another character's name where the player's was", (PageWords() or ""):find("Zweite, Ihr müsst", 1, true) ~= nil, true)
 stub.world.playerName = "Tester"
 local kept = VO.Addon.db.global.CompendiumText
 Expect("...kept by language", kept.deDE[KOBOLDS] ~= nil and kept.enUS == nil, true)
@@ -793,10 +831,10 @@ stub.FireEvent("QUEST_DETAIL")
 stub.world.questID = 0
 Tab:Refresh()
 Click("Koboldkerzen")
-Expect("words kept from a man's window, shown to a man", (page.body.text.text or ""):find("Hallo, werter Herr!", 1, true) ~= nil, true)
+Expect("words kept from a man's window, shown to a man", (PageWords() or ""):find("Hallo, werter Herr!", 1, true) ~= nil, true)
 stub.world.unitSex = 3
 Tab:Refresh()
-Expect("...and to a woman, the English, with her word", (page.body.text.text or ""):find("Hello, my lady!", 1, true) ~= nil, true)
+Expect("...and to a woman, the English, with her word", (PageWords() or ""):find("Hello, my lady!", 1, true) ~= nil, true)
 stub.world.unitSex = 2
 stub.SetLocale("enUS")
 stub.world.questID = CANDLES

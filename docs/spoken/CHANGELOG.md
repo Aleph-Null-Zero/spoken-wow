@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **A quest's page in Azeroth's Compendium sets its offer, progress and hand-in apart.** Each part
+  has its own heading, larger and darker than the words, with Play and Report for that part on the
+  heading's line. A book's page has Report beside Play, as a zone's page does. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium calls each thing by one name in every language.** The Zones tab searches
   zones, holiday quests sit under Holidays and Events as holiday books do, Place Unknown is the
   same on Quests and Books, and the filters and Unlock switches are worded alike. Play on a quest's

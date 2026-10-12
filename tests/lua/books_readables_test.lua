@@ -317,6 +317,23 @@ Expect("...and is remembered", SpokenBooksSettings.compendiumVoicedOnly, true)
 _, choices = Menu()
 choices[2].func()
 Expect("...off, everything again", Has(Shown(), "Westfall"), true)
+
+-- Report on a readable's page, in the heading's corner with Play beside it, as the places' page.
+page:Show({ title = "Ranger Captain Alleria Windrunner", target = ALLERIA })
+Expect("a voiced readable's page has Report", page.report ~= nil and page.report:IsShown(), true)
+Expect("...in the corner, Play to its left", select(2, page.play:GetPoint(1)) == page.report, true)
+local copied
+local showCopyLink = B.ShowCopyLink
+B.ShowCopyLink = function(_, url) copied = url end
+page.report.scripts.OnClick(page.report)
+Expect("...a click giving the address to report its first page", copied ~= nil
+    and copied:find("/books/r/" .. alleriaPage, 1, true) ~= nil, true)
+B.ShowCopyLink = showCopyLink
+local spoken, hidden = _G.Spoken, true
+_G.Spoken = setmetatable({ AreReportButtonsHidden = function() return hidden end }, { __index = spoken })
+page:RefreshPlay()
+Expect("...none with Hide Report Buttons on", page.report:IsShown(), false)
+_G.Spoken = spoken
 B.HasAudio = hasAudio
 
 -- The readables places.mjs leaves out (the Deprecated and TEST items, whose page is "Missing

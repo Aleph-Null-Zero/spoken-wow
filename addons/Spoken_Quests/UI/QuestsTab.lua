@@ -894,17 +894,6 @@ local function PartText(id, moment)
     if text and text ~= "" then return QuestsTab:Fill(text) end
 end
 
-local function Words(id)
-    local parts = {}
-    for _, moment in ipairs(MOMENTS) do
-        local text = PartText(id, moment)
-        if text then
-            table.insert(parts, L[HEADINGS[moment]])
-            table.insert(parts, text)
-        end
-    end
-    return #parts > 0 and table.concat(parts, "\n\n") or L.QUEST_NO_TEXT
-end
 
 --- Keep what the open quest window shows, in this client's language.
 function QuestsTab:Keep(moment, text, title)
@@ -982,6 +971,91 @@ local PLAY = {
     end,
 }
 
+-- Each part's Play and Report, on its heading's line on the page: made once, pointed at the
+-- quest shown.
+local partButtons = {}
+
+local function PartPlaying(id, moment) return #Clips(id, moment) > 0 end
+
+local function PaintPartPlay(button)
+    button.pageState = button.questID and PartPlaying(button.questID, button.moment) and "stop" or "play"
+    if button.SetState then button:SetState(button.pageState) end
+end
+
+local function PartButtons(moment)
+    if partButtons[moment] then return partButtons[moment] end
+    if not (page and Spoken and Spoken.CreateRoundButton) then return nil end
+    local child = page.body.child
+    local play = Spoken:CreateRoundButton(child, "play")
+    play.moment = moment
+    play:SetScript("OnClick", function(self)
+        local id = self.questID
+        if not id then return end
+        if PartPlaying(id, moment) then
+            for _, clip in ipairs(Clips(id, moment)) do VO.Player:Remove(clip) end
+        else
+            -- One part of a quest at a time: another part playing gives way.
+            for _, clip in ipairs(Clips(id)) do VO.Player:Remove(clip) end
+            VO.Player:PlayNow(SoundData(id, moment, "Azeroth's Compendium"))
+        end
+        PaintPartPlay(self)
+    end)
+    play:HookScript("OnEnter", function(self)
+        local words = _G.SpokenEnv and _G.SpokenEnv.L
+        if not (words and GameTooltip) then return end
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:SetText(self.pageState == "stop" and words.STOP or words.PLAY)
+        GameTooltip:Show()
+    end)
+    play:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+    local report = Spoken:CreateRoundButton(child, "report")
+    report:SetScript("OnClick", function(self)
+        local id = self.questID
+        local target = id and VO.ReportButton and VO.ReportButton:TargetForQuest(id, EVENTS[moment])
+        -- The language the part plays in, as the quest log's Report passes it: a fallback line is
+        -- an English take under another language.
+        local sound = { event = EVENTS[moment], questID = id }
+        local language = VO.DataModules:PrepareSound(sound) and sound.language or nil
+        if target then VO.ReportButton:ShowLink(target, language) end
+    end)
+    report:HookScript("OnEnter", function(self)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:SetText(L.OPT_REPORT_PROBLEM)
+        GameTooltip:AddLine(L.OPT_REPORT_QUEST_TIP, 1, 0.8, 0.2, true)
+        GameTooltip:Show()
+    end)
+    report:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+    play:Hide()
+    report:Hide()
+    partButtons[moment] = { play = play, report = report }
+    return partButtons[moment]
+end
+
+-- A quest's words in parts, the offer, the progress and the hand-in each under its heading, with
+-- Play and Report for that part where a pack voices it. nil with no words at all.
+local function Parts(id)
+    local parts = {}
+    local reportsHidden = Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()
+    for _, moment in ipairs(MOMENTS) do
+        local text = PartText(id, moment)
+        if text then
+            local buttons = PartButtons(moment)
+            local list = {}
+            if buttons then
+                local voiced = Voiced(id, moment)
+                buttons.play.questID, buttons.report.questID = id, id
+                buttons.report:SetShown(voiced and not reportsHidden)
+                buttons.play:SetShown(voiced)
+                PaintPartPlay(buttons.play)
+                list = { buttons.report, buttons.play }
+            end
+            table.insert(parts, { heading = L[HEADINGS[moment]], text = text, buttons = list })
+        end
+    end
+    return #parts > 0 and parts or nil
+end
+
 local function Where(id)
     local quest = Quests()[id] or {}
     if quest.zones and #quest.zones > 0 then
@@ -1023,7 +1097,8 @@ local function ShowEntry()
             page:Show({ title = Title(id), subtitle = Where(id), text = L.QUEST_NOT_FOUND })
             return
         end
-        page:Show({ title = Title(id), subtitle = Subtitle(id), text = Words(id), target = id })
+        -- Play and Report on each part's heading, not the page's: each part is said at its own time.
+        page:Show({ title = Title(id), subtitle = Subtitle(id), parts = Parts(id), text = L.QUEST_NO_TEXT })
         return
     end
     if selection.dungeon then
@@ -1187,6 +1262,15 @@ local function Build(panel)
     holder:SetPoint("TOPLEFT", pageInset, "TOPLEFT", 3, -3)
     holder:SetPoint("BOTTOMRIGHT", pageInset, "BOTTOMRIGHT", -3, 3)
     page = C.NewPage(holder, ns, PLAY)
+    -- The parts' Play show Stop while their part plays, and their Report follows Hide Report Buttons.
+    if Spoken and Spoken.RegisterCallback then
+        Spoken:RegisterCallback("AUDIO_CHANGED", function()
+            for _, buttons in pairs(partButtons) do PaintPartPlay(buttons.play) end
+        end)
+        Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
+            if selection and selection.quest then ShowEntry() end
+        end)
+    end
     -- One line, cut short: a quest given in several zones names them all.
     if page.sub.SetWordWrap then page.sub:SetWordWrap(false) end
     if page.sub.SetMaxLines then page.sub:SetMaxLines(1) end

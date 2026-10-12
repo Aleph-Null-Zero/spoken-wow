@@ -87,8 +87,12 @@ Expect("with nothing chosen, the page says shift-click queues a quest", page.bod
     and L.QUESTS_PICK:find("Shift-click", 1, true) ~= nil, true)
 Click("Elwynn Forest")
 Click("Kobold Camp Cleanup")
-page.play.scripts.OnClick(page.play)
-Expect("Play on a quest's page plays it", Queued(), "7-accept")
+local play
+for _, part in ipairs(page.body.lastParts or {}) do
+    if part.heading == L.QUEST_PART_ACCEPT then play = part.buttons[2] end
+end
+play.scripts.OnClick(play)
+Expect("Play on a quest's offer plays it", Queued(), "7-accept")
 
 Click("Kobold Candles", true)
 Expect("a shift-click on another quest queues its recording after what is playing", Queued(),

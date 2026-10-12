@@ -501,6 +501,21 @@ local PLAY = {
 	stop = function(id) SpokenBooks:StopReading(id) end,
 }
 
+-- Report on a readable's page: its first page's recording, filed under the language it plays in,
+-- as the player's Report files a page.
+local REPORT = {
+	has = function(id) return PLAY.has(id) end,
+	open = function(id)
+		local book = Books()[id]
+		local pageId = book and book.pages[1]
+		local clip = pageId and SpokenBooks:ClipFor(pageId)
+		local url = pageId and SpokenBooks:ReportURL(pageId, clip and clip.language)
+		if url and SpokenBooks.ShowCopyLink then SpokenBooks:ShowCopyLink(url, L.REPORT_LINE_ADDRESS) end
+	end,
+	title = L.REPORT_PROBLEM,
+	tip = L.REPORT_LINE_TIP,
+}
+
 -- How a carried readable is had, one line each: "Dropped by Defias Messenger (Westfall)".
 local HOW = {
 	["drop"] = "FROM_DROP", ["pickpocket"] = "FROM_PICKPOCKET", ["quest start"] = "FROM_QUEST_START",
@@ -769,7 +784,7 @@ local function Build(panel)
 	local holder = CreateFrame("Frame", nil, pageInset)
 	holder:SetPoint("TOPLEFT", pageInset, "TOPLEFT", 3, -3)
 	holder:SetPoint("BOTTOMRIGHT", pageInset, "BOTTOMRIGHT", -3, 3)
-	page = C.NewPage(holder, SpokenBooks, PLAY)
+	page = C.NewPage(holder, SpokenBooks, PLAY, REPORT)
 	if type(pageInset.NineSlice) == "table" and pageInset.NineSlice.SetFrameLevel then
 		pageInset.NineSlice:SetFrameLevel(holder:GetFrameLevel() + 5)
 	end
