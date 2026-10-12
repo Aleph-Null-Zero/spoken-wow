@@ -50,7 +50,7 @@ local HEAD_INK = { 0.06, 0.04, 0.02 }
 -- Between one part and the next, in the middle of PART_GAP and of the words' width, the quest
 -- frame's own break, at its own size: stretched, its flourishes widen.
 local BREAK = [[Interface\QuestFrame\UI-HorizontalBreak]]
-local BREAK_WIDTH, BREAK_HEIGHT = 256, 32
+local BREAK_WIDTH, BREAK_HEIGHT = 128, 32
 
 local TextView = {}
 TextView.__index = TextView
