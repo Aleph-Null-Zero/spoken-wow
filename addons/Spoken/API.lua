@@ -375,6 +375,22 @@ function Spoken:ShowsCompendium()
     return true
 end
 
+--- The Text Size of the words of stories, books and quests in Azeroth's Compendium and beside the
+--- map, from the Compendium section of Spoken's page. Until the player sets it there, the size
+--- they set on the Zones page, where it was before; 12 with neither.
+function Spoken:CompendiumFontSize()
+    local size = Addon.db and Addon.db.profile.CompendiumFontSize
+    if size == nil and type(SpokenZonesSettings) == "table" then size = SpokenZonesSettings.fontSize end
+    return tonumber(size) or 12
+end
+
+--- Set the Compendium's Text Size, and tell the parts that draw its words.
+function Spoken:SetCompendiumFontSize(size)
+    if not Addon.db then return end
+    Addon.db.profile.CompendiumFontSize = size
+    Callbacks:Fire("COMPENDIUM_FONT_CHANGED")
+end
+
 --- A button on the player's panel that opens a feature addon's own settings, for the
 --- addons whose panel cannot be nested.
 function Spoken:AddSettingsLink(text, onClick)
@@ -559,6 +575,7 @@ end
 --   SOURCE_REGISTERED  (source)
 --   CONTRIBUTE_SETTINGS_CHANGED ()          the hide-Contribute-buttons setting was toggled
 --   REPORT_SETTINGS_CHANGED     ()          the hide-Report-buttons setting was toggled
+--   COMPENDIUM_FONT_CHANGED     ()          the Compendium's Text Size changed (Spoken:CompendiumFontSize)
 
 function Spoken:RegisterCallback(event, fn)
     return Callbacks:Register(event, fn)

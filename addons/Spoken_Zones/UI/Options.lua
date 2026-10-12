@@ -145,14 +145,14 @@ function SpokenZones:SetupOptions()
 	layout:Requires(layout:Slider(L.OPT_PANEL_WIDTH, 220, 520, 10,
 		Get("panelWidth"), Set("panelWidth"), RedrawPanel, SpokenLayout.Number, L.OPT_PANEL_WIDTH_TIP),
 		besideMap, L.REASON_MAP_PANEL)
-	layout:Slider(L.OPT_FONT_SIZE, 9, 20, 1,
-		Get("fontSize"), Set("fontSize"), RedrawEverything, SpokenLayout.Number, L.OPT_FONT_SIZE_TIP)
 
-	-- Azeroth's Compendium: opened, and its places unlocked, from Spoken's page where Spoken is
-	-- installed (Spoken:ShowsCompendium), with the other tabs'. Here only without it.
+	-- Azeroth's Compendium: opened, its words sized and its places unlocked, from Spoken's page
+	-- where Spoken is installed (Spoken:ShowsCompendium), with the other tabs'. Here only without it.
 	if not (Spoken and Spoken.ShowsCompendium) then
 		layout:Section(L.OPT_SECTION_LORE)
 		layout:Button(L.MENU_LORE_WINDOW, 200, function() SpokenZones:ToggleLoreWindow() end, L.OPT_LORE_WINDOW_TIP)
+		layout:Slider(L.OPT_FONT_SIZE, 9, 20, 1,
+			Get("fontSize"), Set("fontSize"), RedrawEverything, SpokenLayout.Number, L.OPT_FONT_SIZE_TIP)
 		layout:Checkbox(L.OPT_SHOW_UNDISCOVERED,
 			L.OPT_SHOW_UNDISCOVERED_TIP,
 			Get("showUndiscovered"), Set("showUndiscovered"), RedrawEverything)

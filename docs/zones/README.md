@@ -604,9 +604,10 @@ right, on the spellbook's parchment (`UI/LorePage.lua`).
 The list has a banner for each continent, Kalimdor and the Eastern Kingdoms, each
 opening and closing on its own. Under a continent each zone is a card: its painting,
 its name, and its places found out of all with the share and a bar. A zone's places are
-its city, where it holds one, and its areas; its page counts the same, and a banner
+its areas and, where it holds one, its city and the city's areas, the city itself one
+place; its page counts the same, and a banner
 counts what its zones' cards count, of the cards the filters leave listed. A click on a
-zone's card chooses it and opens it: its city as a small card with its own areas, and
+zone's card chooses it and opens it: its city as a card one level in, with its own areas, and
 its areas as rows, a tick on each one found. Each zone's and city's card opens and
 closes on its own click, so several stay open together; a city's card shows only while
 its zone is open, and keeps its own state while the zone is closed. What is open lasts
@@ -624,8 +625,12 @@ still say what this character has found. The filter menu beside the search box h
 **Discovered Only**, which leaves out the places not found, and **Voiced Only**, which
 leaves out what no installed voice pack reads and counts only what it lists; a zone
 stays while an area in it has a recording. A search lists every match a click could
-reach, with what holds it opened, and opens nothing locked. Changing a filter or
-clearing the search keeps the chosen row in view.
+reach, with what holds it opened, and opens nothing locked. A search naming a zone or a
+city lists all its areas; one naming a banner (a continent, Other Lands, Battlegrounds)
+lists its zones' cards as the player left them, each opening and closing on a click as
+it does unsearched. A click on a card the search opened closes it for that search, and
+another opens it again; a new search opens it again too. Changing a filter or clearing
+the search keeps the chosen row in view.
 
 The tab opens on where the player stands and scrolls that row into view: the area they
 are in where it has a story of its own, else its zone, opened, else their continent.

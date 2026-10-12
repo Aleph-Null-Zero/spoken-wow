@@ -46,7 +46,7 @@ L.OPT_REPORT_NOTE = "用于与某一段剧情无关的问题；每段剧情都�
 L.MENU_LORE_WINDOW = "打开艾泽拉斯百科"
 L.MENU_ZONE_SETTINGS = "地区设置"
 
-L.OPT_REPORT_LINE_TIP = "剧情有误、朗读不佳、名字念错——可通过链接告知。"
+L.OPT_REPORT_LINE_TIP = "获取链接，报告剧情有误、朗读错误或名字念错。"
 L.OPT_REPORT_LINE_ADDRESS = "复制此地址并在浏览器中打开，以报告该条目的问题。"
 
 L.AUDIO_READ_TIP = "收听这段剧情的朗读"

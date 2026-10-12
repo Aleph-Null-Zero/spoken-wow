@@ -543,10 +543,17 @@ local function Build(canvas)
         if compendium and compendium.Toggle then compendium:Toggle() end
     end, L.OPT_COMPENDIUM_OPEN_TIP)
     Only(open, function() local compendium = Compendium(); return compendium ~= nil and compendium.Toggle ~= nil end)
-    Requires(open, function()
+    local function Available()
         local compendium = Compendium()
         return compendium ~= nil and compendium.Available ~= nil and compendium:Available()
-    end, L.REASON_COMPENDIUM_OFF)
+    end
+    Requires(open, Available, L.REASON_COMPENDIUM_OFF)
+    -- The words of every tab's stories, and of Zones' panel beside the map.
+    local size = layout:Slider(L.OPT_COMPENDIUM_FONT_SIZE, 9, 20, 1,
+        function() return Spoken:CompendiumFontSize() end,
+        function(v) Spoken:SetCompendiumFontSize(v) end, nil, Layout.Number, L.OPT_COMPENDIUM_FONT_SIZE_TIP)
+    Only(size, function() return Compendium() ~= nil end)
+    Requires(size, Available, L.REASON_COMPENDIUM_OFF)
     -- In the order of the window's tabs.
     for _, unlock in ipairs({
         { tab = "quests", part = "quests", label = L.OPT_UNLOCK_QUESTS, tip = L.OPT_UNLOCK_QUESTS_TIP, module = L.OPT_PART_QUESTS },
@@ -814,6 +821,9 @@ local function Build(canvas)
             -- The feature addons' DialogueUI rows are kept in their own settings too.
             DialogueUIOptions:Reset()
             Addon.db:ResetProfile()
+            -- Unset, the Compendium's Text Size is the one the Zones page had: set, it is back
+            -- to its default.
+            Addon.db.profile.CompendiumFontSize = 12
             Addon.db.global.Layout = nil
             ReloadUI()
         end)

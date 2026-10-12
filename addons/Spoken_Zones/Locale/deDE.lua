@@ -46,10 +46,10 @@ L.OPT_REPORT_NOTE = "Für alles, was nicht eine einzelne Geschichte betrifft; je
 L.MENU_LORE_WINDOW = "„Kompendium von Azeroth“ öffnen"
 L.MENU_ZONE_SETTINGS = "Einstellungen für Zonen"
 
-L.OPT_REPORT_LINE_TIP = "Falsche Geschichte, schlechte Lesung, falsch ausgesprochener Name -- dafür gibt es hier einen Link."
+L.OPT_REPORT_LINE_TIP = "Erhalte einen Link, um eine falsche Geschichte, eine falsche Lesung oder einen falsch ausgesprochenen Namen zu melden."
 L.OPT_REPORT_LINE_ADDRESS = "Kopiere diese Adresse und öffne sie in deinem Browser, um ein Problem mit diesem Eintrag zu melden."
 
-L.AUDIO_READ_TIP = "Diese Geschichte vorlesen lassen"
+L.AUDIO_READ_TIP = "Diese Geschichte vorlesen lassen."
 L.REPORT_BUTTON = "Melden"
 L.CONTRIBUTE_BUTTON = "Mitwirken"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones hat keine Geschichte für diesen Ort"
@@ -109,7 +109,7 @@ L.OPT_DIAGNOSTICS_TIP = "Listet deine Sprachpakete und die Vorlese-Einstellungen
 L.OPEN_IN_LORE_TIP = "Die Geschichte dieses Orts im „Kompendium von Azeroth“, neben denen aller anderen Zonen und Gebiete."
 L.OPT_SECTION_LORE = "Kompendium von Azeroth"
 L.OPT_LORE_WINDOW_TIP = "Die Geschichte jeder Zone und jedes Gebiets, zum Stöbern und Anhören, wo immer du bist. Zonen und Gebiete, die du noch nicht entdeckt hast, sind ausgegraut."
-L.OPT_SHOW_UNDISCOVERED = "Unentdeckte Zonen freischalten"
+L.OPT_SHOW_UNDISCOVERED = "Alle Zonen freischalten"
 L.OPT_SHOW_UNDISCOVERED_TIP = "Lässt dich jede Zone und jedes Gebiet öffnen, auch die, die du noch nicht entdeckt hast. Ist die Option aus, sind sie ausgegraut."
 L.ZONE_COUNT_FMT = "%1$d Zonen"
 L.ZONE_COUNT_ONE = "1 Zone"

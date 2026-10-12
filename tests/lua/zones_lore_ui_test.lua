@@ -104,11 +104,12 @@ Z:SetupLoreWindow()
 -- The places are a tab of Azeroth's Compendium (UI/Compendium.lua); Z.window is the tab.
 local compendium = _G.SpokenCompendium.window
 local window = Z.window
+Expect("built at login, hidden, and not made the tab the window first opens on",
+    tostring(window ~= nil) .. "|" .. tostring(compendium:IsShown()) .. "|" .. tostring(_G.SpokenCompendium:Active()), "true|false|nil")
 Expect("the places are a tab of Azeroth's Compendium, the game's portrait frame", compendium.template, "PortraitFrameTemplate")
 Expect("...titled, with the Compendium's tome in its portrait", compendium.title .. "|" .. tostring(compendium.portrait),
     Z.L.LORE_WINDOW_TITLE .. "|Interface\\Icons\\INV_Misc_Book_11")
 Expect("...closed by Escape", _G.UISpecialFrames[#_G.UISpecialFrames], "SpokenCompendiumWindow")
-Expect("...with no tabs while the places are its only one", _G.SpokenCompendiumWindowTab1:IsShown(), false)
 local page = window.page
 Expect("its story is on the spellbook's parchment", page.parchment, "spellbook-Page-Right-C60")
 Expect("...in an inset of its own, as the list is, so their borders part them", window.pageInset.template, "InsetFrameTemplate")
@@ -123,6 +124,7 @@ local withFallback = Z.GetLoreWithFallback
 Z.GetLoreWithFallback = function() return nil end
 Z:ToggleLoreWindow()
 Expect("with no story where the player stands, it lands on the continent they are on", page.title.text, "Kalimdor")
+Expect("...the window with no tabs while the places are its only one", _G.SpokenCompendiumWindowTab1:IsShown(), false)
 Z.GetLoreWithFallback = withFallback
 _G.SpokenCompendium:Hide()
 Z:ToggleLoreWindow()
@@ -205,7 +207,7 @@ Shown()
 -- The city inside Durotar: chosen, it opens under Durotar, which stays open.
 RowFor("Orgrimmar").scripts.OnClick(RowFor("Orgrimmar"))
 Expect("a city is listed inside the zone around it", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
-Expect("...a small card, one level in, as an area is", RowFor("Orgrimmar").row.small and RowFor("Orgrimmar").row.nest,
+Expect("...a card, one level in, as an area is", RowFor("Orgrimmar").row.style == "card" and RowFor("Orgrimmar").row.nest,
     RowFor("Valley of Trials").row.nest)
 Expect("...indented under its zone's card, its card further in",
     RowFor("Orgrimmar").face[1].anchor.x - RowFor("Durotar").face[1].anchor.x, 16)
@@ -246,6 +248,16 @@ RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
 Expect("...and closing it leaves the other open", Shown(),
     "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 Z.Subzones[1426] = nil
+Z:RefreshLoreWindow(); Shown()
+
+-- A city with areas of its own: the city one place in its zone, and each of its areas another.
+Z.Subzones[1454] = { ["valley of strength"] = { name = "Valley of Strength", full = "The city's heart." } }
+Z:RefreshLoreWindow(); Shown()
+Expect("a zone's card counts its city and the city's areas", RowFor("Durotar").count.text:match("/(%d+)"), "4")
+Expect("...the city's card its own areas", RowFor("Orgrimmar").count.text:match("/(%d+)"), "1")
+Expect("...the continent's banner what its zones' cards count", RowFor("Kalimdor").count.text:match("/(%d+)"), "4")
+Expect("...and the zone's page what its card counts", (Z:PlaceLine(1411)), "In Kalimdor · 0 of 4 discovered")
+Z.Subzones[1454] = nil
 Z:RefreshLoreWindow(); Shown()
 
 RowFor("Valley of Trials").scripts.OnClick(RowFor("Valley of Trials"))
@@ -338,10 +350,19 @@ Expect("a search box sits over the list", search ~= nil, true)
 search:SetText("trials")
 search.hooks.OnTextChanged[1](search)
 Expect("searching shows the matches, under their zone and continent", Shown(), "Kalimdor|Durotar|Valley of Trials")
--- A row clicked in the results only chooses it: the tree under the search is left as it was.
+-- A card clicked in the results is chosen and closed for this search only: the tree under the
+-- search is left as it was.
 RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
 Expect("choosing a match shows its story", page.title.text, "Durotar")
+Expect("...the card the search opened closing on the click", Shown() .. "|" .. tostring(RowFor("Durotar").row.open),
+    "Kalimdor|Durotar|false")
 Expect("...the results from the top", listBar.frame:GetVerticalScroll(), 0)
+RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
+Expect("...and another click opening it again", Shown(), "Kalimdor|Durotar|Valley of Trials")
+RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
+search:SetText("trial")
+search.hooks.OnTextChanged[1](search)
+Expect("...a new search opening it again", Shown(), "Kalimdor|Durotar|Valley of Trials")
 search:SetText("")
 search.hooks.OnTextChanged[1](search)
 Expect("...and the list comes back as it was before the search", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
@@ -349,8 +370,39 @@ Expect("...on the chosen place, not at the top", listBar.frame:GetVerticalScroll
 search:SetText("nowhere")
 search.hooks.OnTextChanged[1](search)
 Expect("...and says when nothing matches", window.noMatch.shown, true)
+
+-- A search naming a zone lists all it holds; one naming a banner lists its cards as the player
+-- left them, each opening and closing on a click as unsearched.
+search:SetText("durotar")
+search.hooks.OnTextChanged[1](search)
+Expect("a search naming a zone lists its city and every area in it, matching or not", Shown(),
+    "Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
+Expect("...its card closing on a click", Shown(), "Kalimdor|Durotar")
+RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
+Expect("...and opening on another", Shown(), "Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+search:SetText("orgrim")
+search.hooks.OnTextChanged[1](search)
+Expect("...a search naming a city lists it under its zone", Shown(), "Kalimdor|Durotar|Orgrimmar")
+search:SetText("eastern")
+search.hooks.OnTextChanged[1](search)
+Expect("a search naming a continent lists its zones' cards, not an empty banner", Shown(), "Eastern Kingdoms|Dun Morogh")
+Expect("...closed as the player left them", RowFor("Dun Morogh").row.open, false)
+search:SetText("kalimdor")
+search.hooks.OnTextChanged[1](search)
+Expect("...an open one open, with all it holds", Shown(), "Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
+Expect("...a click closing it as unsearched", Shown(), "Kalimdor|Durotar")
 search:SetText("")
 search.hooks.OnTextChanged[1](search)
+Expect("...which it stays once the search is cleared", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar")
+search:SetText("kalimdor")
+search.hooks.OnTextChanged[1](search)
+RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
+Expect("...and another click opening it", Shown(), "Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+search:SetText("")
+search.hooks.OnTextChanged[1](search)
+Expect("...open again unsearched", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 
 ---------------------------------------------------------------- beside the map
 Z:SetupMapPanel()
@@ -591,5 +643,59 @@ Expect("...and is remembered", Z:Get("loreVoicedOnly"), true)
 Voiced().func()
 Expect("...off, everything again", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 Z.HasAudio = hasAudio
+
+---------------------------------------------------------------- a new session
+-- A fresh Compendium with a first tab before the places, and Zones' tab set up again in it.
+local partOn = true
+local function NewSession()
+    _G.SpokenCompendium:Hide()
+    _G.SpokenCompendium = nil
+    local session = setmetatable({}, { __index = Z })
+    function session:IsPartOn() return partOn end
+    assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", session)
+    assert(loadfile(ZONES .. "UI/LoreWindow.lua"))("Spoken_Zones", session)
+    _G.SpokenCompendium:Register("first", { label = "First", order = 0, build = function() end })
+    session:SetupLoreWindow()
+    return session
+end
+NewSession()
+_G.SpokenCompendium:Toggle()
+Expect("the Compendium first opened from the minimap or Spoken's page opens on its first tab, not the places",
+    _G.SpokenCompendium:Active(), "first")
+partOn = false
+local late = NewSession()
+Expect("with Zones off at login, the places' tab is not built", rawget(late, "window"), nil)
+partOn = true
+late:ToggleLoreWindow()
+Expect("...switched on later, opening it builds the tab and opens it on where the player stands",
+    tostring(_G.SpokenCompendium:IsOpen("places")) .. "|" .. late.window.page.title.text, "true|Durotar")
+partOn = false
+late = NewSession()
+partOn = true
+late:ShowLoreFor(1411, "valley of trials")
+Expect("...and the map's panel opens it on a place", tostring(_G.SpokenCompendium:IsOpen("places")) .. "|"
+    .. late.window.page.title.text, "true|Valley of Trials")
+partOn = false
+late = NewSession()
+late:ToggleLoreWindow()
+Expect("...while Zones stays off, nothing opens", _G.SpokenCompendium:IsOpen(), false)
+
+-- Text Size, on Spoken's page: Spoken says when it changes, and the story is drawn again at it.
+partOn = true
+local said = {}
+_G.Spoken = setmetatable({ RegisterCallback = function(_, event, fn) said[event] = fn end }, { __index = spoken })
+local sized = NewSession()
+_G.Spoken = spoken
+sized:ToggleLoreWindow()
+local body = sized.window.page.body.text
+local setFont, drawnAt = body.SetFont, nil
+body.SetFont = function(self, face, size, ...) drawnAt = size; if setFont then return setFont(self, face, size, ...) end end
+Z:Set("fontSize", 16)
+Expect("Zones listens for Spoken's COMPENDIUM_FONT_CHANGED", said.COMPENDIUM_FONT_CHANGED ~= nil, true)
+said.COMPENDIUM_FONT_CHANGED()
+-- The parchment's ink is drawn a point larger than the Text Size.
+Expect("...and draws the story again at the new Text Size", drawnAt, 16 + 1)
+body.SetFont = setFont
+Z:Set("fontSize", 12)
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll zones lore window tests passed")
