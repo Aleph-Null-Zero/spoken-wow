@@ -32,11 +32,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
-- **Silence NPC Voices no longer lets a moment of an NPC's greeting through.** The game starts
-  the greeting as the window opens, before Spoken can mute it, so now and then its first moment
-  was heard. An NPC whose greeting a pack reads is now muted while you point at or target it,
-  near enough to talk to, and gets its voice back when you move off.
-  *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
