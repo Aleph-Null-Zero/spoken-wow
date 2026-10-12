@@ -1,11 +1,13 @@
 -- SpokenBooks -- the readables in Azeroth's Compendium (UI/Compendium.lua): every book, letter,
 -- note and plaque Spoken Books reads, found or not, to read and listen to anywhere.
 --
--- The tree is the places' (Spoken Zones' tab): Azeroth, its continents, their zones, a city
--- inside the zone around it; under an opened zone its readables by what they are -- books, letters,
--- notes, scrolls, tablets, plaques, gravestones, exhibits. After the continents, those had in too
--- many zones to list under each, and those whose origin is not known. With By Zone off, the tree is
--- the types alone, every readable under its own. Where each is comes from
+-- The list is laid out as the places' (Spoken Zones' tab): a banner for each continent, a card for
+-- each of its zones (how many of its writings are found, with a bar), a city a small card inside
+-- the zone around it; in an opened zone a small card for each kind of writing -- books, letters,
+-- notes, scrolls, tablets, plaques, gravestones, exhibits -- and the writings under it. After the
+-- continents, a banner each for those had in too many zones to list under each and those whose
+-- origin is not known, with a card for each kind inside. With By Zone off, the list is a card for
+-- each kind alone, every readable under its own. Where each is comes from
 -- Data/Places.lua; what this character has found, from SpokenBooksCharacter (Core.lua). A readable
 -- not found yet is listed greyed, with a padlock, and does not open, unless Unlock Unfound
 -- Readables is on. On the right its pages, on parchment, with where it comes from and Play.
@@ -19,13 +21,15 @@ local WORLD, CONTINENTS, CITY_IN = C.WORLD, C.CONTINENTS, C.CITY_IN
 local MapName, ContinentOf = C.MapName, C.ContinentOf
 
 local list, page
-local selection          -- { book = id } | { mapID = id } | { group = "wide"|"unknown" } | nil
+local selection          -- { book = id } | { mapID = id } | { mapID = id, group = type }
+                         -- | { group = "wide"|"unknown" } | { group = "wide"|"unknown", type = type }
+                         -- | { type = type } | nil
 local expandedZone
-local worldOpen = true
 local continentOpen = { [1414] = true, [1415] = true }
 local groupOpen = { wide = false, unknown = false }
 local typeOpen = {}
 local zoneTypeShut = {}       -- ["mapID:type"] = true: a zone's Books, Notes and the rest, closed
+local groupTypeShut = {}      -- ["wide:type"] = true: the same in a group's banner
 local TYPES, TYPE_NAMES = SpokenBooks.TYPES, SpokenBooks.TYPE_NAMES
 local function TypeLabel(type) return L[(TYPE_NAMES[type] or TYPE_NAMES.other).all] end
 local filter = ""
@@ -51,7 +55,7 @@ end
 local index
 local function Index()
 	if index then return index end
-	index = { zones = {}, wide = {}, unknown = {}, types = {}, all = {} }
+	index = { zones = {}, wide = {}, unknown = {}, types = {}, all = {}, typeOf = {} }
 	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books or {}
 	local function Add(mapID, type, id)
 		local zone = index.zones[mapID] or {}
@@ -64,6 +68,7 @@ local function Index()
 		if place or not _G.SpokenBooksPlaces then
 			index.all[id] = true
 			local type = place and TYPE_NAMES[place.type] and place.type or "other"
+			index.typeOf[id] = type
 			index.types[type] = index.types[type] or {}
 			table.insert(index.types[type], id)
 			if place and place.wide then
@@ -187,24 +192,60 @@ end
 -- The rows
 --------------------------------------------------------------------------------
 
-local function Leaf(id, depth)
+local function Leaf(id, nest)
 	if OnlyFound() and not Found(id) then return nil end
 	if OnlyVoiced() and not Voiced(id) then return nil end
 	if filter ~= "" and not Matches(Title(id)) then return nil end
-	return { kind = "readable", leaf = true, book = id, label = Title(id), depth = depth,
+	return { kind = "readable", leaf = true, book = id, label = Title(id), nest = nest,
 		locked = not Found(id) and not Unlocked() }
 end
 
-local function Leaves(ids, depth, into)
+local function Leaves(ids, nest, into)
 	for _, id in ipairs(ids) do
-		local row = Leaf(id, depth)
+		local row = Leaf(id, nest)
 		if row then table.insert(into, row) end
 	end
 end
 
--- A zone's rows: itself, and when it is open (or a search finds something in it) its city, then
--- its readables by type.
-local function ZoneRows(mapID, depth)
+-- A card's numbers: the found on its diamond, out of all on its line, the share and the bar.
+local function Card(item, found, total)
+	item.style = "card"
+	item.count, item.total = found, total
+	item.badge = found
+	item.sub = L.FOUND_FMT:format(found, total)
+	item.ratio = total > 0 and found / total or 0
+	item.tick = total > 0 and found == total
+	item.none = found == 0
+	return item
+end
+
+-- A card for each kind of writing in `byType` ({ [type] = ids }) with something listed, and its
+-- writings under it while it is open: open until closed, and always while searching. `item`
+-- makes each card's own fields.
+local function KindCards(byType, nest, into, item, shut)
+	for _, type in ipairs(TYPES) do
+		local ids = byType[type] or {}
+		if #ids > 0 then
+			local leaves = {}
+			Leaves(ids, nest + 1, leaves)
+			if #leaves > 0 then
+				local set = {}
+				for _, id in ipairs(ids) do set[id] = true end
+				local closed = filter == "" and shut(type)
+				local card = item(type)
+				card.label, card.nest, card.open = TypeLabel(type), nest, not closed
+				table.insert(into, Card(card, Tally(set)))
+				if not closed then
+					for _, row in ipairs(leaves) do table.insert(into, row) end
+				end
+			end
+		end
+	end
+end
+
+-- A zone's card, and when it is open (or a search finds something in it) its city's small card,
+-- then a small card for each kind of writing in it.
+local function ZoneRows(mapID, nest, small)
 	local all = ReadablesIn(mapID)
 	local found, total = Tally(all)
 	if OnlyFound() and found == 0 then return {} end
@@ -214,54 +255,48 @@ local function ZoneRows(mapID, depth)
 	if open or filter ~= "" then
 		for city, around in pairs(CITY_IN) do
 			if around == mapID and Index().zones[city] then
-				for _, row in ipairs(ZoneRows(city, depth + 1)) do table.insert(inside, row) end
+				for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
 			end
 		end
-		local zone = Index().zones[mapID]
-		for _, type in ipairs(TYPES) do
-			local ids = zone and zone[type] or {}
-			if #ids > 0 then
-				local leaves = {}
-				Leaves(ids, depth + 2, leaves)
-				if #leaves > 0 then
-					local set = {}
-					for _, id in ipairs(ids) do set[id] = true end
-					local f, t = Tally(set)
-					-- Open until closed, and always while searching.
-					local shut = filter == "" and zoneTypeShut[mapID .. ":" .. type]
-					table.insert(inside, { kind = "group", which = type, mapID = mapID, depth = depth + 1,
-						label = TypeLabel(type), count = f, total = t, open = not shut })
-					if not shut then
-						for _, row in ipairs(leaves) do table.insert(inside, row) end
-					end
-				end
-			end
-		end
+		KindCards(Index().zones[mapID] or {}, nest + 1, inside,
+			function(type) return { kind = "group", which = type, mapID = mapID, small = true } end,
+			function(type) return zoneTypeShut[mapID .. ":" .. type] end)
 	end
 	if filter ~= "" and #inside == 0 and not Matches(MapName(mapID)) then return {} end
-	local rows = { { kind = "zone", mapID = mapID, label = MapName(mapID), depth = depth,
-		count = found, total = total, open = (open or filter ~= "") and #inside > 0 } }
+	local rows = { Card({ kind = "zone", small = small, mapID = mapID, label = MapName(mapID), nest = nest,
+		open = (open or filter ~= "") and #inside > 0 }, found, total) }
 	for _, row in ipairs(inside) do table.insert(rows, row) end
 	return rows
 end
 
+-- Those found across Azeroth, or of no known origin: a banner of their own after the continents,
+-- holding a card for each kind of writing.
 local function GroupRows(key, label, ids)
 	if #ids == 0 then return {} end
-	local set = {}
-	for _, id in ipairs(ids) do set[id] = true end
+	local set, byType = {}, {}
+	for _, id in ipairs(ids) do
+		set[id] = true
+		local type = Index().typeOf[id]
+		byType[type] = byType[type] or {}
+		table.insert(byType[type], id)
+	end
 	local found, total = Tally(set)
 	if OnlyFound() and found == 0 then return {} end
 	if not Listed(set) then return {} end
-	local leaves = {}
-	if groupOpen[key] or filter ~= "" then Leaves(ids, 2, leaves) end
-	if filter ~= "" and #leaves == 0 then return {} end
-	local rows = { { kind = "group", which = key, depth = 1, label = label, count = found, total = total,
-		open = #leaves > 0 } }
-	for _, row in ipairs(leaves) do table.insert(rows, row) end
+	local inside = {}
+	if groupOpen[key] or filter ~= "" then
+		KindCards(byType, 0, inside,
+			function(type) return { kind = "kind", which = type, group = key } end,
+			function(type) return groupTypeShut[key .. ":" .. type] end)
+	end
+	if filter ~= "" and #inside == 0 then return {} end
+	local rows = { { style = "banner", kind = "group", which = key, label = label, count = found, total = total,
+		open = #inside > 0 } }
+	for _, row in ipairs(inside) do table.insert(rows, row) end
 	return rows
 end
 
--- By Zone off: each type, every readable of it under it.
+-- By Zone off: a card for each kind of writing, every one of it under it.
 local function TypeRows()
 	local out = {}
 	for _, type in ipairs(TYPES) do
@@ -273,8 +308,8 @@ local function TypeRows()
 			local leaves = {}
 			if typeOpen[type] or filter ~= "" then Leaves(ids, 1, leaves) end
 			if not (OnlyFound() and found == 0) and Listed(set) and (filter == "" or #leaves > 0) then
-				table.insert(out, { kind = "type", which = type, depth = 0, label = TypeLabel(type), count = found,
-					total = total, open = #leaves > 0 })
+				table.insert(out, Card({ kind = "type", which = type, nest = 0, label = TypeLabel(type),
+					open = #leaves > 0 }, found, total))
 				for _, row in ipairs(leaves) do table.insert(out, row) end
 			end
 		end
@@ -282,6 +317,7 @@ local function TypeRows()
 	return out
 end
 
+-- A banner for each continent, its zones' cards under it; then the two groups' banners.
 local function BuildRows()
 	if not ByZone() then return TypeRows() end
 	local out = {}
@@ -297,24 +333,19 @@ local function BuildRows()
 			local rows = {}
 			if searching or continentOpen[continent] then
 				for _, mapID in ipairs(zones) do
-					for _, row in ipairs(ZoneRows(mapID, 2)) do table.insert(rows, row) end
+					for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(rows, row) end
 				end
 			end
 			if not (OnlyFound() and found == 0) and Listed(set) and (not searching or #rows > 0) then
-				table.insert(continents, { kind = "continent", mapID = continent, label = MapName(continent), depth = 1,
-					count = found, total = total, open = searching and #rows > 0 or (not searching and continentOpen[continent]),
-					rows = rows })
+				table.insert(continents, { style = "banner", kind = "continent", mapID = continent,
+					label = MapName(continent), count = found, total = total, open = #rows > 0, rows = rows })
 			end
 		end
 	end
 	table.sort(continents, function(a, b) return a.label < b.label end)
-	local found, total = Tally(Index().all)
-	table.insert(out, { kind = "world", mapID = WORLD, label = MapName(WORLD), depth = 0, count = found, total = total,
-		open = searching or worldOpen })
-	if not (searching or worldOpen) then return out end
 	for _, continent in ipairs(continents) do
 		table.insert(out, continent)
-		if continent.open then Add(continent.rows) end
+		Add(continent.rows)
 	end
 	Add(GroupRows("wide", L.GROUP_WIDE, Index().wide))
 	Add(GroupRows("unknown", L.GROUP_UNKNOWN, Index().unknown))
@@ -324,8 +355,11 @@ end
 local function IsSelected(row)
 	if not selection then return false end
 	if row.kind == "readable" then return selection.book == row.book end
-	if row.kind == "group" then return selection.group == row.which and selection.mapID == row.mapID end
-	if row.kind == "type" then return selection.type == row.which end
+	if row.kind == "kind" then return selection.group == row.group and selection.type == row.which end
+	if row.kind == "group" then
+		return selection.group == row.which and selection.mapID == row.mapID and not selection.type
+	end
+	if row.kind == "type" then return selection.type == row.which and not selection.group end
 	return selection.mapID == row.mapID and not selection.book and not selection.group
 end
 
@@ -419,7 +453,7 @@ local function ShowEntry()
 	end
 	-- A zone, a continent, a group, a type: what it holds.
 	local set = {}
-	if selection.type then
+	if selection.type and not selection.group then
 		for _, id in ipairs(Index().types[selection.type] or {}) do set[id] = true end
 		page:Show({ title = TypeLabel(selection.type), subtitle = Count(Tally(set)), text = L.READABLES_PICK })
 		return
@@ -427,6 +461,15 @@ local function ShowEntry()
 	if selection.group and selection.mapID and TYPE_NAMES[selection.group] then
 		for _, id in ipairs((Index().zones[selection.mapID] or {})[selection.group] or {}) do set[id] = true end
 		page:Show({ title = TypeLabel(selection.group), subtitle = MapName(selection.mapID) .. " · " .. Count(Tally(set)),
+			text = L.READABLES_PICK })
+		return
+	end
+	if selection.type and selection.group then
+		local where = selection.group == "wide" and L.GROUP_WIDE or L.GROUP_UNKNOWN
+		for _, id in ipairs(Index()[selection.group]) do
+			if Index().typeOf[id] == selection.type then set[id] = true end
+		end
+		page:Show({ title = TypeLabel(selection.type), subtitle = where .. " · " .. Count(Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
@@ -456,11 +499,13 @@ local function OnClick(row)
 	elseif row.kind == "type" then
 		if filter == "" then typeOpen[row.which] = not typeOpen[row.which] end
 		selection = { type = row.which }
+	elseif row.kind == "kind" then
+		-- A group's Books, Notes and the rest: closed and opened again, as a zone's are.
+		local key = row.group .. ":" .. row.which
+		if filter == "" then groupTypeShut[key] = not groupTypeShut[key] or nil end
+		selection = { group = row.group, type = row.which }
 	elseif filter ~= "" then
 		selection = { mapID = row.mapID, group = row.kind == "group" and row.which or nil }
-	elseif row.kind == "world" then
-		worldOpen = not worldOpen
-		selection = { mapID = WORLD }
 	elseif row.kind == "continent" then
 		continentOpen[row.mapID] = not continentOpen[row.mapID]
 		selection = { mapID = row.mapID }

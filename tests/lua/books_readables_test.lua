@@ -1,5 +1,6 @@
--- The readables in Azeroth's Compendium: every book, letter, note and plaque, by the zone it is
--- in and what it is, or by what it is alone, found or not; a readable's page with
+-- The readables in Azeroth's Compendium: every book, letter, note and plaque, in a card for the
+-- zone it is in under its continent's banner and a small card for what it is, or by what it is
+-- alone, found or not; a readable's page with
 -- where it comes from; the search, Found Only and Unlock Unfound Readables; and the tabs once the
 -- places are there too. Against the shipped data (Data/Books.lua, Data/Places.lua). Run with
 -- `make test-player`.
@@ -72,16 +73,17 @@ local function Collect(frame)
         Collect(child)
     end
 end
+-- By each item's own name: a banner draws its name in capitals.
 local function Shown()
     rows = {}
     Collect(panel)
     local labels = {}
-    for _, row in ipairs(rows) do if row.shown ~= false and row.row then table.insert(labels, row.label.text) end end
+    for _, row in ipairs(rows) do if row.shown ~= false and row.row then table.insert(labels, row.row.label) end end
     return table.concat(labels, "|")
 end
 local function RowFor(label)
     Shown()
-    for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.label.text == label then return row end end
+    for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.label == label then return row end end
 end
 local function Click(label)
     local row = RowFor(label)
@@ -93,17 +95,26 @@ local function Has(list, label)
 end
 
 local list = Shown()
-Expect("the tree is the places': Azeroth, its continents, their zones", Has(list, "Azeroth") and Has(list, "Eastern Kingdoms")
-    and Has(list, "Elwynn Forest") and Has(list, "Westfall"), true)
+Expect("the list is laid out as the places': a banner for each continent, no Azeroth above them",
+    RowFor("Eastern Kingdoms") ~= nil and RowFor("Eastern Kingdoms").row.style == "banner" and not Has(list, "Azeroth"), true)
+Expect("...its name in capitals", RowFor("Eastern Kingdoms").label.text, "EASTERN KINGDOMS")
+Expect("...a card under it for each zone", Has(list, "Elwynn Forest") and Has(list, "Westfall")
+    and RowFor("Elwynn Forest").row.style == "card" and RowFor("Elwynn Forest").row.nest, 0)
 Expect("...a city inside the zone around it, not beside it", Has(list, "Stormwind City"), false)
-Expect("...the readables after the continents: those found across Azeroth and those of no known origin",
-    Has(list, L.GROUP_WIDE) and Has(list, L.GROUP_UNKNOWN), true)
-Expect("...each zone counted, found out of all, its city's included", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
+Expect("...the readables after the continents, a banner each: those found across Azeroth and those of no known origin",
+    RowFor(L.GROUP_WIDE).row.style == "banner" and RowFor(L.GROUP_UNKNOWN).row.style, "banner")
+Expect("...each zone's card counting what is found out of all, its city's included",
+    RowFor("Elwynn Forest").sub.text:match("^1 of %d+ found$") ~= nil and RowFor("Elwynn Forest").badge.text, "1")
 
 Click("Elwynn Forest")
 Click("Stormwind City")
 list = Shown()
 Expect("the city opens inside its zone, its readables by what they are", Has(list, L.TYPE_PLAQUE) and Has(list, "Kurdran Wildhammer"), true)
+Expect("...the city a small card inside its zone's card", RowFor("Stormwind City").row.small and RowFor("Stormwind City").row.nest, 1)
+Expect("...each kind a small card inside the city's", RowFor(L.TYPE_PLAQUE).row.small and RowFor(L.TYPE_PLAQUE).row.nest, 2)
+Expect("...its writings rows inside that", RowFor("Kurdran Wildhammer").row.leaf and RowFor("Kurdran Wildhammer").row.nest, 3)
+Expect("...a line down each open card's contents beside them", RowFor("Kurdran Wildhammer").rails[3] ~= nil
+    and RowFor("Kurdran Wildhammer").rails[3]:IsShown() and RowFor("Kurdran Wildhammer").rails[3].anchor.x, 40)
 Expect("...a readable not found greyed, with the padlock", RowFor("Ranger Captain Alleria Windrunner").row.locked, true)
 Expect("...one found open to read", RowFor("Kurdran Wildhammer").row.locked, false)
 
@@ -121,9 +132,9 @@ SpokenBooksSettings.unlockUnfound = true
 B:RefreshReadables()
 Expect("Unlock Unfound Readables opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
 -- Opening one is not finding it: the counts stay what the character has found.
-local before = RowFor("Stormwind City").count.text
+local before = RowFor("Stormwind City").sub.text
 Click("Ranger Captain Alleria Windrunner")
-Expect("...and choosing it leaves the counts as they were", RowFor("Stormwind City").count.text, before)
+Expect("...and choosing it leaves the counts as they were", RowFor("Stormwind City").sub.text, before)
 SpokenBooksSettings.unlockUnfound = false
 
 SpokenBooksCharacter.found[LETTER] = true
@@ -168,7 +179,7 @@ do
         if row.row and row.label.text == "Ranger Captain Alleria Windrunner" then break end
     end
 end
-Expect("a zone's readables are under their type, open", typeRow ~= nil and RowFor(typeRow).row.open, true)
+Expect("a zone's readables are under a small card for their kind, open", typeRow ~= nil and RowFor(typeRow).row.open, true)
 Click(typeRow)
 Expect("...a click closes the type", Has(Shown(), "Ranger Captain Alleria Windrunner") or RowFor(typeRow).row.open, false)
 Click(typeRow)
@@ -197,7 +208,7 @@ list = Shown()
 Expect("Voiced Only leaves out what has no recording", Has(list, "Kurdran Wildhammer") or Has(list, "Westfall"), false)
 Expect("...and keeps what has one, with the zone that holds it", Has(list, "Ranger Captain Alleria Windrunner")
     and Has(list, "Elwynn Forest"), true)
-Expect("...counting only what it lists", RowFor("Elwynn Forest").count.text:match("^%d+/%d+"), "1/1")
+Expect("...counting only what it lists", RowFor("Elwynn Forest").sub.text, "1 of 1 found")
 Expect("...and is remembered", SpokenBooksSettings.compendiumVoicedOnly, true)
 _, choices = Menu()
 choices[2].func()
@@ -208,23 +219,42 @@ B.HasAudio = hasAudio
 -- Text") are neither listed nor counted, so every count can reach all.
 local placed = 0
 for _ in pairs(SpokenBooksPlaces.books) do placed = placed + 1 end
-Expect("Azeroth counts only the readables the places know", RowFor("Azeroth").count.text:match("/(%d+)"), tostring(placed))
 
 _, choices = Menu()
 choices[5].func()
 list = Shown()
+local counted = 0
+for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.kind == "type" then counted = counted + row.row.total end end
+Expect("the kinds count only the readables the places know", counted, placed)
 Click(L.TYPE_OTHER)
 Expect("By Type does not list one the places leave out", RowFor("Test Language Item"), nil)
 Click(L.TYPE_OTHER)
-Expect("By Type: the tree is the types alone", Has(list, L.TYPE_PLAQUE) and Has(list, L.TYPE_LETTER) and not Has(list, "Elwynn Forest"), true)
+Expect("By Type: the list is a card for each kind alone", Has(list, L.TYPE_PLAQUE) and Has(list, L.TYPE_LETTER) and not Has(list, "Elwynn Forest"), true)
 _, choices = Menu()
 Expect("...and the menu says so", choices[5].checked and not choices[4].checked, true)
 Click(L.TYPE_PLAQUE)
 Expect("...a type opens on its readables", Has(Shown(), "Kurdran Wildhammer"), true)
-Expect("...counted found out of all", RowFor(L.TYPE_PLAQUE).count.text:match("^2/") ~= nil, true)
+Expect("...each a card, counted found out of all", RowFor(L.TYPE_PLAQUE).row.style == "card"
+    and RowFor(L.TYPE_PLAQUE).sub.text:match("^2 of %d+ found$") ~= nil, true)
 _, choices = Menu()
 choices[4].func()
 Expect("...and By Zone again, the zones", Has(Shown(), "Elwynn Forest"), true)
+
+-- The groups after the continents: a card for each kind inside, the writings under it.
+Click(L.GROUP_WIDE)
+list = Shown()
+local kindRow
+for _, row in ipairs(rows) do
+    if row.shown ~= false and row.row and row.row.kind == "kind" and row.row.group == "wide" then kindRow = kindRow or row end
+end
+Expect("a group's banner opens on a card for each kind of writing in it", kindRow ~= nil and kindRow.row.style == "card"
+    and kindRow.row.nest, 0)
+Expect("...the writings under it", Has(list, "An Exotic Cookbook") and RowFor("An Exotic Cookbook").row.nest, 1)
+kindRow.scripts.OnClick(kindRow)
+Expect("...a kind chosen, its page names it and its group", page.title.text == kindRow.row.label
+    and page.sub.text:find(L.GROUP_WIDE .. " · ", 1, true) == 1, true)
+Expect("...and the click closes it", kindRow.row.open, false)
+Click(L.GROUP_WIDE)
 
 -- The places' tab joins: the tabs show, and each shows its own panel.
 _G.SpokenCompendium:Register("places", { label = "Zones", order = 1, title = L.COMPENDIUM_TITLE,
