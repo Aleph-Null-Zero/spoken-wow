@@ -25,11 +25,21 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Azeroth's Compendium has a Quests tab, its first.** Every quest your character's race and
   class can take, by zone, then by class, profession or season, with what its NPC says when
   offering it, while it is under way and when you hand it in, and Play for its voice. Quests you
-  have completed open; the rest are greyed until Unlock Uncompleted Quests is on, in the
+  have completed open; the rest are greyed until Unlock Unstarted Quests is on, in the
   Compendium section of Spoken's page. On a client in another language, a quest shows in that
   language once you have seen its window. Open in Azeroth's Compendium, on the quest giver's
   window, the quest log's details and DialogueUI's window, opens the tab on that quest.
   *([Nucabe](https://github.com/Nucabe))*
+- **Quests in your quest log open in Azeroth's Compendium too**, marked in progress on their row
+  and their page, and counted with the completed ones. Started Only keeps them, and the list
+  follows your quest log while it is open. Open in Azeroth's Compendium on a quest you have
+  accepted shows its words. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium groups each zone's quests into their chains.** A chain's row is named
+  after its last quest and shows how many of its quests you have completed, how many are in
+  progress, and a bar; a chain you have finished gets a tick. *([Nucabe](https://github.com/Nucabe))*
+- **Previously, on the quest giver's window and in the quest log**, plays what was said when you
+  handed in the quest before this one in its chain. It shows when you have started that quest
+  and a voice pack has its hand-in. *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's Zones tab is always on a place.** Reached from another tab, it showed an

@@ -329,6 +329,6 @@ L.OPT_UNLOCK_PLACES_TIP = "Permet d'ouvrir toutes les zones et sous-zones, y com
 L.OPT_UNLOCK_WRITINGS = "Débloquer tous les livres"
 L.OPT_UNLOCK_WRITINGS_TIP = "Permet d'ouvrir tous les livres, y compris ceux que vous n'avez pas encore trouvés. Sinon, ils sont grisés."
 L.OPT_UNLOCK_QUESTS = "Débloquer toutes les quêtes"
-L.OPT_UNLOCK_QUESTS_TIP = "Permet d'ouvrir toutes les quêtes, y compris celles que vous n'avez pas encore terminées. Sinon, elles sont grisées."
+L.OPT_UNLOCK_QUESTS_TIP = "Permet d'ouvrir toutes les quêtes, y compris celles que vous n'avez pas encore commencées. Sinon, elles sont grisées."
 L.REASON_COMPENDIUM_OFF = "Activez le module Quêtes, Zones ou Livres pour utiliser ceci."
 L.REASON_MODULE_OFF_FMT = "Activez le module %1$s pour utiliser ceci."

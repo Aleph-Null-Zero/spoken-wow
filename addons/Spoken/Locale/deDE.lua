@@ -309,6 +309,6 @@ L.OPT_UNLOCK_PLACES_TIP = "Lässt dich jede Zone und jedes Gebiet öffnen, auch 
 L.OPT_UNLOCK_WRITINGS = "Alle Bücher freischalten"
 L.OPT_UNLOCK_WRITINGS_TIP = "Lässt dich jedes Buch öffnen, auch die, die du noch nicht gefunden hast. Ist die Option aus, sind sie ausgegraut."
 L.OPT_UNLOCK_QUESTS = "Alle Quests freischalten"
-L.OPT_UNLOCK_QUESTS_TIP = "Lässt dich jede Quest öffnen, auch die, die du noch nicht abgeschlossen hast. Ist die Option aus, sind sie ausgegraut."
+L.OPT_UNLOCK_QUESTS_TIP = "Lässt dich jede Quest öffnen, auch die, die du noch nicht begonnen hast. Ist die Option aus, sind sie ausgegraut."
 L.REASON_COMPENDIUM_OFF = "Schalte „Quests“, „Zonen“ oder „Bücher“ unter „Module“ ein, um dies zu nutzen."
 L.REASON_MODULE_OFF_FMT = "Schalte „%1$s“ unter „Module“ ein, um dies zu nutzen."

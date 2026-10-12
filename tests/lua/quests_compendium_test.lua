@@ -1,7 +1,8 @@
 -- The quests in Azeroth's Compendium: every quest this character's race and class may take, by
 -- the zone it is in, or under its class, profession or season; a quest's page with its words, its
--- placeholders filled for the player; found once completed; Completed Only, the search and Unlock
--- Uncompleted Quests; Play; and on a client in another language, the words its windows showed.
+-- placeholders filled for the player; found once completed or in the quest log, marked in progress
+-- then; Started Only, the search and Unlock Unstarted Quests; Play; and on a client in another
+-- language, the words its windows showed.
 -- Against the shipped data (Data/Compendium.lua, Data/QuestText.lua). Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -52,14 +53,23 @@ local B = {}
 for _, file in ipairs({ "Locale/enUS", "UI/Layout", "UI/TextView", "UI/Compendium" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
--- Where a quest is read: Classic Era's quest log, with the selected quest's details beside the
--- list, and the map's quest log of Forever, with its details view.
-local logQuest
+-- Where a quest is read: Classic Era's quest log, a zone's header then its quests, with the
+-- selected quest's details beside the list, and the map's quest log of Forever, with its details
+-- view.
+local questLog, logQuest = {}, nil
 _G.QuestLogFrame = CreateFrame("Frame", "QuestLogFrame")
 _G.QuestLogDetailScrollFrame = CreateFrame("ScrollFrame", "QuestLogDetailScrollFrame", QuestLogFrame)
 function QuestLogDetailScrollFrame:IsVisible() return logQuest ~= nil end
-_G.GetQuestLogSelection = function() return logQuest and 1 or 0 end
-_G.GetQuestLogTitle = function() return "A quest", 1, nil, false, false, false, 0, logQuest end
+_G.GetNumQuestLogEntries = function() return #questLog + 1, #questLog end
+_G.GetQuestLogTitle = function(index)
+    if index == 1 then return "Elwynn Forest", 0, nil, true, false end
+    local id = questLog[index - 1]
+    if id then return "A quest", 1, nil, false, false, false, 0, id end
+end
+_G.GetQuestLogSelection = function()
+    for i, id in ipairs(questLog) do if id == logQuest then return i + 1 end end
+    return 0
+end
 _G.QuestLog_UpdateQuestDetails = function() end
 _G.QuestMapFrame = CreateFrame("Frame", "QuestMapFrame")
 QuestMapFrame.DetailsFrame = CreateFrame("Frame", nil, QuestMapFrame)
@@ -69,16 +79,30 @@ local ns = {}
 for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab", "UI/OpenInCompendium" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
 end
+-- The shipped data links each quest to the one before it in its chain: Lost Necklace, Pie for
+-- Billy, Back to Billy, then Goldtooth. Only that chain is kept here, so the rest of the tree
+-- reads as single quests.
+local NECKLACE, PIE, BACK, GOLDTOOTH = 85, 86, 84, 87
+local shipped = SpokenQuestsCompendium.quests
+local linked = shipped[PIE].prev == NECKLACE and shipped[BACK].prev == PIE and shipped[GOLDTOOTH].prev == BACK
+for _, quest in pairs(shipped) do quest.prev = nil end
+SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
+SpokenQuestsCompendium.quests[BACK].prev = PIE
+SpokenQuestsCompendium.quests[GOLDTOOTH].prev = BACK
 local L, Tab = VO.L, VO.QuestsTab
+Expect("the shipped data has the quests' chains, from the world DB", linked, true)
 local C = _G.SpokenCompendium
 
 Expect("no tab before the world is up", C:Tab("quests"), nil)
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 Expect("the quests are a tab of Azeroth's Compendium once it is", C:Tab("quests") ~= nil and C:Tab("quests").label, L.COMPENDIUM_QUESTS)
+stub.world.playerMapID = 1429
 Tab:Open()
 local panel = Tab.panel
 local page = panel.page
 Expect("...and open on it", C:IsOpen("quests"), true)
+Expect("...on the zone the player stands in, never an empty page", page.title.text, "Elwynn Forest")
+stub.world.playerMapID = nil
 
 local rows
 local function Collect(frame)
@@ -112,10 +136,7 @@ Expect("the tree is the places': Azeroth, its continents, their zones", Has(list
     and Has(list, "Elwynn Forest"), true)
 Expect("...then a class's quests under its name, this character's class only", Has(list, "Mage") and not Has(list, "Warlock"), true)
 Expect("...each zone counted, completed out of all", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
-Expect("with nothing chosen, the page counts every quest", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
-
-Click("Elwynn Forest")
-list = Shown()
+Expect("...its page counting its quests", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
 Expect("a zone opens on its quests", Has(list, "Kobold Camp Cleanup") and Has(list, "Kobold Candles"), true)
 Expect("...a quest completed open to read", RowFor("Kobold Camp Cleanup").row.locked, false)
 Expect("...one not completed greyed, with the padlock", RowFor("Kobold Candles").row.locked, true)
@@ -131,9 +152,9 @@ Expect("...no placeholder left in them", words:find("$", 1, true), nil)
 Click("Kobold Candles")
 Expect("a quest not completed does not open", page.title.text, "Kobold Camp Cleanup")
 
--- Unlock Uncompleted Quests, the switch Spoken's page shows.
+-- Unlock Unstarted Quests, the switch Spoken's page shows.
 C:Tab("quests").unlock.set(true)
-Expect("Unlock Uncompleted Quests opens it", RowFor("Kobold Candles").row.locked, false)
+Expect("Unlock Unstarted Quests opens it", RowFor("Kobold Candles").row.locked, false)
 Click("Kobold Candles")
 words = page.body.text.text or ""
 Expect("...its words filled for the player: the word for his sex", words:find("Hello, good sir!", 1, true) ~= nil, true)
@@ -146,17 +167,54 @@ stub.world.unitSex = 2
 Expect("...choosing it leaves the counts as they were", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
 C:Tab("quests").unlock.set(false)
 
+-- A quest in the quest log is found too, marked in progress.
+local function RowOf(id)
+    Shown()
+    for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.quest == id then return row end end
+end
+questLog = { CANDLES }
+Tab:Refresh()
+Expect("a quest in the quest log opens", RowOf(CANDLES).row.locked, false)
+Expect("...its row marked in progress", RowOf(CANDLES).label.text:find("ActiveQuestIcon", 1, true) ~= nil
+    and RowOf(CANDLES).label.text:find("Kobold Candles", 1, true) ~= nil, true)
+Expect("...a completed one's not", RowFor("Kobold Camp Cleanup").label.text, "Kobold Camp Cleanup")
+Expect("...and it is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
+RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
+Expect("its page: its title", page.title.text, "Kobold Candles")
+Expect("...in progress, then where it is", page.sub.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
+Expect("...and its words", (page.body.text.text or ""):find("Thanks for the candles", 1, true) ~= nil, true)
+Click("Elwynn Forest")
+Expect("a zone's page counts it apart from the completed", page.sub.text:match("^1 of %d+ completed, 1 in progress$") ~= nil, true)
+Click("Elwynn Forest")
+VO.Addon.db.global.Compendium.FoundOnly = true
+Tab:Refresh()
+Expect("Started Only keeps it", RowOf(CANDLES) ~= nil, true)
+VO.Addon.db.global.Compendium.FoundOnly = false
+-- The list follows the quest log while it is open, once a burst of events is over.
+questLog = {}
+stub.FireEvent("QUEST_REMOVED", CANDLES)
+stub.FireEvent("QUEST_LOG_UPDATE")
+Expect("a quest dropped from the log stays until the events settle", RowOf(CANDLES).row.locked, false)
+stub.Advance(0.5)
+Expect("...then is greyed again", RowOf(CANDLES).row.locked, true)
+questLog = { CANDLES }
+stub.FireEvent("QUEST_ACCEPTED", 1, CANDLES)
+stub.Advance(0.5)
+Expect("a quest accepted opens", RowOf(CANDLES).row.locked, false)
+questLog = {}
+Tab:Refresh()
+
 -- Completing one in the world finds it.
 completed[CANDLES] = true
 Tab:Refresh()
 Expect("a quest completed since opens", RowFor("Kobold Candles").row.locked, false)
 Expect("...and is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
 
--- Completed Only.
+-- Started Only.
 VO.Addon.db.global.Compendium.FoundOnly = true
 Tab:Refresh()
 list = Shown()
-Expect("Completed Only leaves out what is not completed", Has(list, "Wolves Across the Border") or Has(list, "Mage"), false)
+Expect("Started Only leaves out what is not started", Has(list, "Wolves Across the Border") or Has(list, "Mage"), false)
 Expect("...and keeps what is", Has(list, "Kobold Candles"), true)
 VO.Addon.db.global.Compendium.FoundOnly = false
 
@@ -174,9 +232,63 @@ Expect("...and never a quest of the other side", Has(Shown(), "Sharptalon's Claw
 box:SetText("")
 box.hooks.OnTextChanged[1](box)
 
--- Play: what the voice packs have of the quest, from the offer on.
+-- Chains: a zone's quests that follow one another under one row, named after the last of them.
+Tab:Open(KOBOLDS)
+local function ChainRow(label)
+    Shown()
+    for _, row in ipairs(rows) do
+        if row.shown ~= false and row.row and row.row.kind == "chain" and row.label.text == label then return row end
+    end
+end
+list = Shown()
+Expect("a chain is one row in its zone, named after its last quest", ChainRow("Goldtooth") ~= nil, true)
+Expect("...its quests inside it, not beside it", Has(list, "Lost Necklace") or Has(list, "Pie for Billy"), false)
+Expect("...a quest in no chain still a row of its own", Has(list, "Kobold Camp Cleanup"), true)
+Expect("...counted, completed out of all", ChainRow("Goldtooth").count.text, "0/4")
+Expect("...its bar empty", ChainRow("Goldtooth").chainTrack:IsShown() and ChainRow("Goldtooth").chainFill:IsShown(), false)
+completed[NECKLACE], completed[PIE] = true, true
+questLog = { BACK }
+Tab:Refresh()
+local count = ChainRow("Goldtooth").count.text
+Expect("...how many are in progress, by the quest mark", count:find("ActiveQuestIcon", 1, true) ~= nil
+    and count:find("1", 1, true) ~= nil and count:sub(-3), "2/4")
+local track, fill = ChainRow("Goldtooth").chainTrack, ChainRow("Goldtooth").chainFill
+Expect("...and its bar filled as far as completed", fill:IsShown() and math.floor(fill.width / track.width * 100 + 0.5), 50)
+Click("Goldtooth")
+list = Shown()
+Expect("a chain opens on its quests, in the order they are taken",
+    list:find("Lost Necklace|Pie for Billy|.*Back to Billy|Goldtooth") ~= nil, true)
+Expect("...chosen, its page has the chain's name", page.title.text, "Goldtooth")
+Expect("...its count", page.sub.text, "2 of 4 completed, 1 in progress")
+local text = page.body.text.text or ""
+Expect("...and its quests in order, each marked", text:find("^1%. .*Lost Necklace\n2%. .*Pie for Billy\n3%. .*ActiveQuestIcon.*Back to Billy\n4%. Goldtooth$") ~= nil, true)
+completed[BACK], completed[GOLDTOOTH] = true, true
+questLog = {}
+Tab:Refresh()
+Expect("a chain all completed gets a tick", ChainRow("Goldtooth").count.text:find("UI-CheckBox-Check", 1, true) ~= nil
+    and ChainRow("Goldtooth").count.text:sub(-3), "4/4")
+Click("Goldtooth")
+Expect("...and closes again", Has(Shown(), "Pie for Billy"), false)
+Tab:Open(PIE)
+Expect("opened on a quest of a chain, the chain is opened to it", RowFor("Pie for Billy") ~= nil
+    and RowFor("Pie for Billy").selected, true)
+box:SetText("pie for")
+box.hooks.OnTextChanged[1](box)
+list = Shown()
+Expect("a search finds a quest inside its chain", Has(list, "Pie for Billy") and ChainRow("Goldtooth") ~= nil
+    and not Has(list, "Lost Necklace"), true)
+box:SetText("")
+box.hooks.OnTextChanged[1](box)
+for _, id in ipairs({ NECKLACE, PIE, BACK, GOLDTOOTH }) do completed[id] = nil end
+VO.Addon.db.global.Compendium.FoundOnly = true
+Tab:Refresh()
+Expect("Started Only leaves out a chain with nothing started", ChainRow("Goldtooth"), nil)
+VO.Addon.db.global.Compendium.FoundOnly = false
+Tab:Refresh()
+
+-- Play: the first part the voice packs have of the quest, with its words.
 VO.DataModules:Register("TestPack", {
-    SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2 },
+    SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2, ["85-accept"] = 2, ["85-complete"] = 2 },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
 })
 Click("Kobold Camp Cleanup")
@@ -184,7 +296,10 @@ Expect("a voiced quest's page has Play", page.play ~= nil and page.play:IsShown(
 page.play.scripts.OnClick(page.play)
 local queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
-Expect("...which plays its offer, then its hand-in", table.concat(queued, ","), "7-accept,7-complete")
+Expect("...which plays its offer alone, not the hand-in after it", table.concat(queued, ","), "7-accept")
+local playing = Spoken:GetQueue()[1]
+Expect("...with the offer's words, for the window to show and highlight",
+    playing and type(playing.text) == "string" and playing.text ~= "" and page.body.text.text:find(playing.text, 1, true) ~= nil, true)
 page.play.scripts.OnClick(page.play)
 Expect("...and again, stops them", #VO.Player:Queued(), 0)
 Click("Kobold Candles")
@@ -239,12 +354,17 @@ stub.ShowPanel(nil)
 stub.FireEvent("QUEST_FINISHED")
 
 -- The quest log's details, on either log.
+questLog, logQuest = { HEIRLOOM, CANDLES }, HEIRLOOM
+QuestLog_UpdateQuestDetails()
+Tab.logButton.scripts.OnClick(Tab.logButton)
+Expect("the quest log's Open on a quest in progress shows its words", page.title.text == "The Forgotten Heirloom"
+    and page.body.text.text ~= L.QUEST_NOT_FOUND, true)
 logQuest = CANDLES
 QuestLog_UpdateQuestDetails()
 Expect("Classic Era's quest log details have it", Tab.logButton:IsShown() and Tab.logButton.questID, CANDLES)
 Tab.logButton.scripts.OnClick(Tab.logButton)
 Expect("...and open the quest", page.title.text, "Kobold Candles")
-logQuest = nil
+questLog, logQuest = {}, nil
 QuestLog_UpdateQuestDetails()
 Expect("...not with no quest chosen", Tab.logButton:IsShown(), false)
 QuestMapFrame_ShowQuestDetails(HEIRLOOM)
@@ -253,6 +373,56 @@ Spoken:SetPartOn("quests", false)
 QuestMapFrame_ShowQuestDetails(HEIRLOOM)
 Expect("...not with Quests off", Tab.mapButton:IsShown(), false)
 Spoken:SetPartOn("quests", true)
+
+---------------------------------------------------------------- Previously
+-- Left of Open in Azeroth's Compendium, on a quest that follows one this character has started:
+-- what was said when that one was handed in.
+-- The test pack has Lost Necklace's hand-in, and its offer.
+local previously = giver.previous
+stub.world.questID = PIE
+stub.ShowPanel("QuestFrameDetailPanel")
+stub.FireEvent("QUEST_DETAIL")
+Expect("no Previously while the quest before is not started", previously ~= nil and previously:IsShown(), false)
+completed[NECKLACE] = true
+stub.FireEvent("QUEST_DETAIL")
+Expect("the quest giver's window has Previously once it is", previously:IsShown(), true)
+Expect("...left of Open in Azeroth's Compendium", previously.anchor ~= nil and previously.anchor.relativeTo == giver
+    and previously.anchor.point == "RIGHT", true)
+tooltip = {}
+_G.GameTooltip = { SetOwner = function() end, SetText = function(_, text) tooltip.title = text end,
+    AddLine = function(_, text) tooltip.line = text end, Show = function() end, Hide = function() end }
+for _, handler in ipairs(previously.hooks and previously.hooks.OnEnter or {}) do handler(previously) end
+_G.GameTooltip = gameTooltip
+Expect("...which says so, naming the quest before", tooltip.title == L.QUEST_PREVIOUSLY
+    and tooltip.line:find("Lost Necklace", 1, true) ~= nil, true)
+Spoken:StopAll()
+previously.scripts.OnClick(previously)
+queued = {}
+for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
+Expect("...and plays what was said when that one was handed in, only that", table.concat(queued, ","), "85-complete")
+Expect("...as Stop while it plays", previously.state, "stop")
+previously.scripts.OnClick(previously)
+Expect("...which stops it", #VO.Player:Queued(), 0)
+stub.world.questID = BACK
+completed[PIE] = true
+stub.FireEvent("QUEST_DETAIL")
+Expect("no Previously where no pack has the quest before's hand-in", previously:IsShown(), false)
+stub.world.questID = KOBOLDS
+stub.FireEvent("QUEST_DETAIL")
+Expect("...nor on a quest that follows none", previously:IsShown(), false)
+stub.world.questID = 0
+stub.ShowPanel(nil)
+stub.FireEvent("QUEST_FINISHED")
+questLog, logQuest = { PIE }, PIE
+QuestLog_UpdateQuestDetails()
+Expect("the quest log's details have Previously too", Tab.logButton.previous:IsShown()
+    and Tab.logButton.previous.questID, NECKLACE)
+questLog, logQuest = {}, nil
+QuestLog_UpdateQuestDetails()
+Expect("...not with no quest chosen", Tab.logButton.previous:IsShown(), false)
+QuestMapFrame_ShowQuestDetails(PIE)
+Expect("and the map's quest log's", Tab.mapButton.previous:IsShown(), true)
+completed[NECKLACE], completed[PIE] = nil, nil
 
 ---------------------------------------------------------------- another language
 -- A German client: the words and the title the quest's window shows are kept, for every

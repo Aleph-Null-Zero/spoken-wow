@@ -1370,6 +1370,12 @@ Two generated files feed it, both committed so the addon never needs a database:
   (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
   quests already listed and adds the corpus's new ones, placed by their giver's spawn and open to
   the races of the side `corpus/factions.json` gives them.
+  Each quest that follows another in a chain has `prev`, the quest before it, from the same DB's
+  `quest_template_addon` (`chain_links`): a positive `PrevQuestID`; else the lowest quest whose
+  `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb
+  whose `BreadcrumbForQuestId` names it, where the DB has that column. A negative `PrevQuestID`
+  (the other quest only has to be in the log) is no link. Quests the corpus lacks are passed
+  through, and a link closing a loop is dropped. `--no-db` keeps the links already written.
 - `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
   `tts_cli/quest_text.py`): each quest's accept, progress and complete text, the corpus's
   `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
@@ -1378,10 +1384,27 @@ Two generated files feed it, both committed so the addon never needs a database:
 
 The tab lists only the quests this character's race and class may take. A quest is found once
 the client says it is completed (`C_QuestLog.GetAllCompletedQuestIDs`, else
-`GetQuestsCompleted`, else `IsQuestFlaggedCompleted` one at a time); the rest are locked unless
-Unlock Uncompleted Quests is on, which Spoken's page shows in its Compendium section. That switch
-and Completed Only are kept in `SpokenQuestsSettings.global.Compendium`. The page fills the
-placeholders for the player as the client does. Play queues the quest's accept, progress and
+`GetQuestsCompleted`, else `IsQuestFlaggedCompleted` one at a time) or while it is in the quest
+log (`C_QuestLog.GetInfo` where the client has it, else `GetQuestLogTitle`; where a collapsed
+header hides some, `C_QuestLog.IsOnQuest` for each quest). A quest in the log and not completed
+is in progress: the gossip window's quest mark before its title, and "In progress" before where
+it is on its page; zone and group counts include it, and a page's count says how many of them
+are in progress. The list follows the log while it is open (`QUEST_LOG_UPDATE`,
+`QUEST_ACCEPTED`, `QUEST_REMOVED`, drawn again once a burst is over and only when the log's
+quests changed). The rest are locked unless Unlock Unstarted Quests is on, which Spoken's page
+shows in its Compendium section. That switch and Started Only are kept in
+`SpokenQuestsSettings.global.Compendium`.
+
+In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
+there, linked by `prev`) are listed under a row of their own, before the quests in no chain. The
+row is named after the last of them, taken in order (how many quests before each, then id); its
+count is completed out of all, with the quest mark and how many are in progress before it, or a
+tick once all are completed; and a thin bar under its name is filled as far as completed. A chain
+that runs through several zones has a row in each, for its quests there. Chosen, a chain's page
+lists its quests in order. The client has no chain of its own, so without `prev` in the data
+every quest is a row of its own.
+
+The page fills the placeholders for the player as the client does. Play queues the quest's accept, progress and
 complete lines, whichever the packs have, named for its giver as the quest log's Play is.
 
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
@@ -1393,6 +1416,14 @@ right of the selected quest's details; in the map's quest log (Forever), left of
 view's Play, Report or Contribute; and in DialogueUI's window, at the left end of Spoken's row on
 a quest page (`UI/DialogueUIBridge.lua`). DialogueUI hides the rest of the interface while it is
 up, so that one closes DialogueUI's window before the Compendium opens.
+
+Previously sits left of that button on the quest giver's window and in both quest logs (not in
+DialogueUI's window): the player's round Play, its replay glyph turning to Stop while it plays.
+It shows where the quest has a `prev` in `Data/Compendium.lua`, this character has started that
+quest (asked of the client when the window shows, not from the tab's last read) and a pack has
+what was said when it was handed in. A click plays that one line, `q:{prev}:complete`, as the
+tab's Play queues a moment (`QuestsTab:TogglePart`), and a second click stops it. The client has
+no chain of its own, so without `prev` in the data it never shows.
 
 On a client in another language, `QUEST_DETAIL`, `QUEST_PROGRESS` and `QUEST_COMPLETE` keep the
 window's title and words in `SpokenQuestsSettings.global.CompendiumText[locale][questID]`, shown
