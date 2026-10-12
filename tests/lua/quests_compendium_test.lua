@@ -1,7 +1,7 @@
 -- The quests in Azeroth's Compendium: every quest this character's race and class may take, by
 -- the zone it is in, or under its class, profession or season; a quest's page with its words, its
 -- placeholders filled for the player; found once completed; Completed Only, the search and Unlock
--- Uncompleted Quests; and Play.
+-- Uncompleted Quests; Play; and on a client in another language, the words its windows showed.
 -- Against the shipped data (Data/Compendium.lua, Data/QuestText.lua). Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -181,6 +181,47 @@ Expect("a quest no pack has has no Play", page.play:IsShown(), false)
 Spoken:SetPartOn("quests", false)
 Expect("with Quests off, the tab is not offered", C:Select("quests"), nil)
 Spoken:SetPartOn("quests", true)
+
+---------------------------------------------------------------- another language
+-- A German client: the words and the title the quest's window shows are kept, for every
+-- character, and shown over the English.
+stub.SetLocale("deDE")
+stub.world.questID = KOBOLDS
+stub.world.title = "Säuberung des Koboldlagers"
+stub.world.questText = "Tester, Ihr müsst die Kobolde vertreiben."
+stub.FireEvent("QUEST_DETAIL")
+stub.world.questID = 0
+Tab:Refresh()
+Click("Säuberung des Koboldlagers")
+words = page.body.text.text or ""
+Expect("the title the window showed", page.title.text, "Säuberung des Koboldlagers")
+Expect("...and its words, over the English", words:find("Ihr müsst die Kobolde vertreiben.", 1, true) ~= nil, true)
+Expect("...the moments the window has not shown yet still in English",
+    words:find(SpokenQuestsText[KOBOLDS].complete:sub(1, 20), 1, true) ~= nil, true)
+stub.world.playerName = "Zweite"
+Tab:Refresh()
+Expect("...another character's name where the player's was", (page.body.text.text or ""):find("Zweite, Ihr müsst", 1, true) ~= nil, true)
+stub.world.playerName = "Tester"
+local kept = VO.Addon.db.global.CompendiumText
+Expect("...kept by language", kept.deDE[KOBOLDS] ~= nil and kept.enUS == nil, true)
+-- A quest whose English has a word for each sex: what a man was told is not shown to a woman.
+stub.world.questID = CANDLES
+stub.world.title = "Koboldkerzen"
+stub.world.questText = "Hallo, werter Herr!"
+stub.FireEvent("QUEST_DETAIL")
+stub.world.questID = 0
+Tab:Refresh()
+Click("Koboldkerzen")
+Expect("words kept from a man's window, shown to a man", (page.body.text.text or ""):find("Hallo, werter Herr!", 1, true) ~= nil, true)
+stub.world.unitSex = 3
+Tab:Refresh()
+Expect("...and to a woman, the English, with her word", (page.body.text.text or ""):find("Hello, my lady!", 1, true) ~= nil, true)
+stub.world.unitSex = 2
+stub.SetLocale("enUS")
+stub.world.questID = CANDLES
+stub.FireEvent("QUEST_DETAIL")
+stub.world.questID = 0
+Expect("an English client keeps nothing: the English ships", VO.Addon.db.global.CompendiumText.enUS, nil)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll quests compendium tests passed")

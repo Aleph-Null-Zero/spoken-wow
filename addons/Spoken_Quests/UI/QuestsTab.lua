@@ -3,6 +3,9 @@
 -- is found once this character has completed it; until then it is greyed and does not open,
 -- unless Unlock Uncompleted Quests is on.
 --
+-- On a client in another language, the words and title each quest's window showed are kept for
+-- the whole account and shown over the English.
+--
 -- Not under setfenv(1, VoiceOver): the frames are built here, and the client's mixins are looked
 -- up in the calling function's environment.
 
@@ -66,7 +69,35 @@ local function OnlyFound()
     return Global().FoundOnly == true
 end
 
-local function Title(id)
+-- The words and titles kept in this client's language, by quest: { title, accept = { text, sex } ... }.
+-- None on an English client: the English shipped is what it would keep.
+local function Kept()
+    if Locale() == "enUS" then return nil end
+    local db = VO.Addon.db and VO.Addon.db.global
+    if not db then return nil end
+    db.CompendiumText = db.CompendiumText or {}
+    db.CompendiumText[Locale()] = db.CompendiumText[Locale()] or {}
+    return db.CompendiumText[Locale()]
+end
+
+-- The client's title once it has one, else the English; asked for once where it is not loaded,
+-- and the list drawn again when it arrives (QUEST_DATA_LOAD_RESULT).
+local titles, asked = {}, {}
+local function Title(id, ask)
+    if titles[id] then return titles[id] end
+    local kept = Kept()
+    local title = kept and kept[id] and kept[id].title
+    if not title and Locale() ~= "enUS" and C_QuestLog and C_QuestLog.GetTitleForQuestID then
+        title = C_QuestLog.GetTitleForQuestID(id)
+        if (type(title) ~= "string" or title == "") and ask and not asked[id] and C_QuestLog.RequestLoadQuestByID then
+            asked[id] = true
+            C_QuestLog.RequestLoadQuestByID(id)
+        end
+    end
+    if type(title) == "string" and title ~= "" then
+        titles[id] = title
+        return title
+    end
     local quest = Quests()[id]
     return quest and quest[1] or tostring(id)
 end
@@ -201,6 +232,7 @@ end
 -- The rows
 --------------------------------------------------------------------------------
 
+-- Sorted as they are drawn: a title the client has only just given may move.
 local function Leaves(ids, depth, into)
     local sorted = {}
     for i, id in ipairs(ids or {}) do sorted[i] = id end
@@ -210,8 +242,9 @@ local function Leaves(ids, depth, into)
         return ta < tb
     end)
     for _, id in ipairs(sorted) do
-        if not (OnlyFound() and not Found(id)) and Matches(Title(id)) then
-            table.insert(into, { kind = "quest", leaf = true, quest = id, label = Title(id),
+        local english = Quests()[id] and Quests()[id][1]
+        if not (OnlyFound() and not Found(id)) and (filter == "" or Matches(Title(id)) or Matches(english)) then
+            table.insert(into, { kind = "quest", leaf = true, quest = id, label = Title(id, filter == ""),
                 depth = depth, locked = not Found(id) and not Unlocked() })
         end
     end
@@ -310,6 +343,10 @@ local function Trim(text)
     return (text:gsub("^%s+", ""):gsub("%s+$", ""))
 end
 
+local function Plain(text)
+    return (text:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0"))
+end
+
 --- A quest's words for this character, as the client fills them: the name, class and race,
 --- the word for its sex out of "$G male:female;", and $B a line break.
 function QuestsTab:Fill(text)
@@ -325,17 +362,59 @@ function QuestsTab:Fill(text)
     return text
 end
 
+-- Words the client showed, made fit for another character: where the English names the player,
+-- their class or race, so does what is kept.
+local function Generalise(text, english)
+    english = english or ""
+    local words = {
+        { "N", UnitName and UnitName("player") },
+        { "C", UnitClass and UnitClass("player") },
+        { "R", UnitRace and UnitRace("player") },
+    }
+    for _, each in ipairs(words) do
+        local letter, word = each[1], each[2]
+        if type(word) == "string" and word ~= "" and english:find("%$[" .. letter .. letter:lower() .. "]") then
+            text = text:gsub(Plain(word), "$" .. letter)
+        end
+    end
+    return text
+end
+
+-- Each moment's words: those kept in this client's language, else the English. Kept words
+-- filled for the other sex are not used where the English has a word for each.
 local function Words(id)
     local english = English(id)
+    local kept = Kept()
+    kept = kept and kept[id]
     local parts = {}
     for _, moment in ipairs(MOMENTS) do
-        local text = english[moment]
+        local text
+        local own = kept and kept[moment]
+        if type(own) == "table" and own.text and not (own.sex ~= Sex() and (english[moment] or ""):find("%$[Gg]")) then
+            text = own.text
+        end
+        text = text or english[moment]
         if text and text ~= "" then
             table.insert(parts, L[HEADINGS[moment]])
             table.insert(parts, QuestsTab:Fill(text))
         end
     end
     return #parts > 0 and table.concat(parts, "\n\n") or L.QUEST_NO_TEXT
+end
+
+--- Keep what the open quest window shows, in this client's language.
+function QuestsTab:Keep(moment, text, title)
+    local id = GetQuestID and GetQuestID()
+    local kept = Kept()
+    if not kept or not id or id == 0 or not Quests()[id] then return end
+    kept[id] = kept[id] or {}
+    if type(title) == "string" and title ~= "" then
+        kept[id].title = title
+        titles[id] = title
+    end
+    if type(text) == "string" and text ~= "" then
+        kept[id][moment] = { text = Generalise(text, English(id)[moment]), sex = Sex() }
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -533,8 +612,25 @@ local function Visible()
     return QuestsTab.panel ~= nil and QuestsTab.panel:IsVisible()
 end
 
-local function OnEvent()
-    if Visible() then QuestsTab:Refresh() end
+local function OnEvent(_, event, a)
+    if event == "QUEST_DETAIL" then
+        QuestsTab:Keep("accept", GetQuestText and GetQuestText(), GetTitleText and GetTitleText())
+    elseif event == "QUEST_PROGRESS" then
+        QuestsTab:Keep("progress", GetProgressText and GetProgressText(), GetTitleText and GetTitleText())
+    elseif event == "QUEST_COMPLETE" then
+        QuestsTab:Keep("complete", GetRewardText and GetRewardText(), GetTitleText and GetTitleText())
+    elseif event == "QUEST_TURNED_IN" then
+        if Visible() then QuestsTab:Refresh() end
+    elseif event == "QUEST_DATA_LOAD_RESULT" then
+        -- Titles arrive one by one: the list is drawn again once, a moment after the last.
+        if asked[a] and not QuestsTab.pending and Visible() and C_Timer and C_Timer.After then
+            QuestsTab.pending = true
+            C_Timer.After(0.3, function()
+                QuestsTab.pending = false
+                QuestsTab:Refresh()
+            end)
+        end
+    end
 end
 
 --- Add the tab to Azeroth's Compendium, where Spoken Books or Spoken Zones has loaded it.
@@ -557,7 +653,10 @@ function QuestsTab:Setup()
         },
     })
     local frame = CreateFrame("Frame")
-    pcall(frame.RegisterEvent, frame, "QUEST_TURNED_IN")
+    for _, event in ipairs({ "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "QUEST_TURNED_IN",
+        "QUEST_DATA_LOAD_RESULT" }) do
+        pcall(frame.RegisterEvent, frame, event)
+    end
     frame:SetScript("OnEvent", OnEvent)
 end
 
