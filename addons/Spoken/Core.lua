@@ -74,6 +74,9 @@ Defaults = {
                 SFX = 0.6,
                 Dialog = 1,
             },
+            -- The game's Sound in Background turned on while a line speaks (BackgroundSound.lua).
+            -- Off, as it plays the game's other sounds in the background too. Not on the legacy clients.
+            KeepTalkingInBackground = (not Version.IsAnyLegacy or nil) and false,
             -- 2.4.3 and 3.3.5 only. Those clients cannot stop a sound once started, so the
             -- player routes speech through the music channel, which can be stopped. This
             -- moved here from the quests addon because it is how the *player* plays on those
@@ -185,6 +188,7 @@ function Addon:ApplyProfile()
     -- Hands LibDBIcon the new profile's table: it keeps the one it was given.
     if Minimap and Minimap.Refresh then Minimap:Refresh() end
     if OtherSounds and OtherSounds.IsAvailable and OtherSounds:IsAvailable() then OtherSounds:RefreshConfig() end
+    if BackgroundSound and BackgroundSound.Sync then BackgroundSound:Sync() end
     -- Which modules are on is the profile's too: each puts its buttons back or takes them off,
     -- and what one now off had queued goes, as switching it off on Spoken's page does.
     for key in Sources:Iterate() do Sources:Apply(key) end
