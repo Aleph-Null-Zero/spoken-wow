@@ -204,6 +204,23 @@ Expect("with whole-book reading off, only the page on screen is queued",
 SpokenBooksSettings.readWholeBook = true
 B:StopReading()
 
+---------------------------------------------------------------- played while the player is stopped
+-- A book opened in the world waits its turn behind the player's Stop; Play in the Compendium
+-- starts it, ending the stop.
+Spoken:Pause()
+B:PlayFrom(261)
+Expect("a book opened in the world while the player is stopped waits in the queue, silent",
+    table.concat(QueuedPages(), ",") .. " " .. tostring(Spoken:IsPaused()) .. " " .. tostring(Spoken:IsPlaying()),
+    "261 true false")
+B:StopReading()
+Spoken:Pause()
+local playedBefore = #stub.world.played
+Expect("Play in the Compendium while the player is stopped plays the book at once, ending the stop",
+    B:PlayFrom(261, true) .. " " .. tostring(Spoken:IsPaused()) .. " " .. tostring(stub.world.played[#stub.world.played]
+    == B:ClipFor(261).path and #stub.world.played > playedBefore), "3 false true")
+Expect("...the rest of the book to follow it", Same(Coming(), { 262, 265 }), true)
+B:StopReading()
+
 ---------------------------------------------------------------- the progress bar across the book
 -- One line: the bar runs across the whole book, not each page.
 B:PlayFrom(261)

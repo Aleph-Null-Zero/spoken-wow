@@ -1,5 +1,5 @@
 -- The readables in Azeroth's Compendium: every book, letter, note and plaque, in a card for the
--- zone it is in under its continent's banner and a card for what it is, or by what it is
+-- zone it is in under its continent's banner and a line for what it is, or by what it is
 -- alone, found or not; a readable's page with
 -- where it comes from; the search, Found Only and Unlock Unfound Books; and the tabs once the
 -- places are there too. Against the shipped data (Data/Books.lua, Data/Places.lua). Run with
@@ -152,6 +152,35 @@ do
     scroll.SetVerticalScroll, scroll.UpdateScrollChildRect, scroll.height = setScroll, nil, 120
     Reopen(9003)
 end
+-- The tab never lands on what the list does not show.
+do
+    local function FirstKindIn(mapID)
+        for _, type in ipairs(B.TYPES) do
+            for _, place in pairs(SpokenBooksPlaces.books) do
+                if place.type == type and not place.event and not place.wide then
+                    for _, zone in ipairs(place.zones or {}) do
+                        if zone == mapID then return L[B.TYPE_NAMES[type].all] end
+                    end
+                end
+            end
+        end
+    end
+    SpokenBooksSettings.compendiumByZone = false
+    Reopen(1436)
+    Expect("By Type, the tab lands on the first kind holding a readable of the player's zone",
+        panel.page.title.text, FirstKindIn(1436))
+    Expect("...its banner in the list", RowFor(panel.page.title.text) ~= nil
+        and RowFor(panel.page.title.text).row.kind, "type")
+    Reopen(9003)
+    Expect("...where their zone holds none, on the first kind", panel.page.title.text, L.TYPE_BOOK)
+    SpokenBooksSettings.compendiumByZone = nil
+    SpokenBooksSettings.compendiumFoundOnly = true
+    Reopen(1426)
+    Expect("Found Only, where the player's zone holds nothing found, the tab lands on their continent's banner",
+        panel.page.title.text .. " " .. tostring(RowFor("Dun Morogh") == nil), "Eastern Kingdoms true")
+    SpokenBooksSettings.compendiumFoundOnly = nil
+    Reopen(9003)
+end
 Click("Westfall")
 Reopen(1453)
 Expect("...and what the player chose, kept on reopening", panel.page.title.text, "Westfall")
@@ -230,7 +259,48 @@ Click(L.TYPE_GRAVE)
 Expect("...Alterac Valley's gravestone listed in it", Has(Shown(), "Rock of Durotan"), true)
 Click(L.TYPE_GRAVE)
 Click("Alterac Valley")
+do
+    local getMapInfo = _G.C_Map.GetMapInfo
+    _G.C_Map.GetMapInfo = function(id) if id ~= 1460 then return getMapInfo(id) end end
+    B:RefreshReadables()
+    Expect("...not a battleground the client has never heard of", Has(Shown(), "Alterac Valley")
+        and not Has(Shown(), "1460") and not Has(Shown(), "Warsong Gulch"), true)
+    _G.C_Map.GetMapInfo = getMapInfo
+    B:RefreshReadables()
+end
 Click(L.GROUP_BATTLEGROUNDS)
+
+-- A readable in a city and in the zone around it (a book shelved in Ironforge and Dun Morogh) is
+-- listed once, in the city: the zone's card counts the rows under it.
+do
+    Click("Dun Morogh")
+    Click("Ironforge")
+    local function Closed()
+        Shown()
+        for _, row in ipairs(rows) do
+            if row.shown ~= false and row.row and row.row.kind == "group" and (row.row.mapID == 1426
+                or row.row.mapID == 1455) and not row.row.open then return row end
+        end
+    end
+    for _ = 1, 40 do
+        local row = Closed()
+        if not row then break end
+        row.scripts.OnClick(row)
+    end
+    local leaves, inside, twice = 0, false, 0
+    for _, row in ipairs(rows) do
+        if row.shown ~= false and row.row then
+            if row.row.label == "Dun Morogh" then inside = true
+            elseif inside and row.row.nest == 0 then inside = false end
+            if inside and row.row.leaf then leaves = leaves + 1 end
+            if row.row.book == 1976 then twice = twice + 1 end
+        end
+    end
+    Expect("a readable in a city and in the zone around it is listed once, in the city", twice, 1)
+    Expect("...so the zone's card counts the rows under it", leaves, RowFor("Dun Morogh").row.total)
+    Click("Ironforge")
+    Click("Dun Morogh")
+end
 
 Click("Westfall")
 Click("Elwynn Forest")
@@ -280,8 +350,9 @@ Click("Kurdran Wildhammer")
 local page = panel.page
 Expect("a readable's page: its title", page.title.text, "Kurdran Wildhammer")
 Expect("...in the spellbook's ink, as the places' page is", page.body.ink and page.body.ink[1], 0.2)
-Expect("...where it is", page.sub.text.text, L.KIND_WORLD .. " · Stormwind City")
-Expect("...on one line, cut short where it names many places", page.sub.text.wordWrap, false)
+Expect("...where it is", page.sub.text.text, L.READABLES_IN_FMT:format("Stormwind City"))
+Expect("...on one line", page.sub.text.wordWrap, false)
+Expect("...that it stands in the world, at the top of its words", (page.body.text.text or ""):find(L.KIND_WORLD .. "\n", 1, true), 1)
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)
 Click("Ranger Captain Alleria Windrunner")
 Expect("a readable not found does not open", page.title.text, "Kurdran Wildhammer")
@@ -303,9 +374,10 @@ Click("Westfall")
 Click(L.TYPE_LETTER)
 Click("A Dusty Unsent Letter")
 Expect("opened on a readable carried from a zone", page.title.text, "A Dusty Unsent Letter")
-Expect("...said to be carried, and from where", page.sub.text.text, L.KIND_CARRIED .. " · Westfall")
-Expect("...how it is had first, the name and the zone", (page.body.text.text or ""):find(
-    L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"), 1, true) == 1, true)
+Expect("...in the zone it is had in", page.sub.text.text, L.READABLES_IN_FMT:format("Westfall"))
+Expect("...its words opening on that it is carried, then how it is had, the name and the zone",
+    (page.body.text.text or ""):find(L.KIND_CARRIED .. "\n"
+    .. L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"), 1, true) == 1, true)
 
 -- The search: every match, with what holds it, opened.
 local box
@@ -355,6 +427,19 @@ Expect("...naming a continent, its zones' cards, closed", Has(list, "Westfall") 
 Click("Westfall")
 Expect("...a card in it chosen, its page shows", page.title.text, "Westfall")
 Click("Westfall")
+list = Search("dark keeper nameplate")
+Expect("readables sharing a title are numbered in id order, so no two rows read the same",
+    Has(list, "Dark Keeper Nameplate (1)") and Has(list, "Dark Keeper Nameplate (6)")
+    and not Has(list, "Dark Keeper Nameplate") and RowFor("Dark Keeper Nameplate (2)").row.book, 1432)
+SpokenBooksSettings.unlockUnfound = true
+B:RefreshReadables()
+Click("Dark Keeper Nameplate (2)")
+Expect("...and so is its page's title", page.title.text, "Dark Keeper Nameplate (2)")
+Search("civil war in the plaguelands")
+Click("Civil War in the Plaguelands")
+Expect("a readable in many zones: the line under its title names the first two and counts the rest",
+    page.sub.text.text, L.READABLES_IN_FMT:format("Map 1420, Map 1423") .. L.READABLES_MORE_FMT:format(5))
+SpokenBooksSettings.unlockUnfound = false
 Search("")
 
 -- Found Only: the readables not found, and what holds none found, left out.
@@ -457,8 +542,33 @@ local copied
 local showCopyLink = B.ShowCopyLink
 B.ShowCopyLink = function(_, url) copied = url end
 page.report.scripts.OnClick(page.report)
-Expect("...a click giving the address to report its first page", copied ~= nil
+Expect("...a click giving the address to report its first voiced page", copied ~= nil
     and copied:find("/books/r/" .. alleriaPage, 1, true) ~= nil, true)
+-- A letter of two pages whose first has no recording: Play and Report are there for the second,
+-- and Play starts it there.
+do
+    local first, second = unpack(B:Data().books[LETTER].pages)
+    local voiced = { [second] = true }
+    B.HasAudio = function(_, p) return voiced[p] == true end
+    page:Show({ title = "A Dusty Unsent Letter", target = LETTER })
+    Expect("a readable whose first page has no recording and a later one has: Play and Report on its page",
+        page.play:IsShown() and page.report:IsShown(), true)
+    local syncTo, synced = B.SyncTo, nil
+    B.SyncTo = function(_, p) synced = p end
+    page.play.scripts.OnClick(page.play)
+    B.SyncTo = syncTo
+    Expect("...Play starting at its first voiced page", synced, second)
+    page.report.scripts.OnClick(page.report)
+    Expect("...Report filing that page", copied:find("/books/r/" .. second, 1, true) ~= nil, true)
+    voiced[first] = true
+    B.following[LETTER] = { clip = { pageId = second }, pages = {} }
+    page.report.scripts.OnClick(page.report)
+    Expect("...and while it is read, the page being read", copied:find("/books/r/" .. second, 1, true) ~= nil, true)
+    B.following[LETTER] = nil
+    page.report.scripts.OnClick(page.report)
+    Expect("...else its first voiced page", copied:find("/books/r/" .. first, 1, true) ~= nil, true)
+end
+B.HasAudio = function(_, p) return p == alleriaPage end
 B.ShowCopyLink = showCopyLink
 local spoken, hidden = _G.Spoken, true
 _G.Spoken = setmetatable({ AreReportButtonsHidden = function() return hidden end }, { __index = spoken })
@@ -521,7 +631,9 @@ Expect("...a click opening it on the writings under it", Has(Shown(), "An Exotic
 local kindLabel = kindRow.row.label
 kindRow = KindRow("wide", kindLabel)
 Expect("...a kind chosen, its page names it and its group", page.title.text == kindLabel
-    and page.sub.text.text:find(L.READABLES_IN_FMT:format(L.GROUP_WIDE) .. " · ", 1, true) == 1, true)
+    and page.sub.text.text:find(L.GROUP_WIDE .. " · ", 1, true) == 1, true)
+Expect("...the group named as it is, not as a place a readable is in", page.sub.text.text:find(
+    L.READABLES_IN_FMT:format(L.GROUP_WIDE), 1, true), nil)
 kindRow.scripts.OnClick(kindRow)
 Expect("...and another click closes it", KindRow("wide", kindLabel).row.open, false)
 OpenKinds("wide")
@@ -554,7 +666,7 @@ on.readables = true
 -- reads itself the first time it is opened in the world.
 do
     local source, clipFor, isQueued = B.source, B.ClipFor, B.IsQueued
-    B.source = { Enqueue = function() return true end, StopAll = function() end }
+    B.source = { Enqueue = function() return true end, PlayNow = function() return true end, StopAll = function() end }
     B.ClipFor = function() return {} end
     B.IsQueued = function() return false end
     SpokenBooksCharacter.read[KURDRAN] = nil

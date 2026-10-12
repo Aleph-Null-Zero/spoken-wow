@@ -175,7 +175,9 @@ end
 --- the addon having stopped working.
 ---
 --- `browsing`: played from the Compendium, which is not meeting the book in the world, so Read
---- Only Once still lets it read itself the first time it is opened there.
+--- Only Once still lets it read itself the first time it is opened there. Its first page goes
+--- in by the player's PlayNow, as any Play clicked by hand does: added behind a stopped queue it
+--- would wait there silent while the button showed Stop.
 function SpokenBooks:PlayFrom(pageId, browsing)
 	local source = self.source
 	if not source then
@@ -194,7 +196,15 @@ function SpokenBooks:PlayFrom(pageId, browsing)
 			local clip = self:ClipFor(id)
 			if clip then
 				Follow(clip)
-				if Taken(source:Enqueue(clip), clip) then
+				local admitted
+				if browsing and not first then
+					-- PlayNow answers whether it plays at once; held behind a line speaking, it is
+					-- still queued.
+					admitted = source:PlayNow(clip) or self:IsQueued(id)
+				else
+					admitted = source:Enqueue(clip)
+				end
+				if Taken(admitted, clip) then
 					queued = queued + 1
 					first = first or clip
 				end
