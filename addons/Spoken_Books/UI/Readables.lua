@@ -236,11 +236,14 @@ local function LooseZones()
 	return out
 end
 
--- The battlegrounds with readables, by name.
+-- The battlegrounds with readables, by name. Not a map this client has never heard of: its card
+-- would lead nowhere.
 local function Battlegrounds()
 	local out = {}
 	for _, mapID in ipairs(BATTLEGROUNDS) do
-		if Index().zones[mapID] then table.insert(out, mapID) end
+		if Index().zones[mapID] and not (C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID) == nil) then
+			table.insert(out, mapID)
+		end
 	end
 	table.sort(out, ByName)
 	return out

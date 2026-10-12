@@ -259,6 +259,15 @@ Click(L.TYPE_GRAVE)
 Expect("...Alterac Valley's gravestone listed in it", Has(Shown(), "Rock of Durotan"), true)
 Click(L.TYPE_GRAVE)
 Click("Alterac Valley")
+do
+    local getMapInfo = _G.C_Map.GetMapInfo
+    _G.C_Map.GetMapInfo = function(id) if id ~= 1460 then return getMapInfo(id) end end
+    B:RefreshReadables()
+    Expect("...not a battleground the client has never heard of", Has(Shown(), "Alterac Valley")
+        and not Has(Shown(), "1460") and not Has(Shown(), "Warsong Gulch"), true)
+    _G.C_Map.GetMapInfo = getMapInfo
+    B:RefreshReadables()
+end
 Click(L.GROUP_BATTLEGROUNDS)
 
 -- A readable in a city and in the zone around it (a book shelved in Ironforge and Dun Morogh) is
