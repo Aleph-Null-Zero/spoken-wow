@@ -115,6 +115,10 @@ shipped[1880].prev = 1879
 -- after Messenger to Stormwind, as the chain of that quest and the next is.
 local SHOES, VERNER, MESSENGER, MESSENGER_2, REDRIDGE = 118, 119, 120, 121, 1433
 shipped[VERNER].prev, shipped[MESSENGER_2].prev, shipped[SHOES].name = SHOES, MESSENGER, MESSENGER
+-- And a chain that starts with a quest this human cannot take, made an orc's here: Redridge
+-- Goulash, then A Watchful Eye and Looking Further.
+local GOULASH, WATCHFUL, FURTHER = 92, 94, 248
+shipped[GOULASH].races, shipped[WATCHFUL].prev, shipped[FURTHER].prev = 2, GOULASH, WATCHFUL
 local L, Tab = VO.L, VO.QuestsTab
 Expect("the shipped data has the quests' chains, from the world DB", linked, true)
 Expect("...and the names of chains given by hand, on their first quest", namedByHand, true)
@@ -735,6 +739,13 @@ end
 ClickChain("Messenger to Stormwind (2)")
 Expect("...the number on the chain's page too", page.title.text, "Messenger to Stormwind (2)")
 ClickChain("Messenger to Stormwind (2)")
+Expect("a chain whose first quest this character may not take is named after the first it may",
+    ChainRow("A Watchful Eye") ~= nil and ChainRow("Redridge Goulash"), nil)
+shipped[GOULASH].name = { "Goulash and After" }
+Tab:Refresh()
+Expect("...unless the data gives the chain a name", ChainRow("Goulash and After") ~= nil and ChainRow("A Watchful Eye"), nil)
+shipped[GOULASH].name = nil
+Tab:Refresh()
 Click(C.MapName(REDRIDGE))
 
 -- Play: the first part the voice packs have of the quest, with its words. Kobold Camp Cleanup is

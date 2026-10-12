@@ -490,15 +490,24 @@ local function Prev(id)
     return prev and Quests()[prev] and prev or nil
 end
 
-local hasNext
-local function InChain(id)
-    if not hasNext then
-        hasNext = {}
-        for _, quest in pairs(Quests()) do
-            if quest.prev then hasNext[quest.prev] = true end
+-- The quests that follow each, by id, by the quest before them.
+local following
+local function Following(id)
+    if not following then
+        following = {}
+        for after, quest in pairs(Quests()) do
+            if quest.prev then
+                following[quest.prev] = following[quest.prev] or {}
+                table.insert(following[quest.prev], after)
+            end
         end
+        for _, ids in pairs(following) do table.sort(ids) end
     end
-    return Prev(id) ~= nil or hasNext[id] == true
+    return following[id]
+end
+
+local function InChain(id)
+    return Prev(id) ~= nil or Following(id) ~= nil
 end
 
 -- The first quest of `id`'s chain, and how many come before `id` in it. The data has no loops, but
@@ -516,15 +525,41 @@ local function First(id)
     return at, steps
 end
 
+-- The first quest of the chain starting at `first` that this character may take, walking it in
+-- the order its quests are taken: a chain's first quest can be another race's (Rude Awakening, the
+-- Undead's, starts a chain Orcs, Tauren and Trolls join later).
+local takenFirst = {}
+local function FirstTaken(first)
+    if takenFirst[first] then return takenFirst[first] end
+    local queue, seen, at, found = { first }, { [first] = true }, 1, nil
+    while queue[at] and not found do
+        local id = queue[at]
+        at = at + 1
+        if Allowed(Quests()[id]) then
+            found = id
+        else
+            for _, after in ipairs(Following(id) or {}) do
+                if not seen[after] then
+                    seen[after] = true
+                    table.insert(queue, after)
+                end
+            end
+        end
+    end
+    takenFirst[first] = found or first
+    return takenFirst[first]
+end
+
 -- A chain's name: the one the data gives its first quest (`name`: a quest's id, whose title the
--- client gives in its own language, or words by language), else the first quest's title. The
--- same in every zone the chain crosses, where each zone's card holds only its quests there.
+-- client gives in its own language, or words by language), else the title of the first quest this
+-- character may take. The same in every zone the chain crosses, where each zone's line holds only
+-- its quests there.
 local function ChainName(first, ask)
     local quest = Quests()[first]
     local name = quest and quest.name
     if type(name) == "number" and Quests()[name] then return Title(name, ask) end
     if type(name) == "table" then return name[Locale()] or name[1] end
-    return Title(first, ask)
+    return Title(FirstTaken(first), ask)
 end
 
 -- A chain's name on its line and its page: numbered (`nth`) where its place has others of that name.
