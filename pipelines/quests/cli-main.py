@@ -6,6 +6,7 @@ the corpus, and building a pack from audio/ once `make quests-sounds` has assemb
     init-db       download and import the vmangos dump      maintainer, rare
     extract       world DB -> Postgres                      maintainer, rare
     import-corpus corpus/corpus.json.gz -> Postgres         DANGEROUS: once, into an empty database
+    import-npc-sexes  world DB -> Postgres npc_sex           after init-db, or into production
     export-corpus Postgres -> corpus/corpus.json.gz         before a build; its only writer
     export-locale-text  Postgres -> one language's gossip text   before its Gossip pack
     export-giver-names  Postgres -> the addon's translated quest-giver names   after import-locale
@@ -50,6 +51,10 @@ loc = subparsers.add_parser(
     "import-locale",
     help="The world DB's *_locN text for one language -> Postgres. Needs MySQL and DATABASE_URL.")
 loc.add_argument("--lang", required=True, help="e.g. deDE; one the dump carries columns for")
+subparsers.add_parser(
+    "import-npc-sexes",
+    help="The world DB's creatures drawn as both sexes -> Postgres npc_sex, splitting each NPC "
+         "by sex. Needs MySQL and DATABASE_URL.")
 ign = subparsers.add_parser(
     "export-ignores",
     help="line_ignore -> corpus/ignored.json, which build reads.")
@@ -79,7 +84,7 @@ gvn.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Ques
 gst = subparsers.add_parser(
     "export-gossip-text",
     help="Every client locale's gossip text and the moments' aliases -> the addon's Gossip/.")
-gst.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Quests/Gossip")
+gst.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Gossip/Gossip")
 gst.add_argument("--aliases", default=DEFAULT_ALIASES_PATH,
                  help="Where the pack build reads the aliases from")
 
@@ -147,6 +152,11 @@ elif args.mode == "import-locale":
     counts = extract_and_import(args.lang)
     for what, n in sorted(counts.items()):
         print(f"  {what:<32} {n:>6}")
+
+elif args.mode == "import-npc-sexes":
+    from tts_cli.corpus_db import import_npc_sexes
+    from tts_cli.sql_queries import query_creature_displays
+    import_npc_sexes(query_creature_displays())
 
 elif args.mode == "export-ignores":
     from tts_cli.corpus_db import export_ignores

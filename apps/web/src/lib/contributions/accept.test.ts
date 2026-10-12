@@ -157,6 +157,21 @@ async function linesFor(lineId: string): Promise<{ origin: string; generatable: 
   return rows;
 }
 
+/** An English quest line as an import writes it, which fires the quest_line name trigger. */
+const INSERT_ENGLISH_LINE = `insert into "quest_line"
+    ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "questId",
+     "questTitle", "fileName", "text", "originalText")
+  values ($1, 0, 'enUS', 1, true, 'extracted', 'accept', $2, 'A Test Quest', $1, 'Test.', 'Test.')`;
+
+/** The names the English triggers wrote for this run's quest and NPCs, which carry no note. */
+async function deleteTriggerNames(): Promise<void> {
+  await db().query(
+    `delete from "entity_name"
+      where ("kind" = 'quest' and "entityId" = $1) or ("kind" = 'creature' and "entityId" = any($2::text[]))`,
+    [String(questId), [0, 1, 2].map((offset) => String(npcId + offset))],
+  );
+}
+
 describe("resolveContribution: quests accept", () => {
   it("refuses a kind-less contribution whose id has conflicting answers, until one is chosen", async () => {
     await speaker(npcId, "orc", "female", "standard");
@@ -464,6 +479,52 @@ describe("resolveContributions: a batch, side by side", () => {
     expect(await linesFor(lineId)).toHaveLength(1);
     expect((await speakersOf(first)).map((s) => s.lineId)).toEqual([lineId]);
     expect((await speakersOf(second)).map((s) => s.lineId)).toEqual([lineId]);
+  });
+
+  it("two rows of one new quest both land, though each names the quest in English", async () => {
+    await speaker(npcId, "orc", "female", "standard");
+    const accept = await questContribution({}, npcId);
+    const complete = await questContribution({ event: "complete" }, npcId, "Well done, druid.");
+
+    try {
+      const outcomes = await resolveContributions([accept, complete], "accepted", RESOLVER);
+      expect(outcomes.get(accept)).toMatchObject({ ok: true });
+      expect(outcomes.get(complete)).toMatchObject({ ok: true });
+    } finally {
+      await deleteTriggerNames();
+    }
+  });
+
+  // What the batch above can only hit by timing: the second transaction's trigger reaches
+  // entity_name_set while the first has written the quest's name but not committed it.
+  it("a second writer of a quest's first English name waits for the first, rather than failing", async () => {
+    const first = await db().connect();
+    const second = await db().connect();
+    try {
+      await first.query("begin");
+      await second.query("begin");
+      await first.query(INSERT_ENGLISH_LINE, [questLineId(questId, "accept"), questId]);
+      const blocked = second.query(INSERT_ENGLISH_LINE, [questLineId(questId, "complete"), questId]);
+      // Long enough for the second insert to reach the trigger and block on the first.
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      await first.query("commit");
+      await blocked;
+      await second.query("commit");
+
+      const { rows } = await db().query(
+        `select "version", "isCurrent" from "entity_name"
+          where "kind" = 'quest' and "entityId" = $1 and "lang" = 'enUS'`,
+        [String(questId)],
+      );
+      expect(rows).toEqual([{ version: 1, isCurrent: true }]);
+    } finally {
+      await first.query("rollback").catch(() => {});
+      await second.query("rollback").catch(() => {});
+      first.release();
+      second.release();
+      await db().query(`delete from "quest_line" where "questId" = $1 and "origin" = 'extracted'`, [questId]);
+      await deleteTriggerNames();
+    }
   });
 
   it("a refused row keeps its refusal and the rest still land", async () => {

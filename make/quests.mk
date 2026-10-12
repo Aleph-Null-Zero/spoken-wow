@@ -59,7 +59,7 @@ endef
         package-audio-complete package-meta push-complete icon \
         downloads-status \
         factions followup-lines release release-audio release-audio-dry release-wago release-curse \
-        release-dry import-corpus import-locale fill-locales import-questit export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
+        release-dry import-corpus import-locale import-npc-sexes fill-locales import-questit export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
         sync check-synced full-release
 
 help: ## Show this help
@@ -373,6 +373,11 @@ import-locale: ## vmangos *_locN -> quest_line + entity_name (LOCALE=deDE; needs
 	@test -n "$(LOCALE)" || { echo "import-locale: set LOCALE, e.g. LOCALE=deDE"; exit 2; }
 	@$(QUESTS_CLI) import-locale --lang $(LOCALE)
 
+# Straight into Postgres, since production is never extracted into. Rerunnable; a moderator's
+# answer is kept.
+import-npc-sexes: ## vmangos creature displays -> npc_sex, splitting each NPC drawn as both sexes (needs MySQL and DATABASE_URL)
+	@$(QUESTS_CLI) import-npc-sexes
+
 # The gaps vmangos leaves -- esMX, zhTW and zhCN text it lacks, and ptBR, which it has no
 # column for -- filled in the local dump from TrinityCore's releases, before import-locale.
 # Only empty cells, and only where TDB's English is vmangos's; see the tool. The three dumps
@@ -412,8 +417,8 @@ export-giver-names: ## entity_name -> addons/Spoken_Quests/Locale/Names/<lang>.l
 # What a gossip line reads as on every other client, and which files are one moment. Committed
 # into the addon for export-giver-names' reason: the text follows the client, not the voice
 # (tts_cli/gossip_text.py). Rerun after an import-locale, a broadcast-text upload or a relink.
-export-gossip-text: ## quest_line, broadcast_text -> addons/Spoken_Quests/Gossip/<lang>.lua, Aliases.lua
-	@$(QUESTS_CLI) export-gossip-text --out-dir $(abspath addons/Spoken_Quests/Gossip)
+export-gossip-text: ## quest_line, broadcast_text -> addons/Spoken_Gossip/Gossip/<lang>.lua, Aliases.lua
+	@$(QUESTS_CLI) export-gossip-text --out-dir $(abspath addons/Spoken_Gossip/Gossip)
 
 export-ignores: ## line_ignore -> corpus/ignored.json, replacing the old ssh export
 	@$(QUESTS_CLI) export-ignores $(ARGS)

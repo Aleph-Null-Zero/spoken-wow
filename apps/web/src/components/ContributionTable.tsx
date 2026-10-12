@@ -68,9 +68,9 @@ import { textHints } from "@/lib/contributions/text-hints";
 // type` erases the whole thing at compile time, so none of that follows the type in here. The
 // same split existing.ts's `existing` prop already draws.
 import type { BookMatch, BookSummary, NpcConflictOption, NpcSummary, QuestSummary } from "@/lib/contributions/triage";
-// From npc.ts, not npc/store.ts: store.ts imports @/lib/db, and pulling NPC_KINDS
+// From npc.ts, not npc/store.ts: store.ts imports @/lib/db, and pulling NPC_ROW_KINDS
 // (values, not just types) out of it would drag Postgres's own node built-ins into this bundle.
-import { NPC_KINDS, type NpcKind, type NpcRowKind } from "@/lib/npc/npc";
+import { NPC_ROW_KINDS, type NpcKind, type NpcRowKind } from "@/lib/npc/npc";
 import type { NpcResolution } from "@/lib/npc/store";
 import type { Filter } from "@/lib/search";
 import { cn } from "@/lib/utils";
@@ -305,7 +305,7 @@ export default function ContributionTable({
    * The error, when there is one, is the route's own words.
    */
   const nameNpc = useCallback(
-    async (contributionId: number, answer: { npcKind: NpcKind; npcId: number; npcName: string }) => {
+    async (contributionId: number, answer: { npcKind: NpcRowKind; npcId: number; npcName: string }) => {
       setNpcBusy(contributionId);
       const response = await fetch("/api/contributions/npc-identity", {
         method: "POST",
@@ -777,7 +777,7 @@ const ContributionTableRow = memo(function ContributionTableRow({
   onResolve: (id: number, next: ContributionStatus) => Promise<void>;
   onOverrideNpc: (id: number, npc: NpcSummary, answer: SpeakerAnswer) => Promise<void>;
   onPickConflict: (id: number, npc: NpcSummary, option: NpcConflictOption) => Promise<void>;
-  onNameNpc: (id: number, answer: { npcKind: NpcKind; npcId: number; npcName: string }) => Promise<void>;
+  onNameNpc: (id: number, answer: { npcKind: NpcRowKind; npcId: number; npcName: string }) => Promise<void>;
   onMatchPage: (id: number, answer: { bookId: number; pageNumber: number } | null) => Promise<void>;
 }) {
   // A written page is one-way (accept.ts), so its match is no longer the moderator's to move.
@@ -1096,9 +1096,9 @@ function MissingNpcForm({
   onSave,
 }: {
   busy: boolean;
-  onSave: (answer: { npcKind: NpcKind; npcId: number; npcName: string }) => void;
+  onSave: (answer: { npcKind: NpcRowKind; npcId: number; npcName: string }) => void;
 }) {
-  const [npcKind, setNpcKind] = useState<NpcKind>("creature");
+  const [npcKind, setNpcKind] = useState<NpcRowKind>("creature");
   const [npcId, setNpcId] = useState("");
   const [npcName, setNpcName] = useState("");
   const valid = /^\d+$/.test(npcId.trim()) && npcName.trim() !== "";
@@ -1113,10 +1113,10 @@ function MissingNpcForm({
     >
       <select
         value={npcKind}
-        onChange={(event) => setNpcKind(event.target.value as NpcKind)}
+        onChange={(event) => setNpcKind(event.target.value as NpcRowKind)}
         className="h-7 rounded border bg-transparent text-xs"
       >
-        {NPC_KINDS.map((option) => (
+        {NPC_ROW_KINDS.map((option) => (
           <option key={option} value={option}>
             {option}
           </option>

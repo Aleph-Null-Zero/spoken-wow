@@ -21,12 +21,12 @@ import { Input } from "@/components/ui/input";
 import Pagination from "@/components/Pagination";
 import ClientSelect from "@/components/ClientSelect";
 import { clientFilterOf, DEFAULT_CLIENT_FILTER, matchesClient, type ClientFamily, type ClientFilter } from "@/lib/contributions/client";
-import { flavorOptionsFor, summaryFromResolution } from "@/lib/contributions/speaker";
+import { flavorOptionsFor, summaryFromResolution, summaryFromSex } from "@/lib/contributions/speaker";
 import type { Roster, RosterData } from "@/lib/voices/roster";
 import type { NpcSummary } from "@/lib/contributions/triage";
 import { localeHref } from "@/lib/lang";
-import { isProvenance, PROVENANCES, type NpcRowKind, type Provenance } from "@/lib/npc/npc";
-import type { NpcResolution } from "@/lib/npc/store";
+import { isProvenance, PROVENANCES, sexOf, type NpcRowKind, type Provenance } from "@/lib/npc/npc";
+import type { NpcResolution, NpcSexAnswer } from "@/lib/npc/store";
 import { wowheadEntityUrl, wowheadForeverUrl } from "@/lib/wowhead";
 
 function key(npcKind: NpcRowKind | null, npcId: number): string {
@@ -181,12 +181,66 @@ function lookups(npcId: number, client: ClientFilter): { label: string; path: st
   ];
 }
 
+const SEX_LABELS: Record<number, string> = { 2: "As a man", 3: "As a woman" };
+
+/** A creature's split by sex: each sex's answer with its own Edit, and Split or Unsplit. */
+function SexCells({
+  npc,
+  sexes,
+  roster,
+  edits,
+  busy,
+  onPost,
+}: {
+  npc: NpcSummary;
+  sexes: NpcSexAnswer[];
+  roster: Roster;
+  edits: ReturnType<typeof useRosterEdits>;
+  busy: boolean;
+  onPost: (body: Record<string, unknown>) => void;
+}) {
+  if (npc.npcKind !== "creature" || !npc.race || sexOf(npc.gender) === null) return null;
+  if (!sexes.length) {
+    return (
+      <LiteButton className={`${ROW_BUTTON} mt-1`} disabled={busy} onClick={() => onPost({ action: "split" })}
+        title="Voice every line this NPC speaks once as a man and once as a woman">
+        Split by sex
+      </LiteButton>
+    );
+  }
+  return (
+    <div className="mt-1 space-y-1 border-l pl-2">
+      {sexes.map((answer) => (
+        <div key={answer.sex} className={ROW_LINE}>
+          <span className="text-muted-foreground w-20 shrink-0">{SEX_LABELS[answer.sex]}</span>
+          <SpeakerCell
+            key={`${answer.provenance}:${answer.race}:${answer.flavor}:${answer.doubtful}`}
+            npc={summaryFromSex(npc, answer, roster)}
+            roster={roster}
+            edits={edits}
+            readOnly={false}
+            busy={busy}
+            onSave={(next) => onPost({ sex: answer.sex, race: next.race ?? answer.race, flavor: next.flavor ?? answer.flavor, doubtful: next.doubtful ?? false })}
+          />
+        </div>
+      ))}
+      <LiteButton className={ROW_BUTTON} disabled={busy} onClick={() => onPost({ action: "unsplit" })}
+        title="Voice every line this NPC speaks in its one answer again">
+        Unsplit
+      </LiteButton>
+    </div>
+  );
+}
+
 export default function NpcEditor({
   initial,
   roster: rosterData,
 }: {
-  /** Each with the client family whose guess filed it, null for one only the extract names. */
-  initial: (NpcSummary & { client: ClientFamily | null })[];
+  /**
+   * Each with the client family whose guess filed it, null for one only the extract names, and
+   * its sexes where it is split by sex.
+   */
+  initial: (NpcSummary & { client: ClientFamily | null; sexes: NpcSexAnswer[] })[];
   /** The roster, for SpeakerCell's pickers, and grown by their "New" entries. */
   roster: RosterData;
 }) {
@@ -221,6 +275,12 @@ export default function NpcEditor({
   );
   /** What this session saved, over the server's rows, keyed by NPC. */
   const [saved, setSaved] = useState<Record<string, NpcSummary>>({});
+  /** Each split this session saved, over the server's, keyed by NPC. */
+  const [savedSexes, setSavedSexes] = useState<Record<string, NpcSexAnswer[]>>({});
+  const initialSexes = useMemo(
+    () => new Map(initial.filter((row) => row.sexes.length).map((row) => [key(row.npcKind, row.npcId), row.sexes])),
+    [initial],
+  );
   const [busy, setBusy] = useState<string | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   /** Rows ticked for the bulk saves, keyed by NPC. */
@@ -262,6 +322,24 @@ export default function NpcEditor({
     },
     [post],
   );
+
+  const postSex = useCallback(async (npc: NpcSummary, body: Record<string, unknown>) => {
+    const k = key(npc.npcKind, npc.npcId);
+    setBusy(k);
+    setFailed(null);
+    const response = await fetch("/api/npcs/sex", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...body, npcKind: npc.npcKind, npcId: npc.npcId }),
+    }).catch(() => null);
+    setBusy(null);
+    if (!response?.ok) {
+      setFailed(k);
+      return;
+    }
+    const { sexes } = (await response.json()) as { sexes: NpcSexAnswer[] };
+    setSavedSexes((current) => ({ ...current, [k]: sexes }));
+  }, []);
 
   /**
    * Each ticked NPC's answer as it stands, saved as the moderator's own -- a guess taken as
@@ -491,6 +569,14 @@ export default function NpcEditor({
                       readOnly={false}
                       busy={busy === k || bulk !== null}
                       onSave={(answer) => void save(npc, answer)}
+                    />
+                    <SexCells
+                      npc={npc}
+                      sexes={savedSexes[k] ?? initialSexes.get(k) ?? []}
+                      roster={roster}
+                      edits={edits}
+                      busy={busy === k || bulk !== null}
+                      onPost={(body) => void postSex(npc, body)}
                     />
                     {failed === k ? (
                       <p className="text-destructive mt-1">That didn&apos;t go through -- try again.</p>

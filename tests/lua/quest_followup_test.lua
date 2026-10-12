@@ -478,5 +478,25 @@ Expect("with no fallback, the English recording is not played, nor the German go
     Keys(), STEM)
 Expect("...and the line is recorded as having no recording", VO.Debug.runtime.stage, "followup-no-recording")
 
+---------------------------------------------------------------- an NPC split by sex
+-- A guard drawn as a man or a woman: the woman's file plays while her sex can be read off a
+-- unit the player has up, the man's when it cannot.
+local SPLIT_PACK = { folder = "SplitPack", module = FollowupPack({ [SPEAKER] = { [1] = "line-1" } },
+    { ["line-1"] = 2, ["line-1-f"] = 2 }) }
+SPLIT_PACK.module.FollowupLookupByNPCSex = { [SPEAKER] = { [1] = { [2] = "line-1", [3] = "line-1-f" } } }
+for i = #queued, 1, -1 do queued[i] = nil end
+VO, Spoken = Boot(nil, { SPLIT_PACK })
+local npcGUID = world.npcGUID
+world.npcGUID = SPEAKER_GUID; world.unitSex = 3
+stub.FireEvent("QUEST_TURNED_IN", 300, 0, 0)
+Say("Thanks, Tester!", SPEAKER_GUID)
+Expect("a split NPC seen as a woman says her own follow-up", Keys(), "line-1-f")
+Reset()
+world.npcGUID = npcGUID
+stub.FireEvent("QUEST_TURNED_IN", 300, 0, 0)
+Say("Thanks, Tester!", SPEAKER_GUID)
+Expect("...and the man's while no unit tells her sex", Keys(), "line-1")
+world.unitSex = 2
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll quest follow-up tests passed")

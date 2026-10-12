@@ -13,7 +13,7 @@ import { requireRegenerate } from "@/lib/generation/authz";
 import { acceptedContributions, observationMeta } from "@/lib/contributions/store";
 import { idOnlyResolution } from "@/lib/contributions/triage";
 import { observedFrom } from "@/lib/npc/resolve";
-import { getResolutions, getResolutionsById, resolutionKey, type NpcKind } from "@/lib/npc/store";
+import { getResolutions, getResolutionsById, resolutionKey, type NpcRowKind } from "@/lib/npc/store";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,7 @@ export async function GET() {
   // One query for every row's resolution, not one per row -- observedFrom is pure and cheap, so
   // it runs twice (once to build the keys, once below per row) rather than kept in a parallel
   // array the two loops would need to stay in lockstep with.
-  const keys: { npcKind: NpcKind; npcId: number }[] = [];
+  const keys: { npcKind: NpcRowKind; npcId: number }[] = [];
   const idOnlyIds = new Set<number>();
   for (const row of rows) {
     // observationMeta puts back build and a moderator-chosen kind, the two things stored in

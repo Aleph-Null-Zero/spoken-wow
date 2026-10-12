@@ -95,3 +95,20 @@ def test_the_file_names_the_export_as_its_only_writer(cur, tmp_path):
     path = str(tmp_path / "corpus.json.gz")
     export_corpus(path, verbose=False)
     assert load_corpus(path)["producedBy"] == "export-corpus"
+
+
+def test_a_split_npcs_sexes_land_by_rank_and_a_corpus_sex_the_file_drops_goes(cur):
+    from tts_cli.corpus_db import _import_npc_sexes
+
+    npc_id = QUEST
+    cur.execute("""insert into "npc" ("npcKind", "npcId", "race", "gender", "flavor", "provenance")
+                   values ('creature', %s, 'human', 'male', 'official', 'corpus')""", (npc_id,))
+    cur.execute("""insert into "npc_sex" ("npcKind", "npcId", "sex", "race", "flavor", "provenance")
+                   values ('creature', %s, 2, 'human', 'official', 'corpus'),
+                          ('creature', %s, 3, 'human', 'warrior', 'moderator')""", (npc_id, npc_id))
+    _import_npc_sexes(cur, [("creature", npc_id, 3, "human", "official", "corpus", False),
+                            # No npc row: skipped, not an error.
+                            ("creature", npc_id + 1, 3, "human", "official", "corpus", False)])
+    cur.execute("""select "sex", "gender", "flavor", "provenance" from "npc_sex"
+                    where "npcId" in (%s, %s) order by "sex" """, (npc_id, npc_id + 1))
+    assert cur.fetchall() == [(3, "female", "warrior", "moderator")]

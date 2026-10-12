@@ -87,6 +87,27 @@ describe("lineStates", () => {
     ]);
   });
 
+  it("calls a greeting missing from an NPC drawn as the sex its voice is not, until it is split", async () => {
+    const woman = { ...greeting(npc, "Well met, traveler."), meta: { ...greeting(npc, "").meta, sex: "3" } };
+    const man = { ...woman, meta: { ...woman.meta, sex: "2" } };
+    await db().query(
+      `insert into "npc" ("npcKind", "npcId", "race", "gender", "flavor", "provenance")
+       values ('creature', $1, 'human', 'male', 'official', 'corpus')`,
+      [npc],
+    );
+    try {
+      expect(await lineStates([woman, man])).toEqual([{ kind: "missing" }, { kind: "known" }]);
+      await db().query(
+        `insert into "npc_sex" ("npcKind", "npcId", "sex", "race", "flavor", "provenance")
+         values ('creature', $1, 2, 'human', 'official', 'corpus'), ('creature', $1, 3, 'human', 'official', 'client')`,
+        [npc],
+      );
+      expect(await lineStates([woman, man])).toEqual([{ kind: "known" }, { kind: "known" }]);
+    } finally {
+      await db().query(`delete from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
+    }
+  });
+
   it("leaves zones and books alone", async () => {
     expect(await lineStates([{ source: "books", locale: "enUS", text: "Page", meta: {} }])).toEqual([{ kind: "missing" }]);
   });

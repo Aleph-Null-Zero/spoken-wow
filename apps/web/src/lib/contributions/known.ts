@@ -16,13 +16,16 @@
  * `:m`/`:f` variant -- and is "known" when any of them says the same. A greeting has no id to
  * match on (its id hashes the English text and the speaker's voice), so it is only ever known
  * or missing: known when the NPC that sent it already speaks a line saying it. A different
- * greeting from the same NPC is another line, never a correction of one.
+ * greeting from the same NPC is another line, never a correction of one. Spoken by an NPC drawn
+ * as the sex its voice is not, it is missing until the NPC is split by sex: the voice the site
+ * has is the wrong one, and storing the row is what splits it.
  *
  * Zones and books are not compared here: a zone has no text to compare, and the table already
  * shows a book page's corpus text beside the contribution (page.tsx's existingTextFor).
  */
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
+import { isSex, sexOf } from "@/lib/npc/npc";
 
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
@@ -49,6 +52,18 @@ function npcOf(row: Comparable): number | null {
   const id = row.meta.npc?.match(/^(\d+)(?:\s|$)/)?.[1];
   // Past the integer ceiling it is not an id quest_line_speaker could hold (resolve.ts says why).
   return id && Number(id) <= 2_147_483_647 ? Number(id) : null;
+}
+
+/** The sex a creature's greeting was seen drawn as, or null for none reported. */
+function seenSex(row: Comparable): number | null {
+  const seen = Number(row.meta.sex);
+  return row.meta.kind !== "gameobject" && isSex(seen) ? seen : null;
+}
+
+/** Whether a creature's greeting was seen drawn as the other sex from the one it is voiced in. */
+function otherSex(row: Comparable, voiced: number | undefined): boolean {
+  const seen = seenSex(row);
+  return voiced !== undefined && seen !== null && seen !== voiced;
 }
 
 type CorpusText = { lineId: string; variant: number; text: string };
@@ -101,18 +116,44 @@ async function greetingTexts(pairs: { locale: string; npcId: number }[]): Promis
   return found;
 }
 
-/** Each contribution's LineState, in the order given: two queries for the lot. */
+/**
+ * The creatures among `npcIds` voiced in one sex: UnitSex's 2 or 3 for their answer's gender.
+ * A creature split by sex (migration 0072) speaks in both and is not listed.
+ */
+async function oneSexOf(npcIds: number[]): Promise<Map<number, number>> {
+  if (npcIds.length === 0) return new Map();
+  const { rows } = await db().query<{ npcId: number; gender: string }>(
+    `select n."npcId", n."gender"
+       from "npc" n
+      where n."npcKind" = 'creature' and n."npcId" = any($1::int[]) and n."gender" in ('male', 'female')
+        and n."race" is not null and n."provenance" <> 'none'
+        and not exists (select 1 from "npc_sex" x where x."npcKind" = n."npcKind" and x."npcId" = n."npcId")`,
+    [npcIds],
+  );
+  return new Map(rows.map((row) => [row.npcId, sexOf(row.gender) as number]));
+}
+
+/** Each contribution's LineState, in the order given: three queries for the lot. */
 export async function lineStates(rows: readonly Comparable[]): Promise<LineState[]> {
   const moments: { locale: string; moment: string }[] = [];
   const greetings: { locale: string; npcId: number }[] = [];
+  // Only a greeting that reports a sex can be seen as the other one, as only such a row splits.
+  const sexed = new Set<number>();
   for (const row of rows) {
     if (row.source !== "quests" || !row.text) continue;
     const moment = momentOf(row);
     const npcId = moment ? null : npcOf(row);
     if (moment) moments.push({ locale: row.locale, moment });
-    else if (npcId !== null) greetings.push({ locale: row.locale, npcId });
+    else if (npcId !== null) {
+      greetings.push({ locale: row.locale, npcId });
+      if (seenSex(row) !== null) sexed.add(npcId);
+    }
   }
-  const [byMoment, byNpc] = await Promise.all([momentTexts(moments), greetingTexts(greetings)]);
+  const [byMoment, byNpc, sexes] = await Promise.all([
+    momentTexts(moments),
+    greetingTexts(greetings),
+    oneSexOf([...sexed]),
+  ]);
 
   return rows.map((row) => {
     if (row.source !== "quests" || !row.text) return MISSING;
@@ -126,6 +167,7 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
     }
     const npcId = npcOf(row);
     const spoken = npcId === null ? undefined : byNpc.get(`${row.locale}|${npcId}`);
+    if (npcId !== null && otherSex(row, sexes.get(npcId))) return MISSING;
     return spoken?.some((line) => sameLine(line, text)) ? { kind: "known" } : MISSING;
   });
 }

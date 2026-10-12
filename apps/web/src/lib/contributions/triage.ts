@@ -11,7 +11,7 @@
 import { BASE_LANG } from "@/lib/lang";
 import { flavorOptionsFor } from "@/lib/contributions/speaker";
 import { loadRoster } from "@/lib/voices/roster-store";
-import type { NpcKind, NpcResolution, NpcRowKind, Provenance } from "@/lib/npc/store";
+import type { NpcResolution, NpcRowKind, Provenance } from "@/lib/npc/store";
 import { isQuestStage, type QuestStage } from "./query";
 
 /** `stage` is null only for stored meta whose `event` is not one the addon sends. */
@@ -155,7 +155,7 @@ export function idOnlyResolution(rows: NpcResolution[] | undefined): IdOnlyLooku
  * name is only the fallback for an envelope that named none.
  */
 export async function npcSummaryFrom(
-  observed: { npcKind: NpcKind | null; npcId: number; npcName: string | null },
+  observed: { npcKind: NpcRowKind | null; npcId: number; npcName: string | null },
   resolution: NpcResolution | undefined,
   conflict: NpcResolution[] = [],
 ): Promise<NpcSummary> {

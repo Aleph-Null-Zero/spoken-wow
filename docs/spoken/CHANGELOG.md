@@ -2,8 +2,10 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
-## 3.4.0-alpha.1 — 2026-10-11
+## Unreleased
 
+- **What NPCs say is its own module, Spoken Gossip, with its own switch and settings page.**
+  Your gossip settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*
 - **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go
   behind.** Closing a dialog on another line, such as a greeting before a quest or a gravestone
   before a book, now fades the window back in at once while the queued page goes behind it.
@@ -46,6 +48,15 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   says "• (Stopped)" and how many lines wait, in place of the list. Its new Background setting
   draws it on parchment, the default, or on the dark rock it had. It fades in and out more
   slowly, from one line to the next too, and goes while a DialogueUI dialog hides the interface. *([Nucabe](https://github.com/Nucabe))*
+- **Guards and other NPCs that come as a man or a woman speak in the voice of the one in front of
+  you.** A Stormwind City Guard, an Orgrimmar Grunt or a Bluffwatcher can be either, and every
+  one of them spoke in a man's voice. Until a pack has the other voice, the line plays as before.
+
+## 3.3.1 — 2026-10-11
+
+- **Fixed: contributing a quest started from an item in your bags sent no item.** The
+  contribution now names the item, so its quest can be voiced without someone looking the item
+  up by hand.
 
 ## 3.3.0 — 2026-10-11
 
