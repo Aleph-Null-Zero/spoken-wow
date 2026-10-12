@@ -132,7 +132,10 @@ function SpokenBooks:MarkBookFound(book)
 		return
 	end
 	SpokenBooksCharacter.found = SpokenBooksCharacter.found or {}
+	if SpokenBooksCharacter.found[book] then return end
 	SpokenBooksCharacter.found[book] = true
+	-- The Books tab open meanwhile ticks it and counts it now, not when it is next opened.
+	if self.readables and self.readables:IsVisible() and self.RefreshReadables then self:RefreshReadables() end
 end
 
 --- Whether this character has found `book`: opened it in the world. Hearing it from the

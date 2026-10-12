@@ -259,11 +259,16 @@ Expect("...Other Lands' and Battlegrounds' banners too, holding nothing found",
 Expect("...and keeps what is", Has(list, "Westfall") and Has(list, "Elwynn Forest"), true)
 SpokenBooksSettings.compendiumFoundOnly = false
 
--- Opening one in the world finds it, and the tree says so.
-SpokenBooksCharacter.found[ALLERIA] = true
+-- Opening one in the world finds it, and the tab open meanwhile says so at once.
 Click("Elwynn Forest")
 Click("Stormwind City")
-Expect("a readable found since opens", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
+local function Counted(text) return tonumber(text:match("^(%d+)/")) end
+local cardBefore, pageBefore = Counted(RowFor("Stormwind City").count.text), panel.page.sub.text
+B:MarkBookFound(ALLERIA)
+Expect("a readable found while the tab is open opens at once", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
+Expect("...ticked", RowFor("Ranger Captain Alleria Windrunner").row.done, true)
+Expect("...counted on its zone's card", Counted(RowFor("Stormwind City").count.text), cardBefore + 1)
+Expect("...and on the page", panel.page.sub.text ~= pageBefore and panel.page.sub.text:find(tostring(cardBefore + 1), 1, true) ~= nil, true)
 
 -- The type it is listed under closes and opens again, as the zone does.
 local typeRow
