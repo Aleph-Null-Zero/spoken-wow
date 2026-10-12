@@ -1365,17 +1365,72 @@ Two generated files feed it, both committed so the addon never needs a database:
 - `Data/Compendium.lua` (`make quests-compendium`, `tools/export_compendium.py`): every corpus
   quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
   the zone of its entrance, else where its giver stands), or the QuestSort of a class, profession
-  or season with its name in every language, and the races and classes allowed to take it. The
+  or season with its name in every language, and the races and classes allowed to take it. Areas,
+  zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, cached
+  in `tools/cache/`), which have Forever's zones and sorts (Zephras Isle, Darkspear Islands,
+  Camping, The High Order); Era's (1.15.9.69109) fill in anything they lack. The
   zone and who may take it come from the Forever repack's TrinityCore world DB
   (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
   quests already listed and adds the corpus's new ones, placed by their giver's spawn and open to
   the races of the side `corpus/factions.json` gives them.
+  A quest the quest log files under a dungeon or a raid (`DUNGEONS`) is placed in the zone of its
+  entrance, wherever its giver stands, with `dungeon`, the dungeon's map: its QuestSortID is the
+  dungeon's own area, an area of its map, or an area of its name (Gnomeregan's quests are under
+  133, an area of Dun Morogh), else the client's `zoneAreaId` is (`Maps.dungeon_of_area`). The
+  dungeons' names in every language, from the client's `Map` table, are the data's `dungeons`. The
+  Excavation Site in the Wetlands is an instance of the Wetlands' own quests, not a dungeon.
+  Battleground quests are under the battleground: the quest log files a few under an area of its
+  name outside it (`Maps.battleground_of_area`), and a battlemaster's next quest, which it files
+  under no zone or his city, follows the one before it from him (`battleground_follow_ups`). A
+  giver found in four zones or more (any chicken, a battlemaster in every capital) places its
+  quest nowhere (`GENERIC_GIVER_ZONES`).
+  `races` keeps a mask's playable bits (`ChrRaces.PlayableRaceBit`): Classic's eight, bits 0-7,
+  and Forever's Skyborne, 32 (High Order, Alliance) and 33 (Windshaper, Horde), all below 2^53 so
+  a Lua number holds them exactly. The DB's masks are read as Forever's client has them
+  (`db_races`): one naming every Classic race is anyone (the client has the DB's 0xFF and
+  0xFFFFFFFF as everyone), and one side's four Classic races are that side's Skyborne too. The
+  tab tests the bit with arithmetic, `bit.band` being 32-bit, and maps race ids
+  95 and 96 to bits 32 and 33 (`Has` in `UI/QuestsTab.lua`).
+  Most quests one side's giver hands out are open to every race in the DB (`AllowableRaces` 0 or
+  all), so where the DB says anyone, the quest takes the side `corpus/factions.json` gives it,
+  and failing that the side of the quest before it in its chain: a follow-up is reached only
+  through that quest (`quest_races`). The export prints how many quests are still not on the
+  side of the quest before them (`side_leaks`, the audit's leak check).
+  A quest filed under a class's QuestSort that the DB names no class for is that class's
+  (`quest_classes`): Forever's class quests are not in the DB, and without it every class would
+  see them under the class.
   Each quest that follows another in a chain has `prev`, the quest before it, from the same DB's
   `quest_template_addon` (`chain_links`): a positive `PrevQuestID`; else the lowest quest whose
   `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb
   whose `BreadcrumbForQuestId` names it, where the DB has that column. A negative `PrevQuestID`
   (the other quest only has to be in the log) is no link. Quests the corpus lacks are passed
   through, and a link closing a loop is dropped. `--no-db` keeps the links already written.
+  The DB has almost none of Forever's own quests, so after it comes Forever's client, as players
+  recorded it: Efficient Games' open data ([EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf),
+  CC BY 4.0, credited in `THIRD_PARTY.md`), `quests.enUS.json` and `npcs.json` of every
+  `wow_classic_beta` build, the latest build's record of a quest winning. Its `zoneAreaId` (a zone
+  through Forever's tables) or `categoryId` (a QuestSort) places a quest the DB does not, before
+  the giver's spawn; a `zoneAreaId` of a Forever area no map shows is placed where players saw
+  its giver (`npcs.json` `offers`, else `takes`, by `positions[].uiMap`). Its `raceMask` limits a
+  quest the DB opens to everyone, before `factions.json`, and its `nextQuestId` links a quest no
+  DB link reaches. It adds and never changes what the DB says. The files are cached in
+  `tools/cache/efficient-games/<build>/` under each one's last collection day, so a run fetches
+  only the index and what changed, and reads the cache offline. `--without-efficient-games`
+  leaves it out.
+  Last come the hand corrections, `corpus/compendium_overrides.json` (`load_overrides`,
+  `apply_overrides`, `chain_names`): what neither the DB nor the client data can say, such as a
+  breadcrumb's link, a quest the beta removed, or a chain's name. Each `quests` entry names its
+  quest (`id`) or quests (`ids`) and sets any of `title`, `zones` (uiMapIDs, taking the quest out
+  of its sort), `sort` (a QuestSort, or the word of a group the client has none for, such as
+  `"winterveil"`; 0 for none), `prev` (0 for none), `races`, `classes` and `remove: true`; each
+  `chains` entry names a quest of a chain and the chain's `name`, a quest's id (the client gives
+  its title in its own language) or words with their translations in `names`. Every entry has a
+  `source`, the wiki page or the reason, for a reviewer to check; the export refuses one without.
+  Entries apply in order, so a later one wins. A quest dropped is passed through by the quests
+  after it; an entry for a quest the corpus lacks is printed, not applied, since a quest needs
+  its lines in the corpus before it can be listed. A chain's name is written as `name` on its
+  first quest, so it is the chain's in every zone it crosses. With `--no-db` the entries apply to
+  the quests added.
 - `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
   `tts_cli/quest_text.py`): each quest's accept, progress and complete text, the corpus's
   `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
@@ -1396,10 +1451,22 @@ shows in its Compendium section. That switch and Started Only are kept in
 `SpokenQuestsSettings.global.Compendium`.
 
 The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
-for each zone with quests (a city a small card inside its zone's), then a banner each for
-Classes, Professions, Events and Other, holding a small card for each class, profession, season
-or other QuestSort, and Place Unknown under Other. There is no Azeroth row; with the player's
-zone unknown the tab lands on the first continent. The list is drawn in the game's own art
+for each zone with quests (a city a small card inside its zone's); a card of its own for each
+zone on no continent the client knows (Zephras Isle, whose map hangs under Azeroth), as the Zones
+tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
+Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
+Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
+it); then a banner each for Classes, Professions (Camping, 666, with them: its quests are Camping
+101 for one profession or another), Events and Other, holding a small card for each class, profession, season
+or other QuestSort, and Place Unknown under Other. The tab names some groups itself
+(`GROUP_NAMES`): Special (284) is Children's Week, under Events, as it holds nothing else;
+Reputation (367) is Commendation Signets, its hand-ins; and the groups the client has no QuestSort
+for, a word in the data (`winterveil`, `hallowsend`, `loveisintheair` and `harvestfestival` under
+Events, `argentdawn` and `library` under Other), take their names from the strings. Inside a
+zone's card, its dungeons' and raids' quests (those with `dungeon`) are a small card, Dungeons
+and Raids, with a small card for each dungeon, named as the data's `dungeons` names it in the
+client's language, where the zone has several (Searing Gorge holds Blackrock Mountain's four).
+There is no Azeroth row; with the player's zone unknown the tab lands on the first continent. The list is drawn in the game's own art
 (`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
 tracker's campaign header for the player's faction, without its crest, and a card is Classic's
 character select card. A zone's card shows its painting (`Spoken:ZoneIcon`) in the collections
@@ -1411,7 +1478,9 @@ all. A quest's row has the gold tick once completed and the quest mark while in 
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
 there, linked by `prev`) are a small card of their own, before the quests in no chain. The card
-is named after the first of them, taken in order (how many quests before each, then id); its
+has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
+chain's first quest (a quest's id, whose title the client gives in its own language, or words by
+language), else the first quest's title, wherever that quest is (`ChainName`). Its
 badge is the quest log's storyline mark, its line counts its quests completed out of all with how
 many are in progress, and its bar and share how many are completed. A chain that runs through
 several zones has a card in each, for its quests there. Chosen, a chain's page lists its quests in

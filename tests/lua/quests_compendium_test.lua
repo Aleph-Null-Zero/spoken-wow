@@ -18,9 +18,13 @@ local BOOKS = here .. "/../../addons/Spoken_Books/"
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.world.questID = 0; stub.ShowPanel(nil)
 
+-- Alterac Valley as Forever's newer client hangs it, in Hillsbrad Foothills; the other
+-- battlegrounds and Zephras Isle under Azeroth itself.
 local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "Eastern Kingdoms", 947 },
     [1429] = { "Elwynn Forest", 1415 }, [1453] = { "Stormwind City", 1415 }, [1436] = { "Westfall", 1415 },
-    [1440] = { "Ashenvale", 1414 } }
+    [1440] = { "Ashenvale", 1414 }, [1424] = { "Hillsbrad Foothills", 1415 }, [1459] = { "Alterac Valley", 1424 },
+    [1460] = { "Warsong Gulch", 947 }, [1461] = { "Arathi Basin", 947 }, [2524] = { "Darkspear Islands", 947 },
+    [2521] = { "Zephras Isle", 947 }, [2548] = { "Riverglades", 1415 }, [1427] = { "Searing Gorge", 1415 } }
 _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
@@ -84,16 +88,22 @@ for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/
 end
 -- The shipped data links each quest to the one before it in its chain: Lost Necklace, Pie for
 -- Billy, Back to Billy, then Goldtooth. Only that chain is kept here, so the rest of the tree
--- reads as single quests.
+-- reads as single quests; and one made up, crossing from Elwynn Forest into Westfall: The
+-- Jasperlode Mine, then Westfall Stew and Goretusk Liver Pie.
 local NECKLACE, PIE, BACK, GOLDTOOTH = 85, 86, 84, 87
+local JASPERLODE, STEW, LIVER_PIE = 76, 36, 22
 local shipped = SpokenQuestsCompendium.quests
 local linked = shipped[PIE].prev == NECKLACE and shipped[BACK].prev == PIE and shipped[GOLDTOOTH].prev == BACK
-for _, quest in pairs(shipped) do quest.prev = nil end
+-- Speak with Ruga, the breadcrumb Brutal Armor's chain starts with, names it after that quest.
+local namedByHand = shipped[1823] and shipped[1823].name == 1838
+for _, quest in pairs(shipped) do quest.prev, quest.name = nil, nil end
 SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
 SpokenQuestsCompendium.quests[BACK].prev = PIE
 SpokenQuestsCompendium.quests[GOLDTOOTH].prev = BACK
+shipped[STEW].prev, shipped[LIVER_PIE].prev = JASPERLODE, STEW
 local L, Tab = VO.L, VO.QuestsTab
 Expect("the shipped data has the quests' chains, from the world DB", linked, true)
+Expect("...and the names of chains given by hand, on their first quest", namedByHand, true)
 local C = _G.SpokenCompendium
 
 Expect("no tab before the world is up", C:Tab("quests"), nil)
@@ -245,11 +255,41 @@ Expect("...Classes opening on a class's quests under its name, this character's 
 Expect("...a small card for it", RowFor("Mage").row.style == "card" and RowFor("Mage").row.small, true)
 Click("Events")
 Expect("...Events on the festivals and the Darkmoon Faire", Has(Shown(), "Lunar Festival") and Has(Shown(), "Darkmoon Faire"), true)
+list = Shown()
+Expect("...each holiday a group of its own, Children's Week among them, where the client has Seasonal and Special",
+    Has(list, "Feast of Winter Veil") and Has(list, "Hallow's End") and Has(list, "Love is in the Air")
+    and Has(list, "Harvest Festival") and Has(list, "Children's Week") and not Has(list, "Seasonal")
+    and not Has(list, "Special"), true)
 Click("Classes")
 Click("Events")
 local leftovers, reused = Leftovers()
 Expect("a row drawn as a card and reused for a banner or a quest keeps none of the card's parts", leftovers, "")
 Expect("...as rows were, once the list changed under them", reused > 0, true)
+Click("Professions")
+Expect("Professions holds Camping, whose quests are Camping 101 for one profession or another", Has(Shown(), "Camping"), true)
+Click("Professions")
+Click("Other")
+list = Shown()
+Expect("Other holds the Commendation Signets' hand-ins, the Argent Dawn's and the library books, under those names",
+    Has(list, "Commendation Signets") and Has(list, "Argent Dawn") and Has(list, "Library Books")
+    and not Has(list, "Reputation"), true)
+Click("Other")
+
+-- Zephras Isle is on no continent: a card of its own after them. The battlegrounds are under a
+-- banner of their own, Alterac Valley too, though the client hangs it in Hillsbrad Foothills.
+list = Shown()
+Expect("a zone on no continent is a card of its own after the continents, then the battlegrounds' banner",
+    list:find("|Zephras Isle|Battlegrounds|Classes|", 1, true) ~= nil and RowFor("Zephras Isle").row.style == "card"
+    and RowFor("Zephras Isle").row.nest, 0)
+Expect("...the battlegrounds a banner", RowFor("Battlegrounds").row.style, "banner")
+Expect("...no battleground among its continent's zones", Has(list, "Alterac Valley"), false)
+Click("Battlegrounds")
+list = Shown()
+Expect("...opening on a card for each battleground", Has(list, "Alterac Valley") and Has(list, "Warsong Gulch")
+    and Has(list, "Arathi Basin") and Has(list, "Darkspear Islands") and RowFor("Alterac Valley").row.style, "card")
+Expect("...its page counting their quests", page.title.text == L.QUESTS_SECTION_BATTLEGROUNDS
+    and page.sub.text:match("^0 of %d+ completed$") ~= nil, true)
+Click("Battlegrounds")
 list = Shown()
 Expect("a zone opens on its quests", Has(list, "Kobold Camp Cleanup") and Has(list, "Kobold Candles"), true)
 Expect("...a quest completed open to read", RowFor("Kobold Camp Cleanup").row.locked, false)
@@ -422,6 +462,30 @@ Expect("Started Only leaves out a chain with nothing started", ChainRow("Lost Ne
 VO.Addon.db.global.Compendium.FoundOnly = false
 Tab:Refresh()
 
+-- A chain's name is the same in every zone it crosses: its first quest's, though that quest is in
+-- another zone, or the name the data gives that quest.
+Click("Westfall")
+Expect("a chain's card in a zone it crosses into has the chain's name: its first quest's, from another zone",
+    ChainRow("The Jasperlode Mine") ~= nil and ChainRow("The Jasperlode Mine").row.nest == 1
+    and ChainRow("Westfall Stew"), nil)
+shipped[JASPERLODE].name = 64 -- The Forgotten Heirloom
+Tab:Refresh()
+Expect("...or the quest whose title the data names it after", ChainRow("The Forgotten Heirloom") ~= nil
+    and ChainRow("The Jasperlode Mine"), nil)
+shipped[JASPERLODE].name = { "Mine and Stew", deDE = "Mine und Eintopf" }
+Tab:Refresh()
+Expect("...or words of its own", ChainRow("Mine and Stew") ~= nil, true)
+ClickChain("Mine and Stew")
+Expect("...its page under that name", page.title.text, "Mine and Stew")
+stub.SetLocale("deDE")
+Tab:Refresh()
+Expect("...in the client's language where the data has it", ChainRow("Mine und Eintopf") ~= nil, true)
+stub.SetLocale("enUS")
+shipped[JASPERLODE].name = nil
+Tab:Refresh()
+ClickChain("The Jasperlode Mine")
+Click("Elwynn Forest")
+
 -- Play: the first part the voice packs have of the quest, with its words.
 VO.DataModules:Register("TestPack", {
     SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2, ["85-accept"] = 2, ["85-complete"] = 2 },
@@ -472,6 +536,33 @@ Expect("...the quest chosen", RowFor("The Forgotten Heirloom").selected, true)
 Expect("...and its page shown", page.title.text, "The Forgotten Heirloom")
 Tab:Open(JENNEA)
 Expect("a class's quest opens under its class", Has(Shown(), "Speak with Jennea") and page.title.text, "Speak with Jennea")
+local IRONDEEP = 5892
+Tab:Open(IRONDEEP)
+Expect("a battleground's quest opens under the battlegrounds' banner", Has(Shown(), "Irondeep Supplies")
+    and RowFor("Battlegrounds").row.open and page.title.text, "Irondeep Supplies")
+
+-- A zone's dungeons' and raids' quests: a small card inside its card, Dungeons and Raids, and in a
+-- zone with several, a small card for each inside that.
+local STOCKADE, DARK_IRON = 386, 3801
+Tab:Open(STOCKADE)
+list = Shown()
+local dungeons = RowFor("Dungeons and Raids")
+Expect("opened on a dungeon's quest, its zone's Dungeons and Raids card is opened to it", dungeons ~= nil
+    and dungeons.row.small and dungeons.row.open and Has(list, "What Comes Around...") and page.title.text,
+    "What Comes Around...")
+Expect("...a small card inside the city's card, as far in as its quests", dungeons.row.nest, 2)
+Expect("...its badge a key", dungeons.icon.texture, [[Interface\Icons\INV_Misc_Key_03]])
+Expect("...with one dungeon there, its quests straight inside, no card of the dungeon's own",
+    Has(list, "Stormwind Stockade") or RowFor("What Comes Around...").row.nest, 3)
+Tab:Open(DARK_IRON)
+list = Shown()
+Expect("in a zone with several dungeons, a small card for each inside Dungeons and Raids",
+    Has(list, "Blackrock Depths") and Has(list, "Blackrock Spire") and RowFor("Blackrock Depths").row.small
+    and RowFor("Blackrock Depths").row.nest, 2)
+Expect("...the dungeon's quests inside its own card", Has(list, "Dark Iron Legacy") and RowFor("Dark Iron Legacy").row.nest >= 3, true)
+Click("Blackrock Spire")
+Expect("...a dungeon's page counting its quests", page.title.text == "Blackrock Spire"
+    and page.sub.text:match("^0 of %d+ completed$") ~= nil, true)
 
 -- The quest giver's window: the Compendium's tome beside its controls, for a quest the tab lists.
 local giver = Tab.giverButton
