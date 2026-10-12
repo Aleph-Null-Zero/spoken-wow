@@ -1,19 +1,24 @@
 -- The quests in Azeroth's Compendium, the window Spoken Books and Spoken Zones carry: every quest
--- this character's race and class may take, by zone, with class, profession, event and other
--- quests apart. A quest is found once this character has started it: completed, or in its quest
--- log, which is marked in progress on its row and its page. Until then it is greyed and does not
--- open, unless Unlock Unstarted Quests is on.
+-- this character's race and class may take. A quest is found once this character has started it:
+-- completed, or in its quest log, which is marked in progress on its row and its page. Until then
+-- it is greyed and does not open, unless Unlock Unstarted Quests is on.
 --
--- The list is the Compendium's cards: a banner for each continent, holding a card for each zone
--- (with its city as a small card inside it), a banner for the zones on no continent, a banner for
--- the battlegrounds, then a banner each for Classes, Professions, Events and Other, holding a
--- small card for each class, profession, event or other kind of quest. A
--- card says how many of its quests are completed and how many in progress, with a bar. Inside a
--- zone's card, its dungeons' and raids' quests are a small card of their own, with a small card
--- for each dungeon where the zone has several. Inside a place, the quests that follow one
--- another (`prev` in the data) are a small card for their chain, with the chain's name (the
--- data's, else its first quest's title) in every zone it crosses; the rest are rows of their own.
--- A chain's page lists its quests in order with the start of each one's offer.
+-- The list is the Compendium's banners and cards. The banners, in order: one for each continent,
+-- Other Lands for the zones on no continent, Battlegrounds, then the sections Classes,
+-- Professions, Events and Other. Inside a zones' banner, a card for each zone; inside a section's,
+-- a card for each class, profession, event or other kind of quest, and Place Unknown in Other.
+-- A zone's card holds its city's card, a card of its dungeons' and raids' quests (named after the
+-- dungeon where there is one, else Dungeons and Raids with a card for each dungeon), then its
+-- chains and its quests. The quests that follow one another (`prev` in the data) are a card for
+-- their chain, with the same name in every zone it crosses; the rest are the leaves, a row each.
+-- Every card and banner counts its quests completed out of all and those in progress.
+--
+-- The page shows what is chosen. A quest's is its title, where it is and its words, with Play
+-- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. A banner's, card's or
+-- chain's is its name, its count and L.QUESTS_PICK, the quests being on the left to choose.
+--
+-- A search lists what matches under what holds it. Where it matches the name of a banner, a card
+-- or a chain, everything inside that one is listed.
 --
 -- On a client in another language, the words and title each quest's window showed are kept for
 -- the whole account and shown over the English.
