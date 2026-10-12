@@ -917,6 +917,20 @@ choices[2].func()
 stub.world.playerMapID = nil
 if RowFor("Classes").row.open then Click("Classes") end
 
+-- Text Size, on Spoken's page: the words read at it, and drawn again when it changes.
+do
+    local text, questFont = page.body.text, _G.QuestFont
+    _G.QuestFont = { GetFont = function() return "Fonts/FRIZQT__.TTF", 12 end }
+    local setFont, drawnAt = text.SetFont, nil
+    text.SetFont = function(self, face, size, ...) drawnAt = size; if setFont then return setFont(self, face, size, ...) end end
+    Spoken:SetCompendiumFontSize(16)
+    -- The parchment's ink is drawn a point larger than the Text Size.
+    Expect("the page's words at the Compendium's Text Size, drawn again when it changes",
+        ns:Get("fontSize") .. "|" .. tostring(drawnAt), "16|" .. (16 + 1))
+    text.SetFont, _G.QuestFont = setFont, questFont
+    Spoken:SetCompendiumFontSize(12)
+end
+
 -- The part switched off takes its tab away.
 Spoken:SetPartOn("quests", false)
 Expect("with Quests off, the tab is not offered", C:Select("quests"), nil)

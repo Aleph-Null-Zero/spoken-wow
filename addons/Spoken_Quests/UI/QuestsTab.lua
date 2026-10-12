@@ -40,10 +40,11 @@ VO.QuestsTab = QuestsTab
 local L = VO.L
 local C
 
--- The words' size, for UI/TextView.lua: Spoken Zones' where it is installed, so every tab of the
--- Compendium reads alike.
+-- The words' size, for UI/TextView.lua: the Compendium's Text Size on Spoken's page, so every tab
+-- reads alike; Spoken Zones' own where Spoken is older and has none.
 function ns:Get(key)
     if key == "fontSize" then
+        if Spoken and Spoken.CompendiumFontSize then return Spoken:CompendiumFontSize() end
         return (SpokenZonesSettings and SpokenZonesSettings.fontSize) or 12
     end
 end
@@ -1585,6 +1586,10 @@ local function Build(panel)
         Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
             if selection and selection.quest then ShowEntry() end
         end)
+    end
+    -- Text Size, on Spoken's page, fires no game event: the page is drawn again at the new size.
+    if Spoken and Spoken.RegisterCallback then
+        Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", function() ShowEntry() end)
     end
     -- One line, cut short: a quest given in several zones names them all.
     if page.sub.SetWordWrap then page.sub:SetWordWrap(false) end
