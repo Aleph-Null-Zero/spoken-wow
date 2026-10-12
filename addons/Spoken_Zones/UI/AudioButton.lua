@@ -118,6 +118,24 @@ function AudioButton:Refresh()
 	self:SetState(state)
 end
 
+-- The tooltip for the button's state, in Spoken's words as every Play of the Compendium's has
+-- them; ours where Spoken is missing, and nothing then plays. Play says what is read.
+local function Tooltip(button)
+	local words = _G.SpokenEnv and _G.SpokenEnv.L or {}
+	GameTooltip:SetOwner(button, "ANCHOR_LEFT")
+	if button.state == "stop" then
+		GameTooltip:SetText(words.STOP or L.STOP)
+		GameTooltip:AddLine(words.STOP_READING_TIP or L.STOP_TOOLTIP, 1, 0.8, 0.2, true)
+	elseif button.state == "replay" then
+		GameTooltip:SetText(words.REPLAY or L.REPLAY)
+		GameTooltip:AddLine(words.REPLAY_READING_TIP or L.REPLAY_TOOLTIP, 1, 0.8, 0.2, true)
+	else
+		GameTooltip:SetText(words.PLAY or L.PLAY)
+		GameTooltip:AddLine(L.AUDIO_READ_TIP, 1, 0.8, 0.2, true)
+	end
+	GameTooltip:Show()
+end
+
 --------------------------------------------------------------------------------
 -- Construction
 --------------------------------------------------------------------------------
@@ -143,22 +161,11 @@ function SpokenZones:CreateAudioButton(parent)
 		else
 			SpokenZones:PlayLore(self.mapID, self.areaKey)
 		end
+		self:Refresh()
+		if GameTooltip:GetOwner() == self then Tooltip(self) end
 	end)
 
-	button:HookScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-		if self.state == "stop" then
-			GameTooltip:SetText(L.STOP)
-			GameTooltip:AddLine(L.STOP_TOOLTIP, 1, 0.8, 0.2, true)
-		elseif self.state == "replay" then
-			GameTooltip:SetText(L.REPLAY)
-			GameTooltip:AddLine(L.REPLAY_TOOLTIP, 1, 0.8, 0.2, true)
-		else
-			GameTooltip:SetText(L.PLAY)
-			GameTooltip:AddLine(L.AUDIO_READ_TIP, 1, 0.8, 0.2, true)
-		end
-		GameTooltip:Show()
-	end)
+	button:HookScript("OnEnter", Tooltip)
 
 	button:HookScript("OnLeave", function()
 		GameTooltip:Hide()

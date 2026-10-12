@@ -65,6 +65,9 @@ function SpokenZones:CreateReportIcon(parent)
 		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 		GameTooltip:SetText(L.OPT_REPORT_PROBLEM)
 		GameTooltip:AddLine(L.OPT_REPORT_LINE_TIP, 1, 0.8, 0.2, true)
+		-- Its right-click opens the debug log's menu, where Spoken Developer is installed.
+		local hint = _G.Spoken and Spoken.LogMenuHint and Spoken:LogMenuHint()
+		if hint then GameTooltip:AddLine(hint, 0.6, 0.6, 0.6, true) end
 		GameTooltip:Show()
 	end)
 	button:SetScript("OnLeave", function()

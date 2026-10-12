@@ -78,8 +78,9 @@ local function Queued()
     return table.concat(names, ",")
 end
 
+local LENGTHS = { ["7-accept"] = 2, ["7-complete"] = 2, ["60-accept"] = 3 }
 VO.DataModules:Register("TestPack", {
-    SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2, ["60-accept"] = 3 },
+    SoundLengthLookupByFileName = LENGTHS,
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
 })
 
@@ -111,6 +112,24 @@ Spoken:StopAll()
 Click("Kobold Candles")
 Expect("a plain click still chooses the quest", page.title.text, "Kobold Candles")
 Expect("...and plays nothing", Queued(), "")
+
+-- One part of a quest at a time: with its hand-in queued, a shift-click on the quest adds nothing.
+Click("Kobold Camp Cleanup")
+local handIn
+for _, part in ipairs(page.body.lastParts or {}) do
+    if part.heading == L.QUEST_PART_COMPLETE then handIn = part.buttons[2] end
+end
+handIn.scripts.OnClick(handIn)
+Expect("with one part of a quest queued", Queued(), "7-complete")
+Click("Kobold Camp Cleanup", true)
+Expect("...a shift-click on that quest queues no other part of it", Queued(), "7-complete")
+Spoken:StopAll()
+
+-- A quest no pack has: a shift-click queues nothing, and says nothing.
+LENGTHS["60-accept"] = nil
+local ok = pcall(Click, "Kobold Candles", true)
+Expect("a shift-click on a quest no pack has queues nothing, without an error", tostring(ok) .. " " .. Queued(), "true ")
+LENGTHS["60-accept"] = 3
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll quests shift-queue tests passed")

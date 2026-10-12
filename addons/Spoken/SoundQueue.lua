@@ -216,6 +216,12 @@ local function AfterRemoval()
     if SoundQueue:IsEmpty() then
         StopRetryTicker()
         SoundQueue:MuteGameDialogue(nil)
+        -- Nothing is left to hold: a queue left stopped would hold the next line it is given,
+        -- silent, under a Stop the player can no longer see.
+        if SoundQueue:IsPaused() then
+            SoundQueue:SetPaused(false)
+            Callbacks:Fire("AUDIO_CHANGED")
+        end
         Callbacks:Fire("QUEUE_EMPTY")
     end
 end
@@ -727,10 +733,11 @@ function SoundQueue:PlayNow(clip, source)
     end
 
     -- Clicking Play on something already waiting should play it, not be swallowed by
-    -- the dedup.
+    -- the dedup. Another clip of its key gives way to it.
     for index = self:GetQueueSize(), 1, -1 do
-        if self.sounds[index].key == clip.key then
-            self:RemoveSoundFromQueue(self.sounds[index])
+        local queued = self.sounds[index]
+        if queued ~= clip and queued.key == clip.key then
+            self:RemoveSoundFromQueue(queued)
         end
     end
 
@@ -740,6 +747,19 @@ function SoundQueue:PlayNow(clip, source)
     end
 
     self:SetPaused(false)
+    -- The very clip waiting moves to the front as it is, never taken out and put back: taken out,
+    -- its stopCallback ends what it carries on with, such as a book's pages still to come.
+    for index, queued in ipairs(self.sounds) do
+        if queued == clip then
+            if index > 1 then
+                table.remove(self.sounds, index)
+                table.insert(self.sounds, 1, clip)
+            end
+            self:Advance()
+            Callbacks:Fire("AUDIO_CHANGED")
+            return self:IsPlaying()
+        end
+    end
     local added, reason = self:Add(clip, source, true)
     if not added then
         self:Advance()
@@ -768,10 +788,8 @@ function SoundQueue:PauseQueue()
     -- next one Stop holds. Replay then plays the next line rather than the one already heard.
     if head and head.nextSoundTimer and head.spokenAt and GetTime() >= head.spokenAt then
         self:RemoveSoundFromQueue(head, true)
-        -- It was the last: there is nothing left to hold, and nothing for the queue to stay stopped on.
+        -- It was the last: there is nothing left to hold, and the removal took the stop off.
         if self:IsEmpty() then
-            self:SetPaused(false)
-            Callbacks:Fire("AUDIO_CHANGED")
             return true
         end
         head = self:GetCurrentSound()

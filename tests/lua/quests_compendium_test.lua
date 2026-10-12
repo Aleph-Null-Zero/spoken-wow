@@ -441,7 +441,8 @@ local words = PageWords() or ""
 Expect("...its words in parts, offered then handed in, each under its heading",
     page.body.lastParts ~= nil and page.body.lastParts[1].heading == L.QUEST_PART_ACCEPT
     and page.body.lastParts[#page.body.lastParts].heading == L.QUEST_PART_COMPLETE, true)
-Expect("...no Play or Report in the page's corner: each part has its own", page.play:IsShown(), false)
+Expect("...no Play or Report in the page's corner: each part has its own", tostring(page.play) .. " " .. tostring(page.report),
+    "nil nil")
 Expect("...no placeholder left in them", words:find("$", 1, true), nil)
 Click("Kobold Candles")
 Expect("a quest not completed does not open", page.title.text, "Kobold Camp Cleanup")
@@ -639,7 +640,7 @@ Expect("...rows one step further in", RowOfQuest(PIE).row.nest, 2)
 Expect("...chosen, its page has the chain's name", page.title.text, "Lost Necklace")
 Expect("...the zone it is listed in and its count", page.sub.text.text, "In Elwynn Forest · 2 of 4 completed, 1 in progress")
 Expect("...and, as a zone's page, the quests on the left to choose", PageWords(), L.QUESTS_PICK)
-Expect("...nothing to play on it", page.play:IsShown(), false)
+Expect("...nothing to play on it", page.play, nil)
 completed[BACK], completed[GOLDTOOTH] = true, true
 questLog = {}
 Tab:Refresh()
@@ -755,37 +756,98 @@ Expect("...named and pictured for its giver", Who(), Npc("Marshal McBride", MCBR
 local playing = Spoken:GetQueue()[1]
 Expect("...with the offer's words, for the window to show and highlight",
     playing and type(playing.text) == "string" and playing.text ~= "" and PageWords():find(playing.text, 1, true) ~= nil, true)
-local function PlayTip()
-    GameTooltip.text = nil
-    for _, hook in ipairs(play.hooks and play.hooks.OnEnter or {}) do hook(play) end
-    return GameTooltip.text
+-- A button's tooltip, its lines as one, the pointer put on it; or as it stands, with `asIs`.
+local function Tip(button, asIs)
+    if not asIs then
+        GameTooltip.lines = nil
+        for _, hook in ipairs(button.hooks and button.hooks.OnEnter or {}) do hook(button) end
+    end
+    return table.concat(GameTooltip.lines or {}, "|")
 end
-Expect("...its tooltip naming Stop while it plays", PlayTip(), SpokenEnv.L.STOP)
+local function PlayTip() return Tip(play) end
+local S = SpokenEnv.L
+Expect("...its tooltip naming Stop while it plays, and what Stop does", PlayTip(), S.STOP .. "|" .. S.STOP_READING_TIP)
 local handIn = PartButton(L.QUEST_PART_COMPLETE, "play")
 handIn.scripts.OnClick(handIn)
 queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
 Expect("...the hand-in's Play playing the hand-in in its place", queued[1], "7-complete")
 Expect("...named and pictured for the one it is handed in to, not its giver", Who(), Npc("Marshal Dughan", DUGHAN))
+local function Names()
+    local names = {}
+    for _, clip in ipairs(Spoken:GetQueue()) do table.insert(names, clip.fileName) end
+    return table.concat(names, ",")
+end
+-- Stop and Replay, as the quest log's Play and the subtitle have them.
 handIn.scripts.OnClick(handIn)
+Expect("a part's Stop stops it and keeps it at the head", tostring(Spoken:IsPaused()) .. " " .. Names(), "true 7-complete")
+Expect("...its Play showing Replay", handIn.pageState, "replay")
+Expect("...named Replay in its tooltip, with what Replay does", Tip(handIn), S.REPLAY .. "|" .. S.REPLAY_READING_TIP)
+handIn.scripts.OnClick(handIn)
+Expect("...Replay plays it again from the start", not Spoken:IsPaused() and Spoken:GetNowPlaying()
+    and Spoken:GetNowPlaying().fileName, "7-complete")
+Expect("...and shows Stop again", handIn.pageState, "stop")
+Expect("...its tooltip, the pointer still on it, redrawn for Stop at once", Tip(handIn, true), S.STOP .. "|" .. S.STOP_READING_TIP)
+-- Another part, not queued: it starts and the part playing gives way, one part of a quest at a time.
+play.scripts.OnClick(play)
+Expect("Play on another part of the quest plays it in place of the part playing", Names(), "7-accept")
 SpokenQuestsCompendium.quests[KOBOLDS].ender = nil
 handIn.scripts.OnClick(handIn)
 Expect("...and for its giver where the data names no one else", Who(), Npc("Marshal McBride", MCBRIDE))
-handIn.scripts.OnClick(handIn)
+-- Waiting behind another quest's line: left where it is while that speaks, played at once once it is
+-- stopped.
+Spoken:StopAll()
+VO.Player:PlayNow({ event = VO.Enums.SoundEvent.QuestAccept, questID = NECKLACE })
 play.scripts.OnClick(play)
+Expect("a part played while another quest's line speaks waits behind it", Names(), "85-accept,7-accept")
+Expect("...its Play still Play", play.pageState, "play")
 play.scripts.OnClick(play)
-Expect("...and again, stops them", #VO.Player:Queued(), 0)
-Expect("...its tooltip naming Play once stopped", PlayTip(), SpokenEnv.L.PLAY)
+Expect("...a second click leaving it where it is", Names(), "85-accept,7-accept")
+Spoken:Pause()
+Expect("...still Play behind the line once that is stopped", play.pageState, "play")
+play.scripts.OnClick(play)
+Expect("...and then a click plays it at once, the stopped line kept behind it", tostring(Spoken:IsPaused()) .. " "
+    .. Names() .. " " .. tostring(Spoken:GetNowPlaying() and Spoken:GetNowPlaying().fileName), "false 7-accept,85-accept 7-accept")
+Expect("...showing Stop", play.pageState, "stop")
+Spoken:StopAll()
+Expect("...Play again once nothing is queued, its tooltip saying what the part's Play does", play.pageState .. " " .. PlayTip(),
+    "play " .. S.PLAY .. "|" .. L.QUEST_PART_PLAY_TIP)
+-- A part's Report ends its tooltip with the line about its right-click, where the debug log's menu is.
+Spoken:RegisterDeveloper({ MenuHint = function() return "Right-click: the debug log" end })
+Expect("a part's Report tooltip ends with the debug log's menu hint", Tip(PartButton(L.QUEST_PART_ACCEPT, "report")),
+    L.OPT_REPORT_PROBLEM .. "|" .. L.OPT_REPORT_QUEST_TIP .. "|Right-click: the debug log")
+Spoken:RegisterDeveloper(nil)
 Click("Kobold Candles")
 Expect("a quest no pack has has no Play", PartButton(L.QUEST_PART_ACCEPT, "play") == nil
     or not PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown(), true)
 Expect("...nor Report", PartButton(L.QUEST_PART_ACCEPT, "report") == nil
     or not PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
+-- A part a pack voices whose words are not known: there, saying so, with its Play and Report.
+do
+    local words = SpokenQuestsText[KOBOLDS].complete
+    SpokenQuestsText[KOBOLDS].complete = nil
+    Click("Kobold Camp Cleanup")
+    local last = page.body.lastParts[#page.body.lastParts]
+    Expect("a voiced part with no words known keeps its part, saying no words are known",
+        last.heading .. "|" .. last.text, L.QUEST_PART_COMPLETE .. "|" .. L.QUEST_PART_NO_TEXT)
+    Expect("...with Play and Report", PartButton(L.QUEST_PART_COMPLETE, "play"):IsShown()
+        and PartButton(L.QUEST_PART_COMPLETE, "report"):IsShown(), true)
+    local handInPlay = PartButton(L.QUEST_PART_COMPLETE, "play")
+    handInPlay.scripts.OnClick(handInPlay)
+    Expect("...its Play playing it", Spoken:GetNowPlaying() and Spoken:GetNowPlaying().fileName, "7-complete")
+    Spoken:StopAll()
+    SpokenQuestsText[KOBOLDS].complete = words
+    local progress = SpokenQuestsText[CANDLES].progress
+    SpokenQuestsText[CANDLES].progress = nil
+    Click("Kobold Candles")
+    Expect("a part with no words known that no pack voices is left out", #page.body.lastParts .. " "
+        .. page.body.lastParts[2].heading, "2 " .. L.QUEST_PART_COMPLETE)
+    SpokenQuestsText[CANDLES].progress = progress
+end
 ClickChain("Lost Necklace")
 completed[NECKLACE] = true
 Tab:Refresh()
-Expect("a chain's page has no Play, even with a voiced quest started: its quests are on the left",
-    page.play:IsShown(), false)
+Expect("a chain's page has no Play, even with a voiced quest started: its quests are on the left", page.play, nil)
 completed[NECKLACE] = nil
 ClickChain("Lost Necklace")
 

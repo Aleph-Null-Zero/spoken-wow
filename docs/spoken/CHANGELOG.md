@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Play in Azeroth's Compendium works as the quest log's.** It shows Stop while its part or book
+  is read and Replay once you stop it; Stop no longer takes the line out of the queue, and Play
+  while the queue is stopped plays at once. A queue emptied while stopped no longer stays stopped,
+  so the next line plays. Play and Report say the same in their tooltips on every tab. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium keeps several zones open at once.** On Quests, Zones and Books a click
   on a zone's or city's card opens or closes that card alone, so opening Elwynn Forest no longer
   closes Alterac Mountains. A city's card stays as you left it while its zone is closed. *([Nucabe](https://github.com/Nucabe))*
