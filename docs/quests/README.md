@@ -1528,11 +1528,20 @@ is under way, has no part on the page: it is not shown or played there, and Voic
 only the offer and the hand-in, so a quest voiced only in its progress counts as unvoiced. Each
 part's Play plays that part. A part is named and pictured for who says it: the offer for the
 quest's giver, as the quest log's Play is, and the hand-in for the one it is handed in to
-(`ender` or `enderObject`, else the giver). Each part's header is drawn as the Small Window's:
-the speaker's round face (`Spoken:CreateSpeakerFace`, 44 across) with the part's badge, their
-name over the part's name beside it, and the part's Play and Report at the right. A creature the
-client has not cached shows the book until it has, one never cached or no one known keeps the
-book, and an object or an item shows the quest's item, else a posted notice. Shift-click on a quest's row hands its first part
+(`ender` or `enderObject`, else the giver). The offer's part is named Description, by the
+client's own `QUEST_DESCRIPTION` (the heading of a quest's text in its quest window) where it has
+one, else `L.QUEST_PART_ACCEPT`; the hand-in's is Completion. Where DialogueUI is installed, each
+part's header is the top of Spoken's DialogueUI window (`Spoken:CreateDialogueHeader`), with the
+part's name where the window has the quest's: DialogueUI's header strip, in its brown theme
+whatever DialogueUI's own (the page is parchment), with the speaker's face in its socket and the
+part's badge, the speaker's name in DialogueUI's subtitle font over the part's name in its title
+font, all scaled from the window's to the page's width, and the part's Play and Report at the
+right, where the window has its round controls. The words start 1.4 of their size under the
+strip's line. Without DialogueUI the header is drawn as the Small Window's: the speaker's round
+face (`Spoken:CreateSpeakerFace`, 44 across) with the part's badge, their name over the part's
+name beside it, and the part's Play and Report at the right. A creature the client has not cached
+shows the book until it has, one never cached or no one known keeps the book, and an object or
+an item shows the quest's item, else a posted notice. Shift-click on a quest's row hands its first part
 shown that a pack voices (its accept line, else its complete line) to `Player:Enqueue`, behind
 what the queue holds, and leaves the selection and the page as they were; a line already queued
 is not queued again. The page shown with no quest chosen says so.
