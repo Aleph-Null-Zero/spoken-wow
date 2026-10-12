@@ -342,15 +342,22 @@ function Face:SetSpeaker(speaker)
     self.badge:SetShown(badge ~= nil)
     self.badgeBackground:SetShown(badge ~= nil)
     -- Bronze Border tints the ring, as it does the Small Window's.
-    local r, g, b = 1, 1, 1
-    if BRONZE and Addon.db and Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
-    self.ring:SetVertexColor(r, g, b)
+    if self.ring then
+        local r, g, b = 1, 1, 1
+        if BRONZE and Addon.db and Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
+        self.ring:SetVertexColor(r, g, b)
+    end
     self:Draw()
 end
 
 --- The Small Window's portrait, `size` across, on `parent`, for a page to show who speaks.
 function MinimalPlayer:CreateFace(parent, size)
-    local face = BuildFace(parent, size)
+    return self:DrawSpeakers(BuildFace(parent, size))
+end
+
+--- Gives `face` SetSpeaker: a frame with a `viewport` clipped round, a `badge` and its
+--- `badgeBackground`, and a `ring` where it has one (DialogueUI's header has its socket instead).
+function MinimalPlayer:DrawSpeakers(face)
     face.still = face.viewport:CreateTexture(nil, "ARTWORK")
     face.still:SetAllPoints()
     face.still:Hide()
