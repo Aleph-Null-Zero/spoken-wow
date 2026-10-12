@@ -1,7 +1,7 @@
 -- The readables in Azeroth's Compendium: every book, letter, note and plaque, in a card for the
--- zone it is in under its continent's banner and a small card for what it is, or by what it is
+-- zone it is in under its continent's banner and a card for what it is, or by what it is
 -- alone, found or not; a readable's page with
--- where it comes from; the search, Found Only and Unlock Unfound Readables; and the tabs once the
+-- where it comes from; the search, Found Only and Unlock Unfound Books; and the tabs once the
 -- places are there too. Against the shipped data (Data/Books.lua, Data/Places.lua). Run with
 -- `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
@@ -204,7 +204,7 @@ Expect("a readable not found does not open", page.title.text, "Kurdran Wildhamme
 
 SpokenBooksSettings.unlockUnfound = true
 B:RefreshReadables()
-Expect("Unlock Unfound Readables opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
+Expect("Unlock Unfound Books opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
 -- Opening one is not finding it: the counts stay what the character has found.
 local before = RowFor("Stormwind City").count.text
 Click("Ranger Captain Alleria Windrunner")
@@ -279,7 +279,7 @@ do
         if row.row and row.label.text == "Ranger Captain Alleria Windrunner" then break end
     end
 end
-Expect("a zone's readables are under a small card for their kind, open", typeRow ~= nil and RowFor(typeRow).row.open, true)
+Expect("a zone's readables are under a card for their kind, open", typeRow ~= nil and RowFor(typeRow).row.open, true)
 Click(typeRow)
 Expect("...a click closes the type", Has(Shown(), "Ranger Captain Alleria Windrunner") or RowFor(typeRow).row.open, false)
 Click(typeRow)

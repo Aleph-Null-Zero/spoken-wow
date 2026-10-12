@@ -2,16 +2,17 @@
 -- note and plaque Spoken Books reads, found or not, to read and listen to anywhere.
 --
 -- The list is laid out as the places' (Spoken Zones' tab): a banner for each continent, a card for
--- each of its zones (how many of its writings are found, with a bar), a city a small card inside
--- the zone around it; in an opened zone a small card for each kind of writing -- books, journals,
--- letters, notes, scrolls, tablets, plaques, gravestones, exhibits, pictures -- and the writings
--- under it. After the continents, a banner each for the seasonal events' readables, for those had
+-- each of its zones (how many of its writings are found, with a bar), a city a card inside the
+-- zone around it; in an opened zone a card for each kind of writing -- books, journals, letters,
+-- notes, scrolls, tablets, plaques, gravestones, exhibits, pictures -- and the writings under it.
+-- After the continents, Other Lands' banner for the zones on none and Battlegrounds', each with a
+-- card for each of its zones; then a banner each for the seasonal events' readables, for those had
 -- in too many zones to list under each and for those whose origin is not known, with a card for
 -- each kind inside. With By Zone off, the list is a card for each kind alone, every readable under
--- its own. Where each is comes from
--- Data/Places.lua; what this character has found, from SpokenBooksCharacter (Core.lua). A readable
--- not found yet is listed greyed, with a padlock, and does not open, unless Unlock Unfound
--- Readables is on. On the right its pages, on parchment, with where it comes from and Play.
+-- its own. Where each is comes from Data/Places.lua; what this character has found, from
+-- SpokenBooksCharacter (Core.lua). A readable not found yet is listed greyed, with a padlock, and
+-- does not open, unless Unlock Unfound Books is on. On the right its pages, on parchment, with
+-- where it comes from and Play.
 
 local ADDON_NAME, SpokenBooks = ...
 
@@ -60,7 +61,7 @@ local function Title(id)
 	return book and book.title or tostring(id)
 end
 
--- Every readable by where it is: index.zones[mapID] = { [type] = { ids } }, the two groups, the
+-- Every readable by where it is: index.zones[mapID] = { [type] = { ids } }, the three groups, the
 -- types, and `all`, what every count is out of. A readable Data/Places.lua does not carry is left
 -- out everywhere: places.mjs drops the Deprecated and TEST items no one can find, and counting
 -- them would keep every total out of reach. Built once: the data is fixed for the session.
@@ -143,7 +144,7 @@ local function Listed(set)
 	return false
 end
 
--- By Zone, under the list: on, zones then types; off, the types alone.
+-- By Zone, in the filter menu: on, zones then types; off, the types alone.
 local function ByZone()
 	return not (SpokenBooksSettings and SpokenBooksSettings.compendiumByZone == false)
 end
@@ -314,8 +315,8 @@ local function KindCards(byType, nest, into, item, shut, whole)
 	end
 end
 
--- A zone's card, and when it is open (or a search finds something in it) its city's small card,
--- then a small card for each kind of writing in it.
+-- A zone's card, and when it is open (or a search finds something in it) its city's card, then a
+-- card for each kind of writing in it.
 local function ZoneRows(mapID, nest, whole)
 	whole = Named(MapName(mapID), whole)
 	local all = ReadablesIn(mapID)
@@ -341,8 +342,8 @@ local function ZoneRows(mapID, nest, whole)
 	return rows
 end
 
--- Those found across Azeroth, or of no known origin: a banner of their own after the continents,
--- holding a card for each kind of writing.
+-- A group's readables (the seasonal events', those found across Azeroth or those of no known
+-- origin): a banner of their own after the zones', holding a card for each kind of writing.
 local function GroupRows(key, label, ids)
 	if #ids == 0 then return {} end
 	local set, byType = {}, {}
