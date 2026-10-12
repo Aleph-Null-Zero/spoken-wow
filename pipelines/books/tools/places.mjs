@@ -135,6 +135,12 @@ for (const m of bookPart.matchAll(/\[(\d+)\] = \{ title = "((?:[^"\\]|\\.)*)", p
 const pageBook = new Map();
 for (const [id, book] of books) for (const page of book.pages) pageBook.set(page, id);
 if (books.size === 0) throw new Error(`no books read from ${BOOKS}`);
+// Each page's words, as Lua source: what a gravestone says decides that it is one.
+const pageText = new Map();
+const pagePart = booksLua.slice(booksLua.indexOf("\tpages = {"), booksLua.indexOf("\tbooks = {"));
+for (const m of pagePart.matchAll(/\[(\d+)\] = \{ book = \d+, number = \d+, text = "((?:[^"\\]|\\.)*)"/g)) {
+  pageText.set(Number(m[1]), m[2]);
+}
 
 // ---------------------------------------------------------------- where on the map
 
@@ -414,7 +420,7 @@ for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
   counts[k]++;
   if (wide) counts.wide++;
   const type = typeOf({ title: book.title, pages: book.pages.length, world: k === "world",
-    icons: (bookItems.get(id) ?? []).map((item) => itemIcon.get(item) ?? "") });
+    text: pageText.get(book.pages[0]) ?? "", icons: (bookItems.get(id) ?? []).map((item) => itemIcon.get(item) ?? "") });
   counts.types[type] = (counts.types[type] ?? 0) + 1;
   const parts = [`kind = "${k}"`, `type = "${type}"`];
   if (wide) parts.push("wide = true");

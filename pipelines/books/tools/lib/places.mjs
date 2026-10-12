@@ -24,13 +24,18 @@ const TITLE_TYPE = [
   [/orders|report|deed|writ|plans/i, "scroll"],
 ];
 
-// What a readable is. One standing in the world by its name and how many pages it has (a
-// gravestone, a museum's exhibit, a book on a shelf, else a plaque or a sign); a carried one by
-// the form its title names, else its item's icon, else the rest of its title.
-export function typeOf({ title, pages = 1, world = false, icons = [] }) {
+// What a readable is. One standing in the world by its name, its first page and how many pages it
+// has (a gravestone, a museum's exhibit, a book on a shelf, else a plaque or a sign); a carried one
+// by the form its title names, else its item's icon, else the rest of its title.
+//
+// A grave is known by its words too: Uther's, Durotan's and Grom's markers carry their names, not
+// "Tombstone", and open "Here lies". "In memory of" is left out: Horatio Montgomery's plaque in
+// Stormwind is a memorial, not a grave.
+export function typeOf({ title, pages = 1, world = false, text = "", icons = [] }) {
   if (world) {
     if (/tombstone|headstone|here lies|in loving memory|\bgrave/i.test(title)) return "grave";
-    if (/skeleton|\begg\b|talon|skull of|astrolabe|catapult|armor of|relics|reliefs/i.test(title)) return "exhibit";
+    if (/^\s*(here lies|in loving memory)/i.test(text)) return "grave";
+    if (/skeleton|\begg\b|talon|skull of|astrolabe|catapult|armor of|relics|reliefs|strider/i.test(title)) return "exhibit";
     if (pages > 1 || /journal/i.test(title)) return "book";
     if (/\bnote\b/i.test(title)) return "note";
     return "plaque";

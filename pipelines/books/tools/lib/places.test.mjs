@@ -45,3 +45,17 @@ test("a readable in the world goes by its name and its pages", () => {
   assert.equal(typeOf({ title: "Aftermath of the Second War", world: true, pages: 6 }), "book");
   assert.equal(typeOf({ title: "Kurdran Wildhammer", world: true }), "plaque");
 });
+
+test("a marker that opens \"Here lies\" is a grave, whatever its name", () => {
+  assert.equal(typeOf({ title: "Uther the Lightbringer", world: true, text: "Here lies Uther the Lightbringer" }), "grave");
+  assert.equal(typeOf({ title: "Rock of Durotan", world: true, text: "Here lies Durotan - first Chieftain" }), "grave");
+  assert.equal(typeOf({ title: "A Grave", world: true, text: "In loving memory of Jesse Morales" }), "grave");
+});
+
+test("a memorial is a plaque, not a grave", () => {
+  assert.equal(typeOf({ title: "Horatio Montgomery, M.D.", world: true, text: "In memory of my dear mentor" }), "plaque");
+});
+
+test("the Hall of Explorers' Geru Strider is an exhibit", () => {
+  assert.equal(typeOf({ title: "Geru Strider", world: true }), "exhibit");
+});
