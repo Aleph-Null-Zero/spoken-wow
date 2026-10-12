@@ -12,6 +12,8 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - Who: the races and classes allowed to take it (quest_template.AllowableRaces,
   quest_template_addon.AllowableClasses) are read from a TrinityCore world DB (the Forever
   repack's), which the vmangos extraction does not keep.
+- Chains: the quest before each one in its storyline (`prev`), from the same DB's
+  quest_template_addon (chain_links below), so the tab can group a zone's quests into their chains.
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/).
 
 With the repack's server up:  make quests-compendium
@@ -138,12 +140,65 @@ def corpus_quests():
     return quests, givers, corpus.get("spawns", {})
 
 
-def quest_line(qid, title, zones=(), group=None, races=0, classes=0):
+def chain_links(rows, known):
+    """{questID: the quest before it in its storyline}, for the quests in `known`.
+
+    `rows` is quest_template_addon as {questID: {"prev", "next", "group", "breadcrumb"}}:
+    - PrevQuestID > 0: that quest must be handed in first, so it comes before. A negative one only
+      has to be in the log at the time; that quest is not over yet, so it is not "before".
+    - NextQuestID: this quest opens that one, which comes after it where it names no PrevQuestID
+      of its own. Several quests opening the same one (an ExclusiveGroup: any one of them, or all
+      of them) leave the lowest id as the one before.
+    - BreadcrumbForQuestId: a breadcrumb leads to its quest, which comes after it where nothing
+      else does.
+    A quest the corpus lacks is passed through to the one before it, and a link that would close a
+    loop is dropped, so every chain has a first quest.
+    """
+    before = {}
+    for qid, row in rows.items():
+        if (row.get("prev") or 0) > 0:
+            before[qid] = row["prev"]
+    for kind in ("next", "breadcrumb"):
+        opened = {}
+        for qid, row in sorted(rows.items()):
+            target = row.get(kind) or 0
+            if target > 0 and target != qid:
+                opened.setdefault(target, qid)
+        for target, qid in opened.items():
+            before.setdefault(target, qid)
+
+    def known_before(qid):
+        seen = {qid}
+        step = before.get(qid)
+        while step is not None and step not in known:
+            if step in seen:
+                return None
+            seen.add(step)
+            step = before.get(step)
+        return step
+
+    links = {}
+    for qid in sorted(known):
+        step = known_before(qid)
+        if step is None or step == qid:
+            continue
+        # Up from the quest before: reaching this one again means the link closes a loop.
+        up, steps = step, 0
+        while up is not None and up != qid and steps <= len(links):
+            up, steps = links.get(up), steps + 1
+        if up != qid:
+            links[qid] = step
+    return links
+
+
+def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None):
     parts = [lua_string(title)]
     if zones:
         parts.append("zones = { %s }" % ", ".join(str(z) for z in zones))
     if group:
         parts.append(f"sort = {group}")
+    if prev:
+        parts.append(f"prev = {prev}")
     # Classic's eight races and nine classes (bits by id less one); every one of them, or
     # none named, is anyone, and goes unsaid. The DB's "all" is every bit set.
     races = races & 0xFF
@@ -160,8 +215,9 @@ def render(quest_lines, sort_lines):
 --
 -- Every quest the voice packs were made from, for the Quests tab of Azeroth's Compendium:
 -- {{ English title, zones = {{ uiMapID... }} or sort = a QuestSort (a class, a profession, a
--- season), races and classes = who may take it (bit masks, absent for anyone) }}. The words are
--- Data/QuestText.lua's. Regenerate with the Forever repack's world DB up:
+-- season), races and classes = who may take it (bit masks, absent for anyone), prev = the quest
+-- before it in its chain }}. The words are Data/QuestText.lua's. Regenerate with the Forever
+-- repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
 --
@@ -232,7 +288,16 @@ def with_db(args):
         cur.execute(f"SELECT ID, AllowableClasses FROM quest_template_addon WHERE ID IN ({marks})", ids)
         for qid, classes in cur.fetchall():
             quests[qid]["classes"] = int(classes or 0)
+        # Every quest's links, not only the corpus's: a chain can pass through a quest it lacks.
+        # Breadcrumbs are a later column some world DBs do not have.
+        cur.execute("SHOW COLUMNS FROM quest_template_addon LIKE 'BreadcrumbForQuestId'")
+        breadcrumb = ", BreadcrumbForQuestId" if cur.fetchall() else ", 0"
+        cur.execute(f"SELECT ID, PrevQuestID, NextQuestID, ExclusiveGroup{breadcrumb} FROM quest_template_addon")
+        rows = {int(qid): {"prev": int(prev or 0), "next": int(nxt or 0), "group": int(group or 0),
+                           "breadcrumb": int(crumb or 0)}
+                for qid, prev, nxt, group, crumb in cur.fetchall()}
     db.close()
+    links = chain_links(rows, set(ids))
 
     sorts = {}
     for locale in ["enUS"] + LOCALES:
@@ -261,7 +326,8 @@ def with_db(args):
             by_sort += 1
         else:
             unplaced += 1
-        quest_lines[qid] = quest_line(qid, q["title"], zones, group, q.get("races", 0), q.get("classes", 0))
+        quest_lines[qid] = quest_line(qid, q["title"], zones, group, q.get("races", 0), q.get("classes", 0),
+                                      links.get(qid))
 
     sort_lines = {}
     for sid in sorted(used_sorts):
@@ -269,7 +335,8 @@ def with_db(args):
         locs = [f"{l} = {lua_string(names[l])}" for l in LOCALES if names.get(l) and names[l] != names.get("enUS")]
         sort_lines[sid] = f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
     return quest_lines, sort_lines, (f"{placed} in a zone, {by_sort} under a class, profession or season, "
-                                     f"{unplaced} with no place; {len(used_sorts)} sorts")
+                                     f"{unplaced} with no place; {len(used_sorts)} sorts; "
+                                     f"{len(links)} after another in a chain")
 
 
 def main():

@@ -79,6 +79,12 @@ local ns = {}
 for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab", "UI/OpenInCompendium" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
 end
+-- A chain, by hand: the shipped data may not have them yet (export_compendium.py writes `prev`
+-- from the world DB). Lost Necklace, Pie for Billy, Back to Billy, then Goldtooth.
+local NECKLACE, PIE, BACK, GOLDTOOTH = 85, 86, 84, 87
+SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
+SpokenQuestsCompendium.quests[BACK].prev = PIE
+SpokenQuestsCompendium.quests[GOLDTOOTH].prev = BACK
 local L, Tab = VO.L, VO.QuestsTab
 local C = _G.SpokenCompendium
 
@@ -220,6 +226,60 @@ box.hooks.OnTextChanged[1](box)
 Expect("...and never a quest of the other side", Has(Shown(), "Sharptalon's Claw"), false)
 box:SetText("")
 box.hooks.OnTextChanged[1](box)
+
+-- Chains: a zone's quests that follow one another under one row, named after the last of them.
+Tab:Open(KOBOLDS)
+local function ChainRow(label)
+    Shown()
+    for _, row in ipairs(rows) do
+        if row.shown ~= false and row.row and row.row.kind == "chain" and row.label.text == label then return row end
+    end
+end
+list = Shown()
+Expect("a chain is one row in its zone, named after its last quest", ChainRow("Goldtooth") ~= nil, true)
+Expect("...its quests inside it, not beside it", Has(list, "Lost Necklace") or Has(list, "Pie for Billy"), false)
+Expect("...a quest in no chain still a row of its own", Has(list, "Kobold Camp Cleanup"), true)
+Expect("...counted, completed out of all", ChainRow("Goldtooth").count.text, "0/4")
+Expect("...its bar empty", ChainRow("Goldtooth").chainTrack:IsShown() and ChainRow("Goldtooth").chainFill:IsShown(), false)
+completed[NECKLACE], completed[PIE] = true, true
+questLog = { BACK }
+Tab:Refresh()
+local count = ChainRow("Goldtooth").count.text
+Expect("...how many are in progress, by the quest mark", count:find("ActiveQuestIcon", 1, true) ~= nil
+    and count:find("1", 1, true) ~= nil and count:sub(-3), "2/4")
+local track, fill = ChainRow("Goldtooth").chainTrack, ChainRow("Goldtooth").chainFill
+Expect("...and its bar filled as far as completed", fill:IsShown() and math.floor(fill.width / track.width * 100 + 0.5), 50)
+Click("Goldtooth")
+list = Shown()
+Expect("a chain opens on its quests, in the order they are taken",
+    list:find("Lost Necklace|Pie for Billy|.*Back to Billy|Goldtooth") ~= nil, true)
+Expect("...chosen, its page has the chain's name", page.title.text, "Goldtooth")
+Expect("...its count", page.sub.text, "2 of 4 completed, 1 in progress")
+local text = page.body.text.text or ""
+Expect("...and its quests in order, each marked", text:find("^1%. .*Lost Necklace\n2%. .*Pie for Billy\n3%. .*ActiveQuestIcon.*Back to Billy\n4%. Goldtooth$") ~= nil, true)
+completed[BACK], completed[GOLDTOOTH] = true, true
+questLog = {}
+Tab:Refresh()
+Expect("a chain all completed gets a tick", ChainRow("Goldtooth").count.text:find("UI-CheckBox-Check", 1, true) ~= nil
+    and ChainRow("Goldtooth").count.text:sub(-3), "4/4")
+Click("Goldtooth")
+Expect("...and closes again", Has(Shown(), "Pie for Billy"), false)
+Tab:Open(PIE)
+Expect("opened on a quest of a chain, the chain is opened to it", RowFor("Pie for Billy") ~= nil
+    and RowFor("Pie for Billy").selected, true)
+box:SetText("pie for")
+box.hooks.OnTextChanged[1](box)
+list = Shown()
+Expect("a search finds a quest inside its chain", Has(list, "Pie for Billy") and ChainRow("Goldtooth") ~= nil
+    and not Has(list, "Lost Necklace"), true)
+box:SetText("")
+box.hooks.OnTextChanged[1](box)
+for _, id in ipairs({ NECKLACE, PIE, BACK, GOLDTOOTH }) do completed[id] = nil end
+VO.Addon.db.global.Compendium.FoundOnly = true
+Tab:Refresh()
+Expect("Started Only leaves out a chain with nothing started", ChainRow("Goldtooth"), nil)
+VO.Addon.db.global.Compendium.FoundOnly = false
+Tab:Refresh()
 
 -- Play: what the voice packs have of the quest, from the offer on.
 VO.DataModules:Register("TestPack", {

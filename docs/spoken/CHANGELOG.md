@@ -16,6 +16,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   and their page, and counted with the completed ones. Started Only keeps them, and the list
   follows your quest log while it is open. Open in Azeroth's Compendium on a quest you have
   accepted shows its words. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium groups each zone's quests into their chains.** A chain's row is named
+  after its last quest and shows how many of its quests you have completed, how many are in
+  progress, and a bar; a chain you have finished gets a tick. *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
