@@ -77,6 +77,10 @@ INSTANCE_ZONE = {
     # areas have no map of their own, so their quests resolved to no zone.
     2998: 1437, 3065: 1455,
 }
+# A giver standing in this many zones or more is a kind of creature found everywhere (CLUCK!'s is
+# any chicken) or a post in every capital (the battlemasters, the Argent Dawn's quartermasters).
+# Listed in each of them, its quest would count in every one; it is placed by other means or not.
+GENERIC_GIVER_ZONES = 4
 # The corpus's quest lines.
 SOURCES = ["accept", "progress", "complete"]
 # The races by side, as AllowableRaces bits (ChrRaces.PlayableRaceBit): Human, Dwarf, Night Elf,
@@ -289,6 +293,8 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
       Excavation Site in the Wetlands) is placed where players saw its giver (`seen`, uiMapIDs);
     - where its giver stands (`giver_zones`, from the corpus's spawns);
     - where players saw its giver.
+    A giver found in GENERIC_GIVER_ZONES zones or more says nothing of where the quest is, and
+    places it nowhere.
     """
     if sort > 0:
         zone = maps.zone_of_area(sort)
@@ -303,7 +309,7 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
             zone = maps.zone_of_uimap(uimap)
             if zone and zone not in zones:
                 zones.append(zone)
-        return zones
+        return zones if len(zones) < GENERIC_GIVER_ZONES else []
 
     if eg:
         area, category = eg.get("zoneAreaId") or 0, eg.get("categoryId") or 0
@@ -315,7 +321,7 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
         if area > 0 and seen_zones():
             return seen_zones(), None, "client"
     zones = giver_zones()
-    if zones:
+    if zones and len(zones) < GENERIC_GIVER_ZONES:
         return zones, None, "giver"
     if seen_zones():
         return seen_zones(), None, "client"

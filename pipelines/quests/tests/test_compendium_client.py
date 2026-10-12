@@ -149,3 +149,8 @@ def test_offline_the_cache_is_read(remote):
 def test_offline_with_nothing_cached_the_export_stops(remote):
     with pytest.raises(OSError):
         eg_datasets("quests.enUS")
+
+
+def test_a_giver_found_in_four_zones_or_more_places_its_quest_nowhere():
+    assert _place(0, None, givers=[1453, 1455, 1457, 1417]) == ([], None, None)
+    assert _place(0, None, givers=[1453, 1455, 1457]) == ([1453, 1455, 1457], None, "giver")
