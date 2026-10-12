@@ -32,10 +32,29 @@ local MATERIALS = {
 }
 SpokenBooks.MATERIALS = MATERIALS
 
+-- What a kind of writing is written on where no page is open to ask the game (a readable played
+-- from Azeroth's Compendium): gravestones and tablets in stone, plaques and exhibits in bronze,
+-- the rest on paper. The book window draws the stone ones in stone.
+local KIND_MATERIAL = { grave = "Stone", tablet = "Stone", plaque = "Bronze", exhibit = "Bronze" }
+
+-- Whether `pageId` is the page open in the world, whose item and material the game can tell.
+local function IsOpen(self, pageId)
+	return self.lastPage ~= nil and (pageId == nil or pageId == self.lastPage)
+end
+
+--- What `pageId`'s readable is written on by its kind, or nil for paper.
+function SpokenBooks:KindMaterial(pageId)
+	local place = pageId and self:Data() and self:Data().pages[pageId]
+	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books
+	local entry = place and places and places[place.book]
+	return entry and KIND_MATERIAL[entry.type] or nil
+end
+
 --- Open is what the item text events say, not the game's frame, which DialogueUI hides. A page
---- queued with nothing open takes the book.
-function SpokenBooks:PagePicture()
-	if self.lastPage then
+--- not open (`pageId` another than the one open, or nothing open) takes what its kind is written
+--- on, else the book.
+function SpokenBooks:PagePicture(pageId)
+	if IsOpen(self, pageId) then
 		local item = ItemTextGetItem and ItemTextGetItem()
 		local icon, crop
 		if Spoken and Spoken.BagItemIcon then icon, crop = Spoken:BagItemIcon(item) end
@@ -46,14 +65,16 @@ function SpokenBooks:PagePicture()
 			return { kind = "texture", texture = MATERIALS[material], texCoord = ICON_CROP }
 		end
 	end
+	local material = not IsOpen(self, pageId) and self:KindMaterial(pageId)
+	if material then return { kind = "texture", texture = MATERIALS[material], texCoord = ICON_CROP } end
 	return { kind = "texture", texture = BOOK_TEXTURE }
 end
 
---- What the open page is written on (ItemTextGetMaterial: Parchment, Stone, Marble...), or nil
---- with nothing open.
-function SpokenBooks:PageMaterial()
-	if not self.lastPage then return nil end
-	return ItemTextGetMaterial and ItemTextGetMaterial() or nil
+--- What `pageId` is written on (ItemTextGetMaterial: Parchment, Stone, Marble...): the game's
+--- word for the page open, else its kind's (KindMaterial), else nil.
+function SpokenBooks:PageMaterial(pageId)
+	if IsOpen(self, pageId) then return ItemTextGetMaterial and ItemTextGetMaterial() or nil end
+	return self:KindMaterial(pageId)
 end
 
 -- What a readable can be (Data/Places.lua's `type`), in the order the Compendium lists them,
@@ -217,8 +238,8 @@ function SpokenBooks:ClipFor(pageId)
 							or ((book and #book.pages > 1)
 								and format(L.OPT_PAGE_COUNT_FMT, place.number, #book.pages) or nil),
 						bullet = "book",
-						material = self:PageMaterial(),
-						portrait = self:PagePicture(),
+						material = self:PageMaterial(pageId),
+						portrait = self:PagePicture(pageId),
 						actions = ACTIONS,
 					},
 					stopCallback = PageStopped,

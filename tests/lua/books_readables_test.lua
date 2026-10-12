@@ -518,5 +518,17 @@ _G.SpokenBooksCharacter = { read = { [LETTER] = true } }
 B:InitDB()
 Expect("...one heard before Found was kept is found", B:IsBookFound(LETTER), true)
 
+-- Played from here, with no page open in the world, a readable is drawn on what its kind is
+-- written on: the book window draws stone and bronze in stone, the rest on paper.
+local function FirstPage(id) return B:Data().books[id].pages[1] end
+B.lastPage = nil
+Expect("a gravestone played with nothing open is on stone", B:PageMaterial(FirstPage(2731)), "Stone")
+Expect("...a plaque on bronze", B:PageMaterial(FirstPage(KURDRAN)), "Bronze")
+Expect("...a letter on paper", B:PageMaterial(FirstPage(LETTER)), nil)
+Expect("...its picture the stone's", B:PagePicture(FirstPage(2731)).texture, B.MATERIALS.Stone)
+B.lastPage = FirstPage(LETTER)
+Expect("...and another page open in the world lends it nothing", B:PageMaterial(FirstPage(2731)), "Stone")
+B.lastPage = nil
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll readables tests passed")
