@@ -778,14 +778,43 @@ local function PlayerZone()
 	end
 end
 
--- The continent the player is on where it has readables, else the first that has.
+-- Whether the list shows what holds `set` ({ [id] = true }): Found Only leaves out one with
+-- nothing found, Voiced Only one with nothing voiced.
+local function SetShown(set)
+	return not (OnlyFound() and Tally(set) == 0) and Listed(set)
+end
+
+-- The continent the player is on where the list shows it, else the first it shows.
 local function PlayerContinent()
 	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
-	local listed = Continents()
+	local listed = {}
+	for _, continent in ipairs(Continents()) do
+		local set = {}
+		for _, mapID in ipairs(ZonesOn(continent)) do ReadablesIn(mapID, set) end
+		if SetShown(set) then table.insert(listed, continent) end
+	end
 	for _, continent in ipairs(listed) do
 		if map == continent or (map and ContinentOf(map) == continent) then return continent end
 	end
 	return listed[1]
+end
+
+-- By Type: the first kind the list shows holding a readable of `zone`, else the first it shows.
+local function PlayerKind(zone)
+	local here = zone and ReadablesIn(zone) or {}
+	local first
+	for _, type in ipairs(TYPES) do
+		local set, holds = {}, false
+		for _, id in ipairs(Index().types[type] or {}) do
+			set[id] = true
+			if here[id] then holds = true end
+		end
+		if next(set) and SetShown(set) then
+			if holds then return type end
+			first = first or type
+		end
+	end
+	return first
 end
 
 -- Open what holds a zone's card: Battlegrounds' banner, its continent's, or Other Lands'.
@@ -808,11 +837,15 @@ local function OpenZone(zone)
 	if CITY_IN[zone] then openZones[CITY_IN[zone]] = true end
 end
 
--- Choose where the player stands: their zone's card, opened, else their continent's banner. The tab
--- never shows a page with nothing chosen.
+-- Choose where the player stands: their zone's card, opened, else their continent's banner; By
+-- Type, the kind of writing their zone holds. Never what the list does not show: the tab would
+-- show a page for no row. The tab never shows a page with nothing chosen.
 local function LandOnPlayer()
 	local zone = PlayerZone()
-	if zone then
+	if not ByZone() then
+		local kind = PlayerKind(zone)
+		selection = kind and { type = kind } or nil
+	elseif zone and SetShown(ReadablesIn(zone)) then
 		selection = { mapID = zone }
 		OpenZone(zone)
 		OpenAround(zone)

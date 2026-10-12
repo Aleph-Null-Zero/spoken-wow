@@ -152,6 +152,35 @@ do
     scroll.SetVerticalScroll, scroll.UpdateScrollChildRect, scroll.height = setScroll, nil, 120
     Reopen(9003)
 end
+-- The tab never lands on what the list does not show.
+do
+    local function FirstKindIn(mapID)
+        for _, type in ipairs(B.TYPES) do
+            for _, place in pairs(SpokenBooksPlaces.books) do
+                if place.type == type and not place.event and not place.wide then
+                    for _, zone in ipairs(place.zones or {}) do
+                        if zone == mapID then return L[B.TYPE_NAMES[type].all] end
+                    end
+                end
+            end
+        end
+    end
+    SpokenBooksSettings.compendiumByZone = false
+    Reopen(1436)
+    Expect("By Type, the tab lands on the first kind holding a readable of the player's zone",
+        panel.page.title.text, FirstKindIn(1436))
+    Expect("...its banner in the list", RowFor(panel.page.title.text) ~= nil
+        and RowFor(panel.page.title.text).row.kind, "type")
+    Reopen(9003)
+    Expect("...where their zone holds none, on the first kind", panel.page.title.text, L.TYPE_BOOK)
+    SpokenBooksSettings.compendiumByZone = nil
+    SpokenBooksSettings.compendiumFoundOnly = true
+    Reopen(1426)
+    Expect("Found Only, where the player's zone holds nothing found, the tab lands on their continent's banner",
+        panel.page.title.text .. " " .. tostring(RowFor("Dun Morogh") == nil), "Eastern Kingdoms true")
+    SpokenBooksSettings.compendiumFoundOnly = nil
+    Reopen(9003)
+end
 Click("Westfall")
 Reopen(1453)
 Expect("...and what the player chose, kept on reopening", panel.page.title.text, "Westfall")
