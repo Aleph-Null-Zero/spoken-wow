@@ -1383,6 +1383,9 @@ Unlock Uncompleted Quests is on, which Spoken's page shows in its Compendium sec
 and Completed Only are kept in `SpokenQuestsSettings.global.Compendium`. The page fills the
 placeholders for the player as the client does. Play queues the quest's accept, progress and
 complete lines, whichever the packs have, named for its giver as the quest log's Play is.
+Shift-click on a quest's row hands the same lines to `Player:Enqueue`, every one behind what the
+queue holds, and leaves the selection and the page as they were; a line already queued is not
+queued again. The page shown with no quest chosen says so.
 
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its

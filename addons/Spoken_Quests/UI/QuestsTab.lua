@@ -449,7 +449,8 @@ local PLAY = {
         return false
     end,
     playing = function(id) return #Clips(id) > 0 end,
-    start = function(id)
+    -- `queued`: every line behind what the queue already holds, none played at once.
+    start = function(id, queued)
         local DataModules, Enums = VO.DataModules, VO.Enums
         local kind, giver = DataModules:GetQuestLogQuestGiverTypeAndID(id)
         local name = giver and DataModules:GetObjectName(kind, giver) or Title(id)
@@ -459,7 +460,7 @@ local PLAY = {
             if Voiced(id, moment) then
                 local soundData = { event = EVENTS[moment], questID = id, title = Title(id), name = name,
                     unitGUID = guid, origin = "Azeroth's Compendium" }
-                if first then VO.Player:PlayNow(soundData) else VO.Player:Enqueue(soundData) end
+                if first and not queued then VO.Player:PlayNow(soundData) else VO.Player:Enqueue(soundData) end
                 first = false
             end
         end
@@ -524,6 +525,10 @@ end
 --------------------------------------------------------------------------------
 
 local function OnClick(row)
+    if row.kind == "quest" and IsShiftKeyDown and IsShiftKeyDown() then
+        PLAY.start(row.quest, true)
+        return
+    end
     if row.kind == "quest" then
         selection = { quest = row.quest }
     elseif row.kind == "sort" or row.kind == "elsewhere" then
