@@ -51,6 +51,8 @@ local ns = {}
 for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
 end
+-- Each quest on its own row, not inside its chain's.
+for _, quest in pairs(SpokenQuestsCompendium.quests) do quest.prev = nil end
 local L, Tab = VO.L, VO.QuestsTab
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 Tab:Open()
