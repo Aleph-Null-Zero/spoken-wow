@@ -321,9 +321,9 @@ local function NarrateUnheard()
 		return
 	end
 
-	local entry, key = SpokenZones:GetSubzoneLore(mapID, subZone)
-	if entry and key and not SpokenZones:HasHeard(mapID, key) then
-		Enqueue(mapID, key)
+	local entry, key, storyMapID = SpokenZones:GetSubzoneLore(mapID, subZone)
+	if entry and key and not SpokenZones:HasHeard(storyMapID, key) then
+		Enqueue(storyMapID, key)
 	end
 end
 
@@ -498,12 +498,12 @@ function SpokenZones:OnAreaDiscovered(areaName)
 		return
 	end
 
-	local entry, key = self:GetSubzoneLore(mapID, areaName)
+	local entry, key, storyMapID = self:GetSubzoneLore(mapID, areaName)
 	if entry and key then
 		if debugOn then
 			self:Print('discovered subzone "%s" -> key "%s" -- queued', areaName, key)
 		end
-		Enqueue(mapID, key)
+		Enqueue(storyMapID, key)
 	elseif debugOn then
 		self:Print('discovered subzone "%s" -> key "%s" -- no lore', areaName, tostring(key))
 	end

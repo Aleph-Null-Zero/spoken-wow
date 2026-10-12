@@ -9,6 +9,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   NPC you hand it in to, with the part's badge, and their name over the part's name. The progress
   part is gone; Voiced Only and shift-click on a quest's row count only the offer and the
   completion, so a quest voiced only in its progress counts as unvoiced. *([Nucabe](https://github.com/Nucabe))*
+- **Razorfen Downs tells its story at its entrance in The Barrens.** Standing there, discovering
+  it or clicking it on The Barrens' map now plays and shows its story, and Azeroth's Compendium
+  opens on its card. *([Nucabe](https://github.com/Nucabe))*
 - **Books in Azeroth's Compendium files what is found inside a dungeon or raid under its card**,
   in the zone of its entrance, as Quests does: the Dark Keeper nameplates under Blackrock Depths,
   the lore books under Scholomance and the Scarlet Monastery. A zone with several dungeons holds

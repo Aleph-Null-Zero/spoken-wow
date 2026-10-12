@@ -326,19 +326,47 @@ function SpokenZones:ReportURL(mapID, areaKey, language)
 	return ("%s/%s/r/%d/%s"):format(self.SITE_URL, language or self:GetLanguage(), mapID, slug)
 end
 
--- Returns the lore entry and the key that was looked up. The key is returned
--- even on a miss so /spz debug can report what failed to match.
+-- The dungeons whose story is kept under another map than their entrance's (Data/Dungeons.lua), by
+-- entrance and key: the story's map.
+local storyAt, storiesFrom = {}, nil
+local function StoryIndex()
+	if storiesFrom ~= SpokenZones.Dungeons then
+		storiesFrom, storyAt = SpokenZones.Dungeons, {}
+		for entrance, list in pairs(storiesFrom or {}) do
+			for _, dungeon in ipairs(list) do
+				if dungeon.mapID ~= entrance then
+					storyAt[entrance] = storyAt[entrance] or {}
+					storyAt[entrance][dungeon.key] = dungeon.mapID
+				end
+			end
+		end
+	end
+	return storyAt
+end
+
+--- Where the story of the area `key` found on the map `mapID` is kept: the map and key its text,
+--- recording, picture and report are under. Razorfen Downs, found at its entrance in The Barrens,
+--- is told under Thousand Needles; every other area is told where it is found.
+function SpokenZones:StoryPlace(mapID, key)
+	local at = key and StoryIndex()[mapID]
+	return at and at[key] or mapID, key
+end
+
+-- Returns the lore entry, the key that was looked up and the map the story is kept under
+-- (SpokenZones:StoryPlace). The key is returned even on a miss so /spz debug can report what
+-- failed to match.
 function SpokenZones:GetSubzoneLore(parentMapID, areaName)
 	local key = self:ResolveAreaKey(areaName)
 	if not key then
 		return nil, nil
 	end
 
-	local zoneTable = self.Subzones[parentMapID]
+	local storyMapID = self:StoryPlace(parentMapID, key)
+	local zoneTable = self.Subzones[storyMapID]
 	if not zoneTable then
-		return nil, key
+		return nil, key, storyMapID
 	end
-	return zoneTable[key], key
+	return zoneTable[key], key, storyMapID
 end
 
 function SpokenZones:IsZoneMap(mapID)
@@ -687,9 +715,9 @@ local function CurrentAudioTarget()
 
 	local subZone = GetSubZoneText()
 	if subZone and subZone ~= "" then
-		local entry, key = SpokenZones:GetSubzoneLore(resolved, subZone)
+		local entry, key, storyMapID = SpokenZones:GetSubzoneLore(resolved, subZone)
 		if entry then
-			return resolved, key
+			return storyMapID, key
 		end
 	end
 
