@@ -590,19 +590,25 @@ Tab:Open(IRONDEEP)
 Expect("a battleground's quest opens under the battlegrounds' banner", Has(Shown(), "Irondeep Supplies")
     and RowFor("Battlegrounds").row.open and page.title.text, "Irondeep Supplies")
 
--- A zone's dungeons' and raids' quests: a small card inside its card, Dungeons and Raids, and in a
--- zone with several, a small card for each inside that.
+-- A zone's dungeons' and raids' quests: a small card inside its card, named after the dungeon
+-- where the zone has one; in a zone with several, Dungeons and Raids, a small card for each
+-- dungeon inside that.
 local STOCKADE, DARK_IRON = 386, 3801
 Tab:Open(STOCKADE)
 list = Shown()
-local dungeons = RowFor("Dungeons and Raids")
-Expect("opened on a dungeon's quest, its zone's Dungeons and Raids card is opened to it", dungeons ~= nil
+local dungeons = RowFor("Stormwind Stockade")
+Expect("opened on a dungeon's quest, its zone's card of its dungeon is opened to it", dungeons ~= nil
     and dungeons.row.small and dungeons.row.open and Has(list, "What Comes Around...") and page.title.text,
     "What Comes Around...")
+Expect("...named after the zone's one dungeon, not Dungeons and Raids", Has(list, "Dungeons and Raids"), false)
 Expect("...a small card inside the city's card, as far in as its quests", dungeons.row.nest, 2)
 Expect("...its badge a key", dungeons.icon.texture, [[Interface\Icons\INV_Misc_Key_03]])
-Expect("...with one dungeon there, its quests straight inside, no card of the dungeon's own",
-    Has(list, "Stormwind Stockade") or RowFor("What Comes Around...").row.nest, 3)
+Expect("...its quests straight inside", RowFor("What Comes Around...").row.nest, 3)
+stub.SetLocale("deDE")
+Tab:Refresh()
+Expect("...the dungeon's name in the client's language", RowFor("Verlies von Stormwind") ~= nil, true)
+stub.SetLocale("enUS")
+Tab:Refresh()
 Tab:Open(DARK_IRON)
 list = Shown()
 Expect("in a zone with several dungeons, a small card for each inside Dungeons and Raids",

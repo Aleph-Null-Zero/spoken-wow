@@ -594,8 +594,9 @@ end
 
 local dungeonOpen = {}
 
--- A zone's dungeons' and raids' quests under one small card, Dungeons and Raids; where the zone
--- has several (Blackrock Mountain's four, in Searing Gorge), a small card for each inside it.
+-- A zone's dungeons' and raids' quests under one small card: named after the dungeon where the
+-- zone has one, else Dungeons and Raids, with a small card for each dungeon inside it (Blackrock
+-- Mountain's four, in Searing Gorge).
 local function DungeonRows(mapID, byDungeon, nest)
     local all, dungeons = {}, {}
     for dungeon, ids in pairs(byDungeon) do
@@ -611,7 +612,7 @@ local function DungeonRows(mapID, byDungeon, nest)
     local found, total, going = Tally(SetOf(all))
     if OnlyFound() and found == 0 then return {} end
     local key, searching = DungeonKey(mapID), filter ~= ""
-    local label = L.QUESTS_DUNGEONS
+    local label = #dungeons == 1 and DungeonName(dungeons[1]) or L.QUESTS_DUNGEONS
     local inside = Whole(searching and Matches(label), function()
         local out = {}
         if not (dungeonOpen[key] or searching) then return out end
