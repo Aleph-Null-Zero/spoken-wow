@@ -24,9 +24,18 @@ local MapName, ContinentOf = C.MapName, C.ContinentOf
 local list, page
 local selection          -- { book = id } | { mapID = id } | { mapID = id, group = type }
                          -- | { group = "events"|"wide"|"unknown" }
-                         -- | { group = "events"|"wide"|"unknown", type = type } | { type = type } | nil
+                         -- | { group = "events"|"wide"|"unknown", type = type } | { type = type }
+                         -- | { zones = "lands"|"battlegrounds" } | nil
 local expandedZone
 local continentOpen = { [1414] = true, [1415] = true }
+local zonesOpen = {}          -- [key] = true: Other Lands' or Battlegrounds' banner, opened
+local ZONES_LABEL = { lands = "GROUP_LANDS", battlegrounds = "GROUP_BATTLEGROUNDS" }
+-- The battlegrounds, under a banner of their own after the continents, whatever map the client
+-- hangs them under: one client puts Alterac Valley in Hillsbrad Foothills, another under Azeroth,
+-- where no continent's list reached it.
+local BATTLEGROUNDS = { 1459, 1460, 1461, 2524 } -- Alterac Valley, Warsong Gulch, Arathi Basin, Darkspear Islands
+local IS_BATTLEGROUND = {}
+for _, mapID in ipairs(BATTLEGROUNDS) do IS_BATTLEGROUND[mapID] = true end
 local groupOpen = { events = false, wide = false, unknown = false }
 local GROUP_LABEL = { events = "GROUP_EVENTS", wide = "GROUP_WIDE", unknown = "GROUP_UNKNOWN" }
 local typeOpen = {}
@@ -148,11 +157,14 @@ local function ByName(a, b)
 	return na < nb
 end
 
--- The zones on `continent` that have readables, cities left to the zone around them.
+-- The zones on `continent` that have readables, cities left to the zone around them and
+-- battlegrounds to their banner.
 local function ZonesOn(continent)
 	local out = {}
 	for mapID in pairs(Index().zones) do
-		if not CITY_IN[mapID] and ContinentOf(mapID) == continent then table.insert(out, mapID) end
+		if not CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] and ContinentOf(mapID) == continent then
+			table.insert(out, mapID)
+		end
 	end
 	-- A zone with no readables of its own but a city that has some.
 	for city, zone in pairs(CITY_IN) do
@@ -165,6 +177,32 @@ local function ZonesOn(continent)
 	table.sort(out, ByName)
 	return out
 end
+
+-- The zones with readables on no continent, under Other Lands after the continents. Not a map
+-- this client has never heard of: its card would lead nowhere.
+local function LooseZones()
+	local out = {}
+	for mapID in pairs(Index().zones) do
+		if not CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] and not ContinentOf(mapID)
+			and not (C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID) == nil) then
+			table.insert(out, mapID)
+		end
+	end
+	table.sort(out, ByName)
+	return out
+end
+
+-- The battlegrounds with readables, by name.
+local function Battlegrounds()
+	local out = {}
+	for _, mapID in ipairs(BATTLEGROUNDS) do
+		if Index().zones[mapID] then table.insert(out, mapID) end
+	end
+	table.sort(out, ByName)
+	return out
+end
+
+local ZONES_OF = { lands = LooseZones, battlegrounds = Battlegrounds }
 
 -- Every readable under `mapID`, its city's included, each once.
 local function ReadablesIn(mapID, into)
@@ -348,7 +386,31 @@ local function TypeRows()
 	return out
 end
 
--- A banner for each continent, its zones' cards under it; then the two groups' banners.
+-- Other Lands' or Battlegrounds' banner, a card for each of its zones under it, opened and chosen
+-- as a continent's.
+local function ZoneBanner(key)
+	local zones = ZONES_OF[key]()
+	if #zones == 0 then return {} end
+	local set = {}
+	for _, mapID in ipairs(zones) do ReadablesIn(mapID, set) end
+	local found, total = Tally(set)
+	if (OnlyFound() and found == 0) or not Listed(set) then return {} end
+	local searching = filter ~= ""
+	local inside = {}
+	if searching or zonesOpen[key] then
+		for _, mapID in ipairs(zones) do
+			for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(inside, row) end
+		end
+	end
+	if searching and #inside == 0 then return {} end
+	local rows = { { style = "banner", kind = "zones", key = key, label = L[ZONES_LABEL[key]], count = found,
+		total = total, open = #inside > 0 } }
+	for _, row in ipairs(inside) do table.insert(rows, row) end
+	return rows
+end
+
+-- A banner for each continent, its zones' cards under it; Other Lands' and Battlegrounds'; then
+-- the groups' banners.
 local function BuildRows()
 	if not ByZone() then return TypeRows() end
 	local out = {}
@@ -378,6 +440,8 @@ local function BuildRows()
 		table.insert(out, continent)
 		Add(continent.rows)
 	end
+	Add(ZoneBanner("lands"))
+	Add(ZoneBanner("battlegrounds"))
 	Add(GroupRows("events", L.GROUP_EVENTS, Index().events))
 	Add(GroupRows("wide", L.GROUP_WIDE, Index().wide))
 	Add(GroupRows("unknown", L.GROUP_UNKNOWN, Index().unknown))
@@ -386,6 +450,7 @@ end
 
 local function IsSelected(row)
 	if not selection then return false end
+	if row.kind == "zones" then return selection.zones == row.key end
 	if row.kind == "readable" then return selection.book == row.book end
 	if row.kind == "kind" then return selection.group == row.group and selection.type == row.which end
 	if row.kind == "group" then
@@ -507,6 +572,11 @@ local function ShowEntry()
 			text = L.READABLES_PICK })
 		return
 	end
+	if selection.zones then
+		for _, mapID in ipairs(ZONES_OF[selection.zones]()) do ReadablesIn(mapID, set) end
+		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+		return
+	end
 	if GROUP_LABEL[selection.group] then
 		for _, id in ipairs(Index()[selection.group]) do set[id] = true end
 		page:Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
@@ -529,6 +599,9 @@ end
 local function OnClick(row)
 	if row.kind == "readable" then
 		selection = { book = row.book }
+	elseif row.kind == "zones" then
+		if filter == "" then zonesOpen[row.key] = not zonesOpen[row.key] end
+		selection = { zones = row.key }
 	elseif row.kind == "type" then
 		if filter == "" then typeOpen[row.which] = not typeOpen[row.which] end
 		selection = { type = row.which }

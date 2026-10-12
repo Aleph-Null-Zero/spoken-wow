@@ -18,7 +18,11 @@ stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames
 -- The maps the client names, and where each is.
 local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "Eastern Kingdoms", 947 },
     [1429] = { "Elwynn Forest", 1415 }, [1453] = { "Stormwind City", 1415 }, [1436] = { "Westfall", 1415 },
-    [1455] = { "Ironforge", 1415 }, [1426] = { "Dun Morogh", 1415 } }
+    [1455] = { "Ironforge", 1415 }, [1426] = { "Dun Morogh", 1415 },
+    -- Alterac Valley under Azeroth, as one client hangs it; Warsong Gulch in Ashenvale; an isle on
+    -- no continent.
+    [1459] = { "Alterac Valley", 947 }, [1440] = { "Ashenvale", 1414 }, [1460] = { "Warsong Gulch", 1440 },
+    [9001] = { "Zephras Isle", 947 } }
 _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
@@ -53,6 +57,14 @@ B:SetupSource()
 dofile(BOOKS .. "Data/Books.lua")
 dofile(BOOKS .. "Data/Places.lua")
 local L = B.L
+
+-- A note on the isle, and one in Warsong Gulch: the shipped data has neither.
+local ISLE_NOTE, GULCH_NOTE = 990001, 990002
+for id, place in pairs({ [ISLE_NOTE] = { "Isle Tide Tables", 9001 }, [GULCH_NOTE] = { "Gulch Orders", 1460 } }) do
+    SpokenBooksData.pages[id] = { book = id, number = 1, text = "Words of " .. place[1] .. "." }
+    SpokenBooksData.books[id] = { title = place[1], pages = { id } }
+    SpokenBooksPlaces.books[id] = { kind = "world", type = "note", zones = { place[2] } }
+end
 
 -- Kurdran Wildhammer and Alleria Windrunner stand in Stormwind; A Dusty Unsent Letter is carried
 -- from Westfall; An Exotic Cookbook is had across Azeroth.
@@ -115,6 +127,33 @@ Expect("...which opens on them, the Winter Veil feast it once listed in the citi
     Has(Shown(), "The Feast of Winter Veil") and Has(Shown(), "A Bloodstained Envelope"), true)
 Click(L.GROUP_EVENTS)
 
+-- The zones on no continent, then the battlegrounds wherever the client hangs them, each under a
+-- banner of their own after the continents.
+local function At(list, label) return ("|" .. list .. "|"):find("|" .. label .. "|", 1, true) end
+list = Shown()
+Expect("Other Lands then Battlegrounds, each a banner, after the continents and before the groups",
+    RowFor(L.GROUP_LANDS).row.style == "banner" and RowFor(L.GROUP_BATTLEGROUNDS).row.style == "banner"
+    and At(list, "Kalimdor") < At(list, L.GROUP_LANDS) and At(list, L.GROUP_LANDS) < At(list, L.GROUP_BATTLEGROUNDS)
+    and At(list, L.GROUP_BATTLEGROUNDS) < At(list, L.GROUP_EVENTS), true)
+Expect("...closed at first", Has(list, "Zephras Isle") or Has(list, "Alterac Valley"), false)
+Expect("...a battleground hung under a continent not listed under it", Has(list, "Warsong Gulch"), false)
+Click(L.GROUP_LANDS)
+Expect("Other Lands opens on a card for each zone on no continent", RowFor("Zephras Isle") ~= nil
+    and RowFor("Zephras Isle").row.style == "card" and RowFor("Zephras Isle").row.nest, 0)
+Expect("...its page its name, what is found of it, and the words to choose one",
+    panel.page.title.text .. "|" .. panel.page.sub.text .. "|" .. panel.page.body.text.text,
+    L.GROUP_LANDS .. "|" .. L.FOUND_FMT:format(0, 1) .. "|" .. L.READABLES_PICK)
+Click(L.GROUP_LANDS)
+Expect("...and closes again", Has(Shown(), "Zephras Isle"), false)
+Click(L.GROUP_BATTLEGROUNDS)
+Expect("Battlegrounds opens on Alterac Valley under Azeroth and Warsong Gulch under Ashenvale",
+    Has(Shown(), "Alterac Valley") and Has(Shown(), "Warsong Gulch"), true)
+Expect("...its page its name", panel.page.title.text, L.GROUP_BATTLEGROUNDS)
+Click("Alterac Valley")
+Expect("...Alterac Valley's gravestone listed in it", Has(Shown(), "Rock of Durotan"), true)
+Click("Alterac Valley")
+Click(L.GROUP_BATTLEGROUNDS)
+
 Click("Elwynn Forest")
 Click("Stormwind City")
 list = Shown()
@@ -173,6 +212,8 @@ SpokenBooksSettings.compendiumFoundOnly = true
 B:RefreshReadables()
 list = Shown()
 Expect("Found Only leaves out what is not found", Has(list, "Ranger Captain Alleria Windrunner") or Has(list, L.GROUP_UNKNOWN), false)
+Expect("...Other Lands' and Battlegrounds' banners too, holding nothing found",
+    Has(list, L.GROUP_LANDS) or Has(list, L.GROUP_BATTLEGROUNDS), false)
 Expect("...and keeps what is", Has(list, "Westfall") and Has(list, "Elwynn Forest"), true)
 SpokenBooksSettings.compendiumFoundOnly = false
 
