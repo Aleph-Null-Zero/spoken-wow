@@ -170,6 +170,7 @@ L.QUEST_NOT_FOUND = "Вы ещё не начали это задание. Воз
 L.QUESTS_FOUND_FMT = "Выполнено %1$d из %2$d"
 L.QUESTS_FOUND_GOING_FMT = "Выполнено %1$d из %2$d, выполняется: %3$d"
 L.QUESTS_IN_FMT = "Расположение: %1$s"
+L.QUESTS_MORE_FMT = " и ещё %1$d"
 L.QUEST_IN_PROGRESS = "Выполняется"
 L.QUEST_PART_ACCEPT = "Предложение"
 L.QUEST_PART_PROGRESS = "Ход задания"

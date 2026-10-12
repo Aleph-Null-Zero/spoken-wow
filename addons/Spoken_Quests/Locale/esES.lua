@@ -185,6 +185,7 @@ L.QUEST_NOT_FOUND = "Aún no has empezado esta misión. Acéptala en el mundo pa
 L.QUESTS_FOUND_FMT = "%1$d de %2$d completadas"
 L.QUESTS_FOUND_GOING_FMT = "%1$d de %2$d completadas, %3$d en curso"
 L.QUESTS_IN_FMT = "Ubicación: %1$s"
+L.QUESTS_MORE_FMT = " y %1$d más"
 L.QUEST_IN_PROGRESS = "En curso"
 L.QUEST_PART_ACCEPT = "Oferta"
 L.QUEST_PART_PROGRESS = "Progreso"

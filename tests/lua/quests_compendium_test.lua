@@ -108,6 +108,9 @@ SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
 SpokenQuestsCompendium.quests[BACK].prev = PIE
 SpokenQuestsCompendium.quests[GOLDTOOTH].prev = BACK
 shipped[STEW].prev, shipped[LIVER_PIE].prev = JASPERLODE, STEW
+-- A mage's chain, in the Mage group: Speak with Bink, then Mage-tastic Gizmonitor.
+local BINK_CHAIN = "Speak with Bink"
+shipped[1880].prev = 1879
 local L, Tab = VO.L, VO.QuestsTab
 Expect("the shipped data has the quests' chains, from the world DB", linked, true)
 Expect("...and the names of chains given by hand, on their first quest", namedByHand, true)
@@ -374,7 +377,11 @@ Expect("...a line of the list for it, a class being no place", RowFor("Mage").ro
 Expect("...Classes' page its count alone, being no place", page.title.text == "Classes"
     and page.sub.text.text:match("^%d+ of %d+ completed$") ~= nil, true)
 Click("Mage")
-Expect("...a class's page in Classes, with its count", page.sub.text.text:match("^In Classes · %d+ of %d+ completed$") ~= nil, true)
+Expect("...a class's page naming Classes, not \"In\" it, with its count",
+    page.sub.text.text:match("^Classes · %d+ of %d+ completed$") ~= nil, true)
+Click(BINK_CHAIN)
+Expect("...a chain in a class naming the class, not \"In\" it", page.title.text .. "|" .. page.sub.text.text,
+    BINK_CHAIN .. "|Mage · 0 of 2 completed")
 Click("Mage")
 Click("Holidays and Events")
 Expect("...Events on the festivals and the Darkmoon Faire", Has(Shown(), "Lunar Festival") and Has(Shown(), "Darkmoon Faire"), true)
@@ -397,8 +404,8 @@ Expect("Other holds the Commendation Signets' hand-ins, the Argent Dawn's and th
     Has(list, "Commendation Signets") and Has(list, "Argent Dawn") and Has(list, "Library Books")
     and not Has(list, "Reputation"), true)
 Click(L.QUESTS_ELSEWHERE)
-Expect("...Place Unknown's page its count alone", page.title.text == L.QUESTS_ELSEWHERE
-    and page.sub.text.text:match("^%d+ of %d+ completed$") ~= nil, true)
+Expect("...Place Unknown's page naming Other, which holds it, with its count", page.title.text == L.QUESTS_ELSEWHERE
+    and page.sub.text.text:match("^Other · %d+ of %d+ completed$") ~= nil, true)
 Click(L.QUESTS_ELSEWHERE)
 Click("Other")
 Click("Kalimdor")
@@ -442,8 +449,17 @@ Expect("...one not completed greyed, with the padlock", RowFor("Kobold Candles")
 
 Click("Kobold Camp Cleanup")
 Expect("a quest's page: its title", page.title.text, "Kobold Camp Cleanup")
-Expect("...where it is", page.sub.text.text, "Elwynn Forest")
+Expect("...in its zone", page.sub.text.text, "In Elwynn Forest")
 Expect("...on one line, cut short", page.sub.text.wordWrap, false)
+do
+    local zones = shipped[KOBOLDS].zones
+    shipped[KOBOLDS].zones = { 1429, 1436, ASHENVALE }
+    Tab:Refresh()
+    Expect("...a quest in several zones naming the first two and how many more", page.sub.text.text,
+        "In Elwynn Forest, Westfall and 1 more")
+    shipped[KOBOLDS].zones = zones
+    Tab:Refresh()
+end
 local words = PageWords() or ""
 Expect("...its words in parts, offered then handed in, each under its heading",
     page.body.lastParts ~= nil and page.body.lastParts[1].heading == L.QUEST_PART_ACCEPT
@@ -489,7 +505,8 @@ Expect("...and its zone's card counts it in progress, apart from the completed",
     RowFor("Elwynn Forest").count.text:match("ActiveQuestIcon.-|t1 +1/%d+ • ") ~= nil, true)
 RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
-Expect("...in progress, then where it is", page.sub.text.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
+Expect("...where it is, then the quest mark and In progress", page.sub.text.text,
+    "In Elwynn Forest · |TInterface\\GossipFrame\\ActiveQuestIcon:0|t " .. L.QUEST_IN_PROGRESS)
 Expect("...and its words, offered and under way", (PageWords() or ""):find("Did you gather those candles yet?", 1, true) ~= nil, true)
 Expect("...not the hand-in before it is completed: it tells how the quest ends",
     (PageWords() or ""):find("Thanks for the candles", 1, true) == nil
@@ -875,6 +892,7 @@ Expect("...the quest chosen", RowFor("The Forgotten Heirloom").selected, true)
 Expect("...and its page shown", page.title.text, "The Forgotten Heirloom")
 Tab:Open(JENNEA)
 Expect("a class's quest opens under its class", Has(Shown(), "Speak with Jennea") and page.title.text, "Speak with Jennea")
+Expect("...its page naming its section and its class, neither a place", page.sub.text.text, "Classes · Mage")
 local IRONDEEP = 5892
 Tab:Open(IRONDEEP)
 Expect("a battleground's quest opens under the battlegrounds' banner", Has(Shown(), "Irondeep Supplies")

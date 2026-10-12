@@ -16,9 +16,11 @@
 --
 -- The page shows what is chosen. A quest's is its title, where it is and its words, with Play
 -- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. Its hand-in waits until
--- it is completed, unless Unlock Unstarted Quests is on. A banner's, card's or
--- chain's is its name, where it is and its count on one line, and L.QUESTS_PICK, the quests being
--- on the left to choose. The sections and Place Unknown are no place: their line is the count.
+-- it is completed, unless Unlock Unstarted Quests is on. A banner's, card's or line's is its name,
+-- what holds it and its count on one line, and L.QUESTS_PICK, the quests being on the left to
+-- choose. A place is "In" its holder; a section, a class, profession or event and Place Unknown
+-- are no place and are named as they are. The sections have nothing above them: their line is the
+-- count.
 --
 -- A search lists what matches under what holds it. Where it matches the name of a banner, a card
 -- or a chain, everything inside that one is listed.
@@ -354,6 +356,13 @@ local function KnownZones(quest)
     return out
 end
 
+-- Whether the data or the tab has a name for a sort: one with none has no line of its own to go
+-- under, and its quests are Place Unknown's.
+local function Named(sort)
+    local names = _G.SpokenQuestsCompendium and SpokenQuestsCompendium.sorts or {}
+    return sort ~= nil and (names[sort] ~= nil or GROUP_NAMES[sort] ~= nil)
+end
+
 -- Every quest this character may take, by where it is: index.zones[mapID], index.sorts[sort],
 -- index.elsewhere, and `all`. A quest only in zones this client does not know is in none of them:
 -- the list could never show it, so it counts nowhere. Built once: neither the data, the client's
@@ -362,7 +371,6 @@ local index
 function Index()
     if index then return index end
     index = { zones = {}, sorts = {}, elsewhere = {}, all = {} }
-    local named = _G.SpokenQuestsCompendium and SpokenQuestsCompendium.sorts or {}
     for id, quest in pairs(Quests()) do
         if Allowed(quest) then
             local zones = KnownZones(quest)
@@ -372,8 +380,7 @@ function Index()
                     index.zones[mapID] = index.zones[mapID] or {}
                     table.insert(index.zones[mapID], id)
                 end
-            -- A sort the data and the tab have no name for has no row of its own to go under.
-            elseif quest.sort and (named[quest.sort] or GROUP_NAMES[quest.sort]) then
+            elseif Named(quest.sort) then
                 index.all[id] = true
                 index.sorts[quest.sort] = index.sorts[quest.sort] or {}
                 table.insert(index.sorts[quest.sort], id)
@@ -1142,15 +1149,26 @@ AnyVoiced = function(id)
     return voicedSeen[id]
 end
 
+local function SectionName(key)
+    for _, section in ipairs(SECTIONS) do
+        if section.key == key then return L[section.label] end
+    end
+end
+
+-- Where a quest is, on its page's line: in its zones (the first two, and how many more), else
+-- its section and its sort ("Classes · Warrior"), else Other and Place Unknown.
 local function Where(id)
     local quest = Quests()[id] or {}
-    if quest.zones and #quest.zones > 0 then
+    local zones = KnownZones(quest)
+    if #zones > 0 then
         local names = {}
-        for _, mapID in ipairs(quest.zones) do table.insert(names, C.MapName(mapID)) end
-        return table.concat(names, ", ")
+        for i = 1, math.min(2, #zones) do table.insert(names, C.MapName(zones[i])) end
+        local line = L.QUESTS_IN_FMT:format(table.concat(names, ", "))
+        if #zones > 2 then line = line .. L.QUESTS_MORE_FMT:format(#zones - 2) end
+        return line
     end
-    if quest.sort then return SortName(quest.sort) end
-    return L.QUESTS_ELSEWHERE
+    if Named(quest.sort) then return SectionName(SectionOf(quest.sort)) .. " · " .. SortName(quest.sort) end
+    return SectionName("other") .. " · " .. L.QUESTS_ELSEWHERE
 end
 
 local function Count(set)
@@ -1168,27 +1186,28 @@ local function Above(mapID)
     return C.CITY_IN[mapID] or C.ContinentOf(mapID) or C.WORLD
 end
 
--- What lists a chain, from where its card is (Leaves' `where`): a zone, a dungeon, a class's,
--- profession's or event's card, or Place Unknown.
+-- What lists a chain, from where its line is (Leaves' `where`), and whether it is a place: a zone
+-- or a dungeon is, a class, profession or event, or Place Unknown, is not.
 local function HolderName(where)
     local zone = where:match("^z(%d+)$")
-    if zone then return C.MapName(tonumber(zone)) end
+    if zone then return C.MapName(tonumber(zone)), true end
     local dungeon = where:match("^d%d+:(%d+)$")
-    if dungeon then return DungeonName(tonumber(dungeon)) end
+    if dungeon then return DungeonName(tonumber(dungeon)), true end
     local sort = where:match("^s(.+)$")
-    if sort == "elsewhere" then return L.QUESTS_ELSEWHERE end
-    if sort then return SortName(tonumber(sort) or sort) end
+    if sort == "elsewhere" then return L.QUESTS_ELSEWHERE, false end
+    if sort then return SortName(tonumber(sort) or sort), false end
 end
 
--- A page's line: where it is and its count, one line, or the count alone with nowhere to name.
-local function Line(where, set)
-    if not where then return Count(set) end
-    return L.QUESTS_IN_FMT:format(where) .. " · " .. Count(set)
+-- A page's line, one line: the count after what holds it, "In" a place ("In Elwynn Forest · …")
+-- and the name alone for what is no place ("Classes · …"); the count alone with nothing to name.
+local function Line(set, holder, place)
+    if not holder then return Count(set) end
+    return (place and L.QUESTS_IN_FMT:format(holder) or holder) .. " · " .. Count(set)
 end
 
--- In progress, before where it is: the line is cut short where a quest is given in several zones.
+-- Where a quest is, and after it the quest mark and In progress while it is.
 local function Subtitle(id)
-    if InProgress(id) then return IN_PROGRESS_MARK .. L.QUEST_IN_PROGRESS .. " • " .. Where(id) end
+    if InProgress(id) then return Where(id) .. " · " .. IN_PROGRESS_MARK .. L.QUEST_IN_PROGRESS end
     return Where(id)
 end
 
@@ -1200,15 +1219,17 @@ local function ShowEntry()
     end
     if selection.chain then
         local ids = selection.ids
-        -- As a zone's page: its name, where it is and its count, and the quests on the left to choose.
+        -- As a zone's page: its name, what holds it and its count, and the quests on the left to choose.
+        local holder, place
+        if selection.where then holder, place = HolderName(selection.where) end
         page:Show({ title = ChainName(selection.first or First(ids[1])),
-            subtitle = Line(selection.where and HolderName(selection.where), SetOf(ids)), text = L.QUESTS_PICK })
+            subtitle = Line(SetOf(ids), holder, place), text = L.QUESTS_PICK })
         return
     end
     if selection.quest then
         local id = selection.quest
         if not Found(id) and not Unlocked() then
-            page:Show({ title = Title(id), subtitle = Where(id), text = L.QUEST_NOT_FOUND })
+            page:Show({ title = Title(id), subtitle = Subtitle(id), text = L.QUEST_NOT_FOUND })
             return
         end
         -- Play and Report on each part's heading, not the page's: each part is said at its own time.
@@ -1218,7 +1239,7 @@ local function ShowEntry()
     if selection.dungeon then
         -- In the zone of its entrance, whose card holds it.
         local zone = tonumber(selection.dungeon:match("^d(%d+)"))
-        page:Show({ title = selection.label, subtitle = Line(zone and C.MapName(zone), SetOf(selection.ids)),
+        page:Show({ title = selection.label, subtitle = Line(SetOf(selection.ids), zone and C.MapName(zone), true),
             text = L.QUESTS_PICK })
         return
     end
@@ -1226,7 +1247,7 @@ local function ShowEntry()
     if banner then
         local set = {}
         for _, mapID in ipairs(banner.zones()) do QuestsIn(mapID, set) end
-        page:Show({ title = L[banner.label], subtitle = Line(C.MapName(C.WORLD), set), text = L.QUESTS_PICK })
+        page:Show({ title = L[banner.label], subtitle = Line(set, C.MapName(C.WORLD), true), text = L.QUESTS_PICK })
         return
     end
     -- Classes, Professions, Holidays and Events and Other are no place: their count alone.
@@ -1238,17 +1259,16 @@ local function ShowEntry()
         end
         return
     end
+    -- A sort's line, and Place Unknown's, names the section that holds it, which is no place.
     if selection.sort then
-        local section
-        for _, each in ipairs(SECTIONS) do
-            if each.key == SectionOf(selection.sort) then section = L[each.label] end
-        end
-        page:Show({ title = SortName(selection.sort), subtitle = Line(section, SetOf(Index().sorts[selection.sort])),
+        page:Show({ title = SortName(selection.sort),
+            subtitle = Line(SetOf(Index().sorts[selection.sort]), SectionName(SectionOf(selection.sort))),
             text = L.QUESTS_PICK })
         return
     end
     if selection.group == "elsewhere" then
-        page:Show({ title = L.QUESTS_ELSEWHERE, subtitle = Count(SetOf(Index().elsewhere)), text = L.QUESTS_PICK })
+        page:Show({ title = L.QUESTS_ELSEWHERE, subtitle = Line(SetOf(Index().elsewhere), SectionName("other")),
+            text = L.QUESTS_PICK })
         return
     end
     local set = {}
@@ -1257,7 +1277,7 @@ local function ShowEntry()
     else
         QuestsIn(selection.mapID, set)
     end
-    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(C.MapName(Above(selection.mapID)), set),
+    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, C.MapName(Above(selection.mapID)), true),
         text = L.QUESTS_PICK })
 end
 
@@ -1480,7 +1500,7 @@ function QuestsTab:Open(questID)
                 chain = ChainKey(questID, "z" .. zone, own)
             end
         else
-            local named = quest.sort and (SpokenQuestsCompendium.sorts[quest.sort] or GROUP_NAMES[quest.sort])
+            local named = Named(quest.sort)
             local key = named and quest.sort or "elsewhere"
             groupOpen[key] = true
             sectionOpen[named and SectionOf(quest.sort) or "other"] = true

@@ -1448,8 +1448,8 @@ the client says it is completed (`C_QuestLog.GetAllCompletedQuestIDs`, else
 `GetQuestsCompleted`, else `IsQuestFlaggedCompleted` one at a time) or while it is in the quest
 log (`C_QuestLog.GetInfo` where the client has it, else `GetQuestLogTitle`; where a collapsed
 header hides some, `C_QuestLog.IsOnQuest` for each quest). A quest in the log and not completed
-is in progress: the gossip window's quest mark before its title, and "In progress" before where
-it is on its page; zone and group counts include it, and a page's count says how many of them
+is in progress: the gossip window's quest mark before its title, and the mark and "In progress"
+after where it is on its page; zone and group counts include it, and a page's count says how many of them
 are in progress. The list follows the log while it is open (`QUEST_LOG_UPDATE`,
 `QUEST_ACCEPTED`, `QUEST_REMOVED`, drawn again once a burst is over and only when the log's
 quests changed). The rest are locked unless Unlock Unstarted Quests is on, which Spoken's page
@@ -1489,11 +1489,15 @@ right, level with its name, are the quest mark with how many of its quests
 are in progress, the quests completed out of all and the share completed (or, once all are, the
 quest log's gold tick), and the Pet Journal's bar along its foot is filled as far. A banner counts
 completed out of all. A quest's row has the gold tick once completed and the quest mark while in progress.
-Chosen, a banner's or card's page has one line under its name, where it is and its count ("In
-Eastern Kingdoms · 1 of 88 completed, 2 in progress"): a zone is in its continent, a city in its
-zone, a continent, Other Lands and Battlegrounds in Azeroth, a dungeon's card in the zone of its
-entrance and a class's, profession's or season's card in its section. The sections and Place
-Unknown are no place, and their line is the count alone.
+Chosen, a banner's, card's or line's page has one line under its name, what holds it and its
+count, parted by " · ". A place is "In" its holder ("In Eastern Kingdoms · 1 of 88 completed, 2 in
+progress"): a zone is in its continent, a city in its zone, a continent, Other Lands and
+Battlegrounds in Azeroth, and a dungeon in the zone of its entrance. A class, profession or season
+and Place Unknown are no place, and are named as they are: their line names their section
+("Classes · 3 of 7 completed"), and a chain's line under one names it ("Mage · …"). The sections
+have nothing above them, and their line is the count alone. A quest's page says where it is: "In"
+its zones (the first two, and how many more: "In Elwynn Forest, Westfall and 1 more"), else its
+section and its group ("Classes · Mage"), else "Other · Place Unknown".
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
 there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The card
@@ -1502,7 +1506,7 @@ chain's first quest (a quest's id, whose title the client gives in its own langu
 language), else the first quest's title, wherever that quest is (`ChainName`). Its badge is the
 game's quest scroll, and its numbers and bar count its quests as a zone's card does. A chain that
 runs through several zones has a card in each, for its quests there. Chosen, a chain's page has
-its name, what lists it (the zone, dungeon or group whose card holds it) and how many of its quests
+its name, what lists it (the zone, dungeon or group that holds it) and how many of its quests
 are completed and in progress, and asks for one of its quests
 to be chosen from the list; it has no Play. The client has no chain of its own, so without `prev`
 in the data every quest is a row of its own.

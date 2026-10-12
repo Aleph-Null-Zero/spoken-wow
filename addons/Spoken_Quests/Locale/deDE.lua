@@ -170,6 +170,7 @@ L.QUEST_NOT_FOUND = "Diese Quest hast du noch nicht begonnen. Nimm sie in der We
 L.QUESTS_FOUND_FMT = "%1$d von %2$d abgeschlossen"
 L.QUESTS_FOUND_GOING_FMT = "%1$d von %2$d abgeschlossen, %3$d in Arbeit"
 L.QUESTS_IN_FMT = "Lage: %1$s"
+L.QUESTS_MORE_FMT = " und %1$d weitere"
 L.QUEST_IN_PROGRESS = "In Arbeit"
 L.QUEST_PART_ACCEPT = "Angebot"
 L.QUEST_PART_PROGRESS = "Fortschritt"

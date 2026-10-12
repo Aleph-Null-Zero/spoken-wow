@@ -180,6 +180,7 @@ L.QUEST_NOT_FOUND = "Vous n'avez pas encore commencé cette quête. Acceptez-la 
 L.QUESTS_FOUND_FMT = "%1$d sur %2$d terminées"
 L.QUESTS_FOUND_GOING_FMT = "%1$d sur %2$d terminées, %3$d en cours"
 L.QUESTS_IN_FMT = "Emplacement : %1$s"
+L.QUESTS_MORE_FMT = " et %1$d autres"
 L.QUEST_IN_PROGRESS = "En cours"
 L.QUEST_PART_ACCEPT = "Proposition"
 L.QUEST_PART_PROGRESS = "Progression"

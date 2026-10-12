@@ -170,6 +170,7 @@ L.QUEST_NOT_FOUND = "你还没有开始这个任务。在世界中接受它后�
 L.QUESTS_FOUND_FMT = "已完成 %1$d / %2$d"
 L.QUESTS_FOUND_GOING_FMT = "已完成 %1$d / %2$d，进行中 %3$d"
 L.QUESTS_IN_FMT = "位于%1$s"
+L.QUESTS_MORE_FMT = "等%1$d处"
 L.QUEST_IN_PROGRESS = "进行中"
 L.QUEST_PART_ACCEPT = "接受"
 L.QUEST_PART_PROGRESS = "进度"
