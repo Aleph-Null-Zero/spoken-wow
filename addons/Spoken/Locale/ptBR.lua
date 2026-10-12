@@ -304,8 +304,8 @@ L.OPT_FALLBACK_NONE = "Ficar em silêncio"
 
 -- Azeroth's Compendium, on Spoken's page.
 L.OPT_COMPENDIUM_TITLE = "Compêndio de Azeroth"
-L.OPT_COMPENDIUM_OPEN = "Abrir Compêndio de Azeroth"
-L.OPT_COMPENDIUM_OPEN_TIP = "A história de cada zona e área, cada livro e cada missão, para navegar e ouvir onde você estiver. O que você ainda não encontrou ou concluiu fica em cinza."
+L.OPT_COMPENDIUM_OPEN = "Abrir o Compêndio de Azeroth"
+L.OPT_COMPENDIUM_OPEN_TIP = "A história de cada zona e área, cada livro e cada missão, para navegar e ouvir onde você estiver. O que você ainda não iniciou, descobriu ou encontrou fica em cinza."
 L.OPT_UNLOCK_PLACES = "Liberar zonas não descobertas"
 L.OPT_UNLOCK_PLACES_TIP = "Permite abrir todas as zonas e áreas, inclusive as que você ainda não descobriu. Desligado, elas ficam em cinza."
 L.OPT_UNLOCK_WRITINGS = "Liberar livros não encontrados"

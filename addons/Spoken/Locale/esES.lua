@@ -327,8 +327,8 @@ L.WELCOME_DONE = "Hecho"
 
 -- Azeroth's Compendium, on Spoken's page.
 L.OPT_COMPENDIUM_TITLE = "Compendio de Azeroth"
-L.OPT_COMPENDIUM_OPEN = "Abrir Compendio de Azeroth"
-L.OPT_COMPENDIUM_OPEN_TIP = "La historia de cada zona y área, cada libro y cada misión, para explorarlos y escucharlos estés donde estés. Lo que aún no has encontrado o completado aparece en gris."
+L.OPT_COMPENDIUM_OPEN = "Abrir el Compendio de Azeroth"
+L.OPT_COMPENDIUM_OPEN_TIP = "La historia de cada zona y área, cada libro y cada misión, para explorarlos y escucharlos estés donde estés. Lo que aún no has empezado, descubierto o encontrado aparece en gris."
 L.OPT_UNLOCK_PLACES = "Abrir zonas sin descubrir"
 L.OPT_UNLOCK_PLACES_TIP = "Permite abrir todas las zonas y áreas, también las que aún no has descubierto. Si está desactivado, aparecen en gris."
 L.OPT_UNLOCK_WRITINGS = "Abrir libros sin encontrar"

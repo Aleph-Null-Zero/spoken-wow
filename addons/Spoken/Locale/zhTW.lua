@@ -305,7 +305,7 @@ L.OPT_FALLBACK_NONE = "保持靜默"
 -- Azeroth's Compendium, on Spoken's page.
 L.OPT_COMPENDIUM_TITLE = "艾澤拉斯百科"
 L.OPT_COMPENDIUM_OPEN = "開啟艾澤拉斯百科"
-L.OPT_COMPENDIUM_OPEN_TIP = "每個地區和區域的故事、每本書籍和每個任務，無論身在何處都能瀏覽和聆聽。尚未找到或完成的顯示為灰色。"
+L.OPT_COMPENDIUM_OPEN_TIP = "每個地區和區域的故事、每本書籍和每個任務，無論身在何處都能瀏覽和聆聽。尚未開始、發現或找到的顯示為灰色。"
 L.OPT_UNLOCK_PLACES = "解鎖未發現的地區"
 L.OPT_UNLOCK_PLACES_TIP = "可以開啟所有地區和區域，包括你尚未發現的。關閉時它們顯示為灰色。"
 L.OPT_UNLOCK_WRITINGS = "解鎖未找到的書籍"

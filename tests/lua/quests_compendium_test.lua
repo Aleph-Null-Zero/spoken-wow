@@ -203,8 +203,8 @@ Expect("...the Horde's for a Horde character", RowFor("Eastern Kingdoms").headMi
 faction = "Alliance"
 Tab:Refresh()
 Expect("...each zone a card inside it", RowFor("Elwynn Forest").row.style == "card" and RowFor("Elwynn Forest").row.nest, 0)
-Expect("...then a banner each for the quests no zone holds: Classes, Professions, Events, Other",
-    list:find("|Classes|Professions|Events|Other$") ~= nil and not Has(list, "Mage")
+Expect("...then a banner each for the quests no zone holds: Classes, Professions, Holidays and Events, Other",
+    list:find("|Classes|Professions|Holidays and Events|Other$") ~= nil and not Has(list, "Mage")
     and RowFor("Classes").row.style == "banner", true)
 local elwynn = RowFor("Elwynn Forest")
 Expect("a zone's card: its quests completed out of all and the share, on one line beside its name",
@@ -257,7 +257,7 @@ Click("Classes")
 list = Shown()
 Expect("...Classes opening on a class's quests under its name, this character's class only", Has(list, "Mage") and not Has(list, "Warlock"), true)
 Expect("...a card for it", RowFor("Mage").row.style, "card")
-Click("Events")
+Click("Holidays and Events")
 Expect("...Events on the festivals and the Darkmoon Faire", Has(Shown(), "Lunar Festival") and Has(Shown(), "Darkmoon Faire"), true)
 list = Shown()
 Expect("...each holiday a group of its own, Children's Week among them, where the client has Seasonal and Special",
@@ -265,7 +265,7 @@ Expect("...each holiday a group of its own, Children's Week among them, where th
     and Has(list, "Harvest Festival") and Has(list, "Children's Week") and not Has(list, "Seasonal")
     and not Has(list, "Special"), true)
 Click("Classes")
-Click("Events")
+Click("Holidays and Events")
 local leftovers, reused = Leftovers()
 Expect("a row drawn as a card and reused for a banner or a quest keeps none of the card's parts", leftovers, "")
 Expect("...as rows were, once the list changed under them", reused > 0, true)

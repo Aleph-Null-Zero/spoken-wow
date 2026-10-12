@@ -305,7 +305,7 @@ L.OPT_FALLBACK_NONE = "무음"
 -- Azeroth's Compendium, on Spoken's page.
 L.OPT_COMPENDIUM_TITLE = "아제로스 백과사전"
 L.OPT_COMPENDIUM_OPEN = "아제로스 백과사전 열기"
-L.OPT_COMPENDIUM_OPEN_TIP = "모든 지역과 세부 지역의 이야기, 모든 책과 모든 퀘스트를 어디에 있든 둘러보고 들을 수 있습니다. 아직 찾지 못했거나 완료하지 못한 것은 회색으로 표시됩니다."
+L.OPT_COMPENDIUM_OPEN_TIP = "모든 지역과 세부 지역의 이야기, 모든 책과 모든 퀘스트를 어디에 있든 둘러보고 들을 수 있습니다. 아직 시작하지 않았거나 발견하지 못했거나 찾지 못한 것은 회색으로 표시됩니다."
 L.OPT_UNLOCK_PLACES = "발견하지 못한 지역 열기"
 L.OPT_UNLOCK_PLACES_TIP = "아직 발견하지 못한 곳을 포함해 모든 지역과 세부 지역을 열 수 있습니다. 끄면 회색으로 표시됩니다."
 L.OPT_UNLOCK_WRITINGS = "찾지 못한 책 열기"
