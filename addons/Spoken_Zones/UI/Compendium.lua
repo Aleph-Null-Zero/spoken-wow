@@ -20,7 +20,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 5
+local VERSION = 6
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -990,6 +990,9 @@ function C.NewPage(parent, addon, play)
 	sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
 	sub:SetPoint("RIGHT", frame, "RIGHT", -RIGHT, 0)
 	sub:SetJustifyH("LEFT")
+	-- One line, cut short with an ellipsis: a book found in several places names them all.
+	if sub.SetWordWrap then sub:SetWordWrap(false) end
+	if sub.SetMaxLines then sub:SetMaxLines(1) end
 	Ink(sub, INK)
 	self.sub = sub
 

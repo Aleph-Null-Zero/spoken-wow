@@ -20,7 +20,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 5
+local VERSION = 6
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
