@@ -591,10 +591,12 @@ local function LandOnPlayer()
 		return
 	end
 	local subZone = GetSubZoneText()
-	local subEntry, subKey
+	local subEntry, subKey, storyMapID
 	if subZone and subZone ~= "" then
-		subEntry, subKey = SpokenZones:GetSubzoneLore(current, subZone)
+		subEntry, subKey, storyMapID = SpokenZones:GetSubzoneLore(current, subZone)
 	end
+	-- At a dungeon's entrance whose story is kept under another zone, its card is chosen.
+	if subEntry then current = storyMapID end
 	OpenPlace(current, subEntry and subKey or nil)
 	selection = { mapID = current, key = subEntry and subKey or nil }
 	landed = selection

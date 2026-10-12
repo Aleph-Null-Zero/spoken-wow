@@ -303,10 +303,13 @@ local function Refresh(mapID)
 		-- reaches the corpus key only through the alias table, and normalising a non-Latin name
 		-- yields nil -- which would silently retarget the buttons at the zone's lore.
 		local key = SpokenZones:ResolveAreaKey(selected.areaName)
-		local line = SpokenZones:PlaceLine(mapID, key or name)
+		-- A dungeon found at its entrance is told where its story is kept (Razorfen Downs, clicked
+		-- on The Barrens' map, under Thousand Needles).
+		local story = SpokenZones:StoryPlace(mapID, key)
+		local line = SpokenZones:PlaceLine(story, key or name)
 		local back = function() SpokenZones:ClearSubzone() end
 		-- Not found yet: named, and no more, as Azeroth's Compendium has it.
-		if SpokenZones.IsLocked and SpokenZones:IsLocked(mapID, key) then
+		if SpokenZones.IsLocked and SpokenZones:IsLocked(story, key) then
 			page:Show({ title = name, subtitle = line, onSubtitle = back, text = L.NOT_DISCOVERED })
 			return
 		end
@@ -314,11 +317,11 @@ local function Refresh(mapID)
 			-- Named, listed, and honest about the rest: nothing to play and nothing written to
 			-- report on. Azeroth's Compendium lists it all the same, so Open goes to its row there.
 			page:Show({ title = name, subtitle = line, onSubtitle = back, text = L.LORE_NOT_WRITTEN:format(name),
-				contribute = { mapID, name }, lore = { mapID, key } })
+				contribute = { story, name }, lore = { story, key } })
 			return
 		end
 		page:Show({ title = name, subtitle = line, onSubtitle = back, text = selected.entry.full or selected.entry.short or "",
-			audio = { mapID, key }, report = { mapID, key }, lore = { mapID, key } })
+			audio = { story, key }, report = { story, key }, lore = { story, key } })
 		return
 	end
 

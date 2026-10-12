@@ -576,6 +576,9 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 	-- the client's file cannot draw names the file that can. Otherwise the window's own is kept.
 	local font = self.FontFor and self:FontFor(GameFontNormal, language)
 	if font == GameFontNormal:GetFont() then font = nil end
+	-- A dungeon's area is headed by the zone of its entrance, where Azeroth's Compendium lists it
+	-- (Razorfen Downs in The Barrens, its story kept under Thousand Needles).
+	local zone = areaKey and (self.DungeonOf and self:DungeonOf(mapID, areaKey) or mapID)
 	return {
 		key = areaKey and ("s:" .. mapID .. ":" .. areaKey) or ("z:" .. mapID),
 		path = path,
@@ -586,7 +589,7 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		areaKey = areaKey,
 		present = {
 			-- An area under its zone; anything else under the place above it.
-			header = areaKey and (self:GetMapName(mapID) or label) or self:GetMapName(self:PlaceAbove(mapID)),
+			header = areaKey and (self:GetMapName(zone) or label) or self:GetMapName(self:PlaceAbove(mapID)),
 			label = label,
 			transcript = entry and entry.full,
 			font = font,

@@ -112,7 +112,6 @@ Z.Dungeons = {
 }
 function Z:GetLore(mapID) return self.Zones[mapID] end
 function Z:IsPending(entry) return entry and entry.pending or false end
-function Z:GetSubzoneLore() return nil end
 function Z:GetLoreWithFallback(mapID) return self.Zones[mapID], mapID end
 function Z:GetPlayerMapID() return 1436 end
 function Z:GetDisplayedMapID() return 1436 end
@@ -133,7 +132,13 @@ Z.ToggleLoreWindow = nil
 local audio = setmetatable({}, { __index = Z })
 assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Zones", audio)
 Z.PlaceAbove = audio.PlaceAbove
-for _, file in ipairs({ "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow" }) do
+-- Where an area found on a map has its story, as Core.lua finds it.
+local core = setmetatable({}, { __index = Z })
+assert(loadfile(ZONES .. "Core.lua"))("Spoken_Zones", core)
+Z.Aliases = {}
+for _, name in ipairs({ "StoryPlace", "GetSubzoneLore", "ResolveAreaKey", "NormaliseAreaKey" }) do Z[name] = core[name] end
+function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
+for _, file in ipairs({ "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 Z:SetupLoreWindow()
@@ -161,6 +166,21 @@ local KEY = [[Interface\Icons\INV_Misc_Key_03]]
 
 Z:ToggleLoreWindow()
 Expect("opened on Westfall, its dungeon a card of its own before its areas", Shown(),
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Thousand Needles")
+
+-- Standing at Razorfen Downs' entrance in The Barrens, the tab opens on its card there.
+Z.GetPlayerMapID = function() return 1413 end
+_G.GetSubZoneText = function() return "Razorfen Downs" end
+Z:ToggleLoreWindow(); Z:ToggleLoreWindow()
+local listed = 0
+for label in (Shown() .. "|"):gmatch("([^|]*)|") do if label == "Razorfen Downs" then listed = listed + 1 end end
+Expect("at Razorfen Downs' entrance the tab opens on its card, listed once", RowFor("Razorfen Downs").selected and listed, 1)
+Expect("...its story under Thousand Needles", page.title.text .. ": " .. page.body.text.text .. "|" .. page.play.mapID,
+    "Razorfen Downs: The quilboars' barrows.|1441")
+Z.GetPlayerMapID = function() return 1436 end
+_G.GetSubZoneText = function() return "" end
+Click("Dungeons and Raids")
+Expect("...its line and its zone's card closing again on a click each", Click("The Barrens"),
     "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Thousand Needles")
 Expect("...a card, one level in, as a city's is", RowFor("Deadmines").row.style .. "|" .. RowFor("Deadmines").row.nest, "card|1")
 Expect("...with the Quests tab's key on it", RowFor("Deadmines").icon:GetTexture(), KEY)
@@ -265,6 +285,28 @@ Expect("Voiced Only keeps a zone whose dungeon has a recording, and only that", 
 Expect("...counting only it", RowFor("Dungeons and Raids").count.text .. "|" .. RowFor("The Barrens").count.text, "0/1 • 0%|0/1 • 0%")
 stub.OpenDropdown(window.filterMenu)[2].func()
 Z.HasAudio = hasAudio
+
+-- Clicked on The Barrens' map, the panel beside it tells its story by its own ids.
+Z.GetDisplayedMapID = function() return 1413 end
+Z:SetupMapPanel()
+WorldMapFrame:Show()
+Z.selected = { mapID = 1413, areaName = "Razorfen Downs", entry = Z.Subzones[1441]["razorfen downs"] }
+Z:RefreshPanel()
+local mapPage = Z.panel.page
+Expect("Razorfen Downs clicked on The Barrens' map: its story beside the map, in The Barrens",
+    mapPage.title.text .. ": " .. mapPage.body.text.text .. "|" .. mapPage.sub.text.text,
+    "Razorfen Downs: The quilboars' barrows.|In The Barrens")
+Expect("...Play, Report and Open on its story under Thousand Needles",
+    table.concat({ mapPage.play.mapID, mapPage.play.areaKey, mapPage.report.mapID, mapPage.report.areaKey,
+        mapPage.open.mapID, mapPage.open.areaKey }, "|"),
+    "1441|razorfen downs|1441|razorfen downs|1441|razorfen downs")
+showAll = false
+Z:RefreshPanel()
+Expect("...not discovered while not found at its entrance", mapPage.body.text.text, Z.L.NOT_DISCOVERED)
+found["1441/razorfen downs"] = true
+Z:RefreshPanel()
+Expect("...and told once it is", mapPage.body.text.text, "The quilboars' barrows.")
+showAll, found = true, {}
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll zones dungeons tests passed")

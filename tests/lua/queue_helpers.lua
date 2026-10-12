@@ -130,6 +130,7 @@ function M.NewZoneLore()
     function Z:Print(fmt, ...) table.insert(self.printed, select("#", ...) > 0 and string.format(fmt, ...) or fmt) end
     function Z:ReportURL(mapID, areaKey) return "https://spoken.test/r/" .. mapID .. "/" .. tostring(areaKey) end
     function Z:ShowLoreFor(mapID, areaKey) self.shown = { mapID, areaKey } end
+    function Z:StoryPlace(mapID, key) return mapID, key end
     function Z:ShowCopyLink(url) self.copied = url end
     function Z:MarkHeard(mapID, areaKey) table.insert(self.heard, tostring(mapID) .. "/" .. tostring(areaKey)) end
     function Z:OnZoneChanged(fn) table.insert(self.zoneChanged, fn) end

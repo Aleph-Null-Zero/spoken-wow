@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Razorfen Downs tells its story at its entrance in The Barrens.** Standing there, discovering
+  it or clicking it on The Barrens' map now plays and shows its story, and Azeroth's Compendium
+  opens on its card. *([Nucabe](https://github.com/Nucabe))*
 - **Books in Azeroth's Compendium files what is found inside a dungeon or raid under its card**,
   in the zone of its entrance, as Quests does: the Dark Keeper nameplates under Blackrock Depths,
   the lore books under Scholomance and the Scarlet Monastery. A zone with several dungeons holds

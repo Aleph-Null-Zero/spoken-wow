@@ -633,6 +633,15 @@ Barrens, where `Discovery.lua` also finds it. Blackrock Mountain's four, the Sto
 Razorfen Kraul, Maraudon, Ahn'Qiraj, Naxxramas and the Hall of Thanes have no area story of
 their own, so they have no card.
 
+A dungeon whose story is kept under another zone is told by its story's keys when it is found at
+its entrance. `SpokenZones:StoryPlace(mapID, key)` returns the map a story found on `mapID` is
+kept under: for an entry of `Data/Dungeons.lua` whose `mapID` is not the zone it is listed in,
+that `mapID`; for any other area, the map it was found on. `GetSubzoneLore` looks the story up
+there and returns that map as a third value. Standing in Razorfen Downs, discovering it or
+clicking it on The Barrens' map therefore plays, reports and opens `s:1441:razorfen downs`, with
+its picture, under a clip header of The Barrens, and the tab opens on its one card. The visit is
+recorded at the entrance (`1413/razorfen downs`), which `IsFound` reads for the story.
+
 Banners and cards list and open whether or not anything in them is found, as on the Quests
 and Books tabs. A zone's, city's or dungeon's card not yet discovered is greyed, as a card
 with none found is there, and its page, like a continent's with none of its zones found, says
