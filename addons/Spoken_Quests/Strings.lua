@@ -14,7 +14,6 @@ setfenv(1, VoiceOver)
 --   Compatibility.lua      Play/Stop, Contribute and Report on the quest-log details panel
 --   Player.lua             minimap menu entries and player settings link
 --   UI/QuestsTab.lua       the Quests tab of Azeroth's Compendium
---   UI/QuestsHeard.lua     the mark on quests heard through, in that tab
 --
 -- What the gossip module shows too -- the windows' Listen and Contribute buttons, the Report
 -- action and its dialog -- is the dialogue core's, in Spoken's strings (DIALOGUE_*).
@@ -224,5 +223,3 @@ L.QUEST_PART_ACCEPT = "Offer"
 L.QUEST_PART_PROGRESS = "Progress"
 L.QUEST_PART_COMPLETE = "Completion"
 L.QUEST_NO_TEXT = "No words are known for this quest."
-L.QUEST_HEARD = "Heard"
-L.QUEST_HEARD_TIP = "Every part of this quest's recording has played to the end, on this character or another of yours."

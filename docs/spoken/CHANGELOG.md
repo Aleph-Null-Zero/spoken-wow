@@ -49,9 +49,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Previously, on the quest giver's window and in the quest log**, plays what was said when you
   handed in the quest before this one in its chain. It shows when you have started that quest
   and a voice pack has its hand-in. *([Nucabe](https://github.com/Nucabe))*
-- **The Quests tab marks the quests you have heard.** A small tick on the quest's row and on its
-  page, once every part of its recording has played to the end on any of your characters.
-  *([Nucabe](https://github.com/Nucabe))*
 - **Shift-click a quest in the Quests tab to queue its recording** after what is playing,
   without leaving the quest you are reading. *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
