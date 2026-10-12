@@ -5,7 +5,7 @@
 -- open, unless Unlock Unstarted Quests is on.
 --
 -- The list is the Compendium's cards: a banner for each continent, holding a card for each zone
--- (with its city as a small card inside it), a card for each zone on no continent, a banner for
+-- (with its city as a small card inside it), a banner for the zones on no continent, a banner for
 -- the battlegrounds, then a banner each for Classes, Professions, Events and Other, holding a
 -- small card for each class, profession, event or other kind of quest. A
 -- card says how many of its quests are completed and how many in progress, with a bar. Inside a
@@ -313,8 +313,8 @@ local function ZonesOn(continent)
 end
 
 -- The zones with quests on no continent (Forever's Zephras Isle, whose map hangs under Azeroth),
--- as cards of their own after the continents, as the Zones tab lists them. Not a map this client
--- has never heard of: Forever's on Era would lead nowhere.
+-- under a banner of their own after the continents, as the Zones tab lists them. Not a map this
+-- client has never heard of: Forever's on Era would lead nowhere.
 local function LooseZones()
     local out = {}
     for mapID in pairs(Index().zones) do
@@ -699,29 +699,34 @@ local function Continents()
     return out
 end
 
--- The battlegrounds' banner, their cards inside.
-local function BattlegroundRows()
-    local zones = Battlegrounds()
+-- A banner holding a card for each of `zones`, opened and chosen as the sections' are.
+local function ZoneBanner(key, label, zones)
     local set = {}
     for _, mapID in ipairs(zones) do QuestsIn(mapID, set) end
     local found, total, going = Tally(set)
     if total == 0 or (OnlyFound() and found == 0) then return {} end
     local searching = filter ~= ""
     local inside = {}
-    if searching or sectionOpen.battlegrounds then
+    if searching or sectionOpen[key] then
         for _, mapID in ipairs(zones) do
             for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(inside, row) end
         end
     end
     if searching and #inside == 0 then return {} end
-    local rows = { { style = "banner", kind = "section", key = "battlegrounds", label = L.QUESTS_SECTION_BATTLEGROUNDS,
+    local rows = { { style = "banner", kind = "section", key = key, label = label,
         count = found - going, found = found, total = total, open = #inside > 0 } }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
 
--- A banner for each continent, its zones' cards inside; the zones on none as cards of their own;
--- the battlegrounds' banner; then a banner for each section.
+-- The zones' banners apart from the continents': what each holds and its name.
+local ZONE_BANNERS = {
+    lands = { label = "QUESTS_SECTION_LANDS", zones = function() return LooseZones() end },
+    battlegrounds = { label = "QUESTS_SECTION_BATTLEGROUNDS", zones = function() return Battlegrounds() end },
+}
+
+-- A banner for each continent, its zones' cards inside; the zones on none under a banner of their
+-- own; the battlegrounds' banner; then a banner for each section.
 local function BuildRows()
     local out = {}
     local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
@@ -743,8 +748,10 @@ local function BuildRows()
             Add(rows)
         end
     end
-    for _, mapID in ipairs(LooseZones()) do Add(ZoneRows(mapID, 0)) end
-    Add(BattlegroundRows())
+    for _, key in ipairs({ "lands", "battlegrounds" }) do
+        local banner = ZONE_BANNERS[key]
+        Add(ZoneBanner(key, L[banner.label], banner.zones()))
+    end
     for _, section in ipairs(SECTIONS) do Add(SectionRows(section)) end
     return out
 end
@@ -961,10 +968,11 @@ local function ShowEntry()
         page:Show({ title = selection.label, subtitle = Count(SetOf(selection.ids)), text = L.QUESTS_PICK })
         return
     end
-    if selection.section == "battlegrounds" then
+    local banner = selection.section and ZONE_BANNERS[selection.section]
+    if banner then
         local set = {}
-        for _, mapID in ipairs(Battlegrounds()) do QuestsIn(mapID, set) end
-        page:Show({ title = L.QUESTS_SECTION_BATTLEGROUNDS, subtitle = Count(set), text = L.QUESTS_PICK })
+        for _, mapID in ipairs(banner.zones()) do QuestsIn(mapID, set) end
+        page:Show({ title = L[banner.label], subtitle = Count(set), text = L.QUESTS_PICK })
         return
     end
     if selection.section then
@@ -1046,14 +1054,19 @@ local function PlayerZone()
     end
 end
 
--- Open what holds a zone's card: the battlegrounds' banner, or its continent's.
+-- Open what holds a zone's card: the battlegrounds' banner, its continent's, or the banner of the
+-- zones on none.
 local function OpenAround(zone)
     if IS_BATTLEGROUND[zone] then
         sectionOpen.battlegrounds = true
         return
     end
     local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
-    if continent then continentOpen[continent] = true end
+    if continent then
+        continentOpen[continent] = true
+    else
+        sectionOpen.lands = true
+    end
 end
 
 -- Choose where the player stands: their zone, opened, else the first continent. The tab never

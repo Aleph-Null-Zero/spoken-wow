@@ -275,12 +275,22 @@ Expect("Other holds the Commendation Signets' hand-ins, the Argent Dawn's and th
     and not Has(list, "Reputation"), true)
 Click("Other")
 
--- Zephras Isle is on no continent: a card of its own after them. The battlegrounds are under a
--- banner of their own, Alterac Valley too, though the client hangs it in Hillsbrad Foothills.
+-- Zephras Isle is on no continent: under a banner of its own after them, closed with it. The
+-- battlegrounds are under a banner of their own, Alterac Valley too, though the client hangs it in
+-- Hillsbrad Foothills.
 list = Shown()
-Expect("a zone on no continent is a card of its own after the continents, then the battlegrounds' banner",
-    list:find("|Zephras Isle|Battlegrounds|Classes|", 1, true) ~= nil and RowFor("Zephras Isle").row.style == "card"
+Expect("the zones on no continent a banner after the continents, then the battlegrounds' banner",
+    list:find("|" .. L.QUESTS_SECTION_LANDS .. "|Battlegrounds|Classes|", 1, true) ~= nil
+    and RowFor(L.QUESTS_SECTION_LANDS).row.style, "banner")
+Expect("...closed, Zephras Isle not shown", Has(list, "Zephras Isle"), false)
+Click(L.QUESTS_SECTION_LANDS)
+Expect("...opened, Zephras Isle a card inside it", RowFor("Zephras Isle") ~= nil and RowFor("Zephras Isle").row.style == "card"
     and RowFor("Zephras Isle").row.nest, 0)
+Expect("...its page counting their quests", page.title.text == L.QUESTS_SECTION_LANDS
+    and page.sub.text:match("^0 of %d+ completed$") ~= nil, true)
+Click(L.QUESTS_SECTION_LANDS)
+Expect("...and closed again", Has(Shown(), "Zephras Isle"), false)
+list = Shown()
 Expect("...the battlegrounds a banner", RowFor("Battlegrounds").row.style, "banner")
 Expect("...no battleground among its continent's zones", Has(list, "Alterac Valley"), false)
 Click("Battlegrounds")

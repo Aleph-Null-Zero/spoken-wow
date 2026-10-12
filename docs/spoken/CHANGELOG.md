@@ -60,7 +60,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Skyborne's own, and a class's quests show for that class alone.
   *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's Quests tab has a Battlegrounds banner, and Zephras Isle shows as a zone of
-  its own.** Each zone with a dungeon or raid holds its quests in a Dungeons and Raids card.
+  its own,** under an Other Lands banner, on the Zones tab too. Each zone with a dungeon or raid holds its quests in a Dungeons and Raids card.
   Every holiday has its own group under Events, Children's Week included, Camping sits with the
   professions, and the Argent Dawn and the library books have groups under Other. A quest chain
   has one name in every zone it crosses. Quests no one can take are gone, and the audit's fixes

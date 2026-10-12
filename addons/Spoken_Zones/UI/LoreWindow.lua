@@ -21,6 +21,8 @@ local panel, list, page
 local expandedZone = nil
 -- The continents start open, so the zones show; each opens and closes on its own.
 local continentOpen = { [1414] = true, [1415] = true }
+-- Whether the banner of the zones on no continent is open.
+local landsOpen = false
 local selection = nil -- { mapID = , key = nil|string }
 -- The selection made for the player, where they stood; any other is one they chose.
 local landed = nil
@@ -102,6 +104,17 @@ local function ZonesOf(continent)
 	return list
 end
 
+--- The zones on neither continent with a story, alphabetical (Forever's Zephras Isle).
+local function LooseZones()
+	local listed = {}
+	for _, continent in ipairs(Continents()) do listed[continent] = true end
+	local list = {}
+	for _, mapID in ipairs(ZoneIDs()) do
+		if not listed[ContinentOf(mapID) or 0] and not CITY_IN[mapID] then table.insert(list, mapID) end
+	end
+	return list
+end
+
 --- The cities inside the zone `mapID`, alphabetical.
 local function CitiesIn(mapID)
 	local list = {}
@@ -114,7 +127,11 @@ end
 --- Open what holds `mapID`, so opening on a place shows it.
 local function Reveal(mapID)
 	local continent = IsContinent(mapID) and mapID or ContinentOf(mapID)
-	if continent then continentOpen[continent] = true end
+	if continent then
+		continentOpen[continent] = true
+	elseif mapID ~= WORLD then
+		landsOpen = true
+	end
 end
 
 -- Whether this is the Forever client, which knows its own maps (Mount Hyjal's, 2482).
@@ -306,11 +323,33 @@ local function BuildRowList()
 			if open then Add(zones) end
 		end
 	end
-	-- Zones on neither continent with a story, as cards of their own after them.
-	local listed = {}
-	for _, continent in ipairs(Continents()) do listed[continent] = true end
-	for _, mapID in ipairs(ZoneIDs()) do
-		if not listed[ContinentOf(mapID) or 0] then Add(ZoneRows(mapID, 0)) end
+	-- Zones on neither continent with a story, under a banner of their own after them, counted
+	-- and locked as a continent is.
+	local loose = LooseZones()
+	if #loose > 0 then
+		local zones = {}
+		if searching or landsOpen then
+			for _, mapID in ipairs(loose) do
+				for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(zones, row) end
+			end
+		end
+		local found, total, anyFound = 0, 0, false
+		for _, mapID in ipairs(loose) do
+			local isFound = Found(mapID)
+			anyFound = anyFound or isFound
+			if not OnlyVoiced() or AnyVoiced(mapID) then
+				total = total + 1
+				if isFound then found = found + 1 end
+			end
+		end
+		local locked = not anyFound and not SpokenZones:ShowsUndiscovered()
+		local voiced = not OnlyVoiced() or total > 0
+		if (not searching or Matches(L.OTHER_LANDS) or #zones > 0) and not (not anyFound and OnlyFound()) and voiced then
+			local open = searching and #zones > 0 or (not searching and landsOpen and not locked)
+			table.insert(list, { style = "banner", kind = "lands", label = L.OTHER_LANDS, count = found, total = total,
+				open = open and true or false, locked = locked })
+			if open then Add(zones) end
+		end
 	end
 	return list
 end
@@ -364,6 +403,12 @@ local function LandOnPlayer()
 end
 
 local function ShowEntry()
+	if selection.lands then
+		local count = #LooseZones()
+		page:Show({ title = L.OTHER_LANDS, subtitle = count == 1 and L.ZONE_COUNT_ONE or string.format(L.ZONE_COUNT_FMT, count),
+			text = L.ZONES_PICK })
+		return
+	end
 	local mapID, key = selection.mapID, selection.key
 	-- Chosen from elsewhere (the map's panel), a place not found yet: named, and no more.
 	if SpokenZones:IsLocked(mapID, key) then
@@ -450,13 +495,17 @@ local function IsSelected(row)
 	if row.kind == "subzone" then
 		return selection.mapID == row.mapID and selection.key == row.key
 	end
+	if row.kind == "lands" or selection.lands then return row.kind == "lands" and selection.lands == true end
 	return selection.mapID == row.mapID and selection.key == nil
 end
 
 local function OnRowClick(row)
 	-- While searching the list shows every match opened, whatever is open: a toggle would change
 	-- nothing there, only leave the tree folded when the search is cleared. Choose, and no more.
-	if filter ~= "" then
+	if row.kind == "lands" then
+		if filter == "" then landsOpen = not landsOpen end
+		selection = { lands = true }
+	elseif filter ~= "" then
 		selection = { mapID = row.mapID, key = row.kind == "subzone" and row.key or nil }
 	elseif row.kind == "continent" then
 		-- Each continent opens and closes on its own; a click also chooses it.
