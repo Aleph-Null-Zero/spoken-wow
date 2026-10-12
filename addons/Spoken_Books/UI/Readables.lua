@@ -18,7 +18,7 @@ local ADDON_NAME, SpokenBooks = ...
 local L = SpokenBooks.L
 
 local C = SpokenCompendium
-local WORLD, CONTINENTS, CITY_IN = C.WORLD, C.CONTINENTS, C.CITY_IN
+local CONTINENTS, CITY_IN = C.CONTINENTS, C.CITY_IN
 local MapName, ContinentOf = C.MapName, C.ContinentOf
 
 local list, page
@@ -266,15 +266,11 @@ local KIND_ICON = {
 	note = [[Interface\Icons\INV_Misc_Note_01]],
 	scroll = [[Interface\Icons\INV_Scroll_03]],
 	tablet = [[Interface\Icons\INV_Misc_StoneTablet_04]],
-	rune = [[Interface\Icons\INV_Misc_Rune_06]],
 	plaque = [[Interface\Icons\INV_Misc_StoneTablet_03]],
-	sign = [[Interface\Icons\INV_Misc_StoneTablet_06]],
 	grave = [[Interface\Icons\INV_Misc_StoneTablet_02]],
 	exhibit = [[Interface\Icons\INV_Misc_Statue_02]],
 	journal = [[Interface\Icons\INV_Misc_Book_11]],
-	diary = [[Interface\Icons\INV_Misc_Book_11]],
 	picture = [[Interface\Icons\INV_Misc_Map_01]],
-	map = [[Interface\Icons\INV_Misc_Map_01]],
 	other = [[Interface\Icons\INV_Scroll_08]],
 }
 
@@ -288,7 +284,6 @@ local function Card(item, found, total)
 	else
 		item.icon = KIND_ICON[item.which] or KIND_ICON.other
 	end
-	item.sub = L.FOUND_FMT:format(found, total)
 	item.ratio = total > 0 and found / total or 0
 	item.tick = total > 0 and found == total
 	item.none = found == 0
@@ -321,7 +316,7 @@ end
 
 -- A zone's card, and when it is open (or a search finds something in it) its city's small card,
 -- then a small card for each kind of writing in it.
-local function ZoneRows(mapID, nest, small, whole)
+local function ZoneRows(mapID, nest, whole)
 	whole = Named(MapName(mapID), whole)
 	local all = ReadablesIn(mapID)
 	local found, total = Tally(all)
@@ -332,15 +327,15 @@ local function ZoneRows(mapID, nest, small, whole)
 	if open or filter ~= "" then
 		for city, around in pairs(CITY_IN) do
 			if around == mapID and Index().zones[city] then
-				for _, row in ipairs(ZoneRows(city, nest + 1, true, whole)) do table.insert(inside, row) end
+				for _, row in ipairs(ZoneRows(city, nest + 1, whole)) do table.insert(inside, row) end
 			end
 		end
 		KindCards(Index().zones[mapID] or {}, nest + 1, inside,
-			function(type) return { kind = "group", which = type, mapID = mapID, small = true } end,
+			function(type) return { kind = "group", which = type, mapID = mapID } end,
 			function(type) return zoneTypeShut[mapID .. ":" .. type] end, whole)
 	end
 	if filter ~= "" and #inside == 0 and not whole then return {} end
-	local rows = { Card({ kind = "zone", small = small, mapID = mapID, label = MapName(mapID), nest = nest,
+	local rows = { Card({ kind = "zone", mapID = mapID, label = MapName(mapID), nest = nest,
 		open = (open or filter ~= "") and #inside > 0 }, found, total) }
 	for _, row in ipairs(inside) do table.insert(rows, row) end
 	return rows
@@ -408,7 +403,7 @@ local function ZoneBanner(key)
 	if searching or zonesOpen[key] then
 		local whole = Named(L[ZONES_LABEL[key]])
 		for _, mapID in ipairs(zones) do
-			for _, row in ipairs(ZoneRows(mapID, 0, false, whole)) do table.insert(inside, row) end
+			for _, row in ipairs(ZoneRows(mapID, 0, whole)) do table.insert(inside, row) end
 		end
 	end
 	if searching and #inside == 0 then return {} end
@@ -436,7 +431,7 @@ local function BuildRows()
 			if searching or continentOpen[continent] then
 				local whole = Named(MapName(continent))
 				for _, mapID in ipairs(zones) do
-					for _, row in ipairs(ZoneRows(mapID, 0, false, whole)) do table.insert(rows, row) end
+					for _, row in ipairs(ZoneRows(mapID, 0, whole)) do table.insert(rows, row) end
 				end
 			end
 			if not (OnlyFound() and found == 0) and Listed(set) and (not searching or #rows > 0) then
@@ -592,9 +587,7 @@ local function ShowEntry()
 		page:Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
-	if selection.mapID == WORLD then
-		set = Index().all
-	elseif selection.mapID == 1414 or selection.mapID == 1415 then
+	if selection.mapID == 1414 or selection.mapID == 1415 then
 		for _, mapID in ipairs(ZonesOn(selection.mapID)) do ReadablesIn(mapID, set) end
 	else
 		ReadablesIn(selection.mapID, set)
