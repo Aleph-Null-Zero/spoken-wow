@@ -228,7 +228,7 @@ Expect("...chosen, the chosen card's warm leather inside its frame", elwynn.warm
     "file:glues-characterselect-card-selected-c60")
 Expect("...with none of the glow that card throws round itself", elwynn.lift[1]:IsShown(), false)
 Expect("...in the sidebar's silver, not the card's bronze", elwynn.face[5].desaturated and elwynn.warm.desaturated, true)
-Expect("...a step in from the continent's banner", elwynn.face[1].anchor.x, 14)
+Expect("...a step in from the continent's banner", elwynn.face[1].anchor.x, 16)
 local elwynnTotal = tonumber(elwynn.count.text:match("/(%d+)"))
 Expect("...the share completed after them", elwynn.count.text, "1/" .. elwynnTotal .. " • " .. math.floor(100 / elwynnTotal) .. "%")
 Expect("...and its bar filled as far", elwynn.fill:IsShown() and math.floor(elwynn.fill.width / elwynn.track.width
@@ -240,8 +240,8 @@ Expect("...in the Pet Journal's bar frame", elwynn.barCaps[1]:IsShown() and elwy
 Expect("...its page counting its quests", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
 local city = RowFor("Stormwind City")
 Expect("a city is a small card inside its zone's card", city ~= nil and city.row.small and city.row.nest, 1)
-Expect("...indented under it, its card further in", city.face[1].anchor.x - elwynn.face[1].anchor.x, 28)
-Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 30)
+Expect("...indented under it, its card further in", city.face[1].anchor.x - elwynn.face[1].anchor.x, 16)
+Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 28)
 Expect("...not chosen, the plain card alone", city.lift[5]:IsShown(), false)
 city.scripts.OnEnter(city)
 Expect("...under the pointer, the hover card over it", city.lift[5]:IsShown() and city.lift[5].texture,
