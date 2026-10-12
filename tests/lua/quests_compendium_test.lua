@@ -241,7 +241,8 @@ Expect("...with the game's yellow cut to the same share, not squeezed", elwynn.f
     and math.abs(elwynn.fill.texCoord[2] - 1 / elwynnTotal) < 1e-9, true)
 Expect("...in the Pet Journal's bar frame", elwynn.barCaps[1]:IsShown() and elwynn.barCaps[1].atlas .. " "
     .. elwynn.barCaps[2].atlas .. " " .. elwynn.barCaps[3].atlas, "PetJournal-ExpBar-Left PetJournal-ExpBar-Mid PetJournal-ExpBar-Right")
-Expect("...its page counting its quests", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
+Expect("...its page saying where it is and counting its quests, on one line",
+    page.sub.text:match("^In Eastern Kingdoms · 1 of %d+ completed$") ~= nil, true)
 local city = RowFor("Stormwind City")
 Expect("a city is a card inside its zone's card", city ~= nil and city.row.style == "card" and city.row.nest, 1)
 Expect("...indented under it, its card further in", city.face[1].anchor.x - elwynn.face[1].anchor.x, 16)
@@ -257,6 +258,11 @@ Click("Classes")
 list = Shown()
 Expect("...Classes opening on a class's quests under its name, this character's class only", Has(list, "Mage") and not Has(list, "Warlock"), true)
 Expect("...a card for it", RowFor("Mage").row.style, "card")
+Expect("...Classes' page its count alone, being no place", page.title.text == "Classes"
+    and page.sub.text:match("^%d+ of %d+ completed$") ~= nil, true)
+Click("Mage")
+Expect("...a class's page in Classes, with its count", page.sub.text:match("^In Classes · %d+ of %d+ completed$") ~= nil, true)
+Click("Mage")
 Click("Holidays and Events")
 Expect("...Events on the festivals and the Darkmoon Faire", Has(Shown(), "Lunar Festival") and Has(Shown(), "Darkmoon Faire"), true)
 list = Shown()
@@ -277,7 +283,15 @@ list = Shown()
 Expect("Other holds the Commendation Signets' hand-ins, the Argent Dawn's and the library books, under those names",
     Has(list, "Commendation Signets") and Has(list, "Argent Dawn") and Has(list, "Library Books")
     and not Has(list, "Reputation"), true)
+Click(L.QUESTS_ELSEWHERE)
+Expect("...Place Unknown's page its count alone", page.title.text == L.QUESTS_ELSEWHERE
+    and page.sub.text:match("^%d+ of %d+ completed$") ~= nil, true)
+Click(L.QUESTS_ELSEWHERE)
 Click("Other")
+Click("Kalimdor")
+Expect("a continent's page is in Azeroth, with its count", page.title.text == "Kalimdor"
+    and page.sub.text:match("^In Azeroth · %d+ of %d+ completed$") ~= nil, true)
+Click("Kalimdor")
 
 -- Zephras Isle is on no continent: under a banner of its own after them, closed with it. The
 -- battlegrounds are under a banner of their own, Alterac Valley too, though the client hangs it in
@@ -290,8 +304,8 @@ Expect("...closed, Zephras Isle not shown", Has(list, "Zephras Isle"), false)
 Click(L.QUESTS_SECTION_LANDS)
 Expect("...opened, Zephras Isle a card inside it", RowFor("Zephras Isle") ~= nil and RowFor("Zephras Isle").row.style == "card"
     and RowFor("Zephras Isle").row.nest, 0)
-Expect("...its page counting their quests", page.title.text == L.QUESTS_SECTION_LANDS
-    and page.sub.text:match("^0 of %d+ completed$") ~= nil, true)
+Expect("...its page in Azeroth, as a continent's, counting their quests", page.title.text == L.QUESTS_SECTION_LANDS
+    and page.sub.text:match("^In Azeroth · 0 of %d+ completed$") ~= nil, true)
 Click(L.QUESTS_SECTION_LANDS)
 Expect("...and closed again", Has(Shown(), "Zephras Isle"), false)
 list = Shown()
@@ -301,8 +315,8 @@ Click("Battlegrounds")
 list = Shown()
 Expect("...opening on a card for each battleground", Has(list, "Alterac Valley") and Has(list, "Warsong Gulch")
     and Has(list, "Arathi Basin") and Has(list, "Darkspear Islands") and RowFor("Alterac Valley").row.style, "card")
-Expect("...its page counting their quests", page.title.text == L.QUESTS_SECTION_BATTLEGROUNDS
-    and page.sub.text:match("^0 of %d+ completed$") ~= nil, true)
+Expect("...its page in Azeroth, counting their quests", page.title.text == L.QUESTS_SECTION_BATTLEGROUNDS
+    and page.sub.text:match("^In Azeroth · 0 of %d+ completed$") ~= nil, true)
 Click("Battlegrounds")
 list = Shown()
 Expect("a zone opens on its quests", Has(list, "Kobold Camp Cleanup") and Has(list, "Kobold Candles"), true)
@@ -355,7 +369,8 @@ Expect("its page: its title", page.title.text, "Kobold Candles")
 Expect("...in progress, then where it is", page.sub.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
 Expect("...and its words", (page.body.text.text or ""):find("Thanks for the candles", 1, true) ~= nil, true)
 Click("Elwynn Forest")
-Expect("a zone's page counts it apart from the completed", page.sub.text:match("^1 of %d+ completed, 1 in progress$") ~= nil, true)
+Expect("a zone's page counts it apart from the completed",
+    page.sub.text:match("^In Eastern Kingdoms · 1 of %d+ completed, 1 in progress$") ~= nil, true)
 Click("Elwynn Forest")
 VO.Addon.db.global.Compendium.FoundOnly = true
 Tab:Refresh()
@@ -490,7 +505,7 @@ Expect("a chain opens on its quests, in the order they are taken",
     list:find("Lost Necklace|Lost Necklace|Pie for Billy|.*Back to Billy|Goldtooth") ~= nil, true)
 Expect("...rows one step further in", RowOfQuest(PIE).row.nest, 2)
 Expect("...chosen, its page has the chain's name", page.title.text, "Lost Necklace")
-Expect("...its count", page.sub.text, "2 of 4 completed, 1 in progress")
+Expect("...the zone it is listed in and its count", page.sub.text, "In Elwynn Forest · 2 of 4 completed, 1 in progress")
 Expect("...and, as a zone's page, the quests on the left to choose", page.body.text.text, L.QUESTS_PICK)
 Expect("...nothing to play on it", page.play:IsShown(), false)
 completed[BACK], completed[GOLDTOOTH] = true, true
@@ -657,8 +672,8 @@ Expect("in a zone with several dungeons, a card for each inside Dungeons and Rai
     and RowFor("Blackrock Depths").row.nest, 2)
 Expect("...the dungeon's quests inside its own card", Has(list, "Dark Iron Legacy") and RowFor("Dark Iron Legacy").row.nest >= 3, true)
 Click("Blackrock Spire")
-Expect("...a dungeon's page counting its quests", page.title.text == "Blackrock Spire"
-    and page.sub.text:match("^0 of %d+ completed$") ~= nil, true)
+Expect("...a dungeon's page in the zone of its entrance, counting its quests", page.title.text == "Blackrock Spire"
+    and page.sub.text:match("^In Searing Gorge · 0 of %d+ completed$") ~= nil, true)
 
 -- The quest giver's window: the Compendium's tome beside its controls, for a quest the tab lists.
 local giver = Tab.giverButton

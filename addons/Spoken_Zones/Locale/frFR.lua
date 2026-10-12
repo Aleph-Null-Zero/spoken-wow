@@ -55,6 +55,7 @@ L.CONTRIBUTE_BUTTON = "Contribuer"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones n'a pas de récit pour cet endroit"
 L.CONTRIBUTE_BUTTON_TIP = "Contribuez en le décrivant : ce que c'est, qui y vit, ce qui s'y est passé."
 L.IN_ZONE_FMT = "Emplacement : %1$s"
+L.DISCOVERED_FMT = "%1$d sur %2$d découvertes"
 
 L.PLAY = "Lecture"
 L.STOP = "Arrêter"
@@ -87,7 +88,6 @@ L.CMD_DEBUG = "  /spz debug      -- signale les noms de zone au clic"
 L.CMD_VERIFY = "  /spz verify     -- vérifie les données contre ce client"
 L.CMD_DUMP = "  /spz dump       -- énumère l'arbre des cartes (dev)"
 
-L.SUBZONE_COUNT_FMT = "%1$d sous-zones"
 
 -- Settings page
 L.OPT_PAGE_TITLE = "Zones"
@@ -148,7 +148,6 @@ L.LORE_SEARCH = "Rechercher une zone"
 L.LORE_DISCOVERED_ONLY = "Découvertes seulement"
 L.LORE_VOICED_ONLY = "Avec voix seulement"
 L.LORE_SEARCH_NONE = "Aucun résultat."
-L.SUBZONE_COUNT_ONE = "1 sous-zone"
 L.ZONE_COUNT_FMT = "%1$d zones"
 L.ZONE_COUNT_ONE = "1 zone"
 L.OTHER_LANDS = "Autres terres"

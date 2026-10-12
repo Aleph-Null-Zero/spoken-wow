@@ -58,6 +58,7 @@ L.CONTRIBUTE_BUTTON = "Contribuir"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones no tiene historia para este lugar"
 L.CONTRIBUTE_BUTTON_TIP = "Contribuye describiéndolo: qué es, quién vive allí, qué pasó allí."
 L.IN_ZONE_FMT = "Ubicación: %1$s"
+L.DISCOVERED_FMT = "%1$d de %2$d descubiertas"
 
 L.PLAY = "Reproducir"
 L.STOP = "Detener"
@@ -90,7 +91,6 @@ L.CMD_DEBUG = "  /spz debug      -- informa nombres de zona al hacer clic"
 L.CMD_VERIFY = "  /spz verify     -- verifica los datos contra este cliente"
 L.CMD_DUMP = "  /spz dump       -- enumera el árbol de mapas (dev)"
 
-L.SUBZONE_COUNT_FMT = "%1$d áreas"
 
 -- Added in the settings, subtitles and Zone Lore release.
 
@@ -153,7 +153,6 @@ L.LORE_SEARCH = "Buscar zonas"
 L.LORE_DISCOVERED_ONLY = "Solo descubiertas"
 L.LORE_VOICED_ONLY = "Solo con voz"
 L.LORE_SEARCH_NONE = "No hay coincidencias."
-L.SUBZONE_COUNT_ONE = "1 área"
 L.ZONE_COUNT_FMT = "%1$d zonas"
 L.ZONE_COUNT_ONE = "1 zona"
 L.OTHER_LANDS = "Otras tierras"

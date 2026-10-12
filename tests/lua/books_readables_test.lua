@@ -124,6 +124,7 @@ Expect("...a city's card opened inside its zone's", RowFor("Elwynn Forest").row.
     and Has(Shown(), L.TYPE_PLAQUE), true)
 Reopen(9002)
 Expect("...where their zone has nothing to read, their continent's banner", panel.page.title.text, "Kalimdor")
+Expect("...its page in Azeroth, with what is found of it", panel.page.sub.text:match("^In Azeroth · %d+ of %d+ found$") ~= nil, true)
 Reopen(9003)
 Expect("...on no continent, the first continent's", panel.page.title.text, "Eastern Kingdoms")
 Click("Westfall")
@@ -148,6 +149,7 @@ Expect("...its badge the zone's painting in the collections window's gold frame"
 Expect("...and the seasonal events' readables, in a group of their own before them",
     Has(list, L.GROUP_EVENTS) and list:find(L.GROUP_EVENTS, 1, true) < list:find(L.GROUP_WIDE, 1, true), true)
 Click(L.GROUP_EVENTS)
+Expect("...its page what is found of it alone, being no place", panel.page.sub.text:match("^%d+ of %d+ found$") ~= nil, true)
 -- A click on each kind's card in a group's banner, which opens it.
 local function KindRow(group, label)
     Shown()
@@ -186,9 +188,9 @@ Expect("...a battleground hung under a continent not listed under it", Has(list,
 Click(L.GROUP_LANDS)
 Expect("Other Lands opens on a card for each zone on no continent", RowFor("Zephras Isle") ~= nil
     and RowFor("Zephras Isle").row.style == "card" and RowFor("Zephras Isle").row.nest, 0)
-Expect("...its page its name, what is found of it, and the words to choose one",
+Expect("...its page its name, in Azeroth as a continent is, what is found of it, and the words to choose one",
     panel.page.title.text .. "|" .. panel.page.sub.text .. "|" .. panel.page.body.text.text,
-    L.GROUP_LANDS .. "|" .. L.FOUND_FMT:format(0, 1) .. "|" .. L.READABLES_PICK)
+    L.GROUP_LANDS .. "|" .. L.READABLES_IN_FMT:format("Azeroth") .. " · " .. L.FOUND_FMT:format(0, 1) .. "|" .. L.READABLES_PICK)
 Click(L.GROUP_LANDS)
 Expect("...and closes again", Has(Shown(), "Zephras Isle"), false)
 Click(L.GROUP_BATTLEGROUNDS)
@@ -205,11 +207,14 @@ Click(L.GROUP_BATTLEGROUNDS)
 Click("Elwynn Forest")
 Click("Stormwind City")
 list = Shown()
+Expect("a city's page in the zone around it, with what is found of it",
+    panel.page.sub.text:find(L.READABLES_IN_FMT:format("Elwynn Forest") .. " · 1 of ", 1, true), 1)
 Expect("the city opens inside its zone, its readables by what they are", Has(list, L.TYPE_PLAQUE), true)
 Expect("...the city a card inside its zone's card", RowFor("Stormwind City").row.nest, 1)
 Expect("...each kind a card inside the city's", RowFor(L.TYPE_PLAQUE).row.nest, 2)
 Expect("...closed, as Quests' chains start", RowFor(L.TYPE_PLAQUE).row.open or Has(list, "Kurdran Wildhammer"), false)
 Click(L.TYPE_PLAQUE)
+Expect("...its page in the place that holds it", panel.page.sub.text:find(L.READABLES_IN_FMT:format("Stormwind City") .. " · ", 1, true), 1)
 Expect("...opened by a click on its writings", RowFor(L.TYPE_PLAQUE).row.open and Has(Shown(), "Kurdran Wildhammer"), true)
 Expect("...its badge what that kind of writing looks like, in the same frame", RowFor(L.TYPE_PLAQUE).icon.texture
     .. " " .. RowFor(L.TYPE_PLAQUE).iconFrame.atlas, [[Interface\Icons\INV_Misc_StoneTablet_03]] .. " collections-itemborder-collected")
@@ -407,7 +412,7 @@ Expect("...a click opening it on the writings under it", Has(Shown(), "An Exotic
 local kindLabel = kindRow.row.label
 kindRow = KindRow("wide", kindLabel)
 Expect("...a kind chosen, its page names it and its group", page.title.text == kindLabel
-    and page.sub.text:find(L.GROUP_WIDE .. " · ", 1, true) == 1, true)
+    and page.sub.text:find(L.READABLES_IN_FMT:format(L.GROUP_WIDE) .. " · ", 1, true) == 1, true)
 kindRow.scripts.OnClick(kindRow)
 Expect("...and another click closes it", KindRow("wide", kindLabel).row.open, false)
 OpenKinds("wide")

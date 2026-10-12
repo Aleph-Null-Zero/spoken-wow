@@ -544,6 +544,20 @@ local function Count(found, total)
 	return L.FOUND_FMT:format(found, total)
 end
 
+-- A page's line: where it is and what it counts, one line.
+local function InAndCount(where, found, total)
+	return L.READABLES_IN_FMT:format(where) .. " · " .. Count(found, total)
+end
+
+-- The place one level up from a zone, as the Zones tab nests them: a city's zone, a zone's
+-- continent, and the world for a continent or a zone on none.
+local function Above(mapID)
+	for _, continent in ipairs(CONTINENTS) do
+		if continent == mapID then return C.WORLD end
+	end
+	return CITY_IN[mapID] or ContinentOf(mapID) or C.WORLD
+end
+
 local function ShowEntry()
 	if not page then return end
 	if not selection then
@@ -578,7 +592,8 @@ local function ShowEntry()
 		page:Show({ title = Title(id), subtitle = where, text = table.concat(parts, "\n\n"), target = id })
 		return
 	end
-	-- A zone, a continent, a group, a type: what it holds.
+	-- A zone, a continent, a group, a type: where it is and what it holds. A kind of writing across
+	-- every place (By Type) and the groups after the zones are no place: their count alone.
 	local set = {}
 	if selection.type and not selection.group then
 		for _, id in ipairs(Index().types[selection.type] or {}) do set[id] = true end
@@ -587,7 +602,7 @@ local function ShowEntry()
 	end
 	if selection.group and selection.mapID and TYPE_NAMES[selection.group] then
 		for _, id in ipairs((Index().zones[selection.mapID] or {})[selection.group] or {}) do set[id] = true end
-		page:Show({ title = TypeLabel(selection.group), subtitle = MapName(selection.mapID) .. " · " .. Count(Tally(set)),
+		page:Show({ title = TypeLabel(selection.group), subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
@@ -596,13 +611,14 @@ local function ShowEntry()
 		for _, id in ipairs(Index()[selection.group]) do
 			if Index().typeOf[id] == selection.type then set[id] = true end
 		end
-		page:Show({ title = TypeLabel(selection.type), subtitle = where .. " · " .. Count(Tally(set)),
+		page:Show({ title = TypeLabel(selection.type), subtitle = InAndCount(where, Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
 	if selection.zones then
 		for _, mapID in ipairs(ZONES_OF[selection.zones]()) do ReadablesIn(mapID, set) end
-		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = InAndCount(MapName(C.WORLD), Tally(set)),
+			text = L.READABLES_PICK })
 		return
 	end
 	if GROUP_LABEL[selection.group] then
@@ -615,7 +631,8 @@ local function ShowEntry()
 	else
 		ReadablesIn(selection.mapID, set)
 	end
-	page:Show({ title = MapName(selection.mapID), subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+	page:Show({ title = MapName(selection.mapID), subtitle = InAndCount(MapName(Above(selection.mapID)), Tally(set)),
+		text = L.READABLES_PICK })
 end
 
 --------------------------------------------------------------------------------

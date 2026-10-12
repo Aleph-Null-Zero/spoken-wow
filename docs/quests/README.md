@@ -1478,6 +1478,11 @@ right, level with its name, are the quest mark with how many of its quests
 are in progress, the quests completed out of all and the share completed (or, once all are, the
 quest log's gold tick), and the Pet Journal's bar along its foot is filled as far. A banner counts
 completed out of all. A quest's row has the gold tick once completed and the quest mark while in progress.
+Chosen, a banner's or card's page has one line under its name, where it is and its count ("In
+Eastern Kingdoms · 1 of 88 completed, 2 in progress"): a zone is in its continent, a city in its
+zone, a continent, Other Lands and Battlegrounds in Azeroth, a dungeon's card in the zone of its
+entrance and a class's, profession's or season's card in its section. The sections and Place
+Unknown are no place, and their line is the count alone.
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
 there, linked by `prev`) are a small card of their own, before the quests in no chain. The card
@@ -1486,7 +1491,8 @@ chain's first quest (a quest's id, whose title the client gives in its own langu
 language), else the first quest's title, wherever that quest is (`ChainName`). Its badge is the
 game's quest scroll, and its numbers and bar count its quests as a zone's card does. A chain that
 runs through several zones has a card in each, for its quests there. Chosen, a chain's page has
-its name and how many of its quests are completed and in progress, and asks for one of its quests
+its name, what lists it (the zone, dungeon or group whose card holds it) and how many of its quests
+are completed and in progress, and asks for one of its quests
 to be chosen from the list; it has no Play. The client has no chain of its own, so without `prev`
 in the data every quest is a row of its own.
 

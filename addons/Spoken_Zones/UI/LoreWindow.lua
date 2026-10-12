@@ -445,11 +445,24 @@ local function LandOnPlayer()
 	landed = selection
 end
 
+-- Where a place sits, and what its card or banner counts found out of all, as "1 of 7
+-- discovered"; no count where there is nothing to count.
+local function InAndCount(where, found, total)
+	local line = string.format(L.IN_ZONE_FMT, ZoneName(where))
+	if total > 0 then line = line .. " · " .. string.format(L.DISCOVERED_FMT, found, total) end
+	return line
+end
+
 local function ShowEntry()
 	if selection.group then
+		-- In Azeroth, as a continent is, a click away.
 		local group = Group(selection.group)
-		local count = #group.zones()
-		page:Show({ title = group.label(), subtitle = count == 1 and L.ZONE_COUNT_ONE or string.format(L.ZONE_COUNT_FMT, count),
+		local found, total = BannerCount(group.zones())
+		page:Show({ title = group.label(), subtitle = InAndCount(WORLD, found, total),
+			onSubtitle = function()
+				selection = { mapID = WORLD, key = nil }
+				SpokenZones:RefreshLoreWindow()
+			end,
 			text = L.ZONES_PICK })
 		return
 	end
@@ -508,8 +521,8 @@ end
 
 local function Count(n, many, one) return n == 1 and one or string.format(many, n) end
 
---- The line under a place's name: where it sits and how many places it holds. Also returns the
---- map one level up, which a click on the line opens (nil for Azeroth).
+--- The line under a place's name: where it sits and what its card or banner counts. Also returns
+--- the map one level up, which a click on the line opens (nil for Azeroth).
 function SpokenZones:PlaceLine(mapID, key)
 	if key then return string.format(L.IN_ZONE_FMT, ZoneName(mapID)), mapID end
 	local parent = self:PlaceAbove(mapID)
@@ -517,15 +530,10 @@ function SpokenZones:PlaceLine(mapID, key)
 		return Count(#Continents(), L.CONTINENT_COUNT_FMT, L.CONTINENT_COUNT_ONE) .. ", "
 			.. Count(#ZoneIDs(), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), nil
 	elseif IsContinent(mapID) then
-		return string.format(L.IN_ZONE_FMT, ZoneName(parent)) .. " · "
-			.. Count(#ZonesOf(mapID), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), parent
+		local found, total = BannerCount(ZonesOf(mapID))
+		return InAndCount(parent, found, total), parent
 	end
-	local _, total = Places(mapID)
-	local line = string.format(L.IN_ZONE_FMT, ZoneName(parent))
-	if total > 0 then
-		line = line .. " · " .. Count(total, L.SUBZONE_COUNT_FMT, L.SUBZONE_COUNT_ONE)
-	end
-	return line, parent
+	return InAndCount(parent, Places(mapID)), parent
 end
 
 --------------------------------------------------------------------------------

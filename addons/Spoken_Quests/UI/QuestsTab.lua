@@ -16,7 +16,8 @@
 --
 -- The page shows what is chosen. A quest's is its title, where it is and its words, with Play
 -- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. A banner's, card's or
--- chain's is its name, its count and L.QUESTS_PICK, the quests being on the left to choose.
+-- chain's is its name, where it is and its count on one line, and L.QUESTS_PICK, the quests being
+-- on the left to choose. The sections and Place Unknown are no place: their line is the count.
 --
 -- A search lists what matches under what holds it. Where it matches the name of a banner, a card
 -- or a chain, everything inside that one is listed.
@@ -46,7 +47,7 @@ end
 
 local list, page
 local selection          -- { quest = id } | { mapID = id } | { sort = id } | { group = "elsewhere" }
-                         -- | { chain = key, ids = { id... } } | nil
+                         -- | { chain = key, ids = { id... }, first = id, where = key } | nil
 local landed             -- the selection made for the player, where they stood; any other they chose
 local expandedZone
 local continentOpen = { [1414] = true, [1415] = true }
@@ -551,7 +552,7 @@ local function ChainRows(where, first, ids, nest)
     end)
     if Filtering() and #inside == 0 then return {} end
     local rows = { Card({ kind = "chain", key = key, ids = ids, first = first, label = label, nest = nest,
-        open = #inside > 0 }, found, total, going) }
+        where = where, open = #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
@@ -1028,6 +1029,33 @@ local function Count(set)
     return L.QUESTS_FOUND_FMT:format(found, total)
 end
 
+-- The place one level up from a zone, as the Zones tab nests them: a city's zone, a zone's
+-- continent, and the world for a continent or a zone on none.
+local function Above(mapID)
+    for _, continent in ipairs(C.CONTINENTS) do
+        if continent == mapID then return C.WORLD end
+    end
+    return C.CITY_IN[mapID] or C.ContinentOf(mapID) or C.WORLD
+end
+
+-- What lists a chain, from where its card is (Leaves' `where`): a zone, a dungeon, a class's,
+-- profession's or event's card, or Place Unknown.
+local function HolderName(where)
+    local zone = where:match("^z(%d+)$")
+    if zone then return C.MapName(tonumber(zone)) end
+    local dungeon = where:match("^d%d+:(%d+)$")
+    if dungeon then return DungeonName(tonumber(dungeon)) end
+    local sort = where:match("^s(.+)$")
+    if sort == "elsewhere" then return L.QUESTS_ELSEWHERE end
+    if sort then return SortName(tonumber(sort) or sort) end
+end
+
+-- A page's line: where it is and its count, one line, or the count alone with nowhere to name.
+local function Line(where, set)
+    if not where then return Count(set) end
+    return L.QUESTS_IN_FMT:format(where) .. " · " .. Count(set)
+end
+
 -- In progress, before where it is: the line is cut short where a quest is given in several zones.
 local function Subtitle(id)
     if InProgress(id) then return IN_PROGRESS_MARK .. L.QUEST_IN_PROGRESS .. " • " .. Where(id) end
@@ -1042,8 +1070,9 @@ local function ShowEntry()
     end
     if selection.chain then
         local ids = selection.ids
-        -- As a zone's page: its name, its count, and the quests on the left to choose.
-        page:Show({ title = ChainName(selection.first or First(ids[1])), subtitle = Count(SetOf(ids)), text = L.QUESTS_PICK })
+        -- As a zone's page: its name, where it is and its count, and the quests on the left to choose.
+        page:Show({ title = ChainName(selection.first or First(ids[1])),
+            subtitle = Line(selection.where and HolderName(selection.where), SetOf(ids)), text = L.QUESTS_PICK })
         return
     end
     if selection.quest then
@@ -1056,16 +1085,20 @@ local function ShowEntry()
         return
     end
     if selection.dungeon then
-        page:Show({ title = selection.label, subtitle = Count(SetOf(selection.ids)), text = L.QUESTS_PICK })
+        -- In the zone of its entrance, whose card holds it.
+        local zone = tonumber(selection.dungeon:match("^d(%d+)"))
+        page:Show({ title = selection.label, subtitle = Line(zone and C.MapName(zone), SetOf(selection.ids)),
+            text = L.QUESTS_PICK })
         return
     end
     local banner = selection.section and ZONE_BANNERS[selection.section]
     if banner then
         local set = {}
         for _, mapID in ipairs(banner.zones()) do QuestsIn(mapID, set) end
-        page:Show({ title = L[banner.label], subtitle = Count(set), text = L.QUESTS_PICK })
+        page:Show({ title = L[banner.label], subtitle = Line(C.MapName(C.WORLD), set), text = L.QUESTS_PICK })
         return
     end
+    -- Classes, Professions, Holidays and Events and Other are no place: their count alone.
     if selection.section then
         for _, section in ipairs(SECTIONS) do
             if section.key == selection.section then
@@ -1075,7 +1108,11 @@ local function ShowEntry()
         return
     end
     if selection.sort then
-        page:Show({ title = SortName(selection.sort), subtitle = Count(SetOf(Index().sorts[selection.sort])),
+        local section
+        for _, each in ipairs(SECTIONS) do
+            if each.key == SectionOf(selection.sort) then section = L[each.label] end
+        end
+        page:Show({ title = SortName(selection.sort), subtitle = Line(section, SetOf(Index().sorts[selection.sort])),
             text = L.QUESTS_PICK })
         return
     end
@@ -1089,7 +1126,8 @@ local function ShowEntry()
     else
         QuestsIn(selection.mapID, set)
     end
-    page:Show({ title = C.MapName(selection.mapID), subtitle = Count(set), text = L.QUESTS_PICK })
+    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(C.MapName(Above(selection.mapID)), set),
+        text = L.QUESTS_PICK })
 end
 
 --------------------------------------------------------------------------------
@@ -1105,7 +1143,7 @@ local function OnClick(row)
         selection = { quest = row.quest }
     elseif row.kind == "chain" then
         if filter == "" or row.shut then chainOpen[row.key] = not chainOpen[row.key] end
-        selection = { chain = row.key, ids = row.ids, first = row.first }
+        selection = { chain = row.key, ids = row.ids, first = row.first, where = row.where }
     elseif row.kind == "dungeons" or row.kind == "dungeon" then
         if filter == "" or row.shut then dungeonOpen[row.key] = not dungeonOpen[row.key] end
         selection = { dungeon = row.key, ids = row.ids, label = row.label }

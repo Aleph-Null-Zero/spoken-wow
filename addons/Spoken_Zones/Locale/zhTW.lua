@@ -55,6 +55,7 @@ L.CONTRIBUTE_BUTTON = "貢獻"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones 還沒有這個地方的故事"
 L.CONTRIBUTE_BUTTON_TIP = "描述它來做貢獻：它是什麼，誰住在那裡，那裡發生過什麼。"
 L.IN_ZONE_FMT = "位於%1$s"
+L.DISCOVERED_FMT = "已發現 %1$d / %2$d"
 
 L.PLAY = "播放"
 L.STOP = "停止"
@@ -87,7 +88,6 @@ L.CMD_DEBUG = "  /spz debug      -- 點擊地圖時回報地區名稱"
 L.CMD_VERIFY = "  /spz verify     -- 根據此客戶端校驗資料"
 L.CMD_DUMP = "  /spz dump       -- 列舉地圖樹 (dev)"
 
-L.SUBZONE_COUNT_FMT = "%1$d 個區域"
 
 -- Added in this release: subtitles, profiles, module pages and windows.
 L.REASON_VOICE = "開啟「朗讀故事」才能使用。"
@@ -111,7 +111,6 @@ L.OPT_SECTION_LORE = "艾澤拉斯百科"
 L.OPT_LORE_WINDOW_TIP = "每個地區和區域的故事，無論身在何處都能瀏覽和聆聽。尚未發現的地區顯示為灰色。"
 L.OPT_SHOW_UNDISCOVERED = "解鎖未發現的地區"
 L.OPT_SHOW_UNDISCOVERED_TIP = "可以開啟所有地區和區域，包括你尚未發現的。關閉時它們顯示為灰色。"
-L.SUBZONE_COUNT_ONE = "1 個區域"
 L.ZONE_COUNT_FMT = "%1$d 個地區"
 L.ZONE_COUNT_ONE = "1 個地區"
 L.OTHER_LANDS = "其他地區"
