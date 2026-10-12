@@ -46,6 +46,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Fixed: the Librams and Nat Pagle's guide said "Dropped by Alliance Sentinel (1)"** in the
   Compendium, naming the server's copies of a creature. They name the creatures you meet.
   *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's readables have two new kinds: Journals and Diaries, and Pictures and Maps.**
+  Journals were split between Books and Notes. A readable with no words, such as the Snapshot of
+  Gammerita or the Crude Map, is a picture. With them, about 90 readables move to the kind their
+  title or words say: "Maybell's Love Letter" is a letter, not a scroll, and Uther's tomb a
+  gravestone, not a plaque. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.1 — 2026-10-11
 
