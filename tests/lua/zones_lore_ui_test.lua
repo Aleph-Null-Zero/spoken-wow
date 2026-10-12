@@ -248,6 +248,16 @@ Expect("...and closing it leaves the other open", Shown(),
 Z.Subzones[1426] = nil
 Z:RefreshLoreWindow(); Shown()
 
+-- A city with areas of its own: the city one place in its zone, and each of its areas another.
+Z.Subzones[1454] = { ["valley of strength"] = { name = "Valley of Strength", full = "The city's heart." } }
+Z:RefreshLoreWindow(); Shown()
+Expect("a zone's card counts its city and the city's areas", RowFor("Durotar").count.text:match("/(%d+)"), "4")
+Expect("...the city's card its own areas", RowFor("Orgrimmar").count.text:match("/(%d+)"), "1")
+Expect("...the continent's banner what its zones' cards count", RowFor("Kalimdor").count.text:match("/(%d+)"), "4")
+Expect("...and the zone's page what its card counts", (Z:PlaceLine(1411)), "In Kalimdor · 0 of 4 discovered")
+Z.Subzones[1454] = nil
+Z:RefreshLoreWindow(); Shown()
+
 RowFor("Valley of Trials").scripts.OnClick(RowFor("Valley of Trials"))
 Expect("choosing an area shows its story", page.title.text .. ": " .. page.body.text.text, "Valley of Trials: Where the orcs learn.")
 Expect("...says which zone it is in, and leads back to it", page.sub.text.text, "In Durotar")

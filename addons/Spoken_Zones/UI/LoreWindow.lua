@@ -292,14 +292,16 @@ local function Missing(mapID)
 	return not entry or SpokenZones:IsPending(entry)
 end
 
--- What a zone holds, found out of all: its city and its areas. Of what is listed: under Voiced
--- Only, what no voice pack reads is left out of the count as it is of the rows, so the card's
--- number is of the rows beneath it. Its page counts the same.
+-- What a zone holds, found out of all: its areas, and its city as one place more with the city's
+-- own areas. Of what is listed: under Voiced Only, what no voice pack reads is left out of the
+-- count as it is of the rows, so the card's number is of the rows beneath it. Its page counts the
+-- same.
 local function Places(mapID)
 	local found, total = 0, 0
 	for _, city in ipairs(CitiesIn(mapID)) do
 		if not OnlyVoiced() or AnyVoiced(city) then
-			total = total + 1
+			local f, t = Places(city)
+			found, total = found + f, total + t + 1
 			if Found(city) then found = found + 1 end
 		end
 	end
