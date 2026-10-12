@@ -262,6 +262,25 @@ local function Matches(text)
     return filter == "" or (text and string.find(string.lower(text), filter, 1, true) ~= nil)
 end
 
+-- Set while the rows inside a container whose name the search matches are built: all it holds is
+-- listed, not only what matches.
+local whole = false
+
+-- Whether the search leaves out what does not match it, where the rows are being built.
+local function Filtering()
+    return filter ~= "" and not whole
+end
+
+-- The rows `build` returns, everything it holds listed where `named` (the search matches the
+-- container's name).
+local function Whole(named, build)
+    local before = whole
+    whole = before or named
+    local rows = build()
+    whole = before
+    return rows
+end
+
 -- Every quest this character may take, by where it is: index.zones[mapID], index.sorts[sort],
 -- index.elsewhere, and `all`. Built once: neither the data nor the character's race and class
 -- change in a session.
@@ -440,7 +459,7 @@ end
 
 local function Shows(id)
     local english = Quests()[id] and Quests()[id][1]
-    return not (OnlyFound() and not Found(id)) and (filter == "" or Matches(Title(id)) or Matches(english))
+    return not (OnlyFound() and not Found(id)) and (not Filtering() or Matches(Title(id)) or Matches(english))
 end
 
 -- What a class, profession, event or other kind of quest shows on its card.
@@ -479,16 +498,16 @@ local function ChainRows(where, first, ids, nest)
     local label = ChainName(first, filter == "")
     local found, total, going = Tally(SetOf(ids))
     if OnlyFound() and found == 0 then return {} end
-    local named = filter ~= "" and Matches(label)
-    local inside = {}
-    if chainOpen[key] or filter ~= "" then
-        for _, id in ipairs(ids) do
-            if named and not (OnlyFound() and not Found(id)) or Shows(id) then
-                table.insert(inside, QuestRow(id, nest + 1))
+    local inside = Whole(filter ~= "" and Matches(label), function()
+        local out = {}
+        if chainOpen[key] or filter ~= "" then
+            for _, id in ipairs(ids) do
+                if Shows(id) then table.insert(out, QuestRow(id, nest + 1)) end
             end
         end
-    end
-    if filter ~= "" and #inside == 0 then return {} end
+        return out
+    end)
+    if Filtering() and #inside == 0 then return {} end
     local rows = { Card({ kind = "chain", small = true, key = key, ids = ids, first = first, label = label, nest = nest,
         open = #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
@@ -592,26 +611,32 @@ local function DungeonRows(mapID, byDungeon, nest)
     local found, total, going = Tally(SetOf(all))
     if OnlyFound() and found == 0 then return {} end
     local key, searching = DungeonKey(mapID), filter ~= ""
-    local inside = {}
-    if dungeonOpen[key] or searching then
+    local label = L.QUESTS_DUNGEONS
+    local inside = Whole(searching and Matches(label), function()
+        local out = {}
+        if not (dungeonOpen[key] or searching) then return out end
         if #dungeons == 1 then
-            Leaves(all, nest + 1, inside, DungeonKey(mapID, dungeons[1]))
-        else
-            for _, dungeon in ipairs(dungeons) do
-                local ids, dkey, name = byDungeon[dungeon], DungeonKey(mapID, dungeon), DungeonName(dungeon)
-                local f, t, g = Tally(SetOf(ids))
-                local leaves = {}
-                if dungeonOpen[dkey] or searching then Leaves(ids, nest + 2, leaves, dkey) end
-                if not (OnlyFound() and f == 0) and not (searching and #leaves == 0 and not Matches(name)) then
-                    table.insert(inside, Card({ kind = "dungeon", small = true, key = dkey, ids = ids, label = name,
-                        nest = nest + 1, open = #leaves > 0 }, f, t, g))
-                    for _, row in ipairs(leaves) do table.insert(inside, row) end
-                end
+            Leaves(all, nest + 1, out, DungeonKey(mapID, dungeons[1]))
+            return out
+        end
+        for _, dungeon in ipairs(dungeons) do
+            local ids, dkey, name = byDungeon[dungeon], DungeonKey(mapID, dungeon), DungeonName(dungeon)
+            local f, t, g = Tally(SetOf(ids))
+            local leaves = Whole(searching and Matches(name), function()
+                local rows = {}
+                if dungeonOpen[dkey] or searching then Leaves(ids, nest + 2, rows, dkey) end
+                return rows
+            end)
+            if not (OnlyFound() and f == 0) and not (Filtering() and #leaves == 0) then
+                table.insert(out, Card({ kind = "dungeon", small = true, key = dkey, ids = ids, label = name,
+                    nest = nest + 1, open = #leaves > 0 }, f, t, g))
+                for _, row in ipairs(leaves) do table.insert(out, row) end
             end
         end
-    end
-    if searching and #inside == 0 then return {} end
-    local rows = { Card({ kind = "dungeons", small = true, key = key, ids = all, label = L.QUESTS_DUNGEONS, nest = nest,
+        return out
+    end)
+    if Filtering() and #inside == 0 then return {} end
+    local rows = { Card({ kind = "dungeons", small = true, key = key, ids = all, label = label, nest = nest,
         open = #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
@@ -623,18 +648,20 @@ local function ZoneRows(mapID, nest, small)
     local found, total, going = Tally(QuestsIn(mapID))
     if OnlyFound() and found == 0 then return {} end
     local open = expandedZone == mapID or C.CITY_IN[expandedZone] == mapID
-    local inside = {}
-    if open or filter ~= "" then
+    local inside = Whole(filter ~= "" and Matches(C.MapName(mapID)), function()
+        local out = {}
+        if not (open or filter ~= "") then return out end
         for city, around in pairs(C.CITY_IN) do
             if around == mapID and Index().zones[city] then
-                for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
+                for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(out, row) end
             end
         end
         local own, byDungeon = ZoneParts(mapID)
-        for _, row in ipairs(DungeonRows(mapID, byDungeon, nest + 1)) do table.insert(inside, row) end
-        Leaves(own, nest + 1, inside, "z" .. mapID)
-    end
-    if filter ~= "" and #inside == 0 and not Matches(C.MapName(mapID)) then return {} end
+        for _, row in ipairs(DungeonRows(mapID, byDungeon, nest + 1)) do table.insert(out, row) end
+        Leaves(own, nest + 1, out, "z" .. mapID)
+        return out
+    end)
+    if Filtering() and #inside == 0 then return {} end
     local rows = { Card({ kind = "zone", small = small, mapID = mapID, label = C.MapName(mapID), nest = nest,
         open = (open or filter ~= "") and #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
@@ -646,9 +673,12 @@ local function GroupRows(kind, key, label, ids)
     if not ids or #ids == 0 then return {} end
     local found, total, going = Tally(SetOf(ids))
     if OnlyFound() and found == 0 then return {} end
-    local leaves = {}
-    if groupOpen[key] or filter ~= "" then Leaves(ids, 1, leaves, "s" .. key) end
-    if filter ~= "" and #leaves == 0 then return {} end
+    local leaves = Whole(filter ~= "" and Matches(label), function()
+        local out = {}
+        if groupOpen[key] or filter ~= "" then Leaves(ids, 1, out, "s" .. key) end
+        return out
+    end)
+    if Filtering() and #leaves == 0 then return {} end
     local rows = { Card({ kind = kind, small = true, key = key, label = label, nest = 0, open = #leaves > 0 },
         found, total, going) }
     for _, row in ipairs(leaves) do table.insert(rows, row) end
@@ -676,12 +706,15 @@ local function SectionRows(section)
     local found, total, going = Tally(set)
     if total == 0 or (OnlyFound() and found == 0) then return {} end
     local searching = filter ~= ""
-    local inside = {}
-    local function Add(rows) for _, row in ipairs(rows) do table.insert(inside, row) end end
-    if searching or sectionOpen[section.key] then
-        for _, sort in ipairs(sorts) do Add(GroupRows("sort", sort, SortName(sort), Index().sorts[sort])) end
-        if section.key == "other" then Add(GroupRows("elsewhere", "elsewhere", L.QUESTS_ELSEWHERE, Index().elsewhere)) end
-    end
+    local inside = Whole(searching and Matches(L[section.label]), function()
+        local out = {}
+        local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
+        if searching or sectionOpen[section.key] then
+            for _, sort in ipairs(sorts) do Add(GroupRows("sort", sort, SortName(sort), Index().sorts[sort])) end
+            if section.key == "other" then Add(GroupRows("elsewhere", "elsewhere", L.QUESTS_ELSEWHERE, Index().elsewhere)) end
+        end
+        return out
+    end)
     if searching and #inside == 0 then return {} end
     local rows = { { style = "banner", kind = "section", key = section.key, label = L[section.label],
         count = found - going, found = found, total = total, open = #inside > 0 } }
@@ -706,12 +739,15 @@ local function ZoneBanner(key, label, zones)
     local found, total, going = Tally(set)
     if total == 0 or (OnlyFound() and found == 0) then return {} end
     local searching = filter ~= ""
-    local inside = {}
-    if searching or sectionOpen[key] then
-        for _, mapID in ipairs(zones) do
-            for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(inside, row) end
+    local inside = Whole(searching and Matches(label), function()
+        local out = {}
+        if searching or sectionOpen[key] then
+            for _, mapID in ipairs(zones) do
+                for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(out, row) end
+            end
         end
-    end
+        return out
+    end)
     if searching and #inside == 0 then return {} end
     local rows = { { style = "banner", kind = "section", key = key, label = label,
         count = found - going, found = found, total = total, open = #inside > 0 } }
@@ -731,17 +767,21 @@ local function BuildRows()
     local out = {}
     local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
     local searching = filter ~= ""
+    whole = false
     for _, continent in ipairs(Continents()) do
         local zones = ZonesOn(continent)
         local set = {}
         for _, mapID in ipairs(zones) do QuestsIn(mapID, set) end
         local found, total, going = Tally(set)
-        local rows = {}
-        if searching or continentOpen[continent] then
-            for _, mapID in ipairs(zones) do
-                for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(rows, row) end
+        local rows = Whole(searching and Matches(C.MapName(continent)), function()
+            local out = {}
+            if searching or continentOpen[continent] then
+                for _, mapID in ipairs(zones) do
+                    for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(out, row) end
+                end
             end
-        end
+            return out
+        end)
         if not (OnlyFound() and found == 0) and (not searching or #rows > 0) then
             table.insert(out, { style = "banner", kind = "continent", mapID = continent, label = C.MapName(continent),
                 count = found - going, found = found, total = total, open = #rows > 0 })
