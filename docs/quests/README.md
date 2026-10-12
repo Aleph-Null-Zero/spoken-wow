@@ -1495,13 +1495,16 @@ quest log's gold tick), and the Pet Journal's bar along its foot is filled as fa
 completed out of all. A quest's row has the gold tick once completed and the quest mark while in progress.
 Chosen, a banner's, card's or line's page has one line under its name, what holds it and its
 count, parted by " · ". A place is "In" its holder ("In Eastern Kingdoms · 1 of 88 completed, 2 in
-progress"): a zone is in its continent, a city in its zone, a continent, Other Lands and
-Battlegrounds in Azeroth, and a dungeon in the zone of its entrance. A class, profession or season
+progress"): a zone is in its continent, Other Lands or Battlegrounds, a city in its zone, a
+continent, Other Lands and Battlegrounds in Azeroth, and a dungeon in the zone of its entrance. A class, profession or season
 and Place Unknown are no place, and are named as they are: their line names their section
 ("Classes · 3 of 7 completed"), and a chain's line under one names it ("Mage · …"). The sections
 have nothing above them, and their line is the count alone. A quest's page says where it is: "In"
 its zones (the first two, and how many more: "In Elwynn Forest, Westfall and 1 more"), else its
-section and its group ("Classes · Mage"), else "Other · Place Unknown".
+section and its group ("Classes · Mage"), else "Other · Place Unknown". Where something holds
+what is chosen, a click on that line chooses it (the page's `onSubtitle`): a quest's or chain's
+zone, dungeon or group, a dungeon's zone, a city's zone, a zone's continent or banner, a group's
+section. A continent's, a banner's and a section's line goes nowhere.
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
 there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The card

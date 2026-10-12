@@ -1229,13 +1229,53 @@ local function Count(set)
     return L.QUESTS_FOUND_FMT:format(found, total)
 end
 
--- The place one level up from a zone, as the Zones tab nests them: a city's zone, a zone's
--- continent, and the world for a continent or a zone on none.
-local function Above(mapID)
-    for _, continent in ipairs(C.CONTINENTS) do
-        if continent == mapID then return C.WORLD end
+-- What holds a selection, one level up the list, or nil for a banner: a quest's zone or sort, a
+-- chain's zone, dungeon or sort, a dungeon's zone, a city's zone, a zone's continent, Other Lands
+-- or Battlegrounds, and a sort's or Place Unknown's section.
+local function Holder(chosen)
+    if chosen.quest then
+        local quest = Quests()[chosen.quest] or {}
+        local zone = KnownZones(quest)[1]
+        if zone then return { mapID = zone } end
+        if Named(quest.sort) then return { sort = quest.sort } end
+        return { group = "elsewhere" }
     end
-    return C.CITY_IN[mapID] or C.ContinentOf(mapID) or C.WORLD
+    if chosen.chain then
+        local where = chosen.where or ""
+        local zone = where:match("^z(%d+)$")
+        if zone then return { mapID = tonumber(zone) } end
+        local mapID, dungeon = where:match("^d(%d+):(%d+)$")
+        if mapID then
+            mapID, dungeon = tonumber(mapID), tonumber(dungeon)
+            -- A zone with one dungeon has that dungeon's card under the zone's own key (DungeonRows).
+            local _, byDungeon = ZoneParts(mapID)
+            local several = next(byDungeon, next(byDungeon)) ~= nil
+            local key = several and DungeonKey(mapID, dungeon) or DungeonKey(mapID)
+            return { dungeon = key, ids = byDungeon[dungeon] or {}, label = DungeonName(dungeon) }
+        end
+        local sort = where:match("^s(.+)$")
+        if sort == "elsewhere" then return { group = "elsewhere" } end
+        if sort then return { sort = tonumber(sort) or sort } end
+        return nil
+    end
+    if chosen.dungeon then return { mapID = tonumber(chosen.dungeon:match("^d(%d+)")) } end
+    if chosen.sort then return { section = SectionOf(chosen.sort) } end
+    if chosen.group == "elsewhere" then return { section = "other" } end
+    local mapID = chosen.mapID
+    if not mapID or mapID == 1414 or mapID == 1415 then return nil end
+    if C.CITY_IN[mapID] then return { mapID = C.CITY_IN[mapID] } end
+    if IS_BATTLEGROUND[mapID] then return { section = "battlegrounds" } end
+    local continent = C.ContinentOf(mapID)
+    if continent then return { mapID = continent } end
+    return { section = "lands" }
+end
+
+-- The name of what holds a zone's card: its continent, the zone around a city, Other Lands or
+-- Battlegrounds; the world for a continent.
+local function ZoneHolderName(up)
+    if not up then return C.MapName(C.WORLD) end
+    if up.mapID then return C.MapName(up.mapID) end
+    return L[ZONE_BANNERS[up.section].label]
 end
 
 -- What lists a chain, from where its line is (Leaves' `where`), and whether it is a place: a zone
@@ -1269,30 +1309,37 @@ local function ShowEntry()
         page:Show({ title = L.COMPENDIUM_QUESTS, subtitle = Count(Index().all), text = L.QUESTS_PICK })
         return
     end
+    -- The line under the title goes up a level, to what holds what is chosen, where anything does.
+    local up = Holder(selection)
+    local onSubtitle = up and function()
+        selection = up
+        QuestsTab:Refresh(true)
+    end
     if selection.chain then
         local ids = selection.ids
         -- As a zone's page: its name, what holds it and its count, and the quests on the left to choose.
         local holder, place
         if selection.where then holder, place = HolderName(selection.where) end
         page:Show({ title = ChainLabel(selection.first or First(ids[1]), selection.nth),
-            subtitle = Line(SetOf(ids), holder, place), text = L.QUESTS_PICK })
+            subtitle = Line(SetOf(ids), holder, place), onSubtitle = onSubtitle, text = L.QUESTS_PICK })
         return
     end
     if selection.quest then
         local id = selection.quest
         if not Found(id) and not Unlocked() then
-            page:Show({ title = Title(id), subtitle = Subtitle(id), text = L.QUEST_NOT_FOUND })
+            page:Show({ title = Title(id), subtitle = Subtitle(id), onSubtitle = onSubtitle, text = L.QUEST_NOT_FOUND })
             return
         end
         -- Play and Report on each part's heading, not the page's: each part is said at its own time.
-        page:Show({ title = Title(id), subtitle = Subtitle(id), parts = Parts(id), text = L.QUEST_NO_TEXT })
+        page:Show({ title = Title(id), subtitle = Subtitle(id), onSubtitle = onSubtitle, parts = Parts(id),
+            text = L.QUEST_NO_TEXT })
         return
     end
     if selection.dungeon then
         -- In the zone of its entrance, whose card holds it.
         local zone = tonumber(selection.dungeon:match("^d(%d+)"))
         page:Show({ title = selection.label, subtitle = Line(SetOf(selection.ids), zone and C.MapName(zone), true),
-            text = L.QUESTS_PICK })
+            onSubtitle = onSubtitle, text = L.QUESTS_PICK })
         return
     end
     local banner = selection.section and ZONE_BANNERS[selection.section]
@@ -1315,12 +1362,12 @@ local function ShowEntry()
     if selection.sort then
         page:Show({ title = SortName(selection.sort),
             subtitle = Line(SetOf(Index().sorts[selection.sort]), SectionName(SectionOf(selection.sort))),
-            text = L.QUESTS_PICK })
+            onSubtitle = onSubtitle, text = L.QUESTS_PICK })
         return
     end
     if selection.group == "elsewhere" then
         page:Show({ title = L.QUESTS_ELSEWHERE, subtitle = Line(SetOf(Index().elsewhere), SectionName("other")),
-            text = L.QUESTS_PICK })
+            onSubtitle = onSubtitle, text = L.QUESTS_PICK })
         return
     end
     local set = {}
@@ -1329,8 +1376,8 @@ local function ShowEntry()
     else
         QuestsIn(selection.mapID, set)
     end
-    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, C.MapName(Above(selection.mapID)), true),
-        text = L.QUESTS_PICK })
+    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, ZoneHolderName(up), true),
+        onSubtitle = onSubtitle, text = L.QUESTS_PICK })
 end
 
 --------------------------------------------------------------------------------
@@ -1444,46 +1491,6 @@ local function LandOnPlayer()
         selection = continent and { mapID = continent } or nil
     end
     landed = selection
-end
-
--- What holds a selection, one level up the list, or nil for a banner: a quest's zone or sort, a
--- chain's zone, dungeon or sort, a dungeon's zone, a city's zone, a zone's continent or banner, and
--- a sort's section.
-local function Holder(chosen)
-    if chosen.quest then
-        local quest = Quests()[chosen.quest] or {}
-        local zone = KnownZones(quest)[1]
-        if zone then return { mapID = zone } end
-        if Named(quest.sort) then return { sort = quest.sort } end
-        return { group = "elsewhere" }
-    end
-    if chosen.chain then
-        local where = chosen.where or ""
-        local zone = where:match("^z(%d+)$")
-        if zone then return { mapID = tonumber(zone) } end
-        local mapID, dungeon = where:match("^d(%d+):(%d+)$")
-        if mapID then
-            mapID, dungeon = tonumber(mapID), tonumber(dungeon)
-            local _, byDungeon = ZoneParts(mapID)
-            local several = next(byDungeon, next(byDungeon)) ~= nil
-            local key = several and DungeonKey(mapID, dungeon) or DungeonKey(mapID)
-            return { dungeon = key, ids = byDungeon[dungeon] or {}, label = DungeonName(dungeon) }
-        end
-        local sort = where:match("^s(.+)$")
-        if sort == "elsewhere" then return { group = "elsewhere" } end
-        if sort then return { sort = tonumber(sort) or sort } end
-        return nil
-    end
-    if chosen.dungeon then return { mapID = tonumber(chosen.dungeon:match("^d(%d+)")) } end
-    if chosen.sort then return { section = SectionOf(chosen.sort) } end
-    if chosen.group == "elsewhere" then return { section = "other" } end
-    local mapID = chosen.mapID
-    if not mapID or mapID == 1414 or mapID == 1415 then return nil end
-    if C.CITY_IN[mapID] then return { mapID = C.CITY_IN[mapID] } end
-    if IS_BATTLEGROUND[mapID] then return { section = "battlegrounds" } end
-    local continent = C.ContinentOf(mapID)
-    if continent then return { mapID = continent } end
-    return { section = "lands" }
 end
 
 -- Whether the list shows a selection's row, as far as the filters go.
