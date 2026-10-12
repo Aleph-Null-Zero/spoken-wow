@@ -116,10 +116,12 @@ local function Reopen(map)
     B:ShowReadables()
 end
 Expect("opened, the tab lands on the player's zone", panel.page.title.text, "Westfall")
-Expect("...its card open on what is in it", RowFor("Westfall").row.open and Has(Shown(), "A Dusty Unsent Letter"), true)
+Expect("...its card open on the kinds of writing in it, each closed", RowFor("Westfall").row.open
+    and Has(Shown(), L.TYPE_LETTER) and not Has(Shown(), "A Dusty Unsent Letter"), true)
 Reopen(1453)
 Expect("...reopened elsewhere, on the zone the player stands in now", panel.page.title.text, "Stormwind City")
-Expect("...a city's card opened inside its zone's", RowFor("Elwynn Forest").row.open and Has(Shown(), "Kurdran Wildhammer"), true)
+Expect("...a city's card opened inside its zone's", RowFor("Elwynn Forest").row.open and RowFor("Stormwind City").row.open
+    and Has(Shown(), L.TYPE_PLAQUE), true)
 Reopen(9002)
 Expect("...where their zone has nothing to read, their continent's banner", panel.page.title.text, "Kalimdor")
 Reopen(9003)
@@ -146,8 +148,29 @@ Expect("...its badge the zone's painting in the collections window's gold frame"
 Expect("...and the seasonal events' readables, in a group of their own before them",
     Has(list, L.GROUP_EVENTS) and list:find(L.GROUP_EVENTS, 1, true) < list:find(L.GROUP_WIDE, 1, true), true)
 Click(L.GROUP_EVENTS)
+-- A click on each kind's card in a group's banner, which opens it.
+local function KindRow(group, label)
+    Shown()
+    for _, row in ipairs(rows) do
+        if row.shown ~= false and row.row and row.row.kind == "kind" and row.row.group == group
+            and (not label or row.row.label == label) then return row end
+    end
+end
+local function OpenKinds(group)
+    Shown()
+    local kinds = {}
+    for _, row in ipairs(rows) do
+        if row.shown ~= false and row.row and row.row.kind == "kind" and row.row.group == group then table.insert(kinds, row.row.label) end
+    end
+    for _, label in ipairs(kinds) do
+        local row = KindRow(group, label)
+        row.scripts.OnClick(row)
+    end
+end
+OpenKinds("events")
 Expect("...which opens on them, the Winter Veil feast it once listed in the cities among them",
     Has(Shown(), "The Feast of Winter Veil") and Has(Shown(), "A Bloodstained Envelope"), true)
+OpenKinds("events")
 Click(L.GROUP_EVENTS)
 
 -- The zones on no continent, then the battlegrounds wherever the client hangs them, each under a
@@ -173,16 +196,21 @@ Expect("Battlegrounds opens on Alterac Valley under Azeroth and Warsong Gulch un
     Has(Shown(), "Alterac Valley") and Has(Shown(), "Warsong Gulch"), true)
 Expect("...its page its name", panel.page.title.text, L.GROUP_BATTLEGROUNDS)
 Click("Alterac Valley")
+Click(L.TYPE_GRAVE)
 Expect("...Alterac Valley's gravestone listed in it", Has(Shown(), "Rock of Durotan"), true)
+Click(L.TYPE_GRAVE)
 Click("Alterac Valley")
 Click(L.GROUP_BATTLEGROUNDS)
 
 Click("Elwynn Forest")
 Click("Stormwind City")
 list = Shown()
-Expect("the city opens inside its zone, its readables by what they are", Has(list, L.TYPE_PLAQUE) and Has(list, "Kurdran Wildhammer"), true)
+Expect("the city opens inside its zone, its readables by what they are", Has(list, L.TYPE_PLAQUE), true)
 Expect("...the city a card inside its zone's card", RowFor("Stormwind City").row.nest, 1)
 Expect("...each kind a card inside the city's", RowFor(L.TYPE_PLAQUE).row.nest, 2)
+Expect("...closed, as Quests' chains start", RowFor(L.TYPE_PLAQUE).row.open or Has(list, "Kurdran Wildhammer"), false)
+Click(L.TYPE_PLAQUE)
+Expect("...opened by a click on its writings", RowFor(L.TYPE_PLAQUE).row.open and Has(Shown(), "Kurdran Wildhammer"), true)
 Expect("...its badge what that kind of writing looks like, in the same frame", RowFor(L.TYPE_PLAQUE).icon.texture
     .. " " .. RowFor(L.TYPE_PLAQUE).iconFrame.atlas, [[Interface\Icons\INV_Misc_StoneTablet_03]] .. " collections-itemborder-collected")
 Expect("...its writings rows inside that", RowFor("Kurdran Wildhammer").row.leaf and RowFor("Kurdran Wildhammer").row.nest, 3)
@@ -213,6 +241,7 @@ SpokenBooksSettings.unlockUnfound = false
 
 SpokenBooksCharacter.found[LETTER] = true
 Click("Westfall")
+Click(L.TYPE_LETTER)
 Click("A Dusty Unsent Letter")
 Expect("opened on a readable carried from a zone", page.title.text, "A Dusty Unsent Letter")
 Expect("...said to be carried, and from where", page.sub.text, L.KIND_CARRIED .. " · Westfall")
@@ -241,10 +270,16 @@ Expect("...naming a kind, every one of that kind", Has(list, "Rock of Durotan") 
 list = Search(L.GROUP_LANDS:lower())
 Expect("...naming Other Lands, its zones' cards, closed", Has(list, "Zephras Isle") and not Has(list, "Isle Tide Tables"), true)
 Click("Zephras Isle")
-Expect("...a zone among them opening on a click, as unsearched", Has(Shown(), "Isle Tide Tables"), true)
+Expect("...a zone among them opening on a click, as unsearched: on its kinds' cards, closed",
+    Has(Shown(), L.TYPE_NOTE) and not Has(Shown(), "Isle Tide Tables"), true)
+Click(L.TYPE_NOTE)
+Expect("...each opening on a click", Has(Shown(), "Isle Tide Tables"), true)
+Click(L.TYPE_NOTE)
 Click("Zephras Isle")
 list = Search(L.GROUP_WIDE:lower())
-Expect("...naming a group, its readables", Has(list, "An Exotic Cookbook"), true)
+Expect("...naming a group, its kinds' cards, closed as a banner's cards are", Has(list, L.TYPE_BOOK)
+    and not Has(list, "An Exotic Cookbook"), true)
+Expect("...a title in a group still found inside its kind, opened", Has(Search("exotic cookbook"), "An Exotic Cookbook"), true)
 list = Search("eastern kingdoms")
 Expect("...naming a continent, its zones' cards, closed", Has(list, "Westfall") and not Has(list, "Kurdran Wildhammer")
     and not Has(list, "Rock of Durotan"), true)
@@ -366,11 +401,17 @@ for _, row in ipairs(rows) do
 end
 Expect("a group's banner opens on a card for each kind of writing in it", kindRow ~= nil and kindRow.row.style == "card"
     and kindRow.row.nest, 0)
-Expect("...the writings under it", Has(list, "An Exotic Cookbook") and RowFor("An Exotic Cookbook").row.nest, 1)
-kindRow.scripts.OnClick(kindRow)
-Expect("...a kind chosen, its page names it and its group", page.title.text == kindRow.row.label
+Expect("...each closed", kindRow.row.open or Has(list, "An Exotic Cookbook"), false)
+OpenKinds("wide")
+Expect("...a click opening it on the writings under it", Has(Shown(), "An Exotic Cookbook") and RowFor("An Exotic Cookbook").row.nest, 1)
+local kindLabel = kindRow.row.label
+kindRow = KindRow("wide", kindLabel)
+Expect("...a kind chosen, its page names it and its group", page.title.text == kindLabel
     and page.sub.text:find(L.GROUP_WIDE .. " · ", 1, true) == 1, true)
-Expect("...and the click closes it", kindRow.row.open, false)
+kindRow.scripts.OnClick(kindRow)
+Expect("...and another click closes it", KindRow("wide", kindLabel).row.open, false)
+OpenKinds("wide")
+OpenKinds("wide")
 Click(L.GROUP_WIDE)
 
 -- The places' tab joins: the tabs show, and each shows its own panel.
