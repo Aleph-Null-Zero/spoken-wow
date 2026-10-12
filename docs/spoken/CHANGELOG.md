@@ -54,6 +54,14 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   *([Nucabe](https://github.com/Nucabe))*
 - **Shift-click a quest in the Quests tab to queue its recording** after what is playing,
   without leaving the quest you are reading. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium files Forever's quests where Forever's own client files them.** Most of
+  the quests that were in Place Unknown are now under their zone, their class or a group of
+  their own such as Camping, and more quests are linked into their chains.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium lists only the quests your side, race and class can take.** One side's
+  quests no longer show for the other, a Skyborne character sees its side's quests and the
+  Skyborne's own, and a class's quests show for that class alone.
+  *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's Zones tab is always on a place.** Reached from another tab, it showed an
