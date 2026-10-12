@@ -59,9 +59,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Azeroth's Compendium groups each zone's quests into their chains.** A chain's card is named
   after its first quest and shows how many of its quests you have completed, how many are in
   progress, and a bar; a chain you have finished gets a tick. *([Nucabe](https://github.com/Nucabe))*
-- **Previously, on the quest giver's window and in the quest log**, plays what was said when you
-  handed in the quest before this one in its chain. It shows when you have started that quest
-  and a voice pack has its hand-in. *([Nucabe](https://github.com/Nucabe))*
 - **Shift-click a quest in the Quests tab to queue its recording** after what is playing,
   without leaving the quest you are reading. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium files Forever's quests where Forever's own client files them.** Most of

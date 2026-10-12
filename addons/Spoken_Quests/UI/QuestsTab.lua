@@ -1437,31 +1437,6 @@ function QuestsTab:Has(questID)
     return Unlocked() and not OnlyFound()
 end
 
---- The quest before `questID` in its chain, where this character has started it and a voice pack
---- has what is said when it is handed in: what Previously plays. Nil otherwise.
-function QuestsTab:Previous(questID)
-    local prev = questID and Prev(questID)
-    if not prev or not StartedNow(prev) or not Voiced(prev, "complete") then return nil end
-    return prev
-end
-
---- Play one moment of a quest, `moment` "accept", "progress" or "complete", as the tab's Play
---- plays each; or stop it where it is playing. Returns whether it is playing now.
-function QuestsTab:TogglePart(questID, moment, origin)
-    local clips = Clips(questID, moment)
-    if #clips > 0 then
-        for _, clip in ipairs(clips) do VO.Player:Remove(clip) end
-        return false
-    end
-    if not Voiced(questID, moment) then return false end
-    VO.Player:PlayNow(SoundData(questID, moment, origin))
-    return true
-end
-
-function QuestsTab:IsPartPlaying(questID, moment)
-    return #Clips(questID, moment) > 0
-end
-
 --- A quest's title in the client's language once it is known, else the English.
 function QuestsTab:Title(questID)
     return Title(questID)

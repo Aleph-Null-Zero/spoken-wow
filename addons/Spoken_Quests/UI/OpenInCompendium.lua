@@ -4,11 +4,6 @@
 -- only for a quest whose page it would open: one the list shows this character, started, or any
 -- it shows with Unlock Unstarted Quests on.
 --
--- Left of it on the quest giver's window and in the quest logs, or in its place where it is
--- hidden, Previously: where the quest follows another in its chain that this character has
--- started, it plays what was said when that one was handed in, as the Compendium's Play would,
--- and stops it on a second click.
---
 -- Not under setfenv(1, VoiceOver), for UI/QuestsTab.lua's reason.
 
 local VO = VoiceOver
@@ -55,68 +50,6 @@ local function Visible(frame)
     return type(frame) == "table" and frame.IsVisible ~= nil and frame:IsVisible() and true or false
 end
 
---------------------------------------------------------------------------------
--- Previously
---------------------------------------------------------------------------------
-
-local PREVIOUS_ORIGIN = "the Previously button"
-
-local function PreviousState(button)
-    if button.SetState then
-        button:SetState(button.questID and QuestsTab:IsPartPlaying(button.questID, "complete") and "stop" or "replay")
-    end
-end
-
--- Previously for the Open button `open`, on the same parent and the same tooltip.
-local function NewPrevious(open, parent, tooltip)
-    if not open or not (_G.Spoken and Spoken.CreateRoundButton) then return end
-    local button = Spoken:CreateRoundButton(parent, "play")
-    button:SetScript("OnClick", function(self)
-        if self.questID then QuestsTab:TogglePart(self.questID, "complete", PREVIOUS_ORIGIN) end
-        PreviousState(self)
-    end)
-    button:HookScript("OnEnter", function(self)
-        if not self.questID then return end
-        local tip = tooltip and tooltip() or GameTooltip
-        tip:SetOwner(self, "ANCHOR_LEFT")
-        tip:SetText(L.QUEST_PREVIOUSLY)
-        tip:AddLine(L.QUEST_PREVIOUSLY_TIP:format(QuestsTab:Title(self.questID)), 1, 0.8, 0.2, true)
-        tip:Show()
-        self.tooltip = tip
-    end)
-    button:HookScript("OnLeave", function(self)
-        if self.tooltip then self.tooltip:Hide() end
-    end)
-    if Spoken.RegisterCallback then
-        Spoken:RegisterCallback("AUDIO_CHANGED", function() PreviousState(button) end)
-    end
-    button:Hide()
-    open.previous = button
-end
-
--- Shown while the window shows `questID`, a quest the tab lists that follows one with a recording
--- to play: left of `open`, or in its place where `open` is hidden because the quest would not open.
-local function RefreshPrevious(open, questID)
-    local button = open and open.previous
-    if not button then return end
-    local prev = QuestsTab:Lists(questID) and QuestsTab:Previous(questID)
-    if not prev then
-        button.questID = nil
-        button:Hide()
-        return
-    end
-    button.questID = prev
-    button:ClearAllPoints()
-    if open:IsShown() then
-        button:SetPoint("RIGHT", open, "LEFT", -GAP, 0)
-    else
-        button:SetPoint("CENTER", open, "CENTER")
-    end
-    button:SetFrameLevel(open:GetFrameLevel())
-    PreviousState(button)
-    button:Show()
-end
-
 local function After(seconds, fn)
     if C_Timer and C_Timer.After then C_Timer.After(seconds, fn) end
 end
@@ -157,10 +90,8 @@ function QuestsTab:RefreshGiverButton()
     local id = GiverQuestOnScreen() and GetQuestID and GetQuestID() or nil
     local shown = self:Has(id)
     giver.questID = shown and id or nil
-    -- Placed even while hidden: Previously takes its place then.
     if id then PlaceGiver() end
     giver:SetShown(shown)
-    RefreshPrevious(giver, id)
 end
 
 local function SetupGiver()
@@ -170,7 +101,6 @@ local function SetupGiver()
     if not giver then return end
     giver:SetFrameLevel(frame:GetFrameLevel() + 10)
     QuestsTab.giverButton = giver
-    NewPrevious(giver, frame)
     local function Refresh() QuestsTab:RefreshGiverButton() end
     local watcher = CreateFrame("Frame")
     for _, event in ipairs({ "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "QUEST_FINISHED" }) do
@@ -207,7 +137,6 @@ function QuestsTab:RefreshLogButton()
     local shown = self:Has(id)
     logButton.questID = shown and id or nil
     logButton:SetShown(shown)
-    RefreshPrevious(logButton, id)
 end
 
 local function SetupLog()
@@ -218,7 +147,6 @@ local function SetupLog()
     logButton:SetFrameLevel(details:GetFrameLevel() + 5)
     logButton:SetPoint("TOPRIGHT", details, "TOPRIGHT", -2, -2)
     QuestsTab.logButton = logButton
-    NewPrevious(logButton, frame)
     local function Refresh() QuestsTab:RefreshLogButton() end
     for _, name in ipairs({ "QuestLog_UpdateQuestDetails", "QuestLog_Update" }) do
         if type(_G[name]) == "function" then hooksecurefunc(name, Refresh) end
@@ -254,7 +182,6 @@ function QuestsTab:RefreshMapButton()
         mapButton:SetPoint("RIGHT", header, "RIGHT", -(backInset or INSET), backOffset or 4)
     end
     mapButton:SetShown(shown)
-    RefreshPrevious(mapButton, id)
 end
 
 local function SetupMap()
@@ -265,7 +192,6 @@ local function SetupMap()
     if not mapButton then return end
     mapButton:SetFrameLevel(header:GetFrameLevel() + 2)
     QuestsTab.mapButton = mapButton
-    NewPrevious(mapButton, header)
     -- After Compatibility.lua's own hook, which has placed Play and Report by then.
     hooksecurefunc("QuestMapFrame_ShowQuestDetails", function() QuestsTab:RefreshMapButton() end)
 end
