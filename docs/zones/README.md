@@ -14,7 +14,7 @@ tooling that produces both.
 ## What ships
 
 **`ZoneLore`** — the addon. World map side panel, subzone lore on click, the area under the
-cursor lit up as clickable, standalone lore window, minimap button, options panel, narration
+cursor lit up as clickable, the Zones tab of Azeroth's Compendium, minimap button, options panel, narration
 playback with floating controls, and autoplay on area discovery. 49 zones and
 1304 subzones of text are bundled; nothing is fetched at runtime.
 
@@ -66,7 +66,7 @@ addons/Spoken_Zones/          the addon itself (this is what WoW loads)
   UI/MapPanel.lua        the world map side panel
   UI/SubzoneClick.lua    resolves a map click to a subzone
   UI/MapHighlight.lua    lights up the area under the cursor on a zone map
-  UI/LoreWindow.lua      standalone browsable lore window
+  UI/LoreWindow.lua      the Zones tab of Azeroth's Compendium
   UI/MinimapButton.lua   LibDBIcon minimap button
   UI/PlaybackBar.lua     floating controls, shown only while narrating
   UI/Options.lua         settings panel
@@ -587,33 +587,60 @@ own exploration overlay drawn again over the map in additive blend; only explore
 one, which are also the only ones a click resolves. There is no tooltip: the panel tells the
 story once the area is clicked.
 
-## Minimap button and lore window
+## Minimap button and Azeroth's Compendium
 
 A minimap button (LibDBIcon) is the entry point that does not need the world map
 open. Its tooltip shows lore for wherever the player is standing -- the subzone if
-there is one, otherwise the zone. **Left-click** opens the lore window,
-**right-click** opens the settings panel. `/spz minimap` hides or shows it.
+there is one, otherwise the zone. **Left-click** opens the Zones tab of Azeroth's
+Compendium, **right-click** opens the settings panel. `/spz minimap` hides or shows it.
 
-Right-click was originally a world-map-panel toggle, which is also an options
-checkbox and a slash command — three ways to reach one setting, and none of them
-the one people reach for on a minimap button.
+### The Zones tab
 
-The lore window is movable, closes on Escape, and browses everything: the left
-column lists all zones, and clicking one expands its subzones beneath it.
+Azeroth's Compendium (`UI/Compendium.lua`, shared with Spoken Books and the Quests tab)
+is a movable window that closes on Escape, resizes from its corner and folds down to its
+list. The Zones tab (`UI/LoreWindow.lua`) is a list on the left and the story on the
+right, on the spellbook's parchment (`UI/LorePage.lua`).
 
-It re-syncs to where the player is standing on **every** open, not just the first,
-and scrolls that row into view. If the player is standing in a subzone that has
-lore, that subzone is selected rather than the zone, since it is the more specific
-answer. The player's map is resolved through `GetLoreWithFallback`, because
+The list has a banner for each continent, Kalimdor and the Eastern Kingdoms, each
+opening and closing on its own. Under a continent each zone is a card: its painting,
+its name, and its places found out of all with the share and a bar. A zone's places are
+its city, where it holds one, and its areas; its page counts the same. A click on a
+zone's card chooses it and opens it: its city as a small card with its own areas, and
+its areas as rows, a tick on each one found. One zone is open at a time. After the
+continents come two more banners: Other Lands, for the zones on no continent the client
+knows (Forever's Zephras Isle), and Battlegrounds, for Alterac Valley, Warsong Gulch,
+Arathi Basin and Darkspear Islands wherever the client hangs their maps. Each lists only
+the places with a story on this client. Chosen, a banner's page counts its zones and
+asks for one to be chosen.
+
+A place not yet discovered is listed greyed, with a padlock, and does not open; a
+continent or banner stays locked until one of its zones is found. **Unlock Undiscovered
+Zones**, in the Compendium section of Spoken's page, opens them all, and the counts
+still say what this character has found. The filter menu beside the search box holds
+**Discovered Only**, which leaves out the places not found, and **Voiced Only**, which
+leaves out what no installed voice pack reads and counts only what it lists; a zone
+stays while an area in it has a recording. A search lists every match a click could
+reach, with what holds it opened, and opens nothing locked. Changing a filter or
+clearing the search keeps the chosen row in view.
+
+The tab opens on where the player stands and scrolls that row into view: the area they
+are in where it has a story of its own, else its zone, opened, else their continent.
+The player's map is resolved through `GetLoreWithFallback`, because
 `C_Map.GetBestMapForUnit` can return an indoor or micro map -- an inn, a dungeon --
-which is not itself a key in `Zones`.
+which is not itself a key in `Zones`. Opened again, or come back to from another tab,
+it lands again only while the selection is still the one it landed on: a place the
+player chose stays chosen. Opened from the map's panel, it opens on that place.
 
-### Why the list is an accordion
+The page has the place's name, the line under it (where it sits, a click away, and how
+many places it holds), its picture and its story, with **Play** and **Report** on the
+title's right. A place with no story yet says so and offers Contribute. A place not yet
+discovered, opened from the map's panel, says to travel there to discover it.
 
-Only one zone expands at a time. That caps the row count at about 108 (49 zones
-plus Ashenvale's 59 subzones), which is few enough that every row can be a real
-button with no view virtualisation. Expanding everything at once would be 1353
-rows, so the accordion is a constraint rather than a preference.
+### Why one zone at a time
+
+Only one zone opens at a time. That caps the row count at about 108 (49 zones plus
+Ashenvale's 59 subzones), few enough that every row can be a real button with no view
+virtualisation. Opening everything at once would be 1353 rows.
 
 Zones are sorted alphabetically by the name the *client* reports, not by uiMapID,
 which is meaningless to a reader.
@@ -1432,7 +1459,7 @@ here:     node tools/seed-from-dump.mjs           # report differences
 /spz verify                  check all 49 entries against this client
 /spz panel                   toggle the world map panel
 /spz options                 open the settings panel
-/spz window                  open the browsable lore window
+/spz window                  open the Zones tab of Azeroth's Compendium
 /spz play                    narrate the lore for where you are standing
 /spz stop                    stop the narration
 /spz voice                   turn narration on or off
