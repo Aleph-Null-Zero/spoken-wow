@@ -39,12 +39,9 @@ local PAD_TOP, PAD_BOTTOM = FADE * TOP_SCALE + SOLID, FADE + SOLID
 local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
 -- A part's heading (SetParts): the title's face, larger than the words and darker, on a line as
 -- tall as its round buttons; the words HEAD_GAP under it, PART_GAP between one part and the next.
--- In near-black, as the quest frame's own headings on parchment are. Under it, RULE_GAP below its
--- buttons, the quest frame's own break between a quest's words and its rewards.
-local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 4, 18, 4
+-- In near-black, as the quest frame's own headings on parchment are, set apart by room alone.
+local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 20, 4
 local HEAD_INK = { 0.06, 0.04, 0.02 }
-local RULE = [[Interface\QuestFrame\UI-HorizontalBreak]]
-local RULE_HEIGHT, RULE_GAP = 32, 6
 
 local TextView = {}
 TextView.__index = TextView
@@ -534,7 +531,6 @@ function TextView:HideParts(keep)
 	for _, part in ipairs(self.parts or {}) do
 		part.heading:Hide()
 		part.words:Hide()
-		part.rule:Hide()
 	end
 	for _, button in ipairs(self.partButtons or {}) do
 		if not (keep and keep[button]) then button:Hide() end
@@ -571,10 +567,7 @@ function TextView:SetParts(parts)
 		local slot = self.parts[i]
 		if not slot then
 			slot = { heading = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge"),
-				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight"),
-				rule = self.child:CreateTexture(nil, "ARTWORK") }
-			slot.rule:SetHeight(RULE_HEIGHT)
-			slot.rule:SetTexture(RULE)
+				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight") }
 			slot.heading:SetJustifyH("LEFT")
 			if slot.heading.SetWordWrap then slot.heading:SetWordWrap(false) end
 			slot.words:SetJustifyH("LEFT")
@@ -611,13 +604,7 @@ function TextView:SetParts(parts)
 			slot.heading:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -(y + HEAD_LINE / 2))
 		end
 		slot.heading:Show()
-		-- The break's line runs through the middle of its picture.
-		y = y + HEAD_LINE + RULE_GAP
-		slot.rule:ClearAllPoints()
-		slot.rule:SetPoint("LEFT", self.child, "TOPLEFT", 0, -y)
-		slot.rule:SetWidth(math.max(width, 1))
-		slot.rule:Show()
-		y = y + RULE_GAP + HEAD_GAP
+		y = y + HEAD_LINE + HEAD_GAP
 
 		self:Paint(slot.words)
 		slot.words:ClearAllPoints()
@@ -630,7 +617,6 @@ function TextView:SetParts(parts)
 	for i = #parts + 1, #self.parts do
 		self.parts[i].heading:Hide()
 		self.parts[i].words:Hide()
-		self.parts[i].rule:Hide()
 	end
 	self.partButtons = shown
 
