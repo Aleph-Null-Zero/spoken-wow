@@ -49,6 +49,11 @@ local HEAD_MOST = 20
 -- its letters, which started lower than a page's first line of words does.
 local HEAD_LIFT = 4
 local HEAD_INK = { 0.06, 0.04, 0.02 }
+-- A part with a face (a speaker's portrait): the face at the left of the heading's line, which is
+-- as tall as it, and the heading FACE_GAP right of it under a caption (the speaker's name) in the
+-- words' face, CAPTION_LESS smaller than the words and no smaller than CAPTION_LEAST or larger
+-- than CAPTION_MOST, CAPTION_GAP above it.
+local FACE_GAP, CAPTION_GAP, CAPTION_LESS, CAPTION_LEAST, CAPTION_MOST = 8, 2, 1, 10, 14
 
 local TextView = {}
 TextView.__index = TextView
@@ -557,10 +562,24 @@ function TextView:Paint(fontString)
 	if self.ink then fontString:SetShadowColor(0, 0, 0, 0) end
 end
 
--- The parts' headings and words hidden, and their buttons but those in `keep`.
+--- A part's caption: the words' face, smaller, in the page's ink.
+function TextView:PaintCaption(fontString)
+	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
+	local fontPath = Addon.FontFor and Addon:FontFor(fontObject)
+		or (fontObject and fontObject.GetFont and fontObject:GetFont())
+	local size = Clamp(Addon:Get("fontSize") - CAPTION_LESS, CAPTION_LEAST, CAPTION_MOST)
+	if fontPath then fontString:SetFont(fontPath, size, "") end
+	if self.ink then
+		fontString:SetTextColor(self.ink[1], self.ink[2], self.ink[3])
+		fontString:SetShadowColor(0, 0, 0, 0)
+	end
+end
+
+-- The parts' headings, captions and words hidden, and their buttons and faces but those in `keep`.
 function TextView:HideParts(keep)
 	for _, part in ipairs(self.parts or {}) do
 		part.heading:Hide()
+		part.caption:Hide()
 		part.words:Hide()
 	end
 	for _, button in ipairs(self.partButtons or {}) do
@@ -569,14 +588,18 @@ function TextView:HideParts(keep)
 	self.partButtons = nil
 end
 
---- Words in parts instead of one block: a quest's offer, progress and hand-in. Each part is a
---- heading, its `buttons` (round buttons the caller made on view.child, rightmost first) on the
---- heading's line at the right, and its words under it. `parts` = { { heading, text, buttons } }.
---- Kept for re-wraps, as SetText's text is; SetText goes back to one block.
+--- Words in parts instead of one block: a quest's offer and hand-in. Each part is a heading, its
+--- `buttons` (round buttons the caller made on view.child, rightmost first) on the heading's line
+--- at the right, and its words under it. A part may have a `face`, a frame the caller made on
+--- view.child (Spoken:CreateSpeakerFace): it stands at the left of the heading's line, which is
+--- then as tall as it, with the heading right of it under its `caption`.
+--- `parts` = { { heading, text, buttons, face, caption } }. Kept for re-wraps, as SetText's text
+--- is; SetText goes back to one block.
 function TextView:SetParts(parts)
 	local keep = {}
 	for _, part in ipairs(parts) do
 		for _, button in ipairs(part.buttons or {}) do keep[button] = true end
+		if part.face then keep[part.face] = true end
 	end
 	self:HideParts(keep)
 	self.lastParts = parts
@@ -593,26 +616,44 @@ function TextView:SetParts(parts)
 	end
 	local titleFace = _G.QuestTitleFont and _G.QuestTitleFont.GetFont and _G.QuestTitleFont:GetFont()
 	local shown = {}
-	local y = PAD_TOP - HEAD_LIFT
+	local y = PAD_TOP
 	for i, part in ipairs(parts) do
 		local slot = self.parts[i]
 		if not slot then
 			slot = { heading = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge"),
+				caption = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall"),
 				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight") }
-			slot.heading:SetJustifyH("LEFT")
-			if slot.heading.SetWordWrap then slot.heading:SetWordWrap(false) end
+			for _, line in ipairs({ slot.heading, slot.caption }) do
+				line:SetJustifyH("LEFT")
+				if line.SetWordWrap then line:SetWordWrap(false) end
+			end
 			slot.words:SetJustifyH("LEFT")
 			slot.words:SetJustifyV("TOP")
 			slot.words:SetWordWrap(true)
 			slot.words:SetSpacing(2)
 			self.parts[i] = slot
 		end
-		if i > 1 then y = y + PART_GAP end
-		local face = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
-		if face then slot.heading:SetFont(face, math.min(Addon:Get("fontSize") + HEAD_SIZE, HEAD_MOST), "") end
+		local face = part.face
+		if i > 1 then
+			y = y + PART_GAP
+		elseif not face then
+			y = y - HEAD_LIFT
+		end
+		local font = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
+		if font then slot.heading:SetFont(font, math.min(Addon:Get("fontSize") + HEAD_SIZE, HEAD_MOST), "") end
 		slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
 		slot.heading:SetShadowColor(0, 0, 0, 0)
 		slot.heading:SetText(part.heading or "")
+		local caption = part.caption ~= "" and part.caption or nil
+		local block = slot.heading:GetStringHeight() or 0
+		if caption then
+			self:PaintCaption(slot.caption)
+			slot.caption:SetText(caption)
+			block = block + CAPTION_GAP + (slot.caption:GetStringHeight() or 0)
+		end
+		-- The heading's line: as tall as the face, or the caption and the heading where they are taller.
+		local line = math.max(HEAD_LINE, face and (face:GetHeight() or 0) or 0, caption and block or 0)
+		local middle = y + line / 2
 		-- The buttons from the right, BUTTON_GAP apart, centred on the heading's line.
 		local previous
 		for _, button in ipairs(part.buttons or {}) do
@@ -621,21 +662,42 @@ function TextView:SetParts(parts)
 				if previous then
 					button:SetPoint("RIGHT", previous, "LEFT", -BUTTON_GAP, 0)
 				else
-					button:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -(y + HEAD_LINE / 2))
+					button:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -middle)
 				end
 				previous = button
 				table.insert(shown, button)
 			end
 		end
-		slot.heading:ClearAllPoints()
-		slot.heading:SetPoint("LEFT", self.child, "TOPLEFT", 0, -(y + HEAD_LINE / 2))
-		if previous then
-			slot.heading:SetPoint("RIGHT", previous, "LEFT", -8, 0)
-		else
-			slot.heading:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -(y + HEAD_LINE / 2))
+		local left = 0
+		if face then
+			face:ClearAllPoints()
+			face:SetPoint("LEFT", self.child, "TOPLEFT", 0, -middle)
+			face:Show()
+			table.insert(shown, face)
+			left = (face:GetWidth() or 0) + FACE_GAP
 		end
-		slot.heading:Show()
-		y = y + HEAD_LINE + HEAD_GAP
+		-- A line of text from `left` to the buttons, centred `at` down from the top.
+		local function Across(text, at)
+			text:ClearAllPoints()
+			text:SetPoint("LEFT", self.child, "TOPLEFT", left, -at)
+			if previous then
+				text:SetPoint("RIGHT", previous, "LEFT", -8, middle - at)
+			else
+				text:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -at)
+			end
+			text:Show()
+		end
+		if caption then
+			-- The caption over the heading, the two centred on the line together.
+			local top = middle - block / 2
+			local captionHigh = slot.caption:GetStringHeight() or 0
+			Across(slot.caption, top + captionHigh / 2)
+			Across(slot.heading, top + captionHigh + CAPTION_GAP + (slot.heading:GetStringHeight() or 0) / 2)
+		else
+			slot.caption:Hide()
+			Across(slot.heading, middle)
+		end
+		y = y + line + HEAD_GAP
 
 		self:Paint(slot.words)
 		slot.words:ClearAllPoints()
@@ -647,6 +709,7 @@ function TextView:SetParts(parts)
 	end
 	for i = #parts + 1, #self.parts do
 		self.parts[i].heading:Hide()
+		self.parts[i].caption:Hide()
 		self.parts[i].words:Hide()
 	end
 	self.partButtons = shown

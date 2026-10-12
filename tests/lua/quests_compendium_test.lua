@@ -807,6 +807,44 @@ do
     _G.QuestTitleFont, ns.Get, heading.SetFont = titleFont, get, nil
     body:SetParts(body.lastParts)
 end
+-- A part with a face: the face at the left of the heading's line, which is as tall as it, and the
+-- caption over the heading right of it, the two centred on the line, as the buttons are.
+do
+    local body, report = page.body, PartButton(L.QUEST_PART_ACCEPT, "report")
+    local parts = body.lastParts
+    local face = CreateFrame("Frame", nil, body.child)
+    face:SetSize(44, 44)
+    local slot = body.parts[1]
+    local points, restore = {}, {}
+    local function Record(region, name)
+        local set = region.SetPoint
+        restore[region] = set
+        region.SetPoint = function(self, point, rel, relPoint, x, y)
+            points[name .. " " .. point] = (type(rel) == "number" and rel or x) .. "," .. (type(rel) == "number" and relPoint or y)
+            return set(self, point, rel, relPoint, x, y)
+        end
+    end
+    Record(face, "face"); Record(slot.caption, "caption"); Record(slot.heading, "heading")
+    Record(slot.words, "words"); Record(report, "report")
+    slot.heading.GetStringHeight = function() return 22 end
+    slot.caption.GetStringHeight = function() return 14 end
+    body:SetParts({ { heading = L.QUEST_PART_ACCEPT, caption = "Marshal McBride", text = "Words.", face = face,
+        buttons = { report } } })
+    -- The line 44 tall from the words' top (18), its middle 40 down; caption and heading 38 together,
+    -- from 21 down.
+    Expect("a part's face at the left of its heading's line, as tall as the face", face:IsShown() and points["face LEFT"], "0,-40")
+    Expect("...its buttons centred on the face", points["report RIGHT"]:match(",(.*)$"), "-40")
+    Expect("...the caption right of the face, above the heading", slot.caption:IsShown() and slot.caption.text .. " "
+        .. points["caption LEFT"], "Marshal McBride 52,-28")
+    Expect("...and the heading under it", slot.heading.text .. " " .. points["heading LEFT"], L.QUEST_PART_ACCEPT .. " 52,-48")
+    Expect("...the words 10 under the line", points["words TOPLEFT"], "0,-72")
+    body:SetParts({ { heading = L.QUEST_PART_ACCEPT, text = "Words.", buttons = { report } } })
+    Expect("a part without a face lays out as before: no caption, the heading at the left, the face put away",
+        tostring(slot.caption:IsShown()) .. " " .. points["heading LEFT"] .. " " .. tostring(face:IsShown()), "false 0,-27 false")
+    for region, set in pairs(restore) do region.SetPoint = set end
+    slot.heading.GetStringHeight, slot.caption.GetStringHeight = nil, nil
+    body:SetParts(parts)
+end
 play.scripts.OnClick(play)
 local queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
