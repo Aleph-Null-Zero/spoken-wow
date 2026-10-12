@@ -1,18 +1,18 @@
 -- Azeroth's Compendium: one window, a tab for each Spoken part that has something to browse --
--- the places (Spoken Zones), the writings (Spoken Books) -- each a list on the left and a page on
--- the right.
+-- the quests (Spoken Quests), the places (Spoken Zones), the writings (Spoken Books) -- each a
+-- list on the left and a page on the right.
 --
--- Carried byte for byte by every addon that adds a tab, as UI/Layout.lua is, so either works on its
--- own and both together share one window: the newest copy loaded wins (VERSION), and a tab
+-- Carried byte for byte by Spoken Zones and Spoken Books, as UI/Layout.lua is, so either works on
+-- its own and both together share one window: the newest copy loaded wins (VERSION), and a tab
 -- registered by any copy is kept. The window is the game's portrait frame, resizable from its corner
--- and folding down to the list. The list is a search box over an inset of rows, with Discovered Only
--- and the tab's other switches in the filter menu beside the search. Its rows are drawn in the
--- game's own art: the objective tracker's campaign bar across the list for each group (a
--- continent), the character select card for each place or set inside one (its painting in the
--- collections window's gold frame, the name, a grey line under it, the share found and the Pet
--- Journal's bar), and a plain row for each single thing, a padlock on what is not found yet. What
--- is inside an open card is indented under it, a faint gold line down its left. What the rows are,
--- what a click does and the page beside them are each tab's own.
+-- and folding down to the list. The list is a search box over an inset of rows, with the tab's
+-- switches (Started Only, Discovered Only, Found Only and the like) in the filter menu beside the
+-- search. Its rows are drawn in the game's own art: the objective tracker's campaign bar across
+-- the list for each group (a continent), the character select card for each place or set inside
+-- one (its painting in the collections window's frame, silvered, the name, the share found and
+-- the Pet Journal's bar), and a plain row for each single thing, a padlock on what is not found
+-- yet. What is inside an open card is indented under it, a faint gold line down its left. What
+-- the rows are, what a click does and the page beside them are each tab's own.
 --
 -- A tab: SpokenCompendium:Register(key, { label, order, title, build(panel), onShow(panel),
 -- store = { get(key), set(key, value) }, open(), enabled(), unlock = { get(), set(value) } }).
@@ -623,7 +623,7 @@ local MAP_ICON = [[Interface\Icons\INV_Misc_Map_01]]
 -- A chain of quests: the game's quest scroll.
 local CHAIN_ICON = [[Interface\Icons\INV_Inscription_Scroll]]
 local CHECK = "questlog-icon-checkmark-yellow"
--- The icons' bevelled border, trimmed inside the gold frame.
+-- The icons' bevelled border, trimmed inside the badge's frame.
 local ICON_CROP = { 0.08, 0.92, 0.08, 0.92 }
 
 -- The campaign header's bar, in its atlas's own pixels: its crest sits half outside the bar at
@@ -768,8 +768,8 @@ List.__index = List
 --- onlySet(on), checks = { { label, get(), set(on) }... }, arrange = { values, describe(value), get(),
 --- set(value) }, build() -> items,
 --- isSelected(item), onClick(item), onSearch(), addScrollBar(scroll, child, inset) }. The filter
---- menu is the spellbook's, the arrow beside its search box: the tab's only switch (Discovered Only,
---- Found Only) and any other checks as checkboxes, and where the tab can arrange its tree more than
+--- menu is the spellbook's, the arrow beside its search box: the tab's only switch (Started Only,
+--- Discovered Only, Found Only) and any other checks as checkboxes, and where the tab can arrange its tree more than
 --- one way, those ways under a divider. An item is { label, count, total, open, locked, missing } and one of:
 --- - style = "banner": a group across the list, its plus or minus, the name, count/total.
 --- - style = "card": a badge (`icon` with its `iconCrop`, a quest scroll for a chain with `story`,
@@ -1092,10 +1092,10 @@ local function Rails(row, count, gap, held, underBanner, afterBanner)
 	end
 end
 
--- The quest log's own expand and collapse, for anything with something inside to open. Where
--- nothing inside opens -- locked, empty (Thunder Bluff, with no areas of its own), or none found
--- with Discovered Only on -- greyed, as the name beside it is. `found`, where an item counts
--- something narrower than what it holds (the quests completed, not those in progress too).
+-- The quest log's own expand and collapse, on a banner; a card has none. Where nothing inside
+-- opens -- locked, empty, or none found with the tab's only switch on -- greyed, as the name
+-- beside it is. `found`, where an item counts something narrower than what it holds (the quests
+-- completed, not those in progress too).
 local function Toggle(row, item, onlyFound)
 	local count = item.found or item.count or 0
 	local opens = ((item.total or count) > 0) and not item.locked and not (onlyFound and count == 0)
@@ -1227,7 +1227,7 @@ local function DrawCard(row, item, indent, width)
 		end
 	end
 
-	-- One line, as the list's rows had it before the cards: the name on the left and on the right
+	-- One line: the name on the left and on the right
 	-- what is found out of all and the share, 5/27 • 18%, with the bar under them.
 	local top = 12
 	local level = -(top + 7)
