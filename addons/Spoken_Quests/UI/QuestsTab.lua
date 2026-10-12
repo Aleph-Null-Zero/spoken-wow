@@ -592,15 +592,6 @@ local function IsSelected(row)
     return selection.mapID ~= nil and selection.mapID == row.mapID
 end
 
--- A chain's page marks each quest as its row does: the quest log's gold tick once completed, the
--- quest mark while under way, a padlock until started. Where the client has not got the atlases,
--- the checkbox's tick and no padlock.
-local TICK = "|TInterface\\Buttons\\UI-CheckBox-Check:0|t "
-local function AtlasMark(atlas, height, width, fallback)
-    if C and C.HasAtlas and C.HasAtlas(atlas) then return ("|A:%s:%d:%d|a "):format(atlas, height, width) end
-    return fallback
-end
-
 --------------------------------------------------------------------------------
 -- The words
 --------------------------------------------------------------------------------
@@ -777,65 +768,6 @@ local function Subtitle(id)
     return Where(id)
 end
 
--- Where the next sentence of `text` ends after `from`: a full stop, a question or an exclamation,
--- the Latin or the Chinese.
-local SENTENCE_ENDS = { "[%.!%?]+[\"']?%s", "。", "！", "？" }
-local function SentenceEnd(text, from)
-    local best
-    for _, pattern in ipairs(SENTENCE_ENDS) do
-        local _, stop = text:find(pattern, from)
-        if stop and (not best or stop < best) then best = stop end
-    end
-    return best
-end
-
--- The first sentence of an offer, and the next with it where the first is short; cut at a word
--- (or, in a language without spaces, at a whole letter) with an ellipsis where they run long.
-local EXCERPT_SHORT, EXCERPT_MOST = 90, 260
-local function Excerpt(text)
-    text = Trim((text:gsub("%s+", " ")))
-    local stop = SentenceEnd(text, 1)
-    if stop and stop < EXCERPT_SHORT then stop = SentenceEnd(text, stop + 1) or stop end
-    local excerpt = Trim(stop and text:sub(1, stop) or text)
-    if #excerpt <= EXCERPT_MOST then return excerpt end
-    -- Back to where a letter starts, so the cut never splits one.
-    local n = EXCERPT_MOST
-    while n > 0 and excerpt:byte(n + 1) >= 0x80 and excerpt:byte(n + 1) < 0xC0 do n = n - 1 end
-    local head = excerpt:sub(1, n)
-    return (head:match("^(.*%S)%s") or head) .. "…"
-end
-
--- A chain's quests in the order they are taken: each one's mark and title, "Not started" under one
--- not started yet, and the start of its offer where it can be read; a blank line between them.
-local function ChainText(ids)
-    local blocks = {}
-    for _, id in ipairs(ids) do
-        local mark
-        if Completed(id) then
-            mark = AtlasMark("questlog-icon-checkmark-yellow", 14, 17, TICK)
-        elseif InProgress(id) then
-            mark = IN_PROGRESS_MARK
-        else
-            mark = AtlasMark("LFG-lock", 16, 13, "")
-        end
-        local lines = { mark .. Title(id) }
-        if not Found(id) then table.insert(lines, L.QUEST_NOT_STARTED) end
-        if Found(id) or Unlocked() then
-            local offer = PartText(id, "accept")
-            if offer then table.insert(lines, Excerpt(offer)) end
-        end
-        table.insert(blocks, table.concat(lines, "\n"))
-    end
-    return table.concat(blocks, "\n\n")
-end
-
--- What Play plays on a chain's page: the first quest of it that can be read and a pack voices.
-local function ChainTarget(ids)
-    for _, id in ipairs(ids) do
-        if (Found(id) or Unlocked()) and PLAY.has(id) then return id end
-    end
-end
-
 local function ShowEntry()
     if not page then return end
     if not selection then
@@ -844,7 +776,8 @@ local function ShowEntry()
     end
     if selection.chain then
         local ids = selection.ids
-        page:Show({ title = Title(ids[1]), subtitle = Count(SetOf(ids)), text = ChainText(ids), target = ChainTarget(ids) })
+        -- As a zone's page: its name, its count, and the quests on the left to choose.
+        page:Show({ title = Title(ids[1]), subtitle = Count(SetOf(ids)), text = L.QUESTS_PICK })
         return
     end
     if selection.quest then

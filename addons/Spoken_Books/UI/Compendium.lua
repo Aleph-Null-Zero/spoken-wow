@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 14
+local VERSION = 16
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -47,8 +47,7 @@ local BANNER_ROW = 36
 local BANNER_GAP = 14         -- above each banner but the first
 local FIRST_GAP = 2           -- above the first row
 local UNDER_BANNER = 8        -- between a banner and the first card in it
-local CARD_ROW = 48
-local SMALL_CARD_ROW = 40
+local CARD_ROW = 50
 local CARD_GAP = 6            -- between cards under a banner
 local LEAF_ROW = 22
 local NEST_GAP = 5            -- between the rows inside an open card
@@ -616,6 +615,8 @@ local ACTIVE = [[Interface\GossipFrame\ActiveQuestIcon]]
 -- A card's badge where it has no painting of its own: a map; a chain's where the storyline's mark
 -- is missing, a scroll.
 local MAP_ICON = [[Interface\Icons\INV_Misc_Map_01]]
+-- A chain of quests: the game's quest scroll.
+local CHAIN_ICON = [[Interface\Icons\INV_Inscription_Scroll]]
 local STORY_ICON = [[Interface\Icons\INV_Scroll_03]]
 local CHECK = "questlog-icon-checkmark-yellow"
 -- The icons' bevelled border, trimmed inside the gold frame.
@@ -635,6 +636,7 @@ local CARD_ART = {
 	selected = { atlas = "glues-characterselect-card-selected-c60", cut = 30, size = 19, out = 7 },
 }
 local CARD_RIGHT = 56         -- what a card's share or tick keeps clear on its right
+local CARD_PAD = 8            -- from a card's side to what is in it: 7 inside the frame's line
 local CARD_INK = { 0.73, 0.70, 0.65 }
 local SHARE_INK = { 0.80, 0.76, 0.70 }
 local BANNER_INK = { 0.85, 0.81, 0.73 }
@@ -763,9 +765,10 @@ List.__index = List
 --- Found Only) and any other checks as checkboxes, and where the tab can arrange its tree more than
 --- one way, those ways under a divider. An item is { label, count, total, open, locked, missing } and one of:
 --- - style = "banner": a group across the list, its plus or minus, the name, count/total.
---- - style = "card", small = bool: a badge (`icon` with its `iconCrop` in a gold frame, greyed with
----   `none`; the storyline's mark instead with `story`), the name, `sub` under it, the share or a
----   tick with `tick`, and a bar filled to `ratio`.
+--- - style = "card": a badge (`icon` with its `iconCrop`, a quest scroll for a chain with `story`,
+---   in a silver frame, greyed with `none`), the name, beside it `count`/`total` and the share or a
+---   tick with `tick` (and `goingCount` by the quest mark), and a bar filled to `ratio`. Every card
+---   is drawn alike, inside an open card or under a banner.
 --- - leaf = true: one line, the name, a tick before it with `done` or the quest mark with `going`.
 --- Cards and leaves give `nest`, how many open cards hold them.
 function C.NewList(panel, opts)
@@ -786,9 +789,9 @@ function C.NewList(panel, opts)
 
 	local ok, inset = pcall(CreateFrame, "Frame", nil, panel, "InsetFrameTemplate")
 	if not ok or not inset then inset = CreateFrame("Frame", nil, panel) end
-	-- The game's grey stone under the list: its marble is near black.
+	-- The game's dark marble under the list, at its own colour.
 	if type(inset.Bg) == "table" and inset.Bg.SetTexture then
-		inset.Bg:SetTexture([[Interface\FrameGeneral\UI-Background-Rock]], "REPEAT", "REPEAT")
+		inset.Bg:SetTexture([[Interface\FrameGeneral\UI-Background-Marble]], "REPEAT", "REPEAT")
 		if inset.Bg.SetHorizTile then inset.Bg:SetHorizTile(true); inset.Bg:SetVertTile(true) end
 		if inset.Bg.SetVertexColor then inset.Bg:SetVertexColor(1, 1, 1, 1) end
 	end
@@ -1120,7 +1123,7 @@ end
 
 local function RowHeight(item)
 	if item.style == "banner" then return BANNER_ROW end
-	if item.style == "card" then return item.small and SMALL_CARD_ROW or CARD_ROW end
+	if item.style == "card" then return CARD_ROW end
 	return LEAF_ROW
 end
 
@@ -1181,7 +1184,6 @@ end
 
 local function DrawCard(row, item, indent, width)
 	CardParts(row)
-	local small = item.small
 	row.toggle:Hide()
 	row.cardArt = SetNine(row.face, CARD_ART.normal, row, indent, 0, 0, 0)
 	ShowAll(row.face, row.cardArt)
@@ -1192,19 +1194,17 @@ local function DrawCard(row, item, indent, width)
 	row.cardFill:SetShown(not row.cardArt)
 
 	-- The badge, centred down the card: the zone's painting or what the card holds, in a silver
-	-- frame, greyed with nothing found. A chain has none: its name and bar start at the card's left.
-	local badged = not item.story
-	local side = badged and (small and 26 or 32) or 0
-	local middle = small and -20 or -24
-	local centre = indent + 12 + side / 2
+	-- frame, greyed with nothing found. The same room between the card's frame and what is in it
+	-- on every side, 7 from the frame's line: the line sits 1 inside the card's sides, 3 below its
+	-- top and at its foot.
+	local side = 32
+	local middle = -26
+	local centre = indent + CARD_PAD + side / 2
 	local none = item.none or item.locked
-	local icon = item.icon or MAP_ICON
+	local icon = item.icon or (item.story and CHAIN_ICON) or MAP_ICON
 	row.story:Hide()
-	if not badged then
-		row.icon:Hide()
-		row.iconFrame:Hide()
-	else
-		local inset = small and 2 or 3
+	do
+		local inset = 3 -- the frame's own rim
 		local crop = item.iconCrop or ICON_CROP
 		row.icon:SetTexture(icon)
 		row.icon:SetTexCoord(crop[1], crop[2], crop[3], crop[4])
@@ -1217,9 +1217,9 @@ local function DrawCard(row, item, indent, width)
 		row.icon:Show()
 		local framed = Atlas(row.iconFrame, "collections-itemborder-collected")
 		row.iconFrame:SetShown(framed)
-		-- Silver as the card round it, not the collections window's gold.
-		if framed then Silver({ row.iconFrame }) end
 		if framed then
+			-- Silver as the card round it, not the collections window's gold.
+			Silver({ row.iconFrame })
 			row.iconFrame:SetSize(side, side)
 			row.iconFrame:ClearAllPoints()
 			row.iconFrame:SetPoint("CENTER", row.icon, "CENTER", 0, 0)
@@ -1228,9 +1228,9 @@ local function DrawCard(row, item, indent, width)
 
 	-- One line, as the list's rows had it before the cards: the name on the left and on the right
 	-- what is found out of all and the share, 5/27 • 18%, with the bar under them.
-	local top = small and 8 or 10
+	local top = 8
 	local level = -(top + 7)
-	local left = indent + (badged and 12 + side + 10 or 16)
+	local left = indent + CARD_PAD + side + 10
 	row.label:SetFontObject("GameFontNormal")
 	row.label:SetPoint("TOPLEFT", row, "TOPLEFT", left, -top)
 	if item.locked then
@@ -1250,7 +1250,7 @@ local function DrawCard(row, item, indent, width)
 	if ratio == nil and item.total and item.total > 0 then ratio = (item.count or 0) / item.total end
 	ratio = math.max(0, math.min(1, ratio or 0))
 	local ticked = not locked and item.tick and true or false
-	row.lock:SetPoint("RIGHT", row, "TOPRIGHT", -16, level)
+	row.lock:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_PAD, level)
 	row.lock:SetShown(locked and true or false)
 	row.tick:SetShown(ticked)
 	if ticked then
@@ -1261,7 +1261,7 @@ local function DrawCard(row, item, indent, width)
 			row.tick:SetSize(14, 14)
 		end
 		row.tick:ClearAllPoints()
-		row.tick:SetPoint("RIGHT", row, "TOPRIGHT", -14, level)
+		row.tick:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_PAD, level)
 	end
 	row.count:SetFontObject("GameFontHighlightSmall")
 	Tint(row.count, SHARE_INK)
@@ -1269,7 +1269,7 @@ local function DrawCard(row, item, indent, width)
 	if ticked then
 		row.count:SetPoint("RIGHT", row.tick, "LEFT", -3, 0)
 	else
-		row.count:SetPoint("RIGHT", row, "TOPRIGHT", -16, level)
+		row.count:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_PAD, level)
 	end
 	local total = item.total or 0
 	local numbers = ""
@@ -1292,11 +1292,11 @@ local function DrawCard(row, item, indent, width)
 	-- The bar along its foot, under the name: a dark track, the game's yellow as far as the share,
 	-- cut rather than squeezed, in the Pet Journal's frame. None on a card with nothing to count.
 	local barred = (item.total or 0) > 0
-	local barLeft, barBottom, barHeight = left, small and 8 or 10, small and 5 or 6
+	local barLeft, barBottom, barHeight = left, 8, 6
 	row.barLeft, row.ratio = barLeft, ratio
 	row.track:ClearAllPoints()
 	row.track:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft + 2, barBottom + 1)
-	row.track:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -16 - 2, barBottom + 1)
+	row.track:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -CARD_PAD - 2, barBottom + 1)
 	row.track:SetHeight(barHeight - 2)
 	row.track:SetShown(barred)
 	row.fill:ClearAllPoints()
@@ -1315,7 +1315,7 @@ local function DrawCard(row, item, indent, width)
 	capLeft:SetSize(6, barHeight)
 	capLeft:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft, barBottom)
 	capRight:SetSize(6, barHeight)
-	capRight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -16, barBottom)
+	capRight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -CARD_PAD, barBottom)
 	capMiddle:SetPoint("TOPLEFT", capLeft, "TOPRIGHT", 0, 0)
 	capMiddle:SetPoint("BOTTOMRIGHT", capRight, "BOTTOMLEFT", 0, 0)
 	ShowAll(row.barCaps, barred and row.hasBarFrame)

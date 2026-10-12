@@ -162,7 +162,6 @@ L.QUESTS_FOUND_GOING_FMT = "Выполнено %1$d из %2$d, выполняе�
 L.QUEST_IN_PROGRESS = "Выполняется"
 L.QUESTS_CARD_FMT = "%1$d из %2$d заданий"
 L.QUESTS_CARD_GOING_FMT = "выполняется: %1$d"
-L.QUEST_NOT_STARTED = "Не начато"
 L.QUEST_PART_ACCEPT = "Предложение"
 L.QUEST_PART_PROGRESS = "В процессе"
 L.QUEST_PART_COMPLETE = "Выполнено"
