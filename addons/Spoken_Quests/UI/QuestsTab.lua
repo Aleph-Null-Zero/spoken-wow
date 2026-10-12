@@ -974,19 +974,29 @@ local function Voiced(id, moment)
     return VO.DataModules:PrepareSound({ event = EVENTS[moment], questID = id }) and true or false
 end
 
--- What the player is given to play one moment of a quest, named for its giver as the quest log's
--- Play names it.
+-- Who says one moment of a quest: the progress and the hand-in are said by the one it is handed
+-- in to (`ender`, `enderObject` in the data, absent where that is the giver), the offer by its
+-- giver, as the quest log's Play names it.
+local function Speaker(id, moment)
+    local DataModules, Enums = VO.DataModules, VO.Enums
+    local quest = moment ~= "accept" and Quests()[id]
+    if quest and quest.ender then return Enums.GUID.Creature, quest.ender end
+    if quest and quest.enderObject then return Enums.GUID.GameObject, quest.enderObject end
+    return DataModules:GetQuestLogQuestGiverTypeAndID(id)
+end
+
+-- What the player is given to play one moment of a quest, named and pictured for who says it.
 local function SoundData(id, moment, origin)
     local DataModules, Enums = VO.DataModules, VO.Enums
-    local kind, giver = DataModules:GetQuestLogQuestGiverTypeAndID(id)
-    local name = giver and DataModules:GetObjectName(kind, giver) or Title(id)
-    local guid = giver and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, giver) or nil
+    local kind, speaker = Speaker(id, moment)
+    local name = speaker and DataModules:GetObjectName(kind, speaker) or Title(id)
+    local guid = speaker and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, speaker) or nil
     return { event = EVENTS[moment], questID = id, title = Title(id), name = name, unitGUID = guid,
         text = PartText(id, moment), origin = origin }
 end
 
 -- Play on a quest's page: what is said when it is offered, under way and handed in, as far as the
--- voice packs have it, named for its giver as the quest log's Play names it.
+-- voice packs have it, named for who says it.
 local PLAY = {
     has = function(id)
         for _, moment in ipairs(MOMENTS) do

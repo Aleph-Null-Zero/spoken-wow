@@ -16,6 +16,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   chain is (quest_races below).
 - Chains: the quest before each one in its storyline (`prev`), from the same DB's
   quest_template_addon (chain_links below), so the tab can group a zone's quests into their chains.
+- Hand-in: who a quest is handed in to (`ender`, or `enderObject` for an object), from the same
+  DB's creature_questender and gameobject_questender, else the corpus's speaker of the progress or
+  complete line; left out where it is the quest's giver (quest_enders below).
 - Forever's own quests are almost all missing from the DB, so after it comes what Forever's
   client says of each quest, as players recorded it: Efficient Games' open data (EG Link,
   github.com/JIVESCORP/eg-link-output-wowf, CC BY 4.0; quests.enUS.json and npcs.json, the
@@ -237,8 +240,11 @@ class Maps:
 
 
 def corpus_quests():
-    """{questID: {"title"}}, who each quest is placed by ("creature:id"), and the spawns. That is
-    its giver, or for a quest the corpus has no offer of, whoever it is handed in to."""
+    """{questID: {"title", "giver", "handIn"}}, who each quest is placed by ("creature:id"), and
+    the spawns. The one it is placed by is its giver, or for a quest the corpus has no offer of,
+    whoever it is handed in to. "giver" is who says its accept line, as the packs' quest log
+    tables name the giver; "handIn" who says its progress or complete line. Either is absent
+    where the corpus has no such line."""
     corpus = json.load(gzip.open(CORPUS, "rt", encoding="utf-8"))
     quests, givers, enders = {}, {}, {}
     for line in corpus["lines"]:
@@ -250,8 +256,10 @@ def corpus_quests():
             npc = f'{line["npcType"]}:{line["npcId"]}'
             if source == "accept":
                 givers.setdefault(qid, npc)
+                quests[qid].setdefault("giver", npc)
             else:
                 enders.setdefault(qid, npc)
+                quests[qid].setdefault("handIn", npc)
     for qid, npc in enders.items():
         givers.setdefault(qid, npc)
     return quests, givers, corpus.get("spawns", {})
@@ -655,6 +663,33 @@ def chain_names(records, entries):
     return names, notes
 
 
+def quest_enders(rows, quests):
+    """{questID: "creature:id" or "gameobject:id"}, who each quest is handed in to, where that is
+    not its giver: the progress and complete lines are said by that one.
+
+    `rows` are the DB's (kind, id, questID), from creature_questender and gameobject_questender;
+    `quests` corpus_quests' records. Of several the DB names, the corpus's speaker of the hand-in
+    wins, then the giver, then the lowest creature, then the lowest object. A quest the DB names
+    none for takes the corpus's speaker. The giver is left out: the tab falls back to it."""
+    named = {}
+    for kind, npc, qid in rows:
+        named.setdefault(qid, set()).add((kind, int(npc)))
+    enders = {}
+    for qid, quest in quests.items():
+        giver, spoken = quest.get("giver"), quest.get("handIn")
+        candidates = [f"{kind}:{npc}" for kind, npc in sorted(named.get(qid, ()),
+                                                              key=lambda c: (c[0] != "creature", c[1]))]
+        if not candidates or spoken in candidates:
+            ender = spoken
+        elif giver in candidates:
+            ender = giver
+        else:
+            ender = candidates[0]
+        if ender and ender != giver and ender.split(":")[0] in ("creature", "gameobject"):
+            enders[qid] = ender
+    return enders
+
+
 def lua_name(name):
     if isinstance(name, int):
         return str(name)
@@ -662,7 +697,8 @@ def lua_name(name):
     return "{ %s }" % ", ".join([lua_string(name["enUS"])] + locs)
 
 
-def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, name=None, dungeon=None):
+def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, name=None, dungeon=None,
+               ender=None):
     parts = [lua_string(title)]
     if zones:
         parts.append("zones = { %s }" % ", ".join(str(z) for z in zones))
@@ -676,6 +712,9 @@ def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, 
         parts.append(f"prev = {prev}")
     if name is not None:
         parts.append(f"name = {lua_name(name)}")
+    if ender:
+        kind, npc = ender.split(":")
+        parts.append(f"{'enderObject' if kind == 'gameobject' else 'ender'} = {npc}")
     # Every race or class, or none named, is anyone, and goes unsaid. Classes are Classic's nine
     # (bits by id less one); the DB's "all" is every bit set.
     races = playable_races(races)
@@ -697,8 +736,9 @@ def render(quest_lines, sort_lines, dungeon_lines=None):
 -- 32 and 33, and a class's id less one; absent for anyone), prev = the quest before it in its
 -- chain, name = the chain's name on its first quest (a quest's id, whose title names it, or words
 -- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
--- its entrance }}. A sort that is a word is a group the client has no QuestSort for. The words are
--- Data/QuestText.lua's. Regenerate with the Forever
+-- its entrance, ender = the creature it is handed in to (enderObject for an object), absent where
+-- that is its giver }}. A sort that is a word is a group the client has no QuestSort for. The words
+-- are Data/QuestText.lua's. Regenerate with the Forever
 -- repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
@@ -746,6 +786,7 @@ def read_existing(path):
 
 def without_db(args):
     quests, givers, spawns = corpus_quests()
+    enders = quest_enders([], quests)
     quest_lines, sort_lines, dungeon_lines = read_existing(args.out)
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
@@ -761,18 +802,23 @@ def without_db(args):
     apply_overrides(records, entries)
     for qid, rec in records.items():
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
-                                      rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None)
+                                      rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None,
+                                      ender=enders.get(qid))
     placed = sum(1 for rec in records.values() if rec["zones"])
     return quest_lines, sort_lines, dungeon_lines, f"{len(records)} quests added, {placed} of them placed"
 
 
-def with_db(args):
+def connect(args):
     import pymysql
 
+    return pymysql.connect(host=args.host, port=args.port, user=args.user, password=args.password,
+                           database=args.database, charset="utf8mb4")
+
+
+def with_db(args):
     quests, givers, spawns = corpus_quests()
     maps = Maps()
-    db = pymysql.connect(host=args.host, port=args.port, user=args.user, password=args.password,
-                         database=args.database, charset="utf8mb4")
+    db = connect(args)
     ids = sorted(quests)
     marks = ",".join(["%s"] * len(ids))
     with db.cursor() as cur:
@@ -790,7 +836,12 @@ def with_db(args):
         rows = {int(qid): {"prev": int(prev or 0), "next": int(nxt or 0), "group": int(group or 0),
                            "breadcrumb": int(crumb or 0)}
                 for qid, prev, nxt, group, crumb in cur.fetchall()}
+        ender_rows = []
+        for kind in ("creature", "gameobject"):
+            cur.execute(f"SELECT id, quest FROM {kind}_questender WHERE quest IN ({marks})", ids)
+            ender_rows += [(kind, int(npc), int(qid)) for npc, qid in cur.fetchall()]
     db.close()
+    enders = quest_enders(ender_rows, quests)
     # Forever's client after the DB, which has almost none of Forever's own quests: it adds
     # links, races and places where the DB has none, and changes none the DB has.
     if args.without_efficient_games:
@@ -856,7 +907,7 @@ def with_db(args):
         else:
             unplaced += 1
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
-                                      rec["prev"], named.get(qid), rec.get("dungeon"))
+                                      rec["prev"], named.get(qid), rec.get("dungeon"), enders.get(qid))
 
     sort_lines = {}
     for sid in sorted(used_sorts):
@@ -877,12 +928,13 @@ def with_db(args):
                                      f"{len(used_sorts)} sorts; "
                                      f"{sum(1 for r in records.values() if r['prev'])} after another in a chain, "
                                      f"{len(named)} chains named by hand; "
+                                     f"{sum(1 for qid in records if qid in enders)} handed in to another than their giver; "
                                      f"{sum(1 for m in races.values() if m)} limited by race, "
                                      f"{len(leaks)} not on the side of the quest before them; "
                                      f"{len(ids) - len(records)} dropped by hand")
 
 
-def main():
+def parse_args(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--no-db", action="store_true", help="add the corpus's new quests without a database")
     ap.add_argument("--without-efficient-games", action="store_true",
@@ -893,8 +945,11 @@ def main():
     ap.add_argument("--password", default=os.environ.get("COMPENDIUM_MYSQL_PASSWORD", ""))
     ap.add_argument("--database", default=os.environ.get("COMPENDIUM_MYSQL_DATABASE", "world"))
     ap.add_argument("--out", default=OUT)
-    args = ap.parse_args()
+    return ap.parse_args(argv)
 
+
+def main():
+    args = parse_args()
     quest_lines, sort_lines, dungeon_lines, summary = (without_db if args.no_db else with_db)(args)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
