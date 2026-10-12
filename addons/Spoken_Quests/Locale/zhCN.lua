@@ -178,6 +178,8 @@ L.OPT_NEXT_GOSSIP = "下一段闲聊"
 
 L.COMPENDIUM_QUESTS = "任务"
 L.COMPENDIUM_TITLE = "艾泽拉斯百科"
+L.OPEN_IN_COMPENDIUM = "在艾泽拉斯百科中打开"
+L.OPEN_QUEST_IN_COMPENDIUM_TIP = "在艾泽拉斯百科中查看此任务的文本，以及其他所有任务的文本。"
 L.QUESTS_SEARCH = "搜索任务"
 L.QUESTS_NONE = "没有匹配的结果。"
 L.QUESTS_FOUND_ONLY = "仅显示已完成的"

@@ -52,8 +52,21 @@ local B = {}
 for _, file in ipairs({ "Locale/enUS", "UI/Layout", "UI/TextView", "UI/Compendium" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
+-- Where a quest is read: Classic Era's quest log, with the selected quest's details beside the
+-- list, and the map's quest log of Forever, with its details view.
+local logQuest
+_G.QuestLogFrame = CreateFrame("Frame", "QuestLogFrame")
+_G.QuestLogDetailScrollFrame = CreateFrame("ScrollFrame", "QuestLogDetailScrollFrame", QuestLogFrame)
+function QuestLogDetailScrollFrame:IsVisible() return logQuest ~= nil end
+_G.GetQuestLogSelection = function() return logQuest and 1 or 0 end
+_G.GetQuestLogTitle = function() return "A quest", 1, nil, false, false, false, 0, logQuest end
+_G.QuestLog_UpdateQuestDetails = function() end
+_G.QuestMapFrame = CreateFrame("Frame", "QuestMapFrame")
+QuestMapFrame.DetailsFrame = CreateFrame("Frame", nil, QuestMapFrame)
+QuestMapFrame.DetailsFrame.BackFrame = CreateFrame("Frame", nil, QuestMapFrame.DetailsFrame)
+_G.QuestMapFrame_ShowQuestDetails = function(questID) QuestMapFrame.DetailsFrame.questID = questID end
 local ns = {}
-for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab" }) do
+for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab", "UI/OpenInCompendium" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
 end
 local L, Tab = VO.L, VO.QuestsTab
@@ -189,6 +202,57 @@ Expect("Quests is the first tab", _G.SpokenCompendiumWindowTab1:GetText(), L.COM
 Expect("...Zones and Books after it", _G.SpokenCompendiumWindowTab2:GetText() .. "|" .. _G.SpokenCompendiumWindowTab3:GetText(),
     "Zones|Books")
 Expect("...and the window has its title", C.window.title, L.COMPENDIUM_TITLE)
+
+---------------------------------------------------------------- Open in Azeroth's Compendium
+-- Opened on a quest: chosen, with its zone, continent or group opened, and its page shown.
+local HEIRLOOM = 64
+C:Hide()
+Tab:Open(HEIRLOOM)
+Expect("opened on a quest, the window shows the Quests tab", C:IsOpen("quests"), true)
+Expect("...with the quest's zone opened to it", Has(Shown(), "The Forgotten Heirloom"), true)
+Expect("...the quest chosen", RowFor("The Forgotten Heirloom").selected, true)
+Expect("...and its page shown", page.title.text, "The Forgotten Heirloom")
+Tab:Open(JENNEA)
+Expect("a class's quest opens under its class", Has(Shown(), "Speak with Jennea") and page.title.text, "Speak with Jennea")
+
+-- The quest giver's window: the Compendium's tome beside its controls, for a quest the tab lists.
+local giver = Tab.giverButton
+stub.world.questID = KOBOLDS
+stub.ShowPanel("QuestFrameDetailPanel")
+stub.FireEvent("QUEST_DETAIL")
+Expect("the quest giver's window has Open in Azeroth's Compendium", giver ~= nil and giver:IsShown(), true)
+C:Hide()
+giver.scripts.OnClick(giver)
+Expect("...which opens the Compendium on that quest", C:IsOpen("quests") and page.title.text, "Kobold Camp Cleanup")
+local tooltip = {}
+local gameTooltip = _G.GameTooltip
+_G.GameTooltip = { SetOwner = function() end, SetText = function(_, text) tooltip.title = text end,
+    AddLine = function(_, text) tooltip.line = text end, Show = function() end, Hide = function() end }
+for _, handler in ipairs(giver.hooks and giver.hooks.OnEnter or {}) do handler(giver) end
+_G.GameTooltip = gameTooltip
+Expect("...and says so", tooltip.title, L.OPEN_IN_COMPENDIUM)
+stub.world.questID = 999999
+stub.FireEvent("QUEST_DETAIL")
+Expect("...not for a quest the tab does not list", giver:IsShown(), false)
+stub.world.questID = 0
+stub.ShowPanel(nil)
+stub.FireEvent("QUEST_FINISHED")
+
+-- The quest log's details, on either log.
+logQuest = CANDLES
+QuestLog_UpdateQuestDetails()
+Expect("Classic Era's quest log details have it", Tab.logButton:IsShown() and Tab.logButton.questID, CANDLES)
+Tab.logButton.scripts.OnClick(Tab.logButton)
+Expect("...and open the quest", page.title.text, "Kobold Candles")
+logQuest = nil
+QuestLog_UpdateQuestDetails()
+Expect("...not with no quest chosen", Tab.logButton:IsShown(), false)
+QuestMapFrame_ShowQuestDetails(HEIRLOOM)
+Expect("the map's quest log details have it", Tab.mapButton:IsShown() and Tab.mapButton.questID, HEIRLOOM)
+Spoken:SetPartOn("quests", false)
+QuestMapFrame_ShowQuestDetails(HEIRLOOM)
+Expect("...not with Quests off", Tab.mapButton:IsShown(), false)
+Spoken:SetPartOn("quests", true)
 
 ---------------------------------------------------------------- another language
 -- A German client: the words and the title the quest's window shows are kept, for every

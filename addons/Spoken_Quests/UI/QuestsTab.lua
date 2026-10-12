@@ -596,9 +596,27 @@ local function Build(panel)
     QuestsTab.panel = panel
 end
 
---- Open the quests.
-function QuestsTab:Open()
+--- Whether `questID` can be opened in the tab: it is there, its part is on, and it lists the quest.
+function QuestsTab:Has(questID)
+    return C ~= nil and C:Tab("quests") ~= nil and VO.Addon:IsPartOn() and questID ~= nil and Quests()[questID] ~= nil
+end
+
+--- Open the quests, on `questID` when one is given: chosen, with what holds it opened.
+function QuestsTab:Open(questID)
     if not C then return end
+    local quest = questID and Quests()[questID]
+    if quest then
+        selection = { quest = questID }
+        worldOpen = true
+        local zone = quest.zones and quest.zones[1]
+        if zone then
+            expandedZone = zone
+            local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
+            if continent then continentOpen[continent] = true end
+        else
+            groupOpen[quest.sort or "elsewhere"] = true
+        end
+    end
     if list then
         list:ClearSearch()
         filter = ""
@@ -660,6 +678,7 @@ function QuestsTab:Setup()
         pcall(frame.RegisterEvent, frame, event)
     end
     frame:SetScript("OnEvent", OnEvent)
+    if self.SetupOpenButtons then self:SetupOpenButtons() end
 end
 
 -- Once the world is up: Spoken Zones, which may be the addon carrying the window, loads after this one.

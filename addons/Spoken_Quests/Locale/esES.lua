@@ -193,6 +193,8 @@ L.OPT_NEXT_GOSSIP = "Siguiente charla"
 
 L.COMPENDIUM_QUESTS = "Misiones"
 L.COMPENDIUM_TITLE = "Compendio de Azeroth"
+L.OPEN_IN_COMPENDIUM = "Abrir en el Compendio de Azeroth"
+L.OPEN_QUEST_IN_COMPENDIUM_TIP = "El texto de esta misión en el Compendio de Azeroth, junto al de todas las demás misiones."
 L.QUESTS_SEARCH = "Buscar misiones"
 L.QUESTS_NONE = "No hay coincidencias."
 L.QUESTS_FOUND_ONLY = "Solo completadas"

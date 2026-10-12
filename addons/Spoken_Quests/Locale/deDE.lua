@@ -178,6 +178,8 @@ L.OPT_NEXT_GOSSIP = "Nächstes Gespräch"
 
 L.COMPENDIUM_QUESTS = "Quests"
 L.COMPENDIUM_TITLE = "Kompendium von Azeroth"
+L.OPEN_IN_COMPENDIUM = "Im „Kompendium von Azeroth“ öffnen"
+L.OPEN_QUEST_IN_COMPENDIUM_TIP = "Der Text dieser Quest im „Kompendium von Azeroth“, neben dem aller anderen Quests."
 L.QUESTS_SEARCH = "Quests suchen"
 L.QUESTS_NONE = "Keine Treffer."
 L.QUESTS_FOUND_ONLY = "Nur abgeschlossene"

@@ -178,6 +178,8 @@ L.OPT_NEXT_GOSSIP = "다음 잡담"
 
 L.COMPENDIUM_QUESTS = "퀘스트"
 L.COMPENDIUM_TITLE = "아제로스 백과사전"
+L.OPEN_IN_COMPENDIUM = "아제로스 백과사전에서 열기"
+L.OPEN_QUEST_IN_COMPENDIUM_TIP = "아제로스 백과사전에서 다른 모든 퀘스트의 대사와 함께 이 퀘스트의 대사를 봅니다."
 L.QUESTS_SEARCH = "퀘스트 검색"
 L.QUESTS_NONE = "일치하는 항목이 없습니다."
 L.QUESTS_FOUND_ONLY = "완료한 것만"

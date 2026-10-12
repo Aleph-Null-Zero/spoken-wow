@@ -178,6 +178,8 @@ L.OPT_NEXT_GOSSIP = "Следующий разговор"
 
 L.COMPENDIUM_QUESTS = "Задания"
 L.COMPENDIUM_TITLE = "Компендиум Азерота"
+L.OPEN_IN_COMPENDIUM = "Открыть в компендиуме"
+L.OPEN_QUEST_IN_COMPENDIUM_TIP = "Текст этого задания в «Компендиуме Азерота», рядом с текстами всех других заданий."
 L.QUESTS_SEARCH = "Поиск заданий"
 L.QUESTS_NONE = "Ничего не найдено."
 L.QUESTS_FOUND_ONLY = "Только выполненные"
