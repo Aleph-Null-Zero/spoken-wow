@@ -18,9 +18,13 @@ local BOOKS = here .. "/../../addons/Spoken_Books/"
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.world.questID = 0; stub.ShowPanel(nil)
 
+-- Alterac Valley as Forever's newer client hangs it, in Hillsbrad Foothills; the other
+-- battlegrounds and Zephras Isle under Azeroth itself.
 local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "Eastern Kingdoms", 947 },
     [1429] = { "Elwynn Forest", 1415 }, [1453] = { "Stormwind City", 1415 }, [1436] = { "Westfall", 1415 },
-    [1440] = { "Ashenvale", 1414 } }
+    [1440] = { "Ashenvale", 1414 }, [1424] = { "Hillsbrad Foothills", 1415 }, [1459] = { "Alterac Valley", 1424 },
+    [1460] = { "Warsong Gulch", 947 }, [1461] = { "Arathi Basin", 947 }, [2524] = { "Darkspear Islands", 947 },
+    [2521] = { "Zephras Isle", 947 }, [2548] = { "Riverglades", 1415 } }
 _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
@@ -250,6 +254,22 @@ Click("Events")
 local leftovers, reused = Leftovers()
 Expect("a row drawn as a card and reused for a banner or a quest keeps none of the card's parts", leftovers, "")
 Expect("...as rows were, once the list changed under them", reused > 0, true)
+
+-- Zephras Isle is on no continent: a card of its own after them. The battlegrounds are under a
+-- banner of their own, Alterac Valley too, though the client hangs it in Hillsbrad Foothills.
+list = Shown()
+Expect("a zone on no continent is a card of its own after the continents, then the battlegrounds' banner",
+    list:find("|Zephras Isle|Battlegrounds|Classes|", 1, true) ~= nil and RowFor("Zephras Isle").row.style == "card"
+    and RowFor("Zephras Isle").row.nest, 0)
+Expect("...the battlegrounds a banner", RowFor("Battlegrounds").row.style, "banner")
+Expect("...no battleground among its continent's zones", Has(list, "Alterac Valley"), false)
+Click("Battlegrounds")
+list = Shown()
+Expect("...opening on a card for each battleground", Has(list, "Alterac Valley") and Has(list, "Warsong Gulch")
+    and Has(list, "Arathi Basin") and Has(list, "Darkspear Islands") and RowFor("Alterac Valley").row.style, "card")
+Expect("...its page counting their quests", page.title.text == L.QUESTS_SECTION_BATTLEGROUNDS
+    and page.sub.text:match("^0 of %d+ completed$") ~= nil, true)
+Click("Battlegrounds")
 list = Shown()
 Expect("a zone opens on its quests", Has(list, "Kobold Camp Cleanup") and Has(list, "Kobold Candles"), true)
 Expect("...a quest completed open to read", RowFor("Kobold Camp Cleanup").row.locked, false)
@@ -485,6 +505,10 @@ Expect("...the quest chosen", RowFor("The Forgotten Heirloom").selected, true)
 Expect("...and its page shown", page.title.text, "The Forgotten Heirloom")
 Tab:Open(JENNEA)
 Expect("a class's quest opens under its class", Has(Shown(), "Speak with Jennea") and page.title.text, "Speak with Jennea")
+local IRONDEEP = 5892
+Tab:Open(IRONDEEP)
+Expect("a battleground's quest opens under the battlegrounds' banner", Has(Shown(), "Irondeep Supplies")
+    and RowFor("Battlegrounds").row.open and page.title.text, "Irondeep Supplies")
 
 -- The quest giver's window: the Compendium's tome beside its controls, for a quest the tab lists.
 local giver = Tab.giverButton

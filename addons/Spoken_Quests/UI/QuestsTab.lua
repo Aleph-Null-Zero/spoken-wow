@@ -5,8 +5,9 @@
 -- open, unless Unlock Unstarted Quests is on.
 --
 -- The list is the Compendium's cards: a banner for each continent, holding a card for each zone
--- (with its city as a small card inside it), then a banner each for Classes, Professions, Events
--- and Other, holding a small card for each class, profession, event or other kind of quest. A
+-- (with its city as a small card inside it), a card for each zone on no continent, a banner for
+-- the battlegrounds, then a banner each for Classes, Professions, Events and Other, holding a
+-- small card for each class, profession, event or other kind of quest. A
 -- card says how many of its quests are completed and how many in progress, with a bar. Inside a
 -- place, the quests that follow one another (`prev` in the data) are a small card for their chain,
 -- named after the first of them; the rest are rows of their own. A chain's page lists its quests
@@ -57,6 +58,13 @@ local SECTIONS = {
         sorts = { [22] = true, [364] = true, [365] = true, [366] = true, [368] = true, [369] = true } },
     { key = "other", label = "QUESTS_SECTION_OTHER" },
 }
+
+-- The battlegrounds, under a banner of their own after the continents, whatever map the client
+-- hangs them under: Forever's newer client puts Alterac Valley in Hillsbrad Foothills, its older
+-- one under Azeroth, where no continent's list reached them.
+local BATTLEGROUNDS = { 1459, 1460, 1461, 2524 } -- Alterac Valley, Warsong Gulch, Arathi Basin, Darkspear Islands
+local IS_BATTLEGROUND = {}
+for _, mapID in ipairs(BATTLEGROUNDS) do IS_BATTLEGROUND[mapID] = true end
 
 local function SectionOf(sort)
     for _, section in ipairs(SECTIONS) do
@@ -274,15 +282,41 @@ local function ByName(a, b)
     return na < nb
 end
 
--- The zones on `continent` with quests, cities left to the zone around them.
+-- The zones on `continent` with quests, cities left to the zone around them and battlegrounds to
+-- their banner.
 local function ZonesOn(continent)
     local out, listed = {}, {}
     for mapID in pairs(Index().zones) do
         local zone = C.CITY_IN[mapID] or mapID
-        if not listed[zone] and C.ContinentOf(zone) == continent then
+        if not listed[zone] and not IS_BATTLEGROUND[zone] and C.ContinentOf(zone) == continent then
             listed[zone] = true
             table.insert(out, zone)
         end
+    end
+    table.sort(out, ByName)
+    return out
+end
+
+-- The zones with quests on no continent (Forever's Zephras Isle, whose map hangs under Azeroth),
+-- as cards of their own after the continents, as the Zones tab lists them. Not a map this client
+-- has never heard of: Forever's on Era would lead nowhere.
+local function LooseZones()
+    local out = {}
+    for mapID in pairs(Index().zones) do
+        if not C.CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] and not C.ContinentOf(mapID)
+            and not (C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID) == nil) then
+            table.insert(out, mapID)
+        end
+    end
+    table.sort(out, ByName)
+    return out
+end
+
+-- The battlegrounds with quests, by name.
+local function Battlegrounds()
+    local out = {}
+    for _, mapID in ipairs(BATTLEGROUNDS) do
+        if Index().zones[mapID] then table.insert(out, mapID) end
     end
     table.sort(out, ByName)
     return out
@@ -559,7 +593,29 @@ local function Continents()
     return out
 end
 
--- A banner for each continent, its zones' cards inside; then a banner for each section.
+-- The battlegrounds' banner, their cards inside.
+local function BattlegroundRows()
+    local zones = Battlegrounds()
+    local set = {}
+    for _, mapID in ipairs(zones) do QuestsIn(mapID, set) end
+    local found, total, going = Tally(set)
+    if total == 0 or (OnlyFound() and found == 0) then return {} end
+    local searching = filter ~= ""
+    local inside = {}
+    if searching or sectionOpen.battlegrounds then
+        for _, mapID in ipairs(zones) do
+            for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(inside, row) end
+        end
+    end
+    if searching and #inside == 0 then return {} end
+    local rows = { { style = "banner", kind = "section", key = "battlegrounds", label = L.QUESTS_SECTION_BATTLEGROUNDS,
+        count = found - going, found = found, total = total, open = #inside > 0 } }
+    for _, row in ipairs(inside) do table.insert(rows, row) end
+    return rows
+end
+
+-- A banner for each continent, its zones' cards inside; the zones on none as cards of their own;
+-- the battlegrounds' banner; then a banner for each section.
 local function BuildRows()
     local out = {}
     local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
@@ -581,6 +637,8 @@ local function BuildRows()
             Add(rows)
         end
     end
+    for _, mapID in ipairs(LooseZones()) do Add(ZoneRows(mapID, 0)) end
+    Add(BattlegroundRows())
     for _, section in ipairs(SECTIONS) do Add(SectionRows(section)) end
     return out
 end
@@ -859,6 +917,12 @@ local function ShowEntry()
         page:Show({ title = Title(id), subtitle = Subtitle(id), text = Words(id), target = id })
         return
     end
+    if selection.section == "battlegrounds" then
+        local set = {}
+        for _, mapID in ipairs(Battlegrounds()) do QuestsIn(mapID, set) end
+        page:Show({ title = L.QUESTS_SECTION_BATTLEGROUNDS, subtitle = Count(set), text = L.QUESTS_PICK })
+        return
+    end
     if selection.section then
         for _, section in ipairs(SECTIONS) do
             if section.key == selection.section then
@@ -935,6 +999,16 @@ local function PlayerZone()
     end
 end
 
+-- Open what holds a zone's card: the battlegrounds' banner, or its continent's.
+local function OpenAround(zone)
+    if IS_BATTLEGROUND[zone] then
+        sectionOpen.battlegrounds = true
+        return
+    end
+    local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
+    if continent then continentOpen[continent] = true end
+end
+
 -- Choose where the player stands: their zone, opened, else the first continent. The tab never
 -- shows a page with nothing chosen.
 local function LandOnPlayer()
@@ -942,8 +1016,7 @@ local function LandOnPlayer()
     if zone then
         selection = { mapID = zone }
         expandedZone = zone
-        local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
-        if continent then continentOpen[continent] = true end
+        OpenAround(zone)
     else
         local first = Continents()[1]
         selection = first and { mapID = first } or nil
@@ -1064,8 +1137,7 @@ function QuestsTab:Open(questID)
         local chain
         if zone then
             expandedZone = zone
-            local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
-            if continent then continentOpen[continent] = true end
+            OpenAround(zone)
             chain = ChainKey(questID, "z" .. zone, Index().zones[zone])
         else
             local named = quest.sort and SpokenQuestsCompendium.sorts[quest.sort]

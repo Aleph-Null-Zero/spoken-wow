@@ -1451,8 +1451,12 @@ shows in its Compendium section. That switch and Started Only are kept in
 `SpokenQuestsSettings.global.Compendium`.
 
 The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
-for each zone with quests (a city a small card inside its zone's), then a banner each for
-Classes, Professions, Events and Other, holding a small card for each class, profession, season
+for each zone with quests (a city a small card inside its zone's); a card of its own for each
+zone on no continent the client knows (Zephras Isle, whose map hangs under Azeroth), as the Zones
+tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
+Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
+Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
+it); then a banner each for Classes, Professions, Events and Other, holding a small card for each class, profession, season
 or other QuestSort, and Place Unknown under Other. There is no Azeroth row; with the player's
 zone unknown the tab lands on the first continent. The list is drawn in the game's own art
 (`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
