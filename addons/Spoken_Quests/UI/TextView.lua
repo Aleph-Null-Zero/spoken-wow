@@ -39,10 +39,12 @@ local PAD_TOP, PAD_BOTTOM = FADE * TOP_SCALE + SOLID, FADE + SOLID
 local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
 -- A part's heading (SetParts): the title's face, larger than the words and darker, on a line as
 -- tall as its round buttons; the words HEAD_GAP under it, PART_GAP between one part and the next.
--- Under it a hairline of the same ink, fading out to the right: plainer than the page's divider.
-local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 18, 4
-local HEAD_INK = { 0.25, 0.16, 0.08 }
-local RULE_ALPHA = 0.45
+-- In near-black, as the quest frame's own headings on parchment are. Under it, RULE_GAP below its
+-- buttons, the quest frame's own break between a quest's words and its rewards.
+local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 4, 18, 4
+local HEAD_INK = { 0.06, 0.04, 0.02 }
+local RULE = [[Interface\QuestFrame\UI-HorizontalBreak]]
+local RULE_HEIGHT, RULE_GAP = 32, 6
 
 local TextView = {}
 TextView.__index = TextView
@@ -571,17 +573,8 @@ function TextView:SetParts(parts)
 			slot = { heading = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge"),
 				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight"),
 				rule = self.child:CreateTexture(nil, "ARTWORK") }
-			slot.rule:SetHeight(1)
-			slot.rule:SetColorTexture(1, 1, 1, 1)
-			local r, g, b = HEAD_INK[1], HEAD_INK[2], HEAD_INK[3]
-			if not (CreateColor and slot.rule.SetGradient and pcall(slot.rule.SetGradient, slot.rule, "HORIZONTAL",
-				CreateColor(r, g, b, RULE_ALPHA), CreateColor(r, g, b, 0))) then
-				if slot.rule.SetGradientAlpha then
-					slot.rule:SetGradientAlpha("HORIZONTAL", r, g, b, RULE_ALPHA, r, g, b, 0)
-				else
-					slot.rule:SetColorTexture(r, g, b, RULE_ALPHA / 2)
-				end
-			end
+			slot.rule:SetHeight(RULE_HEIGHT)
+			slot.rule:SetTexture(RULE)
 			slot.heading:SetJustifyH("LEFT")
 			if slot.heading.SetWordWrap then slot.heading:SetWordWrap(false) end
 			slot.words:SetJustifyH("LEFT")
@@ -593,11 +586,8 @@ function TextView:SetParts(parts)
 		if i > 1 then y = y + PART_GAP end
 		local face = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
 		if face then slot.heading:SetFont(face, Addon:Get("fontSize") + HEAD_SIZE, "") end
-		-- The title's ink, its thin strokes thickened by a faint copy a pixel to the right, so the
-		-- heading reads as dark as the title does at its larger size.
 		slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
-		slot.heading:SetShadowColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3], 0.6)
-		slot.heading:SetShadowOffset(1, 0)
+		slot.heading:SetShadowColor(0, 0, 0, 0)
 		slot.heading:SetText(part.heading or "")
 		-- The buttons from the right, BUTTON_GAP apart, centred on the heading's line.
 		local previous
@@ -621,12 +611,13 @@ function TextView:SetParts(parts)
 			slot.heading:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -(y + HEAD_LINE / 2))
 		end
 		slot.heading:Show()
-		y = y + HEAD_LINE
+		-- The break's line runs through the middle of its picture.
+		y = y + HEAD_LINE + RULE_GAP
 		slot.rule:ClearAllPoints()
-		slot.rule:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -y)
+		slot.rule:SetPoint("LEFT", self.child, "TOPLEFT", 0, -y)
 		slot.rule:SetWidth(math.max(width, 1))
 		slot.rule:Show()
-		y = y + 1 + HEAD_GAP
+		y = y + RULE_GAP + HEAD_GAP
 
 		self:Paint(slot.words)
 		slot.words:ClearAllPoints()

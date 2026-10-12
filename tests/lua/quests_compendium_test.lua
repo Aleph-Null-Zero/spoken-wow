@@ -664,6 +664,7 @@ local function PlayTip()
     return GameTooltip.text
 end
 Expect("...its tooltip naming Stop while it plays", PlayTip(), SpokenEnv.L.STOP)
+Expect("...the long Play, its word beside its glyph saying Stop while it plays", play.label and play.label.text, SpokenEnv.L.STOP)
 local handIn = PartButton(L.QUEST_PART_COMPLETE, "play")
 handIn.scripts.OnClick(handIn)
 queued = {}
@@ -674,6 +675,7 @@ play.scripts.OnClick(play)
 play.scripts.OnClick(play)
 Expect("...and again, stops them", #VO.Player:Queued(), 0)
 Expect("...its tooltip naming Play once stopped", PlayTip(), SpokenEnv.L.PLAY)
+Expect("...and Play once stopped", play.label.text, SpokenEnv.L.PLAY)
 Click("Kobold Candles")
 Expect("a quest no pack has has no Play", PartButton(L.QUEST_PART_ACCEPT, "play") == nil
     or not PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown(), true)

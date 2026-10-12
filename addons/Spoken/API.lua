@@ -454,6 +454,13 @@ function Spoken:CreateRoundButton(parent, kind, name, icon)
     return Actions.NewRound(parent, kind, name, icon)
 end
 
+--- The same Play in its long form, its word beside the glyph ("Play", "Stop", "Replay" in the
+--- player's language), for a window with room: `button:SetState(state)` as the round one's. Anchor
+--- it and give it OnClick yourself.
+function Spoken:CreateLabelledButton(parent, kind, name)
+    return Actions.NewLabelled(parent, kind, name)
+end
+
 --- End the head; the backlog runs.
 function Spoken:Skip()
     return SoundQueue:Skip()

@@ -474,6 +474,53 @@ local function Greys(button)
     button:HookScript("OnEnable", function(self) Paint(self, true) end)
 end
 
+--- The round button's long form, for a page with room beside a heading: the same ring drawn as a
+--- pill (its left half, its middle stretched, its right half), the glyph, and the word for what a
+--- click does. Only Play: `button:SetState("play" | "stop" | "replay")` changes both, and the width.
+function Actions.NewLabelled(parent, kind, name)
+    local button = CreateFrame("Button", name, nil)
+    button:SetParent(parent)
+    button:SetHeight(ROUND_SIZE)
+    local high = ROUND_SIZE + 6
+    local parts = {}
+    for i, cut in ipairs({ { 0, 0.5 }, { 0.49, 0.51 }, { 0.5, 1 } }) do
+        local piece = button:CreateTexture(nil, "BACKGROUND")
+        piece:SetTexture(RING)
+        piece:SetTexCoord(cut[1], cut[2], 0, 1)
+        rings[piece] = true
+        TintRing(piece)
+        parts[i] = piece
+    end
+    parts[1]:SetSize(high / 2, high)
+    parts[1]:SetPoint("TOPLEFT", button, "TOPLEFT", -3, 3)
+    parts[3]:SetSize(high / 2, high)
+    parts[3]:SetPoint("TOPRIGHT", button, "TOPRIGHT", 3, 3)
+    parts[2]:SetPoint("TOPLEFT", parts[1], "TOPRIGHT", 0, 0)
+    parts[2]:SetPoint("BOTTOMRIGHT", parts[3], "BOTTOMLEFT", 0, 0)
+    local glyph = button:CreateTexture(nil, "ARTWORK")
+    glyph:SetSize(12, 12)
+    glyph:SetPoint("LEFT", button, "LEFT", 8, 0)
+    glyph:SetAlpha(0.85)
+    local label = button:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    label:SetPoint("LEFT", glyph, "RIGHT", 5, 0)
+    button.ring, button.rings, button.glyph, button.label = parts[1], parts, glyph, label
+    button:HookScript("OnEnter", function(self) if self:IsEnabled() then glyph:SetAlpha(1) end end)
+    button:HookScript("OnLeave", function(self)
+        if self:IsEnabled() then glyph:SetAlpha(0.85) end
+        if GameTooltip:GetOwner() == self then GameTooltip_Hide() end
+    end)
+    local WORDS = { play = "PLAY", stop = "STOP", replay = "REPLAY" }
+    function button:SetState(state)
+        Actions.SetPlayGlyph(self, state)
+        self.label:SetText(L[WORDS[state] or "PLAY"])
+        self:SetWidth(8 + 12 + 5 + math.ceil(self.label:GetStringWidth() or 0) + 10)
+    end
+    function button:SetPlaying(playing) self:SetState(playing and "stop" or "play") end
+    button:SetState("play")
+    Greys(button)
+    return button
+end
+
 --- The round Play, Skip and Report buttons, as feature addons ask for them
 --- (Spoken:CreateRoundButton), and "icon", with `icon` in the ring, cut round to sit inside it.
 function Actions.NewRound(parent, kind, name, icon)

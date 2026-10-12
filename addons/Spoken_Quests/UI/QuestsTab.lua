@@ -1026,7 +1026,9 @@ local function PartButtons(moment)
     if partButtons[moment] then return partButtons[moment] end
     if not (page and Spoken and Spoken.CreateRoundButton) then return nil end
     local child = page.body.child
-    local play = Spoken:CreateRoundButton(child, "play")
+    -- The long Play, its word beside its glyph: the page has the room.
+    local play = Spoken.CreateLabelledButton and Spoken:CreateLabelledButton(child, "play")
+        or Spoken:CreateRoundButton(child, "play")
     play.moment = moment
     play:SetScript("OnClick", function(self)
         local id = self.questID
