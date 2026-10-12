@@ -209,6 +209,10 @@ Expect("...indented under its zone's card, its card further in",
     RowFor("Orgrimmar").face[1].anchor.x - RowFor("Durotar").face[1].anchor.x, 16)
 Expect("...with the line down the open card's contents beside it", RowFor("Orgrimmar").rails[1]:IsShown()
     and RowFor("Valley of Trials").rails[1]:IsShown(), true)
+Expect("...the line fading out at the last row it runs past, not before", RowFor("Valley of Trials").rails[1].fades
+    and not RowFor("Orgrimmar").rails[1].fades, true)
+Expect("...and the banner's line at the last row under the banner", RowFor("Valley of Trials").bannerRail.fades
+    and not RowFor("Durotar").bannerRail.fades, true)
 Expect("...and with no areas of its own, no numbers or bar on it", RowFor("Orgrimmar").count.text, "")
 Expect("...no bar", RowFor("Orgrimmar").track:IsShown() or RowFor("Orgrimmar").barCaps[1]:IsShown(), false)
 Expect("...a line down the left of what a continent's banner holds, as down an open card's",

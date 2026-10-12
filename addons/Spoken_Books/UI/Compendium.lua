@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 25
+local VERSION = 26
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -672,6 +672,26 @@ local function GoldWash(texture, from, to)
 	texture:SetColorTexture(1, 0.82, 0, (from + to) / 2)
 end
 
+-- A piece of the faint gold line down an open card's contents: solid, or where the line ends,
+-- fading out to its foot.
+local RAIL_INK = { 0.84, 0.71, 0.31, 0.2 }
+local function PaintRail(texture, ends)
+	local r, g, b, a = RAIL_INK[1], RAIL_INK[2], RAIL_INK[3], RAIL_INK[4]
+	texture.fades = ends and true or false
+	if ends then
+		texture:SetColorTexture(1, 1, 1, 1)
+		if CreateColor and texture.SetGradient and pcall(texture.SetGradient, texture, "VERTICAL",
+			CreateColor(r, g, b, 0), CreateColor(r, g, b, a)) then
+			return
+		end
+		if texture.SetGradientAlpha then
+			texture:SetGradientAlpha("VERTICAL", r, g, b, 0, r, g, b, a)
+			return
+		end
+	end
+	texture:SetColorTexture(r, g, b, a)
+end
+
 local function Tint(fontString, colour)
 	fontString:SetTextColor(colour[1], colour[2], colour[3])
 end
@@ -1066,14 +1086,15 @@ end
 
 -- The faint line down the left of each open card's contents, one for every card a row is inside.
 -- Each row draws its share of the line, `gap` up to the row above; a card's or banner's first row
--- draws it on up to that card's or banner's frame.
-local function Rails(row, count, gap, held, underBanner, afterBanner, foot)
+-- draws it on up to that card's or banner's frame. The row a line ends at fades it out: the first
+-- `goesOn` lines go on into the next row, and the banner's with `bannerGoesOn`.
+local function Rails(row, count, gap, held, underBanner, afterBanner, foot, goesOn, bannerGoesOn)
 	if underBanner and not row.bannerRail then
 		row.bannerRail = row:CreateTexture(nil, "BORDER")
 		row.bannerRail:SetWidth(1)
-		row.bannerRail:SetColorTexture(0.84, 0.71, 0.31, 0.2)
 	end
 	if row.bannerRail then
+		PaintRail(row.bannerRail, not bannerGoesOn)
 		row.bannerRail:ClearAllPoints()
 		row.bannerRail:SetPoint("TOPLEFT", row, "TOPLEFT", BANNER_RAIL_X, gap + (afterBanner and BANNER_FOOT or 0))
 		row.bannerRail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", BANNER_RAIL_X, 0)
@@ -1086,9 +1107,9 @@ local function Rails(row, count, gap, held, underBanner, afterBanner, foot)
 			if not rail then
 				rail = row:CreateTexture(nil, "BORDER")
 				rail:SetWidth(1)
-				rail:SetColorTexture(0.84, 0.71, 0.31, 0.2)
 				row.rails[i] = rail
 			end
+			PaintRail(rail, i > (goesOn or 0))
 			local x = (underBanner and UNDER_BANNER_IN or 0) + (i - 1) * NEST_STEP + RAIL_X
 			rail:ClearAllPoints()
 			rail:SetPoint("TOPLEFT", row, "TOPLEFT", x, i <= held and gap or gap + (foot or FOOT))
@@ -1466,9 +1487,12 @@ function List:Render()
 
 		ShowStyle(row, item.style)
 		local nest = item.style ~= "banner" and item.nest or 0
-		local before = items[i - 1]
+		local before, after = items[i - 1], items[i + 1]
+		local _, goesOn = 0, 0
+		if after and after.style ~= "banner" then _, goesOn = GapAbove(items, i + 1) end
 		Rails(row, nest, gap, held, item.style ~= "banner" and underBanner,
-			before and before.style == "banner", before and before.style == "group" and GROUP_FOOT or FOOT)
+			before and before.style == "banner", before and before.style == "group" and GROUP_FOOT or FOOT,
+			goesOn, after ~= nil and after.style ~= "banner")
 		local indent = (underBanner and UNDER_BANNER_IN or 0) + nest * NEST_STEP
 		row.indent = indent
 		row.barLeft = nil
