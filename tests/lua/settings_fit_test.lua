@@ -73,6 +73,8 @@ for _, file in ipairs({ "Locale/enUS", "Locale/deDE", "Locale/esES", "Locale/frF
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 B:InitDB(); B:SetupOptions()
+-- The readables' tab of the Compendium, so Spoken's page shows its Unlock switch.
+B:SetupReadables()
 local Z = H.NewZoneLore()
 for _, file in ipairs({ "UI/Layout", "UI/Options" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
