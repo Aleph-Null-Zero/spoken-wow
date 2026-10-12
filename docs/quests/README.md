@@ -1385,6 +1385,9 @@ Two generated files feed it, both committed so the addon never needs a database:
   and failing that the side of the quest before it in its chain: a follow-up is reached only
   through that quest (`quest_races`). The export prints how many quests are still not on the
   side of the quest before them (`side_leaks`, the audit's leak check).
+  A quest filed under a class's QuestSort that the DB names no class for is that class's
+  (`quest_classes`): Forever's class quests are not in the DB, and without it every class would
+  see them under the class.
   Each quest that follows another in a chain has `prev`, the quest before it, from the same DB's
   `quest_template_addon` (`chain_links`): a positive `PrevQuestID`; else the lowest quest whose
   `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb

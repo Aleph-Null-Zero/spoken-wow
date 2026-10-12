@@ -78,6 +78,10 @@ SOURCES = ["accept", "progress", "complete"]
 CLASSIC_RACES = 0xFF
 SIDE_RACES = {"alliance": 1 | 4 | 8 | 64 | 1 << 32, "horde": 2 | 16 | 32 | 128 | 1 << 33}
 PLAYABLE_RACES = SIDE_RACES["alliance"] | SIDE_RACES["horde"]
+# The class each class QuestSort is, as an AllowableClasses bit (class id less one): Warrior,
+# Paladin, Hunter, Rogue, Priest, Shaman, Mage, Warlock, Druid.
+SORT_CLASS = {81: 1 << 0, 141: 1 << 1, 261: 1 << 2, 162: 1 << 3, 262: 1 << 4, 82: 1 << 6, 161: 1 << 7,
+              61: 1 << 8, 263: 1 << 10}
 
 
 def table(name, locale="enUS", build=BUILD):
@@ -394,6 +398,14 @@ def db_races(mask):
     return playable_races(races)
 
 
+def quest_classes(classes, sort):
+    """The classes that may take a quest: the DB's AllowableClasses, else the class of the class
+    QuestSort it is filed under. The DB names no class for Forever's class quests, which it lacks,
+    nor for a few of its own (8249 Junkboxes Needed), and every class would see those under the
+    class."""
+    return classes or SORT_CLASS.get(sort, 0)
+
+
 def side_of(races):
     """The side a race mask is wholly on ("alliance" or "horde"), else None."""
     for side, mask in SIDE_RACES.items():
@@ -611,7 +623,8 @@ def with_db(args):
         title = q["title"]
         if title == str(qid) and client.get(qid, {}).get("title"):
             title = client[qid]["title"]
-        quest_lines[qid] = quest_line(qid, title, zones, group, races[qid], q.get("classes", 0), links.get(qid))
+        quest_lines[qid] = quest_line(qid, title, zones, group, races[qid], quest_classes(q.get("classes", 0), group),
+                                      links.get(qid))
 
     sort_lines = {}
     for sid in sorted(used_sorts):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from export_compendium import db_races, playable_races, quest_line  # noqa: E402
+from export_compendium import db_races, playable_races, quest_classes, quest_line  # noqa: E402
 
 HIGH_ORDER, WINDSHAPER = 1 << 32, 1 << 33
 ALLIANCE, HORDE = 1 | 4 | 8 | 64, 2 | 16 | 32 | 128
@@ -50,3 +50,16 @@ def test_a_mask_as_the_client_has_it_is_kept_as_it_is():
     for mask in (0, EVERYONE, ALLIANCE | HORDE | HIGH_ORDER | WINDSHAPER, 512):
         assert playable_races(mask) == 0
         assert "races" not in quest_line(1, "Anyone", races=mask)
+
+
+def test_a_quest_filed_under_a_class_with_no_class_named_is_that_classs():
+    # 65601 Love Hurts, Forever's warlock quest the DB lacks; 8249 Junkboxes Needed, a rogue's.
+    assert quest_classes(0, 61) == 1 << 8
+    assert quest_classes(0, 162) == 1 << 3
+    assert quest_line(65601, "Love Hurts", group=61, classes=quest_classes(0, 61)).endswith("classes = 256 },")
+
+
+def test_the_dbs_classes_stand_and_other_sorts_name_no_class():
+    assert quest_classes(1 << 7, 61) == 1 << 7
+    assert quest_classes(0, 666) == 0
+    assert quest_classes(0, None) == 0
