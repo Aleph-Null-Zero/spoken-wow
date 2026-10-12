@@ -1349,6 +1349,46 @@ amber speech bubble and "after quest {id}", and the source filter calls them "fo
 cannot say whether the line follows the accept or the turn-in, since the corpus row keeps only
 the quest.
 
+### The Quests tab of Azeroth's Compendium
+
+Azeroth's Compendium is the window Spoken Zones and Spoken Books each carry
+(`UI/Compendium.lua` there). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
+wherever either addon has loaded it; Spoken Quests carries no copy of the window, only its own
+copy of the text view the page scrolls in (`UI/TextView.lua`, kept byte for byte with the other
+two by `test_package.py`). `Compendium.xml` loads the tab and its data from the `.toc` files of
+the clients the window runs on (Classic Era, TBC Anniversary and Forever), not on Wrath or the
+legacy clients.
+
+Two generated files feed it, both committed so the addon never needs a database:
+
+- `Data/Compendium.lua` (`make quests-compendium`, `tools/export_compendium.py`): every corpus
+  quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
+  the zone of its entrance, else where its giver stands), or the QuestSort of a class, profession
+  or season with its name in every language, and the races and classes allowed to take it. The
+  zone and who may take it come from the Forever repack's TrinityCore world DB
+  (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
+  quests already listed and adds the corpus's new ones, placed by their giver's spawn and open to
+  the races of the side `corpus/factions.json` gives them.
+- `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
+  `tts_cli/quest_text.py`): each quest's accept, progress and complete text, the corpus's
+  `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
+  text; where givers' texts differ, the one most of the moment's lines have, ties to the first in
+  the corpus; ignored lines are left out. About 3.3 MB, parsed at every login on those clients.
+
+The tab lists only the quests this character's race and class may take. A quest is found once
+the client says it is completed (`C_QuestLog.GetAllCompletedQuestIDs`, else
+`GetQuestsCompleted`, else `IsQuestFlaggedCompleted` one at a time); the rest are locked unless
+Unlock Uncompleted Quests is on, which Spoken's page shows in its Compendium section. That switch
+and Completed Only are kept in `SpokenQuestsSettings.global.Compendium`. The page fills the
+placeholders for the player as the client does. Play queues the quest's accept, progress and
+complete lines, whichever the packs have, named for its giver as the quest log's Play is.
+
+On a client in another language, `QUEST_DETAIL`, `QUEST_PROGRESS` and `QUEST_COMPLETE` keep the
+window's title and words in `SpokenQuestsSettings.global.CompendiumText[locale][questID]`, shown
+over the English. The player's name, class and race go back to `$N`, `$C` and `$R` where the
+English has them, so another character sees its own. A text kept by a character of the other sex
+is not shown where the English has a `$G`. An English client keeps nothing.
+
 ## Tests
 
 ```bash
