@@ -8,11 +8,13 @@
 -- and folding down to the list. The list is a search box over an inset of rows, with the tab's
 -- switches (Started Only, Discovered Only, Found Only and the like) in the filter menu beside the
 -- search. Its rows are drawn in the game's own art: the objective tracker's campaign bar across
--- the list for each group (a continent), the character select card for each place or set inside
--- one (its painting in the collections window's frame, silvered, the name, the share found and
--- the Pet Journal's bar), and a plain row for each single thing, a padlock on what is not found
--- yet. What is inside an open card is indented under it, a faint gold line down its left. What
--- the rows are, what a click does and the page beside them are each tab's own.
+-- the list for a banner (a continent, a section, a type of writing), the character select card for
+-- each place (its painting in the collections window's frame, silvered, the name, the share found
+-- and the Pet Journal's bar), and a line for everything else: a group of lines (a chain, a kind of
+-- quest or of writing) with its plus or minus and numbers, and each single thing with its tick,
+-- quest mark or padlock. What is inside an open card or group is indented under it, a faint gold
+-- line down its left. What the rows are, what a click does and the page beside them are each
+-- tab's own.
 --
 -- A tab: SpokenCompendium:Register(key, { label, order, title, build(panel), onShow(panel),
 -- store = { get(key), set(key, value) }, open(), enabled(), unlock = { get(), set(value) } }).
@@ -24,7 +26,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 40
+local VERSION = 41
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -67,8 +69,8 @@ local LEAF_GAP = 4            -- between a card and a single row under it
 -- Between a single row and a card under it: the card's frame as far under the row's foot as under
 -- the frame of a card above it (CARD_GAP + FOOT + 5.4).
 local LINE_TO_CARD = 2
-local NEST_AFTER = 2          -- more under an open card's contents, for each card closed there
-local NEST_STEP = 16          -- each card's contents in, under the open card they belong to
+local NEST_AFTER = 2          -- more under an open card's or group's contents, for each one closed there
+local NEST_STEP = 16          -- what an open card or group holds, this far in under it
 -- The line down an open card's contents, this far into the step: halfway between the card's frame
 -- and its contents' frames. It starts at the card's frame (FOOT above its row's foot).
 local RAIL_X = 12
@@ -633,8 +635,6 @@ local READY = [[Interface\RaidFrame\ReadyCheck-Ready]]
 local ACTIVE = [[Interface\GossipFrame\ActiveQuestIcon]]
 -- A card's badge where it has no painting of its own: a map.
 local MAP_ICON = [[Interface\Icons\INV_Misc_Map_01]]
--- A chain of quests: the game's quest scroll.
-local CHAIN_ICON = [[Interface\Icons\INV_Inscription_Scroll]]
 local CHECK = "questlog-icon-checkmark-yellow"
 -- One size for every tick in the column down the list's right, on cards and lines alike.
 local TICK_WIDTH, TICK_HEIGHT = 15, 13
@@ -654,7 +654,6 @@ local CARD_ART = {
 	hover = { atlas = "glues-characterselect-card-singles-hover-c60", cut = 16, size = 11, out = 0 },
 	selected = { atlas = "glues-characterselect-card-selected-c60", cut = 30, size = 19, out = 7 },
 }
-local CARD_RIGHT = 56         -- what a card's share or tick keeps clear on its right
 -- A card's frame shows 4.4 in from its left, 3.5 from its right, 5.4 below its top and 3 above its
 -- foot. The badge has the same room above, below and to its left of it; the name and bar are a
 -- shorter block centred on the badge, and the room above and below that block is kept on the
@@ -828,14 +827,19 @@ List.__index = List
 --- isSelected(item), onClick(item), onSearch(), addScrollBar(scroll, child, inset) }. The filter
 --- menu is the spellbook's, the arrow beside its search box: the tab's only switch (Started Only,
 --- Discovered Only, Found Only) and any other checks as checkboxes, and where the tab can arrange its tree more than
---- one way, those ways under a divider. An item is { label, count, total, open, locked, missing } and one of:
---- - style = "banner": a group across the list, its plus or minus, the name, count/total.
---- - style = "card": a badge (`icon` with its `iconCrop`, a quest scroll for a chain with `story`,
----   in a silver frame, greyed with `none`), the name, beside it `count`/`total` and the share or a
----   tick with `tick` (and `goingCount` by the quest mark), and a bar filled to `ratio`. Every card
----   is drawn alike, inside an open card or under a banner.
---- - leaf = true: one line, the name, a tick before it with `done` or the quest mark with `going`.
---- Cards and leaves give `nest`, how many open cards hold them.
+--- one way, those ways under a divider. An item is { label, count, total, open, locked, missing }
+--- and one of:
+--- - style = "banner": across the list, for a continent, a section or a type: its plus or minus,
+---   the name, count/total.
+--- - style = "card": a place. A badge (`icon` with its `iconCrop`, else a map, in a silver frame,
+---   greyed with `none`), the name, beside it `count`/`total` and the share or a tick with `tick`
+---   (and `goingCount` by the quest mark), and a bar filled to `ratio`. Every card is drawn alike,
+---   inside an open card or under a banner.
+--- - style = "group": one line holding more lines (a chain, a kind of quest or of writing): its plus
+---   or minus, the name, and the numbers and tick as a card has them, without badge or bar.
+--- - leaf = true: one line for a single thing: the name, and at the line's end a tick with `done`,
+---   the quest mark with `going`, or the padlock with `locked`.
+--- Cards, groups and leaves give `nest`, how many open cards and groups hold them.
 function C.NewList(panel, opts)
 	local list = setmetatable({ panel = panel, opts = opts, rows = {}, filter = "" }, List)
 	local left, _, top = C.Margins()
@@ -1168,7 +1172,7 @@ local function Rails(row, count, gap, held, underBanner, afterBanner, foot, goes
 	end
 end
 
--- The quest log's own expand and collapse, on a banner; a card has none. Where nothing inside
+-- The quest log's own expand and collapse, on a banner or a group; a card has none. Where nothing inside
 -- opens -- locked, empty, or none found with the tab's only switch on -- greyed, as the name
 -- beside it is. `found`, where an item counts something narrower than what it holds (the quests
 -- completed, not those in progress too).
@@ -1297,7 +1301,7 @@ local function DrawCard(row, item, indent, width)
 	local middle = -26
 	local centre = indent + CARD_PAD + side / 2
 	local none = item.none or item.locked
-	local icon = item.icon or (item.story and CHAIN_ICON) or MAP_ICON
+	local icon = item.icon or MAP_ICON
 	do
 		local inset = 3 -- the frame's own rim
 		local crop = item.iconCrop or ICON_CROP
