@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 20
+local VERSION = 21
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -47,12 +47,11 @@ local BANNER_ROW = 36
 local BANNER_GAP = 14         -- above each banner but the first
 local FIRST_GAP = 2           -- above the first row
 -- The rows are spaced by what shows of them: a card's frame starts 5.4 below its row's top and ends
--- 3 above its foot, a banner's 3.5 above its foot. The first card inside a banner or an open card
--- is as far below it as it is from the line down its left; cards side by side are further apart.
-local UNDER_BANNER = -1       -- between a banner and the first card in it (their rows overlap)
-local UNDER_CARD = 0          -- between an open card and the first card in it
+-- 3 above its foot, a banner's 2.5 above its foot. Every card is as far from the card or banner
+-- above it as from the line down its left: about 9 pixels at the game's usual scale.
+local UNDER_BANNER = 0        -- between a banner and the first card in it
 local CARD_ROW = 50
-local CARD_GAP = 6            -- between cards under a banner
+local CARD_GAP = -1           -- between a card and the card above it (their rows overlap)
 local LEAF_ROW = 22
 local LEAF_GAP = 4            -- between a card and a single row next to it
 local NEST_AFTER = 2          -- more under an open card's contents, for each card closed there
@@ -60,7 +59,7 @@ local NEST_STEP = 16          -- each card's contents in, under the open card th
 -- The line down an open card's contents, this far into the step: halfway between the card's frame
 -- and its contents' frames. It starts at the card's frame (FOOT above its row's foot).
 local RAIL_X = 12
-local FOOT, BANNER_FOOT = 3, 3.5
+local FOOT, BANNER_FOOT = 3, 2.5
 local LIST_LEFT, LIST_RIGHT = 3, 2
 -- What a banner holds sits this far in from it, one step down the tree; with no banners, nothing
 -- is set in.
@@ -1127,7 +1126,7 @@ local function GapAbove(items, i)
 	local was, now = before.nest or 0, item.nest or 0
 	if item.leaf and before.leaf and now == was then return 0, now end
 	local between = (item.leaf or before.leaf) and LEAF_GAP or CARD_GAP
-	if now > was then return item.leaf and LEAF_GAP or UNDER_CARD, was end
+	if now > was then return between, was end
 	return (was - now) * NEST_AFTER + between, now
 end
 
@@ -1411,14 +1410,17 @@ function List:Render()
 		else
 			DrawLeaf(row, item, indent)
 		end
+		-- A single row's light starts on the line down its left, its gold edge over that line.
+		local lit = indent
+		if item.leaf and (nest > 0 or underBanner) then lit = indent - (NEST_STEP - RAIL_X) - 0.5 end
 		for _, light in ipairs({ row.wash, row.chosen }) do
 			light:ClearAllPoints()
-			light:SetPoint("TOPLEFT", row, "TOPLEFT", indent, 0)
+			light:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
 			light:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
 		end
 		row.edge:ClearAllPoints()
-		row.edge:SetPoint("TOPLEFT", row, "TOPLEFT", indent, 0)
-		row.edge:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", indent, 0)
+		row.edge:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
+		row.edge:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", lit, 0)
 		-- Clicks on the card or row, not on the room beside its line.
 		if row.SetHitRectInsets then row:SetHitRectInsets(indent, 0, 0, 0) end
 
