@@ -62,6 +62,13 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   quests no longer show for the other, a Skyborne character sees its side's quests and the
   Skyborne's own, and a class's quests show for that class alone.
   *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's Quests tab has a Battlegrounds banner, and Zephras Isle shows as a zone of
+  its own.** Each zone with a dungeon or raid holds its quests in a Dungeons and Raids card.
+  Every holiday has its own group under Events, Children's Week included, Camping sits with the
+  professions, and the Argent Dawn and the library books have groups under Other. A quest chain
+  has one name in every zone it crosses. Quests no one can take are gone, and the audit's fixes
+  put many quests in the right zone, under the right title or in their chain.
+  *([Nucabe](https://github.com/Nucabe))*
 - **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
   short. *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's Zones tab is always on a place.** Reached from another tab, it showed an
