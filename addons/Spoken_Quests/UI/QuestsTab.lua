@@ -138,16 +138,19 @@ local function SortName(sort)
     return names[Locale()] or names[1]
 end
 
--- AllowableRaces and AllowableClasses are bit masks, bit (id - 1).
-local function Has(mask, id)
+-- AllowableRaces and AllowableClasses are bit masks, bit (id - 1), save the races in `bits`:
+-- Skyborne's (race ids 95 and 96) are PlayableRaceBit 32 and 33. Tested with arithmetic, since
+-- bit.band is 32-bit.
+local RACE_BITS = { [95] = 32, [96] = 33 }
+local function Has(mask, id, bits)
     if not id or id < 1 then return true end
-    return math.floor(mask / 2 ^ (id - 1)) % 2 == 1
+    return math.floor(mask / 2 ^ (bits and bits[id] or id - 1)) % 2 == 1
 end
 
 local function Allowed(quest)
     if quest.races then
         local _, _, race = UnitRace("player")
-        if not Has(quest.races, race) then return false end
+        if not Has(quest.races, race, RACE_BITS) then return false end
     end
     if quest.classes then
         local _, _, class = UnitClass("player")
