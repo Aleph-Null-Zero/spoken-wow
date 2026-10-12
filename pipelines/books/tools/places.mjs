@@ -38,7 +38,9 @@ await loadEnv("books");
 const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Books.lua", import.meta.url));
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Places.lua", import.meta.url));
 const CACHE = fileURLToPath(new URL("./cache/", import.meta.url));
-const BUILD = process.env.PLACES_BUILD ?? "1.15.9.69109";
+// Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
+// items, and one that shares a vanilla page id lent that book its sources and zones.
+const BUILD = process.env.PLACES_BUILD ?? "1.60.1.70338";
 const MAPS = process.env.PLACES_MAPS ?? "C:/Forever/ForeverRepack/data/maps";
 const SOURCES = 6;
 const WIDE = 8;
@@ -74,6 +76,11 @@ const INSTANCE_ZONE = {
   509: 1451, // Ruins of Ahn'Qiraj: Silithus
   531: 1451, // Temple of Ahn'Qiraj: Silithus
   533: 1423, // Naxxramas: Eastern Plaguelands
+  // The battlegrounds are zones of their own. Forever's client files them as orphan maps, not
+  // zones, so nothing else would place Alterac Valley's Rock of Durotan.
+  30: 1459, // Alterac Valley
+  489: 1460, // Warsong Gulch
+  529: 1461, // Arathi Basin
 };
 // Text objects the server has and never spawns, placed by hand: the nameplates in Blackrock
 // Depths' Dark Keeper vault.
