@@ -16,6 +16,8 @@ local INSET, BESIDE_PORTRAIT, NO_PORTRAIT = 18, 96, 16
 -- Between the name or the title and the header's buttons; between the buttons.
 local CONTROLS_CLEAR, ROUND_GAP = 8, 4
 local BRONZE = Actions.BRONZE
+-- The smallest a portrait's badge is drawn, on a face smaller than the Small Window's.
+local BADGE_LEAST = 12
 -- The narrowest the window goes, and the room the portrait takes left of the panel.
 local function MinWidth() return Addon:Profile("Frame").HidePortrait and 200 or 280 end
 local function PortraitWidth() return Addon:Profile("Frame").HidePortrait and 80 or 0 end
@@ -207,37 +209,155 @@ function MinimalPlayer:Initialize(original)
     end)
 end
 
-function MinimalPlayer:BuildPortrait()
-    local host = CreateFrame("Frame", nil, self.frame)
-    self.portrait, self.frame.portrait = host, host
-    host:SetPoint("TOPLEFT", 0, -4)
-    host:SetSize(90, 90)
-    host:SetFrameLevel(self.content:GetFrameLevel() + 2)
+-- The round face, `size` across: a dark backing, the speaker in a viewport clipped to it, the
+-- ring, and the line's badge on a small dark disc at the lower right. Placed on the ring art's
+-- 71-unit grid, so it is the Small Window's portrait (90) at any size. `level` is the face's
+-- frame level, set before its ring is built above it.
+local function BuildFace(parent, size, level)
+    local host = CreateFrame("Frame", nil, parent)
+    host:SetSize(size, size)
+    if level then host:SetFrameLevel(level) end
+    local function At(units) return size * units / 71 end
     local background = host:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
     background:SetTexture(ART .. "MinimalPortraitBackground")
 
-    self.viewport = CreateFrame("Frame", nil, host)
-    self.viewport:SetSize(78, 78)
-    self.viewport:SetPoint("CENTER", host, "TOPLEFT", 90 * 35 / 71, -90 * 34 / 71)
-    self.viewport:SetClipsChildren(true)
+    host.viewport = CreateFrame("Frame", nil, host)
+    host.viewport:SetSize(size * 78 / 90, size * 78 / 90)
+    host.viewport:SetPoint("CENTER", host, "TOPLEFT", At(35), -At(34))
+    host.viewport:SetClipsChildren(true)
     local chrome = CreateFrame("Frame", nil, host)
     chrome:SetAllPoints()
     chrome:SetFrameLevel(host:GetFrameLevel() + 8)
+    -- At least BADGE_LEAST: at a small face's own scale the glyph is too small to make out.
+    local badge = math.max(size * 16 / 90, BADGE_LEAST)
     -- Unit-frame badge centres are backed separately from their metal ring.
     -- Without this disc the speaker's face shows through the speech-bubble badge.
-    self.badgeBackground = chrome:CreateTexture(nil, "BACKGROUND")
-    self.badgeBackground:SetSize(24, 24)
-    self.badgeBackground:SetPoint("CENTER", host, "TOPLEFT", 90 * 56.5 / 71, -90 * 56.5 / 71)
-    self.badgeBackground:SetTexture(ART .. "MinimalPortraitMask")
-    self.badgeBackground:SetVertexColor(.04, .04, .035, 1)
-    local ring = chrome:CreateTexture(nil, "ARTWORK")
-    ring:SetAllPoints()
-    ring:SetTexture(ART .. "MinimalPortraitRing")
-    self.ring = ring
-    self.badge = chrome:CreateTexture(nil, "OVERLAY")
-    self.badge:SetSize(16, 16)
-    self.badge:SetPoint("CENTER", host, "TOPLEFT", 90 * 56.5 / 71, -90 * 56.5 / 71)
+    host.badgeBackground = chrome:CreateTexture(nil, "BACKGROUND")
+    host.badgeBackground:SetSize(badge * 1.5, badge * 1.5)
+    host.badgeBackground:SetPoint("CENTER", host, "TOPLEFT", At(56.5), -At(56.5))
+    host.badgeBackground:SetTexture(ART .. "MinimalPortraitMask")
+    host.badgeBackground:SetVertexColor(.04, .04, .035, 1)
+    host.ring = chrome:CreateTexture(nil, "ARTWORK")
+    host.ring:SetAllPoints()
+    host.ring:SetTexture(ART .. "MinimalPortraitRing")
+    host.badge = chrome:CreateTexture(nil, "OVERLAY")
+    host.badge:SetSize(badge, badge)
+    host.badge:SetPoint("CENTER", host, "TOPLEFT", At(56.5), -At(56.5))
+    return host
+end
+
+function MinimalPlayer:BuildPortrait()
+    local host = BuildFace(self.frame, 90, self.content:GetFrameLevel() + 2)
+    self.portrait, self.frame.portrait = host, host
+    host:SetPoint("TOPLEFT", 0, -4)
+    self.viewport, self.ring = host.viewport, host.ring
+    self.badgeBackground, self.badge = host.badgeBackground, host.badge
+end
+
+--------------------------------------------------------------------------------
+-- A speaker's face on a page of a feature addon's (Spoken:CreateSpeakerFace)
+--------------------------------------------------------------------------------
+
+-- What the Small Window shows where it has no face to draw, as Present gives it: the book for a
+-- creature, a posted notice for an object or an item with no picture of its own.
+local BOOK = ART .. "Book"
+local NOTICE = [[Interface\Icons\INV_Misc_Note_01]]
+local ICON_CROP = { .08, .92, .08, .92 }
+local UNITS = { "npc", "target", "mouseover", "focus" }
+-- How long a face drawn before the client has its creature keeps asking for it. StaticPortrait
+-- stops asking the server after 5 seconds; the face keeps the book from then on.
+local FACE_WAIT = 6
+local Face = {}
+
+-- The presentation spec for a speaker, as Present:Portrait builds it for a line.
+local function SpecFor(speaker)
+    if speaker.objectOrItem then
+        return { kind = "texture", texture = speaker.icon or NOTICE, texCoord = ICON_CROP }
+    end
+    return { kind = "model", creatureID = speaker.creatureID, animation = 60,
+        fallback = { kind = "texture", texture = BOOK } }
+end
+
+-- The speaker's unit-frame portrait, as StaticPortrait draws it: from its unit while one with its
+-- GUID is about, else from its creature's appearance. Painted on the face's own texture rather
+-- than StaticPortrait's cached one, which moves to whichever viewport shows it last: two faces of
+-- one NPC on a page, or a page and the Small Window, would take it from each other.
+local function Still(face, speaker)
+    local guid = speaker.guid
+    -- A quest-log GUID is made up, and names no unit.
+    if guid and UnitGUID and SetPortraitTexture and not string.find(guid, "^Creature%-0%-0%-0%-0%-") then
+        for _, unit in ipairs(UNITS) do
+            if UnitGUID(unit) == guid then
+                SetPortraitTexture(face.still, unit)
+                return true
+            end
+        end
+    end
+    local display = speaker.creatureID and SetPortraitTextureFromCreatureDisplayID
+        and StaticPortrait:Prime(speaker.creatureID)
+    if not display then return false end
+    SetPortraitTextureFromCreatureDisplayID(face.still, display)
+    return true
+end
+
+--- Draws the speaker: their still where there is one, else the Small Window's fallback picture
+--- (the book, or an object's or item's picture), never an empty socket. A creature the client has
+--- not cached yet shows the book and is asked for every frame the face is shown, until it comes.
+function Face:Draw()
+    local speaker, viewport = self.speaker, self.viewport
+    local spec = SpecFor(speaker)
+    self.waiting = nil
+    if spec.kind == "model" and Still(self, speaker) then
+        -- Whatever Portrait drew here before, put away.
+        Portrait:Configure(viewport, nil)
+        self.still:Show()
+    else
+        self.still:Hide()
+        if spec.kind == "model" and speaker.creatureID then
+            self.waiting, self.since = speaker.creatureID, GetTime()
+        end
+        Portrait:Configure(viewport, { present = { portrait = spec.kind == "model" and spec.fallback or spec } })
+        if viewport.texture then StaticPortrait:Mask(viewport, viewport.texture) end
+    end
+    self:SetScript("OnUpdate", self.waiting and Face.Wait or nil)
+end
+
+function Face.Wait(self)
+    if not self.waiting then
+        self:SetScript("OnUpdate", nil)
+    elseif StaticPortrait:Prime(self.waiting) then
+        self:Draw()
+    elseif GetTime() - self.since > FACE_WAIT then
+        self.waiting = nil
+        self:SetScript("OnUpdate", nil)
+    end
+end
+
+function Face:SetSpeaker(speaker)
+    self.speaker = speaker or {}
+    local id = self.speaker.bullet
+    local badge = BADGES[id] or Bullets[id] and Bullets[id].texture
+    self.badge:SetTexture(badge)
+    self.badge:SetShown(badge ~= nil)
+    self.badgeBackground:SetShown(badge ~= nil)
+    -- Bronze Border tints the ring, as it does the Small Window's.
+    local r, g, b = 1, 1, 1
+    if BRONZE and Addon.db and Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
+    self.ring:SetVertexColor(r, g, b)
+    self:Draw()
+end
+
+--- The Small Window's portrait, `size` across, on `parent`, for a page to show who speaks.
+function MinimalPlayer:CreateFace(parent, size)
+    local face = BuildFace(parent, size)
+    face.still = face.viewport:CreateTexture(nil, "ARTWORK")
+    face.still:SetAllPoints()
+    face.still:Hide()
+    StaticPortrait:Mask(face.viewport, face.still)
+    face.SetSpeaker, face.Draw = Face.SetSpeaker, Face.Draw
+    face:SetSpeaker(nil)
+    return face
 end
 
 function MinimalPlayer:BuildMenu()
