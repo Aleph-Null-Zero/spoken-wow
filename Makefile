@@ -100,6 +100,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/zones_options_test.lua
 	@$(LUA) tests/lua/zones_test_line_test.lua
 	@$(LUA) tests/lua/zones_lore_ui_test.lua
+	@$(LUA) tests/lua/zones_lands_test.lua
 	@$(LUA) tests/lua/zones_map_click_test.lua
 	@$(LUA) tests/lua/zones_map_highlight_test.lua
 	@$(LUA) tests/lua/zones_area_at_test.lua

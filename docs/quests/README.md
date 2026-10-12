@@ -1451,9 +1451,9 @@ shows in its Compendium section. That switch and Started Only are kept in
 `SpokenQuestsSettings.global.Compendium`.
 
 The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
-for each zone with quests (a city a small card inside its zone's); a card of its own for each
-zone on no continent the client knows (Zephras Isle, whose map hangs under Azeroth), as the Zones
-tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
+for each zone with quests (a city a small card inside its zone's); an Other Lands banner holding
+a card for each zone on no continent the client knows (Zephras Isle, whose map hangs under
+Azeroth), as the Zones tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
 Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
 Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
 it); then a banner each for Classes, Professions (Camping, 666, with them: its quests are Camping
