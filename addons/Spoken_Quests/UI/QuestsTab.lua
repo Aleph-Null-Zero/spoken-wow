@@ -14,8 +14,9 @@
 -- Every card and banner counts its quests completed out of all and those in progress; Voiced Only
 -- leaves the quests no voice pack has out of the counts as it does out of the list.
 --
--- The page shows what is chosen. A quest's is its title, where it is and its words, with Play
--- where a voice pack has it, or L.QUEST_NOT_FOUND where it does not open. Its hand-in waits until
+-- The page shows what is chosen. A quest's is its title, where it is and its words, its offer and
+-- its hand-in each under the face and name of who says it, with Play where a voice pack has it,
+-- or L.QUEST_NOT_FOUND where it does not open. Its hand-in waits until
 -- it is completed, unless Unlock Unstarted Quests is on. A banner's, card's or line's is its name,
 -- what holds it and its count on one line, and L.QUESTS_PICK, the quests being on the left to
 -- choose. A place is "In" its holder; a section, a class, profession or event and Place Unknown
@@ -1066,11 +1067,16 @@ local function Speaker(id, moment)
     return DataModules:GetQuestLogQuestGiverTypeAndID(id)
 end
 
+-- The name of who says one moment, as the packs name them, or nil where none is known.
+local function SpeakerName(kind, speaker)
+    return speaker and VO.DataModules:GetObjectName(kind, speaker) or nil
+end
+
 -- What the player is given to play one moment of a quest, named and pictured for who says it.
 local function SoundData(id, moment, origin)
-    local DataModules, Enums = VO.DataModules, VO.Enums
+    local Enums = VO.Enums
     local kind, speaker = Speaker(id, moment)
-    local name = speaker and DataModules:GetObjectName(kind, speaker) or Title(id)
+    local name = SpeakerName(kind, speaker) or Title(id)
     local guid = speaker and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, speaker) or nil
     return { event = EVENTS[moment], questID = id, title = Title(id), name = name, unitGUID = guid,
         text = PartText(id, moment), origin = origin }
@@ -1153,10 +1159,42 @@ local function PartButtons(moment)
     return partButtons[moment]
 end
 
--- A quest's words in parts, the offer and the hand-in each under its heading, with
--- Play and Report for that part where a pack voices it; the hand-in only where it Shows. A part a
--- pack voices whose words are not known says so, and is there to be played and reported. nil with
--- no words and nothing voiced.
+-- Each part's face, at the left of its heading's line, as the Small Window shows who speaks: made
+-- once, given the speaker of the quest shown. false where Spoken could not make one.
+local partFaces = {}
+local FACE_SIZE = 44
+local BULLETS = { accept = "quest-accept", complete = "quest-complete" }
+
+local function PartFace(moment)
+    if partFaces[moment] ~= nil then return partFaces[moment] or nil end
+    if not (page and Spoken and Spoken.CreateSpeakerFace) then return nil end
+    local ok, face = pcall(Spoken.CreateSpeakerFace, Spoken, page.body.child, FACE_SIZE)
+    if not ok then
+        print("|cffff5555Spoken Quests|r: " .. tostring(face))
+        partFaces[moment] = false
+        return nil
+    end
+    face:Hide()
+    partFaces[moment] = face
+    return face
+end
+
+-- Who says one moment, for its face: the creature SoundData names, else the object or item with
+-- the quest's item where an item offers it, else no one (the book).
+local function FaceSpeaker(id, moment)
+    local Enums = VO.Enums
+    local kind, speaker = Speaker(id, moment)
+    local bullet = BULLETS[moment]
+    if not speaker then return { bullet = bullet } end
+    if Enums.GUID:IsCreature(kind) then return { creatureID = speaker, bullet = bullet } end
+    local icon = kind == Enums.GUID.Item and Spoken.QuestItemIcon and Spoken:QuestItemIcon(id) or nil
+    return { objectOrItem = true, icon = icon, bullet = bullet }
+end
+
+-- A quest's words in parts, the offer and the hand-in each under its heading, with the face and
+-- name of who says it beside the heading, and Play and Report for that part where a pack voices
+-- it; the hand-in only where it Shows. A part a pack voices whose words are not known says so,
+-- and is there to be played and reported. nil with no words and nothing voiced.
 local function Parts(id)
     local parts = {}
     local reportsHidden = Spoken and Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()
@@ -1174,7 +1212,10 @@ local function Parts(id)
                 PaintPartPlay(buttons.play)
                 list = { buttons.report, buttons.play }
             end
-            table.insert(parts, { heading = L[HEADINGS[moment]], text = text, buttons = list })
+            local face = PartFace(moment)
+            if face then face:SetSpeaker(FaceSpeaker(id, moment)) end
+            table.insert(parts, { heading = L[HEADINGS[moment]], text = text, buttons = list, face = face,
+                caption = face and SpeakerName(Speaker(id, moment)) or nil })
         end
     end
     return #parts > 0 and parts or nil

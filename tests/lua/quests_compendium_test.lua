@@ -773,7 +773,35 @@ local function Who()
     return clip and (tostring(clip.name) .. " " .. tostring(clip.unitGUID))
 end
 local function Npc(name, id) return name .. " " .. VO.Utils:MakeGUID(VO.Enums.GUID.Creature, id) end
+stub.world.creatureDisplays[MCBRIDE], stub.world.creatureDisplays[DUGHAN] = { 3258 }, { 1990 }
 Click("Kobold Camp Cleanup")
+-- Each part's header is the Small Window's: the face of who says it with the part's badge, their
+-- name over the part's name.
+local function PartOf(heading)
+    for _, part in ipairs(page.body.lastParts or {}) do if part.heading == heading then return part end end
+end
+local BOOK = [[Interface\AddOns\Spoken\Textures\Book]]
+local function Face(part)
+    local face = part.face
+    if not face then return "no face" end
+    local drawn = face.still:IsShown() and "still " .. tostring(face.still.display)
+        or face.viewport.texture and face.viewport.texture:IsShown() and face.viewport.texture:GetTexture() or "nothing"
+    return drawn .. " " .. tostring(face.badge:GetTexture()) .. " " .. tostring(part.caption)
+end
+local BADGES = SpokenEnv.MinimalPlayer.BADGES
+Expect("the offer's header: its giver's face with the offer's badge, and its giver's name",
+    Face(PartOf(L.QUEST_PART_ACCEPT)), "still 3258 " .. BADGES["quest-accept"] .. " Marshal McBride")
+Expect("...the completion's: the face and name of the one it is handed in to, with the completion's badge",
+    Face(PartOf(L.QUEST_PART_COMPLETE)), "still 1990 " .. BADGES["quest-complete"] .. " Marshal Dughan")
+do
+    local part = PartOf(L.QUEST_PART_ACCEPT)
+    Expect("...the face 44 across, shown at the left of the heading's line", part.face:GetWidth() .. " "
+        .. tostring(part.face:IsShown()) .. " " .. part.face.anchor.point .. " " .. part.face.anchor.x
+        .. " " .. tostring(part.face.anchor.relativeTo == page.body.child), "44 true LEFT 0 true")
+    Expect("...the part's name its heading, and the caption shown over it", part.heading .. " "
+        .. tostring(page.body.parts[1].caption:IsShown()) .. " " .. tostring(page.body.parts[1].caption.text),
+        L.QUEST_PART_ACCEPT .. " true Marshal McBride")
+end
 local play = PartButton(L.QUEST_PART_ACCEPT, "play")
 Expect("a voiced part has Play on its heading's line", play ~= nil and play:IsShown(), true)
 Expect("...and Report beside it", PartButton(L.QUEST_PART_ACCEPT, "report") ~= nil
@@ -788,9 +816,10 @@ do
     local fromPageRight = body.frame.anchor.x - (400 - report.anchor.x)
     Expect("...ending in the column the page's own Play and Report end in",
         report.anchor.relativeTo == body.child and fromPageRight, -(36 + body:BarRoom()))
-    -- A page's words start 18 down (the top fade's room); the first heading's line, 26 tall,
-    -- starts 4 higher, and its buttons are centred on it.
-    Expect("...the first heading's line starting a little above where a page's words do", report.anchor.y, -(18 - 4 + 13))
+    -- A page's words start 18 down (the top fade's room); the first heading's line, as tall as its
+    -- speaker's face (44), starts there too, and its buttons are centred on the face.
+    Expect("...the first heading's line, as tall as its face, starting where a page's words do", report.anchor.y,
+        -(18 + 22))
     body.frame.width = width
     -- Headings grow with the words' size, up to 20.
     local heading, size = body.parts[1].heading, nil
@@ -891,6 +920,9 @@ Expect("Play on another part of the quest plays it in place of the part playing"
 SpokenQuestsCompendium.quests[KOBOLDS].ender = nil
 handIn.scripts.OnClick(handIn)
 Expect("...and for its giver where the data names no one else", Who(), Npc("Marshal McBride", MCBRIDE))
+Tab:Refresh()
+Expect("...its header then the giver's face and name", Face(PartOf(L.QUEST_PART_COMPLETE)),
+    "still 3258 " .. BADGES["quest-complete"] .. " Marshal McBride")
 -- Waiting behind another quest's line: left where it is while that speaks, played at once once it is
 -- stopped.
 Spoken:StopAll()
@@ -919,6 +951,8 @@ Expect("a quest no pack has has no Play", PartButton(L.QUEST_PART_ACCEPT, "play"
     or not PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown(), true)
 Expect("...nor Report", PartButton(L.QUEST_PART_ACCEPT, "report") == nil
     or not PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
+Expect("...and, no one known to say it, the book in its face and no name over its heading",
+    Face(PartOf(L.QUEST_PART_ACCEPT)), BOOK .. " " .. BADGES["quest-accept"] .. " nil")
 -- A part a pack voices whose words are not known: there, saying so, with its Play and Report.
 do
     local words = SpokenQuestsText[KOBOLDS].complete
