@@ -162,7 +162,6 @@ L.ZONE_COUNT_FMT = "%1$d zones"
 L.ZONE_COUNT_ONE = "1 zone"
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
-L.LORE_WINDOW_EMPTY = "Choose a place on the left to read its story. A zone's number is how many smaller areas it has; click it to see them."
 -- The window browses every place; the panel beside the map tells the zone it shows.
 L.LORE_WINDOW_TITLE = "Azeroth's Compendium"
 L.COMPENDIUM_PLACES = "Zones"
@@ -175,7 +174,6 @@ L.LORE_SEARCH = "Search places"
 L.LORE_DISCOVERED_ONLY = "Discovered Only"
 L.LORE_VOICED_ONLY = "Voiced Only"
 L.LORE_SEARCH_NONE = "No place matches."
-L.LORE_PICK = "Every place's story"
 L.MAP_LORE_FOR_FMT = "lore for %1$s"
 
 --------------------------------------------------------------------------------
