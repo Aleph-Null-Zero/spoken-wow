@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 32
+local VERSION = 33
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1010,8 +1010,25 @@ function List:AcquireRow(index)
 	row.lock:Hide()
 
 	row:SetScript("OnClick", OnRowClick)
-	row:SetScript("OnEnter", function(self) self.over = not (self.row and self.row.locked); Light(self) end)
-	row:SetScript("OnLeave", function(self) self.over = false; Light(self) end)
+	row:SetScript("OnEnter", function(self)
+		self.over = not (self.row and self.row.locked)
+		Light(self)
+		-- A name cut short with an ellipsis, whole in the tooltip.
+		if GameTooltip and self.row and self.label.IsTruncated and self.label:IsTruncated() then
+			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+			GameTooltip:SetText(self.row.label or "")
+			GameTooltip:Show()
+			self.tipShown = true
+		end
+	end)
+	row:SetScript("OnLeave", function(self)
+		self.over = false
+		Light(self)
+		if self.tipShown then
+			self.tipShown = nil
+			if GameTooltip then GameTooltip:Hide() end
+		end
+	end)
 	row:SetScript("OnSizeChanged", function(self, width) FitBar(self, width) end)
 
 	self.rows[index] = row
@@ -1456,7 +1473,8 @@ local function DrawLeaf(row, item, indent)
 	row.count:Hide()
 	row.label:SetFontObject("GameFontHighlight")
 	row.label:SetPoint("LEFT", row, "LEFT", indent + 12, 0)
-	row.label:SetPoint("RIGHT", row, "RIGHT", -32, 0)
+	-- Clear of the tick, quest mark or padlock at the row's end, which reach 25.5 in.
+	row.label:SetPoint("RIGHT", row, "RIGHT", -28, 0)
 	-- Something with nothing to read yet, greyed a little: still there to choose. One not yet
 	-- found, greyer: listed, but it does not open.
 	if item.locked then

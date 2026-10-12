@@ -260,6 +260,21 @@ Expect("...a line down each open card's contents beside them, a step in from the
     and RowFor("Kurdran Wildhammer").rails[3]:IsShown() and RowFor("Kurdran Wildhammer").rails[3].anchor.x, 64.4)
 Expect("...a readable not found greyed, with the padlock", RowFor("Ranger Captain Alleria Windrunner").row.locked, true)
 Expect("...one found open to read", RowFor("Kurdran Wildhammer").row.locked, false)
+do
+    local row = RowFor("Kurdran Wildhammer")
+    Expect("...its name clear of the tick at the row's end", row.label.anchor.point == "RIGHT" and row.label.anchor.x, -28)
+    GameTooltip.text, GameTooltip.owner = nil, nil
+    row.scripts.OnEnter(row)
+    row.scripts.OnLeave(row)
+    Expect("...a name shown whole has no tooltip", GameTooltip.text, nil)
+    row.label.IsTruncated = function() return true end
+    row.scripts.OnEnter(row)
+    Expect("...a name cut short shows whole in a tooltip under the pointer", GameTooltip.owner == row
+        and GameTooltip:IsShown() and GameTooltip.text, "Kurdran Wildhammer")
+    row.scripts.OnLeave(row)
+    Expect("...gone when the pointer leaves", GameTooltip:IsShown(), false)
+    row.label.IsTruncated = nil
+end
 
 Click("Kurdran Wildhammer")
 local page = panel.page
