@@ -1,5 +1,6 @@
--- The quests in Azeroth's Compendium: every quest this character's race and class may take, by
--- the zone it is in, or under its class, profession or season; a quest's page with its words, its
+-- The quests in Azeroth's Compendium: every quest this character's race and class may take, in a
+-- card for the zone it is in under its continent's banner, or under its class, profession or
+-- season; its chain a small card inside, with the chain's page; a quest's page with its words, its
 -- placeholders filled for the player; found once completed or in the quest log, marked in progress
 -- then; Started Only, the search and Unlock Unstarted Quests; Play; and on a client in another
 -- language, the words its windows showed.
@@ -111,16 +112,44 @@ local function Collect(frame)
         Collect(child)
     end
 end
+-- By each item's own name: a banner draws its name in capitals.
 local function Shown()
     rows = {}
     Collect(panel)
     local labels = {}
-    for _, row in ipairs(rows) do if row.shown ~= false and row.row then table.insert(labels, row.label.text) end end
+    for _, row in ipairs(rows) do if row.shown ~= false and row.row then table.insert(labels, row.row.label) end end
     return table.concat(labels, "|")
 end
 local function RowFor(label)
     Shown()
-    for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.label.text == label then return row end end
+    for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.label == label then return row end end
+end
+-- Parts drawn for a style the row is not in now: a row reused from a card for a banner or a
+-- quest must not keep the card's diamond, line or bar.
+local function Leftovers()
+    Shown()
+    local out, reused = {}, 0
+    for _, row in ipairs(rows) do
+        local item = row.shown ~= false and row.row
+        if item then
+            if row.cardFill and item.style ~= "card" then
+                reused = reused + 1
+                for _, part in ipairs({ "cardFill", "diamond", "diamondEdge", "badge", "sub", "track", "fill", "tick" }) do
+                    if row[part].shown ~= false then table.insert(out, item.label .. " " .. part) end
+                end
+            end
+            if row.bannerFill and item.style ~= "banner" then
+                reused = reused + 1
+                if row.bannerFill.shown ~= false then table.insert(out, item.label .. " bannerFill") end
+            end
+            for i, rail in ipairs(row.rails or {}) do
+                if rail.shown ~= false and i > (item.style ~= "banner" and item.nest or 0) then
+                    table.insert(out, item.label .. " rail")
+                end
+            end
+        end
+    end
+    return table.concat(out, ", "), reused
 end
 local function Click(label)
     local row = RowFor(label)
@@ -132,19 +161,40 @@ local function Has(list, label)
 end
 
 local list = Shown()
-Expect("the tree is the places': Azeroth, its continents, their zones", Has(list, "Azeroth") and Has(list, "Eastern Kingdoms")
-    and Has(list, "Elwynn Forest"), true)
-Expect("...then, apart from Azeroth, the quests no zone holds: Classes, Professions, Events, Other",
-    list:find("|Classes|Professions|Events|Other$") ~= nil and not Has(list, "Mage"), true)
-Expect("...each zone counted, completed out of all", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
+Expect("the list opens on the continents' banners, no Azeroth above them", list:find("^Eastern Kingdoms|") ~= nil
+    and Has(list, "Kalimdor") and not Has(list, "Azeroth"), true)
+Expect("...a banner across the list, its name in capitals", RowFor("Eastern Kingdoms").row.style == "banner"
+    and RowFor("Eastern Kingdoms").label.text, "EASTERN KINGDOMS")
+Expect("...counting the quests completed out of all", RowFor("Eastern Kingdoms").count.text:match("^1/%d+$") ~= nil, true)
+Expect("...each zone a card inside it", RowFor("Elwynn Forest").row.style == "card" and RowFor("Elwynn Forest").row.nest, 0)
+Expect("...then a banner each for the quests no zone holds: Classes, Professions, Events, Other",
+    list:find("|Classes|Professions|Events|Other$") ~= nil and not Has(list, "Mage")
+    and RowFor("Classes").row.style == "banner", true)
+local elwynn = RowFor("Elwynn Forest")
+Expect("a zone's card: its quests completed out of all on the line under its name",
+    elwynn.sub.text:match("^1 of %d+ quests$") ~= nil, true)
+Expect("...the completed on its diamond", elwynn.badge.text, "1")
+local elwynnTotal = tonumber(elwynn.sub.text:match("of (%d+)"))
+Expect("...the share completed on its right", elwynn.count.text, math.floor(100 / elwynnTotal) .. "%")
+Expect("...and its bar filled as far", elwynn.fill:IsShown() and math.floor(elwynn.fill.width / elwynn.track.width
+    * elwynnTotal + 0.5), 1)
 Expect("...its page counting its quests", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
+local city = RowFor("Stormwind City")
+Expect("a city is a small card inside its zone's card", city ~= nil and city.row.small and city.row.nest, 1)
+Expect("...indented under it, its diamond further in", city.diamondEdge.anchor.x - elwynn.diamondEdge.anchor.x, 16)
+Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 8)
+Expect("...a quest in the zone a row, as far in", RowFor("Kobold Camp Cleanup").row.leaf and RowFor("Kobold Camp Cleanup").row.nest, 1)
 Click("Classes")
 list = Shown()
 Expect("...Classes opening on a class's quests under its name, this character's class only", Has(list, "Mage") and not Has(list, "Warlock"), true)
+Expect("...a small card for it", RowFor("Mage").row.style == "card" and RowFor("Mage").row.small, true)
 Click("Events")
 Expect("...Events on the festivals and the Darkmoon Faire", Has(Shown(), "Lunar Festival") and Has(Shown(), "Darkmoon Faire"), true)
 Click("Classes")
 Click("Events")
+local leftovers, reused = Leftovers()
+Expect("a row drawn as a card and reused for a banner or a quest keeps none of the card's parts", leftovers, "")
+Expect("...as rows were, once the list changed under them", reused > 0, true)
 list = Shown()
 Expect("a zone opens on its quests", Has(list, "Kobold Camp Cleanup") and Has(list, "Kobold Candles"), true)
 Expect("...a quest completed open to read", RowFor("Kobold Camp Cleanup").row.locked, false)
@@ -173,7 +223,7 @@ stub.world.unitSex = 3
 Tab:Refresh()
 Expect("...and for hers", (page.body.text.text or ""):find("Hello, my lady!", 1, true) ~= nil, true)
 stub.world.unitSex = 2
-Expect("...choosing it leaves the counts as they were", RowFor("Elwynn Forest").count.text:match("^1/") ~= nil, true)
+Expect("...choosing it leaves the counts as they were", RowFor("Elwynn Forest").sub.text:match("^1 of ") ~= nil, true)
 C:Tab("quests").unlock.set(false)
 
 -- A quest in the quest log is found too, marked in progress.
@@ -187,7 +237,8 @@ Expect("a quest in the quest log opens", RowOf(CANDLES).row.locked, false)
 Expect("...its row marked in progress", RowOf(CANDLES).label.text:find("ActiveQuestIcon", 1, true) ~= nil
     and RowOf(CANDLES).label.text:find("Kobold Candles", 1, true) ~= nil, true)
 Expect("...a completed one's not", RowFor("Kobold Camp Cleanup").label.text, "Kobold Camp Cleanup")
-Expect("...and it is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
+Expect("...and its zone's card counts it in progress, apart from the completed",
+    RowFor("Elwynn Forest").sub.text:match("^1 of %d+ quests · 1 in progress$") ~= nil and RowFor("Elwynn Forest").badge.text, "1")
 RowOf(CANDLES).scripts.OnClick(RowOf(CANDLES))
 Expect("its page: its title", page.title.text, "Kobold Candles")
 Expect("...in progress, then where it is", page.sub.text:find(L.QUEST_IN_PROGRESS .. " • Elwynn Forest", 1, true) ~= nil, true)
@@ -217,7 +268,7 @@ Tab:Refresh()
 completed[CANDLES] = true
 Tab:Refresh()
 Expect("a quest completed since opens", RowFor("Kobold Candles").row.locked, false)
-Expect("...and is counted", RowFor("Elwynn Forest").count.text:match("^2/") ~= nil, true)
+Expect("...and is counted", RowFor("Elwynn Forest").sub.text:match("^2 of ") ~= nil and RowFor("Elwynn Forest").badge.text, "2")
 
 -- Started Only.
 VO.Addon.db.global.Compendium.FoundOnly = true
@@ -241,7 +292,7 @@ Expect("...and never a quest of the other side", Has(Shown(), "Sharptalon's Claw
 box:SetText("")
 box.hooks.OnTextChanged[1](box)
 
--- Chains: a zone's quests that follow one another under one row, named after the last of them.
+-- Chains: a zone's quests that follow one another under one small card, named after the first.
 Tab:Open(KOBOLDS)
 local function ChainRow(label)
     Shown()
@@ -249,34 +300,54 @@ local function ChainRow(label)
         if row.shown ~= false and row.row and row.row.kind == "chain" and row.label.text == label then return row end
     end
 end
+local function ClickChain(label)
+    local row = ChainRow(label)
+    assert(row, "no chain " .. label)
+    row.scripts.OnClick(row)
+end
+local function RowOfQuest(id)
+    Shown()
+    for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.quest == id then return row end end
+end
 list = Shown()
-Expect("a chain is one row in its zone, named after its last quest", ChainRow("Goldtooth") ~= nil, true)
-Expect("...its quests inside it, not beside it", Has(list, "Lost Necklace") or Has(list, "Pie for Billy"), false)
+Expect("a chain is a small card in its zone's card, named after its first quest", ChainRow("Lost Necklace") ~= nil
+    and ChainRow("Lost Necklace").row.small and ChainRow("Lost Necklace").row.nest, 1)
+Expect("...its quests inside it, not beside it", RowOfQuest(NECKLACE) or Has(list, "Pie for Billy") or Has(list, "Goldtooth"), false)
 Expect("...a quest in no chain still a row of its own", Has(list, "Kobold Camp Cleanup"), true)
-Expect("...counted, completed out of all", ChainRow("Goldtooth").count.text, "0/4")
-Expect("...its bar empty", ChainRow("Goldtooth").chainTrack:IsShown() and ChainRow("Goldtooth").chainFill:IsShown(), false)
+Expect("...how many quests it holds on its diamond", ChainRow("Lost Necklace").badge.text, "4")
+Expect("...and on the line under its name", ChainRow("Lost Necklace").sub.text, "of 4 quests")
+Expect("...none completed, a grey diamond and none of the share", ChainRow("Lost Necklace").row.none
+    and ChainRow("Lost Necklace").count.text, "0%")
+Expect("...its bar empty", ChainRow("Lost Necklace").fill:IsShown(), false)
 completed[NECKLACE], completed[PIE] = true, true
 questLog = { BACK }
 Tab:Refresh()
-local count = ChainRow("Goldtooth").count.text
-Expect("...how many are in progress, by the quest mark", count:find("ActiveQuestIcon", 1, true) ~= nil
-    and count:find("1", 1, true) ~= nil and count:sub(-3), "2/4")
-local track, fill = ChainRow("Goldtooth").chainTrack, ChainRow("Goldtooth").chainFill
+Expect("...how many are in progress on its line", ChainRow("Lost Necklace").sub.text, "of 4 quests · 1 in progress")
+Expect("...the share completed", ChainRow("Lost Necklace").count.text, "50%")
+local track, fill = ChainRow("Lost Necklace").track, ChainRow("Lost Necklace").fill
 Expect("...and its bar filled as far as completed", fill:IsShown() and math.floor(fill.width / track.width * 100 + 0.5), 50)
-Click("Goldtooth")
+ClickChain("Lost Necklace")
 list = Shown()
 Expect("a chain opens on its quests, in the order they are taken",
-    list:find("Lost Necklace|Pie for Billy|.*Back to Billy|Goldtooth") ~= nil, true)
-Expect("...chosen, its page has the chain's name", page.title.text, "Goldtooth")
+    list:find("Lost Necklace|Lost Necklace|Pie for Billy|.*Back to Billy|Goldtooth") ~= nil, true)
+Expect("...rows one step further in", RowOfQuest(PIE).row.nest, 2)
+Expect("...chosen, its page has the chain's name", page.title.text, "Lost Necklace")
 Expect("...its count", page.sub.text, "2 of 4 completed, 1 in progress")
 local text = page.body.text.text or ""
-Expect("...and its quests in order, each marked", text:find("^1%. .*Lost Necklace\n2%. .*Pie for Billy\n3%. .*ActiveQuestIcon.*Back to Billy\n4%. Goldtooth$") ~= nil, true)
+Expect("...and its quests in order, each marked", text:find("^1%. .*Lost Necklace\n.-\n\n2%. .*Pie for Billy\n.-\n\n3%. "
+    .. ".*ActiveQuestIcon.*Back to Billy\n.-\n\n4%. Goldtooth\n" .. L.QUEST_NOT_STARTED .. "$") ~= nil, true)
+Expect("...each one started with the first sentence or two of its offer", text:find("Lost Necklace\nI lost my necklace, and "
+    .. "think that guttersnipe Billy Maclure took it! He's usually scuttling like a rat around the Maclure vineyards east "
+    .. "of here.\n\n", 1, true) ~= nil, true)
+Expect("...one not started without it", text:find("Goldtooth\n" .. L.QUEST_NOT_STARTED .. "$") ~= nil
+    and text:find("Fargodeep", 1, true), nil)
 completed[BACK], completed[GOLDTOOTH] = true, true
 questLog = {}
 Tab:Refresh()
-Expect("a chain all completed gets a tick", ChainRow("Goldtooth").count.text:find("UI-CheckBox-Check", 1, true) ~= nil
-    and ChainRow("Goldtooth").count.text:sub(-3), "4/4")
-Click("Goldtooth")
+Expect("a chain all completed gets a tick in place of its share", ChainRow("Lost Necklace").tick:IsShown()
+    and ChainRow("Lost Necklace").count:IsShown(), false)
+Expect("...and a gold diamond", ChainRow("Lost Necklace").row.tick, true)
+ClickChain("Lost Necklace")
 Expect("...and closes again", Has(Shown(), "Pie for Billy"), false)
 Tab:Open(PIE)
 Expect("opened on a quest of a chain, the chain is opened to it", RowFor("Pie for Billy") ~= nil
@@ -284,14 +355,14 @@ Expect("opened on a quest of a chain, the chain is opened to it", RowFor("Pie fo
 box:SetText("pie for")
 box.hooks.OnTextChanged[1](box)
 list = Shown()
-Expect("a search finds a quest inside its chain", Has(list, "Pie for Billy") and ChainRow("Goldtooth") ~= nil
-    and not Has(list, "Lost Necklace"), true)
+Expect("a search finds a quest inside its chain", Has(list, "Pie for Billy") and ChainRow("Lost Necklace") ~= nil
+    and RowOfQuest(NECKLACE), nil)
 box:SetText("")
 box.hooks.OnTextChanged[1](box)
 for _, id in ipairs({ NECKLACE, PIE, BACK, GOLDTOOTH }) do completed[id] = nil end
 VO.Addon.db.global.Compendium.FoundOnly = true
 Tab:Refresh()
-Expect("Started Only leaves out a chain with nothing started", ChainRow("Goldtooth"), nil)
+Expect("Started Only leaves out a chain with nothing started", ChainRow("Lost Necklace"), nil)
 VO.Addon.db.global.Compendium.FoundOnly = false
 Tab:Refresh()
 
@@ -313,6 +384,18 @@ page.play.scripts.OnClick(page.play)
 Expect("...and again, stops them", #VO.Player:Queued(), 0)
 Click("Kobold Candles")
 Expect("a quest no pack has has no Play", page.play:IsShown(), false)
+ClickChain("Lost Necklace")
+Expect("a chain with nothing started has no Play", page.play:IsShown(), false)
+completed[NECKLACE] = true
+Tab:Refresh()
+Expect("...one with a voiced quest started has", page.play:IsShown(), true)
+page.play.scripts.OnClick(page.play)
+queued = {}
+for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
+Expect("...which plays that quest's first part", table.concat(queued, ","), "85-accept")
+page.play.scripts.OnClick(page.play)
+completed[NECKLACE] = nil
+ClickChain("Lost Necklace")
 
 -- The part switched off takes its tab away.
 Spoken:SetPartOn("quests", false)

@@ -4,9 +4,13 @@
 -- log, which is marked in progress on its row and its page. Until then it is greyed and does not
 -- open, unless Unlock Unstarted Quests is on.
 --
--- In each place, the quests that follow one another (`prev` in the data) are listed under one row
--- for their chain, named after the last of them, with how many are completed and in progress and a
--- bar; the rest are rows of their own.
+-- The list is the Compendium's cards: a banner for each continent, holding a card for each zone
+-- (with its city as a small card inside it), then a banner each for Classes, Professions, Events
+-- and Other, holding a small card for each class, profession, event or other kind of quest. A
+-- card says how many of its quests are completed and how many in progress, with a bar. Inside a
+-- place, the quests that follow one another (`prev` in the data) are a small card for their chain,
+-- named after the first of them; the rest are rows of their own. A chain's page lists its quests
+-- in order with the start of each one's offer.
 --
 -- On a client in another language, the words and title each quest's window showed are kept for
 -- the whole account and shown over the English.
@@ -36,7 +40,6 @@ local selection          -- { quest = id } | { mapID = id } | { sort = id } | { 
                          -- | { chain = key, ids = { id... } } | nil
 local landed             -- the selection made for the player, where they stood; any other they chose
 local expandedZone
-local worldOpen = true
 local continentOpen = { [1414] = true, [1415] = true }
 local groupOpen = {}
 local sectionOpen = {}
@@ -371,9 +374,9 @@ local chainOpen = {}
 -- The rows
 --------------------------------------------------------------------------------
 
-local function QuestRow(id, depth)
+local function QuestRow(id, nest)
     return { kind = "quest", leaf = true, quest = id, label = Marked(id, Title(id, filter == "")),
-        depth = depth, locked = not Found(id) and not Unlocked(), going = InProgress(id) }
+        nest = nest, locked = not Found(id) and not Unlocked(), going = InProgress(id) }
 end
 
 local function Shows(id)
@@ -381,12 +384,27 @@ local function Shows(id)
     return not (OnlyFound() and not Found(id)) and (filter == "" or Matches(Title(id)) or Matches(english))
 end
 
--- A chain's quests in one place, under a row named after the last of them: how many are
--- completed, how many are in progress, and a bar.
-local function ChainRows(where, first, ids, depth)
+-- A card's numbers: the completed (its badge, its share and its bar) out of all, and how many
+-- more are in progress. A chain's line leaves its count to the badge: "of 7 quests".
+local function Card(item, found, total, going, chain)
+    local done = found - going
+    local sub = chain and L.QUESTS_CHAIN_CARD_FMT:format(total) or L.QUESTS_CARD_FMT:format(done, total)
+    if going > 0 then sub = sub .. " · " .. L.QUESTS_CARD_GOING_FMT:format(going) end
+    item.style = "card"
+    item.count, item.total = done, total
+    item.badge = chain and total or done
+    item.sub = sub
+    item.ratio = total > 0 and done / total or 0
+    item.tick = total > 0 and done == total
+    item.none = found == 0
+    return item
+end
+
+-- A chain's quests in one place, under a small card named after the first of them.
+local function ChainRows(where, first, ids, nest)
     InOrder(ids)
     local key = where .. ":" .. first
-    local label = Title(ids[#ids], filter == "")
+    local label = Title(ids[1], filter == "")
     local found, total, going = Tally(SetOf(ids))
     if OnlyFound() and found == 0 then return {} end
     local named = filter ~= "" and Matches(label)
@@ -394,20 +412,20 @@ local function ChainRows(where, first, ids, depth)
     if chainOpen[key] or filter ~= "" then
         for _, id in ipairs(ids) do
             if named and not (OnlyFound() and not Found(id)) or Shows(id) then
-                table.insert(inside, QuestRow(id, depth + 1))
+                table.insert(inside, QuestRow(id, nest + 1))
             end
         end
     end
     if filter ~= "" and #inside == 0 then return {} end
-    local rows = { { kind = "chain", key = key, ids = ids, label = label, depth = depth, count = found, total = total,
-        done = found - going, going = going, open = #inside > 0 } }
+    local rows = { Card({ kind = "chain", small = true, key = key, ids = ids, label = label, nest = nest,
+        open = #inside > 0 }, found, total, going, true) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
 
 -- The quests in one place (`where`): each chain of two or more of them first, by name, then the
 -- rest, by title. Sorted as they are drawn: a title the client has only just given may move.
-local function Leaves(ids, depth, into, where)
+local function Leaves(ids, nest, into, where)
     local chains, single = {}, {}
     for _, id in ipairs(ids or {}) do
         if InChain(id) then
@@ -421,7 +439,7 @@ local function Leaves(ids, depth, into, where)
     local groups = {}
     for first, members in pairs(chains) do
         if #members > 1 then
-            table.insert(groups, { first = first, ids = members, name = Title(InOrder(members)[#members]) })
+            table.insert(groups, { first = first, ids = members, name = Title(InOrder(members)[1]) })
         else
             table.insert(single, members[1])
         end
@@ -431,7 +449,7 @@ local function Leaves(ids, depth, into, where)
         return a.name < b.name
     end)
     for _, group in ipairs(groups) do
-        for _, row in ipairs(ChainRows(where, group.first, group.ids, depth)) do table.insert(into, row) end
+        for _, row in ipairs(ChainRows(where, group.first, group.ids, nest)) do table.insert(into, row) end
     end
     table.sort(single, function(a, b)
         local ta, tb = Title(a), Title(b)
@@ -439,11 +457,11 @@ local function Leaves(ids, depth, into, where)
         return ta < tb
     end)
     for _, id in ipairs(single) do
-        if Shows(id) then table.insert(into, QuestRow(id, depth)) end
+        if Shows(id) then table.insert(into, QuestRow(id, nest)) end
     end
 end
 
--- The chain `id` is listed in, where it is listed: the key of its row, or nil where it is listed
+-- The chain `id` is listed in, where it is listed: the key of its card, or nil where it is listed
 -- on its own.
 local function ChainKey(id, where, ids)
     if not InChain(id) then return nil end
@@ -454,34 +472,37 @@ local function ChainKey(id, where, ids)
     return count > 1 and (where .. ":" .. first) or nil
 end
 
-local function ZoneRows(mapID, depth)
-    local found, total = Tally(QuestsIn(mapID))
+-- A zone's card, and under it when it is open its city's small card, its chains and its quests.
+local function ZoneRows(mapID, nest, small)
+    local found, total, going = Tally(QuestsIn(mapID))
     if OnlyFound() and found == 0 then return {} end
     local open = expandedZone == mapID or C.CITY_IN[expandedZone] == mapID
     local inside = {}
     if open or filter ~= "" then
         for city, around in pairs(C.CITY_IN) do
             if around == mapID and Index().zones[city] then
-                for _, row in ipairs(ZoneRows(city, depth + 1)) do table.insert(inside, row) end
+                for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
             end
         end
-        Leaves(Index().zones[mapID], depth + 1, inside, "z" .. mapID)
+        Leaves(Index().zones[mapID], nest + 1, inside, "z" .. mapID)
     end
     if filter ~= "" and #inside == 0 and not Matches(C.MapName(mapID)) then return {} end
-    local rows = { { kind = "zone", mapID = mapID, label = C.MapName(mapID), depth = depth,
-        count = found, total = total, open = (open or filter ~= "") and #inside > 0 } }
+    local rows = { Card({ kind = "zone", small = small, mapID = mapID, label = C.MapName(mapID), nest = nest,
+        open = (open or filter ~= "") and #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
 
+-- A sort's small card in its section's banner (Mage, Cooking, Lunar Festival), or Place Unknown's.
 local function GroupRows(kind, key, label, ids)
     if not ids or #ids == 0 then return {} end
-    local found, total = Tally(SetOf(ids))
+    local found, total, going = Tally(SetOf(ids))
     if OnlyFound() and found == 0 then return {} end
     local leaves = {}
-    if groupOpen[key] or filter ~= "" then Leaves(ids, 2, leaves, "s" .. key) end
+    if groupOpen[key] or filter ~= "" then Leaves(ids, 1, leaves, "s" .. key) end
     if filter ~= "" and #leaves == 0 then return {} end
-    local rows = { { kind = kind, key = key, depth = 1, label = label, count = found, total = total, open = #leaves > 0 } }
+    local rows = { Card({ kind = kind, small = true, key = key, label = label, nest = 0, open = #leaves > 0 },
+        found, total, going) }
     for _, row in ipairs(leaves) do table.insert(rows, row) end
     return rows
 end
@@ -504,7 +525,7 @@ end
 
 local function SectionRows(section)
     local set, sorts = SectionSet(section.key)
-    local found, total = Tally(set)
+    local found, total, going = Tally(set)
     if total == 0 or (OnlyFound() and found == 0) then return {} end
     local searching = filter ~= ""
     local inside = {}
@@ -514,45 +535,42 @@ local function SectionRows(section)
         if section.key == "other" then Add(GroupRows("elsewhere", "elsewhere", L.QUESTS_ELSEWHERE, Index().elsewhere)) end
     end
     if searching and #inside == 0 then return {} end
-    local rows = { { kind = "section", key = section.key, depth = 0, label = L[section.label], count = found,
-        total = total, open = #inside > 0 } }
+    local rows = { { style = "banner", kind = "section", key = section.key, label = L[section.label],
+        count = found - going, found = found, total = total, open = #inside > 0 } }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
 
+-- The continents with quests, by name.
+local function Continents()
+    local out = {}
+    for _, continent in ipairs(C.CONTINENTS) do
+        if #ZonesOn(continent) > 0 then table.insert(out, continent) end
+    end
+    table.sort(out, ByName)
+    return out
+end
+
+-- A banner for each continent, its zones' cards inside; then a banner for each section.
 local function BuildRows()
     local out = {}
     local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
     local searching = filter ~= ""
-    local continents = {}
-    for _, continent in ipairs(C.CONTINENTS) do
+    for _, continent in ipairs(Continents()) do
         local zones = ZonesOn(continent)
-        if #zones > 0 then
-            local set = {}
-            for _, mapID in ipairs(zones) do QuestsIn(mapID, set) end
-            local found, total = Tally(set)
-            local rows = {}
-            if searching or continentOpen[continent] then
-                for _, mapID in ipairs(zones) do
-                    for _, row in ipairs(ZoneRows(mapID, 2)) do table.insert(rows, row) end
-                end
-            end
-            if not (OnlyFound() and found == 0) and (not searching or #rows > 0) then
-                table.insert(continents, { kind = "continent", mapID = continent, label = C.MapName(continent), depth = 1,
-                    count = found, total = total, open = searching and #rows > 0 or (not searching and continentOpen[continent]),
-                    rows = rows })
+        local set = {}
+        for _, mapID in ipairs(zones) do QuestsIn(mapID, set) end
+        local found, total, going = Tally(set)
+        local rows = {}
+        if searching or continentOpen[continent] then
+            for _, mapID in ipairs(zones) do
+                for _, row in ipairs(ZoneRows(mapID, 0)) do table.insert(rows, row) end
             end
         end
-    end
-    table.sort(continents, function(a, b) return a.label < b.label end)
-    -- Azeroth holds the quests filed under a zone; the rest are in the sections after it.
-    local found, total = Tally(Index().zoned)
-    table.insert(out, { kind = "world", mapID = C.WORLD, label = C.MapName(C.WORLD), depth = 0, count = found,
-        total = total, open = searching or worldOpen })
-    if searching or worldOpen then
-        for _, continent in ipairs(continents) do
-            table.insert(out, continent)
-            if continent.open then Add(continent.rows) end
+        if not (OnlyFound() and found == 0) and (not searching or #rows > 0) then
+            table.insert(out, { style = "banner", kind = "continent", mapID = continent, label = C.MapName(continent),
+                count = found - going, found = found, total = total, open = #rows > 0 })
+            Add(rows)
         end
     end
     for _, section in ipairs(SECTIONS) do Add(SectionRows(section)) end
@@ -569,47 +587,8 @@ local function IsSelected(row)
     return selection.mapID ~= nil and selection.mapID == row.mapID
 end
 
--- A chain row's count: completed out of all, the quest mark and how many in progress before it,
--- or a tick once all are completed; and a thin bar under its name, filled as far as completed.
+-- The tick a quest completed has on a chain's page.
 local TICK = "|TInterface\\Buttons\\UI-CheckBox-Check:0|t"
-local BAR_HEIGHT, BAR_BOTTOM = 2, 3
-
-local function Decorate(items)
-    for i, item in ipairs(items) do
-        local row = list.rows[i]
-        if row then
-            local chain = item.kind == "chain"
-            if chain then
-                local text = item.done .. "/" .. item.total
-                if item.done == item.total then
-                    text = TICK .. " " .. text
-                elseif item.going > 0 then
-                    text = IN_PROGRESS_MARK .. item.going .. "   " .. text
-                end
-                row.count:SetText(text)
-                if not row.chainTrack then
-                    row.chainTrack = row:CreateTexture(nil, "ARTWORK")
-                    row.chainTrack:SetColorTexture(0, 0, 0, 0.45)
-                    row.chainFill = row:CreateTexture(nil, "OVERLAY")
-                    row.chainFill:SetColorTexture(1, 0.82, 0, 0.8)
-                end
-                local left = 28 + item.depth * 14
-                local width = math.max(1, C.LIST_WIDTH - 8 - left - 10)
-                row.chainTrack:ClearAllPoints()
-                row.chainTrack:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", left, BAR_BOTTOM)
-                row.chainTrack:SetSize(width, BAR_HEIGHT)
-                row.chainFill:ClearAllPoints()
-                row.chainFill:SetPoint("BOTTOMLEFT", row.chainTrack, "BOTTOMLEFT", 0, 0)
-                row.chainFill:SetSize(math.max(0.01, width * item.done / math.max(1, item.total)), BAR_HEIGHT)
-                row.chainFill:SetShown(item.done > 0)
-            end
-            if row.chainTrack then
-                row.chainTrack:SetShown(chain)
-                if not chain then row.chainFill:Hide() end
-            end
-        end
-    end
-end
 
 --------------------------------------------------------------------------------
 -- The words
@@ -787,15 +766,56 @@ local function Subtitle(id)
     return Where(id)
 end
 
--- A chain's quests in the order they are taken, each with its tick once completed or the quest
--- mark while in progress.
+-- Where the next sentence of `text` ends after `from`: a full stop, a question or an exclamation,
+-- the Latin or the Chinese.
+local SENTENCE_ENDS = { "[%.!%?]+[\"']?%s", "。", "！", "？" }
+local function SentenceEnd(text, from)
+    local best
+    for _, pattern in ipairs(SENTENCE_ENDS) do
+        local _, stop = text:find(pattern, from)
+        if stop and (not best or stop < best) then best = stop end
+    end
+    return best
+end
+
+-- The first sentence of an offer, and the next with it where the first is short; cut at a word
+-- (or, in a language without spaces, at a whole letter) with an ellipsis where they run long.
+local EXCERPT_SHORT, EXCERPT_MOST = 90, 260
+local function Excerpt(text)
+    text = Trim((text:gsub("%s+", " ")))
+    local stop = SentenceEnd(text, 1)
+    if stop and stop < EXCERPT_SHORT then stop = SentenceEnd(text, stop + 1) or stop end
+    local excerpt = Trim(stop and text:sub(1, stop) or text)
+    if #excerpt <= EXCERPT_MOST then return excerpt end
+    -- Back to where a letter starts, so the cut never splits one.
+    local n = EXCERPT_MOST
+    while n > 0 and excerpt:byte(n + 1) >= 0x80 and excerpt:byte(n + 1) < 0xC0 do n = n - 1 end
+    local head = excerpt:sub(1, n)
+    return (head:match("^(.*%S)%s") or head) .. "…"
+end
+
+-- A chain's quests in the order they are taken: each one's tick once completed, the quest mark
+-- while in progress, or "Not started"; its title; and the start of its offer where it can be read.
 local function ChainText(ids)
-    local lines = {}
+    local blocks = {}
     for i, id in ipairs(ids) do
         local mark = Completed(id) and (TICK .. " ") or (InProgress(id) and IN_PROGRESS_MARK) or ""
-        table.insert(lines, i .. ". " .. mark .. Title(id))
+        local lines = { i .. ". " .. mark .. Title(id) }
+        if not Found(id) then table.insert(lines, L.QUEST_NOT_STARTED) end
+        if Found(id) or Unlocked() then
+            local offer = PartText(id, "accept")
+            if offer then table.insert(lines, Excerpt(offer)) end
+        end
+        table.insert(blocks, table.concat(lines, "\n"))
     end
-    return table.concat(lines, "\n")
+    return table.concat(blocks, "\n\n")
+end
+
+-- What Play plays on a chain's page: the first quest of it that can be read and a pack voices.
+local function ChainTarget(ids)
+    for _, id in ipairs(ids) do
+        if (Found(id) or Unlocked()) and PLAY.has(id) then return id end
+    end
 end
 
 local function ShowEntry()
@@ -806,7 +826,7 @@ local function ShowEntry()
     end
     if selection.chain then
         local ids = selection.ids
-        page:Show({ title = Title(ids[#ids]), subtitle = Count(SetOf(ids)), text = ChainText(ids) })
+        page:Show({ title = Title(ids[1]), subtitle = Count(SetOf(ids)), text = ChainText(ids), target = ChainTarget(ids) })
         return
     end
     if selection.quest then
@@ -868,9 +888,6 @@ local function OnClick(row)
         selection = row.kind == "sort" and { sort = row.key } or { group = "elsewhere" }
     elseif filter ~= "" then
         selection = { mapID = row.mapID }
-    elseif row.kind == "world" then
-        worldOpen = not worldOpen
-        selection = { mapID = C.WORLD }
     elseif row.kind == "continent" then
         continentOpen[row.mapID] = not continentOpen[row.mapID]
         selection = { mapID = row.mapID }
@@ -897,18 +914,18 @@ local function PlayerZone()
     end
 end
 
--- Choose where the player stands: their zone, opened, else the whole world. The tab never shows
--- a page with nothing chosen.
+-- Choose where the player stands: their zone, opened, else the first continent. The tab never
+-- shows a page with nothing chosen.
 local function LandOnPlayer()
     local zone = PlayerZone()
     if zone then
         selection = { mapID = zone }
         expandedZone = zone
-        worldOpen = true
         local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
         if continent then continentOpen[continent] = true end
     else
-        selection = { mapID = C.WORLD }
+        local first = Continents()[1]
+        selection = first and { mapID = first } or nil
     end
     landed = selection
 end
@@ -922,7 +939,6 @@ function QuestsTab:Refresh(scrollToSelection)
         scrollToSelection = true
     end
     local items = list:Render()
-    Decorate(items)
     if scrollToSelection and selection then list:ScrollToSelection(items) end
     ShowEntry()
     if self.MarkHeard then self:MarkHeard(list, items, page, selection and selection.quest) end
@@ -1023,7 +1039,6 @@ function QuestsTab:Open(questID)
     local quest = questID and Quests()[questID]
     if quest then
         selection = { quest = questID }
-        worldOpen = true
         local zone = quest.zones and quest.zones[1]
         local chain
         if zone then
