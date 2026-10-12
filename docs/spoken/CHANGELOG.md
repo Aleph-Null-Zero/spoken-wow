@@ -51,6 +51,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Gammerita or the Crude Map, is a picture. With them, about 90 readables move to the kind their
   title or words say: "Maybell's Love Letter" is a letter, not a scroll, and Uther's tomb a
   gravestone, not a plaque. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: the Compendium counted 26 readables no one can have.** Beta items with no words and
+  the Forsaken letters that were never given out sat under Origin Unknown, so no total could be
+  completed. They are gone, and eight readables that were there, such as Gnomeregan's punch cards
+  and the Snapshot of Gammerita, are listed in the zone they come from.
+  *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.1 — 2026-10-11
 
