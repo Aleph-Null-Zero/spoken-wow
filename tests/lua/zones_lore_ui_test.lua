@@ -565,7 +565,8 @@ ATLASES["spellbook-Page-Right-C60"], ATLASES["QuestDetailsBackgrounds"] = true, 
 ATLASES["spellbook-divider"] = true
 
 ---------------------------------------------------------------- places not yet discovered
--- Durotar and one of its areas found; Dun Morogh and Somewhere Else not.
+-- Durotar and one of its areas found; Dun Morogh, given an area here, and Somewhere Else not. As on
+-- the Quests and Books tabs, every banner and card lists and opens, and only an area's row locks.
 local function Locked()
     local labels = {}
     for _, row in ipairs(rows) do
@@ -573,16 +574,22 @@ local function Locked()
     end
     return table.concat(labels, "|")
 end
+local function Greyed()
+    local labels = {}
+    for _, row in ipairs(rows) do
+        if row.shown ~= false and row.row and row.row.style == "card" and row.row.none then table.insert(labels, row.row.label) end
+    end
+    return table.concat(labels, "|")
+end
+Z.Subzones[1426] = { coldridge = { name = "Coldridge Valley", full = "Where the dwarves start." } }
 showAll, found = false, { ["1411"] = true, ["1411/valley of trials"] = true }
 Z:ShowLoreFor(1411, nil)
-Expect("every place is listed, discovered or not", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
-Expect("...those not yet discovered locked: a continent with none found, a city, an area", Locked(), "Eastern Kingdoms|Orgrimmar|Sen'jin Village")
-found["1415"] = true
-Z:RefreshLoreWindow(); Shown()
-Expect("...a continent found only through its zones, not by being on its map", Locked(), "Eastern Kingdoms|Orgrimmar|Sen'jin Village")
-found["1415"] = nil
-Expect("...a padlock in place of the count", RowFor("Eastern Kingdoms").lock.shown ~= false and RowFor("Eastern Kingdoms").count.shown == false, true)
-Expect("...and on a locked area", RowFor("Sen'jin Village").lock.shown ~= false, true)
+Expect("every place is listed, discovered or not", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+Expect("...only an area not yet discovered locked", Locked(), "Sen'jin Village")
+Expect("...a zone or a city not discovered greyed, as a card with none found is on the other tabs", Greyed(), "Dun Morogh|Orgrimmar")
+Expect("...a banner none of whose zones is found neither locked nor without its count",
+    tostring(RowFor("Eastern Kingdoms").lock.shown ~= false) .. "|" .. RowFor("Eastern Kingdoms").count.text, "false|0/1")
+Expect("...a padlock on a locked area", RowFor("Sen'jin Village").lock.shown ~= false, true)
 Expect("...none on a place found", RowFor("Valley of Trials").lock.shown, false)
 Expect("...a place found marked with the quest log's gold tick, as a completed quest is",
     RowFor("Valley of Trials").status.shown ~= false and RowFor("Sen'jin Village").status.shown == false, true)
@@ -592,13 +599,29 @@ Expect("...a zone's card its areas found out of all, and the share of them", Row
 Expect("...its badge in colour with some found", RowFor("Durotar").icon.desaturated or RowFor("Durotar").row.none, false)
 Expect("...a continent's banner the places its zones' cards count, found out of all", RowFor("Kalimdor").count.text, "1/3")
 RowFor("Eastern Kingdoms").scripts.OnClick(RowFor("Eastern Kingdoms"))
-Expect("a locked continent does not open", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+Expect("a banner none of whose zones is found closes on a click", Shown(),
+    "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+Expect("...its page says it is not discovered", page.title.text .. ": " .. page.body.text.text,
+    "Eastern Kingdoms: " .. Z.L.NOT_DISCOVERED)
+found["1415"] = true
+Z:RefreshLoreWindow()
+Expect("...a continent found only through its zones, not by being on its map", page.body.text.text, Z.L.NOT_DISCOVERED)
+found["1415"] = nil
+RowFor("Eastern Kingdoms").scripts.OnClick(RowFor("Eastern Kingdoms"))
+Expect("...and opens on another", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
+Expect("a zone not discovered opens, its areas listed, those not found locked", Shown() .. " / " .. Locked(),
+    "Eastern Kingdoms|Dun Morogh|Coldridge Valley|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials / Coldridge Valley|Sen'jin Village")
+Expect("...its page says it is not discovered", page.title.text .. ": " .. page.body.text.text,
+    "Dun Morogh: " .. Z.L.NOT_DISCOVERED)
 RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
-Expect("a locked area cannot be chosen", RowFor("Sen'jin Village").row and RowFor("Durotar").selected, true)
+Expect("a locked area cannot be chosen", RowFor("Sen'jin Village").row and RowFor("Dun Morogh").selected, true)
+RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
 -- A city not discovered is still in its zone, not its continent.
 Z:ShowLoreFor(1454, nil)
-Expect("a city not discovered is in its zone, not its continent",
-    page.title.text .. "|" .. page.sub.text.text, "Orgrimmar|" .. Z.L.IN_ZONE_FMT:format("Durotar"))
+Expect("a city not discovered is in its zone, not its continent, and says it is not discovered",
+    page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
+    "Orgrimmar|" .. Z.L.IN_ZONE_FMT:format("Durotar") .. "|" .. Z.L.NOT_DISCOVERED)
 -- Opened from the map's panel, a place not discovered says so instead of telling its story.
 Z:ShowLoreFor(1411, "sen'jin village")
 Expect("a place not discovered, opened from elsewhere, says so and to go there to read its story",
@@ -616,20 +639,9 @@ Z:RefreshPanel()
 Expect("...and tells a found zone's story", mapPage.title.text, "Durotar")
 Z:ShowLoreFor(1411, nil)
 Shown()
-showAll = true
-Z:RefreshLoreWindow()
-Expect("Unlock Undiscovered Zones opens them all", Locked(), "")
-Expect("...the continent opened before shows its zones again", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
-Expect("...the counts still what this character has found", RowFor("Durotar").count.text, "1/3 • 33%")
-RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
-Expect("...and when a place not found is chosen", RowFor("Durotar").count.text, "1/3 • 33%")
-RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
-Expect("...or a zone on a continent with none found, whose zones have no areas to count", RowFor("Eastern Kingdoms").count.text, "")
-Z:ShowLoreFor(1411, nil)
-showAll = false
 
--- A search lists only what a click could reach. With Durotar not found, Kalimdor is locked: an
--- area found in it is not listed, and the banner matching by name stays locked and closed.
+-- A search lists every match, greyed as browsing lists it: in a zone not found, under a banner none
+-- of whose zones is found.
 local wasFound = found
 found = { ["1411/valley of trials"] = true }
 local function Search(text)
@@ -637,16 +649,33 @@ local function Search(text)
     search.hooks.OnTextChanged[1](search)
     return Shown()
 end
-Expect("a search lists nothing inside a locked continent, even an area found there", Search("trials"), "")
-Expect("...and says nothing matches", window.noMatch.shown, true)
-Expect("...a locked continent matching by name listed alone, closed", Search("kalimdor"), "Kalimdor")
-Expect("...still locked", RowFor("Kalimdor").row.locked and not RowFor("Kalimdor").row.open, true)
+Expect("a search lists an area found in a zone not found", Search("trials"), "Kalimdor|Durotar|Valley of Trials")
+Expect("...the zone's card greyed", Greyed(), "Durotar")
+Expect("...and an area not found, locked", Search("coldridge") .. " / " .. Locked(),
+    "Eastern Kingdoms|Dun Morogh|Coldridge Valley / Coldridge Valley")
+Expect("...a banner none of whose zones is found listing its cards as the player left them", Search("eastern"),
+    "Eastern Kingdoms|Dun Morogh")
 found = { ["1411"] = true, ["1411/valley of trials"] = true }
-Expect("...a locked city in an open zone listed closed, as browsing shows it", Search("orgrimmar"), "Kalimdor|Durotar|Orgrimmar")
-Expect("...still locked", RowFor("Orgrimmar").row.locked and not RowFor("Orgrimmar").row.open, true)
+Expect("...a city not found in an open zone, greyed", Search("orgrimmar") .. " / " .. Greyed(), "Kalimdor|Durotar|Orgrimmar / Orgrimmar")
 Search("")
 found = wasFound
+Z.Subzones[1426] = nil
 Z:RefreshLoreWindow(); Shown()
+
+showAll = true
+Z:RefreshLoreWindow()
+Expect("Unlock Undiscovered Zones opens every area", Locked(), "")
+Expect("...the places not found still greyed", Greyed(), "Dun Morogh|Orgrimmar")
+Expect("...the counts still what this character has found", RowFor("Durotar").count.text, "1/3 • 33%")
+RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
+Expect("...and when a place not found is chosen", RowFor("Durotar").count.text, "1/3 • 33%")
+Expect("...its story told", page.body.text.text, Z.L.LORE_NOT_WRITTEN:format("Sen'jin Village"))
+RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
+Expect("...a zone not found tells its story", page.body.text.text, Z.L.LORE_NOT_WRITTEN:format("Dun Morogh"))
+Expect("...or a zone on a continent with none found, whose zones have no areas to count", RowFor("Eastern Kingdoms").count.text, "")
+RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
+Z:ShowLoreFor(1411, nil)
+showAll = false
 
 -- Discovered Only, in the filter menu beside the search box, leaves the places not found out of it.
 local function Only() return stub.OpenDropdown(window.filterMenu)[1] end
@@ -654,16 +683,14 @@ Expect("the filter menu holds Discovered Only, a checkbox", Only().text == Z.L.L
 Expect("...which starts off", Only().checked and true or false, false)
 Expect("...and nothing is left under the list", window.discoveredOnly, nil)
 Only().func()
-Expect("...on, it leaves out what is not found: a continent, an area", Shown(), "Kalimdor|Durotar|Valley of Trials")
+Expect("...on, it leaves out what is not found: a continent, a zone, a city, an area", Shown(), "Kalimdor|Durotar|Valley of Trials")
 Expect("...the list on the chosen place, still listed, not at the top", page.title.text .. "|"
     .. tostring(listBar.frame:GetVerticalScroll() > 0), "Durotar|true")
 Expect("...and is remembered", Z:Get("loreDiscoveredOnly"), true)
 Expect("...and ticked in the menu", Only().checked, true)
 Only().func()
-Expect("...off, they are listed again", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
-Expect("...greyed out", Locked(), "Eastern Kingdoms|Orgrimmar|Sen'jin Village")
-Expect("...a locked branch with the quest log's expand greyed as its name is, as every branch with nothing to open",
-    RowFor("Eastern Kingdoms").toggle.atlas == "questlog-icon-expand" and RowFor("Eastern Kingdoms").toggle.desaturated, true)
+Expect("...off, they are listed again", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+Expect("...greyed out", Greyed() .. " / " .. Locked(), "Dun Morogh|Orgrimmar / Sen'jin Village")
 
 -- Voiced Only, after it in the same menu: what no installed voice pack reads is left out, and a
 -- zone stays while an area in it has a recording.
@@ -680,7 +707,7 @@ Expect("...all of it found: the gold tick after its numbers, no share", RowFor("
 Expect("...15 by 13, as a line's tick is", RowFor("Durotar").tick.width .. "x" .. RowFor("Durotar").tick.height, "15x13")
 Expect("...and is remembered", Z:Get("loreVoicedOnly"), true)
 Voiced().func()
-Expect("...off, everything again", Shown(), "Eastern Kingdoms|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
+Expect("...off, everything again", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 Z.HasAudio = hasAudio
 
 ---------------------------------------------------------------- a new session

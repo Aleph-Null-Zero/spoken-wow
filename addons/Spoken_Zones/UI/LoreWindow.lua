@@ -302,15 +302,16 @@ local function Found(mapID, key)
 	return SpokenZones:IsFound(mapID, key)
 end
 
--- Whether a place can be opened: every place with Unlock Undiscovered Zones on, otherwise only
--- those found. The rest are listed greyed out.
+-- Whether an area's row opens: every area with Unlock Undiscovered Zones on, otherwise only those
+-- found. The rest are listed greyed out, with the padlock, as the Quests and Books tabs list what
+-- is not found yet.
 local function Discovered(mapID, key)
 	return SpokenZones:ShowsUndiscovered() or Found(mapID, key)
 end
 
---- Whether a place is locked for this character: not found yet, with Unlock Undiscovered Zones
---- off. A continent is found through its zones; Azeroth always is. The page and the map's panel
---- say so in its place rather than tell its story.
+--- Whether a place's story is locked for this character: not found yet, with Unlock Undiscovered
+--- Zones off. A continent is found through its zones; Azeroth always is. The page and the map's
+--- panel say so in its place rather than tell its story; the list still opens its banner or card.
 function SpokenZones:IsLocked(mapID, key)
 	if self:ShowsUndiscovered() or mapID == WORLD then return false end
 	if not key and IsContinent(mapID) then
@@ -386,9 +387,9 @@ end
 
 -- A zone's dungeons and raids, as the Quests tab files their quests: one a card of its own, several
 -- a Dungeons and Raids line with a card for each under it. A card's story is its area's, ticked once
--- found; the line counts its dungeons found out of all as a zone's card counts its places, and opens
--- and closes as a zone's card does. A search lists the cards that match, or all of them where it
--- names what holds them (`whole`).
+-- found and greyed until then; the line counts its dungeons found out of all as a zone's card counts
+-- its places, and opens and closes as a zone's card does. A search lists the cards that match, or
+-- all of them where it names what holds them (`whole`).
 local function DungeonRows(zone, nest, whole)
 	local listed = DungeonsIn(zone)
 	if #listed == 0 then return {} end
@@ -404,7 +405,7 @@ local function DungeonRows(zone, nest, whole)
 				table.insert(cards, { style = "card", kind = "dungeon", mapID = dungeon.mapID, key = dungeon.key,
 					label = dungeon.name, nest = several and nest + 1 or nest, icon = DUNGEON_ICON,
 					count = 0, total = 0, ratio = 0, tick = isFound, none = not isFound,
-					missing = SpokenZones:IsPending(dungeon.entry), locked = not Discovered(dungeon.mapID, dungeon.key) })
+					missing = SpokenZones:IsPending(dungeon.entry) })
 			end
 		end
 	end
@@ -423,25 +424,24 @@ local function DungeonRows(zone, nest, whole)
 end
 
 -- One zone's card, and under it when it is open its city's card (a zone of its own, with
--- its own areas), its dungeons' and raids' cards and its areas' rows. A search opens every card with a match inside and lists the
--- areas that match, or all of them where it names the zone or a card around it (`whole`); a card
--- it opened closes and opens again on a click. Nothing when neither the zone nor anything inside
--- matches the search. A city's card opens on its own, and shows only while its zone is open. A
--- zone not yet discovered is listed locked: greyed out, and it does not open, to a search either,
--- so a search lists nothing that browsing could not reach.
+-- its own areas), its dungeons' and raids' cards and its areas' rows. A search opens every card
+-- with a match inside and lists the areas that match, or all of them where it names the zone or a
+-- card around it (`whole`); a card it opened closes and opens again on a click. Nothing when
+-- neither the zone nor anything inside matches the search. A city's card opens on its own, and
+-- shows only while its zone is open. A zone not yet discovered is greyed, as a card with none found
+-- is on the other tabs, and opens all the same: its areas are listed, those not found locked.
 local function ZoneRows(mapID, nest, whole)
 	if OnlyFound() and not Found(mapID) then return {} end
 	if OnlyVoiced() and not AnyVoiced(mapID) then return {} end
-	local locked = not Discovered(mapID)
 	local subKeys = SubzoneKeys(mapID)
 	local zoneName = ZoneName(mapID)
 	whole = Named(zoneName, whole)
 	local searched = filter ~= "" and not asLeft
 	local closeKey = "z" .. mapID
-	local open = openZones[mapID] == true and not locked
+	local open = openZones[mapID] == true
 	local inside = {}
 	local found, total = Places(mapID)
-	if not locked and (open or searched) then
+	if open or searched then
 		for _, city in ipairs(CitiesIn(mapID)) do
 			for _, row in ipairs(ZoneRows(city, nest + 1, whole)) do table.insert(inside, row) end
 		end
@@ -461,17 +461,16 @@ local function ZoneRows(mapID, nest, whole)
 	if filter ~= "" and not whole and #inside == 0 then return {} end
 	-- Closed with a click during this search: the card alone.
 	local shown
-	if searched then shown = not locked and not searchClosed[closeKey] else shown = open end
+	if searched then shown = not searchClosed[closeKey] else shown = open end
 	-- With no areas of its own (Thunder Bluff), nothing to count: no line, share or bar.
 	local icon, iconCrop
 	if Spoken and Spoken.ZoneIcon then icon, iconCrop = Spoken:ZoneIcon(mapID) end
 	local rows = { { style = "card", kind = "zone", mapID = mapID, label = zoneName, nest = nest,
 		count = found, total = total, icon = icon, iconCrop = iconCrop,
 		ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
-		none = found == 0 and not Found(mapID),
+		none = not Found(mapID),
 		open = searched and shown and #inside > 0 or not searched and shown,
-		closeKey = closeKey, asLeft = asLeft,
-		missing = Missing(mapID), locked = locked } }
+		closeKey = closeKey, asLeft = asLeft, missing = Missing(mapID) } }
 	if shown then
 		for _, row in ipairs(inside) do table.insert(rows, row) end
 	end
@@ -480,7 +479,7 @@ end
 
 -- What a banner counts: the places its zones' cards count, found out of all, of the cards Discovered
 -- Only and Voiced Only list. Also how many cards it lists, and whether any of its zones is found,
--- listed or not, which unlocks it.
+-- listed or not, without which Discovered Only leaves it out.
 local function BannerCount(zones)
 	local found, total, listed, anyFound = 0, 0, 0, false
 	for _, mapID in ipairs(zones) do
@@ -504,17 +503,15 @@ local function BuildRowList()
 	for _, continent in ipairs(Continents()) do
 		local name = ZoneName(continent)
 		local found, total, listed, anyFound = BannerCount(ZonesOf(continent))
-		-- A continent with none of its zones found yet is listed locked, and does not open; with
-		-- Discovered Only it is left out. Found through its zones alone: finding Brill finds the
-		-- Eastern Kingdoms.
+		-- A continent opens whether or not any of its zones is found; with none found, Discovered
+		-- Only leaves it out. Found through its zones alone: finding Brill finds the Eastern Kingdoms.
 		local unfound = not anyFound
-		local locked = unfound and not SpokenZones:ShowsUndiscovered()
 		-- A closed continent's zones are never shown, and its count comes from ZonesOf: only a
-		-- search, which can open it, needs them built. A locked one opens to a search no more
-		-- than to a click. Named by the search, its every zone's card is listed as the player left it.
+		-- search, which can open it, needs them built. Named by the search, its every zone's card is
+		-- listed as the player left it.
 		local zones = {}
 		local named = searching and Matches(name)
-		if not locked and (searching or continentOpen[continent]) then
+		if searching or continentOpen[continent] then
 			AsLeft(named, function()
 				for _, mapID in ipairs(ZonesOf(continent)) do
 					for _, row in ipairs(ZoneRows(mapID, 0, named)) do table.insert(zones, row) end
@@ -523,23 +520,21 @@ local function BuildRowList()
 		end
 		local voiced = not OnlyVoiced() or listed > 0
 		if (not searching or Matches(name) or #zones > 0) and not (unfound and OnlyFound()) and voiced then
-			local open = searching and #zones > 0 or (not searching and continentOpen[continent] and not locked)
+			local open = searching and #zones > 0 or (not searching and continentOpen[continent])
 			table.insert(list, { style = "banner", kind = "continent", mapID = continent, label = name,
-				count = found, total = total, open = open and true or false, missing = Missing(continent),
-				locked = locked })
+				count = found, total = total, open = open and true or false, missing = Missing(continent) })
 			if open then Add(zones) end
 		end
 	end
 	-- Zones on neither continent with a story, then the battlegrounds, each under a banner of
-	-- their own after them, counted and locked as a continent is.
+	-- their own after them, counted and opened as a continent is.
 	for _, group in ipairs(GROUPS) do
 		local members = group.zones()
 		local label = group.label()
 		local found, total, listed, anyFound = BannerCount(members)
-		local locked = not anyFound and not SpokenZones:ShowsUndiscovered()
 		local zones = {}
 		local named = searching and Matches(label)
-		if not locked and (searching or groupOpen[group.key]) then
+		if searching or groupOpen[group.key] then
 			AsLeft(named, function()
 				for _, mapID in ipairs(members) do
 					for _, row in ipairs(ZoneRows(mapID, 0, named)) do table.insert(zones, row) end
@@ -549,9 +544,9 @@ local function BuildRowList()
 		local voiced = not OnlyVoiced() or listed > 0
 		if #members > 0 and (not searching or Matches(label) or #zones > 0) and not (not anyFound and OnlyFound())
 			and voiced then
-			local open = searching and #zones > 0 or (not searching and groupOpen[group.key] and not locked)
+			local open = searching and #zones > 0 or (not searching and groupOpen[group.key])
 			table.insert(list, { style = "banner", kind = "group", group = group.key, label = label, count = found,
-				total = total, open = open and true or false, locked = locked })
+				total = total, open = open and true or false })
 			if open then Add(zones) end
 		end
 	end

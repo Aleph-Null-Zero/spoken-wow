@@ -171,6 +171,13 @@ found["1436/deadmines"] = true
 Z:RefreshLoreWindow(); Shown()
 Expect("...ticked once found, as its area's row was", RowFor("Deadmines").tick:IsShown() and not RowFor("Deadmines").row.none, true)
 found["1436/deadmines"] = nil
+showAll = false
+Z:RefreshLoreWindow(); Shown()
+Expect("...not locked, as no card is", RowFor("Deadmines").row.locked or false, false)
+Click("Deadmines")
+Expect("...chosen, its page says it is not discovered", page.title.text .. ": " .. page.body.text.text,
+    "Deadmines: " .. Z.L.NOT_DISCOVERED)
+showAll = true
 Click("Deadmines")
 Expect("its page is its area's story", page.title.text .. ": " .. page.body.text.text, "Deadmines: The Defias' mine.")
 Expect("...in its zone", page.sub.text.text, "In Westfall")
@@ -217,6 +224,11 @@ Z:ShowLoreFor(1441, "razorfen downs")
 Expect("opened on a dungeon, its entrance's zone and its line open", Shown(),
     "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Thousand Needles")
 Expect("...the card chosen", RowFor("Razorfen Downs").selected, true)
+showAll = false
+Z:RefreshLoreWindow()
+Expect("...not discovered, its page says so, in The Barrens", page.sub.text.text .. "|" .. page.body.text.text,
+    "In The Barrens|" .. Z.L.NOT_DISCOVERED)
+showAll = true
 Click("Dungeons and Raids")
 
 -- A search lists the dungeons that match, and every one where it names the line.
