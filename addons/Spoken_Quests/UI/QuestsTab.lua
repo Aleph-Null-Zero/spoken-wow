@@ -1014,9 +1014,11 @@ local PLAY = {
         return false
     end,
     -- One part, the first a pack voices: the offer, the progress and the hand-in are said at
-    -- different times, not as one speech. Its words go with it, for the window to show.
+    -- different times, not as one speech. Its words go with it, for the window to show. Nothing
+    -- where a part of the quest is queued already: one part of a quest at a time.
     -- `queued`: behind what the queue already holds, not played at once.
     start = function(id, queued)
+        if #Clips(id) > 0 then return end
         for _, moment in ipairs(MOMENTS) do
             if Shows(id, moment) and Voiced(id, moment) then
                 local soundData = SoundData(id, moment, "Azeroth's Compendium")
