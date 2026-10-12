@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Azeroth's Compendium calls each thing by one name in every language.** The Zones tab searches
+  zones, holiday quests sit under Holidays and Events as holiday books do, Place Unknown is the
+  same on Quests and Books, and the filters and Unlock switches are worded alike. Play on a quest's
+  or book's page names itself in its tooltip. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium lists everything as cards.** In Quests, Zones and Books each continent is
   a banner, and each zone a card showing how much of it you have found, with a bar; quest chains,
   cities and kinds of writing are smaller cards inside, and single quests, places and writings

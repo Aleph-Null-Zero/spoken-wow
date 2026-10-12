@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 22
+local VERSION = 23
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1652,6 +1652,15 @@ function C.NewPage(parent, addon, play)
 			if play.playing(target) then play.stop(target) else play.start(target) end
 			self:RefreshPlay()
 		end)
+		-- Named in its tooltip, as every Play and Stop of Spoken's is, in Spoken's words.
+		button:HookScript("OnEnter", function(b)
+			local words = _G.SpokenEnv and _G.SpokenEnv.L
+			if not (words and GameTooltip) then return end
+			GameTooltip:SetOwner(b, "ANCHOR_LEFT")
+			GameTooltip:SetText(b.pageState == "stop" and words.STOP or words.PLAY)
+			GameTooltip:Show()
+		end)
+		button:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
 		button:Hide()
 		self.play = button
 		if Spoken.RegisterCallback then
@@ -1669,7 +1678,8 @@ function Page:RefreshPlay()
 		return
 	end
 	button:Show()
-	if button.SetState then button:SetState(self.playing.playing(target) and "stop" or "play") end
+	button.pageState = self.playing.playing(target) and "stop" or "play"
+	if button.SetState then button:SetState(button.pageState) end
 end
 
 --- entry = { title, subtitle, text, target = what Play plays, or nil for none }

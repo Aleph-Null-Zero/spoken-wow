@@ -56,8 +56,8 @@ L.QUEUE_HELD_OFF = "Narration is turned off."
 L.NO_LORE_FOR = "No lore recorded for %1$s yet."
 -- A place the client has that the corpus knows about but nobody has written. Distinct
 -- from NO_LORE_FOR, which is what an unknown place gets: this one we know exists.
-L.LORE_NOT_WRITTEN = "%1$s is on the map, but nobody has written its lore yet."
-L.NOT_DISCOVERED = "You have not discovered this place yet. Travel there to discover it."
+L.LORE_NOT_WRITTEN = "%1$s is on the map, but nobody has written its story yet."
+L.NOT_DISCOVERED = "You have not discovered this place yet. Go there to read its story."
 
 --------------------------------------------------------------------------------
 -- Slash commands
@@ -155,14 +155,14 @@ L.REPORT_BUTTON = "Report"
 L.CONTRIBUTE_BUTTON = "Contribute"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones has no lore for this place"
 L.CONTRIBUTE_BUTTON_TIP = "Contribute by describing it: what it is, who lives there, what happened there."
-L.IN_ZONE_FMT = "in %1$s"
+L.IN_ZONE_FMT = "In %1$s"
 L.SUBZONE_COUNT_FMT = "%1$d areas"
 L.SUBZONE_COUNT_ONE = "1 area"
 L.ZONE_COUNT_FMT = "%1$d zones"
 L.ZONE_COUNT_ONE = "1 zone"
 L.OTHER_LANDS = "Other Lands"
 L.BATTLEGROUNDS = "Battlegrounds"
-L.ZONES_PICK = "Choose a place on the left to read its story."
+L.ZONES_PICK = "Choose a zone on the left to read its story."
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
 -- The window browses every place; the panel beside the map tells the zone it shows.
@@ -173,10 +173,10 @@ L.MAP_PANEL_EXPAND = "Show Zone Lore"
 L.PANEL_SHOWN = "Zone Lore beside the map: on"
 L.PANEL_HIDDEN = "Zone Lore beside the map: off"
 L.MINIMAP_LEFT_CLICK = "|cff66bbffLeft-click|r %1$s"
-L.LORE_SEARCH = "Search places"
+L.LORE_SEARCH = "Search zones"
 L.LORE_DISCOVERED_ONLY = "Discovered Only"
 L.LORE_VOICED_ONLY = "Voiced Only"
-L.LORE_SEARCH_NONE = "No place matches."
+L.LORE_SEARCH_NONE = "Nothing matches."
 L.MAP_LORE_FOR_FMT = "lore for %1$s"
 
 --------------------------------------------------------------------------------

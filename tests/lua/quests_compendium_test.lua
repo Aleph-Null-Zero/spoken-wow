@@ -557,8 +557,15 @@ Expect("...which plays its offer alone, not the hand-in after it", table.concat(
 local playing = Spoken:GetQueue()[1]
 Expect("...with the offer's words, for the window to show and highlight",
     playing and type(playing.text) == "string" and playing.text ~= "" and page.body.text.text:find(playing.text, 1, true) ~= nil, true)
+local function PlayTip()
+    GameTooltip.text = nil
+    for _, hook in ipairs(page.play.hooks and page.play.hooks.OnEnter or {}) do hook(page.play) end
+    return GameTooltip.text
+end
+Expect("...its tooltip naming Stop while it plays", PlayTip(), SpokenEnv.L.STOP)
 page.play.scripts.OnClick(page.play)
 Expect("...and again, stops them", #VO.Player:Queued(), 0)
+Expect("...its tooltip naming Play once stopped", PlayTip(), SpokenEnv.L.PLAY)
 Click("Kobold Candles")
 Expect("a quest no pack has has no Play", page.play:IsShown(), false)
 ClickChain("Lost Necklace")

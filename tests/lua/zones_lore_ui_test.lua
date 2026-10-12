@@ -218,7 +218,7 @@ Expect("...a found area's tick at the end of its row, where a padlock goes", Row
     "CENTER")
 Expect("...counted with the zone's areas", RowFor("Durotar").count.text:match("/(%d+)"), "3")
 Expect("...and not beside it on the continent", RowFor("Kalimdor").count.text:match("/(%d+)"), "1")
-Expect("...its page says the zone it is in", page.title.text .. ": " .. page.sub.text.text, "Orgrimmar: in Durotar")
+Expect("...its page says the zone it is in", page.title.text .. ": " .. page.sub.text.text, "Orgrimmar: In Durotar")
 page.sub.scripts.OnClick(page.sub)
 Expect("...which leads back to the zone", page.title.text, "Durotar")
 RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
@@ -228,14 +228,14 @@ Shown()
 
 RowFor("Valley of Trials").scripts.OnClick(RowFor("Valley of Trials"))
 Expect("choosing an area shows its story", page.title.text .. ": " .. page.body.text.text, "Valley of Trials: Where the orcs learn.")
-Expect("...says which zone it is in, and leads back to it", page.sub.text.text, "in Durotar")
+Expect("...says which zone it is in, and leads back to it", page.sub.text.text, "In Durotar")
 page.sub.scripts.OnClick(page.sub)
 Expect("...which goes back to the zone", page.title.text, "Durotar")
 Expect("a zone says which continent it is on, and how many places it holds, its city with its areas as its card counts",
-    page.sub.text.text .. "|" .. RowFor("Durotar").count.text:match("/(%d+)"), "in Kalimdor · 3 areas|3")
+    page.sub.text.text .. "|" .. RowFor("Durotar").count.text:match("/(%d+)"), "In Kalimdor · 3 areas|3")
 page.sub.scripts.OnClick(page.sub)
 Expect("...leading up to the continent", page.title.text, "Kalimdor")
-Expect("a continent says it is in Azeroth, and how many zones it holds", page.sub.text.text, "in Azeroth · 1 zone")
+Expect("a continent says it is in Azeroth, and how many zones it holds", page.sub.text.text, "In Azeroth · 1 zone")
 page.sub.scripts.OnClick(page.sub)
 Expect("...leading up to Azeroth", page.title.text, "Azeroth")
 Expect("Azeroth sits in nothing: it says what it holds", page.sub.text.text, "2 continents, 3 zones")
@@ -467,9 +467,9 @@ Expect("a city not discovered is in its zone, not its continent",
     page.title.text .. "|" .. page.sub.text.text, "Orgrimmar|" .. Z.L.IN_ZONE_FMT:format("Durotar"))
 -- Opened from the map's panel, a place not discovered says so instead of telling its story.
 Z:ShowLoreFor(1411, "sen'jin village")
-Expect("a place not discovered, opened from elsewhere, says so and to travel there to discover it",
+Expect("a place not discovered, opened from elsewhere, says so and to go there to read its story",
     page.title.text .. ": " .. page.body.text.text,
-    "Sen'jin Village: You have not discovered this place yet. Travel there to discover it.")
+    "Sen'jin Village: You have not discovered this place yet. Go there to read its story.")
 Expect("...with nothing to play", page.play.mapID, nil)
 Shown()
 Expect("...and is not counted found for being chosen", RowFor("Durotar").count.text, "1/3 • 33%")
