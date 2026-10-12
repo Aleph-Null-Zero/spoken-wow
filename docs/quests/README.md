@@ -1456,9 +1456,17 @@ zone on no continent the client knows (Zephras Isle, whose map hangs under Azero
 tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
 Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
 Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
-it); then a banner each for Classes, Professions, Events and Other, holding a small card for each class, profession, season
-or other QuestSort, and Place Unknown under Other. There is no Azeroth row; with the player's
-zone unknown the tab lands on the first continent. The list is drawn in the game's own art
+it); then a banner each for Classes, Professions (Camping, 666, with them: its quests are Camping
+101 for one profession or another), Events and Other, holding a small card for each class, profession, season
+or other QuestSort, and Place Unknown under Other. The tab names some groups itself
+(`GROUP_NAMES`): Special (284) is Children's Week, under Events, as it holds nothing else;
+Reputation (367) is Commendation Signets, its hand-ins; and the groups the client has no QuestSort
+for, a word in the data (`winterveil`, `hallowsend`, `loveisintheair` and `harvestfestival` under
+Events, `argentdawn` and `library` under Other), take their names from the strings. Inside a
+zone's card, its dungeons' and raids' quests (those with `dungeon`) are a small card, Dungeons
+and Raids, with a small card for each dungeon, named as the data's `dungeons` names it in the
+client's language, where the zone has several (Searing Gorge holds Blackrock Mountain's four).
+There is no Azeroth row; with the player's zone unknown the tab lands on the first continent. The list is drawn in the game's own art
 (`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
 tracker's campaign header for the player's faction, without its crest, and a card is Classic's
 character select card. A zone's card shows its painting (`Spoken:ZoneIcon`) in the collections

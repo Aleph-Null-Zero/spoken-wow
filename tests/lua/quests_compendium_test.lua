@@ -24,7 +24,7 @@ local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "
     [1429] = { "Elwynn Forest", 1415 }, [1453] = { "Stormwind City", 1415 }, [1436] = { "Westfall", 1415 },
     [1440] = { "Ashenvale", 1414 }, [1424] = { "Hillsbrad Foothills", 1415 }, [1459] = { "Alterac Valley", 1424 },
     [1460] = { "Warsong Gulch", 947 }, [1461] = { "Arathi Basin", 947 }, [2524] = { "Darkspear Islands", 947 },
-    [2521] = { "Zephras Isle", 947 }, [2548] = { "Riverglades", 1415 } }
+    [2521] = { "Zephras Isle", 947 }, [2548] = { "Riverglades", 1415 }, [1427] = { "Searing Gorge", 1415 } }
 _G.C_Map.GetMapInfo = function(id)
     local map = MAPS[id]
     return { mapType = 3, name = map and map[1] or ("Map " .. id), parentMapID = map and map[2] or nil }
@@ -249,11 +249,25 @@ Expect("...Classes opening on a class's quests under its name, this character's 
 Expect("...a small card for it", RowFor("Mage").row.style == "card" and RowFor("Mage").row.small, true)
 Click("Events")
 Expect("...Events on the festivals and the Darkmoon Faire", Has(Shown(), "Lunar Festival") and Has(Shown(), "Darkmoon Faire"), true)
+list = Shown()
+Expect("...each holiday a group of its own, Children's Week among them, where the client has Seasonal and Special",
+    Has(list, "Feast of Winter Veil") and Has(list, "Hallow's End") and Has(list, "Love is in the Air")
+    and Has(list, "Harvest Festival") and Has(list, "Children's Week") and not Has(list, "Seasonal")
+    and not Has(list, "Special"), true)
 Click("Classes")
 Click("Events")
 local leftovers, reused = Leftovers()
 Expect("a row drawn as a card and reused for a banner or a quest keeps none of the card's parts", leftovers, "")
 Expect("...as rows were, once the list changed under them", reused > 0, true)
+Click("Professions")
+Expect("Professions holds Camping, whose quests are Camping 101 for one profession or another", Has(Shown(), "Camping"), true)
+Click("Professions")
+Click("Other")
+list = Shown()
+Expect("Other holds the Commendation Signets' hand-ins, the Argent Dawn's and the library books, under those names",
+    Has(list, "Commendation Signets") and Has(list, "Argent Dawn") and Has(list, "Library Books")
+    and not Has(list, "Reputation"), true)
+Click("Other")
 
 -- Zephras Isle is on no continent: a card of its own after them. The battlegrounds are under a
 -- banner of their own, Alterac Valley too, though the client hangs it in Hillsbrad Foothills.
@@ -509,6 +523,29 @@ local IRONDEEP = 5892
 Tab:Open(IRONDEEP)
 Expect("a battleground's quest opens under the battlegrounds' banner", Has(Shown(), "Irondeep Supplies")
     and RowFor("Battlegrounds").row.open and page.title.text, "Irondeep Supplies")
+
+-- A zone's dungeons' and raids' quests: a small card inside its card, Dungeons and Raids, and in a
+-- zone with several, a small card for each inside that.
+local STOCKADE, DARK_IRON = 386, 3801
+Tab:Open(STOCKADE)
+list = Shown()
+local dungeons = RowFor("Dungeons and Raids")
+Expect("opened on a dungeon's quest, its zone's Dungeons and Raids card is opened to it", dungeons ~= nil
+    and dungeons.row.small and dungeons.row.open and Has(list, "What Comes Around...") and page.title.text,
+    "What Comes Around...")
+Expect("...a small card inside the city's card, as far in as its quests", dungeons.row.nest, 2)
+Expect("...its badge a key", dungeons.icon.texture, [[Interface\Icons\INV_Misc_Key_03]])
+Expect("...with one dungeon there, its quests straight inside, no card of the dungeon's own",
+    Has(list, "Stormwind Stockade") or RowFor("What Comes Around...").row.nest, 3)
+Tab:Open(DARK_IRON)
+list = Shown()
+Expect("in a zone with several dungeons, a small card for each inside Dungeons and Raids",
+    Has(list, "Blackrock Depths") and Has(list, "Blackrock Spire") and RowFor("Blackrock Depths").row.small
+    and RowFor("Blackrock Depths").row.nest, 2)
+Expect("...the dungeon's quests inside its own card", Has(list, "Dark Iron Legacy") and RowFor("Dark Iron Legacy").row.nest >= 3, true)
+Click("Blackrock Spire")
+Expect("...a dungeon's page counting its quests", page.title.text == "Blackrock Spire"
+    and page.sub.text:match("^0 of %d+ completed$") ~= nil, true)
 
 -- The quest giver's window: the Compendium's tome beside its controls, for a quest the tab lists.
 local giver = Tab.giverButton

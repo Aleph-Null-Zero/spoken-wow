@@ -9,7 +9,8 @@
 -- the battlegrounds, then a banner each for Classes, Professions, Events and Other, holding a
 -- small card for each class, profession, event or other kind of quest. A
 -- card says how many of its quests are completed and how many in progress, with a bar. Inside a
--- place, the quests that follow one another (`prev` in the data) are a small card for their chain,
+-- zone's card, its dungeons' and raids' quests are a small card of their own, with a small card
+-- for each dungeon where the zone has several. Inside a place, the quests that follow one another (`prev` in the data) are a small card for their chain,
 -- named after the first of them; the rest are rows of their own. A chain's page lists its quests
 -- in order with the start of each one's offer.
 --
@@ -51,12 +52,24 @@ local SECTIONS = {
     { key = "classes", label = "QUESTS_SECTION_CLASSES",
         sorts = { [61] = true, [81] = true, [82] = true, [141] = true, [161] = true, [162] = true, [261] = true,
             [262] = true, [263] = true } },
+    -- Camping (666) with them: nearly all its quests are Camping 101 for one profession or another.
     { key = "professions", label = "QUESTS_SECTION_PROFESSIONS",
         sorts = { [24] = true, [101] = true, [121] = true, [181] = true, [182] = true, [201] = true, [264] = true,
-            [304] = true, [324] = true } },
+            [304] = true, [324] = true, [666] = true } },
     { key = "events", label = "QUESTS_SECTION_EVENTS",
-        sorts = { [22] = true, [364] = true, [365] = true, [366] = true, [368] = true, [369] = true } },
+        sorts = { [22] = true, [284] = true, [364] = true, [365] = true, [366] = true, [368] = true, [369] = true,
+            winterveil = true, hallowsend = true, loveisintheair = true, harvestfestival = true } },
     { key = "other", label = "QUESTS_SECTION_OTHER" },
+}
+
+-- The tab's own names: for the groups the client has no QuestSort for (a word in the data), and
+-- for two whose client name says too little. Special (284) holds Children's Week alone, and
+-- Reputation (367) the Commendation Signets' hand-ins.
+local GROUP_NAMES = {
+    [284] = "QUESTS_GROUP_CHILDRENS_WEEK", [367] = "QUESTS_GROUP_COMMENDATIONS",
+    winterveil = "QUESTS_GROUP_WINTER_VEIL", hallowsend = "QUESTS_GROUP_HALLOWS_END",
+    loveisintheair = "QUESTS_GROUP_LOVE_IS_IN_THE_AIR", harvestfestival = "QUESTS_GROUP_HARVEST_FESTIVAL",
+    argentdawn = "QUESTS_GROUP_ARGENT_DAWN", library = "QUESTS_GROUP_LIBRARY",
 }
 
 -- The battlegrounds, under a banner of their own after the continents, whatever map the client
@@ -143,6 +156,7 @@ local function Title(id, ask)
 end
 
 local function SortName(sort)
+    if GROUP_NAMES[sort] then return L[GROUP_NAMES[sort]] end
     local data = _G.SpokenQuestsCompendium
     local names = data and data.sorts and data.sorts[sort]
     if not names then return tostring(sort) end
@@ -264,8 +278,8 @@ function Index()
                     index.zones[mapID] = index.zones[mapID] or {}
                     table.insert(index.zones[mapID], id)
                 end
-            -- A sort the data has no name for has no row of its own to go under.
-            elseif quest.sort and named[quest.sort] then
+            -- A sort the data and the tab have no name for has no row of its own to go under.
+            elseif quest.sort and (named[quest.sort] or GROUP_NAMES[quest.sort]) then
                 index.sorts[quest.sort] = index.sorts[quest.sort] or {}
                 table.insert(index.sorts[quest.sort], id)
             else
@@ -419,6 +433,8 @@ end
 
 -- What a class, profession, event or other kind of quest shows on its card.
 local SORT_ICON = [[Interface\Icons\INV_Scroll_03]]
+-- And a dungeon's or a raid's, or a zone's card of them: a key, as to a door below.
+local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
 
 -- A card's numbers: the completed (its share and its bar) out of all, and how many more are in
 -- progress. Its badge: a zone's painting, a chain's storyline mark, a scroll for the rest.
@@ -432,6 +448,8 @@ local function Card(item, found, total, going)
         if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
     elseif item.kind == "chain" then
         item.story = true
+    elseif item.kind == "dungeons" or item.kind == "dungeon" then
+        item.icon = DUNGEON_ICON
     else
         item.icon = SORT_ICON
     end
@@ -514,7 +532,81 @@ local function ChainKey(id, where, ids)
     return count > 1 and (where .. ":" .. first) or nil
 end
 
--- A zone's card, and under it when it is open its city's small card, its chains and its quests.
+-- A dungeon's or a raid's name, as the client's Map table has it in this client's language.
+local function DungeonName(id)
+    local data = _G.SpokenQuestsCompendium
+    local names = data and data.dungeons and data.dungeons[id]
+    if not names then return tostring(id) end
+    return names[Locale()] or names[1]
+end
+
+-- A zone's own quests, and its dungeons' and raids' by dungeon (`dungeon` in the data: the quest
+-- log files them under the dungeon, and the data under the zone of its entrance).
+local function ZoneParts(mapID)
+    local own, byDungeon = {}, {}
+    for _, id in ipairs(Index().zones[mapID] or {}) do
+        local dungeon = Quests()[id].dungeon
+        if dungeon then
+            byDungeon[dungeon] = byDungeon[dungeon] or {}
+            table.insert(byDungeon[dungeon], id)
+        else
+            table.insert(own, id)
+        end
+    end
+    return own, byDungeon
+end
+
+-- Where a dungeon's quests are listed, for their chains' keys.
+local function DungeonKey(mapID, dungeon)
+    return "d" .. mapID .. (dungeon and (":" .. dungeon) or "")
+end
+
+local dungeonOpen = {}
+
+-- A zone's dungeons' and raids' quests under one small card, Dungeons and Raids; where the zone
+-- has several (Blackrock Mountain's four, in Searing Gorge), a small card for each inside it.
+local function DungeonRows(mapID, byDungeon, nest)
+    local all, dungeons = {}, {}
+    for dungeon, ids in pairs(byDungeon) do
+        table.insert(dungeons, dungeon)
+        for _, id in ipairs(ids) do table.insert(all, id) end
+    end
+    if #all == 0 then return {} end
+    table.sort(dungeons, function(a, b)
+        local na, nb = DungeonName(a), DungeonName(b)
+        if na == nb then return a < b end
+        return na < nb
+    end)
+    local found, total, going = Tally(SetOf(all))
+    if OnlyFound() and found == 0 then return {} end
+    local key, searching = DungeonKey(mapID), filter ~= ""
+    local inside = {}
+    if dungeonOpen[key] or searching then
+        if #dungeons == 1 then
+            Leaves(all, nest + 1, inside, DungeonKey(mapID, dungeons[1]))
+        else
+            for _, dungeon in ipairs(dungeons) do
+                local ids, dkey, name = byDungeon[dungeon], DungeonKey(mapID, dungeon), DungeonName(dungeon)
+                local f, t, g = Tally(SetOf(ids))
+                local leaves = {}
+                if dungeonOpen[dkey] or searching then Leaves(ids, nest + 2, leaves, dkey) end
+                if not (OnlyFound() and f == 0) and not (searching and #leaves == 0 and not Matches(name)) then
+                    table.insert(inside, Card({ kind = "dungeon", small = true, key = dkey, ids = ids, label = name,
+                        nest = nest + 1, open = #leaves > 0 }, f, t, g))
+                    for _, row in ipairs(leaves) do table.insert(inside, row) end
+                end
+            end
+        end
+    end
+    if searching and #inside == 0 then return {} end
+    local rows = { Card({ kind = "dungeons", small = true, key = key, ids = all, label = L.QUESTS_DUNGEONS, nest = nest,
+        open = #inside > 0 }, found, total, going) }
+    for _, row in ipairs(inside) do table.insert(rows, row) end
+    return rows
+end
+
+-- A zone's card, and under it when it is open its city's small card, its dungeons' and raids'
+-- card, its chains and its quests.
 local function ZoneRows(mapID, nest, small)
     local found, total, going = Tally(QuestsIn(mapID))
     if OnlyFound() and found == 0 then return {} end
@@ -526,7 +618,9 @@ local function ZoneRows(mapID, nest, small)
                 for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(inside, row) end
             end
         end
-        Leaves(Index().zones[mapID], nest + 1, inside, "z" .. mapID)
+        local own, byDungeon = ZoneParts(mapID)
+        for _, row in ipairs(DungeonRows(mapID, byDungeon, nest + 1)) do table.insert(inside, row) end
+        Leaves(own, nest + 1, inside, "z" .. mapID)
     end
     if filter ~= "" and #inside == 0 and not Matches(C.MapName(mapID)) then return {} end
     local rows = { Card({ kind = "zone", small = small, mapID = mapID, label = C.MapName(mapID), nest = nest,
@@ -650,6 +744,7 @@ local function IsSelected(row)
     if row.kind == "section" then return selection.section == row.key end
     if row.kind == "elsewhere" then return selection.group == "elsewhere" end
     if row.kind == "chain" then return selection.chain == row.key end
+    if row.kind == "dungeons" or row.kind == "dungeon" then return selection.dungeon == row.key end
     return selection.mapID ~= nil and selection.mapID == row.mapID
 end
 
@@ -917,6 +1012,10 @@ local function ShowEntry()
         page:Show({ title = Title(id), subtitle = Subtitle(id), text = Words(id), target = id })
         return
     end
+    if selection.dungeon then
+        page:Show({ title = selection.label, subtitle = Count(SetOf(selection.ids)), text = L.QUESTS_PICK })
+        return
+    end
     if selection.section == "battlegrounds" then
         local set = {}
         for _, mapID in ipairs(Battlegrounds()) do QuestsIn(mapID, set) end
@@ -965,6 +1064,9 @@ local function OnClick(row)
     elseif row.kind == "chain" then
         if filter == "" then chainOpen[row.key] = not chainOpen[row.key] end
         selection = { chain = row.key, ids = row.ids }
+    elseif row.kind == "dungeons" or row.kind == "dungeon" then
+        if filter == "" then dungeonOpen[row.key] = not dungeonOpen[row.key] end
+        selection = { dungeon = row.key, ids = row.ids, label = row.label }
     elseif row.kind == "section" then
         if filter == "" then sectionOpen[row.key] = not sectionOpen[row.key] end
         selection = { section = row.key }
@@ -1138,9 +1240,16 @@ function QuestsTab:Open(questID)
         if zone then
             expandedZone = zone
             OpenAround(zone)
-            chain = ChainKey(questID, "z" .. zone, Index().zones[zone])
+            local own, byDungeon = ZoneParts(zone)
+            if quest.dungeon and byDungeon[quest.dungeon] then
+                dungeonOpen[DungeonKey(zone)] = true
+                dungeonOpen[DungeonKey(zone, quest.dungeon)] = true
+                chain = ChainKey(questID, DungeonKey(zone, quest.dungeon), byDungeon[quest.dungeon])
+            else
+                chain = ChainKey(questID, "z" .. zone, own)
+            end
         else
-            local named = quest.sort and SpokenQuestsCompendium.sorts[quest.sort]
+            local named = quest.sort and (SpokenQuestsCompendium.sorts[quest.sort] or GROUP_NAMES[quest.sort])
             local key = named and quest.sort or "elsewhere"
             groupOpen[key] = true
             sectionOpen[named and SectionOf(quest.sort) or "other"] = true
