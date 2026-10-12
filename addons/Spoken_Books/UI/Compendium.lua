@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 30
+local VERSION = 31
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1775,10 +1775,9 @@ function C.NewPage(parent, addon, play, report)
 		end
 	end
 
-	-- Play beside Report, in its long form with its word where Spoken has it: the page has room.
+	-- Play, the player's round button, beside Report as the places' page has it.
 	if play and _G.Spoken and Spoken.CreateRoundButton then
-		local button = Spoken.CreateLabelledButton and Spoken:CreateLabelledButton(frame, "play")
-			or Spoken:CreateRoundButton(frame, "play")
+		local button = Spoken:CreateRoundButton(frame, "play")
 		button:SetScript("OnClick", function()
 			local target = self.target
 			if target == nil then return end
