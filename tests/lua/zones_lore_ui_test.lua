@@ -423,6 +423,8 @@ found["1415"] = nil
 Expect("...a padlock in place of the count", RowFor("Eastern Kingdoms").lock.shown ~= false and RowFor("Eastern Kingdoms").count.shown == false, true)
 Expect("...and on a locked area", RowFor("Sen'jin Village").lock.shown ~= false, true)
 Expect("...none on a place found", RowFor("Valley of Trials").lock.shown, false)
+Expect("...a place found marked with the quest log's gold tick, as a completed quest is",
+    RowFor("Valley of Trials").status.shown ~= false and RowFor("Sen'jin Village").status.shown == false, true)
 RowFor("Sen'jin Village").scripts.OnEnter(RowFor("Sen'jin Village"))
 Expect("...not lit under the pointer", RowFor("Sen'jin Village").over, false)
 Expect("...a zone's card its areas found out of all, and the share of them", RowFor("Durotar").sub.text .. " "

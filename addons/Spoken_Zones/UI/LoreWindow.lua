@@ -244,7 +244,8 @@ local function ZoneRows(mapID, nest, small)
 			local shown = filter == "" and open or filter ~= "" and Matches(name)
 			if shown and (isFound or not OnlyFound()) and (not OnlyVoiced() or Voiced(mapID, key)) then
 				table.insert(inside, { kind = "subzone", leaf = true, mapID = mapID, key = key, label = name,
-					nest = nest + 1, missing = SpokenZones:IsPending(entry), locked = not Discovered(mapID, key) })
+					nest = nest + 1, missing = SpokenZones:IsPending(entry), locked = not Discovered(mapID, key),
+					done = isFound and true or false })
 			end
 		end
 	end

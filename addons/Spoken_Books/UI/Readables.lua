@@ -197,7 +197,7 @@ local function Leaf(id, nest)
 	if OnlyVoiced() and not Voiced(id) then return nil end
 	if filter ~= "" and not Matches(Title(id)) then return nil end
 	return { kind = "readable", leaf = true, book = id, label = Title(id), nest = nest,
-		locked = not Found(id) and not Unlocked() }
+		locked = not Found(id) and not Unlocked(), done = Found(id) and true or false }
 end
 
 local function Leaves(ids, nest, into)
