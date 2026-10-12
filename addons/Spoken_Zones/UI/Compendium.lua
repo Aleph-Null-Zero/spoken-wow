@@ -24,7 +24,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 34
+local VERSION = 35
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -45,7 +45,7 @@ local LIST_WIDTH = 345
 local PAGE_MIN_WIDTH = 278
 local BANNER_ROW = 36
 local BANNER_GAP = 14         -- above each banner but the first
-local BANNER_IN = 10          -- a banner's plus or minus, and its count, from its sides
+local BANNER_IN = 10          -- a banner's plus or minus from its left
 local BANNER_DROP = 1.5       -- the banner's art sits this much under its row's middle
 local BANNER_TEXT = 32        -- a banner's name from its left
 local FIRST_GAP = 2           -- above the first row
@@ -1225,8 +1225,9 @@ local function DrawBanner(row, item, onlyFound)
 	row.toggle:SetPoint("LEFT", row, "LEFT", BANNER_IN, -BANNER_DROP)
 	Toggle(row, item, onlyFound)
 	local locked = item.locked and row.hasLock
-	row.lock:SetPoint("RIGHT", row, "RIGHT", -BANNER_IN, -BANNER_DROP)
-	row.count:SetPoint("RIGHT", row, "RIGHT", -BANNER_IN, -1)
+	-- The numbers and padlock in the column the cards' and lines' numbers end in.
+	row.lock:SetPoint("RIGHT", row, "RIGHT", -CARD_END, -BANNER_DROP)
+	row.count:SetPoint("RIGHT", row, "RIGHT", -CARD_END, -1)
 	row.lock:SetShown(locked and true or false)
 	row.count:SetShown(not locked)
 	row.count:SetFontObject("GameFontHighlightSmall")

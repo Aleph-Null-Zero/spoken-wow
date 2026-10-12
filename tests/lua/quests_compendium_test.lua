@@ -275,6 +275,8 @@ Expect("...its left end the right one turned round", banner.headLeft.texCoord[1]
     and banner.headLeft.texCoord[2] == banner.headRight.texCoord[1] and banner.headLeft.texCoord[1] > banner.headLeft.texCoord[2]
     and banner.headLeft:IsShown() and banner.headRight:IsShown(), true)
 Expect("...the quest log's collapse on it while open", banner.toggle.atlas, "questlog-icon-shrink")
+Expect("...its numbers ending in the column a card's do", banner.count.anchor.point .. " " .. banner.count.anchor.x .. "|"
+    .. RowFor("Elwynn Forest").count.anchor.point .. " " .. RowFor("Elwynn Forest").count.anchor.x, "RIGHT -12|RIGHT -12")
 faction = "Horde"
 Tab:Refresh()
 Expect("...the Horde's for a Horde character", RowFor("Eastern Kingdoms").headMiddle.texture, "file:Objective-Header-CampaignHorde")
