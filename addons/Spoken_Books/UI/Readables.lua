@@ -627,12 +627,9 @@ local function InZones(zones)
 	return line
 end
 
-local KIND = { world = "KIND_WORLD", carried = "KIND_CARRIED" }
-
--- How a readable is had, at the top of its page: in the world or carried, then each source.
+-- How a readable is had, at the top of its page: each source, with the zone it is in.
 local function Sources(place)
 	local lines = {}
-	if KIND[place.kind] then table.insert(lines, L[KIND[place.kind]]) end
 	for _, from in ipairs(place.from or {}) do
 		local key = HOW[from[1]]
 		if key and L[key] then

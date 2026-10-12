@@ -352,7 +352,7 @@ Expect("a readable's page: its title", page.title.text, "Kurdran Wildhammer")
 Expect("...in the spellbook's ink, as the places' page is", page.body.ink and page.body.ink[1], 0.2)
 Expect("...where it is", page.sub.text.text, L.READABLES_IN_FMT:format("Stormwind City"))
 Expect("...on one line", page.sub.text.wordWrap, false)
-Expect("...that it stands in the world, at the top of its words", (page.body.text.text or ""):find(L.KIND_WORLD .. "\n", 1, true), 1)
+Expect("...no line before its words saying it is in the world", (page.body.text.text or ""):find("In the World", 1, true), nil)
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)
 Click("Ranger Captain Alleria Windrunner")
 Expect("a readable not found does not open", page.title.text, "Kurdran Wildhammer")
@@ -375,9 +375,8 @@ Click(L.TYPE_LETTER)
 Click("A Dusty Unsent Letter")
 Expect("opened on a readable carried from a zone", page.title.text, "A Dusty Unsent Letter")
 Expect("...in the zone it is had in", page.sub.text.text, L.READABLES_IN_FMT:format("Westfall"))
-Expect("...its words opening on that it is carried, then how it is had, the name and the zone",
-    (page.body.text.text or ""):find(L.KIND_CARRIED .. "\n"
-    .. L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"), 1, true) == 1, true)
+Expect("...its words opening on how it is had, the name and the zone",
+    (page.body.text.text or ""):find(L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"), 1, true), 1)
 
 -- The search: every match, with what holds it, opened.
 local box
