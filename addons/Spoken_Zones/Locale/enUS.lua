@@ -161,6 +161,8 @@ L.ZONE_COUNT_FMT = "%1$d zones"
 L.ZONE_COUNT_ONE = "1 zone"
 L.OTHER_LANDS = "Other Lands"
 L.BATTLEGROUNDS = "Battlegrounds"
+-- The line over a zone's dungeons' and raids' cards where it has several: the Quests tab's words.
+L.DUNGEONS = "Dungeons and Raids"
 L.ZONES_PICK = "Choose a zone on the left to read its story."
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
