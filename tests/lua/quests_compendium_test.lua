@@ -703,7 +703,23 @@ do
     local fromPageRight = body.frame.anchor.x - (400 - report.anchor.x)
     Expect("...ending in the column the page's own Play and Report end in",
         report.anchor.relativeTo == body.child and fromPageRight, -(36 + body:BarRoom()))
+    -- A page's words start 18 down (the top fade's room); the first heading's line, 26 tall,
+    -- starts 4 higher, and its buttons are centred on it.
+    Expect("...the first heading's line starting a little above where a page's words do", report.anchor.y, -(18 - 4 + 13))
     body.frame.width = width
+    -- Headings grow with the words' size, up to 20.
+    local heading, size = body.parts[1].heading, nil
+    local titleFont, get = _G.QuestTitleFont, ns.Get
+    _G.QuestTitleFont = { GetFont = function() return "Fonts/MORPHEUS.TTF", 18 end }
+    heading.SetFont = function(_, _, s) size = s end
+    local words = 12
+    ns.Get = function(self, key) if key == "fontSize" then return words end return get(self, key) end
+    body:SetParts(body.lastParts)
+    Expect("...a part's heading 7 larger than the words", size, 19)
+    words = 18
+    body:SetParts(body.lastParts)
+    Expect("...and no larger than 20, under the page's title", size, 20)
+    _G.QuestTitleFont, ns.Get, heading.SetFont = titleFont, get, nil
     body:SetParts(body.lastParts)
 end
 play.scripts.OnClick(play)

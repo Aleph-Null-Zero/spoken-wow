@@ -41,6 +41,11 @@ local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
 -- tall as its round buttons; the words HEAD_GAP under it, PART_GAP between one part and the next.
 -- In near-black, as the quest frame's own headings on parchment are, set apart by room alone.
 local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 34, 4
+-- No larger than HEAD_MOST, so a heading stays under the page's title (26) at any size of words.
+local HEAD_MOST = 20
+-- The first heading's line starts HEAD_LIFT into the text's top padding: its line is taller than
+-- its letters, which started lower than a page's first line of words does.
+local HEAD_LIFT = 4
 local HEAD_INK = { 0.06, 0.04, 0.02 }
 -- Between one part and the next, in the middle of PART_GAP, the page's own divider at its own size,
 -- cut short to DIVIDER_MOST rather than stretched (SetPartDivider).
@@ -572,7 +577,7 @@ function TextView:SetParts(parts)
 	end
 	local titleFace = _G.QuestTitleFont and _G.QuestTitleFont.GetFont and _G.QuestTitleFont:GetFont()
 	local shown = {}
-	local y = PAD_TOP
+	local y = PAD_TOP - HEAD_LIFT
 	for i, part in ipairs(parts) do
 		local slot = self.parts[i]
 		if not slot then
@@ -602,7 +607,7 @@ function TextView:SetParts(parts)
 			y = y + PART_GAP
 		end
 		local face = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
-		if face then slot.heading:SetFont(face, Addon:Get("fontSize") + HEAD_SIZE, "") end
+		if face then slot.heading:SetFont(face, math.min(Addon:Get("fontSize") + HEAD_SIZE, HEAD_MOST), "") end
 		slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
 		slot.heading:SetShadowColor(0, 0, 0, 0)
 		slot.heading:SetText(part.heading or "")
