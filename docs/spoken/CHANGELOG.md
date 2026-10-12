@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Keep Talking in Background, a new Sound setting, lets you hear Spoken with the game window in
+  the background.** While a line plays it turns on the game's Sound in Background, which plays
+  the game's other sounds too, and puts your own setting back once the last line ends, after a
+  reload or at the next login. A change you make to that setting meanwhile is kept. Off by
+  default. *([Nucabe](https://github.com/Nucabe))*
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The

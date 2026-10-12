@@ -627,6 +627,12 @@ local function Build(canvas)
     layout:Checkbox(L.OPT_CUE_BETWEEN, L.OPT_CUE_BETWEEN_TIP,
         function() return audio().CueBetweenLines end,
         function(v) audio().CueBetweenLines = v end)
+    if BackgroundSound:IsAvailable() then
+        layout:Checkbox(L.OPT_BACKGROUND_SOUND, L.OPT_BACKGROUND_SOUND_TIP,
+            function() return audio().KeepTalkingInBackground end,
+            function(v) audio().KeepTalkingInBackground = v end,
+            function() BackgroundSound:Sync() end)
+    end
     if OtherSounds:IsAvailable() then
         local lower = function() return audio().LowerOthers end
         local apply = function() OtherSounds:RefreshConfig(); Options:UpdateRows() end
