@@ -1,6 +1,6 @@
 -- The quests in Azeroth's Compendium: every quest this character's race and class may take, in a
 -- card for the zone it is in under its continent's banner, or under its class, profession or
--- season; its chain a small card inside, with the chain's page; a quest's page with its words, its
+-- season; its chain a card inside, with the chain's page; a quest's page with its words, its
 -- placeholders filled for the player; found once completed or in the quest log, marked in progress
 -- then; Started Only, the search and Unlock Unstarted Quests; Play; and on a client in another
 -- language, the words its windows showed.
@@ -243,7 +243,7 @@ Expect("...in the Pet Journal's bar frame", elwynn.barCaps[1]:IsShown() and elwy
     .. elwynn.barCaps[2].atlas .. " " .. elwynn.barCaps[3].atlas, "PetJournal-ExpBar-Left PetJournal-ExpBar-Mid PetJournal-ExpBar-Right")
 Expect("...its page counting its quests", page.sub.text:match("^1 of %d+ completed$") ~= nil, true)
 local city = RowFor("Stormwind City")
-Expect("a city is a small card inside its zone's card", city ~= nil and city.row.small and city.row.nest, 1)
+Expect("a city is a card inside its zone's card", city ~= nil and city.row.style == "card" and city.row.nest, 1)
 Expect("...indented under it, its card further in", city.face[1].anchor.x - elwynn.face[1].anchor.x, 16)
 Expect("...with the line down the open card's contents beside it", city.rails[1]:IsShown() and city.rails[1].anchor.x, 28)
 Expect("...not chosen, the plain card alone", city.lift[5]:IsShown(), false)
@@ -256,7 +256,7 @@ Expect("...a quest in the zone a row, as far in", RowFor("Kobold Camp Cleanup").
 Click("Classes")
 list = Shown()
 Expect("...Classes opening on a class's quests under its name, this character's class only", Has(list, "Mage") and not Has(list, "Warlock"), true)
-Expect("...a small card for it", RowFor("Mage").row.style == "card" and RowFor("Mage").row.small, true)
+Expect("...a card for it", RowFor("Mage").row.style, "card")
 Click("Events")
 Expect("...Events on the festivals and the Darkmoon Faire", Has(Shown(), "Lunar Festival") and Has(Shown(), "Darkmoon Faire"), true)
 list = Shown()
@@ -438,7 +438,7 @@ Expect("a title's match inside a zone that does not match still lists that quest
 box:SetText("")
 box.hooks.OnTextChanged[1](box)
 
--- Chains: a zone's quests that follow one another under one small card, named after the first.
+-- Chains: a zone's quests that follow one another under one card, named after the first.
 Tab:Open(KOBOLDS)
 local function ChainRow(label)
     Shown()
@@ -456,8 +456,8 @@ local function RowOfQuest(id)
     for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.quest == id then return row end end
 end
 list = Shown()
-Expect("a chain is a small card in its zone's card, named after its first quest", ChainRow("Lost Necklace") ~= nil
-    and ChainRow("Lost Necklace").row.small and ChainRow("Lost Necklace").row.nest, 1)
+Expect("a chain is a card in its zone's card, named after its first quest", ChainRow("Lost Necklace") ~= nil
+    and ChainRow("Lost Necklace").row.style == "card" and ChainRow("Lost Necklace").row.nest, 1)
 Expect("...its quests inside it, not beside it", RowOfQuest(NECKLACE) or Has(list, "Pie for Billy") or Has(list, "Goldtooth"), false)
 Expect("...a quest in no chain still a row of its own", Has(list, "Kobold Camp Cleanup"), true)
 Expect("...its badge the storyline's mark, with no frame", ChainRow("Lost Necklace").story:IsShown()
@@ -590,18 +590,18 @@ Tab:Open(IRONDEEP)
 Expect("a battleground's quest opens under the battlegrounds' banner", Has(Shown(), "Irondeep Supplies")
     and RowFor("Battlegrounds").row.open and page.title.text, "Irondeep Supplies")
 
--- A zone's dungeons' and raids' quests: a small card inside its card, named after the dungeon
--- where the zone has one; in a zone with several, Dungeons and Raids, a small card for each
+-- A zone's dungeons' and raids' quests: a card inside its card, named after the dungeon
+-- where the zone has one; in a zone with several, Dungeons and Raids, a card for each
 -- dungeon inside that.
 local STOCKADE, DARK_IRON = 386, 3801
 Tab:Open(STOCKADE)
 list = Shown()
 local dungeons = RowFor("Stormwind Stockade")
 Expect("opened on a dungeon's quest, its zone's card of its dungeon is opened to it", dungeons ~= nil
-    and dungeons.row.small and dungeons.row.open and Has(list, "What Comes Around...") and page.title.text,
+    and dungeons.row.style == "card" and dungeons.row.open and Has(list, "What Comes Around...") and page.title.text,
     "What Comes Around...")
 Expect("...named after the zone's one dungeon, not Dungeons and Raids", Has(list, "Dungeons and Raids"), false)
-Expect("...a small card inside the city's card, as far in as its quests", dungeons.row.nest, 2)
+Expect("...a card inside the city's card, as far in as its quests", dungeons.row.nest, 2)
 Expect("...its badge a key", dungeons.icon.texture, [[Interface\Icons\INV_Misc_Key_03]])
 Expect("...its quests straight inside", RowFor("What Comes Around...").row.nest, 3)
 stub.SetLocale("deDE")
@@ -611,8 +611,8 @@ stub.SetLocale("enUS")
 Tab:Refresh()
 Tab:Open(DARK_IRON)
 list = Shown()
-Expect("in a zone with several dungeons, a small card for each inside Dungeons and Raids",
-    Has(list, "Blackrock Depths") and Has(list, "Blackrock Spire") and RowFor("Blackrock Depths").row.small
+Expect("in a zone with several dungeons, a card for each inside Dungeons and Raids",
+    Has(list, "Blackrock Depths") and Has(list, "Blackrock Spire") and RowFor("Blackrock Depths").row.style == "card"
     and RowFor("Blackrock Depths").row.nest, 2)
 Expect("...the dungeon's quests inside its own card", Has(list, "Dark Iron Legacy") and RowFor("Dark Iron Legacy").row.nest >= 3, true)
 Click("Blackrock Spire")

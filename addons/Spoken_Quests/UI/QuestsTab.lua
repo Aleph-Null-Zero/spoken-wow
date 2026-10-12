@@ -287,13 +287,12 @@ end
 local index
 function Index()
     if index then return index end
-    index = { zones = {}, sorts = {}, elsewhere = {}, all = {}, zoned = {} }
+    index = { zones = {}, sorts = {}, elsewhere = {}, all = {} }
     local named = _G.SpokenQuestsCompendium and SpokenQuestsCompendium.sorts or {}
     for id, quest in pairs(Quests()) do
         if Allowed(quest) then
             index.all[id] = true
             if quest.zones and #quest.zones > 0 then
-                index.zoned[id] = true
                 for _, mapID in ipairs(quest.zones) do
                     index.zones[mapID] = index.zones[mapID] or {}
                     table.insert(index.zones[mapID], id)
@@ -471,8 +470,6 @@ local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
 -- progress. Its badge: a zone's painting, a chain's storyline mark, a scroll for the rest.
 local function Card(item, found, total, going)
     local done = found - going
-    local sub = L.QUESTS_CARD_FMT:format(done, total)
-    if going > 0 then sub = sub .. " · " .. L.QUESTS_CARD_GOING_FMT:format(going) end
     item.style = "card"
     item.count, item.total, item.goingCount = done, total, going
     if item.kind == "zone" then
@@ -484,14 +481,13 @@ local function Card(item, found, total, going)
     else
         item.icon = SORT_ICON
     end
-    item.sub = sub
     item.ratio = total > 0 and done / total or 0
     item.tick = total > 0 and done == total
     item.none = found == 0
     return item
 end
 
--- A chain's quests in one place, under a small card with the chain's name.
+-- A chain's quests in one place, under a card with the chain's name.
 local function ChainRows(where, first, ids, nest)
     InOrder(ids)
     local key = where .. ":" .. first
@@ -508,7 +504,7 @@ local function ChainRows(where, first, ids, nest)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    local rows = { Card({ kind = "chain", small = true, key = key, ids = ids, first = first, label = label, nest = nest,
+    local rows = { Card({ kind = "chain", key = key, ids = ids, first = first, label = label, nest = nest,
         open = #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
@@ -594,9 +590,9 @@ end
 
 local dungeonOpen = {}
 
--- A zone's dungeons' and raids' quests under one small card: named after the dungeon where the
--- zone has one, else Dungeons and Raids, with a small card for each dungeon inside it (Blackrock
--- Mountain's four, in Searing Gorge).
+-- A zone's dungeons' and raids' quests under one card: named after the dungeon where the zone
+-- has one, else Dungeons and Raids, with a card for each dungeon inside it (Blackrock Mountain's
+-- four, in Searing Gorge).
 local function DungeonRows(mapID, byDungeon, nest)
     local all, dungeons = {}, {}
     for dungeon, ids in pairs(byDungeon) do
@@ -629,7 +625,7 @@ local function DungeonRows(mapID, byDungeon, nest)
                 return rows
             end)
             if not (OnlyFound() and f == 0) and not (Filtering() and #leaves == 0) then
-                table.insert(out, Card({ kind = "dungeon", small = true, key = dkey, ids = ids, label = name,
+                table.insert(out, Card({ kind = "dungeon", key = dkey, ids = ids, label = name,
                     nest = nest + 1, open = #leaves > 0 }, f, t, g))
                 for _, row in ipairs(leaves) do table.insert(out, row) end
             end
@@ -637,15 +633,15 @@ local function DungeonRows(mapID, byDungeon, nest)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    local rows = { Card({ kind = "dungeons", small = true, key = key, ids = all, label = label, nest = nest,
+    local rows = { Card({ kind = "dungeons", key = key, ids = all, label = label, nest = nest,
         open = #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
 
--- A zone's card, and under it when it is open its city's small card, its dungeons' and raids'
+-- A zone's card, and under it when it is open its city's card, its dungeons' and raids'
 -- card, its chains and its quests.
-local function ZoneRows(mapID, nest, small)
+local function ZoneRows(mapID, nest)
     local found, total, going = Tally(QuestsIn(mapID))
     if OnlyFound() and found == 0 then return {} end
     local open = expandedZone == mapID or C.CITY_IN[expandedZone] == mapID
@@ -654,7 +650,7 @@ local function ZoneRows(mapID, nest, small)
         if not (open or filter ~= "") then return out end
         for city, around in pairs(C.CITY_IN) do
             if around == mapID and Index().zones[city] then
-                for _, row in ipairs(ZoneRows(city, nest + 1, true)) do table.insert(out, row) end
+                for _, row in ipairs(ZoneRows(city, nest + 1)) do table.insert(out, row) end
             end
         end
         local own, byDungeon = ZoneParts(mapID)
@@ -663,13 +659,13 @@ local function ZoneRows(mapID, nest, small)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    local rows = { Card({ kind = "zone", small = small, mapID = mapID, label = C.MapName(mapID), nest = nest,
+    local rows = { Card({ kind = "zone", mapID = mapID, label = C.MapName(mapID), nest = nest,
         open = (open or filter ~= "") and #inside > 0 }, found, total, going) }
     for _, row in ipairs(inside) do table.insert(rows, row) end
     return rows
 end
 
--- A sort's small card in its section's banner (Mage, Cooking, Lunar Festival), or Place Unknown's.
+-- A sort's card in its section's banner (Mage, Cooking, Lunar Festival), or Place Unknown's.
 local function GroupRows(kind, key, label, ids)
     if not ids or #ids == 0 then return {} end
     local found, total, going = Tally(SetOf(ids))
@@ -680,7 +676,7 @@ local function GroupRows(kind, key, label, ids)
         return out
     end)
     if Filtering() and #leaves == 0 then return {} end
-    local rows = { Card({ kind = kind, small = true, key = key, label = label, nest = 0, open = #leaves > 0 },
+    local rows = { Card({ kind = kind, key = key, label = label, nest = 0, open = #leaves > 0 },
         found, total, going) }
     for _, row in ipairs(leaves) do table.insert(rows, row) end
     return rows
@@ -1034,9 +1030,7 @@ local function ShowEntry()
         return
     end
     local set = {}
-    if selection.mapID == C.WORLD then
-        set = Index().zoned
-    elseif selection.mapID == 1414 or selection.mapID == 1415 then
+    if selection.mapID == 1414 or selection.mapID == 1415 then
         for _, mapID in ipairs(ZonesOn(selection.mapID)) do QuestsIn(mapID, set) end
     else
         QuestsIn(selection.mapID, set)
