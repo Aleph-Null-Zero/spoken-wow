@@ -5,7 +5,8 @@
 -- over). `type` is what it is: book, journal, letter, note, scroll, tablet, plaque, grave,
 -- exhibit, picture or other. `from` names how a carried one is had, most specific first: { how, name, zone... }, the name an index
 -- into `names` (false where there is none, as for fishing). `wide` is a readable had in too many
--- zones to list under each. Zones are uiMapIDs. Regenerate with:  make books-places
+-- zones to list under each. `event` is one had only during a seasonal event, listed under
+-- Holidays and Events rather than its zones. Zones are uiMapIDs. Regenerate with:  make books-places
 --
 -- A global rather than a private namespace, as Books.lua is: a data file cannot reach into the
 -- addon's environment.
@@ -337,7 +338,7 @@ SpokenBooksPlaces = {
 		[2515] = { kind = "carried", type = "letter", zones = { 1421 }, from = { { "quest start", 257, 1421 }, { "quest start", 258, 1421 } } },
 		[2531] = { kind = "carried", type = "note", zones = { 1443 }, from = { { "quest start", 259, 1443 } } },
 		[2551] = { kind = "carried", type = "letter", zones = { 1450, 1451 }, from = { { "quest start", 260, 1450, 1451 } } },
-		[2571] = { kind = "carried", type = "book", zones = { 1454, 1455 }, from = { { "quest start", 261, 1454, 1455 } } },
+		[2571] = { kind = "carried", type = "book", event = true, zones = { 1454, 1455 }, from = { { "quest start", 261, 1454, 1455 } } },
 		[2591] = { kind = "carried", type = "note", zones = { 1443 }, from = { { "quest start", 262, 1443 } } },
 		[2611] = { kind = "carried", type = "book", zones = { 1426, 1459 }, from = { { "drop", 263 }, { "drop", 195, 1459 }, { "drop", 264, 1459 }, { "drop", 265, 1459 }, { "drop", 266, 1459 }, { "drop", 267, 1459 } } },
 		[2631] = { kind = "carried", type = "book", zones = { 1444 }, from = { { "drop", 268 }, { "drop", 269, 1444 }, { "drop", 270, 1444 }, { "drop", 271, 1444 }, { "drop", 272, 1444 }, { "drop", 273, 1444 } } },
@@ -355,9 +356,9 @@ SpokenBooksPlaces = {
 		[2771] = { kind = "carried", type = "book", zones = { 1416 }, from = { { "quest reward", 281, 1416 }, { "vendor", 282, 1416 } } },
 		[2779] = { kind = "carried", type = "book", zones = { 1416, 1459 }, from = { { "quest reward", 281, 1416 }, { "vendor", 283, 1459 }, { "vendor", 284, 1416 } } },
 		[2785] = { kind = "world", type = "plaque", zones = { 1434 } },
-		[2786] = { kind = "carried", type = "note", from = { { "quest reward", 285 } } },
-		[2787] = { kind = "carried", type = "book", from = { { "quest reward", 286 } } },
-		[2790] = { kind = "carried", type = "book", from = { { "quest reward", 286 } } },
+		[2786] = { kind = "carried", type = "note", event = true, from = { { "quest reward", 285 } } },
+		[2787] = { kind = "carried", type = "book", event = true, from = { { "quest reward", 286 } } },
+		[2790] = { kind = "carried", type = "book", event = true, from = { { "quest reward", 286 } } },
 		[2793] = { kind = "carried", type = "book", zones = { 1451 }, from = { { "quest start", 287, 1451 } } },
 		[2807] = { kind = "carried", type = "journal", zones = { 1451 }, from = { { "quest start", 288, 1451 } } },
 		[2810] = { kind = "carried", type = "note", zones = { 1451 }, from = { { "container", 289, 1451 } } },
@@ -371,22 +372,22 @@ SpokenBooksPlaces = {
 		[2828] = { kind = "carried", type = "picture", zones = { 1434, 1446, 1452 }, from = { { "drop", 293, 1452 }, { "drop", 294, 1434 }, { "container", 295, 1446 } } },
 		[2829] = { kind = "carried", type = "journal", zones = { 1445 }, from = { { "drop", 296, 1445 } } },
 		[2838] = { kind = "carried", type = "letter", zones = { 1427 }, from = { { "quest", 297, 1427 } } },
-		[2841] = { kind = "carried", type = "letter", from = { { "container", 298 } } },
+		[2841] = { kind = "carried", type = "letter", event = true, from = { { "container", 298 } } },
 		[2858] = { kind = "world", type = "grave", zones = { 1424 } },
 		[2859] = { kind = "carried", type = "book", zones = { 1427 }, from = { { "quest reward", 299, 1427 } } },
-		[2872] = { kind = "carried", type = "note", from = { { "quest start", 300 } } },
-		[2878] = { kind = "carried", type = "letter", from = { { "quest start", 301 } } },
-		[2880] = { kind = "carried", type = "letter", from = { { "quest start", 302 } } },
-		[2881] = { kind = "carried", type = "letter", from = { { "quest start", 303 } } },
-		[2882] = { kind = "carried", type = "letter", from = { { "quest start", 304 } } },
-		[2883] = { kind = "carried", type = "letter", from = { { "quest start", 305 } } },
-		[2884] = { kind = "carried", type = "letter", from = { { "quest start", 306 } } },
-		[2885] = { kind = "carried", type = "letter" },
-		[2886] = { kind = "carried", type = "letter" },
-		[2887] = { kind = "carried", type = "letter" },
-		[2888] = { kind = "carried", type = "letter" },
-		[2889] = { kind = "carried", type = "letter" },
-		[2890] = { kind = "carried", type = "letter" },
+		[2872] = { kind = "carried", type = "note", event = true, from = { { "quest start", 300 } } },
+		[2878] = { kind = "carried", type = "letter", event = true, from = { { "quest start", 301 } } },
+		[2880] = { kind = "carried", type = "letter", event = true, from = { { "quest start", 302 } } },
+		[2881] = { kind = "carried", type = "letter", event = true, from = { { "quest start", 303 } } },
+		[2882] = { kind = "carried", type = "letter", event = true, from = { { "quest start", 304 } } },
+		[2883] = { kind = "carried", type = "letter", event = true, from = { { "quest start", 305 } } },
+		[2884] = { kind = "carried", type = "letter", event = true, from = { { "quest start", 306 } } },
+		[2885] = { kind = "carried", type = "letter", event = true },
+		[2886] = { kind = "carried", type = "letter", event = true },
+		[2887] = { kind = "carried", type = "letter", event = true },
+		[2888] = { kind = "carried", type = "letter", event = true },
+		[2889] = { kind = "carried", type = "letter", event = true },
+		[2890] = { kind = "carried", type = "letter", event = true },
 	},
 
 	names = {
