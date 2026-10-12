@@ -49,7 +49,7 @@ local list, page
 local selection          -- { quest = id } | { mapID = id } | { sort = id } | { group = "elsewhere" }
                          -- | { chain = key, ids = { id... }, first = id, where = key } | nil
 local landed             -- the selection made for the player, where they stood; any other they chose
-local expandedZone
+local openZones = {}     -- [mapID] = true: a zone's or city's card, opened
 local continentOpen = { [1414] = true, [1415] = true }
 local groupOpen = {}
 local sectionOpen = {}
@@ -710,11 +710,12 @@ local function DungeonRows(mapID, byDungeon, nest)
 end
 
 -- A zone's card, and under it when it is open its city's card, its dungeons' and raids'
--- card, its chains and its quests.
+-- card, its chains and its quests. A city's card opens on its own, and shows only while its zone is
+-- open.
 local function ZoneRows(mapID, nest)
     local found, total, going = Tally(QuestsIn(mapID))
     if Unlisted(found, total) then return {} end
-    local open = expandedZone == mapID or C.CITY_IN[expandedZone] == mapID
+    local open = openZones[mapID] == true
     local inside = Whole(filter ~= "" and Matches(C.MapName(mapID)), function()
         local out = {}
         if not (open or Searched()) then return out end
@@ -1254,11 +1255,8 @@ local function OnClick(row)
         continentOpen[row.mapID] = not continentOpen[row.mapID]
         selection = { mapID = row.mapID }
     else
-        if expandedZone == row.mapID or C.CITY_IN[expandedZone] == row.mapID then
-            expandedZone = C.CITY_IN[row.mapID]
-        else
-            expandedZone = row.mapID
-        end
+        -- A zone's or city's card opens and closes alone.
+        openZones[row.mapID] = not openZones[row.mapID] or nil
         selection = { mapID = row.mapID }
     end
     QuestsTab:Refresh()
@@ -1291,13 +1289,19 @@ local function OpenAround(zone)
     end
 end
 
+-- Open a zone's card and, for a city, the zone's around it, leaving the others as they are.
+local function OpenZone(zone)
+    openZones[zone] = true
+    if C.CITY_IN[zone] then openZones[C.CITY_IN[zone]] = true end
+end
+
 -- Choose where the player stands: their zone, opened, else the first continent. The tab never
 -- shows a page with nothing chosen.
 local function LandOnPlayer()
     local zone = PlayerZone()
     if zone then
         selection = { mapID = zone }
-        expandedZone = zone
+        OpenZone(zone)
         OpenAround(zone)
     else
         local first = Continents()[1]
@@ -1454,7 +1458,7 @@ function QuestsTab:Open(questID)
         local zone = quest.zones and quest.zones[1]
         local chain
         if zone then
-            expandedZone = zone
+            OpenZone(zone)
             OpenAround(zone)
             local own, byDungeon = ZoneParts(zone)
             if quest.dungeon and byDungeon[quest.dungeon] then

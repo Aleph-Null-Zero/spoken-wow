@@ -254,6 +254,13 @@ local function Has(list, label)
     return ("|" .. list .. "|"):find("|" .. label .. "|", 1, true) ~= nil
 end
 
+Expect("...the zone landed on before still open beside it", RowFor("Ashenvale").row.open
+    and RowFor("Elwynn Forest").row.open, true)
+-- Ashenvale closed again and Elwynn Forest chosen, open, for what follows.
+Click("Ashenvale")
+Click("Elwynn Forest")
+Click("Elwynn Forest")
+
 local list = Shown()
 Expect("the list opens on the continents' banners, no Azeroth above them", list:find("^Eastern Kingdoms|") ~= nil
     and Has(list, "Kalimdor") and not Has(list, "Azeroth"), true)
@@ -626,6 +633,11 @@ Tab:Refresh()
 -- A chain's name is the same in every zone it crosses: its first quest's, though that quest is in
 -- another zone, or the name the data gives that quest.
 Click("Westfall")
+Expect("a click on a second zone's card opens it beside the open one, both open",
+    RowFor("Westfall").row.open and RowFor("Elwynn Forest").row.open and Has(Shown(), "Kobold Camp Cleanup"), true)
+Click("Elwynn Forest")
+Expect("...and a click on one closes it alone", tostring(RowFor("Elwynn Forest").row.open) .. "|"
+    .. tostring(RowFor("Westfall").row.open), "false|true")
 Expect("a chain's card in a zone it crosses into has the chain's name: its first quest's, from another zone",
     ChainRow("The Jasperlode Mine") ~= nil and ChainRow("The Jasperlode Mine").row.nest == 1
     and ChainRow("Westfall Stew"), nil)
@@ -645,6 +657,7 @@ stub.SetLocale("enUS")
 shipped[JASPERLODE].name = nil
 Tab:Refresh()
 ClickChain("The Jasperlode Mine")
+Click("Westfall")
 Click("Elwynn Forest")
 
 -- Play: the first part the voice packs have of the quest, with its words.

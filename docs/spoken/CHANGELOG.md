@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Azeroth's Compendium keeps several zones open at once.** On Quests, Zones and Books a click
+  on a zone's or city's card opens or closes that card alone, so opening Elwynn Forest no longer
+  closes Alterac Mountains. A city's card stays as you left it while its zone is closed. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium opens scrolled to where you are**, and every page's line under its
   title says where it is and how much of it you have found ("In Kalimdor · 1 of 88 completed").
   Quests has Voiced Only, as Zones and Books do; a continent's banner on Zones counts its areas,
