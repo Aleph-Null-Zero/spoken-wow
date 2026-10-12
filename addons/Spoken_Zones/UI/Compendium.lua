@@ -26,7 +26,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 41
+local VERSION = 42
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -824,7 +824,10 @@ List.__index = List
 --- them running to the window's foot. opts = { search = text, none = text, only = text, onlyGet(),
 --- onlySet(on), checks = { { label, get(), set(on) }... }, arrange = { values, describe(value), get(),
 --- set(value) }, build() -> items,
---- isSelected(item), onClick(item), onSearch(), addScrollBar(scroll, child, inset) }. The filter
+--- isSelected(item), onClick(item), onSearch(), onHidden(), addScrollBar(scroll, child, inset) }.
+--- onHidden is called when a switch in the filter menu leaves the chosen row out of the list, after
+--- the list is drawn again; the tab chooses what to show in its place. Without it the page keeps
+--- what it showed. The search does not call it: what it hides comes back when it is cleared. The filter
 --- menu is the spellbook's, the arrow beside its search box: the tab's only switch (Started Only,
 --- Discovered Only, Found Only) and any other checks as checkboxes, and where the tab can arrange its tree more than
 --- one way, those ways under a divider. An item is { label, count, total, open, locked, missing }
@@ -898,8 +901,19 @@ function C.NewList(panel, opts)
 	if opts.addScrollBar then list.bar = opts.addScrollBar(scroll, child, inset) end
 
 	-- The filter menu.
+	local function Listed()
+		if not (opts.isSelected and list.items) then return false end
+		for _, item in ipairs(list.items) do
+			if opts.isSelected(item) then return true end
+		end
+		return false
+	end
+	-- A filter that leaves out the chosen row tells the tab, which says what the page shows instead:
+	-- left alone, the list went to its top and the page went on showing a row no longer there.
 	local function Changed()
+		local was = Listed()
 		if panel.Refresh then panel:Refresh() end
+		if was and not Listed() and opts.onHidden then opts.onHidden() end
 		Rescroll()
 	end
 	local function OnlyOn() return opts.onlyGet ~= nil and opts.onlyGet() and true or false end

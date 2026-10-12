@@ -795,6 +795,24 @@ Expect("...a started quest it leaves out not opened in the Compendium", Tab:Has(
 _, choices = Menu()
 choices[2].func()
 Expect("...off, everything again", Has(Shown(), "Kobold Candles") and Has(Shown(), "Westfall") and Tab:Has(CANDLES), true)
+-- A switch in the filter menu leaving out the chosen row tells the tab (onHidden), which says what
+-- the page shows in its place.
+do
+    local listObject = RowFor("Eastern Kingdoms").list
+    local hidden = 0
+    listObject.opts.onHidden = function() hidden = hidden + 1 end
+    local wasOpen = RowFor("Classes").row.open
+    Click("Classes")
+    local chosen = RowFor("Classes").selected
+    _, choices = Menu()
+    choices[2].func()
+    Expect("a filter leaving out the chosen row tells the tab, once", chosen and hidden, 1)
+    _, choices = Menu()
+    choices[2].func()
+    Expect("...and one that leaves it in does not", hidden, 1)
+    listObject.opts.onHidden = nil
+    if RowFor("Classes").row.open ~= wasOpen then Click("Classes") end
+end
 
 -- The part switched off takes its tab away.
 Spoken:SetPartOn("quests", false)
