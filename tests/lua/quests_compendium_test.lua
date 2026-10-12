@@ -174,7 +174,7 @@ Expect("...and never a quest of the other side", Has(Shown(), "Sharptalon's Claw
 box:SetText("")
 box.hooks.OnTextChanged[1](box)
 
--- Play: what the voice packs have of the quest, from the offer on.
+-- Play: the first part the voice packs have of the quest, with its words.
 VO.DataModules:Register("TestPack", {
     SoundLengthLookupByFileName = { ["7-accept"] = 2, ["7-complete"] = 2 },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
@@ -184,7 +184,10 @@ Expect("a voiced quest's page has Play", page.play ~= nil and page.play:IsShown(
 page.play.scripts.OnClick(page.play)
 local queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end
-Expect("...which plays its offer, then its hand-in", table.concat(queued, ","), "7-accept,7-complete")
+Expect("...which plays its offer alone, not the hand-in after it", table.concat(queued, ","), "7-accept")
+local playing = Spoken:GetQueue()[1]
+Expect("...with the offer's words, for the window to show and highlight",
+    playing and type(playing.text) == "string" and playing.text ~= "" and page.body.text.text:find(playing.text, 1, true) ~= nil, true)
 page.play.scripts.OnClick(page.play)
 Expect("...and again, stops them", #VO.Player:Queued(), 0)
 Click("Kobold Candles")

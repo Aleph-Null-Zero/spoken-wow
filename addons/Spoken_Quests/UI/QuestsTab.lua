@@ -382,21 +382,27 @@ end
 
 -- Each moment's words: those kept in this client's language, else the English. Kept words
 -- filled for the other sex are not used where the English has a word for each.
-local function Words(id)
+-- One part's words, in the client's language where its window was seen, or nil.
+local function PartText(id, moment)
     local english = English(id)
     local kept = Kept()
     kept = kept and kept[id]
+    local text
+    local own = kept and kept[moment]
+    if type(own) == "table" and own.text and not (own.sex ~= Sex() and (english[moment] or ""):find("%$[Gg]")) then
+        text = own.text
+    end
+    text = text or english[moment]
+    if text and text ~= "" then return QuestsTab:Fill(text) end
+end
+
+local function Words(id)
     local parts = {}
     for _, moment in ipairs(MOMENTS) do
-        local text
-        local own = kept and kept[moment]
-        if type(own) == "table" and own.text and not (own.sex ~= Sex() and (english[moment] or ""):find("%$[Gg]")) then
-            text = own.text
-        end
-        text = text or english[moment]
-        if text and text ~= "" then
+        local text = PartText(id, moment)
+        if text then
             table.insert(parts, L[HEADINGS[moment]])
-            table.insert(parts, QuestsTab:Fill(text))
+            table.insert(parts, text)
         end
     end
     return #parts > 0 and table.concat(parts, "\n\n") or L.QUEST_NO_TEXT
@@ -449,18 +455,18 @@ local PLAY = {
         return false
     end,
     playing = function(id) return #Clips(id) > 0 end,
+    -- One part, the first a pack voices: the offer, the progress and the hand-in are said at
+    -- different times, not as one speech. Its words go with it, for the window to show.
     start = function(id)
         local DataModules, Enums = VO.DataModules, VO.Enums
         local kind, giver = DataModules:GetQuestLogQuestGiverTypeAndID(id)
         local name = giver and DataModules:GetObjectName(kind, giver) or Title(id)
         local guid = giver and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, giver) or nil
-        local first = true
         for _, moment in ipairs(MOMENTS) do
             if Voiced(id, moment) then
-                local soundData = { event = EVENTS[moment], questID = id, title = Title(id), name = name,
-                    unitGUID = guid, origin = "Azeroth's Compendium" }
-                if first then VO.Player:PlayNow(soundData) else VO.Player:Enqueue(soundData) end
-                first = false
+                VO.Player:PlayNow({ event = EVENTS[moment], questID = id, title = Title(id), name = name,
+                    unitGUID = guid, text = PartText(id, moment), origin = "Azeroth's Compendium" })
+                return
             end
         end
     end,
