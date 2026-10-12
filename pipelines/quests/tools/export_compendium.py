@@ -77,6 +77,9 @@ INSTANCE_ZONE = {
     # areas have no map of their own, so their quests resolved to no zone.
     2998: 1437, 3065: 1455,
 }
+# The battlegrounds' maps, and the zone map of each: Alterac Valley, Warsong Gulch, Arathi Basin
+# and Forever's Darkspear Islands.
+BATTLEGROUND_ZONE = {30: 1459, 489: 1460, 529: 1461, 2997: 2524}
 # A giver standing in this many zones or more is a kind of creature found everywhere (CLUCK!'s is
 # any chicken) or a post in every capital (the battlemasters, the Argent Dawn's quartermasters).
 # Listed in each of them, its quest would count in every one; it is placed by other means or not.
@@ -146,6 +149,18 @@ class Maps:
                 self.areas.setdefault(int(r["ID"]), r)
             for r in uimaps:
                 self.uimaps.setdefault(int(r["ID"]), r)
+        # A battleground's name, as its map's own area has it: the quest log files some of its
+        # quests under another area of that name (Alterac Valley, 2839, in Alterac Mountains).
+        self.battlegrounds = {}
+        for r in self.areas.values():
+            continent = int(r.get("ContinentID") or 0)
+            if continent in BATTLEGROUND_ZONE and not int(r.get("ParentAreaID") or 0) and r.get("AreaName_lang"):
+                self.battlegrounds[r["AreaName_lang"]] = BATTLEGROUND_ZONE[continent]
+
+    def battleground_of_area(self, area):
+        """The battleground an area is, or is named after; None for any other."""
+        row = self.areas.get(area)
+        return row and self.battlegrounds.get(row.get("AreaName_lang")) or None
 
     def zone_of_uimap(self, uimap):
         """The zone map (Type 3) a map is or lies in: a city's district or a dungeon's floor is in
@@ -287,7 +302,8 @@ def eg_races(q):
 def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
     """(zones, sort, which source placed it) for a quest, the first that has an answer:
 
-    - the DB's QuestSortID: an area's zone, or a sort the client names (negative);
+    - the DB's QuestSortID: an area's zone (a battleground's, for an area named after one), or a
+      sort the client names (negative);
     - Forever's client (`eg`, its Efficient Games record): its zoneAreaId's zone, or its
       categoryId's sort. A zoneAreaId of a Forever area no map shows (Ruins of Lordaeron, the
       Excavation Site in the Wetlands) is placed where players saw its giver (`seen`, uiMapIDs);
@@ -297,7 +313,7 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
     places it nowhere.
     """
     if sort > 0:
-        zone = maps.zone_of_area(sort)
+        zone = maps.battleground_of_area(sort) or maps.zone_of_area(sort)
         if zone:
             return [zone], None, "db"
     elif sort < 0 and -sort in sorts:
@@ -313,7 +329,7 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
 
     if eg:
         area, category = eg.get("zoneAreaId") or 0, eg.get("categoryId") or 0
-        zone = area > 0 and maps.zone_of_area(area)
+        zone = area > 0 and (maps.battleground_of_area(area) or maps.zone_of_area(area))
         if zone:
             return [zone], None, "client"
         if category > 0 and category in sorts:
@@ -326,6 +342,22 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
     if seen_zones():
         return seen_zones(), None, "client"
     return [], None, None
+
+
+def battleground_follow_ups(records, givers):
+    """File under its battleground a quest that follows one of that battleground's from the same
+    giver: a battlemaster's next quest (Fight for Warsong Gulch at each level, Claiming Arathi
+    Basin), which the quest log leaves under no zone or under the battlemaster's city. In place."""
+    battlegrounds = set(BATTLEGROUND_ZONE.values())
+    changed = True
+    while changed:
+        changed = False
+        for qid, rec in records.items():
+            prev = records.get(rec.get("prev"))
+            if (prev and set(prev["zones"]) & battlegrounds and not set(rec["zones"]) & battlegrounds
+                    and givers.get(qid) and givers.get(qid) == givers.get(rec["prev"])):
+                rec["zones"], rec["sort"] = list(prev["zones"]), None
+                changed = True
 
 
 def chain_links(rows, known, later=None):
@@ -755,6 +787,7 @@ def with_db(args):
         records[qid] = {"title": title, "zones": zones, "sort": group, "races": races[qid],
                         "classes": quest_classes(q.get("classes", 0), group), "prev": links.get(qid)}
 
+    battleground_follow_ups(records, givers)
     overrides = load_overrides()
     notes = apply_overrides(records, overrides["quests"])
     named, name_notes = chain_names(records, overrides["chains"])

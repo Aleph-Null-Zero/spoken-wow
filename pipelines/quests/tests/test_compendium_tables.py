@@ -17,8 +17,8 @@ def _assign(uimap, area, mapid=0, region=(0, 0, 0, 0, 0, 0)):
             **{f"Region_{n}": str(v) for n, v in enumerate(region)}}
 
 
-def _area(area, parent=0, continent=0):
-    return {"ID": str(area), "ParentAreaID": str(parent), "ContinentID": str(continent)}
+def _area(area, parent=0, continent=0, name=""):
+    return {"ID": str(area), "ParentAreaID": str(parent), "ContinentID": str(continent), "AreaName_lang": name}
 
 
 # Forever's tables add Zephras Isle (2521, area 15912); Era's know Elwynn Forest only. An area only
@@ -27,7 +27,8 @@ TABLES = {
     ("UiMap", BUILD): _uimap(1429, 2521),
     ("UiMapAssignment", BUILD): [_assign(1429, 12, 0, (-100, -100, 0, 100, 100, 0)), _assign(2521, 15912)],
     ("AreaTable", BUILD): [_area(12), _area(15912), _area(15913, parent=15912), _area(16732, continent=2998),
-                           _area(16919, continent=3065)],
+                           _area(16919, continent=3065), _area(2597, continent=30, name="Alterac Valley"),
+                           _area(2839, parent=36, name="Alterac Valley"), _area(36, name="Alterac Mountains")],
     ("UiMap", ERA_BUILD): _uimap(1429, 1437),
     ("UiMapAssignment", ERA_BUILD): [_assign(1429, 12), _assign(1437, 9999, 0, (200, 200, 0, 300, 300, 0))],
     ("AreaTable", ERA_BUILD): [_area(12), _area(9999)],
@@ -64,3 +65,10 @@ def test_forevers_instanced_places_are_filed_under_the_zone_around_them(monkeypa
     maps = _maps(monkeypatch)
     assert maps.zone_of_area(16732) == 1437
     assert maps.zone_of_area(16919) == 1455
+
+
+def test_an_area_named_after_a_battleground_is_that_battleground(monkeypatch):
+    maps = _maps(monkeypatch)
+    assert maps.battleground_of_area(2597) == 1459
+    assert maps.battleground_of_area(2839) == 1459
+    assert maps.battleground_of_area(36) is None

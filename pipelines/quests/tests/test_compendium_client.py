@@ -15,11 +15,16 @@ from export_compendium import chain_links, eg_datasets, eg_races, forever_quests
 class FakeMaps:
     """Areas 12 (Elwynn Forest) and 15912 (Zephras Isle) have zones; 16611 (Ruins of Lordaeron) has
     none. uiMap 1455 is Ironforge, 1458 Undercity, 2257 a district inside Ironforge."""
-    AREAS = {12: 1429, 15912: 2521}
+    AREAS = {12: 1429, 15912: 2521, 36: 1416}
     UIMAPS = {1455: 1455, 1458: 1458, 2257: 1455}
+    # 2597 is Alterac Valley's own area, 2839 an area of Alterac Mountains named after it.
+    BATTLEGROUNDS = {2597: 1459, 2839: 1459}
 
     def zone_of_area(self, area):
         return self.AREAS.get(area)
+
+    def battleground_of_area(self, area):
+        return self.BATTLEGROUNDS.get(area)
 
     def zone_of_uimap(self, uimap):
         return self.UIMAPS.get(uimap)
@@ -154,3 +159,21 @@ def test_offline_with_nothing_cached_the_export_stops(remote):
 def test_a_giver_found_in_four_zones_or_more_places_its_quest_nowhere():
     assert _place(0, None, givers=[1453, 1455, 1457, 1417]) == ([], None, None)
     assert _place(0, None, givers=[1453, 1455, 1457]) == ([1453, 1455, 1457], None, "giver")
+
+
+def test_a_quest_filed_under_an_area_named_after_a_battleground_is_that_battlegrounds():
+    assert _place(2839, None, givers=[1455]) == ([1459], None, "db")
+    assert _place(0, {"zoneAreaId": 2597}, givers=[1455]) == ([1459], None, "client")
+
+
+def _rec(zones=(), prev=None):
+    return {"title": "", "zones": list(zones), "sort": None, "prev": prev}
+
+
+def test_a_battlemasters_next_quest_is_filed_under_the_battleground_of_the_one_before():
+    records = {8399: _rec([1460]), 8404: _rec([], prev=8399), 8405: _rec([1455], prev=8404),
+               7000: _rec([1455], prev=8399)}
+    givers = {8399: "creature:15351", 8404: "creature:15351", 8405: "creature:15351", 7000: "creature:1"}
+    export_compendium.battleground_follow_ups(records, givers)
+    assert records[8404]["zones"] == [1460] and records[8405]["zones"] == [1460]
+    assert records[7000]["zones"] == [1455]
