@@ -26,7 +26,7 @@
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
 -- (C.NewPage).
 
-local VERSION = 43
+local VERSION = 44
 
 if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
 	return
@@ -1825,8 +1825,6 @@ function C.NewPage(parent, addon, play, report)
 	body.frame:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 6, -2)
 	body.frame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -RIGHT, PAD - 6)
 	body:SetInk(INK[1], INK[2], INK[3])
-	-- The same divider between a quest's parts, short.
-	if rule and body.SetPartDivider then body:SetPartDivider(rule) end
 	body:SetThumbColor(INK[1], INK[2], INK[3])
 	if file then body:SetFadeSource(frame, file, coords) end
 	self.body = body

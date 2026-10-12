@@ -442,12 +442,9 @@ Expect("...its words in parts, offered then handed in, each under its heading",
     page.body.lastParts ~= nil and page.body.lastParts[1].heading == L.QUEST_PART_ACCEPT
     and page.body.lastParts[#page.body.lastParts].heading == L.QUEST_PART_COMPLETE, true)
 Expect("...no Play or Report in the page's corner: each part has its own", page.play:IsShown(), false)
--- The page's divider, as a client with the spellbook's art gives it.
-page.body:SetPartDivider({ file = "spellbook-divider", width = 657, left = 0, right = 0.64, top = 0, bottom = 0.69 })
-Click("Kobold Candles")
-Click("Kobold Camp Cleanup")
-Expect("...the page's divider, short, above each part but the first", not page.body.parts[1].divider:IsShown()
-    and page.body.parts[2].divider:IsShown() and page.body.parts[2].divider.width <= 220, true)
+Expect("...the quest frame's break above each part but the first, at its own size", not page.body.parts[1].divider:IsShown()
+    and page.body.parts[2].divider:IsShown() and page.body.parts[2].divider.texture
+    == [[Interface\QuestFrame\UI-HorizontalBreak]] and page.body.parts[2].divider.width, 256)
 Expect("...no placeholder left in them", words:find("$", 1, true), nil)
 Click("Kobold Candles")
 Expect("a quest not completed does not open", page.title.text, "Kobold Camp Cleanup")

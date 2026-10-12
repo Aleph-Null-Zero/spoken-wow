@@ -40,16 +40,17 @@ local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
 -- A part's heading (SetParts): the title's face, larger than the words and darker, on a line as
 -- tall as its round buttons; the words HEAD_GAP under it, PART_GAP between one part and the next.
 -- In near-black, as the quest frame's own headings on parchment are, set apart by room alone.
-local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 34, 4
+local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 6, 44, 4
 -- No larger than HEAD_MOST, so a heading stays under the page's title (26) at any size of words.
 local HEAD_MOST = 20
 -- The first heading's line starts HEAD_LIFT into the text's top padding: its line is taller than
 -- its letters, which started lower than a page's first line of words does.
 local HEAD_LIFT = 4
 local HEAD_INK = { 0.06, 0.04, 0.02 }
--- Between one part and the next, in the middle of PART_GAP, the page's own divider at its own size,
--- cut short to DIVIDER_MOST rather than stretched (SetPartDivider).
-local DIVIDER_MOST, DIVIDER_HEIGHT = 220, 11
+-- Between one part and the next, in the middle of PART_GAP and of the words' width, the quest
+-- frame's own break, at its own size: stretched, its flourishes widen.
+local BREAK = [[Interface\QuestFrame\UI-HorizontalBreak]]
+local BREAK_WIDTH, BREAK_HEIGHT = 256, 32
 
 local TextView = {}
 TextView.__index = TextView
@@ -594,14 +595,11 @@ function TextView:SetParts(parts)
 		end
 		slot.divider:Hide()
 		if i > 1 then
-			local rule = self.partDivider
-			if rule and width > 0 then
-				local w = math.min(DIVIDER_MOST, width, rule.width)
-				slot.divider:SetTexture(rule.file)
-				slot.divider:SetTexCoord(rule.left, rule.left + (rule.right - rule.left) * w / rule.width, rule.top, rule.bottom)
-				slot.divider:SetSize(w, DIVIDER_HEIGHT)
+			if width > 0 then
+				slot.divider:SetTexture(BREAK)
+				slot.divider:SetSize(BREAK_WIDTH, BREAK_HEIGHT)
 				slot.divider:ClearAllPoints()
-				slot.divider:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -(y + (PART_GAP - DIVIDER_HEIGHT) / 2))
+				slot.divider:SetPoint("TOP", self.child, "TOPLEFT", width / 2, -(y + (PART_GAP - BREAK_HEIGHT) / 2))
 				slot.divider:Show()
 			end
 			y = y + PART_GAP
@@ -654,12 +652,6 @@ function TextView:SetParts(parts)
 	self.frame:SetVerticalScroll(0)
 	self:UpdateScrollBar()
 	self:UpdateFade()
-end
-
---- The divider drawn between parts (SetParts): { file, width, left, right, top, bottom }, its
---- picture and its own width; nil for none.
-function TextView:SetPartDivider(rule)
-	self.partDivider = rule
 end
 
 --- A picture above the text from the next SetText on: `file` a texture, `mask` the one fraying its
