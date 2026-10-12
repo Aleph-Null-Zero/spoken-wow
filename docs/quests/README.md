@@ -1399,19 +1399,25 @@ The list is the Compendium's cards. Its top level is a banner for each continent
 for each zone with quests (a city a small card inside its zone's), then a banner each for
 Classes, Professions, Events and Other, holding a small card for each class, profession, season
 or other QuestSort, and Place Unknown under Other. There is no Azeroth row; with the player's
-zone unknown the tab lands on the first continent. A card's diamond shows how many of its quests
-are completed (grey with none started, gold with all completed), the line under its name says so
-out of all with how many are in progress, and on its right are the share completed (or a tick)
-and a bar along its foot filled as far. A banner counts completed out of all.
+zone unknown the tab lands on the first continent. The list is drawn in the game's own art
+(`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
+tracker's campaign header for the player's faction, without its crest, and a card is Classic's
+character select card. A zone's card shows its painting (`Spoken:ZoneIcon`) in the collections
+window's gold frame, greyed with none started, and a class, profession, season or other QuestSort
+a scroll in the same frame. The line under a card's name counts the quests completed out of all
+with how many are in progress, and on its right are the share completed (or the quest log's gold
+tick) and the Pet Journal's bar along its foot filled as far. A banner counts completed out of
+all. A quest's row has the gold tick once completed and the quest mark while in progress.
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
 there, linked by `prev`) are a small card of their own, before the quests in no chain. The card
 is named after the first of them, taken in order (how many quests before each, then id); its
-diamond shows how many quests the chain holds, its line "of N quests" with how many are in
-progress, and its bar and share how many are completed. A chain that runs through several zones
-has a card in each, for its quests there. Chosen, a chain's page lists its quests in order, each
-with its tick, the quest mark or "Not started", and where it can be read the first sentence or
-two of its offer; Play there plays the first quest of it started that a pack voices. The client
+badge is the quest log's storyline mark, its line counts its quests completed out of all with how
+many are in progress, and its bar and share how many are completed. A chain that runs through
+several zones has a card in each, for its quests there. Chosen, a chain's page lists its quests in
+order, each with the gold tick, the quest mark or a padlock before its title, then "Not started"
+or, where it can be read, the first sentence or two of its offer; Play there plays the first
+quest of it started that a pack voices. The client
 has no chain of its own, so without `prev` in the data every quest is a row of its own.
 
 The page fills the placeholders for the player as the client does. Play queues the quest's accept, progress and
