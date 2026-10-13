@@ -878,43 +878,6 @@ do
     slot.heading.GetStringHeight, slot.caption.GetStringHeight = nil, nil
     body:SetParts(parts)
 end
--- A part with a header (Spoken:CreateDialogueHeader): drawn across the part's top in place of the
--- heading, the face and the caption, its buttons on its controls' middle, the words under its line.
-do
-    local body, report, play = page.body, PartButton(L.QUEST_PART_ACCEPT, "report"), PartButton(L.QUEST_PART_ACCEPT, "play")
-    local parts = body.lastParts
-    -- Put away by the part above, which had Report alone.
-    play:Show()
-    local header = { frame = CreateFrame("Frame", nil, body.child) }
-    function header:Layout(width, room)
-        self.laidOut = width .. "," .. room
-        return 60, 25, 48
-    end
-    local slot = body.parts[1]
-    local width = body.frame.width
-    body.frame.width = 400
-    body:SetParts({ { heading = L.QUEST_PART_ACCEPT, text = "Words.", header = header, buttons = { report, play } },
-        { heading = L.QUEST_PART_COMPLETE, text = "More words.", header = { frame = CreateFrame("Frame", nil, body.child),
-            Layout = function() return 60, 25, 48 end } } })
-    local full = 400 - body:BarRoom()
-    local size = ns:Get("fontSize") + 1
-    Expect("a part's header laid out across the words' width, told the room its buttons take",
-        header.laidOut, full .. "," .. (report:GetWidth() + 4 + play:GetWidth()))
-    Expect("...at the part's top, where a page's words start", header.frame:IsShown() and header.frame.anchor.point .. " "
-        .. header.frame.anchor.x .. "," .. header.frame.anchor.y, "TOPLEFT 0,-18")
-    Expect("...its buttons centred on its controls' middle at the right", report.anchor.relativePoint .. " "
-        .. report.anchor.x .. "," .. report.anchor.y, "TOPLEFT " .. full .. "," .. -(18 + 25))
-    Expect("...the heading and caption not drawn", tostring(slot.heading:IsShown()) .. " " .. tostring(slot.caption:IsShown()),
-        "false false")
-    Expect("...the words 1.4 of their size under the header strip's line", body.parts[1].words.anchor.y,
-        -(18 + 48 + math.floor(1.4 * size + 0.5)))
-    Expect("...and 34 between one part and the next header", body.parts[2].words.anchor.y - body.parts[1].words.anchor.y
-        + (body.parts[1].words:GetStringHeight() or 0), -(34 + 48 + math.floor(1.4 * size + 0.5)))
-    body:SetParts(parts)
-    Expect("a header no longer in the parts put away", header.frame:IsShown(), false)
-    body.frame.width = width
-    body:SetParts(parts)
-end
 play.scripts.OnClick(play)
 local queued = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(queued, clip.fileName) end

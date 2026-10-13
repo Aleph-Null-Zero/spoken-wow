@@ -1199,10 +1199,9 @@ local function FaceSpeaker(id, moment)
     return { objectOrItem = true, icon = icon, bullet = bullet }
 end
 
--- A quest's words in parts, the offer and the hand-in each under its header, with the face and
--- name of who says it and the part's name, and Play and Report for that part where a pack voices
--- it; the hand-in only where it Shows. Without DialogueUI, the header is the face beside the name
--- over the part's heading. A part a pack voices whose words are not known says so,
+-- A quest's words in parts, the offer and the hand-in, each headed by the face of who says it
+-- beside their name over the part's name, with Play and Report for that part where a pack voices
+-- it; the hand-in only where it Shows. A part a pack voices whose words are not known says so,
 -- and is there to be played and reported. nil with no words and nothing voiced.
 local function Parts(id)
     local parts = {}

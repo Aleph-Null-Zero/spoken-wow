@@ -54,8 +54,8 @@ local METHODS = {
     "AddDiagnostics", "Diagnostics",
     -- contributions
     "ShowContribution", "SetContributeHost", "AreContributeButtonsHidden",
-    -- a speaker's face on a feature addon's page, and the DialogueUI card's header
-    "CreateSpeakerFace", "CreateDialogueHeader",
+    -- a speaker's face on a feature addon's page
+    "CreateSpeakerFace",
 }
 for _, name in ipairs(METHODS) do
     Expect("Spoken:" .. name .. " exists", type(Spoken[name]), "function")
@@ -178,9 +178,6 @@ do
     other:SetSpeaker({ creatureID = 197 })
     Expect("two faces of one creature each draw it", Drawn() .. " " .. tostring(other.still:IsShown()), "still 3258 true")
 end
-
--- Without DialogueUI there is no art to draw its card's header in: the caller draws its own.
-Expect("no DialogueUI header without DialogueUI", Spoken:CreateDialogueHeader(CreateFrame("Frame", nil, UIParent)), nil)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll API contract tests passed")

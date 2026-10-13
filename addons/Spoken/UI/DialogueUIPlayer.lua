@@ -13,7 +13,6 @@ if Version.IsAnyLegacy then
     function DialogueUIPlayer:SetVisible() end
     function DialogueUIPlayer:HasClip() return false end
     function DialogueUIPlayer:Describe() return "dialogueui skin: not available on this client" end
-    function DialogueUIPlayer:CreateHeader() return nil end
     return
 end
 
@@ -199,7 +198,7 @@ local function Config() return Addon:Profile("Frame") end
 
 --------------------------------------------------------------------------------
 -- The header: DialogueUI's header strip, the speaker's face in its socket, and their name and
--- the line's title beside it. This window's, and a page's (DialogueUIPlayer:CreateHeader).
+-- the line's title beside it.
 --------------------------------------------------------------------------------
 
 --- DialogueUI's window as this one copies it: its width, the column inside its paddings, and the
@@ -252,9 +251,9 @@ end
 
 --- Lays the header out across the top of `parent`, a column `inner` wide, in `look`'s art from
 --- `paper`, with `fonts` at `k` of their size. The title and the name stop `clear` short of the
---- round controls: of `right`'s left edge, or without `right`, of `room` from the column's right.
+--- round controls, `right`.
 --- Returns the strip's height, the controls' middle and where the strip's line ends, from its top.
-local function PlaceHeader(head, parent, inner, look, paper, fonts, k, clear, right, room)
+local function PlaceHeader(head, parent, inner, look, paper, fonts, k, clear, right)
     local ratio, stripHeight = Strip(inner)
     local face = Round(34 * ratio)
     local socket = Round(SOCKET_WIDTH * ratio)
@@ -301,11 +300,7 @@ local function PlaceHeader(head, parent, inner, look, paper, fonts, k, clear, ri
     -- the socket's middle, 2 up, and the name above it.
     local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
     local function StopShort(text)
-        if right then
-            text:SetPoint("RIGHT", right, "LEFT", -clear, 0)
-        else
-            text:SetPoint("RIGHT", parent, "TOPRIGHT", -(room + clear), -middle)
-        end
+        text:SetPoint("RIGHT", right, "LEFT", -clear, 0)
     end
     -- The line's title sits where DialogueUI puts its quest title, the speaker's name in its
     -- small line above.
@@ -343,53 +338,6 @@ local function PaintHeader(head, look, fonts, colors, k)
     local shadow = look.shadow and 1 or 0
     PaintText(head.name, fonts.subtitle, fonts.subtitleSize * k, colors.title, shadow)
     PaintText(head.title.text, fonts.title, Round(fonts.titleSize * TITLE_SHARE * k), colors.title, shadow)
-end
-
--- A page's header is drawn in DialogueUI's brown theme whatever theme it is set to: the page is
--- parchment, and the dark theme's art and pale ink are made for its dark window.
-local PAGE_THEME = 1
-local PageHeader = {}
-
-function PageHeader:SetSpeaker(speaker)
-    self.portrait:SetSpeaker(speaker)
-    local tint = Theme:Colors(PAGE_THEME).portraitTint
-    local texture = self.viewport.texture
-    if texture then texture:SetVertexColor(tint[1], tint[2], tint[3]) end
-end
-
-function PageHeader:SetTexts(name, title)
-    self.title.text:SetText(title or "")
-    -- Said once: a name the same as the title is left off.
-    self.name:SetText(name and name ~= title and name or "")
-end
-
-function PageHeader:Layout(width, room)
-    width = math.max(1, width or 1)
-    -- This window's header grown or shrunk to `width`, its words with it.
-    local _, column = Column()
-    local fonts = Theme:Fonts()
-    self.frame:SetWidth(width)
-    local height, middle, line = PlaceHeader(self, self.frame, width, LOOKS.quest,
-        Theme:TexturePath(PAGE_THEME) .. "Parchment.png", fonts, width / column, ROUND_SIZE, nil, room or 0)
-    self.frame:SetHeight(height)
-    PaintHeader(self, LOOKS.quest, fonts, Theme:Colors(PAGE_THEME), width / column)
-    return height, middle, line
-end
-
---- This window's header on a frame of its own on `parent`, for a page (Spoken:CreateDialogueHeader).
---- nil where DialogueUI's art cannot be drawn.
-function DialogueUIPlayer:CreateHeader(parent)
-    if not Theme:Available() then return nil end
-    local frame = CreateFrame("Frame", nil, parent)
-    frame:SetSize(1, 1)
-    local head = BuildHeader(frame)
-    head.frame = frame
-    local host = head.portrait
-    host.viewport, host.badge, host.badgeBackground = head.viewport, head.badge, head.badgeDisc
-    MinimalPlayer:DrawSpeakers(host)
-    head.SetSpeaker, head.SetTexts, head.Layout = PageHeader.SetSpeaker, PageHeader.SetTexts, PageHeader.Layout
-    head:SetSpeaker(nil)
-    return head
 end
 
 function Skin:IsEnabled()

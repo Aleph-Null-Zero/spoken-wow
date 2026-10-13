@@ -356,7 +356,7 @@ function MinimalPlayer:CreateFace(parent, size)
 end
 
 --- Gives `face` SetSpeaker: a frame with a `viewport` clipped round, a `badge` and its
---- `badgeBackground`, and a `ring` where it has one (DialogueUI's header has its socket instead).
+--- `badgeBackground`, and a `ring` where it has one.
 function MinimalPlayer:DrawSpeakers(face)
     face.still = face.viewport:CreateTexture(nil, "ARTWORK")
     face.still:SetAllPoints()
