@@ -291,16 +291,15 @@ end
 --
 -- The game cannot open a URL or send anything anywhere, so the only way a player
 -- can report a bad line is to copy an address and open it themselves. The site
--- resolves /{lang}/r/{mapID}/{slug} back to a line by matching that path against
--- the audio file paths it already assigns, which is why the slug is built the
--- same way here as slugFor does in tools/voice/naming.mjs -- and why "zone", the
--- file name a zone's own line gets, doubles as the slug for it.
+-- resolves /{lang}/zones/r/{mapID}/{slug} back to a line by matching that path
+-- against the audio file paths it already assigns, which is why the slug is built
+-- the same way here as slugFor does in tools/voice/naming.mjs -- and why "zone",
+-- the file name a zone's own line gets, doubles as the slug for it.
 --
 -- The language in the address is the one being READ, not the client's locale: a
--- report is about the text and narration on screen, and the site files it under
--- that language so the people who can act on it see it beside the line it is
--- about. Builds up to 0.3.1 sent /r/... with no language; the site still takes that
--- and treats it as English, which is what it meant when it was written.
+-- report is about the text and narration on screen, and the site shows that
+-- language's line so the people who can act on it see it beside the line it is
+-- about.
 --
 -- tools/validate.mjs fails the build if these two ever drift, or if two subzones
 -- in one zone come to share a slug: the JS side has a hash fallback for that
@@ -313,12 +312,10 @@ function SpokenZones:SiteURL()
 	return _G.Spoken and _G.Spoken.SITE_URL
 end
 
-SpokenZones.SITE_URL = "https://lore.rusty.one"
-
 -- `language` names the narration being reported, for a report made from the player about a
 -- clip; the lore window's report is about the text on screen and passes none.
 function SpokenZones:ReportURL(mapID, areaKey, language)
-	if not mapID then
+	if not mapID or not self:SiteURL() then
 		return nil
 	end
 	local slug = "zone"
@@ -329,7 +326,7 @@ function SpokenZones:ReportURL(mapID, areaKey, language)
 			slug = "zone"
 		end
 	end
-	return ("%s/%s/r/%d/%s"):format(self.SITE_URL, language or self:GetLanguage(), mapID, slug)
+	return _G.Spoken:ReportURL("zones", ("%d/%s"):format(mapID, slug), language or self:GetLanguage())
 end
 
 --------------------------------------------------------------------------------
