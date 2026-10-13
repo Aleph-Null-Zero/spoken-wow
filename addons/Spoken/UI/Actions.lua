@@ -1,23 +1,20 @@
 setfenv(1, SpokenEnv)
 
--- The strip of buttons under the queue, built from the speaking clip's presentation.
--- Zones bring Read and Report; quests bring Report, and Stop Gossip anchored to the
--- header. The player lays them out and knows nothing about what they do.
+-- The buttons the speaking clip's presentation brings beside a window's own Stop or Replay and
+-- Skip: every module's Report, and gossip's Stop Gossip, anchored to the header. The player lays
+-- them out and knows nothing about what they do.
 --
---   action = { id, text = "Read" | fun():string, tooltip = fun(GameTooltip),
---              label = L.OPT_REPORT_PROBLEM?, -- an icon action's name, where a menu lists it
---              visible = fun():boolean, onClick = fun(clip), anchor = "header"?,
+--   action = { id, icon, text = "R", -- what a legacy client draws instead of the icon
+--              tooltip = fun(GameTooltip), label = L.OPT_REPORT_PROBLEM?, -- its name in a menu
+--              visible = fun():boolean, onClick = fun(clip), anchor = "header" | "topright"?,
 --              create = fun(parent):Button?, onClipChanged = fun(clip, button)? }
 --
--- `create` opts a button out of the default template -- the report button builds its
--- own -- and such a button keeps its own OnClick; the player only tells it which clip
--- it now stands beside.
+-- `create` builds the button instead of the round icon, and such a button keeps its own
+-- OnClick; the player only tells it which clip it now stands beside.
 Actions = {}
 
 local function Clamp01(n) return math.max(0, math.min(1, tonumber(n) or 0)) end
 
-local ACTION_WIDTH = 70
-local ACTION_HEIGHT = 18
 -- Big enough to aim at and to read as a bug rather than a smudge.
 local ICON_SIZE = 24
 local named = 0
@@ -28,7 +25,6 @@ local named = 0
 local function CanDrawIcon()
     return not Version.IsAnyLegacy
 end
-Actions.STRIP_HEIGHT = ACTION_HEIGHT + 6
 
 -- Actions an addon has declared optional, in the order declared: { id, label }. The player
 -- offers a setting for each, named by the addon, and never learns what the action does.
@@ -48,7 +44,7 @@ function Actions:RegisterOptional(id, label)
 end
 
 function Actions:Build(frame)
-    frame.actions = { buttons = {}, byId = {}, shown = 0 }
+    frame.actions = { buttons = {}, byId = {} }
 end
 
 local RING = [[Interface\AddOns\Spoken\Textures\SettingsButton]]
@@ -511,7 +507,7 @@ local function NewButton(frame, action)
     local button
     if action.create then
         button = action.create(frame)
-    elseif action.icon then
+    else
         if CanDrawIcon() then
             -- No template: a button that is only a texture wants none of
             -- UIPanelButtonTemplate's furniture.
@@ -545,24 +541,6 @@ local function NewButton(frame, action)
         end)
         button:HookScript("OnLeave", function() GameTooltip_Hide() end)
         Actions.OfferLogMenu(button, function(self) return self.action and self.action.id == "report" end)
-    else
-        button = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-        button:SetScript("OnClick", function(self)
-            if self.action and self.action.onClick then
-                self.action.onClick(frame.actions.clip)
-            end
-        end)
-        button:SetScript("OnEnter", function(self)
-            if self.action and self.action.tooltip then
-                GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-                self.action.tooltip(GameTooltip)
-                GameTooltip:Show()
-            end
-        end)
-        button:SetScript("OnLeave", function() GameTooltip_Hide() end)
-    end
-    if not action.create and not action.icon then
-        button:SetSize(ACTION_WIDTH, ACTION_HEIGHT)
     end
     return button
 end
@@ -580,15 +558,15 @@ function Actions:CornerAction(clip)
     end
 end
 
---- Lay out the actions for `clip` (the head), hiding whatever the last clip left.
----@return number shown
+--- The buttons for `clip`'s actions (the head's) in `frame.actions.buttons`, in order, hiding
+--- whatever the last clip left. Where they go is HeaderControls' caller's.
 function Actions:Configure(frame, clip)
     -- One setting covers the lot. Every action either of the shipped addons offers is a
     -- convenience beside the line, so "hide them" is a player-wide answer rather than one
     -- checkbox per addon per button.
     local list = clip and clip.present and clip.present.actions or {}
     frame.actions.clip = clip
-    local previous, shown, placed = nil, 0, 0
+    local placed = 0
     local inUse = {}
     -- Keyed by source as well as id: both shipped addons call their action "report", and
     -- one button between them means the addon that built it first answers for the other.
@@ -606,34 +584,10 @@ function Actions:Configure(frame, clip)
             end
             button.action = action
             inUse[id] = true
-
-            local text = action.text
-            if type(text) == "function" then text = text() end
-            -- An icon button has no label to set; its `text` is the fallback for a client
-            -- that cannot draw the icon, and that was read when it was built.
-            if text and not button.showsIcon then button:SetText(text) end
             if action.onClipChanged then action.onClipChanged(clip, button) end
-
-            button:ClearAllPoints()
-            if action.anchor == "topright" then
-                -- Out of the way of the line being read, and it makes no room for itself:
-                -- the strip below the queue is what pushes the rows up.
-                button:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -8, -8)
-            elseif action.anchor == "header" then
-                button:SetPoint("BOTTOMLEFT", frame.container.name, "RIGHT", -6, 0)
-            elseif previous then
-                button:SetPoint("BOTTOMLEFT", previous, "BOTTOMRIGHT", 4, 0)
-                previous = button
-            else
-                button:SetPoint("BOTTOMLEFT", frame.portrait, "BOTTOMRIGHT", 15, 4)
-                previous = button
-            end
             button:Show()
             placed = placed + 1
             frame.actions.buttons[placed] = button
-            if action.anchor ~= "topright" then
-                shown = shown + 1
-            end
         end
     end
     for id, button in pairs(frame.actions.byId) do
@@ -642,8 +596,6 @@ function Actions:Configure(frame, clip)
     for i = placed + 1, getn(frame.actions.buttons) do
         frame.actions.buttons[i] = nil
     end
-    frame.actions.shown = shown
-    return shown
 end
 
 --- The actions for `clip` in `controls`, after `first` (its Stop or Replay and Skip) and as large

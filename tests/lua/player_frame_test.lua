@@ -249,12 +249,12 @@ env, quests, zones = Boot(); F = env.PlayerFrame
 local clicked
 zones:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", portrait = { kind = "none" },
     actions = {
-        { id = "read", text = "Read", onClick = function(clip) clicked = "read:" .. clip.key end },
-        { id = "report", text = function() return "Report" end, onClick = function() clicked = "report" end },
+        { id = "read", icon = "Read", onClick = function(clip) clicked = "read:" .. clip.key end },
+        { id = "report", icon = "Report", onClick = function() clicked = "report" end },
     } } }))
-Expect("two actions make two buttons", F.frame.actions.shown, 2)
-Expect("...labelled", F.frame.actions.buttons[1]:GetText(), "Read")
-Expect("...a text function is called", F.frame.actions.buttons[2]:GetText(), "Report")
+Expect("two actions make two buttons", #F.frame.actions.buttons, 2)
+Expect("...each its round icon", F.frame.actions.buttons[1].glyph:GetTexture() .. "|"
+    .. F.frame.actions.buttons[2].glyph:GetTexture(), "Read|Report")
 ExpectOf("...in the header's controls after Stop and Skip", function()
     return #F.row == 4 and F.row[1] == F.play and F.row[2] == F.skip
         and F.row[3] == F.frame.actions.buttons[1] and F.row[4]:GetParent() == F.controls
@@ -263,7 +263,7 @@ F.frame.actions.buttons[1]:Click()
 Expect("clicking passes the clip", clicked ~= nil and clicked:sub(1, 5), "read:")
 env.SoundQueue:RemoveAllSoundsFromQueue()
 quests:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", portrait = { kind = "none" } } }))
-ExpectOf("no actions, Stop and Skip alone", function() return F.frame.actions.shown .. " " .. #F.row end, "0 2")
+ExpectOf("no actions, Stop and Skip alone", function() return #F.frame.actions.buttons .. " " .. #F.row end, "0 2")
 
 ---------------------------------------------------------------- the Talking Head's layout
 -- The window is the game's Talking Head frame as TalkingHeadUI.xml lays it out: 570 by 155, the
@@ -880,24 +880,24 @@ local function Clip(source, label, actions)
         portrait = { kind = "none" }, actions = actions } })
 end
 local zoneClip = Clip(zones, "Durotar", {
-    { id = "read", text = "Read", onClick = function() end },
-    { id = "report", text = "Report", onClick = function() zoneClicks = zoneClicks + 1 end },
+    { id = "read", icon = "ZoneRead", onClick = function() end },
+    { id = "report", icon = "ZoneReport", onClick = function() zoneClicks = zoneClicks + 1 end },
 })
 local questClip = Clip(quests, "Cutting Teeth", {
-    { id = "report", text = "Report", onClick = function() questClicks = questClicks + 1 end },
+    { id = "report", icon = "QuestReport", onClick = function() questClicks = questClicks + 1 end },
 })
 zones:Enqueue(zoneClip)
 env.PlayerFrame:Update()
-Expect("the zone line brings two actions", env.PlayerFrame.frame.actions.shown, 2)
+Expect("the zone line brings two actions", #env.PlayerFrame.frame.actions.buttons, 2)
 env.SoundQueue:RemoveSoundFromQueue(zoneClip)
 quests:Enqueue(questClip)
 env.PlayerFrame:Update()
-Expect("the quest line brings one", env.PlayerFrame.frame.actions.shown, 1)
+Expect("the quest line brings one", #env.PlayerFrame.frame.actions.buttons, 1)
 local visible = {}
 for _, button in pairs(env.PlayerFrame.frame.actions.byId) do
-    if button:IsShown() then table.insert(visible, button:GetText() or "?") end
+    if button:IsShown() then table.insert(visible, button.glyph:GetTexture() or "?") end
 end
-Expect("...and only one is on screen", table.concat(visible, "|"), "Report")
+Expect("...and only one is on screen", table.concat(visible, "|"), "QuestReport")
 env.PlayerFrame.frame.actions.buttons[1]:Click()
 Expect("...whose click belongs to the addon that is speaking", questClicks, 1)
 Expect("...not to the other one", zoneClicks, 0)

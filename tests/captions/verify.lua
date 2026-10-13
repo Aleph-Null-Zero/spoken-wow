@@ -384,7 +384,7 @@ for _,size in ipairs({12,26}) do
             M.frame:SetWidth(width); T:RefreshConfig()
                         local displayed={}
             for page=1,T:PageCount() do
-                T:ScrollTo((page-1)*count+1)
+                T.manualScroll=true; T.topTarget=T:Snap((page-1)*count+1); T.top=T.topTarget; T:Update()
                 CheckLayout()
                 displayed[#displayed+1]=Plain(Captions())
             end
@@ -453,8 +453,6 @@ cfg.Typewriter=false
 cfg.ScrollMode='line'; T:Update()
 T.frame:Fire('OnMouseWheel',1)
 Check(T.manualScroll and T.topTarget<target,'the wheel scrolls back by lines, holding there')
-T:ScrollTo(1)
-Check(T.top==1 and T.manualScroll,'a scrollbar drag lands at once')
 T:Follow()
 Check(not T.manualScroll,'clicking the captions follows the voice again')
 Q:RemoveAllSoundsFromQueue()

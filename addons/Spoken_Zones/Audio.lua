@@ -685,7 +685,7 @@ end
 function SpokenZones:GetNowPlaying()
 	-- Deliberately not "whatever is at the head". An entry held by a gate sits
 	-- there making no sound, and controls offering Pause over silence would be
-	-- lying; the queue list is what shows a held entry. So: playing, or paused.
+	-- lying; the window says why a held line waits. So: playing, or paused.
 	local Spoken = _G.Spoken
 	local head = Spoken and Spoken:GetNowPlaying()
 	if not head or head.source ~= self.source then

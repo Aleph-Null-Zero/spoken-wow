@@ -393,20 +393,6 @@ function Transcript:CanGlide()
     return self.frame ~= nil and self.frame.SetClipsChildren ~= nil
 end
 
---- The first visible line, fractional mid-glide, and the highest it can be. For a player
---- that draws its own scrollbar beside the captions.
-function Transcript:GetScroll()
-    return self.top or 1, self:MaxTop()
-end
-
---- Show the captions from `line` on, holding there as a wheel scroll does.
-function Transcript:ScrollTo(line)
-    self.manualScroll = true
-    self.topTarget = self:Snap(line)
-    self.top = self.topTarget
-    self:Update()
-end
-
 function Transcript:ActiveSegment(progress)
     if not progress or not self.segments or #self.segments == 0 then return nil end
     local target = progress * self.totalWeight

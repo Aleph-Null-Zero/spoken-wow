@@ -12,7 +12,6 @@ Bullets = {}
 Renderers = {}
 
 -- The red a queue line turns when a click will take it out, in either player layout.
-RemoveColor = { 225 / 255, 20 / 255, 8 / 255 }
 
 -- Player-wide settings only. Anything a single domain cares about -- gossip frequency,
 -- autoplay, which pack to prefer -- stays in that feature addon's own saved variables.
