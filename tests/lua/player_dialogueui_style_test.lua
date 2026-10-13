@@ -1047,7 +1047,21 @@ local function Page(material)
         portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 end
 local function Rows(texture) return texture.texCoord and (texture.texCoord[3] * 2048) .. "-" .. (texture.texCoord[4] * 2048) end
+-- The title already says the page's label when the book's look changes its font: the client can
+-- leave such a string blank, and ignores the same text set again, so it is emptied and set again.
+Skin.title.text:SetText("Page 1 of 4")
+local titleSets, setTitle = {}, Skin.title.text.SetText
+Skin.title.text.SetText = function(self, text)
+    table.insert(titleSets, text)
+    return setTitle(self, text)
+end
 books:Enqueue(Page(nil))
+Skin.title.text.SetText = setTitle
+local emptiedThenSet = false
+for i = 1, #titleSets - 1 do
+    if titleSets[i] == "" and titleSets[i + 1] == "Page 1 of 4" then emptiedThenSet = true end
+end
+Expect("a title whose font changes under the same text is emptied and set again, so it is drawn", emptiedThenSet, true)
 Expect("a book's page is drawn in the book view's paper", Skin.parchments[1].texture .. " " .. Skin.parchments[3].texture,
     BOOK .. "Parchment.png " .. BOOK .. "Parchment.png")
 Expect("...its top cap, the middle and its torn foot", Rows(Skin.parchments[1]) .. " " .. Rows(Skin.parchments[2]) .. " "

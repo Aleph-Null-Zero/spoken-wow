@@ -4,6 +4,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **A book's title shows on the DialogueUI window the first time it plays.** It could stay blank after a quest line until another book played. *([Nucabe](https://github.com/Nucabe))*
 - **Bronze Border turns the subtitles' portrait ring bronze too**, as it does the small window's. *([Nucabe](https://github.com/Nucabe))*
 - **The offer on a quest's page in Azeroth's Compendium is now called Description**, as the game's
   quest window calls it. *([Nucabe](https://github.com/Nucabe))*

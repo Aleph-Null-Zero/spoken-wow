@@ -322,10 +322,19 @@ end
 
 --- `text` in `face` at `size` and `color`, over a shadow `shadow` strong.
 local function PaintText(text, face, size, color, shadow)
+    local before, beforeSize = text:GetFont()
     text:SetFont(face, size, "")
     text:SetShadowColor(0, 0, 0, shadow)
     text:SetShadowOffset(1, -1)
     text:SetTextColor(color[1], color[2], color[3])
+    -- The client can leave a string blank when its font changes under text it already has, and
+    -- ignores the same text set again: a book's title after a quest's stayed empty. Emptied and
+    -- set again, it is drawn.
+    local shown = text:GetText()
+    if (before ~= face or beforeSize ~= size) and shown and shown ~= "" then
+        text:SetText("")
+        text:SetText(shown)
+    end
 end
 
 --- The name and the title in DialogueUI's subtitle and title fonts at `k` of their size, in
