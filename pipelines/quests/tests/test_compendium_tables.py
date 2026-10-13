@@ -97,3 +97,12 @@ def test_a_dungeons_quest_is_known_by_its_area_its_map_or_its_name(monkeypatch):
 
 def test_the_excavation_site_is_the_wetlands_not_a_dungeon():
     assert 2998 not in export_compendium.DUNGEONS and 3065 in export_compendium.DUNGEONS
+
+
+def test_the_builds_are_the_ones_every_pipeline_pins():
+    """pipelines/lib/wago.mjs pins the client builds for the Node pipelines; the export reads its
+    cache under the same names, so the two must name the same builds."""
+    wago = (Path(__file__).resolve().parents[2] / "lib" / "wago.mjs").read_text(encoding="utf-8")
+    assert f'export const FOREVER_BUILD = "{BUILD}";' in wago
+    assert f'export const ERA_BUILD = "{ERA_BUILD}";' in wago
+    assert Path(export_compendium.WAGO_CACHE).parts[-4:] == ("pipelines", "lib", "cache", "wago")

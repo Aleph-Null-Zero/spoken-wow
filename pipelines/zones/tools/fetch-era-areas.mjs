@@ -25,17 +25,17 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { fetchTable, PINNED_BUILD } from "./lib/db2.mjs";
+import { ERA_BUILD, wagoTable } from "../../lib/wago.mjs";
 import { ROOT } from "./lib/wiki.mjs";
 
 const SEED = join(ROOT, "pipelines/zones/tools/seed/era-areas.json");
 
 const argv = process.argv.slice(2);
-const build = argv.includes("--build") ? argv[argv.indexOf("--build") + 1] : PINNED_BUILD;
+const build = argv.includes("--build") ? argv[argv.indexOf("--build") + 1] : ERA_BUILD;
 
 async function main() {
   console.log(`fetching AreaTable for ${build}`);
-  const rows = await fetchTable("AreaTable", { build });
+  const rows = await wagoTable("AreaTable", { build });
   if (rows.length && rows[0].AreaName_lang === undefined) {
     throw new Error("AreaTable format changed: no AreaName_lang column");
   }

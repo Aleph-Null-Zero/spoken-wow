@@ -31,7 +31,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { areaNames, mapNames } from "../lib/area-names.mjs";
-import { fetchTable, PINNED_BUILD } from "../lib/db2.mjs";
+import { ERA_BUILD, wagoTable as fetchTable } from "../../../lib/wago.mjs";
 import { BASE_LOCALE, isClientLocale, LOCALES } from "../lib/locales.mjs";
 import { readSubzones, readZones } from "../lib/loredata.mjs";
 import { luaString, normaliseKey, readJson, ROOT } from "../lib/wiki.mjs";
@@ -39,7 +39,7 @@ import { luaString, normaliseKey, readJson, ROOT } from "../lib/wiki.mjs";
 const SEED = join(ROOT, "pipelines/zones/tools/seed/area-names.json");
 
 const argv = process.argv.slice(2);
-const build = argv.includes("--build") ? argv[argv.indexOf("--build") + 1] : PINNED_BUILD;
+const build = argv.includes("--build") ? argv[argv.indexOf("--build") + 1] : ERA_BUILD;
 
 function emitAliases(locale, aliases, build) {
   const lines = [

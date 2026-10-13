@@ -23,7 +23,6 @@
 // Committed, as Books.lua is: the addon builds on a clone with no database.
 
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,6 +30,7 @@ import { fileURLToPath } from "node:url";
 import mysql from "mysql2/promise";
 
 import { loadEnv } from "../../lib/env.mjs";
+import { FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
 import { areaReader } from "./lib/area.mjs";
 import { quote } from "./lib/lua.mjs";
 import { cannotBeHad, dungeonsOf, isTemplateCopy, typeOf } from "./lib/places.mjs";
@@ -40,10 +40,9 @@ await loadEnv("books");
 const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Books.lua", import.meta.url));
 const QUESTS = fileURLToPath(new URL("../../../addons/Spoken_Quests/Data/Compendium.lua", import.meta.url));
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Places.lua", import.meta.url));
-const CACHE = fileURLToPath(new URL("./cache/", import.meta.url));
 // Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
 // items, and one that shares a vanilla page id lent that book its sources and zones.
-const BUILD = process.env.PLACES_BUILD ?? "1.60.1.70338";
+const BUILD = process.env.PLACES_BUILD ?? FOREVER_BUILD;
 const MAPS = process.env.PLACES_MAPS ?? "C:/Forever/ForeverRepack/data/maps";
 const SOURCES = 6;
 const WIDE = 8;
@@ -156,37 +155,8 @@ const ORDER = ["quest start", "quest reward", "mail", "quest", "drop", "object",
 
 // ---------------------------------------------------------------- the client's tables
 
-async function table(name) {
-  const file = `${CACHE}${name}-${BUILD}.csv`;
-  if (!existsSync(file)) {
-    const response = await fetch(`https://wago.tools/db2/${name}/csv?build=${BUILD}`, {
-      headers: { "User-Agent": "curl/8.0" },
-    });
-    if (!response.ok) throw new Error(`wago.tools ${name}: ${response.status}`);
-    await mkdir(CACHE, { recursive: true });
-    await writeFile(file, await response.text());
-  }
-  return parseCsv(await readFile(file, "utf8"));
-}
-
-// RFC 4180 as wago.tools writes it: quoted fields, doubled quotes inside them.
-function parseCsv(text) {
-  const rows = [];
-  let row = [], field = "", quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (quoted) {
-      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
-      else if (c === '"') quoted = false;
-      else field += c;
-    } else if (c === '"') quoted = true;
-    else if (c === ",") { row.push(field); field = ""; }
-    else if (c === "\n") { row.push(field.replace(/\r$/, "")); rows.push(row); row = []; field = ""; }
-    else field += c;
-  }
-  if (field || row.length) { row.push(field); rows.push(row); }
-  const [head, ...body] = rows;
-  return body.filter((r) => r.length === head.length).map((r) => Object.fromEntries(head.map((h, k) => [h, r[k]])));
+function table(name) {
+  return wagoTable(name, { build: BUILD });
 }
 
 // ---------------------------------------------------------------- the readables

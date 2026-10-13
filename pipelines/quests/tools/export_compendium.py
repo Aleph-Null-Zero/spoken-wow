@@ -65,8 +65,12 @@ IGNORED = os.path.join(QUESTS, "corpus", "ignored.json")
 OVERRIDES = os.path.join(QUESTS, "corpus", "compendium_overrides.json")
 OUT =os.path.join(ROOT, "addons", "Spoken_Quests", "Data", "Compendium.lua")
 CACHE = os.path.join(HERE, "cache")
-# Forever's client (wago.tools' wow_classic_beta), and Classic Era's. With Era's alone, Forever's
-# own zones and sorts resolve to nothing, even where the DB names them.
+# The client's tables, in the cache pipelines/lib/wago.mjs keeps for every pipeline, under its
+# file names.
+WAGO_CACHE = os.path.join(ROOT, "pipelines", "lib", "cache", "wago")
+# Forever's client (wago.tools' wow_classic_beta), and Classic Era's: the builds wago.mjs pins
+# (tests/test_compendium_tables.py holds them equal). With Era's alone, Forever's own zones and
+# sorts resolve to nothing, even where the DB names them.
 BUILD = "1.60.1.70338"
 ERA_BUILD = "1.15.9.69109"
 # Efficient Games' Forever data: what players' Forever clients recorded, per client build (EG Link,
@@ -110,8 +114,8 @@ SORT_CLASS = {81: 1 << 0, 141: 1 << 1, 261: 1 << 2, 162: 1 << 3, 262: 1 << 4, 82
 
 
 def table(name, locale="enUS", build=BUILD):
-    os.makedirs(CACHE, exist_ok=True)
-    path = os.path.join(CACHE, f"{name}-{locale}-{build}.csv")
+    os.makedirs(WAGO_CACHE, exist_ok=True)
+    path = os.path.join(WAGO_CACHE, f"{name}-{locale}-{build}.csv")
     if not os.path.exists(path):
         url = f"https://wago.tools/db2/{name}/csv?build={build}&locale={locale}"
         request = urllib.request.Request(url, headers={"User-Agent": "curl/8.0"})

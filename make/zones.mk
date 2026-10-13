@@ -147,7 +147,7 @@ lore-rewrite: ## Rewrite one zone's lore from the full wiki article (ZONE=1420, 
 # "Burning Steppes" -- and the corpus is keyed by the English one in every
 # language. Without these tables such a client matches no subzone at all, which
 # is what it did for the addon's whole life before they existed. Regenerate only
-# when the pinned client build in pipelines/zones/tools/lib/db2.mjs moves.
+# when a client build pinned in pipelines/lib/wago.mjs moves.
 #-------------------------------------------------------------------------------
 
 aliases: ## Rebuild Data/<locale>/Aliases.lua and seed/area-names.json from the client's AreaTable
