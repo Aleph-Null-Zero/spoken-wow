@@ -55,11 +55,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 QUESTS = os.path.dirname(HERE)
 sys.path.insert(0, QUESTS)
 
-from tts_cli.quest_text import in_game, lua_string  # noqa: E402
+from tts_cli.ignores import ignored_line_ids  # noqa: E402
+from tts_cli.quest_text import left_out, lua_string  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(QUESTS, "..", ".."))
 CORPUS = os.path.join(QUESTS, "corpus", "corpus.json.gz")
 FACTIONS = os.path.join(QUESTS, "corpus", "factions.json")
+IGNORED = os.path.join(QUESTS, "corpus", "ignored.json")
 OVERRIDES = os.path.join(QUESTS, "corpus", "compendium_overrides.json")
 OUT =os.path.join(ROOT, "addons", "Spoken_Quests", "Data", "Compendium.lua")
 CACHE = os.path.join(HERE, "cache")
@@ -239,17 +241,20 @@ class Maps:
         return zones
 
 
-def corpus_quests():
+def corpus_quests(path=CORPUS, ignored_path=IGNORED):
     """{questID: {"title", "giver", "handIn"}}, who each quest is placed by ("creature:id"), and
     the spawns. The one it is placed by is its giver, or for a quest the corpus has no offer of,
     whoever it is handed in to. "giver" is who says its accept line, as the packs' quest log
     tables name the giver; "handIn" who says its progress or complete line. Either is absent
-    where the corpus has no such line."""
-    corpus = json.load(gzip.open(CORPUS, "rt", encoding="utf-8"))
+    where the corpus has no such line. A quest QuestText.lua leaves out by the same rule
+    (quest_text.left_out: Blizzard's debris, every line ignored) is not one; the hand
+    corrections' removals come later, in apply_overrides, which passes chains through them."""
+    corpus = json.load(gzip.open(path, "rt", encoding="utf-8"))
+    dropped = left_out(corpus, ignored_line_ids(ignored_path))
     quests, givers, enders = {}, {}, {}
     for line in corpus["lines"]:
         qid, source = line.get("questId"), line.get("source")
-        if not qid or source not in SOURCES or not in_game(qid, line.get("questTitle")):
+        if not qid or source not in SOURCES or qid in dropped:
             continue
         quests.setdefault(qid, {"title": line.get("questTitle") or str(qid)})
         if line.get("npcId") and line.get("npcType"):

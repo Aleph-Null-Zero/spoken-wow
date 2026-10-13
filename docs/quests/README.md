@@ -847,6 +847,12 @@ Alterac Valley questgivers are spawned by the battleground's scripts and appear 
 the scan flags quests a player really can do. Read the quest, then ignore it in the explorer
 where the decision carries a reason.
 
+The Compendium reads the same list. `tts_cli/quest_text.py` `left_out` is the one rule for which
+quests it lists and has words for: Blizzard's debris (quest 1, `<NYI>` titles), a quest every
+line of which is ignored, and the `remove` entries of `corpus/compendium_overrides.json`. Those
+23 removals are the Compendium's alone until `line_ignore` holds their lines; once it does, the
+packs drop their clips too and the entries can go.
+
 ### Reporting a line
 
 Two routes, one destination. In the explorer, every row has a flag button that opens the report

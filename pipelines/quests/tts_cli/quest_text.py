@@ -15,8 +15,7 @@ and per player gender, so a moment can have several. One text is kept for each:
 - Where givers' words differ (the Runecloth donations, quest ids the database reuses), the
   text most of the moment's lines have; on a tie, the one that comes first in the corpus.
 - An ignored line (corpus/ignored.json) is left out, as it is from every pack.
-- A quest the Compendium leaves out (`remove` in corpus/compendium_overrides.json) has none:
-  its page does not exist.
+- A quest the Compendium leaves out (`left_out`) has none: its page does not exist.
 """
 import json
 import os
@@ -43,14 +42,30 @@ def removed_quests(overrides_path: str) -> set:
     return {qid for e in entries if e.get("remove") for qid in ([e["id"]] if "id" in e else e["ids"])}
 
 
+def left_out(corpus: dict, ignored=(), removed=()) -> set:
+    """The quests the Compendium does not list, by one rule its index and its words both read:
+    Blizzard's debris (in_game), a quest every line of which is ignored (corpus/ignored.json,
+    the site's line_ignore), and `removed`, the hand corrections' removals. Those are the list
+    until line_ignore holds them; a quest ignored there needs no removal here."""
+    out, ignored_only = set(removed), {}
+    for line in corpus["lines"]:
+        quest = line.get("questId")
+        if not quest or line["source"] not in MOMENTS + (PROGRESS,):
+            continue
+        if not in_game(quest, line.get("questTitle")):
+            out.add(quest)
+        ignored_only[quest] = ignored_only.get(quest, True) and line["lineId"] in ignored
+    return out | {quest for quest, every in ignored_only.items() if every}
+
+
 def quest_text(corpus: dict, ignored=(), removed=()) -> dict:
-    """{questID: {moment: text}} for every quest the corpus has words for, save `removed`."""
+    """{questID: {moment: text}} for every quest the corpus has words for, save those
+    left_out."""
+    dropped = left_out(corpus, ignored, removed)
     texts = {}
     for line in corpus["lines"]:
         moment = line["source"]
-        if moment not in MOMENTS + (PROGRESS,) or line["lineId"] in ignored or line["questId"] in removed:
-            continue
-        if not in_game(line["questId"], line.get("questTitle")):
+        if moment not in MOMENTS + (PROGRESS,) or line["lineId"] in ignored or line["questId"] in dropped:
             continue
         text = (line.get("originalText") or "").replace("\r\n", "\n").replace("\r", "\n")
         if text:

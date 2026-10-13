@@ -5,7 +5,7 @@ import pytest
 
 import json
 
-from tts_cli.quest_text import in_game, lua_string, quest_text, removed_quests, render
+from tts_cli.quest_text import in_game, left_out, lua_string, quest_text, removed_quests, render
 
 
 def _line(quest, source, text, npc=288, gender=None, title="Growling Gut"):
@@ -73,6 +73,17 @@ def test_a_quest_the_compendium_leaves_out_has_no_words(tmp_path):
     assert removed_quests(str(tmp_path / "none.json")) == set()
     corpus = {"lines": [_line(5, "accept", "Find my pack."), _line(236, "accept", "Wait for word.")]}
     assert set(quest_text(corpus, removed={236})) == {5}
+
+
+def test_one_rule_leaves_out_debris_quests_wholly_ignored_and_removals():
+    corpus = {"lines": [_line(1, "accept", "Test.", title="The Chow Quest"),
+                        _line(8514, "accept", "Tally: $2113w."), _line(8516, "accept", "Bring bars."),
+                        _line(8516, "complete", "Tally: $2113w."), _line(236, "accept", "Wait."),
+                        _line(5, "accept", "Find my pack.")]}
+    ignored = {"q:8514:accept", "q:8516:complete"}
+    # 8516 keeps a line no one ignored, so it is still listed, without the ignored one's words.
+    assert left_out(corpus, ignored, {236}) == {1, 8514, 236}
+    assert set(quest_text(corpus, ignored, {236})) == {8516, 5}
 
 
 def test_the_test_quest_and_those_not_yet_implemented_are_left_out():
