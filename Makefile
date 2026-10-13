@@ -20,7 +20,8 @@
 LUA ?= $(shell command -v luajit || command -v lua5.1)
 
 .PHONY: help test test-player contribute-fixtures lint package-all \
-        package-spoken package-spoken-retired package-spoken-all release-spoken-all release-spoken-all-dry \
+        package-spoken package-spoken-retired package-spoken-all release-spoken release-spoken-dry \
+        release-spoken-all release-spoken-all-dry \
         descriptions descriptions-check descriptions-published \
         character-models \
         audio-release audio-release-dry
@@ -225,6 +226,15 @@ package-all: ## Build every addon zip: Spoken with its modules, then quests and 
 # packager. No sound packs; scripts/spoken/package.sh says why.
 package-spoken: ## Zip Spoken with its modules, Quests, Gossip, Books and Zones, without the sound packs
 	@./scripts/spoken/package.sh
+
+# Spoken's release: the zip package-spoken built, to both stores, with its changelog section
+# as the notes. scripts/spoken/release.sh refuses a version whose notes are still under
+# ## Unreleased.
+release-spoken-dry: ## Check Spoken's release and show what uploading it would send
+	@./scripts/spoken/release.sh --dry-run
+
+release-spoken: ## Upload Spoken's zip to CurseForge and Wago (build it with package-spoken first)
+	@./scripts/spoken/release.sh
 
 # The last release of each retired project, spoken-quests, spoken-zones and spoken-books: a
 # tombstone under the folder name it shipped, so updating it leaves the old module nothing to
