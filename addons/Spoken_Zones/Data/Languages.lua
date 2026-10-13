@@ -12,14 +12,14 @@ local _, SpokenZones = ...
 
 SpokenZones.Languages = {
 	{ code = "enUS", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 0, audio = true, ready = true },
-	{ code = "deDE", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 690, audio = true, ready = true },
-	{ code = "esES", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 735, audio = true, ready = true },
-	{ code = "esMX", lore = { done = 841, total = 841 }, strings = { done = 0, total = 128 }, aliases = 725, audio = true, ready = true },
-	{ code = "frFR", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 733, audio = true, ready = true },
+	{ code = "deDE", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 774, audio = true, ready = true },
+	{ code = "esES", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 837, audio = true, ready = true },
+	{ code = "esMX", lore = { done = 841, total = 841 }, strings = { done = 0, total = 128 }, aliases = 805, audio = true, ready = true },
+	{ code = "frFR", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 850, audio = true, ready = true },
 	{ code = "itIT", lore = { done = 0, total = 841 }, strings = { done = 0, total = 128 }, aliases = 0, audio = false, ready = false },
-	{ code = "ptBR", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 727, audio = true, ready = true },
-	{ code = "ruRU", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 773, audio = true, ready = true },
-	{ code = "koKR", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 770, audio = true, ready = true },
-	{ code = "zhCN", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 774, audio = true, ready = true },
-	{ code = "zhTW", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 776, audio = true, ready = true },
+	{ code = "ptBR", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 808, audio = true, ready = true },
+	{ code = "ruRU", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 857, audio = true, ready = true },
+	{ code = "koKR", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 860, audio = true, ready = true },
+	{ code = "zhCN", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 860, audio = true, ready = true },
+	{ code = "zhTW", lore = { done = 841, total = 841 }, strings = { done = 128, total = 128 }, aliases = 868, audio = true, ready = true },
 }
