@@ -1,6 +1,6 @@
 """Building a module over a staged store, which may hold mp3 or ogg.
 
-The store on disk is always mp3; scripts/package-audio.sh stages a transcoded copy and
+The store on disk is always mp3; scripts/quests/package-audio.sh stages a transcoded copy and
 hands that to `build --store`, and that copy is ogg for the packs this project ships. So
 the module's sound paths have to follow the files rather than assume an extension.
 """

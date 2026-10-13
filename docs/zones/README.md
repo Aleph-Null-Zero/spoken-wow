@@ -1370,9 +1370,9 @@ people actually listening. So the verdicts, the note dialog and the column were 
 and a problem with a line is now said in exactly one way: a report.
 
 The `line_flag` table is left in place, unread. It is forward-only like every other table
-here, and it still holds the era attributions the full-corpus review wrote --
-`tools/fix-flagged.mjs` was built to spend model credits on those notes and is retired
-with them. Reviving that pass means pointing it at `report` first.
+here, and it still holds the era attributions the full-corpus review wrote. The pass that
+spent model credits on those notes (`tools/fix-flagged.mjs`) is gone with them; git history
+has it, and reviving it means pointing it at `report` first.
 
 **Open counts are public; report bodies are not.** The badge on a row and the `?fb=open`
 filter travel with the search results, because "someone has already reported this one" is

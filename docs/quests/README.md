@@ -638,12 +638,11 @@ the value to configure.
 
 #### What the corpus scan found
 
-`tools/scan_corpus_hiccups.py` reads the corpus and writes `corpus/hiccups.json.gz`: every
-token or fragment likely to trip a reader up — invented names no pronunciation rule covers,
-stage directions in asterisks, Blizzard's own typos, raw binary, alphanumeric codes. The
-artifact is committed and ships inside a release; `/issues` → **Reload scan** loads it into
-Postgres, and it is never read on the search path. `docs/corpus-hiccups.md` documents the
-method and the categories.
+`tools/scan_corpus_hiccups.py` reads the corpus and lists every token or fragment likely to
+trip a reader up — invented names no pronunciation rule covers, stage directions in asterisks,
+Blizzard's own typos, raw binary, alphanumeric codes. It is retired as it stands: the
+`/issues` queue its JSON fed is gone, so the JSON is written only with `--json` and is no
+longer committed or shipped. `docs/corpus-hiccups.md` documents the method and the categories.
 
 **A finding is a detection, not a defect.** `Ashenvale` occurring 199 times is a fact about
 the corpus; whether it is a problem depends on the lexicon and on someone having listened. So
