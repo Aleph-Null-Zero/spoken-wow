@@ -326,30 +326,98 @@ function SpokenZones:ReportURL(mapID, areaKey, language)
 	return ("%s/%s/r/%d/%s"):format(self.SITE_URL, language or self:GetLanguage(), mapID, slug)
 end
 
--- The dungeons whose story is kept under another map than their entrance's (Data/Dungeons.lua), by
--- entrance and key: the story's map.
-local storyAt, storiesFrom = {}, nil
-local function StoryIndex()
-	if storiesFrom ~= SpokenZones.Dungeons then
-		storiesFrom, storyAt = SpokenZones.Dungeons, {}
-		for entrance, list in pairs(storiesFrom or {}) do
-			for _, dungeon in ipairs(list) do
-				if dungeon.mapID ~= entrance then
-					storyAt[entrance] = storyAt[entrance] or {}
-					storyAt[entrance][dungeon.key] = dungeon.mapID
-				end
-			end
+--------------------------------------------------------------------------------
+-- Areas the client puts in another zone than their story's
+--
+-- Two hand-kept tables name them: Data/Dungeons.lua lists each dungeon under the zone of its
+-- entrance, and Data/AreaZones.lua the other areas, under the zone their story is kept under,
+-- with the zone the client puts them in (`zone`) and any more it has an area of that name in
+-- (`also`). An area is listed in its zone, found and told there and on its `also` maps, and its
+-- story is still kept, recorded, pictured and reported under its own frozen id. A `zone` this
+-- client has no map for is left out: Forever's Shen'dralas, on Era.
+--------------------------------------------------------------------------------
+
+-- Built once from both tables: `story` [found on][key] = the story's map, `zone` [story's map][key]
+-- = the zone it is listed in, `on` [story's map][key] = every map it is found on but the story's,
+-- `into` [zone] = the areas listed there whose story is kept under another zone.
+local placeIndex, placesFrom = nil, {}
+
+local function HasMap(mapID)
+	return not (C_Map and C_Map.GetMapInfo) or C_Map.GetMapInfo(mapID) ~= nil
+end
+
+local function PlaceIndex()
+	local dungeons, moved = SpokenZones.Dungeons, SpokenZones.AreaZones
+	if placeIndex and placesFrom[1] == dungeons and placesFrom[2] == moved then
+		return placeIndex
+	end
+	placesFrom = { dungeons, moved }
+	local index = { story = {}, zone = {}, on = {}, into = {} }
+	local function FoundOn(storyMapID, key, mapID)
+		index.story[mapID] = index.story[mapID] or {}
+		index.story[mapID][key] = storyMapID
+		index.on[storyMapID] = index.on[storyMapID] or {}
+		index.on[storyMapID][key] = index.on[storyMapID][key] or {}
+		table.insert(index.on[storyMapID][key], mapID)
+	end
+	local function Listed(storyMapID, key, zone)
+		index.zone[storyMapID] = index.zone[storyMapID] or {}
+		index.zone[storyMapID][key] = zone
+		index.into[zone] = index.into[zone] or {}
+		table.insert(index.into[zone], { mapID = storyMapID, key = key })
+		FoundOn(storyMapID, key, zone)
+	end
+	for entrance, list in pairs(dungeons or {}) do
+		for _, dungeon in ipairs(list) do
+			if dungeon.mapID ~= entrance then Listed(dungeon.mapID, dungeon.key, entrance) end
 		end
 	end
-	return storyAt
+	for storyMapID, areas in pairs(moved or {}) do
+		for key, area in pairs(areas) do
+			if area.zone and HasMap(area.zone) then Listed(storyMapID, key, area.zone) end
+			for _, mapID in ipairs(area.also or {}) do FoundOn(storyMapID, key, mapID) end
+		end
+	end
+	placeIndex = index
+	return index
 end
 
 --- Where the story of the area `key` found on the map `mapID` is kept: the map and key its text,
 --- recording, picture and report are under. Razorfen Downs, found at its entrance in The Barrens,
---- is told under Thousand Needles; every other area is told where it is found.
+--- is told under Thousand Needles, and Strahnbrad, found in Alterac Mountains, under Hillsbrad
+--- Foothills; an area found where its story is kept is told there.
 function SpokenZones:StoryPlace(mapID, key)
-	local at = key and StoryIndex()[mapID]
+	local at = key and PlaceIndex().story[mapID]
 	return at and at[key] or mapID, key
+end
+
+--- The zone the area `key`, whose story is kept under `mapID`, is listed in: the zone of a
+--- dungeon's entrance, the zone the client puts any other area in.
+function SpokenZones:AreaZone(mapID, key)
+	local at = key and PlaceIndex().zone[mapID]
+	return at and at[key] or mapID
+end
+
+--- The maps besides `mapID` that the area `key`, whose story is kept under `mapID`, is found on.
+function SpokenZones:FoundOn(mapID, key)
+	local at = key and PlaceIndex().on[mapID]
+	return at and at[key] or {}
+end
+
+--- The areas with a story listed under the zone `zone`, each { mapID = the map its story is kept
+--- under, key = }: the zone's own stories but those the client puts elsewhere, and the stories
+--- kept elsewhere that it puts here.
+function SpokenZones:AreasIn(zone)
+	local index = PlaceIndex()
+	local away = index.zone[zone] or {}
+	local list = {}
+	for key in pairs(self.Subzones[zone] or {}) do
+		if not away[key] then table.insert(list, { mapID = zone, key = key }) end
+	end
+	for _, area in ipairs(index.into[zone] or {}) do
+		if self.Subzones[area.mapID] and self.Subzones[area.mapID][area.key] then table.insert(list, area) end
+	end
+	return list
 end
 
 -- Returns the lore entry, the key that was looked up and the map the story is kept under
