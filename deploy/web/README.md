@@ -161,6 +161,8 @@ curl -sI 'https://voiceover.rusty.one/r/quest/5/accept'      | grep -i location 
 curl -sI 'https://lore.rusty.one/enUS/r/1411/razor-hill'     | grep -i location  # /zones/r/1411/razor-hill
 curl -sI 'https://lore.rusty.one/r/1411/razor-hill'          | grep -i location  # the same
 curl -sI 'https://lore.rusty.one/deDE/r/1411/razor-hill'     | grep -i location  # /deDE/zones/r/1411/razor-hill
+curl -sI 'https://lore.rusty.one/?q=razor'                   | grep -i location  # /zones?q=razor
+curl -sI 'https://voiceover.rusty.one/?q=thrall'             | grep -i location  # /quests?q=thrall
 curl -sI 'https://spoken.rusty.one/downloads/SpokenQuestsAudioComplete-latest.zip' | grep -i location  # the meta addon's page
 ```
 
