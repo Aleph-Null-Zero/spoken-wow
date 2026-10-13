@@ -1,4 +1,4 @@
-# ZoneLore
+# Spoken Zones
 
 A World of Warcraft **Classic Era** addon that shows zone lore on the world map,
 with lore text built from warcraft.wiki.gg at development time.
@@ -13,12 +13,13 @@ tooling that produces both.
 
 ## What ships
 
-**`ZoneLore`** — the addon. World map side panel, subzone lore on click, the area under the
+**`Spoken_Zones`** — the addon, a module of Spoken. World map side panel, subzone lore on click, the area under the
 cursor lit up as clickable, the Zones tab of Azeroth's Compendium, minimap button, options panel, narration
 playback with floating controls, and autoplay on area discovery. 49 zones and
-1304 subzones of text are bundled; nothing is fetched at runtime.
+792 subzones of text are bundled, in English and nine other languages, and 86 more places
+and Forever's 5 new zones are listed with no text yet; nothing is fetched at runtime.
 
-**Sound packs** — 1353 voicelines, built from the same text, shipped separately
+**Sound packs** — 841 voicelines, one for each place with text, built from it and shipped separately
 because they are a large download. Two tiers with identical content:
 
 | Folder | Bitrate | Zip |
@@ -622,7 +623,7 @@ Ragefire Chasm), as the Quests tab files their quests: the Quests tab's key on i
 area's story as its page, a tick once found and no numbers. A zone with several has a
 **Dungeons and Raids** line, the Quests tab's words, with a card for each under it; the line
 counts them found out of all, opens and closes on a click, and chooses nothing.
-`Data/Dungeons.lua`, kept by hand, marks the 17 areas that are dungeons and raids, each with
+`Data/Dungeons.lua`, kept by hand, marks the 16 areas that are dungeons and raids, each with
 the instance's map the Quests data files its quests under (`dungeon` in
 `Spoken_Quests/Data/Compendium.lua`); `tests/lua/zones_dungeons_test.lua` checks it against
 the areas' stories and the Quests data. Razorfen Downs' story is under Thousand Needles, where
