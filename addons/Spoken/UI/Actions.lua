@@ -73,6 +73,12 @@ function Actions.RefreshRings()
     for ring in pairs(rings) do TintRing(ring) end
 end
 
+--- `ring`, a portrait's ring, tinted with the round buttons' from now on.
+function Actions.TintWithRings(ring)
+    rings[ring] = true
+    TintRing(ring)
+end
+
 --- Dress `button` as the player's round buttons are -- the windows' pause, the subtitle's
 --- controls: the ring round its edge, `icon` inside it, brighter under the pointer. Sized by the
 --- button, so a corner icon and a subtitle control are the same button at different sizes.

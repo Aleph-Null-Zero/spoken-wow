@@ -4,6 +4,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Bronze Border turns the subtitles' portrait ring bronze too**, as it does the small window's. *([Nucabe](https://github.com/Nucabe))*
 - **The offer on a quest's page in Azeroth's Compendium is now called Description**, as the game's
   quest window calls it. *([Nucabe](https://github.com/Nucabe))*
 - **A quest's page in Azeroth's Compendium shows who says each part.** The description and the
