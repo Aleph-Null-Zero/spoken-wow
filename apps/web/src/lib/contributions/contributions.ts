@@ -114,9 +114,10 @@ function withText(envelope: Envelope, key: string): EnvelopeCheck {
     if (envelope.text != null) {
       return { ok: false, message: "This carries text, but a zones paste from the addon never does." };
     }
-  } else if (!envelope.text) {
+  } else if (!envelope.text?.trim()) {
     // For quests and books the text is the entire payload, so one without it is a report, not
-    // a contribution.
+    // a contribution. Whitespace counts as none: the addon fences a lone space, which
+    // normalises to an empty row.
     return { ok: false, message: "This has no text, which for quests and books is the whole point of the paste." };
   }
   return { ok: true, key };

@@ -130,6 +130,30 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   the game's other sounds too, and puts your own setting back once the last line ends, after a
   reload or at the next login. A change you make to that setting meanwhile is kept. Off by
   default. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: readables near a zone's border were listed under the zone next door** in the
+  Compendium. The letters handed out in Darkshire were under Deadwind Pass, Nesingwary's Green
+  Hills chapters under Westfall and Ratchet's manuals under Durotar. Each is now under the zone
+  where it is found. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: the Librams and Nat Pagle's guide said "Dropped by Alliance Sentinel (1)"** in the
+  Compendium, naming the server's copies of a creature. They name the creatures you meet.
+  *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's readables have two new kinds: Journals and Diaries, and Pictures and Maps.**
+  Journals were split between Books and Notes. A readable with no words, such as the Snapshot of
+  Gammerita or the Crude Map, is a picture. With them, about 90 readables move to the kind their
+  title or words say: "Maybell's Love Letter" is a letter, not a scroll, and Uther's tomb a
+  gravestone, not a plaque. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: the Compendium counted 26 readables no one can have.** Beta items with no words and
+  the Forsaken letters that were never given out sat under Origin Unknown, so no total could be
+  completed. They are gone, and eight readables that were there, such as Gnomeregan's punch cards
+  and the Snapshot of Gammerita, are listed in the zone they come from.
+  *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium lists the seasonal events' readables under Holidays and Events.** Winter
+  Veil's, the Harvest Festival's poems, the fishing tournament's flier and the Scourge invasion's
+  letters and reports were under Origin Unknown, or in the cities where the event's NPCs stand.
+  *([Nucabe](https://github.com/Nucabe))*
+
+## 3.4.0 — 2026-10-12
+
 - **A character is greeted by its zone only once, in its starting area.** An existing
   character could hear the lore of wherever it logged in, such as a level 1 character parked in
   Stormwind, the first time it logged in after updating to 3.0 or after the game crashed. The
@@ -165,27 +189,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Guards and other NPCs that come as a man or a woman speak in the voice of the one in front of
   you.** A Stormwind City Guard, an Orgrimmar Grunt or a Bluffwatcher can be either, and every
   one of them spoke in a man's voice. Until a pack has the other voice, the line plays as before.
-- **Fixed: readables near a zone's border were listed under the zone next door** in the
-  Compendium. The letters handed out in Darkshire were under Deadwind Pass, Nesingwary's Green
-  Hills chapters under Westfall and Ratchet's manuals under Durotar. Each is now under the zone
-  where it is found. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: the Librams and Nat Pagle's guide said "Dropped by Alliance Sentinel (1)"** in the
-  Compendium, naming the server's copies of a creature. They name the creatures you meet.
-  *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium's readables have two new kinds: Journals and Diaries, and Pictures and Maps.**
-  Journals were split between Books and Notes. A readable with no words, such as the Snapshot of
-  Gammerita or the Crude Map, is a picture. With them, about 90 readables move to the kind their
-  title or words say: "Maybell's Love Letter" is a letter, not a scroll, and Uther's tomb a
-  gravestone, not a plaque. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: the Compendium counted 26 readables no one can have.** Beta items with no words and
-  the Forsaken letters that were never given out sat under Origin Unknown, so no total could be
-  completed. They are gone, and eight readables that were there, such as Gnomeregan's punch cards
-  and the Snapshot of Gammerita, are listed in the zone they come from.
-  *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium lists the seasonal events' readables under Holidays and Events.** Winter
-  Veil's, the Harvest Festival's poems, the fishing tournament's flier and the Scourge invasion's
-  letters and reports were under Origin Unknown, or in the cities where the event's NPCs stand.
-  *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.3.1 — 2026-10-11
 
