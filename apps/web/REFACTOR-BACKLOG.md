@@ -5,8 +5,7 @@ deliberately left out of it: each was either outside that PR's scope, would chan
 behaviour someone should decide on, or was judged not worth the churn at the time.
 
 Each entry says where, what it costs to leave, and the fix that was in mind. Paths are
-under `apps/web/src/` unless they say otherwise. Line numbers are left out on purpose;
-they drift.
+under `src/` unless they say otherwise. Line numbers are left out on purpose; they drift.
 
 When one of these is done, delete its entry rather than ticking it.
 
