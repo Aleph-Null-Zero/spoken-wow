@@ -32,8 +32,9 @@ has it. Both can still be installed at once — Spoken Zones plays the
 higher-bitrate one and `/spz audio` switches; see "Sound packs are
 self-describing" below for how it decides.
 
-Player-facing documentation lives in `addons/Spoken_Zones/README.md` and
-`addons/SpokenZonesAudio/README.md` — those are the CurseForge project descriptions.
+Player-facing documentation is Spoken's store page, `publishers/spoken/spoken.md`, and
+`publishers/zones/spoken-zones-audio.md`; `make descriptions` generates the READMEs that ship
+in `addons/Spoken` and `addons/SpokenZonesAudio` from them.
 Release history is in `CHANGELOG.md`.
 
 ## What is here but not shipped
@@ -741,7 +742,7 @@ voice ships:
 | File | Where it shows |
 |---|---|
 | `addons/Spoken_Zones/Spoken_Zones.toc` and `addons/SpokenZonesAudio/SpokenZonesAudio.toc` (`## Notes:`) | the in-game addon list, and the CurseForge blurb |
-| `addons/Spoken_Zones/README.md`, `addons/SpokenZonesAudio/README.md` | the two CurseForge project descriptions |
+| `publishers/spoken/spoken.md`, `publishers/zones/spoken-zones-audio.md` | the two CurseForge project descriptions, and the READMEs generated from them |
 | `web/src/lib/beta.ts` | the **beta** badge beside the logo on lore.rusty.one |
 
 **Descriptions only, in the addon.** Nothing in the client says any of this out

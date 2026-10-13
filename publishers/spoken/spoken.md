@@ -9,6 +9,7 @@ categories:
   - Roleplay
   - Miscellaneous
 license: MIT
+addonReadme: addons/Spoken/README.md
 ---
 
 **Expressive, character-driven AI voiceover for WoW Forever.** NPCs speak their quest text and gossip, zones tell their stories, and books read themselves aloud.
