@@ -42,12 +42,9 @@ local L = VO.L
 local C
 
 -- The words' size, for UI/TextView.lua: the Compendium's Text Size on Spoken's page, so every tab
--- reads alike; Spoken Zones' own where Spoken is older and has none.
+-- reads alike.
 function ns:Get(key)
-    if key == "fontSize" then
-        if Spoken and Spoken.CompendiumFontSize then return Spoken:CompendiumFontSize() end
-        return (SpokenZonesSettings and SpokenZonesSettings.fontSize) or 12
-    end
+    if key == "fontSize" then return Spoken:CompendiumFontSize() end
 end
 
 local list, page
