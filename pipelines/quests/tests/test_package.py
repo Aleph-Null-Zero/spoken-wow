@@ -314,20 +314,6 @@ def test_each_retired_project_ships_only_its_tombstone(retired_built):
         assert "(now in Spoken)" in text
 
 
-def test_the_shared_layout_is_the_same_file_in_every_addon():
-    # UI/Layout.lua is carried by each addon rather than shared at runtime: they install
-    # separately, and the player is only an optional dependency of the other two. Carrying
-    # it is only safe while the copies agree, which nothing but this enforces.
-    import hashlib
-    copies = {}
-    for addon in ("Spoken", "Spoken_Quests", "Spoken_Gossip", "Spoken_Zones", "Spoken_Books", "Spoken_Developer"):
-        path = os.path.join(REPO, "addons", addon, "UI", "Layout.lua")
-        assert os.path.isfile(path), f"{addon} is missing its copy of UI/Layout.lua"
-        with open(path, "rb") as handle:
-            copies[addon] = hashlib.sha256(handle.read()).hexdigest()
-    assert len(set(copies.values())) == 1, f"UI/Layout.lua differs between addons: {copies}"
-
-
 def test_the_compendium_files_are_the_same_in_every_addon_that_carries_them():
     # Azeroth's Compendium (UI/Compendium.lua) and the text view its pages scroll in
     # (UI/TextView.lua) are carried by Spoken Zones and Spoken Books for the reason UI/Layout.lua

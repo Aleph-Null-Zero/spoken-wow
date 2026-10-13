@@ -44,7 +44,7 @@ local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local Spoken = _G.Spoken
 local B = {}
-for _, file in ipairs({ "Locale/enUS", "UI/Layout", "UI/TextView", "UI/Compendium" }) do
+for _, file in ipairs({ "Locale/enUS", "UI/TextView", "UI/Compendium" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 local ns = {}

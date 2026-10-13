@@ -60,7 +60,7 @@ VO.Addon:OnInitialize()
 local Spoken = _G.Spoken
 -- The window comes with Spoken Books.
 local B = {}
-for _, file in ipairs({ "Locale/enUS", "UI/Layout", "UI/TextView", "UI/Compendium" }) do
+for _, file in ipairs({ "Locale/enUS", "UI/TextView", "UI/Compendium" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 -- Where a quest is read: Classic Era's quest log, a zone's header then its quests, with the

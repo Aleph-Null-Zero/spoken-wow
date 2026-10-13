@@ -1,7 +1,7 @@
 -- SpokenBooks -- options panel in the interface settings.
 --
--- Registered with Settings.RegisterCanvasLayoutCategory, and laid out by the UI/Layout.lua
--- every Spoken addon carries a copy of, so this panel and the other three read alike.
+-- Nested under Spoken's settings entry, and laid out by Spoken's UI/Layout.lua, so this page and
+-- the others read alike.
 -- UI/Options.lua on the zones side is the same file one size larger; the reasoning for both
 -- choices is written down there.
 --
@@ -32,13 +32,6 @@ function SpokenBooks:SetupOptions()
 
 	if not (Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory) then
 		self:Print("|cffffcc00Settings API missing; options panel unavailable (use /spb)|r")
-		return
-	end
-
-	if not SpokenLayout then
-		-- Carried, not shared, so this can only be a broken install -- and saying so beats a
-		-- panel that half-draws.
-		self:Print("|cffffcc00UI/Layout.lua did not load; options panel unavailable|r")
 		return
 	end
 

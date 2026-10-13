@@ -1,5 +1,5 @@
 -- The gossip module's settings page: nested under Spoken's beside the other modules', laid out by
--- the UI/Layout.lua every Spoken addon carries. Run with `make test-player`.
+-- Spoken's UI/Layout.lua. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")

@@ -1,8 +1,8 @@
 if not SpokenGossipEnv then return end
 setfenv(1, SpokenGossipEnv)
 
--- The addon's page in the interface settings, laid out by UI/Layout.lua, the file every Spoken
--- addon carries a copy of so the pages read alike. Absent on the three legacy clients, which
+-- The addon's page in the interface settings, laid out by Spoken's UI/Layout.lua so the pages
+-- read alike. Absent on the three legacy clients, which
 -- have no Settings API: the options window and /spg are the interface there (Options.lua).
 
 SettingsPanel = {}

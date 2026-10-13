@@ -16,8 +16,8 @@ local panel
 local scroller
 local pendingLinks = {}
 
--- Rows, headings and the spacing between them come from UI/Layout.lua, the file every
--- Spoken addon carries a copy of, so the three panels read alike.
+-- Rows, headings and the spacing between them come from UI/Layout.lua, which every module's page
+-- is built with too, so the pages read alike.
 local Layout = SpokenLayout
 
 local CHANNELS = { "Master", "SFX", "Music", "Ambience", "Dialog" }

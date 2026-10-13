@@ -1367,7 +1367,6 @@ end
 --- The quests addon's settings panel, which the dispatch tests have no use for: its two
 --- files, on top of an addon already loaded by LoadQuests.
 function M.LoadQuestsPanel(addonDirectory, VO)
-    dofile(addonDirectory .. "UI/Layout.lua")
     -- SettingsPanel builds its DialogueUI section only with the bridge loaded; a bridge test
     -- has loaded and hooked its own already.
     if not VO.DialogueUIBridge then dofile(addonDirectory .. "UI/DialogueUIBridge.lua") end
@@ -1377,7 +1376,6 @@ end
 
 --- The gossip addon's settings page, on top of an addon already loaded by LoadGossip.
 function M.LoadGossipPanel(addonDirectory, G)
-    dofile(addonDirectory .. "UI/Layout.lua")
     dofile(addonDirectory .. "UI/SettingsPanel.lua")
     return G.SettingsPanel
 end

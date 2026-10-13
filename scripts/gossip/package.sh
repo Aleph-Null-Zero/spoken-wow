@@ -59,14 +59,6 @@ done
 env_version="$(sed -n 's/.*AddonVersion = "\([^"]*\)".*/\1/p' "$SRC/Environment.lua" | head -1)"
 [ "$env_version" = "$version" ] || { echo "error: Environment.lua says $env_version, $NAME.toc says $version" >&2; exit 1; }
 
-# UI/Layout.lua is byte-identical across every Spoken addon; pipelines/quests/tests/test_package.py
-# enforces it on the tree, and this catches a copy that diverged before it ships.
-for other in Spoken Spoken_Quests Spoken_Zones Spoken_Books; do
-  peer="$REPO/addons/$other/UI/Layout.lua"
-  [ -f "$peer" ] || continue
-  cmp -s "$SRC/UI/Layout.lua" "$peer" || { echo "error: UI/Layout.lua differs from addons/$other/UI/Layout.lua" >&2; exit 1; }
-done
-
 mkdir -p "$DIST"
 zip_path="$DIST/$NAME-$version.zip"
 rm -f "$zip_path"

@@ -38,12 +38,8 @@ Log.lua
 Copy.lua
 Write.lua
 Screen.lua
-UI/Layout.lua
 UI/Box.lua
 UI/Menu.lua
 UI/Options.lua
 Commands.lua
 Events.lua
-
-# UI/Layout.lua is byte-identical in every Spoken addon and must stay that way: the file says why,
-# and pipelines/quests/tests/test_package.py is what enforces it.

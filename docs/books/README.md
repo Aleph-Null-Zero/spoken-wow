@@ -236,9 +236,7 @@ is in that zone (`dungeons` in `Data/Places.lua`). One had in more than eight zo
 Across Azeroth instead. A continent's banner counts each readable once, so its count can be less
 than the sum of its zone cards.
 
-`UI/Layout.lua` is the fourth copy of a file that must stay byte-identical across
-Spoken, SpokenQuests, SpokenZones and SpokenBooks;
-`pipelines/quests/tests/test_package.py` is what enforces that.
+The page is laid out by Spoken's `UI/Layout.lua`.
 
 ### Installing it in a client
 

@@ -109,11 +109,6 @@ function Developer:SetupOptions()
 	if not (Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory) then
 		return
 	end
-	if not SpokenLayout then
-		-- Carried, not shared, so this can only be a broken install.
-		self:Print("|cffffcc00UI/Layout.lua did not load; the Developer page is unavailable|r")
-		return
-	end
 	local Spoken = self:Spoken()
 
 	panel = CreateFrame("Frame", "SpokenDeveloperOptionsPanel")

@@ -9,10 +9,8 @@
 -- Escape handling and the edit box with it, and because a modal is the honest shape for
 -- something you have to finish before carrying on.
 --
--- The zones addon carries the same file under the same reasoning. Not shared the way
--- UI/Layout.lua is: that one is a hundred rows of geometry three panels must agree on, while
--- this is a popup id and forty lines around it, and two addons sharing one StaticPopup id
--- would be two addons overwriting each other's dialog.
+-- The zones addon carries the same file under the same reasoning: two addons sharing one
+-- StaticPopup id would be two addons overwriting each other's dialog.
 
 local ADDON_NAME, SpokenBooks = ...
 

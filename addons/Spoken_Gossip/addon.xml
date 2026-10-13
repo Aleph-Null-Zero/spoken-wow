@@ -9,7 +9,6 @@
     <Include file="Locale\koKR.lua"/>
     <Include file="Locale\zhCN.lua"/>
     <Include file="Locale\zhTW.lua"/>
-    <Include file="UI\Layout.lua"/>
     <Include file="EasterEggs.lua"/>
     <Include file="Player.lua"/>
     <Include file="Gossip.lua"/>

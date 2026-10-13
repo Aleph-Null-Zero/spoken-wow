@@ -1,5 +1,5 @@
--- The quests addon's settings panel: sections on one canvas, laid out by the UI/Layout.lua
--- every Spoken addon carries, rather than a Blizzard category per group of an AceConfig
+-- The quests addon's settings panel: sections on one canvas, laid out by Spoken's UI/Layout.lua,
+-- rather than a Blizzard category per group of an AceConfig
 -- tree. The tree itself is untouched -- it still backs every /spq command and still fills
 -- the window where profiles and the pack manager live. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
