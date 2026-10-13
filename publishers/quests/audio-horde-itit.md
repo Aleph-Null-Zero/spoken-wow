@@ -4,7 +4,7 @@ release: quests-audio-horde-itIT
 section: quests
 lang: itIT
 pack: horde
-version: 0.0.1
+version: 0.0.2
 github: false
 slug: italian-spoken-quests-horde
 name: Italian Spoken Quests: Horde

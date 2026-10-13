@@ -3,7 +3,7 @@ release: quests-audio-itIT
 section: quests
 lang: itIT
 pack: all
-version: 0.0.1
+version: 0.0.2
 slug: spoken-quests-audio-itit
 name: Spoken Quests Audio: Italian
 summary: Quest and gossip lines for Spoken Player, voiced in Italian from the QuestIT community translation. One pack, both factions. Partial. Needs Spoken Player.

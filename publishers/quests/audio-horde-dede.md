@@ -4,7 +4,7 @@ release: quests-audio-horde-deDE
 section: quests
 lang: deDE
 pack: horde
-version: 0.0.5
+version: 0.0.6
 github: false
 slug: german-spoken-quests-horde
 name: German Spoken Quests: Horde

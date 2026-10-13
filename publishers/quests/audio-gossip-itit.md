@@ -4,7 +4,7 @@ release: quests-audio-gossip-itIT
 section: quests
 lang: itIT
 pack: gossip
-version: 0.0.1
+version: 0.0.2
 github: false
 slug: italian-spoken-quests-gossip
 name: Italian Spoken Quests: Gossip

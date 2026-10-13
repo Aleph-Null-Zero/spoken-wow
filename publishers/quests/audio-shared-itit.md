@@ -4,7 +4,7 @@ release: quests-audio-shared-itIT
 section: quests
 lang: itIT
 pack: shared
-version: 0.0.1
+version: 0.0.2
 github: false
 slug: italian-spoken-quests-shared
 name: Italian Spoken Quests: Shared

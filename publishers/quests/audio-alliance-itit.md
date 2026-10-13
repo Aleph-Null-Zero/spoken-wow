@@ -4,7 +4,7 @@ release: quests-audio-alliance-itIT
 section: quests
 lang: itIT
 pack: alliance
-version: 0.0.1
+version: 0.0.2
 github: false
 slug: italian-spoken-quests-alliance
 name: Italian Spoken Quests: Alliance

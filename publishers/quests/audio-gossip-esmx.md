@@ -4,7 +4,7 @@ release: quests-audio-gossip-esMX
 section: quests
 lang: esMX
 pack: gossip
-version: 0.0.4
+version: 0.0.5
 github: false
 slug: spanish-al-spoken-quests-gossip
 name: Spanish (AL) Spoken Quests: Gossip
