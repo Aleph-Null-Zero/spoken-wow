@@ -6,6 +6,7 @@
         status remove clean voice voice-zones lookup export \
         pull-history pull-live pull-recorded package-acted acted history-status sounds ssh-check sync check-synced full-release \
         icon lore-import lore-import-names lore-export lore-check lore-rewrite aliases languages locale-check \
+        areas forever-areas pictures \
         release release-dry release-wago release-curse release-audio release-audio-dry
 
 # The \# escapes are required: an unescaped # starts a make comment, even
@@ -153,6 +154,30 @@ lore-rewrite: ## Rewrite one zone's lore from the full wiki article (ZONE=1420, 
 aliases: ## Rebuild Data/<locale>/Aliases.lua and seed/area-names.json from the client's AreaTable
 	@node pipelines/zones/tools/locale/build-aliases.mjs
 	@node pipelines/zones/tools/locale/build-languages.mjs
+
+#-------------------------------------------------------------------------------
+# Which places each client has
+#
+# The lore export keeps the places either client can name (seed/era-areas.json and
+# seed/camelot-areas.json, Era's and Forever's AreaTable), and Data/ForeverAreas.lua says which
+# only Forever has, which Forever names differently and which no Forever player reaches
+# (seed/forever-places.json, by hand). Run areas when a pinned build moves, forever-areas after
+# it, after a lore export or after an edit to forever-places.json.
+#-------------------------------------------------------------------------------
+
+areas: ## Refetch seed/era-areas.json and seed/camelot-areas.json from the pinned client builds
+	@node pipelines/zones/tools/fetch-era-areas.mjs
+	@node pipelines/zones/tools/fetch-era-areas.mjs --forever
+
+forever-areas: ## Rebuild Data/ForeverAreas.lua from the area seeds and seed/forever-places.json
+	@node pipelines/zones/tools/lore/export-forever-areas.mjs
+
+# The reviewed pictures in the choices folder, as the shipped textures, Data/Pictures.lua and
+# Textures/Pictures/CREDITS.md. A folder holding only the places being worked on is safe: the
+# rest keep their pictures, and nothing is deleted unless ARGS=--prune says the folder holds
+# every place. Needs Python with numpy, Pillow and scipy.
+pictures: ## Prepare the reviewed zone pictures (CHOICES=<folder>, ARGS=--force or --prune)
+	@python3 pipelines/zones/tools/pictures/prepare.py $(if $(CHOICES),--choices "$(CHOICES)") $(ARGS)
 
 languages: ## Rebuild Data/Languages.lua -- what each language covers, and whether it ships
 	@node pipelines/zones/tools/locale/build-languages.mjs
