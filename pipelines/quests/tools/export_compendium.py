@@ -7,7 +7,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - The quests are the corpus's (corpus/corpus.json.gz): the ones the voice packs were made from.
 - Where: the zone the quest belongs to, as the quest log files it (QuestSortID: an AreaTable
   zone, or a dungeon, which counts as the zone its entrance is in), else where its giver stands
-  (the corpus's spawns). A quest of a class, a profession or a season is filed under that
+  (the corpus's spawns): the area the server's own map files put the point in, as the books'
+  places have it (area_reader; COMPENDIUM_MAPS, the repack's maps folder), else the smallest zone
+  rectangle around it. A quest of a class, a profession or a season is filed under that
   instead (a negative QuestSortID), named as the client names it, in every language.
 - Who: the races and classes allowed to take it (quest_template.AllowableRaces,
   quest_template_addon.AllowableClasses) are read from a TrinityCore world DB (the Forever
@@ -50,8 +52,10 @@ import argparse
 import csv
 import gzip
 import json
+import math
 import os
 import re
+import struct
 import sys
 import urllib.request
 
@@ -95,6 +99,12 @@ INSTANCE_ZONE = {
     # areas have no map of their own, so their quests resolved to no zone.
     2998: 1437, 3065: 1455,
 }
+# The cities, each inside the zone around it. Ironforge and the Undercity are buildings set into the
+# ground, and the map files give a point inside them the ground's area, Dun Morogh's or Tirisfal's;
+# there the rectangle, which says city, is kept.
+CITY_IN = {1453: 1429, 1454: 1411, 1455: 1426, 1456: 1412, 1457: 1438, 1458: 1420}
+# The Forever repack's extracted map files, whose AREA chunks say which area a point is in.
+MAPS_DIR = os.environ.get("COMPENDIUM_MAPS", "C:/Forever/ForeverRepack/data/maps")
 # The dungeons and raids a quest is filed under (`dungeon`): those above, save the Excavation Site,
 # an instance of the Wetlands' own story (Caitlin Grassman's quests) and not a dungeon.
 DUNGEONS = set(INSTANCE_ZONE) - {2998}
@@ -154,11 +164,59 @@ def sort_names(rows_by_locale):
     return sorts
 
 
+GRID = 533.3333333
+
+
+def read_tile(data):
+    """A map file's AREA chunk: one area id for a tile that is all one area, else the 256 of its
+    16x16 grid. The file header's fourth word is the chunk's offset."""
+    offset = struct.unpack_from("<I", data, 12)[0]
+    if data[offset:offset + 4] != b"AREA":
+        raise ValueError("no AREA chunk")
+    flags, area = struct.unpack_from("<HH", data, offset + 4)
+    if flags & 0x0001:
+        return area
+    return list(struct.unpack_from("<256H", data, offset + 8))
+
+
+def cell_of(x, y):
+    """The tile a point is on and its cell in that tile, as the server computes them
+    (GridMap::getArea)."""
+    gx = 63 - math.floor(x / GRID + 32)
+    gy = 63 - math.floor(y / GRID + 32)
+    cx = math.floor(16 * (32 - x / GRID)) & 15
+    cy = math.floor(16 * (32 - y / GRID)) & 15
+    return gx, gy, cx * 16 + cy
+
+
+def area_reader(directory=MAPS_DIR):
+    """area_at(map, x, y): the AreaTable id the server's map files put a point in, None where no
+    tile was extracted. None where there are no map files: then the rectangles place a giver."""
+    if not os.path.isdir(directory):
+        return None
+    tiles = {}
+
+    def area_at(mapid, x, y):
+        gx, gy, cell = cell_of(x, y)
+        name = f"{mapid:04d}_{gx:02d}_{gy:02d}.map"
+        if name not in tiles:
+            path = os.path.join(directory, name)
+            tiles[name] = read_tile(open(path, "rb").read()) if os.path.exists(path) else None
+        tile = tiles[name]
+        if tile is None:
+            return None
+        return (tile if isinstance(tile, int) else tile[cell]) or None
+
+    return area_at
+
+
 class Maps:
     """The client's zones: which an area is in, and which a point stands in. Forever's tables, then
-    Era's for an area or a point Forever's do not place."""
+    Era's for an area or a point Forever's do not place. `area_at` (area_reader) gives the area a
+    point is in, where there are map files."""
 
-    def __init__(self, builds=(BUILD, ERA_BUILD)):
+    def __init__(self, builds=(BUILD, ERA_BUILD), area_at=None):
+        self.area_at = area_at
         self.assign_sets, self.area_zone, self.areas, self.uimaps = [], {}, {}, {}
         for build in builds:
             uimaps = table("UiMap", build=build)
@@ -226,8 +284,21 @@ class Maps:
         return None
 
     def zone_at(self, mapid, x, y):
+        """The zone a point is in: its area's, from the map files, else the smallest zone
+        rectangle around it. Rectangles overlap along every border, so a town at a zone's edge
+        (Darkshire, Ratchet) fell into its neighbour; a city's rectangle wins over the ground's
+        area around it."""
         if mapid in INSTANCE_ZONE:
             return INSTANCE_ZONE[mapid]
+        box = self.box_at(mapid, x, y)
+        area = self.area_at(mapid, x, y) if self.area_at else None
+        zone = area and self.zone_of_area(area)
+        if not zone or CITY_IN.get(box) == zone:
+            return box
+        return zone
+
+    def box_at(self, mapid, x, y):
+        """The smallest zone rectangle a point is in."""
         for assigns in self.assign_sets:
             best = None
             for a in assigns:
@@ -850,7 +921,7 @@ def without_db(args):
     quest_lines = {qid: line for qid, line in quest_lines.items() if "notext = true" not in line}
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
-    maps = Maps()
+    maps = Maps(area_at=area_reader())
     records = {}
     for qid in sorted(set(quests) - set(quest_lines)):
         zones = maps.giver_zones(givers[qid], spawns) if qid in givers else []
@@ -888,7 +959,9 @@ def connect(args):
 
 def with_db(args):
     quests, givers, spawns = corpus_quests()
-    maps = Maps()
+    maps = Maps(area_at=area_reader())
+    if not maps.area_at:
+        print(f"no map files at {MAPS_DIR} (COMPENDIUM_MAPS): givers are placed by zone rectangles")
     db = connect(args)
     ids = sorted(quests)
     marks = ",".join(["%s"] * len(ids))

@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import export_compendium  # noqa: E402
-from export_compendium import BUILD, ERA_BUILD, Maps, sort_names  # noqa: E402
+from export_compendium import BUILD, ERA_BUILD, Maps, area_reader, cell_of, read_tile, sort_names  # noqa: E402
 
 
 def _uimap(*ids):
@@ -106,3 +106,48 @@ def test_the_builds_are_the_ones_every_pipeline_pins():
     assert f'export const FOREVER_BUILD = "{BUILD}";' in wago
     assert f'export const ERA_BUILD = "{ERA_BUILD}";' in wago
     assert Path(export_compendium.WAGO_CACHE).parts[-4:] == ("pipelines", "lib", "cache", "wago")
+
+
+def _tile(area=0, grid=()):
+    """A map file as the extractor writes it: a header whose fourth word points at the AREA chunk."""
+    offset = 40
+    data = bytearray(offset + 8 + (0 if area else 512))
+    data[0:4] = b"MAPS"
+    data[12:16] = offset.to_bytes(4, "little")
+    data[offset:offset + 4] = b"AREA"
+    data[offset + 4:offset + 6] = (1 if area else 0).to_bytes(2, "little")
+    data[offset + 6:offset + 8] = area.to_bytes(2, "little")
+    for i, a in enumerate(grid):
+        data[offset + 8 + i * 2:offset + 10 + i * 2] = a.to_bytes(2, "little")
+    return bytes(data)
+
+
+def test_a_map_file_holds_one_area_or_a_grid_of_them():
+    assert read_tile(_tile(area=42)) == 42
+    assert read_tile(_tile(grid=range(1, 257))) == list(range(1, 257))
+
+
+def test_a_points_tile_and_cell_are_the_servers():
+    # Darkshire's square in Duskwood: the server files it under 0000_51_34.map.
+    gx, gy, cell = cell_of(-10567, -1170)
+    assert (gx, gy) == (51, 34) and 0 <= cell < 256
+
+
+def test_the_area_a_giver_stands_in_beats_the_rectangles(monkeypatch, tmp_path):
+    gx, gy, cell = cell_of(250, 250)
+    grid = [12] * 256
+    (tmp_path / f"0000_{gx:02d}_{gy:02d}.map").write_bytes(_tile(grid=grid))
+    monkeypatch.setattr(export_compendium, "table", lambda name, locale="enUS", build=BUILD: TABLES[(name, build)])
+    maps = Maps(area_at=area_reader(str(tmp_path)))
+    # The rectangles say the Wetlands (1437) there; the map file says Elwynn Forest's area.
+    assert maps.zone_at(0, 250, 250) == 1429
+    # No tile extracted: the rectangle.
+    assert maps.zone_at(0, -10567, -1170) == maps.box_at(0, -10567, -1170)
+    assert area_reader(str(tmp_path / "none")) is None
+
+
+def test_a_citys_rectangle_wins_over_the_ground_around_it(monkeypatch):
+    monkeypatch.setattr(export_compendium, "table", lambda name, locale="enUS", build=BUILD: TABLES[(name, build)])
+    maps = Maps(area_at=lambda mapid, x, y: 12)
+    monkeypatch.setattr(maps, "box_at", lambda mapid, x, y: 1453)
+    assert maps.zone_at(0, 1, 1) == 1453
