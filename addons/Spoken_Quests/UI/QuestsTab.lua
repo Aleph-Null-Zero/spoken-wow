@@ -1,4 +1,4 @@
--- The quests in Azeroth's Compendium, the window Spoken Books and Spoken Zones carry: every quest
+-- The quests in Azeroth's Compendium, Spoken's window: every quest
 -- this character's race and class may take. A quest is found once this character has started it:
 -- completed, or in its quest log, which is marked in progress on its row and its page. Until then
 -- it is greyed and does not open, unless Unlock Unstarted Quests is on.
@@ -40,12 +40,6 @@ VO.QuestsTab = QuestsTab
 
 local L = VO.L
 local C
-
--- The words' size, for UI/TextView.lua: the Compendium's Text Size on Spoken's page, so every tab
--- reads alike.
-function ns:Get(key)
-    if key == "fontSize" then return Spoken:CompendiumFontSize() end
-end
 
 local list, page
 local selection          -- { quest = id } | { mapID = id } | { sort = id } | { group = "elsewhere" }
@@ -1603,7 +1597,7 @@ local function Build(panel)
             searchClosed = {}
             QuestsTab:Refresh()
         end,
-        addScrollBar = function(scroll, child, inset) return ns:AddScrollBar(scroll, child, inset) end,
+        addScrollBar = function(scroll, child, inset) return SpokenTextView.AddScrollBar(scroll, child, inset) end,
     })
     panel.Refresh = function() QuestsTab:Refresh() end
     panel.inset, panel.filterButton, panel.filterMenu, panel.noMatch = list.inset, list.filterButton, list.filterMenu, list.noMatch
@@ -1750,15 +1744,14 @@ local function OnEvent(_, event, a)
     end
 end
 
---- Add the tab to Azeroth's Compendium, where Spoken Books or Spoken Zones has loaded it.
+--- Add the tab to Azeroth's Compendium.
 function QuestsTab:Setup()
     C = _G.SpokenCompendium
     if not C or C:Tab("quests") or not _G.SpokenQuestsCompendium then return end
     C:Register("quests", {
         label = L.COMPENDIUM_QUESTS,
-        -- The first tab, before Zones (1) and Books (2); the window takes its title from it.
+        -- The first tab, before Zones (1) and Books (2).
         order = 0,
-        title = L.COMPENDIUM_TITLE,
         build = Build,
         open = function() QuestsTab:Open() end,
         -- Come back to from another tab: where the player stands now, unless they chose here.
@@ -1786,7 +1779,7 @@ function QuestsTab:Setup()
     if self.SetupOpenButtons then self:SetupOpenButtons() end
 end
 
--- Once the world is up: Spoken Zones, which may be the addon carrying the window, loads after this one.
+-- Once the world is up, as the other tabs are added.
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("PLAYER_ENTERING_WORLD")
 loader:SetScript("OnEvent", function(self)

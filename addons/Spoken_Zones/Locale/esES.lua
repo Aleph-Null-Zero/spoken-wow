@@ -136,7 +136,6 @@ L.OPT_RELOAD_NOW = "Recargar ahora"
 L.OPT_LATER = "Más tarde"
 
 -- Lore of Azeroth and Zone Lore
-L.LORE_WINDOW_TITLE = "Compendio de Azeroth"
 L.COMPENDIUM_PLACES = "Zonas"
 L.LORE_PANEL_TITLE = "Historia de la zona"
 L.MAP_PANEL_EXPAND = "Mostrar historia de la zona"

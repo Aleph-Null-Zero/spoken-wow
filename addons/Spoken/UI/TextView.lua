@@ -1,9 +1,10 @@
 -- A scrolling block of wrapped text, with a scrollbar: Spoken Zones' stories, beside the map and in
 -- Azeroth's Compendium, and Spoken Books' readables and Spoken Quests' quests there, so all of them
--- scroll and wrap alike.
+-- scroll and wrap alike. The global SpokenTextView: Create, AddScrollBar and Unsnap. The words are
+-- the Compendium's Text Size (Spoken:CompendiumFontSize).
 --
--- Carried byte for byte by all three addons, as UI/Layout.lua is: what it makes goes on the addon that
--- loads it (`...`), which also answers the words' size (Addon:Get("fontSize")).
+-- Not under setfenv(1, SpokenEnv): the client's mixins are looked up in the calling function's
+-- environment.
 --
 -- The scrollbar is built by hand from the game's minimal scroll bar art (MinimalScrollBar's
 -- track and small thumb, as the quest log and the settings draw them) rather than inherited:
@@ -14,7 +15,7 @@
 -- clean line: a strip of the page's own background (TextView:SetFadeSource), drawn over the
 -- text, clear on the inside and solid at the edge.
 
-local ADDON_NAME, Addon = ...
+SpokenTextView = {}
 
 local SCROLL_STEP = 28
 -- Between the words (and a part's buttons) and the scroll bar, while the bar shows.
@@ -69,6 +70,18 @@ end
 
 local function HasAtlas(name)
 	return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) ~= nil or false
+end
+
+local function FontSize()
+	return Spoken:CompendiumFontSize()
+end
+
+-- The file `fontObject`'s words are written in: where the view's owner reads a language other than
+-- the client's (only Zones does, SpokenZones:FontFor), one that draws its script.
+local function FontFile(view, fontObject)
+	local owner = view.owner
+	return owner and owner.FontFor and owner:FontFor(fontObject)
+		or (fontObject and fontObject.GetFont and fontObject:GetFont())
 end
 
 --------------------------------------------------------------------------------
@@ -281,7 +294,7 @@ end
 --- Drawn where it lies, not nudged onto the screen's pixel grid: the fade and the page under it
 --- are two textures of one picture, and snapped separately they part by a pixel along the
 --- fade's solid edge.
-function Addon:Unsnap(texture)
+function SpokenTextView.Unsnap(texture)
 	if texture.SetSnapToPixelGrid then texture:SetSnapToPixelGrid(false) end
 	if texture.SetTexelSnappingBias then texture:SetTexelSnappingBias(0) end
 end
@@ -299,7 +312,7 @@ local function BuildFade(view, parent)
 	view.strips, view.ramps = {}, {}
 	local function Strip()
 		local strip = over:CreateTexture(nil, "OVERLAY")
-		Addon:Unsnap(strip)
+		SpokenTextView.Unsnap(strip)
 		strip:Hide()
 		table.insert(view.strips, strip)
 		return strip
@@ -400,9 +413,10 @@ end
 --------------------------------------------------------------------------------
 
 -- Anchor the returned view's `frame` yourself. Width is read at SetText time, so
--- it copes with the frame being resized after creation.
-function Addon:CreateTextView(parent)
-	local view = setmetatable({}, TextView)
+-- it copes with the frame being resized after creation. `owner` is the module whose words it shows,
+-- for the font its language is written in (FontFile).
+function SpokenTextView.Create(parent, owner)
+	local view = setmetatable({ owner = owner }, TextView)
 	view.range = 0
 
 	local scroll = CreateFrame("ScrollFrame", nil, parent)
@@ -504,12 +518,9 @@ function TextView:SetText(str)
 
 	-- The quest text's face on a parchment page, as a quest's own words are written there.
 	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
-	-- Where the addon reads a language other than the client's (only Zones does), in a file that
-	-- draws its script.
-	local fontPath = Addon.FontFor and Addon:FontFor(fontObject)
-		or (fontObject and fontObject.GetFont and fontObject:GetFont())
+	local fontPath = FontFile(self, fontObject)
 	if fontPath then
-		self.text:SetFont(fontPath, Addon:Get("fontSize") + (self.ink and 1 or 0), "")
+		self.text:SetFont(fontPath, FontSize() + (self.ink and 1 or 0), "")
 	end
 	if self.ink then
 		self.text:SetTextColor(self.ink[1], self.ink[2], self.ink[3])
@@ -532,7 +543,7 @@ end
 --- The same scroll bar on a scroll frame of the caller's own (the lore window's list of places):
 --- `child` its scroll child, `parent` what the bar is drawn in. Leaves the bar's width plus a
 --- gap free on the right of `child`, so nothing in it runs under the bar.
-function Addon:AddScrollBar(scroll, child, parent)
+function SpokenTextView.AddScrollBar(scroll, child, parent)
 	local view = setmetatable({ frame = scroll, child = child, range = 0 }, TextView)
 	BuildScrollBar(view, parent)
 	-- The child as wide as the frame, but for the bar's room while the bar shows (UpdateScrollBar).
@@ -554,9 +565,8 @@ end
 --- The words' face and size, as SetText sets them, on `fontString`.
 function TextView:Paint(fontString)
 	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
-	local fontPath = Addon.FontFor and Addon:FontFor(fontObject)
-		or (fontObject and fontObject.GetFont and fontObject:GetFont())
-	if fontPath then fontString:SetFont(fontPath, Addon:Get("fontSize") + (self.ink and 1 or 0), "") end
+	local fontPath = FontFile(self, fontObject)
+	if fontPath then fontString:SetFont(fontPath, FontSize() + (self.ink and 1 or 0), "") end
 	local colour = self.color or self.ink
 	if colour then fontString:SetTextColor(colour[1], colour[2], colour[3]) end
 	if self.ink then fontString:SetShadowColor(0, 0, 0, 0) end
@@ -565,9 +575,8 @@ end
 --- A part's caption: the words' face, smaller, in the page's ink.
 function TextView:PaintCaption(fontString)
 	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
-	local fontPath = Addon.FontFor and Addon:FontFor(fontObject)
-		or (fontObject and fontObject.GetFont and fontObject:GetFont())
-	local size = Clamp(Addon:Get("fontSize") - CAPTION_LESS, CAPTION_LEAST, CAPTION_MOST)
+	local fontPath = FontFile(self, fontObject)
+	local size = Clamp(FontSize() - CAPTION_LESS, CAPTION_LEAST, CAPTION_MOST)
 	if fontPath then fontString:SetFont(fontPath, size, "") end
 	if self.ink then
 		fontString:SetTextColor(self.ink[1], self.ink[2], self.ink[3])
@@ -656,8 +665,8 @@ function TextView:SetParts(parts)
 			end
 			return previous
 		end
-		local font = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
-		if font then slot.heading:SetFont(font, math.min(Addon:Get("fontSize") + HEAD_SIZE, HEAD_MOST), "") end
+		local font = _G.QuestTitleFont and FontFile(self, _G.QuestTitleFont) or titleFace
+		if font then slot.heading:SetFont(font, math.min(FontSize() + HEAD_SIZE, HEAD_MOST), "") end
 		slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
 		slot.heading:SetShadowColor(0, 0, 0, 0)
 		slot.heading:SetText(part.heading or "")

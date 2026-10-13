@@ -98,7 +98,7 @@ local audio = setmetatable({}, { __index = Z })
 assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Zones", audio)
 Z.PlaceAbove = audio.PlaceAbove
 dofile(here .. "/../../addons/Spoken/UI/Layout.lua")
-for _, file in ipairs({ "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 
@@ -111,7 +111,7 @@ Expect("built at login, hidden, and not made the tab the window first opens on",
     tostring(window ~= nil) .. "|" .. tostring(compendium:IsShown()) .. "|" .. tostring(_G.SpokenCompendium:Active()), "true|false|nil")
 Expect("the places are a tab of Azeroth's Compendium, the game's portrait frame", compendium.template, "PortraitFrameTemplate")
 Expect("...titled, with the Compendium's tome in its portrait", compendium.title .. "|" .. tostring(compendium.portrait),
-    Z.L.LORE_WINDOW_TITLE .. "|Interface\\Icons\\INV_Misc_Book_11")
+    SpokenEnv.L.OPT_COMPENDIUM_TITLE .. "|Interface\\Icons\\INV_Misc_Book_11")
 Expect("...closed by Escape", _G.UISpecialFrames[#_G.UISpecialFrames], "SpokenCompendiumWindow")
 local page = window.page
 Expect("its story is on the spellbook's parchment", page.parchment, "spellbook-Page-Right-C60")
@@ -721,7 +721,7 @@ local function NewSession()
     _G.SpokenCompendium = nil
     local session = setmetatable({}, { __index = Z })
     function session:IsPartOn() return partOn end
-    assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", session)
+    dofile(here .. "/../../addons/Spoken/UI/Compendium.lua")
     assert(loadfile(ZONES .. "UI/LoreWindow.lua"))("Spoken_Zones", session)
     _G.SpokenCompendium:Register("first", { label = "First", order = 0, build = function() end })
     session:SetupLoreWindow()
@@ -759,13 +759,13 @@ sized:ToggleLoreWindow()
 local body = sized.window.page.body.text
 local setFont, drawnAt = body.SetFont, nil
 body.SetFont = function(self, face, size, ...) drawnAt = size; if setFont then return setFont(self, face, size, ...) end end
-Z:Set("fontSize", 16)
+spoken:SetCompendiumFontSize(16)
 Expect("Zones listens for Spoken's COMPENDIUM_FONT_CHANGED", said.COMPENDIUM_FONT_CHANGED ~= nil, true)
 said.COMPENDIUM_FONT_CHANGED()
 -- The parchment's ink is drawn a point larger than the Text Size.
 Expect("...and draws the story again at the new Text Size", drawnAt, 16 + 1)
 body.SetFont = setFont
-Z:Set("fontSize", 12)
+spoken:SetCompendiumFontSize(12)
 -- The words run to the page's edge while they fit, and leave the scroll bar room, with a gap,
 -- only while they run past the view; the header's buttons follow the words' right edge.
 do

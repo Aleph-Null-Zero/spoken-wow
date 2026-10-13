@@ -95,10 +95,8 @@ function SpokenBooks:InitDB()
 	return SpokenBooksSettings
 end
 
---- A setting by name. The words' size (UI/TextView.lua asks it) is the Compendium's Text Size on
---- Spoken's page, so every tab reads alike.
+--- A setting by name.
 function SpokenBooks:Get(key)
-	if key == "fontSize" then return Spoken:CompendiumFontSize() end
 	return SpokenBooksSettings and SpokenBooksSettings[key]
 end
 

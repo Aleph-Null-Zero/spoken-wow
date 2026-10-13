@@ -176,7 +176,7 @@ function SpokenZones:CreateLorePage(parent, style)
 	page.bgCoords = { info.leftTexCoord, info.rightTexCoord, top, info.bottomTexCoord }
 	bg:SetTexture(info.file)
 	bg:SetTexCoord(info.leftTexCoord, info.rightTexCoord, top, info.bottomTexCoord)
-	SpokenZones:Unsnap(bg)
+	SpokenTextView.Unsnap(bg)
 
 	-- A spellbook header's backplate behind the title, faint, as the spellbook lays one behind
 	-- each of its headings. Laid out as if it started BACKPLATE_CUT left of the page, and cut there
@@ -297,7 +297,7 @@ function SpokenZones:CreateLorePage(parent, style)
 	end
 	page.divider = divider
 
-	local body = SpokenZones:CreateTextView(frame)
+	local body = SpokenTextView.Create(frame, SpokenZones)
 	body.frame:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 6, -2)
 	body.frame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -inset.right, PAD - 6)
 	body:SetInk(Art.INK[1], Art.INK[2], Art.INK[3])

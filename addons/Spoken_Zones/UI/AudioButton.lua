@@ -1,6 +1,6 @@
 -- SpokenZones -- the play/pause button shown next to a lore description.
 --
--- A factory in the same shape as SpokenZones:CreateTextView: anchor the returned
+-- A factory in the same shape as SpokenTextView.Create: anchor the returned
 -- button yourself, then call SetTarget whenever the panel's content changes.
 --
 -- The player's own round button (Spoken:CreateRoundButton), the one its subtitle shows, so the

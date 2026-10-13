@@ -10,7 +10,6 @@ local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.world.questID = 0; stub.ShowPanel(nil)
@@ -38,12 +37,8 @@ _G.GetQuestsCompleted = function() return {} end
 
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
-local B = {}
-for _, file in ipairs({ "Locale/enUS", "UI/TextView", "UI/Compendium" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
-end
 local ns = {}
-for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab" }) do
+for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/QuestsTab" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
 end
 local HIGH_ORDER, WINDSHAPER, CLASSIC_ALLIANCE = 2 ^ 32, 2 ^ 33, 1 + 4 + 8 + 64

@@ -13,7 +13,6 @@ local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
 
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.world.questID = 0; stub.ShowPanel(nil)
@@ -58,11 +57,7 @@ _G.GetQuestsCompleted = function() return completed end
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local Spoken = _G.Spoken
--- The window comes with Spoken Books.
-local B = {}
-for _, file in ipairs({ "Locale/enUS", "UI/TextView", "UI/Compendium" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
-end
+-- The window is Spoken's: no other module is loaded.
 -- Where a quest is read: Classic Era's quest log, a zone's header then its quests, with the
 -- selected quest's details beside the list, and the map's quest log of Forever, with its details
 -- view.
@@ -90,7 +85,7 @@ QuestMapFrame.DetailsFrame = CreateFrame("Frame", nil, QuestMapFrame)
 QuestMapFrame.DetailsFrame.BackFrame = CreateFrame("Frame", nil, QuestMapFrame.DetailsFrame)
 _G.QuestMapFrame_ShowQuestDetails = function(questID) QuestMapFrame.DetailsFrame.questID = questID end
 local ns = {}
-for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab", "UI/OpenInCompendium" }) do
+for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/QuestsTab", "UI/OpenInCompendium" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
 end
 -- The shipped data links each quest to the one before it in its chain: Lost Necklace, Pie for
@@ -827,17 +822,17 @@ do
     body.frame.width = width
     -- Headings grow with the words' size, up to 20.
     local heading, size = body.parts[1].heading, nil
-    local titleFont, get = _G.QuestTitleFont, ns.Get
+    local titleFont = _G.QuestTitleFont
     _G.QuestTitleFont = { GetFont = function() return "Fonts/MORPHEUS.TTF", 18 end }
     heading.SetFont = function(_, _, s) size = s end
-    local words = 12
-    ns.Get = function(self, key) if key == "fontSize" then return words end return get(self, key) end
+    Spoken:SetCompendiumFontSize(12)
     body:SetParts(body.lastParts)
     Expect("...a part's heading 7 larger than the words", size, 19)
-    words = 18
+    Spoken:SetCompendiumFontSize(18)
     body:SetParts(body.lastParts)
     Expect("...and no larger than 20, under the page's title", size, 20)
-    _G.QuestTitleFont, ns.Get, heading.SetFont = titleFont, get, nil
+    Spoken:SetCompendiumFontSize(12)
+    _G.QuestTitleFont, heading.SetFont = titleFont, nil
     body:SetParts(body.lastParts)
 end
 -- A part with a face: the face at the left of the heading's line, which is as tall as it, and the
@@ -1091,7 +1086,7 @@ do
     Spoken:SetCompendiumFontSize(16)
     -- The parchment's ink is drawn a point larger than the Text Size.
     Expect("the page's words at the Compendium's Text Size, drawn again when it changes",
-        ns:Get("fontSize") .. "|" .. tostring(drawnAt), "16|" .. (16 + 1))
+        Spoken:CompendiumFontSize() .. "|" .. tostring(drawnAt), "16|" .. (16 + 1))
     text.SetFont, _G.QuestFont = setFont, questFont
     Spoken:SetCompendiumFontSize(12)
 end
@@ -1109,7 +1104,7 @@ C:Register("readables", { label = "Books", order = 2, build = function() end })
 Expect("Quests is the first tab", _G.SpokenCompendiumWindowTab1:GetText(), L.COMPENDIUM_QUESTS)
 Expect("...Zones and Books after it", _G.SpokenCompendiumWindowTab2:GetText() .. "|" .. _G.SpokenCompendiumWindowTab3:GetText(),
     "Zones|Books")
-Expect("...and the window has its title", C.window.title, L.COMPENDIUM_TITLE)
+Expect("...and the window has its title", C.window.title, SpokenEnv.L.OPT_COMPENDIUM_TITLE)
 -- Opened from the minimap menu, on the first tab until the player has chosen one with the tabs.
 C:Select("readables")
 C:Hide()

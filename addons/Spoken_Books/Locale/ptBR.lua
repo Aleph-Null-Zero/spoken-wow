@@ -76,7 +76,6 @@ L.OPT_CANCEL = "Cancelar"
 L.OPT_SECTION_START_OVER = "Recomeçar"
 
 -- Azeroth's Compendium: the readables' tab (UI/Readables.lua) and its settings.
-L.COMPENDIUM_TITLE = "Compêndio de Azeroth"
 L.COMPENDIUM_READABLES = "Livros"
 L.READABLES_SEARCH = "Buscar livros"
 L.READABLES_NONE = "Nada encontrado."

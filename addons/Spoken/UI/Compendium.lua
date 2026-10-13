@@ -2,9 +2,7 @@
 -- the quests (Spoken Quests), the places (Spoken Zones), the writings (Spoken Books) -- each a
 -- list on the left and a page on the right.
 --
--- Carried byte for byte by Spoken Zones and Spoken Books, as UI/Layout.lua is, so either works on
--- its own and both together share one window: the newest copy loaded wins (VERSION), and a tab
--- registered by any copy is kept. The window is the game's portrait frame, resizable from its corner
+-- Spoken's, so every module's tab shares one window. The window is the game's portrait frame, resizable from its corner
 -- and folding down to the list. The list is a search box over an inset of rows, with the tab's
 -- switches (Started Only, Discovered Only, Found Only and the like) in the filter menu beside the
 -- search. Its rows are drawn in the game's own art: the objective tracker's campaign bar across
@@ -16,26 +14,19 @@
 -- line down its left. What the rows are, what a click does and the page beside them are each
 -- tab's own.
 --
--- A tab: SpokenCompendium:Register(key, { label, order, title, build(panel), onShow(panel),
--- store = { get(key), set(key, value) }, open(), enabled(), unlock = { get(), set(value) } }).
--- build lays the tab out in `panel`, which fills the window, and sets panel.pageInset, folded away
--- with the window. title is the window's, from the first tab registered; store keeps the window's
--- size, from the first tab that has one. open shows the tab as its part wants it opened, enabled
--- says whether its part is on, and unlock is its Unlock switch, which Spoken's page shows
+-- A tab: SpokenCompendium:Register(key, { label, order, build(panel), onShow(panel), open(),
+-- enabled(), unlock = { get(), set(value) } }). build lays the tab out in `panel`, which fills the
+-- window, and sets panel.pageInset, folded away with the window. open shows the tab as its part
+-- wants it opened, enabled says whether its part is on, and unlock is its Unlock switch, which Spoken's page shows
 -- (SpokenCompendium:Toggle opens the window from there and from the minimap menu). Shared
 -- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
--- (C.NewPage).
+-- (C.NewPage). The window's size is kept in Spoken's settings.
+--
+-- Not under setfenv(1, SpokenEnv): the frames are built here, and the client's mixins are looked
+-- up in the calling function's environment.
 
-local VERSION = 47
-
-if SpokenCompendium and (SpokenCompendium.VERSION or 0) >= VERSION then
-	return
-end
-
-local C = SpokenCompendium or {}
+local C = { tabs = {} }
 SpokenCompendium = C
-C.VERSION = VERSION
-C.tabs = C.tabs or {}
 
 local WINDOW_WIDTH = 920
 local WINDOW_HEIGHT = 600
@@ -184,11 +175,12 @@ local function Ordered()
 	return list
 end
 
-local function Store()
-	for _, tab in ipairs(Ordered()) do
-		if tab.store then return tab.store end
-	end
+-- Spoken's settings, where the window's size is kept: nil before they have loaded.
+local function Profile()
+	local addon = SpokenEnv and SpokenEnv.Addon
+	return addon and addon.db and addon.db.profile
 end
+local SIZE_KEYS = { width = "CompendiumWidth", height = "CompendiumHeight" }
 
 -- The list's margins inside the window, left and right, and how far below its top the tab's
 -- content starts: a templated frame's portrait takes the top-left corner.
@@ -246,8 +238,8 @@ end
 -- Saved sizes are clamped on the way in: a size persisted by the runaway would otherwise
 -- reopen at the bound for good.
 local function SavedSize(key, min, max, fallback)
-	local store = Store()
-	local saved = store and store.get(key)
+	local profile = Profile()
+	local saved = profile and profile[SIZE_KEYS[key]]
 	if type(saved) ~= "number" or saved < min then
 		return fallback
 	end
@@ -263,14 +255,14 @@ local function SavedHeight()
 end
 
 local function SaveWindowSize()
-	local store = Store()
+	local profile = Profile()
 	local width, height = window:GetSize()
-	if not store or not width or not height or width <= 0 or height <= 0 then
+	if not profile or not width or not height or width <= 0 or height <= 0 then
 		return
 	end
-	store.set("height", math.floor(height + 0.5))
+	profile[SIZE_KEYS.height] = math.floor(height + 0.5)
 	if not minimized then
-		store.set("width", math.floor(width + 0.5))
+		profile[SIZE_KEYS.width] = math.floor(width + 0.5)
 	end
 end
 
@@ -477,8 +469,8 @@ local function PaintTabs()
 end
 
 local function BuildWindow()
-	local first = Ordered()[1]
-	window = NewWindow(first and first.title or "", ICON)
+	local L = SpokenEnv and SpokenEnv.L
+	window = NewWindow(L and L.OPT_COMPENDIUM_TITLE or "", ICON)
 	window:SetSize(ExpandedWidth(), SavedHeight())
 	window:SetPoint("CENTER")
 	window:SetFrameStrata("HIGH")
@@ -1773,7 +1765,7 @@ local Page = {}
 Page.__index = Page
 
 --- A page of parchment filling `parent`: a title, the line under it, the divider, the words in a
---- scrolling view (`addon`'s UI/TextView.lua), and Report and Play on the title's right, as the
+--- scrolling view (UI/TextView.lua, in `addon`'s font for its language), and Report and Play on the title's right, as the
 --- places' page has them. `play` = { has(target), find(target) -> the line in the queue or nil,
 --- start(target), tip }, what Play does for whatever Show was given (C.PlayState, C.PlayClick);
 --- `report` = { has(target), open(target), title, tip }, what Report does, hidden where it has
@@ -1799,7 +1791,7 @@ function C.NewPage(parent, addon, play, report)
 	self.bg, self.bgFile, self.bgCoords = bg, file, coords
 	-- Off the pixel grid, as the text's fade cut from the same picture is: snapped apart, the two
 	-- part by a pixel along the fade's edge.
-	if addon.Unsnap then addon:Unsnap(bg) end
+	SpokenTextView.Unsnap(bg)
 
 	if ZonesLoaded() then
 		local backplate = frame:CreateTexture(nil, "BORDER")
@@ -1885,7 +1877,7 @@ function C.NewPage(parent, addon, play, report)
 	end
 	self.divider = divider
 
-	local body = addon:CreateTextView(frame)
+	local body = SpokenTextView.Create(frame, addon)
 	body.frame:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 6, -2)
 	body.frame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -RIGHT, PAD - 6)
 	body:SetInk(INK[1], INK[2], INK[3])

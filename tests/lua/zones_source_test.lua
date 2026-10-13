@@ -215,7 +215,7 @@ for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.te
 Expect("the zones addon adds its settings entry to the one button, and not the Compendium's",
     table.concat(labels, "|"), "Stop or Replay|Stop All|Settings|Zones Settings")
 -- The Compendium is Spoken's own entry, there once a part has a tab in it, and opens the window.
-assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", Z)
+dofile(here .. "/../../addons/Spoken/UI/Compendium.lua")
 local opened = 0
 SpokenCompendium:Register("places", { label = "Zones", order = 1, build = function() end,
     open = function() opened = opened + 1 end })

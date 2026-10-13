@@ -76,7 +76,6 @@ L.OPT_CANCEL = "取消"
 L.OPT_SECTION_START_OVER = "重新開始"
 
 -- Azeroth's Compendium: the readables' tab (UI/Readables.lua) and its settings.
-L.COMPENDIUM_TITLE = "艾澤拉斯百科"
 L.COMPENDIUM_READABLES = "書籍"
 L.READABLES_SEARCH = "搜尋書籍"
 L.READABLES_NONE = "沒有符合的結果。"

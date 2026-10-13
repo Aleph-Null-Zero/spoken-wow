@@ -314,19 +314,10 @@ def test_each_retired_project_ships_only_its_tombstone(retired_built):
         assert "(now in Spoken)" in text
 
 
-def test_the_compendium_files_are_the_same_in_every_addon_that_carries_them():
+def test_the_compendium_files_are_spoken_s_alone():
     # Azeroth's Compendium (UI/Compendium.lua) and the text view its pages scroll in
-    # (UI/TextView.lua) are carried by Spoken Zones and Spoken Books for the reason UI/Layout.lua
-    # is: either installs on its own, and both together share one window. Spoken Quests' tab
-    # opens in the window either loads, and carries only the text view its page needs.
-    import hashlib
-    carriers = {"Compendium.lua": ("Spoken_Zones", "Spoken_Books"),
-                "TextView.lua": ("Spoken_Zones", "Spoken_Books", "Spoken_Quests")}
-    for name, addons in carriers.items():
-        copies = {}
-        for addon in addons:
-            path = os.path.join(REPO, "addons", addon, "UI", name)
-            assert os.path.isfile(path), f"{addon} is missing its copy of UI/{name}"
-            with open(path, "rb") as handle:
-                copies[addon] = hashlib.sha256(handle.read()).hexdigest()
-        assert len(set(copies.values())) == 1, f"UI/{name} differs between addons: {copies}"
+    # (UI/TextView.lua) are Spoken's, loaded once for every module's tab.
+    for name in ("Compendium.lua", "TextView.lua"):
+        carriers = [addon for addon in os.listdir(os.path.join(REPO, "addons"))
+                    if os.path.isfile(os.path.join(REPO, "addons", addon, "UI", name))]
+        assert carriers == ["Spoken"], f"UI/{name} is carried by {carriers}"

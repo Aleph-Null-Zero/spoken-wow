@@ -152,7 +152,6 @@ L.OPT_RESET_PROFILE_CONFIRM = "Remettre chaque paramètre du module Quêtes du p
 L.OPT_RESET = "Réinitialiser"
 L.OPT_CANCEL = "Annuler"
 L.COMPENDIUM_QUESTS = "Quêtes"
-L.COMPENDIUM_TITLE = "Compendium d'Azeroth"
 L.OPEN_IN_COMPENDIUM = "Ouvrir dans le Compendium d'Azeroth"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "Le texte de cette quête dans le Compendium d'Azeroth, avec ceux de toutes les autres quêtes."
 L.QUESTS_SEARCH = "Rechercher une quête"

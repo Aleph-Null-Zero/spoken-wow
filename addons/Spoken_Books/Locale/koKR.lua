@@ -76,7 +76,6 @@ L.OPT_CANCEL = "취소"
 L.OPT_SECTION_START_OVER = "초기화"
 
 -- Azeroth's Compendium: the readables' tab (UI/Readables.lua) and its settings.
-L.COMPENDIUM_TITLE = "아제로스 백과사전"
 L.COMPENDIUM_READABLES = "책"
 L.READABLES_SEARCH = "책 검색"
 L.READABLES_NONE = "일치하는 항목이 없습니다."

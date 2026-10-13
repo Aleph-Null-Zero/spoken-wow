@@ -802,7 +802,7 @@ local function BuildPanel(p)
 			SetFilter(text)
 			SpokenZones:RefreshLoreWindow()
 		end,
-		addScrollBar = function(scroll, child, inset) return SpokenZones:AddScrollBar(scroll, child, inset) end,
+		addScrollBar = function(scroll, child, inset) return SpokenTextView.AddScrollBar(scroll, child, inset) end,
 	})
 	p.Refresh = function() SpokenZones:RefreshLoreWindow() end
 	p.inset, p.filterButton, p.filterMenu, p.noMatch, p.listBar = list.inset, list.filterButton, list.filterMenu, list.noMatch, list.bar
@@ -890,8 +890,6 @@ function SpokenZones:ShowLoreFor(mapID, areaKey)
 	SpokenZones:RefreshLoreWindow(true)
 end
 
--- The window's size, kept with the rest of Zones' settings as it was when it was Lore of Azeroth.
-local SIZE_KEYS = { width = "loreWindowWidth", height = "loreWindowHeight" }
 
 function SpokenZones:SetupLoreWindow()
 	if list then
@@ -900,7 +898,6 @@ function SpokenZones:SetupLoreWindow()
 	SpokenCompendium:Register("places", {
 		label = L.COMPENDIUM_PLACES,
 		order = 1,
-		title = L.LORE_WINDOW_TITLE,
 		build = BuildPanel,
 		-- A place found since the window last opened is listed now. Come back to from another tab,
 		-- the tab is on where the player stands now, unless they chose a place here.
@@ -908,10 +905,6 @@ function SpokenZones:SetupLoreWindow()
 			if SpokenZones.RefreshFound then SpokenZones:RefreshFound() end
 			if selection == landed then selection = nil end
 		end,
-		store = {
-			get = function(key) return SpokenZones:Get(SIZE_KEYS[key]) end,
-			set = function(key, value) SpokenZones:Set(SIZE_KEYS[key], value) end,
-		},
 		-- Opened from Spoken's menu and page on where the player stands, as from the map.
 		open = function() SpokenZones:ToggleLoreWindow() end,
 		enabled = function() return SpokenZones:IsPartOn() end,

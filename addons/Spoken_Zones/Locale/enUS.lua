@@ -166,7 +166,6 @@ L.ZONES_PICK = "Choose a zone on the left to read its story."
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
 -- The window browses every place; the panel beside the map tells the zone it shows.
-L.LORE_WINDOW_TITLE = "Azeroth's Compendium"
 L.COMPENDIUM_PLACES = "Zones"
 L.LORE_PANEL_TITLE = "Zone Lore"
 L.MAP_PANEL_EXPAND = "Show Zone Lore"

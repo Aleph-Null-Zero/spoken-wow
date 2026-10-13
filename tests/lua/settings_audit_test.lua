@@ -45,7 +45,7 @@ end
 Z:SetupOptions()
 -- Azeroth's Compendium, with the three tabs Spoken's page shows an Unlock switch for: stand-ins
 -- that keep the switch, as the real tabs keep it in their settings.
-assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", Z)
+dofile(here .. "/../../addons/Spoken/UI/Compendium.lua")
 local unlocked = {}
 for _, key in ipairs({ "places", "readables", "quests" }) do
     SpokenCompendium:Register(key, { label = key, order = 1, build = function() end, open = function() end,

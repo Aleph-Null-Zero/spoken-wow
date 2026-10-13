@@ -199,7 +199,6 @@ L.OPT_SECTION_START_OVER = "Start Over"
 --------------------------------------------------------------------------------
 
 L.COMPENDIUM_QUESTS = "Quests"
-L.COMPENDIUM_TITLE = "Azeroth's Compendium"
 L.OPEN_IN_COMPENDIUM = "Open in Azeroth's Compendium"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "This quest's words in Azeroth's Compendium, beside every other quest's."
 L.QUESTS_SEARCH = "Search quests"

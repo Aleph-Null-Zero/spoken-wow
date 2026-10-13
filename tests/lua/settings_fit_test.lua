@@ -73,13 +73,13 @@ stub.LoadGossipPanel(GOSSIP, G):Setup()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU",
     "Locale/koKR", "Locale/zhCN", "Locale/zhTW", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
-    "UI/TextView", "UI/Compendium", "UI/Readables", "UI/Options", "Events", "Commands" }) do
+    "UI/Readables", "UI/Options", "Events", "Commands" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 B:InitDB(); B:SetupOptions()
 -- Two of the Compendium's tabs, so Spoken's page shows their Unlock switches.
 B:SetupReadables()
-for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab" }) do
+for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/QuestsTab" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", {})
 end
 VO.QuestsTab:Setup()

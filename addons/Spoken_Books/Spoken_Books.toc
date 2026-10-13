@@ -47,8 +47,6 @@ Playlist.lua
 UI/Options.lua
 UI/PlayButton.lua
 UI/CopyLink.lua
-UI/TextView.lua
-UI/Compendium.lua
 UI/Readables.lua
 UI/DialogueUIBook.lua
 Events.lua

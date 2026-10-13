@@ -61,7 +61,6 @@ addons/Spoken_Zones/          the addon itself (this is what WoW loads)
   Data/enUS/Zones.lua    GENERATED -- do not edit by hand
   Data/enUS/Subzones.lua GENERATED -- do not edit by hand
   Data/<locale>/Aliases.lua  GENERATED -- localized area name -> English key
-  UI/TextView.lua        shared scrolling wrapped-text widget
   UI/AudioButton.lua     the Play/Stop button shown on a description
   UI/MapPanel.lua        the world map side panel
   UI/SubzoneClick.lua    resolves a map click to a subzone
@@ -593,7 +592,7 @@ opens Azeroth's Compendium and the Zones settings.
 
 ### The Zones tab
 
-Azeroth's Compendium (`UI/Compendium.lua`, shared with Spoken Books and the Quests tab)
+Azeroth's Compendium (Spoken's `UI/Compendium.lua`, shared with the Quests and Books tabs)
 is a movable window that closes on Escape, resizes from its corner and folds down to its
 list. The Zones tab (`UI/LoreWindow.lua`) is a list on the left and the story on the
 right, on the spellbook's parchment (`UI/LorePage.lua`).
@@ -1450,7 +1449,7 @@ rather than from memory: `UICheckButtonTemplate` (`Syndicator/Options`) and
 
 ### The scrollbar
 
-`UI/TextView.lua` now draws a track and a draggable thumb, auto-hidden when the
+Spoken's `UI/TextView.lua` now draws a track and a draggable thumb, auto-hidden when the
 text fits. This is hand-rolled rather than inherited from `ScrollFrameTemplate`.
 That template *does* give a native bar on 11509 -- `Leatrix_Plus` uses it -- but
 only through XML `KeyValues` naming a `scrollBarTemplate`, and none of that

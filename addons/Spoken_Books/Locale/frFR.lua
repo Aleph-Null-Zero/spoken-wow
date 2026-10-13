@@ -82,7 +82,6 @@ L.OPT_RESET = "Réinitialiser"
 L.OPT_CANCEL = "Annuler"
 
 -- Azeroth's Compendium: the readables' tab (UI/Readables.lua) and its settings.
-L.COMPENDIUM_TITLE = "Compendium d'Azeroth"
 L.COMPENDIUM_READABLES = "Livres"
 L.READABLES_SEARCH = "Rechercher un livre"
 L.READABLES_NONE = "Aucun résultat."

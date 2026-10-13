@@ -136,7 +136,6 @@ L.OPT_LORE_WINDOW_TIP = "Le récit de chaque zone et sous-zone, à parcourir et 
 L.OPT_SHOW_UNDISCOVERED = "Débloquer toutes les zones"
 L.OPT_SHOW_UNDISCOVERED_TIP = "Permet de lire le récit de toutes les zones et sous-zones, y compris celles que vous n'avez pas encore découvertes. Sinon, elles sont grisées."
 L.OPEN_IN_LORE_TIP = "Le récit de ce lieu dans le Compendium d'Azeroth, avec ceux de toutes les autres zones et sous-zones."
-L.LORE_WINDOW_TITLE = "Compendium d'Azeroth"
 L.COMPENDIUM_PLACES = "Zones"
 L.LORE_PANEL_TITLE = "Récit de la zone"
 L.MAP_PANEL_EXPAND = "Afficher le récit de la zone"

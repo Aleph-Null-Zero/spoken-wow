@@ -157,7 +157,6 @@ L.OPT_RESET_PROFILE_CONFIRM = "¿Restablecer todos los ajustes de Misiones del p
 L.OPT_RESET = "Restablecer"
 L.OPT_CANCEL = "Cancelar"
 L.COMPENDIUM_QUESTS = "Misiones"
-L.COMPENDIUM_TITLE = "Compendio de Azeroth"
 L.OPEN_IN_COMPENDIUM = "Abrir en el Compendio de Azeroth"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "El texto de esta misión en el Compendio de Azeroth, junto al de todas las demás misiones."
 L.QUESTS_SEARCH = "Buscar misiones"

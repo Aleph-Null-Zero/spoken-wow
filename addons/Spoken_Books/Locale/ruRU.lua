@@ -76,7 +76,6 @@ L.REPORT_LINE_TIP = "Получить ссылку, чтобы сообщить 
 L.REPORT_LINE_ADDRESS = "Скопируйте этот адрес и откройте его в браузере, чтобы сообщить о проблеме с этой страницей."
 
 -- Azeroth's Compendium: the readables' tab (UI/Readables.lua) and its settings.
-L.COMPENDIUM_TITLE = "Компендиум Азерота"
 L.COMPENDIUM_READABLES = "Книги"
 L.READABLES_SEARCH = "Поиск книг"
 L.READABLES_NONE = "Ничего не найдено."

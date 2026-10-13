@@ -1175,6 +1175,9 @@ function M.LoadSpoken(addonDirectory)
     -- Its Contribute, listed by Contribute.xml as Spoken's own is. The button is loaded by the
     -- tests that want it.
     dofile(addonDirectory .. "Dialogue/Contribute.lua")
+    -- Azeroth's Compendium and its text view (Compendium.xml).
+    dofile(addonDirectory .. "UI/TextView.lua")
+    dofile(addonDirectory .. "UI/Compendium.lua")
     local env = _G.SpokenEnv
     env.Addon:InitDB()
     -- The suites time the queue by each module's own gap; the player's pause between lines has
@@ -1213,9 +1216,11 @@ end
 --- Load the zones addon's playback files the way the client would -- each chunk receives
 --- the addon name and the shared table as varargs -- against a hand-built SpokenZones table
 --- carrying the few Core.lua facts Audio.lua and Autoplay.lua read. Returns that table.
---- UI/Compendium.lua too, as the toc loads it: a clip's header is the place above, from its tree.
+--- Spoken's UI/Compendium.lua too where Spoken has not loaded it: a clip's header is the place
+--- above, from its tree.
 function M.LoadZones(addonDirectory, SpokenZones)
-    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay", "UI/Compendium" }) do
+    if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
+    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
         chunk("Spoken_Zones", SpokenZones)
     end

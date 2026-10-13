@@ -1351,14 +1351,11 @@ the quest.
 
 ### The Quests tab of Azeroth's Compendium
 
-Azeroth's Compendium is the window Spoken Zones and Spoken Books each carry
-(`UI/Compendium.lua` there). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
-first, before Zones and Books, and the window takes its title from it. It goes wherever either
-addon has loaded the window; Spoken Quests carries no copy of the window, only its own
-copy of the text view the page scrolls in (`UI/TextView.lua`, kept byte for byte with the other
-two by `test_package.py`). `Compendium.xml` loads the tab and its data from the `.toc` files of
-the clients the window runs on (Classic Era, TBC Anniversary and Forever), not on Wrath or the
-legacy clients.
+Azeroth's Compendium is Spoken's window (`addons/Spoken/UI/Compendium.lua`, its pages scrolling
+in Spoken's `UI/TextView.lua`). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
+first, before Zones and Books; it needs no other module. `Compendium.xml` loads the tab and its
+data from the `.toc` files of the clients the window runs on (Classic Era, TBC Anniversary and
+Forever), not on the legacy clients.
 
 Two generated files feed it, both committed so the addon never needs a database:
 
