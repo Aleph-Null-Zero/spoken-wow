@@ -1,12 +1,12 @@
 {
   "_comment": [
-    "Every area name the Camelot client can report, from its own AreaTable via",
+    "Every area name the Forever client can report, from its own AreaTable via",
     "wago.tools. The Era seed beside this one is the same thing for Classic Era;",
     "the corpus filter is the union, because the addon ships for both clients and a",
     "place either one can name is a place worth having a line for.",
-    "Regenerate with:  node tools/fetch-era-areas.mjs --product camelot"
+    "Regenerate with:  node tools/fetch-era-areas.mjs --forever"
   ],
-  "build": "1.60.1.69913",
+  "build": "1.60.1.70338",
   "names": [
     "***On Map Dungeon***",
     "Abandoned Tower",
@@ -41,7 +41,6 @@
     "Arathi Basin",
     "Arathi Highlands",
     "Arcane Sanctum",
-    "Archimonde's Fall",
     "Ariden's Camp",
     "Ashenvale",
     "Ashwood's Fall",
@@ -234,6 +233,7 @@
     "Dreadmurk Shore",
     "Dreadwatch Outpost",
     "Dream Bough",
+    "Dreambound Pinnacle",
     "Drygulch Ravine",
     "Drywhisker Gorge",
     "Dun Algaz",
@@ -1041,6 +1041,7 @@
     "Turner's Logging Camp",
     "Twilight Base Camp",
     "Twilight Grove",
+    "Twilight Hollow",
     "Twilight Outpost",
     "Twilight Post",
     "Twilight Shore",
