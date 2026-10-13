@@ -22,7 +22,7 @@ missing, and the setting is kept, so the window comes back with DialogueUI.
 
 A parchment, or dark, panel in DialogueUI's proportions, showing only the line playing:
 
-- the speaker's face in a ring like the socket of DialogueUI's header, with no line under it;
+- the speaker's face in the socket of DialogueUI's header strip;
 - the line's title beside it in DialogueUI's title type, with the speaker's name small above,
   and after the title "(Stopped)" while the line is stopped and the count of the lines waiting;
 - Stop (Replay once stopped), Skip and the line's own actions, Report among them, at the

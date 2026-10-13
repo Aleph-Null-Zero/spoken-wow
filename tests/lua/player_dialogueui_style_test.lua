@@ -292,16 +292,15 @@ Expect("...and the line", Skin.title.text:GetText(), "Wolves Across the Border")
 do
     local page = CreateFrame("Frame", nil, UIParent)
     local header = Spoken:CreateDialogueHeader(page)
-    local inner = Skin.headerWidth
+    local inner = Skin.headerSocket:GetWidth() + Skin.headerDivider:GetWidth()
     local room = Skin.controls:GetWidth() * Skin.controls:GetScale()
     local height, middle, line = header:Layout(inner, room)
-    Expect("a page's header at the card's column is the card's: as tall, the ring as wide, no line",
-        height .. " " .. header.socket:GetWidth() .. " " .. tostring(header.divider:IsShown()),
-        Skin.headerHeight .. " " .. Skin.headerSocket:GetWidth() .. " " .. tostring(Skin.headerDivider:IsShown()))
-    Expect("...no line under it: the card's header draws none either", Skin.headerDivider:IsShown(), false)
-    Expect("...the face in Spoken's own ring, not DialogueUI's art", header.socket.texture, [[Interface\AddOns\Spoken\Textures\HeaderSocketBrown]])
-    Expect("...the ring centred on the face", header.socket.anchor.relativeTo == header.portrait
-        and header.socket.anchor.point .. " " .. header.socket.anchor.x .. " " .. header.socket.anchor.y, "CENTER 0 0")
+    local function Coords(texture) return table.concat(texture.texCoord, ",") end
+    Expect("a page's header at the card's column is the card's strip, socket and line",
+        height .. " " .. Coords(header.socket) .. " " .. Coords(header.divider) .. " " .. header.divider:GetWidth(),
+        Skin.headerSocket:GetHeight() .. " " .. Coords(Skin.headerSocket) .. " " .. Coords(Skin.headerDivider)
+        .. " " .. Skin.headerDivider:GetWidth())
+    Expect("...in DialogueUI's own parchment", header.socket.texture, BROWN .. "Parchment.png")
     Expect("...the card's face in its socket", header.portrait:GetWidth() .. " " .. header.portrait.anchor.x .. " "
         .. header.portrait.anchor.y, Skin.portrait:GetWidth() .. " " .. Skin.portrait.anchor.x .. " " .. Skin.portrait.anchor.y)
     Expect("...its badge where the card's is", header.badge:GetWidth() .. " " .. header.badge.anchor.x,
@@ -322,8 +321,8 @@ do
         wide .. " " .. header.title:GetHeight(), math.floor(51 * inner * 2 / 358 + 0.5) .. " " .. (math.floor(18 * 0.85 * 2 + 0.5) + 4))
     _G.DialogueUI_DB.Theme = 2
     header:Layout(inner, room)
-    Expect("with DialogueUI's dark theme, still the brown ring: the page is parchment", header.socket.texture,
-        [[Interface\AddOns\Spoken\Textures\HeaderSocketBrown]])
+    Expect("with DialogueUI's dark theme, still its brown parchment: the page is parchment", header.socket.texture,
+        BROWN .. "Parchment.png")
     _G.DialogueUI_DB.Theme = 1
     header:SetTexts("Eagan Peltskinner", "Description")
     Expect("the speaker's name over the part's title", header.name:GetText() .. "|" .. header.title.text:GetText(),
@@ -381,7 +380,6 @@ Spoken:StopAll()
 _G.DialogueUI_DB.Theme = 2
 DUI:LoadTheme()
 Expect("DialogueUI switching to dark switches the window", Skin.parchments[2].texture, DARK .. "Parchment.png")
-Expect("...and the face's ring to its dark one", Skin.headerSocket.texture, [[Interface\AddOns\Spoken\Textures\HeaderSocketDark]])
 Expect("...and the highlight to gold", T.style.highlight, GOLD)
 _G.DialogueUI_DB.Theme = 1
 DUI:LoadTheme()
@@ -701,7 +699,7 @@ Expect("a place's picture shows over its words, as Place Lore shows it", Skin.pi
     and Skin.picture.texture == "Interface/Pictures/1412-mulgore", true)
 Expect("...2:1, as wide as the words", Skin.picture:GetWidth() .. "x" .. Skin.picture:GetHeight(),
     T.frame:GetWidth() .. "x" .. math.floor(T.frame:GetWidth() / 2 + 0.5))
-local column = Skin.headerWidth
+local column = Skin.headerSocket:GetWidth() + Skin.headerDivider:GetWidth()
 Expect("...the words narrower than DialogueUI's column, centred in it",
     T.frame:GetWidth() < column and math.abs(T.frame.anchor.x * 2 + T.frame:GetWidth() - column) <= 1, true)
 Expect("...the progress line as wide as they are, under them",
@@ -710,7 +708,7 @@ Expect("...as far over where the paper's light ends as the last line is over it"
     Skin.progressGaps and math.abs(Skin.progressGaps.below - Skin.progressGaps.above) <= 0.5, true)
 Expect("...and no scrollbar beside them: the wheel scrolls them", Skin.scrollbar, nil)
 local pictureTop = -Skin.picture.anchor.y
-local lineBottom = Skin.headerHeight * 0.8
+local lineBottom = Skin.headerDivider:GetHeight() * 0.8
 Expect("...as far under the divider's line as the words are under it",
     math.abs((pictureTop - lineBottom) - (-WordsTop() - (pictureTop + Skin.picture:GetHeight()))) < 1, true)
 Spoken:StopAll()
@@ -730,7 +728,7 @@ Expect("the words have room over them in the captions, up to the divider's line,
     room > 0 and room <= lineHeight and T.labels[1].anchor.y == -room, true)
 Expect("...and a line's room under them", T.frame:GetHeight(), Skin.lines * lineHeight + room + lineHeight)
 Expect("...reaching over the header's gap, not adding to it: the words where they were",
-    -(T.frame.anchor.y - room) - Skin.headerHeight < room + T.style.size, true)
+    -(T.frame.anchor.y - room) - Skin.headerDivider:GetHeight() < room + T.style.size, true)
 Expect("...no parchment strips drawn over them", Skin.strips, nil)
 T.top = 1.75; T.placedKey = nil; T:Place()
 Expect("a line gliding out is at a quarter, three quarters into the room", math.abs(T.labels[1]:GetAlpha() - .25) < 1e-6, true)

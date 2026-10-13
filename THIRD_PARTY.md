@@ -94,9 +94,6 @@ None of this is the project's to license, and the MIT grant does not reach it.
   `SubtitleLine.tga`): the band shade and the line's gold fill from shorley's
   [Spoken Subtitles](https://github.com/shorley-gm/spoken-subtitles) (MIT), used as they are
   there.
-- **Header rings** (`addons/Spoken/Textures/HeaderSocket*.tga`): drawn for this project by
-  `scripts/spoken/header_socket.py`, after the look of DialogueUI's portrait socket; no pixels of
-  DialogueUI's art are in them.
 - **Stop and Replay glyphs** (`addons/Spoken/Textures/GlyphStop.tga`, `GlyphReplay.tga`): drawn
   for this project in the gold of the player's play and pause glyphs; Stop is built from the
   pause glyph's bar.

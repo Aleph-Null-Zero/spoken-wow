@@ -147,17 +147,11 @@ local BASE_FONT_SIZE = 16
 local TITLE_SHARE = 0.85
 -- DialogueUI's paddings at multiplier 1.
 local PAD_H, PAD_TOP, PAD_BOTTOM = 26, 48, 36
--- The size of DialogueUI's quest-parchment header strip, in pixels: the header is laid out on it,
--- though its art is not drawn.
-local STRIP_WIDTH, STRIP_HEIGHT = 358, 51
--- Where, of the strip's 358, the portrait socket at its left end ends.
+-- The quest parchment's header strip: its texture coordinates, then its size in pixels.
+local HEADER_DIVIDER = { 0, 0.65625, 0.56640625, 0.61328125, 358, 51 }
+-- Where, of the strip's 358, the portrait socket at its left end gives way to the plain
+-- line. The socket is drawn as is; only the line past it stretches with the panel.
 local SOCKET_WIDTH = 64
--- The strip's socket redrawn alone (scripts/spoken/header_socket.py), without the line that
--- leaves it and the light band under that line: its texture's width, of the strip's 358, so its
--- ring matches the strip's.
-local SOCKET_RING = 46.7
-local SOCKET_ART = { Brown = [[Interface\AddOns\Spoken\Textures\HeaderSocketBrown]],
-    Dark = [[Interface\AddOns\Spoken\Textures\HeaderSocketDark]] }
 -- Ctrl-wheel limits for Window Size and Text Size, matching their sliders' ranges.
 local WINDOW_SIZES, WINDOW_STEP = { 0.5, 2 }, 0.05
 local FONT_SIZES = { 12, 26 }
@@ -204,8 +198,8 @@ end
 local function Config() return Addon:Profile("Frame") end
 
 --------------------------------------------------------------------------------
--- The header: the speaker's face in a ring like DialogueUI's, and their name and the line's
--- title beside it. This window's, and a page's (DialogueUIPlayer:CreateHeader).
+-- The header: DialogueUI's header strip, the speaker's face in its socket, and their name and
+-- the line's title beside it. This window's, and a page's (DialogueUIPlayer:CreateHeader).
 --------------------------------------------------------------------------------
 
 --- DialogueUI's window as this one copies it: its width, the column inside its paddings, and the
@@ -219,8 +213,8 @@ end
 
 --- The header strip across a column `inner` wide: its scale from the art's, and its height.
 local function Strip(inner)
-    local ratio = inner / STRIP_WIDTH
-    return ratio, Round(STRIP_HEIGHT * ratio)
+    local ratio = inner / HEADER_DIVIDER[5]
+    return ratio, Round(HEADER_DIVIDER[6] * ratio)
 end
 
 --- The header's parts on `parent`, placed by PlaceHeader.
@@ -228,8 +222,9 @@ local function BuildHeader(parent)
     local head = {}
     -- The face and the title are placed on this, whatever the look.
     head.anchor = CreateFrame("Frame", nil, parent)
-    -- In the quest parchment, a ring round the face like the header strip's socket, and no line.
-    -- In a book's, the book's ring round the face and the line under the title.
+    -- In the quest parchment, DialogueUI's header strip in two pieces: the face's socket, never
+    -- stretched, and the line past it, stretched to the column's width. In a book's, the ring
+    -- round the face and the line under the title.
     head.socket = parent:CreateTexture(nil, "ARTWORK")
     head.divider = parent:CreateTexture(nil, "ARTWORK")
     local host = CreateFrame("Frame", nil, parent)
@@ -285,14 +280,14 @@ local function PlaceHeader(head, parent, inner, look, paper, fonts, k, clear, ri
         head.divider:SetTexCoord(BOOK_DIVIDER[1], BOOK_DIVIDER[2], BOOK_DIVIDER[3], BOOK_DIVIDER[4])
         head.divider:SetSize(inner, lineHeightArt)
         head.divider:SetPoint("CENTER", parent, "TOP", 0, -(lineBottom - Round(lineHeightArt / 2)))
-        head.divider:Show()
     else
-        local ring = Round(SOCKET_RING * ratio)
-        head.socket:SetTexture(string.find(paper, "Theme_Dark", 1, true) and SOCKET_ART.Dark or SOCKET_ART.Brown)
-        head.socket:SetTexCoord(0, 1, 0, 1)
-        head.socket:SetSize(ring, ring)
-        head.socket:SetPoint("CENTER", head.portrait, "CENTER", 0, 0)
-        head.divider:Hide()
+        local socketU = HEADER_DIVIDER[1] + (HEADER_DIVIDER[2] - HEADER_DIVIDER[1]) * SOCKET_WIDTH / HEADER_DIVIDER[5]
+        head.socket:SetTexCoord(HEADER_DIVIDER[1], socketU, HEADER_DIVIDER[3], HEADER_DIVIDER[4])
+        head.socket:SetPoint("TOPLEFT", head.anchor, "TOPLEFT", 0, 0)
+        head.socket:SetSize(socket, stripHeight)
+        head.divider:SetTexCoord(socketU, HEADER_DIVIDER[2], HEADER_DIVIDER[3], HEADER_DIVIDER[4])
+        head.divider:SetPoint("TOPLEFT", head.socket, "TOPRIGHT", 0, 0)
+        head.divider:SetSize(math.max(1, inner - socket), stripHeight)
     end
     local badgeAt = Round(face * 0.36)
     head.badgeDisc:SetSize(Round(face * 0.42), Round(face * 0.42))
@@ -674,10 +669,9 @@ function Skin:Layout()
     -- the default Window Size, growing and shrinking with it from there. The name and the title
     -- stop a button's width short of them.
     self.controlsRound = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
-    local headerHeight, middle = PlaceHeader(self.head, content, inner, look, parchment, fonts, 1,
+    local _, middle = PlaceHeader(self.head, content, inner, look, parchment, fonts, 1,
         Round(ROUND_SIZE * self.controlsRound), self.controls)
     self.controlsMiddle = middle
-    self.headerWidth, self.headerHeight = inner, headerHeight
     self:FitControls()
 
     self.picture:SetShown(picture ~= nil)
