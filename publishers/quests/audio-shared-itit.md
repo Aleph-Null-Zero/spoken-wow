@@ -1,4 +1,5 @@
 ---
+curseforge: 1743744
 release: quests-audio-shared-itIT
 section: quests
 lang: itIT

@@ -1,4 +1,5 @@
 ---
+curseforge: 1743736
 release: quests-audio-horde-esMX
 section: quests
 lang: esMX

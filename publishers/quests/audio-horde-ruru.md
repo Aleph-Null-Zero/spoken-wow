@@ -1,4 +1,5 @@
 ---
+curseforge: 1743741
 release: quests-audio-horde-ruRU
 section: quests
 lang: ruRU

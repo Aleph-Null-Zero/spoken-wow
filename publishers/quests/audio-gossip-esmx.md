@@ -1,4 +1,5 @@
 ---
+curseforge: 1743727
 release: quests-audio-gossip-esMX
 section: quests
 lang: esMX

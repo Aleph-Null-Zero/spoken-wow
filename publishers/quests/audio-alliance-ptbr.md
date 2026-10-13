@@ -1,4 +1,5 @@
 ---
+curseforge: 1743722
 release: quests-audio-alliance-ptBR
 section: quests
 lang: ptBR

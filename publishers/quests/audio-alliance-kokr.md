@@ -1,4 +1,5 @@
 ---
+curseforge: 1743721
 release: quests-audio-alliance-koKR
 section: quests
 lang: koKR

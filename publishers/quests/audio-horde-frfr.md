@@ -1,4 +1,5 @@
 ---
+curseforge: 1743737
 release: quests-audio-horde-frFR
 section: quests
 lang: frFR

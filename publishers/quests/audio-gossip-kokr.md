@@ -1,4 +1,5 @@
 ---
+curseforge: 1743730
 release: quests-audio-gossip-koKR
 section: quests
 lang: koKR

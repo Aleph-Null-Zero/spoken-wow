@@ -1,4 +1,5 @@
 ---
+curseforge: 1743725
 release: quests-audio-alliance-zhTW
 section: quests
 lang: zhTW

@@ -1,4 +1,5 @@
 ---
+curseforge: 1743694
 release: quests-audio-horde-deDE
 section: quests
 lang: deDE

@@ -1,4 +1,5 @@
 ---
+curseforge: 1743739
 release: quests-audio-horde-koKR
 section: quests
 lang: koKR

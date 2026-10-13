@@ -1,4 +1,5 @@
 ---
+curseforge: 1743699
 release: quests-audio-alliance-deDE
 section: quests
 lang: deDE

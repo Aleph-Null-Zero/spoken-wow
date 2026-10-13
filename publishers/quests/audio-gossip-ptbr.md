@@ -1,4 +1,5 @@
 ---
+curseforge: 1743731
 release: quests-audio-gossip-ptBR
 section: quests
 lang: ptBR

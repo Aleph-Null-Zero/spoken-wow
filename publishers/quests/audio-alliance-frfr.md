@@ -1,4 +1,5 @@
 ---
+curseforge: 1743719
 release: quests-audio-alliance-frFR
 section: quests
 lang: frFR

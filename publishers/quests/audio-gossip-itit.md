@@ -1,4 +1,5 @@
 ---
+curseforge: 1743729
 release: quests-audio-gossip-itIT
 section: quests
 lang: itIT

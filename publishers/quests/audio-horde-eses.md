@@ -1,4 +1,5 @@
 ---
+curseforge: 1743735
 release: quests-audio-horde-esES
 section: quests
 lang: esES

@@ -1,4 +1,5 @@
 ---
+curseforge: 1743743
 release: quests-audio-horde-zhTW
 section: quests
 lang: zhTW

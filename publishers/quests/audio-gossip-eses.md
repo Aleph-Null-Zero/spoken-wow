@@ -1,4 +1,5 @@
 ---
+curseforge: 1743726
 release: quests-audio-gossip-esES
 section: quests
 lang: esES

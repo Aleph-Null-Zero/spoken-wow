@@ -1,4 +1,5 @@
 ---
+curseforge: 1743732
 release: quests-audio-gossip-ruRU
 section: quests
 lang: ruRU

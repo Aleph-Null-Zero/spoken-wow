@@ -1,4 +1,5 @@
 ---
+curseforge: 1743728
 release: quests-audio-gossip-frFR
 section: quests
 lang: frFR

@@ -1,4 +1,5 @@
 ---
+curseforge: 1743718
 release: quests-audio-alliance-esMX
 section: quests
 lang: esMX

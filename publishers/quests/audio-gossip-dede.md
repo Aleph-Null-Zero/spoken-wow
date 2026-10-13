@@ -1,4 +1,5 @@
 ---
+curseforge: 1743701
 release: quests-audio-gossip-deDE
 section: quests
 lang: deDE

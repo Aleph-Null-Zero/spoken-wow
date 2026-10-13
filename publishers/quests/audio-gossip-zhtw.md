@@ -1,4 +1,5 @@
 ---
+curseforge: 1743734
 release: quests-audio-gossip-zhTW
 section: quests
 lang: zhTW

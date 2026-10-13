@@ -1,4 +1,5 @@
 ---
+curseforge: 1743738
 release: quests-audio-horde-itIT
 section: quests
 lang: itIT

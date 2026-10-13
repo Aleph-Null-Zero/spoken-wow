@@ -1,4 +1,5 @@
 ---
+curseforge: 1743742
 release: quests-audio-horde-zhCN
 section: quests
 lang: zhCN

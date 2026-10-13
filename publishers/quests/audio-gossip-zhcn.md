@@ -1,4 +1,5 @@
 ---
+curseforge: 1743733
 release: quests-audio-gossip-zhCN
 section: quests
 lang: zhCN

@@ -1,4 +1,5 @@
 ---
+curseforge: 1743740
 release: quests-audio-horde-ptBR
 section: quests
 lang: ptBR

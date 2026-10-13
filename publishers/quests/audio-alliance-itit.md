@@ -1,4 +1,5 @@
 ---
+curseforge: 1743720
 release: quests-audio-alliance-itIT
 section: quests
 lang: itIT
