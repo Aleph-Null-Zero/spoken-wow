@@ -5,8 +5,8 @@
 #   ALLOW_DIRTY=1 ./scripts/quests/package.sh   # build from an uncommitted tree
 #
 # ONE ZIP FOR BLIZZARD'S CLIENTS, ONE APIECE FOR THE LEGACY ONES. Blizzard's clients
-# pick their .toc by flavor suffix - _Vanilla, _TBC, _Wrath, _Mainline - so a single archive
-# serves Classic Era through retail and the client decides. The 1.12, 2.4.3 and 3.3.5 clients
+# pick their .toc by flavor suffix - _Vanilla, _TBC, else the unsuffixed one, which Forever
+# reads - so a single archive serves them all and the client decides. The 1.12, 2.4.3 and 3.3.5 clients
 # predate suffix support: each reads Spoken_Quests.toc and nothing else, and each wants a
 # different file under that one name, so each needs an archive of its own. They also load a
 # vendored Ace3 of their own - the root Libs/ binds C_Timer.After at load time - which is why

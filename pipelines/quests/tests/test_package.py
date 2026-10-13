@@ -38,13 +38,25 @@ GOSSIP = "Spoken_Gossip"
 TOMBSTONE = "SpokenPlayer"
 #: This module's folder before 3.0.0-beta.3, which the legacy zips overwrite with a tombstone.
 OLD_NAME = "SpokenQuests"
+#: The flavor suffixes of the .toc files the modules carry for Blizzard's clients.
+FLAVORS = ("", "_TBC", "_Vanilla")
+#: The suffixes an old folder had beyond those: its tombstone keeps them, with the unsuffixed
+#: .toc's Interface line, which is what those clients read now.
+OLD_FLAVORS = FLAVORS + ("_Mainline", "_Wrath")
+
 #: Each retired project's folder -> the module folder that replaced it, and the flavor suffixes
 #: of the .toc names the old folder had on Blizzard's clients.
 RETIRED = {
-    "SpokenQuests": ("Spoken_Quests", ("", "_Mainline", "_TBC", "_Vanilla", "_Wrath")),
+    "SpokenQuests": ("Spoken_Quests", OLD_FLAVORS),
     "SpokenZones": ("Spoken_Zones", ("",)),
     "SpokenBooks": ("Spoken_Books", ("",)),
 }
+
+
+def interface_source(folder, name, suffix):
+    path = os.path.join(folder, f"{name}{suffix}.toc")
+    return path if os.path.isfile(path) else os.path.join(folder, f"{name}.toc")
+
 
 #: client label -> the Interface version its .toc must declare.
 LEGACY_CLIENTS = {"1.12": "11200", "2.4.3": "20400", "3.3.5": "30300"}
@@ -203,8 +215,7 @@ def test_the_gossip_zip_carries_every_flavor_and_no_legacy_client(gossip_built):
     assert set(gossip_built) == {f"{GOSSIP}-{version}.zip"}
     names, files = gossip_built[f"{GOSSIP}-{version}.zip"]
     tocs = tocs_in(files, GOSSIP)
-    assert sorted(tocs) == sorted(f"{GOSSIP}/{GOSSIP}{suffix}.toc" for suffix in
-                                  ("", "_Mainline", "_TBC", "_Vanilla", "_Wrath"))
+    assert sorted(tocs) == sorted(f"{GOSSIP}/{GOSSIP}{suffix}.toc" for suffix in FLAVORS)
     for client in LEGACY_CLIENTS:
         assert not any(name.startswith(f"{GOSSIP}/{client}/") for name in names)
     assert {name.split("/", 1)[0] for name in names} == {GOSSIP}
@@ -214,8 +225,7 @@ def test_the_gossip_zip_carries_every_flavor_and_no_legacy_client(gossip_built):
 def test_the_blizzard_zip_carries_every_flavor_and_no_legacy_client(built):
     names, files = modern(built)
     tocs = tocs_in(files, NAME)
-    assert sorted(tocs) == sorted(f"{NAME}/{NAME}{suffix}.toc" for suffix in
-                                  ("", "_Mainline", "_TBC", "_Vanilla", "_Wrath"))
+    assert sorted(tocs) == sorted(f"{NAME}/{NAME}{suffix}.toc" for suffix in FLAVORS)
     for client in LEGACY_CLIENTS:
         assert not any(name.startswith(f"{NAME}/{client}/") for name in names)
     assert any(name.startswith(f"{NAME}/Libs/") for name in names)
@@ -268,8 +278,7 @@ def test_spoken_ships_with_its_modules_for_blizzard_clients(player_built):
     assert set(player_built) == {f"{PLAYER}-{version}.zip"}
     names, files = player_built[f"{PLAYER}-{version}.zip"]
     tocs = tocs_in(files, PLAYER)
-    assert sorted(tocs) == sorted(f"{PLAYER}/{PLAYER}{suffix}.toc" for suffix in
-                                  ("", "_Mainline", "_TBC", "_Vanilla", "_Wrath"))
+    assert sorted(tocs) == sorted(f"{PLAYER}/{PLAYER}{suffix}.toc" for suffix in FLAVORS)
     for client in LEGACY_CLIENTS:
         assert not any(name.startswith(f"{PLAYER}/{client}/") for name in names)
     # Spoken, the folder whose only job is to name the gathered-lines file
@@ -284,8 +293,8 @@ def test_spoken_ships_with_its_modules_for_blizzard_clients(player_built):
         == ["SpokenContributions/SpokenContributions.toc"]
     # Every .toc name the old player's folder had on these clients, so an unzip over it leaves
     # the old Lua with nothing to load it.
-    interfaces = {f"{TOMBSTONE}{suffix}.toc": interface_of(os.path.join(PLAYER_DIR, f"{PLAYER}{suffix}.toc"))
-                  for suffix in ("", "_Mainline", "_TBC", "_Vanilla", "_Wrath")}
+    interfaces = {f"{TOMBSTONE}{suffix}.toc": interface_of(interface_source(PLAYER_DIR, PLAYER, suffix))
+                  for suffix in OLD_FLAVORS}
     assert_tombstone(files, interfaces)
 
 
@@ -298,7 +307,7 @@ def test_each_retired_project_ships_only_its_tombstone(retired_built):
     for old, (new, suffixes) in RETIRED.items():
         names, files = retired_built[f"{old}-{version}.zip"]
         assert {name.split("/", 1)[0] for name in names} == {old}, names
-        interfaces = {f"{old}{suffix}.toc": interface_of(os.path.join(REPO, "addons", new, f"{new}{suffix}.toc"))
+        interfaces = {f"{old}{suffix}.toc": interface_of(interface_source(os.path.join(REPO, "addons", new), new, suffix))
                       for suffix in suffixes}
         assert_tombstone(files, interfaces, old)
         text = files[f"{old}/{old}.toc"].decode()

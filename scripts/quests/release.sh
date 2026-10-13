@@ -64,9 +64,8 @@ API="https://wow.curseforge.com/api"
 # the first time they needed changing.
 #
 # Era, the 2.5.6 Anniversary client and the 1.60.1 Forever client (CurseForge's name for the
-# one whose TOC suffix is _Camelot). The zip carries _Wrath and _Mainline TOCs as well, but
-# nothing here has been run on those clients, and a file offered to a client it misbehaves on
-# is worse than one that is simply absent there.
+# one whose TOC suffix is _Camelot). Nothing here has been run on any other client, and a file
+# offered to a client it misbehaves on is worse than one that is simply absent there.
 #
 # The 1.12, 2.4.3 and 3.3.5 zips package.sh also builds are deliberately not uploaded here:
 # CurseForge has no game version to file them against. They go out on the GitHub release that

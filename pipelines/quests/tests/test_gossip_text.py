@@ -119,7 +119,7 @@ def test_gossip_xml_loads_every_file(tmp_path):
 
 ADDON = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../addons/Spoken_Gossip"))
 QUESTS = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../addons/Spoken_Quests"))
-FOREVER = ("Spoken_Gossip.toc", "Spoken_Gossip_Mainline.toc")
+FOREVER = ("Spoken_Gossip.toc",)
 
 
 def toc(name, addon=ADDON):

@@ -159,8 +159,8 @@ and refuses when a variant `.toc` or `Environment.lua` names a different version
 nothing else notices until it ships.
 
 **One zip for Blizzard's clients, one apiece for the legacy ones.** Blizzard's clients
-pick a `.toc` by flavor suffix — `_Vanilla`, `_TBC`, `_Wrath`, `_Mainline` — so a single archive
-serves Classic Era through retail and the client chooses. The 1.12, 2.4.3 and 3.3.5 clients
+pick a `.toc` by flavor suffix (`_Vanilla`, `_TBC`, else the unsuffixed one, which Forever reads),
+so a single archive serves them all and the client chooses. The 1.12, 2.4.3 and 3.3.5 clients
 predate suffix support: each reads `Spoken_Quests.toc` and nothing else, and each wants a
 different file under that one name, so each needs an archive of its own. Each also loads its own
 vendored Ace3 from `Spoken_Quests/<client>/`, because the root `Libs/AceTimer-3.0` binds
@@ -330,9 +330,9 @@ back out of its module in `dist/`, which means releasing a pack nobody built fai
 uploading a stale zip that happens to still be lying around. `CHANGELOG.md` holds one section
 per version and each target looks up its own.
 
-Files are offered to **Era (1.15.9) and the 2.5.6 Anniversary client** only. The zip carries
-`_Wrath` and `_Mainline` TOCs too, but nothing here has been run on those clients, and a file
-offered to a client it misbehaves on is worse than one that is simply absent there. Client
+Files are offered to **Era (1.15.9), the 2.5.6 Anniversary client and Forever** only. Nothing
+here has been run on any other client, and a file offered to a client it misbehaves on is worse
+than one that is simply absent there. Client
 names are resolved against `/api/game/versions` and a name matching anything but exactly one
 version is fatal, because the alternative failure is a file filed against the wrong client —
 which players meet as "the addon does not appear in my list".

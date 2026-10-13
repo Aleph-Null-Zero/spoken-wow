@@ -77,6 +77,8 @@ for old in "${RETIRED[@]}"; do
   for suffix in $(old_suffixes "$old"); do
     [ "$suffix" != "-" ] || suffix=""
     source_toc="$REPO/addons/$new/$new$suffix.toc"
+    # The module has no _Mainline or _Wrath .toc: those clients read its unsuffixed one.
+    [ -f "$source_toc" ] || [ -z "$suffix" ] || source_toc="$REPO/addons/$new/$new.toc"
     [ -f "$source_toc" ] || { echo "error: no $source_toc to take the ${old}$suffix.toc Interface line from" >&2; exit 1; }
     tombstone_toc "$template" "$source_toc" "$staging/$old/$old$suffix.toc"
   done
