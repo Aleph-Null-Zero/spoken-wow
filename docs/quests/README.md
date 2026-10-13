@@ -1376,8 +1376,9 @@ Two generated files feed it, both committed so the addon never needs a database:
   quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
   the zone of its entrance, else where its giver stands), or the QuestSort of a class, profession
   or season with its name in every language, and the races and classes allowed to take it. Areas,
-  zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, cached
-  in `tools/cache/`), which have Forever's zones and sorts (Zephras Isle, Darkspear Islands,
+  zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, pinned
+  in `pipelines/lib/wago.mjs` and cached in `pipelines/lib/cache/wago/` for every pipeline), which
+  have Forever's zones and sorts (Zephras Isle, Darkspear Islands,
   Camping, The High Order); Era's (1.15.9.69109) fill in anything they lack. The
   zone and who may take it come from the Forever repack's TrinityCore world DB
   (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
@@ -1429,10 +1430,12 @@ Two generated files feed it, both committed so the addon never needs a database:
   the giver's spawn; a `zoneAreaId` of a Forever area no map shows is placed where players saw
   its giver (`npcs.json` `offers`, else `takes`, by `positions[].uiMap`). Its `raceMask` limits a
   quest the DB opens to everyone, before `factions.json`, and its `nextQuestId` links a quest no
-  DB link reaches. It adds and never changes what the DB says. The files are cached in
-  `tools/cache/efficient-games/<build>/` under each one's last collection day, so a run fetches
-  only the index and what changed, and reads the cache offline. `--without-efficient-games`
-  leaves it out.
+  DB link reaches. It adds and never changes what the DB says. The files are read at one commit
+  of their repository (`EG_COMMIT`), since it grows every day and an export run twice must give
+  the same file; they are fetched once into `tools/cache/efficient-games/<commit>/` and read from
+  there after, offline too. Moving the commit is a deliberate change whose diff is reviewed.
+  The file's header names the client builds and the commit it was made from.
+  `--without-efficient-games` leaves it out.
   Last come the hand corrections, `corpus/compendium_overrides.json` (`load_overrides`,
   `apply_overrides`, `chain_names`): what neither the DB nor the client data can say, such as a
   breadcrumb's link, a quest the beta removed, or a chain's name. Each `quests` entry names its

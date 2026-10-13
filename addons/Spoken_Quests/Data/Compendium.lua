@@ -8,8 +8,9 @@
 -- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
 -- its entrance, ender = the creature it is handed in to (enderObject for an object), absent where
 -- that is its giver }. A sort that is a word is a group the client has no QuestSort for. The words
--- are Data/QuestText.lua's. Regenerate with the Forever
--- repack's world DB up:
+-- are Data/QuestText.lua's. Made from the client tables of Forever 1.60.1.70338 and Era 1.15.9.69109
+-- (wago.tools) and Efficient Games' data at commit 2ae2154 (CC BY 4.0, efficient.games).
+-- Regenerate with the Forever repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
 --

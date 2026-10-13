@@ -22,9 +22,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - Forever's own quests are almost all missing from the DB, so after it comes what Forever's
   client says of each quest, as players recorded it: Efficient Games' open data (EG Link,
   github.com/JIVESCORP/eg-link-output-wowf, CC BY 4.0; quests.enUS.json and npcs.json, the
-  latest build's record of each quest, cached in cache/efficient-games/). Its zone or quest
-  sort, race mask and nextQuestId fill in where the DB has none, and change nothing it has.
-  --without-efficient-games leaves it out.
+  latest build's record of each quest, as the repository had them at EG_COMMIT, cached in
+  cache/efficient-games/). Its zone or quest sort, race mask and nextQuestId fill in where the
+  DB has none, and change nothing it has. --without-efficient-games leaves it out.
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
   Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
@@ -74,8 +74,10 @@ WAGO_CACHE = os.path.join(ROOT, "pipelines", "lib", "cache", "wago")
 BUILD = "1.60.1.70338"
 ERA_BUILD = "1.15.9.69109"
 # Efficient Games' Forever data: what players' Forever clients recorded, per client build (EG Link,
-# CC BY 4.0, credited in THIRD_PARTY.md). Cached in cache/efficient-games/.
-EG_DATA = "https://raw.githubusercontent.com/JIVESCORP/eg-link-output-wowf/main/data"
+# CC BY 4.0, credited in THIRD_PARTY.md), at one commit of their repository: it grows every day,
+# and an export run twice must give the same file. Move it on purpose, and review the diff.
+EG_COMMIT = "2ae21542f54d7168ab430d8b6248deb1f8d50a02"
+EG_DATA = f"https://raw.githubusercontent.com/JIVESCORP/eg-link-output-wowf/{EG_COMMIT}/data"
 EG_PRODUCT = "wow_classic_beta"
 EG_CACHE = os.path.join(CACHE, "efficient-games")
 LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"]
@@ -284,26 +286,20 @@ def fetch(url, path):
 
 
 def eg_datasets(name):
-    """{build: Efficient Games' `name` dataset of that Forever build}, oldest build first.
-
-    The index is read afresh when it can be, since a build's files grow as players send more,
-    else from the cache. A build's file is cached under its last collection day and record count,
-    so a file that changed is fetched again and one that did not is not."""
-    index_path = os.path.join(EG_CACHE, "index.json")
-    try:
+    """{build: Efficient Games' `name` dataset of that Forever build}, oldest build first, as their
+    repository had them at EG_COMMIT. A file at one commit never changes, so each is fetched once
+    and read from the cache (cache/efficient-games/<commit>/) after that, offline too."""
+    root = os.path.join(EG_CACHE, EG_COMMIT)
+    index_path = os.path.join(root, "index.json")
+    if not os.path.exists(index_path):
         fetch(f"{EG_DATA}/index.json", index_path)
-    except OSError as e:
-        if not os.path.exists(index_path):
-            raise
-        print(f"Efficient Games' index not reached ({e}); the cached one is read")
     with open(index_path, encoding="utf-8") as f:
         builds = json.load(f)["products"].get(EG_PRODUCT, {})
     out = {}
     for build in sorted(builds, key=lambda b: tuple(int(n) for n in b.split("."))):
-        entry = builds[build].get(name)
-        if not entry:
+        if not builds[build].get(name):
             continue
-        path = os.path.join(EG_CACHE, build, f"{name}-{entry['lastCollectedOn']}-{entry['records']}.json")
+        path = os.path.join(root, build, f"{name}.json")
         if not os.path.exists(path):
             fetch(f"{EG_DATA}/{EG_PRODUCT}/{build}/{name}.json", path)
         with open(path, encoding="utf-8") as f:
@@ -747,8 +743,9 @@ def render(quest_lines, sort_lines, dungeon_lines=None):
 -- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
 -- its entrance, ender = the creature it is handed in to (enderObject for an object), absent where
 -- that is its giver }}. A sort that is a word is a group the client has no QuestSort for. The words
--- are Data/QuestText.lua's. Regenerate with the Forever
--- repack's world DB up:
+-- are Data/QuestText.lua's. Made from the client tables of Forever {BUILD} and Era {ERA_BUILD}
+-- (wago.tools) and Efficient Games' data at commit {EG_COMMIT[:7]} (CC BY 4.0, efficient.games).
+-- Regenerate with the Forever repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
 --

@@ -122,24 +122,21 @@ def _index(entries):
     return {"products": {"wow_classic_beta": {b: {"quests.enUS": e} for b, e in entries.items()}}}
 
 
-def test_a_builds_file_is_fetched_once_until_it_changes(remote):
+def test_the_data_is_read_at_one_commit_and_fetched_once(remote):
     files, fetched = remote
     files["index.json"] = _index({"1.60.1.70338": {"lastCollectedOn": "2026-10-12", "records": 1},
                                   "1.60.1.70009": {"lastCollectedOn": "2026-09-30", "records": 1}})
     files["wow_classic_beta/1.60.1.70338/quests.enUS.json"] = {"quests": {"1": {"title": "a"}}}
     files["wow_classic_beta/1.60.1.70009/quests.enUS.json"] = {"quests": {"1": {"title": "old"}}}
 
+    assert export_compendium.EG_COMMIT in export_compendium.EG_DATA
     assert list(eg_datasets("quests.enUS")) == ["1.60.1.70009", "1.60.1.70338"]
-    fetched.clear()
-    eg_datasets("quests.enUS")
-    assert fetched == ["index.json"]
-
-    files["index.json"] = _index({"1.60.1.70338": {"lastCollectedOn": "2026-10-13", "records": 2},
-                                  "1.60.1.70009": {"lastCollectedOn": "2026-09-30", "records": 1}})
+    # The repository moving on changes nothing: the pinned commit's files are the cached ones.
+    files["index.json"] = _index({"1.60.1.70338": {"lastCollectedOn": "2026-10-13", "records": 2}})
     files["wow_classic_beta/1.60.1.70338/quests.enUS.json"] = {"quests": {"1": {"title": "b"}}}
     fetched.clear()
-    assert eg_datasets("quests.enUS")["1.60.1.70338"]["quests"]["1"]["title"] == "b"
-    assert fetched == ["index.json", "wow_classic_beta/1.60.1.70338/quests.enUS.json"]
+    assert eg_datasets("quests.enUS")["1.60.1.70338"]["quests"]["1"]["title"] == "a"
+    assert fetched == []
 
 
 def test_offline_the_cache_is_read(remote):
@@ -177,3 +174,9 @@ def test_a_battlemasters_next_quest_is_filed_under_the_battleground_of_the_one_b
     export_compendium.battleground_follow_ups(records, givers)
     assert records[8404]["zones"] == [1460] and records[8405]["zones"] == [1460]
     assert records[7000]["zones"] == [1455]
+
+
+def test_the_file_says_which_builds_and_data_it_was_made_from():
+    lua = export_compendium.render({}, {})
+    assert f"Forever {export_compendium.BUILD} and Era {export_compendium.ERA_BUILD}" in lua
+    assert f"commit {export_compendium.EG_COMMIT[:7]}" in lua
