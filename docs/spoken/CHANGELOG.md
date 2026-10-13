@@ -4,6 +4,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **/sp collect turns Collect Missing Lines on and off**, as the switch on Spoken's page does. /spb gather, which did the same from Books, is gone. *([Nucabe](https://github.com/Nucabe))*
 - **Report on a line an object says (a wanted poster) opens that object's lines**, not those of a creature with the same number. *([Nucabe](https://github.com/Nucabe))*
 - **A zone story's Report opens the line in the language it was read in.** A German story's report used to open the English line. *([Nucabe](https://github.com/Nucabe))*
 - **A quest line's Report copies a spoken.rusty.one address**, the site's own, instead of the old voiceover.rusty.one one that redirected there. *([Nucabe](https://github.com/Nucabe))*

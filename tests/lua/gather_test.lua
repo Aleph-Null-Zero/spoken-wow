@@ -22,6 +22,10 @@ local Gather = Spoken.Gather
 
 ------------------------------------------------------------------------------- the store
 Expect("gathering is on until the player opts out", Gather:IsEnabled(), true)
+SlashCmdList.SPOKEN("collect")
+Expect("/sp collect turns it off", Gather:IsEnabled(), false)
+SlashCmdList.SPOKEN("collect")
+Expect("...and on again", Gather:IsEnabled(), true)
 Gather:SetEnabled(false)
 Expect("...so opting out keeps nothing", Gather:Add("q:1:accept:2", "!SPOKEN1 quests\n"), false)
 Expect("...and nothing is counted", Gather:Count(), 0)

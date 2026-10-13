@@ -21,7 +21,7 @@ for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader",
 end
 B:InitDB()
 -- The player the gather switch belongs to: faked, since this suite boots Books alone.
--- The /spb gather shortcut and the status line read it.
+-- The status line reads it.
 _G.Spoken = { Gather = { _on = nil,
     IsEnabled = function(self) if self._on == nil then return true end return self._on end,
     SetEnabled = function(self, v) self._on = v and true or false end } }
@@ -117,11 +117,9 @@ close.scripts.OnClick(close)
 ---------------------------------------------------------------- the gather switch stays in the player's settings
 -- The switch is the player's alone: quests and books both feed the one store, so a
 -- mirror here could only ever repeat it -- a reader cannot have pages off and lines on.
--- Only the /spb gather shortcut still reaches the player's switch from here.
+-- Its command is Spoken's too (/sp collect): /spb gather no longer reaches it.
 SlashCmdList["SPOKENBOOKS"]("gather")
-Expect("/spb gather turns gathering off", _G.Spoken.Gather._on, false)
-SlashCmdList["SPOKENBOOKS"]("gather")
-Expect("...and toggles it back on", _G.Spoken.Gather._on, true)
+Expect("/spb gather leaves the player's switch alone", _G.Spoken.Gather._on, nil)
 
 ---------------------------------------------------------------- forgetting what was read
 SpokenBooksCharacter.read = { ["Hillsbrad Town Registry"] = true, ["Jitters' Journal"] = true }

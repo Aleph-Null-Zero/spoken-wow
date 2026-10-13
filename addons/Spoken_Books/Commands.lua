@@ -114,13 +114,6 @@ SlashCmdList["SPOKENBOOKS"] = function(msg)
 		Toggle("readOnce", "reading each book only once")
 	elseif cmd == "close" then
 		Toggle("closeWhenRead", "closing the book once it has been read")
-	elseif cmd == "gather" then
-		if SpokenBooks:GatherAvailable() then
-			Spoken.Gather:SetEnabled(not Spoken.Gather:IsEnabled())
-			Print("gathering %s", Spoken.Gather:IsEnabled() and "enabled" or "disabled")
-		else
-			Print("gathering is unavailable -- this version of Spoken has no background gathering")
-		end
 	elseif cmd == "forget" then
 		local count = SpokenBooks:ForgetRead()
 		Print("forgot %d book%s; they will be read again", count, count == 1 and "" or "s")
@@ -148,6 +141,6 @@ SlashCmdList["SPOKENBOOKS"] = function(msg)
 	elseif cmd == "debug" then
 		Toggle("debug", "explaining in chat why a page was or was not read")
 	else
-		Print("/spb read | stop | autoplay | whole | oneline | once | close | gather | forget | compendium | settings | status | debug")
+		Print("/spb read | stop | autoplay | whole | oneline | once | close | forget | compendium | settings | status | debug")
 	end
 end
