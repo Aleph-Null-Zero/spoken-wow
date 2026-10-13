@@ -92,7 +92,9 @@ export function packLua(lang, clips, entries = null) {
     // Null only for a take imported from a store this app did not cut. Written as 0 so
     // the addon can tell "unknown" from "short" and fall back to its own timer.
     const len = row.durationSec === null ? 0 : row.durationSec;
-    const text = row.text == null ? "" : `, text = ${quote(spokenText(row.text))}`;
+    // English's words are Books.lua's, which the addon falls back to: a copy here was 440 KB
+    // more in every English pack.
+    const text = row.text == null || lang === LANG ? "" : `, text = ${quote(spokenText(row.text))}`;
     lines.push(`\t\t[${row.pageId}] = { file = "${row.file}", len = ${len}${text} },`);
   }
   lines.push("\t},");
