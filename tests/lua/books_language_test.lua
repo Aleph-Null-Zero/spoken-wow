@@ -113,11 +113,15 @@ SpokenBooksAudioPacks.SpokenBooksAudio_deDE.pages = { [PAGE] = {
 Expect("E. new packs provide captions before a page is opened",
     B:ClipFor(PAGE).present.transcript, "Gespeicherte deutsche Seite.")
 B = Install({ ENGLISH })
+Expect("E. with no Spoken there is nothing to report to", B:ReportURL(PAGE), nil)
+-- The address is Spoken's to build (Spoken:ReportURL); this suite loads Books alone.
+stub.LoadSpoken(here .. "/../../addons/Spoken/")
 Expect("E. an English report keeps its address", B:ReportURL(PAGE, "enUS"),
     "https://spoken.rusty.one/books/r/15")
 Expect("E. ...as does one with no language", B:ReportURL(PAGE), "https://spoken.rusty.one/books/r/15")
 Expect("E. a German report goes to the German page", B:ReportURL(PAGE, "deDE"),
     "https://spoken.rusty.one/deDE/books/r/15")
+_G.Spoken, _G.SpokenEnv = nil, nil
 
 ---------------------------------------------------------------- F. a language no client runs in
 -- Italian has no index of its own: the page is found by the English client's and read from

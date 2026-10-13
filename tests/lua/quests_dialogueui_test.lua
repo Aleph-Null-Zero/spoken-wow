@@ -818,7 +818,7 @@ Expect("...and goes back in the row on the next page", icon.anchor and icon.anch
 driver.scripts.OnShow(driver)
 Fire(icon, "OnClick")
 local box = Spoken.ContributeBox
-Expect("Report opens the quest page's address", box and box.editBox:GetText(), "https://voiceover.rusty.one/r/quest/101/accept")
+Expect("Report opens the quest page's address", box and box.editBox:GetText(), "https://spoken.rusty.one/quests/r/quest/101/accept")
 Expect("...over DialogueUI's window", box and box.frame:GetParent(), DUI)
 box.frame:Hide()
 

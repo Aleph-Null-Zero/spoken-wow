@@ -9,8 +9,6 @@ SettingsPanel = {}
 
 -- The game's settings list sets its rows 25 in from the canvas's left.
 local INDENT = 25
--- Where a problem that is not about one line is reported: the site the addons share.
-local REPORT_URL = "https://spoken.rusty.one"
 local ICON = [[Interface\Icons\UI_Chat]]
 local panel, category
 
@@ -164,7 +162,7 @@ function SettingsPanel:Setup()
     -- For what belongs to no one line; each line has its own Report. The game cannot open a
     -- link, so it hands over the address to copy.
     layout:Columns(nil)
-    layout:Button(L.OPT_REPORT_PROBLEM, 200, function() ReportButton:ShowAddress(REPORT_URL) end,
+    layout:Button(L.OPT_REPORT_PROBLEM, 200, function() ReportButton:ShowAddress(Spoken.SITE_URL) end,
         L.OPT_REPORT_PROBLEM_TIP)
 
     -- Profiles are Spoken's, on its own page: one choice for every part.

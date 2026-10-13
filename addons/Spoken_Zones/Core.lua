@@ -307,6 +307,12 @@ end
 -- collision, and nothing here can reproduce it.
 --------------------------------------------------------------------------------
 
+--- Spoken's site, or nil when Spoken is not loaded: no clip plays without it, so there is no
+--- report to send.
+function SpokenZones:SiteURL()
+	return _G.Spoken and _G.Spoken.SITE_URL
+end
+
 SpokenZones.SITE_URL = "https://lore.rusty.one"
 
 -- `language` names the narration being reported, for a report made from the player about a

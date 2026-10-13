@@ -210,7 +210,7 @@ function SpokenBooks:SetupOptions()
 	layout:Button(L.OPT_DIAGNOSTICS, 200, function() SpokenBooks:ShowStatus() end, L.OPT_DIAGNOSTICS_TIP)
 	layout:Columns(nil)
 	layout:Button(L.OPT_REPORT_PROBLEM, 200, function()
-		SpokenBooks:ShowCopyLink(SpokenBooks.SITE_URL, L.OPT_REPORT_ADDRESS)
+		SpokenBooks:ShowCopyLink(SpokenBooks:SiteURL(), L.OPT_REPORT_ADDRESS)
 	end, L.OPT_REPORT_PROBLEM_TIP)
 
 	-- Every page ends the same way, as Spoken's does: one section, last, to start over.

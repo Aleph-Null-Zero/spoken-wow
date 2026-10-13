@@ -245,10 +245,10 @@ Expect("H. with no pack at all, the chosen language", VO.DataModules:GetPackLang
 
 ---------------------------------------------------------------- J. a report is filed in the clip's language
 VO = Install({ { folder = "EnglishPack", lines = EN_LINES } })
-Expect("J. an English report keeps the address it always had",
-    VO.ReportButton:Link("quest/1/accept", "enUS"), "https://voiceover.rusty.one/r/quest/1/accept")
+Expect("J. an English report goes to the unprefixed page",
+    VO.ReportButton:Link("quest/1/accept", "enUS"), "https://spoken.rusty.one/quests/r/quest/1/accept")
 Expect("J. ...and so does one with no language",
-    VO.ReportButton:Link("quest/1/accept"), "https://voiceover.rusty.one/r/quest/1/accept")
+    VO.ReportButton:Link("quest/1/accept"), "https://spoken.rusty.one/quests/r/quest/1/accept")
 Expect("J. another language's report goes to that language's page",
     VO.ReportButton:Link("quest/1/accept", "deDE"), "https://spoken.rusty.one/deDE/quests/r/quest/1/accept")
 

@@ -9,6 +9,27 @@ setfenv(1, SpokenEnv)
 Spoken.API_VERSION = 1
 Spoken.ADDON_VERSION = AddonVersion
 
+-- The site every module's report, contribute and help links point at. The old hosts
+-- (voiceover.rusty.one, lore.rusty.one) keep redirecting, so changing this breaks no copy
+-- already installed.
+Spoken.SITE_URL = "https://spoken.rusty.one"
+
+--- The page for reporting one line: `section` is "quests", "zones" or "books", `path` the
+--- line's address under it, `language` the language the line was read in. English goes
+--- unprefixed, the address the site serves it at; any other language keeps its prefix, so the
+--- report lands beside that language's line. tests/lua/report_url_contract_test.lua holds
+--- these addresses to the site's routes.
+---@param section string
+---@param path string
+---@param language? string
+---@return string url
+function Spoken:ReportURL(section, path, language)
+    if language and language ~= "enUS" then
+        return ("%s/%s/%s/r/%s"):format(self.SITE_URL, language, section, path)
+    end
+    return ("%s/%s/r/%s"):format(self.SITE_URL, section, path)
+end
+
 ---@param required number The API_VERSION the caller was written against.
 function Spoken:IsCompatible(required)
     return type(required) == "number" and required <= self.API_VERSION
