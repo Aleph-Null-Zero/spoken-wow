@@ -79,6 +79,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/sources_test.lua
 	@$(LUA) tests/lua/api_contract_test.lua
 	@$(LUA) tests/lua/contribute_envelope_test.lua
+	@$(LUA) tests/lua/report_url_contract_test.lua
 	@$(LUA) tests/lua/contribute_toc_test.lua
 	@$(LUA) tests/lua/transcript_toc_test.lua
 	@$(LUA) tests/lua/contribute_box_test.lua
@@ -142,9 +143,11 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 
 # Rewrite the envelope fixtures the TypeScript reader is tested against. A diff here is the
 # wire format changing, and that is a change the reader's tests must be part of. The
-# captured-* ones are what the modules' own Capture functions produce in their tests.
+# captured-* ones are what the modules' own Capture functions produce in their tests, and
+# report-urls.txt the report addresses the site's report-urls.test.ts resolves.
 contribute-fixtures:
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/contribute_envelope_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/report_url_contract_test.lua
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/quests_contribute_test.lua
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/zones_contribute_test.lua
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/books_contribute_test.lua
@@ -168,6 +171,7 @@ test: test-player ## Everything: both webs, the Python pipeline, the addons
 lint: ## The checks CI gates on
 	@pnpm -r typecheck
 	@node scripts/check-addon-xml.mjs
+	@./scripts/spoken/check-changelog.sh
 	@node pipelines/zones/tools/validate.mjs
 	@node scripts/descriptions.mjs --check
 	@node pipelines/zones/tools/locale/check-strings.mjs

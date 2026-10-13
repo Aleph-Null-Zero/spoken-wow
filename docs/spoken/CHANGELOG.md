@@ -80,6 +80,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go
   behind.** Closing a dialog on another line, such as a greeting before a quest or a gravestone
   before a book, now fades the window back in at once while the queued page goes behind it.
+  *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's Books and Quests pages are written in the same dark ink as Zones'**, with
   the same faint band behind the title. Their words were a lighter brown that looked greyed out.
   *([Nucabe](https://github.com/Nucabe))*

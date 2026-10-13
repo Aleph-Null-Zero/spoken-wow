@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { section } from "./changelog.mjs";
+import { problems, section } from "./changelog.mjs";
 
 const CHANGELOG = [
   "# Changelog — Spoken",
@@ -41,4 +41,33 @@ test("two sections for one version are refused", () => {
 
 test("a changelog checked out with CRLF reads the same", () => {
   assert.equal(section(CHANGELOG.replace(/\n/g, "\r\n"), "3.3.1"), "## 3.3.1 — 2026-10-11\n\n- **An older one.**");
+});
+
+test("a changelog that keeps the rules has no problems", () => {
+  const credited = CHANGELOG.replace("- **An older one.**", "- **An older one.** *([Rusty](https://github.com/rusty-key))*");
+  assert.deepEqual(problems(credited, ["3.4.0", "3.3.1"]), []);
+});
+
+test("an Unreleased bullet without a credit is named, over however many lines it runs", () => {
+  const text = CHANGELOG.replace(
+    "- **Something new.** *([Nucabe](https://github.com/Nucabe))*",
+    "- **Something new.**\n  On two lines.\n- **Credited.**\n  *([Nucabe](https://github.com/Nucabe))*",
+  );
+  const found = problems(text);
+  assert.equal(found.length, 1);
+  assert.match(found[0], /line 5: an Unreleased bullet with no credit: - \*\*Something new/);
+});
+
+test("released sections are history, credited or not", () => {
+  assert.deepEqual(problems(CHANGELOG, ["3.3.1"]), []);
+});
+
+test("a shipped version with no section of its own has its notes still under Unreleased", () => {
+  assert.deepEqual(problems(CHANGELOG, ["3.5.0"]), ['3.5.0 has shipped but has no "## 3.5.0" section']);
+});
+
+test("Unreleased comes first", () => {
+  const late = CHANGELOG.replace("## Unreleased\n\n- **Something new.** *([Nucabe](https://github.com/Nucabe))*\n\n", "")
+    .replace("## 3.3.1", "## Unreleased\n\n## 3.3.1");
+  assert.match(problems(late).join("\n"), /"## Unreleased" is not the first section/);
 });
