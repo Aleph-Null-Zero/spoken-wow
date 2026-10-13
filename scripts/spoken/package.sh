@@ -106,8 +106,7 @@ modules_dist="$(mktemp -d)"
 trap 'rm -rf "$staging" "$modules_dist"' EXIT
 folders=("$NAME" "$STORE" "$TOMBSTONE")
 for module in Spoken_Quests Spoken_Gossip Spoken_Books Spoken_Zones; do
-  module_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$module/$module.toc" | head -1 | tr -d '
-')"
+  module_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$module/$module.toc" | head -1 | tr -d '\r\n')"
   DIST="$modules_dist" "$(module_packager "$module")" >/dev/null
   module_zip="$modules_dist/$module-$module_version.zip"
   [ -f "$module_zip" ] || { echo "error: $(module_packager "$module") did not produce $module_zip" >&2; exit 1; }
