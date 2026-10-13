@@ -6,8 +6,8 @@ table, so they never meet the quests module's of the same names in the core.
 
 What the core itself has to find goes into the core by name (EasterEggs.lua).
 
-Without the core (Spoken missing, switched off, or too old to have one) the addon loads nothing
-but PlayerRequired.lua: every other file starts with
+Without the core (another addon's VoiceOver table in its place) the addon loads nothing: every
+file starts with
 
     if not SpokenGossipEnv then return end
 

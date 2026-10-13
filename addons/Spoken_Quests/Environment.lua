@@ -3,8 +3,8 @@ This addon runs in the dialogue core's environment, the VoiceOver table Spoken c
 Dialogue/Environment.lua: the voice packs, languages and sound events it reads lines with are
 there, shared with the gossip module. Its own files add to that table.
 
-Without the core (Spoken missing, switched off, or too old to have one) the addon loads nothing
-but PlayerRequired.lua: every other file starts with
+Without the core (another addon's VoiceOver table in its place) the addon loads nothing: every
+file starts with
 
     if not (VoiceOver and VoiceOver.SpokenDialogue) then return end
 

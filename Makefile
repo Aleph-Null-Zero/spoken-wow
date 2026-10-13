@@ -96,7 +96,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/data_modules_test.lua
 	@$(LUA) tests/lua/quests_language_test.lua
 	@$(LUA) tests/lua/quest_voice_files_test.lua
-	@$(LUA) tests/lua/player_required_test.lua
+	@$(LUA) tests/lua/quests_no_packs_test.lua
 	@$(LUA) tests/lua/duplicate_player_test.lua
 	@$(LUA) tests/lua/zones_options_test.lua
 	@$(LUA) tests/lua/zones_test_line_test.lua

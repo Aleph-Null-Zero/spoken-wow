@@ -1321,7 +1321,6 @@ function M.LoadQuests(addonDirectory, spokenDirectory)
     local env = M.LoadSpoken(spokenDirectory)
     env.Addon:Enable()
 
-    dofile(addonDirectory .. "PlayerRequired.lua")
     dofile(addonDirectory .. "Environment.lua")
     local VO = _G.VoiceOver
     for _, module in ipairs({ "QuestOverlayUI", "Options" }) do
@@ -1342,7 +1341,6 @@ function M.LoadGossip(addonDirectory, spokenDirectory, onTop)
     local env = onTop and _G.SpokenEnv or M.LoadSpoken(spokenDirectory)
     if not onTop then env.Addon:Enable() end
 
-    dofile(addonDirectory .. "PlayerRequired.lua")
     dofile(addonDirectory .. "Environment.lua")
     local G = _G.SpokenGossipEnv
     for _, module in ipairs({ "Options", "SettingsPanel" }) do
@@ -1366,20 +1364,8 @@ function M.LoadQuestsOverlay(addonDirectory, spokenDirectory)
     return VO, env
 end
 
---- The quests addon with no player at all: what a hand-install without the optional
---- dependency loads. LoadQuests boots the player first; this deliberately does not. Every
---- file but PlayerRequired.lua returns at once without Spoken's dialogue core; what that file
---- returns is what this does.
-function M.LoadQuestsAlone(addonDirectory)
-    local required = dofile(addonDirectory .. "PlayerRequired.lua")
-    for _, file in ipairs({ "Environment", "Strings", "Player", "VoiceOver" }) do
-        dofile(addonDirectory .. file .. ".lua")
-    end
-    return required
-end
-
 --- The quests addon's settings panel, which the dispatch tests have no use for: its two
---- files, on top of an addon already loaded by LoadQuests or LoadQuestsAlone.
+--- files, on top of an addon already loaded by LoadQuests.
 function M.LoadQuestsPanel(addonDirectory, VO)
     dofile(addonDirectory .. "UI/Layout.lua")
     -- SettingsPanel builds its DialogueUI section only with the bridge loaded; a bridge test

@@ -27,7 +27,6 @@ local function Login(addons, loadedPlayers, keepSaved)
         _G.SpokenQuestsSettings, _G.VoiceOverDB = nil, nil
     end
     _G.Spoken, _G.SpokenEnv = nil, nil
-    _G.SpokenPlayerRequiredBy, _G.SpokenPlayerPrompted = nil, nil
     local VO = stub.LoadQuests(QUESTS, here .. "/../../addons/Spoken/")
     VO.Addon:OnInitialize()
     return VO
