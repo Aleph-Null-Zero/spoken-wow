@@ -108,6 +108,11 @@ by players with Contribute, and 1,275 of them have a voice in these packs: 464 q
   **Partial**: it voices the quests QuestIT has translated so far. Set **Fallback Language**
   to English to hear the rest.
 
+## 0.0.5 — quests-audio-deDE — 2026-10-13
+
+- 931 more lines voiced, most of them NPC greetings, and 23 re-recorded: 13071 files in all.
+  Install over the previous version.
+
 ## 0.0.4 — quests-audio-deDE — 2026-10-08
 
 - **Every line re-recorded** with ElevenLabs' newer voice model: 12140 files, all of them
