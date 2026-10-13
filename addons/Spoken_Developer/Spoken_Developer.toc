@@ -15,7 +15,7 @@
 ## SavedVariables: SpokenDeveloperDB
 # Account-wide, not per character: a log is about the client, and the character played is in each
 # session line anyway.
-## OptionalDeps: Spoken, Spoken_Quests, Spoken_Zones, Spoken_Books
+## OptionalDeps: Spoken, Spoken_Quests, Spoken_Gossip, Spoken_Zones, Spoken_Books
 # Spoken is what this registers with (Spoken:RegisterDeveloper); without it there is nothing to
 # log. Optional, as for every module, so a copy installed without it loads and says so. The
 # modules are listed for load order only: their Developer sections are handed to Spoken whether
