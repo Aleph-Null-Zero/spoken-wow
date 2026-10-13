@@ -19,7 +19,7 @@ local INDENT = 25
 local AUDIO_ADDON = "SpokenBooksAudio"
 local AUDIO_URL = "https://www.curseforge.com/wow/addons/spoken-books-audio"
 
-local panel, category
+local panel
 
 --------------------------------------------------------------------------------
 -- Panel
@@ -59,28 +59,14 @@ function SpokenBooks:SetupOptions()
 	local refresh = function() layout:Refresh() end
 
 	-- The part's own switch first, as on Spoken's page: off, everything under it is greyed
-	-- out and says why, rather than looking live and doing nothing.
-	local switch
+	-- out and says why, rather than looking live and doing nothing. Its own entry, nested under
+	-- Spoken in the game's settings list and headed as the game's pages are: the page is there
+	-- whether the part is on or not. The part's card on Spoken's page turns it on and off too.
 	local function PartOn() return SpokenBooks:IsPartOn() end
-	-- Its own entry, nested under Spoken in the game's settings list and headed as the game's
-	-- pages are, with its switch first: the page is there whether the part is on or not. The
-	-- part's card on Spoken's page turns it on and off too.
-	if Spoken and Spoken.SettingsStyle and Spoken:SettingsStyle() == "pages" then
-		layout:HideHeader()
-		layout:Intro([[Interface\Icons\INV_Misc_Book_09]], L.OPT_PAGE_TITLE)
-		switch = layout:Checkbox(L.OPT_PART_SWITCH, L.OPT_PART_SWITCH_TIP, PartOn,
-			function(value) Spoken:SetPartOn("books", value) end, refresh)
-	else
-		-- A player too old to nest pages: how this part stands -- on or off, and its voice
-		-- packs -- before any setting, worded as on its card on Spoken's page.
-		if Spoken and Spoken.PartStatus then
-			layout:Status(function() return Spoken:PartStatus("books") end)
-		end
-		if Spoken and Spoken.IsPartOn then
-			switch = layout:Checkbox(L.OPT_PART_SWITCH, L.OPT_PART_SWITCH_TIP, PartOn,
-				function(value) Spoken:SetPartOn("books", value) end, refresh)
-		end
-	end
+	layout:HideHeader()
+	layout:Intro([[Interface\Icons\INV_Misc_Book_09]], L.OPT_PAGE_TITLE)
+	local switch = layout:Checkbox(L.OPT_PART_SWITCH, L.OPT_PART_SWITCH_TIP, PartOn,
+		function(value) Spoken:SetPartOn("books", value) end, refresh)
 
 	local function Get(key)
 		return function() return SpokenBooksSettings and SpokenBooksSettings[key] end
@@ -115,46 +101,12 @@ function SpokenBooks:SetupOptions()
 		L.OPT_CLOSE_WHEN_READ_TIP,
 		Get("closeWhenRead"), Set("closeWhenRead"))
 
-	-- The voice language is set once for every module, on Spoken's page. Here only where the
-	-- player is too old to have that setting.
-	if not (Spoken and Spoken.GetLanguageChoice) then
-		layout:Section(L.OPT_SECTION_LANGUAGE)
-		local voices = { SpokenBooks.AUTO_LANGUAGE }
-		local fallbacks = { "none" }
-		for _, locale in ipairs(SpokenBooks.LOCALES or {}) do
-			table.insert(voices, locale.code)
-			table.insert(fallbacks, locale.code)
-		end
-		layout:Dropdown(L.OPT_VOICE_LANGUAGE, L.OPT_VOICE_LANGUAGE_TIP,
-			voices, Get("voiceLanguage"), Set("voiceLanguage"), nil, function(code)
-				if code == SpokenBooks.AUTO_LANGUAGE then
-					return L.OPT_LANG_AUTO_FMT:format(
-						SpokenBooks:GetLanguageName(SpokenBooks:GetClientLanguage()))
-				end
-				return SpokenBooks:GetLanguageName(code)
-			end)
-		layout:Dropdown(L.OPT_FALLBACK_LANGUAGE, L.OPT_FALLBACK_LANGUAGE_TIP,
-			fallbacks, Get("fallbackLanguage"), Set("fallbackLanguage"), nil, function(code)
-				return code == "none" and L.OPT_FALLBACK_NONE or SpokenBooks:GetLanguageName(code)
-			end)
-	end
-
 	-- What this character has heard, before the voice packs, as on the other modules' pages.
 	layout:Section(L.OPT_SECTION_READ)
 	layout:Button(L.OPT_FORGET, 200, function()
 		local count = SpokenBooks:ForgetRead()
 		SpokenBooks:Print(L.OPT_FORGET_DONE_FMT:format(count))
 	end, L.OPT_FORGET_TIP)
-
-	-- Every writing, found or not, in Azeroth's Compendium (UI/Readables.lua): opened, and unlocked,
-	-- from Spoken's page where Spoken is installed (Spoken:ShowsCompendium). Here only without it.
-	if SpokenBooks.ShowReadables and not (Spoken and Spoken.ShowsCompendium) then
-		layout:Section(L.COMPENDIUM_TITLE)
-		layout:Button(L.OPT_OPEN_READABLES, 200, function() SpokenBooks:ShowReadables() end, L.OPT_OPEN_READABLES_TIP)
-		layout:Checkbox(L.OPT_UNLOCK_UNFOUND, L.OPT_UNLOCK_UNFOUND_TIP,
-			Get("unlockUnfound"), Set("unlockUnfound"),
-			function() if SpokenBooks.RefreshReadables then SpokenBooks:RefreshReadables() end end)
-	end
 
 	-- Every voice pack, a row each, as on the quests page: its version where it is installed,
 	-- and where it is not, a button with the address to get it.
@@ -228,27 +180,15 @@ function SpokenBooks:SetupOptions()
 	layout:Refresh()
 	content:SetScript("OnShow", refresh)
 	-- Switched on or off from Spoken's page while this one was hidden: drawn again for it.
-	if Spoken and Spoken.RegisterCallback then
-		Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "books" then refresh() end end)
-	end
+	Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "books" then refresh() end end)
 
 	-- Derived rather than written as a number: a hardcoded height is a number nobody updates
 	-- when a row is added, and what that produces is a section you cannot scroll to.
 	scroller:SetContentHeight(layout:Height() + 40)
 
-	-- Under Spoken's own entry when the player can nest it, named as DialogueUI names the
-	-- same things; a top-level entry of its own otherwise.
-	local page = Spoken and Spoken.AddSettingsPage
-		and Spoken:AddSettingsPage(panel, L.OPT_PAGE_TITLE, 3, layout, scroller)
-	if page then
-		SpokenBooks.optionsPage = page
-	else
-		category = Settings.RegisterCanvasLayoutCategory(panel, "Spoken Books")
-		Settings.RegisterAddOnCategory(category)
-	end
-
+	-- Under Spoken's own entry, named as DialogueUI names the same things.
+	SpokenBooks.optionsPage = Spoken:AddSettingsPage(panel, L.OPT_PAGE_TITLE, 3, layout, scroller)
 	SpokenBooks.optionsPanel = panel
-	SpokenBooks.optionsCategory = category
 end
 
 --- Open the panel, or say why there is none. Reached by `/spb settings`, the player's
@@ -256,9 +196,8 @@ end
 function SpokenBooks:OpenOptions()
 	-- Nested under Spoken's entry: Spoken opens this page.
 	if self.optionsPage and self.optionsPage.Open and self.optionsPage.Open() then return end
-	local category = category or (self.optionsPage and self.optionsPage.category)
+	local category = self.optionsPage and self.optionsPage.category
 	if not (SpokenLayout and SpokenLayout.OpenCategory(category)) then
-		self:Print(self.optionsPage and "open Game Menu -> Options -> AddOns -> Spoken -> Books"
-			or "open Game Menu -> Options -> AddOns -> Spoken Books")
+		self:Print("open Game Menu -> Options -> AddOns -> Spoken -> Books")
 	end
 end
