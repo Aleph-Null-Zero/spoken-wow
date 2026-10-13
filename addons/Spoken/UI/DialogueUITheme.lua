@@ -92,14 +92,6 @@ function Theme:Colors(palette)
     return PALETTE[palette or self:ThemeID()]
 end
 
---- The face DialogueUI writes its text in, whatever font it is set to.
-function Theme:FontFace()
-    local font = _G.DUIFont_Quest_Paragraph
-    local ok, face = pcall(function() return font:GetFont() end)
-    if ok and type(face) == "string" then return face end
-    return GameFontNormal:GetFont()
-end
-
 local function FontOf(name, size)
     local font = _G[name]
     local ok, face, height = pcall(function() return font:GetFont() end)
