@@ -133,6 +133,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/zones_city_test.lua
 	@$(LUA) tests/lua/zones_dungeons_test.lua
 	@$(LUA) tests/lua/zones_story_place_test.lua
+	@$(LUA) tests/lua/zones_area_zones_test.lua
 	@$(LUA) tests/lua/minimap_compartment_test.lua
 	@$(LUA) tests/lua/bronze_rings_test.lua
 

@@ -19,6 +19,12 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Razorfen Downs tells its story at its entrance in The Barrens.** Standing there, discovering
   it or clicking it on The Barrens' map now plays and shows its story, and Azeroth's Compendium
   opens on its card. *([Nucabe](https://github.com/Nucabe))*
+- **Strahnbrad and the other places the game puts in Alterac Mountains are in Alterac Mountains.**
+  Azeroth's Compendium lists and counts the twelve under Alterac Mountains instead of Hillsbrad
+  Foothills, and standing in one, discovering it or clicking it on Alterac Mountains' map plays and
+  shows its story. Places you found before still count. The Great Lift, Lordamere Lake and
+  Darrowmere Lake tell their stories from both zones they border, and on Forever the Valley of
+  Bones is listed in Shen'dralas. *([Nucabe](https://github.com/Nucabe))*
 - **Books in Azeroth's Compendium files what is found inside a dungeon or raid under its card**,
   in the zone of its entrance, as Quests does: the Dark Keeper nameplates under Blackrock Depths,
   the lore books under Scholomance and the Scarlet Monastery. A zone with several dungeons holds

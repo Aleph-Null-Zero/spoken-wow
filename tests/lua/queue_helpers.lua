@@ -131,6 +131,13 @@ function M.NewZoneLore()
     function Z:ReportURL(mapID, areaKey) return "https://spoken.test/r/" .. mapID .. "/" .. tostring(areaKey) end
     function Z:ShowLoreFor(mapID, areaKey) self.shown = { mapID, areaKey } end
     function Z:StoryPlace(mapID, key) return mapID, key end
+    function Z:AreaZone(mapID) return mapID end
+    function Z:FoundOn() return {} end
+    function Z:AreasIn(zone)
+        local list = {}
+        for key in pairs(self.Subzones[zone] or {}) do table.insert(list, { mapID = zone, key = key }) end
+        return list
+    end
     function Z:ShowCopyLink(url) self.copied = url end
     function Z:MarkHeard(mapID, areaKey) table.insert(self.heard, tostring(mapID) .. "/" .. tostring(areaKey)) end
     function Z:OnZoneChanged(fn) table.insert(self.zoneChanged, fn) end

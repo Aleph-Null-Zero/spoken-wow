@@ -303,8 +303,8 @@ local function Refresh(mapID)
 		-- reaches the corpus key only through the alias table, and normalising a non-Latin name
 		-- yields nil -- which would silently retarget the buttons at the zone's lore.
 		local key = SpokenZones:ResolveAreaKey(selected.areaName)
-		-- A dungeon found at its entrance is told where its story is kept (Razorfen Downs, clicked
-		-- on The Barrens' map, under Thousand Needles).
+		-- An area is told where its story is kept: Razorfen Downs, clicked on The Barrens' map,
+		-- under Thousand Needles, and Strahnbrad, clicked on Alterac Mountains', under Hillsbrad.
 		local story = SpokenZones:StoryPlace(mapID, key)
 		local line = SpokenZones:PlaceLine(story, key or name)
 		local back = function() SpokenZones:ClearSubzone() end

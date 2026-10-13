@@ -8,7 +8,8 @@
 -- Razorfen Downs' story is under Thousand Needles, where the wiki has it, and its entrance is in
 -- The Barrens: the story, its recording and its picture stay keyed by Thousand Needles, the
 -- Compendium lists it in The Barrens and finds it there, and found at its entrance it is told by
--- those keys (SpokenZones:StoryPlace). Any entry whose `mapID` is not its entrance's is told so.
+-- those keys (SpokenZones:StoryPlace). Any entry whose `mapID` is not its entrance's is told so,
+-- as the other areas in Data/AreaZones.lua are.
 
 local _, SpokenZones = ...
 

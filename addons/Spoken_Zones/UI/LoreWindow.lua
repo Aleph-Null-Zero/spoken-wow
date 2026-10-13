@@ -37,7 +37,7 @@ local landed = nil
 -- data under it is fixed for the session (a language change reloads the interface).
 local sortedZoneIDs = nil
 local zonesOfContinent = {}
-local sortedSubzoneKeys = {}
+local sortedAreas = {}
 local filter = ""   -- what the list's search box holds, lowered (UI/Compendium.lua's List)
 
 --------------------------------------------------------------------------------
@@ -180,12 +180,14 @@ local function OpenZone(mapID)
 end
 
 --- Open what holds the place `mapID`, or its area `key`: a dungeon's entrance zone and the line its
---- card is under, any other area's zone.
+--- card is under, any other area's zone, the one the client puts it in (SpokenZones:AreaZone).
 local function OpenPlace(mapID, key)
 	local entrance = SpokenZones:DungeonOf(mapID, key)
 	if entrance then
 		dungeonsOpen[entrance] = true
 		mapID = entrance
+	elseif key then
+		mapID = SpokenZones:AreaZone(mapID, key)
 	end
 	OpenZone(mapID)
 	Reveal(mapID)
@@ -243,26 +245,30 @@ local function DungeonsIn(zone)
 	return list
 end
 
--- A zone's areas listed as rows: not its dungeons and raids, which are cards.
-local function SubzoneKeys(mapID)
-	local tbl = SpokenZones.Subzones[mapID]
-	if not tbl then
-		return nil
+-- A zone's areas listed as rows, by name, each { mapID = the map its story is kept under, key =,
+-- entry = }: those the client puts in the zone (SpokenZones:AreasIn), not its dungeons and raids,
+-- which are cards.
+local function Areas(mapID)
+	local own = SpokenZones.Subzones[mapID]
+	if own and sortedAreas[mapID] then return sortedAreas[mapID] end
+	local list = {}
+	for _, area in ipairs(SpokenZones:AreasIn(mapID)) do
+		-- Not the areas only Forever has (Data/ForeverAreas.lua) on another client, which can never
+		-- report them: listed, they would never be found.
+		local foreverOnly = not OnForever() and SpokenZones.ForeverOnlyAreas and SpokenZones.ForeverOnlyAreas[area.mapID]
+		local dungeons = DungeonIndex()[area.mapID]
+		if not (foreverOnly and foreverOnly[area.key]) and not (dungeons and dungeons[area.key]) then
+			table.insert(list, { mapID = area.mapID, key = area.key, entry = SpokenZones.Subzones[area.mapID][area.key] })
+		end
 	end
-	if sortedSubzoneKeys[mapID] then return sortedSubzoneKeys[mapID] end
-	-- Not the areas only Forever has (Data/ForeverAreas.lua) on another client, which can never
-	-- report them: listed, they would never be found.
-	local foreverOnly = not OnForever() and SpokenZones.ForeverOnlyAreas and SpokenZones.ForeverOnlyAreas[mapID] or {}
-	local dungeons = DungeonIndex()[mapID] or {}
-	local keys = {}
-	for key in pairs(tbl) do
-		if not foreverOnly[key] and not dungeons[key] then table.insert(keys, key) end
-	end
-	table.sort(keys, function(a, b)
-		return (tbl[a].name or a) < (tbl[b].name or b)
+	table.sort(list, function(a, b)
+		local na, nb = a.entry.name or a.key, b.entry.name or b.key
+		if na == nb then return a.mapID < b.mapID end
+		return na < nb
 	end)
-	sortedSubzoneKeys[mapID] = keys
-	return keys
+	-- Kept for a zone whose stories have loaded; one with none of its own yet is asked again.
+	if own then sortedAreas[mapID] = list end
+	return list
 end
 
 local function Matches(text)
@@ -340,8 +346,8 @@ end
 
 local function AnyVoiced(mapID)
 	if Voiced(mapID) then return true end
-	for _, key in ipairs(SubzoneKeys(mapID) or {}) do
-		if Voiced(mapID, key) then return true end
+	for _, area in ipairs(Areas(mapID)) do
+		if Voiced(area.mapID, area.key) then return true end
 	end
 	for _, dungeon in ipairs(DungeonsIn(mapID)) do
 		if Voiced(dungeon.mapID, dungeon.key) then return true end
@@ -376,10 +382,10 @@ local function Places(mapID)
 			if Found(dungeon.mapID, dungeon.key) then found = found + 1 end
 		end
 	end
-	for _, key in ipairs(SubzoneKeys(mapID) or {}) do
-		if not OnlyVoiced() or Voiced(mapID, key) then
+	for _, area in ipairs(Areas(mapID)) do
+		if not OnlyVoiced() or Voiced(area.mapID, area.key) then
 			total = total + 1
-			if Found(mapID, key) then found = found + 1 end
+			if Found(area.mapID, area.key) then found = found + 1 end
 		end
 	end
 	return found, total
@@ -433,7 +439,6 @@ end
 local function ZoneRows(mapID, nest, whole)
 	if OnlyFound() and not Found(mapID) then return {} end
 	if OnlyVoiced() and not AnyVoiced(mapID) then return {} end
-	local subKeys = SubzoneKeys(mapID)
 	local zoneName = ZoneName(mapID)
 	whole = Named(zoneName, whole)
 	local searched = filter ~= "" and not asLeft
@@ -446,15 +451,14 @@ local function ZoneRows(mapID, nest, whole)
 			for _, row in ipairs(ZoneRows(city, nest + 1, whole)) do table.insert(inside, row) end
 		end
 		for _, row in ipairs(DungeonRows(mapID, nest + 1, whole)) do table.insert(inside, row) end
-		for _, key in ipairs(subKeys or {}) do
-			local isFound = Found(mapID, key)
-			local entry = SpokenZones.Subzones[mapID][key]
-			local name = entry.name or key
+		for _, area in ipairs(Areas(mapID)) do
+			local isFound = Found(area.mapID, area.key)
+			local name = area.entry.name or area.key
 			if (filter == "" or whole or Matches(name)) and (isFound or not OnlyFound())
-				and (not OnlyVoiced() or Voiced(mapID, key)) then
-				table.insert(inside, { kind = "subzone", leaf = true, mapID = mapID, key = key, label = name,
-					nest = nest + 1, missing = SpokenZones:IsPending(entry), locked = not Discovered(mapID, key),
-					done = isFound and true or false })
+				and (not OnlyVoiced() or Voiced(area.mapID, area.key)) then
+				table.insert(inside, { kind = "subzone", leaf = true, mapID = area.mapID, key = area.key, label = name,
+					nest = nest + 1, missing = SpokenZones:IsPending(area.entry),
+					locked = not Discovered(area.mapID, area.key), done = isFound and true or false })
 			end
 		end
 	end
@@ -595,7 +599,8 @@ local function LandOnPlayer()
 	if subZone and subZone ~= "" then
 		subEntry, subKey, storyMapID = SpokenZones:GetSubzoneLore(current, subZone)
 	end
-	-- At a dungeon's entrance whose story is kept under another zone, its card is chosen.
+	-- In an area whose story is kept under another zone (Razorfen Downs' entrance, Strahnbrad), its
+	-- card or row is chosen, by its story's keys.
 	if subEntry then current = storyMapID end
 	OpenPlace(current, subEntry and subKey or nil)
 	selection = { mapID = current, key = subEntry and subKey or nil }
@@ -628,7 +633,7 @@ local function ShowEntry()
 	if SpokenZones:IsLocked(mapID, key) then
 		local entry = key and SpokenZones.Subzones[mapID] and SpokenZones.Subzones[mapID][key]
 		-- Where it sits, a click away: the zone for an area or a city, the continent for a zone.
-		local up = key and (SpokenZones:DungeonOf(mapID, key) or mapID) or SpokenZones:PlaceAbove(mapID)
+		local up = key and SpokenZones:AreaZone(mapID, key) or SpokenZones:PlaceAbove(mapID)
 		local line = up and string.format(L.IN_ZONE_FMT, ZoneName(up)) or nil
 		page:Show({ title = entry and (entry.name or key) or ZoneName(mapID), subtitle = line,
 			onSubtitle = up and function()
@@ -679,11 +684,11 @@ end
 local function Count(n, many, one) return n == 1 and one or string.format(many, n) end
 
 --- The line under a place's name: where it sits and what its card or banner counts. Also returns
---- the map one level up, which a click on the line opens (nil for Azeroth). A dungeon's is the zone
---- of its entrance.
+--- the map one level up, which a click on the line opens (nil for Azeroth). An area's is the zone it
+--- is listed in (SpokenZones:AreaZone): a dungeon's entrance's, Strahnbrad's Alterac Mountains.
 function SpokenZones:PlaceLine(mapID, key)
 	if key then
-		local zone = self:DungeonOf(mapID, key) or mapID
+		local zone = self:AreaZone(mapID, key)
 		return string.format(L.IN_ZONE_FMT, ZoneName(zone)), zone
 	end
 	local parent = self:PlaceAbove(mapID)

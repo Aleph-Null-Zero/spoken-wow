@@ -87,6 +87,7 @@ Data/zhCN/Aliases.lua
 Data/zhTW/Aliases.lua
 Data/ForeverAreas.lua
 Data/Dungeons.lua
+Data/AreaZones.lua
 UI/Layout.lua
 UI/TextView.lua
 UI/CopyLink.lua

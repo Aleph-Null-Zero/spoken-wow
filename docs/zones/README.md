@@ -629,18 +629,36 @@ the instance's map the Quests data files its quests under (`dungeon` in
 the areas' stories and the Quests data. Razorfen Downs' story is under Thousand Needles, where
 the wiki has it, and its Classic entrance is in The Barrens: the story, its recording and its
 picture stay keyed `s:1441:razorfen downs`, frozen as every id is, and the tab lists it in The
-Barrens, where `Discovery.lua` also finds it. Blackrock Mountain's four, the Stockade,
+Barrens, where `Discovery.lua` also finds it (below). Blackrock Mountain's four, the Stockade,
 Razorfen Kraul, Maraudon, Ahn'Qiraj, Naxxramas and the Hall of Thanes have no area story of
 their own, so they have no card.
 
-A dungeon whose story is kept under another zone is told by its story's keys when it is found at
-its entrance. `SpokenZones:StoryPlace(mapID, key)` returns the map a story found on `mapID` is
-kept under: for an entry of `Data/Dungeons.lua` whose `mapID` is not the zone it is listed in,
-that `mapID`; for any other area, the map it was found on. `GetSubzoneLore` looks the story up
-there and returns that map as a third value. Standing in Razorfen Downs, discovering it or
-clicking it on The Barrens' map therefore plays, reports and opens `s:1441:razorfen downs`, with
-its picture, under a clip header of The Barrens, and the tab opens on its one card. The visit is
-recorded at the entrance (`1413/razorfen downs`), which `IsFound` reads for the story.
+An area the game puts in another zone than the one its story is kept under is listed, found and
+told where the game has it, by its story's frozen keys: the stories follow the wiki, which files
+some areas by the map after the Cataclysm. Two hand-kept tables say where. `Data/Dungeons.lua`
+lists each dungeon under the zone of its entrance (Razorfen Downs under The Barrens, its story
+under Thousand Needles). `Data/AreaZones.lua` lists the other areas by the zone their story is
+kept under, with `zone`, the zone the Classic clients' AreaTable puts the area in, and `also`,
+more zones the client has an area of that name in. Strahnbrad, Ravenholdt Manor and ten more,
+kept under Hillsbrad Foothills (1424), are Alterac Mountains' (1416) on Era and Forever. The
+Valley of Bones, kept under Desolace, is Shen'dralas' (2652) on Forever; a `zone` the client has
+no map for is left out, so on Era it stays in Desolace. The Great Lift (Thousand Needles, also
+The Barrens), Lordamere Lake (Silverpine Forest, also Alterac Mountains) and Darrowmere Lake
+(Western Plaguelands, also the Eastern Plaguelands) are areas of both zones in the AreaTable:
+each is listed once, where its story is kept, and found and told from both.
+
+`Core.lua` reads both tables into one index. `SpokenZones:StoryPlace(mapID, key)` returns the map
+a story found on `mapID` is kept under, `AreaZone` the zone an area is listed in, `FoundOn` every
+other map it is found on and `AreasIn(zone)` the areas listed in a zone. `GetSubzoneLore` looks
+the story up where `StoryPlace` says and returns that map as a third value, so autoplay, `/spz
+play`, the map's click and panel, the minimap button and the greeting tell `s:1424:strahnbrad`
+for Strahnbrad found in Alterac Mountains, with its picture and report, under a clip header of
+Alterac Mountains. The tab lists and counts it in Alterac Mountains' card, its page says "In
+Alterac Mountains", and Hillsbrad Foothills' card and its map's panel no longer count it. A visit
+is recorded on the map the area is found on (`1416/strahnbrad`, `1413/razorfen downs`); `IsFound`
+reads those, what is explored on every map in `FoundOn`, and any visit recorded under the story's
+own map. An area found on the map its story is kept under is still told there.
+`tests/lua/zones_area_zones_test.lua` checks the table against the stories.
 
 Banners and cards list and open whether or not anything in them is found, as on the Quests
 and Books tabs. A zone's, city's or dungeon's card not yet discovered is greyed, as a card
