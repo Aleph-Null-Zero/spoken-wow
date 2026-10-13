@@ -4,6 +4,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The small window's size grabber is the game's own**, the one Azeroth's Compendium and the chat windows have. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium is part of Spoken.** Its Quests tab no longer needs Zones or Books switched on, and the window keeps its size in Spoken's settings, so it opens once at its default size. *([Nucabe](https://github.com/Nucabe))*
 - **/spz minimap is gone.** It showed or hid a Zones minimap button that only appeared without Spoken; Spoken's own button is the one to use. *([Nucabe](https://github.com/Nucabe))*
 - **Spoken's modules load only with Spoken switched on.** With Spoken off in the AddOns list, the game leaves Quests, Gossip, Zones, Books and Developer off too, and no longer shows a dialog offering to switch Spoken back on. *([Nucabe](https://github.com/Nucabe))*
