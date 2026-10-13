@@ -364,13 +364,24 @@ def credited():
     return rows
 
 
+def in_lore():
+    """(parent, key) of every place the lore lists, written or pending; key None for a zone."""
+    zones, areas = lore_names()
+    return {(z, None) for z in zones.values()} | {(parent, key) for parent, names in areas.items()
+                                                  for key, _ in names.values()}
+
+
 def kept(placed, credits):
     """The places Pictures.lua gives a picture that the choices folder does not hold, as placed
-    entries: their texture, mask and credit as they are, where the texture is still there."""
+    entries: their texture, mask and credit as they are, where the texture is still there and the
+    lore still lists the place."""
     have = {(p["parent"], p.get("key")) for p in placed}
+    lore = in_lore()
     out = []
     for entry in listed():
-        if (entry["parent"], entry["key"]) in have or not os.path.exists(os.path.join(OUT, entry["texture"] + ".blp")):
+        if (entry["parent"], entry["key"]) in have or (entry["parent"], entry["key"]) not in lore:
+            continue
+        if not os.path.exists(os.path.join(OUT, entry["texture"] + ".blp")):
             continue
         title, cell = credits.get(entry["texture"], ("", ""))
         out.append({**entry, "id": entry["texture"], "title": title, "source": True, "credit": cell, "kept": True})
