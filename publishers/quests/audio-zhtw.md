@@ -1,5 +1,4 @@
 ---
-curseforge: 1719049
 release: quests-audio-zhTW
 section: quests
 lang: zhTW

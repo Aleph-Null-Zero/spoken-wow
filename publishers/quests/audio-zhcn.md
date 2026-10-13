@@ -1,5 +1,4 @@
 ---
-curseforge: 1719048
 release: quests-audio-zhCN
 section: quests
 lang: zhCN

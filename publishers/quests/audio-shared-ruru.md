@@ -1,4 +1,5 @@
 ---
+curseforge: 1717824
 release: quests-audio-shared-ruRU
 section: quests
 lang: ruRU

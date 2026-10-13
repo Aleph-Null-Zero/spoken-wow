@@ -1,4 +1,5 @@
 ---
+curseforge: 1719048
 release: quests-audio-shared-zhCN
 section: quests
 lang: zhCN

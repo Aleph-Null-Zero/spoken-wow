@@ -1,5 +1,4 @@
 ---
-curseforge: 1717808
 release: quests-audio-deDE
 section: quests
 lang: deDE

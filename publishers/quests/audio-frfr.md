@@ -1,5 +1,4 @@
 ---
-curseforge: 1717800
 release: quests-audio-frFR
 section: quests
 lang: frFR
