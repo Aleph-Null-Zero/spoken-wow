@@ -11,7 +11,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 local Expect, Failures = H.Expecter(print)
 
-local BOOK = [[Interface\AddOns\Spoken_Zones\Textures\Book]]
+local BOOK = [[Interface\AddOns\Spoken\Textures\Book]]
 
 local NewZoneLore = H.NewZoneLore
 

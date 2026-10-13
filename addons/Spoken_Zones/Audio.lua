@@ -78,10 +78,10 @@ end
 -- The player
 --------------------------------------------------------------------------------
 
-local BOOK = "Interface\\AddOns\\" .. ADDON_NAME .. "\\Textures\\Book"
+local BOOK = [[Interface\AddOns\Spoken\Textures\Book]]
 local warnedNoPlayer = false
 
---- The zone's icon, or its zone's for a subzone; the book without Spoken or an icon.
+--- The zone's icon, or its zone's for a subzone; the book without an icon.
 function SpokenZones:Portrait(mapID)
 	local icon, crop
 	if Spoken and Spoken.ZoneIcon then icon, crop = Spoken:ZoneIcon(mapID) end
