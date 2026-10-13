@@ -4,7 +4,7 @@ release: quests-audio-gossip-frFR
 section: quests
 lang: frFR
 pack: gossip
-version: 0.0.4
+version: 1.0.0
 github: false
 slug: french-spoken-quests-gossip
 name: French Spoken Quests: Gossip

@@ -4,7 +4,7 @@ release: quests-audio-alliance-frFR
 section: quests
 lang: frFR
 pack: alliance
-version: 0.0.4
+version: 1.0.0
 github: false
 slug: french-spoken-quests-alliance
 name: French Spoken Quests: Alliance

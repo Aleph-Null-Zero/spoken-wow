@@ -4,7 +4,7 @@ release: quests-audio-horde-frFR
 section: quests
 lang: frFR
 pack: horde
-version: 0.0.4
+version: 1.0.0
 github: false
 slug: french-spoken-quests-horde
 name: French Spoken Quests: Horde

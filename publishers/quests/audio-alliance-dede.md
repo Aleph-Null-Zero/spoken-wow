@@ -4,7 +4,7 @@ release: quests-audio-alliance-deDE
 section: quests
 lang: deDE
 pack: alliance
-version: 0.0.6
+version: 1.0.0
 github: false
 slug: german-spoken-quests-alliance
 name: German Spoken Quests: Alliance

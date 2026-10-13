@@ -4,7 +4,7 @@ release: quests-audio-horde-esMX
 section: quests
 lang: esMX
 pack: horde
-version: 0.0.5
+version: 1.0.0
 github: false
 slug: spanish-al-spoken-quests-horde
 name: Spanish (AL) Spoken Quests: Horde
