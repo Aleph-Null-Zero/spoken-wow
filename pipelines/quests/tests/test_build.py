@@ -180,10 +180,8 @@ def test_toc_declares_both_generations_of_the_module_key():
     for suffix, value in (("Version", "1"), ("Priority", "100")):
         assert f"## X-SpokenQuests-DataModule-{suffix}: {value}\n" in toc
         assert f"## X-VoiceOver-DataModule-{suffix}: {value}\n" in toc
-    assert toc.count("-DataModule-Maps: ") == 2
-    # The two generations must agree, or the pack means one thing to each reader.
-    maps = [line.split(": ", 1)[1] for line in toc.splitlines() if "-DataModule-Maps: " in line]
-    assert maps[0] == maps[1]
+    # A map list would be read and never used: every pack loads on every map.
+    assert "-DataModule-Maps" not in toc
 
 
 def test_toc_nests_the_pack_under_the_player():
