@@ -255,8 +255,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   book view, that brings back the interface it hides. The Spoken window now shows a book's title in
   your client's language, and names a one-page letter by its title instead of an internal key.
   *([earlsinclairdino](https://github.com/earlsinclairdino))*
-- **Captions fade lines in and out at the edges as they scroll**, instead of cutting them off.
-  *([Nucabe](https://github.com/Nucabe))*
 - **Narrator Style Settings drops its box.** Small titles with a thin line separate its groups of
   settings, and the welcome window lists the narrator styles as the settings page does.
   *([Nucabe](https://github.com/Nucabe))*
