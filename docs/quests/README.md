@@ -146,9 +146,8 @@ For a module to hand to players, use `make package-audio` instead: it transcodes
 ```bash
 make package                       # the player addon: one Blizzard zip, one per legacy client
 make package-audio                 # transcode to ogg, build five packs, zip each -> dist/
-make package-audio-complete        # every line in one folder, for the site (~1.3 GB)
 make package-meta                  # the "install everything" addon
-make package-audio PACKS=all       # only the complete pack, when trying an encode change
+make package-audio PACKS=all       # every line in one folder, when trying an encode change
 make package-audio VERSION=1.4.0   # the version written into each pack's .toc
 ENCODE=copy make package-audio     # the masters untouched, to hear what is being given up
 ```
@@ -187,14 +186,10 @@ downsample halves that again and speech survives the 11 kHz ceiling it imposes �
 second set of packs for a while and is retired, because one format is one set of projects and one
 answer to "which do I install".
 
-`make package-audio-complete` builds the same audio as one `SpokenQuestsAudioComplete` folder, ~1.3 GB.
-It is **not a CurseForge release**: it is far over the upload ceiling and always will be. The site
-hosts it instead — `make push-complete` puts a built zip in `shared/downloads/` on the droplet and
-repoints
-[`/downloads/SpokenQuestsAudioComplete-latest.zip`](https://spoken.rusty.one/downloads/SpokenQuestsAudioComplete-latest.zip),
-a symlink, so the published URL never changes once the pack is renamed. The pre-rename
-`VoiceOverReduxAudioHQ-latest.zip` is not kept alive: the descriptions carrying it are being
-re-pasted. See `deploy/README.md`.
+There is no complete pack, every line in one folder: it is far over CurseForge's upload ceiling,
+and the site no longer offers one. Its old address,
+`/downloads/SpokenQuestsAudioComplete-latest.zip`, redirects to the meta addon's page, which
+installs the four packs.
 
 **The packs ship as five CurseForge projects** — four packs and a meta addon:
 
@@ -339,7 +334,7 @@ which players meet as "the addon does not appear in my list".
 
 Uploading a file cannot change the page around it: descriptions, relations and project
 settings live in the web UI, and a script that rewrote them each release would be one that
-could quietly undo an edit made there. The complete pack has no project and is not released.
+could quietly undo an edit made there.
 
 ### A language's packs
 

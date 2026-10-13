@@ -2,7 +2,7 @@
 # Build the data module from transcoded copies of the audio store, and zip it.
 #
 #   make package-audio                 # the four shipping packs, Ogg Vorbis, into dist/
-#   make package-audio-complete        # every line in one folder, for the site
+
 #   make package-audio VERSION=1.4.0   # the version written into the .toc
 #   ENCODE=copy make package-audio     # the masters, untranscoded, for a listening check
 #   JOBS=1 make package-audio          # serial, when a failing encode needs readable output
