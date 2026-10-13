@@ -1179,26 +1179,6 @@ local function PartFace(moment)
     return face
 end
 
--- Each part's header where DialogueUI is installed: the top of Spoken's DialogueUI window, with
--- who says the part and the part's name. Made once, given the quest shown. false where it failed
--- to build; nil (asked again) where Spoken draws none, and the part has its face instead.
-local partHeaders = {}
-
-local function PartHeader(moment)
-    if partHeaders[moment] ~= nil then return partHeaders[moment] or nil end
-    if not (page and Spoken and Spoken.CreateDialogueHeader) then return nil end
-    local ok, header = pcall(Spoken.CreateDialogueHeader, Spoken, page.body.child)
-    if not ok then
-        print("|cffff5555Spoken Quests|r: " .. tostring(header))
-        partHeaders[moment] = false
-        return nil
-    end
-    if not header then return nil end
-    header.frame:Hide()
-    partHeaders[moment] = header
-    return header
-end
-
 -- A part's name: the offer is the quest's description, by the word the client's quest window
 -- heads it with where the client has one; the hand-in its completion.
 local function PartName(moment)
@@ -1242,15 +1222,9 @@ local function Parts(id)
                 list = { buttons.report, buttons.play }
             end
             local name, speaker = PartName(moment), SpeakerName(Speaker(id, moment))
-            local header = PartHeader(moment)
-            local face = not header and PartFace(moment) or nil
-            if header then
-                header:SetSpeaker(FaceSpeaker(id, moment))
-                header:SetTexts(speaker, name)
-            elseif face then
-                face:SetSpeaker(FaceSpeaker(id, moment))
-            end
-            table.insert(parts, { heading = name, text = text, buttons = list, header = header, face = face,
+            local face = PartFace(moment)
+            if face then face:SetSpeaker(FaceSpeaker(id, moment)) end
+            table.insert(parts, { heading = name, text = text, buttons = list, face = face,
                 caption = face and speaker or nil })
         end
     end

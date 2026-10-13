@@ -1352,8 +1352,8 @@ stub.FireEvent("QUEST_DETAIL")
 stub.world.questID = 0
 Expect("an English client keeps nothing: the English ships", VO.Addon.db.global.CompendiumText.enUS, nil)
 
--- With DialogueUI, each part's header is the top of Spoken's DialogueUI window: who says it, and
--- the part's name where the window has the quest's.
+-- With DialogueUI too, each part is headed by the Small Window's face, with who says it over the
+-- part's name, all centred on the face, as the buttons are.
 do
     local isLoaded = _G.IsAddOnLoaded
     _G.IsAddOnLoaded = function(name) return name == "DialogueUI" or (isLoaded ~= nil and isLoaded(name)) end
@@ -1366,23 +1366,15 @@ do
     SpokenQuestsCompendium.quests[KOBOLDS].ender = DUGHAN
     Tab:Open(KOBOLDS)
     local offer, handIn = page.body.lastParts[1], page.body.lastParts[#page.body.lastParts]
-    local function Header(part)
-        local header = part.header
-        if not header then return "no header" end
-        local still = header.portrait.still
-        return tostring(header.frame:IsShown()) .. " " .. (still:IsShown() and "still " .. tostring(still.display) or "no still")
-            .. " " .. tostring(header.badge:GetTexture()) .. " " .. header.name:GetText() .. "|" .. header.title.text:GetText()
-    end
-    Expect("with DialogueUI, the offer under the DialogueUI window's header: its giver, named, and the client's word for it",
-        Header(offer), "true still 3258 " .. BADGES["quest-accept"] .. " Marshal McBride|Quest Description")
-    Expect("...the hand-in under its own: the one it is handed in to, and its completion",
-        Header(handIn), "true still 1990 " .. BADGES["quest-complete"] .. " Marshal Dughan|" .. L.QUEST_PART_COMPLETE)
-    Expect("...on the page, in place of the Small Window's face", tostring(offer.header.frame:GetParent() == page.body.child)
-        .. " " .. tostring(offer.face) .. " " .. tostring(handIn.face), "true nil nil")
-    Expect("...its words named after it too", offer.heading, "Quest Description")
+    Expect("with DialogueUI, still the Small Window's face, no DialogueUI header",
+        tostring(offer.header) .. " " .. tostring(offer.face ~= nil and offer.face:IsShown()), "nil true")
+    Expect("...the giver over the client's word for the offer", offer.caption .. "|" .. offer.heading,
+        "Marshal McBride|Quest Description")
+    Expect("...the one it is handed in to over its completion", handIn.caption .. "|" .. handIn.heading,
+        "Marshal Dughan|" .. L.QUEST_PART_COMPLETE)
     _G.QUEST_DESCRIPTION = nil
     Tab:Refresh()
-    Expect("a client with no word for it: Spoken's", page.body.lastParts[1].header.title.text:GetText(), L.QUEST_PART_ACCEPT)
+    Expect("a client with no word for it: Spoken's", page.body.lastParts[1].heading, L.QUEST_PART_ACCEPT)
     _G.IsAddOnLoaded, _G.DialogueUI_DB, _G.DUIQuestFrame, _G.DUIFont_Quest_Paragraph = isLoaded, nil, nil, nil
 end
 
