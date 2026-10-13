@@ -743,6 +743,9 @@ def render(quest_lines, sort_lines, dungeon_lines=None):
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
 --
+-- Where Forever's quests are filed, who may take them and which follows which come partly from
+-- data from Efficient Games (https://efficient.games), licensed under CC BY 4.0.
+--
 -- A global rather than a private namespace: a data file cannot reach into the addon's environment.
 
 SpokenQuestsCompendium = {{
