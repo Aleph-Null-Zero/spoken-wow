@@ -38,14 +38,11 @@ Expect("...without a word about the others", #printed, 0)
 
 ---------------------------------------------------------------- Start Over
 -- The page's reset writes the defaults and applies them, as the checkboxes do.
-local applied, notified = 0, 0
-Z.ApplyMinimapButton = function() applied = applied + 1 end
+local notified = 0
 Z.NotifyAudioChanged = function() notified = notified + 1 end
-_G.SpokenZonesSettings.showMinimapButton = false
 _G.SpokenZonesSettings.voiceEnabled = false
 Z:ResetOptions()
-Expect("a reset brings the minimap button setting back", _G.SpokenZonesSettings.showMinimapButton, true)
-Expect("...and shows the button rather than waiting for a reload", applied, 1)
+Expect("a reset brings the voice back on", _G.SpokenZonesSettings.voiceEnabled, true)
 Expect("...and the play buttons hear the voice is on again", notified, 1)
 
 ---------------------------------------------------------------- Text Size

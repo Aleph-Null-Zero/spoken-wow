@@ -4,6 +4,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **/spz minimap is gone.** It showed or hid a Zones minimap button that only appeared without Spoken; Spoken's own button is the one to use. *([Nucabe](https://github.com/Nucabe))*
 - **Spoken's modules load only with Spoken switched on.** With Spoken off in the AddOns list, the game leaves Quests, Gossip, Zones, Books and Developer off too, and no longer shows a dialog offering to switch Spoken back on. *([Nucabe](https://github.com/Nucabe))*
 - **A book's title shows on the DialogueUI window the first time it plays.** It could stay blank after a quest line until another book played. *([Nucabe](https://github.com/Nucabe))*
 - **Bronze Border turns the subtitles' portrait ring bronze too**, as it does the small window's. *([Nucabe](https://github.com/Nucabe))*

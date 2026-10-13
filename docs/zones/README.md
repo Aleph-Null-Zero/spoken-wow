@@ -67,7 +67,6 @@ addons/Spoken_Zones/          the addon itself (this is what WoW loads)
   UI/SubzoneClick.lua    resolves a map click to a subzone
   UI/MapHighlight.lua    lights up the area under the cursor on a zone map
   UI/LoreWindow.lua      the Zones tab of Azeroth's Compendium
-  UI/MinimapButton.lua   LibDBIcon minimap button
   UI/PlaybackBar.lua     floating controls, shown only while narrating
   UI/Options.lua         settings panel
   Libs/                  LibStub, CallbackHandler-1.0, LibDataBroker-1.1,
@@ -589,10 +588,8 @@ story once the area is clicked.
 
 ## Minimap button and Azeroth's Compendium
 
-A minimap button (LibDBIcon) is the entry point that does not need the world map
-open. Its tooltip shows lore for wherever the player is standing -- the subzone if
-there is one, otherwise the zone. **Left-click** opens the Zones tab of Azeroth's
-Compendium, **right-click** opens the settings panel. `/spz minimap` hides or shows it.
+Spoken's minimap button is the entry point that does not need the world map open: its menu
+opens Azeroth's Compendium and the Zones settings.
 
 ### The Zones tab
 
@@ -1523,7 +1520,6 @@ here:     node tools/seed-from-dump.mjs           # report differences
 /spz autoplay                toggle narrating areas as you discover them
 /spz discover [area]         pretend to discover an area (dev)
 /spz forget                  replay the login greeting on next login (dev)
-/spz minimap                 show or hide the minimap button
 /spz debug                   report area names on map click
 /spz dump                    enumerate the map tree (dev)
 ```

@@ -52,7 +52,6 @@ As of 0.3.0 every line is recorded with a new narrator, and NPC and place names 
 /spz audio        list sound packs, or switch between them
 /spz lang         list languages, or switch between them
 /spz autoplay     toggle narrating areas as you discover them
-/spz minimap      show or hide the minimap button
 /spz help         the full list
 ```
 

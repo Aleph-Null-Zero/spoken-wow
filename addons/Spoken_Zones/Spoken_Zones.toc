@@ -33,7 +33,6 @@
 ## X-License: Addon code MIT. Zone lore text from warcraft.wiki.gg, CC BY-SA 4.0.
 ## X-Credits: Lore text sourced from warcraft.wiki.gg contributors (CC BY-SA 4.0).
 
-embeds.xml
 
 # Data/Languages.lua first: it is what Language.lua reads to decide which
 # language is being read, and everything after that guards itself on the answer.
@@ -97,5 +96,4 @@ UI/SubzoneClick.lua
 UI/MapHighlight.lua
 UI/Compendium.lua
 UI/LoreWindow.lua
-UI/MinimapButton.lua
 UI/Options.lua

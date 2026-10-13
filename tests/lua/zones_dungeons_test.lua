@@ -65,6 +65,8 @@ Expect("Razorfen Downs is listed in The Barrens, its story kept under Thousand N
 
 ---------------------------------------------------------------- the list
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+-- Spoken, which the module runs on: its round buttons are the pages' Play and Report.
+stub.LoadSpoken(here .. "/../../addons/Spoken/").Addon:Enable()
 _G.C_Texture = { GetAtlasInfo = function(name) return stub.ListAtlas(name) end }
 _G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 -- The game's portrait frame, as PortraitFrameMixin has it, and each frame's template kept.
