@@ -910,9 +910,6 @@ SpokenQuestsText = {
 		accept = "Attention, young adventurers!  The wilds of Ashenvale await you!$B$BThe Horde has established a strong presence in the lands north of the Barrens.  Our two outposts - Splintertree Post and the Zoram Strand Outpost - strive to bring glory to the Horde!  Those who would prove themselves should seek out guidance there.  Of note: Senani Thunderheart in Splintertree Post, directly north of the Barrens, seeks adventurers willing to take part in a great hunt of Ashenvale!",
 		complete = "Welcome to the new frontier, $N.  Ashenvale is a land of opportunity, one where a young $c like yourself is able to find boundless chances to prove their mettle.  Look around the outpost here, and be sure to travel out to the Zoram Strand, as the Horde has another outpost there as well.$B$BYour presence here tells me that you've come to learn more about the hunt.  Listen close, and I will gladly share with you what you need to know.",
 	},
-	[236] = {
-		accept = "A few weeks ago, I dispatched Watcher Callahan and a few others to the northern border of Duskwood to deal with the wolf infestation. I haven't heard word from him for quite some time. If he followed my instructions, he'll be camped out on the road north from Darkshire. $B$BIf it's on your way, please check up on him and inform him that I am awaiting a progress report from him.",
-	},
 	[237] = {
 		accept = "Mountaineer Cobbleflint had nothing but good things to say about you, $r.  For that reason I am going to entrust upon you a mission of utmost importance.  We need to keep pressure on the invading Trogg forces until our Dwarven brethren return from the Alliance front.$b$bSet forth into the southern hills and kill 10 Stonesplinter Skullthumpers and 10 Stonesplinter Seers.  Your attacks will buy us some time.  Report back when your mission is complete.",
 		complete = "You accomplished your mission well, $r.  The King himself would be proud.$b$bThe reinforcements promised to us never showed, however.  Apparently the Alliance front is a sea of crimson from the blood of our fallen brethren.  The news of the losses leaves a bitter taste in one's mouth.  But we must not let their deaths go for naught.  We must rally in these grim times and bring glory back to the Alliance.$b$bSpeak with Mountaineer Wallbang for reassignment.  You're needed now more than ever.",
@@ -2345,14 +2342,6 @@ SpokenQuestsText = {
 		accept = "Curses!  That swab Maury put a lock on his foot, and I can't open it!  His loot's inside the foot, and that's what he owes me!$B$BWe need to find the key to open the lock.  Maury was known to gamble with the Mosh'Ogg ogres, at their mound to the northeast.  And he told me, when he was still alive, that the last time he went to the mound he was chased off after winning too much.  Maybe the Ogres there have his key.$B$BBut if they do, you might have to kill a load of them to find the right one...",
 		complete = "You found it!  Thanks a million, $N.  You've been a big help to me!$B$BHere you go - you earned this!",
 	},
-	[614] = {
-		accept = "I used to sail a ship from here all the way to Ratchet, in Kalimdor.  I was a successful captain with a sterling reputation.$B$BUntil...$B$BThose cursed sea giants ruined me!  They smashed my ship, killed my crew, and set me on a lifeboat to Booty Bay.  And one of the giants, Gorlash, stole my Captain's Chest.  He said he wanted it for a snuffbox.  The nerve!$B$BI hear Gorlash wanders the coast east of here.  Find him and get back my chest!  Do that, and you'll have earned a captain's gratitude.",
-		complete = "You found it! Oh happy day, this is! Thank you, $N. Getting back my chest cools some of the fire in me.$b$bBut my revenge isn't complete...",
-	},
-	[615] = {
-		accept = "After I lost my first ship to those giants, I bought another.  Named Smotts' Revenge, I filled it with supplies and crew, and set out to find the villains.  I found them, but...they beat me.  They smashed Smotts' Revenge, killed my second crew and set me on another lifeboat.$B$BThis time another of the giants, Negolash, stole my cutlass.$B$BFace Negolash and bring me my cutlass!$B$BSpeak with Sprogger.  He was my cook on the Smotts' Revenge, and survived the last attack.  He can help you find the giant.",
-		complete = "Hello hello, $N. Captain told me you're going after Negolash, eh?",
-	},
 	[616] = {
 		accept = "Baron Revilgaz has had me keep an ear out for rumors of the strange and out-of-place in Booty Bay and Stranglethorn. I don't usually put much stock in ghost stories, but I heard some sailors in the tavern talking about a haunted island off the coast. Water elementals and a raving goblin ghost, they say.$b$bIf you're going to go talk to Revilgaz, could you relay that story to him?",
 		complete = "Interesting. Some time ago, I seem to remember reading a book once that suggested...$b$bAh, of course, a troll legend it was. If what Krazek reports is true, perhaps I will soon be able to add the Stone of the Tides to my collection of ancient artifacts and relics.",
@@ -2361,16 +2350,8 @@ SpokenQuestsText = {
 		accept = "You looking fer work, $N? I might have some if you're up for a little challenge.$B$BI got a friend named Groy who makes a killing selling what the naga call akiris reed: it's some kind of valuable ocean reed. Not too sure what it's for, but he pays well for bundles of the stuff.$B$BYa bring me ten stalks of the stuff, and we'll have business to do. The naga were last seen along the beach to the north of here.",
 		complete = "Well done, $N. 10 stalks of akiris reed wasn't too much a challenge after all, huh? No offense to the naga, but hey, everybody's gotta make a living.",
 	},
-	[618] = {
-		accept = "Negolash is a hungry giant.$B$BWhen the giants destroyed our ship, Negolash went straight for my kitchen.  He wasn't hungry for crew like the other giants.  Negolash wanted wine...and my Barbecued Buzzard Wings.  They're my specialty, and I had to go all the way to the Badlands for the recipe!$B$BIf you want to lure the giant, then get some wine and a heap of buzzard wings.  Put them in our old lifeboat, southeast of here along the coast.  When Negolash smells all that food, he'll come for sure!",
-		complete = "You got my cutlass from Negolash! I can't believe my fortune, $N! Meeting you has turned my luck to the better, make no mistake there!$B$BThank you! And if I ever get a new ship and you're looking to sail the seas, you would be my honored guest.",
-	},
 	[619] = {
 		complete = "You pile food and drink upon the raft...",
-	},
-	[620] = {
-		accept = "This fine sash has the letters \"HS\" embroidered along its hem.",
-		complete = "You recovered my sash?  Then...you must have killed Mok'rash the sea giant!  Hooray!$B$BI'm glad the scurvy villain's dead - Mok'rash was one of three sea giants who smashed my ships and killed my crew.$B$BThree times.$B$BYou are a $c of worth, $N.",
 	},
 	[621] = {
 		accept = "Zanzil the Outcast dwells with his followers in the Jubuwai and Aboraz Ruins, northeast of Booty Bay.  He is exiled from his tribe.  Why? Well...$B$BZanzil has methods of bending the minds of others, and his leaders fear him.  He uses a mixture of jungle plants on his followers to suppress their will and strengthen their bodies.$B$BHis mixture would be worth much to those who wish to control others.$B$BBring me samples of his mixture, and I will find a use for them.",
@@ -2715,9 +2696,6 @@ SpokenQuestsText = {
 	[707] = {
 		accept = "$N.  I received reports from Prospector Ironband at his excavation site in Loch Modan--he needs some legwork done concerning another of our excavations.$B$BI don't have more details than that, but if you want to stretch your legs then go speak with Ironband.",
 		complete = "So Stormpike sent you, did he?  Good.$B$BI have a big task for you...",
-	},
-	[708] = {
-		accept = "The surface of this metallic black box is heavily pitted, as if it had been immersed in acid - it must have been sitting in the giant condor's stomach for a long time.$B$BTurning the box over, a symbol is found stamped on its bottom.  Below the symbol are the words:$B$B\"Engine #19 - Ironforge Siege Brigade\"",
 	},
 	[709] = {
 		accept = "Oh my!  Oh my!  There is a doom approaching.  Mark me!  A doom!$B$BNo, I cannot speak of it...cannot utter their names or they may hear me!  But if we learn, yes, if we learn more of them...then maybe we can learn how to foil them!$B$BMaybe.$B$BGo into Uldaman.  No!  I said it!  You must find...find the tablet of...Ryun'eh.  Yes, find it!  And don't make me speak that name again!$B$BIt is deep in that place, in an ancient chest.  That's where it hides...in a chest crafted before the works of any dwarf.",
@@ -3431,9 +3409,6 @@ SpokenQuestsText = {
 	[907] = {
 		accept = "Now, $N, you must face the great thunder lizards.  So large are the beasts, the ground rumbles as they stomp across the plains.  Take care as you fight them, for one false step and you may find yourself beneath their feet.$B$BYou will find the thunder lizards in the southern Barrens.  They are known as Stormsnouts, Stormhides and Thunderheads.  Return to me after you have bested them.",
 		complete = "It is good to see you return with proof of victory.  And it is good to know you have done so with your bones unbroken.",
-	},
-	[909] = {
-		complete = "This... this is quite the find, $N.$b$bYou acquired this from Baron Aquanis in Blackfathom, you say? Baron Aquanis has long been thought of as a corrupted elemental power; this globe will prove what exactly had corrupted him. While it would be no surprise if it turned out to be the Twilight's Hammer, our studies will also show how they did it as well.$b$bYou did well in bringing this to me. Please - take this, along with the Earthen Ring's warmest regards.",
 	},
 	[910] = {
 		accept = "I have heard tales of the mighty ships that sail between Ratchet and Booty Bay!  That would be so cool to sail on the ocean and fight in many great sea battles.  Maybe I will be a mighty Horde sailor when I grow up!  Yeah!$B$BWould you take me to see the Ratchet docks, please?  I promise I won't get into the water or cause any trouble - I just want to see the big boats and smell the salty sea water!  Yeah!",
@@ -7159,9 +7134,6 @@ SpokenQuestsText = {
 		accept = "While you were helping me out, this rune was given to me to pass on to you. Take some time to read it when you have a chance. I'm thinkin' it came from the priest trainer Branstock. Take a gander at it and go find him inside Anvilmar when you've a chance.",
 		complete = "I'm the one who can train ya as you start to find your way around Coldridge Valley. When ya feel yer ready, come back to me and we'll see about maybe teaching you a new spell or two to fend off the valley from them blasted troggs.$B$BYa got the Light on yer side, along with all of Ironforge, $N... no pressure on ya to become somethin' special.",
 	},
-	[3111] = {
-		accept = "Long ago high elves taught us the secrets of magic along with our human allies. They preached to us about rules and how magic can make ya go mad! But don't believe it. We're not like the elves; we don't have the same weaknesses. Just keep yourself on the right path and you'll find magic is as powerful a tool as it is a weapon.$B$BWhen you're ready, come find me inside Anvilmar. I'll be waiting for ya!",
-	},
 	[3112] = {
 		accept = "While you were helping me out, this memorandum was given to me to pass on to you. Take some time to read it when you have a chance. I'm thinkin' it came from the warrior trainer Thran. Take a gander at it and go find him inside Anvilmar when you've a chance.",
 		complete = "Well, seein' how this is your prime directive, or whatever yer callin' it these days, I gave my word I'd do whatever I can to make sure you and yours were ready to take back your home... and that's just what I'm gonna do.$B$BAny time you feel yer ready, come back to good ol' Thran and I'll be happy to share my knowledge wit ya. There's some cost to me trainin' ya, but it won't be too expensive. Good luck.",
@@ -10153,29 +10125,9 @@ SpokenQuestsText = {
 		accept = "Araj the Summoner lords over Andorhal from an obfuscated vantage.  We know that he was the former leader of Scholomance before claiming the city as his own.  To finish the key, we will need his signet - called a scarab - mounted as the head of the key.$B$BIn the city are four summoning crystals, one in each tower you marked for us previously.  Destroy all four crystals and break his hold on the city, drawing him into the open.  Once destroyed, seize his scarab from his fallen phylactery!",
 		complete = "Yes, this is it!  I... again, I'm absolutely amazed at the depths of your cunning and bravery.  It simply boggles the mind the lengths you are willing to go in order achieve victory.$B$BAllow me now to play my small part in this.  I've prepared a special solvent that should allow me to secure the scarab on as the head of the key, infusing it with the power to breech the locked door of Scholomance.$B$BThis should take just a moment...",
 	},
-	[5805] = {
-		accept = "Welcome to the World of Warcraft!$B$BAs special thanks for purchasing the World of Warcraft Collector's Edition, turn in this gift voucher to Merissa Stilwell in Northshire Valley.  You'll then be given a gift: a little companion to join you on your quest for adventure and glory.$B$BThanks again, and enjoy your stay in the World of Warcraft!\n",
-		complete = "You are indeed a special hero, $N. We welcome you to the world of Azeroth, and offer you one of these unique gifts!",
-	},
 	[5821] = {
 		accept = "Under normal circumstances, Rigger and I would lead our kodo past the Kolkar Centaur. Every now and then we hear the Centaur war drums, and when we hear those we stop. It's not good for business to be dead!$B$BI'll tell you what $c, if you protect us past the Kolkar village we'll make it worth your while.$B$BIt's just a short distance, all you need to do is keep the caravan intact and you can pick up your reward from Smeed Scrabblescrew - he is down the road a bit. We do a little business together.",
 		complete = "You know, it doesn't seem prosperous to be paying the likes of you to guard Gizelton Caravan. $C, if I were a bit taller I could take on a second job and sit kodo-side-saddle with the biggest gun my hands could carry... and I'd show them blasted centaur who's their papa.",
-	},
-	[5841] = {
-		accept = "Welcome to the World of Warcraft!$B$BAs special thanks for purchasing the World of Warcraft Collector's Edition, turn in this gift voucher to Yori Crackhelm in Coldridge Valley.  You'll then be given a gift: a little companion to join you on your quest for adventure and glory.$B$BThanks again, and enjoy your stay in the World of Warcraft!",
-		complete = "You are indeed a special hero, $N. We welcome you to the world of Azeroth, and offer you one of these unique gifts!",
-	},
-	[5842] = {
-		accept = "Welcome to the World of Warcraft!$B$BAs special thanks for purchasing the World of Warcraft Collector's Edition, turn in this gift voucher to Orenthil Whisperwind in Shadowglen.  You'll then be given a gift: a little companion to join you on your quest for adventure and glory.$B$BThanks again, and enjoy your stay in the World of Warcraft!",
-		complete = "You are indeed a special hero, $N. We welcome you to the world of Azeroth, and offer you one of these unique gifts!",
-	},
-	[5843] = {
-		accept = "Welcome to the World of Warcraft!$B$BAs special thanks for purchasing the World of Warcraft Collector's Edition, turn in this gift voucher to Magga in the Valley of Trials.  You'll then be given a gift: a little companion to join you on your quest for adventure and glory.$B$BThanks again, and enjoy your stay in the World of Warcraft!",
-		complete = "You are indeed a special hero, $N. We welcome you to the world of Azeroth, and offer you one of these unique gifts!",
-	},
-	[5844] = {
-		accept = "Welcome to the World of Warcraft!$B$BAs special thanks for purchasing the World of Warcraft Collector's Edition, turn in this gift voucher to Vorn Skyseer in Camp Narache.  You'll then be given a gift: a little companion to join you on your quest for adventure and glory.$B$BThanks again, and enjoy your stay in the World of Warcraft!",
-		complete = "You are indeed a special hero, $N. We welcome you to the world of Azeroth, and offer you one of these unique gifts!",
 	},
 	[5845] = {
 		accept = "The Order of the Silver Hand was utterly decimated when Uther was slain.$B$BThe boy held out for as long as he could. Pushed to the war torn hamlet of Northdale, he made his final stand.$B$BWere any of the Order left alive, he thought - and did it matter?$B$BIt was with that thought that Taelan threw down the standard of the Order and renounced all that he had known. His honor left upon the blood soaked ground of Northdale.$B$BYou must travel to Northdale and recover that symbol of lost honor.",
@@ -10184,10 +10136,6 @@ SpokenQuestsText = {
 	[5846] = {
 		accept = "When Taelan was a child, we would oft visit Caer Darrow on family excursions. On our last visit, an artist by the name of Renfray painted a portrait of us poised along the beachside. It is my fondest memory of both Taelan and Karandra. For it was at that moment, with my wife and son in my arms, that I felt a bond of love and family that I would never know again.$B$BIf this painting still exists, you must find it.$B$BTravel to the ruined island of Caer Darrow and see if the painting or the artist remain.",
 		complete = "How could I forget? Many of the spirits on this island are cursed to relive their last happy memory before they met their tragic end.$B$BI too am cursed, but not as they - I am one of the few that remembers all...$B$BPerhaps this thing that you ask me is why I haunt these ruins. Perhaps this thing I tell you shall set me free.",
-	},
-	[5847] = {
-		accept = "Welcome to the World of Warcraft!$B$BAs special thanks for purchasing the World of Warcraft Collector's Edition, turn in this gift voucher to Claire Willower in Deathknell.  You'll then be given a gift: a little companion to join you on your quest for adventure and glory.$B$BThanks again, and enjoy your stay in the World of Warcraft!",
-		complete = "You are indeed a special hero, $N. We welcome you to the world of Azeroth, and offer you one of these unique gifts!",
 	},
 	[5848] = {
 		accept = "The painting... It hung on the wall of my workshop - inside the Order's barracks - for years.$B$BAfter Tirion's trial was over, I knew that I could no longer keep the painting visible. I hid it in a place that they would never think to look.$B$BTravel to Stratholme and make your way deep inside what is now the Scarlet Bastion, search for a painting of our twin moons. Chip away at the paint until you uncover my master work, 'Of Love and Family.'$B$BMay the Light guide your actions.",
@@ -10555,10 +10503,6 @@ SpokenQuestsText = {
 		accept = "You've learned what it means to cure poison without the benefit of spiritual aid.  Remember what others must endure in fighting poisonous afflictions as you soon embrace your newfound power over poison.$B$BYou should now return to Turak Runetotem in Thunder Bluff, $N.  He, no doubt, has a very important spell to teach you now that the student understands the lesson given unto $g him : her;.$B$BFarewell, young druid.  We shall speak again.",
 		complete = "Welcome back - I've been following your progress on this lesson since you left, and I must admit I was surprised to learn about the situation at the Crossroads.  This does bear some further investigation, as the introduction of such poisons into the environment is most upsetting to the balance.$B$BYou handled yourself with grace under pressure.  For that, I can find no better way to reward you than with permanent power over poison.  Use it well, $N... use it well.",
 	},
-	[6131] = {
-		accept = "The Timbermaw are the only furbolg tribe to escape the corruption. However, many other races kill furbolg blindly now, without bothering to see if they are friend or foe. For this reason, the Timbermaw furbolg trust very few.$B$B Are you interested in proving yourself? Drive back the corrupted Deadwood tribe and we may one day consider you an ally. You'll find the Deadwood warriors, pathfinders and gardeners to the south.",
-		complete = "We suffer much from the events of the past. Thank you for what you have done to help protect the Timbermaw.",
-	},
 	[6132] = {
 		accept = "Get me out of here!$B$BI came up to the Valley of Spears to talk to the Maraudines.  I thought I could do a little business with them... but they don't want to talk!  I think they want to eat me!$B$BGet me out of here and my brother Hornizz will pay you big!  He's at our camp next to the kodo graveyard, to the east.$B$BLet's hurry, $N.  Not two minutes ago I heard some centaurs talking about getting wood for their cookpot... ",
 		complete = "My sister Melizza said you'd be coming.  Thanks a lot for getting her out of the jam she was in; it's too bad that she's already probably found herself in a new one!",
@@ -10654,14 +10598,6 @@ SpokenQuestsText = {
 	[6187] = {
 		accept = "Do you know how many ranger lords exist in this world? How many human ranger lords have ever existed?$B$BNathanos' accomplishments were unprecedented. He was a tactical genius, responsible for Alliance victories spanning a decade of conflict.$B$BAnd now... the champion of the Forsaken.$B$BNo. This cannot be. Order must be restored.$B$BGather an army, $N. Return to the Plagues with your army and destroy the Blightcaller.$B$BI wish you luck, $N. Truly, you will need it for this battle.",
 		complete = "It is a tragedy. I think... I believe that our kind is cursed, $N. We are cursed to lose our greatest warriors; our most noble heroes; our most gifted scholars.$B$BWe are indebted to you and I assure you, $N, wherever Nathanos Marris is now, he smiles down upon you. ",
-	},
-	[6221] = {
-		accept = "Directly southwest of here, there is a camp of Deadwood furbolgs. I am not sure what they are planning, but I'd like to put an end to it before they become a problem.$B$BThe Deadwood tribe is evil, but it is the effects of the fel that pollutes their minds. Their hostility is not truly an innate quality, yet they cannot be helped. For this reason, I am deeply saddened by having to fight my own brethren.$B$BPlease, $N, do what must be done, and do not mention the details; they upset me far too much.",
-		complete = "I sense that you have achieved victory.  Victory... such a hollow word considering what had to be done.  Regardless, you've proven yourself to be worthy of our trust.$B$BIt may take some time before the Timbermaw welcome you without hostility within the Hold.  Still, your perseverance will erode any suspicion my brethren may have about you.  So long as you never betray us and raise weapons against us, we will find common ground.",
-	},
-	[6241] = {
-		accept = "The Timbermaw tend to stay to themselves, $N. While we do allow safe passage to those that have proven they can be trusted, we try to avoid other furbolg tribes if at all possible.$B$BLately I have noticed that the Winterfall tribe has become increasingly hostile towards us. They seem to be in a state of rage, completely engulfed by their own fear and hatred of anything they do not understand.$B$BIf you could reduce their numbers this would help us greatly, $N.",
-		complete = "Thank you for what you have done. Please continue to help us, $N. We have very few allies on which to call upon.",
 	},
 	[6261] = {
 		accept = "$N, I gathered into this crate everything Lewis asked for.  Can you take it to him?$B$BIf you've already spoken to Thor in Westfall, then you can take a gryphon back to him.  Dungar Longdrink is our gryphon master, over in the trade district.$B$BSpeak with Dungar, then get this crate to Lewis as fast as you can.  We don't want our fighting men and women in Westfall to go without fresh equipment!",
@@ -11546,24 +11482,9 @@ SpokenQuestsText = {
 		accept = "Have you heard enough? Are you a $g man:woman; of action?$B$BThis madness must come to an end. The age of the immortals has long since passed. Destroy the guardians surrounding the pylons to lower the force field. When this is done, destroy Immol'thar. With the Prince's power greatly reduced, attack and end him. Lay the spirits of this city to rest, adventurer.",
 		complete = "We thank you, hero.",
 	},
-	[7462] = {
-		complete = "You open the chest to find...",
-	},
 	[7463] = {
 		accept = "A $r mage! How wonderous. I have not seen one of your kind for... oh what is it going on now? 500 years!$B$BI have something that will quench your thirst, but first you must do a task for me.$B$B<Lydros snickers.>$B$BThere is an anomaly in Eldre'Thalas. A water elemental has taken residence in the east wing. His presence must be catalogued!$B$BVenture to the Warpwood Quarter and extract a portion of the elemental essence of the Hydrospawn. Return it to me and I shall teach you a useful cantrip.",
 		complete = "Wonderful! Who are you again? Oh it matters not. What was I supposed to give you? Hrm... well you are a mage, perhaps you will find this useful.",
-	},
-	[7478] = {
-		accept = "Master Winthalus lost the Libram of Rapidity in the east wing. The Libram will allow for a minor haste cantrip to be placed upon your equipment. Parlor tricks, really...$B$BRegardless, if you are interested, you will need to present the Libram along with some basic reagents.$B$BHrm... I believe it also requires blood of heroes, a pristine black diamond, and large brilliant shards. I could be wrong!$B$B<Lydros shrugs.>",
-		complete = "<Lydros yawns.>$B$BAs promised, the Arcanum of Rapidity. Don't spend it all in once place.$B$B<Lydros snickers.>",
-	},
-	[7479] = {
-		accept = "This libram almost aroused interest in one of the younger Lorekeeper's familiars. Poor thing, it was only a few weeks old.$B$BThose among you who are more magically inclined might find this item interesting.$B$BThe Libram of Focus was lost in this wing. I can only assume one of the Highborne spirits holds it in their possession.$B$BBring the Libram along with some large brilliant shards, skin of shadow, and a pristine black diamond and I shall conjure the Arcanum.",
-		complete = "Don't hurt yourself when applying the enchantment, $R.",
-	},
-	[7480] = {
-		accept = "He wept like an infant at the loss of this libram. Mind you, I myself have wept over texts - there is no greater loss than that of knowledge and history - but to cry over this nearly useless jumbling of incantations? Preposterous! It left me to believe that the Prince was doing him a favor in flaying the flesh from his bones.$B$BBring the Libram along with a pristine black diamond, large brilliant shards, and a frayed abomination stitching and I shall recreate the Arcanum.$B$BOh, and check the north wing.",
-		complete = "Yes, yes... Calm yourself. As promised, here is your Arcanum.",
 	},
 	[7481] = {
 		accept = "Several years ago, a lone elven master named Kariel Winthalus fled the devastation of his homeland with several ancient elven artifacts in tow.$B$BOur search for this lost master lead us from the ruins of Quel'Thalas, through the Burning Steppes, across the great expanses of the sea, to Feralas.$B$BWe suspect that the elf sought sanctuary in the halls of Eldre'Thalas (what is now known as Dire Maul).$B$BYou must find him, adventurer. Whether alive or dead, the knowledge he carried must be recovered!",
@@ -13200,9 +13121,6 @@ SpokenQuestsText = {
 	},
 	[8324] = {
 		complete = "Excellent!  I can't wait to read these. Please do keep bringing the encrypted texts here if you find them.",
-	},
-	[8325] = {
-		accept = "The sooner you begin your education, $N, the better for us all.  There is little room for error, so listen closely.\n\nThe Burning Crystals - the green floating objects to the west of the Sunspire here - have long been used to power the isle's experimentations.  The mana wyrms were their guardians, but the Scourge invasion of Quel'Thalas has driven them errant from our lack of magical control over them.\n\nThere is little choice but to thin their numbers for reclamation.  Do this, then return to me.",
 	},
 	[8331] = {
 		accept = "$N, although we had hoped the Twilight's Hammer's operations in Silithus were slowing... we were, regrettably, mistaken.  Through continued forays against the cult, we have learned that an even darker power, the Abyssal Council, controls the Hammer through the arcane wind stones dotted amongst the cult's camps.  Your next action, $N, will be against the Abyssal Council.$B$BSpeak with the craftsman Aurel Goldleaf, in the eastern section of Cenarion Hold.  Her skill will be needed for this next gambit.",
@@ -16079,9 +15997,6 @@ SpokenQuestsText = {
 	[9246] = {
 		accept = "Thanks to you and Omarion (May he rest in peace), I am now able to create an Icy Scale breastplate. All you need to do is bring me the materials and pay a small crafting fee.",
 		complete = "Here is your order, $N. Delivered as promised!",
-	},
-	[9247] = {
-		accept = "$N,$B$BIn times past you have served the interests of the Argent Dawn, always to the best of your abilities. Now, once again, we sound the clarion call in our time of greatest need.$B$B$N, please report to the Keeper of the Rolls at Light's Hope Chapel in the Eastern Plaguelands if you are willing to aid us once more.",
 	},
 	[9248] = {
 		accept = "Ishnu-alah, $r. Show me proof of the demise of a Lord of the Abyssal Council and I shall reward you with an item that should aid you in your battles against the Qiraji.",

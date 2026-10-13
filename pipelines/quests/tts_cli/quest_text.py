@@ -15,7 +15,11 @@ and per player gender, so a moment can have several. One text is kept for each:
 - Where givers' words differ (the Runecloth donations, quest ids the database reuses), the
   text most of the moment's lines have; on a tie, the one that comes first in the corpus.
 - An ignored line (corpus/ignored.json) is left out, as it is from every pack.
+- A quest the Compendium leaves out (`remove` in corpus/compendium_overrides.json) has none:
+  its page does not exist.
 """
+import json
+import os
 from collections import Counter
 
 #: The moments a quest's page shows, in the order a player meets them.
@@ -30,12 +34,21 @@ def in_game(quest_id: int, title: str) -> bool:
     return quest_id != 1 and "<NYI>" not in (title or "")
 
 
-def quest_text(corpus: dict, ignored=()) -> dict:
-    """{questID: {moment: text}} for every quest the corpus has words for."""
+def removed_quests(overrides_path: str) -> set:
+    """The quests the Compendium's hand corrections leave out, or none where there is no file."""
+    if not os.path.isfile(overrides_path):
+        return set()
+    with open(overrides_path, encoding="utf-8") as f:
+        entries = json.load(f).get("quests", [])
+    return {qid for e in entries if e.get("remove") for qid in ([e["id"]] if "id" in e else e["ids"])}
+
+
+def quest_text(corpus: dict, ignored=(), removed=()) -> dict:
+    """{questID: {moment: text}} for every quest the corpus has words for, save `removed`."""
     texts = {}
     for line in corpus["lines"]:
         moment = line["source"]
-        if moment not in MOMENTS + (PROGRESS,) or line["lineId"] in ignored:
+        if moment not in MOMENTS + (PROGRESS,) or line["lineId"] in ignored or line["questId"] in removed:
             continue
         if not in_game(line["questId"], line.get("questTitle")):
             continue

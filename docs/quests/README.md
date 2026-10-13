@@ -1441,7 +1441,7 @@ Two generated files feed it, both committed so the addon never needs a database:
   `tts_cli/quest_text.py`): each quest's accept and complete text (its progress only where it has neither, as its accept), the corpus's
   `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
   text; where givers' texts differ, the one most of the moment's lines have, ties to the first in
-  the corpus; ignored lines are left out. About 2.8 MB, parsed at every login on those clients.
+  the corpus; ignored lines, and the quests the hand corrections `remove`, are left out. About 2.8 MB, parsed at every login on those clients.
 
 The tab lists only the quests this character's race and class may take. A quest is found once
 the client says it is completed (`C_QuestLog.GetAllCompletedQuestIDs`, else

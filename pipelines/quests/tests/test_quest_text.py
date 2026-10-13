@@ -3,7 +3,9 @@ import subprocess
 
 import pytest
 
-from tts_cli.quest_text import in_game, lua_string, quest_text, render
+import json
+
+from tts_cli.quest_text import in_game, lua_string, quest_text, removed_quests, render
 
 
 def _line(quest, source, text, npc=288, gender=None, title="Growling Gut"):
@@ -59,6 +61,18 @@ def test_a_tie_goes_to_the_words_the_corpus_has_first():
 def test_an_ignored_line_has_no_words():
     corpus = {"lines": [_line(5, "accept", "Find my pack."), _line(5, "complete", "You found it!")]}
     assert quest_text(corpus, {"q:5:accept"}) == {5: {"complete": "You found it!"}}
+
+
+def test_a_quest_the_compendium_leaves_out_has_no_words(tmp_path):
+    overrides = tmp_path / "compendium_overrides.json"
+    overrides.write_text(json.dumps({"quests": [
+        {"id": 236, "remove": True, "source": "removed in the beta"},
+        {"ids": [708, 909], "remove": True, "source": "old copies"},
+        {"id": 5, "title": "Growling Gut", "source": "a title"}]}), encoding="utf-8")
+    assert removed_quests(str(overrides)) == {236, 708, 909}
+    assert removed_quests(str(tmp_path / "none.json")) == set()
+    corpus = {"lines": [_line(5, "accept", "Find my pack."), _line(236, "accept", "Wait for word.")]}
+    assert set(quest_text(corpus, removed={236})) == {5}
 
 
 def test_the_test_quest_and_those_not_yet_implemented_are_left_out():
