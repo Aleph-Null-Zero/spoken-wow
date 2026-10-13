@@ -48,6 +48,7 @@ web-%:
 books-%:
 	@$(MAKE) --no-print-directory -f make/books.mk $*
 
+# The settings fit loop leaves esMX out until its Voice Pack row fits: 226 px in a 200 px column.
 test-player: ## Run the addons' Lua tests (needs luajit)
 	@[ -n "$(LUA)" ] || { echo "No luajit found: brew install luajit"; exit 1; }
 	@$(LUA) tests/lua/quest_dispatch_test.lua
@@ -69,7 +70,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/settings_ux_test.lua
 	@$(LUA) tests/lua/settings_legacy_test.lua
 	@$(LUA) tests/lua/settings_art_test.lua
-	@for lang in enUS deDE esES frFR ptBR ruRU koKR zhCN zhTW; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
+	@for lang in enUS deDE esES frFR ptBR ruRU koKR zhCN zhTW itIT; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
 	@$(LUA) tests/lua/settings_audit_test.lua
 	@$(LUA) tests/lua/queue_test.lua
 	@$(LUA) tests/lua/developer_hooks_test.lua
