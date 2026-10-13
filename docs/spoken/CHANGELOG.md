@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Azeroth's Compendium lists 25 quests Forever gives that Spoken has no words for yet**, such as
+  the Mulgore quests from Mazu'kon and Muln Earthfury, Changing Tastes and Conflict at Darkspear
+  Islands, in their zones or class groups. Their pages have no words until their lines are recorded. *([Nucabe](https://github.com/Nucabe))*
 - **On Forever in German, Spanish, French, Portuguese, Russian, Korean and Chinese, Zones finds the
   places Forever added or renamed**, such as Die Schwarzschlundfeste and Die Abendruh, by the
   names Forever's own client gives them. *([Nucabe](https://github.com/Nucabe))*

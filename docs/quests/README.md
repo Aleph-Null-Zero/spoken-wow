@@ -1436,6 +1436,12 @@ Two generated files feed it, both committed so the addon never needs a database:
   there after, offline too. Moving the commit is a deliberate change whose diff is reviewed.
   The file's header names the client builds and the commit it was made from.
   `--without-efficient-games` leaves it out.
+  Forever serves quests the corpus has no lines for yet. Each one players were seen being offered
+  or handing in (`npcs.json` `offers`, `takes`) or working on (`objectives.json`), and that the
+  client data has a title for, is listed with `notext = true` (`served_quests`, `without_text`):
+  placed, limited and linked by its client record as above, so the tab lists it with no words
+  until its lines reach the corpus and an export drops the flag. `--no-db` makes these again on
+  every run; the hand corrections' removals are never listed.
   Last come the hand corrections, `corpus/compendium_overrides.json` (`load_overrides`,
   `apply_overrides`, `chain_names`): what neither the DB nor the client data can say, such as a
   breadcrumb's link, a quest the beta removed, or a chain's name. Each `quests` entry names its

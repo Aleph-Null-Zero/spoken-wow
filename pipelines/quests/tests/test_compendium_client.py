@@ -9,7 +9,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import export_compendium  # noqa: E402
-from export_compendium import chain_links, eg_datasets, eg_races, forever_quests, gates, place  # noqa: E402
+from export_compendium import (chain_links, eg_datasets, eg_races, forever_quests, gates, place,  # noqa: E402
+                               quest_line, served_quests, without_text)
 
 
 class FakeMaps:
@@ -180,3 +181,24 @@ def test_the_file_says_which_builds_and_data_it_was_made_from():
     lua = export_compendium.render({}, {})
     assert f"Forever {export_compendium.BUILD} and Era {export_compendium.ERA_BUILD}" in lua
     assert f"commit {export_compendium.EG_COMMIT[:7]}" in lua
+
+
+def test_a_quest_is_served_where_players_saw_it_offered_handed_in_or_worked_on():
+    npcs = {"1.60.1.70338": {"npcs": {"10": {"offers": {"5": {}}, "takes": {"6": {}}}},
+                             "objects": {"20": {"offers": {"7": {}}}}}}
+    objectives = {"1.60.1.70338": {"quests": {"8": {}}, "completed": {"9": {}}, "failed": {"11": {}}}}
+    assert served_quests(npcs, objectives) == {5, 6, 7, 8, 9}
+
+
+def test_a_served_quest_the_corpus_lacks_is_listed_without_words():
+    client = {96259: {"title": "Defending the Dead", "zoneAreaId": 12, "raceMask": "00000002000000B2",
+                      "nextQuestId": 96261},
+              96261: {"title": "The Broodmother", "zoneAreaId": 12},
+              5: {"title": "Jitters' Growling Gut"}, 236: {"title": "Awaiting Word"}, 99999: {}}
+    records = without_text({5: {}}, {5, 236, 96259, 96261, 99999}, client, {}, FakeMaps(), {}, removed={236})
+    assert set(records) == {96259, 96261}
+    assert records[96259] == {"title": "Defending the Dead", "zones": [1429], "sort": None, "dungeon": None,
+                              "races": 0x2000000B2, "classes": 0, "prev": None, "notext": True}
+    assert records[96261]["prev"] == 96259
+    assert quest_line(96261, "The Broodmother", [1412], prev=96259, notext=True) == \
+        '\t\t[96261] = { "The Broodmother", zones = { 1412 }, prev = 96259, notext = true },'

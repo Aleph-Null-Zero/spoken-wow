@@ -31,6 +31,10 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - A dungeon's or a raid's quest (its QuestSortID is the dungeon) is filed under the zone of its
   entrance with `dungeon`, the dungeon's map, so the tab can hold it apart there; the dungeons'
   names in every language are the client's (its Map table).
+- Forever serves quests the corpus has no lines for yet. Each quest players were seen being
+  offered or handing in (npcs.json), or working on (objectives.json), is listed with `notext`,
+  placed and limited by its client record as above (without_text below), so the Compendium
+  lists it with no words until its lines reach the corpus. Both runs, with the DB or without.
 - Last, corpus/compendium_overrides.json: what no source above can say, corrected by hand, each
   correction with its source (a wiki page, or why). It can move, retitle, link, restrict or drop a
   quest, and name a chain (apply_overrides, chain_names below).
@@ -56,7 +60,7 @@ QUESTS = os.path.dirname(HERE)
 sys.path.insert(0, QUESTS)
 
 from tts_cli.ignores import ignored_line_ids  # noqa: E402
-from tts_cli.quest_text import left_out, lua_string  # noqa: E402
+from tts_cli.quest_text import left_out, lua_string, removed_quests  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(QUESTS, "..", ".."))
 CORPUS = os.path.join(QUESTS, "corpus", "corpus.json.gz")
@@ -329,6 +333,45 @@ def forever_quests(quest_sets, npc_sets):
         if maps:
             where[qid] = sorted(maps)
     return quests, where
+
+
+def served_quests(npc_sets, objective_sets):
+    """The quests players saw Forever serve: offered or taken in at an NPC or object (npcs.json),
+    or worked on, a count going up or the quest completing (objectives.json)."""
+    served = set()
+    for data in npc_sets.values():
+        for kind in ("npcs", "objects"):
+            for rec in data.get(kind, {}).values():
+                served |= {int(q) for key in ("offers", "takes") for q in rec.get(key, {})}
+    for data in objective_sets.values():
+        for kind in ("quests", "completed"):
+            served |= {int(q) for q in data.get(kind, {})}
+    return served
+
+
+def without_text(known, served, client, seen, maps, sorts, removed=()):
+    """{questID: record} for the quests Forever serves (`served`) that are not `known` (the corpus's)
+    nor `removed`: listed with `notext`, since the corpus has no lines for them yet. Each is placed
+    and limited as Forever's client has it (its Efficient Games record, `client`; `seen` where
+    players saw its giver), and follows the quest whose nextQuestId names it. A quest the client
+    data has no title for is left out: there is nothing to list it by."""
+    records = {}
+    for qid in sorted(set(served) - set(known) - set(removed)):
+        eg = client.get(qid) or {}
+        if not eg.get("title"):
+            continue
+        zones, sort, _ = place(0, maps, sorts, eg, seen.get(qid, ()))
+        records[qid] = {"title": eg["title"], "zones": zones, "sort": sort, "dungeon": None,
+                        "races": playable_races(eg_races(eg)), "classes": quest_classes(0, sort),
+                        "prev": None, "notext": True}
+    opened_by = {}
+    for qid, eg in sorted(client.items()):
+        nxt = int(eg.get("nextQuestId") or 0)
+        if nxt in records and (qid in records or qid in known) and qid != nxt:
+            opened_by.setdefault(nxt, qid)
+    for qid, prev in opened_by.items():
+        records[qid]["prev"] = prev
+    return records
 
 
 def eg_races(q):
@@ -695,6 +738,12 @@ def quest_enders(rows, quests):
     return enders
 
 
+def sort_line(sid, names):
+    """A QuestSort's line: its English name, then each language's that differs."""
+    locs = [f"{l} = {lua_string(names[l])}" for l in LOCALES if names.get(l) and names[l] != names.get("enUS")]
+    return f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
+
+
 def lua_name(name):
     if isinstance(name, int):
         return str(name)
@@ -703,7 +752,7 @@ def lua_name(name):
 
 
 def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, name=None, dungeon=None,
-               ender=None):
+               ender=None, notext=False):
     parts = [lua_string(title)]
     if zones:
         parts.append("zones = { %s }" % ", ".join(str(z) for z in zones))
@@ -728,6 +777,8 @@ def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, 
     classes = classes & 0x5DF
     if classes and classes != 0x5DF:
         parts.append(f"classes = {classes}")
+    if notext:
+        parts.append("notext = true")
     return f"\t\t[{qid}] = {{ {', '.join(parts)} }},"
 
 
@@ -742,7 +793,8 @@ def render(quest_lines, sort_lines, dungeon_lines=None):
 -- chain, name = the chain's name on its first quest (a quest's id, whose title names it, or words
 -- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
 -- its entrance, ender = the creature it is handed in to (enderObject for an object), absent where
--- that is its giver }}. A sort that is a word is a group the client has no QuestSort for. The words
+-- that is its giver, notext = true for a quest Forever serves that the corpus has no words for yet
+-- }}. A sort that is a word is a group the client has no QuestSort for. The words
 -- are Data/QuestText.lua's. Made from the client tables of Forever {BUILD} and Era {ERA_BUILD}
 -- (wago.tools) and Efficient Games' data at commit {EG_COMMIT[:7]} (CC BY 4.0, efficient.games).
 -- Regenerate with the Forever repack's world DB up:
@@ -794,6 +846,8 @@ def without_db(args):
     quests, givers, spawns = corpus_quests()
     enders = quest_enders([], quests)
     quest_lines, sort_lines, dungeon_lines = read_existing(args.out)
+    # Listed without words last time: made again below, or now the corpus's.
+    quest_lines = {qid: line for qid, line in quest_lines.items() if "notext = true" not in line}
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
     maps = Maps()
@@ -806,12 +860,23 @@ def without_db(args):
     added = set(records)
     entries = [e for e in load_overrides()["quests"] if added & set([e["id"]] if "id" in e else e["ids"])]
     apply_overrides(records, entries)
+    unvoiced = {}
+    if not args.without_efficient_games:
+        client, seen = forever_quests(eg_datasets("quests.enUS"), eg_datasets("npcs"))
+        sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
+                            for locale in ["enUS"] + LOCALES})
+        served = served_quests(eg_datasets("npcs"), eg_datasets("objectives"))
+        unvoiced = without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES))
+        for sid in {rec["sort"] for rec in unvoiced.values() if isinstance(rec["sort"], int)} - set(sort_lines):
+            sort_lines[sid] = sort_line(sid, sorts[sid])
+        records.update(unvoiced)
     for qid, rec in records.items():
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
                                       rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None,
-                                      ender=enders.get(qid))
+                                      ender=enders.get(qid), notext=rec.get("notext"))
     placed = sum(1 for rec in records.values() if rec["zones"])
-    return quest_lines, sort_lines, dungeon_lines, f"{len(records)} quests added, {placed} of them placed"
+    return quest_lines, sort_lines, dungeon_lines, (f"{len(records) - len(unvoiced)} quests added, "
+                                                    f"{len(unvoiced)} listed without words, {placed} of them placed")
 
 
 def connect(args):
@@ -892,6 +957,10 @@ def with_db(args):
         records[qid] = {"title": title, "zones": zones, "sort": group, "dungeon": dungeon, "races": races[qid],
                         "classes": quest_classes(q.get("classes", 0), group), "prev": links.get(qid)}
 
+    if not args.without_efficient_games:
+        served = served_quests(eg_datasets("npcs"), eg_datasets("objectives"))
+        records.update(without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES)))
+
     battleground_follow_ups(records, givers)
     overrides = load_overrides()
     notes = apply_overrides(records, overrides["quests"])
@@ -913,13 +982,10 @@ def with_db(args):
         else:
             unplaced += 1
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
-                                      rec["prev"], named.get(qid), rec.get("dungeon"), enders.get(qid))
+                                      rec["prev"], named.get(qid), rec.get("dungeon"), enders.get(qid),
+                                      rec.get("notext"))
 
-    sort_lines = {}
-    for sid in sorted(used_sorts):
-        names = sorts[sid]
-        locs = [f"{l} = {lua_string(names[l])}" for l in LOCALES if names.get(l) and names[l] != names.get("enUS")]
-        sort_lines[sid] = f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
+    sort_lines = {sid: sort_line(sid, sorts[sid]) for sid in sorted(used_sorts)}
     dungeon_names = {locale: {int(r["ID"]): r["MapName_lang"] for r in table("Map", locale) if int(r["ID"]) in used_dungeons}
                      for locale in ["enUS"] + LOCALES}
     dungeon_lines = {}
