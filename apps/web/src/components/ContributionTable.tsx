@@ -85,6 +85,8 @@ export type ContributionRow = Pick<
 > & {
   /** The game client the text came from, classified from the envelope's `build`. */
   client: ClientSummary;
+  /** The voice packs' language when it is not the client's (triage.ts packHeard), else null. */
+  pack: string | null;
   /** Null when the envelope never named an NPC at all -- zones and books, or a quest keyed on quest+event. */
   npc: NpcSummary | null;
   /** Null when the source has no quest concept at all. See lib/contributions/triage.ts. */
@@ -923,6 +925,11 @@ const ContributionTableRow = memo(function ContributionTableRow({
             {row.locale}
             {row.client.buildNumber ? ` · ${row.client.buildNumber}` : null}
           </div>
+          {row.pack ? (
+            <div className="text-muted-foreground" title="The language of the voice packs the player was hearing">
+              heard in {row.pack}
+            </div>
+          ) : null}
         </td>
 
         <td className="pr-3 text-xs whitespace-nowrap"><SendersButton id={row.id} count={row.count} /></td>
