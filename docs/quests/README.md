@@ -293,7 +293,11 @@ per expansion. Every pack carries the full lookup tables (3.5 MB); they map text
 hashes rather than to files, so an entry whose audio lives in a pack you did not install finds
 no length and stays quiet.
 
-**Which side a quest is on comes from `corpus/factions.json`**, exported by
+**Which side a quest is on comes first from the Compendium's race masks**
+(`addons/Spoken_Quests/Data/Compendium.lua`, `tts_cli/factions.py` `compendium_sides`): a quest
+whose `races` are all one side's is that side's, and one open to both is shared. That covers
+Forever's own quests, which the vmangos world DB lacks (528 more one-side quests than the export
+below). A quest the Compendium does not list takes its side from `corpus/factions.json`, exported by
 `make factions` from the world DB and committed beside the corpus, so building a pack never
 needs a database. `tools/export_factions.py` explains the derivation, and the short version is
 that `quest_template.RequiredRaces` is nearly useless — vanilla sets it on race and class
