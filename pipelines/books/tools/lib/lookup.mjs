@@ -21,7 +21,7 @@ import { dirname, join } from "node:path";
 import pg from "pg";
 
 import { isClientLocale } from "../../../lib/locales.mjs";
-import { indexLua, pageIndex, quote } from "./lua.mjs";
+import { canBeHad, indexLua, pageIndex, quote } from "./lua.mjs";
 import { spokenText } from "./text.mjs";
 
 const ROOT = new URL("../../../../", import.meta.url).pathname;
@@ -129,8 +129,8 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
     // Joined to the corpus rather than trusting the take's lineId: a take for a page no
     // longer in the corpus has nothing to narrate, and an entry for it would be a row the
     // addon can never reach.
-    const { rows } = await pool.query(
-      `select b."pageId", b."text", t."file", t."durationSec"
+    const { rows: taken } = await pool.query(
+      `select b."pageId", b."bookId", b."title", b."text", t."file", t."durationSec"
          from "take" t
          join "book_line" b
            on b."lineId" = t."lineId" and b."lang" = t."lang" and b."isCurrent"
@@ -138,6 +138,8 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
         order by b."pageId"`,
       [lang],
     );
+    // A book nobody can have has no page the reader is shown, so no clip of it ships.
+    const rows = canBeHad(taken);
 
     // A language no client runs in (Italian) has no index: no client shows its words, so a page
     // is always found by the client's own index and only played in this one.

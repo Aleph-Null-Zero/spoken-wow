@@ -114,10 +114,6 @@ const SOURCES_BY_HAND = {
   2671: [{ how: "quest start", quest: 7636, zones: [1448] }], // Petrified Bark: Vartrus the Ancient, Felwood
   2859: [{ how: "quest reward", quest: 8996, zones: [1427] }], // Brazier of Invocation: Bodley, Blackrock Mountain
 };
-// Readables with words that no one can have: the Forsaken class letters that were never given out
-// (the Musty Note, Parchment, Scroll, Letter and Missive). No loot, quest, vendor or mail names
-// their items.
-const NEVER_HAD = new Set([691, 692, 693, 694, 695]);
 // The seasonal events' readables, had only while the event runs: the Compendium lists them under
 // Holidays and Events. Their NPCs are spawned by the event, and most have no spawn in the DB.
 const EVENTS = new Set([
@@ -444,7 +440,7 @@ try {
 
 // ---------------------------------------------------------------- the file
 
-const gone = (id, book) => NEVER_HAD.has(id) || cannotBeHad(book.title, book.pages.map((page) => pageText.get(page) ?? ""));
+const gone = (id, book) => cannotBeHad(book.title, book.pages.map((page) => pageText.get(page) ?? ""), id);
 
 const nameIndex = new Map();
 const nameList = [];
