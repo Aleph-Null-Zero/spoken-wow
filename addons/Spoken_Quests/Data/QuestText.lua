@@ -16337,6 +16337,9 @@ SpokenQuestsText = {
 	[78143] = {
 		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
 	},
+	[78149] = {
+		accept = "Have you brought something to add to our collection?",
+	},
 	[79007] = {
 		complete = "As you stumble upon the remnants of yet another charred corpse, your gaze falls upon a message secured to a wooden plank.",
 	},
@@ -17045,6 +17048,9 @@ SpokenQuestsText = {
 	[94233] = {
 		complete = "Ahh, my practice lock has arrived.\n\nThe Syndicate here have been plotting to turn this place into a prison like it once was. I already know that at least one orc is currently being held here. Maybe more. I don't intend to be another, but I intend to be more prepared than the last time if they catch me off guard.",
 	},
+	[94235] = {
+		accept = "Careful where you walk, $N! This thing likes to activate when you least expect it, and we don't quite have a handle on where it can take you when we aren't actively manning the controls.",
+	},
 	[94248] = {
 		complete = "The Blue Overalls! Thank goodness, I have a proper change of clothes.\n\nTake this, and please be on your way. I do not have time to chat, I must keep an eye on the farm and can't risk more distractions.",
 	},
@@ -17643,6 +17649,9 @@ SpokenQuestsText = {
 		accept = "There's rumors of a monstrous abomination that makes its lair at a cave to the northwest of here, on the plateau known as Thorn Hill. The Razormane call it Chol'aruk or \"The Ravener\" and those that have seen it say its so massive that it can swallow an orc whole.\n\nFew believe such tales, but I do... because I've fought one like it myself. On the honor of those I lost to these things, this beast must die.\n\nGather strong allies and find the lair of Chol'aruk. Kill the abomination and bring me it's head.",
 		complete = "My dead men will rest easier knowing that there is one less of these monsters in the world. You've done well, and are a true and stalwart defender of the alliance. Thank you.\n\nGo with honor, Gryma.",
 	},
+	[97065] = {
+		accept = "An angelfish for some tastyfish. Feels like a fair trade to me.",
+	},
 	[97220] = {
 		accept = "Every day this week we've been short dockhands.\n\nCare to ease the stress on our cargo schedule?\n\nTake this package to the stockroom entrance of the Gatehouse. You'll find it inside Trias' Cheese shop on the second floor. The mistress, Elaine, will be quite familiar with the deliveries. The Gatehouse often has shipments arriving with more discretion to allow for ceremonial surprises on behalf of the guard's officers.",
 		complete = "Oh, dear. You think we want to carry that up the stairs ourselves? Keeping the valuables intact is your responsibility up until the point you drop it off.",
@@ -18157,6 +18166,9 @@ SpokenQuestsText = {
 		accept = "Enchanters make everything better and are always welcome at any camp out in the wilds.\n\nI reckon I know someone that can teach you how to craft an Enchanted Lute for your camp. It's so important to find entertainment during your downtime, and this bit of magic can help ensure you are ready to weather all sorts of challenges when you hit the old dusty trail once again.",
 		complete = "There you have it, you can now craft your very own Enchanted Lute. Most folk don't care much for camps being set up in the center of town, so you'll need to head into the wilderness if you want to test it out.\n\nOh, and just remember, no camp is complete without a campfire. You'll need one of those before you start up your camp. Most cooks can teach you to make a fire. If you haven't already, you might want to check in with someone who can train you in the culinary arts to learn the basics.",
 	},
+	[98293] = {
+		accept = "What's that you have there, $c?",
+	},
 	[98298] = {
 		accept = "Ah, it's all become so embarrassingly clear! Arugal hardly had any magic at all, let alone enough to create the worgen. 'Arugal's Curse.' Pah! Barely potent enough to last a few seconds.\n\nThese shackles prove he can bind the beasts, not create them. The worgen clearly spread their curse a different way. I would know how.\n\nGo to the Greymane Wall to the south. The worgen seem to be spreading to the humans nearby. Tear the beasts apart and bring me whatever you find. This requires a more direct approach.",
 		complete = "It appears I get the last laugh after all, haha! Arugal truly was a fool. And I, Dalar Dawnweaver, have exposed him as the fraud he is.\n\nThese pieces are all the proof I need that the curse has nothing to do with that blithering dolt.\n\nRegrettably, that means his remedy is also worth nothing. It seems the search for a solution to the worgen curse continues.",
@@ -18327,6 +18339,12 @@ SpokenQuestsText = {
 		accept = "With titan-like inscriptions like that on its facets, nothing less than Ironforge's Hall of Explorers is the right place to bring it.\n\nI'd like to think that you'll be noted in the history for it in the catalogue -- \"Recovered by $N! Authenticated by Prospector Whelgar...\" Ah, I'm gettin' meself carried away.\n\nHigh Explorer Magellas will receive you, and given the exquisite nature of what you carry, will surely be most generously appreciative should you donate it to the museum.\n\nGood find!",
 		complete = "What's this you've got...\n\nWoah! Look at this marvel! The light through it dances like nothin' I've seen since my first dig in old Uldaman. The marks of the keepers on this cannot be mistaken.\n\nYou've done the League a great service bringin' this home. A find like this pushes the very boundaries o' the world's wisdom forward.\n\nWe'll be sure to record the details of your contribution! Truly a job well done, adventurer.",
 	},
+	[98888] = {
+		accept = "The fight in Darkspear Islands is ceaseless, $N. Together, we will destroy the Alliance dogs in the Theramore Expeditionary Force!",
+	},
+	[98896] = {
+		accept = "The fight in the Darkspear Islands continues, $N. Rally your forces and crush the Darkspear Raiders!",
+	},
 	[99046] = {
 		accept = "The Council of the Forest sent a small group of sentinels to the Oracle Tree some time ago. The tree sends messages to our elders, and it falls to us to deliver them to Darnassus safely.\n\nI received word that our most recent runner has not yet arrived. The Oracle's messages vary in frequency, but it has been abnormally long.\n\nPlease head towards the Oracle Glade along the road to the west and check on her. It would have been Eralya Leafshadow's turn, and she is still in training. Elune guide you.",
 		complete = "Elune's grace... I shall not die... alone...",
@@ -18462,6 +18480,12 @@ SpokenQuestsText = {
 	[99162] = {
 		accept = "Even mountaineers from Ironforge have to keep their wits about them when traversing through the peaks of Dun Morogh. Falling snow and ice often spells the end of some more novice members' lives.\n\nAfter a slide, I usually try to find any sign of survivors or victims--while praying to the Light that there's nothing to be found. But with the elements acting up, I've held off wandering too far. If you could look for some lost mountaineers and bring me their rifles, I will return them to Ironforge.",
 		complete = "The mountaineers engrave their names on the stock of their rifles. It helps identify them should something happen. I'll send these back to Ironforge--there someone will pass them on to any family.",
+	},
+	[99191] = {
+		accept = "The High Order are currently accepting donations for wool cloth.\n\nA donation of sixty pieces of wool cloth will net you full recognition by the High Order for your generous actions.  Sixty pieces of wool should prove to be a sufficient amount for the High Order's needs for now.\n\nIf you have the sixty pieces of wool cloth on you and are ready to donate them, I'm able to take them from you now.",
+	},
+	[99196] = {
+		accept = "The Windshapers are currently accepting donations for wool cloth.\n\nA donation of sixty pieces of wool cloth will net you full recognition by the Windshapers for your generosity.\n\nIf you have the sixty pieces of wool cloth on you and are ready to donate them, I'm able to take them from you now.",
 	},
 	[99260] = {
 		accept = "I was tasked to retrieve important data on the flow of elemental energy from the Overlook Standing Stones. That data is vital to our plans to safely travel between Skywall and Azeroth. Without that data to aid in our calculations, our attempts to steer our skycutter ships through the elemental plane will fail.\n\nThe data is likely lost at this point, and I'm in no state to attempt to gather it again. I told the Supreme Magister of your role in saving me, and he wishes to speak with you again.",

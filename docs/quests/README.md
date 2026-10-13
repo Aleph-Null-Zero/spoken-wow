@@ -1438,7 +1438,7 @@ Two generated files feed it, both committed so the addon never needs a database:
   first quest, so it is the chain's in every zone it crosses. With `--no-db` the entries apply to
   the quests added.
 - `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
-  `tts_cli/quest_text.py`): each quest's accept and complete text (not its progress), the corpus's
+  `tts_cli/quest_text.py`): each quest's accept and complete text (its progress only where it has neither, as its accept), the corpus's
   `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
   text; where givers' texts differ, the one most of the moment's lines have, ties to the first in
   the corpus; ignored lines are left out. About 2.8 MB, parsed at every login on those clients.

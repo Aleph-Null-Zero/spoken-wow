@@ -18,6 +18,12 @@ def test_each_quest_keeps_its_offer_and_completion_and_not_its_progress():
     assert quest_text(corpus) == {5: {"accept": "Find my pack.", "complete": "You found it!"}}
 
 
+def test_a_quest_with_only_its_progress_shows_it_as_its_offer():
+    corpus = {"lines": [_line(98888, "progress", "Back so soon?"),
+                        _line(6, "progress", "Not yet?"), _line(6, "complete", "Done!")]}
+    assert quest_text(corpus) == {98888: {"accept": "Back so soon?"}, 6: {"complete": "Done!"}}
+
+
 def test_gossip_and_follow_up_lines_are_not_a_quest_s_words():
     corpus = {"lines": [_line(5, "accept", "Find my pack."), _line(5, "followup", "Thanks!"),
                         dict(_line(0, "gossip", "Move along."), questId=None)]}

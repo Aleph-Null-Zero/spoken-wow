@@ -5,8 +5,9 @@ gives a quest's words only while its window is open, so a quest done before Spok
 installed would have none to show: the English ships with the addon instead.
 
 The page shows the offer and the hand-in, so those are kept (accept, complete); the progress
-line, said while a quest is under way, is not. The corpus has a line per giver and per player
-gender, so a moment can have several. One text is kept for each:
+line, said while a quest is under way, is not, save for a quest the corpus has no other words
+for, whose progress is kept as its offer so its page has words. The corpus has a line per giver
+and per player gender, so a moment can have several. One text is kept for each:
 
 - `originalText`, the world database's, with the game's placeholders left in ($N, $C, $R,
   $G male:female; and $B) for the addon to fill for the player as the client does. A quest's
@@ -19,6 +20,8 @@ from collections import Counter
 
 #: The moments a quest's page shows, in the order a player meets them.
 MOMENTS = ("accept", "complete")
+#: Read only for a quest with neither of those.
+PROGRESS = "progress"
 
 
 def in_game(quest_id: int, title: str) -> bool:
@@ -32,7 +35,7 @@ def quest_text(corpus: dict, ignored=()) -> dict:
     texts = {}
     for line in corpus["lines"]:
         moment = line["source"]
-        if moment not in MOMENTS or line["lineId"] in ignored:
+        if moment not in MOMENTS + (PROGRESS,) or line["lineId"] in ignored:
             continue
         if not in_game(line["questId"], line.get("questTitle")):
             continue
@@ -41,11 +44,14 @@ def quest_text(corpus: dict, ignored=()) -> dict:
             texts.setdefault(line["questId"], {}).setdefault(moment, []).append(text)
     out = {}
     for quest, moments in texts.items():
+        if not any(moment in moments for moment in MOMENTS):
+            moments = {"accept": moments[PROGRESS]}
         out[quest] = {}
-        for moment, candidates in moments.items():
-            counts = Counter(candidates)
-            # max keeps the first of equals, and a Counter keeps the order texts were met in.
-            out[quest][moment] = max(counts, key=counts.get)
+        for moment in MOMENTS:
+            if moment in moments:
+                counts = Counter(moments[moment])
+                # max keeps the first of equals, and a Counter keeps the order texts were met in.
+                out[quest][moment] = max(counts, key=counts.get)
     return out
 
 
