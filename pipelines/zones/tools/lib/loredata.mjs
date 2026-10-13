@@ -68,8 +68,13 @@ function fields(block) {
   return out;
 }
 
+// A Windows checkout has CRLF on disk; every pattern here matches lines as Git stores them.
+async function readLua(path) {
+  return (await readFile(path, "utf8")).replace(/\r\n/g, "\n");
+}
+
 export async function readZones() {
-  const src = await readFile(zonesLua(), "utf8");
+  const src = await readLua(zonesLua());
   const zones = [];
 
   // Split on the top-level "[id] = {" headers, so each block is one zone.
@@ -82,7 +87,7 @@ export async function readZones() {
 }
 
 export async function readSubzones() {
-  const src = await readFile(subzonesLua(), "utf8");
+  const src = await readLua(subzonesLua());
   const subzones = [];
 
   const zoneParts = src.split(/^\t\[(\d+)\] = \{$/m);
@@ -97,11 +102,19 @@ export async function readSubzones() {
   return subzones;
 }
 
-// Every voiceable entry, in a single shape. `key` is null for a zone.
+// Every voiceable entry, in a single shape. `key` is null for a zone. A pending entry (a place
+// nobody has written yet) is one too, with empty text: `shipped` tells the two apart.
 export async function readLines() {
   const [zones, subzones] = await Promise.all([readZones(), readSubzones()]);
   return [
     ...zones.map((z) => ({ ...z, key: null, kind: "zone" })),
     ...subzones.map((s) => ({ ...s, kind: "subzone" })),
   ];
+}
+
+/** The lineIds of the entries the addon has words for: neither pending nor empty. */
+export function shipped(entries) {
+  return new Set(
+    entries.filter((e) => e.full).map((e) => (e.key ? `s:${e.mapID}:${e.key}` : `z:${e.mapID}`)),
+  );
 }

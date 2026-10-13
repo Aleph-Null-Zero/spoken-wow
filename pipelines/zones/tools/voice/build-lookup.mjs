@@ -4,7 +4,9 @@
 //
 // Run after any generation. The addon resolves every clip through this table, so
 // audio that is not in it is unreachable, and a row pointing at a file that is not
-// on disk plays silence.
+// on disk plays silence. Only the places the addon has words for are listed: a take
+// stays live after its place leaves the lore (a city once filed as an area of its
+// zone), and listing it would ship a clip nothing plays.
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -12,6 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { loadEnvFile } from "../lib/env.mjs";
+import { readLines, shipped } from "../lib/loredata.mjs";
 import { close as closeStore, loadManifest, packDir, soundsDir } from "./store.mjs";
 
 function luaString(text) {
@@ -36,12 +39,18 @@ function luaPath(file) {
  */
 export async function buildLookup() {
   const manifest = await loadManifest();
+  const lore = shipped(await readLines());
 
   const zones = new Map();      // mapID -> row
   const subzones = new Map();   // mapID -> Map(key -> row)
   let missingFiles = 0;
+  let notShipped = 0;
 
   for (const [id, record] of Object.entries(manifest)) {
+    if (!lore.has(id)) {
+      notShipped++;
+      continue;
+    }
     if (!existsSync(join(soundsDir(), `${record.file}.mp3`))) {
       console.warn(`warning: ${id} is in the manifest but ${record.file}.mp3 is not on disk`);
       missingFiles++;
@@ -144,6 +153,7 @@ export async function buildLookup() {
     subzones: subzoneCount,
     zonesWithSubzones: subzones.size,
     missingFiles,
+    notShipped,
     path: outPath,
   };
 }
@@ -154,6 +164,9 @@ async function main() {
   console.log(
     `  ${result.zones} zones, ${result.subzones} subzones across ${result.zonesWithSubzones} zones`,
   );
+  if (result.notShipped) {
+    console.log(`  ${result.notShipped} live takes left out: the lore has no words for their place`);
+  }
   if (result.missingFiles) {
     console.log(`  ${result.missingFiles} manifest entries skipped: no file on disk`);
     process.exitCode = 1;
