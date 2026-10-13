@@ -79,6 +79,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/contribute_envelope_test.lua
 	@$(LUA) tests/lua/contribute_toc_test.lua
 	@$(LUA) tests/lua/transcript_toc_test.lua
+	@$(LUA) tests/lua/interface_numbers_test.lua
 	@$(LUA) tests/lua/contribute_box_test.lua
 	@$(LUA) tests/lua/quests_contribute_test.lua
 	@$(LUA) tests/lua/player_frame_test.lua
