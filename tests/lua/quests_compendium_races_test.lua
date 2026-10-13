@@ -12,7 +12,7 @@ local QUESTS = here .. "/../../addons/Spoken_Quests/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 local BOOKS = here .. "/../../addons/Spoken_Books/"
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.world.questID = 0; stub.ShowPanel(nil)
 
 local MAPS = { [947] = { "Azeroth" }, [1415] = { "Eastern Kingdoms", 947 }, [1429] = { "Elwynn Forest", 1415 } }

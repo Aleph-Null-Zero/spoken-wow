@@ -14,7 +14,7 @@ local CHAR = "Tester - Realm"
 --- A login with the quests module's saved settings as given; `keep` keeps Spoken's own from the
 --- last login.
 local function Login(quests, keep)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     if not keep then _G.SpokenSettings = nil end
     _G.SpokenQuestsSettings = quests
     local env = stub.LoadSpoken(SPOKEN)

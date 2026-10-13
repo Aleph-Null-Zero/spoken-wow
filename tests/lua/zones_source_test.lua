@@ -26,7 +26,7 @@ _G.ZoneLoreAudioPacks = {
 local StubAfter = _G.C_Timer.After
 
 local function Boot()
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     world.inCombat = false
     local env = stub.LoadSpoken(SPOKEN)
@@ -234,7 +234,7 @@ SpokenCompendium = nil
 Expect("...and registers no button of its own", stub.ldbObjects.SpokenZones, nil)
 
 ---------------------------------------------------------------- without the player
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 local saved = _G.Spoken
 _G.Spoken = nil
 local alone = stub.LoadZones(ZONES, NewZoneLore())
@@ -289,7 +289,7 @@ _G.ZoneLoreAudioPacks = savedPacks
 -- Reaching GetPlayerMapID means the gate let the attempt through, and stubbing it to nil
 -- ends the attempt there.
 local function BootGreeting(level)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     world.inCombat = false
     world.playerLevel = level

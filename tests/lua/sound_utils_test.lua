@@ -23,7 +23,7 @@ local function Expect(scenario, actual, expected)
 end
 
 ---------------------------------------------------------------- a current client
-stub.SetClient("11509")
+stub.SetClient("16001")
 stub.ResetSound()
 local env = stub.LoadSpoken(SPOKEN)
 local SU = env.SoundUtils

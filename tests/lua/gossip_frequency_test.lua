@@ -81,7 +81,7 @@ local function CloseGreeting()
     _G.Spoken:StopAll()
 end
 
-for _, client in ipairs({ "11509", "1.12" }) do
+for _, client in ipairs({ "16001", "1.12" }) do
     local VO, G, played = Boot(client)
     local button = G.PlayButton.button
     local audio = G.Addon.db.profile.Audio

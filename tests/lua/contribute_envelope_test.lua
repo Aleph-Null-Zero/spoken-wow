@@ -10,7 +10,7 @@ local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 local env = stub.LoadSpoken(SPOKEN)
 local C = env.Spoken.Contribute
 

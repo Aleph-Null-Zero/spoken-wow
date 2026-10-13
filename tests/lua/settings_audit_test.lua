@@ -13,7 +13,7 @@ local BOOKS = here .. "/../../addons/Spoken_Books/"
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
 stub.world.questID = 0; stub.ShowPanel(nil)
 -- Waypoint's art, as on a client that can nine-slice with the player loaded.

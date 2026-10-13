@@ -20,7 +20,7 @@ local REDUX = { folder = "VoiceOverRedux", title = "VoiceOver Redux" }
 --- A login with the addon list and the old players the scenario describes. The saved
 --- variables are dropped unless the scenario is a second login of the same character.
 local function Login(addons, loadedPlayers, keepSaved)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetUIActions()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetUIActions()
     stub.SetAddOns(addons)
     stub.SetLoadedPlayers(loadedPlayers)
     if not keepSaved then

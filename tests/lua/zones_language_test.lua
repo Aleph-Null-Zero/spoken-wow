@@ -10,7 +10,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 stub.LoadSpoken(SPOKEN)
 stub.SetAddOns({ { folder = "Spoken_Zones", meta = { Version = "9.9.9" } } })
 

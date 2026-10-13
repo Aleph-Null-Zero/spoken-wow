@@ -20,7 +20,7 @@ local function LoadBooks()
 end
 
 local function Boot()
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     _G.SpokenBooksSettings = nil
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
@@ -40,7 +40,7 @@ end
 -- Its own loader, because LoadBooks above is deliberately the two files this file's other
 -- sections need: Events.lua is what creates the frame the events arrive at, and without it
 -- firing them reaches nothing and the test passes for the wrong reason.
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local bootEnv = stub.LoadSpoken(SPOKEN)
 bootEnv.Addon:Enable()

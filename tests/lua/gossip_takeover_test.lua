@@ -16,7 +16,7 @@ local NPC = "Creature-0-0-0-0-12345-0"
 --- A login with the quests module's saved settings as given. `keep` keeps the gossip module's
 --- own from the last login; `questsOff` has quests switched off in Spoken's settings.
 local function Login(quests, keep, questsOff)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     if not keep then _G.SpokenGossipSettings = nil end
     -- Spoken's own too: which parts are switched on is its to keep.
     _G.SpokenSettings = nil

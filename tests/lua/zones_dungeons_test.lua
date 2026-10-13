@@ -64,7 +64,7 @@ Expect("Razorfen Downs is listed in The Barrens, its story kept under Thousand N
     dungeons[1413][2].key .. "|" .. dungeons[1413][2].mapID, "razorfen downs|1441")
 
 ---------------------------------------------------------------- the list
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 _G.C_Texture = { GetAtlasInfo = function(name) return stub.ListAtlas(name) end }
 _G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 -- The game's portrait frame, as PortraitFrameMixin has it, and each frame's template kept.

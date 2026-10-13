@@ -356,14 +356,14 @@ end
 
 local _G = _G
 
--- A current Blizzard client by default, which is where the 10 Hz watcher runs at all.
--- SetClient() swaps in a legacy client: those have no WOW_PROJECT_ID, and 1.12
--- reports no interface version at all, which is exactly what Version.lua keys on.
+-- The Forever client by default, the one Spoken is made on. SetClient() swaps in another:
+-- the legacy ones have no WOW_PROJECT_ID, and 1.12 reports no interface version at all,
+-- which is exactly what Version.lua keys on.
 local CLIENTS = {
     ["20506"] = { "2.5.6", "60000", 20506, 5 },
-    -- The Forever client: a mainline-flavoured client carrying vanilla content, and the one
-    -- whose quest log is the modern map-attached one rather than the named QuestLogFrame.
-    ["16001"] = { "1.60.1", "69913", 16001, 1 },
+    -- Forever: vanilla content on the modern engine, with a project id of its own, and the
+    -- client whose quest log is the modern map-attached one rather than the named QuestLogFrame.
+    ["16001"] = { "1.60.1", "70338", 16001, 18 },
     ["11509"] = { "1.15.9", "69109", 11509, 2 },
     ["1.12"]  = { "1.12.1", "5875", nil, nil },
     ["2.4.3"] = { "2.4.3", "8606", 20400, nil },
@@ -566,7 +566,7 @@ M.modernSettings = {
     OpenToCategory = function() return true end,
 }
 _G.Settings = M.modernSettings
-M.SetClient("20506")
+M.SetClient("16001")
 
 -- What the zones addon's playback and autoplay files reach for.
 M.chat = {}

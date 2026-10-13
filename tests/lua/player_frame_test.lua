@@ -19,7 +19,7 @@ local function ExpectOf(name, fn, want)
 end
 
 local function Boot(client)
-    stub.SetClient(client or "11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+    stub.SetClient(client or "16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()   -- what PLAYER_LOGIN does: builds the frame, the button, the panel
@@ -30,7 +30,7 @@ end
 
 ---------------------------------------------------------------- a settings link registered before the panel exists
 -- Feature addons register their link from ADDON_LOADED; the panel is built at PLAYER_LOGIN.
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
 local early = stub.LoadSpoken(SPOKEN)
 _G.Spoken:AddSettingsLink("Quests settings", function() end)
@@ -521,7 +521,7 @@ Expect("1.12: GetSettingsCategory is nil rather than an error", _G.Spoken:GetSet
 -- Every row used to place itself by adding a hand-tuned fudge to a running offset, so no
 -- two sections were spaced alike. One layout owns the offset now: a row knows its own
 -- height and the gap that follows it, and no caller does arithmetic.
-Boot("11509")
+Boot("16001")
 -- On the settings canvas the rows live in the scroller's content, never on the panel itself.
 local host = _G.SpokenOptionsPanel.content
 local rows, headings = {}, {}
@@ -740,7 +740,7 @@ local function PanelLabels(client)
     return labels
 end
 
-local labels = PanelLabels("11509")
+local labels = PanelLabels("16001")
 -- "Up next" is the queue window's own title. As a settings heading it named nothing. In the
 -- narrator style's settings the rows are in three parts under small titles, the same for every style.
 Expect("the narrator style's settings are in three parts under small titles",
@@ -763,7 +763,7 @@ Expect("...and an orientation", scale and scale:GetOrientation(), "HORIZONTAL")
 -- windows, so its switch is a general one, beside Contribute's, not among the window's.
 Expect("Report has one switch for every window", labels["Hide Report Buttons"], true)
 Expect("...not among the window's own settings", labels["Hide Report Button"], nil)
-local order = table.concat(PanelOrder("11509"), "|")
+local order = table.concat(PanelOrder("16001"), "|")
 Expect("...beside hiding the Contribute buttons", string.find(order,
     "Hide Contribute Buttons|Hide Report Buttons", 1, true) ~= nil, true)
 -- Nothing on screen at all is a way of showing lines, chosen with the others, not a switch
@@ -822,7 +822,7 @@ local function CornerClip()
         } } })
 end
 
-env, quests, zones = Boot("11509")
+env, quests, zones = Boot("16001")
 quests:Enqueue(CornerClip())
 env.PlayerFrame:Update()
 local corner = env.PlayerFrame.frame.actions.buttons[1]
@@ -855,7 +855,7 @@ end, true)
 legacy:Click()
 Expect("...and it still reports", reported, 2)
 
-env, quests, zones = Boot("11509")
+env, quests, zones = Boot("16001")
 quests:Enqueue(CornerClip())
 env.PlayerFrame:Update()
 corner = env.PlayerFrame.frame.actions.buttons[1]
@@ -932,7 +932,7 @@ Expect("the other addon does not inherit a button built by this one",
 --
 -- Model:GetModel returned a path and was removed from the current clients, which answer
 -- GetModelFileID instead. Asking for the one this client lacks is an error, not a nil.
-for _, client in ipairs({ "11509", "1.12" }) do
+for _, client in ipairs({ "16001", "1.12" }) do
     env, quests, zones = Boot(client)
     local clip = H.Clip({ present = { header = "Gornek", label = "Cutting Teeth", bullet = "b",
         portrait = { kind = "model", creatureID = 3143, animation = 60,

@@ -31,7 +31,7 @@ local function LoadGossipText()
 end
 
 local function Boot(locale)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     stub.SetLocale(locale)
     _G.SpokenGossipSettings = nil
     local G = stub.LoadGossip(GOSSIP, SPOKEN)

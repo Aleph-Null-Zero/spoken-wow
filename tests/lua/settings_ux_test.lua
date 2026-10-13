@@ -13,7 +13,7 @@ _G.UISpecialFrames = _G.UISpecialFrames or {}
 local opened = {}
 stub.modernSettings.OpenToCategory = function(category) table.insert(opened, category); return true end
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
 stub.world.questID = 0; stub.ShowPanel(nil)
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
@@ -197,27 +197,26 @@ end
 
 -- Bronze Border matches Forever's own frames, so a Classic Era client has no row for it. On Forever
 -- it sits outside the narrator style's settings, since it colours every frame Spoken draws.
-do
-    local function Placed()
-        local inGroup, section, found = false, nil, nil
-        for _, item in ipairs(home.items) do
-            if item.kind == "group" then inGroup = item.text == L.OPT_NARRATOR_SETTINGS
-            elseif item.kind == "groupEnd" then inGroup = false
-            elseif item.rows then
-                if item.kind == "section" then section = item.text end
-                for _, row in ipairs(item.rows) do
-                    if row.control == Row(home, L.OPT_BRONZE_TINT) then found = { inGroup, section, row.shown } end
-                end
+local function BronzePlaced(home)
+    local inGroup, section, found = false, nil, nil
+    for _, item in ipairs(home.items) do
+        if item.kind == "group" then inGroup = item.text == L.OPT_NARRATOR_SETTINGS
+        elseif item.kind == "groupEnd" then inGroup = false
+        elseif item.rows then
+            if item.kind == "section" then section = item.text end
+            for _, row in ipairs(item.rows) do
+                if row.control == Row(home, L.OPT_BRONZE_TINT) then found = { inGroup, section, row.shown } end
             end
         end
-        return found and (tostring(found[1]) .. " " .. tostring(found[2]) .. " " .. tostring(found[3])) or "missing"
     end
-    for _, style in ipairs({ "minimal", "none" }) do
-        env.Addon:SetPlayerStyle(style); Options:UpdateRows()
-        Expect("no Bronze Border row on Classic Era, with " .. style, Placed(), "missing")
-    end
-    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+    return found and (tostring(found[1]) .. " " .. tostring(found[2]) .. " " .. tostring(found[3])) or "missing"
 end
+for _, style in ipairs({ "minimal", "none" }) do
+    env.Addon:SetPlayerStyle(style); Options:UpdateRows()
+    Expect("Bronze Border sits in Colours, outside the narrator style's settings, with " .. style,
+        BronzePlaced(home), "false " .. L.OPT_COLOURS_TITLE .. " true")
+end
+env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 
 ---------------------------------------------------------------- keys
 local bindings = assert(io.open(SPOKEN .. "Bindings.xml")):read("*a")
@@ -619,6 +618,19 @@ do
         box.handlers.OnTextChanged(box)
         Expect("...which cannot be typed over", box:GetText(), "https://discord.gg/HEGUgn6Yf")
     end
+end
+
+---------------------------------------------------------------- Classic Era
+stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
+VO = stub.LoadQuests(QUESTS, SPOKEN)
+VO.Addon:OnInitialize()
+env = _G.SpokenEnv
+env.Addon:Enable()
+stub.LoadQuestsPanel(QUESTS, VO):Setup()
+for _, style in ipairs({ "minimal", "none" }) do
+    env.Addon:SetPlayerStyle(style); env.Options:UpdateRows()
+    Expect("no Bronze Border row on Classic Era, with " .. style, BronzePlaced(_G.SpokenOptionsPanel.layout), "missing")
 end
 
 os.exit(Failures() == 0 and 0 or 1)

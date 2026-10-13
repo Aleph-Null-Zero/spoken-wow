@@ -13,7 +13,7 @@ local Expect, Failures = H.Expecter(print)
 local BOOKS = here .. "/../../addons/Spoken_Books/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 
 -- The maps the client names, and where each is.
 local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "Eastern Kingdoms", 947 },

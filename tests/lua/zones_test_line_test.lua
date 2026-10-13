@@ -9,7 +9,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 stub.LoadSpoken(SPOKEN)
 local Z = H.LoadZones(ZONES)
 _G.SpokenZonesSettings = { voiceEnabled = true }

@@ -12,7 +12,7 @@ local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 stub.LoadSpoken(SPOKEN)
 local Spoken = _G.Spoken
 

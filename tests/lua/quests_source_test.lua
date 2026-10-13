@@ -29,7 +29,7 @@ local G
 local GOSSIP = here .. "/../../addons/Spoken_Gossip/"
 
 local function Boot()
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     -- The client state the previous scenario left: a quest ID and a visible panel would
     -- have the new addon's 10 Hz watcher queue a line before the scenario starts.

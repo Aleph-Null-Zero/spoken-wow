@@ -15,7 +15,7 @@ local BARRENS, NEEDLES = 1413, 1441
 local ENTRANCE = { map = BARRENS, zone = "The Barrens", subzone = "Razorfen Downs" }
 
 local function Boot()
-    stub.SetClient("11509")
+    stub.SetClient("16001")
     stub.ResetSound(); stub.ResetTimers()
     stub.world.inCombat = false
     stub.world.playerLevel = 40

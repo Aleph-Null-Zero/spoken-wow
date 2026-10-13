@@ -20,7 +20,7 @@ local LANG = "X-SpokenQuests-Language"
 --- Install the given packs and load the addon. Each entry is
 --- { folder, language (nil = declares none), priority, lines = { [fileName] = length } }.
 local function Install(packs, locale)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetLocale(locale or "enUS")
     local addons = {}
     for _, pack in ipairs(packs) do

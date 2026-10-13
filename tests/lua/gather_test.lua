@@ -11,7 +11,7 @@ local QUESTS = here .. "/../../addons/Spoken_Quests/"
 local BOOKS = here .. "/../../addons/Spoken_Books/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 stub.SetAddOns({
     { folder = "Spoken_Quests", meta = { Version = "9.9.9" } },
     { folder = "TestPack", meta = { ["X-VoiceOver-DataModule-Version"] = "1", Version = "1.2.1", Title = "TestPack" } },

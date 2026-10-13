@@ -18,7 +18,7 @@ local PACK = { folder = "TestPack", meta = { ["X-VoiceOver-DataModule-Version"] 
 
 --- A login with no player loaded, and the addon list the scenario describes.
 local function Login(addons)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetUIActions()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetUIActions()
     stub.SetAddOns(addons)
     _G.Spoken, _G.SpokenEnv = nil, nil
     _G.SpokenPlayerRequiredBy, _G.SpokenPlayerPrompted = nil, nil
@@ -151,7 +151,7 @@ Expect("...none is shown", Shown(), nil)
 _G.Spoken = nil
 
 ---------------------------------------------------------------- the player actually loaded
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetUIActions()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetUIActions()
 stub.ResetAddOns()
 _G.SpokenPlayerRequiredBy, _G.SpokenPlayerPrompted = nil, nil
 VO = stub.LoadQuests(QUESTS, SPOKEN)
