@@ -1152,7 +1152,7 @@ end
 --- The dialogue core's files, in Dialogue/Dialogue.xml's order. Compat.lua is left out, as the
 --- quests addon's Compatibility.lua always was: its legacy script wrappers read the globals
 --- `this` and `event`, which this stub does not set. LoadQuestsOverlay loads both.
-local DIALOGUE_CORE = { "Environment", "Version", "Enums", "Utils", "Language", "Debug", "FuzzySearch", "DataModules",
+local DIALOGUE_CORE = { "Environment", "Enums", "Utils", "Language", "Debug", "FuzzySearch", "DataModules",
     "ReportButton", "Present", "PlayButton" }
 
 --- Load the Spoken player addon against this stub and return its private environment.

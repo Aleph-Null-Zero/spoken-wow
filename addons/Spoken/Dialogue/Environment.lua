@@ -37,4 +37,6 @@ VoiceOver = setmetatable({
     -- and upstream AI VoiceOver's table has the same global name.
     SpokenDialogue = true,
     PreviousEnvironment = previousEnvironment,
+    -- Spoken's, loaded before the dialogue core: one answer to which client this is.
+    Version = SpokenEnv.Version,
 }, { __index = _G })
