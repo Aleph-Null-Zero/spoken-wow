@@ -4,7 +4,7 @@ release: quests-audio-alliance-esMX
 section: quests
 lang: esMX
 pack: alliance
-version: 1.0.0
+version: 0.0.5
 github: false
 slug: spanish-al-spoken-quests-alliance
 name: Spanish (AL) Spoken Quests: Alliance

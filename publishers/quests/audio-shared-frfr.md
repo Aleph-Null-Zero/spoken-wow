@@ -4,7 +4,7 @@ release: quests-audio-shared-frFR
 section: quests
 lang: frFR
 pack: shared
-version: 1.0.0
+version: 0.0.4
 github: false
 slug: french-spoken-quests-shared
 name: French Spoken Quests: Shared
