@@ -32,6 +32,7 @@ env.Addon.db.profile.Contribute.HideButtons = true
 Expect("...but not when Contribute buttons are hidden in the player settings", B:HasContributionGap(), false)
 env.Addon.db.profile.Contribute.HideButtons = false
 local envelope = B:CaptureContribution()
+H.WriteCapturedFixture(here, "books-page", envelope)
 Expect("the source is books", envelope:match("^!SPOKEN1 books\n") ~= nil, true)
 Expect("the key is the client-side checksum",
     envelope:match("\npage=" .. B:ChecksumOf(UNKNOWN) .. "\n") ~= nil, true)

@@ -138,9 +138,13 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/bronze_rings_test.lua
 
 # Rewrite the envelope fixtures the TypeScript reader is tested against. A diff here is the
-# wire format changing, and that is a change the reader's tests must be part of.
+# wire format changing, and that is a change the reader's tests must be part of. The
+# captured-* ones are what the modules' own Capture functions produce in their tests.
 contribute-fixtures:
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/contribute_envelope_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/quests_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/zones_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/books_contribute_test.lua
 
 # The Python half needs its own venv:
 #
