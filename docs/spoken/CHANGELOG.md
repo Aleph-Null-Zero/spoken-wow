@@ -4,6 +4,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Report on a line an object says (a wanted poster) opens that object's lines**, not those of a creature with the same number. *([Nucabe](https://github.com/Nucabe))*
 - **A zone story's Report opens the line in the language it was read in.** A German story's report used to open the English line. *([Nucabe](https://github.com/Nucabe))*
 - **A quest line's Report copies a spoken.rusty.one address**, the site's own, instead of the old voiceover.rusty.one one that redirected there. *([Nucabe](https://github.com/Nucabe))*
 - **A book's title shows on the DialogueUI window the first time it plays.** It could stay blank after a quest line until another book played. *([Nucabe](https://github.com/Nucabe))*

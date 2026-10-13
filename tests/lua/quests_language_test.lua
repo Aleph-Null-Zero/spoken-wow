@@ -249,6 +249,10 @@ Expect("J. an English report goes to the unprefixed page",
     VO.ReportButton:Link("quest/1/accept", "enUS"), "https://spoken.rusty.one/quests/r/quest/1/accept")
 Expect("J. ...and so does one with no language",
     VO.ReportButton:Link("quest/1/accept"), "https://spoken.rusty.one/quests/r/quest/1/accept")
+Expect("J. a creature is reported by its npc address",
+    VO.ReportButton:TargetForGUID("Creature-0-1-2-3-68-0000000001"), "npc/68")
+Expect("J. ...and an object of the same id by its object address",
+    VO.ReportButton:TargetForGUID("GameObject-0-1-2-3-68-0000000001"), "object/68")
 Expect("J. another language's report goes to that language's page",
     VO.ReportButton:Link("quest/1/accept", "deDE"), "https://spoken.rusty.one/deDE/quests/r/quest/1/accept")
 

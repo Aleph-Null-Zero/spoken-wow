@@ -52,7 +52,9 @@ function ReportButton:TargetForQuest(questID, event)
     return format("quest/%d/%s", questID, path)
 end
 
---- The creature behind a GUID, or nil when this client cannot tell us.
+--- The creature or object behind a GUID, or nil when this client cannot tell us. The two
+--- number their ids apart (creature 68 is a guard, object 68 a poster), so each has its own
+--- address.
 ---
 --- Guarded twice over: Utils:GetIDFromGUID is absent on 1.12 and asserts on a GUID carrying no
 --- id, and an error thrown here would land on a player who only wanted to complain about audio.
@@ -70,7 +72,7 @@ function ReportButton:TargetForGUID(guid)
     if not readID or not id then
         return nil
     end
-    return format("npc/%d", id)
+    return format(guidType == Enums.GUID.GameObject and "object/%d" or "npc/%d", id)
 end
 
 --- The line a clip is, from what the clip carries: its quest and event, or the NPC who said
