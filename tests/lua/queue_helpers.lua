@@ -156,7 +156,7 @@ function M.NewZoneLore()
     function Z:OpenOptions() self.opened = true end
     -- What UI/Options.lua asks the rest of the addon. The panel is the one part that
     -- reports what is installed, so the answers live here rather than in each test.
-    Z.SITE_URL = "https://spoken.test"
+    function Z:SiteURL() return "https://spoken.test" end
     function Z:GetAudioPacks() return {} end
     function Z:GetActiveAudioPack() return nil end
     function Z:GetAudioPackLabel() return "none" end
