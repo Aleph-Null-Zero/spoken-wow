@@ -95,8 +95,8 @@ end
 
 -- Safe before ADDON_LOADED has run.
 function SpokenZones:Get(key)
-	-- Text Size is Azeroth's Compendium's, on Spoken's page, where Spoken is installed.
-	if key == "fontSize" and Spoken and Spoken.CompendiumFontSize then
+	-- Text Size is Azeroth's Compendium's, on Spoken's page.
+	if key == "fontSize" and Spoken then
 		return Spoken:CompendiumFontSize()
 	end
 	if SpokenZonesSettings == nil then
