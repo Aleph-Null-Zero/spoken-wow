@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **On Forever, Legashi Encampment in Azshara tells its story**, the one Spoken has for the camp
+  under its older name, Legash Encampment, and it is listed once. Northshire Valley - Camelot and
+  Storm Cliffs, which no one can reach there, are no longer listed as places to find. *([Nucabe](https://github.com/Nucabe))*
 - **Eight quests whose pages in Azeroth's Compendium had no words now show them** as their
   Description, from what the NPC says while the quest is under way: Conflict at Darkspear Islands,
   Forced Disarmament and the two Donations of Wool among them. *([Nucabe](https://github.com/Nucabe))*
