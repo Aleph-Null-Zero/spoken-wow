@@ -13,10 +13,8 @@
 ## Version: 3.4.0
 ## IconTexture: Interface\Icons\UI_Chat
 ## SavedVariables: SpokenGossipSettings
-## OptionalDeps: Spoken
-# Spoken is the player this addon speaks through: optional, so a hand-installed copy
-# without it loads and says what is missing; addon managers install it from the
-# CurseForge dependency.
+## Dependencies: Spoken
+# Spoken is what this module runs on, and ships in the same zip.
 ## Group: Spoken
 ## X-Part-Of: Spoken
 

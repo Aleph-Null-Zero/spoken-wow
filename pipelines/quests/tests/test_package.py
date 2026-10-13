@@ -165,8 +165,7 @@ def test_a_legacy_zip_carries_only_its_own_ace3(built, client):
 
 @pytest.mark.parametrize("client,interface", sorted(LEGACY_CLIENTS.items()))
 def test_a_legacy_zip_bundles_the_player_with_a_hard_dependency(built, client, interface):
-    # No addon manager on these clients, so the player travels inside the zip - and since it
-    # is guaranteed present, the dependency can be hard here where it is soft everywhere else.
+    # No addon manager on these clients, so the player travels inside the zip.
     names, files = legacy(built, client)
     tocs = tocs_in(files, PLAYER)
     assert list(tocs) == [f"{PLAYER}/{PLAYER}.toc"], names
@@ -219,7 +218,7 @@ def test_the_gossip_zip_carries_every_flavor_and_no_legacy_client(gossip_built):
     for client in LEGACY_CLIENTS:
         assert not any(name.startswith(f"{GOSSIP}/{client}/") for name in names)
     assert {name.split("/", 1)[0] for name in names} == {GOSSIP}
-    assert "## OptionalDeps: Spoken" in tocs[f"{GOSSIP}/{GOSSIP}.toc"]
+    assert "## Dependencies: Spoken" in tocs[f"{GOSSIP}/{GOSSIP}.toc"]
 
 
 def test_the_blizzard_zip_carries_every_flavor_and_no_legacy_client(built):
@@ -229,10 +228,10 @@ def test_the_blizzard_zip_carries_every_flavor_and_no_legacy_client(built):
     for client in LEGACY_CLIENTS:
         assert not any(name.startswith(f"{NAME}/{client}/") for name in names)
     assert any(name.startswith(f"{NAME}/Libs/") for name in names)
-    # Managers install the player from the CurseForge dependency; it is not bundled here. Nor is
-    # the old folder's tombstone: that folder belongs to the retired spoken-quests project.
+    # Spoken ships beside it in Spoken's own zip; it is not bundled here. Nor is the old folder's
+    # tombstone: that folder belongs to the retired spoken-quests project.
     assert {name.split("/", 1)[0] for name in names} == {NAME}
-    assert "## OptionalDeps: Spoken" in tocs[f"{NAME}/{NAME}.toc"]
+    assert "## Dependencies: Spoken" in tocs[f"{NAME}/{NAME}.toc"]
 
 
 def test_every_zip_unpacks_into_the_addons_folder(built):

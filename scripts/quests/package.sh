@@ -23,8 +23,7 @@
 # install a dependency, so the player travels inside the zip, staged from its own tree at
 # build time -- there is no committed second copy that could drift, and the build asserts
 # the staged copy is byte-identical to addons/Spoken/ apart from the per-client pruning and
-# the .toc swap. Since it is guaranteed present, the dependency is hard there where it is
-# soft everywhere else.
+# the .toc swap.
 #
 # The sound pack is NOT here: it is 1.5 GB and rebuilt from the audio store on its own
 # schedule. See scripts/quests/package-audio.sh, or `make quests-package-audio`.
