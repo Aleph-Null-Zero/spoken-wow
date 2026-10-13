@@ -31,7 +31,7 @@ Spoken Quests speaks in your client's language by default. To hear Portuguese on
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
 
 ## Support
 
