@@ -5,10 +5,12 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 ## Unreleased
 
 - **With DialogueUI, each part of a quest's page in Azeroth's Compendium is headed as Spoken's
-  DialogueUI window heads a line**: DialogueUI's header strip with the speaker's face in its
-  socket and the part's badge, the speaker's name over the part's name in DialogueUI's fonts, and
+  DialogueUI window heads a line**: the speaker's face in a ring like DialogueUI's, with the
+  part's badge, the speaker's name over the part's name in DialogueUI's fonts, and
   Play and Report at the right. Without DialogueUI the page keeps the small window's header. The
   offer is now called Description, as the game's quest window calls it. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI window's header has no line under it.** The speaker's face sits in Spoken's
+  own ring, drawn after DialogueUI's, without the light band that showed under the line. *([Nucabe](https://github.com/Nucabe))*
 - **A quest's page in Azeroth's Compendium shows who says each part.** The description and the
   completion each have the small window's header: the round portrait of the quest giver or of the
   NPC you hand it in to, with the part's badge, and their name over the part's name. The progress

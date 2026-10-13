@@ -1532,12 +1532,12 @@ quest's giver, as the quest log's Play is, and the hand-in for the one it is han
 client's own `QUEST_DESCRIPTION` (the heading of a quest's text in its quest window) where it has
 one, else `L.QUEST_PART_ACCEPT`; the hand-in's is Completion. Where DialogueUI is installed, each
 part's header is the top of Spoken's DialogueUI window (`Spoken:CreateDialogueHeader`), with the
-part's name where the window has the quest's: DialogueUI's header strip, in its brown theme
-whatever DialogueUI's own (the page is parchment), with the speaker's face in its socket and the
-part's badge, the speaker's name in DialogueUI's subtitle font over the part's name in its title
+part's name where the window has the quest's: the speaker's face in Spoken's ring after
+DialogueUI's socket (its brown one whatever DialogueUI's theme, as the page is parchment), with no
+line under the header, and the part's badge, the speaker's name in DialogueUI's subtitle font over the part's name in its title
 font, all scaled from the window's to the page's width, and the part's Play and Report at the
-right, where the window has its round controls. The words start 1.4 of their size under the
-strip's line. Without DialogueUI the header is drawn as the Small Window's: the speaker's round
+right, where the window has its round controls. The words start where they would under
+DialogueUI's header strip. Without DialogueUI the header is drawn as the Small Window's: the speaker's round
 face (`Spoken:CreateSpeakerFace`, 44 across) with the part's badge, their name over the part's
 name beside it, and the part's Play and Report at the right. A creature the client has not cached
 shows the book until it has, one never cached or no one known keeps the book, and an object or
