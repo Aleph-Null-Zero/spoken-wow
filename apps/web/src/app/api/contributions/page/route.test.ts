@@ -116,6 +116,22 @@ describe("POST /api/contributions/page", () => {
     expect(await matchOf(id)).toEqual({ matchLineId: null, matchBookId: null, matchPageNumber: null, matchNewBook: false });
   });
 
+  it("refuses a book that does not exist", async () => {
+    const id = await contribution();
+    editable.add("ptBR");
+    expect((await POST(post({ id, bookId: "nope", pageNumber: 1 }))).status).toBe(400);
+    expect(await matchOf(id)).toEqual({ matchLineId: null, matchBookId: null, matchPageNumber: null, matchNewBook: false });
+  });
+
+  it("logs the answer", async () => {
+    const id = await contribution();
+    editable.add("ptBR");
+    await POST(post({ id, bookId: String(base), pageNumber: 9 }));
+    expect(recordActivity).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "contribution.edited", subject: String(id), detail: { field: "match", value: { bookId: String(base), pageNumber: 9 } } }),
+    );
+  });
+
   it("refuses a lineId that is no page", async () => {
     const id = await contribution();
     editable.add("ptBR");

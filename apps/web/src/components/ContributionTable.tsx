@@ -740,7 +740,7 @@ const ContributionTableRow = memo(function ContributionTableRow({
   bucket: Bucket;
   /** On the New tab, the row now belongs to the other half. */
   moved: boolean;
-  /** The corpus text the row's key already resolves to, if any. */
+  /** The text already on file for the row: a zones key's line, or the matched books page in the row's own language. */
   found: string | undefined;
   selected: boolean;
   /** This row's own resolve is in flight. */
@@ -1153,7 +1153,10 @@ function MatchCell({
 }) {
   const [choice, setChoice] = useState("");
   const [pageNumber, setPageNumber] = useState(String(book.number ?? 1));
-  const valid = choice !== "" && /^\d+$/.test(pageNumber.trim()) && Number(pageNumber.trim()) > 0;
+  const isNew = choice === "new";
+  const valid = choice !== "" && (isNew || (/^\d+$/.test(pageNumber.trim()) && Number(pageNumber.trim()) > 0));
+  const titles = new Map<string, number>();
+  for (const option of books) titles.set(option.title, (titles.get(option.title) ?? 0) + 1);
   const shown = book.title ? `${book.title}${book.number ? ` p.${book.number}` : ""}` : null;
   const moderated = "via" in book.match && book.match.via === "moderator";
 
@@ -1179,7 +1182,7 @@ function MatchCell({
           onSubmit={(event) => {
             event.preventDefault();
             if (!valid) return;
-            onSave(choice === "new" ? { newBook: true } : { bookId: choice, pageNumber: Number(pageNumber.trim()) });
+            onSave(isNew ? { newBook: true } : { bookId: choice, pageNumber: Number(pageNumber.trim()) });
           }}
         >
           <select
@@ -1193,12 +1196,13 @@ function MatchCell({
             <option value="new">New book</option>
             {books.map((option) => (
               <option key={option.bookId} value={option.bookId}>
-                {option.title} ({option.pages === 1 ? "1 page" : `${option.pages} pages`})
+                {option.title}{titles.get(option.title)! > 1 ? ` · #${option.bookId}` : ""} ({option.pages === 1 ? "1 page" : `${option.pages} pages`})
               </option>
             ))}
           </select>
           <input
-            required
+            required={!isNew}
+            disabled={isNew}
             inputMode="numeric"
             pattern="\d+"
             aria-label="page"

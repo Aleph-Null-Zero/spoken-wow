@@ -78,7 +78,7 @@ async function existingTextFor(
         const page = lineId
           ? (await catalogue(isLang(row.locale) ? row.locale : BASE_LANG)).find((p) => p.id === lineId)
           : undefined;
-        if (page && page.text) found[row.id] = page.text;
+        if (page && !page.missing?.text && page.text) found[row.id] = page.text;
         return;
       }
       const lookup = corpusLookup(row.source, row.key);
@@ -92,7 +92,7 @@ async function existingTextFor(
   return found;
 }
 
-/** What each books row is (book-match.ts), and a way to name a page or book in the row's language. */
+/** What each books row is by its words, owner or title, and a way to name a page or book in the row's language. */
 async function bookMatchesFor(contributions: Contribution[]) {
   const books = contributions.filter((row) => row.source === "books");
   if (books.length === 0) {

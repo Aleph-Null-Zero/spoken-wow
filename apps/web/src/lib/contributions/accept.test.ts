@@ -1159,7 +1159,7 @@ describe("resolveContribution: a book page in another language", () => {
     seeded = [];
   });
 
-  /** accept.ts still reads the English page from "pageId"; nothing else writes it now. */
+  /** Sets the English page accept reads, in the "pageId" column. */
   async function matchedTo(id: number, pageId: number): Promise<void> {
     await db().query(`update "contribution" set "pageId" = $2 where "id" = $1`, [id, pageId]);
   }

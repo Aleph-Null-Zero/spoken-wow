@@ -1,8 +1,8 @@
 /**
  * A moderator's answer to "which page is this?" for a books contribution: a page in any
- * language, a place in a book, or a new book. Stored on the contribution
- * (store.ts's setContributionMatch); the automatic match (book-match.ts) stands where there is
- * none. Refused once the row's page is written -- that is one-way (accept.ts).
+ * language, a place in a book, or a new book. Stored on the contribution; where there is no
+ * answer, the matcher's own decision stands. Refused once the row's page is written, which is
+ * one-way.
  *
  * Gated as ../npc-identity is: whoever may edit the row's language.
  */
