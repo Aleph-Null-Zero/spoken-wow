@@ -42,6 +42,7 @@ which is why there is one file per project here and not two.
 | `quests/audio-shared.md` | Spoken Quests Audio: Shared Quests | 1660199 | QNlz3YKe | `spoken-quests-audio-shared` |
 | `quests/audio-gossip.md` | Spoken Quests Audio: Gossip | 1660202 | XKqA45Ky | `spoken-quests-audio-gossip` |
 | `quests/audio-<pack>-<lang>.md` | `<Language> Spoken Quests: <Pack>`, four per language: Alliance, Horde, Shared, Gossip | each page's `curseforge:` | — | `<language>-spoken-quests-<pack>` |
+| `quests/audio-shared-<lang>.md` for itIT, ptBR, koKR, ruRU, zhCN, zhTW | `<Language> Spoken Quests`, every quest in one pack beside Gossip; Alliance and Horde dormant | each page's `curseforge:` | — | `<language>-spoken-quests` |
 | `quests/audio-<lang>.md` | Spoken Quests Audio: `<Language>`, every line in one folder, GitHub only | — | — | — |
 | `zones/spoken-zones.md` | Spoken Zones (was ZoneLore) | 1636521 | mNw7b5No | `spoken-zones` |
 | `zones/spoken-zones-audio.md` | Spoken Zones Audio | 1636532 | b6mvD9KP | `spoken-zones-audio` |
@@ -68,6 +69,13 @@ and, on a quests pack, `pack:` say which pack it is; a language other than Engli
 release tag (English's, plus `-<lang>`), and every build and release script asks it rather than
 keeping a table of its own. Adding a language's pack is its page -- one per pack, four for quests
 -- plus the CurseForge project it names.
+
+**A language with few players yet ships two quests packs, not four.** Its Shared page says
+`holds: quests` and carries every quest line, both sides' included, under the name
+`<Language> Spoken Quests`; its Alliance and Horde pages say `dormant: true`, keep their project
+ids, and nothing builds or uploads them. Splitting the language later is dropping both keys and
+renaming Shared back: its players keep the folder and add their side. Italian, Portuguese,
+Korean, Russian and both Chinese ship this way.
 
 The slugs follow the projects' names, `-all` included: the meta addon is the "All" pack as far
 as a player is concerned, so it is the one project whose slug names a pack that holds no audio.

@@ -4,6 +4,7 @@ release: quests-audio-horde-itIT
 section: quests
 lang: itIT
 pack: horde
+dormant: true
 version: 0.0.2
 github: false
 slug: italian-spoken-quests-horde
@@ -21,7 +22,7 @@ This is the Italian audio pack for Horde quest dialogue: the quests only a Horde
 **You need two more addons for this to do anything:**
 
 1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Italian Spoken Quests: Shared](https://www.curseforge.com/wow/addons/italian-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+2. **[Italian Spoken Quests](https://www.curseforge.com/wow/addons/italian-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 
@@ -29,7 +30,7 @@ This is the Italian audio pack for Horde quest dialogue: the quests only a Horde
 | --- | --- | --- |
 | [Alliance](https://www.curseforge.com/wow/addons/italian-spoken-quests-alliance) | Alliance-only quests | |
 | **Horde** | Horde-only quests | **this pack** |
-| [Shared](https://www.curseforge.com/wow/addons/italian-spoken-quests-shared) | quests both factions can take | |
+| [Shared](https://www.curseforge.com/wow/addons/italian-spoken-quests) | quests both factions can take | |
 | [Gossip](https://www.curseforge.com/wow/addons/italian-spoken-quests-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.

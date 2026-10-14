@@ -188,38 +188,12 @@ carries that version. The heading says which.
 - The same audio is now on CurseForge too, split into Alliance, Horde, Shared and Gossip
   packs. Install those or this one, not both.
 
-## 0.0.2 — quests-audio-alliance-itIT — 2026-10-14
-
-- **First release on CurseForge.** The Italian quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_itIT`
-  pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: it voices the quests QuestIT has translated so far. Set **Fallback Language**
-  to English to hear the rest.
-- 9564 more lines voiced, as QuestIT has translated more quests, and 2169 re-recorded since
-  0.0.1.
-
-## 0.0.2 — quests-audio-horde-itIT — 2026-10-14
-
-- **First release on CurseForge.** The Italian quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_itIT`
-  pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: it voices the quests QuestIT has translated so far. Set **Fallback Language**
-  to English to hear the rest.
-- 9564 more lines voiced, as QuestIT has translated more quests, and 2169 re-recorded since
-  0.0.1.
-
 ## 0.0.2 — quests-audio-shared-itIT — 2026-10-14
 
 - **First release on CurseForge.** The Italian quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_itIT`
-  pack on GitHub, so install one or the other.
+  comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_itIT` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: it voices the quests QuestIT has translated so far. Set **Fallback Language**
@@ -230,9 +204,9 @@ carries that version. The heading says which.
 ## 0.0.2 — quests-audio-gossip-itIT — 2026-10-14
 
 - **First release on CurseForge.** The Italian quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_itIT`
-  pack on GitHub, so install one or the other.
+  comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_itIT` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: it voices the quests QuestIT has translated so far. Set **Fallback Language**
@@ -244,37 +218,15 @@ carries that version. The heading says which.
 
 - 9564 more lines voiced, as QuestIT has translated more quests, and 2169 re-recorded since
   0.0.1: 12734 files in all. Install over the previous version.
-- The same audio is now on CurseForge too, split into Alliance, Horde, Shared and Gossip
-  packs. Install those or this one, not both.
-
-## 0.0.2 — quests-audio-alliance-koKR — 2026-10-14
-
-- **First release on CurseForge.** The Korean quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_koKR`
-  pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: it voices about four quests in five. Set **Fallback Language** to English to
-  hear the rest.
-
-## 0.0.2 — quests-audio-horde-koKR — 2026-10-14
-
-- **First release on CurseForge.** The Korean quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_koKR`
-  pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: it voices about four quests in five. Set **Fallback Language** to English to
-  hear the rest.
+- The same audio is now on CurseForge too, as a Quests pack and a Gossip pack. Install those
+  or this one, not both.
 
 ## 0.0.2 — quests-audio-shared-koKR — 2026-10-14
 
 - **First release on CurseForge.** The Korean quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_koKR`
-  pack on GitHub, so install one or the other.
+  comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_koKR` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: it voices about four quests in five. Set **Fallback Language** to English to
@@ -283,42 +235,20 @@ carries that version. The heading says which.
 ## 0.0.2 — quests-audio-gossip-koKR — 2026-10-14
 
 - **First release on CurseForge.** The Korean quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_koKR`
-  pack on GitHub, so install one or the other.
+  comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_koKR` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: it voices about four quests in five. Set **Fallback Language** to English to
   hear the rest.
 
-## 0.0.3 — quests-audio-alliance-ptBR — 2026-10-14
-
-- **First release on CurseForge.** The Brazilian Portuguese quests audio, until now one pack
-  on GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_ptBR` pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: few quest completions are voiced yet. Set **Fallback Language** to English to
-  hear the rest.
-
-## 0.0.3 — quests-audio-horde-ptBR — 2026-10-14
-
-- **First release on CurseForge.** The Brazilian Portuguese quests audio, until now one pack
-  on GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_ptBR` pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: few quest completions are voiced yet. Set **Fallback Language** to English to
-  hear the rest.
-
 ## 0.0.3 — quests-audio-shared-ptBR — 2026-10-14
 
 - **First release on CurseForge.** The Brazilian Portuguese quests audio, until now one pack
-  on GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_ptBR` pack on GitHub, so install one or the other.
+  on GitHub, comes here in two: Quests, with every quest for both factions, and Gossip, which
+  is optional. They hold the same lines as the single `SpokenQuestsAudio_ptBR` pack on GitHub,
+  so install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: few quest completions are voiced yet. Set **Fallback Language** to English to
@@ -327,78 +257,38 @@ carries that version. The heading says which.
 ## 0.0.3 — quests-audio-gossip-ptBR — 2026-10-14
 
 - **First release on CurseForge.** The Brazilian Portuguese quests audio, until now one pack
-  on GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_ptBR` pack on GitHub, so install one or the other.
+  on GitHub, comes here in two: Quests, with every quest for both factions, and Gossip, which
+  is optional. They hold the same lines as the single `SpokenQuestsAudio_ptBR` pack on GitHub,
+  so install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: few quest completions are voiced yet. Set **Fallback Language** to English to
   hear the rest.
 
-## 0.0.3 — quests-audio-alliance-ruRU — 2026-10-14
-
-- **First release on CurseForge.** The Russian quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_ruRU`
-  pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-
-## 0.0.3 — quests-audio-horde-ruRU — 2026-10-14
-
-- **First release on CurseForge.** The Russian quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_ruRU`
-  pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-
 ## 0.0.3 — quests-audio-shared-ruRU — 2026-10-14
 
 - **First release on CurseForge.** The Russian quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_ruRU`
-  pack on GitHub, so install one or the other.
+  comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_ruRU` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 
 ## 0.0.3 — quests-audio-gossip-ruRU — 2026-10-14
 
 - **First release on CurseForge.** The Russian quests audio, until now one pack on GitHub,
-  comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack with
-  Shared; Gossip is optional. They hold the same lines as the single `SpokenQuestsAudio_ruRU`
-  pack on GitHub, so install one or the other.
+  comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_ruRU` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
-
-## 0.0.1 — quests-audio-alliance-zhCN — 2026-10-14
-
-- **First release on CurseForge.** The Simplified Chinese quests audio, until now one pack on
-  GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_zhCN` pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: it voices about six quests in seven. Set **Fallback Language** to English to
-  hear the rest.
-
-## 0.0.1 — quests-audio-horde-zhCN — 2026-10-14
-
-- **First release on CurseForge.** The Simplified Chinese quests audio, until now one pack on
-  GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_zhCN` pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: it voices about six quests in seven. Set **Fallback Language** to English to
-  hear the rest.
 
 ## 0.0.1 — quests-audio-shared-zhCN — 2026-10-14
 
 - **First release on CurseForge.** The Simplified Chinese quests audio, until now one pack on
-  GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_zhCN` pack on GitHub, so install one or the other.
+  GitHub, comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_zhCN` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: it voices about six quests in seven. Set **Fallback Language** to English to
@@ -407,42 +297,20 @@ carries that version. The heading says which.
 ## 0.0.1 — quests-audio-gossip-zhCN — 2026-10-14
 
 - **First release on CurseForge.** The Simplified Chinese quests audio, until now one pack on
-  GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_zhCN` pack on GitHub, so install one or the other.
+  GitHub, comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_zhCN` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: it voices about six quests in seven. Set **Fallback Language** to English to
   hear the rest.
 
-## 0.0.1 — quests-audio-alliance-zhTW — 2026-10-14
-
-- **First release on CurseForge.** The Traditional Chinese quests audio, until now one pack on
-  GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_zhTW` pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: it voices about four quests in five. Set **Fallback Language** to English to
-  hear the rest.
-
-## 0.0.1 — quests-audio-horde-zhTW — 2026-10-14
-
-- **First release on CurseForge.** The Traditional Chinese quests audio, until now one pack on
-  GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_zhTW` pack on GitHub, so install one or the other.
-- **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
-  re-recorded, and report the ones that sound wrong.
-- **Partial**: it voices about four quests in five. Set **Fallback Language** to English to
-  hear the rest.
-
 ## 0.0.1 — quests-audio-shared-zhTW — 2026-10-14
 
 - **First release on CurseForge.** The Traditional Chinese quests audio, until now one pack on
-  GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_zhTW` pack on GitHub, so install one or the other.
+  GitHub, comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_zhTW` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: it voices about four quests in five. Set **Fallback Language** to English to
@@ -451,9 +319,9 @@ carries that version. The heading says which.
 ## 0.0.1 — quests-audio-gossip-zhTW — 2026-10-14
 
 - **First release on CurseForge.** The Traditional Chinese quests audio, until now one pack on
-  GitHub, comes here in four: Alliance, Horde, Shared and Gossip. Install your side's pack
-  with Shared; Gossip is optional. They hold the same lines as the single
-  `SpokenQuestsAudio_zhTW` pack on GitHub, so install one or the other.
+  GitHub, comes here in two: Quests, with every quest for both factions, and Gossip, which is
+  optional. They hold the same lines as the single `SpokenQuestsAudio_zhTW` pack on GitHub, so
+  install one or the other.
 - **Experimental**, numbered 0.0.x so it does not read as finished: expect lines to be
   re-recorded, and report the ones that sound wrong.
 - **Partial**: it voices about four quests in five. Set **Fallback Language** to English to

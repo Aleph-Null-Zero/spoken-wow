@@ -4,6 +4,7 @@ release: quests-audio-horde-zhCN
 section: quests
 lang: zhCN
 pack: horde
+dormant: true
 version: 0.0.1
 github: false
 slug: chinese-simplified-spoken-quests-horde
@@ -21,7 +22,7 @@ This is the Chinese (Simplified) audio pack for Horde quest dialogue: the quests
 **You need two more addons for this to do anything:**
 
 1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Chinese (Simplified) Spoken Quests: Shared](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+2. **[Chinese (Simplified) Spoken Quests](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 
@@ -29,7 +30,7 @@ This is the Chinese (Simplified) audio pack for Horde quest dialogue: the quests
 | --- | --- | --- |
 | [Alliance](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-alliance) | Alliance-only quests | |
 | **Horde** | Horde-only quests | **this pack** |
-| [Shared](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-shared) | quests both factions can take | |
+| [Shared](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests) | quests both factions can take | |
 | [Gossip](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.

@@ -8,7 +8,7 @@ version: 0.0.1
 github: false
 slug: chinese-simplified-spoken-quests-gossip
 name: Chinese (Simplified) Spoken Quests: Gossip
-summary: NPC gossip chatter, voiced in Chinese (Simplified). Optional extra for any of the quest packs. Needs Spoken Player.
+summary: NPC gossip chatter, voiced in Simplified Chinese. Optional extra for the quest pack. Needs Spoken Player.
 categories:
   - Audio & Video
   - Roleplay
@@ -16,25 +16,21 @@ categories:
 license: MIT
 ---
 
-This is the Chinese (Simplified) audio pack for NPC gossip — the chatter you get when you talk to someone without a quest to hand in — voiced in Chinese (Simplified).
+This is the Simplified Chinese audio pack for NPC gossip — the chatter you get when you talk to someone without a quest to hand in — voiced in Simplified Chinese.
 
 Innkeepers, guards, faction quartermasters and the rest saying their piece out loud, in the same voices they use for quests. Purely extra: it adds nothing to a quest you were already hearing, and it costs nothing to skip.
 
-**You need the player and at least one quest pack for any of this to work:**
+**You need the player and the quest pack for any of this to work:**
 
 1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. Your quest audio — **[Alliance](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-alliance)** or **[Horde](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-horde)**, plus **[Shared](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-shared)**.
+2. **[Chinese (Simplified) Spoken Quests](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests)** — the quest dialogue.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
-| [Alliance](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-alliance) | Alliance-only quests | |
-| [Horde](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-horde) | Horde-only quests | |
-| [Shared](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-shared) | quests both factions can take | |
+| [Quests](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests) | every quest, both factions | |
 | **Gossip** | NPC gossip chatter | **this pack** |
-
-Gossip is not split by faction: an NPC greets whoever walks up, so one pack serves both sides.
 
 ## Voiced with care
 
