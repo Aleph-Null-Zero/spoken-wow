@@ -304,8 +304,11 @@ for pack in $PACKS; do
 
   version="$VERSION"
   language_args=()
+  build_pack="$pack"
   if [ "$LANGUAGE" != enUS ]; then
     module="$(pack_field "$pack" folder)"
+    # A Shared page that holds every quest builds the quests slice (scripts/lib/packs.mjs).
+    build_pack="$(pack_field "$pack" build)"
     title="$(pack_field "$pack" name)"
     version="$(pack_field "$pack" version)"
     language_args=(--language "$LANGUAGE")
@@ -317,7 +320,7 @@ for pack in $PACKS; do
   # ${language_args[@]+...} rather than a bare expansion: macOS's bash 3.2 raises "unbound
   # variable" under set -u when a plain "${arr[@]}" is empty, which it is on every English build.
   (cd "$QUESTS" && "$PYTHON" cli-main.py build --store "$staging" --dist "$DIST" \
-    --module "$module" --version "$version" --pack "$pack" ${title:+--module-title "$title"} \
+    --module "$module" --version "$version" --pack "$build_pack" ${title:+--module-title "$title"} \
     "${language_args[@]+"${language_args[@]}"}")
 
   echo "  module size: $(du -sh "$DIST/$module" | cut -f1)  (store: $(du -sh "$STORE" | cut -f1))"

@@ -8,7 +8,7 @@
 // which is what a case block per script per language turned into the moment there was a second
 // language.
 //
-//   node scripts/lib/packs.mjs list <section> <lang> [github]            pack keys, or "-"
+//   node scripts/lib/packs.mjs list <section> <lang> [github|curseforge] pack keys, or "-"; never dormant
 //   node scripts/lib/packs.mjs get <section> <lang> <pack|-> <field>     one field
 //   node scripts/lib/packs.mjs changelog <file> <version> <release>      a pack's notes
 //
@@ -122,9 +122,22 @@ function toPack(page, meta) {
   if (meta.github !== undefined && meta.github !== "false") fail(`github may only be false`);
   const github = meta.github !== "false";
 
+  // A language with too few players yet for three quest packs ships two: Gossip, and a Shared
+  // pack that `holds: quests` -- every quest line, both sides' included (tts_cli/factions.py
+  // builds it as the 'quests' pack). Its Alliance and Horde pages stay, project ids and all, as
+  // `dormant: true`: nothing builds or uploads them until the language is split, when Shared
+  // goes back to holding shared quests and its players keep the folder and add their side.
+  if (meta.holds !== undefined && !(meta.holds === "quests" && !english && pack === "shared")) {
+    fail(`only a language's shared quests pack may say holds: quests`);
+  }
+  if (meta.dormant !== undefined && !(meta.dormant === "true" && !english && ["alliance", "horde"].includes(pack))) {
+    fail(`only a language's alliance or horde quests pack may say dormant: true`);
+  }
+
   const folder = english ? englishFolder(section, pack) : `${languageFolder(section, pack)}_${lang}`;
   return {
     page, section, lang, pack, version, github,
+    build: meta.holds ?? pack, dormant: meta.dormant === "true",
     curseforge: meta.curseforge ?? null, wago: meta.wago ?? null, release,
     bundles: english && section === "quests" && pack === "all" ? ENGLISH_QUESTS_BUNDLE : null,
     slug: meta.slug, name: meta.name, folder,
@@ -145,6 +158,18 @@ export function loadPacks(dir = PUBLISHERS_DIR) {
     const key = `${p.section}/${p.lang}/${p.pack ?? "-"}`;
     if (seen.has(key)) throw new Error(`two pages for one pack (${key}): publishers/${seen.get(key)} and publishers/${p.page}`);
     seen.set(key, p.page);
+  }
+  // Shared holding every quest and a side's own pack would ship that side's lines twice; Shared
+  // holding only shared quests with a side dormant would ship them nowhere.
+  for (const shared of packs.filter((p) => p.section === "quests" && p.pack === "shared")) {
+    for (const side of packs.filter((p) => p.section === "quests" && p.lang === shared.lang &&
+      ["alliance", "horde"].includes(p.pack))) {
+      if (side.dormant !== (shared.build === "quests")) {
+        throw new Error(shared.build === "quests"
+          ? `publishers/${shared.page} holds every quest, so publishers/${side.page} must be dormant: true`
+          : `publishers/${side.page} is dormant, so publishers/${shared.page} must say holds: quests`);
+      }
+    }
   }
   return packs;
 }
@@ -184,8 +209,12 @@ export function changelogSection(text, version, release) {
 function main([command, ...args]) {
   if (command === "list") {
     const [section, lang, only] = args;
-    if (only !== undefined && only !== "github") throw new Error(`list filters by 'github' only, not '${only}'`);
-    const packs = packsFor(section, lang).filter((p) => only !== "github" || p.github);
+    // Dormant packs are never listed: the list is what gets built and released.
+    if (only !== undefined && only !== "github" && only !== "curseforge") {
+      throw new Error(`list filters by 'github' or 'curseforge' only, not '${only}'`);
+    }
+    const packs = packsFor(section, lang).filter((p) => !p.dormant &&
+      (only === undefined || (only === "github" ? p.github : p.curseforge !== null)));
     if (packs.length === 0) throw new Error(`no ${section} packs registered for ${lang}${only ? ` on ${only}` : ""}`);
     for (const p of packs) console.log(p.pack ?? "-");
   } else if (command === "get") {
@@ -198,7 +227,7 @@ function main([command, ...args]) {
     const [file, version, release] = args;
     process.stdout.write(changelogSection(readFileSync(file, "utf8"), version, release));
   } else {
-    throw new Error("usage: packs.mjs list <section> <lang> [github] | get <section> <lang> <pack|-> <field> | changelog <file> <version> <release>");
+    throw new Error("usage: packs.mjs list <section> <lang> [github|curseforge] | get <section> <lang> <pack|-> <field> | changelog <file> <version> <release>");
   }
 }
 
