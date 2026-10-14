@@ -106,6 +106,24 @@ export type ContributionRow = Pick<
 /** A book a row can be placed in. */
 export type BookChoice = { bookId: string; title: string; pages: number };
 
+/** The datalist the match form's book field offers, rendered once for the whole table. */
+const BOOKS_LIST = "contribution-books";
+const NEW_BOOK = "New book";
+
+/**
+ * What the book field may say -> the book it names, or null for a new book. A title more than
+ * one book has carries its book's id.
+ */
+type BookLabels = ReadonlyMap<string, BookChoice | null>;
+
+function bookLabels(books: readonly BookChoice[]): BookLabels {
+  const titles = new Map<string, number>([[NEW_BOOK, 1]]);
+  for (const book of books) titles.set(book.title, (titles.get(book.title) ?? 0) + 1);
+  const labels = new Map<string, BookChoice | null>([[NEW_BOOK, null]]);
+  for (const book of books) labels.set(titles.get(book.title)! > 1 ? `${book.title} · #${book.bookId}` : book.title, book);
+  return labels;
+}
+
 /** What a moderator says a books row is, as api/contributions/page takes it; null clears it. */
 type MatchAnswer = { bookId: string; pageNumber: number } | { newBook: true } | null;
 
@@ -187,6 +205,7 @@ export default function ContributionTable({
   const router = useRouter();
   const lang = useLang();
   const roster = useMemo(() => new Roster(rosterData), [rosterData]);
+  const labels = useMemo(() => bookLabels(books), [books]);
 
   /**
    * What this session resolved, overlaid on the server's rows -- the same shape ReportTable
@@ -668,7 +687,7 @@ export default function ContributionTable({
                 <ContributionTableRow
                   key={row.id}
                   row={row}
-                  books={books}
+                  books={labels}
                   current={resolved[row.id] ?? row.status}
                   npc={npc}
                   bucket={now}
@@ -695,6 +714,13 @@ export default function ContributionTable({
           </tbody>
         </table>
       )}
+      <datalist id={BOOKS_LIST}>
+        {[...labels].map(([label, choice]) => (
+          <option key={label} value={label}>
+            {choice ? (choice.pages === 1 ? "1 page" : `${choice.pages} pages`) : null}
+          </option>
+        ))}
+      </datalist>
       {rows.length > 0 && pages > 1 ? (
         <div className="mt-3 flex text-xs">
           <Pager page={page} pages={pages} total={matching.length} onGo={(to) => go({}, to)} />
@@ -734,7 +760,7 @@ const ContributionTableRow = memo(function ContributionTableRow({
   onMatchPage,
 }: {
   row: ContributionRow;
-  books: BookChoice[];
+  books: BookLabels;
   /** The row's status, with this session's own changes over the server's. */
   current: ContributionStatus;
   npc: NpcSummary | null;
@@ -1137,8 +1163,8 @@ function MissingNpcForm({
 
 /**
  * A books row's match: what the matcher (or a moderator) decided it is, linked where it names a
- * page, and the controls to say otherwise -- a book from the picker and a page number, or a new
- * book. Clear drops a moderator's answer and lets the matcher decide again.
+ * page, and the controls to say otherwise -- a book from the table's list and a page number, or
+ * a new book. Clear drops a moderator's answer and lets the matcher decide again.
  */
 function MatchCell({
   book,
@@ -1148,17 +1174,16 @@ function MatchCell({
   onSave,
 }: {
   book: BookSummary;
-  books: BookChoice[];
+  books: BookLabels;
   busy: boolean;
   locked: boolean;
   onSave: (answer: MatchAnswer) => void;
 }) {
   const [choice, setChoice] = useState("");
   const [pageNumber, setPageNumber] = useState(String(book.number ?? 1));
-  const isNew = choice === "new";
-  const valid = choice !== "" && (isNew || (/^\d+$/.test(pageNumber.trim()) && Number(pageNumber.trim()) > 0));
-  const titles = new Map<string, number>();
-  for (const option of books) titles.set(option.title, (titles.get(option.title) ?? 0) + 1);
+  const picked = books.get(choice.trim());
+  const isNew = picked === null;
+  const valid = picked !== undefined && (isNew || (/^\d+$/.test(pageNumber.trim()) && Number(pageNumber.trim()) > 0));
   const shown = book.title ? `${book.title}${book.number ? ` p.${book.number}` : ""}` : null;
   const moderated = "via" in book.match && book.match.via === "moderator";
 
@@ -1184,24 +1209,18 @@ function MatchCell({
           onSubmit={(event) => {
             event.preventDefault();
             if (!valid) return;
-            onSave(isNew ? { newBook: true } : { bookId: choice, pageNumber: Number(pageNumber.trim()) });
+            onSave(picked ? { bookId: picked.bookId, pageNumber: Number(pageNumber.trim()) } : { newBook: true });
           }}
         >
-          <select
+          <input
             required
+            list={BOOKS_LIST}
             aria-label="Book"
+            placeholder="Book"
             value={choice}
             onChange={(event) => setChoice(event.target.value)}
             className="h-7 w-40 rounded border bg-transparent px-1.5 text-xs"
-          >
-            <option value="">Book</option>
-            <option value="new">New book</option>
-            {books.map((option) => (
-              <option key={option.bookId} value={option.bookId}>
-                {option.title}{titles.get(option.title)! > 1 ? ` · #${option.bookId}` : ""} ({option.pages === 1 ? "1 page" : `${option.pages} pages`})
-              </option>
-            ))}
-          </select>
+          />
           <input
             required={!isNew}
             disabled={isNew}
