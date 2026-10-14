@@ -20,13 +20,12 @@ local function View()
 	return _G.DUIBookFrame
 end
 
---- The book open in the view: its key in the corpus and its first page, or nil for a page the
---- corpus does not carry.
+--- The book open in the view: its key and its first page, or nil for a page nothing
+--- carries.
 local function OpenBook()
 	local pageId = SpokenBooks.lastPage
 	local key = pageId and SpokenBooks:PlaceOf(pageId)
-	local data = key and SpokenBooks:Data()
-	local entry = data and data.books[key]
+	local entry = key and SpokenBooks:BookById(key)
 	if not entry then
 		return nil, nil
 	end

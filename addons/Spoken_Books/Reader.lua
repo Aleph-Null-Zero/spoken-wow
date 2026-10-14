@@ -133,10 +133,19 @@ end
 function SpokenBooks:BookById(bookId)
 	local data = self:Data()
 	local book = data and data.books[bookId]
+	local packs = self:GetAudioPacks()
+	local hasBooks = false
+	for _, pack in ipairs(packs) do
+		if type(pack.books) == "table" then hasBooks = true break end
+	end
+	if not hasBooks then
+		return book
+	end
+
 	local extra = {}
 	local seen = {}
 	for _, id in ipairs(book and book.pages or {}) do seen[id] = true end
-	for _, pack in ipairs(self:GetAudioPacks()) do
+	for _, pack in ipairs(packs) do
 		local entry = type(pack.books) == "table" and pack.books[bookId]
 		for _, id in ipairs(entry and entry.pages or {}) do
 			if not seen[id] then
