@@ -67,7 +67,7 @@ const COLUMNS = CONTRIBUTION_COLUMNS;
  * extract's own rows from 0 on every import, so contributed rows sit far above it: they never
  * collide with a re-import, and the export lists them after everything the extract carries.
  */
-const CONTRIBUTED_ORD_FLOOR = 1_000_000;
+export const CONTRIBUTED_ORD_FLOOR = 1_000_000;
 
 export type ResolveRefusal =
   | { ok: false; reason: "not-found" }
