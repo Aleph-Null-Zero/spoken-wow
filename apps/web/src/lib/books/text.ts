@@ -44,10 +44,7 @@ export type BookVersion = {
 
 type Row = Omit<BookVersion, "createdAt"> & { createdAt: Date };
 
-/**
- * book_line's integer bookId, written until the column is dropped: the extracted book's id,
- * or null for a minted book once the column allows it.
- */
+/** book_line's integer bookId: the extracted book's id, or null for a minted book. */
 const BOOK_ID_COMPAT = `case when p."bookId" ~ '^\\d+$' then p."bookId"::int end`;
 
 const COLUMNS = `"lineId", "version", "isCurrent", "origin", "text", "editedBy", "note",
@@ -148,8 +145,8 @@ export async function saveBookText(args: {
       [args.lineId, lang],
     );
 
-    // The structural fields come from book_page, which places a page once for every language.
-    // book_line still carries them until they are dropped.
+    // The structural fields come from book_page, which places a page once for every language;
+    // book_line gets a copy, which the previous release reads.
     //
     // Whether the page can be voiced is not structure: it is a property of this language's
     // text, judged again on every save, with its $N spoken as this language's word

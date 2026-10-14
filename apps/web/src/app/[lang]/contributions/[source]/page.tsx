@@ -59,10 +59,9 @@ export const dynamic = "force-dynamic";
 /**
  * The corpus text a contribution already resolves to, or undefined where it does not.
  *
- * A zones row is looked up by its key (see existing.ts); a books row by the page the matcher
- * found, in the row's language or English. A quests row is left out of the map entirely rather
- * than looked up and always missing, so the table can tell "not checked" apart from "checked
- * and the corpus has nothing".
+ * A zones row is looked up by its key; a books row by the page the matcher found, in the row's
+ * language only. A quests row is left out of the map entirely rather than looked up and always
+ * missing, so the table can tell "not checked" apart from "checked and the corpus has nothing".
  */
 async function existingTextFor(
   contributions: Contribution[],

@@ -3,6 +3,12 @@
 Notable changes to Spoken Books and its sound pack. An addon update can use an
 existing compatible sound pack unless the release notes say otherwise.
 
+## Unreleased
+
+- **Language packs carry pages English lacks.** A page that exists only in another language, such
+  as one a player sent in, is in that language's pack with its place in its book, so Spoken finds
+  and reads it.
+
 ## 3.0.0 — 2026-10-05
 
 - **Spoken Books is now part of Spoken**, and this download no longer carries the addon. It

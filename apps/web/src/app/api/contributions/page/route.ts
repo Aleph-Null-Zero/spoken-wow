@@ -4,7 +4,7 @@
  * answer, the matcher's own decision stands. Refused once the row's page is written, which is
  * one-way.
  *
- * Gated as ../npc-identity is: whoever may edit the row's language.
+ * Gated on the row's language: whoever may edit it.
  */
 import { requireCapability } from "@/lib/generation/authz";
 import { loadBookCorpus, matchBook } from "@/lib/contributions/book-match";

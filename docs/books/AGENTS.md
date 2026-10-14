@@ -5,10 +5,24 @@ is the detailed reference.
 
 ## The table is the corpus; the Lua is an export of it
 
-`book_line` is what the site reads and what an editor changes. `addons/Spoken_Books/Data/Books.lua`
-is generated from it and committed, so the addon builds on a clone with no Postgres. Nothing on
+`book_page` and `book_line` are what the site reads and what an editor changes.
+`addons/Spoken_Books/Data/Books.lua` is generated from them and committed, so the addon builds on
+a clone with no Postgres. Nothing on
 the site may read that file, because it shows the last export rather than the table. Building
 the sound pack does need the database (`books-lookup` reads `DATABASE_URL`).
+
+## A page exists in any language
+
+`book_page` holds a page's structure, once: its book, its number and what opens it. `book_line`
+holds each language's words for it, so a page may exist in Spanish and nowhere else. Never read
+a page's place from `book_line`.
+
+A books contribution names no page, so `apps/web/src/lib/contributions/book-match.ts` finds it:
+by the item or object it was read from, then the same words in any language, then the title and
+page number. Two candidates are never guessed between; a moderator picks. A page nothing in the
+corpus has is minted on accept as `b:n{uuid}`, in a minted `n{uuid}` book when it starts one,
+and the import folds it into the real page if the world database turns out to have it
+(`pipelines/books/tools/lib/absorb.mjs`).
 
 ## The extract must respect `patch`
 

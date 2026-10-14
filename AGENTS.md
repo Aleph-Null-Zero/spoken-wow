@@ -61,8 +61,10 @@ reproduced. Never prune those.
 
 **Ids and filenames are frozen.** `q:{questID}:{accept|progress|complete}`, `g:{md5}`,
 `g:b{broadcastTextID}-{voice}`, `g:{lang}-{md5}`, `f:{broadcastTextID}:{voice}` (each with an optional `:m`/`:f` suffix), `z:{mapID}`,
-`s:{mapID}:{key}`, `b:{pageTextID}`, and the paths derived from them. Renaming one re-ships a
-pack every player has downloaded and orphans the take history. Each is derived in exactly one
+`s:{mapID}:{key}`, `b:{pageTextID}`, the minted `b:n{uuid}` (a page only a player's client has
+shown) and its book's `n{uuid}`, and the paths derived from them. A minted page later found in
+the world database folds into the real one, and its id stays behind as an alias. Renaming one
+re-ships a pack every player has downloaded and orphans the take history. Each is derived in exactly one
 place: `pipelines/quests/tts_cli/naming.py` (mirrored by
 `apps/web/src/lib/contributions/naming.ts`), `pipelines/zones/tools/voice/naming.mjs` and
 `pipelines/books/tools/lib/naming.mjs`.

@@ -2,6 +2,12 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## Unreleased
+
+- **Books finds and reads pages only a language pack has.** A page that exists in your client's
+  language but not in English, such as one a player sent in, is now recognised, placed in its
+  book and read aloud once its language pack carries it, and Report works on it.
+
 ## 3.4.0 — 2026-10-12
 
 - **A character is greeted by its zone only once, in its starting area.** An existing

@@ -1,8 +1,7 @@
 -- Which pages exist, where each sits, and what opens it -- the same in every language.
 --
--- book_line keeps each language's words for a page. Until now it also carried the page's
--- structure on every row, copied from the English one, so a page English does not have could
--- not exist in any language. book_page is that structure, once per page.
+-- book_line holds each language's words for a page; book_page is the page's structure, once
+-- per page, so a page exists in any language whether English has it or not.
 --
 -- "lineId" is 'b:{pageTextID}' for a page the world database has, or 'b:n{uuid}' for one a
 -- player's client showed and nothing else names. "bookId" is text for the same reason: the
@@ -12,8 +11,8 @@
 -- "aliasOf" is set on a minted page later found in the world database: everything moved to the
 -- real page, and the minted id is kept so a pack that shipped it still plays.
 --
--- Additive: book_line keeps its structure columns, written and read as before, until a later
--- release drops them.
+-- Additive: book_line keeps its structure columns, written as before, for the previous release
+-- to read.
 
 create table "book_page" (
   "lineId"     text primary key,
