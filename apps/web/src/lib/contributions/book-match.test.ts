@@ -123,10 +123,19 @@ describe("matchBook", () => {
   });
 
   it("stays ambiguous when the title leaves none or several", () => {
-    const ambiguous = { kind: "ambiguous", candidates: ["b:340", "b:341", "b:342"] };
-    expect(matchBook(row({ text: "Carta de reclutamiento", meta: { book: "Ninguno", number: "1" } }), corpus)).toEqual(ambiguous);
+    expect(matchBook(row({ text: "Carta de reclutamiento", meta: { book: "Ninguno", number: "1" } }), corpus))
+      .toEqual({ kind: "ambiguous", candidates: ["b:340", "b:341", "b:342"] });
     expect(matchBook(row({ text: "Carta de reclutamiento", meta: { book: "Registro de Reclutamiento", number: "1" } }), corpus))
-      .toEqual(ambiguous);
+      .toEqual({ kind: "ambiguous", candidates: ["b:340", "b:341"] });
+  });
+
+  it("tries the contributor's title against the titles in any language when its own has no pages", () => {
+    const letters = indexCorpus([
+      page("b:340", "340", 1, { esMX: "Igual" }, { esMX: "Carta de reclutamiento" }),
+      page("b:341", "341", 1, { esMX: "Igual" }, { esMX: "Carta de reclutamiento firmada" }),
+    ]);
+    expect(matchBook(row({ text: "Igual", meta: { book: "Carta de reclutamiento", number: "1" } }), letters))
+      .toMatchObject({ kind: "translation", lineId: "b:340", via: "text" });
   });
 
   it("matches 2,000 rows against 1,200 pages quickly", () => {

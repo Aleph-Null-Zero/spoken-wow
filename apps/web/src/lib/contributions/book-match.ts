@@ -136,12 +136,20 @@ export function matchBook(row: BookMatchInput, corpus: BookCorpus): BookMatchRes
       // The same words in this language on one page is that page, whatever else repeats them.
       const own = same.filter((p) => corpus.normalised.get(p.lineId)?.get(row.locale) === said);
       if (own.length === 1) return onPage(own[0], said, row, corpus, "text");
-      // Otherwise the contributor's own title, then its page number, may tell the copies apart.
-      const titled = title ? same.filter((p) => p.titles.get(row.locale)?.trim() === title) : [];
-      if (titled.length === 1) return onPage(titled[0], said, row, corpus, "text");
-      const numbered = titled.filter((p) => p.pageNumber === pageNumber);
-      if (numbered.length === 1) return onPage(numbered[0], said, row, corpus, "text");
-      return { kind: "ambiguous", candidates: same.map((p) => p.lineId).sort() };
+      // Otherwise the contributor's title, in its language and then in any, and its page number
+      // may tell the copies apart.
+      const named = (p: BookCorpusPage, lang?: string) =>
+        [...p.titles].some(([l, t]) => (lang === undefined || l === lang) && t.trim() === title);
+      let narrowed = title ? same.filter((p) => named(p, row.locale)) : [];
+      if (title && narrowed.length === 0) narrowed = same.filter((p) => named(p));
+      if (narrowed.length === 1) return onPage(narrowed[0], said, row, corpus, "text");
+      if (narrowed.length > 1) {
+        const numbered = narrowed.filter((p) => p.pageNumber === pageNumber);
+        if (numbered.length === 1) return onPage(numbered[0], said, row, corpus, "text");
+        if (numbered.length > 1) narrowed = numbered;
+      }
+      const left = narrowed.length > 0 ? narrowed : same;
+      return { kind: "ambiguous", candidates: left.map((p) => p.lineId).sort() };
     }
   }
 
