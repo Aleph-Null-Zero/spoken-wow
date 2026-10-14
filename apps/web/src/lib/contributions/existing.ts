@@ -2,11 +2,11 @@
  * Turning a triage key back into a corpus lookup.
  *
  * Read backwards from contributions.ts's checkEnvelope, which is the only other place that owns
- * this format. Only books and zones parse to something worth checking: their keys are a frozen
- * id and either a bare map or an (mapID, subzone) pair, both things a real corpus entry could
- * already answer to, so a row filed as "missing" might in fact be a corpus bug -- the case the
- * triage page exists to surface. Quests keys have no such target to resolve against, so there
- * is nothing to check.
+ * this format. Only zones parse to something worth checking: a key is a bare map or an
+ * (mapID, subzone) pair, which a real corpus entry could already answer to, so a row filed as
+ * "missing" might in fact be a corpus bug -- the case the triage page exists to surface. A books
+ * key is the checksum of the text on screen and names no page (book-match.ts finds it), and
+ * quests keys have no target to resolve against, so there is nothing to check.
  *
  * The subzone canonicalisation is not reimplemented here. It used to be a hand-rolled regex
  * chain in this file, and it silently disagreed with the pipeline on any subzone starting
@@ -21,15 +21,10 @@ import { normaliseKey, slugFor } from "@/lib/zones/tools";
 const DIGITS = /^\d+$/;
 
 export type CorpusLookup =
-  | { source: "books"; pageId: number }
   | { source: "zones"; mapID: number; slug: string }
   | null;
 
 export function corpusLookup(source: string, key: string): CorpusLookup {
-  if (source === "books") {
-    return DIGITS.test(key) ? { source: "books", pageId: Number(key) } : null;
-  }
-
   if (source === "zones") {
     // "map" is digits-only by construction (contributions.ts's checkEnvelope), so the first
     // ":" always marks its end no matter what the subzone name itself contains.

@@ -8,7 +8,7 @@
  * this file's own care around npcId/questId, which are randomised well outside any id the
  * corpus or an addon submission could plausibly produce.
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
@@ -1108,21 +1108,83 @@ describe("resolveContribution: a greeting in any language", { timeout: 20_000 },
   });
 });
 
-describe("resolveContribution: a book page in another language", () => {
-  // A language no import on this machine writes, so the rows here are this test's own.
-  const LOCALE = "ptBR";
+
+describe("resolveContribution: a books contribution, in any language", () => {
+  /**
+   * A two-page book of this test's own, in English and esMX, owned by an object no language has
+   * named, and two more books sharing one English title. Ids far outside vmangos's, fresh per
+   * test, so no run reads another's pages.
+   */
+  let base: number;
+  let seeded: string[] = [];
+  let DUSTY: string;
+
+  async function seedPage(
+    lineId: string,
+    bookId: string,
+    pageNumber: number,
+    owner: number | null,
+    texts: [lang: string, title: string, text: string][],
+  ): Promise<void> {
+    seeded.push(lineId);
+    await db().query(
+      `insert into "book_page" ("lineId", "pageTextId", "bookId", "pageNumber", "ownerKind", "ownerIds")
+       values ($1, $2, $3, $4, $5, $6)`,
+      [lineId, Number(lineId.slice(2)), bookId, pageNumber, owner === null ? null : "object", owner === null ? null : [owner]],
+    );
+    for (const [lang, title, text] of texts) await textRow(lineId, lang, text, title);
+  }
+
+  async function textRow(lineId: string, lang: string, text: string, title = "Libro"): Promise<void> {
+    await db().query(
+      `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+       values ($1, $2, 1, true, 'extracted', $3, $4)`,
+      [lineId, lang, title, text],
+    );
+  }
+
+  beforeEach(async () => {
+    base = 900_000_000 + Math.floor(Math.random() * 90_000_000);
+    DUSTY = `Dusty ${base}`;
+    const owner = base;
+    await seedPage(`b:${base}`, String(base), 1, owner, [
+      ["enUS", `A Test Tome ${base}`, `Words one ${base}.`],
+      ["esMX", `Libro ${base}`, `Palabras esMX uno ${base}.`],
+    ]);
+    await seedPage(`b:${base + 1}`, String(base), 2, owner, [
+      ["enUS", `A Test Tome ${base}`, `Words two ${base}.`],
+      ["esMX", `Libro ${base}`, `Palabras esMX dos ${base}.`],
+    ]);
+    await seedPage(`b:${base + 10}`, String(base + 10), 1, null, [["enUS", DUSTY, `Dust one ${base}.`]]);
+    await seedPage(`b:${base + 20}`, String(base + 20), 1, null, [["enUS", DUSTY, `Dust two ${base}.`]]);
+  });
+
+  afterEach(async () => {
+    const notes = contributionIds.map((id) => `contribution #${id}`);
+    await db().query(
+      `delete from "book_page" where "lineId" like 'b:n%'
+          and "lineId" in (select "lineId" from "book_line" where "note" = any($1::text[]))`,
+      [notes],
+    );
+    // A correction is 'edited', which the file's own cleanup leaves.
+    await db().query(`delete from "book_line" where "note" = any($1::text[])`, [notes]);
+    await db().query(`delete from "book_line" where "lineId" = any($1::text[])`, [seeded]);
+    await db().query(`delete from "book_page" where "lineId" = any($1::text[])`, [seeded]);
+    // The English names book_line's trigger gave each owner (0036).
+    await db().query(`delete from "entity_name" where "kind" = 'gameobject' and "entityId" = $1`, [String(base)]);
+    seeded = [];
+  });
 
   /** A books contribution as the addon files one: keyed on the checksum, naming no page. */
-  async function page(text: string, book: string): Promise<number> {
+  async function booksRow(over: { locale: string; text: string; meta: Record<string, string> }): Promise<number> {
     const dedup = `accept-test-${Math.random().toString(36).slice(2)}`;
-    // Not a real checksum, so no real contribution shares it.
     await createContribution({
       source: "books",
       key: dedup,
-      locale: LOCALE,
+      locale: over.locale,
       build: "1.15.7/61582",
-      text,
-      meta: { page: dedup, book, number: "1" },
+      text: over.text,
+      meta: { page: dedup, ...over.meta },
       raw: `raw:${dedup}`,
       dedup,
       body: null,
@@ -1137,100 +1199,182 @@ describe("resolveContribution: a book page in another language", () => {
   }
 
   async function row(id: number): Promise<Contribution> {
-    const { rows } = await db().query<Contribution>(
-      `select ${CONTRIBUTION_COLUMNS} from "contribution" where "id" = $1`,
-      [id],
+    const { rows } = await db().query<Contribution>(`select ${CONTRIBUTION_COLUMNS} from "contribution" where "id" = $1`, [id]);
+    return rows[0];
+  }
+
+  async function textOf(lineId: string, lang: string) {
+    const { rows } = await db().query(
+      `select "text", "origin", "title" from "book_line" where "lineId" = $1 and "lang" = $2 and "isCurrent"`,
+      [lineId, lang],
     );
     return rows[0];
   }
 
-  /**
-   * An English page of this test's own, so it needs no imported corpus: ids far outside
-   * vmangos's, and an owner no language has named.
-   */
-  let seeded: number[] = [];
-
-  afterEach(async () => {
-    await db().query(`delete from "book_line" where "pageId" = any($1::int[])`, [seeded]);
-    // The English name book_line's trigger gave each owner (0036).
-    await db().query(`delete from "entity_name" where "kind" = 'gameobject' and "entityId" = any($1::text[])`, [
-      seeded.map(String),
-    ]);
-    seeded = [];
-  });
-
-  /** Sets the English page accept reads, in the "pageId" column. */
-  async function matchedTo(id: number, pageId: number): Promise<void> {
-    await db().query(`update "contribution" set "pageId" = $2 where "id" = $1`, [id, pageId]);
-  }
-
-  async function untranslatedPage(): Promise<{ pageId: number; lineId: string; owner: string; kind: string }> {
-    const pageId = 900_000_000 + Math.floor(Math.random() * 90_000_000);
-    seeded.push(pageId);
-    await db().query(
-      `insert into "book_line"
-         ("lineId", "lang", "version", "isCurrent", "origin", "pageId", "bookId",
-          "pageNumber", "pageCount", "title", "ownerKind", "ownerIds", "text")
-       values ($1, $2, 1, true, 'extracted', $3, $3, 1, 1, 'A Test Tome', 'object', $4, 'Words.')`,
-      [`b:${pageId}`, BASE_LANG, pageId, [pageId]],
-    );
-    return { pageId, lineId: `b:${pageId}`, owner: String(pageId), kind: "gameobject" };
-  }
-
-  it("refuses a row nobody has matched to a page, and writes nothing", async () => {
-    const id = await page("Uma página sem par.", "Livro Nenhum");
-    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: false, reason: "needs-page" });
-    expect((await row(id)).status).toBe("new");
-  });
-
-  it("writes the matched page in its language, with the title the client showed", async () => {
-    const target = await untranslatedPage();
-    const id = await page("Olá, $N. Esta é a página.", "Livro de Teste");
-    await matchedTo(id, target.pageId);
-    expect(await lineIsInExplorer({ ...(await row(id)), status: "accepted" })).toBe(false);
-    expect((await resolveContribution(id, "accepted", RESOLVER)).ok).toBe(true);
-
+  async function versionsOf(lineId: string, lang: string) {
     const { rows } = await db().query(
-      `select "origin", "version", "isCurrent", "text", "title", "editedBy", "generatable"
-         from "book_line" where "lineId" = $1 and "lang" = $2`,
-      [target.lineId, LOCALE],
+      `select "version", "isCurrent", "text" from "book_line" where "lineId" = $1 and "lang" = $2 order by "version" desc`,
+      [lineId, lang],
     );
-    expect(rows).toEqual([
-      {
-        origin: "contributed",
-        version: 1,
-        isCurrent: true,
-        text: "Olá, $N. Esta é a página.",
-        title: "Livro de Teste",
-        editedBy: RESOLVER,
-        generatable: true,
-      },
-    ]);
+    return rows;
+  }
+
+  async function pagesTitled(title: string, lang: string) {
+    const { rows } = await db().query<{ lineId: string; bookId: string; pageNumber: number }>(
+      `select p."lineId", p."bookId", p."pageNumber" from "book_page" p
+         join "book_line" l on l."lineId" = p."lineId" and l."lang" = $2 and l."isCurrent"
+        where l."title" = $1 order by p."pageNumber"`,
+      [title, lang],
+    );
+    return rows;
+  }
+
+  /** Until two backends wait on a lock at accept's books lock or its book_page insert. */
+  async function bothWaiting(): Promise<void> {
+    for (let tries = 0; tries < 200; tries++) {
+      const { rows } = await db().query<{ n: number }>(
+        `select count(*)::int as "n" from pg_stat_activity
+          where "datname" = current_database() and "wait_event_type" = 'Lock'
+            and ("query" like 'select pg_advisory_xact_lock(hashtext($1))%' or "query" like 'insert into "book_page"%')`,
+      );
+      if (rows[0].n >= 2) return;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    throw new Error("the two accepts never both reached the lock");
+  }
+
+  async function ownersOf(lineId: string) {
+    const { rows } = await db().query(`select "ownerKind", "ownerIds" from "book_page" where "lineId" = $1`, [lineId]);
+    return rows[0];
+  }
+
+  it("writes a translation of a page found by another language's words, naming its owner", async () => {
+    const id = await booksRow({ locale: "esES", text: `Palabras esMX uno ${base}.`, meta: { book: "Libro", number: "1" } });
+    expect(await lineIsInExplorer({ ...(await row(id)), status: "accepted" })).toBe(false);
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await textOf(`b:${base}`, "esES")).toEqual({ text: `Palabras esMX uno ${base}.`, origin: "contributed", title: "Libro" });
     const { rows: names } = await db().query(
-      `select "name", "origin" from "entity_name" where "kind" = $1 and "entityId" = $2 and "lang" = $3 and "isCurrent"`,
-      [target.kind, target.owner, LOCALE],
+      `select "name", "origin" from "entity_name" where "kind" = 'gameobject' and "entityId" = $1 and "lang" = 'esES' and "isCurrent"`,
+      [String(base)],
     );
     // Not 'edited': an import that finds the game's own name must be free to promote over it.
-    expect(names).toEqual([{ name: "Livro de Teste", origin: "contributed" }]);
+    expect(names).toEqual([{ name: "Libro", origin: "contributed" }]);
     expect(await lineIsInExplorer(await row(id))).toBe(true);
   });
 
-  it("leaves a page this language already has alone, and is one-way once written", async () => {
-    const target = await untranslatedPage();
-    const first = await page("O primeiro texto.", "Livro de Teste");
-    const second = await page("O segundo texto.", "Outro Título");
-    await matchedTo(first, target.pageId);
-    await matchedTo(second, target.pageId);
-    expect((await resolveContribution(first, "accepted", RESOLVER)).ok).toBe(true);
-    expect((await resolveContribution(second, "accepted", RESOLVER)).ok).toBe(true);
-
-    const { rows } = await db().query(`select "text" from "book_line" where "lineId" = $1 and "lang" = $2`, [
-      target.lineId, LOCALE,
+  it("writes a correction as a new version", async () => {
+    await textRow(`b:${base}`, "esES", "Viejo texto.");
+    const id = await booksRow({ locale: "esES", text: `Palabras esMX uno ${base}.`, meta: { book: "Libro", number: "1" } });
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await versionsOf(`b:${base}`, "esES")).toEqual([
+      { version: 2, isCurrent: true, text: `Palabras esMX uno ${base}.` },
+      { version: 1, isCurrent: false, text: "Viejo texto." },
     ]);
-    expect(rows).toEqual([{ text: "O primeiro texto." }]);
-    expect(await resolveContribution(first, "rejected", RESOLVER)).toMatchObject({ ok: false, reason: "one-way" });
+    expect(await lineIsInExplorer(await row(id))).toBe(true);
+    // A correction is written too, so it is as one-way as a first version.
+    expect(await resolveContribution(id, "rejected", RESOLVER)).toMatchObject({ ok: false, reason: "one-way" });
+  });
+
+  it("writes the page a moderator named, and is one-way once written", async () => {
+    const id = await booksRow({ locale: "ptBR", text: "Olá, $N. Esta é a página.", meta: { book: "Livro de Teste", number: "1" } });
+    await setContributionMatch(id, { lineId: `b:${base + 1}` }, RESOLVER);
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await textOf(`b:${base + 1}`, "ptBR")).toEqual({
+      text: "Olá, $N. Esta é a página.", origin: "contributed", title: "Livro de Teste",
+    });
+    expect(await resolveContribution(id, "rejected", RESOLVER)).toMatchObject({ ok: false, reason: "one-way" });
     // The match under a written page cannot move either.
-    expect(await setContributionMatch(first, null, RESOLVER)).toBeNull();
-    expect((await row(first)).pageId).toBe(target.pageId);
+    expect(await setContributionMatch(id, null, RESOLVER)).toBeNull();
+    expect((await row(id)).matchLineId).toBe(`b:${base + 1}`);
+  });
+
+  it("mints a new book, and its next page joins it", async () => {
+    const title = `Instrucciones ${base}`;
+    const first = await booksRow({ locale: "esES", text: `Uno ${base}.`, meta: { book: title, number: "1" } });
+    const third = await booksRow({ locale: "esES", text: `Tres ${base}.`, meta: { book: title, number: "3" } });
+    expect(await resolveContribution(first, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await resolveContribution(third, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    const pages = await pagesTitled(title, "esES");
+    expect(pages).toHaveLength(2);
+    expect(new Set(pages.map((p) => p.bookId)).size).toBe(1);
+    expect(pages.map((p) => p.pageNumber)).toEqual([1, 3]);
+    expect(pages[0].lineId).toMatch(/^b:n[0-9a-f-]{36}$/);
+    expect(pages[0].bookId).toMatch(/^n[0-9a-f-]{36}$/);
+    const { rows } = await db().query(
+      `select "pageId", "bookId", "pageNumber", "pageCount", "ownerKind", "ownerIds" from "book_line"
+        where "lineId" = $1 and "lang" = 'esES'`,
+      [pages[0].lineId],
+    );
+    expect(rows).toEqual([{ pageId: null, bookId: null, pageNumber: 1, pageCount: 1, ownerKind: null, ownerIds: null }]);
+  });
+
+  it("mints one book for two pages of one title accepted at once", async () => {
+    const title = `Simultáneo ${base}`;
+    const a = await booksRow({ locale: "esES", text: `A ${base}.`, meta: { book: title, number: "1" } });
+    const b = await booksRow({ locale: "esES", text: `B ${base}.`, meta: { book: ` ${title} `, number: "2" } });
+    // Each resolve takes its own pool connection. Holding book_page's inserts until both are
+    // waiting -- one at the insert, the other at accept's lock, or both at the insert if
+    // nothing serialised them -- makes the two transactions overlap every run.
+    const blocker = await db().connect();
+    let outcomes;
+    try {
+      await blocker.query("begin");
+      await blocker.query(`lock table "book_page" in share mode`);
+      const resolving = Promise.all([resolveContribution(a, "accepted", RESOLVER), resolveContribution(b, "accepted", RESOLVER)]);
+      await bothWaiting();
+      await blocker.query("commit");
+      outcomes = await resolving;
+    } finally {
+      blocker.release();
+    }
+    expect(outcomes).toMatchObject([{ ok: true }, { ok: true }]);
+    const pages = await pagesTitled(title, "esES");
+    expect(pages).toHaveLength(2);
+    expect(new Set(pages.map((p) => p.bookId)).size).toBe(1);
+  });
+
+  it("accepts an English page the corpus lacks", async () => {
+    const title = `New in Forever ${base}`;
+    const id = await booksRow({ locale: "enUS", text: `Forever only ${base}.`, meta: { book: title, number: "1" } });
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await pagesTitled(title, "enUS")).toHaveLength(1);
+  });
+
+  it("refuses an ambiguous row until a moderator answers, and writes nothing", async () => {
+    const id = await booksRow({ locale: "enUS", text: `Unseen ${base}.`, meta: { book: DUSTY, number: "1" } });
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: false, reason: "needs-page" });
+    expect((await row(id)).status).toBe("new");
+    expect(await pagesTitled(DUSTY, "enUS")).toHaveLength(2);
+  });
+
+  it("refuses a row whose words the page already has", async () => {
+    const id = await booksRow({ locale: "esMX", text: `Palabras esMX dos ${base}.`, meta: { book: `Libro ${base}`, number: "2" } });
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: false, reason: "malformed" });
+    expect(await versionsOf(`b:${base + 1}`, "esMX")).toHaveLength(1);
+  });
+
+  it("adds the object the client read it from to the page's owners, once", async () => {
+    const renumbered = String(base + 5);
+    const first = await booksRow({
+      locale: "esES", text: `Palabras esMX uno ${base}.`, meta: { book: "Libro", number: "1", object: renumbered },
+    });
+    expect(await resolveContribution(first, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await ownersOf(`b:${base}`)).toEqual({ ownerKind: "object", ownerIds: [base, base + 5] });
+
+    // Found by that object now, as a correction of the same page.
+    const second = await booksRow({
+      locale: "esES", text: `Otras palabras ${base}.`, meta: { book: "Libro", number: "1", object: renumbered },
+    });
+    expect(await resolveContribution(second, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await versionsOf(`b:${base}`, "esES")).toHaveLength(2);
+    expect(await ownersOf(`b:${base}`)).toEqual({ ownerKind: "object", ownerIds: [base, base + 5] });
+  });
+
+  it("gives a minted page the item it was read from", async () => {
+    const item = base + 6;
+    const id = await booksRow({ locale: "esES", text: `Nueva ${base}.`, meta: { book: `Nuevo ${base}`, number: "1", item: String(item) } });
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    const [page] = await pagesTitled(`Nuevo ${base}`, "esES");
+    expect(await ownersOf(page.lineId)).toEqual({ ownerKind: "item", ownerIds: [item] });
   });
 });

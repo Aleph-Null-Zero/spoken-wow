@@ -91,6 +91,20 @@ describe("a page with no words yet", () => {
     expect(rows[0]).toEqual({ pageId: id, bookId: id, pageNumber: 1, pageCount: 1, title: "" });
   });
 
+  it("takes the first words of a minted page, leaving the structure the game never gave it empty", async () => {
+    const bookId = `n${crypto.randomUUID()}`;
+    lineId = `b:${bookId}`;
+    await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 1)`, [lineId, bookId]);
+    const saved = await saveBookText({ lineId, text: "Hola.", editedBy: editor, lang: "esES" });
+    expect(saved).toMatchObject({ lineId, version: 1, text: "Hola." });
+    const { rows } = await db().query(
+      `select "pageId", "bookId", "pageNumber", "pageCount", "ownerKind", "ownerIds" from "book_line"
+        where "lineId" = $1 and "lang" = 'esES'`,
+      [lineId],
+    );
+    expect(rows[0]).toEqual({ pageId: null, bookId: null, pageNumber: 1, pageCount: 1, ownerKind: null, ownerIds: null });
+  });
+
   it("refuses a page that has words but no book_page row", async () => {
     await seed("Words.");
     await db().query(`delete from "book_page" where "lineId" = $1`, [lineId]);

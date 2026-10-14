@@ -17,10 +17,8 @@ const lineId = `b:${bookId}`;
 beforeAll(async () => {
   await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 1)`, [lineId, bookId]);
   await db().query(
-    `insert into "book_line"
-       ("lineId", "lang", "version", "isCurrent", "origin", "pageId", "bookId", "pageNumber",
-        "pageCount", "title", "ownerKind", "ownerIds", "text")
-     values ($1, 'esES', 1, true, 'contributed', 0, 0, 1, 1, 'Instrucciones', 'item', '{}', 'Trotamundos.')`,
+    `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+     values ($1, 'esES', 1, true, 'contributed', 'Instrucciones', 'Trotamundos.')`,
     [lineId],
   );
 });

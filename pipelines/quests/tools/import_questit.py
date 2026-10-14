@@ -143,7 +143,8 @@ def import_pages(conn, data: dict, hasher: Hasher, note: str, dry_run: bool) -> 
                    select p."lineId", %s,
                           coalesce((select max(m."version") from "book_line" m
                                      where m."lineId" = p."lineId" and m."lang" = %s), 0) + 1,
-                          %s, 'community', p."pageTextId", p."bookId"::int, p."pageNumber",
+                          %s, 'community', p."pageTextId",
+                          case when p."bookId" ~ '^\\d+$' then p."bookId"::int end, p."pageNumber",
                           (select count(*) from "book_page" c
                             where c."bookId" = p."bookId" and c."aliasOf" is null),
                           e."title", p."ownerKind", p."ownerIds", coalesce(p."material", 0), %s, true, null, %s
