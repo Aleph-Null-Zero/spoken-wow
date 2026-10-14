@@ -48,7 +48,7 @@ export function validateOverride(input: unknown): { file: string; lineId: string
   // reintroduce the characters it exists to remove would be a trap rather than a freedom.
   if (overrideHasInvalidChars(trimmed)) {
     throw new OverrideError(
-      `text cannot contain any of ${INVALID_CHARS} outside a $gmale:female; branch - those are what make a line unvoiceable`,
+      `text cannot contain any of ${INVALID_CHARS} outside a $g branch such as $glad:lass; - those are what make a line unvoiceable`,
     );
   }
 

@@ -381,8 +381,8 @@ A moderator splits it by writing the `$G` back in the explorer: the plain line s
 current and `:m` and `:f` take its place, both holding the template. Edited without a `$G`, a
 side of a split moment changes alone; putting the plain version back undoes the split. English
 splits the same way: a rewrite or an accepted correction holding a `$G` makes a plain line,
-extracted or not, its `:m` and `:f` (`apps/web/src/lib/quests/english-rewrite.ts`), and on a
-split moment it rewrites both sides. The site decides the shape: `extract` leaves out a dump
+extracted or not, its `:m` and `:f`, each holding its own reader's words
+(`apps/web/src/lib/quests/english-rewrite.ts`), and on a split moment it rewrites both sides. The site decides the shape: `extract` leaves out a dump
 line the site split and gives its speakers to both sides (`split_here` in
 `tts_cli/corpus_db.py`).
 

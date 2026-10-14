@@ -50,7 +50,7 @@ afterAll(async () => {
 });
 
 describe("rewriteEnglish", () => {
-  it("splits an extracted plain line by player gender, keeping what it prints", async () => {
+  it("splits an extracted plain line into each reader's words, keeping what it prints", async () => {
     const outcome = await rewriteEnglish(await englishMomentLines(moment, 0), 0, {
       text: "Well met, $glad:lass;.",
       userId: EDITOR,
@@ -62,10 +62,10 @@ describe("rewriteEnglish", () => {
          from "quest_line" where "lineId" = any($1::text[]) and "lang" = 'enUS' and "isCurrent" order by "lineId"`,
       [lines],
     );
-    const shared = { text: "Well met, $glad:lass;.", originalText: "Well met, $n.", origin: "edited", editedBy: EDITOR };
+    const shared = { originalText: "Well met, $n.", origin: "edited", editedBy: EDITOR };
     expect(rows).toEqual([
-      { lineId: `${moment}:f`, fileName: `f-${quest}-accept`, ...shared },
-      { lineId: `${moment}:m`, fileName: `m-${quest}-accept`, ...shared },
+      { lineId: `${moment}:f`, fileName: `f-${quest}-accept`, text: "Well met, lass.", ...shared },
+      { lineId: `${moment}:m`, fileName: `m-${quest}-accept`, text: "Well met, lad.", ...shared },
     ]);
 
     const { rows: speakers } = await db().query(

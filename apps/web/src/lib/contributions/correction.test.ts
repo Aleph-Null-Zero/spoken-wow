@@ -144,10 +144,10 @@ describe("acceptCorrection", () => {
          from "quest_line" where "lineId" = any($1::text[]) and "lang" = 'enUS' and "isCurrent" order by "lineId"`,
       [linesOf(contributedQuest)],
     );
-    const shared = { text: "Well met, $glad:lass;.", originalText: "Well met, $glad:lass;.", origin: "contributed", generatable: true };
+    const shared = { originalText: "Well met, $glad:lass;.", origin: "contributed", generatable: true };
     expect(rows).toEqual([
-      { lineId: `${moments[1]}:f`, playerGender: "f", fileName: `f-${contributedQuest}-accept`, ...shared },
-      { lineId: `${moments[1]}:m`, playerGender: "m", fileName: `m-${contributedQuest}-accept`, ...shared },
+      { lineId: `${moments[1]}:f`, playerGender: "f", fileName: `f-${contributedQuest}-accept`, text: "Well met, lass.", ...shared },
+      { lineId: `${moments[1]}:m`, playerGender: "m", fileName: `m-${contributedQuest}-accept`, text: "Well met, lad.", ...shared },
     ]);
 
     // The export joins speakers by line id, so each side carries its own.

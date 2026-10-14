@@ -70,7 +70,7 @@ export async function rewriteEnglish(
     }),
   );
 
-  if (split) await splitByPlayerGender(rows[0], forms, variant, rewrite);
+  if (split) await splitByPlayerGender(rows[0], forms, drafts.map((draft) => draft.text), variant, rewrite);
   else {
     for (const draft of drafts) {
       await writeOverride(draft.file, draft.lineId, draft.text, rewrite.userId, rewrite.contributionId);
@@ -80,9 +80,9 @@ export async function rewriteEnglish(
 }
 
 /**
- * A plain English line made the moment's `:m` and `:f` lines, as accept.ts writes a contributed
- * moment whose template branches: `text` keeps the `$G` for player-words.ts to resolve in each
- * line's gender. The plain line stops being current; its takes stay under its own file.
+ * A plain English line made the moment's `:m` and `:f` lines, each holding its own reader's
+ * words: the `$G` branches are taken here, not left for player-words.ts. The plain line stops
+ * being current; its takes stay under its own file.
  *
  * The plain line's speakers, in every language, are copied onto both, because the export joins
  * speakers to lines by id.
@@ -90,6 +90,7 @@ export async function rewriteEnglish(
 async function splitByPlayerGender(
   plain: EnglishRow,
   forms: readonly EnglishRow[],
+  texts: readonly string[],
   variant: number,
   rewrite: EnglishRewrite,
 ): Promise<void> {
@@ -105,8 +106,9 @@ async function splitByPlayerGender(
     );
     if (!rowCount) throw new QuestTextConflict(`${plain.lineId} changed while it was being split`);
 
-    for (const form of forms) {
-      const skipReason = skipReasonFor(plain.source, rewrite.text, BASE_LANG, form.playerGender);
+    for (const [i, form] of forms.entries()) {
+      const text = texts[i];
+      const skipReason = skipReasonFor(plain.source, text, BASE_LANG, form.playerGender);
       const { rows } = await client.query<{ version: number }>(
         `insert into "quest_line"
            ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "questId",
@@ -118,7 +120,7 @@ async function splitByPlayerGender(
          returning "version"`,
         [
           form.lineId, variant, BASE_LANG, origin, plain.source, plain.questId, plain.questTitle,
-          form.playerGender, form.fileName, rewrite.text, originalText, skipReason === null,
+          form.playerGender, form.fileName, text, originalText, skipReason === null,
           skipReason, rewrite.userId, rewrite.note ?? null,
         ],
       );
@@ -132,7 +134,7 @@ async function splitByPlayerGender(
           lineId: form.lineId,
           detail: {
             version: rows[0].version,
-            text: rewrite.text,
+            text,
             note: rewrite.note ?? null,
             variant,
             replaces: [plain.lineId],
