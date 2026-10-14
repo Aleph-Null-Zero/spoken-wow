@@ -24,7 +24,7 @@ import { writeOverride } from "@/lib/quests/overrides";
 import { QuestTextConflict } from "@/lib/quests/text";
 import { skipReasonFor } from "@/lib/text-gate";
 
-export type EnglishRow = Pick<
+type EnglishRow = Pick<
   CorpusLine,
   "lineId" | "source" | "questId" | "questTitle" | "playerGender" | "fileName" | "originalText"
 >;
@@ -70,8 +70,10 @@ export async function rewriteEnglish(
     }),
   );
 
-  if (split) await splitByPlayerGender(rows[0], forms, drafts.map((draft) => draft.text), variant, rewrite);
-  else {
+  if (split) {
+    const sides = forms.map((form, i) => ({ ...form, text: drafts[i].text }));
+    await splitByPlayerGender(rows[0], sides, variant, rewrite);
+  } else {
     for (const draft of drafts) {
       await writeOverride(draft.file, draft.lineId, draft.text, rewrite.userId, rewrite.contributionId);
     }
@@ -89,8 +91,7 @@ export async function rewriteEnglish(
  */
 async function splitByPlayerGender(
   plain: EnglishRow,
-  forms: readonly EnglishRow[],
-  texts: readonly string[],
+  forms: readonly (EnglishRow & { text: string })[],
   variant: number,
   rewrite: EnglishRewrite,
 ): Promise<void> {
@@ -106,8 +107,8 @@ async function splitByPlayerGender(
     );
     if (!rowCount) throw new QuestTextConflict(`${plain.lineId} changed while it was being split`);
 
-    for (const [i, form] of forms.entries()) {
-      const text = texts[i];
+    for (const form of forms) {
+      const { text } = form;
       const skipReason = skipReasonFor(plain.source, text, BASE_LANG, form.playerGender);
       const { rows } = await client.query<{ version: number }>(
         `insert into "quest_line"

@@ -16,7 +16,7 @@ import { momentOf } from "@/lib/contributions/naming";
 import { requireRegenerate } from "@/lib/generation/authz";
 import { branchesOnPlayerGender } from "@/lib/player-words";
 import { englishMomentLines, rewriteEnglish } from "@/lib/quests/english-rewrite";
-import { OverrideError, validateOverride } from "@/lib/quests/override";
+import { OverrideError, validateRewrite } from "@/lib/quests/override";
 import { clearOverride, writeOverride } from "@/lib/quests/overrides";
 import { QuestTextConflict } from "@/lib/quests/text";
 
@@ -28,7 +28,7 @@ export async function PUT(request: Request) {
 
   let draft;
   try {
-    draft = validateOverride(await request.json());
+    draft = validateRewrite(await request.json());
   } catch (error) {
     // A validation failure is the caller's fault and a JSON parse failure is too, so both are
     // 400 - but only OverrideError text is safe to hand back verbatim.
@@ -43,8 +43,8 @@ export async function PUT(request: Request) {
     const variant = line.variant ?? 0;
     try {
       const rows = await englishMomentLines(momentOf(line.lineId), variant);
-      const { split, files } = await rewriteEnglish(rows, variant, { text: draft.text, userId: session.user.id });
-      return Response.json({ split, files });
+      const { files } = await rewriteEnglish(rows, variant, { text: draft.text, userId: session.user.id });
+      return Response.json({ files });
     } catch (error) {
       if (error instanceof OverrideError) return Response.json({ error: error.message }, { status: 400 });
       if (error instanceof QuestTextConflict) return Response.json({ error: error.message }, { status: 409 });

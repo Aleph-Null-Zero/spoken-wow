@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { branchesOnPlayerGender } from "@/lib/player-words";
-import { OverrideError, overrideHasInvalidChars, validateOverride } from "@/lib/quests/override";
+import { OverrideError, rewriteHasInvalidChars, validateRewrite } from "@/lib/quests/override";
 import { INVALID_CHARS } from "@/lib/text-gate";
 import type { ResultLine } from "@/lib/search";
 import { isModelVoice } from "@/lib/voices/voices";
@@ -60,7 +60,7 @@ export default function OverrideDialog({ line, onSaved, onRewritten, onCancel }:
   // would claim every edit rescued it.
   // No rewrite rescues a line in a model slot, which is refused for its voice, not its text.
   const rescues =
-    !line.voiceable && line.skipReason !== "progress" && !isModelVoice(line.voice) && !overrideHasInvalidChars(draft);
+    !line.voiceable && line.skipReason !== "progress" && !isModelVoice(line.voice) && !rewriteHasInvalidChars(draft);
   const gendered = branchesOnPlayerGender(draft);
 
   async function send(method: "PUT" | "DELETE") {
@@ -72,7 +72,7 @@ export default function OverrideDialog({ line, onSaved, onRewritten, onCancel }:
       if (method === "PUT") {
         // Checked here so the message lands next to the field, and again on the server
         // because that is the copy that counts.
-        validateOverride({ file: line.audioPath, lineId: line.lineId, text: draft });
+        validateRewrite({ file: line.audioPath, lineId: line.lineId, text: draft });
       }
 
       const url =

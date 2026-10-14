@@ -38,6 +38,7 @@ from datetime import datetime, timezone
 from tts_cli.corpus import (GENERIC_TYPES, INVALID_CHARS, NO_VOICE, SCHEMA_VERSION, load_corpus,
                             write_corpus)
 from tts_cli.flavors import fallback_flavors, is_model_voice
+from tts_cli.naming import moment_of
 
 LANG = "enUS"
 
@@ -128,7 +129,7 @@ def split_here(variants, live):
     return {
         (line_id, variant)
         for line_id, payloads in variants.items()
-        if not line_id.endswith((":m", ":f"))
+        if moment_of(line_id) == line_id
         for variant in range(len(payloads))
         if (line_id, variant) not in live
         and ((f"{line_id}:m", variant) in live or (f"{line_id}:f", variant) in live)
