@@ -10,6 +10,7 @@
  */
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
+import { catalogue } from "@/lib/books/catalogue";
 import { closeDb, db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
 import { upsertResolution } from "@/lib/npc/store";
@@ -1170,7 +1171,7 @@ describe("resolveContribution: a books contribution, in any language", () => {
     await db().query(`delete from "book_line" where "note" = any($1::text[])`, [notes]);
     await db().query(`delete from "book_line" where "lineId" = any($1::text[])`, [seeded]);
     await db().query(`delete from "book_page" where "lineId" = any($1::text[])`, [seeded]);
-    // The English names book_line's trigger gave each owner (0036).
+    // The English name book_line's trigger gives the seeded owner.
     await db().query(`delete from "entity_name" where "kind" = 'gameobject' and "entityId" = $1`, [String(base)]);
     seeded = [];
   });
@@ -1370,11 +1371,41 @@ describe("resolveContribution: a books contribution, in any language", () => {
     expect(await ownersOf(`b:${base}`)).toEqual({ ownerKind: "object", ownerIds: [base, base + 5] });
   });
 
-  it("gives a minted page the item it was read from", async () => {
+  it("gives a minted page the item it was read from, named so the page keeps its title", async () => {
     const item = base + 6;
     const id = await booksRow({ locale: "esES", text: `Nueva ${base}.`, meta: { book: `Nuevo ${base}`, number: "1", item: String(item) } });
     expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
     const [page] = await pagesTitled(`Nuevo ${base}`, "esES");
     expect(await ownersOf(page.lineId)).toEqual({ ownerKind: "item", ownerIds: [item] });
+    const listed = (await catalogue("esES")).find((p) => p.id === page.lineId);
+    expect(listed?.title).toBe(`Nuevo ${base}`);
+    expect(listed?.missing).toBeUndefined();
+  });
+
+  it("keeps every language's title when a correction gives an ownerless page its first owner", async () => {
+    await seedPage(`b:${base + 30}`, String(base + 30), 1, null, [
+      ["deDE", `Staubiges Buch ${base}`, `Staub ${base}.`],
+      ["esES", `Libro polvoriento ${base}`, `Polvo ${base}.`],
+    ]);
+    const id = await booksRow({
+      locale: "esES", text: `Polvo corregido ${base}.`,
+      meta: { book: `Libro polvoriento ${base}`, number: "1", object: String(base + 31) },
+    });
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await ownersOf(`b:${base + 30}`)).toEqual({ ownerKind: "object", ownerIds: [base + 31] });
+    const german = (await catalogue("deDE")).find((p) => p.id === `b:${base + 30}`);
+    expect(german?.title).toBe(`Staubiges Buch ${base}`);
+    expect(german?.missing).toBeUndefined();
+    const spanish = (await catalogue("esES")).find((p) => p.id === `b:${base + 30}`);
+    expect(spanish?.title).toBe(`Libro polvoriento ${base}`);
+  });
+
+  it("leaves an id the corpus already knows on its own page", async () => {
+    const id = await booksRow({
+      locale: "esES", text: `Polvo uno ${base}.`, meta: { book: DUSTY, number: "1", object: String(base) },
+    });
+    await setContributionMatch(id, { lineId: `b:${base + 10}` }, RESOLVER);
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await ownersOf(`b:${base + 10}`)).toEqual({ ownerKind: null, ownerIds: null });
   });
 });

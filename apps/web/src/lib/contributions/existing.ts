@@ -5,8 +5,8 @@
  * this format. Only zones parse to something worth checking: a key is a bare map or an
  * (mapID, subzone) pair, which a real corpus entry could already answer to, so a row filed as
  * "missing" might in fact be a corpus bug -- the case the triage page exists to surface. A books
- * key is the checksum of the text on screen and names no page (book-match.ts finds it), and
- * quests keys have no target to resolve against, so there is nothing to check.
+ * key is the checksum of the text on screen, which names no page by itself, and quests keys
+ * have no target to resolve against, so there is nothing to check.
  *
  * The subzone canonicalisation is not reimplemented here. It used to be a hand-rolled regex
  * chain in this file, and it silently disagreed with the pipeline on any subzone starting

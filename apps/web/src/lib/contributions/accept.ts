@@ -47,7 +47,7 @@ import { corpus } from "@/lib/quests/catalogue";
 import type { Roster } from "@/lib/voices/roster";
 import { loadRoster } from "@/lib/voices/roster-store";
 
-import { loadBookCorpus, matchBook } from "./book-match";
+import { loadBookCorpus, matchBook, type BookCorpus } from "./book-match";
 import type { ContributionStatus } from "./contributions";
 import {
   answersQuestMomentSql,
@@ -697,10 +697,10 @@ async function contributedPageExists(contributionId: number, client: PoolClient)
  *
  * Matched again here, inside the transaction and under a lock on its language and title, so
  * two pages of one new book accepted at once find each other rather than minting two books.
- * A page the game names keeps its id; one only a player's client has shown gets a minted one
- * (naming.mjs). A correction is a new version of that language's text, as an editor's save is;
- * the rest is a first version, 'contributed'. Known and ambiguous rows are refused: there is
- * nothing to write, or nobody has said where.
+ * A page the game names keeps its id; one only a player's client has shown gets a minted
+ * `b:n{uuid}`, in a minted `n{uuid}` book when it starts one. A correction is a new version of
+ * that language's text, as an editor's save is; the rest is a first version, 'contributed'.
+ * Known and ambiguous rows are refused: there is nothing to write, or nobody has said where.
  */
 async function acceptBookContribution(
   client: PoolClient,
@@ -713,45 +713,52 @@ async function acceptBookContribution(
   const title = contribution.meta.book?.trim() || null;
   await client.query(`select pg_advisory_xact_lock(hashtext($1))`, [`books|${lang}|${title ?? ""}`]);
 
-  const match = matchBook(contribution, await loadBookCorpus(client));
+  const corpus = await loadBookCorpus(client);
+  const match = matchBook(contribution, corpus);
   const note = noteFor(contribution.id);
   const { generatable, skipReason } = isGeneratable(speakPlayerTokens(text, lang));
   const words = { lang, title, text, generatable, skipReason, userId, note };
 
+  let lineId: string;
   switch (match.kind) {
     case "ambiguous":
       return { ok: false, reason: "needs-page", message: "Several pages could be this one -- pick it first." };
     case "known":
       return { ok: false, reason: "malformed", message: "The corpus already has these words for this page." };
     case "correction":
+      lineId = match.lineId;
       await client.query(
         `update "book_line" set "isCurrent" = false where "lineId" = $1 and "lang" = $2 and "isCurrent"`,
-        [match.lineId, lang],
+        [lineId, lang],
       );
-      await insertText(client, { ...words, lineId: match.lineId, origin: "edited" });
-      await addOwner(client, match.lineId, contribution.meta);
-      return null;
+      await insertText(client, { ...words, lineId, origin: "edited" });
+      break;
     case "translation":
-      await insertText(client, { ...words, lineId: match.lineId, origin: "contributed" });
-      await nameOwnersIfUnnamed(client, match.lineId, lang, title, userId, note);
-      await addOwner(client, match.lineId, contribution.meta);
-      return null;
+      lineId = match.lineId;
+      await insertText(client, { ...words, lineId, origin: "contributed" });
+      break;
     case "new-page":
     case "new-book": {
       const bookId = match.kind === "new-page" ? match.bookId : mintBookId();
-      const lineId = mintPageId();
+      lineId = mintPageId();
       await client.query(
         `insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, $3)`,
         [lineId, bookId, match.pageNumber],
       );
       await insertText(client, { ...words, lineId, origin: "contributed" });
-      await addOwner(client, lineId, contribution.meta);
-      return null;
+      break;
     }
   }
+  const firstOwner = await addOwner(client, lineId, contribution.meta, corpus);
+  await nameOwnersIfUnnamed(client, { lineId, lang, title, userId, note, everyLanguage: firstOwner });
+  return null;
 }
 
-/** One language's text of a page, versioned after whatever that language already has. */
+/**
+ * One language's text of a page, versioned after whatever that language already has. Throws
+ * when book_page no longer has the page live: an import does not take accept's lock, and a
+ * correction that wrote nothing would leave the language with no current text.
+ */
 async function insertText(
   client: PoolClient,
   row: {
@@ -766,7 +773,7 @@ async function insertText(
     origin: "contributed" | "edited";
   },
 ): Promise<void> {
-  await client.query(
+  const { rowCount } = await client.query(
     `insert into "book_line"
        ("lineId", "lang", "version", "isCurrent", "origin", "pageId", "bookId", "pageNumber", "pageCount",
         "title", "ownerKind", "ownerIds", "material", "text", "generatable", "skipReason", "editedBy", "note")
@@ -777,59 +784,81 @@ async function insertText(
             coalesce($3, (select e."title" from "book_line" e
                            where e."lineId" = p."lineId" and e."isCurrent" order by e."lang" limit 1), ''),
             p."ownerKind", p."ownerIds", coalesce(p."material", 0), $4, $5, $6, $7, $8
-       from "book_page" p where p."lineId" = $1`,
+       from "book_page" p where p."lineId" = $1 and p."aliasOf" is null`,
     [row.lineId, row.lang, row.title, row.text, row.generatable, row.skipReason, row.userId, row.note, row.origin],
   );
+  if (rowCount !== 1) throw new Error(`book page ${row.lineId} is gone or an alias; match the contribution again`);
 }
 
 /**
- * The owners' names in this language, where the language has none, since the catalogue titles
- * an owned page from entity_name rather than from the row.
+ * The page's owners named where a language has no name for them, since the catalogue titles an
+ * owned page from entity_name rather than from the row: in the row's language, the title the
+ * client showed. With `everyLanguage`, for an owner the page has only just been given, every
+ * language's own title for the page too, so a language that read it by its row's title still
+ * does.
  */
 async function nameOwnersIfUnnamed(
   client: PoolClient,
-  lineId: string,
-  lang: Lang,
-  title: string | null,
-  userId: string,
-  note: string,
+  args: { lineId: string; lang: Lang; title: string | null; userId: string; note: string; everyLanguage: boolean },
 ): Promise<void> {
-  if (!title) return;
   const { rows } = await client.query<{ ownerKind: string | null; ownerIds: number[] | null }>(
     `select "ownerKind", "ownerIds" from "book_page" where "lineId" = $1`,
-    [lineId],
+    [args.lineId],
   );
   const { ownerKind, ownerIds } = rows[0] ?? {};
   if (!ownerKind) return;
-  for (const owner of ownerIds ?? []) {
-    await nameIfUnnamed(client, {
-      kind: ownerKind === "object" ? "gameobject" : "item",
-      entityId: String(owner),
-      lang,
-      name: title,
-      userId,
-      note,
-    });
+  const names = new Map<string, string>();
+  if (args.everyLanguage) {
+    const { rows: titled } = await client.query<{ lang: string; title: string }>(
+      `select "lang", "title" from "book_line" where "lineId" = $1 and "isCurrent" and "title" <> ''`,
+      [args.lineId],
+    );
+    for (const { lang, title } of titled) names.set(lang, title);
+  }
+  if (args.title) names.set(args.lang, args.title);
+  for (const [lang, name] of names) {
+    for (const owner of ownerIds ?? []) {
+      await nameIfUnnamed(client, {
+        kind: ownerKind === "object" ? "gameobject" : "item",
+        entityId: String(owner),
+        lang: lang as Lang,
+        name,
+        userId: args.userId,
+        note: args.note,
+      });
+    }
   }
 }
 
 /**
- * The item or object the client read this page from, added to the page's owners when the
- * corpus does not have it: Forever renumbered some objects, and the next client to open one
- * finds the page by id rather than by its words.
+ * The item or object the client read this page from, added to the page's owners when no page
+ * in the corpus has it: Forever renumbered some objects, and the next client to open one finds
+ * the page by id rather than by its words. Answers whether that gave an ownerless page its first
+ * owner.
  */
-async function addOwner(client: PoolClient, lineId: string, meta: Record<string, string>): Promise<void> {
+async function addOwner(
+  client: PoolClient,
+  lineId: string,
+  meta: Record<string, string>,
+  corpus: BookCorpus,
+): Promise<boolean> {
+  let first = false;
   for (const kind of ["item", "object"] as const) {
     const id = Number(meta[kind]);
     if (!Number.isInteger(id) || id <= 0 || id > 2_147_483_647) continue;
-    await client.query(
-      `update "book_page" set "ownerKind" = coalesce("ownerKind", $2),
-              "ownerIds" = array_append(coalesce("ownerIds", '{}'), $3::int)
-        where "lineId" = $1 and ("ownerKind" is null or "ownerKind" = $2)
-          and not ($3::int = any(coalesce("ownerIds", '{}')))`,
+    if (corpus.byOwner.has(`${kind}:${id}`)) continue;
+    const { rows } = await client.query<{ first: boolean }>(
+      `update "book_page" p set "ownerKind" = coalesce(p."ownerKind", $2),
+              "ownerIds" = array_append(coalesce(p."ownerIds", '{}'), $3::int)
+         from (select "lineId", "ownerKind" is null as "first" from "book_page" where "lineId" = $1) was
+        where p."lineId" = was."lineId" and (p."ownerKind" is null or p."ownerKind" = $2)
+          and not ($3::int = any(coalesce(p."ownerIds", '{}')))
+        returning was."first"`,
       [lineId, kind, id],
     );
+    if (rows[0]?.first) first = true;
   }
+  return first;
 }
 
 /**
