@@ -227,7 +227,8 @@ async function build(lang: Lang): Promise<BookPage[]> {
               p."ownerKind", p."ownerIds", p."material",
               l."text", l."title", e."text" as "englishText", e."title" as "englishTitle",
               (select a."title" from "book_line" a
-                where a."lineId" = p."lineId" and a."isCurrent" order by a."lang" limit 1) as "anyTitle"
+                where a."lineId" = p."lineId" and a."isCurrent" and trim(a."title") <> ''
+                order by a."lang" limit 1) as "anyTitle"
          from "book_page" p
          left join "book_line" l on l."lineId" = p."lineId" and l."lang" = $1 and l."isCurrent"
          left join "book_line" e on e."lineId" = p."lineId" and e."lang" = $2 and e."isCurrent"
@@ -246,18 +247,26 @@ async function build(lang: Lang): Promise<BookPage[]> {
 
   // A page with an owner is titled by the owner's name in this language and by nothing else:
   // book_line's title is the English owner name for an extracted page. A page without an owner
-  // takes its book's first page's title, so every page of a minted book reads under one name.
-  const firstTitle = new Map<string, string | null>();
-  for (const row of rows) if (!firstTitle.has(row.bookId)) firstTitle.set(row.bookId, row.title);
+  // takes its book's first page's title, as that page resolves it, so every page of a book reads
+  // under one name; only where that page is ownerless and untitled does the page fall back to
+  // its own. An empty title is no title.
+  const named = (title: string | null | undefined) => (title?.trim() ? title : undefined);
+  const ownTitle = (row: PageRow): string | undefined => {
+    if (!row.ownerKind) return named(row.title);
+    if (lang === BASE_LANG) return named(row.englishTitle);
+    const ownerIds = row.ownerIds ?? [];
+    return ownerIds.length ? named(owned.get(`${ownerEntityKind(row.ownerKind)}:${ownerIds[0]}`)) : undefined;
+  };
+  const first = new Map<string, { title: string | undefined; owned: boolean }>();
+  for (const row of rows) {
+    if (!first.has(row.bookId)) first.set(row.bookId, { title: ownTitle(row), owned: row.ownerKind !== null });
+  }
 
   return rows.map((row) => {
     const ownerIds = row.ownerIds ?? [];
-    const ownerName = row.ownerKind && ownerIds.length
-      ? owned.get(`${ownerEntityKind(row.ownerKind)}:${ownerIds[0]}`)
-      : undefined;
-    const own = lang === BASE_LANG && row.ownerKind ? row.englishTitle ?? undefined : ownerName;
-    const title = row.ownerKind ? own : firstTitle.get(row.bookId) ?? row.title ?? undefined;
-    const shown = title ?? row.englishTitle ?? row.anyTitle ?? "";
+    const book = first.get(row.bookId)!;
+    const title = row.ownerKind ? ownTitle(row) : book.owned ? book.title : book.title ?? ownTitle(row);
+    const shown = title ?? named(row.englishTitle) ?? named(row.anyTitle) ?? "";
     const base = {
       id: row.lineId,
       key: pageKeyOf(row.lineId),

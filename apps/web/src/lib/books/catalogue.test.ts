@@ -33,6 +33,8 @@ afterAll(async () => {
 const owned = 2_000_000_000 + Math.floor(Math.random() * 1_000_000);
 const ownedLine = `b:${owned}`;
 const ownerId = String(owned);
+// A page a client showed in the same book, with no owner of its own.
+const mintedLine = `b:n00000000-0000-4000-8001-${run.padEnd(12, "0")}`;
 
 async function ownedPage() {
   await db().query(
@@ -49,9 +51,17 @@ async function ownedPage() {
       [ownedLine, lang, owned, title, text],
     );
   }
+  await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 2)`, [mintedLine, String(owned)]);
+  await db().query(
+    `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+     values ($1, 'frFR', 1, true, 'contributed', 'Old Tome', 'Page deux.')`,
+    [mintedLine],
+  );
 }
 
 async function dropOwned() {
+  await db().query(`delete from "book_line" where "lineId" = $1`, [mintedLine]);
+  await db().query(`delete from "book_page" where "lineId" = $1`, [mintedLine]);
   await db().query(`delete from "book_line" where "lineId" = $1`, [ownedLine]);
   await db().query(`delete from "book_page" where "lineId" = $1`, [ownedLine]);
   await db().query(`delete from "entity_name" where "kind" = 'item' and "entityId" = $1`, [ownerId]);
@@ -65,6 +75,8 @@ describe("an owned page", () => {
     const page = (await catalogue("frFR")).find((p) => p.id === ownedLine);
     expect(page?.missing?.title).toBe(true);
     expect(page?.spoken).not.toContain("Old Tome");
+    const minted = (await catalogue("frFR")).find((p) => p.id === mintedLine);
+    expect(minted?.missing?.title).toBe(true);
   });
 
   it("takes the owner's name where the language has one", async () => {
@@ -77,6 +89,12 @@ describe("an owned page", () => {
     expect(page?.title).toBe("Vieux Tome");
     expect(page?.missing?.title).toBeFalsy();
     expect(page?.spoken).toContain("Vieux Tome");
+  });
+
+  it("titles an ownerless page of the book with the owner's name, not page 1's row", async () => {
+    const minted = (await catalogue("frFR")).find((p) => p.id === mintedLine);
+    expect(minted?.title).toBe("Vieux Tome");
+    expect(minted?.missing?.title).toBeFalsy();
   });
 });
 
@@ -92,6 +110,24 @@ describe("catalogue", () => {
     const page = (await catalogue("esES")).find((p) => p.id === lineId);
     expect(page).toMatchObject({ text: "Trotamundos.", title: "Instrucciones" });
     expect(page?.missing).toBeUndefined();
+  });
+
+  it("treats an empty title as none, and shows another language's", async () => {
+    const blank = `b:n00000000-0000-4000-8002-${run.padEnd(12, "0")}`;
+    await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 1)`, [blank, blank.slice(2)]);
+    try {
+      await db().query(
+        `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+         values ($1, 'esES', 1, true, 'contributed', '', 'Sin titulo.'), ($1, 'frFR', 1, true, 'contributed', 'Notice', 'Sans.')`,
+        [blank],
+      );
+      const page = (await catalogue("esES")).find((p) => p.id === blank);
+      expect(page?.title).toBe("Notice");
+      expect(page?.missing?.title).toBe(true);
+    } finally {
+      await db().query(`delete from "book_line" where "lineId" = $1`, [blank]);
+      await db().query(`delete from "book_page" where "lineId" = $1`, [blank]);
+    }
   });
 
   it("finds it by its key", async () => {
