@@ -82,6 +82,23 @@ describe("loadBookCorpus", () => {
     expect(Object.fromEntries(page.titles)).toEqual({ esES: "Nombre del cofre" });
   });
 
+  it("is read once while nothing changes, and again once a page's words do", async () => {
+    const first = await loadBookCorpus();
+    expect(await loadBookCorpus()).toBe(first);
+    await db().query(
+      `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+       values ($1, 'frFR', 1, true, 'extracted', 'Titre', 'Texte français')`,
+      [lineId],
+    );
+    try {
+      const next = await loadBookCorpus();
+      expect(next).not.toBe(first);
+      expect(next.pages.find((p) => p.lineId === lineId)!.texts.get("frFR")).toBe("Texte français");
+    } finally {
+      await db().query(`delete from "book_line" where "lineId" = $1 and "lang" = 'frFR'`, [lineId]);
+    }
+  });
+
   it("accepts a transaction client", async () => {
     const client = await db().connect();
     try {

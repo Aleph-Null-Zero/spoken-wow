@@ -13,7 +13,7 @@ import "server-only";
 import { query } from "@/lib/db";
 import type { LiveRecording } from "@/lib/recordings/live";
 import { memoByLang } from "@/lib/memo";
-import { nameStamp, versionStamp } from "@/lib/stamp";
+import { bookPageStamp, nameStamp, versionStamp } from "@/lib/stamp";
 import { loadDirtyContext, NO_DIRT, type DirtyContext } from "@/lib/generation/dirty";
 
 import { ownerEntityKind, type OwnerKind } from "./filters";
@@ -157,18 +157,10 @@ const cacheKey = Symbol.for("spoken.books-catalogue.by-lang");
  * the other keeps serving.
  */
 async function stampOf(lang: Lang): Promise<string> {
-  // book_page moves with its count, its newest row, and a hash of every page's place, so a page
-  // moved between books or made an alias changes the stamp as well as one added.
   const rows = await query<{ stamp: string }>(
     `select ${versionStamp("book_line", `"lang" = $1`)} || '|' ||
             ${versionStamp("book_line", `"lang" = '${BASE_LANG}'`)} || '|' ||
-            (select count(*) || ':' || coalesce(max("createdAt")::text, '') || ':' ||
-                    coalesce(sum(hashtext("lineId" || '|' || coalesce("pageTextId"::text, '') || '|' ||
-                                          "bookId" || '|' || "pageNumber" || '|' ||
-                                          coalesce("aliasOf", '') || '|' || coalesce("ownerKind", '') || '|' ||
-                                          coalesce("ownerIds"::text, '') || '|' ||
-                                          coalesce("material"::text, ''))), 0)
-               from "book_page") || '|' ||
+            ${bookPageStamp()} || '|' ||
             ${nameStamp(["item", "gameobject"])} as "stamp"`,
     [lang],
   );

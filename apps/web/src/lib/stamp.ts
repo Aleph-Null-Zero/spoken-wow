@@ -22,3 +22,17 @@ export function nameStamp(kinds: readonly string[]): string {
     `"lang" = $1 and "kind" in (${kinds.map((kind) => `'${kind}'`).join(", ")})`,
   );
 }
+
+/**
+ * book_page, which is not versioned: its count, its newest row, and a hash of every page's
+ * place, so a page moved between books or made an alias moves the stamp as well as one added.
+ */
+export function bookPageStamp(): string {
+  return `(select count(*) || ':' || coalesce(max("createdAt")::text, '') || ':' ||
+                  coalesce(sum(hashtext("lineId" || '|' || coalesce("pageTextId"::text, '') || '|' ||
+                                        "bookId" || '|' || "pageNumber" || '|' ||
+                                        coalesce("aliasOf", '') || '|' || coalesce("ownerKind", '') || '|' ||
+                                        coalesce("ownerIds"::text, '') || '|' ||
+                                        coalesce("material"::text, ''))), 0)
+             from "book_page")`;
+}
