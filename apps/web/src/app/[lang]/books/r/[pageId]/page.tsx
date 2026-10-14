@@ -22,10 +22,10 @@ import { Contained } from "@/components/Width";
  * either. Someone arriving from the game is a player, not a collaborator; flags, takes,
  * staleness and the regenerate controls are answers to questions they did not ask.
  *
- * The address is /books/r/{pageTextID} -- the page id and nothing else -- because the addon
- * can build it from what it already has, with no per-page table to ship and nothing to
- * escape. docs/books/AGENTS.md freezes that id, which is what makes the address safe to bake
- * into a release. See SpokenBooks' ReportURL.
+ * The address is /books/r/{key}: the pageTextID, or a minted page's n{uuid}. The key and
+ * nothing else -- because the addon can build it from what it already has, with no per-page
+ * table to ship and nothing to escape. docs/books/AGENTS.md freezes both forms, which is what
+ * makes the address safe to bake into a release. See SpokenBooks' ReportURL.
  */
 type Params = { lang: string; pageId: string };
 

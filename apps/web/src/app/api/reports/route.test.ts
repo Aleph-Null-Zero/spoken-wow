@@ -8,6 +8,7 @@
  * Needs DATABASE_URL and migrations applied:
  *   docker compose up -d postgres && deploy/bin/migrate.sh "$PWD/web"
  */
+import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
@@ -72,6 +73,33 @@ describe("POST /api/reports", () => {
     }
 
     expect((await POST(post(valid()))).status).toBe(429);
+  });
+
+  it("files a books report against a minted page's key", async () => {
+    const key = `n${randomUUID()}`;
+    const lineId = `b:${key}`;
+    await db().query(
+      `insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 1)`,
+      [lineId, key],
+    );
+    try {
+      await db().query(
+        `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+         values ($1, 'enUS', 1, true, 'contributed', 'Minted', 'Words.')`,
+        [lineId],
+      );
+
+      expect((await POST(post(valid({ source: "books", target: key })))).status).toBe(200);
+
+      const { rows } = await db().query<{ lineId: string | null }>(
+        `select "lineId" from "report" where "ip" = $1`,
+        [ip],
+      );
+      expect(rows).toEqual([{ lineId }]);
+    } finally {
+      await db().query(`delete from "book_line" where "lineId" = $1`, [lineId]);
+      await db().query(`delete from "book_page" where "lineId" = $1`, [lineId]);
+    }
   });
 
   it("stores no lineId when the claimed line does not belong to the target", async () => {
