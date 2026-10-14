@@ -12,6 +12,7 @@ import ReportsBadge from "@/components/ReportsBadge";
 import TakeSelector from "@/components/TakeSelector";
 import { Button } from "@/components/ui/button";
 import { materialName } from "@/lib/books/filters";
+import { shownText } from "@/lib/books/shown";
 import type { ResultLine } from "@/lib/books/search";
 import { cn } from "@/lib/utils";
 
@@ -182,7 +183,7 @@ export function PageRow({
           </button>
 
           <span className={cn("min-w-0 flex-1 whitespace-pre-wrap", !expanded && "clamp-2")}>
-            <Untranslated missing={line.missing?.text}>{line.text}</Untranslated>
+            <Untranslated missing={line.missing?.text}>{shownText(line)}</Untranslated>
           </span>
           {line.missing?.text ? (
             <span className="mt-0.5 shrink-0 text-xs">
