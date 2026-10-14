@@ -48,7 +48,7 @@ export type LineDetail = {
 const TARGETS: Record<Source, (line: SourceLine) => string | null> = {
   quests: (line) => targetForLine(line as QuestLine),
   zones: (line) => (line as ZoneLine).file,
-  books: (line) => String((line as BookLine).pageId),
+  books: (line) => (line as BookLine).key,
 };
 
 /**

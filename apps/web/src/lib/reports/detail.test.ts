@@ -41,6 +41,7 @@ const zoneLine = {
 const bookLine = {
   id: "b:261",
   pageId: 261,
+  key: "261",
   title: "The Dusty Tome",
   pageNumber: 2,
   pageCount: 4,

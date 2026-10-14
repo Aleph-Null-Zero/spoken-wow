@@ -71,7 +71,7 @@ async function existingTextFor(contributions: Contribution[]): Promise<Record<nu
       if (!lookup) return;
 
       if (lookup.source === "books") {
-        const page = await pageById(lookup.pageId);
+        const page = await pageById(String(lookup.pageId));
         if (page) found[row.id] = page.text;
       } else {
         const line = await lineByPath(lookup.mapID, lookup.slug);
@@ -89,9 +89,10 @@ async function bookMatchesFor(contributions: Contribution[]): Promise<Map<number
   if (ids.size === 0) return new Map();
   const matches = new Map<number, BookMatch>();
   for (const page of await catalogue(BASE_LANG)) {
-    if (!ids.has(page.pageId)) continue;
-    const { pageId, bookId, title, pageNumber, pageCount } = page;
-    matches.set(pageId, { pageId, bookId, title, pageNumber, pageCount });
+    const { pageId, title, pageNumber, pageCount } = page;
+    // A matched row names an extracted page and book: both have numeric ids.
+    if (pageId === null || !ids.has(pageId) || !/^\d+$/.test(page.bookId)) continue;
+    matches.set(pageId, { pageId, bookId: Number(page.bookId), title, pageNumber, pageCount });
   }
   return matches;
 }
@@ -315,7 +316,9 @@ export default async function Page({
   // The English books, for matching a translated page to one -- only when this page shows a
   // row that can be matched.
   const books = shown.some((row) => bookFor(row, null))
-    ? (await bookFacets(BASE_LANG)).map(({ bookId, title, pages }) => ({ bookId, title, pages }))
+    ? (await bookFacets(BASE_LANG))
+        .filter(({ bookId }) => /^\d+$/.test(bookId))
+        .map(({ bookId, title, pages }) => ({ bookId: Number(bookId), title, pages }))
     : [];
 
   // ContributionTable is a client component: whatever shape crosses in `initial` lands in the

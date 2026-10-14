@@ -20,12 +20,13 @@ import { PAGE_SIZE, type Field, type PageFilters, type OwnerKind, type State } f
 export type ResultLine = {
   /** 'b:1381'. Unique by construction: one page is one line. */
   id: string;
-  pageId: number;
-  bookId: number;
+  pageId: number | null;
+  key: string;
+  bookId: string;
   pageNumber: number;
   pageCount: number;
   title: string;
-  ownerKind: OwnerKind;
+  ownerKind: OwnerKind | null;
   ownerIds: number[];
   material: number;
   text: string;
@@ -87,6 +88,7 @@ export function decorate(page: BookPage, context: SearchContext): ResultLine {
   return {
     id: page.id,
     pageId: page.pageId,
+    key: page.key,
     bookId: page.bookId,
     pageNumber: page.pageNumber,
     pageCount: page.pageCount,
@@ -161,7 +163,7 @@ function order(lines: ResultLine[]): ResultLine[] {
   return [...lines].sort(
     (a, b) =>
       a.title.localeCompare(b.title) ||
-      a.bookId - b.bookId ||
+      a.bookId.localeCompare(b.bookId, undefined, { numeric: true }) ||
       a.pageNumber - b.pageNumber ||
       a.id.localeCompare(b.id),
   );

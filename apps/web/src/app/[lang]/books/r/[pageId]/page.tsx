@@ -33,7 +33,7 @@ async function resolve(params: Promise<Params>) {
   const lang = await pageLang(params);
   const { pageId } = await params;
   try {
-    return await pageById(Number(pageId), lang);
+    return await pageById(pageId, lang);
   } catch (error) {
     // An unseeded corpus names no pages, so no address resolves to one. What a player
     // arriving from the game should see is the same page an unknown id gives them.
@@ -111,7 +111,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
             {/* The target is the page id, which is what the addon put in the address and what
                 the endpoint resolves; the lineId is sent for the endpoint to ignore, exactly as
                 the zones form does. */}
-            <ReportForm source="books" target={String(page.pageId)} lineId={page.id} />
+            <ReportForm source="books" target={page.key} lineId={page.id} />
           </section>
 
           <footer className="text-muted-foreground mt-8 text-sm">
