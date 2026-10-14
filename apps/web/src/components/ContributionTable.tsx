@@ -67,7 +67,7 @@ import { textHints } from "@/lib/contributions/text-hints";
 // Both are computed server-side (npcSummaryFrom reads the roster store) -- `import
 // type` erases the whole thing at compile time, so none of that follows the type in here. The
 // same split existing.ts's `existing` prop already draws.
-import type { BookMatch, BookSummary, NpcConflictOption, NpcSummary, QuestSummary } from "@/lib/contributions/triage";
+import type { BookSummary, NpcConflictOption, NpcSummary, QuestSummary } from "@/lib/contributions/triage";
 // From npc.ts, not npc/store.ts: store.ts imports @/lib/db, and pulling NPC_ROW_KINDS
 // (values, not just types) out of it would drag Postgres's own node built-ins into this bundle.
 import { NPC_ROW_KINDS, type NpcKind, type NpcRowKind } from "@/lib/npc/npc";
@@ -89,7 +89,7 @@ export type ContributionRow = Pick<
   npc: NpcSummary | null;
   /** Null when the source has no quest concept at all. See lib/contributions/triage.ts. */
   quest: QuestSummary | null;
-  /** A books row from another language's client: what it showed, and its English page. */
+  /** A books row: what the client showed, and what the matcher or a moderator decided it is. */
   book: BookSummary | null;
   /** A zones or books row's place as the client named it: zone and subzone, or book and page. */
   place: string | null;
@@ -103,15 +103,11 @@ export type ContributionRow = Pick<
   hasSpeaker: boolean;
 };
 
-/** An English book a translated page can be matched to. */
-export type BookChoice = { bookId: number; title: string; pages: number };
+/** A book a row can be placed in. */
+export type BookChoice = { bookId: string; title: string; pages: number };
 
-/** The datalist the match form's book field offers, rendered once for the whole table. */
-const BOOKS_LIST = "contribution-english-books";
-
-function bookOption(book: BookChoice): string {
-  return `${book.title} #${book.bookId}`;
-}
+/** What a moderator says a books row is, as api/contributions/page takes it; null clears it. */
+type MatchAnswer = { bookId: string; pageNumber: number } | { newBook: true } | null;
 
 const STAGE_LABELS: Record<QuestStage, string> = {
   accept: "Accept",
@@ -180,7 +176,7 @@ export default function ContributionTable({
   searchIn: Filter;
   /** id -> corpus text, present only where the row's key resolves to something on file. */
   existing: Record<number, string>;
-  /** The English books, for matching a translated page to one. Empty when no row here needs it. */
+  /** The books a row can be placed in. Empty when no row here needs it. */
   books: BookChoice[];
   /** facets().roster -- what lets the speaker selects narrow to whatever type was just chosen, without a round trip. */
   roster: RosterData;
@@ -204,8 +200,6 @@ export default function ContributionTable({
   const [lineCreated, setLineCreated] = useState<Set<number>>(new Set());
   /** A refused resolve, in the words the route already gives -- cleared by the next attempt. */
   const [refusals, setRefusals] = useState<Record<number, string>>({});
-  /** A page matched (or cleared) this session, over the server's -- keyed by contribution. */
-  const [bookOverrides, setBookOverrides] = useState<Record<number, BookMatch | null>>({});
 
   /**
    * The npc column, overlaid on the server's rows for the same reason `resolved` is: the
@@ -333,28 +327,28 @@ export default function ContributionTable({
   );
 
   /**
-   * A books row matched to its English page by hand (api/contributions/page), or cleared with
-   * null. The error, when there is one, is the route's own words.
+   * A books row placed by hand (api/contributions/page), or cleared with null. The error, when
+   * there is one, is the route's own words; the page re-reads the row's match on success.
    */
   const matchPage = useCallback(
-    async (contributionId: number, answer: { bookId: number; pageNumber: number } | null) => {
+    async (contributionId: number, answer: MatchAnswer) => {
       setNpcBusy(contributionId);
       const response = await fetch("/api/contributions/page", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: contributionId, ...(answer ?? { pageId: null }) }),
+        body: JSON.stringify({ id: contributionId, ...(answer ?? { clear: true }) }),
       }).catch(() => null);
       setNpcBusy(null);
 
-      const body = (await response?.json().catch(() => null)) as { match?: BookMatch | null; error?: unknown } | null;
+      const body = (await response?.json().catch(() => null)) as { error?: unknown } | null;
       if (!response?.ok) {
         setRefusals(withRefusal(contributionId, body?.error));
         return;
       }
       setRefusals(withoutRefusal(contributionId));
-      setBookOverrides((current) => ({ ...current, [contributionId]: body?.match ?? null }));
+      router.refresh();
     },
-    [],
+    [router],
   );
 
   /** A row's status change landed: shown at once, without waiting for a reload. */
@@ -668,13 +662,11 @@ export default function ContributionTable({
             {rows.map((row) => {
               const npc = npcOf(row);
               const now = bucketOf(row, npc, roster);
-              const book =
-                row.book && row.id in bookOverrides ? { ...row.book, match: bookOverrides[row.id] } : row.book;
               return (
                 <ContributionTableRow
                   key={row.id}
                   row={row}
-                  book={book}
+                  books={books}
                   current={resolved[row.id] ?? row.status}
                   npc={npc}
                   bucket={now}
@@ -701,15 +693,6 @@ export default function ContributionTable({
           </tbody>
         </table>
       )}
-      {books.length > 0 && (
-        <datalist id={BOOKS_LIST}>
-          {books.map((book) => (
-            <option key={book.bookId} value={bookOption(book)}>
-              {book.pages === 1 ? "1 page" : `${book.pages} pages`}
-            </option>
-          ))}
-        </datalist>
-      )}
       {rows.length > 0 && pages > 1 ? (
         <div className="mt-3 flex text-xs">
           <Pager page={page} pages={pages} total={matching.length} onGo={(to) => go({}, to)} />
@@ -726,7 +709,7 @@ export default function ContributionTable({
  */
 const ContributionTableRow = memo(function ContributionTableRow({
   row,
-  book,
+  books,
   current,
   npc,
   bucket,
@@ -749,8 +732,7 @@ const ContributionTableRow = memo(function ContributionTableRow({
   onMatchPage,
 }: {
   row: ContributionRow;
-  /** row.book, with this session's own match over the server's. */
-  book: BookSummary | null;
+  books: BookChoice[];
   /** The row's status, with this session's own changes over the server's. */
   current: ContributionStatus;
   npc: NpcSummary | null;
@@ -778,10 +760,14 @@ const ContributionTableRow = memo(function ContributionTableRow({
   onOverrideNpc: (id: number, npc: NpcSummary, answer: SpeakerAnswer) => Promise<void>;
   onPickConflict: (id: number, npc: NpcSummary, option: NpcConflictOption) => Promise<void>;
   onNameNpc: (id: number, answer: { npcKind: NpcRowKind; npcId: number; npcName: string }) => Promise<void>;
-  onMatchPage: (id: number, answer: { bookId: number; pageNumber: number } | null) => Promise<void>;
+  onMatchPage: (id: number, answer: MatchAnswer) => Promise<void>;
 }) {
   // A written page is one-way (accept.ts), so its match is no longer the moderator's to move.
   const pageWritten = current === "accepted" && (row.hasLine || lineCreated);
+  const book = row.book;
+  // An ambiguous row needs a page picked, and a known one is already in the corpus.
+  const acceptHold =
+    book?.match.kind === "ambiguous" ? "Pick the page first" : book?.match.kind === "known" ? "Already in the corpus" : null;
   const [expanded, setExpanded] = useState(false);
   const hints = useMemo(() => (row.text ? textHints(row.text, row.locale) : []), [row.text, row.locale]);
   return (
@@ -887,9 +873,9 @@ const ContributionTableRow = memo(function ContributionTableRow({
         {row.quest === "gossip" ? null : (
           <td className="max-w-[14rem] pr-3 text-xs whitespace-nowrap">
             {book ? (
-              <BookMatchCell
+              <MatchCell
                 book={book}
-                lang={lang}
+                books={books}
                 busy={npcBusy}
                 locked={pageWritten || locked}
                 onSave={(answer) => void onMatchPage(row.id, answer)}
@@ -979,7 +965,8 @@ const ContributionTableRow = memo(function ContributionTableRow({
             {current !== "accepted" && bucket === "ready" ? (
               <LiteButton
                 variant="accept"
-                disabled={busy || locked}
+                disabled={busy || locked || acceptHold !== null}
+                title={acceptHold ?? undefined}
                 onClick={() => void onResolve(row.id, "accepted")}
               >
                 Accept
@@ -992,7 +979,8 @@ const ContributionTableRow = memo(function ContributionTableRow({
               // (needs-speaker, collision, one-way).
               <LiteButton
                 variant="accept"
-                disabled={busy || locked}
+                disabled={busy || locked || acceptHold !== null}
+                title={acceptHold ?? undefined}
                 onClick={() => void onResolve(row.id, "accepted")}
               >
                 Add to explorer
@@ -1146,29 +1134,28 @@ function MissingNpcForm({
 }
 
 /**
- * A books row's English page: the one matched, linked, or the form that matches one -- a book
- * from the table's datalist and a page number, the client's own number to start with. Accept
- * refuses the row until there is one (accept.ts's acceptBookTranslation).
+ * A books row's match: what the matcher (or a moderator) decided it is, linked where it names a
+ * page, and the controls to say otherwise -- a book from the picker and a page number, or a new
+ * book. Clear drops a moderator's answer and lets the matcher decide again.
  */
-function BookMatchCell({
+function MatchCell({
   book,
-  lang,
+  books,
   busy,
   locked,
   onSave,
 }: {
   book: BookSummary;
-  lang: Lang;
+  books: BookChoice[];
   busy: boolean;
   locked: boolean;
-  onSave: (answer: { bookId: number; pageNumber: number } | null) => void;
+  onSave: (answer: MatchAnswer) => void;
 }) {
-  const [editing, setEditing] = useState(false);
   const [choice, setChoice] = useState("");
   const [pageNumber, setPageNumber] = useState(String(book.number ?? 1));
-  const bookId = Number(choice.match(/#(\d+)$/)?.[1]);
-  const valid = Number.isInteger(bookId) && bookId > 0 && /^\d+$/.test(pageNumber.trim());
+  const valid = choice !== "" && /^\d+$/.test(pageNumber.trim()) && Number(pageNumber.trim()) > 0;
   const shown = book.title ? `${book.title}${book.number ? ` p.${book.number}` : ""}` : null;
+  const moderated = "via" in book.match && book.match.via === "moderator";
 
   return (
     <div className="flex flex-col gap-1">
@@ -1177,41 +1164,39 @@ function BookMatchCell({
           {shown}
         </span>
       ) : null}
-      {book.match && !editing ? (
-        <div className="flex items-center gap-1">
-          <a
-            href={localeHref(lang, `/books/r/${book.match.pageId}`)}
-            className="truncate hover:underline"
-            title={book.match.title}
-          >
-            {book.match.title} p.{book.match.pageNumber}/{book.match.pageCount}
-          </a>
-          {locked ? null : (
-            <LiteButton variant="ghost" className="h-6 px-1.5 text-xs" disabled={busy} onClick={() => setEditing(true)}>
-              change
-            </LiteButton>
-          )}
-        </div>
-      ) : locked ? (
-        <span className="text-muted-foreground">no English page</span>
+      {book.href ? (
+        <a href={book.href} className="truncate hover:underline" title={book.label}>
+          {book.label}
+        </a>
       ) : (
+        <span className="truncate" title={book.label}>
+          {book.label}
+        </span>
+      )}
+      {locked ? null : (
         <form
           className="flex flex-wrap items-center gap-1"
           onSubmit={(event) => {
             event.preventDefault();
             if (!valid) return;
-            onSave({ bookId, pageNumber: Number(pageNumber.trim()) });
-            setEditing(false);
+            onSave(choice === "new" ? { newBook: true } : { bookId: choice, pageNumber: Number(pageNumber.trim()) });
           }}
         >
-          <input
+          <select
             required
-            list={BOOKS_LIST}
-            placeholder="English book"
+            aria-label="Book"
             value={choice}
             onChange={(event) => setChoice(event.target.value)}
             className="h-7 w-40 rounded border bg-transparent px-1.5 text-xs"
-          />
+          >
+            <option value="">Book</option>
+            <option value="new">New book</option>
+            {books.map((option) => (
+              <option key={option.bookId} value={option.bookId}>
+                {option.title} ({option.pages === 1 ? "1 page" : `${option.pages} pages`})
+              </option>
+            ))}
+          </select>
           <input
             required
             inputMode="numeric"
@@ -1224,23 +1209,10 @@ function BookMatchCell({
           <LiteButton type="submit" variant="outline" className="h-7 px-2 text-xs" disabled={busy || !valid}>
             Match
           </LiteButton>
-          {book.match ? (
-            <>
-              <LiteButton variant="ghost" className="h-7 px-1.5 text-xs" disabled={busy} onClick={() => setEditing(false)}>
-                cancel
-              </LiteButton>
-              <LiteButton
-                variant="ghost"
-                className="h-7 px-1.5 text-xs"
-                disabled={busy}
-                onClick={() => {
-                  onSave(null);
-                  setEditing(false);
-                }}
-              >
-                clear
-              </LiteButton>
-            </>
+          {moderated ? (
+            <LiteButton variant="ghost" className="h-7 px-1.5 text-xs" disabled={busy} onClick={() => onSave(null)}>
+              Clear
+            </LiteButton>
           ) : null}
         </form>
       )}

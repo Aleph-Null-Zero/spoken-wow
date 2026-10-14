@@ -31,7 +31,7 @@ import {
   CONTRIBUTION_COLUMNS,
   listContributions,
   setContributionNpcKind,
-  setContributionPage,
+  setContributionMatch,
   type Contribution,
 } from "./store";
 
@@ -1159,6 +1159,11 @@ describe("resolveContribution: a book page in another language", () => {
     seeded = [];
   });
 
+  /** accept.ts still reads the English page from "pageId"; nothing else writes it now. */
+  async function matchedTo(id: number, pageId: number): Promise<void> {
+    await db().query(`update "contribution" set "pageId" = $2 where "id" = $1`, [id, pageId]);
+  }
+
   async function untranslatedPage(): Promise<{ pageId: number; lineId: string; owner: string; kind: string }> {
     const pageId = 900_000_000 + Math.floor(Math.random() * 90_000_000);
     seeded.push(pageId);
@@ -1181,7 +1186,7 @@ describe("resolveContribution: a book page in another language", () => {
   it("writes the matched page in its language, with the title the client showed", async () => {
     const target = await untranslatedPage();
     const id = await page("Olá, $N. Esta é a página.", "Livro de Teste");
-    expect(await setContributionPage(id, target.pageId, RESOLVER)).toMatchObject({ pageId: target.pageId });
+    await matchedTo(id, target.pageId);
     expect(await lineIsInExplorer({ ...(await row(id)), status: "accepted" })).toBe(false);
     expect((await resolveContribution(id, "accepted", RESOLVER)).ok).toBe(true);
 
@@ -1214,8 +1219,8 @@ describe("resolveContribution: a book page in another language", () => {
     const target = await untranslatedPage();
     const first = await page("O primeiro texto.", "Livro de Teste");
     const second = await page("O segundo texto.", "Outro Título");
-    await setContributionPage(first, target.pageId, RESOLVER);
-    await setContributionPage(second, target.pageId, RESOLVER);
+    await matchedTo(first, target.pageId);
+    await matchedTo(second, target.pageId);
     expect((await resolveContribution(first, "accepted", RESOLVER)).ok).toBe(true);
     expect((await resolveContribution(second, "accepted", RESOLVER)).ok).toBe(true);
 
@@ -1225,7 +1230,7 @@ describe("resolveContribution: a book page in another language", () => {
     expect(rows).toEqual([{ text: "O primeiro texto." }]);
     expect(await resolveContribution(first, "rejected", RESOLVER)).toMatchObject({ ok: false, reason: "one-way" });
     // The match under a written page cannot move either.
-    expect(await setContributionPage(first, null, RESOLVER)).toBeNull();
+    expect(await setContributionMatch(first, null, RESOLVER)).toBeNull();
     expect((await row(first)).pageId).toBe(target.pageId);
   });
 });
