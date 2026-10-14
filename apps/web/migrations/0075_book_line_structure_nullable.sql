@@ -27,3 +27,7 @@ begin
   return null;
 end;
 $$;
+
+-- Answers a moderator gave on "pageId" since the last migration are carried into the match columns.
+update "contribution" set "matchLineId" = case when "pageId" is null then null else 'b:' || "pageId" end
+ where "source" = 'books' and "matchBookId" is null and not "matchNewBook";
