@@ -25,9 +25,10 @@ Neither one can be accepted today:
 - **Only a moderator sets `pageId`.** The envelope carries a checksum of the translated text,
   which names no page, and intake does not try to match.
 
-The import has the same assumption. `localizedPages` (`pipelines/books/tools/lib/locale.mjs`)
-skips every locale page with no English row (`withoutEnglish`), so even real `pageTextID`s that
-only another language has never reach the corpus.
+The import skips every locale page with no English row (`withoutEnglish` in
+`pipelines/books/tools/lib/locale.mjs`). That skip is right and stays: a `locales_page_text` entry
+is a `page_text` entry, and the English extract already holds every one something can open. The
+rest are the orphans the README counts.
 
 ## What was decided
 
@@ -197,12 +198,9 @@ Stacked PRs. Each one deploys on its own, and every migration is additive
 
 1. **Probe.** Its result settles step 5's envelope fields.
 2. **Migration.** Create `book_page`, backfilled from the current `book_line` rows. Add
-   `matchLineId`, `matchBookId` and `matchPageNumber` to `contribution`, with today's `pageId`
-   answers copied into `matchLineId`.
+   `matchLineId`, `matchBookId`, `matchPageNumber` and `matchNewBook` to `contribution`, with
+   today's `pageId` answers copied into `matchLineId`.
 3. **Readers move to `book_page`:** catalogue, filters, lookup, export, accept and triage.
-   `import-locale` stops skipping locale pages that have no English row. Those are real
-   `pageTextID`s, so they become `book_page` rows built from the world database's page chains,
-   not minted pages.
 4. **Matching, triage, and the new kinds of accept**, including the books Corrections tab.
 5. **Addon:** string page ids, plus the envelope ids if the probe found any.
 6. **Minting switched on.**
