@@ -136,6 +136,18 @@ describe("accentTagged", () => {
     );
   });
 
+  it("repeats the tag before every sentence, which eleven_v4 otherwise forgets", () => {
+    expect(accentTagged("Ahoy. Ye'll do!\n\nWhat say \"ye?\" Go.", "[pirate accent]")).toBe(
+      "[pirate accent] Ahoy. [pirate accent] Ye'll do!\n\n[pirate accent] What say \"ye?\" [pirate accent] Go.",
+    );
+  });
+
+  it("does not end a sentence at an ellipsis", () => {
+    expect(accentTagged("Adventurer... yeah. Aye.", "[pirate accent]")).toBe(
+      "[pirate accent] Adventurer... yeah. [pirate accent] Aye.",
+    );
+  });
+
   it("leaves the line alone when the race has no tag", () => {
     expect(accentTagged("Welcome to Ironforge.", undefined)).toBe("Welcome to Ironforge.");
   });

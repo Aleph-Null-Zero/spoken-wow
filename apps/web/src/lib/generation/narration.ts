@@ -139,12 +139,23 @@ export function audioTags(text: string): string {
 }
 
 /**
- * The direction for a slot (see directionFor), prefixed to the words the NPC says.
+ * Where a sentence ends and the next begins: a full stop, `!` or `?`, any closing quotes or
+ * brackets, then whitespace. Not after a second dot, so "coin... [hic]" and "Adventurer...
+ * yeah" stay one sentence.
+ */
+const SENTENCE_END = /((?<!\.)[.!?]["'\u201d\u2019)\]]*)(\s+)(?=\S)/g;
+
+/**
+ * The direction for a slot (see directionFor), in front of every sentence the NPC says.
  *
  * Dwarves are the reason this exists: they are meant to have a strong Scottish brogue, and
  * an instant clone read by eleven_v3 returns something closer to RP. The model has no other
  * channel for direction - a text-to-speech request carries text, settings and a seed,
  * nothing else - so the direction has to travel inside the text.
+ *
+ * In front of every sentence, not once per line: eleven_v4 performs a direction for the first
+ * few words and then drifts back to the voice's own delivery, so a pirate was a pirate for
+ * half a sentence of a 400-character line. Every sentence pays the direction's characters again.
  *
  * Applied per stretch of speech rather than once at the front, because a line can be
  * interrupted by a stage direction that `narrator-male` reads. Tagging the whole string would
@@ -175,7 +186,7 @@ export function accentTagged(
       const own = current ? directionFor(current, raceTags) : tag;
       return DIRECTION.test(piece) || !piece.trim() || !own
         ? piece
-        : piece.replace(/^(\s*)/, `$1${own} `);
+        : piece.replace(/^(\s*)/, `$1${own} `).replace(SENTENCE_END, `$1$2${own} `);
     })
     .join("");
 }

@@ -678,7 +678,8 @@ Skybourne elves have the game's two voice sets per gender, named by their NPCSou
 
 An NPC whose voice is right but whose manner is not — "Pretty Boy" Duncan, a pirate among human
 men — takes a **direction** of its own in the Direction column of `/npcs` (migration 0074). It
-is sent after the race's and the slot's, in front of every line, and only on a file that no
+is sent after the race's and the slot's, in front of every sentence (eleven_v4 drifts back to
+the voice's own delivery after a few words, so every direction is repeated), and only on a file that no
 other NPC speaks without the same direction: a gossip line shared with every other human man
 stays theirs. Setting one marks the NPC's takes **text changed**, like any change to what is
 sent.
