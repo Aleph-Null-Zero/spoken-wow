@@ -272,13 +272,15 @@ SpokenBooks.SITE_URL = "https://spoken.rusty.one"
 --- the link from what it already has, with no per-page table to ship and nothing to escape.
 --- The zones landing page makes the same trade with its {mapID}/{slug} path.
 function SpokenBooks:ReportURL(pageId, language)
-	if type(pageId) ~= "number" then
+	local key = type(pageId) == "number" and format("%d", pageId)
+		or (type(pageId) == "string" and pageId:match("^n[%x%-]+$"))
+	if not key then
 		return nil
 	end
 	-- Filed under the language of the clip being reported, which the site reads off its
 	-- /{lang}/ prefix. English keeps the address it always had.
 	if language and language ~= "enUS" then
-		return format("%s/%s/books/r/%d", self.SITE_URL, language, pageId)
+		return format("%s/%s/books/r/%s", self.SITE_URL, language, key)
 	end
-	return format("%s/books/r/%d", self.SITE_URL, pageId)
+	return format("%s/books/r/%s", self.SITE_URL, key)
 end

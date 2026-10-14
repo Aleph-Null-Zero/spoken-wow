@@ -145,8 +145,7 @@ end
 --- turned away from. Walks the book rather than trusting a remembered "currently reading",
 --- which nothing clears when a queue drains on its own.
 function SpokenBooks:IsNarrating(book)
-	local data = self:Data()
-	local entry = book and data and data.books[book]
+	local entry = book and self:BookById(book)
 	if not entry then
 		return false
 	end

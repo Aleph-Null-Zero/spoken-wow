@@ -81,19 +81,27 @@ end
 
 --- A page every installed pack has, played the way a real one is, to check it can be heard.
 function SpokenBooks:PlayTestLine()
+	local held = false
 	for _, pack in ipairs(self:GetAudioPacks()) do
-		local pageId = next(pack.pages)
-		if pageId then
-			-- One page, queued as a real one plays: not PlayFrom, which marks the book read and
-			-- with Read Whole Book on lines up the rest of it.
+		-- A page ClipFor can place: a pack may hold keys an older corpus does not know.
+		for pageId in pairs(pack.pages) do
+			held = true
 			local clip = self.source and self:ClipFor(pageId)
-			if clip and self.source:Enqueue(clip) then
-				Print("playing a test page")
-			else
-				Print("|cffffcc00the test page could not be queued|r")
+			if clip then
+				-- One page, queued as a real one plays: not PlayFrom, which marks the book read
+				-- and with Read Whole Book on lines up the rest of it.
+				if self.source:Enqueue(clip) then
+					Print("playing a test page")
+				else
+					Print("|cffffcc00the test page could not be queued|r")
+				end
+				return
 			end
-			return
 		end
+	end
+	if held then
+		Print("|cffffcc00the test page could not be queued|r")
+		return
 	end
 	Print(self:DescribeMissingAudio())
 end
