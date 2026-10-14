@@ -107,7 +107,7 @@ async function bookMatchesFor(contributions: Contribution[]) {
     if (!first || p.pageNumber < first.pageNumber) firstOf.set(p.bookId, p);
   }
   const titleIn = (p: BookCorpusPage | undefined, lang: string) =>
-    p?.titles.get(lang) ?? p?.titles.get(BASE_LANG) ?? [...(p?.titles.values() ?? [])][0] ?? "untitled";
+    p?.titles.get(lang)?.[0] ?? p?.titles.get(BASE_LANG)?.[0] ?? [...(p?.titles.values() ?? [])][0]?.[0] ?? "untitled";
   const describe = (lang: string) => (id: string) => {
     if (id.startsWith("book:")) return titleIn(firstOf.get(id.slice(5)), lang);
     const page = byLine.get(id);

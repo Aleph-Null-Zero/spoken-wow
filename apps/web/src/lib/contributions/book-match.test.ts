@@ -6,7 +6,7 @@ function page(lineId: string, bookId: string, pageNumber: number, texts: Record<
   return {
     lineId, bookId, pageNumber,
     ownerKind: owner?.[0] ?? null, ownerIds: owner ? [owner[1]] : [],
-    texts: new Map(Object.entries(texts)), titles: new Map(Object.entries(titles)),
+    texts: new Map(Object.entries(texts)), titles: new Map(Object.entries(titles).map(([lang, title]) => [lang, [title]])),
   };
 }
 

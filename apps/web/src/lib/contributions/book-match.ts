@@ -26,8 +26,11 @@ export type BookCorpusPage = {
   ownerIds: number[];
   /** lang -> current text */
   texts: Map<string, string>;
-  /** lang -> the title a client in that language shows: the owner's entity_name, else the page's own */
-  titles: Map<string, string>;
+  /**
+   * lang -> every title a client in that language may show: each owner's entity_name, then the
+   * page's own. The first is the one shown, the first owner's name where it has one.
+   */
+  titles: Map<string, string[]>;
 };
 export type BookCorpus = {
   pages: BookCorpusPage[];
@@ -112,7 +115,9 @@ export function indexCorpus(pages: BookCorpusPage[]): BookCorpus {
       addTo(byTextSets, said, page);
     }
     normalised.set(page.lineId, own);
-    for (const [lang, title] of page.titles) addTo(byTitle, `${lang}\u0000${title.trim()}`, page.bookId);
+    for (const [lang, titles] of page.titles) {
+      for (const title of titles) addTo(byTitle, `${lang}\u0000${title.trim()}`, page.bookId);
+    }
     byPlace.set(`${page.bookId}\u0000${page.pageNumber}`, page);
     if (page.ownerKind) for (const id of page.ownerIds) addTo(byOwner, `${page.ownerKind}:${id}`, page.bookId);
   }
@@ -168,7 +173,7 @@ export function matchBook(row: BookMatchInput, corpus: BookCorpus): BookMatchRes
       // Otherwise the contributor's title, in its language and then in any, and its page number
       // may tell the copies apart.
       const named = (p: BookCorpusPage, lang?: string) =>
-        [...p.titles].some(([l, t]) => (lang === undefined || l === lang) && t.trim() === title);
+        [...p.titles].some(([l, ts]) => (lang === undefined || l === lang) && ts.some((t) => t.trim() === title));
       let narrowed = title ? same.filter((p) => named(p, row.locale)) : [];
       if (title && narrowed.length === 0) narrowed = same.filter((p) => named(p));
       if (narrowed.length === 1) return onPage(narrowed[0], said, row, corpus, "text");
@@ -214,18 +219,30 @@ export async function loadBookCorpus(client?: Pick<PoolClient, "query">): Promis
 async function readCorpus(q: Pick<PoolClient, "query">): Promise<BookCorpus> {
   const { rows } = await q.query<{
     lineId: string; bookId: string; pageNumber: number; ownerKind: "object" | "item" | null;
-    ownerIds: number[] | null; lang: string | null; text: string | null; title: string | null; ownerName: string | null;
+    ownerIds: number[] | null; lang: string | null; text: string | null; title: string | null;
   }>(
-    `select p."lineId", p."bookId", p."pageNumber", p."ownerKind", p."ownerIds",
-            l."lang", l."text", l."title",
-            (select n."name" from "entity_name" n
-              where n."kind" = case p."ownerKind" when 'object' then 'gameobject' else 'item' end
-                and n."entityId" = p."ownerIds"[1]::text and n."lang" = l."lang" and n."isCurrent") as "ownerName"
+    `select p."lineId", p."bookId", p."pageNumber", p."ownerKind", p."ownerIds", l."lang", l."text", l."title"
        from "book_page" p
        left join "book_line" l on l."lineId" = p."lineId" and l."isCurrent"
       where p."aliasOf" is null`,
   );
+  const { rows: names } = await q.query<{ lineId: string; lang: string; name: string }>(
+    `select p."lineId", n."lang", n."name"
+       from "book_page" p
+       cross join lateral unnest(p."ownerIds") with ordinality as o("id", "ord")
+       join "entity_name" n on n."kind" = case p."ownerKind" when 'object' then 'gameobject' else 'item' end
+                           and n."entityId" = o."id"::text and n."isCurrent"
+      where p."aliasOf" is null and p."ownerKind" is not null
+      order by p."lineId", o."ord"`,
+  );
   const pages = new Map<string, BookCorpusPage>();
+  const titled = (page: BookCorpusPage, lang: string, title: string | null) => {
+    const trimmed = title?.trim();
+    if (!trimmed) return;
+    const titles = page.titles.get(lang);
+    if (!titles) page.titles.set(lang, [trimmed]);
+    else if (!titles.includes(trimmed)) titles.push(trimmed);
+  };
   for (const row of rows) {
     let page = pages.get(row.lineId);
     if (!page) {
@@ -234,8 +251,12 @@ async function readCorpus(q: Pick<PoolClient, "query">): Promise<BookCorpus> {
       pages.set(row.lineId, page);
     }
     if (row.lang && row.text !== null) page.texts.set(row.lang, row.text);
-    const title = (row.ownerName ?? row.title)?.trim();
-    if (row.lang && title) page.titles.set(row.lang, title);
   }
+  // Owners' names first, in owner order, so a language's first title is the one its clients show.
+  for (const { lineId, lang, name } of names) {
+    const page = pages.get(lineId);
+    if (page) titled(page, lang, name);
+  }
+  for (const row of rows) if (row.lang) titled(pages.get(row.lineId)!, row.lang, row.title);
   return indexCorpus([...pages.values()]);
 }
