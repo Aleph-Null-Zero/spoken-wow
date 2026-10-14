@@ -25,18 +25,18 @@ describe("filtersFromParams", () => {
     expect((await filtersFromParams(new URLSearchParams("fb=closed"))).reports).toBeUndefined();
   });
 
-  it("reads which explorer is asking, and nothing else as one", async () => {
-    expect((await filtersFromParams(new URLSearchParams("kind=gossip"))).kind).toBe("gossip");
-    expect((await filtersFromParams(new URLSearchParams("kind=quests"))).kind).toBe("quests");
-    expect((await filtersFromParams(new URLSearchParams("kind=zones"))).kind).toBeUndefined();
+  it("reads several sources, comma-separated, and drops the ones that are not sources", async () => {
+    expect((await filtersFromParams(new URLSearchParams("source=gossip,accept"))).source).toEqual(["accept", "gossip"]);
+    expect((await filtersFromParams(new URLSearchParams("source=gossip,zones"))).source).toEqual(["gossip"]);
+    expect((await filtersFromParams(new URLSearchParams("source=zones"))).source).toBeUndefined();
   });
 
   it("reads the follow-up source by its value, not by the label the dropdown shows", async () => {
     // SOURCE_LABELS spells it "follow-up" for people; the URL carries the corpus value, and a
     // hyphenated one would fall outside SOURCES and silently unfilter the search.
-    expect((await filtersFromParams(new URLSearchParams("source=followup"))).source).toBe(
+    expect((await filtersFromParams(new URLSearchParams("source=followup"))).source).toEqual([
       "followup",
-    );
+    ]);
     expect(
       (await filtersFromParams(new URLSearchParams("source=follow-up"))).source,
     ).toBeUndefined();

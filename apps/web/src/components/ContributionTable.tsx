@@ -28,6 +28,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 import ClientSelect from "@/components/ClientSelect";
 import { SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
+import MultiFilterChip from "@/components/MultiFilterChip";
 import SortHeader from "@/components/SortHeader";
 import SpeakerCell, { ProvenanceBadge, type SpeakerAnswer } from "@/components/SpeakerCell";
 import { ACCEPT_TONE, LiteButton, LiteCheckbox, REJECT_TONE } from "@/components/LiteControls";
@@ -51,14 +52,14 @@ import {
   bucketOf,
   contributionsHref,
   namesSpeaker,
-  QUEST_STAGES,
+  STAGES,
   nextSort,
   type Bucket,
   type Section,
   type ClientFilter,
   type ContributionSort,
   type FilterChange,
-  type QuestStage,
+  type Stage,
   type SortColumn,
   type StageFilter,
 } from "@/lib/contributions/query";
@@ -113,13 +114,14 @@ function bookOption(book: BookChoice): string {
   return `${book.title} #${book.bookId}`;
 }
 
-const STAGE_LABELS: Record<QuestStage, string> = {
+const STAGE_LABELS: Record<Stage, string> = {
   accept: "Accept",
   progress: "Progress",
   complete: "Complete",
+  gossip: "Gossip",
 };
 
-const STAGE_CHIP_OPTIONS: ChipOption[] = QUEST_STAGES.map((option) => ({
+const STAGE_CHIP_OPTIONS: ChipOption[] = STAGES.map((option) => ({
   value: option,
   label: STAGE_LABELS[option],
 }));
@@ -525,7 +527,7 @@ export default function ContributionTable({
           type="search"
           value={query}
           placeholder={
-            source === "quests" ? "NPC, quest, or what they sent…" : source === "gossip" ? "NPC, or what they sent…" : "What they sent…"
+            source === "quests" ? "NPC, quest, or what they sent…" : "What they sent…"
           }
           aria-label="Search"
           className="h-8 min-w-0 basis-64"
@@ -535,14 +537,14 @@ export default function ContributionTable({
           <FilterChip
             label="search in"
             value={searchIn === "any" ? undefined : searchIn}
-            options={source === "gossip" ? SEARCH_IN_OPTIONS.filter((option) => option.value !== "quest") : SEARCH_IN_OPTIONS}
+            options={SEARCH_IN_OPTIONS}
             onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
           />
         ) : null}
         {source === "quests" ? (
-          <FilterChip
+          <MultiFilterChip
             label="stage"
-            value={stage === "all" ? undefined : stage}
+            values={stage}
             options={STAGE_CHIP_OPTIONS}
             onChange={(next) => go({ stage: next as StageFilter | undefined })}
           />
@@ -650,8 +652,6 @@ export default function ContributionTable({
                   <th className="border-b py-2 pr-3 font-normal">NPC</th>
                   <th className="border-b py-2 pr-3 font-normal">Quest</th>
                 </>
-              ) : source === "gossip" ? (
-                <th className="border-b py-2 pr-3 font-normal">NPC</th>
               ) : (
                 <th className="border-b py-2 pr-3 font-normal">{source === "books" ? "Book" : "Place"}</th>
               )}
@@ -884,36 +884,36 @@ const ContributionTableRow = memo(function ContributionTableRow({
           </td>
         ) : null}
 
-        {row.quest === "gossip" ? null : (
-          <td className="max-w-[14rem] pr-3 text-xs whitespace-nowrap">
-            {book ? (
-              <BookMatchCell
-                book={book}
-                lang={lang}
-                busy={npcBusy}
-                locked={pageWritten || locked}
-                onSave={(answer) => void onMatchPage(row.id, answer)}
-              />
-            ) : row.quest === null ? (
-              <span title={row.key}>{row.place ?? row.key}</span>
-            ) : (
-              <>
-                <span className="truncate">{row.quest.title}</span>{" "}
-                <a
-                  href={wowheadQuestUrl(row.quest.questId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-muted-foreground hover:underline"
-                >
-                  #{row.quest.questId}
-                </a>
-                {row.quest.stage ? (
-                  <div className="text-muted-foreground">{STAGE_LABELS[row.quest.stage]}</div>
-                ) : null}
-              </>
-            )}
-          </td>
-        )}
+        <td className="max-w-[14rem] pr-3 text-xs whitespace-nowrap">
+          {book ? (
+            <BookMatchCell
+              book={book}
+              lang={lang}
+              busy={npcBusy}
+              locked={pageWritten || locked}
+              onSave={(answer) => void onMatchPage(row.id, answer)}
+            />
+          ) : row.quest === null ? (
+            <span title={row.key}>{row.place ?? row.key}</span>
+          ) : row.quest === "gossip" ? (
+            "Gossip"
+          ) : (
+            <>
+              <span className="truncate">{row.quest.title}</span>{" "}
+              <a
+                href={wowheadQuestUrl(row.quest.questId)}
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground hover:underline"
+              >
+                #{row.quest.questId}
+              </a>
+              {row.quest.stage ? (
+                <div className="text-muted-foreground">{STAGE_LABELS[row.quest.stage]}</div>
+              ) : null}
+            </>
+          )}
+        </td>
 
         {/* Which game, then the locale and the exact build underneath: the version is
             in the label, and the build number is what tells a beta's builds apart. */}

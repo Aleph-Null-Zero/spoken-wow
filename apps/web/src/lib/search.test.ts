@@ -138,21 +138,18 @@ describe("field filters", () => {
     // own axis rather than standing in for a voice.
     expect(all({ flavor: "shaman" })).toHaveLength(867);
     expect(all({ flavor: "shaman", race: "tauren" })).toHaveLength(486);
-    expect(all({ source: "gossip" }).every((l) => l.source === "gossip")).toBe(true);
+    expect(all({ source: ["gossip"] }).every((l) => l.source === "gossip")).toBe(true);
     expect(all({ npcType: "item" }).every((l) => l.npcType === "item")).toBe(true);
   });
 
-  it("splits gossip from everything tied to a quest", () => {
-    const gossip = all({ kind: "gossip" });
-    const quests = all({ kind: "quests" });
-    expect(gossip.length).toBeGreaterThan(0);
-    expect(gossip.every((l) => l.source === "gossip")).toBe(true);
-    expect(quests.some((l) => l.source === "gossip")).toBe(false);
-    expect(gossip.length + quests.length).toBe(all().length);
+  it("takes several sources at once, as lines of any of them", () => {
+    const both = all({ source: ["accept", "gossip"] });
+    expect(both).toHaveLength(all({ source: ["accept"] }).length + all({ source: ["gossip"] }).length);
+    expect(new Set(both.map((l) => l.source))).toEqual(new Set(["accept", "gossip"]));
   });
 
   it("combines with a query", () => {
-    const lines = all({ q: "dughan", filter: "npc", source: "gossip" });
+    const lines = all({ q: "dughan", filter: "npc", source: ["gossip"] });
     expect(lines.length).toBeGreaterThan(0);
     expect(lines.every((l) => l.npcId === 240 && l.source === "gossip")).toBe(true);
   });
@@ -189,7 +186,7 @@ describe("field filters", () => {
   it("treats asking for the progress source as asking to see them", () => {
     // Otherwise picking `progress` in the source filter would return nothing at all, which
     // reads as a broken filter rather than as a default doing its job.
-    const lines = asShipped({ source: "progress" });
+    const lines = asShipped({ source: ["progress"] });
     expect(lines).toHaveLength(3653);
     expect(lines.every((l) => l.source === "progress")).toBe(true);
   });
@@ -202,7 +199,7 @@ describe("follow-up lines", () => {
   });
 
   it("narrow by source, and are voiceable lines with a quest and a speaker", () => {
-    const lines = asShipped({ source: "followup" });
+    const lines = asShipped({ source: ["followup"] });
     expect(lines).toHaveLength(corpus.lines.filter((l) => l.source === "followup").length);
     expect(lines.every((l) => l.source === "followup")).toBe(true);
     // What the row draws: the quest it follows and the NPC who says it. A null quest would
@@ -214,7 +211,7 @@ describe("follow-up lines", () => {
   it("come back when narrowing to the quest they follow", () => {
     // Narrowing a row to its quest is a quest-id search; a follow-up line belongs in that
     // answer beside the quest's own dialog.
-    const sample = asShipped({ source: "followup" })[0];
+    const sample = asShipped({ source: ["followup"] })[0];
     const lines = asShipped({ q: String(sample.questId), filter: "quest" });
     expect(lines.some((l) => l.source === "followup")).toBe(true);
     expect(lines.some((l) => l.source !== "followup")).toBe(true);

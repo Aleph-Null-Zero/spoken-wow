@@ -32,13 +32,10 @@ export const SOURCE_LABELS: Record<Source, string> = {
 };
 
 /**
- * The two explorers the quests corpus is shown in. Gossip is an NPC talking with no quest
- * behind it, and is being split from quests entirely; every other source hangs off a quest.
+ * The source filter off a query string: `source=accept,gossip`, comma-separated so a link made
+ * when it took one value still reads. Unknown values are dropped, and none left is no filter.
  */
-export const KINDS = ["quests", "gossip"] as const;
-
-export type Kind = (typeof KINDS)[number];
-
-export function kindOf(source: Source): Kind {
-  return source === "gossip" ? "gossip" : "quests";
+export function sourcesFromParam(value: string | null): Source[] | undefined {
+  const sources = SOURCES.filter((source) => value?.split(",").includes(source));
+  return sources.length ? sources : undefined;
 }

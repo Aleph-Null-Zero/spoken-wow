@@ -6,7 +6,6 @@ import { LinkTabs } from "@/components/StatusTabs";
 
 const SECTION_LABELS: Record<Section, string> = {
   quests: "Quests",
-  gossip: "Gossip",
   books: "Books",
   zones: "Zones",
 };
