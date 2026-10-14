@@ -100,3 +100,8 @@ test("a corrected page is still found by the wording the client shows", () => {
   assert.ok(lua.includes(`[${pageChecksum("Texto corregido.")}] = 15`));
   assert.ok(lua.includes(`[${pageChecksum("Texto original.")}] = 15`));
 });
+
+test("an absorbed page keeps the file its take was cut to under the real numeric id", () => {
+  const lua = packLua("esMX", [{ pageId: 38, file: "n1b2c", durationSec: 2.5 }]);
+  assert.match(lua, /\[38\] = \{ file = "n1b2c", len = /);
+});
