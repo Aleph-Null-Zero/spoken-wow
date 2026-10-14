@@ -27,7 +27,19 @@ export type BookCorpusPage = {
   /** lang -> the title a client in that language shows: the owner's entity_name, else the page's own */
   titles: Map<string, string>;
 };
-export type BookCorpus = { pages: BookCorpusPage[] };
+export type BookCorpus = {
+  pages: BookCorpusPage[];
+  /** normalised words, in any language -> the pages that have them */
+  byText: Map<string, BookCorpusPage[]>;
+  /** lineId -> lang -> normalised words */
+  normalised: Map<string, Map<string, string>>;
+  /** `${lang}\u0000${title}` -> bookIds */
+  byTitle: Map<string, Set<string>>;
+  /** `${bookId}\u0000${pageNumber}` -> page */
+  byPlace: Map<string, BookCorpusPage>;
+  /** `${kind}:${id}` -> bookIds */
+  byOwner: Map<string, Set<string>>;
+};
 
 export type BookMatchInput = {
   locale: string;
@@ -50,60 +62,94 @@ export type MatchVia = "moderator" | "owner" | "text" | "title" | "none";
 
 const normal = (text: string) => (normaliseText(text) as string).trim();
 
+function addTo<K, V>(map: Map<K, Set<V>>, key: K, value: V) {
+  const set = map.get(key);
+  if (set) set.add(value);
+  else map.set(key, new Set([value]));
+}
+
+/** The lookups matchBook uses, built once so a call never re-reads a page's words. */
+export function indexCorpus(pages: BookCorpusPage[]): BookCorpus {
+  const byTextSets = new Map<string, Set<BookCorpusPage>>();
+  const normalised = new Map<string, Map<string, string>>();
+  const byTitle = new Map<string, Set<string>>();
+  const byPlace = new Map<string, BookCorpusPage>();
+  const byOwner = new Map<string, Set<string>>();
+  for (const page of pages) {
+    const own = new Map<string, string>();
+    for (const [lang, text] of page.texts) {
+      const said = normal(text);
+      own.set(lang, said);
+      addTo(byTextSets, said, page);
+    }
+    normalised.set(page.lineId, own);
+    for (const [lang, title] of page.titles) addTo(byTitle, `${lang}\u0000${title.trim()}`, page.bookId);
+    byPlace.set(`${page.bookId}\u0000${page.pageNumber}`, page);
+    if (page.ownerKind) for (const id of page.ownerIds) addTo(byOwner, `${page.ownerKind}:${id}`, page.bookId);
+  }
+  const byText = new Map([...byTextSets].map(([said, set]) => [said, [...set]]));
+  return { pages, byText, normalised, byTitle, byPlace, byOwner };
+}
+
 function pageNumberOf(meta: Record<string, string>): number {
   const number = Number(meta.number);
   return Number.isInteger(number) && number > 0 ? number : 1;
 }
 
-function onPage(page: BookCorpusPage, row: BookMatchInput, via: MatchVia): BookMatchResult {
+function onPage(page: BookCorpusPage, said: string, row: BookMatchInput, corpus: BookCorpus, via: MatchVia): BookMatchResult {
   const current = page.texts.get(row.locale);
   if (current === undefined) return { kind: "translation", lineId: page.lineId, via };
-  if (row.text !== null && normal(current) === normal(row.text)) return { kind: "known", lineId: page.lineId, via };
+  if (said !== "" && corpus.normalised.get(page.lineId)?.get(row.locale) === said) return { kind: "known", lineId: page.lineId, via };
   return { kind: "correction", lineId: page.lineId, current, via };
 }
 
-function inBook(corpus: BookCorpus, bookId: string, pageNumber: number, row: BookMatchInput, via: MatchVia): BookMatchResult {
-  const page = corpus.pages.find((p) => p.bookId === bookId && p.pageNumber === pageNumber);
-  return page ? onPage(page, row, via) : { kind: "new-page", bookId, pageNumber, via };
+function inBook(corpus: BookCorpus, bookId: string, pageNumber: number, said: string, row: BookMatchInput, via: MatchVia): BookMatchResult {
+  const page = corpus.byPlace.get(`${bookId}\u0000${pageNumber}`);
+  return page ? onPage(page, said, row, corpus, via) : { kind: "new-page", bookId, pageNumber, via };
 }
 
 export function matchBook(row: BookMatchInput, corpus: BookCorpus): BookMatchResult {
   const pageNumber = row.matchPageNumber ?? pageNumberOf(row.meta);
   const title = row.meta.book?.trim() ?? "";
+  const said = row.text ? normal(row.text) : "";
 
   if (row.matchLineId) {
     const page = corpus.pages.find((p) => p.lineId === row.matchLineId);
-    if (page) return onPage(page, row, "moderator");
+    if (page) return onPage(page, said, row, corpus, "moderator");
   }
-  if (row.matchBookId) return inBook(corpus, row.matchBookId, pageNumber, row, "moderator");
+  if (row.matchBookId) return inBook(corpus, row.matchBookId, pageNumber, said, row, "moderator");
   if (row.matchNewBook) return { kind: "new-book", title, pageNumber, via: "moderator" };
 
   // 1. What the client read it from.
-  for (const [kind, field] of [["item", "item"], ["object", "object"]] as const) {
-    const id = Number(row.meta[field]);
+  for (const kind of ["item", "object"] as const) {
+    const id = Number(row.meta[kind]);
     if (!Number.isInteger(id) || id <= 0) continue;
-    const books = new Set(corpus.pages.filter((p) => p.ownerKind === kind && p.ownerIds.includes(id)).map((p) => p.bookId));
-    if (books.size === 1) return inBook(corpus, [...books][0], pageNumber, row, "owner");
+    const books = corpus.byOwner.get(`${kind}:${id}`);
+    if (books?.size === 1) return inBook(corpus, [...books][0], pageNumber, said, row, "owner");
   }
 
   // 2. The same words, in any language.
-  if (row.text) {
-    const said = normal(row.text);
-    const same = corpus.pages.filter((p) => [...p.texts.values()].some((t) => normal(t) === said));
-    if (same.length === 1) return onPage(same[0], row, "text");
+  if (said !== "") {
+    const same = corpus.byText.get(said) ?? [];
+    if (same.length === 1) return onPage(same[0], said, row, corpus, "text");
     if (same.length > 1) {
       // The same words in this language on one page is that page, whatever else repeats them.
-      const own = same.filter((p) => p.texts.has(row.locale) && normal(p.texts.get(row.locale)!) === said);
-      if (own.length === 1) return onPage(own[0], row, "text");
+      const own = same.filter((p) => corpus.normalised.get(p.lineId)?.get(row.locale) === said);
+      if (own.length === 1) return onPage(own[0], said, row, corpus, "text");
+      // Otherwise the contributor's own title, then its page number, may tell the copies apart.
+      const titled = title ? same.filter((p) => p.titles.get(row.locale)?.trim() === title) : [];
+      if (titled.length === 1) return onPage(titled[0], said, row, corpus, "text");
+      const numbered = titled.filter((p) => p.pageNumber === pageNumber);
+      if (numbered.length === 1) return onPage(numbered[0], said, row, corpus, "text");
       return { kind: "ambiguous", candidates: same.map((p) => p.lineId).sort() };
     }
   }
 
   // 3. The title and page number, in this language.
   if (title) {
-    const books = [...new Set(corpus.pages.filter((p) => p.titles.get(row.locale) === title).map((p) => p.bookId))].sort();
-    if (books.length === 1) return inBook(corpus, books[0], pageNumber, row, "title");
-    if (books.length > 1) return { kind: "ambiguous", candidates: books };
+    const found = corpus.byTitle.get(`${row.locale}\u0000${title}`);
+    if (found && found.size === 1) return inBook(corpus, [...found][0], pageNumber, said, row, "title");
+    if (found && found.size > 1) return { kind: "ambiguous", candidates: [...found].sort() };
   }
 
   // 4. Nothing has it.
@@ -135,8 +181,8 @@ export async function loadBookCorpus(client?: Pick<PoolClient, "query">): Promis
       pages.set(row.lineId, page);
     }
     if (row.lang && row.text !== null) page.texts.set(row.lang, row.text);
-    const title = row.ownerName ?? row.title;
+    const title = (row.ownerName ?? row.title)?.trim();
     if (row.lang && title) page.titles.set(row.lang, title);
   }
-  return { pages: [...pages.values()] };
+  return indexCorpus([...pages.values()]);
 }
