@@ -134,10 +134,14 @@ type EnglishRow = Pick<CorpusLine, "lineId" | "source" | "questId" | "questTitle
  * and an override on one of them would leave the other reader the old text. Each line is
  * given the template as its reader hears it.
  *
- * A template that branches on `$G` where the moment is one plain line cannot be an override:
- * one file cannot say both. The line is split instead (splitByPlayerGender), but only one the
- * site wrote. An extracted line comes back from the next dump import under its plain id,
- * current again beside the split.
+ * A template without `$G` for a moment split by player gender is refused: the client resolves
+ * `$G` before sending (Contribute.lua's Detemplate does not restore it) and the envelope does
+ * not say which reader sent it, so the text is one side's words with no telling which.
+ *
+ * A template with `$G` where the moment is one plain line cannot be an override: one file
+ * cannot say both. The line is split instead (splitByPlayerGender), but only one the site
+ * wrote. An extracted line comes back from the next dump import under its plain id, current
+ * again beside the split.
  */
 async function correctEnglish(
   moment: string,
@@ -158,8 +162,17 @@ async function correctEnglish(
   }
 
   const spoken = spokenFromTemplate(template);
-  const split = branchesOnPlayerGender(spoken) && rows.every((row) => row.playerGender === null);
-  if (split && rows.some((row) => row.origin === "extracted")) {
+  const gendered = branchesOnPlayerGender(spoken);
+  const split = rows.some((row) => row.playerGender !== null);
+  if (split && !gendered) {
+    return {
+      ok: false,
+      reason: "malformed",
+      message: "This line has a side for each player gender, and the correction is one player's words. Edit it in the explorer.",
+    };
+  }
+  const splitting = gendered && !split;
+  if (splitting && rows.some((row) => row.origin === "extracted")) {
     return {
       ok: false,
       reason: "malformed",
@@ -167,7 +180,7 @@ async function correctEnglish(
     };
   }
   // Every form checked before any is written, so a refusal leaves no reader with the new text.
-  const forms = split
+  const forms = splitting
     ? playerGenderForms(rows[0].lineId, rows[0].fileName, true).map((form) => ({ ...rows[0], ...form }))
     : rows;
   const drafts = forms.map((row) =>
@@ -178,7 +191,7 @@ async function correctEnglish(
     }),
   );
 
-  if (split) await splitByPlayerGender(rows[0], variant, template, contributionId, userId);
+  if (splitting) await splitByPlayerGender(rows[0], forms, variant, template, contributionId, userId);
   else for (const draft of drafts) await writeOverride(draft.file, draft.lineId, draft.text, userId, contributionId);
   return null;
 }
@@ -188,12 +201,12 @@ async function correctEnglish(
  * moment whose template branches: `text` keeps the `$G` for player-words.ts to resolve in each
  * line's gender. The plain line stops being current; its takes stay under its own file.
  *
- * The plain line's speakers are copied onto both, because the export joins speakers to lines by
- * id. A copied row names the correction when it named no contribution, so the next dump import
- * keeps it: the dump has no `:m`/`:f` line to give it speakers.
+ * The plain line's speakers, in every language, are copied onto both, because the export joins
+ * speakers to lines by id.
  */
 async function splitByPlayerGender(
   plain: EnglishRow,
+  forms: readonly EnglishRow[],
   variant: number,
   template: string,
   contributionId: number,
@@ -201,7 +214,6 @@ async function splitByPlayerGender(
 ): Promise<void> {
   const note = correctionNote(contributionId);
   const text = spokenFromTemplate(template);
-  const forms = playerGenderForms(plain.lineId, plain.fileName, true);
   const client = await db().connect();
   try {
     await client.query("begin");
@@ -243,26 +255,20 @@ async function splitByPlayerGender(
     }
 
     // One writer at a time past this point, so no two inserts pick the same `ord` (accept.ts).
+    // Within the statement the max is read once, so row_number spaces the copies apart.
     await client.query(`select pg_advisory_xact_lock(hashtext('quest_line_speaker.contributed_ord'))`);
-    const { rows: speakers } = await client.query<{ id: number }>(
-      `select "id" from "quest_line_speaker" where "lineId" = $1 and "variant" = $2 order by "lang", "ord"`,
-      [plain.lineId, variant],
+    await client.query(
+      `insert into "quest_line_speaker"
+         ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName", "race", "gender",
+          "flavor", "voice", "contributionId")
+       select f."lineId", s."variant", s."lang",
+              greatest((select coalesce(max(o."ord") + 1, 0) from "quest_line_speaker" o where o."lang" = s."lang"), $3)
+                + row_number() over (partition by s."lang" order by f."lineId", s."ord", s."id") - 1,
+              s."npcType", s."npcId", s."npcName", s."race", s."gender", s."flavor", s."voice", s."contributionId"
+         from "quest_line_speaker" s cross join unnest($4::text[]) as f ("lineId")
+        where s."lineId" = $1 and s."variant" = $2`,
+      [plain.lineId, variant, CONTRIBUTED_ORD_FLOOR, forms.map((form) => form.lineId)],
     );
-    for (const form of forms) {
-      for (const speaker of speakers) {
-        await client.query(
-          `insert into "quest_line_speaker"
-             ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName", "race", "gender",
-              "flavor", "voice", "contributionId")
-           select $1, s."variant", s."lang",
-                  (select greatest(coalesce(max(o."ord") + 1, 0), $3) from "quest_line_speaker" o where o."lang" = s."lang"),
-                  s."npcType", s."npcId", s."npcName", s."race", s."gender", s."flavor", s."voice",
-                  coalesce(s."contributionId", $4)
-             from "quest_line_speaker" s where s."id" = $2`,
-          [form.lineId, speaker.id, CONTRIBUTED_ORD_FLOOR, contributionId],
-        );
-      }
-    }
     await client.query("commit");
   } catch (error) {
     await client.query("rollback").catch(() => {});

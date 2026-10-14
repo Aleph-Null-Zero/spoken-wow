@@ -95,7 +95,7 @@ afterAll(async () => {
   ]);
   await db().query(`delete from "quest_line_speaker" where "lineId" = any($1::text[])`, [lines]);
   await db().query(`delete from "contribution" where "ip" = $1`, [ip]);
-  await db().query(`delete from "line_override" where "lineId" = any($1::text[])`, [[lineId, ...lines]]);
+  await db().query(`delete from "line_override" where "lineId" = any($1::text[])`, [lines]);
   await db().query(`delete from "quest_line" where "lineId" = any($1::text[])`, [lines]);
   await db().query(`delete from "user" where "id" = $1`, [ACCEPTER]);
   await closeDb();
@@ -157,8 +157,8 @@ describe("acceptCorrection", () => {
     );
     expect(speakers).toEqual([
       { lineId: moments[1], npcId: 2104, contributionId: null },
-      { lineId: `${moments[1]}:f`, npcId: 2104, contributionId: id },
-      { lineId: `${moments[1]}:m`, npcId: 2104, contributionId: id },
+      { lineId: `${moments[1]}:f`, npcId: 2104, contributionId: null },
+      { lineId: `${moments[1]}:m`, npcId: 2104, contributionId: null },
     ]);
 
     const [state] = await lineStates([
@@ -180,6 +180,12 @@ describe("acceptCorrection", () => {
       { lineId: `${moments[2]}:f`, text: "Hail and well met, lass." },
       { lineId: `${moments[2]}:m`, text: "Hail and well met, lad." },
     ]);
+  });
+
+  it("refuses a correction without $g for a split moment, which is one reader's words", async () => {
+    const id = await contribution("enUS", "Hail and well met, lad.", "accept", splitQuest);
+    const outcome = await acceptCorrection(id, ACCEPTER);
+    expect(!outcome.ok && outcome.reason).toBe("malformed");
   });
 
   it("refuses to split an extracted line, which the next import would bring back", async () => {
