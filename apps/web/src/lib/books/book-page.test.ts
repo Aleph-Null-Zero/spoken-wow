@@ -11,14 +11,17 @@ afterAll(closeDb);
 
 describe("book_page", () => {
   it("has a row for every page book_line had when the migration ran", async () => {
+    const applied = await db().query<{ at: Date }>(
+      `select applied_at as "at" from "schema_migrations" where "name" = '0074_book_page.sql'`,
+    );
+    expect(applied.rows).toHaveLength(1);
     // Other suites insert book_line rows of their own afterwards; those are not the migration's.
     const { rows } = await db().query<{ missing: number }>(
-      `with applied as (
-         select applied_at from "schema_migrations" where "name" = '0074_book_page.sql'
-       )
-       select count(*) filter (where not exists (select 1 from "book_page" p where p."lineId" = l."lineId"))::int as "missing"
-         from (select distinct "lineId" from "book_line", applied
-                where "createdAt" <= applied.applied_at) l`,
+      `select count(*)::int as "missing" from (
+         select distinct "lineId" from "book_line" where "isCurrent" and "createdAt" <= $1
+       ) l
+        where not exists (select 1 from "book_page" p where p."lineId" = l."lineId")`,
+      [applied.rows[0].at],
     );
     expect(rows[0].missing).toBe(0);
   });
