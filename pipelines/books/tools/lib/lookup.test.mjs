@@ -91,3 +91,12 @@ test("English's pack carries the English pages Books.lua lacks, and no empty ind
   assert.match(lua, /\tplaces = \{/);
   assert.doesNotMatch(lua, /\n\tindex = \{|\n\tloose = \{/);
 });
+
+test("a corrected page is still found by the wording the client shows", () => {
+  const { known } = localeEntries([
+    { pageId: "15", numeric: true, bookId: "15", pageNumber: 1, ownerKind: null, ownerIds: [], inEnglish: true, texts: ["Texto corregido.", "Texto original."], ownTitle: "Diario" },
+  ], []);
+  const lua = packLua("ptBR", [], { known, extra: [] });
+  assert.ok(lua.includes(`[${pageChecksum("Texto corregido.")}] = 15`));
+  assert.ok(lua.includes(`[${pageChecksum("Texto original.")}] = 15`));
+});

@@ -103,7 +103,7 @@ export function packLua(lang, clips, entries = null) {
     // the addon can tell "unknown" from "short" and fall back to its own timer.
     const len = row.durationSec === null ? 0 : row.durationSec;
     const text = row.text == null ? "" : `, text = ${quote(spokenText(row.text))}`;
-    lines.push(`\t\t[${luaId(row.pageId)}] = { file = "${row.file}", len = ${len}${text} },`);
+    lines.push(`\t\t[${luaId(row.pageId)}] = { file = ${quote(row.file)}, len = ${len}${text} },`);
   }
   lines.push("\t},");
 
@@ -166,7 +166,7 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
          join "book_line" b on b."lineId" = t."lineId" and b."lang" = t."lang" and b."isCurrent"
          join "book_page" p on p."lineId" = t."lineId" and p."aliasOf" is null
         where t."source" = 'books' and t."isCurrent" and t."lang" = $1
-        order by p."bookId", p."pageNumber"`,
+        order by p."pageTextId" nulls last, p."lineId"`,
       [lang],
     );
     const rows = clips.rows.map((r) => ({ ...r, pageId: r.numeric ? Number(r.pageId) : r.pageId }));
@@ -175,12 +175,11 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
     // is always found by the client's own index and only played in this one.
     let entries = null;
     if (lang === LANG || isClientLocale(lang)) {
-      // The newest version of the words the client shows, not the live row: a correction made
-      // here changes what is voiced, not what is on screen. Those words are the world
-      // database's ('extracted') or, for a language the world database has none of, what a
-      // player's client displayed and sent in ('contributed') -- Portuguese books are all the
-      // latter, and an index read from 'extracted' alone shipped a pack no page could find.
-      // Extracted wins where both exist, being the game's own. Placed by book_page, which
+      // A page is indexed under its current text and under the words a client shows: the
+      // newest version from the world database ('extracted') or, for a language it has none
+      // of, from what a player's client sent in ('contributed') -- Portuguese books are all
+      // the latter. A correction made here becomes the current text, not what is on screen,
+      // so the current text alone would lose the page in game. Placed by book_page, which
       // fixes a page's book and number.
       const [pages, names] = await Promise.all([
         pool.query(
@@ -190,8 +189,9 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
                   exists (select 1 from "book_line" e where e."lineId" = p."lineId" and e."lang" = $2 and e."isCurrent") as "inEnglish",
                   array_remove(array[
                     (select c."text" from "book_line" c where c."lineId" = p."lineId" and c."lang" = $1 and c."isCurrent"),
-                    (select x."text" from "book_line" x where x."lineId" = p."lineId" and x."lang" = $1 and x."origin" = 'extracted'
-                      order by x."version" desc limit 1)
+                    (select x."text" from "book_line" x where x."lineId" = p."lineId" and x."lang" = $1
+                        and x."origin" in ('extracted', 'contributed')
+                      order by (x."origin" = 'extracted') desc, x."version" desc limit 1)
                   ], null) as "texts",
                   (select c."title" from "book_line" c where c."lineId" = p."lineId" and c."lang" = $1 and c."isCurrent") as "ownTitle"
              from "book_page" p
