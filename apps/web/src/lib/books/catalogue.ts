@@ -163,8 +163,11 @@ async function stampOf(lang: Lang): Promise<string> {
     `select ${versionStamp("book_line", `"lang" = $1`)} || '|' ||
             ${versionStamp("book_line", `"lang" = '${BASE_LANG}'`)} || '|' ||
             (select count(*) || ':' || coalesce(max("createdAt")::text, '') || ':' ||
-                    coalesce(sum(hashtext("lineId" || '|' || "bookId" || '|' || "pageNumber" || '|' ||
-                                          coalesce("aliasOf", ''))), 0)
+                    coalesce(sum(hashtext("lineId" || '|' || coalesce("pageTextId"::text, '') || '|' ||
+                                          "bookId" || '|' || "pageNumber" || '|' ||
+                                          coalesce("aliasOf", '') || '|' || coalesce("ownerKind", '') || '|' ||
+                                          coalesce("ownerIds"::text, '') || '|' ||
+                                          coalesce("material"::text, ''))), 0)
                from "book_page") || '|' ||
             ${nameStamp(["item", "gameobject"])} as "stamp"`,
     [lang],
@@ -249,7 +252,9 @@ async function build(lang: Lang): Promise<BookPage[]> {
   if (rows.length === 0) throw new CorpusEmpty(lang);
   const owned = new Map(names.map((row) => [`${row.kind}:${row.entityId}`, row.name]));
 
-  // A minted book's title is its first page's, so every page of it reads under one name.
+  // A page with an owner is titled by the owner's name in this language and by nothing else:
+  // book_line's title is the English owner name for an extracted page. A page without an owner
+  // takes its book's first page's title, so every page of a minted book reads under one name.
   const firstTitle = new Map<string, string | null>();
   for (const row of rows) if (!firstTitle.has(row.bookId)) firstTitle.set(row.bookId, row.title);
 
@@ -259,7 +264,7 @@ async function build(lang: Lang): Promise<BookPage[]> {
       ? owned.get(`${ownerEntityKind(row.ownerKind)}:${ownerIds[0]}`)
       : undefined;
     const own = lang === BASE_LANG && row.ownerKind ? row.englishTitle ?? undefined : ownerName;
-    const title = own ?? firstTitle.get(row.bookId) ?? row.title ?? undefined;
+    const title = row.ownerKind ? own : firstTitle.get(row.bookId) ?? row.title ?? undefined;
     const shown = title ?? row.englishTitle ?? row.anyTitle ?? "";
     const base = {
       id: row.lineId,
@@ -386,6 +391,6 @@ export async function bookFacets(lang: Lang = BASE_LANG): Promise<BookFacet[]> {
   // By title, then by id: 381 distinct titles cover 404 books, so a stable tiebreak is
   // what keeps two "A Dusty Tome" entries from swapping places between requests.
   return [...books.values()].sort(
-    (a, b) => a.title.localeCompare(b.title) || a.bookId.localeCompare(b.bookId),
+    (a, b) => a.title.localeCompare(b.title) || a.bookId.localeCompare(b.bookId, undefined, { numeric: true }),
   );
 }
