@@ -106,9 +106,9 @@ export default async function Page({
       <Contained>
         <h1 className="text-xl font-semibold">Contributions</h1>
         <p className="text-muted-foreground mt-1 mb-5 text-sm">
-          Lines the corpus already has, sent back with different text -- usually the game
-          rewording a quest since the corpus was extracted. Accept a correction to make the
-          player&apos;s text what the line speaks; reject one that is wrong.
+          {source === "books"
+            ? "Pages the corpus already has in this language, sent back with different words -- usually the game showing a page differently from the extract. Accept a correction to save the player's words as the page's new version; reject one that is wrong."
+            : "Lines the corpus already has, sent back with different text -- usually the game rewording a quest since the corpus was extracted. Accept a correction to make the player's text what the line speaks; reject one that is wrong."}
         </p>
       </Contained>
       <Wide>

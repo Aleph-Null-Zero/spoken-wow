@@ -149,7 +149,7 @@ export default function CorrectionTable({
         <Input
           type="search"
           value={query}
-          placeholder={source === "books" ? "Book or either text…" : "NPC, quest, or either text…"}
+          placeholder={source === "books" ? "Either text…" : "NPC, quest, or either text…"}
           aria-label="Search"
           className="h-8 min-w-0 basis-64"
           onChange={(event) => setQuery(event.target.value)}
@@ -157,7 +157,7 @@ export default function CorrectionTable({
         <FilterChip
           label="search in"
           value={searchIn === "any" ? undefined : searchIn}
-          options={SEARCH_IN_OPTIONS}
+          options={source === "books" ? SEARCH_IN_OPTIONS.filter((option) => option.value === "text") : SEARCH_IN_OPTIONS}
           onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
         />
         {source === "quests" ? (
@@ -261,7 +261,7 @@ export default function CorrectionTable({
                         href={localeHref(lang, row.editHref)}
                         className="border-border bg-background hover:bg-muted inline-flex h-7 items-center rounded-md border px-2.5 text-[0.8rem] font-medium whitespace-nowrap"
                       >
-                        Edit line
+                        {source === "books" ? "Edit page" : "Edit line"}
                       </Link>
                       {current === "new" ? (
                         <>

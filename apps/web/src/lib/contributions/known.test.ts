@@ -155,6 +155,17 @@ describe("lineStates: books", () => {
     expect(changed).toEqual({ kind: "changed", lineId: pages[0], variant: 0, current: `Texto uno ${base}.` });
     expect(missing).toEqual({ kind: "missing" });
   });
+
+  it("honours the page a moderator named over the one the words find", async () => {
+    const [named, ownText, newBook] = await lineStates([
+      { source: "books", locale: "esES", text: `Words two ${base}.`, meta: {}, matchLineId: pages[0] },
+      { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: {}, matchLineId: pages[0] },
+      { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: { book: `Libro ${base}`, number: "1" }, matchNewBook: true },
+    ]);
+    expect(named).toEqual({ kind: "changed", lineId: pages[0], variant: 0, current: `Texto uno ${base}.` });
+    expect(ownText).toEqual({ kind: "known" });
+    expect(newBook).toEqual({ kind: "missing" });
+  });
 });
 
 describe("tabOf", () => {

@@ -21,12 +21,13 @@
  * has is the wrong one, and storing the row is what splits it.
  *
  * A books row is compared through the books matcher (book-match.ts): the same words on the page
- * it matches are known, other words a correction. A zone has no text to compare.
+ * it matches (the page a moderator named, if one did) are known, other words a correction. A zone has no text to compare.
  */
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
 import { isSex, sexOf } from "@/lib/npc/npc";
 
+import type { Contribution } from "./store";
 import { loadBookCorpus, matchBook } from "./book-match";
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
@@ -38,7 +39,9 @@ export type LineState =
   /** `current` is the corpus's text of `lineId` and `variant`, in the contribution's language. */
   | { kind: "changed"; lineId: string; variant: number; current: string };
 
-type Comparable = Pick<Submission, "source" | "locale" | "text" | "meta">;
+/** A stored row also carries a moderator's books answer; an intake submission has none. */
+type Comparable = Pick<Submission, "source" | "locale" | "text" | "meta"> &
+  Partial<Pick<Contribution, "matchLineId" | "matchBookId" | "matchPageNumber" | "matchNewBook">>;
 
 const MISSING: LineState = { kind: "missing" };
 
@@ -160,9 +163,17 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
   return rows.map((row) => {
     if (row.source === "books") {
       if (!books || !row.text) return MISSING;
-      // The stored row's moderator answer is not passed: the corpus alone says what it differs from.
+      // A moderator's stored answer overrides the matcher, as it does when the row is accepted.
       const match = matchBook(
-        { locale: row.locale, text: row.text, meta: row.meta, matchLineId: null, matchBookId: null, matchPageNumber: null, matchNewBook: false },
+        {
+          locale: row.locale,
+          text: row.text,
+          meta: row.meta,
+          matchLineId: row.matchLineId ?? null,
+          matchBookId: row.matchBookId ?? null,
+          matchPageNumber: row.matchPageNumber ?? null,
+          matchNewBook: row.matchNewBook ?? false,
+        },
         books,
       );
       if (match.kind === "known") return { kind: "known" };
