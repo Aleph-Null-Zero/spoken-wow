@@ -41,8 +41,18 @@ export const textHash = namingModule.textHash as (text: string) => string;
 /** sha1 of text already in spoken form, newlines and all. What a titled first page is hashed by. */
 export const spokenHash = namingModule.spokenHash as (spoken: string) => string;
 
-/** Store-relative and extension-less, e.g. '1381'. AGENTS.md freezes it. */
-export const fileFor = namingModule.fileFor as (pageId: number) => string;
+/** Store-relative and extension-less, e.g. '1381'. AGENTS.md freezes it for extracted pages. */
+export const fileFor = namingModule.fileFor as (pageIdOrKey: number | string) => string;
+
+/** '1381' for 'b:1381'; a minted page's 'n{uuid}'. */
+export const pageKeyOf = namingModule.pageKeyOf as (lineId: string) => string;
+
+/** The lineId a key names, or null for anything else. */
+export const lineIdOfKey = namingModule.lineIdOfKey as (key: string) => string | null;
+
+export const mintPageId = namingModule.mintPageId as () => string;
+export const mintBookId = namingModule.mintBookId as () => string;
+export const isMinted = namingModule.isMinted as (lineId: string) => boolean;
 
 /** The checksum the addon recomputes in Lua to tell two same-named books apart. */
 export const pageChecksum = namingModule.pageChecksum as (text: string) => number;
