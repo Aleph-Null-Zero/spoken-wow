@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import ContributionsTabs from "@/components/ContributionsTabs";
 import CorrectionTable, { type CorrectionRow, type CorrectionSource } from "@/components/CorrectionTable";
 import { auth } from "@/lib/auth";
-import { pageKeyOf } from "@/lib/books/tools";
 import { clientFilterOf, clientOf, matchesClient } from "@/lib/contributions/client";
 import { readable } from "@/lib/contributions/compare";
 import { isStatus, type ContributionStatus } from "@/lib/contributions/contributions";
@@ -85,7 +84,7 @@ export default async function Page({
       {
         id: row.id,
         lineId: state.lineId,
-        editHref: source === "books" ? `/books/r/${pageKeyOf(state.lineId)}` : explorerHref("quests", state.lineId),
+        editHref: explorerHref(source, state.lineId),
         quest: quest === "gossip" ? null : quest,
         title: source === "books" ? bookTitleOf(row.meta) : null,
         client: clientOf(row.build),
