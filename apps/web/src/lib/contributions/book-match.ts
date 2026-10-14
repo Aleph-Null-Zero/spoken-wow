@@ -60,6 +60,13 @@ export type BookMatchResult =
   | { kind: "ambiguous"; candidates: string[] };
 export type MatchVia = "moderator" | "owner" | "text" | "title" | "none";
 
+/**
+ * Whether accepting many rows at once may take a row with this match. A new book is minted only
+ * by accepting its row on its own: a title no corpus book has may still be one under another title.
+ */
+export const bulkAcceptable = (match: BookMatchResult) =>
+  match.kind === "translation" || match.kind === "correction" || match.kind === "new-page";
+
 const normal = (text: string) => (normaliseText(text) as string).trim();
 
 function addTo<K, V>(map: Map<K, Set<V>>, key: K, value: V) {

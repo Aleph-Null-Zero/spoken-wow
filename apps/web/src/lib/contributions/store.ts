@@ -359,6 +359,15 @@ export async function acceptedContributions(): Promise<Contribution[]> {
   return rows;
 }
 
+/** The books rows among `ids`, whole. */
+export async function booksContributions(ids: readonly number[]): Promise<Contribution[]> {
+  const { rows } = await db().query<Contribution>(
+    `select ${COLUMNS} from "contribution" where "id" = any($1::int[]) and "source" = 'books'`,
+    [ids],
+  );
+  return rows;
+}
+
 /**
  * The language a contribution was sent in -- the pack the player was using -- or null for
  * one that does not exist. Asked before resolving it, since who may resolve it is whoever

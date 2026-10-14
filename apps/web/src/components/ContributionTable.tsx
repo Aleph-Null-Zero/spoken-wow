@@ -160,7 +160,7 @@ export default function ContributionTable({
   /** This page's rows. */
   initial: ContributionRow[];
   /** Every row the filters match, on any page -- what "Accept all" acts on. */
-  matching: { id: number; status: ContributionStatus }[];
+  matching: { id: number; status: ContributionStatus; bulk: boolean }[];
   page: number;
   pages: number;
   status: ContributionStatus;
@@ -462,11 +462,13 @@ export default function ContributionTable({
     from.filter((row) => (resolved[row.id] ?? row.status) !== next).map((row) => row.id);
   // Every matching row, not just this page's: "Accept all" is for the whole filtered queue.
   const shownToAccept = matching
-    .filter((row) => (resolved[row.id] ?? row.status) !== "accepted")
+    .filter((row) => row.bulk && (resolved[row.id] ?? row.status) !== "accepted")
     .map((row) => row.id);
-  // A row with no speaker would only come back refused.
+  // A row with no speaker would only come back refused, nor would a books row the matcher can't
+  // place: that one is accepted on its own.
+  const notBulk = new Set(matching.filter((row) => !row.bulk).map((row) => row.id));
   const selectedToAccept = changeable(
-    selectedRows.filter((row) => bucketOf(row, npcOf(row), roster) === "ready"),
+    selectedRows.filter((row) => bucketOf(row, npcOf(row), roster) === "ready" && !notBulk.has(row.id)),
     "accepted",
   );
   const selectedToReject = changeable(selectedRows, "rejected");

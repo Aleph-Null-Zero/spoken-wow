@@ -9,7 +9,7 @@ import ContributionsTabs from "@/components/ContributionsTabs";
 import { auth } from "@/lib/auth";
 import { bookFacets, catalogue } from "@/lib/books/catalogue";
 import { pageKeyOf } from "@/lib/books/tools";
-import { loadBookCorpus, matchBook, type BookCorpusPage, type BookMatchResult } from "@/lib/contributions/book-match";
+import { bulkAcceptable, loadBookCorpus, matchBook, type BookCorpusPage, type BookMatchResult } from "@/lib/contributions/book-match";
 import { clientFilterOf, clientOf, matchesClient } from "@/lib/contributions/client";
 import { corpusLookup } from "@/lib/contributions/existing";
 import { lineStates, tabOf } from "@/lib/contributions/known";
@@ -327,7 +327,8 @@ export default async function Page({
   const pages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
   const page = Math.min(pageOf(rawPage), pages);
   const shown = matching.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const { matches: bookMatches, describe } = await bookMatchesFor(shown);
+  // Every matching row's, not just this page's: "Accept all" leaves out the ones the matcher can't place.
+  const { matches: bookMatches, describe } = await bookMatchesFor(matching);
   const [existing, linedIds] = await Promise.all([existingTextFor(shown, bookMatches), linesInExplorer(shown)]);
   // Every language's books, for placing a row in one -- only when this page shows a books row.
   const books = shown.some((row) => row.source === "books")
@@ -381,9 +382,12 @@ export default async function Page({
         />
         <ContributionTable
           initial={rows}
-          // Every row the filters match, on any page, as just its id and status: what "Accept all"
-          // acts on.
-          matching={matching.map((row) => ({ id: row.id, status: row.status }))}
+          // Every row the filters match, on any page, as just its id, status and whether a bulk
+          // accept may take it: what "Accept all" acts on.
+          matching={matching.map((row) => {
+            const match = bookMatches.get(row.id);
+            return { id: row.id, status: row.status, bulk: !match || bulkAcceptable(match) };
+          })}
           page={page}
           pages={pages}
           status={status}
