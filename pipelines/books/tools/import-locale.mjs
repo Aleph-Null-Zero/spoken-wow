@@ -17,6 +17,7 @@ import { localeInfo, BASE_LOCALE } from "../../lib/locales.mjs";
 import { localizedPages, localizedTitles } from "./lib/locale.mjs";
 import { chunks, progress, writeNames } from "../../lib/bulk.mjs";
 import { decideImport } from "./lib/promote.mjs";
+import { foldMinted } from "./lib/absorb.mjs";
 
 await loadEnv("books", { override: MYSQL_VARS });
 
@@ -42,7 +43,7 @@ const connection = await mysql.createConnection({
   database: process.env.MYSQL_DATABASE ?? "mangos",
 });
 
-const counts = { promote: 0, record: 0, skip: 0, names: 0 };
+const counts = { promote: 0, record: 0, skip: 0, names: 0, folded: 0 };
 
 /** One transaction for a batch of writes: an import that fails leaves nothing half-applied. */
 async function inTransaction(work) {
@@ -129,6 +130,8 @@ try {
       bar.add(batch.length);
     }
     bar.end();
+    // This language's words may show a minted page to be a real one.
+    counts.folded = await foldMinted(client);
   });
 
   // The owners the English corpus names, and nothing else: the dump localises every item.
@@ -163,7 +166,8 @@ try {
 
   console.log(
     `${lang}: ${counts.promote} pages promoted, ${counts.record} recorded, ${counts.skip} unchanged, ` +
-      `${withoutEnglish} without an English page; ${counts.names} titles written`,
+      `${withoutEnglish} without an English page; ${counts.names} titles written; ` +
+      `${counts.folded} minted pages found in the world database`,
   );
 } finally {
   await connection.end();

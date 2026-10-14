@@ -19,12 +19,14 @@ vi.mock("server-only", () => ({}));
 import { closeDb, db } from "@/lib/db";
 import { pageById } from "./catalogue";
 import { commitTake } from "@/lib/takes/commit";
-import { absorb } from "@books-tools/lib/absorb.mjs";
+import { absorb, foldMinted } from "@books-tools/lib/absorb.mjs";
 
 const n = 800_000_000 + Math.floor(Math.random() * 90_000_000);
 const REAL = `b:${n}`;
 const MINTED_FILE = `n${randomUUID()}`;
 const MINTED = `b:${MINTED_FILE}`;
+/** A second page of the minted book, for a book that keeps a live page after the fold. */
+const MINTED_TWO = `b:n${randomUUID()}`;
 
 async function line(lineId: string, lang: string, version: number, isCurrent: boolean, text: string) {
   await db().query(
@@ -44,7 +46,7 @@ async function take(lineId: string, file: string, lang: string) {
 }
 
 async function clean() {
-  const ids = [REAL, MINTED];
+  const ids = [REAL, MINTED, MINTED_TWO];
   await db().query(`delete from "contribution" where "source" = 'books' and "key" like $1`, [`absorb-${n}%`]);
   for (const table of ["take", "report", "recording"]) {
     await db().query(`delete from "${table}" where "lineId" = any($1)`, [ids]);
@@ -101,6 +103,19 @@ async function fold() {
     client.release();
   }
 }
+
+async function bookAnswer(): Promise<number> {
+  const { rows } = await db().query<{ id: number }>(
+    `insert into "contribution" ("source", "key", "raw", "dedup", "matchBookId", "matchPageNumber")
+     values ('books', $1, 'r', $1, $2, 1) returning "id"`,
+    [`absorb-${n}-book`, MINTED_FILE],
+  );
+  return rows[0].id;
+}
+
+const matchBookOf = async (id: number) =>
+  (await db().query<{ matchBookId: string }>(`select "matchBookId" from "contribution" where "id" = $1`, [id])).rows[0]
+    .matchBookId;
 
 describe("absorb", () => {
   it("moves a minted page's texts, takes, reports, recordings and matches to the real page", async () => {
@@ -160,5 +175,31 @@ describe("absorb", () => {
     await fold();
     const page = await pageById(MINTED.slice(2), "esES");
     expect(page?.id).toBe(REAL);
+  });
+
+  it("moves an answer naming the minted book to the real page's book once the minted book is empty", async () => {
+    const id = await bookAnswer();
+    await fold();
+    expect(await matchBookOf(id)).toBe(String(n));
+  });
+
+  it("leaves an answer naming the minted book while the book has another live page", async () => {
+    await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 2)`, [MINTED_TWO, MINTED_FILE]);
+    const id = await bookAnswer();
+    await fold();
+    expect(await matchBookOf(id)).toBe(MINTED_FILE);
+  });
+
+  it("folds every minted page whose distinctive words are a real page's", async () => {
+    const client = await db().connect();
+    try {
+      await client.query("begin");
+      expect(await foldMinted(client)).toBeGreaterThanOrEqual(1);
+      await client.query("commit");
+    } finally {
+      client.release();
+    }
+    const { rows } = await db().query(`select "aliasOf" from "book_page" where "lineId" = $1`, [MINTED]);
+    expect(rows).toEqual([{ aliasOf: REAL }]);
   });
 });

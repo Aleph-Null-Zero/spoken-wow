@@ -55,4 +55,30 @@ export async function absorb(client, { from, to }) {
   await client.query(`update "regeneration_job" set "lineId" = $2 where "lineId" = $1 and "source" = 'books'`, [from, to]);
   await client.query(`update "contribution" set "matchLineId" = $2 where "matchLineId" = $1`, [from, to]);
   await client.query(`update "book_page" set "aliasOf" = $2 where "lineId" = $1`, [from, to]);
+  // A moderator's "this is a page of that book", once the minted book has no live page left,
+  // is the real page's book.
+  await client.query(
+    `update "contribution" c set "matchBookId" = r."bookId"
+       from "book_page" m, "book_page" r
+      where m."lineId" = $1 and r."lineId" = $2 and c."matchBookId" = m."bookId" and m."bookId" <> r."bookId"
+        and not exists (select 1 from "book_page" o where o."bookId" = m."bookId" and o."aliasOf" is null)`,
+    [from, to],
+  );
+}
+
+/**
+ * Every minted page whose words turn out to be a real page's, folded into it, in the caller's
+ * transaction. Returns how many were.
+ */
+export async function foldMinted(client) {
+  const { rows } = await client.query(
+    `select p."lineId", p."pageTextId" is null as "minted", jsonb_object_agg(l."lang", l."text") as "texts"
+       from "book_page" p join "book_line" l on l."lineId" = p."lineId" and l."isCurrent"
+      where p."aliasOf" is null
+        and not exists (select 1 from "book_page" a where a."aliasOf" = p."lineId")
+      group by p."lineId", p."pageTextId"`,
+  );
+  const absorptions = findAbsorptions(rows.filter((p) => p.minted), rows.filter((p) => !p.minted));
+  for (const move of absorptions) await absorb(client, move);
+  return absorptions.length;
 }
