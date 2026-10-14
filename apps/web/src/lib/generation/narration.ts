@@ -79,10 +79,31 @@ function raceOf(voice: string): string {
  * gnome whose neutral clips eleven_v3 reads as a woman. Both rather than the slot's alone, so
  * giving one dwarf flavor a direction does not quietly drop its brogue.
  */
-export function directionFor(voice: string, tags: Record<string, string>): string | undefined {
+export function directionFor(
+  voice: string,
+  tags: Record<string, string>,
+  npc?: string,
+): string | undefined {
   const race = raceOf(voice);
-  const own = [tags[race], voice === race ? undefined : tags[voice]].filter(Boolean);
+  const own = [tags[race], voice === race ? undefined : tags[voice], npc].filter(Boolean);
   return own.length > 0 ? own.join(" ") : undefined;
+}
+
+/**
+ * The NPC direction for a file (npc.direction), after the slot's in directionFor: one NPC's
+ * accent on top of its voice's, "Pretty Boy" Duncan's pirate on a human man.
+ *
+ * Only when every NPC speaking the file has the same one. A gossip file is shared by every NPC
+ * of a voice who says the same words, and one pirate must not make that line a pirate's for
+ * all of them. `directions` is keyed as listDirections keys it, `kind:id`.
+ */
+export function npcDirection(
+  lines: { npcType: string; npcId: number }[],
+  directions: Map<string, string>,
+): string | undefined {
+  const found = new Set(lines.map((line) => directions.get(`${line.npcType}:${line.npcId}`)));
+  const [only] = found;
+  return found.size === 1 ? only : undefined;
 }
 
 /**

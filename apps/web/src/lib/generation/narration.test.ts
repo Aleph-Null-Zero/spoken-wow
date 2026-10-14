@@ -6,6 +6,7 @@ import {
   directionFor,
   audioTags,
   hasNarration,
+  npcDirection,
   restoresOnlyNarration,
   segments,
   voiceAfter,
@@ -243,6 +244,31 @@ describe("directionFor", () => {
 
   it("does not read a race's direction twice for a slot named by the race alone", () => {
     expect(directionFor("dwarf", tags)).toBe("[Scottish accent]");
+  });
+
+  it("adds an NPC's direction after its voice's", () => {
+    expect(directionFor("dwarf-female-young", tags, "[pirate accent]")).toBe("[Scottish accent] [girlish] [pirate accent]");
+    expect(directionFor("human-male-standard", tags, "[pirate accent]")).toBe("[pirate accent]");
+  });
+});
+
+describe("npcDirection", () => {
+  const directions = new Map([["creature:1", "[pirate accent]"], ["creature:2", "[pirate accent]"], ["creature:3", "[lisp]"]]);
+  const npc = (npcId: number) => ({ npcType: "creature", npcId });
+
+  it("is the NPC's direction for a file only it speaks", () => {
+    expect(npcDirection([npc(1)], directions)).toBe("[pirate accent]");
+    expect(npcDirection([npc(4)], directions)).toBeUndefined();
+  });
+
+  it("holds for a shared file only when every NPC on it has the same one", () => {
+    expect(npcDirection([npc(1), npc(2)], directions)).toBe("[pirate accent]");
+    expect(npcDirection([npc(1), npc(4)], directions)).toBeUndefined();
+    expect(npcDirection([npc(1), npc(3)], directions)).toBeUndefined();
+  });
+
+  it("keys by kind as well as id", () => {
+    expect(npcDirection([{ npcType: "gameobject", npcId: 1 }], directions)).toBeUndefined();
   });
 });
 
