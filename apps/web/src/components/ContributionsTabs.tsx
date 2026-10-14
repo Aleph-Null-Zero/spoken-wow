@@ -1,4 +1,5 @@
 import { SECTIONS, type Section } from "@/lib/contributions/query";
+import type { PendingCounts } from "@/lib/contributions/pending";
 import { localeHref, type Lang } from "@/lib/lang";
 
 import { LinkTabs } from "@/components/StatusTabs";
@@ -21,21 +22,24 @@ type View = ReturnType<typeof viewsOf>[number]["key"];
 
 /**
  * The sections of /contributions, and under Quests and Books their two views: lines the corpus
- * lacks and corrections to lines it has, which only quests and books can have. Links, not client state: each is
- * its own page with its own gate.
+ * lacks and corrections to lines it has, which only quests and books can have. Links, not client
+ * state: each is its own page with its own gate. Each tab carries how many new rows wait in it,
+ * when given.
  */
 export default function ContributionsTabs({
   lang,
   section,
   view,
+  pending,
 }: {
   lang: Lang;
   section: Section;
   view?: View;
+  pending?: PendingCounts;
 }) {
   const sections = SECTIONS.map((key) => ({
     key,
-    label: SECTION_LABELS[key],
+    label: counted(SECTION_LABELS[key], pending?.sections[key]),
     href: `/contributions/${key}`,
   }));
   return (
@@ -44,12 +48,19 @@ export default function ContributionsTabs({
       {section === "quests" || section === "books" ? (
         <LinkTabs
           label={SECTION_LABELS[section]}
-          tabs={localised(lang, viewsOf(section))}
+          tabs={localised(
+            lang,
+            viewsOf(section).map((tab) => ({ ...tab, label: counted(tab.label, pending?.[section][tab.key]) })),
+          )}
           active={view ?? "contributions"}
         />
       ) : null}
     </>
   );
+}
+
+function counted(label: string, count: number | undefined): string {
+  return count === undefined ? label : `${label} (${count})`;
 }
 
 function localised(lang: Lang, tabs: readonly { key: string; label: string; href: string }[]) {
