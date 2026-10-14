@@ -7,6 +7,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
+import { saveBookText } from "@/lib/books/text";
+
 import { createContribution } from "./store";
 
 import { acceptCorrection, correctionNote } from "./correction";
@@ -180,6 +182,15 @@ describe("acceptCorrection: a books page", () => {
     const before = await versions();
     // The corpus already says it, so the second accept is refused and writes no version.
     expect(await acceptCorrection(id, ACCEPTER)).toMatchObject({ ok: false, reason: "not-a-correction" });
+    expect(await versions()).toEqual(before);
+  });
+
+  it("flips the status alone when the words were written and the flip was not", async () => {
+    const text = `Nuevo texto ${base}.`;
+    const id = await booksRow(text);
+    await saveBookText({ lineId: page, text, note: correctionNote(id), editedBy: ACCEPTER, lang: "esES" });
+    const before = await versions();
+    expect(await acceptCorrection(id, ACCEPTER)).toMatchObject({ ok: true, contribution: { status: "accepted" } });
     expect(await versions()).toEqual(before);
   });
 });

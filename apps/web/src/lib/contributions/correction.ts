@@ -23,7 +23,9 @@
  *
  * Not one transaction with the status flip: the two writers own theirs, and both are
  * idempotent -- the same text again spends no version and logs nothing -- so an accept that
- * fails after the text is written is simply sent again.
+ * fails after the text is written is simply sent again. A book page so written already reads
+ * as known; its current version carrying this contribution's note is what lets the resend
+ * flip the status alone.
  */
 import "server-only";
 
@@ -32,7 +34,7 @@ import { audioRelPath } from "@/lib/audio";
 import { BookConflict, BookMissing, saveBookText } from "@/lib/books/text";
 import type { CorpusLine } from "@/lib/corpus";
 import { db } from "@/lib/db";
-import { BASE_LANG, isLang } from "@/lib/lang";
+import { BASE_LANG, isLang, type Lang } from "@/lib/lang";
 import { OverrideError, validateOverride } from "@/lib/quests/override";
 import { writeOverride } from "@/lib/quests/overrides";
 import { QuestTextConflict, QuestTextMissing, saveQuestText } from "@/lib/quests/text";
@@ -68,6 +70,10 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
   }
 
   const [state] = await lineStates([contribution]);
+  if (state.kind === "known" && contribution.source === "books" && contribution.status !== "accepted"
+      && (await bookCorrectionWritten(id, lang))) {
+    return markAccepted(contribution, lang, userId);
+  }
   if (state.kind !== "changed") {
     return {
       ok: false,
@@ -118,6 +124,23 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
     throw error;
   }
 
+  return markAccepted(contribution, lang, userId);
+}
+
+/**
+ * Whether this contribution's correction is already the page's current text in its language:
+ * the text was saved and the status flip after it failed, so the row now reads as known.
+ */
+async function bookCorrectionWritten(id: number, lang: string): Promise<boolean> {
+  const { rowCount } = await db().query(
+    `select 1 from "book_line" where "note" = $1 and "lang" = $2 and "isCurrent"`,
+    [correctionNote(id), lang],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+async function markAccepted(contribution: Contribution, lang: Lang, userId: string): Promise<CorrectionOutcome> {
+  const { id } = contribution;
   const client = await db().connect();
   try {
     await client.query("begin");
