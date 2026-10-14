@@ -7,6 +7,7 @@
  * An override replaces what is *spoken*. It cannot touch originalText, which is what names
  * the file and what the addon matches on - see the header of migration 0012.
  */
+import { branchesOnPlayerGender, playerGenderSides } from "../player-words";
 import { INVALID_CHARS, hasInvalidChars } from "../text-gate";
 
 export type LineOverride = {
@@ -45,11 +46,22 @@ export function validateOverride(input: unknown): { file: string; lineId: string
   }
   // The whole point of an override is to get a line past this gate, so letting one
   // reintroduce the characters it exists to remove would be a trap rather than a freedom.
-  if (hasInvalidChars(trimmed)) {
-    throw new OverrideError(`text cannot contain any of ${INVALID_CHARS} - those are what make a line unvoiceable`);
+  if (overrideHasInvalidChars(trimmed)) {
+    throw new OverrideError(
+      `text cannot contain any of ${INVALID_CHARS} outside a $gmale:female; branch - those are what make a line unvoiceable`,
+    );
   }
 
   return { file: file.trim(), lineId: lineId.trim(), text: trimmed };
+}
+
+/**
+ * hasInvalidChars on each reader's side. A `$G` branch is the one token an override may hold:
+ * the route splits the line by player gender instead of saving it (quests/english-rewrite.ts).
+ */
+export function overrideHasInvalidChars(text: string): boolean {
+  const sides = branchesOnPlayerGender(text) ? playerGenderSides(text) : [text];
+  return sides.some(hasInvalidChars);
 }
 
 /** A voice's name as migration 0071's voice table allows it, or a model slot's. */

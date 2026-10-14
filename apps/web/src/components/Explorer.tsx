@@ -967,6 +967,10 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
       <OverrideDialog
         line={editing}
         onSaved={handleOverrideSaved}
+        onRewritten={() => {
+          setEditing(null);
+          refetch();
+        }}
         onCancel={() => setEditing(null)}
       />
 

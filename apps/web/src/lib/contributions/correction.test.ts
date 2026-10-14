@@ -188,15 +188,15 @@ describe("acceptCorrection", () => {
     expect(!outcome.ok && outcome.reason).toBe("malformed");
   });
 
-  it("refuses to split an extracted line, which the next import would bring back", async () => {
+  it("splits an extracted line too, the site being the corpus", async () => {
     const id = await contribution("enUS", "Well met, $glad:lass;.", "accept", extractedQuest);
     const outcome = await acceptCorrection(id, ACCEPTER);
-    expect(!outcome.ok && outcome.reason).toBe("malformed");
+    expect(outcome.ok && outcome.contribution.status).toBe("accepted");
     const { rows } = await db().query(
-      `select "lineId" from "quest_line" where "lineId" = any($1::text[]) and "isCurrent"`,
+      `select "lineId" from "quest_line" where "lineId" = any($1::text[]) and "isCurrent" order by "lineId"`,
       [linesOf(extractedQuest)],
     );
-    expect(rows).toEqual([{ lineId: moments[3] }]);
+    expect(rows).toEqual([{ lineId: `${moments[3]}:f` }, { lineId: `${moments[3]}:m` }]);
   });
 
   it("refuses a contribution the corpus does not differ from", async () => {

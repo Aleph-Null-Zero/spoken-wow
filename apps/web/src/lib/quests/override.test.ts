@@ -17,6 +17,11 @@ describe("validateOverride", () => {
     expect(() => validateOverride({ ...VALID, text: "in $2113w days" })).toThrow(/unvoiceable/);
   });
 
+  it("accepts a $g branch, the route's to split, but nothing else of the token's kind", () => {
+    expect(() => validateOverride({ ...VALID, text: "Well met, $glad:lass;." })).not.toThrow();
+    expect(() => validateOverride({ ...VALID, text: "Well met, $glad:lass;, $N." })).toThrow(/unvoiceable/);
+  });
+
   it("accepts either bracketed span, which the narrator and the NPC now voice", () => {
     // The gate stopped calling these damage, and an override is judged by the same gate.
     expect(() => validateOverride({ ...VALID, text: "<Thrall grunts.>" })).not.toThrow();
