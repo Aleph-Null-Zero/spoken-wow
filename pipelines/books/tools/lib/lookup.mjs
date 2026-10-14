@@ -157,8 +157,8 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
   try {
     // Joined to the corpus rather than trusting the take's lineId: a take for a page no
     // longer in the corpus has nothing to narrate, and an entry for it would be a row the
-    // addon can never reach. One take per page, the newest, whatever else is flagged live. A minted page is keyed by its id string, an extracted one by
-    // its page text id.
+    // addon can never reach. One take per page, the newest, whatever else is flagged live. A
+    // minted page is keyed by its id string, an extracted one by its page text id.
     const clips = await pool.query(
       `select * from (
        select distinct on (t."lineId")
