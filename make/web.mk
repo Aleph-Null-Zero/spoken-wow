@@ -158,8 +158,8 @@ migrate-books: require-droplet ## Copy the local books corpus onto the droplet (
 	@$(SSH) $(DROPLET) 'set -a; . $(REMOTE_ROOT)/shared/app.env; set +a; psql "$$DATABASE_URL" 		-c "select count(*) as rows, count(*) filter (where \"isCurrent\") as live, count(distinct \"bookId\") as books from \"book_line\""'
 	@printf 'Replace the droplet book_line with the local one? [y/N] ' && read a && [ "$$a" = y ] || { echo aborted; exit 1; }
 	@( echo 'begin;'; \
-	   echo 'truncate "book_line";'; \
-	   pg_dump "$(LOCAL_DB)" --data-only --table=book_line | $(UNRESTRICT); \
+	   echo 'truncate "book_line", "book_page";'; \
+	   pg_dump "$(LOCAL_DB)" --data-only --table=book_page --table=book_line | $(UNRESTRICT); \
 	   echo 'select setval(pg_get_serial_sequence('"'"'public.book_line'"'"', '"'"'id'"'"'), coalesce(max("id"), 1)) from public."book_line";'; \
 	   echo 'commit;' ) \
 	  | $(SSH) $(DROPLET) 'set -a; . $(REMOTE_ROOT)/shared/app.env; set +a; psql "$$DATABASE_URL" -v ON_ERROR_STOP=1 -q'
