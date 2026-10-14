@@ -2,15 +2,21 @@
 // move to the real page, and the minted row stays behind as an alias so a pack that shipped it
 // still plays. Audio files are not renamed: a take keeps the file it was cut to.
 
-import { normaliseText } from "./text.mjs";
+import { isGeneratable, normaliseText } from "./text.mjs";
 
 const norm = (t) => normaliseText(t).trim();
+
+/** Shorter than this, a page's words are too common to say two pages are one. */
+export const MIN_MATCH_LENGTH = 20;
+
+const distinctive = (t) => norm(t).length >= MIN_MATCH_LENGTH && isGeneratable(t).generatable;
 
 export function findAbsorptions(minted, extracted) {
   const candidates = new Map();
   for (const page of minted) {
     const hits = new Set();
     for (const [lang, text] of Object.entries(page.texts)) {
+      if (!distinctive(text)) continue;
       for (const real of extracted) if (real.texts[lang] !== undefined && norm(real.texts[lang]) === norm(text)) hits.add(real.lineId);
     }
     if (hits.size === 1) candidates.set(page.lineId, [...hits][0]);
@@ -46,6 +52,7 @@ export async function absorb(client, { from, to }) {
                       where t."lineId" = $1 and t."source" = 'books' and t."isCurrent" and t."lang" = "take"."lang")`,
     [to],
   );
+  await client.query(`update "regeneration_job" set "lineId" = $2 where "lineId" = $1 and "source" = 'books'`, [from, to]);
   await client.query(`update "contribution" set "matchLineId" = $2 where "matchLineId" = $1`, [from, to]);
   await client.query(`update "book_page" set "aliasOf" = $2 where "lineId" = $1`, [from, to]);
 }

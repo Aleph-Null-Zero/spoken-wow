@@ -4,15 +4,27 @@
  *
  * Needs DATABASE_URL and migrations applied.
  */
-import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "books-absorb-"));
+process.env.SPOKEN_BOOKS_AUDIO_HISTORY = path.join(root, "audio-history");
+
+vi.mock("server-only", () => ({}));
 
 import { closeDb, db } from "@/lib/db";
+import { pageById } from "./catalogue";
+import { commitTake } from "@/lib/takes/commit";
 import { absorb } from "@books-tools/lib/absorb.mjs";
 
 const n = 800_000_000 + Math.floor(Math.random() * 90_000_000);
 const REAL = `b:${n}`;
-const MINTED = `b:ntest${n}`;
-const MINTED_FILE = `ntest${n}`;
+const MINTED_FILE = `n${randomUUID()}`;
+const MINTED = `b:${MINTED_FILE}`;
 
 async function line(lineId: string, lang: string, version: number, isCurrent: boolean, text: string) {
   await db().query(
@@ -47,7 +59,7 @@ beforeEach(async () => {
   await db().query(
     `insert into "book_page" ("lineId", "pageTextId", "bookId", "pageNumber")
      values ($1, $3::int, $3::int::text, 1), ($2, null, $4, 1)`,
-    [REAL, MINTED, n, `ntest${n}`],
+    [REAL, MINTED, n, MINTED_FILE],
   );
   await line(REAL, "enUS", 1, true, "Elf travellers:");
   await line(REAL, "esES", 1, true, "Trotamundos de los elfos:");
@@ -74,7 +86,21 @@ beforeEach(async () => {
 });
 
 afterEach(clean);
-afterAll(closeDb);
+afterAll(async () => {
+  await closeDb();
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+async function fold() {
+  const client = await db().connect();
+  try {
+    await client.query("begin");
+    await absorb(client, { from: MINTED, to: REAL });
+    await client.query("commit");
+  } finally {
+    client.release();
+  }
+}
 
 describe("absorb", () => {
   it("moves a minted page's texts, takes, reports, recordings and matches to the real page", async () => {
@@ -117,5 +143,22 @@ describe("absorb", () => {
       { matchLineId: REAL },
     ]);
     expect(await q(`select "aliasOf" from "book_page" where "lineId" = $1`, [MINTED])).toEqual([{ aliasOf: REAL }]);
+  });
+
+  it("leaves one current take per page and language when the real page's file is committed next", async () => {
+    await fold();
+    await commitTake("books", String(n), Buffer.from("audio"), { lineId: REAL }, { lang: "esES" });
+    const { rows } = await db().query(
+      `select "file" from "take" where "lineId" = $1 and "lang" = 'esES' and "isCurrent"`,
+      [REAL],
+    );
+    expect(rows).toEqual([{ file: String(n) }]);
+    await db().query(`delete from "take" where "lineId" = $1`, [REAL]);
+  });
+
+  it("still finds the folded page by its minted key", async () => {
+    await fold();
+    const page = await pageById(MINTED.slice(2), "esES");
+    expect(page?.id).toBe(REAL);
   });
 });

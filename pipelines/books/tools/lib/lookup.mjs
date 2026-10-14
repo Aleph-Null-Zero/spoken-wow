@@ -157,16 +157,19 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
   try {
     // Joined to the corpus rather than trusting the take's lineId: a take for a page no
     // longer in the corpus has nothing to narrate, and an entry for it would be a row the
-    // addon can never reach. A minted page is keyed by its id string, an extracted one by
+    // addon can never reach. One take per page, the newest, whatever else is flagged live. A minted page is keyed by its id string, an extracted one by
     // its page text id.
     const clips = await pool.query(
-      `select case when p."pageTextId" is not null then p."pageTextId"::text else substr(p."lineId", 3) end as "pageId",
-              p."pageTextId" is not null as "numeric", b."text", t."file", t."durationSec"
+      `select * from (
+       select distinct on (t."lineId")
+              case when p."pageTextId" is not null then p."pageTextId"::text else substr(p."lineId", 3) end as "pageId",
+              p."pageTextId" is not null as "numeric", p."pageTextId", p."lineId", b."text", t."file", t."durationSec"
          from "take" t
          join "book_line" b on b."lineId" = t."lineId" and b."lang" = t."lang" and b."isCurrent"
          join "book_page" p on p."lineId" = t."lineId" and p."aliasOf" is null
         where t."source" = 'books' and t."isCurrent" and t."lang" = $1
-        order by p."pageTextId" nulls last, p."lineId"`,
+        order by t."lineId", t."id" desc) c
+        order by c."pageTextId" nulls last, c."lineId"`,
       [lang],
     );
     const rows = clips.rows.map((r) => ({ ...r, pageId: r.numeric ? Number(r.pageId) : r.pageId }));

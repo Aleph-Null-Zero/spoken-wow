@@ -119,7 +119,9 @@ try {
   const { rows: pageTexts } = await placing.query(
     `select p."lineId", p."pageTextId" is null as "minted", jsonb_object_agg(l."lang", l."text") as "texts"
        from "book_page" p join "book_line" l on l."lineId" = p."lineId" and l."isCurrent"
-      where p."aliasOf" is null group by p."lineId", p."pageTextId"`,
+      where p."aliasOf" is null
+        and not exists (select 1 from "book_page" a where a."aliasOf" = p."lineId")
+      group by p."lineId", p."pageTextId"`,
   );
   const absorptions = findAbsorptions(pageTexts.filter((p) => p.minted), pageTexts.filter((p) => !p.minted));
   for (const move of absorptions) await absorb(placing, move);

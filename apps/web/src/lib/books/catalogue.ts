@@ -362,8 +362,15 @@ export async function isKnownLine(lineId: string, lang: Lang = BASE_LANG): Promi
 
 /** One page, by the key the addon and the landing URL know it as: '1381' or 'n{uuid}'. */
 export async function pageById(key: string, lang: Lang = BASE_LANG): Promise<BookPage | undefined> {
-  const lineId = lineIdOfKey(key);
-  if (!lineId) return undefined;
+  const keyed = lineIdOfKey(key);
+  if (!keyed) return undefined;
+  // A minted page folded into a real one is still addressed by its old key, from packs and
+  // reports already out.
+  const rows = await query<{ aliasOf: string | null }>(
+    `select "aliasOf" from "book_page" where "lineId" = $1`,
+    [keyed],
+  );
+  const lineId = rows[0]?.aliasOf ?? keyed;
   return (await catalogue(lang)).find((page) => page.id === lineId);
 }
 
