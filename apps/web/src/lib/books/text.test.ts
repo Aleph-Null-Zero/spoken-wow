@@ -10,7 +10,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 const { closeDb, db } = await import("@/lib/db");
-const { BookConflict, bookHistory, restoreBookText, saveBookText } = await import("./text");
+const { BookConflict, BookMissing, bookHistory, restoreBookText, saveBookText } = await import("./text");
 
 /** A page id no other run will collide with, so this can share a database. */
 let lineId: string;
@@ -83,6 +83,21 @@ describe("a page with no words yet", () => {
     );
     const saved = await saveBookText({ lineId, text: "Hola.", editedBy: editor, lang: "esES" });
     expect(saved).toMatchObject({ lineId, version: 1, text: "Hola." });
+    const { rows } = await db().query(
+      `select "pageId", "bookId", "pageNumber", "pageCount", "title" from "book_line"
+        where "lineId" = $1 and "lang" = 'esES'`,
+      [lineId],
+    );
+    expect(rows[0]).toEqual({ pageId: id, bookId: id, pageNumber: 1, pageCount: 1, title: "" });
+  });
+
+  it("refuses a page that has words but no book_page row", async () => {
+    await seed("Words.");
+    await db().query(`delete from "book_page" where "lineId" = $1`, [lineId]);
+    await expect(saveBookText({ lineId, text: "Other.", editedBy: editor })).rejects.toThrow(BookMissing);
+    const history = await bookHistory(lineId);
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({ isCurrent: true, text: "Words." });
   });
 });
 
@@ -180,5 +195,23 @@ describe("putting an earlier version back", () => {
     const history = await bookHistory(lineId);
     expect(history).toHaveLength(2);
     expect(history.find((v) => v.isCurrent)).toMatchObject({ version: 1, text: "First." });
+  });
+
+  it("carries the restored version's title into the next edit", async () => {
+    await seed("First.");
+    await saveBookText({ lineId, text: "Second.", editedBy: editor });
+    await restoreBookText(lineId, 1, "enUS", editor);
+    await db().query(
+      `update "book_line" set "title" = 'Corrected' where "lineId" = $1 and "version" = 1`,
+      [lineId],
+    );
+
+    await saveBookText({ lineId, text: "Third.", editedBy: editor });
+
+    const { rows } = await db().query(
+      `select "title" from "book_line" where "lineId" = $1 and "version" = 3`,
+      [lineId],
+    );
+    expect(rows[0].title).toBe("Corrected");
   });
 });

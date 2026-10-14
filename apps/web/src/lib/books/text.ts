@@ -104,11 +104,16 @@ export async function saveBookText(args: {
     );
     const current = currentRows[0];
 
+    const { rows: titled } = await client.query<{ title: string }>(
+      `select "title" from "book_line"
+        where "lineId" = $1 and "lang" = $2 and "isCurrent"`,
+      [args.lineId, lang],
+    );
     const { rows: placed } = await client.query<{ lineId: string }>(
       `select "lineId" from "book_page" where "lineId" = $1`,
       [args.lineId],
     );
-    if (!current && !placed[0]) {
+    if (!placed[0]) {
       throw new BookMissing(`${args.lineId} is not a page -- seed the table with: make books-import`);
     }
     if (
@@ -157,14 +162,13 @@ export async function saveBookText(args: {
           "text", "generatable", "skipReason", "editedBy", "note")
        select p."lineId", $2, $3, true, 'edited', p."pageTextId", ${BOOK_ID_COMPAT}, p."pageNumber",
               (select count(*) from "book_page" c where c."bookId" = p."bookId" and c."aliasOf" is null),
-              coalesce(t."title", e."title", ''), p."ownerKind", p."ownerIds", coalesce(p."material", 0),
+              coalesce($9, e."title", ''), p."ownerKind", p."ownerIds", coalesce(p."material", 0),
               $4, $7, $8, $5, $6
          from "book_page" p
-         left join "book_line" t on t."lineId" = p."lineId" and t."lang" = $2 and t."version" = $3 - 1
          left join "book_line" e on e."lineId" = p."lineId" and e."lang" = '${BASE_LANG}' and e."isCurrent"
         where p."lineId" = $1
        returning ${COLUMNS}`,
-      [args.lineId, lang, version, text, args.editedBy, args.note?.trim() || null, generatable, skipReason],
+      [args.lineId, lang, version, text, args.editedBy, args.note?.trim() || null, generatable, skipReason, titled[0]?.title ?? null],
     );
     await recordActivity(
       {
