@@ -148,16 +148,18 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
       // database's ('extracted') or, for a language the world database has none of, what a
       // player's client displayed and sent in ('contributed') -- Portuguese books are all the
       // latter, and an index read from 'extracted' alone shipped a pack no page could find.
-      // Extracted wins where both exist, being the game's own. Placed by the English page,
-      // which is what fixes a page's book and number.
+      // Extracted wins where both exist, being the game's own. Placed by book_page, which
+      // fixes a page's book and number.
       const [pages, names] = await Promise.all([
         pool.query(
-          `select e."pageId", e."bookId", e."pageNumber", e."ownerKind", e."ownerIds", l."text"
+          `select e."pageTextId" as "pageId", e."bookId", e."pageNumber", e."ownerKind",
+                  coalesce(e."ownerIds", '{}') as "ownerIds", l."text"
              from (select distinct on ("lineId") "lineId", "text" from "book_line"
                     where "lang" = $1 and "origin" in ('extracted', 'contributed')
                     order by "lineId", ("origin" = 'extracted') desc, "version" desc) l
-             join "book_line" e on e."lineId" = l."lineId" and e."lang" = $2 and e."isCurrent"`,
-          [lang, LANG],
+             join "book_page" e on e."lineId" = l."lineId" and e."aliasOf" is null
+            where e."pageTextId" is not null`,
+          [lang],
         ),
         // The same rule for the owners' names.
         pool.query(

@@ -16,6 +16,13 @@ const { BookConflict, bookHistory, restoreBookText, saveBookText } = await impor
 let lineId: string;
 
 async function seed(text: string, skipReason: string | null = null) {
+  const bookId = 900_000_000 + Math.floor(Math.random() * 90_000_000);
+  await db().query(
+    `insert into "book_page"
+       ("lineId", "pageTextId", "bookId", "pageNumber", "ownerKind", "ownerIds", "material")
+     values ($1, $2::int, $2::int::text, 1, 'item', '{1}'::integer[], 0)`,
+    [lineId, bookId],
+  );
   await db().query(
     `insert into "book_line"
        ("lineId", "lang", "version", "isCurrent", "origin", "pageId", "bookId",
@@ -58,11 +65,25 @@ beforeEach(() => {
 afterEach(async () => {
   await db().query(`delete from "activity" where "lineId" = $1`, [lineId]);
   await db().query(`delete from "book_line" where "lineId" = $1`, [lineId]);
+  await db().query(`delete from "book_page" where "lineId" = $1`, [lineId]);
 });
 
 afterAll(async () => {
   await db().query(`delete from "user" where "id" = $1`, [editor]);
   await closeDb();
+});
+
+describe("a page with no words yet", () => {
+  it("takes the first words of a page English lacks", async () => {
+    const id = 900_000_000 + Math.floor(Math.random() * 90_000_000);
+    await db().query(
+      `insert into "book_page" ("lineId", "pageTextId", "bookId", "pageNumber", "ownerKind", "ownerIds")
+       values ($1, $2::int, $2::int::text, 1, 'item', '{1}'::integer[])`,
+      [lineId, id],
+    );
+    const saved = await saveBookText({ lineId, text: "Hola.", editedBy: editor, lang: "esES" });
+    expect(saved).toMatchObject({ lineId, version: 1, text: "Hola." });
+  });
 });
 
 describe("rewriting a page", () => {
