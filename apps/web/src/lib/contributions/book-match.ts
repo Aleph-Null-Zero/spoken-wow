@@ -62,10 +62,30 @@ export type MatchVia = "moderator" | "owner" | "text" | "title" | "none";
 
 /**
  * Whether accepting many rows at once may take a row with this match. A new book is minted only
- * by accepting its row on its own: a title no corpus book has may still be one under another title.
+ * by accepting its row on its own: a title no corpus book has may still be one under another
+ * title. A correction replaces words the page has, so it is taken from the Corrections tab.
  */
 export const bulkAcceptable = (match: BookMatchResult) =>
-  match.kind === "translation" || match.kind === "correction" || match.kind === "new-page";
+  match.kind === "translation" || match.kind === "new-page";
+
+/** Whether two matches would write the same thing: the same kind, at the same page or place. */
+export function sameMatch(a: BookMatchResult, b: BookMatchResult): boolean {
+  const target = (m: BookMatchResult) => {
+    switch (m.kind) {
+      case "known":
+      case "correction":
+      case "translation":
+        return `${m.kind}\u0000${m.lineId}`;
+      case "new-page":
+        return `${m.kind}\u0000${m.bookId}\u0000${m.pageNumber}`;
+      case "new-book":
+        return `${m.kind}\u0000${m.title}\u0000${m.pageNumber}`;
+      case "ambiguous":
+        return `${m.kind}\u0000${m.candidates.join(",")}`;
+    }
+  };
+  return target(a) === target(b);
+}
 
 const normal = (text: string) => (normaliseText(text) as string).trim();
 

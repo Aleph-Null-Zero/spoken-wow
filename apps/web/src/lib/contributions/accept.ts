@@ -47,7 +47,7 @@ import { corpus } from "@/lib/quests/catalogue";
 import type { Roster } from "@/lib/voices/roster";
 import { loadRoster } from "@/lib/voices/roster-store";
 
-import { loadBookCorpus, matchBook, type BookCorpus } from "./book-match";
+import { loadBookCorpus, matchBook, sameMatch, type BookCorpus, type BookMatchResult } from "./book-match";
 import type { ContributionStatus } from "./contributions";
 import { correctionNote } from "./correction";
 import {
@@ -76,6 +76,7 @@ export type ResolveRefusal =
   | { ok: false; reason: "needs-speaker"; message: string }
   | { ok: false; reason: "needs-page"; message: string }
   | { ok: false; reason: "one-way"; message: string }
+  | { ok: false; reason: "changed"; message: string }
   | { ok: false; reason: "malformed"; message: string };
 
 export type ResolveOutcome = { ok: true; contribution: Contribution } | ResolveRefusal;
@@ -703,11 +704,14 @@ async function contributedPageExists(contributionId: number, client: PoolClient)
  * `b:n{uuid}`, in a minted `n{uuid}` book when it starts one. A correction is a new version of
  * that language's text, as an editor's save is; the rest is a first version, 'contributed'.
  * Known and ambiguous rows are refused: there is nothing to write, or nobody has said where.
+ * With `expected`, the match the caller checked before accepting, a row that now matches
+ * otherwise is refused rather than written as something nobody looked at.
  */
 async function acceptBookContribution(
   client: PoolClient,
   contribution: Contribution,
   userId: string,
+  expected?: BookMatchResult,
 ): Promise<ResolveRefusal | null> {
   const text = contribution.text?.trim();
   if (!text) return { ok: false, reason: "malformed", message: "contribution has no text to voice" };
@@ -717,6 +721,9 @@ async function acceptBookContribution(
 
   const corpus = await loadBookCorpus(client);
   const match = matchBook(contribution, corpus);
+  if (expected && !sameMatch(match, expected)) {
+    return { ok: false, reason: "changed", message: "This page changed since you looked -- open it again." };
+  }
   const note = noteFor(contribution.id);
   const { generatable, skipReason } = isGeneratable(speakPlayerTokens(text, lang));
   const words = { lang, title, text, generatable, skipReason, userId, note };
@@ -868,13 +875,15 @@ async function addOwner(
  * is "accepted" for a fresh quests row.
  *
  * `corpusLines` is the English catalogue to match against, read by the caller -- a batch reads
- * it once for all its rows. Left out, it is read here.
+ * it once for all its rows. Left out, it is read here. `bookMatch` is what the caller saw a
+ * books row match; the accept refuses when the row matches otherwise by the time it writes.
  */
 export async function resolveContribution(
   id: number,
   status: ContributionStatus,
   userId: string,
   corpusLines?: readonly CorpusLine[],
+  bookMatch?: BookMatchResult,
 ): Promise<ResolveOutcome> {
   const client = await db().connect();
   // Set only on the path below where rollback itself throws -- that is the one case that
@@ -921,7 +930,7 @@ export async function resolveContribution(
     }
 
     if (status === "accepted" && contribution.source === "books" && !written) {
-      const refused = await acceptBookContribution(client, contribution, userId);
+      const refused = await acceptBookContribution(client, contribution, userId, bookMatch);
       if (refused) {
         await client.query("rollback");
         return refused;
@@ -1077,12 +1086,14 @@ const BATCH_CONCURRENCY = 8;
  * line; lockLine and the re-checks under it are what keep them from both writing it.
  *
  * Each row is still its own transaction, so one refused (or failing) row leaves the rest
- * landed. A row that throws is answered as an Error, in its place.
+ * landed. A row that throws is answered as an Error, in its place. `bookMatches` holds, per
+ * books row, the match the caller checked it by (resolveContribution's `bookMatch`).
  */
 export async function resolveContributions(
   ids: readonly number[],
   status: ContributionStatus,
   userId: string,
+  bookMatches?: ReadonlyMap<number, BookMatchResult>,
 ): Promise<Map<number, ResolveOutcome | Error>> {
   const corpusLines = status === "accepted" ? (await corpus()).lines : undefined;
   const outcomes = new Map<number, ResolveOutcome | Error>();
@@ -1091,7 +1102,7 @@ export async function resolveContributions(
     while (next < ids.length) {
       const id = ids[next++];
       try {
-        outcomes.set(id, await resolveContribution(id, status, userId, corpusLines));
+        outcomes.set(id, await resolveContribution(id, status, userId, corpusLines, bookMatches?.get(id)));
       } catch (error) {
         outcomes.set(id, error instanceof Error ? error : new Error(String(error)));
       }

@@ -145,6 +145,43 @@ describe("POST /api/contributions/resolve-many", () => {
       expect(minted).toEqual([]);
     });
 
+    it("writes the first of two rows for one page and language, and refuses the second", async () => {
+      await db().query(`update "book_page" set "ownerKind" = 'item', "ownerIds" = $2 where "lineId" = $1`, [`b:${base}`, [base]]);
+      const meta = { book: "Libro", number: "1", item: String(base) };
+      const first = await booksRow("esES", `Palabras ${base}.`, meta);
+      const second = await booksRow("esES", `Otras palabras ${base}.`, meta);
+
+      const { results } = await (await POST(post({ ids: [first, second], status: "accepted" }))).json();
+      const outcomes = [results[first], results[second]];
+      expect(outcomes).toContainEqual({ ok: true });
+      expect(outcomes).toContainEqual({ ok: false, error: expect.stringContaining("changed since you looked") });
+
+      const { rows } = await db().query<{ origin: string }>(
+        `select "origin" from "book_line" where "lineId" = $1 and "lang" = 'esES'`,
+        [`b:${base}`],
+      );
+      expect(rows).toEqual([{ origin: "contributed" }]);
+    });
+
+    it("accepts a row a moderator pointed at a page, and skips one the corpus already has", async () => {
+      const pointed = await booksRow("esES", `Otra cosa ${base}.`, { book: "Libro", number: "1" });
+      await db().query(`update "contribution" set "matchLineId" = $2 where "id" = $1`, [pointed, `b:${base + 10}`]);
+      const known = await booksRow("enUS", `Words one ${base}.`, { book: `Tome ${base}`, number: "1" });
+
+      const { results } = await (await POST(post({ ids: [pointed, known], status: "accepted" }))).json();
+      expect(results[pointed]).toEqual({ ok: true });
+      expect(results[known]).toMatchObject({ ok: false, error: expect.stringContaining("already has these words") });
+      expect(await statusOf(pointed)).toBe("accepted");
+      expect(await statusOf(known)).toBe("new");
+    });
+
+    it("leaves a correction to the Corrections tab", async () => {
+      const correction = await booksRow("enUS", `Words won ${base}.`, { book: `Tome ${base}`, number: "1" });
+      const { results } = await (await POST(post({ ids: [correction], status: "accepted" }))).json();
+      expect(results[correction]).toMatchObject({ ok: false, error: expect.stringContaining("Corrections tab") });
+      expect(await statusOf(correction)).toBe("new");
+    });
+
     it("still rejects a new-book row", async () => {
       const fresh = await booksRow("esES", `Nueva ${base}.`, { book: `Brand New ${base}`, number: "1" });
       const { results } = await (await POST(post({ ids: [fresh], status: "rejected" }))).json();

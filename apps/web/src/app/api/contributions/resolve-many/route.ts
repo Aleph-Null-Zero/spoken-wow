@@ -10,14 +10,15 @@
  * about which ids exist than the single route does.
  *
  * Accepting books rows in bulk takes only those the matcher places in a page that exists or
- * will (bulkAcceptable): an ambiguous, known or new-book row is left as it is and answered with
- * why, one corpus read for the lot.
+ * will (bulkAcceptable): an ambiguous, known, correction or new-book row is left as it is and
+ * answered with why, one corpus read for the lot. Each accept is held to the match checked here,
+ * so a row another accept turned into a correction meanwhile is refused, not written.
  */
 import { requireCapability } from "@/lib/generation/authz";
 import { booksContributions, contributionLocales } from "@/lib/contributions/store";
 import { BASE_LANG, isLang, type Lang } from "@/lib/lang";
 import { isStatus, RESOLVE_MANY_MAX, type ResolveManyResult } from "@/lib/contributions/contributions";
-import { bulkAcceptable, loadBookCorpus, matchBook } from "@/lib/contributions/book-match";
+import { bulkAcceptable, loadBookCorpus, matchBook, type BookMatchResult } from "@/lib/contributions/book-match";
 import { resolveContributions } from "@/lib/contributions/accept";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ const UNKNOWN = "unknown contribution";
 const SKIPPED: Record<string, string> = {
   ambiguous: "Several pages could be this one -- pick it first.",
   known: "The corpus already has these words for this page.",
+  correction: "This changes words the page already has -- accept it from the Corrections tab.",
   "new-book": "A new book is accepted one row at a time, so the title is checked first.",
 };
 
@@ -63,18 +65,20 @@ export async function POST(request: Request) {
     return locale !== undefined && allowed.get(isLang(locale) ? locale : BASE_LANG);
   });
   const skipped = new Map<number, string>();
+  const bookMatches = new Map<number, BookMatchResult>();
   if (body.status === "accepted" && permitted.length > 0) {
     const books = await booksContributions(permitted);
     if (books.length > 0) {
       const corpus = await loadBookCorpus();
       for (const row of books) {
         const match = matchBook(row, corpus);
-        if (!bulkAcceptable(match)) skipped.set(row.id, SKIPPED[match.kind]);
+        if (bulkAcceptable(match)) bookMatches.set(row.id, match);
+        else skipped.set(row.id, SKIPPED[match.kind]);
       }
       permitted = permitted.filter((id) => !skipped.has(id));
     }
   }
-  const outcomes = await resolveContributions(permitted, body.status, userId);
+  const outcomes = await resolveContributions(permitted, body.status, userId, bookMatches);
 
   const results: Record<number, ResolveManyResult> = {};
   for (const id of ids) {
