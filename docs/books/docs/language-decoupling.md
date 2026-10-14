@@ -186,17 +186,36 @@ Two routes might give one:
 - **Gameobject books.** `UnitGUID("softinteract")` may return a `GameObject-…-<entryID>-…` GUID
   while the player is interacting, and `gameobject_template.data0` gives the first page.
 
-The probe is a throwaway debug build that logs both on `ITEM_TEXT_BEGIN`. It is tried in Forever
-and in Era on an item book (Nota de Wiley), a gameobject book (a lectern), and a page opened from
-a quest. Whatever proves reliable becomes an `item=` or `object=` field in the envelope. If
-neither does, matching step 1 is dropped and the rest of this plan stands.
+The probe was a throwaway debug addon that logged both on `ITEM_TEXT_BEGIN`/`READY`.
+
+### Probe result (Forever, 2026-10-14)
+
+- **Item books:** the used-item hook never fires. Forever's bag buttons, Baganator and Bagnon
+  don't go through Lua's `UseContainerItem`, and neither does a `/use` macro. What works on every
+  open is searching the bags for an item named like the title (`ItemTextGetItem()`): the
+  Encrypted Letter gave item 9555 each time. Two different items with the same name give no
+  answer. `GetItemInfo(title)` returns nothing.
+- **Gameobject books:** `UnitGUID("npc")` holds `GameObject-…-<entry>-…` on every open, whether
+  by mouse or by the interact key, from `ITEM_TEXT_BEGIN` through every page turn. The entry is
+  the GUID's sixth field. `softinteract` has it only when the interact key was used.
+- **Forever renumbered some objects.** The lectern (175761) matches the corpus. The Khadgar
+  plaque is 696299 on Forever and 25333 in vmangos, and was found only because its text
+  matched. So an id that names nothing in the corpus is not a new book: matching falls through
+  to the words and the title, as before.
+
+Decided on the result: a page may have several owner ids (a renumbered object is added beside
+the old one), the addon looks a page up by id first and then by checksum, so current packs keep
+working, and a renumbered object whose text also changed is voiced again.
+
+The addon's id-first lookup (an `owners` table in `Books.lua`, `Spoken:BagItemID`, the `npc`
+GUID) is built separately on `feat/books-owner-lookup`. The envelope reuses the same two ids.
 
 ## Order of work
 
 Stacked PRs. Each one deploys on its own, and every migration is additive
 (`deploy/web/bin/migrate.sh`).
 
-1. **Probe.** Its result settles step 5's envelope fields.
+1. **Probe.** Done; see the result above.
 2. **Migration.** Create `book_page`, backfilled from the current `book_line` rows. Add
    `matchLineId`, `matchBookId`, `matchPageNumber` and `matchNewBook` to `contribution`, with
    today's `pageId` answers copied into `matchLineId`.

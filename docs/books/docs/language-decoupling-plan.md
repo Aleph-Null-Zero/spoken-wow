@@ -35,7 +35,7 @@
 
 ## PR 0: probe (throwaway, needs the user in game)
 
-### Task 0: Does the client say what is being read?
+### Task 0: Does the client say what is being read? (done 2026-10-14, result in the spec)
 
 **Files:**
 - Create (not committed): `addons/Spoken_Books/Probe.lua`, plus a temporary line in `addons/Spoken_Books/Spoken_Books.toc`.
@@ -1686,6 +1686,7 @@ async function acceptBookContribution(
       await insertText(client, { lineId: match.lineId, lang, title, text, generatable, skipReason, userId, note, origin: "contributed" });
       await nameOwnersIfUnnamed(client, match.lineId, lang, title, userId, note);
       return null;
+
     case "new-page":
     case "new-book": {
       const bookId = match.kind === "new-page" ? match.bookId : mintBookId();
@@ -1733,6 +1734,35 @@ async function nameOwnersIfUnnamed(client: PoolClient, lineId: string, lang: Lan
   }
 }
 ```
+
+After the `switch` writes a page, record the owner the client read it from when the corpus doesn't know that id yet. That's a renumbered Forever object (Khadgar's plaque: 696299 beside vmangos's 25333) or an item. Add, at the end of every case that writes (`correction`, `translation`, `new-page`, `new-book`):
+
+```ts
+      await addOwner(client, lineIdWritten, contribution.meta);
+```
+
+```ts
+/**
+ * The item or object the client read this page from, added to the page's owners when the
+ * corpus does not have it: Forever renumbered some objects, and the next client to open one
+ * finds the page by id rather than by its words.
+ */
+async function addOwner(client: PoolClient, lineId: string, meta: Record<string, string>): Promise<void> {
+  for (const [kind, field] of [["item", "item"], ["object", "object"]] as const) {
+    const id = Number(meta[field]);
+    if (!Number.isInteger(id) || id <= 0 || id > 2_147_483_647) continue;
+    await client.query(
+      `update "book_page" set "ownerKind" = coalesce("ownerKind", $2),
+              "ownerIds" = array_append(coalesce("ownerIds", '{}'), $3)
+        where "lineId" = $1 and ("ownerKind" is null or "ownerKind" = $2)
+          and not ($3 = any(coalesce("ownerIds", '{}')))`,
+      [lineId, kind, id],
+    );
+  }
+}
+```
+
+Here `lineIdWritten` is `match.lineId` for a correction or translation, and the minted `lineId` for a new page or book. Add a test to Step 2: a translation row with `meta.object = "696299"` leaves `book_page.ownerIds` holding both the seeded id and 696299, and accepting a second row with the same id adds nothing.
 
 Imports: `import { loadBookCorpus, matchBook } from "./book-match";` and `import { mintBookId, mintPageId } from "@/lib/books/tools";`. `loadBookCorpus(client)` takes the transaction's client, so it reads rows the lock has serialised. Its `Queryable` type must accept `PoolClient`. If TypeScript objects, type the parameter as `Pick<PoolClient, "query">`.
 
@@ -2257,16 +2287,18 @@ end
 
 Keep the function's existing structure for the language branch. The only changes are `%s` instead of `%d`, and the key check.
 
-- [ ] **Step 6: Envelope ids (only if Task 0 found any)**
+- [ ] **Step 6: Envelope ids**
 
-In `Contribute.lua`'s field list, add after `{ "number", … }`:
+This builds on `feat/books-owner-lookup`, which adds `Spoken:BagItemID(title)` and reads the object entry from `UnitGUID("npc")`. Rebase onto it once it has merged, and use its helpers rather than a second copy. In `Contribute.lua`'s field list, after `{ "number", … }`:
 
 ```lua
-		{ "item", self.readFrom and self.readFrom.item or "" },
-		{ "object", self.readFrom and self.readFrom.object or "" },
+		{ "item", (Spoken and Spoken.BagItemID and Spoken:BagItemID(ItemTextGetItem and ItemTextGetItem())) or "" },
+		{ "object", SpokenBooks:ObjectEntry() or "" },
 ```
 
-In `Events.lua`, on `ITEM_TEXT_BEGIN`, set `self.readFrom` to `{ item = <bag item id used within 2 seconds>, object = <entry from UnitGUID("softinteract") when it starts with "GameObject-"> }`. That is the same capture the probe used, minus the `print`, and limited to the routes Task 0 found reliable. Clear it on `ITEM_TEXT_CLOSED`. Empty fields must not break the site: `parseEnvelope` ignores unknown empty fields (check `lib/contributions/envelope.ts` and add `item`/`object` to its accepted keys if it validates them). Add a case to `books_contribute_test.lua`: with `readFrom = { item = 5 }`, the envelope contains `item=5`.
+where `ObjectEntry` is the branch's GUID parse (the sixth `-`-separated field of a `GameObject-` GUID from `UnitGUID("npc")`). If the branch named it differently, use its name. Check `lib/contributions/envelope.ts` and accept `item` and `object` as optional digit fields. Add a case to `books_contribute_test.lua`: with a bag item named like the title and an `npc` GUID stubbed, the envelope carries `item=9555` and `object=175761`.
+
+The pack side mirrors the branch's `owners` table: in Task 11, also write `extraOwners = { object = { [entry] = bookId }, item = { [id] = bookId } }` for pages in `extraIndex`, and in Step 3 have `Find` try it by owner and page number before the checksum, as the branch does for `Books.lua`.
 
 - [ ] **Step 7: Run every Lua test**
 
