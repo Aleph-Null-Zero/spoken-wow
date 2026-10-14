@@ -49,6 +49,7 @@ import { loadRoster } from "@/lib/voices/roster-store";
 
 import { loadBookCorpus, matchBook, type BookCorpus } from "./book-match";
 import type { ContributionStatus } from "./contributions";
+import { correctionNote } from "./correction";
 import {
   answersQuestMomentSql,
   baseLineId,
@@ -381,7 +382,8 @@ async function booksInExplorer(contributions: readonly Contribution[]): Promise<
   if (accepted.length === 0) return new Set();
   const { rows } = await db().query<{ id: number }>(
     `select c."id" from unnest($1::int[]) as c("id")
-      where exists (select 1 from "book_line" b where b."note" = 'contribution #' || c."id")`,
+      where exists (select 1 from "book_line" b
+                     where b."note" in ('contribution #' || c."id", 'correction from the game, contribution #' || c."id"))`,
     [accepted.map((c) => c.id)],
   );
   return new Set(rows.map((row) => row.id));
@@ -686,8 +688,8 @@ export function noteFor(contributionId: number): string {
  */
 async function contributedPageExists(contributionId: number, client: PoolClient): Promise<boolean> {
   const { rowCount } = await client.query(
-    `select 1 from "book_line" where "note" = $1`,
-    [noteFor(contributionId)],
+    `select 1 from "book_line" where "note" = any($1::text[])`,
+    [[noteFor(contributionId), correctionNote(contributionId)]],
   );
   return (rowCount ?? 0) > 0;
 }

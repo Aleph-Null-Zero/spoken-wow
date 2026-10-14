@@ -20,13 +20,14 @@
  * as the sex its voice is not, it is missing until the NPC is split by sex: the voice the site
  * has is the wrong one, and storing the row is what splits it.
  *
- * Zones and books are not compared here: a zone has no text to compare, and the table already
- * shows a book page's corpus text beside the contribution (page.tsx's existingTextFor).
+ * A books row is compared through the books matcher (book-match.ts): the same words on the page
+ * it matches are known, other words a correction. A zone has no text to compare.
  */
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
 import { isSex, sexOf } from "@/lib/npc/npc";
 
+import { loadBookCorpus, matchBook } from "./book-match";
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
 import { answersQuestMomentSql } from "./naming";
@@ -133,8 +134,9 @@ async function oneSexOf(npcIds: number[]): Promise<Map<number, number>> {
   return new Map(rows.map((row) => [row.npcId, sexOf(row.gender) as number]));
 }
 
-/** Each contribution's LineState, in the order given: three queries for the lot. */
+/** Each contribution's LineState, in the order given: three queries for the lot, and the books corpus when a books row is in it. */
 export async function lineStates(rows: readonly Comparable[]): Promise<LineState[]> {
+  const books = rows.some((row) => row.source === "books" && row.text) ? await loadBookCorpus() : null;
   const moments: { locale: string; moment: string }[] = [];
   const greetings: { locale: string; npcId: number }[] = [];
   // Only a greeting that reports a sex can be seen as the other one, as only such a row splits.
@@ -156,6 +158,17 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
   ]);
 
   return rows.map((row) => {
+    if (row.source === "books") {
+      if (!books || !row.text) return MISSING;
+      // The stored row's moderator answer is not passed: the corpus alone says what it differs from.
+      const match = matchBook(
+        { locale: row.locale, text: row.text, meta: row.meta, matchLineId: null, matchBookId: null, matchPageNumber: null, matchNewBook: false },
+        books,
+      );
+      if (match.kind === "known") return { kind: "known" };
+      if (match.kind === "correction") return { kind: "changed", lineId: match.lineId, variant: 0, current: match.current };
+      return MISSING;
+    }
     if (row.source !== "quests" || !row.text) return MISSING;
     const text = row.text;
     const moment = momentOf(row);

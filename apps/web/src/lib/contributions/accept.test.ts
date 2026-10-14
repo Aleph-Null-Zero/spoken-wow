@@ -17,6 +17,7 @@ import { upsertResolution } from "@/lib/npc/store";
 import { corpus, lineIndex } from "@/lib/quests/catalogue";
 import { isGap, matchingLines, NO_CONTEXT } from "@/lib/search";
 
+import { acceptCorrection } from "./correction";
 import { lineIsInExplorer, momentHasSpeaker, resolveContribution, resolveContributions } from "./accept";
 import {
   broadcastGossipStem,
@@ -1274,6 +1275,13 @@ describe("resolveContribution: a books contribution, in any language", () => {
     expect(await lineIsInExplorer(await row(id))).toBe(true);
     // A correction is written too, so it is as one-way as a first version.
     expect(await resolveContribution(id, "rejected", RESOLVER)).toMatchObject({ ok: false, reason: "one-way" });
+  });
+
+  it("counts an accepted books correction as in the explorer", async () => {
+    await textRow(`b:${base}`, "esES", "Viejo texto.");
+    const id = await booksRow({ locale: "esES", text: `Words one ${base}.`, meta: { book: "Libro", number: "1" } });
+    expect(await acceptCorrection(id, RESOLVER)).toMatchObject({ ok: true });
+    expect(await lineIsInExplorer(await row(id))).toBe(true);
   });
 
   it("writes the page a moderator named, and is one-way once written", async () => {

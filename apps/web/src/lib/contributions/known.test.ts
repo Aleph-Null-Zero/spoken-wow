@@ -108,8 +108,52 @@ describe("lineStates", () => {
     }
   });
 
-  it("leaves zones and books alone", async () => {
+  it("leaves a books row naming no page missing", async () => {
     expect(await lineStates([{ source: "books", locale: "enUS", text: "Page", meta: {} }])).toEqual([{ kind: "missing" }]);
+  });
+});
+
+describe("lineStates: books", () => {
+  const base = 900_000_000 + Math.floor(Math.random() * 90_000_000);
+  const pages = [`b:${base}`, `b:${base + 1}`];
+
+  beforeAll(async () => {
+    const owner = base;
+    const seed: [string, number, [string, string, string][]][] = [
+      [pages[0], 1, [["enUS", `Tome ${base}`, `Words one ${base}.`], ["esES", `Libro ${base}`, `Texto uno ${base}.`]]],
+      [pages[1], 2, [["enUS", `Tome ${base}`, `Words two ${base}.`], ["esES", `Libro ${base}`, `Texto dos ${base}.`]]],
+    ];
+    for (const [lineId, pageNumber, texts] of seed) {
+      await db().query(
+        `insert into "book_page" ("lineId", "pageTextId", "bookId", "pageNumber", "ownerKind", "ownerIds")
+         values ($1, $2, $3, $4, 'object', $5)`,
+        [lineId, Number(lineId.slice(2)), String(base), pageNumber, [owner]],
+      );
+      for (const [lang, title, text] of texts) {
+        await db().query(
+          `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+           values ($1, $2, 1, true, 'extracted', $3, $4)`,
+          [lineId, lang, title, text],
+        );
+      }
+    }
+  });
+
+  afterAll(async () => {
+    await db().query(`delete from "book_line" where "lineId" = any($1::text[])`, [pages]);
+    await db().query(`delete from "book_page" where "lineId" = any($1::text[])`, [pages]);
+    await db().query(`delete from "entity_name" where "kind" = 'gameobject' and "entityId" = $1`, [String(base)]);
+  });
+
+  it("calls a books row with this language's words known, and other words changed", async () => {
+    const [known, changed, missing] = await lineStates([
+      { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: { book: `Libro ${base}`, number: "1" } },
+      { source: "books", locale: "esES", text: `Words one ${base}.`, meta: { book: `Libro ${base}`, number: "1" } },
+      { source: "books", locale: "esES", text: "Nada.", meta: { book: `Nuevo ${base}`, number: "1" } },
+    ]);
+    expect(known).toEqual({ kind: "known" });
+    expect(changed).toEqual({ kind: "changed", lineId: pages[0], variant: 0, current: `Texto uno ${base}.` });
+    expect(missing).toEqual({ kind: "missing" });
   });
 });
 

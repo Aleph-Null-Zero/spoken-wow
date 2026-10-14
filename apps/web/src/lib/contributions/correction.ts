@@ -1,5 +1,5 @@
 /**
- * Accepting a correction: a quest line the corpus has, sent back by a player's client with
+ * Accepting a correction: a quest line or book page the corpus has, sent back by a player's client with
  * different text (known.ts's "changed"), taken as what the line now speaks.
  *
  * It is the explorer's text edit done in one click, not resolve's accept: that writes a line
@@ -17,6 +17,10 @@
  * line; another language keeps its $N, $C and $R, as accept does, for player-words.ts
  * to speak in that language.
  *
+ * A book page is written as an editor's save of that language's text (a new 'edited' version).
+ * Unlike a quest line, its text is what the row is compared on, so once accepted the row is
+ * known, and tabOf lists it with the accepted contributions.
+ *
  * Not one transaction with the status flip: the two writers own theirs, and both are
  * idempotent -- the same text again spends no version and logs nothing -- so an accept that
  * fails after the text is written is simply sent again.
@@ -25,6 +29,7 @@ import "server-only";
 
 import { recordActivity } from "@/lib/activity/store";
 import { audioRelPath } from "@/lib/audio";
+import { BookConflict, BookMissing, saveBookText } from "@/lib/books/text";
 import type { CorpusLine } from "@/lib/corpus";
 import { db } from "@/lib/db";
 import { BASE_LANG, isLang } from "@/lib/lang";
@@ -54,8 +59,12 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
   const contribution = rows[0];
   if (!contribution) return { ok: false, reason: "not-found" };
   const lang = contribution.locale;
-  if (contribution.source !== "quests" || !contribution.text || !isLang(lang)) {
-    return { ok: false, reason: "not-a-correction", message: "Only a quest line sent in a site language is a correction." };
+  if ((contribution.source !== "quests" && contribution.source !== "books") || !contribution.text || !isLang(lang)) {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "Only a quest line or a book page sent in a site language is a correction.",
+    };
   }
 
   const [state] = await lineStates([contribution]);
@@ -68,7 +77,9 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
   }
 
   try {
-    if (lang === BASE_LANG) {
+    if (contribution.source === "books") {
+      await saveBookText({ lineId: state.lineId, text: contribution.text, note: correctionNote(id), editedBy: userId, lang });
+    } else if (lang === BASE_LANG) {
       const { rows: lines } = await db().query<Pick<CorpusLine, "source" | "fileName">>(
         `select "source", "fileName" from "quest_line"
           where "lineId" = $1 and "variant" = $2 and "lang" = $3 and "isCurrent"`,
@@ -95,7 +106,13 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
       });
     }
   } catch (error) {
-    if (error instanceof OverrideError || error instanceof QuestTextMissing || error instanceof QuestTextConflict) {
+    if (
+      error instanceof OverrideError ||
+      error instanceof QuestTextMissing ||
+      error instanceof QuestTextConflict ||
+      error instanceof BookMissing ||
+      error instanceof BookConflict
+    ) {
       return { ok: false, reason: "malformed", message: error.message };
     }
     throw error;
