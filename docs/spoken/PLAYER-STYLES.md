@@ -53,6 +53,8 @@ All of it is in `addons/Spoken/UI/`, one copy for every module.
   badge on a dark disc at its lower right, and the disc only under a badge. A creature the client
   has not cached shows the book until it comes. The Large Window draws a 3D model instead.
 - **Show Progress Bar**: a progress line under the words, for the subtitles and every window.
+- **Dragging** a window or the subtitles draws it to the screen's edges and middle, and the DialogueUI
+  window to its resting place too, with a gold guide line where it holds. Holding Shift drags it free.
 - **Lock Position**: the windows and the subtitles cannot be dragged or resized, and clicks on
   them pass through to the game; their buttons still work. **Reset Positions**, under Fix a
   Problem, forgets the places saved for the Small, Large and DialogueUI windows and the subtitles.
@@ -121,7 +123,8 @@ they do in the windows.
 - The words do nothing when clicked, and there is no right-click menu: a subtitle in the middle
   of the screen is clicked by accident, and a right-drag there is the camera turning. Stop or
   Replay, Skip and Report fade in under it while the pointer is over it.
-- Dragged by its words, it moves up and down only, staying on the screen's centre line.
+- Dragged by its words, it moves anywhere on the screen and keeps its place. It is drawn to the
+  screen's edges and middle, with a gold guide line where it holds; Shift drags it free.
 - It shows once the voice has begun, or while the line is stopped or held back, so that it can
   say why nothing is being read.
 

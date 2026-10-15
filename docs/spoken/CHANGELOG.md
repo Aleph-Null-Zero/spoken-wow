@@ -68,6 +68,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Narrator styles
 
+- The windows and the subtitles are drawn to the screen's edges and middle as you drag them, with a
+  gold guide line where they hold, and the subtitles now move sideways as well as up and down. The
+  DialogueUI window also holds on its resting place. Hold Shift to drag freely.
+  *([Nucabe](https://github.com/Nucabe))*
 - The round Play, Skip and Report buttons are dark at 90% inside their ring instead of solid, so the
   world shows a little through them. *([Nucabe](https://github.com/Nucabe))*
 - Ctrl and the mouse wheel size the Small Window and the subtitles, as they do the DialogueUI

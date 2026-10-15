@@ -1195,7 +1195,7 @@ local DIALOGUE_CORE = { "Environment", "Enums", "Utils", "Language", "Debug", "F
 function M.LoadSpoken(addonDirectory)
     for _, file in ipairs({ "Environment", "Version", "Core", "SoundUtils", "Callbacks", "SoundQueue", "Sources", "Developer", "OtherSounds",
         "BackgroundSound", "Strings", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU", "Locale/koKR", "Locale/zhCN",
-        "Locale/zhTW", "UI/Layout", "UI/DialogueUITheme", "UI/Transcript", "UI/Subtitle", "UI/WordMarks", "UI/Search", "UI/Portrait", "UI/StaticPortrait", "UI/Actions", "UI/Face", "UI/PlayerFrame",
+        "Locale/zhTW", "UI/Layout", "UI/DialogueUITheme", "UI/Transcript", "UI/Subtitle", "UI/WordMarks", "UI/Search", "UI/Portrait", "UI/StaticPortrait", "UI/Actions", "UI/Snap", "UI/Face", "UI/PlayerFrame",
         "UI/MinimalPlayer", "UI/DialogueUIPlayer", "UI/DialogueUITransitions", "UI/MinimapButton",
         -- Real LibDeflate, not a hand-faked stub library: Contribute:Encode's round trip through
         -- actual compression is the point of testing it at all.

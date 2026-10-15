@@ -401,11 +401,20 @@ function Skin:Covered()
 end
 
 function Skin:StartDrag()
-    if not Addon:IsFrameLocked() then self.frame:StartMoving() end
+    if Addon:IsFrameLocked() then return end
+    Snap.Start(self.frame, {
+        locked = function() return Addon:IsFrameLocked() end,
+        -- Where it rests until it is dragged: it holds there as it holds on the screen's lines.
+        home = function()
+            local left, top = self:Home()
+            local ui = UIParent:GetEffectiveScale()
+            return left / ui, top / ui
+        end,
+    })
 end
 
 function Skin:StopDrag()
-    self.frame:StopMovingOrSizing()
+    Snap.Stop()
     if not Addon:IsFrameLocked() then Addon:SaveLayout("DialogueUI", self.frame) end
 end
 
@@ -1026,7 +1035,7 @@ function Skin:RefreshConfig(original)
     self:Layout()
     frame:SetScale(frame.spokenBaseScale)
     if not Addon:Layout().DialogueUI then self:PlaceDefault() end
-    if Addon:IsFrameLocked() then frame:StopMovingOrSizing() end
+    if Addon:IsFrameLocked() then Snap.Stop() end
     self:ApplyLock()
     Addon:ApplyHost(frame)
     self:Update()
@@ -1084,7 +1093,7 @@ end
 function Skin:Reset()
     Addon:Layout().DialogueUI = nil
     if not self.frame then return end
-    self.frame:StopMovingOrSizing()
+    Snap.Stop()
     if self:IsEnabled() then self:RefreshConfig(PlayerFrame) end
 end
 

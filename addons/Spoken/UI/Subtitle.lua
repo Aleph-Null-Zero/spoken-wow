@@ -257,20 +257,13 @@ function Subtitle:Build()
     -- The strata Addon:ApplyHost restores when the host lets go.
     frame.spokenBaseStrata = "LOW"
     frame:SetClampedToScreen(true)
-    -- Dragged by hand rather than with StartMoving, which would let it wander sideways: the
-    -- subtitle always sits on the screen's centre line, and only its height is the player's.
+    -- Dragged anywhere on the screen, drawn to its edges and its middle (Snap).
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", function()
         if Locked() then return end
-        local _, y = GetCursorPosition()
-        self.dragFrom = { cursor = y, top = self:Top() }
+        Snap.Start(frame, { locked = Locked, place = function(left, top, width) self:Drop(left, top, width) end })
     end)
-    frame:SetScript("OnDragStop", function()
-        if not self.dragFrom then return end
-        self:DragTo()
-        self.dragFrom = nil
-        Addon:Layout().Subtitle = { top = self:Top() }
-    end)
+    frame:SetScript("OnDragStop", function() Snap.Stop() end)
     -- The words do nothing when clicked: a subtitle mid-screen is clicked by accident all the
     -- time. Play or pause and Report come up beside it under the pointer (Subtitle:BuildControls).
     -- No right-click menu either: a right-drag here is the camera turning.
@@ -472,30 +465,31 @@ end
 -- it has to grow out from its middle and down from its top to stay where it was put.
 -- Its top edge in the screen's units, divided by the subtitle's own size when placed: an
 -- anchor's offsets are counted in the frame's scale, so resizing it would otherwise move it.
--- Always on the screen's centre line, so the frame grows out from its middle as lines change.
+-- Its middle stays where it was put, so the frame grows out from there as lines change.
 function Subtitle:Top()
     local saved = Addon:Layout().Subtitle
     return type(saved) == "table" and tonumber(saved.top) or DEFAULT_TOP
 end
 
-function Subtitle:Place(top)
+--- How far its middle is right of the screen's, in UI units: 0 until it is dragged sideways.
+function Subtitle:Across()
+    local saved = Addon:Layout().Subtitle
+    return type(saved) == "table" and tonumber(saved.x) or 0
+end
+
+function Subtitle:Place(top, across)
     -- The size the player chose, not the frame's scale: over a host that scale makes up for
     -- the host's, and the offset is counted in the effective scale, which hosting keeps.
     local scale = self.frame.spokenBaseScale or self.frame:GetScale() or 1
     self.frame:ClearAllPoints()
-    self.frame:SetPoint("TOP", UIParent, "BOTTOM", 0, (top or self:Top()) / scale)
+    self.frame:SetPoint("TOP", UIParent, "BOTTOM", (across or self:Across()) / scale, (top or self:Top()) / scale)
 end
 
---- Follow the cursor up or down from where the drag began, kept on the screen.
-function Subtitle:DragTo()
-    local from = self.dragFrom
-    if Locked() then return end
-    local _, y = GetCursorPosition()
-    local top = from.top + (y - from.cursor) / UIParent:GetEffectiveScale()
-    local height = self.frame:GetHeight() * (self.frame.spokenBaseScale or self.frame:GetScale())
-    top = math.max(height, math.min(UIParent:GetHeight(), top))
-    Addon:Layout().Subtitle = { top = top }
-    self:Place(top)
+--- Put where a drag has brought it: its top edge and its middle, kept as its place.
+function Subtitle:Drop(left, top, width)
+    local across = left + width / 2 - UIParent:GetWidth() / 2
+    Addon:Layout().Subtitle = { top = top, x = across }
+    self:Place(top, across)
 end
 
 function Subtitle:Line(index)
@@ -998,7 +992,6 @@ function Subtitle:FadeControls(elapsed)
 end
 
 function Subtitle:Tick(elapsed)
-    if self.dragFrom then self:DragTo() end
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
         local t = math.min(1, self.fadeTime / (self.wanted and FADE_IN or FADE_OUT))

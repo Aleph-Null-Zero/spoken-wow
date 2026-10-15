@@ -301,11 +301,14 @@ function MinimalPlayer:Wheel(delta)
 end
 
 function MinimalPlayer:StartDrag()
-    if not Addon:IsFrameLocked() then self.menu:Hide(); self.frame:StartMoving() end
+    if not Addon:IsFrameLocked() then
+        self.menu:Hide()
+        Snap.Start(self.frame, { locked = function() return Addon:IsFrameLocked() end })
+    end
 end
 
 function MinimalPlayer:StopDrag()
-    self.frame:StopMovingOrSizing()
+    Snap.Stop()
     if not Addon:IsFrameLocked() then self:SaveLayout() end
 end
 
