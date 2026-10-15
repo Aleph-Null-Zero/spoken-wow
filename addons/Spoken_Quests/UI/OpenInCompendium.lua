@@ -87,7 +87,7 @@ end
 
 function QuestsTab:RefreshGiverButton()
     if not giver then return end
-    local id = GiverQuestOnScreen() and GetQuestID and GetQuestID() or nil
+    local id = GiverQuestOnScreen() and GetQuestID and VO.NotSecret(GetQuestID()) or nil
     local shown = self:Has(id)
     giver.questID = shown and id or nil
     if id then PlaceGiver() end

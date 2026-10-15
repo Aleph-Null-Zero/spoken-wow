@@ -23,6 +23,9 @@
 
 local ADDON_NAME, SpokenZones = ...
 
+-- A value the game hands over as a secret, in an instance or in combat, reads as nil.
+local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
+
 -- The queue itself is the Spoken player's, shared with every other route to a clip
 -- and with every other Spoken addon. This file decides what deserves narrating and
 -- hands it over; the depth cap, the dedup and the retry after combat are the
@@ -316,7 +319,7 @@ local function NarrateUnheard()
 		return
 	end
 
-	local subZone = GetSubZoneText()
+	local subZone = NotSecret(GetSubZoneText())
 	if not subZone or subZone == "" then
 		return
 	end
@@ -388,7 +391,7 @@ local function SeedLoginArea(attempt)
 	-- fresh character.
 	local playerMap = SpokenZones:GetPlayerMapID()
 	local _, mapID = SpokenZones:GetLoreWithFallback(playerMap)
-	local subZone = GetSubZoneText()
+	local subZone = NotSecret(GetSubZoneText())
 	if debugOn then
 		SpokenZones:Print("greeting %d: player map %s (%s), resolved %s (%s), subzone \"%s\"",
 			attempt or 0, tostring(playerMap), tostring(SpokenZones:GetMapName(playerMap)),
@@ -559,10 +562,7 @@ local function TextFrom(...)
 	for i = 1, select("#", ...) do
 		local value = select(i, ...)
 		if type(value) == "string" then
-			if issecretvalue and issecretvalue(value) then
-				return nil
-			end
-			return value
+			return NotSecret(value)
 		end
 	end
 	return nil

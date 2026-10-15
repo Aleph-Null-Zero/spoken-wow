@@ -14,13 +14,16 @@
 
 local ADDON_NAME, SpokenBooks = ...
 
+-- A value the game hands over as a secret, in an instance or in combat, reads as nil.
+local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
+
 --- The envelope for the page on screen, or nil when there is nothing to send.
 function SpokenBooks:CaptureContribution()
 	if self:IsMail() then
 		return nil
 	end
 
-	local text = ItemTextGetText and ItemTextGetText()
+	local text = ItemTextGetText and NotSecret(ItemTextGetText())
 	if type(text) ~= "string" or text == "" then
 		return nil
 	end
@@ -38,8 +41,8 @@ function SpokenBooks:CaptureContribution()
 		{ "locale", (GetLocale and GetLocale()) or "enUS" },
 		{ "pack", self:GetPackLanguage() },
 		{ "page", sum },
-		{ "book", (ItemTextGetItem and ItemTextGetItem()) or "" },
-		{ "number", (ItemTextGetPage and ItemTextGetPage()) or 1 },
+		{ "book", (ItemTextGetItem and NotSecret(ItemTextGetItem())) or "" },
+		{ "number", (ItemTextGetPage and NotSecret(ItemTextGetPage())) or 1 },
 	}
 
 	-- The second value is what Gather keys the page on: its checksum, the same id the site

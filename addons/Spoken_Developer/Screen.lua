@@ -6,6 +6,9 @@
 
 local _, Developer = ...
 
+-- A value the game hands over as a secret, in an instance or in combat, reads as nil.
+local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
+
 local Log = Developer.Log
 
 local Screen = {}
@@ -52,14 +55,14 @@ end
 function Screen:ReadingWindow()
 	local frame = _G.ItemTextFrame
 	if not (frame and frame:IsVisible()) then return nil end
-	local title = ItemTextGetItem and ItemTextGetItem()
-	local creator = ItemTextGetCreator and ItemTextGetCreator()
-	local material = ItemTextGetMaterial and ItemTextGetMaterial()
+	local title = ItemTextGetItem and NotSecret(ItemTextGetItem())
+	local creator = ItemTextGetCreator and NotSecret(ItemTextGetCreator())
+	local material = ItemTextGetMaterial and NotSecret(ItemTextGetMaterial())
 	return format("%s %q, page %s%s%s, starting %q", creator and creator ~= "" and "a letter" or "a book",
-		tostring(title or "?"), tostring(ItemTextGetPage and ItemTextGetPage() or "?"),
+		tostring(title or "?"), tostring(ItemTextGetPage and NotSecret(ItemTextGetPage()) or "?"),
 		creator and creator ~= "" and (", from " .. creator) or "",
 		material and (", " .. tostring(material)) or "",
-		Excerpt(ItemTextGetText and ItemTextGetText()))
+		Excerpt(ItemTextGetText and NotSecret(ItemTextGetText())))
 end
 
 --- The letter open in the mailbox, as words, or nil.
@@ -103,15 +106,15 @@ frame:SetScript("OnEvent", function(_, event)
 		return
 	end
 	-- READY can come before the frame shows: read the words, whether or not it is drawn yet.
-	local title = ItemTextGetItem and ItemTextGetItem()
-	local page = ItemTextGetPage and ItemTextGetPage()
+	local title = ItemTextGetItem and NotSecret(ItemTextGetItem())
+	local page = ItemTextGetPage and NotSecret(ItemTextGetPage())
 	local key = tostring(title) .. "#" .. tostring(page)
 	if key == shown then return end
 	shown = key
-	local creator = ItemTextGetCreator and ItemTextGetCreator()
+	local creator = ItemTextGetCreator and NotSecret(ItemTextGetCreator())
 	Log:Add("screen", "reading window: %s %q, page %s%s, starting %q; %s",
 		creator and creator ~= "" and "a letter" or "a book", tostring(title or "?"), tostring(page or "?"),
 		creator and creator ~= "" and (", from " .. creator) or "",
-		Excerpt(ItemTextGetText and ItemTextGetText()), BooksReader())
+		Excerpt(ItemTextGetText and NotSecret(ItemTextGetText())), BooksReader())
 end)
 Screen.eventFrame = frame

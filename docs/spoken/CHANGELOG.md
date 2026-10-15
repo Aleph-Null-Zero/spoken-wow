@@ -181,6 +181,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   and /spb still work. Its settings and reading history start fresh, and Spoken asks you to delete a
   leftover `Spoken_Books` or `Spoken_Writings` folder. The modules are listed Quests, Gossip, Places,
   Readables everywhere, and the minimap menu names them in your language. *([Nucabe](https://github.com/Nucabe))*
+- **Read in Battlegrounds**, a new switch on Spoken's page, on by default. Turned off, Spoken reads nothing by itself in a battleground or an arena, and what was waiting stops as you arrive. A line you ask for, with Play, a command or the Compendium, is still read. *([Nucabe](https://github.com/Nucabe))*
+- **No more errors from the game's hidden values in dungeons, battlegrounds and combat.** Forever hides some names, words and ids from addons there, and Places raised an error over a discovery message in Shadowfang Keep and Blackfathom Deeps. Spoken and its modules now pass over a hidden value quietly. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.4.0 — 2026-10-12
 

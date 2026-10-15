@@ -16,13 +16,16 @@
 
 local ADDON_NAME, SpokenBooks = ...
 
+-- A value the game hands over as a secret, in an instance or in combat, reads as nil.
+local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
+
 --- Whether the frame is showing mail rather than something the world wrote.
 ---
 --- Two tests, because they catch different things. A creator is a player's name, and only
 --- mail has one. And MailFrame being open is what catches a piece of mail with no creator
 --- at all -- a returned letter, or one the server sent.
 function SpokenBooks:IsMail()
-	if ItemTextGetCreator and ItemTextGetCreator() then
+	if ItemTextGetCreator and NotSecret(ItemTextGetCreator()) then
 		return true
 	end
 
@@ -55,14 +58,14 @@ function SpokenBooks:PageOnScreen()
 		return nil
 	end
 
-	local text = ItemTextGetText and ItemTextGetText()
+	local text = ItemTextGetText and NotSecret(ItemTextGetText())
 	if type(text) ~= "string" or text == "" then
 		return nil
 	end
 
 	local checksum = self:ChecksumOf(text)
-	local title = ItemTextGetItem and ItemTextGetItem()
-	local number = (ItemTextGetPage and ItemTextGetPage()) or 1
+	local title = ItemTextGetItem and NotSecret(ItemTextGetItem())
+	local number = (ItemTextGetPage and NotSecret(ItemTextGetPage())) or 1
 
 	-- The client's own locale first: the title and the words are what this client shows, and
 	-- a German client's are German. A language's index ships in that language's pack, in the

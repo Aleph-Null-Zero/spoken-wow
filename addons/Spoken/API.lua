@@ -542,6 +542,13 @@ function Spoken:AddGate(fn)
     SoundQueue:AddGate(fn)
 end
 
+--- False in a battleground or arena with Read in Battlegrounds off, where a source's Enqueue
+--- refuses every line the player did not ask for (`source:Enqueue(clip, true)` is one they did):
+--- a module can skip the work of finding one. Additive: guard on the field.
+function Spoken:ReadsHere()
+    return Addon:ReadsHere()
+end
+
 --------------------------------------------------------------------------------
 -- Captions, for an addon that shows the line being read somewhere else
 --------------------------------------------------------------------------------

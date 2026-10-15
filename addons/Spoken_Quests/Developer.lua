@@ -107,8 +107,8 @@ local function ContextLines(lines)
         Addon:IsAutoplayOn() and "on" or "off",
         greetings and tostring(Enums.GossipFrequency:GetName(greetings)) or "(no gossip module)",
         Debug:IsMockingMissingVoice() and "ON" or "off"))
-    local questID = Safe(function() return GetQuestID and GetQuestID() end)
-    local title = Safe(function() return GetTitleText and GetTitleText() end)
+    local questID = Safe(function() return GetQuestID and NotSecret(GetQuestID()) end)
+    local title = Safe(function() return GetTitleText and NotSecret(GetTitleText()) end)
     local npc = Safe(function() return Utils:GetNPCName() end)
     local guid = Safe(function() return Utils:GetNPCGUID() end)
     table.insert(lines, format("now: quest ID %s, title %q, NPC %q, GUID %s", tostring(questID), tostring(title or ""),

@@ -621,6 +621,10 @@ local function Build(canvas)
         -- Muting Dialog would mute Spoken's own line, so on Dialog the queue never does.
         Requires(silence, function() return Sources:PlayerChannel() ~= "Dialog" end, L.REASON_DIALOG_CHANNEL)
     end
+    layout:Checkbox(L.OPT_READ_IN_BATTLEGROUNDS, nil,
+        function() return audio().ReadInBattlegrounds ~= false end,
+        function(v) audio().ReadInBattlegrounds = v end,
+        function() Addon:StopWhereNotRead() end)
     layout:Checkbox(L.OPT_GREETING_FIRST, L.OPT_GREETING_FIRST_TIP,
         function() return audio().GreetingFirst end,
         function(v)

@@ -198,6 +198,16 @@ stub.FireEvent("ITEM_TEXT_READY")
 Expect("a letter a player wrote is told from a book", Has('screen reading window: a letter "A letter for you", page 1, from Williams'), true)
 stub.ClosePage()
 stub.FireEvent("ITEM_TEXT_CLOSED")
+-- A page the game hands over as secrets is logged without its title or words.
+stub.ShowPage({ title = "Sealed Orders", text = "Burn after reading.", creator = "Agent" })
+stub.Secrets("Sealed Orders", "Burn after reading.", "Agent")
+local logged = pcall(stub.FireEvent, "ITEM_TEXT_READY")
+stub.Secrets()
+Expect("a secret page raises no error in the log", logged, true)
+Expect("...which says a book is open, without its title or words",
+    Has('screen reading window: a book "?", page 1, starting ""'), true)
+stub.ClosePage()
+stub.FireEvent("ITEM_TEXT_CLOSED")
 
 ---------------------------------------------------------------- the Report buttons' menu
 local report = Spoken:CreateRoundButton(UIParent, "report")

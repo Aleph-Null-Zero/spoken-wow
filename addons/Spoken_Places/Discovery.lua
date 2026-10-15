@@ -19,6 +19,9 @@
 
 local ADDON_NAME, SpokenZones = ...
 
+-- A value the game hands over as a secret, in an instance or in combat, reads as nil.
+local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
+
 -- Points asked about across each overlay's rectangle, this many a side: an overlay's rectangle
 -- can hold a smaller area of its own, which only some points land in.
 local SAMPLES = 4
@@ -186,7 +189,7 @@ local function RecordVisit()
 	end
 	local visited = CharDB().visited
 	visited[VisitKey(mapID)] = true
-	local subZone = GetSubZoneText and GetSubZoneText()
+	local subZone = GetSubZoneText and NotSecret(GetSubZoneText())
 	if subZone and subZone ~= "" then
 		local _, key = SpokenZones:GetSubzoneLore(mapID, subZone)
 		if key then visited[VisitKey(mapID, key)] = true end

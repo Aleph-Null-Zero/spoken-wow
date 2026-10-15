@@ -383,7 +383,7 @@ function Options:RunSelfTest()
             -- that means the music channel, and a self-test that went another way would
             -- answer a question nobody asked.
             local channel = Player.source and Player.source:GetChannel() or "unknown"
-            if Player:Enqueue(soundData) then
+            if Player:Enqueue(soundData, true) then
                 Debug:Record("self-test-playing", format("Self-test queued on %s: %s", channel, soundData.filePath))
                 print(format("|cFF40FF40Spoken Quests test started on %s.|r You should hear a short voice line.", channel))
             else

@@ -88,7 +88,7 @@ function SpokenBooks:PlayTestLine()
 			-- One page, queued as a real one plays: not PlayFrom, which marks the book read and
 			-- with Read Whole Book on lines up the rest of it.
 			local clip = self.source and self:ClipFor(pageId)
-			if clip and self.source:Enqueue(clip) then
+			if clip and self.source:Enqueue(clip, true) then
 				Print("playing a test page")
 			else
 				Print("|cffffcc00the test page could not be queued|r")
