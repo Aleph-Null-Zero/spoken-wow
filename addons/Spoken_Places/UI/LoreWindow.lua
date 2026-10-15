@@ -17,7 +17,7 @@
 -- the player opened. A search opens every card with a match in it instead: one naming a zone or
 -- a city lists all its areas, and one naming a banner lists its cards as the player left them.
 
-local ADDON_NAME, SpokenZones = ...
+local _, SpokenZones = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
@@ -620,42 +620,6 @@ local function InAndCount(where, found, total)
 	return line
 end
 
--- The place a story is the story of, as the Compendium's other tabs name it (SpokenCompendium.PlaceLinks):
--- a zone, a city or a continent by its map, a dungeon by its instance map and the zone it is
--- entered in. nil for an area, which they do not list.
-local function PlaceOfStory(mapID, key)
-	if not key then return { mapID = mapID } end
-	for map, dungeon in pairs(_G.SpokenDungeons and SpokenDungeons.dungeons or {}) do
-		if dungeon.story and dungeon.story[1] == mapID and dungeon.story[2] == key then
-			return { mapID = dungeon.zone, dungeon = map }
-		end
-	end
-end
-
--- The links under a story to its place's quests and writings.
-local function LinksFor(mapID, key)
-	local place = PlaceOfStory(mapID, key)
-	return place and SpokenCompendium.PlaceLinks("places", place) or nil
-end
-
--- The story of a place as the other tabs name it, or nil: written, which a link to it is for.
-local function StoryOf(place)
-	local mapID, key = place.mapID, nil
-	if place.dungeon then
-		local dungeon = SpokenCompendium.Dungeon(place.dungeon)
-		if not (dungeon and dungeon.story) then return nil end
-		mapID, key = dungeon.story[1], dungeon.story[2]
-	end
-	local entry
-	if key then
-		entry = SpokenZones.Subzones[mapID] and SpokenZones.Subzones[mapID][key]
-	else
-		entry = SpokenZones:GetLore(mapID)
-	end
-	if not entry or SpokenZones:IsPending(entry) then return nil end
-	return { mapID, key }
-end
-
 local function ShowEntry()
 	if selection.dungeons then
 		-- In its zone, as a dungeon's card is, a click away.
@@ -712,8 +676,7 @@ local function ShowEntry()
 			-- Rows are keyed by the canonical form already, so this needs no normalising --
 			-- unlike the map panel, which starts from the name the client reports.
 			page:Show({ title = name, subtitle = line, onSubtitle = back,
-				text = entry.full or entry.short or "", audio = { mapID, key }, report = { mapID, key },
-				links = LinksFor(mapID, key) })
+				text = entry.full or entry.short or "", audio = { mapID, key }, report = { mapID, key } })
 			return
 		end
 	end
@@ -727,11 +690,11 @@ local function ShowEntry()
 	end or nil
 	if not entry or SpokenZones:IsPending(entry) then
 		page:Show({ title = name, subtitle = subtitle, onSubtitle = onSubtitle, text = L.LORE_NOT_WRITTEN:format(name),
-			contribute = { mapID, nil }, links = LinksFor(mapID) })
+			contribute = { mapID, nil } })
 		return
 	end
 	page:Show({ title = name, subtitle = subtitle, onSubtitle = onSubtitle, text = entry.full or entry.short or "",
-		audio = { mapID, nil }, report = { mapID, nil }, links = LinksFor(mapID) })
+		audio = { mapID, nil }, report = { mapID, nil } })
 end
 
 local function Count(n, many, one) return n == 1 and one or string.format(many, n) end
@@ -975,12 +938,6 @@ function SpokenZones:SetupLoreWindow()
 		end,
 		-- Opened from Spoken's menu and page on where the player stands, as from the map.
 		open = function() SpokenZones:ToggleLoreWindow() end,
-		-- The other tabs' links to a place's story.
-		placeLink = function(place) return StoryOf(place) and L.PLACE_LINK_STORY or nil end,
-		openPlace = function(place)
-			local story = StoryOf(place)
-			if story then SpokenZones:ShowLoreFor(story[1], story[2]) end
-		end,
 		enabled = function() return SpokenZones:IsPartOn() end,
 		-- Unlock Undiscovered Zones, on Spoken's page.
 		unlock = {

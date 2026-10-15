@@ -12,9 +12,8 @@ rest out of the game-wide namespace, and it is what lets Compat.lua override `se
 file loaded after it sees the override, and the real _G is untouched.
 
 Every implementation file starts with `setfenv(1, SpokenEnv)`, and this file must load
-before all of them. This is VoiceOverRedux's Environment.lua with the API split out of
-the environment, so that what a caller can reach is a deliberate surface rather than
-the player's entire internals.
+before all of them. The API is kept out of the environment, so that what a caller can
+reach is a deliberate surface rather than the player's entire internals.
 ]]
 
 local _G = getfenv(0)

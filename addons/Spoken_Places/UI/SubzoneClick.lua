@@ -5,7 +5,7 @@
 -- resolves a cursor position to an area name, and it is present on 11509
 -- (Leatrix_Maps calls it on this client).
 
-local ADDON_NAME, SpokenZones = ...
+local _, SpokenZones = ...
 
 -- Normalised-coordinate slop allowed between mouse-down and mouse-up before the
 -- gesture counts as a map drag rather than a click. IsPanning() is unreliable by

@@ -12,7 +12,7 @@
 -- The zones addon carries the same file under the same reasoning: two addons sharing one
 -- StaticPopup id would be two addons overwriting each other's dialog.
 
-local ADDON_NAME, SpokenBooks = ...
+local _, SpokenBooks = ...
 
 local POPUP = "SPOKENBOOKS_COPY_LINK"
 

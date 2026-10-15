@@ -516,22 +516,10 @@ function TextView:SetText(str)
 	end
 	self.text:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -(PAD_TOP + pictureRoom))
 
-	-- The quest text's face on a parchment page, as a quest's own words are written there.
-	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
-	local fontPath = FontFile(self, fontObject)
-	if fontPath then
-		self.text:SetFont(fontPath, FontSize() + (self.ink and 1 or 0), "")
-	end
-	if self.ink then
-		self.text:SetTextColor(self.ink[1], self.ink[2], self.ink[3])
-		self.text:SetShadowColor(0, 0, 0, 0)
-	end
-	-- The caller's colour over the ink, here rather than once after SetText: a re-wrap
-	-- (OnSizeChanged) comes back through this, and would otherwise put full ink on words the
-	-- page had faded, such as the line saying a place has no story yet.
-	if self.color then
-		self.text:SetTextColor(self.color[1], self.color[2], self.color[3])
-	end
+	-- Painted here, not once after SetText: a re-wrap (OnSizeChanged) comes back through this, and
+	-- would otherwise put full ink on words the page had faded, such as the line saying a place has
+	-- no story yet.
+	self:Paint(self.text)
 
 	self.child:SetHeight((self.text:GetStringHeight() or 0) + pictureRoom + PAD_TOP + PAD_BOTTOM)
 	self:Settle(function() self:SetText(self.lastText) end)
@@ -562,7 +550,8 @@ function SpokenTextView.AddScrollBar(scroll, child, parent)
 	return view
 end
 
---- The words' face and size, as SetText sets them, on `fontString`.
+--- The words' face and size on `fontString`: the quest text's face on a parchment page, as a
+--- quest's own words are written there, in the caller's colour over the page's ink.
 function TextView:Paint(fontString)
 	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
 	local fontPath = FontFile(self, fontObject)

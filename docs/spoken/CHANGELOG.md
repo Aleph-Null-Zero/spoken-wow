@@ -60,8 +60,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 - Ctrl and the mouse wheel size the Small Window and the subtitles, as they do the DialogueUI
   window. Ctrl and the wheel change Window Size, or Subtitle Size over the subtitles, and Ctrl,
-  Shift and the wheel change Word Size. Without Ctrl the wheel over the subtitles still zooms the
-  camera. With Lock Position on, no window and no subtitles change size, and the wheel scrolls the
+  Shift and the wheel change Word Size. Without Ctrl the wheel over the subtitles and the windows
+  still zooms the camera. With Lock Position on, no window and no subtitles change size, and the wheel scrolls the
   words. *([Nucabe](https://github.com/Nucabe))*
 - The subtitles and the DialogueUI window say why a line waits, as the Small and Large Windows do:
   "(Waiting for combat to end.)" or "(Waiting for the NPC to finish speaking.)" after the line's
@@ -84,6 +84,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Azeroth's Compendium
 
+- A page's Play and Report buttons stand at the scroll bar's right edge, and stay there
+  whether or not the bar shows. The Compendium's icon is the library book: in the window's
+  portrait and on every Open in Compendium button. *([Nucabe](https://github.com/Nucabe))*
 - Azeroth's Compendium is part of Spoken. Its Quests tab no longer needs Places or Readables switched
   on, and the window keeps its size in Spoken's settings, so it opens once at its default size. Text
   Size on Spoken's page sets the words of every tab and of the Place Lore panel beside the map.
@@ -103,8 +106,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   place or row above it that is still listed, or to where you stand. The page used to go on showing
   a row no longer there. *([Nucabe](https://github.com/Nucabe))*
 - A zone's, city's or dungeon's page on Quests and Readables has the place's picture from Places, with
-  Zones and Show Pictures on, and a link to its story. A story has links to the quests and the
-  writings of its place, each with its count. *([Nucabe](https://github.com/Nucabe))*
+  Places and Show Pictures on. *([Nucabe](https://github.com/Nucabe))*
 - Play works as the quest log's. It shows Stop while its line is read and Replay once you stop it.
   Stop leaves the line in the queue, and Play while the queue is stopped plays at once. A queue
   emptied while stopped no longer stays stopped, so the next line plays. Report is on every quest
@@ -262,6 +264,12 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   to open the English line. *([Nucabe](https://github.com/Nucabe))*
 - A quest's Report copies a spoken.rusty.one address, the site's own, instead of the old
   voiceover.rusty.one one that redirected there. *([Nucabe](https://github.com/Nucabe))*
+- Stop When Quest Closes works with Read Automatically off. A quest line started with the Play
+  button kept playing after the quest window closed. *([Nucabe](https://github.com/Nucabe))*
+- With Quests switched off, a quest window no longer cuts off the NPC's own greeting, and the
+  DialogueUI window no longer holds the quest's words back for a moment. *([Nucabe](https://github.com/Nucabe))*
+- With Read in Battlegrounds off, a quest or gossip window in a battleground or arena no longer cuts off the
+  NPC's own greeting for a line that is never read. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.4.0 — 2026-10-12
 

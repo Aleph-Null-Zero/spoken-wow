@@ -225,15 +225,14 @@ end
 
 --- What the page shows: entry = { title, subtitle, onSubtitle = fn?, text,
 --- audio = { mapID, key }?, report = { mapID, key }?, contribute = { mapID, subzone }?,
---- lore = { mapID, key }?, links = { { text, onClick } }? }: Play for `audio`, Report for `report`,
---- its picture above the words, a missing story's Contribute, beside the map Open for `lore`, and
---- at the foot the links to the Compendium's other tabs' pages of the place (links).
+--- lore = { mapID, key }? }: Play for `audio`, Report for `report`, its picture above the words, a
+--- missing story's Contribute, and beside the map Open for `lore`.
 function Page:Show(entry)
 	local story = entry.audio or entry.report
 	local picture, mask
 	if story then picture, mask = SpokenZones:Picture(story[1], story[2]) end
 	self.page:Show({ title = entry.title, subtitle = entry.subtitle, onSubtitle = entry.onSubtitle, text = entry.text,
-		target = story, picture = picture and { file = picture, mask = mask } or nil, links = entry.links })
+		target = story, picture = picture and { file = picture, mask = mask } or nil })
 	local contribute = entry.contribute
 	self.contribute:SetTarget(contribute and contribute[1], contribute and contribute[2])
 	if self.open then

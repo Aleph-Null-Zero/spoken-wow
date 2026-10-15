@@ -114,7 +114,7 @@ Expect("built at login, hidden, and not made the tab the window first opens on",
     tostring(window ~= nil) .. "|" .. tostring(compendium:IsShown()) .. "|" .. tostring(_G.SpokenCompendium:Active()), "true|false|nil")
 Expect("the places are a tab of Azeroth's Compendium, the game's portrait frame", compendium.template, "PortraitFrameTemplate")
 Expect("...titled, with the Compendium's tome in its portrait", compendium.title .. "|" .. tostring(compendium.portrait),
-    SpokenEnv.L.OPT_COMPENDIUM_TITLE .. "|Interface\\Icons\\INV_Misc_Book_11")
+    SpokenEnv.L.OPT_COMPENDIUM_TITLE .. "|5341597")
 Expect("...closed by Escape", _G.UISpecialFrames[#_G.UISpecialFrames], "SpokenCompendiumWindow")
 local page = window.page
 Expect("its story is on the spellbook's parchment", page.parchment, "spellbook-Page-Right-C60")
@@ -146,8 +146,8 @@ Expect("Hide Report Buttons, in Spoken's settings, takes Report off the Compendi
     page.report:IsShown(), false)
 Expect("...Play taking its corner", page.play.anchor.point .. " " .. tostring(page.play.anchor.relativeTo == page.frame),
     "TOPRIGHT true")
-Expect("...over the words' right edge, the scroll bar's room in, the column Quests' and Books' pages put Play in",
-    page.play.anchor.x, -(page.right + page.body:BarRoom()))
+Expect("...at the scroll bar's right edge, where the bar stands whether or not it shows",
+    page.play.anchor.x, -page.right)
 reportsHidden = false
 Z:RefreshLoreWindow()
 Expect("...and gives it back when it is off", page.report:IsShown(), true)
@@ -783,7 +783,7 @@ Expect("...and draws the story again at the new Text Size", drawnAt, 16 + 1)
 body.SetFont = setFont
 spoken:SetCompendiumFontSize(12)
 -- The words run to the page's edge while they fit, and leave the scroll bar room, with a gap,
--- only while they run past the view; the header's buttons follow the words' right edge.
+-- only while they run past the view; the header's buttons stay at the scroll bar's edge.
 do
     local body = page.body
     local stringHeight = body.text.GetStringHeight
@@ -798,7 +798,7 @@ do
     body:SetText("Long.")
     Expect("...words that run past the view leave the bar its room and a gap", body:BarRoom() > body.barWidth, true)
     Expect("...the words that much narrower", body.text.width, 300 - body:BarRoom())
-    Expect("...and the header's buttons moved in with them", page.report.anchor.x, fitX - body:BarRoom())
+    Expect("...and the header's buttons where they were, at the bar's edge", page.report.anchor.x, fitX)
     body.text.GetStringHeight = stringHeight
 end
 

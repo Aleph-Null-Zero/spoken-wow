@@ -14,8 +14,7 @@ Actions = {}
 
 local function Clamp01(n) return math.max(0, math.min(1, tonumber(n) or 0)) end
 
--- Big enough to aim at and to read as a bug rather than a smudge.
-local ICON_SIZE = 24
+local ART = [[Interface\AddOns\Spoken\Textures\]]
 local named = 0
 
 --- Whether an action's icon can be drawn. The art these use lives in folders that postdate
@@ -46,7 +45,9 @@ function Actions:Build(frame)
     frame.actions = { buttons = {}, byId = {} }
 end
 
-local RING = [[Interface\AddOns\Spoken\Textures\SettingsButton]]
+local RING = ART .. "SettingsButton"
+-- A round button's glyph at rest; 1 under the pointer.
+local GLYPH_ALPHA = 0.85
 -- The Forever client's bronze, as its own frames wear it: the round buttons' rings and the small
 -- window's metal take it while Bronze Border is on. Every ring made, to tint again when the setting
 -- changes.
@@ -94,18 +95,26 @@ function Actions.RoundIcon(button, icon)
     glyph:SetPoint("TOPLEFT", button, "TOPLEFT", 4, -4)
     glyph:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -4, 4)
     if icon then glyph:SetTexture(icon) end
-    glyph:SetAlpha(0.85)
+    glyph:SetAlpha(GLYPH_ALPHA)
     -- Brighter under the pointer; a disabled button keeps the dimmer look it was given.
     button:HookScript("OnEnter", function() if button:IsEnabled() then glyph:SetAlpha(1) end end)
-    button:HookScript("OnLeave", function() if button:IsEnabled() then glyph:SetAlpha(0.85) end end)
+    button:HookScript("OnLeave", function() if button:IsEnabled() then glyph:SetAlpha(GLYPH_ALPHA) end end)
     button.ring, button.glyph = ring, glyph
     return button
 end
 
-local ROUND_SIZE = 24
-local PORTRAIT_ATLAS = [[Interface\AddOns\Spoken\Textures\PortraitFrameAtlas]]
+-- Big enough to aim at and to read as a bug rather than a smudge; and the gap between a row of them.
+local ROUND_SIZE, ROUND_GAP = 24, 4
+Actions.ROUND_SIZE, Actions.ROUND_GAP = ROUND_SIZE, ROUND_GAP
+local PORTRAIT_ATLAS = ART .. "PortraitFrameAtlas"
 local PORTRAIT_ATLAS_SIZE = 512
 local BUG = [[Interface\HelpFrame\HelpIcon-Bug]]
+
+-- Hides the game's tooltip where `owner` is what it shows.
+local function HideTipFor(owner)
+    if GameTooltip:GetOwner() == owner then GameTooltip_Hide() end
+end
+Actions.HideTipFor = HideTipFor
 
 --- A Report button's right-click: the debug log's menu, where the Spoken_Developer module is
 --- installed (Developer.lua). Hooked on mouse-up rather than set as the click, so whatever the
@@ -117,7 +126,7 @@ function Actions.OfferLogMenu(button, isReport)
     button.offersLogMenu = true
     button:HookScript("OnMouseUp", function(self, mouse)
         if mouse ~= "RightButton" or (isReport and not isReport(self)) then return end
-        if GameTooltip:GetOwner() == self then GameTooltip_Hide() end
+        HideTipFor(self)
         Developer:ShowMenu(self)
     end)
 end
@@ -142,17 +151,15 @@ function Actions.RoundButton(parent, glyphSize, name)
         button.glyph:SetPoint("CENTER")
         button.glyph:SetSize(glyphSize, glyphSize)
     end
-    button:HookScript("OnLeave", function()
-        if GameTooltip:GetOwner() == button then GameTooltip_Hide() end
-    end)
+    button:HookScript("OnLeave", function() HideTipFor(button) end)
     return button
 end
 
 -- A line's button shows one of three glyphs: Play for a line not yet queued, Stop while it
 -- speaks, Replay once it is stopped and still at the head. Play is the portrait atlas's cell;
 -- Stop and Replay are drawn in its gold, each in a 93-wide cell of a 128 canvas.
-local GLYPH_STOP = [[Interface\AddOns\Spoken\Textures\GlyphStop]]
-local GLYPH_REPLAY = [[Interface\AddOns\Spoken\Textures\GlyphReplay]]
+local GLYPH_STOP = ART .. "GlyphStop"
+local GLYPH_REPLAY = ART .. "GlyphReplay"
 local CELL = 93 / 128
 
 function Actions.Glyph(texture, state)
@@ -267,11 +274,12 @@ function Actions.WaitingTip(owner)
     GameTooltip:SetOwner(owner, "ANCHOR_TOP")
     GameTooltip:SetText(L.WAITING_TITLE)
     local sounds = SoundQueue.sounds or {}
-    for index = 2, math.min(getn(sounds), WAITING_MOST + 1) do
+    local count = SoundQueue.sounds and SoundQueue:GetQueueSize() or 0
+    for index = 2, math.min(count, WAITING_MOST + 1) do
         local clip = sounds[index]
         GameTooltip:AddDoubleLine(Actions.Label(clip), Actions.Speaker(clip), 1, 1, 1, .62, .62, .62)
     end
-    if getn(sounds) > WAITING_MOST + 1 then GameTooltip:AddLine("...", 1, 1, 1) end
+    if count > WAITING_MOST + 1 then GameTooltip:AddLine("...", 1, 1, 1) end
     GameTooltip:Show()
 end
 
@@ -287,8 +295,8 @@ function Actions.WaitingHover(text)
         hover:EnableMouse(true)
     end
     hover:SetScript("OnEnter", function() Actions.WaitingTip(hover) end)
-    hover:SetScript("OnLeave", function() if GameTooltip:GetOwner() == hover then GameTooltip_Hide() end end)
-    hover:SetScript("OnHide", function() if GameTooltip:GetOwner() == hover then GameTooltip_Hide() end end)
+    hover:SetScript("OnLeave", function() HideTipFor(hover) end)
+    hover:SetScript("OnHide", function() HideTipFor(hover) end)
     hover:Hide()
     return hover
 end
@@ -453,6 +461,30 @@ function Actions.WheelSize(delta, key)
     return format("%s: %d%%", key == "SubtitleScale" and L.OPT_SUBTITLE_SIZE or L.OPT_SCALE, math.floor(value * 100 + 0.5))
 end
 
+--- Whether the pointer is over `frame`, which must be shown.
+function Actions.PointerOver(frame)
+    if not (frame and frame:IsShown()) then return false end
+    if frame.IsMouseOver then return frame:IsMouseOver() and true or false end
+    return MouseIsOver and MouseIsOver(frame) and true or false
+end
+
+--- A window takes the wheel only while Ctrl is held over it and it is not `locked`; otherwise the
+--- wheel zooms the camera, which a frame with the wheel enabled would swallow. Asked every frame,
+--- since Ctrl goes down only just before the wheel turns. It touches the frame only when the
+--- answer changes, so it may be called freely, but not on a window frozen as one image.
+function Actions.TakeWheel(frame, locked)
+    local wheel = not locked and IsControlKeyDown ~= nil and IsControlKeyDown() and Actions.PointerOver(frame) or false
+    if frame.EnableMouseWheel and (frame.spokenWheelOn or false) ~= wheel then
+        frame.spokenWheelOn = wheel
+        frame:EnableMouseWheel(wheel)
+    end
+end
+
+--- The window gives the wheel back to the camera: it is hiding, or about to become one image.
+function Actions.DropWheel(frame)
+    Actions.TakeWheel(frame, true)
+end
+
 --- The size the wheel just set, beside the pointer.
 function Actions.WheelTip(owner, text)
     GameTooltip:SetOwner(owner, "ANCHOR_CURSOR")
@@ -472,7 +504,7 @@ end
 -- The progress line: Spoken Subtitles' layout and spark, framed as the game frames a status bar
 -- (UIWidgetTemplateStatusBar). Without that art, Spoken Subtitles' own hairline.
 local PROGRESS_HEIGHT = 7
-local PROGRESS_LINE = [[Interface\AddOns\Spoken\Textures\SubtitleLine]]
+local PROGRESS_LINE = ART .. "SubtitleLine"
 local SPARK = [[Interface\CastingBar\UI-CastingBar-Spark]]
 -- Called through the global environment: the client looks up Vector2DMixin in the caller's
 -- environment, and from SpokenEnv it fails with "unable to find mixin or metatable".
@@ -579,7 +611,7 @@ function Actions.Elapsed(clip, seconds)
 end
 
 local PORTRAIT_MASK = [[Interface\CharacterFrame\TempPortraitAlphaMask]]
-local VIGNETTE = [[Interface\AddOns\Spoken\Textures\RoundVignette]]
+local VIGNETTE = ART .. "RoundVignette"
 
 --- `icon` filling the ring's dark middle, cut round with the game's portrait mask, its own bevel
 --- trimmed off. The ring (SettingsButton, 32 drawn at 30) is dark from its 6th pixel to its
@@ -614,7 +646,7 @@ local function Greys(button)
     local function Paint(self, on)
         for _, texture in ipairs({ self.glyph, self.bar }) do
             if texture.SetDesaturated then texture:SetDesaturated(not on) end
-            texture:SetAlpha(on and 0.85 or 0.4)
+            texture:SetAlpha(on and GLYPH_ALPHA or 0.4)
         end
     end
     button:HookScript("OnDisable", function(self) Paint(self, false) end)
@@ -648,8 +680,7 @@ function Actions.NewRound(parent, kind, name, icon)
     return button
 end
 
--- The dialog row's buttons, 24 at UIParent's scale whatever DialogueUI's own size, ROW_GAP apart.
-local ROW_GAP = 4
+-- The dialog row's buttons, 24 at UIParent's scale whatever DialogueUI's own size.
 local DialogRow = {}
 
 --- Play, Skip and, with `report`, Report in a row on one of DialogueUI's dialogs (its quest window
@@ -673,7 +704,7 @@ function Actions.DialogRow(dialog, tooltip, report)
             row:ShowTip(self)
         end)
         button:SetScript("OnLeave", function(self)
-            if self:IsEnabled() then self.glyph:SetAlpha(0.85) end
+            if self:IsEnabled() then self.glyph:SetAlpha(GLYPH_ALPHA) end
             if self.tooltip then self.tooltip:Hide() end
         end)
         return button
@@ -727,14 +758,14 @@ function DialogRow:Place(buttons, anchor, force)
     end
     if same and not force then return end
     placed.scale, placed.anchor, placed.count = scale, anchor, getn(buttons)
-    holder:SetSize(math.max(1, (getn(buttons) * ROUND_SIZE + (getn(buttons) - 1) * ROW_GAP) * scale), ROUND_SIZE * scale)
+    holder:SetSize(math.max(1, (getn(buttons) * ROUND_SIZE + (getn(buttons) - 1) * ROUND_GAP) * scale), ROUND_SIZE * scale)
     local right
     for _, button in ipairs(buttons) do
         button:SetScale(scale)
         button:SetSize(ROUND_SIZE, ROUND_SIZE)
         button:ClearAllPoints()
         if right then
-            button:SetPoint("RIGHT", right, "LEFT", -ROW_GAP, 0)
+            button:SetPoint("RIGHT", right, "LEFT", -ROUND_GAP, 0)
         else
             button:SetPoint("RIGHT", holder, "RIGHT", 0, 0)
         end
@@ -742,7 +773,7 @@ function DialogRow:Place(buttons, anchor, force)
     end
     holder:ClearAllPoints()
     if anchor then
-        holder:SetPoint("RIGHT", anchor, "LEFT", -ROW_GAP, 0)
+        holder:SetPoint("RIGHT", anchor, "LEFT", -ROUND_GAP, 0)
     else
         holder:SetPoint("TOPRIGHT", self.dialog, "TOPRIGHT", -48, -19)
     end
@@ -758,7 +789,7 @@ local function NewButton(frame, action)
             -- UIPanelButtonTemplate's furniture.
             -- The player's round button, the same Report the subtitle shows.
             button = CreateFrame("Button", nil, frame)
-            button:SetSize(ICON_SIZE, ICON_SIZE)
+            button:SetSize(ROUND_SIZE, ROUND_SIZE)
             Actions.RoundIcon(button, action.icon)
             button.showsIcon = true
         else
@@ -767,7 +798,7 @@ local function NewButton(frame, action)
             named = named + 1
             button = CreateFrame("Button", "SpokenActionButton" .. named, frame,
                 "UIPanelButtonTemplate")
-            button:SetSize(ICON_SIZE + 8, ICON_SIZE + 4)
+            button:SetSize(ROUND_SIZE + 8, ROUND_SIZE + 4)
             button:SetText(action.text or "?")
         end
         button:SetScript("OnClick", function(self)

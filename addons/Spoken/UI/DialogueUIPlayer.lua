@@ -96,7 +96,7 @@ local LINE_IN, SIZE_EASE = .28, 10
 local STILL, ARM_FRAMES, ARM_MOST, PREPARE_MOST = 0.1, 2, 0.5, 1
 -- The gap between the round controls in the header, and the buttons' size, which is also the
 -- least room between them and the title's end, so a long title cut short does not crowd them.
-local ROUND_GAP, ROUND_SIZE = 4, 24
+local ROUND_GAP, ROUND_SIZE = Actions.ROUND_GAP, Actions.ROUND_SIZE
 -- The words take this share of DialogueUI's column, centred in it: a narrower column than the
 -- header's and the progress line's, read more easily.
 local WORDS_SHARE = 0.9
@@ -324,9 +324,9 @@ function Skin:Initialize()
     end)
     frame:SetScript("OnUpdate", function(_, elapsed) self:Tick(elapsed) end)
     frame.spokenEndFade = function() self:EndFade() end
-    frame:SetScript("OnHide", function() self:HideTooltip() end)
-    -- The captions take the wheel first and hand it here when Ctrl is held.
-    frame:EnableMouseWheel(true)
+    frame:SetScript("OnHide", function() self:HideTooltip(); Actions.DropWheel(frame) end)
+    -- It takes the wheel only while Ctrl is held over it, unlocked (Skin:Tick), so the camera
+    -- zooms otherwise. The captions take the wheel first and hand it here when Ctrl is held.
     frame:SetScript("OnMouseWheel", function(_, delta) self:Wheel(delta) end)
     frame.spokenWheel = function(delta) return self:Wheel(delta) end
     frame:Hide()
@@ -666,6 +666,8 @@ end
 --- and while it is.
 function Skin:Deafen()
     if self.deafened then return end
+    -- The frame's own wheel goes first, and is not given back: Skin:Tick takes it again.
+    Actions.DropWheel(self.frame)
     self.deafened = {}
     for _, part in ipairs(Clickables(self)) do
         local entry = { part = part }
@@ -927,6 +929,7 @@ function Skin:Tick(elapsed)
     end
     -- Nothing in it changes while it is one image, nor while it waits to be one.
     if not self.wanted or self.buffered or self.preparing or self.arming then return end
+    Actions.TakeWheel(self.frame, Addon:IsFrameLocked())
     if StaticPortrait:Resolved() then self:ConfigurePortrait() end
     self:UpdateProgress()
     self.poll = (self.poll or 0) + elapsed

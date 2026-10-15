@@ -89,7 +89,6 @@ L.OPT_LATER = "Plus tard"
 
 -- Lore of Azeroth and Zone Lore
 L.OPEN_IN_LORE_TIP = "Le récit de ce lieu dans le Compendium d'Azeroth, avec ceux de toutes les autres zones et sous-zones."
-L.PLACE_LINK_STORY = "Le récit de ce lieu"
 L.COMPENDIUM_PLACES = "Lieux"
 L.LORE_PANEL_TITLE = "Récit du lieu"
 L.MAP_PANEL_EXPAND = "Afficher le récit du lieu"

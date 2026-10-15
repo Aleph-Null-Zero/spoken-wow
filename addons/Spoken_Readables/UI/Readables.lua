@@ -16,7 +16,7 @@
 -- does not open, unless Unlock Unfound Readables is on. On the right its pages, on parchment, with
 -- where it comes from and Play.
 
-local ADDON_NAME, SpokenBooks = ...
+local _, SpokenBooks = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
@@ -916,7 +916,6 @@ local function ShowEntry()
 		DungeonReadables(selection.mapID, selection.dungeon, set)
 		Show({ title = DungeonName(selection.dungeon), subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
 			text = L.READABLES_PICK,
-			links = C.PlaceLinks("readables", { mapID = selection.mapID, dungeon = selection.dungeon }),
 			picture = C.PlacePicture({ mapID = selection.mapID, dungeon = selection.dungeon }) })
 		return
 	end
@@ -961,7 +960,7 @@ local function ShowEntry()
 		ReadablesIn(selection.mapID, set)
 	end
 	Show({ title = MapName(selection.mapID), subtitle = InAndCount(MapName(Above(selection.mapID)), Tally(set)),
-		text = L.READABLES_PICK, links = C.PlaceLinks("readables", { mapID = selection.mapID }),
+		text = L.READABLES_PICK,
 		picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
@@ -1214,42 +1213,6 @@ local function OpenAt(id)
 	end
 end
 
--- The writings of a place, for another tab's link (SpokenCompendium.PlaceLinks): a zone, a city or
--- a continent by its map, a dungeon by its instance map and the zone it is entered in.
-local function PlaceSet(place)
-	local set = {}
-	if place.dungeon then
-		DungeonReadables(place.mapID, place.dungeon, set)
-	elseif C.IsContinent(place.mapID) then
-		for _, mapID in ipairs(ZonesOn(place.mapID)) do ReadablesIn(mapID, set) end
-	else
-		ReadablesIn(place.mapID, set)
-	end
-	return set
-end
-
---- Open the writings on a place, as another tab's link asks: its page, with what holds it opened.
---- Only where the list is by zone: By Type has no row for a place.
-function SpokenBooks:OpenPlace(place)
-	if not SpokenCompendium or not ByZone() then return end
-	local zone = place.mapID
-	if place.dungeon then
-		dungeonsOpen[zone] = true
-		dungeonOpen[zone .. ":" .. place.dungeon] = true
-		OpenZone(zone)
-		OpenAround(zone)
-		selection = { mapID = zone, dungeon = place.dungeon }
-	elseif C.IsContinent(zone) then
-		continentOpen[zone] = true
-		selection = { mapID = zone }
-	else
-		OpenZone(zone)
-		OpenAround(zone)
-		selection = { mapID = zone }
-	end
-	SpokenBooks:ShowReadables()
-end
-
 --- Whether the tab is there, its part is on, and opening it on the writing `id` shows its words:
 --- it is listed, and found or Unlock Unfound Readables is on. Found Only and Voiced Only do not
 --- count: opened on it, its page shows though they leave its row out of the list.
@@ -1284,13 +1247,6 @@ function SpokenBooks:SetupReadables()
 		order = 2,
 		build = Build,
 		open = function() SpokenBooks:ShowReadables() end,
-		-- The other tabs' links to a place's writings.
-		placeLink = function(place)
-			if not ByZone() then return nil end
-			local _, total = Tally(PlaceSet(place))
-			return total > 0 and L.PLACE_LINK_WRITINGS_FMT:format(total) or nil
-		end,
-		openPlace = function(place) SpokenBooks:OpenPlace(place) end,
 		-- Come back to from another tab: where the player stands now, unless they chose here.
 		onShow = function() if selection == landed then selection = nil end end,
 		enabled = function() return SpokenBooks:IsPartOn() end,

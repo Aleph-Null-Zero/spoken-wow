@@ -14,6 +14,8 @@ setfenv(1, SpokenEnv)
 GreetingFirst = {}
 
 local FALLBACK, END_GAP, POLL = 1.5, 0.05, 0.025
+-- Two volumes this close are the same level.
+local SAME_LEVEL = 0.00001
 -- How long a voice has to show up before there is taken to be none, and the longest wait.
 local DISCOVERY, LONGEST = 0.25, 10
 -- The handles asked about either side of the marker, how many a poll asks, and how many
@@ -24,7 +26,7 @@ local MARKER_KIT = 856
 local WINDOWS = { "GossipFrame", "QuestFrame", "DUIQuestFrame", "ImmersionFrame" }
 -- Where an NPC's window opens, and where it closes.
 local OPENS = { "GOSSIP_SHOW", "QUEST_GREETING", "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE" }
-local CLOSES = { "GOSSIP_CLOSED", "QUEST_FINISHED" }
+local CLOSES = { GOSSIP_CLOSED = true, QUEST_FINISHED = true }
 local OTHER_CHANNELS = { "SFX", "Music", "Ambience" }
 
 local watch          -- the greeting being listened to, or nil
@@ -52,12 +54,12 @@ end
 --- Whether a Dialog level can't be told from other sounds: 100% is shared with every sound on the
 --- Master channel, and any other level with SFX, Music or Ambience at it.
 local function Shared(dialog)
-    if math.abs(dialog - 1) < 0.00001 then
+    if math.abs(dialog - 1) < SAME_LEVEL then
         return true
     end
     for _, channel in ipairs(OTHER_CHANNELS) do
         local volume = Number("Sound_" .. channel .. "Volume")
-        if not volume or math.abs(volume - dialog) < 0.00001 then
+        if not volume or math.abs(volume - dialog) < SAME_LEVEL then
             return true
         end
     end
@@ -96,10 +98,7 @@ end
 --- window, so the level has to be apart already. Returns whether it moved.
 function GreetingFirst:SetDialogApart()
     local dialog = Number("Sound_DialogVolume")
-    if not dialog or dialog <= 0 then
-        return false
-    end
-    if not Shared(dialog) then
+    if not dialog or dialog <= 0 or not Shared(dialog) then
         return false
     end
     for _, step in ipairs({ -0.01, 0.01, -0.02, 0.02, -0.03, 0.03 }) do
@@ -164,7 +163,7 @@ local function Poll(state)
         return Done()
     end
     -- Spoken's own line, should another part's start meanwhile, is not the NPC.
-    local nowPlaying = Spoken.GetNowPlaying and Spoken:GetNowPlaying()
+    local nowPlaying = SoundQueue:GetNowPlaying()
     local own = nowPlaying and nowPlaying.handle
     local count = 0
     for handle in pairs(state.voices) do
@@ -268,14 +267,10 @@ local events = CreateFrame("Frame")
 for _, name in ipairs(OPENS) do
     pcall(events.RegisterEvent, events, name)
 end
-for _, name in ipairs(CLOSES) do
+for name in pairs(CLOSES) do
     pcall(events.RegisterEvent, events, name)
 end
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
-local closes = {}
-for _, name in ipairs(CLOSES) do
-    closes[name] = true
-end
 events:SetScript("OnEvent", function(_, ev)
     ev = ev or event
     if ev == "PLAYER_ENTERING_WORLD" then
@@ -284,7 +279,7 @@ events:SetScript("OnEvent", function(_, ev)
         if GreetingFirst:IsOn() then
             GreetingFirst:SetDialogApart()
         end
-    elseif closes[ev] then
+    elseif CLOSES[ev] then
         GreetingFirst:Closed()
     elseif GreetingFirst:IsOn() then
         GreetingFirst:Open()

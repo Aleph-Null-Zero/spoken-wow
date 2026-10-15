@@ -401,18 +401,6 @@ do
         and KindIn(L.TYPE_NOTE, 9004, 9101).row.nest == 3 and not Has(Shown(), "Vault Ledger"), true)
     Expect("...its page in the zone of its entrance", panel.page.title.text .. "|" .. panel.page.sub.text.text,
         "Hollow Vault|" .. L.READABLES_IN_FMT:format("Cragmoor") .. " · " .. L.FOUND_FMT:format(0, 1))
-    -- Links to the other tabs' page of the same place (SpokenCompendium.PlaceLinks), here a fake tab's.
-    do
-        local opened = {}
-        _G.SpokenCompendium:Register("fakeother", { label = "Other", order = 9,
-            placeLink = function(place) return "Other " .. place.dungeon .. " in " .. place.mapID end,
-            openPlace = function(place) table.insert(opened, place.mapID .. "/" .. place.dungeon) end })
-        B:RefreshReadables()
-        Expect("a dungeon's page links to the other tabs' page of it", panel.page.links[1].text.text, "Other 9101 in 9004")
-        panel.page.links[1].scripts.OnClick(panel.page.links[1])
-        Expect("...a click opening it by the dungeon and the zone of its entrance", table.concat(opened, ","), "9004/9101")
-        _G.SpokenCompendium.tabs.fakeother = nil
-    end
     Expect("...chosen, its card alone marked", RowFor("Hollow Vault").selected == true
         and RowFor("Cragmoor").selected == false and RowFor(L.GROUP_DUNGEONS).selected == false, true)
     Press(KindIn(L.TYPE_NOTE, 9004, 9101))
@@ -483,16 +471,6 @@ do
     SpokenBooksCharacter.found[LEDGER] = nil
     Click(L.GROUP_DUNGEONS)
     Click("Cragmoor")
-
-    -- The tab's own side of those links: its writings counted, and opened on the place.
-    local readables = _G.SpokenCompendium:Tab("readables")
-    Expect("the Writings tab names its writings of a dungeon for the others' links",
-        readables.placeLink({ mapID = 9004, dungeon = 9101 }), L.PLACE_LINK_WRITINGS_FMT:format(1))
-    Expect("...and nothing of a place with none", readables.placeLink({ mapID = 1 }), nil)
-    readables.openPlace({ mapID = 9005, dungeon = 9103 })
-    Expect("...opened on a dungeon, its page", panel.page.title.text, "Sunken Crypt")
-    readables.openPlace({ mapID = 9004 })
-    Expect("...on a zone", panel.page.title.text, "Cragmoor")
     _G.SpokenZones = { Picture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end }
     B:RefreshReadables()
     Expect("a zone's page has Zones' picture of the place above it", panel.page.body.picture:IsShown()
@@ -743,9 +721,20 @@ Expect("...off, everything again", Has(Shown(), "Westfall"), true)
 page:Show({ title = "Ranger Captain Alleria Windrunner", target = ALLERIA })
 Expect("a voiced readable's page has Report", page.report ~= nil and page.report:IsShown(), true)
 Expect("...in the corner, Play to its left", select(2, page.play:GetPoint(1)) == page.report, true)
--- 36 is the text's right inset on the page; a quest's part buttons end at the same column.
-Expect("...the corner over the words' right edge, where a part's buttons end",
-    page.report.anchor.point .. " " .. page.report.anchor.x, "TOPRIGHT " .. -(36 + page.body:BarRoom()))
+-- 36 is the text's right inset on the page: the view's right edge, where the scroll bar stands.
+Expect("...the corner at the scroll bar's right edge",
+    page.report.anchor.point .. " " .. page.report.anchor.x, "TOPRIGHT " .. -36)
+-- A page with no Report (a tab that has none to give) still places Play in the corner: the buttons
+-- are lined up without a hole where Report would be.
+do
+    local report = page.report
+    page.report = nil
+    page.play.anchor = nil
+    page:Show({ title = "Ranger Captain Alleria Windrunner", target = ALLERIA })
+    Expect("a page with no Report puts Play in the heading's corner", page.play.anchor ~= nil and page.play.anchor.point, "TOPRIGHT")
+    page.report = report
+    page:Show({ title = "Ranger Captain Alleria Windrunner", target = ALLERIA })
+end
 do
     local unsnapped
     local unsnap = SpokenTextView.Unsnap

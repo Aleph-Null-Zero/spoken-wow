@@ -573,7 +573,7 @@ end
 ---@return string?
 function Addon:ExpectedLine(event, textIsCurrent)
     local speech = SPEECH_EVENTS[event]
-    if not speech or DataModules:IsPending() or not Player.source then
+    if not speech or DataModules:IsPending() or not Player.source or (Spoken.ReadsHere and not Spoken:ReadsHere()) then
         return nil
     end
     -- The page text is not to be trusted yet (see the deferred read), so this asks only whether

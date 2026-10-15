@@ -1,7 +1,7 @@
 -- SpokenZones -- the module's page in the game's settings, under Spoken's, laid out by Spoken's
 -- UI/Layout.lua so the pages read alike.
 
-local ADDON_NAME, SpokenZones = ...
+local _, SpokenZones = ...
 
 local L = SpokenZones.L
 
@@ -205,10 +205,8 @@ function SpokenZones:SetupOptions()
 	local function PackRow(addon, name, url)
 		listed[addon] = true
 		return layout:Download(name, function()
-			for _, pack in ipairs(SpokenZones:GetAudioPacks()) do
-				if pack.addon == addon then
-					return "ok", (GetMeta and GetMeta(addon, "Version")) or W.MODULE_INSTALLED
-				end
+			if Installed(addon) then
+				return "ok", (GetMeta and GetMeta(addon, "Version")) or W.MODULE_INSTALLED
 			end
 		end, W.MODULE_DOWNLOAD, function()
 			SpokenZones:ShowCopyLink(url or AUDIO_URL, L.OPT_DOWNLOAD_ADDRESS)

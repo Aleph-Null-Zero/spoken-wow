@@ -138,10 +138,14 @@ local function Queued() return _G.Spoken:GetQueueSize() end
 local function Clear() _G.Spoken:StopAll(); stub.Advance(1) end
 
 local VO, G = BootModules()
+_G.SpokenEnv.Addon.db.profile.Audio.AutoToggleDialog = true
+world.cvars.Sound_EnableDialog = "1"
 world.questID = 101
 stub.ShowPanel("QuestFrameDetailPanel")
 _G.QuestFrameDetailPanel:Show()
 stub.FireEvent("QUEST_DETAIL")
+Expect("off, a quest window in a battleground keeps the NPC's greeting", world.cvars.Sound_EnableDialog, "1")
+Expect("...and expects no line to hold the words back for", VO.Addon:ExpectedLine("QUEST_DETAIL"), nil)
 stub.Advance(3)
 Expect("off, a quest window opened in a battleground reads nothing by itself", Queued(), 0)
 VO.Addon:ReadVisibleQuest("/spq read")
@@ -157,6 +161,8 @@ stub.Advance(3)
 
 stub.ShowGossip("We stand ready.")
 stub.FireEvent("GOSSIP_SHOW")
+Expect("off, gossip in a battleground keeps the NPC's greeting", world.cvars.Sound_EnableDialog, "1")
+Expect("...and expects no line to hold the words back for", G.Addon:ExpectedLine("GOSSIP_SHOW"), nil)
 stub.Advance(1)
 Expect("off, gossip opened in a battleground reads nothing by itself", Queued(), 0)
 G.Addon:ReadVisible("/spgread")

@@ -591,6 +591,10 @@ end
 --- when the line starts, so an NPC's greeting is never heard instead of being cut short.
 --- Honours the player's "mute game dialogue" setting, and lifts itself if nothing comes.
 function Spoken:MuteGameDialogueAhead(source)
+    -- Where Read in Battlegrounds keeps Spoken quiet no line follows, so the greeting is left alone.
+    if not Addon:ReadsHere() then
+        return
+    end
     SoundQueue:MuteGameDialogueAhead(source:GetChannel())
 end
 

@@ -32,7 +32,7 @@
 -- Not under setfenv(1, VoiceOver): the frames are built here, and the client's mixins are looked
 -- up in the calling function's environment.
 
-local ADDON_NAME, ns = ...
+local _, ns = ...
 local VO = VoiceOver
 
 local QuestsTab = {}
@@ -1369,8 +1369,7 @@ local function ShowEntry()
         local zone = tonumber(selection.dungeon:match("^d(%d+)"))
         local place = zone and selection.map and { mapID = zone, dungeon = selection.map } or nil
         page:Show({ title = selection.label, subtitle = Line(SetOf(selection.ids), zone and C.MapName(zone), true),
-            onSubtitle = onSubtitle, text = L.QUESTS_PICK,
-            links = place and C.PlaceLinks("quests", place) or nil, picture = place and C.PlacePicture(place) or nil })
+            onSubtitle = onSubtitle, text = L.QUESTS_PICK, picture = place and C.PlacePicture(place) or nil })
         return
     end
     local banner = selection.section and ZONE_BANNERS[selection.section]
@@ -1408,8 +1407,7 @@ local function ShowEntry()
         QuestsIn(selection.mapID, set)
     end
     page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, ZoneHolderName(up), true),
-        onSubtitle = onSubtitle, text = L.QUESTS_PICK, links = C.PlaceLinks("quests", { mapID = selection.mapID }),
-        picture = C.PlacePicture({ mapID = selection.mapID }) })
+        onSubtitle = onSubtitle, text = L.QUESTS_PICK, picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
 --------------------------------------------------------------------------------
@@ -1664,49 +1662,6 @@ function QuestsTab:Reveal()
     self:Refresh(true)
 end
 
---- The quests of a place, for another tab's link (SpokenCompendium.PlaceLinks): a zone, a city or
---- a continent by its map, a dungeon by its instance map and the zone it is entered in.
-local function PlaceSet(place)
-    local set = {}
-    if place.dungeon then
-        local _, byDungeon = ZoneParts(place.mapID)
-        for _, id in ipairs(byDungeon[place.dungeon] or {}) do set[id] = true end
-    elseif C.IsContinent(place.mapID) then
-        for _, mapID in ipairs(ZonesOn(place.mapID)) do QuestsIn(mapID, set) end
-    else
-        QuestsIn(place.mapID, set)
-    end
-    return set
-end
-
---- Open the quests on a place, as another tab's link asks: its page, with what holds it opened.
-function QuestsTab:OpenPlace(place)
-    if not C then return end
-    local zone = place.mapID
-    if place.dungeon then
-        local _, byDungeon = ZoneParts(zone)
-        local ids = byDungeon[place.dungeon]
-        if not ids then return end
-        -- A zone with one dungeon has that dungeon's card under the zone's own key (DungeonRows).
-        local several = next(byDungeon, next(byDungeon)) ~= nil
-        OpenZone(zone)
-        OpenAround(zone)
-        dungeonOpen[DungeonKey(zone)] = true
-        if several then dungeonOpen[DungeonKey(zone, place.dungeon)] = true end
-        selection = { dungeon = several and DungeonKey(zone, place.dungeon) or DungeonKey(zone), ids = ids,
-            label = DungeonName(place.dungeon), map = place.dungeon }
-    else
-        selection = { mapID = zone }
-        if C.IsContinent(zone) then
-            continentOpen[zone] = true
-        else
-            OpenZone(zone)
-            OpenAround(zone)
-        end
-    end
-    self:Reveal()
-end
-
 local function Visible()
     return QuestsTab.panel ~= nil and QuestsTab.panel:IsVisible()
 end
@@ -1754,12 +1709,6 @@ function QuestsTab:Setup()
         order = 0,
         build = Build,
         open = function() QuestsTab:Open() end,
-        -- The other tabs' links to a place's quests.
-        placeLink = function(place)
-            local _, total = Tally(PlaceSet(place))
-            return total > 0 and L.PLACE_LINK_QUESTS_FMT:format(total) or nil
-        end,
-        openPlace = function(place) QuestsTab:OpenPlace(place) end,
         -- Come back to from another tab: where the player stands now, unless they chose here.
         onShow = function() if selection == landed then selection = nil end end,
         enabled = function() return VO.Addon:IsPartOn() end,

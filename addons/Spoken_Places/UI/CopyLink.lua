@@ -9,7 +9,7 @@
 -- backdrop, the Escape handling and the edit box with it, and because a modal is
 -- the honest shape for something you have to finish before carrying on.
 
-local ADDON_NAME, SpokenZones = ...
+local _, SpokenZones = ...
 
 local POPUP = "ZONELORE_COPY_LINK"
 

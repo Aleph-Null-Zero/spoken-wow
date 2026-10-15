@@ -1589,14 +1589,8 @@ shown that a pack voices (its accept line, else its complete line) to `Player:En
 what the queue holds, and leaves the selection and the page as they were; a line already queued
 is not queued again. The page shown with no quest chosen says so.
 
-Links between tabs: a zone's, city's, continent's or dungeon's page shows, at its foot, a link to
-the same place on each other tab that has something of it (`SpokenCompendium.PlaceLinks`): the
-Zones story, the quests (`Quests of this place (12)`), the writings. A tab joins with
-`placeLink(place)` and `openPlace(place)` in its `Register` table, a place being
-`{ mapID }` or `{ mapID = the dungeon's entrance zone, dungeon = its instance map }`. Writings
-offers its link only while the list is By Zone.
-The same page shows Spoken Places' picture of the place above its words where Places has one
-(`SpokenCompendium.PlacePicture`).
+A zone's, city's, continent's or dungeon's page shows Spoken Places' picture of the place above its
+words where Places has one (`SpokenCompendium.PlacePicture`).
 
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Places' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its

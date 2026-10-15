@@ -92,7 +92,6 @@ L.READABLE_NOT_FOUND = "Вы ещё не нашли это. Откройте э�
 L.READABLE_SOURCES = "Где найти"
 L.OPEN_IN_COMPENDIUM = "Открыть в «Компендиуме Азерота»"
 L.OPEN_READABLE_IN_COMPENDIUM_TIP = "Этот текст в «Компендиуме Азерота», рядом со всеми другими текстами."
-L.PLACE_LINK_WRITINGS_FMT = "Тексты этого места (%1$d)"
 L.FOUND_FMT = "Найдено %1$d из %2$d"
 L.READABLES_IN_FMT = "Расположение: %1$s"
 L.READABLES_MORE_FMT = " и ещё %1$d"

@@ -282,6 +282,15 @@ world.questID = 999
 Open(VO, "QUEST_DETAIL")
 Expect("a quest no pack holds keeps its greeting", world.cvars.Sound_EnableDialog, "1")
 
+VO, env, Spoken = MuteBoot()
+Spoken:SetPartOn("quests", false)
+world.questID = 101
+stub.ShowPanel("QuestFrameDetailPanel")
+Open(VO, "QUEST_DETAIL")
+Expect("a quest dialog keeps its greeting while Quests is switched off", world.cvars.Sound_EnableDialog, "1")
+Expect("...and expects no line to hold the words back for", VO.Addon:ExpectedLine("QUEST_DETAIL"), nil)
+Spoken:SetPartOn("quests", true)
+
 ---------------------------------------------------------------- disengage and abandon
 VO, env, Spoken = Boot()
 VO.Addon.db.profile.Audio.StopAudioOnDisengage = true
@@ -293,6 +302,16 @@ VO.Addon.db.profile.Audio.StopAudioOnDisengage = false
 VO.Addon:QUEST_DETAIL()
 VO.Addon:QUEST_FINISHED()
 Expect("...and leaves it otherwise", Spoken:GetQueueSize(), 1)
+
+-- Read Automatically off: the Play button starts the line, and the event still ends it.
+VO, env, Spoken = Boot()
+VO.Addon.db.profile.Audio.StopAudioOnDisengage = true
+VO.Addon:SetAutoplay(false)
+world.questID = 101
+VO.Addon:QUEST_DETAIL(nil, true)
+Expect("a line the Play button started is queued", Spoken:GetQueueSize(), 1)
+VO.Addon:DispatchDirectEvent("QUEST_FINISHED", "test")
+Expect("closing the quest frame stops it with Read Automatically off", Spoken:GetQueueSize(), 0)
 
 ---------------------------------------------------------------- the easter egg
 VO, env, Spoken = Boot()

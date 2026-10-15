@@ -201,26 +201,6 @@ for label in (Shown() .. "|"):gmatch("([^|]*)|") do if label == "Razorfen Downs"
 Expect("at Razorfen Downs' entrance the tab opens on its card, listed once", RowFor("Razorfen Downs").selected and listed, 1)
 Expect("...its story under Thousand Needles", page.title.text .. ": " .. page.body.text.text .. "|" .. page.target[1],
     "Razorfen Downs: The quilboars' barrows.|1441")
--- Under a story, a link to each other tab's page of the same place (SpokenCompendium.PlaceLinks): a
--- tab that has one, here stood in for by a fake. A dungeon is named by its instance map and the
--- zone it is entered in.
-do
-    local C, opened = _G.SpokenCompendium, {}
-    C:Register("fakeother", { label = "Other", order = 9,
-        placeLink = function(place) return "Other " .. (place.dungeon or place.mapID) end,
-        openPlace = function(place) table.insert(opened, place.mapID .. "/" .. tostring(place.dungeon)) end })
-    Z:RefreshLoreWindow()
-    Expect("a dungeon's story has a link to the other tabs' page of it", #page.links .. "|" .. page.links[1].text.text, "1|Other 129")
-    page.links[1].scripts.OnClick(page.links[1])
-    Expect("...which opens it, by the dungeon and the zone it is entered in", table.concat(opened, ","), "1413/129")
-    Z:ShowLoreFor(1413)
-    Expect("a zone's story has one by the zone", #page.links .. "|" .. page.links[1].text.text, "1|Other 1413")
-    Z:ShowLoreFor(1441, "razorfen downs")
-    C:Register("fakeother", { label = "Other", order = 9, placeLink = function() return nil end, openPlace = function() end })
-    Z:RefreshLoreWindow()
-    Expect("a tab with nothing of the place has no link", page.links[1] == nil or not page.links[1]:IsShown(), true)
-    C.tabs.fakeother = nil
-end
 Z.GetPlayerMapID = function() return 1436 end
 _G.GetSubZoneText = function() return "" end
 Click("Dungeons and Raids")

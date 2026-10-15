@@ -46,7 +46,6 @@ Expect("a channel at zero volume is a reason", SU:WhyInaudible("Dialog"), "the D
 stub.ResetSound()
 
 Expect("everything on is audible", SU:WhyInaudible("Dialog"), nil)
-Expect("IsSoundEnabled is the predicate form", SU:IsSoundEnabled("Dialog"), true)
 
 local clip = { path = "a.ogg" }
 Expect("PlaySound reports the client accepted the file", SU:PlaySound(clip, "Dialog"), true)

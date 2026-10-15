@@ -80,7 +80,8 @@ local GRABBER_SIZE = 16
 local FILTER_ROOM = 26       -- what the search box gives up for the filter menu's arrow beside it
 local NAME = "SpokenCompendiumWindow"
 -- The window's portrait: a tome from the game, the Compendium's own rather than any one part's.
-local ICON = [[Interface\Icons\INV_Misc_Book_11]]
+-- inv_toy_booklibrary, by file id.
+local ICON = 5341597
 C.ICON = ICON
 
 local GRABBER_UP = [[Interface\ChatFrame\UI-ChatIM-SizeGrabber-Up]]
@@ -664,21 +665,6 @@ local SHARE_INK = { 0.80, 0.76, 0.70 }
 local BANNER_INK = { 0.85, 0.81, 0.73 }
 local LOCKED_INK = { 0.50, 0.48, 0.45 }
 
--- A gold wash fading from `from` on the left to `to` on the right, as alpha; even where the client
--- cannot fade one.
-local function GoldWash(texture, from, to)
-	texture:SetColorTexture(1, 1, 1, 1)
-	if CreateColor and texture.SetGradient and pcall(texture.SetGradient, texture, "HORIZONTAL",
-		CreateColor(1, 0.82, 0, from), CreateColor(1, 0.82, 0, to)) then
-		return
-	end
-	if texture.SetGradientAlpha then
-		texture:SetGradientAlpha("HORIZONTAL", 1, 0.82, 0, from, 1, 0.82, 0, to)
-		return
-	end
-	texture:SetColorTexture(1, 0.82, 0, (from + to) / 2)
-end
-
 -- A piece of the faint gold line down an open card's contents: solid, or where the line ends,
 -- fading out to its foot.
 local RAIL_INK = { 0.84, 0.71, 0.31, 0.2 }
@@ -702,6 +688,38 @@ end
 
 local function Tint(fontString, colour)
 	fontString:SetTextColor(colour[1], colour[2], colour[3])
+end
+
+local NAME_INK = { 1, 0.82, 0 }
+local MISSING_INK = { 0.84, 0.71, 0.31 }
+
+-- A card's or group's name: gold, duller for what has nothing found yet, grey where it is locked.
+local function NameInk(label, item)
+	if item.locked then
+		Tint(label, LOCKED_INK)
+	elseif item.none or item.missing then
+		Tint(label, MISSING_INK)
+	else
+		Tint(label, NAME_INK)
+	end
+end
+
+-- The share of `item` found, 0 to 1: its own `ratio`, else its count out of its total.
+local function Share(item)
+	local total = item.total or 0
+	local ratio = item.ratio
+	if ratio == nil and total > 0 then ratio = (item.count or 0) / total end
+	return math.max(0, math.min(1, ratio or 0))
+end
+
+-- A tick: the game's yellow check, else its ready check.
+local function Ticked(texture)
+	if Atlas(texture, CHECK) then
+		texture:SetSize(TICK_WIDTH, TICK_HEIGHT)
+	else
+		texture:SetTexture(READY)
+		texture:SetSize(14, 14)
+	end
 end
 
 -- A count as the game writes numbers in the player's language: 1,054 rather than 1054.
@@ -1277,7 +1295,7 @@ local function DrawBanner(row, item, onlyFound)
 	-- The name over its cards' badges.
 	row.label:SetPoint("LEFT", row, "LEFT", BANNER_TEXT, -1)
 	row.label:SetPoint("RIGHT", locked and row.lock or row.count, "LEFT", -8, 0)
-	if item.locked then Tint(row.label, LOCKED_INK) else row.label:SetTextColor(1, 0.82, 0) end
+	if item.locked then Tint(row.label, LOCKED_INK) else Tint(row.label, NAME_INK) end
 	row.label:SetShadowColor(0, 0, 0, 1)
 	row.label:SetShadowOffset(0, -1)
 	row.label:SetText(item.label)
@@ -1345,32 +1363,19 @@ local function DrawCard(row, item, indent, width)
 	local left = indent + CARD_PAD + side + 10
 	row.label:SetFontObject("GameFontNormal")
 	row.label:SetPoint("TOPLEFT", row, "TOPLEFT", left, -top)
-	if item.locked then
-		Tint(row.label, LOCKED_INK)
-	elseif item.none or item.missing then
-		row.label:SetTextColor(0.84, 0.71, 0.31)
-	else
-		row.label:SetTextColor(1, 0.82, 0)
-	end
+	NameInk(row.label, item)
 	row.label:SetText(item.label)
 
 	-- On the right the padlock, or the numbers, with the gold tick after them once all are found
 	-- and the quest mark before them with how many are under way.
 	local locked = item.locked and row.hasLock
-	local ratio = item.ratio
-	if ratio == nil and item.total and item.total > 0 then ratio = (item.count or 0) / item.total end
-	ratio = math.max(0, math.min(1, ratio or 0))
+	local ratio = Share(item)
 	local ticked = not locked and item.tick and true or false
 	row.lock:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_END, level)
 	row.lock:SetShown(locked and true or false)
 	row.tick:SetShown(ticked)
 	if ticked then
-		if Atlas(row.tick, CHECK) then
-			row.tick:SetSize(TICK_WIDTH, TICK_HEIGHT)
-		else
-			row.tick:SetTexture(READY)
-			row.tick:SetSize(14, 14)
-		end
+		Ticked(row.tick)
 		row.tick:ClearAllPoints()
 		row.tick:SetPoint("RIGHT", row, "TOPRIGHT", -CARD_END, level)
 	end
@@ -1437,20 +1442,13 @@ local function DrawGroup(row, item, indent, onlyFound)
 
 	local locked = item.locked and row.hasLock
 	local total = item.total or 0
-	local ratio = item.ratio
-	if ratio == nil and total > 0 then ratio = (item.count or 0) / total end
-	ratio = math.max(0, math.min(1, ratio or 0))
+	local ratio = Share(item)
 	local ticked = not locked and item.tick and true or false
 	local edge = -(CARD_END + 6)
 	row.lock:SetPoint("CENTER", row, "RIGHT", edge, 0)
 	row.lock:SetShown(locked and true or false)
 	if ticked then
-		if Atlas(row.status, CHECK) then
-			row.status:SetSize(TICK_WIDTH, TICK_HEIGHT)
-		else
-			row.status:SetTexture(READY)
-			row.status:SetSize(14, 14)
-		end
+		Ticked(row.status)
 		row.status:ClearAllPoints()
 		row.status:SetPoint("CENTER", row, "RIGHT", edge, 0)
 	end
@@ -1470,13 +1468,7 @@ local function DrawGroup(row, item, indent, onlyFound)
 	row.label:SetPoint("LEFT", row, "LEFT", indent + NEST_STEP + 12, 0)
 	row.label:SetPoint("RIGHT", locked and row.lock or (numbers ~= "" and row.count) or row, locked and "LEFT"
 		or (numbers ~= "" and "LEFT") or "RIGHT", -8, 0)
-	if item.locked then
-		Tint(row.label, LOCKED_INK)
-	elseif item.none or item.missing then
-		row.label:SetTextColor(0.84, 0.71, 0.31)
-	else
-		row.label:SetTextColor(1, 0.82, 0)
-	end
+	NameInk(row.label, item)
 	row.label:SetText(item.label)
 end
 
@@ -1486,12 +1478,7 @@ local function DrawLeaf(row, item, indent)
 	row.toggle:Hide()
 	local status = item.done and "done" or item.going and "going" or nil
 	if status == "done" then
-		if Atlas(row.status, CHECK) then
-			row.status:SetSize(TICK_WIDTH, TICK_HEIGHT)
-		else
-			row.status:SetTexture(READY)
-			row.status:SetSize(14, 14)
-		end
+		Ticked(row.status)
 	elseif status == "going" then
 		-- A file after an atlas keeps the atlas's tex coords.
 		row.status:SetTexture(ACTIVE)
@@ -1751,27 +1738,10 @@ function C.PlayerContinent(listed)
 	return listed[1]
 end
 
---- The links from a place's page on tab `from` to the other tabs' pages of the same place, for
---- Page:Show's `links`: { { text, onClick } } in tab order. `place` is { mapID = a zone, a city or a
---- continent } or { mapID = the zone of a dungeon's entrance, dungeon = its instance map }. A tab
---- takes part with `placeLink(place)`, the words of its link or nil where it has nothing of the
---- place, and `openPlace(place)`, which opens the window on its page of it.
-function C.PlaceLinks(from, place)
-	local links = {}
-	for _, def in ipairs(Ordered()) do
-		if def.key ~= from and Enabled(def) and def.placeLink and def.openPlace then
-			local text = def.placeLink(place)
-			if text then
-				table.insert(links, { text = text, onClick = function() def.openPlace(place) end })
-			end
-		end
-	end
-	return links
-end
-
 --- The picture of a place's story (Spoken Places'), for Page:Show's `picture` on another tab's page of
 --- the place: { file, mask }, or nil where Zones is not there, has none or has pictures off.
---- `place` as C.PlaceLinks takes it.
+--- `place` is { mapID = a zone, a city or a continent } or { mapID = the zone of a dungeon's entrance,
+--- dungeon = its instance map }.
 function C.PlacePicture(place)
 	local zones = _G.SpokenZones
 	if not (zones and zones.Picture) then return nil end
@@ -2053,7 +2023,6 @@ function C.NewPage(parent, addon, play, report, look)
 	self.body = body
 	-- The header's buttons stand over the words' right edge, which moves as the bar comes and goes.
 	body.onRoom = function() self:RefreshPlay() end
-	self.links = {}
 
 	-- Report in the heading's corner, the game's bug in the player's round button, as the places'
 	-- page has it.
@@ -2093,40 +2062,6 @@ function C.NewPage(parent, addon, play, report, look)
 	return self
 end
 
---- The links at the page's foot, one to a line (Page:Show's `links`): the words in the link's
---- colour, a click doing what the tab says. The words stop above them, which take 18 each.
-function Page:SetLinks(links)
-	links = links or {}
-	local frame = self.frame
-	for i, link in ipairs(links) do
-		local button = self.links[i]
-		if not button then
-			button = CreateFrame("Button", nil, frame)
-			button:SetHeight(18)
-			local words = button:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-			words:SetAllPoints()
-			words:SetJustifyH("LEFT")
-			if words.SetWordWrap then words:SetWordWrap(false) end
-			if words.SetMaxLines then words:SetMaxLines(1) end
-			Ink(words, LINK)
-			button.text = words
-			button:SetScript("OnClick", function(b) if b.onClick then b.onClick() end end)
-			button:SetScript("OnEnter", function(b) Ink(b.text, INK) end)
-			button:SetScript("OnLeave", function(b) Ink(b.text, LINK) end)
-			self.links[i] = button
-		end
-		button.text:SetText(link.text)
-		button.onClick = link.onClick
-		Ink(button.text, LINK)
-		button:ClearAllPoints()
-		button:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", PAD, PAD - 6 + (#links - i) * 18)
-		button:SetPoint("RIGHT", frame, "RIGHT", -self.right, 0)
-		button:Show()
-	end
-	for i = #links + 1, #self.links do self.links[i]:Hide() end
-	self.body.frame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -self.right, PAD - 6 + #links * 18)
-end
-
 --- A round button of the caller's on the heading's line, left of Report and Play, shown or hidden
 --- by the caller: Open in Azeroth's Compendium on Spoken Places' page beside the map.
 function Page:AddButton(button)
@@ -2152,12 +2087,17 @@ function Page:RefreshPlay()
 			if button.SetState then button:SetState(button.pageState) end
 		end
 	end
-	-- Level with the title's first line, from the words' right edge leftward, 4 apart: one column
-	-- with a part's buttons (TextView:SetParts), which end there.
-	local edge = self.right + (self.body.BarRoom and self.body:BarRoom() or 14)
+	-- Level with the title's first line, from the scroll bar's right edge leftward, 4 apart. The bar
+	-- stands at the view's right edge whether or not it shows, so the buttons stay put.
+	local edge = self.right
 	local previous
-	for _, shown in ipairs({ report, button, unpack(self.extra) }) do
-		if shown and shown:IsShown() then
+	-- Built without holes: a table with a nil first would stop ipairs before the others.
+	local buttons = {}
+	if report then buttons[#buttons + 1] = report end
+	if button then buttons[#buttons + 1] = button end
+	for _, extra in ipairs(self.extra) do buttons[#buttons + 1] = extra end
+	for _, shown in ipairs(buttons) do
+		if shown:IsShown() then
 			shown:ClearAllPoints()
 			if previous then
 				shown:SetPoint("RIGHT", previous, "LEFT", -4, 0)
@@ -2174,8 +2114,7 @@ end
 
 --- entry = { title, subtitle, onSubtitle, text, target = what Play and Report act on, or nil for
 --- none, picture = { file, mask } above the words, parts = { { heading, text, buttons } } in place
---- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts),
---- links = { { text, onClick } } at the foot (C.PlaceLinks) }.
+--- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts) }.
 --- onSubtitle(), where given, is what a click on the line under the title does (the places' page
 --- goes up a level with it); without it the line is plain words.
 function Page:Show(entry)
@@ -2196,6 +2135,5 @@ function Page:Show(entry)
 		self.body:SetText(entry.text or "")
 	end
 	self.target = entry.target
-	self:SetLinks(entry.links)
 	self:RefreshPlay()
 end

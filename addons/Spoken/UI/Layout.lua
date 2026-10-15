@@ -1453,11 +1453,10 @@ local function NewBadge(parent, clickable)
     if clickable then
         local ok, made = pcall(CreateFrame, "Button", nil, parent, "UIMenuButtonStretchTemplate")
         badge = ok and made or CreateFrame("Button", nil, parent)
-        badge:SetWidth(FIELD_WIDTH)
     else
         badge = CreateFrame("Frame", nil, parent)
-        badge:SetWidth(FIELD_WIDTH)
     end
+    badge:SetWidth(FIELD_WIDTH)
     badge:SetHeight(FIELD_HEIGHT)
     local text = badge:CreateFontString(nil, "ARTWORK", clickable and "GameFontHighlightSmall" or "GameFontHighlight")
     text:SetJustifyH(clickable and "CENTER" or "LEFT")
@@ -1524,21 +1523,26 @@ local function Hover(frame)
     Chain(frame, "OnLeave", function() if not Inside() then Leave() end end)
 end
 
+local function BackdropTemplate()
+    return BackdropTemplateMixin and "BackdropTemplate" or nil
+end
+
+-- The game's tooltip border and background, as the game's own cards and lists are drawn.
+local function TooltipBackdrop(frame)
+    frame:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
+        edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]], tile = true, tileSize = 16, edgeSize = 14,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 } })
+    frame:SetBackdropColor(0.06, 0.06, 0.06, 0.9)
+end
+
 -- A card: the game's tooltip border round it, the same whatever its state. Chosen or enabled
 -- (`layoutFaceOn`), it stands at full strength under the chosen tab's faint wash; otherwise it
 -- stands back, and comes forward under the pointer. `layoutFaceOff` marks an option that cannot
 -- be had (a module not installed), which stays furthest back and does not answer the pointer.
 local function Card(parent)
-    local template = BackdropTemplateMixin and "BackdropTemplate" or nil
-    local card = CreateFrame("Button", nil, parent, template)
-    -- The game's tooltip border and background, as the game's own cards are drawn; the wash a
-    -- faint light inside it.
-    if card.SetBackdrop then
-        card:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
-            edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]], tile = true, tileSize = 16, edgeSize = 14,
-            insets = { left = 4, right = 4, top = 4, bottom = 4 } })
-        card:SetBackdropColor(0.06, 0.06, 0.06, 0.9)
-    end
+    local card = CreateFrame("Button", nil, parent, BackdropTemplate())
+    -- The wash is a faint light inside the border.
+    if card.SetBackdrop then TooltipBackdrop(card) end
     local wash = Flat(card, "BORDER", 1, 1, 1, 0.05)
     wash:SetPoint("TOPLEFT", card, "TOPLEFT", 4, -4)
     wash:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", -4, 4)
@@ -1575,8 +1579,7 @@ end
 -- game's tooltip edge, as the card round it is, thinner and in grey so the card's stays the
 -- one that says what is chosen.
 local function InputFrame(parent)
-    local template = BackdropTemplateMixin and "BackdropTemplate" or nil
-    local frame = CreateFrame("Frame", nil, parent, template)
+    local frame = CreateFrame("Frame", nil, parent, BackdropTemplate())
     local backing = Flat(frame, "BACKGROUND", 0, 0, 0, 0.55)
     backing:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -2)
     backing:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
@@ -1589,7 +1592,7 @@ local function InputFrame(parent)
 end
 
 -- A card's name and the line about it.
-local function Words(card, item, nameSize)
+local function Words(card, item)
     local title = card:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetJustifyH("LEFT")
     if title.SetWordWrap then title:SetWordWrap(false) end
@@ -1682,18 +1685,14 @@ end
 -- options_frame_child), or the tooltip border where the client has not got it.
 local BRONZE = "options_frame_child"
 local function ListPanel(parent)
-    local template = BackdropTemplateMixin and "BackdropTemplate" or nil
-    local panel = CreateFrame("Frame", nil, parent, template)
+    local panel = CreateFrame("Frame", nil, parent, BackdropTemplate())
     if HasAtlas(BRONZE) then
         local frame = panel:CreateTexture(nil, "BACKGROUND")
         frame:SetAtlas(BRONZE)
         frame:SetAllPoints(panel)
         panel.layoutFrame = frame
     elseif panel.SetBackdrop then
-        panel:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
-            edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]], tile = true, tileSize = 16, edgeSize = 14,
-            insets = { left = 4, right = 4, top = 4, bottom = 4 } })
-        panel:SetBackdropColor(0.06, 0.06, 0.06, 0.9)
+        TooltipBackdrop(panel)
         panel:SetBackdropBorderColor(0.45, 0.45, 0.45, 1)
     end
     panel.lines = {}
@@ -1739,7 +1738,7 @@ local function ListWords(row, item, picture, edge)
     local words = CreateFrame("Frame", nil, row)
     words:SetPoint("LEFT", picture, "RIGHT", LIST_GAP, 0)
     words:SetPoint("RIGHT", edge, "LEFT", -LIST_GAP, 0)
-    local title, text = Words(row, item, 14)
+    local title, text = Words(row, item)
     title:SetPoint("TOPLEFT", words, "TOPLEFT", 0, 0)
     title:SetPoint("RIGHT", words, "RIGHT", 0, 0)
     text:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -LIST_NAME_GAP)
@@ -1788,6 +1787,15 @@ local function AddList(layout, panel, pictureWidth, pictureHeight, Right, padY)
     row.measure = function() return (Measure()) end
     for _, each in ipairs(rows) do each.layoutRow = row end
     return rows
+end
+
+-- A row's or card's name in gold while it is on or chosen, else in the grey `rest`.
+local function NameColor(title, lit, rest)
+    if lit then
+        title:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
+    else
+        title:SetTextColor(rest, rest, rest)
+    end
 end
 
 --- The modules, a row each in a list. An item is { icon, title, text, tooltip, read(), write(on),
@@ -1894,11 +1902,7 @@ function Layout:List(items)
             check:SetChecked(live)
             if reason then check:Disable() else check:Enable() end
             if icon.SetDesaturated then icon:SetDesaturated(not live) end
-            if live then
-                title:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
-            else
-                title:SetTextColor(0.7, 0.7, 0.7)
-            end
+            NameColor(title, live, 0.7)
             if status then
                 if item.status then status:Set(item.status()) else status:Set(nil) end
             end
@@ -1940,6 +1944,27 @@ function Layout:List(items)
     return AddList(self, panel, iconSize, iconSize, Right, self.compactList and LIST_PAD_Y_COMPACT or nil)
 end
 
+-- A style's sketch, drawn by `item.art`, centred in its dark `screen`.
+local function Sketch(screen, item)
+    local sketch = CreateFrame("Frame", nil, screen)
+    sketch:SetWidth(SKETCH_WIDTH)
+    sketch:SetHeight(SKETCH_HEIGHT)
+    sketch:SetPoint("CENTER", screen, "CENTER", 0, 0)
+    sketch.width = SKETCH_WIDTH
+    if item.art then item.art(sketch) end
+    return sketch
+end
+
+-- What a click on a style does: choose it.
+local function Chooser(layout, item, write, apply)
+    return function()
+        Sound(CLICK)
+        write(item.value)
+        if apply then apply() end
+        layout:Refresh()
+    end
+end
+
 --- The narrator's styles, a row each in a list, as the modules are: a sketch of the style in a
 --- small dark screen at its left, its name over a line about it, and the page's checkbox at its
 --- right, ticked on the chosen style only: one is always chosen, so an empty box on the others
@@ -1958,12 +1983,7 @@ function Layout:Choices(items, read, write, apply, labels)
         screen:SetWidth(LIST_SCREEN_WIDTH)
         screen:SetHeight(LIST_SCREEN_HEIGHT)
         screen:SetPoint("LEFT", row, "LEFT", LIST_PAD, 0)
-        local sketch = CreateFrame("Frame", nil, screen)
-        sketch:SetWidth(SKETCH_WIDTH)
-        sketch:SetHeight(SKETCH_HEIGHT)
-        sketch:SetPoint("CENTER", screen, "CENTER", 0, 0)
-        sketch.width = SKETCH_WIDTH
-        if item.art then item.art(sketch) end
+        local sketch = Sketch(screen, item)
         if sketch.SetScale then sketch:SetScale(scale) end
 
         local check = NewCheck(row, 26)
@@ -1972,13 +1992,7 @@ function Layout:Choices(items, read, write, apply, labels)
         ListWords(row, item, screen, check)
         row.screen, row.sketch, row.check = screen, sketch, check
 
-        local function Choose()
-            Sound(CLICK)
-            write(item.value)
-            if apply then apply() end
-            self:Refresh()
-        end
-        Script(row, "OnClick", Choose)
+        Script(row, "OnClick", Chooser(self, item, write, apply))
         Script(check, "OnClick", function() check:SetChecked(true) end)
 
         local title = row.name
@@ -1989,11 +2003,7 @@ function Layout:Choices(items, read, write, apply, labels)
             check:SetChecked(chosen)
             if chosen then check:Show() else check:Hide() end
             Layout.Grey(sketch, not chosen)
-            if chosen then
-                title:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
-            else
-                title:SetTextColor(0.7, 0.7, 0.7)
-            end
+            NameColor(title, chosen, 0.7)
             row.layoutSelected = chosen
             row:Look()
         end
@@ -2026,25 +2036,14 @@ function Layout:Tiles(items, read, write, apply, labels)
         screen:SetPoint("TOPLEFT", tile, "TOPLEFT", CARD_PAD, -CARD_PAD)
         screen:SetPoint("TOPRIGHT", tile, "TOPRIGHT", -CARD_PAD, -CARD_PAD)
         screen:SetHeight(SCREEN_HEIGHT)
-        local sketch = CreateFrame("Frame", nil, screen)
-        sketch:SetWidth(SKETCH_WIDTH)
-        sketch:SetHeight(SKETCH_HEIGHT)
-        sketch:SetPoint("CENTER", screen, "CENTER", 0, 0)
-        sketch.width = SKETCH_WIDTH
-        if item.art then item.art(sketch) end
-        local title, text = Words(tile, item, 14)
+        local sketch = Sketch(screen, item)
+        local title, text = Words(tile, item)
         title:SetPoint("TOPLEFT", screen, "BOTTOMLEFT", 0, -10)
         title:SetPoint("RIGHT", tile, "RIGHT", -CARD_PAD, 0)
         text:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -TITLE_GAP)
         tile.screen, tile.sketch, tile.name, tile.text = screen, sketch, title, text
 
-        local function Choose()
-            Sound(CLICK)
-            write(item.value)
-            if apply then apply() end
-            self:Refresh()
-        end
-        Script(tile, "OnClick", Choose)
+        Script(tile, "OnClick", Chooser(self, item, write, apply))
         -- The page's checkbox on the sketch's screen, in its top right corner inside its rim,
         -- over the picture. Only on the chosen style: one is always chosen, so an empty box on
         -- the others offers nothing.
@@ -2062,11 +2061,7 @@ function Layout:Tiles(items, read, write, apply, labels)
             check:SetChecked(chosen)
             if chosen then check:Show() else check:Hide() end
             Layout.Grey(sketch, not chosen)
-            if chosen then
-                title:SetTextColor(GOLD[1], GOLD[2], GOLD[3])
-            else
-                title:SetTextColor(1, 1, 1)
-            end
+            NameColor(title, chosen, 1)
             tile.layoutSelected = chosen
             tile:Look()
         end
@@ -2618,23 +2613,13 @@ local function BuildScrollBar(view, parent)
     local function Release()
         if not view.dragging then return end
         view.dragging = false
+        Script(bar, "OnUpdate", nil)
         Look()
         Sound(TICK)
     end
-    Script(thumb, "OnMouseDown", function(_, button)
-        if button and button ~= "LeftButton" then return end
-        view.grab = (thumb:GetTop() or 0) - CursorY()
-        view.dragging = true
-        Look()
-    end)
-    Script(thumb, "OnMouseUp", Release)
-    Script(thumb, "OnHide", Release)
 
-    -- Map the cursor's Y position onto the scroll range while dragging.
-    Script(bar, "OnUpdate", function()
-        if not view.dragging then
-            return
-        end
+    -- Map the cursor's Y position onto the scroll range, every frame only while the thumb is held.
+    local function Follow()
         -- Let go outside the client's window, the thumb never hears it.
         if IsMouseButtonDown and not IsMouseButtonDown("LeftButton") then
             Release()
@@ -2650,7 +2635,17 @@ local function BuildScrollBar(view, parent)
 
         local offset = (bar:GetTop() or 0) - (CursorY() + (view.grab or thumbHeight / 2))
         view:ScrollTo((Clamp(offset, 0, travel) / travel) * (view.range or 0))
+    end
+
+    Script(thumb, "OnMouseDown", function(_, button)
+        if button and button ~= "LeftButton" then return end
+        view.grab = (thumb:GetTop() or 0) - CursorY()
+        view.dragging = true
+        Script(bar, "OnUpdate", Follow)
+        Look()
     end)
+    Script(thumb, "OnMouseUp", Release)
+    Script(thumb, "OnHide", Release)
 
     view.bar = bar
     view.thumb = thumb

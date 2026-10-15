@@ -288,9 +288,8 @@ else the continent's banner.
 how many more; a click goes up to its kind in its place, then the zone and the continent), and
 then two parts: Where to Find It (how it is had: "Dropped by Defias Messenger (Westfall)", each
 source with its zone) and its words, all its pages one after another. A zone's, city's, continent's
-or dungeon's page has its count, Places' picture of the place above it and links to the place's story
-and quests (`SpokenCompendium.PlaceLinks`); the other lines (a kind, a banner) show their count
-alone. Play starts the readable from its first page with a recording and becomes Stop and then
+or dungeon's page has its count and Places' picture of the place above it; the other lines (a kind,
+a banner) show their count alone. Play starts the readable from its first page with a recording and becomes Stop and then
 Replay while it is read, as every Play of the Compendium's; browsing here does not count as hearing
 it in the world (Read Only Once), nor as finding it. Report is there on every page, voiced or
 not: it files the page being read, else the first with a recording, else the first, at
@@ -301,9 +300,7 @@ and leaves the page as it was.
 **Opened from elsewhere.** The book frame and DialogueUI's book view have the Compendium's tome
 button (`UI/PlayButton.lua`, `NewOpenButton`), which opens this tab on that readable with what holds
 it opened (`SpokenBooks:ShowReadables(bookId)`). It shows for readables listed, and found or with
-Unlock Unfound Readables on (`SpokenBooks:CompendiumHas`). Another tab's link to a place opens it
-through `openPlace` (`SpokenBooks:OpenPlace`), only while the list is By Zone, which has the
-place's row.
+Unlock Unfound Readables on (`SpokenBooks:CompendiumHas`).
 
 ### Installing it in a client
 

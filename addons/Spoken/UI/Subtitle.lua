@@ -47,12 +47,6 @@ end
 local function Locked()
     return Addon:IsFrameLocked() or Addon.playerHost ~= nil
 end
--- Whether the pointer is over a shown frame.
-local function Over(frame)
-    if not (frame and frame:IsShown()) then return false end
-    if frame.IsMouseOver then return frame:IsMouseOver() and true or false end
-    return MouseIsOver and MouseIsOver(frame) and true or false
-end
 local function Characters(text)
     local _, count = text:gsub(UTF8_CHAR, "")
     return count
@@ -919,12 +913,6 @@ function Subtitle:Corner(clip)
     self.controls:SetWidth(CONTROL_SIZE * count + CONTROL_GAP * (count - 1))
 end
 
--- The round button every window shows (Actions.RoundButton), the lore pages' and the quest
--- log's Play and Report among them. Looked up when called: Actions may load after this file.
-local function RoundButton(parent, glyphSize)
-    return Actions.RoundButton(parent, glyphSize)
-end
-
 --- They fade in while the pointer is over the subtitle or them, and out after it leaves (Tick).
 function Subtitle:BuildControls()
     local frame = self.frame
@@ -946,7 +934,7 @@ function Subtitle:BuildControls()
 
     -- Report, in the same ring, with the action's own bug icon: what the windows show in their
     -- corner, and what it does is the action's, as there.
-    local report = RoundButton(controls)
+    local report = Actions.RoundButton(controls)
     report:SetPoint("LEFT", skip, "RIGHT", CONTROL_GAP, 0)
     report:SetScript("OnClick", function()
         if report.action and report.action.onClick then report.action.onClick(report.clip) end
@@ -992,19 +980,14 @@ end
 --- It takes the wheel only while Ctrl is held over it, unlocked: otherwise the wheel zooms the
 --- camera. Asked every frame, since Ctrl goes down only just before the wheel turns.
 function Subtitle:TakeWheel()
-    local frame = self.frame
-    local wheel = not Locked() and IsControlKeyDown ~= nil and IsControlKeyDown() and Over(frame) or false
-    if frame.EnableMouseWheel and (self.wheelOn or false) ~= wheel then
-        self.wheelOn = wheel
-        frame:EnableMouseWheel(wheel)
-    end
+    Actions.TakeWheel(self.frame, Locked())
 end
 
 -- The controls toward shown while the pointer is over the subtitle or them, and toward
 -- hidden otherwise; hidden outright once faded, so they cannot be clicked unseen.
 function Subtitle:FadeControls(elapsed)
     local controls = self.controls
-    local over = not self.sample and (Over(self.frame) or Over(controls))
+    local over = not self.sample and (Actions.PointerOver(self.frame) or Actions.PointerOver(controls))
     if over and not controls:IsShown() then controls:Show() end
     local target = over and 1 or 0
     local step = (elapsed or 0) / CONTROLS_FADE

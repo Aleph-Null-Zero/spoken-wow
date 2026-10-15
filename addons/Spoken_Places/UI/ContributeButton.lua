@@ -3,7 +3,7 @@
 -- A factory: anchor the returned button yourself, then call SetTarget whenever the page's content
 -- changes.
 
-local ADDON_NAME, SpokenZones = ...
+local _, SpokenZones = ...
 
 local L = SpokenZones.L
 
