@@ -313,6 +313,20 @@ Expect("a line the Play button started is queued", Spoken:GetQueueSize(), 1)
 VO.Addon:DispatchDirectEvent("QUEST_FINISHED", "test")
 Expect("closing the quest frame stops it with Read Automatically off", Spoken:GetQueueSize(), 0)
 
+-- Read When Window Closes: an automatic read waits for the window to close, and is not read twice.
+VO, env, Spoken = Boot()
+VO.Addon.db.profile.Audio.ReadAfterClose = true
+world.questID = 101
+VO.Addon:QUEST_DETAIL(nil, nil)
+Expect("with Read When Window Closes on, an automatic read waits while the window is open", Spoken:GetQueueSize(), 0)
+VO.Addon:DispatchDirectEvent("QUEST_FINISHED", "test")
+Expect("...and starts when it closes", Spoken:GetQueueSize(), 1)
+VO.Addon:DispatchDirectEvent("QUEST_FINISHED", "test")
+Expect("...once", Spoken:GetQueueSize(), 1)
+Spoken:StopAll()
+VO.Addon:QUEST_DETAIL(nil, true)
+Expect("a read the player asks for does not wait", Spoken:GetQueueSize(), 1)
+
 ---------------------------------------------------------------- the easter egg
 VO, env, Spoken = Boot()
 G.Addon.db.profile.Audio.OGThrall = true

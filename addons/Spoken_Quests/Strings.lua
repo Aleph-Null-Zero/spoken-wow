@@ -90,6 +90,7 @@ L.OPT_CMD_OPTIONS_DESC = "Opens this module's settings page"
 
 L.OPT_PANEL_AUTOPLAY = "Read Automatically"
 L.OPT_PANEL_STOP_ON_CLOSE = "Stop When Quest Closes"
+L.OPT_PANEL_READ_AFTER_CLOSE = "Read When Window Closes"
 L.OPT_PANEL_FOLLOWUP = "Read NPC Chat After Quests"
 L.OPT_SECTION_PACKS = "Voice Packs"
 L.OPT_REPORT_PROBLEM = "Report a Problem"

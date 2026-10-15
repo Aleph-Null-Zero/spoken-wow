@@ -283,6 +283,7 @@ function Options:RunSelfTest()
                 questID = 3441,
                 name = "Spoken Quests self-test",
                 title = "Spoken Quests self-test",
+                text = Spoken:Words().TEST_LINE_TEXT,
                 origin = "/spq test",
             }
             if not DataModules:PrepareSound(soundData) then

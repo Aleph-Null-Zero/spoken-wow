@@ -844,6 +844,7 @@ local function BuildPanel(p)
 		build = BuildRowList,
 		isSelected = IsSelected,
 		onClick = OnRowClick,
+		locked = function() return L.NOT_DISCOVERED end,
 		onHidden = OnHidden,
 		onSearch = function(text)
 			SetFilter(text)

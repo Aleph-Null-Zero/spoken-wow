@@ -190,6 +190,33 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
         return QuestScrollFrame
     end
 
+    -- Dressed as the player's square Play button: the tracking checkbox's border beside it, Play's
+    -- own glyph inside, as the Zones story and the narrator styles have it. A failure leaves the
+    -- button as it was and is said once, so the quest log never loses its Play.
+    local said
+    local function Say(err)
+        if said then return end
+        said = true
+        print("|cffff8080Spoken Quests:|r the quest log's Play button kept its old look: " .. tostring(err))
+    end
+    -- Built bare, not from the old button: its own art would stay drawn over the checkbox's border.
+    local MakePlayButton = QuestOverlayUI.MakePlayButton
+    function QuestOverlayUI:MakePlayButton(parent)
+        if Spoken and Spoken.DressBoxButton then
+            local button = Utils:CreateDetachedFrame("Button", nil, parent or self:GetPlayButtonParent())
+            button:SetSize(20, 20)
+            button:SetHitRectInsets(2, 2, 2, 2)
+            local ok, err = pcall(Spoken.DressBoxButton, Spoken, button)
+            if ok then
+                button.setPlayState = function(self, playing) self:SetState(playing and "stop" or "play") end
+                return button
+            end
+            Say(err)
+            button:Hide()
+        end
+        return MakePlayButton(self, parent)
+    end
+
     --- The client's own objective icon for this quest, drawn when "Quest objectives" is on: a
     --- small square button carrying the quest's ID, anchored to the row's top left corner and
     --- pooled beside the rows rather than parented to them. The play button is the one frame
@@ -212,6 +239,10 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
     -- already decided, and a prefix re-wraps it inside a row too short to hold the extra line.
     function QuestOverlayUI:UpdateQuestTitle(questLogTitleFrame, playButton)
         playButton:ClearAllPoints()
+        if playButton.MatchBox and questLogTitleFrame.Checkbox then
+            local ok, err = pcall(playButton.MatchBox, playButton, questLogTitleFrame.Checkbox)
+            if not ok then Say(err) end
+        end
         local poiButton = QuestPOIButton(questLogTitleFrame)
         if poiButton and questLogTitleFrame.Checkbox then
             playButton:SetPoint("RIGHT", questLogTitleFrame.Checkbox, "LEFT", -2, 0)

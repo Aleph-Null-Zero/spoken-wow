@@ -190,12 +190,12 @@ do
     words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
     local ROWS = {
         -- The wheel's note where Ctrl and the wheel size the window or the subtitles.
-        minimal = "Window Size, Show Words, Word Size, Lock Position, wheel note, Theme, Hide Portrait, "
+        minimal = "Window Size, Show Words, Quests, Word Size, Lock Position, wheel note, Theme, Hide Portrait, "
             .. "Show Progress Bar, Rows at Once, Auto-Scroll, Highlight Words, Type Words Out, Type Out By",
         -- The large window's words fill the box, so no Rows at Once.
-        classic = "Window Size, Show Words, Word Size, Lock Position, Hide Portrait, Show Progress Bar, "
+        classic = "Window Size, Show Words, Quests, Word Size, Lock Position, Hide Portrait, Show Progress Bar, "
             .. "Auto-Scroll, Highlight Words, Type Words Out, Type Out By",
-        subtitle = "Subtitle Size, Show Words, Word Size, Lock Position, subtitles' wheel note, Shadow Behind Words, "
+        subtitle = "Subtitle Size, Show Words, Quests, Word Size, Lock Position, subtitles' wheel note, Shadow Behind Words, "
             .. "Show Name and Title, Hide Portrait, Show Progress Bar, Sentences at Once, Auto-Scroll (subtitles), "
             .. "Highlight Words, Type Words Out, Type Out By",
         none = "",
@@ -210,7 +210,7 @@ do
     env.Addon.PlayerStyle = function() return chosen end
     Options:UpdateRows()
     Expect("the dialogueui style shows the rows it reads", StyleRows(),
-        "Window Size, Show Words, Word Size, Lock Position, wheel note, Theme, Show Progress Bar, "
+        "Window Size, Show Words, Quests, Word Size, Lock Position, wheel note, Theme, Show Progress Bar, "
         .. "Rows at Once, Fit Window to Words, Auto-Scroll, Highlight Words, Type Words Out, Type Out By")
     chosen = "none"; Options:UpdateRows()
     Expect("voice only shows no words' rows without DialogueUI: nothing of Spoken's is on screen", StyleRows(), "")
@@ -219,7 +219,7 @@ do
     Theme.Installed = function() return true end
     Options:UpdateRows()
     Expect("voice only, with DialogueUI installed, keeps the rows that mark DialogueUI's text", StyleRows(),
-        "Show Words, Highlight Words, Type Words Out, Type Out By")
+        "Show Words, Quests, Highlight Words, Type Words Out, Type Out By")
     Theme.Installed = installed
     Theme.Available, env.Addon.PlayerStyle = available, playerStyle
     words.Enabled, words.Typewriter, words.SubtitleScroll = saved[1], saved[2], saved[3]
@@ -514,6 +514,21 @@ Expect("accepting resets", env.Addon.db.profile.Frame.FrameScale, 0.7)
 Expect("...and reloads to finish", stub.reloads, reloads + 1)
 
 ---------------------------------------------------------------- welcome
+-- Show Words, and each module's own row under it: every source's words show unless turned off.
+do
+    local cfg, shows = env.Addon.db.profile.Transcript, function(key) return env.Transcript:ShowsWords({ source = { key = key } }) end
+    local was = cfg.Enabled
+    cfg.Enabled = true
+    Expect("every module's words show by default", shows("quests") and shows("gossip") and shows("zones") and shows("books"), true)
+    cfg.WordsOff.quests = true
+    Expect("a module turned off has none", shows("quests"), false)
+    Expect("...and the others keep theirs", shows("zones"), true)
+    cfg.WordsOff.quests = nil
+    cfg.Enabled = false
+    Expect("with Show Words off none show", shows("zones"), false)
+    cfg.Enabled = was
+end
+
 local Welcome = env.Welcome
 -- Drawing a subtitle needs font metrics this stub does not have; tests/captions covers that.
 -- Here it is enough to know the welcome asked for one.
@@ -529,6 +544,36 @@ Expect("it offers the parts as a list, as Home does", #Welcome.modules, 4)
 Expect("...under its header, the paragraph saying what the window is for",
     Welcome.layout.intro.text ~= nil and Welcome.layout.intro.text.text, L.WELCOME_INTRO)
 Expect("...which the settings pages, like the game's own, do without", home.intro.text, nil)
+do
+    local titles, left = 0, 0
+    for _, item in ipairs(Welcome.layout.items) do
+        if item.kind == "section" and item.heading then
+            titles = titles + 1
+            if item.heading.anchor and item.heading.anchor.point == "TOPLEFT" then left = left + 1 end
+        end
+    end
+    Expect("...its questions' titles start at the left, as a settings page's do", titles > 0 and titles == left, true)
+end
+Expect("...its rows scroll, with the page's own bar", Welcome.layout.parent.layoutScroller ~= nil, true)
+-- Voices are a separate download: the welcome says so while no module has a pack, and stops
+-- when one is installed.
+local sources = env.Sources.ordered
+local realPacks = {}
+for i, source in ipairs(sources) do realPacks[i] = source.packs end
+local function PacksAre(list)
+    for _, source in ipairs(sources) do source.packs = function() return list end end
+end
+PacksAre({})
+Welcome:Sync()
+Expect("with no voice pack installed, the welcome says where to get one",
+    Welcome.noPack:IsShown() and Welcome.noPack.text, L.MODULE_NO_PACK .. " " .. L.WELCOME_PACK_WHERE)
+local heightWithout = Welcome.scroller.contentHeight
+PacksAre({ "SpokenQuestsAudioAll" })
+Welcome:Sync()
+Expect("...and not once one is", Welcome.noPack:IsShown(), false)
+Expect("...the scrolling content shrinking back with the line", Welcome.scroller.contentHeight < heightWithout, true)
+for i, source in ipairs(sources) do source.packs = realPacks[i] end
+Welcome:Sync()
 Expect("...and the ways of showing lines as a list, as Spoken's settings page has them", #Welcome.styles >= 3, true)
 local subtitles
 for _, row in ipairs(Welcome.styles) do if row.layoutTile.value == "subtitle" then subtitles = row end end

@@ -454,6 +454,19 @@ list = Shown()
 Expect("a zone opens on its quests", Has(list, "Kobold Camp Cleanup") and Has(list, "Kobold Candles"), true)
 Expect("...a quest completed open to read", RowFor("Kobold Camp Cleanup").row.locked, false)
 Expect("...one not completed greyed, with the padlock", RowFor("Kobold Candles").row.locked, true)
+do
+    local locked, open = RowFor("Kobold Candles"), RowFor("Kobold Camp Cleanup")
+    GameTooltip.lines = nil
+    locked.scripts.OnEnter(locked)
+    Expect("...saying under the pointer why it does not open, and which switch opens it",
+        table.concat(GameTooltip.lines or {}, "|"),
+        "Kobold Candles|" .. string.format(SpokenEnv.L.LOCKED_ROW_FMT, SpokenEnv.L.OPT_UNLOCK_QUESTS))
+    locked.scripts.OnLeave(locked)
+    GameTooltip.lines = nil
+    open.scripts.OnEnter(open)
+    Expect("...and nothing under the pointer on one that opens", GameTooltip.lines, nil)
+    open.scripts.OnLeave(open)
+end
 
 Click("Kobold Camp Cleanup")
 Expect("a quest's page: its title", page.title.text, "Kobold Camp Cleanup")

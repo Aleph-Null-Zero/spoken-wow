@@ -149,7 +149,7 @@ function ReportButton:Initialize()
     StaticPopupDialogs[COPY_DIALOG] =
     {
         text = L.DIALOGUE_REPORT_COPY,
-        button1 = OKAY,
+        button1 = CLOSE,
         timeout = 0,
         whileDead = 1,
         hasEditBox = true,

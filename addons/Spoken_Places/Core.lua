@@ -37,6 +37,8 @@ local defaults = {
 	panelWidth = 360,
 	fontSize = 12,
 	showPictures = true,
+	-- How bright the area under the pointer lights on a zone map; 0 turns the highlight off.
+	highlightOpacity = 0.35,
 	-- Off, so Azeroth's Compendium opens only the places this character has found (Discovery.lua).
 	showUndiscovered = false,
 	-- Azeroth's Compendium's Discovered Only, under its list: off, so every place is listed.

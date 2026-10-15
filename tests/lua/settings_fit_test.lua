@@ -185,17 +185,13 @@ for _, width in ipairs({ 470, 680, 740 }) do
     end
 end
 ---------------------------------------------------------------- the welcome window
--- The same boxes, cards and pictures, centred in the window: as far from its left side as
--- from its right, and nothing past a box's edges.
+-- The same boxes, cards and pictures as a settings page, in a scroller: nothing past a box's edges, and
+-- the window no taller than the screen however much there is.
 local Welcome = env.Welcome
 Welcome:Build(); Welcome:Sync()
 local welcome = Welcome.layout
-local frameWidth = Welcome.frame.width
 local boxLeft, boxRight = welcome.left - BOX, welcome.left + welcome:Width() + BOX
--- The page sits inside the window, so the window's own sides are measured the page's offset away.
-local pageX = Welcome.page.anchor and Welcome.page.anchor.x or 0
-Expect("the welcome's cards are centred in its window",
-    math.abs((pageX + boxLeft) - (frameWidth - (pageX + boxRight))) < 0.6, true)
+Expect("the welcome's rows scroll, as a settings page's do", welcome.parent.layoutScroller == Welcome.scroller, true)
 local outside = {}
 for _, item in ipairs(welcome.items) do
     if item.kind == "section" and item.shown then

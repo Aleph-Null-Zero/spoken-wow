@@ -161,6 +161,8 @@ for _, client in ipairs({ "16001", "1.12" }) do
     Expect(client .. ": Play a Test Line plays Thrall's line", G.Addon:RunSelfTest(), true)
     stub.Advance(0.2)
     Expect(client .. ": ...which is heard", Played(played), "9fdeb82237b72e8801030487901e690f")
+    local current = _G.Spoken:GetCurrent()
+    Expect(client .. ": ...with words for the window and subtitles to show", current and current.text, _G.Spoken:Words().TEST_LINE_TEXT)
     _G.Spoken:StopAll()
 
     -- Switched off in Spoken's settings, it reads nothing and offers nothing.

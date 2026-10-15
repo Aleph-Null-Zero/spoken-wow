@@ -425,7 +425,7 @@ function Spoken:GetLanguageChoice()
 end
 
 --- Spoken's words in the player's language, for what every module's settings page shares and
---- names the same way: MODULE_SWITCH, MODULE_WHEN, PART_VOICE, MODULE_TEST_LINE, MODULE_HISTORY,
+--- names the same way: MODULE_SWITCH, MODULE_WHEN, PART_VOICE, MODULE_TEST_LINE, TEST_LINE_TEXT, MODULE_HISTORY,
 --- MODULE_DOWNLOAD, MODULE_INSTALLED, MODULE_NOT_LOADED, MODULE_NO_PACK, MODULE_RESET,
 --- REASON_PART_OFF, OPT_RESET_ALL_TIP and CANCEL. Read, never written.
 function Spoken:Words()
@@ -567,6 +567,12 @@ end
 --- yourself. Play and Skip grey out while disabled.
 function Spoken:CreateRoundButton(parent, kind, name, icon)
     return Actions.NewRound(parent, kind, name, icon)
+end
+
+--- `button`, a Button the caller made, dressed as a square Play button with the game's checkbox for
+--- its border (`button:SetState("play" | "stop")`, `button:MatchBox(checkbox)`): the quest log's rows.
+function Spoken:DressBoxButton(button)
+    return Actions.BoxPlay(button)
 end
 
 --- End the head; the backlog runs.

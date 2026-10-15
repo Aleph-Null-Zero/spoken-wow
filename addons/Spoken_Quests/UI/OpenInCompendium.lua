@@ -23,8 +23,6 @@ function QuestsTab:NewOpenButton(parent, tooltip)
     if not (_G.Spoken and Spoken.CreateRoundButton) then return nil end
     local icon = _G.SpokenCompendium and SpokenCompendium.ICON or 5341597
     local button = Spoken:CreateRoundButton(parent, "icon", nil, icon)
-    -- The tome is a dark picture already: the ring's vignette at full strength left it black.
-    if type(button.vignette) == "table" and button.vignette.SetAlpha then button.vignette:SetAlpha(0.35) end
     button:SetScript("OnClick", function(self)
         if self.questID then
             if self.beforeOpen then self.beforeOpen() end

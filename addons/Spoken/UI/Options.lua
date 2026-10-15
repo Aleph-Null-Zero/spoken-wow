@@ -442,6 +442,19 @@ local function Build(canvas)
         Only(layout:Checkbox(L.TRANSCRIPT_SHOW, nil,
             function() return transcript().Enabled end,
             function(v) Transcript:SetEnabled(v) end, function() Options:UpdateRows() end), MarksWords)
+        -- Each module's words, on unless turned off: a player can read the quest window and want the
+        -- subtitles only for the places and the writings.
+        layout:Indent()
+        for _, part in ipairs(PARTS) do
+            local key = part.key
+            local row = layout:Checkbox(part.label, nil,
+                function() return not transcript().WordsOff[key] end,
+                function(v) transcript().WordsOff[key] = (not v) or nil end, refreshTranscript)
+            Only(row, MarksWords)
+            Only(row, function() return Sources:Get(key) ~= nil end)
+            Requires(row, Words, L.REASON_WORDS)
+        end
+        layout:Outdent()
         local size = layout:Slider(L.TRANSCRIPT_SIZE, SIZES.FontSize[1], SIZES.FontSize[2], SIZES.FontSize[3],
             function() return transcript().FontSize end,
             function(v) transcript().FontSize = v end, function() refreshTranscript(); refreshSubtitle() end,
@@ -942,6 +955,17 @@ function Options:PartVoice(key)
     local have = self:PackCount(source)
     if not have then return nil end
     return have == 0 and "muted" or "neutral", L.PART_VOICE, tostring(have)
+end
+
+--- Whether no voice pack is installed for any module that says how many it has: the first-run
+--- state, where nothing is read aloud yet.
+function Options:NoVoicePacks()
+    local known, total = false, 0
+    for _, source in Sources:Iterate() do
+        local count = self:PackCount(source)
+        if count then known, total = true, total + count end
+    end
+    return known and total == 0
 end
 
 --- Every AceDB object a profile choice applies to: the player's, then each installed part's

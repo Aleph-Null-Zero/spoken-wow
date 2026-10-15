@@ -32,6 +32,8 @@ local function Point(px, py) cursor[1], cursor[2] = px / 1002, py / 668 end
 -- rectangle (its overlay's rectangle reaches past it), the Valley of Trials in the rest of the
 -- big one, and an area with no story beyond.
 local Z = {}
+local settings = { highlightOpacity = 0.35 }
+function Z:Get(key) return settings[key] end
 function Z:IsPartOn() return true end
 function Z:IsZoneMap(mapID) return mapID == 1411 end
 local asked = 0
@@ -102,6 +104,19 @@ Expect("not on a continent map, which has Blizzard's own", state.frame:IsShown()
 WorldMapFrame.mapID = 1411
 Run()
 Expect("back on the zone map it lights again", state.frame:IsShown(), true)
+
+-- Area Highlight, on the Zones page: how bright, and nothing at all at 0.
+settings.highlightOpacity = 0.6
+Z:RefreshMapHighlight()
+Run()
+Expect("Area Highlight sets how brightly the area lights", state.frame:GetAlpha(), 0.6)
+settings.highlightOpacity = 0
+Z:RefreshMapHighlight()
+Expect("at 0 it is out and nothing follows the cursor", state.frame:IsShown() or state.driver:IsShown(), false)
+settings.highlightOpacity = 0.35
+Z:RefreshMapHighlight()
+Run()
+Expect("raised again, it lights again", state.frame:IsShown() and state.frame:GetAlpha(), 0.35)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll map highlight tests passed")

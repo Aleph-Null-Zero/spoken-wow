@@ -174,7 +174,7 @@ local TEST_LINE = "9fdeb82237b72e8801030487901e690f"
 --- Play the test line through the player, the route every real line takes.
 function Addon:RunSelfTest()
     local soundData = { event = Enums.SoundEvent.Gossip, fileName = TEST_LINE, name = "Thrall",
-        title = "Spoken Gossip self-test" }
+        title = "Spoken Gossip self-test", text = Spoken:Words().TEST_LINE_TEXT }
     if not DataModules:ResolveSoundFile(soundData) then
         Debug:Record("self-test-data-failed", "No loaded pack holds the known gossip test line")
         print("|cFFFF4040Spoken Gossip test failed: the known test line was not found in the loaded sound packs.|r")

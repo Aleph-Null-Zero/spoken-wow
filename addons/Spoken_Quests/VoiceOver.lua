@@ -280,6 +280,8 @@ local defaults = {
             -- the Play button on the window is pressed (UI/DialogPlayButton.lua) or
             -- /spq read is typed.
             Autoplay = true,
+            -- On, an automatic read starts when the window closes instead of when it opens.
+            ReadAfterClose = false,
             -- What NPCs say in chat after this player accepts or turns in a quest
             -- (Followup.lua). Autoplay off silences these too: they read themselves.
             FollowupLines = true,
@@ -770,6 +772,18 @@ function ResolveQuestID(source, questID, questTitle, targetName, questText, quie
         questTitle or ""))
 end
 
+-- With Read When Window Closes on, an automatic read waits for the window to close
+-- (QUEST_FINISHED). The window shows one quest page at a time, so the last one read is the one kept.
+local pendingRead
+
+local function QueueRead(soundData, manual)
+    if not manual and Addon.db.profile.Audio.ReadAfterClose then
+        pendingRead = soundData
+        return
+    end
+    Player:Enqueue(soundData, manual)
+end
+
 function Addon:QUEST_DETAIL(_, manual)
     local questID, questTitle, questText, guid, targetName, isObjectOrItem = ReadQuestFields("QUEST_DETAIL")
 
@@ -807,7 +821,7 @@ function Addon:QUEST_DETAIL(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    QueueRead(soundData, manual)
 end
 
 function Addon:QUEST_PROGRESS(_, manual)
@@ -835,7 +849,7 @@ function Addon:QUEST_PROGRESS(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    QueueRead(soundData, manual)
 end
 
 function Addon:QUEST_COMPLETE(_, manual)
@@ -864,7 +878,7 @@ function Addon:QUEST_COMPLETE(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    QueueRead(soundData, manual)
 end
 
 --- An NPC's own greeting starts the moment its dialog opens, and the line that replaces it
@@ -921,4 +935,7 @@ function Addon:QUEST_FINISHED()
         Player:Remove(currentQuestSoundData)
     end
     currentQuestSoundData = nil
+    local pending = pendingRead
+    pendingRead = nil
+    if pending then Player:Enqueue(pending) end
 end

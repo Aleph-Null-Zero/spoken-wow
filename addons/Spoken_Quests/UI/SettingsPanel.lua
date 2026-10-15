@@ -65,6 +65,10 @@ function SettingsPanel:Setup()
     layout:Checkbox(L.OPT_PANEL_STOP_ON_CLOSE, nil,
         function() return audio().StopAudioOnDisengage end,
         function(value) audio().StopAudioOnDisengage = value end)
+    layout:Requires(layout:Checkbox(L.OPT_PANEL_READ_AFTER_CLOSE, nil,
+        function() return audio().ReadAfterClose end,
+        function(value) audio().ReadAfterClose = value end),
+        function() return Addon:IsAutoplayOn() end, L.REASON_AUTOPLAY)
 
     -- Only with DialogueUI installed, on Spoken's page.
     if DialogueUIBridge and DialogueUIBridge.Problem and IsAddOnLoaded and IsAddOnLoaded("DialogueUI") then

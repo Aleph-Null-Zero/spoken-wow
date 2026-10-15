@@ -31,6 +31,7 @@ local function Build()
     frame:SetWidth(WIDTH)
     frame:SetHeight(HEIGHT)
     frame:SetPoint("CENTER")
+    if UISpecialFrames then table.insert(UISpecialFrames, "SpokenContributeBox") end -- close on Escape
     frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)
     frame:EnableMouse(true)

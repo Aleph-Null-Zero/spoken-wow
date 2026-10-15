@@ -23,6 +23,16 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Settings
 
+- Read When Window Closes, on the Quests page, starts a quest's reading when you close the window
+  instead of when it opens. It is off by default. *([Nucabe](https://github.com/Nucabe))*
+- Show Words has a row for each module under it. Turn one off to read its lines by ear only, such as
+  the quest window's, and keep the words for the places and the writings. All are on by default. *([Nucabe](https://github.com/Nucabe))*
+- Area Highlight, on the Places page, sets how brightly an area lights under the pointer on a zone
+  map, and turns the highlight off at 0. *([Nucabe](https://github.com/Nucabe))*
+- The Welcome window uses the same cards and rows as the settings, scrolls when the screen is too
+  short for them, and starts its questions at the left. *([Nucabe](https://github.com/Nucabe))*
+- The Welcome window says so when no voice pack is installed, and where to download one.
+  *([Nucabe](https://github.com/Nucabe))*
 - Spoken's settings page is reorganised, with no Advanced part. The settings most players change
   come first: Modules, Narrator Style (with Window Size, Subtitle Size, Show Words, Word Size and
   Lock Position), Language, Sound, While Spoken Reads, Keys, Azeroth's Compendium and Fix a Problem.
@@ -84,12 +94,17 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Azeroth's Compendium
 
+- The Open in Compendium button has a darker, tighter vignette inside its ring, so the ring and the
+  book read apart. *([Nucabe](https://github.com/Nucabe))*
+- A locked row says why it does not open when you point at it, and names the switch that opens
+  it. The pick lines on the Places, Dungeons and Readables pages mention Shift-click to queue a
+  story or a writing after what is playing, as the Quests page does. *([Nucabe](https://github.com/Nucabe))*
 - A page's Play and Report buttons stand at the scroll bar's right edge, and stay there
   whether or not the bar shows. The Compendium's icon is the library book: in the window's
   portrait and on every Open in Compendium button. *([Nucabe](https://github.com/Nucabe))*
 - Azeroth's Compendium is part of Spoken. Its Quests tab no longer needs Places or Readables switched
   on, and the window keeps its size in Spoken's settings, so it opens once at its default size. Text
-  Size on Spoken's page sets the words of every tab and of the Place Lore panel beside the map.
+  Size on Spoken's page sets the words of every tab and of the Place Story panel beside the map.
   *([Nucabe](https://github.com/Nucabe))*
 - Every tab lists its places in one style. Each continent and each type (Classes, Professions,
   Holidays and Events, a kind of writing under By Type) is a banner. Each zone, city and dungeon is
@@ -117,6 +132,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Azeroth's Compendium: Quests
 
+- The Play button on each row of the quest log has the tracking checkbox's border and the Play and
+  Stop glyphs the narrator styles use. *([Nucabe](https://github.com/Nucabe))*
 - The Quests tab is new. It lists the quests your character's side, race and class can take, by zone
   (a Skyborne character sees its side's quests and the Skyborne's own), with class, profession,
   holiday and other quests apart. Quests no one can take are not listed. A quest you have started or
@@ -235,6 +252,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Fixes
 
+- Play a Test Line on the Quests and Gossip pages shows a line of words in the subtitle and the Small
+  Window, where it showed an empty box. *([Nucabe](https://github.com/Nucabe))*
 - With the DialogueUI narrator style, a queued line's page flew in with no window to go behind.
   Closing a dialog on another line, such as a greeting before a quest or a gravestone before a book,
   now fades the window back in at once while the queued page goes behind it.
