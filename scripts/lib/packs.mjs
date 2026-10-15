@@ -11,6 +11,7 @@
 //   node scripts/lib/packs.mjs list <section> <lang> [github|curseforge] pack keys, or "-"; never dormant
 //   node scripts/lib/packs.mjs get <section> <lang> <pack|-> <field>     one field
 //   node scripts/lib/packs.mjs changelog <file> <version> <release>      a pack's notes
+//   node scripts/lib/packs.mjs meta <lang> <field>                       a language's meta addon
 //
 // WHAT IS DERIVED AND WHAT IS WRITTEN. The folder and the release tag are rules, not fields:
 // English's are the names players already have installed, and a language's are those plus its
@@ -174,14 +175,41 @@ export function loadPacks(dir = PUBLISHERS_DIR) {
   return packs;
 }
 
+// A null section means every section's.
 export function packsFor(section, lang, packs = loadPacks()) {
-  return packs.filter((p) => p.section === section && p.lang === lang);
+  return packs.filter((p) => (section === null || p.section === section) && p.lang === lang);
 }
 
 export function findPack(section, lang, pack, packs = loadPacks()) {
   const found = packsFor(section, lang, packs).find((p) => p.pack === (pack ?? null));
   if (!found) throw new Error(`no ${section} pack registered for ${lang}${pack ? ` (${pack})` : ""}`);
   return found;
+}
+
+// A language's meta addon, "Spoken: <Language>": publishers/spoken/all-<lang>.md, the language's
+// counterpart of Spoken Everything (scripts/spoken/package-meta.sh). Not a pack -- the page has
+// no `section` -- but its dependencies are the packs, so they are read off the registry here
+// rather than listed a second time: every pack of the language that is on CurseForge and not
+// dormant, quests, zones and books alike. A language without a zones or books project simply
+// has none to name.
+export function metaFor(lang, packs = loadPacks(), dir = PUBLISHERS_DIR) {
+  if (lang === BASE_LOCALE) throw new Error(`English's meta addon is spoken-all itself, not a language's`);
+  const page = join("spoken", `all-${lang.toLowerCase()}.md`);
+  let text;
+  try { text = readFileSync(join(dir, page), "utf8"); } catch { throw new Error(`no meta addon page publishers/${page}`); }
+  const { meta } = parseFrontmatter(text, page);
+  const fail = (why) => { throw new Error(`publishers/${page}: ${why}`); };
+  if (meta.lang !== lang) fail(`lang should be ${lang}, not ${meta.lang}`);
+  if (!/^\d+\.\d+\.\d+$/.test(meta.version ?? "")) fail(`needs version: x.y.z`);
+  const order = (p) => SECTIONS.indexOf(p.section) * 10 + ["alliance", "horde", "shared", "gossip"].indexOf(p.pack);
+  const shipped = packsFor(null, lang, packs).filter((p) => !p.dormant && p.curseforge !== null).sort((a, b) => order(a) - order(b));
+  if (!shipped.some((p) => p.section === "quests")) fail(`${lang} has no quests pack on CurseForge to depend on`);
+  return {
+    page, lang, version: meta.version, slug: meta.slug, name: meta.name,
+    curseforge: meta.curseforge ?? null,
+    folder: `SpokenAll_${lang}`, release: `spoken-all-${lang}`,
+    dependencies: ["spoken-player", ...shipped.map((p) => p.slug)],
+  };
 }
 
 // `## 1.0.0 — zones-audio-esMX`: a release tag ending in a language code. English headings
@@ -223,11 +251,17 @@ function main([command, ...args]) {
     if (!(field in found)) throw new Error(`no field '${field}'`);
     const value = found[field];
     console.log(Array.isArray(value) ? value.join(" ") : value ?? "");
+  } else if (command === "meta") {
+    const [lang, field] = args;
+    const found = metaFor(lang);
+    if (!(field in found)) throw new Error(`no field '${field}'`);
+    const value = found[field];
+    console.log(Array.isArray(value) ? value.join(" ") : value ?? "");
   } else if (command === "changelog") {
     const [file, version, release] = args;
     process.stdout.write(changelogSection(readFileSync(file, "utf8"), version, release));
   } else {
-    throw new Error("usage: packs.mjs list <section> <lang> [github|curseforge] | get <section> <lang> <pack|-> <field> | changelog <file> <version> <release>");
+    throw new Error("usage: packs.mjs list <section> <lang> [github|curseforge] | get <section> <lang> <pack|-> <field> | changelog <file> <version> <release> | meta <lang> <field>");
   }
 }
 

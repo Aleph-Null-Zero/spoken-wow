@@ -35,6 +35,7 @@ which is why there is one file per project here and not two.
 | --- | --- | --- | --- | --- |
 | `spoken/spoken.md` | Spoken Player | 1700375 | QN53yXKB | `spoken-player` |
 | `spoken/all.md` | Spoken Everything: Quests, Zones, Books AI Voiceover | 1721569 | — | `spoken` |
+| `spoken/all-<lang>.md` | `Spoken: <Language>`, a language's meta addon: Spoken Player and that language's packs on CurseForge | each page's `curseforge:` | — | `spoken-<language>` |
 | `quests/player.md` | Spoken Quests (was VoiceOver Redux) | 1655859 | aN0XPlNj | `spoken-quests` |
 | `quests/audio-all.md` | Spoken Quests Audio: All | 1660196 | ANzkpD64 | `spoken-quests-audio-all` |
 | `quests/audio-alliance.md` | Spoken Quests Audio: Alliance | 1660197 | 5NR8mJK3 | `spoken-quests-audio-alliance` |
