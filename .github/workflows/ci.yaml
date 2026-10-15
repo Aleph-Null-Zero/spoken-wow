@@ -96,6 +96,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
+          package-manager-cache: false
       - run: node scripts/check-addon-xml.mjs
       # Block balance in Spoken_Zones' Lua (make zones-lint).
       - run: python3 pipelines/zones/tools/lua-syntax-check.py
