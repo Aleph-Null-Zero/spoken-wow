@@ -23,6 +23,7 @@ import { Refreshing } from "@/components/Loading";
 import Pagination from "@/components/Pagination";
 import QuestsPlayer from "@/components/Player";
 import ReportDetail from "@/components/ReportDetail";
+import { OutdatedNote } from "@/components/reports/LineHeading";
 import SortHeader from "@/components/SortHeader";
 import { LinkTabs } from "@/components/StatusTabs";
 import { usePendingPush } from "@/components/usePendingPush";
@@ -274,14 +275,7 @@ export default function ReportTable({
             {count} reports
           </Badge>
         ) : null}
-        {line && detailOf(report.source, line).stale ? (
-          <span
-            className="shrink-0 text-amber-300"
-            title="Made from text that has since changed"
-          >
-            audio outdated
-          </span>
-        ) : null}
+        {line && detailOf(report.source, line).stale ? <OutdatedNote className="shrink-0" /> : null}
       </div>
     );
   }
