@@ -7,17 +7,21 @@
  * Walks the list the server sorted without navigating, so answering a card costs one
  * request and no page load, and the next card's line is fetched while this one is read.
  */
-import { ArrowLeft, Pause, Pencil, Play, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronsDownUp, ChevronsUpDown, Pause, Pencil, Play, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useLang } from "@/components/LangProvider";
 import { ACCEPT_TONE, LiteButton, REJECT_TONE } from "@/components/LiteControls";
 import Link from "@/components/LocaleLink";
 import OverrideDialog from "@/components/OverrideDialog";
+import QuestsPlayer from "@/components/Player";
+import TakeSelector from "@/components/TakeSelector";
 import { TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
 import { PageTextDialog } from "@/components/books/PageTextDialog";
+import { Player as BooksPlayer } from "@/components/books/Player";
 import { Button } from "@/components/ui/button";
 import { LoreDialog } from "@/components/zones/LoreDialog";
+import { Player as ZonesPlayer } from "@/components/zones/Player";
 import type { ResultLine as BookLine } from "@/lib/books/search";
 import { BASE_LANG, withLang } from "@/lib/lang";
 import { explorerHref } from "@/lib/links";
@@ -61,6 +65,11 @@ function translateSubject(line: QuestLine): TranslateSubject {
   };
 }
 
+/** The store-relative file a take belongs to, as TakeSelector addresses it. */
+function fileOf(source: Source, line: SourceLine): string {
+  return source === "quests" ? (line as QuestLine).audioPath : (line as ZoneLine | BookLine).file;
+}
+
 function isTyping(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
@@ -90,8 +99,8 @@ export default function SortQueue({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [showAll, setShowAll] = useState(false);
-  const [fullText, setFullText] = useState(false);
+  /** Everything on the card unclamped: the line's whole text and every report in full. */
+  const [expanded, setExpanded] = useState(false);
   const [playing, setPlaying] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
   /** Lines asked for, so a re-render while one is in flight does not ask again. */
@@ -103,7 +112,10 @@ export default function SortQueue({
   const lineId = group?.reports[0].lineId ?? null;
   const looked = lineId === null ? undefined : lines[lineId];
   const line = looked && looked !== "error" ? looked : null;
-  const detail = line ? detailOf(source, line, lineId ? versions[lineId] : undefined, lang) : null;
+  // The take this session made or restored, else the live one: either way a cache buster, since
+  // a new take keeps its path and the browser would replay the one it replaced.
+  const version = lineId === null || line === null ? undefined : (versions[lineId] ?? line.take?.version);
+  const detail = line ? detailOf(source, line, version, lang) : null;
 
   const fetchLine = useCallback(
     async (id: string) => {
@@ -131,6 +143,22 @@ export default function SortQueue({
     }
   }, [groups, index, reload]);
 
+  // The player owns the element; the Play button only mirrors it.
+  useEffect(() => {
+    const element = audio.current;
+    if (!element) return;
+    const on = () => setPlaying(true);
+    const off = () => setPlaying(false);
+    element.addEventListener("play", on);
+    element.addEventListener("pause", off);
+    element.addEventListener("ended", off);
+    return () => {
+      element.removeEventListener("play", on);
+      element.removeEventListener("pause", off);
+      element.removeEventListener("ended", off);
+    };
+  }, [group === undefined]);
+
   useEffect(() => {
     if (!playWhenReady.current || !detail?.audioSrc) return;
     playWhenReady.current = false;
@@ -143,8 +171,7 @@ export default function SortQueue({
     setError(null);
     setNotice(null);
     setEditing(false);
-    setShowAll(false);
-    setFullText(false);
+    setExpanded(false);
     setPlaying(false);
   }
 
@@ -232,6 +259,7 @@ export default function SortQueue({
     skip,
     edit: () => canEdit && setEditing(true),
     regenerate: () => canRegenerateLine && void regenerate(),
+    expand: () => setExpanded((current) => !current),
   };
   const actions = useRef(keyActions);
   actions.current = keyActions;
@@ -250,6 +278,7 @@ export default function SortQueue({
       else if (event.key === "s") void act.skip();
       else if (event.key === "e") act.edit();
       else if (event.key === "r") act.regenerate();
+      else if (event.key === "x") act.expand();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -271,12 +300,11 @@ export default function SortQueue({
     );
   }
 
-  const reports = showAll ? group.reports : group.reports.slice(0, PREVIEW);
+  const reports = expanded ? group.reports : group.reports.slice(0, PREVIEW);
   const text = detail?.text ?? "";
-  const clamped = !fullText && text.length > LONG_TEXT;
 
   return (
-    <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 pt-4 pb-32">
+    <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 pt-4 pb-56">
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Link
@@ -287,6 +315,11 @@ export default function SortQueue({
             <ArrowLeft className="size-5" />
           </Link>
           <span className="flex-1 font-medium">{SOURCE_LABELS[source]}</span>
+          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-pressed={expanded}>
+            {expanded ? <ChevronsDownUp /> : <ChevronsUpDown />}
+            {expanded ? "Collapse" : "Expand"}
+            <Hint>[X]</Hint>
+          </Button>
           <span className="text-muted-foreground text-sm tabular-nums">
             {index + 1} / {total}
           </span>
@@ -323,16 +356,24 @@ export default function SortQueue({
               <p className="leading-snug font-medium">{detail.heading}</p>
               <p className="text-muted-foreground mt-0.5 text-xs">{detail.context}</p>
             </div>
-            <p className={cn("text-sm whitespace-pre-wrap", clamped && "line-clamp-5")}>{text}</p>
+            <p className={cn("text-sm whitespace-pre-wrap", !expanded && text.length > LONG_TEXT && "line-clamp-5")}>
+              {text}
+            </p>
             <div className="text-muted-foreground flex items-center gap-3 text-xs">
-              {text.length > LONG_TEXT ? (
-                <button type="button" className="underline underline-offset-2" onClick={() => setFullText(!fullText)}>
-                  {fullText ? "less" : "more"}
-                </button>
-              ) : null}
               <Link href={explorerHref(source, lineId)} className="font-mono underline-offset-2 hover:underline">
                 {lineId}
               </Link>
+              <TakeSelector
+                source={source}
+                file={fileOf(source, line!)}
+                version={version ?? null}
+                takes={line!.take?.takes ?? 0}
+                canRestore={canRegenerate}
+                onRestored={(restored) => {
+                  setVersions((current) => ({ ...current, [lineId]: restored }));
+                  reload(lineId);
+                }}
+              />
             </div>
           </>
         )}
@@ -374,15 +415,6 @@ export default function SortQueue({
         </div>
         {detail && !detail.audioSrc ? <p className="text-muted-foreground text-xs">No audio on file.</p> : null}
         {notice ? <p className="text-xs text-emerald-500">{notice}</p> : null}
-        <audio
-          ref={audio}
-          src={detail?.audioSrc ?? undefined}
-          preload="none"
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onEnded={() => setPlaying(false)}
-          onError={() => detail?.audioSrc && setError("Couldn't play the audio.")}
-        />
       </section>
 
       <section className="flex flex-col gap-2">
@@ -390,22 +422,30 @@ export default function SortQueue({
           {group.reports.length} {group.reports.length === 1 ? "report" : "reports"}
         </p>
         {reports.map((report) => (
-          <ReportPreview key={report.id} report={report} />
+          <ReportPreview key={report.id} report={report} expanded={expanded} />
         ))}
-        {group.reports.length > PREVIEW ? (
+        {!expanded && group.reports.length > PREVIEW ? (
           <button
             type="button"
             className="text-muted-foreground self-start text-sm underline underline-offset-2"
-            onClick={() => setShowAll(!showAll)}
+            onClick={() => setExpanded(true)}
           >
-            {showAll ? "Show fewer" : `Show all ${group.reports.length}`}
+            {group.reports.length - PREVIEW} more
           </button>
         ) : null}
       </section>
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
-      <nav className="bg-background/95 fixed inset-x-0 bottom-0 z-20 border-t backdrop-blur">
+      <nav className="bg-background/95 fixed inset-x-0 bottom-0 z-20 backdrop-blur">
+        {/* The explorers' transport, for scrubbing through the line and downloading it. */}
+        {source === "quests" ? (
+          <QuestsPlayer ref={audio} line={detail?.audioSrc ? (line as QuestLine) : null} version={version} />
+        ) : source === "zones" ? (
+          <ZonesPlayer audioRef={audio} line={line as ZoneLine | null} version={version} />
+        ) : (
+          <BooksPlayer audioRef={audio} line={line as BookLine | null} version={version} />
+        )}
         <div className="mx-auto grid max-w-xl grid-cols-3 gap-2 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <LiteButton
             className={cn("h-12 justify-center gap-1.5 text-sm", ACCEPT_TONE)}
@@ -470,12 +510,12 @@ function Hint({ children }: { children: ReactNode }) {
   return <span className="hidden opacity-60 pointer-fine:inline">{children}</span>;
 }
 
-
 /** Never shows the reporter's email or address: who they are is not what triage weighs. */
-function ReportPreview({ report }: { report: Report }) {
-  const [whole, setWhole] = useState(false);
+function ReportPreview({ report, expanded }: { report: Report; expanded: boolean }) {
+  const [opened, setWhole] = useState(false);
+  const whole = expanded || opened;
   return (
-    <article className="bg-card cursor-pointer rounded-lg border px-3 py-2.5" onClick={() => setWhole(!whole)}>
+    <article className="bg-card cursor-pointer rounded-lg border px-3 py-2.5" onClick={() => setWhole(!opened)}>
       <div className="text-muted-foreground flex items-center gap-2 text-xs">
         <span className="bg-muted text-foreground rounded px-1.5 py-0.5 font-medium">
           {CATEGORY_COLUMN[report.category]}
