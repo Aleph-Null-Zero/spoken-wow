@@ -86,7 +86,6 @@ L.CMD_AUDIO = "  /spz audio      -- lista paquetes de voces, o cambia con /spz a
 L.CMD_LANG = "  /spz lang       -- lista idiomas, o cambia con /spz lang <code> o auto"
 L.CMD_DISCOVER = "  /spz discover   -- finge descubrir un área (dev)"
 L.CMD_FORGET = "  /spz forget     -- olvida lo narrado a este personaje"
-L.CMD_MINIMAP = "  /spz minimap    -- muestra u oculta el botón del minimapa"
 L.CMD_DEBUG = "  /spz debug      -- informa nombres de zona al hacer clic"
 L.CMD_VERIFY = "  /spz verify     -- verifica los datos contra este cliente"
 L.CMD_DUMP = "  /spz dump       -- enumera el árbol de mapas (dev)"
@@ -137,7 +136,6 @@ L.OPT_RELOAD_NOW = "Recargar ahora"
 L.OPT_LATER = "Más tarde"
 
 -- Lore of Azeroth and Zone Lore
-L.LORE_WINDOW_TITLE = "Compendio de Azeroth"
 L.COMPENDIUM_PLACES = "Zonas"
 L.LORE_PANEL_TITLE = "Historia de la zona"
 L.MAP_PANEL_EXPAND = "Mostrar historia de la zona"
@@ -148,7 +146,6 @@ L.OPT_SHOW_UNDISCOVERED_TIP = "Permite leer la historia de todas las zonas y ár
 L.OPEN_IN_LORE_TIP = "La historia de este lugar en el Compendio de Azeroth, junto a la de todas las demás zonas y áreas."
 L.PANEL_SHOWN = "Historia junto al mapa: activado"
 L.PANEL_HIDDEN = "Historia junto al mapa: desactivado"
-L.MINIMAP_LEFT_CLICK = "|cff66bbffClic izquierdo:|r %1$s"
 L.LORE_SEARCH = "Buscar zonas"
 L.LORE_DISCOVERED_ONLY = "Solo descubiertas"
 L.LORE_VOICED_ONLY = "Solo con voz"

@@ -13,7 +13,7 @@ local Expect, Failures = H.Expecter(print)
 local BOOKS = here .. "/../../addons/Spoken_Books/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 
 -- The maps the client names, and where each is.
 local MAPS = { [947] = { "Azeroth" }, [1414] = { "Kalimdor", 947 }, [1415] = { "Eastern Kingdoms", 947 },
@@ -46,14 +46,14 @@ _G.CreateFrame = function(kind, name, parent, template)
     return frame
 end
 
+-- The spellbook's colour, which the places' page writes in too, as the game has it before Spoken loads.
+_G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.2, 0.09, 0 end }
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 _G.SpokenBooksSettings, _G.SpokenBooksCharacter = nil, nil
--- The spellbook's colour, which the places' page writes in too.
-_G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.2, 0.09, 0 end }
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
-    "UI/Layout", "UI/TextView", "UI/Compendium", "UI/Readables", "Events", "Commands" }) do
+    "UI/Readables", "Events", "Commands" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 B:InitDB()
@@ -96,7 +96,7 @@ stub.SetZone({ map = 1436 })
 B:ShowReadables()
 local window = _G.SpokenCompendium.window
 local panel = B.readables
-Expect("the readables are a tab of Azeroth's Compendium", window.title, L.COMPENDIUM_TITLE)
+Expect("the readables are a tab of Azeroth's Compendium", window.title, SpokenEnv.L.OPT_COMPENDIUM_TITLE)
 Expect("...with no tabs while they are its only one", _G.SpokenCompendiumWindowTab1:IsShown(), false)
 
 local rows
@@ -663,8 +663,10 @@ Expect("...the corner over the words' right edge, where a part's buttons end",
     page.report.anchor.point .. " " .. page.report.anchor.x, "TOPRIGHT " .. -(36 + page.body:BarRoom()))
 do
     local unsnapped
-    local addon = setmetatable({ Unsnap = function(_, texture) unsnapped = texture end }, { __index = B })
-    local fresh = _G.SpokenCompendium.NewPage(CreateFrame("Frame"), addon)
+    local unsnap = SpokenTextView.Unsnap
+    SpokenTextView.Unsnap = function(texture) unsnapped = unsnapped or texture end
+    local fresh = _G.SpokenCompendium.NewPage(CreateFrame("Frame"), B)
+    SpokenTextView.Unsnap = unsnap
     Expect("a page's parchment drawn off the pixel grid, as the fade cut from it is", unsnapped ~= nil and unsnapped == fresh.bg, true)
 
     -- The line under the title: plain words, or where the tab gives one, a way up a level.
@@ -849,7 +851,7 @@ OpenKinds("wide")
 Click(L.GROUP_WIDE)
 
 -- The places' tab joins: the tabs show, and each shows its own panel.
-_G.SpokenCompendium:Register("places", { label = "Zones", order = 1, title = L.COMPENDIUM_TITLE,
+_G.SpokenCompendium:Register("places", { label = "Zones", order = 1,
     build = function(p) p.places = true end })
 _G.SpokenCompendium:Select("places")
 Expect("with two tabs, the tabs show", _G.SpokenCompendiumWindowTab1:IsShown() and _G.SpokenCompendiumWindowTab2:IsShown(), true)
@@ -915,7 +917,7 @@ do
     _G.Spoken:SetCompendiumFontSize(16)
     -- The parchment's ink is drawn a point larger than the Text Size.
     Expect("the page's words at the Compendium's Text Size, drawn again when it changes",
-        B:Get("fontSize") .. "|" .. tostring(drawnAt), "16|" .. (16 + 1))
+        _G.Spoken:CompendiumFontSize() .. "|" .. tostring(drawnAt), "16|" .. (16 + 1))
     text.SetFont, _G.QuestFont = setFont, questFont
     _G.Spoken:SetCompendiumFontSize(12)
 end

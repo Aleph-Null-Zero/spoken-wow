@@ -182,7 +182,6 @@ L.OPT_REPORT_NO_LINE = "Dieser Client kann nicht erkennen, welche Zeile das war,
 L.OPT_STOP_GOSSIP = "Gespräch stoppen"
 L.OPT_NEXT_GOSSIP = "Nächstes Gespräch"
 L.COMPENDIUM_QUESTS = "Quests"
-L.COMPENDIUM_TITLE = "Kompendium von Azeroth"
 L.OPEN_IN_COMPENDIUM = "Im „Kompendium von Azeroth“ öffnen"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "Der Text dieser Quest im „Kompendium von Azeroth“, neben dem aller anderen Quests."
 L.QUESTS_SEARCH = "Quests suchen"

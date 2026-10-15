@@ -1,4 +1,4 @@
--- The quests in Azeroth's Compendium, the window Spoken Books and Spoken Zones carry: every quest
+-- The quests in Azeroth's Compendium, Spoken's window: every quest
 -- this character's race and class may take. A quest is found once this character has started it:
 -- completed, or in its quest log, which is marked in progress on its row and its page. Until then
 -- it is greyed and does not open, unless Unlock Unstarted Quests is on.
@@ -40,15 +40,6 @@ VO.QuestsTab = QuestsTab
 
 local L = VO.L
 local C
-
--- The words' size, for UI/TextView.lua: the Compendium's Text Size on Spoken's page, so every tab
--- reads alike; Spoken Zones' own where Spoken is older and has none.
-function ns:Get(key)
-    if key == "fontSize" then
-        if Spoken and Spoken.CompendiumFontSize then return Spoken:CompendiumFontSize() end
-        return (SpokenZonesSettings and SpokenZonesSettings.fontSize) or 12
-    end
-end
 
 local list, page
 local selection          -- { quest = id } | { mapID = id } | { sort = id } | { group = "elsewhere" }
@@ -1199,10 +1190,9 @@ local function FaceSpeaker(id, moment)
     return { objectOrItem = true, icon = icon, bullet = bullet }
 end
 
--- A quest's words in parts, the offer and the hand-in each under its header, with the face and
--- name of who says it and the part's name, and Play and Report for that part where a pack voices
--- it; the hand-in only where it Shows. Without DialogueUI, the header is the face beside the name
--- over the part's heading. A part a pack voices whose words are not known says so,
+-- A quest's words in parts, the offer and the hand-in, each headed by the face of who says it
+-- beside their name over the part's name, with Play and Report for that part where a pack voices
+-- it; the hand-in only where it Shows. A part a pack voices whose words are not known says so,
 -- and is there to be played and reported. nil with no words and nothing voiced.
 local function Parts(id)
     local parts = {}
@@ -1607,7 +1597,7 @@ local function Build(panel)
             searchClosed = {}
             QuestsTab:Refresh()
         end,
-        addScrollBar = function(scroll, child, inset) return ns:AddScrollBar(scroll, child, inset) end,
+        addScrollBar = function(scroll, child, inset) return SpokenTextView.AddScrollBar(scroll, child, inset) end,
     })
     panel.Refresh = function() QuestsTab:Refresh() end
     panel.inset, panel.filterButton, panel.filterMenu, panel.noMatch = list.inset, list.filterButton, list.filterMenu, list.noMatch
@@ -1754,15 +1744,14 @@ local function OnEvent(_, event, a)
     end
 end
 
---- Add the tab to Azeroth's Compendium, where Spoken Books or Spoken Zones has loaded it.
+--- Add the tab to Azeroth's Compendium.
 function QuestsTab:Setup()
     C = _G.SpokenCompendium
     if not C or C:Tab("quests") or not _G.SpokenQuestsCompendium then return end
     C:Register("quests", {
         label = L.COMPENDIUM_QUESTS,
-        -- The first tab, before Zones (1) and Books (2); the window takes its title from it.
+        -- The first tab, before Zones (1) and Books (2).
         order = 0,
-        title = L.COMPENDIUM_TITLE,
         build = Build,
         open = function() QuestsTab:Open() end,
         -- Come back to from another tab: where the player stands now, unless they chose here.
@@ -1790,7 +1779,7 @@ function QuestsTab:Setup()
     if self.SetupOpenButtons then self:SetupOpenButtons() end
 end
 
--- Once the world is up: Spoken Zones, which may be the addon carrying the window, loads after this one.
+-- Once the world is up, as the other tabs are added.
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("PLAYER_ENTERING_WORLD")
 loader:SetScript("OnEvent", function(self)

@@ -1,7 +1,7 @@
 -- The zones addon's settings panel. It is a canvas of its own -- the addon has settings
 -- that have nothing to do with the player, and must have them with the player absent --
--- but it is laid out by the same UI/Layout.lua every Spoken addon carries, so the panels
--- read alike. Run with `make test-player`.
+-- but it is laid out by Spoken's UI/Layout.lua, so the pages read alike. Run with
+-- `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
@@ -10,9 +10,10 @@ local print = stub.print
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 local Z = H.NewZoneLore()
-for _, file in ipairs({ "UI/Layout", "UI/Options" }) do
+dofile(here .. "/../../addons/Spoken/UI/Layout.lua")
+for _, file in ipairs({ "UI/Options" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 Z:SetupOptions()

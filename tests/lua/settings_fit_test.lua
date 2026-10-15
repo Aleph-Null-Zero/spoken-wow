@@ -46,7 +46,7 @@ local BOOKS = here .. "/../../addons/Spoken_Books/"
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.SetLocale(LANG)
 stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
 stub.world.questID = 0; stub.ShowPanel(nil)
@@ -70,18 +70,18 @@ VO.GossipSettingsPanel:Setup()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU",
     "Locale/koKR", "Locale/zhCN", "Locale/zhTW", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
-    "UI/Layout", "UI/TextView", "UI/Compendium", "UI/Readables", "UI/Options", "Events", "Commands" }) do
+    "UI/Readables", "UI/Options", "Events", "Commands" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 B:InitDB(); B:SetupOptions()
 -- Two of the Compendium's tabs, so Spoken's page shows their Unlock switches.
 B:SetupReadables()
-for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab" }) do
+for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/QuestsTab" }) do
     assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", {})
 end
 VO.QuestsTab:Setup()
 local Z = H.NewZoneLore()
-for _, file in ipairs({ "UI/Layout", "UI/Options" }) do
+for _, file in ipairs({ "UI/Options" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 Z:SetupOptions()

@@ -49,8 +49,7 @@ line being read on the last row instead, with what has been read above it, as ro
 captions do. The glide needs the client to clip the captions' frame (`SetClipsChildren`); where it
 cannot, the text steps a line at a time. While the text moves, a line partly past the top or bottom
 edge fades by as much of it as is out of view, so lines fade out and in at the edges instead of
-ending on a hard cut. `Transcript:GetScroll` and `Transcript:ScrollTo` let a player draw its own
-scrollbar. Subtitles Only pages on its own and is not affected.
+ending on a hard cut. Subtitles Only pages on its own and is not affected.
 
 Stopping freezes the text. Replay restarts it with the recording. Skipping
 shows the next clip's text, and a clip without text hides the captions.

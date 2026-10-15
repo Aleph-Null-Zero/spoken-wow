@@ -16,8 +16,8 @@ local panel
 local scroller
 local pendingLinks = {}
 
--- Rows, headings and the spacing between them come from UI/Layout.lua, the file every
--- Spoken addon carries a copy of, so the three panels read alike.
+-- Rows, headings and the spacing between them come from UI/Layout.lua, which every module's page
+-- is built with too, so the pages read alike.
 local Layout = SpokenLayout
 
 local CHANNELS = { "Master", "SFX", "Music", "Ambience", "Dialog" }
@@ -412,29 +412,17 @@ local function Build(canvas)
         function() return cfg().HidePortrait end, function(v) cfg().HidePortrait = v end,
         function() refresh(); if Subtitle then Subtitle:Update() end end),
         function() return (InWindow() and not DUI()) or Subtitles() end)
-    -- One row per action an addon declared optional, named by that addon. The player is
-    -- not told what any of them do. The subtitle shows the corner icon too, so the row is
-    -- there with subtitles as well as with a window. Report is not the window's alone (the
-    -- quest log, DialogueUI's window and the lore pages show it), so its row is a general one.
-    local function HideActionRow(id, label, tip, changed)
-        return layout:Checkbox(label, tip,
-            function() return cfg().HiddenActions[id] end,
-            function(v) cfg().HiddenActions[id] = v or nil end, function()
+    -- The report action's own key, which the windows already follow: a hidden Report stays hidden.
+    -- Report is not the window's alone (the quest log, DialogueUI's window and the lore pages show
+    -- it), so its row is a general one.
+    local function ReportRow(tip)
+        return layout:Checkbox(L.OPT_HIDE_REPORT, tip,
+            function() return cfg().HiddenActions.report end,
+            function(v) cfg().HiddenActions.report = v or nil end, function()
                 refresh()
                 if Subtitle then Subtitle:Update() end
-                if changed then changed() end
+                Callbacks:Fire("REPORT_SETTINGS_CHANGED")
             end)
-    end
-    for _, optional in ipairs(Actions.optional) do
-        if optional.id ~= "report" then
-            Only(HideActionRow(optional.id, format(L.OPT_HIDE_ACTION, optional.label), L.OPT_HIDE_ACTION_TIP),
-                function() return InWindow() or Subtitles() end)
-        end
-    end
-    -- The report action's own key, which the windows already follow: a hidden Report stays hidden.
-    local function ReportRow(tip)
-        return HideActionRow("report", L.OPT_HIDE_REPORT, tip,
-            function() Callbacks:Fire("REPORT_SETTINGS_CHANGED") end)
     end
     -- Legacy clients have no Contribute section, and Report only on a window or subtitles. Its tip
     -- names only what they have: no Small Window, and no subtitles on 1.12.

@@ -95,14 +95,8 @@ function SpokenBooks:InitDB()
 	return SpokenBooksSettings
 end
 
---- A setting by name, for the files carried from Spoken Zones (UI/TextView.lua asks the words'
---- size): the Compendium's Text Size on Spoken's page, so every tab reads alike; Zones' own where
---- Spoken is older and has none.
+--- A setting by name.
 function SpokenBooks:Get(key)
-	if key == "fontSize" then
-		if Spoken and Spoken.CompendiumFontSize then return Spoken:CompendiumFontSize() end
-		return (SpokenZonesSettings and SpokenZonesSettings.fontSize) or 12
-	end
 	return SpokenBooksSettings and SpokenBooksSettings[key]
 end
 

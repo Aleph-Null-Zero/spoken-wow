@@ -159,8 +159,8 @@ and refuses when a variant `.toc` or `Environment.lua` names a different version
 nothing else notices until it ships.
 
 **One zip for Blizzard's clients, one apiece for the legacy ones.** Blizzard's clients
-pick a `.toc` by flavor suffix — `_Vanilla`, `_TBC`, `_Wrath`, `_Mainline` — so a single archive
-serves Classic Era through retail and the client chooses. The 1.12, 2.4.3 and 3.3.5 clients
+pick a `.toc` by flavor suffix (`_Vanilla`, `_TBC`, else the unsuffixed one, which Forever reads),
+so a single archive serves them all and the client chooses. The 1.12, 2.4.3 and 3.3.5 clients
 predate suffix support: each reads `Spoken_Quests.toc` and nothing else, and each wants a
 different file under that one name, so each needs an archive of its own. Each also loads its own
 vendored Ace3 from `Spoken_Quests/<client>/`, because the root `Libs/AceTimer-3.0` binds
@@ -172,8 +172,8 @@ release: tag `v<version>` and `.github/workflows/release-addons.yaml` checks the
 `## Version:`, runs this same script, and attaches all four zips.
 
 The sound packs are the same files on every client. Their
-`## Interface: 100000, 11509, 20506, 16001` names Era, Anniversary and Forever, as the zones and
-books packs do, after a 100000 for the 1.12/2.4.3/3.3.5 clients, which read the first number
+`## Interface: 100007, 11509, 20506, 16001` names Era, Anniversary and Forever, as the zones and
+books packs do, after a 100007 for the 1.12/2.4.3/3.3.5 clients, which read the first number
 alone and refuse one below 20000. `DataModules` sets `checkAddonVersion` to 0 around
 `LoadAddOn` so a client that considers a pack out of date loads it anyway. That switch reaches "out of date" and nothing else: the Forever client marks an
 Interface it does not list as incompatible (since build 70170), which no setting overrides, so
@@ -330,9 +330,9 @@ back out of its module in `dist/`, which means releasing a pack nobody built fai
 uploading a stale zip that happens to still be lying around. `CHANGELOG.md` holds one section
 per version and each target looks up its own.
 
-Files are offered to **Era (1.15.9) and the 2.5.6 Anniversary client** only. The zip carries
-`_Wrath` and `_Mainline` TOCs too, but nothing here has been run on those clients, and a file
-offered to a client it misbehaves on is worse than one that is simply absent there. Client
+Files are offered to **Era (1.15.9), the 2.5.6 Anniversary client and Forever** only. Nothing
+here has been run on any other client, and a file offered to a client it misbehaves on is worse
+than one that is simply absent there. Client
 names are resolved against `/api/game/versions` and a name matching anything but exactly one
 version is fatal, because the alternative failure is a file filed against the wrong client —
 which players meet as "the addon does not appear in my list".
@@ -1376,14 +1376,11 @@ the quest.
 
 ### The Quests tab of Azeroth's Compendium
 
-Azeroth's Compendium is the window Spoken Zones and Spoken Books each carry
-(`UI/Compendium.lua` there). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
-first, before Zones and Books, and the window takes its title from it. It goes wherever either
-addon has loaded the window; Spoken Quests carries no copy of the window, only its own
-copy of the text view the page scrolls in (`UI/TextView.lua`, kept byte for byte with the other
-two by `test_package.py`). `Compendium.xml` loads the tab and its data from the `.toc` files of
-the clients the window runs on (Classic Era, TBC Anniversary and Forever), not on Wrath or the
-legacy clients.
+Azeroth's Compendium is Spoken's window (`addons/Spoken/UI/Compendium.lua`, its pages scrolling
+in Spoken's `UI/TextView.lua`). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
+first, before Zones and Books; it needs no other module. `Compendium.xml` loads the tab and its
+data from the `.toc` files of the clients the window runs on (Classic Era, TBC Anniversary and
+Forever), not on the legacy clients.
 
 Two generated files feed it, both committed so the addon never needs a database:
 

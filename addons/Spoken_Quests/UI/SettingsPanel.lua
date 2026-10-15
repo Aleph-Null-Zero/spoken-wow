@@ -1,8 +1,7 @@
 setfenv(1, VoiceOver)
 
 -- The addon's face in the interface settings: one canvas panel of sections, laid out by
--- UI/Layout.lua, the file every Spoken addon carries a copy of so the three panels read
--- alike.
+-- Spoken's UI/Layout.lua so the pages read alike.
 --
 -- The AceConfig table is not replaced. It still backs every `/spq` command, and it still
 -- fills the window OpenConfigWindow shows -- which is where profiles and the sound-pack

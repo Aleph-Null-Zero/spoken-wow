@@ -34,7 +34,6 @@ How it works, what a line says and the API for feature addons:
 | `UI/Options.lua` | the Developer page |
 | `Commands.lua` | `/spoken log ...`, and the provider Spoken calls |
 | `Events.lua` | registering with Spoken as it loads, the login |
-| `UI/Layout.lua` | the settings layout every Spoken addon carries, byte-identical |
 
 Package with `scripts/developer/package.sh`. Tests: `tests/lua/developer_log_test.lua` (this
 module) and `tests/lua/developer_hooks_test.lua` (Spoken's side).

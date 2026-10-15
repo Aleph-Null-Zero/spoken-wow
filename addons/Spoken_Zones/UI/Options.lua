@@ -93,8 +93,8 @@ function SpokenZones:SetupOptions()
 		end
 	end
 
-	-- Every row's position, and the spacing between them, comes from UI/Layout.lua -- the
-	-- file every Spoken addon carries a copy of, so the three panels read alike.
+	-- Every row's position, and the spacing between them, comes from Spoken's UI/Layout.lua, so
+	-- the pages read alike.
 	local function Get(key) return function() return SpokenZones:Get(key) end end
 	local function Set(key) return function(value) SpokenZones:Set(key, value) end end
 

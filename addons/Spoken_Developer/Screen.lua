@@ -16,7 +16,7 @@ local GetAddOnInfo = (C_AddOns and C_AddOns.GetAddOnInfo) or GetAddOnInfo
 
 -- Spoken's modules, and what each one reads.
 local MODULES = {
-	{ name = "Spoken_Quests", reads = "quests and NPC gossip" },
+	{ name = "Spoken_Quests", reads = "quests" },
 	{ name = "Spoken_Books", reads = "books, plaques, signs and letters" },
 	{ name = "Spoken_Zones", reads = "zone lore" },
 }

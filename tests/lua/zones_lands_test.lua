@@ -11,6 +11,8 @@ local ZONES = here .. "/../../addons/Spoken_Zones/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+-- Spoken, which the module runs on: its round buttons are the pages' Play and Report.
+stub.LoadSpoken(here .. "/../../addons/Spoken/").Addon:Enable()
 
 -- The atlases the client has, as Blizzard's own frames use them (wow-ui-source, forever).
 local ATLASES = { ["spellbook-Page-Right-C60"] = true, ["spellbook-divider"] = true, ["LFG-lock"] = true,
@@ -103,7 +105,7 @@ _G.hooksecurefunc = _G.hooksecurefunc or function() end
 local audio = setmetatable({}, { __index = Z })
 assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Zones", audio)
 Z.PlaceAbove = audio.PlaceAbove
-for _, file in ipairs({ "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 

@@ -118,7 +118,7 @@ def test_gossip_xml_loads_every_file(tmp_path):
 
 
 ADDON = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../addons/Spoken_Quests"))
-FOREVER = ("Spoken_Quests.toc", "Spoken_Quests_Mainline.toc")
+FOREVER = ("Spoken_Quests.toc",)
 
 
 def toc(name):

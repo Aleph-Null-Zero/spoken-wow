@@ -32,8 +32,6 @@ local defaults = {
 	mapPanelCollapsed = false,
 	-- Wide enough that a zone's name fits on one line beside the header's round buttons.
 	panelWidth = 360,
-	loreWindowWidth = 880,
-	loreWindowHeight = 600,
 	fontSize = 12,
 	showPictures = true,
 	-- Off, so Azeroth's Compendium opens only the places this character has found (Discovery.lua).
@@ -41,7 +39,6 @@ local defaults = {
 	-- Azeroth's Compendium's Discovered Only, under its list: off, so every place is listed.
 	loreDiscoveredOnly = false,
 	loreVoicedOnly = false,
-	showMinimapButton = true,
 	voiceEnabled = true,
 	autoplay = true,
 	autoplaySubzones = true,
@@ -61,8 +58,6 @@ local defaults = {
 	-- same answer as "enUS" -- a player who never chose should start reading their
 	-- own language the day it ships, and one who picked English should not.
 	debug = false,
-	-- `hide` and `minimapPos` are intentionally absent: LibDBIcon owns those keys
-	-- inside SpokenZonesSettings and writes them itself. See UI/MinimapButton.lua.
 }
 
 --------------------------------------------------------------------------------
@@ -98,8 +93,8 @@ end
 
 -- Safe before ADDON_LOADED has run.
 function SpokenZones:Get(key)
-	-- Text Size is Azeroth's Compendium's, on Spoken's page, where Spoken is installed.
-	if key == "fontSize" and Spoken and Spoken.CompendiumFontSize then
+	-- Text Size is Azeroth's Compendium's, on Spoken's page.
+	if key == "fontSize" and Spoken then
 		return Spoken:CompendiumFontSize()
 	end
 	if SpokenZonesSettings == nil then
@@ -133,9 +128,8 @@ function SpokenZones:ResetOptions()
 	for key, value in pairs(defaults) do
 		if not elsewhere[key] then SpokenZonesSettings[key] = value end
 	end
-	-- Applied as the checkboxes apply them, not only written: a hidden minimap button comes
-	-- back, and the play buttons follow the voice being on again.
-	SpokenZones:ApplyMinimapButton()
+	-- Applied as the checkboxes apply them, not only written: the play buttons follow the voice
+	-- being on again.
 	SpokenZones:NotifyAudioChanged()
 end
 
@@ -569,7 +563,7 @@ local function SetupHooks()
 	-- step on its own, its error printed and reported, so one that fails does not keep the rest
 	-- from being set up: without audio's source, Spoken's page calls Zones not installed.
 	for _, step in ipairs({ "SetupMapPanel", "SetupSubzoneClicks", "SetupMapHighlight", "SetupDiscovery",
-		"SetupLoreWindow", "SetupMinimapButton", "SetupAudio", "SetupAutoplay", "SetupOptions" }) do
+		"SetupLoreWindow", "SetupAudio", "SetupAutoplay", "SetupOptions" }) do
 		if SpokenZones[step] then
 			local ok, err = pcall(SpokenZones[step], SpokenZones)
 			if not ok then
@@ -595,10 +589,6 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		end
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		SetupHooks()
-		-- Once the world is up, so every addon waiting on the player has registered.
-		if SpokenZones.PromptForPlayer then
-			SpokenZones:PromptForPlayer()
-		end
 		-- Said every login, not once: an override you have forgotten you enabled
 		-- turns every gap in an unfinished translation into a bug report nobody
 		-- can reproduce.
@@ -992,7 +982,7 @@ local function CmdHelp()
 	for _, key in ipairs({
 		"CMD_STATUS", "CMD_OPTIONS", "CMD_WINDOW", "CMD_PANEL",
 		"CMD_PLAY", "CMD_STOP", "CMD_VOICE", "CMD_AUTOPLAY", "CMD_AUDIO",
-		"CMD_LANG", "CMD_DISCOVER", "CMD_FORGET", "CMD_MINIMAP",
+		"CMD_LANG", "CMD_DISCOVER", "CMD_FORGET",
 		"CMD_DEBUG", "CMD_VERIFY", "CMD_DUMP",
 	}) do
 		SpokenZones:Print(L[key])
@@ -1023,11 +1013,6 @@ SlashCmdList["SPOKENZONES"] = function(msg)
 	elseif cmd == "window" or cmd == "w" then
 		if SpokenZones.ToggleLoreWindow then
 			SpokenZones:ToggleLoreWindow()
-		end
-	elseif cmd == "minimap" then
-		if SpokenZones.ToggleMinimapButton then
-			local enabled = SpokenZones:ToggleMinimapButton()
-			SpokenZones:Print("minimap button %s", enabled and "shown" or "hidden")
 		end
 	elseif cmd == "play" then
 		CmdPlay()

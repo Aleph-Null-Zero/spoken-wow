@@ -21,7 +21,7 @@ end
 local legacy = PLAYER .. "Spoken_1.12.toc"
 Expect("Spoken_1.12.toc does not load captions", Lists(legacy, "Transcript.xml"), false)
 Expect("...but loads the stub in their place", Lists(legacy, "1.12\\Transcript.lua"), true)
-for _, flavor in ipairs({ "", "_Mainline", "_Vanilla", "_TBC", "_Wrath", "_2.4.3", "_3.3.5" }) do
+for _, flavor in ipairs({ "", "_Vanilla", "_TBC", "_2.4.3", "_3.3.5" }) do
     Expect("Spoken" .. flavor .. ".toc loads captions",
         Lists(PLAYER .. "Spoken" .. flavor .. ".toc", "Transcript.xml"), true)
 end

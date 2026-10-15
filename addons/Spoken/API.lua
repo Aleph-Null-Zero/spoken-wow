@@ -132,26 +132,6 @@ function Spoken:CreateSpeakerFace(parent, size)
     return MinimalPlayer:CreateFace(parent, size)
 end
 
---- The top of the DialogueUI window's card, for a page of a feature addon's: DialogueUI's header
---- strip with the speaker's face in its socket and the line's badge, the speaker's name in
---- DialogueUI's subtitle font and a title in its quest title font, in DialogueUI's brown theme
---- (the page is parchment). Nil where DialogueUI is not installed or not recognised: draw your own
---- header there. Additive: guard on the field.
----
----   header:SetSpeaker(speaker)          -- as a speaker face's SetSpeaker
----   header:SetTexts(name, title)        -- a name the same as the title is left off
----   local height, middle, line = header:Layout(width, room)
----
---- Layout lays it out `width` wide, the card's header grown or shrunk to it, words and all, the
---- name and the title stopping a round button's width short of `room` (the width your controls
---- take at its right). It returns its height, how far down its controls' middle is, and how far
---- down the strip's line ends. Anchor `header.frame` and your controls yourself.
----@param parent table a frame
----@return table|nil header  with frame, SetSpeaker, SetTexts and Layout
-function Spoken:CreateDialogueHeader(parent)
-    return DialogueUIPlayer:CreateHeader(parent)
-end
-
 --- How lines are shown: "subtitle", "none", "minimal", "classic" or "dialogueui".
 --- Additive: guard on the field.
 function Spoken:GetPlayerStyle()

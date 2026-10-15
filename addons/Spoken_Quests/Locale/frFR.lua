@@ -192,7 +192,6 @@ L.OPT_REPORT_NO_LINE = "Ce client ne peut pas savoir de quelle réplique il s'ag
 L.OPT_STOP_GOSSIP = "Arrêter la discussion"
 L.OPT_NEXT_GOSSIP = "Discussion suivante"
 L.COMPENDIUM_QUESTS = "Quêtes"
-L.COMPENDIUM_TITLE = "Compendium d'Azeroth"
 L.OPEN_IN_COMPENDIUM = "Ouvrir dans le Compendium d'Azeroth"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "Le texte de cette quête dans le Compendium d'Azeroth, avec ceux de toutes les autres quêtes."
 L.QUESTS_SEARCH = "Rechercher une quête"

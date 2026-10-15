@@ -13,7 +13,7 @@ local after = C_Timer.After
 local getMapInfo = C_Map.GetMapInfo
 
 local function Boot(where, level, record)
-    stub.SetClient("11509")
+    stub.SetClient("16001")
     stub.ResetSound(); stub.ResetTimers()
     stub.world.inCombat = false
     stub.world.playerLevel = level

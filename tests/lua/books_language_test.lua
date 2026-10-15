@@ -12,7 +12,7 @@ local PAGE, ONLY_ENGLISH = 15, 16
 
 --- Load the addon on a client in `locale`, with the given packs installed.
 local function Install(packs, locale)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetLocale(locale or "enUS")
     _G.SpokenBooksSettings = nil
     _G.SpokenBooksAudioPacks = {}

@@ -17,12 +17,11 @@
 # Two tables, because they answer different questions. SpokenBooksSettings is how you like the
 # addon to behave and is yours; SpokenBooksCharacter is what a particular character has heard,
 # so an alt walking into the same library is read to rather than met with silence.
-## OptionalDeps: Spoken, SpokenBooksAudio
-# Spoken is the player this addon speaks through. Optional here so a hand-installed
-# copy without it loads and says what is missing rather than failing to load at all; addon
-# managers install it from the CurseForge dependency. The pack is not a registration
-# mechanism either -- it registers itself into SpokenBooksAudioPacks and Audio.lua walks
-# that on demand -- so this list is load order only.
+## Dependencies: Spoken
+# Spoken is what this module runs on, and ships in the same zip.
+## OptionalDeps: SpokenBooksAudio
+# The pack is not a registration mechanism: it registers itself into SpokenBooksAudioPacks and
+# Audio.lua walks that on demand, so this is load order only.
 ## IconTexture: Interface\AddOns\Spoken_Books\Textures\AddonIcon.tga
 ## Group: Spoken
 ## X-License: Addon code MIT. Book text is Blizzard's, extracted from the game.
@@ -45,18 +44,10 @@ Reader.lua
 Contribute.lua
 Audio.lua
 Playlist.lua
-UI/Layout.lua
 UI/Options.lua
 UI/PlayButton.lua
 UI/CopyLink.lua
-UI/TextView.lua
-UI/Compendium.lua
 UI/Readables.lua
 UI/DialogueUIBook.lua
 Events.lua
 Commands.lua
-
-# UI/Layout.lua is byte-identical in every Spoken addon and must stay that way -- the file
-# says why, and pipelines/quests/tests/test_package.py is what enforces it. It loads before
-# UI/Options.lua, which builds its panel with it, and both load before Events.lua, which is
-# what calls SetupOptions once the world is up.

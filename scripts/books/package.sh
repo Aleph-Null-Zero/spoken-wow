@@ -45,18 +45,6 @@ if [ ${#missing[@]} -gt 0 ]; then
   exit 1
 fi
 
-# UI/Layout.lua is byte-identical across all four Spoken addons and the packaged copy has to
-# stay that way; pipelines/quests/tests/test_package.py enforces it on the tree, and this
-# catches a staging copy that somehow diverged from it.
-for other in Spoken Spoken_Quests Spoken_Zones; do
-  peer="$REPO/addons/$other/UI/Layout.lua"
-  [ -f "$peer" ] || continue
-  cmp -s "$SRC/UI/Layout.lua" "$peer" || {
-    echo "error: UI/Layout.lua differs from addons/$other/UI/Layout.lua" >&2
-    exit 1
-  }
-done
-
 mkdir -p "$DIST"
 zip_path="$DIST/$NAME-$version.zip"
 rm -f "$zip_path"

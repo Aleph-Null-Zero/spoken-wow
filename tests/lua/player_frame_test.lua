@@ -19,7 +19,7 @@ local function ExpectOf(name, fn, want)
 end
 
 local function Boot(client)
-    stub.SetClient(client or "11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+    stub.SetClient(client or "16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()   -- what PLAYER_LOGIN does: builds the frame, the button, the panel
@@ -30,7 +30,7 @@ end
 
 ---------------------------------------------------------------- a settings link registered before the panel exists
 -- Feature addons register their link from ADDON_LOADED; the panel is built at PLAYER_LOGIN.
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
 local early = stub.LoadSpoken(SPOKEN)
 _G.Spoken:AddSettingsLink("Quests settings", function() end)
@@ -249,12 +249,12 @@ env, quests, zones = Boot(); F = env.PlayerFrame
 local clicked
 zones:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", portrait = { kind = "none" },
     actions = {
-        { id = "read", text = "Read", onClick = function(clip) clicked = "read:" .. clip.key end },
-        { id = "report", text = function() return "Report" end, onClick = function() clicked = "report" end },
+        { id = "read", icon = "Read", onClick = function(clip) clicked = "read:" .. clip.key end },
+        { id = "report", icon = "Report", onClick = function() clicked = "report" end },
     } } }))
-Expect("two actions make two buttons", F.frame.actions.shown, 2)
-Expect("...labelled", F.frame.actions.buttons[1]:GetText(), "Read")
-Expect("...a text function is called", F.frame.actions.buttons[2]:GetText(), "Report")
+Expect("two actions make two buttons", #F.frame.actions.buttons, 2)
+Expect("...each its round icon", F.frame.actions.buttons[1].glyph:GetTexture() .. "|"
+    .. F.frame.actions.buttons[2].glyph:GetTexture(), "Read|Report")
 ExpectOf("...in the header's controls after Stop and Skip", function()
     return #F.row == 4 and F.row[1] == F.play and F.row[2] == F.skip
         and F.row[3] == F.frame.actions.buttons[1] and F.row[4]:GetParent() == F.controls
@@ -263,7 +263,7 @@ F.frame.actions.buttons[1]:Click()
 Expect("clicking passes the clip", clicked ~= nil and clicked:sub(1, 5), "read:")
 env.SoundQueue:RemoveAllSoundsFromQueue()
 quests:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", portrait = { kind = "none" } } }))
-ExpectOf("no actions, Stop and Skip alone", function() return F.frame.actions.shown .. " " .. #F.row end, "0 2")
+ExpectOf("no actions, Stop and Skip alone", function() return #F.frame.actions.buttons .. " " .. #F.row end, "0 2")
 
 ---------------------------------------------------------------- the Talking Head's layout
 -- The window is the game's Talking Head frame as TalkingHeadUI.xml lays it out: 570 by 155, the
@@ -521,7 +521,7 @@ Expect("1.12: GetSettingsCategory is nil rather than an error", _G.Spoken:GetSet
 -- Every row used to place itself by adding a hand-tuned fudge to a running offset, so no
 -- two sections were spaced alike. One layout owns the offset now: a row knows its own
 -- height and the gap that follows it, and no caller does arithmetic.
-Boot("11509")
+Boot("16001")
 -- On the settings canvas the rows live in the scroller's content, never on the panel itself.
 local host = _G.SpokenOptionsPanel.content
 local rows, headings = {}, {}
@@ -740,7 +740,7 @@ local function PanelLabels(client)
     return labels
 end
 
-local labels = PanelLabels("11509")
+local labels = PanelLabels("16001")
 -- "Up next" is the queue window's own title. As a settings heading it named nothing. In the
 -- narrator style's settings the rows are in three parts under small titles, the same for every style.
 Expect("the narrator style's settings are in three parts under small titles",
@@ -763,7 +763,7 @@ Expect("...and an orientation", scale and scale:GetOrientation(), "HORIZONTAL")
 -- windows, so its switch is a general one, beside Contribute's, not among the window's.
 Expect("Report has one switch for every window", labels["Hide Report Buttons"], true)
 Expect("...not among the window's own settings", labels["Hide Report Button"], nil)
-local order = table.concat(PanelOrder("11509"), "|")
+local order = table.concat(PanelOrder("16001"), "|")
 Expect("...beside hiding the Contribute buttons", string.find(order,
     "Hide Contribute Buttons|Hide Report Buttons", 1, true) ~= nil, true)
 -- Nothing on screen at all is a way of showing lines, chosen with the others, not a switch
@@ -822,7 +822,7 @@ local function CornerClip()
         } } })
 end
 
-env, quests, zones = Boot("11509")
+env, quests, zones = Boot("16001")
 quests:Enqueue(CornerClip())
 env.PlayerFrame:Update()
 local corner = env.PlayerFrame.frame.actions.buttons[1]
@@ -855,7 +855,7 @@ end, true)
 legacy:Click()
 Expect("...and it still reports", reported, 2)
 
-env, quests, zones = Boot("11509")
+env, quests, zones = Boot("16001")
 quests:Enqueue(CornerClip())
 env.PlayerFrame:Update()
 corner = env.PlayerFrame.frame.actions.buttons[1]
@@ -880,24 +880,24 @@ local function Clip(source, label, actions)
         portrait = { kind = "none" }, actions = actions } })
 end
 local zoneClip = Clip(zones, "Durotar", {
-    { id = "read", text = "Read", onClick = function() end },
-    { id = "report", text = "Report", onClick = function() zoneClicks = zoneClicks + 1 end },
+    { id = "read", icon = "ZoneRead", onClick = function() end },
+    { id = "report", icon = "ZoneReport", onClick = function() zoneClicks = zoneClicks + 1 end },
 })
 local questClip = Clip(quests, "Cutting Teeth", {
-    { id = "report", text = "Report", onClick = function() questClicks = questClicks + 1 end },
+    { id = "report", icon = "QuestReport", onClick = function() questClicks = questClicks + 1 end },
 })
 zones:Enqueue(zoneClip)
 env.PlayerFrame:Update()
-Expect("the zone line brings two actions", env.PlayerFrame.frame.actions.shown, 2)
+Expect("the zone line brings two actions", #env.PlayerFrame.frame.actions.buttons, 2)
 env.SoundQueue:RemoveSoundFromQueue(zoneClip)
 quests:Enqueue(questClip)
 env.PlayerFrame:Update()
-Expect("the quest line brings one", env.PlayerFrame.frame.actions.shown, 1)
+Expect("the quest line brings one", #env.PlayerFrame.frame.actions.buttons, 1)
 local visible = {}
 for _, button in pairs(env.PlayerFrame.frame.actions.byId) do
-    if button:IsShown() then table.insert(visible, button:GetText() or "?") end
+    if button:IsShown() then table.insert(visible, button.glyph:GetTexture() or "?") end
 end
-Expect("...and only one is on screen", table.concat(visible, "|"), "Report")
+Expect("...and only one is on screen", table.concat(visible, "|"), "QuestReport")
 env.PlayerFrame.frame.actions.buttons[1]:Click()
 Expect("...whose click belongs to the addon that is speaking", questClicks, 1)
 Expect("...not to the other one", zoneClicks, 0)
@@ -932,7 +932,7 @@ Expect("the other addon does not inherit a button built by this one",
 --
 -- Model:GetModel returned a path and was removed from the current clients, which answer
 -- GetModelFileID instead. Asking for the one this client lacks is an error, not a nil.
-for _, client in ipairs({ "11509", "1.12" }) do
+for _, client in ipairs({ "16001", "1.12" }) do
     env, quests, zones = Boot(client)
     local clip = H.Clip({ present = { header = "Gornek", label = "Cutting Teeth", bullet = "b",
         portrait = { kind = "model", creatureID = 3143, animation = 60,

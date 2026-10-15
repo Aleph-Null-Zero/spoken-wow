@@ -7,8 +7,7 @@
 -- A TEXT button, not an icon, for the reason UI/AudioButton.lua gives on the zones side: an
 -- icon path cannot be verified without launching the client, and a texture that does not
 -- exist on 11509 draws nothing at all -- an invisible button is a worse failure than a plain
--- one. Spoken carries QuestLogPlayButton.blp, but it is that addon's file and this one
--- must work with the player absent.
+-- one.
 --
 -- ON THE PAGE, in its bottom-right corner. Two placements came before it and both were on
 -- the strip of frame above the page: outside the top-right corner, where it read as floating

@@ -182,7 +182,6 @@ L.OPT_REPORT_NO_LINE = "이 클라이언트는 어떤 대사였는지 알 수 �
 L.OPT_STOP_GOSSIP = "잡담 중지"
 L.OPT_NEXT_GOSSIP = "다음 잡담"
 L.COMPENDIUM_QUESTS = "퀘스트"
-L.COMPENDIUM_TITLE = "아제로스 백과사전"
 L.OPEN_IN_COMPENDIUM = "아제로스 백과사전에서 열기"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "아제로스 백과사전에서 다른 모든 퀘스트의 대사와 함께 이 퀘스트의 대사를 봅니다."
 L.QUESTS_SEARCH = "퀘스트 검색"

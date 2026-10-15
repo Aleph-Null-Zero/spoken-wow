@@ -182,7 +182,6 @@ L.OPT_REPORT_NO_LINE = "此客户端无法判断是哪一句台词，因此没�
 L.OPT_STOP_GOSSIP = "停止闲聊"
 L.OPT_NEXT_GOSSIP = "下一段闲聊"
 L.COMPENDIUM_QUESTS = "任务"
-L.COMPENDIUM_TITLE = "艾泽拉斯百科"
 L.OPEN_IN_COMPENDIUM = "在艾泽拉斯百科中打开"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "在艾泽拉斯百科中查看此任务的文本，以及其他所有任务的文本。"
 L.QUESTS_SEARCH = "搜索任务"

@@ -1,10 +1,4 @@
--- The settings layout every Spoken addon builds its panel with.
---
--- BYTE-IDENTICAL IN EVERY SPOKEN ADDON. A copy lives in Spoken, SpokenQuests,
--- SpokenZones and SpokenBooks, and the packaging tests assert the copies are the same file.
--- The addons cannot share a file at runtime -- each is installed on its own, and the player is
--- only an optional dependency of the others -- so they share it by carrying it, the way
--- vendored libraries do. Edit one copy and copy it over the others; do not edit in place.
+-- The settings layout Spoken's page and every module's build with: the global SpokenLayout.
 --
 -- Deliberately idiom-free: no setfenv, no addon table, no localisation. Every label and
 -- every accessor is passed in, so the same file suits an addon that runs in a private
@@ -15,14 +9,6 @@
 -- A page is a list of items -- its header, its sections, and the rows in them -- recorded as
 -- they are built and placed by Reflow, top to bottom. Placing them all in one pass is what lets
 -- a row be hidden (ShowWhen) and everything under it close up, rather than leaving a hole.
-
-local VERSION = 62
-
--- LibStub's contract, for LibStub's reason: several addons load this file and the newest
--- copy must win, whichever of them the client happens to load last.
-if SpokenLayout and SpokenLayout.VERSION and SpokenLayout.VERSION >= VERSION then
-    return
-end
 
 local format = string.format
 
@@ -80,7 +66,7 @@ local GOLD = { 1, 0.82, 0 }      -- NORMAL_FONT_COLOR: a setting's name
 local WHITE = { 1, 1, 1 }        -- HIGHLIGHT_FONT_COLOR: a page's and a section's title
 local GREY = { 0.5, 0.5, 0.5 }   -- GameFontDisable: a setting greyed out
 
-local Layout = { VERSION = VERSION }
+local Layout = {}
 Layout.__index = Layout
 
 --- Widen a button to its label, never below `width`. The widths the panels ask for were

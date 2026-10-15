@@ -189,7 +189,9 @@ function MinimalPlayer:Initialize(original)
     self.resizer = CreateFrame("Button", nil, frame)
     self.resizer:SetSize(12, 12)
     self.resizer:SetPoint("BOTTOMRIGHT", -5, 12)
-    self.resizer:SetNormalTexture(ART .. "SizeGrabber-Up")
+    -- The client's own, as Azeroth's Compendium's. The Small Window is not offered on the legacy
+    -- clients.
+    self.resizer:SetNormalTexture([[Interface\ChatFrame\UI-ChatIM-SizeGrabber-Up]])
     self.resizer:SetAlpha(0)
     self.resizer:SetScript("OnMouseDown", function(_, button)
         if button ~= "LeftButton" or Addon:IsFrameLocked() then return end
@@ -356,7 +358,7 @@ function MinimalPlayer:CreateFace(parent, size)
 end
 
 --- Gives `face` SetSpeaker: a frame with a `viewport` clipped round, a `badge` and its
---- `badgeBackground`, and a `ring` where it has one (DialogueUI's header has its socket instead).
+--- `badgeBackground`, and a `ring` where it has one.
 function MinimalPlayer:DrawSpeakers(face)
     face.still = face.viewport:CreateTexture(nil, "ARTWORK")
     face.still:SetAllPoints()

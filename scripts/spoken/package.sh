@@ -86,6 +86,10 @@ for toc in "$SRC"/$NAME.toc "$SRC"/${NAME}_*.toc; do
   case "$suffix" in _1.12.toc|_2.4.3.toc|_3.3.5.toc) continue ;; esac
   tombstone_toc "$REPO/addons/$TOMBSTONE/$TOMBSTONE.toc" "$toc" "$staging/$TOMBSTONE/$TOMBSTONE$suffix"
 done
+# The old folder also had _Mainline and _Wrath names; Spoken has none, so those clients read Spoken.toc.
+for suffix in _Mainline _Wrath; do
+  tombstone_toc "$REPO/addons/$TOMBSTONE/$TOMBSTONE.toc" "$TOC" "$staging/$TOMBSTONE/$TOMBSTONE$suffix.toc"
+done
 
 excludes=()
 for client in "${LEGACY_CLIENTS[@]}"; do

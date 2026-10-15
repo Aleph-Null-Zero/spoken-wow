@@ -8,7 +8,7 @@ local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 
 -- Durotar's map, 1000 by 500, with two explored overlays: the Valley of Trials, and Orgrimmar's
 -- gate at the top. Nothing explored on Dun Morogh's map, and none on Orgrimmar's own (cities have

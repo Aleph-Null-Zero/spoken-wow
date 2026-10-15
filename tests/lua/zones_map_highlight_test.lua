@@ -7,7 +7,7 @@ local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 
 -- A zone map 1002 by 668, in tiles of 256, with two explored areas: a big one, and a small one
 -- inside its rectangle. The big one is two tiles wide, its second only partly used.

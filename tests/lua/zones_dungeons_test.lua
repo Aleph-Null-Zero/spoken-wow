@@ -64,7 +64,9 @@ Expect("Razorfen Downs is listed in The Barrens, its story kept under Thousand N
     dungeons[1413][2].key .. "|" .. dungeons[1413][2].mapID, "razorfen downs|1441")
 
 ---------------------------------------------------------------- the list
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+-- Spoken, which the module runs on: its round buttons are the pages' Play and Report.
+stub.LoadSpoken(here .. "/../../addons/Spoken/").Addon:Enable()
 _G.C_Texture = { GetAtlasInfo = function(name) return stub.ListAtlas(name) end }
 _G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 -- The game's portrait frame, as PortraitFrameMixin has it, and each frame's template kept.
@@ -140,7 +142,7 @@ for _, name in ipairs({ "StoryPlace", "AreaZone", "FoundOn", "AreasIn", "GetSubz
     Z[name] = core[name]
 end
 function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
-for _, file in ipairs({ "UI/Layout", "UI/TextView", "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/Compendium", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 Z:SetupLoreWindow()

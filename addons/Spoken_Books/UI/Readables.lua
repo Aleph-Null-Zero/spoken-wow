@@ -1103,7 +1103,7 @@ local function Build(panel)
 			searchClosed = {}
 			SpokenBooks:RefreshReadables()
 		end,
-		addScrollBar = function(scroll, child, inset) return SpokenBooks:AddScrollBar(scroll, child, inset) end,
+		addScrollBar = function(scroll, child, inset) return SpokenTextView.AddScrollBar(scroll, child, inset) end,
 	})
 	panel.Refresh = function() SpokenBooks:RefreshReadables() end
 	panel.inset, panel.filterButton, panel.filterMenu, panel.noMatch = list.inset, list.filterButton, list.filterMenu, list.noMatch
@@ -1142,21 +1142,12 @@ function SpokenBooks:ShowReadables()
 	SpokenBooks:RefreshReadables(true)
 end
 
--- The window's size, with the rest of this addon's settings, for when Spoken Zones is not there
--- to keep it.
-local SIZE_KEYS = { width = "compendiumWidth", height = "compendiumHeight" }
-
 function SpokenBooks:SetupReadables()
 	if not SpokenCompendium or SpokenCompendium:Tab("readables") then return end
 	SpokenCompendium:Register("readables", {
 		label = L.COMPENDIUM_READABLES,
 		order = 2,
-		title = L.COMPENDIUM_TITLE,
 		build = Build,
-		store = {
-			get = function(key) return SpokenBooksSettings and SpokenBooksSettings[SIZE_KEYS[key]] end,
-			set = function(key, value) if SpokenBooksSettings then SpokenBooksSettings[SIZE_KEYS[key]] = value end end,
-		},
 		open = function() SpokenBooks:ShowReadables() end,
 		-- Come back to from another tab: where the player stands now, unless they chose here.
 		onShow = function() if selection == landed then selection = nil end end,

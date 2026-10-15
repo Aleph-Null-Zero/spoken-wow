@@ -182,7 +182,6 @@ L.OPT_REPORT_NO_LINE = "Este cliente não consegue saber qual fala era, então n
 L.OPT_STOP_GOSSIP = "Parar a conversa"
 L.OPT_NEXT_GOSSIP = "Próxima conversa"
 L.COMPENDIUM_QUESTS = "Missões"
-L.COMPENDIUM_TITLE = "Compêndio de Azeroth"
 L.OPEN_IN_COMPENDIUM = "Abrir no Compêndio de Azeroth"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "O texto desta missão no Compêndio de Azeroth, ao lado do de todas as outras missões."
 L.QUESTS_SEARCH = "Buscar missões"

@@ -13,7 +13,7 @@ local BOOKS = here .. "/../../addons/Spoken_Books/"
 local ZONES = here .. "/../../addons/Spoken_Zones/"
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
 stub.world.questID = 0; stub.ShowPanel(nil)
 -- Waypoint's art, as on a client that can nine-slice with the player loaded.
@@ -35,18 +35,18 @@ QuestsPanel:Setup()
 VO.GossipSettingsPanel:Setup()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
-    "UI/Layout", "UI/Options", "Events", "Commands" }) do
+    "UI/Options", "Events", "Commands" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 B:InitDB(); B:SetupOptions()
 local Z = H.NewZoneLore()
-for _, file in ipairs({ "UI/Layout", "UI/Options" }) do
+for _, file in ipairs({ "UI/Options" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 Z:SetupOptions()
 -- Azeroth's Compendium, with the three tabs Spoken's page shows an Unlock switch for: stand-ins
 -- that keep the switch, as the real tabs keep it in their settings.
-assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", Z)
+dofile(here .. "/../../addons/Spoken/UI/Compendium.lua")
 local unlocked = {}
 for _, key in ipairs({ "places", "readables", "quests" }) do
     SpokenCompendium:Register(key, { label = key, order = 1, build = function() end, open = function() end,

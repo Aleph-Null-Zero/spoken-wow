@@ -182,7 +182,6 @@ L.OPT_REPORT_NO_LINE = "Этот клиент не может определит
 L.OPT_STOP_GOSSIP = "Остановить разговор"
 L.OPT_NEXT_GOSSIP = "Следующий разговор"
 L.COMPENDIUM_QUESTS = "Задания"
-L.COMPENDIUM_TITLE = "Компендиум Азерота"
 L.OPEN_IN_COMPENDIUM = "Открыть в «Компендиуме Азерота»"
 L.OPEN_QUEST_IN_COMPENDIUM_TIP = "Текст этого задания в «Компендиуме Азерота», рядом с текстами всех других заданий."
 L.QUESTS_SEARCH = "Поиск заданий"

@@ -16,7 +16,7 @@ local OLD, NEW = "X-VoiceOver-DataModule-", "X-SpokenQuests-DataModule-"
 
 --- Install one pack carrying exactly the given TOC keys, and enumerate.
 local function Enumerate(meta)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     meta.Title = meta.Title or "TestPack"
     meta.Version = meta.Version or "1.2.1"
     stub.SetAddOns({ { folder = "TestPack", meta = meta } })
@@ -59,7 +59,7 @@ local ok = pcall(function() VO.DataModules:Register("TestPack", { GetSoundPath =
 Expect("a new-key pack can register its data", ok, true)
 
 ---------------------------------------------------------------- switched off in the AddOns list
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 stub.SetAddOns({
     { folder = "OnPack", meta = { [OLD .. "Version"] = "1", Title = "OnPack", Version = "1.2.1" } },
     { folder = "OffPack", loadable = false, reason = "DISABLED",
@@ -89,7 +89,7 @@ Expect("...nor is a missing one", D:IsOlderContent(nil, "2.1.0"), false)
 
 --- Install one shipping pack at a version, and collect what the options offer for it.
 local function Offered(version)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetAddOns({ { folder = "SpokenQuestsAudioShared",
         meta = { Title = "Spoken Quests Audio: Shared Quests", Version = version, [NEW .. "Version"] = "1" } } })
     local vo = stub.LoadQuests(QUESTS, SPOKEN)

@@ -1,36 +1,30 @@
--- The books addon's settings panel: three switches, the language choices and the button that
--- undoes the third, laid out by the same UI/Layout.lua every Spoken addon carries. The panel is
--- this addon's own canvas rather than a section of the player's, because its settings are about
--- books and must be reachable with the player absent. Run with `make test-player`.
+-- The books addon's settings page: its switches and the button that undoes the reading record,
+-- laid out by Spoken's UI/Layout.lua and nested under Spoken's entry. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
+local SPOKEN = here .. "/../../addons/Spoken/"
 local BOOKS = here .. "/../../addons/Spoken_Books/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 _G.SpokenBooksSettings = nil
 _G.SpokenBooksCharacter = nil
+local env = stub.LoadSpoken(SPOKEN)
+env.Addon:Enable()
 
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
-    "UI/Layout", "UI/Options", "Events", "Commands" }) do
+    "UI/Options", "Events", "Commands" }) do
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 B:InitDB()
--- The player the gather switch belongs to: faked, since this suite boots Books alone.
--- The /spb gather shortcut and the status line read it.
-_G.Spoken = { Gather = { _on = nil,
-    IsEnabled = function(self) if self._on == nil then return true end return self._on end,
-    SetEnabled = function(self, v) self._on = v and true or false end } }
 B:SetupOptions()
 
 ---------------------------------------------------------------- registration
-Expect("the panel is registered as a settings category", stub.settingsCategories[1] ~= nil, true)
-Expect("...under its own name", stub.settingsCategories[1] and stub.settingsCategories[1].name,
-    "Spoken Books")
+Expect("the page is Spoken's, nested under its entry", B.optionsPage ~= nil and B.optionsPage.name, B.L.OPT_PAGE_TITLE)
 
 ---------------------------------------------------------------- what is on it
 -- The rows live in the scroller's content frame, not on the panel: the settings canvas
@@ -54,8 +48,9 @@ for _, child in ipairs(content.children) do
 end
 
 Expect("every section is there", table.concat(headings, "|"),
-    "When to Read|Language|Reading History|Voice Packs|Fix a Problem|Start Over")
-Expect("every switch has a row", table.getn(checkboxes), 6)
+    "When to Read|Reading History|Voice Packs|Fix a Problem")
+Expect("every switch has a row, the module's own first", table.getn(checkboxes) .. " " .. checkboxes[1].text.text,
+    "7 " .. B.L.OPT_PART_SWITCH)
 local function Button(text)
     for _, button in ipairs(buttons) do if button.text == text then return button end end
 end
@@ -118,10 +113,11 @@ close.scripts.OnClick(close)
 -- The switch is the player's alone: quests and books both feed the one store, so a
 -- mirror here could only ever repeat it -- a reader cannot have pages off and lines on.
 -- Only the /spb gather shortcut still reaches the player's switch from here.
+local gathering = _G.Spoken.Gather:IsEnabled()
 SlashCmdList["SPOKENBOOKS"]("gather")
-Expect("/spb gather turns gathering off", _G.Spoken.Gather._on, false)
+Expect("/spb gather turns gathering over", _G.Spoken.Gather:IsEnabled(), not gathering)
 SlashCmdList["SPOKENBOOKS"]("gather")
-Expect("...and toggles it back on", _G.Spoken.Gather._on, true)
+Expect("...and back", _G.Spoken.Gather:IsEnabled(), gathering)
 
 ---------------------------------------------------------------- forgetting what was read
 SpokenBooksCharacter.read = { ["Hillsbrad Town Registry"] = true, ["Jitters' Journal"] = true }
@@ -177,7 +173,8 @@ do
     local redrawn = 0
     B.RefreshReadables = function() redrawn = redrawn + 1 end
     SpokenBooksSettings.compendiumFoundOnly = true
-    local reset = Button(B.L.OPT_RESET_PAGE)
+    -- The page's Defaults button, in its header as on the game's own pages.
+    local reset = B.optionsPage.layout.defaults
     reset.scripts.OnClick(reset)
     stub.popups[#stub.popups].dialog.OnAccept()
     Expect("resetting the page puts Found Only back and draws the Books tab again",

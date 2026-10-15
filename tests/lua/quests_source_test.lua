@@ -24,7 +24,7 @@ local GREETING_HASH = "9fdeb82237b72e8801030487901e690f"
 lookup[GREETING_HASH] = 3
 
 local function Boot()
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     -- The client state the previous scenario left: a quest ID and a visible panel would
     -- have the new addon's 10 Hz watcher queue a line before the scenario starts.

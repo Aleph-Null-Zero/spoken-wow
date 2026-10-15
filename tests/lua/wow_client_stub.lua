@@ -356,14 +356,14 @@ end
 
 local _G = _G
 
--- A current Blizzard client by default, which is where the 10 Hz watcher runs at all.
--- SetClient() swaps in a legacy client: those have no WOW_PROJECT_ID, and 1.12
--- reports no interface version at all, which is exactly what Version.lua keys on.
+-- The Forever client by default, the one Spoken is made on. SetClient() swaps in another:
+-- the legacy ones have no WOW_PROJECT_ID, and 1.12 reports no interface version at all,
+-- which is exactly what Version.lua keys on.
 local CLIENTS = {
     ["20506"] = { "2.5.6", "60000", 20506, 5 },
-    -- The Forever client: a mainline-flavoured client carrying vanilla content, and the one
-    -- whose quest log is the modern map-attached one rather than the named QuestLogFrame.
-    ["16001"] = { "1.60.1", "69913", 16001, 1 },
+    -- Forever: vanilla content on the modern engine, with a project id of its own, and the
+    -- client whose quest log is the modern map-attached one rather than the named QuestLogFrame.
+    ["16001"] = { "1.60.1", "70338", 16001, 18 },
     ["11509"] = { "1.15.9", "69109", 11509, 2 },
     ["1.12"]  = { "1.12.1", "5875", nil, nil },
     ["2.4.3"] = { "2.4.3", "8606", 20400, nil },
@@ -566,7 +566,7 @@ M.modernSettings = {
     OpenToCategory = function() return true end,
 }
 _G.Settings = M.modernSettings
-M.SetClient("20506")
+M.SetClient("16001")
 
 -- What the zones addon's playback and autoplay files reach for.
 M.chat = {}
@@ -1161,6 +1161,9 @@ function M.LoadSpoken(addonDirectory)
         "UI/Options", "UI/DialogueUIOptions", "UI/Welcome", "API", "Libs/LibDeflate/LibDeflate", "Compat", "UI/ContributeBox", "Contribute", "Gather" }) do
         dofile(addonDirectory .. file .. ".lua")
     end
+    -- Azeroth's Compendium and its text view (Compendium.xml).
+    dofile(addonDirectory .. "UI/TextView.lua")
+    dofile(addonDirectory .. "UI/Compendium.lua")
     local env = _G.SpokenEnv
     env.Addon:InitDB()
     -- The suites time the queue by each module's own gap; the player's pause between lines has
@@ -1199,9 +1202,11 @@ end
 --- Load the zones addon's playback files the way the client would -- each chunk receives
 --- the addon name and the shared table as varargs -- against a hand-built SpokenZones table
 --- carrying the few Core.lua facts Audio.lua and Autoplay.lua read. Returns that table.
---- UI/Compendium.lua too, as the toc loads it: a clip's header is the place above, from its tree.
+--- Spoken's UI/Compendium.lua too where Spoken has not loaded it: a clip's header is the place
+--- above, from its tree.
 function M.LoadZones(addonDirectory, SpokenZones)
-    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay", "UI/Compendium" }) do
+    if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
+    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
         chunk("Spoken_Zones", SpokenZones)
     end
@@ -1349,7 +1354,6 @@ end
 --- dispatch tests have no use for: their files, on top of an addon already loaded by
 --- LoadQuests or LoadQuestsAlone. Returns the quests page.
 function M.LoadQuestsPanel(addonDirectory, VO)
-    dofile(addonDirectory .. "UI/Layout.lua")
     -- SettingsPanel builds its DialogueUI section only with the bridge loaded; a bridge test
     -- has loaded and hooked its own already.
     if not VO.DialogueUIBridge then dofile(addonDirectory .. "UI/DialogueUIBridge.lua") end
