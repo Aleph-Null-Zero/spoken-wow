@@ -132,6 +132,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/zones_dungeons_test.lua
 	@$(LUA) tests/lua/zones_story_place_test.lua
 	@$(LUA) tests/lua/zones_area_zones_test.lua
+	@$(LUA) tests/lua/zones_forever_places_test.lua
 	@$(LUA) tests/lua/minimap_compartment_test.lua
 	@$(LUA) tests/lua/bronze_rings_test.lua
 
@@ -150,7 +151,7 @@ contribute-fixtures:
 
 test: test-player ## Everything: both webs, the Python pipeline, the addons
 	@pnpm -r test
-	@node --test scripts/lib/*.test.mjs scripts/audio/*.test.mjs
+	@node --test scripts/lib/*.test.mjs scripts/audio/*.test.mjs pipelines/lib/*.test.mjs
 	@[ -x pipelines/quests/.venv/bin/python ] || { \
 	  echo "No venv at pipelines/quests/.venv -- see the comment above 'test' in the Makefile"; \
 	  exit 1; }
@@ -162,6 +163,7 @@ lint: ## The checks CI gates on
 	@node pipelines/zones/tools/validate.mjs
 	@node scripts/descriptions.mjs --check
 	@node pipelines/zones/tools/locale/check-strings.mjs
+	@node pipelines/zones/tools/locale/build-languages.mjs --check
 
 # The store project pages, for every addon. One tool over publishers/*/ rather than one
 # per project: the pages are the same shape, and a second copy of this would be a second place

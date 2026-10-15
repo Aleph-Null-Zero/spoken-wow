@@ -86,6 +86,11 @@ test("test and retired items cannot be had, by their titles", () => {
   assert.equal(cannotBeHad("Letter to Ello", ["Some words"]), false);
 });
 
+test("the Forsaken class letters never given out cannot be had, by their ids", () => {
+  assert.equal(cannotBeHad("Musty Note", ["Some words"], 691), true);
+  assert.equal(cannotBeHad("Musty Note", ["Some words"], 22), false);
+});
+
 test("a readable had only inside a dungeon names it, one per zone", () => {
   const entrance = { 230: 1427, 229: 1427, 289: 1422, 70: 1418 };
   assert.deepEqual(dungeonsOf(new Set([-230]), entrance), [230]);

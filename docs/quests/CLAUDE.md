@@ -39,8 +39,9 @@ claiming is global.
 - `make quests-full-release VERSION=…` is the end-to-end pack release: sync, pull live takes,
   build, upload. `package-audio` refuses to run until local data matches the droplet's
   (`check-synced`), and `make quests-sync` is destructive.
-- `pipelines/quests/tts_cli/factions.py` owns the four-way split, using the committed
-  `corpus/factions.json`. Every pack carries the full lookup tables.
+- `pipelines/quests/tts_cli/factions.py` owns the four-way split, using the race masks of the
+  committed `Data/Compendium.lua`, then `corpus/factions.json` for quests the Compendium does not
+  list. Every pack carries the full lookup tables.
 - A pack ships one audio format, `ogg-q0-44k`; `store.py:audio_extension` refuses a store
   holding two.
 - The meta addon must never carry a `DataModule-Version` key. If it does, the player counts it

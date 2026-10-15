@@ -11,6 +11,18 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **The quest pack Spoken suggests for your language links to its download again.** It pointed
   at CurseForge pages that now hold only part of a language's quests; it now opens the one-pack
   download on GitHub. Chinese clients are offered their own pack too, instead of English's.
+- **Azeroth's Compendium lists 25 quests Forever gives that Spoken has no words for yet**, such as
+  the Mulgore quests from Mazu'kon and Muln Earthfury, Changing Tastes and Conflict at Darkspear
+  Islands, in their zones or class groups. Their pages have no words until their lines are recorded. *([Nucabe](https://github.com/Nucabe))*
+- **On Forever in German, Spanish, French, Portuguese, Russian, Korean and Chinese, Zones finds the
+  places Forever added or renamed**, such as Die Schwarzschlundfeste and Die Abendruh, by the
+  names Forever's own client gives them. *([Nucabe](https://github.com/Nucabe))*
+- **On Forever, Legashi Encampment in Azshara tells its story**, the one Spoken has for the camp
+  under its older name, Legash Encampment, and it is listed once. Northshire Valley - Camelot and
+  Storm Cliffs, which no one can reach there, are no longer listed as places to find. *([Nucabe](https://github.com/Nucabe))*
+- **Eight quests whose pages in Azeroth's Compendium had no words now show them** as their
+  Description, from what the NPC says while the quest is under way: Conflict at Darkspear Islands,
+  Forced Disarmament and the two Donations of Wool among them. *([Nucabe](https://github.com/Nucabe))*
 - **The small window's size grabber is the game's own**, the one Azeroth's Compendium and the chat windows have. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium is part of Spoken.** Its Quests tab no longer needs Zones or Books switched on, and the window keeps its size in Spoken's settings, so it opens once at its default size. *([Nucabe](https://github.com/Nucabe))*
 - **/spz minimap is gone.** It showed or hid a Zones minimap button that only appeared without Spoken; Spoken's own button is the one to use. *([Nucabe](https://github.com/Nucabe))*

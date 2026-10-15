@@ -1,9 +1,8 @@
 // CSV, whole-file: quoted fields may span lines, because lore text does.
 //
-// tools/lib/db2.mjs has a per-line parser for wago.tools exports, where no field
-// contains a newline. A translation sheet is prose -- paragraphs, quotes, commas --
-// so this one reads the whole text with one state machine and writes it back the
-// same way. RFC 4180: comma-separated, double quotes around anything that needs
+// pipelines/lib/wago.mjs reads the client's tables. A translation sheet is prose --
+// paragraphs, quotes, commas -- so this one reads the whole text with one state
+// machine and writes it back the same way. RFC 4180: comma-separated, double quotes around anything that needs
 // them, a quote doubled inside. Spreadsheets read and write exactly this.
 
 /** rows as objects keyed by the header row. A blank final line is ignored. */

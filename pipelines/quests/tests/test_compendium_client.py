@@ -9,7 +9,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import export_compendium  # noqa: E402
-from export_compendium import chain_links, eg_datasets, eg_races, forever_quests, gates, place  # noqa: E402
+from export_compendium import (chain_links, eg_datasets, eg_races, forever_quests, gates, place,  # noqa: E402
+                               quest_line, served_quests, without_text)
 
 
 class FakeMaps:
@@ -122,24 +123,21 @@ def _index(entries):
     return {"products": {"wow_classic_beta": {b: {"quests.enUS": e} for b, e in entries.items()}}}
 
 
-def test_a_builds_file_is_fetched_once_until_it_changes(remote):
+def test_the_data_is_read_at_one_commit_and_fetched_once(remote):
     files, fetched = remote
     files["index.json"] = _index({"1.60.1.70338": {"lastCollectedOn": "2026-10-12", "records": 1},
                                   "1.60.1.70009": {"lastCollectedOn": "2026-09-30", "records": 1}})
     files["wow_classic_beta/1.60.1.70338/quests.enUS.json"] = {"quests": {"1": {"title": "a"}}}
     files["wow_classic_beta/1.60.1.70009/quests.enUS.json"] = {"quests": {"1": {"title": "old"}}}
 
+    assert export_compendium.EG_COMMIT in export_compendium.EG_DATA
     assert list(eg_datasets("quests.enUS")) == ["1.60.1.70009", "1.60.1.70338"]
-    fetched.clear()
-    eg_datasets("quests.enUS")
-    assert fetched == ["index.json"]
-
-    files["index.json"] = _index({"1.60.1.70338": {"lastCollectedOn": "2026-10-13", "records": 2},
-                                  "1.60.1.70009": {"lastCollectedOn": "2026-09-30", "records": 1}})
+    # The repository moving on changes nothing: the pinned commit's files are the cached ones.
+    files["index.json"] = _index({"1.60.1.70338": {"lastCollectedOn": "2026-10-13", "records": 2}})
     files["wow_classic_beta/1.60.1.70338/quests.enUS.json"] = {"quests": {"1": {"title": "b"}}}
     fetched.clear()
-    assert eg_datasets("quests.enUS")["1.60.1.70338"]["quests"]["1"]["title"] == "b"
-    assert fetched == ["index.json", "wow_classic_beta/1.60.1.70338/quests.enUS.json"]
+    assert eg_datasets("quests.enUS")["1.60.1.70338"]["quests"]["1"]["title"] == "a"
+    assert fetched == []
 
 
 def test_offline_the_cache_is_read(remote):
@@ -177,3 +175,30 @@ def test_a_battlemasters_next_quest_is_filed_under_the_battleground_of_the_one_b
     export_compendium.battleground_follow_ups(records, givers)
     assert records[8404]["zones"] == [1460] and records[8405]["zones"] == [1460]
     assert records[7000]["zones"] == [1455]
+
+
+def test_the_file_says_which_builds_and_data_it_was_made_from():
+    lua = export_compendium.render({}, {})
+    assert f"Forever {export_compendium.BUILD} and Era {export_compendium.ERA_BUILD}" in lua
+    assert f"commit {export_compendium.EG_COMMIT[:7]}" in lua
+
+
+def test_a_quest_is_served_where_players_saw_it_offered_handed_in_or_worked_on():
+    npcs = {"1.60.1.70338": {"npcs": {"10": {"offers": {"5": {}}, "takes": {"6": {}}}},
+                             "objects": {"20": {"offers": {"7": {}}}}}}
+    objectives = {"1.60.1.70338": {"quests": {"8": {}}, "completed": {"9": {}}, "failed": {"11": {}}}}
+    assert served_quests(npcs, objectives) == {5, 6, 7, 8, 9}
+
+
+def test_a_served_quest_the_corpus_lacks_is_listed_without_words():
+    client = {96259: {"title": "Defending the Dead", "zoneAreaId": 12, "raceMask": "00000002000000B2",
+                      "nextQuestId": 96261},
+              96261: {"title": "The Broodmother", "zoneAreaId": 12},
+              5: {"title": "Jitters' Growling Gut"}, 236: {"title": "Awaiting Word"}, 99999: {}}
+    records = without_text({5: {}}, {5, 236, 96259, 96261, 99999}, client, {}, FakeMaps(), {}, removed={236})
+    assert set(records) == {96259, 96261}
+    assert records[96259] == {"title": "Defending the Dead", "zones": [1429], "sort": None, "dungeon": None,
+                              "races": 0x2000000B2, "classes": 0, "prev": None, "notext": True}
+    assert records[96261]["prev"] == 96259
+    assert quest_line(96261, "The Broodmother", [1412], prev=96259, notext=True) == \
+        '\t\t[96261] = { "The Broodmother", zones = { 1412 }, prev = 96259, notext = true },'

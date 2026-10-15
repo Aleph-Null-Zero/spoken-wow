@@ -293,7 +293,11 @@ per expansion. Every pack carries the full lookup tables (3.5 MB); they map text
 hashes rather than to files, so an entry whose audio lives in a pack you did not install finds
 no length and stays quiet.
 
-**Which side a quest is on comes from `corpus/factions.json`**, exported by
+**Which side a quest is on comes first from the Compendium's race masks**
+(`addons/Spoken_Quests/Data/Compendium.lua`, `tts_cli/factions.py` `compendium_sides`): a quest
+whose `races` are all one side's is that side's, and one open to both is shared. That covers
+Forever's own quests, which the vmangos world DB lacks (528 more one-side quests than the export
+below). A quest the Compendium does not list takes its side from `corpus/factions.json`, exported by
 `make factions` from the world DB and committed beside the corpus, so building a pack never
 needs a database. `tools/export_factions.py` explains the derivation, and the short version is
 that `quest_template.RequiredRaces` is nearly useless — vanilla sets it on race and class
@@ -644,12 +648,11 @@ the value to configure.
 
 #### What the corpus scan found
 
-`tools/scan_corpus_hiccups.py` reads the corpus and writes `corpus/hiccups.json.gz`: every
-token or fragment likely to trip a reader up — invented names no pronunciation rule covers,
-stage directions in asterisks, Blizzard's own typos, raw binary, alphanumeric codes. The
-artifact is committed and ships inside a release; `/issues` → **Reload scan** loads it into
-Postgres, and it is never read on the search path. `docs/corpus-hiccups.md` documents the
-method and the categories.
+`tools/scan_corpus_hiccups.py` reads the corpus and lists every token or fragment likely to
+trip a reader up — invented names no pronunciation rule covers, stage directions in asterisks,
+Blizzard's own typos, raw binary, alphanumeric codes. It is retired as it stands: the
+`/issues` queue its JSON fed is gone, so the JSON is written only with `--json` and is no
+longer committed or shipped. `docs/corpus-hiccups.md` documents the method and the categories.
 
 **A finding is a detection, not a defect.** `Ashenvale` occurring 199 times is a fact about
 the corpus; whether it is a problem depends on the lexicon and on someone having listened. So
@@ -857,6 +860,12 @@ its map.
 Alterac Valley questgivers are spawned by the battleground's scripts and appear in no table, so
 the scan flags quests a player really can do. Read the quest, then ignore it in the explorer
 where the decision carries a reason.
+
+The Compendium reads the same list. `tts_cli/quest_text.py` `left_out` is the one rule for which
+quests it lists and has words for: Blizzard's debris (quest 1, `<NYI>` titles), a quest every
+line of which is ignored, and the `remove` entries of `corpus/compendium_overrides.json`. Those
+23 removals are the Compendium's alone until `line_ignore` holds their lines; once it does, the
+packs drop their clips too and the entries can go.
 
 ### Reporting a line
 
@@ -1386,10 +1395,13 @@ Two generated files feed it, both committed so the addon never needs a database:
 
 - `Data/Compendium.lua` (`make quests-compendium`, `tools/export_compendium.py`): every corpus
   quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
-  the zone of its entrance, else where its giver stands), or the QuestSort of a class, profession
+  the zone of its entrance, else where its giver stands: the area the repack's map files put the
+  spawn in, `COMPENDIUM_MAPS`, as the books' places have it, else the smallest zone rectangle
+  around it, and a city's rectangle over the ground around it), or the QuestSort of a class, profession
   or season with its name in every language, and the races and classes allowed to take it. Areas,
-  zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, cached
-  in `tools/cache/`), which have Forever's zones and sorts (Zephras Isle, Darkspear Islands,
+  zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, pinned
+  in `pipelines/lib/wago.mjs` and cached in `pipelines/lib/cache/wago/` for every pipeline), which
+  have Forever's zones and sorts (Zephras Isle, Darkspear Islands,
   Camping, The High Order); Era's (1.15.9.69109) fill in anything they lack. The
   zone and who may take it come from the Forever repack's TrinityCore world DB
   (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
@@ -1441,10 +1453,18 @@ Two generated files feed it, both committed so the addon never needs a database:
   the giver's spawn; a `zoneAreaId` of a Forever area no map shows is placed where players saw
   its giver (`npcs.json` `offers`, else `takes`, by `positions[].uiMap`). Its `raceMask` limits a
   quest the DB opens to everyone, before `factions.json`, and its `nextQuestId` links a quest no
-  DB link reaches. It adds and never changes what the DB says. The files are cached in
-  `tools/cache/efficient-games/<build>/` under each one's last collection day, so a run fetches
-  only the index and what changed, and reads the cache offline. `--without-efficient-games`
-  leaves it out.
+  DB link reaches. It adds and never changes what the DB says. The files are read at one commit
+  of their repository (`EG_COMMIT`), since it grows every day and an export run twice must give
+  the same file; they are fetched once into `tools/cache/efficient-games/<commit>/` and read from
+  there after, offline too. Moving the commit is a deliberate change whose diff is reviewed.
+  The file's header names the client builds and the commit it was made from.
+  `--without-efficient-games` leaves it out.
+  Forever serves quests the corpus has no lines for yet. Each one players were seen being offered
+  or handing in (`npcs.json` `offers`, `takes`) or working on (`objectives.json`), and that the
+  client data has a title for, is listed with `notext = true` (`served_quests`, `without_text`):
+  placed, limited and linked by its client record as above, so the tab lists it with no words
+  until its lines reach the corpus and an export drops the flag. `--no-db` makes these again on
+  every run; the hand corrections' removals are never listed.
   Last come the hand corrections, `corpus/compendium_overrides.json` (`load_overrides`,
   `apply_overrides`, `chain_names`): what neither the DB nor the client data can say, such as a
   breadcrumb's link, a quest the beta removed, or a chain's name. Each `quests` entry names its
@@ -1460,10 +1480,10 @@ Two generated files feed it, both committed so the addon never needs a database:
   first quest, so it is the chain's in every zone it crosses. With `--no-db` the entries apply to
   the quests added.
 - `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
-  `tts_cli/quest_text.py`): each quest's accept, progress and complete text, the corpus's
+  `tts_cli/quest_text.py`): each quest's accept and complete text (its progress only where it has neither, as its accept), the corpus's
   `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
   text; where givers' texts differ, the one most of the moment's lines have, ties to the first in
-  the corpus; ignored lines are left out. About 3.3 MB, parsed at every login on those clients.
+  the corpus; ignored lines, and the quests the hand corrections `remove`, are left out. About 2.8 MB, parsed at every login on those clients.
 
 The tab lists only the quests this character's race and class may take. A quest is found once
 the client says it is completed (`C_QuestLog.GetAllCompletedQuestIDs`, else

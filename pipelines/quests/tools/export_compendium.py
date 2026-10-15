@@ -7,7 +7,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - The quests are the corpus's (corpus/corpus.json.gz): the ones the voice packs were made from.
 - Where: the zone the quest belongs to, as the quest log files it (QuestSortID: an AreaTable
   zone, or a dungeon, which counts as the zone its entrance is in), else where its giver stands
-  (the corpus's spawns). A quest of a class, a profession or a season is filed under that
+  (the corpus's spawns): the area the server's own map files put the point in, as the books'
+  places have it (area_reader; COMPENDIUM_MAPS, the repack's maps folder), else the smallest zone
+  rectangle around it. A quest of a class, a profession or a season is filed under that
   instead (a negative QuestSortID), named as the client names it, in every language.
 - Who: the races and classes allowed to take it (quest_template.AllowableRaces,
   quest_template_addon.AllowableClasses) are read from a TrinityCore world DB (the Forever
@@ -22,15 +24,19 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - Forever's own quests are almost all missing from the DB, so after it comes what Forever's
   client says of each quest, as players recorded it: Efficient Games' open data (EG Link,
   github.com/JIVESCORP/eg-link-output-wowf, CC BY 4.0; quests.enUS.json and npcs.json, the
-  latest build's record of each quest, cached in cache/efficient-games/). Its zone or quest
-  sort, race mask and nextQuestId fill in where the DB has none, and change nothing it has.
-  --without-efficient-games leaves it out.
+  latest build's record of each quest, as the repository had them at EG_COMMIT, cached in
+  cache/efficient-games/). Its zone or quest sort, race mask and nextQuestId fill in where the
+  DB has none, and change nothing it has. --without-efficient-games leaves it out.
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
   Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
 - A dungeon's or a raid's quest (its QuestSortID is the dungeon) is filed under the zone of its
   entrance with `dungeon`, the dungeon's map, so the tab can hold it apart there; the dungeons'
   names in every language are the client's (its Map table).
+- Forever serves quests the corpus has no lines for yet. Each quest players were seen being
+  offered or handing in (npcs.json), or working on (objectives.json), is listed with `notext`,
+  placed and limited by its client record as above (without_text below), so the Compendium
+  lists it with no words until its lines reach the corpus. Both runs, with the DB or without.
 - Last, corpus/compendium_overrides.json: what no source above can say, corrected by hand, each
   correction with its source (a wiki page, or why). It can move, retitle, link, restrict or drop a
   quest, and name a chain (apply_overrides, chain_names below).
@@ -46,8 +52,10 @@ import argparse
 import csv
 import gzip
 import json
+import math
 import os
 import re
+import struct
 import sys
 import urllib.request
 
@@ -55,21 +63,29 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 QUESTS = os.path.dirname(HERE)
 sys.path.insert(0, QUESTS)
 
-from tts_cli.quest_text import in_game, lua_string  # noqa: E402
+from tts_cli.ignores import ignored_line_ids  # noqa: E402
+from tts_cli.quest_text import left_out, lua_string, removed_quests  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(QUESTS, "..", ".."))
 CORPUS = os.path.join(QUESTS, "corpus", "corpus.json.gz")
 FACTIONS = os.path.join(QUESTS, "corpus", "factions.json")
+IGNORED = os.path.join(QUESTS, "corpus", "ignored.json")
 OVERRIDES = os.path.join(QUESTS, "corpus", "compendium_overrides.json")
 OUT =os.path.join(ROOT, "addons", "Spoken_Quests", "Data", "Compendium.lua")
 CACHE = os.path.join(HERE, "cache")
-# Forever's client (wago.tools' wow_classic_beta), and Classic Era's. With Era's alone, Forever's
-# own zones and sorts resolve to nothing, even where the DB names them.
+# The client's tables, in the cache pipelines/lib/wago.mjs keeps for every pipeline, under its
+# file names.
+WAGO_CACHE = os.path.join(ROOT, "pipelines", "lib", "cache", "wago")
+# Forever's client (wago.tools' wow_classic_beta), and Classic Era's: the builds wago.mjs pins
+# (tests/test_compendium_tables.py holds them equal). With Era's alone, Forever's own zones and
+# sorts resolve to nothing, even where the DB names them.
 BUILD = "1.60.1.70338"
 ERA_BUILD = "1.15.9.69109"
 # Efficient Games' Forever data: what players' Forever clients recorded, per client build (EG Link,
-# CC BY 4.0, credited in THIRD_PARTY.md). Cached in cache/efficient-games/.
-EG_DATA = "https://raw.githubusercontent.com/JIVESCORP/eg-link-output-wowf/main/data"
+# CC BY 4.0, credited in THIRD_PARTY.md), at one commit of their repository: it grows every day,
+# and an export run twice must give the same file. Move it on purpose, and review the diff.
+EG_COMMIT = "2ae21542f54d7168ab430d8b6248deb1f8d50a02"
+EG_DATA = f"https://raw.githubusercontent.com/JIVESCORP/eg-link-output-wowf/{EG_COMMIT}/data"
 EG_PRODUCT = "wow_classic_beta"
 EG_CACHE = os.path.join(CACHE, "efficient-games")
 LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"]
@@ -83,6 +99,12 @@ INSTANCE_ZONE = {
     # areas have no map of their own, so their quests resolved to no zone.
     2998: 1437, 3065: 1455,
 }
+# The cities, each inside the zone around it. Ironforge and the Undercity are buildings set into the
+# ground, and the map files give a point inside them the ground's area, Dun Morogh's or Tirisfal's;
+# there the rectangle, which says city, is kept.
+CITY_IN = {1453: 1429, 1454: 1411, 1455: 1426, 1456: 1412, 1457: 1438, 1458: 1420}
+# The Forever repack's extracted map files, whose AREA chunks say which area a point is in.
+MAPS_DIR = os.environ.get("COMPENDIUM_MAPS", "C:/Forever/ForeverRepack/data/maps")
 # The dungeons and raids a quest is filed under (`dungeon`): those above, save the Excavation Site,
 # an instance of the Wetlands' own story (Caitlin Grassman's quests) and not a dungeon.
 DUNGEONS = set(INSTANCE_ZONE) - {2998}
@@ -108,8 +130,8 @@ SORT_CLASS = {81: 1 << 0, 141: 1 << 1, 261: 1 << 2, 162: 1 << 3, 262: 1 << 4, 82
 
 
 def table(name, locale="enUS", build=BUILD):
-    os.makedirs(CACHE, exist_ok=True)
-    path = os.path.join(CACHE, f"{name}-{locale}-{build}.csv")
+    os.makedirs(WAGO_CACHE, exist_ok=True)
+    path = os.path.join(WAGO_CACHE, f"{name}-{locale}-{build}.csv")
     if not os.path.exists(path):
         url = f"https://wago.tools/db2/{name}/csv?build={build}&locale={locale}"
         request = urllib.request.Request(url, headers={"User-Agent": "curl/8.0"})
@@ -142,11 +164,59 @@ def sort_names(rows_by_locale):
     return sorts
 
 
+GRID = 533.3333333
+
+
+def read_tile(data):
+    """A map file's AREA chunk: one area id for a tile that is all one area, else the 256 of its
+    16x16 grid. The file header's fourth word is the chunk's offset."""
+    offset = struct.unpack_from("<I", data, 12)[0]
+    if data[offset:offset + 4] != b"AREA":
+        raise ValueError("no AREA chunk")
+    flags, area = struct.unpack_from("<HH", data, offset + 4)
+    if flags & 0x0001:
+        return area
+    return list(struct.unpack_from("<256H", data, offset + 8))
+
+
+def cell_of(x, y):
+    """The tile a point is on and its cell in that tile, as the server computes them
+    (GridMap::getArea)."""
+    gx = 63 - math.floor(x / GRID + 32)
+    gy = 63 - math.floor(y / GRID + 32)
+    cx = math.floor(16 * (32 - x / GRID)) & 15
+    cy = math.floor(16 * (32 - y / GRID)) & 15
+    return gx, gy, cx * 16 + cy
+
+
+def area_reader(directory=MAPS_DIR):
+    """area_at(map, x, y): the AreaTable id the server's map files put a point in, None where no
+    tile was extracted. None where there are no map files: then the rectangles place a giver."""
+    if not os.path.isdir(directory):
+        return None
+    tiles = {}
+
+    def area_at(mapid, x, y):
+        gx, gy, cell = cell_of(x, y)
+        name = f"{mapid:04d}_{gx:02d}_{gy:02d}.map"
+        if name not in tiles:
+            path = os.path.join(directory, name)
+            tiles[name] = read_tile(open(path, "rb").read()) if os.path.exists(path) else None
+        tile = tiles[name]
+        if tile is None:
+            return None
+        return (tile if isinstance(tile, int) else tile[cell]) or None
+
+    return area_at
+
+
 class Maps:
     """The client's zones: which an area is in, and which a point stands in. Forever's tables, then
-    Era's for an area or a point Forever's do not place."""
+    Era's for an area or a point Forever's do not place. `area_at` (area_reader) gives the area a
+    point is in, where there are map files."""
 
-    def __init__(self, builds=(BUILD, ERA_BUILD)):
+    def __init__(self, builds=(BUILD, ERA_BUILD), area_at=None):
+        self.area_at = area_at
         self.assign_sets, self.area_zone, self.areas, self.uimaps = [], {}, {}, {}
         for build in builds:
             uimaps = table("UiMap", build=build)
@@ -214,8 +284,21 @@ class Maps:
         return None
 
     def zone_at(self, mapid, x, y):
+        """The zone a point is in: its area's, from the map files, else the smallest zone
+        rectangle around it. Rectangles overlap along every border, so a town at a zone's edge
+        (Darkshire, Ratchet) fell into its neighbour; a city's rectangle wins over the ground's
+        area around it."""
         if mapid in INSTANCE_ZONE:
             return INSTANCE_ZONE[mapid]
+        box = self.box_at(mapid, x, y)
+        area = self.area_at(mapid, x, y) if self.area_at else None
+        zone = area and self.zone_of_area(area)
+        if not zone or CITY_IN.get(box) == zone:
+            return box
+        return zone
+
+    def box_at(self, mapid, x, y):
+        """The smallest zone rectangle a point is in."""
         for assigns in self.assign_sets:
             best = None
             for a in assigns:
@@ -239,17 +322,20 @@ class Maps:
         return zones
 
 
-def corpus_quests():
+def corpus_quests(path=CORPUS, ignored_path=IGNORED):
     """{questID: {"title", "giver", "handIn"}}, who each quest is placed by ("creature:id"), and
     the spawns. The one it is placed by is its giver, or for a quest the corpus has no offer of,
     whoever it is handed in to. "giver" is who says its accept line, as the packs' quest log
     tables name the giver; "handIn" who says its progress or complete line. Either is absent
-    where the corpus has no such line."""
-    corpus = json.load(gzip.open(CORPUS, "rt", encoding="utf-8"))
+    where the corpus has no such line. A quest QuestText.lua leaves out by the same rule
+    (quest_text.left_out: Blizzard's debris, every line ignored) is not one; the hand
+    corrections' removals come later, in apply_overrides, which passes chains through them."""
+    corpus = json.load(gzip.open(path, "rt", encoding="utf-8"))
+    dropped = left_out(corpus, ignored_line_ids(ignored_path))
     quests, givers, enders = {}, {}, {}
     for line in corpus["lines"]:
         qid, source = line.get("questId"), line.get("source")
-        if not qid or source not in SOURCES or not in_game(qid, line.get("questTitle")):
+        if not qid or source not in SOURCES or qid in dropped:
             continue
         quests.setdefault(qid, {"title": line.get("questTitle") or str(qid)})
         if line.get("npcId") and line.get("npcType"):
@@ -275,26 +361,20 @@ def fetch(url, path):
 
 
 def eg_datasets(name):
-    """{build: Efficient Games' `name` dataset of that Forever build}, oldest build first.
-
-    The index is read afresh when it can be, since a build's files grow as players send more,
-    else from the cache. A build's file is cached under its last collection day and record count,
-    so a file that changed is fetched again and one that did not is not."""
-    index_path = os.path.join(EG_CACHE, "index.json")
-    try:
+    """{build: Efficient Games' `name` dataset of that Forever build}, oldest build first, as their
+    repository had them at EG_COMMIT. A file at one commit never changes, so each is fetched once
+    and read from the cache (cache/efficient-games/<commit>/) after that, offline too."""
+    root = os.path.join(EG_CACHE, EG_COMMIT)
+    index_path = os.path.join(root, "index.json")
+    if not os.path.exists(index_path):
         fetch(f"{EG_DATA}/index.json", index_path)
-    except OSError as e:
-        if not os.path.exists(index_path):
-            raise
-        print(f"Efficient Games' index not reached ({e}); the cached one is read")
     with open(index_path, encoding="utf-8") as f:
         builds = json.load(f)["products"].get(EG_PRODUCT, {})
     out = {}
     for build in sorted(builds, key=lambda b: tuple(int(n) for n in b.split("."))):
-        entry = builds[build].get(name)
-        if not entry:
+        if not builds[build].get(name):
             continue
-        path = os.path.join(EG_CACHE, build, f"{name}-{entry['lastCollectedOn']}-{entry['records']}.json")
+        path = os.path.join(root, build, f"{name}.json")
         if not os.path.exists(path):
             fetch(f"{EG_DATA}/{EG_PRODUCT}/{build}/{name}.json", path)
         with open(path, encoding="utf-8") as f:
@@ -324,6 +404,45 @@ def forever_quests(quest_sets, npc_sets):
         if maps:
             where[qid] = sorted(maps)
     return quests, where
+
+
+def served_quests(npc_sets, objective_sets):
+    """The quests players saw Forever serve: offered or taken in at an NPC or object (npcs.json),
+    or worked on, a count going up or the quest completing (objectives.json)."""
+    served = set()
+    for data in npc_sets.values():
+        for kind in ("npcs", "objects"):
+            for rec in data.get(kind, {}).values():
+                served |= {int(q) for key in ("offers", "takes") for q in rec.get(key, {})}
+    for data in objective_sets.values():
+        for kind in ("quests", "completed"):
+            served |= {int(q) for q in data.get(kind, {})}
+    return served
+
+
+def without_text(known, served, client, seen, maps, sorts, removed=()):
+    """{questID: record} for the quests Forever serves (`served`) that are not `known` (the corpus's)
+    nor `removed`: listed with `notext`, since the corpus has no lines for them yet. Each is placed
+    and limited as Forever's client has it (its Efficient Games record, `client`; `seen` where
+    players saw its giver), and follows the quest whose nextQuestId names it. A quest the client
+    data has no title for is left out: there is nothing to list it by."""
+    records = {}
+    for qid in sorted(set(served) - set(known) - set(removed)):
+        eg = client.get(qid) or {}
+        if not eg.get("title"):
+            continue
+        zones, sort, _ = place(0, maps, sorts, eg, seen.get(qid, ()))
+        records[qid] = {"title": eg["title"], "zones": zones, "sort": sort, "dungeon": None,
+                        "races": playable_races(eg_races(eg)), "classes": quest_classes(0, sort),
+                        "prev": None, "notext": True}
+    opened_by = {}
+    for qid, eg in sorted(client.items()):
+        nxt = int(eg.get("nextQuestId") or 0)
+        if nxt in records and (qid in records or qid in known) and qid != nxt:
+            opened_by.setdefault(nxt, qid)
+    for qid, prev in opened_by.items():
+        records[qid]["prev"] = prev
+    return records
 
 
 def eg_races(q):
@@ -690,6 +809,12 @@ def quest_enders(rows, quests):
     return enders
 
 
+def sort_line(sid, names):
+    """A QuestSort's line: its English name, then each language's that differs."""
+    locs = [f"{l} = {lua_string(names[l])}" for l in LOCALES if names.get(l) and names[l] != names.get("enUS")]
+    return f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
+
+
 def lua_name(name):
     if isinstance(name, int):
         return str(name)
@@ -698,7 +823,7 @@ def lua_name(name):
 
 
 def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, name=None, dungeon=None,
-               ender=None):
+               ender=None, notext=False):
     parts = [lua_string(title)]
     if zones:
         parts.append("zones = { %s }" % ", ".join(str(z) for z in zones))
@@ -723,6 +848,8 @@ def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, 
     classes = classes & 0x5DF
     if classes and classes != 0x5DF:
         parts.append(f"classes = {classes}")
+    if notext:
+        parts.append("notext = true")
     return f"\t\t[{qid}] = {{ {', '.join(parts)} }},"
 
 
@@ -737,9 +864,11 @@ def render(quest_lines, sort_lines, dungeon_lines=None):
 -- chain, name = the chain's name on its first quest (a quest's id, whose title names it, or words
 -- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
 -- its entrance, ender = the creature it is handed in to (enderObject for an object), absent where
--- that is its giver }}. A sort that is a word is a group the client has no QuestSort for. The words
--- are Data/QuestText.lua's. Regenerate with the Forever
--- repack's world DB up:
+-- that is its giver, notext = true for a quest Forever serves that the corpus has no words for yet
+-- }}. A sort that is a word is a group the client has no QuestSort for. The words
+-- are Data/QuestText.lua's. Made from the client tables of Forever {BUILD} and Era {ERA_BUILD}
+-- (wago.tools) and Efficient Games' data at commit {EG_COMMIT[:7]} (CC BY 4.0, efficient.games).
+-- Regenerate with the Forever repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
 --
@@ -788,9 +917,11 @@ def without_db(args):
     quests, givers, spawns = corpus_quests()
     enders = quest_enders([], quests)
     quest_lines, sort_lines, dungeon_lines = read_existing(args.out)
+    # Listed without words last time: made again below, or now the corpus's.
+    quest_lines = {qid: line for qid, line in quest_lines.items() if "notext = true" not in line}
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
-    maps = Maps()
+    maps = Maps(area_at=area_reader())
     records = {}
     for qid in sorted(set(quests) - set(quest_lines)):
         zones = maps.giver_zones(givers[qid], spawns) if qid in givers else []
@@ -800,12 +931,23 @@ def without_db(args):
     added = set(records)
     entries = [e for e in load_overrides()["quests"] if added & set([e["id"]] if "id" in e else e["ids"])]
     apply_overrides(records, entries)
+    unvoiced = {}
+    if not args.without_efficient_games:
+        client, seen = forever_quests(eg_datasets("quests.enUS"), eg_datasets("npcs"))
+        sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
+                            for locale in ["enUS"] + LOCALES})
+        served = served_quests(eg_datasets("npcs"), eg_datasets("objectives"))
+        unvoiced = without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES))
+        for sid in {rec["sort"] for rec in unvoiced.values() if isinstance(rec["sort"], int)} - set(sort_lines):
+            sort_lines[sid] = sort_line(sid, sorts[sid])
+        records.update(unvoiced)
     for qid, rec in records.items():
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
                                       rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None,
-                                      ender=enders.get(qid))
+                                      ender=enders.get(qid), notext=rec.get("notext"))
     placed = sum(1 for rec in records.values() if rec["zones"])
-    return quest_lines, sort_lines, dungeon_lines, f"{len(records)} quests added, {placed} of them placed"
+    return quest_lines, sort_lines, dungeon_lines, (f"{len(records) - len(unvoiced)} quests added, "
+                                                    f"{len(unvoiced)} listed without words, {placed} of them placed")
 
 
 def connect(args):
@@ -817,7 +959,9 @@ def connect(args):
 
 def with_db(args):
     quests, givers, spawns = corpus_quests()
-    maps = Maps()
+    maps = Maps(area_at=area_reader())
+    if not maps.area_at:
+        print(f"no map files at {MAPS_DIR} (COMPENDIUM_MAPS): givers are placed by zone rectangles")
     db = connect(args)
     ids = sorted(quests)
     marks = ",".join(["%s"] * len(ids))
@@ -886,6 +1030,10 @@ def with_db(args):
         records[qid] = {"title": title, "zones": zones, "sort": group, "dungeon": dungeon, "races": races[qid],
                         "classes": quest_classes(q.get("classes", 0), group), "prev": links.get(qid)}
 
+    if not args.without_efficient_games:
+        served = served_quests(eg_datasets("npcs"), eg_datasets("objectives"))
+        records.update(without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES)))
+
     battleground_follow_ups(records, givers)
     overrides = load_overrides()
     notes = apply_overrides(records, overrides["quests"])
@@ -907,13 +1055,10 @@ def with_db(args):
         else:
             unplaced += 1
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
-                                      rec["prev"], named.get(qid), rec.get("dungeon"), enders.get(qid))
+                                      rec["prev"], named.get(qid), rec.get("dungeon"), enders.get(qid),
+                                      rec.get("notext"))
 
-    sort_lines = {}
-    for sid in sorted(used_sorts):
-        names = sorts[sid]
-        locs = [f"{l} = {lua_string(names[l])}" for l in LOCALES if names.get(l) and names[l] != names.get("enUS")]
-        sort_lines[sid] = f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
+    sort_lines = {sid: sort_line(sid, sorts[sid]) for sid in sorted(used_sorts)}
     dungeon_names = {locale: {int(r["ID"]): r["MapName_lang"] for r in table("Map", locale) if int(r["ID"]) in used_dungeons}
                      for locale in ["enUS"] + LOCALES}
     dungeon_lines = {}

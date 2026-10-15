@@ -8,10 +8,17 @@ export function isTemplateCopy(name) {
   return / \(\d+\)$/.test(name ?? "") || /<old>/i.test(name ?? "");
 }
 
-// A readable nobody can have, which would keep every "found X of Y" out of reach: a test item, one
-// the game retired, or one whose every page is the server's "Missing Text", left where a beta
-// item's words were never written.
-export function cannotBeHad(title, texts = []) {
+// Readables with words that no one can have: the Forsaken class letters that were never given out
+// (the Musty Note, Parchment, Scroll, Letter and Missive). No loot, quest, vendor or mail names
+// their items.
+export const NEVER_HAD = new Set([691, 692, 693, 694, 695]);
+
+// A readable nobody can have, which would keep every "found X of Y" out of reach: one of
+// NEVER_HAD (by book id), a test item, one the game retired, or one whose every page is the
+// server's "Missing Text", left where a beta item's words were never written. Books.lua, Places.lua
+// and the sound pack all leave these out.
+export function cannotBeHad(title, texts = [], bookId = null) {
+  if (NEVER_HAD.has(bookId)) return true;
   if (/^(Deprecated|TEST |Test )/.test(title) || /\(old\)$/.test(title)) return true;
   return texts.length > 0 && texts.every((text) => text.trim() === "Missing Text");
 }

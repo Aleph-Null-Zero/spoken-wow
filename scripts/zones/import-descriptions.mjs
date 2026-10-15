@@ -2,8 +2,8 @@
 //
 // The live CurseForge pages -> publishers/*.md
 //
-//   node tools/import-descriptions.mjs            # show what would change
-//   node tools/import-descriptions.mjs --write    # write it
+//   node scripts/zones/import-descriptions.mjs            # show what would change
+//   node scripts/zones/import-descriptions.mjs --write    # write it
 //
 // The other direction of tools/descriptions.mjs, and the reason both exist: a
 // page edited in the web form is the newer copy, and there is no upload API to
@@ -25,9 +25,8 @@ import { readFile, writeFile, readdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// The monorepo root, three levels up from pipelines/zones/tools/. See
-// lib/loredata.mjs for why this reaches the repo root rather than the pipeline root.
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+// The monorepo root, two levels up from scripts/zones/.
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SOURCE_DIR = join(ROOT, "publishers/zones");
 
 const decodeEntities = (text) =>

@@ -6,9 +6,9 @@ One command writes both outputs:
 python3 tools/scan_corpus_hiccups.py
 ```
 
-- **`corpus/hiccups.json.gz`** — the findings with every line each one occurs on. Committed,
-  ships inside a release beside the corpus, and is what `/issues` → **Reload scan** loads
-  into Postgres. Never read on the search path.
+- **`--json <file>`** — the findings with every line each one occurs on, written only when
+  asked. `/issues` → **Reload scan** loaded it into Postgres until the review queue was
+  removed; nothing reads it now, so it is no longer committed or shipped.
 - **`docs/corpus-hiccups.csv`** — the same findings, one row each, for reading offline.
   Gitignored: it is derivable, and it has empty columns meant to be filled in.
 
