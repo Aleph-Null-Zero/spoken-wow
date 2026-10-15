@@ -7,7 +7,7 @@
  * Walks the list the server sorted without navigating, so answering a card costs one
  * request and no page load, and the next card's line is fetched while this one is read.
  */
-import { ArrowLeft, ChevronsDownUp, ChevronsUpDown, Pause, Pencil, Play, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronsDownUp, ChevronsUpDown, Pause, Pencil, Play, RefreshCw, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useLang } from "@/components/LangProvider";
@@ -34,12 +34,22 @@ import type { Source } from "@/lib/sections";
 import { cn } from "@/lib/utils";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
 
+/** The answer a revisited card was given. */
+const CHOSEN = "ring-foreground/60 ring-2";
+
 /** Enough to read a typical complaint whole without pushing the actions off a phone screen. */
 const PREVIEW = 3;
 /** Longer than this and the line's text is clamped behind "more". */
 const LONG_TEXT = 280;
 
-type Busy = Status | "skip" | "regenerate" | null;
+type Answer = Exclude<Status, "open"> | "skip";
+type Busy = Answer | "regenerate" | null;
+
+const ANSWER_LABELS: Record<Answer, string> = {
+  fixed: "Fixed",
+  not_an_issue: "Not a problem",
+  skip: "Skipped",
+};
 /** A line not fetched yet is absent; null is a line the corpus no longer has. */
 type Looked = SourceLine | null | "error";
 
@@ -92,6 +102,8 @@ export default function SortQueue({
   // already answered, and the position would then point past the card on screen.
   const [groups] = useState(initial);
   const [index, setIndex] = useState(0);
+  /** What was answered on each card this visit, by position, so Previous can show and change it. */
+  const [answers, setAnswers] = useState<Record<number, Answer>>({});
   const [lines, setLines] = useState<Record<string, Looked>>({});
   /** Takes written here, so the player plays the new one rather than the browser's cache. */
   const [versions, setVersions] = useState<Record<string, number>>({});
@@ -165,9 +177,9 @@ export default function SortQueue({
     void audio.current?.play().catch(() => {});
   }, [detail?.audioSrc]);
 
-  function advance() {
+  function goTo(next: number) {
     audio.current?.pause();
-    setIndex((current) => current + 1);
+    setIndex(next);
     setError(null);
     setNotice(null);
     setEditing(false);
@@ -175,13 +187,19 @@ export default function SortQueue({
     setPlaying(false);
   }
 
-  /** One request per report, as the triage table does: each keeps its own resolver. */
-  async function resolve(status: Status) {
-    if (!group || busy) return;
-    setBusy(status);
-    setError(null);
+  function answered(answer: Answer) {
+    setAnswers((current) => ({ ...current, [index]: answer }));
+    goTo(index + 1);
+  }
+
+  /**
+   * One request per report, as the triage table does: each keeps its own resolver. Returns
+   * how many failed. Resolving a report already resolved is allowed, which is what lets a
+   * card revisited through Previous change its answer.
+   */
+  async function setStatuses(reports: Report[], status: Status): Promise<number> {
     const results = await Promise.all(
-      group.reports.map((report) =>
+      reports.map((report) =>
         fetch("/api/reports/resolve", {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -191,16 +209,32 @@ export default function SortQueue({
           .catch(() => false),
       ),
     );
+    return results.filter((ok) => !ok).length;
+  }
+
+  async function resolve(status: Exclude<Status, "open">) {
+    if (!group || busy) return;
+    if (answers[index] === status) return goTo(index + 1);
+    setBusy(status);
+    setError(null);
+    const failed = await setStatuses(group.reports, status);
     setBusy(null);
-    const failed = results.filter((ok) => !ok).length;
-    if (failed) return setError(`${failed} of ${results.length} didn't save. Try again.`);
-    advance();
+    if (failed) return setError(`${failed} of ${group.reports.length} didn't save. Try again.`);
+    answered(status);
   }
 
   async function skip() {
     if (!group || busy) return;
+    const previous = answers[index];
+    if (previous === "skip") return goTo(index + 1);
     setBusy("skip");
     setError(null);
+    // A line answered earlier is reopened first: only open reports can be skipped, and a
+    // skipped line is one still waiting for somebody.
+    if (previous && (await setStatuses(group.reports, "open"))) {
+      setBusy(null);
+      return setError("Couldn't reopen the reports. Try again.");
+    }
     const response = await fetch(withLang(lang, "/api/reports/skip"), {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -208,7 +242,11 @@ export default function SortQueue({
     }).catch(() => null);
     setBusy(null);
     if (!response?.ok) return setError("Couldn't skip. Try again.");
-    advance();
+    answered("skip");
+  }
+
+  function previous() {
+    if (index > 0 && !busy) goTo(index - 1);
   }
 
   async function regenerate() {
@@ -260,6 +298,7 @@ export default function SortQueue({
     edit: () => canEdit && setEditing(true),
     regenerate: () => canRegenerateLine && void regenerate(),
     expand: () => setExpanded((current) => !current),
+    previous,
   };
   const actions = useRef(keyActions);
   actions.current = keyActions;
@@ -279,6 +318,7 @@ export default function SortQueue({
       else if (event.key === "e") act.edit();
       else if (event.key === "r") act.regenerate();
       else if (event.key === "x") act.expand();
+      else if (event.key === "p") act.previous();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -293,9 +333,18 @@ export default function SortQueue({
         <p className="text-muted-foreground mt-2 text-sm">
           No open {SOURCE_LABELS[source].toLowerCase()} reports left in your queue.
         </p>
-        <Link href="/reports/sort" className="mt-6 text-sm underline underline-offset-2">
-          Back to sections
-        </Link>
+        <div className="mt-6 flex items-center gap-4 text-sm">
+          {index > 0 ? (
+            <Button variant="outline" size="sm" onClick={previous}>
+              <Undo2 />
+              Previous
+              <Hint>[P]</Hint>
+            </Button>
+          ) : null}
+          <Link href="/reports/sort" className="underline underline-offset-2">
+            Back to sections
+          </Link>
+        </div>
       </main>
     );
   }
@@ -315,6 +364,17 @@ export default function SortQueue({
             <ArrowLeft className="size-5" />
           </Link>
           <span className="flex-1 font-medium">{SOURCE_LABELS[source]}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={previous}
+            disabled={index === 0 || busy !== null}
+            title="Go back to the last line and change its answer"
+          >
+            <Undo2 />
+            Previous
+            <Hint>[P]</Hint>
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-pressed={expanded}>
             {expanded ? <ChevronsDownUp /> : <ChevronsUpDown />}
             {expanded ? "Collapse" : "Expand"}
@@ -328,6 +388,13 @@ export default function SortQueue({
           <div className="bg-primary h-full transition-[width]" style={{ width: `${(index / total) * 100}%` }} />
         </div>
       </header>
+
+      {answers[index] ? (
+        <p className="bg-muted rounded-lg px-3 py-2 text-sm">
+          Answered <span className="font-medium">{ANSWER_LABELS[answers[index]]}</span>. Pick another answer
+          below to change it.
+        </p>
+      ) : null}
 
       <section className="bg-card flex flex-col gap-2 rounded-xl border p-4">
         {lineId === null ? (
@@ -448,7 +515,7 @@ export default function SortQueue({
         )}
         <div className="mx-auto grid max-w-xl grid-cols-3 gap-2 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <LiteButton
-            className={cn("h-12 justify-center gap-1.5 text-sm", ACCEPT_TONE)}
+            className={cn("h-12 justify-center gap-1.5 text-sm", ACCEPT_TONE, answers[index] === "fixed" && CHOSEN)}
             disabled={busy !== null}
             onClick={() => void resolve("fixed")}
             title="Fixed"
@@ -457,7 +524,11 @@ export default function SortQueue({
             <Hint>[F]</Hint>
           </LiteButton>
           <LiteButton
-            className={cn("h-12 justify-center gap-1.5 text-sm", REJECT_TONE)}
+            className={cn(
+              "h-12 justify-center gap-1.5 text-sm",
+              REJECT_TONE,
+              answers[index] === "not_an_issue" && CHOSEN,
+            )}
             disabled={busy !== null}
             onClick={() => void resolve("not_an_issue")}
             title="Not a problem"
@@ -466,7 +537,7 @@ export default function SortQueue({
             <Hint>[N]</Hint>
           </LiteButton>
           <LiteButton
-            className="h-12 justify-center gap-1.5 text-sm"
+            className={cn("h-12 justify-center gap-1.5 text-sm", answers[index] === "skip" && CHOSEN)}
             disabled={busy !== null}
             onClick={() => void skip()}
             title="Skip"
