@@ -29,6 +29,18 @@
 
 local ADDON_NAME, SpokenZones = ...
 
+-- The settings live in Spoken's profile (Spoken:BindModuleSettings), copied from
+-- SpokenZonesSettings the first time. `dump` is a developer's scratch table, not a setting.
+-- Bound here, before anything reads the language, and again in Core.lua's InitConfig.
+function SpokenZones:BindSettings()
+	if not (Spoken and Spoken.BindModuleSettings) then return end
+	Spoken:BindModuleSettings("Zones", SpokenZonesSettings, function(settings)
+		SpokenZonesSettings = settings
+		if SpokenZones.OnSettingsBound then SpokenZones:OnSettingsBound() end
+	end, { dump = true })
+end
+SpokenZones:BindSettings()
+
 -- Every locale a Classic Era or Anniversary client can run in, plus the
 -- languages a community translates into that no client ships (`client = false`:
 -- Italian). GetLocale() never returns one of those, so it has no aliases and no

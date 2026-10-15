@@ -42,4 +42,24 @@ audio.GreetingFirst = false
 Expect("taken over once: the next login keeps what the player set here",
     Login(_G.SpokenQuestsSettings, true).GreetingFirst, false)
 
+-- The voice language was the quests page's too: a choice made there is Spoken's Voice Language
+-- and If a Voice Is Missing from now on, once, unless one was made here first.
+local function LoginLanguage(audio, keep)
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+    if not keep then _G.SpokenSettings = nil end
+    _G.SpokenQuestsSettings = { profiles = { [CHAR] = { Audio = audio } } }
+    local env = stub.LoadSpoken(SPOKEN)
+    stub.FireEvent("PLAYER_LOGIN")
+    return env.Addon.db.profile.Language
+end
+local language = LoginLanguage({ VoiceLanguage = "deDE", FallbackLanguage = "none" })
+Expect("a voice language chosen on the quests page comes over", language.Voice, "deDE")
+Expect("...and so does the fallback", language.Fallback, "none")
+language = LoginLanguage({ VoiceLanguage = "auto", FallbackLanguage = "enUS" })
+Expect("Auto and English, the defaults, leave Spoken's choice unset", tostring(language.Voice) .. tostring(language.Fallback), "nilnil")
+language = LoginLanguage({ VoiceLanguage = "frFR" })
+language.Voice = "esES"
+language = LoginLanguage({ VoiceLanguage = "frFR" }, true)
+Expect("taken over once: the next login keeps what the player chose here", language.Voice, "esES")
+
 os.exit(Failures() == 0 and 0 or 1)

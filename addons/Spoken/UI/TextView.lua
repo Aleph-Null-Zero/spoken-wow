@@ -601,7 +601,8 @@ end
 --- `buttons` (round buttons the caller made on view.child, rightmost first) on the heading's line
 --- at the right, and its words under it. A part may have a `face`, a frame the caller made on
 --- view.child (Spoken:CreateSpeakerFace): it stands at the left of the heading's line, which is
---- then as tall as it, with the heading right of it under its `caption`.
+--- then as tall as it, with the heading right of it under its `caption`. A part with no heading,
+--- face or buttons is its words alone (a writing's words under where it is found).
 --- `parts` = { { heading, text, buttons, face, caption } }. Kept for re-wraps, as SetText's
 --- text is; SetText goes back to one block.
 function TextView:SetParts(parts)
@@ -643,74 +644,81 @@ function TextView:SetParts(parts)
 			self.parts[i] = slot
 		end
 		local face = part.face
+		-- A part with no heading, face or buttons is its words alone, set apart by room.
+		local headless = part.heading == nil and not face and not (part.buttons and part.buttons[1])
 		if i > 1 then
 			y = y + PART_GAP
-		elseif not face then
+		elseif not face and not headless then
 			y = y - HEAD_LIFT
 		end
-		-- The buttons from the right, BUTTON_GAP apart, centred `middle` down; the leftmost shown.
-		local function PlaceButtons(middle)
-			local previous
-			for _, button in ipairs(part.buttons or {}) do
-				if button:IsShown() then
-					button:ClearAllPoints()
-					if previous then
-						button:SetPoint("RIGHT", previous, "LEFT", -BUTTON_GAP, 0)
-					else
-						button:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -middle)
-					end
-					previous = button
-					table.insert(shown, button)
-				end
-			end
-			return previous
-		end
-		local font = _G.QuestTitleFont and FontFile(self, _G.QuestTitleFont) or titleFace
-		if font then slot.heading:SetFont(font, math.min(FontSize() + HEAD_SIZE, HEAD_MOST), "") end
-		slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
-		slot.heading:SetShadowColor(0, 0, 0, 0)
-		slot.heading:SetText(part.heading or "")
-		local caption = part.caption ~= "" and part.caption or nil
-		local block = slot.heading:GetStringHeight() or 0
-		if caption then
-			self:PaintCaption(slot.caption)
-			slot.caption:SetText(caption)
-			block = block + CAPTION_GAP + (slot.caption:GetStringHeight() or 0)
-		end
-		-- The heading's line: as tall as the face, or the caption and the heading where they are taller.
-		local line = math.max(HEAD_LINE, face and (face:GetHeight() or 0) or 0, caption and block or 0)
-		local middle = y + line / 2
-		local previous = PlaceButtons(middle)
-		local left = 0
-		if face then
-			face:ClearAllPoints()
-			face:SetPoint("LEFT", self.child, "TOPLEFT", 0, -middle)
-			face:Show()
-			table.insert(shown, face)
-			left = (face:GetWidth() or 0) + FACE_GAP
-		end
-		-- A line of text from `left` to the buttons, centred `at` down from the top.
-		local function Across(text, at)
-			text:ClearAllPoints()
-			text:SetPoint("LEFT", self.child, "TOPLEFT", left, -at)
-			if previous then
-				text:SetPoint("RIGHT", previous, "LEFT", -8, middle - at)
-			else
-				text:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -at)
-			end
-			text:Show()
-		end
-		if caption then
-			-- The caption over the heading, the two centred on the line together.
-			local top = middle - block / 2
-			local captionHigh = slot.caption:GetStringHeight() or 0
-			Across(slot.caption, top + captionHigh / 2)
-			Across(slot.heading, top + captionHigh + CAPTION_GAP + (slot.heading:GetStringHeight() or 0) / 2)
-		else
+		if headless then
+			slot.heading:Hide()
 			slot.caption:Hide()
-			Across(slot.heading, middle)
+		else
+			-- The buttons from the right, BUTTON_GAP apart, centred `middle` down; the leftmost shown.
+			local function PlaceButtons(middle)
+				local previous
+				for _, button in ipairs(part.buttons or {}) do
+					if button:IsShown() then
+						button:ClearAllPoints()
+						if previous then
+							button:SetPoint("RIGHT", previous, "LEFT", -BUTTON_GAP, 0)
+						else
+							button:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -middle)
+						end
+						previous = button
+						table.insert(shown, button)
+					end
+				end
+				return previous
+			end
+			local font = _G.QuestTitleFont and FontFile(self, _G.QuestTitleFont) or titleFace
+			if font then slot.heading:SetFont(font, math.min(FontSize() + HEAD_SIZE, HEAD_MOST), "") end
+			slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
+			slot.heading:SetShadowColor(0, 0, 0, 0)
+			slot.heading:SetText(part.heading or "")
+			local caption = part.caption ~= "" and part.caption or nil
+			local block = slot.heading:GetStringHeight() or 0
+			if caption then
+				self:PaintCaption(slot.caption)
+				slot.caption:SetText(caption)
+				block = block + CAPTION_GAP + (slot.caption:GetStringHeight() or 0)
+			end
+			-- The heading's line: as tall as the face, or the caption and the heading where they are taller.
+			local line = math.max(HEAD_LINE, face and (face:GetHeight() or 0) or 0, caption and block or 0)
+			local middle = y + line / 2
+			local previous = PlaceButtons(middle)
+			local left = 0
+			if face then
+				face:ClearAllPoints()
+				face:SetPoint("LEFT", self.child, "TOPLEFT", 0, -middle)
+				face:Show()
+				table.insert(shown, face)
+				left = (face:GetWidth() or 0) + FACE_GAP
+			end
+			-- A line of text from `left` to the buttons, centred `at` down from the top.
+			local function Across(text, at)
+				text:ClearAllPoints()
+				text:SetPoint("LEFT", self.child, "TOPLEFT", left, -at)
+				if previous then
+					text:SetPoint("RIGHT", previous, "LEFT", -8, middle - at)
+				else
+					text:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -at)
+				end
+				text:Show()
+			end
+			if caption then
+				-- The caption over the heading, the two centred on the line together.
+				local top = middle - block / 2
+				local captionHigh = slot.caption:GetStringHeight() or 0
+				Across(slot.caption, top + captionHigh / 2)
+				Across(slot.heading, top + captionHigh + CAPTION_GAP + (slot.heading:GetStringHeight() or 0) / 2)
+			else
+				slot.caption:Hide()
+				Across(slot.heading, middle)
+			end
+			y = y + line + HEAD_GAP
 		end
-		y = y + line + HEAD_GAP
 
 		self:Paint(slot.words)
 		slot.words:ClearAllPoints()

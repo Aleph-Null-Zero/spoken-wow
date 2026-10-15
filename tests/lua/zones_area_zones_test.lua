@@ -18,14 +18,15 @@ local ALTERAC, HILLSBRAD, BARRENS, NEEDLES, DESOLACE, SHENDRALAS = 1416, 1424, 1
 ---------------------------------------------------------------- the data
 local data, loader = {}, { ShouldLoadLanguage = function() return true end }
 function loader:RegisterLoreData(_, kind, t) data[kind] = t end
-for _, file in ipairs({ "enUS/Zones.lua", "enUS/Subzones.lua", "Dungeons.lua", "AreaZones.lua" }) do
+for _, file in ipairs({ "enUS/Zones.lua", "enUS/Subzones.lua", "AreaZones.lua" }) do
     assert(loadfile(ZONES .. "Data/" .. file))("Spoken_Places", loader)
 end
+dofile(ZONES .. "../Spoken/Data/Dungeons.lua")
 local zones, subzones, moved = data.zones, data.subzones, loader.AreaZones
 
 local isDungeon = {}
-for _, list in pairs(loader.Dungeons) do
-    for _, dungeon in ipairs(list) do isDungeon[dungeon.mapID .. "/" .. dungeon.key] = true end
+for _, dungeon in pairs(SpokenDungeons.dungeons) do
+    if dungeon.story then isDungeon[dungeon.story[1] .. "/" .. dungeon.story[2]] = true end
 end
 local missing, unknownZone, clash, dungeon, neither = {}, {}, {}, {}, {}
 for storyMapID, areas in pairs(moved) do
@@ -45,7 +46,7 @@ end
 Expect("every area moved is a story kept where the table says", table.concat(missing, ", "), "")
 Expect("...shown in zones with a story of their own", table.concat(unknownZone, ", "), "")
 Expect("...none of which keeps a story of the same name", table.concat(clash, ", "), "")
-Expect("...no dungeon among them, which Data/Dungeons.lua places", table.concat(dungeon, ", "), "")
+Expect("...no dungeon among them, which Spoken's Data/Dungeons.lua places", table.concat(dungeon, ", "), "")
 Expect("...each with a zone or more zones it is found in", table.concat(neither, ", "), "")
 local alterac = {}
 for key, area in pairs(moved[HILLSBRAD]) do if area.zone == ALTERAC then table.insert(alterac, key) end end
@@ -80,7 +81,7 @@ local function Boot(where, client)
     C_Timer.After = after
     local Z = H.LoadZones(ZONES)
     assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
-    for _, file in ipairs({ "Autoplay", "Discovery", "Data/Dungeons", "Data/AreaZones", "UI/LoreWindow" }) do
+    for _, file in ipairs({ "Autoplay", "Discovery", "Data/AreaZones", "UI/LoreWindow" }) do
         assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
     end
     Z.Zones[ALTERAC] = { name = "Alterac Mountains", full = "Snow." }
@@ -235,6 +236,7 @@ function Z:IsVoiceEnabled() return true end
 function Z:HasAudio() return true end
 function Z:IsPlayingLore() return false end
 function Z:IsLoreAtHead() return false end
+function Z:LoreClip() end
 function Z:OnAudioChanged() end
 function Z:OnMapChanged() end
 function Z:CanContribute() return true end
@@ -254,7 +256,7 @@ for _, name in ipairs({ "StoryPlace", "AreaZone", "FoundOn", "AreasIn", "GetSubz
     Z[name] = core[name]
 end
 function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
-for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/ContributeButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupLoreWindow()
@@ -304,8 +306,8 @@ Click("Strahnbrad")
 Expect("Strahnbrad's page is its story, in Alterac Mountains",
     page.title.text .. ": " .. page.body.text.text .. "|" .. page.sub.text.text, "Strahnbrad: A town in the mountains.|In Alterac Mountains")
 Expect("...played and reported by its story's keys",
-    table.concat({ page.play.mapID, page.play.areaKey, page.report.mapID, page.report.areaKey }, "|"),
-    "1424|strahnbrad|1424|strahnbrad")
+    table.concat({ page.target[1], page.target[2], tostring(page.play:IsShown()), tostring(page.report:IsShown()) }, "|"),
+    "1424|strahnbrad|true|true")
 page.sub.scripts.OnClick(page.sub)
 Expect("...its line leading to Alterac Mountains", page.title.text, "Alterac Mountains")
 found["1424/strahnbrad"] = true
@@ -355,9 +357,9 @@ Expect("Strahnbrad clicked on Alterac Mountains' map: its story, in Alterac Moun
     mapPage.title.text .. ": " .. mapPage.body.text.text .. "|" .. mapPage.sub.text.text,
     "Strahnbrad: A town in the mountains.|In Alterac Mountains")
 Expect("...Play, Report and Open on its story under Hillsbrad Foothills",
-    table.concat({ mapPage.play.mapID, mapPage.play.areaKey, mapPage.report.mapID, mapPage.report.areaKey,
+    table.concat({ mapPage.target[1], mapPage.target[2], tostring(mapPage.play:IsShown()), tostring(mapPage.report:IsShown()),
         mapPage.open.mapID, mapPage.open.areaKey }, "|"),
-    "1424|strahnbrad|1424|strahnbrad|1424|strahnbrad")
+    "1424|strahnbrad|true|true|1424|strahnbrad")
 showAll = false
 Z:RefreshPanel()
 Expect("...not discovered while not found", mapPage.body.text.text, Z.L.NOT_DISCOVERED)

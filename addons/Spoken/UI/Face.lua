@@ -117,7 +117,7 @@ local function Still(face, speaker)
     -- A quest-log GUID is made up, and names no unit.
     if guid and UnitGUID and SetPortraitTexture and not string.find(guid, "^Creature%-0%-0%-0%-0%-") then
         for _, unit in ipairs(UNITS) do
-            if UnitGUID(unit) == guid then
+            if NotSecret(UnitGUID(unit)) == guid then
                 SetPortraitTexture(face.still, unit)
                 return true
             end

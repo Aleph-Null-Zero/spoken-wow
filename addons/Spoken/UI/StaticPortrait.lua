@@ -152,7 +152,7 @@ function StaticPortrait:Capture(clip, refreshGUID)
         end
     end
     for _, unit in ipairs(UNITS) do
-        local actual = UnitGUID(unit)
+        local actual = NotSecret(UnitGUID(unit))
         if actual and ((guid and actual == guid) or (not guid and creature and CreatureID(actual) == creature)) then
             local entry = self.cache[actual] or self:Acquire(actual)
             if not entry then return cached end
@@ -236,7 +236,9 @@ if not Version.IsAnyLegacy then
     for _, event in ipairs({ "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "GOSSIP_SHOW",
         "QUEST_DETAIL", "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED" }) do watcher:RegisterEvent(event) end
     watcher:SetScript("OnEvent", function(_, event, unit)
-        local refreshGUID = (event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED") and unit and UnitGUID(unit)
+        unit = NotSecret(unit)
+        local refreshGUID = (event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED") and unit
+            and NotSecret(UnitGUID(unit))
         for _, clip in ipairs(SoundQueue.sounds) do StaticPortrait:Capture(clip, refreshGUID) end
         local skin = PlayerFrame.Skin and PlayerFrame:Skin()
         if skin and skin:HasClip() then skin:ConfigurePortrait() end

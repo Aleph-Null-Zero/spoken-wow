@@ -63,7 +63,8 @@ addons/Spoken_Places/          the addon itself (this is what WoW loads)
   Data/enUS/Zones.lua    GENERATED -- do not edit by hand
   Data/enUS/Subzones.lua GENERATED -- do not edit by hand
   Data/<locale>/Aliases.lua  GENERATED -- localized area name -> English key
-  UI/AudioButton.lua     the Play/Stop button shown on a description
+  UI/LorePage.lua        the page a story is written on (Azeroth's Compendium's page, with Play and Report)
+  UI/ContributeButton.lua  Contribute, under a place with no story yet
   UI/MapPanel.lua        the world map side panel
   UI/SubzoneClick.lua    resolves a map click to a subzone
   UI/MapHighlight.lua    lights up the area under the cursor on a zone map
@@ -619,20 +620,25 @@ A dungeon or a raid is a card inside the card of the zone of its entrance (a cit
 Ragefire Chasm), as the Quests tab files their quests: the Quests tab's key on its badge, its
 area's story as its page, a tick once found and no numbers. A zone with several has a
 **Dungeons and Raids** line, the Quests tab's words, with a card for each under it; the line
-counts them found out of all, opens and closes on a click, and chooses nothing.
-`Data/Dungeons.lua`, kept by hand, marks the 16 areas that are dungeons and raids, each with
-the instance's map the Quests data files its quests under (`dungeon` in
-`Spoken_Quests/Data/Compendium.lua`); `tests/lua/zones_dungeons_test.lua` checks it against
-the areas' stories and the Quests data. Razorfen Downs' story is under Thousand Needles, where
-the wiki has it, and its Classic entrance is in The Barrens: the story, its recording and its
-picture stay keyed `s:1441:razorfen downs`, frozen as every id is, and the tab lists it in The
-Barrens, where `Discovery.lua` also finds it (below). Blackrock Mountain's four, the Stockade,
-Razorfen Kraul, Maraudon, Ahn'Qiraj, Naxxramas and the Hall of Thanes have no area story of
-their own, so they have no card.
+counts them found out of all and opens and closes on a click; chosen, its page counts them in
+their zone and asks for one to be chosen, as the line's page does on Quests and Writings.
+Spoken's `Data/Dungeons.lua`, the one table of dungeons every tab reads, gives each dungeon and
+raid the zone of its entrance and, for the 18 that have one, the area whose story is its card
+(`story`); the instance's map is the one the Quests data files its quests under. It is made from
+`pipelines/lib/dungeons.json` (`make dungeons`), which the quests' and books' exporters read
+too. `Core.lua` lists the dungeons with a story by the zone of their entrance
+(`SpokenZones.Dungeons`); `tests/lua/zones_dungeons_test.lua` checks the table against the
+areas' stories and the Quests data. Forever's City of Dalaran is the `dalaran` area of Alterac
+Mountains, and its Ruins of Lordaeron the Undercity's `ruins of lordaeron`. Razorfen Downs'
+story is under Thousand Needles, where the wiki has it, and its Classic entrance is in The
+Barrens: the story, its recording and its picture stay keyed `s:1441:razorfen downs`, frozen as
+every id is, and the tab lists it in The Barrens, where `Discovery.lua` also finds it (below).
+Blackrock Mountain's four, the Stockade, Razorfen Kraul, Maraudon, Ahn'Qiraj, Naxxramas and the
+Hall of Thanes have no area story of their own, so they have no card.
 
 An area the game puts in another zone than the one its story is kept under is listed, found and
 told where the game has it, by its story's frozen keys: the stories follow the wiki, which files
-some areas by the map after the Cataclysm. Two hand-kept tables say where. `Data/Dungeons.lua`
+some areas by the map after the Cataclysm. Two tables say where. Spoken's `Data/Dungeons.lua`
 lists each dungeon under the zone of its entrance (Razorfen Downs under The Barrens, its story
 under Thousand Needles). `Data/AreaZones.lua` lists the other areas by the zone their story is
 kept under, with `zone`, the zone the Classic clients' AreaTable puts the area in, and `also`,
@@ -657,14 +663,17 @@ reads those, what is explored on every map in `FoundOn`, and any visit recorded 
 own map. An area found on the map its story is kept under is still told there.
 `tests/lua/zones_area_zones_test.lua` checks the table against the stories.
 
-Banners and cards list and open whether or not anything in them is found, as on the Quests
-and Books tabs. A zone's, city's or dungeon's card not yet discovered is greyed, as a card
-with none found is there, and its page, like a continent's with none of its zones found, says
-it is not discovered. An area not yet discovered is a row greyed with a padlock, listed by
-name, and does not open. **Unlock Undiscovered Zones**, in the Compendium section of Spoken's
-page, opens every area and tells every story, and the counts and the greyed cards still say
-what this character has found. The filter menu beside the search box holds
-**Discovered Only**, which leaves out the places not found, and **Voiced Only**, which
+Banners and cards list and open whether or not anything in them is found, exactly as on the
+Quests and Writings tabs. A zone's or city's card is greyed while nothing in it is found (the
+zone itself, its areas, dungeons and city), as a card with nothing started or found in it is
+there, and a dungeon's while it is not discovered. The page of a zone not yet discovered, like a
+continent's with none of its zones found, says so under the line saying where it is and how much
+of it is found, as a quest or a writing not found yet says so on its page. An area not yet
+discovered is a row greyed with a padlock, listed by name, and does not open. **Unlock
+Undiscovered Zones**, in the Compendium section of Spoken's page, opens every area and tells every
+story, and the counts and the greyed cards still say what this character has found. The filter
+menu beside the search box holds **Discovered Only**, which leaves out the zones with nothing found
+and the areas not found, and **Voiced Only**, which
 leaves out what no installed voice pack reads and counts only what it lists; a zone
 stays while an area in it has a recording. A search lists every match, with what holds it
 opened, greyed as browsing lists it. A search naming a zone or a

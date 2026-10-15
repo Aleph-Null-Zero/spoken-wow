@@ -114,7 +114,7 @@ onZone()
 Expect("...a zone's still does", SpokenZonesCharacter.visited["1426"], true)
 
 -- Razorfen Downs: its story kept under Thousand Needles, its entrance in The Barrens, where the
--- game reports it (Data/Dungeons.lua).
+-- game reports it (Spoken's Data/Dungeons.lua).
 function Z:FoundOn(mapID, key) if mapID == 1441 and key == "razorfen downs" then return { 1413 } end return {} end
 Expect("a dungeon whose story is under another zone is not found before it is", Z:IsFound(1441, "razorfen downs"), false)
 SpokenZonesCharacter.visited["1413/razorfen downs"] = true

@@ -11,9 +11,9 @@ Addon = LibStub("AceAddon-3.0"):NewAddon("SpokenGossip", "AceEvent-3.0", "AceTim
 -- The windows this addon reads, the sound each is keyed by and where its text is read from.
 local SPEECH_EVENTS = {
     QUEST_GREETING = { sound = Enums.SoundEvent.QuestGreeting, panel = "QuestFrameGreetingPanel",
-        text = function() return GetGreetingText() end },
+        text = function() return NotSecret(GetGreetingText()) end },
     GOSSIP_SHOW = { sound = Enums.SoundEvent.Gossip, panel = "GossipFrame",
-        text = function() return GetGossipText() end },
+        text = function() return NotSecret(GetGossipText()) end },
 }
 
 local function IsFrameVisible(frame)
@@ -180,7 +180,7 @@ function Addon:RunSelfTest()
         print("|cFFFF4040Spoken Gossip test failed: the known test line was not found in the loaded sound packs.|r")
         return false
     end
-    if Player:EnqueuePrepared(soundData) then
+    if Player:EnqueuePrepared(soundData, true) then
         print("|cFF40FF40Spoken Gossip test started.|r You should hear Thrall.")
         return true
     end
@@ -457,10 +457,11 @@ function Addon:SetupEvents()
     if C_GossipInfo and C_GossipInfo.SelectOption then
         hooksecurefunc(C_GossipInfo, "SelectOption", function(optionID)
             gossipOptionPicked = true
-            if lastGossipOptions then
+            optionID = NotSecret(optionID)
+            if lastGossipOptions and optionID then
                 for _, info in ipairs(lastGossipOptions) do
-                    if info.gossipOptionID == optionID then
-                        selectedGossipOption = info.name
+                    if NotSecret(info.gossipOptionID) == optionID then
+                        selectedGossipOption = NotSecret(info.name)
                         break
                     end
                 end
@@ -470,8 +471,9 @@ function Addon:SetupEvents()
     elseif SelectGossipOption then
         hooksecurefunc("SelectGossipOption", function(index)
             gossipOptionPicked = true
-            if lastGossipOptions then
-                selectedGossipOption = lastGossipOptions[1 + (index - 1) * 2]
+            index = NotSecret(index)
+            if lastGossipOptions and index then
+                selectedGossipOption = NotSecret(lastGossipOptions[1 + (index - 1) * 2])
                 lastGossipOptions = nil
             end
         end)
@@ -599,10 +601,13 @@ end
 function Addon:QUEST_GREETING(event, manual)
     local guid = Utils:GetNPCGUID()
     local targetName = Utils:GetNPCName()
-    local greetingText = GetGreetingText()
+    local greetingText = NotSecret(GetGreetingText())
 
     -- Can happen if the player interacted with an NPC while having main menu or options opened
     if not guid and not targetName then
+        return
+    end
+    if not greetingText then
         return
     end
 
@@ -623,7 +628,7 @@ function Addon:QUEST_GREETING(event, manual)
             self.db.char.hasSeenGossipForNPC[npcKey] = true
         end
     }
-    Player:Enqueue(soundData)
+    Player:Enqueue(soundData, manual)
 end
 
 -- The option the player picked to reach the gossip on screen, as its clip's label. Kept past
@@ -637,7 +642,7 @@ local shownGossipKey
 --- not it is read. At Never it is not, and the next page's label would otherwise be looked up
 --- in this page's predecessor's options.
 function Addon:NoteGossipPage()
-    local pageKey = tostring(Utils:GetNPCGUID() or Utils:GetNPCName()) .. ":" .. tostring(GetGossipText())
+    local pageKey = tostring(Utils:GetNPCGUID() or Utils:GetNPCName()) .. ":" .. tostring(NotSecret(GetGossipText()))
     if not selectedGossipOption and pageKey == shownGossipKey then
         return
     end
@@ -655,10 +660,13 @@ end
 function Addon:GOSSIP_SHOW(event, manual)
     local guid = Utils:GetNPCGUID()
     local targetName = Utils:GetNPCName()
-    local gossipText = GetGossipText()
+    local gossipText = NotSecret(GetGossipText())
 
     -- Can happen if the player interacted with an NPC while having main menu or options opened
     if not guid and not targetName then
+        return
+    end
+    if not gossipText then
         return
     end
 
@@ -680,7 +688,7 @@ function Addon:GOSSIP_SHOW(event, manual)
             self.db.char.hasSeenGossipForNPC[npcKey] = true
         end
     }
-    Player:Enqueue(soundData)
+    Player:Enqueue(soundData, manual)
 end
 
 -- The quest frame closing, the greeting's window among its panels: under Stop When Window Closes

@@ -43,7 +43,7 @@ local function QuestItem()
     if guidType ~= nil and guidType ~= Enums.GUID.Item then
         return nil
     end
-    local questID = GetQuestID and GetQuestID() or 0
+    local questID = GetQuestID and NotSecret(GetQuestID()) or 0
     if not (questID and questID > 0 and Spoken and Spoken.QuestItem) then
         return nil
     end
@@ -63,7 +63,7 @@ end
 
 local function NPCField()
     local id = NPCID()
-    local name = UnitName and UnitName("npc") or nil
+    local name = UnitName and NotSecret(UnitName("npc")) or nil
     if not name then
         name = select(2, QuestItem())
     end
@@ -384,27 +384,27 @@ local function Observations(fields)
     if kind == "creature" then
         add("displays", CachedDisplays())
     end
-    add("sex", UnitSex and UnitSex("npc") or nil)
-    add("creature", UnitCreatureType and UnitCreatureType("npc") or nil)
+    add("sex", UnitSex and NotSecret(UnitSex("npc")) or nil)
+    add("creature", UnitCreatureType and NotSecret(UnitCreatureType("npc")) or nil)
 end
 
 --- Which panel the player is looking at, as the event it would have played.
 local function EventOnScreen()
     if QuestFrameRewardPanel and QuestFrameRewardPanel:IsShown() then
-        return Enums.SoundEvent.QuestComplete, GetRewardText and GetRewardText()
+        return Enums.SoundEvent.QuestComplete, GetRewardText and NotSecret(GetRewardText())
     elseif QuestFrameProgressPanel and QuestFrameProgressPanel:IsShown() then
-        return Enums.SoundEvent.QuestProgress, GetProgressText and GetProgressText()
+        return Enums.SoundEvent.QuestProgress, GetProgressText and NotSecret(GetProgressText())
     elseif QuestFrameDetailPanel and QuestFrameDetailPanel:IsShown() then
-        return Enums.SoundEvent.QuestAccept, GetQuestText and GetQuestText()
+        return Enums.SoundEvent.QuestAccept, GetQuestText and NotSecret(GetQuestText())
     end
     -- The quest API answers for the dialog whichever window draws it.
     local page = Utils:DialogueUIPage()
     if page == "QUEST_COMPLETE" then
-        return Enums.SoundEvent.QuestComplete, GetRewardText and GetRewardText()
+        return Enums.SoundEvent.QuestComplete, GetRewardText and NotSecret(GetRewardText())
     elseif page == "QUEST_PROGRESS" then
-        return Enums.SoundEvent.QuestProgress, GetProgressText and GetProgressText()
+        return Enums.SoundEvent.QuestProgress, GetProgressText and NotSecret(GetProgressText())
     elseif page == "QUEST_DETAIL" then
-        return Enums.SoundEvent.QuestAccept, GetQuestText and GetQuestText()
+        return Enums.SoundEvent.QuestAccept, GetQuestText and NotSecret(GetQuestText())
     end
     return nil, nil
 end
@@ -416,13 +416,13 @@ end
 --- taken at its word.
 local function GossipOnScreen()
     if Utils:DialogueUIPage() == "GOSSIP_SHOW" then
-        return GetGossipText and GetGossipText()
+        return GetGossipText and NotSecret(GetGossipText())
     end
     local frame = _G.GossipFrame
     if frame and frame.IsVisible and not frame:IsVisible() then
         return nil
     end
-    return GetGossipText and GetGossipText()
+    return GetGossipText and NotSecret(GetGossipText())
 end
 
 -- A letter, a digit, or any byte of a multi-byte UTF-8 character. Byte-wise rather than %w,
@@ -553,14 +553,14 @@ function Contribute:Capture()
     local fields = BaseFields()
 
     if event and text and text ~= "" then
-        local questID = GetQuestID and GetQuestID() or 0
+        local questID = GetQuestID and NotSecret(GetQuestID()) or 0
         if questID and questID > 0 then
             fields[#fields + 1] = { "quest", questID }
         end
         fields[#fields + 1] = { "event", EVENT_PATHS[event] }
         fields[#fields + 1] = { "npc", NPCField() }
         Observations(fields)
-        fields[#fields + 1] = { "title", GetTitleText and GetTitleText() or "" }
+        fields[#fields + 1] = { "title", GetTitleText and NotSecret(GetTitleText()) or "" }
         -- The second value is what Gather keys the line on: the quest, the moment and who said
         -- it. The text is left out on purpose -- the same panel read twice is one line.
         return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text)),
@@ -584,7 +584,7 @@ function Contribute:Capture()
         Observations(fields)
         -- An NPC can say several different things, so gossip is keyed on the words as well.
         -- Keyed on the sex too, so a man and a woman saying the same words are two lines.
-        local sex = UnitSex and UnitSex("npc")
+        local sex = UnitSex and NotSecret(UnitSex("npc"))
         return Spoken.Contribute:Envelope("quests", fields, gossip),
             format("g:%d:%d%s", NPCID(), Spoken.Contribute:Checksum(gossip), sex == 3 and ":f" or "")
     end
@@ -602,7 +602,7 @@ end
 local function HasSoundForCurrent()
     local event, text = EventOnScreen()
     if event and text and text ~= "" then
-        return DataModules:PrepareSound({ event = event, questID = GetQuestID and GetQuestID() or 0 })
+        return DataModules:PrepareSound({ event = event, questID = GetQuestID and NotSecret(GetQuestID()) or 0 })
     end
 
     local gossip = GossipOnScreen()
@@ -723,7 +723,7 @@ function Contribute:QuestLogDescription(questID)
             if id == questID then
                 local previous = GetQuestLogSelection()
                 SelectQuestLogEntry(index)
-                local description = GetQuestLogQuestText and GetQuestLogQuestText()
+                local description = GetQuestLogQuestText and NotSecret(GetQuestLogQuestText())
                 SelectQuestLogEntry(previous or 0)
                 return description
             end

@@ -212,6 +212,71 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **The "+N" after a line's title lists the lines waiting** when you point at it, each with who
   says it, in the windows and the subtitles. It does nothing when clicked.
   *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Quests and Readables: a place's page shows its picture.** A zone's, city's
+  or dungeon's page showed only a count and "Choose ..."; it now has the place's picture from Zones
+  above it, and the link to its story. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium: places link to each other's pages.** A zone's, city's, continent's or
+  dungeon's page on Quests and Readables has a link to its story on Places, and a story has links to
+  the quests and the writings of its place, each with its count.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Quests: a quest with no recorded words says so.** The page of a quest that
+  Forever has and the corpus has no lines for yet reads "No words yet: this quest has not been
+  recorded.", in every language, instead of the line for a quest whose text is unknown.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium: Report is on every quest part and every writing, voiced or not.** A line
+  no pack has recorded can be wrong as much as a voiced one, and the report page takes it. Play
+  stays where there is a recording. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Places: a story's page is the Compendium's page.** Play, Report, the title
+  and the line under it, the divider and the words are the ones Quests and Readables use, so a change
+  to one shows on all three. The page looks as before, on the spellbook's parchment in the window
+  and the quest log's beside the map, and Contribute and Open in Azeroth's Compendium stay.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Open in Azeroth's Compendium for writings.** The book frame and DialogueUI's book view have the
+  Compendium's round tome button, as quest windows and the map's story have, opening the Readables
+  tab on that writing with what holds it opened. It shows for writings you have found, or any with
+  Unlock Unfound Readables on. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Places and Readables: shift-click a place's story or a writing to queue it**
+  behind what is playing, as on Quests. The page stays on what you had chosen.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Quests: no group holds a single quest.** CLUCK! is in Westfall and
+  Tirisfal Glades, where its chicken feed is sold, instead of alone under Place Unknown, and The
+  Goddess Provides is in Teldrassil instead of alone under a Night Elf line.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Readables: Holidays and Events holds a line for each event**, Feast of
+  Winter Veil, Harvest Festival, Stranglethorn Fishing Extravaganza and Scourge Invasion, as Quests
+  does, instead of Letters and Notes. It shows once the writings' places are next exported.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Quests: the Scourge's invasion quests are under Scourge Invasion in every
+  language**, not the bare "Invasion" the English and most other clients call them.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Readables: how a writing is had ("Dropped by Defias Messenger (Westfall)")
+  is a part of its own above its words**, under Where to Find It, instead of running into them.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Quests: searching with Voiced Only on no longer asks every quest's voice
+  again on each key you type**, only when a pack loads or you change the voice language.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Places and Readables: a filter that hides the chosen row moves the page**,
+  as on Quests: to the nearest place or line above it that is still listed, or to where you stand.
+  The page used to go on showing a row no longer there. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Readables: the line under a page's title goes up a level on a click**, as
+  on Quests and Places: from a writing to its kind of writing in the place it is listed, then to the
+  zone, the continent. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Places: zones you have not discovered behave as on Quests and Readables.** A
+  zone's card is greyed only while nothing in it is found, Discovered Only leaves out only those,
+  and the page of a zone not yet discovered still says where it is and how much of it you have
+  found. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Places: a Dungeons and Raids line shows a page when chosen**, as on Quests
+  and Readables: how many of the zone's dungeons and raids you have discovered, and a way back to the
+  zone. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium, Places: Forever's City of Dalaran and Ruins of Lordaeron are dungeon
+  cards**, inside Alterac Mountains' card and the Undercity's, with their stories. Quests and
+  Readables name every dungeon from one list, and Quests lists two Dalaran quests with no words yet
+  in Alterac Mountains. *([Nucabe](https://github.com/Nucabe))*
+- **Spoken's settings page is reorganised, and nothing is hidden behind Advanced.** The settings most players change come first: Modules, Narrator Style with its window and subtitle sizes, Language, Sound, While Spoken Reads and Keys. Finer ones follow in named sections (Azeroth's Compendium, Fix a Problem, Look, Words, Playback, Sound Levels While Spoken Reads, Contribute). Theme for Small Window and DialogueUI Theme are one row each, Show Welcome Window is a button on the Modules heading, Reset Positions moved into Fix a Problem, which also holds Show Diagnostics and Report a Problem. Rows that cannot apply are greyed with the reason instead of hidden, and most tooltips that repeated their row's name are gone. Every setting keeps its saved name and value, and no default changed. *([Nucabe](https://github.com/Nucabe))*
+- **Quests, Gossip, Places and Readables pages open with When to Read, then Voice Packs, then Reading History.** A voice pack row is named by its language alone, the voice language and the fallback are set once on Spoken's page (a choice made on the Quests page is copied there the first time), and the developer switches moved to Spoken's Developer page, grouped as Chat Messages and Testing. *([Nucabe](https://github.com/Nucabe))*
+- **Places and Readables keep their settings in Spoken's profile**, so one profile holds everything, and Profiles on Spoken's page copy, switch and reset them with the rest. The first time, what a player had saved is copied into the current profile under the same names; a profile made later starts from the defaults. In every language list a language whose script the game's font cannot draw is named in English. *([Nucabe](https://github.com/Nucabe))*
+- **New commands.** /sp skip, /sp compendium, /sp settings, /sp style, /sp words and /sp rows, and /sp diagnostics, /spz diagnostics and /spw diagnostics print the same diagnostics, which /spw status and a bare /spz used to. /sp help lists them in the settings' own words; the older words (transcript, player, play, pause, stop) still work. There is also a key binding for Open Azeroth's Compendium, and the minimap menu and the small window's menu have the same playback rows. *([Nucabe](https://github.com/Nucabe))*
+- **/spq play, /spq pause and /spq clear are gone**, as are the language rows on the /spq window: /sp and Spoken's page do those, for every module. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.4.0 — 2026-10-12
 

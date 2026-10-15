@@ -1,7 +1,8 @@
 -- The dungeons and raids on the Zones tab of Azeroth's Compendium: each a card inside the card of
 -- the zone of its entrance, under a Dungeons and Raids line where the zone has several, as the
--- Quests tab files their quests. First the data (Data/Dungeons.lua) against the areas' stories and
--- the Quests data, then the list built against the stub client. Run with `make test-player`.
+-- Quests tab files their quests. First the data (Spoken's Data/Dungeons.lua, which every tab reads)
+-- against the areas' stories and the Quests data, then the list built against the stub client. Run
+-- with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
@@ -19,10 +20,15 @@ end
 local data = {}
 local loader = { ShouldLoadLanguage = function() return true end }
 function loader:RegisterLoreData(_, kind, t) data[kind] = t end
-for _, file in ipairs({ "enUS/Zones.lua", "enUS/Subzones.lua", "Dungeons.lua" }) do
+for _, file in ipairs({ "enUS/Zones.lua", "enUS/Subzones.lua" }) do
     assert(loadfile(ZONES .. "Data/" .. file))("Spoken_Places", loader)
 end
-local subzones, dungeons = data.subzones, loader.Dungeons
+dofile(ADDONS .. "Spoken/Data/Dungeons.lua")
+local all = _G.SpokenDungeons.dungeons
+-- By the zone of each's entrance, as Spoken Zones' Core.lua reads them.
+local core = {}
+assert(loadfile(ZONES .. "Core.lua"))("Spoken_Places", core)
+local subzones, dungeons = data.subzones, core.Dungeons
 assert(loadfile(ADDONS .. "Spoken_Quests/Data/Compendium.lua"))()
 local quests = _G.SpokenQuestsCompendium
 
@@ -37,27 +43,40 @@ for zone, list in pairs(dungeons) do
     for _, dungeon in ipairs(list) do
         local name = dungeon.mapID .. "/" .. dungeon.key
         if not (subzones[dungeon.mapID] and subzones[dungeon.mapID][dungeon.key]) then table.insert(missing, name) end
-        if not quests.dungeons[dungeon.dungeon] then table.insert(unknown, name) end
+        if not all[dungeon.dungeon] then table.insert(unknown, name) end
         if questZone[dungeon.dungeon] and questZone[dungeon.dungeon] ~= zone then table.insert(elsewhere, name) end
         if mapped[dungeon.dungeon] then table.insert(twice, name) end
         mapped[dungeon.dungeon] = true
     end
 end
 Expect("every dungeon is an area with a story", table.concat(missing, ", "), "")
-Expect("...named by the instance's map the Quests data has", table.concat(unknown, ", "), "")
+Expect("...named by its instance's map", table.concat(unknown, ", "), "")
 Expect("...under the zone the Quests tab files its quests in", table.concat(elsewhere, ", "), "")
 Expect("...each once", table.concat(twice, ", "), "")
 
--- A dungeon of the Quests data with an area of its name anywhere is one of them.
-local unmapped = {}
-for id, names in pairs(quests.dungeons) do
+-- A dungeon with an area of its name anywhere is one of them.
+local unmapped, filed = {}, {}
+for id, names in pairs(all) do
     local key = Normalise(names[1])
     for mapID, areas in pairs(subzones) do
         if areas[key] and not mapped[id] then table.insert(unmapped, names[1] .. " in " .. mapID) end
     end
 end
 table.sort(unmapped)
-Expect("every dungeon of the Quests data with an area of its name is marked", table.concat(unmapped, ", "), "")
+Expect("every dungeon with an area of its name is marked", table.concat(unmapped, ", "), "")
+-- Every dungeon the Quests data files quests under is one of the table's, in the same zone.
+for _, quest in pairs(quests.quests) do
+    if quest.dungeon and not (all[quest.dungeon] and quest.zones and quest.zones[1] == all[quest.dungeon].zone) then
+        filed[quest.dungeon] = true
+    end
+end
+local strays = {}
+for id in pairs(filed) do table.insert(strays, id) end
+table.sort(strays)
+Expect("every dungeon the Quests data names is in the table, under its entrance's zone", table.concat(strays, ", "), "")
+Expect("Forever's City of Dalaran is Alterac Mountains' Dalaran, and Ruins of Lordaeron the Undercity's",
+    all[2959].zone .. "/" .. all[2959].story[2] .. "|" .. all[2999].zone .. "/" .. all[2999].story[2],
+    "1416/dalaran|1458/ruins of lordaeron")
 Expect("the Sunken Temple is the Temple of Atal'Hakkar's area", dungeons[1435][1].key .. "|" .. dungeons[1435][1].dungeon,
     "temple of atalhakkar|109")
 Expect("Razorfen Downs is listed in The Barrens, its story kept under Thousand Needles",
@@ -122,6 +141,7 @@ function Z:IsVoiceEnabled() return true end
 function Z:HasAudio() return true end
 function Z:IsPlayingLore() return false end
 function Z:IsLoreAtHead() return false end
+function Z:LoreClip() end
 function Z:OnAudioChanged() end
 function Z:OnMapChanged() end
 function Z:CanContribute() return true end
@@ -142,7 +162,7 @@ for _, name in ipairs({ "StoryPlace", "AreaZone", "FoundOn", "AreasIn", "GetSubz
     Z[name] = core[name]
 end
 function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
-for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/ContributeButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupLoreWindow()
@@ -179,8 +199,28 @@ Z:ToggleLoreWindow(); Z:ToggleLoreWindow()
 local listed = 0
 for label in (Shown() .. "|"):gmatch("([^|]*)|") do if label == "Razorfen Downs" then listed = listed + 1 end end
 Expect("at Razorfen Downs' entrance the tab opens on its card, listed once", RowFor("Razorfen Downs").selected and listed, 1)
-Expect("...its story under Thousand Needles", page.title.text .. ": " .. page.body.text.text .. "|" .. page.play.mapID,
+Expect("...its story under Thousand Needles", page.title.text .. ": " .. page.body.text.text .. "|" .. page.target[1],
     "Razorfen Downs: The quilboars' barrows.|1441")
+-- Under a story, a link to each other tab's page of the same place (SpokenCompendium.PlaceLinks): a
+-- tab that has one, here stood in for by a fake. A dungeon is named by its instance map and the
+-- zone it is entered in.
+do
+    local C, opened = _G.SpokenCompendium, {}
+    C:Register("fakeother", { label = "Other", order = 9,
+        placeLink = function(place) return "Other " .. (place.dungeon or place.mapID) end,
+        openPlace = function(place) table.insert(opened, place.mapID .. "/" .. tostring(place.dungeon)) end })
+    Z:RefreshLoreWindow()
+    Expect("a dungeon's story has a link to the other tabs' page of it", #page.links .. "|" .. page.links[1].text.text, "1|Other 129")
+    page.links[1].scripts.OnClick(page.links[1])
+    Expect("...which opens it, by the dungeon and the zone it is entered in", table.concat(opened, ","), "1413/129")
+    Z:ShowLoreFor(1413)
+    Expect("a zone's story has one by the zone", #page.links .. "|" .. page.links[1].text.text, "1|Other 1413")
+    Z:ShowLoreFor(1441, "razorfen downs")
+    C:Register("fakeother", { label = "Other", order = 9, placeLink = function() return nil end, openPlace = function() end })
+    Z:RefreshLoreWindow()
+    Expect("a tab with nothing of the place has no link", page.links[1] == nil or not page.links[1]:IsShown(), true)
+    C.tabs.fakeother = nil
+end
 Z.GetPlayerMapID = function() return 1436 end
 _G.GetSubZoneText = function() return "" end
 Click("Dungeons and Raids")
@@ -213,12 +253,16 @@ Expect("...a line, not a card", RowFor("Dungeons and Raids").row.style .. "|" ..
 Expect("...counting its dungeons found out of all", RowFor("Dungeons and Raids").count.text, "0/2 • 0%")
 Expect("...a story under Thousand Needles counted in the zone of its entrance",
     RowFor("The Barrens").count.text:match("/(%d+)") .. "|" .. RowFor("Thousand Needles").count.text:match("/(%d+)"), "3|1")
-local chosen = page.title.text
 Click("Dungeons and Raids")
 Expect("...opening on a click, a card for each under it by name", Shown(),
     "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Thousand Needles")
 Expect("...one level further in", RowFor("Razorfen Downs").row.style .. "|" .. RowFor("Razorfen Downs").row.nest, "card|2")
-Expect("...the line choosing nothing", page.title.text, chosen)
+Expect("...the line chosen, its page counting its dungeons in its zone",
+    page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
+    "Dungeons and Raids|In The Barrens · 0 of 2 discovered|" .. Z.L.DUNGEONS_PICK)
+Expect("...its row lit as chosen", RowFor("Dungeons and Raids").selected, true)
+page.sub.scripts.OnClick(page.sub)
+Expect("...its line under the title leading to the zone", page.title.text, "The Barrens")
 Click("Razorfen Downs")
 Expect("Razorfen Downs' page is its story", page.title.text .. ": " .. page.body.text.text, "Razorfen Downs: The quilboars' barrows.")
 Expect("...in The Barrens, where its entrance is", page.sub.text.text, "In The Barrens")
@@ -301,9 +345,9 @@ Expect("Razorfen Downs clicked on The Barrens' map: its story beside the map, in
     mapPage.title.text .. ": " .. mapPage.body.text.text .. "|" .. mapPage.sub.text.text,
     "Razorfen Downs: The quilboars' barrows.|In The Barrens")
 Expect("...Play, Report and Open on its story under Thousand Needles",
-    table.concat({ mapPage.play.mapID, mapPage.play.areaKey, mapPage.report.mapID, mapPage.report.areaKey,
+    table.concat({ mapPage.target[1], mapPage.target[2], tostring(mapPage.play:IsShown()), tostring(mapPage.report:IsShown()),
         mapPage.open.mapID, mapPage.open.areaKey }, "|"),
-    "1441|razorfen downs|1441|razorfen downs|1441|razorfen downs")
+    "1441|razorfen downs|true|true|1441|razorfen downs")
 showAll = false
 Z:RefreshPanel()
 Expect("...not discovered while not found at its entrance", mapPage.body.text.text, Z.L.NOT_DISCOVERED)

@@ -48,15 +48,17 @@ for _, child in ipairs(content.children) do
 end
 
 Expect("every section is there", table.concat(headings, "|"),
-    "When to Read|Reading History|Voice Packs|Fix a Problem")
+    "When to Read|Voice Packs|Reading History")
+local W = _G.Spoken:Words()
 Expect("every switch has a row, the module's own first", table.getn(checkboxes) .. " " .. checkboxes[1].text.text,
-    "7 " .. B.L.OPT_PART_SWITCH)
+    "7 " .. W.MODULE_SWITCH)
 local function Button(text)
     for _, button in ipairs(buttons) do if button.text == text then return button end end
 end
 Expect("the voice pack has its Download button", Button("Download") ~= nil, true)
-Expect("Fix a Problem has the same buttons as every module's page",
-    Button("Play a Test Line") ~= nil and Button("Show Diagnostics") ~= nil and Button("Report a Problem") ~= nil, true)
+-- Diagnostics and Report a Problem are on Spoken's page, for every module at once.
+Expect("the voice packs end with Play a Test Line, as on every module's page",
+    tostring(Button("Play a Test Line") ~= nil) .. " " .. tostring(Button("Show Diagnostics") ~= nil), "true false")
 
 local function Labelled(text)
     for _, box in ipairs(checkboxes) do
@@ -99,6 +101,14 @@ if oneLine then
     Expect("...and unticking it is the same as /spw oneline", SpokenBooksSettings.bookAsOneLine, false)
     oneLine:SetChecked(true)
     oneLine.scripts.OnClick(oneLine)
+    -- One line for the whole book is a choice only where the whole book is read.
+    local whole = Labelled("Read Whole Book")
+    whole:SetChecked(false)
+    whole.scripts.OnClick(whole)
+    Expect("...under Read Whole Book, greyed while it is off, saying why", tostring(oneLine.text.anchor.x > whole.text.anchor.x)
+        .. " " .. tostring(oneLine.layoutReason), "true " .. B.L.REASON_WHOLE_BOOK)
+    whole:SetChecked(true)
+    whole.scripts.OnClick(whole)
 end
 
 local close = Labelled("Close Book When Done Reading")
@@ -119,9 +129,16 @@ Expect("/spw gather leaves the player's switch alone", _G.Spoken.Gather:IsEnable
 
 ---------------------------------------------------------------- forgetting what was read
 SpokenBooksCharacter.read = { ["Hillsbrad Town Registry"] = true, ["Jitters' Journal"] = true }
-local forget = Button("Forget What Was Read")
+local forget = Button("Forget Readables Heard")
 Expect("the button says what it does", forget ~= nil, true)
+-- It only matters while a writing is read once.
+B.optionsPage.layout:Refresh()
+Expect("...greyed while Read Only Once is off, saying why", forget.layoutReason, B.L.REASON_READ_ONCE)
+SpokenBooksSettings.readOnce = true
+B.optionsPage.layout:Refresh()
+Expect("...and live with it on", forget.layoutReason, nil)
 forget.scripts.OnClick(forget)
+SpokenBooksSettings.readOnce = false
 
 local left = 0
 for _ in pairs(SpokenBooksCharacter.read) do left = left + 1 end

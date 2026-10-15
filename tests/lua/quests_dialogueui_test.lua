@@ -902,14 +902,14 @@ local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end
 layout:Refresh()
 -- They change DialogueUI's quest window, which is there whatever the narrator style.
-local narratorEnd, section, compendium
+local words, section, playback
 for index, item in ipairs(layout.items) do
-    if item.kind == "groupEnd" and item.group.text == env.L.OPT_NARRATOR_SETTINGS then narratorEnd = index end
+    if item.kind == "section" and item.text == env.L.OPT_TEXT_TITLE then words = index end
     if item.kind == "section" and item.text == VO.L.OPT_SECTION_DIALOGUEUI then section = index end
-    if item.kind == "section" and item.text == env.L.OPT_COMPENDIUM_TITLE then compendium = index end
+    if item.kind == "section" and item.text == env.L.OPT_PLAYBACK_TITLE then playback = index end
 end
-Expect("...in a DialogueUI section after the narrator style's settings", captions:IsShown()
-    and narratorEnd ~= nil and section ~= nil and section > narratorEnd and compendium ~= nil and section < compendium
+Expect("...in a DialogueUI section of its own after Words", captions:IsShown()
+    and words ~= nil and section ~= nil and section > words and playback ~= nil and section < playback
     and layout.items[section].heading ~= nil, true)
 for _, style in ipairs({ "subtitle", "minimal", "classic", "none" }) do
     chosen = style
@@ -924,15 +924,14 @@ for _, style in ipairs({ "subtitle", "minimal", "classic", "dialogueui" }) do
     layout:Refresh()
     Expect("...and is with the " .. style .. " style", showPlayer:IsShown(), true)
 end
--- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked.
-for _, label in ipairs({ env.L.TRANSCRIPT_SHOW, env.L.TRANSCRIPT_HIGHLIGHT, env.L.TRANSCRIPT_TYPEWRITER }) do
-    local tip
-    for _, entry in ipairs(layout.entries) do
-        if entry.label == label then tip = entry.tooltip end
-    end
-    Expect(label .. "'s tooltip names DialogueUI's quest text", tip ~= nil
-        and string.find(tip, "DialogueUI's quest and gossip text", 1, true) ~= nil, true)
+-- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked:
+-- Mark Words in DialogueUI says so, once, rather than each of them.
+local markTip
+for _, entry in ipairs(layout.entries) do
+    if entry.label == VO.L.OPT_DUI_CAPTIONS then markTip = entry.tooltip end
 end
+Expect("Mark Words in DialogueUI's tooltip points to the Words section", markTip ~= nil
+    and string.find(markTip, "as set under Words", 1, true) ~= nil, true)
 chosen = "dialogueui"
 layout:Refresh()
 Expect("...live while DialogueUI is loaded", captions and captions.layoutReason, nil)

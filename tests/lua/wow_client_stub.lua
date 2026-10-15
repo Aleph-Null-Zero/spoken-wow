@@ -92,6 +92,33 @@ function M.HidePanels()
     world.gossipOptions = nil
 end
 
+--- The game's secret values: in an instance or in combat the Forever client hands addons some
+--- values that their code cannot index, compare or join (#357). M.Secrets(a, b, ...) marks those
+--- values secret, issecretvalue answers for them, and indexing a marked string throws, as the
+--- client's does. M.Secrets() with nothing ends it: no issecretvalue, as on a legacy client.
+--- Returns its first value, so a test can mark one where it hands it over.
+local secret = {}
+local stringIndex = getmetatable("").__index
+function M.Secrets(...)
+    secret = {}
+    local count = select("#", ...)
+    if count == 0 then
+        _G.issecretvalue = nil
+        getmetatable("").__index = stringIndex
+        return nil
+    end
+    for i = 1, count do
+        local value = select(i, ...)
+        if value ~= nil then secret[value] = true end
+    end
+    _G.issecretvalue = function(value) return value ~= nil and secret[value] == true end
+    getmetatable("").__index = function(s, key)
+        if secret[s] then error("attempt to index a secret string value", 2) end
+        return stringIndex[key]
+    end
+    return (...)
+end
+
 --- Deliver a client event to every frame registered for it.
 function M.FireEvent(event, ...)
     for _, frame in ipairs(allFrames) do
@@ -1175,7 +1202,8 @@ function M.LoadSpoken(addonDirectory)
     -- Its Contribute, listed by Contribute.xml as Spoken's own is. The button is loaded by the
     -- tests that want it.
     dofile(addonDirectory .. "Dialogue/Contribute.lua")
-    -- Azeroth's Compendium and its text view (Compendium.xml).
+    -- Azeroth's Compendium, its dungeons and its text view (Compendium.xml).
+    dofile(addonDirectory .. "Data/Dungeons.lua")
     dofile(addonDirectory .. "UI/TextView.lua")
     dofile(addonDirectory .. "UI/Compendium.lua")
     local env = _G.SpokenEnv
@@ -1220,7 +1248,7 @@ end
 --- above, from its tree.
 function M.LoadZones(addonDirectory, SpokenZones)
     if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
-    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay" }) do
+    for _, file in ipairs({ "Audio", "UI/ContributeButton", "Autoplay" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
         chunk("Spoken_Places", SpokenZones)
     end

@@ -67,21 +67,15 @@ local SECTIONS = {
 }
 
 -- The tab's own names: for the groups the client has no QuestSort for (a word in the data), and
--- for two whose client name says too little. Special (284) holds Children's Week alone, and
--- Reputation (367) the Commendation Signets' hand-ins.
+-- for three whose client name says too little. Special (284) holds Children's Week alone,
+-- Reputation (367) the Commendation Signets' hand-ins, and Invasion (368) is the Scourge's, as the
+-- German and Chinese clients name it.
 local GROUP_NAMES = {
-    [284] = "QUESTS_GROUP_CHILDRENS_WEEK", [367] = "QUESTS_GROUP_COMMENDATIONS",
+    [284] = "QUESTS_GROUP_CHILDRENS_WEEK", [367] = "QUESTS_GROUP_COMMENDATIONS", [368] = "QUESTS_GROUP_SCOURGE_INVASION",
     winterveil = "QUESTS_GROUP_WINTER_VEIL", hallowsend = "QUESTS_GROUP_HALLOWS_END",
     loveisintheair = "QUESTS_GROUP_LOVE_IS_IN_THE_AIR", harvestfestival = "QUESTS_GROUP_HARVEST_FESTIVAL",
     argentdawn = "QUESTS_GROUP_ARGENT_DAWN", library = "QUESTS_GROUP_LIBRARY",
 }
-
--- The battlegrounds, under a banner of their own after the continents, whatever map the client
--- hangs them under: Forever's newer client puts Alterac Valley in Hillsbrad Foothills, its older
--- one under Azeroth, where no continent's list reached them.
-local BATTLEGROUNDS = { 1459, 1460, 1461, 2524 } -- Alterac Valley, Warsong Gulch, Arathi Basin, Darkspear Islands
-local IS_BATTLEGROUND = {}
-for _, mapID in ipairs(BATTLEGROUNDS) do IS_BATTLEGROUND[mapID] = true end
 
 local function SectionOf(sort)
     for _, section in ipairs(SECTIONS) do
@@ -298,11 +292,11 @@ end
 -- Set while the cards under a banner whose name the search matches are built: each is listed,
 -- closed or open as the player left it, and opens and closes on a click as it does unsearched. A
 -- continent's every quest at once would be too long a list to read.
-local shut = false
+local asLeft = false
 
 -- Whether a search opens the cards being built.
 local function Searched()
-    return filter ~= "" and not shut
+    return filter ~= "" and not asLeft
 end
 
 -- What a search opened and the player closed again with a click, by row; a new search opens all.
@@ -322,17 +316,17 @@ end
 
 -- While a search opens everything it finds, a click on an open card closes it, and opens it again.
 local function SearchFold(row)
-    if filter == "" or row.shut or not row.closeKey then return false end
+    if filter == "" or row.asLeft or not row.closeKey then return false end
     searchClosed[row.closeKey] = not searchClosed[row.closeKey] or nil
     return true
 end
 
 -- As Whole, for a banner: its cards listed, each as the player left it.
-local function Listed(named, build)
-    local before = shut
-    shut = before or named
+local function AsLeft(named, build)
+    local before = asLeft
+    asLeft = before or named
     local rows = Whole(named, build)
-    shut = before
+    asLeft = before
     return rows
 end
 
@@ -400,7 +394,7 @@ local function ZonesOn(continent)
     local out, listed = {}, {}
     for mapID in pairs(Index().zones) do
         local zone = C.CITY_IN[mapID] or mapID
-        if not listed[zone] and not IS_BATTLEGROUND[zone] and C.ContinentOf(zone) == continent then
+        if not listed[zone] and not C.IS_BATTLEGROUND[zone] and C.ContinentOf(zone) == continent then
             listed[zone] = true
             table.insert(out, zone)
         end
@@ -414,7 +408,7 @@ end
 local function LooseZones()
     local out = {}
     for mapID in pairs(Index().zones) do
-        if not C.CITY_IN[mapID] and not IS_BATTLEGROUND[mapID] and not C.ContinentOf(mapID) then
+        if not C.CITY_IN[mapID] and not C.IS_BATTLEGROUND[mapID] and not C.ContinentOf(mapID) then
             table.insert(out, mapID)
         end
     end
@@ -426,7 +420,7 @@ end
 -- Forever's Darkspear Islands on Era.
 local function Battlegrounds()
     local out = {}
-    for _, mapID in ipairs(BATTLEGROUNDS) do
+    for _, mapID in ipairs(C.BATTLEGROUNDS) do
         if Index().zones[mapID] then table.insert(out, mapID) end
     end
     table.sort(out, ByName)
@@ -591,9 +585,6 @@ local function Shows(id)
         and (not Filtering() or Matches(Title(id)) or Matches(english))
 end
 
--- A dungeon's or a raid's card's badge: a key, as to a door below.
-local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
-
 -- A card's or a line's numbers: the completed (a card's share and its bar) out of all, and how
 -- many more are in progress. A card's badge: a zone's painting, a dungeon's key. A line has none.
 local function Card(item, found, total, going)
@@ -604,11 +595,11 @@ local function Card(item, found, total, going)
     item.style = place and "card" or "group"
     -- `found`, completed or under way, is what opens: a chain with one quest started has that to show.
     item.count, item.total, item.goingCount, item.found = done, total, going, found
-    item.shut = shut
+    item.asLeft = asLeft
     if item.kind == "zone" then
         if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
-    elseif item.kind == "dungeons" or item.kind == "dungeon" then
-        item.icon = DUNGEON_ICON
+    elseif (item.kind == "dungeons" or item.kind == "dungeon") and Spoken and Spoken.DungeonIcon then
+        item.icon, item.iconCrop = Spoken:DungeonIcon(item.dungeon)
     end
     item.ratio = total > 0 and done / total or 0
     item.tick = total > 0 and done == total
@@ -698,10 +689,7 @@ end
 
 -- A dungeon's or a raid's name, as the client's Map table has it in this client's language.
 local function DungeonName(id)
-    local data = _G.SpokenQuestsCompendium
-    local names = data and data.dungeons and data.dungeons[id]
-    if not names then return tostring(id) end
-    return names[Locale()] or names[1]
+    return C.DungeonName(id)
 end
 
 -- A zone's own quests, and its dungeons' and raids' by dungeon (`dungeon` in the data: the quest
@@ -762,7 +750,7 @@ local function DungeonRows(mapID, byDungeon, nest)
                 return rows
             end)
             if not Unlisted(f, t) and not (Filtering() and #leaves == 0) then
-                for _, row in ipairs(Rows(Card({ kind = "dungeon", key = dkey, ids = ids, label = name,
+                for _, row in ipairs(Rows(Card({ kind = "dungeon", key = dkey, dungeon = dungeon, ids = ids, label = name,
                     nest = nest + 1, open = #leaves > 0 }, f, t, g), leaves, "d" .. dkey)) do
                     table.insert(out, row)
                 end
@@ -772,6 +760,7 @@ local function DungeonRows(mapID, byDungeon, nest)
     end)
     if Filtering() and #inside == 0 then return {} end
     return Rows(Card({ kind = "dungeons", key = key, ids = all, label = label, nest = nest, place = #dungeons == 1,
+        dungeon = #dungeons == 1 and dungeons[1] or nil,
         open = #inside > 0 }, found, total, going), inside, "d" .. key)
 end
 
@@ -836,7 +825,7 @@ local function SectionRows(section)
     local found, total, going = Tally(set)
     if total == 0 or Unlisted(found, total) then return {} end
     local searching = filter ~= ""
-    local inside = Listed(searching and Matches(L[section.label]), function()
+    local inside = AsLeft(searching and Matches(L[section.label]), function()
         local out = {}
         local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
         if searching or sectionOpen[section.key] then
@@ -869,7 +858,7 @@ local function ZoneBanner(key, label, zones)
     local found, total, going = Tally(set)
     if total == 0 or Unlisted(found, total) then return {} end
     local searching = filter ~= ""
-    local inside = Listed(searching and Matches(label), function()
+    local inside = AsLeft(searching and Matches(label), function()
         local out = {}
         if searching or sectionOpen[key] then
             for _, mapID in ipairs(zones) do
@@ -897,13 +886,13 @@ local function BuildRows()
     local out = {}
     local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
     local searching = filter ~= ""
-    whole, shut = false, false
+    whole, asLeft = false, false
     for _, continent in ipairs(Continents()) do
         local zones = ZonesOn(continent)
         local set = {}
         for _, mapID in ipairs(zones) do QuestsIn(mapID, set) end
         local found, total, going = Tally(set)
-        local rows = Listed(searching and Matches(C.MapName(continent)), function()
+        local rows = AsLeft(searching and Matches(C.MapName(continent)), function()
             local out = {}
             if searching or continentOpen[continent] then
                 for _, mapID in ipairs(zones) do
@@ -1005,7 +994,7 @@ end
 
 --- Keep what the open quest window shows, in this client's language.
 function QuestsTab:Keep(moment, text, title)
-    local id = GetQuestID and GetQuestID()
+    local id = GetQuestID and VO.NotSecret(GetQuestID())
     local kept = Kept()
     if not kept or not id or id == 0 or not Quests()[id] then return end
     kept[id] = kept[id] or {}
@@ -1093,7 +1082,7 @@ local PLAY = {
         for _, moment in ipairs(MOMENTS) do
             if Shows(id, moment) and Voiced(id, moment) then
                 local soundData = SoundData(id, moment, "Azeroth's Compendium")
-                if queued then VO.Player:Enqueue(soundData) else VO.Player:PlayNow(soundData) end
+                if queued then VO.Player:Enqueue(soundData, true) else VO.Player:PlayNow(soundData) end
                 return
             end
         end
@@ -1191,7 +1180,7 @@ local function FaceSpeaker(id, moment)
 end
 
 -- A quest's words in parts, the offer and the hand-in, each headed by the face of who says it
--- beside their name over the part's name, with Play and Report for that part where a pack voices
+-- beside their name over the part's name, with Report for every part and Play where a pack voices
 -- it; the hand-in only where it Shows. A part a pack voices whose words are not known says so,
 -- and is there to be played and reported. nil with no words and nothing voiced.
 local function Parts(id)
@@ -1206,7 +1195,7 @@ local function Parts(id)
             local list = {}
             if buttons then
                 buttons.play.questID, buttons.report.questID = id, id
-                buttons.report:SetShown(voiced and not reportsHidden)
+                buttons.report:SetShown(not reportsHidden)
                 buttons.play:SetShown(voiced)
                 PaintPartPlay(buttons.play)
                 list = { buttons.report, buttons.play }
@@ -1221,9 +1210,19 @@ local function Parts(id)
     return #parts > 0 and parts or nil
 end
 
--- Asked once a refresh: Voiced Only asks it of every quest under every banner, and the packs
--- do not change while the list is drawn.
-local voicedSeen = {}
+-- Asked once while the packs and the voice languages stay as they are: Voiced Only asks it of every
+-- quest under every banner, on every keystroke of a search. A pack loading, or a language chosen on
+-- Spoken's page, voices other quests and asks again (Voicing).
+local voicedSeen, voicedFor = {}, nil
+
+-- What decides which quests a pack voices: the packs loaded and the languages a line is looked up in.
+local function Voicing()
+    local packs = 0
+    for _ in VO.DataModules:GetModules() do packs = packs + 1 end
+    local order = VO.Language and VO.Language.ResolutionOrder and VO.Language:ResolutionOrder() or {}
+    return packs .. ":" .. table.concat(order, ",")
+end
+
 AnyVoiced = function(id)
     if voicedSeen[id] == nil then voicedSeen[id] = PLAY.has(id) end
     return voicedSeen[id]
@@ -1279,7 +1278,7 @@ local function Holder(chosen)
             local _, byDungeon = ZoneParts(mapID)
             local several = next(byDungeon, next(byDungeon)) ~= nil
             local key = several and DungeonKey(mapID, dungeon) or DungeonKey(mapID)
-            return { dungeon = key, ids = byDungeon[dungeon] or {}, label = DungeonName(dungeon) }
+            return { dungeon = key, ids = byDungeon[dungeon] or {}, label = DungeonName(dungeon), map = dungeon }
         end
         local sort = where:match("^s(.+)$")
         if sort == "elsewhere" then return { group = "elsewhere" } end
@@ -1290,9 +1289,9 @@ local function Holder(chosen)
     if chosen.sort then return { section = SectionOf(chosen.sort) } end
     if chosen.group == "elsewhere" then return { section = "other" } end
     local mapID = chosen.mapID
-    if not mapID or mapID == 1414 or mapID == 1415 then return nil end
+    if not mapID or C.IsContinent(mapID) then return nil end
     if C.CITY_IN[mapID] then return { mapID = C.CITY_IN[mapID] } end
-    if IS_BATTLEGROUND[mapID] then return { section = "battlegrounds" } end
+    if C.IS_BATTLEGROUND[mapID] then return { section = "battlegrounds" } end
     local continent = C.ContinentOf(mapID)
     if continent then return { mapID = continent } end
     return { section = "lands" }
@@ -1359,15 +1358,19 @@ local function ShowEntry()
             return
         end
         -- Play and Report on each part's heading, not the page's: each part is said at its own time.
+        -- A quest Forever has that the corpus has no lines for yet says so, not that none are known.
+        local record = Quests()[id]
         page:Show({ title = Title(id), subtitle = Subtitle(id), onSubtitle = onSubtitle, parts = Parts(id),
-            text = L.QUEST_NO_TEXT })
+            text = record and record.notext and L.QUEST_NO_WORDS_YET or L.QUEST_NO_TEXT })
         return
     end
     if selection.dungeon then
         -- In the zone of its entrance, whose card holds it.
         local zone = tonumber(selection.dungeon:match("^d(%d+)"))
+        local place = zone and selection.map and { mapID = zone, dungeon = selection.map } or nil
         page:Show({ title = selection.label, subtitle = Line(SetOf(selection.ids), zone and C.MapName(zone), true),
-            onSubtitle = onSubtitle, text = L.QUESTS_PICK })
+            onSubtitle = onSubtitle, text = L.QUESTS_PICK,
+            links = place and C.PlaceLinks("quests", place) or nil, picture = place and C.PlacePicture(place) or nil })
         return
     end
     local banner = selection.section and ZONE_BANNERS[selection.section]
@@ -1399,13 +1402,14 @@ local function ShowEntry()
         return
     end
     local set = {}
-    if selection.mapID == 1414 or selection.mapID == 1415 then
+    if C.IsContinent(selection.mapID) then
         for _, mapID in ipairs(ZonesOn(selection.mapID)) do QuestsIn(mapID, set) end
     else
         QuestsIn(selection.mapID, set)
     end
     page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, ZoneHolderName(up), true),
-        onSubtitle = onSubtitle, text = L.QUESTS_PICK })
+        onSubtitle = onSubtitle, text = L.QUESTS_PICK, links = C.PlaceLinks("quests", { mapID = selection.mapID }),
+        picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
 --------------------------------------------------------------------------------
@@ -1420,18 +1424,18 @@ local function OnClick(row)
     if row.kind == "quest" then
         selection = { quest = row.quest }
     elseif row.kind == "chain" then
-        if not SearchFold(row) and (filter == "" or row.shut) then chainOpen[row.key] = not chainOpen[row.key] end
+        if not SearchFold(row) and (filter == "" or row.asLeft) then chainOpen[row.key] = not chainOpen[row.key] end
         selection = { chain = row.key, ids = row.ids, first = row.first, nth = row.nth, where = row.where }
     elseif row.kind == "dungeons" or row.kind == "dungeon" then
-        if not SearchFold(row) and (filter == "" or row.shut) then dungeonOpen[row.key] = not dungeonOpen[row.key] end
-        selection = { dungeon = row.key, ids = row.ids, label = row.label }
+        if not SearchFold(row) and (filter == "" or row.asLeft) then dungeonOpen[row.key] = not dungeonOpen[row.key] end
+        selection = { dungeon = row.key, ids = row.ids, label = row.label, map = row.dungeon }
     elseif row.kind == "section" then
         if filter == "" then sectionOpen[row.key] = not sectionOpen[row.key] end
         selection = { section = row.key }
     elseif row.kind == "sort" or row.kind == "elsewhere" then
-        if not SearchFold(row) and (filter == "" or row.shut) then groupOpen[row.key] = not groupOpen[row.key] end
+        if not SearchFold(row) and (filter == "" or row.asLeft) then groupOpen[row.key] = not groupOpen[row.key] end
         selection = row.kind == "sort" and { sort = row.key } or { group = "elsewhere" }
-    elseif filter ~= "" and not row.shut then
+    elseif filter ~= "" and not row.asLeft then
         SearchFold(row)
         selection = { mapID = row.mapID }
     elseif row.kind == "continent" then
@@ -1445,38 +1449,14 @@ local function OnClick(row)
     QuestsTab:Refresh()
 end
 
--- The zone the player stands in that has quests listed, walking up from an inn's or a cave's
--- map, or nil.
+-- The zone the player stands in that has quests listed, or nil.
 local function PlayerZone()
-    local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
-    local steps = 0
-    while map and steps < 8 do
-        if Index().zones[map] then return map end
-        local info = C_Map.GetMapInfo and C_Map.GetMapInfo(map)
-        map, steps = info and info.parentMapID, steps + 1
-    end
+    return C.PlayerZone(function(map) return Index().zones[map] ~= nil end)
 end
 
--- Open what holds a zone's card: the battlegrounds' banner, its continent's, or the banner of the
--- zones on none.
-local function OpenAround(zone)
-    if IS_BATTLEGROUND[zone] then
-        sectionOpen.battlegrounds = true
-        return
-    end
-    local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
-    if continent then
-        continentOpen[continent] = true
-    else
-        sectionOpen.lands = true
-    end
-end
-
--- Open a zone's card and, for a city, the zone's around it, leaving the others as they are.
-local function OpenZone(zone)
-    openZones[zone] = true
-    if C.CITY_IN[zone] then openZones[C.CITY_IN[zone]] = true end
-end
+-- Open what holds a zone's card, and the card.
+local function OpenAround(zone) C.OpenAround(zone, continentOpen, sectionOpen) end
+local function OpenZone(zone) C.OpenZone(zone, openZones) end
 
 -- Whether the list shows what holds `set` ({ [id] = true }): Started Only leaves out one with
 -- nothing started, Voiced Only one with nothing voiced.
@@ -1494,15 +1474,11 @@ end
 
 -- The continent the player is on where the list shows it, else the first it shows.
 local function PlayerContinent()
-    local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
     local listed = {}
     for _, continent in ipairs(Continents()) do
         if SetListed(ContinentSet(continent)) then table.insert(listed, continent) end
     end
-    for _, continent in ipairs(listed) do
-        if map == continent or (map and C.ContinentOf(map) == continent) then return continent end
-    end
-    return listed[1]
+    return C.PlayerContinent(listed)
 end
 
 -- Choose where the player stands: their zone, opened, else their continent, as Zones and Books
@@ -1534,7 +1510,7 @@ local function SelectionListed(chosen)
         for _, mapID in ipairs(banner.zones()) do QuestsIn(mapID, set) end
         return SetListed(set)
     end
-    if chosen.mapID == 1414 or chosen.mapID == 1415 then return SetListed(ContinentSet(chosen.mapID)) end
+    if C.IsContinent(chosen.mapID) then return SetListed(ContinentSet(chosen.mapID)) end
     return SetListed(QuestsIn(chosen.mapID))
 end
 
@@ -1552,31 +1528,18 @@ local function OnHidden()
     QuestsTab:Refresh(true)
 end
 
--- The chosen row brought into view. The client's scroll frame takes an offset only within the
--- range it last measured, and a list drawn for the first time has none measured yet; nor has the
--- frame a height until the window is first laid out. Either left the list at its top, the chosen
--- zone off screen: the range is measured now, and the row brought into view again a frame later.
-local function ScrollToChosen(items)
-    if list.scroll.UpdateScrollChildRect then list.scroll:UpdateScrollChildRect() end
-    list:ScrollToSelection(items)
-    if C_Timer and C_Timer.After then
-        C_Timer.After(0, function()
-            if filter == "" and list.items then list:ScrollToSelection(list.items) end
-        end)
-    end
-end
-
 function QuestsTab:Refresh(scrollToSelection)
     if not list then return end
     ReadCompleted()
     ReadLog()
-    voicedSeen = {}
+    local voicing = Voicing()
+    if voicing ~= voicedFor then voicedSeen, voicedFor = {}, voicing end
     if not selection then
         LandOnPlayer()
         scrollToSelection = true
     end
     local items = list:Render()
-    if scrollToSelection and selection then ScrollToChosen(items) end
+    if scrollToSelection and selection then list:ScrollToChosen(items) end
     ShowEntry()
 end
 
@@ -1602,16 +1565,7 @@ local function Build(panel)
     panel.Refresh = function() QuestsTab:Refresh() end
     panel.inset, panel.filterButton, panel.filterMenu, panel.noMatch = list.inset, list.filterButton, list.filterMenu, list.noMatch
 
-    local _, right = C.Margins()
-    local window = C:Window()
-    local ok, pageInset = pcall(CreateFrame, "Frame", nil, panel, "InsetFrameTemplate")
-    if not ok or not pageInset then pageInset = CreateFrame("Frame", nil, panel) end
-    pageInset:SetPoint("TOPLEFT", list.inset, "TOPRIGHT", 6, 38)
-    pageInset:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -right, window.templated and 6 or 12)
-    panel.pageInset = pageInset
-    local holder = CreateFrame("Frame", nil, pageInset)
-    holder:SetPoint("TOPLEFT", pageInset, "TOPLEFT", 3, -3)
-    holder:SetPoint("BOTTOMRIGHT", pageInset, "BOTTOMRIGHT", -3, 3)
+    local holder = C.PageHolder(panel, list)
     -- No Play in the page's corner: each part is said at its own time, and has its own.
     page = C.NewPage(holder, ns)
     -- The parts' Play show Stop while their part plays, and their Report follows Hide Report Buttons.
@@ -1626,9 +1580,6 @@ local function Build(panel)
     -- Text Size, on Spoken's page, fires no game event: the page is drawn again at the new size.
     if Spoken and Spoken.RegisterCallback then
         Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", function() ShowEntry() end)
-    end
-    if type(pageInset.NineSlice) == "table" and pageInset.NineSlice.SetFrameLevel then
-        pageInset.NineSlice:SetFrameLevel(holder:GetFrameLevel() + 5)
     end
     panel.page = page
     QuestsTab.panel = panel
@@ -1699,6 +1650,11 @@ function QuestsTab:Open(questID)
         -- Opened from the minimap, on where the player stands now.
         selection = nil
     end
+    self:Reveal()
+end
+
+--- Show the window on the Quests tab with nothing searched, on what is chosen.
+function QuestsTab:Reveal()
     if list then
         list:ClearSearch()
         filter = ""
@@ -1708,18 +1664,62 @@ function QuestsTab:Open(questID)
     self:Refresh(true)
 end
 
+--- The quests of a place, for another tab's link (SpokenCompendium.PlaceLinks): a zone, a city or
+--- a continent by its map, a dungeon by its instance map and the zone it is entered in.
+local function PlaceSet(place)
+    local set = {}
+    if place.dungeon then
+        local _, byDungeon = ZoneParts(place.mapID)
+        for _, id in ipairs(byDungeon[place.dungeon] or {}) do set[id] = true end
+    elseif C.IsContinent(place.mapID) then
+        for _, mapID in ipairs(ZonesOn(place.mapID)) do QuestsIn(mapID, set) end
+    else
+        QuestsIn(place.mapID, set)
+    end
+    return set
+end
+
+--- Open the quests on a place, as another tab's link asks: its page, with what holds it opened.
+function QuestsTab:OpenPlace(place)
+    if not C then return end
+    local zone = place.mapID
+    if place.dungeon then
+        local _, byDungeon = ZoneParts(zone)
+        local ids = byDungeon[place.dungeon]
+        if not ids then return end
+        -- A zone with one dungeon has that dungeon's card under the zone's own key (DungeonRows).
+        local several = next(byDungeon, next(byDungeon)) ~= nil
+        OpenZone(zone)
+        OpenAround(zone)
+        dungeonOpen[DungeonKey(zone)] = true
+        if several then dungeonOpen[DungeonKey(zone, place.dungeon)] = true end
+        selection = { dungeon = several and DungeonKey(zone, place.dungeon) or DungeonKey(zone), ids = ids,
+            label = DungeonName(place.dungeon), map = place.dungeon }
+    else
+        selection = { mapID = zone }
+        if C.IsContinent(zone) then
+            continentOpen[zone] = true
+        else
+            OpenZone(zone)
+            OpenAround(zone)
+        end
+    end
+    self:Reveal()
+end
+
 local function Visible()
     return QuestsTab.panel ~= nil and QuestsTab.panel:IsVisible()
 end
 
 local function OnEvent(_, event, a)
+    a = VO.NotSecret(a)
     if event == "QUEST_DETAIL" then
-        QuestsTab:Keep("accept", GetQuestText and GetQuestText(), GetTitleText and GetTitleText())
+        QuestsTab:Keep("accept", GetQuestText and VO.NotSecret(GetQuestText()), GetTitleText and VO.NotSecret(GetTitleText()))
     elseif event == "QUEST_PROGRESS" then
         -- Its title alone: the page has no progress part to show its words.
-        QuestsTab:Keep("progress", nil, GetTitleText and GetTitleText())
+        QuestsTab:Keep("progress", nil, GetTitleText and VO.NotSecret(GetTitleText()))
     elseif event == "QUEST_COMPLETE" then
-        QuestsTab:Keep("complete", GetRewardText and GetRewardText(), GetTitleText and GetTitleText())
+        QuestsTab:Keep("complete", GetRewardText and VO.NotSecret(GetRewardText()), GetTitleText and VO.NotSecret(GetTitleText()))
     elseif event == "QUEST_TURNED_IN" then
         if Visible() then QuestsTab:Refresh() end
     elseif event == "QUEST_LOG_UPDATE" or event == "QUEST_ACCEPTED" or event == "QUEST_REMOVED" then
@@ -1754,6 +1754,12 @@ function QuestsTab:Setup()
         order = 0,
         build = Build,
         open = function() QuestsTab:Open() end,
+        -- The other tabs' links to a place's quests.
+        placeLink = function(place)
+            local _, total = Tally(PlaceSet(place))
+            return total > 0 and L.PLACE_LINK_QUESTS_FMT:format(total) or nil
+        end,
+        openPlace = function(place) QuestsTab:OpenPlace(place) end,
         -- Come back to from another tab: where the player stands now, unless they chose here.
         onShow = function() if selection == landed then selection = nil end end,
         enabled = function() return VO.Addon:IsPartOn() end,

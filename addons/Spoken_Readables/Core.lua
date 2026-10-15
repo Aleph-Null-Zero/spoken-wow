@@ -70,12 +70,24 @@ function SpokenBooks:ResetOptions()
 	end
 end
 
-function SpokenBooks:InitDB()
+local function FillDefaults()
 	SpokenBooksSettings = SpokenBooksSettings or {}
 	for key, value in pairs(defaults) do
 		if SpokenBooksSettings[key] == nil then
 			SpokenBooksSettings[key] = value
 		end
+	end
+end
+
+function SpokenBooks:InitDB()
+	FillDefaults()
+	-- The settings live in Spoken's profile, copied from SpokenBooksSettings the first time. The
+	-- table bound is the one read from now on, and again whenever another profile is chosen.
+	if Spoken and Spoken.BindModuleSettings then
+		Spoken:BindModuleSettings("Writings", SpokenBooksSettings, function(settings)
+			SpokenBooksSettings = settings
+			FillDefaults()
+		end)
 	end
 
 	-- What has been heard is the character's, not the account's: the settings above are how
@@ -98,6 +110,10 @@ end
 --- A setting by name.
 function SpokenBooks:Get(key)
 	return SpokenBooksSettings and SpokenBooksSettings[key]
+end
+
+function SpokenBooks:Set(key, value)
+	if SpokenBooksSettings then SpokenBooksSettings[key] = value end
 end
 
 --- Whether this character has already been read `book` -- the book key from PlaceOf, not a
@@ -209,6 +225,8 @@ function SpokenBooks:SetupSource()
 		-- A page whose file the client cannot find (a pack updated without a restart, a partial
 		-- install) is refused at the door, so the book reads on from the next page.
 		testBeforeQueue = true,
+		-- Printed after Spoken's own by its Show Diagnostics.
+		diagnostics = function() SpokenBooks:ShowStatus() end,
 		-- What Spoken's settings show on this part's card: which voice packs are installed.
 		packs = function()
 			local names = {}

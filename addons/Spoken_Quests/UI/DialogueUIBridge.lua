@@ -724,7 +724,7 @@ function Bridge:DrawPlayButton()
     if r.open then
         local page = self:Page()
         local id = (page == "QUEST_DETAIL" or page == "QUEST_PROGRESS" or page == "QUEST_COMPLETE")
-            and GetQuestID and GetQuestID() or nil
+            and GetQuestID and NotSecret(GetQuestID()) or nil
         local tab = rawget(VoiceOver, "QuestsTab")
         local shown = tab ~= nil and tab:Has(id)
         r.open.questID = shown and id or nil

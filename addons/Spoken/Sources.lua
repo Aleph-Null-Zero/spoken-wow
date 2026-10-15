@@ -50,6 +50,8 @@ function Sources:Register(key, info)
         -- A part's settings kept in AceDB profiles: a function returning its AceDB object, so
         -- Spoken's own Profiles section switches it with the player's (Options:ProfileDBs).
         profiles = info.profiles,
+        -- What the module prints for a report, after Spoken's own (Options:ShowDiagnostics).
+        diagnostics = info.diagnostics,
         gates = {},
     }, SourceMethods)
     self.byKey[key] = source
@@ -130,7 +132,12 @@ local function Noted(clip, how, result, why)
     return result, why
 end
 
-function SourceMethods:Enqueue(clip)
+--- `asked`: the player asked for this line (a click, a command), so it is queued even where
+--- Spoken reads nothing by itself (Addon:ReadsHere).
+function SourceMethods:Enqueue(clip, asked)
+    if not asked and not Addon:ReadsHere() then
+        return Noted(clip, "queue", nil, "Read in Battlegrounds is off")
+    end
     return Noted(clip, "queue", SoundQueue:Add(clip, self, false))
 end
 

@@ -98,7 +98,7 @@ Spoken = _G.Spoken
 Expect("with DialogueUI it is a fifth tile, after the large window",
     table.concat(env.Options:Styles(), ","), "subtitle,minimal,classic,dialogueui,none")
 Expect("...named, described and drawn", env.Options.STYLE_LABELS.dialogueui ~= nil and env.Options.STYLE_TEXTS.dialogueui ~= nil
-    and env.Options.STYLE_TIPS.dialogueui ~= nil and env.Options.SKETCHES.dialogueui ~= nil, true)
+    and env.Options.SKETCHES.dialogueui ~= nil, true)
 SlashCmdList.SPOKEN("player dialogueui")
 local Skin, T = env.DialogueUIPlayer, env.Transcript
 Expect("/spoken player dialogueui draws it", Spoken:GetPlayerStyle(), "dialogueui")
@@ -150,12 +150,23 @@ for _, page in ipairs(env.Options.pages or {}) do
     if page.name == env.L.OPT_STYLE_DIALOGUEUI then listed = true end
 end
 Expect("the DialogueUI settings are on Spoken's page, with no page of their own", listed, false)
-Expect("the window's size is the player's Window Size", Shown(main, env.L.OPT_SCALE, env.L.OPT_SCALE_TIP), true)
-Expect("...its words' size and lines theirs", Shown(main, env.L.TRANSCRIPT_SIZE, env.L.TRANSCRIPT_SIZE_TIP)
+Expect("the window's size is the player's Window Size", Shown(main, env.L.OPT_SCALE), true)
+Expect("...its words' size and rows theirs", Shown(main, env.L.TRANSCRIPT_SIZE)
     and Shown(main, env.L.TRANSCRIPT_LINES), true)
 Expect("...and how the words scroll too", Shown(main, env.L.TRANSCRIPT_SCROLL), true)
-Expect("beside them, the window's theme", Live(env.L.OPT_DUI_FOLLOW_THEME), true)
-Expect("...and Fit to the Words", Live(env.L.OPT_DUI_FIT_TEXT), true)
+-- Two Theme rows share the name, the Small Window's and this window's: this one also offers
+-- DialogueUI's own.
+local function ThemeRow()
+    for _, entry in ipairs(main.entries) do
+        local values = entry.frame.layoutValues
+        if entry.label == env.L.OPT_DUI_THEME and type(values) == "table" and values[1] == "follow" then
+            return entry.frame
+        end
+    end
+end
+local theme = ThemeRow()
+Expect("beside them, the window's Theme", theme ~= nil and theme:IsShown() and theme.layoutReason == nil, true)
+Expect("...and Fit Window to Words", Live(env.L.OPT_DUI_FIT_TEXT), true)
 -- A note is not indexed by label: found by what it says.
 local function NoteShown(text)
     for _, item in ipairs(main.items) do
@@ -166,24 +177,40 @@ local function NoteShown(text)
     return false
 end
 Expect("...and the wheel's shortcuts", NoteShown(env.L.WINDOW_WHEEL_HINT), true)
-Expect("no Hide Portrait for it: its header has the face's socket built in", Shown(main, env.L.OPT_HIDE_PORTRAIT), false)
+-- Hide Portrait is two rows, the subtitles' under Show Name and Title and the windows' own.
+local function AnyShown(label)
+    for _, entry in ipairs(main.entries) do
+        if entry.label == label and entry.frame:IsShown() then return true end
+    end
+    return false
+end
+Expect("no Hide Portrait for it: its header has the face's socket built in", AnyShown(env.L.OPT_HIDE_PORTRAIT), false)
 env.Addon.db.profile.Frame.HidePortrait = true
 Skin:ConfigurePortrait()
 Expect("...so the face stays with Hide Portrait set for another style", Skin.portrait:IsShown(), true)
 env.Addon.db.profile.Frame.HidePortrait = false
 Skin:ConfigurePortrait()
-Expect("the theme waits on not following DialogueUI's", Row(main, env.L.OPT_DUI_THEME).layoutReason, env.L.REASON_DUI_FOLLOW)
+-- One row for what is kept as two settings: following DialogueUI's theme, or a theme of its own.
+local panelSettings = env.Addon.db.profile.Frame.DialogueUI
+Expect("the Theme row starts the same as DialogueUI's", theme.layoutRead(), "follow")
+theme.layoutChoose(2)
+Expect("...and choosing Dark stops following it", tostring(panelSettings.FollowTheme) .. " " .. tostring(panelSettings.Theme),
+    "false 2")
+theme.layoutChoose("follow")
+Expect("...and Same as DialogueUI follows it again, keeping the theme chosen", tostring(panelSettings.FollowTheme) .. " "
+    .. tostring(panelSettings.Theme), "true 2")
+panelSettings.Theme = 1
 env.Addon:SetPlayerStyle("minimal")
 main:Refresh()
 Expect("with another style chosen they are not shown", Shown(main, env.L.OPT_DUI_FIT_TEXT)
-    or Shown(main, env.L.OPT_DUI_FOLLOW_THEME), false)
+    or theme:IsShown(), false)
 Expect("...but the small window has the wheel's shortcuts too", NoteShown(env.L.WINDOW_WHEEL_HINT), true)
-Expect("...and the small window has Hide Portrait", Shown(main, env.L.OPT_HIDE_PORTRAIT), true)
+Expect("...and the small window has Hide Portrait", AnyShown(env.L.OPT_HIDE_PORTRAIT), true)
 env.Addon:SetPlayerStyle("dialogueui")
 main:Refresh()
 env.Addon.db.profile.Frame.DialogueUI.FitText = false
 Page:Reset()
-Expect("Start Over puts the window's settings back", env.Addon.db.profile.Frame.DialogueUI.FitText, true)
+Expect("Defaults puts the window's settings back", env.Addon.db.profile.Frame.DialogueUI.FitText, true)
 
 ---------------------------------------------------------------- only the line playing
 -- No fold: the other windows' words opened, this one still shows Lines Shown of the line playing.

@@ -414,9 +414,9 @@ local menu = env.Minimap:BuildMenu()
 local labels = {}
 for _, entry in ipairs(menu) do table.insert(labels, entry.text) end
 Expect("the menu is the player's entries then each source's in order", table.concat(labels, "|"),
-    "Stop or Replay|Stop All|Settings|Quest settings|Open lore window")
+    "Stop or Replay|Skip Line|Stop All|Settings|Quest settings|Open lore window")
 env.Minimap:RemoveEntry("zones", "lore")
-Expect("RemoveEntry", getn(env.Minimap:BuildMenu()), 4)
+Expect("RemoveEntry", getn(env.Minimap:BuildMenu()), 5)
 
 -- A click on the icon opens the settings at once; the menu is a right-click away.
 local openSettings, settingsOpened = env.Options.Open, false
@@ -441,7 +441,7 @@ end
 -- A rule before each addon's heading. Without one the headings are the only thing
 -- separating the groups, and a heading reads as a row of the group above it.
 Expect("...listing the player's entries, then each source's under its name, ruled apart",
-    table.concat(shown, "|"), "Stop or Replay|Stop All|Settings|---|[Quests]|Quest settings")
+    table.concat(shown, "|"), "Stop or Replay|Skip Line|Stop All|Settings|---|[Quests]|Quest settings")
 Expect("...anchored to the button", stub.openDropDown.dropdownAnchor, mmButton)
 
 -- The menu opens under the cursor, which is still on the button, so the button's tooltip
@@ -557,20 +557,7 @@ Expect("on the settings canvas the rows sit in a scroller", host ~= nil, true)
 local lowest = 0
 for _, row in ipairs(rows) do lowest = math.max(lowest, -row.y + row.height) end
 Expect("...tall enough to reach the last row", host:GetHeight() >= lowest, true)
--- Where each of the narrator style box's untitled sections starts, after its first.
-local sectionStarts = {}
-for _, item in ipairs(_G.SpokenOptionsPanel.layout.items) do
-    if item.kind == "group" and item.shown then
-        local seen = 0
-        for _, section in ipairs(item.sections) do
-            if section.shown then
-                seen = seen + 1
-                if seen > 1 then sectionStarts[string.format("%.1f", section.top)] = true end
-            end
-        end
-    end
-end
-local gaps, sectionGaps = {}, {}
+local gaps = {}
 for index = 2, #rows do
     local previous = rows[index - 1]
     -- Top-anchored and downward, so the gap is the drop less the height already used.
@@ -581,17 +568,11 @@ for index = 2, #rows do
     for _, heading in ipairs(headings) do
         if heading.y < previous.y and heading.y > rows[index].y then crossesHeading = true end
     end
-    if sectionStarts[string.format("%.1f", rows[index].y)] then
-        table.insert(sectionGaps, gap)
-    elseif not crossesHeading then
+    if not crossesHeading then
         table.insert(gaps, gap)
     end
 end
 Expect("every row sits the same distance below the one above it", Distinct(gaps), 1)
--- Between the narrator style's sections, each one's small title: 16 under the rows above, 14 tall,
--- and its rows 10 under it.
-Expect("...and the narrator style's sections their small titles apart, the same everywhere",
-    #sectionGaps > 0 and Distinct(sectionGaps) == 1 and sectionGaps[1], 16 + 14 + 10)
 
 -- Each control sits on its own row, centred on it as the game's settings centre theirs -- the 3
 -- they nudge a slider and a dropdown up by aside (SettingsSliderControlMixin) -- which is how the
@@ -625,63 +606,38 @@ for key in pairs(columns) do distinctColumns = distinctColumns + 1; columnsSeen 
 Expect("...and every one of them ends at the same edge, inside the box too", distinctColumns, 1)
 
 -- From where each section ends -- the bottom of its box, or of its cards where it has no box --
--- to the next one's title. A group's title (the narrator style's settings) is a heading too, and
--- after the group comes the bottom of its box; its first section follows its title, not a section.
+-- to the next one's title.
 local headingGaps, last = {}, nil
-local groups = 0
 for _, item in ipairs(_G.SpokenOptionsPanel.layout.items) do
     if item.kind == "section" and item.shown then
         if last and last.bottom and item.heading then
             table.insert(headingGaps, last.bottom - item.heading.layoutY)
         end
         last = item
-    elseif item.kind == "group" and item.shown then
-        groups = groups + 1
-        if last and last.bottom then
-            table.insert(headingGaps, last.bottom - item.heading.layoutY)
-        end
-        last = nil
-    elseif item.kind == "groupEnd" and item.group.shown then
-        last = item.group
     end
 end
 Expect("every heading the same distance below the section or box above", Distinct(headingGaps), 1)
-Expect("the narrator style's settings are a group of their own", groups, 1)
 do
     local layout = _G.SpokenOptionsPanel.layout
-    local group
+    -- The rows under the narrator styles' tiles have no title of their own: they follow the
+    -- tiles a row's gap below, where every other section's rows are.
+    local tiles, under
     for _, item in ipairs(layout.items) do
-        if item.kind == "group" and item.shown then group = item end
+        if item.kind == "section" then
+            if tiles and not under then under = item end
+            if item.text == env.L.OPT_PLAYER_STYLE then tiles = item end
+        end
     end
-    local shown = {}
-    for _, section in ipairs(group and group.sections or {}) do
-        if section.shown then table.insert(shown, section) end
-    end
-    local titled, small, divided = 0, 0, 0
-    for _, section in ipairs(shown) do
-        if section.heading then titled = titled + 1 end
-        if section.small and section.small.shown ~= false then small = small + 1 end
-        if section.divider and section.divider.shown ~= false then divided = divided + 1 end
-    end
-    Expect("its sections have small titles under the group's large one", titled .. " " .. small, "0 " .. #shown)
-    Expect("...a line running on from each, the first's too", divided, #shown)
-    Expect("...its rows where every other section's are, in from no box",
-        shown[1] and (shown[1].left .. " " .. shown[1].width) or "no sections", layout.left .. " " .. layout:Width())
+    Expect("the narrator style's rows follow its tiles with no title, where every other section's rows are",
+        under and tostring(under.heading) .. " " .. under.left .. " " .. under.width or "no section",
+        "nil " .. layout.left .. " " .. layout:Width())
+    Expect("...a row's gap under the tiles", under and tiles.bottom - under.top, 9)
     local list
     for _, item in ipairs(layout.items) do
         for _, row in ipairs(item.rows or { item }) do
             if row.control and row.control.layoutRows and not list then list = row.control end
         end
     end
-    -- Guarded, so a layout without small titles or their lines fails these rather than stopping.
-    local divider, small = shown[2] and shown[2].divider, shown[2] and shown[2].small
-    local first = shown[1] and shown[1].small
-    Expect("...each title where its rows' labels start, its line on to where the modules' list ends",
-        small and divider and (small.anchor.x .. " " .. (divider.anchor.x + divider.width)) or "no small title",
-        (layout.left + 37) .. " " .. (list.anchor.x + list.width))
-    Expect("...the first small title under the group's as a section's rows are under its own, its rows 10 under it",
-        first and (group.heading.layoutY - first.layoutY) or "no small title", 45 + 9)
-    Expect("...its rows 10 under it", first and (first.layoutY - 14 - shown[1].top) or "no small title", 10)
     local preview
     for _, item in ipairs(layout.items) do
         if item.button and item.kind == "section" then preview = item.button end
@@ -741,11 +697,10 @@ local function PanelLabels(client)
 end
 
 local labels = PanelLabels("16001")
--- "Up next" is the queue window's own title. As a settings heading it named nothing. In the
--- narrator style's settings the rows are in three parts under small titles, the same for every style.
-Expect("the narrator style's settings are in three parts under small titles",
-    tostring(labels["Size and Position"] and labels["Look"] and labels["Words"]), "true")
-Expect("...nor the queue's title", labels["Up next"], nil)
+-- "Up next" is the queue window's own title. As a settings heading it named nothing.
+Expect("the finer settings are in sections named for what they hold",
+    tostring(labels["Look"] and labels["Words"] and labels["Playback"]), "true")
+Expect("...not the queue's title", labels["Up next"], nil)
 -- The scale slider was built with no height and no orientation, so it drew nothing: the
 -- setting sat on the panel invisible, with a gap where it should have been. The zones
 -- addon's own sliders, which do render, set both.
@@ -793,8 +748,8 @@ local function RowTip(label)
     end
     return ""
 end
-Expect("on a current client, Hide Report Buttons' tip names the Compendium too",
-    RowTip("Hide Report Buttons"):find("Compendium", 1, true) ~= nil, true)
+Expect("on a current client, Hide Report Buttons says nothing more than its name: it hides them all",
+    RowTip("Hide Report Buttons"), "")
 labels = PanelLabels("3.3.5")
 Expect("a legacy client, with no Contribute section, is offered Hide Report Buttons too", labels["Hide Report Buttons"], true)
 local reportTip = RowTip("Hide Report Buttons")

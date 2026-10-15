@@ -49,7 +49,7 @@ end
 local names = {}
 for _, heading in ipairs(headings) do table.insert(names, heading.text) end
 Expect("the settings are grouped into sections", table.concat(names, "|"),
-    "When to Read|Extras|Voice Packs|Fix a Problem")
+    "When to Read|Voice Packs")
 
 local function Distinct(values)
     local seen, count = {}, 0
@@ -103,15 +103,15 @@ Expect("autoplay is a checkbox on the panel", autoplay ~= nil, true)
 -- Follow-up lines are queued by autoplay alone (Followup.lua), so they grey out with it.
 local followup
 for _, child in ipairs(SettingsPanel.panel.content.children) do
-    if type(child.text) == "table" and child.text.text == "Follow-up Lines" then followup = child end
+    if type(child.text) == "table" and child.text.text == "Read NPC Chat After Quests" then followup = child end
 end
 autoplay:SetChecked(false)
 autoplay:GetScript("OnClick")(autoplay)
 Expect("unticking autoplay turns it off", db.Audio.Autoplay, false)
-Expect("...and greys Follow-up Lines out, saying why", followup and followup.layoutReason, VO.L.REASON_AUTOPLAY)
+Expect("...and greys Read NPC Chat After Quests out, saying why", followup and followup.layoutReason, VO.L.REASON_AUTOPLAY)
 autoplay:SetChecked(true)
 autoplay:GetScript("OnClick")(autoplay)
-Expect("ticking it again brings Follow-up Lines back", followup and followup.layoutReason, nil)
+Expect("ticking it again brings Read NPC Chat After Quests back", followup and followup.layoutReason, nil)
 
 ---------------------------------------------------------------- the gather switch stays in the player's settings
 -- The switch is the player's alone: quests and books both feed the one store, so a
@@ -163,7 +163,7 @@ end
 local profile
 local home = _G.SpokenOptionsPanel.content or _G.SpokenOptionsPanel
 for _, child in ipairs(home.children) do
-    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "Profile in Use" then
+    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "Profile" then
         profile = child
     end
 end
@@ -186,7 +186,7 @@ local function Dropdown(content, label)
 end
 Expect("the Quests page has no language of its own", Dropdown(SettingsPanel.panel.content, "Voice Language"), nil)
 local spoken = _G.SpokenOptionsPanel.content or _G.SpokenOptionsPanel
-local voice, fallback = Dropdown(spoken, "Voice Language"), Dropdown(spoken, "If a Line Is Missing")
+local voice, fallback = Dropdown(spoken, "Voice Language"), Dropdown(spoken, "If a Voice Is Missing")
 Expect("the voice language is chosen on Spoken's page", voice ~= nil, true)
 Expect("...Auto by default, named with the client's language", voice and voice.dropdownText, "Auto (English)")
 VO.Addon.db.profile.Audio.VoiceLanguage = "frFR"

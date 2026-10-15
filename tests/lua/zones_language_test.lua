@@ -12,13 +12,28 @@ local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
 stub.LoadSpoken(SPOKEN)
+
+-- What a player had saved before the settings moved into Spoken's profile. Each load below is a
+-- first run, so the move is forgotten and the profile starts without Zones' table.
+local function Legacy(settings)
+    local db = _G.SpokenEnv.Addon.db
+    db.profile.Modules, db.global.ModulesMoved = nil, nil
+    _G.SpokenZonesSettings = settings
+end
 stub.SetAddOns({ { folder = "Spoken_Places", meta = { Version = "9.9.9" } } })
 
 local MAP, BOTH, ONLY_ENGLISH = 1411, "valley of trials", "sen'jin village"
 
+-- The voice is Spoken's Voice Language and If a Voice Is Missing, as for every module; the text's
+-- language is the Zones page's own.
+local function Voice(code, fallback)
+    local language = _G.SpokenEnv.Addon.db.profile.Language
+    language.Voice, language.Fallback = code, fallback
+end
+
 --- Load the addon with these packs installed.
 local function Install(packs)
-    _G.SpokenZonesSettings = {}
+    Legacy({})
     _G.SpokenZonesAudioPacks = {}
     for _, pack in ipairs(packs) do
         _G.SpokenZonesAudioPacks[pack.addon] = pack
@@ -48,7 +63,7 @@ Expect("A. installed voice metadata retains captions before that pack loads", Z:
 Expect("A. unrelated languages do not allocate caption tables", Z:ShouldLoadLanguage("frFR"), false)
 Expect("A. registering captions leaves the lore browser's language alone", Z:GetLore(MAP).full, "English zone lore.")
 Expect("A. zones carry their full text", Z:NewLoreSound(MAP, nil).present.transcript, "English zone lore.")
-Z:SetActiveAudioPack("SpokenZonesAudio_deDE")
+Voice("deDE")
 Expect("A. captions match the chosen voice, even when reading another language",
     Z:NewLoreSound(MAP, BOTH).present.transcript, "Deutsche Geschichte.")
 Expect("A. fallback captions match the English audio",
@@ -57,14 +72,22 @@ local _, _, pack = Z:GetAudioClip(MAP, BOTH)
 Expect("A. the active pack answers what it has", pack and pack.addon, "SpokenZonesAudio_deDE")
 _, _, pack = Z:GetAudioClip(MAP, ONLY_ENGLISH)
 Expect("A. an entry it lacks falls back to English, not to French", pack and pack.addon, "SpokenZonesAudio")
+Voice("deDE", "frFR")
+_, _, pack = Z:GetAudioClip(MAP, ONLY_ENGLISH)
+Expect("A. ...to French where If a Voice Is Missing says French", pack and pack.addon, "SpokenZonesAudio_frFR")
+Voice("deDE", "none")
+Expect("A. ...and to nothing with Stay Silent", Z:GetAudioClip(MAP, ONLY_ENGLISH), nil)
+Voice("frFR")
+_, _, pack = Z:GetAudioClip(MAP, ONLY_ENGLISH)
+Expect("A. the voice language picks the pack, whatever the text is in", pack and pack.addon, "SpokenZonesAudio_frFR")
 
 Z = Install({ ENGLISH, FRENCH })
-Z:SetActiveAudioPack("SpokenZonesAudio")
+Voice(nil)
 Expect("A. an English pack falls back to nothing else", Z:GetAudioClip(MAP, "durotar coast"), nil)
 
 ---------------------------------------------------------------- B. the language narration plays in
 Z = Install({ ENGLISH, GERMAN })
-Z:SetActiveAudioPack("SpokenZonesAudio_deDE")
+Voice("deDE")
 Expect("B. the active pack's language", Z:GetPackLanguage(), "deDE")
 Z = Install({})
 Expect("B. with no pack, the language being read", Z:GetPackLanguage(), Z:GetLanguage())
@@ -78,11 +101,12 @@ Expect("C. a clip's report keeps the language it was narrated in",
 
 ---------------------------------------------------------------- D. contributions
 Z = Install({ ENGLISH, GERMAN })
-Z:SetActiveAudioPack("SpokenZonesAudio_deDE")
+Voice("deDE")
 Z.Zones[1537] = { name = "Ironforge", pending = true }
 local envelope = Z:CaptureContribution(1537, nil)
 Expect("D. the locale is the client's", envelope:match("\nlocale=enUS\n") ~= nil, true)
 Expect("D. ...and the language narration plays in goes beside it", envelope:match("\npack=deDE\n") ~= nil, true)
+Voice(nil)
 
 ---------------------------------------------------------------- E. pack labels
 -- One pack per language now, so a pack is named by the language it narrates, the one
@@ -103,9 +127,12 @@ Expect("E. a language with one pack still needs no bitrate", Z:GetAudioPackLabel
 -- player picked stays picked, whichever language the game runs in.
 local READY = { { code = "enUS", ready = true }, { code = "esES", ready = true },
     { code = "frFR", ready = true } }
+-- The same table again is a reload: the profile already holds the settings, so nothing is moved.
+local lastInstalled
 local function InstallOn(locale, db)
     stub.SetLocale(locale)
-    _G.SpokenZonesSettings = db
+    if db ~= lastInstalled then Legacy(db) end
+    lastInstalled = db
     _G.SpokenZonesAudioPacks = {}
     return H.LoadZones(ZONES, { Languages = READY })
 end
@@ -136,7 +163,7 @@ Expect("F. going back to Auto follows the client again", Z:GetLanguage(), "frFR"
 local WITH_ITALIAN = { { code = "enUS", ready = true }, { code = "itIT", ready = true } }
 local function InstallItalian(locale, db)
     stub.SetLocale(locale)
-    _G.SpokenZonesSettings = db
+    Legacy(db)
     _G.SpokenZonesAudioPacks = {}
     return H.LoadZones(ZONES, { Languages = WITH_ITALIAN })
 end
@@ -208,8 +235,9 @@ KOREAN.zones[MAP] = { file = "ko-durotar", len = 5 }
 local GERMAN_ZONE = Pack("SpokenZonesAudio_deDE", "deDE", {})
 GERMAN_ZONE.zones[MAP] = { file = "de-durotar", len = 5 }
 local function Lore(pack)
+    Voice(pack.language)
     stub.SetLocale("deDE")
-    _G.SpokenZonesSettings = { language = pack.language }
+    Legacy({ language = pack.language })
     _G.SpokenZonesAudioPacks = { [pack.addon] = pack }
     Z = H.LoadZones(ZONES, { Languages = { { code = "enUS", ready = true }, { code = "deDE", ready = true },
         { code = "koKR", ready = true } } })
@@ -223,6 +251,7 @@ local german = Lore(GERMAN_ZONE)
 Expect("H. ...German lore names no font, so the window's own is kept",
     tostring(german ~= nil) .. " " .. tostring(german and german.font), "true nil")
 _G.GameFontNormal = realNormal
+Voice(nil)
 
 Faces("Fonts\\LATIN.TTF", "Fonts\\QUEST.TTF")
 Z.drawable, Z.fonts = {}, {}

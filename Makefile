@@ -23,7 +23,7 @@ LUA ?= $(shell command -v luajit || command -v lua5.1)
         package-spoken package-spoken-retired package-spoken-all release-spoken release-spoken-dry \
         release-spoken-all release-spoken-all-dry \
         descriptions descriptions-check descriptions-published \
-        character-models \
+        character-models dungeons \
         audio-release audio-release-dry
 
 help: ## Show this help
@@ -48,7 +48,6 @@ web-%:
 books-%:
 	@$(MAKE) --no-print-directory -f make/books.mk $*
 
-# The settings fit loop leaves esMX out until its Voice Pack row fits: 226 px in a 200 px column.
 test-player: ## Run the addons' Lua tests (needs luajit)
 	@[ -n "$(LUA)" ] || { echo "No luajit found: brew install luajit"; exit 1; }
 	@$(LUA) tests/lua/quest_dispatch_test.lua
@@ -70,9 +69,11 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/settings_ux_test.lua
 	@$(LUA) tests/lua/settings_legacy_test.lua
 	@$(LUA) tests/lua/settings_art_test.lua
-	@for lang in enUS deDE esES frFR ptBR ruRU koKR zhCN zhTW itIT; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
+	@for lang in enUS deDE esES esMX frFR ptBR ruRU koKR zhCN zhTW itIT; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
 	@$(LUA) tests/lua/settings_audit_test.lua
 	@$(LUA) tests/lua/queue_test.lua
+	@$(LUA) tests/lua/battlegrounds_test.lua
+	@$(LUA) tests/lua/secret_values_test.lua
 	@$(LUA) tests/lua/developer_hooks_test.lua
 	@$(LUA) tests/lua/developer_log_test.lua
 	@$(LUA) tests/lua/quests_log_test.lua
@@ -120,6 +121,8 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/quests_dialogueui_test.lua
 	@$(LUA) tests/lua/books_source_test.lua
 	@$(LUA) tests/lua/books_options_test.lua
+	@$(LUA) tests/lua/module_settings_test.lua
+	@$(LUA) tests/lua/locale_parity_test.lua
 	@$(LUA) tests/lua/books_reader_test.lua
 	@$(LUA) tests/lua/books_playlist_test.lua
 	@$(LUA) tests/lua/books_dialogueui_test.lua
@@ -197,6 +200,12 @@ descriptions-published: ## Record the current descriptions as pasted into the si
 
 # Not a target that runs itself -- scripts/character-models.mjs takes the listfile on stdin
 # so this step never pulls 152 MB on its own. Run it by hand when a new race ships.
+
+# The dungeons the quests' and books' exporters file things under, and the one table the addon
+# reads (Spoken/Data/Dungeons.lua), both from pipelines/lib/dungeons.json. Run it after editing
+# that file, then the exporters that read it.
+dungeons: ## Rebuild addons/Spoken/Data/Dungeons.lua from pipelines/lib/dungeons.json and the client's Map table
+	@node pipelines/lib/dungeons.mjs
 
 character-models: ## Print how to regenerate apps/web/src/lib/npc/character-models.json
 	@sed -n '2,10p' scripts/character-models.mjs | sed -e 's/^\/\/ //' -e 's/^\/\/$$//'

@@ -4,8 +4,8 @@ setfenv(1, SpokenEnv)
 -- a first visit to a settings page full of rows. Built from the same boxes, cards and pictures
 -- as General, in the same frame as the game's settings window, so a player who opens the
 -- settings later recognises all of it. Each choice applies as it is made; Done only closes.
--- Shown once per account, at the first login after it ships, and again from the button at the
--- bottom of General. Only where the Settings API exists: "All Settings" opens a page the
+-- Shown once per account, at the first login after it ships, and again from the button on the
+-- Modules title of Spoken's page. Only where the Settings API exists: "All Settings" opens a page the
 -- legacy clients do not have.
 Welcome = {}
 
@@ -139,7 +139,7 @@ function Welcome:Build()
     local modules = {}
     for _, part in ipairs(Options.PARTS) do
         local key = part.key
-        table.insert(modules, { icon = part.icon, title = part.label, text = part.text, tooltip = part.tip,
+        table.insert(modules, { icon = part.icon, title = part.label, text = part.text,
             read = function() return Spoken:IsPartOn(key) end,
             write = function(v) Sources:SetTurnedOff(key, not v) end,
             apply = function() Options:UpdateRows(); layout:Refresh() end,
@@ -157,7 +157,7 @@ function Welcome:Build()
     local styles = {}
     for _, style in ipairs(Options:Styles()) do
         table.insert(styles, { value = style, title = Options.STYLE_LABELS[style], text = Options.STYLE_TEXTS[style],
-            tooltip = Options.STYLE_TIPS[style], art = Options.SKETCHES[style] })
+            art = Options.SKETCHES[style] })
     end
     self.styles = layout:Choices(styles, function() return Addon:PlayerStyle() end,
         function(v) Addon:SetPlayerStyle(v) end,
@@ -201,9 +201,9 @@ function Welcome:Build()
                 Options:UpdateRows()
             end)
     end
-    -- The debug log is offered here, off: a player who turns it on now has a log to send with
-    -- the first report, rather than being asked to turn it on and wait for it to happen again.
-    -- Its words are the module's.
+    -- The debug log, where the Spoken_Developer module is installed: on from the start, so the
+    -- first report has a log to send with it, and turned off here as on the Developer page. Its
+    -- words are the module's.
     if logShown then
         self.log = FooterCheck(page, frame, bottomY, Developer:Call("SwitchLabel") or "",
             Developer:Call("SwitchTip") or "", function(on) Developer:Call("SetLogOn", on) end)

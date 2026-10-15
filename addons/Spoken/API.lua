@@ -337,6 +337,14 @@ function Spoken:ZoneIcon(mapID)
     return nil
 end
 
+-- A dungeon's or a raid's badge on every tab of the Compendium: a key, as to a door below.
+local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
+
+--- The icon for the dungeon or raid whose instance map is `map`, with its crop.
+function Spoken:DungeonIcon(map)
+    return DUNGEON_ICON, ICON_CROP
+end
+
 -- C_Container where the client has it, else the old bag functions.
 local function BagSlots(bag)
     if C_Container and C_Container.GetContainerNumSlots then return C_Container.GetContainerNumSlots(bag) or 0 end
@@ -416,10 +424,48 @@ function Spoken:GetLanguageChoice()
     return language.Voice, language.Fallback
 end
 
+--- Spoken's words in the player's language, for what every module's settings page shares and
+--- names the same way: MODULE_SWITCH, MODULE_WHEN, PART_VOICE, MODULE_TEST_LINE, MODULE_HISTORY,
+--- MODULE_DOWNLOAD, MODULE_INSTALLED, MODULE_NOT_LOADED, MODULE_NO_PACK, MODULE_RESET,
+--- REASON_PART_OFF, OPT_RESET_ALL_TIP and CANCEL. Read, never written.
+function Spoken:Words()
+    return L
+end
+
+--- A language's name as the lists show it, the same in every module: its own, or in English where
+--- this client's font cannot draw it.
+function Spoken:LanguageName(code)
+    return Options:LanguageName(code)
+end
+
+--- The voice language as it plays: the one chosen on Spoken's page, "auto" being the client's.
+function Spoken:VoiceLanguage()
+    local voice = self:GetLanguageChoice()
+    if voice == nil or voice == "auto" then return Options:ClientLanguage() end
+    return voice
+end
+
+--- What a module's page says under its voice packs when nothing can be heard: no pack in the voice
+--- language exists for `module` ("quests", "zones" or "books"), and If a Voice Is Missing is Stay
+--- Silent. Nil otherwise.
+function Spoken:SilentNote(module)
+    local voice = self:VoiceLanguage()
+    local _, fallback = self:GetLanguageChoice()
+    if voice == "enUS" or fallback ~= "none" or self:VoicePack(module, voice) then return nil end
+    return format(L.MODULE_NO_VOICE_FMT, Options:LanguageName(voice))
+end
+
 function Spoken:SetPartOn(key, on)
     Sources:SetTurnedOff(key, not on)
     -- Home lists the same switch.
     Options:UpdateRows()
+end
+
+--- Where a feature addon keeps its settings: a table inside Spoken's profile, so one profile holds
+--- them all. See Addon:BindModuleSettings. Returns false where Spoken has no profile yet, and the
+--- addon goes on with the table it keeps itself.
+function Spoken:BindModuleSettings(name, legacy, bind, skip)
+    return Addon:BindModuleSettings(name, legacy, bind, skip)
 end
 
 --- Whether Spoken's page and minimap menu open Azeroth's Compendium and hold its Unlock switches,
@@ -551,6 +597,13 @@ end
 --- A gate that applies to every source: fn(clip) -> reason | nil.
 function Spoken:AddGate(fn)
     SoundQueue:AddGate(fn)
+end
+
+--- False in a battleground or arena with Read in Battlegrounds off, where a source's Enqueue
+--- refuses every line the player did not ask for (`source:Enqueue(clip, true)` is one they did):
+--- a module can skip the work of finding one. Additive: guard on the field.
+function Spoken:ReadsHere()
+    return Addon:ReadsHere()
 end
 
 --------------------------------------------------------------------------------
@@ -755,8 +808,16 @@ end
 --- out, which a player never needs. build(layout) is called once, when the page is built, with
 --- the page's SpokenLayout, and may return a function that puts its rows back to their defaults
 --- for the page's Defaults button. Kept until the module builds its page; nothing shows without it.
-function Spoken:AddDeveloperSettings(build)
-    Developer:AddSettings(build)
+--- `group`, "chat" (switches for messages in chat) or "testing", puts the rows build adds under
+--- that group's title, with every other module's, in `order` (the module's page order: Quests 1,
+--- Gossip 2, Places 3, Readables 4); without it, build adds a section of its own.
+function Spoken:AddDeveloperSettings(build, group, order)
+    Developer:AddSettings(build, group, order)
+end
+
+--- The group and order a section handed in was given, or nil.
+function Spoken:GetDeveloperGroup(build)
+    return Developer.groups[build], Developer.orders[build]
 end
 
 --- For the module: every section handed in so far, in order.

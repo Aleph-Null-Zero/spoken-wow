@@ -84,8 +84,9 @@ end
 
 --- Resolve a line through the packs and hand it to the player.
 ---@param soundData SoundData
+---@param asked boolean? the player asked for it, so it is read in a battleground too
 ---@return boolean queued
-function Player:Enqueue(soundData)
+function Player:Enqueue(soundData, asked)
     if not self.source then
         Debug:Record("player-missing", "The Spoken player addon is not installed")
         return false
@@ -98,13 +99,14 @@ function Player:Enqueue(soundData)
         return false
     end
 
-    return self:EnqueuePrepared(soundData)
+    return self:EnqueuePrepared(soundData, asked)
 end
 
 --- Hand the player a line whose file DataModules has already resolved.
 ---@param soundData SoundData
+---@param asked boolean? as Enqueue's
 ---@return boolean queued
-function Player:EnqueuePrepared(soundData)
+function Player:EnqueuePrepared(soundData, asked)
     if not self.source then
         Debug:Record("player-missing", "The Spoken player addon is not installed")
         return false
@@ -114,7 +116,7 @@ function Player:EnqueuePrepared(soundData)
     if self.playNow then
         return self:PlayPreparedNow(soundData)
     end
-    local added, reason = self.source:Enqueue(soundData)
+    local added, reason = self.source:Enqueue(soundData, asked)
     if not added then
         if reason == "duplicate" then
             Debug:Record("queued", format("Already queued: %s", soundData.fileName))
@@ -217,6 +219,8 @@ function Player:Setup()
         waitsForGreeting = true,
         -- Its settings follow the profile chosen in Spoken's own settings.
         profiles = function() return Addon.db end,
+        -- Printed after Spoken's own by its Show Diagnostics.
+        diagnostics = function() Addon:PrintDiagnostics() end,
         -- What Spoken's settings show on this part's card: the voice packs that hold gossip.
         packs = function()
             local names = {}

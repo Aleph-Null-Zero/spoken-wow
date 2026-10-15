@@ -47,8 +47,8 @@ env.Addon:SetPlayerStyle("subtitle"); Options:UpdateRows()
 local size = Row(home, "Window Size")
 local typing = Row(home, "Subtitle Size")
 Expect("a window setting is hidden once subtitles replace the window", Shown(size), false)
-Expect("...its part, Size and Position, kept: every style has the same three", Box(L.OPT_PLACE_TITLE).shown
-    and Box(L.OPT_LOOK_TITLE).shown and Box(L.OPT_TEXT_TITLE).shown, true)
+Expect("...the finer sections, Look and Words, kept: subtitles have rows in both", Box(L.OPT_LOOK_TITLE).shown
+    and Box(L.OPT_TEXT_TITLE).shown, true)
 Expect("the subtitle settings appear with subtitles chosen", Shown(typing), true)
 local subtitlesTop = typing.layoutY
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
@@ -65,19 +65,35 @@ Expect("subtitles have Highlight Words, waiting while their words are typed out"
 words.Typewriter = false; Options:UpdateRows()
 Expect("...and live with them shown whole", lit.layoutReason, nil)
 words.Typewriter = true; Options:UpdateRows()
-local function ByTip(tip)
-    for _, entry in ipairs(home.entries) do if entry.tooltip == tip then return entry.frame end end
+local function SubtitleScroll()
+    for _, entry in ipairs(home.entries) do if entry.frame.layoutSubtitles then return entry.frame end end
 end
-local scroll, sentences, linesRow = ByTip(L.OPT_SUBTITLE_SCROLL_TIP), Row(home, "Sentences at Once"), Row(home, "Lines Shown")
+local scroll, sentences, linesRow = SubtitleScroll(), Row(home, "Sentences at Once"), Row(home, "Rows at Once")
 words.SubtitleScroll = "page"; Options:UpdateRows()
 Expect("subtitles have their own Auto-Scroll, by pages showing Sentences at Once",
     tostring(Shown(scroll)) .. " " .. tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)), "true true false")
 words.SubtitleScroll = "line"; Options:UpdateRows()
-Expect("...and line by line, Lines Shown in its place", tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)),
+Expect("...and row by row, Rows at Once in its place", tostring(Shown(sentences)) .. " " .. tostring(Shown(linesRow)),
     "false true")
 words.SubtitleScroll = "page"; Options:UpdateRows()
-Expect("subtitles have Text Size and Hide Portrait, as the windows do",
-    tostring(Shown(Row(home, "Text Size"))) .. " " .. tostring(Shown(Row(home, "Hide Portrait"))), "true true")
+Expect("subtitles have Word Size, as the windows do", tostring(Shown(Row(home, "Word Size"))), "true")
+do
+    -- Hide Portrait twice over: under Show Name and Title for the subtitles, greyed while their name
+    -- is off; a row of its own for the windows. Each shows with its own style.
+    local portraits = {}
+    for _, entry in ipairs(home.entries) do
+        if entry.label == L.OPT_HIDE_PORTRAIT then table.insert(portraits, entry.frame) end
+    end
+    local underName, windows = portraits[1], portraits[2]
+    Expect("subtitles have Hide Portrait, under Show Name and Title", tostring(Shown(underName)) .. " "
+        .. tostring(Shown(windows)) .. " " .. tostring(underName.layoutRow.x > windows.layoutRow.x), "true false true")
+    words.SubtitleName = false; Options:UpdateRows()
+    Expect("...greyed while the name is off", underName.layoutReason, L.REASON_SUBTITLE_NAME)
+    words.SubtitleName = true; Options:UpdateRows()
+    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+    Expect("the windows have their own", tostring(Shown(underName)) .. " " .. tostring(Shown(windows)), "false true")
+    env.Addon:SetPlayerStyle("subtitle"); Options:UpdateRows()
+end
 
 ---------------------------------------------------------------- greyed out, and why
 -- A setting waiting on a switch beside it stays, greyed, saying which switch.
@@ -89,6 +105,15 @@ Expect("...and its tooltip says so", Tooltip(typing):find(L.REASON_WORDS, 1, tru
 env.Addon.db.profile.Transcript.Enabled = true; Options:UpdateRows()
 Expect("turning the switch on wakes it", typing.layoutReason, nil)
 Expect("...at full strength", typing:GetAlpha(), 1)
+do
+    -- A row with nothing to say beyond its label shows no tooltip, only its band.
+    local plain = _G.SpokenLayout.New(_G.CreateFrame("Frame"), 0, 0)
+    local box = plain:Checkbox("Plain", nil, function() return false end, function() end)
+    Expect("a row without a tooltip of its own shows none, not its label again", Tooltip(box), "")
+    plain:Requires(box, function() return false end, "Waiting.")
+    plain:Refresh()
+    Expect("...but greyed, it still says why", Tooltip(box), "Plain|Waiting.")
+end
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 
 local music = Row(home, "Music")
@@ -136,22 +161,20 @@ env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 Expect("choosing a window shows it again", env.Addon:PlayerStyle(), "minimal")
 
 ---------------------------------------------------------------- each style's rows
--- Rows by their label, notes by what they say. No addon here declares an optional button before
--- the page is built, so no Hide ... Button row.
+-- Rows by their label, notes by what they say: the rows under the narrator styles' tiles, then
+-- the Look and Words sections lower on the page. Bronze Border, in Look, is for every style.
 local function StyleRows()
-    local names, inGroup, byFrame = {}, false, {}
+    local names, byFrame, under = {}, {}, false
     for _, entry in ipairs(home.entries) do byFrame[entry.frame] = entry end
     for _, item in ipairs(home.items) do
-        if item.kind == "group" then
-            inGroup = item.text == L.OPT_NARRATOR_SETTINGS
-        elseif item.kind == "groupEnd" then
-            inGroup = false
-        elseif inGroup and item.rows then
-            for _, row in ipairs(item.rows) do
-                if row.shown then
-                    local entry = byFrame[row.control]
+        if item.kind == "section" then
+            local mine = (under and item.text == nil) or item.text == L.OPT_LOOK_TITLE or item.text == L.OPT_TEXT_TITLE
+            under = item.text == L.OPT_PLAYER_STYLE
+            for _, row in ipairs(mine and item.rows or {}) do
+                local entry = byFrame[row.control]
+                if row.shown and not (entry and entry.label == L.OPT_BRONZE_TINT) then
                     local name = entry and entry.label or row.control.text
-                    if entry and entry.tooltip == L.OPT_SUBTITLE_SCROLL_TIP then name = name .. " (subtitles)" end
+                    if row.control.layoutSubtitles then name = name .. " (subtitles)" end
                     if row.control.text == L.WINDOW_WHEEL_HINT then name = "wheel note" end
                     if row.control.text == L.SUBTITLE_WHEEL_HINT then name = "subtitles' wheel note" end
                     table.insert(names, name)
@@ -167,14 +190,14 @@ do
     words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
     local ROWS = {
         -- The wheel's note where Ctrl and the wheel size the window or the subtitles.
-        minimal = "Window Size, Lock Position, Reset Positions, wheel note, Background, Show Progress, Hide Portrait, "
-            .. "Show Words, Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By",
-        -- The large window's words fill the box, so no Lines Shown.
-        classic = "Window Size, Lock Position, Reset Positions, Show Progress, Hide Portrait, Show Words, "
-            .. "Text Size, Auto-Scroll, Highlight Words, Type Words Out, Type By",
-        subtitle = "Subtitle Size, Lock Position, Reset Positions, subtitles' wheel note, Background Darkness, Show Name and Title, Show Progress, "
-            .. "Hide Portrait, Show Words, Text Size, Sentences at Once, Auto-Scroll (subtitles), "
-            .. "Highlight Words, Type Words Out, Type By",
+        minimal = "Window Size, Show Words, Word Size, Lock Position, wheel note, Theme, Hide Portrait, "
+            .. "Show Progress Bar, Rows at Once, Auto-Scroll, Highlight Words, Type Words Out, Type Out By",
+        -- The large window's words fill the box, so no Rows at Once.
+        classic = "Window Size, Show Words, Word Size, Lock Position, Hide Portrait, Show Progress Bar, "
+            .. "Auto-Scroll, Highlight Words, Type Words Out, Type Out By",
+        subtitle = "Subtitle Size, Show Words, Word Size, Lock Position, subtitles' wheel note, Shadow Behind Words, "
+            .. "Show Name and Title, Hide Portrait, Show Progress Bar, Sentences at Once, Auto-Scroll (subtitles), "
+            .. "Highlight Words, Type Words Out, Type Out By",
         none = "",
     }
     for _, style in ipairs({ "minimal", "classic", "subtitle", "none" }) do
@@ -187,46 +210,96 @@ do
     env.Addon.PlayerStyle = function() return chosen end
     Options:UpdateRows()
     Expect("the dialogueui style shows the rows it reads", StyleRows(),
-        "Window Size, Lock Position, Reset Positions, wheel note, Follow DialogueUI's Theme, Theme, "
-        .. "Show Progress, Show Words, Text Size, Lines Shown, Fit to the Words, Auto-Scroll, "
-        .. "Highlight Words, Type Words Out, Type By")
+        "Window Size, Show Words, Word Size, Lock Position, wheel note, Theme, Show Progress Bar, "
+        .. "Rows at Once, Fit Window to Words, Auto-Scroll, Highlight Words, Type Words Out, Type Out By")
     chosen = "none"; Options:UpdateRows()
-    Expect("voice only, with DialogueUI, shows no words' rows: nothing of Spoken's is on screen", StyleRows(), "")
+    Expect("voice only shows no words' rows without DialogueUI: nothing of Spoken's is on screen", StyleRows(), "")
+    -- DialogueUI's own quest text is marked by them, whatever the style.
+    local installed = Theme.Installed
+    Theme.Installed = function() return true end
+    Options:UpdateRows()
+    Expect("voice only, with DialogueUI installed, keeps the rows that mark DialogueUI's text", StyleRows(),
+        "Show Words, Highlight Words, Type Words Out, Type Out By")
+    Theme.Installed = installed
     Theme.Available, env.Addon.PlayerStyle = available, playerStyle
     words.Enabled, words.Typewriter, words.SubtitleScroll = saved[1], saved[2], saved[3]
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end
 
 -- Bronze Border matches Forever's own frames, so a Classic Era client has no row for it. On Forever
--- it sits outside the narrator style's settings, since it colours every frame Spoken draws.
+-- it sits in Look and shows whatever the style, since it colours every frame Spoken draws.
 local function BronzePlaced(home)
-    local inGroup, section, found = false, nil, nil
+    local found
     for _, item in ipairs(home.items) do
-        if item.kind == "group" then inGroup = item.text == L.OPT_NARRATOR_SETTINGS
-        elseif item.kind == "groupEnd" then inGroup = false
-        elseif item.rows then
-            if item.kind == "section" then section = item.text end
-            for _, row in ipairs(item.rows) do
-                if row.control == Row(home, L.OPT_BRONZE_TINT) then found = { inGroup, section, row.shown } end
-            end
+        for _, row in ipairs(item.rows or {}) do
+            if row.control == Row(home, L.OPT_BRONZE_TINT) then found = { item.text, row.shown } end
         end
     end
-    return found and (tostring(found[1]) .. " " .. tostring(found[2]) .. " " .. tostring(found[3])) or "missing"
+    return found and (tostring(found[1]) .. " " .. tostring(found[2])) or "missing"
 end
 for _, style in ipairs({ "minimal", "none" }) do
     env.Addon:SetPlayerStyle(style); Options:UpdateRows()
-    Expect("Bronze Border sits in Colours, outside the narrator style's settings, with " .. style,
-        BronzePlaced(home), "false " .. L.OPT_COLOURS_TITLE .. " true")
+    Expect("Bronze Border sits in Look, shown with " .. style, BronzePlaced(home), L.OPT_LOOK_TITLE .. " true")
 end
 env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 
+---------------------------------------------------------------- the page's order
+-- What most players change first, then the finer settings, each section named for what it holds.
+-- Nothing is hidden behind a switch: every section is on the page.
+do
+    local titles = {}
+    for _, item in ipairs(home.items) do
+        if item.kind == "section" and item.text then table.insert(titles, item.text) end
+    end
+    Expect("Spoken's sections, the most changed first", table.concat(titles, ", "), table.concat({
+        L.OPT_PARTS_TITLE, L.OPT_PLAYER_STYLE, L.OPT_LANGUAGE_TITLE, L.OPT_AUDIO_TITLE, L.OPT_WHILE_READING_TITLE,
+        L.OPT_KEYS_TITLE, L.OPT_COMPENDIUM_TITLE, L.OPT_FIX_TITLE, L.OPT_LOOK_TITLE, L.OPT_TEXT_TITLE,
+        L.OPT_PLAYBACK_TITLE, L.OPT_LOWER_TITLE, L.OPT_CONTRIBUTE_TITLE, L.OPT_MINIMAP_TITLE,
+        L.OPT_SECTION_PROFILES, L.OPT_LINKS_TITLE }, ", "))
+    local modules
+    for _, item in ipairs(home.items) do
+        if item.kind == "section" and item.text == L.OPT_PARTS_TITLE then modules = item end
+    end
+    Expect("Show Welcome Window is the button on the Modules title", modules and modules.button
+        and modules.button:GetText(), L.OPT_WELCOME_AGAIN)
+    Expect("Fix a Problem shows the diagnostics, reports a problem and resets the positions",
+        tostring(Row(home, L.OPT_DIAGNOSTICS) ~= nil) .. " " .. tostring(Row(home, L.DIALOGUE_REPORT_PROBLEM) ~= nil)
+        .. " " .. tostring(Row(home, L.OPT_RESET) ~= nil), "true true true")
+    -- One Theme row per window that has a choice.
+    local themes = 0
+    for _, entry in ipairs(home.entries) do if entry.label == L.OPT_DUI_THEME then themes = themes + 1 end end
+    Expect("one Theme row for the Small Window and one for DialogueUI's, no Background row", themes, 2)
+end
+
 ---------------------------------------------------------------- keys
 local bindings = assert(io.open(SPOKEN .. "Bindings.xml")):read("*a")
-for _, name in ipairs({ "SPOKEN_PLAYPAUSE", "SPOKEN_SKIP", "SPOKEN_STOP" }) do
+for _, name in ipairs({ "SPOKEN_PLAYPAUSE", "SPOKEN_SKIP", "SPOKEN_STOP", "SPOKEN_COMPENDIUM" }) do
     Expect(name .. " is a key binding", bindings:find('name="' .. name .. '"', 1, true) ~= nil, true)
     Expect("...named in the game's key bindings list", type(_G["BINDING_NAME_" .. name]), "string")
 end
 Expect("...under a Spoken heading", _G.BINDING_HEADER_SPOKEN, "Spoken")
+Expect("the keys section sets the Compendium's key too", Row(home, L.BIND_COMPENDIUM) ~= nil, true)
+
+---------------------------------------------------------------- /sp in the settings' words
+do
+    local said = {}
+    local print_ = env.print
+    env.print = function(text) table.insert(said, text) end
+    SlashCmdList.SPOKEN("help")
+    env.print = print_
+    local help = table.concat(said, "\n")
+    Expect("/sp help names each command by its setting", help:find("/sp style subtitles | small | large | dialogueui | voice: "
+        .. L.OPT_PLAYER_STYLE, 1, true) ~= nil and help:find("/sp stopall: " .. L.BIND_STOP, 1, true) ~= nil, true)
+    SlashCmdList.SPOKEN("style small")
+    Expect("/sp style takes the styles' names", env.Addon:PlayerStyle(), "minimal")
+    SlashCmdList.SPOKEN("player subtitle")
+    Expect("...and the old ones still", env.Addon:PlayerStyle(), "subtitle")
+    SlashCmdList.SPOKEN("words off")
+    Expect("/sp words turns Show Words off", env.Addon.db.profile.Transcript.Enabled, false)
+    SlashCmdList.SPOKEN("transcript on")
+    Expect("...and transcript still answers", env.Addon.db.profile.Transcript.Enabled, true)
+    env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
+end
 
 ---------------------------------------------------------------- collected lines
 local collected
@@ -247,35 +320,68 @@ local function Group(layout, text)
         if item.kind == "section" and item.text == text then return item end
     end
 end
-Expect("the Quests page has its module's switch, said plainly", Row(quests, VO.L.OPT_PART_SWITCH) ~= nil
-    and VO.L.OPT_PART_SWITCH, "Enable Module")
+Expect("the Quests page has its module's switch, said plainly, in Spoken's words for every module",
+    Row(quests, L.MODULE_SWITCH) ~= nil and L.MODULE_SWITCH, "Enable Module")
 Expect("...and is headed by its name", quests.intro ~= nil and quests.intro.name.text, VO.L.OPT_PAGE_TITLE)
 Expect("...and no paragraph under it, as the game's own pages have none", quests.intro.text, nil)
 do
-    -- Every pack listed, by a name that says what it is: installed ones by version, the rest
-    -- with a button to get them.
-    local horde = Row(quests, "Voice Pack (Horde Quests)")
-    local all = Row(quests, "Voice Pack (All Quests)")
-    Expect("the Quests page lists every voice pack, named for what it holds", horde ~= nil and all ~= nil, true)
+    -- Every pack listed, by its language: installed ones by version, the rest with a button to
+    -- get them. The retired complete pack only where a player still has it.
+    local horde = Row(quests, "English (Horde)")
+    local all = Row(quests, "All Quests")
+    Expect("the Quests page lists every voice pack by its language, not the retired complete one",
+        tostring(horde ~= nil) .. " " .. tostring(all ~= nil), "true false")
     Expect("...one not installed has a Download button in place of its version",
         horde.layoutGet and horde.layoutButton.text, "Download")
 end
 -- Switched from Spoken's page while the Quests page is hidden: the page is drawn again for it.
 _G.Spoken:SetPartOn("quests", false)
 local autoplay = Row(quests, VO.L.OPT_PANEL_AUTOPLAY)
-Expect("switching Quests off from Spoken's page greys out its page at once", autoplay.layoutReason, VO.L.REASON_PART_OFF)
+Expect("switching Quests off from Spoken's page greys out its page at once", autoplay.layoutReason, L.REASON_PART_OFF)
 Expect("...a checkbox's label in the game's grey with its box", autoplay.alpha < 1 and autoplay.text.layoutGreyed, true)
-Expect("...the titles of its groups with it", Group(quests, VO.L.OPT_SECTION_DIALOGUE).greyed, true)
-Expect("...and everything else on it: fixing a problem", Row(quests, VO.L.OPT_PRINT_DIAG).layoutReason, VO.L.REASON_PART_OFF)
-Expect("...every title", Group(quests, VO.L.OPT_SECTION_TROUBLE).greyed, true)
+Expect("...the titles of its groups with it", Group(quests, L.MODULE_WHEN).greyed, true)
+Expect("...and everything else on it: the test line", Row(quests, L.MODULE_TEST_LINE).layoutReason, L.REASON_PART_OFF)
+Expect("...every title", Group(quests, L.PART_VOICE).greyed, true)
 do
-    local pack = Row(quests, "Voice Pack (Horde Quests)")
+    local pack = Row(quests, "English (Horde)")
     Expect("...and a voice pack's Download button, which cannot be clicked", pack.layoutButton.enabled, false)
 end
-Expect("...but not its own switch", Row(quests, VO.L.OPT_PART_SWITCH).layoutReason, nil)
+Expect("...but not its own switch", Row(quests, L.MODULE_SWITCH).layoutReason, nil)
 _G.Spoken:SetPartOn("quests", true); Options:UpdateRows(); quests:Refresh()
 Expect("switching it back on wakes the page", autoplay.layoutReason, nil)
-Expect("...and its titles", Group(quests, VO.L.OPT_SECTION_DIALOGUE).greyed, false)
+Expect("...and its titles", Group(quests, L.MODULE_WHEN).greyed, false)
+do
+    -- No pack speaks the voice language and nothing falls back: the page says so, rather than
+    -- going quiet with no word why.
+    local function Silent()
+        for _, row in ipairs(Group(quests, L.PART_VOICE).rows) do
+            local text = row.control.GetText and row.control:GetText()
+            if row.shown and type(text) == "string" and text:find("Stay Silent", 1, true) then return text end
+        end
+    end
+    local language = env.Addon.db.profile.Language
+    language.Voice, language.Fallback = "zhCN", "none"
+    quests:Refresh()
+    -- The stub measures every character alike, so no font of its own draws Chinese: it is named in
+    -- English, as on a client whose font lacks it.
+    Expect("a voice language with no Quests pack and Stay Silent is said under the voice packs", Silent(),
+        format(L.MODULE_NO_VOICE_FMT, "Chinese (Simplified)"))
+    -- A font with the glyphs measures the text apart from the box a missing one draws.
+    stub.TextWidth = function(fs)
+        local text = tostring(fs.text or "")
+        local width = 0
+        for char in text:gmatch("[%z\1-\127\194-\244][\128-\191]*") do width = width + (char == "\238\128\128" and 12 or 7) end
+        return width
+    end
+    quests:Refresh()
+    Expect("...in its own name where the font draws it", Silent(), format(L.MODULE_NO_VOICE_FMT, "简体中文"))
+    stub.TextWidth = nil
+    language.Fallback = "enUS"
+    quests:Refresh()
+    Expect("...and not while English fills in", Silent(), nil)
+    language.Voice, language.Fallback = nil, nil
+    quests:Refresh()
+end
 
 ---------------------------------------------------------------- under the page's divider
 -- The first row on a page stands as far under the divider as the section's title after it stands
@@ -290,7 +396,7 @@ do
     local above = 2 - search.layoutY
     local below = (search.layoutY - search.layoutHeight) - (modules.layoutY - 16)
     Expect("the search box is as far under the divider as Modules' title is under it", above .. " " .. below, "25 25")
-    Expect("...and a module's Enable switch as far", 2 - Row(quests, VO.L.OPT_PART_SWITCH).layoutY, 25)
+    Expect("...and a module's Enable switch as far", 2 - Row(quests, L.MODULE_SWITCH).layoutY, 25)
 end
 
 ---------------------------------------------------------------- a page already showing follows its settings
@@ -334,8 +440,9 @@ Expect("search finds a setting by its name", found[1] and found[1].entry.label, 
 Expect("...on the page it is on", found[1] and found[1].page.name, L.OPT_HOME_TITLE)
 found = Search:Find("automatically")
 Expect("search reaches the pages under Spoken too", found[1] and found[1].page.name, "Quests")
-Expect("a word from a tooltip is enough", Search:Find("footsteps")[1] and Search:Find("footsteps")[1].entry.label, "Effects")
-Expect("every word must match", #Search:Find("subtitle footsteps"), 0)
+Expect("a word from a tooltip is enough", Search:Find("finish")[1] and Search:Find("finish")[1].entry.label,
+    L.OPT_GREETING_FIRST)
+Expect("every word must match", #Search:Find("subtitle finish"), 0)
 Expect("case and spacing do not matter", Search:Find("  SUBTITLE   size ")[1].entry.label, "Subtitle Size")
 local function Hit(query)
     for _, result in ipairs(Search:Find(query)) do

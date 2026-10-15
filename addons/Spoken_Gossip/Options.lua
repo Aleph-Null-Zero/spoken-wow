@@ -29,14 +29,13 @@ local GeneralTab =
             type = "group",
             order = 1,
             inline = true,
-            name = L.OPT_SECTION_DIALOGUE,
+            name = Spoken:Words().MODULE_WHEN,
             args = {
                 GossipFrequency = {
                     type = "select",
                     width = 1.1,
                     order = 1,
                     name = L.OPT_PANEL_GREETINGS,
-                    desc = L.OPT_PANEL_GREETINGS_TIP,
                     values = FREQUENCIES,
                     get = function(info) return Addon.db.profile.Audio.GossipFrequency end,
                     set = function(info, value)
@@ -50,7 +49,6 @@ local GeneralTab =
                     order = 3,
                     width = 2,
                     name = L.OPT_PANEL_STOP_ON_CLOSE,
-                    desc = L.OPT_PANEL_STOP_ON_CLOSE_TIP,
                     get = function(info) return Addon.db.profile.Audio.StopAudioOnDisengage end,
                     set = function(info, value) Addon.db.profile.Audio.StopAudioOnDisengage = value end,
                 },
@@ -67,7 +65,6 @@ local GeneralTab =
                     type = "execute",
                     order = 5,
                     name = L.OPT_FORGET_GREETINGS,
-                    desc = L.OPT_FORGET_GREETINGS_TIP,
                     func = function() Addon:ForgetGreetings() end,
                 },
             },
@@ -111,12 +108,21 @@ local SlashCommands = {
             dropdownHidden = true,
             func = function() Addon:PrintDiagnostics() end
         },
+        -- The settings page where the client has one, and the window where it has not.
         Options = {
             type = "execute",
             order = 100,
             name = L.OPT_CMD_OPTIONS,
             desc = L.OPT_CMD_OPTIONS_DESC,
-            func = function(info) Options:OpenConfigWindow() end
+            func = function(info) Options:OpenSettings() end
+        },
+        Settings = {
+            type = "execute",
+            order = 101,
+            name = L.OPT_CMD_OPTIONS,
+            desc = L.OPT_CMD_OPTIONS_DESC,
+            hidden = true,
+            func = function(info) Options:OpenSettings() end
         },
     }
 }

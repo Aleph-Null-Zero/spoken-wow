@@ -12,13 +12,15 @@ local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 -- Spoken, which the module runs on: its round buttons are the pages' Play and Report.
+-- Spoken Zones is loaded, as the Compendium's page checks for the art it ships.
+_G.IsAddOnLoaded = function(name) return name == "Spoken_Places" end
+_G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 stub.LoadSpoken(here .. "/../../addons/Spoken/").Addon:Enable()
 
 -- The atlases the client has, as Blizzard's own frames use them (wow-ui-source, forever).
 local ATLASES = { ["spellbook-Page-Right-C60"] = true, ["spellbook-divider"] = true, ["LFG-lock"] = true,
     ["QuestDetailsBackgrounds"] = true, ["questlog-frame"] = true, ["questlog-frame-filigree"] = true }
 _G.C_Texture = { GetAtlasInfo = function(name) return stub.ListAtlas(name) or ATLASES[name] and { width = 64, height = 11 } or nil end }
-_G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 
 -- The game's portrait frame: its title, portrait and close button, as PortraitFrameMixin has them.
 local createFrame = _G.CreateFrame
@@ -74,6 +76,7 @@ function Z:IsVoiceEnabled() return true end
 function Z:HasAudio() return true end
 function Z:IsPlayingLore() return false end
 function Z:IsLoreAtHead() return false end
+function Z:LoreClip() end
 function Z:OnAudioChanged() end
 function Z:OnMapChanged() end
 function Z:CanContribute() return true end
@@ -98,7 +101,7 @@ local audio = setmetatable({}, { __index = Z })
 assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Places", audio)
 Z.PlaceAbove = audio.PlaceAbove
 dofile(here .. "/../../addons/Spoken/UI/Layout.lua")
-for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/ContributeButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 
@@ -133,7 +136,7 @@ _G.SpokenCompendium:Hide()
 Z:ToggleLoreWindow()
 Expect("opening it lands on where the player stands", page.title.text, "Durotar")
 Expect("...the story in the spellbook's ink", page.body.ink and page.body.ink[1], 0.24)
-Expect("...with Play and Report for it", page.play.mapID == 1411 and page.report.mapID == 1411, true)
+Expect("...with Play and Report for it", page.target[1] == 1411 and page.play:IsShown() and page.report:IsShown(), true)
 -- Hide Report Buttons is Spoken's; here, a Spoken that answers it, and the redraw its
 -- REPORT_SETTINGS_CHANGED runs.
 local spoken, reportsHidden = _G.Spoken, true
@@ -144,7 +147,7 @@ Expect("Hide Report Buttons, in Spoken's settings, takes Report off the Compendi
 Expect("...Play taking its corner", page.play.anchor.point .. " " .. tostring(page.play.anchor.relativeTo == page.frame),
     "TOPRIGHT true")
 Expect("...over the words' right edge, the scroll bar's room in, the column Quests' and Books' pages put Play in",
-    page.play.anchor.x, -(page.inset.right + page.body:BarRoom()))
+    page.play.anchor.x, -(page.right + page.body:BarRoom()))
 reportsHidden = false
 Z:RefreshLoreWindow()
 Expect("...and gives it back when it is off", page.report:IsShown(), true)
@@ -154,15 +157,18 @@ _G.Spoken = spoken
 -- Spoken's words for what they do; under Play, what is read. A click redraws it while the pointer is
 -- still on the button. Report's ends with the debug log's menu hint.
 do
-    local env, state = _G.SpokenEnv, { playing = false, atHead = false, paused = false }
+    local env, state = _G.SpokenEnv, { started = false, paused = false }
+    local clip = {}
     _G.SpokenEnv = { L = { PLAY = "Spoken Play", STOP = "Spoken Stop", REPLAY = "Spoken Replay",
         STOP_READING_TIP = "Stops the reading.", REPLAY_READING_TIP = "Reads it again." } }
-    local saved = { Z.IsPlayingLore, Z.IsLoreAtHead, Z.IsPaused, Z.PlayLore }
-    Z.IsPlayingLore = function() return state.playing end
-    Z.IsLoreAtHead = function() return state.atHead end
-    Z.IsPaused = function() return state.paused end
-    Z.PlayLore = function() state.playing, state.atHead = true, true end
-    _G.Spoken = setmetatable({ TogglePause = function() state.paused = not state.paused; state.playing = not state.paused end,
+    -- The story's line, in the queue once Play has started it, as Spoken's queue says it.
+    local saved = { Z.LoreClip, Z.PlayLore }
+    Z.LoreClip = function() return state.started and clip or nil end
+    Z.PlayLore = function() state.started = true end
+    _G.Spoken = setmetatable({ TogglePause = function() state.paused = not state.paused end,
+        GetCurrent = function() return state.started and clip or nil end,
+        IsPaused = function() return state.paused end,
+        GetNowPlaying = function() return not state.paused and clip or nil end,
         LogMenuHint = function() return "Right-click: the debug log" end }, { __index = spoken })
     -- A button's tooltip, its lines as one, the pointer put on it; or as it stands, with `asIs`.
     local function Tip(button, asIs)
@@ -173,7 +179,7 @@ do
         end
         return table.concat(GameTooltip.lines or {}, "|")
     end
-    page.play:Refresh()
+    page:RefreshPlay()
     Expect("Play's tooltip: Spoken's Play, and what it reads", Tip(page.play), "Spoken Play|" .. Z.L.AUDIO_READ_TIP)
     page.play.scripts.OnClick(page.play)
     Expect("...a click, the pointer still on it, redrawing it for Stop, in Spoken's words", Tip(page.play, true),
@@ -183,8 +189,8 @@ do
     Expect("Report's tooltip ends with the debug log's menu hint", Tip(page.report),
         Z.L.OPT_REPORT_PROBLEM .. "|" .. Z.L.OPT_REPORT_LINE_TIP .. "|Right-click: the debug log")
     _G.Spoken, _G.SpokenEnv = spoken, env
-    Z.IsPlayingLore, Z.IsLoreAtHead, Z.IsPaused, Z.PlayLore = saved[1], saved[2], saved[3], saved[4]
-    page.play:Refresh()
+    Z.LoreClip, Z.PlayLore = saved[1], saved[2]
+    page:RefreshPlay()
 end
 Expect("...and the zone's picture above the story", page.body.picture:IsShown() and page.body.picture:GetTexture(), "Pictures/zone-1411")
 Expect("...its edge frayed by its mask", page.body.pictureMask:GetTexture(), "Pictures/Mask2")
@@ -321,7 +327,7 @@ Expect("an area only Forever has is not listed on another client", RowFor("Camp 
 RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
 Expect("a place with no story says so", page.body.text.text, Z.L.LORE_NOT_WRITTEN:format("Sen'jin Village"))
 Expect("...offers to Contribute one", page.contribute.mapID, 1411)
-Expect("...and has nothing to play or report", page.play.mapID == nil and page.report.mapID == nil, true)
+Expect("...and has nothing to play or report", page.target == nil and not page.play:IsShown() and not page.report:IsShown(), true)
 _G.SpokenCompendium.tabs.places.onShow(window); window.Refresh()
 Expect("come back to from another tab, a place the player chose stays chosen", page.title.text, "Sen'jin Village")
 _G.SpokenCompendium:Hide()
@@ -617,6 +623,8 @@ Expect("a zone not discovered opens, its areas listed, those not found locked", 
     "Eastern Kingdoms|Dun Morogh|Coldridge Valley|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials / Coldridge Valley|Sen'jin Village")
 Expect("...its page says it is not discovered", page.title.text .. ": " .. page.body.text.text,
     "Dun Morogh: " .. Z.L.NOT_DISCOVERED)
+Expect("...under where it sits and what is found in it, as any card's page", page.sub.text.text,
+    Z.L.IN_ZONE_FMT:format("Eastern Kingdoms") .. " · " .. Z.L.DISCOVERED_FMT:format(0, 1))
 RowFor("Sen'jin Village").scripts.OnClick(RowFor("Sen'jin Village"))
 Expect("a locked area cannot be chosen", RowFor("Sen'jin Village").row and RowFor("Dun Morogh").selected, true)
 RowFor("Dun Morogh").scripts.OnClick(RowFor("Dun Morogh"))
@@ -630,7 +638,7 @@ Z:ShowLoreFor(1411, "sen'jin village")
 Expect("a place not discovered, opened from elsewhere, says so and to go there to read its story",
     page.title.text .. ": " .. page.body.text.text,
     "Sen'jin Village: You have not discovered this place yet. Go there to read its story.")
-Expect("...with nothing to play", page.play.mapID, nil)
+Expect("...with nothing to play", page.target, nil)
 Shown()
 Expect("...and is not counted found for being chosen", RowFor("Durotar").count.text, "1/3 • 33%")
 Expect("...still locked in the list", RowFor("Sen'jin Village").row.locked, true)
@@ -644,7 +652,8 @@ Z:ShowLoreFor(1411, nil)
 Shown()
 
 -- A search lists every match, greyed as browsing lists it: in a zone not found, under a banner none
--- of whose zones is found.
+-- of whose zones is found. A zone's card is greyed while nothing in it is found, as a card with
+-- nothing started or found in it is on the Quests and Writings tabs.
 local wasFound = found
 found = { ["1411/valley of trials"] = true }
 local function Search(text)
@@ -653,7 +662,7 @@ local function Search(text)
     return Shown()
 end
 Expect("a search lists an area found in a zone not found", Search("trials"), "Kalimdor|Durotar|Valley of Trials")
-Expect("...the zone's card greyed", Greyed(), "Durotar")
+Expect("...the zone's card not greyed, an area in it found", Greyed(), "")
 Expect("...and an area not found, locked", Search("coldridge") .. " / " .. Locked(),
     "Eastern Kingdoms|Dun Morogh|Coldridge Valley / Coldridge Valley")
 Expect("...a banner none of whose zones is found listing its cards as the player left them", Search("eastern"),
@@ -694,6 +703,13 @@ Expect("...and ticked in the menu", Only().checked, true)
 Only().func()
 Expect("...off, they are listed again", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar|Orgrimmar|Sen'jin Village|Valley of Trials")
 Expect("...greyed out", Greyed() .. " / " .. Locked(), "Dun Morogh|Orgrimmar / Sen'jin Village")
+RowFor("Orgrimmar").scripts.OnClick(RowFor("Orgrimmar"))
+Only().func()
+Expect("...on with a place chosen it leaves out, what holds it is chosen, as on Quests",
+    page.title.text .. "|" .. tostring(RowFor("Durotar").selected), "Durotar|true")
+Only().func()
+RowFor("Orgrimmar").scripts.OnClick(RowFor("Orgrimmar"))
+Z:ShowLoreFor(1411, nil)
 
 -- Voiced Only, after it in the same menu: what no installed voice pack reads is left out, and a
 -- zone stays while an area in it has a recording.
@@ -776,13 +792,13 @@ do
     body.text.GetStringHeight = function() return 20 end
     body:SetText("Short.")
     Expect("words that fit leave no room for a scroll bar", body:BarRoom(), 0)
-    local fitX = page.report.layoutX
+    local fitX = page.report.anchor.x
     body.frame:SetHeight(100)
     body.text.GetStringHeight = function() return 400 end
     body:SetText("Long.")
     Expect("...words that run past the view leave the bar its room and a gap", body:BarRoom() > body.barWidth, true)
     Expect("...the words that much narrower", body.text.width, 300 - body:BarRoom())
-    Expect("...and the header's buttons moved in with them", page.report.layoutX, fitX - body:BarRoom())
+    Expect("...and the header's buttons moved in with them", page.report.anchor.x, fitX - body:BarRoom())
     body.text.GetStringHeight = stringHeight
 end
 

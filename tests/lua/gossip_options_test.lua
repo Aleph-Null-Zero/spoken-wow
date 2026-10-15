@@ -44,12 +44,14 @@ for _, child in ipairs(content.children) do
         table.insert(buttons, child)
     end
 end
-Expect("every section is there", table.concat(headings, "|"), "When to Read|Extras|Reading History|Voice Packs|Fix a Problem")
+Expect("every section is there", table.concat(headings, "|"), "When to Read|Voice Packs|Reading History")
+local W = _G.Spoken:Words()
 local function Button(text)
     for _, button in ipairs(buttons) do if button.text == text then return button end end
 end
-Expect("Fix a Problem has the same buttons as every module's page",
-    Button(L.OPT_TEST_LINE) ~= nil and Button(L.OPT_PRINT_DIAG) ~= nil and Button(L.OPT_REPORT_PROBLEM) ~= nil, true)
+-- Diagnostics and Report a Problem are on Spoken's page, for every module at once.
+Expect("the voice packs end with Play a Test Line, as on every module's page",
+    tostring(Button(W.MODULE_TEST_LINE) ~= nil) .. " " .. tostring(Button(W.DIALOGUE_REPORT_PROBLEM) ~= nil), "true false")
 
 ---------------------------------------------------------------- NPC Greetings
 local db = G.Addon.db.profile
@@ -59,13 +61,13 @@ for _, child in ipairs(content.children) do
         greetings = child
     end
 end
-Expect("NPC Greetings is a dropdown", greetings ~= nil, true)
+Expect("Read Greetings is a dropdown", greetings ~= nil, true)
 greetings:GetScript("OnShow")(greetings)
 Expect("...showing Once per NPC to start with", greetings.dropdownText, L.OPT_GREETING_LABEL_ONCE_NPC)
 local offered = {}
 for _, entry in ipairs(stub.OpenDropdown(greetings)) do table.insert(offered, entry.text) end
-Expect("...offering every choice at once", table.concat(offered, "|"),
-    "Every Time|Once per NPC with Quests|Once per NPC|Never")
+Expect("...offering every choice at once, from reading the most to the least", table.concat(offered, "|"),
+    "Every Time|Once per NPC|Once for Quest Givers|Never")
 -- Live whatever the quests module's autoplay is: this page has no autoplay to grey it.
 Expect("...live, with no switch above it to grey it", greetings.dropdownDisabled or false, false)
 Expect("picking Never is possible", stub.PickDropdown(greetings, "Never"), true)
@@ -78,22 +80,26 @@ G.Addon.db.char.hasSeenGossipForNPC = { ["Creature-0-0-0-0-12345-0"] = true }
 local forget
 for _, button in ipairs(buttons) do if button.text == L.OPT_FORGET_GREETINGS then forget = button end end
 Expect("Forget Greetings Heard is a button", forget ~= nil, true)
+-- It only matters while a greeting is read once.
+stub.PickDropdown(greetings, "Every Time"); SettingsPanel.panel.layout:Refresh()
+Expect("...greyed while every greeting is read each time, saying why", forget.layoutReason, L.REASON_FORGET_GREETINGS)
+stub.PickDropdown(greetings, "Once per NPC"); SettingsPanel.panel.layout:Refresh()
+Expect("...and live with a greeting read once", forget.layoutReason, nil)
 forget.scripts.OnClick(forget)
 Expect("...which clears this character's greetings heard", next(G.Addon.db.char.hasSeenGossipForNPC), nil)
 
 ---------------------------------------------------------------- the packs that hold gossip
 local rows = {}
 for _, item in ipairs(SettingsPanel.panel.layout.items) do
-    if item.kind == "section" and item.text == L.OPT_SECTION_PACKS then
+    if item.kind == "section" and item.text == W.PART_VOICE then
         for _, row in ipairs(item.rows) do
             local caption = row.regions and row.regions[4]
             if row.shown and caption and caption.text then table.insert(rows, caption.text) end
         end
     end
 end
-local function Name(label) return (L.OPT_PACK_NAME_FMT:gsub("%%1%$s", label)) end
-Expect("the packs offered are those that hold gossip: All, and the Gossip pack",
-    table.concat(rows, "|"), Name(L.OPT_PACK_ALL) .. "|" .. Name(L.OPT_PACK_GOSSIP))
+Expect("the pack offered is English's that holds gossip, named by its language, not the retired complete pack",
+    table.concat(rows, "|"), "English")
 Expect("...the card counts only the installed one that does", _G.Spoken:PartStatus("gossip") ~= nil, true)
 Expect("the minimap menu heads its entries with the page's name, in the player's language",
     _G.Spoken:GetSource("gossip").title, L.OPT_PAGE_TITLE)

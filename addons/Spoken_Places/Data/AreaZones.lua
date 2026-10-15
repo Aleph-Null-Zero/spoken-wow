@@ -10,8 +10,8 @@
 --   also  more zones the client has an area of that name in, at a border: found and told there
 --         too, and listed only once, where `zone` (or else its story) is.
 --
--- Data/Dungeons.lua does the same for a dungeon kept under another zone than its entrance's
--- (Razorfen Downs), which needs no entry here. Kept by hand; tests/lua/zones_area_zones_test.lua
+-- Spoken's Data/Dungeons.lua does the same for a dungeon kept under another zone than its
+-- entrance's (Razorfen Downs), which needs no entry here. Kept by hand; tests/lua/zones_area_zones_test.lua
 -- checks every entry against the stories.
 
 local _, SpokenZones = ...

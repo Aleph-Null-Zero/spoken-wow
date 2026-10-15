@@ -1,22 +1,25 @@
 if not (VoiceOver and VoiceOver.SpokenDialogue) then return end
 setfenv(1, VoiceOver)
 
--- The addon's face in the interface settings: one canvas panel of sections, laid out by
--- Spoken's UI/Layout.lua so the pages read alike.
+-- The module's page in the game's settings, under Spoken's: laid out by Spoken's UI/Layout.lua so
+-- the pages read alike.
 --
--- The AceConfig table is not replaced. It still backs every `/spq` command, and it still
--- fills the window OpenConfigWindow shows -- which is where profiles and the sound-pack
--- manager live, both of them AceGUI's to draw. What changed is that the settings a player
--- actually changes are sections on one panel rather than entries in a tree.
---
--- Absent on the three legacy clients, which have no Settings API at all. There the
--- window and the slash commands are the whole interface, as they have always been.
+-- The AceConfig table is not replaced. It still backs every `/spq` command, and on the three
+-- legacy clients, which have no Settings API at all, it fills the window OpenConfigWindow shows:
+-- there the window and the slash commands are the whole interface, as they have always been.
 
 SettingsPanel = {}
 
 -- The game's settings list sets its rows 25 in from the canvas's left.
 local INDENT = 25
-local panel, category
+
+-- A language's name as Spoken lists it for every module: its own, in English where the font
+-- cannot draw it.
+local function LanguageName(code)
+    if Spoken and Spoken.LanguageName then return Spoken:LanguageName(code) end
+    return Language:GetNativeName(code)
+end
+local panel
 
 function SettingsPanel:Setup()
     if panel or not (Settings and Settings.RegisterCanvasLayoutCategory) then
@@ -24,6 +27,8 @@ function SettingsPanel:Setup()
     end
     panel = CreateFrame("Frame", "SpokenQuestsOptionsPanel", UIParent)
     panel.name = "Spoken Quests"
+    -- The words every module's page shares, kept in Spoken.
+    local W = Spoken:Words()
 
     -- The settings canvas is a fixed size and neither scrolls nor clips what overflows
     -- it, so a panel with more rows than fit draws them over the game world.
@@ -34,96 +39,44 @@ function SettingsPanel:Setup()
     panel.layout = layout
     local audio = function() return Addon.db.profile.Audio end
     local refresh = function() layout:Refresh() end
-    layout:Header(L.OPT_PAGE_TITLE, L.OPT_PANEL_NOTE, nil, [[Interface\Icons\INV_Scroll_03]])
 
-    -- The part's own switch first, as on Spoken's page: off, everything under it is greyed
-    -- out and says why, rather than looking live and doing nothing.
-    local switch
-    local function PartOn() return Addon:IsPartOn() end
     -- Its own entry, nested under Spoken in the game's settings list and headed as the game's
-    -- pages are, with its switch first: the page is there whether the part is on or not. The
-    -- part's card on Spoken's page turns it on and off too.
-    if Spoken and Spoken.SettingsStyle and Spoken:SettingsStyle() == "pages" then
-        layout:HideHeader()
-        layout:Intro([[Interface\Icons\INV_Scroll_03]], L.OPT_PAGE_TITLE)
-        switch = layout:Checkbox(L.OPT_PART_SWITCH, L.OPT_PART_SWITCH_TIP, PartOn,
-            function(value) Spoken:SetPartOn("quests", value) end, refresh)
-    else
-        -- A player too old to nest pages: how this part stands -- on or off, and its voice
-        -- packs -- before any setting, worded as on its card on Spoken's page.
-        if Spoken and Spoken.PartStatus then
-            layout:Status(function() return Spoken:PartStatus("quests") end)
-        end
-        if Spoken and Spoken.IsPartOn then
-            switch = layout:Checkbox(L.OPT_PART_SWITCH, L.OPT_PART_SWITCH_TIP, PartOn,
-                function(value) Spoken:SetPartOn("quests", value) end, refresh)
-        end
-    end
+    -- pages are, with the module's switch first: off, everything under it is greyed out and says
+    -- why, rather than looking live and doing nothing. The module's card on Spoken's page turns
+    -- it on and off too.
+    local function PartOn() return Addon:IsPartOn() end
+    layout:Intro([[Interface\Icons\INV_Scroll_03]], L.OPT_PAGE_TITLE)
+    local switch = layout:Checkbox(W.MODULE_SWITCH, nil, PartOn,
+        function(value) Spoken:SetPartOn("quests", value) end, refresh)
 
-    layout:Section(L.OPT_SECTION_DIALOGUE)
-    layout:Checkbox(L.OPT_PANEL_AUTOPLAY,
-        L.OPT_PANEL_AUTOPLAY_TIP,
+    layout:Section(W.MODULE_WHEN)
+    layout:Checkbox(L.OPT_PANEL_AUTOPLAY, nil,
         function() return Addon:IsAutoplayOn() end,
         function(value) Addon:SetAutoplay(value) end,
         refresh)
-    layout:Checkbox(L.OPT_PANEL_STOP_ON_CLOSE,
-        L.OPT_PANEL_STOP_ON_CLOSE_TIP,
-        function() return audio().StopAudioOnDisengage end,
-        function(value) audio().StopAudioOnDisengage = value end)
-    -- The two rarely wanted, apart from the everyday choices above.
-    layout:Section(L.OPT_SECTION_EXTRAS)
-    local followup = layout:Checkbox(L.OPT_PANEL_FOLLOWUP,
-        L.OPT_PANEL_FOLLOWUP_TIP,
+    -- NPC chat after a quest is queued only by automatic reading (Followup.lua), so with it off
+    -- this does nothing either: under it, greyed, and saying why.
+    layout:Indent()
+    local followup = layout:Checkbox(L.OPT_PANEL_FOLLOWUP, nil,
         function() return audio().FollowupLines ~= false end,
         function(value) audio().FollowupLines = value end)
-    -- Follow-up lines are queued only by autoplay (Followup.lua), so with it off this one
-    -- does nothing either: greyed, and saying why.
+    layout:Outdent()
     layout:Requires(followup, function() return Addon:IsAutoplayOn() end, L.REASON_AUTOPLAY)
+    layout:Checkbox(L.OPT_PANEL_STOP_ON_CLOSE, nil,
+        function() return audio().StopAudioOnDisengage end,
+        function(value) audio().StopAudioOnDisengage = value end)
 
-    -- Only with DialogueUI installed: on Spoken's page, or here with a Spoken too old to have
-    -- room for them.
+    -- Only with DialogueUI installed, on Spoken's page.
     if DialogueUIBridge and DialogueUIBridge.Problem and IsAddOnLoaded and IsAddOnLoaded("DialogueUI") then
-        if Spoken and Spoken.AddDialogueUISettings then
-            Spoken:AddDialogueUISettings(function(page)
-                return SettingsPanel:DialogueUIRows(page, L.OPT_SECTION_DIALOGUEUI)
-            end)
-        else
-            self:DialogueUIRows(layout, L.OPT_SECTION_DIALOGUEUI, L.OPT_DUI_NOTE)
-        end
+        Spoken:AddDialogueUISettings(function(page)
+            return SettingsPanel:DialogueUIRows(page)
+        end)
     end
 
-    -- The voice language is set once for every module, on Spoken's page. Here only where the
-    -- player is too old to have that setting.
-    if not (Spoken and Spoken.GetLanguageChoice) then
-        layout:Section(L.OPT_SECTION_LANGUAGE)
-        local voices, fallbacks = { Language.AUTO }, { "none" }
-        for _, locale in ipairs(Language.LOCALES) do
-            table.insert(voices, locale.code)
-            table.insert(fallbacks, locale.code)
-        end
-        layout:Dropdown(L.OPT_VOICE_LANGUAGE, L.OPT_VOICE_LANGUAGE_TIP,
-            voices,
-            function() return audio().VoiceLanguage or Language.AUTO end,
-            function(code) audio().VoiceLanguage = code end,
-            nil,
-            function(code)
-                if code == Language.AUTO then
-                    return format(L.OPT_LANG_AUTO_FMT, Language:GetNativeName(Language:GetClientLanguage()))
-                end
-                return Language:GetNativeName(code)
-            end)
-        layout:Dropdown(L.OPT_FALLBACK_LANGUAGE, L.OPT_FALLBACK_LANGUAGE_TIP,
-            fallbacks,
-            function() return audio().FallbackLanguage or Language.BASE end,
-            function(code) audio().FallbackLanguage = code end,
-            nil,
-            function(code) return code == "none" and L.OPT_FALLBACK_NONE or Language:GetNativeName(code) end)
-    end
-
-    -- Every pack, a row each, installed or not: its version where it is installed, and where
-    -- it is not, a button with the address to get it -- the game cannot open a link, so the
-    -- button hands over one to copy. All holds the other four, which then say so.
-    layout:Section(L.OPT_SECTION_PACKS)
+    -- Every pack, a row each named by its language, installed or not: its version where it is
+    -- installed, and where it is not, a button with the address to get it -- the game cannot open
+    -- a link, so the button hands over one to copy.
+    layout:Section(W.PART_VOICE)
     local ALL = "SpokenQuestsAudioAll"
     -- What NPCs say is the gossip module's, its English pack on that module's page.
     local GOSSIP_PACK = "SpokenQuestsAudioGossip"
@@ -135,44 +88,49 @@ function SettingsPanel:Setup()
     local present = 0
     for _ in DataModules:GetPresentModules() do present = present + 1 end
     if present == 0 then
-        layout:Note(L.OPT_NO_PACK, nil, 16)
+        layout:Note(W.MODULE_NO_PACK, nil, 16)
     end
+    -- No pack in the voice language, and nothing to fall back on: said here, or the page goes
+    -- quiet with no word why.
+    local silent = layout:Note("", nil, 32)
+    layout:OnRefresh(function() silent:SetText(Spoken:SilentNote("quests") or "") end)
+    layout:ShowWhen(silent, function() return Spoken:SilentNote("quests") ~= nil end)
     local listed = { [GOSSIP_PACK] = true }
     -- The packs to get are the voice language's; any pack installed is listed too. Not the
-    -- fallback's to get: on an esMX client English's five rows buried the one that mattered. But
+    -- fallback's to get: on an esMX client English's rows buried the one that mattered. But
     -- a voice language with no pack of its own (zhCN, zhTW) is heard in the fallback's, so those
     -- are the ones to get there. Each row is built whatever is chosen and shown while it is
     -- wanted, so a change of language on Spoken's page shows at once.
     local function Wanted(code, addon)
         local voice = Language:GetVoiceLanguage()
         if code == voice or Present(addon) ~= nil then return true end
-        local own = voice == Language.BASE or (Spoken and Spoken.VoicePack and Spoken:VoicePack("quests", voice))
+        local own = voice == Language.BASE or Spoken:VoicePack("quests", voice)
         return not own and code == Language:GetFallbackLanguage()
     end
     local function PackRow(module, label)
         listed[module.AddonName] = true
-        return layout:Download(format(L.OPT_PACK_NAME_FMT, label or DataModules:GetPackLabel(module)), function()
+        return layout:Download(label or DataModules:GetPackLabel(module), function()
             local installed = Present(module.AddonName)
             if installed then
-                if not DataModules:GetModule(module.AddonName) then return "warn", L.OPT_PACK_NOT_LOADED end
+                if not DataModules:GetModule(module.AddonName) then return "warn", W.MODULE_NOT_LOADED end
                 local version = installed.ContentVersion
-                return "ok", (version and version ~= "") and version or L.OPT_PACK_LOADED
+                return "ok", (version and version ~= "") and version or W.MODULE_INSTALLED
             end
             if module.AddonName ~= ALL and Present(ALL) then return "off", L.OPT_PACK_INCLUDED end
-        end, L.OPT_DOWNLOAD, function() ReportButton:ShowAddress(module.URL) end,
-            module.URL and format(L.OPT_COPY_ADDRESS_FMT, module.URL))
+        end, W.MODULE_DOWNLOAD, function() ReportButton:ShowAddress(module.URL) end)
     end
     for _, locale in ipairs(Language.LOCALES) do
-        local folder, url = Spoken and Spoken.VoicePack and Spoken:VoicePack("quests", locale.code)
+        local folder, url = Spoken:VoicePack("quests", locale.code)
         if folder then
             local code = locale.code
-            layout:ShowWhen(PackRow({ AddonName = folder, URL = url }, Language:GetNativeName(code)),
+            layout:ShowWhen(PackRow({ AddonName = folder, URL = url }, LanguageName(code)),
                 function() return Wanted(code, folder) end)
         end
     end
-    -- English's, split by faction, where English is the voice or the pack is installed.
+    -- English's, split by faction, where English is the voice or the pack is installed. Not the
+    -- retired complete pack, listed below only where a player still has it.
     for _, module in DataModules:GetAvailableModules() do
-        if module.AddonName ~= GOSSIP_PACK then
+        if not listed[module.AddonName] and module.AddonName ~= ALL then
             layout:ShowWhen(PackRow(module), function() return Wanted(Language.BASE, module.AddonName) end)
         end
     end
@@ -180,31 +138,18 @@ function SettingsPanel:Setup()
     for _, module in DataModules:GetPresentModules() do
         if not listed[module.AddonName] then PackRow(module) end
     end
+    layout:Button(W.MODULE_TEST_LINE, 200, function() Options:RunSelfTest() end)
     content:SetScript("OnShow", function() layout:Refresh() end)
     -- Switched on or off from Spoken's page while this one was hidden: drawn again for it.
-    if Spoken and Spoken.RegisterCallback then
-        Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "quests" then layout:Refresh() end end)
-    end
-
-    layout:Section(L.OPT_SECTION_TROUBLE)
-    layout:Columns(2)
-    layout:Button(L.OPT_TEST_LINE, 200, function() Options:RunSelfTest() end,
-        L.OPT_TEST_LINE_TIP)
-    layout:Button(L.OPT_PRINT_DIAG, 200, function() Options:PrintDiagnostics() end,
-        L.OPT_PRINT_DIAG_TIP)
-    -- For what belongs to no one line; each line has its own Report. The game cannot open a
-    -- link, so it hands over the address to copy.
-    layout:Columns(nil)
-    layout:Button(L.OPT_REPORT_PROBLEM, 200, function() ReportButton:ShowAddress(Spoken.SITE_URL) end,
-        L.OPT_REPORT_PROBLEM_TIP)
+    Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "quests" then layout:Refresh() end end)
 
     -- Profiles are Spoken's, on its own page: one choice for every part (Options:ProfileDBs).
     local db = Addon.db
 
-    -- Every page ends the same way, as Spoken's does: one section, last, to start over.
+    -- The page's Defaults, as Spoken's has.
     if db.ResetProfile then
-        layout:StartOver(L.OPT_SECTION_START_OVER, L.OPT_RESET_PROFILE, function()
-            SpokenLayout.Confirm(L.OPT_RESET_PROFILE_CONFIRM, L.OPT_RESET, L.OPT_CANCEL, function()
+        layout:Defaults(function()
+            SpokenLayout.Confirm(L.OPT_RESET_PROFILE_CONFIRM, W.MODULE_RESET, W.CANCEL, function()
                 db:ResetProfile()
                 -- The Compendium's filters are the account's (db.global), which a profile's reset
                 -- leaves as they were.
@@ -214,35 +159,26 @@ function SettingsPanel:Setup()
                 if tab and tab.panel and tab.panel:IsVisible() then tab:Refresh() end
                 layout:Refresh()
             end)
-        end, L.OPT_RESET_PROFILE_TIP)
+        end, nil, W.OPT_RESET_ALL_TIP)
     end
     -- Switched off, the module is off: everything on its page greys out but its own switch.
-    layout:RequiresAll(PartOn, L.REASON_PART_OFF, switch)
+    layout:RequiresAll(PartOn, W.REASON_PART_OFF, switch)
 
     -- Derived rather than written down: a hardcoded height is a number nobody updates
     -- when a row is added, and the failure it produces is a section you cannot reach.
     scroller:SetContentHeight(layout:Height() + 40)
     panel.content = content
 
-    -- Under Spoken's own entry when the player can nest it, beside the other parts' pages;
-    -- a top-level entry of its own otherwise.
+    -- Under Spoken's own entry, beside the other modules' pages.
     layout:Refresh()
-    local page = Spoken and Spoken.AddSettingsPage
-        and Spoken:AddSettingsPage(panel, L.OPT_PAGE_TITLE, 1, layout, scroller)
-    if page then
-        self.page = page
-    else
-        category = Settings.RegisterCanvasLayoutCategory(panel, "Spoken Quests")
-        Settings.RegisterAddOnCategory(category)
-    end
-    self.panel, self.category = panel, category
+    self.page = Spoken:AddSettingsPage(panel, L.OPT_PAGE_TITLE, 1, layout, scroller)
+    self.panel = panel
 end
 
---- Adds the DialogueUI rows to `layout` under `title`. Returns what resets them, for the
---- Defaults button of Spoken's DialogueUI page.
-function SettingsPanel:DialogueUIRows(layout, title, note)
-    layout:Section(title)
-    if note then layout:Note(note, nil, 32) end
+--- Adds the DialogueUI section to `layout`, Spoken's page. Returns what resets it, for that
+--- page's Defaults.
+function SettingsPanel:DialogueUIRows(layout)
+    layout:Section(L.OPT_SECTION_DIALOGUEUI)
     local dui = function() return Addon.db.profile.DialogueUI end
     local function Box(key, label, tip)
         local row = layout:Checkbox(label, tip,
@@ -259,15 +195,15 @@ function SettingsPanel:DialogueUIRows(layout, title, note)
     Box("Captions", L.OPT_DUI_CAPTIONS, L.OPT_DUI_CAPTIONS_TIP)
     -- Scrolling follows the marked words, so it waits on them.
     layout:Indent()
-    layout:Requires(Box("AutoScroll", L.OPT_DUI_AUTOSCROLL, L.OPT_DUI_AUTOSCROLL_TIP),
+    layout:Requires(Box("AutoScroll", L.OPT_DUI_AUTOSCROLL, nil),
         function() return dui().Captions end, L.REASON_DUI_CAPTIONS)
     layout:Outdent()
-    local showPlayer = Box("ShowPlayer", L.OPT_DUI_SHOW_PLAYER, L.OPT_DUI_SHOW_PLAYER_TIP)
+    local showPlayer = Box("ShowPlayer", L.OPT_DUI_SHOW_PLAYER, nil)
     -- It keeps Spoken's window or subtitles on screen, and Voice Only has neither.
     if Spoken and Spoken.GetPlayerStyle then
         layout:ShowWhen(showPlayer, function() return Spoken:GetPlayerStyle() ~= "none" end)
     end
-    Box("PlayButton", L.OPT_DUI_PLAY_BUTTON, L.OPT_DUI_PLAY_BUTTON_TIP)
+    Box("PlayButton", L.OPT_DUI_PLAY_BUTTON, nil)
     return function()
         for key, value in pairs(Addon.DialogueUIDefaults) do dui()[key] = value end
         DialogueUIBridge:Refresh()
@@ -276,7 +212,5 @@ end
 
 function SettingsPanel:Open()
     -- Nested under Spoken's entry: Spoken opens this page.
-    if self.page and self.page.Open and self.page.Open() then return true end
-    local category = category or (self.page and self.page.category)
-    return SpokenLayout ~= nil and SpokenLayout.OpenCategory(category)
+    return self.page ~= nil and self.page.Open() and true or false
 end

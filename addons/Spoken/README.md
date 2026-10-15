@@ -45,16 +45,18 @@ Spoken Quests, Spoken Zones (now Spoken Places) and Spoken Books are no longer s
 
 ## Settings and commands
 
-Game Menu → Options → AddOns → **Spoken**, or `/sp options`.
+Game Menu → Options → AddOns → **Spoken**, or `/sp settings`.
 
 ```
 /sp            stop or replay the line
 /sp skip       skip the current line
-/sp stop       clear the queue
-/sp options    settings
+/sp stopall    stop and clear the queue
+/sp compendium open Azeroth's Compendium
+/sp settings   settings
 /sp reset      put the window and subtitles back in place
 /sp collect    turn Collect Missing Lines on or off
-/sp share      how to send collected lines
+/sp send       how to send collected lines
+/sp help       every command
 /spq, /spg, /spp, /spr   each module's own commands
 ```
 

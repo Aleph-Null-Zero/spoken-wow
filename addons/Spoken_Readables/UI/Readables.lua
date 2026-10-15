@@ -18,6 +18,9 @@
 
 local ADDON_NAME, SpokenBooks = ...
 
+-- A value the game hands over as a secret, in an instance or in combat, reads as nil.
+local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
+
 local L = SpokenBooks.L
 
 local C = SpokenCompendium
@@ -35,23 +38,23 @@ local landed             -- the selection made for the player, where they stood;
 local openZones = {}          -- [mapID] = true: a zone's or city's card, opened
 local dungeonsOpen = {}       -- [mapID] = true: a zone's Dungeons and Raids line, opened
 local dungeonOpen = {}        -- ["mapID:map"] = true: a dungeon's card, opened
--- A dungeon's or a raid's card's badge, the Quests tab's: a key, as to a door below.
-local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
 local continentOpen = { [1414] = true, [1415] = true }
 local zonesOpen = {}          -- [key] = true: Other Lands' or Battlegrounds' banner, opened
 local ZONES_LABEL = { lands = "GROUP_LANDS", battlegrounds = "GROUP_BATTLEGROUNDS" }
--- The battlegrounds, under a banner of their own after the continents, whatever map the client
--- hangs them under: one client puts Alterac Valley in Hillsbrad Foothills, another under Azeroth,
--- where no continent's list reached it.
-local BATTLEGROUNDS = { 1459, 1460, 1461, 2524 } -- Alterac Valley, Warsong Gulch, Arathi Basin, Darkspear Islands
-local IS_BATTLEGROUND = {}
-for _, mapID in ipairs(BATTLEGROUNDS) do IS_BATTLEGROUND[mapID] = true end
+local IS_BATTLEGROUND = C.IS_BATTLEGROUND
 local groupOpen = { events = false, wide = false, unknown = false }
 local GROUP_LABEL = { events = "GROUP_EVENTS", wide = "GROUP_WIDE", unknown = "GROUP_UNKNOWN" }
 local typeOpen = {}
 local zoneTypeOpen = {}       -- ["mapID:type"] = true: a zone's Books, Notes and the rest, opened;
                               -- ["mapID:map:type"] = true: a dungeon's
-local groupTypeOpen = {}      -- ["wide:type"] = true: the same in a group's banner
+local groupTypeOpen = {}      -- ["wide:type"] = true: the same in a group's banner; ["events:key"]
+                              -- = true: an event's line in Holidays and Events
+-- The seasonal events, in the year's order, each a line in Holidays and Events (`event` in
+-- Data/Places.lua). A readable whose event the data does not name is under its kind of writing.
+local EVENTS = { "fishingextravaganza", "harvestfestival", "winterveil", "scourgeinvasion" }
+local EVENT_NAMES = { winterveil = "EVENT_WINTER_VEIL", harvestfestival = "EVENT_HARVEST_FESTIVAL",
+	fishingextravaganza = "EVENT_FISHING_EXTRAVAGANZA", scourgeinvasion = "EVENT_SCOURGE_INVASION" }
+local function EventLabel(key) return EVENT_NAMES[key] and L[EVENT_NAMES[key]] or key end
 local TYPES, TYPE_NAMES = SpokenBooks.TYPES, SpokenBooks.TYPE_NAMES
 local function TypeLabel(type) return L[(TYPE_NAMES[type] or TYPE_NAMES.other).all] end
 local filter = ""
@@ -70,18 +73,9 @@ local function Title(id)
 	return book and book.title or tostring(id)
 end
 
--- The dungeons and raids, by instance map: { zone = the zone of its entrance, English name, [locale]
--- = name }.
-local function Dungeons()
-	return _G.SpokenBooksPlaces and SpokenBooksPlaces.dungeons or {}
-end
-
-local function DungeonName(map)
-	local names = Dungeons()[map]
-	if not names then return tostring(map) end
-	local locale = GetLocale and GetLocale() or "enUS"
-	return names[locale] or names[1]
-end
+-- The dungeons and raids, by instance map (Spoken's Data/Dungeons.lua): `zone`, the zone of
+-- its entrance, and its name.
+local Dungeon, DungeonName = C.Dungeon, C.DungeonName
 
 -- Every readable by where it is: index.zones[mapID] = { [type] = { ids } } for the zone's own,
 -- index.dungeons[mapID][map] = { [type] = { ids } } for each dungeon whose entrance is in it, the
@@ -92,7 +86,8 @@ end
 local index
 local function Index()
 	if index then return index end
-	index = { zones = {}, dungeons = {}, events = {}, wide = {}, unknown = {}, types = {}, all = {}, typeOf = {} }
+	index = { zones = {}, dungeons = {}, events = {}, wide = {}, unknown = {}, types = {}, all = {}, typeOf = {},
+		at = {}, eventOf = {} }
 	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books or {}
 	local function Add(mapID, type, id, map)
 		local zone = index.zones[mapID] or {}
@@ -104,6 +99,7 @@ local function Index()
 		end
 		zone[type] = zone[type] or {}
 		table.insert(zone[type], id)
+		index.at[id] = index.at[id] or { mapID = mapID, dungeon = map }
 	end
 	for id in pairs(Books()) do
 		local place = places[id]
@@ -116,8 +112,11 @@ local function Index()
 			-- A seasonal event's readable under the event, not where its NPCs stand.
 			if place and place.event then
 				table.insert(index.events, id)
+				index.at[id] = { group = "events" }
+				if place.event ~= true then index.eventOf[id] = place.event end
 			elseif place and place.wide then
 				table.insert(index.wide, id)
+				index.at[id] = { group = "wide" }
 			elseif place and place.zones and #place.zones > 0 then
 				-- One in a city and in the zone around it is listed in the city alone: the zone's
 				-- card holds the city's, and would list it twice.
@@ -128,7 +127,7 @@ local function Index()
 				-- One had inside a dungeon alone, in the zone of the dungeon's entrance, is the dungeon's.
 				local inDungeon = {}
 				for _, map in ipairs(place.dungeons or {}) do
-					local dungeon = Dungeons()[map]
+					local dungeon = Dungeon(map)
 					if dungeon then
 						inDungeon[dungeon.zone] = inDungeon[dungeon.zone] or {}
 						table.insert(inDungeon[dungeon.zone], map)
@@ -145,6 +144,7 @@ local function Index()
 				end
 			else
 				table.insert(index.unknown, id)
+				index.at[id] = { group = "unknown" }
 			end
 		end
 	end
@@ -289,7 +289,7 @@ end
 -- would lead nowhere.
 local function Battlegrounds()
 	local out = {}
-	for _, mapID in ipairs(BATTLEGROUNDS) do
+	for _, mapID in ipairs(C.BATTLEGROUNDS) do
 		if Index().zones[mapID] and not (C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID) == nil) then
 			table.insert(out, mapID)
 		end
@@ -400,8 +400,8 @@ local function Card(item, found, total)
 	item.asLeft = asLeft
 	if item.kind == "zone" and Spoken and Spoken.ZoneIcon then
 		item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID)
-	elseif item.kind == "dungeon" then
-		item.icon = DUNGEON_ICON
+	elseif item.kind == "dungeon" and Spoken and Spoken.DungeonIcon then
+		item.icon, item.iconCrop = Spoken:DungeonIcon(item.dungeon)
 	end
 	item.ratio = total > 0 and found / total or 0
 	item.tick = total > 0 and found == total
@@ -409,15 +409,15 @@ local function Card(item, found, total)
 	return item
 end
 
--- A line for each kind of writing in `byType` ({ [type] = ids }) with something listed, and its
--- writings under it while it is open: closed until opened, as Quests' chains are, and always open
--- while searching. `item` makes each line's own fields.
-local function KindCards(byType, nest, into, item, opened, whole)
-	for _, type in ipairs(TYPES) do
-		local ids = byType[type] or {}
+-- A line for each of `lines` ({ key, label, ids }) with something listed, and its writings under it
+-- while it is open: closed until opened, as Quests' chains are, and always open while searching.
+-- `item` makes each line's own fields.
+local function Lines(lines, nest, into, item, opened, whole)
+	for _, line in ipairs(lines) do
+		local type, ids = line.key, line.ids
 		if #ids > 0 then
 			local leaves = {}
-			Leaves(ids, nest + 1, leaves, Named(TypeLabel(type), whole))
+			Leaves(ids, nest + 1, leaves, Named(line.label, whole))
 			if #leaves > 0 then
 				local set = {}
 				for _, id in ipairs(ids) do set[id] = true end
@@ -431,7 +431,7 @@ local function KindCards(byType, nest, into, item, opened, whole)
 				else
 					closed = not SearchOpens(card.closeKey)
 				end
-				card.label, card.nest, card.open = TypeLabel(type), nest, not closed
+				card.label, card.nest, card.open = line.label, nest, not closed
 				table.insert(into, Card(card, Tally(set)))
 				if not closed then
 					for _, row in ipairs(leaves) do table.insert(into, row) end
@@ -439,6 +439,15 @@ local function KindCards(byType, nest, into, item, opened, whole)
 			end
 		end
 	end
+end
+
+-- A line for each kind of writing in `byType` ({ [type] = ids }), by Lines.
+local function KindCards(byType, nest, into, item, opened, whole)
+	local lines = {}
+	for _, type in ipairs(TYPES) do
+		if byType[type] then table.insert(lines, { key = type, label = TypeLabel(type), ids = byType[type] }) end
+	end
+	Lines(lines, nest, into, item, opened, whole)
 end
 
 -- `rows`, the first of them the card or line `item` holding them, shown while it is open.
@@ -538,15 +547,26 @@ local function ZoneRows(mapID, nest, whole)
 end
 
 -- A group's readables (the seasonal events', those found across Azeroth or those of no known
--- origin): a banner of their own after the zones', holding a line for each kind of writing.
+-- origin): a banner of their own after the zones', holding a line for each kind of writing; in
+-- Holidays and Events, a line for each event first.
 local function GroupRows(key, label, ids)
 	if #ids == 0 then return {} end
-	local set, byType = {}, {}
+	local set, byType, byEvent = {}, {}, {}
 	for _, id in ipairs(ids) do
 		set[id] = true
-		local type = Index().typeOf[id]
-		byType[type] = byType[type] or {}
-		table.insert(byType[type], id)
+		local event = key == "events" and Index().eventOf[id]
+		if event then
+			byEvent[event] = byEvent[event] or {}
+			table.insert(byEvent[event], id)
+		else
+			local type = Index().typeOf[id]
+			byType[type] = byType[type] or {}
+			table.insert(byType[type], id)
+		end
+	end
+	local events = {}
+	for _, event in ipairs(EVENTS) do
+		if byEvent[event] then table.insert(events, { key = event, label = EventLabel(event), ids = byEvent[event] }) end
 	end
 	local found, total = Tally(set)
 	if OnlyFound() and found == 0 then return {} end
@@ -555,6 +575,9 @@ local function GroupRows(key, label, ids)
 	if groupOpen[key] or filter ~= "" then
 		local whole = Named(label)
 		AsLeft(whole, function()
+			Lines(events, 0, inside,
+				function(event) return { kind = "event", which = event, group = key } end,
+				function(event) return groupTypeOpen[key .. ":" .. event] end, whole)
 			KindCards(byType, 0, inside,
 				function(type) return { kind = "kind", which = type, group = key } end,
 				function(type) return groupTypeOpen[key .. ":" .. type] end, whole)
@@ -666,9 +689,10 @@ local function IsSelected(row)
 	if row.kind == "zones" then return selection.zones == row.key end
 	if row.kind == "readable" then return selection.book == row.book end
 	if row.kind == "kind" then return selection.group == row.group and selection.type == row.which end
+	if row.kind == "event" then return selection.group == row.group and selection.event == row.which end
 	if row.kind == "group" then
 		return selection.group == row.which and selection.mapID == row.mapID and selection.dungeon == row.dungeon
-			and not selection.type
+			and not selection.type and not selection.event
 	end
 	if row.kind == "type" then return selection.type == row.which and not selection.group end
 	if row.kind == "dungeons" then return selection.dungeons == true and selection.mapID == row.mapID end
@@ -712,12 +736,14 @@ local function PageReading(id)
 	end
 end
 
--- Report on a readable's page: the page being read, else its first voiced page, filed under the
+-- Report on a readable's page, voiced or not (the site's report page takes a line with no
+-- recording): the page being read, else its first voiced page, else its first, filed under the
 -- language it plays in, as the player's Report files a page.
 local REPORT = {
-	has = function(id) return PLAY.has(id) end,
+	has = function(id) local book = Books()[id]; return book ~= nil and book.pages ~= nil and #book.pages > 0 end,
 	open = function(id)
-		local pageId = PageReading(id) or FirstVoiced(id)
+		local book = Books()[id]
+		local pageId = PageReading(id) or FirstVoiced(id) or book and book.pages and book.pages[1]
 		local clip = pageId and SpokenBooks:ClipFor(pageId)
 		local url = pageId and SpokenBooks:ReportURL(pageId, clip and clip.language)
 		if url and SpokenBooks.ShowCopyLink then SpokenBooks:ShowCopyLink(url, L.REPORT_LINE_ADDRESS) end
@@ -757,7 +783,8 @@ local function InZones(zones)
 	return line
 end
 
--- How a readable is had, at the top of its page: each source, with the zone it is in.
+-- How a readable is had, in a part of its own at the top of its page: each source, with the zone
+-- it is in.
 local function Sources(place)
 	local lines = {}
 	for _, from in ipairs(place.from or {}) do
@@ -788,10 +815,33 @@ end
 -- The place one level up from a zone, as the Zones tab nests them: a city's zone, a zone's
 -- continent, and the world for a continent or a zone on none.
 local function Above(mapID)
-	for _, continent in ipairs(CONTINENTS) do
-		if continent == mapID then return C.WORLD end
-	end
+	if C.IsContinent(mapID) then return C.WORLD end
 	return CITY_IN[mapID] or ContinentOf(mapID) or C.WORLD
+end
+
+-- What holds a selection, one level up the list, or nil for a banner: a readable's kind of writing
+-- where it is first listed (a zone's, a dungeon's or a group's; By Type, its type's banner), a kind's
+-- zone or dungeon or group, a dungeon's zone, a Dungeons and Raids line's zone, a city's zone, a
+-- zone's continent, Other Lands or Battlegrounds.
+local function Holder(chosen)
+	if chosen.book then
+		local type, at = Index().typeOf[chosen.book], Index().at[chosen.book]
+		if not ByZone() or not at then return type and { type = type } or nil end
+		local event = Index().eventOf[chosen.book]
+		if at.group then return { group = at.group, type = not event and type or nil, event = event } end
+		return { mapID = at.mapID, dungeon = at.dungeon, group = type }
+	end
+	if chosen.type or chosen.event then return chosen.group and { group = chosen.group } or nil end
+	if chosen.group and chosen.mapID then return { mapID = chosen.mapID, dungeon = chosen.dungeon } end
+	if chosen.group or chosen.zones then return nil end
+	if chosen.dungeon or chosen.dungeons then return { mapID = chosen.mapID } end
+	local mapID = chosen.mapID
+	if not mapID or C.IsContinent(mapID) then return nil end
+	if CITY_IN[mapID] then return { mapID = CITY_IN[mapID] } end
+	if IS_BATTLEGROUND[mapID] then return { zones = "battlegrounds" } end
+	local continent = ContinentOf(mapID)
+	if continent then return { mapID = continent } end
+	return { zones = "lands" }
 end
 
 local function ShowEntry()
@@ -799,6 +849,16 @@ local function ShowEntry()
 	if not selection then
 		page:Show({ title = L.COMPENDIUM_READABLES, subtitle = Count(Tally(Index().all)), text = L.READABLES_PICK })
 		return
+	end
+	-- The line under the title goes up a level, to what holds what is chosen, where anything does.
+	local up = Holder(selection)
+	local onSubtitle = up and function()
+		selection = up
+		SpokenBooks:RefreshReadables(true)
+	end
+	local function Show(entry)
+		entry.onSubtitle = onSubtitle
+		page:Show(entry)
 	end
 	if selection.book then
 		local id = selection.book
@@ -814,18 +874,25 @@ local function ShowEntry()
 			where = L.GROUP_UNKNOWN
 		end
 		if not Found(id) and not Unlocked() then
-			page:Show({ title = Name(id), subtitle = where, text = L.READABLE_NOT_FOUND })
+			Show({ title = Name(id), subtitle = where, text = L.READABLE_NOT_FOUND })
 			return
 		end
-		local parts = {}
-		local sources = Sources(place)
-		if #sources > 0 then table.insert(parts, table.concat(sources, "\n")) end
+		local words = {}
 		local data = SpokenBooks:Data()
 		for _, pageId in ipairs(Books()[id].pages) do
 			local text = data.pages[pageId] and data.pages[pageId].text
-			if text and text ~= "" then table.insert(parts, text) end
+			if text and text ~= "" then table.insert(words, text) end
 		end
-		page:Show({ title = Name(id), subtitle = where, text = table.concat(parts, "\n\n"), target = id })
+		-- How it is had, in a part of its own above the words, which follow under no heading.
+		local sources = Sources(place)
+		if #sources > 0 then
+			Show({ title = Name(id), subtitle = where, target = id, parts = {
+				{ heading = L.READABLE_SOURCES, text = table.concat(sources, "\n") },
+				{ text = table.concat(words, "\n\n") },
+			} })
+		else
+			Show({ title = Name(id), subtitle = where, text = table.concat(words, "\n\n"), target = id })
+		end
 		return
 	end
 	-- A zone, a continent, a group, a type: where it is and what it holds. A kind of writing across
@@ -833,7 +900,7 @@ local function ShowEntry()
 	local set = {}
 	if selection.type and not selection.group then
 		for _, id in ipairs(Index().types[selection.type] or {}) do set[id] = true end
-		page:Show({ title = TypeLabel(selection.type), subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+		Show({ title = TypeLabel(selection.type), subtitle = Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if selection.group and selection.mapID and TYPE_NAMES[selection.group] then
@@ -842,18 +909,20 @@ local function ShowEntry()
 			byType, where = (Index().dungeons[selection.mapID] or {})[selection.dungeon], DungeonName(selection.dungeon)
 		end
 		for _, id in ipairs((byType or {})[selection.group] or {}) do set[id] = true end
-		page:Show({ title = TypeLabel(selection.group), subtitle = InAndCount(where, Tally(set)), text = L.READABLES_PICK })
+		Show({ title = TypeLabel(selection.group), subtitle = InAndCount(where, Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if selection.dungeon then
 		DungeonReadables(selection.mapID, selection.dungeon, set)
-		page:Show({ title = DungeonName(selection.dungeon), subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
-			text = L.READABLES_PICK })
+		Show({ title = DungeonName(selection.dungeon), subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
+			text = L.READABLES_PICK,
+			links = C.PlaceLinks("readables", { mapID = selection.mapID, dungeon = selection.dungeon }),
+			picture = C.PlacePicture({ mapID = selection.mapID, dungeon = selection.dungeon }) })
 		return
 	end
 	if selection.dungeons then
 		for map in pairs(Index().dungeons[selection.mapID] or {}) do DungeonReadables(selection.mapID, map, set) end
-		page:Show({ title = L.GROUP_DUNGEONS, subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
+		Show({ title = L.GROUP_DUNGEONS, subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
@@ -862,28 +931,38 @@ local function ShowEntry()
 		for _, id in ipairs(Index()[selection.group]) do
 			if Index().typeOf[id] == selection.type then set[id] = true end
 		end
-		page:Show({ title = TypeLabel(selection.type),
+		Show({ title = TypeLabel(selection.type),
 			subtitle = L[GROUP_LABEL[selection.group]] .. " · " .. Count(Tally(set)), text = L.READABLES_PICK })
+		return
+	end
+	if selection.event then
+		-- An event is no place: the banner's name, not "In" it.
+		for _, id in ipairs(Index().events) do
+			if Index().eventOf[id] == selection.event then set[id] = true end
+		end
+		Show({ title = EventLabel(selection.event),
+			subtitle = L.GROUP_EVENTS .. " · " .. Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if selection.zones then
 		for _, mapID in ipairs(ZONES_OF[selection.zones]()) do ReadablesIn(mapID, set) end
-		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = InAndCount(MapName(C.WORLD), Tally(set)),
+		Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = InAndCount(MapName(C.WORLD), Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
 	if GROUP_LABEL[selection.group] then
 		for _, id in ipairs(Index()[selection.group]) do set[id] = true end
-		page:Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+		Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
-	if selection.mapID == 1414 or selection.mapID == 1415 then
+	if C.IsContinent(selection.mapID) then
 		for _, mapID in ipairs(ZonesOn(selection.mapID)) do ReadablesIn(mapID, set) end
 	else
 		ReadablesIn(selection.mapID, set)
 	end
-	page:Show({ title = MapName(selection.mapID), subtitle = InAndCount(MapName(Above(selection.mapID)), Tally(set)),
-		text = L.READABLES_PICK })
+	Show({ title = MapName(selection.mapID), subtitle = InAndCount(MapName(Above(selection.mapID)), Tally(set)),
+		text = L.READABLES_PICK, links = C.PlaceLinks("readables", { mapID = selection.mapID }),
+		picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
 --------------------------------------------------------------------------------
@@ -900,15 +979,9 @@ local function Continents()
 	return out
 end
 
--- The zone the player stands in that has a card, walking up from an inn's or a cave's map, or nil.
+-- The zone the player stands in that has a card, or nil.
 local function PlayerZone()
-	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
-	local steps = 0
-	while map and steps < 8 do
-		if next(ReadablesIn(map)) then return map end
-		local info = C_Map.GetMapInfo and C_Map.GetMapInfo(map)
-		map, steps = info and info.parentMapID, steps + 1
-	end
+	return C.PlayerZone(function(map) return next(ReadablesIn(map)) ~= nil end)
 end
 
 -- Whether the list shows what holds `set` ({ [id] = true }): Found Only leaves out one with
@@ -919,25 +992,21 @@ end
 
 -- The continent the player is on where the list shows it, else the first it shows.
 local function PlayerContinent()
-	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
 	local listed = {}
 	for _, continent in ipairs(Continents()) do
 		local set = {}
 		for _, mapID in ipairs(ZonesOn(continent)) do ReadablesIn(mapID, set) end
 		if SetShown(set) then table.insert(listed, continent) end
 	end
-	for _, continent in ipairs(listed) do
-		if map == continent or (map and ContinentOf(map) == continent) then return continent end
-	end
-	return listed[1]
+	return C.PlayerContinent(listed)
 end
 
 -- The dungeon or raid the player is in, where it has readables: its map, and the zone of its
 -- entrance.
 local function PlayerDungeon()
 	if not GetInstanceInfo then return nil end
-	local map = select(8, GetInstanceInfo())
-	local dungeon = map and Dungeons()[map]
+	local map = NotSecret((select(8, GetInstanceInfo())))
+	local dungeon = map and Dungeon(map)
 	if dungeon and next(DungeonReadables(dungeon.zone, map)) then return map, dungeon.zone end
 end
 
@@ -959,25 +1028,9 @@ local function PlayerKind(here)
 	return first
 end
 
--- Open what holds a zone's card: Battlegrounds' banner, its continent's, or Other Lands'.
-local function OpenAround(zone)
-	if IS_BATTLEGROUND[zone] then
-		zonesOpen.battlegrounds = true
-		return
-	end
-	local continent = ContinentOf(CITY_IN[zone] or zone)
-	if continent then
-		continentOpen[continent] = true
-	else
-		zonesOpen.lands = true
-	end
-end
-
--- Open a zone's card and, for a city, the zone's around it, leaving the others as they are.
-local function OpenZone(zone)
-	openZones[zone] = true
-	if CITY_IN[zone] then openZones[CITY_IN[zone]] = true end
-end
+-- Open what holds a zone's card, and the card.
+local function OpenAround(zone) C.OpenAround(zone, continentOpen, zonesOpen) end
+local function OpenZone(zone) C.OpenZone(zone, openZones) end
 
 -- Choose where the player stands: the dungeon's card they are in, opened, else their zone's, else
 -- their continent's banner; By Type, the kind of writing the dungeon or zone holds. Never what the
@@ -1008,6 +1061,13 @@ local function LandOnPlayer()
 end
 
 local function OnClick(row)
+	-- Shift-click on a writing queues it from its first voiced page behind what is playing, as on
+	-- Quests, and chooses nothing.
+	if row.kind == "readable" and IsShiftKeyDown and IsShiftKeyDown() then
+		local pageId = FirstVoiced(row.book)
+		if pageId then SpokenBooks:SyncTo(pageId, true, true, true) end
+		return
+	end
 	local folded = SearchFold(row)
 	if row.kind == "readable" then
 		selection = { book = row.book }
@@ -1017,6 +1077,11 @@ local function OnClick(row)
 	elseif row.kind == "type" then
 		if filter == "" and not folded then typeOpen[row.which] = not typeOpen[row.which] end
 		selection = { type = row.which }
+	elseif row.kind == "event" then
+		-- An event's line in Holidays and Events: opened and closed again, as a kind of writing's.
+		local key = row.group .. ":" .. row.which
+		if not folded and (filter == "" or row.asLeft) then groupTypeOpen[key] = not groupTypeOpen[key] or nil end
+		selection = { group = row.group, event = row.which }
 	elseif row.kind == "kind" then
 		-- A group's Books, Notes and the rest: opened and closed again, as a zone's are.
 		local key = row.group .. ":" .. row.which
@@ -1054,18 +1119,27 @@ local function OnClick(row)
 	SpokenBooks:RefreshReadables()
 end
 
--- The chosen row brought into view. The client's scroll frame takes an offset only within the
--- range it last measured, and a list drawn for the first time has none measured yet; nor has the
--- frame a height until the window is first laid out. Either left the list at its top, the chosen
--- zone off screen: the range is measured now, and the row brought into view again a frame later.
-local function ScrollToChosen(items)
-	if list.scroll.UpdateScrollChildRect then list.scroll:UpdateScrollChildRect() end
-	list:ScrollToSelection(items)
-	if C_Timer and C_Timer.After then
-		C_Timer.After(0, function()
-			if filter == "" and list.items then list:ScrollToSelection(list.items) end
-		end)
+-- Whether the list as last drawn shows `chosen`'s row.
+local function Shows(chosen)
+	local was = selection
+	selection = chosen
+	local shown = list:ListsAny(IsSelected)
+	selection = was
+	return shown
+end
+
+-- A filter in the menu left the chosen row out of the list. Where the tab chose it for the player,
+-- it lands again; where the player chose it, the nearest row above it the list still shows is
+-- chosen, else it lands. As the Quests tab does.
+local function OnHidden()
+	if selection ~= landed then
+		local up = selection and Holder(selection)
+		while up and not Shows(up) do up = Holder(up) end
+		selection = up
+	else
+		selection = nil
 	end
+	SpokenBooks:RefreshReadables(true)
 end
 
 function SpokenBooks:RefreshReadables(scrollToSelection)
@@ -1075,7 +1149,7 @@ function SpokenBooks:RefreshReadables(scrollToSelection)
 		scrollToSelection = true
 	end
 	local items = list:Render()
-	if scrollToSelection and selection then ScrollToChosen(items) end
+	if scrollToSelection and selection then list:ScrollToChosen(items) end
 	ShowEntry()
 end
 
@@ -1098,6 +1172,7 @@ local function Build(panel)
 		build = BuildRows,
 		isSelected = IsSelected,
 		onClick = OnClick,
+		onHidden = OnHidden,
 		onSearch = function(text)
 			filter = text
 			searchClosed = {}
@@ -1108,31 +1183,91 @@ local function Build(panel)
 	panel.Refresh = function() SpokenBooks:RefreshReadables() end
 	panel.inset, panel.filterButton, panel.filterMenu, panel.noMatch = list.inset, list.filterButton, list.filterMenu, list.noMatch
 
-	local _, right = SpokenCompendium.Margins()
-	local window = SpokenCompendium:Window()
-	local ok, pageInset = pcall(CreateFrame, "Frame", nil, panel, "InsetFrameTemplate")
-	if not ok or not pageInset then pageInset = CreateFrame("Frame", nil, panel) end
-	pageInset:SetPoint("TOPLEFT", list.inset, "TOPRIGHT", 6, 38)
-	pageInset:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -right, window.templated and 6 or 12)
-	panel.pageInset = pageInset
-	local holder = CreateFrame("Frame", nil, pageInset)
-	holder:SetPoint("TOPLEFT", pageInset, "TOPLEFT", 3, -3)
-	holder:SetPoint("BOTTOMRIGHT", pageInset, "BOTTOMRIGHT", -3, 3)
-	page = C.NewPage(holder, SpokenBooks, PLAY, REPORT)
+	page = C.NewPage(C.PageHolder(panel, list), SpokenBooks, PLAY, REPORT)
 	-- Text Size, on Spoken's page, fires no game event: the page is drawn again at the new size.
 	if Spoken and Spoken.RegisterCallback then Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", ShowEntry) end
-	if type(pageInset.NineSlice) == "table" and pageInset.NineSlice.SetFrameLevel then
-		pageInset.NineSlice:SetFrameLevel(holder:GetFrameLevel() + 5)
-	end
 	panel.page = page
 	SpokenBooks.readables = panel
 end
 
---- Open the readables.
-function SpokenBooks:ShowReadables()
+-- Open what lists the writing `id` where it is first listed (Index().at), so its row shows.
+local function OpenAt(id)
+	local at, type = Index().at[id], Index().typeOf[id]
+	if not ByZone() then
+		typeOpen[type] = true
+		return
+	end
+	if not at then return end
+	if at.group then
+		groupOpen[at.group] = true
+		groupTypeOpen[at.group .. ":" .. (Index().eventOf[id] or type)] = true
+		return
+	end
+	OpenZone(at.mapID)
+	OpenAround(at.mapID)
+	if at.dungeon then
+		dungeonsOpen[at.mapID] = true
+		dungeonOpen[at.mapID .. ":" .. at.dungeon] = true
+		zoneTypeOpen[at.mapID .. ":" .. at.dungeon .. ":" .. type] = true
+	else
+		zoneTypeOpen[at.mapID .. ":" .. type] = true
+	end
+end
+
+-- The writings of a place, for another tab's link (SpokenCompendium.PlaceLinks): a zone, a city or
+-- a continent by its map, a dungeon by its instance map and the zone it is entered in.
+local function PlaceSet(place)
+	local set = {}
+	if place.dungeon then
+		DungeonReadables(place.mapID, place.dungeon, set)
+	elseif C.IsContinent(place.mapID) then
+		for _, mapID in ipairs(ZonesOn(place.mapID)) do ReadablesIn(mapID, set) end
+	else
+		ReadablesIn(place.mapID, set)
+	end
+	return set
+end
+
+--- Open the writings on a place, as another tab's link asks: its page, with what holds it opened.
+--- Only where the list is by zone: By Type has no row for a place.
+function SpokenBooks:OpenPlace(place)
+	if not SpokenCompendium or not ByZone() then return end
+	local zone = place.mapID
+	if place.dungeon then
+		dungeonsOpen[zone] = true
+		dungeonOpen[zone .. ":" .. place.dungeon] = true
+		OpenZone(zone)
+		OpenAround(zone)
+		selection = { mapID = zone, dungeon = place.dungeon }
+	elseif C.IsContinent(zone) then
+		continentOpen[zone] = true
+		selection = { mapID = zone }
+	else
+		OpenZone(zone)
+		OpenAround(zone)
+		selection = { mapID = zone }
+	end
+	SpokenBooks:ShowReadables()
+end
+
+--- Whether the tab is there, its part is on, and opening it on the writing `id` shows its words:
+--- it is listed, and found or Unlock Unfound Readables is on. Found Only and Voiced Only do not
+--- count: opened on it, its page shows though they leave its row out of the list.
+function SpokenBooks:CompendiumHas(id)
+	return SpokenCompendium ~= nil and SpokenCompendium:Tab("readables") ~= nil and self:IsPartOn()
+		and id ~= nil and Index().all[id] == true and (Found(id) or Unlocked())
+end
+
+--- Open the readables, on the writing `bookId` when one is given: chosen, with what holds it
+--- opened. Without one, on where the player stands now, unless they chose something here.
+function SpokenBooks:ShowReadables(bookId)
 	if not SpokenCompendium then return end
-	-- On where the player stands now, unless they chose something here.
-	if selection == landed then selection = nil end
+	if bookId and Index().all[bookId] then
+		selection = { book = bookId }
+		OpenAt(bookId)
+	elseif selection == landed then
+		selection = nil
+	end
 	if list then
 		list:ClearSearch()
 		filter = ""
@@ -1149,6 +1284,13 @@ function SpokenBooks:SetupReadables()
 		order = 2,
 		build = Build,
 		open = function() SpokenBooks:ShowReadables() end,
+		-- The other tabs' links to a place's writings.
+		placeLink = function(place)
+			if not ByZone() then return nil end
+			local _, total = Tally(PlaceSet(place))
+			return total > 0 and L.PLACE_LINK_WRITINGS_FMT:format(total) or nil
+		end,
+		openPlace = function(place) SpokenBooks:OpenPlace(place) end,
 		-- Come back to from another tab: where the player stands now, unless they chose here.
 		onShow = function() if selection == landed then selection = nil end end,
 		enabled = function() return SpokenBooks:IsPartOn() end,

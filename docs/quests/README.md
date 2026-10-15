@@ -1381,8 +1381,10 @@ Two generated files feed it, both committed so the addon never needs a database:
   entrance, wherever its giver stands, with `dungeon`, the dungeon's map: its QuestSortID is the
   dungeon's own area, an area of its map, or an area of its name (Gnomeregan's quests are under
   133, an area of Dun Morogh), else the client's `zoneAreaId` is (`Maps.dungeon_of_area`). The
-  dungeons' names in every language, from the client's `Map` table, are the data's `dungeons`. The
-  Excavation Site in the Wetlands is an instance of the Wetlands' own quests, not a dungeon.
+  dungeons, their entrances' zones and the other instances come from `pipelines/lib/dungeons.json`,
+  which the books' places read too; their names in every language are Spoken's
+  `Data/Dungeons.lua` (`make dungeons`). The Excavation Site in the Wetlands is an instance of the
+  Wetlands' own quests, not a dungeon.
   Battleground quests are under the battleground: the quest log files a few under an area of its
   name outside it (`Maps.battleground_of_area`), and a battlemaster's next quest, which it files
   under no zone or his city, follows the one before it from him (`battleground_follow_ups`). A
@@ -1433,7 +1435,8 @@ Two generated files feed it, both committed so the addon never needs a database:
   or handing in (`npcs.json` `offers`, `takes`) or working on (`objectives.json`), and that the
   client data has a title for, is listed with `notext = true` (`served_quests`, `without_text`):
   placed, limited and linked by its client record as above, so the tab lists it with no words
-  until its lines reach the corpus and an export drops the flag. `--no-db` makes these again on
+  until its lines reach the corpus and an export drops the flag. Its page says so
+  (`L.QUEST_NO_WORDS_YET`, "No words yet: this quest has not been recorded."). `--no-db` makes these again on
   every run; the hand corrections' removals are never listed.
   Last come the hand corrections, `corpus/compendium_overrides.json` (`load_overrides`,
   `apply_overrides`, `chain_names`): what neither the DB nor the client data can say, such as a
@@ -1447,8 +1450,9 @@ Two generated files feed it, both committed so the addon never needs a database:
   Entries apply in order, so a later one wins. A quest dropped is passed through by the quests
   after it; an entry for a quest the corpus lacks is printed, not applied, since a quest needs
   its lines in the corpus before it can be listed. A chain's name is written as `name` on its
-  first quest, so it is the chain's in every zone it crosses. With `--no-db` the entries apply to
-  the quests added.
+  first quest, so it is the chain's in every zone it crosses. With `--no-db` the quest entries
+  apply to every quest again (each line read back, `parse_quest_line`), so a correction written
+  since the last run with the database takes effect; the chain entries apply to the quests added.
 - `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
   `tts_cli/quest_text.py`): each quest's accept and complete text (its progress only where it has neither, as its accept), the corpus's
   `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
@@ -1473,23 +1477,24 @@ only what it lists. That switch and both filters are kept in
 The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
 for each zone with quests (a city a small card inside its zone's); an Other Lands banner holding
 a card for each zone on no continent the client knows (Zephras Isle, whose map hangs under
-Azeroth), as the Places tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
-Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
-Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
-it); a map the client has never heard of (Forever's Zephras Isle and Darkspear Islands on Era)
-has no card, and its quests are neither listed nor counted; then a banner each for Classes,
-Professions (Camping, 666, with them: its quests are Camping
-101 for one profession or another), Holidays and Events and Other, holding a line of the list for
-each class, profession, season or other QuestSort, and Place Unknown under Other. Banners are for
+Azeroth), as the Places tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong
+Gulch, Arathi Basin and Darkspear Islands, whatever map the client hangs them under (Forever's
+newer client puts Alterac Valley in Hillsbrad Foothills, its older one under Azeroth, where no
+continent's list reached it); a map the client has never heard of (Forever's Zephras Isle and
+Darkspear Islands on Era) has no card, and its quests are neither listed nor counted; then a
+banner each for Classes, Professions (Camping, 666, with them: its quests are Camping 101 for
+one profession or another), Holidays and Events and Other, holding a line of the list for each
+class, profession, season or other QuestSort, and Place Unknown under Other. Banners are for
 continents and types, cards for places alone (zones, cities, dungeons), and everything else is a
-line of the list with what it holds under it. The tab names some groups itself
-(`GROUP_NAMES`): Special (284) is Children's Week, under Events, as it holds nothing else;
-Reputation (367) is Commendation Signets, its hand-ins; and the groups the client has no QuestSort
-for, a word in the data (`winterveil`, `hallowsend`, `loveisintheair` and `harvestfestival` under
-Events, `argentdawn` and `library` under Other), take their names from the strings. Inside a
-zone's card, its dungeons' and raids' quests (those with `dungeon`) are the dungeon's card, named
-as the data's `dungeons` names it in the client's language; where the zone has several (Searing
-Gorge holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a card
+line of the list with what it holds under it. The tab names some groups itself (`GROUP_NAMES`):
+Special (284) is Children's Week, under Events, as it holds nothing else; Reputation (367) is
+Commendation Signets, its hand-ins; Invasion (368) is Scourge Invasion, as the German and
+Chinese clients call it; and the groups the client has no QuestSort for, a word in the data
+(`winterveil`, `hallowsend`, `loveisintheair` and `harvestfestival` under Events, `argentdawn`
+and `library` under Other), take their names from the strings. Inside a zone's card, its
+dungeons' and raids' quests (those with `dungeon`) are the dungeon's card, named as Spoken's
+`Data/Dungeons.lua` names it in the client's language; where the zone has several (Searing Gorge
+holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a card
 for each dungeon under it.
 The tab lands on the player's zone, opened; where it has no quests, or Started Only or Voiced
 Only leaves it out, on the player's continent, as Places and Books land, else on the first continent
@@ -1545,13 +1550,23 @@ client's own `QUEST_DESCRIPTION` (the heading of a quest's text in its quest win
 one, else `L.QUEST_PART_ACCEPT`; the hand-in's is Completion. Each part is headed as
 the Small Window heads a line, with DialogueUI installed or not: the speaker's round face
 (`Spoken:CreateSpeakerFace`, 44 across) with the part's badge, their name over the part's name
-beside it, the two centred on the face together, and the part's Play and Report at the right on
-the face's middle. A creature the client has not cached
+beside it, the two centred on the face together, and the part's Report (every part, voiced or
+not: the site's report page takes a line with no recording) and its Play (where a pack voices
+it) at the right on the face's middle. A creature the client has not cached
 shows the book until it has, one never cached or no one known keeps the book, and an object or
 an item shows the quest's item, else a posted notice. Shift-click on a quest's row hands its first part
 shown that a pack voices (its accept line, else its complete line) to `Player:Enqueue`, behind
 what the queue holds, and leaves the selection and the page as they were; a line already queued
 is not queued again. The page shown with no quest chosen says so.
+
+Links between tabs: a zone's, city's, continent's or dungeon's page shows, at its foot, a link to
+the same place on each other tab that has something of it (`SpokenCompendium.PlaceLinks`): the
+Zones story, the quests (`Quests of this place (12)`), the writings. A tab joins with
+`placeLink(place)` and `openPlace(place)` in its `Register` table, a place being
+`{ mapID }` or `{ mapID = the dungeon's entrance zone, dungeon = its instance map }`. Writings
+offers its link only while the list is By Zone.
+The same page shows Spoken Places' picture of the place above its words where Places has one
+(`SpokenCompendium.PlacePicture`).
 
 Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Places' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its

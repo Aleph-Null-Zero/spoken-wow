@@ -90,7 +90,7 @@ function Book:Row()
 			if key and SpokenBooks:IsNarrating(key) then
 				SpokenBooks:StopReading(key)
 			elseif first then
-				SpokenBooks:SyncTo(first)
+				SpokenBooks:SyncTo(first, nil, true)
 			end
 		end
 		Book:Draw()
@@ -108,6 +108,17 @@ function Book:Row()
 		tooltip:AddLine(L.REPORT_LINE_TIP, 1, 0.8, 0.2, true)
 	end)
 	local since = 0
+	-- Open in Azeroth's Compendium, on a writing it lists. The view is a child of UIParent, which
+	-- DialogueUI hides while it is open, so the view closes first.
+	local open = SpokenBooks.NewOpenButton and SpokenBooks:NewOpenButton(row.frame, function() return Book:Tooltip() end)
+	if open then
+		open:SetFrameStrata("FULLSCREEN")
+		open.beforeOpen = function()
+			local view = View()
+			if view then view:Hide() end
+		end
+	end
+	row.open = open
 	row.frame:SetScript("OnUpdate", function(_, elapsed)
 		since = since + elapsed
 		if since >= LOOK_EVERY then
@@ -254,6 +265,7 @@ function Book:Place()
 	if row.report:IsShown() then table.insert(list, row.report) end
 	if row.skip:IsShown() then table.insert(list, row.skip) end
 	if row.play:IsShown() then table.insert(list, row.play) end
+	if row.open and row.open:IsShown() then table.insert(list, row.open) end
 	local close = view.CloseButton
 	row:Place(list, type(close) == "table" and close.GetObjectType and close or nil)
 end
@@ -303,6 +315,11 @@ function Book:Draw()
 	end
 	SetEnabled(row.skip, Spoken.GetCurrent ~= nil and Spoken:GetCurrent() ~= nil)
 	row.report:SetShown(voiced and not ReportsHidden())
+	if row.open then
+		local shown = SpokenBooks.CompendiumHas ~= nil and SpokenBooks:CompendiumHas(key) or false
+		row.open.bookId = shown and key or nil
+		if (row.open:IsShown() and true or false) ~= shown then row.open:SetShown(shown) end
+	end
 	self:Place()
 	self:PlaceTheirs()
 end

@@ -125,6 +125,8 @@ function SpokenZones:SetupAudio()
 		-- Durations come from a generated lookup and are exact; upstream's larger gap
 		-- absorbs durations that are not.
 		interClipGap = 0.25,
+		-- Printed after Spoken's own by its Show Diagnostics.
+		diagnostics = function() SpokenZones:ShowDiagnostics() end,
 		-- What Spoken's settings show on this part's card: which voice packs are installed.
 		packs = function()
 			local names = {}
@@ -239,10 +241,10 @@ function SpokenZones:GetAudioPacks(lang)
 		end
 	end
 
-	-- Best default first: the language being read, then the client's own locale,
+	-- Best default first: the voice language, then the client's own locale,
 	-- then bitrate descending, then folder name so the order is stable when two
 	-- packs report the same bitrate (or none at all).
-	local reading = self:GetLanguage()
+	local reading = self:GetVoiceLanguage()
 	local client = self.clientLocale
 	local function rank(pack)
 		local language = pack.language
@@ -267,22 +269,50 @@ function SpokenZones:GetAudioPacks(lang)
 	return packs
 end
 
--- The pack narration plays from, or nil when no pack is installed at all.
+-- The language narration is heard in: Spoken's Voice Language, as every module's is, "Auto"
+-- being the client's. The text's language (GetLanguage) is a choice apart.
+function SpokenZones:GetVoiceLanguage()
+	local Spoken = _G.Spoken
+	if Spoken and Spoken.VoiceLanguage then
+		return Spoken:VoiceLanguage()
+	end
+	return self:GetLanguage()
+end
+
+-- The language a story is heard in where the voice language has no recording of it: Spoken's
+-- If a Voice Is Missing, English unless the player chose otherwise. Nil for Stay Silent.
+function SpokenZones:GetFallbackLanguage()
+	local Spoken = _G.Spoken
+	local fallback
+	if Spoken and Spoken.GetLanguageChoice then
+		local _
+		_, fallback = Spoken:GetLanguageChoice()
+	end
+	if fallback == "none" then
+		return nil
+	end
+	return fallback or "enUS"
+end
+
+-- The pack narration plays from: one in the voice language, else one in the fallback language,
+-- else nil.
 --
--- The stored preference is a folder name rather than an index: a player who
--- uninstalls the high-quality pack should fall back to whatever is left instead
--- of pointing at whichever pack happens to occupy that slot afterwards. It is
--- kept per content language, so picking the English pack while reading German
--- does not overrule the German pack once one is installed and German is no
--- longer what is being read.
+-- Between two packs of one language (a retired 64 kbps pack beside the current one), the one
+-- /spp audio chose, kept as a folder name rather than an index: a player who uninstalls the
+-- high-quality pack should fall back to whatever is left instead of pointing at whichever pack
+-- happens to occupy that slot afterwards.
 function SpokenZones:GetActiveAudioPack()
-	local packs = self:GetAudioPacks()
+	local packs = self:GetAudioPacks(self:GetVoiceLanguage())
+	local fallback = self:GetFallbackLanguage()
+	if #packs == 0 and fallback then
+		packs = self:GetAudioPacks(fallback)
+	end
 	if #packs == 0 then
 		return nil
 	end
 
 	local stored = self:Get("audioPack")
-	local preferred = type(stored) == "table" and stored[self:GetLanguage()] or nil
+	local preferred = type(stored) == "table" and stored[packs[1].language] or nil
 	if type(preferred) == "string" then
 		for i = 1, #packs do
 			if packs[i].addon == preferred then
@@ -291,9 +321,7 @@ function SpokenZones:GetActiveAudioPack()
 		end
 	end
 
-	-- No preference, or the preferred pack is gone: best available wins -- the
-	-- sort in GetAudioPacks already put the language being read first, then the
-	-- client's locale.
+	-- No preference, or the preferred pack is gone: best available wins.
 	return packs[1]
 end
 
@@ -307,7 +335,7 @@ function SpokenZones:SetActiveAudioPack(name)
 			if type(stored) ~= "table" then
 				stored = {}
 			end
-			stored[self:GetLanguage()] = name
+			stored[packs[i].language] = name
 			self:Set("audioPack", stored)
 			self:StopLore()
 			self:NotifyAudioChanged()
@@ -366,13 +394,14 @@ function SpokenZones:GetAudioClip(mapID, areaKey)
 		return nil, nil
 	end
 
-	-- The active pack, then English, entry by entry: a German pack that has not narrated an
-	-- area yet leaves it to the English one rather than to silence, the way a quest line falls
-	-- back. The entry keys are the same in every language, so any pack names the area alike.
-	-- No other language is tried: a player reading German does not want French.
+	-- The active pack, then the fallback language's, entry by entry: a German pack that has not
+	-- narrated an area yet leaves it to the English one rather than to silence, the way a quest
+	-- line falls back. The entry keys are the same in every language, so any pack names the area
+	-- alike. With Stay Silent, nothing else is tried.
 	local candidates = { active }
-	if active.language ~= "enUS" then
-		for _, pack in ipairs(self:GetAudioPacks("enUS")) do
+	local fallback = self:GetFallbackLanguage()
+	if fallback and active.language ~= fallback then
+		for _, pack in ipairs(self:GetAudioPacks(fallback)) do
 			table.insert(candidates, pack)
 		end
 	end
@@ -506,14 +535,24 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 	}
 end
 
--- Appends a clip for a producer -- autoplay -- which waits its turn. Returns whether
--- it was admitted; the player refuses duplicates and silence of its own accord.
-function SpokenZones:EnqueueLore(item)
+-- Appends a clip that waits its turn: autoplay's, or one the player `asked` for with a shift-click.
+-- Returns whether it was admitted; the player refuses duplicates and silence of its own accord.
+function SpokenZones:EnqueueLore(item, asked)
 	local source = Source()
 	if not source or not item then
 		return false
 	end
-	return source:Enqueue(item) ~= nil
+	return source:Enqueue(item, asked) ~= nil
+end
+
+--- A story behind what is playing, as a shift-click on its row in Azeroth's Compendium asks: once,
+--- where a pack has it and it is not locked. Returns whether it was queued.
+function SpokenZones:QueueLore(mapID, areaKey)
+	if not self:IsVoiceEnabled() or (self.IsLocked and self:IsLocked(mapID, areaKey)) then
+		return false
+	end
+	-- Asked for, so read in a battleground too.
+	return self:EnqueueLore(self:NewLoreSound(mapID, areaKey), true)
 end
 
 function SpokenZones:HasAudio(mapID, areaKey)
@@ -565,6 +604,15 @@ end
 
 --- This story at the head of the queue, whether speaking or paused: what the Play button
 --- pauses and resumes rather than starting again.
+--- This story's line in the queue, nearest the head, or nil: what a page's Play stops or replays.
+function SpokenZones:LoreClip(mapID, areaKey)
+	local Spoken = _G.Spoken
+	if not self.source or not (Spoken and Spoken.GetQueue) then return nil end
+	for _, clip in ipairs(Spoken:GetQueue()) do
+		if clip.source == self.source and clip.mapID == mapID and clip.areaKey == areaKey then return clip end
+	end
+end
+
 function SpokenZones:IsLoreAtHead(mapID, areaKey)
 	local head = OurHead()
 	return head ~= nil and head.mapID == mapID and head.areaKey == areaKey

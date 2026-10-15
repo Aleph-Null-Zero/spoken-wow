@@ -82,6 +82,7 @@ function Z:IsVoiceEnabled() return true end
 function Z:HasAudio() return true end
 function Z:IsPlayingLore() return false end
 function Z:IsLoreAtHead() return false end
+function Z:LoreClip() end
 function Z:OnAudioChanged() end
 function Z:OnMapChanged() end
 function Z:CanContribute() return true end
@@ -105,7 +106,7 @@ _G.hooksecurefunc = _G.hooksecurefunc or function() end
 local audio = setmetatable({}, { __index = Z })
 assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Places", audio)
 Z.PlaceAbove = audio.PlaceAbove
-for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/ContributeButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 

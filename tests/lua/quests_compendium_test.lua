@@ -398,6 +398,8 @@ Expect("...each holiday a group of its own, Children's Week among them, where th
     Has(list, "Feast of Winter Veil") and Has(list, "Hallow's End") and Has(list, "Love is in the Air")
     and Has(list, "Harvest Festival") and Has(list, "Children's Week") and not Has(list, "Seasonal")
     and not Has(list, "Special"), true)
+Expect("...the Scourge Invasion named so, not the client's bare Invasion", Has(list, "Scourge Invasion")
+    and not Has(list, "Invasion"), true)
 Click("Classes")
 Click("Holidays and Events")
 local leftovers, reused = Leftovers()
@@ -411,10 +413,8 @@ list = Shown()
 Expect("Other holds the Commendation Signets' hand-ins, the Argent Dawn's and the library books, under those names",
     Has(list, "Commendation Signets") and Has(list, "Argent Dawn") and Has(list, "Library Books")
     and not Has(list, "Reputation"), true)
-Click(L.QUESTS_ELSEWHERE)
-Expect("...Place Unknown's page naming Other, which holds it, with its count", page.title.text == L.QUESTS_ELSEWHERE
-    and page.sub.text.text:match("^Other · %d+ of %d+ completed$") ~= nil, true)
-Click(L.QUESTS_ELSEWHERE)
+Expect("...and no Place Unknown: CLUCK!, its last quest, is in Westfall and Tirisfal Glades, where its feed is sold",
+    tostring(Has(list, L.QUESTS_ELSEWHERE)) .. "|" .. table.concat(SpokenQuestsCompendium.quests[3861].zones, ","), "false|1436,1420")
 Click("Other")
 Click("Kalimdor")
 Expect("a continent's page is in Azeroth, with its count", page.title.text == "Kalimdor"
@@ -948,8 +948,8 @@ Spoken:RegisterDeveloper(nil)
 Click("Kobold Candles")
 Expect("a quest no pack has has no Play", PartButton(L.QUEST_PART_ACCEPT, "play") == nil
     or not PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown(), true)
-Expect("...nor Report", PartButton(L.QUEST_PART_ACCEPT, "report") == nil
-    or not PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
+Expect("...but Report: a line no pack voices can be wrong too", PartButton(L.QUEST_PART_ACCEPT, "report") ~= nil
+    and PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
 Expect("...and, no one known to say it, the book in its face and no name over its heading",
     Face(PartOf(L.QUEST_PART_ACCEPT)), BOOK .. " " .. BADGES["quest-accept"] .. " nil")
 -- A part a pack voices whose words are not known: there, saying so, with its Play and Report.
@@ -973,6 +973,16 @@ do
     Expect("a part with no words known that no pack voices is left out", #page.body.lastParts .. " "
         .. page.body.lastParts[1].heading, "1 " .. L.QUEST_PART_ACCEPT)
     SpokenQuestsText[CANDLES].complete = handInWords
+    -- A quest Forever has that the corpus has no lines for (notext) says there are no words yet.
+    local candles, record = SpokenQuestsText[CANDLES], SpokenQuestsCompendium.quests[CANDLES]
+    SpokenQuestsText[CANDLES], record.notext = nil, true
+    Click("Kobold Camp Cleanup")
+    Click("Kobold Candles")
+    Expect("a quest with no words in the corpus says there are none yet", PageWords(), L.QUEST_NO_WORDS_YET)
+    SpokenQuestsText[CANDLES], record.notext = candles, nil
+    Click("Kobold Camp Cleanup")
+    Click("Kobold Candles")
+    Expect("...its words back once the corpus has them", PageWords() ~= L.QUEST_NO_WORDS_YET, true)
 end
 ClickChain("Lost Necklace")
 completed[NECKLACE] = true
@@ -1002,6 +1012,22 @@ Expect("...each card counting only the quests it lists", RowFor("Elwynn Forest")
     and ChainRow("Lost Necklace").count.text, "0/1 • 0%")
 Expect("...and each banner", RowFor("Eastern Kingdoms").count.text, "1/2")
 Expect("...and is remembered", VO.Addon.db.global.Compendium.VoicedOnly, true)
+do
+    -- Every quest under every banner is asked whether a pack voices it: once, not on each refresh or
+    -- keystroke, until the packs or the voice languages change. The page's own parts are asked each time.
+    local prepare, asked = VO.DataModules.PrepareSound, 0
+    VO.DataModules.PrepareSound = function(...) asked = asked + 1; return prepare(...) end
+    Tab:Refresh()
+    Expect("...each quest's voice asked once, not again on a refresh", asked < 20, true)
+    local order = VO.Language.ResolutionOrder
+    VO.Language.ResolutionOrder = function() return { "deDE" } end
+    asked = 0
+    Tab:Refresh()
+    Expect("...and again once the voice language changes", asked > 100, true)
+    VO.Language.ResolutionOrder = order
+    VO.DataModules.PrepareSound = prepare
+    Tab:Refresh()
+end
 Expect("...a started quest it leaves out still opened in the Compendium", Tab:Has(CANDLES), true)
 Tab:Open(CANDLES)
 Expect("...on its page, the list keeping the filter and leaving its row out", page.title.text .. "|"
@@ -1173,6 +1199,43 @@ Expect("...the dungeon's quests inside its own card", Has(list, "Dark Iron Legac
 Click("Blackrock Spire")
 Expect("...a dungeon's page in the zone of its entrance, counting its quests", page.title.text == "Blackrock Spire"
     and page.sub.text.text:match("^In Searing Gorge · 0 of %d+ completed$") ~= nil, true)
+-- Links to the other tabs' page of the same place (SpokenCompendium.PlaceLinks), here a fake tab's, and
+-- this tab's own for them: its quests counted, and opened on the place.
+do
+    local C, opened = _G.SpokenCompendium, {}
+    C:Register("fakeother", { label = "Other", order = 9,
+        placeLink = function(place) return "Other " .. (place.dungeon or "") .. " in " .. place.mapID end,
+        openPlace = function(place) table.insert(opened, place.mapID .. "/" .. tostring(place.dungeon)) end })
+    Tab:Refresh()
+    Expect("a dungeon's page links to the other tabs' page of it", page.links[1].text.text, "Other 229 in 1427")
+    page.links[1].scripts.OnClick(page.links[1])
+    Expect("...a click opening it by the dungeon and the zone of its entrance", table.concat(opened, ","), "1427/229")
+    list = Shown()
+    Click("Searing Gorge")
+    Expect("a zone's page links by its map", page.links[1].text.text, "Other  in 1427")
+    -- Zones' picture of the place above its page, where Zones has one.
+    Expect("a place's page has no picture while Zones has none", page.body.picture:IsShown(), false)
+    _G.SpokenZones = { Picture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end }
+    Tab:Refresh()
+    Expect("...and Zones' picture of the place when it has", page.body.picture:IsShown() and page.body.picture:GetTexture(), "pic1427")
+    _G.SpokenZones = nil
+    C.tabs.fakeother = nil
+    local quests = C:Tab("quests")
+    Expect("the Quests tab names its quests of a dungeon for the others' links",
+        quests.placeLink({ mapID = 1427, dungeon = 229 }):match("^Quests of this place %(%d+%)$") ~= nil, true)
+    Expect("...of a zone", quests.placeLink({ mapID = 1427 }):match("^Quests of this place %(%d+%)$") ~= nil, true)
+    Expect("...and nothing of a place with none", quests.placeLink({ mapID = 1 }), nil)
+    quests.openPlace({ mapID = 1427, dungeon = 229 })
+    Expect("its page of a dungeon, from another tab's link", page.title.text .. "|" .. tostring(_G.SpokenCompendium:IsOpen("quests")),
+        "Blackrock Spire|true")
+    Expect("...with the zone of its entrance opened to it", RowFor("Blackrock Spire") ~= nil and RowFor("Blackrock Spire").selected, true)
+    quests.openPlace({ mapID = 1429 })
+    Expect("...of a zone", page.title.text, "Elwynn Forest")
+    quests.openPlace({ mapID = 1415 })
+    Expect("...of a continent", page.title.text, "Eastern Kingdoms")
+    quests.openPlace({ mapID = 1427, dungeon = 229 })
+    list = Shown()
+end
 
 -- The line under a page's title goes up a level, to what holds what the page is of.
 local function Up()
@@ -1291,6 +1354,15 @@ Expect("...another character's name where the player's was", (PageWords() or "")
 stub.world.playerName = "Tester"
 local kept = VO.Addon.db.global.CompendiumText
 Expect("...kept by language", kept.deDE[KOBOLDS] ~= nil and kept.enUS == nil, true)
+-- A window whose id, title and words the game hands over as secrets keeps nothing.
+stub.world.questID = JENNEA
+stub.world.title = "Versiegelte Befehle"
+stub.world.questText = "Verbrennt dies nach dem Lesen."
+stub.Secrets(JENNEA, "Versiegelte Befehle", "Verbrennt dies nach dem Lesen.")
+Expect("a secret quest window raises no error", (pcall(stub.FireEvent, "QUEST_DETAIL")), true)
+stub.Secrets()
+stub.world.questID = 0
+Expect("...and keeps nothing", kept.deDE[JENNEA], nil)
 -- A quest whose English has a word for each sex: what a man was told is not shown to a woman.
 stub.world.questID = CANDLES
 stub.world.title = "Koboldkerzen"
