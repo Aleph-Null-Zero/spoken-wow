@@ -151,9 +151,9 @@ to `Spoken:SetContributeHost`, which puts Spoken's copy box over it. A box still
 window closes goes back to UIParent and stays up.
 
 **The row of controls.** DialogueUI creates its own Play button only when its Text To Speech
-setting turns on, and has no public way to show it, so the bridge builds a row of the player's
-round buttons (`Spoken:CreateRoundButton`, "play" and "skip", plus the Report icon) in a holder
-that is a child of `DUIQuestFrame`. The close button is cut from DialogueUI's
+setting turns on, and has no public way to show it, so the bridge puts the player's row there
+(`Spoken:CreateDialogueUIRow`, the one Spoken Readables puts on DialogueUI's book view): Play and
+Skip, plus the Report icon, in a holder that is a child of `DUIQuestFrame`. The close button is cut from DialogueUI's
 `Art/Book/TextureKit-Parchment.png` or `-Metal.png`, by DialogueUI's theme (told from the colour
 of `DUIFont_QuestType_Left`), 64 of the art's pixels across at 0.5333 each times DialogueUI's
 size (its header's width over 358), 26 of them in from the right edge. Its middle, and the

@@ -330,7 +330,7 @@ end
 -- Report icon (through its dialogueUISlot). Read Automatically, never DialogueUI's Auto Play,
 -- decides whether a line reads on its own.
 
-local ROUND, ROUND_GAP = 24, 4
+local ROUND = 24
 -- DialogueUI's own speaker button, as it draws it.
 local THEIRS_ALPHA = 0.6
 -- How often the row looks again for the page's line while the window is open: a quest's ID
@@ -344,8 +344,8 @@ local AUTOPLAY_DELAY = 0.5
 -- When DialogueUI's autoplay will call playFile. It asks the delay (getAutoPlayDelay) just
 -- before it waits, and a click on its button never does, which is how the two are told apart.
 local autoplayAt
--- { frame, play, skip }, built the first time the window shows a page; `report` is
--- ContributeButton's icon once it is handed over.
+-- Spoken's row (Spoken:CreateDialogueUIRow), built the first time the window shows a page, with
+-- `open`, the Compendium's button; `report` is ContributeButton's icon once it is handed over.
 local row, report
 
 --- Whether `soundData` is the line at the head of the player's queue, and not stopped there:
@@ -396,39 +396,26 @@ local function Tooltip()
 end
 
 --- What a click on Play does now, and Read Automatically, which a right-click switches.
-local function ShowPlayTooltip(button)
-    local tooltip = Tooltip()
+local function PlayTip(tooltip)
     local speaking = line ~= nil and IsSpeaking(line)
-    tooltip:SetOwner(button, "ANCHOR_RIGHT")
     tooltip:SetText(speaking and L.OPT_STOP or L.OPT_LISTEN)
     tooltip:AddLine(speaking and L.OPT_DIALOG_STOP_TIP or L.OPT_READ_TIP, 1, 1, 1, true)
     local on = Addon:IsAutoplayOn()
     tooltip:AddDoubleLine(L.OPT_PANEL_AUTOPLAY, on and L.OPT_DUI_ON or L.OPT_DUI_OFF, 1, 1, 1,
         on and 0.1 or 1, on and 1 or 0.125, on and 0.1 or 0.125)
     tooltip:AddLine(L.OPT_DUI_PLAY_RIGHT_CLICK, 1, 0.82, 0, true)
-    tooltip:Show()
-    button.tooltip = tooltip
 end
 
-local function HideTooltip(button)
-    if button.tooltip then
-        button.tooltip:Hide()
-    end
-end
-
---- Play and Skip in a row on the window: children of it, so they show while DialogueUI hides
---- UIParent and close with it, and drawn above it.
+--- Play and Skip in Spoken's row on the window, which shows while DialogueUI hides UIParent and
+--- closes with it.
 local function Row()
     if row then
         return row
     end
     local frame = DUIQuestFrame
-    local holder = CreateFrame("Frame", nil, frame)
-    holder:SetFrameStrata("FULLSCREEN")
-    holder:SetSize(ROUND, ROUND)
-    local play = Spoken:CreateRoundButton(holder, "play")
-    play:SetFrameStrata("FULLSCREEN")
-    play:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    row = Spoken:CreateDialogueUIRow(frame, Tooltip)
+    local play = row.play
+    row:SetTip(play, PlayTip)
     play:SetScript("OnClick", function(_, mouse)
         if mouse == "RightButton" then
             Addon:SetAutoplay(not Addon:IsAutoplayOn())
@@ -438,43 +425,19 @@ local function Row()
             PlayLine("Spoken's Play button on DialogueUI")
         end
         Bridge:DrawPlayButton()
-        if play.tooltip and play.tooltip:IsShown() then
-            ShowPlayTooltip(play)
-        end
+        row:RefreshTip(play)
     end)
-    -- Skips by itself.
-    local skip = Spoken:CreateRoundButton(holder, "skip")
-    skip:SetFrameStrata("FULLSCREEN")
-    local function ShowSkipTooltip()
-        local tooltip = Tooltip()
-        tooltip:SetOwner(skip, "ANCHOR_RIGHT")
-        tooltip:SetText(SpokenEnv.L.BIND_SKIP)
-        tooltip:Show()
-        skip.tooltip = tooltip
-    end
-    -- Brighter under the pointer as the ring's own hover has it, and the tooltip on the window's.
-    for button, Show in pairs({ [play] = ShowPlayTooltip, [skip] = ShowSkipTooltip }) do
-        button:SetScript("OnEnter", function(self)
-            if self:IsEnabled() then self.glyph:SetAlpha(1) end
-            Show(self)
-        end)
-        button:SetScript("OnLeave", function(self)
-            if self:IsEnabled() then self.glyph:SetAlpha(0.85) end
-            HideTooltip(self)
-        end)
-    end
     -- Open in Azeroth's Compendium, on a quest's page. The window is a child of UIParent, which
     -- DialogueUI hides while it is open, so DialogueUI's window closes first.
     local tab = rawget(VoiceOver, "QuestsTab")
-    local open = tab and tab.NewOpenButton and tab:NewOpenButton(holder, Tooltip)
+    local open = tab and tab.NewOpenButton and tab:NewOpenButton(row.frame, Tooltip)
     if open then
         open:SetFrameStrata("FULLSCREEN")
         open.beforeOpen = function()
             if type(frame.HideUI) == "function" then frame:HideUI() else frame:Hide() end
         end
     end
-    holder:Hide()
-    row = { frame = holder, play = play, skip = skip, open = open }
+    row.open = open
     return row
 end
 
@@ -585,17 +548,15 @@ local function Lower()
     end
 end
 
---- Lay the row out right to left from the close button, on its middle: Report, Skip, Play, 24 at
---- UIParent's scale whatever DialogueUI's own size, in the same place on every page.
---- DialogueUI's buttons in that corner (Copy Text, the translator's) go left of it.
-local placedKey
+--- Lay the row out right to left from the close button, on its middle: Report, Skip, Play, in the
+--- same place on every page. DialogueUI's buttons in that corner (Copy Text, the translator's) go
+--- left of it.
 -- Reused on every tick, which runs while the window is open.
 local list = {}
 local THEIRS = { "TranslatorButton", "CopyTextButton" }
 
 local function PlaceRow(force)
     local frame = DUIQuestFrame
-    local scale = UIParent:GetEffectiveScale() / math.max(0.01, frame:GetEffectiveScale() or 1)
     for i = #list, 1, -1 do
         list[i] = nil
     end
@@ -610,25 +571,7 @@ local function PlaceRow(force)
         table.insert(list, row.open)
     end
     local holder = row.frame
-    local key = #list * 100000 + math.floor(scale * 1000 + 0.5)
-    if key ~= placedKey or force then
-        placedKey = key
-        holder:SetSize((#list * ROUND + (#list - 1) * ROUND_GAP) * scale, ROUND * scale)
-        local right
-        for _, button in ipairs(list) do
-            button:SetScale(scale)
-            button:SetSize(ROUND, ROUND)
-            button:ClearAllPoints()
-            if right then
-                button:SetPoint("RIGHT", right, "LEFT", -ROUND_GAP, 0)
-            else
-                button:SetPoint("RIGHT", holder, "RIGHT", 0, 0)
-            end
-            right = button
-        end
-        holder:ClearAllPoints()
-        holder:SetPoint("RIGHT", CloseButton(), "LEFT", -ROUND_GAP, 0)
-    end
+    row:Place(list, CloseButton(), force)
     -- DialogueUI's first button there (Copy Text, else the translator's) left of the row, on its
     -- middle; the other keeps its place left of that one. Again whenever DialogueUI lays them out.
     local first
@@ -640,7 +583,7 @@ local function PlaceRow(force)
     end
     if first and select(2, first:GetPoint(1)) ~= holder then
         first:ClearAllPoints()
-        first:SetPoint("RIGHT", holder, "LEFT", -ROUND_GAP, 0)
+        first:SetPoint("RIGHT", holder, "LEFT", -4, 0)
     end
 end
 
@@ -692,8 +635,7 @@ function Bridge:DrawPlayButton()
         end
         if row and row.frame:IsShown() then
             row.frame:Hide()
-            HideTooltip(row.play)
-            HideTooltip(row.skip)
+            row:HideTips()
         end
         return
     end

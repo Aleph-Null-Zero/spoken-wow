@@ -125,11 +125,22 @@ function Spoken:GetPortraitRenderer(kind)
     return Renderers[kind]
 end
 
---- Ask the client about a creature whose portrait may soon be drawn, so the small and the
---- DialogueUI windows show its face, not the book. A no-op in the large window (a 3D model).
+--- Ask the client about a creature whose portrait may soon be drawn, so the subtitles and the
+--- small and DialogueUI windows show its face, not the book. A no-op with the large window (a
+--- 3D model) and with Voice Only.
 function Spoken:PrimePortrait(creatureID)
-    local skin = PlayerFrame.Skin and PlayerFrame:Skin()
-    if skin and StaticPortrait then StaticPortrait:Prime(creatureID) end
+    local style = Addon.db and Addon:DisplayStyle()
+    if style and style ~= "classic" and style ~= "none" and StaticPortrait then StaticPortrait:Prime(creatureID) end
+end
+
+--- Play, Skip and, with `report`, Report in a row on one of DialogueUI's dialogs (`dialog`, its
+--- quest window or its book view), for a feature addon to put its line's controls there.
+--- `tooltip()` returns the tooltip the dialog uses. The row has `frame`, `play`, `skip` and
+--- `report`; `row:SetTip(button, fill)`, `row:ShowTip(button)`, `row:RefreshTip(button)`,
+--- `row:HideTips()`, and `row:Place(buttons, anchor, force)`, right to left from `anchor`. Additive:
+--- guard on the field.
+function Spoken:CreateDialogueUIRow(dialog, tooltip, report)
+    return Actions.DialogRow(dialog, tooltip, report)
 end
 
 --- The Small Window's round portrait, `size` across, on `parent`: the speaker masked round in its
@@ -150,7 +161,7 @@ end
 ---@param size number
 ---@return table face  a Frame, with SetSpeaker
 function Spoken:CreateSpeakerFace(parent, size)
-    return MinimalPlayer:CreateFace(parent, size)
+    return Face.CreateSpeaker(parent, size)
 end
 
 --- How lines are shown: "subtitle", "none", "minimal", "classic" or "dialogueui".

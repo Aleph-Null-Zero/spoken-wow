@@ -11,11 +11,11 @@ DialogueUIOptions = { builders = {}, resets = {} }
 
 if Version.IsAnyLegacy then
     function DialogueUIOptions:Add() end
-    function DialogueUIOptions:WheelNote() end
     function DialogueUIOptions:ThemeRows() end
     function DialogueUIOptions:FitRow() end
     function DialogueUIOptions:Place() end
     function DialogueUIOptions:Reset() end
+    function DialogueUIOptions:WordRowsShown(style) return style ~= "none" end
     return
 end
 
@@ -47,11 +47,6 @@ local function Window(layout, only, row)
     return row
 end
 
---- Nothing on the window shows its wheel shortcuts.
-function Page:WheelNote(layout, only)
-    only(layout:Note(L.DUI_WHEEL_HINT, nil, 40))
-end
-
 function Page:ThemeRows(layout, only, refresh)
     Window(layout, only, layout:Checkbox(L.OPT_DUI_FOLLOW_THEME, L.OPT_DUI_FOLLOW_THEME_TIP,
         function() return Panel().FollowTheme end, function(v) Panel().FollowTheme = v end, refresh))
@@ -75,6 +70,13 @@ function Page:Place(layout)
     self.layout = layout
     self.keep = layout:Keep()
     for _, build in ipairs(self.builders) do self:Run(build) end
+end
+
+--- Whether Show Words, Highlight Words and Type Words Out are offered under narrator style `style`:
+--- under every style that shows words, and under Voice Only too while DialogueUI is installed, as
+--- they mark DialogueUI's own quest, gossip and book text (Spoken:GetCaption).
+function Page:WordRowsShown(style)
+    return style ~= "none" or DialogueUITheme:Installed() and true or false
 end
 
 --- Spoken's Start Over, before its reload: the window's settings back, and every feature

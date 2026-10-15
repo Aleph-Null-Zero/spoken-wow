@@ -13,6 +13,14 @@ Renderers = {}
 
 -- The red a queue line turns when a click will take it out, in either player layout.
 
+-- Window Size, Subtitle Size and Text Size: lowest, highest and step, for their sliders and for
+-- Ctrl and the mouse wheel over the windows and the subtitles.
+SIZES = {
+    FrameScale = { 0.5, 2, 0.05 },
+    SubtitleScale = { 0.6, 1.6, 0.05 },
+    FontSize = { 12, 26, 1 },
+}
+
 -- Player-wide settings only. Anything a single domain cares about -- gossip frequency,
 -- autoplay, which pack to prefer -- stays in that feature addon's own saved variables.
 Defaults = {
@@ -27,7 +35,6 @@ Defaults = {
             Style = Version.IsAnyLegacy and "classic" or "subtitle",
             -- The windows' metal in the bronze the Forever client's frames wear.
             BronzeTint = true,
-            MinimalWidth = 380,
             -- The small window's background: "parchment" or "dark" (the rock).
             MinimalBackground = "parchment",
             -- Per action id, for the ones an addon declared optional. Absent means shown.

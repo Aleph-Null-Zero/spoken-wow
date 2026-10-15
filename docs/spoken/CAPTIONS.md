@@ -1,17 +1,19 @@
 # Captions
 
-Spoken can show quest dialogue, NPC dialogue, place lore and book pages inside the
-player. Compact captions show one or two lines; expanded captions show eight.
-The captions follow the recording: with **Type Words Out** on (the default) the
-words appear as the voice reaches them, and with **Highlight Words** on (off by
-default) two adjacent words are lit in gold. They move, resize and scale with
-the player in both window layouts.
+Spoken shows the words of the line it reads (quest dialogue, NPC dialogue, place lore and book
+pages) in each window, and as subtitles. The Small and DialogueUI windows show Lines Shown of
+them, one or two lines, and the Small Window's **+** button expands them to eight; the Large
+Window shows as many as its box holds, up to three. The captions follow the recording: with
+**Type Words Out** on (the default) the words appear as the voice reaches them, and with
+**Highlight Words** on (off by default) two adjacent words are lit, in gold, or in deep red on
+parchment. They move, resize and scale with their window.
 
-The **Subtitles Only** narrator style shows the words without a window instead,
-low in the middle of the screen, four lines at a time, typed in a little ahead
-of the voice. It lights no words: with the timing an estimate, a word lit as it
-is typed in front of the reader shows every miss. `/spoken player subtitle`
-switches to it.
+The **Subtitles Only** narrator style shows the words without a window instead, low in the
+middle of the screen: a page of whole sentences at a time (Sentences at Once, never more than four
+lines), or line by line, typed in a little ahead of the voice. It lights the word being read only
+with Type Words Out off: with the timing an estimate, a word lit as it is typed in front of the
+reader shows every miss. `/spoken player subtitle` switches to it; see
+[`PLAYER-STYLES.md`](PLAYER-STYLES.md) for each style.
 
 ![Quest captions in the WoW Forever player](captions.png)
 
@@ -21,16 +23,17 @@ visually. The expanded view and zone/book captions still need an in-game visual 
 
 ## Controls
 
-- `/spoken transcript` toggles captions; `on` and `off` also work.
-- The small **+** button expands captions to eight lines. **−** restores your
-  compact line setting. The player grows downward and keeps the unit icon in place.
-- `/spoken transcript 1` sets one compact line; `/spoken transcript 2` sets two.
-- `/spoken options` has settings for line count, font size, highlighting, typing
-  out, **Auto-Scroll** (below), and the subtitles' size and background.
-- Scroll over the captions to read back or ahead; they hold there. Click the
-  text to follow the recording again. Right-click opens the player menu, or
-  settings in the original layout. With **Type Words Out** on, a line the voice
-  has not reached yet shows blank until it does; turn the setting off to read ahead.
+- `/spoken transcript` turns the captions (Show Words) on and off; `on` and `off` also work.
+- In the Small Window, the small **+** button expands the captions to eight lines, and **−**
+  goes back to Lines Shown. The window grows downward and keeps its portrait in place.
+- `/spoken transcript 1` sets Lines Shown to one line; `/spoken transcript 2` to two.
+- `/spoken options` has settings for Lines Shown, Text Size, Highlight Words, Type Words Out,
+  **Auto-Scroll** (below), and the subtitles' size and background.
+- Scroll over the captions in a window to read back or ahead; they hold there. Click the
+  text to follow the recording again. With Ctrl held the wheel sizes the window instead.
+  Right-click opens the Small Window's menu, or the settings over the other windows. With
+  **Type Words Out** on, a line the voice has not reached yet shows blank until it does; turn
+  the setting off to read ahead.
 - `/spoken transcript reset` restores the caption and subtitle defaults and
   moves the subtitles back to where they start.
 
@@ -49,7 +52,8 @@ line being read on the last row instead, with what has been read above it, as ro
 captions do. The glide needs the client to clip the captions' frame (`SetClipsChildren`); where it
 cannot, the text steps a line at a time. While the text moves, a line partly past the top or bottom
 edge fades by as much of it as is out of view, so lines fade out and in at the edges instead of
-ending on a hard cut. Subtitles Only pages on its own and is not affected.
+ending on a hard cut. The subtitles have an Auto-Scroll of their own, Page by Page or Line by
+Line, and no Off: they cannot be scrolled by hand.
 
 Stopping freezes the text. Replay restarts it with the recording. Skipping
 shows the next clip's text, and a clip without text hides the captions.
@@ -112,10 +116,11 @@ and whether **Highlight Words** and **Type Words Out** are on. It stays current 
 captions are hidden or turned off. `Spoken:SplitCaption(text)` splits any text the way the
 captions do, and records where each word sits in that text. With the two, another addon can
 mark the same words in its own copy of the line. Spoken Quests does this inside DialogueUI's
-window: see [`docs/quests/DIALOGUEUI-BRIDGE.md`](../quests/DIALOGUEUI-BRIDGE.md). So with
-DialogueUI installed, **Show Words**, **Highlight Words** and **Type Words Out** stay on
-Spoken's page under Voice Only too, and their tooltips say they apply to DialogueUI's quest and
-gossip text. **Type By** does not: DialogueUI's text is typed by whole words.
+window (see [`docs/quests/DIALOGUEUI-BRIDGE.md`](../quests/DIALOGUEUI-BRIDGE.md)), and Spoken
+Readables in its book view. So **Show Words**, **Highlight Words** and **Type Words Out** apply to
+DialogueUI's own text under every narrator style, Voice Only included; with DialogueUI installed
+their tooltips say so, and `DialogueUIOptions:WordRowsShown` offers them under Voice Only.
+**Type By** does not apply there: DialogueUI's text is typed by whole words.
 
 ## Checks
 

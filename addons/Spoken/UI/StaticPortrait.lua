@@ -68,7 +68,7 @@ end
 local roller
 -- Creature id -> the appearance it answered with, kept so a face does not change between
 -- clips. A creature the client has not cached answers 0 until its server replies to the
--- query SetCreature sent, so MinimalPlayer's Tick asks again every few frames (Resolved)
+-- query SetCreature sent, so the face's window asks again every few frames (Resolved)
 -- rather than waiting for a timer; one that never replies keeps the book. `asked` holds when
 -- a creature was first and last asked: the watcher below captures on every mouseover, and
 -- each of those must not become another SetCreature.
@@ -115,7 +115,7 @@ function StaticPortrait:Prime(creature)
 end
 
 --- Whether the creature the viewport fell back to the book for has an appearance now. Asked
---- every frame by MinimalPlayer, which repaints when it does.
+--- every frame by the window or the subtitle showing the face, which repaints when it does.
 function StaticPortrait:Resolved()
     if self.waiting and DisplayFor(self.waiting) then
         self.waiting = nil

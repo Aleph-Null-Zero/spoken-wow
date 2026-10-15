@@ -82,6 +82,8 @@ Expect("...the choice is kept, for DialogueUI coming back", env.Addon.db.profile
 Expect("...and the player frame is the small one", Spoken:GetPlayerFrame(), env.MinimalPlayer.frame)
 Expect("...with the reason to hand", env.DialogueUITheme:Problem(), env.L.OPT_STYLE_DUI_MISSING)
 Expect("no DialogueUI window is built for it", env.DialogueUIPlayer.frame, nil)
+Expect("Voice Only offers no word rows without DialogueUI: nothing would show the words",
+    env.DialogueUIOptions:WordRowsShown("none"), false)
 
 env = Boot("1.12")
 Expect("the legacy client has the large window and nothing else", Spoken:GetPlayerStyle(), "classic")
@@ -163,7 +165,7 @@ local function NoteShown(text)
     end
     return false
 end
-Expect("...and the wheel's shortcuts", NoteShown(env.L.DUI_WHEEL_HINT), true)
+Expect("...and the wheel's shortcuts", NoteShown(env.L.WINDOW_WHEEL_HINT), true)
 Expect("no Hide Portrait for it: its header has the face's socket built in", Shown(main, env.L.OPT_HIDE_PORTRAIT), false)
 env.Addon.db.profile.Frame.HidePortrait = true
 Skin:ConfigurePortrait()
@@ -174,7 +176,8 @@ Expect("the theme waits on not following DialogueUI's", Row(main, env.L.OPT_DUI_
 env.Addon:SetPlayerStyle("minimal")
 main:Refresh()
 Expect("with another style chosen they are not shown", Shown(main, env.L.OPT_DUI_FIT_TEXT)
-    or Shown(main, env.L.OPT_DUI_FOLLOW_THEME) or NoteShown(env.L.DUI_WHEEL_HINT), false)
+    or Shown(main, env.L.OPT_DUI_FOLLOW_THEME), false)
+Expect("...but the small window has the wheel's shortcuts too", NoteShown(env.L.WINDOW_WHEEL_HINT), true)
 Expect("...and the small window has Hide Portrait", Shown(main, env.L.OPT_HIDE_PORTRAIT), true)
 env.Addon:SetPlayerStyle("dialogueui")
 main:Refresh()
@@ -261,7 +264,7 @@ Expect("the page's Defaults puts Fit to the Words back", panel.FitText, true)
 local noted = false
 local function Look(row)
     for _, region in ipairs(row.regions or {}) do
-        if region.text == env.L.DUI_WHEEL_HINT then noted = true end
+        if region.text == env.L.WINDOW_WHEEL_HINT then noted = true end
     end
 end
 for _, item in ipairs(main.items or {}) do
@@ -276,7 +279,7 @@ env.PlayerFrame:RefreshConfig()
 env.Options:Preview("dialogueui")
 Expect("previewing the tile shows the window with a sample line", Skin.wanted, true)
 Expect("...its speaker", Skin.name:GetText(), env.L.SAMPLE_SPEAKER)
-Expect("...and words, as the subtitle's sample has", T.text, env.L.SUBTITLE_SAMPLE_TEXT)
+Expect("...and words of the windows' own, which do not say to drag them", T.text, env.L.SAMPLE_WINDOW_TEXT)
 env.Options:Preview(nil)
 Expect("...and puts it away", Skin.wanted, false)
 
@@ -317,7 +320,7 @@ Expect("...titled by the book, never by its key", Skin.title.text:GetText(), "A 
 Expect("...said once: no name over it", Skin.name:GetText(), "")
 Expect("...the book for a face", Skin.viewport.active, "texture")
 Expect("...badged as a book, as the subtitle badges it", tostring(Skin.badge:IsShown()) .. " " .. tostring(Skin.badge.texture),
-    "true " .. tostring(env.MinimalPlayer.BADGES.book))
+    "true " .. tostring(env.Face.BADGES.book))
 Expect("...with its words in the window", T.text, "Dear mother, the war goes well.")
 Spoken:StopAll()
 local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2 })
@@ -390,6 +393,19 @@ Expect("...saying so", _G.GameTooltip.text, env.L.TRANSCRIPT_SIZE .. ": 17")
 ctrl, shift = false, false
 words.FontSize = 16
 env.PlayerFrame:RefreshConfig()
+-- Lock Position: nothing is resized, and the words still scroll.
+frameCfg.LockFrame = true
+ctrl = true
+T.manualScroll = false
+T.frame:GetScript("OnMouseWheel")(T.frame, -1)
+Expect("locked, Ctrl and the wheel leave Window Size alone", frameCfg.FrameScale, 0.7)
+Expect("...and scroll the words instead", T.manualScroll, true)
+shift = true
+Skin.frame:GetScript("OnMouseWheel")(Skin.frame, 1)
+Expect("...nor does Ctrl, Shift and the wheel change Text Size", words.FontSize, 16)
+ctrl, shift = false, false
+frameCfg.LockFrame = false
+env.PlayerFrame:RefreshConfig()
 
 ---------------------------------------------------------------- over DialogueUI's window
 Spoken:SetPlayerHost(DUI)
@@ -409,6 +425,49 @@ env.PlayerFrame:RefreshConfig()
 Expect("...to the place saved over the window", placed ~= nil and math.abs(Skin.frame:GetLeft() - placed.left) < 1e-6
     and math.abs(Skin.frame:GetTop() - placed.top) < 1e-6, true)
 Expect("...at its own scale", math.abs(Skin.frame.scale - 0.52) < 1e-6, true)
+
+---------------------------------------------------------------- Voice Only with DialogueUI
+-- The three word settings still mark DialogueUI's own text with nothing of Spoken's on screen, so
+-- the settings page may offer them there (DialogueUIOptions:WordRowsShown).
+do
+    local words = env.Addon.db.profile.Transcript
+    local saved = { words.Enabled, words.HighlightWord, words.Typewriter }
+    words.Enabled, words.HighlightWord, words.Typewriter = true, true, true
+    env.Addon:SetPlayerStyle("none")
+    env.PlayerFrame:RefreshConfig()
+    Spoken:StopAll()
+    quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Heard", portrait = { kind = "none" },
+        transcript = "The kobolds dig deeper into the mine every night." } }))
+    env.Transcript:Sync()
+    local caption = Spoken:GetCaption()
+    Expect("under Voice Only the captions still follow the line for DialogueUI's text",
+        caption ~= nil and caption.clip ~= nil and caption.highlight == true and caption.typewriter == true, true)
+    Expect("...so the word rows are offered there with DialogueUI installed",
+        env.DialogueUIOptions:WordRowsShown("none"), true)
+    Expect("...and under the styles that show words", env.DialogueUIOptions:WordRowsShown("subtitle"), true)
+    words.Enabled = false
+    Expect("Show Words off turns the marks off there too",
+        select(1, Spoken:GetCaptionOptions()) or select(2, Spoken:GetCaptionOptions()), false)
+    words.Enabled, words.HighlightWord, words.Typewriter = saved[1], saved[2], saved[3]
+    Spoken:StopAll()
+    env.Addon:SetPlayerStyle("dialogueui")
+    env.PlayerFrame:RefreshConfig()
+end
+
+---------------------------------------------------------------- why a line waits
+-- As every style says it: after the title, before the count.
+Spoken:StopAll()
+local holding = true
+quests:AddGate(function() if holding then return "in combat" end end)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Held", portrait = { kind = "none" } } }))
+env.PlayerFrame:RefreshConfig()
+Skin:UpdateControls()
+Expect("a held line says why after its title", tostring(Skin.held:IsShown()) .. " " .. tostring(Skin.held:GetText()),
+    "true • (in combat)")
+holding = false
+quests:RecheckGates()
+Skin:UpdateControls()
+Expect("...and not once it may play", Skin.held:IsShown(), false)
 
 ---------------------------------------------------------------- its controls, the subtitle's
 Spoken:StopAll()

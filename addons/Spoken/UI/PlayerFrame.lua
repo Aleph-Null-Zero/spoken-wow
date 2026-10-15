@@ -194,6 +194,7 @@ function PlayerFrame:InitMover()
     self.frame.mover.background:SetTexture(TEXTURES .. "SettingsButton")
     self.frame.mover.background:SetPoint("CENTER")
     self.frame.mover.background:SetSize(32, 32)
+    Actions.TintWithRings(self.frame.mover.background)
     self.frame.mover:HookScript("OnEnter", function(button)
         if Addon:IsFrameLocked() then return end
         SetCursor([[Interface\Cursor\UI-Cursor-Move]])
@@ -409,7 +410,7 @@ function PlayerFrame:ShowSample(shown)
         key = "sample", length = 0,
         source = { key = "sample", gates = {}, interClipGap = 0 },
         present = { header = L.SAMPLE_SPEAKER, label = L.SAMPLE_LINE,
-            transcript = L.SUBTITLE_SAMPLE_TEXT,
+            transcript = L.SAMPLE_WINDOW_TEXT,
             portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\icon.tga]] } },
     } or nil
     Transcript:Sync()
@@ -505,11 +506,12 @@ function PlayerFrame:SaveLayout()
     Addon:SaveLayout("Player", self.frame)
 end
 
---- Back to the default spot, forgetting the saved one, for a frame dragged off-screen.
+--- Every window back to its default spot, forgetting the place saved for each, whichever is in
+--- use: for a frame dragged off-screen or in the way. The subtitles have their own (Subtitle:Reset).
 function PlayerFrame:Reset()
-    local skin = self:Skin()
-    if skin then skin:Reset(); return end
     Addon:Layout().Player = nil
+    MinimalPlayer:Reset()
+    if DialogueUIPlayer.Reset then DialogueUIPlayer:Reset() end
     if not self.frame then return end
     self.frame:Reset()
     self:RefreshConfig()

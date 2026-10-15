@@ -25,7 +25,6 @@ local DEFAULT_TOP = 336
 -- either side.
 local SHADOW = [[Interface\AddOns\Spoken\Textures\SubtitleBand]]
 local SHADOW_REACH = 40
-local TEXTURES = [[Interface\AddOns\Spoken\Textures\]]
 -- A page fades out before the next fades in; the shadow eases to the new page's size.
 local PAGE_OUT, PAGE_IN = .18, .28
 -- Line by line, how fast the words glide up to the next line.
@@ -281,6 +280,8 @@ function Subtitle:Build()
     -- The words do nothing when clicked: a subtitle mid-screen is clicked by accident all the
     -- time. Play or pause and Report come up beside it under the pointer (Subtitle:BuildControls).
     -- No right-click menu either: a right-drag here is the camera turning.
+    -- The wheel sizes it only with Ctrl held (Subtitle:TakeWheel): without, it zooms the camera.
+    frame:SetScript("OnMouseWheel", function(_, delta) self:Wheel(delta) end)
     frame:SetScript("OnUpdate", function(_, elapsed) self:Tick(elapsed) end)
     frame:Hide()
     self:BuildControls()
@@ -335,14 +336,19 @@ function Subtitle:Build()
         self.fillRoom, self.progressHeight, self.progressBroken = 0, 0, true
     end
 
+    -- Why the line has not started, "• (Waiting for combat to end.)", and the lines waiting, "• +2".
+    self.heldDot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.held = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.moreDot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.more = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    for _, part in ipairs({ self.moreDot, self.more }) do
+    for _, part in ipairs({ self.heldDot, self.held, self.moreDot, self.more }) do
         part:SetTextColor(.62, .62, .62)
         part:SetShadowColor(0, 0, 0, 1)
         part:SetShadowOffset(1, -1)
     end
+    self.heldDot:SetText("•")
     self.moreDot:SetText("•")
+    self.moreHover = Actions.WaitingHover(self.more)
     self.waiting = 0
 
     -- Clips the words, so a line gliding past an edge is cut there, not drawn over the name row or
@@ -367,47 +373,16 @@ function Subtitle:BuildProgress()
     self.fillRoom, self.progressHeight = bar.room, bar.height
 end
 
+-- The Small Window's face, PICTURE across. Its badge is drawn at the face's own scale, a little
+-- over, not grown to the least a page's face has: at 36 that would cover half the face.
 function Subtitle:BuildPicture()
-    local k = PICTURE / 90
-    local host = CreateFrame("Frame", nil, self.nameRow)
-    host:SetSize(PICTURE, PICTURE)
-    local background = host:CreateTexture(nil, "BACKGROUND")
-    background:SetAllPoints()
-    background:SetTexture(TEXTURES .. "MinimalPortraitBackground")
-    local viewport = CreateFrame("Frame", nil, host)
-    viewport:SetSize(78 * k, 78 * k)
-    viewport:SetPoint("CENTER", host, "TOPLEFT", PICTURE * 35 / 71, -PICTURE * 34 / 71)
-    if viewport.SetClipsChildren then viewport:SetClipsChildren(true) end
-    local chrome = CreateFrame("Frame", nil, host)
-    chrome:SetAllPoints()
-    chrome:SetFrameLevel(host:GetFrameLevel() + 8)
-    -- The badge's socket is open in the ring: without its disc the face shows through it.
-    local disc = chrome:CreateTexture(nil, "BACKGROUND")
-    disc:SetSize(24 * k + 2, 24 * k + 2)
-    disc:SetPoint("CENTER", host, "TOPLEFT", PICTURE * 56.5 / 71, -PICTURE * 56.5 / 71)
-    disc:SetTexture(TEXTURES .. "MinimalPortraitMask")
-    disc:SetVertexColor(.04, .04, .035, 1)
-    local ring = chrome:CreateTexture(nil, "ARTWORK")
-    ring:SetAllPoints()
-    ring:SetTexture(TEXTURES .. "MinimalPortraitRing")
-    -- Bronze Border tints it, as it does the Small Window's.
-    Actions.TintWithRings(ring)
-    local badge = chrome:CreateTexture(nil, "OVERLAY")
-    badge:SetSize(16 * k + 2, 16 * k + 2)
-    badge:SetPoint("CENTER", disc, "CENTER", 0, 0)
-    self.picture, self.viewport, self.badge, self.ring = host, viewport, badge, ring
+    local face = Face.Build(self.nameRow, PICTURE, nil, PICTURE * 16 / 90 + 2)
+    self.picture, self.viewport, self.badge, self.ring = face, face.viewport, face.badge, face.ring
 end
 
 --- The speaker's face where one was captured, else the clip's own picture, with its badge.
 function Subtitle:ConfigurePicture(clip)
-    local viewport = self.viewport
-    if not StaticPortrait:Configure(viewport, clip) then Portrait:Configure(viewport, clip) end
-    if viewport.active == "texture" and viewport.texture then StaticPortrait:Mask(viewport, viewport.texture) end
-    local id = clip and clip.present and clip.present.bullet
-    local badges = MinimalPlayer and MinimalPlayer.BADGES or {}
-    local texture = badges[id] or (Bullets and Bullets[id] and Bullets[id].texture)
-    self.badge:SetTexture(texture)
-    self.badge:SetShown(texture ~= nil)
+    Face.Show(self.picture, clip)
 end
 
 function Subtitle:NameShown()
@@ -415,20 +390,33 @@ function Subtitle:NameShown()
 end
 
 function Subtitle:RowHeight()
-    if not self:NameShown() then return self.shownPaused and (self.pausedLabel:GetStringHeight() or 0) or 0 end
+    if not self:NameShown() then
+        return (self.shownPaused or self.heldText) and (self.pausedLabel:GetStringHeight() or 0) or 0
+    end
     return math.max(Pictured() and PICTURE or 0, self.title:GetStringHeight() or 0)
 end
 
 --- The row's visible width, so it centres on what shows. The title is cut to keep it within WIDTH.
 function Subtitle:RowWidth(paused)
-    -- Show Name off still shows Stopped: Wanted keeps a stopped line on screen to say why it is
-    -- not being read.
-    if not self:NameShown() then return paused and (self.pausedLabel:GetStringWidth() or 0) or 0 end
+    -- Show Name off still shows Stopped and why the line waits: Wanted keeps such a line on screen
+    -- to say why it is not being read.
+    if not self:NameShown() then
+        local width = paused and (self.pausedLabel:GetStringWidth() or 0) or 0
+        if self.heldText then
+            if paused then width = width + LABEL_GAP + (self.heldDot:GetStringWidth() or 0) + LABEL_GAP end
+            width = width + (self.held:GetStringWidth() or 0)
+        end
+        return width
+    end
     local start = (Pictured() and PICTURE + PICTURE_GAP or 0) + (self.title:GetStringWidth() or 0)
-    -- The waiting count's room, taken first so a long title is cut rather than the count.
+    -- Why it waits and the waiting count, their room taken first so a long title is cut rather
+    -- than they.
     local more = 0
+    if self.heldText then
+        more = LABEL_GAP + (self.heldDot:GetStringWidth() or 0) + LABEL_GAP + (self.held:GetStringWidth() or 0)
+    end
     if (self.waiting or 0) > 0 then
-        more = LABEL_GAP + (self.moreDot:GetStringWidth() or 0) + LABEL_GAP + (self.more:GetStringWidth() or 0)
+        more = more + LABEL_GAP + (self.moreDot:GetStringWidth() or 0) + LABEL_GAP + (self.more:GetStringWidth() or 0)
     end
     if self.labelText then
         local lead = LABEL_GAP + (self.dot:GetStringWidth() or 0) + LABEL_GAP
@@ -462,14 +450,28 @@ function Subtitle:PlaceRow(left)
     else
         self.pausedLabel:SetPoint("TOPLEFT", self.frame, "TOP", left, textY)
     end
-    local last = self.shownPaused and self.pausedLabel or (self.labelText and self.label or self.title)
-    local shown = named and (self.waiting or 0) > 0
-    self.moreDot:SetShown(shown)
-    self.more:SetShown(shown)
-    self.moreDot:ClearAllPoints()
-    self.moreDot:SetPoint("LEFT", last, "RIGHT", LABEL_GAP, 0)
-    self.more:ClearAllPoints()
-    self.more:SetPoint("LEFT", self.moreDot, "RIGHT", LABEL_GAP, 0)
+    -- Then why it waits and the count, each after a dot; with Show Name off and nothing before it,
+    -- why it waits starts the row, and there is no count.
+    local last = self.shownPaused and self.pausedLabel or (named and (self.labelText and self.label or self.title))
+    local parts = { { self.heldDot, self.held, self.heldText ~= nil },
+        { self.moreDot, self.more, named and (self.waiting or 0) > 0 } }
+    for _, part in ipairs(parts) do
+        local dot, text, shown = part[1], part[2], part[3]
+        dot:SetShown(shown and last and true or false)
+        text:SetShown(shown)
+        if text == self.more then self.moreHover:SetShown(shown) end
+        if shown then
+            text:ClearAllPoints()
+            if last then
+                dot:ClearAllPoints()
+                dot:SetPoint("LEFT", last, "RIGHT", LABEL_GAP, 0)
+                text:SetPoint("LEFT", dot, "RIGHT", LABEL_GAP, 0)
+            else
+                text:SetPoint("TOPLEFT", self.frame, "TOP", left, textY)
+            end
+            last = text
+        end
+    end
 end
 
 -- The centre and the top edge, not a corner: the frame is as wide as its longest line, so
@@ -526,7 +528,7 @@ function Subtitle:Layout(text)
     self.measure:SetText("Ag")
     local lineHeight = self.measure:GetStringHeight()
     local named = self:NameShown()
-    self.nameRow:SetShown(named or self.shownPaused)
+    self.nameRow:SetShown(named or self.shownPaused or self.heldText ~= nil)
     local titleHeight, widest = self:RowHeight(), self:RowWidth(self.shownPaused)
     local titleGap = titleHeight > 0 and TITLE_GAP or 0
     self.rows = {}
@@ -718,6 +720,7 @@ function Subtitle:Prepare(clip, text)
     -- the count already in, rather than sliding as if lines had just been added.
     self.rowLeft, self.share = nil, 0
     self:SetWaiting(self:Waiting())
+    self:SetHeld(self:Held())
     -- The measure too: pages are cut by the width of the text in the face it is drawn in.
     for _, text in ipairs({ self.title, self.label, self.measure }) do Addon:ClipFont(text, clip) end
     self.title:SetText(title)
@@ -824,14 +827,15 @@ function Subtitle:WholeWords(count)
     return count
 end
 
--- Shown once the audio has begun, not while a clip waits on a gate: the typing is paced to
--- the voice, and before it starts there is nothing to type. A paused queue is the exception.
--- The line will not start until the player plays it, and with no window on screen a subtitle
--- saying "paused" is the only sign of why nothing is being read -- and the thing to click.
+-- Shown once the audio has begun: the typing is paced to the voice, and before it starts there
+-- is nothing to type. A stopped queue and a line held back are the exceptions. With no window on
+-- screen, a subtitle saying "Stopped" or why the line waits (a fight, the NPC's own greeting) is
+-- the only sign of why nothing is being read.
 function Subtitle:Wanted()
     local cfg = Config()
     return cfg.Enabled and Addon:DisplayStyle() == "subtitle" and Transcript.clip ~= nil
-        and Transcript.text ~= "" and (Transcript.hasStarted or SoundQueue:IsPaused())
+        and Transcript.text ~= "" and (Transcript.hasStarted or SoundQueue:IsPaused()
+        or SoundQueue:GetHeldReason(Transcript.clip) ~= nil)
 end
 
 function Subtitle:SetWanted(wanted)
@@ -961,6 +965,13 @@ function Subtitle:BuildControls()
     self.reportButton = report
 end
 
+--- Ctrl-wheel steps Subtitle Size, Ctrl-Shift-wheel Text Size (Actions.WheelSize). Its top stays
+--- where it is: Place counts it in the screen's units.
+function Subtitle:Wheel(delta)
+    local text = Actions.WheelSize(delta, "SubtitleScale")
+    if text then Actions.WheelTip(self.frame, text) end
+end
+
 function Subtitle:UpdatePause()
     Actions.SetPlayGlyph(self.pause, Actions.HeadState())
     Actions.SetPausable({ self.pause, self.skip })
@@ -975,6 +986,17 @@ function Subtitle:Mouse()
         frame:SetMouseClickEnabled(not Locked())
     else
         frame:EnableMouse(not Locked())
+    end
+end
+
+--- It takes the wheel only while Ctrl is held over it, unlocked: otherwise the wheel zooms the
+--- camera. Asked every frame, since Ctrl goes down only just before the wheel turns.
+function Subtitle:TakeWheel()
+    local frame = self.frame
+    local wheel = not Locked() and IsControlKeyDown ~= nil and IsControlKeyDown() and Over(frame) or false
+    if frame.EnableMouseWheel and (self.wheelOn or false) ~= wheel then
+        self.wheelOn = wheel
+        frame:EnableMouseWheel(wheel)
     end
 end
 
@@ -1015,9 +1037,12 @@ function Subtitle:Tick(elapsed)
     end
     if self.wanted and self.pages then self:Render() end
     if self.wanted and self.pages then self:CountWaiting() end
+    -- A creature the client had not cached shows the book until its face comes.
+    if self.wanted and self.clip and StaticPortrait:Resolved() then self:ConfigurePicture(self.clip) end
     self:ShowProgress()
     self:Animate(elapsed)
     self:FadeControls(elapsed)
+    self:TakeWheel()
     self.poll = (self.poll or 0) + elapsed
     if self.poll >= .2 then
         self.poll = 0
@@ -1054,10 +1079,26 @@ end
 
 function Subtitle:CountWaiting()
     local waiting = self:Waiting()
-    if waiting ~= self.waiting then
+    local held = self:Held()
+    if waiting ~= self.waiting or held ~= self.heldText then
+        -- With Show Name off the row is there only while there is something to say, so the words
+        -- move for it.
+        local moves = held ~= self.heldText and not self:NameShown()
         self:SetWaiting(waiting)
-        self:Fit()
+        self:SetHeld(held)
+        if moves and self.page then self:Relayout() else self:Fit() end
     end
+end
+
+--- Why the line on screen has not started, or nil: as the windows say it.
+function Subtitle:Held()
+    if self.sample or not self.clip or Transcript.clip ~= self.clip then return nil end
+    return SoundQueue:GetHeldReason(self.clip)
+end
+
+function Subtitle:SetHeld(reason)
+    self.heldText = reason
+    self.held:SetText(reason and format("(%s)", reason) or "")
 end
 
 --- Whether the progress line is wanted: the setting on, and the bar built.

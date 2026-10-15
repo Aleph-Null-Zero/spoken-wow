@@ -123,7 +123,8 @@ L = {
     OPT_DUI_FIT_TEXT = "Fit to the Words",
     OPT_DUI_FIT_TEXT_TIP = "The window is only as tall as the line's words need, up to Lines Shown. Off, it is always as tall as Lines Shown.",
     REASON_DUI_FOLLOW = "Turn off Follow DialogueUI's Theme to use this.",
-    DUI_WHEEL_HINT = "Over the window: Ctrl and the mouse wheel change Window Size; Ctrl, Shift and the mouse wheel change Text Size.",
+    WINDOW_WHEEL_HINT = "Over the window: Ctrl and the mouse wheel change Window Size; Ctrl, Shift and the mouse wheel change Text Size.",
+    SUBTITLE_WHEEL_HINT = "Over the subtitles: Ctrl and the mouse wheel change Subtitle Size; Ctrl, Shift and the mouse wheel change Text Size.",
     OPT_KEYS_TITLE = "Keys",
     OPT_KEY_NONE = "Not set",
     OPT_KEYS_SET = "Set Keys",
@@ -169,6 +170,8 @@ L = {
     SUBTITLE_SAMPLE_TEXT = "This is how spoken lines will look. Drag this text to move it. You can lock it in place in the Spoken settings.",
     SAMPLE_SPEAKER = "Sample speaker",
     SAMPLE_LINE = "This is how spoken lines will look.",
+    -- The windows' sample words: dragging the words does not move a window.
+    SAMPLE_WINDOW_TEXT = "This is how spoken lines will look. Move the window where you want it, then turn on Lock Position in the Spoken settings.",
     STYLE_PREVIEW = "Preview",
     STYLE_PREVIEW_HIDE = "Hide Preview",
     STYLE_PREVIEW_TIP = "Shows the chosen style on screen with a sample line.",
@@ -269,6 +272,8 @@ L = {
     OPT_LINE_GAP = "Pause Between Lines",
     OPT_LINE_GAP_TIP = "How long Spoken waits after a line before the next one starts. A book's pages read on without it.",
     OPT_MUTE_DIALOGUE_TIP_VANILLA = "Cut off an NPC's greeting voiceline when a line starts being read.",
+    -- Over the "+N" count: the lines waiting.
+    WAITING_TITLE = "Up Next",
     OPT_CUE_BETWEEN = "Sound Between Lines",
     OPT_CUE_BETWEEN_TIP = "When one line finishes and another is waiting, play a short sound in the pause before the next, so a quest hand-in and the next pickup do not run together. Not between the pages of one book.",
     OPT_BACKGROUND_SOUND = "Keep Talking in Background",

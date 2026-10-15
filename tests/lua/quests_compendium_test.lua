@@ -783,7 +783,7 @@ local function Face(part)
         or face.viewport.texture and face.viewport.texture:IsShown() and face.viewport.texture:GetTexture() or "nothing"
     return drawn .. " " .. tostring(face.badge:GetTexture()) .. " " .. tostring(part.caption)
 end
-local BADGES = SpokenEnv.MinimalPlayer.BADGES
+local BADGES = SpokenEnv.Face.BADGES
 Expect("without DialogueUI, no DialogueUI header on either part",
     tostring(PartOf(L.QUEST_PART_ACCEPT).header) .. " " .. tostring(PartOf(L.QUEST_PART_COMPLETE).header), "nil nil")
 Expect("the offer is named its description, the hand-in its completion",

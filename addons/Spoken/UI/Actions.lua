@@ -1,8 +1,7 @@
 setfenv(1, SpokenEnv)
 
 -- The buttons the speaking clip's presentation brings beside a window's own Stop or Replay and
--- Skip: every module's Report, and gossip's Stop Gossip, anchored to the header. The player lays
--- them out and knows nothing about what they do.
+-- Skip: every module's Report. The player lays them out and knows nothing about what they do.
 --
 --   action = { id, icon, text = "R", -- what a legacy client draws instead of the icon
 --              tooltip = fun(GameTooltip), label = L.OPT_REPORT_PROBLEM?, -- its name in a menu
@@ -55,10 +54,16 @@ local BRONZE = Version.IsCamelot and { .95, .68, .35 } or nil
 Actions.BRONZE = BRONZE
 local rings = setmetatable({}, { __mode = "k" })
 
+--- The bronze while Bronze Border is on, on Forever; nil otherwise. Every tint asks this.
+function Actions.Bronze()
+    if BRONZE and Addon.db and Addon:Bronze() then return BRONZE end
+    return nil
+end
+
 local function TintRing(ring)
-    local frame = Addon.db and Addon.db.profile and Addon.db.profile.Frame
-    if BRONZE and frame and frame.BronzeTint then
-        ring:SetVertexColor(BRONZE[1], BRONZE[2], BRONZE[3])
+    local bronze = Actions.Bronze()
+    if bronze then
+        ring:SetVertexColor(bronze[1], bronze[2], bronze[3])
     else
         ring:SetVertexColor(1, 1, 1)
     end
@@ -244,11 +249,48 @@ local function EaseOut(t) return 1 - (1 - t) * (1 - t) end
 local Tail = {}
 
 --- The tail for the font strings the window made: `stopped`, its text already set, `count`, and
---- `held` where the window says why a line has not started.
+--- `held` where the window says why a line has not started. The count lists the lines waiting
+--- under the pointer (Actions.WaitingHover).
 function Actions.Tail(stopped, count, held)
     local tail = { stopped = stopped, count = count, held = held, alpha = 0, want = false, parts = {} }
     for key, fn in pairs(Tail) do tail[key] = fn end
+    tail.hover = Actions.WaitingHover(count)
     return tail
+end
+
+-- The most waiting lines the count's tooltip names.
+local WAITING_MOST = 12
+
+--- The lines waiting behind the one playing, in the order they will play, in `tooltip`: each
+--- line's title, and who says it where that is not the title.
+function Actions.WaitingTip(owner)
+    GameTooltip:SetOwner(owner, "ANCHOR_TOP")
+    GameTooltip:SetText(L.WAITING_TITLE)
+    local sounds = SoundQueue.sounds or {}
+    for index = 2, math.min(getn(sounds), WAITING_MOST + 1) do
+        local clip = sounds[index]
+        GameTooltip:AddDoubleLine(Actions.Label(clip), Actions.Speaker(clip), 1, 1, 1, .62, .62, .62)
+    end
+    if getn(sounds) > WAITING_MOST + 1 then GameTooltip:AddLine("...", 1, 1, 1) end
+    GameTooltip:Show()
+end
+
+--- A frame over `text`, the "+N" count, that lists the waiting lines while the pointer is on it.
+--- It only listens: a click goes through to the window under it, which it drags as before.
+function Actions.WaitingHover(text)
+    local hover = CreateFrame("Frame", nil, text:GetParent())
+    hover:SetAllPoints(text)
+    if hover.SetMouseClickEnabled and hover.SetMouseMotionEnabled then
+        hover:SetMouseClickEnabled(false)
+        hover:SetMouseMotionEnabled(true)
+    else
+        hover:EnableMouse(true)
+    end
+    hover:SetScript("OnEnter", function() Actions.WaitingTip(hover) end)
+    hover:SetScript("OnLeave", function() if GameTooltip:GetOwner() == hover then GameTooltip_Hide() end end)
+    hover:SetScript("OnHide", function() if GameTooltip:GetOwner() == hover then GameTooltip_Hide() end end)
+    hover:Hide()
+    return hover
 end
 
 --- Whether Stopped should show; Step fades it in or out.
@@ -271,6 +313,7 @@ function Tail:SetCount(waiting)
         self.counted = waiting
         self.count:SetText(waiting > 0 and "• +" .. waiting or "")
     end
+    self.hover:SetShown(waiting > 0)
     self.parts = {}
     if self.held then
         self.held:SetShown(self.reason ~= nil)
@@ -322,6 +365,108 @@ end
 function Tail:Finish()
     self.fade = nil
     self.alpha = self.want and 1 or 0
+end
+
+--- The tail after `text`, the title in its box `width` wide: the title is cut short, not the tail.
+function Tail:Fit(text, width)
+    local room = self:Room()
+    text:ClearAllPoints()
+    text:SetPoint("TOPLEFT")
+    text:SetPoint("BOTTOMRIGHT", -room, 0)
+    if room == 0 then return end
+    self:Place(text, math.min(text:GetStringWidth() or 0, math.max(0, width - room)))
+    self:Paint()
+end
+
+---------------------------------------------------------------- what the windows share
+-- The Small Window and the DialogueUI window name a line, count what waits and take the pointer
+-- alike.
+
+--- A line's title. A line with no label (a one-page letter) goes by its header: its key means
+--- nothing to a player.
+function Actions.Label(clip)
+    local present = clip and clip.present
+    return clip and (present and (present.label or present.header) or clip.key) or ""
+end
+
+--- The speaker's name over the title: the header, unless it is already the title (a line with no
+--- label), and said once, so never the same as the title.
+function Actions.Speaker(clip)
+    local present = clip and clip.present
+    local name = present and present.label and present.header or ""
+    return name ~= Actions.Label(clip) and name or ""
+end
+
+--- The lines waiting behind the one playing.
+function Actions.Waiting()
+    return math.max(0, SoundQueue:GetQueueSize() - 1)
+end
+
+--- Whether `frame` is `root` or inside it.
+function Actions.BelongsTo(frame, root)
+    while frame do
+        if frame == root then return true end
+        frame = frame.GetParent and frame:GetParent()
+    end
+    return false
+end
+
+--- A line of a window's header on `parent`, `size` high, in `r, g, b`, one line, from the left.
+function Actions.Text(parent, size, r, g, b)
+    local text = parent:CreateFontString(nil, "OVERLAY")
+    text:SetFont(GameFontNormal:GetFont(), size, "")
+    text:SetShadowColor(0, 0, 0, 1)
+    text:SetShadowOffset(1, -1)
+    text:SetJustifyH("LEFT")
+    text:SetWordWrap(false)
+    text:SetTextColor(r, g, b)
+    return text
+end
+
+--- Locked, clicks on a window pass through to the game; its buttons still take theirs. Where the
+--- client cannot tell a click from the pointer passing over, the window keeps both.
+function Actions.ClickThrough(frame)
+    if frame.SetMouseClickEnabled and frame.SetMouseMotionEnabled then
+        frame:SetMouseMotionEnabled(true)
+        frame:SetMouseClickEnabled(not Addon:IsFrameLocked())
+    end
+end
+
+--- Ctrl and the wheel step `key`, the window's own size (Frame's FrameScale or Transcript's
+--- SubtitleScale); Ctrl, Shift and the wheel Text Size; each within its slider's range (SIZES).
+--- Nothing while Lock Position is on, so the words under the pointer scroll instead. Returns
+--- what changed, for a tooltip, or nil when the wheel was not taken.
+function Actions.WheelSize(delta, key)
+    if delta == 0 or not (IsControlKeyDown and IsControlKeyDown()) or Addon:IsFrameLocked() then return nil end
+    local shift = IsShiftKeyDown and IsShiftKeyDown()
+    local part = (shift or key == "SubtitleScale") and "Transcript" or "Frame"
+    local field = shift and "FontSize" or key
+    local cfg, limits = Addon:Profile(part), SIZES[field]
+    local low, high, step = limits[1], limits[2], limits[3]
+    local value = (tonumber(cfg[field]) or Defaults.profile[part][field]) + (delta > 0 and step or -step)
+    value = math.max(low, math.min(high, math.floor(value / step + 0.5) * step))
+    cfg[field] = value
+    PlayerFrame:RefreshConfig()
+    Transcript:RefreshConfig()
+    if Options and Options.UpdateRows then Options:UpdateRows() end
+    if shift then return format("%s: %d", L.TRANSCRIPT_SIZE, value) end
+    return format("%s: %d%%", key == "SubtitleScale" and L.OPT_SUBTITLE_SIZE or L.OPT_SCALE, math.floor(value * 100 + 0.5))
+end
+
+--- The size the wheel just set, beside the pointer.
+function Actions.WheelTip(owner, text)
+    GameTooltip:SetOwner(owner, "ANCHOR_CURSOR")
+    GameTooltip:SetText(text)
+    GameTooltip:Show()
+end
+
+--- `window.progress` filled to where `window.clip`'s voice is; `window.seconds` holds it while the
+--- line is stopped.
+function Actions.FollowProgress(window)
+    local clip = window.clip
+    if not clip then return end
+    window.seconds = Actions.Elapsed(clip, window.seconds)
+    Actions.SetProgress(window.progress, SoundQueue:Share(clip, window.seconds))
 end
 
 -- The progress line: Spoken Subtitles' layout and spark, framed as the game frames a status bar
@@ -503,6 +648,106 @@ function Actions.NewRound(parent, kind, name, icon)
     return button
 end
 
+-- The dialog row's buttons, 24 at UIParent's scale whatever DialogueUI's own size, ROW_GAP apart.
+local ROW_GAP = 4
+local DialogRow = {}
+
+--- Play, Skip and, with `report`, Report in a row on one of DialogueUI's dialogs (its quest window
+--- or its book view), as Spoken Quests and Spoken Readables put them there: children of the dialog,
+--- drawn over it, so they show while DialogueUI hides UIParent and close with it. `tooltip()`
+--- returns the tooltip to use on the dialog, the game's being a child of UIParent. Skip skips and
+--- names itself; the caller gives Play and Report their clicks and their tooltips (Row:SetTip).
+function Actions.DialogRow(dialog, tooltip, report)
+    local holder = CreateFrame("Frame", nil, dialog)
+    holder:SetFrameStrata("FULLSCREEN")
+    holder:SetSize(ROUND_SIZE, ROUND_SIZE)
+    holder:Hide()
+    local row = { frame = holder, dialog = dialog, tooltip = tooltip, tips = {}, placed = {} }
+    for key, fn in pairs(DialogRow) do row[key] = fn end
+    local function Round(kind)
+        local button = Actions.NewRound(holder, kind)
+        button:SetFrameStrata("FULLSCREEN")
+        -- Brighter under the pointer, as the ring's own hover has it, and the tooltip the dialog's.
+        button:SetScript("OnEnter", function(self)
+            if self:IsEnabled() then self.glyph:SetAlpha(1) end
+            row:ShowTip(self)
+        end)
+        button:SetScript("OnLeave", function(self)
+            if self:IsEnabled() then self.glyph:SetAlpha(0.85) end
+            if self.tooltip then self.tooltip:Hide() end
+        end)
+        return button
+    end
+    row.play = Round("play")
+    row.play:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    row.skip = Round("skip")
+    row.tips[row.skip] = function(tip) tip:SetText(L.BIND_SKIP) end
+    if report then row.report = Round("report") end
+    return row
+end
+
+--- `fill(tooltip)` writes `button`'s tooltip, its owner already set.
+function DialogRow:SetTip(button, fill)
+    self.tips[button] = fill
+end
+
+--- `button`'s tooltip on the dialog, written afresh.
+function DialogRow:ShowTip(button)
+    local fill = self.tips[button]
+    if not fill then return end
+    local tip = self.tooltip()
+    tip:SetOwner(button, "ANCHOR_RIGHT")
+    fill(tip)
+    tip:Show()
+    button.tooltip = tip
+end
+
+--- The tooltip again where it shows: what a click changed is in it.
+function DialogRow:RefreshTip(button)
+    if button.tooltip and button.tooltip:IsShown() then self:ShowTip(button) end
+end
+
+function DialogRow:HideTips()
+    for _, button in ipairs({ self.play, self.skip, self.report }) do
+        if button.tooltip then button.tooltip:Hide() end
+    end
+end
+
+--- `buttons` laid out right to left from `anchor`'s left, on its middle (the dialog's top right
+--- without one), each 24 on screen whatever the dialog's scale. Laid out again only when the
+--- buttons or the scale change, or with `force`, for a button another file placed meanwhile: the
+--- callers run this every frame the dialog is open.
+function DialogRow:Place(buttons, anchor, force)
+    local holder, placed = self.frame, self.placed
+    local scale = UIParent:GetEffectiveScale() / math.max(0.01, self.dialog:GetEffectiveScale() or 1)
+    local same = placed.scale == scale and placed.anchor == anchor and placed.count == getn(buttons)
+    for index = 1, getn(buttons) do
+        if placed[index] ~= buttons[index] then same = false end
+        placed[index] = buttons[index]
+    end
+    if same and not force then return end
+    placed.scale, placed.anchor, placed.count = scale, anchor, getn(buttons)
+    holder:SetSize(math.max(1, (getn(buttons) * ROUND_SIZE + (getn(buttons) - 1) * ROW_GAP) * scale), ROUND_SIZE * scale)
+    local right
+    for _, button in ipairs(buttons) do
+        button:SetScale(scale)
+        button:SetSize(ROUND_SIZE, ROUND_SIZE)
+        button:ClearAllPoints()
+        if right then
+            button:SetPoint("RIGHT", right, "LEFT", -ROW_GAP, 0)
+        else
+            button:SetPoint("RIGHT", holder, "RIGHT", 0, 0)
+        end
+        right = button
+    end
+    holder:ClearAllPoints()
+    if anchor then
+        holder:SetPoint("RIGHT", anchor, "LEFT", -ROW_GAP, 0)
+    else
+        holder:SetPoint("TOPRIGHT", self.dialog, "TOPRIGHT", -48, -19)
+    end
+end
+
 local function NewButton(frame, action)
     local button
     if action.create then
@@ -599,7 +844,7 @@ function Actions:Configure(frame, clip)
 end
 
 --- The actions for `clip` in `controls`, after `first` (its Stop or Replay and Skip) and as large
---- and as strong. An action anchored to the header (Stop Gossip) is left off: Skip does its work.
+--- and as strong. An action anchored to the header is left off: Skip does its work.
 --- Returns the buttons shown, in order.
 function Actions:HeaderControls(frame, controls, first, clip)
     self:Configure(frame, clip)
