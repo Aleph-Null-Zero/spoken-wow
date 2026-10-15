@@ -491,6 +491,10 @@ function EditDialog({
         onClose();
         onSaved();
       }}
+      onRewritten={() => {
+        onClose();
+        onSaved();
+      }}
       onCancel={onClose}
     />
   );
