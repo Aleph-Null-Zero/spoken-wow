@@ -32,6 +32,7 @@ import os
 import re
 import struct
 import sys
+import urllib.parse
 import zlib
 
 import numpy as np
@@ -417,11 +418,12 @@ def write_credits(placed):
     lines = [
         "# Zone pictures",
         "",
-        "Screenshots of World of Warcraft, (c) Blizzard Entertainment, from these warcraft.wiki.gg",
-        "files, each chosen by hand. Each was cleaned up and sharpened with Gemini 3.1 Flash Image",
-        "(the same scene, lighting and colours; compression artifacts and interface removed), then",
-        "cropped, tinted and edged by `pipelines/zones/tools/pictures/prepare.py`. Each source file's",
-        "page gives its uploader and terms.",
+        "Screenshots of World of Warcraft, (c) Blizzard Entertainment, each chosen by hand: most from",
+        "the warcraft.wiki.gg files linked below, the rest from where their row says. Each was cleaned",
+        "up and sharpened with Gemini 3.1 Flash Image (the same scene, lighting and colours;",
+        "compression artifacts and interface removed), then cropped, tinted and edged by",
+        "`pipelines/zones/tools/pictures/prepare.py`. Each wiki file's page gives its uploader and",
+        "terms.",
         "",
         "| Picture | Place | Source file |",
         "| --- | --- | --- |",
@@ -438,7 +440,13 @@ def write_credits(placed):
         elif not src:
             source = "unknown, added by hand"
         elif src.startswith("http"):
-            source = src
+            # A file's address, named by its file. An archived revision's name carries its
+            # timestamp and a "!" before the file's own name.
+            name = urllib.parse.unquote(src.rsplit("/", 1)[-1])
+            archived = "/images/archive/" in src
+            if archived:
+                name = name.split("!", 1)[-1]
+            source = "[%s%s](%s)" % (cell(name.replace("_", " ")), " (an earlier version)" if archived else "", src)
         elif src.startswith("own:"):
             source = cell(src[4:].strip())
         else:

@@ -20,7 +20,8 @@
 LUA ?= $(shell command -v luajit || command -v lua5.1)
 
 .PHONY: help test test-player contribute-fixtures lint package-all \
-        package-spoken package-spoken-retired package-spoken-all release-spoken-all release-spoken-all-dry \
+        package-spoken package-spoken-retired package-spoken-all release-spoken release-spoken-dry \
+        release-spoken-all release-spoken-all-dry \
         descriptions descriptions-check descriptions-published \
         character-models \
         audio-release audio-release-dry
@@ -47,6 +48,7 @@ web-%:
 books-%:
 	@$(MAKE) --no-print-directory -f make/books.mk $*
 
+# The settings fit loop leaves esMX out until its Voice Pack row fits: 226 px in a 200 px column.
 test-player: ## Run the addons' Lua tests (needs luajit)
 	@[ -n "$(LUA)" ] || { echo "No luajit found: brew install luajit"; exit 1; }
 	@$(LUA) tests/lua/quest_dispatch_test.lua
@@ -65,7 +67,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/settings_ux_test.lua
 	@$(LUA) tests/lua/settings_legacy_test.lua
 	@$(LUA) tests/lua/settings_art_test.lua
-	@for lang in enUS deDE esES frFR ptBR ruRU koKR zhCN zhTW; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
+	@for lang in enUS deDE esES frFR ptBR ruRU koKR zhCN zhTW itIT; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
 	@$(LUA) tests/lua/settings_audit_test.lua
 	@$(LUA) tests/lua/queue_test.lua
 	@$(LUA) tests/lua/developer_hooks_test.lua
@@ -74,6 +76,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/sources_test.lua
 	@$(LUA) tests/lua/api_contract_test.lua
 	@$(LUA) tests/lua/contribute_envelope_test.lua
+	@$(LUA) tests/lua/report_url_contract_test.lua
 	@$(LUA) tests/lua/contribute_toc_test.lua
 	@$(LUA) tests/lua/transcript_toc_test.lua
 	@$(LUA) tests/lua/interface_numbers_test.lua
@@ -82,6 +85,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/player_frame_test.lua
 	@$(LUA) tests/lua/player_dialogueui_style_test.lua
 	@$(LUA) tests/lua/minimal_window_test.lua
+	@$(LUA) tests/minimal-classic/verify.lua
 	@$(LUA) tests/captions/verify.lua
 	@$(LUA) tests/lua/zones_source_test.lua
 	@$(LUA) tests/lua/zones_flight_test.lua
@@ -137,9 +141,15 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/bronze_rings_test.lua
 
 # Rewrite the envelope fixtures the TypeScript reader is tested against. A diff here is the
-# wire format changing, and that is a change the reader's tests must be part of.
+# wire format changing, and that is a change the reader's tests must be part of. The
+# captured-* ones are what the modules' own Capture functions produce in their tests, and
+# report-urls.txt the report addresses the site's report-urls.test.ts resolves.
 contribute-fixtures:
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/contribute_envelope_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/report_url_contract_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/quests_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/zones_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/books_contribute_test.lua
 
 # The Python half needs its own venv:
 #
@@ -160,6 +170,7 @@ test: test-player ## Everything: both webs, the Python pipeline, the addons
 lint: ## The checks CI gates on
 	@pnpm -r typecheck
 	@node scripts/check-addon-xml.mjs
+	@./scripts/spoken/check-changelog.sh
 	@node pipelines/zones/tools/validate.mjs
 	@node scripts/descriptions.mjs --check
 	@node pipelines/zones/tools/locale/check-strings.mjs
@@ -221,6 +232,15 @@ package-all: ## Build every addon zip: Spoken with its modules, then quests and 
 # packager. No sound packs; scripts/spoken/package.sh says why.
 package-spoken: ## Zip Spoken with its modules, Quests, Books and Zones, without the sound packs
 	@./scripts/spoken/package.sh
+
+# Spoken's release: the zip package-spoken built, to both stores, with its changelog section
+# as the notes. scripts/spoken/release.sh refuses a version whose notes are still under
+# ## Unreleased.
+release-spoken-dry: ## Check Spoken's release and show what uploading it would send
+	@./scripts/spoken/release.sh --dry-run
+
+release-spoken: ## Upload Spoken's zip to CurseForge and Wago (build it with package-spoken first)
+	@./scripts/spoken/release.sh
 
 # The last release of each retired project, spoken-quests, spoken-zones and spoken-books: a
 # tombstone under the folder name it shipped, so updating it leaves the old module nothing to

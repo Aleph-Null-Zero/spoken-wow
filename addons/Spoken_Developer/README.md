@@ -1,8 +1,12 @@
 # Spoken Developer
 
-Tools for trying Spoken out, which a player never needs: a **debug log** to send with a report,
+Tools for working on Spoken, which a player never needs: a **debug log** to send with a report,
 and the **Developer** page in Spoken's settings where Spoken's modules put their own tools (Spoken
-Quests' Mock Missing Voice Over, for one). A download of its own, beside Spoken.
+Quests' Mock Missing Voice Over, for one).
+
+For developers only. It is not in Spoken's zip and is not published: there is no store page and
+no release. Link it into the game from a checkout, or build a zip with
+`scripts/developer/package.sh` to hand to someone asked for a log.
 
 - The log is on once the module is installed: installing it is asking for one. Turn it off (or on
   again) with Spoken > Developer > Enable Debug Log Recording, the switch in Spoken's welcome

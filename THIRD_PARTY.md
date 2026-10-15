@@ -13,19 +13,24 @@ the client loads what is in the folder. They are unmodified copies, and are foun
 
 | Library | Used by | License |
 |---|---|---|
-| LibStub | every addon | Public domain (stated in the file header) |
-| CallbackHandler-1.0 | Ace3 consumers, LibDataBroker | [Ace3 license](https://www.wowace.com/projects/ace3) — BSD-style, free use with attribution |
-| Ace3 (AceAddon, AceConsole, AceDB, AceDBOptions, AceEvent, AceTimer, AceGUI-3.0, AceConfig-3.0, AceCore-3.0) | SpokenQuests, Spoken | [Ace3 license](https://www.wowace.com/projects/ace3) |
-| LibDataBroker-1.1 | Spoken, SpokenZones | Public domain / CC0, per its project page |
-| LibDBIcon-1.0 | Spoken, SpokenZones | Public domain, by Rabbit |
+| LibStub | Spoken, Spoken_Quests, Spoken_Gossip, Spoken_Zones | Public domain (stated in the file header) |
+| CallbackHandler-1.0 | the same four | [Ace3 license](https://www.wowace.com/projects/ace3) — BSD-style, free use with attribution |
+| Ace3: AceAddon, AceConsole, AceDBOptions, AceEvent, AceGUI-3.0, AceConfig-3.0 | Spoken_Quests, Spoken_Gossip | [Ace3 license](https://www.wowace.com/projects/ace3) |
+| Ace3: AceDB, AceTimer | Spoken, Spoken_Quests, Spoken_Gossip, Spoken_Zones | [Ace3 license](https://www.wowace.com/projects/ace3) |
+| Ace3: AceCore-3.0 | the 1.12 trees of Spoken, Spoken_Quests and Spoken_Gossip | [Ace3 license](https://www.wowace.com/projects/ace3) |
+| LibDataBroker-1.1 | Spoken, Spoken_Zones | Public domain / CC0, per its project page |
+| LibDBIcon-1.0 | Spoken, Spoken_Zones | Public domain, by Rabbit |
 | [LibDeflate](https://github.com/SafeteeWoW/LibDeflate) 1.0.2-release | Spoken | zlib License (`Libs/LibDeflate/LICENSE.txt`) |
+
+Only LibDeflate has its license text beside it so far; the Ace3 copies and the public-domain
+libraries carry what their file headers say.
 
 If you are vendoring a new library, put its upstream license text beside it rather than
 only adding a row here.
 
 ## The addons' own lineage
 
-**SpokenQuests** began as a fork of **AI VoiceOver** (`AI_VoiceOver_Continued`), an
+**Spoken Quests** began as a fork of **AI VoiceOver** (`AI_VoiceOver_Continued`), an
 addon by Mrthinger and its later maintainers, and still carries structure from it —
 the sound queue and the data-module loader most visibly. The fork adapted the removed
 global addon-management APIs to `C_AddOns` and the gossip APIs to `C_GossipInfo`, was
@@ -49,7 +54,7 @@ None of this is the project's to license, and the MIT grant does not reach it.
   **CC BY-SA 4.0**. Re-use of that text carries the same terms, including attribution
   and share-alike. `pipelines/zones/tools/scrape.mjs` is what fetches it and records
   which article each line came from.
-- **Book, letter and in-world text** for SpokenBooks comes from the same vmangos
+- **Book, letter and in-world text** for Spoken_Books comes from the same vmangos
   extraction as the quest corpus, and is likewise Blizzard's.
 - **Where each readable is** (`addons/Spoken_Books/Data/Places.lua`): the spawns, loot, quests
   and vendors that place a book, letter or plaque, and the names of the creatures, quests and
@@ -74,6 +79,16 @@ None of this is the project's to license, and the MIT grant does not reach it.
   apply to it.
 - **Map images, portrait frames and icons** derived from game assets
   (`PortraitFrameAtlas`, the continent maps) are Blizzard's.
+- **The player's older textures** (the `.blp` files in `addons/Spoken/Textures/`, and the copies
+  in `Spoken_Quests`, `Spoken_Gossip` and `Spoken_Zones`: the window gradient, book, portrait
+  frame and background, settings button, size grabber, quest log Play and Stop, queue bullets,
+  Stop Gossip and the spacer) came with the AI VoiceOver fork, as it shipped them. The game art
+  in them is Blizzard's. The 1.12 tree's `UI-Minimap-Background.blp` comes with LibDBIcon.
+- **Addon-list icons** (`Textures/AddonIcon.tga` in Spoken_Books, Spoken_Zones and the two sound
+  packs): the Spoken shields, made for this project from the sources in `pipelines/books/assets/`
+  and `pipelines/zones/assets/`.
+- **Round vignette and subtitle shadow** (`addons/Spoken/Textures/RoundVignette.tga`,
+  `SubtitleShadow.tga`): black alpha gradients made for this project.
 - **Zone icons** (`addons/Spoken/Textures/Zones/*.tga`): the game's zone achievement icons and the
   world map's globe, copied from the game's files so every client has them; the pictures for
   Spoken Zones' lines. They are Blizzard's. Forever's own zones, which have no icon in the game

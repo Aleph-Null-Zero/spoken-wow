@@ -26,7 +26,7 @@ Spoken Books reads in your client's language, so this pack plays on a Spanish (E
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
 
 ## Support
 

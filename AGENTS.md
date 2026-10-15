@@ -9,6 +9,9 @@ Repo-wide rules. Each section also has its own file, which applies on top of thi
   - `Spoken` plays every line. `Spoken_Quests`, `Spoken_Zones` and `Spoken_Books` are its
     modules, and `SpokenContributions` holds what players upload at /contribute. All five
     ship in one zip, `Spoken-<v>.zip` (`scripts/spoken/package.sh`).
+  - `Spoken_Developer` is for developers only: the debug log and the Developer page. It is
+    not in Spoken's zip and has no store page or release; a developer links it from a checkout
+    or builds it with `scripts/developer/package.sh` (`addons/Spoken_Developer/README.md`).
   - `SpokenZonesAudio` and `SpokenBooksAudio` are sound packs. The quests packs have no folder
     here; they are built into `pipelines/quests/audio/`, which is gitignored.
   - `SpokenPlayer`, `SpokenQuests`, `SpokenZones` and `SpokenBooks` are tombstones: a `.toc`

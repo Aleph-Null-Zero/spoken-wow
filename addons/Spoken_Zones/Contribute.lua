@@ -9,12 +9,6 @@
 
 local ADDON_NAME, SpokenZones = ...
 
--- The merged domain, not SpokenZones.SITE_URL ("https://lore.rusty.one", ReportButton.lua's
--- own report domain): the contribute page is new and exists only on the site all three
--- sections share. Kept as a local of its own for the reason SpokenQuests/Contribute.lua gives
--- for the same split -- a report link that moved would be a report link that breaks for
--- everyone still running the shipped addon.
-local SITE_URL = "https://spoken.rusty.one"
 
 --- Whether this client can offer Contribute at all: a player that carries contributing (an
 --- older bundled one does not), and the buttons not hidden in its settings.
@@ -73,7 +67,7 @@ function SpokenZones:ShowContribution(mapID, subzone)
     if not envelope then
         return
     end
-    local address = format("%s/contribute", SITE_URL)
+    local address = format("%s/contribute", Spoken.SITE_URL)
     -- Encode is absent on an older Spoken a legacy-client zip can still bundle; Link
     -- returns nil for that or for an oversized result, and the two-copy fallback still works.
     local link = Spoken.Contribute.Encode and Spoken.Contribute:Link(address, envelope)

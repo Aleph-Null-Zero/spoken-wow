@@ -86,9 +86,8 @@ RELEASE_TYPE="${RELEASE_TYPE:-release}"
 # /projects//upload-file, which would fail somewhere less legible or land on whatever project
 # the API resolved.
 #
-# The complete pack (make package-audio-complete) is deliberately absent: the whole corpus in one
-# folder is twice the upload ceiling, so the site hosts it instead - see deploy/README.md. The
-# audio-all target here is the meta addon, not that pack.
+# There is no complete pack: the whole corpus in one folder is twice the upload ceiling. The
+# audio-all target here is the meta addon, which names the four packs as dependencies.
 #
 # A pack whose project does not exist yet has no id, and the run fails on it rather than
 # uploading a Horde pack over the Alliance project. Create the project on CurseForge, then

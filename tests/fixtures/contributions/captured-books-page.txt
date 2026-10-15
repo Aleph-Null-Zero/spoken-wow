@@ -1,0 +1,14 @@
+!SPOKEN1 books
+addon=SpokenBooks/
+build=1.15.9/69109
+locale=enUS
+pack=enUS
+page=927515100
+book=Ledger of Nothing
+number=2
+text<<
+A page no corpus has ever held.
+
+Written for this test alone.
+>>
+sum=761292482

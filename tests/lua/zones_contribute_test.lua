@@ -33,6 +33,7 @@ env.Addon.db.profile.Contribute.HideButtons = false
 
 Z.Zones[1537] = { name = "Ironforge", pending = true }
 local envelope = Z:CaptureContribution(1537, "A Nook With No Lore")
+H.WriteCapturedFixture(here, "zones-subzone", envelope)
 Expect("the source is zones", envelope:match("^!SPOKEN1 zones\n") ~= nil, true)
 Expect("the map is the one shown, not the player's", envelope:match("\nmap=1537\n") ~= nil, true)
 Expect("the zone is named from the map", envelope:match("\nzone=Ironforge\n") ~= nil, true)
@@ -43,6 +44,7 @@ Expect("the addon field carries the real .toc version, not the \"dev\" fallback"
     envelope:match("\naddon=SpokenZones/9%.9%.9\n") ~= nil, true)
 
 local zoneOnly = Z:CaptureContribution(1537, nil)
+H.WriteCapturedFixture(here, "zones-zone", zoneOnly)
 Expect("a zone with no subzone leaves the key out rather than sending it empty", zoneOnly:match("\nsubzone=") == nil, true)
 Expect("nothing is captured without a map", Z:CaptureContribution(nil, nil), nil)
 

@@ -1,10 +1,11 @@
 # Zone pictures
 
-Screenshots of World of Warcraft, (c) Blizzard Entertainment, from these warcraft.wiki.gg
-files, each chosen by hand. Each was cleaned up and sharpened with Gemini 3.1 Flash Image
-(the same scene, lighting and colours; compression artifacts and interface removed), then
-cropped, tinted and edged by `pipelines/zones/tools/pictures/prepare.py`. Each source file's
-page gives its uploader and terms.
+Screenshots of World of Warcraft, (c) Blizzard Entertainment, each chosen by hand: most from
+the warcraft.wiki.gg files linked below, the rest from where their row says. Each was cleaned
+up and sharpened with Gemini 3.1 Flash Image (the same scene, lighting and colours;
+compression artifacts and interface removed), then cropped, tinted and edged by
+`pipelines/zones/tools/pictures/prepare.py`. Each wiki file's page gives its uploader and
+terms.
 
 | Picture | Place | Source file |
 | --- | --- | --- |
@@ -182,7 +183,7 @@ page gives its uploader and terms.
 | 1422-caer-darrow | Caer Darrow | [Caer Darrow 2.jpg](https://warcraft.wiki.gg/wiki/File:Caer_Darrow_2.jpg) |
 | 1422-chillwind-camp | Chillwind Camp | [Chillwind camp.jpg](https://warcraft.wiki.gg/wiki/File:Chillwind_camp.jpg) |
 | 1422-dalsons-tears | Dalson's Tears | [Dalson's Tears.jpg](https://warcraft.wiki.gg/wiki/File:Dalson's_Tears.jpg) |
-| 1422-darrowmere-lake | Darrowmere Lake | https://warcraft.wiki.gg/images/archive/20061221184725%21Darrowmere_Lake.jpg |
+| 1422-darrowmere-lake | Darrowmere Lake | [Darrowmere Lake.jpg (an earlier version)](https://warcraft.wiki.gg/images/archive/20061221184725%21Darrowmere_Lake.jpg) |
 | 1422-felstone-field | Felstone Field | [Felstone Field.jpg](https://warcraft.wiki.gg/wiki/File:Felstone_Field.jpg) |
 | 1422-gahrrons-withering | Gahrron's Withering | [Gahrrons withering.jpg](https://warcraft.wiki.gg/wiki/File:Gahrrons_withering.jpg) |
 | 1422-hearthglen | Hearthglen | [Hearthglen.jpg](https://warcraft.wiki.gg/wiki/File:Hearthglen.jpg) |

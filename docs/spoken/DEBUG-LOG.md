@@ -1,6 +1,7 @@
 # Debug log
 
-**Spoken Developer** (`addons/Spoken_Developer`, a download of its own) keeps a log of what
+**Spoken Developer** (`addons/Spoken_Developer`, for developers only: not in Spoken's zip and not
+published; link it from a checkout or build it with `scripts/developer/package.sh`) keeps a log of what
 Spoken plays and why: every line queued, started, stopped, dropped or refused, with the time and
 the reason, Spoken's diagnostics, and whatever its modules add (Spoken Quests writes each quest
 or gossip window it saw and what it decided). It is for finding out afterwards why a line played

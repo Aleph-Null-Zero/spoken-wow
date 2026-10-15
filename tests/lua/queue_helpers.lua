@@ -50,6 +50,17 @@ function M.Recorder(env)
     return rec
 end
 
+--- Under `make contribute-fixtures`, keep an envelope the addon captured in a test as one of
+--- the fixtures the site's reader is tested against (tests/fixtures/contributions). Written
+--- as bytes, so a Windows run writes the LF the checksum was taken over.
+function M.WriteCapturedFixture(here, name, envelope)
+    if not os.getenv("SPOKEN_WRITE_FIXTURES") then return end
+    local file = assert(io.open(here .. "/../fixtures/contributions/captured-" .. name .. ".txt", "wb"))
+    assert(envelope, "no envelope captured for " .. name)
+    file:write(envelope)
+    file:close()
+end
+
 function M.Expecter(print)
     local failures = 0
     local function Expect(scenario, actual, expected)
@@ -146,7 +157,7 @@ function M.NewZoneLore()
     function Z:OpenOptions() self.opened = true end
     -- What UI/Options.lua asks the rest of the addon. The panel is the one part that
     -- reports what is installed, so the answers live here rather than in each test.
-    Z.SITE_URL = "https://spoken.test"
+    function Z:SiteURL() return "https://spoken.test" end
     function Z:GetAudioPacks() return {} end
     function Z:GetActiveAudioPack() return nil end
     function Z:GetAudioPackLabel() return "none" end

@@ -22,12 +22,13 @@ import type { CorpusLine } from "@/lib/corpus";
 const QUEST_EVENTS = new Set(["accept", "progress", "complete"]);
 
 export function targetForLine(
-  line: Pick<CorpusLine, "source" | "questId" | "npcId">,
+  line: Pick<CorpusLine, "source" | "questId" | "npcId" | "npcType">,
 ): string | null {
   if (QUEST_EVENTS.has(line.source)) {
     // Nothing in the corpus should be a quest line without a quest, but "quest/null/accept"
     // would resolve to nothing while looking like a real report, so it is worth refusing.
     return line.questId === null ? null : `quest/${line.questId}/${line.source}`;
   }
-  return line.source === "gossip" || line.source === "followup" ? `npc/${line.npcId}` : null;
+  if (line.source !== "gossip" && line.source !== "followup") return null;
+  return line.npcType === "gameobject" ? `object/${line.npcId}` : `npc/${line.npcId}`;
 }

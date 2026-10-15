@@ -113,7 +113,7 @@ DataModules =
     -- anyway, which is the only cost a rename has.
     --
     -- The sound pack ships in five pieces, so this is a menu rather than a single answer: a
-    -- player picks their side plus the shared quests, or takes the complete pack. Only shown
+    -- player picks their side plus the shared quests, or takes them all. Only shown
     -- to somebody who has no pack at all - see EnumerateAddons, where having one silences the
     -- other four, since suggesting the Horde pack to an Alliance player who already installed
     -- theirs is noise.

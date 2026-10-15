@@ -12,11 +12,6 @@ setfenv(1, VoiceOver)
 -- data module failed to load there is no soundData at all, and that is the case most worth
 -- sending.
 
--- The merged domain, not the frozen voiceover.rusty.one that ReportButton.lua points at: the
--- contribute page is new and exists only on the site the three sections share. That file's
--- SITE_URL is a local of its own and deliberately stays where it is -- a report link that moved
--- would be a report link that breaks for everyone still running the shipped addon.
-local SITE_URL = "https://spoken.rusty.one"
 
 local EVENT_PATHS =
 {
@@ -817,7 +812,7 @@ end
 --- Hand the player an envelope: as one link where the bundled player can build one, and as the
 --- raw text and the address otherwise.
 local function Offer(envelope, key)
-    local address = format("%s/contribute", SITE_URL)
+    local address = format("%s/contribute", Spoken.SITE_URL)
     -- What the first-click choice gathers if the player takes it. Only for a line with a key:
     -- a quest log entry has no NPC in front of it, so it is sent but never kept.
     local gather = key and { key = key, envelope = envelope } or nil

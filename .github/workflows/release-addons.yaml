@@ -77,7 +77,8 @@ jobs:
       # longer builds - which failed the whole workflow before it reached the first step.
       # Substitution into a fixed template needs no template engine anyway, and this keeps the
       # engine's one useful behaviour: an unfilled placeholder is an error, not empty text.
-      # Only the quests addon has a template. The player and zones take GitHub's generated notes.
+      # Only the quests addon has a template. Spoken's notes are its changelog section (the next
+      # step); zones and books take GitHub's generated notes.
       - name: Render the release notes
         if: steps.target.outputs.name == 'quests'
         env:
@@ -123,13 +124,20 @@ jobs:
               handle.write(rendered)
           PY
 
+      # The same section scripts/spoken/release.sh sends to the stores, so the GitHub release and
+      # the store pages say the same. A tag whose version has no section fails here, before a
+      # release with no notes is made.
+      - name: Take Spoken's notes from its changelog
+        if: steps.target.outputs.name == 'spoken'
+        run: node scripts/lib/changelog.mjs section docs/spoken/CHANGELOG.md "${{ steps.version.outputs.version }}" > release_notes.md
+
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           draft: true
           fail_on_unmatched_files: true
-          generate_release_notes: true
-          body_path: ${{ steps.target.outputs.name == 'quests' && 'release_notes.md' || '' }}
+          generate_release_notes: ${{ steps.target.outputs.name != 'spoken' }}
+          body_path: ${{ (steps.target.outputs.name == 'quests' || steps.target.outputs.name == 'spoken') && 'release_notes.md' || '' }}
           files: |
             dist/*.zip

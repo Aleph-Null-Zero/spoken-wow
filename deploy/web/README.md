@@ -160,7 +160,10 @@ curl -sI 'https://spoken.rusty.one/api/zones/audio/1411/zone.mp3' | head -1
 curl -sI 'https://voiceover.rusty.one/r/quest/5/accept'      | grep -i location  # /quests/r/quest/5/accept
 curl -sI 'https://lore.rusty.one/enUS/r/1411/razor-hill'     | grep -i location  # /zones/r/1411/razor-hill
 curl -sI 'https://lore.rusty.one/r/1411/razor-hill'          | grep -i location  # the same
-curl -sI 'https://voiceover.rusty.one/downloads/SpokenQuestsAudioComplete-latest.zip' | grep -i location
+curl -sI 'https://lore.rusty.one/deDE/r/1411/razor-hill'     | grep -i location  # /deDE/zones/r/1411/razor-hill
+curl -sI 'https://lore.rusty.one/?q=razor'                   | grep -i location  # /zones?q=razor
+curl -sI 'https://voiceover.rusty.one/?q=thrall'             | grep -i location  # /quests?q=thrall
+curl -sI 'https://spoken.rusty.one/downloads/SpokenQuestsAudioComplete-latest.zip' | grep -i location  # the meta addon's page
 ```
 
 Then sign in and regenerate one line in each section with a key set on `/profile`.
@@ -267,12 +270,12 @@ psql "$(grep ^DATABASE_URL /srv/spoken/shared/app.env | cut -d= -f2-)" \
 Every role after this one is handed out from `/admin`, which will not let an admin demote
 themselves.
 
-## Serving the complete sound pack
+## Downloads
 
-The complete quests pack is 1.2 GB, which CurseForge will not take, so the site hosts it at
-`/downloads/SpokenQuestsAudioComplete-latest.zip`. `make quests-push-complete` uploads the
-versioned zip into `shared/downloads/` and repoints the `-latest` symlink; nginx aliases the
-location straight at the directory, so the file never passes through the app.
+nginx aliases `/downloads/` straight at `shared/downloads/`, so a file there never passes
+through the app; `make quests-downloads-status` lists it. The complete quests pack it used to
+hold is retired, and its address redirects to the meta addon's page (`nginx-spoken.conf`).
+Once that redirect is live, delete `SpokenQuestsAudioComplete-*.zip` from the directory.
 
 ## Day to day
 

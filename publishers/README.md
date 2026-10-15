@@ -1,9 +1,9 @@
 # Publishers
 
 The description of each project, as markdown, one file per project, for every store the
-addons are published on. **Two of them**: CurseForge and Wago Addons, which carry the same
-eleven projects under the same slugs, and this directory is the source for both sets of
-pages. It was `curseforge/` while there was only one store, and the frontmatter still names
+addons are published on. **Two of them**: CurseForge and Wago Addons, which carry the addons
+and the English packs under the same slugs (the language packs and Spoken Everything are on
+CurseForge alone), and this directory is the source for both sets of pages. It was `curseforge/` while there was only one store, and the frontmatter still names
 each store's own project id separately -- `curseforge:` and `wago:` -- because the ids are
 the one thing the two do not share.
 
@@ -47,8 +47,13 @@ which is why there is one file per project here and not two.
 | `quests/audio-<lang>.md` | Spoken Quests Audio: `<Language>`, every line in one folder, GitHub only | — | — | — |
 | `zones/spoken-zones.md` | Spoken Zones (was ZoneLore) | 1636521 | mNw7b5No | `spoken-zones` |
 | `zones/spoken-zones-audio.md` | Spoken Zones Audio | 1636532 | b6mvD9KP | `spoken-zones-audio` |
+| `zones/spoken-zones-audio-dede.md` | Spoken Zones Audio: German | 1713131 | — | `spoken-zones-audio-dede` |
+| `zones/spoken-zones-audio-eses.md` | Spoken Zones Audio: Spanish (EU) | 1712807 | — | `spoken-zones-audio-eses` |
 | `zones/spoken-zones-audio-esmx.md` | Spoken Zones Audio: Spanish (AL) | 1711067 | — | `spoken-zones-audio-esmx` |
+| `zones/spoken-zones-audio-frfr.md` | Spoken Zones Audio: French | 1713125 | — | `spoken-zones-audio-frfr` |
 | `zones/spoken-zones-audio-kokr.md` | Spoken Zones Audio: Korean | 1723252 | — | `spoken-zones-audio-kokr` |
+| `zones/spoken-zones-audio-ptbr.md` | Spoken Zones Audio: Portuguese | 1713138 | — | `spoken-zones-audio-ptbr` |
+| `zones/spoken-zones-audio-ruru.md` | Spoken Zones Audio: Russian | 1713143 | — | `spoken-zones-audio-ruru` |
 | `zones/spoken-zones-audio-zhcn.md` | Spoken Zones Audio: Chinese (Simplified) | 1723273 | — | `spoken-zones-audio-zhcn` |
 | `zones/spoken-zones-audio-zhtw.md` | Spoken Zones Audio: Chinese (Traditional) | 1723276 | — | `spoken-zones-audio-zhtw` |
 | `books/spoken-books.md` | Spoken Books | 1701514 | qGYZnRNg | `spoken-books` |
@@ -100,12 +105,13 @@ prose, headings, comments, new identifiers - it reads as a name the project stil
 
 **Spoken Player is the project everything else depends on**, and it had to exist *and be
 approved* before any upload could name it: the errorCode 1018 gate below. It was created first
-for that reason and its id is in `target_curseforge()` in `scripts/quests/release.sh`. Every Spoken
-addon declares it in `relations`, which is what makes addon managers install it.
+for that reason and its id is in `target_curseforge()` in `scripts/quests/release.sh`, whose
+`spoken` target `scripts/spoken/release.sh` (`make release-spoken`) runs. Every Spoken addon
+declares it in `relations`, which is what makes addon managers install it.
 
 `audio-all` is the odd one: that project ships a **meta addon** rather than audio, because the
 complete pack is too big to upload. It is a few kilobytes declaring the other four as required
-dependencies, which `scripts/release.sh` sends as part of the upload metadata - relations are
+dependencies, which `scripts/quests/release.sh` sends as part of the upload metadata - relations are
 per file, so they need no web-UI step and cannot drift from the file that shipped.
 
 **A dependency has to be an approved project**, which is a one-time gate rather than a
@@ -115,7 +121,7 @@ is not accessible"). Once approved it stays approved, and every later `audio-all
 resolves immediately - file moderation is separate and does not gate relations, which is why
 the four packs uploaded fine while their own projects were still pending.
 
-`release.sh` uploads `audio-all` last for the same reason: its dependencies are resolved at
+`scripts/quests/release.sh` uploads `audio-all` last for the same reason: its dependencies are resolved at
 upload time, so it goes after the things it depends on.
 
 The slugs are what the pages and the addon link to, so they are read off the live projects
