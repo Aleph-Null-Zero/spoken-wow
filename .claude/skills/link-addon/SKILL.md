@@ -36,8 +36,11 @@ For each folder, the destination is `<client>/Interface/AddOns/<folder name>`:
 
 - Destination is a symlink: replace it (`ln -sfn`).
 - Destination does not exist: create the symlink.
-- Destination is a real directory: leave it and report it. It may hold the only copy of
-  something, so never delete or move it without asking.
+- Destination is a real directory (usually an installed release): move it into
+  `<client>/Interface/AddOns.bak/<YYYYMMDD-HHMMSS>/`, one timestamped folder per run, then
+  create the symlink. Left in place, the client would run the release beside this checkout's
+  other addons. The backup sits outside `AddOns` so the client never loads it. Never delete a
+  backup.
 
 SavedVariables live under `WTF/`, so relinking never touches settings.
 
@@ -45,7 +48,7 @@ SavedVariables live under `WTF/`, so relinking never touches settings.
 
 Show the client and, for each addon, where it now points. Then list:
 
-- real directories that were left in place;
+- real directories that were moved, and the backup folder they went to;
 - Spoken symlinks in that `AddOns` folder that point into a different worktree and were not
   replaced (for example audio packs linked to another checkout's `dist/`), so a stale link is
   visible.
