@@ -31,8 +31,8 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
   Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
 - A dungeon's or a raid's quest (its QuestSortID is the dungeon) is filed under the zone of its
-  entrance with `dungeon`, the dungeon's map, so the tab can hold it apart there; the dungeons'
-  names in every language are the client's (its Map table).
+  entrance with `dungeon`, the dungeon's map, so the tab can hold it apart there; the dungeons
+  themselves and their names are Spoken's Data/Dungeons.lua (pipelines/lib/dungeons.mjs).
 - Forever serves quests the corpus has no lines for yet. Each quest players were seen being
   offered or handing in (npcs.json), or working on (objectives.json), is listed with `notext`,
   placed and limited by its client record as above (without_text below), so the Compendium
@@ -43,8 +43,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 
 With the repack's server up:  make quests-compendium
 
-Without it, `make quests-compendium ARGS=--no-db` keeps every quest the file already has as it is
-and adds the corpus's quests it lacks: each placed where its giver stands, and open to the races
+Without it, `make quests-compendium ARGS=--no-db` keeps every quest the file already has as it is,
+but for the hand corrections, applied again so one written since takes effect, and adds the
+corpus's quests it lacks: each placed where its giver stands, and open to the races
 of the side corpus/factions.json gives it (to everyone where it gives none). A later run with
 the database files them as the quest log does.
 """
@@ -90,27 +91,25 @@ EG_PRODUCT = "wow_classic_beta"
 EG_CACHE = os.path.join(CACHE, "efficient-games")
 LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"]
 
-# The dungeons, under the zone their entrance is in (as the books' places have them).
-INSTANCE_ZONE = {
-    33: 1421, 34: 1453, 36: 1436, 43: 1413, 47: 1413, 48: 1440, 70: 1418, 90: 1426, 109: 1435,
-    129: 1413, 189: 1420, 209: 1446, 229: 1427, 230: 1427, 249: 1445, 289: 1422, 309: 1434,
-    329: 1423, 349: 1443, 389: 1454, 409: 1427, 429: 1444, 469: 1427, 509: 1451, 531: 1451, 533: 1423,
-    # Forever's: the Excavation Site in the Wetlands, and the Hall of Thanes under Ironforge. Their
-    # areas have no map of their own, so their quests resolved to no zone.
-    2998: 1437, 3065: 1455,
-}
+# The dungeons and raids, and the other instances, under the zone their entrance is in, from the
+# table every pipeline and the addon share (pipelines/lib/dungeons.json). Forever's Excavation Site
+# in the Wetlands, City of Dalaran, Ruins of Lordaeron and Hall of Thanes have no map of their own
+# for their areas, so their quests resolved to no zone without it.
+with open(os.path.join(ROOT, "pipelines", "lib", "dungeons.json"), encoding="utf-8") as _f:
+    _INSTANCES = json.load(_f)
+INSTANCE_ZONE = {int(m): row["zone"] for part in ("dungeons", "instances") for m, row in _INSTANCES[part].items()}
 # The cities, each inside the zone around it. Ironforge and the Undercity are buildings set into the
 # ground, and the map files give a point inside them the ground's area, Dun Morogh's or Tirisfal's;
 # there the rectangle, which says city, is kept.
 CITY_IN = {1453: 1429, 1454: 1411, 1455: 1426, 1456: 1412, 1457: 1438, 1458: 1420}
 # The Forever repack's extracted map files, whose AREA chunks say which area a point is in.
 MAPS_DIR = os.environ.get("COMPENDIUM_MAPS", "C:/Forever/ForeverRepack/data/maps")
-# The dungeons and raids a quest is filed under (`dungeon`): those above, save the Excavation Site,
-# an instance of the Wetlands' own story (Caitlin Grassman's quests) and not a dungeon.
-DUNGEONS = set(INSTANCE_ZONE) - {2998}
+# The dungeons and raids a quest is filed under (`dungeon`): not the other instances, such as the
+# Excavation Site, an instance of the Wetlands' own story (Caitlin Grassman's quests).
+DUNGEONS = {int(m) for m in _INSTANCES["dungeons"]}
 # The battlegrounds' maps, and the zone map of each: Alterac Valley, Warsong Gulch, Arathi Basin
 # and Forever's Darkspear Islands.
-BATTLEGROUND_ZONE = {30: 1459, 489: 1460, 529: 1461, 2997: 2524}
+BATTLEGROUND_ZONE = {int(m): row["zone"] for m, row in _INSTANCES["battlegrounds"].items()}
 # A giver standing in this many zones or more is a kind of creature found everywhere (CLUCK!'s is
 # any chicken) or a post in every capital (the battlemasters, the Argent Dawn's quartermasters).
 # Listed in each of them, its quest would count in every one; it is placed by other means or not.
@@ -815,7 +814,13 @@ def sort_line(sid, names):
     return f"\t\t[{sid}] = {{ {', '.join([lua_string(names.get('enUS', str(sid)))] + locs)} }},"
 
 
+class LuaText(str):
+    """Lua written as it is: a chain's name read back from a file this wrote (parse_quest_line)."""
+
+
 def lua_name(name):
+    if isinstance(name, LuaText):
+        return str(name)
     if isinstance(name, int):
         return str(name)
     locs = [f"{l} = {lua_string(name[l])}" for l in LOCALES if name.get(l)]
@@ -853,8 +858,7 @@ def quest_line(qid, title, zones=(), group=None, races=0, classes=0, prev=None, 
     return f"\t\t[{qid}] = {{ {', '.join(parts)} }},"
 
 
-def render(quest_lines, sort_lines, dungeon_lines=None):
-    dungeon_lines = dungeon_lines or {}
+def render(quest_lines, sort_lines):
     return f"""-- AUTO-GENERATED by pipelines/quests/tools/export_compendium.py. Do not edit by hand.
 --
 -- Every quest the voice packs were made from, for the Quests tab of Azeroth's Compendium:
@@ -862,12 +866,13 @@ def render(quest_lines, sort_lines, dungeon_lines=None):
 -- season), races and classes = who may take it (bit masks: a race's PlayableRaceBit, Skyborne's
 -- 32 and 33, and a class's id less one; absent for anyone), prev = the quest before it in its
 -- chain, name = the chain's name on its first quest (a quest's id, whose title names it, or words
--- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
--- its entrance, ender = the creature it is handed in to (enderObject for an object), absent where
--- that is its giver, notext = true for a quest Forever serves that the corpus has no words for yet
--- }}. A sort that is a word is a group the client has no QuestSort for. The words
--- are Data/QuestText.lua's. Made from the client tables of Forever {BUILD} and Era {ERA_BUILD}
--- (wago.tools) and Efficient Games' data at commit {EG_COMMIT[:7]} (CC BY 4.0, efficient.games).
+-- by locale), dungeon = the map of the dungeon or raid it is a quest of (Spoken's Data/Dungeons.lua
+-- names it), filed under the zone of its entrance, ender = the creature it is handed in to
+-- (enderObject for an object), absent where that is its giver, notext = true for a quest Forever
+-- serves that the corpus has no words for yet }}. A sort that is a word is a group the client has
+-- no QuestSort for. The words are Data/QuestText.lua's. Made from the client tables of
+-- Forever {BUILD} and Era {ERA_BUILD} (wago.tools) and Efficient Games' data
+-- at commit {EG_COMMIT[:7]} (CC BY 4.0, efficient.games).
 -- Regenerate with the Forever repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
@@ -887,10 +892,6 @@ SpokenQuestsCompendium = {{
 \tsorts = {{
 {chr(10).join(line for _, line in sorted(sort_lines.items()))}
 \t}},
-
-\tdungeons = {{
-{chr(10).join(line for _, line in sorted(dungeon_lines.items()))}
-\t}},
 }}
 """
 
@@ -898,28 +899,109 @@ SpokenQuestsCompendium = {{
 ENTRY = re.compile(r"^\t\t\[(-?\d+)\] = \{ .* \},$")
 
 
+def _lua_value(text, at):
+    """The Lua value at `at` in `text` (a number, a word, a string or a table, strings in it read
+    whole) and where it ends."""
+    if text[at] == '"':
+        end = at + 1
+        while text[end] != '"':
+            end += 2 if text[end] == "\\" else 1
+        return text[at:end + 1], end + 1
+    if text[at] == "{":
+        depth, end = 0, at
+        while True:
+            if text[end] == '"':
+                _, end = _lua_value(text, end)
+                continue
+            depth += {"{": 1, "}": -1}.get(text[end], 0)
+            end += 1
+            if depth == 0:
+                return text[at:end], end
+    end = at
+    while end < len(text) and text[end] not in ", }":
+        end += 1
+    return text[at:end], end
+
+
+def _lua_unstring(text):
+    out, i = [], 1
+    while i < len(text) - 1:
+        if text[i] == "\\":
+            nxt = text[i + 1]
+            if nxt.isdigit():
+                out.append(chr(int(text[i + 1:i + 4])))
+                i += 4
+                continue
+            out.append({"n": "\n"}.get(nxt, nxt))
+            i += 2
+            continue
+        out.append(text[i])
+        i += 1
+    return "".join(out)
+
+
+def parse_quest_line(line):
+    """A quest's line as quest_line writes it, back into (qid, its record, its chain's name as Lua
+    text, its ender as kind:id, notext)."""
+    qid = int(ENTRY.match(line).group(1))
+    body = line[line.index("{ ") + 2:line.rindex(" },")]
+    title, at = _lua_value(body, 0)
+    fields = {}
+    while at < len(body):
+        at = body.index(", ", at) + 2
+        key, at = body[at:body.index(" = ", at)], body.index(" = ", at) + 3
+        fields[key], at = _lua_value(body, at)
+    number = lambda key: int(fields[key]) if key in fields else None
+    sort = fields.get("sort")
+    rec = {"title": _lua_unstring(title),
+           "zones": [int(z) for z in re.findall(r"-?\d+", fields["zones"])] if "zones" in fields else [],
+           "sort": _lua_unstring(sort) if sort and sort.startswith('"') else (int(sort) if sort else None),
+           "dungeon": number("dungeon"), "prev": number("prev"), "races": number("races") or 0,
+           "classes": number("classes") or 0}
+    ender = ("creature:" + fields["ender"]) if "ender" in fields else \
+        ("gameobject:" + fields["enderObject"]) if "enderObject" in fields else None
+    name = LuaText(fields["name"]) if "name" in fields else None
+    return qid, rec, name, ender, fields.get("notext") == "true"
+
+
+def reapply_overrides(quest_lines, entries):
+    """`quest_lines` with the hand corrections' quest entries applied again, as a run with the DB
+    applies them last: the lines they leave as they were come out the same, so an override written
+    since takes effect without the database."""
+    parsed = {qid: parse_quest_line(line) for qid, line in quest_lines.items()}
+    records = {qid: rec for qid, (_, rec, _, _, _) in parsed.items()}
+    apply_overrides(records, entries)
+    out = {}
+    for qid, rec in records.items():
+        _, _, name, ender, notext = parsed[qid]
+        out[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"], rec["prev"],
+                              name, rec.get("dungeon"), ender, notext)
+    return out
+
+
 def read_existing(path):
-    """The quest, sort and dungeon lines of a file this wrote, as they are."""
-    quest_lines, sort_lines, dungeon_lines, into = {}, {}, {}, None
+    """The quest and sort lines of a file this wrote, as they are. An older file's dungeon names
+    are left behind: Spoken's Data/Dungeons.lua has them."""
+    quest_lines, sort_lines, into = {}, {}, None
     with open(path, encoding="utf-8") as f:
         for line in f.read().splitlines():
             if line == "\tquests = {":
                 into = quest_lines
             elif line == "\tsorts = {":
                 into = sort_lines
-            elif line == "\tdungeons = {":
-                into = dungeon_lines
             elif line == "\t},":
                 into = None
             elif into is not None and ENTRY.match(line):
                 into[int(ENTRY.match(line).group(1))] = line
-    return quest_lines, sort_lines, dungeon_lines
+    return quest_lines, sort_lines
 
 
 def without_db(args):
     quests, givers, spawns = corpus_quests()
     enders = quest_enders([], quests)
-    quest_lines, sort_lines, dungeon_lines = read_existing(args.out)
+    quest_lines, sort_lines = read_existing(args.out)
+    # Every hand correction, as the last run with the DB applied them and any written since.
+    quest_lines = reapply_overrides(quest_lines, load_overrides()["quests"])
     # Listed without words last time: made again below, or now the corpus's.
     quest_lines = {qid: line for qid, line in quest_lines.items() if "notext = true" not in line}
     with open(FACTIONS, encoding="utf-8") as f:
@@ -949,7 +1031,7 @@ def without_db(args):
                                       rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None,
                                       ender=enders.get(qid), notext=rec.get("notext"))
     placed = sum(1 for rec in records.values() if rec["zones"])
-    return quest_lines, sort_lines, dungeon_lines, (f"{len(records) - len(unvoiced)} quests added, "
+    return quest_lines, sort_lines, (f"{len(records) - len(unvoiced)} quests added, "
                                                     f"{len(unvoiced)} listed without words, {placed} of them placed")
 
 
@@ -1045,10 +1127,8 @@ def with_db(args):
         print(f"override not applied: {note}")
 
     placed = unplaced = by_sort = 0
-    quest_lines, used_sorts, used_dungeons = {}, set(), set()
+    quest_lines, used_sorts = {}, set()
     for qid, rec in records.items():
-        if rec.get("dungeon") and rec["zones"]:
-            used_dungeons.add(rec["dungeon"])
         if rec["sort"] and not isinstance(rec["sort"], str):
             used_sorts.add(rec["sort"])
         if rec["zones"]:
@@ -1062,15 +1142,7 @@ def with_db(args):
                                       rec.get("notext"))
 
     sort_lines = {sid: sort_line(sid, sorts[sid]) for sid in sorted(used_sorts)}
-    dungeon_names = {locale: {int(r["ID"]): r["MapName_lang"] for r in table("Map", locale) if int(r["ID"]) in used_dungeons}
-                     for locale in ["enUS"] + LOCALES}
-    dungeon_lines = {}
-    for mid in sorted(used_dungeons):
-        english = dungeon_names["enUS"].get(mid) or str(mid)
-        locs = [f"{l} = {lua_string(dungeon_names[l][mid])}" for l in LOCALES
-                if dungeon_names[l].get(mid) and dungeon_names[l][mid] != english]
-        dungeon_lines[mid] = f"\t\t[{mid}] = {{ {', '.join([lua_string(english)] + locs)} }},"
-    return quest_lines, sort_lines, dungeon_lines, (f"{placed} in a zone ({sum(1 for r in records.values() if r.get('dungeon') and r['zones'])} "
+    return quest_lines, sort_lines, (f"{placed} in a zone ({sum(1 for r in records.values() if r.get('dungeon') and r['zones'])} "
                                      f"of a dungeon or raid), {by_sort} under a class, profession or season, "
                                      f"{unplaced} with no place ({by_client} placed by Forever's client); "
                                      f"{len(used_sorts)} sorts; "
@@ -1098,10 +1170,10 @@ def parse_args(argv=None):
 
 def main():
     args = parse_args()
-    quest_lines, sort_lines, dungeon_lines, summary = (without_db if args.no_db else with_db)(args)
+    quest_lines, sort_lines, summary = (without_db if args.no_db else with_db)(args)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
-        f.write(render(quest_lines, sort_lines, dungeon_lines))
+        f.write(render(quest_lines, sort_lines))
     print(f"{len(quest_lines)} quests: {summary}; {os.path.getsize(args.out) // 1024} KB")
     print(f"wrote {args.out}")
 

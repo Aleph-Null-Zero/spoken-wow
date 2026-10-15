@@ -61,6 +61,11 @@ B:SetupSource()
 dofile(BOOKS .. "Data/Books.lua")
 dofile(BOOKS .. "Data/Places.lua")
 local L = B.L
+-- The events as the next export names them; the Scourge Invasion's left as an older export has it.
+for id, event in pairs({ [2571] = "winterveil", [2841] = "winterveil", [2787] = "harvestfestival",
+    [2790] = "harvestfestival", [2786] = "fishingextravaganza" }) do
+    SpokenBooksPlaces.books[id].event = event
+end
 
 -- A note on the isle, and one in Warsong Gulch: the shipped data has neither.
 local ISLE_NOTE, GULCH_NOTE = 990001, 990002
@@ -71,9 +76,9 @@ for id, place in pairs({ [ISLE_NOTE] = { "Isle Tide Tables", 9001 }, [GULCH_NOTE
 end
 -- Cragmoor's two dungeons and Fenwatch's one, a readable inside each, a plaque outside in Cragmoor,
 -- and an epitaph had inside Fenwatch's dungeon and outside in Cragmoor.
-SpokenBooksPlaces.dungeons[9101] = { zone = 9004, "Hollow Vault", deDE = "Hohles Gewölbe" }
-SpokenBooksPlaces.dungeons[9102] = { zone = 9004, "Ember Halls" }
-SpokenBooksPlaces.dungeons[9103] = { zone = 9005, "Sunken Crypt" }
+SpokenDungeons.dungeons[9101] = { zone = 9004, "Hollow Vault", deDE = "Hohles Gewölbe" }
+SpokenDungeons.dungeons[9102] = { zone = 9004, "Ember Halls" }
+SpokenDungeons.dungeons[9103] = { zone = 9005, "Sunken Crypt" }
 local LEDGER, RUNE, SIGNPOST, EPITAPH = 990003, 990004, 990005, 990006
 for id, place in pairs({
     [LEDGER] = { "Vault Ledger", "note", { 9004 }, { 9101 } },
@@ -239,6 +244,7 @@ Expect("...and the seasonal events' readables, in a group of their own before th
     Has(list, L.GROUP_EVENTS) and list:find(L.GROUP_EVENTS, 1, true) < list:find(L.GROUP_WIDE, 1, true), true)
 Click(L.GROUP_EVENTS)
 Expect("...its page what is found of it alone, being no place", panel.page.sub.text.text:match("^%d+ of %d+ found$") ~= nil, true)
+local function At(list, label) return ("|" .. list .. "|"):find("|" .. label .. "|", 1, true) end
 -- A click on each kind's card in a group's banner, which opens it.
 local function KindRow(group, label)
     Shown()
@@ -258,15 +264,33 @@ local function OpenKinds(group)
         row.scripts.OnClick(row)
     end
 end
+list = Shown()
+Expect("...a line for each event, in the year's order, before the kinds of writing of one with no event named",
+    At(list, L.EVENT_FISHING_EXTRAVAGANZA) < At(list, L.EVENT_HARVEST_FESTIVAL)
+    and At(list, L.EVENT_HARVEST_FESTIVAL) < At(list, L.EVENT_WINTER_VEIL)
+    and At(list, L.EVENT_WINTER_VEIL) < At(list, KindRow("events").row.label), true)
+Expect("...each a line, closed", RowFor(L.EVENT_WINTER_VEIL).row.style .. "|" .. tostring(RowFor(L.EVENT_WINTER_VEIL).row.open),
+    "group|false")
+Click(L.EVENT_WINTER_VEIL)
+Expect("...opening on its writings, the Winter Veil feast it once listed in the cities among them",
+    Has(Shown(), "The Feast of Winter Veil") and Has(Shown(), "Metzen's Letters and Notes"), true)
+Expect("...its page named for the event, in Holidays and Events, with its count", panel.page.title.text .. "|"
+    .. panel.page.sub.text.text, L.EVENT_WINTER_VEIL .. "|" .. L.GROUP_EVENTS .. " · 0 of 2 found")
+SpokenBooksSettings.unlockUnfound = true
+B:RefreshReadables()
+Click("The Feast of Winter Veil")
+panel.page.sub.scripts.OnClick(panel.page.sub)
+Expect("...a writing's line under its title leading to its event", panel.page.title.text, L.EVENT_WINTER_VEIL)
+SpokenBooksSettings.unlockUnfound = false
+Click(L.EVENT_WINTER_VEIL)
 OpenKinds("events")
-Expect("...which opens on them, the Winter Veil feast it once listed in the cities among them",
-    Has(Shown(), "The Feast of Winter Veil") and Has(Shown(), "A Bloodstained Envelope"), true)
+Expect("...one whose event the data does not name under its kind of writing, as before",
+    Has(Shown(), "A Bloodstained Envelope"), true)
 OpenKinds("events")
 Click(L.GROUP_EVENTS)
 
 -- The zones on no continent, then the battlegrounds wherever the client hangs them, each under a
 -- banner of their own after the continents.
-local function At(list, label) return ("|" .. list .. "|"):find("|" .. label .. "|", 1, true) end
 list = Shown()
 Expect("Other Lands then Battlegrounds, each a banner, after the continents and before the groups",
     RowFor(L.GROUP_LANDS).row.style == "banner" and RowFor(L.GROUP_BATTLEGROUNDS).row.style == "banner"
@@ -377,6 +401,18 @@ do
         and KindIn(L.TYPE_NOTE, 9004, 9101).row.nest == 3 and not Has(Shown(), "Vault Ledger"), true)
     Expect("...its page in the zone of its entrance", panel.page.title.text .. "|" .. panel.page.sub.text.text,
         "Hollow Vault|" .. L.READABLES_IN_FMT:format("Cragmoor") .. " · " .. L.FOUND_FMT:format(0, 1))
+    -- Links to the other tabs' page of the same place (SpokenCompendium.PlaceLinks), here a fake tab's.
+    do
+        local opened = {}
+        _G.SpokenCompendium:Register("fakeother", { label = "Other", order = 9,
+            placeLink = function(place) return "Other " .. place.dungeon .. " in " .. place.mapID end,
+            openPlace = function(place) table.insert(opened, place.mapID .. "/" .. place.dungeon) end })
+        B:RefreshReadables()
+        Expect("a dungeon's page links to the other tabs' page of it", panel.page.links[1].text.text, "Other 9101 in 9004")
+        panel.page.links[1].scripts.OnClick(panel.page.links[1])
+        Expect("...a click opening it by the dungeon and the zone of its entrance", table.concat(opened, ","), "9004/9101")
+        _G.SpokenCompendium.tabs.fakeother = nil
+    end
     Expect("...chosen, its card alone marked", RowFor("Hollow Vault").selected == true
         and RowFor("Cragmoor").selected == false and RowFor(L.GROUP_DUNGEONS).selected == false, true)
     Press(KindIn(L.TYPE_NOTE, 9004, 9101))
@@ -448,6 +484,21 @@ do
     Click(L.GROUP_DUNGEONS)
     Click("Cragmoor")
 
+    -- The tab's own side of those links: its writings counted, and opened on the place.
+    local readables = _G.SpokenCompendium:Tab("readables")
+    Expect("the Writings tab names its writings of a dungeon for the others' links",
+        readables.placeLink({ mapID = 9004, dungeon = 9101 }), L.PLACE_LINK_WRITINGS_FMT:format(1))
+    Expect("...and nothing of a place with none", readables.placeLink({ mapID = 1 }), nil)
+    readables.openPlace({ mapID = 9005, dungeon = 9103 })
+    Expect("...opened on a dungeon, its page", panel.page.title.text, "Sunken Crypt")
+    readables.openPlace({ mapID = 9004 })
+    Expect("...on a zone", panel.page.title.text, "Cragmoor")
+    _G.SpokenZones = { Picture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end }
+    B:RefreshReadables()
+    Expect("a zone's page has Zones' picture of the place above it", panel.page.body.picture:IsShown()
+        and panel.page.body.picture:GetTexture(), "pic9004")
+    _G.SpokenZones = nil
+    list = Shown()
 end
 
 Click("Westfall")
@@ -502,6 +553,30 @@ Expect("...where it is", page.sub.text.text, L.READABLES_IN_FMT:format("Stormwin
 Expect("...on one line", page.sub.text.wordWrap, false)
 Expect("...no line before its words saying it is in the world", (page.body.text.text or ""):find("In the World", 1, true), nil)
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)
+-- Opened on a writing from elsewhere (Open in Azeroth's Compendium): chosen, with what holds it
+-- opened, though the zone and its kind were closed.
+Click("Stormwind City")
+B:ShowReadables(KURDRAN)
+Expect("opened on a writing, it is chosen, its row shown with what holds it opened",
+    page.title.text .. "|" .. tostring(RowFor("Kurdran Wildhammer") and RowFor("Kurdran Wildhammer").selected), "Kurdran Wildhammer|true")
+Expect("the Compendium shows a found writing's page, not one not found",
+    tostring(B:CompendiumHas(KURDRAN)) .. "|" .. tostring(B:CompendiumHas(ALLERIA)), "true|false")
+SpokenBooksSettings.unlockUnfound = true
+Expect("...or any with Unlock Unfound Writings on", B:CompendiumHas(ALLERIA), true)
+SpokenBooksSettings.unlockUnfound = false
+-- The line under the title goes up a level, as on Quests and Zones.
+local kind = page.title.text
+page.sub.scripts.OnClick(page.sub)
+Expect("...its line under the title leading to its kind of writing in the place it is listed",
+    page.title.text ~= kind and page.sub.text.text:find(L.READABLES_IN_FMT:format("Stormwind City") .. " · ", 1, true), 1)
+Expect("...that line chosen in the list", RowFor(page.title.text).selected, true)
+page.sub.scripts.OnClick(page.sub)
+Expect("...and on up: the city", page.title.text, "Stormwind City")
+page.sub.scripts.OnClick(page.sub)
+Expect("...the zone around it", page.title.text, "Elwynn Forest")
+page.sub.scripts.OnClick(page.sub)
+Expect("...its continent, whose line goes nowhere", page.title.text .. "|" .. tostring(page.sub.onClick), "Eastern Kingdoms|nil")
+Click("Kurdran Wildhammer")
 Click("Ranger Captain Alleria Windrunner")
 Expect("a readable not found does not open", page.title.text, "Kurdran Wildhammer")
 
@@ -523,8 +598,13 @@ Click(L.TYPE_LETTER)
 Click("A Dusty Unsent Letter")
 Expect("opened on a readable carried from a zone", page.title.text, "A Dusty Unsent Letter")
 Expect("...in the zone it is had in", page.sub.text.text, L.READABLES_IN_FMT:format("Westfall"))
-Expect("...its words opening on how it is had, the name and the zone",
-    (page.body.text.text or ""):find(L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"), 1, true), 1)
+local parts = page.body.parts
+Expect("...how it is had in a part of its own above the words, the name and the zone",
+    parts[1].heading.text .. "|" .. parts[1].words.text,
+    L.READABLE_SOURCES .. "|" .. L.FROM_IN_ZONES:format(L.FROM_QUEST_START:format("The Legend of Stalvan"), "Westfall"))
+Expect("...its words in the next, under no heading", parts[2].heading:IsShown() == false and parts[2].words:IsShown()
+    and #parts[2].words.text > 40 and parts[2].words.text:find(L.FROM_QUEST_START:format(""), 1, true), nil)
+Expect("...set apart from the part above by room", select(5, parts[2].words:GetPoint(1)) < select(5, parts[1].words:GetPoint(1)), true)
 
 -- The search: every match, with what holds it, opened.
 local box
@@ -643,8 +723,13 @@ Expect("...By Zone the one chosen", choices[4].checked and not choices[5].checke
 local hasAudio = B.HasAudio
 local alleriaPage = B:Data().books[ALLERIA].pages[1]
 B.HasAudio = function(_, page) return page == alleriaPage end
+Click("Kurdran Wildhammer")
 choices[2].func()
 list = Shown()
+local chosen
+for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.selected then chosen = row.row.label end end
+Expect("Voiced Only leaving out the writing chosen chooses the nearest row above it still listed",
+    chosen ~= nil and chosen ~= "Kurdran Wildhammer" and chosen == panel.page.title.text, true)
 Expect("Voiced Only leaves out what has no recording", Has(list, "Kurdran Wildhammer") or Has(list, "Westfall"), false)
 Expect("...and keeps what has one, with the zone that holds it", Has(list, "Ranger Captain Alleria Windrunner")
     and Has(list, "Elwynn Forest"), true)
@@ -716,6 +801,13 @@ do
     B.following[LETTER] = nil
     page.report.scripts.OnClick(page.report)
     Expect("...else its first voiced page", copied:find("/books/r/" .. first, 1, true) ~= nil, true)
+    -- Nothing recorded: no Play, and Report all the same, filing its first page.
+    voiced[first], voiced[second] = nil, nil
+    page:Show({ title = "A Dusty Unsent Letter", target = LETTER })
+    Expect("a readable with no recording has Report and no Play", page.report:IsShown() and not page.play:IsShown(), true)
+    copied = nil
+    page.report.scripts.OnClick(page.report)
+    Expect("...Report filing its first page", copied ~= nil and copied:find("/books/r/" .. first, 1, true) ~= nil, true)
 end
 B.HasAudio = function(_, p) return p == alleriaPage end
 B.ShowCopyLink = showCopyLink
@@ -782,6 +874,24 @@ do
         .. tostring(Spoken:GetNowPlaying() and Spoken:GetNowPlaying().pageId), "false " .. alleriaPage)
     Expect("...still followed as the book being read", B.following[ALLERIA] ~= nil
         and B.following[ALLERIA].clip == Spoken:GetCurrent(), true)
+    Spoken:StopAll()
+    B.following = {}
+
+    -- Shift-click on a writing's row queues it behind what is playing, as on Quests, choosing nothing.
+    SpokenBooksSettings.unlockUnfound = true
+    B:RefreshReadables()
+    local chosenTitle = panel.page.title.text
+    local shift = _G.IsShiftKeyDown
+    _G.IsShiftKeyDown = function() return true end
+    B.source:Enqueue(B:ClipFor(kurdranPage))
+    Click("Ranger Captain Alleria Windrunner")
+    Expect("a shift-click on a voiced writing queues it behind what is playing", Spoken:GetQueueSize() .. " "
+        .. tostring(Head()) .. " " .. tostring(Spoken:GetQueue()[2] and Spoken:GetQueue()[2].pageId), "2 " .. kurdranPage .. " " .. alleriaPage)
+    Expect("...choosing nothing", panel.page.title.text, chosenTitle)
+    Click("Ranger Captain Alleria Windrunner")
+    Expect("...and a second does not queue it twice", Spoken:GetQueueSize(), 2)
+    _G.IsShiftKeyDown = shift
+    SpokenBooksSettings.unlockUnfound = false
     Spoken:StopAll()
     B.following = {}
     B.ClipFor, B.HasAudio = clipFor, hasAudio

@@ -5,12 +5,13 @@
 -- season), races and classes = who may take it (bit masks: a race's PlayableRaceBit, Skyborne's
 -- 32 and 33, and a class's id less one; absent for anyone), prev = the quest before it in its
 -- chain, name = the chain's name on its first quest (a quest's id, whose title names it, or words
--- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
--- its entrance, ender = the creature it is handed in to (enderObject for an object), absent where
--- that is its giver, notext = true for a quest Forever serves that the corpus has no words for yet
--- }. A sort that is a word is a group the client has no QuestSort for. The words
--- are Data/QuestText.lua's. Made from the client tables of Forever 1.60.1.70338 and Era 1.15.9.69109
--- (wago.tools) and Efficient Games' data at commit 2ae2154 (CC BY 4.0, efficient.games).
+-- by locale), dungeon = the map of the dungeon or raid it is a quest of (Spoken's Data/Dungeons.lua
+-- names it), filed under the zone of its entrance, ender = the creature it is handed in to
+-- (enderObject for an object), absent where that is its giver, notext = true for a quest Forever
+-- serves that the corpus has no words for yet }. A sort that is a word is a group the client has
+-- no QuestSort for. The words are Data/QuestText.lua's. Made from the client tables of
+-- Forever 1.60.1.70338 and Era 1.15.9.69109 (wago.tools) and Efficient Games' data
+-- at commit 2ae2154 (CC BY 4.0, efficient.games).
 -- Regenerate with the Forever repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
@@ -1996,7 +1997,7 @@ SpokenQuestsCompendium = {
 		[3843] = { "The Newest Member of the Family", zones = { 1444 }, prev = 3842, ender = 9660, races = 4294967373 },
 		[3844] = { "It's a Secret to Everybody", zones = { 1449 }, enderObject = 161504 },
 		[3845] = { "It's a Secret to Everybody", zones = { 1449 }, prev = 3844, ender = 8737 },
-		[3861] = { "CLUCK!", races = 4294967373 },
+		[3861] = { "CLUCK!", zones = { 1436, 1420 }, races = 4294967373 },
 		[3881] = { "Expedition Salvation", zones = { 1449 } },
 		[3882] = { "Roll the Bones", zones = { 1449 } },
 		[3883] = { "Alien Ecology", zones = { 1449 } },
@@ -4620,9 +4621,9 @@ SpokenQuestsCompendium = {
 		[96897] = { "The Cult of the Damned", zones = { 1420 }, races = 8589934770 },
 		[96898] = { "Remnants of War", zones = { 1420 }, races = 8589934770 },
 		[96899] = { "Bandarion Keep", zones = { 1420 }, ender = 267008, races = 8589934770 },
-		[96984] = { "Heart of Disruption", zones = { 1421 }, prev = 92434, races = 8589934770, notext = true },
+		[96984] = { "Heart of Disruption", zones = { 1416 }, prev = 92434, races = 8589934770, notext = true },
 		[96986] = { "The Grave Knight", zones = { 1424 }, races = 8589934770 },
-		[96987] = { "Opportunistic Education", races = 8589934770, notext = true },
+		[96987] = { "Opportunistic Education", zones = { 1416 }, races = 8589934770, notext = true },
 		[96988] = { "Source of Power", zones = { 1458 }, races = 8589934770 },
 		[97003] = { "Chol'aruk the Ravener", zones = { 1413 }, races = 8589934770 },
 		[97005] = { "Chol'aruk the Ravener", zones = { 1413 }, races = 4294967373 },
@@ -4726,7 +4727,7 @@ SpokenQuestsCompendium = {
 		[97971] = { "Camping 101: Skinning", sort = 666, ender = 257024 },
 		[97972] = { "Camping 101: Tailoring", sort = 666, ender = 251991, races = 8589934770 },
 		[97973] = { "Camping 101: Tailoring", sort = 666, ender = 251991, races = 4294967373 },
-		[97979] = { "The Goddess Provides", sort = 676, races = 8 },
+		[97979] = { "The Goddess Provides", zones = { 1438 }, races = 8 },
 		[97985] = { "Thundering Hearts", zones = { 1458 }, races = 8589934770 },
 		[98021] = { "Journey to Sentinel Hill", zones = { 1436 }, ender = 234, races = 4294967296 },
 		[98024] = { "Journey to the Crossroads", zones = { 1413 }, ender = 3429, races = 8589934592 },
@@ -4883,35 +4884,5 @@ SpokenQuestsCompendium = {
 		[369] = { "Midsummer", deDE = "Sonnenwendfest", esES = "Verano", esMX = "Verano", frFR = "Solstice d'été", ptBR = "Solstício", ruRU = "Огненный солнцеворот", koKR = "한여름 불꽃축제", zhCN = "仲夏", zhTW = "仲夏", itIT = "Mezza Estate" },
 		[666] = { "Camping", deDE = "Lager aufschlagen", esES = "Acampando", esMX = "Campamento", frFR = "Campement", ptBR = "Acampamento", ruRU = "Отдых в лагере", koKR = "야영", zhCN = "露营", zhTW = "紮營" },
 		[676] = { "Night Elf", deDE = "Nachtelf", esES = "Elfo de la noche", esMX = "Elfo de la noche", frFR = "Elfe de la nuit", ptBR = "Elfo Noturno", ruRU = "Ночной эльф", koKR = "나이트 엘프", zhCN = "暗夜精灵", zhTW = "夜精靈" },
-	},
-
-	dungeons = {
-		[33] = { "Shadowfang Keep", deDE = "Burg Shadowfang", esES = "Castillo de Colmillo Oscuro", esMX = "Castillo de Colmillo Oscuro", frFR = "Donjon d'Ombrecroc", ptBR = "Bastilha da Presa Negra", ruRU = "Крепость Темного Клыка", koKR = "그림자송곳니 성채", zhCN = "影牙城堡", zhTW = "影牙城堡", itIT = "Forte Zannascura" },
-		[34] = { "Stormwind Stockade", deDE = "Verlies von Stormwind", esES = "Mazmorras de Ventormenta", esMX = "Mazmorras de Ventormenta", frFR = "Prison de Stormwind", ptBR = "Cárcere de Ventobravo", ruRU = "Тюрьма Штормграда", koKR = "스톰윈드 지하감옥", zhCN = "暴风城监狱", zhTW = "暴風城監獄", itIT = "Segrete di Roccavento" },
-		[36] = { "Deadmines", deDE = "Todesminen", esES = "Minas de la Muerte", esMX = "Minas de la Muerte", frFR = "Mortemines", ptBR = "Minas Mortas", ruRU = "Мертвые копи", koKR = "죽음의 폐광", zhCN = "死亡矿井", zhTW = "死亡礦坑", itIT = "Miniere della Morte" },
-		[43] = { "Wailing Caverns", deDE = "Höhlen des Wehklagens", esES = "Cuevas de los Lamentos", esMX = "Cuevas de los Lamentos", frFR = "Cavernes des Lamentations", ptBR = "Caverna Ululante", ruRU = "Пещеры Стенаний", koKR = "통곡의 동굴", zhCN = "哀嚎洞穴", zhTW = "哀嚎洞穴", itIT = "Caverna dei Lamenti" },
-		[47] = { "Razorfen Kraul", deDE = "Kral von Razorfen", esES = "Horado Rajacieno", esMX = "Horado Rajacieno", frFR = "Kraal de Tranchebauge", ptBR = "Urzal dos Tuscos", ruRU = "Лабиринты Иглошкурых", koKR = "가시덩굴 우리", zhCN = "剃刀沼泽", zhTW = "剃刀沼澤", itIT = "Gallerie di Lamaspina" },
-		[48] = { "Blackfathom Deeps", deDE = "Blackfathom-Tiefe", esES = "Cavernas de Brazanegra", esMX = "Cavernas de Brazanegra", frFR = "Profondeurs de Brassenoire", ptBR = "Profundezas Negras", ruRU = "Непроглядная Пучина", koKR = "검은심연 나락", zhCN = "黑暗深渊", zhTW = "黑澗深淵", itIT = "Abissi di Fondocupo" },
-		[70] = { "Uldaman", ruRU = "Ульдаман", koKR = "울다만", zhCN = "奥达曼", zhTW = "奧達曼" },
-		[90] = { "Gnomeregan", ruRU = "Гномреган", koKR = "놈리건", zhCN = "诺莫瑞根", zhTW = "諾姆瑞根" },
-		[109] = { "Sunken Temple", deDE = "Versunkener Tempel", esES = "Templo Sumergido", esMX = "Templo Sumergido", frFR = "Temple englouti", ptBR = "Templo Submerso", ruRU = "Затонувший храм", koKR = "가라앉은 사원", zhCN = "沉没的神庙", zhTW = "沉沒的神廟", itIT = "Tempio Sommerso" },
-		[129] = { "Razorfen Downs", deDE = "Hügel von Razorfen", esES = "Zahúrda Rajacieno", esMX = "Zahúrda Rajacieno", frFR = "Souilles de Tranchebauge", ptBR = "Urzal dos Mortos", ruRU = "Курганы Иглошкурых", koKR = "가시덩굴 구릉", zhCN = "剃刀高地", zhTW = "剃刀高地", itIT = "Sotterranei di Lamaspina" },
-		[189] = { "Scarlet Monastery", deDE = "Scharlachrotes Kloster", esES = "Monasterio Escarlata", esMX = "Monasterio Escarlata", frFR = "Monastère écarlate", ptBR = "Monastério Escarlate", ruRU = "Монастырь Алого ордена", koKR = "붉은십자군 수도원", zhCN = "血色修道院", zhTW = "血色修道院", itIT = "Monastero Scarlatto" },
-		[209] = { "Zul'Farrak", ruRU = "Зул'Фаррак", koKR = "줄파락", zhCN = "祖尔法拉克", zhTW = "祖爾法拉克" },
-		[229] = { "Blackrock Spire", deDE = "Blackrockspitze", esES = "Cumbre de Roca Negra", esMX = "Cumbre de Roca Negra", frFR = "Pic Rochenoire", ptBR = "Pico da Rocha Negra", ruRU = "Вершина Черной горы", koKR = "검은바위 첨탑", zhCN = "黑石塔", zhTW = "黑石塔", itIT = "Bastioni di Roccianera" },
-		[230] = { "Blackrock Depths", deDE = "Blackrocktiefen", esES = "Profundidades de Roca Negra", esMX = "Profundidades de Roca Negra", frFR = "Profondeurs de Rochenoire", ptBR = "Abismo Rocha Negra", ruRU = "Глубины Черной горы", koKR = "검은바위 나락", zhCN = "黑石深渊", zhTW = "黑石深淵", itIT = "Sotterranei di Roccianera" },
-		[249] = { "Onyxia's Lair", deDE = "Onyxias Hort", esES = "Guarida de Onyxia", esMX = "Guarida de Onyxia", frFR = "Repaire d'Onyxia", ptBR = "Covil de Onyxia", ruRU = "Логово Ониксии", koKR = "오닉시아의 둥지", zhCN = "奥妮克希亚的巢穴", zhTW = "奧妮克希亞的巢穴", itIT = "Antro di Onyxia" },
-		[289] = { "Scholomance", ptBR = "Scolomântia", ruRU = "Некроситет", koKR = "스칼로맨스", zhCN = "通灵学院", zhTW = "通靈學院" },
-		[309] = { "Zul'Gurub", ruRU = "Зул'Гуруб", koKR = "줄구룹", zhCN = "祖尔格拉布", zhTW = "祖爾格拉布" },
-		[329] = { "Stratholme", ruRU = "Стратхольм", koKR = "스트라솔름", zhCN = "斯坦索姆", zhTW = "斯坦索姆" },
-		[349] = { "Maraudon", ruRU = "Мародон", koKR = "마라우돈", zhCN = "玛拉顿", zhTW = "瑪拉頓" },
-		[389] = { "Ragefire Chasm", deDE = "Ragefireabgrund", esES = "Sima Ígnea", esMX = "Sima Ígnea", frFR = "Gouffre de Ragefeu", ptBR = "Cavernas Ígneas", ruRU = "Огненная пропасть", koKR = "성난불길 협곡", zhCN = "怒焰裂谷", zhTW = "怒焰裂谷", itIT = "Baratro di Fiamma Furente" },
-		[409] = { "Molten Core", deDE = "Geschmolzener Kern", esES = "Núcleo de Magma", esMX = "Núcleo de Magma", frFR = "Cœur du Magma", ptBR = "Núcleo Derretido", ruRU = "Огненные Недра", koKR = "화산 심장부", zhCN = "熔火之心", zhTW = "熔火之心", itIT = "Nucleo Ardente" },
-		[429] = { "Dire Maul", deDE = "Düsterbruch", esES = "La Masacre", esMX = "La Masacre", frFR = "Hache-tripes", ptBR = "Gládio Cruel", ruRU = "Забытый Город", koKR = "혈투의 전장", zhCN = "厄运之槌", zhTW = "厄運之槌", itIT = "Maglio Infausto" },
-		[469] = { "Blackwing Lair", deDE = "Pechschwingenhort", esES = "Guarida Alanegra", esMX = "Guarida de Alanegra", frFR = "Repaire de l'Aile noire", ptBR = "Covil Asa Negra", ruRU = "Логово Крыла Тьмы", koKR = "검은날개 둥지", zhCN = "黑翼之巢", zhTW = "黑翼之巢", itIT = "Fortezza dell'Ala Nera" },
-		[509] = { "Ruins of Ahn'Qiraj", deDE = "Ruinen von Ahn'Qiraj", esES = "Ruinas de Ahn'Qiraj", esMX = "Ruinas de Ahn'Qiraj", frFR = "Ruines d'Ahn'Qiraj", ptBR = "Ruínas de Ahn'Qiraj", ruRU = "Руины Ан'Киража", koKR = "안퀴라즈 폐허", zhCN = "安其拉废墟", zhTW = "安其拉廢墟", itIT = "Rovine di Ahn'Qiraj" },
-		[531] = { "Ahn'Qiraj Temple", deDE = "Tempel von Ahn'Qiraj", esES = "Templo de Ahn'Qiraj", esMX = "Templo de Ahn'Qiraj", frFR = "Temple d'Ahn'Qiraj", ptBR = "Templo de Ahn'Qiraj", ruRU = "Храм Ан'Киража", koKR = "안퀴라즈 사원", zhCN = "安其拉神殿", zhTW = "安其拉神廟", itIT = "Tempio di Ahn'Qiraj" },
-		[533] = { "Naxxramas", ruRU = "Наксрамас", koKR = "낙스라마스", zhCN = "纳克萨玛斯", zhTW = "納克薩瑪斯" },
-		[3065] = { "The Hall of Thanes", deDE = "Die Halle der Thanen", esES = "El Salón de los Feudales", esMX = "El Salón de Señores Feudales", frFR = "La salle des Thanes", ptBR = "Salão dos Thanes", ruRU = "Чертоги танов", koKR = "영주의 전당", zhCN = "领主大厅", zhTW = "族長之廳" },
 	},
 }

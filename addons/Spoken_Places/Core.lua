@@ -49,13 +49,11 @@ local defaults = {
 	-- discovered with one SpokenZones keeps itself. Only a character who explored
 	-- before installing the addon needs that; see Autoplay.lua.
 	autoplayExplored = false,
-	-- Off, so Read means "read along". Stopping discards the queue as well, which
-	-- is not something to do to a player who only wanted to see the words.
 	-- Off, so a player cannot end up reading an unfinished translation without
-	-- having asked for one. See Language.lua.
+	-- having asked for one (Spoken > Developer). See Language.lua.
 	languagePreview = false,
-	-- `audioPack` likewise: nil means "the best pack installed", which is a rule
-	-- rather than a folder name, and naming a default here would pin the player to
+	-- `audioPack` has no default: nil means "the best pack in the voice language", which is a
+	-- rule rather than a folder name, and naming a default here would pin the player to
 	-- a pack they may never install. See Audio.lua.
 	-- `language` likewise: nil means "follow the client locale", which is not the
 	-- same answer as "enUS" -- a player who never chose should start reading their
@@ -82,6 +80,7 @@ end
 -- options added in later versions appear for existing users. Runtime reads and
 -- writes go straight to SpokenZonesSettings.
 local function InitConfig()
+	SpokenZones:BindSettings()
 	if type(SpokenZonesSettings) ~= "table" then
 		SpokenZonesSettings = {}
 	end
@@ -92,6 +91,11 @@ local function InitConfig()
 	end
 
 	SpokenZones.db = SpokenZonesSettings
+end
+
+-- Another profile chosen: its table is the one read and written from now on.
+function SpokenZones:OnSettingsBound()
+	if SpokenZones.db then InitConfig() end
 end
 
 -- Safe before ADDON_LOADED has run.
@@ -331,13 +335,30 @@ end
 --------------------------------------------------------------------------------
 -- Areas the client puts in another zone than their story's
 --
--- Two hand-kept tables name them: Data/Dungeons.lua lists each dungeon under the zone of its
--- entrance, and Data/AreaZones.lua the other areas, under the zone their story is kept under,
--- with the zone the client puts them in (`zone`) and any more it has an area of that name in
--- (`also`). An area is listed in its zone, found and told there and on its `also` maps, and its
--- story is still kept, recorded, pictured and reported under its own frozen id. A `zone` this
--- client has no map for is left out: Forever's Shen'dralas, on Era.
+-- Two tables name them: Spoken's Data/Dungeons.lua lists each dungeon with the zone of its entrance
+-- and the area that tells its story, and the hand-kept Data/AreaZones.lua the other areas, under
+-- the zone their story is kept under, with the zone the client puts them in (`zone`) and any more
+-- it has an area of that name in (`also`). An area is listed in its zone, found and told there and
+-- on its `also` maps, and its story is still kept, recorded, pictured and reported under its own
+-- frozen id. A `zone` this client has no map for is left out: Forever's Shen'dralas, on Era.
 --------------------------------------------------------------------------------
+
+--- The dungeons and raids that have a story, by the zone of their entrance: each { mapID, key } of
+--- the area telling it and `dungeon`, its instance map, from Spoken's table of them (`all`, by map).
+function SpokenZones.DungeonsByZone(all)
+	local byZone, maps = {}, {}
+	for map in pairs(all or {}) do table.insert(maps, map) end
+	table.sort(maps)
+	for _, map in ipairs(maps) do
+		local dungeon = all[map]
+		if dungeon.story and dungeon.zone then
+			byZone[dungeon.zone] = byZone[dungeon.zone] or {}
+			table.insert(byZone[dungeon.zone], { mapID = dungeon.story[1], key = dungeon.story[2], dungeon = map })
+		end
+	end
+	return byZone
+end
+SpokenZones.Dungeons = SpokenZones.DungeonsByZone(_G.SpokenDungeons and SpokenDungeons.dungeons)
 
 -- Built once from both tables: `story` [found on][key] = the story's map, `zone` [story's map][key]
 -- = the zone it is listed in, `on` [story's map][key] = every map it is found on but the story's,
@@ -999,11 +1020,12 @@ end
 local function CmdHelp()
 	local L = SpokenZones.L
 	SpokenZones:Print(L.CMD_HEADING)
+	-- A player's commands. discover, found, debug, verify and dump are a developer's, and still
+	-- answer.
 	for _, key in ipairs({
-		"CMD_STATUS", "CMD_OPTIONS", "CMD_WINDOW", "CMD_PANEL",
+		"CMD_STATUS", "CMD_DIAGNOSTICS", "CMD_OPTIONS", "CMD_WINDOW", "CMD_PANEL",
 		"CMD_PLAY", "CMD_STOP", "CMD_VOICE", "CMD_AUTOPLAY", "CMD_AUDIO",
-		"CMD_LANG", "CMD_DISCOVER", "CMD_FORGET",
-		"CMD_DEBUG", "CMD_VERIFY", "CMD_DUMP",
+		"CMD_LANG", "CMD_FORGET",
 	}) do
 		SpokenZones:Print(L[key])
 	end
@@ -1029,11 +1051,11 @@ SlashCmdList["SPOKENZONES"] = function(msg)
 		SpokenZones:SetMapPanelShown(enabled)
 		SpokenZones:Print(enabled and SpokenZones.L.PANEL_SHOWN or SpokenZones.L.PANEL_HIDDEN)
 		Dispatch(SpokenZones.mapChangedCallbacks, SpokenZones:GetDisplayedMapID())
-	elseif cmd == "options" or cmd == "config" or cmd == "opt" then
+	elseif cmd == "settings" or cmd == "options" or cmd == "config" or cmd == "opt" then
 		if SpokenZones.OpenOptions then
 			SpokenZones:OpenOptions()
 		end
-	elseif cmd == "window" or cmd == "w" then
+	elseif cmd == "window" or cmd == "w" or cmd == "compendium" then
 		if SpokenZones.ToggleLoreWindow then
 			SpokenZones:ToggleLoreWindow()
 		end
@@ -1064,9 +1086,10 @@ SlashCmdList["SPOKENZONES"] = function(msg)
 	elseif cmd == "forget" then
 		if SpokenZones.ForgetAutoplayHistory then
 			SpokenZones:ForgetAutoplayHistory()
-			SpokenZones:Print("this character's narration history is cleared -- the "
-				.. "greeting returns on next login, and every area counts as unheard again")
+			SpokenZones:Print(SpokenZones.L.OPT_FORGET_PLACES_DONE)
 		end
+	elseif cmd == "diagnostics" then
+		SpokenZones:ShowDiagnostics()
 	elseif cmd == "discover" then
 		-- Simulates a discovery, because the real one happens once per character
 		-- ever and is otherwise untestable without rolling a fresh alt.

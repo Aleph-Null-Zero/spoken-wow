@@ -175,11 +175,58 @@ function Addon:InitDB()
     -- Another profile chosen, copied over this one or reset, from Spoken's page or anywhere
     -- else: its settings apply now rather than at the next reload.
     if self.db.RegisterCallback then
-        local function Apply() Addon:ApplyProfile() end
+        local function Apply()
+            Addon:RebindModules()
+            Addon:ApplyProfile()
+        end
         self.db.RegisterCallback(self, "OnProfileChanged", Apply)
         self.db.RegisterCallback(self, "OnProfileCopied", Apply)
         self.db.RegisterCallback(self, "OnProfileReset", Apply)
     end
+end
+
+local function CopyOf(value)
+    if type(value) ~= "table" then return value end
+    local copy = {}
+    for key, inner in pairs(value) do copy[key] = CopyOf(inner) end
+    return copy
+end
+
+--- Point a feature addon at its settings table inside the current profile. The first time, in
+--- the profile that is current then, the table is a copy of what the addon kept on its own before
+--- (`legacy`, minus the keys named in `skip`); a profile made later starts from the addon's
+--- defaults. The keys keep their names. `bind` is called with the table now and again whenever
+--- another profile is chosen, copied over this one or reset.
+function Addon:BindModuleSettings(name, legacy, bind, skip)
+    self.boundModules = self.boundModules or {}
+    self.boundModules[name] = { legacy = legacy, bind = bind, skip = skip }
+    return self:BindModule(name)
+end
+
+function Addon:BindModule(name)
+    local entry = self.boundModules and self.boundModules[name]
+    if not (entry and self.db) then return false end
+    local profile = self.db.profile
+    if type(profile.Modules) ~= "table" then profile.Modules = {} end
+    local settings = profile.Modules[name]
+    if type(settings) ~= "table" then
+        settings = {}
+        local global = self.db.global
+        if type(global.ModulesMoved) ~= "table" then global.ModulesMoved = {} end
+        if not global.ModulesMoved[name] then
+            global.ModulesMoved[name] = true
+            for key, value in pairs(type(entry.legacy) == "table" and entry.legacy or {}) do
+                if not (entry.skip and entry.skip[key]) then settings[key] = CopyOf(value) end
+            end
+        end
+        profile.Modules[name] = settings
+    end
+    entry.bind(settings)
+    return true
+end
+
+function Addon:RebindModules()
+    for name in pairs(self.boundModules or {}) do self:BindModule(name) end
 end
 
 --- Put the profile's settings into effect: the window or subtitles, the captions, the minimap
@@ -360,6 +407,21 @@ function Addon:SetPlayerStyle(style)
     self.db.profile.Frame.Style = style
 end
 
+--- What Spoken itself says for a report: its version, the queue, the window and the modules
+--- registered. Each module's own follows it in Options:ShowDiagnostics.
+function Addon:PrintDiagnostics()
+    print(format("Spoken %s, API %d, %d queued, %s", AddonVersion, Spoken.API_VERSION,
+        SoundQueue:GetQueueSize(), SoundQueue:IsPaused() and "paused" or "playing"))
+    print("  " .. (Developer:Call("Describe") or "debug log: no Spoken Developer module"))
+    for key, source in Sources:Iterate() do
+        print(format("  source %s (%s)", key, source.addon or "?"))
+    end
+    for _, line in ipairs(PlayerFrame:Describe()) do print("  " .. line) end
+    print("  " .. Transcript:Describe())
+    print("  " .. DialogueUITheme:Describe())
+    for _, err in ipairs(Callbacks.errors) do print("  callback error: " .. err) end
+end
+
 --- Everything that needs the world: the frame, the button, the settings, the slash
 --- command. Idempotent, so the harness and PLAYER_LOGIN can both call it.
 function Addon:Enable()
@@ -382,68 +444,97 @@ function Addon:Enable()
     -- form. /sp here, /spq for quests, /spp for places.
     _G.SLASH_SPOKEN1 = "/spoken"
     _G.SLASH_SPOKEN2 = "/sp"
+    -- Spoken's page, drawn again for a setting changed here; not there on a client without it.
+    local function Redraw() if Options.UpdateRows then Options:UpdateRows() end end
+    -- The narrator styles by the words the settings use for them, and by the names they are
+    -- stored under, which /sp player took before.
+    local STYLES = { subtitles = "subtitle", subtitle = "subtitle", small = "minimal", minimal = "minimal",
+        large = "classic", classic = "classic", dialogueui = "dialogueui", voice = "none", none = "none" }
+    local function SetStyle(name)
+        local style = STYLES[name]
+        if not style then return false end
+        local problem = style == "dialogueui" and DialogueUITheme:Problem()
+        if problem then
+            print("Spoken: " .. problem)
+        else
+            Addon:SetPlayerStyle(style)
+            PlayerFrame:RefreshConfig()
+            Transcript:RefreshConfig()
+            Redraw()
+        end
+        return true
+    end
+    -- What /sp help lists: each command by the name its setting or key binding has on Spoken's
+    -- page. The words before the colon are the command's own.
+    local function Help()
+        local lines = {
+            { "/sp replay", L.BIND_PLAYPAUSE },
+            { "/sp skip", L.BIND_SKIP },
+            { "/sp stopall", L.BIND_STOP },
+            { "/sp style subtitles | small | large | dialogueui | voice", L.OPT_PLAYER_STYLE },
+            { "/sp words on | off", L.TRANSCRIPT_SHOW },
+            { "/sp rows 1 | 2", L.TRANSCRIPT_LINES },
+            { "/sp compendium", L.OPT_COMPENDIUM_OPEN },
+            { "/sp reset", L.OPT_RESET },
+            { "/sp diagnostics", L.OPT_DIAGNOSTICS },
+            { "/sp settings", L.SETTINGS },
+        }
+        if Gather then
+            table.insert(lines, { "/sp collect", L.OPT_GATHER })
+            table.insert(lines, { "/sp send", L.OPT_GATHER_SHARE })
+        end
+        if Developer.provider then table.insert(lines, { "/sp log", "Spoken Developer" }) end
+        print("|cff66bbffSpoken|r")
+        for _, line in ipairs(lines) do print("  " .. line[1] .. ": " .. line[2]) end
+    end
     SlashCmdList.SPOKEN = function(input)
         local command = strlower(strtrim(input or ""))
-        if command == "play" or command == "pause" or command == "" then
+        local _, _, verb, rest = string.find(command, "^(%S*)%s*(.-)$")
+        -- play, pause and stop are the words Bindings.xml and players' macros send: kept.
+        if command == "replay" or command == "play" or command == "pause" or command == "" then
             SoundQueue:TogglePauseQueue()
-        elseif command == "stop" then
+        elseif command == "stopall" or command == "stop" then
             SoundQueue:RemoveAllSoundsFromQueue()
         elseif command == "skip" then
             SoundQueue:Skip()
-        elseif command == "transcript" then
-            Transcript:SetEnabled(not Addon.db.profile.Transcript.Enabled)
-        elseif command == "transcript on" then
-            Transcript:SetEnabled(true)
-        elseif command == "transcript off" then
-            Transcript:SetEnabled(false)
+        elseif command == "compendium" then
+            Options:ToggleCompendium()
+        elseif (verb == "words" or verb == "transcript") and (rest == "" or rest == "on" or rest == "off") then
+            if rest == "" then
+                Transcript:SetEnabled(not Addon.db.profile.Transcript.Enabled)
+            else
+                Transcript:SetEnabled(rest == "on")
+            end
+            Redraw()
+        elseif (verb == "rows" or verb == "transcript") and (rest == "1" or rest == "2") then
+            Addon.db.profile.Transcript.Lines = tonumber(rest)
+            Transcript:RefreshConfig()
+            Redraw()
         elseif command == "transcript reset" then
             Transcript:Reset()
-        elseif command == "transcript 1" or command == "transcript 2" then
-            Addon.db.profile.Transcript.Lines = tonumber(string.sub(command, -1))
-            Transcript:RefreshConfig()
-        elseif command == "player minimal" or command == "player classic" or command == "player subtitle"
-            or command == "player none" or command == "player dialogueui" then
-            local style = string.sub(command, 8)
-            local problem = style == "dialogueui" and DialogueUITheme:Problem()
-            if problem then
-                print("Spoken: " .. problem)
-            else
-                Addon:SetPlayerStyle(style)
-                PlayerFrame:RefreshConfig()
-                Transcript:RefreshConfig()
-            end
-        elseif command == "options" or command == "settings" then
+        elseif (verb == "style" or verb == "player") and SetStyle(rest) then
+            -- SetStyle did it.
+        elseif command == "settings" or command == "options" then
             Options:Open()
-        elseif command == "share" and Gather then
+        elseif (command == "send" or command == "share") and Gather then
             Spoken:ShowGatherInstructions()
         elseif command == "collect" and Gather then
             Gather:SetEnabled(not Gather:IsEnabled())
-            print("Spoken: collecting missing lines " .. (Gather:IsEnabled() and "on" or "off"))
+            print("Spoken: " .. L.OPT_GATHER .. " " .. (Gather:IsEnabled() and L.ON or L.OFF))
+            Redraw()
         elseif command == "reset" then
-            PlayerFrame:Reset()
-            -- Not on 1.12, which has no captions and so no subtitles to move.
-            if Subtitle then Subtitle:Reset() end
-        elseif command == "log" or string.find(command, "^log ") then
+            Options:ResetPositions()
+        elseif verb == "log" then
             -- The debug log is the Spoken_Developer module's; this only hands the words on.
-            local _, _, rest = string.find(command, "^log%s*(.-)$")
             if Developer.provider then
                 Developer:Call("Command", rest)
             else
                 print("Spoken: the debug log comes with the Spoken Developer module, which is not installed")
             end
         elseif command == "diagnostics" then
-            print(format("Spoken %s, API %d, %d queued, %s", AddonVersion, Spoken.API_VERSION,
-                SoundQueue:GetQueueSize(), SoundQueue:IsPaused() and "paused" or "playing"))
-            print("  " .. (Developer:Call("Describe") or "debug log: no Spoken Developer module"))
-            for key, source in Sources:Iterate() do
-                print(format("  source %s (%s)", key, source.addon or "?"))
-            end
-            for _, line in ipairs(PlayerFrame:Describe()) do print("  " .. line) end
-            print("  " .. Transcript:Describe())
-            print("  " .. DialogueUITheme:Describe())
-            for _, err in ipairs(Callbacks.errors) do print("  callback error: " .. err) end
+            Options:ShowDiagnostics()
         else
-            print("Spoken: /spoken play | stop | skip | player [minimal|classic|dialogueui|subtitle|none] | transcript [on|off|1|2|reset] | collect | share | log | options | reset | diagnostics")
+            Help()
         end
     end
 end
@@ -536,6 +627,42 @@ function Addon:RetireOldFolders()
     end
 end
 
+-- The Audio table of the profile the quests module gives this character, as saved; nil without one.
+local function QuestsAudio(db)
+    local quests = rawget(_G, "SpokenQuestsSettings")
+    if type(quests) ~= "table" or type(quests.profiles) ~= "table" then
+        return nil
+    end
+    -- The profile AceDB gives the character there: its own key unless it chose another.
+    local charKey = db.keys and db.keys.char
+    local name = charKey and (type(quests.profileKeys) == "table" and quests.profileKeys[charKey] or charKey)
+    local profile = name and quests.profiles[name]
+    local audio = type(profile) == "table" and profile.Audio
+    return type(audio) == "table" and audio or nil
+end
+
+--- The voice language and the fallback were set on the quests page; they are Spoken's now. Once,
+--- a choice made there is copied to the Language section, unless one was already made here, so the
+--- page shows what is being heard.
+function Addon:TakeVoiceLanguageFromQuests()
+    local db = self.db
+    if not db or db.global.VoiceLanguageTaken then
+        return
+    end
+    db.global.VoiceLanguageTaken = true
+    local audio = QuestsAudio(db)
+    local language = db.profile.Language
+    if not (audio and language) or language.Voice ~= nil or language.Fallback ~= nil then
+        return
+    end
+    if type(audio.VoiceLanguage) == "string" and audio.VoiceLanguage ~= "auto" then
+        language.Voice = audio.VoiceLanguage
+    end
+    if type(audio.FallbackLanguage) == "string" and audio.FallbackLanguage ~= "enUS" then
+        language.Fallback = audio.FallbackLanguage
+    end
+end
+
 -- AceDB needs the saved variable to exist, which is only true once the client has loaded
 -- this addon's file. 1.12 hands an OnEvent handler nothing and sets the globals `event`
 -- and `arg1` instead, hence the fallback.
@@ -550,6 +677,7 @@ loader:SetScript("OnEvent", function(_, ev, name)
     elseif ev == "PLAYER_ENTERING_WORLD" then
         Addon:StopWhereNotRead()
     elseif ev == "PLAYER_LOGIN" then
+        Addon:TakeVoiceLanguageFromQuests()
         Addon:Enable()
         Addon:RetireOldFolders()
         WatchPausedQueue()

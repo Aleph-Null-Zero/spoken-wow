@@ -50,7 +50,7 @@ end
 local names = {}
 for _, heading in ipairs(headings) do table.insert(names, heading.text) end
 Expect("the settings are grouped into sections", table.concat(names, "|"),
-    "When to Read|Extras|Voice Packs|Fix a Problem")
+    "When to Read|Voice Packs")
 
 local function Distinct(values)
     local seen, count = {}, 0
@@ -92,7 +92,7 @@ db.Audio.GossipFrequency = VO.Enums.GossipFrequency.Always
 local greetings
 local GossipPanel = VO.GossipSettingsPanel
 for _, child in ipairs(GossipPanel.panel.content.children) do
-    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "NPC Greetings" then
+    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "Read Greetings" then
         greetings = child
     end
 end
@@ -101,7 +101,7 @@ greetings:GetScript("OnShow")(greetings)
 Expect("...showing the setting when the panel opens", greetings.dropdownText, "Every Time")
 local onQuestsPage
 for _, child in ipairs(SettingsPanel.panel.content.children) do
-    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "NPC Greetings" then onQuestsPage = child end
+    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "Read Greetings" then onQuestsPage = child end
 end
 Expect("...and not on the Quests page", onQuestsPage, nil)
 
@@ -125,20 +125,20 @@ Expect("...saying where autoplay is", greetings.layoutReason, VO.L.REASON_AUTOPL
 -- Follow-up lines are queued by autoplay alone (Followup.lua), so they grey out with it too.
 local followup
 for _, child in ipairs(SettingsPanel.panel.content.children) do
-    if type(child.text) == "table" and child.text.text == "Follow-up Lines" then followup = child end
+    if type(child.text) == "table" and child.text.text == "Read NPC Chat After Quests" then followup = child end
 end
-Expect("...and Follow-up Lines, saying why", followup and followup.layoutReason, VO.L.REASON_AUTOPLAY)
+Expect("...and Read NPC Chat After Quests, saying why", followup and followup.layoutReason, VO.L.REASON_AUTOPLAY)
 autoplay:SetChecked(true)
 autoplay:GetScript("OnClick")(autoplay)
 GossipPanel.panel.layout:Refresh()
 Expect("ticking it again brings the frequency back", greetings.dropdownDisabled, false)
-Expect("...and Follow-up Lines", followup and followup.layoutReason, nil)
+Expect("...and Read NPC Chat After Quests", followup and followup.layoutReason, nil)
 
 local entries = stub.OpenDropdown(greetings)
 local offered = {}
 for _, entry in ipairs(entries) do table.insert(offered, entry.text) end
 Expect("...offering every choice at once", table.concat(offered, "|"),
-    "Every Time|Once per NPC with Quests|Once per NPC|Never")
+    "Every Time|Once for Quest Givers|Once per NPC|Never")
 Expect("...with the current one ticked", entries[1].checked, true)
 
 Expect("picking one is possible", stub.PickDropdown(greetings, "Once per NPC"), true)
@@ -201,7 +201,7 @@ end
 local profile
 local home = _G.SpokenOptionsPanel.content or _G.SpokenOptionsPanel
 for _, child in ipairs(home.children) do
-    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "Profile in Use" then
+    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "Profile" then
         profile = child
     end
 end
@@ -224,7 +224,7 @@ local function Dropdown(content, label)
 end
 Expect("the Quests page has no language of its own", Dropdown(SettingsPanel.panel.content, "Voice Language"), nil)
 local spoken = _G.SpokenOptionsPanel.content or _G.SpokenOptionsPanel
-local voice, fallback = Dropdown(spoken, "Voice Language"), Dropdown(spoken, "If a Line Is Missing")
+local voice, fallback = Dropdown(spoken, "Voice Language"), Dropdown(spoken, "If a Voice Is Missing")
 Expect("the voice language is chosen on Spoken's page", voice ~= nil, true)
 Expect("...Auto by default, named with the client's language", voice and voice.dropdownText, "Auto (English)")
 VO.Addon.db.profile.Audio.VoiceLanguage = "frFR"

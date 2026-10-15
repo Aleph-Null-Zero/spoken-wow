@@ -4,7 +4,7 @@
 -- book: the addon's two settings both mean "do not start by yourself", and neither should
 -- mean "give me no way to start it".
 --
--- A TEXT button, not an icon, for the reason UI/AudioButton.lua gives on the zones side: an
+-- A TEXT button, not an icon, for the reason the zones side once gave: an
 -- icon path cannot be verified without launching the client, and a texture that does not
 -- exist on 11509 draws nothing at all -- an invisible button is a worse failure than a plain
 -- one.
@@ -41,6 +41,7 @@
 local ADDON_NAME, SpokenBooks = ...
 local L = SpokenBooks.L
 
+local GAP = 4
 local BUTTON_WIDTH = 58
 local BUTTON_HEIGHT = 22
 -- Room the button's end caps take either side of its label.
@@ -60,12 +61,63 @@ local function FitToLabels(button, labels)
 	button:SetWidth(math.max(BUTTON_WIDTH, widest + LABEL_PADDING))
 end
 
+--- Open in Azeroth's Compendium: the Compendium's tome in the player's round button, as Quests
+--- and Zones have it, opening the tab on writing `bookId`. `tooltip`, where given, returns the
+--- tooltip to use: DialogueUI hides the game's with the rest of the interface.
+function SpokenBooks:NewOpenButton(parent, tooltip)
+	if not (_G.Spoken and Spoken.CreateRoundButton) then return nil end
+	local icon = _G.SpokenCompendium and SpokenCompendium.ICON or [[Interface\Icons\INV_Misc_Book_11]]
+	local button = Spoken:CreateRoundButton(parent, "icon", nil, icon)
+	-- The tome is a dark picture already: the ring's vignette at full strength left it black.
+	if type(button.vignette) == "table" and button.vignette.SetAlpha then button.vignette:SetAlpha(0.35) end
+	button:SetScript("OnClick", function(self)
+		if self.bookId then
+			if self.beforeOpen then self.beforeOpen() end
+			SpokenBooks:ShowReadables(self.bookId)
+		end
+	end)
+	button:HookScript("OnEnter", function(self)
+		local tip = tooltip and tooltip() or GameTooltip
+		if not tip then return end
+		tip:SetOwner(self, "ANCHOR_LEFT")
+		tip:SetText(L.OPEN_IN_COMPENDIUM)
+		tip:AddLine(L.OPEN_READABLE_IN_COMPENDIUM_TIP, 1, 0.8, 0.2, true)
+		tip:Show()
+		self.tooltip = tip
+	end)
+	button:HookScript("OnLeave", function(self)
+		if self.tooltip then self.tooltip:Hide() end
+	end)
+	button:Hide()
+	return button
+end
+
+--- Open in Azeroth's Compendium on the book frame, left of Play where it shows, else in its corner:
+--- only for a writing whose page the Compendium would show.
+function SpokenBooks:RefreshOpenButton()
+	local open, play = self.openButton, self.playButton
+	if not open then return end
+	local book = self:IsPartOn() and self:PlaceOf(self:PageOnScreen()) or nil
+	local shown = self.CompendiumHas ~= nil and self:CompendiumHas(book)
+	open.bookId = shown and book or nil
+	open:ClearAllPoints()
+	if play and play:IsShown() then
+		open:SetPoint("RIGHT", play, "LEFT", -GAP, 0)
+	elseif _G.ItemTextScrollFrame then
+		open:SetPoint("BOTTOMRIGHT", ItemTextScrollFrame, "BOTTOMRIGHT", -6, 6)
+	else
+		-- Where SetupPlayButton puts Play on a book frame built some other way.
+		open:SetPoint("BOTTOMRIGHT", ItemTextFrame, "TOPRIGHT", -39, -412)
+	end
+	open:SetShown(shown)
+end
+
 --- Show, hide and re-label the button for whatever is on screen now.
 ---
 --- Hidden rather than disabled when there is nothing to play or send. A greyed-out button on
 --- every letter and every page this corpus does not carry is a permanent invitation to wonder
 --- what is broken; an absent one says the addon has nothing to offer here.
-function SpokenBooks:RefreshPlayButton()
+local function RefreshPlay(self)
 	local button = self.playButton
 	if not button then
 		return
@@ -103,6 +155,12 @@ function SpokenBooks:RefreshPlayButton()
 	end
 
 	button:Hide()
+end
+
+--- Play, then Open in Azeroth's Compendium beside it.
+function SpokenBooks:RefreshPlayButton()
+	RefreshPlay(self)
+	self:RefreshOpenButton()
 end
 
 --- Build the button, once, as soon as the client has a book frame to hang it on.
@@ -182,6 +240,14 @@ function SpokenBooks:SetupPlayButton()
 	end)
 
 	self.playButton = button
+
+	local open = SpokenBooks:NewOpenButton(frame)
+	if open then
+		open:SetFrameLevel(button:GetFrameLevel())
+		self.openButton = open
+		-- Before ItemTextFrame closes: the Compendium opens beside the game's windows.
+		open.beforeOpen = function() if _G.CloseItemText then CloseItemText() end end
+	end
 
 	-- Toggling the hide setting in the Spoken settings fires no game event.
 	if _G.Spoken and Spoken.RegisterCallback then

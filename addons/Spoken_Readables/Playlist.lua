@@ -180,7 +180,9 @@ end
 --- would wait there silent while the button showed Stop.
 ---
 --- `asked`: the reader asked for it (browsing is asking too), so it is read in a battleground.
-function SpokenBooks:PlayFrom(pageId, browsing, asked)
+--- With `behind`, its first page waits its turn behind what is playing, as a shift-click on its
+--- row asks.
+function SpokenBooks:PlayFrom(pageId, browsing, asked, behind)
 	local source = self.source
 	if not source then
 		return 0
@@ -199,7 +201,7 @@ function SpokenBooks:PlayFrom(pageId, browsing, asked)
 			if clip then
 				Follow(clip)
 				local admitted
-				if browsing and not first then
+				if browsing and not first and not behind then
 					-- PlayNow answers whether it plays at once; held behind a line speaking, it is
 					-- still queued.
 					admitted = source:PlayNow(clip) or self:IsQueued(id)
@@ -233,8 +235,9 @@ function SpokenBooks:PlayFrom(pageId, browsing, asked)
 	return queued
 end
 
---- The page on screen changed. Keep the queue pointed at it. `browsing` and `asked` as PlayFrom's.
-function SpokenBooks:SyncTo(pageId, browsing, asked)
+--- The page on screen changed. Keep the queue pointed at it. `browsing`, `asked` and `behind` as
+--- PlayFrom's.
+function SpokenBooks:SyncTo(pageId, browsing, asked, behind)
 	if not pageId then
 		return 0
 	end
@@ -253,7 +256,7 @@ function SpokenBooks:SyncTo(pageId, browsing, asked)
 	end
 
 	-- Another readable waits behind what is being read, a quest line or another book.
-	return self:PlayFrom(pageId, browsing, asked)
+	return self:PlayFrom(pageId, browsing, asked, behind)
 end
 
 --- Stop `book`, or every readable with none, and nothing else: a quest line may be queued too.

@@ -1,4 +1,6 @@
--- SpokenZones -- the page a story is written on, shared by the lore window and the map panel.
+-- SpokenZones -- the page a story is written on, shared by the lore window and the map panel:
+-- Azeroth's Compendium's page (SpokenCompendium.NewPage), with its Play, Report and layout, on the
+-- spellbook's parchment in the window and the quest log's beside the map.
 --
 -- Drawn with the game's own art: the spellbook's parchment and the quest log's details page, the
 -- spellbook's divider and backplate, the quest log's frame. Copies of them ship in Textures/Art,
@@ -134,91 +136,69 @@ Art.Ink = Ink
 -- The page
 --------------------------------------------------------------------------------
 
-local PAD = 24
 -- The page's parchment: the spellbook's in the lore window, the quest log's beside the map.
 local BOOK_PAGE = "spellbook-Page-Right-C60"
 local LOG_PAGE = "QuestDetailsBackgrounds"
--- How far the heading sits from the page's top and its right edge, per art. The spellbook's
--- parchment has a torn edge on its right and top that eats into the page, so its content sits
--- further in there, to look as far from those edges as the title does from the left.
-local INSET = { book = { top = 36, right = 36 }, log = { top = 28, right = 28 } }
 -- The spellbook's page art leaves a band along its top, made to sit under the spellbook's own
 -- top bar: this much of its height, cut off so the parchment starts at the page's top.
 local BOOK_TOP_BAND = 0.07
--- How much of the header's backplate lies left of the page, cut off.
-local BACKPLATE_CUT = 40
+-- Beside the map: the quest log's page, its heading nearer the narrower page's top and right edge,
+-- smaller and on one line, under a shorter backplate.
+local LOG_LOOK = { top = 28, right = 28, titleSize = 20, oneLine = true, backplate = { full = 300, height = 80 } }
 
+-- What Play does on a story's page: the story `target` ({ mapID, key }) where a pack reads it, Stop
+-- while it is read and Replay once stopped, as every Play of the Compendium's (SpokenCompendium.PlayState).
+local PLAY = {
+	has = function(target) return SpokenZones:IsVoiceEnabled() and SpokenZones:HasAudio(target[1], target[2]) end,
+	find = function(target) return SpokenZones:LoreClip(target[1], target[2]) end,
+	start = function(target) SpokenZones:PlayLore(target[1], target[2]) end,
+	tip = L.AUDIO_READ_TIP,
+}
+
+-- What Report does: every story, voiced or not. Lore text can be wrong whether or not anyone has
+-- read it aloud, and a report on a line with no voiceover is one of the more useful kinds.
+local REPORT = {
+	has = function() return true end,
+	open = function(target)
+		local url = SpokenZones:ReportURL(target[1], target[2])
+		if url then SpokenZones:ShowCopyLink(url, L.OPT_REPORT_LINE_ADDRESS) end
+	end,
+	title = L.OPT_REPORT_PROBLEM,
+	tip = L.OPT_REPORT_LINE_TIP,
+}
+
+-- The Compendium's page inside, its parts (title, sub, body, play, report, frame) read through.
 local Page = {}
-Page.__index = Page
+Page.__index = function(page, key) return Page[key] or page.page[key] end
 
---- A page of parchment filling `parent`, with a heading -- Play and Report on its right, as
---- the quest log has its buttons -- the line under it that says where the place is (or leads
---- back to its zone), the divider, and the story in ink. `style` picks the art: "book" for the lore window (the spellbook's page), "log"
---- for the panel beside the map (the quest log's details page, as the quest beside it has).
+function Page:RefreshPlay()
+	self.page:RefreshPlay()
+end
+
+--- A story's page filling `parent`: Azeroth's Compendium's page (SpokenCompendium.NewPage), in the
+--- lore's font, with Play and Report on its heading's right, the line under the title that says
+--- where the place is (or leads back to its zone), the divider, the place's picture and its story.
+--- `style` picks the art: "book" for the lore window (the spellbook's page), "log" for the panel
+--- beside the map (the quest log's details page, as the quest beside it has), which also has Open in
+--- Azeroth's Compendium. A missing story is said with Contribute under it.
 function SpokenZones:CreateLorePage(parent, style)
-	local page = setmetatable({ style = style }, Page)
-	local inset = INSET[style] or INSET.log
-	local frame = CreateFrame("Frame", nil, parent)
-	frame:SetAllPoints()
-	page.frame = frame
-
-	-- Drawn from the copy's file and coordinates, so the text's fade can be cut from the same
-	-- picture (TextView:SetFadeSource). The book's top band is cut off, inside the page, rather than
-	-- drawn above it: the band is not empty, and above the page it showed over the window's title bar.
-	local bg = frame:CreateTexture(nil, "BACKGROUND")
-	bg:SetAllPoints()
 	local parchment = style == "book" and BOOK_PAGE or LOG_PAGE
 	local info = COPIES[parchment]
 	local top = info.topTexCoord
 	if parchment == BOOK_PAGE then top = top + (info.bottomTexCoord - top) * BOOK_TOP_BAND end
-	page.parchment, page.bg = parchment, bg
-	page.bgFile = info.file
-	page.bgCoords = { info.leftTexCoord, info.rightTexCoord, top, info.bottomTexCoord }
-	bg:SetTexture(info.file)
-	bg:SetTexCoord(info.leftTexCoord, info.rightTexCoord, top, info.bottomTexCoord)
-	SpokenTextView.Unsnap(bg)
-
-	-- A spellbook header's backplate behind the title, faint, as the spellbook lays one behind
-	-- each of its headings. Laid out as if it started BACKPLATE_CUT left of the page, and cut there
-	-- and at the page's right edge rather than drawn past them: past the left it showed over the
-	-- window's list and over the map's border beside the panel.
-	do
-		local plate = COPIES["spellbook-list-backplate"]
-		local full = style == "book" and 460 or 300
-		local backplate = frame:CreateTexture(nil, "BORDER")
-		backplate:SetTexture(plate.file)
-		backplate:SetHeight(style == "book" and 110 or 80)
-		backplate:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 28 - inset.top)
-		backplate:SetAlpha(0.55)
-		local function Fit()
-			local room = frame:GetWidth() or 0
-			local shown = full - BACKPLATE_CUT
-			if room > 0 then shown = math.min(shown, room) end
-			backplate:SetWidth(shown)
-			local u = plate.rightTexCoord - plate.leftTexCoord
-			backplate:SetTexCoord(plate.leftTexCoord + u * BACKPLATE_CUT / full,
-				plate.leftTexCoord + u * (BACKPLATE_CUT + shown) / full, plate.topTexCoord, plate.bottomTexCoord)
-		end
-		frame:HookScript("OnSizeChanged", Fit)
-		Fit()
-		page.backplate = backplate
+	local look = {}
+	if style ~= "book" then
+		for key, value in pairs(LOG_LOOK) do look[key] = value end
 	end
-
-	-- Play and Report on the header's right, level with the title, as the quest log has them: two
-	-- of the subtitle's round buttons, Report the game's bug in the corner, Play beside it.
-	-- Centred on the title's first line.
-	local titleSize = style == "book" and 26 or 20
-	local report = SpokenZones:CreateReportIcon(frame)
-	page.inset = inset
-	page.report = report
-	local play = SpokenZones:CreateAudioButton(frame)
-	page.play = play
+	look.art = { file = info.file, coords = { info.leftTexCoord, info.rightTexCoord, top, info.bottomTexCoord } }
+	local inner = SpokenCompendium.NewPage(parent, SpokenZones, PLAY, REPORT, look)
+	local page = setmetatable({ page = inner, style = style, parchment = parchment }, Page)
+	SpokenZones:OnAudioChanged(function() inner:RefreshPlay() end)
 
 	-- Beside the map, a third: this place in Azeroth's Compendium, with the window's own tome in the
 	-- same ring. The window has it open already, so not there.
-	if style ~= "book" then
-		local icon = SpokenCompendium and SpokenCompendium.ICON or [[Interface\Icons\INV_Misc_Book_11]]
-		local open = SpokenZones:CreateRoundButton(frame, "icon", icon)
+	if style ~= "book" and _G.Spoken and Spoken.CreateRoundButton then
+		local open = Spoken:CreateRoundButton(inner.frame, "icon", nil, SpokenCompendium.ICON)
 		-- The tome is a dark picture already: the ring's vignette at full strength left it black.
 		if type(open.vignette) == "table" and open.vignette.SetAlpha then open.vignette:SetAlpha(0.35) end
 		open:SetScript("OnClick", function(self)
@@ -232,155 +212,33 @@ function SpokenZones:CreateLorePage(parent, style)
 		end)
 		open:HookScript("OnLeave", function() GameTooltip:Hide() end)
 		open:Hide()
+		inner:AddButton(open)
 		page.open = open
 	end
 
-	for _, button in ipairs({ report, play, page.open }) do
-		button:HookScript("OnShow", function() page:PlaceButtons() end)
-		button:HookScript("OnHide", function() page:PlaceButtons() end)
-	end
-
-	-- The quest log's title face, as a quest's name is written on its page: larger on the book's.
-	local title = frame:CreateFontString(nil, "ARTWORK", Art.Font("QuestTitleFont", "GameFontNormalLarge"))
-	-- In the lore's language, as the place's name is.
-	local face = SpokenZones.FontFor and SpokenZones:FontFor(_G.QuestTitleFont)
-		or (_G.QuestTitleFont and _G.QuestTitleFont.GetFont and _G.QuestTitleFont:GetFont())
-	if face then title:SetFont(face, titleSize, "") end
-	title:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, -inset.top)
-	title:SetJustifyH("LEFT")
-	-- One line on the map's narrow panel, cut short with an ellipsis where the name is longer;
-	-- the window has room to wrap.
-	title:SetWordWrap(style == "book")
-	if style ~= "book" and title.SetMaxLines then title:SetMaxLines(1) end
-	Ink(title)
-	page.title = title
-
-	-- Where the place is, or a way back to its zone: one line, always there, so nothing below it
-	-- moves as it changes.
-	local sub = CreateFrame("Button", nil, frame)
-	sub:SetHeight(16)
-	sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
-	sub:SetPoint("RIGHT", frame, "RIGHT", -inset.right, 0)
-	sub.text = sub:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-	sub.text:SetAllPoints()
-	sub.text:SetJustifyH("LEFT")
-	sub:SetScript("OnClick", function(self) if self.onClick then self.onClick() end end)
-	sub:SetScript("OnEnter", function(self) if self.onClick then Ink(self.text, Art.LINK) end end)
-	sub:SetScript("OnLeave", function(self) page:PaintSubtitle() end)
-	page.sub = sub
-
-	-- The spellbook's divider under the heading: a flourish on its left and a rule running right.
-	-- Where the page is narrower than the art, the rule is cut short rather than the whole of it
-	-- squeezed, which flattened the flourish on the map's panel; where it is wider, the rule stops
-	-- at the art's own end rather than being stretched to the page's.
-	local divider = frame:CreateTexture(nil, "ARTWORK")
-	divider:SetHeight(11)
-	divider:SetPoint("TOPLEFT", sub, "BOTTOMLEFT", -6, -10)
-	do
-		local rule = COPIES["spellbook-divider"]
-		divider:SetTexture(rule.file)
-		divider:SetHeight(rule.height)
-		-- From the divider's left (the title's, less 6) to the page's right inset.
-		local left = PAD - 6
-		local function Fit()
-			local room = (frame:GetWidth() or 0) - left - inset.right
-			if room <= 0 then return end
-			local width = math.min(room, rule.width)
-			divider:SetWidth(width)
-			local shown = width / rule.width
-			divider:SetTexCoord(rule.leftTexCoord, rule.leftTexCoord + (rule.rightTexCoord - rule.leftTexCoord) * shown,
-				rule.topTexCoord, rule.bottomTexCoord)
-		end
-		page.FitDivider = Fit
-		frame:HookScript("OnSizeChanged", Fit)
-		Fit()
-	end
-	page.divider = divider
-
-	local body = SpokenTextView.Create(frame, SpokenZones)
-	body.frame:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 6, -2)
-	body.frame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -inset.right, PAD - 6)
-	body:SetInk(Art.INK[1], Art.INK[2], Art.INK[3])
-	body:SetThumbColor(Art.INK[1], Art.INK[2], Art.INK[3])
-	-- Text cut off at an edge fades into the parchment under it.
-	body:SetFadeSource(frame, page.bgFile, page.bgCoords)
-	page.body = body
-
-	-- Where the first shown button goes (Page:PlaceButtons): its right edge over the words' right
-	-- edge, the scroll bar's room in from the page's, as on the Quests and Writings pages.
-	local buttonsX = -(inset.right + body:BarRoom())
-	report:SetPoint("TOPRIGHT", frame, "TOPRIGHT", buttonsX, -inset.top - titleSize / 2 + 12)
-	report.layoutX, report.layoutY = buttonsX, -inset.top - titleSize / 2 + 12
-	-- The words' right edge moves as the scroll bar comes and goes; the buttons follow it.
-	body.onRoom = function(room)
-		report.layoutX = -(inset.right + room)
-		page:PlaceButtons()
-	end
-
 	-- Under the sentence that says a place has no story yet, so it reads as the answer to it.
-	local contribute = SpokenZones:CreateContributeButton(body.child)
-	contribute:SetPoint("TOPLEFT", body.text, "BOTTOMLEFT", 0, -12)
+	local contribute = SpokenZones:CreateContributeButton(inner.body.child)
+	contribute:SetPoint("TOPLEFT", inner.body.text, "BOTTOMLEFT", 0, -12)
 	page.contribute = contribute
 	return page
 end
 
---- The header's round buttons in a row from the right, 4 apart, only those shown: a hidden one
---- leaves no gap. The title stops 10 short of the last of them.
-function Page:PlaceButtons()
-	local corner = self.report
-	local x, y = corner.layoutX, corner.layoutY
-	local previous
-	for _, button in ipairs({ self.report, self.play, self.open }) do
-		if button and button:IsShown() then
-			button:ClearAllPoints()
-			if previous then
-				button:SetPoint("RIGHT", previous, "LEFT", -4, 0)
-			else
-				button:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", x, y)
-			end
-			previous = button
-		end
-	end
-	self.title:ClearAllPoints()
-	self.title:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD, -self.inset.top)
-	if previous then
-		self.title:SetPoint("RIGHT", previous, "LEFT", -10, 0)
-	else
-		self.title:SetPoint("RIGHT", self.frame, "RIGHT", -self.inset.right, 0)
-	end
-end
-
-function Page:PaintSubtitle()
-	Ink(self.sub.text, Art.INK)
-end
-
 --- What the page shows: entry = { title, subtitle, onSubtitle = fn?, text,
 --- audio = { mapID, key }?, report = { mapID, key }?, contribute = { mapID, subzone }?,
---- lore = { mapID, key }? }. A missing story is said with Contribute under it.
+--- lore = { mapID, key }?, links = { { text, onClick } }? }: Play for `audio`, Report for `report`,
+--- its picture above the words, a missing story's Contribute, beside the map Open for `lore`, and
+--- at the foot the links to the Compendium's other tabs' pages of the place (links).
 function Page:Show(entry)
-	self.title:SetText(entry.title or "")
-	self.sub.text:SetText(entry.subtitle or "")
-	-- No line under the title takes no room: the divider closes up under it.
-	self.sub:SetHeight((entry.subtitle and entry.subtitle ~= "") and 16 or 1)
-	self.sub.onClick = entry.onSubtitle
-	if entry.onSubtitle then self.sub:Enable() else self.sub:Disable() end
-	self:PaintSubtitle()
-
-	-- Told to the view rather than painted on its text, which a re-wrap would repaint.
-	self.body:SetColor(Art.INK[1], Art.INK[2], Art.INK[3])
+	local story = entry.audio or entry.report
 	local picture, mask
-	if entry.audio then picture, mask = SpokenZones:Picture(entry.audio[1], entry.audio[2]) end
-	self.body:SetPicture(picture, mask)
-	self.body:SetText(entry.text or "")
-
-	local audio, report, contribute = entry.audio, entry.report, entry.contribute
-	self.play:SetTarget(audio and audio[1], audio and audio[2])
-	self.report:SetTarget(report and report[1], report and report[2])
+	if story then picture, mask = SpokenZones:Picture(story[1], story[2]) end
+	self.page:Show({ title = entry.title, subtitle = entry.subtitle, onSubtitle = entry.onSubtitle, text = entry.text,
+		target = story, picture = picture and { file = picture, mask = mask } or nil, links = entry.links })
+	local contribute = entry.contribute
 	self.contribute:SetTarget(contribute and contribute[1], contribute and contribute[2])
 	if self.open then
 		local lore = entry.lore
 		self.open.mapID, self.open.areaKey = lore and lore[1], lore and lore[2]
-		if lore and lore[1] then self.open:Show() else self.open:Hide() end
+		self.open:SetShown(lore ~= nil and lore[1] ~= nil)
 	end
-	self:PlaceButtons()
 end

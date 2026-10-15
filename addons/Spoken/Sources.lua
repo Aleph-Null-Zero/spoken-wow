@@ -14,7 +14,8 @@ SourceMethods.__index = SourceMethods
 ---@field title string
 ---@field addon string
 ---@field icon? string
----@field order? number       -- minimap menu order only; never queue order
+---@field about? string       -- one line for its card on Spoken's page
+---@field order? number       -- its place on Spoken's page and the order of its settings page; never queue order
 ---@field queueLimit? number  -- clips of this source allowed behind the head; nil = unlimited
 ---@field interClipGap? number
 ---@field channel? fun():string
@@ -33,6 +34,7 @@ function Sources:Register(key, info)
         title = info.title or key,
         addon = info.addon,
         icon = info.icon,
+        about = info.about,
         order = info.order or 100,
         queueLimit = info.queueLimit,
         -- 0.55 is upstream's figure; it absorbs a duration that is slightly short.
@@ -46,6 +48,8 @@ function Sources:Register(key, info)
         -- A part's settings kept in AceDB profiles: a function returning its AceDB object, so
         -- Spoken's own Profiles section switches it with the player's (Options:ProfileDBs).
         profiles = info.profiles,
+        -- What the module prints for a report, after Spoken's own (Options:ShowDiagnostics).
+        diagnostics = info.diagnostics,
         gates = {},
     }, SourceMethods)
     self.byKey[key] = source

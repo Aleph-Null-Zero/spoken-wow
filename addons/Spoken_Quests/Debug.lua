@@ -86,7 +86,17 @@ function Debug:IsMockingMissingVoice()
     return developer ~= nil and developer.MockMissingVoice == true
 end
 
---- This addon's section of the Developer page. Hands back what puts it back to its defaults.
+--- This addon's switch among the Developer page's chat messages: what Debug:Print says. Hands
+--- back what puts it back to its default.
+function Debug:ChatRows(layout)
+    layout:Checkbox(L.OPT_DEBUG, nil,
+        function() return Addon.db.profile.DebugEnabled end,
+        function(value) Addon.db.profile.DebugEnabled = value end)
+    return function() Addon.db.profile.DebugEnabled = false end
+end
+
+--- This addon's testing tools on the Developer page. Hands back what puts them back to their
+--- defaults.
 function Debug:DeveloperRows(layout)
     -- A dialog already open shows the change at once: its buttons ask DataModules again.
     local function Refresh()
@@ -96,7 +106,6 @@ function Debug:DeveloperRows(layout)
             if button and button.Refresh then button:Refresh() end
         end
     end
-    layout:Section(L.OPT_PAGE_TITLE)
     layout:Checkbox(L.OPT_DEV_MOCK_MISSING, L.OPT_DEV_MOCK_MISSING_TIP,
         function() return Debug:IsMockingMissingVoice() end,
         function(value)
@@ -112,7 +121,8 @@ function Debug:DeveloperRows(layout)
 end
 
 if Spoken and Spoken.AddDeveloperSettings then
-    Spoken:AddDeveloperSettings(function(layout) return Debug:DeveloperRows(layout) end)
+    Spoken:AddDeveloperSettings(function(layout) return Debug:ChatRows(layout) end, "chat", 1)
+    Spoken:AddDeveloperSettings(function(layout) return Debug:DeveloperRows(layout) end, "testing", 1)
 end
 
 -- Kept between sessions, so said at each login: with it on, no quest line plays.

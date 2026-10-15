@@ -1188,7 +1188,8 @@ function M.LoadSpoken(addonDirectory)
         "UI/Options", "UI/DialogueUIOptions", "UI/Welcome", "API", "Libs/LibDeflate/LibDeflate", "Compat", "UI/ContributeBox", "Contribute", "Gather" }) do
         dofile(addonDirectory .. file .. ".lua")
     end
-    -- Azeroth's Compendium and its text view (Compendium.xml).
+    -- Azeroth's Compendium, its dungeons and its text view (Compendium.xml).
+    dofile(addonDirectory .. "Data/Dungeons.lua")
     dofile(addonDirectory .. "UI/TextView.lua")
     dofile(addonDirectory .. "UI/Compendium.lua")
     local env = _G.SpokenEnv
@@ -1233,7 +1234,7 @@ end
 --- above, from its tree.
 function M.LoadZones(addonDirectory, SpokenZones)
     if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
-    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay" }) do
+    for _, file in ipairs({ "Audio", "UI/ContributeButton", "Autoplay" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
         chunk("Spoken_Places", SpokenZones)
     end

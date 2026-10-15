@@ -16,9 +16,10 @@
 // which database they read. Zones come from where each spawn stands: the area the server's own
 // map files put the point in (PLACES_MAPS), up to its zone through the client's AreaTable and
 // UiMapAssignment (wago.tools), because the server leaves its zone columns at 0. A dungeon is
-// under the zone its entrance is in (INSTANCE_ZONE), and a readable had there only from inside
-// a dungeon or raid names it (`dungeons`), so the Compendium files it under the dungeon's card as
-// the Quests tab files that dungeon's quests, by the same names (Spoken_Quests' `dungeons`).
+// under the zone its entrance is in (INSTANCE_ZONE, pipelines/lib/dungeons.json), and a readable
+// had there only from inside a dungeon or raid names it (`dungeons`), so the Compendium files it
+// under the dungeon's card as the Quests tab files that dungeon's quests, by the same maps
+// (Spoken's Data/Dungeons.lua names them).
 //
 // Committed, as Books.lua is: the addon builds on a clone with no database.
 
@@ -29,6 +30,7 @@ import { fileURLToPath } from "node:url";
 
 import mysql from "mysql2/promise";
 
+import { instanceZones, loadDungeons } from "../../lib/dungeons.mjs";
 import { loadEnv } from "../../lib/env.mjs";
 import { FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
 import { areaReader } from "./lib/area.mjs";
@@ -38,7 +40,6 @@ import { cannotBeHad, dungeonsOf, isTemplateCopy, typeOf } from "./lib/places.mj
 await loadEnv("books");
 
 const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Books.lua", import.meta.url));
-const QUESTS = fileURLToPath(new URL("../../../addons/Spoken_Quests/Data/Compendium.lua", import.meta.url));
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Places.lua", import.meta.url));
 // Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
 // items, and one that shares a vanilla page id lent that book its sources and zones.
@@ -48,52 +49,12 @@ const SOURCES = 6;
 const WIDE = 8;
 const LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"];
 
-// The dungeons and halls, under the zone their entrance is in.
-const INSTANCE_ZONE = {
-  33: 1421, // Shadowfang Keep: Silverpine Forest
-  34: 1453, // The Stockade: Stormwind City
-  36: 1436, // The Deadmines: Westfall
-  43: 1413, // Wailing Caverns: The Barrens
-  47: 1413, // Razorfen Kraul: The Barrens
-  48: 1440, // Blackfathom Deeps: Ashenvale
-  70: 1418, // Uldaman: Badlands
-  90: 1426, // Gnomeregan: Dun Morogh
-  109: 1435, // The Temple of Atal'Hakkar: Swamp of Sorrows
-  129: 1413, // Razorfen Downs: The Barrens
-  189: 1420, // Scarlet Monastery: Tirisfal Glades
-  209: 1446, // Zul'Farrak: Tanaris
-  229: 1427, // Blackrock Spire: Searing Gorge
-  230: 1427, // Blackrock Depths: Searing Gorge
-  249: 1445, // Onyxia's Lair: Dustwallow Marsh
-  289: 1422, // Scholomance: Western Plaguelands
-  309: 1434, // Zul'Gurub: Stranglethorn Vale
-  329: 1423, // Stratholme: Eastern Plaguelands
-  349: 1443, // Maraudon: Desolace
-  389: 1454, // Ragefire Chasm: Orgrimmar
-  409: 1427, // Molten Core: Searing Gorge
-  429: 1444, // Dire Maul: Feralas
-  449: 1453, // Champion's Hall: Stormwind City
-  450: 1454, // Hall of Legends: Orgrimmar
-  469: 1427, // Blackwing Lair: Searing Gorge
-  509: 1451, // Ruins of Ahn'Qiraj: Silithus
-  531: 1451, // Temple of Ahn'Qiraj: Silithus
-  533: 1423, // Naxxramas: Eastern Plaguelands
-  // The battlegrounds are zones of their own. Forever's client files them as orphan maps, not
-  // zones, so nothing else would place Alterac Valley's Rock of Durotan.
-  30: 1459, // Alterac Valley
-  489: 1460, // Warsong Gulch
-  529: 1461, // Arathi Basin
-};
-// The dungeons and raids, by the names the Quests tab gives their cards: each line of
-// Spoken_Quests' `dungeons` table, Lua as it is there. An instance it does not name (the
-// battlegrounds, the PvP halls) is no dungeon here either, and stays its zone's.
-const questsLua = await readFile(QUESTS, "utf8");
-const dungeonPart = questsLua.slice(questsLua.indexOf("\tdungeons = {"));
-const DUNGEON_NAMES = new Map();
-for (const m of dungeonPart.slice(0, dungeonPart.indexOf("\n\t},")).matchAll(/^\t\t\[(\d+)\] = \{ (.*) \},\r?$/gm)) {
-  if (INSTANCE_ZONE[m[1]]) DUNGEON_NAMES.set(Number(m[1]), m[2]);
-}
-if (DUNGEON_NAMES.size === 0) throw new Error(`no dungeons read from ${QUESTS}`);
+// The dungeons, halls and battlegrounds, under the zone their entrance is in. The battlegrounds are
+// zones of their own: Forever's client files them as orphan maps, not zones, so nothing else would
+// place Alterac Valley's Rock of Durotan. Only the dungeons and raids are a readable's `dungeons`;
+// another instance (a battleground, a PvP hall) stays its zone's.
+const INSTANCE_ZONE = instanceZones();
+const DUNGEONS = loadDungeons().dungeons;
 // A spawn inside a dungeon is placed at -map until the file is written, so a readable's zones
 // still say which of them it is had in only from inside one.
 const placeOf = (z) => (z < 0 ? INSTANCE_ZONE[-z] : z);
@@ -114,16 +75,21 @@ const SOURCES_BY_HAND = {
   2671: [{ how: "quest start", quest: 7636, zones: [1448] }], // Petrified Bark: Vartrus the Ancient, Felwood
   2859: [{ how: "quest reward", quest: 8996, zones: [1427] }], // Brazier of Invocation: Bodley, Blackrock Mountain
 };
-// The seasonal events' readables, had only while the event runs: the Compendium lists them under
-// Holidays and Events. Their NPCs are spawned by the event, and most have no spawn in the DB.
-const EVENTS = new Set([
-  2571, 2841, // Winter Veil: The Feast of Winter Veil, Metzen's Letters and Notes
-  2787, 2790, // Harvest Festival: the poems for Uther and Grom
-  2786, // Stranglethorn Fishing Extravaganza: the flier
+// The seasonal events' readables, had only while the event runs, by event: the Compendium lists
+// them under Holidays and Events, a line for each event. Their NPCs are spawned by the event, and
+// most have no spawn in the DB.
+const EVENTS = new Map([
+  [2571, "winterveil"], [2841, "winterveil"], // The Feast of Winter Veil, Metzen's Letters and Notes
+  [2787, "harvestfestival"], [2790, "harvestfestival"], // the poems for Uther and Grom
+  [2786, "fishingextravaganza"], // Stranglethorn's flier
   // Scourge Invasion: the Call to Arms, the soldiers' letters by the Necrotic Shards, and the
   // reports the Keeper of the Rolls mails back for them.
-  2872, 2878, 2880, 2881, 2882, 2883, 2884, 2885, 2886, 2887, 2888, 2889, 2890,
+  ...[2872, 2878, 2880, 2881, 2882, 2883, 2884, 2885, 2886, 2887, 2888, 2889, 2890].map((id) => [id, "scourgeinvasion"]),
 ]);
+// Readables nothing in the DB places, placed by hand where the wiki has them.
+const ZONES_BY_HAND = {
+  124: [1434], // Green Hills of Stranglethorn: the cover of Hemet Nesingwary's book, whose pages are found in Stranglethorn Vale
+};
 // Types no title, icon or first page gives away, by book id: read off the words or the wiki.
 const TYPE_BY_HAND = {
   15: "letter", // William's Shipment: "Hello Morgan, ..."
@@ -195,7 +161,7 @@ const CITY_IN = { 1453: 1429, 1454: 1411, 1455: 1426, 1456: 1412, 1457: 1438, 14
 const areaAt = areaReader(MAPS);
 
 function zoneAt(map, x, y) {
-  if (INSTANCE_ZONE[map]) return DUNGEON_NAMES.has(map) ? -map : INSTANCE_ZONE[map];
+  if (INSTANCE_ZONE[map]) return DUNGEONS[map] ? -map : INSTANCE_ZONE[map];
   const box = boxAt(map, x, y);
   const area = areaAt(map, x, y);
   const zone = area && zoneOfArea(area);
@@ -461,6 +427,7 @@ for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
     .map((s) => ({ ...s, spots: s.zones, zones: new Set([...s.zones].map(placeOf)) }))
     .sort((a, b) => ORDER.indexOf(a.how) - ORDER.indexOf(b.how) || a.zones.size - b.zones.size || (a.name?.enUS ?? "").localeCompare(b.name?.enUS ?? ""));
   const spots = new Set(k === "world" ? where.get(id) : list_.flatMap((s) => [...s.spots]));
+  if (!spots.size) for (const zone of ZONES_BY_HAND[id] ?? []) spots.add(zone);
   const zones = new Set([...spots].map(placeOf));
   const dungeons = dungeonsOf(spots, INSTANCE_ZONE);
   const wide = zones.size > WIDE;
@@ -470,7 +437,7 @@ for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
     icons: (bookItems.get(id) ?? []).map((item) => itemIcon.get(item) ?? "") });
   counts.types[type] = (counts.types[type] ?? 0) + 1;
   const parts = [`kind = "${k}"`, `type = "${type}"`];
-  if (EVENTS.has(id)) { parts.push("event = true"); counts.event++; }
+  if (EVENTS.has(id)) { parts.push(`event = "${EVENTS.get(id)}"`); counts.event++; }
   if (wide) parts.push("wide = true");
   else if (zones.size) {
     parts.push(`zones = { ${[...zones].sort((a, b) => a - b).join(", ")} }`);
@@ -495,8 +462,6 @@ const nameLines = nameList.map((n, i) => {
   const locs = LOCALES.filter((l) => n[l] && n[l] !== n.enUS).map((l) => `${l} = ${quote(n[l])}`);
   return `\t\t[${i + 1}] = { ${[quote(n.enUS), ...locs].join(", ")} },`;
 });
-const dungeonLines = [...DUNGEON_NAMES].sort((a, b) => a[0] - b[0])
-  .map(([map, names]) => `\t\t[${map}] = { zone = ${INSTANCE_ZONE[map]}, ${names} },`);
 
 const out = `-- AUTO-GENERATED by pipelines/books/tools/places.mjs. Do not edit by hand.
 --
@@ -505,11 +470,11 @@ const out = `-- AUTO-GENERATED by pipelines/books/tools/places.mjs. Do not edit 
 -- over). \`type\` is what it is: book, journal, letter, note, scroll, tablet, plaque, grave,
 -- exhibit, picture or other. \`from\` names how a carried one is had, most specific first: { how, name, zone... }, the name an index
 -- into \`names\` (false where there is none, as for fishing). \`wide\` is a readable had in too many
--- zones to list under each. \`event\` is one had only during a seasonal event, listed under
--- Holidays and Events rather than its zones. Zones are uiMapIDs. \`dungeons\` are the instance maps
--- of the dungeons and raids a readable is had in from inside alone, in a zone it is had nowhere
--- else in; the \`dungeons\` table below names each, with the zone its entrance is in. Regenerate
--- with:  make books-places
+-- zones to list under each. \`event\` is the seasonal event one is had only during, listed under
+-- Holidays and Events, a line for each event, rather than its zones. Zones are uiMapIDs.
+-- \`dungeons\` are the instance maps of the dungeons and raids a readable is had in from inside
+-- alone, in a zone it is had nowhere else in; Spoken's Data/Dungeons.lua names each, with the zone
+-- its entrance is in. Regenerate with:  make books-places
 --
 -- A global rather than a private namespace, as Books.lua is: a data file cannot reach into the
 -- addon's environment.
@@ -524,10 +489,6 @@ ${lines.join("\n")}
 \tnames = {
 ${nameLines.join("\n")}
 \t},
-
-\tdungeons = {
-${dungeonLines.join("\n")}
-\t},
 }
 `;
 await mkdir(dirname(OUT), { recursive: true });
@@ -535,6 +496,6 @@ await writeFile(OUT, out);
 console.log(`${counts.world} in the world, ${counts.carried} carried (${counts.wide} across Azeroth, ${counts.event} at events), ` +
   `${counts.nowhere} with no place, ${counts.gone} that cannot be had; ${nameList.length} names`);
 console.log(`${counts.inDungeon} in dungeons: ` + [...counts.dungeons].sort((a, b) => a[0] - b[0])
-  .map(([d, n]) => `${n} in ${DUNGEON_NAMES.get(d).match(/^"([^"]*)"/)[1]}`).join(", "));
+  .map(([d, n]) => `${n} in ${DUNGEONS[d].name}`).join(", "));
 console.log(Object.entries(counts.types).map(([t, n]) => `${n} ${t}`).join(", "));
 console.log(`wrote ${OUT}`);

@@ -203,12 +203,39 @@ for _, key in ipairs({ "quests", "gossip", "zones", "books" }) do
     local live = {}
     for _, control in ipairs(Controls(page.layout)) do
         local name = Name(control)
-        if not control.layoutReason and name ~= "Enable Module" then table.insert(live, name) end
+        if not control.layoutReason and name ~= "Enable" then table.insert(live, name) end
     end
-    Expect(page.name .. ", switched off, greys out everything on it but its switch", table.concat(live, ", "), "")
+    -- Read Automatically and Stop When Window Closes cover Gossip's window too: they stay live
+    -- on the Quests page while Gossip is on.
+    local shared = key == "quests" and "Read Automatically, Stop When Window Closes, NPC Voice Before Reading" or ""
+    Expect(page.name .. ", switched off, greys out everything on it but its switch", table.concat(live, ", "), shared)
     _G.Spoken:SetPartOn(key, true)
     env.Options:UpdateRows()
     page.layout:Refresh()
+end
+
+---------------------------------------------------------------- the Developer page
+-- Every module's debug switch under one Chat Messages title, every testing tool under Testing,
+-- each in the modules' order; not a section per module.
+do
+    local sections, rows = {}, {}
+    for _, item in ipairs(pages[6].layout.items) do
+        if item.kind == "section" and item.text then
+            table.insert(sections, item.text)
+            local names = {}
+            for _, row in ipairs(item.rows) do
+                local label = row.control.layoutLabel and row.control.layoutLabel.text
+                if type(label) == "string" then table.insert(names, label) end
+            end
+            rows[item.text] = table.concat(names, ", ")
+        end
+    end
+    Expect("the Developer page's sections", table.concat(sections, "|"), table.concat({ Dev.L.OPT_LOG_SECTION,
+        Dev.L.OPT_CHAT_SECTION, Dev.L.OPT_TESTING_SECTION }, "|"))
+    Expect("...Chat Messages holding each module's debug switch, in the modules' order",
+        rows[Dev.L.OPT_CHAT_SECTION], VO.L.OPT_DEBUG .. ", " .. Z.L.OPT_DEV_DEBUG .. ", " .. B.L.OPT_DEV_DEBUG)
+    Expect("...Testing each module's tools", rows[Dev.L.OPT_TESTING_SECTION],
+        VO.L.OPT_DEV_MOCK_MISSING .. ", " .. Z.L.OPT_DEV_PREVIEW)
 end
 
 ---------------------------------------------------------------- Reset All and the Unlock switches
@@ -229,8 +256,8 @@ for index, control in ipairs(controls) do
 end
 Expect("Spoken's Compendium section has Text Size after its Open button", afterOpen, env.L.OPT_COMPENDIUM_FONT_SIZE)
 local onZones = {}
-for _, control in ipairs(Controls(pages[3].layout)) do
-    if Name(control) == Z.L.OPT_FONT_SIZE and control.shown ~= false then table.insert(onZones, Name(control)) end
+for _, control in ipairs(Controls(pages[4].layout)) do
+    if Name(control) == env.L.OPT_COMPENDIUM_FONT_SIZE then table.insert(onZones, Name(control)) end
 end
 Expect("...and the Zones page has none", table.concat(onZones, "|"), "")
 

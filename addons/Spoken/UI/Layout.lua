@@ -90,21 +90,22 @@ end
 
 -- The tooltip a row shows anywhere along it: what it is, what it does, and -- greyed out --
 -- why, under that. A control that does nothing, with no word on what would make it work,
--- reads as broken.
+-- reads as broken. A row with nothing to say beyond its label shows only the band: a tooltip
+-- that repeats the label is noise.
 local function ShowTip(frame, title, body)
     local band = frame.layoutBand or (frame.layoutHit and frame.layoutHit.layoutBand)
     if band then band:Show() end
-    if not body and not title then return end
+    local reason = frame.layoutReason or (frame.layoutControl and frame.layoutControl.layoutReason)
+    if not body and not reason and not frame.layoutHint then return end
     GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
     if title then
         GameTooltip:SetText(title)
-    else
+    elseif body then
         GameTooltip:SetText(body, 1, 1, 1, 1, true)
     end
     if title and body then
         GameTooltip:AddLine(body, 1, 1, 1, true)
     end
-    local reason = frame.layoutReason or (frame.layoutControl and frame.layoutControl.layoutReason)
     if reason then
         GameTooltip:AddLine(reason, 1, 0.5, 0.25, true)
     end
@@ -863,10 +864,12 @@ local function EachRow(layout, fn)
     end
 end
 
-function Layout:RequiresAll(applies, reason, except)
+function Layout:RequiresAll(applies, reason, ...)
+    local except = {}
+    for i = 1, select("#", ...) do except[(select(i, ...))] = true end
     EachRow(self, function(row)
         local control = row.control
-        if control and control ~= except and not control.layoutCard then
+        if control and not except[control] and not control.layoutCard then
             self:Requires(control, applies, reason)
         end
     end)

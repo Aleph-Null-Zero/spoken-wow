@@ -19,8 +19,10 @@
 -- window, and sets panel.pageInset, folded away with the window. open shows the tab as its part
 -- wants it opened, enabled says whether its part is on, and unlock is its Unlock switch, which Spoken's page shows
 -- (SpokenCompendium:Toggle opens the window from there and from the minimap menu). Shared
--- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN) and the parchment page
--- (C.NewPage). The window's size is kept in Spoken's settings.
+-- with the tabs too: the zones' tree (C.MapName, C.ContinentOf, C.CITY_IN, C.BATTLEGROUNDS and
+-- C.OpenAround, C.OpenZone, C.PlayerZone, C.PlayerContinent to open it where the player stands),
+-- the page's inset (C.PageHolder) and the parchment page (C.NewPage). The window's size is kept in
+-- Spoken's settings.
 --
 -- Not under setfenv(1, SpokenEnv): the frames are built here, and the client's mixins are looked
 -- up in the calling function's environment.
@@ -79,7 +81,7 @@ local FILTER_ROOM = 26       -- what the search box gives up for the filter menu
 local NAME = "SpokenCompendiumWindow"
 -- The window's portrait: a tome from the game, the Compendium's own rather than any one part's.
 local ICON = [[Interface\Icons\INV_Misc_Book_11]]
-C.LIST_WIDTH, C.ICON = LIST_WIDTH, ICON
+C.ICON = ICON
 
 local GRABBER_UP = [[Interface\ChatFrame\UI-ChatIM-SizeGrabber-Up]]
 local GRABBER_DOWN = [[Interface\ChatFrame\UI-ChatIM-SizeGrabber-Down]]
@@ -97,7 +99,6 @@ local PANEL_HI = [[Interface\Buttons\UI-Panel-MinimizeButton-Highlight]]
 local function HasAtlas(name)
 	return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) ~= nil or false
 end
-C.HasAtlas = HasAtlas
 
 -- Paint `texture` with the game's atlas and say so, or leave it alone and say not: a missing
 -- atlas draws nothing at all.
@@ -1617,14 +1618,31 @@ function List:ScrollToSelection(items)
 	return false
 end
 
+--- Whether the list as last drawn holds a row `test(item)` says yes to.
+function List:ListsAny(test)
+	for _, item in ipairs(self.items or {}) do
+		if test(item) then return true end
+	end
+	return false
+end
+
 function List:ClearSearch()
 	if self.searchBox:GetText() ~= "" then self.searchBox:SetText("") end
 	self.filter = ""
 end
 
---- Whether `text` matches what is being searched for: everything, with nothing typed.
-function List:Matches(text)
-	return self.filter == "" or (text and string.find(string.lower(text), self.filter, 1, true) ~= nil)
+--- The chosen row brought into view. The client's scroll frame takes an offset only within the
+--- range it last measured, which a list just drawn longer has not measured yet; nor has the frame
+--- a height until the window is first laid out. Either left the list at its top, the chosen row
+--- off screen: the range is measured now, and the row brought into view again a frame later.
+function List:ScrollToChosen(items)
+	if self.scroll.UpdateScrollChildRect then self.scroll:UpdateScrollChildRect() end
+	self:ScrollToSelection(items)
+	if C_Timer and C_Timer.After then
+		C_Timer.After(0, function()
+			if self.filter == "" and self.items then self:ScrollToSelection(self.items) end
+		end)
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -1642,10 +1660,33 @@ for _, id in ipairs({ 1416, 1417, 1418, 1419, 1420, 1421, 1422, 1423, 1424, 1425
 	1429, 1430, 1431, 1432, 1433, 1434, 1435, 1436, 1437, 1453, 1455, 1458 }) do KNOWN_CONTINENT[id] = 1415 end
 -- The cities, each inside the zone around it, as the places list them.
 C.CITY_IN = { [1453] = 1429, [1454] = 1411, [1455] = 1426, [1456] = 1412, [1457] = 1438, [1458] = 1420 }
+-- The battlegrounds, under a banner of their own after the continents, whatever map the client
+-- hangs them under: Forever's newer client puts Alterac Valley in Hillsbrad Foothills, its older
+-- one under Azeroth, where no continent's list reached them.
+C.BATTLEGROUNDS = { 1459, 1460, 1461, 2524 } -- Alterac Valley, Warsong Gulch, Arathi Basin, Darkspear Islands
+C.IS_BATTLEGROUND = {}
+for _, mapID in ipairs(C.BATTLEGROUNDS) do C.IS_BATTLEGROUND[mapID] = true end
+
+function C.IsContinent(mapID)
+	return mapID == 1414 or mapID == 1415
+end
 
 function C.MapName(mapID)
 	local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
 	return info and info.name or tostring(mapID)
+end
+
+--- A dungeon or raid by its instance map (Data/Dungeons.lua): { zone = its entrance's, story =
+--- { mapID, key } of the Zones area telling it or nil, its name by locale }; nil for any other map.
+function C.Dungeon(map)
+	return _G.SpokenDungeons and SpokenDungeons.dungeons and SpokenDungeons.dungeons[map] or nil
+end
+
+--- A dungeon's name in the client's language, as its Map table has it.
+function C.DungeonName(map)
+	local dungeon = C.Dungeon(map)
+	if not dungeon then return tostring(map) end
+	return dungeon[GetLocale and GetLocale() or "enUS"] or dungeon[1]
 end
 
 local continentCache = {}
@@ -1664,6 +1705,104 @@ function C.ContinentOf(mapID)
 	found = found or KNOWN_CONTINENT[mapID]
 	continentCache[mapID] = found or false
 	return found
+end
+
+--- Open what holds a zone's card, as every tab nests them: the battlegrounds' banner, its
+--- continent's, or the banner of the zones on none. `continentOpen` and `bannerOpen` are the tab's
+--- own, by continent and by "battlegrounds" and "lands".
+function C.OpenAround(zone, continentOpen, bannerOpen)
+	if C.IS_BATTLEGROUND[zone] then
+		bannerOpen.battlegrounds = true
+		return
+	end
+	local continent = C.ContinentOf(C.CITY_IN[zone] or zone)
+	if continent then
+		continentOpen[continent] = true
+	else
+		bannerOpen.lands = true
+	end
+end
+
+--- Open a zone's card in `openZones` and, for a city, the zone's around it, leaving the others as
+--- they are.
+function C.OpenZone(zone, openZones)
+	openZones[zone] = true
+	if C.CITY_IN[zone] then openZones[C.CITY_IN[zone]] = true end
+end
+
+--- The map the player stands in that `has(map)` says a tab lists, walking up from an inn's or a
+--- cave's map, or nil.
+function C.PlayerZone(has)
+	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local steps = 0
+	while map and steps < 8 do
+		if has(map) then return map end
+		local info = C_Map.GetMapInfo and C_Map.GetMapInfo(map)
+		map, steps = info and info.parentMapID, steps + 1
+	end
+end
+
+--- Of `listed`, the continents a tab's list shows, the one the player is on, else the first.
+function C.PlayerContinent(listed)
+	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	for _, continent in ipairs(listed) do
+		if map == continent or (map and C.ContinentOf(map) == continent) then return continent end
+	end
+	return listed[1]
+end
+
+--- The links from a place's page on tab `from` to the other tabs' pages of the same place, for
+--- Page:Show's `links`: { { text, onClick } } in tab order. `place` is { mapID = a zone, a city or a
+--- continent } or { mapID = the zone of a dungeon's entrance, dungeon = its instance map }. A tab
+--- takes part with `placeLink(place)`, the words of its link or nil where it has nothing of the
+--- place, and `openPlace(place)`, which opens the window on its page of it.
+function C.PlaceLinks(from, place)
+	local links = {}
+	for _, def in ipairs(Ordered()) do
+		if def.key ~= from and Enabled(def) and def.placeLink and def.openPlace then
+			local text = def.placeLink(place)
+			if text then
+				table.insert(links, { text = text, onClick = function() def.openPlace(place) end })
+			end
+		end
+	end
+	return links
+end
+
+--- The picture of a place's story (Spoken Places'), for Page:Show's `picture` on another tab's page of
+--- the place: { file, mask }, or nil where Zones is not there, has none or has pictures off.
+--- `place` as C.PlaceLinks takes it.
+function C.PlacePicture(place)
+	local zones = _G.SpokenZones
+	if not (zones and zones.Picture) then return nil end
+	local mapID, key = place.mapID, nil
+	if place.dungeon then
+		local dungeon = C.Dungeon(place.dungeon)
+		if not (dungeon and dungeon.story) then return nil end
+		mapID, key = dungeon.story[1], dungeon.story[2]
+	end
+	local file, mask = zones:Picture(mapID, key)
+	return file and { file = file, mask = mask } or nil
+end
+
+--- The page's side of a tab: an inset beside `list` down the rest of `panel`, as the game's split
+--- windows frame each pane (the professions window), so list and page are parted by their borders.
+--- Returns the frame the page fills; `panel.pageInset` is folded away with the window.
+function C.PageHolder(panel, list)
+	local _, right = C.Margins()
+	local ok, inset = pcall(CreateFrame, "Frame", nil, panel, "InsetFrameTemplate")
+	if not ok or not inset then inset = CreateFrame("Frame", nil, panel) end
+	inset:SetPoint("TOPLEFT", list.inset, "TOPRIGHT", 6, 38)
+	inset:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -right, (window and window.templated) and 6 or 12)
+	panel.pageInset = inset
+	local holder = CreateFrame("Frame", nil, inset)
+	holder:SetPoint("TOPLEFT", inset, "TOPLEFT", 3, -3)
+	holder:SetPoint("BOTTOMRIGHT", inset, "BOTTOMRIGHT", -3, 3)
+	-- The inset's border over the parchment's edge, not under it.
+	if type(inset.NineSlice) == "table" and inset.NineSlice.SetFrameLevel then
+		inset.NineSlice:SetFrameLevel(holder:GetFrameLevel() + 5)
+	end
+	return holder
 end
 
 --------------------------------------------------------------------------------
@@ -1764,25 +1903,39 @@ end
 local Page = {}
 Page.__index = Page
 
+-- The spellbook's page, its top band cut off: a band made to sit under the spellbook's own top bar.
+local SPELLBOOK_PAGE = { file = ZONES_ART .. "spellbook-Page-Right-C60", coords = { 0, 0.791016, 0.666016 * 0.07, 0.666016 } }
+
 --- A page of parchment filling `parent`: a title, the line under it, the divider, the words in a
---- scrolling view (UI/TextView.lua, in `addon`'s font for its language), and Report and Play on the title's right, as the
---- places' page has them. `play` = { has(target), find(target) -> the line in the queue or nil,
---- start(target), tip }, what Play does for whatever Show was given (C.PlayState, C.PlayClick);
---- `report` = { has(target), open(target), title, tip }, what Report does, hidden where it has
---- nothing to report or the player hides Report buttons.
-function C.NewPage(parent, addon, play, report)
-	local self = setmetatable({ playing = play, reporting = report }, Page)
+--- scrolling view (UI/TextView.lua, in `addon`'s font for its language), and Report and Play on the
+--- title's right, as the places' page has them. `play` = { has(target), find(target) -> the line in
+--- the queue or nil, start(target), tip }, what Play does for whatever Show was given (C.PlayState,
+--- C.PlayClick); `report` = { has(target), open(target), title, tip }, what Report does, hidden where
+--- it has nothing to report or the player hides Report buttons.
+---
+--- `look`, where given, changes the page's art from the spellbook's for the Compendium:
+--- { art = { file, coords } the parchment; top, right, the heading's room from the page's top and
+--- its right edge; titleSize; oneLine, a title cut short rather than wrapped; backplate = { full,
+--- height } }. Spoken Places' page beside the map is the quest log's details page this way.
+function C.NewPage(parent, addon, play, report, look)
+	look = look or {}
+	local top, right = look.top or TOP, look.right or RIGHT
+	local titleSize = look.titleSize or 26
+	local self = setmetatable({ playing = play, reporting = report, top = top, right = right,
+		titleSize = titleSize, extra = {} }, Page)
 	local frame = CreateFrame("Frame", nil, parent)
 	frame:SetAllPoints()
 	self.frame = frame
 
 	local bg = frame:CreateTexture(nil, "BACKGROUND")
 	bg:SetAllPoints()
-	-- The spellbook's page, its top band cut off as the places' page has it.
+	-- Spoken Places' copy of the spellbook's page where it is installed, so every tab is on the same
+	-- paper as the places; the game's own atlas where the client has it; a plain colour where
+	-- neither. Drawn from a file wherever it can be, so the text's fade is cut from the same picture.
+	local art = look.art or (ZonesLoaded() and SPELLBOOK_PAGE) or nil
 	local file, coords
-	if ZonesLoaded() then
-		file = ZONES_ART .. "spellbook-Page-Right-C60"
-		coords = { 0, 0.791016, 0.666016 * 0.07, 0.666016 }
+	if art then
+		file, coords = art.file, art.coords
 		bg:SetTexture(file)
 		bg:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
 	elseif not Atlas(bg, "spellbook-Page-Right-C60") then
@@ -1793,32 +1946,45 @@ function C.NewPage(parent, addon, play, report)
 	-- part by a pixel along the fade's edge.
 	SpokenTextView.Unsnap(bg)
 
+	-- The spellbook header's backplate behind the title, faint, as the spellbook lays one behind
+	-- each heading. Laid out as if it started BACKPLATE_CUT left of the page, and cut there and at
+	-- the page's right edge rather than drawn past them: past the left it showed over the window's
+	-- list and over the map's border beside the panel.
 	if ZonesLoaded() then
+		local plate = look.backplate or { full = BACKPLATE_FULL, height = 110 }
 		local backplate = frame:CreateTexture(nil, "BORDER")
 		backplate:SetTexture(ZONES_ART .. "spellbook-list-backplate")
-		backplate:SetHeight(110)
-		backplate:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 28 - TOP)
+		backplate:SetHeight(plate.height)
+		backplate:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 28 - top)
 		backplate:SetAlpha(0.55)
-		local right, bottom = 0.617188, 0.828125
+		local plateRight, plateBottom = 0.617188, 0.828125
 		local function Fit()
-			local shown = BACKPLATE_FULL - BACKPLATE_CUT
+			local shown = plate.full - BACKPLATE_CUT
 			local room = frame:GetWidth() or 0
 			if room > 0 then shown = math.min(shown, room) end
 			backplate:SetWidth(shown)
-			backplate:SetTexCoord(right * BACKPLATE_CUT / BACKPLATE_FULL,
-				right * (BACKPLATE_CUT + shown) / BACKPLATE_FULL, 0, bottom)
+			backplate:SetTexCoord(plateRight * BACKPLATE_CUT / plate.full,
+				plateRight * (BACKPLATE_CUT + shown) / plate.full, 0, plateBottom)
 		end
 		frame:HookScript("OnSizeChanged", Fit)
 		Fit()
 		self.backplate = backplate
 	end
 
+	-- The quest log's title face, as a quest's name is written on its page, in the font `addon`
+	-- writes its language in (Spoken Places' stories in another language than the client's).
 	local title = frame:CreateFontString(nil, "ARTWORK", _G.QuestTitleFont and "QuestTitleFont" or "GameFontNormalLarge")
-	local face = _G.QuestTitleFont and _G.QuestTitleFont.GetFont and _G.QuestTitleFont:GetFont()
-	if face then title:SetFont(face, 26, "") end
-	title:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, -TOP)
-	title:SetPoint("RIGHT", frame, "RIGHT", -RIGHT - 34, 0)
+	local face = addon and addon.FontFor and addon:FontFor(_G.QuestTitleFont)
+		or (_G.QuestTitleFont and _G.QuestTitleFont.GetFont and _G.QuestTitleFont:GetFont())
+	if face then title:SetFont(face, titleSize, "") end
+	title:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, -top)
+	title:SetPoint("RIGHT", frame, "RIGHT", -right - 34, 0)
 	title:SetJustifyH("LEFT")
+	-- One line where the page is narrow, cut short with an ellipsis; elsewhere it wraps.
+	if look.oneLine then
+		if title.SetWordWrap then title:SetWordWrap(false) end
+		if title.SetMaxLines then title:SetMaxLines(1) end
+	end
 	Ink(title, INK)
 	self.title = title
 
@@ -1827,7 +1993,7 @@ function C.NewPage(parent, addon, play, report)
 	-- a level (Page:Show's onSubtitle), a click goes there and the pointer paints it as a link.
 	local sub = CreateFrame("Button", nil, frame)
 	sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
-	sub:SetPoint("RIGHT", frame, "RIGHT", -RIGHT, 0)
+	sub:SetPoint("RIGHT", frame, "RIGHT", -right, 0)
 	sub:SetHeight(16)
 	local words = sub:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 	words:SetAllPoints()
@@ -1862,7 +2028,7 @@ function C.NewPage(parent, addon, play, report)
 	if rule then
 		divider:SetTexture(rule.file)
 		local function Fit()
-			local room = (frame:GetWidth() or 0) - (PAD - 6) - RIGHT
+			local room = (frame:GetWidth() or 0) - (PAD - 6) - right
 			if room <= 0 then return end
 			local width = math.min(room, rule.width)
 			divider:SetWidth(width)
@@ -1871,7 +2037,7 @@ function C.NewPage(parent, addon, play, report)
 		frame:HookScript("OnSizeChanged", Fit)
 		Fit()
 	else
-		divider:SetPoint("RIGHT", frame, "RIGHT", -RIGHT, 0)
+		divider:SetPoint("RIGHT", frame, "RIGHT", -right, 0)
 		divider:SetColorTexture(INK[1], INK[2], INK[3], 0.35)
 		divider:SetHeight(1)
 	end
@@ -1879,13 +2045,15 @@ function C.NewPage(parent, addon, play, report)
 
 	local body = SpokenTextView.Create(frame, addon)
 	body.frame:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 6, -2)
-	body.frame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -RIGHT, PAD - 6)
+	body.frame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -right, PAD - 6)
 	body:SetInk(INK[1], INK[2], INK[3])
 	body:SetThumbColor(INK[1], INK[2], INK[3])
+	-- Text cut off at an edge fades into the parchment under it.
 	if file then body:SetFadeSource(frame, file, coords) end
 	self.body = body
 	-- The header's buttons stand over the words' right edge, which moves as the bar comes and goes.
 	body.onRoom = function() self:RefreshPlay() end
+	self.links = {}
 
 	-- Report in the heading's corner, the game's bug in the player's round button, as the places'
 	-- page has it.
@@ -1925,8 +2093,50 @@ function C.NewPage(parent, addon, play, report)
 	return self
 end
 
---- Report in the heading's corner and Play beside it, each only where it does something; the
---- title stops 10 short of the last shown.
+--- The links at the page's foot, one to a line (Page:Show's `links`): the words in the link's
+--- colour, a click doing what the tab says. The words stop above them, which take 18 each.
+function Page:SetLinks(links)
+	links = links or {}
+	local frame = self.frame
+	for i, link in ipairs(links) do
+		local button = self.links[i]
+		if not button then
+			button = CreateFrame("Button", nil, frame)
+			button:SetHeight(18)
+			local words = button:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+			words:SetAllPoints()
+			words:SetJustifyH("LEFT")
+			if words.SetWordWrap then words:SetWordWrap(false) end
+			if words.SetMaxLines then words:SetMaxLines(1) end
+			Ink(words, LINK)
+			button.text = words
+			button:SetScript("OnClick", function(b) if b.onClick then b.onClick() end end)
+			button:SetScript("OnEnter", function(b) Ink(b.text, INK) end)
+			button:SetScript("OnLeave", function(b) Ink(b.text, LINK) end)
+			self.links[i] = button
+		end
+		button.text:SetText(link.text)
+		button.onClick = link.onClick
+		Ink(button.text, LINK)
+		button:ClearAllPoints()
+		button:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", PAD, PAD - 6 + (#links - i) * 18)
+		button:SetPoint("RIGHT", frame, "RIGHT", -self.right, 0)
+		button:Show()
+	end
+	for i = #links + 1, #self.links do self.links[i]:Hide() end
+	self.body.frame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -self.right, PAD - 6 + #links * 18)
+end
+
+--- A round button of the caller's on the heading's line, left of Report and Play, shown or hidden
+--- by the caller: Open in Azeroth's Compendium on Spoken Places' page beside the map.
+function Page:AddButton(button)
+	table.insert(self.extra, button)
+	button:HookScript("OnShow", function() self:RefreshPlay() end)
+	button:HookScript("OnHide", function() self:RefreshPlay() end)
+end
+
+--- Report in the heading's corner and Play beside it, each only where it does something, and the
+--- caller's buttons after them; the title stops 10 short of the last shown.
 function Page:RefreshPlay()
 	local target = self.target
 	local report, button = self.report, self.play
@@ -1944,40 +2154,48 @@ function Page:RefreshPlay()
 	end
 	-- Level with the title's first line, from the words' right edge leftward, 4 apart: one column
 	-- with a part's buttons (TextView:SetParts), which end there.
-	local edge = RIGHT + (self.body.BarRoom and self.body:BarRoom() or 14)
+	local edge = self.right + (self.body.BarRoom and self.body:BarRoom() or 14)
 	local previous
-	for _, shown in ipairs({ report, button }) do
+	for _, shown in ipairs({ report, button, unpack(self.extra) }) do
 		if shown and shown:IsShown() then
 			shown:ClearAllPoints()
 			if previous then
 				shown:SetPoint("RIGHT", previous, "LEFT", -4, 0)
 			else
-				shown:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -edge, -TOP - 1)
+				shown:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", -edge, -self.top - self.titleSize / 2 + 12)
 			end
 			previous = shown
 		end
 	end
-	self.title:SetPoint("RIGHT", previous or self.frame, previous and "LEFT" or "RIGHT", previous and -10 or -RIGHT, 0)
+	self.title:ClearAllPoints()
+	self.title:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD, -self.top)
+	self.title:SetPoint("RIGHT", previous or self.frame, previous and "LEFT" or "RIGHT", previous and -10 or -self.right, 0)
 end
 
 --- entry = { title, subtitle, onSubtitle, text, target = what Play and Report act on, or nil for
---- none, parts = { { heading, text, buttons } } in place of `text`: words in parts, each under its
---- heading with its own buttons (TextView:SetParts) }. onSubtitle(), where given, is what a click
---- on the line under the title does (the places' page goes up a level with it); without it the
---- line is plain words.
+--- none, picture = { file, mask } above the words, parts = { { heading, text, buttons } } in place
+--- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts),
+--- links = { { text, onClick } } at the foot (C.PlaceLinks) }.
+--- onSubtitle(), where given, is what a click on the line under the title does (the places' page
+--- goes up a level with it); without it the line is plain words.
 function Page:Show(entry)
 	self.title:SetText(entry.title or "")
 	self.sub.text:SetText(entry.subtitle or "")
+	-- No line under the title takes no room: the divider closes up under it.
 	self.sub:SetHeight((entry.subtitle and entry.subtitle ~= "") and 16 or 1)
 	self.sub.onClick = entry.onSubtitle
 	if entry.onSubtitle then self.sub:Enable() else self.sub:Disable() end
 	Ink(self.sub.text, INK)
+	-- Told to the view rather than painted on its text, which a re-wrap would repaint.
 	self.body:SetColor(INK[1], INK[2], INK[3])
 	if entry.parts and self.body.SetParts then
 		self.body:SetParts(entry.parts)
 	else
+		local picture = entry.picture
+		self.body:SetPicture(picture and picture.file, picture and picture.mask)
 		self.body:SetText(entry.text or "")
 	end
 	self.target = entry.target
+	self:SetLinks(entry.links)
 	self:RefreshPlay()
 end

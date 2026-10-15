@@ -119,6 +119,8 @@ SlashCmdList["SPOKENWRITINGS"] = function(msg)
 		Toggle("readOnce", "reading each book only once")
 	elseif cmd == "close" then
 		Toggle("closeWhenRead", "closing the book once it has been read")
+	elseif cmd == "stoponclose" then
+		Toggle("stopOnClose", "stopping when the book closes")
 	elseif cmd == "forget" then
 		local count = SpokenBooks:ForgetRead()
 		Print("forgot %d readable%s; they will be read again", count, count == 1 and "" or "s")
@@ -141,11 +143,11 @@ SlashCmdList["SPOKENWRITINGS"] = function(msg)
 	elseif cmd == "stop" then
 		SpokenBooks:StopReading()
 		Print("stopped")
-	elseif cmd == "status" then
+	elseif cmd == "diagnostics" or cmd == "status" then
 		Status()
 	elseif cmd == "debug" then
 		Toggle("debug", "explaining in chat why a page was or was not read")
 	else
-		Print("/spr read | stop | autoplay | whole | oneline | once | close | forget | compendium | settings | status | debug")
+		Print("/spr read | stop | autoplay | once | whole | oneline | stoponclose | close | forget | compendium | settings | diagnostics")
 	end
 end

@@ -54,7 +54,7 @@ Expect("a page asked for afterwards is nested at once", readables.category and r
 Expect("opening a page opens its own entry", readables.Open(), true)
 local labels = {}
 for _, text in ipairs(stub.LabelsUnder(_G.SpokenOptionsPanel)) do labels[text] = true end
-Expect("the parts have a section of their own", labels["Modules"], true)
+Expect("the parts have a section of their own", labels["What Spoken Reads"], true)
 Expect("an installed part is named for what it reads", labels["Quests"], true)
 Expect("...and so is the other", labels["Places"], true)
 Expect("a part not installed still has its row", labels["Readables"], true)
@@ -101,5 +101,21 @@ _G.Spoken:SetPartOn("quests", false); env.Options:UpdateRows()
 Expect("...while still saying whether it has its voices", env.Options:PartVoice("quests"), "muted")
 _G.Spoken:SetPartOn("quests", true); env.Options:UpdateRows()
 Expect("nothing went wrong in a callback", #env.Callbacks.errors, 0)
+
+-- Another source that registers is listed too, with its own title, line and place in the order;
+-- the page and the Welcome window draw whatever Parts() lists when they are built.
+local bosses = _G.Spoken:RegisterSource("bosses", { title = "Bosses", about = "What a boss says.", order = 2.5 })
+local keys = {}
+for _, part in ipairs(env.Options:Parts()) do table.insert(keys, part.key) end
+Expect("a registered source is listed among the parts, in its order", table.concat(keys, ","),
+    "quests,gossip,bosses,zones,books")
+Expect("...with the line it gave", env.Options:Parts()[3].text, "What a boss says.")
+Expect("...and it can be switched off like the others", _G.Spoken:IsPartOn("bosses"), true)
+Expect("a part with no page of its own has no button to one", env.Options:HasPage(2.5), false)
+Expect("...where a part with a page has", env.Options:HasPage(1), true)
+env.Sources.byKey.bosses = nil
+for i, source in ipairs(env.Sources.ordered) do
+    if source == bosses then table.remove(env.Sources.ordered, i) break end
+end
 
 os.exit(Failures() == 0 and 0 or 1)

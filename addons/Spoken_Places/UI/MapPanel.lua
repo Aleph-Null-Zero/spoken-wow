@@ -3,7 +3,7 @@
 -- Shows lore for the zone the map is displaying, or for a subzone the player
 -- clicked (see UI/SubzoneClick.lua), with a link back to the zone.
 --
--- Also the home for the contribute button (UI/ReportButton.lua's CreateContributeButton), in the
+-- Also the home for the contribute button (UI/ContributeButton.lua's CreateContributeButton), in the
 -- body under the sentence that says a place has no lore yet, pointed at the place this panel is
 -- showing -- not where the player stands, since every place is known and what is missing is a
 -- description someone can write from anywhere.

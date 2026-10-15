@@ -75,11 +75,14 @@ local function Shown(locale)
     return names, VO.L
 end
 
-local function Name(L, label) return (L.OPT_PACK_NAME_FMT:gsub("%%1%$s", label)) end
+-- Each row is named by its language alone; English's three by their faction too.
+local function Name(L, label) return label end
 local english, L = Shown("enUS")
+-- Not the retired complete pack, and not the Gossip pack's own row: it is listed as the gossip it holds.
 Expect("an English client is offered English's packs, then one it has that the list does not know",
-    table.concat(english, "|"), table.concat({ Name(L, L.OPT_PACK_ALL), Name(L, L.OPT_PACK_ALLIANCE), Name(L, L.OPT_PACK_HORDE),
+    table.concat(english, "|"), table.concat({ Name(L, L.OPT_PACK_ALLIANCE), Name(L, L.OPT_PACK_HORDE),
         Name(L, L.OPT_PACK_SHARED), Name(L, L.OPT_PACK_GOSSIP), Name(L, "TestPack") }, "|"))
+Expect("...English's named by their language and faction", L.OPT_PACK_HORDE, "English (Horde)")
 local spanish, ES = Shown("esES")
 Expect("a Spanish client is offered the Spanish pack first", spanish[1], Name(ES, "Español (España)"))
 -- Not English's to get, though English is what it falls back on: on an esMX client its five rows
@@ -89,6 +92,6 @@ Expect("...then only the pack it has installed, not English's to get", table.con
 -- Every client language has a quests pack of its own now, Chinese included.
 local chinese, CN = Shown("zhCN")
 Expect("a Chinese client is offered the Chinese pack first, like any other",
-    table.concat(chinese, "|"), table.concat({ Name(CN, "简体中文"), Name(CN, "TestPack") }, "|"))
+    table.concat(chinese, "|"), table.concat({ Name(CN, "Chinese (Simplified)"), Name(CN, "TestPack") }, "|"))
 
 if Failures() > 0 then stub.print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

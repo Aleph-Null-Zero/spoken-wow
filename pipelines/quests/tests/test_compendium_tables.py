@@ -99,6 +99,15 @@ def test_the_excavation_site_is_the_wetlands_not_a_dungeon():
     assert 2998 not in export_compendium.DUNGEONS and 3065 in export_compendium.DUNGEONS
 
 
+def test_the_dungeons_are_the_table_every_pipeline_shares():
+    """pipelines/lib/dungeons.json, which the books' places and Spoken's Data/Dungeons.lua are
+    made from too: Forever's City of Dalaran in Alterac Mountains, Ruins of Lordaeron under the
+    Undercity."""
+    assert export_compendium.INSTANCE_ZONE[2959] == 1416 and 2959 in export_compendium.DUNGEONS
+    assert export_compendium.INSTANCE_ZONE[2999] == 1458 and 2999 in export_compendium.DUNGEONS
+    assert export_compendium.BATTLEGROUND_ZONE[2997] == 2524
+
+
 def test_the_builds_are_the_ones_every_pipeline_pins():
     """pipelines/lib/wago.mjs pins the client builds for the Node pipelines; the export reads its
     cache under the same names, so the two must name the same builds."""
@@ -151,3 +160,17 @@ def test_a_citys_rectangle_wins_over_the_ground_around_it(monkeypatch):
     maps = Maps(area_at=lambda mapid, x, y: 12)
     monkeypatch.setattr(maps, "box_at", lambda mapid, x, y: 1453)
     assert maps.zone_at(0, 1, 1) == 1453
+
+
+def test_without_the_db_the_hand_corrections_are_applied_again():
+    """--no-db reads each quest's line back and applies the overrides again: a line they leave as
+    it was is written back the same, and one written since takes effect."""
+    lines = {
+        3861: '\t\t[3861] = { "CLUCK!", races = 4294967373 },',
+        2: '\t\t[2] = { "Sharptalon\'s \\"Claw\\"", zones = { 1440 }, prev = 6383, ender = 12696, races = 8589934770 },',
+        6383: '\t\t[6383] = { "The Ashenvale Hunt", zones = { 1440 }, name = { "Hunt", deDE = "Jagd, \\"die\\" {Hatz}" } },',
+        7: '\t\t[7] = { "Kobold Camp Cleanup", sort = "library", enderObject = 99, notext = true },',
+    }
+    out = export_compendium.reapply_overrides(lines, [{"id": 3861, "zones": [1436, 1420], "source": "test"}])
+    assert out[3861] == '\t\t[3861] = { "CLUCK!", zones = { 1436, 1420 }, races = 4294967373 },'
+    assert all(out[qid] == lines[qid] for qid in (2, 6383, 7))

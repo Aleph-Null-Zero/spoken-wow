@@ -238,9 +238,67 @@ on one row at `/contributions` rather than filing a second.
 Stormwind and in Scholomance is under both cards, because a player looking through either place
 expects to find it there. Inside a zone it is listed once: under the city where it is also in the
 zone around it, under the dungeon's card where it is had only from inside a dungeon whose entrance
-is in that zone (`dungeons` in `Data/Places.lua`). One had in more than eight zones goes under
+is in that zone (`dungeons` in `Data/Places.lua`, the instance maps of Spoken's `Data/Dungeons.lua`,
+which names them). One had in more than eight zones goes under
 Across Azeroth instead. A continent's banner counts each readable once, so its count can be less
 than the sum of its zone cards.
+
+### The Readables tab
+
+Azeroth's Compendium (Spoken's `UI/Compendium.lua`, shared with the Quests and Places tabs) is a
+movable window that closes on Escape, resizes from its corner and folds down to its list. The
+Readables tab (`UI/Readables.lua`, key `readables`; the rest of the code says books) lists
+every book, letter, note, scroll, tablet, plaque, gravestone, exhibit and picture Spoken Readables
+reads, found or not, with the words of each on the right, on the spellbook's parchment, to read
+and to listen to wherever you are. Which readables exist and where they are comes from
+`Data/Places.lua` (`pipelines/books/tools/places.mjs`); what this character has found, from
+`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`.
+
+**The list.** A banner for each continent, Kalimdor and the Eastern Kingdoms, each opening and
+closing on its own. Under a continent each zone is a card (its name, how many of its readables are
+found out of all, and a bar), a city a card inside the zone around it, and
+after the city the card of each dungeon or raid whose entrance is in the zone (a zone with several
+has a Dungeons and Raids line holding them, as on Quests). Several cards can be open at once. An
+opened zone or dungeon has a line for each kind of readable it holds, closed until chosen, and the
+readables under it, each once: a city's under the city, a dungeon's under its card. After the
+continents come Other Lands' banner (zones on no continent) and Battlegrounds'; then a banner for
+the seasonal events, for the readables had in more than eight zones (Across Azeroth) and for those
+whose origin is not known. Holidays and Events holds a line for each event (Feast of Winter Veil,
+Harvest Festival, Stranglethorn Fishing Extravaganza, Scourge Invasion; `event` in
+`Data/Places.lua`, `EVENTS` in `Readables.lua`), each with a line per kind inside; a readable whose
+event the data does not name is listed under its kind alone. A banner shows only for a continent or
+a kind, a card only for a place.
+
+**What the list keeps.** The search box looks in names only: a search naming a place lists
+everything under it, a title lists itself under its place. The filter menu has Found Only and Voiced
+Only, which leave out what has nothing found or voiced and take it from the counts, By Zone (the
+default) or By Type, and the window's Unlock Unfound Readables, which makes every one readable
+here. Without it a readable not found yet is greyed with a padlock, and its page says to open it in
+the world. A filter that hides the chosen row moves the page to the nearest row above it that is
+still listed, or to where the player stands; a row chosen only because the player stood there is
+chosen again. The window opens on where the player stands: the dungeon's card, else the zone's,
+else the continent's banner.
+
+**The page.** A readable's page has its name, the places it is in under it (its first two zones, and
+how many more; a click goes up to its kind in its place, then the zone and the continent), and
+then two parts: Where to Find It (how it is had: "Dropped by Defias Messenger (Westfall)", each
+source with its zone) and its words, all its pages one after another. A zone's, city's, continent's
+or dungeon's page has its count, Places' picture of the place above it and links to the place's story
+and quests (`SpokenCompendium.PlaceLinks`); the other lines (a kind, a banner) show their count
+alone. Play starts the readable from its first page with a recording and becomes Stop and then
+Replay while it is read, as every Play of the Compendium's; browsing here does not count as hearing
+it in the world (Read Only Once), nor as finding it. Report is there on every page, voiced or
+not: it files the page being read, else the first with a recording, else the first, at
+`/books/r/<page id>`, which the site renders for an unvoiced page too. Hide Report Buttons, in
+Spoken's settings, takes it away. Shift-click on a readable's row queues it behind what is playing
+and leaves the page as it was.
+
+**Opened from elsewhere.** The book frame and DialogueUI's book view have the Compendium's tome
+button (`UI/PlayButton.lua`, `NewOpenButton`), which opens this tab on that readable with what holds
+it opened (`SpokenBooks:ShowReadables(bookId)`). It shows for readables listed, and found or with
+Unlock Unfound Readables on (`SpokenBooks:CompendiumHas`). Another tab's link to a place opens it
+through `openPlace` (`SpokenBooks:OpenPlace`), only while the list is By Zone, which has the
+place's row.
 
 The page is laid out by Spoken's `UI/Layout.lua`.
 

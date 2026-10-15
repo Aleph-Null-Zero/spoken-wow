@@ -226,6 +226,21 @@ button.scripts.OnClick(button)
 Expect("pressing it again reads the book", Reading(), 3)
 Expect("...whatever autoplay and read-once say", button:GetText(), "Stop")
 
+-- Open in Azeroth's Compendium beside it, for a writing whose page the Compendium shows.
+local open, opened = B.openButton, nil
+local has, show = B.CompendiumHas, B.ShowReadables
+B.CompendiumHas = function(_, book) return book ~= nil end
+B.ShowReadables = function(_, book) opened = book end
+B:RefreshPlayButton()
+Expect("Open in Azeroth's Compendium beside Play, for a writing the Compendium shows",
+    open ~= nil and open:IsShown() and open.anchor.relativeTo == button and open.anchor.point, "RIGHT")
+open.scripts.OnClick(open)
+Expect("...opening its tab on the book", opened ~= nil and opened == B:PlaceOf(B:PageOnScreen()), true)
+B.CompendiumHas = function() return false end
+B:RefreshPlayButton()
+Expect("...and none for one it does not", open:IsShown(), false)
+B.CompendiumHas, B.ShowReadables = has, show
+
 -- Mail is not a book, and a button on a letter would be an invitation to read somebody's
 -- post aloud.
 B:StopReading()

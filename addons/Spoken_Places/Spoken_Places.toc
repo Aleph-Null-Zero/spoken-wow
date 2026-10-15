@@ -84,11 +84,9 @@ Data/koKR/Aliases.lua
 Data/zhCN/Aliases.lua
 Data/zhTW/Aliases.lua
 Data/ForeverAreas.lua
-Data/Dungeons.lua
 Data/AreaZones.lua
 UI/CopyLink.lua
-UI/AudioButton.lua
-UI/ReportButton.lua
+UI/ContributeButton.lua
 UI/LorePage.lua
 UI/MapPanel.lua
 UI/SubzoneClick.lua

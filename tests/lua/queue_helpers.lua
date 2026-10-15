@@ -76,7 +76,7 @@ function M.Expecter(print)
 end
 
 --- The zones addon loaded for real, Core.lua included -- unlike wow_client_stub.LoadZones,
---- which loads only Audio/ReportButton/Autoplay against a hand-built fake table for playback
+--- which loads only Audio/ContributeButton/Autoplay against a hand-built fake table for playback
 --- tests. Contribute.lua needs the real GetPlayerMapID, GetLoreWithFallback, GetSubzoneLore,
 --- GetLore and IsPending, all of which live in Core.lua, so this loads that too, and the
 --- language and pack answers it sends, from Language.lua and Audio.lua. Spoken's UI/Compendium.lua
@@ -160,9 +160,14 @@ function M.NewZoneLore()
     function Z:SiteURL() return "https://spoken.test" end
     function Z:GetAudioPacks() return {} end
     function Z:GetActiveAudioPack() return nil end
+    -- The voice is Spoken's Voice Language and its fallback, as Audio.lua reads them.
+    function Z:GetVoiceLanguage() return Spoken and Spoken.VoiceLanguage and Spoken:VoiceLanguage() or "enUS" end
+    function Z:GetFallbackLanguage() return "enUS" end
     function Z:GetAudioPackLabel() return "none" end
     function Z:GetSelectableLanguages() return { { code = "enUS", name = "English" } } end
     function Z:GetLanguagePreference() return nil end
+    function Z:IsPreviewingLanguage() return cfg.languagePreview == true end
+    function Z:SetLanguagePreview(on) cfg.languagePreview = on and true or false end
     function Z:GetAutoLanguage() return "enUS" end
     function Z:GetLocaleInfo() return { name = "English" } end
     function Z:GetLanguageName(code) return code and Z.L["LANG_" .. code] or "Automatic" end

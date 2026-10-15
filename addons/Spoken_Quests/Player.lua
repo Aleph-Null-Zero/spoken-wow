@@ -351,7 +351,7 @@ function Player:EnqueuePrepared(soundData, asked)
     end
 
     if Spoken:IsPaused() then
-        Debug:Record("queue-paused", "The voiceover is queued, but playback is stopped; run /spq play")
+        Debug:Record("queue-paused", "The voiceover is queued, but playback is stopped; run /sp replay")
     end
     return true
 end
@@ -435,6 +435,8 @@ function Player:Setup()
         testBeforeQueue = true,
         -- Its settings follow the profile chosen in Spoken's own settings.
         profiles = function() return Addon.db end,
+        -- Printed after Spoken's own by its Show Diagnostics.
+        diagnostics = function() Options:PrintDiagnostics() end,
         -- What Spoken's settings show on this part's card: which voice packs are installed.
         packs = function()
             local names = {}

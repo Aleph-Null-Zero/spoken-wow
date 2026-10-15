@@ -30,7 +30,7 @@ local function Boot()
     C_Timer.After = after
     local Z = H.LoadZones(ZONES)
     assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
-    for _, file in ipairs({ "Autoplay", "Discovery", "Data/Dungeons", "UI/LoreWindow" }) do
+    for _, file in ipairs({ "Autoplay", "Discovery", "UI/LoreWindow" }) do
         assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
     end
     Z.Zones[BARRENS] = { name = "The Barrens", full = "Dry land." }
@@ -72,6 +72,34 @@ Z = Boot()
 stub.FireEvent("CHAT_MSG_SYSTEM", "Discovered Razorfen Downs: 10 experience gained.")
 clip = Spoken:GetCurrent()
 Expect("discovering it at its entrance plays the same story", clip and clip.key, "s:1441:razorfen downs")
+
+-- Shift-click on a story's row in Azeroth's Compendium queues it, as on Quests, choosing nothing.
+Z = Boot()
+Z:Set("showUndiscovered", true)
+Spoken:StopAll()
+for _, file in ipairs({ "UI/ContributeButton", "UI/LorePage" }) do assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z) end
+Z.Zones[1414] = { name = "Kalimdor", full = "West." }
+Z:SetupLoreWindow()
+Z:ToggleLoreWindow()
+local function RowFor(label, frame)
+    for _, child in ipairs((frame or Z.window).children or {}) do
+        if child.row and child.shown ~= false and child.row.label == label then return child end
+        local found = RowFor(label, child)
+        if found then return found end
+    end
+end
+local title = Z.window.page.title.text
+local shift = _G.IsShiftKeyDown
+_G.IsShiftKeyDown = function() return true end
+local row = RowFor("Razorfen Downs")
+row.scripts.OnClick(row)
+clip = Spoken:GetCurrent()
+Expect("a shift-click on a story's row in the Compendium queues it by its own id", clip and clip.key, "s:1441:razorfen downs")
+Expect("...choosing nothing", Z.window.page.title.text, title)
+row.scripts.OnClick(row)
+Expect("...and a second does not queue it twice", Spoken:GetQueueSize(), 1)
+_G.IsShiftKeyDown = shift
+Spoken:StopAll()
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll zones story place tests passed")
