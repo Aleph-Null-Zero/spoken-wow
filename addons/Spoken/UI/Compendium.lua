@@ -1016,6 +1016,13 @@ function C.NewList(panel, opts)
 	return list
 end
 
+--- Why a locked row does not open, for a tab's `locked` option: Spoken's own sentence naming the
+--- Unlock switch (`label` is its key in Spoken's strings).
+function C.LockedReason(label)
+	local L = SpokenEnv and SpokenEnv.L
+	return L and L.LOCKED_ROW_FMT and L[label] and string.format(L.LOCKED_ROW_FMT, L[label]) or nil
+end
+
 local function OnRowClick(self)
 	local item = self.row
 	if not item or item.locked then
@@ -1074,10 +1081,13 @@ function List:AcquireRow(index)
 	row:SetScript("OnEnter", function(self)
 		self.over = not (self.row and self.row.locked)
 		Light(self)
-		-- A name cut short with an ellipsis, whole in the tooltip.
-		if GameTooltip and self.row and self.label.IsTruncated and self.label:IsTruncated() then
+		-- A name cut short with an ellipsis, whole in the tooltip; a locked row says why it does not
+		-- open, in the reason's colour the settings use.
+		local reason = self.row and self.row.locked and self.list.opts.locked and self.list.opts.locked(self.row)
+		if GameTooltip and self.row and (reason or (self.label.IsTruncated and self.label:IsTruncated())) then
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 			GameTooltip:SetText(self.row.label or "")
+			if reason then GameTooltip:AddLine(reason, 1, 0.5, 0.25, true) end
 			GameTooltip:Show()
 			self.tipShown = true
 		end

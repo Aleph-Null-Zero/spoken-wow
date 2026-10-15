@@ -109,7 +109,7 @@ function M.NewZoneLore()
         autoplayExplored = false, debug = false,
         -- What the options panel reads, as well as what the playback files do.
         showMapPanel = true, panelSide = "RIGHT",
-        panelWidth = 320, fontSize = 12 }
+        panelWidth = 320, fontSize = 12, highlightOpacity = 0.35 }
     local Z = { printed = {}, heard = {}, zoneChanged = {}, clientLocale = "enUS" }
     -- The addon's real English strings, so a label a file reads (a minimap entry, a button,
     -- a settings row) is the one the client would show rather than nil. Language.lua is what
@@ -132,6 +132,7 @@ function M.NewZoneLore()
     Z.Subzones = { [1411] = { ["valley of trials"] = { name = "Valley of Trials" } } }
     function Z:Get(key) return cfg[key] end
     function Z:Set(key, value) cfg[key] = value end
+    function Z:RefreshMapHighlight() end
     function Z:SetMapPanelShown(shown)
         cfg.showMapPanel = shown
         if shown then cfg.mapPanelCollapsed = false end

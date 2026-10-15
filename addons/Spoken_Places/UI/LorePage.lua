@@ -199,8 +199,6 @@ function SpokenZones:CreateLorePage(parent, style)
 	-- same ring. The window has it open already, so not there.
 	if style ~= "book" and _G.Spoken and Spoken.CreateRoundButton then
 		local open = Spoken:CreateRoundButton(inner.frame, "icon", nil, SpokenCompendium.ICON)
-		-- The tome is a dark picture already: the ring's vignette at full strength left it black.
-		if type(open.vignette) == "table" and open.vignette.SetAlpha then open.vignette:SetAlpha(0.35) end
 		open:SetScript("OnClick", function(self)
 			if self.mapID then SpokenZones:ShowLoreFor(self.mapID, self.areaKey) end
 		end)

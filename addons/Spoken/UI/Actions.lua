@@ -653,6 +653,38 @@ local function Greys(button)
     button:HookScript("OnEnable", function(self) Paint(self, true) end)
 end
 
+--- Dress `button` as a square Play button with the game's checkbox for a border, as the quest
+--- log's rows have beside it: Play's glyph inside, `button:SetState("play" | "stop" | "replay")`.
+--- `button:MatchBox(checkbox)` takes the checkbox's size and, where it is drawn from an atlas,
+--- that atlas, so the two read as a pair whatever the client draws its checkbox with.
+function Actions.BoxPlay(button)
+    local layout = SpokenLayout
+    local border = layout and layout.AtlasTexture and layout.AtlasTexture(button, "BACKGROUND", "checkbox-minimal")
+    if border then border:SetAllPoints(button) end
+    local glyph = button:CreateTexture(nil, "ARTWORK")
+    glyph:SetPoint("CENTER")
+    glyph:SetSize(11, 11)
+    glyph:SetAlpha(GLYPH_ALPHA)
+    button.border, button.glyph = border, glyph
+    Actions.SetPlayGlyph(button, "play")
+    function button:SetState(state) Actions.SetPlayGlyph(self, state) end
+    button:HookScript("OnEnter", function(self) if self:IsEnabled() then glyph:SetAlpha(1) end end)
+    button:HookScript("OnLeave", function(self) if self:IsEnabled() then glyph:SetAlpha(GLYPH_ALPHA) end end)
+    function button:MatchBox(box)
+        local texture = box.GetNormalTexture and box:GetNormalTexture()
+        local atlas = type(texture) == "table" and texture.GetAtlas and texture:GetAtlas()
+        if atlas and self.border then self.border:SetAtlas(atlas) end
+        local width, height = box:GetWidth(), box:GetHeight()
+        if type(width) == "number" and type(height) == "number" and width >= 12 and height >= 12 then
+            self:SetSize(width, height)
+            -- Play's glyph fills the box as it fills the round button's ring: about half.
+            glyph:SetSize(math.floor(width * 0.55), math.floor(height * 0.55))
+        end
+    end
+    Greys(button)
+    return button
+end
+
 --- The round Play, Skip and Report buttons, as feature addons ask for them
 --- (Spoken:CreateRoundButton), and "icon", with `icon` in the ring, cut round to sit inside it.
 function Actions.NewRound(parent, kind, name, icon)

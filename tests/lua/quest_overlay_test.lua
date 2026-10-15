@@ -118,8 +118,11 @@ Expect("...once, however often the log is redrawn", stub.SetCreatureCount() - se
 buttons[748]:Click()
 -- Read before the clip ends: the button drops its sound data when playback stops.
 Expect("...under the quest's own title", buttons[748].soundData.title, "Poison Water")
+Expect("...the row's Play wears the player's square dress, with the checkbox's border", type(buttons[748].SetState), "function")
+Expect("...showing Stop while its line speaks", buttons[748].state, "stop")
 stub.Advance(3)
 Expect("clicking play reads the accept line", table.concat(played, ", "), "748-accept")
+Expect("...and Play once it has", buttons[748].state, "play")
 
 -- The giver, named the way the dialog would have: on an English client the pack's name, on
 -- any other the client's own, which the addon ships because the packs only have English.

@@ -199,6 +199,9 @@ local function AtlasTexture(frame, layer, atlas, useAtlasSize)
     return texture
 end
 
+Layout.AtlasTexture = AtlasTexture
+Layout.HEADER_HEIGHT = HEADER_HEIGHT
+
 -- The settings' own sounds: the checkbox's on and off, as the game's settings play them.
 local function Sound(name)
     local kit = SOUNDKIT and SOUNDKIT[name]
@@ -658,8 +661,8 @@ function Layout:Section(text, plain)
         if fs then
             fs:Show()
             local here = layout.left
-            if layout.centred then
-                -- Across the rows' middle, in a window that centres its titles (the welcome).
+            if layout.centred and not layout.leftTitles then
+                -- Across the rows' middle, in a window that centres its titles.
                 fs:SetJustifyH("CENTER")
                 fs:ClearAllPoints()
                 fs:SetPoint("TOP", parent, "TOPLEFT", math.floor(here + layout:Width() / 2), top - SECTION_TITLE_Y)

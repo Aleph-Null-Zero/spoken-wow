@@ -1171,6 +1171,7 @@ local function Build(panel)
 		build = BuildRows,
 		isSelected = IsSelected,
 		onClick = OnClick,
+		locked = function() return SpokenCompendium.LockedReason("OPT_UNLOCK_WRITINGS") end,
 		onHidden = OnHidden,
 		onSearch = function(text)
 			filter = text

@@ -120,6 +120,8 @@ function SpokenZones:SetupOptions()
 	-- Beside the map, in Azeroth's Compendium and in the reading window alike.
 	layout:Checkbox(L.OPT_PICTURES, nil,
 		Get("showPictures"), Set("showPictures"), RedrawEverything)
+	layout:Slider(L.OPT_MAP_HIGHLIGHT, 0, 1, 0.05, Get("highlightOpacity"), Set("highlightOpacity"),
+		function() SpokenZones:RefreshMapHighlight() end)
 	layout:Checkbox(L.OPT_PLAY_BUTTON, nil,
 		voiced, Set("voiceEnabled"), function()
 			SpokenZones:StopLore()

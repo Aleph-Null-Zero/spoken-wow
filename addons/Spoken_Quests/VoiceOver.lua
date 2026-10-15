@@ -383,6 +383,8 @@ local defaults = {
             -- /spq read is typed. GossipFrequency then has nothing to decide.
             Autoplay = true,
             OGThrall = false,
+            -- On, an automatic read starts when the window closes instead of when it opens.
+            ReadAfterClose = false,
             -- What NPCs say in chat after this player accepts or turns in a quest
             -- (Followup.lua). Autoplay off silences these too: they read themselves.
             FollowupLines = true,
@@ -1003,6 +1005,25 @@ function ResolveQuestID(source, questID, questTitle, targetName, questText, quie
         questTitle or ""))
 end
 
+-- With Read When Window Closes on, an automatic read waits for the window to close
+-- (QUEST_FINISHED). The window shows one quest page at a time, so the last one read is the one kept.
+local pendingRead
+
+local function QueueRead(soundData, manual)
+    -- A read from the snapshot of a window that has already closed has nothing left to wait for.
+    if not manual and Addon.db.profile.Audio.ReadAfterClose and not questSnapshotInUse then
+        pendingRead = soundData
+        -- Held counts as handled for the watcher, or it would read the quest again once the window closes.
+        if questSnapshot then questSnapshot.dispatched = true end
+        local state = Addon.autoQuestState
+        if state then
+            state.completedKey, state.lastHandledKey, state.lastHandledAt = state.candidateKey, state.candidateKey, GetTime()
+        end
+        return
+    end
+    Player:Enqueue(soundData, manual)
+end
+
 function Addon:QUEST_DETAIL(_, manual)
     local questID, questTitle, questText, guid, targetName, isObjectOrItem = ReadQuestFields("QUEST_DETAIL")
 
@@ -1040,7 +1061,7 @@ function Addon:QUEST_DETAIL(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    QueueRead(soundData, manual)
 end
 
 function Addon:QUEST_PROGRESS(_, manual)
@@ -1068,7 +1089,7 @@ function Addon:QUEST_PROGRESS(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    QueueRead(soundData, manual)
 end
 
 function Addon:QUEST_COMPLETE(_, manual)
@@ -1097,7 +1118,7 @@ function Addon:QUEST_COMPLETE(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    QueueRead(soundData, manual)
 end
 
 ---@param followsOption boolean? the page was reached by picking one of the NPC's options
@@ -1155,6 +1176,10 @@ function Addon:MuteGreetingAhead(event)
     if not (SPEECH_EVENTS[event] or quest) then
         return
     end
+    -- A quest read that waits for the window to close leaves the NPC's greeting alone.
+    if quest and self.db.profile.Audio.ReadAfterClose then
+        return
+    end
     -- Game Greeting First: nothing is cut, and the line waits for the greeting instead.
     if GreetingFirst:IsOn() then
         GreetingFirst:Open()
@@ -1197,6 +1222,9 @@ function Addon:ExpectedLine(event, textIsCurrent)
         end
         return speech.text() or ""
     elseif quest then
+        if self.db.profile.Audio.ReadAfterClose then
+            return nil
+        end
         -- The quest ID can still be the previous quest's this early; the worst that costs is
         -- one greeting muted for nothing, or one cut off as it was before.
         local questID = QuestIDFor(event)
@@ -1318,6 +1346,9 @@ function Addon:QUEST_FINISHED()
         end
     end
     currentQuestSoundData = nil
+    local pending = pendingRead
+    pendingRead = nil
+    if pending then Player:Enqueue(pending) end
 end
 
 function Addon:GOSSIP_CLOSED()

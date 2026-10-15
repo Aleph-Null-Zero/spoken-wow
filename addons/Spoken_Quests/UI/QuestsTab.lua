@@ -1552,6 +1552,7 @@ local function Build(panel)
         build = BuildRows,
         isSelected = IsSelected,
         onClick = OnClick,
+        locked = function() return C.LockedReason("OPT_UNLOCK_QUESTS") end,
         onHidden = OnHidden,
         onSearch = function(text)
             filter = text

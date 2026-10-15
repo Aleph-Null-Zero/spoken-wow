@@ -73,6 +73,10 @@ function SettingsPanel:Setup()
             if value then GreetingFirst:SetDialogApart() end
         end)
     layout:Requires(greetingFirst, function() return Addon:IsAutoplayOn() end, L.REASON_AUTOPLAY)
+    layout:Requires(layout:Checkbox(L.OPT_PANEL_READ_AFTER_CLOSE, nil,
+        function() return audio().ReadAfterClose end,
+        function(value) audio().ReadAfterClose = value end),
+        function() return Addon:IsAutoplayOn() end, L.REASON_AUTOPLAY)
 
     -- Only with DialogueUI installed, on Spoken's page.
     if DialogueUIBridge and DialogueUIBridge.Problem and IsAddOnLoaded and IsAddOnLoaded("DialogueUI") then

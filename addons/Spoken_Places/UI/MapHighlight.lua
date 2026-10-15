@@ -5,7 +5,7 @@
 -- (SubzoneClick.lua). An area resolves under the cursor only once it is explored
 -- (MapUtil.FindBestAreaNameAtMouse), and every explored area is drawn on the map as an
 -- exploration overlay: a texture in the area's shape (C_MapExplorationInfo.GetExploredMapTextures).
--- The highlight is that overlay drawn again over the map, added at HIGHLIGHT_ALPHA, laid out in
+-- The highlight is that overlay drawn again over the map, added at the Area Highlight setting, laid out in
 -- tiles exactly as Blizzard's MapExplorationPin lays it out. It lights and goes out at once, as
 -- the continent map's own highlight does.
 --
@@ -16,8 +16,6 @@
 
 local _, SpokenZones = ...
 
--- How bright the lit area is.
-local HIGHLIGHT_ALPHA = 0.35
 -- Points across and down an overlay's rectangle asked which area they are in.
 local SAMPLES = 6
 
@@ -199,6 +197,11 @@ local function OnUpdate()
 	state.frame:SetShown(info ~= nil)
 end
 
+-- How bright the lit area is, and whether it follows the pointer at all: 0 is off.
+local function Opacity()
+	return tonumber(SpokenZones:Get("highlightOpacity")) or 0
+end
+
 local function Reset()
 	state.overlaysFor, state.lit = nil, nil
 	state.x, state.y, state.mapID, state.focus = nil, nil, nil, nil
@@ -219,7 +222,6 @@ function SpokenZones:SetupMapHighlight()
 	local levels = WorldMapFrame.GetPinFrameLevelsManager and WorldMapFrame:GetPinFrameLevelsManager()
 	local explored = levels and levels.GetValidFrameLevel and levels:GetValidFrameLevel("PIN_FRAME_LEVEL_MAP_EXPLORATION")
 	frame:SetFrameLevel((explored or canvas:GetFrameLevel()) + 1)
-	frame:SetAlpha(HIGHLIGHT_ALPHA)
 	frame:Hide()
 	frame:EnableMouse(false)
 	state.frame = frame
@@ -227,7 +229,19 @@ function SpokenZones:SetupMapHighlight()
 	-- Parented to WorldMapFrame so OnUpdate only runs while the map is open.
 	state.driver = CreateFrame("Frame", nil, WorldMapFrame)
 	state.driver:SetScript("OnUpdate", OnUpdate)
+	SpokenZones:RefreshMapHighlight()
 	-- An area explored since the map last opened has its overlay by the next time it opens.
 	WorldMapFrame:HookScript("OnShow", Reset)
 	WorldMapFrame:HookScript("OnHide", Reset)
+end
+
+--- Apply the Area Highlight setting: the brightness, and no work at all while it is 0.
+function SpokenZones:RefreshMapHighlight()
+	if not state.driver then
+		return
+	end
+	local opacity = Opacity()
+	state.frame:SetAlpha(opacity)
+	state.driver:SetShown(opacity > 0)
+	Reset()
 end
