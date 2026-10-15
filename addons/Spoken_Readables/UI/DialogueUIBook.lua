@@ -104,7 +104,7 @@ function Book:Row()
 			if key and SpokenBooks:IsNarrating(key) then
 				SpokenBooks:StopReading(key)
 			elseif first then
-				SpokenBooks:SyncTo(first)
+				SpokenBooks:SyncTo(first, nil, true)
 			end
 		end
 		Book:Draw()

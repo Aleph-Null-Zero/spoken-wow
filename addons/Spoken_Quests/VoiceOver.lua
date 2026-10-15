@@ -70,11 +70,11 @@ local questSnapshotInUse
 -- interaction, and the global its text is read from.
 local QUEST_EVENTS = {
     QUEST_DETAIL = { sound = Enums.SoundEvent.QuestAccept, source = "accept",
-        text = function() return GetQuestText and GetQuestText() or "" end },
+        text = function() return GetQuestText and NotSecret(GetQuestText()) or "" end },
     QUEST_PROGRESS = { sound = Enums.SoundEvent.QuestProgress, source = "progress",
-        text = function() return GetProgressText and GetProgressText() or "" end },
+        text = function() return GetProgressText and NotSecret(GetProgressText()) or "" end },
     QUEST_COMPLETE = { sound = Enums.SoundEvent.QuestComplete, source = "complete",
-        text = function() return GetRewardText and GetRewardText() or "" end },
+        text = function() return GetRewardText and NotSecret(GetRewardText()) or "" end },
 }
 
 --- GetQuestID for the dialog `event` names. On a legacy client GetQuestID is
@@ -85,7 +85,7 @@ local function QuestIDFor(event)
     if quest and Addon.NoteLegacyQuestEvent then
         Addon:NoteLegacyQuestEvent(quest.source, quest.text())
     end
-    return GetQuestID and GetQuestID() or 0
+    return GetQuestID and NotSecret(GetQuestID()) or 0
 end
 
 --- The quest on the open dialog `event` names, falling back on its title, NPC and text where
@@ -93,7 +93,7 @@ end
 --- Followup.lua's accept and turn-in hooks on the legacy clients.
 function Addon:DialogQuestID(event)
     local quest = QUEST_EVENTS[event]
-    return ResolveQuestID(quest.source, QuestIDFor(event), GetTitleText and GetTitleText() or "",
+    return ResolveQuestID(quest.source, QuestIDFor(event), GetTitleText and NotSecret(GetTitleText()) or "",
         Utils:GetNPCName() or "", quest.text(), true) or 0
 end
 
@@ -104,7 +104,7 @@ local function CaptureQuestSnapshot(event)
     end
     local readText = quest.text
     local questID = QuestIDFor(event)
-    local questTitle = GetTitleText and GetTitleText() or ""
+    local questTitle = GetTitleText and NotSecret(GetTitleText()) or ""
     -- Nothing to replay, and nothing to identify a quest by either.
     if (not questID or questID == 0) and questTitle == "" then
         return
@@ -127,7 +127,7 @@ local function ReadQuestFields(event)
         return snapshot.questID, snapshot.title, snapshot.text, snapshot.guid, snapshot.targetName,
             snapshot.isObjectOrItem
     end
-    return QuestIDFor(event), GetTitleText(), QUEST_EVENTS[event].text(), Utils:GetNPCGUID(),
+    return QuestIDFor(event), NotSecret(GetTitleText()), QUEST_EVENTS[event].text(), Utils:GetNPCGUID(),
         Utils:GetNPCName(), Utils:IsNPCObjectOrItem()
 end
 
@@ -144,7 +144,7 @@ local function GetVisibleQuestEvent()
         return "QUEST_GREETING"
     end
 
-    local questID = GetQuestID and GetQuestID()
+    local questID = GetQuestID and NotSecret(GetQuestID())
     if not questID or questID == 0 then
         return
     end
@@ -294,8 +294,8 @@ local function GetVisibleDialogueEvent()
 end
 
 local SPEECH_EVENTS = {
-    QUEST_GREETING = { sound = Enums.SoundEvent.QuestGreeting, text = function() return GetGreetingText() end },
-    GOSSIP_SHOW = { sound = Enums.SoundEvent.Gossip, text = function() return GetGossipText() end },
+    QUEST_GREETING = { sound = Enums.SoundEvent.QuestGreeting, text = function() return NotSecret(GetGreetingText()) end },
+    GOSSIP_SHOW = { sound = Enums.SoundEvent.Gossip, text = function() return NotSecret(GetGossipText()) end },
 }
 
 --- The line the open dialog would read, resolved against the packs, or nil when no dialog
@@ -316,7 +316,7 @@ function Addon:GetVisibleLine(event)
     local probe
     if quest then
         local questID = ResolveQuestID(quest.source, QuestIDFor(event),
-            GetTitleText and GetTitleText() or "", Utils:GetNPCName() or "", quest.text(), true)
+            GetTitleText and NotSecret(GetTitleText()) or "", Utils:GetNPCName() or "", quest.text(), true)
         if not questID then
             return nil
         end
@@ -558,7 +558,7 @@ function Addon:OnInitialize()
             questSnapshot = nil
             ResetCandidate(state)
             -- Said once for each quest opened meanwhile, which is the question a player asks.
-            local open = GetQuestID and GetQuestID() or 0
+            local open = GetQuestID and NotSecret(GetQuestID()) or 0
             if open and open ~= 0 then
                 Debug:Note("watcher", "off:" .. tostring(open),
                     "quest %s open, not read: Read Automatically is off", tostring(open))
@@ -566,7 +566,7 @@ function Addon:OnInitialize()
             return
         end
         local questCallSucceeded, questID = pcall(function()
-            return GetQuestID and GetQuestID() or 0
+            return GetQuestID and NotSecret(GetQuestID()) or 0
         end)
         if not questCallSucceeded then
             error(questID)
@@ -595,7 +595,7 @@ function Addon:OnInitialize()
         end
 
         local titleSucceeded, questTitle = pcall(function()
-            return GetTitleText and GetTitleText() or ""
+            return GetTitleText and NotSecret(GetTitleText()) or ""
         end)
         if not titleSucceeded then
             error(questTitle)
@@ -895,7 +895,10 @@ function Addon:OnInitialize()
 
     local function MakeAbandonQuestHook(field, getFieldData)
         return function()
-            local data = getFieldData()
+            local data = NotSecret(getFieldData())
+            if data == nil then
+                return
+            end
             local soundsToRemove = {}
             for _, soundData in ipairs(Player:Queued()) do
                 if Enums.SoundEvent:IsQuestEvent(soundData.event) and soundData[field] == data then
@@ -925,10 +928,11 @@ function Addon:OnInitialize()
     if C_GossipInfo and C_GossipInfo.SelectOption then
         hooksecurefunc(C_GossipInfo, "SelectOption", function(optionID)
             gossipOptionPicked = true
-            if lastGossipOptions then
+            optionID = NotSecret(optionID)
+            if lastGossipOptions and optionID then
                 for _, info in ipairs(lastGossipOptions) do
-                    if info.gossipOptionID == optionID then
-                        selectedGossipOption = info.name
+                    if NotSecret(info.gossipOptionID) == optionID then
+                        selectedGossipOption = NotSecret(info.name)
                         break
                     end
                 end
@@ -938,8 +942,9 @@ function Addon:OnInitialize()
     elseif SelectGossipOption then
         hooksecurefunc("SelectGossipOption", function(index)
             gossipOptionPicked = true
-            if lastGossipOptions then
-                selectedGossipOption = lastGossipOptions[1 + (index - 1) * 2]
+            index = NotSecret(index)
+            if lastGossipOptions and index then
+                selectedGossipOption = NotSecret(lastGossipOptions[1 + (index - 1) * 2])
                 lastGossipOptions = nil
             end
         end)
@@ -993,7 +998,7 @@ function ResolveQuestID(source, questID, questTitle, targetName, questText, quie
         questTitle or ""))
 end
 
-function Addon:QUEST_DETAIL()
+function Addon:QUEST_DETAIL(_, manual)
     local questID, questTitle, questText, guid, targetName, isObjectOrItem = ReadQuestFields("QUEST_DETAIL")
 
     Debug:Record("quest-detail", format("QUEST_DETAIL: raw ID %s, title %q, NPC %q",
@@ -1030,10 +1035,10 @@ function Addon:QUEST_DETAIL()
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData)
+    Player:Enqueue(soundData, manual)
 end
 
-function Addon:QUEST_PROGRESS()
+function Addon:QUEST_PROGRESS(_, manual)
     local questID, questTitle, questText, guid, targetName, isObjectOrItem = ReadQuestFields("QUEST_PROGRESS")
 
     Debug:Record("quest-progress", format("QUEST_PROGRESS: raw ID %s, title %q, NPC %q",
@@ -1058,10 +1063,10 @@ function Addon:QUEST_PROGRESS()
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData)
+    Player:Enqueue(soundData, manual)
 end
 
-function Addon:QUEST_COMPLETE()
+function Addon:QUEST_COMPLETE(_, manual)
     local questID, questTitle, questText, guid, targetName, isObjectOrItem = ReadQuestFields("QUEST_COMPLETE")
 
     Debug:Record("quest-complete", format("QUEST_COMPLETE: raw ID %s, title %q, NPC %q",
@@ -1087,7 +1092,7 @@ function Addon:QUEST_COMPLETE()
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData)
+    Player:Enqueue(soundData, manual)
 end
 
 ---@param followsOption boolean? the page was reached by picking one of the NPC's options
@@ -1203,10 +1208,13 @@ end
 function Addon:QUEST_GREETING(event, manual)
     local guid = Utils:GetNPCGUID()
     local targetName = Utils:GetNPCName()
-    local greetingText = GetGreetingText()
+    local greetingText = NotSecret(GetGreetingText())
 
     -- Can happen if the player interacted with an NPC while having main menu or options opened
     if not guid and not targetName then
+        return
+    end
+    if not greetingText then
         return
     end
 
@@ -1228,7 +1236,7 @@ function Addon:QUEST_GREETING(event, manual)
             self.db.char.hasSeenGossipForNPC[npcKey] = true
         end
     }
-    Player:Enqueue(soundData)
+    Player:Enqueue(soundData, manual)
 end
 
 -- The option the player picked to reach the gossip on screen, as its clip's label. Kept past
@@ -1242,7 +1250,7 @@ local shownGossipKey
 --- not it is read. With autoplay off it is not, and the next page's label would otherwise be
 --- looked up in this page's predecessor's options.
 function NoteGossipPage()
-    local pageKey = tostring(Utils:GetNPCGUID() or Utils:GetNPCName()) .. ":" .. tostring(GetGossipText())
+    local pageKey = tostring(Utils:GetNPCGUID() or Utils:GetNPCName()) .. ":" .. tostring(NotSecret(GetGossipText()))
     if not selectedGossipOption and pageKey == shownGossipKey then
         return
     end
@@ -1260,10 +1268,13 @@ end
 function Addon:GOSSIP_SHOW(event, manual)
     local guid = Utils:GetNPCGUID()
     local targetName = Utils:GetNPCName()
-    local gossipText = GetGossipText()
+    local gossipText = NotSecret(GetGossipText())
 
     -- Can happen if the player interacted with an NPC while having main menu or options opened
     if not guid and not targetName then
+        return
+    end
+    if not gossipText then
         return
     end
 
@@ -1286,7 +1297,7 @@ function Addon:GOSSIP_SHOW(event, manual)
             self.db.char.hasSeenGossipForNPC[npcKey] = true
         end
     }
-    Player:Enqueue(soundData)
+    Player:Enqueue(soundData, manual)
 end
 
 function Addon:QUEST_FINISHED()

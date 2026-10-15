@@ -18,6 +18,9 @@
 
 local ADDON_NAME, SpokenBooks = ...
 
+-- A value the game hands over as a secret, in an instance or in combat, reads as nil.
+local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
+
 local L = SpokenBooks.L
 
 local C = SpokenCompendium
@@ -936,7 +939,7 @@ end
 -- entrance.
 local function PlayerDungeon()
 	if not GetInstanceInfo then return nil end
-	local map = select(8, GetInstanceInfo())
+	local map = NotSecret((select(8, GetInstanceInfo())))
 	local dungeon = map and Dungeons()[map]
 	if dungeon and next(DungeonReadables(dungeon.zone, map)) then return map, dungeon.zone end
 end

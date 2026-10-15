@@ -1291,6 +1291,15 @@ Expect("...another character's name where the player's was", (PageWords() or "")
 stub.world.playerName = "Tester"
 local kept = VO.Addon.db.global.CompendiumText
 Expect("...kept by language", kept.deDE[KOBOLDS] ~= nil and kept.enUS == nil, true)
+-- A window whose id, title and words the game hands over as secrets keeps nothing.
+stub.world.questID = JENNEA
+stub.world.title = "Versiegelte Befehle"
+stub.world.questText = "Verbrennt dies nach dem Lesen."
+stub.Secrets(JENNEA, "Versiegelte Befehle", "Verbrennt dies nach dem Lesen.")
+Expect("a secret quest window raises no error", (pcall(stub.FireEvent, "QUEST_DETAIL")), true)
+stub.Secrets()
+stub.world.questID = 0
+Expect("...and keeps nothing", kept.deDE[JENNEA], nil)
 -- A quest whose English has a word for each sex: what a man was told is not shown to a woman.
 stub.world.questID = CANDLES
 stub.world.title = "Koboldkerzen"

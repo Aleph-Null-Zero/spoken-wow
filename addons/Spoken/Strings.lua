@@ -265,6 +265,7 @@ L = {
     OPT_CHANNEL_DIALOG_WARN = "On Dialog Volume, NPC voices are neither silenced nor turned down while Spoken talks, and Game Greeting First cannot tell Spoken's voices from an NPC's.",
     OPT_MUTE_DIALOGUE = "Silence NPC Voices",
     OPT_MUTE_DIALOGUE_TIP = "Mutes the game's own NPC voices while a line is read, so they do not talk over it. They come back when Spoken stops.",
+    OPT_READ_IN_BATTLEGROUNDS = "Read in Battlegrounds",
     OPT_LINE_GAP = "Pause Between Lines",
     OPT_LINE_GAP_TIP = "How long Spoken waits after a line before the next one starts. A book's pages read on without it.",
     OPT_MUTE_DIALOGUE_TIP_VANILLA = "Cut off an NPC's greeting voiceline when a line starts being read.",

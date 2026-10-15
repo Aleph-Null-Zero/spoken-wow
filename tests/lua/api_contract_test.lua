@@ -37,6 +37,8 @@ local METHODS = {
     "GetCurrent", "GetNowPlaying", "GetQueue", "GetQueueSize", "GetWaitingCount",
     "IsPlaying", "IsPaused", "GetHeldReason",
     "Pause", "Resume", "TogglePause", "Skip", "StopAll", "AddGate", "MuteChannel", "MuteGameDialogueAhead",
+    -- Read in Battlegrounds
+    "ReadsHere",
     -- callbacks
     "RegisterCallback", "UnregisterCallback",
     -- packs
