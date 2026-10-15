@@ -34,7 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
 import { explorerHref, reportHref, targetExplorerHref } from "@/lib/links";
 import type { ResultLine as BookLine } from "@/lib/books/search";
-import { searchPath, type SourceLine } from "@/lib/reports/detail";
+import { detailOf, regenerated, searchPath, type SourceLine } from "@/lib/reports/detail";
 import {
   reportsHref,
   SECTIONS,
@@ -148,36 +148,53 @@ export default function ReportTable({
   // line therefore stops the previous one with no bookkeeping - see AudioPlayer.
   const audio = useRef<HTMLAudioElement>(null);
 
+  /**
+   * One request per line for the page's life, kept as the promise so a play press that
+   * lands while the row's lookup is still in flight waits for it rather than asking again.
+   */
+  const requests = useRef(new Map<string, Promise<SourceLine | null>>());
+
   const load = useCallback(
-    async (reportSource: Source, lineId: string): Promise<SourceLine | null> => {
+    (reportSource: Source, lineId: string): Promise<SourceLine | null> => {
       const key = lineKey(reportSource, lineId);
-      let cached: SourceLine | null | undefined;
-      // Read through a setState rather than off `lines`, which this callback closes over
-      // stale: two rows expanded in the same tick would otherwise both fetch.
-      setLines((current) => {
-        cached = current[key];
-        return current;
-      });
-      if (cached !== undefined) return cached;
+      const known = requests.current.get(key);
+      if (known) return known;
 
-      const response = await fetch(searchPath(reportSource, lineId, lang)).catch(() => null);
-      const body = response?.ok
-        ? ((await response.json().catch(() => null)) as { lines?: SourceLine[] } | null)
-        : null;
-      const line = body?.lines?.[0] ?? null;
+      const request = (async () => {
+        const response = await fetch(searchPath(reportSource, lineId, lang)).catch(() => null);
+        const body = response?.ok
+          ? ((await response.json().catch(() => null)) as { lines?: SourceLine[] } | null)
+          : null;
+        const line = body?.lines?.[0] ?? null;
 
-      setLines((current) => ({ ...current, [key]: line }));
-      return line;
+        setLines((current) => ({ ...current, [key]: line }));
+        return line;
+      })();
+      requests.current.set(key, request);
+      return request;
     },
-    [],
+    [lang],
   );
 
+  // Every line on the page, looked up up front rather than on the first expand: whether its
+  // audio is outdated belongs in the row, where the scan down the table can see it.
+  useEffect(() => {
+    for (const { reports } of initial) {
+      const [first] = reports;
+      if (first.lineId) void load(first.source, first.lineId);
+    }
+  }, [initial, load]);
+
+  /**
+   * Opens the group's line below it, and unclamps what its reporters said. A report with no
+   * line still opens, for the second half.
+   *
+   * Not when the click ends a text selection: copying a phrase out of a report is a drag
+   * across it, and that drag should not fold the row away under the cursor.
+   */
   function toggle(group: ReportGroup) {
-    const report = group.reports[0];
-    if (!report.lineId) return;
-    const next = open === group.key ? null : group.key;
-    setOpen(next);
-    if (next !== null) void load(report.source, report.lineId);
+    if (window.getSelection()?.toString()) return;
+    setOpen((current) => (current === group.key ? null : group.key));
   }
 
   async function play(report: Report) {
@@ -223,6 +240,7 @@ export default function ReportTable({
 
   /** The line: a link into the explorer narrowed to it. The tab already says the section. */
   function whereCell(report: Report, count?: number) {
+    const line = report.lineId ? lines[lineKey(report.source, report.lineId)] : null;
     return (
       <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
         {/* The explorer, narrowed to this line: where a triager works. A report with no
@@ -256,31 +274,33 @@ export default function ReportTable({
             {count} reports
           </Badge>
         ) : null}
+        {line && detailOf(report.source, line).stale ? (
+          <span
+            className="shrink-0 text-amber-300"
+            title="Made from text that has since changed"
+          >
+            audio outdated
+          </span>
+        ) : null}
       </div>
     );
   }
 
-  /** Play and open the line. Once per line, so on a group's row rather than each report's. */
+  /** Play the line. Once per line, so on a group's row rather than each report's. */
   function lineActions(group: ReportGroup) {
     const [first] = group.reports;
     if (!first.lineId) return null;
-    const expanded = open === group.key;
 
     return (
-      <>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          title="Play this line"
-          aria-label="Play this line"
-          onClick={() => void play(first)}
-        >
-          <Play />
-        </Button>
-        <Button size="sm" variant="ghost" aria-expanded={expanded} onClick={() => toggle(group)}>
-          {expanded ? "Hide" : "Details"}
-        </Button>
-      </>
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        title="Play this line"
+        aria-label="Play this line"
+        onClick={() => void play(first)}
+      >
+        <Play />
+      </Button>
     );
   }
 
@@ -322,9 +342,15 @@ export default function ReportTable({
       lineActions,
       nested,
       expanded,
-    }: { where?: ReactNode; lineActions?: ReactNode; nested?: boolean; expanded: boolean },
+      onToggle,
+    }: {
+      where?: ReactNode;
+      lineActions?: ReactNode;
+      nested?: boolean;
+      expanded: boolean;
+      onToggle: () => void;
+    },
   ) {
-
     return (
       // Every cell is one line except the body, which is clamped to two, so the row centres
       // rather than aligning to a top edge that only one cell has.
@@ -343,7 +369,7 @@ export default function ReportTable({
 
         <td className="pr-3 text-xs whitespace-nowrap">{CATEGORY_COLUMN[report.category]}</td>
 
-        <td className="max-w-md pr-3">
+        <td className="max-w-md cursor-pointer pr-3" aria-expanded={expanded} onClick={onToggle}>
           <p className={cn("whitespace-pre-wrap", !expanded && "line-clamp-2")}>{report.body}</p>
           {report.name || report.email ? (
             <p className="text-muted-foreground mt-1 text-xs">
@@ -382,7 +408,12 @@ export default function ReportTable({
           {when(first.createdAt)}
         </td>
         <td className="max-w-[20rem] pr-3 text-xs">{whereCell(first, group.reports.length)}</td>
-        <td className="pr-3 text-xs" colSpan={2}>
+        <td
+          className="cursor-pointer pr-3 text-xs"
+          colSpan={2}
+          aria-expanded={open === group.key}
+          onClick={() => toggle(group)}
+        >
           {complaints.join(", ")}
         </td>
         <td className="pr-3 text-xs whitespace-nowrap">
@@ -483,12 +514,15 @@ export default function ReportTable({
                     where: whereCell(first),
                     lineActions: lineActions(group),
                     expanded,
+                    onToggle: () => toggle(group),
                   })
                 ) : (
                   groupRow(group)
                 ),
 
-                ...(single ? [] : group.reports.map((report) => reportRow(report, { nested: true, expanded }))),
+                ...(single ? [] : group.reports.map((report) =>
+                      reportRow(report, { nested: true, expanded, onToggle: () => toggle(group) }),
+                    )),
 
                 expanded && first.lineId && key ? (
                   <tr key={`${group.key}-detail`}>
@@ -498,14 +532,24 @@ export default function ReportTable({
                         lineId={first.lineId}
                         line={lines[key]}
                         canRegenerate={canRegenerate}
-                        onRegenerated={(version) =>
-                          setVersions((current) => ({ ...current, [key]: version }))
-                        }
-                        onOverridden={(text) =>
+                        onRegenerated={(version) => {
+                          setVersions((current) => ({ ...current, [key]: version }));
                           setLines((current) => {
                             const known = current[key];
                             if (!known) return current;
-                            return { ...current, [key]: { ...known, override: text } };
+                            return { ...current, [key]: regenerated(first.source, known) };
+                          });
+                        }}
+                        // Only quests lines can be rewritten. Whatever audio they have was
+                        // made from the old text, as the explorer marks it.
+                        onOverridden={(text) =>
+                          setLines((current) => {
+                            const known = current[key] as QuestLine | null | undefined;
+                            if (!known) return current;
+                            return {
+                              ...current,
+                              [key]: { ...known, override: text, stale: known.hasAudio },
+                            };
                           })
                         }
                       />

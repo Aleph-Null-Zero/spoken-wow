@@ -8,7 +8,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { detailOf, regeneratePath, reportTargetOf, searchPath } from "./detail";
+import { detailOf, regeneratePath, regenerated, reportTargetOf, searchPath } from "./detail";
 import type { ResultLine as BookLine } from "@/lib/books/search";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
@@ -18,6 +18,7 @@ const questLine = {
   source: "accept",
   questId: 374,
   npcId: 233,
+  npcType: "creature",
   npcName: "Marshal Dughan",
   questTitle: "Kobold Camp Cleanup",
   race: "human",
@@ -27,6 +28,7 @@ const questLine = {
   text: "Those kobolds are a menace.",
   audioPath: "quests/374-accept.mp3",
   hasAudio: true,
+  stale: false,
 } as unknown as QuestLine;
 
 const zoneLine = {
@@ -57,6 +59,31 @@ describe("detailOf", () => {
     expect(detail.text).toBe("Those kobolds are a menace.");
     expect(detail.lineId).toBe("q:374:accept");
     expect(detail.audioSrc).toBe("/api/quests/audio/quests/374-accept.mp3");
+  });
+
+  it("links the quest and its speaker into the explorer", () => {
+    const detail = detailOf("quests", questLine);
+    expect(detail.headingHref).toBe("/quests?q=374&filter=quest");
+    expect(detail.speaker).toEqual({
+      name: "Marshal Dughan",
+      href: "/quests?q=233&filter=npc&type=creature",
+    });
+    expect(detail.aside).toBe("human male · human-male");
+  });
+
+  it("links a quest-less line's heading to its speaker, and names them once", () => {
+    const gossip = { ...questLine, source: "gossip", questId: null, questTitle: null } as QuestLine;
+    const detail = detailOf("quests", gossip);
+    expect(detail.heading).toBe("Marshal Dughan");
+    expect(detail.headingHref).toBe("/gossip?q=233&filter=npc&type=creature");
+    expect(detail.speaker).toBeNull();
+  });
+
+  it("says when the audio was made from text that has since changed", () => {
+    expect(detailOf("quests", questLine).stale).toBe(false);
+    expect(detailOf("quests", { ...questLine, stale: true } as QuestLine).stale).toBe(true);
+    expect(detailOf("zones", { ...zoneLine, state: "stale" } as ZoneLine).stale).toBe(true);
+    expect(detailOf("books", bookLine).stale).toBe(false);
   });
 
   it("carries a quest line's flavor, which is what picks one of that race's voices", () => {
@@ -93,6 +120,17 @@ describe("detailOf", () => {
 
   it("busts the cache with the take a regeneration just wrote", () => {
     expect(detailOf("zones", zoneLine, 7).audioSrc).toBe("/api/zones/audio/1411/razor-hill.mp3?v=7");
+  });
+});
+
+describe("regenerated", () => {
+  it("clears the outdated flag, and gives a line with no audio its take", () => {
+    const stale = { ...questLine, stale: true, hasAudio: false } as QuestLine;
+    expect(detailOf("quests", regenerated("quests", stale)).stale).toBe(false);
+    expect(detailOf("quests", regenerated("quests", stale)).audioSrc).not.toBeNull();
+    expect(detailOf("books", regenerated("books", bookLine)).audioSrc).not.toBeNull();
+    const zone = regenerated("zones", { ...zoneLine, state: "stale" } as ZoneLine);
+    expect(detailOf("zones", zone).stale).toBe(false);
   });
 });
 

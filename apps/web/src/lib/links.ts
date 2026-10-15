@@ -33,6 +33,16 @@ export function questsHref(options: { q?: string; filter?: Scope; finding?: numb
 }
 
 /**
+ * The quests or gossip explorer, narrowed to one NPC: what clicking the name in an explorer
+ * row does. `type` too, because an NPC id is unique only within its kind - creature 68 and
+ * gameobject 68 are two speakers.
+ */
+export function npcHref(npc: { npcId: number; npcType: string; gossip: boolean }): string {
+  const params = new URLSearchParams({ q: String(npc.npcId), filter: "npc", type: npc.npcType });
+  return `/${npc.gossip ? "gossip" : "quests"}?${params}`;
+}
+
+/**
  * The zones explorer, narrowed to one zone or to a search.
  *
  * `field` is this section's name for what quests calls `filter`: three filter vocabularies,

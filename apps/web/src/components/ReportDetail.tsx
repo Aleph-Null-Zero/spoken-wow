@@ -14,6 +14,7 @@
 import { useLang } from "@/components/LangProvider";
 import { useState } from "react";
 
+import Link from "@/components/LocaleLink";
 import OverrideDialog from "@/components/OverrideDialog";
 import { Button } from "@/components/ui/button";
 import { detailOf, regenerateLine, type SourceLine } from "@/lib/reports/detail";
@@ -81,14 +82,37 @@ export default function ReportDetail({
   return (
     <div className="flex flex-col gap-2 px-3 py-3">
       <div>
-        <span className="font-medium">{detail.heading}</span>
-        <span className="text-muted-foreground ml-2 text-xs">{detail.context}</span>
+        {detail.headingHref ? (
+          <Link href={detail.headingHref} className="font-medium underline-offset-2 hover:underline">
+            {detail.heading}
+          </Link>
+        ) : (
+          <span className="font-medium">{detail.heading}</span>
+        )}
+        <span className="text-muted-foreground ml-2 text-xs">
+          {detail.speaker ? (
+            <>
+              <Link
+                href={detail.speaker.href}
+                className="hover:text-foreground underline-offset-2 hover:underline"
+              >
+                {detail.speaker.name}
+              </Link>
+              {detail.aside ? " · " : null}
+            </>
+          ) : null}
+          {detail.aside}
+        </span>
       </div>
 
       <p className="text-sm whitespace-pre-wrap">{detail.text}</p>
 
       {detail.audioSrc === null ? (
         <p className="text-muted-foreground text-xs">No audio on file for this line.</p>
+      ) : detail.stale ? (
+        <p className="text-xs text-amber-300">
+          Audio outdated: the take was made from text that has since changed.
+        </p>
       ) : null}
 
       {canRegenerate ? (
