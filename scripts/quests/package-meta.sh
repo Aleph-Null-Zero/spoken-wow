@@ -62,7 +62,7 @@ cat > "$module_dir/$NAME.toc" <<TOC
 ## IconTexture: Interface\\AddOns\\$NAME\\icon.tga
 ## Group: Spoken
 ## X-Part-Of: Spoken
-## X-Child-Of: SpokenQuests
+## X-Child-Of: Spoken_Quests
 
 Meta.lua
 TOC

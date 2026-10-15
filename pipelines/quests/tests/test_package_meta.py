@@ -32,12 +32,13 @@ def test_the_stub_is_not_a_data_module(tmp_path):
 
 def test_the_stub_nests_under_spoken(tmp_path):
     # Group and X-Child-Of name a folder. Group names Spoken, where every addon and pack
-    # of the project sits; X-Child-Of is read only by addon managers.
+    # of the project sits; X-Child-Of, read only by addon managers, names the addon that plays
+    # the packs, not the SpokenQuests tombstone it shipped in before 3.0.
     toc = build(tmp_path)
 
     assert "## Group: Spoken\n" in toc
     assert "## X-Part-Of: Spoken\n" in toc
-    assert "## X-Child-Of: SpokenQuests\n" in toc
+    assert "## X-Child-Of: Spoken_Quests\n" in toc
 
 
 def test_the_stub_carries_the_version_it_was_built_with(tmp_path):
