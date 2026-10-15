@@ -14,7 +14,7 @@ tooling that produces both.
 ## What ships
 
 **`ZoneLore`** — the addon. World map side panel, subzone lore on click, the area under the
-cursor lit up as clickable, standalone lore window, minimap button, options panel, narration
+cursor lit up as clickable, the Zones tab of Azeroth's Compendium, minimap button, options panel, narration
 playback with floating controls, and autoplay on area discovery. 49 zones and
 1304 subzones of text are bundled; nothing is fetched at runtime.
 
@@ -66,7 +66,7 @@ addons/Spoken_Zones/          the addon itself (this is what WoW loads)
   UI/MapPanel.lua        the world map side panel
   UI/SubzoneClick.lua    resolves a map click to a subzone
   UI/MapHighlight.lua    lights up the area under the cursor on a zone map
-  UI/LoreWindow.lua      standalone browsable lore window
+  UI/LoreWindow.lua      the Zones tab of Azeroth's Compendium
   UI/MinimapButton.lua   LibDBIcon minimap button
   UI/PlaybackBar.lua     floating controls, shown only while narrating
   UI/Options.lua         settings panel
@@ -587,33 +587,116 @@ own exploration overlay drawn again over the map in additive blend; only explore
 one, which are also the only ones a click resolves. There is no tooltip: the panel tells the
 story once the area is clicked.
 
-## Minimap button and lore window
+## Minimap button and Azeroth's Compendium
 
 A minimap button (LibDBIcon) is the entry point that does not need the world map
 open. Its tooltip shows lore for wherever the player is standing -- the subzone if
-there is one, otherwise the zone. **Left-click** opens the lore window,
-**right-click** opens the settings panel. `/spz minimap` hides or shows it.
+there is one, otherwise the zone. **Left-click** opens the Zones tab of Azeroth's
+Compendium, **right-click** opens the settings panel. `/spz minimap` hides or shows it.
 
-Right-click was originally a world-map-panel toggle, which is also an options
-checkbox and a slash command — three ways to reach one setting, and none of them
-the one people reach for on a minimap button.
+### The Zones tab
 
-The lore window is movable, closes on Escape, and browses everything: the left
-column lists all zones, and clicking one expands its subzones beneath it.
+Azeroth's Compendium (`UI/Compendium.lua`, shared with Spoken Books and the Quests tab)
+is a movable window that closes on Escape, resizes from its corner and folds down to its
+list. The Zones tab (`UI/LoreWindow.lua`) is a list on the left and the story on the
+right, on the spellbook's parchment (`UI/LorePage.lua`).
 
-It re-syncs to where the player is standing on **every** open, not just the first,
-and scrolls that row into view. If the player is standing in a subzone that has
-lore, that subzone is selected rather than the zone, since it is the more specific
-answer. The player's map is resolved through `GetLoreWithFallback`, because
+The list has a banner for each continent, Kalimdor and the Eastern Kingdoms, each
+opening and closing on its own. Under a continent each zone is a card: its painting,
+its name, and its places found out of all with the share and a bar. A zone's places are
+its areas, its dungeons and raids, and, where it holds one, its city and the city's own, the
+city itself one place; its page counts the same, and a banner
+counts what its zones' cards count, of the cards the filters leave listed. A click on a
+zone's card chooses it and opens it: its city as a card one level in, with its own areas, then
+its dungeons and raids, then its areas as rows, a tick on each one found. Each zone's and city's card opens and
+closes on its own click, so several stay open together; a city's card shows only while
+its zone is open, and keeps its own state while the zone is closed. What is open lasts
+for the session and is not saved. After the
+continents come two more banners: Other Lands, for the zones on no continent the client
+knows (Forever's Zephras Isle), and Battlegrounds, for Alterac Valley, Warsong Gulch,
+Arathi Basin and Darkspear Islands wherever the client hangs their maps. Each lists only
+the places with a story on this client. Chosen, a banner's page says it is in Azeroth,
+with its banner's count, and asks for one to be chosen.
+
+A dungeon or a raid is a card inside the card of the zone of its entrance (a city's, for
+Ragefire Chasm), as the Quests tab files their quests: the Quests tab's key on its badge, its
+area's story as its page, a tick once found and no numbers. A zone with several has a
+**Dungeons and Raids** line, the Quests tab's words, with a card for each under it; the line
+counts them found out of all, opens and closes on a click, and chooses nothing.
+`Data/Dungeons.lua`, kept by hand, marks the 17 areas that are dungeons and raids, each with
+the instance's map the Quests data files its quests under (`dungeon` in
+`Spoken_Quests/Data/Compendium.lua`); `tests/lua/zones_dungeons_test.lua` checks it against
+the areas' stories and the Quests data. Razorfen Downs' story is under Thousand Needles, where
+the wiki has it, and its Classic entrance is in The Barrens: the story, its recording and its
+picture stay keyed `s:1441:razorfen downs`, frozen as every id is, and the tab lists it in The
+Barrens, where `Discovery.lua` also finds it (below). Blackrock Mountain's four, the Stockade,
+Razorfen Kraul, Maraudon, Ahn'Qiraj, Naxxramas and the Hall of Thanes have no area story of
+their own, so they have no card.
+
+An area the game puts in another zone than the one its story is kept under is listed, found and
+told where the game has it, by its story's frozen keys: the stories follow the wiki, which files
+some areas by the map after the Cataclysm. Two hand-kept tables say where. `Data/Dungeons.lua`
+lists each dungeon under the zone of its entrance (Razorfen Downs under The Barrens, its story
+under Thousand Needles). `Data/AreaZones.lua` lists the other areas by the zone their story is
+kept under, with `zone`, the zone the Classic clients' AreaTable puts the area in, and `also`,
+more zones the client has an area of that name in. Strahnbrad, Ravenholdt Manor and ten more,
+kept under Hillsbrad Foothills (1424), are Alterac Mountains' (1416) on Era and Forever. The
+Valley of Bones, kept under Desolace, is Shen'dralas' (2652) on Forever; a `zone` the client has
+no map for is left out, so on Era it stays in Desolace. The Great Lift (Thousand Needles, also
+The Barrens), Lordamere Lake (Silverpine Forest, also Alterac Mountains) and Darrowmere Lake
+(Western Plaguelands, also the Eastern Plaguelands) are areas of both zones in the AreaTable:
+each is listed once, where its story is kept, and found and told from both.
+
+`Core.lua` reads both tables into one index. `SpokenZones:StoryPlace(mapID, key)` returns the map
+a story found on `mapID` is kept under, `AreaZone` the zone an area is listed in, `FoundOn` every
+other map it is found on and `AreasIn(zone)` the areas listed in a zone. `GetSubzoneLore` looks
+the story up where `StoryPlace` says and returns that map as a third value, so autoplay, `/spz
+play`, the map's click and panel, the minimap button and the greeting tell `s:1424:strahnbrad`
+for Strahnbrad found in Alterac Mountains, with its picture and report, under a clip header of
+Alterac Mountains. The tab lists and counts it in Alterac Mountains' card, its page says "In
+Alterac Mountains", and Hillsbrad Foothills' card and its map's panel no longer count it. A visit
+is recorded on the map the area is found on (`1416/strahnbrad`, `1413/razorfen downs`); `IsFound`
+reads those, what is explored on every map in `FoundOn`, and any visit recorded under the story's
+own map. An area found on the map its story is kept under is still told there.
+`tests/lua/zones_area_zones_test.lua` checks the table against the stories.
+
+Banners and cards list and open whether or not anything in them is found, as on the Quests
+and Books tabs. A zone's, city's or dungeon's card not yet discovered is greyed, as a card
+with none found is there, and its page, like a continent's with none of its zones found, says
+it is not discovered. An area not yet discovered is a row greyed with a padlock, listed by
+name, and does not open. **Unlock Undiscovered Zones**, in the Compendium section of Spoken's
+page, opens every area and tells every story, and the counts and the greyed cards still say
+what this character has found. The filter menu beside the search box holds
+**Discovered Only**, which leaves out the places not found, and **Voiced Only**, which
+leaves out what no installed voice pack reads and counts only what it lists; a zone
+stays while an area in it has a recording. A search lists every match, with what holds it
+opened, greyed as browsing lists it. A search naming a zone or a
+city lists all its areas; one naming a banner (a continent, Other Lands, Battlegrounds)
+lists its zones' cards as the player left them, each opening and closing on a click as
+it does unsearched. A click on a card the search opened closes it for that search, and
+another opens it again; a new search opens it again too. Changing a filter or clearing
+the search keeps the chosen row in view.
+
+The tab opens on where the player stands and scrolls that row into view: the area they
+are in where it has a story of its own, else its zone, opened, else their continent.
+Landing there, or opening from the map's panel, opens the place's zone (and the zone
+around a city) without closing the others.
+The player's map is resolved through `GetLoreWithFallback`, because
 `C_Map.GetBestMapForUnit` can return an indoor or micro map -- an inn, a dungeon --
-which is not itself a key in `Zones`.
+which is not itself a key in `Zones`. Opened again, or come back to from another tab,
+it lands again only while the selection is still the one it landed on: a place the
+player chose stays chosen. Opened from the map's panel, it opens on that place.
 
-### Why the list is an accordion
+The page has the place's name, the line under it (where it sits, a click away, and its
+card's or banner's count, as "In Kalimdor · 3 of 12 discovered"), its picture and its story, with **Play** and **Report** on the
+title's right. A place with no story yet says so and offers Contribute. A place not yet
+discovered, its card chosen or opened from the map's panel, says to travel there to discover it.
 
-Only one zone expands at a time. That caps the row count at about 108 (49 zones
-plus Ashenvale's 59 subzones), which is few enough that every row can be a real
-button with no view virtualisation. Expanding everything at once would be 1353
-rows, so the accordion is a constraint rather than a preference.
+### Rows
+
+Every row is a real button, with no view virtualisation. A zone's areas are rows only
+while its card is open, so the list holds the zones' cards plus what the player opened;
+opening everything at once would be 1353 rows.
 
 Zones are sorted alphabetically by the name the *client* reports, not by uiMapID,
 which is meaningless to a reader.
@@ -1432,7 +1515,7 @@ here:     node tools/seed-from-dump.mjs           # report differences
 /spz verify                  check all 49 entries against this client
 /spz panel                   toggle the world map panel
 /spz options                 open the settings panel
-/spz window                  open the browsable lore window
+/spz window                  open the Zones tab of Azeroth's Compendium
 /spz play                    narrate the lore for where you are standing
 /spz stop                    stop the narration
 /spz voice                   turn narration on or off

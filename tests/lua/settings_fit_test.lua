@@ -74,6 +74,12 @@ for _, file in ipairs({ "Locale/enUS", "Locale/deDE", "Locale/esES", "Locale/frF
     assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
 end
 B:InitDB(); B:SetupOptions()
+-- Two of the Compendium's tabs, so Spoken's page shows their Unlock switches.
+B:SetupReadables()
+for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/TextView", "UI/QuestsTab" }) do
+    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", {})
+end
+VO.QuestsTab:Setup()
 local Z = H.NewZoneLore()
 for _, file in ipairs({ "UI/Layout", "UI/Options" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)

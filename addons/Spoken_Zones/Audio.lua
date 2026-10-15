@@ -576,6 +576,10 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 	-- the client's file cannot draw names the file that can. Otherwise the window's own is kept.
 	local font = self.FontFor and self:FontFor(GameFontNormal, language)
 	if font == GameFontNormal:GetFont() then font = nil end
+	-- An area is headed by the zone Azeroth's Compendium lists it in: Razorfen Downs by The Barrens,
+	-- where its entrance is, and Strahnbrad by Alterac Mountains, their stories kept under Thousand
+	-- Needles and Hillsbrad Foothills.
+	local zone = areaKey and (self.AreaZone and self:AreaZone(mapID, areaKey) or mapID)
 	return {
 		key = areaKey and ("s:" .. mapID .. ":" .. areaKey) or ("z:" .. mapID),
 		path = path,
@@ -586,7 +590,7 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		areaKey = areaKey,
 		present = {
 			-- An area under its zone; anything else under the place above it.
-			header = areaKey and (self:GetMapName(mapID) or label) or self:GetMapName(self:PlaceAbove(mapID)),
+			header = areaKey and (self:GetMapName(zone) or label) or self:GetMapName(self:PlaceAbove(mapID)),
 			label = label,
 			transcript = entry and entry.full,
 			font = font,

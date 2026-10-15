@@ -303,22 +303,25 @@ local function Refresh(mapID)
 		-- reaches the corpus key only through the alias table, and normalising a non-Latin name
 		-- yields nil -- which would silently retarget the buttons at the zone's lore.
 		local key = SpokenZones:ResolveAreaKey(selected.areaName)
-		local line = SpokenZones:PlaceLine(mapID, key or name)
+		-- An area is told where its story is kept: Razorfen Downs, clicked on The Barrens' map,
+		-- under Thousand Needles, and Strahnbrad, clicked on Alterac Mountains', under Hillsbrad.
+		local story = SpokenZones:StoryPlace(mapID, key)
+		local line = SpokenZones:PlaceLine(story, key or name)
 		local back = function() SpokenZones:ClearSubzone() end
 		-- Not found yet: named, and no more, as Azeroth's Compendium has it.
-		if SpokenZones.IsLocked and SpokenZones:IsLocked(mapID, key) then
-			page:Show({ title = name, subtitle = line, onSubtitle = back, text = L.NOT_DISCOVERED, missing = true })
+		if SpokenZones.IsLocked and SpokenZones:IsLocked(story, key) then
+			page:Show({ title = name, subtitle = line, onSubtitle = back, text = L.NOT_DISCOVERED })
 			return
 		end
 		if SpokenZones:IsPending(selected.entry) then
 			-- Named, listed, and honest about the rest: nothing to play and nothing written to
 			-- report on. Azeroth's Compendium lists it all the same, so Open goes to its row there.
 			page:Show({ title = name, subtitle = line, onSubtitle = back, text = L.LORE_NOT_WRITTEN:format(name),
-				missing = true, contribute = { mapID, name }, lore = { mapID, key } })
+				contribute = { story, name }, lore = { story, key } })
 			return
 		end
 		page:Show({ title = name, subtitle = line, onSubtitle = back, text = selected.entry.full or selected.entry.short or "",
-			audio = { mapID, key }, report = { mapID, key }, lore = { mapID, key } })
+			audio = { story, key }, report = { story, key }, lore = { story, key } })
 		return
 	end
 
@@ -326,7 +329,7 @@ local function Refresh(mapID)
 	-- No Open here: a map with no entry at all, not even a pending one, has no row in Lore of
 	-- Azeroth to open on.
 	if not entry then
-		page:Show({ title = zoneName, text = L.NO_LORE_FOR:format(zoneName), missing = true,
+		page:Show({ title = zoneName, text = L.NO_LORE_FOR:format(zoneName),
 			contribute = { mapID, nil } })
 		return
 	end
@@ -342,12 +345,12 @@ local function Refresh(mapID)
 		if up and WorldMapFrame.SetMapID then onCaption = function() WorldMapFrame:SetMapID(up) end end
 	end
 	if SpokenZones.IsLocked and SpokenZones:IsLocked(foundOn) then
-		page:Show({ title = zoneName, subtitle = caption, onSubtitle = onCaption, text = L.NOT_DISCOVERED, missing = true })
+		page:Show({ title = zoneName, subtitle = caption, onSubtitle = onCaption, text = L.NOT_DISCOVERED })
 		return
 	end
 	if SpokenZones:IsPending(entry) then
 		page:Show({ title = zoneName, subtitle = caption, onSubtitle = onCaption,
-			text = L.LORE_NOT_WRITTEN:format(SpokenZones:GetMapName(foundOn) or zoneName), missing = true,
+			text = L.LORE_NOT_WRITTEN:format(SpokenZones:GetMapName(foundOn) or zoneName),
 			contribute = { foundOn, nil }, lore = { foundOn, nil } })
 		return
 	end

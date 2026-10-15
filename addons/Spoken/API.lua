@@ -111,6 +111,47 @@ function Spoken:PrimePortrait(creatureID)
     if skin and StaticPortrait then StaticPortrait:Prime(creatureID) end
 end
 
+--- The Small Window's round portrait, `size` across, on `parent`: the speaker masked round in its
+--- ring, with a line's badge at the lower right, for a page of a feature addon's to show who says
+--- a line. Anchor it yourself. Additive: guard on the field.
+---
+---   face:SetSpeaker({
+---     creatureID   = 197,             -- the creature to draw, or nil
+---     guid         = "Creature-...",  -- optional; drawn from its unit while one is about
+---     objectOrItem = false,           -- an object or an item: its `icon`, else a posted notice
+---     icon         = [[...]],         -- optional; an object's or item's picture
+---     bullet       = "quest-accept",  -- optional; the badge, a RegisterBullet id or a quest moment's
+---   })
+---
+--- A creature the client has not cached yet shows the book and turns into its face once the client
+--- has it; one with no face to draw keeps the book, as the Small Window does.
+---@param parent table a frame
+---@param size number
+---@return table face  a Frame, with SetSpeaker
+function Spoken:CreateSpeakerFace(parent, size)
+    return MinimalPlayer:CreateFace(parent, size)
+end
+
+--- The top of the DialogueUI window's card, for a page of a feature addon's: DialogueUI's header
+--- strip with the speaker's face in its socket and the line's badge, the speaker's name in
+--- DialogueUI's subtitle font and a title in its quest title font, in DialogueUI's brown theme
+--- (the page is parchment). Nil where DialogueUI is not installed or not recognised: draw your own
+--- header there. Additive: guard on the field.
+---
+---   header:SetSpeaker(speaker)          -- as a speaker face's SetSpeaker
+---   header:SetTexts(name, title)        -- a name the same as the title is left off
+---   local height, middle, line = header:Layout(width, room)
+---
+--- Layout lays it out `width` wide, the card's header grown or shrunk to it, words and all, the
+--- name and the title stopping a round button's width short of `room` (the width your controls
+--- take at its right). It returns its height, how far down its controls' middle is, and how far
+--- down the strip's line ends. Anchor `header.frame` and your controls yourself.
+---@param parent table a frame
+---@return table|nil header  with frame, SetSpeaker, SetTexts and Layout
+function Spoken:CreateDialogueHeader(parent)
+    return DialogueUIPlayer:CreateHeader(parent)
+end
+
 --- How lines are shown: "subtitle", "none", "minimal", "classic" or "dialogueui".
 --- Additive: guard on the field.
 function Spoken:GetPlayerStyle()
@@ -379,6 +420,22 @@ function Spoken:ShowsCompendium()
     return true
 end
 
+--- The Text Size of the words of stories, books and quests in Azeroth's Compendium and beside the
+--- map, from the Compendium section of Spoken's page. Until the player sets it there, the size
+--- they set on the Zones page, where it was before; 12 with neither.
+function Spoken:CompendiumFontSize()
+    local size = Addon.db and Addon.db.profile.CompendiumFontSize
+    if size == nil and type(SpokenZonesSettings) == "table" then size = SpokenZonesSettings.fontSize end
+    return tonumber(size) or 12
+end
+
+--- Set the Compendium's Text Size, and tell the parts that draw its words.
+function Spoken:SetCompendiumFontSize(size)
+    if not Addon.db then return end
+    Addon.db.profile.CompendiumFontSize = size
+    Callbacks:Fire("COMPENDIUM_FONT_CHANGED")
+end
+
 --- A button on the player's panel that opens a feature addon's own settings, for the
 --- addons whose panel cannot be nested.
 function Spoken:AddSettingsLink(text, onClick)
@@ -563,6 +620,7 @@ end
 --   SOURCE_REGISTERED  (source)
 --   CONTRIBUTE_SETTINGS_CHANGED ()          the hide-Contribute-buttons setting was toggled
 --   REPORT_SETTINGS_CHANGED     ()          the hide-Report-buttons setting was toggled
+--   COMPENDIUM_FONT_CHANGED     ()          the Compendium's Text Size changed (Spoken:CompendiumFontSize)
 
 function Spoken:RegisterCallback(event, fn)
     return Callbacks:Register(event, fn)

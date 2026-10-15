@@ -13,6 +13,7 @@ if Version.IsAnyLegacy then
     function DialogueUIPlayer:SetVisible() end
     function DialogueUIPlayer:HasClip() return false end
     function DialogueUIPlayer:Describe() return "dialogueui skin: not available on this client" end
+    function DialogueUIPlayer:CreateHeader() return nil end
     return
 end
 
@@ -196,6 +197,201 @@ end
 -- the profile.
 local function Config() return Addon:Profile("Frame") end
 
+--------------------------------------------------------------------------------
+-- The header: DialogueUI's header strip, the speaker's face in its socket, and their name and
+-- the line's title beside it. This window's, and a page's (DialogueUIPlayer:CreateHeader).
+--------------------------------------------------------------------------------
+
+--- DialogueUI's window as this one copies it: its width, the column inside its paddings, and the
+--- multiplier DialogueUI drew it at, which the paddings scale by.
+local function Column()
+    local duiWidth, duiHeight = Theme:FrameSize()
+    local multiplier = duiHeight / (Theme.HEIGHT_SHARE * math.max(1, UIParent:GetHeight()))
+    local width = Round(duiWidth)
+    return width, math.max(1, width - 2 * PAD_H * multiplier), multiplier
+end
+
+--- The header strip across a column `inner` wide: its scale from the art's, and its height.
+local function Strip(inner)
+    local ratio = inner / HEADER_DIVIDER[5]
+    return ratio, Round(HEADER_DIVIDER[6] * ratio)
+end
+
+--- The header's parts on `parent`, placed by PlaceHeader.
+local function BuildHeader(parent)
+    local head = {}
+    -- The face and the title are placed on this, whatever the look.
+    head.anchor = CreateFrame("Frame", nil, parent)
+    -- In the quest parchment, DialogueUI's header strip in two pieces: the face's socket, never
+    -- stretched, and the line past it, stretched to the column's width. In a book's, the ring
+    -- round the face and the line under the title.
+    head.socket = parent:CreateTexture(nil, "ARTWORK")
+    head.divider = parent:CreateTexture(nil, "ARTWORK")
+    local host = CreateFrame("Frame", nil, parent)
+    head.portrait = host
+    host:SetSize(PORTRAIT, PORTRAIT)
+    head.viewport = CreateFrame("Frame", nil, host)
+    head.viewport:SetAllPoints()
+    head.viewport:SetClipsChildren(true)
+    -- What kind of line it is, on a dark disc at the face's lower right.
+    local chrome = CreateFrame("Frame", nil, host)
+    chrome:SetAllPoints()
+    chrome:SetFrameLevel(host:GetFrameLevel() + 8)
+    head.badgeDisc = chrome:CreateTexture(nil, "BACKGROUND")
+    head.badgeDisc:SetTexture([[Interface\AddOns\Spoken\Textures\MinimalPortraitMask]])
+    head.badgeDisc:SetVertexColor(.04, .04, .035, 1)
+    head.badge = chrome:CreateTexture(nil, "OVERLAY")
+    head.name = Font(parent, 18, 1, 1, 1)
+    -- The line's name, nothing to click.
+    head.title = CreateFrame("Frame", nil, parent)
+    head.title.text = Font(head.title, 12, 1, 1, 1)
+    head.title.text:SetPoint("TOPLEFT")
+    head.title.text:SetPoint("BOTTOMRIGHT")
+    return head
+end
+
+--- Lays the header out across the top of `parent`, a column `inner` wide, in `look`'s art from
+--- `paper`, with `fonts` at `k` of their size. The title and the name stop `clear` short of the
+--- round controls: of `right`'s left edge, or without `right`, of `room` from the column's right.
+--- Returns the strip's height, the controls' middle and where the strip's line ends, from its top.
+local function PlaceHeader(head, parent, inner, look, paper, fonts, k, clear, right, room)
+    local ratio, stripHeight = Strip(inner)
+    local face = Round(34 * ratio)
+    local socket = Round(SOCKET_WIDTH * ratio)
+    local lineBottom = Round(stripHeight * DIVIDER_LINE)
+    head.anchor:ClearAllPoints()
+    head.anchor:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+    head.anchor:SetSize(socket, stripHeight)
+    head.portrait:SetSize(face, face)
+    head.portrait:ClearAllPoints()
+    head.portrait:SetPoint("CENTER", head.anchor, "TOPLEFT", Round(23 * ratio), -Round(23 * ratio))
+    head.socket:SetTexture(paper)
+    head.divider:SetTexture(paper)
+    head.socket:ClearAllPoints()
+    head.divider:ClearAllPoints()
+    if look.book then
+        -- The book's ring round the face, its opening the face's size, and its line under the
+        -- title where the quest strip's line ends.
+        local ring = Round(face / RING_OPENING)
+        head.socket:SetTexCoord(BOOK_RING[1], BOOK_RING[2], BOOK_RING[3], BOOK_RING[4])
+        head.socket:SetSize(ring, ring)
+        head.socket:SetPoint("CENTER", head.portrait, "CENTER", 0, 0)
+        local lineHeightArt = math.max(1, Round(inner * 32 / 768))
+        head.divider:SetTexCoord(BOOK_DIVIDER[1], BOOK_DIVIDER[2], BOOK_DIVIDER[3], BOOK_DIVIDER[4])
+        head.divider:SetSize(inner, lineHeightArt)
+        head.divider:SetPoint("CENTER", parent, "TOP", 0, -(lineBottom - Round(lineHeightArt / 2)))
+    else
+        local socketU = HEADER_DIVIDER[1] + (HEADER_DIVIDER[2] - HEADER_DIVIDER[1]) * SOCKET_WIDTH / HEADER_DIVIDER[5]
+        head.socket:SetTexCoord(HEADER_DIVIDER[1], socketU, HEADER_DIVIDER[3], HEADER_DIVIDER[4])
+        head.socket:SetPoint("TOPLEFT", head.anchor, "TOPLEFT", 0, 0)
+        head.socket:SetSize(socket, stripHeight)
+        head.divider:SetTexCoord(socketU, HEADER_DIVIDER[2], HEADER_DIVIDER[3], HEADER_DIVIDER[4])
+        head.divider:SetPoint("TOPLEFT", head.socket, "TOPRIGHT", 0, 0)
+        head.divider:SetSize(math.max(1, inner - socket), stripHeight)
+    end
+    local badgeAt = Round(face * 0.36)
+    head.badgeDisc:SetSize(Round(face * 0.42), Round(face * 0.42))
+    head.badge:SetSize(Round(face * 0.3), Round(face * 0.3))
+    for _, part in ipairs({ head.badgeDisc, head.badge }) do
+        part:ClearAllPoints()
+        part:SetPoint("CENTER", head.portrait, "CENTER", badgeAt, -badgeAt)
+    end
+    local nameHeight = fonts.subtitleSize * k + 2
+    -- The controls centred on the speaker's name and the line's title together: the title sits on
+    -- the socket's middle, 2 up, and the name above it.
+    local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
+    local function StopShort(text)
+        if right then
+            text:SetPoint("RIGHT", right, "LEFT", -clear, 0)
+        else
+            text:SetPoint("RIGHT", parent, "TOPRIGHT", -(room + clear), -middle)
+        end
+    end
+    -- The line's title sits where DialogueUI puts its quest title, the speaker's name in its
+    -- small line above.
+    head.title:ClearAllPoints()
+    head.title:SetPoint("LEFT", head.anchor, "LEFT", Round(53 * ratio), Round(2 * ratio))
+    StopShort(head.title)
+    head.title:SetHeight(Round(fonts.titleSize * TITLE_SHARE * k) + 4)
+    head.name:ClearAllPoints()
+    head.name:SetPoint("BOTTOMLEFT", head.title, "TOPLEFT", 0, 2)
+    StopShort(head.name)
+    head.name:SetHeight(nameHeight)
+    return stripHeight, middle, lineBottom
+end
+
+--- `text` in `face` at `size` and `color`, over a shadow `shadow` strong.
+local function PaintText(text, face, size, color, shadow)
+    local before, beforeSize = text:GetFont()
+    text:SetFont(face, size, "")
+    text:SetShadowColor(0, 0, 0, shadow)
+    text:SetShadowOffset(1, -1)
+    text:SetTextColor(color[1], color[2], color[3])
+    -- The client can leave a string blank when its font changes under text it already has, and
+    -- ignores the same text set again: a book's title after a quest's stayed empty. Emptied and
+    -- set again, it is drawn.
+    local shown = text:GetText()
+    if (before ~= face or beforeSize ~= size) and shown and shown ~= "" then
+        text:SetText("")
+        text:SetText(shown)
+    end
+end
+
+--- The name and the title in DialogueUI's subtitle and title fonts at `k` of their size, in
+--- `colors`; on stone, over the book view's shadow under its pale text.
+local function PaintHeader(head, look, fonts, colors, k)
+    local shadow = look.shadow and 1 or 0
+    PaintText(head.name, fonts.subtitle, fonts.subtitleSize * k, colors.title, shadow)
+    PaintText(head.title.text, fonts.title, Round(fonts.titleSize * TITLE_SHARE * k), colors.title, shadow)
+end
+
+-- A page's header is drawn in DialogueUI's brown theme whatever theme it is set to: the page is
+-- parchment, and the dark theme's art and pale ink are made for its dark window.
+local PAGE_THEME = 1
+local PageHeader = {}
+
+function PageHeader:SetSpeaker(speaker)
+    self.portrait:SetSpeaker(speaker)
+    local tint = Theme:Colors(PAGE_THEME).portraitTint
+    local texture = self.viewport.texture
+    if texture then texture:SetVertexColor(tint[1], tint[2], tint[3]) end
+end
+
+function PageHeader:SetTexts(name, title)
+    self.title.text:SetText(title or "")
+    -- Said once: a name the same as the title is left off.
+    self.name:SetText(name and name ~= title and name or "")
+end
+
+function PageHeader:Layout(width, room)
+    width = math.max(1, width or 1)
+    -- This window's header grown or shrunk to `width`, its words with it.
+    local _, column = Column()
+    local fonts = Theme:Fonts()
+    self.frame:SetWidth(width)
+    local height, middle, line = PlaceHeader(self, self.frame, width, LOOKS.quest,
+        Theme:TexturePath(PAGE_THEME) .. "Parchment.png", fonts, width / column, ROUND_SIZE, nil, room or 0)
+    self.frame:SetHeight(height)
+    PaintHeader(self, LOOKS.quest, fonts, Theme:Colors(PAGE_THEME), width / column)
+    return height, middle, line
+end
+
+--- This window's header on a frame of its own on `parent`, for a page (Spoken:CreateDialogueHeader).
+--- nil where DialogueUI's art cannot be drawn.
+function DialogueUIPlayer:CreateHeader(parent)
+    if not Theme:Available() then return nil end
+    local frame = CreateFrame("Frame", nil, parent)
+    frame:SetSize(1, 1)
+    local head = BuildHeader(frame)
+    head.frame = frame
+    local host = head.portrait
+    host.viewport, host.badge, host.badgeBackground = head.viewport, head.badge, head.badgeDisc
+    MinimalPlayer:DrawSpeakers(host)
+    head.SetSpeaker, head.SetTexts, head.Layout = PageHeader.SetSpeaker, PageHeader.SetTexts, PageHeader.Layout
+    head:SetSpeaker(nil)
+    return head
+end
+
 function Skin:IsEnabled()
     return Addon.db and Addon:DisplayStyle() == "dialogueui"
 end
@@ -334,34 +530,13 @@ function Skin:Initialize()
     -- The captions are docked here and hand Ctrl-wheel to their parent.
     content.spokenWheel = frame.spokenWheel
 
-    -- The face and the title are placed on this, whatever the look.
-    self.header = CreateFrame("Frame", nil, content)
-    -- In the quest parchment, DialogueUI's header strip in two pieces: the face's socket, never
-    -- stretched, and the line past it, stretched to the panel's width. In a book's, the ring
-    -- round the face and the line under the title.
-    self.headerSocket = content:CreateTexture(nil, "ARTWORK")
-    self.headerDivider = content:CreateTexture(nil, "ARTWORK")
-    local host = CreateFrame("Frame", nil, content)
-    self.portrait, frame.portrait = host, host
-    host:SetSize(PORTRAIT, PORTRAIT)
-    self.viewport = CreateFrame("Frame", nil, host)
-    self.viewport:SetAllPoints()
-    self.viewport:SetClipsChildren(true)
-    -- What kind of line it is, on a dark disc at the face's lower right.
-    local chrome = CreateFrame("Frame", nil, host)
-    chrome:SetAllPoints()
-    chrome:SetFrameLevel(host:GetFrameLevel() + 8)
-    self.badgeDisc = chrome:CreateTexture(nil, "BACKGROUND")
-    self.badgeDisc:SetTexture([[Interface\AddOns\Spoken\Textures\MinimalPortraitMask]])
-    self.badgeDisc:SetVertexColor(.04, .04, .035, 1)
-    self.badge = chrome:CreateTexture(nil, "OVERLAY")
-    self.name = Font(content, 18, 1, 1, 1)
+    local head = BuildHeader(content)
+    self.head = head
+    self.header, self.headerSocket, self.headerDivider = head.anchor, head.socket, head.divider
+    self.portrait, frame.portrait, self.viewport = head.portrait, head.portrait, head.viewport
+    self.badgeDisc, self.badge = head.badgeDisc, head.badge
+    self.name, self.title = head.name, head.title
     content.name = self.name -- Actions' header anchor contract.
-    -- The line's name, nothing to click: Skip takes a line away.
-    self.title = CreateFrame("Frame", nil, content)
-    self.title.text = Font(self.title, 12, 1, 1, 1)
-    self.title.text:SetPoint("TOPLEFT")
-    self.title.text:SetPoint("BOTTOMRIGHT")
     -- Stopped and the lines waiting, after the title: each its own text, so each fades by itself.
     self.stopped = Font(self.title, 12, 1, 1, 1)
     self.stopped:SetText(format("• (%s)", L.SUBTITLE_STOPPED))
@@ -423,12 +598,8 @@ function Skin:Layout()
     -- whole frame from BASE_SCALE.
     local scale = BASE_SCALE * (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE
     frame.spokenBaseScale = scale * Theme:FrameScale() / UIParent:GetEffectiveScale()
-    local duiWidth, duiHeight = Theme:FrameSize()
-    -- The multiplier DialogueUI drew its window at, so the paddings keep its proportions.
-    local multiplier = duiHeight / (Theme.HEIGHT_SHARE * math.max(1, UIParent:GetHeight()))
+    local width, inner, multiplier = Column()
     local padH, padTop, padBottom = PAD_H * multiplier, PAD_TOP * multiplier, PAD_BOTTOM * multiplier
-    local width = Round(duiWidth)
-    local inner = math.max(1, width - 2 * padH)
     local wordsWidth = math.max(1, Round(inner * WORDS_SHARE))
     local wordsLeft = Round((inner - wordsWidth) / 2)
     -- DialogueUI's spacing: 0.35 of the text size under each line, four of those between
@@ -441,11 +612,8 @@ function Skin:Layout()
     local lineHeight = captionSize + lineGap
     self.fonts, self.captionSize, self.lineGap = fonts, captionSize, lineGap
 
-    -- DialogueUI's header strip thickness and its face and title placements, scaled to its column,
-    -- whatever the look.
-    local ratio = inner / HEADER_DIVIDER[5]
-    local stripHeight = Round(HEADER_DIVIDER[6] * ratio)
-    local face = Round(34 * ratio)
+    -- DialogueUI's header strip thickness, scaled to its column, whatever the look.
+    local _, stripHeight = Strip(inner)
     -- DialogueUI's gap under its header line, before the text.
     local textGap = Round(4 * 0.35 * fontSize)
     -- A place's picture (Spoken Zones gives one with its line) between the header and the words,
@@ -506,63 +674,12 @@ function Skin:Layout()
     content:ClearAllPoints()
     content:SetPoint("TOPLEFT", padH, -padTop)
     content:SetPoint("BOTTOMRIGHT", -padH, padBottom)
-    local socket = Round(SOCKET_WIDTH * ratio)
-    self.header:ClearAllPoints()
-    self.header:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    self.header:SetSize(socket, stripHeight)
-    self.portrait:SetSize(face, face)
-    self.portrait:ClearAllPoints()
-    self.portrait:SetPoint("CENTER", self.header, "TOPLEFT", Round(23 * ratio), -Round(23 * ratio))
-    self.headerSocket:SetTexture(parchment)
-    self.headerDivider:SetTexture(parchment)
-    self.headerSocket:ClearAllPoints()
-    self.headerDivider:ClearAllPoints()
-    if look.book then
-        -- The book's ring round the face, its opening the face's size, and its line under the
-        -- title where the quest strip's line ends.
-        local ring = Round(face / RING_OPENING)
-        self.headerSocket:SetTexCoord(BOOK_RING[1], BOOK_RING[2], BOOK_RING[3], BOOK_RING[4])
-        self.headerSocket:SetSize(ring, ring)
-        self.headerSocket:SetPoint("CENTER", self.portrait, "CENTER", 0, 0)
-        local lineHeightArt = math.max(1, Round(inner * 32 / 768))
-        self.headerDivider:SetTexCoord(BOOK_DIVIDER[1], BOOK_DIVIDER[2], BOOK_DIVIDER[3], BOOK_DIVIDER[4])
-        self.headerDivider:SetSize(inner, lineHeightArt)
-        self.headerDivider:SetPoint("CENTER", content, "TOP", 0,
-            -(lineBottom - Round(lineHeightArt / 2)))
-    else
-        local socketU = HEADER_DIVIDER[1] + (HEADER_DIVIDER[2] - HEADER_DIVIDER[1]) * SOCKET_WIDTH / HEADER_DIVIDER[5]
-        self.headerSocket:SetTexCoord(HEADER_DIVIDER[1], socketU, HEADER_DIVIDER[3], HEADER_DIVIDER[4])
-        self.headerSocket:SetPoint("TOPLEFT", self.header, "TOPLEFT", 0, 0)
-        self.headerSocket:SetSize(socket, stripHeight)
-        self.headerDivider:SetTexCoord(socketU, HEADER_DIVIDER[2], HEADER_DIVIDER[3], HEADER_DIVIDER[4])
-        self.headerDivider:SetPoint("TOPLEFT", self.headerSocket, "TOPRIGHT", 0, 0)
-        self.headerDivider:SetSize(math.max(1, inner - socket), stripHeight)
-    end
-    local badgeAt = Round(face * 0.36)
-    self.badgeDisc:SetSize(Round(face * 0.42), Round(face * 0.42))
-    self.badge:SetSize(Round(face * 0.3), Round(face * 0.3))
-    for _, part in ipairs({ self.badgeDisc, self.badge }) do
-        part:ClearAllPoints()
-        part:SetPoint("CENTER", self.portrait, "CENTER", badgeAt, -badgeAt)
-    end
     -- The round buttons as large on screen as Place Lore draws them (24, at UIParent's scale) at
-    -- the default Window Size, growing and shrinking with it from there.
+    -- the default Window Size, growing and shrinking with it from there. The name and the title
+    -- stop a button's width short of them.
     self.controlsRound = (Config().FrameScale or DEFAULT_WINDOW_SIZE) / DEFAULT_WINDOW_SIZE / frame.spokenBaseScale
-    -- The line's title sits where DialogueUI puts its quest title, the speaker's name in its
-    -- small line above, both stopping a button's width short of the buttons.
-    local clear = Round(ROUND_SIZE * self.controlsRound)
-    self.title:ClearAllPoints()
-    self.title:SetPoint("LEFT", self.header, "LEFT", Round(53 * ratio), Round(2 * ratio))
-    self.title:SetPoint("RIGHT", self.controls, "LEFT", -clear, 0)
-    self.title:SetHeight(Round(fonts.titleSize * TITLE_SHARE) + 4)
-    self.name:ClearAllPoints()
-    self.name:SetPoint("BOTTOMLEFT", self.title, "TOPLEFT", 0, 2)
-    self.name:SetPoint("RIGHT", self.controls, "LEFT", -clear, 0)
-    local nameHeight = fonts.subtitleSize + 2
-    self.name:SetHeight(nameHeight)
-    -- Centred on the speaker's name and the line's title together: the title sits on the
-    -- socket's middle, 2 up, and the name above it.
-    local middle = stripHeight / 2 - Round(2 * ratio) - (2 + nameHeight) / 2
+    local _, middle = PlaceHeader(self.head, content, inner, look, parchment, fonts, 1,
+        Round(ROUND_SIZE * self.controlsRound), self.controls)
     self.controlsMiddle = middle
     self:FitControls()
 
@@ -593,18 +710,10 @@ end
 function Skin:Dress()
     local look, fonts = self.look, self.fonts
     local colors = Theme:Colors(look.palette)
-    -- On stone, the book view's shadow under its pale text.
+    PaintHeader(self.head, look, fonts, colors, 1)
     local shadow = look.shadow and 1 or 0
-    local function Paint(text, face, size, color)
-        text:SetFont(face, size, "")
-        text:SetShadowColor(0, 0, 0, shadow)
-        text:SetShadowOffset(1, -1)
-        text:SetTextColor(color[1], color[2], color[3])
-    end
-    Paint(self.name, fonts.subtitle, fonts.subtitleSize, colors.title)
-    Paint(self.title.text, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.title)
-    Paint(self.count, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
-    Paint(self.stopped, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled)
+    PaintText(self.count, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled, shadow)
+    PaintText(self.stopped, fonts.title, Round(fonts.titleSize * TITLE_SHARE), colors.disabled, shadow)
     -- A clip's own face goes back on over the theme's (Addon:ClipFont).
     Addon:ClipFont(self.name, self.clip)
     Addon:ClipFont(self.title.text, self.clip)
@@ -867,7 +976,7 @@ end
 
 function Skin:SetVisible(visible, immediate)
     if not self.frame then return end
-    if not visible then self:HideTooltip() end
+    if not visible then self:HideTooltip(); self.tuckWaiting = nil end
     if immediate then
         self.turning = nil
         self:StopTuck()
@@ -924,13 +1033,13 @@ end
 --- Start the fade, as one image where the client can draw one, unless asked not to.
 function Skin:StartFade(asItself)
     if not asItself then self:Buffer() end
-    self.fadeFrom, self.fadeTime = self.level or 0, 0
+    self.fadeFrom, self.fadeTime, self.fadeSlow = self.level or 0, 0, nil
 end
 
 --- The fade at its end: hidden if it went out, itself again, and the next line in if it turned.
 function Skin:EndFade()
     self:SetLevel(self.wanted and 1 or 0)
-    self.fadeTime = nil
+    self.fadeTime, self.fadeSlow = nil, nil
     if not self.wanted then
         self.frame:Hide()
         self:Undeafen()
@@ -991,6 +1100,15 @@ function Skin:Tick(elapsed)
             self:StartFade()
         end
     end
+    -- A page waiting for this window to fade in (Skin:TuckWhenShown): it goes behind it now, if its
+    -- line still waits behind the one playing.
+    local waiting = self.tuckWaiting
+    if waiting and self:Settled() then
+        self.tuckWaiting = nil
+        for index, clip in ipairs(SoundQueue.sounds) do
+            if index > 1 and clip == waiting.clip then self:TuckWhenShown(waiting.dialog, clip); break end
+        end
+    end
     -- Stopped faded out: its room given back.
     if self.tail and self.tail:Step(elapsed) then self:Count(self.tail.counted or 0) end
     if self.lineFade then
@@ -1007,7 +1125,7 @@ function Skin:Tick(elapsed)
     end
     if self.fadeTime then
         self.fadeTime = self.fadeTime + elapsed
-        local t = Clamp(self.fadeTime / (self.wanted and FADE_IN or FADE_OUT), 0, 1)
+        local t = Clamp(self.fadeTime / ((self.wanted and FADE_IN or FADE_OUT) * (self.fadeSlow or 1)), 0, 1)
         local eased = Smooth(t)
         self:SetLevel(self.fadeFrom + ((self.wanted and 1 or 0) - self.fadeFrom) * eased)
         if t == 1 then
@@ -1079,6 +1197,7 @@ function Skin:Settle(dialog)
     -- Fading as one image: it finishes, then shows the line as it does any.
     if self:Defer("update") then return end
     self:StopTuck()
+    self.tuckWaiting = nil
     self:StopLanding()
     -- Coming back as it is: a fade under way goes on, and Update hands it the line.
     if not self:Owns(dialog) then
@@ -1086,11 +1205,10 @@ function Skin:Settle(dialog)
         self:Update()
         if queued then
             self.justClosed = nil
-            local ok, err = pcall(self.StartTuck, self, dialog, queued)
-            if not ok then
-                self:StopTuck()
-                if geterrorhandler then geterrorhandler()(err) end
-            end
+            -- Fading in now as itself, not one image, so the page goes behind a window that is
+            -- coming in with it rather than one still waiting to.
+            self:FadeInAsItself()
+            self:TuckWhenShown(dialog, queued)
         end
         return
     end
@@ -1641,6 +1759,40 @@ end
 
 --- Done, or cut short (a dialog opening, another closing): the page and the ripple gone, this
 --- window where it rests.
+--- Fading in from where it is, now and as itself, not one image: no wait to be still. As itself
+--- the paper comes in over the first half and the rest over the second, so it takes twice as long
+--- as a fade as one image, each half as long as that whole fade.
+function Skin:FadeInAsItself()
+    self.preparing, self.arming, self.turning = nil, nil, nil
+    self.wanted = true
+    self:Unbuffer()
+    self:Undeafen()
+    Transcript:Release()
+    self.frame:Show()
+    self:StartFade(true)
+    self.fadeSlow = 2
+end
+
+--- Whether this window is coming in or in, and itself, not one image: a tuck may run against it.
+function Skin:Settled()
+    return self.wanted and self.frame:IsShown() and not self.buffered and not self.preparing and not self.arming
+end
+
+--- `clip`'s page from `dialog` goes behind this window: now if the window is itself, or once it
+--- is. As one image, or still waiting to fade in, nothing may move it.
+function Skin:TuckWhenShown(dialog, clip)
+    self.tuckWaiting = nil
+    if not self:Settled() then
+        self.tuckWaiting = { dialog = dialog, clip = clip }
+        return
+    end
+    local ok, err = pcall(self.StartTuck, self, dialog, clip)
+    if not ok then
+        self:StopTuck()
+        if geterrorhandler then geterrorhandler()(err) end
+    end
+end
+
 function Skin:StopTuck()
     local tuck = self.tuck
     self.tuck = nil

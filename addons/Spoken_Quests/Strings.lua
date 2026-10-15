@@ -15,6 +15,7 @@ setfenv(1, VoiceOver)
 --   Contribute.lua         Contribute button tooltip
 --   ReportButton.lua       the copy-link dialog for reporting a line
 --   Player.lua             minimap menu entries and player settings link
+--   UI/QuestsTab.lua       the Quests tab of Azeroth's Compendium
 --
 -- FORMAT ARGUMENTS ARE POSITIONAL (%1$s, %2$d), even where there is only one and
 -- the position is obvious. Word order is the thing a translator most often has to
@@ -233,3 +234,44 @@ L.OPT_REPORT_LINE_TIP = "Get a link to report a wrong reading or a mispronounced
 L.OPT_REPORT_NO_LINE = "This client cannot tell which line that was, so there is no address to report."
 L.OPT_STOP_GOSSIP = "Stop Gossip"
 L.OPT_NEXT_GOSSIP = "Next Gossip"
+--------------------------------------------------------------------------------
+-- Azeroth's Compendium: the Quests tab (UI/QuestsTab.lua)
+--------------------------------------------------------------------------------
+
+L.COMPENDIUM_QUESTS = "Quests"
+L.COMPENDIUM_TITLE = "Azeroth's Compendium"
+L.OPEN_IN_COMPENDIUM = "Open in Azeroth's Compendium"
+L.OPEN_QUEST_IN_COMPENDIUM_TIP = "This quest's words in Azeroth's Compendium, beside every other quest's."
+L.QUESTS_SEARCH = "Search quests"
+L.QUESTS_NONE = "Nothing matches."
+L.QUESTS_FOUND_ONLY = "Started Only"
+L.QUESTS_VOICED_ONLY = "Voiced Only"
+L.QUESTS_PICK = "Choose a quest on the left to read it. Shift-click one to queue its recording after what is playing."
+L.QUESTS_ELSEWHERE = "Place Unknown"
+L.QUESTS_SECTION_CLASSES = "Classes"
+L.QUESTS_SECTION_PROFESSIONS = "Professions"
+L.QUESTS_SECTION_EVENTS = "Holidays and Events"
+L.QUESTS_SECTION_OTHER = "Other"
+L.QUESTS_SECTION_BATTLEGROUNDS = "Battlegrounds"
+L.QUESTS_SECTION_LANDS = "Other Lands"
+L.QUESTS_DUNGEONS = "Dungeons and Raids"
+L.QUESTS_GROUP_CHILDRENS_WEEK = "Children's Week"
+L.QUESTS_GROUP_WINTER_VEIL = "Feast of Winter Veil"
+L.QUESTS_GROUP_HALLOWS_END = "Hallow's End"
+L.QUESTS_GROUP_LOVE_IS_IN_THE_AIR = "Love is in the Air"
+L.QUESTS_GROUP_HARVEST_FESTIVAL = "Harvest Festival"
+L.QUESTS_GROUP_COMMENDATIONS = "Commendation Signets"
+L.QUESTS_GROUP_ARGENT_DAWN = "Argent Dawn"
+L.QUESTS_GROUP_LIBRARY = "Library Books"
+L.QUEST_NOT_FOUND = "You have not started this quest yet. Accept it in the world to read it here."
+L.QUESTS_FOUND_FMT = "%1$d of %2$d completed"
+L.QUESTS_FOUND_GOING_FMT = "%1$d of %2$d completed, %3$d in progress"
+L.QUESTS_IN_FMT = "In %1$s"
+L.QUESTS_MORE_FMT = " and %1$d more"
+L.QUESTS_TITLE_NTH_FMT = "%1$s (%2$d)"
+L.QUEST_IN_PROGRESS = "In progress"
+L.QUEST_PART_ACCEPT = "Description"
+L.QUEST_PART_COMPLETE = "Completion"
+L.QUEST_PART_PLAY_TIP = "Hear this part of the quest read aloud."
+L.QUEST_NO_TEXT = "No words are known for this quest."
+L.QUEST_PART_NO_TEXT = "No words are known for this part."

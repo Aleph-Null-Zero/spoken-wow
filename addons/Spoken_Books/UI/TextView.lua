@@ -1,7 +1,8 @@
 -- A scrolling block of wrapped text, with a scrollbar: Spoken Zones' stories, beside the map and in
--- Azeroth's Compendium, and Spoken Books' readables there, so all of them scroll and wrap alike.
+-- Azeroth's Compendium, and Spoken Books' readables and Spoken Quests' quests there, so all of them
+-- scroll and wrap alike.
 --
--- Carried byte for byte by both addons, as UI/Layout.lua is: what it makes goes on the addon that
+-- Carried byte for byte by all three addons, as UI/Layout.lua is: what it makes goes on the addon that
 -- loads it (`...`), which also answers the words' size (Addon:Get("fontSize")).
 --
 -- The scrollbar is built by hand from the game's minimal scroll bar art (MinimalScrollBar's
@@ -16,6 +17,8 @@
 local ADDON_NAME, Addon = ...
 
 local SCROLL_STEP = 28
+-- Between the words (and a part's buttons) and the scroll bar, while the bar shows.
+local BAR_GAP = 14
 local BAR_WIDTH = 6
 local MIN_THUMB = 20
 -- The fade at each edge of the text, from the text outward: three strips easing from clear to
@@ -36,6 +39,24 @@ local PAD_TOP, PAD_BOTTOM = FADE * TOP_SCALE + SOLID, FADE + SOLID
 -- bigger, and drawn at PICTURE_ALPHA so the page's grain shows through. PICTURE_LIFT raises one
 -- into the text's top padding: its frayed edge is clear page, which left a wider gap above it.
 local PICTURE_MOST, PICTURE_GAP, PICTURE_ALPHA, PICTURE_LIFT = 400, 10, 0.95, 10
+-- A part's heading (SetParts): the title's face, larger than the words and darker, on a line as
+-- tall as its round buttons; the words HEAD_GAP under it, PART_GAP between one part and the next.
+-- In near-black, as the quest frame's own headings on parchment are, set apart by room alone.
+local HEAD_SIZE, HEAD_LINE, HEAD_GAP, PART_GAP, BUTTON_GAP = 7, 26, 10, 34, 4
+-- No larger than HEAD_MOST, so a heading stays under the page's title (26) at any size of words.
+local HEAD_MOST = 20
+-- The first heading's line starts HEAD_LIFT into the text's top padding: its line is taller than
+-- its letters, which started lower than a page's first line of words does.
+local HEAD_LIFT = 4
+local HEAD_INK = { 0.06, 0.04, 0.02 }
+-- A part with a face (a speaker's portrait): the face at the left of the heading's line, which is
+-- as tall as it, and the heading FACE_GAP right of it under a caption (the speaker's name) in the
+-- words' face, CAPTION_LESS smaller than the words and no smaller than CAPTION_LEAST or larger
+-- than CAPTION_MOST, CAPTION_GAP above it.
+local FACE_GAP, CAPTION_GAP, CAPTION_LESS, CAPTION_LEAST, CAPTION_MOST = 8, 2, 1, 10, 14
+-- A part with a header (Spoken:CreateDialogueHeader): its words start this share of their size
+-- under the header strip's line, as the DialogueUI window's start under its own.
+local WORDS_UNDER_LINE = 1.4
 
 local TextView = {}
 TextView.__index = TextView
@@ -71,6 +92,13 @@ function TextView:UpdateScrollBar()
 		self.frame:SetVerticalScroll(limit)
 	end
 
+	-- A caller's scroll child (AddScrollBar) as wide as the frame, less the bar's room only while
+	-- there is something to scroll: rows reach the edge when the bar is not there.
+	if self.fitsChild then
+		local width = (self.frame:GetWidth() or 0) - (scrollable and (self.barWidth + 6) or 0)
+		if width > 0 and math.abs((self.child:GetWidth() or 0) - width) > 0.5 then self.child:SetWidth(width) end
+	end
+
 	-- Nothing to scroll: keep the bar out of the way entirely.
 	if not scrollable then
 		self.range = 0
@@ -91,6 +119,28 @@ function TextView:UpdateScrollBar()
 	self.thumb:ClearAllPoints()
 	self.thumb:SetPoint("TOP", self.bar, "TOP", 0, -Clamp(fraction * travel, 0, travel))
 	self:UpdateFade()
+end
+
+--- What the text leaves free on its right for the scroll bar: the words, and a part's buttons,
+--- end this far inside the view's right edge. None while they fit and the bar is not there; the
+--- bar's width and BAR_GAP while they run past the view.
+function TextView:BarRoom()
+	return self.room or 0
+end
+
+-- After laying the words out: room for the bar where they run past the view, none where they fit,
+-- and laid out once more (`again`) where that changed. `onRoom(room)` tells the page, whose
+-- header buttons stand over the words' right edge.
+function TextView:Settle(again)
+	local high = self.frame:GetHeight() or 0
+	local runsPast = high > 0 and (self.child:GetHeight() or 0) - high > 1
+	local need = runsPast and (self.barWidth + BAR_GAP) or 0
+	if need == (self.room or 0) or self.settling then return end
+	self.room = need
+	self.settling = true
+	again()
+	self.settling = false
+	if self.onRoom then self.onRoom(need) end
 end
 
 function TextView:ScrollTo(value)
@@ -405,8 +455,13 @@ function Addon:CreateTextView(parent)
 	-- the ScrollFrame, so this cannot recurse.
 	scroll:SetScript("OnSizeChanged", function(self)
 		local width = self:GetWidth() or 0
-		if width > 0 and width ~= view.wrappedAt and view.lastText then
-			view:SetText(view.lastText)
+		-- Taller or shorter too: the words may run past the view now, or fit.
+		if width > 0 and (width ~= view.wrappedAt or (self:GetHeight() or 0) ~= view.wrappedHigh) then
+			if view.lastParts then
+				view:SetParts(view.lastParts)
+			elseif view.lastText then
+				view:SetText(view.lastText)
+			end
 		end
 	end)
 
@@ -419,15 +474,18 @@ end
 
 function TextView:SetText(str)
 	self.lastText = str or ""
+	self.lastParts = nil
+	self:HideParts()
+	self.text:Show()
 
 	-- The scroll child does not inherit the ScrollFrame's width, so both it and
-	-- the FontString have to be told, or the text will not wrap. Leave room for
-	-- the scrollbar so it never sits on top of the last few characters.
-	local width = (self.frame:GetWidth() or 0) - (self.barWidth + 6)
+	-- the FontString have to be told, or the text will not wrap. Room for the
+	-- scrollbar only where the words run past the view (Settle).
+	local width = (self.frame:GetWidth() or 0) - self:BarRoom()
 	if width > 0 then
 		self.child:SetWidth(width)
 		self.text:SetWidth(width)
-		self.wrappedAt = self.frame:GetWidth()
+		self.wrappedAt, self.wrappedHigh = self.frame:GetWidth(), self.frame:GetHeight()
 	end
 
 	self.text:SetText(self.lastText)
@@ -468,6 +526,7 @@ function TextView:SetText(str)
 	end
 
 	self.child:SetHeight((self.text:GetStringHeight() or 0) + pictureRoom + PAD_TOP + PAD_BOTTOM)
+	self:Settle(function() self:SetText(self.lastText) end)
 	self.frame:SetVerticalScroll(0)
 	self:UpdateScrollBar()
 	self:UpdateFade()
@@ -479,9 +538,9 @@ end
 function Addon:AddScrollBar(scroll, child, parent)
 	local view = setmetatable({ frame = scroll, child = child, range = 0 }, TextView)
 	BuildScrollBar(view, parent)
+	-- The child as wide as the frame, but for the bar's room while the bar shows (UpdateScrollBar).
+	view.fitsChild = true
 	local function Fit()
-		local width = scroll:GetWidth() or 0
-		if width > 0 then child:SetWidth(width - view.barWidth - 6) end
 		view:UpdateScrollBar()
 	end
 	scroll:HookScript("OnSizeChanged", Fit)
@@ -493,6 +552,201 @@ function Addon:AddScrollBar(scroll, child, parent)
 	end
 	Fit()
 	return view
+end
+
+--- The words' face and size, as SetText sets them, on `fontString`.
+function TextView:Paint(fontString)
+	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
+	local fontPath = Addon.FontFor and Addon:FontFor(fontObject)
+		or (fontObject and fontObject.GetFont and fontObject:GetFont())
+	if fontPath then fontString:SetFont(fontPath, Addon:Get("fontSize") + (self.ink and 1 or 0), "") end
+	local colour = self.color or self.ink
+	if colour then fontString:SetTextColor(colour[1], colour[2], colour[3]) end
+	if self.ink then fontString:SetShadowColor(0, 0, 0, 0) end
+end
+
+--- A part's caption: the words' face, smaller, in the page's ink.
+function TextView:PaintCaption(fontString)
+	local fontObject = self.ink and _G.QuestFont or GameFontHighlight
+	local fontPath = Addon.FontFor and Addon:FontFor(fontObject)
+		or (fontObject and fontObject.GetFont and fontObject:GetFont())
+	local size = Clamp(Addon:Get("fontSize") - CAPTION_LESS, CAPTION_LEAST, CAPTION_MOST)
+	if fontPath then fontString:SetFont(fontPath, size, "") end
+	if self.ink then
+		fontString:SetTextColor(self.ink[1], self.ink[2], self.ink[3])
+		fontString:SetShadowColor(0, 0, 0, 0)
+	end
+end
+
+-- The parts' headings, captions and words hidden, and their buttons and faces but those in `keep`.
+function TextView:HideParts(keep)
+	for _, part in ipairs(self.parts or {}) do
+		part.heading:Hide()
+		part.caption:Hide()
+		part.words:Hide()
+	end
+	for _, button in ipairs(self.partButtons or {}) do
+		if not (keep and keep[button]) then button:Hide() end
+	end
+	self.partButtons = nil
+end
+
+--- Words in parts instead of one block: a quest's offer and hand-in. Each part is a heading, its
+--- `buttons` (round buttons the caller made on view.child, rightmost first) on the heading's line
+--- at the right, and its words under it. A part may have a `face`, a frame the caller made on
+--- view.child (Spoken:CreateSpeakerFace): it stands at the left of the heading's line, which is
+--- then as tall as it, with the heading right of it under its `caption`. A part may instead have
+--- a `header` (Spoken:CreateDialogueHeader, its frame on view.child), which is drawn in place of
+--- the heading, the face and the caption: across the part's top, its buttons on the header's
+--- controls' middle, and the words under the header strip's line.
+--- `parts` = { { heading, text, buttons, face, caption, header } }. Kept for re-wraps, as SetText's
+--- text is; SetText goes back to one block.
+function TextView:SetParts(parts)
+	local keep = {}
+	for _, part in ipairs(parts) do
+		for _, button in ipairs(part.buttons or {}) do keep[button] = true end
+		if part.face then keep[part.face] = true end
+		if part.header then keep[part.header.frame] = true end
+	end
+	self:HideParts(keep)
+	self.lastParts = parts
+	self.lastText = nil
+	self.text:SetText("")
+	self.text:Hide()
+	self.picture:Hide()
+	self.parts = self.parts or {}
+
+	local width = (self.frame:GetWidth() or 0) - self:BarRoom()
+	if width > 0 then
+		self.child:SetWidth(width)
+		self.wrappedAt, self.wrappedHigh = self.frame:GetWidth(), self.frame:GetHeight()
+	end
+	local titleFace = _G.QuestTitleFont and _G.QuestTitleFont.GetFont and _G.QuestTitleFont:GetFont()
+	local shown = {}
+	local y = PAD_TOP
+	for i, part in ipairs(parts) do
+		local slot = self.parts[i]
+		if not slot then
+			slot = { heading = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge"),
+				caption = self.child:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall"),
+				words = self.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight") }
+			for _, line in ipairs({ slot.heading, slot.caption }) do
+				line:SetJustifyH("LEFT")
+				if line.SetWordWrap then line:SetWordWrap(false) end
+			end
+			slot.words:SetJustifyH("LEFT")
+			slot.words:SetJustifyV("TOP")
+			slot.words:SetWordWrap(true)
+			slot.words:SetSpacing(2)
+			self.parts[i] = slot
+		end
+		local face, header = part.face, part.header
+		if i > 1 then
+			y = y + PART_GAP
+		elseif not (face or header) then
+			y = y - HEAD_LIFT
+		end
+		-- The buttons from the right, BUTTON_GAP apart, centred `middle` down; the leftmost shown.
+		local function PlaceButtons(middle)
+			local previous
+			for _, button in ipairs(part.buttons or {}) do
+				if button:IsShown() then
+					button:ClearAllPoints()
+					if previous then
+						button:SetPoint("RIGHT", previous, "LEFT", -BUTTON_GAP, 0)
+					else
+						button:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -middle)
+					end
+					previous = button
+					table.insert(shown, button)
+				end
+			end
+			return previous
+		end
+		if header then
+			slot.heading:Hide()
+			slot.caption:Hide()
+			local room = 0
+			for _, button in ipairs(part.buttons or {}) do
+				if button:IsShown() then room = room + (room > 0 and BUTTON_GAP or 0) + (button:GetWidth() or 0) end
+			end
+			local _, middle, line = header:Layout(math.max(width, 1), room)
+			header.frame:ClearAllPoints()
+			header.frame:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -y)
+			header.frame:Show()
+			table.insert(shown, header.frame)
+			PlaceButtons(y + middle)
+			local wordsSize = Addon:Get("fontSize") + (self.ink and 1 or 0)
+			y = y + line + math.floor(WORDS_UNDER_LINE * wordsSize + 0.5)
+		else
+			local font = Addon.FontFor and _G.QuestTitleFont and Addon:FontFor(_G.QuestTitleFont) or titleFace
+			if font then slot.heading:SetFont(font, math.min(Addon:Get("fontSize") + HEAD_SIZE, HEAD_MOST), "") end
+			slot.heading:SetTextColor(HEAD_INK[1], HEAD_INK[2], HEAD_INK[3])
+			slot.heading:SetShadowColor(0, 0, 0, 0)
+			slot.heading:SetText(part.heading or "")
+			local caption = part.caption ~= "" and part.caption or nil
+			local block = slot.heading:GetStringHeight() or 0
+			if caption then
+				self:PaintCaption(slot.caption)
+				slot.caption:SetText(caption)
+				block = block + CAPTION_GAP + (slot.caption:GetStringHeight() or 0)
+			end
+			-- The heading's line: as tall as the face, or the caption and the heading where they are taller.
+			local line = math.max(HEAD_LINE, face and (face:GetHeight() or 0) or 0, caption and block or 0)
+			local middle = y + line / 2
+			local previous = PlaceButtons(middle)
+			local left = 0
+			if face then
+				face:ClearAllPoints()
+				face:SetPoint("LEFT", self.child, "TOPLEFT", 0, -middle)
+				face:Show()
+				table.insert(shown, face)
+				left = (face:GetWidth() or 0) + FACE_GAP
+			end
+			-- A line of text from `left` to the buttons, centred `at` down from the top.
+			local function Across(text, at)
+				text:ClearAllPoints()
+				text:SetPoint("LEFT", self.child, "TOPLEFT", left, -at)
+				if previous then
+					text:SetPoint("RIGHT", previous, "LEFT", -8, middle - at)
+				else
+					text:SetPoint("RIGHT", self.child, "TOPLEFT", math.max(width, 1), -at)
+				end
+				text:Show()
+			end
+			if caption then
+				-- The caption over the heading, the two centred on the line together.
+				local top = middle - block / 2
+				local captionHigh = slot.caption:GetStringHeight() or 0
+				Across(slot.caption, top + captionHigh / 2)
+				Across(slot.heading, top + captionHigh + CAPTION_GAP + (slot.heading:GetStringHeight() or 0) / 2)
+			else
+				slot.caption:Hide()
+				Across(slot.heading, middle)
+			end
+			y = y + line + HEAD_GAP
+		end
+
+		self:Paint(slot.words)
+		slot.words:ClearAllPoints()
+		slot.words:SetPoint("TOPLEFT", self.child, "TOPLEFT", 0, -y)
+		if width > 0 then slot.words:SetWidth(width) end
+		slot.words:SetText(part.text or "")
+		slot.words:Show()
+		y = y + (slot.words:GetStringHeight() or 0)
+	end
+	for i = #parts + 1, #self.parts do
+		self.parts[i].heading:Hide()
+		self.parts[i].caption:Hide()
+		self.parts[i].words:Hide()
+	end
+	self.partButtons = shown
+
+	self.child:SetHeight(y + PAD_BOTTOM)
+	self:Settle(function() self:SetParts(parts) end)
+	self.frame:SetVerticalScroll(0)
+	self:UpdateScrollBar()
+	self:UpdateFade()
 end
 
 --- A picture above the text from the next SetText on: `file` a texture, `mask` the one fraying its

@@ -39,3 +39,4 @@ Gossip\ptBR.lua [AllowLoadTextLocale ptBR]
 Gossip\ruRU.lua [AllowLoadTextLocale ruRU]
 Gossip\zhCN.lua [AllowLoadTextLocale zhCN]
 Gossip\zhTW.lua [AllowLoadTextLocale zhTW]
+Compendium.xml

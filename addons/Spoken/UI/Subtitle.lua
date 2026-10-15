@@ -390,10 +390,12 @@ function Subtitle:BuildPicture()
     local ring = chrome:CreateTexture(nil, "ARTWORK")
     ring:SetAllPoints()
     ring:SetTexture(TEXTURES .. "MinimalPortraitRing")
+    -- Bronze Border tints it, as it does the Small Window's.
+    Actions.TintWithRings(ring)
     local badge = chrome:CreateTexture(nil, "OVERLAY")
     badge:SetSize(16 * k + 2, 16 * k + 2)
     badge:SetPoint("CENTER", disc, "CENTER", 0, 0)
-    self.picture, self.viewport, self.badge = host, viewport, badge
+    self.picture, self.viewport, self.badge, self.ring = host, viewport, badge, ring
 end
 
 --- The speaker's face where one was captured, else the clip's own picture, with its badge.

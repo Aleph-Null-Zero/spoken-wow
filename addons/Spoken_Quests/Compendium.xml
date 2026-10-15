@@ -1,0 +1,12 @@
+<Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+    <!--
+        The Quests tab of Azeroth's Compendium (UI/QuestsTab.lua), in the window Spoken Books or
+        Spoken Zones loads. Listed only by the .toc files of the clients those two run on: the
+        words are 3 MB of Lua, parsed at every login, for a tab that cannot open without them.
+    -->
+    <Include file="Data\Compendium.lua"/>
+    <Include file="Data\QuestText.lua"/>
+    <Include file="UI\TextView.lua"/>
+    <Include file="UI\QuestsTab.lua"/>
+    <Include file="UI\OpenInCompendium.lua"/>
+</Ui>

@@ -286,6 +286,56 @@ quests:Enqueue(clip)
 Expect("a queued line shows the window", Skin.wanted, true)
 Expect("...naming the speaker", Skin.name:GetText(), "Eagan Peltskinner")
 Expect("...and the line", Skin.title.text:GetText(), "Wolves Across the Border")
+
+-- The card's header on a page of a feature addon's (Spoken:CreateDialogueHeader): at the card's
+-- column it is the card's, at another width the card's grown to it.
+do
+    local page = CreateFrame("Frame", nil, UIParent)
+    local header = Spoken:CreateDialogueHeader(page)
+    local inner = Skin.headerSocket:GetWidth() + Skin.headerDivider:GetWidth()
+    local room = Skin.controls:GetWidth() * Skin.controls:GetScale()
+    local height, middle, line = header:Layout(inner, room)
+    local function Coords(texture) return table.concat(texture.texCoord, ",") end
+    Expect("a page's header at the card's column is the card's strip, socket and line",
+        height .. " " .. Coords(header.socket) .. " " .. Coords(header.divider) .. " " .. header.divider:GetWidth(),
+        Skin.headerSocket:GetHeight() .. " " .. Coords(Skin.headerSocket) .. " " .. Coords(Skin.headerDivider)
+        .. " " .. Skin.headerDivider:GetWidth())
+    Expect("...in DialogueUI's own parchment", header.socket.texture, BROWN .. "Parchment.png")
+    Expect("...the card's face in its socket", header.portrait:GetWidth() .. " " .. header.portrait.anchor.x .. " "
+        .. header.portrait.anchor.y, Skin.portrait:GetWidth() .. " " .. Skin.portrait.anchor.x .. " " .. Skin.portrait.anchor.y)
+    Expect("...its badge where the card's is", header.badge:GetWidth() .. " " .. header.badge.anchor.x,
+        Skin.badge:GetWidth() .. " " .. Skin.badge.anchor.x)
+    Expect("...the name and the title as tall as the card's", header.name:GetHeight() .. " " .. header.title:GetHeight(),
+        Skin.name:GetHeight() .. " " .. Skin.title:GetHeight())
+    Expect("...its controls' middle the card's", middle, Skin.controlsMiddle)
+    Expect("...the strip's line ending 0.8 down it", line, math.floor(height * 0.8 + 0.5))
+    Expect("...the title stopping a round button's width short of the controls' room, on their middle",
+        header.title.anchor.point .. " " .. tostring(header.title.anchor.relativeTo == header.frame) .. " "
+        .. header.title.anchor.relativePoint .. " " .. header.title.anchor.x .. " " .. header.title.anchor.y,
+        "RIGHT true TOPRIGHT " .. -(room + 24) .. " " .. -middle)
+    Expect("...its frame the column's width and the strip's height", header.frame:GetWidth() .. " " .. header.frame:GetHeight(),
+        inner .. " " .. height)
+    local wide = header:Layout(inner * 2, room)
+    -- The strip art is 358 by 51, and the title DialogueUI's 18 at 0.85, on a line 4 taller.
+    Expect("twice as wide, the strip twice as tall and the title's line with it",
+        wide .. " " .. header.title:GetHeight(), math.floor(51 * inner * 2 / 358 + 0.5) .. " " .. (math.floor(18 * 0.85 * 2 + 0.5) + 4))
+    _G.DialogueUI_DB.Theme = 2
+    header:Layout(inner, room)
+    Expect("with DialogueUI's dark theme, still its brown parchment: the page is parchment", header.socket.texture,
+        BROWN .. "Parchment.png")
+    _G.DialogueUI_DB.Theme = 1
+    header:SetTexts("Eagan Peltskinner", "Description")
+    Expect("the speaker's name over the part's title", header.name:GetText() .. "|" .. header.title.text:GetText(),
+        "Eagan Peltskinner|Description")
+    header:SetTexts("Mulgore", "Mulgore")
+    Expect("...a name the same as the title said once", header.name:GetText() .. "|" .. header.title.text:GetText(), "|Mulgore")
+    header:SetSpeaker({ bullet = "quest-complete" })
+    Expect("the line's badge on its disc", tostring(header.badge:IsShown()) .. " " .. tostring(header.badgeDisc:IsShown())
+        .. " " .. header.badge:GetTexture(), "true true " .. env.MinimalPlayer.BADGES["quest-complete"])
+    Expect("...no one speaking: the book, tinted as the card tints it",
+        header.viewport.texture:GetTexture() .. " " .. table.concat(header.viewport.texture.vertexColor, ",", 1, 3),
+        [[Interface\AddOns\Spoken\Textures\Book]] .. " 1,0.9,0.78")
+end
 quests:Enqueue(H.Clip({ present = { header = "Eagan", label = "Second", portrait = { kind = "none" } } }))
 Expect("a waiting line gets no row, the title counts it", tostring(Skin.rows) .. " " .. Skin.count:GetText(), "nil • +1")
 Spoken:StopAll()
@@ -997,7 +1047,21 @@ local function Page(material)
         portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 end
 local function Rows(texture) return texture.texCoord and (texture.texCoord[3] * 2048) .. "-" .. (texture.texCoord[4] * 2048) end
+-- The title already says the page's label when the book's look changes its font: the client can
+-- leave such a string blank, and ignores the same text set again, so it is emptied and set again.
+Skin.title.text:SetText("Page 1 of 4")
+local titleSets, setTitle = {}, Skin.title.text.SetText
+Skin.title.text.SetText = function(self, text)
+    table.insert(titleSets, text)
+    return setTitle(self, text)
+end
 books:Enqueue(Page(nil))
+Skin.title.text.SetText = setTitle
+local emptiedThenSet = false
+for i = 1, #titleSets - 1 do
+    if titleSets[i] == "" and titleSets[i + 1] == "Page 1 of 4" then emptiedThenSet = true end
+end
+Expect("a title whose font changes under the same text is emptied and set again, so it is drawn", emptiedThenSet, true)
 Expect("a book's page is drawn in the book view's paper", Skin.parchments[1].texture .. " " .. Skin.parchments[3].texture,
     BOOK .. "Parchment.png " .. BOOK .. "Parchment.png")
 Expect("...its top cap, the middle and its torn foot", Rows(Skin.parchments[1]) .. " " .. Rows(Skin.parchments[2]) .. " "
@@ -1085,7 +1149,12 @@ local card = Skin.card
 Expect("a stone closed while a quest's line plays does not take this window's place", Skin.settling, nil)
 Expect("...this window comes back as it was, in the quest's parchment", tostring(Skin.wanted) .. " "
     .. Skin.parchments[1].texture, "true " .. BROWN .. "Parchment.png")
-Expect("...and the stone's page is lifted off where the stone was, as large, in stone",
+Expect("...fading back in at once as itself, not one image, the stone's page going behind it",
+    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.fadeTime ~= nil) .. " " .. tostring(not Skin.buffered), "true true true")
+Skin:Tick(0.1)
+Expect("...the window coming in as the page flies, not appearing at once", Skin.level > 0 and Skin.level < 1, true)
+card = Skin.card
+Expect("...then the stone's page is lifted off where the stone was, as large, in stone",
     Skin.tuck ~= nil and card:IsShown() and card.strips[1].texture == BOOK .. "Metal.png"
     and Near(card.anchor.x * card.scale, (200 + 409.6 / 2) * 0.8 / ui)
     and Near(card.anchor.y * card.scale, (100 + 477.87 / 2) * 0.8 / ui)
@@ -1107,6 +1176,13 @@ Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
 Expect("a dialog closed on another's line, having queued nothing, brings this window back and nothing more",
     tostring(Skin.tuck) .. " " .. tostring(Skin.settling) .. " " .. tostring(Skin.wanted), "nil nil true")
+-- The window coming back on another's line fades in first: a page waits until it shows in full.
+local function UntilTucked()
+    for _ = 1, 40 do
+        if Skin.tuck then return end
+        Skin:Tick(0.05)
+    end
+end
 -- A dialog opening while a page flies: cut short.
 stub.Advance(2)
 BookView:Show()
@@ -1115,6 +1191,7 @@ books:Enqueue(Page(nil))
 BookView:Hide()
 Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
+UntilTucked()
 Expect("a book's page goes behind in the book view's paper", card.strips[1].texture, BOOK .. "Parchment.png")
 Skin:TuckStep(0.3)
 stub.Advance(1)
@@ -1134,6 +1211,7 @@ stub.Advance(2)
 DUI:ShowUI()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Second", portrait = { kind = "none" } } }))
 CloseDialog()
+UntilTucked()
 Expect("a giver's second quest accepted while the first's line plays sends its page behind this window",
     tostring(Skin.settling) .. " " .. tostring(Skin.tuck ~= nil) .. " " .. tostring(card:IsShown()), "nil true true")
 Skin:TuckStep(1)
@@ -1157,6 +1235,7 @@ OpenDialog()
 CloseDialog()
 stub.Advance(0.4)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Quick Second", portrait = { kind = "none" } } }))
+UntilTucked()
 Expect("...and, another line playing, its page goes behind this window", tostring(Skin.settling) .. " " .. tostring(Skin.tuck ~= nil), "nil true")
 Skin:TuckStep(1)
 stub.Advance(2)
@@ -1173,7 +1252,7 @@ stub.Advance(1.5)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Late", portrait = { kind = "none" } } }))
 Expect("...nor a quest's line queued long after", tostring(Skin.settling) .. " " .. tostring(Skin.tuck), "nil nil")
 -- Coming back from nothing on another's line, and the quest's line queued while it waits to fade
--- in: its page goes behind, and the window still fades in, after the page.
+-- in: the window fades in at once, as itself, while the page goes behind it, never behind nothing.
 Spoken:StopAll()
 for _ = 1, 40 do Skin:Tick(0.05) end
 stub.Advance(2)
@@ -1185,12 +1264,13 @@ Expect("closed on another's line, the window waits unseen to fade in",
     tostring(Skin.preparing ~= nil) .. " " .. Skin.level, "true 0")
 stub.Advance(0.4)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Quick Third", portrait = { kind = "none" } } }))
-Expect("...a quest's line queued then goes behind it, the fade still to come",
-    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.preparing ~= nil), "true true")
+Expect("...a quest's line queued then fades it in at once as itself, its page going behind it",
+    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.fadeTime ~= nil) .. " " .. tostring(Skin.preparing) .. " "
+    .. tostring(not Skin.buffered), "true true nil true")
 Skin.stillFor = 1
-Expect("...not as one image while the page flies", Skin:Still(), false)
+Expect("...the window not one image while the page flies", Skin:Still(), false)
 for _ = 1, 40 do Skin:TuckStep(0.05); Skin:Tick(0.05) end
-Expect("...and in once it has", tostring(Skin.tuck) .. " " .. Skin.level, "nil 1")
+Expect("...and the page gone behind it, the window still shown", tostring(Skin.tuck) .. " " .. Skin.level, "nil 1")
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 

@@ -11,6 +11,153 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **The quest pack Spoken suggests for your language links to its download again.** It pointed
   at CurseForge pages that now hold only part of a language's quests; it now opens the one-pack
   download on GitHub. Chinese clients are offered their own pack too, instead of English's.
+- **A book's title shows on the DialogueUI window the first time it plays.** It could stay blank after a quest line until another book played. *([Nucabe](https://github.com/Nucabe))*
+- **Bronze Border turns the subtitles' portrait ring bronze too**, as it does the small window's. *([Nucabe](https://github.com/Nucabe))*
+- **The offer on a quest's page in Azeroth's Compendium is now called Description**, as the game's
+  quest window calls it. *([Nucabe](https://github.com/Nucabe))*
+- **A quest's page in Azeroth's Compendium shows who says each part.** The description and the
+  completion each have the small window's header: the round portrait of the quest giver or of the
+  NPC you hand it in to, with the part's badge, and their name over the part's name. The progress
+  part is gone; Voiced Only and shift-click on a quest's row count only the description and the
+  completion, so a quest voiced only in its progress counts as unvoiced. *([Nucabe](https://github.com/Nucabe))*
+- **Razorfen Downs tells its story at its entrance in The Barrens.** Standing there, discovering
+  it or clicking it on The Barrens' map now plays and shows its story, and Azeroth's Compendium
+  opens on its card. *([Nucabe](https://github.com/Nucabe))*
+- **Strahnbrad and the other places the game puts in Alterac Mountains are in Alterac Mountains.**
+  Azeroth's Compendium lists and counts the twelve under Alterac Mountains instead of Hillsbrad
+  Foothills, and standing in one, discovering it or clicking it on Alterac Mountains' map plays and
+  shows its story. Places you found before still count. The Great Lift, Lordamere Lake and
+  Darrowmere Lake tell their stories from both zones they border, and on Forever the Valley of
+  Bones is listed in Shen'dralas. *([Nucabe](https://github.com/Nucabe))*
+- **Books in Azeroth's Compendium files what is found inside a dungeon or raid under its card**,
+  in the zone of its entrance, as Quests does: the Dark Keeper nameplates under Blackrock Depths,
+  the lore books under Scholomance and the Scarlet Monastery. A zone with several dungeons holds
+  them under a Dungeons and Raids line. Searching for a dungeon's name lists all it holds, and
+  inside a dungeon the tab opens on its card. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium's Zones tab lists dungeons and raids as cards, and opens every zone.**
+  Each dungeon or raid is a card inside the zone of its entrance, as on the Quests tab, under a
+  Dungeons and Raids line where the zone has several; Razorfen Downs is in The Barrens. Continents
+  and zones you have not discovered open as on Quests and Books: their cards are greyed and their
+  areas listed, those not found greyed with a padlock, and a search finds them too. Their stories
+  stay hidden until you discover them, unless Unlock Undiscovered Zones is on. *([Nucabe](https://github.com/Nucabe))*
+- **Play in Azeroth's Compendium works as the quest log's.** It shows Stop while its part or book
+  is read and Replay once you stop it; Stop no longer takes the line out of the queue, and Play
+  while the queue is stopped plays at once. A queue emptied while stopped no longer stays stopped,
+  so the next line plays. Play and Report say the same in their tooltips on every tab. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium's Quests tab finds its way better.** The line under a page's title says
+  "In" only before a place ("In Mulgore", "Classes · Warrior") and a click on it goes up a level.
+  Chains of one name in one place are numbered, and a chain is named after its first quest you can
+  take. With no quests where you stand, or the filters hiding your zone, the tab opens on your
+  continent. Open in Azeroth's Compendium stays on a quest the filters hide, and follows Unlock
+  Unstarted Quests at once. Era no longer lists Forever's Darkspear Islands. Text Size applies to
+  Quests and Books, switching Quests off closes its tab, and Defaults turns off Started Only and
+  Voiced Only. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium keeps several zones open at once.** On Quests, Zones and Books a click
+  on a zone's or city's card opens or closes that card alone, so opening Elwynn Forest no longer
+  closes Alterac Mountains. A city's card stays as you left it while its zone is closed. *([Nucabe](https://github.com/Nucabe))*
+- **A quest's hand-in in Azeroth's Compendium plays under the NPC you hand it in to**,
+  with that NPC's name and portrait, not the quest giver's. The hand-in stays hidden until you
+  have completed the quest, unless Unlock Unstarted Quests is on. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium opens scrolled to where you are**, and every page's line under its
+  title says where it is and how much of it you have found ("In Kalimdor · 1 of 88 completed").
+  Quests has Voiced Only, as Zones and Books do; a continent's banner on Zones counts its areas,
+  as its zones' cards do; a zone's kinds of writing on Books start closed. *([Nucabe](https://github.com/Nucabe))*
+- **A quest's page in Azeroth's Compendium sets its offer, progress and hand-in apart.** Each part
+  has its own heading, larger and darker than the words, with Play and Report for that part on the
+  heading's line. A book's page has Report beside Play, as a zone's page does. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium calls each thing by one name in every language.** The Zones tab searches
+  zones, holiday quests sit under Holidays and Events as holiday books do, Place Unknown is the
+  same on Quests and Books, and the filters and Unlock switches are worded alike. Play on a quest's
+  or book's page names itself in its tooltip. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium lists everything as cards.** In Quests, Zones and Books each continent is
+  a banner, as is each type (Classes, Professions, Holidays and Events, a kind of writing By Type),
+  and each zone a card showing how much of it you have found, with a bar; its cities and dungeons
+  are cards inside it. Everything else (a class, a profession, a quest chain, a kind of writing in
+  a zone) is a line of the list with what it holds under it, and single quests, places and
+  writings are rows. A quest chain is named after its first quest, and its page shows how many of
+  its quests you have completed and asks you to choose one. The list is drawn in the game's own
+  art: your faction's campaign header for each banner, and Classic's character select card for
+  each card, with the zone's painting in a silver frame and the Pet Journal's progress bar. *([Nucabe](https://github.com/Nucabe))*
+- **What NPCs say is its own module, Spoken Gossip, with its own switch and settings page.**
+  Your gossip settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go
+  behind.** Closing a dialog on another line, such as a greeting before a quest or a gravestone
+  before a book, now fades the window back in at once while the queued page goes behind it.
+- **The Compendium's Books and Quests pages are written in the same dark ink as Zones'**, with
+  the same faint band behind the title. Their words were a lighter brown that looked greyed out.
+  *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's line under a book's title stays on one line.** A book found in several places
+  listed them all over two lines; the line is now cut short. *([Nucabe](https://github.com/Nucabe))*
+- **A book's highlighted word keeps pace with its voice from the start.** The recording of a
+  book's first page reads its title before the words, and the highlight began at once, running
+  ahead the whole page. It now starts once the title is said. Pages that open with their own
+  title, as gravestones do, start at once as before. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium has a Quests tab, its first.** Every quest your character's race and
+  class can take, by zone, with class, profession, event and other quests apart, with what its NPC
+  says when offering it, while it is under way and when you hand it in, and Play for its voice.
+  Quests you have started or completed open; the rest are greyed until Unlock Unstarted Quests is
+  on, in the Compendium section of Spoken's page. On a client in another language, a quest shows in that
+  language once you have seen its window. Open in Azeroth's Compendium, on the quest giver's
+  window, the quest log's details and DialogueUI's window, opens the tab on that quest.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Quests in your quest log open in Azeroth's Compendium too**, marked in progress on their row
+  and their page, and counted with the completed ones. Started Only keeps them, and the list
+  follows your quest log while it is open. Open in Azeroth's Compendium on a quest you have
+  accepted shows its words. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium groups each zone's quests into their chains.** A chain's card is named
+  after its first quest and shows how many of its quests you have completed, how many are in
+  progress, and a bar; a chain you have finished gets a tick. *([Nucabe](https://github.com/Nucabe))*
+- **Shift-click a quest in the Quests tab to queue its recording** after what is playing,
+  without leaving the quest you are reading. *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium files Forever's quests where Forever's own client files them.** Most of
+  the quests that were in Place Unknown are now under their zone, their class or a group of
+  their own such as Camping, and more quests are linked into their chains.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Azeroth's Compendium lists only the quests your side, race and class can take.** One side's
+  quests no longer show for the other, a Skyborne character sees its side's quests and the
+  Skyborne's own, and a class's quests show for that class alone.
+  *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's Quests and Zones tabs have a Battlegrounds banner, and Zephras Isle shows as
+  a zone of its own,** under an Other Lands banner on both. Each zone with a dungeon or raid holds its quests in a Dungeons and Raids card.
+  Every holiday has its own group under Events, Children's Week included, Camping sits with the
+  professions, and the Argent Dawn and the library books have groups under Other. A quest chain
+  has one name in every zone it crosses. Quests no one can take are gone, and the audit's fixes
+  put many quests in the right zone, under the right title or in their chain.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
+  short. *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's Zones tab is always on a place.** Reached from another tab, it showed an
+  empty page asking to choose a place; it now shows where the player stands, and keeps a place the
+  player chose. *([Nucabe](https://github.com/Nucabe))*
+- **A place you have not discovered says how to discover it:** travel there. A search on the
+  Compendium's Zones tab no longer opens the continents and zones you have not discovered.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Keep Talking in Background, a new Sound setting, lets you hear Spoken with the game window in
+  the background.** While a line plays it turns on the game's Sound in Background, which plays
+  the game's other sounds too, and puts your own setting back once the last line ends, after a
+  reload or at the next login. A change you make to that setting meanwhile is kept. Off by
+  default. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: readables near a zone's border were listed under the zone next door** in the
+  Compendium. The letters handed out in Darkshire were under Deadwind Pass, Nesingwary's Green
+  Hills chapters under Westfall and Ratchet's manuals under Durotar. Each is now under the zone
+  where it is found. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: the Librams and Nat Pagle's guide said "Dropped by Alliance Sentinel (1)"** in the
+  Compendium, naming the server's copies of a creature. They name the creatures you meet.
+  *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's readables have two new kinds: Journals and Diaries, and Pictures and Maps.**
+  Journals were split between Books and Notes. A readable with no words, such as the Snapshot of
+  Gammerita or the Crude Map, is a picture. With them, about 90 readables move to the kind their
+  title or words say: "Maybell's Love Letter" is a letter, not a scroll, and Uther's tomb a
+  gravestone, not a plaque. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: the Compendium counted 26 readables no one can have.** Beta items with no words and
+  the Forsaken letters that were never given out sat under Origin Unknown, so no total could be
+  completed. They are gone, and eight readables that were there, such as Gnomeregan's punch cards
+  and the Snapshot of Gammerita, are listed in the zone they come from.
+  *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium lists the seasonal events' readables under Holidays and Events.** Winter
+  Veil's, the Harvest Festival's poems, the fishing tournament's flier and the Scourge invasion's
+  letters and reports were under Origin Unknown, or in the cities where the event's NPCs stand.
+  *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.4.0 — 2026-10-12
 

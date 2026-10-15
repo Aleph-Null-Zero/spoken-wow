@@ -44,6 +44,8 @@ local METHODS = {
     -- frame, settings
     "GetPlayerFrame", "GetSettingsCategory", "OpenSettings", "AddSettingsLink", "RefreshPlayer",
     "GetPlayerStyle", "SetPlayerHost", "AddDialogueUISettings",
+    -- Azeroth's Compendium's Text Size, which Zones, Books and Quests draw their words at
+    "CompendiumFontSize", "SetCompendiumFontSize",
     -- captions
     "GetCaption", "GetCaptionOptions", "SplitCaption", "CaptionWords",
     -- developer tools: the Spoken_Developer module's
@@ -52,6 +54,8 @@ local METHODS = {
     "AddDiagnostics", "Diagnostics",
     -- contributions
     "ShowContribution", "SetContributeHost", "AreContributeButtonsHidden",
+    -- a speaker's face on a feature addon's page, and the DialogueUI card's header
+    "CreateSpeakerFace", "CreateDialogueHeader",
 }
 for _, name in ipairs(METHODS) do
     Expect("Spoken:" .. name .. " exists", type(Spoken[name]), "function")
@@ -118,6 +122,65 @@ Expect("a registered renderer is retrievable", type(Spoken:GetPortraitRenderer("
 Spoken.Packs:Register("contract", "SomePackFolder", { version = 1 })
 Expect("Packs.Get returns what was registered", Spoken.Packs:Get("contract")[1].version, 1)
 Expect("Packs.Get for an unknown source is empty", getn(Spoken.Packs:Get("nothing")), 0)
+
+---------------------------------------------------------------- a speaker's face
+-- The Small Window's portrait on a page of the caller's: the creature's still where the client
+-- has its appearance, else the book; an object's picture; the line's badge on its disc.
+do
+    local E = SpokenEnv
+    local BOOK = [[Interface\AddOns\Spoken\Textures\Book]]
+    local page = CreateFrame("Frame", nil, UIParent)
+    local face = Spoken:CreateSpeakerFace(page, 44)
+    local function Drawn()
+        if face.still:IsShown() then return "still " .. tostring(face.still.display) end
+        local texture = face.viewport.texture
+        return texture and texture:IsShown() and texture:GetTexture() or "nothing"
+    end
+    Expect("a face is the size asked for, on the page", face:GetWidth() .. " " .. tostring(face:GetParent() == page), "44 true")
+    Expect("...in the Small Window's ring", face.ring:GetTexture(), [[Interface\AddOns\Spoken\Textures\MinimalPortraitRing]])
+    Expect("...with no speaker, the book, never an empty socket", Drawn(), BOOK)
+    Expect("...and no badge", tostring(face.badge:IsShown()) .. " " .. tostring(face.badgeBackground:IsShown()), "false false")
+
+    world.creatureDisplays[197] = { 3258 }
+    face:SetSpeaker({ creatureID = 197, bullet = "quest-accept" })
+    Expect("a creature the client has: its still", Drawn(), "still 3258")
+    Expect("...with the bullet's badge on its disc", face.badge:IsShown() and face.badgeBackground:IsShown()
+        and face.badge:GetTexture(), E.MinimalPlayer.BADGES["quest-accept"])
+    Expect("...at least 12 across on a small face", face.badge:GetWidth(), 12)
+
+    world.creatureDisplays[240] = { 1990 }
+    world.displaysUncached = true
+    face:SetSpeaker({ creatureID = 240, bullet = "quest-complete" })
+    Expect("a creature the client has not cached: the book meanwhile", Drawn(), BOOK)
+    Expect("...asking for it while shown", type(face.scripts.OnUpdate), "function")
+    world.displaysUncached = false
+    world.time = world.time + 1
+    face.scripts.OnUpdate(face, 1)
+    Expect("...and its still once the client has it", Drawn(), "still 1990")
+    Expect("...then asking no more", face.scripts.OnUpdate, nil)
+
+    world.displaysUncached = true
+    face:SetSpeaker({ creatureID = 6 })
+    world.time = world.time + 10
+    face.scripts.OnUpdate(face, 10)
+    Expect("one the client never answers for keeps the book, and is no longer asked for",
+        Drawn() .. " " .. tostring(face.scripts.OnUpdate), BOOK .. " nil")
+    world.displaysUncached = false
+
+    face:SetSpeaker({ objectOrItem = true, icon = [[Interface\Icons\INV_Misc_Book_08]] })
+    Expect("an object or an item: its picture", Drawn(), [[Interface\Icons\INV_Misc_Book_08]])
+    face:SetSpeaker({ objectOrItem = true })
+    Expect("...else a posted notice", Drawn(), [[Interface\Icons\INV_Misc_Note_01]])
+
+    -- Two faces of one NPC both show it: neither takes the other's texture.
+    local other = Spoken:CreateSpeakerFace(page, 44)
+    face:SetSpeaker({ creatureID = 197 })
+    other:SetSpeaker({ creatureID = 197 })
+    Expect("two faces of one creature each draw it", Drawn() .. " " .. tostring(other.still:IsShown()), "still 3258 true")
+end
+
+-- Without DialogueUI there is no art to draw its card's header in: the caller draws its own.
+Expect("no DialogueUI header without DialogueUI", Spoken:CreateDialogueHeader(CreateFrame("Frame", nil, UIParent)), nil)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll API contract tests passed")

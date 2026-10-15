@@ -44,11 +44,11 @@ for _, file in ipairs({ "UI/Layout", "UI/Options" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
 end
 Z:SetupOptions()
--- Azeroth's Compendium, with the two tabs Spoken's page shows an Unlock switch for: stand-ins
--- that keep the switch, as Places' and Writings' real tabs keep it in their settings.
+-- Azeroth's Compendium, with the three tabs Spoken's page shows an Unlock switch for: stand-ins
+-- that keep the switch, as the real tabs keep it in their settings.
 assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", Z)
 local unlocked = {}
-for _, key in ipairs({ "places", "readables" }) do
+for _, key in ipairs({ "places", "readables", "quests" }) do
     SpokenCompendium:Register(key, { label = key, order = 1, build = function() end, open = function() end,
         unlock = { get = function() return unlocked[key] == true end, set = function(v) unlocked[key] = v end } })
 end
@@ -208,11 +208,37 @@ for _, key in ipairs({ "quests", "gossip", "books", "zones" }) do
 end
 
 ---------------------------------------------------------------- Reset All and the Unlock switches
+local unlocks = {}
+for _, control in ipairs(Controls(pages[1].layout)) do
+    local name = Name(control)
+    if name:find("^Unlock ") then table.insert(unlocks, name) end
+end
+Expect("Spoken's page lists the Unlock switches in the order of the Compendium's tabs: Quests, Zones, Books",
+    table.concat(unlocks, "|"), "Unlock Unstarted Quests|Unlock Undiscovered Zones|Unlock Unfound Books")
+
+---------------------------------------------------------------- the Compendium's Text Size
+-- On Spoken's page, after Open Azeroth's Compendium, for every tab; no longer on the Zones page.
+local afterOpen
+local controls = Controls(pages[1].layout)
+for index, control in ipairs(controls) do
+    if Name(control) == env.L.OPT_COMPENDIUM_OPEN and controls[index + 1] then afterOpen = Name(controls[index + 1]) end
+end
+Expect("Spoken's Compendium section has Text Size after its Open button", afterOpen, env.L.OPT_COMPENDIUM_FONT_SIZE)
+local onZones = {}
+for _, control in ipairs(Controls(pages[4].layout)) do
+    if Name(control) == Z.L.OPT_FONT_SIZE and control.shown ~= false then table.insert(onZones, Name(control)) end
+end
+Expect("...and the Zones page has none", table.concat(onZones, "|"), "")
+
 -- Kept with each part's settings, so Spoken's profile reset would not reach them.
-unlocked.places, unlocked.readables = true, true
+unlocked.places, unlocked.readables, unlocked.quests = true, true, true
+-- The Text Size the Zones page had, which Spoken's reads until it is set there.
+_G.SpokenZonesSettings = { fontSize = 15 }
 local reset = _G.SpokenOptionsPanel.layout.defaults
 reset.scripts.OnClick(reset)
 stub.popups[#stub.popups].dialog.OnAccept()
-Expect("Reset All turns both Unlock switches off", (unlocked.places or unlocked.readables) and true or false, false)
+Expect("Reset All turns every Unlock switch off", (unlocked.places or unlocked.readables or unlocked.quests) and true or false, false)
+Expect("...and puts the Compendium's Text Size back to 12, not to the Zones page's", _G.Spoken:CompendiumFontSize(), 12)
+_G.SpokenZonesSettings = nil
 
 os.exit(Failures() == 0 and 0 or 1)

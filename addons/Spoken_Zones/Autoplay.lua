@@ -321,9 +321,9 @@ local function NarrateUnheard()
 		return
 	end
 
-	local entry, key = SpokenZones:GetSubzoneLore(mapID, subZone)
-	if entry and key and not SpokenZones:HasHeard(mapID, key) then
-		Enqueue(mapID, key)
+	local entry, key, storyMapID = SpokenZones:GetSubzoneLore(mapID, subZone)
+	if entry and key and not SpokenZones:HasHeard(storyMapID, key) then
+		Enqueue(storyMapID, key)
 	end
 end
 
@@ -410,7 +410,7 @@ local function SeedLoginArea(attempt)
 		return false
 	end
 
-	local entry, key = SpokenZones:GetSubzoneLore(mapID, subZone)
+	local entry, key, storyMapID = SpokenZones:GetSubzoneLore(mapID, subZone)
 	if key ~= STARTING_AREAS[mapID] then
 		if debugOn then
 			SpokenZones:Print("greeting: \"%s\" is not a starting area -- not a new character", subZone)
@@ -420,7 +420,7 @@ local function SeedLoginArea(attempt)
 
 	-- The subzone is the more specific answer, the same preference /spz play and the
 	-- lore window both apply.
-	if SpokenZones:Get("autoplaySubzones") and entry and Enqueue(mapID, key) then
+	if SpokenZones:Get("autoplaySubzones") and entry and Enqueue(storyMapID, key) then
 		db.greeted = true
 		return true
 	end
@@ -498,12 +498,12 @@ function SpokenZones:OnAreaDiscovered(areaName)
 		return
 	end
 
-	local entry, key = self:GetSubzoneLore(mapID, areaName)
+	local entry, key, storyMapID = self:GetSubzoneLore(mapID, areaName)
 	if entry and key then
 		if debugOn then
 			self:Print('discovered subzone "%s" -> key "%s" -- queued', areaName, key)
 		end
-		Enqueue(mapID, key)
+		Enqueue(storyMapID, key)
 	elseif debugOn then
 		self:Print('discovered subzone "%s" -> key "%s" -- no lore', areaName, tostring(key))
 	end

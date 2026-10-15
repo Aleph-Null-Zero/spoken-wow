@@ -88,6 +88,16 @@ Expect("...named by the book, whatever page of it this is: the book is one line"
     "Hillsbrad Town Registry")
 Expect("a page the pack does not carry has no clip", B:ClipFor(263), nil)
 local letter = B:ClipFor(15)
+-- A first page that does not open with its title is read after it: the narration reads the title
+-- first, and the captions' words start once it is said.
+local timings = letter.present.timings
+Expect("a letter's words start after its title, which its recording reads first",
+    timings ~= nil and #timings == #(_G.Spoken:CaptionWords(letter.present.transcript)) and timings[1] > 0, true)
+local rising = timings ~= nil
+for i = 2, #(timings or {}) do rising = rising and timings[i] > timings[i - 1] end
+Expect("...each word after the last, all within the recording", rising and timings[#timings] < letter.length, true)
+Expect("a first page opening with its own title starts its words at once", clip.present.timings, nil)
+Expect("...and a later page, read without its title, too", B:ClipFor(262).present.timings, nil)
 Expect("a one-page letter is named by its title, under what it is", letter.present.label .. " " .. tostring(letter.present.header ~= letter.present.label),
     "William's Shipment true")
 
@@ -192,6 +202,23 @@ B:PlayFrom(261)
 Expect("with whole-book reading off, only the page on screen is queued",
     Same(QueuedPages(), { 261 }) and #Coming() == 0, true)
 SpokenBooksSettings.readWholeBook = true
+B:StopReading()
+
+---------------------------------------------------------------- played while the player is stopped
+-- A book opened in the world waits its turn behind the player's Stop; Play in the Compendium
+-- starts it, ending the stop.
+Spoken:Pause()
+B:PlayFrom(261)
+Expect("a book opened in the world while the player is stopped waits in the queue, silent",
+    table.concat(QueuedPages(), ",") .. " " .. tostring(Spoken:IsPaused()) .. " " .. tostring(Spoken:IsPlaying()),
+    "261 true false")
+B:StopReading()
+Spoken:Pause()
+local playedBefore = #stub.world.played
+Expect("Play in the Compendium while the player is stopped plays the book at once, ending the stop",
+    B:PlayFrom(261, true) .. " " .. tostring(Spoken:IsPaused()) .. " " .. tostring(stub.world.played[#stub.world.played]
+    == B:ClipFor(261).path and #stub.world.played > playedBefore), "3 false true")
+Expect("...the rest of the book to follow it", Same(Coming(), { 262, 265 }), true)
 B:StopReading()
 
 ---------------------------------------------------------------- the progress bar across the book

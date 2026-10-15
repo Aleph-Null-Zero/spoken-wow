@@ -463,8 +463,18 @@ local function Row()
             HideTooltip(self)
         end)
     end
+    -- Open in Azeroth's Compendium, on a quest's page. The window is a child of UIParent, which
+    -- DialogueUI hides while it is open, so DialogueUI's window closes first.
+    local tab = rawget(VoiceOver, "QuestsTab")
+    local open = tab and tab.NewOpenButton and tab:NewOpenButton(holder, Tooltip)
+    if open then
+        open:SetFrameStrata("FULLSCREEN")
+        open.beforeOpen = function()
+            if type(frame.HideUI) == "function" then frame:HideUI() else frame:Hide() end
+        end
+    end
     holder:Hide()
-    row = { frame = holder, play = play, skip = skip }
+    row = { frame = holder, play = play, skip = skip, open = open }
     return row
 end
 
@@ -596,6 +606,9 @@ local function PlaceRow(force)
     if row.play:IsShown() then
         table.insert(list, row.play)
     end
+    if row.open and row.open:IsShown() then
+        table.insert(list, row.open)
+    end
     local holder = row.frame
     local key = #list * 100000 + math.floor(scale * 1000 + 0.5)
     if key ~= placedKey or force then
@@ -696,6 +709,15 @@ function Bridge:DrawPlayButton()
         r.play:SetState(state)
     end
     SetEnabled(r.skip, Spoken.GetCurrent ~= nil and Spoken:GetCurrent() ~= nil)
+    if r.open then
+        local page = self:Page()
+        local id = (page == "QUEST_DETAIL" or page == "QUEST_PROGRESS" or page == "QUEST_COMPLETE")
+            and GetQuestID and GetQuestID() or nil
+        local tab = rawget(VoiceOver, "QuestsTab")
+        local shown = tab ~= nil and tab:Has(id)
+        r.open.questID = shown and id or nil
+        if (r.open:IsShown() and true or false) ~= shown then r.open:SetShown(shown) end
+    end
     PlaceRow()
 end
 

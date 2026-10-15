@@ -115,6 +115,13 @@ function SpokenZones:IsFound(mapID, areaKey)
 	if areaKey then
 		if visited[VisitKey(mapID, areaKey)] then return true, "stood in" end
 		if Explored(mapID).keys[areaKey] then return true, "explored on the map" end
+		-- An area the client puts in another zone than its story's (Razorfen Downs' entrance in The
+		-- Barrens, Strahnbrad in Alterac Mountains) is stood in and explored on that zone's map. A
+		-- visit recorded under the story's own map, above, still counts.
+		for _, at in ipairs(self:FoundOn(mapID, areaKey)) do
+			if visited[VisitKey(at, areaKey)] then return true, "stood in" end
+			if Explored(at).keys[areaKey] then return true, "explored on map " .. tostring(at) end
+		end
 		return false
 	end
 	if visited[VisitKey(mapID)] then return true, "stood in" end
@@ -127,8 +134,8 @@ function SpokenZones:IsFound(mapID, areaKey)
 	if name and exploredNames[name] then
 		return true, "its name explored on map " .. tostring(exploredNames[name])
 	end
-	for key in pairs(self.Subzones[mapID] or {}) do
-		if visited[VisitKey(mapID, key)] then return true, "stood in its area " .. key end
+	for _, area in ipairs(self:AreasIn(mapID)) do
+		if visited[VisitKey(mapID, area.key)] then return true, "stood in its area " .. area.key end
 	end
 	return false
 end
@@ -150,10 +157,10 @@ function SpokenZones:PrintFound()
 			self:Print("%s [%d]: %s", name, mapID, why or "?")
 			lines = lines + 1
 		end
-		for key in pairs(self.Subzones[mapID] or {}) do
-			local areaFound, areaWhy = self:IsFound(mapID, key)
+		for _, area in ipairs(self:AreasIn(mapID)) do
+			local areaFound, areaWhy = self:IsFound(area.mapID, area.key)
 			if areaFound then
-				self:Print("  %s > %s: %s", name, key, areaWhy or "?")
+				self:Print("  %s > %s: %s", name, area.key, areaWhy or "?")
 				lines = lines + 1
 			end
 		end

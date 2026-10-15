@@ -182,6 +182,21 @@ Expect("profiles are not chosen on the Quests page: they are Spoken's, for every
 Expect("...and can be reset there, from the header's Defaults as the game's pages have it",
     SettingsPanel.panel.layout.defaults ~= nil, true)
 Expect("nothing sends the player to a second window", Mentions("everything else"), false)
+-- The Compendium's Started Only and Voiced Only are the account's: Defaults resets them too, and
+-- draws the Quests tab again where it is open.
+do
+    VO.Addon.db.global.Compendium = { FoundOnly = true, VoicedOnly = true, UnlockUnfound = true }
+    local redrawn = 0
+    VO.QuestsTab = { panel = { IsVisible = function() return true end }, Refresh = function() redrawn = redrawn + 1 end }
+    local defaults = SettingsPanel.panel.layout.defaults
+    defaults.scripts.OnClick(defaults)
+    stub.popups[#stub.popups].dialog.OnAccept()
+    local filters = VO.Addon.db.global.Compendium
+    Expect("Defaults turns Started Only and Voiced Only off and redraws an open Quests tab",
+        tostring(filters.FoundOnly) .. "|" .. tostring(filters.VoicedOnly) .. "|" .. redrawn, "nil|nil|1")
+    Expect("...leaving Unlock Unstarted Quests, which is Spoken's page's", filters.UnlockUnfound, true)
+    VO.QuestsTab, VO.Addon.db.global.Compendium = nil, nil
+end
 
 local profile
 local home = _G.SpokenOptionsPanel.content or _G.SpokenOptionsPanel

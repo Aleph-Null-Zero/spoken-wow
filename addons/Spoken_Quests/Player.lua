@@ -485,7 +485,8 @@ function Player:Setup()
     Spoken:RegisterBullet("quest-complete", TEXTURES .. "SoundQueueBulletComplete", 14)
     Spoken:RegisterBullet("gossip",         TEXTURES .. "SoundQueueBulletGossip", 14)
 
-    -- Switched off or on in Spoken's settings: the buttons on the log and the dialog follow.
+    -- Switched off or on in Spoken's settings: the buttons on the log and the dialog follow, and
+    -- so does the Compendium's Quests tab.
     if Spoken.RegisterCallback then
         Spoken:RegisterCallback("PART_SWITCHED", function(key)
             if key ~= "quests" and key ~= "gossip" then return end
@@ -498,6 +499,7 @@ function Player:Setup()
             end
             if dialog and dialog.Refresh then dialog:Refresh() end
             if contribute and contribute.Refresh then contribute:Refresh() end
+            if SpokenCompendium and SpokenCompendium.Relayout then SpokenCompendium:Relayout() end
         end)
     end
 

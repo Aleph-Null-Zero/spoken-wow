@@ -171,5 +171,19 @@ do
     B.PageOnScreen, B.Print = onScreen, print_
 end
 
+---------------------------------------------------------------- starting over
+-- Found Only, Voiced Only and By Zone go back with the rest, and an open Books tab is drawn again.
+do
+    local redrawn = 0
+    B.RefreshReadables = function() redrawn = redrawn + 1 end
+    SpokenBooksSettings.compendiumFoundOnly = true
+    local reset = Button(B.L.OPT_RESET_PAGE)
+    reset.scripts.OnClick(reset)
+    stub.popups[#stub.popups].dialog.OnAccept()
+    Expect("resetting the page puts Found Only back and draws the Books tab again",
+        tostring(SpokenBooksSettings.compendiumFoundOnly) .. " " .. redrawn, "false 1")
+    B.RefreshReadables = nil
+end
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll books options tests passed")

@@ -528,7 +528,8 @@ local function Build(canvas)
     DialogueUIOptions:Place(layout)
 
     -- Azeroth's Compendium, after the narrator style's settings: the window Zones and Books each
-    -- add a tab to, opened here and from the minimap menu, with each tab's Unlock switch. The tabs
+    -- add a tab to, Quests too where either is there, opened here and from the minimap menu, with
+    -- each tab's Unlock switch. The tabs
     -- register once the world is up, after this page is built, so the rows ask for them each time
     -- they are drawn; with neither part installed the section has nothing showing and hides.
     local function Compendium() return _G.SpokenCompendium end
@@ -542,11 +543,20 @@ local function Build(canvas)
         if compendium and compendium.Toggle then compendium:Toggle() end
     end, L.OPT_COMPENDIUM_OPEN_TIP)
     Only(open, function() local compendium = Compendium(); return compendium ~= nil and compendium.Toggle ~= nil end)
-    Requires(open, function()
+    local function Available()
         local compendium = Compendium()
         return compendium ~= nil and compendium.Available ~= nil and compendium:Available()
-    end, L.REASON_COMPENDIUM_OFF)
+    end
+    Requires(open, Available, L.REASON_COMPENDIUM_OFF)
+    -- The words of every tab's stories, and of Zones' panel beside the map.
+    local size = layout:Slider(L.OPT_COMPENDIUM_FONT_SIZE, 9, 20, 1,
+        function() return Spoken:CompendiumFontSize() end,
+        function(v) Spoken:SetCompendiumFontSize(v) end, nil, Layout.Number, L.OPT_COMPENDIUM_FONT_SIZE_TIP)
+    Only(size, function() return Compendium() ~= nil end)
+    Requires(size, Available, L.REASON_COMPENDIUM_OFF)
+    -- In the order of the window's tabs.
     for _, unlock in ipairs({
+        { tab = "quests", part = "quests", label = L.OPT_UNLOCK_QUESTS, tip = L.OPT_UNLOCK_QUESTS_TIP, module = L.OPT_PART_QUESTS },
         { tab = "places", part = "zones", label = L.OPT_UNLOCK_PLACES, tip = L.OPT_UNLOCK_PLACES_TIP, module = L.OPT_PART_ZONES },
         { tab = "readables", part = "books", label = L.OPT_UNLOCK_WRITINGS, tip = L.OPT_UNLOCK_WRITINGS_TIP, module = L.OPT_PART_BOOKS },
     }) do
@@ -629,6 +639,12 @@ local function Build(canvas)
     layout:Checkbox(L.OPT_CUE_BETWEEN, L.OPT_CUE_BETWEEN_TIP,
         function() return audio().CueBetweenLines end,
         function(v) audio().CueBetweenLines = v end)
+    if BackgroundSound:IsAvailable() then
+        layout:Checkbox(L.OPT_BACKGROUND_SOUND, L.OPT_BACKGROUND_SOUND_TIP,
+            function() return audio().KeepTalkingInBackground end,
+            function(v) audio().KeepTalkingInBackground = v end,
+            function() BackgroundSound:Sync() end)
+    end
     if OtherSounds:IsAvailable() then
         local lower = function() return audio().LowerOthers end
         local apply = function() OtherSounds:RefreshConfig(); Options:UpdateRows() end
@@ -792,13 +808,16 @@ local function Build(canvas)
         Layout.Confirm(L.OPT_RESET_ALL_CONFIRM, L.OPT_RESET_AND_RELOAD, L.CANCEL, function()
             -- The Unlock switches are on this page but kept with each part's settings, which
             -- ResetProfile does not reach, and each part's own Reset skips them.
-            for _, key in ipairs({ "places", "readables" }) do
+            for _, key in ipairs({ "places", "readables", "quests" }) do
                 local tab = Tab(key)
                 if tab and tab.unlock then tab.unlock.set(false) end
             end
             -- The feature addons' DialogueUI rows are kept in their own settings too.
             DialogueUIOptions:Reset()
             Addon.db:ResetProfile()
+            -- Unset, the Compendium's Text Size is the one the Zones page had: set, it is back
+            -- to its default.
+            Addon.db.profile.CompendiumFontSize = 12
             Addon.db.global.Layout = nil
             ReloadUI()
         end)

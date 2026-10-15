@@ -1374,6 +1374,217 @@ amber speech bubble and "after quest {id}", and the source filter calls them "fo
 cannot say whether the line follows the accept or the turn-in, since the corpus row keeps only
 the quest.
 
+### The Quests tab of Azeroth's Compendium
+
+Azeroth's Compendium is the window Spoken Zones and Spoken Books each carry
+(`UI/Compendium.lua` there). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
+first, before Zones and Books, and the window takes its title from it. It goes wherever either
+addon has loaded the window; Spoken Quests carries no copy of the window, only its own
+copy of the text view the page scrolls in (`UI/TextView.lua`, kept byte for byte with the other
+two by `test_package.py`). `Compendium.xml` loads the tab and its data from the `.toc` files of
+the clients the window runs on (Classic Era, TBC Anniversary and Forever), not on Wrath or the
+legacy clients.
+
+Two generated files feed it, both committed so the addon never needs a database:
+
+- `Data/Compendium.lua` (`make quests-compendium`, `tools/export_compendium.py`): every corpus
+  quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
+  the zone of its entrance, else where its giver stands), or the QuestSort of a class, profession
+  or season with its name in every language, and the races and classes allowed to take it. Areas,
+  zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, cached
+  in `tools/cache/`), which have Forever's zones and sorts (Zephras Isle, Darkspear Islands,
+  Camping, The High Order); Era's (1.15.9.69109) fill in anything they lack. The
+  zone and who may take it come from the Forever repack's TrinityCore world DB
+  (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
+  quests already listed and adds the corpus's new ones, placed by their giver's spawn and open to
+  the races of the side `corpus/factions.json` gives them.
+  A quest the quest log files under a dungeon or a raid (`DUNGEONS`) is placed in the zone of its
+  entrance, wherever its giver stands, with `dungeon`, the dungeon's map: its QuestSortID is the
+  dungeon's own area, an area of its map, or an area of its name (Gnomeregan's quests are under
+  133, an area of Dun Morogh), else the client's `zoneAreaId` is (`Maps.dungeon_of_area`). The
+  dungeons' names in every language, from the client's `Map` table, are the data's `dungeons`. The
+  Excavation Site in the Wetlands is an instance of the Wetlands' own quests, not a dungeon.
+  Battleground quests are under the battleground: the quest log files a few under an area of its
+  name outside it (`Maps.battleground_of_area`), and a battlemaster's next quest, which it files
+  under no zone or his city, follows the one before it from him (`battleground_follow_ups`). A
+  giver found in four zones or more (any chicken, a battlemaster in every capital) places its
+  quest nowhere (`GENERIC_GIVER_ZONES`).
+  `races` keeps a mask's playable bits (`ChrRaces.PlayableRaceBit`): Classic's eight, bits 0-7,
+  and Forever's Skyborne, 32 (High Order, Alliance) and 33 (Windshaper, Horde), all below 2^53 so
+  a Lua number holds them exactly. The DB's masks are read as Forever's client has them
+  (`db_races`): one naming every Classic race is anyone (the client has the DB's 0xFF and
+  0xFFFFFFFF as everyone), and one side's four Classic races are that side's Skyborne too. The
+  tab tests the bit with arithmetic, `bit.band` being 32-bit, and maps race ids
+  95 and 96 to bits 32 and 33 (`Has` in `UI/QuestsTab.lua`).
+  Most quests one side's giver hands out are open to every race in the DB (`AllowableRaces` 0 or
+  all), so where the DB says anyone, the quest takes the side `corpus/factions.json` gives it,
+  and failing that the side of the quest before it in its chain: a follow-up is reached only
+  through that quest (`quest_races`). The export prints how many quests are still not on the
+  side of the quest before them (`side_leaks`, the audit's leak check).
+  A quest filed under a class's QuestSort that the DB names no class for is that class's
+  (`quest_classes`): Forever's class quests are not in the DB, and without it every class would
+  see them under the class.
+  Each quest that follows another in a chain has `prev`, the quest before it, from the same DB's
+  `quest_template_addon` (`chain_links`): a positive `PrevQuestID`; else the lowest quest whose
+  `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb
+  whose `BreadcrumbForQuestId` names it, where the DB has that column. A negative `PrevQuestID`
+  (the other quest only has to be in the log) is no link. Quests the corpus lacks are passed
+  through, and a link closing a loop is dropped. `--no-db` keeps the links already written.
+  Each quest handed in to another than its giver has `ender`, the creature it is handed in to
+  (`enderObject` for an object), from the same DB's `creature_questender` and
+  `gameobject_questender` (`quest_enders`): of several, the one the corpus has saying its progress
+  or complete line, else its giver, else the lowest creature, then the lowest object. A quest the
+  DB names no one for takes that speaker, and so do the quests `--no-db` adds. The giver it is
+  compared with is the corpus's speaker of the accept line, as the packs' quest log tables have it.
+  The DB has almost none of Forever's own quests, so after it comes Forever's client, as players
+  recorded it: Efficient Games' open data ([EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf),
+  CC BY 4.0, credited in `THIRD_PARTY.md`), `quests.enUS.json` and `npcs.json` of every
+  `wow_classic_beta` build, the latest build's record of a quest winning. Its `zoneAreaId` (a zone
+  through Forever's tables) or `categoryId` (a QuestSort) places a quest the DB does not, before
+  the giver's spawn; a `zoneAreaId` of a Forever area no map shows is placed where players saw
+  its giver (`npcs.json` `offers`, else `takes`, by `positions[].uiMap`). Its `raceMask` limits a
+  quest the DB opens to everyone, before `factions.json`, and its `nextQuestId` links a quest no
+  DB link reaches. It adds and never changes what the DB says. The files are cached in
+  `tools/cache/efficient-games/<build>/` under each one's last collection day, so a run fetches
+  only the index and what changed, and reads the cache offline. `--without-efficient-games`
+  leaves it out.
+  Last come the hand corrections, `corpus/compendium_overrides.json` (`load_overrides`,
+  `apply_overrides`, `chain_names`): what neither the DB nor the client data can say, such as a
+  breadcrumb's link, a quest the beta removed, or a chain's name. Each `quests` entry names its
+  quest (`id`) or quests (`ids`) and sets any of `title`, `zones` (uiMapIDs, taking the quest out
+  of its sort), `sort` (a QuestSort, or the word of a group the client has none for, such as
+  `"winterveil"`; 0 for none), `prev` (0 for none), `races`, `classes` and `remove: true`; each
+  `chains` entry names a quest of a chain and the chain's `name`, a quest's id (the client gives
+  its title in its own language) or words with their translations in `names`. Every entry has a
+  `source`, the wiki page or the reason, for a reviewer to check; the export refuses one without.
+  Entries apply in order, so a later one wins. A quest dropped is passed through by the quests
+  after it; an entry for a quest the corpus lacks is printed, not applied, since a quest needs
+  its lines in the corpus before it can be listed. A chain's name is written as `name` on its
+  first quest, so it is the chain's in every zone it crosses. With `--no-db` the entries apply to
+  the quests added.
+- `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
+  `tts_cli/quest_text.py`): each quest's accept, progress and complete text, the corpus's
+  `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
+  text; where givers' texts differ, the one most of the moment's lines have, ties to the first in
+  the corpus; ignored lines are left out. About 3.3 MB, parsed at every login on those clients.
+
+The tab lists only the quests this character's race and class may take. A quest is found once
+the client says it is completed (`C_QuestLog.GetAllCompletedQuestIDs`, else
+`GetQuestsCompleted`, else `IsQuestFlaggedCompleted` one at a time) or while it is in the quest
+log (`C_QuestLog.GetInfo` where the client has it, else `GetQuestLogTitle`; where a collapsed
+header hides some, `C_QuestLog.IsOnQuest` for each quest). A quest in the log and not completed
+is in progress: the gossip window's quest mark before its title, and the mark and "In progress"
+after where it is on its page; zone and group counts include it, and a page's count says how many of them
+are in progress. The list follows the log while it is open (`QUEST_LOG_UPDATE`,
+`QUEST_ACCEPTED`, `QUEST_REMOVED`, drawn again once a burst is over and only when the log's
+quests changed). The rest are locked unless Unlock Unstarted Quests is on, which Spoken's page
+shows in its Compendium section. The filter menu holds Started Only and Voiced Only, which leaves
+out the quests no voice pack has the offer or the hand-in of, with any card or banner left with nothing, and counts
+only what it lists. That switch and both filters are kept in
+`SpokenQuestsSettings.global.Compendium`.
+
+The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
+for each zone with quests (a city a small card inside its zone's); an Other Lands banner holding
+a card for each zone on no continent the client knows (Zephras Isle, whose map hangs under
+Azeroth), as the Zones tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
+Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
+Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
+it); a map the client has never heard of (Forever's Zephras Isle and Darkspear Islands on Era)
+has no card, and its quests are neither listed nor counted; then a banner each for Classes,
+Professions (Camping, 666, with them: its quests are Camping
+101 for one profession or another), Holidays and Events and Other, holding a line of the list for
+each class, profession, season or other QuestSort, and Place Unknown under Other. Banners are for
+continents and types, cards for places alone (zones, cities, dungeons), and everything else is a
+line of the list with what it holds under it. The tab names some groups itself
+(`GROUP_NAMES`): Special (284) is Children's Week, under Events, as it holds nothing else;
+Reputation (367) is Commendation Signets, its hand-ins; and the groups the client has no QuestSort
+for, a word in the data (`winterveil`, `hallowsend`, `loveisintheair` and `harvestfestival` under
+Events, `argentdawn` and `library` under Other), take their names from the strings. Inside a
+zone's card, its dungeons' and raids' quests (those with `dungeon`) are the dungeon's card, named
+as the data's `dungeons` names it in the client's language; where the zone has several (Searing
+Gorge holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a card
+for each dungeon under it.
+The tab lands on the player's zone, opened; where it has no quests, or Started Only or Voiced
+Only leaves it out, on the player's continent, as Zones and Books land, else on the first continent
+listed (there is no Azeroth row). A switch in the filter menu that leaves out the chosen row
+(`onHidden`) lands again where the tab chose it, and otherwise chooses the nearest row above it
+that is still listed: a quest's zone or group, a zone's continent. The list is drawn in the game's own art
+(`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
+tracker's campaign header for the player's faction, without its crest, and a card is Classic's
+character select card, both silvered. A zone's card shows its painting (`Spoken:ZoneIcon`) in the
+collections window's frame, silvered as the card is, greyed with none started; a dungeon's card a
+key in the same frame. On the card's
+right, level with its name, are the quest mark with how many of its quests
+are in progress, the quests completed out of all and the share completed (or, once all are, the
+quest log's gold tick), and the Pet Journal's bar along its foot is filled as far. A banner counts
+completed out of all. A quest's row has the gold tick once completed and the quest mark while in progress.
+Chosen, a banner's, card's or line's page has one line under its name, what holds it and its
+count, parted by " · ". A place is "In" its holder ("In Eastern Kingdoms · 1 of 88 completed, 2 in
+progress"): a zone is in its continent, Other Lands or Battlegrounds, a city in its zone, a
+continent, Other Lands and Battlegrounds in Azeroth, and a dungeon in the zone of its entrance. A class, profession or season
+and Place Unknown are no place, and are named as they are: their line names their section
+("Classes · 3 of 7 completed"), and a chain's line under one names it ("Mage · …"). The sections
+have nothing above them, and their line is the count alone. A quest's page says where it is: "In"
+its zones (the first two, and how many more: "In Elwynn Forest, Westfall and 1 more"), else its
+section and its group ("Classes · Mage"), else "Other · Place Unknown". Where something holds
+what is chosen, a click on that line chooses it (the page's `onSubtitle`): a quest's or chain's
+zone, dungeon or group, a dungeon's zone, a city's zone, a zone's continent or banner, a group's
+section. A continent's, a banner's and a section's line goes nowhere.
+
+In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
+there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The
+line has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
+chain's first quest (a quest's id, whose title the client gives in its own language, or words by
+language), else the title of the chain's first quest this character may take, wherever that
+quest is (`ChainName`): Rude Awakening, the Undead's, does not name the chain an Orc joins later.
+Where one place has two or more chains of one name (Warsong Gulch's six Fight for Warsong Gulch),
+each is numbered on its line and its page, "Fight for Warsong Gulch (2)", in the order of their
+first quests' ids. The line has no badge or bar; its numbers count its quests as a zone's card
+does. A chain that runs through several zones has a line in each, for its quests there. Chosen, a chain's page has
+its name, what lists it (the zone, dungeon or group that holds it) and how many of its quests
+are completed and in progress, and asks for one of its quests
+to be chosen from the list; it has no Play. The client has no chain of its own, so without `prev`
+in the data every quest is a row of its own.
+
+The page fills the placeholders for the player as the client does. A started quest's page shows
+its offer; its hand-in, with its Play and Report, shows only once the quest is completed, or with
+Unlock Unstarted Quests on, since it tells how the quest ends. The progress, said while the quest
+is under way, has no part on the page: it is not shown or played there, and Voiced Only counts
+only the offer and the hand-in, so a quest voiced only in its progress counts as unvoiced. Each
+part's Play plays that part. A part is named and pictured for who says it: the offer for the
+quest's giver, as the quest log's Play is, and the hand-in for the one it is handed in to
+(`ender` or `enderObject`, else the giver). The offer's part is named Description, by the
+client's own `QUEST_DESCRIPTION` (the heading of a quest's text in its quest window) where it has
+one, else `L.QUEST_PART_ACCEPT`; the hand-in's is Completion. Each part is headed as
+the Small Window heads a line, with DialogueUI installed or not: the speaker's round face
+(`Spoken:CreateSpeakerFace`, 44 across) with the part's badge, their name over the part's name
+beside it, the two centred on the face together, and the part's Play and Report at the right on
+the face's middle. A creature the client has not cached
+shows the book until it has, one never cached or no one known keeps the book, and an object or
+an item shows the quest's item, else a posted notice. Shift-click on a quest's row hands its first part
+shown that a pack voices (its accept line, else its complete line) to `Player:Enqueue`, behind
+what the queue holds, and leaves the selection and the page as they were; a line already queued
+is not queued again. The page shown with no quest chosen says so.
+
+Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
+quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
+zone, continent or group opened and its page shown (`QuestsTab:Open(questID)`), though Started
+Only or Voiced Only leaves its row out of the list, which keeps its filters. It shows, with Quests
+on, for a quest this character may take whose page shows its words: started, or any with Unlock
+Unstarted Quests on, and switching that refreshes the buttons on the windows open. It is on the
+quest giver's window, left of Listen or Contribute
+in the strip under the close button, or in that corner; in Classic Era's quest log, at the top
+right of the selected quest's details; in the map's quest log (Forever), left of the details
+view's Play, Report or Contribute; and in DialogueUI's window, at the left end of Spoken's row on
+a quest page (`UI/DialogueUIBridge.lua`). DialogueUI hides the rest of the interface while it is
+up, so that one closes DialogueUI's window before the Compendium opens.
+
+On a client in another language, `QUEST_DETAIL` and `QUEST_COMPLETE` keep the window's title and
+words in `SpokenQuestsSettings.global.CompendiumText[locale][questID]`, shown over the English;
+`QUEST_PROGRESS` keeps the title alone. The player's name, class and race go back to `$N`, `$C` and `$R` where the
+English has them, so another character sees its own. A text kept by a character of the other sex
+is not shown where the English has a `$G`. An English client keeps nothing.
+
 ## Tests
 
 ```bash

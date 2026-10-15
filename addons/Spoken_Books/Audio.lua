@@ -32,10 +32,29 @@ local MATERIALS = {
 }
 SpokenBooks.MATERIALS = MATERIALS
 
+-- What a kind of writing is written on where no page is open to ask the game (a readable played
+-- from Azeroth's Compendium): gravestones and tablets in stone, plaques and exhibits in bronze,
+-- the rest on paper. The book window draws the stone ones in stone.
+local KIND_MATERIAL = { grave = "Stone", tablet = "Stone", plaque = "Bronze", exhibit = "Bronze" }
+
+-- Whether `pageId` is the page open in the world, whose item and material the game can tell.
+local function IsOpen(self, pageId)
+	return self.lastPage ~= nil and (pageId == nil or pageId == self.lastPage)
+end
+
+--- What `pageId`'s readable is written on by its kind, or nil for paper.
+function SpokenBooks:KindMaterial(pageId)
+	local place = pageId and self:Data() and self:Data().pages[pageId]
+	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books
+	local entry = place and places and places[place.book]
+	return entry and KIND_MATERIAL[entry.type] or nil
+end
+
 --- Open is what the item text events say, not the game's frame, which DialogueUI hides. A page
---- queued with nothing open takes the book.
-function SpokenBooks:PagePicture()
-	if self.lastPage then
+--- not open (`pageId` another than the one open, or nothing open) takes what its kind is written
+--- on, else the book.
+function SpokenBooks:PagePicture(pageId)
+	if IsOpen(self, pageId) then
 		local item = ItemTextGetItem and ItemTextGetItem()
 		local icon, crop
 		if Spoken and Spoken.BagItemIcon then icon, crop = Spoken:BagItemIcon(item) end
@@ -46,21 +65,25 @@ function SpokenBooks:PagePicture()
 			return { kind = "texture", texture = MATERIALS[material], texCoord = ICON_CROP }
 		end
 	end
+	local material = not IsOpen(self, pageId) and self:KindMaterial(pageId)
+	if material then return { kind = "texture", texture = MATERIALS[material], texCoord = ICON_CROP } end
 	return { kind = "texture", texture = BOOK_TEXTURE }
 end
 
---- What the open page is written on (ItemTextGetMaterial: Parchment, Stone, Marble...), or nil
---- with nothing open.
-function SpokenBooks:PageMaterial()
-	if not self.lastPage then return nil end
-	return ItemTextGetMaterial and ItemTextGetMaterial() or nil
+--- What `pageId` is written on (ItemTextGetMaterial: Parchment, Stone, Marble...): the game's
+--- word for the page open, else its kind's (KindMaterial), else nil.
+function SpokenBooks:PageMaterial(pageId)
+	if IsOpen(self, pageId) then return ItemTextGetMaterial and ItemTextGetMaterial() or nil end
+	return self:KindMaterial(pageId)
 end
 
 -- What a readable can be (Data/Places.lua's `type`), in the order the Compendium lists them,
 -- and the keys of its names: `one` of it, over its line in the queue, and `all`, the Compendium's.
-SpokenBooks.TYPES = { "book", "letter", "note", "scroll", "tablet", "plaque", "grave", "exhibit", "other" }
+SpokenBooks.TYPES = { "book", "journal", "letter", "note", "scroll", "tablet", "plaque", "grave", "exhibit",
+	"picture", "other" }
 SpokenBooks.TYPE_NAMES = {
 	book = { one = "READABLE_BOOK", all = "TYPE_BOOK" },
+	journal = { one = "READABLE_JOURNAL", all = "TYPE_JOURNAL" },
 	letter = { one = "READABLE_LETTER", all = "TYPE_LETTER" },
 	note = { one = "READABLE_NOTE", all = "TYPE_NOTE" },
 	scroll = { one = "READABLE_SCROLL", all = "TYPE_SCROLL" },
@@ -68,6 +91,7 @@ SpokenBooks.TYPE_NAMES = {
 	plaque = { one = "READABLE_PLAQUE", all = "TYPE_PLAQUE" },
 	grave = { one = "READABLE_GRAVE", all = "TYPE_GRAVE" },
 	exhibit = { one = "READABLE_EXHIBIT", all = "TYPE_EXHIBIT" },
+	picture = { one = "READABLE_PICTURE", all = "TYPE_PICTURE" },
 	other = { one = "READABLE_OTHER", all = "TYPE_OTHER" },
 }
 
@@ -140,6 +164,30 @@ end
 --- Language before pack order: a pack in the voice language answers before any other, and a
 --- page it lacks falls back to the fallback language's packs -- page by page, so a partial
 --- translation still reads what it has.
+-- Letters and digits only, for asking whether a page opens with its own title.
+local function Bare(text)
+	return (string.gsub(string.lower(text or ""), "[%s%p]", ""))
+end
+
+--- When each word of a book's first page is read. Its narration reads the title first, then a
+--- pause, unless the page opens with it (pipelines/books/tools/lib/text.mjs, spokenWithTitle), so
+--- the words start after the title's share of the recording, each at its share of the rest as the
+--- captions estimate it. Nil where nothing comes before the words, or the length is not known.
+local function TitleFirstTimings(title, text, length)
+	if not (length and length > 0 and title ~= "" and text and Spoken and Spoken.CaptionWords) then return nil end
+	local bare = Bare(title)
+	if bare == "" or string.sub(Bare(text), 1, string.len(bare)) == bare then return nil end
+	local words, total = Spoken:CaptionWords(text)
+	local _, heading = Spoken:CaptionWords(title .. ".")
+	if not (words and words[1] and total and total > 0 and heading and heading > 0) then return nil end
+	local lead = length * heading / (heading + total)
+	local timings = {}
+	for i, word in ipairs(words) do
+		timings[i] = lead + (length - lead) * word.start / total
+	end
+	return timings
+end
+
 function SpokenBooks:ClipFor(pageId)
 	local place = self:Data() and self:Data().pages[pageId]
 	if not place then
@@ -162,13 +210,14 @@ function SpokenBooks:ClipFor(pageId)
 				-- corpus's own is English.
 				local title = self.bookTitle and self.bookTitle[language] and self.bookTitle[language][place.book]
 					or (book and book.title) or ""
+				local length = (entry.len and entry.len > 0) and entry.len or nil
 				return {
 					key = "b:" .. pageId,
 					path = [[Interface\AddOns\]] .. pack.addon .. [[\Sounds\]] .. entry.file .. ".mp3",
 					-- 0 means the pack recorded no duration -- an imported take rather than one
 					-- this project cut. The player falls back to its own timer; a wrong number
 					-- here would reset the Play button mid-sentence.
-					length = (entry.len and entry.len > 0) and entry.len or nil,
+					length = length,
 					pageId = pageId,
 					-- A line per page: one book is one item to the player, its pages read on
 					-- with no pause or cue between.
@@ -183,12 +232,14 @@ function SpokenBooks:ClipFor(pageId)
 						-- a letter, which is most of this corpus).
 						header = oneLine and self:KindOf(place.book) or title,
 						transcript = text,
+						-- The first page's words start after its title is read.
+						timings = place.number == 1 and TitleFirstTimings(title, text, length) or nil,
 						label = oneLine and (title ~= "" and title or nil)
 							or ((book and #book.pages > 1)
 								and format(L.OPT_PAGE_COUNT_FMT, place.number, #book.pages) or nil),
 						bullet = "book",
-						material = self:PageMaterial(),
-						portrait = self:PagePicture(),
+						material = self:PageMaterial(pageId),
+						portrait = self:PagePicture(pageId),
 						actions = ACTIONS,
 					},
 					stopCallback = PageStopped,

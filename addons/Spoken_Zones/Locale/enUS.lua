@@ -56,8 +56,8 @@ L.QUEUE_HELD_OFF = "Narration is turned off."
 L.NO_LORE_FOR = "No lore recorded for %1$s yet."
 -- A place the client has that the corpus knows about but nobody has written. Distinct
 -- from NO_LORE_FOR, which is what an unknown place gets: this one we know exists.
-L.LORE_NOT_WRITTEN = "%1$s is on the map, but nobody has written its lore yet."
-L.NOT_DISCOVERED = "You have not discovered this place yet."
+L.LORE_NOT_WRITTEN = "%1$s is on the map, but nobody has written its story yet."
+L.NOT_DISCOVERED = "You have not discovered this place yet. Go there to read its story."
 
 --------------------------------------------------------------------------------
 -- Slash commands
@@ -131,7 +131,7 @@ L.OPT_DIAGNOSTICS_TIP = "Lists your voice packs and reading settings in chat, fo
 L.OPT_REPORT_PROBLEM = "Report a Problem"
 L.OPT_REPORT_ADDRESS = "Copy this address and open it in your browser to send feedback about Spoken Zones."
 L.OPT_REPORT_NOTE = "For anything that isn't about one story; each story has its own Report button. Gives you an address to copy into your web browser."
-L.OPT_REPORT_LINE_TIP = "Wrong lore, a bad reading, a mispronounced name -- this gives you a link to say so."
+L.OPT_REPORT_LINE_TIP = "Get a link to report wrong lore, a wrong reading or a mispronounced name."
 L.OPT_REPORT_LINE_ADDRESS = "Copy this address and open it in your browser to report a problem with this entry."
 
 --------------------------------------------------------------------------------
@@ -143,26 +143,29 @@ L.OPEN_IN_LORE_TIP = "This place's story in Azeroth's Compendium, beside every o
 L.OPT_SECTION_LORE = "Azeroth's Compendium"
 L.OPT_LORE_WINDOW_TIP = "Every zone and area's story, to browse and listen to wherever you are. Zones and areas you have not discovered yet are greyed out."
 L.OPT_SHOW_UNDISCOVERED = "Unlock Undiscovered Zones"
-L.OPT_SHOW_UNDISCOVERED_TIP = "Lets you open every zone and area, including those you have not discovered yet. When off, they are greyed out."
+L.OPT_SHOW_UNDISCOVERED_TIP = "Lets you read the story of every zone and area, including those you have not discovered yet. When off, they are greyed out."
 L.MENU_ZONE_SETTINGS = "Zones Settings"
 
 --------------------------------------------------------------------------------
 -- Lore window buttons
 --------------------------------------------------------------------------------
 
-L.AUDIO_READ_TIP = "Hear this story read aloud"
+L.AUDIO_READ_TIP = "Hear this story read aloud."
 L.REPORT_BUTTON = "Report"
 L.CONTRIBUTE_BUTTON = "Contribute"
 L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Zones has no lore for this place"
 L.CONTRIBUTE_BUTTON_TIP = "Contribute by describing it: what it is, who lives there, what happened there."
-L.IN_ZONE_FMT = "in %1$s"
-L.SUBZONE_COUNT_FMT = "%1$d areas"
-L.SUBZONE_COUNT_ONE = "1 area"
+L.IN_ZONE_FMT = "In %1$s"
+L.DISCOVERED_FMT = "%1$d of %2$d discovered"
 L.ZONE_COUNT_FMT = "%1$d zones"
 L.ZONE_COUNT_ONE = "1 zone"
+L.OTHER_LANDS = "Other Lands"
+L.BATTLEGROUNDS = "Battlegrounds"
+-- The line over a zone's dungeons' and raids' cards where it has several: the Quests tab's words.
+L.DUNGEONS = "Dungeons and Raids"
+L.ZONES_PICK = "Choose a zone on the left to read its story."
 L.CONTINENT_COUNT_FMT = "%1$d continents"
 L.CONTINENT_COUNT_ONE = "1 continent"
-L.LORE_WINDOW_EMPTY = "Choose a place on the left to read its story. A zone's number is how many smaller areas it has; click it to see them."
 -- The window browses every place; the panel beside the map tells the zone it shows.
 L.LORE_WINDOW_TITLE = "Azeroth's Compendium"
 L.COMPENDIUM_PLACES = "Zones"
@@ -171,11 +174,10 @@ L.MAP_PANEL_EXPAND = "Show Zone Lore"
 L.PANEL_SHOWN = "Zone Lore beside the map: on"
 L.PANEL_HIDDEN = "Zone Lore beside the map: off"
 L.MINIMAP_LEFT_CLICK = "|cff66bbffLeft-click|r %1$s"
-L.LORE_SEARCH = "Search places"
+L.LORE_SEARCH = "Search zones"
 L.LORE_DISCOVERED_ONLY = "Discovered Only"
 L.LORE_VOICED_ONLY = "Voiced Only"
-L.LORE_SEARCH_NONE = "No place matches."
-L.LORE_PICK = "Every place's story"
+L.LORE_SEARCH_NONE = "Nothing matches."
 L.MAP_LORE_FOR_FMT = "lore for %1$s"
 
 --------------------------------------------------------------------------------
