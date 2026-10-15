@@ -26,12 +26,11 @@ Spoken is made and tested on WoW Forever. It also installs on Classic Era and An
 
 ## What's inside
 
-Four modules, each can be switched off in the settings. **The voices are not included:** install the voice pack for each module you want to hear, or the addon stays silent.
+Three modules, each can be switched off in the settings. **The voices are not included:** install the voice pack for each module you want to hear, or the addon stays silent.
 
 | Module | Voices | Voice pack |
 | --- | --- | --- |
-| **Spoken Quests** | quest dialogue | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-quests-audio-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-quests-audio-shared) |
-| **Spoken Gossip** | NPC gossip and greetings | [Gossip](https://www.curseforge.com/wow/addons/spoken-quests-audio-gossip), also in All |
+| **Spoken Quests** | quest dialogue, and what NPCs say when you talk to them | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-quests-audio-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-quests-audio-shared) |
 | **Spoken Places** | zone and area lore, on the world map | [Spoken Zones Audio](https://www.curseforge.com/wow/addons/spoken-zones-audio) |
 | **Spoken Readables** | books, letters, notes and the plaques out in the world | [Spoken Readables Audio](https://www.curseforge.com/wow/addons/spoken-books-audio) |
 
@@ -71,7 +70,7 @@ Game Menu → Options → AddOns → **Spoken**, or `/sp settings`.
 /sp collect    turn Collect Missing Lines on or off
 /sp send       how to send collected lines
 /sp help       every command
-/spq, /spg, /spp, /spr   each module's own commands
+/spq, /spp, /spr   each module's own commands
 ```
 
 ## Contributing

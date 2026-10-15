@@ -5,6 +5,7 @@ Read **[AGENTS.md](AGENTS.md)**: layout, branches, checks and the rules that are
 Before touching a section, read its guide:
 
 - quests: `docs/quests/CLAUDE.md`
+- gossip: `docs/gossip/AGENTS.md`
 - places (the folders are still named `zones`): `docs/zones/AGENTS.md`
 - readables (the folders are still named `books`): `docs/books/AGENTS.md`
 

@@ -66,6 +66,15 @@ test("a shipped version with no section of its own has its notes still under Unr
   assert.deepEqual(problems(CHANGELOG, ["3.5.0"]), ['3.5.0 has shipped but has no "## 3.5.0" section']);
 });
 
+test("a version heading inside Unreleased is named, groups that are not versions are not", () => {
+  const grouped = CHANGELOG.replace("## Unreleased\n\n", "## Unreleased\n\n### Settings\n\n");
+  assert.deepEqual(problems(grouped, ["3.4.0"]), []);
+  const copied = CHANGELOG.replace("## Unreleased\n\n", "## Unreleased\n\n### 3.4.0 notes\n\n");
+  const found = problems(copied, ["3.4.0"]);
+  assert.equal(found.length, 1);
+  assert.match(found[0], /line 5: "### 3\.4\.0 notes" is a version heading under Unreleased/);
+});
+
 test("Unreleased comes first", () => {
   const late = CHANGELOG.replace("## Unreleased\n\n- **Something new.** *([Nucabe](https://github.com/Nucabe))*\n\n", "")
     .replace("## 3.3.1", "## Unreleased\n\n## 3.3.1");

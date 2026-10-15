@@ -9,7 +9,7 @@ python3 tools/scan_corpus_hiccups.py
 - **`--json <file>`** — the findings with every line each one occurs on, written only when
   asked. `/issues` → **Reload scan** loaded it into Postgres until the review queue was
   removed; nothing reads it now, so it is no longer committed or shipped.
-- **`docs/corpus-hiccups.csv`** — the same findings, one row each, for reading offline.
+- **`pipelines/quests/docs/corpus-hiccups.csv`** — the same findings, one row each, for reading offline.
   Gitignored: it is derivable, and it has empty columns meant to be filled in.
 
 This file is the summary. The counts below are from the scan of 2026-07-31.
@@ -23,7 +23,7 @@ false alarm about text that never reaches ElevenLabs.
 still a detection — it is a resolved one — and only the live lexicon row knows which those
 are, so findings carry a `grapheme` and the loader decides coverage when it reads them. The
 CSV's `in_lexicon` column says `seed` for the 144 that the *seeded* lexicon
-(`web/migrations/0008_seed_pronunciation_lexicon.sql`) covered, which is a reading aid and
+(`apps/web/migrations/0008_seed_pronunciation_lexicon.sql`) covered, which is a reading aid and
 nothing more.
 
 Method: a token counts as English if Webster's (`/usr/share/dict/web2`) has it or

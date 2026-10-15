@@ -15,8 +15,8 @@ nothing, and `/spoken log` says the module is not installed.
 The log is **on as soon as the module is installed**: the module is installed on purpose, by
 whoever wants a log. It can be turned off, and keeps nothing while off:
 
-- **Spoken > Developer > Enable Debug Log Recording**, in the game's settings.
-- The switch at the bottom of the welcome window (Spoken > General > Show Welcome Window).
+- **Spoken > Developer > Keep a Debug Log**, in the game's settings.
+- The switch at the bottom of the welcome window (Spoken > Show Welcome Window), which is Keep a Debug Log too.
 - Right-click any **Report a Problem** or **Contribute** button: with the log off, the menu offers to turn it on.
 - `/spoken log off` and `/spoken log on`.
 
@@ -31,8 +31,11 @@ says how big the log is (lines used of 2000, and the room they take in the saved
   no clipboard, so Ctrl+A, then Ctrl+C. To send with a report.
 - **Write the Debug Log for an AI Agent**: see below.
 
-The Developer page has the same two buttons and the size, and `/spoken log copy` and
-`/spoken log write` do the same from chat. Opened from a button on DialogueUI's window, which
+The Developer page, Spoken > Developer, has the same two buttons (**Copy with Diagnostics** and
+**Write for an AI Agent**), the size (Log Size), **Show the Log**, **Clear the Log** and the
+steps for asking an AI agent. Under the Debug Log section come the switches for messages in chat
+(Chat Messages) and the testing tools (Testing) that Spoken's modules add. `/spoken log copy`
+and `/spoken log write` do the same from chat. Opened from a button on DialogueUI's window, which
 hides the rest of the interface, the menu and the box show over that window.
 
 ## Writing it for an AI agent

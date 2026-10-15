@@ -270,6 +270,12 @@ local function resolve()
 	return SpokenZones:GetAutoLanguage()
 end
 
+-- What the settings in force now would read: not what was loaded (GetLanguage), which a profile
+-- chosen later can disagree with until the interface reloads.
+function SpokenZones:ResolveLanguage()
+	return resolve()
+end
+
 -- Resolved once, at load, and never recomputed: the generated data files consult
 -- it as they load and only get one chance to build their table. Everything that
 -- changes the answer therefore asks for a /reload.

@@ -79,8 +79,7 @@ end
 -- Merge defaults into the saved table without clobbering stored values, so new
 -- options added in later versions appear for existing users. Runtime reads and
 -- writes go straight to SpokenZonesSettings.
-local function InitConfig()
-	SpokenZones:BindSettings()
+local function MergeDefaults()
 	if type(SpokenZonesSettings) ~= "table" then
 		SpokenZonesSettings = {}
 	end
@@ -93,9 +92,22 @@ local function InitConfig()
 	SpokenZones.db = SpokenZonesSettings
 end
 
--- Another profile chosen: its table is the one read and written from now on.
+local function InitConfig()
+	SpokenZones:BindSettings()
+	MergeDefaults()
+end
+
+-- Spoken has bound a profile's table. Before ADDON_LOADED that is the first binding, which
+-- InitConfig finishes; after it, another profile was chosen, copied over this one or reset. Only
+-- merges: binding again from here would call this again.
 function SpokenZones:OnSettingsBound()
-	if SpokenZones.db then InitConfig() end
+	if not SpokenZones.db then return end
+	MergeDefaults()
+	-- The stories' language was settled at load: say when this profile wants another.
+	local wanted = self:ResolveLanguage()
+	if wanted ~= self:GetLanguage() then
+		self:Print("%s", string.format(self.L.OPT_LANG_PROFILE_FMT, self:GetLanguageName(wanted)))
+	end
 end
 
 -- Safe before ADDON_LOADED has run.

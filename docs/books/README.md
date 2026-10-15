@@ -162,11 +162,14 @@ title over its page count, grouped so no pause or cue falls between them.
 gravestone read on the way waits for the book. The source has no queue limit, unlike zones,
 whose cap drops the oldest waiting clip and here would drop what the player opened.
 
-**Two saved-variable tables, on purpose.** `SpokenBooksSettings` is account-wide and holds the
-three switches — autoplay, whole-book, read-once. `SpokenBooksCharacter` is per character and
-holds only what that character has been read, keyed by book id. Settings are how you like
-the addon to behave; having read something is a thing a character did, so an alt walking
-into the same library hears it fresh.
+**Settings and reading are kept apart, on purpose.** The settings (autoplay, whole book, one
+line, read once, stop when the book closes, close when read, the voice language and the
+Compendium's switches) live in Spoken's profile under `Writings`, bound by
+`Spoken:BindModuleSettings` and copied from `SpokenBooksSettings` the first time. That saved
+variable keeps its name and stays the module's own table until Spoken binds it.
+`SpokenBooksCharacter` is per character and holds what that character has read and found,
+keyed by book id. Settings are how you like the addon to behave; having read something is a
+thing a character did, so an alt walking into the same library hears it fresh.
 
 **Read-once marks a book when narration starts, not when it ends.** The addon is never told
 that a clip finished — the player owns the queue — so "finished" could only be inferred
@@ -177,8 +180,9 @@ of reading, which is what `SpokenBooks:IsNarrating` is for — a reader who jump
 queued pages would otherwise strand the narration on the page they turned away from.
 
 **The panel and the button are the two files this addon reads books without.**
-`UI/Options.lua` registers a settings canvas the way the zones panel does, and
-`UI/PlayButton.lua` puts Play/Stop on the book window's page row. `Events.lua` guards both
+`UI/Options.lua` is the module's page under Spoken's in the game's settings
+(`Spoken:AddSettingsPage`), laid out by Spoken's `UI/Layout.lua` like the other modules' pages,
+and `UI/PlayButton.lua` puts Play/Stop on the book window's page row. `Events.lua` guards both
 calls, so a partial install still narrates. Every switch on the panel is also a `/spr`
 command, which is what a client with no Settings API gets.
 
@@ -201,7 +205,8 @@ client cannot open a browser or post anywhere, so pressing it raises a popup hol
 selectable address — `UI/CopyLink.lua`, the same shape the Places addon carries, and not
 shared with it because two addons cannot own one StaticPopup id.
 
-The address is `https://spoken.rusty.one/books/r/{pageTextID}`, built from the page id
+The address is `https://spoken.rusty.one/books/r/{pageTextID}` (`/{lang}/books/r/…` when the
+clip was read in another language, through `Spoken:ReportURL`), built from the page id
 alone. That is deliberate: the id is frozen, so the addon can address any page with no
 per-page table to ship and nothing to escape — the trade the zones landing page makes with
 its `{mapID}/{slug}` path.
@@ -225,23 +230,17 @@ triage sees.
 is every post-vanilla book, every locale but one, and custom text a server added
 itself — `Contribute.lua`'s `HasContributionGap` is true exactly there, whenever
 `PageOnScreen` found nothing. The Play button itself becomes the way to say so: relabelled
-**Contribute** in that state, it opens the same copy box the Report action uses, holding an
+**Contribute** in that state, it opens Spoken's contribute box (`UI/ContributeBox.lua`) with an
 envelope instead of an address — the addon, the build, the locale, the book, the page number,
 the checksum the page would be looked up by if the corpus knew it, and the page's own text.
 **Mail is excluded the same way narration already excludes it**, doubly: a letter with a
-creator, or anything shown while `MailFrame` is open, is never captured. The player copies the
-box, opens `spoken.rusty.one/contribute`, pastes, and sees exactly what is about to be sent
-before it goes — the same page, submitted again by the same or another reader, bumps a count
-on one row at `/contributions` rather than filing a second.
-
-**Azeroth's Compendium lists a readable in every zone it is had in.** A lore book shelved in
-Stormwind and in Scholomance is under both cards, because a player looking through either place
-expects to find it there. Inside a zone it is listed once: under the city where it is also in the
-zone around it, under the dungeon's card where it is had only from inside a dungeon whose entrance
-is in that zone (`dungeons` in `Data/Places.lua`, the instance maps of Spoken's `Data/Dungeons.lua`,
-which names them). One had in more than eight zones goes under
-Across Azeroth instead. A continent's banner counts each readable once, so its count can be less
-than the sum of its zone cards.
+creator, or anything shown while `MailFrame` is open, is never captured. The box holds a link
+to `spoken.rusty.one/contribute` that carries the envelope, or, where no link can be built, the
+envelope and the address to paste. The player copies it, opens it, and sees exactly what is
+about to be sent before it goes — the same page, submitted again by the same or another
+reader, bumps a count on one row at `/contributions` rather than filing a second. The first
+click ever also offers Spoken's **Collect Missing Lines**, which keeps such pages in
+`SpokenContributions.lua` for the player to upload at `/contribute`.
 
 ### The Readables tab
 
@@ -267,7 +266,13 @@ whose origin is not known. Holidays and Events holds a line for each event (Feas
 Harvest Festival, Stranglethorn Fishing Extravaganza, Scourge Invasion; `event` in
 `Data/Places.lua`, `EVENTS` in `Readables.lua`), each with a line per kind inside; a readable whose
 event the data does not name is listed under its kind alone. A banner shows only for a continent or
-a kind, a card only for a place.
+a kind, a card only for a place. A readable is listed in every zone it is had in: a lore book
+shelved in Stormwind and in Scholomance is under both cards, because a player looking through
+either place expects to find it there. Inside a zone it is listed once: under the city where it
+is also in the zone around it, under the dungeon's card where it is had only from inside a
+dungeon whose entrance is in that zone (`dungeons` in `Data/Places.lua`, the instance maps of
+Spoken's `Data/Dungeons.lua`). A continent's banner counts each readable once, so its count can
+be less than the sum of its zone cards.
 
 **What the list keeps.** The search box looks in names only: a search naming a place lists
 everything under it, a title lists itself under its place. The filter menu has Found Only and Voiced
@@ -300,47 +305,47 @@ Unlock Unfound Readables on (`SpokenBooks:CompendiumHas`). Another tab's link to
 through `openPlace` (`SpokenBooks:OpenPlace`), only while the list is By Zone, which has the
 place's row.
 
-The page is laid out by Spoken's `UI/Layout.lua`.
-
 ### Installing it in a client
 
 ```bash
-make books-deploy                  # symlink into Classic Era
-CLIENT=forever make books-deploy   # or the Forever beta (wow_classic_beta)
+CLIENT=forever make books-deploy   # symlink Spoken_Readables and SpokenBooksAudio into the Forever beta (wow_classic_beta)
 make books-status                  # what is installed where, and how many mp3s exist
 ```
 
+`scripts/books/deploy.sh` links only those two folders and defaults to Classic Era, so pass
+`CLIENT=forever`. It looks under `/Applications/World of Warcraft`. Spoken has to be installed
+as well: the repo's `/link-addon` skill links every addon folder of a checkout into a client,
+Forever by default.
+
 ## Releasing
 
-The two CurseForge projects:
+The module ships inside Spoken's zip: `make package-spoken` builds `Spoken-<version>.zip`, the
+release is tagged `spoken/v<version>`, and its notes are in `docs/spoken/CHANGELOG.md`. Two
+CurseForge projects are left here:
 
 | Project | id | Slug |
 | --- | --- | --- |
-| Spoken Books | 1701514 | `spoken-books` |
-| Spoken Books Audio | 1701520 | `spoken-books-audio` |
+| Spoken Books, retired | 1701514 | `spoken-books` |
+| Spoken Writings Audio | 1701520 | `spoken-books-audio` |
 
-Cutting one:
+The first project's last file is the tombstone that `make package-spoken-retired` builds. The
+second is the sound pack, which declares `spoken-player` as its required dependency. Cutting a
+pack:
 
 ```bash
-make books-package                 # -> dist/Spoken_Readables-<version>.zip
 make books-package-audio           # -> dist/SpokenBooksAudio-<version>.zip
 make books-release-dry             # what would be uploaded, uploading nothing
 make books-release                 # needs CURSEFORGE_TOKEN
 ```
 
-The version is the `## Version:` line in each `.toc`, and the release notes are the matching
-`## <version>` section of `docs/books/CHANGELOG.md` — a version with no section there fails
-before anything is sent. `scripts/books/release.sh` carries the two ids in
+The pack's version is the `## Version:` line in its `.toc`, and its release notes are the
+matching `## <version>` section of `docs/books/CHANGELOG.md` — a version with no section there
+fails before anything is sent. `make books-package` builds `Spoken_Readables` alone, for a
+`books/v<version>` tag, which `.github/workflows/release-addons.yaml` still builds. `scripts/books/release.sh` carries the two ids in
 `target_curseforge()`, and an unknown target fails on the empty id rather than defaulting, for
 the reason `docs/quests/CLAUDE.md` gives: an id left in that function is an id something
 eventually uploads to, and uploading a books pack over another project is not recoverable
 from this side.
-
-The addon uploads before the pack, because the pack declares it as a required dependency and
-CurseForge resolves a `relations` slug at upload time — against an *approved* project. Both
-projects are new, so the first release is the one that can meet that gate late: if
-`spoken-books` is still in moderation the pack's upload is rejected with errorCode 1018, and
-the fix is to send the pack again once the project is approved.
 
 The project pages themselves are `publishers/books/*.md`, one body per project for both
 stores; after `make descriptions`, paste `dist/descriptions/<slug>.md` into CurseForge and
@@ -350,7 +355,7 @@ into Wago, then record it with `make descriptions-published`.
 `make books-release` sends each zip to both stores. The pack goes to CurseForge alone: at
 452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
 in as many words. `make audio-release` then publishes it as a GitHub release under
-`books-audio/vX.Y.Z`, which is where the Wago page for Spoken Books sends anyone looking for
+`books-audio/vX.Y.Z`, which is where the pack's Wago page sends anyone looking for
 the narration.
 
 ### A language's pack
