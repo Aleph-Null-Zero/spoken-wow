@@ -22,18 +22,9 @@ function SpokenZones:CanContribute()
     return true
 end
 
---- The envelope for a place the panel is showing with no lore, or nil with no map to name.
----
---- The place the player is looking at, not where they stand: every zone and subzone is already
---- known, what is missing is what to say about it, and a player reading the map of a zone they
---- have been to can describe it from anywhere. The description itself is written on the
---- contribute page, which asks for it -- the client has nothing to hand over.
-function SpokenZones:CaptureContribution(mapID, subzone)
-    if not mapID then
-        return nil
-    end
-
-    local fields =
+--- The fields every zones envelope starts with: which addon, which client, which language.
+local function BaseFields(self)
+    return
     {
         -- SpokenZones.VERSION does not exist -- Core.lua computes the real .toc version into
         -- the lowercase SpokenZones.version; "dev" is what a source checkout with no .toc
@@ -45,8 +36,22 @@ function SpokenZones:CaptureContribution(mapID, subzone)
         -- The language narration plays in, said outright so triage can see what the player
         -- was hearing beside what their client shows.
         { "pack", self:GetPackLanguage() },
-        { "map", mapID },
     }
+end
+
+--- The envelope for a place the panel is showing with no lore, or nil with no map to name.
+---
+--- The place the player is looking at, not where they stand: every zone and subzone is already
+--- known, what is missing is what to say about it, and a player reading the map of a zone they
+--- have been to can describe it from anywhere. The description itself is written on the
+--- contribute page, which asks for it -- the client has nothing to hand over.
+function SpokenZones:CaptureContribution(mapID, subzone)
+    if not mapID then
+        return nil
+    end
+
+    local fields = BaseFields(self)
+    fields[#fields + 1] = { "map", mapID }
     local zone = self:GetMapName(mapID)
     if zone and zone ~= "" then
         fields[#fields + 1] = { "zone", zone }
@@ -76,4 +81,41 @@ function SpokenZones:ShowContribution(mapID, subzone)
     else
         Spoken:ShowContribution(envelope, address)
     end
+end
+
+--- What a report carries beside its address: this client, and the place by name as it shows it.
+---
+--- `key`, not `subzone`: a subzone field is what a contribution is keyed on, and a report is
+--- about lore that exists. The lore itself is ours, so it is not sent back.
+function SpokenZones:ReportContext(mapID, areaKey)
+    if not (mapID and _G.Spoken and Spoken.Contribute) then
+        return nil
+    end
+    local fields = BaseFields(self)
+    fields[#fields + 1] = { "map", mapID }
+    local zone = self:GetMapName(mapID)
+    if zone and zone ~= "" then
+        fields[#fields + 1] = { "zone", zone }
+    end
+    if areaKey then
+        fields[#fields + 1] = { "key", areaKey }
+    end
+    return Spoken.Contribute:Envelope("zones", fields, nil)
+end
+
+--- The report address for a place, with its context in the fragment, in Spoken's copy box: a
+--- link that long outgrows a StaticPopup's edit box. The bare address in the popup where the
+--- player has no such box.
+function SpokenZones:ShowReport(mapID, areaKey, language)
+    local url = self:ReportURL(mapID, areaKey, language)
+    if not url then
+        return
+    end
+    local codec = _G.Spoken and Spoken.Contribute
+    if codec and codec.Link and Spoken.ShowContribution then
+        local context = self:ReportContext(mapID, areaKey)
+        Spoken:ShowContribution(context and codec:Link(url, context) or url, nil, true)
+        return
+    end
+    self:ShowCopyLink(url, self.L.OPT_REPORT_LINE_ADDRESS)
 end

@@ -160,8 +160,7 @@ local PLAY = {
 local REPORT = {
 	has = function() return true end,
 	open = function(target)
-		local url = SpokenZones:ReportURL(target[1], target[2])
-		if url then SpokenZones:ShowCopyLink(url, L.OPT_REPORT_LINE_ADDRESS) end
+		SpokenZones:ShowReport(target[1], target[2])
 	end,
 	title = L.OPT_REPORT_PROBLEM,
 	tip = L.OPT_REPORT_LINE_TIP,

@@ -31,7 +31,7 @@ _G.SpokenBooksAudioPacks = {
 
 local function LoadBooks()
     local SpokenBooks = {}
-    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
+    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Contribute", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
         chunk("Spoken_Readables", SpokenBooks)
     end
@@ -114,13 +114,15 @@ Expect("the report address names the page", B:ReportURL(261),
     "https://spoken.rusty.one/books/r/261")
 Expect("...and is nothing at all without one", B:ReportURL(nil), nil)
 
--- The client cannot open a browser, so pressing it can only offer the address to copy.
-local before = table.getn(stub.popups)
+-- The client cannot open a browser, so pressing it can only offer the address to copy, in
+-- Spoken's box: the context makes it longer than a popup's edit box holds.
 report.onClick(clip)
-Expect("pressing it raises one popup", table.getn(stub.popups), before + 1)
-Expect("...saying what the address is for",
-    string.find(stub.popups[table.getn(stub.popups)].args[1] or "", "report a problem") ~= nil,
-    true)
+local box = _G.Spoken.ContributeBox
+local address, context = H.SplitReportLink(box and box.frame:IsShown() and box.editBox:GetText())
+Expect("pressing it offers the page's address", address, "https://spoken.rusty.one/books/r/261")
+Expect("...carrying the addon and the page", context
+    and context:find("\naddon=SpokenBooks/", 1, true) and context:find("\nid=261\n", 1, true) and true, true)
+box.frame:Hide()
 
 ---------------------------------------------------------------- reading a book
 Expect("a book lists the pages from here on", Same(B:PagesFrom(262), { 262, 263, 265 }), true)

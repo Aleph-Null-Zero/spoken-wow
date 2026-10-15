@@ -849,7 +849,8 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                     -- Report passes it: a fallback line is an English take under another language.
                     local sound = { event = Enums.SoundEvent.QuestAccept, questID = button.questID }
                     local language = DataModules:PrepareSound(sound) and sound.language or nil
-                    if target then ReportButton:ShowLink(target, language) end
+                    local clip = { fromLog = true, questID = button.questID, title = button.title }
+                    if target then ReportButton:ShowLink(target, language, clip) end
                 end)
                 report:HookScript("OnEnter", function(button)
                     GameTooltip:SetOwner(button, "ANCHOR_LEFT")
@@ -869,6 +870,7 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             local report = self.detailsReportButton
             local contributeButton = self.detailsContributeButton
             report.questID = questID
+            report.title = self:GetQuestTitle(questID)
 
             -- Rebound rather than kept: this button stood for a different quest a moment ago. A line
             -- of this quest's already queued is the one it stands for, whoever queued it.

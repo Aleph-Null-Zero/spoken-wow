@@ -745,8 +745,7 @@ local REPORT = {
 		local book = Books()[id]
 		local pageId = PageReading(id) or FirstVoiced(id) or book and book.pages and book.pages[1]
 		local clip = pageId and SpokenBooks:ClipFor(pageId)
-		local url = pageId and SpokenBooks:ReportURL(pageId, clip and clip.language)
-		if url and SpokenBooks.ShowCopyLink then SpokenBooks:ShowCopyLink(url, L.REPORT_LINE_ADDRESS) end
+		if pageId then SpokenBooks:ShowReport(pageId, clip and clip.language, L.REPORT_LINE_ADDRESS) end
 	end,
 	title = L.REPORT_PROBLEM,
 	tip = L.REPORT_LINE_TIP,

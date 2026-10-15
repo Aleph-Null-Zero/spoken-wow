@@ -120,10 +120,11 @@ function ReportButton:Link(target, language)
     return Spoken:ReportURL("quests", target, language)
 end
 
---- DialogueUI hides UIParent and the game's popups with it, so under its window the address
---- goes to Spoken's copy box, which shows over that window.
+--- Spoken's copy box where the player has one: a report carrying its context is longer than a
+--- StaticPopup's edit box will hold, and DialogueUI hides UIParent and the game's popups with
+--- it, while the box shows over that window.
 local function ShowCopy(url)
-    if Utils:DialogueUIPage() and Spoken and Spoken.ShowContribution then
+    if Spoken and Spoken.ShowContribution then
         Spoken:ShowContribution(url, nil, true)
         return
     end
@@ -131,8 +132,21 @@ local function ShowCopy(url)
     StaticPopup_Show(COPY_DIALOG)
 end
 
-function ReportButton:ShowLink(target, language)
-    ShowCopy(self:Link(target, language))
+--- The report address for `target`, with the line as the player met it in its fragment: the
+--- addon version, the client, the text and the NPC. `clip` is the line being reported, or nil
+--- for the window on screen. The bare address when there is nothing to add or no way to
+--- encode it: a report without context is still a report.
+function ReportButton:ShowLink(target, language, clip)
+    local url = self:Link(target, language)
+    -- Absent on the legacy clients, whose toc never loads Contribute.xml.
+    local contribute = rawget(VoiceOver, "Contribute")
+    local ok, context = false, nil
+    if contribute and contribute.ReportContext then
+        ok, context = pcall(contribute.ReportContext, contribute, clip)
+    end
+    local codec = Spoken and Spoken.Contribute
+    local link = ok and context and codec and codec.Link and codec:Link(url, context)
+    ShowCopy(link or url)
 end
 
 --- The same popup, for an address that is not a report: the settings panel offers one per

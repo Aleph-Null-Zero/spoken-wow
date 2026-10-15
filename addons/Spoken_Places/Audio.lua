@@ -454,10 +454,7 @@ local ACTIONS = {
 			end
 			-- Filed under the language the clip was narrated in, which for an entry the
 			-- active pack lacks is the English pack's, whatever is being read.
-			local url = SpokenZones:ReportURL(clip.mapID, clip.areaKey, clip.pack and clip.pack.language)
-			if url then
-				SpokenZones:ShowCopyLink(url, L.OPT_REPORT_LINE_ADDRESS)
-			end
+			SpokenZones:ShowReport(clip.mapID, clip.areaKey, clip.pack and clip.pack.language)
 		end,
 	}
 }

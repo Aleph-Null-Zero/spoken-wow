@@ -780,7 +780,11 @@ Expect("...and goes back in the row on the next page", icon.anchor and icon.anch
 driver.scripts.OnShow(driver)
 Fire(icon, "OnClick")
 local box = Spoken.ContributeBox
-Expect("Report opens the quest page's address", box and box.editBox:GetText(), "https://spoken.rusty.one/quests/r/quest/101/accept")
+local address, context = H.SplitReportLink(box and box.editBox:GetText())
+Expect("Report opens the quest page's address", address, "https://spoken.rusty.one/quests/r/quest/101/accept")
+Expect("...carrying the addon, the quest and the text on screen", context
+    and context:find("\naddon=SpokenQuests/", 1, true) and context:find("\nquest=101\nevent=accept\n", 1, true)
+    and context:find("\ntext<<\n", 1, true) and true, true)
 Expect("...over DialogueUI's window", box and box.frame:GetParent(), DUI)
 box.frame:Hide()
 

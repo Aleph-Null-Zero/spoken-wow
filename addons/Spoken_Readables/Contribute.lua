@@ -17,6 +17,20 @@ local ADDON_NAME, SpokenBooks = ...
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
 
+--- The fields every books envelope starts with: which addon, which client, which language.
+local function BaseFields(self)
+	return
+	{
+		{ "addon", format("%s/%s", ADDON_NAME, self.version or "dev") },
+		{ "build", format("%s/%s", (GetBuildInfo and select(1, GetBuildInfo())) or "?",
+		                           (GetBuildInfo and select(2, GetBuildInfo())) or "?") },
+		-- The client's, because the page is as the client shows it. The packs' language goes
+		-- beside it, so triage can see what the player was hearing.
+		{ "locale", (GetLocale and GetLocale()) or "enUS" },
+		{ "pack", self:GetPackLanguage() },
+	}
+end
+
 --- The envelope for the page on screen, or nil when there is nothing to send.
 function SpokenBooks:CaptureContribution()
 	if self:IsMail() then
@@ -31,23 +45,56 @@ function SpokenBooks:CaptureContribution()
 	-- Once: the page field and Gather's key are the same checksum, and it is a pass over the
 	-- whole page each time.
 	local sum = self:ChecksumOf(text)
-	local fields =
-	{
-		{ "addon", format("%s/%s", ADDON_NAME, self.version or "dev") },
-		{ "build", format("%s/%s", (GetBuildInfo and select(1, GetBuildInfo())) or "?",
-		                           (GetBuildInfo and select(2, GetBuildInfo())) or "?") },
-		-- The client's, because the page is as the client shows it. The packs' language goes
-		-- beside it, so triage can see what the player was hearing.
-		{ "locale", (GetLocale and GetLocale()) or "enUS" },
-		{ "pack", self:GetPackLanguage() },
-		{ "page", sum },
-		{ "book", (ItemTextGetItem and NotSecret(ItemTextGetItem())) or "" },
-		{ "number", (ItemTextGetPage and NotSecret(ItemTextGetPage())) or 1 },
-	}
+	local fields = BaseFields(self)
+	fields[#fields + 1] = { "page", sum }
+	fields[#fields + 1] = { "book", (ItemTextGetItem and NotSecret(ItemTextGetItem())) or "" }
+	fields[#fields + 1] = { "number", (ItemTextGetPage and NotSecret(ItemTextGetPage())) or 1 }
 
 	-- The second value is what Gather keys the page on: its checksum, the same id the site
 	-- files it under, so reading a page twice keeps it once.
 	return Spoken.Contribute:Envelope("books", fields, text), format("b:%d", sum)
+end
+
+--- What a report carries beside its address: this client, and the page as the player read it.
+---
+--- `id`, the corpus page, not `page`: that field is a contribution's client checksum. The text
+--- is the open page's when it is the one reported, else the copy the reader kept of it.
+function SpokenBooks:ReportContext(pageId)
+	if type(pageId) ~= "number" or self:IsMail() or not (_G.Spoken and Spoken.Contribute) then
+		return nil
+	end
+	local fields = BaseFields(self)
+	fields[#fields + 1] = { "id", pageId }
+	local text
+	local open = ItemTextGetText and NotSecret(ItemTextGetText())
+	if type(open) == "string" and open ~= "" and self:PageOnScreen() == pageId then
+		text = open
+		fields[#fields + 1] = { "book", (ItemTextGetItem and NotSecret(ItemTextGetItem())) or "" }
+		fields[#fields + 1] = { "number", (ItemTextGetPage and NotSecret(ItemTextGetPage())) or 1 }
+	else
+		local kept = self.pageText and self.pageText[self:GetClientLanguage()]
+		text = kept and kept[pageId]
+	end
+	return Spoken.Contribute:Envelope("books", fields, text)
+end
+
+--- The report address for a page, with its context in the fragment, in Spoken's copy box: a
+--- link that long outgrows a StaticPopup's edit box. The bare address in the popup where the
+--- player has no such box.
+function SpokenBooks:ShowReport(pageId, language, caption)
+	local url = self:ReportURL(pageId, language)
+	if not url then
+		return
+	end
+	local codec = _G.Spoken and Spoken.Contribute
+	if codec and codec.Link and Spoken.ShowContribution then
+		local context = self:ReportContext(pageId)
+		Spoken:ShowContribution(context and codec:Link(url, context) or url, nil, true)
+		return
+	end
+	if self.ShowCopyLink then
+		self:ShowCopyLink(url, caption)
+	end
 end
 
 --- Keep the page on screen for later, if the player opted into gathering and the corpus has
