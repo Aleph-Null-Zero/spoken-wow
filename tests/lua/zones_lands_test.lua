@@ -7,7 +7,7 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -103,10 +103,10 @@ _G.hooksecurefunc = _G.hooksecurefunc or function() end
 -- The page's line over a place's name comes from Audio.lua's PlaceAbove; the rest of that file
 -- would replace this test's stand-in packs.
 local audio = setmetatable({}, { __index = Z })
-assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Zones", audio)
+assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Places", audio)
 Z.PlaceAbove = audio.PlaceAbove
 for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 
 ---------------------------------------------------------------- the lore window

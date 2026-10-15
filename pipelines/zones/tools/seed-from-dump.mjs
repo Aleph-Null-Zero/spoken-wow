@@ -8,7 +8,7 @@
 // the useful mode: it tells you whether any hand-entered uiMapID is wrong.
 //
 // Reads SpokenZonesSettings.dump out of the SavedVariables file the game names after the
-// addon's folder, Spoken_Zones.lua. That file is Lua, but the dump has a fixed shape, so it is
+// addon's folder, Spoken_Places.lua. That file is Lua, but the dump has a fixed shape, so it is
 // scanned rather than interpreted. The WTF/Account folder is --wtf, else SPOKEN_ZONES_WTF, else
 // the first of the clients' usual folders that exists, Forever's first.
 
@@ -29,7 +29,7 @@ const WTF_FOLDERS = [
   "/Applications/World of Warcraft/_classic_beta_/WTF/Account",
   "/Applications/World of Warcraft/_classic_era_/WTF/Account",
 ].filter(Boolean);
-const SAVED = "Spoken_Zones.lua";
+const SAVED = "Spoken_Places.lua";
 
 const write = argv.includes("--write");
 

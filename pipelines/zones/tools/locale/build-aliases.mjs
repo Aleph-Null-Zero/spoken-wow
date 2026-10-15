@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Writes addons/Spoken_Zones/Data/<locale>/Aliases.lua for every non-English locale.
+// Writes addons/Spoken_Places/Data/<locale>/Aliases.lua for every non-English locale.
 //
 //   node tools/locale/build-aliases.mjs               # the pinned builds (pipelines/lib/wago.mjs)
 //   node tools/locale/build-aliases.mjs --build 1.15.9.69109   # another Era build
@@ -161,7 +161,7 @@ async function main() {
     }
     for (const name of fromEra.ambiguous) if (!aliases.has(name)) ambiguous.add(name);
 
-    const dir = join(ROOT, "addons/Spoken_Zones/Data", locale.code);
+    const dir = join(ROOT, "addons/Spoken_Places/Data", locale.code);
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, "Aliases.lua"), emitAliases(locale.code, aliases, [FOREVER_BUILD, build]));
 

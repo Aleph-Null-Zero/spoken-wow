@@ -6,7 +6,7 @@ Repo-wide rules. Each section also has its own file, which applies on top of thi
 ## Layout
 
 - `addons/`: the shipped Lua.
-  - `Spoken` plays every line. `Spoken_Quests`, `Spoken_Zones` and `Spoken_Books` are its
+  - `Spoken` plays every line. `Spoken_Quests`, `Spoken_Places` and `Spoken_Readables` are its
     modules, and `SpokenContributions` holds what players upload at /contribute. All five
     ship in one zip, `Spoken-<v>.zip` (`scripts/spoken/package.sh`).
   - `Spoken_Developer` is for developers only: the debug log and the Developer page. It is

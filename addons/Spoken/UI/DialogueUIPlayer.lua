@@ -344,7 +344,7 @@ function Skin:IsEnabled()
     return Addon.db and Addon:DisplayStyle() == "dialogueui"
 end
 
---- The art a line is drawn in: Spoken Books' pages in the book view's paper, or its stone for
+--- The art a line is drawn in: Spoken Readables' pages in the book view's paper, or its stone for
 --- the materials DialogueUI draws in stone; every other line in the quest parchment.
 local function LookOf(clip)
     local present = clip and clip.present
@@ -564,7 +564,7 @@ function Skin:Layout()
     local _, stripHeight = Strip(inner)
     -- DialogueUI's gap under its header line, before the text.
     local textGap = Round(4 * 0.35 * fontSize)
-    -- A place's picture (Spoken Zones gives one with its line) between the header and the words,
+    -- A place's picture (Spoken Places gives one with its line) between the header and the words,
     -- as wide as they are.
     local picture = self.clip and self.clip.present and self.clip.present.picture
     local pictureWidth = picture and wordsWidth or 0

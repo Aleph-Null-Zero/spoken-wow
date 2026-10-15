@@ -13,8 +13,8 @@ local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local FIXTURE = here .. "/../fixtures/report-urls.txt"
 local Expect, Failures = H.Expecter(print)
 
@@ -24,7 +24,7 @@ local R, E = VO.ReportButton, VO.Enums
 local Z = H.LoadZones(ZONES)
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
+    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
 end
 
 -- English, a language of each script, and Italian, which no client runs in.

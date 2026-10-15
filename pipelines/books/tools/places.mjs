@@ -1,4 +1,4 @@
-// A TrinityCore world DB + the client's map tables -> addons/Spoken_Books/Data/Places.lua.
+// A TrinityCore world DB + the client's map tables -> addons/Spoken_Readables/Data/Places.lua.
 //
 // Where each readable is, for Azeroth's Compendium: those standing in the world (a plaque, a
 // book on a shelf) in the zones their objects are spawned in, and those carried (a letter, a
@@ -37,9 +37,9 @@ import { cannotBeHad, dungeonsOf, isTemplateCopy, typeOf } from "./lib/places.mj
 
 await loadEnv("books");
 
-const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Books.lua", import.meta.url));
+const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Books.lua", import.meta.url));
 const QUESTS = fileURLToPath(new URL("../../../addons/Spoken_Quests/Data/Compendium.lua", import.meta.url));
-const OUT = fileURLToPath(new URL("../../../addons/Spoken_Books/Data/Places.lua", import.meta.url));
+const OUT = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Places.lua", import.meta.url));
 // Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
 // items, and one that shares a vanilla page id lent that book its sources and zones.
 const BUILD = process.env.PLACES_BUILD ?? FOREVER_BUILD;

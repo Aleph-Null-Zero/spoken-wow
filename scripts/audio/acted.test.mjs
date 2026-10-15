@@ -62,7 +62,7 @@ test("a quests overlay outranks the generated packs, and says its language", () 
 });
 
 test("every overlay nests under Spoken and names the addon that plays it", () => {
-  for (const [section, player] of [["quests", "Spoken_Quests"], ["zones", "Spoken_Zones"], ["books", "Spoken_Books"]]) {
+  for (const [section, player] of [["quests", "Spoken_Quests"], ["zones", "Spoken_Places"], ["books", "Spoken_Readables"]]) {
     const text = toc({ section, lang: "enUS", version: "1.0.0", credits: ["A"], iface: "11509", maps: "0" });
     assert.match(text, /^## Group: Spoken$/m);
     assert.match(text, /^## X-Part-Of: Spoken$/m);

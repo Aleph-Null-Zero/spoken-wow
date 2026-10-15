@@ -308,8 +308,8 @@ Skin:Layout()
 Expect("...and keeps it when the window is laid out again", Faces(), NOTO .. "|" .. NOTO)
 Spoken:StopAll()
 
--- A book page and a zone's lore, queued as Spoken_Books and Spoken_Zones queue them.
-local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Books", order = 3 })
+-- A book page and a zone's lore, queued as Spoken_Readables and Spoken_Places queue them.
+local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Readables", order = 3 })
 books:Enqueue({ key = "b:1", path = "b1.mp3", length = 6, present = { header = "A Letter Home", transcript = "Dear mother, the war goes well.",
     bullet = "book", portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 Expect("a book page shows the window", Skin.wanted, true)
@@ -320,7 +320,7 @@ Expect("...badged as a book, as the subtitle badges it", tostring(Skin.badge:IsS
     "true " .. tostring(env.MinimalPlayer.BADGES.book))
 Expect("...with its words in the window", T.text, "Dear mother, the war goes well.")
 Spoken:StopAll()
-local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Zones", order = 2 })
+local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2 })
 zones:Enqueue({ key = "z:12", path = "z12.ogg", length = 20, present = { header = "Elwynn Forest", label = "Goldshire",
     bullet = "zone", portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 Expect("a zone's lore shows it too", Skin.name:GetText() .. "/" .. Skin.title.text:GetText(), "Elwynn Forest/Goldshire")

@@ -1,5 +1,5 @@
 -- Azeroth's Compendium: one window, a tab for each Spoken part that has something to browse --
--- the quests (Spoken Quests), the places (Spoken Zones), the writings (Spoken Books) -- each a
+-- the quests (Spoken Quests), the places (Spoken Places), the writings (Spoken Readables) -- each a
 -- list on the left and a page on the right.
 --
 -- Spoken's, so every module's tab shares one window. The window is the game's portrait frame, resizable from its corner
@@ -1670,10 +1670,10 @@ end
 -- The page
 --------------------------------------------------------------------------------
 
--- The parchment: Spoken Zones' copies of the spellbook's page and divider where it is installed,
+-- The parchment: Spoken Places' copies of the spellbook's page and divider where it is installed,
 -- so every tab is on the same paper as the places; the game's own atlas where the client has it;
 -- a plain colour where neither.
-local ZONES_ART = "Interface\\AddOns\\Spoken_Zones\\Textures\\Art\\"
+local ZONES_ART = "Interface\\AddOns\\Spoken_Places\\Textures\\Art\\"
 -- One ink for every word on the page: a lighter one for the line under the title and for a page
 -- with nothing chosen read as greyed out, and was hard to make out on the parchment.
 -- The spellbook's own, as the places' page has it: the game's colour is darker than the brown
@@ -1689,8 +1689,8 @@ local PAD, TOP, RIGHT = 24, 36, 36
 local BACKPLATE_CUT, BACKPLATE_FULL = 40, 460
 
 local function ZonesLoaded()
-	if C_AddOns and C_AddOns.IsAddOnLoaded then return C_AddOns.IsAddOnLoaded("Spoken_Zones") end
-	return IsAddOnLoaded and IsAddOnLoaded("Spoken_Zones") or false
+	if C_AddOns and C_AddOns.IsAddOnLoaded then return C_AddOns.IsAddOnLoaded("Spoken_Places") end
+	return IsAddOnLoaded and IsAddOnLoaded("Spoken_Places") or false
 end
 
 local function Ink(fontString, color)

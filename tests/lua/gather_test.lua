@@ -8,7 +8,7 @@ local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
@@ -151,7 +151,7 @@ Expect("...counting what is kept", box.body:GetText():match("1 line") ~= nil, tr
 ------------------------------------------------------------------------------- books
 local SpokenBooks = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", SpokenBooks)
+    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", SpokenBooks)
 end
 SpokenBooks:InitDB()
 dofile(BOOKS .. "Data/Books.lua")

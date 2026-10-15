@@ -6,7 +6,7 @@ lang: esES
 version: 2.0.1
 slug: spoken-zones-audio-eses
 name: Spoken Zones Audio: Spanish (EU)
-summary: The European Spanish narration for Spoken Player's Zones module: every zone and subzone read aloud in Spanish (EU).
+summary: The European Spanish narration for Spoken Player's Places module: every zone and subzone read aloud in Spanish (EU).
 categories:
   - Audio & Video
   - Miscellaneous
@@ -14,15 +14,15 @@ categories:
 license: MIT
 ---
 
-Narrated zone lore for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Zones module, in European Spanish. This addon is data only — it does nothing on its own.
+Narrated zone lore for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Places module, in European Spanish. This addon is data only — it does nothing on its own.
 
-It plays while Spoken Zones is showing its lore in **Spanish (EU)**, and never under another language's text. It installs beside the English pack, **[Spoken Zones Audio](https://www.curseforge.com/wow/addons/spoken-zones-audio)**, rather than replacing it, so a player who switches languages keeps the narration for both.
+It plays while Spoken Places is showing its lore in **Spanish (EU)**, and never under another language's text. It installs beside the English pack, **[Spoken Zones Audio](https://www.curseforge.com/wow/addons/spoken-zones-audio)**, rather than replacing it, so a player who switches languages keeps the narration for both.
 
 ## Installing
 
 Install **Spoken Player** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped (`SpokenZonesAudio_esES`) — Spoken finds packs by folder name.
 
-Spoken Zones reads your client's language when it has lore in it, and `/spz lang esES` picks Spanish (EU) on any client.
+Spoken Places reads your client's language when it has lore in it, and `/spp lang esES` picks Spanish (EU) on any client.
 
 ## Compatibility
 

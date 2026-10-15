@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -18,7 +18,7 @@ env.Addon:Enable()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Options", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
+    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB()
 B:SetupOptions()
@@ -82,7 +82,7 @@ local autoplay = Labelled("Read Automatically")
 Expect("autoplay is on the panel too, defaulting on", autoplay and autoplay.checked, true)
 autoplay:SetChecked(false)
 autoplay.scripts.OnClick(autoplay)
-Expect("...and unticking it is the same as /spb autoplay", SpokenBooksSettings.autoplay, false)
+Expect("...and unticking it is the same as /spw autoplay", SpokenBooksSettings.autoplay, false)
 -- Only automatic reading skips a book already heard (Events.lua): the switch sits under
 -- autoplay and greys out without it.
 Expect("...greying out Read Only Once, which only automatic reading heeds", once.enabled, false)
@@ -96,7 +96,7 @@ Expect("Read Book as One Line is on the panel, defaulting on", oneLine ~= nil an
 if oneLine then
     oneLine:SetChecked(false)
     oneLine.scripts.OnClick(oneLine)
-    Expect("...and unticking it is the same as /spb oneline", SpokenBooksSettings.bookAsOneLine, false)
+    Expect("...and unticking it is the same as /spw oneline", SpokenBooksSettings.bookAsOneLine, false)
     oneLine:SetChecked(true)
     oneLine.scripts.OnClick(oneLine)
 end
@@ -105,17 +105,17 @@ local close = Labelled("Close Book When Done Reading")
 Expect("Close Book When Done Reading is on the panel, defaulting off", close and close.checked, false)
 close:SetChecked(true)
 close.scripts.OnClick(close)
-Expect("...and ticking it is the same as /spb close", SpokenBooksSettings.closeWhenRead, true)
+Expect("...and ticking it is the same as /spw close", SpokenBooksSettings.closeWhenRead, true)
 close:SetChecked(false)
 close.scripts.OnClick(close)
 
 ---------------------------------------------------------------- the gather switch stays in the player's settings
 -- The switch is the player's alone: quests and books both feed the one store, so a
 -- mirror here could only ever repeat it -- a reader cannot have pages off and lines on.
--- Its command is Spoken's too (/sp collect): /spb gather no longer reaches it.
+-- Its command is Spoken's too (/sp collect): /spw gather no longer reaches it.
 local gathering = _G.Spoken.Gather:IsEnabled()
-SlashCmdList["SPOKENBOOKS"]("gather")
-Expect("/spb gather leaves the player's switch alone", _G.Spoken.Gather:IsEnabled(), gathering)
+SlashCmdList["SPOKENWRITINGS"]("gather")
+Expect("/spw gather leaves the player's switch alone", _G.Spoken.Gather:IsEnabled(), gathering)
 
 ---------------------------------------------------------------- forgetting what was read
 SpokenBooksCharacter.read = { ["Hillsbrad Town Registry"] = true, ["Jitters' Journal"] = true }
@@ -166,7 +166,7 @@ do
 end
 
 ---------------------------------------------------------------- starting over
--- Found Only, Voiced Only and By Zone go back with the rest, and an open Books tab is drawn again.
+-- Found Only, Voiced Only and By Zone go back with the rest, and an open Writings tab is drawn again.
 do
     local redrawn = 0
     B.RefreshReadables = function() redrawn = redrawn + 1 end
@@ -175,7 +175,7 @@ do
     local reset = B.optionsPage.layout.defaults
     reset.scripts.OnClick(reset)
     stub.popups[#stub.popups].dialog.OnAccept()
-    Expect("resetting the page puts Found Only back and draws the Books tab again",
+    Expect("resetting the page puts Found Only back and draws the Writings tab again",
         tostring(SpokenBooksSettings.compendiumFoundOnly) .. " " .. redrawn, "false 1")
     B.RefreshReadables = nil
 end

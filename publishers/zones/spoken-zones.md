@@ -12,7 +12,7 @@ license: MIT
 
 **This addon is retired. Spoken Zones is now part of [Spoken Player](https://www.curseforge.com/wow/addons/spoken-player).**
 
-Spoken Player carries Spoken Zones (zone and area lore on the world map) together with the other Spoken modules, in one download. This project gets no further updates.
+Spoken Player carries Spoken Places (once Spoken Zones: zone and area lore on the world map) together with the other Spoken modules, in one download. This project gets no further updates.
 
 ## What to do
 

@@ -2,7 +2,13 @@
 
 Every book, letter, note and plaque World of Warcraft will show you, extracted from the
 vmangos world database, reviewable at `/books` on the site, and
-read aloud in game by **SpokenBooks**.
+read aloud in game by Spoken's Readables module (`addons/Spoken_Readables`).
+
+Players see this section as **Readables**: the module, its page and tab, its commands (`/spr`; `/spw`
+and `/spb` still work), the sound packs' titles and the site's labels. Everything they never see keeps the name books:
+this folder, `pipelines/books`, `make books-*`, the `books` source and part key, the
+`SpokenBooks*` globals and saved variables, `b:{pageTextID}`, the `/books` routes, and the
+`SpokenBooksAudio` folder with its `books-audio` tags.
 
 ## Where the words come from, and why not from anywhere else
 
@@ -70,7 +76,7 @@ them.
 | `import` | that file | `book_line` rows | the same maintainer |
 | review | `book_line` | corrected text | anyone, at `/books` |
 | generate | `book_line` | mp3s and `take` rows | anyone with an ElevenLabs key |
-| export | `book_line` | `addons/Spoken_Books/Data/Books.lua` | a maintainer, before a release |
+| export | `book_line` | `addons/Spoken_Readables/Data/Books.lua` | a maintainer, before a release |
 
 ## Running it locally
 
@@ -122,7 +128,7 @@ pnpm --filter @spoken/web test     # the site, including lib/books
 
 ## The addon
 
-`addons/Spoken_Books` hooks `ITEM_TEXT_BEGIN` / `READY` / `CLOSED` — the whole book UI, and
+`addons/Spoken_Readables` hooks `ITEM_TEXT_BEGIN` / `READY` / `CLOSED` — the whole book UI, and
 the same API on Era, Anniversary and Forever, which is why there is one addon rather than
 three.
 
@@ -132,7 +138,7 @@ where no other page shares it; then nothing. Nothing is the right third answer: 
 alternative is reading the wrong page's words aloud.
 
 **The checksum is the load-bearing part.** `pipelines/books/tools/lib/naming.mjs` and
-`addons/Spoken_Books/Checksum.lua` must produce the same number for the same text, over
+`addons/Spoken_Readables/Checksum.lua` must produce the same number for the same text, over
 UTF-8 bytes, using only multiply, add and modulo — the clients run Lua 5.1, which has no
 bitwise operators. `tests/lua/books_source_test.lua` asserts the two agree, on an ASCII
 string and an accented one. They have to: the lookup is keyed on that number, and a
@@ -149,7 +155,7 @@ source's own gap, not Pause Between Lines or the cue. Turning to the page being 
 still to come changes nothing; turning back starts the book again from there. The progress
 bar runs across the book: each page carries the seconds before it and the reading's length
 (`clip.span`), unless a page in it has no recorded length. *Read Book as One Line* (on by default,
-`/spb oneline`) turns this off: every page is queued at once as a line of its own, the book's
+`/spr oneline`) turns this off: every page is queued at once as a line of its own, the book's
 title over its page count, grouped so no pause or cue falls between them.
 
 **Readables pile up on purpose.** One opened while another is read queues after it: a
@@ -164,8 +170,8 @@ into the same library hears it fresh.
 
 **Read-once marks a book when narration starts, not when it ends.** The addon is never told
 that a clip finished — the player owns the queue — so "finished" could only be inferred
-from a queue that `/spb stop` or a zone change can empty early. The rule refuses autoplay
-only: `/spb read` and the Play button go straight to the playlist, because a reader pressing
+from a queue that `/spr stop` or a zone change can empty early. The rule refuses autoplay
+only: `/spr read` and the Play button go straight to the playlist, because a reader pressing
 play has asked again in so many words. It also does not refuse the book it is in the middle
 of reading, which is what `SpokenBooks:IsNarrating` is for — a reader who jumps past the
 queued pages would otherwise strand the narration on the page they turned away from.
@@ -173,7 +179,7 @@ queued pages would otherwise strand the narration on the page they turned away f
 **The panel and the button are the two files this addon reads books without.**
 `UI/Options.lua` registers a settings canvas the way the zones panel does, and
 `UI/PlayButton.lua` puts Play/Stop on the book window's page row. `Events.lua` guards both
-calls, so a partial install still narrates. Every switch on the panel is also a `/spb`
+calls, so a partial install still narrates. Every switch on the panel is also a `/spr`
 command, which is what a client with no Settings API gets.
 
 **The button is anchored to `ItemTextScrollFrame` — the page — in its bottom-right corner,
@@ -192,7 +198,7 @@ colliding with one of Blizzard's controls on page two of every book.
 **Every clip carries a Report action**, the bug icon the quests and zones clips use, falling
 back to an "R" on the three legacy clients where that texture does not exist. The
 client cannot open a browser or post anywhere, so pressing it raises a popup holding one
-selectable address — `UI/CopyLink.lua`, the same shape the zones addon carries, and not
+selectable address — `UI/CopyLink.lua`, the same shape the Places addon carries, and not
 shared with it because two addons cannot own one StaticPopup id.
 
 The address is `https://spoken.rusty.one/books/r/{pageTextID}`, built from the page id
@@ -258,7 +264,7 @@ The two CurseForge projects:
 Cutting one:
 
 ```bash
-make books-package                 # -> dist/Spoken_Books-<version>.zip
+make books-package                 # -> dist/Spoken_Readables-<version>.zip
 make books-package-audio           # -> dist/SpokenBooksAudio-<version>.zip
 make books-release-dry             # what would be uploaded, uploading nothing
 make books-release                 # needs CURSEFORGE_TOKEN
@@ -306,7 +312,7 @@ make books-release-audio LOCALE=esMX  # uploads it, CurseForge only
 
 The addon finds a page by its title and a checksum of its words, and a client in another
 locale shows neither in English. So a language's `Data/Sounds.lua` also carries that
-language's `index` and `loose`, in the shape of `Spoken_Books/Data/Books.lua`'s: every page
+language's `index` and `loose`, in the shape of `Spoken_Readables/Data/Books.lua`'s: every page
 the world database translates, under each name its owners have in that language, keyed on the
 text as the client shows it — the newest *extracted* version, not a correction made on the
 site. The reader asks it only on a client in the pack's language, before the English index.

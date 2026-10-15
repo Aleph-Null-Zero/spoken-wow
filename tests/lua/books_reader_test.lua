@@ -7,14 +7,14 @@ local H = require("queue_helpers")
 local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 local function LoadBooks()
     local SpokenBooks = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Books", SpokenBooks)
+        chunk("Spoken_Readables", SpokenBooks)
     end
     return SpokenBooks
 end

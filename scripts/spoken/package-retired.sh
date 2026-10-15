@@ -6,7 +6,7 @@
 #   ALLOW_DIRTY=1 ./scripts/spoken/package-retired.sh   # build from an uncommitted tree
 #
 # WHY A RELEASE AT ALL. The modules ship inside Spoken's zip now, from Spoken_Quests,
-# Spoken_Zones and Spoken_Books. A player who still has a retired project installed keeps its
+# Spoken_Places and Spoken_Readables. A player who still has a retired project installed keeps its
 # folder, the module's full old copy, which loads beside the renamed one and voices every line a
 # second time. Updating the retired project to this file replaces that copy with a tombstone,
 # a .toc that never loads (addons/SpokenQuests/SpokenQuests.toc explains it), and the old names
@@ -38,8 +38,8 @@ source "$REPO/scripts/lib/tombstone.sh"
 RETIRED=(SpokenQuests SpokenZones SpokenBooks)
 renamed_to() { case "$1" in
   SpokenQuests) echo "Spoken_Quests";;
-  SpokenZones)  echo "Spoken_Zones";;
-  SpokenBooks)  echo "Spoken_Books";;
+  SpokenZones)  echo "Spoken_Places";;
+  SpokenBooks)  echo "Spoken_Readables";;
 esac; }
 old_suffixes() { case "$1" in
   SpokenQuests) echo "- _Mainline _TBC _Vanilla _Wrath";;

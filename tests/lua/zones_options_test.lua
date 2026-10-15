@@ -7,14 +7,14 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 local Z = H.NewZoneLore()
 dofile(here .. "/../../addons/Spoken/UI/Layout.lua")
 for _, file in ipairs({ "UI/Options" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupOptions()
 

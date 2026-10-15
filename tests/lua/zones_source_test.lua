@@ -8,7 +8,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 local BOOK = [[Interface\AddOns\Spoken\Textures\Book]]
@@ -42,6 +42,7 @@ end
 local env, Z = Boot()
 local Spoken = _G.Spoken
 Expect("the zones addon registers a source with the player", Spoken:GetSource("zones"), Z.source)
+Expect("...headed in the minimap menu by its page's name, in the player's language", Z.source.title, Z.L.OPT_PAGE_TITLE)
 -- No channel of its own: the channel is one setting, on the player.
 Expect("...on the player's channel", Z.source:GetChannel(), "Master")
 Expect("...SpokenZones's queue limit", Z.source.queueLimit, 3)
@@ -213,7 +214,7 @@ env, Z = Boot()
 local labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
 Expect("the zones addon adds its settings entry to the one button, and not the Compendium's",
-    table.concat(labels, "|"), "Stop or Replay|Stop All|Settings|Zones Settings")
+    table.concat(labels, "|"), "Stop or Replay|Stop All|Settings|Places Settings")
 -- The Compendium is Spoken's own entry, there once a part has a tab in it, and opens the window.
 dofile(here .. "/../../addons/Spoken/UI/Compendium.lua")
 local opened = 0
@@ -222,14 +223,14 @@ SpokenCompendium:Register("places", { label = "Zones", order = 1, build = functi
 labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
 Expect("...which is Spoken's, before Settings, once a part has a tab", table.concat(labels, "|"),
-    "Stop or Replay|Stop All|Open Azeroth's Compendium|Settings|Zones Settings")
+    "Stop or Replay|Stop All|Open Azeroth's Compendium|Settings|Places Settings")
 env.Minimap:FindEntry("Compendium").onClick()
 Expect("...and opens the window through the tab", opened, 1)
 SpokenCompendium.tabs.places.enabled = function() return false end
 labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
 Expect("...and is gone while no tab's part is on", table.concat(labels, "|"),
-    "Stop or Replay|Stop All|Settings|Zones Settings")
+    "Stop or Replay|Stop All|Settings|Places Settings")
 SpokenCompendium = nil
 Expect("...and registers no button of its own", stub.ldbObjects.SpokenZones, nil)
 

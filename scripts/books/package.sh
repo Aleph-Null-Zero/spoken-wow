@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Builds the Spoken Books zip for CurseForge.
+# Builds the Spoken Writings zip for CurseForge.
 #
-#   ./scripts/books/package.sh                 # dist/Spoken_Books-<version>.zip
+#   ./scripts/books/package.sh                 # dist/Spoken_Readables-<version>.zip
 #   ALLOW_DIRTY=1 ./scripts/books/package.sh   # build from an uncommitted tree
 #
 # The version comes from `## Version:` in the .toc, so bumping the addon and naming the zip
@@ -13,7 +13,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-NAME="Spoken_Books"
+NAME="Spoken_Readables"
 SRC="$REPO/addons/$NAME"
 TOC="$SRC/$NAME.toc"
 DIST="${DIST:-$REPO/dist}"

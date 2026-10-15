@@ -1,7 +1,7 @@
 -- The readables in Azeroth's Compendium: every book, letter, note and plaque, in a card for the
 -- zone it is in under its continent's banner and a line for what it is, or by what it is
 -- alone, found or not; a readable's page with
--- where it comes from; the search, Found Only and Unlock Unfound Books; and the tabs once the
+-- where it comes from; the search, Found Only and Unlock Unfound Writings; and the tabs once the
 -- places are there too. Against the shipped data (Data/Books.lua, Data/Places.lua). Run with
 -- `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
@@ -10,7 +10,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -54,7 +54,7 @@ _G.SpokenBooksSettings, _G.SpokenBooksCharacter = nil, nil
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Readables", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
+    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB()
 B:SetupSource()
@@ -507,7 +507,7 @@ Expect("a readable not found does not open", page.title.text, "Kurdran Wildhamme
 
 SpokenBooksSettings.unlockUnfound = true
 B:RefreshReadables()
-Expect("Unlock Unfound Books opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
+Expect("Unlock Unfound Writings opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
 -- Opening one is not finding it: the counts stay what the character has found.
 local before = RowFor("Stormwind City").count.text
 Click("Ranger Captain Alleria Windrunner")

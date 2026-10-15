@@ -81,8 +81,8 @@ const ADDONS: Addon[] = [
   },
   {
     slug: "spoken-books",
-    label: "Spoken Books",
-    description: "Reads books, letters and notes aloud.",
+    label: "Spoken Writings",
+    description: "Reads books, letters, notes and plaques aloud.",
     wago: true,
     release: "books/",
     section: "books",
@@ -96,7 +96,7 @@ const ADDONS: Addon[] = [
 const EXPLORERS = [
   { href: "/quests", icon: "/icons/quests.svg", title: "Quests" },
   { href: "/zones", icon: "/icons/zones.svg", title: "Zones" },
-  { href: "/books", icon: "/icons/books.svg", title: "Books" },
+  { href: "/books", icon: "/icons/books.svg", title: "Writings" },
 ];
 
 /** The languages with at least one pack, in the site's order: the table's columns. */

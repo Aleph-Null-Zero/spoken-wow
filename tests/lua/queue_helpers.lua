@@ -2,7 +2,7 @@
 -- sources, a clip factory, and a recorder for the player's callbacks.
 local M = {}
 
-local ZONES = (debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$") or ".") .. "/../../addons/Spoken_Zones/"
+local ZONES = (debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$") or ".") .. "/../../addons/Spoken_Places/"
 
 function M.Fresh(stub, spokenDir)
     stub.SetClient("11509")
@@ -11,7 +11,7 @@ function M.Fresh(stub, spokenDir)
     local env = stub.LoadSpoken(spokenDir)
     env.Addon.db.char.IsPaused = false
     local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
-    local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Zones", order = 2,
+    local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2,
         queueLimit = 3, interClipGap = 0.25 })
     return env, quests, zones
 end
@@ -88,7 +88,7 @@ function M.LoadZones(addonDirectory, seed)
     if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
     for _, file in ipairs({ "Language", "Core", "Audio", "Contribute" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
-        chunk("Spoken_Zones", SpokenZones)
+        chunk("Spoken_Places", SpokenZones)
     end
     return SpokenZones
 end
@@ -97,7 +97,7 @@ end
 --- addons each keep a copy of the list and are tested against this one.
 function M.ZonesLocaleCodes(here)
     local codes = {}
-    local file = assert(io.open(here .. "/../../addons/Spoken_Zones/Language.lua"))
+    local file = assert(io.open(here .. "/../../addons/Spoken_Places/Language.lua"))
     for code in file:read("*a"):gmatch('{ code = "(%a+)"') do table.insert(codes, code) end
     file:close()
     return table.concat(codes, " ")
@@ -119,7 +119,7 @@ function M.NewZoneLore()
     local registered = {}
     Z.RegisterStrings = function(_, code, strings) registered[code] = strings end
     for _, code in ipairs({ "enUS", "deDE", "esES", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW" }) do
-        assert(loadfile(ZONES .. "Locale/" .. code .. ".lua"))("Spoken_Zones", Z)
+        assert(loadfile(ZONES .. "Locale/" .. code .. ".lua"))("Spoken_Places", Z)
     end
     Z.RegisterStrings = nil
     local english = registered.enUS

@@ -6,7 +6,7 @@ section: zones
 lang: enUS
 slug: spoken-zones-audio
 name: Spoken Zones Audio
-summary: The narration for Spoken Player's Zones module: every zone and subzone read aloud.
+summary: The narration for Spoken Player's Places module: every zone and subzone read aloud.
 categories:
   - Audio & Video
   - Miscellaneous
@@ -15,7 +15,7 @@ license: MIT
 addonReadme: addons/SpokenZonesAudio/README.md
 ---
 
-Narrated zone lore for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Zones module. This addon is data only — it does nothing on its own.
+Narrated zone lore for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Places module. This addon is data only — it does nothing on its own.
 
 ## The voice, as of 0.3.0
 

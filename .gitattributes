@@ -8,7 +8,7 @@
 *.sh text eol=lf
 publishers/**/*.md text eol=lf
 addons/*/README.md text eol=lf
-addons/Spoken_Zones/Data/** text eol=lf
-addons/Spoken_Zones/Locale/*.lua text eol=lf
+addons/Spoken_Places/Data/** text eol=lf
+addons/Spoken_Places/Locale/*.lua text eol=lf
 # The contribution and report-URL fixtures are compared byte for byte by the site tests.
 tests/fixtures/** text eol=lf

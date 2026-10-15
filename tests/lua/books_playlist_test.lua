@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 -- The Hillsbrad Town Registry: four real pages of one real book, 261 through 265.
@@ -33,7 +33,7 @@ local function LoadBooks()
     local SpokenBooks = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Books", SpokenBooks)
+        chunk("Spoken_Readables", SpokenBooks)
     end
     return SpokenBooks
 end
@@ -277,7 +277,7 @@ B:StopReading()
 _G.SpokenBooksAudioPacks = {}
 Expect("no pack means no clips", B:ClipFor(261), nil)
 Expect("...and a message that names the download rather than blaming the page",
-    B:DescribeMissingAudio(), "No Books voice pack is installed.")
+    B:DescribeMissingAudio(), "No Readables voice pack is installed.")
 
 print(Failures() == 0 and "All books playlist tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

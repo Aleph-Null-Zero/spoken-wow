@@ -42,8 +42,8 @@ stub.TextWidth = function(fs)
 end
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -58,9 +58,9 @@ _G.C_AddOns = { IsAddOnLoaded = function() return true end }
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local env = _G.SpokenEnv
-env.Sources:Register("books", { title = "Spoken Books", addon = "Spoken_Books", order = 2,
+env.Sources:Register("books", { title = "Spoken Readables", addon = "Spoken_Readables", order = 4,
     packs = function() return { "SpokenBooksAudio" } end })
-env.Sources:Register("zones", { title = "Spoken Zones", addon = "Spoken_Zones", order = 3,
+env.Sources:Register("zones", { title = "Spoken Zones", addon = "Spoken_Places", order = 3,
     packs = function() return { "SpokenZonesAudio" } end })
 _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()
@@ -71,7 +71,7 @@ local B = {}
 for _, file in ipairs({ "Locale/enUS", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU",
     "Locale/koKR", "Locale/zhCN", "Locale/zhTW", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Readables", "UI/Options", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
+    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB(); B:SetupOptions()
 -- Two of the Compendium's tabs, so Spoken's page shows their Unlock switches.
@@ -82,7 +82,7 @@ end
 VO.QuestsTab:Setup()
 local Z = H.NewZoneLore()
 for _, file in ipairs({ "UI/Options" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupOptions()
 -- The Spoken_Developer module and its page.
