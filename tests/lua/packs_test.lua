@@ -86,10 +86,9 @@ Expect("a Spanish client is offered the Spanish pack first", spanish[1], Name(ES
 -- buried the one that mattered. A pack installed is listed whatever its language.
 Expect("...then only the pack it has installed, not English's to get", table.concat(spanish, "|", 2),
     Name(ES, "TestPack"))
--- But a language with no pack of its own is heard in English, the fallback: that is the pack to get.
+-- Every client language has a quests pack of its own now, Chinese included.
 local chinese, CN = Shown("zhCN")
-Expect("a Chinese client, with no Chinese pack, is offered English's packs, its fallback",
-    table.concat(chinese, "|"), table.concat({ Name(CN, CN.OPT_PACK_ALL), Name(CN, CN.OPT_PACK_ALLIANCE),
-        Name(CN, CN.OPT_PACK_HORDE), Name(CN, CN.OPT_PACK_SHARED), Name(CN, CN.OPT_PACK_GOSSIP), Name(CN, "TestPack") }, "|"))
+Expect("a Chinese client is offered the Chinese pack first, like any other",
+    table.concat(chinese, "|"), table.concat({ Name(CN, "简体中文"), Name(CN, "TestPack") }, "|"))
 
 if Failures() > 0 then stub.print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
