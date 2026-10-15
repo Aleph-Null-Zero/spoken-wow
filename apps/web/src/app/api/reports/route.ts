@@ -121,8 +121,11 @@ export async function POST(request: Request) {
     context,
   });
 
+  // The report is filed by now: a failure here must not answer 500 and invite a second one.
   if (context && validated.value.category === "missing") {
-    await contributeMissing(body.context as string, validated.value.body, identity);
+    await contributeMissing(body.context as string, validated.value.body, identity).catch((error) =>
+      console.error("filing a missing report as a contribution failed", error),
+    );
   }
 
   return Response.json({ ok: true });
@@ -133,7 +136,8 @@ export async function POST(request: Request) {
  * line the corpus may not. Filed through the contribute route's own checks and allowance, and
  * dropped as that route drops it when the corpus already has the line -- then the audio, not
  * the text, is what is missing, and the report says so. Zones never: a zones report is about
- * lore that exists, and a zones contribution is a description someone wrote.
+ * lore that exists, and a zones contribution is a description someone wrote. Books never in
+ * practice: a books report names a corpus page by `id`, so submissionFrom finds no `page`.
  */
 async function contributeMissing(
   raw: string,
