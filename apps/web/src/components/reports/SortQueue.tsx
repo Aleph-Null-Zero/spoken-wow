@@ -8,7 +8,7 @@
  * request and no page load, and the next card's line is fetched while this one is read.
  */
 import { ArrowLeft, Pause, Pencil, Play, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useLang } from "@/components/LangProvider";
 import { ACCEPT_TONE, LiteButton, REJECT_TONE } from "@/components/LiteControls";
@@ -338,6 +338,7 @@ export default function SortQueue({
           >
             {playing ? <Pause /> : <Play />}
             {playing ? "Pause" : "Play"}
+            <Hint>[Space]</Hint>
           </Button>
           <Button
             variant="outline"
@@ -347,7 +348,7 @@ export default function SortQueue({
             title="Edit text (e)"
           >
             <Pencil />
-            Edit
+            <Shortcut label="Edit" />
           </Button>
           <Button
             variant="outline"
@@ -401,7 +402,7 @@ export default function SortQueue({
             onClick={() => void resolve("fixed")}
             title="Fixed (f)"
           >
-            {busy === "fixed" ? "Saving…" : "Fixed"}
+            {busy === "fixed" ? "Saving…" : <Shortcut label="Fixed" />}
           </LiteButton>
           <LiteButton
             className={cn("h-12 justify-center text-sm", REJECT_TONE)}
@@ -409,7 +410,7 @@ export default function SortQueue({
             onClick={() => void resolve("not_an_issue")}
             title="Not a problem (n)"
           >
-            {busy === "not_an_issue" ? "Saving…" : "Not a problem"}
+            {busy === "not_an_issue" ? "Saving…" : <Shortcut label="Not a problem" />}
           </LiteButton>
           <LiteButton
             className="h-12 justify-center text-sm"
@@ -417,7 +418,7 @@ export default function SortQueue({
             onClick={() => void skip()}
             title="Skip (s)"
           >
-            {busy === "skip" ? "Skipping…" : "Skip"}
+            {busy === "skip" ? "Skipping…" : <Shortcut label="Skip" />}
           </LiteButton>
         </div>
       </nav>
@@ -447,6 +448,23 @@ export default function SortQueue({
         )
       ) : null}
     </main>
+  );
+}
+
+/** Only where there is a keyboard to press it with: a phone has no use for the hint. */
+function Hint({ children }: { children: ReactNode }) {
+  return <span className="hidden opacity-60 pointer-fine:inline">{children}</span>;
+}
+
+/** "[F]ixed": the label's first letter is the key that presses the button. */
+function Shortcut({ label }: { label: string }) {
+  return (
+    <span>
+      <Hint>[</Hint>
+      {label[0]}
+      <Hint>]</Hint>
+      {label.slice(1)}
+    </span>
   );
 }
 
