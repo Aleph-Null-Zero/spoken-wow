@@ -225,8 +225,16 @@ export default function SortQueue({
   }
 
   const canEdit = canEditText && line !== null;
-  const actions = useRef({ togglePlay, resolve, skip, edit: () => canEdit && setEditing(true) });
-  actions.current = { togglePlay, resolve, skip, edit: () => canEdit && setEditing(true) };
+  const canRegenerateLine = canRegenerate && line !== null;
+  const keyActions = {
+    togglePlay,
+    resolve,
+    skip,
+    edit: () => canEdit && setEditing(true),
+    regenerate: () => canRegenerateLine && void regenerate(),
+  };
+  const actions = useRef(keyActions);
+  actions.current = keyActions;
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -241,6 +249,7 @@ export default function SortQueue({
       else if (event.key === "n") void act.resolve("not_an_issue");
       else if (event.key === "s") void act.skip();
       else if (event.key === "e") act.edit();
+      else if (event.key === "r") act.regenerate();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -334,7 +343,7 @@ export default function SortQueue({
             className="h-11"
             disabled={!detail?.audioSrc}
             onClick={togglePlay}
-            title="Play (space)"
+            title="Play"
           >
             {playing ? <Pause /> : <Play />}
             {playing ? "Pause" : "Play"}
@@ -345,20 +354,22 @@ export default function SortQueue({
             className="h-11"
             disabled={!canEdit || busy !== null}
             onClick={() => setEditing(true)}
-            title="Edit text (e)"
+            title="Edit text"
           >
             <Pencil />
-            <Shortcut label="Edit" />
+            Edit
+            <Hint>[E]</Hint>
           </Button>
           <Button
             variant="outline"
             className="h-11"
-            disabled={!canRegenerate || !line || busy !== null}
+            disabled={!canRegenerateLine || busy !== null}
             onClick={() => void regenerate()}
             title={canRegenerate ? "Regenerate this line" : "You can't regenerate in this language"}
           >
             <RefreshCw className={cn(busy === "regenerate" && "animate-spin")} />
             {busy === "regenerate" ? "Working…" : "Regenerate"}
+            <Hint>[R]</Hint>
           </Button>
         </div>
         {detail && !detail.audioSrc ? <p className="text-muted-foreground text-xs">No audio on file.</p> : null}
@@ -397,28 +408,31 @@ export default function SortQueue({
       <nav className="bg-background/95 fixed inset-x-0 bottom-0 z-20 border-t backdrop-blur">
         <div className="mx-auto grid max-w-xl grid-cols-3 gap-2 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <LiteButton
-            className={cn("h-12 justify-center text-sm", ACCEPT_TONE)}
+            className={cn("h-12 justify-center gap-1.5 text-sm", ACCEPT_TONE)}
             disabled={busy !== null}
             onClick={() => void resolve("fixed")}
-            title="Fixed (f)"
+            title="Fixed"
           >
-            {busy === "fixed" ? "Saving…" : <Shortcut label="Fixed" />}
+            {busy === "fixed" ? "Saving…" : "Fixed"}
+            <Hint>[F]</Hint>
           </LiteButton>
           <LiteButton
-            className={cn("h-12 justify-center text-sm", REJECT_TONE)}
+            className={cn("h-12 justify-center gap-1.5 text-sm", REJECT_TONE)}
             disabled={busy !== null}
             onClick={() => void resolve("not_an_issue")}
-            title="Not a problem (n)"
+            title="Not a problem"
           >
-            {busy === "not_an_issue" ? "Saving…" : <Shortcut label="Not a problem" />}
+            {busy === "not_an_issue" ? "Saving…" : "Not a problem"}
+            <Hint>[N]</Hint>
           </LiteButton>
           <LiteButton
-            className="h-12 justify-center text-sm"
+            className="h-12 justify-center gap-1.5 text-sm"
             disabled={busy !== null}
             onClick={() => void skip()}
-            title="Skip (s)"
+            title="Skip"
           >
-            {busy === "skip" ? "Skipping…" : <Shortcut label="Skip" />}
+            {busy === "skip" ? "Skipping…" : "Skip"}
+            <Hint>[S]</Hint>
           </LiteButton>
         </div>
       </nav>
@@ -456,17 +470,6 @@ function Hint({ children }: { children: ReactNode }) {
   return <span className="hidden opacity-60 pointer-fine:inline">{children}</span>;
 }
 
-/** "[F]ixed": the label's first letter is the key that presses the button. */
-function Shortcut({ label }: { label: string }) {
-  return (
-    <span>
-      <Hint>[</Hint>
-      {label[0]}
-      <Hint>]</Hint>
-      {label.slice(1)}
-    </span>
-  );
-}
 
 /** Never shows the reporter's email or address: who they are is not what triage weighs. */
 function ReportPreview({ report }: { report: Report }) {
