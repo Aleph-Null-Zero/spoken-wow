@@ -20,9 +20,12 @@ import type { Source } from "@/lib/sections";
 
 // Timestamps are cast to text so a Report is the same shape in Postgres, over JSON and in the
 // browser. `pg` hands back Date objects for timestamptz, which survive neither the wire nor a
-// server-to-client component boundary as themselves.
+// server-to-client component boundary as themselves. Through to_json rather than ::text, which
+// writes `2026-10-03 12:34:56+00`: Safari's Date.parse refuses the space and the bare offset,
+// and ISO 8601 parses everywhere.
 const COLUMNS = `"id", "source", "lineId", "target", "category", "body", "status", "userId",
-                 "name", "email", "createdAt"::text, "resolvedAt"::text, "resolvedBy"`;
+                 "name", "email", to_json("createdAt") #>> '{}' as "createdAt",
+                 to_json("resolvedAt") #>> '{}' as "resolvedAt", "resolvedBy"`;
 
 export async function createReport(input: {
   source: Source;

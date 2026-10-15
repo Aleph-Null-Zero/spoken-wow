@@ -146,6 +146,7 @@ export default function SortQueue({
 
   function goTo(next: number) {
     audio.current?.pause();
+    playWhenReady.current = false;
     setIndex(next);
     setError(null);
     setNotice(null);
@@ -216,7 +217,7 @@ export default function SortQueue({
 
   const keys: Record<string, () => void> = {
     " ": togglePlay,
-    e: () => canEdit && setEditing(true),
+    e: () => canEdit && !busy && setEditing(true),
     r: () => canRegenerateLine && void regenerate(),
     x: () => setExpanded((current) => !current),
     p: previous,
