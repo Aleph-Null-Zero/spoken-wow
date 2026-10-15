@@ -14,7 +14,8 @@ import { useLang } from "@/components/LangProvider";
 import { ACCEPT_TONE, LiteButton, REJECT_TONE } from "@/components/LiteControls";
 import Link from "@/components/LocaleLink";
 import OverrideDialog from "@/components/OverrideDialog";
-import LineHeading, { OutdatedNote } from "@/components/reports/LineHeading";
+import OutdatedNote from "@/components/OutdatedNote";
+import LineHeading from "@/components/reports/LineHeading";
 import QuestsPlayer from "@/components/Player";
 import TakeSelector from "@/components/TakeSelector";
 import { lineTextSubject, TranslateDialog } from "@/components/TranslateDialog";
@@ -33,7 +34,7 @@ import { CATEGORY_COLUMN, SOURCE_LABELS, STATUS_LABELS, type Report, type Status
 import type { ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { Source } from "@/lib/sections";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
 
 /** Enough to read a typical complaint whole without pushing the actions off a phone screen. */
@@ -80,12 +81,15 @@ export default function SortQueue({
   groups: initial,
   canRegenerate,
   canEditText,
+  showNpcPage,
 }: {
   source: Source;
   /** The queue as the server sorted it, open reports only, skipped lines already left out. */
   groups: ReportGroup[];
   canRegenerate: boolean;
   canEditText: boolean;
+  /** Whether the speaker's name opens the NPC page. See LineHeading. */
+  showNpcPage: boolean;
 }) {
   const lang = useLang();
   // Held from the first render: a refresh while sorting brings back a list without the lines
@@ -326,7 +330,12 @@ export default function SortQueue({
         ) : (
           <>
             <div className="flex flex-col">
-              <LineHeading detail={detail} className="leading-snug" asideClassName="mt-0.5" />
+              <LineHeading
+                detail={detail}
+                showNpcPage={showNpcPage}
+                className="leading-snug"
+                asideClassName="mt-0.5"
+              />
             </div>
             {/* The text is the expand control, as each report below is: [X] does the same from
                 the keyboard. */}
@@ -336,7 +345,7 @@ export default function SortQueue({
                 !expanded && text.length > LONG_TEXT && "line-clamp-5",
               )}
               aria-expanded={expanded}
-              onClick={() => !window.getSelection()?.toString() && setExpanded(!expanded)}
+              onClick={() => !endsSelection() && setExpanded(!expanded)}
             >
               {text}
             </p>
@@ -489,18 +498,16 @@ function EditDialog({
   if (lang !== BASE_LANG) {
     return <TranslateDialog subject={lineTextSubject(line as QuestLine)} onClose={onClose} onSaved={onSaved} />;
   }
+  const done = () => {
+    onClose();
+    onSaved();
+  };
   return (
     <OverrideDialog
       line={line as QuestLine}
-      onSaved={() => {
-        onClose();
-        onSaved();
-      }}
+      onSaved={done}
       // A `$G` text went to the moment's lines; this one's text changed with them.
-      onRewritten={() => {
-        onClose();
-        onSaved();
-      }}
+      onRewritten={done}
       onCancel={onClose}
     />
   );
@@ -515,8 +522,7 @@ function Hint({ children }: { children: ReactNode }) {
 function ReportPreview({ report, expanded }: { report: Report; expanded: boolean }) {
   const [opened, setOpened] = useState(false);
   return (
-    <article className="bg-card cursor-pointer rounded-lg border px-3 py-2.5" onClick={() => !window.getSelection()?.toString() && setOpened(!opened)}
-    >
+    <article className="bg-card cursor-pointer rounded-lg border px-3 py-2.5" onClick={() => !endsSelection() && setOpened(!opened)}>
       <div className="text-muted-foreground flex items-center gap-2 text-xs">
         <span className="bg-muted text-foreground rounded px-1.5 py-0.5 font-medium">
           {CATEGORY_COLUMN[report.category]}

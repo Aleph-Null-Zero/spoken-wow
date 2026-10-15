@@ -8,7 +8,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { detailOf, regeneratePath, regenerated, reportTargetOf, searchPath } from "./detail";
+import { detailOf, regeneratePath, reportTargetOf, searchPath } from "./detail";
 import type { ResultLine as BookLine } from "@/lib/books/search";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
@@ -55,7 +55,7 @@ describe("detailOf", () => {
   it("names a quest line by its NPC, and says which voice it was cut with", () => {
     const detail = detailOf("quests", questLine);
     expect(detail.heading).toBe("Kobold Camp Cleanup");
-    expect(detail.context).toBe("Marshal Dughan · human male · human-male");
+    expect(detail.aside).toBe("human male · human-male");
     expect(detail.text).toBe("Those kobolds are a menace.");
     expect(detail.lineId).toBe("q:374:accept");
     expect(detail.audioSrc).toBe("/api/quests/audio/quests/374-accept.mp3");
@@ -91,15 +91,13 @@ describe("detailOf", () => {
 
   it("carries a quest line's flavor, which is what picks one of that race's voices", () => {
     const shaman = { ...questLine, flavor: "shaman" } as QuestLine;
-    expect(detailOf("quests", shaman).context).toBe(
-      "Marshal Dughan · human male shaman · human-male",
-    );
+    expect(detailOf("quests", shaman).aside).toBe("human male shaman · human-male");
   });
 
   it("places a zone line by zone and subzone", () => {
     const detail = detailOf("zones", zoneLine);
     expect(detail.heading).toBe("Razor Hill");
-    expect(detail.context).toBe("Durotar");
+    expect(detail.aside).toBe("Durotar");
     expect(detail.lineId).toBe("s:1411:razor hill");
     expect(detail.audioSrc).toBe("/api/zones/audio/1411/razor-hill.mp3");
   });
@@ -107,7 +105,7 @@ describe("detailOf", () => {
   it("places a book page in its book", () => {
     const detail = detailOf("books", bookLine);
     expect(detail.heading).toBe("The Dusty Tome");
-    expect(detail.context).toBe("page 2 of 4");
+    expect(detail.aside).toBe("page 2 of 4");
     expect(detail.lineId).toBe("b:261");
   });
 
@@ -123,17 +121,6 @@ describe("detailOf", () => {
 
   it("busts the cache with the take a regeneration just wrote", () => {
     expect(detailOf("zones", zoneLine, 7).audioSrc).toBe("/api/zones/audio/1411/razor-hill.mp3?v=7");
-  });
-});
-
-describe("regenerated", () => {
-  it("clears the outdated flag, and gives a line with no audio its take", () => {
-    const stale = { ...questLine, stale: true, hasAudio: false } as QuestLine;
-    expect(detailOf("quests", regenerated("quests", stale)).stale).toBe(false);
-    expect(detailOf("quests", regenerated("quests", stale)).audioSrc).not.toBeNull();
-    expect(detailOf("books", regenerated("books", bookLine)).audioSrc).not.toBeNull();
-    const zone = regenerated("zones", { ...zoneLine, state: "stale" } as ZoneLine);
-    expect(detailOf("zones", zone).stale).toBe(false);
   });
 });
 

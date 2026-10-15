@@ -17,7 +17,7 @@ import RegenerateButton from "@/components/RegenerateButton";
 import ReportsBadge from "@/components/ReportsBadge";
 import TakeSelector from "@/components/TakeSelector";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 import type { ResultLine } from "@/lib/zones/search";
 
 export type RowState =
@@ -101,7 +101,7 @@ export function LineRow({
   function toggleFromRow(event: React.MouseEvent<HTMLTableRowElement>) {
     const target = event.target as HTMLElement | null;
     if (target?.closest("button, a, input, textarea, select, [role='dialog']")) return;
-    if (!window.getSelection()?.isCollapsed) return;
+    if (endsSelection()) return;
     setExpanded((open) => !open);
   }
 

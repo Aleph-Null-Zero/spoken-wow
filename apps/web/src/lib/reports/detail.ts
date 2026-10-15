@@ -29,15 +29,13 @@ export type LineDetail = {
   heading: string;
   /** The explorer, narrowed to the heading's quest. Null where the heading is no quest. */
   headingHref: string | null;
-  /** Where it sits, and for quests what picked its voice. */
-  context: string;
   /**
-   * `context` split for the triage views, which link the speaker: their NPC page, and the
-   * explorer narrowed to their lines. Quests only. `aside` is the rest of `context`.
+   * Who says it, quests only, with their NPC page and the explorer narrowed to their lines.
+   * A line with no quest is headed by its speaker, who is then not named a second time.
    */
   speaker: { name: string; page: string; search: string } | null;
-  /** A line with no quest is headed by its speaker, who is then not named a second time. */
   speakerIsHeading: boolean;
+  /** Where it sits, and for quests what picked its voice. */
   aside: string;
   /** The live take was made from text that has since changed. */
   stale: boolean;
@@ -142,13 +140,9 @@ export function detailOf(
   return bookDetail(line as BookLine, version, lang);
 }
 
-/**
- * The line once a take has just been cut from its current text: no longer outdated, and with
- * audio even if it had none. What the panel and the row read until the next lookup.
- */
-export function regenerated(source: Source, line: SourceLine): SourceLine {
-  if (source === "quests") return { ...(line as QuestLine), stale: false, hasAudio: true };
-  return { ...(line as ZoneLine | BookLine), state: "current" };
+/** The live take was made from text that has since changed. */
+export function isStale(source: Source, line: SourceLine): boolean {
+  return source === "quests" ? (line as QuestLine).stale : (line as ZoneLine | BookLine).state === "stale";
 }
 
 function audio(source: Source, path: string, version: number | undefined, lang: Lang): string {
@@ -170,11 +164,10 @@ function questDetail(line: QuestLine, version: number | undefined, lang: Lang): 
     heading: line.questTitle ?? line.npcName,
     headingHref:
       line.questTitle && line.questId !== null ? questsHref({ q: String(line.questId), filter: "quest" }) : null,
-    context: [line.npcName, aside].filter(Boolean).join(" · "),
     speaker: npc,
     speakerIsHeading: !line.questTitle,
     aside,
-    stale: line.stale,
+    stale: isStale("quests", line),
     // The override when there is one: it is what the next take will say, and a panel that
     // showed the corpus text would report a rewrite as having changed nothing.
     text: line.override ?? line.text,
@@ -187,11 +180,10 @@ function zoneDetail(line: ZoneLine, version: number | undefined, lang: Lang): Li
   return {
     heading: line.name,
     headingHref: null,
-    context: line.zoneName,
     speaker: null,
     speakerIsHeading: false,
     aside: line.zoneName,
-    stale: line.state === "stale",
+    stale: isStale("zones", line),
     text: line.text,
     audioSrc: line.state === "missing" ? null : audio("zones", `${line.file}.mp3`, version, lang),
     lineId: line.id,
@@ -202,11 +194,10 @@ function bookDetail(line: BookLine, version: number | undefined, lang: Lang): Li
   return {
     heading: line.title,
     headingHref: null,
-    context: `page ${line.pageNumber} of ${line.pageCount}`,
     speaker: null,
     speakerIsHeading: false,
     aside: `page ${line.pageNumber} of ${line.pageCount}`,
-    stale: line.state === "stale",
+    stale: isStale("books", line),
     text: line.text,
     audioSrc: line.state === "missing" ? null : audio("books", `${line.file}.mp3`, version, lang),
     lineId: line.id,

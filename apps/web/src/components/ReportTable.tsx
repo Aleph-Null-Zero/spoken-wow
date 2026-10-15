@@ -23,7 +23,7 @@ import { Refreshing } from "@/components/Loading";
 import Pagination from "@/components/Pagination";
 import QuestsPlayer from "@/components/Player";
 import ReportDetail from "@/components/ReportDetail";
-import { OutdatedNote } from "@/components/reports/LineHeading";
+import OutdatedNote from "@/components/OutdatedNote";
 import SortHeader from "@/components/SortHeader";
 import { LinkTabs } from "@/components/StatusTabs";
 import { usePendingPush } from "@/components/usePendingPush";
@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
 import { explorerHref, reportHref, targetExplorerHref } from "@/lib/links";
 import type { ResultLine as BookLine } from "@/lib/books/search";
-import { detailOf, regenerated, searchPath, type SourceLine } from "@/lib/reports/detail";
+import { isStale, searchPath, type SourceLine } from "@/lib/reports/detail";
 import {
   reportsHref,
   SECTIONS,
@@ -48,7 +48,7 @@ import { CATEGORIES, CATEGORY_COLUMN, STATUS_LABELS, type Category, type Report,
 import { resolveReport } from "@/lib/reports/client";
 import { applyResolutions, type ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
 import type { Source } from "@/lib/sections";
 
@@ -89,7 +89,9 @@ export default function ReportTable({
   sectionCounts,
   statusCounts,
   filters,
+  stale,
   canRegenerate,
+  showNpcPage,
 }: {
   /** This page's lines, each with its reports, in the order the server sorted them. */
   groups: ReportGroup[];
@@ -102,8 +104,12 @@ export default function ReportTable({
   /** This section's reports in each status, under the complaint and search in force. */
   statusCounts: Record<StatusView, number>;
   filters: ReportFilters;
+  /** This page's lines whose audio predates their text, by id. A looked-up line answers for itself. */
+  stale: string[];
   /** Whether this visitor may spend credits from the panel below a row. */
   canRegenerate: boolean;
+  /** The NPC page is the admins'; see LineHeading. */
+  showNpcPage: boolean;
 }) {
   /**
    * What this session resolved, overlaid on the server's rows.
@@ -150,16 +156,17 @@ export default function ReportTable({
   const audio = useRef<HTMLAudioElement>(null);
 
   /**
-   * One request per line for the page's life, kept as the promise so a play press that
-   * lands while the row's lookup is still in flight waits for it rather than asking again.
+   * One request per line, kept as the promise so a play press that lands while the row's
+   * lookup is still in flight waits for it rather than asking again. `fresh` asks again after
+   * a regeneration or a rewrite: the search knows what changed, where a patch would guess.
    */
   const requests = useRef(new Map<string, Promise<SourceLine | null>>());
 
   const load = useCallback(
-    (reportSource: Source, lineId: string): Promise<SourceLine | null> => {
+    (reportSource: Source, lineId: string, fresh = false): Promise<SourceLine | null> => {
       const key = lineKey(reportSource, lineId);
       const known = requests.current.get(key);
-      if (known) return known;
+      if (known && !fresh) return known;
 
       const request = (async () => {
         const response = await fetch(searchPath(reportSource, lineId, lang)).catch(() => null);
@@ -177,25 +184,15 @@ export default function ReportTable({
     [lang],
   );
 
-  // Every line on the page, looked up up front rather than on the first expand: whether its
-  // audio is outdated belongs in the row, where the scan down the table can see it.
-  useEffect(() => {
-    for (const { reports } of initial) {
-      const [first] = reports;
-      if (first.lineId) void load(first.source, first.lineId);
-    }
-  }, [initial, load]);
+  const staleIds = new Set(stale);
 
-  /**
-   * Opens the group's line below it, and unclamps what its reporters said. A report with no
-   * line still opens, for the second half.
-   *
-   * Not when the click ends a text selection: copying a phrase out of a report is a drag
-   * across it, and that drag should not fold the row away under the cursor.
-   */
+  /** Opens the group's line below it and unclamps what its reporters said, which a report with no line still has. */
   function toggle(group: ReportGroup) {
-    if (window.getSelection()?.toString()) return;
-    setOpen((current) => (current === group.key ? null : group.key));
+    if (endsSelection()) return;
+    const [first] = group.reports;
+    const next = open === group.key ? null : group.key;
+    setOpen(next);
+    if (next !== null && first.lineId) void load(first.source, first.lineId);
   }
 
   async function play(report: Report) {
@@ -275,7 +272,9 @@ export default function ReportTable({
             {count} reports
           </Badge>
         ) : null}
-        {line && detailOf(report.source, line).stale ? <OutdatedNote className="shrink-0" /> : null}
+        {(line ? isStale(report.source, line) : report.lineId !== null && staleIds.has(report.lineId)) ? (
+          <OutdatedNote className="shrink-0" />
+        ) : null}
       </div>
     );
   }
@@ -501,6 +500,7 @@ export default function ReportTable({
               const expanded = open === group.key;
               const key = first.lineId ? lineKey(first.source, first.lineId) : null;
               const single = group.reports.length === 1;
+              const onToggle = () => toggle(group);
 
               return [
                 single ? (
@@ -508,15 +508,13 @@ export default function ReportTable({
                     where: whereCell(first),
                     lineActions: lineActions(group),
                     expanded,
-                    onToggle: () => toggle(group),
+                    onToggle,
                   })
                 ) : (
                   groupRow(group)
                 ),
 
-                ...(single ? [] : group.reports.map((report) =>
-                      reportRow(report, { nested: true, expanded, onToggle: () => toggle(group) }),
-                    )),
+                ...(single ? [] : group.reports.map((report) => reportRow(report, { nested: true, expanded, onToggle }))),
 
                 expanded && first.lineId && key ? (
                   <tr key={`${group.key}-detail`}>
@@ -526,26 +524,12 @@ export default function ReportTable({
                         lineId={first.lineId}
                         line={lines[key]}
                         canRegenerate={canRegenerate}
+                        showNpcPage={showNpcPage}
                         onRegenerated={(version) => {
                           setVersions((current) => ({ ...current, [key]: version }));
-                          setLines((current) => {
-                            const known = current[key];
-                            if (!known) return current;
-                            return { ...current, [key]: regenerated(first.source, known) };
-                          });
+                          void load(first.source, first.lineId!, true);
                         }}
-                        // Only quests lines can be rewritten. Whatever audio they have was
-                        // made from the old text, as the explorer marks it.
-                        onOverridden={(text) =>
-                          setLines((current) => {
-                            const known = current[key] as QuestLine | null | undefined;
-                            if (!known) return current;
-                            return {
-                              ...current,
-                              [key]: { ...known, override: text, stale: known.hasAudio },
-                            };
-                          })
-                        }
+                        onOverridden={() => void load(first.source, first.lineId!, true)}
                       />
                     </td>
                   </tr>

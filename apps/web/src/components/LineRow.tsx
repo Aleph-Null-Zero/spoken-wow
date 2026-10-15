@@ -23,9 +23,11 @@ import TakeSelector from "./TakeSelector";
 import RegenerateButton from "./RegenerateButton";
 import { Button } from "./ui/button";
 import { targetForLine } from "@/lib/reports/line-target";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 import type { LineState } from "./Explorer";
 import type { ResultLine } from "@/lib/search";
+import OutdatedNote from "@/components/OutdatedNote";
+import { npcPageHref } from "@/lib/links";
 import { wowheadEntityUrl, wowheadQuestUrl } from "@/lib/wowhead";
 
 /**
@@ -224,7 +226,7 @@ export default function LineRow({
   function toggleFromRow(event: React.MouseEvent<HTMLTableRowElement>) {
     const target = event.target as HTMLElement | null;
     if (target?.closest("button, a, input, textarea, select, [role='dialog']")) return;
-    if (!window.getSelection()?.isCollapsed) return;
+    if (endsSelection()) return;
     setExpanded((open) => !open);
   }
 
@@ -257,7 +259,7 @@ export default function LineRow({
               <>
                 {" "}
                 <a
-                  href={localeHref(lang, `/npcs?q=${line.npcId}`)}
+                  href={localeHref(lang, npcPageHref(line.npcId))}
                   onClick={(event) => event.stopPropagation()}
                   title="Open this NPC on the NPCs page"
                   className="hover:text-foreground underline underline-offset-2"
@@ -467,9 +469,7 @@ export default function LineRow({
         ) : stale ? (
           // Stale before the take number: "the audio is old" is the more actionable of the
           // two things this cell could say, and a rewrite is why somebody is here.
-          <span className="text-amber-300" title="Made from text that has since changed">
-            audio outdated
-          </span>
+          <OutdatedNote />
         ) : (
           // Which take is live, and the way to any other. The label IS the control, so the
           // history is no longer hidden behind a second icon.

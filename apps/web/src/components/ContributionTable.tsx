@@ -72,7 +72,7 @@ import type { BookMatch, BookSummary, NpcConflictOption, NpcSummary, QuestSummar
 import { NPC_ROW_KINDS, type NpcKind, type NpcRowKind } from "@/lib/npc/npc";
 import type { NpcResolution } from "@/lib/npc/store";
 import type { Filter } from "@/lib/search";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 import { wowheadEntityUrl, wowheadForeverUrl, wowheadQuestUrl } from "@/lib/wowhead";
 
 export type { NpcSummary };
@@ -783,7 +783,7 @@ const ContributionTableRow = memo(function ContributionTableRow({
           // A click on one of the row's controls is that control's, and one ending a drag over
           // the text is somebody copying it: neither should fold the row out from under them.
           if ((event.target as HTMLElement).closest("button, a, input, select, textarea, label, form")) return;
-          if (!window.getSelection()?.isCollapsed) return;
+          if (endsSelection()) return;
           setExpanded((open) => !open);
         }}
         className="align-top [&>td]:border-b [&>td]:py-2 [&>td]:leading-5"

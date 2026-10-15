@@ -8,8 +8,6 @@
 import { Search } from "lucide-react";
 
 import Link from "@/components/LocaleLink";
-import { useSession } from "@/lib/auth-client";
-import { isAdmin } from "@/lib/permissions";
 import type { LineDetail } from "@/lib/reports/detail";
 import { cn } from "@/lib/utils";
 
@@ -17,10 +15,13 @@ const LINK = "underline-offset-2 hover:underline";
 
 export default function LineHeading({
   detail,
+  showNpcPage,
   className,
   asideClassName,
 }: {
   detail: LineDetail;
+  /** Whether the viewer may open /npcs, which is the admins' alone. */
+  showNpcPage: boolean;
   className?: string;
   asideClassName?: string;
 }) {
@@ -29,7 +30,7 @@ export default function LineHeading({
   return (
     <>
       {speaker && detail.speakerIsHeading ? (
-        <Speaker speaker={speaker} className={cn("font-medium", className)} />
+        <Speaker speaker={speaker} admin={showNpcPage} className={cn("font-medium", className)} />
       ) : detail.headingHref ? (
         <Link href={detail.headingHref} className={cn("font-medium", LINK, className)}>
           {detail.heading}
@@ -40,7 +41,7 @@ export default function LineHeading({
       <span className={cn("text-muted-foreground text-xs", asideClassName)}>
         {speaker && !detail.speakerIsHeading ? (
           <>
-            <Speaker speaker={speaker} className="hover:text-foreground" />
+            <Speaker speaker={speaker} admin={showNpcPage} className="hover:text-foreground" />
             {detail.aside ? " · " : null}
           </>
         ) : null}
@@ -51,13 +52,18 @@ export default function LineHeading({
 }
 
 /**
- * The NPC page is the admins' alone and 404s for anybody else, so for them the name opens the
- * explorer instead and there is no icon to repeat it.
+ * The NPC page 404s for anybody but an admin, so for everyone else the name opens the explorer
+ * and there is no icon to repeat it.
  */
-function Speaker({ speaker, className }: { speaker: NonNullable<LineDetail["speaker"]>; className?: string }) {
-  const { data: session } = useSession();
-  const admin = isAdmin(session?.user.role);
-
+function Speaker({
+  speaker,
+  admin,
+  className,
+}: {
+  speaker: NonNullable<LineDetail["speaker"]>;
+  admin: boolean;
+  className?: string;
+}) {
   return (
     <span className="inline-flex items-center gap-1">
       <Link
@@ -77,15 +83,6 @@ function Speaker({ speaker, className }: { speaker: NonNullable<LineDetail["spea
           <Search className="size-3.5" />
         </Link>
       ) : null}
-    </span>
-  );
-}
-
-/** The amber the explorers give a take made from text that has since changed. */
-export function OutdatedNote({ className }: { className?: string }) {
-  return (
-    <span className={cn("text-amber-300", className)} title="Made from text that has since changed">
-      audio outdated
     </span>
   );
 }
