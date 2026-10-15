@@ -15,6 +15,7 @@ import { recordActivity } from "@/lib/activity/store";
 import { BASE_LANG, type Lang } from "@/lib/lang";
 import { db } from "@/lib/db";
 
+import type { ReportContext } from "./context";
 import { type Category, type Report, type Status } from "./reports";
 import type { Source } from "@/lib/sections";
 
@@ -25,7 +26,7 @@ import type { Source } from "@/lib/sections";
 // and ISO 8601 parses everywhere.
 const COLUMNS = `"id", "source", "lineId", "target", "category", "body", "status", "userId",
                  "name", "email", to_json("createdAt") #>> '{}' as "createdAt",
-                 to_json("resolvedAt") #>> '{}' as "resolvedAt", "resolvedBy"`;
+                 to_json("resolvedAt") #>> '{}' as "resolvedAt", "resolvedBy", "context"`;
 
 export async function createReport(input: {
   source: Source;
@@ -38,13 +39,15 @@ export async function createReport(input: {
   name: string | null;
   email: string | null;
   ip: string | null;
+  context?: ReportContext | null;
 }): Promise<void> {
   // Returns nothing: the reporter cannot read a report back, so an id would only be a handle
   // on something they cannot reach.
   await db().query(
     `insert into "report"
-       ("source", "lang", "lineId", "target", "category", "body", "userId", "name", "email", "ip")
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+       ("source", "lang", "lineId", "target", "category", "body", "userId", "name", "email", "ip",
+        "context")
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
     [
       input.source,
       input.lang ?? BASE_LANG,
@@ -56,6 +59,7 @@ export async function createReport(input: {
       input.name,
       input.email,
       input.ip,
+      input.context ? JSON.stringify(input.context) : null,
     ],
   );
 }

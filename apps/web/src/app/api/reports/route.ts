@@ -17,6 +17,16 @@ import { clientIp } from "@/lib/reports/client-ip";
 import { validateSubmission } from "@/lib/reports/reports";
 import { langParam } from "@/lib/lang-server";
 import { countRecent, createReport } from "@/lib/reports/store";
+import { contextFrom } from "@/lib/reports/context";
+import { parseEnvelope } from "@/lib/contributions/envelope";
+import { submissionFrom } from "@/lib/contributions/submission";
+import {
+  CONTRIBUTION_WINDOW_MS,
+  CONTRIBUTIONS_PER_HOUR,
+  knownSubmissions,
+  storeSubmission,
+} from "@/lib/contributions/intake";
+import { countRecentContributions, recordContributionHit } from "@/lib/contributions/store";
 import { formatTarget, parseTarget, resolveTarget } from "@/lib/reports/target";
 import { pageById } from "@/lib/books/catalogue";
 import { lineByPath } from "@/lib/zones/catalogue";
@@ -90,6 +100,16 @@ export async function POST(request: Request) {
   // way to put words in another person's mouth.
   const session = await auth.api.getSession({ headers: await headers() });
 
+  const identity = {
+    userId: session?.user.id ?? null,
+    name: session ? null : validated.value.name,
+    email: session ? null : validated.value.email,
+    ip,
+  };
+
+  // parseEnvelope refuses anything past its own MAX_BYTES before reading it.
+  const context = contextFrom(body.context, source);
+
   await createReport({
     source,
     lang,
@@ -97,13 +117,41 @@ export async function POST(request: Request) {
     target: addressed.target,
     category: validated.value.category,
     body: validated.value.body,
-    userId: session?.user.id ?? null,
-    name: session ? null : validated.value.name,
-    email: session ? null : validated.value.email,
-    ip,
+    ...identity,
+    context,
   });
 
+  if (context && validated.value.category === "missing") {
+    await contributeMissing(body.context as string, validated.value.body, identity);
+  }
+
   return Response.json({ ok: true });
+}
+
+/**
+ * "Nothing played" with the text attached is also a contribution: the player's client holds a
+ * line the corpus may not. Filed through the contribute route's own checks and allowance, and
+ * dropped as that route drops it when the corpus already has the line -- then the audio, not
+ * the text, is what is missing, and the report says so. Zones never: a zones report is about
+ * lore that exists, and a zones contribution is a description someone wrote.
+ */
+async function contributeMissing(
+  raw: string,
+  complaint: string,
+  identity: { userId: string | null; name: string | null; email: string | null; ip: string },
+): Promise<void> {
+  const parsed = parseEnvelope(raw);
+  if (!parsed.ok || parsed.value.source === "zones") return;
+  const submission = submissionFrom(parsed.value, raw);
+  if (!submission) return;
+  if ((await countRecentContributions(identity.ip, CONTRIBUTION_WINDOW_MS)) >= CONTRIBUTIONS_PER_HOUR) {
+    return;
+  }
+  const [known] = await knownSubmissions([submission]);
+  if (!known) {
+    await storeSubmission(submission, { ...identity, body: complaint });
+  }
+  await recordContributionHit(identity.ip);
 }
 
 /**
