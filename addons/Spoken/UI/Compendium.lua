@@ -1970,7 +1970,8 @@ function C.NewPage(parent, addon, play, report, look)
 		if title.SetWordWrap then title:SetWordWrap(false) end
 		if title.SetMaxLines then title:SetMaxLines(1) end
 	end
-	Ink(title, INK)
+	-- Its shadow is the quest log's: the font's own, which Ink would take away.
+	title:SetTextColor(INK[1], INK[2], INK[3])
 	self.title = title
 
 	-- The line under the title as the places' page sets it: a line 16 high, its words in the middle,

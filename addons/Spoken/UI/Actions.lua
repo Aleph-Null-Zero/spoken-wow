@@ -45,7 +45,8 @@ function Actions:Build(frame)
     frame.actions = { buttons = {}, byId = {} }
 end
 
-local RING = ART .. "SettingsButton"
+-- SettingsButton with the dark middle at 90%, so the round buttons let a little of what is behind show.
+local RING = ART .. "SettingsButtonSoft"
 -- A round button's glyph at rest; 1 under the pointer.
 local GLYPH_ALPHA = 0.85
 -- How much brighter a square Play button's border is under the pointer (added over itself).
