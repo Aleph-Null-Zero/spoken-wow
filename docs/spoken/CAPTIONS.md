@@ -24,12 +24,13 @@ an in-game visual check.
 
 ## Controls
 
-- `/sp words` turns the captions (Show Words) on and off; `on` and `off` also work.
+- `/sp narrator` turns the window and subtitles (Show Narrator) on and off; `on` and `off` also work, and
+  `/sp words` still answers to it.
 - In the Small Window, the small **+** button expands the captions to eight rows, and **−**
   goes back to Rows at Once. The window grows downward and keeps its portrait in place. The Large
   Window and the DialogueUI window have no such button.
 - `/sp rows 1` sets Rows at Once to one row; `/sp rows 2` to two.
-- `/sp settings` opens Spoken's page. Its rows for the captions are Show Words, Rows at Once,
+- `/sp settings` opens Spoken's page. Its rows for the captions are Show Narrator, Rows at Once,
   Word Size, Highlight Words, Type Words Out, Type Out By and **Auto-Scroll** (below), and for the
   subtitles Subtitle Size, Sentences at Once, Shadow Behind Words, Show Name and Title, Hide
   Portrait and Show Progress Bar. Each style shows only the rows it reads.
@@ -128,7 +129,7 @@ captions are hidden or turned off. `Spoken:SplitCaption(text)` splits any text t
 captions do, and records where each word sits in that text. With the two, another addon can
 mark the same words in its own copy of the line. Spoken Quests does this inside DialogueUI's
 window (see [`docs/quests/DIALOGUEUI-BRIDGE.md`](../quests/DIALOGUEUI-BRIDGE.md)), and Spoken
-Readables in its book view. So **Show Words**, **Highlight Words** and **Type Words Out** apply to
+Readables in its book view. So **Show Narrator**, **Highlight Words** and **Type Words Out** apply to
 DialogueUI's own text under every narrator style, Voice Only included, when Mark Words in
 DialogueUI is on; with DialogueUI installed Spoken's page offers them under Voice Only
 (`DialogueUIOptions:WordRowsShown`). **Type Out By** does not apply there: DialogueUI's text is

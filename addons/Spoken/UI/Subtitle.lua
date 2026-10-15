@@ -820,7 +820,7 @@ end
 -- screen, a subtitle saying "Stopped" or why the line waits (a fight, the NPC's own greeting) is
 -- the only sign of why nothing is being read.
 function Subtitle:Wanted()
-    return Transcript:ShowsWords(Transcript.clip) and Addon:DisplayStyle() == "subtitle" and Transcript.clip ~= nil
+    return Addon:ShowsNarrator(Transcript.clip) and Addon:DisplayStyle() == "subtitle" and Transcript.clip ~= nil
         and Transcript.text ~= "" and (Transcript.hasStarted or SoundQueue:IsPaused()
         or SoundQueue:GetHeldReason(Transcript.clip) ~= nil)
 end

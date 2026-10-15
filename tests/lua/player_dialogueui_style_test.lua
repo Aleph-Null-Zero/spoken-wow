@@ -471,7 +471,7 @@ do
         env.DialogueUIOptions:WordRowsShown("none"), true)
     Expect("...and under the styles that show words", env.DialogueUIOptions:WordRowsShown("subtitle"), true)
     words.Enabled = false
-    Expect("Show Words off turns the marks off there too",
+    Expect("Show Narrator off turns the marks off there too",
         select(1, Spoken:GetCaptionOptions()) or select(2, Spoken:GetCaptionOptions()), false)
     words.Enabled, words.HighlightWord, words.Typewriter = saved[1], saved[2], saved[3]
     Spoken:StopAll()
