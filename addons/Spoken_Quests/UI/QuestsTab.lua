@@ -1337,31 +1337,26 @@ local function ShowEntry()
         page:Show({ title = L.COMPENDIUM_QUESTS, subtitle = Count(Index().all), text = L.QUESTS_PICK })
         return
     end
-    -- The line under the title goes up a level, to what holds what is chosen, where anything does.
     local up = Holder(selection)
-    local onSubtitle = up and function()
-        selection = up
-        QuestsTab:Refresh(true)
-    end
     if selection.chain then
         local ids = selection.ids
         -- As a zone's page: its name, what holds it and its count, and the quests on the left to choose.
         local holder, place
         if selection.where then holder, place = HolderName(selection.where) end
         page:Show({ title = ChainLabel(selection.first or First(ids[1]), selection.nth),
-            subtitle = Line(SetOf(ids), holder, place), onSubtitle = onSubtitle, text = L.QUESTS_PICK })
+            subtitle = Line(SetOf(ids), holder, place), text = L.QUESTS_PICK })
         return
     end
     if selection.quest then
         local id = selection.quest
         if not Found(id) and not Unlocked() then
-            page:Show({ title = Title(id), subtitle = Subtitle(id), onSubtitle = onSubtitle, text = L.QUEST_NOT_FOUND })
+            page:Show({ title = Title(id), subtitle = Subtitle(id), text = L.QUEST_NOT_FOUND })
             return
         end
         -- Play and Report on each part's heading, not the page's: each part is said at its own time.
         -- A quest Forever has that the corpus has no lines for yet says so, not that none are known.
         local record = Quests()[id]
-        page:Show({ title = Title(id), subtitle = Subtitle(id), onSubtitle = onSubtitle, parts = Parts(id),
+        page:Show({ title = Title(id), subtitle = Subtitle(id), parts = Parts(id),
             text = record and record.notext and L.QUEST_NO_WORDS_YET or L.QUEST_NO_TEXT })
         return
     end
@@ -1369,8 +1364,7 @@ local function ShowEntry()
         -- In the zone of its entrance, whose card holds it.
         local zone = tonumber(selection.dungeon:match("^d(%d+)"))
         local place = zone and selection.map and { mapID = zone, dungeon = selection.map } or nil
-        page:Show({ title = selection.label, subtitle = Line(SetOf(selection.ids), zone and C.MapName(zone), true),
-            onSubtitle = onSubtitle, text = L.QUESTS_PICK, picture = place and C.PlacePicture(place) or nil })
+        page:Show({ title = selection.label, subtitle = Line(SetOf(selection.ids), zone and C.MapName(zone), true), text = L.QUESTS_PICK, picture = place and C.PlacePicture(place) or nil })
         return
     end
     local banner = selection.section and ZONE_BANNERS[selection.section]
@@ -1392,13 +1386,11 @@ local function ShowEntry()
     -- A sort's line, and Place Unknown's, names the section that holds it, which is no place.
     if selection.sort then
         page:Show({ title = SortName(selection.sort),
-            subtitle = Line(SetOf(Index().sorts[selection.sort]), SectionName(SectionOf(selection.sort))),
-            onSubtitle = onSubtitle, text = L.QUESTS_PICK })
+            subtitle = Line(SetOf(Index().sorts[selection.sort]), SectionName(SectionOf(selection.sort))), text = L.QUESTS_PICK })
         return
     end
     if selection.group == "elsewhere" then
-        page:Show({ title = L.QUESTS_ELSEWHERE, subtitle = Line(SetOf(Index().elsewhere), SectionName("other")),
-            onSubtitle = onSubtitle, text = L.QUESTS_PICK })
+        page:Show({ title = L.QUESTS_ELSEWHERE, subtitle = Line(SetOf(Index().elsewhere), SectionName("other")), text = L.QUESTS_PICK })
         return
     end
     local set = {}
@@ -1407,8 +1399,7 @@ local function ShowEntry()
     else
         QuestsIn(selection.mapID, set)
     end
-    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, ZoneHolderName(up), true),
-        onSubtitle = onSubtitle, text = L.QUESTS_PICK, picture = C.PlacePicture({ mapID = selection.mapID }) })
+    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, ZoneHolderName(up), true), text = L.QUESTS_PICK, picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
 --------------------------------------------------------------------------------

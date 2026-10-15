@@ -250,7 +250,7 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
         end
         local poiButton = QuestPOIButton(questLogTitleFrame)
         if poiButton and questLogTitleFrame.Checkbox then
-            playButton:SetPoint("RIGHT", questLogTitleFrame.Checkbox, "LEFT", -2, 0)
+            playButton:SetPoint("RIGHT", questLogTitleFrame.Checkbox, "LEFT", -3, 0)
         elseif poiButton then
             playButton:SetPoint("TOPRIGHT", questLogTitleFrame, "TOPRIGHT", -4, -2)
         else
@@ -523,6 +523,28 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                 playButton:SetPoint("RIGHT", report, "RIGHT", 0, 0)
             end
             self:SetPlayButtonState(playButton)
+            -- Once, for the debug log: how the page draws the quest's title, which the Compendium's
+            -- pages are matched to, and what holds it.
+            local title = QuestInfoTitleHeader
+            if not self.recordedTitle and title and title.GetFont then
+                self.recordedTitle = true
+                local ok, text = pcall(function()
+                    local face, size, flags = title:GetFont()
+                    local r, g, b = title:GetTextColor()
+                    local sr, sg, sb, sa = title:GetShadowColor()
+                    local sx, sy = title:GetShadowOffset()
+                    local chain, frame = {}, title:GetParent()
+                    for _ = 1, 5 do
+                        if not frame then break end
+                        chain[#chain + 1] = (frame.GetName and frame:GetName()) or "?"
+                        frame = frame.GetParent and frame:GetParent() or nil
+                    end
+                    return format("font %s %s %s, colour %.2f %.2f %.2f, shadow %.2f %.2f %.2f %.2f offset %s %s, width %s, held by %s",
+                        tostring(face), tostring(size), tostring(flags), r, g, b, sr, sg, sb, sa, tostring(sx), tostring(sy),
+                        tostring(title:GetWidth()), table.concat(chain, " < "))
+                end)
+                Debug:Record("quest-log-title", ok and text or ("failed: " .. tostring(text)))
+            end
         end
 
         hooksecurefunc("QuestMapFrame_ShowQuestDetails", function()
@@ -530,4 +552,97 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
         end)
     end
 
+end
+
+-- Play on the objective tracker's quests, at the right end of each quest's title as the quest log has
+-- it: the same square button. The tracker pools its blocks, so a block keeps one button and rebinds it
+-- to the quest it shows. Where the client has no such tracker nothing is hooked.
+do
+    local MODULES = { "QuestObjectiveTracker", "CampaignQuestObjectiveTracker" }
+    -- The quest log's tracking checkbox, as it draws on this client (what its Play button matches).
+    local BOX, SIZE = "QuestLog-icon-ticksquare", 14
+    local buttons, hooked, listening = {}, {}, false
+
+    local function Dress(block)
+        local questID = block.id
+        local button = buttons[block]
+        if type(questID) ~= "number" or not (Spoken and Spoken.DressBoxButton) or not Addon:IsPartOn()
+            or not DataModules:PrepareSound({ event = Enums.SoundEvent.QuestAccept, questID = questID }) then
+            if button then button:Hide() end
+            return
+        end
+        if not button then
+            button = Utils:CreateDetachedFrame("Button", nil, block)
+            button:SetSize(SIZE, SIZE)
+            button:SetHitRectInsets(1, 1, 1, 1)
+            local ok, err = pcall(Spoken.DressBoxButton, Spoken, button)
+            if ok then ok, err = pcall(button.SetBox, button, BOX, SIZE, SIZE) end
+            if not ok then
+                Debug:Record("tracker-play", "not dressed: " .. tostring(err))
+                button:Hide()
+                return
+            end
+            button.setPlayState = function(self, playing) self:SetState(playing and "stop" or "play") end
+            -- Black behind the box: the tracker sits on the world, not on a panel.
+            local back = button:CreateTexture(nil, "BACKGROUND", nil, -1)
+            back:SetPoint("TOPLEFT", 1, -1)
+            back:SetPoint("BOTTOMRIGHT", -1, 1)
+            back:SetColorTexture(0, 0, 0, 0.6)
+            button:SetFrameLevel(block:GetFrameLevel() + 3)
+            button:SetPoint("TOPRIGHT", block, "TOPRIGHT", 0, 0)
+            buttons[block] = button
+            Debug:Record("tracker-play", format("button on a block %sx%s, header %s", tostring(block:GetWidth()),
+                tostring(block:GetHeight()), tostring(block.HeaderText ~= nil)))
+            -- Stopped or replayed from the subtitle or the windows, the glyph follows.
+            if not listening and Spoken.RegisterCallback then
+                listening = true
+                Spoken:RegisterCallback("AUDIO_CHANGED", function()
+                    for _, each in pairs(buttons) do
+                        if each:IsShown() then QuestOverlayUI:SetPlayButtonState(each) end
+                    end
+                end)
+            end
+        end
+        if button.questID ~= questID then
+            button.questID, button.soundData = questID, nil
+        end
+        QuestOverlayUI:BindPlayButton(button, questID, C_QuestLog.GetTitleForQuestID(questID) or "",
+            "the objective tracker's Play button")
+        button:Show()
+        QuestOverlayUI:SetPlayButtonState(button)
+    end
+
+    -- The blocks already drawn: the tracker lays out before the packs have loaded and before this
+    -- hook, and would otherwise show no button until something redraws it.
+    local function Sweep()
+        for _, name in ipairs(MODULES) do
+            local module = _G[name]
+            for _, byTemplate in pairs(type(module) == "table" and module.usedBlocks or {}) do
+                if type(byTemplate) == "table" then
+                    for _, block in pairs(byTemplate) do
+                        if type(block) == "table" and block.id then Dress(block) end
+                    end
+                end
+            end
+        end
+    end
+
+    local function Install()
+        for _, name in ipairs(MODULES) do
+            local module = _G[name]
+            if type(module) == "table" and module.AddBlock and not hooked[name] then
+                hooked[name] = true
+                hooksecurefunc(module, "AddBlock", function(_, block) Dress(block) end)
+            end
+        end
+        Sweep()
+    end
+    Install()
+    -- The tracker may load after this file, and the voice packs after the tracker.
+    local waiter = CreateFrame("Frame")
+    waiter:RegisterEvent("PLAYER_LOGIN")
+    waiter:SetScript("OnEvent", function()
+        Install()
+        if Spoken and Spoken.RegisterCallback then Spoken:RegisterCallback("VOICE_PACKS_LOADED", Sweep) end
+    end)
 end

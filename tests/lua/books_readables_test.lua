@@ -279,8 +279,6 @@ Expect("...its page named for the event, in Holidays and Events, with its count"
 SpokenBooksSettings.unlockUnfound = true
 B:RefreshReadables()
 Click("The Feast of Winter Veil")
-panel.page.sub.scripts.OnClick(panel.page.sub)
-Expect("...a writing's line under its title leading to its event", panel.page.title.text, L.EVENT_WINTER_VEIL)
 SpokenBooksSettings.unlockUnfound = false
 Click(L.EVENT_WINTER_VEIL)
 OpenKinds("events")
@@ -542,18 +540,8 @@ Expect("the Compendium shows a found writing's page, not one not found",
 SpokenBooksSettings.unlockUnfound = true
 Expect("...or any with Unlock Unfound Writings on", B:CompendiumHas(ALLERIA), true)
 SpokenBooksSettings.unlockUnfound = false
--- The line under the title goes up a level, as on Quests and Zones.
-local kind = page.title.text
-page.sub.scripts.OnClick(page.sub)
-Expect("...its line under the title leading to its kind of writing in the place it is listed",
-    page.title.text ~= kind and page.sub.text.text:find(L.READABLES_IN_FMT:format("Stormwind City") .. " · ", 1, true), 1)
-Expect("...that line chosen in the list", RowFor(page.title.text).selected, true)
-page.sub.scripts.OnClick(page.sub)
-Expect("...and on up: the city", page.title.text, "Stormwind City")
-page.sub.scripts.OnClick(page.sub)
-Expect("...the zone around it", page.title.text, "Elwynn Forest")
-page.sub.scripts.OnClick(page.sub)
-Expect("...its continent, whose line goes nowhere", page.title.text .. "|" .. tostring(page.sub.onClick), "Eastern Kingdoms|nil")
+-- The line under the title is plain words, as on Quests and Zones.
+Expect("a page's line under its title is not a link", page.sub.onClick, nil)
 Click("Kurdran Wildhammer")
 Click("Ranger Captain Alleria Windrunner")
 Expect("a readable not found does not open", page.title.text, "Kurdran Wildhammer")

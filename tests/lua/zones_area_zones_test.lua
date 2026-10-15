@@ -213,7 +213,7 @@ _G.GameFontHighlight = _G.GameFontHighlight or { GetFont = function() return "fo
 _G.hooksecurefunc = _G.hooksecurefunc or function() end
 
 Z = H.NewZoneLore()
-Z.Zones = { [947] = { name = "Azeroth", full = "The world." }, [1415] = { name = "Eastern Kingdoms", full = "East." },
+Z.Zones = { [1415] = { name = "Eastern Kingdoms", full = "East." },
     [1414] = { name = "Kalimdor", full = "West." },
     [ALTERAC] = { name = "Alterac Mountains", full = "Snow." }, [HILLSBRAD] = { name = "Hillsbrad Foothills", full = "Hills." },
     [BARRENS] = { name = "The Barrens", full = "Dry land." }, [NEEDLES] = { name = "Thousand Needles", full = "Spires." } }
@@ -308,8 +308,6 @@ Expect("Strahnbrad's page is its story, in Alterac Mountains",
 Expect("...played and reported by its story's keys",
     table.concat({ page.target[1], page.target[2], tostring(page.play:IsShown()), tostring(page.report:IsShown()) }, "|"),
     "1424|strahnbrad|true|true")
-page.sub.scripts.OnClick(page.sub)
-Expect("...its line leading to Alterac Mountains", page.title.text, "Alterac Mountains")
 found["1424/strahnbrad"] = true
 Z:RefreshLoreWindow(); Shown()
 Expect("found, it is ticked and counted in Alterac Mountains",

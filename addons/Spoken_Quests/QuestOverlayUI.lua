@@ -151,8 +151,9 @@ local function PrimeGiver(questID)
 end
 
 --- What a play button does when it is clicked, for whichever quest it currently stands for.
---- Shared by the buttons in the quest log and the one in the quest details view.
-function QuestOverlayUI:BindPlayButton(playButton, questID, soundTitle)
+--- Shared by the buttons in the quest log, the objective tracker and the one in the quest details
+--- view. `origin` names the screen for the debug log.
+function QuestOverlayUI:BindPlayButton(playButton, questID, soundTitle, origin)
     PrimeGiver(questID)
     playButton:SetScript("OnClick", function(self)
         if not self.soundData then
@@ -166,7 +167,7 @@ function QuestOverlayUI:BindPlayButton(playButton, questID, soundTitle)
                 -- A poster or an item has no face to draw: the line shows a notice, as the dialog's does.
                 unitIsObjectOrItem = id ~= nil and not Enums.GUID:IsCreature(type),
                 -- For the debug log: which screen queued it.
-                origin = "the quest log's Play button",
+                origin = origin or "the quest log's Play button",
             }
         end
 

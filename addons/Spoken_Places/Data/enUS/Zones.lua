@@ -13,12 +13,6 @@ if not SpokenZones:ShouldLoadLanguage("enUS") then
 end
 
 local zones = {
-	[947] = {
-		name = "Azeroth",
-		short = "Ten thousand years ago the Highborne of Kalimdor, drunk on the power of the Well of Eternity, answered the call of the fallen titan Sargeras and tore open a gate for the Burning Legion.",
-		full = "Ten thousand years ago the Highborne of Kalimdor, drunk on the power of the Well of Eternity, answered the call of the fallen titan Sargeras and tore open a gate for the Burning Legion. Malfurion Stormrage and the Kaldorei resistance shattered that gate with the Dragon Soul and hurled Sargeras back into the Twisting Nether, but the Well's collapse broke the world itself. Ancient Kalimdor sank in fire and flood; four ruined continents rose from the wreck, and the drowned heart of the land became the Great Sea, with the Maelstrom churning where the Well once stood.",
-		source = "https://warcraft.wiki.gg/wiki/Azeroth",
-	},
 	[1411] = {
 		name = "Durotar",
 		short = "Durotar is a cracked, red land of crags and canyons, dry and hot, sparse in water and green things.",

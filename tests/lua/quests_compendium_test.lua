@@ -1234,27 +1234,10 @@ do
     list = Shown()
 end
 
--- The line under a page's title goes up a level, to what holds what the page is of.
-local function Up()
-    if not page.sub.onClick then return nil end
-    page.sub.scripts.OnClick(page.sub)
-    return page.title.text
-end
-Expect("a click on a dungeon's line goes to its zone", Up(), "Searing Gorge")
-Expect("...on a zone's, to its continent", Up(), "Eastern Kingdoms")
-Expect("...and a continent's goes nowhere, Azeroth being no row", Up(), nil)
+-- The line under a page's title is plain words: it leads nowhere.
 Tab:Open(STOCKADE)
-Expect("...a quest's to its zone, a city's to the zone around it", Up() .. "|" .. Up(), "Stormwind City|Elwynn Forest")
-Tab:Open(PIE)
-ClickChain("Lost Necklace")
-Expect("...a chain's to the zone that holds it", Up(), "Elwynn Forest")
-Tab:Open(JENNEA)
-Expect("...a class's quest's to its class, and the class's to its section", Up() .. "|" .. Up(), "Mage|Classes")
-Expect("...whose line, the count alone, goes nowhere", Up(), nil)
+Expect("the line under a quest's title is not a link", page.sub.onClick, nil)
 Tab:Open(IRONDEEP)
-Up()
-Expect("...a battleground's page in the Battlegrounds, its line going there", page.sub.text.text:match("^In Battlegrounds · ")
-    ~= nil and Up(), L.QUESTS_SECTION_BATTLEGROUNDS)
 
 -- The quest giver's window: the Compendium's tome beside its controls, for a quest the tab lists.
 local giver = Tab.giverButton

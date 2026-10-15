@@ -94,6 +94,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Azeroth's Compendium
 
+- The line under a page's title is plain words and no longer a link, and the Azeroth page is gone. The
+  continents are the top of the Places list. On the map, the line under an area's name still goes back to
+  its zone. *([Nucabe](https://github.com/Nucabe))*
 - The Open in Compendium button has a darker, tighter vignette inside its ring, so the ring and the
   book read apart. *([Nucabe](https://github.com/Nucabe))*
 - A locked row says why it does not open when you point at it, and names the switch that opens
@@ -132,6 +135,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Azeroth's Compendium: Quests
 
+- The objective tracker has a Play button at the right end of each quest's title, the same button
+  the quest log has. *([Nucabe](https://github.com/Nucabe))*
 - The Play button on each row of the quest log has the tracking checkbox's border and the Play and
   Stop glyphs the narrator styles use. *([Nucabe](https://github.com/Nucabe))*
 - The Quests tab is new. It lists the quests your character's side, race and class can take, by zone

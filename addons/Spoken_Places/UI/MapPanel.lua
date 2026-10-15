@@ -307,6 +307,7 @@ local function Refresh(mapID)
 		-- under Thousand Needles, and Strahnbrad, clicked on Alterac Mountains', under Hillsbrad.
 		local story = SpokenZones:StoryPlace(mapID, key)
 		local line = SpokenZones:PlaceLine(story, key or name)
+		-- The line under an area's name returns to its zone's story: nothing else on the panel does.
 		local back = function() SpokenZones:ClearSubzone() end
 		-- Not found yet: named, and no more, as Azeroth's Compendium has it.
 		if SpokenZones.IsLocked and SpokenZones:IsLocked(story, key) then
@@ -336,27 +337,25 @@ local function Refresh(mapID)
 
 	-- Fallback hit an ancestor (a dungeon or micro-map inheriting its zone's lore); say so rather
 	-- than silently mislabelling the text.
-	local caption, onCaption = "", nil
+	local caption = ""
 	if foundOn ~= mapID then
 		caption = string.format(L.MAP_LORE_FOR_FMT, SpokenZones:GetMapName(foundOn) or "parent zone")
 	else
-		local up
-		caption, up = SpokenZones:PlaceLine(mapID)
-		if up and WorldMapFrame.SetMapID then onCaption = function() WorldMapFrame:SetMapID(up) end end
+		caption = SpokenZones:PlaceLine(mapID)
 	end
 	if SpokenZones.IsLocked and SpokenZones:IsLocked(foundOn) then
-		page:Show({ title = zoneName, subtitle = caption, onSubtitle = onCaption, text = L.NOT_DISCOVERED })
+		page:Show({ title = zoneName, subtitle = caption, text = L.NOT_DISCOVERED })
 		return
 	end
 	if SpokenZones:IsPending(entry) then
-		page:Show({ title = zoneName, subtitle = caption, onSubtitle = onCaption,
+		page:Show({ title = zoneName, subtitle = caption,
 			text = L.LORE_NOT_WRITTEN:format(SpokenZones:GetMapName(foundOn) or zoneName),
 			contribute = { foundOn, nil }, lore = { foundOn, nil } })
 		return
 	end
 	-- foundOn, not mapID: a dungeon showing its parent zone's text should read that same parent
 	-- zone's narration, and a report on it belongs to the line the text actually came from.
-	page:Show({ title = zoneName, subtitle = caption, onSubtitle = onCaption, text = entry.full or entry.short or "",
+	page:Show({ title = zoneName, subtitle = caption, text = entry.full or entry.short or "",
 		audio = { foundOn, nil }, report = { foundOn, nil }, lore = { foundOn, nil } })
 end
 

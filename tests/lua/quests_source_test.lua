@@ -121,7 +121,6 @@ Expect("a quest from an item shows the item's icon", fromItem and fromItem.prese
 Expect("...the icon found by name too, for a book read from the bags", Spoken:BagItemIcon("Gold Pickup Schedule"), 134939)
 _G.C_Container = nil
 Expect("a city takes its zone's icon, as an area does", Spoken:ZoneIcon(1455), [[Interface\AddOns\Spoken\Textures\Zones\DunMorogh]])
-Expect("...Azeroth the world map's globe", Spoken:ZoneIcon(947), [[Interface\AddOns\Spoken\Textures\Zones\Azeroth]])
 Expect("...a Forever zone the icon drawn for it", Spoken:ZoneIcon(2524), [[Interface\AddOns\Spoken\Textures\Zones\DarkspearIslands]])
 Expect("...and a map with none, itself or above it, none", Spoken:ZoneIcon(9999), nil)
 _G.UnitExists = unitExists

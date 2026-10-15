@@ -302,7 +302,7 @@ end
 -- zone's icon, Teldrassil takes Darnassus's, and a map not listed takes its parent's.
 local ZONE_ART = [[Interface\AddOns\Spoken\Textures\Zones\]]
 local ZONE_ICONS = {
-    [947] = "Azeroth", [1414] = "Kalimdor", [1415] = "EasternKingdoms",
+    [1414] = "Kalimdor", [1415] = "EasternKingdoms",
     [1411] = "Durotar", [1412] = "Mulgore", [1413] = "Barrens", [1416] = "AlteracMountains",
     [1417] = "ArathiHighlands", [1418] = "Badlands", [1419] = "BlastedLands", [1420] = "TirisfalGlades",
     [1421] = "Silverpine", [1422] = "WesternPlaguelands", [1423] = "EasternPlaguelands",
@@ -319,9 +319,8 @@ local ZONE_ICONS = {
     -- Forever's own zones, drawn for Spoken.
     [2521] = "ZephrasIsle", [2524] = "DarkspearIslands", [2548] = "Riverglades", [2652] = "Shendralas",
 }
--- Trims the icons' bevelled border, as the game does in a round frame. The globe needs none.
+-- Trims the icons' bevelled border, as the game does in a round frame.
 local ICON_CROP = { 0.08, 0.92, 0.08, 0.92 }
-local WHOLE = { 0, 1, 0, 1 }
 Spoken.ZONE_ICONS = ZONE_ICONS
 
 --- The icon for `mapID` or its nearest ancestor that has one, with its crop.
@@ -329,7 +328,7 @@ function Spoken:ZoneIcon(mapID)
     local depth = 0
     while mapID and depth < 6 do
         local icon = ZONE_ICONS[mapID]
-        if icon then return ZONE_ART .. icon, icon == "Azeroth" and WHOLE or ICON_CROP end
+        if icon then return ZONE_ART .. icon, ICON_CROP end
         local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
         mapID = info and info.parentMapID
         depth = depth + 1

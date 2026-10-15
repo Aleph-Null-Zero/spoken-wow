@@ -1551,9 +1551,7 @@ and Place Unknown are no place, and are named as they are: their line names thei
 have nothing above them, and their line is the count alone. A quest's page says where it is: "In"
 its zones (the first two, and how many more: "In Elwynn Forest, Westfall and 1 more"), else its
 section and its group ("Classes · Mage"), else "Other · Place Unknown". Where something holds
-what is chosen, a click on that line chooses it (the page's `onSubtitle`): a quest's or chain's
-zone, dungeon or group, a dungeon's zone, a city's zone, a zone's continent or banner, a group's
-section. A continent's, a banner's and a section's line goes nowhere.
+what is chosen, the line is plain words: it leads nowhere.
 
 In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
 there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The

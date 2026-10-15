@@ -73,15 +73,15 @@ local function UnknownHere(mapID)
 	return C_Map.GetMapInfo(mapID) == nil
 end
 
---- Every zone with a story, alphabetical: everything in the data but Azeroth, its continents and
---- maps this client has not got.
+--- Every zone with a story, alphabetical: everything in the data but its continents and maps this
+--- client has not got.
 local function ZoneIDs()
 	if sortedZoneIDs then
 		return sortedZoneIDs
 	end
 	sortedZoneIDs = {}
 	for mapID in pairs(SpokenZones.Zones) do
-		if mapID ~= WORLD and not IsContinent(mapID) and not UnknownHere(mapID) then
+		if not IsContinent(mapID) and not UnknownHere(mapID) then
 			table.insert(sortedZoneIDs, mapID)
 		end
 	end
@@ -159,7 +159,7 @@ end
 local function Reveal(mapID)
 	if IsContinent(mapID) then
 		continentOpen[mapID] = true
-	elseif mapID ~= WORLD then
+	else
 		C.OpenAround(mapID, continentOpen, groupOpen)
 	end
 end
@@ -301,10 +301,10 @@ local function Discovered(mapID, key)
 end
 
 --- Whether a place's story is locked for this character: not found yet, with Unlock Undiscovered
---- Zones off. A continent is found through its zones; Azeroth always is. The page and the map's
+--- Zones off. A continent is found through its zones. The page and the map's
 --- panel say so in its place rather than tell its story; the list still opens its banner or card.
 function SpokenZones:IsLocked(mapID, key)
-	if self:ShowsUndiscovered() or mapID == WORLD then return false end
+	if self:ShowsUndiscovered() then return false end
 	if not key and IsContinent(mapID) then
 		for _, zone in ipairs(ZonesOf(mapID)) do
 			if self:IsFound(zone) then return false end
@@ -579,7 +579,7 @@ local function CurrentZoneID()
 end
 
 -- The continent the player is on, else the first: where the tab lands when no zone of theirs has
--- a story. Azeroth's own page is never chosen from the list.
+-- a story.
 local function PlayerContinent()
 	local map = SpokenZones:GetPlayerMapID()
 	local continent = map and (IsContinent(map) and map or ContinentOf(map))
@@ -592,10 +592,10 @@ end
 -- chosen.
 local function LandOnPlayer()
 	local current = CurrentZoneID()
-	if not current or current == WORLD or IsContinent(current) then
+	if not current or IsContinent(current) then
 		local continent = current and IsContinent(current) and current or PlayerContinent()
 		if continent then Reveal(continent) end
-		selection = { mapID = continent or WORLD, key = nil }
+		selection = continent and { mapID = continent, key = nil } or nil
 		landed = selection
 		return
 	end
@@ -622,40 +622,23 @@ end
 
 local function ShowEntry()
 	if selection.dungeons then
-		-- In its zone, as a dungeon's card is, a click away.
 		local zone = selection.dungeons
-		page:Show({ title = L.DUNGEONS, subtitle = InAndCount(zone, DungeonCount(zone)),
-			onSubtitle = function()
-				selection = { mapID = zone, key = nil }
-				SpokenZones:RefreshLoreWindow()
-			end,
-			text = L.DUNGEONS_PICK })
+		page:Show({ title = L.DUNGEONS, subtitle = InAndCount(zone, DungeonCount(zone)), text = L.DUNGEONS_PICK })
 		return
 	end
 	if selection.group then
-		-- In Azeroth, as a continent is, a click away.
 		local group = Group(selection.group)
 		local found, total = BannerCount(group.zones())
-		page:Show({ title = group.label(), subtitle = InAndCount(WORLD, found, total),
-			onSubtitle = function()
-				selection = { mapID = WORLD, key = nil }
-				SpokenZones:RefreshLoreWindow()
-			end,
-			text = L.ZONES_PICK })
+		page:Show({ title = group.label(), subtitle = InAndCount(WORLD, found, total), text = L.ZONES_PICK })
 		return
 	end
 	local mapID, key = selection.mapID, selection.key
 	-- Chosen from elsewhere (the map's panel), a place not found yet: named, and no more.
 	if SpokenZones:IsLocked(mapID, key) then
 		local entry = key and SpokenZones.Subzones[mapID] and SpokenZones.Subzones[mapID][key]
-		-- Where it sits, a click away: the zone for an area or a city, the continent for a zone. A
-		-- zone's or a continent's line counts what is found in it, as every card's page does.
-		local line, up = SpokenZones:PlaceLine(mapID, key)
-		page:Show({ title = entry and (entry.name or key) or ZoneName(mapID), subtitle = line,
-			onSubtitle = up and function()
-				selection = { mapID = up, key = nil }
-				SpokenZones:RefreshLoreWindow()
-			end or nil,
+		-- Where it sits: a zone's or a continent's line counts what is found in it, as every card's
+		-- page does.
+		page:Show({ title = entry and (entry.name or key) or ZoneName(mapID), subtitle = SpokenZones:PlaceLine(mapID, key),
 			text = L.NOT_DISCOVERED })
 		return
 	end
@@ -663,19 +646,15 @@ local function ShowEntry()
 		local entry = SpokenZones.Subzones[mapID] and SpokenZones.Subzones[mapID][key]
 		if entry then
 			local name = entry.name or key
-			local line, up = SpokenZones:PlaceLine(mapID, key)
-			local back = function()
-				selection = { mapID = up, key = nil }
-				SpokenZones:RefreshLoreWindow()
-			end
+			local line = SpokenZones:PlaceLine(mapID, key)
 			if SpokenZones:IsPending(entry) then
-				page:Show({ title = name, subtitle = line, onSubtitle = back,
+				page:Show({ title = name, subtitle = line,
 					text = L.LORE_NOT_WRITTEN:format(name), contribute = { mapID, name } })
 				return
 			end
 			-- Rows are keyed by the canonical form already, so this needs no normalising --
 			-- unlike the map panel, which starts from the name the client reports.
-			page:Show({ title = name, subtitle = line, onSubtitle = back,
+			page:Show({ title = name, subtitle = line,
 				text = entry.full or entry.short or "", audio = { mapID, key }, report = { mapID, key } })
 			return
 		end
@@ -683,39 +662,27 @@ local function ShowEntry()
 
 	local entry = SpokenZones:GetLore(mapID)
 	local name = ZoneName(mapID)
-	local subtitle, up = SpokenZones:PlaceLine(mapID)
-	local onSubtitle = up and function()
-		selection = { mapID = up, key = nil }
-		SpokenZones:RefreshLoreWindow()
-	end or nil
+	local subtitle = SpokenZones:PlaceLine(mapID)
 	if not entry or SpokenZones:IsPending(entry) then
-		page:Show({ title = name, subtitle = subtitle, onSubtitle = onSubtitle, text = L.LORE_NOT_WRITTEN:format(name),
+		page:Show({ title = name, subtitle = subtitle, text = L.LORE_NOT_WRITTEN:format(name),
 			contribute = { mapID, nil } })
 		return
 	end
-	page:Show({ title = name, subtitle = subtitle, onSubtitle = onSubtitle, text = entry.full or entry.short or "",
+	page:Show({ title = name, subtitle = subtitle, text = entry.full or entry.short or "",
 		audio = { mapID, nil }, report = { mapID, nil } })
 end
 
-local function Count(n, many, one) return n == 1 and one or string.format(many, n) end
-
---- The line under a place's name: where it sits and what its card or banner counts. Also returns
---- the map one level up, which a click on the line opens (nil for Azeroth). An area's is the zone it
---- is listed in (SpokenZones:AreaZone): a dungeon's entrance's, Strahnbrad's Alterac Mountains.
+--- The line under a place's name: where it sits and what its card or banner counts. An area sits in
+--- the zone it is listed in (SpokenZones:AreaZone): a dungeon's entrance's, Strahnbrad's Alterac
+--- Mountains.
 function SpokenZones:PlaceLine(mapID, key)
-	if key then
-		local zone = self:AreaZone(mapID, key)
-		return string.format(L.IN_ZONE_FMT, ZoneName(zone)), zone
-	end
+	if key then return string.format(L.IN_ZONE_FMT, ZoneName(self:AreaZone(mapID, key))) end
 	local parent = self:PlaceAbove(mapID)
-	if not parent then
-		return Count(#Continents(), L.CONTINENT_COUNT_FMT, L.CONTINENT_COUNT_ONE) .. ", "
-			.. Count(#ZoneIDs(), L.ZONE_COUNT_FMT, L.ZONE_COUNT_ONE), nil
-	elseif IsContinent(mapID) then
+	if IsContinent(mapID) then
 		local found, total = BannerCount(ZonesOf(mapID))
-		return InAndCount(parent, found, total), parent
+		return InAndCount(parent, found, total)
 	end
-	return InAndCount(parent, Places(mapID)), parent
+	return InAndCount(parent, Places(mapID))
 end
 
 --------------------------------------------------------------------------------
@@ -780,7 +747,7 @@ local function Holder(chosen)
 	if chosen.dungeons then return { mapID = chosen.dungeons } end
 	local mapID, key = chosen.mapID, chosen.key
 	if key then return { mapID = SpokenZones:DungeonOf(mapID, key) or SpokenZones:AreaZone(mapID, key) } end
-	if not mapID or mapID == WORLD or IsContinent(mapID) then return nil end
+	if not mapID or IsContinent(mapID) then return nil end
 	if CITY_IN[mapID] then return { mapID = CITY_IN[mapID] } end
 	if IS_BATTLEGROUND[mapID] then return { group = "battlegrounds" } end
 	local continent = ContinentOf(mapID)
@@ -823,7 +790,7 @@ function SpokenZones:RefreshLoreWindow(scrollToSelection)
 	if scrollToSelection and selection then
 		list:ScrollToChosen(items)
 	end
-	ShowEntry()
+	if selection then ShowEntry() end
 end
 
 --------------------------------------------------------------------------------

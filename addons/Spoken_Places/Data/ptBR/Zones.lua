@@ -13,12 +13,6 @@ if not SpokenZones:ShouldLoadLanguage("ptBR") then
 end
 
 local zones = {
-	[947] = {
-		name = "Azeroth",
-		short = "Há dez mil anos, os Bem-nascidos de Kalimdor, embriagados pelo poder do Poço da Eternidade, atenderam ao chamado do titã caído Sargeras e abriram um portal para a Legião Ardente.",
-		full = "Há dez mil anos, os Bem-nascidos de Kalimdor, embriagados pelo poder do Poço da Eternidade, atenderam ao chamado do titã caído Sargeras e abriram um portal para a Legião Ardente. Malfurion Tempesfúria e a resistência kaldorei destruíram esse portal com a Alma Dragônica e lançaram Sargeras de volta à Espiral Etérea, mas o colapso do Poço partiu o próprio mundo. A antiga Kalimdor afundou em fogo e inundação; quatro continentes arruinados emergiram dos destroços, e o coração submerso da terra tornou-se o Grande Mar, com a Voragem revolvendo as águas onde antes ficava o Poço.",
-		source = "https://warcraft.wiki.gg/wiki/Azeroth",
-	},
 	[1411] = {
 		name = "Durotar",
 		short = "Durotar é uma terra vermelha e rachada de penhascos e desfiladeiros, seca e quente, pobre em água e em verde.",

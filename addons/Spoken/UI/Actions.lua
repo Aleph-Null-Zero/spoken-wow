@@ -48,6 +48,8 @@ end
 local RING = ART .. "SettingsButton"
 -- A round button's glyph at rest; 1 under the pointer.
 local GLYPH_ALPHA = 0.85
+-- How much brighter a square Play button's border is under the pointer (added over itself).
+local BOX_LIT = 0.7
 -- The Forever client's bronze, as its own frames wear it: the round buttons' rings and the small
 -- window's metal take it while Bronze Border is on. Every ring made, to tint again when the setting
 -- changes.
@@ -661,15 +663,33 @@ function Actions.BoxPlay(button)
     local layout = SpokenLayout
     local border = layout and layout.AtlasTexture and layout.AtlasTexture(button, "BACKGROUND", "checkbox-minimal")
     if border then border:SetAllPoints(button) end
+    -- Under the pointer the box lights up, as the checkbox's does: its border again, added over itself.
+    local lit = layout and layout.AtlasTexture and layout.AtlasTexture(button, "HIGHLIGHT", "checkbox-minimal")
+    if lit then
+        lit:SetAllPoints(button)
+        lit:SetBlendMode("ADD")
+        lit:SetAlpha(BOX_LIT)
+    end
     local glyph = button:CreateTexture(nil, "ARTWORK")
     glyph:SetPoint("CENTER")
     glyph:SetSize(11, 11)
     glyph:SetAlpha(GLYPH_ALPHA)
-    button.border, button.glyph = border, glyph
+    button.border, button.lit, button.glyph = border, lit, glyph
     Actions.SetPlayGlyph(button, "play")
     function button:SetState(state) Actions.SetPlayGlyph(self, state) end
     button:HookScript("OnEnter", function(self) if self:IsEnabled() then glyph:SetAlpha(1) end end)
     button:HookScript("OnLeave", function(self) if self:IsEnabled() then glyph:SetAlpha(GLYPH_ALPHA) end end)
+    --- The box's atlas and size, and Play's glyph at about seven tenths of it.
+    function button:SetBox(atlas, width, height)
+        if atlas then
+            if self.border then self.border:SetAtlas(atlas) end
+            if self.lit then self.lit:SetAtlas(atlas) end
+        end
+        if type(width) == "number" and type(height) == "number" and width >= 12 and height >= 12 then
+            self:SetSize(width, height)
+            glyph:SetSize(math.floor(width * 0.7), math.floor(height * 0.7))
+        end
+    end
     function button:MatchBox(box)
         -- The texture that draws the checkbox's box, at the size it draws it: its normal texture, else
         -- the first region painted from an atlas that is not the tick.
@@ -685,15 +705,8 @@ function Actions.BoxPlay(button)
         Consider(box.GetNormalTexture and box:GetNormalTexture())
         for _, region in ipairs({ box:GetRegions() }) do Consider(region) end
         local width, height = box:GetWidth(), box:GetHeight()
-        if found then
-            if self.border then self.border:SetAtlas(found.atlas) end
-            width, height = found.width, found.height
-        end
-        if type(width) == "number" and type(height) == "number" and width >= 12 and height >= 12 then
-            self:SetSize(width, height)
-            -- Play's glyph fills the box as it fills the round button's ring: about half.
-            glyph:SetSize(math.floor(width * 0.55), math.floor(height * 0.55))
-        end
+        if found then width, height = found.width, found.height end
+        self:SetBox(found and found.atlas, width, height)
         return found and found.atlas, width, height
     end
     Greys(button)
