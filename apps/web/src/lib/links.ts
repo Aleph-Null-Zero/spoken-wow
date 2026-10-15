@@ -32,6 +32,21 @@ export function questsHref(options: { q?: string; filter?: Scope; finding?: numb
   return params.size ? `/quests?${params}` : "/quests";
 }
 
+/** The NPCs page, narrowed to one NPC: who it is and which voice reads it. Admins only. */
+export function npcPageHref(npcId: number): string {
+  return `/npcs?${new URLSearchParams({ q: String(npcId) })}`;
+}
+
+/**
+ * The quests or gossip explorer, narrowed to one NPC: what clicking the name in an explorer
+ * row does. `type` too, because an NPC id is unique only within its kind - creature 68 and
+ * gameobject 68 are two speakers.
+ */
+export function npcHref(npc: { npcId: number; npcType: string; gossip: boolean }): string {
+  const params = new URLSearchParams({ q: String(npc.npcId), filter: "npc", type: npc.npcType });
+  return `/${npc.gossip ? "gossip" : "quests"}?${params}`;
+}
+
 /**
  * The zones explorer, narrowed to one zone or to a search.
  *

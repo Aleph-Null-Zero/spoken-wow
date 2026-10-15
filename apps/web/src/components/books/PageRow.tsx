@@ -13,7 +13,7 @@ import TakeSelector from "@/components/TakeSelector";
 import { Button } from "@/components/ui/button";
 import { materialName } from "@/lib/books/filters";
 import type { ResultLine } from "@/lib/books/search";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 
 export type RowState =
   | { phase: "busy" }
@@ -103,7 +103,7 @@ export function PageRow({
   function toggleFromRow(event: React.MouseEvent<HTMLTableRowElement>) {
     const target = event.target as HTMLElement | null;
     if (target?.closest("button, a, input, textarea, select, [role='dialog']")) return;
-    if (!window.getSelection()?.isCollapsed) return;
+    if (endsSelection()) return;
     setExpanded((open) => !open);
   }
 
