@@ -398,7 +398,7 @@ export default function LineRow({
                 // link would land on a queue that never shows the row it points at.
                 href={localeHref(
                   lang,
-                  `/contributions/${line.source === "gossip" ? "gossip" : "quests"}?status=accepted#contribution-${line.contributionId}`,
+                  `/contributions/quests?status=accepted#contribution-${line.contributionId}`,
                 )}
                 onClick={(event) => event.stopPropagation()}
                 title="Accepted from a player's contribution"

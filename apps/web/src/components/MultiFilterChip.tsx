@@ -1,8 +1,6 @@
 "use client";
 
-import { XIcon } from "lucide-react";
-
-import type { ChipOption } from "@/components/FilterChip";
+import { ChipClear, type ChipOption } from "@/components/FilterChip";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -72,16 +70,7 @@ export default function MultiFilterChip({
         </PopoverContent>
       </Popover>
 
-      {active && (
-        <button
-          type="button"
-          aria-label={`Clear ${label} filter`}
-          onClick={() => onChange(undefined)}
-          className="border-primary bg-primary text-primary-foreground/70 hover:bg-primary/90 hover:text-primary-foreground focus-visible:ring-ring/50 flex h-8 items-center rounded-r-lg border border-l-0 pr-2 pl-1 transition-colors outline-none focus-visible:ring-3"
-        >
-          <XIcon className="size-3.5" />
-        </button>
-      )}
+      {active && <ChipClear label={label} onClear={() => onChange(undefined)} />}
     </div>
   );
 }
