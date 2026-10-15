@@ -20,9 +20,12 @@ import type { Source } from "@/lib/sections";
 
 // Timestamps are cast to text so a Report is the same shape in Postgres, over JSON and in the
 // browser. `pg` hands back Date objects for timestamptz, which survive neither the wire nor a
-// server-to-client component boundary as themselves.
+// server-to-client component boundary as themselves. Through to_json rather than ::text, which
+// writes `2026-10-03 12:34:56+00`: Safari's Date.parse refuses the space and the bare offset,
+// and ISO 8601 parses everywhere.
 const COLUMNS = `"id", "source", "lineId", "target", "category", "body", "status", "userId",
-                 "name", "email", "createdAt"::text, "resolvedAt"::text, "resolvedBy"`;
+                 "name", "email", to_json("createdAt") #>> '{}' as "createdAt",
+                 to_json("resolvedAt") #>> '{}' as "resolvedAt", "resolvedBy"`;
 
 export async function createReport(input: {
   source: Source;
@@ -149,4 +152,46 @@ export async function setStatus(
     detail: { status: report.status, category: report.category },
   });
   return report;
+}
+
+/**
+ * The open reports in one language that this person put aside while sorting. Every section at
+ * once: ids are unique across them, so a caller holding one section's reports can use it as is.
+ */
+export async function skippedIds(userId: string, lang: Lang): Promise<Set<number>> {
+  const { rows } = await db().query<{ id: string }>(
+    `select r."id"::text as "id"
+       from "report_skip" s
+       join "report" r on r."id" = s."reportId"
+      where s."userId" = $1 and r."lang" = $2 and r."status" = 'open'`,
+    [userId, lang],
+  );
+  return new Set(rows.map((row) => Number(row.id)));
+}
+
+/**
+ * Only open reports in `lang` are written: the caller's grant is for that language, and an
+ * id from another one, or one already answered, has nothing to put aside.
+ */
+export async function skipReports(userId: string, ids: number[], lang: Lang): Promise<number> {
+  if (!ids.length) return 0;
+  const { rowCount } = await db().query(
+    `insert into "report_skip" ("userId", "reportId")
+     select $1, "id" from "report"
+      where "id" = any($2::bigint[]) and "lang" = $3 and "status" = 'open'
+     on conflict do nothing`,
+    [userId, ids, lang],
+  );
+  return rowCount ?? 0;
+}
+
+/** Puts every report this person skipped in one section and language back in their queue. */
+export async function resetSkips(userId: string, source: Source, lang: Lang): Promise<number> {
+  const { rowCount } = await db().query(
+    `delete from "report_skip" s
+      using "report" r
+      where r."id" = s."reportId" and s."userId" = $1 and r."source" = $2 and r."lang" = $3`,
+    [userId, source, lang],
+  );
+  return rowCount ?? 0;
 }

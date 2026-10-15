@@ -44,6 +44,7 @@ import {
   type StatusView,
 } from "@/lib/reports/query";
 import { CATEGORIES, CATEGORY_COLUMN, STATUS_LABELS, type Category, type Report, type Status } from "@/lib/reports/reports";
+import { resolveReport } from "@/lib/reports/client";
 import { applyResolutions, type ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import { cn } from "@/lib/utils";
@@ -194,25 +195,12 @@ export default function ReportTable({
     void audio.current?.play().catch(() => {});
   }, [pressed]);
 
-  /**
-   * One request per report, even for a group: each row keeps its own resolvedAt and
-   * resolvedBy, and a report that fails to resolve stays open rather than taking the rest
-   * of its group down with it.
-   */
   async function resolve(ids: number[], status: Status) {
     setBusy((current) => new Set([...current, ...ids]));
     await Promise.all(
       ids.map(async (id) => {
-        const response = await fetch("/api/reports/resolve", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ id, status }),
-        }).catch(() => null);
-
-        if (response?.ok) {
-          const { report } = (await response.json()) as { report: Report };
-          setResolved((current) => ({ ...current, [report.id]: report }));
-        }
+        const report = await resolveReport(id, status);
+        if (report) setResolved((current) => ({ ...current, [report.id]: report }));
 
         setBusy((current) => {
           const next = new Set(current);

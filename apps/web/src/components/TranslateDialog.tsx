@@ -4,6 +4,7 @@ import { Loader2, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { withLang } from "@/lib/lang";
+import type { ResultLine as QuestLine } from "@/lib/search";
 
 import { useLang } from "./LangProvider";
 
@@ -43,6 +44,20 @@ export type TranslateSubject = {
   /** A line is a paragraph; a name is one line. */
   multiline: boolean;
 };
+
+/** A quest line's text, in a language other than English. */
+export function lineTextSubject(line: QuestLine): TranslateSubject {
+  return {
+    title: line.npcName,
+    subtitle: line.lineId,
+    english: line.english ? line.originalText : "There is no English line yet.",
+    current: line.missing?.text ? null : line.text,
+    endpoint: "/api/quests/lines/text",
+    address: { lineId: line.lineId, variant: line.variant ?? 0 },
+    field: "text",
+    multiline: true,
+  };
+}
 
 /** A thing's name: a quest's, an NPC's, a book owner's, a place's. */
 export function nameSubject(args: {

@@ -891,6 +891,14 @@ reopening it. **A report never becomes a regeneration job.** Regenerating spends
 credits, so nothing public can start one; someone reads the report, listens, and queues the
 file through the normal flow.
 
+`/reports/sort` is the same triage one line at a time, laid out for a phone. It offers quests
+(gossip included), books and zones with how many lines each has open, then walks one section's
+lines, most reported first, each with its line, its takes, its reports, the explorers' player
+and Play, Edit and Regenerate.
+Fixed and Not a problem answer every open report on the line. Skip is per person and stored in
+`report_skip` (migration 0074), per report: a line comes back when a new report arrives on it,
+and Reset on the picker brings back everything that person skipped in that section.
+
 ### When there is no line at all
 
 A report presumes a line exists and is wrong. Some of the time there is no line to be wrong —

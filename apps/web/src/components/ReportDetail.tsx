@@ -16,9 +16,8 @@ import { useState } from "react";
 
 import OverrideDialog from "@/components/OverrideDialog";
 import { Button } from "@/components/ui/button";
-import { detailOf, regeneratePath, type SourceLine } from "@/lib/reports/detail";
+import { detailOf, regenerateLine, type SourceLine } from "@/lib/reports/detail";
 
-import { noApiKeyMessage } from "@/lib/no-api-key";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { Source } from "@/lib/sections";
 
@@ -54,33 +53,12 @@ export default function ReportDetail({
     setError(null);
     setDone(false);
 
-    const response = await fetch(regeneratePath(source, lang), {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ lineId }),
-    }).catch(() => null);
-
-    const body = (await response?.json().catch(() => ({}))) as {
-      ok?: boolean;
-      version?: number;
-      error?: string;
-      code?: string;
-    };
+    const result = await regenerateLine(source, lineId, lang);
     setBusy(false);
-
-    if (!response) return setError("the request did not go through");
-
-    // "You have the role but no key on file" is one page away from fixed, so it says so
-    // rather than reading as a failure of the line.
-    const noKey = noApiKeyMessage(response.status, body);
-    if (noKey) return setError(noKey);
-
-    if (!response.ok || !body.ok || body.version === undefined) {
-      return setError(body.error ?? `failed (${response.status})`);
-    }
+    if ("error" in result) return setError(result.error);
 
     setDone(true);
-    onRegenerated(body.version);
+    onRegenerated(result.version);
   }
 
   if (line === undefined) {

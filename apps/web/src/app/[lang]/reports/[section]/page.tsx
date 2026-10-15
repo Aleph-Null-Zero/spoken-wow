@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
+import Link from "@/components/LocaleLink";
 import ReportTable from "@/components/ReportTable";
 import { auth } from "@/lib/auth";
 import { viewerOf } from "@/lib/grants/store";
@@ -80,7 +81,12 @@ export default async function Page({
   return (
     <main className="pt-6 pb-24">
       <Contained>
-        <h1 className="text-xl font-semibold">Reports</h1>
+        <div className="flex items-baseline justify-between gap-4">
+          <h1 className="text-xl font-semibold">Reports</h1>
+          <Link href="/reports/sort" className="text-sm underline-offset-2 hover:underline">
+            Sort one at a time
+          </Link>
+        </div>
         <p className="text-muted-foreground mt-1 mb-5 text-sm">
           What players filed from inside the game. A report is a claim, not a verdict: read it,
           listen to the line, and if it is right, queue the file for regeneration the usual way.
