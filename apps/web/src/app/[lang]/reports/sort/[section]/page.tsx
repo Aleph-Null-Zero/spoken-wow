@@ -24,10 +24,11 @@ export default async function Page({ params }: { params: Promise<{ lang: string;
   const viewer = await viewerOf(session);
   if (!session || !can(viewer, "edit", lang)) notFound();
 
-  const groups = sortQueue(
-    await listReports("open", section, "all", null, lang),
-    await skippedIds(session.user.id, section, lang),
-  );
+  const [reports, skipped] = await Promise.all([
+    listReports("open", section, "all", null, lang),
+    skippedIds(session.user.id, lang),
+  ]);
+  const groups = sortQueue(reports, skipped);
   const canRegenerate = can(viewer, "regenerate", lang);
 
   return (

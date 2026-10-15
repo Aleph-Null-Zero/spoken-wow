@@ -22,17 +22,12 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
   const viewer = await viewerOf(session);
   if (!session || !can(viewer, "edit", lang)) notFound();
 
-  const open = await listReports("open", "all", "all", null, lang);
+  const [open, skipped] = await Promise.all([
+    listReports("open", "all", "all", null, lang),
+    skippedIds(session.user.id, lang),
+  ]);
   const counts = Object.fromEntries(
-    await Promise.all(
-      SOURCES.map(async (source) => [
-        source,
-        queueCounts(
-          open.filter((report) => report.source === source),
-          await skippedIds(session.user.id, source, lang),
-        ),
-      ]),
-    ),
+    SOURCES.map((source) => [source, queueCounts(open.filter((report) => report.source === source), skipped)]),
   ) as Record<Source, { left: number; skipped: number }>;
 
   return (

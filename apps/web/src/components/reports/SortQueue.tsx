@@ -16,40 +16,47 @@ import Link from "@/components/LocaleLink";
 import OverrideDialog from "@/components/OverrideDialog";
 import QuestsPlayer from "@/components/Player";
 import TakeSelector from "@/components/TakeSelector";
-import { TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
+import { lineTextSubject, TranslateDialog } from "@/components/TranslateDialog";
 import { PageTextDialog } from "@/components/books/PageTextDialog";
 import { Player as BooksPlayer } from "@/components/books/Player";
 import { Button } from "@/components/ui/button";
 import { LoreDialog } from "@/components/zones/LoreDialog";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
 import type { ResultLine as BookLine } from "@/lib/books/search";
-import { BASE_LANG, withLang } from "@/lib/lang";
+import { isTypingTarget } from "@/lib/keyboard";
+import { BASE_LANG, withLang, type Lang } from "@/lib/lang";
 import { explorerHref } from "@/lib/links";
-import { noApiKeyMessage } from "@/lib/no-api-key";
-import { detailOf, regeneratePath, searchPath, type SourceLine } from "@/lib/reports/detail";
-import { CATEGORY_COLUMN, SOURCE_LABELS, type Report, type Status } from "@/lib/reports/reports";
+import { resolveReport } from "@/lib/reports/client";
+import { detailOf, fileOf, regenerateLine, searchPath, type SourceLine } from "@/lib/reports/detail";
+import { CATEGORY_COLUMN, SOURCE_LABELS, STATUS_LABELS, type Report, type Status } from "@/lib/reports/reports";
 import type { ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { Source } from "@/lib/sections";
 import { cn } from "@/lib/utils";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
 
-/** The answer a revisited card was given. */
-const CHOSEN = "ring-foreground/60 ring-2";
-
 /** Enough to read a typical complaint whole without pushing the actions off a phone screen. */
 const PREVIEW = 3;
-/** Longer than this and the line's text is clamped behind "more". */
+/** Longer than this and the line's text is clamped until the card is expanded. */
 const LONG_TEXT = 280;
 
 type Answer = Exclude<Status, "open"> | "skip";
 type Busy = Answer | "regenerate" | null;
 
-const ANSWER_LABELS: Record<Answer, string> = {
-  fixed: "Fixed",
-  not_an_issue: "Not a problem",
-  skip: "Skipped",
-};
+/** The completion row, left to right, with each answer's key. */
+const ANSWERS: { answer: Answer; label: string; done: string; busy: string; key: string; tone?: string }[] = [
+  { answer: "fixed", label: STATUS_LABELS.fixed, done: STATUS_LABELS.fixed, busy: "Saving…", key: "f", tone: ACCEPT_TONE },
+  {
+    answer: "not_an_issue",
+    label: STATUS_LABELS.not_an_issue,
+    done: STATUS_LABELS.not_an_issue,
+    busy: "Saving…",
+    key: "n",
+    tone: REJECT_TONE,
+  },
+  { answer: "skip", label: "Skip", done: "Skipped", busy: "Skipping…", key: "s" },
+];
+
 /** A line not fetched yet is absent; null is a line the corpus no longer has. */
 type Looked = SourceLine | null | "error";
 
@@ -61,28 +68,10 @@ function ago(at: string): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-/** What TranslateDialog edits for a quest line outside English, as the explorer opens it. */
-function translateSubject(line: QuestLine): TranslateSubject {
-  return {
-    title: line.npcName,
-    subtitle: line.lineId,
-    english: line.english ? line.originalText : "There is no English line yet.",
-    current: line.missing?.text ? null : line.text,
-    endpoint: "/api/quests/lines/text",
-    address: { lineId: line.lineId, variant: line.variant ?? 0 },
-    field: "text",
-    multiline: true,
-  };
-}
-
-/** The store-relative file a take belongs to, as TakeSelector addresses it. */
-function fileOf(source: Source, line: SourceLine): string {
-  return source === "quests" ? (line as QuestLine).audioPath : (line as ZoneLine | BookLine).file;
-}
-
-function isTyping(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+/** Resolving a report already resolved is allowed, which is what lets Previous change an answer. */
+async function failedToSet(reports: Report[], status: Status): Promise<number> {
+  const results = await Promise.all(reports.map((report) => resolveReport(report.id, status)));
+  return results.filter((report) => report === null).length;
 }
 
 export default function SortQueue({
@@ -126,11 +115,13 @@ export default function SortQueue({
   const line = looked && looked !== "error" ? looked : null;
   // The take this session made or restored, else the live one: either way a cache buster, since
   // a new take keeps its path and the browser would replay the one it replaced.
-  const version = lineId === null || line === null ? undefined : (versions[lineId] ?? line.take?.version);
+  const version = line ? (versions[lineId!] ?? line.take?.version) : undefined;
   const detail = line ? detailOf(source, line, version, lang) : null;
+  const answer = answers[index];
 
-  const fetchLine = useCallback(
+  const load = useCallback(
     async (id: string) => {
+      requested.current.add(id);
       const response = await fetch(searchPath(source, id, lang)).catch(() => null);
       const body = response?.ok
         ? ((await response.json().catch(() => null)) as { lines?: SourceLine[] } | null)
@@ -140,36 +131,12 @@ export default function SortQueue({
     [source, lang],
   );
 
-  const reload = useCallback(
-    (id: string) => {
-      requested.current.add(id);
-      void fetchLine(id);
-    },
-    [fetchLine],
-  );
-
   useEffect(() => {
     for (const next of groups.slice(index, index + 2)) {
       const id = next.reports[0].lineId;
-      if (id && !requested.current.has(id)) reload(id);
+      if (id && !requested.current.has(id)) void load(id);
     }
-  }, [groups, index, reload]);
-
-  // The player owns the element; the Play button only mirrors it.
-  useEffect(() => {
-    const element = audio.current;
-    if (!element) return;
-    const on = () => setPlaying(true);
-    const off = () => setPlaying(false);
-    element.addEventListener("play", on);
-    element.addEventListener("pause", off);
-    element.addEventListener("ended", off);
-    return () => {
-      element.removeEventListener("play", on);
-      element.removeEventListener("pause", off);
-      element.removeEventListener("ended", off);
-    };
-  }, [group === undefined]);
+  }, [groups, index, load]);
 
   useEffect(() => {
     if (!playWhenReady.current || !detail?.audioSrc) return;
@@ -187,66 +154,33 @@ export default function SortQueue({
     setPlaying(false);
   }
 
-  function answered(answer: Answer) {
-    setAnswers((current) => ({ ...current, [index]: answer }));
+  async function give(next: Answer) {
+    if (!group || busy) return;
+    if (answer === next) return goTo(index + 1);
+    setBusy(next);
+    setError(null);
+    const problem = next === "skip" ? await skip(group) : await resolve(group, next);
+    setBusy(null);
+    if (problem) return setError(problem);
+    setAnswers((current) => ({ ...current, [index]: next }));
     goTo(index + 1);
   }
 
-  /**
-   * One request per report, as the triage table does: each keeps its own resolver. Returns
-   * how many failed. Resolving a report already resolved is allowed, which is what lets a
-   * card revisited through Previous change its answer.
-   */
-  async function setStatuses(reports: Report[], status: Status): Promise<number> {
-    const results = await Promise.all(
-      reports.map((report) =>
-        fetch("/api/reports/resolve", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ id: report.id, status }),
-        })
-          .then((response) => response.ok)
-          .catch(() => false),
-      ),
-    );
-    return results.filter((ok) => !ok).length;
+  async function resolve(current: ReportGroup, status: Exclude<Status, "open">): Promise<string | null> {
+    const failed = await failedToSet(current.reports, status);
+    return failed ? `${failed} of ${current.reports.length} didn't save. Try again.` : null;
   }
 
-  async function resolve(status: Exclude<Status, "open">) {
-    if (!group || busy) return;
-    if (answers[index] === status) return goTo(index + 1);
-    setBusy(status);
-    setError(null);
-    const failed = await setStatuses(group.reports, status);
-    setBusy(null);
-    if (failed) return setError(`${failed} of ${group.reports.length} didn't save. Try again.`);
-    answered(status);
-  }
-
-  async function skip() {
-    if (!group || busy) return;
-    const previous = answers[index];
-    if (previous === "skip") return goTo(index + 1);
-    setBusy("skip");
-    setError(null);
+  async function skip(current: ReportGroup): Promise<string | null> {
     // A line answered earlier is reopened first: only open reports can be skipped, and a
     // skipped line is one still waiting for somebody.
-    if (previous && (await setStatuses(group.reports, "open"))) {
-      setBusy(null);
-      return setError("Couldn't reopen the reports. Try again.");
-    }
+    if (answer && (await failedToSet(current.reports, "open"))) return "Couldn't reopen the reports. Try again.";
     const response = await fetch(withLang(lang, "/api/reports/skip"), {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ids: group.reports.map((report) => report.id) }),
+      body: JSON.stringify({ ids: current.reports.map((report) => report.id) }),
     }).catch(() => null);
-    setBusy(null);
-    if (!response?.ok) return setError("Couldn't skip. Try again.");
-    answered("skip");
-  }
-
-  function previous() {
-    if (index > 0 && !busy) goTo(index - 1);
+    return response?.ok ? null : "Couldn't skip. Try again.";
   }
 
   async function regenerate() {
@@ -254,32 +188,16 @@ export default function SortQueue({
     setBusy("regenerate");
     setError(null);
     setNotice(null);
-    const response = await fetch(regeneratePath(source, lang), {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ lineId }),
-    }).catch(() => null);
-    const body = (await response?.json().catch(() => ({}))) as {
-      ok?: boolean;
-      version?: number;
-      error?: string;
-      code?: string;
-    };
+    const result = await regenerateLine(source, lineId, lang);
     setBusy(null);
+    if ("error" in result) return setError(`Regenerate failed: ${result.error}`);
 
-    if (!response) return setError("The request did not go through.");
-    const noKey = noApiKeyMessage(response.status, body);
-    if (noKey) return setError(noKey);
-    if (!response.ok || !body.ok || body.version === undefined) {
-      return setError(body.error ?? `Regenerate failed (${response.status}).`);
-    }
-
-    setVersions((current) => ({ ...current, [lineId]: body.version! }));
+    setVersions((current) => ({ ...current, [lineId]: result.version }));
     setNotice("New take saved.");
     playWhenReady.current = true;
     // Refetched rather than patched: a line that had no take until now only gains its audio
     // path from the search.
-    reload(lineId);
+    void load(lineId);
   }
 
   function togglePlay() {
@@ -289,42 +207,52 @@ export default function SortQueue({
     else element.pause();
   }
 
+  function previous() {
+    if (index > 0 && !busy) goTo(index - 1);
+  }
+
   const canEdit = canEditText && line !== null;
   const canRegenerateLine = canRegenerate && line !== null;
-  const keyActions = {
-    togglePlay,
-    resolve,
-    skip,
-    edit: () => canEdit && setEditing(true),
-    regenerate: () => canRegenerateLine && void regenerate(),
-    expand: () => setExpanded((current) => !current),
-    previous,
+
+  const keys: Record<string, () => void> = {
+    " ": togglePlay,
+    e: () => canEdit && setEditing(true),
+    r: () => canRegenerateLine && void regenerate(),
+    x: () => setExpanded((current) => !current),
+    p: previous,
+    ...Object.fromEntries(ANSWERS.map((each) => [each.key, () => void give(each.answer)])),
   };
-  const actions = useRef(keyActions);
-  actions.current = keyActions;
+  // Read through a ref so the listener, added once, always calls this render's handlers.
+  const keysRef = useRef(keys);
+  keysRef.current = keys;
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return;
-      // A dialog owns the keyboard while it is open.
-      if (document.querySelector("[role=dialog]")) return;
-      const act = actions.current;
-      if (event.key === " ") {
-        event.preventDefault();
-        act.togglePlay();
-      } else if (event.key === "f") void act.resolve("fixed");
-      else if (event.key === "n") void act.resolve("not_an_issue");
-      else if (event.key === "s") void act.skip();
-      else if (event.key === "e") act.edit();
-      else if (event.key === "r") act.regenerate();
-      else if (event.key === "x") act.expand();
-      else if (event.key === "p") act.previous();
+      if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
+      // A dialog is portalled outside the focused element's tree, so it is checked for here too.
+      if (document.querySelector('[role="dialog"]')) return;
+      const act = keysRef.current[event.key];
+      if (!act) return;
+      if (event.key === " ") event.preventDefault();
+      act();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const total = groups.length;
+  const previousButton = (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={previous}
+      disabled={index === 0 || busy !== null}
+      title="Go back to the last line and change its answer"
+    >
+      <Undo2 />
+      Previous
+      <Hint>[P]</Hint>
+    </Button>
+  );
 
   if (!group) {
     return (
@@ -334,13 +262,7 @@ export default function SortQueue({
           No open {SOURCE_LABELS[source].toLowerCase()} reports left in your queue.
         </p>
         <div className="mt-6 flex items-center gap-4 text-sm">
-          {index > 0 ? (
-            <Button variant="outline" size="sm" onClick={previous}>
-              <Undo2 />
-              Previous
-              <Hint>[P]</Hint>
-            </Button>
-          ) : null}
+          {index > 0 ? previousButton : null}
           <Link href="/reports/sort" className="underline underline-offset-2">
             Back to sections
           </Link>
@@ -349,6 +271,7 @@ export default function SortQueue({
     );
   }
 
+  const total = groups.length;
   const reports = expanded ? group.reports : group.reports.slice(0, PREVIEW);
   const text = detail?.text ?? "";
 
@@ -356,25 +279,11 @@ export default function SortQueue({
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 pt-4 pb-56">
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <Link
-            href="/reports/sort"
-            aria-label="Back to sections"
-            className="hover:bg-muted -ml-2 rounded-md p-2"
-          >
+          <Link href="/reports/sort" aria-label="Back to sections" className="hover:bg-muted -ml-2 rounded-md p-2">
             <ArrowLeft className="size-5" />
           </Link>
           <span className="flex-1 font-medium">{SOURCE_LABELS[source]}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={previous}
-            disabled={index === 0 || busy !== null}
-            title="Go back to the last line and change its answer"
-          >
-            <Undo2 />
-            Previous
-            <Hint>[P]</Hint>
-          </Button>
+          {previousButton}
           <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-pressed={expanded}>
             {expanded ? <ChevronsDownUp /> : <ChevronsUpDown />}
             {expanded ? "Collapse" : "Expand"}
@@ -389,10 +298,10 @@ export default function SortQueue({
         </div>
       </header>
 
-      {answers[index] ? (
+      {answer ? (
         <p className="bg-muted rounded-lg px-3 py-2 text-sm">
-          Answered <span className="font-medium">{ANSWER_LABELS[answers[index]]}</span>. Pick another answer
-          below to change it.
+          Answered <span className="font-medium">{ANSWERS.find((each) => each.answer === answer)!.done}</span>.
+          Pick another answer below to change it.
         </p>
       ) : null}
 
@@ -409,11 +318,11 @@ export default function SortQueue({
         ) : looked === "error" ? (
           <p className="text-sm">
             Couldn&apos;t load the line.{" "}
-            <button type="button" className="underline underline-offset-2" onClick={() => reload(lineId)}>
+            <button type="button" className="underline underline-offset-2" onClick={() => void load(lineId)}>
               Retry
             </button>
           </p>
-        ) : detail === null ? (
+        ) : line === null || detail === null ? (
           <p className="text-muted-foreground text-sm">
             No line in the corpus carries <span className="font-mono">{lineId}</span> any more.
           </p>
@@ -432,13 +341,13 @@ export default function SortQueue({
               </Link>
               <TakeSelector
                 source={source}
-                file={fileOf(source, line!)}
+                file={fileOf(source, line)}
                 version={version ?? null}
-                takes={line!.take?.takes ?? 0}
+                takes={line.take?.takes ?? 0}
                 canRestore={canRegenerate}
                 onRestored={(restored) => {
                   setVersions((current) => ({ ...current, [lineId]: restored }));
-                  reload(lineId);
+                  void load(lineId);
                 }}
               />
             </div>
@@ -446,13 +355,7 @@ export default function SortQueue({
         )}
 
         <div className="mt-1 grid grid-cols-3 gap-2">
-          <Button
-            variant="outline"
-            className="h-11"
-            disabled={!detail?.audioSrc}
-            onClick={togglePlay}
-            title="Play"
-          >
+          <Button variant="outline" className="h-11" disabled={!detail?.audioSrc} onClick={togglePlay}>
             {playing ? <Pause /> : <Play />}
             {playing ? "Pause" : "Play"}
             <Hint>[Space]</Hint>
@@ -462,7 +365,6 @@ export default function SortQueue({
             className="h-11"
             disabled={!canEdit || busy !== null}
             onClick={() => setEditing(true)}
-            title="Edit text"
           >
             <Pencil />
             Edit
@@ -504,75 +406,92 @@ export default function SortQueue({
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
-      <nav className="bg-background/95 fixed inset-x-0 bottom-0 z-20 backdrop-blur">
+      {/* Media events reach React handlers on ancestors, so the Play button mirrors the
+          player's element from here without a listener of its own. */}
+      <nav
+        className="bg-background/95 fixed inset-x-0 bottom-0 z-20 backdrop-blur"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      >
         {/* The explorers' transport, for scrubbing through the line and downloading it. */}
-        {source === "quests" ? (
-          <QuestsPlayer ref={audio} line={detail?.audioSrc ? (line as QuestLine) : null} version={version} />
-        ) : source === "zones" ? (
-          <ZonesPlayer audioRef={audio} line={line as ZoneLine | null} version={version} />
-        ) : (
-          <BooksPlayer audioRef={audio} line={line as BookLine | null} version={version} />
-        )}
+        <SourcePlayer source={source} line={detail?.audioSrc ? line : null} version={version} audio={audio} />
         <div className="mx-auto grid max-w-xl grid-cols-3 gap-2 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <LiteButton
-            className={cn("h-12 justify-center gap-1.5 text-sm", ACCEPT_TONE, answers[index] === "fixed" && CHOSEN)}
-            disabled={busy !== null}
-            onClick={() => void resolve("fixed")}
-            title="Fixed"
-          >
-            {busy === "fixed" ? "Saving…" : "Fixed"}
-            <Hint>[F]</Hint>
-          </LiteButton>
-          <LiteButton
-            className={cn(
-              "h-12 justify-center gap-1.5 text-sm",
-              REJECT_TONE,
-              answers[index] === "not_an_issue" && CHOSEN,
-            )}
-            disabled={busy !== null}
-            onClick={() => void resolve("not_an_issue")}
-            title="Not a problem"
-          >
-            {busy === "not_an_issue" ? "Saving…" : "Not a problem"}
-            <Hint>[N]</Hint>
-          </LiteButton>
-          <LiteButton
-            className={cn("h-12 justify-center gap-1.5 text-sm", answers[index] === "skip" && CHOSEN)}
-            disabled={busy !== null}
-            onClick={() => void skip()}
-            title="Skip"
-          >
-            {busy === "skip" ? "Skipping…" : "Skip"}
-            <Hint>[S]</Hint>
-          </LiteButton>
+          {ANSWERS.map((each) => (
+            <LiteButton
+              key={each.answer}
+              className={cn(
+                "h-12 justify-center gap-1.5 text-sm",
+                each.tone,
+                answer === each.answer && "ring-foreground/60 ring-2",
+              )}
+              disabled={busy !== null}
+              onClick={() => void give(each.answer)}
+            >
+              {busy === each.answer ? each.busy : each.label}
+              <Hint>[{each.key.toUpperCase()}]</Hint>
+            </LiteButton>
+          ))}
         </div>
       </nav>
 
       {editing && line && lineId ? (
-        source === "quests" ? (
-          lang === BASE_LANG ? (
-            <OverrideDialog
-              line={line as QuestLine}
-              onSaved={() => {
-                setEditing(false);
-                reload(lineId);
-              }}
-              onCancel={() => setEditing(false)}
-            />
-          ) : (
-            <TranslateDialog
-              subject={translateSubject(line as QuestLine)}
-              onClose={() => setEditing(false)}
-              onSaved={() => reload(lineId)}
-            />
-          )
-        ) : source === "zones" ? (
-          <LoreDialog line={line as ZoneLine} onClose={() => setEditing(false)} onSaved={() => reload(lineId)} />
-        ) : (
-          <PageTextDialog line={line as BookLine} onClose={() => setEditing(false)} onSaved={() => reload(lineId)} />
-        )
+        <EditDialog
+          source={source}
+          lang={lang}
+          line={line}
+          onClose={() => setEditing(false)}
+          onSaved={() => void load(lineId)}
+        />
       ) : null}
     </main>
+  );
+}
+
+function SourcePlayer({
+  source,
+  line,
+  version,
+  audio,
+}: {
+  source: Source;
+  line: SourceLine | null;
+  version: number | undefined;
+  audio: React.RefObject<HTMLAudioElement | null>;
+}) {
+  if (source === "quests") return <QuestsPlayer ref={audio} line={line as QuestLine | null} version={version} />;
+  if (source === "zones") return <ZonesPlayer audioRef={audio} line={line as ZoneLine | null} version={version} />;
+  return <BooksPlayer audioRef={audio} line={line as BookLine | null} version={version} />;
+}
+
+/** Each section's own editor: English quest text is an override, other quest text a translation. */
+function EditDialog({
+  source,
+  lang,
+  line,
+  onClose,
+  onSaved,
+}: {
+  source: Source;
+  lang: Lang;
+  line: SourceLine;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  if (source === "zones") return <LoreDialog line={line as ZoneLine} onClose={onClose} onSaved={onSaved} />;
+  if (source === "books") return <PageTextDialog line={line as BookLine} onClose={onClose} onSaved={onSaved} />;
+  if (lang !== BASE_LANG) {
+    return <TranslateDialog subject={lineTextSubject(line as QuestLine)} onClose={onClose} onSaved={onSaved} />;
+  }
+  return (
+    <OverrideDialog
+      line={line as QuestLine}
+      onSaved={() => {
+        onClose();
+        onSaved();
+      }}
+      onCancel={onClose}
+    />
   );
 }
 
@@ -583,10 +502,9 @@ function Hint({ children }: { children: ReactNode }) {
 
 /** Never shows the reporter's email or address: who they are is not what triage weighs. */
 function ReportPreview({ report, expanded }: { report: Report; expanded: boolean }) {
-  const [opened, setWhole] = useState(false);
-  const whole = expanded || opened;
+  const [opened, setOpened] = useState(false);
   return (
-    <article className="bg-card cursor-pointer rounded-lg border px-3 py-2.5" onClick={() => setWhole(!opened)}>
+    <article className="bg-card cursor-pointer rounded-lg border px-3 py-2.5" onClick={() => setOpened(!opened)}>
       <div className="text-muted-foreground flex items-center gap-2 text-xs">
         <span className="bg-muted text-foreground rounded px-1.5 py-0.5 font-medium">
           {CATEGORY_COLUMN[report.category]}
@@ -594,7 +512,14 @@ function ReportPreview({ report, expanded }: { report: Report; expanded: boolean
         <span className="truncate">{report.name ?? "anonymous"}</span>
         <span className="ml-auto shrink-0">{ago(report.createdAt)}</span>
       </div>
-      <p className={cn("mt-1.5 text-sm break-words whitespace-pre-wrap", !whole && "line-clamp-3")}>{report.body}</p>
+      <p
+        className={cn(
+          "mt-1.5 text-sm break-words whitespace-pre-wrap",
+          !expanded && !opened && "line-clamp-3",
+        )}
+      >
+        {report.body}
+      </p>
     </article>
   );
 }

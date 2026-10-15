@@ -151,14 +151,17 @@ export async function setStatus(
   return report;
 }
 
-/** The open reports of one section and language that this person put aside while sorting. */
-export async function skippedIds(userId: string, source: Source, lang: Lang): Promise<Set<number>> {
+/**
+ * The open reports in one language that this person put aside while sorting. Every section at
+ * once: ids are unique across them, so a caller holding one section's reports can use it as is.
+ */
+export async function skippedIds(userId: string, lang: Lang): Promise<Set<number>> {
   const { rows } = await db().query<{ id: string }>(
     `select r."id"::text as "id"
        from "report_skip" s
        join "report" r on r."id" = s."reportId"
-      where s."userId" = $1 and r."source" = $2 and r."lang" = $3 and r."status" = 'open'`,
-    [userId, source, lang],
+      where s."userId" = $1 and r."lang" = $2 and r."status" = 'open'`,
+    [userId, lang],
   );
   return new Set(rows.map((row) => Number(row.id)));
 }

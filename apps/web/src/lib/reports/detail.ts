@@ -11,6 +11,7 @@
  * a row that would silently render an empty panel if it reached for the wrong pair.
  */
 import { BASE_LANG, withLang, type Lang } from "@/lib/lang";
+import { noApiKeyMessage } from "@/lib/no-api-key";
 import type { ResultLine as BookLine } from "@/lib/books/search";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
@@ -66,6 +67,49 @@ export function searchPath(source: Source, lineId: string, lang: Lang = BASE_LAN
 
 export function regeneratePath(source: Source, lang: Lang = BASE_LANG): string {
   return withLang(lang, `/api/${source}/regenerate`);
+}
+
+/**
+ * Cuts a new take of one line, and says which version it wrote or why it could not.
+ *
+ * "You have the role but no key on file" is one page away from fixed, so it comes back in
+ * those words rather than reading as a failure of the line.
+ */
+export async function regenerateLine(
+  source: Source,
+  lineId: string,
+  lang: Lang = BASE_LANG,
+): Promise<{ version: number } | { error: string }> {
+  const response = await fetch(regeneratePath(source, lang), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ lineId }),
+  }).catch(() => null);
+  if (!response) return { error: "the request did not go through" };
+
+  const body = (await response.json().catch(() => ({}))) as {
+    ok?: boolean;
+    version?: number;
+    error?: string;
+    code?: string;
+  };
+  const noKey = noApiKeyMessage(response.status, body);
+  if (noKey) return { error: noKey };
+  if (!response.ok || !body.ok || body.version === undefined) {
+    return { error: body.error ?? `failed (${response.status})` };
+  }
+  return { version: body.version };
+}
+
+const FILES: Record<Source, (line: SourceLine) => string> = {
+  quests: (line) => (line as QuestLine).audioPath,
+  zones: (line) => (line as ZoneLine).file,
+  books: (line) => (line as BookLine).file,
+};
+
+/** The store-relative file a line's takes belong to, as /api/takes addresses it. */
+export function fileOf(source: Source, line: SourceLine): string {
+  return FILES[source](line);
 }
 
 /**

@@ -1,6 +1,7 @@
 "use client";
 
-import { nameSubject, TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
+import { lineTextSubject, nameSubject, TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
+import { isTypingTarget } from "@/lib/keyboard";
 import { useLang } from "@/components/LangProvider";
 import { BASE_LANG, withLang } from "@/lib/lang";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -194,16 +195,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
         setEditing(line);
         return;
       }
-      setTranslating({
-        title: line.npcName,
-        subtitle: line.lineId,
-        english: line.english ? line.originalText : "There is no English line yet.",
-        current: line.missing?.text ? null : line.text,
-        endpoint: "/api/quests/lines/text",
-        address: { lineId: line.lineId, variant: line.variant ?? 0 },
-        field: "text",
-        multiline: true,
-      });
+      setTranslating(lineTextSubject(line));
     },
     [lang],
   );
@@ -742,14 +734,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      // The shadcn Select trigger is a <button role="combobox">, not a <select>, so
-      // checking tagName alone would let space both toggle audio and open the dropdown.
-      const target = event.target instanceof HTMLElement ? event.target : null;
-      const typing =
-        !!target &&
-        (["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName) ||
-          target.isContentEditable ||
-          !!target.closest('[role="combobox"],[role="listbox"],[role="dialog"]'));
+      const typing = isTypingTarget(event.target);
 
       if (event.key === "/" && !typing) {
         event.preventDefault();

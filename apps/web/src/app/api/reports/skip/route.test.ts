@@ -79,8 +79,8 @@ describe("/api/reports/skip", () => {
     const response = await POST(post([open, foreign, answered]));
     expect(await response.json()).toEqual({ skipped: 1 });
 
-    expect([...(await skippedIds(USER, "quests", "enUS"))]).toEqual([open]);
-    expect((await skippedIds(USER, "quests", "deDE")).size).toBe(0);
+    expect([...(await skippedIds(USER, "enUS"))]).toEqual([open]);
+    expect((await skippedIds(USER, "deDE")).size).toBe(0);
   });
 
   it("resets one section and leaves the others", async () => {
@@ -93,8 +93,7 @@ describe("/api/reports/skip", () => {
     const response = await DELETE(new Request("https://example.com/api/reports/skip?source=quests"));
     expect(((await response.json()) as { reset: number }).reset).toBeGreaterThanOrEqual(1);
 
-    expect((await skippedIds(USER, "quests", "enUS")).size).toBe(0);
-    expect([...(await skippedIds(USER, "zones", "enUS"))]).toEqual([zone]);
+    expect([...(await skippedIds(USER, "enUS"))]).toEqual([zone]);
   });
 
   it("rejects an empty list and an unknown source", async () => {
