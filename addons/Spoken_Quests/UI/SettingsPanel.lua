@@ -20,20 +20,6 @@ local INDENT = 25
 local REPORT_URL = "https://spoken.rusty.one"
 local panel, category
 
--- The enum is stored as a number and read as a name. Ordered, because a cycle button
--- steps through them in the order the list is written.
-local GOSSIP_ORDER = { "Always", "OncePerQuestNPC", "OncePerNPC", "Never" }
-local GOSSIP_LABELS = {
-    Always = L.OPT_GREETING_LABEL_ALWAYS,
-    OncePerQuestNPC = L.OPT_GREETING_LABEL_ONCE_QUEST,
-    OncePerNPC = L.OPT_GREETING_LABEL_ONCE_NPC,
-    Never = L.OPT_GREETING_LABEL_NEVER,
-}
-
-local function GossipName()
-    return Enums.GossipFrequency:GetName(Addon.db.profile.Audio.GossipFrequency) or "Always"
-end
-
 function SettingsPanel:Setup()
     if panel or not (Settings and Settings.RegisterCanvasLayoutCategory) then
         return
@@ -82,33 +68,11 @@ function SettingsPanel:Setup()
         function() return Addon:IsAutoplayOn() end,
         function(value) Addon:SetAutoplay(value) end,
         refresh)
-    -- Indented under autoplay and greyed out with it off: the frequency only decides which
-    -- greetings autoplay reads, and a live control that does nothing reads as broken.
-    layout:Indent()
-    local greetings = layout:Dropdown(L.OPT_PANEL_GREETINGS, L.OPT_PANEL_GREETINGS_TIP,
-        GOSSIP_ORDER,
-        GossipName,
-        function(name)
-            Addon.db.profile.Audio.GossipFrequency = Enums.GossipFrequency[name]
-        end,
-        nil,
-        function(name) return GOSSIP_LABELS[name] or name end)
-    layout:Outdent()
-    layout:Requires(greetings, function() return Addon:IsAutoplayOn() end, L.REASON_AUTOPLAY)
     layout:Checkbox(L.OPT_PANEL_STOP_ON_CLOSE,
         L.OPT_PANEL_STOP_ON_CLOSE_TIP,
         function() return audio().StopAudioOnDisengage end,
         function(value) audio().StopAudioOnDisengage = value end)
-    -- Only what autoplay reads waits for the greeting, so with it off this does nothing.
-    local greetingFirst = layout:Checkbox(L.OPT_PANEL_GAME_GREETING_FIRST,
-        L.OPT_PANEL_GAME_GREETING_FIRST_TIP,
-        function() return audio().GreetingFirst end,
-        function(value)
-            audio().GreetingFirst = value
-            if value then GreetingFirst:SetDialogApart() end
-        end)
-    layout:Requires(greetingFirst, function() return Addon:IsAutoplayOn() end, L.REASON_AUTOPLAY)
-    -- The two rarely wanted, apart from the everyday choices above.
+    -- What is rarely wanted, apart from the everyday choices above.
     layout:Section(L.OPT_SECTION_EXTRAS)
     local followup = layout:Checkbox(L.OPT_PANEL_FOLLOWUP,
         L.OPT_PANEL_FOLLOWUP_TIP,
@@ -117,10 +81,6 @@ function SettingsPanel:Setup()
     -- Follow-up lines are queued only by autoplay (Followup.lua), so with it off this one
     -- does nothing either: greyed, and saying why.
     layout:Requires(followup, function() return Addon:IsAutoplayOn() end, L.REASON_AUTOPLAY)
-    layout:Checkbox(L.OPT_OG_THRALL,
-        L.OPT_OG_THRALL_TIP,
-        function() return audio().OGThrall end,
-        function(value) audio().OGThrall = value end)
 
     -- Only with DialogueUI installed: on Spoken's page, or here with a Spoken too old to have
     -- room for them.
@@ -161,14 +121,6 @@ function SettingsPanel:Setup()
             nil,
             function(code) return code == "none" and L.OPT_FALLBACK_NONE or Language:GetNativeName(code) end)
     end
-
-    -- What this character has heard, as on the other pages: forgotten, every NPC greets again.
-    layout:Section(L.OPT_SECTION_HISTORY)
-    layout:Button(L.OPT_FORGET_GREETINGS, 200, function()
-        local char = Addon.db and Addon.db.char
-        if char then char.hasSeenGossipForNPC = {} end
-        print("|cFF00CCFFSpoken Quests:|r " .. L.OPT_FORGET_GREETINGS_DONE)
-    end, L.OPT_FORGET_GREETINGS_TIP)
 
     -- Every pack, a row each, installed or not: its version where it is installed, and where
     -- it is not, a button with the address to get it -- the game cannot open a link, so the

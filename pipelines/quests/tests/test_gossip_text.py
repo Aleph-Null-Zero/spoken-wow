@@ -140,4 +140,4 @@ def test_forever_loads_only_its_own_locale_and_the_rest_load_every_one():
         else:
             assert "Gossip\\Gossip.xml" in lines, name
     with open(os.path.join(ADDON, "addon.xml"), encoding="utf-8") as f:
-        assert "Gossip" not in f.read()
+        assert "Gossip\\" not in f.read()

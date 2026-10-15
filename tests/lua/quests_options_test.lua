@@ -21,6 +21,7 @@ local function Boot()
     _G.SpokenEnv.Addon:Enable()
     local SettingsPanel = stub.LoadQuestsPanel(QUESTS, VO)
     SettingsPanel:Setup()
+    VO.GossipSettingsPanel:Setup()
     return VO, SettingsPanel
 end
 
@@ -49,7 +50,7 @@ end
 local names = {}
 for _, heading in ipairs(headings) do table.insert(names, heading.text) end
 Expect("the settings are grouped into sections", table.concat(names, "|"),
-    "When to Read|Extras|Reading History|Voice Packs|Fix a Problem")
+    "When to Read|Extras|Voice Packs|Fix a Problem")
 
 local function Distinct(values)
     local seen, count = {}, 0
@@ -89,16 +90,23 @@ Expect("every section heading the same distance below the section above", Distin
 local db = VO.Addon.db.profile
 db.Audio.GossipFrequency = VO.Enums.GossipFrequency.Always
 local greetings
-for _, child in ipairs(SettingsPanel.panel.content.children) do
+local GossipPanel = VO.GossipSettingsPanel
+for _, child in ipairs(GossipPanel.panel.content.children) do
     if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "NPC Greetings" then
         greetings = child
     end
 end
-Expect("the greeting frequency is a dropdown", greetings ~= nil, true)
+Expect("the greeting frequency is a dropdown, on the Gossip page", greetings ~= nil, true)
 greetings:GetScript("OnShow")(greetings)
 Expect("...showing the setting when the panel opens", greetings.dropdownText, "Every Time")
+local onQuestsPage
+for _, child in ipairs(SettingsPanel.panel.content.children) do
+    if child.dropdownInit and child.layoutLabel and child.layoutLabel.text == "NPC Greetings" then onQuestsPage = child end
+end
+Expect("...and not on the Quests page", onQuestsPage, nil)
 
--- Autoplay is what reads greetings, so the frequency sits under it and goes grey without it.
+-- Autoplay is what reads greetings, and is the Quests page's: the frequency goes grey without it
+-- and says where to turn it on.
 local autoplay
 for _, child in ipairs(SettingsPanel.panel.content.children) do
     if type(child.text) == "table" and child.text.text == "Read Automatically" then
@@ -106,14 +114,14 @@ for _, child in ipairs(SettingsPanel.panel.content.children) do
     end
 end
 Expect("autoplay is a checkbox on the panel", autoplay ~= nil, true)
--- The labels carry the indent; every control stays in the one column the page shares.
-Expect("...with the greeting frequency indented under it",
-    greetings.layoutLabel.anchor.x > autoplay.text.anchor.x, true)
 Expect("...live while autoplay is on", greetings.dropdownDisabled or false, false)
 autoplay:SetChecked(false)
 autoplay:GetScript("OnClick")(autoplay)
 Expect("unticking autoplay turns it off", db.Audio.Autoplay, false)
+-- The Gossip page redraws as it is shown, as every page does.
+GossipPanel.panel.layout:Refresh()
 Expect("...and greys the greeting frequency out", greetings.dropdownDisabled, true)
+Expect("...saying where autoplay is", greetings.layoutReason, VO.L.REASON_AUTOPLAY_ON_QUESTS)
 -- Follow-up lines are queued by autoplay alone (Followup.lua), so they grey out with it too.
 local followup
 for _, child in ipairs(SettingsPanel.panel.content.children) do
@@ -122,6 +130,7 @@ end
 Expect("...and Follow-up Lines, saying why", followup and followup.layoutReason, VO.L.REASON_AUTOPLAY)
 autoplay:SetChecked(true)
 autoplay:GetScript("OnClick")(autoplay)
+GossipPanel.panel.layout:Refresh()
 Expect("ticking it again brings the frequency back", greetings.dropdownDisabled, false)
 Expect("...and Follow-up Lines", followup and followup.layoutReason, nil)
 

@@ -199,7 +199,7 @@ local function Tick()
     local caption = Spoken:GetCaption()
     local clip = caption and caption.clip
     -- This addon's lines only: a zone's or a book's never match DialogueUI's text anyway.
-    if clip and clip.source == Player.source then
+    if clip and Player:Owns(clip) then
         if clip ~= state.clip then
             -- Put back and drawn again in this one call: nothing shows in between.
             Restore()
@@ -224,7 +224,7 @@ local function Tick()
     -- A line is about to be queued for this page: its words wait blank, unless another part's
     -- line (a zone's lore, a book page) is playing, which the quest's waits behind.
     local pending = state.pending
-    local otherPart = clip ~= nil and clip.source ~= Player.source
+    local otherPart = clip ~= nil and not Player:Owns(clip)
     if pending and not otherPart and GetTime() < pending.untilTime then
         if not pending.span then
             pending.map, pending.span = Marks.Align(pending.words, state.paragraphs)
@@ -544,7 +544,7 @@ end
 --- DialogueUI scrolls by, shorter by as much. Measured from the title, not the portrait beside
 --- it.
 local function Lower()
-    if not Addon:IsPartOn() then
+    if not Addon:IsPageOn(Bridge:Page()) then
         return
     end
     local frame = DUIQuestFrame
@@ -672,7 +672,7 @@ end
 --- setting on, greyed with no line to read and Stop while that line speaks; Skip greyed with
 --- nothing speaking. Run as a page is built, as the window opens, and on the driver's tick.
 function Bridge:DrawPlayButton()
-    if self:Page() == nil or not Addon:IsPartOn() then
+    if self:Page() == nil or not Addon:IsPageOn(self:Page()) then
         CoverTheirs(false)
         if close then
             close:Hide()

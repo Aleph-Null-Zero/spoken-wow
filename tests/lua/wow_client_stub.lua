@@ -1317,14 +1317,16 @@ function M.LoadQuestsAlone(addonDirectory)
     return VO
 end
 
---- The quests addon's settings panel, which the dispatch tests have no use for: its two
---- files, on top of an addon already loaded by LoadQuests or LoadQuestsAlone.
+--- The quests addon's settings pages, quests' and gossip's (VO.GossipSettingsPanel), which the
+--- dispatch tests have no use for: their files, on top of an addon already loaded by
+--- LoadQuests or LoadQuestsAlone. Returns the quests page.
 function M.LoadQuestsPanel(addonDirectory, VO)
     dofile(addonDirectory .. "UI/Layout.lua")
     -- SettingsPanel builds its DialogueUI section only with the bridge loaded; a bridge test
     -- has loaded and hooked its own already.
     if not VO.DialogueUIBridge then dofile(addonDirectory .. "UI/DialogueUIBridge.lua") end
     dofile(addonDirectory .. "UI/SettingsPanel.lua")
+    dofile(addonDirectory .. "UI/GossipSettingsPanel.lua")
     return VO.SettingsPanel
 end
 

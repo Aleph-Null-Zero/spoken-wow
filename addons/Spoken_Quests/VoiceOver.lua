@@ -248,14 +248,30 @@ function Addon:InvokeQuestHandler(event, source, manual)
     return true
 end
 
---- Whether the player has this part of Spoken switched on (Spoken's settings). Off, none of
---- its buttons show on the game's frames.
-function Addon:IsPartOn()
-    return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("quests")
+--- Whether the player has a part of Spoken switched on (Spoken's settings): "quests", or
+--- "gossip" for what NPCs say. Off, none of its buttons show on the game's frames.
+function Addon:IsPartOn(part)
+    return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn(part or "quests")
+end
+
+--- The part a window belongs to, told by the game event that opens it: greeting and gossip
+--- windows are Gossip's, every quest window Quests'.
+function Addon:PartOfPage(event)
+    return (event == "GOSSIP_SHOW" or event == "QUEST_GREETING") and "gossip" or "quests"
+end
+
+--- Whether the part the window `event` opens belongs to is switched on.
+function Addon:IsPageOn(event)
+    return self:IsPartOn(self:PartOfPage(event))
 end
 
 function Addon:IsAutoplayOn()
     return self.db.profile.Audio.Autoplay ~= false
+end
+
+--- Read Greetings is at Never: no NPC window reads itself, whatever Read Automatically says.
+function Addon:IsNever()
+    return self.db.profile.Audio.GossipFrequency == Enums.GossipFrequency.Never
 end
 
 function Addon:SetAutoplay(on)
@@ -291,6 +307,10 @@ local SPEECH_EVENTS = {
 ---@return SoundData?, string?
 function Addon:GetVisibleLine(event)
     event = event or GetVisibleDialogueEvent()
+    -- A part that is off reads nothing and offers nothing: no Listen button, no DialogueUI Play.
+    if event and not self:IsPageOn(event) then
+        return nil, event
+    end
     local quest = event and QUEST_EVENTS[event]
     local speech = event and SPEECH_EVENTS[event]
     local probe
@@ -1184,7 +1204,7 @@ function Addon:ShouldPlayGossip(guid, text, manual, followsOption)
         return true, npcKey
     end
 
-    if self.db.profile.Audio.GossipFrequency == Enums.GossipFrequency.Never then
+    if self:IsNever() then
         Debug:Note("gossip", "never", "greetings not read: NPC Greetings is set to never")
         return
     end
@@ -1239,7 +1259,7 @@ function Addon:MuteGreetingAhead(event)
     -- ID is not known yet is muted too: its greeting starts now, and with no line the mute lifts.
     local questID = quest and QuestIDFor(event)
     if (quest and (not questID or questID == 0)) or self:ExpectedLine(event) then
-        Spoken:MuteGameDialogueAhead(Player.source)
+        Spoken:MuteGameDialogueAhead(self:PartOfPage(event) == "gossip" and Player.gossipSource or Player.source)
     end
 end
 
@@ -1375,8 +1395,15 @@ function Addon:GOSSIP_SHOW(event, manual)
 end
 
 function Addon:QUEST_FINISHED()
-    if Addon.db.profile.Audio.StopAudioOnDisengage and currentQuestSoundData then
-        Player:Remove(currentQuestSoundData)
+    if Addon.db.profile.Audio.StopAudioOnDisengage then
+        if currentQuestSoundData then
+            Player:Remove(currentQuestSoundData)
+        end
+        -- A quest giver's greeting is read in the quest frame, so it ends with the frame.
+        if currentGossipSoundData and currentGossipSoundData.event == Enums.SoundEvent.QuestGreeting then
+            Player:Remove(currentGossipSoundData)
+            currentGossipSoundData = nil
+        end
     end
     currentQuestSoundData = nil
 end

@@ -32,6 +32,7 @@ _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()
 local QuestsPanel = stub.LoadQuestsPanel(QUESTS, VO)
 QuestsPanel:Setup()
+VO.GossipSettingsPanel:Setup()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Layout", "UI/Options", "Events", "Commands" }) do
@@ -86,7 +87,7 @@ for _, page in ipairs(env.Options.pages or {}) do
     table.insert(pages, { name = page.name, layout = page.layout })
 end
 -- The Developer page comes from the Spoken_Developer module.
-Expect("Spoken, the three modules' pages and the Developer page are all here", #pages, 5)
+Expect("Spoken, the four parts' pages and the Developer page are all here", #pages, 6)
 
 local function Controls(layout)
     local list = {}
@@ -189,8 +190,8 @@ stub.print(string.format("settings_audit: %d checkboxes, %d sliders, %d menus, %
     worked.checkbox, worked.slider, worked.menu, worked.button))
 
 ---------------------------------------------------------------- a module switched off is off
-local PAGE_FOR = { quests = 2, books = 3, zones = 4 }
-for _, key in ipairs({ "quests", "books", "zones" }) do
+local PAGE_FOR = { quests = 2, gossip = 3, books = 4, zones = 5 }
+for _, key in ipairs({ "quests", "gossip", "books", "zones" }) do
     local page = pages[PAGE_FOR[key]]
     _G.Spoken:SetPartOn(key, false)
     env.Options:UpdateRows()

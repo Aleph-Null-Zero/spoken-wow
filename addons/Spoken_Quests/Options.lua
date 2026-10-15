@@ -516,6 +516,7 @@ function Options:Initialize()
         -- table above still backs every /spq command and still fills the window below,
         -- which is where profiles and the pack manager live.
         SettingsPanel:Setup()
+        GossipSettingsPanel:Setup()
     end)
     Debug:Print("Done!", "Options")
 
@@ -538,6 +539,14 @@ end
 --- everywhere else. The window is still how profiles and the pack manager are reached.
 function Options:OpenSettings()
     if SettingsPanel and SettingsPanel.Open and SettingsPanel:Open() then
+        return
+    end
+    self:OpenConfigWindow()
+end
+
+--- Gossip's page, its own entry beside Quests' under Spoken's.
+function Options:OpenGossipSettings()
+    if GossipSettingsPanel and GossipSettingsPanel.Open and GossipSettingsPanel:Open() then
         return
     end
     self:OpenConfigWindow()

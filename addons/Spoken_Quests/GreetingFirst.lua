@@ -247,11 +247,14 @@ function GreetingFirst:Setup()
         return
     end
     self.ready = true
-    Player.source:AddGate(function()
-        if GreetingFirst:IsWaiting() then
-            return L.QUEUE_HELD_GREETING
-        end
-    end)
+    -- Quest lines and gossip lines are two sources: each waits for the NPC's greeting.
+    for _, source in ipairs({ Player.source, Player.gossipSource }) do
+        source:AddGate(function()
+            if GreetingFirst:IsWaiting() then
+                return L.QUEUE_HELD_GREETING
+            end
+        end)
+    end
     local frame = CreateFrame("Frame")
     for _, event in ipairs({ "GOSSIP_CLOSED", "QUEST_FINISHED" }) do
         pcall(frame.RegisterEvent, frame, event)

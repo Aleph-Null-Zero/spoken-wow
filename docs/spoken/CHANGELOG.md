@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **What NPCs say has its own switch and settings page, Gossip.** Gossip and greeting windows
+  can be turned off apart from quests, and NPC Greetings, Game Greeting First, Original Thrall
+  Speech and Forget Greetings Heard moved from the Quests page to the Gossip page. Your settings
+  are unchanged. *([Nucabe](https://github.com/Nucabe))*
 - **The quest pack Spoken suggests for your language links to its download again.** It pointed
   at CurseForge pages that now hold only part of a language's quests; it now opens the one-pack
   download on GitHub. Chinese clients are offered their own pack too, instead of English's.

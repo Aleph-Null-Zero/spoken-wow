@@ -22,6 +22,7 @@ local env = _G.SpokenEnv
 env.Addon:Enable()
 local QuestsPanel = stub.LoadQuestsPanel(QUESTS, VO)
 QuestsPanel:Setup()
+VO.GossipSettingsPanel:Setup()
 local L, Options = env.L, env.Options
 local home = _G.SpokenOptionsPanel.layout
 
@@ -332,7 +333,7 @@ local found = Search:Find("subtitle size")
 Expect("search finds a setting by its name", found[1] and found[1].entry.label, "Subtitle Size")
 Expect("...on the page it is on", found[1] and found[1].page.name, L.OPT_HOME_TITLE)
 found = Search:Find("greetings")
-Expect("search reaches the pages under Spoken too", found[1] and found[1].page.name, "Quests")
+Expect("search reaches the pages under Spoken too", found[1] and found[1].page.name, "Gossip")
 Expect("a word from a tooltip is enough", Search:Find("footsteps")[1] and Search:Find("footsteps")[1].entry.label, "Effects")
 Expect("every word must match", #Search:Find("subtitle footsteps"), 0)
 Expect("case and spacing do not matter", Search:Find("  SUBTITLE   size ")[1].entry.label, "Subtitle Size")
@@ -360,12 +361,13 @@ Expect("...and says so when nothing matches", Search.rows[1].text.text:find(L.SE
 Search.box:SetText("greetings"); Search.box.handlers.OnTextChanged(Search.box)
 Search.box.handlers.OnEnterPressed(Search.box)
 local last = opened[#opened]
-Expect("Enter opens the first result's own page", type(last) == "table" and last.name or last, "Quests")
+Expect("Enter opens the first result's own page", type(last) == "table" and last.name or last, "Gossip")
 stub.Advance(0.1)
-Expect("...and lights up the row it found", quests.glow ~= nil and quests.glow:IsShown(), true)
+local gossip = VO.GossipSettingsPanel.panel.layout
+Expect("...and lights up the row it found", gossip.glow ~= nil and gossip.glow:IsShown(), true)
 -- The client runs OnUpdate every frame; the stub does not, so the fade is driven here.
-quests.glow.scripts.OnUpdate(quests.glow, 3)
-Expect("...for a moment", quests.glow:IsShown(), false)
+gossip.glow.scripts.OnUpdate(gossip.glow, 3)
+Expect("...for a moment", gossip.glow:IsShown(), false)
 
 ---------------------------------------------------------------- not in combat
 -- The client will not open the settings window for an addon in combat, so the minimap
@@ -416,7 +418,7 @@ env.Addon.db.global.Welcomed = nil
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 stub.Advance(2.1)
 Expect("the welcome opens at the first login after it ships", Welcome.frame and Welcome.frame:IsShown(), true)
-Expect("it offers the parts as a list, as Home does", #Welcome.modules, 3)
+Expect("it offers the parts as a list, as Home does", #Welcome.modules, 4)
 Expect("...under its header, the paragraph saying what the window is for",
     Welcome.layout.intro.text ~= nil and Welcome.layout.intro.text.text, L.WELCOME_INTRO)
 Expect("...which the settings pages, like the game's own, do without", home.intro.text, nil)

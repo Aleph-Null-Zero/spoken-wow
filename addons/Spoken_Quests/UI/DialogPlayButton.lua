@@ -124,14 +124,12 @@ function DialogPlayButton:Refresh()
     end
     self.line = nil
 
-    if Addon:IsAutoplayOn() or not Addon:IsPartOn() then
-        button:Hide()
-        return
-    end
     local line, event = Addon:GetVisibleLine()
+    -- Nothing reads itself with Read Automatically off, and no NPC window does at Never.
+    local held = not Addon:IsAutoplayOn() or (event and Addon:PartOfPage(event) == "gossip" and Addon:IsNever())
     -- The panel itself, not merely the event: under DialogueUI the event arrives and the
-    -- panel never shows.
-    if not line or not IsFrameVisible(_G[PANELS[event]]) then
+    -- panel never shows. Switched off, the window's part puts no button on it.
+    if not held or not line or not IsFrameVisible(_G[PANELS[event]]) then
         button:Hide()
         return
     end
@@ -191,7 +189,7 @@ function DialogPlayButton:Setup()
             GameTooltip:SetText(L.OPT_DIALOG_STOP_TIP)
         else
             GameTooltip:SetText(L.OPT_READ_TIP)
-            GameTooltip:AddLine(L.OPT_AUTOPLAY_OFF_TIP, 1, 0.8, 0.2, true)
+            GameTooltip:AddLine(Addon:IsAutoplayOn() and L.OPT_NEVER_TIP or L.OPT_AUTOPLAY_OFF_TIP, 1, 0.8, 0.2, true)
         end
         GameTooltip:Show()
     end)
