@@ -17,7 +17,7 @@
 # session line anyway.
 ## Dependencies: Spoken
 # Spoken is what this registers with (Spoken:RegisterDeveloper).
-## OptionalDeps: Spoken_Quests, Spoken_Gossip, Spoken_Zones, Spoken_Books
+## OptionalDeps: Spoken_Quests, Spoken_Gossip, Spoken_Places, Spoken_Readables
 # The modules are listed for load order only: their Developer sections are handed to Spoken
 # whether this loads before or after them.
 ## IconTexture: Interface\AddOns\Spoken\icon.tga

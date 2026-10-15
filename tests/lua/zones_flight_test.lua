@@ -6,7 +6,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local after = C_Timer.After
 local onTaxi, flying = false, false
 
@@ -33,12 +33,12 @@ local function Boot(client, taxi, flight, greeting)
     env.Addon:Enable()
     C_Timer.After = after
     local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Zones", Z)
-    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
+    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1411] = { name = "Durotar", full = "Durotar lore." }
     Z.Subzones[1411] = { ["valley of trials"] = { name = "Valley of Trials", full = "Valley lore." } }
     stub.SetZone({ map = 1411, zone = "Durotar", subzone = "Valley of Trials" })
-    stub.FireEvent("ADDON_LOADED", "Spoken_Zones")
+    stub.FireEvent("ADDON_LOADED", "Spoken_Places")
     Z:SetupAudio()
     Z:SetupAutoplay()
     return Z

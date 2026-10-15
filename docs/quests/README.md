@@ -1357,7 +1357,7 @@ the quest.
 
 Azeroth's Compendium is Spoken's window (`addons/Spoken/UI/Compendium.lua`, its pages scrolling
 in Spoken's `UI/TextView.lua`). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
-first, before Zones and Books; it needs no other module. `Compendium.xml` loads the tab and its
+first, before Places and Books; it needs no other module. `Compendium.xml` loads the tab and its
 data from the `.toc` files of the clients the window runs on (Classic Era, TBC Anniversary and
 Forever), not on the legacy clients.
 
@@ -1473,7 +1473,7 @@ only what it lists. That switch and both filters are kept in
 The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
 for each zone with quests (a city a small card inside its zone's); an Other Lands banner holding
 a card for each zone on no continent the client knows (Zephras Isle, whose map hangs under
-Azeroth), as the Zones tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
+Azeroth), as the Places tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong Gulch, Arathi Basin and
 Darkspear Islands, whatever map the client hangs them under (Forever's newer client puts Alterac
 Valley in Hillsbrad Foothills, its older one under Azeroth, where no continent's list reached
 it); a map the client has never heard of (Forever's Zephras Isle and Darkspear Islands on Era)
@@ -1492,7 +1492,7 @@ as the data's `dungeons` names it in the client's language; where the zone has s
 Gorge holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a card
 for each dungeon under it.
 The tab lands on the player's zone, opened; where it has no quests, or Started Only or Voiced
-Only leaves it out, on the player's continent, as Zones and Books land, else on the first continent
+Only leaves it out, on the player's continent, as Places and Books land, else on the first continent
 listed (there is no Azeroth row). A switch in the filter menu that leaves out the chosen row
 (`onHidden`) lands again where the tab chose it, and otherwise chooses the nearest row above it
 that is still listed: a quest's zone or group, a zone's continent. The list is drawn in the game's own art
@@ -1553,7 +1553,7 @@ shown that a pack voices (its accept line, else its complete line) to `Player:En
 what the queue holds, and leaves the selection and the page as they were; a line already queued
 is not queued again. The page shown with no quest chosen says so.
 
-Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Zones' lore-page button for
+Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Places' lore-page button for
 quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
 zone, continent or group opened and its page shown (`QuestsTab:Open(questID)`), though Started
 Only or Voiced Only leaves its row out of the list, which keeps its filters. It shows, with Quests

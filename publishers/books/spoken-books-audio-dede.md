@@ -5,8 +5,8 @@ section: books
 lang: deDE
 version: 2.1.0
 slug: spoken-books-audio-dede
-name: Spoken Books Audio: German
-summary: The German narration for Spoken Player's Books module: books, letters and notes read aloud in German.
+name: Spoken Writings Audio: German
+summary: The German narration for Spoken Player's Readables module: books, letters and notes read aloud in German.
 categories:
   - Audio & Video
   - Miscellaneous
@@ -14,7 +14,7 @@ categories:
 license: MIT
 ---
 
-Narrated books, letters and notes for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Books module, in German. This addon is data only — it does nothing on its own.
+Narrated books, letters and notes for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Readables module, in German. This addon is data only — it does nothing on its own.
 
 One clip per page, read from the game's own German text. It installs beside the English pack, **[Spoken Books Audio](https://www.curseforge.com/wow/addons/spoken-books-audio)**, rather than replacing it, so a player who switches languages keeps the narration for both.
 
@@ -22,7 +22,7 @@ One clip per page, read from the game's own German text. It installs beside the 
 
 Install **Spoken Player** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped (`SpokenBooksAudio_deDE`).
 
-Spoken Books reads in your client's language, so this pack plays on a German client. A page it does not hold is read in English instead.
+Spoken Readables reads in your client's language, so this pack plays on a German client. A page it does not hold is read in English instead.
 
 ## Compatibility
 

@@ -1,6 +1,6 @@
 -- Open in Azeroth's Compendium, where a player reads a quest: the quest giver's window, the
 -- quest log's details, and DialogueUI's window (UI/DialogueUIBridge.lua puts it in its row). The
--- button Spoken Zones' lore page has: the Compendium's tome in the player's round button. Shown
+-- button Spoken Places' lore page has: the Compendium's tome in the player's round button. Shown
 -- only for a quest whose words its page would show: one this character may take, started, or any
 -- with Unlock Unstarted Quests on, whatever the list's filters leave out.
 --

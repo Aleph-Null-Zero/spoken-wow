@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Writes addons/Spoken_Zones/Data/ForeverAreas.lua: the areas only the Forever client has.
+// Writes addons/Spoken_Places/Data/ForeverAreas.lua: the areas only the Forever client has.
 //
 //   node tools/lore/export-forever-areas.mjs
 //
@@ -21,9 +21,9 @@ import { join } from "node:path";
 import { loadEraAreas } from "../lib/era.mjs";
 import { readJson, ROOT } from "../lib/wiki.mjs";
 
-const SUBZONES = join(ROOT, "addons/Spoken_Zones/Data/enUS/Subzones.lua");
+const SUBZONES = join(ROOT, "addons/Spoken_Places/Data/enUS/Subzones.lua");
 const PLACES = join(ROOT, "pipelines/zones/tools/seed/forever-places.json");
-const OUT = join(ROOT, "addons/Spoken_Zones/Data/ForeverAreas.lua");
+const OUT = join(ROOT, "addons/Spoken_Places/Data/ForeverAreas.lua");
 
 function table(name, byZone) {
   const lines = [`SpokenZones.${name} = {`];

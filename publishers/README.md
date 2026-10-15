@@ -63,16 +63,16 @@ which is why there is one file per project here and not two.
 | `zones/spoken-zones-audio-zhcn.md` | Spoken Zones Audio: Chinese (Simplified) | 1723273 | — | `spoken-zones-audio-zhcn` |
 | `zones/spoken-zones-audio-zhtw.md` | Spoken Zones Audio: Chinese (Traditional) | 1723276 | — | `spoken-zones-audio-zhtw` |
 | `books/spoken-books.md` | Spoken Books | 1701514 | qGYZnRNg | `spoken-books` |
-| `books/spoken-books-audio.md` | Spoken Books Audio | 1701520 | qGZOrvNd | `spoken-books-audio` |
-| `books/spoken-books-audio-dede.md` | Spoken Books Audio: German | 1723279 | — | `spoken-books-audio-dede` |
-| `books/spoken-books-audio-eses.md` | Spoken Books Audio: Spanish (EU) | 1723280 | — | `spoken-books-audio-eses` |
-| `books/spoken-books-audio-esmx.md` | Spoken Books Audio: Spanish (AL) | 1723282 | — | `spoken-books-audio-esmx` |
-| `books/spoken-books-audio-frfr.md` | Spoken Books Audio: French | 1723284 | — | `spoken-books-audio-frfr` |
-| `books/spoken-books-audio-ruru.md` | Spoken Books Audio: Russian | 1723285 | — | `spoken-books-audio-ruru` |
-| `books/spoken-books-audio-ptbr.md` | Spoken Books Audio: Portuguese | 1723287 | — | `spoken-books-audio-ptbr` |
-| `books/spoken-books-audio-kokr.md` | Spoken Books Audio: Korean | 1723288 | — | `spoken-books-audio-kokr` |
-| `books/spoken-books-audio-zhcn.md` | Spoken Books Audio: Chinese (Simplified) | 1723289 | — | `spoken-books-audio-zhcn` |
-| `books/spoken-books-audio-zhtw.md` | Spoken Books Audio: Chinese (Traditional) | 1723295 | — | `spoken-books-audio-zhtw` |
+| `books/spoken-books-audio.md` | Spoken Writings Audio | 1701520 | qGZOrvNd | `spoken-books-audio` |
+| `books/spoken-books-audio-dede.md` | Spoken Writings Audio: German | 1723279 | — | `spoken-books-audio-dede` |
+| `books/spoken-books-audio-eses.md` | Spoken Writings Audio: Spanish (EU) | 1723280 | — | `spoken-books-audio-eses` |
+| `books/spoken-books-audio-esmx.md` | Spoken Writings Audio: Spanish (AL) | 1723282 | — | `spoken-books-audio-esmx` |
+| `books/spoken-books-audio-frfr.md` | Spoken Writings Audio: French | 1723284 | — | `spoken-books-audio-frfr` |
+| `books/spoken-books-audio-ruru.md` | Spoken Writings Audio: Russian | 1723285 | — | `spoken-books-audio-ruru` |
+| `books/spoken-books-audio-ptbr.md` | Spoken Writings Audio: Portuguese | 1723287 | — | `spoken-books-audio-ptbr` |
+| `books/spoken-books-audio-kokr.md` | Spoken Writings Audio: Korean | 1723288 | — | `spoken-books-audio-kokr` |
+| `books/spoken-books-audio-zhcn.md` | Spoken Writings Audio: Chinese (Simplified) | 1723289 | — | `spoken-books-audio-zhcn` |
+| `books/spoken-books-audio-zhtw.md` | Spoken Writings Audio: Chinese (Traditional) | 1723295 | — | `spoken-books-audio-zhtw` |
 
 **A sound pack's page is also its registry entry.** `section:` (quests, zones or books), `lang:`
 and, on a quests pack, `pack:` say which pack it is; a language other than English also carries

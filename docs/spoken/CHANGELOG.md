@@ -172,6 +172,15 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Veil's, the Harvest Festival's poems, the fishing tournament's flier and the Scourge invasion's
   letters and reports were under Origin Unknown, or in the cities where the event's NPCs stand.
   *([Nucabe](https://github.com/Nucabe))*
+- Zones is now Places, in every language: its card, settings page, Compendium tab, menu entry, and the
+  panel beside the map, now Place Story. Its commands are /spp and /spokenplaces, and /spz still
+  works. Its folder is `Spoken_Places`, so each character's discovered places and the places it has
+  heard start fresh, and Spoken asks you to delete a leftover `Spoken_Zones` folder. *([Nucabe](https://github.com/Nucabe))*
+- Books is now Readables, in every language: its card, page, minimap entry, Compendium tab and AddOns
+  list entry, and its folder, `Spoken_Readables`. Its commands are /spr and /spokenreadables, and /spw
+  and /spb still work. Its settings and reading history start fresh, and Spoken asks you to delete a
+  leftover `Spoken_Books` or `Spoken_Writings` folder. The modules are listed Quests, Gossip, Places,
+  Readables everywhere, and the minimap menu names them in your language. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.4.0 — 2026-10-12
 

@@ -253,7 +253,7 @@ function Player:Setup()
     end
 
     self.source = Spoken:RegisterSource("gossip", {
-        title = "Spoken Gossip",
+        title = L.OPT_PAGE_TITLE,
         addon = AddonFolder,
         order = 2,
         -- The quests module's figure, for the packs they share.

@@ -49,25 +49,28 @@ local function Listed()
     return table.concat(names, "|")
 end
 Expect("...then is nested under it, in its own order", Listed(), "Spoken|Spoken>Quests|Spoken>Zones")
-local readables = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Books", 2)
+local readables = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Writings", 2)
 Expect("a page asked for afterwards is nested at once", readables.category and readables.category.parent.name, "Spoken")
 Expect("opening a page opens its own entry", readables.Open(), true)
 local labels = {}
 for _, text in ipairs(stub.LabelsUnder(_G.SpokenOptionsPanel)) do labels[text] = true end
 Expect("the parts have a section of their own", labels["Modules"], true)
 Expect("an installed part is named for what it reads", labels["Quests"], true)
-Expect("...and so is the other", labels["Zones"], true)
-Expect("a part not installed still has its row", labels["Books"], true)
+Expect("...and so is the other", labels["Places"], true)
+Expect("a part not installed still has its row", labels["Readables"], true)
 local readablesCard
+local cards = {}
 for _, child in ipairs(_G.SpokenOptionsPanel.content.children) do
     for _, row in ipairs(child.layoutRows or {}) do
-        if row.layoutCard and row.layoutCard.title == "Books" then readablesCard = row end
+        if row.layoutCard and row.layoutCard.title == "Readables" then readablesCard = row end
+        if row.layoutCard then table.insert(cards, row.layoutCard.title) end
     end
 end
+Expect("the modules are listed Quests, Gossip, Places, Readables", table.concat(cards, ", "), "Quests, Gossip, Places, Readables")
 Expect("...which says why it cannot be turned on", readablesCard and readablesCard.layoutReason, env.L.REASON_NOT_INSTALLED)
 -- The modules register on entering the world, after the page is built: the row is drawn again
 -- at once, not left saying "Not installed" until something else redraws it.
-local lateBooks = _G.Spoken:RegisterSource("books", { title = "Spoken Books", order = 4 })
+local lateBooks = _G.Spoken:RegisterSource("books", { title = "Spoken Writings", order = 4 })
 Expect("a module registering after the page is built is installed on its row at once",
     readablesCard and readablesCard.layoutReason, nil)
 env.Sources.byKey.books = nil

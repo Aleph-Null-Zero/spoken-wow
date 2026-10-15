@@ -1,8 +1,8 @@
 -- What the player had open that Spoken may or may not read, and whether anything of Spoken's is
 -- there to read it, for the log and its snapshots: the reading window (a book, a plaque, a sign,
--- a letter: Spoken Books' to read), an open letter in the mailbox, and which of Spoken's modules
+-- a letter: Spoken Readables' to read), an open letter in the mailbox, and which of Spoken's modules
 -- are installed. Spoken Quests says the quest and gossip windows itself. A book opened without
--- Spoken Books installed is silent and shows nothing, and this is how the log says why.
+-- Spoken Readables installed is silent and shows nothing, and this is how the log says why.
 
 local _, Developer = ...
 
@@ -18,8 +18,8 @@ local GetAddOnInfo = (C_AddOns and C_AddOns.GetAddOnInfo) or GetAddOnInfo
 local MODULES = {
 	{ name = "Spoken_Quests", reads = "quests" },
 	{ name = "Spoken_Gossip", reads = "what NPCs say when spoken to" },
-	{ name = "Spoken_Books", reads = "books, plaques, signs and letters" },
-	{ name = "Spoken_Zones", reads = "zone lore" },
+	{ name = "Spoken_Places", reads = "place lore" },
+	{ name = "Spoken_Readables", reads = "books, plaques, signs and letters" },
 }
 
 -- How much of a page the log keeps: enough to tell one book from another.
@@ -40,11 +40,11 @@ local function Excerpt(text)
 	return text
 end
 
---- Who reads the reading window: Spoken Books, or nothing, and why.
+--- Who reads the reading window: Spoken Readables, or nothing, and why.
 local function BooksReader()
-	local state = Screen:AddonState("Spoken_Books")
-	if state == "loaded" then return "Spoken Books reads it (Spoken_Books loaded)" end
-	return "nothing of Spoken reads it: Spoken_Books is " .. state
+	local state = Screen:AddonState("Spoken_Readables")
+	if state == "loaded" then return "Spoken Readables reads it (Spoken_Readables loaded)" end
+	return "nothing of Spoken reads it: Spoken_Readables is " .. state
 end
 
 --- The reading window as words, or nil while it is closed. A letter a player wrote has a creator;

@@ -356,7 +356,7 @@ function Addon:Enable()
     -- metatable falls back to _G: reads fall through, writes do not. A bare assignment
     -- lands in the environment, and the client never hears of the command.
     -- One scheme across the three addons: the long name and a two-or-three letter short
-    -- form. /sp here, /spq for quests, /spz for zones.
+    -- form. /sp here, /spq for quests, /spp for places.
     _G.SLASH_SPOKEN1 = "/spoken"
     _G.SLASH_SPOKEN2 = "/sp"
     SlashCmdList.SPOKEN = function(input)
@@ -464,10 +464,16 @@ end
 -- leave a tombstone there instead (addons/SpokenQuests/SpokenQuests.toc), which is LoadOnDemand
 -- and so never loaded, so it alone stays quiet here and only a full old copy is named.
 --
+-- Spoken_Books and Spoken_Writings are the Readables module's folders before it took that name, and
+-- Spoken_Zones the Places module's. An older zip unpacked by hand leaves one beside its module, where
+-- it registers the same source and reads every page twice. No project owns those names, so no
+-- tombstone replaces them.
+--
 -- Each one found is switched off for the next login, and the player is offered the reload that
 -- finishes it. The Forever client accepts DisableAddOn from an addon (checked 2026-10-04); the
 -- pcall is for a client that does not, where the popup still names the folders to delete.
-local OLD_FOLDERS = { "SpokenPlayer", "VoiceOverRedux", "ZoneLore", "SpokenQuests", "SpokenZones", "SpokenBooks" }
+local OLD_FOLDERS = { "SpokenPlayer", "VoiceOverRedux", "ZoneLore", "SpokenQuests", "SpokenZones", "SpokenBooks",
+    "Spoken_Books", "Spoken_Zones", "Spoken_Writings" }
 function Addon:FindOldFolders()
     local found = {}
     if not IsAddOnLoaded then return found end

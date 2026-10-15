@@ -16,12 +16,12 @@ license: MIT
 
 ## What it installs
 
-[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player), which since 3.0.0 carries Spoken Quests, Spoken Zones and Spoken Books inside it, and the English voice pack for each:
+[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player), which since 3.0.0 carries Spoken Quests, Spoken Places and Spoken Books inside it, and the English voice pack for each:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
 | Spoken Quests | quest dialogue and NPC gossip | [Spoken Quests Audio: All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all) |
-| Spoken Zones | zone and subzone lore | [Spoken Zones Audio](https://www.curseforge.com/wow/addons/spoken-zones-audio) |
+| Spoken Places | zone and subzone lore | [Spoken Places Audio](https://www.curseforge.com/wow/addons/spoken-zones-audio) |
 | Spoken Books | books, letters, notes and plaques | [Spoken Books Audio](https://www.curseforge.com/wow/addons/spoken-books-audio) |
 
 ## Language

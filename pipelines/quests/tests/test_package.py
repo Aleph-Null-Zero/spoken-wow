@@ -48,8 +48,8 @@ OLD_FLAVORS = FLAVORS + ("_Mainline", "_Wrath")
 #: of the .toc names the old folder had on Blizzard's clients.
 RETIRED = {
     "SpokenQuests": ("Spoken_Quests", OLD_FLAVORS),
-    "SpokenZones": ("Spoken_Zones", ("",)),
-    "SpokenBooks": ("Spoken_Books", ("",)),
+    "SpokenZones": ("Spoken_Places", ("",)),
+    "SpokenBooks": ("Spoken_Readables", ("",)),
 }
 
 
@@ -286,8 +286,8 @@ def test_spoken_ships_with_its_modules_for_blizzard_clients(player_built):
     # No tombstone for the modules' old folders, which belong to the retired projects: two
     # projects shipping one folder is what the rename exists to stop.
     assert {entry.split("/", 1)[0] for entry in names} == {PLAYER, "SpokenContributions", TOMBSTONE,
-                                                          "Spoken_Quests", "Spoken_Gossip", "Spoken_Books",
-                                                          "Spoken_Zones"}
+                                                          "Spoken_Quests", "Spoken_Gossip", "Spoken_Readables",
+                                                          "Spoken_Places"}
     assert [name for name in names if name.startswith("SpokenContributions/") and not name.endswith("/")] \
         == ["SpokenContributions/SpokenContributions.toc"]
     # Every .toc name the old player's folder had on these clients, so an unzip over it leaves

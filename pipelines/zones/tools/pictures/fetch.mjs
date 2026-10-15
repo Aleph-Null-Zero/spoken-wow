@@ -16,7 +16,7 @@ import { API, CACHE, ROOT, USER_AGENT, THROTTLE_MS, sleep, readJson, readJsonIfE
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MANIFEST = join(HERE, "manifest.json");
 const RAW = join(CACHE, "pictures", "raw");
-const DATA = join(ROOT, "addons/Spoken_Zones/Data/enUS");
+const DATA = join(ROOT, "addons/Spoken_Places/Data/enUS");
 // Wide enough to crop a 2:1 banner from at twice the shipped size.
 const THUMB_WIDTH = 1024;
 

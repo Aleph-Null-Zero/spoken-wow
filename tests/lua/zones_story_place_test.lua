@@ -8,7 +8,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local after = C_Timer.After
 
 local BARRENS, NEEDLES = 1413, 1441
@@ -29,9 +29,9 @@ local function Boot()
     env.Addon:Enable()
     C_Timer.After = after
     local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     for _, file in ipairs({ "Autoplay", "Discovery", "Data/Dungeons", "UI/LoreWindow" }) do
-        assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+        assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
     end
     Z.Zones[BARRENS] = { name = "The Barrens", full = "Dry land." }
     Z.Zones[NEEDLES] = { name = "Thousand Needles", full = "Spires." }
@@ -39,7 +39,7 @@ local function Boot()
     Z.Subzones[NEEDLES] = { ["razorfen downs"] = { name = "Razorfen Downs", full = "The quilboars' barrows." } }
     Z.GetMapName = function(_, mapID) return Z.Zones[mapID] and Z.Zones[mapID].name end
     stub.SetZone(ENTRANCE)
-    stub.FireEvent("ADDON_LOADED", "Spoken_Zones")
+    stub.FireEvent("ADDON_LOADED", "Spoken_Places")
     Z:SetupAudio()
     Z:SetupAutoplay()
     Z:SetupDiscovery()

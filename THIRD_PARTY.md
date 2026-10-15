@@ -13,13 +13,13 @@ the client loads what is in the folder. They are unmodified copies, and are foun
 
 | Library | Used by | License |
 |---|---|---|
-| LibStub | Spoken, Spoken_Quests, Spoken_Gossip, Spoken_Zones | Public domain (stated in the file header) |
+| LibStub | Spoken, Spoken_Quests, Spoken_Gossip, Spoken_Places | Public domain (stated in the file header) |
 | CallbackHandler-1.0 | the same four | [Ace3 license](https://www.wowace.com/projects/ace3) — BSD-style, free use with attribution |
 | Ace3: AceAddon, AceConsole, AceDBOptions, AceEvent, AceGUI-3.0, AceConfig-3.0 | Spoken_Quests, Spoken_Gossip | [Ace3 license](https://www.wowace.com/projects/ace3) |
-| Ace3: AceDB, AceTimer | Spoken, Spoken_Quests, Spoken_Gossip, Spoken_Zones | [Ace3 license](https://www.wowace.com/projects/ace3) |
+| Ace3: AceDB, AceTimer | Spoken, Spoken_Quests, Spoken_Gossip, Spoken_Places | [Ace3 license](https://www.wowace.com/projects/ace3) |
 | Ace3: AceCore-3.0 | the 1.12 trees of Spoken, Spoken_Quests and Spoken_Gossip | [Ace3 license](https://www.wowace.com/projects/ace3) |
-| LibDataBroker-1.1 | Spoken, Spoken_Zones | Public domain / CC0, per its project page |
-| LibDBIcon-1.0 | Spoken, Spoken_Zones | Public domain, by Rabbit |
+| LibDataBroker-1.1 | Spoken, Spoken_Places | Public domain / CC0, per its project page |
+| LibDBIcon-1.0 | Spoken, Spoken_Places | Public domain, by Rabbit |
 | [LibDeflate](https://github.com/SafeteeWoW/LibDeflate) 1.0.2-release | Spoken | zlib License (`Libs/LibDeflate/LICENSE.txt`) |
 
 Only LibDeflate has its license text beside it so far; the Ace3 copies and the public-domain
@@ -49,14 +49,14 @@ None of this is the project's to license, and the MIT grant does not reach it.
   world database, which is itself a community reconstruction of that content. The
   extraction lives in `pipelines/quests/`; the exported reference tables under
   `pipelines/quests/assets/sql/exported/` come from the same place.
-- **Zone and subzone lore prose** in `addons/Spoken_Zones/Data/` is derived from
+- **Zone and subzone lore prose** in `addons/Spoken_Places/Data/` is derived from
   [Warcraft Wiki](https://warcraft.wiki.gg), which publishes under
   **CC BY-SA 4.0**. Re-use of that text carries the same terms, including attribution
   and share-alike. `pipelines/zones/tools/scrape.mjs` is what fetches it and records
   which article each line came from.
-- **Book, letter and in-world text** for Spoken_Books comes from the same vmangos
+- **Book, letter and in-world text** for Spoken_Readables comes from the same vmangos
   extraction as the quest corpus, and is likewise Blizzard's.
-- **Where each readable is** (`addons/Spoken_Books/Data/Places.lua`): the spawns, loot, quests
+- **Where each readable is** (`addons/Spoken_Readables/Data/Places.lua`): the spawns, loot, quests
   and vendors that place a book, letter or plaque, and the names of the creatures, quests and
   objects involved, are read from a [TrinityCore](https://github.com/TrinityCore/TrinityCore)
   world database (the one the Forever repack ships), another community reconstruction of
@@ -80,11 +80,11 @@ None of this is the project's to license, and the MIT grant does not reach it.
 - **Map images, portrait frames and icons** derived from game assets
   (`PortraitFrameAtlas`, the continent maps) are Blizzard's.
 - **The player's older textures** (the `.blp` files in `addons/Spoken/Textures/`, and the copies
-  in `Spoken_Quests`, `Spoken_Gossip` and `Spoken_Zones`: the window gradient, book, portrait
+  in `Spoken_Quests`, `Spoken_Gossip` and `Spoken_Places`: the window gradient, book, portrait
   frame and background, settings button, size grabber, quest log Play and Stop, queue bullets,
   Stop Gossip and the spacer) came with the AI VoiceOver fork, as it shipped them. The game art
   in them is Blizzard's. The 1.12 tree's `UI-Minimap-Background.blp` comes with LibDBIcon.
-- **Addon-list icons** (`Textures/AddonIcon.tga` in Spoken_Books, Spoken_Zones and the two sound
+- **Addon-list icons** (`Textures/AddonIcon.tga` in Spoken_Readables, Spoken_Places and the two sound
   packs): the Spoken shields, made for this project from the sources in `pipelines/books/assets/`
   and `pipelines/zones/assets/`.
 - **Round vignette and subtitle shadow** (`addons/Spoken/Textures/RoundVignette.tga`,
@@ -94,13 +94,13 @@ None of this is the project's to license, and the MIT grant does not reach it.
   Spoken Zones' lines. They are Blizzard's. Forever's own zones, which have no icon in the game
   (Zephras Isle, Darkspear Islands, Riverglades, Shen'dralas), have icons made for this project
   in the same style.
-- **Zone pictures** (`addons/Spoken_Zones/Textures/Pictures/*.blp`): screenshots of the game,
+- **Zone pictures** (`addons/Spoken_Places/Textures/Pictures/*.blp`): screenshots of the game,
   chosen by hand, mostly from each place's [Warcraft Wiki](https://warcraft.wiki.gg) page, cleaned
   up and sharpened with Gemini 3.1 Flash Image, then cropped, tinted and edged by
   `pipelines/zones/tools/pictures/prepare.py`. The game in them is Blizzard's; each picture's
   source file is listed in that folder's `CREDITS.md`, whose wiki page gives its uploader and
   terms. The edge masks (`Mask*.blp`) are made for this project.
-- **Lore page art** (`addons/Spoken_Zones/Textures/Art/*.tga`): the spellbook's parchment,
+- **Lore page art** (`addons/Spoken_Places/Textures/Art/*.tga`): the spellbook's parchment,
   divider and backplate, and the quest log's details page and frame, cut from the game's UI
   files (Forever client) so the page looks the same on every client. They are Blizzard's.
 - **Small window parchment** (`addons/Spoken/Textures/MinimalParchment.tga`): a band of the same

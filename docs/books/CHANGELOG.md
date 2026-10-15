@@ -3,6 +3,11 @@
 Notable changes to Spoken Books and its sound pack. An addon update can use an
 existing compatible sound pack unless the release notes say otherwise.
 
+## Unreleased
+
+- **The sound packs are called Spoken Readables Audio** in the AddOns list, after the module that
+  reads them. Their folders keep their names, so nothing needs reinstalling. *([Nucabe](https://github.com/Nucabe))*
+
 ## 3.0.0 — 2026-10-05
 
 - **Spoken Books is now part of Spoken**, and this download no longer carries the addon. It

@@ -14,7 +14,7 @@ See the repository's [third-party notice](../../THIRD_PARTY.md).
 - `MinimalBullet*.tga` uses the existing quest/gossip glyphs, alpha-trimmed
   and centered; the portrait background and mask complete the circular framing.
 - Book and zone badges use the client's own `GossipFrame\TrainerGossipIcon`
-  and `WorldMap\UI-World-Icon`. A zone story's portrait is its zone's icon, one of
+  and `WorldMap\UI-World-Icon`. A place story's portrait is its place's icon, one of
   the 47 bundled in `addons/Spoken/Textures/Zones/` (`Spoken:ZoneIcon`), which the
   Compendium's zone rows show too; [THIRD_PARTY.md](../../THIRD_PARTY.md) says
   where they come from.

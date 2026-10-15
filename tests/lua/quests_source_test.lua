@@ -53,6 +53,7 @@ end
 local VO, env, Spoken = Boot()
 local source = Spoken:GetSource("quests")
 Expect("the quests addon registers a source", source ~= nil and source == VO.Player.source, true)
+Expect("...headed in the minimap menu by its page's name, in the player's language", source.title, VO.L.OPT_PAGE_TITLE)
 Expect("...probing files before queueing, as it always did", source.testBeforeQueue, true)
 Expect("...on the configured channel, as a string", source:GetChannel(), "Master")
 
@@ -173,7 +174,7 @@ Expect("...and logging out mid-line restores it", world.cvars.Sound_EnableDialog
 -- the mute covers a quest line speaking, not the quests source having a backlog.
 VO, env, Spoken = Boot()
 VO.Addon.db.profile.Audio.AutoToggleDialog = true
-local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Zones", channel = function() return "Dialog" end })
+local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Places", channel = function() return "Dialog" end })
 world.questID = 101
 VO.Addon:QUEST_DETAIL()
 stub.Advance(0.6)

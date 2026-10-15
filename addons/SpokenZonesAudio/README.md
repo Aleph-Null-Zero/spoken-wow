@@ -1,6 +1,6 @@
 <!-- GENERATED from publishers/zones/spoken-zones-audio.md by scripts/descriptions.mjs. Do not edit by hand. -->
 
-Narrated zone lore for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Zones module. This addon is data only — it does nothing on its own.
+Narrated zone lore for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Places module. This addon is data only — it does nothing on its own.
 
 ## The voice, as of 0.3.0
 

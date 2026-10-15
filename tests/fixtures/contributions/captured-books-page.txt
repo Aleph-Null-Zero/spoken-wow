@@ -1,6 +1,6 @@
 !SPOKEN1 books
-addon=SpokenBooks/
-build=1.15.9/69109
+addon=Spoken_Readables/
+build=1.60.1/70338
 locale=enUS
 pack=enUS
 page=927515100
@@ -11,4 +11,4 @@ A page no corpus has ever held.
 
 Written for this test alone.
 >>
-sum=761292482
+sum=182545867

@@ -8,7 +8,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
@@ -19,7 +19,7 @@ local env = stub.LoadSpoken(SPOKEN)
 -- confirming a particular one. See addons/Spoken_Quests/Contribute.lua's Contribute:Capture
 -- for the same pattern; SpokenZones.VERSION does not exist, only the lowercase
 -- SpokenZones.version Core.lua already computes from the .toc.
-stub.SetAddOns({ { folder = "Spoken_Zones", meta = { Version = "9.9.9" } } })
+stub.SetAddOns({ { folder = "Spoken_Places", meta = { Version = "9.9.9" } } })
 
 local Z = H.LoadZones(ZONES)   -- the loader that loads Core.lua for real, unlike stub.LoadZones
 

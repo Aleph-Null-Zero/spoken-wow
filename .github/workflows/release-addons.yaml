@@ -8,8 +8,8 @@ name: Release addons
 #
 #     spoken/v1.0.0   ->  addons/Spoken
 #     quests/v2.0.0   ->  addons/Spoken_Quests
-#     zones/v1.0.0    ->  addons/Spoken_Zones
-#     books/v2.0.0    ->  addons/Spoken_Books
+#     zones/v1.0.0    ->  addons/Spoken_Places
+#     books/v2.0.0    ->  addons/Spoken_Readables
 #
 # Unprefixed v*.*.* tags are deliberately not matched: seventeen of them already exist
 # from the AI_VoiceOver_Continued lineage and were imported as legacy/quests/v*.
@@ -42,8 +42,8 @@ jobs:
           case "${GITHUB_REF_NAME%%/*}" in
             spoken) toc=addons/Spoken/Spoken.toc;               script=scripts/spoken/package.sh ;;
             quests) toc=addons/Spoken_Quests/Spoken_Quests.toc;   script=scripts/quests/package.sh ;;
-            zones)  toc=addons/Spoken_Zones/Spoken_Zones.toc;     script=scripts/zones/package.sh  ;;
-            books)  toc=addons/Spoken_Books/Spoken_Books.toc;     script=scripts/books/package.sh  ;;
+            zones)  toc=addons/Spoken_Places/Spoken_Places.toc;     script=scripts/zones/package.sh  ;;
+            books)  toc=addons/Spoken_Readables/Spoken_Readables.toc;     script=scripts/books/package.sh  ;;
             *)      echo "unknown tag prefix in ${GITHUB_REF_NAME}" >&2; exit 1 ;;
           esac
           {

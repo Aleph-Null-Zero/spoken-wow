@@ -13,7 +13,7 @@ tooling that produces both.
 
 ## What ships
 
-**`Spoken_Zones`** — the addon, a module of Spoken. World map side panel, subzone lore on click, the area under the
+**`Spoken_Places`** — the addon, a module of Spoken. World map side panel, subzone lore on click, the area under the
 cursor lit up as clickable, the Zones tab of Azeroth's Compendium, minimap button, options panel, narration
 playback with floating controls, and autoplay on area discovery. 49 zones and
 792 subzones of text are bundled, in English and nine other languages, and 86 more places
@@ -50,7 +50,7 @@ validators that keep the generated Lua honest.
 ## Layout
 
 ```
-addons/Spoken_Zones/          the addon itself (this is what WoW loads)
+addons/Spoken_Places/          the addon itself (this is what WoW loads)
   ZoneLore.toc
   embeds.xml             loads the bundled libraries
   Language.lua           which language is read, and the string lookup
@@ -471,7 +471,7 @@ attribution — and it never adds or removes a line.
 
 **Place names are never translated here.** The client already names every zone and
 subzone in its own language, and `make zones-aliases` writes those names out of `AreaTable`
-straight into each locale's `addons/Spoken_Zones/Data/<locale>/Aliases.lua`
+straight into each locale's `addons/Spoken_Places/Data/<locale>/Aliases.lua`
 (`pipelines/zones/tools/locale/build-aliases.mjs` does it, fetching the table per run
 rather than through a committed seed). The explorer names places from that table in whatever language is being
 read, translated line or not; a translated row is stored under the same name, so an
@@ -737,7 +737,7 @@ voice ships:
 
 | File | Where it shows |
 |---|---|
-| `addons/Spoken_Zones/Spoken_Zones.toc` and `addons/SpokenZonesAudio/SpokenZonesAudio.toc` (`## Notes:`) | the in-game addon list, and the CurseForge blurb |
+| `addons/Spoken_Places/Spoken_Places.toc` and `addons/SpokenZonesAudio/SpokenZonesAudio.toc` (`## Notes:`) | the in-game addon list, and the CurseForge blurb |
 | `publishers/spoken/spoken.md`, `publishers/zones/spoken-zones-audio.md` | the two CurseForge project descriptions, and the READMEs generated from them |
 | `web/src/lib/beta.ts` | the **beta** badge beside the logo on lore.rusty.one |
 
@@ -1472,8 +1472,8 @@ credits on the spot.
 Getting that into the addon is one command and a commit:
 
 ```
-make zones-lore-export        # rewrite addons/Spoken_Zones/Data/*.lua from the database
-git diff addons/Spoken_Zones/Data/
+make zones-lore-export        # rewrite addons/Spoken_Places/Data/*.lua from the database
+git diff addons/Spoken_Places/Data/
 make zones-lookup             # only if the text moved and the audio was regenerated
 ```
 
@@ -1512,13 +1512,13 @@ here:     node tools/seed-from-dump.mjs           # report differences
 /spz verify                  check all 49 entries against this client
 /spz panel                   toggle the world map panel
 /spz options                 open the settings panel
-/spz window                  open the Zones tab of Azeroth's Compendium
+/spp window                  open the Places tab of Azeroth's Compendium
 /spz play                    narrate the lore for where you are standing
 /spz stop                    stop the narration
 /spz voice                   turn narration on or off
 /spz audio                   list sound packs, or switch with /spz audio <name>
 /spz autoplay                toggle narrating areas as you discover them
-/spz discover [area]         pretend to discover an area (dev)
+/spp discover [area]         pretend to discover an area (dev)
 /spz forget                  replay the login greeting on next login (dev)
 /spz debug                   report area names on map click
 /spz dump                    enumerate the map tree (dev)
@@ -1548,11 +1548,11 @@ Three CurseForge projects, released on their own cadences: most ZoneLore release
 do not touch a voiceline, and the packs should not re-upload 400MB for a Lua fix.
 
 ```sh
-make zones-package                    # dist/Spoken_Zones-<version>.zip
+make zones-package                    # dist/Spoken_Places-<version>.zip
 make zones-package-audio              # dist/SpokenZonesAudio-<v>.zip
 ```
 
-`make zones-package` refuses to build from a dirty `addons/Spoken_Zones/` tree, so a zip can always be
+`make zones-package` refuses to build from a dirty `addons/Spoken_Places/` tree, so a zip can always be
 traced back to a commit. Both scripts unpack to the addon folder itself, which is
 what the addon hosts expect — check with `unzip -l` if that ever seems in doubt.
 
@@ -1683,7 +1683,7 @@ queue widget's textures are ported from
 rest of the repository. The credit is here because knowing where the code came from is
 what makes re-applying its fixes possible.
 
-Zone lore text in `addons/Spoken_Zones/Data/Zones.lua` and `Data/Subzones.lua` is
+Zone lore text in `addons/Spoken_Places/Data/Zones.lua` and `Data/Subzones.lua` is
 derived from [warcraft.wiki.gg](https://warcraft.wiki.gg) and is licensed
 **CC BY-SA 4.0**; each entry carries a `source` URL to its page. The narration in
 the sound packs is generated from that text and carries the same license. Any

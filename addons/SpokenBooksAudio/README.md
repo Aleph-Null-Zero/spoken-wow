@@ -1,6 +1,6 @@
 <!-- GENERATED from publishers/books/spoken-books-audio.md by scripts/descriptions.mjs. Do not edit by hand. -->
 
-Narrated books, letters and notes for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Books module. This addon is data only — it does nothing on its own.
+Narrated books, letters and notes for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Readables module. This addon is data only — it does nothing on its own.
 
 One clip per page, covering every readable book, letter, note and plaque in the world that can be spoken at all.
 

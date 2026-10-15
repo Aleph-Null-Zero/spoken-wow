@@ -41,7 +41,7 @@ local function Check(where, line)
     end
 end
 
-local FOLDERS = { "Spoken", "Spoken_Quests", "Spoken_Gossip", "Spoken_Zones", "Spoken_Books", "Spoken_Developer",
+local FOLDERS = { "Spoken", "Spoken_Quests", "Spoken_Gossip", "Spoken_Places", "Spoken_Readables", "Spoken_Developer",
     "SpokenContributions", "SpokenZonesAudio", "SpokenBooksAudio", "SpokenPlayer", "SpokenQuests", "SpokenZones",
     "SpokenBooks" }
 local SUFFIXES = { "", "_Vanilla", "_TBC", "_1.12", "_2.4.3", "_3.3.5" }

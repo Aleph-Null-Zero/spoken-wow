@@ -1,6 +1,6 @@
 # Captions
 
-Spoken can show quest dialogue, NPC dialogue, zone lore and book pages inside the
+Spoken can show quest dialogue, NPC dialogue, place lore and book pages inside the
 player. Compact captions show one or two lines; expanded captions show eight.
 The captions follow the recording: with **Type Words Out** on (the default) the
 words appear as the voice reaches them, and with **Highlight Words** on (off by

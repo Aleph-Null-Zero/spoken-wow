@@ -4,14 +4,14 @@ local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(print)
-local DATA = here .. "/../../addons/Spoken_Zones/Data/"
+local DATA = here .. "/../../addons/Spoken_Places/Data/"
 
 local function Load(lang)
     local Z, data = { ShouldLoadLanguage = function() return true end }, {}
     function Z:RegisterLoreData(_, kind, t) data[kind] = t end
     for _, file in ipairs({ "Zones.lua", "Subzones.lua" }) do
         local chunk = loadfile(DATA .. lang .. "/" .. file)
-        if chunk then chunk("Spoken_Zones", Z) end
+        if chunk then chunk("Spoken_Places", Z) end
     end
     return data.zones or {}, data.subzones or {}
 end

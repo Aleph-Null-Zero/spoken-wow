@@ -11,7 +11,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 
 local ALTERAC, HILLSBRAD, BARRENS, NEEDLES, DESOLACE, SHENDRALAS = 1416, 1424, 1413, 1441, 1443, 2652
 
@@ -19,7 +19,7 @@ local ALTERAC, HILLSBRAD, BARRENS, NEEDLES, DESOLACE, SHENDRALAS = 1416, 1424, 1
 local data, loader = {}, { ShouldLoadLanguage = function() return true end }
 function loader:RegisterLoreData(_, kind, t) data[kind] = t end
 for _, file in ipairs({ "enUS/Zones.lua", "enUS/Subzones.lua", "Dungeons.lua", "AreaZones.lua" }) do
-    assert(loadfile(ZONES .. "Data/" .. file))("Spoken_Zones", loader)
+    assert(loadfile(ZONES .. "Data/" .. file))("Spoken_Places", loader)
 end
 local zones, subzones, moved = data.zones, data.subzones, loader.AreaZones
 
@@ -79,9 +79,9 @@ local function Boot(where, client)
     env.Addon:Enable()
     C_Timer.After = after
     local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     for _, file in ipairs({ "Autoplay", "Discovery", "Data/Dungeons", "Data/AreaZones", "UI/LoreWindow" }) do
-        assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+        assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
     end
     Z.Zones[ALTERAC] = { name = "Alterac Mountains", full = "Snow." }
     Z.Zones[HILLSBRAD] = { name = "Hillsbrad Foothills", full = "Hills." }
@@ -95,7 +95,7 @@ local function Boot(where, client)
     Z.pictures = { [HILLSBRAD] = { strahnbrad = { "1424-strahnbrad", 3 } } }
     Z.GetMapName = function(_, mapID) return Z.Zones[mapID] and Z.Zones[mapID].name end
     stub.SetZone(where)
-    stub.FireEvent("ADDON_LOADED", "Spoken_Zones")
+    stub.FireEvent("ADDON_LOADED", "Spoken_Places")
     Z:SetupAudio()
     Z:SetupAutoplay()
     Z:SetupDiscovery()
@@ -130,7 +130,7 @@ local clip = Spoken:GetCurrent()
 Expect("standing in Strahnbrad plays its story by its own id", clip and clip.key, "s:1424:strahnbrad")
 Expect("...headed by Alterac Mountains, where it is listed", clip and clip.present.header, "Alterac Mountains")
 Expect("...with its picture", clip and clip.present.picture and clip.present.picture.file,
-    [[Interface\AddOns\Spoken_Zones\Textures\Pictures\1424-strahnbrad]])
+    [[Interface\AddOns\Spoken_Places\Textures\Pictures\1424-strahnbrad]])
 Expect("...and its report names the story's map", clip and Z:ReportURL(clip.mapID, clip.areaKey),
     "https://spoken.rusty.one/zones/r/1424/strahnbrad")
 Expect("...the visit recorded in Alterac Mountains, where it is found",
@@ -245,17 +245,17 @@ function Z:IsFound(mapID, k) return found[k and (mapID .. "/" .. k) or tostring(
 function Z:RefreshFound() end
 Z.ToggleLoreWindow = nil
 local audio = setmetatable({}, { __index = Z })
-assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Zones", audio)
+assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Places", audio)
 Z.PlaceAbove = audio.PlaceAbove
 local core = setmetatable({}, { __index = Z })
-assert(loadfile(ZONES .. "Core.lua"))("Spoken_Zones", core)
+assert(loadfile(ZONES .. "Core.lua"))("Spoken_Places", core)
 Z.Aliases = {}
 for _, name in ipairs({ "StoryPlace", "AreaZone", "FoundOn", "AreasIn", "GetSubzoneLore", "ResolveAreaKey", "NormaliseAreaKey" }) do
     Z[name] = core[name]
 end
 function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
 for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupLoreWindow()
 local window = Z.window

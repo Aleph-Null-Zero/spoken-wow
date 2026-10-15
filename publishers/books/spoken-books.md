@@ -13,7 +13,7 @@ license: MIT
 
 **This addon is retired. Spoken Books is now part of [Spoken Player](https://www.curseforge.com/wow/addons/spoken-player).**
 
-Spoken Player carries Spoken Books (books, letters, notes and plaques read aloud) together with the other Spoken modules, in one download. This project gets no further updates.
+Spoken Player carries Spoken Books (books, letters, notes and plaques read aloud) together with the other Spoken modules, in one download, where the module is now called Readables. This project gets no further updates.
 
 ## What to do
 

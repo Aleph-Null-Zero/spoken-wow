@@ -6,8 +6,8 @@ Repo-wide rules. Each section also has its own file, which applies on top of thi
 ## Layout
 
 - `addons/`: the shipped Lua.
-  - `Spoken` plays every line. `Spoken_Quests`, `Spoken_Gossip`, `Spoken_Zones` and
-    `Spoken_Books` are its modules, and `SpokenContributions` holds what players upload at
+  - `Spoken` plays every line. `Spoken_Quests`, `Spoken_Gossip`, `Spoken_Places` and
+    `Spoken_Readables` are its modules, and `SpokenContributions` holds what players upload at
     /contribute. All ship in one zip, `Spoken-<v>.zip` (`scripts/spoken/package.sh`).
   - What quests and gossip both read lines with (the voice packs, languages, the NPC windows'
     buttons) is Spoken's `Dialogue/` folder; both modules run in its `VoiceOver` table.

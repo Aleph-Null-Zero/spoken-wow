@@ -1,5 +1,5 @@
--- A scrolling block of wrapped text, with a scrollbar: Spoken Zones' stories, beside the map and in
--- Azeroth's Compendium, and Spoken Books' readables and Spoken Quests' quests there, so all of them
+-- A scrolling block of wrapped text, with a scrollbar: Spoken Places' stories, beside the map and in
+-- Azeroth's Compendium, and Spoken Readables' readables and Spoken Quests' quests there, so all of them
 -- scroll and wrap alike. The global SpokenTextView: Create, AddScrollBar and Unsnap. The words are
 -- the Compendium's Text Size (Spoken:CompendiumFontSize).
 --

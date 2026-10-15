@@ -81,8 +81,8 @@ const ADDONS: Addon[] = [
   },
   {
     slug: "spoken-books",
-    label: "Spoken Books",
-    description: "Reads books, letters and notes aloud.",
+    label: "Spoken Writings",
+    description: "Reads books, letters, notes and plaques aloud.",
     wago: true,
     release: "books/",
     section: "books",
@@ -98,7 +98,7 @@ const EXPLORERS = [
   // Quests' icon until gossip has its own addon, and with it its own art.
   { href: "/gossip", icon: "/icons/quests.svg", title: "Gossip" },
   { href: "/zones", icon: "/icons/zones.svg", title: "Zones" },
-  { href: "/books", icon: "/icons/books.svg", title: "Books" },
+  { href: "/books", icon: "/icons/books.svg", title: "Writings" },
 ];
 
 /** The languages with at least one pack, in the site's order: the table's columns. */

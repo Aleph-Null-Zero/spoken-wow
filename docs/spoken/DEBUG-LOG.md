@@ -81,8 +81,8 @@ quest title placed in whichever window shows it, and the last window Spoken Ques
 Forever the game's quest functions can answer that no quest is open while its window shows one.
 It also says which of Spoken's modules are loaded, turned off in the AddOns list or not installed,
 and what the reading window holds (`reading window: open, a book "...", page 2, starting "...";
-nothing of Spoken reads it: Spoken_Books is not installed`) and the mailbox's open letter: a book
-read without Spoken Books is silent and shows nothing, and this is where the log says why.
+nothing of Spoken reads it: Spoken_Readables is not installed`) and the mailbox's open letter: a book
+read without Spoken Readables is silent and shows nothing, and this is where the log says why.
 
 ## Diagnostics in the log
 
@@ -137,7 +137,7 @@ Each line is `<GetTime> <category> <text>`:
 ```
 1234.567 session start: Tata Throwaway, Spoken 3.0.1, Spoken Developer 0.1.0, client 1.60.1 build 70205
 1234.567 session wall clock 2026-10-06 21:14:03 at GetTime 1234.567
-1234.567 session modules: quests (Spoken_Quests), zones (Spoken_Zones)
+1234.567 session modules: quests (Spoken_Quests), zones (Spoken_Places)
 1237.570 diag login:
 1237.570 diag   Spoken 3.0.1, API 1, 0 queued, playing
 1240.090 quests quest-detail: QUEST_DETAIL raw quest ID 783, title "A Threat Within", NPC "Marshal McBride"
@@ -159,7 +159,7 @@ on this client's clock, and head each line with whose it is.
   muted channel, a module turned off), and the Dialog channel muted, restored, or left alone
   because the player already had it off.
 - `screen`: the reading window (books, plaques, signs, letters) as each page shows, with its
-  title, page, author for a letter and first words, and whether Spoken Books is there to read it;
+  title, page, author for a letter and first words, and whether Spoken Readables is there to read it;
   then its closing.
 - Other categories come from the modules that write them: `quests` from Spoken Quests, `sync`,
   `msg`, `party`, `room` and `logs` from Spoken Party Sync.

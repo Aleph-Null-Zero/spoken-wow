@@ -6,14 +6,14 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 local function LoadBooks()
     local SpokenBooks = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Books", SpokenBooks)
+        chunk("Spoken_Readables", SpokenBooks)
     end
     return SpokenBooks
 end
@@ -34,6 +34,7 @@ env.Addon.db.profile.Contribute.HideButtons = false
 local envelope = B:CaptureContribution()
 H.WriteCapturedFixture(here, "books-page", envelope)
 Expect("the source is books", envelope:match("^!SPOKEN1 books\n") ~= nil, true)
+Expect("the addon is named by its folder", envelope:match("\naddon=Spoken_Readables/") ~= nil, true)
 Expect("the key is the client-side checksum",
     envelope:match("\npage=" .. B:ChecksumOf(UNKNOWN) .. "\n") ~= nil, true)
 Expect("the book title is carried", envelope:match("\nbook=Ledger of Nothing\n") ~= nil, true)

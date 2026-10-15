@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Writes addons/Spoken_Zones/Data/Languages.lua: what each language covers, and
+// Writes addons/Spoken_Places/Data/Languages.lua: what each language covers, and
 // whether it is finished enough to offer to players.
 //
 //   node tools/locale/build-languages.mjs
@@ -31,7 +31,7 @@ import { loadPacks } from "../../../../scripts/lib/packs.mjs";
 // A Windows checkout has CRLF on disk; the counts and the --check compare lines as Git stores them.
 const read = async (path) => (await readFile(path, "utf8")).replace(/\r\n/g, "\n");
 
-const DATA = join(ROOT, "addons/Spoken_Zones/Data");
+const DATA = join(ROOT, "addons/Spoken_Places/Data");
 const OUT_PATH = join(DATA, "Languages.lua");
 
 // Whether a language has a pack: its page under publishers/zones/ is what says so, since a

@@ -13,7 +13,7 @@
 # addon's 1.12/2.4.3/3.3.5 zips carry Spoken and the gossip module inside them
 # (scripts/quests/package.sh).
 #
-# The modules' folders are Spoken_Quests, Spoken_Gossip, Spoken_Books and Spoken_Zones. Their old names,
+# The modules' folders are Spoken_Quests, Spoken_Gossip, Spoken_Readables and Spoken_Places. Their old names,
 # SpokenQuests and the rest, belong to the retired CurseForge projects, and this zip carries no
 # tombstone under them: two projects shipping one folder is what the rename exists to stop. The
 # retired projects' last releases carry those (scripts/spoken/package-retired.sh).
@@ -102,14 +102,14 @@ module_packager() {
   case "$1" in
     Spoken_Quests) echo "$REPO/scripts/quests/package.sh" ;;
     Spoken_Gossip) echo "$REPO/scripts/gossip/package.sh" ;;
-    Spoken_Books) echo "$REPO/scripts/books/package.sh" ;;
-    Spoken_Zones) echo "$REPO/scripts/zones/package.sh" ;;
+    Spoken_Readables) echo "$REPO/scripts/books/package.sh" ;;
+    Spoken_Places) echo "$REPO/scripts/zones/package.sh" ;;
   esac
 }
 modules_dist="$(mktemp -d)"
 trap 'rm -rf "$staging" "$modules_dist"' EXIT
 folders=("$NAME" "$STORE" "$TOMBSTONE")
-for module in Spoken_Quests Spoken_Gossip Spoken_Books Spoken_Zones; do
+for module in Spoken_Quests Spoken_Gossip Spoken_Readables Spoken_Places; do
   module_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$module/$module.toc" | head -1 | tr -d '\r\n')"
   DIST="$modules_dist" "$(module_packager "$module")" >/dev/null
   module_zip="$modules_dist/$module-$module_version.zip"

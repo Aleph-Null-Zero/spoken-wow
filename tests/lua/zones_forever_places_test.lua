@@ -8,7 +8,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 
 local ELWYNN, AZSHARA = 1429, 1447
 local getMapInfo = C_Map.GetMapInfo
@@ -20,7 +20,7 @@ local function Boot(forever)
         return getMapInfo(id)
     end
     local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Data/ForeverAreas.lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. "Data/ForeverAreas.lua"))("Spoken_Places", Z)
     Z.Subzones[ELWYNN] = {
         goldshire = { name = "Goldshire", full = "A town." },
         ["northshire valley camelot"] = { name = "Northshire Valley - Camelot", pending = true },

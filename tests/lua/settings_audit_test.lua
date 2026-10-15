@@ -9,8 +9,8 @@ local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -24,9 +24,9 @@ _G.C_AddOns = { IsAddOnLoaded = function() return true end }
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local env = _G.SpokenEnv
-env.Sources:Register("books", { title = "Spoken Books", addon = "Spoken_Books", order = 2,
+env.Sources:Register("books", { title = "Spoken Writings", addon = "Spoken_Readables", order = 2,
     packs = function() return { "SpokenBooksAudio" } end })
-env.Sources:Register("zones", { title = "Spoken Zones", addon = "Spoken_Zones", order = 3,
+env.Sources:Register("zones", { title = "Spoken Zones", addon = "Spoken_Places", order = 3,
     packs = function() return { "SpokenZonesAudio" } end })
 _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()
@@ -35,12 +35,12 @@ QuestsPanel:Setup()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Options", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
+    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB(); B:SetupOptions()
 local Z = H.NewZoneLore()
 for _, file in ipairs({ "UI/Options" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupOptions()
 -- Azeroth's Compendium, with the three tabs Spoken's page shows an Unlock switch for: stand-ins
@@ -70,7 +70,7 @@ local zonesLanguage
 Z.SetLanguage = function(_, code) zonesLanguage = code; return true end
 Z.GetLanguagePreference = function() return zonesLanguage end
 -- The books addon's own copy dialog.
-assert(loadfile(BOOKS .. "UI/CopyLink.lua"))("Spoken_Books", B)
+assert(loadfile(BOOKS .. "UI/CopyLink.lua"))("Spoken_Readables", B)
 -- The stub client measures no text; the subtitle's sample needs a height to lay out.
 do
     local build = env.Subtitle.Build
@@ -87,6 +87,10 @@ for _, page in ipairs(env.Options.pages or {}) do
 end
 -- The Developer page comes from the Spoken_Developer module.
 Expect("Spoken, the three modules' pages and the Developer page are all here", #pages, 5)
+local names = {}
+for _, page in ipairs(pages) do table.insert(names, page.name) end
+Expect("the modules' pages are listed Quests, Places, Readables: Gossip, not loaded here, goes between Quests and Places",
+    table.concat(names, ", ", 2, 4), "Quests, Places, Readables")
 
 local function Controls(layout)
     local list = {}
@@ -189,8 +193,8 @@ stub.print(string.format("settings_audit: %d checkboxes, %d sliders, %d menus, %
     worked.checkbox, worked.slider, worked.menu, worked.button))
 
 ---------------------------------------------------------------- a module switched off is off
-local PAGE_FOR = { quests = 2, books = 3, zones = 4 }
-for _, key in ipairs({ "quests", "books", "zones" }) do
+local PAGE_FOR = { quests = 2, zones = 3, books = 4 }
+for _, key in ipairs({ "quests", "zones", "books" }) do
     local page = pages[PAGE_FOR[key]]
     _G.Spoken:SetPartOn(key, false)
     env.Options:UpdateRows()
@@ -212,8 +216,8 @@ for _, control in ipairs(Controls(pages[1].layout)) do
     local name = Name(control)
     if name:find("^Unlock ") then table.insert(unlocks, name) end
 end
-Expect("Spoken's page lists the Unlock switches in the order of the Compendium's tabs: Quests, Zones, Books",
-    table.concat(unlocks, "|"), "Unlock Unstarted Quests|Unlock Undiscovered Zones|Unlock Unfound Books")
+Expect("Spoken's page lists the Unlock switches in the order of the Compendium's tabs: Quests, Places, Readables",
+    table.concat(unlocks, "|"), "Unlock Unstarted Quests|Unlock Undiscovered Places|Unlock Unfound Readables")
 
 ---------------------------------------------------------------- the Compendium's Text Size
 -- On Spoken's page, after Open Azeroth's Compendium, for every tab; no longer on the Zones page.
@@ -224,7 +228,7 @@ for index, control in ipairs(controls) do
 end
 Expect("Spoken's Compendium section has Text Size after its Open button", afterOpen, env.L.OPT_COMPENDIUM_FONT_SIZE)
 local onZones = {}
-for _, control in ipairs(Controls(pages[4].layout)) do
+for _, control in ipairs(Controls(pages[3].layout)) do
     if Name(control) == Z.L.OPT_FONT_SIZE and control.shown ~= false then table.insert(onZones, Name(control)) end
 end
 Expect("...and the Zones page has none", table.concat(onZones, "|"), "")

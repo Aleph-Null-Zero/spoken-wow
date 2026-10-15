@@ -8,7 +8,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local ADDONS = here .. "/../../addons/"
-local ZONES = ADDONS .. "Spoken_Zones/"
+local ZONES = ADDONS .. "Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 ---------------------------------------------------------------- the data
@@ -20,7 +20,7 @@ local data = {}
 local loader = { ShouldLoadLanguage = function() return true end }
 function loader:RegisterLoreData(_, kind, t) data[kind] = t end
 for _, file in ipairs({ "enUS/Zones.lua", "enUS/Subzones.lua", "Dungeons.lua" }) do
-    assert(loadfile(ZONES .. "Data/" .. file))("Spoken_Zones", loader)
+    assert(loadfile(ZONES .. "Data/" .. file))("Spoken_Places", loader)
 end
 local subzones, dungeons = data.subzones, loader.Dungeons
 assert(loadfile(ADDONS .. "Spoken_Quests/Data/Compendium.lua"))()
@@ -132,18 +132,18 @@ function Z:IsFound(mapID, key) return found[key and (mapID .. "/" .. key) or tos
 function Z:RefreshFound() end
 Z.ToggleLoreWindow = nil
 local audio = setmetatable({}, { __index = Z })
-assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Zones", audio)
+assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Places", audio)
 Z.PlaceAbove = audio.PlaceAbove
 -- Where an area found on a map has its story, as Core.lua finds it.
 local core = setmetatable({}, { __index = Z })
-assert(loadfile(ZONES .. "Core.lua"))("Spoken_Zones", core)
+assert(loadfile(ZONES .. "Core.lua"))("Spoken_Places", core)
 Z.Aliases = {}
 for _, name in ipairs({ "StoryPlace", "AreaZone", "FoundOn", "AreasIn", "GetSubzoneLore", "ResolveAreaKey", "NormaliseAreaKey" }) do
     Z[name] = core[name]
 end
 function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
 for _, file in ipairs({ "UI/AudioButton", "UI/ReportButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupLoreWindow()
 local window = Z.window

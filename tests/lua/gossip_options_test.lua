@@ -95,6 +95,8 @@ local function Name(label) return (L.OPT_PACK_NAME_FMT:gsub("%%1%$s", label)) en
 Expect("the packs offered are those that hold gossip: All, and the Gossip pack",
     table.concat(rows, "|"), Name(L.OPT_PACK_ALL) .. "|" .. Name(L.OPT_PACK_GOSSIP))
 Expect("...the card counts only the installed one that does", _G.Spoken:PartStatus("gossip") ~= nil, true)
+Expect("the minimap menu heads its entries with the page's name, in the player's language",
+    _G.Spoken:GetSource("gossip").title, L.OPT_PAGE_TITLE)
 local packs = _G.Spoken:GetSource("gossip").packs()
 Expect("...Alliance's not among them", table.concat(packs, "|"), "Spoken Quests Audio: Gossip")
 

@@ -5,7 +5,7 @@ Discord: https://discord.gg/HEGUgn6Yf
 Voiced dialogue, lore and text for World of Warcraft Classic.
 
 **Spoken** is one download: Spoken itself and its three modules, Spoken Quests, Spoken
-Books and Spoken Zones. Each is a folder of its own, grouped under Spoken in the AddOns
+Books and Spoken Places. Each is a folder of its own, grouped under Spoken in the AddOns
 list. Spoken plays every line and owns the settings page, the minimap button, the queue and
 the narrator window or subtitles; each module voices one kind of text and has a page of its
 own under Spoken's settings. Every module comes installed. A player who does not want one
@@ -17,8 +17,8 @@ folder. The voice packs are separate downloads.
 | `Spoken` | **Spoken** | nothing itself: it plays every module's lines | — |
 | `Spoken_Quests` | **Spoken Quests** | quest dialogue | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-quests-audio-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-quests-audio-shared) — or all in one from [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=quests-audio) |
 | `Spoken_Gossip` | **Spoken Gossip** | what NPCs say when you talk to them | [Gossip](https://www.curseforge.com/wow/addons/spoken-quests-audio-gossip), or the quests' [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all); each language's quests pack holds its gossip too |
-| `Spoken_Books` | **Spoken Books** | books, letters and other in-world texts | [CurseForge](https://www.curseforge.com/wow/addons/spoken-books-audio) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=books-audio) |
-| `Spoken_Zones` | **Spoken Zones** | zone and subzone lore | [CurseForge](https://www.curseforge.com/wow/addons/spoken-zones-audio) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=zones-audio) |
+| `Spoken_Readables` | **Spoken Readables** | books, letters and other in-world texts | [CurseForge](https://www.curseforge.com/wow/addons/spoken-books-audio) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=books-audio) |
+| `Spoken_Places` | **Spoken Places** | zone and subzone lore | [CurseForge](https://www.curseforge.com/wow/addons/spoken-zones-audio) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=zones-audio) |
 
 `make package-spoken` builds the download, `Spoken-<version>.zip`, with every module built by
 its own packager. A module's voice pack holds its lines; the module does nothing without one,
@@ -41,9 +41,9 @@ everyone who has it gets the modules with their next update; `spoken-quests`, `s
 `spoken-books` and `spoken` retire, and their last release stops shipping the module folders;
 the voice packs name Spoken as their dependency. The modules' folders were `SpokenQuests`,
 `SpokenZones` and `SpokenBooks` until 3.0.0-beta.3; those names belong to the retiring projects,
-so the modules moved to `Spoken_Quests`, `Spoken_Zones` and `Spoken_Books`, and each retiring
-project's last release (`make package-spoken-retired`) replaces its old folder with a tombstone
-that never loads. Folders an older release left behind (`SpokenPlayer`, `VoiceOverRedux`,
+so the modules moved to `Spoken_Quests`, `Spoken_Places` and `Spoken_Books` (since renamed
+`Spoken_Readables`), and each retiring project's last release (`make package-spoken-retired`)
+replaces its old folder with a tombstone that never loads. Folders an older release left behind (`SpokenPlayer`, `VoiceOverRedux`,
 `ZoneLore`, and a full old copy of a module under its old name) are found at login, and the
 player is asked to delete them.
 
@@ -88,7 +88,7 @@ Quests module's settings together. Each module has a page of its own.
 **Quests.** The quest log's details have Play and Report, the same round buttons the
 subtitle uses; a quest with no recording offers Contribute in their place.
 
-**Zones.** *Zone Lore* sits beside the world map, in a panel of its own, with the story of
+**Places.** *The Place Story* sits beside the world map, in a panel of its own, with the story of
 the zone or area the map shows on the quest log's parchment, and Play, Report and a button
 that opens it in *Lore of Azeroth*. That window, from the minimap menu or `/spz window`,
 browses every story: Azeroth, its two continents, their zones and each zone's areas, with a
@@ -135,7 +135,7 @@ make test-player        # the Lua harness, all addons
 
 `THIRD_PARTY.md` says what in here is not this project's, and under what terms —
 the vendored Ace libraries, the game text the corpus is built from, and the wiki
-lore the zones addon ships.
+lore the Places addon ships.
 
 Read `AGENTS.md` before changing anything, and the project READMEs under
 `docs/` for what each side actually does — both are unusually detailed and

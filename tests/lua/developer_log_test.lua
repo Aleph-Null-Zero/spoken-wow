@@ -170,19 +170,25 @@ Expect("...nor offer /reload", opened, nil)
 _G.InCombatLockdown = nil
 
 ---------------------------------------------------------------- a book open
--- Spoken Books is not loaded here: a book opened says what it is, and that nothing reads it.
+-- Spoken Writings is not loaded here: a book opened says what it is, and that nothing reads it.
 stub.ShowPage({ title = "The Fall of Ameth'Aran", text = "Long ago, the night elves of Ameth'Aran\nkept vigil.", number = 2 })
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("a book opened is in the log, with its title and page",
     Has([[screen reading window: a book "The Fall of Ameth'Aran", page 2, starting "Long ago, the night elves]]), true)
-Expect("...and that nothing of Spoken reads it", Has("nothing of Spoken reads it: Spoken_Books is not installed"), true)
+Expect("...and that nothing of Spoken reads it", Has("nothing of Spoken reads it: Spoken_Readables is not installed"), true)
 local count = #Spoken:LogLines()
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("...once per page", #Spoken:LogLines(), count)
 local diagnostics = Spoken:Diagnostics(true)
 Expect("the snapshot has the reading window open", Has([[reading window: open, a book "The Fall of Ameth'Aran", page 2]], diagnostics), true)
-Expect("...and which Spoken modules are installed", Has("Spoken_Books (books, plaques, signs and letters): not installed", diagnostics), true)
+Expect("...and which Spoken modules are installed", Has("Spoken_Readables (books, plaques, signs and letters): not installed", diagnostics), true)
 Expect("...gossip among them", Has("Spoken_Gossip (what NPCs say when spoken to): not installed", diagnostics), true)
+local order = {}
+for _, line in ipairs(diagnostics) do
+    local module = line:match("(Spoken_%a+) %(")
+    if module then table.insert(order, module) end
+end
+Expect("...in the modules' order", table.concat(order, " "), "Spoken_Quests Spoken_Gossip Spoken_Places Spoken_Readables")
 stub.ClosePage()
 stub.FireEvent("ITEM_TEXT_CLOSED")
 Expect("its closing is in the log", Last():find("screen reading window closed", 1, true) ~= nil, true)
