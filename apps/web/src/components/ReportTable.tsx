@@ -53,7 +53,6 @@ import type { Source } from "@/lib/sections";
 
 const SECTION_LABELS: Record<Section, string> = {
   quests: "Quests",
-  gossip: "Gossip",
   books: "Books",
   zones: "Zones",
 };

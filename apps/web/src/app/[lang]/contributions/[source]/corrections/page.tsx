@@ -14,6 +14,7 @@ import {
   isSearchIn,
   matchesSearch,
   matchesStage,
+  stagesOf,
   type ClientFilter,
   type StageFilter,
 } from "@/lib/contributions/query";
@@ -59,7 +60,7 @@ export default async function Page({
   // Era and Forever by default: every other client is the low-effort bin, shown only on request.
   const client: ClientFilter = clientFilterOf(rawClient);
   // Gossip has no quest moment to correct, so only the three panels are offered.
-  const stage: StageFilter = isQuestStage(rawStage) ? rawStage : "all";
+  const stage: StageFilter = stagesOf(rawStage).filter(isQuestStage);
   const q = typeof rawQ === "string" ? rawQ.trim() : "";
   const searchIn = isSearchIn(rawFilter) ? rawFilter : "any";
 

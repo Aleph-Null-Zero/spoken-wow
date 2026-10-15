@@ -8,9 +8,8 @@ import "server-only";
 
 import { clientFilterOf, clientOf, matchesClient } from "./client";
 import { lineStates, tabOf } from "./known";
-import { sectionOf, type Section } from "./query";
+import type { Section } from "./query";
 import { listContributions } from "./store";
-import { questFor } from "./triage";
 
 export type PendingCounts = {
   sections: Record<Section, number>;
@@ -24,17 +23,15 @@ export async function pendingCounts(lang: string): Promise<PendingCounts> {
   );
   const states = await lineStates(listed);
   const counts: PendingCounts = {
-    sections: { quests: 0, gossip: 0, books: 0, zones: 0 },
+    sections: { quests: 0, books: 0, zones: 0 },
     quests: { contributions: 0, corrections: 0 },
   };
   listed.forEach((row, index) => {
     const tab = tabOf(row.status, states[index]);
     if (tab === null) return;
-    const section = sectionOf(row, questFor(row));
-    // Gossip has no quest moment, so a correction is always a quests row.
-    if (tab === "corrections" && section !== "quests") return;
-    counts.sections[section]++;
-    if (section === "quests") counts.quests[tab]++;
+    if (tab === "corrections" && row.source !== "quests") return;
+    counts.sections[row.source]++;
+    if (row.source === "quests") counts.quests[tab]++;
   });
   return counts;
 }

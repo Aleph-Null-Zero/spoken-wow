@@ -443,10 +443,16 @@ each take's audio, in `audio-history/`. A line with no live take shows as a gap.
 **Progress text is hidden by default.** Those 3,093 lines — 17.7% of the corpus — are never
 voiced by any code path, so leaving them in every result padded the list with rows nobody can
 act on. **Show progress text** brings them back, and `?progress=1` says the same thing in a
-URL; absence means hidden, so a bare link is the useful view. Choosing `progress` in the
+URL; absence means hidden, so a bare link is the useful view. Ticking `progress` in the
 source filter also counts as asking for them, since otherwise that choice would return
 nothing. It is not counted as an active filter: it widens the results rather than narrowing
 them, and clearing filters returns it to hidden.
+
+**Gossip is a source, not an explorer of its own.** The source filter takes several values,
+written `?source=accept,gossip`, so one view holds an NPC's greetings beside their quest text.
+A gossip row has no quest, and its Quest / broadcast cell shows the BroadcastText ids it speaks
+instead. `/gossip` redirects here with `source=gossip`, and `/contributions/gossip` to the
+quests contributions with `stage=gossip`. `/reports/gossip` redirects to `/reports/quests`.
 
 Lines with no audio are marked. `no audio` is a real gap; `progress` and `invalid-chars`
 are lines the generator deliberately never voices.
@@ -1247,7 +1253,7 @@ then the older. It takes the other's languages it lacks. The other's rows stop b
 `gossip_merge` (migration 0068) records where it went. Its file is never renamed: it becomes an
 alias of the line kept, so its takes still play, `corpus/gossip_aliases.json` tells the pack build
 to ship them, and a link to it shows the line kept. Lines of one moment that read differently
-stay apart, and the explorer's Broadcast column links each to the others as "same moment". To run
+stay apart, and the explorer's Quest / broadcast column links each to the others as "same moment". To run
 it over every line, use `apps/web/scripts/relink-gossip.mts`; `--dry-run` lists what it would merge.
 
 ## Addon Install

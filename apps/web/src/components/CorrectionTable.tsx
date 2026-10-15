@@ -18,6 +18,7 @@ import { useLang } from "@/components/LangProvider";
 import ClientSelect from "@/components/ClientSelect";
 import { SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
+import MultiFilterChip from "@/components/MultiFilterChip";
 import { LiteButton } from "@/components/LiteControls";
 import { Refreshing } from "@/components/Loading";
 import SendersButton from "@/components/SendersButton";
@@ -68,7 +69,7 @@ type Filters = { status: ContributionStatus; client: ClientFilter; stage: StageF
 function correctionsHref(filters: Filters): string {
   // Client always written, "all" included: left out, it means the Era and Forever default.
   const params = new URLSearchParams({ status: filters.status, client: filters.client });
-  if (filters.stage !== "all") params.set("stage", filters.stage);
+  if (filters.stage.length) params.set("stage", filters.stage.join(","));
   if (filters.q.trim()) params.set("q", filters.q.trim());
   if (filters.searchIn !== "any") params.set("filter", filters.searchIn);
   return `/contributions/quests/corrections?${params}`;
@@ -192,11 +193,11 @@ export default function CorrectionTable({
           options={SEARCH_IN_OPTIONS}
           onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
         />
-        <FilterChip
+        <MultiFilterChip
           label="stage"
-          value={stage === "all" ? undefined : stage}
+          values={stage}
           options={STAGE_CHIP_OPTIONS}
-          onChange={(next) => go({ stage: (next ?? "all") as StageFilter })}
+          onChange={(next) => go({ stage: (next ?? []) as StageFilter })}
         />
         <span className="text-muted-foreground text-xs">
           {initial.length} {initial.length === 1 ? "correction" : "corrections"}

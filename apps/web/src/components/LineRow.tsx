@@ -144,10 +144,6 @@ type Props = {
   /** Open the report dialog. Everyone gets this, signed in or not. */
   onReport: (line: ResultLine) => void;
   onRestored: (file: string, version: number) => void;
-  /** False in the gossip explorer, where no line has a quest. */
-  showQuest: boolean;
-  /** True in the gossip explorer: the BroadcastText ids each line speaks. */
-  showBroadcast: boolean;
   /**
    * Rows of one line and speaker (its player-gender wordings) share the speaker cells: the
    * first row spans this many rows, and the rest pass 0 and leave those cells out.
@@ -207,8 +203,6 @@ export default function LineRow({
   onRestored,
   onNarrowToNpc,
   showNpcPage = false,
-  showQuest,
-  showBroadcast,
   groupSpan,
   onNarrowToQuest,
   onClearDirty,
@@ -276,11 +270,9 @@ export default function LineRow({
         </td>
       )}
 
-      {spanned && showQuest && (
+      {spanned && (
         <td rowSpan={groupSpan} className="px-2 py-2">
-          {line.questId === null ? (
-            <span className="text-muted-foreground">—</span>
-          ) : (
+          {line.questId !== null ? (
             <>
               <button
                 className="hover:text-foreground block max-w-full truncate text-left underline-offset-2 hover:underline"
@@ -309,39 +301,38 @@ export default function LineRow({
                 {line.questId} <WowheadLink href={wowheadQuestUrl(line.questId)} />
               </span>
             </>
-          )}
-        </td>
-      )}
-
-      {spanned && showBroadcast && (
-        <td rowSpan={groupSpan} className="px-2 py-2 text-xs tabular-nums">
-          {line.broadcast?.length ? (
-            line.broadcast.map(({ id, matchedBy }) => (
-              <span
-                key={id}
-                className={"block " + (matchedBy === "text" ? "text-muted-foreground" : "")}
-                title={
-                  matchedBy === "text"
-                    ? "Matched by English text: one of the ids that read this way"
-                    : "The world database names this id for an NPC saying this text"
-                }
-              >
-                {id}
-              </span>
-            ))
           ) : (
-            <span className="text-muted-foreground">—</span>
+            // Gossip, which has no quest: the BroadcastText ids it speaks stand in its place.
+            <div className="text-xs tabular-nums">
+              {line.broadcast?.length ? (
+                line.broadcast.map(({ id, matchedBy }) => (
+                  <span
+                    key={id}
+                    className={"block " + (matchedBy === "text" ? "text-muted-foreground" : "")}
+                    title={
+                      matchedBy === "text"
+                        ? "Matched by English text: one of the ids that read this way"
+                        : "The world database names this id for an NPC saying this text"
+                    }
+                  >
+                    {id}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              )}
+              {line.moment?.map((sibling) => (
+                <a
+                  key={sibling}
+                  href={localeHref(lang, `/quests?line=${encodeURIComponent(sibling)}`)}
+                  className="text-muted-foreground block truncate underline-offset-2 hover:underline"
+                  title={`Same moment: ${sibling}, the same id in the same voice, kept as a line of its own`}
+                >
+                  same moment
+                </a>
+              ))}
+            </div>
           )}
-          {line.moment?.map((sibling) => (
-            <a
-              key={sibling}
-              href={localeHref(lang, `/gossip?line=${encodeURIComponent(sibling)}`)}
-              className="text-muted-foreground block truncate underline-offset-2 hover:underline"
-              title={`Same moment: ${sibling}, the same id in the same voice, kept as a line of its own`}
-            >
-              same moment
-            </a>
-          ))}
         </td>
       )}
 

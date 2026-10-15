@@ -1,7 +1,7 @@
 import { pageLang } from "@/lib/lang-server";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import Link from "@/components/LocaleLink";
 import ReportTable from "@/components/ReportTable";
@@ -15,14 +15,14 @@ import {
   pageOf,
   PAGE_SIZE,
   SECTIONS,
-  sectionOfReport,
   sortedGroups,
   STATUS_VIEWS,
   type Section,
   type StatusView,
 } from "@/lib/reports/query";
 import { listReports } from "@/lib/reports/store";
-import { isSection } from "@/lib/contributions/query";
+import { isSection, queryOf } from "@/lib/contributions/query";
+import { localeHref } from "@/lib/lang";
 import { Contained, Wide } from "@/components/Width";
 
 export const metadata: Metadata = { title: "Reports · Spoken" };
@@ -39,6 +39,8 @@ export default async function Page({
 }) {
   const lang = await pageLang(params);
   const { section } = await params;
+  // Gossip was a tab of its own; its reports are quests reports.
+  if (section === "gossip") redirect(localeHref(lang, `/reports/quests?${queryOf(await searchParams)}`));
   if (!isSection(section)) notFound();
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -61,10 +63,10 @@ export default async function Page({
   const all = (await listReports("all", "all", category, null, lang)).filter((report) =>
     matchesReportSearch(report, q),
   );
-  const inSection = all.filter((report) => sectionOfReport(report) === section);
+  const inSection = all.filter((report) => report.source === section);
   const sectionCounts = Object.fromEntries(SECTIONS.map((key) => [key, 0])) as Record<Section, number>;
   for (const report of all) {
-    if (view === "all" || report.status === view) sectionCounts[sectionOfReport(report)]++;
+    if (view === "all" || report.status === view) sectionCounts[report.source]++;
   }
   const statusCounts = Object.fromEntries(STATUS_VIEWS.map((key) => [key, 0])) as Record<StatusView, number>;
   for (const report of inSection) {
