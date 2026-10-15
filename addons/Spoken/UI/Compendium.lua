@@ -1727,10 +1727,15 @@ function C.OpenZone(zone, openZones)
 	if C.CITY_IN[zone] then openZones[C.CITY_IN[zone]] = true end
 end
 
+--- The map the player stands in, or nil where there is none or the game hides it (instances).
+local function PlayerMap()
+	return _G.Spoken.NotSecret(C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player"))
+end
+
 --- The map the player stands in that `has(map)` says a tab lists, walking up from an inn's or a
 --- cave's map, or nil.
 function C.PlayerZone(has)
-	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local map = PlayerMap()
 	local steps = 0
 	while map and steps < 8 do
 		if has(map) then return map end
@@ -1741,7 +1746,7 @@ end
 
 --- Of `listed`, the continents a tab's list shows, the one the player is on, else the first.
 function C.PlayerContinent(listed)
-	local map = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local map = PlayerMap()
 	for _, continent in ipairs(listed) do
 		if map == continent or (map and C.ContinentOf(map) == continent) then return continent end
 	end

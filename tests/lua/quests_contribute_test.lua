@@ -75,6 +75,23 @@ local inflected = VoiceOver.Contribute:Capture()
 Expect("...and the class in either gender's form", inflected:match("\nEine %$C, %$N%.\n") ~= nil, true)
 _G.LOCALIZED_CLASS_NAMES_FEMALE = nil
 
+-- A quest only the reader's class can take says the class as its own word, not as the reader's.
+world.playerClass, world.playerClassFile, world.playerClassID = "Paladin", "PALADIN", 2
+world.questText = "Tester, a paladin must reflect the Light."
+_G.SpokenQuestsCompendium = { quests = { [9123] = { "A Rough Start", classes = 2 } } }
+Expect("a quest only that class can take keeps the class as written",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a paladin must reflect the Light.")
+Expect("...also from the quest log",
+    VoiceOver.Contribute:Detemplate("A paladin, Tester.", 9123), "A paladin, $N.")
+_G.SpokenQuestsCompendium.quests[9123].classes = 2 + 4
+Expect("a quest two classes can take still puts the reader's class back",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a $c must reflect the Light.")
+_G.SpokenQuestsCompendium.quests[9123].classes = nil
+Expect("...as does a quest open to every class",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a $c must reflect the Light.")
+_G.SpokenQuestsCompendium = nil
+world.playerClassID = nil
+
 world.playerName = "Valaas Dawnsight"
 world.questText = "Greetings, young Valaas. The Dawnsight name is known, Valaas Dawnsight."
 local surnamed = VoiceOver.Contribute:Capture()

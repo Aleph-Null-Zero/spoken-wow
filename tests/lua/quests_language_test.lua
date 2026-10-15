@@ -321,6 +321,12 @@ Expect("L. ...and hears the English pack", own.module.METADATA.AddonName, "Engli
 Expect("L. ...and the NPC counts as having gossip", VO.DataModules:HasGossipFor(
     { unitGUID = "Creature-0-0-0-0-6929-0" }), true)
 
+-- The text names every NPC's lines whether or not a pack voices them, so it alone says nothing.
+VO = Install({ { folder = "EnglishPack", lines = {} } }, "deDE")
+VO.GossipText = DE_OWN
+Expect("L. ...but not where no pack holds its audio", VO.DataModules:HasGossipFor(
+    { unitGUID = "Creature-0-0-0-0-6929-0" }), false)
+
 -- The same German client choosing Portuguese.
 VO = Install({
     { folder = "EnglishPack", lines = { [SECOND_HASH] = 4.0 }, gossip = TWO_LINES },

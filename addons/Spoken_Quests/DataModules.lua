@@ -482,9 +482,10 @@ local function GossipLookupKey(soundData)
         soundData.name and (replaceDoubleQuotes(soundData.name))
 end
 
---- Whether any pack holds gossip for this speaker, whatever the text. Asked the moment a
---- gossip dialog opens, before its text can be trusted, to decide whether to silence the
---- NPC's greeting for a line that is coming.
+--- Whether a pack holds the audio of any of this speaker's gossip lines, whatever the text on
+--- screen. Asked the moment a gossip dialog opens, before its text can be trusted, to decide
+--- whether to silence the NPC's greeting for a line that is coming. The addon's own text names
+--- every NPC's lines, so it counts only where a pack has the file.
 ---@param soundData { unitGUID: string?, name: string?, unitIsObjectOrItem: boolean? }
 ---@return boolean
 function DataModules:HasGossipFor(soundData)
@@ -492,12 +493,23 @@ function DataModules:HasGossipFor(soundData)
     if not table or npc == nil then
         return false
     end
-    if GossipText and GossipText[table] and GossipText[table][npc] then
+    local probe = { event = Enums.SoundEvent.Gossip, unitGUID = soundData.unitGUID, name = soundData.name,
+        unitIsObjectOrItem = soundData.unitIsObjectOrItem }
+    local function Voiced(lines)
+        for text in pairs(lines or {}) do
+            probe.text = text
+            if self:PrepareSound(probe) then
+                return true
+            end
+        end
+        return false
+    end
+    if Voiced(GossipText and GossipText[table] and GossipText[table][npc]) then
         return true
     end
     for _, module in self:GetModules() do
         local data = TextLookup(module, table)
-        if data and data[npc] then
+        if Voiced(data and data[npc]) then
             return true
         end
     end

@@ -40,9 +40,10 @@ SpokenBooks.MATERIALS = MATERIALS
 -- the rest on paper. The book window draws the stone ones in stone.
 local KIND_MATERIAL = { grave = "Stone", tablet = "Stone", plaque = "Bronze", exhibit = "Bronze" }
 
--- Whether `pageId` is the page open in the world, whose item and material the game can tell.
+-- Whether `pageId` is a page of the book open in the world, whose item and material the game can
+-- tell: they are the same on every page, and the next page is built while another is open.
 local function IsOpen(self, pageId)
-	return self.lastPage ~= nil and (pageId == nil or pageId == self.lastPage)
+	return self.lastPage ~= nil and (pageId == nil or self:PlaceOf(pageId) == self:PlaceOf(self.lastPage))
 end
 
 --- What `pageId`'s readable is written on by its kind, or nil for paper.
@@ -54,7 +55,7 @@ function SpokenBooks:KindMaterial(pageId)
 end
 
 --- Open is what the item text events say, not the game's frame, which DialogueUI hides. A page
---- not open (`pageId` another than the one open, or nothing open) takes what its kind is written
+--- not open (of another book than the one open, or nothing open) takes what its kind is written
 --- on, else the book.
 function SpokenBooks:PagePicture(pageId)
 	if IsOpen(self, pageId) then
