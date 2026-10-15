@@ -456,6 +456,7 @@ Expect("...and hides itself if the cursor goes back over the button", tip:IsShow
 stub.ldbObjects.Spoken.OnClick(mmButton, "RightButton")
 stub.ldbObjects.Spoken.OnTooltipShow(tip)
 Expect("with the menu closed it says what the clicks do again", tip:NumLines() > 3, true)
+Expect("...and the version, above the clicks", tip.lines[2], "v" .. env.AddonVersion)
 local playing = env.SoundQueue.GetCurrentSound
 env.SoundQueue.GetCurrentSound = function() return { present = { label = "Azeroth" } } end
 stub.ldbObjects.Spoken.OnTooltipShow(tip)

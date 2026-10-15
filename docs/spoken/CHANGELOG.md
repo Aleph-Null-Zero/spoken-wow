@@ -2,6 +2,11 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## Unreleased
+
+- **The minimap button's tooltip shows Spoken's version.** It sits above the click hints, where
+  a bug report can quote it without opening the settings.
+
 ## 3.4.0 — 2026-10-12
 
 - **A character is greeted by its zone only once, in its starting area.** An existing
