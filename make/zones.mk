@@ -62,8 +62,8 @@ clean: ## Remove build output
 # Voicelines
 #
 # None of these can spend a credit. They report on lines, build the addon's lookup
-# table and check it; cutting audio is the site's, on the droplet. See README
-# "Generating voicelines".
+# table and check it; cutting audio is the site's, on the droplet. See
+# docs/zones/VOICE.md, "Generating voicelines".
 #-------------------------------------------------------------------------------
 
 # Which language's takes and pack the voice targets act on: English, or LOCALE=esMX for

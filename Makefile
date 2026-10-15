@@ -1,10 +1,10 @@
 # Spoken -- the dispatcher.
 #
-# The two projects keep their own Makefiles. They collide on fifteen target names
-# (help, package, release, push, pull, rollback and the rest) and each target is
+# The four projects (quests, zones, books and web) keep their own Makefiles. They share about
+# thirty target names (help, package, release, pull, sync and the rest) and each target is
 # commented with the failure it exists to prevent, several of them guarding an
 # rsync --delete against audio that cannot be regenerated. Merging them is a
-# semantic rewrite of about a hundred targets with nothing to show for it, so
+# semantic rewrite of well over a hundred targets with nothing to show for it, so
 # they are dispatched instead and the prefix disambiguates:
 #
 #     make quests-package        ->  make -f make/quests.mk package
@@ -12,7 +12,7 @@
 #     make web-dev               ->  make -f make/web.mk    dev
 #     make books-extract         ->  make -f make/books.mk  extract
 #
-# Both .mk files use paths relative to the repo root, so they must be run from
+# Every .mk file uses paths relative to the repo root, so they must be run from
 # here -- which is what the pattern rules below guarantee.
 
 .DEFAULT_GOAL := help
@@ -122,6 +122,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/books_source_test.lua
 	@$(LUA) tests/lua/books_options_test.lua
 	@$(LUA) tests/lua/module_settings_test.lua
+	@$(LUA) tests/lua/module_profiles_test.lua
 	@$(LUA) tests/lua/locale_parity_test.lua
 	@$(LUA) tests/lua/books_reader_test.lua
 	@$(LUA) tests/lua/books_playlist_test.lua
@@ -165,7 +166,7 @@ contribute-fixtures:
 # tests/test_corpus.py skips itself without pandas, which is in requirements-extract.txt and
 # pinned at a version with no wheel for this Python. See docs/quests/README.md#tests.
 
-test: test-player ## Everything: both webs, the Python pipeline, the addons
+test: test-player ## Everything: the site, the Node and Python pipelines, the addons
 	@pnpm -r test
 	@node --test scripts/lib/*.test.mjs scripts/audio/*.test.mjs pipelines/lib/*.test.mjs
 	@[ -x pipelines/quests/.venv/bin/python ] || { \
@@ -240,9 +241,9 @@ package-all: ## Build every addon zip: Spoken with its modules, then quests and 
 	@$(MAKE) --no-print-directory -f make/quests.mk package
 	@$(MAKE) --no-print-directory -f make/zones.mk  package
 
-# Spoken's download: Spoken and its three modules in one zip, each module built by its own
+# Spoken's download: Spoken and its four modules in one zip, each module built by its own
 # packager. No sound packs; scripts/spoken/package.sh says why.
-package-spoken: ## Zip Spoken with its modules, Quests, Gossip, Books and Zones, without the sound packs
+package-spoken: ## Zip Spoken with its modules, Quests, Gossip, Zones and Writings, without the sound packs
 	@./scripts/spoken/package.sh
 
 # Spoken's release: the zip package-spoken built, to both stores, with its changelog section

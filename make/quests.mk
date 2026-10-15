@@ -152,17 +152,17 @@ acted: pull-recorded package-acted ## Pull the recordings and build the voice-ac
 # nothing else and each need their own vendored Ace3 in it. Only the first goes to CurseForge;
 # the GitHub release workflow publishes all four.
 #
-# `package-audio` builds the store into five packs - Alliance, Horde, the quests both sides
-# share, gossip, and one holding everything - and zips each. Ogg Vorbis at the full 44.1 kHz,
+# `package-audio` builds the store into four packs - Alliance, Horde, the quests both sides
+# share, and gossip - zips each, and bundles the four into one zip for GitHub. Ogg Vorbis at the full 44.1 kHz,
 # around 300 MB a pack. Its own header explains every choice; VERSION goes into each TOC,
-# PACKS=all builds only the complete one, ENCODE=copy skips the transcode to hear the masters
+# PACKS=all builds one folder holding every line, ENCODE=copy skips the transcode to hear the masters
 # in game, JOBS=1 makes a failing encode readable.
 #
 # ONE PACK FORMAT. A second set at half the size shipped alongside these for a while, five
 # CurseForge projects of its own, because an addon manager installs a project's newest file and
 # one project holding two formats would move a player out of the one they picked. That is over:
 # those five projects stay published and are never uploaded to again, and nothing here builds
-# them. docs/pack-size.md is where every encode that was considered was measured.
+# them. docs/quests/docs/pack-size.md is where every encode that was considered was measured.
 
 # The AddOns list reads a TGA or BLP, never the PNGs in pipelines/quests/assets/icon/, so the
 # icon is converted and committed. Two marks, not one: the player wears the play triangle and
@@ -194,7 +194,7 @@ package-audio: check-synced export-corpus export-ignores $(if $(filter-out enUS 
 	  LANGUAGE="$(or $(LOCALE),enUS)" JOBS=$(JOBS) ./scripts/quests/package-audio.sh
 
 # The "install everything" addon, which installs nothing itself: a few kilobytes declaring the
-# four packs as CurseForge dependencies, because the complete pack is too big to upload. Its
+# four packs as CurseForge dependencies, because one folder holding every line is too big to upload. Its
 # header explains the rest; release.sh sends the dependency list with the file.
 #
 # NAME is the bare pack-family folder, which the split packs leave free, and which release.sh

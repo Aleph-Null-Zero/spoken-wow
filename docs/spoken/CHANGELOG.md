@@ -4,174 +4,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
-- **/sp collect turns Collect Missing Lines on and off**, as the switch on Spoken's page does. /spb gather, which did the same from Books, is gone. *([Nucabe](https://github.com/Nucabe))*
-- **Report on a line an object says (a wanted poster) opens that object's lines**, not those of a creature with the same number. *([Nucabe](https://github.com/Nucabe))*
-- **A zone story's Report opens the line in the language it was read in.** A German story's report used to open the English line. *([Nucabe](https://github.com/Nucabe))*
-- **A quest line's Report copies a spoken.rusty.one address**, the site's own, instead of the old voiceover.rusty.one one that redirected there. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium lists 25 quests Forever gives that Spoken has no words for yet**, such as
-  the Mulgore quests from Mazu'kon and Muln Earthfury, Changing Tastes and Conflict at Darkspear
-  Islands, in their zones or class groups. Their pages have no words until their lines are recorded. *([Nucabe](https://github.com/Nucabe))*
-- **On Forever in German, Spanish, French, Portuguese, Russian, Korean and Chinese, Zones finds the
-  places Forever added or renamed**, such as Die Schwarzschlundfeste and Die Abendruh, by the
-  names Forever's own client gives them. *([Nucabe](https://github.com/Nucabe))*
-- **On Forever, Legashi Encampment in Azshara tells its story**, the one Spoken has for the camp
-  under its older name, Legash Encampment, and it is listed once. Northshire Valley - Camelot and
-  Storm Cliffs, which no one can reach there, are no longer listed as places to find. *([Nucabe](https://github.com/Nucabe))*
-- **Eight quests whose pages in Azeroth's Compendium had no words now show them** as their
-  Description, from what the NPC says while the quest is under way: Conflict at Darkspear Islands,
-  Forced Disarmament and the two Donations of Wool among them. *([Nucabe](https://github.com/Nucabe))*
-- **The small window's size grabber is the game's own**, the one Azeroth's Compendium and the chat windows have. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium is part of Spoken.** Its Quests tab no longer needs Zones or Books switched on, and the window keeps its size in Spoken's settings, so it opens once at its default size. *([Nucabe](https://github.com/Nucabe))*
-- **/spz minimap is gone.** It showed or hid a Zones minimap button that only appeared without Spoken; Spoken's own button is the one to use. *([Nucabe](https://github.com/Nucabe))*
-- **Spoken's modules load only with Spoken switched on.** With Spoken off in the AddOns list, the game leaves Quests, Gossip, Zones, Books and Developer off too, and no longer shows a dialog offering to switch Spoken back on. *([Nucabe](https://github.com/Nucabe))*
-- **A book's title shows on the DialogueUI window the first time it plays.** It could stay blank after a quest line until another book played. *([Nucabe](https://github.com/Nucabe))*
-- **Bronze Border turns the subtitles' portrait ring bronze too**, as it does the small window's. *([Nucabe](https://github.com/Nucabe))*
-- **The offer on a quest's page in Azeroth's Compendium is now called Description**, as the game's
-  quest window calls it. *([Nucabe](https://github.com/Nucabe))*
-- **A quest's page in Azeroth's Compendium shows who says each part.** The description and the
-  completion each have the small window's header: the round portrait of the quest giver or of the
-  NPC you hand it in to, with the part's badge, and their name over the part's name. The progress
-  part is gone; Voiced Only and shift-click on a quest's row count only the description and the
-  completion, so a quest voiced only in its progress counts as unvoiced. *([Nucabe](https://github.com/Nucabe))*
-- **Razorfen Downs tells its story at its entrance in The Barrens.** Standing there, discovering
-  it or clicking it on The Barrens' map now plays and shows its story, and Azeroth's Compendium
-  opens on its card. *([Nucabe](https://github.com/Nucabe))*
-- **Strahnbrad and the other places the game puts in Alterac Mountains are in Alterac Mountains.**
-  Azeroth's Compendium lists and counts the twelve under Alterac Mountains instead of Hillsbrad
-  Foothills, and standing in one, discovering it or clicking it on Alterac Mountains' map plays and
-  shows its story. Places you found before still count. The Great Lift, Lordamere Lake and
-  Darrowmere Lake tell their stories from both zones they border, and on Forever the Valley of
-  Bones is listed in Shen'dralas. *([Nucabe](https://github.com/Nucabe))*
-- **Books in Azeroth's Compendium files what is found inside a dungeon or raid under its card**,
-  in the zone of its entrance, as Quests does: the Dark Keeper nameplates under Blackrock Depths,
-  the lore books under Scholomance and the Scarlet Monastery. A zone with several dungeons holds
-  them under a Dungeons and Raids line. Searching for a dungeon's name lists all it holds, and
-  inside a dungeon the tab opens on its card. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium's Zones tab lists dungeons and raids as cards, and opens every zone.**
-  Each dungeon or raid is a card inside the zone of its entrance, as on the Quests tab, under a
-  Dungeons and Raids line where the zone has several; Razorfen Downs is in The Barrens. Continents
-  and zones you have not discovered open as on Quests and Books: their cards are greyed and their
-  areas listed, those not found greyed with a padlock, and a search finds them too. Their stories
-  stay hidden until you discover them, unless Unlock Undiscovered Zones is on. *([Nucabe](https://github.com/Nucabe))*
-- **Play in Azeroth's Compendium works as the quest log's.** It shows Stop while its part or book
-  is read and Replay once you stop it; Stop no longer takes the line out of the queue, and Play
-  while the queue is stopped plays at once. A queue emptied while stopped no longer stays stopped,
-  so the next line plays. Play and Report say the same in their tooltips on every tab. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium's Quests tab finds its way better.** The line under a page's title says
-  "In" only before a place ("In Mulgore", "Classes · Warrior") and a click on it goes up a level.
-  Chains of one name in one place are numbered, and a chain is named after its first quest you can
-  take. With no quests where you stand, or the filters hiding your zone, the tab opens on your
-  continent. Open in Azeroth's Compendium stays on a quest the filters hide, and follows Unlock
-  Unstarted Quests at once. Era no longer lists Forever's Darkspear Islands. Text Size applies to
-  Quests and Books, switching Quests off closes its tab, and Defaults turns off Started Only and
-  Voiced Only. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium keeps several zones open at once.** On Quests, Zones and Books a click
-  on a zone's or city's card opens or closes that card alone, so opening Elwynn Forest no longer
-  closes Alterac Mountains. A city's card stays as you left it while its zone is closed. *([Nucabe](https://github.com/Nucabe))*
-- **A quest's hand-in in Azeroth's Compendium plays under the NPC you hand it in to**,
-  with that NPC's name and portrait, not the quest giver's. The hand-in stays hidden until you
-  have completed the quest, unless Unlock Unstarted Quests is on. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium opens scrolled to where you are**, and every page's line under its
-  title says where it is and how much of it you have found ("In Kalimdor · 1 of 88 completed").
-  Quests has Voiced Only, as Zones and Books do; a continent's banner on Zones counts its areas,
-  as its zones' cards do; a zone's kinds of writing on Books start closed. *([Nucabe](https://github.com/Nucabe))*
-- **A quest's page in Azeroth's Compendium sets its offer, progress and hand-in apart.** Each part
-  has its own heading, larger and darker than the words, with Play and Report for that part on the
-  heading's line. A book's page has Report beside Play, as a zone's page does. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium calls each thing by one name in every language.** The Zones tab searches
-  zones, holiday quests sit under Holidays and Events as holiday books do, Place Unknown is the
-  same on Quests and Books, and the filters and Unlock switches are worded alike. Play on a quest's
-  or book's page names itself in its tooltip. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium lists everything as cards.** In Quests, Zones and Books each continent is
-  a banner, as is each type (Classes, Professions, Holidays and Events, a kind of writing By Type),
-  and each zone a card showing how much of it you have found, with a bar; its cities and dungeons
-  are cards inside it. Everything else (a class, a profession, a quest chain, a kind of writing in
-  a zone) is a line of the list with what it holds under it, and single quests, places and
-  writings are rows. A quest chain is named after its first quest, and its page shows how many of
-  its quests you have completed and asks you to choose one. The list is drawn in the game's own
-  art: your faction's campaign header for each banner, and Classic's character select card for
-  each card, with the zone's painting in a silver frame and the Pet Journal's progress bar. *([Nucabe](https://github.com/Nucabe))*
-- **What NPCs say is its own module, Spoken Gossip, with its own switch and settings page.**
-  Your gossip settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go
-  behind.** Closing a dialog on another line, such as a greeting before a quest or a gravestone
-  before a book, now fades the window back in at once while the queued page goes behind it.
-  *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium's Books and Quests pages are written in the same dark ink as Zones'**, with
-  the same faint band behind the title. Their words were a lighter brown that looked greyed out.
-  *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium's line under a book's title stays on one line.** A book found in several places
-  listed them all over two lines; the line is now cut short. *([Nucabe](https://github.com/Nucabe))*
-- **A book's highlighted word keeps pace with its voice from the start.** The recording of a
-  book's first page reads its title before the words, and the highlight began at once, running
-  ahead the whole page. It now starts once the title is said. Pages that open with their own
-  title, as gravestones do, start at once as before. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium has a Quests tab, its first.** Every quest your character's race and
-  class can take, by zone, with class, profession, event and other quests apart, with what its NPC
-  says when offering it, while it is under way and when you hand it in, and Play for its voice.
-  Quests you have started or completed open; the rest are greyed until Unlock Unstarted Quests is
-  on, in the Compendium section of Spoken's page. On a client in another language, a quest shows in that
-  language once you have seen its window. Open in Azeroth's Compendium, on the quest giver's
-  window, the quest log's details and DialogueUI's window, opens the tab on that quest.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Quests in your quest log open in Azeroth's Compendium too**, marked in progress on their row
-  and their page, and counted with the completed ones. Started Only keeps them, and the list
-  follows your quest log while it is open. Open in Azeroth's Compendium on a quest you have
-  accepted shows its words. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium groups each zone's quests into their chains.** A chain's card is named
-  after its first quest and shows how many of its quests you have completed, how many are in
-  progress, and a bar; a chain you have finished gets a tick. *([Nucabe](https://github.com/Nucabe))*
-- **Shift-click a quest in the Quests tab to queue its recording** after what is playing,
-  without leaving the quest you are reading. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium files Forever's quests where Forever's own client files them.** Most of
-  the quests that were in Place Unknown are now under their zone, their class or a group of
-  their own such as Camping, and more quests are linked into their chains.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium lists only the quests your side, race and class can take.** One side's
-  quests no longer show for the other, a Skyborne character sees its side's quests and the
-  Skyborne's own, and a class's quests show for that class alone.
-  *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium's Quests and Zones tabs have a Battlegrounds banner, and Zephras Isle shows as
-  a zone of its own,** under an Other Lands banner on both. Each zone with a dungeon or raid holds its quests in a Dungeons and Raids card.
-  Every holiday has its own group under Events, Children's Week included, Camping sits with the
-  professions, and the Argent Dawn and the library books have groups under Other. A quest chain
-  has one name in every zone it crosses. Quests no one can take are gone, and the audit's fixes
-  put many quests in the right zone, under the right title or in their chain.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Unlock Unfound Books fits its row on Spoken's page in German and French**, where it was cut
-  short. *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium's Zones tab is always on a place.** Reached from another tab, it showed an
-  empty page asking to choose a place; it now shows where the player stands, and keeps a place the
-  player chose. *([Nucabe](https://github.com/Nucabe))*
-- **A place you have not discovered says how to discover it:** travel there. A search on the
-  Compendium's Zones tab no longer opens the continents and zones you have not discovered.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Keep Talking in Background, a new Sound setting, lets you hear Spoken with the game window in
-  the background.** While a line plays it turns on the game's Sound in Background, which plays
-  the game's other sounds too, and puts your own setting back once the last line ends, after a
-  reload or at the next login. A change you make to that setting meanwhile is kept. Off by
-  default. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: readables near a zone's border were listed under the zone next door** in the
-  Compendium. The letters handed out in Darkshire were under Deadwind Pass, Nesingwary's Green
-  Hills chapters under Westfall and Ratchet's manuals under Durotar. Each is now under the zone
-  where it is found. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: the Librams and Nat Pagle's guide said "Dropped by Alliance Sentinel (1)"** in the
-  Compendium, naming the server's copies of a creature. They name the creatures you meet.
-  *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium's readables have two new kinds: Journals and Diaries, and Pictures and Maps.**
-  Journals were split between Books and Notes. A readable with no words, such as the Snapshot of
-  Gammerita or the Crude Map, is a picture. With them, about 90 readables move to the kind their
-  title or words say: "Maybell's Love Letter" is a letter, not a scroll, and Uther's tomb a
-  gravestone, not a plaque. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: the Compendium counted 26 readables no one can have.** Beta items with no words and
-  the Forsaken letters that were never given out sat under Origin Unknown, so no total could be
-  completed. They are gone, and eight readables that were there, such as Gnomeregan's punch cards
-  and the Snapshot of Gammerita, are listed in the zone they come from.
-  *([Nucabe](https://github.com/Nucabe))*
-- **The Compendium lists the seasonal events' readables under Holidays and Events.** Winter
-  Veil's, the Harvest Festival's poems, the fishing tournament's flier and the Scourge invasion's
-  letters and reports were under Origin Unknown, or in the cities where the event's NPCs stand.
-  *([Nucabe](https://github.com/Nucabe))*
+### Modules
+
 - Zones is now Places, in every language: its card, settings page, Compendium tab, menu entry, and the
   panel beside the map, now Place Story. Its commands are /spp and /spokenplaces, and /spz still
   works. Its folder is `Spoken_Places`, so each character's discovered places and the places it has
@@ -181,102 +15,253 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   and /spb still work. Its settings and reading history start fresh, and Spoken asks you to delete a
   leftover `Spoken_Books` or `Spoken_Writings` folder. The modules are listed Quests, Gossip, Places,
   Readables everywhere, and the minimap menu names them in your language. *([Nucabe](https://github.com/Nucabe))*
-- **Read in Battlegrounds**, a new switch on Spoken's page, on by default. Turned off, Spoken reads nothing by itself in a battleground or an arena, and what was waiting stops as you arrive. A line you ask for, with Play, a command or the Compendium, is still read. *([Nucabe](https://github.com/Nucabe))*
-- **No more errors from the game's hidden values in dungeons, battlegrounds and combat.** Forever hides some names, words and ids from addons there, and Places raised an error over a discovery message in Shadowfang Keep and Blackfathom Deeps. Spoken and its modules now pass over a hidden value quietly. *([Nucabe](https://github.com/Nucabe))*
-- **The subtitles show the speaker's face once the game has it.** A quest giver the game had not
-  loaded yet kept the book for the whole line. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: an empty dark circle on the portrait.** The small window and the subtitles drew the
+- What NPCs say is its own module, Spoken Gossip, with its own switch and settings page. Your gossip
+  settings carry over from Spoken Quests. *([Nucabe](https://github.com/Nucabe))*
+- Spoken's modules load only with Spoken switched on. With Spoken off in the AddOns list, the game
+  leaves Quests, Gossip, Places, Readables and Developer off too, and no longer shows a dialog
+  offering to switch Spoken back on. *([Nucabe](https://github.com/Nucabe))*
+
+### Settings
+
+- Spoken's settings page is reorganised, with no Advanced part. The settings most players change
+  come first: Modules, Narrator Style (with Window Size, Subtitle Size, Show Words, Word Size and
+  Lock Position), Language, Sound, While Spoken Reads, Keys, Azeroth's Compendium and Fix a Problem.
+  The finer ones follow in named sections: Look, Words, Playback, Sound Levels While Spoken Reads,
+  Contribute and Minimap Button, then Profiles. Theme is one row for the Small Window and one for
+  DialogueUI. Show Welcome Window is a button on the Modules heading. Fix a Problem holds Show
+  Diagnostics, Report a Problem and Reset Positions. A row that waits on another switch is greyed
+  with the reason, and most tooltips that repeated their row's name are gone. Every setting keeps
+  its saved name and value, and no default changed. *([Nucabe](https://github.com/Nucabe))*
+- Each module's page opens with Enable Module and When to Read, then Voice Packs (on Places, a
+  Stories section comes between them), and ends with Reading History where the module has one. A
+  voice pack row is named by its language alone. Voice Language and If a Voice Is Missing are set
+  once, on Spoken's page, and a choice made on the Quests page is copied there the first time. The
+  debug switches moved to Spoken's Developer page, under Chat Messages and Testing.
+  *([Nucabe](https://github.com/Nucabe))*
+- Places and Readables keep their settings in Spoken's profile, so one profile holds everything, and
+  Profiles on Spoken's page copy, switch and reset them with the rest. What the account had saved
+  is kept and copied under the same names to each character's profile at login, and a profile made
+  or reset later starts from the defaults. A profile that reads the stories in another language
+  than the one loaded says so and asks for /reload. *([Nucabe](https://github.com/Nucabe))*
+- Keep Reading in Background, a new switch under Playback, lets you hear Spoken with the game window
+  in the background. While a line plays it turns on the game's Sound in Background, which plays the
+  game's other sounds too, and puts your own value back once the last line ends, after a reload or
+  at the next login. A change you make to that setting meanwhile is kept. Off by default.
+  *([Nucabe](https://github.com/Nucabe))*
+
+### Battlegrounds
+
+- Read in Battlegrounds, a new switch under While Spoken Reads, is on by default. Turned off, Spoken
+  reads nothing by itself in a battleground or an arena, and what was waiting stops as you arrive. A
+  line you ask for, with Play, a command or the Compendium, is still read.
+  *([Nucabe](https://github.com/Nucabe))*
+
+### Narrator styles
+
+- Ctrl and the mouse wheel size the Small Window and the subtitles, as they do the DialogueUI
+  window. Ctrl and the wheel change Window Size, or Subtitle Size over the subtitles, and Ctrl,
+  Shift and the wheel change Word Size. Without Ctrl the wheel over the subtitles still zooms the
+  camera. With Lock Position on, no window and no subtitles change size, and the wheel scrolls the
+  words. *([Nucabe](https://github.com/Nucabe))*
+- The subtitles and the DialogueUI window say why a line waits, as the Small and Large Windows do:
+  "(Waiting for combat to end.)" or "(Waiting for the NPC to finish speaking.)" after the line's
+  title. The subtitles show a line held back this way instead of nothing until it starts.
+  *([Nucabe](https://github.com/Nucabe))*
+- The "+N" after a line's title lists the lines waiting when you point at it, each with who says it,
+  in the windows and the subtitles. It does nothing when clicked.
+  *([Nucabe](https://github.com/Nucabe))*
+- Bronze Border, on Forever, tints every round button Spoken draws: the subtitles' portrait ring,
+  the faces on the Compendium's quest pages, the Large Window's move button and the Small Window's
+  right-click menu border. The faces change with the setting at once.
+  *([Nucabe](https://github.com/Nucabe))*
+- The Small Window's size grabber is the game's own, the one Azeroth's Compendium and the chat
+  windows have. *([Nucabe](https://github.com/Nucabe))*
+- The windows' sample line no longer tells you to drag its words, which do not move a window. It
+  says to move the window and turn on Lock Position. The subtitles' sample, which can be dragged by
+  its words, is unchanged. *([Nucabe](https://github.com/Nucabe))*
+- The DialogueUI narrator style's picture on Spoken's page has no scrollbar, as the window itself
+  has none. *([Nucabe](https://github.com/Nucabe))*
+
+### Azeroth's Compendium
+
+- Azeroth's Compendium is part of Spoken. Its Quests tab no longer needs Places or Readables switched
+  on, and the window keeps its size in Spoken's settings, so it opens once at its default size. Text
+  Size on Spoken's page sets the words of every tab and of the Place Lore panel beside the map.
+  *([Nucabe](https://github.com/Nucabe))*
+- Every tab lists its places in one style. Each continent and each type (Classes, Professions,
+  Holidays and Events, a kind of writing under By Type) is a banner. Each zone, city and dungeon is
+  a card showing how much of it you have found, with a bar, and everything else is a row. A group
+  such as a quest chain or Dungeons and Raids is a row that opens to what it holds, with its count.
+  The art is the game's own, and several cards stay open at once, so opening Elwynn Forest does not
+  close Alterac Mountains. The window opens scrolled to where you are. A tab reached from another
+  tab shows where you stand and keeps a place you chose. The row under a page's title says where the
+  page is and how much of it you have found, such as "In Kalimdor · 1 of 88 completed", and a click
+  on it goes up a level. *([Nucabe](https://github.com/Nucabe))*
+- Search matches names. It lists what matches under what holds it, and a match on a banner, card or
+  chain lists everything inside it, so a dungeon's name finds all it holds. Places you have not
+  discovered are listed greyed out. A filter that hides the chosen row moves the page to the nearest
+  place or row above it that is still listed, or to where you stand. The page used to go on showing
+  a row no longer there. *([Nucabe](https://github.com/Nucabe))*
+- A zone's, city's or dungeon's page on Quests and Readables has the place's picture from Places, with
+  Zones and Show Pictures on, and a link to its story. A story has links to the quests and the
+  writings of its place, each with its count. *([Nucabe](https://github.com/Nucabe))*
+- Play works as the quest log's. It shows Stop while its line is read and Replay once you stop it.
+  Stop leaves the line in the queue, and Play while the queue is stopped plays at once. A queue
+  emptied while stopped no longer stays stopped, so the next line plays. Report is on every quest
+  part, story and writing, voiced or not, so words no pack has recorded can be reported, and Play
+  shows where there is a voice for it. Play and Report have the same tooltips on every tab.
+  Shift-click a quest, a story or a writing to queue its voice behind what is playing. The page
+  stays on what you had chosen. *([Nucabe](https://github.com/Nucabe))*
+
+### Azeroth's Compendium: Quests
+
+- The Quests tab is new. It lists the quests your character's side, race and class can take, by zone
+  (a Skyborne character sees its side's quests and the Skyborne's own), with class, profession,
+  holiday and other quests apart. Quests no one can take are not listed. A quest you have started or
+  completed opens, and one in your quest log is marked In progress and counts with the completed.
+  The rest are greyed until Unlock Unstarted Quests is on, in the Compendium section of Spoken's
+  page. Started Only and Voiced Only are in the filter menu, and Defaults on the Quests page turns
+  both off. With no quests where you stand, or the filters hiding your zone, the tab opens on your
+  continent. On a client in another language, a quest shows in that language once you have seen its
+  window. Open in Azeroth's Compendium, on the quest giver's window, the quest log's details and
+  DialogueUI's window, opens the tab on that quest, also when the filters hide it. Switching Quests
+  off closes the tab. *([Nucabe](https://github.com/Nucabe))*
+- Quests are filed where Forever's own client files them. A zone with a dungeon or raid holds its
+  quests in a Dungeons and Raids row. Each holiday has its own group under Holidays and Events,
+  Children's Week included, Camping sits with Professions, and Argent Dawn and Library Books are
+  under Other. Battlegrounds and Other Lands, which holds Zephras Isle, have banners. The Scourge's
+  invasion quests are under Scourge Invasion in every language, and no group holds a single quest:
+  CLUCK! is in Westfall and Tirisfal Glades, where its chicken feed is sold, and The Goddess
+  Provides is in Teldrassil. Quests that follow one another are one chain row, named after its first
+  quest you can take, and chains of one name in one place are numbered. The row shows how many of
+  its quests you have completed and how many are in progress, with a tick once you finish it, and
+  its page asks you to choose a quest. *([Nucabe](https://github.com/Nucabe))*
+- A quest's page has two parts, Description and Completion. Each shows the round portrait and name
+  of who says it, with the part's badge, and has its own Play and Report. Completion is said by the
+  NPC you hand the quest in to, and stays hidden until you have completed the quest, unless Unlock
+  Unstarted Quests is on. There is no progress part, so Voiced Only and shift-click count only
+  Description and Completion, and a quest voiced only in its progress counts as unvoiced. Eight
+  quests whose pages had no words show them as their Description, from what the NPC says while the
+  quest is under way. Conflict at Darkspear Islands, Forced Disarmament and the two Donations of
+  Wool are among them. *([Nucabe](https://github.com/Nucabe))*
+- The tab lists 25 quests Forever gives that Spoken has no words for yet, such as Changing Tastes
+  and Conflict at Darkspear Islands, in their zones or class groups. Their pages read "No words yet:
+  this quest has not been recorded." in every language. *([Nucabe](https://github.com/Nucabe))*
+- Searching with Voiced Only on no longer asks every quest's voice again on each key you type. It
+  asks when a pack loads or you change the voice language. *([Nucabe](https://github.com/Nucabe))*
+
+### Azeroth's Compendium: Places
+
+- The Places tab lists dungeons and raids as cards inside the zone of their entrance, under a
+  Dungeons and Raids row where the zone has several. Forever's City of Dalaran and Ruins of
+  Lordaeron are cards inside Alterac Mountains' and the Undercity's, with their stories. A Dungeons
+  and Raids row shows a page with how many of the zone's dungeons and raids you have discovered, and
+  a way back to the zone. Razorfen Downs tells its story at its entrance in The Barrens: standing
+  there, discovering it or clicking it on The Barrens' map plays and shows its story, and the
+  Compendium opens on its card. *([Nucabe](https://github.com/Nucabe))*
+- Zones you have not discovered work as they do on Quests and Readables. A zone's card is greyed only
+  while nothing in it is found, its areas are listed greyed with a padlock, and Discovered Only
+  leaves out only the places not found. The page of a place not discovered says where it is, how
+  much of it you have found, and to go there to read its story. A story stays hidden until you
+  discover it, unless Unlock Undiscovered Places is on. *([Nucabe](https://github.com/Nucabe))*
+- A story's page is the Compendium's page. Play, Report, the title and the row under it, the divider
+  and the words are the ones Quests and Readables use, so a change to one shows on all three. The
+  page looks as before, on the spellbook's parchment in the window and the quest log's beside the
+  map, and Contribute and Open in Azeroth's Compendium stay. *([Nucabe](https://github.com/Nucabe))*
+- Strahnbrad and the other places the game puts in Alterac Mountains are in Alterac Mountains. The
+  Compendium lists and counts the twelve under Alterac Mountains instead of Hillsbrad Foothills, and
+  standing in one, discovering it or clicking it on Alterac Mountains' map plays and shows its
+  story. Places you found before still count. The Great Lift, Lordamere Lake and Darrowmere Lake
+  tell their stories from both zones they border, and on Forever the Valley of Bones is listed in
+  Shen'dralas. Also on Forever, Legashi Encampment in Azshara tells its story, the one Spoken has
+  for the camp under its older name, Legash Encampment, and is listed once. Northshire Valley -
+  Camelot and Storm Cliffs, which no one can reach there, are no longer listed.
+  *([Nucabe](https://github.com/Nucabe))*
+
+### Azeroth's Compendium: Readables
+
+- The Readables tab files what is found inside a dungeon or raid under its card, in the zone of its
+  entrance, as Quests does: the Dark Keeper nameplates under Blackrock Depths, the lore books under
+  Scholomance and the Scarlet Monastery. A zone with several dungeons holds them under a Dungeons
+  and Raids row. Under a zone, city or dungeon, the writings are in a row for each kind: Books,
+  Journals and Diaries, Letters, Notes, Scrolls, Tablets and Runes, Plaques and Signs, Gravestones,
+  Exhibits, Pictures and Maps and Other. Each starts closed. Writings found in too many zones to
+  list under each are under Across Azeroth. Journals were split between Books and Notes, a writing
+  with no words, such as the Crude Map, is a Picture, and about 90 writings moved to the kind their
+  title or words say: Maybell's Love Letter is a letter and Uther's tomb a gravestone.
+  *([Nucabe](https://github.com/Nucabe))*
+- The writings of the seasonal events, Winter Veil's, the Harvest Festival's poems, the fishing
+  tournament's flier and the Scourge invasion's letters and reports, are under Holidays and Events,
+  where they were under Place Unknown or in the cities where the event's NPCs stand. A writing's
+  page shows how it is had ("Dropped by Defias Messenger (Westfall)") as a part of its own above its
+  words, under Where to Find It, and a writing found in several places lists them on one row, cut
+  short with "and N more". *([Nucabe](https://github.com/Nucabe))*
+- Open in Azeroth's Compendium, a round tome button on the book frame and in DialogueUI's book view,
+  opens the Readables tab on that writing with what holds it opened. It shows for writings you have
+  found, or any with Unlock Unfound Readables on. *([Nucabe](https://github.com/Nucabe))*
+- Each writing is listed in the zone where it is found. Writings near a zone's border are no longer
+  under the zone next door: the letters handed out in Darkshire were under Deadwind Pass. The
+  Librams and Nat Pagle's guide name the creatures you meet instead of the server's copies. The 26
+  writings no one can have, beta items with no words and Forsaken letters never handed out, are
+  gone, and eight that were among them, such as Gnomeregan's punch cards and the Snapshot of
+  Gammerita, are listed in the zone they come from. *([Nucabe](https://github.com/Nucabe))*
+
+### Languages
+
+- Places reads in Spoken's Voice Language and follows If a Voice Is Missing, as the other modules do.
+  Its Text Language sets the language of the story's words. *([Nucabe](https://github.com/Nucabe))*
+- In every language list, a language whose script the game's font cannot draw is named in English.
+  *([Nucabe](https://github.com/Nucabe))*
+- On Forever in German, Spanish, French, Portuguese, Russian, Korean and Chinese, Places finds the
+  places Forever added or renamed, such as Die Schwarzschlundfeste and Die Abendruh, by the names
+  Forever's own client gives them. *([Nucabe](https://github.com/Nucabe))*
+
+### Commands
+
+- New commands: /sp replay, /sp stopall, /sp style, /sp words, /sp rows, /sp compendium and /sp
+  collect, which turns Collect Missing Lines on and off as the switch on Spoken's page does. /sp
+  diagnostics prints Spoken's diagnostics and then each module's, and /spp diagnostics and /spw
+  diagnostics print one module's. /spw status and a bare /spp still show their status. /sp help
+  lists them in the settings' own words, and the older words (transcript, player, play, pause, stop)
+  still work. A key binding opens Azeroth's Compendium, and the minimap menu and the Small Window's
+  menu have the same playback rows. *([Nucabe](https://github.com/Nucabe))*
+- /spq play, /spq pause and /spq clear are gone, as are the language rows on the /spq window. /sp
+  and Spoken's page do those, for every module. *([Nucabe](https://github.com/Nucabe))*
+- /spp minimap is gone. It showed or hid a Places minimap button that only appeared without Spoken.
+  Spoken's own button is the one to use. *([Nucabe](https://github.com/Nucabe))*
+- /spb gather is gone. /sp collect does the same. *([Nucabe](https://github.com/Nucabe))*
+
+### Fixes
+
+- With the DialogueUI narrator style, a queued line's page flew in with no window to go behind.
+  Closing a dialog on another line, such as a greeting before a quest or a gravestone before a book,
+  now fades the window back in at once while the queued page goes behind it.
+  *([Nucabe](https://github.com/Nucabe))*
+- A book's title shows on the DialogueUI window the first time it plays. It could stay blank after a
+  quest line until another book played. *([Nucabe](https://github.com/Nucabe))*
+- A book's highlighted word keeps pace with its voice from the start. The recording of a book's
+  first page reads its title before the words, and the highlight began at once, running ahead the
+  whole page. It now starts once the title is said. Pages that open with their own title, as
+  gravestones do, start at once as before. *([Nucabe](https://github.com/Nucabe))*
+- The subtitles show the speaker's face once the game has it. A quest giver the game had not loaded
+  yet kept the book for the whole line. *([Nucabe](https://github.com/Nucabe))*
+- An empty dark circle no longer shows on the portrait. The Small Window and the subtitles drew the
   badge's dark backing at the face's lower right on lines with no badge, the sample line among them.
   *([Nucabe](https://github.com/Nucabe))*
-- **Bronze Border reaches the large window's move button and the small window's right-click
-  menu**, and the faces on Azeroth's Compendium's quest pages change with the setting at once
-  rather than the next time they are drawn. *([Nucabe](https://github.com/Nucabe))*
-- **Ctrl and the mouse wheel size the small window and the subtitles**, as they do the DialogueUI
-  window: Ctrl and the wheel change Window Size, or Subtitle Size over the subtitles, and Ctrl,
-  Shift and the wheel change Text Size. Without Ctrl the wheel over the subtitles still zooms the
-  camera. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: Ctrl and the wheel resized the DialogueUI window with Lock Position on.** Locked, no
-  window and no subtitles change size, and the wheel scrolls the words. *([Nucabe](https://github.com/Nucabe))*
-- **The DialogueUI narrator style's picture on Spoken's page has no scrollbar**, as the window
-  itself has none. *([Nucabe](https://github.com/Nucabe))*
-- **Fixed: Reset Positions moved back only the window in use.** It now forgets where the small,
-  large and DialogueUI windows and the subtitles were put, as its tooltip says.
+- Reset Positions moved back only the window in use. It now forgets where the Small, Large and
+  DialogueUI windows and the subtitles were put, as its tooltip says.
   *([Nucabe](https://github.com/Nucabe))*
-- **The windows' sample line no longer tells you to drag its words**, which do not move a window.
-  It says to move the window and turn on Lock Position; the subtitles' sample, which can be
-  dragged by its words, is unchanged. *([Nucabe](https://github.com/Nucabe))*
-- **The subtitles and the DialogueUI window say why a line waits**, as the small and large windows
-  do: "(Waiting for combat to end.)" or "(Waiting for the NPC to finish speaking.)" after the
-  line's title. The subtitles now show a line held back in this way instead of nothing until it
-  starts. *([Nucabe](https://github.com/Nucabe))*
-- **The "+N" after a line's title lists the lines waiting** when you point at it, each with who
-  says it, in the windows and the subtitles. It does nothing when clicked.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Quests and Readables: a place's page shows its picture.** A zone's, city's
-  or dungeon's page showed only a count and "Choose ..."; it now has the place's picture from Zones
-  above it, and the link to its story. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium: places link to each other's pages.** A zone's, city's, continent's or
-  dungeon's page on Quests and Readables has a link to its story on Places, and a story has links to
-  the quests and the writings of its place, each with its count.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Quests: a quest with no recorded words says so.** The page of a quest that
-  Forever has and the corpus has no lines for yet reads "No words yet: this quest has not been
-  recorded.", in every language, instead of the line for a quest whose text is unknown.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium: Report is on every quest part and every writing, voiced or not.** A line
-  no pack has recorded can be wrong as much as a voiced one, and the report page takes it. Play
-  stays where there is a recording. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Places: a story's page is the Compendium's page.** Play, Report, the title
-  and the line under it, the divider and the words are the ones Quests and Readables use, so a change
-  to one shows on all three. The page looks as before, on the spellbook's parchment in the window
-  and the quest log's beside the map, and Contribute and Open in Azeroth's Compendium stay.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Open in Azeroth's Compendium for writings.** The book frame and DialogueUI's book view have the
-  Compendium's round tome button, as quest windows and the map's story have, opening the Readables
-  tab on that writing with what holds it opened. It shows for writings you have found, or any with
-  Unlock Unfound Readables on. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Places and Readables: shift-click a place's story or a writing to queue it**
-  behind what is playing, as on Quests. The page stays on what you had chosen.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Quests: no group holds a single quest.** CLUCK! is in Westfall and
-  Tirisfal Glades, where its chicken feed is sold, instead of alone under Place Unknown, and The
-  Goddess Provides is in Teldrassil instead of alone under a Night Elf line.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Readables: Holidays and Events holds a line for each event**, Feast of
-  Winter Veil, Harvest Festival, Stranglethorn Fishing Extravaganza and Scourge Invasion, as Quests
-  does, instead of Letters and Notes. It shows once the writings' places are next exported.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Quests: the Scourge's invasion quests are under Scourge Invasion in every
-  language**, not the bare "Invasion" the English and most other clients call them.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Readables: how a writing is had ("Dropped by Defias Messenger (Westfall)")
-  is a part of its own above its words**, under Where to Find It, instead of running into them.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Quests: searching with Voiced Only on no longer asks every quest's voice
-  again on each key you type**, only when a pack loads or you change the voice language.
-  *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Places and Readables: a filter that hides the chosen row moves the page**,
-  as on Quests: to the nearest place or line above it that is still listed, or to where you stand.
-  The page used to go on showing a row no longer there. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Readables: the line under a page's title goes up a level on a click**, as
-  on Quests and Places: from a writing to its kind of writing in the place it is listed, then to the
-  zone, the continent. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Places: zones you have not discovered behave as on Quests and Readables.** A
-  zone's card is greyed only while nothing in it is found, Discovered Only leaves out only those,
-  and the page of a zone not yet discovered still says where it is and how much of it you have
-  found. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Places: a Dungeons and Raids line shows a page when chosen**, as on Quests
-  and Readables: how many of the zone's dungeons and raids you have discovered, and a way back to the
-  zone. *([Nucabe](https://github.com/Nucabe))*
-- **Azeroth's Compendium, Places: Forever's City of Dalaran and Ruins of Lordaeron are dungeon
-  cards**, inside Alterac Mountains' card and the Undercity's, with their stories. Quests and
-  Readables name every dungeon from one list, and Quests lists two Dalaran quests with no words yet
-  in Alterac Mountains. *([Nucabe](https://github.com/Nucabe))*
-- **Spoken's settings page is reorganised, and nothing is hidden behind Advanced.** The settings most players change come first: Modules, Narrator Style with its window and subtitle sizes, Language, Sound, While Spoken Reads and Keys. Finer ones follow in named sections (Azeroth's Compendium, Fix a Problem, Look, Words, Playback, Sound Levels While Spoken Reads, Contribute). Theme for Small Window and DialogueUI Theme are one row each, Show Welcome Window is a button on the Modules heading, Reset Positions moved into Fix a Problem, which also holds Show Diagnostics and Report a Problem. Rows that cannot apply are greyed with the reason instead of hidden, and most tooltips that repeated their row's name are gone. Every setting keeps its saved name and value, and no default changed. *([Nucabe](https://github.com/Nucabe))*
-- **Quests, Gossip, Places and Readables pages open with When to Read, then Voice Packs, then Reading History.** A voice pack row is named by its language alone, the voice language and the fallback are set once on Spoken's page (a choice made on the Quests page is copied there the first time), and the developer switches moved to Spoken's Developer page, grouped as Chat Messages and Testing. *([Nucabe](https://github.com/Nucabe))*
-- **Places and Readables keep their settings in Spoken's profile**, so one profile holds everything, and Profiles on Spoken's page copy, switch and reset them with the rest. The first time, what a player had saved is copied into the current profile under the same names; a profile made later starts from the defaults. In every language list a language whose script the game's font cannot draw is named in English. *([Nucabe](https://github.com/Nucabe))*
-- **New commands.** /sp skip, /sp compendium, /sp settings, /sp style, /sp words and /sp rows, and /sp diagnostics, /spz diagnostics and /spw diagnostics print the same diagnostics, which /spw status and a bare /spz used to. /sp help lists them in the settings' own words; the older words (transcript, player, play, pause, stop) still work. There is also a key binding for Open Azeroth's Compendium, and the minimap menu and the small window's menu have the same playback rows. *([Nucabe](https://github.com/Nucabe))*
-- **/spq play, /spq pause and /spq clear are gone**, as are the language rows on the /spq window: /sp and Spoken's page do those, for every module. *([Nucabe](https://github.com/Nucabe))*
+- Unlock Unfound Readables fits its row on Spoken's page in German and French, where it was cut
+  short. *([Nucabe](https://github.com/Nucabe))*
+- Forever hides some names, words and ids from addons in dungeons, battlegrounds and combat, and
+  Places raised an error over a discovery message in Shadowfang Keep and Blackfathom Deeps. Spoken
+  and its modules now pass over a hidden value quietly. *([Nucabe](https://github.com/Nucabe))*
+- Report on a line an object says, such as a wanted poster, opens that object's lines, not those of
+  a creature with the same number. *([Nucabe](https://github.com/Nucabe))*
+- A zone story's Report opens the line in the language it was read in. A German story's report used
+  to open the English line. *([Nucabe](https://github.com/Nucabe))*
+- A quest's Report copies a spoken.rusty.one address, the site's own, instead of the old
+  voiceover.rusty.one one that redirected there. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.4.0 — 2026-10-12
 

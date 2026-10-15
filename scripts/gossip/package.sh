@@ -11,8 +11,8 @@
 # their zips are the quests addon's, which carry Spoken and this module pruned for each client
 # (scripts/quests/package.sh): one download there, quests and gossip, as before the split.
 #
-# There is no sound pack here: gossip is voiced by the quests packs (the Gossip pack, the complete
-# one, and each language's), which scripts/quests/package-audio.sh builds.
+# There is no sound pack here: gossip is voiced by the quests packs (the Gossip pack and
+# each language's), which scripts/quests/package-audio.sh builds.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

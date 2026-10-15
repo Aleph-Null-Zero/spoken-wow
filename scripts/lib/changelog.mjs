@@ -37,6 +37,9 @@ export function section(text, version) {
   return lines.slice(starts[0], end).join("\n").trim();
 }
 
+/** A heading of a group inside a section that names a version: `### 3.4.0`. */
+const VERSION_HEADING = /^#{3,}\s+v?\d+\.\d+\.\d+/;
+
 /** A bullet's credit: *([Name](https://github.com/Name))*. */
 const CREDIT = /\*\(\[[^\]]+\]\(https:\/\/github\.com\/[^)\s]+\)\)\*/;
 
@@ -45,7 +48,8 @@ const CREDIT = /\*\(\[[^\]]+\]\(https:\/\/github\.com\/[^)\s]+\)\)\*/;
  *
  * `released` are the versions that have shipped: the one in the .toc and the tagged ones. Each
  * needs its own section, or its notes are still under `## Unreleased` and the release went out
- * without them. `## Unreleased` comes first, and each of its bullets credits its author.
+ * without them. `## Unreleased` comes first, each of its bullets credits its author, and no group
+ * heading inside it is a version, which is what notes copied from a release leave behind.
  */
 export function problems(text, released = []) {
   const lines = linesOf(text);
@@ -66,7 +70,9 @@ export function problems(text, released = []) {
       }
     };
     for (let i = start + 1; i < end; i++) {
-      if (lines[i].startsWith("- ")) {
+      if (VERSION_HEADING.test(lines[i])) {
+        found.push(`line ${i + 1}: "${lines[i]}" is a version heading under Unreleased; a released version has its own "## " section`);
+      } else if (lines[i].startsWith("- ")) {
         check();
         bullet = { line: i + 1, text: lines[i] };
       } else if (bullet && lines[i].startsWith(" ")) {

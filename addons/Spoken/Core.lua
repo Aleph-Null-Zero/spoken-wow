@@ -195,33 +195,40 @@ local function CopyOf(value)
     return copy
 end
 
---- Point a feature addon at its settings table inside the current profile. The first time, in
---- the profile that is current then, the table is a copy of what the addon kept on its own before
---- (`legacy`, minus the keys named in `skip`); a profile made later starts from the addon's
---- defaults. The keys keep their names. `bind` is called with the table now and again whenever
---- another profile is chosen, copied over this one or reset.
+--- Point a feature addon at its settings table inside the current profile. These settings were
+--- account-wide before they were in the profile, and every character has a profile of its own, so
+--- the first time the table the addon kept itself (`legacy`, minus the keys named in `skip`) is
+--- copied to `global.ModulesLegacy` and left alone from then on. A profile with no table of its
+--- own gets a copy of that at login, whichever character that is; one made, copied over or reset
+--- later starts from the addon's defaults. The keys keep their names. `bind` is called with the
+--- table now and again whenever another profile is chosen, copied over this one or reset.
 function Addon:BindModuleSettings(name, legacy, bind, skip)
     self.boundModules = self.boundModules or {}
     self.boundModules[name] = { legacy = legacy, bind = bind, skip = skip }
-    return self:BindModule(name)
+    local db = self.db
+    if db then
+        if type(db.global.ModulesLegacy) ~= "table" then db.global.ModulesLegacy = {} end
+        if type(db.global.ModulesLegacy[name]) ~= "table" then
+            local saved = {}
+            for key, value in pairs(type(legacy) == "table" and legacy or {}) do
+                if not (skip and skip[key]) then saved[key] = CopyOf(value) end
+            end
+            db.global.ModulesLegacy[name] = saved
+        end
+    end
+    return self:BindModule(name, true)
 end
 
-function Addon:BindModule(name)
+--- `atLogin`: a profile with no table of its own takes the saved one, instead of the defaults.
+function Addon:BindModule(name, atLogin)
     local entry = self.boundModules and self.boundModules[name]
     if not (entry and self.db) then return false end
     local profile = self.db.profile
     if type(profile.Modules) ~= "table" then profile.Modules = {} end
     local settings = profile.Modules[name]
     if type(settings) ~= "table" then
-        settings = {}
-        local global = self.db.global
-        if type(global.ModulesMoved) ~= "table" then global.ModulesMoved = {} end
-        if not global.ModulesMoved[name] then
-            global.ModulesMoved[name] = true
-            for key, value in pairs(type(entry.legacy) == "table" and entry.legacy or {}) do
-                if not (entry.skip and entry.skip[key]) then settings[key] = CopyOf(value) end
-            end
-        end
+        local saved = atLogin and self.db.global.ModulesLegacy and self.db.global.ModulesLegacy[name]
+        settings = CopyOf(type(saved) == "table" and saved or {})
         profile.Modules[name] = settings
     end
     entry.bind(settings)
@@ -229,7 +236,7 @@ function Addon:BindModule(name)
 end
 
 function Addon:RebindModules()
-    for name in pairs(self.boundModules or {}) do self:BindModule(name) end
+    for name in pairs(self.boundModules or {}) do self:BindModule(name, false) end
 end
 
 --- Put the profile's settings into effect: the window or subtitles, the captions, the minimap
@@ -659,15 +666,21 @@ function Addon:TakeGreetingFirstFromQuests()
     end
 end
 
---- The voice language and the fallback were set on the quests page; they are Spoken's now. Once,
---- a choice made there is copied to the Language section, unless one was already made here, so the
---- page shows what is being heard.
+--- The voice language and the fallback were set on the quests page; they are Spoken's now. On each
+--- character's first login with the quests settings loaded, that character's choice there is copied
+--- to the profile it is on, unless that profile has one of its own, so the page shows what is being
+--- heard. The quests settings are not loaded while that module is off: nothing is marked then, and
+--- the next login that has them does it.
 function Addon:TakeVoiceLanguageFromQuests()
     local db = self.db
-    if not db or db.global.VoiceLanguageTaken then
+    if not db or db.char.voiceLanguageFromQuests then
         return
     end
-    db.global.VoiceLanguageTaken = true
+    local quests = rawget(_G, "SpokenQuestsSettings")
+    if type(quests) ~= "table" or type(quests.profiles) ~= "table" then
+        return
+    end
+    db.char.voiceLanguageFromQuests = true
     local audio = QuestsAudio(db)
     local language = db.profile.Language
     if not (audio and language) or language.Voice ~= nil or language.Fallback ~= nil then

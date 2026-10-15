@@ -9,7 +9,7 @@ no release. Link it into the game from a checkout, or build a zip with
 `scripts/developer/package.sh` to hand to someone asked for a log.
 
 - The log is on once the module is installed: installing it is asking for one. Turn it off (or on
-  again) with Spoken > Developer > Enable Debug Log Recording, the switch in Spoken's welcome
+  again) with Spoken > Developer > Keep a Debug Log, the switch in Spoken's welcome
   window, or `/spoken log off`. Off, nothing is kept.
 - Right-click any **Report a Problem** or **Contribute** button: the log's size, **Copy the Debug
   Log** (with the diagnostics, to send with a report), or **Write the Debug Log for an AI Agent**

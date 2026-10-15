@@ -2,8 +2,9 @@
 #
 #     make books-extract     ->  make -f make/books.mk extract
 #
-# Its own file because AGENTS.md forbids merging the Makefiles: quests.mk and zones.mk
-# already collide on fifteen target names and this one would collide with both.
+# Its own file because AGENTS.md forbids merging the Makefiles: the project files share many
+# target names (help, package, release, sync and the rest), and the root Makefile's prefix
+# tells them apart.
 #
 # The MySQL is the quests pipeline's. One vmangos dump on the machine, loaded once and read
 # by both extracts -- a second copy is hundreds of megabytes and another thing to keep in
@@ -177,7 +178,8 @@ test: ## The pipeline's unit tests
 #-------------------------------------------------------------------------------
 # The release
 #
-# Two CurseForge projects, uploaded by scripts/books/release.sh. Both zips have to be built
+# Two CurseForge projects, uploaded by scripts/books/release.sh: the retired Spoken Books, whose
+# last release is the tombstone, and the Writings sound pack. Both zips have to be built
 # first: the release script refuses a target whose zip is missing rather than uploading a
 # stale one it found in dist/.
 #-------------------------------------------------------------------------------

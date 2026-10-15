@@ -35,7 +35,7 @@ which is why there is one file per project here and not two.
 | --- | --- | --- | --- | --- |
 | `spoken/spoken.md` | Spoken Player | 1700375 | QN53yXKB | `spoken-player` |
 | `spoken/all.md` | Spoken Everything: Quests, Zones, Books AI Voiceover | 1721569 | — | `spoken` |
-| `quests/player.md` | Spoken Quests (was VoiceOver Redux) | 1655859 | aN0XPlNj | `spoken-quests` |
+| `quests/player.md` | Spoken Quests (retired; was VoiceOver Redux) | 1655859 | aN0XPlNj | `spoken-quests` |
 | `quests/audio-all.md` | Spoken Quests Audio: All | 1660196 | ANzkpD64 | `spoken-quests-audio-all` |
 | `quests/audio-alliance.md` | Spoken Quests Audio: Alliance | 1660197 | 5NR8mJK3 | `spoken-quests-audio-alliance` |
 | `quests/audio-horde.md` | Spoken Quests Audio: Horde | 1660198 | vNAg3OKo | `spoken-quests-audio-horde` |
@@ -49,9 +49,9 @@ which is why there is one file per project here and not two.
 | `quests/audio-ptbr.md` | Spoken Quests Audio: Portuguese | 1717819 | — | `spoken-quests-audio-ptbr` |
 | `quests/audio-itit.md` | Spoken Quests Audio: Italian | *(not created yet)* | — | `spoken-quests-audio-itit` |
 | `quests/audio-ruru.md` | Spoken Quests Audio: Russian | 1717824 | — | `spoken-quests-audio-ruru` |
-| *(page not on master yet)* | Spoken Quests Audio: Chinese (Simplified) | 1719048 | — | `spoken-quests-audio-zhcn` |
-| *(page not on master yet)* | Spoken Quests Audio: Chinese (Traditional) | 1719049 | — | `spoken-quests-audio-zhtw` |
-| `zones/spoken-zones.md` | Spoken Zones (was ZoneLore) | 1636521 | mNw7b5No | `spoken-zones` |
+| *(no page yet)* | Spoken Quests Audio: Chinese (Simplified) | 1719048 | — | `spoken-quests-audio-zhcn` |
+| *(no page yet)* | Spoken Quests Audio: Chinese (Traditional) | 1719049 | — | `spoken-quests-audio-zhtw` |
+| `zones/spoken-zones.md` | Spoken Zones (retired; was ZoneLore) | 1636521 | mNw7b5No | `spoken-zones` |
 | `zones/spoken-zones-audio.md` | Spoken Zones Audio | 1636532 | b6mvD9KP | `spoken-zones-audio` |
 | `zones/spoken-zones-audio-dede.md` | Spoken Zones Audio: German | 1713131 | — | `spoken-zones-audio-dede` |
 | `zones/spoken-zones-audio-eses.md` | Spoken Zones Audio: Spanish (EU) | 1712807 | — | `spoken-zones-audio-eses` |
@@ -62,7 +62,7 @@ which is why there is one file per project here and not two.
 | `zones/spoken-zones-audio-ruru.md` | Spoken Zones Audio: Russian | 1713143 | — | `spoken-zones-audio-ruru` |
 | `zones/spoken-zones-audio-zhcn.md` | Spoken Zones Audio: Chinese (Simplified) | 1723273 | — | `spoken-zones-audio-zhcn` |
 | `zones/spoken-zones-audio-zhtw.md` | Spoken Zones Audio: Chinese (Traditional) | 1723276 | — | `spoken-zones-audio-zhtw` |
-| `books/spoken-books.md` | Spoken Books | 1701514 | qGYZnRNg | `spoken-books` |
+| `books/spoken-books.md` | Spoken Books (retired) | 1701514 | qGYZnRNg | `spoken-books` |
 | `books/spoken-books-audio.md` | Spoken Writings Audio | 1701520 | qGZOrvNd | `spoken-books-audio` |
 | `books/spoken-books-audio-dede.md` | Spoken Writings Audio: German | 1723279 | — | `spoken-books-audio-dede` |
 | `books/spoken-books-audio-eses.md` | Spoken Writings Audio: Spanish (EU) | 1723280 | — | `spoken-books-audio-eses` |
@@ -84,6 +84,15 @@ keeping a table of its own. Adding a language's pack is its page -- one per pack
 
 The slugs follow the projects' names, `-all` included: the meta addon is the "All" pack as far
 as a player is concerned, so it is the one project whose slug names a pack that holds no audio.
+
+**Spoken Gossip has no project of its own.** It ships in Spoken Player's zip, and its voices are
+the Gossip pack above, which every language's quests pack also holds.
+
+**Three projects are retired and keep a page.** `quests/player.md`, `zones/spoken-zones.md` and
+`books/spoken-books.md` tell a visitor to install Spoken Player instead. Each project's last
+release holds a tombstone folder that never loads (`make package-spoken-retired`), so the old
+module folder is replaced rather than left to load twice. Their ids stay in the release scripts
+for that release and no other.
 
 **Six more projects exist and are retired.** 1655867, 1658236, 1658237, 1658239 and 1658235 held
 the second set of quest packs, back when the audio shipped at two qualities, and 1636548 the
@@ -109,7 +118,7 @@ for that reason and its id is in `target_curseforge()` in `scripts/quests/releas
 declares it in `relations`, which is what makes addon managers install it.
 
 `audio-all` is the odd one: that project ships a **meta addon** rather than audio, because the
-complete pack is too big to upload. It is a few kilobytes declaring the other four as required
+complete pack is too big to upload. It is a few kilobytes declaring Spoken Player and the four packs as required
 dependencies, which `scripts/quests/release.sh` sends as part of the upload metadata - relations are
 per file, so they need no web-UI step and cannot drift from the file that shipped.
 
@@ -128,8 +137,9 @@ rather than guessed. They were all changed when the projects were renamed; the o
 depend on, and CurseForge resolves a `relations` slug at upload time. `scripts/quests/release.sh`
 carries the same slugs in `target_dependencies()`, `Spoken/Dialogue/DataModules.lua` the same URLs,
 and `.github/workflows/release-addons.yaml` the same links, so a slug that changes has to change
-in all four. The project names are the addons' `## Title` too - `tts_cli/factions.py:pack_title` -
-so a player sees the same name in the AddOns list as on the site.
+in all four. The project names are the addons' `## Title` too (`pack_title` in
+`pipelines/quests/tts_cli/factions.py`), so a player sees the same name in the AddOns list as on
+the site.
 
 **The folder names moved with them.** The packs ship as `SpokenQuestsAudio*` and the zones pack as
 `SpokenZonesAudio`, where they were `VoiceOverReduxHQAudio*` and `ZoneLoreAudio`. A renamed folder
@@ -187,5 +197,5 @@ which meant two places to edit and one of them silently authoritative.
 re-recorded, and a number in prose nothing checks is a number that goes stale on the site while
 looking authoritative. CurseForge shows the file size on the Files tab anyway.
 
-Every page carries the same table of the five packs, with the row for that page marked and the
-other four linked.
+The five English quests pages (`audio-all` and the four split packs) carry the same table of the
+five packs, with the row for that page marked and the other four linked.

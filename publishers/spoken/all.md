@@ -2,7 +2,7 @@
 curseforge: 1721569
 slug: spoken
 name: Spoken Everything: Quests, Zones, Books AI Voiceover
-summary: Meta package for when you want everything voiced over and don't care about disk space: Quests, Zones, Books narrated for you
+summary: Meta package for when you want everything voiced over and don't care about disk space: quests, gossip, places and readables narrated for you
 categories:
   - Audio & Video
   - Roleplay
@@ -16,13 +16,14 @@ license: MIT
 
 ## What it installs
 
-[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player), which since 3.0.0 carries Spoken Quests, Spoken Places and Spoken Books inside it, and the English voice pack for each:
+[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Gossip, Spoken Places and Spoken Readables inside it, and the English voice pack for each:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue and NPC gossip | [Spoken Quests Audio: All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all) |
-| Spoken Places | zone and subzone lore | [Spoken Places Audio](https://www.curseforge.com/wow/addons/spoken-zones-audio) |
-| Spoken Books | books, letters, notes and plaques | [Spoken Books Audio](https://www.curseforge.com/wow/addons/spoken-books-audio) |
+| Spoken Quests | quest dialogue | [Spoken Quests Audio: All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all) |
+| Spoken Gossip | what NPCs say when you talk to them | the same pack, which holds the gossip too |
+| Spoken Places | zone and subzone lore | [Spoken Zones Audio](https://www.curseforge.com/wow/addons/spoken-zones-audio) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Readables Audio](https://www.curseforge.com/wow/addons/spoken-books-audio) |
 
 ## Language
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds Spoken's zip for Blizzard's clients: Spoken itself and its modules, Quests, Gossip,
-# Books and Zones, in one download.
+# Zones and Writings, in one download.
 #
 #   ./scripts/spoken/package.sh                 # dist/Spoken-<version>.zip
 #   ALLOW_DIRTY=1 ./scripts/spoken/package.sh   # build from an uncommitted tree

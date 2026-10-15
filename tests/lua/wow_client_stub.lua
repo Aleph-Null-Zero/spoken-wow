@@ -1135,11 +1135,14 @@ libs["AceDB-3.0"] = {
         _G[name] = sv
         sv.profiles = sv.profiles or {}
         sv.profiles.Default = Merge(defaults.profile, sv.profiles.Default)
+        -- The profile this character starts on: a test sets M.StartProfile to be another character.
+        local startName = M.StartProfile or "Default"
+        sv.profiles[startName] = Merge(defaults.profile, sv.profiles[startName])
         sv.char = sv.char or {}
         local charKey = next(sv.char) or "Tester - Realm"
         sv.char[charKey] = Merge(defaults.char, sv.char[charKey])
         sv.global = sv.global or {}
-        local db = { profile = sv.profiles.Default, char = sv.char[charKey], global = sv.global, sv = sv,
+        local db = { profile = sv.profiles[startName], char = sv.char[charKey], global = sv.global, sv = sv,
             keys = { char = charKey } }
         db.RegisterCallback = function() end
         function db:Shutdown()
@@ -1148,7 +1151,7 @@ libs["AceDB-3.0"] = {
         end
         table.insert(databases, db)
         -- The profile half of AceDB, which the settings panels offer inline.
-        local current = "Default"
+        local current = startName
         function db:GetCurrentProfile() return current end
         function db:GetProfiles()
             local names = {}

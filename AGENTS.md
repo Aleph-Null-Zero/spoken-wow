@@ -1,7 +1,9 @@
 # AGENTS.md
 
 Repo-wide rules. Each section also has its own file, which applies on top of this one:
-`docs/quests/CLAUDE.md`, `docs/zones/AGENTS.md`, `docs/books/AGENTS.md`.
+`docs/quests/CLAUDE.md`, `docs/gossip/AGENTS.md`, `docs/zones/AGENTS.md` (Spoken Places), `docs/books/AGENTS.md` (Spoken Readables).
+`Spoken_Gossip` reads the `g:` lines the quests pipeline builds, so the quests guide covers how
+they are made. Spoken has no guide; `docs/spoken/` holds its changelog and reference pages.
 
 ## Layout
 
@@ -42,8 +44,14 @@ Run what your change touches before pushing:
 ```sh
 make test-player   # addons' Lua tests (needs luajit)
 make test          # all of it: Lua, web, Node scripts, quests pytest (venv at pipelines/quests/.venv)
-make lint          # what CI gates on: typecheck, addon XML, zones validation, store pages, locale strings
+make lint          # static checks: typecheck, addon XML, changelog, zones validation, store pages, locale strings
 ```
+
+CI (`.github/workflows/ci.yaml`) runs four jobs, each only when the paths it reads changed:
+addons, quests pipeline, web, and zones pipeline. Between them they run the pieces of those
+commands, not the commands. `make lint` also checks the zones language files
+(`build-languages.mjs --check`), which CI does not. CI also runs the Lua block-balance check
+(`make zones-lint`), which `make lint` does not. Run both before pushing a change to either.
 
 Several web tests need a real, migrated Postgres, because the invariants they protect live in
 schema constraints. The CI `web` job shows the setup.
@@ -97,6 +105,7 @@ its date.
   Spoken_Gossip) included. Their notes go in
   `docs/spoken/CHANGELOG.md`, and they release as the `spoken/vX` tag.
 - Sound packs version on their own, with sections in their section's changelog.
+- `Spoken_Developer` has its own version, and nothing releases it.
 - Release scripts look for the exact `## <version>` heading and fail without it, so a release
   must not ship with the notes still under `## Unreleased`.
 

@@ -47,7 +47,8 @@ Expect("taken over once: the next login keeps what the player set here",
 local function LoginLanguage(audio, keep)
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     if not keep then _G.SpokenSettings = nil end
-    _G.SpokenQuestsSettings = { profiles = { [CHAR] = { Audio = audio } } }
+    -- No audio: the quests module is off at this login, so its settings are not loaded at all.
+    _G.SpokenQuestsSettings = audio and { profiles = { [CHAR] = { Audio = audio } } } or nil
     local env = stub.LoadSpoken(SPOKEN)
     stub.FireEvent("PLAYER_LOGIN")
     return env.Addon.db.profile.Language
@@ -61,5 +62,11 @@ language = LoginLanguage({ VoiceLanguage = "frFR" })
 language.Voice = "esES"
 language = LoginLanguage({ VoiceLanguage = "frFR" }, true)
 Expect("taken over once: the next login keeps what the player chose here", language.Voice, "esES")
+
+-- Quests off at the first login after the update, on at a later one: the choice is still taken.
+language = LoginLanguage(nil)
+Expect("with the quests module off, nothing comes over", tostring(language.Voice), "nil")
+language = LoginLanguage({ VoiceLanguage = "ptBR", FallbackLanguage = "none" }, true)
+Expect("...and it does at the next login the quests settings are there", tostring(language.Voice) .. " " .. tostring(language.Fallback), "ptBR none")
 
 os.exit(Failures() == 0 and 0 or 1)

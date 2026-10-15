@@ -13,7 +13,7 @@ Player = { source = nil }
 local TEXTURES = format([[Interface\AddOns\%s\Textures\]], AddonFolder)
 
 -- The English packs that hold no gossip: quests only. Every other pack holds some -- the
--- Gossip pack, the complete one, each language's single pack, and upstream's.
+-- Gossip pack, each language's single pack, and upstream's.
 local QUEST_ONLY = {
     SpokenQuestsAudioAlliance = true,
     SpokenQuestsAudioHorde = true,

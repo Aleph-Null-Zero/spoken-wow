@@ -9,12 +9,19 @@ behaviour changes.
 - `pipelines/quests/` (`tts_cli/`, `cli-main.py`): the Python pipeline. It builds the corpus
   and the addon's data modules and packs. It makes no audio; the site does.
 - `apps/web/` quests section: browsing the corpus, regeneration, triage, reports.
-- `addons/Spoken_Quests/`: a module of Spoken that ships inside `Spoken-<v>.zip`.
-  Its commands are `/spokenquests`, `/spq` and `/spqread`.
+- `addons/Spoken_Quests/`: a module of Spoken that ships inside `Spoken-<v>.zip`. It reads
+  quest dialogue and is the Quests tab of Azeroth's Compendium. Its commands are
+  `/spokenquests`, `/spq` (`read`, `test`, `followup`, `diagnostics`, `options`) and `/spqread`.
+- `addons/Spoken_Gossip/`: the other module that reads NPCs, in the same zip. It reads the
+  greeting a quest giver opens with (`QUEST_GREETING`) and the gossip page (`GOSSIP_SHOW`).
+  Its commands are `/spokengossip`, `/spg` (`read`, `test`, `diagnostics`, `options`) and
+  `/spgread`. Quests and Gossip both run in the dialogue core in Spoken's `Dialogue/` folder.
+  `docs/gossip/AGENTS.md` is its guide.
 - Sound packs `SpokenQuestsAudio{Alliance,Horde,Shared,Gossip}`, plus the `All` meta addon,
-  which depends on those four and `spoken-player`. Language packs are
-  `SpokenQuestsAudio_<lang>` (`LOCALE=xx`). Pack metadata, CurseForge and Wago ids live in
-  `publishers/quests/audio-*.md` and are read by `scripts/lib/packs.mjs`.
+  which depends on those four and `spoken-player`. A language other than English has one pack,
+  `SpokenQuestsAudio_<lang>` (`LOCALE=xx`), holding quests and gossip together. Pack metadata,
+  CurseForge and Wago ids live in `publishers/quests/audio-*.md` and are read by
+  `scripts/lib/packs.mjs`.
 
 ## Commands
 
@@ -48,9 +55,11 @@ claiming is global.
   as an installed pack and stops offering the real ones.
 - `scripts/quests/release.sh` uploads what is already in `dist/` and never builds. Its targets
   are `spoken` (the bundle, to `spoken-player`), `player` (the retired SpokenQuests tombstone),
-  the four packs and `audio-all`. A failing target does not stop the rest.
-- Legacy 1.12/2.4.3/3.3.5 zips are built only from a `quests/vX` tag and published only on
-  GitHub. Each carries Spoken and that client's vendored Ace3.
+  the four packs and `audio-all`; `spoken-all` is accepted by name only. A failing target does
+  not stop the rest.
+- Legacy 1.12/2.4.3/3.3.5 zips are built only from a `quests/vX` tag
+  (`scripts/quests/package.sh`) and published only on GitHub. Each carries Spoken,
+  Spoken_Gossip, that client's vendored Ace3 and the two tombstones.
 - Packs list every client in `## Interface:` (`tts_cli/build.py`). Forever rejects an Interface
   it does not list, so a new client's number must be added there.
 
@@ -81,8 +90,8 @@ regenerating one changes every line that points at it. The queue is keyed on the
 
 **The queue** lives in `apps/web/src/lib/generation/`. `leader.ts` elects one pm2 worker with
 a Postgres advisory lock, and `queue.ts` is the only module that knows the column names. There
-are two providers, ElevenLabs and fish.audio (`providers.ts`). `db.ts` explains why
-`POOL_MAX` is 30.
+are two providers, ElevenLabs and fish.audio (`providers.ts`). `apps/web/src/lib/db.ts`
+explains why `POOL_MAX` is 30.
 
 **Reports never queue jobs.** `POST /api/reports` is the only unauthenticated write in the
 app. A job spends credits, so a collaborator reads the report and queues the file by hand.
