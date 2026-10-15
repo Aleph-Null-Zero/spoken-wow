@@ -150,3 +150,42 @@ export async function setStatus(
   });
   return report;
 }
+
+/** The open reports of one section and language that this person put aside while sorting. */
+export async function skippedIds(userId: string, source: Source, lang: Lang): Promise<Set<number>> {
+  const { rows } = await db().query<{ id: string }>(
+    `select r."id"::text as "id"
+       from "report_skip" s
+       join "report" r on r."id" = s."reportId"
+      where s."userId" = $1 and r."source" = $2 and r."lang" = $3 and r."status" = 'open'`,
+    [userId, source, lang],
+  );
+  return new Set(rows.map((row) => Number(row.id)));
+}
+
+/**
+ * Only open reports in `lang` are written: the caller's grant is for that language, and an
+ * id from another one, or one already answered, has nothing to put aside.
+ */
+export async function skipReports(userId: string, ids: number[], lang: Lang): Promise<number> {
+  if (!ids.length) return 0;
+  const { rowCount } = await db().query(
+    `insert into "report_skip" ("userId", "reportId")
+     select $1, "id" from "report"
+      where "id" = any($2::bigint[]) and "lang" = $3 and "status" = 'open'
+     on conflict do nothing`,
+    [userId, ids, lang],
+  );
+  return rowCount ?? 0;
+}
+
+/** Puts every report this person skipped in one section and language back in their queue. */
+export async function resetSkips(userId: string, source: Source, lang: Lang): Promise<number> {
+  const { rowCount } = await db().query(
+    `delete from "report_skip" s
+      using "report" r
+      where r."id" = s."reportId" and s."userId" = $1 and r."source" = $2 and r."lang" = $3`,
+    [userId, source, lang],
+  );
+  return rowCount ?? 0;
+}
