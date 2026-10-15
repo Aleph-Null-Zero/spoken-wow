@@ -120,6 +120,8 @@ export default function ReportDetail({
             setEditing(false);
             onOverridden(text);
           }}
+          // The moment's other lines took the text too, so the explorer is where to see them.
+          onRewritten={() => setEditing(false)}
           onCancel={() => setEditing(false)}
         />
       ) : null}

@@ -380,7 +380,11 @@ A player's client has already picked one side of any `$G`, so a contribution is 
 A moderator splits it by writing the `$G` back in the explorer: the plain line stops being
 current and `:m` and `:f` take its place, both holding the template. Edited without a `$G`, a
 side of a split moment changes alone; putting the plain version back undoes the split. English
-is not split here: its shape is the extract's.
+splits the same way: a rewrite or an accepted correction holding a `$G` makes a plain line,
+extracted or not, its `:m` and `:f`, each holding its own reader's words
+(`apps/web/src/lib/quests/english-rewrite.ts`), and on a split moment it rewrites both sides. The site decides the shape: `extract` leaves out a dump
+line the site split and gives its speakers to both sides (`split_here` in
+`tts_cli/corpus_db.py`).
 
 The forms of one moment are linked by its id without the suffix. Each takes the moment's
 speakers, and the explorer shows a language its own lines, or English's while it has none. An
@@ -660,7 +664,8 @@ explorer marks it **rewritten**. An override changes the spoken text only: the f
 every addon lookup key derive from the original text, so a rewrite can never rename a file or
 make the addon miss it. It also reopens the `invalid-chars` gate — stripping a `$` or a `<>`
 makes an otherwise unvoiceable line voiceable — while `progress` lines stay skipped, because
-that is policy rather than a text defect.
+that is policy rather than a text defect. The one token a rewrite may hold is a
+`$gmale:female;` branch, which splits the line by player gender instead of overriding it.
 
 **Audio made before a fix says so.** Every take records a hash of the exact string sent to
 ElevenLabs, so a line whose text has since changed — by a rewrite, a pronunciation rule or a

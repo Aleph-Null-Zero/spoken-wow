@@ -38,6 +38,7 @@ from datetime import datetime, timezone
 from tts_cli.corpus import (GENERIC_TYPES, INVALID_CHARS, NO_VOICE, SCHEMA_VERSION, load_corpus,
                             write_corpus)
 from tts_cli.flavors import fallback_flavors, is_model_voice
+from tts_cli.naming import moment_of
 
 LANG = "enUS"
 
@@ -116,6 +117,23 @@ def with_answered_voices(lines, answers):
         out.append({**row, "race": race, "gender": gender, "flavor": flavor, "voice": voice,
                     "skipReason": reason, "generatable": reason is None})
     return out
+
+
+def split_here(variants, live):
+    """The dump's plain lines the site split by player gender: (lineId, variant) whose own row
+    is not current while its `:m` or `:f` is (apps/web/src/lib/quests/english-rewrite.ts).
+
+    The site is the corpus. Such a line is left out, never promoted back beside its split, and
+    its speakers are written onto the two sides.
+    """
+    return {
+        (line_id, variant)
+        for line_id, payloads in variants.items()
+        if moment_of(line_id) == line_id
+        for variant in range(len(payloads))
+        if (line_id, variant) not in live
+        and ((f"{line_id}:m", variant) in live or (f"{line_id}:f", variant) in live)
+    }
 
 
 def _variants(lines):
@@ -491,11 +509,17 @@ def import_corpus_data(corpus, verbose=True):
             highest = {(r[0], r[1]): r[2] for r in cur.fetchall()}
 
             unchanged, retire, inserts = [], [], []
+            split = split_here(variants, live)
             for line_id, payloads in variants.items():
                 for variant, payload in enumerate(payloads):
                     row = dict(zip(LINE_FIELDS, payload))
                     current = live.get((line_id, variant))
 
+                    if (line_id, variant) in split:
+                        # Not recorded either: with no current version to compare against,
+                        # every import would add the same text again.
+                        counts["split"] += 1
+                        continue
                     if current is None:
                         action = "promote"
                     elif current[1] == row["text"] and current[2] == row["originalText"]:
@@ -564,13 +588,20 @@ def import_corpus_data(corpus, verbose=True):
                     where "lang" = %s and "contributionId" is null""",
                 (LANG,),
             )
+            # A line split here is spoken by the dump's speakers on both of its sides. The
+            # sides' `ord`s follow the dump's own, which are only ever as many as its rows.
             speaker_rows = []
             for ord_, row in enumerate(lines):
                 variant = variants[row["lineId"]].index(_line_key(row))
-                speaker_rows.append(
-                    (row["lineId"], variant, LANG, ord_)
-                    + tuple(row[field] for field in SPEAKER_FIELDS)
-                )
+                speaker = tuple(row[field] for field in SPEAKER_FIELDS)
+                if (row["lineId"], variant) not in split:
+                    speaker_rows.append((row["lineId"], variant, LANG, ord_) + speaker)
+                    continue
+                for side in ("m", "f"):
+                    speaker_rows.append(
+                        (f'{row["lineId"]}:{side}', variant, LANG, len(lines) + len(speaker_rows))
+                        + speaker
+                    )
             _bulk(cur, "quest_line_speaker", speaker_rows,
                   """insert into "quest_line_speaker"
                        ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName",
@@ -636,6 +667,7 @@ def import_corpus_data(corpus, verbose=True):
         print(
             f"{len(lines)} rows: {counts['promote']} promoted, "
             f"{counts['record']} recorded without promoting (edited here), "
+            f"{counts['split']} left out (split by player gender here), "
             f"{counts['skip']} unchanged"
         )
         print(f"{len(speaker_rows)} speakers, {len(npc_rows)} NPCs ({len(sex_rows)} sexes of split "

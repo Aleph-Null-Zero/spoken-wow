@@ -83,6 +83,11 @@ export function branchesOnPlayerGender(text: string): boolean {
   return HAS_GENDER.test(text);
 }
 
+/** The text as a male and a female reader read it, every `$G` branch taken to its side. */
+export function playerGenderSides(text: string): [string, string] {
+  return [text.replace(GENDER, "$1"), text.replace(GENDER, "$2")];
+}
+
 /** The text as it is spoken in `lang`, by a reader of `playerGender` where the line has one. */
 export function speakPlayerTokens(
   text: string,
@@ -97,9 +102,7 @@ export function speakPlayerTokens(
       ? word[0].toUpperCase() + word.slice(1)
       : word;
 
-  let spoken = text.replace(GENDER, (_, male: string, female: string) =>
-    playerGender === "f" ? female : male,
-  );
+  let spoken = playerGenderSides(text)[playerGender === "f" ? 1 : 0];
   const genitive = words.nameGenitive;
   if (genitive) {
     spoken = spoken.replace(TOKEN_GENITIVE, (_, _token: string, at: number, whole: string) =>

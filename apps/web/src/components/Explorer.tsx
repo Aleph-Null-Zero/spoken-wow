@@ -943,6 +943,10 @@ export default function Explorer({ facets }: { facets: Facets }) {
       <OverrideDialog
         line={editing}
         onSaved={handleOverrideSaved}
+        onRewritten={() => {
+          setEditing(null);
+          refetch();
+        }}
         onCancel={() => setEditing(null)}
       />
 
