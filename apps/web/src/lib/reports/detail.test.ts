@@ -66,17 +66,20 @@ describe("detailOf", () => {
     expect(detail.headingHref).toBe("/quests?q=374&filter=quest");
     expect(detail.speaker).toEqual({
       name: "Marshal Dughan",
-      href: "/quests?q=233&filter=npc&type=creature",
+      page: "/npcs?q=233",
+      search: "/quests?q=233&filter=npc&type=creature",
     });
+    expect(detail.speakerIsHeading).toBe(false);
     expect(detail.aside).toBe("human male · human-male");
   });
 
-  it("links a quest-less line's heading to its speaker, and names them once", () => {
+  it("heads a quest-less line with its speaker, and names them once", () => {
     const gossip = { ...questLine, source: "gossip", questId: null, questTitle: null } as QuestLine;
     const detail = detailOf("quests", gossip);
     expect(detail.heading).toBe("Marshal Dughan");
-    expect(detail.headingHref).toBe("/gossip?q=233&filter=npc&type=creature");
-    expect(detail.speaker).toBeNull();
+    expect(detail.headingHref).toBeNull();
+    expect(detail.speakerIsHeading).toBe(true);
+    expect(detail.speaker?.search).toBe("/gossip?q=233&filter=npc&type=creature");
   });
 
   it("says when the audio was made from text that has since changed", () => {

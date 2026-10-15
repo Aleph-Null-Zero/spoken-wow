@@ -14,6 +14,7 @@ import {
   explorerHref,
   lexiconHref,
   npcHref,
+  npcPageHref,
   questsHref,
   reportHref,
   targetExplorerHref,
@@ -70,6 +71,12 @@ describe("npcHref", () => {
     expect(npcHref({ npcId: 68, npcType: "gameobject", gossip: true })).toBe(
       "/gossip?q=68&filter=npc&type=gameobject",
     );
+  });
+});
+
+describe("npcPageHref", () => {
+  it("opens the NPCs page on one NPC", () => {
+    expect(npcPageHref(233)).toBe("/npcs?q=233");
   });
 });
 

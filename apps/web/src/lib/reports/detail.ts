@@ -16,7 +16,7 @@ import type { ResultLine as BookLine } from "@/lib/books/search";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
 
-import { npcHref, questsHref } from "@/lib/links";
+import { npcHref, npcPageHref, questsHref } from "@/lib/links";
 
 import { targetForLine } from "./line-target";
 import type { Source } from "@/lib/sections";
@@ -27,15 +27,17 @@ export type SourceLine = QuestLine | ZoneLine | BookLine;
 export type LineDetail = {
   /** What the line is called: the quest, the subzone, the book. */
   heading: string;
-  /** The explorer, narrowed to the heading's quest or NPC. Null where nothing narrows to it. */
+  /** The explorer, narrowed to the heading's quest. Null where the heading is no quest. */
   headingHref: string | null;
   /** Where it sits, and for quests what picked its voice. */
   context: string;
   /**
-   * `context` split for the triage panel, which links the speaker: the NPC when the heading
-   * is a quest title, otherwise null and the heading already names them. `aside` is the rest.
+   * `context` split for the triage views, which link the speaker: their NPC page, and the
+   * explorer narrowed to their lines. Quests only. `aside` is the rest of `context`.
    */
-  speaker: { name: string; href: string } | null;
+  speaker: { name: string; page: string; search: string } | null;
+  /** A line with no quest is headed by its speaker, who is then not named a second time. */
+  speakerIsHeading: boolean;
   aside: string;
   /** The live take was made from text that has since changed. */
   stale: boolean;
@@ -159,19 +161,18 @@ function questDetail(line: QuestLine, version: number | undefined, lang: Lang): 
   const who = [line.race, line.gender, line.flavor].filter(Boolean).join(" ");
   const npc = {
     name: line.npcName,
-    href: npcHref({ npcId: line.npcId, npcType: line.npcType, gossip: line.source === "gossip" }),
+    page: npcPageHref(line.npcId),
+    search: npcHref({ npcId: line.npcId, npcType: line.npcType, gossip: line.source === "gossip" }),
   };
   const aside = [who, line.voice].filter(Boolean).join(" · ");
 
   return {
     heading: line.questTitle ?? line.npcName,
-    headingHref: line.questTitle
-      ? line.questId === null
-        ? null
-        : questsHref({ q: String(line.questId), filter: "quest" })
-      : npc.href,
+    headingHref:
+      line.questTitle && line.questId !== null ? questsHref({ q: String(line.questId), filter: "quest" }) : null,
     context: [line.npcName, aside].filter(Boolean).join(" · "),
-    speaker: line.questTitle ? npc : null,
+    speaker: npc,
+    speakerIsHeading: !line.questTitle,
     aside,
     stale: line.stale,
     // The override when there is one: it is what the next take will say, and a panel that
@@ -188,6 +189,7 @@ function zoneDetail(line: ZoneLine, version: number | undefined, lang: Lang): Li
     headingHref: null,
     context: line.zoneName,
     speaker: null,
+    speakerIsHeading: false,
     aside: line.zoneName,
     stale: line.state === "stale",
     text: line.text,
@@ -202,6 +204,7 @@ function bookDetail(line: BookLine, version: number | undefined, lang: Lang): Li
     headingHref: null,
     context: `page ${line.pageNumber} of ${line.pageCount}`,
     speaker: null,
+    speakerIsHeading: false,
     aside: `page ${line.pageNumber} of ${line.pageCount}`,
     stale: line.state === "stale",
     text: line.text,
