@@ -69,6 +69,15 @@ def test_the_all_pack_is_every_stem():
         "quests/5-accept", "quests/7-accept", "quests/9-accept", "gossip/abc123"}
 
 
+def test_the_quests_pack_is_every_side_but_no_gossip():
+    # A language not split by side ships Alliance, Horde and Shared as one pack.
+    assert pack_stems(CORPUS, SIDES, "quests") == (
+        pack_stems(CORPUS, SIDES, "alliance") | pack_stems(CORPUS, SIDES, "horde")
+        | pack_stems(CORPUS, SIDES, "shared"))
+    assert pack_stems(CORPUS, SIDES, "quests") == {
+        "quests/5-accept", "quests/7-accept", "quests/9-accept"}
+
+
 def test_the_packs_partition_the_corpus():
     # Nothing may fall between the four: a line in no pack is a line that ships nowhere.
     split = set()
@@ -98,7 +107,7 @@ def test_a_missing_export_sides_with_nobody(tmp_path):
 
 
 def test_pack_names_are_stable():
-    assert PACKS == ("all", "alliance", "horde", "shared", "gossip")
+    assert PACKS == ("all", "alliance", "horde", "shared", "gossip", "quests")
 
 
 def test_every_pack_has_a_folder_suffix_and_a_label():

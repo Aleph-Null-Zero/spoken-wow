@@ -35,22 +35,16 @@ which is why there is one file per project here and not two.
 | --- | --- | --- | --- | --- |
 | `spoken/spoken.md` | Spoken Player | 1700375 | QN53yXKB | `spoken-player` |
 | `spoken/all.md` | Spoken Everything: Quests, Zones, Books AI Voiceover | 1721569 | — | `spoken` |
+| `spoken/all-<lang>.md` | `Spoken: <Language>`, a language's meta addon: Spoken Player and that language's packs on CurseForge | each page's `curseforge:` | — | `spoken-<language>` |
 | `quests/player.md` | Spoken Quests (was VoiceOver Redux) | 1655859 | aN0XPlNj | `spoken-quests` |
 | `quests/audio-all.md` | Spoken Quests Audio: All | 1660196 | ANzkpD64 | `spoken-quests-audio-all` |
 | `quests/audio-alliance.md` | Spoken Quests Audio: Alliance | 1660197 | 5NR8mJK3 | `spoken-quests-audio-alliance` |
 | `quests/audio-horde.md` | Spoken Quests Audio: Horde | 1660198 | vNAg3OKo | `spoken-quests-audio-horde` |
 | `quests/audio-shared.md` | Spoken Quests Audio: Shared Quests | 1660199 | QNlz3YKe | `spoken-quests-audio-shared` |
 | `quests/audio-gossip.md` | Spoken Quests Audio: Gossip | 1660202 | XKqA45Ky | `spoken-quests-audio-gossip` |
-| `quests/audio-dede.md` | Spoken Quests Audio: German | 1717808 | — | `spoken-quests-audio-dede` |
-| `quests/audio-eses.md` | Spoken Quests Audio: Spanish (EU) | 1717817 | — | `spoken-quests-audio-eses` |
-| `quests/audio-esmx.md` | Spoken Quests Audio: Spanish (AL) | 1717814 | — | `spoken-quests-audio-esmx` |
-| `quests/audio-frfr.md` | Spoken Quests Audio: French | 1717800 | — | `spoken-quests-audio-frfr` |
-| `quests/audio-kokr.md` | Spoken Quests Audio: Korean | 1719018 | — | `spoken-quests-audio-kokr` |
-| `quests/audio-ptbr.md` | Spoken Quests Audio: Portuguese | 1717819 | — | `spoken-quests-audio-ptbr` |
-| `quests/audio-itit.md` | Spoken Quests Audio: Italian | *(not created yet)* | — | `spoken-quests-audio-itit` |
-| `quests/audio-ruru.md` | Spoken Quests Audio: Russian | 1717824 | — | `spoken-quests-audio-ruru` |
-| *(page not on master yet)* | Spoken Quests Audio: Chinese (Simplified) | 1719048 | — | `spoken-quests-audio-zhcn` |
-| *(page not on master yet)* | Spoken Quests Audio: Chinese (Traditional) | 1719049 | — | `spoken-quests-audio-zhtw` |
+| `quests/audio-<pack>-<lang>.md` | `<Language> Spoken Quests: <Pack>`, four per language: Alliance, Horde, Shared, Gossip | each page's `curseforge:` | — | `<language>-spoken-quests-<pack>` |
+| `quests/audio-shared-<lang>.md` for itIT, ptBR, koKR, ruRU, zhCN, zhTW | `<Language> Spoken Quests`, every quest in one pack beside Gossip; Alliance and Horde dormant | each page's `curseforge:` | — | `<language>-spoken-quests` |
+| `quests/audio-<lang>.md` | Spoken Quests Audio: `<Language>`, every line in one folder, GitHub only | — | — | — |
 | `zones/spoken-zones.md` | Spoken Zones (was ZoneLore) | 1636521 | mNw7b5No | `spoken-zones` |
 | `zones/spoken-zones-audio.md` | Spoken Zones Audio | 1636532 | b6mvD9KP | `spoken-zones-audio` |
 | `zones/spoken-zones-audio-esmx.md` | Spoken Zones Audio: Spanish (AL) | 1711067 | — | `spoken-zones-audio-esmx` |
@@ -76,6 +70,13 @@ and, on a quests pack, `pack:` say which pack it is; a language other than Engli
 release tag (English's, plus `-<lang>`), and every build and release script asks it rather than
 keeping a table of its own. Adding a language's pack is its page -- one per pack, four for quests
 -- plus the CurseForge project it names.
+
+**A language with few players yet ships two quests packs, not four.** Its Shared page says
+`holds: quests` and carries every quest line, both sides' included, under the name
+`<Language> Spoken Quests`; its Alliance and Horde pages say `dormant: true`, keep their project
+ids, and nothing builds or uploads them. Splitting the language later is dropping both keys and
+renaming Shared back: its players keep the folder and add their side. Italian, Portuguese,
+Korean, Russian and both Chinese ship this way.
 
 The slugs follow the projects' names, `-all` included: the meta addon is the "All" pack as far
 as a player is concerned, so it is the one project whose slug names a pack that holds no audio.

@@ -220,11 +220,13 @@ package-spoken-retired: ## Zip the tombstones the retired Quests, Zones and Book
 # and English sound pack as required dependencies, so the CurseForge app installs the lot.
 # scripts/spoken/package-meta.sh explains it; the upload is release.sh's spoken-all target, and
 # its notes come from docs/spoken/CHANGELOG-ALL.md. VERSION defaults to the script's own.
-package-spoken-all: ## Zip the English meta addon that pulls in every Spoken addon and pack
-	@VERSION=$(VERSION) ./scripts/spoken/package-meta.sh
+# LOCALE=deDE builds and uploads that language's meta addon, "Spoken: German", instead
+# (publishers/spoken/all-<lang>.md).
+package-spoken-all: ## Zip the English meta addon (LOCALE=xx: that language's) that pulls in every pack
+	@VERSION=$(VERSION) LANG_CODE=$(or $(LOCALE),enUS) ./scripts/spoken/package-meta.sh
 
-release-spoken-all-dry: ## Show what uploading the English meta addon would send
-	@./scripts/quests/release.sh --dry-run --store=curseforge spoken-all
+release-spoken-all-dry: ## Show what uploading the meta addon (LOCALE=xx: that language's) would send
+	@./scripts/quests/release.sh --dry-run --store=curseforge --lang=$(or $(LOCALE),enUS) spoken-all
 
-release-spoken-all: ## Upload the English meta addon to CurseForge (never Wago)
-	@./scripts/quests/release.sh --store=curseforge spoken-all
+release-spoken-all: ## Upload the meta addon (LOCALE=xx: that language's) to CurseForge (never Wago)
+	@./scripts/quests/release.sh --store=curseforge --lang=$(or $(LOCALE),enUS) spoken-all

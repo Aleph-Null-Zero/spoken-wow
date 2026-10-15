@@ -2,6 +2,12 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## Unreleased
+
+- **The quest pack Spoken suggests for your language links to its download again.** It pointed
+  at CurseForge pages that now hold only part of a language's quests; it now opens the one-pack
+  download on GitHub. Chinese clients are offered their own pack too, instead of English's.
+
 ## 3.4.0 — 2026-10-12
 
 - **A character is greeted by its zone only once, in its starting area.** An existing

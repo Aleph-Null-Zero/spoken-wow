@@ -1,5 +1,4 @@
 ---
-curseforge: 1717819
 release: quests-audio-ptBR
 section: quests
 lang: ptBR
