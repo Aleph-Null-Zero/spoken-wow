@@ -60,9 +60,9 @@ cat > "$module_dir/$NAME.toc" <<TOC
 ## Notes: Installs every Spoken Quests sound pack$VARIANT - Alliance, Horde, Shared Quests and Gossip.|n|nThis addon holds no audio itself. If your addon manager did not fetch the four packs with it, install them yourself; |cFFFFD200Spoken Quests|r plays whatever it finds.
 ## Version: $VERSION
 ## IconTexture: Interface\\AddOns\\$NAME\\icon.tga
-## Group: SpokenQuests
+## Group: Spoken
 ## X-Part-Of: Spoken
-## X-Child-Of: SpokenQuests
+## X-Child-Of: Spoken_Quests
 
 Meta.lua
 TOC

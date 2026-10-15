@@ -27,8 +27,11 @@ from tts_cli.naming import subfolder_from_line_id
 
 DEFAULT_FACTIONS_PATH = "corpus/factions.json"
 
-#: 'all' is every line; the other four partition the same set.
-PACKS = ("all", "alliance", "horde", "shared", "gossip")
+#: 'all' is every line; the next four partition the same set. 'quests' is every line but gossip
+#: - Alliance, Horde and Shared in one - for a language with too few players yet to be worth
+#: three quest packs: it ships in that language's Shared folder, so when the language is split
+#: later its players keep the folder and add their side (scripts/lib/packs.mjs, `holds: quests`).
+PACKS = ("all", "alliance", "horde", "shared", "gossip", "quests")
 
 #: Appended to the module name to make each pack's addon folder. Every pack carries one,
 #: including 'all': a bare VoiceOverReduxAudio is the single-format pack that shipped before
@@ -39,6 +42,7 @@ PACK_SUFFIXES = {
     "horde": "Horde",
     "shared": "Shared",
     "gossip": "Gossip",
+    "quests": "Quests",
 }
 
 #: The half of a title that names the pack. What comes before it is the family - see
@@ -49,6 +53,7 @@ PACK_LABELS = {
     "horde": "Horde",
     "shared": "Shared Quests",
     "gossip": "Gossip",
+    "quests": "Quests",
 }
 
 #: The family every pack belongs to unless told otherwise, which is every shipping build.
@@ -104,8 +109,12 @@ def pack_stems(corpus: dict, sides: dict, pack: str, aliases: dict = None) -> se
         if packs_by_stem.setdefault(stem, found) != found:
             packs_by_stem[stem] = "shared"
 
-    stems = set(packs_by_stem) if pack == "all" else \
-        {stem for stem, found in packs_by_stem.items() if found == pack}
+    if pack == "all":
+        stems = set(packs_by_stem)
+    elif pack == "quests":
+        stems = {stem for stem, found in packs_by_stem.items() if found != "gossip"}
+    else:
+        stems = {stem for stem, found in packs_by_stem.items() if found == pack}
     for stem in list(stems):
         folder, name = stem.split("/", 1)
         if folder != "gossip":

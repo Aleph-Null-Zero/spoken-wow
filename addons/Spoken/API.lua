@@ -225,9 +225,13 @@ local CURSEFORGE = "https://www.curseforge.com/wow/addons/"
 local RELEASES = "https://github.com/rusty-key/spoken-wow/releases?q="
 local PACK_FOLDERS = { quests = "SpokenQuestsAudio", zones = "SpokenZonesAudio", books = "SpokenBooksAudio" }
 local PACK_PAGES = {
-    quests = { deDE = "spoken-quests-audio-dede", esES = "spoken-quests-audio-eses", esMX = "spoken-quests-audio-esmx",
-        frFR = "spoken-quests-audio-frfr", itIT = { github = "quests-audio-itIT" }, koKR = "spoken-quests-audio-kokr",
-        ptBR = "spoken-quests-audio-ptbr", ruRU = "spoken-quests-audio-ruru" },
+    -- Quests in one folder per language is a GitHub download: on CurseForge a language's quests
+    -- are split into packs under other folders.
+    quests = { deDE = { github = "quests-audio-deDE" }, esES = { github = "quests-audio-esES" },
+        esMX = { github = "quests-audio-esMX" }, frFR = { github = "quests-audio-frFR" },
+        itIT = { github = "quests-audio-itIT" }, koKR = { github = "quests-audio-koKR" },
+        ptBR = { github = "quests-audio-ptBR" }, ruRU = { github = "quests-audio-ruRU" },
+        zhCN = { github = "quests-audio-zhCN" }, zhTW = { github = "quests-audio-zhTW" } },
     zones = { deDE = "spoken-zones-audio-dede", esES = "spoken-zones-audio-eses", esMX = "spoken-zones-audio-esmx",
         frFR = "spoken-zones-audio-frfr", koKR = "spoken-zones-audio-kokr", ptBR = "spoken-zones-audio-ptbr",
         ruRU = "spoken-zones-audio-ruru", zhCN = "spoken-zones-audio-zhcn", zhTW = "spoken-zones-audio-zhtw" },
