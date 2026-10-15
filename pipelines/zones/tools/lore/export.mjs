@@ -14,10 +14,12 @@
 // It is not part of `make check`, which has to keep passing on clones with no Postgres.
 
 import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 import { zonesLua, subzonesLua } from "../lib/loredata.mjs";
 import { loadClientAreas } from "../lib/era.mjs";
 import { BASE_LOCALE, CODES } from "../lib/locales.mjs";
+import { readJson, ROOT } from "../lib/wiki.mjs";
 import { emitZones, emitSubzones } from "./lua.mjs";
 import { isEnabled, readCurrent, readNames, writeCorpus } from "./store.mjs";
 import { close } from "../voice/db.mjs";
@@ -54,6 +56,14 @@ async function main() {
       `leaving ${unreachable} line(s) behind: no client can report them ` +
         `(builds ${client.builds.join(", ")})`,
     );
+  }
+  // Forever's spelling of a place the lore keeps under another key is that place, not a second
+  // one: Data/ForeverAreas.lua sends the client's name to the frozen key.
+  const { renamed } = await readJson(join(ROOT, "pipelines/zones/tools/seed/forever-places.json"));
+  const twice = rows.filter((row) => row.kind === "subzone" && renamed[row.key]);
+  for (const row of twice) rows.splice(rows.indexOf(row), 1);
+  if (twice.length) {
+    console.log(`leaving ${twice.length} line(s) behind: Forever's spelling of a place kept under another key`);
   }
 
   // A 'discovered' row is a place the client has and nobody has written about yet. It

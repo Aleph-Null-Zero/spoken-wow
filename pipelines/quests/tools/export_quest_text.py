@@ -15,7 +15,7 @@ sys.path.insert(0, QUESTS)
 
 from tts_cli.corpus import load_corpus  # noqa: E402
 from tts_cli.ignores import ignored_line_ids  # noqa: E402
-from tts_cli.quest_text import quest_text, render  # noqa: E402
+from tts_cli.quest_text import quest_text, removed_quests, render  # noqa: E402
 
 DEFAULT_OUT = os.path.join(QUESTS, "..", "..", "addons", "Spoken_Quests", "Data", "QuestText.lua")
 
@@ -25,10 +25,12 @@ if __name__ == "__main__":
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--corpus", default=os.path.join(QUESTS, "corpus", "corpus.json.gz"))
     parser.add_argument("--ignored", default=os.path.join(QUESTS, "corpus", "ignored.json"))
+    parser.add_argument("--overrides", default=os.path.join(QUESTS, "corpus", "compendium_overrides.json"))
     parser.add_argument("--out", default=DEFAULT_OUT)
     args = parser.parse_args()
 
-    texts = quest_text(load_corpus(args.corpus), ignored_line_ids(args.ignored))
+    texts = quest_text(load_corpus(args.corpus), ignored_line_ids(args.ignored),
+                       removed_quests(args.overrides))
     with open(args.out, "w", encoding="utf-8", newline="\n") as f:
         f.write(render(texts))
 

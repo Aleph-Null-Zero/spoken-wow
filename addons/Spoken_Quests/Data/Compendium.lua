@@ -7,9 +7,11 @@
 -- chain, name = the chain's name on its first quest (a quest's id, whose title names it, or words
 -- by locale), dungeon = the map of the dungeon or raid it is a quest of, filed under the zone of
 -- its entrance, ender = the creature it is handed in to (enderObject for an object), absent where
--- that is its giver }. A sort that is a word is a group the client has no QuestSort for. The words
--- are Data/QuestText.lua's. Regenerate with the Forever
--- repack's world DB up:
+-- that is its giver, notext = true for a quest Forever serves that the corpus has no words for yet
+-- }. A sort that is a word is a group the client has no QuestSort for. The words
+-- are Data/QuestText.lua's. Made from the client tables of Forever 1.60.1.70338 and Era 1.15.9.69109
+-- (wago.tools) and Efficient Games' data at commit 2ae2154 (CC BY 4.0, efficient.games).
+-- Regenerate with the Forever repack's world DB up:
 --   make quests-compendium
 -- or, adding only the corpus's new quests, without it:  make quests-compendium ARGS=--no-db
 --
@@ -4262,7 +4264,12 @@ SpokenQuestsCompendium = {
 		[79093] = { "Rumi of Gnomeregan: The Collected Works", sort = "library", ender = 211033 },
 		[79095] = { "The Apothecary's Metaphysical Primer", sort = "library", ender = 211022 },
 		[79097] = { "Baxtan: On Destructive Magics", sort = "library", ender = 211022 },
+		[79229] = { "Highway Robbery", zones = { 1443 }, notext = true },
+		[79361] = { "Storm, Earth, and Fire", sort = 82, classes = 64, notext = true },
 		[79362] = { "Grant's Shield", zones = { 1431 }, ender = 268 },
+		[79365] = { "With Wind Beneath Your Wings", sort = 82, races = 8589934770, classes = 64, notext = true },
+		[79366] = { "Heed My Call", sort = 82, prev = 79361, races = 8589934770, classes = 64, notext = true },
+		[79442] = { "The Tempest's Weapons", sort = 82, prev = 79366, races = 8589934770, classes = 64, notext = true },
 		[86574] = { "Stonetalon Supply Run", zones = { 1442 }, ender = 16458, races = 4294967373 },
 		[86576] = { "Bloodfury Trinkets", zones = { 1442 }, ender = 11861, races = 8589934770 },
 		[86585] = { "Banner of the Fallen", zones = { 1432 }, ender = 1092, races = 4294967373 },
@@ -4316,6 +4323,7 @@ SpokenQuestsCompendium = {
 		[92415] = { "Remember That I Love You", zones = { 1453 }, ender = 14450, races = 4294967373 },
 		[92421] = { "Light's Justice", zones = { 1458 }, races = 8589934770 },
 		[92422] = { "The Wrath of Rath'mael", zones = { 1420 } },
+		[92434] = { "Blood in the Streets", zones = { 1416 }, races = 8589934770, notext = true },
 		[92460] = { "Coming of Age", zones = { 2521 }, ender = 251361 },
 		[92461] = { "Harmony in Balance", zones = { 2521 }, prev = 92460 },
 		[92462] = { "Infestation Investigation", zones = { 2521 } },
@@ -4414,6 +4422,7 @@ SpokenQuestsCompendium = {
 		[93459] = { "More Al'Aketh Ears", zones = { 2521 }, ender = 254151 },
 		[93461] = { "Welcome to Shen'dar Village", zones = { 2521 }, races = 4294967373 },
 		[93552] = { "Harvesting Windstones", zones = { 2521 } },
+		[93680] = { "Key to the City", zones = { 1416 }, races = 8589934770, notext = true },
 		[93735] = { "The Broken Construct", zones = { 2521 }, ender = 256083, races = 8589934770 },
 		[93736] = { "Unwelcome Spirits", zones = { 2521 }, races = 8589934770 },
 		[93737] = { "The Broken Construct", zones = { 2521 }, races = 8589934770 },
@@ -4529,7 +4538,10 @@ SpokenQuestsCompendium = {
 		[95508] = { "Unwelcome Guests", zones = { 1413 }, races = 8589934770 },
 		[95621] = { "Trouble in the Valley", zones = { 1413 }, prev = 95495, races = 8589934770 },
 		[95647] = { "Lost in the Thicket Things", zones = { 1437 }, races = 4294967373 },
+		[95663] = { "Dragonmaw Rumors", zones = { 1437 }, notext = true },
+		[95664] = { "Elder Knowledge", zones = { 1437 }, races = 8589934770, notext = true },
 		[95682] = { "Open the Maw", zones = { 1437 } },
+		[95697] = { "Changing Tastes", zones = { 1437 }, races = 8589934770, notext = true },
 		[95737] = { "Seeking Caitlin", zones = { 1437 }, ender = 1480 },
 		[95772] = { "Songblade Search", zones = { 1437 } },
 		[95774] = { "Her Name Is Olgra", zones = { 1413 }, prev = 4921, races = 8589934770 },
@@ -4537,6 +4549,9 @@ SpokenQuestsCompendium = {
 		[95803] = { "A Token of Good Faith", sort = 141, ender = 10181, races = 16, classes = 2 },
 		[95805] = { "Grace of An'she and Mu'sha", zones = { 1412 }, races = 8589934770 },
 		[95809] = { "Heartwoven", zones = { 1437 }, prev = 95647, ender = 1480, races = 4294967373 },
+		[95883] = { "The Tortured Soul", zones = { 1421 }, prev = 95884, notext = true },
+		[95884] = { "The Offering Stone", zones = { 1421 }, notext = true },
+		[95885] = { "The Offering of Blood", zones = { 1421 }, prev = 95883, notext = true },
 		[95981] = { "Watching the Roads", zones = { 1421 }, races = 8589934770 },
 		[95998] = { "The Great Outdoors", sort = 666, races = 4294967373 },
 		[95999] = { "WANTED: Incinerator Gar'im", zones = { 1433 }, ender = 344, races = 4294967373 },
@@ -4556,6 +4571,12 @@ SpokenQuestsCompendium = {
 		[96130] = { "Chakuyak", zones = { 1412 }, races = 8589934770 },
 		[96139] = { "The Valor Family", zones = { 1431 }, races = 4294967373 },
 		[96204] = { "The Windshaper's Wrath", sort = 141, ender = 259620, races = 16, classes = 2 },
+		[96241] = { "Talkin' bout Toxins, Mon", zones = { 1412 }, races = 8589934770, notext = true },
+		[96259] = { "Defending the Dead", zones = { 1412 }, races = 8589934770, notext = true },
+		[96260] = { "Stronger than Steel", zones = { 1412 }, races = 8589934770, notext = true },
+		[96261] = { "The Broodmother", zones = { 1412 }, races = 8589934770, notext = true },
+		[96294] = { "A Darker Truth", zones = { 1412 }, races = 8589934770, notext = true },
+		[96339] = { "Legacy Reward: Replica Ironforge Air Rifle", zones = { 1413 }, notext = true },
 		[96390] = { "Nip 'Em in the Bud", zones = { 1426 }, prev = 96392, races = 4294967373 },
 		[96391] = { "Underground Map", zones = { 1426 }, ender = 264936 },
 		[96392] = { "Farsen's Watch", zones = { 1426 }, prev = 96408, races = 4294967373 },
@@ -4582,6 +4603,7 @@ SpokenQuestsCompendium = {
 		[96658] = { "Camping 101: Cooking", sort = 666, ender = 265944, races = 8589934770 },
 		[96659] = { "The Adventurer", sort = 666, ender = 265810, races = 8589934770 },
 		[96661] = { "Camping 101: Cooking", sort = 666, ender = 3067, races = 8589934770 },
+		[96774] = { "Ancient Gurubashi Idol", zones = { 1412 }, races = 8589934770, notext = true },
 		[96821] = { "Legging It", zones = { 1411 }, ender = 3139, races = 8589934770 },
 		[96822] = { "For Honor", zones = { 1411 }, races = 8589934770 },
 		[96825] = { "This Fruit Could Bite Back", zones = { 1411 }, races = 8589934770 },
@@ -4595,7 +4617,9 @@ SpokenQuestsCompendium = {
 		[96897] = { "The Cult of the Damned", zones = { 1420 }, races = 8589934770 },
 		[96898] = { "Remnants of War", zones = { 1420 }, races = 8589934770 },
 		[96899] = { "Bandarion Keep", zones = { 1420 }, ender = 267008, races = 8589934770 },
+		[96984] = { "Heart of Disruption", zones = { 1421 }, prev = 92434, races = 8589934770, notext = true },
 		[96986] = { "The Grave Knight", zones = { 1424 }, races = 8589934770 },
+		[96987] = { "Opportunistic Education", races = 8589934770, notext = true },
 		[96988] = { "Source of Power", zones = { 1458 }, races = 8589934770 },
 		[97003] = { "Chol'aruk the Ravener", zones = { 1413 }, races = 8589934770 },
 		[97005] = { "Chol'aruk the Ravener", zones = { 1413 }, races = 4294967373 },
@@ -4617,6 +4641,7 @@ SpokenQuestsCompendium = {
 		[97253] = { "Parts and Pieces", zones = { 1413 } },
 		[97257] = { "Call of Fire", sort = 82, prev = 97245, ender = 252382, races = 8589934592, classes = 64 },
 		[97263] = { "Your Package Has Arrived", zones = { 1455 }, ender = 258098, races = 4294967373 },
+		[97265] = { "Hate the Hatefury", zones = { 1443 }, races = 8589934770, notext = true },
 		[97275] = { "Whuut's the Rush", zones = { 1454 }, ender = 11046, races = 8589934770 },
 		[97277] = { "Grund and Gozwin", zones = { 1426 } },
 		[97279] = { "Wayward Weapons", zones = { 1411 }, ender = 3159 },
@@ -4758,6 +4783,7 @@ SpokenQuestsCompendium = {
 		[98397] = { "To Darnassus", sort = 263, prev = 98731, ender = 4217, races = 4294967304, classes = 1024 },
 		[98398] = { "The Oracle Tree", zones = { 1438 }, prev = 98392, races = 4294967373 },
 		[98403] = { "Twisted Hatred", zones = { 1438 }, prev = 932, races = 4294967373 },
+		[98404] = { "The Great Windborne Cat Spirit", sort = 263, races = 12884901888, classes = 1024, notext = true },
 		[98405] = { "The Great Cat Spirit", sort = 263, races = 32, classes = 1024 },
 		[98407] = { "Show of Force", zones = { 1433 } },
 		[98417] = { "Vengeful Trail", zones = { 1440 }, races = 4294967373 },
@@ -4782,6 +4808,7 @@ SpokenQuestsCompendium = {
 		[98815] = { "Highland Hides", zones = { 1437 } },
 		[98823] = { "Earthen Echo", zones = { 1437 }, races = 8589934770 },
 		[98824] = { "Prehistoric Prism", zones = { 1437 }, ender = 5387, races = 4294967373 },
+		[98887] = { "Conflict at Darkspear Islands", zones = { 2524 }, notext = true },
 		[98888] = { "Conflict at Darkspear Islands", zones = { 2524 }, ender = 15350 },
 		[98896] = { "Darkspear Islands Clash", zones = { 2524 }, ender = 15351 },
 		[99046] = { "The Lost Runner", zones = { 1438 }, ender = 275683, races = 4294967373 },

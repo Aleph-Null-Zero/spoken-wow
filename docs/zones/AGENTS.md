@@ -10,8 +10,9 @@ Fix the source and regenerate. Never hand-edit the output.
 - `addons/Spoken_Zones/Data/<lang>/*.lua` comes from the `lore_line` table. Edit lore through
   the site or re-scrape, run `make zones-lore-export`, and commit the diff.
   `make zones-lore-check` confirms the files match the database.
-- `addons/Spoken_Zones/Data/Languages.lua` and `Data/Pictures.lua` come from their own build
-  tools.
+- `addons/Spoken_Zones/Data/Languages.lua` (`make zones-languages`), `Data/Pictures.lua`
+  (`make zones-pictures`) and `Data/ForeverAreas.lua` (`make zones-forever-areas`) come from
+  their own build tools.
 - `addons/SpokenZonesAudio/Data/Sounds.lua` is the pack's lookup table.
 - `addons/SpokenZonesAudio/Sounds/` (enUS) and `build/zones/<lang>/` are assembled by
   `make zones-sounds` from the live takes. They are not a store.

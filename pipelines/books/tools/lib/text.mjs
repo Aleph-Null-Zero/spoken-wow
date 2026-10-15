@@ -30,15 +30,21 @@ export function normaliseText(raw) {
     .trim();
 }
 
+/** The HTML entities page text carries, as the characters the game draws. */
+const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+
 /**
  * Narration form: one flowing paragraph, markup gone.
  *
  * Tags become a space rather than nothing, because "<H1>Ledger</H1>Three crates." has no
- * space of its own and deleting the tags would leave "LedgerThree".
+ * space of its own and deleting the tags would leave "LedgerThree". Entities become their
+ * characters after the tags go, so an escaped "&lt;" is never taken for a tag, and "&amp;" is
+ * shown and read as "&" (Military Ranks of the Horde & Alliance).
  */
 export function spokenText(text) {
   return normaliseText(text)
     .replace(/<[^>]+>/g, " ")
+    .replace(/&(amp|lt|gt|quot|apos|nbsp);/g, (_, name) => ENTITIES[name])
     .replace(/\s+/g, " ")
     .trim();
 }

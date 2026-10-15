@@ -100,10 +100,8 @@ TOC_HEADER = """## Interface: 100007, 11509, 20506, 16001
 ## X-Child-Of: SpokenQuests
 ## X-SpokenQuests-DataModule-Version: 1
 ## X-SpokenQuests-DataModule-Priority: 100
-## X-SpokenQuests-DataModule-Maps: 0, 1, 30, 33, 43, 47, 48, 70, 90, 109, 129, 189, 209, 229, 230, 289, 309, 329, 349, 369, 389, 429, 469, 509, 531, 533
 ## X-VoiceOver-DataModule-Version: 1
 ## X-VoiceOver-DataModule-Priority: 100
-## X-VoiceOver-DataModule-Maps: 0, 1, 30, 33, 43, 47, 48, 70, 90, 109, 129, 189, 209, 229, 230, 289, 309, 329, 349, 369, 389, 429, 469, 509, 531, 533
 
 Module.lua
 """

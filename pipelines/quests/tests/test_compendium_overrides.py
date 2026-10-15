@@ -1,5 +1,6 @@
 """The Compendium's hand corrections (corpus/compendium_overrides.json), applied last by
 export_compendium.py: each moves, retitles, links, restricts or drops a quest, or names a chain."""
+import gzip
 import json
 import sys
 from pathlib import Path
@@ -8,7 +9,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from export_compendium import OVERRIDES, apply_overrides, chain_names, load_overrides, quest_line  # noqa: E402
+from export_compendium import (OVERRIDES, apply_overrides, chain_names, corpus_quests, load_overrides,  # noqa: E402
+                               quest_line)
 
 
 def _rec(title, zones=(), sort=None, prev=None, races=0, classes=0):
@@ -102,3 +104,16 @@ def test_a_dungeon_files_a_quest_in_the_zone_of_its_entrance_and_the_line_says_w
     assert (records[4]["zones"], records[4]["sort"], records[4]["dungeon"]) == ([1427], None, 230)
     assert quest_line(4, "Elsewhere", zones=[1427], dungeon=230) == \
         '\t\t[4] = { "Elsewhere", zones = { 1427 }, dungeon = 230 },'
+
+
+def test_the_index_leaves_out_a_quest_every_line_of_which_is_ignored(tmp_path):
+    lines = [{"lineId": "q:8514:accept", "source": "accept", "questId": 8514, "questTitle": "Tally"},
+             {"lineId": "q:5:accept", "source": "accept", "questId": 5, "questTitle": "Growling Gut"},
+             {"lineId": "q:1:accept", "source": "accept", "questId": 1, "questTitle": "The Chow Quest"}]
+    corpus, ignored = tmp_path / "corpus.json.gz", tmp_path / "ignored.json"
+    with gzip.open(corpus, "wt", encoding="utf-8") as f:
+        json.dump({"lines": lines}, f)
+    ignored.write_text(json.dumps({"ignored": [{"lineId": "q:8514:accept", "reason": "a tally"}]}),
+                       encoding="utf-8")
+    quests, _, _ = corpus_quests(str(corpus), str(ignored))
+    assert set(quests) == {5}

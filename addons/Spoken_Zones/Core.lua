@@ -277,7 +277,9 @@ function SpokenZones:ResolveAreaKey(name)
 	if aliased then
 		return aliased
 	end
-	return self:NormaliseAreaKey(name)
+	-- Forever's spelling of a place the lore keeps under another key (Data/ForeverAreas.lua).
+	local key = self:NormaliseAreaKey(name)
+	return self.ForeverNames and self.ForeverNames[key] or key
 end
 
 --------------------------------------------------------------------------------
@@ -400,16 +402,28 @@ end
 
 --- The areas with a story listed under the zone `zone`, each { mapID = the map its story is kept
 --- under, key = }: the zone's own stories but those the client puts elsewhere, and the stories
---- kept elsewhere that it puts here.
+--- kept elsewhere that it puts here. On Forever, not those no Forever player can reach
+--- (Data/ForeverAreas.lua's NotOnForever).
+local onForever
 function SpokenZones:AreasIn(zone)
 	local index = PlaceIndex()
 	local away = index.zone[zone] or {}
+	if onForever == nil then
+		-- Forever's client has a map of Mount Hyjal.
+		onForever = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(2482) ~= nil or false
+	end
+	local unreachable = onForever and self.NotOnForever or {}
+	local function Reachable(mapID, key)
+		return not (unreachable[mapID] and unreachable[mapID][key])
+	end
 	local list = {}
 	for key in pairs(self.Subzones[zone] or {}) do
-		if not away[key] then table.insert(list, { mapID = zone, key = key }) end
+		if not away[key] and Reachable(zone, key) then table.insert(list, { mapID = zone, key = key }) end
 	end
 	for _, area in ipairs(index.into[zone] or {}) do
-		if self.Subzones[area.mapID] and self.Subzones[area.mapID][area.key] then table.insert(list, area) end
+		if self.Subzones[area.mapID] and self.Subzones[area.mapID][area.key] and Reachable(area.mapID, area.key) then
+			table.insert(list, area)
+		end
 	end
 	return list
 end
@@ -646,7 +660,7 @@ local function CmdDump()
 	DumpMapTree(1415, out, seen, 0)  -- Eastern Kingdoms
 	SpokenZonesSettings.dump = out
 	SpokenZones:Print("dumped %d maps to SpokenZonesSettings.dump. Run /reload, then:", #out)
-	SpokenZones:Print("  node tools/seed-from-dump.mjs")
+	SpokenZones:Print("  node pipelines/zones/tools/seed-from-dump.mjs")
 end
 
 -- Cross-check the generated data against the live client. Catches wrong uiMapIDs

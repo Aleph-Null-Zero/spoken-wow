@@ -217,16 +217,7 @@ function interfaceOf(section) {
   return found[1].trim();
 }
 
-/** The quests DataModule maps, from the generated packs' TOC, for the same reason. */
-function questsMaps() {
-  const found = readFileSync(join(ROOT, "pipelines/quests/tts_cli/build.py"), "utf8").match(
-    /^## X-SpokenQuests-DataModule-Maps: (.+)$/m,
-  );
-  if (!found) throw new Error("no DataModule-Maps line in tts_cli/build.py");
-  return found[1].trim();
-}
-
-export function toc({ section, lang, version, credits, iface, maps }) {
+export function toc({ section, lang, version, credits, iface }) {
   const title = `${TITLES[section]}: Voice Actors${lang === BASE_LOCALE ? "" : ` (${lang})`}`;
   const lines = [
     `## Interface: ${iface}`,
@@ -246,10 +237,8 @@ export function toc({ section, lang, version, credits, iface, maps }) {
       // language. Language still comes before priority: a German recording does not play
       // for somebody listening in English.
       "## X-SpokenQuests-DataModule-Priority: 200",
-      `## X-SpokenQuests-DataModule-Maps: ${maps}`,
       "## X-VoiceOver-DataModule-Version: 1",
       "## X-VoiceOver-DataModule-Priority: 200",
-      `## X-VoiceOver-DataModule-Maps: ${maps}`,
     );
     // Only for a language, as the generated packs do: an absent key reads as enUS.
     if (lang !== BASE_LOCALE) lines.unshift(`## X-SpokenQuests-Language: ${lang}`);
@@ -375,7 +364,6 @@ async function main(args) {
       version,
       credits,
       iface: interfaceOf(section),
-      maps: section === "quests" ? questsMaps() : null,
     });
     for (const [name, text] of Object.entries(files)) {
       mkdirSync(dirname(join(out, name)), { recursive: true });

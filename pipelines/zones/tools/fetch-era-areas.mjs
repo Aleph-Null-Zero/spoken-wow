@@ -1,8 +1,13 @@
 #!/usr/bin/env node
-// Writes tools/seed/era-areas.json from the Classic Era client's AreaTable.
+// Writes tools/seed/era-areas.json from the Classic Era client's AreaTable, or with --forever
+// tools/seed/camelot-areas.json from Forever's.
 //
-//   node tools/fetch-era-areas.mjs                     # pinned build
+//   node tools/fetch-era-areas.mjs                     # Era's pinned build
+//   node tools/fetch-era-areas.mjs --forever           # Forever's pinned build
 //   node tools/fetch-era-areas.mjs --build 1.15.9.69109
+//
+// The lore export keeps the places either client can name (lib/era.mjs loadClientAreas), and
+// ForeverAreas.lua lists those only Forever's can: both pins live in pipelines/lib/wago.mjs.
 //
 // AreaTable is the table GetSubZoneText and MapUtil.FindBestAreaNameAtMouse
 // read from, so it is the definitive list of area names the Era client can ever
@@ -25,17 +30,17 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { fetchTable, PINNED_BUILD } from "./lib/db2.mjs";
+import { ERA_BUILD, FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
 import { ROOT } from "./lib/wiki.mjs";
 
-const SEED = join(ROOT, "pipelines/zones/tools/seed/era-areas.json");
-
 const argv = process.argv.slice(2);
-const build = argv.includes("--build") ? argv[argv.indexOf("--build") + 1] : PINNED_BUILD;
+const forever = argv.includes("--forever");
+const SEED = join(ROOT, "pipelines/zones/tools/seed", forever ? "camelot-areas.json" : "era-areas.json");
+const build = argv.includes("--build") ? argv[argv.indexOf("--build") + 1] : forever ? FOREVER_BUILD : ERA_BUILD;
 
 async function main() {
   console.log(`fetching AreaTable for ${build}`);
-  const rows = await fetchTable("AreaTable", { build });
+  const rows = await wagoTable("AreaTable", { build });
   if (rows.length && rows[0].AreaName_lang === undefined) {
     throw new Error("AreaTable format changed: no AreaName_lang column");
   }
@@ -47,12 +52,20 @@ async function main() {
   }
 
   const seed = {
-    _comment: [
-      "Every area name the Classic Era client can report, from the client's own",
-      "AreaTable via wago.tools. The ground truth that keeps post-vanilla places",
-      "(which the wiki's subzone categories are full of) out of the corpus.",
-      "Regenerate with:  node tools/fetch-era-areas.mjs",
-    ],
+    _comment: forever
+      ? [
+          "Every area name the Forever client can report, from its own AreaTable via",
+          "wago.tools. The Era seed beside this one is the same thing for Classic Era;",
+          "the corpus filter is the union, because the addon ships for both clients and a",
+          "place either one can name is a place worth having a line for.",
+          "Regenerate with:  node tools/fetch-era-areas.mjs --forever",
+        ]
+      : [
+          "Every area name the Classic Era client can report, from the client's own",
+          "AreaTable via wago.tools. The ground truth that keeps post-vanilla places",
+          "(which the wiki's subzone categories are full of) out of the corpus.",
+          "Regenerate with:  node tools/fetch-era-areas.mjs",
+        ],
     build,
     names: [...names].sort(),
   };

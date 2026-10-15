@@ -17,7 +17,7 @@ Classic Era 1.15.9 on 2026-08-19 and play. That was the one open risk in the who
 
 ## The store is no longer half inherited
 
-`scripts/package-audio.sh` and `tools/plan_transcode.py` exist because two thirds of the store
+`scripts/quests/package-audio.sh` and `tools/plan_transcode.py` exist because two thirds of the store
 used to be the 64 kbps pack this project inherited, which `-q:a 6` cannot beat. **That is no
 longer true.** Every file has since been regenerated:
 
@@ -91,7 +91,7 @@ decision.
 
 ## How the two profiles are built
 
-`ENCODE` names a profile in `scripts/package-audio.sh`, and a profile is a format plus the flags
+`ENCODE` names a profile in `scripts/quests/package-audio.sh`, and a profile is a format plus the flags
 that produce it and nothing else:
 
 | Profile | Encoder flags | Built by |
