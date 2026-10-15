@@ -23,6 +23,7 @@
     <Include file="UI\Portrait.lua"/>
     <Include file="UI\StaticPortrait.lua"/>
     <Include file="UI\Actions.lua"/>
+    <Include file="UI\Snap.lua"/>
     <Include file="UI\Face.lua"/>
     <Include file="UI\PlayerFrame.lua"/>
     <Include file="UI\MinimalPlayer.lua"/>

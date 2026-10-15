@@ -438,11 +438,9 @@ env.PlayerFrame:RefreshConfig()
 Spoken:SetPlayerHost(DUI)
 Expect("hosted over DialogueUI the window moves onto it", Skin.frame:GetParent(), DUI)
 Expect("...at its share of the window it sits on", math.abs(Skin.frame.scale - 0.65) < 1e-6, true)
-local moving = false
-Skin.frame.StartMoving = function() moving = true end
+_G.GetCursorPosition = _G.GetCursorPosition or function() return 0, 0 end
 Skin:StartDrag()
-Expect("...and can still be dragged there", moving, true)
-Skin.frame.StartMoving = nil
+Expect("...and can still be dragged there", env.Snap.Active(), Skin.frame)
 Skin:StopDrag()
 local placed = env.Addon:Layout().DialogueUI
 Expect("...its place saved", placed ~= nil, true)

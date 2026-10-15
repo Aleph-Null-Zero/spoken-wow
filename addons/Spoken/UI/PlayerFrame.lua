@@ -204,11 +204,11 @@ function PlayerFrame:InitMover()
     mover:HookScript("OnLeave", function() SetCursor(nil); GameTooltip_Hide() end)
     mover:HookScript("OnMouseDown", function()
         if Addon:IsFrameLocked() then return end
-        self.frame:StartMoving()
+        Snap.Start(self.frame, { locked = function() return Addon:IsFrameLocked() end })
     end)
     mover:HookScript("OnMouseUp", function()
         if Addon:IsFrameLocked() then return end
-        self.frame:StopMovingOrSizing()
+        Snap.Stop()
         self:SaveLayout()
     end)
 end

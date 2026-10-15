@@ -64,6 +64,7 @@ E.SoundUtils={WhyInaudible=function() end,IsMutedByPlayer=function() return fals
 E.StaticPortrait={Configure=function() return false end,Resolved=function() return false end}
 E.Portrait={Configure=function(_,frame) frame.active='mock-model' end}
 dofile(addons .. 'Spoken/UI/Actions.lua')
+dofile(addons .. 'Spoken/UI/Snap.lua')
 dofile(addons .. 'Spoken/UI/Face.lua')
 dofile(addons .. 'Spoken/UI/PlayerFrame.lua')
 dofile(addons .. 'Spoken/UI/MinimalPlayer.lua')
@@ -340,10 +341,11 @@ Check(not T.manualScroll,'clicking the caption text resumes following')
 T.frame:Fire('OnClick','RightButton')
 Check(M.menu:IsShown(),'right-clicking captions opens the existing player menu')
 M.menu:Hide()
+GetCursorPosition=GetCursorPosition or function() return 0,0 end
 frameCfg.LockFrame=true; E.PlayerFrame:RefreshConfig(); M:StartDrag()
-Check(not M.frame.moving and not M.resizer:IsShown(),'the player lock controls the attached caption layout')
+Check(E.Snap.Active()==nil and not M.resizer:IsShown(),'the player lock controls the attached caption layout')
 frameCfg.LockFrame=false; E.PlayerFrame:RefreshConfig(); M.header:Fire('OnDragStart')
-Check(M.frame.moving,'the existing header still moves the whole player')
+Check(E.Snap.Active()==M.frame,'the existing header still moves the whole player')
 M.header:Fire('OnDragStop')
 frameCfg.Style='classic'; E.PlayerFrame:RefreshConfig()
 local original=E.PlayerFrame.frame
@@ -598,15 +600,24 @@ Check(not S.controls:IsShown(),'once the pointer leaves they fade out, and go')
 
 local centre=UIParent:GetWidth()/2
 Check(math.abs(S.frame:GetTop()-336)<.001,'the subtitle starts at its default height')
+local shift=true
+IsShiftKeyDown=function() return shift end
 S.frame:Fire('OnDragStart')
-cursor[1],cursor[2]=300,80; S.frame:Fire('OnUpdate',.05)
-Check(math.abs(S.frame:GetTop()-416)<.001 and math.abs(S.frame:GetCenter()-centre)<.001,
-    'dragging moves the subtitle up with the cursor and never sideways')
-cursor[2]=164; S.frame:Fire('OnDragStop'); cursor[1],cursor[2]=0,0
-Check(math.abs(S.frame:GetTop()-500)<.001 and math.abs(S.frame:GetCenter()-centre)<.001
-    and E.Addon:Layout().Subtitle.top==500,'a dragged subtitle stays at the height it was dropped, on the centre line')
-S.frame:Fire('OnDragStart'); cursor[2]=5000; S.frame:Fire('OnDragStop'); cursor[2]=0
+cursor[1],cursor[2]=100,80; E.Snap.Move()
+Check(math.abs(S.frame:GetTop()-416)<.001 and math.abs(S.frame:GetCenter()-centre-100)<.001,
+    'dragging moves the subtitle with the cursor, up and sideways')
+cursor[2]=164; E.Snap.Move(); S.frame:Fire('OnDragStop'); cursor[1],cursor[2]=0,0
+Check(math.abs(S.frame:GetTop()-500)<.001 and math.abs(S.frame:GetCenter()-centre-100)<.001
+    and E.Addon:Layout().Subtitle.top==500 and math.abs(E.Addon:Layout().Subtitle.x-100)<.001,
+    'a dragged subtitle stays where it was dropped')
+S.frame:Fire('OnDragStart'); cursor[2]=5000; E.Snap.Move(); S.frame:Fire('OnDragStop'); cursor[2]=0
 Check(math.abs(S.frame:GetTop()-UIParent:GetHeight())<.001,'it cannot be dragged off the top of the screen')
+shift=false
+S:Reset(); S:Place()
+S.frame:Fire('OnDragStart'); cursor[1]=4; E.Snap.Move(); S.frame:Fire('OnDragStop'); cursor[1]=0
+Check(math.abs(S.frame:GetCenter()-centre)<.001 and E.Addon:Layout().Subtitle.x==0,
+    'a subtitle dropped near the middle of the screen holds on it')
+shift=true
 S:Reset(); E.Addon:Layout().Subtitle={top=500}; S:Place()
 local droppedCenter=S.frame:GetCenter()
 cfg.SubtitleScale=1.5; T:RefreshConfig()
