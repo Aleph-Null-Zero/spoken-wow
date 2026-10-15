@@ -4,6 +4,9 @@
 ## Version: 2.0.1
 ## Author: rusty
 ## IconTexture: Interface\AddOns\SpokenZonesAudio\Textures\AddonIcon.tga
+## Group: Spoken
+## X-Part-Of: Spoken
+## X-Child-Of: Spoken_Zones
 ## X-License: Audio generated with ElevenLabs from warcraft.wiki.gg lore text (CC BY-SA 4.0).
 ## X-Credits: Lore text sourced from warcraft.wiki.gg contributors (CC BY-SA 4.0).
 
