@@ -50,17 +50,23 @@ _G.tinsert = _G.tinsert or table.insert
 _G.GameFontHighlight = _G.GameFontHighlight or { GetFont = function() return "font.ttf", 12 end }
 
 local Z = H.NewZoneLore()
+-- The world's name is the client's: no story of its own to take it from.
+local mapName = Z.GetMapName
+function Z:GetMapName(id) return id == 947 and "Azeroth" or mapName(self, id) end
 Z.Zones = { [1411] = { name = "Durotar", full = "Durotar is a cracked, red land." },
     [1426] = { name = "Dun Morogh", pending = true },
     -- A city: a zone of its own, listed inside the zone around it.
     [1454] = { name = "Orgrimmar", full = "The orcs' city." },
-    [947] = { name = "Azeroth", full = "The world." },
     [1414] = { name = "Kalimdor", full = "The western continent." },
     [1415] = { name = "Eastern Kingdoms", full = "The eastern continent." },
     -- A map only another client has (Forever's, on Era): this client's C_Map has never heard of it.
     [2482] = { name = "Somewhere Else", full = "Another client's place." } }
 local getMapInfo = _G.C_Map.GetMapInfo
-_G.C_Map.GetMapInfo = function(id) if id == 2482 then return nil end return getMapInfo(id) end
+_G.C_Map.GetMapInfo = function(id)
+    if id == 2482 then return nil end
+    if id == 947 then return { mapType = 0, name = "Azeroth" } end
+    return getMapInfo(id)
+end
 Z.Subzones = { [1411] = { ["valley of trials"] = { name = "Valley of Trials", full = "Where the orcs learn." },
     ["sen'jin village"] = { name = "Sen'jin Village", pending = true },
     -- An area only Forever has: this client, Era, never lists it.
@@ -276,8 +282,6 @@ Expect("...counted with the zone's areas", RowFor("Durotar").count.text:match("/
 Expect("...the continent's banner counting what its zones' cards count, the city once",
     RowFor("Kalimdor").count.text:match("/(%d+)"), "3")
 Expect("...its page says the zone it is in", page.title.text .. ": " .. page.sub.text.text, "Orgrimmar: In Durotar")
-page.sub.scripts.OnClick(page.sub)
-Expect("...which leads back to the zone", page.title.text, "Durotar")
 RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
 Expect("a click on the zone's card closes it with its city", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdor|Durotar")
 RowFor("Durotar").scripts.OnClick(RowFor("Durotar"))
@@ -310,17 +314,10 @@ Z:RefreshLoreWindow(); Shown()
 
 RowFor("Valley of Trials").scripts.OnClick(RowFor("Valley of Trials"))
 Expect("choosing an area shows its story", page.title.text .. ": " .. page.body.text.text, "Valley of Trials: Where the orcs learn.")
-Expect("...says which zone it is in, and leads back to it", page.sub.text.text, "In Durotar")
-page.sub.scripts.OnClick(page.sub)
-Expect("...which goes back to the zone", page.title.text, "Durotar")
+Expect("...says which zone it is in, in plain words", page.sub.text.text .. "|" .. tostring(page.sub.onClick), "In Durotar|nil")
 Expect("a zone says which continent it is on, and its places discovered out of all, its city one of them, as its card counts",
-    page.sub.text.text .. "|" .. RowFor("Durotar").count.text:match("/(%d+)"), "In Kalimdor · 0 of 3 discovered|3")
-page.sub.scripts.OnClick(page.sub)
-Expect("...leading up to the continent", page.title.text, "Kalimdor")
-Expect("a continent says it is in Azeroth, and what its banner counts", page.sub.text.text, "In Azeroth · 0 of 3 discovered")
-page.sub.scripts.OnClick(page.sub)
-Expect("...leading up to Azeroth", page.title.text, "Azeroth")
-Expect("Azeroth sits in nothing: it says what it holds", page.sub.text.text, "2 continents, 3 zones")
+    Z:PlaceLine(1411) .. "|" .. RowFor("Durotar").count.text:match("/(%d+)"), "In Kalimdor · 0 of 3 discovered|3")
+Expect("a continent says it is in Azeroth, and what its banner counts", Z:PlaceLine(1414), "In Azeroth · 0 of 3 discovered")
 Expect("...not counting a map this client has not got", RowFor("Somewhere Else"), nil)
 Expect("an area only Forever has is not listed on another client", RowFor("Camp Forever"), nil)
 
@@ -519,11 +516,6 @@ mapPage.sub.scripts.OnClick(mapPage.sub)
 Expect("...and the line goes back to the zone's story", mapPage.title.text, "Durotar")
 Expect("a zone's line is Lore of Azeroth's: its continent, and how many areas", mapPage.sub.text.text,
     (Z:PlaceLine(1411)))
-local shownMap
-WorldMapFrame.SetMapID = function(_, id) shownMap = id end
-mapPage.sub.scripts.OnClick(mapPage.sub)
-Expect("...a click taking the map up to the continent", shownMap, 1414)
-WorldMapFrame.SetMapID = nil
 
 ---------------------------------------------------------------- Lore of Azeroth from the panel
 local opened

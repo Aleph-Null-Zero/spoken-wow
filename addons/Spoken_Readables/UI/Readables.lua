@@ -850,16 +850,6 @@ local function ShowEntry()
 		page:Show({ title = L.COMPENDIUM_READABLES, subtitle = Count(Tally(Index().all)), text = L.READABLES_PICK })
 		return
 	end
-	-- The line under the title goes up a level, to what holds what is chosen, where anything does.
-	local up = Holder(selection)
-	local onSubtitle = up and function()
-		selection = up
-		SpokenBooks:RefreshReadables(true)
-	end
-	local function Show(entry)
-		entry.onSubtitle = onSubtitle
-		page:Show(entry)
-	end
 	if selection.book then
 		local id = selection.book
 		local place = _G.SpokenBooksPlaces and SpokenBooksPlaces.books[id] or {}
@@ -874,7 +864,7 @@ local function ShowEntry()
 			where = L.GROUP_UNKNOWN
 		end
 		if not Found(id) and not Unlocked() then
-			Show({ title = Name(id), subtitle = where, text = L.READABLE_NOT_FOUND })
+			page:Show({ title = Name(id), subtitle = where, text = L.READABLE_NOT_FOUND })
 			return
 		end
 		local words = {}
@@ -886,12 +876,12 @@ local function ShowEntry()
 		-- How it is had, in a part of its own above the words, which follow under no heading.
 		local sources = Sources(place)
 		if #sources > 0 then
-			Show({ title = Name(id), subtitle = where, target = id, parts = {
+			page:Show({ title = Name(id), subtitle = where, target = id, parts = {
 				{ heading = L.READABLE_SOURCES, text = table.concat(sources, "\n") },
 				{ text = table.concat(words, "\n\n") },
 			} })
 		else
-			Show({ title = Name(id), subtitle = where, text = table.concat(words, "\n\n"), target = id })
+			page:Show({ title = Name(id), subtitle = where, text = table.concat(words, "\n\n"), target = id })
 		end
 		return
 	end
@@ -900,7 +890,7 @@ local function ShowEntry()
 	local set = {}
 	if selection.type and not selection.group then
 		for _, id in ipairs(Index().types[selection.type] or {}) do set[id] = true end
-		Show({ title = TypeLabel(selection.type), subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+		page:Show({ title = TypeLabel(selection.type), subtitle = Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if selection.group and selection.mapID and TYPE_NAMES[selection.group] then
@@ -909,19 +899,19 @@ local function ShowEntry()
 			byType, where = (Index().dungeons[selection.mapID] or {})[selection.dungeon], DungeonName(selection.dungeon)
 		end
 		for _, id in ipairs((byType or {})[selection.group] or {}) do set[id] = true end
-		Show({ title = TypeLabel(selection.group), subtitle = InAndCount(where, Tally(set)), text = L.READABLES_PICK })
+		page:Show({ title = TypeLabel(selection.group), subtitle = InAndCount(where, Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if selection.dungeon then
 		DungeonReadables(selection.mapID, selection.dungeon, set)
-		Show({ title = DungeonName(selection.dungeon), subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
+		page:Show({ title = DungeonName(selection.dungeon), subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
 			text = L.READABLES_PICK,
 			picture = C.PlacePicture({ mapID = selection.mapID, dungeon = selection.dungeon }) })
 		return
 	end
 	if selection.dungeons then
 		for map in pairs(Index().dungeons[selection.mapID] or {}) do DungeonReadables(selection.mapID, map, set) end
-		Show({ title = L.GROUP_DUNGEONS, subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
+		page:Show({ title = L.GROUP_DUNGEONS, subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
@@ -930,7 +920,7 @@ local function ShowEntry()
 		for _, id in ipairs(Index()[selection.group]) do
 			if Index().typeOf[id] == selection.type then set[id] = true end
 		end
-		Show({ title = TypeLabel(selection.type),
+		page:Show({ title = TypeLabel(selection.type),
 			subtitle = L[GROUP_LABEL[selection.group]] .. " · " .. Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
@@ -939,19 +929,19 @@ local function ShowEntry()
 		for _, id in ipairs(Index().events) do
 			if Index().eventOf[id] == selection.event then set[id] = true end
 		end
-		Show({ title = EventLabel(selection.event),
+		page:Show({ title = EventLabel(selection.event),
 			subtitle = L.GROUP_EVENTS .. " · " .. Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if selection.zones then
 		for _, mapID in ipairs(ZONES_OF[selection.zones]()) do ReadablesIn(mapID, set) end
-		Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = InAndCount(MapName(C.WORLD), Tally(set)),
+		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = InAndCount(MapName(C.WORLD), Tally(set)),
 			text = L.READABLES_PICK })
 		return
 	end
 	if GROUP_LABEL[selection.group] then
 		for _, id in ipairs(Index()[selection.group]) do set[id] = true end
-		Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
+		page:Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), text = L.READABLES_PICK })
 		return
 	end
 	if C.IsContinent(selection.mapID) then
@@ -959,7 +949,7 @@ local function ShowEntry()
 	else
 		ReadablesIn(selection.mapID, set)
 	end
-	Show({ title = MapName(selection.mapID), subtitle = InAndCount(MapName(Above(selection.mapID)), Tally(set)),
+	page:Show({ title = MapName(selection.mapID), subtitle = InAndCount(MapName(Above(selection.mapID)), Tally(set)),
 		text = L.READABLES_PICK,
 		picture = C.PlacePicture({ mapID = selection.mapID }) })
 end

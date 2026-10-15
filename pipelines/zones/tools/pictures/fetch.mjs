@@ -32,8 +32,8 @@ const LATER = /(mists|pandaria|draenor|\bwod\b|legion|\bbfa\b|battle for azeroth
 // it left as they were (UNCHANGED, by uiMapID), where its screenshots show the Classic place.
 const CATACLYSM = /(cataclysm|cata\d|\bcata\b|post-?cata)/i;
 const UNCHANGED = new Set([1412, 1438, 1429, 1430, 1449, 1450, 1452, 1455, 1456, 1457, 1458]);
-// Azeroth and the continents have no picture: their pages carry maps, not views of a place.
-const NO_PICTURE = new Set(["zone-947", "zone-1414", "zone-1415"]);
+// The continents have no picture: their pages carry maps, not views of a place.
+const NO_PICTURE = new Set(["zone-1414", "zone-1415"]);
 // A picture chosen by hand after looking (choices.json beside this script): the wiki file to use
 // for a place, or null for none.
 const CHOICES = join(HERE, "choices.json");

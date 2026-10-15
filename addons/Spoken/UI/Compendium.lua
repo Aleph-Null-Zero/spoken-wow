@@ -1974,8 +1974,8 @@ function C.NewPage(parent, addon, play, report, look)
 	self.title = title
 
 	-- The line under the title as the places' page sets it: a line 16 high, its words in the middle,
-	-- 2 under the title; none at all where there is nothing to say. Where the tab gives it a way up
-	-- a level (Page:Show's onSubtitle), a click goes there and the pointer paints it as a link.
+	-- 2 under the title; none at all where there is nothing to say. Where the tab gives it somewhere
+	-- to go (Page:Show's onSubtitle), a click goes there and the pointer paints it as a link.
 	local sub = CreateFrame("Button", nil, frame)
 	sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
 	sub:SetPoint("RIGHT", frame, "RIGHT", -right, 0)
@@ -2130,8 +2130,8 @@ end
 --- entry = { title, subtitle, onSubtitle, text, target = what Play and Report act on, or nil for
 --- none, picture = { file, mask } above the words, parts = { { heading, text, buttons } } in place
 --- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts) }.
---- onSubtitle(), where given, is what a click on the line under the title does (the places' page
---- goes up a level with it); without it the line is plain words.
+--- onSubtitle(), where given, is what a click on the line under the title does (the map panel's
+--- area story returns to its zone's with it); without it the line is plain words.
 function Page:Show(entry)
 	self.title:SetText(entry.title or "")
 	self.sub.text:SetText(entry.subtitle or "")

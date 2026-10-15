@@ -110,7 +110,7 @@ _G.GameFontHighlight = _G.GameFontHighlight or { GetFont = function() return "fo
 _G.hooksecurefunc = _G.hooksecurefunc or function() end
 
 local Z = H.NewZoneLore()
-Z.Zones = { [947] = { name = "Azeroth", full = "The world." }, [1414] = { name = "Kalimdor", full = "West." },
+Z.Zones = { [1414] = { name = "Kalimdor", full = "West." },
     [1415] = { name = "Eastern Kingdoms", full = "East." }, [1411] = { name = "Durotar", full = "Red land." },
     [1454] = { name = "Orgrimmar", full = "The orcs' city." }, [1413] = { name = "The Barrens", full = "Dry land." },
     [1441] = { name = "Thousand Needles", full = "Spires." }, [1436] = { name = "Westfall", full = "Farms." } }
@@ -241,13 +241,9 @@ Expect("...the line chosen, its page counting its dungeons in its zone",
     page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
     "Dungeons and Raids|In The Barrens · 0 of 2 discovered|" .. Z.L.DUNGEONS_PICK)
 Expect("...its row lit as chosen", RowFor("Dungeons and Raids").selected, true)
-page.sub.scripts.OnClick(page.sub)
-Expect("...its line under the title leading to the zone", page.title.text, "The Barrens")
 Click("Razorfen Downs")
 Expect("Razorfen Downs' page is its story", page.title.text .. ": " .. page.body.text.text, "Razorfen Downs: The quilboars' barrows.")
 Expect("...in The Barrens, where its entrance is", page.sub.text.text, "In The Barrens")
-page.sub.scripts.OnClick(page.sub)
-Expect("...which leads to The Barrens", page.title.text, "The Barrens")
 Click("Thousand Needles")
 Expect("...and is not an area of Thousand Needles", Shown(),
     "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Thousand Needles|Highperch")

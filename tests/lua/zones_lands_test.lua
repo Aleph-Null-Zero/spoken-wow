@@ -45,11 +45,13 @@ _G.tinsert = _G.tinsert or table.insert
 _G.GameFontHighlight = _G.GameFontHighlight or { GetFont = function() return "font.ttf", 12 end }
 
 local Z = H.NewZoneLore()
+-- The world's name is the client's: no story of its own to take it from.
+local mapName = Z.GetMapName
+function Z:GetMapName(id) return id == 947 and "Azeroth" or mapName(self, id) end
 Z.Zones = { [1411] = { name = "Durotar", full = "Durotar is a cracked, red land." },
     [1426] = { name = "Dun Morogh", pending = true },
     -- A city: a zone of its own, listed inside the zone around it.
     [1454] = { name = "Orgrimmar", full = "The orcs' city." },
-    [947] = { name = "Azeroth", full = "The world." },
     [1414] = { name = "Kalimdor", full = "The western continent." },
     [1415] = { name = "Eastern Kingdoms", full = "The eastern continent." },
     -- A map only another client has (Forever's, on Era): this client's C_Map has never heard of it.
@@ -62,6 +64,7 @@ Z.Zones = { [1411] = { name = "Durotar", full = "Durotar is a cracked, red land.
 local getMapInfo = _G.C_Map.GetMapInfo
 _G.C_Map.GetMapInfo = function(id)
     if id == 2482 then return nil end
+    if id == 947 then return { mapType = 0, name = "Azeroth" } end
     if id == 2521 then return { mapType = 3, name = "Zephras Isle", parentMapID = 947 } end
     if id == 2524 then return { mapType = 3, name = "Darkspear Islands", parentMapID = 1414 } end
     return getMapInfo(id)
@@ -177,8 +180,6 @@ Z:RefreshLoreWindow()
 Expect("...and what its zones' cards count, where they have areas", page.sub.text.text,
     L.IN_ZONE_FMT:format("Azeroth") .. " · " .. L.DISCOVERED_FMT:format(1, 1))
 Z.Subzones[2521], found["2521/cove"] = nil, nil
-page.sub.scripts.OnClick(page.sub)
-Expect("...the line leading up to Azeroth", page.title.text, "Azeroth")
 Shown()
 RowFor(L.OTHER_LANDS).scripts.OnClick(RowFor(L.OTHER_LANDS))
 Expect("...closed again, the card gone", Shown():find("Zephras Isle", 1, true), nil)

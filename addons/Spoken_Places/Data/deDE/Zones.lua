@@ -13,12 +13,6 @@ if not SpokenZones:ShouldLoadLanguage("deDE") then
 end
 
 local zones = {
-	[947] = {
-		name = "Azeroth",
-		short = "Vor zehntausend Jahren folgten die Hochgeborenen Kalimdors, berauscht von der Macht des Brunnens der Ewigkeit, dem Ruf des gefallenen Titanen Sargeras und rissen ein Tor für die Brennende Legion auf.",
-		full = "Vor zehntausend Jahren folgten die Hochgeborenen Kalimdors, berauscht von der Macht des Brunnens der Ewigkeit, dem Ruf des gefallenen Titanen Sargeras und rissen ein Tor für die Brennende Legion auf. Malfurion Sturmgrimm und der Widerstand der Kaldorei zerschmetterten dieses Tor mit der Drachenseele und schleuderten Sargeras zurück in den Wirbelnden Nether, doch der Zusammenbruch des Brunnens zerbrach die Welt selbst. Das alte Kalimdor versank in Feuer und Flut; vier zerschlagene Kontinente erhoben sich aus den Trümmern, und das ertrunkene Herz des Landes wurde zum Großen Meer, in dem der Mahlstrom dort tobt, wo einst der Brunnen lag.",
-		source = "https://warcraft.wiki.gg/wiki/Azeroth",
-	},
 	[1411] = {
 		name = "Durotar",
 		short = "Durotar ist ein zerklüftetes, rotes Land aus Felsen und Schluchten, trocken und heiß, arm an Wasser und an allem, was grünt.",

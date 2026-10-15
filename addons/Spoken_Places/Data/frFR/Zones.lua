@@ -13,12 +13,6 @@ if not SpokenZones:ShouldLoadLanguage("frFR") then
 end
 
 local zones = {
-	[947] = {
-		name = "Azeroth",
-		short = "Il y a dix mille ans, les Bien-nés de Kalimdor, enivrés par la puissance du Puits d'éternité, répondirent à l'appel du titan déchu Sargeras et ouvrirent un passage à la Légion ardente.",
-		full = "Il y a dix mille ans, les Bien-nés de Kalimdor, enivrés par la puissance du Puits d'éternité, répondirent à l'appel du titan déchu Sargeras et ouvrirent un passage à la Légion ardente. Malfurion Hurlorage et la résistance kaldorei brisèrent ce passage grâce à l'Âme des dragons et rejetèrent Sargeras dans le Néant distordu, mais l'effondrement du Puits brisa le monde lui-même. L'antique Kalimdor sombra dans le feu et les flots ; quatre continents en ruine surgirent du naufrage, et le cœur englouti des terres devint la Grande mer, où le Maelström tourbillonne là où se dressait autrefois le Puits.",
-		source = "https://warcraft.wiki.gg/wiki/Azeroth",
-	},
 	[1411] = {
 		name = "Durotar",
 		short = "Durotar est une terre rouge et crevassée, faite d'escarpements et de canyons, sèche et brûlante, pauvre en eau comme en verdure.",

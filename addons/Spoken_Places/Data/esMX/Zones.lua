@@ -13,12 +13,6 @@ if not SpokenZones:ShouldLoadLanguage("esMX") then
 end
 
 local zones = {
-	[947] = {
-		name = "Azeroth",
-		short = "Hace diez mil años, los Altonato de Kalimdor, embriagados por el poder del Pozo de la Eternidad, respondieron al llamado del titán caído Sargeras y abrieron un portal para la Legión Ardiente.",
-		full = "Hace diez mil años, los Altonato de Kalimdor, embriagados por el poder del Pozo de la Eternidad, respondieron al llamado del titán caído Sargeras y abrieron un portal para la Legión Ardiente. Malfurion Tempestira y la resistencia kaldorei destruyeron ese portal con el Alma de Dragón y arrojaron a Sargeras de vuelta al Vacío Abisal, pero el colapso del Pozo quebró el mundo entero. La antigua Kalimdor se hundió entre fuego e inundaciones; cuatro continentes en ruinas surgieron de los restos, y el corazón anegado de aquella tierra se convirtió en el Mare Magnum, con La Vorágine rugiendo donde antes se alzaba el Pozo.",
-		source = "https://warcraft.wiki.gg/wiki/Azeroth",
-	},
 	[1411] = {
 		name = "Durotar",
 		short = "Durotar es una tierra roja y agrietada de riscos y cañones, seca y calurosa, escasa en agua y en vegetación.",
