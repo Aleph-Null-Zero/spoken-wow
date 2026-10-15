@@ -99,9 +99,9 @@ end
 -- A setting waiting on a switch beside it stays, greyed, saying which switch.
 env.Addon.db.profile.Transcript.Enabled = false; Options:UpdateRows()
 Expect("a row waiting on a switch is greyed rather than hidden", Shown(typing), true)
-Expect("...says which switch", typing.layoutReason, L.REASON_WORDS)
+Expect("...says which switch", typing.layoutReason, L.REASON_NARRATOR)
 Expect("...faded, so it reads as asleep rather than broken", typing:GetAlpha() < 1, true)
-Expect("...and its tooltip says so", Tooltip(typing):find(L.REASON_WORDS, 1, true) ~= nil, true)
+Expect("...and its tooltip says so", Tooltip(typing):find(L.REASON_NARRATOR, 1, true) ~= nil, true)
 env.Addon.db.profile.Transcript.Enabled = true; Options:UpdateRows()
 Expect("turning the switch on wakes it", typing.layoutReason, nil)
 Expect("...at full strength", typing:GetAlpha(), 1)
@@ -190,12 +190,12 @@ do
     words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
     local ROWS = {
         -- The wheel's note where Ctrl and the wheel size the window or the subtitles.
-        minimal = "Window Size, Show Words, Quests, Word Size, Lock Position, wheel note, Theme, Hide Portrait, "
+        minimal = "Window Size, Show Narrator, Quests, Word Size, Lock Position, wheel note, Theme, Hide Portrait, "
             .. "Show Progress Bar, Rows at Once, Auto-Scroll, Highlight Words, Type Words Out, Type Out By",
         -- The large window's words fill the box, so no Rows at Once.
-        classic = "Window Size, Show Words, Quests, Word Size, Lock Position, Hide Portrait, Show Progress Bar, "
+        classic = "Window Size, Show Narrator, Quests, Word Size, Lock Position, Hide Portrait, Show Progress Bar, "
             .. "Auto-Scroll, Highlight Words, Type Words Out, Type Out By",
-        subtitle = "Subtitle Size, Show Words, Quests, Word Size, Lock Position, subtitles' wheel note, Shadow Behind Words, "
+        subtitle = "Subtitle Size, Show Narrator, Quests, Word Size, Lock Position, subtitles' wheel note, Shadow Behind Words, "
             .. "Show Name and Title, Hide Portrait, Show Progress Bar, Sentences at Once, Auto-Scroll (subtitles), "
             .. "Highlight Words, Type Words Out, Type Out By",
         none = "",
@@ -210,7 +210,7 @@ do
     env.Addon.PlayerStyle = function() return chosen end
     Options:UpdateRows()
     Expect("the dialogueui style shows the rows it reads", StyleRows(),
-        "Window Size, Show Words, Quests, Word Size, Lock Position, wheel note, Theme, Show Progress Bar, "
+        "Window Size, Show Narrator, Quests, Word Size, Lock Position, wheel note, Theme, Show Progress Bar, "
         .. "Rows at Once, Fit Window to Words, Auto-Scroll, Highlight Words, Type Words Out, Type Out By")
     chosen = "none"; Options:UpdateRows()
     Expect("voice only shows no words' rows without DialogueUI: nothing of Spoken's is on screen", StyleRows(), "")
@@ -219,7 +219,7 @@ do
     Theme.Installed = function() return true end
     Options:UpdateRows()
     Expect("voice only, with DialogueUI installed, keeps the rows that mark DialogueUI's text", StyleRows(),
-        "Show Words, Quests, Highlight Words, Type Words Out, Type Out By")
+        "Show Narrator, Quests, Highlight Words, Type Words Out, Type Out By")
     Theme.Installed = installed
     Theme.Available, env.Addon.PlayerStyle = available, playerStyle
     words.Enabled, words.Typewriter, words.SubtitleScroll = saved[1], saved[2], saved[3]
@@ -295,9 +295,12 @@ do
     SlashCmdList.SPOKEN("player subtitle")
     Expect("...and the old ones still", env.Addon:PlayerStyle(), "subtitle")
     SlashCmdList.SPOKEN("words off")
-    Expect("/sp words turns Show Words off", env.Addon.db.profile.Transcript.Enabled, false)
+    Expect("/sp words turns Show Narrator off", env.Addon.db.profile.Transcript.Enabled, false)
     SlashCmdList.SPOKEN("transcript on")
     Expect("...and transcript still answers", env.Addon.db.profile.Transcript.Enabled, true)
+    SlashCmdList.SPOKEN("narrator off")
+    Expect("/sp narrator is its name now", env.Addon.db.profile.Transcript.Enabled, false)
+    SlashCmdList.SPOKEN("narrator on")
     env.Addon:SetPlayerStyle("minimal"); Options:UpdateRows()
 end
 
@@ -514,19 +517,30 @@ Expect("accepting resets", env.Addon.db.profile.Frame.FrameScale, 0.7)
 Expect("...and reloads to finish", stub.reloads, reloads + 1)
 
 ---------------------------------------------------------------- welcome
--- Show Words, and each module's own row under it: every source's words show unless turned off.
+-- Show Narrator, and each module's own row under it: every module's lines show unless turned off.
 do
-    local cfg, shows = env.Addon.db.profile.Transcript, function(key) return env.Transcript:ShowsWords({ source = { key = key } }) end
+    local cfg, shows = env.Addon.db.profile.Transcript, function(key) return env.Addon:ShowsNarrator({ source = { key = key } }) end
     local was = cfg.Enabled
     cfg.Enabled = true
-    Expect("every module's words show by default", shows("quests") and shows("gossip") and shows("zones") and shows("books"), true)
+    Expect("every module shows its lines by default", shows("quests") and shows("gossip") and shows("zones") and shows("books"), true)
     cfg.WordsOff.quests = true
-    Expect("a module turned off has none", shows("quests"), false)
-    Expect("...and the others keep theirs", shows("zones"), true)
+    Expect("a module turned off shows none", shows("quests"), false)
+    Expect("...and the others keep showing", shows("zones"), true)
     cfg.WordsOff.quests = nil
     cfg.Enabled = false
-    Expect("with Show Words off none show", shows("zones"), false)
+    Expect("with Show Narrator off none show", shows("zones"), false)
     cfg.Enabled = was
+    -- The window stands for no line of a module turned off, while the line itself goes on playing.
+    local head = { source = { key = "quests" } }
+    local queue = env.SoundQueue
+    local real = queue.GetCurrentSound
+    queue.GetCurrentSound = function() return head end
+    Expect("the window stands for a line of a module that shows", env.PlayerFrame:Current(), head)
+    cfg.WordsOff.quests = true
+    Expect("...and for none of a module turned off", env.PlayerFrame:Current(), nil)
+    Expect("...though the line is still the head", env.PlayerFrame:Head(), head)
+    cfg.WordsOff.quests = nil
+    queue.GetCurrentSound = real
 end
 
 local Welcome = env.Welcome

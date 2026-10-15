@@ -217,7 +217,7 @@ Expect("Spoken's Highlight Words off: DialogueUI's own text", Paragraph(1) .. Pa
 words.HighlightWord = true
 words.Enabled = false
 Tick(0)
-Expect("...and with Spoken's Show Words off, which greys it", Lit(), 0)
+Expect("...and with Spoken's Show Narrator off, which greys it", Lit(), 0)
 words.Enabled = true
 Tick(0)
 Expect("...lit again when it is back on", Lit(), 2)

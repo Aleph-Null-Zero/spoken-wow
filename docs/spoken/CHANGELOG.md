@@ -25,8 +25,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 - Read When Window Closes, on the Quests page, starts a quest's reading when you close the window
   instead of when it opens. It is off by default. *([Nucabe](https://github.com/Nucabe))*
-- Show Words has a row for each module under it. Turn one off to read its lines by ear only, such as
-  the quest window's, and keep the words for the places and the writings. All are on by default. *([Nucabe](https://github.com/Nucabe))*
+- Show Narrator replaces Show Words, with a row for each module under it. Turn a module off to hear
+  its lines without the window or subtitles, such as the quests', and keep them for the places and
+  the writings. All are on by default. /sp narrator is the command, and /sp words still works. With
+  it off for everything, the voice plays and nothing shows. *([Nucabe](https://github.com/Nucabe))*
 - Area Highlight, on the Places page, sets how brightly an area lights under the pointer on a zone
   map, and turns the highlight off at 0. *([Nucabe](https://github.com/Nucabe))*
 - The Welcome window uses the same cards and rows as the settings, scrolls when the screen is too
@@ -34,7 +36,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - The Welcome window says so when no voice pack is installed, and where to download one.
   *([Nucabe](https://github.com/Nucabe))*
 - Spoken's settings page is reorganised, with no Advanced part. The settings most players change
-  come first: Modules, Narrator Style (with Window Size, Subtitle Size, Show Words, Word Size and
+  come first: Modules, Narrator Style (with Window Size, Subtitle Size, Show Narrator, Word Size and
   Lock Position), Language, Sound, While Spoken Reads, Keys, Azeroth's Compendium and Fix a Problem.
   The finer ones follow in named sections: Look, Words, Playback, Sound Levels While Spoken Reads,
   Contribute and Minimap Button, then Profiles. Theme is one row for the Small Window and one for

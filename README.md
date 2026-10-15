@@ -99,7 +99,7 @@ compendium` or `/spp window`. It browses every quest, every place story and ever
 a search box, and plays any of them without going there. Places follows Spoken's Voice
 Language.
 
-**Defaults on a first install:** every module on; Subtitles Only; Show Words and Type Words
+**Defaults on a first install:** every module on; Subtitles Only; Show Narrator and Type Words
 Out on, by letters, Highlight Words off; subtitle size 100% and its shadow at 60%; the voice in
 the game's language with English for a missing line; volume on Master; NPC voices silenced
 while a line plays; other sounds turned down (music 30%, ambience 40%, effects 60%); missing

@@ -13,7 +13,7 @@ end
 
 L.PLAY = "Reproducir"
 L.TRANSCRIPT = "Texto"
-L.TRANSCRIPT_SHOW = "Mostrar texto"
+L.OPT_SHOW_NARRATOR = "Mostrar narrador"
 L.TRANSCRIPT_EXPAND = "Ampliar texto"
 L.TRANSCRIPT_COLLAPSE = "Reducir texto"
 L.TRANSCRIPT_SCROLL = "Desplazamiento automático"
@@ -122,7 +122,7 @@ L.SEARCH_WHERE = "%1$s > %2$s"
 
 -- Why a setting is unavailable
 L.REASON_NOT_INSTALLED = "No instalado. Instala este módulo de Spoken para usarlo."
-L.REASON_WORDS = "Activa «Mostrar texto» para usar esto."
+L.REASON_NARRATOR = "Activa «Mostrar narrador» para usar esto."
 L.REASON_SUBTITLE_NAME = "Activa «Mostrar nombre y título» para usar esto."
 L.REASON_LOWER = "Activa «Bajar otros sonidos» para usar esto."
 L.REASON_VOICE_CHANNEL = "Las voces de Spoken suenan por este sonido, así que nunca se baja. Cambia «Volumen controlado por» para usar esto."
@@ -134,7 +134,7 @@ L.REASON_UNTYPED = "Desactiva «Ir escribiendo el texto» para usar esto con sub
 -- Display: narrator style
 L.OPT_PLAYER_STYLE = "Estilo del narrador"
 L.OPT_LOOK_TITLE = "Aspecto"
-L.OPT_PLAYER_STYLE_TIP = "Ventana grande: el retrato del hablante, con el texto al lado.\n\nSolo subtítulos, en los clientes que los tienen: sin ventana, solo el texto escribiéndose en la parte baja del centro de la pantalla. Pasa el ratón por encima para Detener o Repetir, Omitir e Informar, y arrástralo arriba o abajo para moverlo.\n\nSolo voz: nada en pantalla; las líneas solo se oyen. Las teclas de abajo siguen sirviendo para detener, repetir y omitir."
+L.OPT_PLAYER_STYLE_TIP = "Ventana grande: el retrato del hablante, con el texto al lado.\n\nSolo subtítulos, en los clientes que los tienen: sin ventana, solo el texto escribiéndose en la parte baja del centro de la pantalla. Pasa el ratón por encima para Detener o Repetir, Omitir e Informar, y arrástralo a cualquier lugar para moverlo.\n\nSolo voz: nada en pantalla; las líneas solo se oyen. Las teclas de abajo siguen sirviendo para detener, repetir y omitir."
 L.OPT_STYLE_MINIMAL = "Ventana pequeña"
 L.OPT_STYLE_CLASSIC = "Ventana grande"
 L.OPT_STYLE_SUBTITLE = "Solo subtítulos"

@@ -306,7 +306,7 @@ end
 local function Left() return FrameConfig().HidePortrait and BARE_LEFT or NAME_X end
 
 --- The lines of words that fit between the name and the progress line, up to MOST_LINES, and a
---- line's height; no lines where the line has no words to show (Show Words off, none written, or
+--- line's height; no lines where the line has no words to show (Show Narrator off, none written, or
 --- 1.12, which has no captions).
 function PlayerFrame:WordLines(clip)
     local lineHeight = (Addon:Profile("Transcript").FontSize or 16) + 4
@@ -425,10 +425,17 @@ function PlayerFrame:WillTurn(clip)
         and not self.fader:Leaving() and not Actions.DialogCovers()
 end
 
---- The line the window stands for: the one playing, or the sample while nothing is.
-function PlayerFrame:Current()
+--- The line playing, or the sample while nothing is.
+function PlayerFrame:Head()
     if not SoundQueue:IsEmpty() then self.sample = nil end
     return SoundQueue:GetCurrentSound() or self.sample
+end
+
+--- The line the window stands for: the head, unless its module has Show Narrator off.
+function PlayerFrame:Current()
+    local head = self:Head()
+    if head and not Addon:ShowsNarrator(head) then return nil end
+    return head
 end
 
 function PlayerFrame:Update()

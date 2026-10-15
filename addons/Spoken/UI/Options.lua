@@ -320,7 +320,7 @@ local function Build(canvas)
     local function Small() return Style() == "minimal" end
     local function Subtitles() return Style() == "subtitle" end
     local function DUI() return Style() == "dialogueui" end
-    local function Words() return transcript().Enabled end
+    local function Narrator() return transcript().Enabled end
     local refresh = function() PlayerFrame:RefreshConfig(); Options:UpdateRows() end
     local refreshTranscript = function() Transcript:RefreshConfig(); Options:UpdateRows() end
     -- The subtitle's own: redrawing it is enough, on every step of a drag, without the captions'
@@ -346,7 +346,7 @@ local function Build(canvas)
     local function Requires(row, applies, reason) return layout:Requires(row, applies, reason) end
     local function Only(row, applies) return layout:ShowWhen(row, applies) end
     local function Shown() return Style() ~= "none" end
-    -- DialogueUI's own quest text follows Show Words, Highlight Words and Type Words Out, so with
+    -- DialogueUI's own quest text follows Show Narrator, Highlight Words and Type Words Out, so with
     -- DialogueUI installed they matter under Voice Only too.
     local function MarksWords() return DialogueUIOptions:WordRowsShown(Style()) end
 
@@ -435,17 +435,17 @@ local function Build(canvas)
     Only(layout:Slider(L.OPT_SCALE, SIZES.FrameScale[1], SIZES.FrameScale[2], SIZES.FrameScale[3],
         function() return cfg().FrameScale end, function(v) cfg().FrameScale = v end, refresh), InWindow)
     if captions then
-        -- The subtitles are the words: with Show Words off there is nothing to size.
+        -- With Show Narrator off there are no subtitles to size.
         local subtitleSize = layout:Slider(L.OPT_SUBTITLE_SIZE, SIZES.SubtitleScale[1], SIZES.SubtitleScale[2],
             SIZES.SubtitleScale[3],
             function() return transcript().SubtitleScale end,
             function(v) transcript().SubtitleScale = v end, refreshSubtitle)
         Only(subtitleSize, Subtitles)
-        Requires(subtitleSize, Words, L.REASON_WORDS)
-        Only(layout:Checkbox(L.TRANSCRIPT_SHOW, nil,
+        Requires(subtitleSize, Narrator, L.REASON_NARRATOR)
+        Only(layout:Checkbox(L.OPT_SHOW_NARRATOR, nil,
             function() return transcript().Enabled end,
             function(v) Transcript:SetEnabled(v) end, function() Options:UpdateRows() end), MarksWords)
-        -- Each module's words, on unless turned off: a player can read the quest window and want the
+        -- Each module's narrator, on unless turned off: a player can read the quest window and want the
         -- subtitles only for the places and the writings.
         layout:Indent()
         for _, part in ipairs(PARTS) do
@@ -455,7 +455,7 @@ local function Build(canvas)
                 function(v) transcript().WordsOff[key] = (not v) or nil end, refreshTranscript)
             Only(row, MarksWords)
             Only(row, function() return Sources:Get(key) ~= nil end)
-            Requires(row, Words, L.REASON_WORDS)
+            Requires(row, Narrator, L.REASON_NARRATOR)
         end
         layout:Outdent()
         local size = layout:Slider(L.TRANSCRIPT_SIZE, SIZES.FontSize[1], SIZES.FontSize[2], SIZES.FontSize[3],
@@ -463,7 +463,7 @@ local function Build(canvas)
             function(v) transcript().FontSize = v end, refreshText,
             Layout.Number)
         Only(size, function() return InWindow() or Subtitles() end)
-        Requires(size, Words, L.REASON_WORDS)
+        Requires(size, Narrator, L.REASON_NARRATOR)
     end
     Only(layout:Checkbox(L.OPT_LOCK_FRAME, nil,
         function() return cfg().LockFrame end, function(v) cfg().LockFrame = v end, refresh), Shown)
@@ -649,7 +649,7 @@ local function Build(canvas)
             function() return transcript().SubtitleShadow end,
             function(v) transcript().SubtitleShadow = v end, refreshSubtitle)
         Only(shadow, Subtitles)
-        Requires(shadow, Words, L.REASON_WORDS)
+        Requires(shadow, Narrator, L.REASON_NARRATOR)
         Only(layout:Checkbox(L.OPT_SUBTITLE_NAME, nil,
             function() return transcript().SubtitleName ~= false end,
             function(v) transcript().SubtitleName = v end, function() refreshSubtitle(); Options:UpdateRows() end),
@@ -674,7 +674,7 @@ local function Build(canvas)
             function() return transcript().SubtitleProgress ~= false end,
             function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
         Only(progress, function() return Subtitles() or InWindow() end)
-        Requires(progress, function() return not Subtitles() or Words() end, L.REASON_WORDS)
+        Requires(progress, function() return not Subtitles() or Narrator() end, L.REASON_NARRATOR)
     end
     -- Report on the window and the subtitles, on the legacy clients, which have no Contribute
     -- section to hold it. Its tip names only what they have: no Small Window, and no subtitles on
@@ -709,14 +709,14 @@ local function Build(canvas)
             function(v) transcript().Lines = v end, refreshText,
             Layout.Number)
         Only(lines, function() return (InWindow() and Style() ~= "classic") or (Subtitles() and Rolling()) end)
-        Requires(lines, Words, L.REASON_WORDS)
+        Requires(lines, Narrator, L.REASON_NARRATOR)
         local sentences = layout:Slider(L.OPT_SUBTITLE_SENTENCES, 1, 4, 1,
             function() return transcript().SubtitleSentences or 3 end,
             function(v) transcript().SubtitleSentences = v end, refreshSubtitle, Layout.Number)
         Only(sentences, function() return Subtitles() and not Rolling() end)
-        Requires(sentences, Words, L.REASON_WORDS)
+        Requires(sentences, Narrator, L.REASON_NARRATOR)
         local fit = DialogueUIOptions:FitRow(layout, function(row) return Only(row, DUI) end, refresh)
-        if fit then Requires(fit, Words, L.REASON_WORDS) end
+        if fit then Requires(fit, Narrator, L.REASON_NARRATOR) end
         local SCROLL_LABELS = { line = L.TRANSCRIPT_SCROLL_LINE, page = L.TRANSCRIPT_SCROLL_PAGE,
             off = L.TRANSCRIPT_SCROLL_OFF }
         local scroll = layout:Dropdown(L.TRANSCRIPT_SCROLL, nil, { "line", "page", "off" },
@@ -724,14 +724,14 @@ local function Build(canvas)
             function(v) transcript().ScrollMode = v; Transcript.manualScroll = false end, refreshTranscript,
             function(v) return SCROLL_LABELS[v] or v end)
         Only(scroll, InWindow)
-        Requires(scroll, Words, L.REASON_WORDS)
+        Requires(scroll, Narrator, L.REASON_NARRATOR)
         -- The subtitle's Auto-Scroll has no Off: it cannot be scrolled by hand.
         local subtitleScroll = layout:Dropdown(L.TRANSCRIPT_SCROLL, nil, { "line", "page" },
             function() return transcript().SubtitleScroll or "page" end,
             function(v) transcript().SubtitleScroll = v end, function() refreshSubtitle(); Options:UpdateRows() end,
             function(v) return SCROLL_LABELS[v] or v end)
         Only(subtitleScroll, Subtitles)
-        Requires(subtitleScroll, Words, L.REASON_WORDS)
+        Requires(subtitleScroll, Narrator, L.REASON_NARRATOR)
         subtitleScroll.layoutSubtitles = true
         -- The subtitle lights the word only while its words show whole: typed at their own pace, an
         -- estimated word timing would show every miss.
@@ -739,13 +739,13 @@ local function Build(canvas)
             function() return transcript().HighlightWord end,
             function(v) transcript().HighlightWord = v end, refreshTranscript)
         Only(highlight, MarksWords)
-        Requires(highlight, Words, L.REASON_WORDS)
+        Requires(highlight, Narrator, L.REASON_NARRATOR)
         Requires(highlight, function() return not (Subtitles() and transcript().Typewriter) end, L.REASON_UNTYPED)
         local typewriter = layout:Checkbox(L.TRANSCRIPT_TYPEWRITER, nil,
             function() return transcript().Typewriter end,
             function(v) transcript().Typewriter = v end, refreshTranscript)
         Only(typewriter, MarksWords)
-        Requires(typewriter, Words, L.REASON_WORDS)
+        Requires(typewriter, Narrator, L.REASON_NARRATOR)
         layout:Indent()
         local by = layout:Dropdown(L.TRANSCRIPT_TYPEWRITER_BY, nil, { "letter", "word" },
             function() return transcript().TypewriterBy or "letter" end,
@@ -753,7 +753,7 @@ local function Build(canvas)
             function(v) return v == "letter" and L.TRANSCRIPT_BY_LETTER or L.TRANSCRIPT_BY_WORD end)
         layout:Outdent()
         Only(by, MarksWords)
-        Requires(by, function() return Words() and transcript().Typewriter end, L.REASON_TYPEWRITER)
+        Requires(by, function() return Narrator() and transcript().Typewriter end, L.REASON_TYPEWRITER)
     end
 
     -- The rows feature addons add for DialogueUI's own window, where it is installed.

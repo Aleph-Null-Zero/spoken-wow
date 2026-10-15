@@ -270,7 +270,7 @@ end
 function Transcript:Sync()
     if self.held then return end
     -- The line playing, or the sample a window previews.
-    local current = PlayerFrame and PlayerFrame:Current() or SoundQueue:GetCurrentSound()
+    local current = PlayerFrame and PlayerFrame:Head() or SoundQueue:GetCurrentSound()
     -- A window turning to it by fading out first: these words stay until it has.
     if HeldFor(self, current) then
         self.held, self.heldStart = true, { clip = current, at = GetTime() }
@@ -544,7 +544,7 @@ end
 -- the caption text and its reading position.
 function Transcript:HeightForClip(clip)
     -- Subtitles stand apart from the player, which then keeps its compact height.
-    if not self:ShowsWords(clip) or Addon:DisplayStyle() == "subtitle" or not clip or self:TextFor(clip) == "" then return 0 end
+    if not Addon:ShowsNarrator(clip) or Addon:DisplayStyle() == "subtitle" or not clip or self:TextFor(clip) == "" then return 0 end
     return LineCount() * ((Config().FontSize or 16) + GAP)
 end
 
@@ -584,7 +584,7 @@ end
 function Transcript:Update()
     if not self.frame or self.held then return end
     self:Render()
-    self.frame:SetShown(self:ShowsWords(self.clip) and Addon:DisplayStyle() ~= "subtitle" and self.clip ~= nil
+    self.frame:SetShown(Addon:ShowsNarrator(self.clip) and Addon:DisplayStyle() ~= "subtitle" and self.clip ~= nil
         and self.text ~= "")
     Subtitle:Update()
 end
@@ -603,13 +603,6 @@ function Transcript:Reset()
     Addon:Layout().CaptionsExpanded = false
     self.manualScroll = false
     self:RefreshConfig()
-end
-
---- Whether the words of `clip` are shown: Show Words is on, and not off for the clip's source.
-function Transcript:ShowsWords(clip)
-    local cfg = Config()
-    local key = clip and clip.source and clip.source.key
-    return cfg.Enabled and not (key and cfg.WordsOff[key])
 end
 
 function Transcript:SetEnabled(enabled)

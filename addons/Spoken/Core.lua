@@ -395,6 +395,14 @@ end
 
 --- What is on screen: the chosen style, or one previewed from the welcome window or the settings
 --- (Options:Preview). The windows and the subtitles ask this; the settings ask PlayerStyle.
+--- Whether the window or subtitles show `clip`: Show Narrator is on, and not off for the clip's module.
+--- The voice plays either way.
+function Addon:ShowsNarrator(clip)
+    local cfg = self.db.profile.Transcript
+    local key = clip and clip.source and clip.source.key
+    return cfg.Enabled and not (key and cfg.WordsOff[key])
+end
+
 function Addon:DisplayStyle()
     return self.previewStyle or self:PlayerStyle()
 end
@@ -466,7 +474,7 @@ local function RegisterSlashCommand()
             { "/sp skip", L.BIND_SKIP },
             { "/sp stopall", L.BIND_STOP },
             { "/sp style subtitles | small | large | dialogueui | voice", L.OPT_PLAYER_STYLE },
-            { "/sp words on | off", L.TRANSCRIPT_SHOW },
+            { "/sp narrator on | off", L.OPT_SHOW_NARRATOR },
             { "/sp rows 1 | 2", L.TRANSCRIPT_LINES },
             { "/sp compendium", L.OPT_COMPENDIUM_OPEN },
             { "/sp reset", L.OPT_RESET },
@@ -493,7 +501,7 @@ local function RegisterSlashCommand()
             SoundQueue:Skip()
         elseif command == "compendium" then
             Options:ToggleCompendium()
-        elseif (verb == "words" or verb == "transcript") and (rest == "" or rest == "on" or rest == "off") then
+        elseif (verb == "narrator" or verb == "words" or verb == "transcript") and (rest == "" or rest == "on" or rest == "off") then
             if rest == "" then
                 Transcript:SetEnabled(not Addon.db.profile.Transcript.Enabled)
             else
