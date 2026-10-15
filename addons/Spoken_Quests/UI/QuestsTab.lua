@@ -1005,7 +1005,7 @@ end
 
 --- Keep what the open quest window shows, in this client's language.
 function QuestsTab:Keep(moment, text, title)
-    local id = GetQuestID and VO.NotSecret(GetQuestID())
+    local id = GetQuestID and GetQuestID()
     local kept = Kept()
     if not kept or not id or id == 0 or not Quests()[id] then return end
     kept[id] = kept[id] or {}
@@ -1093,7 +1093,7 @@ local PLAY = {
         for _, moment in ipairs(MOMENTS) do
             if Shows(id, moment) and Voiced(id, moment) then
                 local soundData = SoundData(id, moment, "Azeroth's Compendium")
-                if queued then VO.Player:Enqueue(soundData, true) else VO.Player:PlayNow(soundData) end
+                if queued then VO.Player:Enqueue(soundData) else VO.Player:PlayNow(soundData) end
                 return
             end
         end
@@ -1713,14 +1713,13 @@ local function Visible()
 end
 
 local function OnEvent(_, event, a)
-    a = VO.NotSecret(a)
     if event == "QUEST_DETAIL" then
-        QuestsTab:Keep("accept", GetQuestText and VO.NotSecret(GetQuestText()), GetTitleText and VO.NotSecret(GetTitleText()))
+        QuestsTab:Keep("accept", GetQuestText and GetQuestText(), GetTitleText and GetTitleText())
     elseif event == "QUEST_PROGRESS" then
         -- Its title alone: the page has no progress part to show its words.
-        QuestsTab:Keep("progress", nil, GetTitleText and VO.NotSecret(GetTitleText()))
+        QuestsTab:Keep("progress", nil, GetTitleText and GetTitleText())
     elseif event == "QUEST_COMPLETE" then
-        QuestsTab:Keep("complete", GetRewardText and VO.NotSecret(GetRewardText()), GetTitleText and VO.NotSecret(GetTitleText()))
+        QuestsTab:Keep("complete", GetRewardText and GetRewardText(), GetTitleText and GetTitleText())
     elseif event == "QUEST_TURNED_IN" then
         if Visible() then QuestsTab:Refresh() end
     elseif event == "QUEST_LOG_UPDATE" or event == "QUEST_ACCEPTED" or event == "QUEST_REMOVED" then

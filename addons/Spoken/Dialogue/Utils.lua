@@ -57,7 +57,7 @@ end
 --- - Overridden in 1.12 to only return "npc" as "questnpc" unitID is unavailable in 1.12 and causes an error.
 ---@return string|nil name
 function Utils:GetNPCName()
-    return NotSecret(UnitName("questnpc")) or NotSecret(UnitName("npc"))
+    return UnitName("questnpc") or UnitName("npc")
 end
 
 --- Returns the GUID of the NPC that's being interacted with while a GossipFrame or QuestFrame is visible.
@@ -66,7 +66,7 @@ end
 --- - Returns nil in 1.12 due to the lack of `UnitGUID(unitID)` function.
 ---@return string|nil guid
 function Utils:GetNPCGUID()
-    return NotSecret(UnitGUID("questnpc")) or NotSecret(UnitGUID("npc"))
+    return UnitGUID("questnpc") or UnitGUID("npc")
 end
 
 local SEX_UNITS = { "questnpc", "npc", "target", "mouseover" }
@@ -80,8 +80,8 @@ function Utils:GetSexForGUID(unitGUID)
         return
     end
     for _, unit in ipairs(SEX_UNITS) do
-        if NotSecret(UnitGUID(unit)) == unitGUID then
-            return NotSecret(UnitSex(unit))
+        if UnitGUID(unit) == unitGUID then
+            return UnitSex(unit)
         end
     end
 end

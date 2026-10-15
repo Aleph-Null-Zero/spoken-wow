@@ -13,6 +13,14 @@ Renderers = {}
 
 -- The red a queue line turns when a click will take it out, in either player layout.
 
+-- Window Size, Subtitle Size and Text Size: lowest, highest and step, for their sliders and for
+-- Ctrl and the mouse wheel over the windows and the subtitles.
+SIZES = {
+    FrameScale = { 0.5, 2, 0.05 },
+    SubtitleScale = { 0.6, 1.6, 0.05 },
+    FontSize = { 12, 26, 1 },
+}
+
 -- Player-wide settings only. Anything a single domain cares about -- gossip frequency,
 -- autoplay, which pack to prefer -- stays in that feature addon's own saved variables.
 Defaults = {
@@ -27,7 +35,6 @@ Defaults = {
             Style = Version.IsAnyLegacy and "classic" or "subtitle",
             -- The windows' metal in the bronze the Forever client's frames wear.
             BronzeTint = true,
-            MinimalWidth = 380,
             -- The small window's background: "parchment" or "dark" (the rock).
             MinimalBackground = "parchment",
             -- Per action id, for the ones an addon declared optional. Absent means shown.
@@ -59,8 +66,6 @@ Defaults = {
             -- On, an NPC's own greeting is heard and the lines read off its window wait for it
             -- (GreetingFirst.lua); off, Silence NPC Voices cuts it where a pack has one.
             GreetingFirst = false,
-            -- Off, nothing is queued in a battleground or arena (Addon:ReadsHere).
-            ReadInBattlegrounds = true,
             -- A short sound in the pause between one line and the next (#142): at a quest hub a hand-in
             -- and the next pickup otherwise run together, often in the same NPC's voice.
             -- Off by default, as the queue has always played without it.
@@ -271,23 +276,6 @@ end
 
 function Addon:Bronze()
     return self:Profile("Frame").BronzeTint ~= false
-end
-
---- False in a battleground or arena with Read in Battlegrounds off. Every module's lines are
---- queued through Sources.lua's Enqueue, which asks this unless the player asked for the line.
-function Addon:ReadsHere()
-    if self:Profile("Audio").ReadInBattlegrounds ~= false or not IsInInstance then
-        return true
-    end
-    local _, kind = IsInInstance()
-    return kind ~= "pvp" and kind ~= "arena"
-end
-
---- What was queued before the loading screen is not read in a battleground either.
-function Addon:StopWhereNotRead()
-    if self.enabled and not self:ReadsHere() then
-        SoundQueue:RemoveAllSoundsFromQueue()
-    end
 end
 
 --- Put a player frame on the host, or back on UIParent, since a host that hides UIParent
@@ -561,13 +549,10 @@ end
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("ADDON_LOADED")
 loader:RegisterEvent("PLAYER_LOGIN")
-loader:RegisterEvent("PLAYER_ENTERING_WORLD")
 loader:SetScript("OnEvent", function(_, ev, name)
     ev = ev or event
     if ev == "ADDON_LOADED" and (name or arg1) == AddonFolder then
         Addon:InitDB()
-    elseif ev == "PLAYER_ENTERING_WORLD" then
-        Addon:StopWhereNotRead()
     elseif ev == "PLAYER_LOGIN" then
         Addon:TakeGreetingFirstFromQuests()
         Addon:Enable()

@@ -97,7 +97,7 @@ function ReportButton:CurrentTarget()
         event = page and PAGE_EVENTS[page]
     end
 
-    local target = event and self:TargetForQuest(GetQuestID and NotSecret(GetQuestID()), event)
+    local target = event and self:TargetForQuest(GetQuestID and GetQuestID(), event)
     if target then
         return target
     end

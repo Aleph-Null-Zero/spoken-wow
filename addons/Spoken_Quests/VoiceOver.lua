@@ -71,11 +71,11 @@ local questSnapshotInUse
 -- interaction, and the global its text is read from.
 local QUEST_EVENTS = {
     QUEST_DETAIL = { sound = Enums.SoundEvent.QuestAccept, source = "accept",
-        text = function() return GetQuestText and NotSecret(GetQuestText()) or "" end },
+        text = function() return GetQuestText and GetQuestText() or "" end },
     QUEST_PROGRESS = { sound = Enums.SoundEvent.QuestProgress, source = "progress",
-        text = function() return GetProgressText and NotSecret(GetProgressText()) or "" end },
+        text = function() return GetProgressText and GetProgressText() or "" end },
     QUEST_COMPLETE = { sound = Enums.SoundEvent.QuestComplete, source = "complete",
-        text = function() return GetRewardText and NotSecret(GetRewardText()) or "" end },
+        text = function() return GetRewardText and GetRewardText() or "" end },
 }
 
 --- GetQuestID for the dialog `event` names. On a legacy client GetQuestID is
@@ -86,7 +86,7 @@ local function QuestIDFor(event)
     if quest and Addon.NoteLegacyQuestEvent then
         Addon:NoteLegacyQuestEvent(quest.source, quest.text())
     end
-    return GetQuestID and NotSecret(GetQuestID()) or 0
+    return GetQuestID and GetQuestID() or 0
 end
 
 --- The quest on the open dialog `event` names, falling back on its title, NPC and text where
@@ -94,7 +94,7 @@ end
 --- Followup.lua's accept and turn-in hooks on the legacy clients.
 function Addon:DialogQuestID(event)
     local quest = QUEST_EVENTS[event]
-    return ResolveQuestID(quest.source, QuestIDFor(event), GetTitleText and NotSecret(GetTitleText()) or "",
+    return ResolveQuestID(quest.source, QuestIDFor(event), GetTitleText and GetTitleText() or "",
         Utils:GetNPCName() or "", quest.text(), true) or 0
 end
 
@@ -105,7 +105,7 @@ local function CaptureQuestSnapshot(event)
     end
     local readText = quest.text
     local questID = QuestIDFor(event)
-    local questTitle = GetTitleText and NotSecret(GetTitleText()) or ""
+    local questTitle = GetTitleText and GetTitleText() or ""
     -- Nothing to replay, and nothing to identify a quest by either.
     if (not questID or questID == 0) and questTitle == "" then
         return
@@ -128,7 +128,7 @@ local function ReadQuestFields(event)
         return snapshot.questID, snapshot.title, snapshot.text, snapshot.guid, snapshot.targetName,
             snapshot.isObjectOrItem
     end
-    return QuestIDFor(event), NotSecret(GetTitleText()), QUEST_EVENTS[event].text(), Utils:GetNPCGUID(),
+    return QuestIDFor(event), GetTitleText(), QUEST_EVENTS[event].text(), Utils:GetNPCGUID(),
         Utils:GetNPCName(), Utils:IsNPCObjectOrItem()
 end
 
@@ -143,7 +143,7 @@ local function GetVisibleQuestEvent()
         return "QUEST_DETAIL"
     end
 
-    local questID = GetQuestID and NotSecret(GetQuestID())
+    local questID = GetQuestID and GetQuestID()
     if not questID or questID == 0 then
         return
     end
@@ -242,7 +242,7 @@ function Addon:GetVisibleLine(event)
         return nil
     end
     local questID = ResolveQuestID(quest.source, QuestIDFor(event),
-        GetTitleText and NotSecret(GetTitleText()) or "", Utils:GetNPCName() or "", quest.text(), true)
+        GetTitleText and GetTitleText() or "", Utils:GetNPCName() or "", quest.text(), true)
     if not questID then
         return nil
     end
@@ -411,7 +411,7 @@ function Addon:OnInitialize()
             questSnapshot = nil
             ResetCandidate(state)
             -- Said once for each quest opened meanwhile, which is the question a player asks.
-            local open = GetQuestID and NotSecret(GetQuestID()) or 0
+            local open = GetQuestID and GetQuestID() or 0
             if open and open ~= 0 then
                 Debug:Note("watcher", "off:" .. tostring(open),
                     "quest %s open, not read: Read Automatically is off", tostring(open))
@@ -419,7 +419,7 @@ function Addon:OnInitialize()
             return
         end
         local questCallSucceeded, questID = pcall(function()
-            return GetQuestID and NotSecret(GetQuestID()) or 0
+            return GetQuestID and GetQuestID() or 0
         end)
         if not questCallSucceeded then
             error(questID)
@@ -448,7 +448,7 @@ function Addon:OnInitialize()
         end
 
         local titleSucceeded, questTitle = pcall(function()
-            return GetTitleText and NotSecret(GetTitleText()) or ""
+            return GetTitleText and GetTitleText() or ""
         end)
         if not titleSucceeded then
             error(questTitle)
@@ -696,10 +696,7 @@ function Addon:OnInitialize()
 
     local function MakeAbandonQuestHook(field, getFieldData)
         return function()
-            local data = NotSecret(getFieldData())
-            if data == nil then
-                return
-            end
+            local data = getFieldData()
             local soundsToRemove = {}
             for _, soundData in ipairs(Player:Queued()) do
                 if Enums.SoundEvent:IsQuestEvent(soundData.event) and soundData[field] == data then
@@ -769,7 +766,7 @@ function ResolveQuestID(source, questID, questTitle, targetName, questText, quie
         questTitle or ""))
 end
 
-function Addon:QUEST_DETAIL(_, manual)
+function Addon:QUEST_DETAIL()
     local questID, questTitle, questText, guid, targetName, isObjectOrItem = ReadQuestFields("QUEST_DETAIL")
 
     Debug:Record("quest-detail", format("QUEST_DETAIL: raw ID %s, title %q, NPC %q",
@@ -806,10 +803,10 @@ function Addon:QUEST_DETAIL(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    Player:Enqueue(soundData)
 end
 
-function Addon:QUEST_PROGRESS(_, manual)
+function Addon:QUEST_PROGRESS()
     local questID, questTitle, questText, guid, targetName, isObjectOrItem = ReadQuestFields("QUEST_PROGRESS")
 
     Debug:Record("quest-progress", format("QUEST_PROGRESS: raw ID %s, title %q, NPC %q",
@@ -834,10 +831,10 @@ function Addon:QUEST_PROGRESS(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    Player:Enqueue(soundData)
 end
 
-function Addon:QUEST_COMPLETE(_, manual)
+function Addon:QUEST_COMPLETE()
     local questID, questTitle, questText, guid, targetName, isObjectOrItem = ReadQuestFields("QUEST_COMPLETE")
 
     Debug:Record("quest-complete", format("QUEST_COMPLETE: raw ID %s, title %q, NPC %q",
@@ -863,7 +860,7 @@ function Addon:QUEST_COMPLETE(_, manual)
         unitIsObjectOrItem = isObjectOrItem,
         addedCallback = QuestSoundDataAdded,
     }
-    Player:Enqueue(soundData, manual)
+    Player:Enqueue(soundData)
 end
 
 --- An NPC's own greeting starts the moment its dialog opens, and the line that replaces it

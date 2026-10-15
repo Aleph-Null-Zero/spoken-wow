@@ -178,9 +178,7 @@ end
 --- Only Once still lets it read itself the first time it is opened there. Its first page goes
 --- in by the player's PlayNow, as any Play clicked by hand does: added behind a stopped queue it
 --- would wait there silent while the button showed Stop.
----
---- `asked`: the reader asked for it (browsing is asking too), so it is read in a battleground.
-function SpokenBooks:PlayFrom(pageId, browsing, asked)
+function SpokenBooks:PlayFrom(pageId, browsing)
 	local source = self.source
 	if not source then
 		return 0
@@ -204,7 +202,7 @@ function SpokenBooks:PlayFrom(pageId, browsing, asked)
 					-- still queued.
 					admitted = source:PlayNow(clip) or self:IsQueued(id)
 				else
-					admitted = source:Enqueue(clip, asked or browsing)
+					admitted = source:Enqueue(clip)
 				end
 				if Taken(admitted, clip) then
 					queued = queued + 1
@@ -233,8 +231,8 @@ function SpokenBooks:PlayFrom(pageId, browsing, asked)
 	return queued
 end
 
---- The page on screen changed. Keep the queue pointed at it. `browsing` and `asked` as PlayFrom's.
-function SpokenBooks:SyncTo(pageId, browsing, asked)
+--- The page on screen changed. Keep the queue pointed at it. `browsing` as PlayFrom's.
+function SpokenBooks:SyncTo(pageId, browsing)
 	if not pageId then
 		return 0
 	end
@@ -253,7 +251,7 @@ function SpokenBooks:SyncTo(pageId, browsing, asked)
 	end
 
 	-- Another readable waits behind what is being read, a quest line or another book.
-	return self:PlayFrom(pageId, browsing, asked)
+	return self:PlayFrom(pageId, browsing)
 end
 
 --- Stop `book`, or every readable with none, and nothing else: a quest line may be queued too.

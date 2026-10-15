@@ -1,7 +1,7 @@
 setfenv(1, VoiceOver)
 
 -- How an NPC's line shows on the Spoken player, for every module that reads NPCs: the speaker's
--- face, and the Report action. Each module adds what is its own (Stop Gossip, the bullets).
+-- face, and the Report action. Each module adds what is its own (the bullets).
 local L = SpokenEnv.L
 
 Present = {}

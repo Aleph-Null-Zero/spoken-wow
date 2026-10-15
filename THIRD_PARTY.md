@@ -81,8 +81,8 @@ None of this is the project's to license, and the MIT grant does not reach it.
   (`PortraitFrameAtlas`, the continent maps) are Blizzard's.
 - **The player's older textures** (the `.blp` files in `addons/Spoken/Textures/`, and the copies
   in `Spoken_Quests`, `Spoken_Gossip` and `Spoken_Places`: the window gradient, book, portrait
-  frame and background, settings button, size grabber, quest log Play and Stop, queue bullets,
-  Stop Gossip and the spacer) came with the AI VoiceOver fork, as it shipped them. The game art
+  frame and background, settings button, size grabber, quest log Play and Stop, queue bullets
+  and the spacer) came with the AI VoiceOver fork, as it shipped them. The game art
   in them is Blizzard's. The 1.12 tree's `UI-Minimap-Background.blp` comes with LibDBIcon.
 - **Addon-list icons** (`Textures/AddonIcon.tga` in Spoken_Readables, Spoken_Places and the two sound
   packs): the Spoken shields, made for this project from the sources in `pipelines/books/assets/`

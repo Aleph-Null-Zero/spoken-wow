@@ -180,5 +180,5 @@ function SpokenBooks:ReadCurrent()
 	if not pageId then
 		return 0
 	end
-	return self:SyncTo(pageId, nil, true)
+	return self:SyncTo(pageId)
 end

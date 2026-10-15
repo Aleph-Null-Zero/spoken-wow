@@ -68,7 +68,7 @@ end
 local roller
 -- Creature id -> the appearance it answered with, kept so a face does not change between
 -- clips. A creature the client has not cached answers 0 until its server replies to the
--- query SetCreature sent, so MinimalPlayer's Tick asks again every few frames (Resolved)
+-- query SetCreature sent, so the face's window asks again every few frames (Resolved)
 -- rather than waiting for a timer; one that never replies keeps the book. `asked` holds when
 -- a creature was first and last asked: the watcher below captures on every mouseover, and
 -- each of those must not become another SetCreature.
@@ -115,7 +115,7 @@ function StaticPortrait:Prime(creature)
 end
 
 --- Whether the creature the viewport fell back to the book for has an appearance now. Asked
---- every frame by MinimalPlayer, which repaints when it does.
+--- every frame by the window or the subtitle showing the face, which repaints when it does.
 function StaticPortrait:Resolved()
     if self.waiting and DisplayFor(self.waiting) then
         self.waiting = nil
@@ -152,7 +152,7 @@ function StaticPortrait:Capture(clip, refreshGUID)
         end
     end
     for _, unit in ipairs(UNITS) do
-        local actual = NotSecret(UnitGUID(unit))
+        local actual = UnitGUID(unit)
         if actual and ((guid and actual == guid) or (not guid and creature and CreatureID(actual) == creature)) then
             local entry = self.cache[actual] or self:Acquire(actual)
             if not entry then return cached end
@@ -236,9 +236,7 @@ if not Version.IsAnyLegacy then
     for _, event in ipairs({ "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "GOSSIP_SHOW",
         "QUEST_DETAIL", "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED" }) do watcher:RegisterEvent(event) end
     watcher:SetScript("OnEvent", function(_, event, unit)
-        unit = NotSecret(unit)
-        local refreshGUID = (event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED") and unit
-            and NotSecret(UnitGUID(unit))
+        local refreshGUID = (event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED") and unit and UnitGUID(unit)
         for _, clip in ipairs(SoundQueue.sounds) do StaticPortrait:Capture(clip, refreshGUID) end
         local skin = PlayerFrame.Skin and PlayerFrame:Skin()
         if skin and skin:HasClip() then skin:ConfigurePortrait() end

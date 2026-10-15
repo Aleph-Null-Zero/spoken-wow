@@ -61,39 +61,25 @@ function Book:Tooltip()
 	return tooltip
 end
 
-local function HideTooltip(button)
-	if button.tooltip then
-		button.tooltip:Hide()
-	end
-end
-
 --- What a click on Play does now, and Read Automatically, which a right-click switches.
-function Book:ShowPlayTooltip(button)
-	local tooltip = self:Tooltip()
+local function PlayTip(tooltip)
 	local key = OpenBook()
 	local reading = key and SpokenBooks:IsNarrating(key)
-	tooltip:SetOwner(button, "ANCHOR_RIGHT")
 	tooltip:SetText(reading and L.STOP_TIP or L.PLAY_TIP)
 	local on = SpokenBooksSettings and SpokenBooksSettings.autoplay
 	tooltip:AddDoubleLine(L.OPT_AUTOPLAY, on and L.DUI_ON or L.DUI_OFF, 1, 1, 1,
 		on and 0.1 or 1, on and 1 or 0.125, on and 0.1 or 0.125)
 	tooltip:AddLine(L.DUI_PLAY_RIGHT_CLICK, 1, 0.82, 0, true)
-	tooltip:Show()
-	button.tooltip = tooltip
 end
 
---- The row, built the first time the view opens: a child of the view, drawn over it.
+--- Spoken's row (Spoken:CreateDialogueUIRow), built the first time the view opens.
 function Book:Row()
 	if self.row then
 		return self.row
 	end
-	local view = View()
-	local holder = CreateFrame("Frame", nil, view)
-	holder:SetFrameStrata("FULLSCREEN")
-	holder:SetSize(ROUND, ROUND)
-	local play = Spoken:CreateRoundButton(holder, "play")
-	play:SetFrameStrata("FULLSCREEN")
-	play:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	local row = Spoken:CreateDialogueUIRow(View(), function() return Book:Tooltip() end, true)
+	local play, report = row.play, row.report
+	row:SetTip(play, PlayTip)
 	play:SetScript("OnClick", function(_, mouse)
 		if mouse == "RightButton" then
 			if SpokenBooksSettings then
@@ -104,19 +90,12 @@ function Book:Row()
 			if key and SpokenBooks:IsNarrating(key) then
 				SpokenBooks:StopReading(key)
 			elseif first then
-				SpokenBooks:SyncTo(first, nil, true)
+				SpokenBooks:SyncTo(first)
 			end
 		end
 		Book:Draw()
-		if play.tooltip and play.tooltip:IsShown() then
-			Book:ShowPlayTooltip(play)
-		end
+		row:RefreshTip(play)
 	end)
-	-- Skips by itself.
-	local skip = Spoken:CreateRoundButton(holder, "skip")
-	skip:SetFrameStrata("FULLSCREEN")
-	local report = Spoken:CreateRoundButton(holder, "report")
-	report:SetFrameStrata("FULLSCREEN")
 	report:SetScript("OnClick", function()
 		local pageId, language = ReadingPage(OpenBook())
 		local url = pageId and SpokenBooks:ReportURL(pageId, language)
@@ -124,46 +103,20 @@ function Book:Row()
 			Spoken:ShowContribution(url, nil, true)
 		end
 	end)
-	local tips = {
-		[play] = function() Book:ShowPlayTooltip(play) end,
-		[skip] = function()
-			local tooltip = Book:Tooltip()
-			tooltip:SetOwner(skip, "ANCHOR_RIGHT")
-			tooltip:SetText(SpokenEnv and SpokenEnv.L and SpokenEnv.L.BIND_SKIP or "Skip")
-			tooltip:Show()
-			skip.tooltip = tooltip
-		end,
-		[report] = function()
-			local tooltip = Book:Tooltip()
-			tooltip:SetOwner(report, "ANCHOR_RIGHT")
-			tooltip:SetText(L.REPORT_PROBLEM)
-			tooltip:AddLine(L.REPORT_LINE_TIP, 1, 0.8, 0.2, true)
-			tooltip:Show()
-			report.tooltip = tooltip
-		end,
-	}
-	-- Brighter under the pointer as the ring's own hover has it, and the tooltip on the view's.
-	for button, Show in pairs(tips) do
-		button:SetScript("OnEnter", function(self)
-			if self:IsEnabled() then self.glyph:SetAlpha(1) end
-			Show()
-		end)
-		button:SetScript("OnLeave", function(self)
-			if self:IsEnabled() then self.glyph:SetAlpha(0.85) end
-			HideTooltip(self)
-		end)
-	end
+	row:SetTip(report, function(tooltip)
+		tooltip:SetText(L.REPORT_PROBLEM)
+		tooltip:AddLine(L.REPORT_LINE_TIP, 1, 0.8, 0.2, true)
+	end)
 	local since = 0
-	holder:SetScript("OnUpdate", function(_, elapsed)
+	row.frame:SetScript("OnUpdate", function(_, elapsed)
 		since = since + elapsed
 		if since >= LOOK_EVERY then
 			since = 0
 			Book:Draw()
 		end
 	end)
-	holder:Hide()
-	self.row = { frame = holder, play = play, skip = skip, report = report }
-	return self.row
+	self.row = row
+	return row
 end
 
 --- DialogueUI's speaker, kept out of sight while the row stands in for it.
@@ -292,42 +245,17 @@ end
 -- Reused on every Draw, which runs while the book view is open.
 local list = {}
 
---- Right to left from the book's close button, centred on it: Report, Skip, Play, whichever show,
---- the same size on screen whatever DialogueUI's book scale.
+--- Right to left from the book's close button, centred on it: Report, Skip, Play, whichever show.
 function Book:Place()
 	local view, row = View(), self.row
-	local scale = UIParent:GetEffectiveScale() / math.max(0.01, view:GetEffectiveScale() or 1)
 	for i = #list, 1, -1 do
 		list[i] = nil
 	end
 	if row.report:IsShown() then table.insert(list, row.report) end
 	if row.skip:IsShown() then table.insert(list, row.skip) end
 	if row.play:IsShown() then table.insert(list, row.play) end
-	local key = #list * 100000 + math.floor(scale * 1000 + 0.5)
-	if key == self.placedKey then
-		return
-	end
-	self.placedKey = key
-	row.frame:SetSize(math.max(1, (#list * ROUND + (#list - 1) * ROUND_GAP) * scale), ROUND * scale)
-	local right
-	for _, button in ipairs(list) do
-		button:SetScale(scale)
-		button:SetSize(ROUND, ROUND)
-		button:ClearAllPoints()
-		if right then
-			button:SetPoint("RIGHT", right, "LEFT", -ROUND_GAP, 0)
-		else
-			button:SetPoint("RIGHT", row.frame, "RIGHT", 0, 0)
-		end
-		right = button
-	end
-	row.frame:ClearAllPoints()
 	local close = view.CloseButton
-	if type(close) == "table" and close.GetObjectType then
-		row.frame:SetPoint("RIGHT", close, "LEFT", -ROUND_GAP, 0)
-	else
-		row.frame:SetPoint("TOPRIGHT", view, "TOPRIGHT", -48, -19)
-	end
+	row:Place(list, type(close) == "table" and close.GetObjectType and close or nil)
 end
 
 --- DialogueUI's Copy Text left of the row, on its middle; in its own corner again once the row goes.
@@ -357,9 +285,7 @@ function Book:Draw()
 		self:RestoreClose()
 		if self.row and self.row.frame:IsShown() then
 			self.row.frame:Hide()
-			HideTooltip(self.row.play)
-			HideTooltip(self.row.skip)
-			HideTooltip(self.row.report)
+			self.row:HideTips()
 		end
 		self:PlaceTheirs()
 		return
@@ -551,7 +477,7 @@ end
 --- Hooked once DialogueUI's book view exists, with the player there to draw the buttons.
 function SpokenBooks:SetupDialogueUIBook()
 	local view = View()
-	if Book.hooked or not (view and view.HookScript and _G.Spoken and Spoken.CreateRoundButton) then
+	if Book.hooked or not (view and view.HookScript and _G.Spoken and Spoken.CreateDialogueUIRow) then
 		return
 	end
 	Book.hooked = true

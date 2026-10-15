@@ -4,9 +4,6 @@
 
 local ADDON_NAME, SpokenZones = ...
 
--- A value the game hands over as a secret, in an instance or in combat, reads as nil.
-local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
-
 -- C_AddOns is the modern home of GetAddOnMetadata; the global is the older one.
 -- Reading through whichever exists costs a line and removes a whole class of
 -- load-time failure on a client this addon has not been run on.
@@ -154,7 +151,7 @@ end
 
 -- The uiMapID the player is physically standing in.
 function SpokenZones:GetPlayerMapID()
-	return NotSecret(C_Map.GetBestMapForUnit("player"))
+	return C_Map.GetBestMapForUnit("player")
 end
 
 -- Prefer the client's own zone name over the name baked into the generated data,
@@ -747,7 +744,7 @@ local function CmdStatus()
 	-- Report the subzone the player is standing in. This exercises the same
 	-- name-keyed lookup the map click uses, without needing the map open, so a
 	-- name mismatch can be spotted just by walking around.
-	local subZone = NotSecret(GetSubZoneText())
+	local subZone = GetSubZoneText()
 	if subZone and subZone ~= "" then
 		local subEntry, key = SpokenZones:GetSubzoneLore(playerMap, subZone)
 		local raw = SpokenZones:NormaliseAreaKey(subZone)
@@ -791,7 +788,7 @@ local function CurrentAudioTarget()
 		return nil, nil
 	end
 
-	local subZone = NotSecret(GetSubZoneText())
+	local subZone = GetSubZoneText()
 	if subZone and subZone ~= "" then
 		local entry, key, storyMapID = SpokenZones:GetSubzoneLore(resolved, subZone)
 		if entry then
@@ -1072,9 +1069,9 @@ SlashCmdList["SPOKENZONES"] = function(msg)
 		-- ever and is otherwise untestable without rolling a fresh alt.
 		local areaName = (msg or ""):match("^%s*%S+%s+(.-)%s*$")
 		if not areaName or areaName == "" then
-			areaName = NotSecret(GetSubZoneText())
+			areaName = GetSubZoneText()
 			if not areaName or areaName == "" then
-				areaName = NotSecret(GetZoneText())
+				areaName = GetZoneText()
 			end
 		end
 		SpokenZones:Print('simulating discovery of "%s"', tostring(areaName))

@@ -88,7 +88,7 @@ local SKETCHES = {
         R(art, x + 41, 42, 34, 2, 0.48, 0.58, 0.65, 0.6)
     end,
     -- Parchment, a header strip with the face at its left and the title past it, the words
-    -- in dark ink, a slim scrollbar beside them.
+    -- in dark ink, the progress line under them.
     dialogueui = function(art)
         local R, w = Layout.Rect, art.width
         local x = (w - 60) / 2
@@ -99,7 +99,6 @@ local SKETCHES = {
         R(art, x + 6, 26, 44, 2, 0.19, 0.17, 0.13, 0.85)
         R(art, x + 6, 32, 40, 2, 0.19, 0.17, 0.13, 0.85)
         R(art, x + 6, 38, 30, 2, 0.19, 0.17, 0.13, 0.85)
-        R(art, x + 53, 26, 2, 14, 0.5, 0.36, 0.24, 0.8)
         R(art, x + 6, 47, 48, 1, 0.5, 0.36, 0.24, 0.8)
     end,
     subtitle = function(art)
@@ -370,11 +369,12 @@ local function Build(canvas)
             function() PlayerFrame:RefreshConfig(); refreshTranscript() end,
             function(v) return STYLE_LABELS[v] or v end)
     end
-    Only(layout:Slider(L.OPT_SCALE, 0.5, 2, 0.05,
+    Only(layout:Slider(L.OPT_SCALE, SIZES.FrameScale[1], SIZES.FrameScale[2], SIZES.FrameScale[3],
         function() return cfg().FrameScale end, function(v) cfg().FrameScale = v end, refresh,
         nil, L.OPT_SCALE_TIP), InWindow)
     if captions then
-        ForSubtitles(layout:Slider(L.OPT_SUBTITLE_SIZE, 0.6, 1.6, 0.05,
+        ForSubtitles(layout:Slider(L.OPT_SUBTITLE_SIZE, SIZES.SubtitleScale[1], SIZES.SubtitleScale[2],
+            SIZES.SubtitleScale[3],
             function() return transcript().SubtitleScale end,
             function(v) transcript().SubtitleScale = v end, refreshSubtitle, nil, L.OPT_SUBTITLE_SIZE_TIP))
     end
@@ -384,7 +384,10 @@ local function Build(canvas)
         PlayerFrame:Reset()
         if Subtitle then Subtitle:Reset() end
     end, L.OPT_RESET_TIP), Shown)
-    DialogueUIOptions:WheelNote(layout, ForDUI)
+    -- Nothing on the windows or the subtitles shows their wheel shortcuts.
+    local wheel = layout:Note(L.WINDOW_WHEEL_HINT, nil, 40)
+    Only(wheel, function() return Small() or DUI() or Subtitles() end)
+    layout:OnRefresh(function() wheel:SetText(Subtitles() and L.SUBTITLE_WHEEL_HINT or L.WINDOW_WHEEL_HINT) end)
 
     layout:Section(L.OPT_LOOK_TITLE)
     DialogueUIOptions:ThemeRows(layout, ForDUI, refresh)
@@ -448,7 +451,7 @@ local function Build(canvas)
             Requires(row, Words, L.REASON_WORDS)
             return row
         end
-        local size = layout:Slider(L.TRANSCRIPT_SIZE, 12, 26, 1,
+        local size = layout:Slider(L.TRANSCRIPT_SIZE, SIZES.FontSize[1], SIZES.FontSize[2], SIZES.FontSize[3],
             function() return transcript().FontSize end,
             function(v) transcript().FontSize = v end, function() refreshTranscript(); refreshSubtitle() end,
             Layout.Number, L.TRANSCRIPT_SIZE_TIP)
@@ -621,10 +624,6 @@ local function Build(canvas)
         -- Muting Dialog would mute Spoken's own line, so on Dialog the queue never does.
         Requires(silence, function() return Sources:PlayerChannel() ~= "Dialog" end, L.REASON_DIALOG_CHANNEL)
     end
-    layout:Checkbox(L.OPT_READ_IN_BATTLEGROUNDS, nil,
-        function() return audio().ReadInBattlegrounds ~= false end,
-        function(v) audio().ReadInBattlegrounds = v end,
-        function() Addon:StopWhereNotRead() end)
     layout:Checkbox(L.OPT_GREETING_FIRST, L.OPT_GREETING_FIRST_TIP,
         function() return audio().GreetingFirst end,
         function(v)

@@ -31,17 +31,3 @@ SpokenEnv = setmetatable({
 -- early reference valid if the player is ever reloaded in place.
 Spoken = rawget(_G, "Spoken") or {}
 SpokenEnv.Spoken = Spoken
-
--- Inside instances and in combat the Forever client hands addons some values as secrets: a chat
--- line, an NPC's name or GUID (#357). Indexing, matching, comparing or joining one raises an
--- error, so every value read from the game goes through this, and a secret reads as nil: the
--- caller skips it as it skips a missing value. Legacy clients have no issecretvalue and no
--- secrets. One argument: 1.12's Lua 5.0 loads this file.
-function Spoken.NotSecret(value)
-    local IsSecret = rawget(_G, "issecretvalue")
-    if IsSecret and IsSecret(value) then
-        return nil
-    end
-    return value
-end
-SpokenEnv.NotSecret = Spoken.NotSecret

@@ -39,5 +39,4 @@ VoiceOver = setmetatable({
     PreviousEnvironment = previousEnvironment,
     -- Spoken's, loaded before the dialogue core: one answer to which client this is.
     Version = SpokenEnv.Version,
-    NotSecret = SpokenEnv.NotSecret,
 }, { __index = _G })

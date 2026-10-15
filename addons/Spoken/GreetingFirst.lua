@@ -72,7 +72,7 @@ local function NPC()
     if utils then
         return utils:GetNPCGUID() or utils:GetNPCName(), utils:IsNPCObjectOrItem()
     end
-    return (UnitGUID and NotSecret(UnitGUID("npc"))) or NotSecret(UnitName("npc")), false
+    return (UnitGUID and UnitGUID("npc")) or UnitName("npc"), false
 end
 
 --- The volume an NPC's voice plays at: nil where it cannot be told from other sounds, 0 where

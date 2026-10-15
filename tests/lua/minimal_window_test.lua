@@ -59,6 +59,16 @@ Expect("the title counts the lines waiting, after it", Try(function() return M.t
 Expect("...fading in as the line is added", Try(function() return M.count:GetAlpha() < 1 end), true)
 M:Tick(0.3)
 Expect("...all the way", Try(function() return M.count:GetAlpha() end), 1)
+_G.GameTooltip.AddDoubleLine = function(self, left, right) self:AddLine(left .. "|" .. right) end
+Expect("the count lists the lines waiting under the pointer, who says each beside it", Try(function()
+    local hover = M.tail.hover
+    hover.scripts.OnEnter(hover)
+    return tostring(hover:IsShown()) .. " " .. table.concat(_G.GameTooltip.lines, ", ")
+end), "true " .. L.WAITING_TITLE .. ", Two|Grull")
+Expect("...and does nothing when clicked", Try(function()
+    local scripts = M.tail.hover.scripts
+    return tostring(scripts.OnMouseUp) .. " " .. tostring(scripts.OnMouseDown) .. " " .. tostring(scripts.OnClick)
+end), "nil nil nil")
 
 pcall(function() M.play.scripts.OnClick(M.play) end)
 Expect("Stop stops the line, its glyph turning to Replay", Try(function() return tostring(env.SoundQueue:IsPaused())
@@ -191,6 +201,62 @@ Expect("on Forever, with Bronze Border on, the border, progress line and portrai
 frame.BronzeTint = false
 env.PlayerFrame:RefreshConfig()
 Expect("...each its own colour with it off", Tints(), WHITE .. "|" .. WHITE .. "|" .. WHITE)
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
+---------------------------------------------------------------- Ctrl and the wheel, as the DialogueUI window
+env, quests = Boot()
+M = env.MinimalPlayer
+frame = env.Addon.db.profile.Frame
+local words = env.Addon.db.profile.Transcript
+quests:Enqueue(Line("One"))
+env.PlayerFrame:RefreshConfig()
+local ctrl, shift = false, false
+local hadCtrl, hadShift = _G.IsControlKeyDown, _G.IsShiftKeyDown
+_G.IsControlKeyDown = function() return ctrl end
+_G.IsShiftKeyDown = function() return shift end
+local T = env.Transcript
+T.manualScroll = false
+T.frame:GetScript("OnMouseWheel")(T.frame, -1)
+Expect("the wheel alone scrolls the words", T.manualScroll, true)
+Expect("...the size untouched", frame.FrameScale, 0.7)
+ctrl = true
+T.frame:GetScript("OnMouseWheel")(T.frame, 1)
+Expect("Ctrl and the wheel over the words grow Window Size", math.abs(frame.FrameScale - 0.75) < 1e-9, true)
+Expect("...drawing it larger", math.abs((M.frame.scale or 0) - 0.75) < 1e-9, true)
+Expect("...and saying so", _G.GameTooltip.text, env.L.OPT_SCALE .. ": 75%")
+M.frame:GetScript("OnMouseWheel")(M.frame, -1)
+Expect("...over the window too, and back", math.abs(frame.FrameScale - 0.7) < 1e-9, true)
+shift = true
+M.frame:GetScript("OnMouseWheel")(M.frame, 1)
+Expect("Ctrl, Shift and the wheel grow Text Size", words.FontSize, 17)
+Expect("...saying so", _G.GameTooltip.text, env.L.TRANSCRIPT_SIZE .. ": 17")
+words.FontSize = 16
+shift = false
+frame.LockFrame = true
+env.PlayerFrame:RefreshConfig()
+T.manualScroll = false
+T.frame:GetScript("OnMouseWheel")(T.frame, 1)
+Expect("locked, Ctrl and the wheel leave Window Size alone", math.abs(frame.FrameScale - 0.7) < 1e-9, true)
+Expect("...and scroll the words instead", T.manualScroll, true)
+frame.LockFrame = false
+ctrl = false
+_G.IsControlKeyDown, _G.IsShiftKeyDown = hadCtrl, hadShift
+env.SoundQueue:RemoveAllSoundsFromQueue()
+
+---------------------------------------------------------------- Reset Positions
+-- The settings' button: every window's saved place goes, whichever style is shown, and the
+-- subtitles' with them.
+env, quests = Boot()
+local places = env.Addon:Layout()
+for _, key in ipairs({ "Player", "Minimal", "DialogueUI", "Subtitle" }) do places[key] = { left = 10, top = 500, width = 400 } end
+local reset
+for _, entry in ipairs(_G.SpokenOptionsPanel.layout.entries) do
+    if entry.label == env.L.OPT_RESET then reset = entry.frame end
+end
+reset:GetScript("OnClick")(reset)
+Expect("Reset Positions forgets every saved place, not only the window in use",
+    tostring(places.Player) .. " " .. tostring(places.Minimal) .. " " .. tostring(places.DialogueUI)
+    .. " " .. tostring(places.Subtitle), "nil nil nil nil")
 env.SoundQueue:RemoveAllSoundsFromQueue()
 
 -- Classic Era: no bronze frames to match, so its own colours whatever the setting.

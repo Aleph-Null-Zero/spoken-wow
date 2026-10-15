@@ -102,7 +102,6 @@ end
 
 --- The player's own trigger: `kind` is "end" for a turn-in and "start" for an accept.
 function Followup:Arm(kind, questID, title)
-    questID = NotSecret(questID)
     if not questID or questID == 0 or not self:IsEnabled() then
         return
     end
@@ -208,8 +207,7 @@ function Followup:Consume(matched)
     end
 end
 
---- `asked`: replayed by /spq followup, which the player typed.
-function Followup:OnChat(event, message, sender, guid, asked)
+function Followup:OnChat(event, message, sender, guid)
     if not self.armed[1] then
         return
     end
@@ -219,11 +217,6 @@ function Followup:OnChat(event, message, sender, guid, asked)
     end
     if not self:IsEnabled() then
         self.armed = {}
-        return
-    end
-    -- In a dungeon the server's NPC chat can come as secrets, which cannot be matched.
-    message, sender, guid = NotSecret(message), NotSecret(sender), NotSecret(guid)
-    if not message then
         return
     end
 
@@ -237,7 +230,7 @@ function Followup:OnChat(event, message, sender, guid, asked)
     self:Consume(entry)
     Debug:Record("followup-matched", format("Line %d from %s after quest %d", entry.line.id or 0,
         tostring(sender), entry.questID))
-    self:Play(entry, message, sender, guid, npcID, asked)
+    self:Play(entry, message, sender, guid, npcID)
 end
 
 --------------------------------------------------------------------------------
@@ -280,7 +273,7 @@ local function OwnClip(line, npcID, guid)
     end
 end
 
-function Followup:Play(entry, message, sender, guid, npcID, asked)
+function Followup:Play(entry, message, sender, guid, npcID)
     -- Only the line's own recording plays. A borrowed clip - the speaker's gossip, the
     -- quest's accept or complete - says other words in the NPC's voice while the chat shows
     -- this line, which is worse than the silence of a line nobody has voiced yet.
@@ -310,7 +303,7 @@ function Followup:Play(entry, message, sender, guid, npcID, asked)
         language = clip.language,
     }
     -- Appended like any other line, so it waits for the turn-in's own voiceover to finish.
-    return Player:EnqueuePrepared(soundData, asked)
+    return Player:EnqueuePrepared(soundData)
 end
 
 --------------------------------------------------------------------------------
@@ -318,10 +311,8 @@ end
 --------------------------------------------------------------------------------
 
 local function TitleFor(questID)
-    questID = NotSecret(questID)
-    local title = questID and C_QuestLog and C_QuestLog.GetTitleForQuestID
-        and NotSecret(C_QuestLog.GetTitleForQuestID(questID))
-    return title or (GetTitleText and NotSecret(GetTitleText())) or nil
+    local title = C_QuestLog and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
+    return title or (GetTitleText and GetTitleText()) or nil
 end
 
 -- The event each exported chat label arrives as, for /spq followup to replay it through.
@@ -370,7 +361,7 @@ function Followup:Simulate(input)
             print(format("line %d in %ds, %s: %s%s", line.id, line.delay or 0, name, text,
                 OwnClip(line) and "" or "  |cFFFF8040(no recording yet — silent)|r"))
             Addon:ScheduleTimer(function()
-                Followup:OnChat(event, text, name, guid, true)
+                Followup:OnChat(event, text, name, guid)
             end, line.delay or 0)
         end
     end
@@ -404,7 +395,7 @@ function Followup:Setup()
             Followup:Arm("end", a1, TitleFor(a1))
         elseif event == "QUEST_ACCEPTED" then
             -- Classic sends (questLogIndex, questID); mainline sends the questID alone.
-            local questID = NotSecret(a2) or NotSecret(a1)
+            local questID = a2 or a1
             Followup:Arm("start", questID, TitleFor(questID))
         else
             Followup:OnChat(event, a1, a2, a12)

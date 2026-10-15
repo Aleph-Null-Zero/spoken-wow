@@ -15,9 +15,6 @@ local WORDS_TOP, PROGRESS_GAP, FOOT = 44, 6, 27
 local INSET, BESIDE_PORTRAIT, NO_PORTRAIT = 18, 96, 16
 -- Between the name or the title and the header's buttons; between the buttons.
 local CONTROLS_CLEAR, ROUND_GAP = 8, 4
-local BRONZE = Actions.BRONZE
--- The smallest a portrait's badge is drawn, on a face smaller than the Small Window's.
-local BADGE_LEAST = 12
 -- The narrowest the window goes, and the room the portrait takes left of the panel.
 local function MinWidth() return Addon:Profile("Frame").HidePortrait and 200 or 280 end
 local function PortraitWidth() return Addon:Profile("Frame").HidePortrait and 80 or 0 end
@@ -31,56 +28,16 @@ local LOOKS = {
 -- Shipped with Spoken: the Classic clients list the retail parchment atlases without their art,
 -- so those draw nothing.
 local PARCHMENT = ART .. "MinimalParchment"
--- Portrait badges by bullet id. Quests use trimmed copies of their own glyphs; books
--- and zones take native ones, since their registered bullet (or none) is not a badge.
-local BADGES = {
-    ["quest-accept"] = ART .. "MinimalBulletAccept",
-    ["quest-progress"] = ART .. "MinimalBulletProgress",
-    ["quest-complete"] = ART .. "MinimalBulletComplete",
-    gossip = ART .. "MinimalBulletGossip",
-    book = [[Interface\GossipFrame\TrainerGossipIcon]],
-    zone = [[Interface\WorldMap\UI-World-Icon]],
-}
-MinimalPlayer.BADGES = BADGES
+-- The right-click menu's border, where Bronze Border does not tint it.
+local MENU_EDGE = { .6, .57, .48 }
 local function Clamp(n, low, high) return math.max(low, math.min(high, n)) end
 -- The frame still resizes while the UI is torn down, after AceDB strips it (Addon:Profile).
 local function Config() return Addon:Profile("Frame") end
-local function Waiting() return math.max(0, SoundQueue:GetQueueSize() - 1) end
--- A line with no label (a one-page letter) goes by its header: its key means nothing to a player.
-local function Label(clip)
-    local present = clip and clip.present
-    return clip and (present and (present.label or present.header) or clip.key) or ""
-end
--- The name over the title: the header, unless it is already the title (a line with no label).
-local function Name(clip)
-    local present = clip and clip.present
-    return present and present.label and present.header or ""
-end
-local function Font(parent, size, r, g, b)
-    local text = parent:CreateFontString(nil, "OVERLAY")
-    text:SetFont(GameFontNormal:GetFont(), size, "")
-    text:SetShadowColor(0, 0, 0, 1)
-    text:SetShadowOffset(1, -1)
-    text:SetJustifyH("LEFT")
-    text:SetWordWrap(false)
-    text:SetTextColor(r, g, b)
-    return text
-end
-local function BelongsTo(frame, root)
-    while frame do
-        if frame == root then return true end
-        frame = frame.GetParent and frame:GetParent()
-    end
-    return false
-end
+local Label, Waiting, BelongsTo, Font = Actions.Label, Actions.Waiting, Actions.BelongsTo, Actions.Text
 
 function MinimalPlayer:IsEnabled()
     return Addon.db and Addon:DisplayStyle() == "minimal"
 end
-
--- Shared with the DialogueUI window, so both windows' text behaves alike.
-MinimalPlayer.parts = { Font = Font, Label = Label, Name = Name, Clamp = Clamp, Waiting = Waiting,
-    BelongsTo = BelongsTo }
 
 function MinimalPlayer:HideTooltip()
     local owner = GameTooltip:GetOwner()
@@ -112,6 +69,10 @@ function MinimalPlayer:Initialize(original)
     frame:SetScript("OnMouseUp", function(_, button)
         if button == "RightButton" then self:ToggleMenu() end
     end)
+    -- The captions take the wheel first and hand it here when Ctrl is held.
+    frame:EnableMouseWheel(true)
+    frame:SetScript("OnMouseWheel", function(_, delta) self:Wheel(delta) end)
+    frame.spokenWheel = function(delta) return self:Wheel(delta) end
     frame:Hide()
     self.fader = Actions.Fader(frame, function() return { self.viewport and self.viewport.model } end, function()
         -- Faded out for a turn: show the next line.
@@ -211,162 +172,12 @@ function MinimalPlayer:Initialize(original)
     end)
 end
 
--- The round face, `size` across: a dark backing, the speaker in a viewport clipped to it, the
--- ring, and the line's badge on a small dark disc at the lower right. Placed on the ring art's
--- 71-unit grid, so it is the Small Window's portrait (90) at any size. `level` is the face's
--- frame level, set before its ring is built above it.
-local function BuildFace(parent, size, level)
-    local host = CreateFrame("Frame", nil, parent)
-    host:SetSize(size, size)
-    if level then host:SetFrameLevel(level) end
-    local function At(units) return size * units / 71 end
-    local background = host:CreateTexture(nil, "BACKGROUND")
-    background:SetAllPoints()
-    background:SetTexture(ART .. "MinimalPortraitBackground")
-
-    host.viewport = CreateFrame("Frame", nil, host)
-    host.viewport:SetSize(size * 78 / 90, size * 78 / 90)
-    host.viewport:SetPoint("CENTER", host, "TOPLEFT", At(35), -At(34))
-    host.viewport:SetClipsChildren(true)
-    local chrome = CreateFrame("Frame", nil, host)
-    chrome:SetAllPoints()
-    chrome:SetFrameLevel(host:GetFrameLevel() + 8)
-    -- At least BADGE_LEAST: at a small face's own scale the glyph is too small to make out.
-    local badge = math.max(size * 16 / 90, BADGE_LEAST)
-    -- Unit-frame badge centres are backed separately from their metal ring.
-    -- Without this disc the speaker's face shows through the speech-bubble badge.
-    host.badgeBackground = chrome:CreateTexture(nil, "BACKGROUND")
-    host.badgeBackground:SetSize(badge * 1.5, badge * 1.5)
-    host.badgeBackground:SetPoint("CENTER", host, "TOPLEFT", At(56.5), -At(56.5))
-    host.badgeBackground:SetTexture(ART .. "MinimalPortraitMask")
-    host.badgeBackground:SetVertexColor(.04, .04, .035, 1)
-    host.ring = chrome:CreateTexture(nil, "ARTWORK")
-    host.ring:SetAllPoints()
-    host.ring:SetTexture(ART .. "MinimalPortraitRing")
-    host.badge = chrome:CreateTexture(nil, "OVERLAY")
-    host.badge:SetSize(badge, badge)
-    host.badge:SetPoint("CENTER", host, "TOPLEFT", At(56.5), -At(56.5))
-    return host
-end
-
 function MinimalPlayer:BuildPortrait()
-    local host = BuildFace(self.frame, 90, self.content:GetFrameLevel() + 2)
+    local host = Face.Build(self.frame, 90, self.content:GetFrameLevel() + 2)
     self.portrait, self.frame.portrait = host, host
     host:SetPoint("TOPLEFT", 0, -4)
     self.viewport, self.ring = host.viewport, host.ring
     self.badgeBackground, self.badge = host.badgeBackground, host.badge
-end
-
---------------------------------------------------------------------------------
--- A speaker's face on a page of a feature addon's (Spoken:CreateSpeakerFace)
---------------------------------------------------------------------------------
-
--- What the Small Window shows where it has no face to draw, as Present gives it: the book for a
--- creature, a posted notice for an object or an item with no picture of its own.
-local BOOK = ART .. "Book"
-local NOTICE = [[Interface\Icons\INV_Misc_Note_01]]
-local ICON_CROP = { .08, .92, .08, .92 }
-local UNITS = { "npc", "target", "mouseover", "focus" }
--- How long a face drawn before the client has its creature keeps asking for it. StaticPortrait
--- stops asking the server after 5 seconds; the face keeps the book from then on.
-local FACE_WAIT = 6
-local Face = {}
-
--- The presentation spec for a speaker, as Present:Portrait builds it for a line.
-local function SpecFor(speaker)
-    if speaker.objectOrItem then
-        return { kind = "texture", texture = speaker.icon or NOTICE, texCoord = ICON_CROP }
-    end
-    return { kind = "model", creatureID = speaker.creatureID, animation = 60,
-        fallback = { kind = "texture", texture = BOOK } }
-end
-
--- The speaker's unit-frame portrait, as StaticPortrait draws it: from its unit while one with its
--- GUID is about, else from its creature's appearance. Painted on the face's own texture rather
--- than StaticPortrait's cached one, which moves to whichever viewport shows it last: two faces of
--- one NPC on a page, or a page and the Small Window, would take it from each other.
-local function Still(face, speaker)
-    local guid = speaker.guid
-    -- A quest-log GUID is made up, and names no unit.
-    if guid and UnitGUID and SetPortraitTexture and not string.find(guid, "^Creature%-0%-0%-0%-0%-") then
-        for _, unit in ipairs(UNITS) do
-            if NotSecret(UnitGUID(unit)) == guid then
-                SetPortraitTexture(face.still, unit)
-                return true
-            end
-        end
-    end
-    local display = speaker.creatureID and SetPortraitTextureFromCreatureDisplayID
-        and StaticPortrait:Prime(speaker.creatureID)
-    if not display then return false end
-    SetPortraitTextureFromCreatureDisplayID(face.still, display)
-    return true
-end
-
---- Draws the speaker: their still where there is one, else the Small Window's fallback picture
---- (the book, or an object's or item's picture), never an empty socket. A creature the client has
---- not cached yet shows the book and is asked for every frame the face is shown, until it comes.
-function Face:Draw()
-    local speaker, viewport = self.speaker, self.viewport
-    local spec = SpecFor(speaker)
-    self.waiting = nil
-    if spec.kind == "model" and Still(self, speaker) then
-        -- Whatever Portrait drew here before, put away.
-        Portrait:Configure(viewport, nil)
-        self.still:Show()
-    else
-        self.still:Hide()
-        if spec.kind == "model" and speaker.creatureID then
-            self.waiting, self.since = speaker.creatureID, GetTime()
-        end
-        Portrait:Configure(viewport, { present = { portrait = spec.kind == "model" and spec.fallback or spec } })
-        if viewport.texture then StaticPortrait:Mask(viewport, viewport.texture) end
-    end
-    self:SetScript("OnUpdate", self.waiting and Face.Wait or nil)
-end
-
-function Face.Wait(self)
-    if not self.waiting then
-        self:SetScript("OnUpdate", nil)
-    elseif StaticPortrait:Prime(self.waiting) then
-        self:Draw()
-    elseif GetTime() - self.since > FACE_WAIT then
-        self.waiting = nil
-        self:SetScript("OnUpdate", nil)
-    end
-end
-
-function Face:SetSpeaker(speaker)
-    self.speaker = speaker or {}
-    local id = self.speaker.bullet
-    local badge = BADGES[id] or Bullets[id] and Bullets[id].texture
-    self.badge:SetTexture(badge)
-    self.badge:SetShown(badge ~= nil)
-    self.badgeBackground:SetShown(badge ~= nil)
-    -- Bronze Border tints the ring, as it does the Small Window's.
-    if self.ring then
-        local r, g, b = 1, 1, 1
-        if BRONZE and Addon.db and Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
-        self.ring:SetVertexColor(r, g, b)
-    end
-    self:Draw()
-end
-
---- The Small Window's portrait, `size` across, on `parent`, for a page to show who speaks.
-function MinimalPlayer:CreateFace(parent, size)
-    return self:DrawSpeakers(BuildFace(parent, size))
-end
-
---- Gives `face` SetSpeaker: a frame with a `viewport` clipped round, a `badge` and its
---- `badgeBackground`, and a `ring` where it has one.
-function MinimalPlayer:DrawSpeakers(face)
-    face.still = face.viewport:CreateTexture(nil, "ARTWORK")
-    face.still:SetAllPoints()
-    face.still:Hide()
-    StaticPortrait:Mask(face.viewport, face.still)
-    face.SetSpeaker, face.Draw = Face.SetSpeaker, Face.Draw
-    face:SetSpeaker(nil)
-    return face
 end
 
 function MinimalPlayer:BuildMenu()
@@ -380,7 +191,7 @@ function MinimalPlayer:BuildMenu()
         edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]], tile = true, tileSize = 16, edgeSize = 12,
         insets = { left = 3, right = 3, top = 3, bottom = 3 } })
     menu:SetBackdropColor(.07, .065, .05, .98)
-    menu:SetBackdropBorderColor(.6, .57, .48, 1)
+    menu:SetBackdropBorderColor(MENU_EDGE[1], MENU_EDGE[2], MENU_EDGE[3], 1)
     menu:Hide()
     table.insert(UISpecialFrames, "SpokenMinimalPlayerMenu")
     menu:RegisterEvent("GLOBAL_MOUSE_DOWN")
@@ -469,6 +280,23 @@ function MinimalPlayer:ToggleMenu()
     self.menu:Show()
 end
 
+--- Ctrl-wheel steps Window Size, Ctrl-Shift-wheel Text Size (Actions.WheelSize), its top-left
+--- corner staying put. True when the wheel was taken.
+function MinimalPlayer:Wheel(delta)
+    local frame = self.frame
+    local left, top, before = frame:GetLeft(), frame:GetTop(), frame:GetEffectiveScale()
+    local text = Actions.WheelSize(delta, "FrameScale")
+    if not text then return false end
+    if left and top then
+        local after = frame:GetEffectiveScale()
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left * before / after, top * before / after)
+        if Addon:Layout().Minimal then self:SaveLayout() end
+    end
+    Actions.WheelTip(frame, text)
+    return true
+end
+
 function MinimalPlayer:StartDrag()
     if not Addon:IsFrameLocked() then self.menu:Hide(); self.frame:StartMoving() end
 end
@@ -485,13 +313,7 @@ end
 
 function MinimalPlayer:ConfigurePortrait()
     if Config().HidePortrait then return end
-    if not StaticPortrait:Configure(self.viewport, self.clip) then Portrait:Configure(self.viewport, self.clip) end
-    local viewport = self.viewport
-    if viewport.active == "texture" and viewport.texture then StaticPortrait:Mask(viewport, viewport.texture) end
-    local id = self.clip.present and self.clip.present.bullet
-    local texture = BADGES[id] or Bullets[id] and Bullets[id].texture
-    self.badge:SetTexture(texture)
-    self.badge:SetShown(texture ~= nil)
+    Face.Show(self.portrait, self.clip)
 end
 
 --- The rock repeats once per 256 units, inside the inset.
@@ -545,23 +367,12 @@ end
 
 --- Puts the tail after the title: the title is cut short, not it.
 function MinimalPlayer:Count(waiting)
-    local tail = self.tail
-    tail:SetCount(waiting)
-    local room = tail:Room()
-    local text = self.title.text
-    text:ClearAllPoints()
-    text:SetPoint("TOPLEFT")
-    text:SetPoint("BOTTOMRIGHT", -room, 0)
-    if room == 0 then return end
-    tail:Place(text, math.min(text:GetStringWidth() or 0, math.max(0, (self.title:GetWidth() or 0) - room)))
-    tail:Paint()
+    self.tail:SetCount(waiting)
+    self.tail:Fit(self.title.text, self.title:GetWidth() or 0)
 end
 
 function MinimalPlayer:UpdateProgress()
-    local clip = self.clip
-    if not clip then return end
-    self.seconds = Actions.Elapsed(clip, self.seconds)
-    Actions.SetProgress(self.progress, SoundQueue:Share(clip, self.seconds))
+    Actions.FollowProgress(self)
 end
 
 --- The window as tall as its words, with the progress line along their foot.
@@ -619,25 +430,23 @@ function MinimalPlayer:RefreshConfig(original)
     frame:SetFrameStrata(cfg.FrameStrata)
     frame:SetResizeBounds(MinWidth(), frame:GetHeight(), 1000, frame:GetHeight())
     local saved = Addon:Layout().Minimal
-    frame:SetWidth(Clamp((saved and saved.width or cfg.MinimalWidth or WIDTH) - PortraitWidth(), MinWidth(), 1000))
+    frame:SetWidth(Clamp((saved and saved.width or WIDTH) - PortraitWidth(), MinWidth(), 1000))
     self.content:ClearAllPoints()
     self.content:SetPoint("TOPLEFT", cfg.HidePortrait and NO_PORTRAIT or BESIDE_PORTRAIT, -INSET)
     self.content:SetPoint("TOPRIGHT", -INSET, -INSET)
     self.portrait:SetShown(not cfg.HidePortrait)
+    local bronze = Actions.Bronze()
     local r, g, b = 1, 1, 1
-    if BRONZE and Addon:Bronze() then r, g, b = BRONZE[1], BRONZE[2], BRONZE[3] end
+    if bronze then r, g, b = bronze[1], bronze[2], bronze[3] end
     self.panel:SetBackdropBorderColor(r, g, b)
     Actions.TintProgress(self.progress, r, g, b)
-    self.ring:SetVertexColor(r, g, b)
+    local edge = bronze or MENU_EDGE
+    self.menu:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
     self:Dress()
     if Addon:IsFrameLocked() then frame:StopMovingOrSizing(); self.sizing = false end
-    -- Locked, clicks on the window pass through to the game, as the subtitle's do; its buttons
-    -- still take theirs, and the header still opens the menu. Where the client cannot tell a
-    -- click from the pointer passing over, the window keeps both.
-    if frame.SetMouseClickEnabled and frame.SetMouseMotionEnabled then
-        frame:SetMouseMotionEnabled(true)
-        frame:SetMouseClickEnabled(not Addon:IsFrameLocked())
-    end
+    -- Locked, clicks on the window pass through to the game, as the subtitle's do; the header
+    -- still opens the menu.
+    Actions.ClickThrough(frame)
     Addon:ApplyHost(frame)
     self:Update()
 end
@@ -667,9 +476,7 @@ function MinimalPlayer:Update()
         self.clip, self.seconds = clip, 0
     end
     self:SetVisible(true)
-    -- A speaker name the same as the line's own is left off, so it is not said twice.
-    local name = Name(clip)
-    self.name:SetText(name ~= Label(clip) and name or "")
+    self.name:SetText(Actions.Speaker(clip))
     Addon:ClipFont(self.name, clip)
     self:ConfigurePortrait()
     self:ConfigureActions()
@@ -678,14 +485,15 @@ function MinimalPlayer:Update()
     self:UpdateControls()
 end
 
+--- Its saved place and width forgotten, and back at its default spot. Drawn again only while it
+--- is the style shown; another picks the default up when it switches.
 function MinimalPlayer:Reset()
+    Addon:Layout().Minimal = nil
     if not self.frame then return end
     self.frame:StopMovingOrSizing()
-    Config().MinimalWidth = WIDTH
-    Addon:Layout().Minimal = nil
     self.frame:ClearAllPoints()
     self.frame:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 200)
-    self:RefreshConfig(PlayerFrame)
+    if self:IsEnabled() then self:RefreshConfig(PlayerFrame) end
 end
 
 function MinimalPlayer:Describe()

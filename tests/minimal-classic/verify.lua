@@ -54,8 +54,8 @@ SpokenEnv.SoundUtils={
 SpokenEnv.Options={Open=function() end}
 ]], "settings and sound stubs")
 for _, name in ipairs({ "Callbacks.lua", "SoundQueue.lua", "Sources.lua", "Strings.lua", "UI/Transcript.lua",
-    "UI/Subtitle.lua", "UI/Portrait.lua", "UI/StaticPortrait.lua", "UI/Actions.lua", "UI/PlayerFrame.lua",
-    "UI/MinimalPlayer.lua", "UI/DialogueUITheme.lua", "UI/DialogueUIPlayer.lua", "API.lua" }) do
+    "UI/Subtitle.lua", "UI/Portrait.lua", "UI/StaticPortrait.lua", "UI/Actions.lua", "UI/Face.lua", "UI/PlayerFrame.lua",
+    "UI/MinimalPlayer.lua", "UI/DialogueUITheme.lua", "UI/DialogueUIPlayer.lua", "UI/DialogueUITransitions.lua", "API.lua" }) do
     load(name)
 end
 SpokenEnv.PlayerFrame:Initialize()
@@ -154,9 +154,21 @@ for id,texture in pairs(badges) do
  assert(P.badge:IsShown() and P.badge.texture:find(texture),id)
 end
 P.clip.present.bullet=nil;P:ConfigurePortrait()
-assert(not P.badge:IsShown())
+-- No badge, no dark disc where it would sit.
+assert(not P.badge:IsShown() and not P.badgeBackground:IsShown())
+-- The subtitles' face waits for an uncached creature as the window's does: the book, then its face.
+local T=E.Subtitle
+T:Build()
+local uncached=Clip("Subtitle giver","Creature-0-0-0-0-657-000000",657)
+T.wanted,T.clip=true,uncached
+T:ConfigurePicture(uncached)
+assert(T.viewport.active=="texture" and T.viewport.texture:GetTexture()=="Book")
+assert(not T.badge:IsShown() and not T.picture.badgeBackground:IsShown())
+MockDisplays[657]=9003;Advance(.06);T:Tick(.06)
+assert(T.viewport.active=="static" and T.viewport.activeFrame.nativeDisplay==9003)
+T.wanted,T.clip=nil,nil
 assert(getn(E.Callbacks.errors)==0,table.concat(E.Callbacks.errors,"\n"))
-print("PASS: quest, gossip, book and zone badges, bounded portrait cache, opaque centred badge")
+print("PASS: quest, gossip, book and zone badges, no disc without one, bounded portrait cache, opaque centred badge, the subtitles' face")
 ]], "portraits")
 
 -- The textures it draws are power-of-two RGBA TGAs: 32 bits a pixel, the alpha the masks need.

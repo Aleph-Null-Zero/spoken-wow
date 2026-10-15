@@ -152,7 +152,8 @@ local function StyleRows()
                     local entry = byFrame[row.control]
                     local name = entry and entry.label or row.control.text
                     if entry and entry.tooltip == L.OPT_SUBTITLE_SCROLL_TIP then name = name .. " (subtitles)" end
-                    if row.control.text == L.DUI_WHEEL_HINT then name = "wheel note" end
+                    if row.control.text == L.WINDOW_WHEEL_HINT then name = "wheel note" end
+                    if row.control.text == L.SUBTITLE_WHEEL_HINT then name = "subtitles' wheel note" end
                     table.insert(names, name)
                 end
             end
@@ -165,12 +166,13 @@ do
     local saved = { words.Enabled, words.Typewriter, words.SubtitleScroll }
     words.Enabled, words.Typewriter, words.SubtitleScroll = true, true, "page"
     local ROWS = {
-        minimal = "Window Size, Lock Position, Reset Positions, Background, Show Progress, Hide Portrait, "
+        -- The wheel's note where Ctrl and the wheel size the window or the subtitles.
+        minimal = "Window Size, Lock Position, Reset Positions, wheel note, Background, Show Progress, Hide Portrait, "
             .. "Show Words, Text Size, Lines Shown, Auto-Scroll, Highlight Words, Type Words Out, Type By",
         -- The large window's words fill the box, so no Lines Shown.
         classic = "Window Size, Lock Position, Reset Positions, Show Progress, Hide Portrait, Show Words, "
             .. "Text Size, Auto-Scroll, Highlight Words, Type Words Out, Type By",
-        subtitle = "Subtitle Size, Lock Position, Reset Positions, Background Darkness, Show Name and Title, Show Progress, "
+        subtitle = "Subtitle Size, Lock Position, Reset Positions, subtitles' wheel note, Background Darkness, Show Name and Title, Show Progress, "
             .. "Hide Portrait, Show Words, Text Size, Sentences at Once, Auto-Scroll (subtitles), "
             .. "Highlight Words, Type Words Out, Type By",
         none = "",

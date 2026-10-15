@@ -37,8 +37,6 @@ local METHODS = {
     "GetCurrent", "GetNowPlaying", "GetQueue", "GetQueueSize", "GetWaitingCount",
     "IsPlaying", "IsPaused", "GetHeldReason",
     "Pause", "Resume", "TogglePause", "Skip", "StopAll", "AddGate", "MuteChannel", "MuteGameDialogueAhead",
-    -- Read in Battlegrounds
-    "ReadsHere",
     -- callbacks
     "RegisterCallback", "UnregisterCallback",
     -- packs
@@ -58,6 +56,8 @@ local METHODS = {
     "ShowContribution", "SetContributeHost", "AreContributeButtonsHidden",
     -- a speaker's face on a feature addon's page
     "CreateSpeakerFace",
+    -- Play, Skip and Report on DialogueUI's quest window and book view
+    "CreateDialogueUIRow",
 }
 for _, name in ipairs(METHODS) do
     Expect("Spoken:" .. name .. " exists", type(Spoken[name]), "function")
@@ -147,7 +147,7 @@ do
     face:SetSpeaker({ creatureID = 197, bullet = "quest-accept" })
     Expect("a creature the client has: its still", Drawn(), "still 3258")
     Expect("...with the bullet's badge on its disc", face.badge:IsShown() and face.badgeBackground:IsShown()
-        and face.badge:GetTexture(), E.MinimalPlayer.BADGES["quest-accept"])
+        and face.badge:GetTexture(), E.Face.BADGES["quest-accept"])
     Expect("...at least 12 across on a small face", face.badge:GetWidth(), 12)
 
     world.creatureDisplays[240] = { 1990 }

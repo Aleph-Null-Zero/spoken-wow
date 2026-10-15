@@ -56,55 +56,7 @@ end
 -- Presentation
 --------------------------------------------------------------------------------
 
--- The Stop Gossip control, anchored to the header as it always was.
-local STOP_GOSSIP = {
-    id = "stopGossip",
-    anchor = "header",
-    visible = function() return getn(Player:Queued()) > 0 end,
-    create = function(parent)
-        local button = CreateFrame("Button", nil, parent)
-        button:SetSize(32, 32)
-        function button:SetGossipCount(gossipCount)
-            local texture = gossipCount > 1 and (TEXTURES .. "StopGossipMore") or (TEXTURES .. "StopGossip")
-            self:SetShown(gossipCount > 0)
-            self:SetHighlightTexture(texture, "ADD")
-            self:SetNormalTexture(texture)
-            self:SetPushedTexture(texture)
-            self.tooltip = gossipCount > 1 and L.OPT_NEXT_GOSSIP or L.OPT_STOP_GOSSIP
-            if GameTooltip:GetOwner() == self then
-                GameTooltip:SetText(self.tooltip)
-                GameTooltip:Show()
-            end
-        end
-        button:SetGossipCount(0)
-        button:GetHighlightTexture():SetAlpha(0.5)
-        button:GetPushedTexture():SetAlpha(0.5)
-        button:HookScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_NONE")
-            GameTooltip:SetPoint("LEFT", self, "RIGHT")
-            GameTooltip:SetText(self.tooltip)
-            GameTooltip:Show()
-        end)
-        button:HookScript("OnLeave", GameTooltip_Hide)
-        button:HookScript("OnClick", function()
-            PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
-            local head = Player:Current()
-            if head then
-                Player:Remove(head)
-            else
-                for _, clip in ipairs(Player:Queued()) do
-                    Player:Remove(clip)
-                end
-            end
-        end)
-        return button
-    end,
-    onClipChanged = function(clip, button)
-        button:SetGossipCount(getn(Player:Queued()))
-    end,
-}
-
-local ACTIONS = { Present.REPORT, STOP_GOSSIP }
+local ACTIONS = { Present.REPORT }
 
 --- Turn a prepared SoundData into a clip, in place.
 function Player:Prepare(soundData)
@@ -132,9 +84,8 @@ end
 
 --- Resolve a line through the packs and hand it to the player.
 ---@param soundData SoundData
----@param asked boolean? the player asked for it, so it is read in a battleground too
 ---@return boolean queued
-function Player:Enqueue(soundData, asked)
+function Player:Enqueue(soundData)
     if not self.source then
         Debug:Record("player-missing", "The Spoken player addon is not installed")
         return false
@@ -147,14 +98,13 @@ function Player:Enqueue(soundData, asked)
         return false
     end
 
-    return self:EnqueuePrepared(soundData, asked)
+    return self:EnqueuePrepared(soundData)
 end
 
 --- Hand the player a line whose file DataModules has already resolved.
 ---@param soundData SoundData
----@param asked boolean? as Enqueue's
 ---@return boolean queued
-function Player:EnqueuePrepared(soundData, asked)
+function Player:EnqueuePrepared(soundData)
     if not self.source then
         Debug:Record("player-missing", "The Spoken player addon is not installed")
         return false
@@ -164,7 +114,7 @@ function Player:EnqueuePrepared(soundData, asked)
     if self.playNow then
         return self:PlayPreparedNow(soundData)
     end
-    local added, reason = self.source:Enqueue(soundData, asked)
+    local added, reason = self.source:Enqueue(soundData)
     if not added then
         if reason == "duplicate" then
             Debug:Record("queued", format("Already queued: %s", soundData.fileName))

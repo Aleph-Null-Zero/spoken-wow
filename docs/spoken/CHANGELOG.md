@@ -183,6 +183,35 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Readables everywhere, and the minimap menu names them in your language. *([Nucabe](https://github.com/Nucabe))*
 - **Read in Battlegrounds**, a new switch on Spoken's page, on by default. Turned off, Spoken reads nothing by itself in a battleground or an arena, and what was waiting stops as you arrive. A line you ask for, with Play, a command or the Compendium, is still read. *([Nucabe](https://github.com/Nucabe))*
 - **No more errors from the game's hidden values in dungeons, battlegrounds and combat.** Forever hides some names, words and ids from addons there, and Places raised an error over a discovery message in Shadowfang Keep and Blackfathom Deeps. Spoken and its modules now pass over a hidden value quietly. *([Nucabe](https://github.com/Nucabe))*
+- **The subtitles show the speaker's face once the game has it.** A quest giver the game had not
+  loaded yet kept the book for the whole line. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: an empty dark circle on the portrait.** The small window and the subtitles drew the
+  badge's dark backing at the face's lower right on lines with no badge, the sample line among them.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Bronze Border reaches the large window's move button and the small window's right-click
+  menu**, and the faces on Azeroth's Compendium's quest pages change with the setting at once
+  rather than the next time they are drawn. *([Nucabe](https://github.com/Nucabe))*
+- **Ctrl and the mouse wheel size the small window and the subtitles**, as they do the DialogueUI
+  window: Ctrl and the wheel change Window Size, or Subtitle Size over the subtitles, and Ctrl,
+  Shift and the wheel change Text Size. Without Ctrl the wheel over the subtitles still zooms the
+  camera. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: Ctrl and the wheel resized the DialogueUI window with Lock Position on.** Locked, no
+  window and no subtitles change size, and the wheel scrolls the words. *([Nucabe](https://github.com/Nucabe))*
+- **The DialogueUI narrator style's picture on Spoken's page has no scrollbar**, as the window
+  itself has none. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: Reset Positions moved back only the window in use.** It now forgets where the small,
+  large and DialogueUI windows and the subtitles were put, as its tooltip says.
+  *([Nucabe](https://github.com/Nucabe))*
+- **The windows' sample line no longer tells you to drag its words**, which do not move a window.
+  It says to move the window and turn on Lock Position; the subtitles' sample, which can be
+  dragged by its words, is unchanged. *([Nucabe](https://github.com/Nucabe))*
+- **The subtitles and the DialogueUI window say why a line waits**, as the small and large windows
+  do: "(Waiting for combat to end.)" or "(Waiting for the NPC to finish speaking.)" after the
+  line's title. The subtitles now show a line held back in this way instead of nothing until it
+  starts. *([Nucabe](https://github.com/Nucabe))*
+- **The "+N" after a line's title lists the lines waiting** when you point at it, each with who
+  says it, in the windows and the subtitles. It does nothing when clicked.
+  *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.4.0 — 2026-10-12
 

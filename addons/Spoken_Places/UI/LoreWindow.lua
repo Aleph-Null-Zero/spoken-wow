@@ -19,9 +19,6 @@
 
 local ADDON_NAME, SpokenZones = ...
 
--- A value the game hands over as a secret, in an instance or in combat, reads as nil.
-local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
-
 local L = SpokenZones.L
 
 local panel, list, page
@@ -597,7 +594,7 @@ local function LandOnPlayer()
 		landed = selection
 		return
 	end
-	local subZone = NotSecret(GetSubZoneText())
+	local subZone = GetSubZoneText()
 	local subEntry, subKey, storyMapID
 	if subZone and subZone ~= "" then
 		subEntry, subKey, storyMapID = SpokenZones:GetSubzoneLore(current, subZone)

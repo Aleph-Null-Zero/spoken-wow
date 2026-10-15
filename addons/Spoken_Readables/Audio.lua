@@ -9,9 +9,6 @@
 
 local ADDON_NAME, SpokenBooks = ...
 
--- A value the game hands over as a secret, in an instance or in combat, reads as nil.
-local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
-
 local L = SpokenBooks.L
 
 -- The pack table shape this version knows how to read. A pack declaring anything else is
@@ -58,11 +55,11 @@ end
 --- on, else the book.
 function SpokenBooks:PagePicture(pageId)
 	if IsOpen(self, pageId) then
-		local item = ItemTextGetItem and NotSecret(ItemTextGetItem())
+		local item = ItemTextGetItem and ItemTextGetItem()
 		local icon, crop
 		if Spoken and Spoken.BagItemIcon then icon, crop = Spoken:BagItemIcon(item) end
 		if icon then return { kind = "texture", texture = icon, texCoord = crop } end
-		local material = ItemTextGetMaterial and NotSecret(ItemTextGetMaterial())
+		local material = ItemTextGetMaterial and ItemTextGetMaterial()
 		if self.Explain then self:Explain("picture: %s is not in the bags; its material is %s", tostring(item), tostring(material)) end
 		if material and MATERIALS[material] then
 			return { kind = "texture", texture = MATERIALS[material], texCoord = ICON_CROP }
@@ -76,7 +73,7 @@ end
 --- What `pageId` is written on (ItemTextGetMaterial: Parchment, Stone, Marble...): the game's
 --- word for the page open, else its kind's (KindMaterial), else nil.
 function SpokenBooks:PageMaterial(pageId)
-	if IsOpen(self, pageId) then return ItemTextGetMaterial and NotSecret(ItemTextGetMaterial()) or nil end
+	if IsOpen(self, pageId) then return ItemTextGetMaterial and ItemTextGetMaterial() or nil end
 	return self:KindMaterial(pageId)
 end
 

@@ -92,33 +92,6 @@ function M.HidePanels()
     world.gossipOptions = nil
 end
 
---- The game's secret values: in an instance or in combat the Forever client hands addons some
---- values that their code cannot index, compare or join (#357). M.Secrets(a, b, ...) marks those
---- values secret, issecretvalue answers for them, and indexing a marked string throws, as the
---- client's does. M.Secrets() with nothing ends it: no issecretvalue, as on a legacy client.
---- Returns its first value, so a test can mark one where it hands it over.
-local secret = {}
-local stringIndex = getmetatable("").__index
-function M.Secrets(...)
-    secret = {}
-    local count = select("#", ...)
-    if count == 0 then
-        _G.issecretvalue = nil
-        getmetatable("").__index = stringIndex
-        return nil
-    end
-    for i = 1, count do
-        local value = select(i, ...)
-        if value ~= nil then secret[value] = true end
-    end
-    _G.issecretvalue = function(value) return value ~= nil and secret[value] == true end
-    getmetatable("").__index = function(s, key)
-        if secret[s] then error("attempt to index a secret string value", 2) end
-        return stringIndex[key]
-    end
-    return (...)
-end
-
 --- Deliver a client event to every frame registered for it.
 function M.FireEvent(event, ...)
     for _, frame in ipairs(allFrames) do
@@ -1188,8 +1161,8 @@ local DIALOGUE_CORE = { "Environment", "Enums", "Utils", "Language", "Debug", "F
 function M.LoadSpoken(addonDirectory)
     for _, file in ipairs({ "Environment", "Version", "Core", "SoundUtils", "Callbacks", "SoundQueue", "Sources", "Developer", "OtherSounds",
         "BackgroundSound", "Strings", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU", "Locale/koKR", "Locale/zhCN",
-        "Locale/zhTW", "UI/Layout", "UI/DialogueUITheme", "UI/Transcript", "UI/Subtitle", "UI/WordMarks", "UI/Search", "UI/Portrait", "UI/StaticPortrait", "UI/Actions", "UI/PlayerFrame",
-        "UI/MinimalPlayer", "UI/DialogueUIPlayer", "UI/MinimapButton",
+        "Locale/zhTW", "UI/Layout", "UI/DialogueUITheme", "UI/Transcript", "UI/Subtitle", "UI/WordMarks", "UI/Search", "UI/Portrait", "UI/StaticPortrait", "UI/Actions", "UI/Face", "UI/PlayerFrame",
+        "UI/MinimalPlayer", "UI/DialogueUIPlayer", "UI/DialogueUITransitions", "UI/MinimapButton",
         -- Real LibDeflate, not a hand-faked stub library: Contribute:Encode's round trip through
         -- actual compression is the point of testing it at all.
         "UI/Options", "UI/DialogueUIOptions", "UI/Welcome", "GreetingFirst", "API", "Libs/LibDeflate/LibDeflate", "Compat", "UI/ContributeBox", "Contribute", "Gather" }) do
