@@ -28,7 +28,7 @@ DEFAULT_ADDONS_DIR = ("/Applications/World of Warcraft/_classic_era_"
                       "/Interface/AddOns")
 GUARD = "if not VoiceOver or not VoiceOver.DataModules then return end"
 
-#: Group is what actually nests this under the player in the AddOns list - added in 11.1.0,
+#: Group is what actually nests this under Spoken in the AddOns list - added in 11.1.0,
 #: and its value is the main addon's *name*, so it is the folder name and not the title.
 #: X-Part-Of and X-Child-Of are custom X- fields the client does not read at all; they are
 #: kept because addon managers do, and because upstream shipped them. Three keys that look
@@ -95,7 +95,7 @@ TOC_HEADER = """## Interface: 100000, 11509, 20506, 16001
 ## Version: {version}
 ## IconTexture: Interface\\AddOns\\{module}\\{icon}
 ## LoadOnDemand: 1
-## Group: SpokenQuests
+## Group: Spoken
 ## X-Part-Of: Spoken
 ## X-Child-Of: SpokenQuests
 ## X-SpokenQuests-DataModule-Version: 1

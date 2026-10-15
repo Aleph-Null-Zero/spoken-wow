@@ -235,12 +235,12 @@ export function toc({ section, lang, version, credits, iface, maps }) {
     `## Version: ${version}`,
     `## Author: ${["rusty", ...credits].join(", ")}`,
     `## X-Spoken-Actors: ${credits.join(", ")}`,
+    "## Group: Spoken",
   ];
   if (section === "quests") {
     // Both generations of each key, as the generated packs write them (tts_cli/build.py).
     lines.push(
       "## LoadOnDemand: 1",
-      "## Group: SpokenQuests",
       "## X-SpokenQuests-DataModule-Version: 1",
       // Over the generated packs' 100, which is what makes this the one asked first within a
       // language. Language still comes before priority: a German recording does not play

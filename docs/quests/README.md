@@ -1285,8 +1285,10 @@ the player finds packs by the `X-SpokenQuests-DataModule-Version` key in the TOC
 (`DataModules:EnumerateAddons`) — but settings do not survive, because `SavedVariables` live in
 `WTF/…/SavedVariables/<folder>.lua` and the folder is the identity.
 
-**The pack is nested under the player in the AddOns list** by `## Group: SpokenQuests` in
-both TOCs — the value is the main addon's *name*, so it is the folder rather than the title.
+**The pack is nested under Spoken in the AddOns list** by `## Group: Spoken` in both
+TOCs, as is every other addon and pack of the project — the value is the main addon's *name*,
+so it is the folder rather than the title. It named `SpokenQuests` until 3.0, which left the
+packs at the top level once that folder became a tombstone.
 That tag arrived in 11.1.0; the `X-Part-Of` and `X-Child-Of` lines beside it are custom `X-`
 fields the client never reads, kept because addon managers do and because upstream shipped
 them.

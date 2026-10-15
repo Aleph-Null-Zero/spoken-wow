@@ -4,6 +4,7 @@
 ## Version: 2.1.2
 ## Author: rusty
 ## IconTexture: Interface\AddOns\SpokenBooksAudio\Textures\AddonIcon.tga
+## Group: Spoken
 ## X-License: Audio generated with ElevenLabs from book text extracted from the game.
 
 # The tier this folder is, read back by Data/Sounds.lua and reported to Spoken Books, which

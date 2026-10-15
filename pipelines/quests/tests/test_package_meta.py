@@ -30,12 +30,12 @@ def test_the_stub_is_not_a_data_module(tmp_path):
     assert "X-SpokenQuests-DataModule" not in toc
 
 
-def test_the_stub_nests_under_the_addon_that_plays_the_packs(tmp_path):
-    # Group and X-Child-Of name a folder, and the folder they named was renamed. Left
-    # pointing at VoiceOverRedux they nest the stub under a folder that no longer ships.
+def test_the_stub_nests_under_spoken(tmp_path):
+    # Group and X-Child-Of name a folder. Group names Spoken, where every addon and pack
+    # of the project sits; X-Child-Of is read only by addon managers.
     toc = build(tmp_path)
 
-    assert "## Group: SpokenQuests\n" in toc
+    assert "## Group: Spoken\n" in toc
     assert "## X-Part-Of: Spoken\n" in toc
     assert "## X-Child-Of: SpokenQuests\n" in toc
 
