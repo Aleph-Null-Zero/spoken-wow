@@ -90,9 +90,12 @@ type Props = {
   setReferences: Dispatch<SetStateAction<Record<string, ReferenceView>>>;
   /** The directions per race and per voice, as the settings currently in force hold them. */
   raceTags: Record<string, string>;
-  /** May change the sources and the accent tags. */
-  manager: boolean;
-  /** The sources' editors are showing: a manager asked for them. */
+  /**
+   * May change this language's directions: a `configure` grant in it, not only a global admin,
+   * since the directions are the language's own.
+   */
+  directs: boolean;
+  /** The sources' editors are showing: an admin asked for them. */
   editing: boolean;
   /** Whether the viewer has an ElevenLabs key to clone into. */
   canClone: boolean;
@@ -109,7 +112,7 @@ export default function VoiceSlotList({
   references,
   setReferences,
   raceTags,
-  manager,
+  directs,
   editing,
   canClone,
 }: Props) {
@@ -228,13 +231,14 @@ export default function VoiceSlotList({
   }
 
   /**
-   * The direction box for a race or one voice: editable for a manager, read-only otherwise.
+   * The direction box for a race or one voice: editable for whoever configures the language,
+   * read-only otherwise.
    *
    * On both tabs: the language holds one set, and speakers/shape.ts puts it in front of the
    * NPC's words whichever provider speaks them.
    */
   function direction(key: string, placeholder: string) {
-    if (!manager) {
+    if (!directs) {
       return tags[key] ? (
         <span
           title="Direction"
