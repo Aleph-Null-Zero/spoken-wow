@@ -665,6 +665,11 @@ local SHARE_INK = { 0.80, 0.76, 0.70 }
 local BANNER_INK = { 0.85, 0.81, 0.73 }
 local LOCKED_INK = { 0.50, 0.48, 0.45 }
 
+-- `size` in whole screen pixels as `frame` is drawn (Layout.Pixels): lines and icons stay crisp.
+local function Pixels(frame, size, least)
+	return SpokenLayout and SpokenLayout.Pixels and SpokenLayout.Pixels(frame, size, least) or size
+end
+
 -- A piece of the faint gold line down an open card's contents: solid, or where the line ends,
 -- fading out to its foot.
 local RAIL_INK = { 0.84, 0.71, 0.31, 0.2 }
@@ -1051,7 +1056,7 @@ function List:AcquireRow(index)
 	end
 	row.wash:Hide()
 	row.edge = row:CreateTexture(nil, "ARTWORK")
-	row.edge:SetWidth(2)
+	row.edge:SetWidth(Pixels(row, 2))
 	row.edge:SetColorTexture(1, 0.82, 0, 0.9)
 	row.edge:Hide()
 
@@ -1125,12 +1130,12 @@ local function BannerParts(row)
 	row.bannerFill:SetColorTexture(0.17, 0.11, 0.06, 0.95)
 	row.bannerFill:SetAllPoints(row)
 	row.bannerTop = row:CreateTexture(nil, "BORDER")
-	row.bannerTop:SetHeight(1)
+	row.bannerTop:SetHeight(Pixels(row, 1))
 	row.bannerTop:SetColorTexture(0.79, 0.63, 0.31, 0.8)
 	row.bannerTop:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
 	row.bannerTop:SetPoint("TOPRIGHT", row, "TOPRIGHT", 0, 0)
 	row.bannerBottom = row:CreateTexture(nil, "BORDER")
-	row.bannerBottom:SetHeight(1)
+	row.bannerBottom:SetHeight(Pixels(row, 1))
 	row.bannerBottom:SetColorTexture(0.79, 0.63, 0.31, 0.45)
 	row.bannerBottom:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
 	row.bannerBottom:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
@@ -1183,13 +1188,13 @@ end
 local function Rails(row, count, gap, held, underBanner, afterBanner, foot, goesOn, bannerGoesOn)
 	if underBanner and not row.bannerRail then
 		row.bannerRail = row:CreateTexture(nil, "BORDER")
-		row.bannerRail:SetWidth(1)
+		row.bannerRail:SetWidth(Pixels(row, 1))
 	end
 	if row.bannerRail then
 		PaintRail(row.bannerRail, not bannerGoesOn)
 		row.bannerRail:ClearAllPoints()
-		row.bannerRail:SetPoint("TOPLEFT", row, "TOPLEFT", BANNER_RAIL_X, gap + (afterBanner and BANNER_FOOT or 0))
-		row.bannerRail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", BANNER_RAIL_X, 0)
+		row.bannerRail:SetPoint("TOPLEFT", row, "TOPLEFT", Pixels(row, BANNER_RAIL_X, 0), gap + (afterBanner and BANNER_FOOT or 0))
+		row.bannerRail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", Pixels(row, BANNER_RAIL_X, 0), 0)
 		row.bannerRail:SetShown(underBanner and true or false)
 	end
 	row.rails = row.rails or {}
@@ -1198,11 +1203,11 @@ local function Rails(row, count, gap, held, underBanner, afterBanner, foot, goes
 		if i <= count then
 			if not rail then
 				rail = row:CreateTexture(nil, "BORDER")
-				rail:SetWidth(1)
+				rail:SetWidth(Pixels(row, 1))
 				row.rails[i] = rail
 			end
 			PaintRail(rail, i > (goesOn or 0))
-			local x = (underBanner and UNDER_BANNER_IN or 0) + (i - 1) * NEST_STEP + RAIL_X
+			local x = Pixels(row, (underBanner and UNDER_BANNER_IN or 0) + (i - 1) * NEST_STEP + RAIL_X, 0)
 			rail:ClearAllPoints()
 			rail:SetPoint("TOPLEFT", row, "TOPLEFT", x, i <= held and gap or gap + (foot or FOOT))
 			rail:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", x, 0)
@@ -1348,7 +1353,7 @@ local function DrawCard(row, item, indent, width)
 		local crop = item.iconCrop or ICON_CROP
 		row.icon:SetTexture(icon)
 		row.icon:SetTexCoord(crop[1], crop[2], crop[3], crop[4])
-		row.icon:SetSize(side - 2 * inset, side - 2 * inset)
+		row.icon:SetSize(Pixels(row, side - 2 * inset), Pixels(row, side - 2 * inset))
 		row.icon:ClearAllPoints()
 		row.icon:SetPoint("CENTER", row, "TOPLEFT", centre, middle)
 		if row.icon.SetDesaturated then row.icon:SetDesaturated(none and true or false) end
@@ -1360,7 +1365,7 @@ local function DrawCard(row, item, indent, width)
 		if framed then
 			-- Silver as the card round it, not the collections window's gold.
 			Silver({ row.iconFrame })
-			row.iconFrame:SetSize(side, side)
+			row.iconFrame:SetSize(Pixels(row, side), Pixels(row, side))
 			row.iconFrame:ClearAllPoints()
 			row.iconFrame:SetPoint("CENTER", row.icon, "CENTER", 0, 0)
 		end
@@ -1416,11 +1421,11 @@ local function DrawCard(row, item, indent, width)
 	row.track:ClearAllPoints()
 	row.track:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft + 2, barBottom + 1)
 	row.track:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -CARD_END - 2, barBottom + 1)
-	row.track:SetHeight(barHeight - 2)
+	row.track:SetHeight(Pixels(row, barHeight - 2))
 	row.track:SetShown(barred)
 	row.fill:ClearAllPoints()
 	row.fill:SetPoint("BOTTOMLEFT", row.track, "BOTTOMLEFT", 0, 0)
-	row.fill:SetHeight(barHeight - 2)
+	row.fill:SetHeight(Pixels(row, barHeight - 2))
 	local spot = AtlasSpot("ui-frame-bar-fill-yellow")
 	row.fillSpot = spot
 	if spot then
@@ -1432,9 +1437,9 @@ local function DrawCard(row, item, indent, width)
 	FitBar(row, width)
 	local capLeft, capMiddle, capRight = row.barCaps[1], row.barCaps[2], row.barCaps[3]
 	for _, cap in ipairs(row.barCaps) do cap:ClearAllPoints() end
-	capLeft:SetSize(6, barHeight)
+	capLeft:SetSize(Pixels(row, 6), Pixels(row, barHeight))
 	capLeft:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", barLeft, barBottom)
-	capRight:SetSize(6, barHeight)
+	capRight:SetSize(Pixels(row, 6), Pixels(row, barHeight))
 	capRight:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", -CARD_END, barBottom)
 	capMiddle:SetPoint("TOPLEFT", capLeft, "TOPRIGHT", 0, 0)
 	capMiddle:SetPoint("BOTTOMRIGHT", capRight, "BOTTOMLEFT", 0, 0)
@@ -1493,7 +1498,7 @@ local function DrawLeaf(row, item, indent)
 		-- A file after an atlas keeps the atlas's tex coords.
 		row.status:SetTexture(ACTIVE)
 		row.status:SetTexCoord(0, 1, 0, 1)
-		row.status:SetSize(15, 15)
+		row.status:SetSize(Pixels(row, 15), Pixels(row, 15))
 	end
 	-- At the row's end, where a padlock goes: one place for what a row's state is.
 	row.status:ClearAllPoints()
@@ -2025,7 +2030,7 @@ function C.NewPage(parent, addon, play, report, look)
 	else
 		divider:SetPoint("RIGHT", frame, "RIGHT", -right, 0)
 		divider:SetColorTexture(INK[1], INK[2], INK[3], 0.35)
-		divider:SetHeight(1)
+		divider:SetHeight(Pixels(frame, 1))
 	end
 	self.divider = divider
 

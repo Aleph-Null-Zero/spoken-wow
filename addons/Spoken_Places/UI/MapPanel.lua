@@ -32,6 +32,15 @@ local function Host()
 	return WorldMapFrame
 end
 
+-- The frame the player sees as the map: its border frame, which a map addon (Leatrix Maps) resizes
+-- inside WorldMapFrame, whose own edge then lies beyond what is drawn. The panel and its button hang
+-- off it, so they stay against the visible edge.
+local function MapEdge()
+	local border = WorldMapFrame.BorderFrame
+	if type(border) == "table" and border.SetPoint then return border end
+	return WorldMapFrame
+end
+
 -- Space between the map's frame and the panel's: a small gap, so the two read as neighbours
 -- rather than one frame.
 local GAP = 2
@@ -145,7 +154,7 @@ local function BuildToggle()
 		if toggle.SetChecked then toggle:SetChecked(false) end
 		toggle:SetCustomOnMouseUpHandler(function() SpokenZones:SetMapPanelCollapsed(false) end)
 		toggle:EnableMouse(true)
-		toggle:SetPoint("TOPLEFT", WorldMapFrame, "TOPRIGHT", 0, -SIDE_TAB_TOP)
+		toggle:SetPoint("TOPLEFT", MapEdge(), "TOPRIGHT", 0, -SIDE_TAB_TOP)
 		toggle:SetScript("OnHide", function(self)
 			if GameTooltip:IsOwned(self) then GameTooltip:Hide() end
 		end)
@@ -164,7 +173,7 @@ local function BuildToggle()
 	border:SetPoint("CENTER")
 	toggle:SetPushedTexture([[Interface\Buttons\UI-Quickslot-Depress]])
 	toggle:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]], "ADD")
-	toggle:SetPoint("TOPLEFT", WorldMapFrame, "TOPRIGHT", -TOGGLE_TUCK, -ICON_SIZE)
+	toggle:SetPoint("TOPLEFT", MapEdge(), "TOPRIGHT", -TOGGLE_TUCK, -ICON_SIZE)
 	toggle:SetScript("OnClick", function()
 		SpokenZones:SetMapPanelCollapsed(false)
 	end)
@@ -234,8 +243,8 @@ end
 local function ApplyAnchors()
 	local gap = GAP
 	panel:ClearAllPoints()
-	panel:SetPoint("TOPLEFT", WorldMapFrame, "TOPRIGHT", gap, 0)
-	panel:SetPoint("BOTTOMLEFT", WorldMapFrame, "BOTTOMRIGHT", gap, 0)
+	panel:SetPoint("TOPLEFT", MapEdge(), "TOPRIGHT", gap, 0)
+	panel:SetPoint("BOTTOMLEFT", MapEdge(), "BOTTOMRIGHT", gap, 0)
 end
 
 -- Maximised, the map fills the screen and a side panel would sit off-screen, so

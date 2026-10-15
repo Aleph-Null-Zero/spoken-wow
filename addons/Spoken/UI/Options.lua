@@ -326,6 +326,9 @@ local function Build(canvas)
     -- The subtitle's own: redrawing it is enough, on every step of a drag, without the captions'
     -- full refresh and every row's.
     local refreshSubtitle = function() Subtitle:Update() end
+    -- Text Size and Lines: the DialogueUI and minimal windows lay their words out in the window's own
+    -- refresh, so the window is refreshed too, as the wheel's Text Size does.
+    local refreshText = function() PlayerFrame:RefreshConfig(); refreshTranscript(); refreshSubtitle() end
 
     local layout = Layout.New(host, INDENT, -TOP)
     panel.layout = layout
@@ -457,7 +460,7 @@ local function Build(canvas)
         layout:Outdent()
         local size = layout:Slider(L.TRANSCRIPT_SIZE, SIZES.FontSize[1], SIZES.FontSize[2], SIZES.FontSize[3],
             function() return transcript().FontSize end,
-            function(v) transcript().FontSize = v end, function() refreshTranscript(); refreshSubtitle() end,
+            function(v) transcript().FontSize = v end, refreshText,
             Layout.Number)
         Only(size, function() return InWindow() or Subtitles() end)
         Requires(size, Words, L.REASON_WORDS)
@@ -703,7 +706,7 @@ local function Build(canvas)
         local function Rolling() return transcript().SubtitleScroll == "line" end
         local lines = layout:Slider(L.TRANSCRIPT_LINES, 1, 2, 1,
             function() return transcript().Lines end,
-            function(v) transcript().Lines = v end, function() refreshTranscript(); refreshSubtitle() end,
+            function(v) transcript().Lines = v end, refreshText,
             Layout.Number)
         Only(lines, function() return (InWindow() and Style() ~= "classic") or (Subtitles() and Rolling()) end)
         Requires(lines, Words, L.REASON_WORDS)

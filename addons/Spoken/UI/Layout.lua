@@ -200,6 +200,16 @@ local function AtlasTexture(frame, layer, atlas, useAtlasSize)
 end
 
 Layout.AtlasTexture = AtlasTexture
+
+--- `size` in whole screen pixels, as `frame` is drawn: the interface scale cuts a plain 1 into a pixel
+--- and a bit, which draws a line one pixel wide here and two there, and an icon with a ragged edge.
+--- `least` is the fewest pixels it may be (1 for a size, 0 for a place).
+function Layout.Pixels(frame, size, least)
+    if PixelUtil and PixelUtil.GetNearestPixelSize then
+        return PixelUtil.GetNearestPixelSize(size, frame:GetEffectiveScale(), least or 1)
+    end
+    return size
+end
 Layout.HEADER_HEIGHT = HEADER_HEIGHT
 
 -- The settings' own sounds: the checkbox's on and off, as the game's settings play them.
@@ -605,11 +615,11 @@ local function Rule(parent)
     if info and rule.SetAtlas then
         -- At its own size, as the game's header draws it (useAtlasSize).
         rule:SetAtlas(DIVIDER_ATLAS, true)
-        rule:SetHeight(info.height or 2)
+        rule:SetHeight(Layout.Pixels(parent, info.height or 2))
         rule.layoutAtlas = DIVIDER_ATLAS
     else
         if rule.SetColorTexture then rule:SetColorTexture(GOLD[1], GOLD[2], GOLD[3], 0.3) end
-        rule:SetHeight(1)
+        rule:SetHeight(Layout.Pixels(parent, 1))
     end
     return rule
 end
@@ -622,7 +632,7 @@ local function Divider(parent)
     local line = Flat(parent, "ARTWORK", 1, 1, 1, 1)
     line:SetVertexColor(DIVIDER_COLOR[1], DIVIDER_COLOR[2], DIVIDER_COLOR[3])
     line:SetAlpha(DIVIDER_ALPHA)
-    line:SetHeight(1)
+    line:SetHeight(Layout.Pixels(parent, 1))
     line.layoutColor = DIVIDER_COLOR
     return line
 end
@@ -1716,7 +1726,7 @@ local function ListRow(panel, item)
     row.layoutLight, row.layoutWash = light, over
     if panel.layoutRows[1] then
         local line = Flat(panel, "ARTWORK", 1, 1, 1, LIST_LINE)
-        line:SetHeight(1)
+        line:SetHeight(Layout.Pixels(panel, 1))
         line:SetPoint("BOTTOMLEFT", row, "TOPLEFT", LIST_PAD, 0)
         line:SetPoint("BOTTOMRIGHT", row, "TOPRIGHT", -LIST_PAD, 0)
         table.insert(panel.lines, line)

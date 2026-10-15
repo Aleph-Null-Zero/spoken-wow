@@ -260,6 +260,13 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Fixes
 
+- The Places tab and panel beside the world map hang off the map's visible frame, so they sit against it
+  when a map addon such as Leatrix Maps resizes it. *([Nucabe](https://github.com/Nucabe))*
+- Text Size and Lines on Spoken's page apply at once in the DialogueUI and Small windows, without a
+  reload. *([Nucabe](https://github.com/Nucabe))*
+- Lines and icons in Azeroth's Compendium (the faint lines down open cards, the card bars, the
+  badges) and the square Play buttons are sized in whole screen pixels, so they no longer come out
+  jagged or a pixel too thick at some interface scales. *([Nucabe](https://github.com/Nucabe))*
 - A class name in a quest only that class can take is no longer sent to the site as a stand-in
   for the player's class, so a paladin quest's "paladin" is not voiced as "adventurer".
   *([Nucabe](https://github.com/Nucabe))*

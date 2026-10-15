@@ -203,7 +203,8 @@ function Actions.SkipButton(parent, name)
     skip.glyph:ClearAllPoints()
     skip.glyph:SetPoint("CENTER", -2, 0)
     skip.bar = skip:CreateTexture(nil, "ARTWORK")
-    skip.bar:SetSize(2, 9)
+    local P = SpokenLayout and SpokenLayout.Pixels
+    skip.bar:SetSize(P and P(skip, 2) or 2, P and P(skip, 9) or 9)
     skip.bar:SetPoint("LEFT", skip.glyph, "RIGHT", 0, 0)
     if skip.bar.SetColorTexture then skip.bar:SetColorTexture(1, 0.82, 0, 0.85) end
     skip:SetScript("OnClick", function()
@@ -687,8 +688,11 @@ function Actions.BoxPlay(button)
             if self.lit then self.lit:SetAtlas(atlas) end
         end
         if type(width) == "number" and type(height) == "number" and width >= 12 and height >= 12 then
+            local P = SpokenLayout and SpokenLayout.Pixels
+            width, height = P and P(self, width) or width, P and P(self, height) or height
             self:SetSize(width, height)
-            glyph:SetSize(math.floor(width * 0.7), math.floor(height * 0.7))
+            glyph:SetSize(P and P(self, width * 0.7) or math.floor(width * 0.7),
+                P and P(self, height * 0.7) or math.floor(height * 0.7))
         end
     end
     function button:MatchBox(box)
