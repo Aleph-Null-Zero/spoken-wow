@@ -68,6 +68,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Narrator styles
 
+- The round Play, Skip and Report buttons are dark at 90% inside their ring instead of solid, so the
+  world shows a little through them. *([Nucabe](https://github.com/Nucabe))*
 - Ctrl and the mouse wheel size the Small Window and the subtitles, as they do the DialogueUI
   window. Ctrl and the wheel change Window Size, or Subtitle Size over the subtitles, and Ctrl,
   Shift and the wheel change Word Size. Without Ctrl the wheel over the subtitles and the windows
@@ -136,7 +138,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 ### Azeroth's Compendium: Quests
 
 - The objective tracker has a Play button at the right end of each quest's title, the same button
-  the quest log has. *([Nucabe](https://github.com/Nucabe))*
+  the quest log has. Both stop and replay a quest's line as the round buttons do, and say so in a
+  tooltip. *([Nucabe](https://github.com/Nucabe))*
 - The Play button on each row of the quest log has the tracking checkbox's border and the Play and
   Stop glyphs the narrator styles use. *([Nucabe](https://github.com/Nucabe))*
 - The Quests tab is new. It lists the quests your character's side, race and class can take, by zone

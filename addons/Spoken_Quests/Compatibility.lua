@@ -208,7 +208,7 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             button:SetHitRectInsets(2, 2, 2, 2)
             local ok, err = pcall(Spoken.DressBoxButton, Spoken, button)
             if ok then
-                button.setPlayState = function(self, playing) self:SetState(playing and "stop" or "play") end
+                button.setPlayState = QuestOverlayUI.FollowQueue
                 return button
             end
             Say(err)
@@ -324,35 +324,6 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
     -- follow it there: a frame has one parent. Play, Report and Contribute, rebound to whichever
     -- quest the panel is showing, in the corner opposite its Back button.
     if QuestMapFrame and QuestMapFrame.DetailsFrame and QuestMapFrame_ShowQuestDetails then
-        -- This quest's accept line in the queue, whoever queued it: autoplay, the log's own button
-        -- or this one. Found again each time, since a rebind or a reopened panel starts afresh.
-        local function QueuedLine(questID)
-            for _, clip in ipairs(Player:Queued()) do
-                if clip.questID == questID and clip.event == Enums.SoundEvent.QuestAccept then return clip end
-            end
-        end
-        -- Stop while this quest's line speaks, Replay while it is stopped at the head, Play otherwise.
-        local function StateOf(questID)
-            local clip = QueuedLine(questID)
-            if not clip or Spoken:GetCurrent() ~= clip then return "play", clip end
-            if Spoken:IsPaused() then return "replay", clip end
-            if Spoken:GetNowPlaying() == clip then return "stop", clip end
-            return "play", clip
-        end
-        local function SetRoundPlaying(button)
-            button:SetState((StateOf(button.questID)))
-        end
-        -- The tooltip says what a click does now.
-        local TIPS = { play = { L.OPT_PLAY, L.OPT_PLAY_TIP }, stop = { L.OPT_STOP, L.OPT_STOP_TIP },
-            replay = { L.OPT_REPLAY, L.OPT_REPLAY_TIP } }
-        local function PlayTooltip(button)
-            local tip = TIPS[button.state or "play"]
-            GameTooltip:SetOwner(button, "ANCHOR_LEFT")
-            GameTooltip:SetText(tip[1])
-            GameTooltip:AddLine(tip[2], 1, 0.8, 0.2, true)
-            GameTooltip:Show()
-        end
-
         function QuestOverlayUI:UpdateDetailsPlayButton()
             if not Addon:IsPartOn() then
                 if self.detailsPlayButton then self.detailsPlayButton:Hide() end
@@ -393,14 +364,10 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                 local playButton = Spoken:CreateRoundButton(header, "play", "SpokenQuestsDetailsPlayButton")
                 playButton:SetFrameLevel(header:GetFrameLevel() + 2)
                 playButton:SetPoint("RIGHT", report, "LEFT", -4, 0)
-                playButton.setPlayState = SetRoundPlaying
+                playButton.setPlayState = QuestOverlayUI.FollowQueue
                 self.detailsPlayButton = playButton
-                -- Stopped or replayed from the subtitle or the windows, the glyph follows.
+                -- Hide Report Buttons, in Spoken's settings, fires no game event.
                 if Spoken.RegisterCallback then
-                    Spoken:RegisterCallback("AUDIO_CHANGED", function()
-                        QuestOverlayUI:SetPlayButtonState(playButton)
-                    end)
-                    -- Hide Report Buttons, in Spoken's settings, fires no game event.
                     Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
                         QuestOverlayUI:UpdateDetailsPlayButton()
                     end)
@@ -453,42 +420,8 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
 
             -- Rebound rather than kept: this button stood for a different quest a moment ago. A line
             -- of this quest's already queued is the one it stands for, whoever queued it.
-            playButton.questID = questID
             self:BindPlayButton(playButton, questID, self:GetQuestTitle(questID))
-            playButton.soundData = QueuedLine(questID)
-            -- This quest's line speaking or stopped: Stop or Replay it, as the subtitle's
-            -- button does. Waiting behind a line speaking: leave it queued; behind a stopped one: play it.
-            -- Otherwise: queue it.
-            local bound = playButton:GetScript("OnClick")
-            -- Named arguments, not varargs: this file also loads on 1.12, whose Lua 5.0 cannot
-            -- parse `...` as an expression, and one parse error loses the whole file.
-            playButton:SetScript("OnClick", function(button, mouse, down)
-                -- Looked up each click, never the copy kept when the panel opened: a line that has
-                -- since finished is no longer in the queue, and holding on to it left the button dead.
-                local state, clip = StateOf(button.questID)
-                if state == "stop" or state == "replay" then
-                    SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-                    Spoken:TogglePause()
-                elseif clip and Spoken:IsPaused() and Player.source then
-                    -- Waiting behind a stopped line: Play on it plays it, and takes the queue out of its stop.
-                    SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-                    Player.source:PlayNow(clip)
-                elseif not clip and bound then
-                    -- The bound handler queues the line it holds, so it starts from a fresh one.
-                    button.soundData = nil
-                    bound(button, mouse, down)
-                end
-                QuestOverlayUI:SetPlayButtonState(button)
-                if GameTooltip:GetOwner() == button then PlayTooltip(button) end
-            end)
-            playButton:SetScript("OnEnter", function(button)
-                if button:IsEnabled() then button.glyph:SetAlpha(1) end
-                PlayTooltip(button)
-            end)
-            playButton:SetScript("OnLeave", function(button)
-                if button:IsEnabled() then button.glyph:SetAlpha(0.85) end
-                GameTooltip:Hide()
-            end)
+            playButton.soundData = self:QueuedLine(questID)
 
             -- No sound: Contribute in the pair's place, where this client can contribute at all
             -- (Contribute:CanOfferFromLog); otherwise Play greyed out and nothing to report.
@@ -561,7 +494,7 @@ do
     local MODULES = { "QuestObjectiveTracker", "CampaignQuestObjectiveTracker" }
     -- The quest log's tracking checkbox, as it draws on this client (what its Play button matches).
     local BOX, SIZE = "QuestLog-icon-ticksquare", 14
-    local buttons, hooked, listening = {}, {}, false
+    local buttons, hooked = {}, {}
 
     local function Dress(block)
         local questID = block.id
@@ -582,7 +515,7 @@ do
                 button:Hide()
                 return
             end
-            button.setPlayState = function(self, playing) self:SetState(playing and "stop" or "play") end
+            button.setPlayState = QuestOverlayUI.FollowQueue
             -- Black behind the box: the tracker sits on the world, not on a panel.
             local back = button:CreateTexture(nil, "BACKGROUND", nil, -1)
             back:SetPoint("TOPLEFT", 1, -1)
@@ -593,19 +526,8 @@ do
             buttons[block] = button
             Debug:Record("tracker-play", format("button on a block %sx%s, header %s", tostring(block:GetWidth()),
                 tostring(block:GetHeight()), tostring(block.HeaderText ~= nil)))
-            -- Stopped or replayed from the subtitle or the windows, the glyph follows.
-            if not listening and Spoken.RegisterCallback then
-                listening = true
-                Spoken:RegisterCallback("AUDIO_CHANGED", function()
-                    for _, each in pairs(buttons) do
-                        if each:IsShown() then QuestOverlayUI:SetPlayButtonState(each) end
-                    end
-                end)
-            end
         end
-        if button.questID ~= questID then
-            button.questID, button.soundData = questID, nil
-        end
+        if button.questID ~= questID then button.soundData = nil end
         QuestOverlayUI:BindPlayButton(button, questID, C_QuestLog.GetTitleForQuestID(questID) or "",
             "the objective tracker's Play button")
         button:Show()

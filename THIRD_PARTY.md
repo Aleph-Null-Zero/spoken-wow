@@ -85,7 +85,8 @@ None of this is the project's to license, and the MIT grant does not reach it.
   (`PortraitFrameAtlas`, the continent maps) are Blizzard's.
 - **The older `.blp` textures** came with the AI VoiceOver fork, as it shipped them: in
   `addons/Spoken/Textures/` `BackgroundGradient`, `Book`, `MinimapButton`, `PortraitFrameAtlas`,
-  `PortraitFrameBackground` and `SettingsButton`; in `Spoken_Quests/Textures/` `QuestLogPlayButton`,
+  `PortraitFrameBackground` and `SettingsButton` (`SettingsButtonSoft` is the same ring with its middle
+  at 90%); in `Spoken_Quests/Textures/` `QuestLogPlayButton`,
   `QuestLogStopButton` and the three `SoundQueueBullet*` files; and in `Spoken_Gossip/Textures/`
   `SoundQueueBulletGossip`. `git log --follow` takes each back to the AI VoiceOver import. The
   game art in them is Blizzard's. The 1.12 tree's `UI-Minimap-Background.blp` comes with
