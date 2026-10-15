@@ -44,6 +44,8 @@ import { actedFolder, languageFolder } from "../lib/packs.mjs";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 const TITLES = { quests: "Spoken Quests Audio", zones: "Spoken Zones Audio", books: "Spoken Books Audio" };
+/** The addon that plays a section's packs, which X-Child-Of names for addon managers. */
+const PLAYERS = { quests: "Spoken_Quests", zones: "Spoken_Zones", books: "Spoken_Books" };
 
 //------------------------------------------------------------------------------
 // Pure: names, paths and the Lua, so they can be tested without a database
@@ -236,6 +238,8 @@ export function toc({ section, lang, version, credits, iface, maps }) {
     `## Author: ${["rusty", ...credits].join(", ")}`,
     `## X-Spoken-Actors: ${credits.join(", ")}`,
     "## Group: Spoken",
+    "## X-Part-Of: Spoken",
+    `## X-Child-Of: ${PLAYERS[section]}`,
   ];
   if (section === "quests") {
     // Both generations of each key, as the generated packs write them (tts_cli/build.py).
