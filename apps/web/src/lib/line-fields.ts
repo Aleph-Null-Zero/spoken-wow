@@ -36,6 +36,12 @@ export const SOURCE_LABELS: Record<Source, string> = {
  * when it took one value still reads. Unknown values are dropped, and none left is no filter.
  */
 export function sourcesFromParam(value: string | null): Source[] | undefined {
-  const sources = SOURCES.filter((source) => value?.split(",").includes(source));
+  const sources = listParam(value, SOURCES);
   return sources.length ? sources : undefined;
+}
+
+/** A comma-separated query parameter, kept to `allowed` and in its order; anything else is dropped. */
+export function listParam<T extends string>(value: unknown, allowed: readonly T[]): T[] {
+  const picked = typeof value === "string" ? value.split(",") : [];
+  return allowed.filter((option) => picked.includes(option));
 }

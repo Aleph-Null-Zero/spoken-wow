@@ -8,6 +8,7 @@
  * contributions.ts and npc.ts, whose types this one only composes: ContributionTable is a client
  * component and calls this directly on every dropdown change.
  */
+import { listParam } from "../line-fields";
 import type { ClientFilter } from "./client";
 import type { ContributionStatus } from "./contributions";
 import type { EnvelopeSource } from "./envelope";
@@ -79,8 +80,7 @@ export type StageFilter = readonly Stage[];
 
 /** The `stage` query parameter, comma-separated, in STAGES order; anything else is dropped. */
 export function stagesOf(value: unknown): Stage[] {
-  const picked = typeof value === "string" ? value.split(",") : [];
-  return STAGES.filter((stage) => picked.includes(stage));
+  return listParam(value, STAGES);
 }
 
 /**

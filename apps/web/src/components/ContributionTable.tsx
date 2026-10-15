@@ -26,8 +26,8 @@ import { useRouter } from "next/navigation";
 import { memo, useCallback, useMemo, useState } from "react";
 
 import ClientSelect from "@/components/ClientSelect";
-import { SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
-import FilterChip, { type ChipOption } from "@/components/FilterChip";
+import { SEARCH_IN_OPTIONS, STAGE_CHIP_OPTIONS, STAGE_LABELS } from "@/components/contribution-chips";
+import FilterChip from "@/components/FilterChip";
 import MultiFilterChip from "@/components/MultiFilterChip";
 import SortHeader from "@/components/SortHeader";
 import SpeakerCell, { ProvenanceBadge, type SpeakerAnswer } from "@/components/SpeakerCell";
@@ -52,14 +52,12 @@ import {
   bucketOf,
   contributionsHref,
   namesSpeaker,
-  STAGES,
   nextSort,
   type Bucket,
   type Section,
   type ClientFilter,
   type ContributionSort,
   type FilterChange,
-  type Stage,
   type SortColumn,
   type StageFilter,
 } from "@/lib/contributions/query";
@@ -113,18 +111,6 @@ const BOOKS_LIST = "contribution-english-books";
 function bookOption(book: BookChoice): string {
   return `${book.title} #${book.bookId}`;
 }
-
-const STAGE_LABELS: Record<Stage, string> = {
-  accept: "Accept",
-  progress: "Progress",
-  complete: "Complete",
-  gossip: "Gossip",
-};
-
-const STAGE_CHIP_OPTIONS: ChipOption[] = STAGES.map((option) => ({
-  value: option,
-  label: STAGE_LABELS[option],
-}));
 
 const STATUS_LABELS: Record<ContributionStatus, string> = {
   new: "New",
@@ -896,7 +882,7 @@ const ContributionTableRow = memo(function ContributionTableRow({
           ) : row.quest === null ? (
             <span title={row.key}>{row.place ?? row.key}</span>
           ) : row.quest === "gossip" ? (
-            "Gossip"
+            STAGE_LABELS.gossip
           ) : (
             <>
               <span className="truncate">{row.quest.title}</span>{" "}
