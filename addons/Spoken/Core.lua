@@ -1,17 +1,13 @@
 setfenv(1, SpokenEnv)
 
--- The object the ported queue code reaches timers and settings through, under the name
--- upstream gave it. A plain table with AceTimer embedded, not an AceAddon: the player has
--- no options table to register, no console commands of its own, and every client from
--- 1.12 up can embed AceTimer into anything. Reproducing the name is what keeps the
--- ported bodies diffable against upstream.
+-- What the queue and the windows reach timers and settings through. A plain table with AceTimer
+-- embedded, not an AceAddon: the player has no options table to register, and every client from
+-- 1.12 up can embed AceTimer into anything.
 Addon = LibStub("AceTimer-3.0"):Embed({})
 
 -- What feature addons register through API.lua and the UI reads back.
 Bullets = {}
 Renderers = {}
-
--- The red a queue line turns when a click will take it out, in either player layout.
 
 -- Window Size, Subtitle Size and Text Size: lowest, highest and step, for their sliders and for
 -- Ctrl and the mouse wheel over the windows and the subtitles.
@@ -429,21 +425,7 @@ function Addon:PrintDiagnostics()
     for _, err in ipairs(Callbacks.errors) do print("  callback error: " .. err) end
 end
 
---- Everything that needs the world: the frame, the button, the settings, the slash
---- command. Idempotent, so the harness and PLAYER_LOGIN can both call it.
-function Addon:Enable()
-    if self.enabled then return end
-    self:InitDB()
-    self.enabled = true
-    PlayerFrame:Initialize()
-    Transcript:Initialize()
-    -- Redraw in the new art when DialogueUI's theme or window size changes.
-    DialogueUITheme:Watch(function()
-        if Addon:DisplayStyle() == "dialogueui" then PlayerFrame:RefreshConfig() end
-    end)
-    Minimap:Setup()
-    Options:Setup()
-
+local function RegisterSlashCommand()
     -- Through _G, not bare. Every file here runs inside a private environment whose
     -- metatable falls back to _G: reads fall through, writes do not. A bare assignment
     -- lands in the environment, and the client never hears of the command.
@@ -546,20 +528,34 @@ function Addon:Enable()
     end
 end
 
+--- Everything that needs the world: the frame, the button, the settings, the slash
+--- command. Idempotent, so the harness and PLAYER_LOGIN can both call it.
+function Addon:Enable()
+    if self.enabled then return end
+    self:InitDB()
+    self.enabled = true
+    PlayerFrame:Initialize()
+    Transcript:Initialize()
+    -- Redraw in the new art when DialogueUI's theme or window size changes.
+    DialogueUITheme:Watch(function()
+        if Addon:DisplayStyle() == "dialogueui" then PlayerFrame:RefreshConfig() end
+    end)
+    Minimap:Setup()
+    Options:Setup()
+    RegisterSlashCommand()
+end
+
 -- Said the first time a line waits behind a stop with nothing on screen to show it: with subtitles
 -- or voice only, a stopped queue looks like a broken addon.
 local pauseReminded = false
-local function RemindPaused()
-    print("|cff66bbffSpoken:|r " .. L.STOPPED_REMINDER)
-end
--- Registered from Enable, not here: this file loads before Callbacks.lua does.
+-- Registered at login, not at load: this file loads before Callbacks.lua does.
 local function WatchPausedQueue()
     Callbacks:Register("CLIP_QUEUED", function()
         if pauseReminded or not SoundQueue:IsPaused() then return end
         local style = Addon:PlayerStyle()
         if style == "none" or style == "subtitle" and not Addon.db.profile.Transcript.Enabled then
             pauseReminded = true
-            RemindPaused()
+            print("|cff66bbffSpoken:|r " .. L.STOPPED_REMINDER)
         end
     end)
 end

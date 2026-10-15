@@ -105,7 +105,6 @@ L.OPT_REPORT_LINE_ADDRESS = "Copy this address and open it in your browser to re
 
 L.MENU_LORE_WINDOW = "Open Azeroth's Compendium"
 L.OPEN_IN_LORE_TIP = "This place's story in Azeroth's Compendium, beside every other zone and area's."
-L.PLACE_LINK_STORY = "The story of this place"
 L.MENU_ZONE_SETTINGS = "Places Settings"
 
 --------------------------------------------------------------------------------

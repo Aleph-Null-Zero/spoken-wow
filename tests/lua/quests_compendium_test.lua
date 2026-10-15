@@ -1199,41 +1199,19 @@ Expect("...the dungeon's quests inside its own card", Has(list, "Dark Iron Legac
 Click("Blackrock Spire")
 Expect("...a dungeon's page in the zone of its entrance, counting its quests", page.title.text == "Blackrock Spire"
     and page.sub.text.text:match("^In Searing Gorge · 0 of %d+ completed$") ~= nil, true)
--- Links to the other tabs' page of the same place (SpokenCompendium.PlaceLinks), here a fake tab's, and
--- this tab's own for them: its quests counted, and opened on the place.
 do
-    local C, opened = _G.SpokenCompendium, {}
-    C:Register("fakeother", { label = "Other", order = 9,
-        placeLink = function(place) return "Other " .. (place.dungeon or "") .. " in " .. place.mapID end,
-        openPlace = function(place) table.insert(opened, place.mapID .. "/" .. tostring(place.dungeon)) end })
-    Tab:Refresh()
-    Expect("a dungeon's page links to the other tabs' page of it", page.links[1].text.text, "Other 229 in 1427")
-    page.links[1].scripts.OnClick(page.links[1])
-    Expect("...a click opening it by the dungeon and the zone of its entrance", table.concat(opened, ","), "1427/229")
     list = Shown()
     Click("Searing Gorge")
-    Expect("a zone's page links by its map", page.links[1].text.text, "Other  in 1427")
     -- Zones' picture of the place above its page, where Zones has one.
     Expect("a place's page has no picture while Zones has none", page.body.picture:IsShown(), false)
     _G.SpokenZones = { Picture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end }
     Tab:Refresh()
     Expect("...and Zones' picture of the place when it has", page.body.picture:IsShown() and page.body.picture:GetTexture(), "pic1427")
     _G.SpokenZones = nil
-    C.tabs.fakeother = nil
-    local quests = C:Tab("quests")
-    Expect("the Quests tab names its quests of a dungeon for the others' links",
-        quests.placeLink({ mapID = 1427, dungeon = 229 }):match("^Quests of this place %(%d+%)$") ~= nil, true)
-    Expect("...of a zone", quests.placeLink({ mapID = 1427 }):match("^Quests of this place %(%d+%)$") ~= nil, true)
-    Expect("...and nothing of a place with none", quests.placeLink({ mapID = 1 }), nil)
-    quests.openPlace({ mapID = 1427, dungeon = 229 })
-    Expect("its page of a dungeon, from another tab's link", page.title.text .. "|" .. tostring(_G.SpokenCompendium:IsOpen("quests")),
-        "Blackrock Spire|true")
-    Expect("...with the zone of its entrance opened to it", RowFor("Blackrock Spire") ~= nil and RowFor("Blackrock Spire").selected, true)
-    quests.openPlace({ mapID = 1429 })
-    Expect("...of a zone", page.title.text, "Elwynn Forest")
-    quests.openPlace({ mapID = 1415 })
-    Expect("...of a continent", page.title.text, "Eastern Kingdoms")
-    quests.openPlace({ mapID = 1427, dungeon = 229 })
+    list = Shown()
+    Click("Searing Gorge")
+    list = Shown()
+    Click("Blackrock Spire")
     list = Shown()
 end
 

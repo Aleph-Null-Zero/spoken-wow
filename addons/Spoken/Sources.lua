@@ -37,7 +37,7 @@ function Sources:Register(key, info)
         about = info.about,
         order = info.order or 100,
         queueLimit = info.queueLimit,
-        -- 0.55 is upstream's figure; it absorbs a duration that is slightly short.
+        -- Absorbs a recorded duration that is slightly short.
         interClipGap = info.interClipGap or 0.55,
         channel = info.channel,
         admit = info.admit,
@@ -70,8 +70,8 @@ end
 
 --- Whether the player has switched this part of Spoken off in the settings. Off, the addon
 --- stays installed and loaded and nothing it sends is played. The player's own switch, not the
---- client's addon list, which only changes at the next reload: this one needs none. `part` is a source or its key: the settings ask about a
---- part by key whether or not it is installed.
+--- client's addon list, which only changes at the next reload: this one needs none. `part` is a
+--- source or its key: the settings ask about a part by key whether or not it is installed.
 function Sources:IsTurnedOff(part)
     local key = type(part) == "table" and part.key or part
     local parts = Addon.db and Addon.db.profile.Parts
@@ -124,7 +124,7 @@ end
 -- (a duplicate, a file the probe did not find, a muted channel, a part turned off) are otherwise
 -- seen nowhere.
 local function Noted(clip, how, result, why)
-    if not result and why and Developer then
+    if not result and why then
         Developer:Log("player", "%s refused %s: %s", how, Developer.Describe(clip), tostring(why))
     end
     return result, why

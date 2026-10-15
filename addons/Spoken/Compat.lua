@@ -2,19 +2,17 @@ setfenv(1, SpokenEnv)
 
 --------------------------------------------------------------------------- polyfills
 --
--- What the legacy clients lack of the Lua the rest of this addon is written in.
--- Lifted from the quests addon. Written into the environment, never into _G, so other
--- addons on those clients see their own Lua and not ours.
+-- What the legacy clients lack of the Lua the rest of this addon is written in. Written into
+-- the environment, never into _G, so other addons on those clients see their own Lua and not
+-- ours.
 --
--- Load order note: this file loads last, and that is fine -- nothing above calls
--- `select`, `hooksecurefunc` or the rest at load time, only from functions that run
--- after login.
+-- This file loads last, which is fine: nothing above calls `select`, `hooksecurefunc` or the
+-- rest at load time, only from functions that run after login.
 
 -- Patch 11.0.2 removed the legacy global AddOn-management API. Current
 -- Classic clients expose the same operations through C_AddOns, with the
 -- character/addon argument order reversed for GetAddOnEnableState.
--- Keep these shims private to VoiceOver's environment so other addons are
--- not affected.
+-- Kept private to Spoken's environment so other addons are not affected.
 if C_AddOns then
     GetNumAddOns = GetNumAddOns or C_AddOns.GetNumAddOns
     GetAddOnInfo = GetAddOnInfo or C_AddOns.GetAddOnInfo
@@ -177,11 +175,6 @@ end
 
 -- Per-client overrides. Loaded last, so everything it replaces already exists. Each block
 -- writes into the environment, never into _G, which is the whole point of the environment.
---
--- Only the playback half of VoiceOverRedux's Compatibility.lua lives here so far: what the
--- frame and model overrides need arrives with the player's UI. The quest-side policy that
--- used to sit inside these functions -- toggling the NPC's own greeting off on 1.12 when
--- AutoToggleDialog is set -- does not: that is the quests addon's, and it hooks the queue.
 
 --------------------------------------------------------------------------------- 1.12
 if Version.IsLegacyVanilla then
@@ -393,7 +386,7 @@ if Version.IsLegacyBurningCrusade or Version.IsLegacyWrath then
 
         Addon:CancelTimer(soundData.stopSoundTimer, true)
         soundData.stopSoundTimer = nil
-        -- Upstream left the handle set here, so a stopped clip still looked stoppable.
+        -- Cleared, or a stopped clip would still look stoppable.
         soundData.handle = nil
 
         PlaySilence() -- Instantly interrupt the VO sound
@@ -415,7 +408,7 @@ end
 --
 -- Everything the UI builds goes through this file's CreateFrame, which applies what an
 -- old client lacks (SetShown, SetSize, SetResizeBounds, Get*Texture, HookScript...) as
--- mixins and overrides on the frame it returns. Lifted from the quests addon.
+-- mixins and overrides on the frame it returns.
 
 local RegionMixins = {}
 local RegionOverrides = {}

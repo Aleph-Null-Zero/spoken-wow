@@ -194,6 +194,12 @@ Expect("locked, they leave the wheel to the camera", wheelOn, false)
 Subtitle.frame:GetScript("OnMouseWheel")(Subtitle.frame, 1)
 Expect("...and a turn that reaches them changes nothing", cfg.SubtitleScale, before)
 _G.SpokenEnv.Addon.db.profile.Frame.LockFrame = false
+Subtitle:TakeWheel()
+Expect("...unlocked, they take it again", wheelOn, true)
+Subtitle.frame:Hide()
+Subtitle:TakeWheel()
+Expect("...and give it back once they hide", wheelOn, false)
+Subtitle.frame:Show()
 ctrl = false
 _G.IsControlKeyDown, _G.IsShiftKeyDown = hadCtrl, hadShift
 Subtitle:Update()

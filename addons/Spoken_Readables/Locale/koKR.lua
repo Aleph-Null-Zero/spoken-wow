@@ -92,7 +92,6 @@ L.READABLE_NOT_FOUND = "아직 찾지 못한 것입니다. 세상에서 열어 �
 L.READABLE_SOURCES = "얻는 곳"
 L.OPEN_IN_COMPENDIUM = "아제로스 백과사전에서 열기"
 L.OPEN_READABLE_IN_COMPENDIUM_TIP = "아제로스 백과사전에서 이 읽을거리의 내용을 다른 모든 읽을거리와 나란히 봅니다."
-L.PLACE_LINK_WRITINGS_FMT = "이곳의 글 (%1$d)"
 L.FOUND_FMT = "%2$d개 중 %1$d개 찾음"
 L.READABLES_IN_FMT = "위치: %1$s"
 L.READABLES_MORE_FMT = " 외 %1$d곳"

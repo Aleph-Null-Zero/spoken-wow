@@ -38,7 +38,7 @@
 -- re-labelling what is already here is the honest arrangement rather than a second control
 -- stacked on space that does not exist.
 
-local ADDON_NAME, SpokenBooks = ...
+local _, SpokenBooks = ...
 local L = SpokenBooks.L
 
 local GAP = 4
@@ -66,7 +66,7 @@ end
 --- tooltip to use: DialogueUI hides the game's with the rest of the interface.
 function SpokenBooks:NewOpenButton(parent, tooltip)
 	if not (_G.Spoken and Spoken.CreateRoundButton) then return nil end
-	local icon = _G.SpokenCompendium and SpokenCompendium.ICON or [[Interface\Icons\INV_Misc_Book_11]]
+	local icon = _G.SpokenCompendium and SpokenCompendium.ICON or 5341597
 	local button = Spoken:CreateRoundButton(parent, "icon", nil, icon)
 	-- The tome is a dark picture already: the ring's vignette at full strength left it black.
 	if type(button.vignette) == "table" and button.vignette.SetAlpha then button.vignette:SetAlpha(0.35) end

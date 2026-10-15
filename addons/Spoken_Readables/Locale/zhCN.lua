@@ -92,7 +92,6 @@ L.READABLE_NOT_FOUND = "你还没有找到它。在世界中打开它后即可�
 L.READABLE_SOURCES = "获取途径"
 L.OPEN_IN_COMPENDIUM = "在艾泽拉斯百科中打开"
 L.OPEN_READABLE_IN_COMPENDIUM_TIP = "在艾泽拉斯百科中查看这份读物的文字，以及其他所有读物的文字。"
-L.PLACE_LINK_WRITINGS_FMT = "此地的文献 (%1$d)"
 L.FOUND_FMT = "已找到 %1$d / %2$d"
 L.READABLES_IN_FMT = "位于%1$s"
 L.READABLES_MORE_FMT = "等%1$d处"

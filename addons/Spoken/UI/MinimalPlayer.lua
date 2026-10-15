@@ -14,7 +14,7 @@ local WORDS_TOP, PROGRESS_GAP, FOOT = 44, 6, 27
 -- The content's inset from the frame's top and right; its left edge clears the portrait.
 local INSET, BESIDE_PORTRAIT, NO_PORTRAIT = 18, 96, 16
 -- Between the name or the title and the header's buttons; between the buttons.
-local CONTROLS_CLEAR, ROUND_GAP = 8, 4
+local CONTROLS_CLEAR, ROUND_GAP = 8, Actions.ROUND_GAP
 -- The narrowest the window goes, and the room the portrait takes left of the panel.
 local function MinWidth() return Addon:Profile("Frame").HidePortrait and 200 or 280 end
 local function PortraitWidth() return Addon:Profile("Frame").HidePortrait and 80 or 0 end
@@ -69,8 +69,8 @@ function MinimalPlayer:Initialize(original)
     frame:SetScript("OnMouseUp", function(_, button)
         if button == "RightButton" then self:ToggleMenu() end
     end)
-    -- The captions take the wheel first and hand it here when Ctrl is held.
-    frame:EnableMouseWheel(true)
+    -- It takes the wheel only while Ctrl is held over it, unlocked (MinimalPlayer:Tick), so the
+    -- camera zooms otherwise. The captions take the wheel first and hand it here when Ctrl is held.
     frame:SetScript("OnMouseWheel", function(_, delta) self:Wheel(delta) end)
     frame.spokenWheel = function(delta) return self:Wheel(delta) end
     frame:Hide()
@@ -169,6 +169,7 @@ function MinimalPlayer:Initialize(original)
     frame:SetScript("OnHide", function()
         self.menu:Hide()
         self:HideTooltip()
+        Actions.DropWheel(frame)
     end)
 end
 
@@ -412,6 +413,7 @@ function MinimalPlayer:SetVisible(visible, immediate)
 end
 
 function MinimalPlayer:Tick(elapsed)
+    Actions.TakeWheel(self.frame, Addon:IsFrameLocked())
     if not self.wanted then return end
     -- Once "(Stopped)" has faded out, the title gets its room back.
     if self.tail:Step(elapsed) then self:Count(Waiting()) end

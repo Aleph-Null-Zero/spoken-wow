@@ -5,7 +5,7 @@
 -- DialogueUI loads every page of a book as it opens it and leaves the game on the last, so Play
 -- reads the book from its first page, not from the page the game is on.
 
-local ADDON_NAME, SpokenBooks = ...
+local _, SpokenBooks = ...
 local L = SpokenBooks.L
 
 local ROUND, ROUND_GAP = 24, 4
@@ -386,9 +386,9 @@ local function Collect(marks)
 	for index, data in ipairs(scroll and type(scroll.content) == "table" and scroll.content or {}) do
 		local text = type(data) == "table" and data.text
 		local split = type(text) == "string" and text ~= "" and Spoken:SplitCaption(text)
-		if split and table.getn(split) > 0 then
+		if split and #split > 0 then
 			table.insert(paragraphs, { index = index, text = text, words = marks.MarkLinks(text, split) })
-			byIndex[index] = table.getn(paragraphs)
+			byIndex[index] = #paragraphs
 		end
 	end
 	return paragraphs, byIndex

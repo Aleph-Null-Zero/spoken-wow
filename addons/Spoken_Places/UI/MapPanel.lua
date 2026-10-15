@@ -8,7 +8,7 @@
 -- showing -- not where the player stands, since every place is known and what is missing is a
 -- description someone can write from anywhere.
 
-local ADDON_NAME, SpokenZones = ...
+local _, SpokenZones = ...
 local L = SpokenZones.L
 
 local Art = SpokenZones.Art

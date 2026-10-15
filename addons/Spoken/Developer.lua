@@ -102,7 +102,7 @@ end
 --- function runs, with `print` caught for the time it takes, so the two never say different things.
 --- The modules' own come after, each from its AddDiagnostics.
 local function SpokenLines(lines)
-    if not (Addon.enabled and Addon.PrintDiagnostics) then
+    if not Addon.enabled then
         table.insert(lines, "Spoken " .. tostring(AddonVersion) .. ": not enabled yet")
         return
     end
@@ -132,7 +132,7 @@ function Developer:Context()
         table.insert(lines, format("module %s (%s): %s", key, tostring(source.addon),
             Sources:IsTurnedOff(source) and "turned off" or "on"))
     end
-    local queue = SoundQueue.sounds or {}
+    local queue = SoundQueue.sounds
     if table.getn(queue) == 0 then
         table.insert(lines, "queue empty")
     end

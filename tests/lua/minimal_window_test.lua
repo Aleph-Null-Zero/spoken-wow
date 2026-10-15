@@ -240,6 +240,33 @@ T.frame:GetScript("OnMouseWheel")(T.frame, 1)
 Expect("locked, Ctrl and the wheel leave Window Size alone", math.abs(frame.FrameScale - 0.7) < 1e-9, true)
 Expect("...and scroll the words instead", T.manualScroll, true)
 frame.LockFrame = false
+-- The window takes the wheel only while Ctrl is held over it, unlocked: the camera zooms otherwise.
+do
+    local wheelOn
+    local window = M.frame
+    window.IsMouseOver = function() return true end
+    window.EnableMouseWheel = function(_, on) wheelOn = on end
+    window.spokenWheelOn = nil
+    local function Poll() window:GetScript("OnUpdate")(window, 0) end
+    ctrl = false
+    Poll()
+    Expect("the small window leaves the wheel to the camera without Ctrl", wheelOn, nil)
+    ctrl = true
+    Poll()
+    Expect("...takes it while Ctrl is held over it", wheelOn, true)
+    frame.LockFrame = true
+    Poll()
+    Expect("...gives it back while locked", wheelOn, false)
+    frame.LockFrame = false
+    Poll()
+    Expect("...takes it again unlocked", wheelOn, true)
+    window:Hide()
+    window:GetScript("OnHide")(window)
+    Expect("...and gives it back once it hides, Ctrl still held", wheelOn, false)
+    window:Show()
+    ctrl = false
+    window.IsMouseOver, window.EnableMouseWheel, window.spokenWheelOn = nil, nil, nil
+end
 ctrl = false
 _G.IsControlKeyDown, _G.IsShiftKeyDown = hadCtrl, hadShift
 env.SoundQueue:RemoveAllSoundsFromQueue()

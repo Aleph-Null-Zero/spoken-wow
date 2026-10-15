@@ -7,15 +7,14 @@ modules add to it, so there is one copy of each piece:
 
 | File | What it holds |
 | --- | --- |
-| `addons/Spoken/UI/Compendium.lua` | The window (movable, resizable, closes on Escape, folds down to the list), the list (`C.NewList`: search box, filter menu, banners, cards, rows), the page (`C.NewPage`: title, line under it, Play, Report, words, picture, links), `C:Register` for a tab. |
+| `addons/Spoken/UI/Compendium.lua` | The window (movable, resizable, closes on Escape, folds down to the list), the list (`C.NewList`: search box, filter menu, banners, cards, rows), the page (`C.NewPage`: title, line under it, Play, Report, words, picture), `C:Register` for a tab. |
 | `addons/Spoken/UI/TextView.lua` | The scrolling, wrapping text with its scroll bar and edge fade, and the picture above the words (`SetPicture`). The words are drawn at Text Size. |
 | `addons/Spoken/UI/Face.lua` | The round face on the player windows, and the badge for a line's kind (`zone` uses the world map icon). |
 
 `Compendium.lua` also holds what every tab lays places out by: `C.WORLD` (947), `C.CONTINENTS`
 (Kalimdor 1414 and the Eastern Kingdoms 1415), `C.CITY_IN`, `C.BATTLEGROUNDS`, `C.ContinentOf`,
-`C.OpenAround`, `C.OpenZone` and `C.PlayerZone`. The other tabs link to a place's story through
-`C.PlaceLinks` and show its picture through `C.PlacePicture`. A tab takes part by giving
-`placeLink(place)` and `openPlace(place)` when it registers.
+`C.OpenAround`, `C.OpenZone` and `C.PlayerZone`. The other tabs show a place's picture through
+`C.PlacePicture`.
 
 The Places tab registers as `places` (`UI/LoreWindow.lua`, `SetupLoreWindow`), label Places, after Quests
 and before Readables. Its Unlock switch, Unlock Undiscovered Places, is on Spoken's page. The spellbook

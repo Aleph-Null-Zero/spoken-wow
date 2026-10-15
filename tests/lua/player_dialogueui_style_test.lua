@@ -646,6 +646,37 @@ Skin:Tick(0.05)
 Expect("...then fades in as one image", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.content:GetAlpha(), "true 1")
 Skin:Tick(0.4)
 Expect("...itself again once in", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.frame:GetAlpha(), "false 1")
+-- The window takes the wheel only while Ctrl is held over it, unlocked, and never once it is deaf to
+-- the pointer for becoming one image: the camera zooms otherwise.
+do
+    local wheelOn
+    local window = Skin.frame
+    window.IsMouseOver = function() return true end
+    window.EnableMouseWheel = function(_, on) wheelOn = on end
+    window.spokenWheelOn = nil
+    ctrl = false
+    Skin:Tick(0.01)
+    Expect("the window leaves the wheel to the camera without Ctrl", wheelOn, nil)
+    ctrl = true
+    Skin:Tick(0.01)
+    Expect("...takes it while Ctrl is held over it", wheelOn, true)
+    Skin:Deafen()
+    Expect("...gives it back as it goes deaf, before it becomes one image", wheelOn, false)
+    Skin:Undeafen()
+    Skin:Tick(0.01)
+    frameCfg.LockFrame = true
+    Skin:Tick(0.01)
+    Expect("...gives it back while locked", wheelOn, false)
+    frameCfg.LockFrame = false
+    Skin:Tick(0.01)
+    Expect("...takes it again unlocked", wheelOn, true)
+    window:Hide()
+    window:GetScript("OnHide")(window)
+    Expect("...and gives it back once it hides, Ctrl still held", wheelOn, false)
+    window:Show()
+    ctrl = false
+    window.IsMouseOver, window.EnableMouseWheel, window.spokenWheelOn = nil, nil, nil
+end
 do
     -- A client with no frame buffers: the paper and what is on it fade in turn.
     local SetIsFrameBuffer = Skin.frame.SetIsFrameBuffer

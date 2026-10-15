@@ -5,7 +5,7 @@
 -- Settings API's, and a client that does not offer one must still leave the addon
 -- configurable. /spr is what the Print below points at when that happens.
 
-local ADDON_NAME, SpokenBooks = ...
+local _, SpokenBooks = ...
 
 local L = SpokenBooks.L
 
@@ -116,10 +116,8 @@ function SpokenBooks:SetupOptions()
 	local function PackRow(addon, name, url)
 		listed[addon] = true
 		return layout:Download(name, function()
-			for _, pack in ipairs(SpokenBooks:GetAudioPacks()) do
-				if pack.addon == addon then
-					return "ok", (GetMeta and GetMeta(addon, "Version")) or W.MODULE_INSTALLED
-				end
+			if Installed(addon) then
+				return "ok", (GetMeta and GetMeta(addon, "Version")) or W.MODULE_INSTALLED
 			end
 		end, W.MODULE_DOWNLOAD, function()
 			SpokenBooks:ShowCopyLink(url or AUDIO_URL, L.OPT_DOWNLOAD_ADDRESS)

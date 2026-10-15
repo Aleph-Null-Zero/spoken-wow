@@ -90,12 +90,12 @@ local function PageEnded(clip, finished)
 	end
 	local span = clip.span
 	local before = span and clip.length and span.before + clip.length
-	while table.getn(entry.pages) > 0 do
+	while #entry.pages > 0 do
 		local id = table.remove(entry.pages, 1)
 		local nextClip = SpokenBooks:ClipFor(id)
 		if nextClip then
 			Follow(nextClip)
-			nextClip.continues = table.getn(entry.pages) > 0
+			nextClip.continues = #entry.pages > 0
 			nextClip.span = before and nextClip.length and { before = before, total = span.total } or nil
 			if Taken(SpokenBooks.source and SpokenBooks.source:Continue(nextClip), nextClip) then
 				entry.clip = nextClip

@@ -219,7 +219,8 @@ function Addon:InvokeQuestHandler(event, source, manual)
         Debug:Record("handler-missing", format("No handler exists for %s", tostring(event)))
         return false
     end
-    if not manual and not self:IsAutoplayOn() then
+    -- Only a read waits on autoplay: a window closing must still stop a line the Play button started.
+    if not manual and event ~= "QUEST_FINISHED" and event ~= "GOSSIP_CLOSED" and not self:IsAutoplayOn() then
         Debug:Record("autoplay-off", format("Not reading %s: autoplay is off", event))
         return false
     end
@@ -864,7 +865,7 @@ function Addon:OnInitialize()
 
     if next(self.eventBridgeErrors) then
         Debug:Record("event-bridge-partial", format("Quest watcher is active; %d optional bridge component(s) failed",
-            getn(self.eventBridgeErrors)))
+            #self.eventBridgeErrors))
     else
         Debug:Record("event-bridge-ready", "Stabilized quest watcher and deferred greeting bridge are registered")
     end
@@ -1146,7 +1147,7 @@ end
 --- will be read for keeps its greeting: that is what the lookups below are for.
 ---@param event string
 function Addon:MuteGreetingAhead(event)
-    if not Spoken.MuteGameDialogueAhead or not self:IsAutoplayOn() or self.dataModulesPending
+    if not Spoken.MuteGameDialogueAhead or not self:IsPageOn(event) or not self:IsAutoplayOn() or self.dataModulesPending
         or not Player.source then
         return
     end
@@ -1173,7 +1174,8 @@ end
 ---@param textIsCurrent boolean?
 ---@return string?
 function Addon:ExpectedLine(event, textIsCurrent)
-    if not self:IsAutoplayOn() or self.dataModulesPending or not Player.source then
+    if not self:IsPageOn(event) or not self:IsAutoplayOn() or self.dataModulesPending or not Player.source
+        or (Spoken.ReadsHere and not Spoken:ReadsHere()) then
         return nil
     end
     local speech, quest = SPEECH_EVENTS[event], QUEST_EVENTS[event]

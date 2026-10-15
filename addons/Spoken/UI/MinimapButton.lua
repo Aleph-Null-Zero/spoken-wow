@@ -5,8 +5,7 @@ setfenv(1, SpokenEnv)
 --
 -- Left-click opens settings. Right-click opens a menu: the player's entries, then each
 -- source's, grouped in source order. Middle-click stops or replays. All three are
--- rebindable (Minimap.Commands in the profile), which is what keeps VoiceOverRedux's three-configurable-clicks
--- behaviour for the players who use it.
+-- rebindable (Minimap.Commands in the profile).
 Minimap = { entries = {} }
 
 local ICON = [[Interface\AddOns\Spoken\Textures\MinimapButton]]

@@ -712,9 +712,7 @@ function Transcript:Initialize()
         GameTooltip:AddLine(L.TRANSCRIPT_HINT, 1, .82, 0, true)
         GameTooltip:Show()
     end)
-    local function HideTooltip()
-        if GameTooltip:GetOwner() == frame then GameTooltip_Hide() end
-    end
+    local function HideTooltip() Actions.HideTipFor(frame) end
     frame:SetScript("OnLeave", HideTooltip)
     frame:SetScript("OnHide", HideTooltip)
     self.expand = CreateFrame("Button", nil, frame)
@@ -730,9 +728,7 @@ function Transcript:Initialize()
         GameTooltip:SetText(Expanded() and L.TRANSCRIPT_COLLAPSE or L.TRANSCRIPT_EXPAND)
         GameTooltip:Show()
     end)
-    local function HideExpandTooltip()
-        if GameTooltip:GetOwner() == self.expand then GameTooltip_Hide() end
-    end
+    local function HideExpandTooltip() Actions.HideTipFor(self.expand) end
     self.expand:SetScript("OnLeave", HideExpandTooltip)
     self.expand:SetScript("OnHide", HideExpandTooltip)
     self.labels = {}

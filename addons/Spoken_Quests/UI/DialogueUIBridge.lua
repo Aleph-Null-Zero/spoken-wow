@@ -123,7 +123,7 @@ local function Collect()
         if not fs.isTranslation and (fs.ttsFlag ~= nil or fs.isTranslation == false) then
             local text = fs:GetText()
             local words = type(text) == "string" and Spoken:SplitCaption(text)
-            if words and table.getn(words) > 0 then
+            if words and #words > 0 then
                 table.insert(paragraphs, { fs = fs, text = text, shown = text, words = Marks.MarkLinks(text, words),
                     color = Marks.ColorFor(fs:GetTextColor()) })
             end
@@ -255,7 +255,7 @@ function Bridge.Expect(handler)
     end
     local ok, text = pcall(Addon.ExpectedLine, Addon, event, true)
     local words = ok and type(text) == "string" and Spoken:SplitCaption(text)
-    if words and table.getn(words) > 0 then
+    if words and #words > 0 then
         state.pending = { event = event, words = words, untilTime = GetTime() + HOLD }
     end
 end

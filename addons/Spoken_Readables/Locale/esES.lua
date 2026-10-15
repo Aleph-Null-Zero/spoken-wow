@@ -101,7 +101,6 @@ L.READABLE_NOT_FOUND = "Aún no lo has encontrado. Ábrelo en el mundo para leer
 L.READABLE_SOURCES = "Dónde encontrarlo"
 L.OPEN_IN_COMPENDIUM = "Abrir en el Compendio de Azeroth"
 L.OPEN_READABLE_IN_COMPENDIUM_TIP = "El texto de esta lectura en el Compendio de Azeroth, junto al de todas las demás lecturas."
-L.PLACE_LINK_WRITINGS_FMT = "Escritos de este lugar (%1$d)"
 L.FOUND_FMT = "%1$d de %2$d encontrados"
 L.READABLES_IN_FMT = "Ubicación: %1$s"
 L.READABLES_MORE_FMT = " y %1$d más"
