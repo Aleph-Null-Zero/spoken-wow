@@ -3,8 +3,9 @@
 -- picked an option to reach, and they went quiet along with the greeting. On the gossip
 -- module. Run with `make test-player`.
 --
--- Both gossip APIs are covered, because picking an option is noticed through a hook on each:
--- C_GossipInfo.SelectOption on Blizzard's clients and SelectGossipOption on the 1.12 one.
+-- Every way of picking an option is covered, because it is noticed through a hook on each:
+-- C_GossipInfo.SelectOption (the game's window) and SelectOptionByIndex (DialogueUI's) on current
+-- clients, and SelectGossipOption on the 1.12 one.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
@@ -19,6 +20,8 @@ local Expect, Failures = require("queue_helpers").Expecter(print)
 local GREETING = "Well met. How can I help?"
 local BANK = "Where is the bank?"
 local DIRECTIONS = "The bank is past the fountain."
+-- The option picked to reach the page of the clip that started last.
+local lastTitle
 
 local function Boot(client)
     stub.SetClient(client); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -45,6 +48,7 @@ local function Boot(client)
     local played = {}
     _G.Spoken:RegisterCallback("CLIP_STARTED", function(clip)
         table.insert(played, clip.fileName)
+        lastTitle = clip.title
     end)
     return G, played
 end
@@ -61,10 +65,10 @@ local function Talk()
     stub.Advance(1)
 end
 
-local function AskForTheBank()
+local function AskForTheBank(byIndex)
     -- The greeting is cut short, the way a player clicking through it leaves it.
     _G.Spoken:StopAll()
-    stub.PickGossipOption(BANK, DIRECTIONS)
+    stub.PickGossipOption(BANK, DIRECTIONS, byIndex)
     stub.Advance(1)
 end
 
@@ -101,6 +105,15 @@ for _, client in ipairs({ "16001", "1.12" }) do
     Talk()
     Expect(client .. ": a pick on the last visit does not carry over", Played(played), "(nothing)")
     Leave()
+
+    -- DialogueUI picks an option by its index, not its id.
+    if _G.C_GossipInfo then
+        Talk()
+        AskForTheBank(true)
+        Expect(client .. ": an option picked by index leads to its directions too", Played(played), "directions-hash")
+        Expect(client .. ": ...labelled with the option", lastTitle, '"' .. BANK .. '"')
+        Leave()
+    end
 
     G.Addon.db.profile.Audio.GossipFrequency = Frequency.Never
     Talk()

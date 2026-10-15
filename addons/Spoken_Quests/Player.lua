@@ -141,6 +141,9 @@ function Player:Enqueue(soundData, asked)
             Enums.SoundEvent:GetName(soundData.event) or tostring(soundData.event),
             tostring(soundData.questID or "none"), soundData.title or soundData.name or "",
             table.concat(Language:ResolutionOrder(), " then "), tostring(why)))
+        if Spoken.EndMuteGameDialogueAhead then
+            Spoken:EndMuteGameDialogueAhead()
+        end
         return false
     end
 

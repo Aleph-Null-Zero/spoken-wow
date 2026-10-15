@@ -455,19 +455,24 @@ function Addon:SetupEvents()
 
     -- Which option the player picked, for the next page's label.
     if C_GossipInfo and C_GossipInfo.SelectOption then
-        hooksecurefunc(C_GossipInfo, "SelectOption", function(optionID)
-            gossipOptionPicked = true
-            optionID = NotSecret(optionID)
-            if lastGossipOptions and optionID then
-                for _, info in ipairs(lastGossipOptions) do
-                    if NotSecret(info.gossipOptionID) == optionID then
-                        selectedGossipOption = NotSecret(info.name)
-                        break
+        -- The game's window picks by id, DialogueUI by the option's index in the page.
+        for name, field in pairs({ SelectOption = "gossipOptionID", SelectOptionByIndex = "orderIndex" }) do
+            if C_GossipInfo[name] then
+                hooksecurefunc(C_GossipInfo, name, function(pick)
+                    gossipOptionPicked = true
+                    pick = NotSecret(pick)
+                    if lastGossipOptions and pick then
+                        for _, info in ipairs(lastGossipOptions) do
+                            if NotSecret(info[field]) == pick then
+                                selectedGossipOption = NotSecret(info.name)
+                                break
+                            end
+                        end
+                        lastGossipOptions = nil
                     end
-                end
-                lastGossipOptions = nil
+                end)
             end
-        end)
+        end
     elseif SelectGossipOption then
         hooksecurefunc("SelectGossipOption", function(index)
             gossipOptionPicked = true

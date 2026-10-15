@@ -225,6 +225,17 @@ Expect("...past the mute's own deadline too", world.cvars.Sound_EnableDialog, "0
 Spoken:StopAll()
 Expect("...and the empty queue restores it", world.cvars.Sound_EnableDialog, "1")
 
+-- The mute is taken for the NPC's lines; the page then read has none a pack holds.
+VO, env, Spoken = MuteBoot()
+G.Addon.db.char.hasSeenGossipForNPC = {}
+stub.ShowGossip("Greetings, traveller.")
+Open(G, "GOSSIP_SHOW")
+Expect("a voiced NPC's gossip opening mutes it...", world.cvars.Sound_EnableDialog, "0")
+lookup[GREETING_HASH] = nil
+stub.Advance(0.2)
+Expect("...and its voice is back as soon as the read finds no line", world.cvars.Sound_EnableDialog, "1")
+lookup[GREETING_HASH] = 3
+
 VO, env, Spoken = MuteBoot()
 world.npcGUID = "Creature-0-0-0-0-9999-0"
 stub.ShowGossip("Well met.")

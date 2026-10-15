@@ -252,6 +252,27 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Fixes
 
+- A class name in a quest only that class can take is no longer sent to the site as a stand-in
+  for the player's class, so a paladin quest's "paladin" is not voiced as "adventurer".
+  *([Nucabe](https://github.com/Nucabe))*
+- Silence NPC Voices no longer mutes an NPC when Spoken has no line to play for it. On a client
+  whose language Spoken has its own gossip text for, every NPC counted as voiced even with no voice
+  pack installed, so the game's greeting was cut for nothing. An NPC counts as voiced only where a
+  pack holds a line for it, and the game's voice comes back as soon as a window turns out to have
+  none. *([Nucabe](https://github.com/Nucabe))*
+- A quest from a poster or an item shows a posted notice or the item's icon when played from the
+  quest log or Azeroth's Compendium, as it does when its dialog opens. It showed the book.
+  *([Nucabe](https://github.com/Nucabe))*
+- A writing keeps its icon as its voice moves to the next page. A note showed its letter icon on
+  the first page and the generic book from the second, and a tablet lost its stone.
+  *([Nucabe](https://github.com/Nucabe))*
+- With DialogueUI, the pages a gossip option leads to, such as a guard's directions, are read again
+  when NPC Greetings is Once per NPC. Picking an option in DialogueUI was not noticed, so they were
+  held back with the greeting. *([Nucabe](https://github.com/Nucabe))*
+- A voice pack's row on the Quests and Gossip pages shows its version once the packs have loaded after
+  /reload. It said Not loaded until you left the page and came back. *([Nucabe](https://github.com/Nucabe))*
+- Azeroth's Compendium opens in a dungeon without an error on Quests and Readables. The game hides
+  where you stand there, so the tab opens on the first continent. *([Nucabe](https://github.com/Nucabe))*
 - Play a Test Line on the Quests and Gossip pages shows a line of words in the subtitle and the Small
   Window, where it showed an empty box. *([Nucabe](https://github.com/Nucabe))*
 - With the DialogueUI narrator style, a queued line's page flew in with no window to go behind.

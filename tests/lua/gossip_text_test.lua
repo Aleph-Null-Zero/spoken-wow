@@ -30,7 +30,7 @@ local function LoadGossipText()
     return true
 end
 
-local function Boot(locale)
+local function Boot(locale, files)
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     stub.SetLocale(locale)
     _G.SpokenGossipSettings = nil
@@ -39,7 +39,7 @@ local function Boot(locale)
     local loaded = LoadGossipText()
     -- The stub's English pack, with the files and no gossip tables: only the module's text finds them.
     G.DataModules:Register("TestPack", {
-        SoundLengthLookupByFileName = { [HASH] = 1, [ALIAS] = 1 },
+        SoundLengthLookupByFileName = files or { [HASH] = 1, [ALIAS] = 1 },
         GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
     })
     stub.Advance(2)
@@ -55,6 +55,10 @@ Expect("deDE: ...and the guard counts as having gossip", G.DataModules:HasGossip
 
 local aliased = { event = G.Enums.SoundEvent.Gossip, fileName = LINE }
 Expect("deDE: a line no pack holds plays under its alias", G.DataModules:ResolveSoundFile(aliased) and aliased.fileName, ALIAS)
+
+-- The text names every NPC's lines whether or not a pack voices them, so it alone says nothing.
+G = Boot("deDE", {})
+Expect("deDE: ...but not where no pack holds its audio", G.DataModules:HasGossipFor({ unitGUID = GUARD }), false)
 
 G = Boot("enUS")
 Expect("enUS: no locale's text is built on an English client", rawget(G.Core, "GossipText"), nil)

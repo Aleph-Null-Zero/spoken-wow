@@ -428,7 +428,7 @@ function _G.GetRewardText() return world.rewardText end
 function _G.UnitName(unit) return unit == "player" and (world.playerName or "Tester") or world.npcName end
 -- Nil unless a test sets them: a class or race the stub made up would be swapped out of every
 -- text a test captures, and only the tests about that swap should see it happen.
-function _G.UnitClass() return world.playerClass, world.playerClassFile end
+function _G.UnitClass() return world.playerClass, world.playerClassFile, world.playerClassID end
 function _G.UnitRace() return world.playerRace, world.playerRaceFile end
 function _G.GetRealmName() return "Realm" end
 function _G.UnitGUID() return world.npcGUID end
@@ -651,11 +651,12 @@ M.gossipAPI = {
     GetOptions = function()
         local infos = {}
         for i, name in ipairs(world.gossipOptions or {}) do
-            infos[i] = { name = name, gossipOptionID = GossipOptionID(i) }
+            infos[i] = { name = name, gossipOptionID = GossipOptionID(i), orderIndex = i }
         end
         return infos
     end,
     SelectOption = function() end,
+    SelectOptionByIndex = function() end,
 }
 --- The pre-namespace pair: options come back flattened as name, type, name, type...
 function _G.GetGossipOptions()
@@ -668,11 +669,14 @@ function _G.GetGossipOptions()
 end
 function _G.SelectGossipOption() end
 
---- The player clicking one of the page's options, through whichever API the client has.
-function M.SelectGossipOption(name)
+--- The player clicking one of the page's options, through whichever API the client has. DialogueUI
+--- picks by index (`byIndex`), the game's own window by id.
+function M.SelectGossipOption(name, byIndex)
     for i, option in ipairs(world.gossipOptions or {}) do
         if option == name then
-            if _G.C_GossipInfo then
+            if _G.C_GossipInfo and byIndex then
+                _G.C_GossipInfo.SelectOptionByIndex(i)
+            elseif _G.C_GossipInfo then
                 _G.C_GossipInfo.SelectOption(GossipOptionID(i))
             else
                 _G.SelectGossipOption(i)
@@ -684,8 +688,8 @@ function M.SelectGossipOption(name)
 end
 
 --- ...and the NPC answering with `nextText` on a fresh GOSSIP_SHOW.
-function M.PickGossipOption(name, nextText)
-    M.SelectGossipOption(name)
+function M.PickGossipOption(name, nextText, byIndex)
+    M.SelectGossipOption(name, byIndex)
     M.ShowGossip(nextText)
     M.FireEvent("GOSSIP_SHOW")
 end

@@ -365,6 +365,17 @@ end
 local MUTE_AHEAD_SECONDS = 1.5
 local muteAheadTimer
 
+local function LiftMuteAhead()
+    muteAheadTimer = nil
+    -- A line speaking lifts the mute itself when the queue drains. One merely queued --
+    -- held by a gate, or paused since -- may not speak for a long while, and must not
+    -- keep the game's dialogue silent until it does.
+    local head = SoundQueue:GetCurrentSound()
+    if not (head and head.nextSoundTimer) then
+        SoundQueue:MuteGameDialogue(nil)
+    end
+end
+
 --- Mute the game's dialogue now, for a line that will be queued shortly. The client
 --- starts an NPC's greeting as the dialog opens, and a line needs a moment to be read off
 --- the dialog after that: muting only once the line starts cut the greeting off mid-word.
@@ -389,16 +400,16 @@ function SoundQueue:MuteGameDialogueAhead(speakingOn)
     if muteAheadTimer then
         Addon:CancelTimer(muteAheadTimer)
     end
-    muteAheadTimer = Addon:ScheduleTimer(function()
-        muteAheadTimer = nil
-        -- A line speaking lifts the mute itself when the queue drains. One merely queued --
-        -- held by a gate, or paused since -- may not speak for a long while, and must not
-        -- keep the game's dialogue silent until it does.
-        local head = self:GetCurrentSound()
-        if not (head and head.nextSoundTimer) then
-            self:MuteGameDialogue(nil)
-        end
-    end, MUTE_AHEAD_SECONDS)
+    muteAheadTimer = Addon:ScheduleTimer(LiftMuteAhead, MUTE_AHEAD_SECONDS)
+end
+
+--- The read a mute ahead was taken for found no line: give the game's dialogue back now rather
+--- than at the deadline.
+function SoundQueue:EndMuteGameDialogueAhead()
+    if muteAheadTimer then
+        Addon:CancelTimer(muteAheadTimer)
+        LiftMuteAhead()
+    end
 end
 
 -- The channel a clip speaks on, ready for it. Whatever we muted, we cannot speak on, so it

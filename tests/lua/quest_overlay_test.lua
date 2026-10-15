@@ -40,6 +40,8 @@ VO.DataModules:Register("TestPack", {
     -- The quest log has no NPC to ask who gave the quest; the pack says, in English.
     NPCIDLookupByQuestID = { [748] = 2948 },
     NPCNameLookupByNPCID = { [2948] = "Mull Thunderhorn" },
+    ObjectIDLookupByQuestID = { [176] = 5555 },
+    ObjectNameLookupByObjectID = { [5555] = "Wanted Poster" },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
 })
 -- Wait out the deferred data module load that OnInitialize schedules.
@@ -138,6 +140,18 @@ Expect("a Russian client names the quest-log giver in Russian", buttons[748].sou
 stub.Advance(3)
 Expect("...and the other languages' files built nothing there", VO.GiverNames.creature[2948], "Мулл Громовой Рог")
 stub.SetLocale("enUS")
+
+-- A quest a poster gives has no face to draw: its Play in the log shows the notice, as the dialog's
+-- line does, and a creature's keeps its face.
+buttons[748]:Click()
+Expect("a creature's quest in the log keeps its model", VO.Present:Portrait(buttons[748].soundData).kind, "model")
+stub.Advance(3)
+VO.QuestOverlayUI:BindPlayButton(buttons[748], 176, "Wanted: Hogger")
+buttons[748]:Click()
+Expect("a quest from a poster in the log shows a posted notice", VO.Present:Portrait(buttons[748].soundData).texture,
+    [[Interface\Icons\INV_Misc_Note_01]])
+stub.Advance(3)
+VO.QuestOverlayUI:BindPlayButton(buttons[748], 748, "Poison Water")
 VO.GiverNames = nil
 
 

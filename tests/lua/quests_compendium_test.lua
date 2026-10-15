@@ -209,6 +209,12 @@ Measured()
 stub.world.playerMapID = 1429
 Tab:Open()
 Expect("...on the zone the player stands in, never an empty page", page.title.text, "Elwynn Forest")
+-- In an instance the game hides the player's map (#422): it is no zone to look up, not an error.
+stub.Secrets(1429)
+Expect("a hidden map raises no error when the tab opens", pcall(Tab.Open, Tab), true)
+Expect("...and is no zone the player stands in: the tab opens on the first continent", page.title.text,
+    "Eastern Kingdoms")
+stub.Secrets()
 stub.world.playerMapID = nil
 
 local rows

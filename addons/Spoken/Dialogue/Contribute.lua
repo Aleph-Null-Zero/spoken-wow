@@ -471,9 +471,11 @@ end
 ---
 --- Class and race are replaced wherever they occur as words, so a warrior reading "a warrior's
 --- discipline" sends "a $c's discipline" -- a known cost, taken over voicing someone's class
---- at every other player. $G cannot be undone at all: the client picked one side of the
---- branch, and the words of the other side are not on screen.
-function Contribute:Detemplate(text)
+--- at every other player. The class is kept as written on a quest that only that class can take
+--- (questID), since the word there is the quest's own whichever way Blizzard wrote it. $G cannot
+--- be undone at all: the client picked one side of the branch, and the words of the other side
+--- are not on screen.
+function Contribute:Detemplate(text, questID)
     local swaps = {}
     local function add(word, token)
         if type(word) == "string" and word ~= "" then
@@ -499,8 +501,13 @@ function Contribute:Detemplate(text)
             end
         end
     end
+    local localized, classFile, classID
     if UnitClass then
-        local localized, classFile = UnitClass("player")
+        localized, classFile, classID = UnitClass("player")
+    end
+    local quests = _G.SpokenQuestsCompendium and _G.SpokenQuestsCompendium.quests
+    local quest = questID and quests and quests[questID]
+    if localized and not (quest and classID and quest.classes == 2 ^ (classID - 1)) then
         addCased(localized, "$C", "$c")
         -- The locales that inflect a class by gender (deDE "Kriegerin") render the form for
         -- this character, which is the one UnitClass already answered; both are asked for in
@@ -563,7 +570,7 @@ function Contribute:Capture()
         fields[#fields + 1] = { "title", GetTitleText and NotSecret(GetTitleText()) or "" }
         -- The second value is what Gather keys the line on: the quest, the moment and who said
         -- it. The text is left out on purpose -- the same panel read twice is one line.
-        return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text)),
+        return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text, questID)),
             format("q:%s:%s:%s", tostring(questID or 0), EVENT_PATHS[event], tostring(NPCID() or ""))
     end
 
@@ -755,7 +762,7 @@ function Contribute:CaptureFromLog(questID, title)
     fields[#fields + 1] = { "event", "accept" }
     fields[#fields + 1] = { "title", title or "" }
     fields[#fields + 1] = { "from", "log" }
-    return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text))
+    return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text, questID))
 end
 
 --- Whether the quest log should offer Contribute in place of a Play it cannot give.

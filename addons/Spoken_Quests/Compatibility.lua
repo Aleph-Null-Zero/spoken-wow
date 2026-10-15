@@ -193,7 +193,7 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
     -- Dressed as the player's square Play button: the tracking checkbox's border beside it, Play's
     -- own glyph inside, as the Zones story and the narrator styles have it. A failure leaves the
     -- button as it was and is said once, so the quest log never loses its Play.
-    local said
+    local said, recorded
     local function Say(err)
         if said then return end
         said = true
@@ -240,8 +240,13 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
     function QuestOverlayUI:UpdateQuestTitle(questLogTitleFrame, playButton)
         playButton:ClearAllPoints()
         if playButton.MatchBox and questLogTitleFrame.Checkbox then
-            local ok, err = pcall(playButton.MatchBox, playButton, questLogTitleFrame.Checkbox)
-            if not ok then Say(err) end
+            local ok, atlas, width, height = pcall(playButton.MatchBox, playButton, questLogTitleFrame.Checkbox)
+            if not ok then Say(atlas) end
+            if not recorded then
+                recorded = true
+                Debug:Record("quest-log-play-box", format("checkbox %s, atlas %s, %sx%s", tostring(ok),
+                    tostring(atlas), tostring(width), tostring(height)))
+            end
         end
         local poiButton = QuestPOIButton(questLogTitleFrame)
         if poiButton and questLogTitleFrame.Checkbox then

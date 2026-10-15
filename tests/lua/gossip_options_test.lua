@@ -106,5 +106,22 @@ Expect("the minimap menu heads its entries with the page's name, in the player's
 local packs = _G.Spoken:GetSource("gossip").packs()
 Expect("...Alliance's not among them", table.concat(packs, "|"), "Spoken Quests Audio: Gossip")
 
+-- The packs are loaded a second after login, so the page was built while the Gossip pack was still
+-- to register: its row is drawn again once it has (#254).
+local function PackStatus()
+    for _, item in ipairs(SettingsPanel.panel.layout.items) do
+        if item.kind == "section" and item.text == W.PART_VOICE then
+            for _, row in ipairs(item.rows) do
+                local field, caption = row.regions and row.regions[2], row.regions and row.regions[4]
+                if row.shown and caption and caption.text == "English" then return field.message end
+            end
+        end
+    end
+end
+Expect("a pack found but not yet loaded says so", PackStatus(), W.MODULE_NOT_LOADED)
+G.DataModules:Register("SpokenQuestsAudioGossip", {})
+stub.Advance(2)
+Expect("...and says its version once the packs have loaded", PackStatus(), "2.2.0")
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll gossip options tests passed")

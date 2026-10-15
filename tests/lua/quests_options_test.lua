@@ -199,5 +199,21 @@ Expect("the fallback language is chosen there too", fallback and fallback.dropdo
 Expect("...and can be switched off", stub.PickDropdown(fallback, "Stay Silent"), true)
 Expect("...which Quests then honours", VO.Language:GetFallbackLanguage(), nil)
 
+---------------------------------------------------------------- packs that register after the page is built
+-- The packs are loaded a second after login, so the page is built while an installed pack is
+-- still to register: its row is drawn again once they have (#254).
+do
+    local VO, Panel = Boot()
+    local row
+    for _, child in ipairs(Panel.panel.content.children) do
+        if child.layoutHit and child.layoutLabel and child.layoutLabel.text == "TestPack" then row = child end
+    end
+    local W = _G.Spoken:Words()
+    Expect("a pack found but not yet loaded says so", row and row.message, W.MODULE_NOT_LOADED)
+    VO.DataModules:Register("TestPack", {})
+    stub.Advance(2)
+    Expect("...and says its version once the packs have loaded", row and row.message, "1.2.1")
+end
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll quests options tests passed")

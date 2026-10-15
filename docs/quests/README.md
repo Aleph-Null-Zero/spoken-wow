@@ -978,7 +978,9 @@ client knows which words those were — so a contributed line is a template like
 one: stored as `originalText`, spoken as `Adventurer`/`Traveler` by the extract's own table,
 and hashed on the template when it is gossip. Class and race are swapped wherever they occur as
 whole words, so a warrior's "a warrior's discipline" arrives as "a `$c`'s discipline"; that
-false positive is accepted over voicing one player's class at everyone. The contribution's id on its speaker row, or its note on the first
+false positive is accepted over voicing one player's class at everyone, except on a quest only
+that class can take (the Compendium's `classes` is that one class), where the class is left as
+written. The contribution's id on its speaker row, or its note on the first
 version of a line it wrote without one, is the mark, not the line's origin, because an edit
 puts an `edited` version on top. A contributed speaker is what `corpus_db.py`'s import leaves
 alone when it replaces every extracted speaker, and it numbers from 1,000,000 so a re-import

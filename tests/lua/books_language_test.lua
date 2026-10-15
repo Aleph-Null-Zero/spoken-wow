@@ -162,6 +162,10 @@ do
     local spoken = _G.Spoken
     _G.Spoken = { BagItemIcon = function(_, name) return name == "Worn Tablet" and 133741 or nil, { 0, 1, 0, 1 } end }
     Expect("...and a book from the bags its own icon", Bk:ClipFor(PAGE).present.portrait.texture, 133741)
+    -- The next page of the open book is built while another is open (the one before it ends, or
+    -- DialogueUI has left the game on the last): it keeps the book's picture.
+    Expect("a later page of the open book keeps its icon", Bk:ClipFor(ONLY_ENGLISH).present.portrait.texture, 133741)
+    Expect("...and its material", Bk:ClipFor(ONLY_ENGLISH).present.material, "Stone")
     _G.Spoken = spoken
     Bk.lastPage = nil
     _G.ItemTextGetItem, _G.ItemTextGetMaterial = nil, nil

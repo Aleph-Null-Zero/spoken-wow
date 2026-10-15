@@ -163,6 +163,8 @@ function QuestOverlayUI:BindPlayButton(playButton, questID, soundTitle)
                 name = id and DataModules:GetObjectName(type, id) or "Unknown Name",
                 title = soundTitle,
                 unitGUID = id and Enums.GUID:CanHaveID(type) and Utils:MakeGUID(type, id) or nil,
+                -- A poster or an item has no face to draw: the line shows a notice, as the dialog's does.
+                unitIsObjectOrItem = id ~= nil and not Enums.GUID:IsCreature(type),
                 -- For the debug log: which screen queued it.
                 origin = "the quest log's Play button",
             }

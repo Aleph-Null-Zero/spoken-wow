@@ -96,6 +96,9 @@ function Player:Enqueue(soundData, asked)
         Debug:Record("data-lookup-failed", format("No sound entry for event %s, NPC %q, language %s",
             Enums.SoundEvent:GetName(soundData.event) or tostring(soundData.event), soundData.name or "",
             table.concat(Language:ResolutionOrder(), " then ")))
+        if Spoken.EndMuteGameDialogueAhead then
+            Spoken:EndMuteGameDialogueAhead()
+        end
         return false
     end
 

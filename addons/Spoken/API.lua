@@ -604,6 +604,12 @@ function Spoken:MuteGameDialogueAhead(source)
     SoundQueue:MuteGameDialogueAhead(source:GetChannel())
 end
 
+--- The read that MuteGameDialogueAhead was taken for found no line: the game's dialogue comes
+--- back at once, unless a line is speaking.
+function Spoken:EndMuteGameDialogueAhead()
+    SoundQueue:EndMuteGameDialogueAhead()
+end
+
 --- A gate that applies to every source: fn(clip) -> reason | nil.
 function Spoken:AddGate(fn)
     SoundQueue:AddGate(fn)
@@ -691,6 +697,7 @@ end
 --   SOURCE_REGISTERED  (source)
 --   CONTRIBUTE_SETTINGS_CHANGED ()          the hide-Contribute-buttons setting was toggled
 --   REPORT_SETTINGS_CHANGED     ()          the hide-Report-buttons setting was toggled
+--   VOICE_PACKS_LOADED          ()          the quest and gossip voice packs found at login have loaded
 --   COMPENDIUM_FONT_CHANGED     ()          the Compendium's Text Size changed (Spoken:CompendiumFontSize)
 
 function Spoken:RegisterCallback(event, fn)

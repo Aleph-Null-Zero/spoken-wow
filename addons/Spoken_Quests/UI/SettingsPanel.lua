@@ -146,6 +146,8 @@ function SettingsPanel:Setup()
     content:SetScript("OnShow", function() layout:Refresh() end)
     -- Switched on or off from Spoken's page while this one was hidden: drawn again for it.
     Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "quests" then layout:Refresh() end end)
+    -- The packs load a second after login, after this page was built: their rows say Not loaded until then.
+    Spoken:RegisterCallback("VOICE_PACKS_LOADED", function() layout:Refresh() end)
 
     -- Profiles are Spoken's, on its own page: one choice for every part (Options:ProfileDBs).
     local db = Addon.db

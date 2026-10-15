@@ -671,15 +671,30 @@ function Actions.BoxPlay(button)
     button:HookScript("OnEnter", function(self) if self:IsEnabled() then glyph:SetAlpha(1) end end)
     button:HookScript("OnLeave", function(self) if self:IsEnabled() then glyph:SetAlpha(GLYPH_ALPHA) end end)
     function button:MatchBox(box)
-        local texture = box.GetNormalTexture and box:GetNormalTexture()
-        local atlas = type(texture) == "table" and texture.GetAtlas and texture:GetAtlas()
-        if atlas and self.border then self.border:SetAtlas(atlas) end
+        -- The texture that draws the checkbox's box, at the size it draws it: its normal texture, else
+        -- the first region painted from an atlas that is not the tick.
+        local found
+        local function Consider(texture)
+            if found or type(texture) ~= "table" or not texture.GetAtlas then return end
+            local atlas, width, height = texture:GetAtlas(), texture:GetWidth(), texture:GetHeight()
+            if atlas and not atlas:find("mark") and type(width) == "number" and type(height) == "number"
+                and width >= 12 and height >= 12 then
+                found = { atlas = atlas, width = width, height = height }
+            end
+        end
+        Consider(box.GetNormalTexture and box:GetNormalTexture())
+        for _, region in ipairs({ box:GetRegions() }) do Consider(region) end
         local width, height = box:GetWidth(), box:GetHeight()
+        if found then
+            if self.border then self.border:SetAtlas(found.atlas) end
+            width, height = found.width, found.height
+        end
         if type(width) == "number" and type(height) == "number" and width >= 12 and height >= 12 then
             self:SetSize(width, height)
             -- Play's glyph fills the box as it fills the round button's ring: about half.
             glyph:SetSize(math.floor(width * 0.55), math.floor(height * 0.55))
         end
+        return found and found.atlas, width, height
     end
     Greys(button)
     return button

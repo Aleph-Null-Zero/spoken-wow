@@ -1059,7 +1059,8 @@ local function SoundData(id, moment, origin)
     local name = SpeakerName(kind, speaker) or Title(id)
     local guid = speaker and Enums.GUID:CanHaveID(kind) and VO.Utils:MakeGUID(kind, speaker) or nil
     return { event = EVENTS[moment], questID = id, title = Title(id), name = name, unitGUID = guid,
-        text = PartText(id, moment), origin = origin }
+        unitIsObjectOrItem = speaker ~= nil and not Enums.GUID:IsCreature(kind), text = PartText(id, moment),
+        origin = origin }
 end
 
 -- Whether a voice pack has any of a quest (Voiced Only), and a quest played from its row
