@@ -103,7 +103,7 @@ local function RoundTrips(label, envelope)
     local STD = encoded:gsub("-", "+"):gsub("_", "/")
     local pad = (4 - (#STD % 4)) % 4
     STD = STD .. string.rep("=", pad)
-    local decoded = require("base64_decode_for_test")(STD)
+    local decoded = require("base64_decode")(STD)
     local inflated = LibDeflate:DecompressDeflate(decoded)
     Expect(label .. ": deflate-raw round trips to the exact envelope", inflated, envelope)
 end

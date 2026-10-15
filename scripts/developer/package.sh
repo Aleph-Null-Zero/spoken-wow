@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Builds the Spoken Developer zip: a download of its own, not part of Spoken's one download
-# (scripts/spoken/package.sh), so a player who never reports a problem never gets it.
+# Builds the Spoken Developer zip, for developers only: it is not part of Spoken's one download
+# (scripts/spoken/package.sh) and is never published, so this zip is handed to whoever is asked
+# for a log.
 #
 #   ./scripts/developer/package.sh                 # dist/Spoken_Developer-<version>.zip
 #   ALLOW_DIRTY=1 ./scripts/developer/package.sh   # build from an uncommitted tree

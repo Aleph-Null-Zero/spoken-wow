@@ -33,6 +33,7 @@ world.npcGUID = "Creature-0-0-0-0-12345-0"
 stub.ShowPanel("QuestFrameDetailPanel")
 
 local envelope = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-accept", envelope)
 Expect("the source is quests", envelope:match("^!SPOKEN1 quests\n") ~= nil, true)
 Expect("the quest id is carried", envelope:match("\nquest=9123\n") ~= nil, true)
 Expect("the event is the panel on screen", envelope:match("\nevent=accept\n") ~= nil, true)
@@ -50,6 +51,7 @@ Expect("the addon field carries the real .toc version, not the \"dev\" fallback"
 stub.HidePanels()
 stub.ShowGossip("We stand ready.")
 local gossip = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-gossip", gossip)
 Expect("gossip carries the npc and no quest", gossip:match("\nquest=") == nil, true)
 Expect("...and the gossip text", gossip:match("\nWe stand ready%.\n") ~= nil, true)
 
@@ -268,6 +270,7 @@ Expect("firing the callback hides the probe immediately, before any click",
     stub.playerModel and stub.playerModel.shown, false)
 
 local seen = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-observed", seen)
 Expect("the model file id is reported once the load has fired", seen:match("\nmodel=122055\n") ~= nil, true)
 Expect("the sex the client reports is carried too", seen:match("\nsex=2\n") ~= nil, true)
 Expect("the creature type is carried", seen:match("\ncreature=Humanoid\n") ~= nil, true)
@@ -548,6 +551,7 @@ _G.C_Container = {
 }
 stub.ShowPanel("QuestFrameDetailPanel")
 local item = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-item", item)
 Expect("an item that starts the quest is reported as an item", item:match("\nkind=item\n") ~= nil, true)
 Expect("...named by the bag item whose quest is on screen",
     item:match("\nnpc=211315 Underground Map\n") ~= nil, true)

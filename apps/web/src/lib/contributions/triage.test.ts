@@ -1,6 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { idOnlyResolution, npcSummaryFrom, questFor, resolveMissing } from "./triage";
+import { idOnlyResolution, npcSummaryFrom, packHeard, questFor, resolveMissing } from "./triage";
+
+describe("packHeard", () => {
+  it("names the packs' language when it is not the client's", () => {
+    expect(packHeard({ locale: "deDE", meta: { pack: "enUS" } })).toBe("enUS");
+  });
+
+  it("says nothing when the player hears their client's language, or the envelope has no pack", () => {
+    expect(packHeard({ locale: "deDE", meta: { pack: "deDE" } })).toBeNull();
+    expect(packHeard({ locale: "deDE", meta: {} })).toBeNull();
+  });
+});
 
 describe("questFor", () => {
   it("reads the title and quest id off a quest-moment envelope", async () => {

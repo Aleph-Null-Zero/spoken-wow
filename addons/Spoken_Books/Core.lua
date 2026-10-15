@@ -260,9 +260,11 @@ function SpokenBooks:Data()
 	return _G.SpokenBooksData
 end
 
---- Where a report goes. The books section is on the new domain from the start, unlike the
---- quests and zones addons, which point at the two frozen sites they shipped with.
-SpokenBooks.SITE_URL = "https://spoken.rusty.one"
+--- Spoken's site, or nil when Spoken is not loaded: no page is read aloud without it, so there
+--- is no report to send.
+function SpokenBooks:SiteURL()
+	return _G.Spoken and _G.Spoken.SITE_URL
+end
 
 --- The page to send a reader to when they want to complain about a page or its narration.
 ---
@@ -271,13 +273,9 @@ SpokenBooks.SITE_URL = "https://spoken.rusty.one"
 --- the link from what it already has, with no per-page table to ship and nothing to escape.
 --- The zones landing page makes the same trade with its {mapID}/{slug} path.
 function SpokenBooks:ReportURL(pageId, language)
-	if type(pageId) ~= "number" then
+	if type(pageId) ~= "number" or not self:SiteURL() then
 		return nil
 	end
-	-- Filed under the language of the clip being reported, which the site reads off its
-	-- /{lang}/ prefix. English keeps the address it always had.
-	if language and language ~= "enUS" then
-		return format("%s/%s/books/r/%d", self.SITE_URL, language, pageId)
-	end
-	return format("%s/books/r/%d", self.SITE_URL, pageId)
+	-- Filed under the language of the clip being reported.
+	return _G.Spoken:ReportURL("books", tostring(pageId), language)
 end

@@ -26,7 +26,7 @@ Spoken Zones reads your client's language when it has lore in it, and `/spz lang
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
 
 ## Support
 

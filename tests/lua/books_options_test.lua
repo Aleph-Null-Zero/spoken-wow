@@ -112,12 +112,10 @@ close.scripts.OnClick(close)
 ---------------------------------------------------------------- the gather switch stays in the player's settings
 -- The switch is the player's alone: quests and books both feed the one store, so a
 -- mirror here could only ever repeat it -- a reader cannot have pages off and lines on.
--- Only the /spb gather shortcut still reaches the player's switch from here.
+-- Its command is Spoken's too (/sp collect): /spb gather no longer reaches it.
 local gathering = _G.Spoken.Gather:IsEnabled()
 SlashCmdList["SPOKENBOOKS"]("gather")
-Expect("/spb gather turns gathering over", _G.Spoken.Gather:IsEnabled(), not gathering)
-SlashCmdList["SPOKENBOOKS"]("gather")
-Expect("...and back", _G.Spoken.Gather:IsEnabled(), gathering)
+Expect("/spb gather leaves the player's switch alone", _G.Spoken.Gather:IsEnabled(), gathering)
 
 ---------------------------------------------------------------- forgetting what was read
 SpokenBooksCharacter.read = { ["Hillsbrad Town Registry"] = true, ["Jitters' Journal"] = true }

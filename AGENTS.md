@@ -11,6 +11,9 @@ Repo-wide rules. Each section also has its own file, which applies on top of thi
     /contribute. All ship in one zip, `Spoken-<v>.zip` (`scripts/spoken/package.sh`).
   - What quests and gossip both read lines with (the voice packs, languages, the NPC windows'
     buttons) is Spoken's `Dialogue/` folder; both modules run in its `VoiceOver` table.
+  - `Spoken_Developer` is for developers only: the debug log and the Developer page. It is
+    not in Spoken's zip and has no store page or release; a developer links it from a checkout
+    or builds it with `scripts/developer/package.sh` (`addons/Spoken_Developer/README.md`).
   - `SpokenZonesAudio` and `SpokenBooksAudio` are sound packs. The quests packs have no folder
     here; they are built into `pipelines/quests/audio/`, which is gitignored.
   - `SpokenPlayer`, `SpokenQuests`, `SpokenZones` and `SpokenBooks` are tombstones: a `.toc`

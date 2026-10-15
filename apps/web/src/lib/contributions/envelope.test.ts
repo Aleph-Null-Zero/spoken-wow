@@ -8,6 +8,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { checkEnvelope } from "./contributions";
 import { checksum, decodeFragment, parseEnvelope } from "./envelope";
 
 const fixture = (name: string) =>
@@ -79,6 +80,59 @@ describe("parseEnvelope", () => {
     const result = parseEnvelope(crlf);
     expect(result.ok).toBe(true);
     expect(result.ok && result.value.text).toBe("Убей шестерых.\n\nПотом возвращайся.");
+  });
+});
+
+/**
+ * Envelopes the modules' own Capture functions wrote in their Lua tests, so the reader is held
+ * to what the addon sends today: the pack field, an item offering a quest, gossip with no
+ * quest, a zone with no subzone.
+ */
+describe("envelopes the addon captured", () => {
+  const captured = (name: string) => {
+    const result = parseEnvelope(fixture(`captured-${name}.txt`));
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(name);
+    expect(checkEnvelope(result.value).ok).toBe(true);
+    return result.value;
+  };
+
+  it("reads a quest's text with the client's locale and the packs' language", () => {
+    const quest = captured("quests-accept");
+    expect(quest.fields).toMatchObject({ quest: "9123", event: "accept", locale: "enUS", pack: "enUS" });
+    expect(quest.text).toBe("Kill six of them.\nThen come back.");
+  });
+
+  it("reads gossip, which names its speaker and no quest", () => {
+    const gossip = captured("quests-gossip");
+    expect(gossip.fields.quest).toBeUndefined();
+    expect(gossip.fields.npc).toMatch(/^12345 /);
+    expect(gossip.text).toBe("We stand ready.");
+  });
+
+  it("reads what a modern client observes of the speaker", () => {
+    expect(captured("quests-observed").fields).toMatchObject({
+      kind: "creature",
+      model: "122055",
+      sex: "2",
+      creature: "Humanoid",
+    });
+  });
+
+  it("reads a quest an item offers as the item", () => {
+    expect(captured("quests-item").fields).toMatchObject({ kind: "item", npc: "211315 Underground Map" });
+  });
+
+  it("reads a zone with a subzone, and one without, which leaves the field out", () => {
+    expect(captured("zones-subzone").fields).toMatchObject({ map: "1537", subzone: "A Nook With No Lore" });
+    const zone = captured("zones-zone");
+    expect(zone.fields.map).toBe("1537");
+    expect(zone.fields.subzone).toBeUndefined();
+  });
+
+  it("reads a book page with its packs' language", () => {
+    const page = captured("books-page");
+    expect(page.fields).toMatchObject({ book: "Ledger of Nothing", number: "2", pack: "enUS" });
   });
 });
 

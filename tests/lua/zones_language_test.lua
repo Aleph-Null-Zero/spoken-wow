@@ -71,10 +71,10 @@ Expect("B. with no pack, the language being read", Z:GetPackLanguage(), Z:GetLan
 
 ---------------------------------------------------------------- C. reports
 Z = Install({ ENGLISH })
-Expect("C. the lore window's report is filed under the language being read",
-    Z:ReportURL(MAP, BOTH), "https://lore.rusty.one/" .. Z:GetLanguage() .. "/r/1411/valley-of-trials")
-Expect("C. a clip's report under the language it was narrated in",
-    Z:ReportURL(MAP, BOTH, "deDE"), "https://lore.rusty.one/deDE/r/1411/valley-of-trials")
+Expect("C. the lore window's report is filed under the language being read, English unprefixed",
+    Z:GetLanguage() .. " " .. Z:ReportURL(MAP, BOTH), "enUS https://spoken.rusty.one/zones/r/1411/valley-of-trials")
+Expect("C. a clip's report keeps the language it was narrated in",
+    Z:ReportURL(MAP, BOTH, "deDE"), "https://spoken.rusty.one/deDE/zones/r/1411/valley-of-trials")
 
 ---------------------------------------------------------------- D. contributions
 Z = Install({ ENGLISH, GERMAN })

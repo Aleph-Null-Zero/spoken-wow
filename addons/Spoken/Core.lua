@@ -393,6 +393,9 @@ function Addon:Enable()
             Options:Open()
         elseif command == "share" and Gather then
             Spoken:ShowGatherInstructions()
+        elseif command == "collect" and Gather then
+            Gather:SetEnabled(not Gather:IsEnabled())
+            print("Spoken: collecting missing lines " .. (Gather:IsEnabled() and "on" or "off"))
         elseif command == "reset" then
             PlayerFrame:Reset()
             -- Not on 1.12, which has no captions and so no subtitles to move.
@@ -417,7 +420,7 @@ function Addon:Enable()
             print("  " .. DialogueUITheme:Describe())
             for _, err in ipairs(Callbacks.errors) do print("  callback error: " .. err) end
         else
-            print("Spoken: /spoken play | stop | skip | player [minimal|classic|dialogueui|subtitle|none] | transcript [on|off|1|2|reset] | log | options | reset | diagnostics")
+            print("Spoken: /spoken play | stop | skip | player [minimal|classic|dialogueui|subtitle|none] | transcript [on|off|1|2|reset] | collect | share | log | options | reset | diagnostics")
         end
     end
 end

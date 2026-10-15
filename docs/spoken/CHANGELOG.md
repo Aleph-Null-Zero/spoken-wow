@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **/sp collect turns Collect Missing Lines on and off**, as the switch on Spoken's page does. /spb gather, which did the same from Books, is gone. *([Nucabe](https://github.com/Nucabe))*
+- **Report on a line an object says (a wanted poster) opens that object's lines**, not those of a creature with the same number. *([Nucabe](https://github.com/Nucabe))*
+- **A zone story's Report opens the line in the language it was read in.** A German story's report used to open the English line. *([Nucabe](https://github.com/Nucabe))*
+- **A quest line's Report copies a spoken.rusty.one address**, the site's own, instead of the old voiceover.rusty.one one that redirected there. *([Nucabe](https://github.com/Nucabe))*
 - **Azeroth's Compendium lists 25 quests Forever gives that Spoken has no words for yet**, such as
   the Mulgore quests from Mazu'kon and Muln Earthfury, Changing Tastes and Conflict at Darkspear
   Islands, in their zones or class groups. Their pages have no words until their lines are recorded. *([Nucabe](https://github.com/Nucabe))*
@@ -92,6 +96,7 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Fixed: with the DialogueUI narrator style, a queued line's page flew in with no window to go
   behind.** Closing a dialog on another line, such as a greeting before a quest or a gravestone
   before a book, now fades the window back in at once while the queued page goes behind it.
+  *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's Books and Quests pages are written in the same dark ink as Zones'**, with
   the same faint band behind the title. Their words were a lighter brown that looked greyed out.
   *([Nucabe](https://github.com/Nucabe))*
@@ -267,8 +272,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   book view, that brings back the interface it hides. The Spoken window now shows a book's title in
   your client's language, and names a one-page letter by its title instead of an internal key.
   *([earlsinclairdino](https://github.com/earlsinclairdino))*
-- **Captions fade lines in and out at the edges as they scroll**, instead of cutting them off.
-  *([Nucabe](https://github.com/Nucabe))*
 - **Narrator Style Settings drops its box.** Small titles with a thin line separate its groups of
   settings, and the welcome window lists the narrator styles as the settings page does.
   *([Nucabe](https://github.com/Nucabe))*

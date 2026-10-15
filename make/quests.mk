@@ -56,7 +56,7 @@ endef
 .DEFAULT_GOAL := help
 .PHONY: help pull-voices push-voices voices-status \
         pull-history pull-live pull-recorded package-acted acted history-status sounds package package-audio \
-        package-audio-complete package-meta push-complete icon \
+        package-meta icon \
         downloads-status \
         factions followup-lines compendium-text compendium release release-audio release-audio-dry release-wago release-curse \
         release-dry import-corpus import-locale import-npc-sexes fill-locales import-questit export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
@@ -193,17 +193,6 @@ package-audio: check-synced export-corpus export-ignores $(if $(filter-out enUS 
 	@VERSION=$(VERSION) ENCODE=$(if $(ENCODE),$(ENCODE),ogg-q0-44k) MODULE=SpokenQuestsAudio \
 	  LANGUAGE="$(or $(LOCALE),enUS)" JOBS=$(JOBS) ./scripts/quests/package-audio.sh
 
-# Every line in one folder rather than split five ways, ~1.3 GB. Not a CurseForge release - it
-# is over the upload ceiling and always will be - so it is built for people who would rather
-# take one download, and it is a folder of its own rather than a fatter copy of a shipping pack,
-# so installing it beside them is possible but pointless. The site hosts it: `push-complete`
-# below, under the one current name -- see the note there.
-
-package-audio-complete: check-synced export-corpus export-ignores sounds ## Build the whole corpus as one folder for the site (~1.3 GB)
-	@VERSION=$(VERSION) ENCODE=ogg-q0-44k PACKS=all \
-	  MODULE_NAME=SpokenQuestsAudioComplete TITLE="Spoken Quests Audio: Complete" \
-	  JOBS=$(JOBS) ./scripts/quests/package-audio.sh
-
 # The "install everything" addon, which installs nothing itself: a few kilobytes declaring the
 # four packs as CurseForge dependencies, because the complete pack is too big to upload. Its
 # header explains the rest; release.sh sends the dependency list with the file.
@@ -214,26 +203,9 @@ package-audio-complete: check-synced export-corpus export-ignores sounds ## Buil
 package-meta: ## Zip the meta addon that pulls in all four packs
 	@VERSION=$(VERSION) NAME=SpokenQuestsAudio ./scripts/quests/package-meta.sh
 
-# The complete pack's home, since it is too big for CurseForge: nginx serves
-# /srv/spoken/shared/downloads/ straight off disk (see deploy/web/nginx-spoken.conf), and
-# this puts a freshly built zip there.
-#
-# The version comes from the built module rather than a variable, so pushing a pack nobody
-# built fails here instead of uploading whatever zip is oldest in dist/. -latest.zip is a
-# symlink repointed after the copy: the published URL never changes, and it never points at a
-# half-transferred file because rsync writes to a temporary name and renames.
-#
-# ONE NAME. The pack was published as VoiceOverReduxAudioHQ-latest.zip before the rename, and
-# that URL is not kept alive: the descriptions that carried it are being re-pasted with the
-# current one, and the pack itself is re-downloaded this release whatever its name.
-
 # What nginx-spoken.conf serves at /downloads/. voiceover.rusty.one is a redirect vhost now,
-# so a zip pushed into the old tree would land in a directory nothing answers from.
+# so a zip left in the old tree would sit in a directory nothing answers from.
 REMOTE_DOWNLOADS := $(REMOTE_ROOT)/shared/downloads
-
-push-complete: require-droplet ## Upload the built complete pack to the site's downloads directory
-	@[ -n "$(RSYNC)" ] || { echo "No rsync 3.x found. brew install rsync"; exit 1; }
-	@v=$$(sed -n 's/^## Version:[[:space:]]*//p' dist/SpokenQuestsAudioComplete/SpokenQuestsAudioComplete.toc 2>/dev/null | head -1); 	[ -n "$$v" ] || { echo "No complete module built. Run: make package-audio-complete"; exit 1; }; 	zip=dist/SpokenQuestsAudioComplete-$$v.zip; 	[ -f "$$zip" ] || { echo "$$zip is missing. Run: make package-audio-complete"; exit 1; }; 	echo "==> $$zip -> $(DROPLET):$(REMOTE_DOWNLOADS)/"; 	$(RSYNC) -a --human-readable --info=progress2 -e "$(SSH)" "$$zip" $(DROPLET):$(REMOTE_DOWNLOADS)/; 	$(SSH) $(DROPLET) "ln -sfn SpokenQuestsAudioComplete-$$v.zip $(REMOTE_DOWNLOADS)/SpokenQuestsAudioComplete-latest.zip"; 	echo "==> https://spoken.rusty.one/downloads/SpokenQuestsAudioComplete-latest.zip"
 
 downloads-status: require-droplet ## List what the site is offering for download
 	@$(SSH) $(DROPLET) 'ls -lh $(REMOTE_DOWNLOADS)/'
@@ -312,8 +284,7 @@ endif
 # GitHub is where a Wago player gets them. English's four split packs go to CurseForge, and the
 # same four bundled into one zip to GitHub; a language's one pack goes to GitHub, and to
 # CurseForge once it has a project. English's meta addon is kilobytes and goes to both stores; a
-# language has none. The complete pack for the site is not built here: it is another 1.3 GB, and
-# `make quests-package-audio-complete push-complete` is the step if it is wanted.
+# language has none.
 ifneq ($(filter-out enUS,$(LOCALE)),)
 full-release: require-droplet ## Sync, pull live takes, build and upload the packs (VERSION=2.1.0; LOCALE=xx for a language's)
 	@$(MAKE) --no-print-directory -f make/quests.mk sync

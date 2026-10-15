@@ -17,8 +17,6 @@ local INDENT = 25
 -- The voice pack this addon is made for, and where to get it.
 local AUDIO_ADDON = "SpokenZonesAudio"
 local AUDIO_URL = "https://www.curseforge.com/wow/addons/spoken-zones-audio"
--- Where a problem that is not about one story is reported: the site the addons share.
-local REPORT_URL = "https://spoken.rusty.one"
 
 local panel, category
 
@@ -295,7 +293,7 @@ function SpokenZones:SetupOptions()
 	-- The per-story Report buttons cover a bad story; this covers everything that belongs to
 	-- none -- the addon erroring, the voice wrong throughout, the site.
 	layout:Button(L.OPT_REPORT_PROBLEM, 200, function()
-		SpokenZones:ShowCopyLink(REPORT_URL, L.OPT_REPORT_ADDRESS)
+		SpokenZones:ShowCopyLink(SpokenZones:SiteURL(), L.OPT_REPORT_ADDRESS)
 	end, L.OPT_REPORT_NOTE)
 	-- Every page ends the same way, as Spoken's does: one section, last, to start over.
 	layout:StartOver(L.OPT_SECTION_START_OVER, L.OPT_RESET_PAGE, function()

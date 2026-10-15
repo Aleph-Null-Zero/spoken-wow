@@ -3,15 +3,18 @@ curseforge: 1700375
 wago: QN53yXKB
 slug: spoken-player
 name: Spoken Player
-summary: Expressive, character-driven AI voiceover for WoW Forever and Classic. Quest dialogue, NPC gossip, zone lore and books, read aloud. Spoken Quests, Spoken Zones and Spoken Books in one download.
+summary: Expressive, character-driven AI voiceover for WoW Forever. Quest dialogue, NPC gossip, zone lore and books, read aloud. Spoken Quests, Gossip, Zones and Books in one download.
 categories:
   - Audio & Video
   - Roleplay
   - Miscellaneous
 license: MIT
+addonReadme: addons/Spoken/README.md
 ---
 
-**Expressive, character-driven AI voiceover for WoW Forever and Classic.** NPCs speak their quest text and gossip, zones tell their stories, and books read themselves aloud.
+**Expressive, character-driven AI voiceover for WoW Forever.** NPCs speak their quest text and gossip, zones tell their stories, and books read themselves aloud.
+
+Spoken is made and tested on WoW Forever. It also installs on Classic Era and Anniversary, as it is.
 
 **Voiced with care:**
 
@@ -23,11 +26,12 @@ license: MIT
 
 ## What's inside
 
-Three modules, each can be switched off in the settings. **The voices are not included:** install the voice pack for each module you want to hear, or the addon stays silent.
+Four modules, each can be switched off in the settings. **The voices are not included:** install the voice pack for each module you want to hear, or the addon stays silent.
 
 | Module | Voices | Voice pack |
 | --- | --- | --- |
-| **Spoken Quests** | quest dialogue and NPC gossip | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-quests-audio-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-quests-audio-shared) · [Gossip](https://www.curseforge.com/wow/addons/spoken-quests-audio-gossip) |
+| **Spoken Quests** | quest dialogue | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-quests-audio-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-quests-audio-shared) |
+| **Spoken Gossip** | NPC gossip and greetings | [Gossip](https://www.curseforge.com/wow/addons/spoken-quests-audio-gossip), also in All |
 | **Spoken Zones** | zone and area lore, on the world map | [Spoken Zones Audio](https://www.curseforge.com/wow/addons/spoken-zones-audio) |
 | **Spoken Books** | books, letters, notes and the plaques out in the world | [Spoken Books Audio](https://www.curseforge.com/wow/addons/spoken-books-audio) |
 
@@ -39,11 +43,13 @@ Voice packs in German, Spanish, French, Korean, Portuguese, Russian and Chinese 
 
 ## More details
 
-- **Quests**: the quest text plays as the dialog opens, and NPC gossip and greetings are voiced too. Every quest in the log has a Play button.
-- **Zones**: the story of each zone and area in a panel beside the world map, with a picture of the place. An area you discover for the first time is narrated once. **Lore of Azeroth** browses every story without the map.
+- **Quests**: the quest text plays as the dialog opens. Every quest in the log has a Play button.
+- **Gossip**: what an NPC says when you talk to them, and the greeting before it.
+- **Zones**: the story of each zone and area in a panel beside the world map, with a picture of the place. An area you discover for the first time is narrated once.
+- **Azeroth's Compendium**: every quest, zone story and book in one window, to browse, search and play without going there.
 - **Books**: open a book and it reads every page in order, following you as you turn them. Your mail is never read.
 - **One queue**: quest lines, zone stories and books wait their turn; nothing talks over anything. Stop, Replay and Skip from the screen, the minimap button or a key binding.
-- **Your choice of display**: subtitles low on screen with the speaker's picture, a small window, the large classic window, or voice only.
+- **Your choice of display**: subtitles low on screen with the speaker's picture, a small window, a large window, a window in DialogueUI's art when that addon is installed, or voice only.
 - **The game makes room**: music, ambience and NPC voices are turned down while a line plays.
 - **Interface in nine languages**: English, German, Spanish, French, Korean, Portuguese, Russian and both Chinese scripts.
 
@@ -61,15 +67,16 @@ Game Menu → Options → AddOns → **Spoken**, or `/sp options`.
 /sp stop       clear the queue
 /sp options    settings
 /sp reset      put the window and subtitles back in place
-/sp share      how to send gathered lines
-/spq, /spz, /spb   each module's own commands
+/sp collect    turn Collect Missing Lines on or off
+/sp share      how to send collected lines
+/spq, /spg, /spz, /spb   each module's own commands
 ```
 
 ## Contributing
 
 **Bugs.** Something wrong with a line, a wrong voice, a mispronounced name or a broken quest? Press the **bug** button on the subtitle or the window while the line plays. It hands you a short link to that exact line; the page has the text, the audio and a form.
 
-**Missing lines and corrections.** When Spoken has no voice for something on screen, it shows a **Contribute** button that hands you a link carrying the game's text; open it and press Send. Or turn on **Gather missing lines automatically** in the settings, play as usual, then upload `SavedVariables/SpokenContributions.lua` at [spoken.rusty.one/contribute](https://spoken.rusty.one/contribute). Text that reads wrong can be corrected the same way. Nothing leaves your game until you send it yourself.
+**Missing lines and corrections.** When Spoken has no voice for something on screen, it shows a **Contribute** button that hands you a link carrying the game's text; open it and press Send. Or leave **Collect Missing Lines** on in the settings, play as usual, then upload `SavedVariables/SpokenContributions.lua` at [spoken.rusty.one/contribute](https://spoken.rusty.one/contribute). Text that reads wrong can be corrected the same way. Nothing leaves your game until you send it yourself.
 
 **Code.** The addon is open source on [GitHub](https://github.com/rusty-key/spoken-wow): issues and pull requests are welcome.
 
