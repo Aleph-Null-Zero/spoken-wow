@@ -32,10 +32,46 @@ local function Host()
 	return WorldMapFrame
 end
 
--- The frame the player sees as the map: its border frame, which a map addon (Leatrix Maps) resizes
--- inside WorldMapFrame, whose own edge then lies beyond what is drawn. The panel and its button hang
--- off it, so they stay against the visible edge.
+-- Leatrix Maps' simple map frame draws its own title bar and gold border round the map and the quest
+-- log, and hides the game's: the game's border frame then lies beyond what is drawn. The title bar
+-- is 22 high and its black frame lies 1 outside the map; the gold border reaches 5 past that.
+local LEATRIX_TITLE, LEATRIX_FRAME, LEATRIX_BORDER = 22, 1, 5
+
+local function LeatrixFrame()
+	local db = _G.LeaMapsDB
+	return type(db) == "table" and db.SimpleMapFrame ~= "Off" and WorldMapFrame.ScrollContainer ~= nil
+		and C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Leatrix_Maps")
+end
+
+local edge
+-- Lay the edge frame over what Leatrix draws, as it lays it out: the map, and the quest log's width
+-- while that is shown.
+local function FitLeatrixEdge()
+	if not edge then return end
+	local questWidth = 0
+	if QuestMapFrame and QuestMapFrame:IsShown() then questWidth = WorldMapFrame.questLogWidth or 0 end
+	local map = WorldMapFrame.ScrollContainer
+	edge:ClearAllPoints()
+	local out = LEATRIX_FRAME + LEATRIX_BORDER
+	edge:SetPoint("TOPLEFT", map, "TOPLEFT", -out, LEATRIX_TITLE + LEATRIX_FRAME)
+	edge:SetPoint("BOTTOMRIGHT", map, "BOTTOMRIGHT", questWidth + out, -out)
+end
+
+-- The frame the player sees as the map: the game's border frame, or where Leatrix Maps' simple frame
+-- is on, the frame it draws. The panel and its button hang off it, so they stay against the visible
+-- edge.
 local function MapEdge()
+	if LeatrixFrame() then
+		if not edge then
+			edge = CreateFrame("Frame", nil, WorldMapFrame)
+			if QuestMapFrame then
+				QuestMapFrame:HookScript("OnShow", FitLeatrixEdge)
+				QuestMapFrame:HookScript("OnHide", FitLeatrixEdge)
+			end
+		end
+		FitLeatrixEdge()
+		return edge
+	end
 	local border = WorldMapFrame.BorderFrame
 	if type(border) == "table" and border.SetPoint then return border end
 	return WorldMapFrame
