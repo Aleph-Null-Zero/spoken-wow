@@ -390,8 +390,6 @@ function Addon:SetPlayerHost(host)
     end
 end
 
---- What is on screen: the chosen style, or one previewed from the welcome window or the settings
---- (Options:Preview). The windows and the subtitles ask this; the settings ask PlayerStyle.
 --- Whether the window or subtitles show `clip`: Show Narrator is on, and not off for the clip's module.
 --- The voice plays either way.
 function Addon:ShowsNarrator(clip)
@@ -400,6 +398,8 @@ function Addon:ShowsNarrator(clip)
     return cfg.Enabled and not (key and cfg.WordsOff[key])
 end
 
+--- What is on screen: the chosen style, or one previewed from the welcome window or the settings
+--- (Options:Preview). The windows and the subtitles ask this; the settings ask PlayerStyle.
 function Addon:DisplayStyle()
     return self.previewStyle or self:PlayerStyle()
 end
@@ -555,15 +555,14 @@ function Addon:Enable()
     RegisterSlashCommand()
 end
 
--- Said the first time a line waits behind a stop with nothing on screen to show it: with subtitles
--- or voice only, a stopped queue looks like a broken addon.
+-- Said the first time a line waits behind a stop with nothing on screen to show it: with voice
+-- only, or Show Narrator off for the line, a stopped queue looks like a broken addon.
 local pauseReminded = false
 -- Registered at login, not at load: this file loads before Callbacks.lua does.
 local function WatchPausedQueue()
-    Callbacks:Register("CLIP_QUEUED", function()
+    Callbacks:Register("CLIP_QUEUED", function(clip)
         if pauseReminded or not SoundQueue:IsPaused() then return end
-        local style = Addon:PlayerStyle()
-        if style == "none" or style == "subtitle" and not Addon.db.profile.Transcript.Enabled then
+        if Addon:PlayerStyle() == "none" or not Addon:ShowsNarrator(clip) then
             pauseReminded = true
             print("|cff66bbffSpoken:|r " .. L.STOPPED_REMINDER)
         end
