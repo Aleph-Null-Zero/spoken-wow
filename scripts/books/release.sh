@@ -139,7 +139,7 @@ for name in $GAME_VERSION_ERA $GAME_VERSION_ANNIVERSARY $GAME_VERSION_FOREVER; d
 done
 
 #-- the changelog -------------------------------------------------------------
-# The section of docs/books/CHANGELOG.md for the version being uploaded, so the release
+# The section of docs/readables/CHANGELOG.md for the version being uploaded, so the release
 # notes on the site and the notes in the repository cannot drift apart. Extracted per
 # version rather than sending the whole file: a player opening the Files tab wants to know
 # what changed in this one.
@@ -161,7 +161,7 @@ changelog_for() {
       if (lines[i].startsWith("## ")) { end = i; break; }
     }
     process.stdout.write(lines.slice(start, end).join("\n").trim());
-  ' "$REPO/docs/books/CHANGELOG.md" "$1"
+  ' "$REPO/docs/readables/CHANGELOG.md" "$1"
 }
 
 #-- preflight -------------------------------------------------------------------
@@ -222,7 +222,7 @@ for target in "${targets[@]}"; do
   fi
 
   if [[ "$target" == audio ]] && ! english; then
-    changelog="$(node "$REPO/scripts/lib/packs.mjs" changelog "$REPO/docs/books/CHANGELOG.md" "$version" "$(pack_field release)")"
+    changelog="$(node "$REPO/scripts/lib/packs.mjs" changelog "$REPO/docs/readables/CHANGELOG.md" "$version" "$(pack_field release)")"
   else
     changelog="$(changelog_for "$version")"
   fi
