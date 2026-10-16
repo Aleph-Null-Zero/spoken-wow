@@ -86,6 +86,11 @@ function plural(n: number | null, noun: string, nouns = `${noun}s`): string {
   return `${n === null ? "?" : n.toLocaleString()} ${n === 1 ? noun : nouns}`;
 }
 
+/** A body a row names, "gnome woman". */
+function bodyWords(d: Record<string, unknown>): string {
+  return [str(d.race), num(d.sex) === 3 ? "woman" : "man"].join(" ");
+}
+
 /** "a → b", or whichever half is known: rows backfilled from older tables carry neither. */
 function change(before: string | null, after: string | null): string | null {
   if (before && after) return `${before} → ${after}`;
@@ -204,11 +209,11 @@ function describe(row: ActivityRow): { what: string; quote: string | null } {
     }
     case "npc.split":
       return d.race
-        ? { what: `gave ${str(d.npcName) ?? row.subject} another body`, quote: [str(d.race), num(d.sex) === 3 ? "woman" : "man"].join(" ") }
+        ? { what: `gave ${str(d.npcName) ?? row.subject} another body`, quote: bodyWords(d) }
         : { what: `split ${str(d.npcName) ?? row.subject} into a man and a woman`, quote: null };
     case "npc.unsplit":
       return d.race
-        ? { what: `took a body from ${str(d.npcName) ?? row.subject}`, quote: [str(d.race), num(d.sex) === 3 ? "woman" : "man"].join(" ") }
+        ? { what: `took a body from ${str(d.npcName) ?? row.subject}`, quote: bodyWords(d) }
         : { what: `gave ${str(d.npcName) ?? row.subject} one voice again`, quote: null };
     case "npc.resolved":
       return {

@@ -44,9 +44,9 @@ def body_voices(corpus: dict) -> dict:
         grouped.setdefault((row["npcType"], row["npcId"]), []).append(row)
     voices = {}
     for key, bodies in grouped.items():
-        fallback = {id(row) for row in sex_bodies(bodies, npc_race.get(key)).values()}
+        chosen = sex_bodies(bodies, npc_race.get(key))
         voices[key] = [(body_name(row["race"], row["gender"]), row["sex"], row.get("voice"),
-                        id(row) in fallback) for row in bodies]
+                        row is chosen.get(row["sex"])) for row in bodies]
     return voices
 
 
@@ -60,6 +60,7 @@ def with_voice_files(corpus: dict, stems: set) -> dict:
     file has audio among `stems`. The rest are as they were."""
     voices = npc_voices(corpus)
     bodies = body_voices(corpus)
+    body_voice = {(*key, body): voice for key, rows in bodies.items() for body, _, voice, _ in rows}
     # A line's file was made in its first speaker's voice, as the site reads it (catalogue.ts
     # voiced): a later speaker written with another voice still speaks that file's.
     written = {}
@@ -67,7 +68,8 @@ def with_voice_files(corpus: dict, stems: set) -> dict:
         written.setdefault(line["lineId"], line["voice"])
 
     def moved(line):
-        voice = line.get("bodyVoice") or voices.get((line["npcType"], line["npcId"]))
+        voice = (body_voice.get((line["npcType"], line["npcId"], line.get("npcBody")))
+                 or voices.get((line["npcType"], line["npcId"])))
         if line["source"] not in OWN_VOICE_SOURCES or not voice or voice == written[line["lineId"]]:
             return None
         file_name = variant_file_name(line["fileName"], voice)
@@ -93,8 +95,8 @@ def with_voice_files(corpus: dict, stems: set) -> dict:
     def split(line):
         if line["source"] not in OWN_VOICE_SOURCES:
             return [line]
-        return [{**line, "npcBody": body, "npcSex": sex, "sexBody": fallback, "bodyVoice": voice}
-                for body, sex, voice, fallback in bodies.get((line["npcType"], line["npcId"]), ())] or [line]
+        return [{**line, "npcBody": body, "npcSex": sex, "sexBody": fallback}
+                for body, sex, _, fallback in bodies.get((line["npcType"], line["npcId"]), ())] or [line]
 
     rows = [row for line in corpus["lines"] for row in split(line)]
     ready = {}
@@ -102,9 +104,5 @@ def with_voice_files(corpus: dict, stems: set) -> dict:
         candidate = moved(line)
         stored = candidate is not None and reachable(line, candidate["fileName"])
         ready[together(line)] = ready.get(together(line), True) and stored
-    lines = [_without_body_voice(moved(line) if ready[together(line)] else line) for line in rows]
+    lines = [moved(line) if ready[together(line)] else line for line in rows]
     return {**corpus, "lines": lines}
-
-
-def _without_body_voice(line):
-    return {key: value for key, value in line.items() if key != "bodyVoice"}

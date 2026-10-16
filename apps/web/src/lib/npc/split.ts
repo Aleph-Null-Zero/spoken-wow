@@ -7,7 +7,7 @@
 import { defaultFlavorFor } from "@/lib/quests/catalogue";
 
 import { voiceFromDisplays } from "./display-voices";
-import { raceForModel } from "./models";
+import { raceOfModel } from "./models";
 import type { Observed } from "./resolve";
 import { isSex, SEX_GENDER, sexOf, type Sex } from "./npc";
 import { getBodies, upsertBody, type NpcBodyAnswer, type NpcResolution } from "./store";
@@ -16,8 +16,7 @@ export type BodyInput = Omit<NpcBodyAnswer, "gender" | "updatedAt">;
 
 /** The race a player saw: the model's where the map knows it, else the NPC's own. */
 function seenRace(observed: Observed, sex: Sex, race: string): string {
-  const model = raceForModel(observed.modelFileId);
-  return model && model.gender === SEX_GENDER[sex] ? model.race : race;
+  return raceOfModel(observed.modelFileId, SEX_GENDER[sex]) ?? race;
 }
 
 /** The body the player saw, answered from what the client reported. */

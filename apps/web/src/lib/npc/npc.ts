@@ -65,7 +65,3 @@ export function bodyName(race: string, gender: "male" | "female"): string {
   return `${race}-${gender}`;
 }
 
-export function parseBody(body: string): { race: string; gender: "male" | "female" } | null {
-  const match = /^(.+)-(male|female)$/.exec(body);
-  return match ? { race: match[1], gender: match[2] as "male" | "female" } : null;
-}

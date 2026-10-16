@@ -39,6 +39,7 @@ from tts_cli.corpus import (GENERIC_TYPES, INVALID_CHARS, NO_VOICE, SCHEMA_VERSI
                             write_corpus)
 from tts_cli.flavors import fallback_flavors, is_model_voice
 from tts_cli.naming import moment_of
+from tts_cli.npc_bodies import body_name
 
 LANG = "enUS"
 
@@ -343,8 +344,8 @@ def npc_body_answers(npc_bodies, npcs) -> list:
     chosen = {(npc["npcType"], npc["npcId"]): npc for npc in npcs
               if npc.get("provenance") == "moderator" and npc.get("race")}
     defaults = fallback_flavors(
-        [(f'{npc["race"]}-{npc["gender"]}', npc["flavor"]) for npc in retyped(npcs)]
-        + [(f'{row["race"]}-{row["gender"]}', row["flavor"]) for row in npc_bodies])
+        [(body_name(npc["race"], npc["gender"]), npc["flavor"]) for npc in retyped(npcs)]
+        + [(body_name(row["race"], row["gender"]), row["flavor"]) for row in npc_bodies])
     rows = []
     for row in npc_bodies:
         npc = chosen.get((row["npcType"], row["npcId"]))
@@ -357,6 +358,15 @@ def npc_body_answers(npc_bodies, npcs) -> list:
         rows.append((row["npcType"], row["npcId"], row["race"], row["sex"], weight,
                      *_with_default(row, defaults)))
     return rows
+
+
+def split_bodies(alias: str) -> str:
+    """Whether npc_body row `alias` has a sibling. An NPC is split by two or more npc_body rows;
+    one alone (a moderator's body an import kept) splits nothing, so it is left out of
+    everything a split NPC is built from."""
+    return f"""exists (select 1 from "npc_body" o
+                        where o."npcKind" = {alias}."npcKind" and o."npcId" = {alias}."npcId"
+                          and (o."race", o."sex") is distinct from ({alias}."race", {alias}."sex"))"""
 
 
 def _import_npc_bodies(cur, rows):
@@ -394,19 +404,9 @@ def _import_npc_bodies(cur, rows):
                   is distinct from (coalesce(excluded."weight", x."weight"), excluded."flavor",
                                     excluded."provenance", excluded."doubtful")""".format(
             replaces=_REPLACES.format(old="x", new="excluded")))
-    cur.execute(
-        """delete from "npc_body" x
-            where x."provenance" = 'corpus'
-              and not exists (select 1 from "npc_body" y
-                               where y."npcKind" = x."npcKind" and y."npcId" = x."npcId"
-                                 and (y."race", y."sex") is distinct from (x."race", x."sex"))""")
+    cur.execute("""delete from "npc_body" x where x."provenance" = 'corpus' and not """
+                + split_bodies("x"))
 
-
-# An NPC is split by two or more npc_body rows. One alone (a moderator's body an import kept)
-# splits nothing, so it is left out of everything a split NPC is built from.
-SPLIT_BODIES = """exists (select 1 from "npc_body" o
-                           where o."npcKind" = b."npcKind" and o."npcId" = b."npcId"
-                             and (o."race", o."sex") is distinct from (b."race", b."sex"))"""
 
 
 def export_npc_bodies(cur) -> list:
@@ -415,7 +415,7 @@ def export_npc_bodies(cur) -> list:
         """select "npcKind", "npcId", "race", "sex", "gender", "weight",
                   case when "provenance" = 'corpus' and "doubtful" then null else "flavor" end,
                   "provenance", voice_for("race", "gender", "flavor") from "npc_body" b
-            where """ + SPLIT_BODIES + """
+            where """ + split_bodies("b") + """
             order by "npcKind", "npcId", "sex", "weight" desc nulls last, "updatedAt", "race" """
     )
     return [{"npcType": kind, "npcId": npc_id, "race": race, "sex": sex, "gender": gender,
@@ -1047,7 +1047,7 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
 
             # A split NPC shows each sex its own form of a BroadcastText row.
             cur.execute("""select distinct "npcKind", "npcId", "gender" from "npc_body" b
-                            where """ + SPLIT_BODIES + """ order by 1, 2, 3""")
+                            where """ + split_bodies("b") + """ order by 1, 2, 3""")
             sexes = {}
             for kind, npc_id, gender in cur.fetchall():
                 sexes.setdefault((kind, npc_id), []).append(gender)

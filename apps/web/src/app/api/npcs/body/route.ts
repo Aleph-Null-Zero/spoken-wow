@@ -15,7 +15,7 @@ import { requireAdmin } from "@/lib/generation/authz";
 import { INT32_MAX, isSex, oppositeSex, SEX_GENDER, sexOf, type Sex } from "@/lib/npc/npc";
 import { splitNpc } from "@/lib/npc/split";
 import {
-  deleteBody, getBodies, getResolution, resolutionKey, unsplit, upsertBody, type NpcResolution, type NpcRowKind,
+  deleteBody, getBodies, getResolution, resolutionKey, unsplit, upsertBody, type NpcBodyAnswer, type NpcResolution, type NpcRowKind,
 } from "@/lib/npc/store";
 import { defaultFlavorFor } from "@/lib/quests/catalogue";
 import { loadRoster } from "@/lib/voices/roster-store";
@@ -29,7 +29,9 @@ const text = (value: unknown, max: number) =>
  * A new body for `npc`, splitting it with its own body kept as a moderator's answer. Its own body,
  * on an NPC split without it, is that answer itself: there is nothing to split it from.
  */
-async function addBody(npc: NpcResolution, race: string, sex: Sex, resolvedBy: string): Promise<void> {
+async function addBody(
+  npc: NpcResolution, race: string, sex: Sex, resolvedBy: string, bodies: NpcBodyAnswer[],
+): Promise<void> {
   if (race === npc.race && sex === sexOf(npc.gender)) {
     await upsertBody({
       npcKind: npc.npcKind, npcId: npc.npcId, race, sex, weight: null, flavor: npc.flavor,
@@ -41,7 +43,7 @@ async function addBody(npc: NpcResolution, race: string, sex: Sex, resolvedBy: s
     npcKind: npc.npcKind, npcId: npc.npcId, race, sex, weight: null,
     flavor: await defaultFlavorFor(race, SEX_GENDER[sex]),
     provenance: "moderator", confirmed: true, doubtful: true, note: null, resolvedBy,
-  }, { provenance: "moderator", confirmed: true, doubtful: false, resolvedBy });
+  }, { provenance: "moderator", confirmed: true, doubtful: false, resolvedBy }, bodies);
 }
 
 export async function POST(request: Request) {
@@ -74,7 +76,7 @@ export async function POST(request: Request) {
   if (!npc.race || own === null) return Response.json({ error: "answer the NPC as a man or a woman first" }, { status: 400 });
 
   if (body.action === "split") {
-    await addBody(npc, npc.race, oppositeSex(own), actorId);
+    await addBody(npc, npc.race, oppositeSex(own), actorId, bodies);
     await recordActivity({ kind: "npc.split", lang, actorId, subject, detail: { npcName: npc.npcName } });
     return Response.json({ bodies: await getBodies(npcKind, npcId) });
   }
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
     if (exists) return Response.json({ error: "the NPC has that body already" }, { status: 400 });
     const refusal = roster.isAnswer(race, SEX_GENDER[sex], null);
     if (refusal) return Response.json({ error: refusal }, { status: 400 });
-    await addBody(npc, race, sex, actorId);
+    await addBody(npc, race, sex, actorId, bodies);
     await recordActivity({ kind: "npc.split", lang, actorId, subject, detail: { npcName: npc.npcName, race, sex } });
     return Response.json({ bodies: await getBodies(npcKind, npcId) });
   }

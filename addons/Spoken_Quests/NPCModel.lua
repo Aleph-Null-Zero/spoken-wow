@@ -71,40 +71,19 @@ local function ModelProbeFrame()
     return modelProbe
 end
 
---- Read back whatever the probe currently has for `guid`, cache it, and put the probe away.
---- The one place that finalises a load, regardless of what noticed it was time to: the
---- OnModelLoaded callback (the fast path), or PollLoadingGUID reading the probe directly
---- (the fallback that does not depend on that callback ever firing).
-local function FinishModelLoad(guid)
-    -- First act, not last: ClearModel below can itself fire OnModelLoaded on some clients, and
-    -- that callback is this same function closed over this same guid. Clearing the script
-    -- before touching the model at all means a re-entrant call has nothing left to run.
+--- The file id the probe holds now, or nil while it has none.
+local function ReadProbe()
     local probe = modelProbe
-    if probe and probe.SetScript then
-        pcall(probe.SetScript, probe, "OnModelLoaded", nil)
-    end
     -- Not `probe and pcall(...)`: `and` truncates pcall's two return values down to one, so
     -- `id` would be nil even on a successful read. Separate statements keep both.
     local ok, id = false, nil
     if probe then
         ok, id = pcall(probe.GetModelFileID, probe)
     end
-    if probe then
-        -- pcall'd like every other probe call here: ClearModel is exactly the kind of call
-        -- that can itself trigger a client callback, and one client's blowup on it must not
-        -- skip the Hide beneath it.
-        if probe.ClearModel then pcall(probe.ClearModel, probe) end
-        if probe.Hide then probe:Hide() end
+    if ok and type(id) == "number" and id > 0 then
+        return id
     end
-    if loadingGUID == guid then
-        loadingGUID, loadingRefreshes = nil, nil
-    end
-    -- Absent rather than zero: the site reads a missing model as "race unknown", and 0 is a
-    -- file id that would mean something.
-    modelCache[guid] = (ok and type(id) == "number" and id > 0) and id or false
-    for _, callback in ipairs(NPCModel.onLoaded) do
-        pcall(callback, guid)
-    end
+    return nil
 end
 
 --- Put the probe away without deciding anything about `guid` -- the difference between this
@@ -116,10 +95,16 @@ end
 --- to -- only running out of MAX_LOAD_ATTEMPTS is allowed to decide that.
 local function AbandonModelLoad(guid)
     local probe = modelProbe
+    -- First act, not last: ClearModel below can itself fire OnModelLoaded on some clients, and
+    -- that callback is FinishModelLoad closed over this same guid. Clearing the script before
+    -- touching the model at all means a re-entrant call has nothing left to run.
     if probe and probe.SetScript then
         pcall(probe.SetScript, probe, "OnModelLoaded", nil)
     end
     if probe then
+        -- pcall'd like every other probe call here: ClearModel is exactly the kind of call
+        -- that can itself trigger a client callback, and one client's blowup on it must not
+        -- skip the Hide beneath it.
         if probe.ClearModel then pcall(probe.ClearModel, probe) end
         if probe.Hide then probe:Hide() end
     end
@@ -128,17 +113,25 @@ local function AbandonModelLoad(guid)
     end
 end
 
---- The file id the probe holds now, or nil while it has none.
-local function ReadProbe()
+--- Read back whatever the probe currently has for `guid`, cache it, and put the probe away.
+--- The one place that finalises a load, regardless of what noticed it was time to: the
+--- OnModelLoaded callback (the fast path), or PollLoadingGUID reading the probe directly
+--- (the fallback that does not depend on that callback ever firing).
+local function FinishModelLoad(guid)
+    -- The script is cleared before the read, so a callback the read itself fires finds
+    -- nothing to run; the read comes before AbandonModelLoad's ClearModel empties the probe.
     local probe = modelProbe
-    local ok, id = false, nil
-    if probe then
-        ok, id = pcall(probe.GetModelFileID, probe)
+    if probe and probe.SetScript then
+        pcall(probe.SetScript, probe, "OnModelLoaded", nil)
     end
-    if ok and type(id) == "number" and id > 0 then
-        return id
+    local id = ReadProbe()
+    AbandonModelLoad(guid)
+    -- Absent rather than zero: the site reads a missing model as "race unknown", and 0 is a
+    -- file id that would mean something.
+    modelCache[guid] = id or false
+    for _, callback in ipairs(NPCModel.onLoaded) do
+        pcall(callback, guid)
     end
-    return nil
 end
 
 --- Stop a load that came back empty: a miss for good once the guid has no attempts left,

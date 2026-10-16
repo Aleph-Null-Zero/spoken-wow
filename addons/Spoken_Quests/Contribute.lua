@@ -454,17 +454,15 @@ local function GatherLine()
     return envelope and Spoken.Gather:Add(key, envelope) or false
 end
 
--- A line gathered while its model was loading was kept without it. Take it again once the model
--- is in, if the same NPC is still on screen: the same key replaces it.
+-- Once a model is in, if the same NPC is still on screen: a line gathered while it was loading
+-- was kept without it, so take it again (the same key replaces it); and the model can show the
+-- line is a body its voice is not, so the button asks again.
 table.insert(NPCModel.onLoaded, function(guid)
-    if Utils:GetNPCGUID() == guid then
-        GatherLine()
+    if Utils:GetNPCGUID() ~= guid then
+        return
     end
-end)
-
--- A model just in can show the line is a body its voice is not: the button asks again.
-table.insert(NPCModel.onLoaded, function(guid)
-    if Utils:GetNPCGUID() == guid and ContributeButton then
+    GatherLine()
+    if ContributeButton then
         ContributeButton:Refresh()
     end
 end)

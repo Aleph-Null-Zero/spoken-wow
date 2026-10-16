@@ -178,8 +178,6 @@ Expect("an unknown model falls back to the sex", select(2, GreetAs("Creature-0-0
 Expect("...which still sees the other sex", select(2, GreetAs("Creature-0-0-0-0-1-4", 424242, 3)), true)
 Expect("a split creature is split", VO.DataModules:IsSplit(15906), true)
 Expect("an unsplit one is not", VO.DataModules:IsSplit(1), false)
-Expect("a body is its race and gender", VO.Utils:BodyName("gnome", 3), "gnome-female")
-Expect("...and no body for a sex that is neither", VO.Utils:BodyName("gnome", 1), nil)
 
 -- A pack built before bodies carries only the sex tables: the new addon still hears the sex.
 VO = InstallBodies({

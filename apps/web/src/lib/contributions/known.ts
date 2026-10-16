@@ -25,7 +25,7 @@
  */
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
-import { raceForModel } from "@/lib/npc/models";
+import { raceOfModel } from "@/lib/npc/models";
 import { bodyName, isSex, SEX_GENDER } from "@/lib/npc/npc";
 import { splitBody } from "@/lib/npc/store";
 
@@ -70,8 +70,8 @@ function otherBody(row: Comparable, voiced: VoicedBodies | undefined): boolean {
   const sex = seenSex(row);
   if (!voiced || sex === null) return false;
   const gender = SEX_GENDER[sex as 2 | 3];
-  const model = raceForModel(Number(row.meta.model));
-  if (model && model.gender === gender) return !voiced.bodies.has(bodyName(model.race, gender));
+  const race = raceOfModel(Number(row.meta.model), gender);
+  if (race) return !voiced.bodies.has(bodyName(race, gender));
   return !voiced.sexes.has(sex);
 }
 

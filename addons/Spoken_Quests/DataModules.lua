@@ -738,6 +738,19 @@ function DataModules:GetQuestFileForGiver(soundData)
     end
 end
 
+--- The first installed pack's `tableName[key]`, or nil where none has it.
+---@param tableName string
+---@param key any
+---@return any
+local function FirstIn(tableName, key)
+    for _, module in DataModules:GetModules() do
+        local value = module[tableName] and module[tableName][key]
+        if value then
+            return value
+        end
+    end
+end
+
 --- The creature a GUID names, its id, the sex it is drawn as and its body where its model is in.
 ---@param soundData SoundData
 ---@return number|nil id
@@ -753,6 +766,32 @@ local function CreatureBody(soundData)
     return id, soundData.npcSex, soundData.npcBody
 end
 
+--- A line's file in the `...ByNPCBody` or `...ByNPCSex` tables (`kind`), for creature `id` drawn
+--- as `key`: quest tables are `[line][id][key]`, gossip tables `[id][key][line]`.
+---@param kind "Body"|"Sex"
+---@param id number
+---@param key string|number
+---@param line string
+---@param quest boolean
+---@return string|nil
+local function FileFor(kind, id, key, line, quest)
+    for _, module in DataModules:GetModules() do
+        local file
+        if quest then
+            local byGiver = module["QuestFileLookupByNPC" .. kind]
+            byGiver = byGiver and byGiver[line]
+            file = byGiver and byGiver[id] and byGiver[id][key]
+        else
+            local byKey = module["GossipFileLookupByNPC" .. kind]
+            byKey = byKey and byKey[id]
+            file = byKey and byKey[key] and byKey[key][line]
+        end
+        if file then
+            return file
+        end
+    end
+end
+
 --- The file a line is in for the body its NPC is drawn as, for an NPC split by body: the body's
 --- where its model is in, else its sex's, which each pack names for addons that cannot see a body.
 ---@param soundData SoundData
@@ -764,37 +803,9 @@ function DataModules:GetFileForBody(soundData, line)
         return
     end
     local quest = Enums.SoundEvent:IsQuestEvent(soundData.event)
-    if body then
-        for _, module in self:GetModules() do
-            local file
-            if quest then
-                local byGiver = module.QuestFileLookupByNPCBody and module.QuestFileLookupByNPCBody[line]
-                file = byGiver and byGiver[id] and byGiver[id][body]
-            else
-                local byBody = module.GossipFileLookupByNPCBody and module.GossipFileLookupByNPCBody[id]
-                file = byBody and byBody[body] and byBody[body][line]
-            end
-            if file then
-                return file
-            end
-        end
-    end
-    if not sex then
-        return
-    end
-    for _, module in self:GetModules() do
-        local file
-        if quest then
-            local byGiver = module.QuestFileLookupByNPCSex and module.QuestFileLookupByNPCSex[line]
-            file = byGiver and byGiver[id] and byGiver[id][sex]
-        else
-            local bySex = module.GossipFileLookupByNPCSex and module.GossipFileLookupByNPCSex[id]
-            file = bySex and bySex[sex] and bySex[sex][line]
-        end
-        if file then
-            return file
-        end
-    end
+    return body and FileFor("Body", id, body, line, quest)
+        or sex and FileFor("Sex", id, sex, line, quest)
+        or nil
 end
 
 --- Whether a creature is drawn as a body its voice is not. Its line still plays, and the site has
@@ -807,26 +818,15 @@ function DataModules:IsOtherBody(soundData)
     if not id or (sex ~= 2 and sex ~= 3) then
         return false
     end
-    if body then
-        for _, module in self:GetModules() do
-            local bodies = module.NPCBodiesByNPCID and module.NPCBodiesByNPCID[id]
-            if bodies then
-                return not bodies[body]
-            end
-        end
+    local bodies = body and FirstIn("NPCBodiesByNPCID", id)
+    if bodies then
+        return not bodies[body]
     end
-    for _, module in self:GetModules() do
-        if module.GossipFileLookupByNPCSex and module.GossipFileLookupByNPCSex[id] then
-            return false
-        end
+    if FirstIn("GossipFileLookupByNPCSex", id) then
+        return false
     end
-    for _, module in self:GetModules() do
-        local voiced = module.NPCSexByNPCID and module.NPCSexByNPCID[id]
-        if voiced then
-            return voiced ~= sex
-        end
-    end
-    return false
+    local voiced = FirstIn("NPCSexByNPCID", id)
+    return voiced ~= nil and voiced ~= sex
 end
 
 --- Whether a creature is split by body in any installed pack: the ones worth loading a model for
@@ -834,25 +834,14 @@ end
 ---@param id number
 ---@return boolean
 function DataModules:IsSplit(id)
-    for _, module in self:GetModules() do
-        if (module.GossipFileLookupByNPCBody and module.GossipFileLookupByNPCBody[id])
-            or (module.GossipFileLookupByNPCSex and module.GossipFileLookupByNPCSex[id]) then
-            return true
-        end
-    end
-    return false
+    return (FirstIn("GossipFileLookupByNPCBody", id) or FirstIn("GossipFileLookupByNPCSex", id)) ~= nil
 end
 
 --- Whether any installed pack lists a creature's bodies, so that its model is worth reading.
 ---@param id number
 ---@return boolean
 function DataModules:HasBodies(id)
-    for _, module in self:GetModules() do
-        if module.NPCBodiesByNPCID and module.NPCBodiesByNPCID[id] then
-            return true
-        end
-    end
-    return false
+    return FirstIn("NPCBodiesByNPCID", id) ~= nil
 end
 
 --- A greeting's table names its speaker's own voice's file, `{hash}-{voice}`: the line's own

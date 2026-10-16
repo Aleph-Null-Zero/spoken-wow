@@ -86,17 +86,6 @@ function Utils:GetSexForGUID(unitGUID)
     end
 end
 
-local SEX_GENDER = { [2] = "male", [3] = "female" }
-
---- A body as the packs key it: "gnome-female". nil for a sex that is neither (UnitSex 1).
----@param race string
----@param sex number
----@return string|nil
-function Utils:BodyName(race, sex)
-    local gender = SEX_GENDER[sex]
-    return race and gender and (race .. "-" .. gender) or nil
-end
-
 --- The body (race and sex) a GUID's creature is drawn as, read from its model: nil until the
 --- model has loaded (NPCModel), or where no installed pack names that model. NPCModel and
 --- DataModules load after this file, so both are reached at call time.
