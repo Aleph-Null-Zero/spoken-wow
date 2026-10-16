@@ -225,3 +225,26 @@ end
 function NPCModel:IsLoading()
     return loadingGUID ~= nil
 end
+
+-- A split creature's greeting plays the moment its dialog opens, too soon for a model asked for
+-- then. Targeting or pointing at it first is nearly always how a dialog is opened, so its model
+-- is asked for then. Only a split creature: nothing else is heard differently by its model.
+-- DataModules loads after this file, so it is reached at event time.
+local function PrimeUnit(unit)
+    local guid = UnitGUID and UnitGUID(unit)
+    local id = guid and Utils:GetCreatureIDFromGUID(guid)
+    if id and DataModules and DataModules:IsSplit(id) then
+        NPCModel:Prime(guid, unit)
+    end
+end
+
+if CreateFrame then
+    local ok, events = pcall(CreateFrame, "Frame")
+    if ok and events then
+        pcall(events.RegisterEvent, events, "PLAYER_TARGET_CHANGED")
+        pcall(events.RegisterEvent, events, "UPDATE_MOUSEOVER_UNIT")
+        pcall(events.SetScript, events, "OnEvent", function(_, event)
+            PrimeUnit(event == "PLAYER_TARGET_CHANGED" and "target" or "mouseover")
+        end)
+    end
+end

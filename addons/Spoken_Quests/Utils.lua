@@ -86,6 +86,35 @@ function Utils:GetSexForGUID(unitGUID)
     end
 end
 
+local SEX_GENDER = { [2] = "male", [3] = "female" }
+
+--- A body as the packs key it: "gnome-female". nil for a sex that is neither (UnitSex 1).
+---@param race string
+---@param sex number
+---@return string|nil
+function Utils:BodyName(race, sex)
+    local gender = SEX_GENDER[sex]
+    return race and gender and (race .. "-" .. gender) or nil
+end
+
+--- The body (race and sex) a GUID's creature is drawn as, read from its model: nil until the
+--- model has loaded (NPCModel), or where no installed pack names that model. NPCModel and
+--- DataModules load after this file, so both are reached at call time.
+---@param unitGUID string|nil
+---@return string|nil body
+function Utils:GetBodyForGUID(unitGUID)
+    local model = unitGUID and NPCModel and NPCModel:Get(unitGUID)
+    if not model or not DataModules then
+        return
+    end
+    for _, module in DataModules:GetModules() do
+        local body = module.BodyByModelFileID and module.BodyByModelFileID[model]
+        if body then
+            return body
+        end
+    end
+end
+
 --- Returns whether the NPC that's being interacted with while a GossipFrame or QuestFrame is visible is a GameObject or Item.
 ---
 --- Uses "questnpc" unitID when available, falls back to "npc" unitID.

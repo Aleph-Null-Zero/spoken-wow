@@ -581,6 +581,43 @@ Expect("closing the window with no event takes the button with it", lingering:Is
 stub.FireEvent("QUEST_FINISHED")
 Expect("...and no later event brings it back while nothing is open", lingering:IsShown(), false)
 
+---------------------------------------------------------- a body its voice is not
+-- A Reveler voiced as a dwarf and drawn as a gnome: its line plays, so nothing is missing, but
+-- only its model shows it is a body the site has no voice for. The model is read on the dialog
+-- opening, and the button comes up once it is in.
+local pack = VoiceOver.DataModules:GetModule("TestPack")
+local HASH = string.rep("b", 32)
+pack.SoundLengthLookupByFileName[HASH] = 2
+pack.GossipLookupByNPCID = { [15906] = { ["Prosit!"] = HASH } }
+pack.NPCBodiesByNPCID = { [15906] = { ["dwarf-male"] = true } }
+pack.BodyByModelFileID = { [119159] = "gnome-male", [118355] = "dwarf-male" }
+stub.HidePanels()
+world.npcName, world.npcGUID = "Ironforge Reveler", "Creature-0-0-0-0-15906-0"
+world.modelFileID, world.modelStillLoading, world.unitSex = 119159, true, 2
+local bodySetUnits = stub.SetUnitCount()
+stub.ShowGossip("Prosit!")
+stub.FireEvent("GOSSIP_SHOW")
+local bodyButton = VoiceOver.ContributeButton.button
+Expect("a voiced line whose model is not in yet offers nothing", bodyButton:IsShown(), false)
+Expect("...but its model is asked for, though nothing is missing", stub.SetUnitCount(), bodySetUnits + 1)
+Expect("...and kept loading", VoiceOver.NPCModel:IsLoading(), true)
+world.modelStillLoading = false
+stub.FinishModelLoad()
+Expect("drawn as a gnome, the button comes up once the model is in", bodyButton:IsShown(), true)
+stub.FireEvent("GOSSIP_SHOW")
+Expect("...without loading it again", stub.SetUnitCount(), bodySetUnits + 1)
+
+stub.HidePanels()
+world.npcGUID = "Creature-0-0-0-0-15906-1"
+world.modelFileID = 118355
+stub.ShowGossip("Prosit!")
+stub.FireEvent("GOSSIP_SHOW")
+stub.FinishModelLoad()
+Expect("drawn as a dwarf, the body its voice is, nothing is offered", bodyButton:IsShown(), false)
+stub.HidePanels()
+stub.FireEvent("GOSSIP_CLOSED")
+world.modelFileID = nil
+
 SpokenEnv.Spoken.Gather:SetEnabled(true)
 
 os.exit(Failures() == 0 and 0 or 1)

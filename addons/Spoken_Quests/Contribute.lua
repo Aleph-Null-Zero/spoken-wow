@@ -407,8 +407,8 @@ local function HasSoundForCurrent()
             unitIsObjectOrItem = Utils:IsNPCObjectOrItem(),
             text = gossip,
         }
-        -- A woman speaking in the man's voice plays, and is still a line the site lacks.
-        return DataModules:PrepareSound(soundData) and not DataModules:IsOtherSex(soundData)
+        -- Drawn as a body its voice is not, a line plays, and is still a line the site lacks.
+        return DataModules:PrepareSound(soundData) and not DataModules:IsOtherBody(soundData)
     end
 
     return false
@@ -462,11 +462,18 @@ table.insert(NPCModel.onLoaded, function(guid)
     end
 end)
 
+-- A model just in can show the line is a body its voice is not: the button asks again.
+table.insert(NPCModel.onLoaded, function(guid)
+    if Utils:GetNPCGUID() == guid and ContributeButton then
+        ContributeButton:Refresh()
+    end
+end)
+
 --- Whether the contribute button belongs on screen: something to send, and nothing to play.
 ---
 --- Priming the model cache happens here, not in Capture, and only when there is actually a
---- gap: most NPCs already have sound, and there is no reason to ever ask a model to load for
---- one of those. One SetUnit per NPC encountered while a gap is showing, not one per event --
+--- gap or a creature whose bodies the packs list: most NPCs already have sound and one voice,
+--- and there is no reason to ever ask a model to load for one of those. One SetUnit per NPC encountered while a gap is showing, not one per event --
 --- a player reads a quest for seconds, which is ample for the load NPCModel:Prime started to
 --- finish before a click ever reads it back.
 function Contribute:HasGap()
@@ -479,17 +486,28 @@ function Contribute:HasGap()
     -- Gathering needs the model primed as much as a click does, and runs with the buttons
     -- hidden as readily as with them shown.
     local gathering = Spoken.Gather and Spoken.Gather:IsEnabled()
+    -- A body the voice is not can only be seen in the model, so a creature whose bodies the
+    -- packs list has it read whatever the gap: once per guid, as for a gap. Primed at most once
+    -- per pass, since each Prime of a guid still loading counts towards giving up on it.
+    local guid = Utils:GetNPCGUID()
+    local id = guid and Utils:GetCreatureIDFromGUID(guid)
+    local hasBodies = id and DataModules:HasBodies(id)
+    if hasBodies then
+        NPCModel:Prime(guid, "npc")
+    end
     local missing = (not hidden or gathering) and IsMissing()
     local gap = not hidden and missing
     if missing then
-        NPCModel:Prime(Utils:GetNPCGUID(), "npc")
+        if not hasBodies then
+            NPCModel:Prime(guid, "npc")
+        end
         -- Gathered here, on the one pass that already knows the line is missing, rather than
         -- by a second caller asking PrepareSound all over again. This runs on every quest and
         -- gossip event through ContributeButton's refresh, which is what drives gathering.
         if gathering then
             GatherLine()
         end
-    elseif NPCModel:IsLoading() then
+    elseif NPCModel:IsLoading() and not hasBodies then
         -- No gap, but a load is still in flight for whatever NPC started it: the player closed
         -- the dialog, or a pack picked up the line, with no click and no retarget to trigger
         -- NPCModel:Prime's own guid-switch guard. Left alone, this is unbounded exposure --

@@ -498,5 +498,27 @@ Say("Thanks, Tester!", SPEAKER_GUID)
 Expect("...and the man's while no unit tells her sex", Keys(), "line-1")
 world.unitSex = 2
 
+---------------------------------------------------------------- an NPC split by body
+-- A Reveler drawn as a dwarf or a gnome: the gnome's file plays once its model has loaded, the
+-- sex's before.
+local BODY_PACK = { folder = "BodyPack", module = FollowupPack({ [SPEAKER] = { [1] = "line-1" } },
+    { ["line-1"] = 2, ["line-1-g"] = 2 }) }
+BODY_PACK.module.FollowupLookupByNPCSex = { [SPEAKER] = { [1] = { [2] = "line-1" } } }
+BODY_PACK.module.FollowupLookupByNPCBody = { [SPEAKER] = { [1] = { ["dwarf-male"] = "line-1", ["gnome-male"] = "line-1-g" } } }
+BODY_PACK.module.BodyByModelFileID = { [119159] = "gnome-male" }
+for i = #queued, 1, -1 do queued[i] = nil end
+VO, Spoken = Boot(nil, { BODY_PACK })
+world.npcGUID = SPEAKER_GUID; world.unitSex = 2
+stub.FireEvent("QUEST_TURNED_IN", 300, 0, 0)
+Say("Thanks, Tester!", SPEAKER_GUID)
+Expect("a split speaker whose model is not in says its sex's follow-up", Keys(), "line-1")
+Reset()
+world.modelFileID = 119159
+VO.NPCModel:Prime(SPEAKER_GUID, "npc"); stub.FinishModelLoad()
+stub.FireEvent("QUEST_TURNED_IN", 300, 0, 0)
+Say("Thanks, Tester!", SPEAKER_GUID)
+Expect("a gnome speaker's follow-up is the gnome's file", Keys(), "line-1-g")
+world.npcGUID = npcGUID; world.modelFileID = nil
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll quest follow-up tests passed")
