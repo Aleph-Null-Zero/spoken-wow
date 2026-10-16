@@ -16,7 +16,7 @@ local env = stub.LoadSpoken(SPOKEN)
 
 -- The addon's own .toc Version, deliberately unlike "dev" so the assertion below cannot pass
 -- by coincidence -- it is pinning that CaptureContribution reads a real version, not
--- confirming a particular one. See addons/Spoken_Quests/Contribute.lua's Contribute:Capture
+-- confirming a particular one. See addons/Spoken_Conversations/Contribute.lua's Contribute:Capture
 -- for the same pattern; SpokenZones.VERSION does not exist, only the lowercase
 -- SpokenZones.version Core.lua already computes from the .toc.
 stub.SetAddOns({ { folder = "Spoken_Places", meta = { Version = "9.9.9" } } })

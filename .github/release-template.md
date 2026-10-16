@@ -1,6 +1,6 @@
 ## Download
 
-### Spoken Quests
+### Spoken Conversations
 The zips carry Spoken too.
 
 | Client | GitHub Direct Link | Addon stores |
@@ -11,7 +11,7 @@ The zips carry Spoken too.
 | 3.3.5 (build 12340) | [GitHub ZIP Download]({{ github_zip_download_335 }}) | - |
 
 One zip serves every Blizzard client — it carries a `.toc` per flavor and the client picks.
-The three legacy clients read `Spoken_Quests.toc` and nothing else, so each has a zip
+The three legacy clients read `Spoken_Conversations.toc` and nothing else, so each has a zip
 of its own, carrying the vendored Ace3 that client needs. Only Forever gets new work; the
 legacy zips are kept as they are.
 

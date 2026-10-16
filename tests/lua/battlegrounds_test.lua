@@ -106,7 +106,7 @@ local asked = H.Clip()
 Expect("off, a line the player asked for is queued in a battleground", quests:Enqueue(asked, true) ~= nil, true)
 Expect("...and plays", world.played[1], asked.path)
 
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local BOOKS = here .. "/../../addons/Spoken_Readables/"
 
 local function BootModules()

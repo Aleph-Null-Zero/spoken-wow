@@ -124,7 +124,7 @@ Expect("...and SpokenZones sees it", Z:IsPaused(), true)
 Z:ResumeLore()
 Expect("ResumeLore", Spoken:IsPaused(), false)
 
-local quests = Spoken:RegisterSource("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
+local quests = Spoken:RegisterSource("quests", { title = "Quests", addon = "Spoken_Conversations", order = 1 })
 local q = H.Clip()
 quests:Enqueue(q)
 Z:EnqueueLore(Z:NewLoreSound(1411, "valley of trials"))

@@ -6,7 +6,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
@@ -21,7 +21,7 @@ local VoiceOver = stub.LoadQuests(QUESTS, SPOKEN)
 -- to see TestPack in this same list, or the DataModules:Register call further down (which
 -- asserts a module was detected during enumeration) fails.
 stub.SetAddOns({
-    { folder = "Spoken_Quests", meta = { Version = "9.9.9" } },
+    { folder = "Spoken_Conversations", meta = { Version = "9.9.9" } },
     { folder = "TestPack", meta = { ["X-VoiceOver-DataModule-Version"] = "1", Version = "1.2.1", Title = "TestPack" } },
 })
 
@@ -191,7 +191,7 @@ Expect("...in from the frame's right edge as far as the details Play is from its
 Expect("...by its top right corner", button.anchor and button.anchor.point, "TOPRIGHT")
 
 button:GetScript("OnEnter")(button)
-Expect("the tooltip says the quest is missing", GameTooltip.text, "Spoken Quests doesn't have this quest")
+Expect("the tooltip says the quest is missing", GameTooltip.text, "Spoken Conversations doesn't have this quest")
 _G.QuestFrameCloseButton = nil
 stub.HidePanels()
 
@@ -201,7 +201,7 @@ stub.FireEvent("GOSSIP_SHOW")
 Expect("the button appears on gossip too", button:IsShown(), true)
 Expect("...in the gossip frame's top right corner", button.anchor and button.anchor.relativeTo == _G.GossipFrame, true)
 button:GetScript("OnEnter")(button)
-Expect("...saying the line is missing", GameTooltip.text, "Spoken Quests doesn't have this line")
+Expect("...saying the line is missing", GameTooltip.text, "Spoken Conversations doesn't have this line")
 
 ---------------------------------------------------------------- the closing gossip frame
 -- CloseGossip fires GOSSIP_CLOSED, which refreshes the button, and on a real client the

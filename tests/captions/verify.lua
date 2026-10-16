@@ -695,14 +695,14 @@ Q:RemoveAllSoundsFromQueue()
 Check(#E.Callbacks.errors==0,table.concat(E.Callbacks.errors,'\n'))
 
 -- Exercise the actual quest adapter and log-text helper, including reward text.
-dofile(addons .. 'Spoken_Quests/Environment.lua')
+dofile(addons .. 'Spoken_Conversations/Environment.lua')
 -- Player.lua names its report action at load time, so it needs the string table.
-dofile(addons .. 'Spoken_Quests/Strings.lua')
+dofile(addons .. 'Spoken_Conversations/Strings.lua')
 VoiceOver.Version=E.Version
-dofile(addons .. 'Spoken_Quests/Enums.lua')
-dofile(addons .. 'Spoken_Quests/NPCModel.lua')
-dofile(addons .. 'Spoken_Quests/Contribute.lua')
-dofile(addons .. 'Spoken_Quests/Player.lua')
+dofile(addons .. 'Spoken_Conversations/Enums.lua')
+dofile(addons .. 'Spoken_Conversations/NPCModel.lua')
+dofile(addons .. 'Spoken_Conversations/Contribute.lua')
+dofile(addons .. 'Spoken_Conversations/Player.lua')
 local V=VoiceOver
 C_QuestLog={GetLogIndexForQuestID=function(id) return id==33 and 7 or nil end}
 GetQuestLogQuestText=function(index) assert(index==7); return 'Log description', 'Objectives' end

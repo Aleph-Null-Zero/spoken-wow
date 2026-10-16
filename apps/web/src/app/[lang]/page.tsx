@@ -65,7 +65,7 @@ const ADDONS: Addon[] = [
   },
   {
     slug: "spoken-quests",
-    label: "Spoken Quests",
+    label: "Spoken Conversations",
     description: "Voices quest and gossip dialogue.",
     wago: true,
     release: "quests/",

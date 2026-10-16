@@ -2,7 +2,7 @@
 
 [DialogueUI](https://www.curseforge.com/wow/addons/dialogueui) replaces the quest and gossip
 frames with its own window. While that window is open it also hides the rest of the interface,
-which hides Spoken's window or subtitles. `addons/Spoken_Quests/UI/DialogueUIBridge.lua`
+which hides Spoken's window or subtitles. `addons/Spoken_Conversations/UI/DialogueUIBridge.lua`
 brings back what was hidden, inside DialogueUI's window:
 
 - **Mark the words being read.** DialogueUI's own quest and gossip text follows the line the
@@ -28,15 +28,15 @@ brings back what was hidden, inside DialogueUI's window:
 - **Listen button on DialogueUI.** Play is there whether or not DialogueUI's Text To Speech is on
   (DialogueUI has it off by default, and draws its own button only with it on). Left-click
   plays the page's line, or stops it while it speaks, when the button shows Stop; on a quest
-  page, right-click turns Spoken Quests' **Read Automatically** on or off, as a right-click on
+  page, right-click turns Spoken Conversations' **Read Automatically** on or off, as a right-click on
   DialogueUI's button turns its Auto Play. On a page with no recording it is greyed and keeps
   its place. With the setting off it is gone, and DialogueUI's own button, if shown, is in
   view again. Skip skips whatever speaks and is greyed while nothing does.
 - **DialogueUI's settings are left alone.** Nothing here changes DialogueUI's Text To Speech or
-  its Auto Play. Spoken Quests still registers as DialogueUI's voiceover provider, so where the
+  its Auto Play. Spoken Conversations still registers as DialogueUI's voiceover provider, so where the
   player has DialogueUI's Text To Speech on, its button and hotkey play the recording too.
   Whether a line reads by itself is decided by **Read Automatically** alone; DialogueUI's Auto
-  Play has no say over Spoken Quests' lines.
+  Play has no say over Spoken Conversations' lines.
 - **Report a problem, or contribute a missing line.** Report is the rightmost button of the
   row, on every quest and gossip page: it opens the report address for the page, the quest's or
   the NPC's. For a quest or gossip line no pack has, the same icon does what the game's
@@ -44,7 +44,7 @@ brings back what was hidden, inside DialogueUI's window:
   Spoken's **Hide Report Buttons** takes it away, except where it contributes; there is no
   setting of its own here: the Contribute button was missing under DialogueUI
   ([rusty-key/spoken-wow#246](https://github.com/rusty-key/spoken-wow/issues/246)), and
-  gathering saved nothing. Where Spoken Quests is not installed, the icon sits small and
+  gathering saved nothing. Where Spoken Conversations is not installed, the icon sits small and
   faint (40 %) under DialogueUI's Decline (or Goodbye) button, right-aligned with it, in full
   where it contributes.
 
@@ -92,14 +92,14 @@ DialogueUI's words:
 - Every starting paragraph is tried, because DialogueUI can keep earlier gossip above the
   current page. On a tie, the later paragraph wins.
 - Below 60 % of the words matched, the window shows something else, so nothing is marked.
-- Only the lines of Spoken Quests, quests and gossip, are matched. A zone's lore or a book page
+- Only the lines of Spoken Conversations, quests and gossip, are matched. A zone's lore or a book page
   playing while DialogueUI is open leaves its text alone.
 
 **Drawing.** Both marks are made in the paragraph's own text:
 
 - The highlight is a colour code around the word.
 - Typing out shows the paragraphs the line covers up to the word being read, and the ones
-  after it blank. DialogueUI draws a page the moment the dialog opens, while Spoken Quests
+  after it blank. DialogueUI draws a page the moment the dialog opens, while Spoken Conversations
   reads it a moment later (0.1 s for gossip, once a quest has held still for 0.4 s). So when
   a page is about to be read, `Addon:ExpectedLine(event, true)` gives its line's text as the
   page is built, and its words are blank from the first frame, for up to 2.5 s, until the
@@ -119,7 +119,7 @@ reads that text back for its own text-to-speech.
 
 **Waiting for the window.** DialogueUI shows its window on the client's event and then plays
 an intro (a 0.2 s fade, or 0.75 s for its unfold and fly-in styles) and fades the text in over
-0.35 s. A line Spoken Quests reads on its own could start in the middle of that, the voice
+0.35 s. A line Spoken Conversations reads on its own could start in the middle of that, the voice
 ahead of the words it marks. So an automatic read of the page DialogueUI is showing waits,
 in `Bridge:Defer` (asked by `Addon:InvokeQuestHandler`), until the window and its text are at
 full opacity, for at most 1.5 s, and is dropped if the window closes first. A read the player
@@ -135,7 +135,7 @@ asks for, and a dialog DialogueUI is not showing, read at once.
 
 `Spoken:SetPlayerHost(nil)` puts all of it back, the subtitles' own low strata included.
 
-**Contribute button.** Spoken Quests decides there is a line to contribute from the game's
+**Contribute button.** Spoken Conversations decides there is a line to contribute from the game's
 quest panels and gossip frame, which DialogueUI never shows. `Bridge:Page()` gives the
 dialog event of the page DialogueUI's window shows instead, from DialogueUI's
 `DUIQuestFrame.handler` (the page builder it last ran). `Contribute.lua` falls back on it to
@@ -179,7 +179,7 @@ login. Where DialogueUI's own button is shown, it is set transparent while Spoke
 in for it and given back its alpha when Play goes. The tooltips are the window's own GameTooltip
 (`ContributeButton:DialogueUITooltip`), since the game's is hidden with UIParent.
 
-DialogueUI hears the client's quest event before Spoken Quests' recorder does. So the line is
+DialogueUI hears the client's quest event before Spoken Conversations' recorder does. So the line is
 resolved from the page DialogueUI shows, through `Addon:GetVisibleLine(event)`, rather than from
 the last recorded event; the provider DialogueUI asks does the same. Play reads the line at once
 (`Player:PlayPreparedNow`): the player's `PlayNow` lets a speaking line finish first, so
@@ -191,11 +191,11 @@ stops a playing line and plays one that is not. The provider's Stop works only w
 window is open. DialogueUI also asks the provider to stop as its window closes, and accepting a
 quest closes it. That comes from DialogueUI's "TTS Auto Stop" setting, which is on by default
 even with its text-to-speech off. Obeying it would cut every line short at the accept, so
-whether closing the dialog stops the line is left to Spoken Quests' own **Stop When Window
+whether closing the dialog stops the line is left to Spoken Conversations' own **Stop When Window
 Closes**.
 
 **Auto Play.** DialogueUI's autoplay calls the provider's Play after asking it for its delay,
-which a click on its button never does. That call is always ignored: Spoken Quests' own
+which a click on its button never does. That call is always ignored: Spoken Conversations' own
 **Read Automatically** reads the line or not, so the two never both start it.
 
 ## Limits

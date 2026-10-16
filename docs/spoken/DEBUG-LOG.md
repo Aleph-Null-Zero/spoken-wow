@@ -3,7 +3,7 @@
 **Spoken Developer** (`addons/Spoken_Developer`, for developers only: not in Spoken's zip and not
 published; link it from a checkout or build it with `scripts/developer/package.sh`) keeps a log of what
 Spoken plays and why: every line queued, started, stopped, dropped or refused, with the time and
-the reason, Spoken's diagnostics, and whatever its modules add (Spoken Quests writes each quest
+the reason, Spoken's diagnostics, and whatever its modules add (Spoken Conversations writes each quest
 or gossip window it saw and what it decided). It is for finding out afterwards why a line played
 late, twice or not at all, and it is what to send with a report. It is written to be read by a
 person, or by an AI agent on the player's computer straight from the saved file.
@@ -23,7 +23,7 @@ whoever wants a log. It can be turned off, and keeps nothing while off:
 ## The menu
 
 Right-click a **Report a Problem** button (the windows', the subtitle's, the quest log's, and any
-made with `Spoken:CreateRoundButton`) or a Spoken Quests **Contribute** button (the quest or
+made with `Spoken:CreateRoundButton`) or a Spoken Conversations **Contribute** button (the quest or
 gossip window's, the quest log's), up exactly when a line did not play: with the log on, a menu
 says how big the log is (lines used of 2000, and the room they take in the saved file) and offers
 
@@ -46,7 +46,7 @@ debug loggers (Transcriptor, BugGrabber) live with the same rule and ask for a `
 **Write the Debug Log for an AI Agent**:
 
 1. writes the detailed diagnostics of the moment into the log (a `diag written for an AI agent:`
-   block: the window and the quest open, what Spoken Quests would read for it, Read
+   block: the window and the quest open, what Spoken Conversations would read for it, Read
    Automatically, the queue entry by entry), then `session written for an AI agent at <wall
    clock>`;
 2. has the interface reload, so the game writes `Spoken_Developer.lua`. Forever refuses an
@@ -80,7 +80,7 @@ reload.
 
 The snapshot says what the screen shows as well as what the game answers (`on screen: NPC quest
 frame shown, detail panel, quest "...", NPC "..."; quest log hidden; gossip frame hidden`, the
-quest title placed in whichever window shows it, and the last window Spoken Quests read): on
+quest title placed in whichever window shows it, and the last window Spoken Conversations read): on
 Forever the game's quest functions can answer that no quest is open while its window shows one.
 It also says which of Spoken's modules are loaded, turned off in the AddOns list or not installed,
 and what the reading window holds (`reading window: open, a book "...", page 2, starting "...";
@@ -140,7 +140,7 @@ Each line is `<GetTime> <category> <text>`:
 ```
 1234.567 session start: Tata Throwaway, Spoken 3.0.1, Spoken Developer 0.1.0, client 1.60.1 build 70205
 1234.567 session wall clock 2026-10-06 21:14:03 at GetTime 1234.567
-1234.567 session modules: quests (Spoken_Quests), zones (Spoken_Places)
+1234.567 session modules: quests (Spoken_Conversations), zones (Spoken_Places)
 1237.570 diag login:
 1237.570 diag   Spoken 3.0.1, API 1, 0 queued, playing
 1240.090 quests quest-detail: QUEST_DETAIL raw quest ID 783, title "A Threat Within", NPC "Marshal McBride"
@@ -164,7 +164,7 @@ on this client's clock, and head each line with whose it is.
 - `screen`: the reading window (books, plaques, signs, letters) as each page shows, with its
   title, page, author for a letter and first words, and whether Spoken Readables is there to read it;
   then its closing.
-- Other categories come from the modules that write them: `quests` from Spoken Quests, `sync`,
+- Other categories come from the modules that write them: `quests` from Spoken Conversations, `sync`,
   `msg`, `party`, `room` and `logs` from Spoken Party Sync.
 
 ## For feature addons

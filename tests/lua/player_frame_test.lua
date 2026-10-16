@@ -23,7 +23,7 @@ local function Boot(client)
     stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()   -- what PLAYER_LOGIN does: builds the frame, the button, the panel
-    local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
+    local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Conversations", order = 1 })
     local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2 })
     return env, quests, zones
 end

@@ -9,7 +9,7 @@ local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local print = stub.print
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 
 local world = stub.world

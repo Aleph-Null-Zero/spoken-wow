@@ -7,7 +7,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -44,7 +44,7 @@ VO.Addon:OnInitialize()
 local Spoken = _G.Spoken
 local ns = {}
 for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/QuestsTab" }) do
-    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
+    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Conversations", ns)
 end
 -- Each quest on its own row, not inside its chain's.
 for _, quest in pairs(SpokenQuestsCompendium.quests) do quest.prev = nil end

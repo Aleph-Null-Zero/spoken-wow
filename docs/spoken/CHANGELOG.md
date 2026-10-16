@@ -81,6 +81,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - Spoken's modules load only with Spoken switched on. With Spoken off in the AddOns list, the game
   leaves Quests, Places, Readables and Developer off too, and no longer shows a dialog
   offering to switch Spoken back on. *([Nucabe](https://github.com/Nucabe))*
+- The module that reads quests and NPC talk is now Conversations, in the AddOns list, its settings, tooltips
+  and messages, in every language. Its Quests and Gossip pages keep their names. Its folder is
+  `Spoken_Conversations`, so its saved settings, profiles and greetings heard start fresh, and Spoken asks
+  you to delete a leftover `Spoken_Quests` folder. Its commands are /spc and /spokenconversations, and
+  /spq still works. *([Nucabe](https://github.com/Nucabe))*
 
 ### Settings
 

@@ -75,7 +75,7 @@ All of it is in `addons/Spoken/UI/`, one copy for every module.
   (`Addon:StopWhereNotRead`). A line you ask for with Play, a command or the Compendium is read.
 - **Preview** on Spoken's page shows the chosen style with a sample line while no line plays,
   until it is turned off.
-- With a DialogueUI dialog open, the windows step aside unless Spoken Quests' **Show Spoken Over
+- With a DialogueUI dialog open, the windows step aside unless Spoken Conversations' **Show Spoken Over
   DialogueUI** hosts them on it (`Actions.DialogCovers`, `Addon:ApplyHost`).
 
 ## Settings by style
@@ -101,7 +101,7 @@ The page builds only the rows a style reads, and greys a row whose switch is off
 - Rows at Once is 1 or 2 where it shows. The Large Window has none: its words fill the box, up to
   three rows.
 - Bronze Border (Forever) shows under every style.
-- Under DialogueUI, Spoken Quests adds a DialogueUI section, shown under every style while
+- Under DialogueUI, Spoken Conversations adds a DialogueUI section, shown under every style while
   DialogueUI is installed (see below).
 
 ## Subtitles Only
@@ -224,17 +224,17 @@ Words.
 
 After the narrator style's settings comes a DialogueUI section from each module that registered
 one with `Spoken:AddDialogueUISettings(build)`, shown under every style since it changes
-DialogueUI's own window. Spoken Quests puts its DialogueUI switches there: Mark Words in
+DialogueUI's own window. Spoken Conversations puts its DialogueUI switches there: Mark Words in
 DialogueUI, Keep the Words in View, Show Spoken Over DialogueUI and Listen Button on DialogueUI
 (see [`docs/quests/DIALOGUEUI-BRIDGE.md`](../quests/DIALOGUEUI-BRIDGE.md)). Reset Spoken Settings
 puts all of them back.
 
 The highlight on the words being read is deep red on parchment and gold on dark, the same pair
-Spoken Quests lights DialogueUI's own text with.
+Spoken Conversations lights DialogueUI's own text with.
 
 ### Over DialogueUI
 
-With Spoken Quests' **Show Spoken Over DialogueUI** on, whichever style is chosen is hosted on
+With Spoken Conversations' **Show Spoken Over DialogueUI** on, whichever style is chosen is hosted on
 DialogueUI's window while it is open and comes back afterwards: see
 [`docs/quests/DIALOGUEUI-BRIDGE.md`](../quests/DIALOGUEUI-BRIDGE.md). The DialogueUI window keeps
 its size on screen there, as the others do.
@@ -252,7 +252,7 @@ Nothing it reads is a public API, and each is checked before use:
   dialog's words fade before it closes; `DUIQuestFrame:GetQuestFinishedDelay()`; the dialogs'
   `BackgroundFrame`, `Footer` and place on screen; DialogueUI's art files.
 - `Actions.lua`: whether either dialog is shown (`Actions.DialogCovers`, `Actions.WatchDialogs`),
-  and the Play, Skip and Report row Spoken Quests and Spoken Readables put on the dialogs
+  and the Play, Skip and Report row Spoken Conversations and Spoken Readables put on the dialogs
   (`Spoken:CreateDialogueUIRow`).
 
 If a DialogueUI release renames them, the tile is not offered, `/sp style dialogueui` says the

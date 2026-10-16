@@ -11,7 +11,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -86,7 +86,7 @@ QuestMapFrame.DetailsFrame.BackFrame = CreateFrame("Frame", nil, QuestMapFrame.D
 _G.QuestMapFrame_ShowQuestDetails = function(questID) QuestMapFrame.DetailsFrame.questID = questID end
 local ns = {}
 for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/QuestsTab", "UI/OpenInCompendium" }) do
-    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
+    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Conversations", ns)
 end
 -- The shipped data links each quest to the one before it in its chain: Lost Necklace, Pie for
 -- Billy, Back to Billy, then Goldtooth. Only that chain is kept here, so the rest of the tree

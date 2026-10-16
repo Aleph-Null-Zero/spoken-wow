@@ -2,7 +2,7 @@
 
 A gold four-pointed star on a dark octagonal shield. The shield is the Spoken family mark, and
 the other addons wear it with a different figure (a play triangle for Spoken, an exclamation
-mark for Spoken Quests, a book for Spoken Readables), so the family reads as siblings on a
+mark for Spoken Conversations, a book for Spoken Readables), so the family reads as siblings on a
 CurseForge profile without any two being mistaken for each other.
 
 | File | Used for |

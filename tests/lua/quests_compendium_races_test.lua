@@ -8,7 +8,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -39,7 +39,7 @@ local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local ns = {}
 for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/QuestsTab" }) do
-    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", ns)
+    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Conversations", ns)
 end
 local HIGH_ORDER, WINDSHAPER, CLASSIC_ALLIANCE = 2 ^ 32, 2 ^ 33, 1 + 4 + 8 + 64
 SpokenQuestsCompendium.quests = {

@@ -56,7 +56,7 @@ local function Boot(client)
     -- LoadSpoken picks the large window for the other suites; these start from the small one.
     env.Addon.db.profile.Frame.Style = "minimal"
     env.Addon:Enable()
-    local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
+    local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Conversations", order = 1 })
     return env, quests
 end
 

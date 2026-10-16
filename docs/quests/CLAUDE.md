@@ -9,7 +9,7 @@ behaviour changes.
 - `pipelines/quests/` (`tts_cli/`, `cli-main.py`): the Python pipeline. It builds the corpus
   and the addon's data modules and packs. It makes no audio; the site does.
 - `apps/web/` quests section: browsing the corpus, regeneration, triage, reports.
-- `addons/Spoken_Quests/`: a module of Spoken that ships inside `Spoken-<v>.zip`. It reads
+- `addons/Spoken_Conversations/`: a module of Spoken that ships inside `Spoken-<v>.zip`. It reads
   quest dialogue and is the Quests tab of Azeroth's Compendium. Its commands are
   `/spokenquests`, `/spq` (`read`, `test`, `followup`, `diagnostics`, `options`) and `/spqread`.
   It is two parts of Spoken, each with its own source, switch and settings page: Quests, which

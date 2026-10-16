@@ -144,11 +144,11 @@ acted: pull-recorded package-acted ## Pull the recordings and build the voice-ac
 # Two zips built on their own schedules, which is why they are two targets: most changes to
 # the player touch no voiceline, and the sound pack is three orders of magnitude larger.
 #
-# `package` takes its version from `## Version:` in Spoken_Quests.toc, so bumping the addon
+# `package` takes its version from `## Version:` in Spoken_Conversations.toc, so bumping the addon
 # and naming the zips stay one edit. It refuses to build from an uncommitted tree, because a
 # zip nobody can trace back to a commit is a zip nobody can rebuild - ALLOW_DIRTY=1 to
 # override while testing. Four zips come out: one for Blizzard's clients, which pick a .toc by
-# flavor suffix, and one apiece for 1.12, 2.4.3 and 3.3.5, which read Spoken_Quests.toc and
+# flavor suffix, and one apiece for 1.12, 2.4.3 and 3.3.5, which read Spoken_Conversations.toc and
 # nothing else and each need their own vendored Ace3 in it. Only the first goes to CurseForge;
 # the GitHub release workflow publishes all four.
 #
@@ -166,7 +166,7 @@ acted: pull-recorded package-acted ## Pull the recordings and build the voice-ac
 
 # The AddOns list reads a TGA or BLP, never the PNGs in pipelines/quests/assets/icon/, so the
 # icon is converted and committed. Two marks, not one: the player wears the play triangle and
-# Spoken Quests the exclamation mark, since they sit next to each other in that list. The five
+# Spoken Conversations the exclamation mark, since they sit next to each other in that list. The five
 # sound packs take the Quests mark -- scripts/quests/package-meta.sh and tts_cli/build.py copy
 # spoken-quests.tga into every module they build. A language's packs and its Spoken stub take the
 # same mark with the language's badge, spoken-<mark>-<locale>.tga, made from the
@@ -181,11 +181,11 @@ icon: ## Rebuild the addons' icon.tga and the minimap BLP from pipelines/quests/
 	@python3 pipelines/quests/tools/make_icon.py pipelines/quests/assets/icon/spoken-quests-512.png pipelines/quests/assets/icon/spoken-quests.tga
 	@cp pipelines/quests/assets/icon/spoken-player.tga addons/Spoken/icon.tga
 	@for png in pipelines/quests/assets/icon/spoken-*-??[A-Z][A-Z]-512.png; do python3 pipelines/quests/tools/make_icon.py "$$png" "$${png%-512.png}.tga"; done
-	@cp pipelines/quests/assets/icon/spoken-quests.tga addons/Spoken_Quests/icon.tga
+	@cp pipelines/quests/assets/icon/spoken-quests.tga addons/Spoken_Conversations/icon.tga
 	@for mark in developer contributions; do python3 pipelines/quests/tools/make_icon.py "pipelines/quests/assets/icon/spoken-$$mark-512.png" "pipelines/quests/assets/icon/spoken-$$mark.tga"; done
 	@cp pipelines/quests/assets/icon/spoken-developer.tga addons/Spoken_Developer/icon.tga
 	@cp pipelines/quests/assets/icon/spoken-contributions.tga addons/SpokenContributions/icon.tga
-	@echo "==> copied into addons/Spoken/, addons/Spoken_Quests/, addons/Spoken_Developer/ and addons/SpokenContributions/"
+	@echo "==> copied into addons/Spoken/, addons/Spoken_Conversations/, addons/Spoken_Developer/ and addons/SpokenContributions/"
 	@python3 pipelines/quests/tools/make_minimap_icon.py pipelines/quests/assets/icon/spoken-player-512.png addons/Spoken/Textures/MinimapButton.blp
 
 package: ## Zip the player addon into dist/: one Blizzard zip, one per legacy client
@@ -235,14 +235,14 @@ factions: ## Re-export pipelines/quests/corpus/factions.json from the world DB (
 # scripts. Committed as addon Lua for the same reason factions.json is committed: packaging the
 # addon must never need MySQL. pipelines/quests/tools/export_followup_lines.py explains who speaks.
 
-followup-lines: ## Re-export addons/Spoken_Quests/FollowupLines.lua from the world DB (needs MySQL)
+followup-lines: ## Re-export addons/Spoken_Conversations/FollowupLines.lua from the world DB (needs MySQL)
 	@$(PYTHON) pipelines/quests/tools/export_followup_lines.py
 
 # Each quest's words, for its page in the Quests tab of Azeroth's Compendium: the client gives
 # them only while a quest's window is open, so a quest done before the addon was installed would
 # have none. Read from the committed corpus, so it needs no database; rerun after an export.
 
-compendium-text: ## Re-export addons/Spoken_Quests/Data/QuestText.lua from the corpus
+compendium-text: ## Re-export addons/Spoken_Conversations/Data/QuestText.lua from the corpus
 	@$(PYTHON) pipelines/quests/tools/export_quest_text.py
 
 # Where each quest is and who may take it, for the same tab, committed for the reason
@@ -250,7 +250,7 @@ compendium-text: ## Re-export addons/Spoken_Quests/Data/QuestText.lua from the c
 # quest log's zone nor who may take a quest, so this reads the Forever repack's TrinityCore DB
 # (COMPENDIUM_MYSQL_*). ARGS=--no-db adds the corpus's new quests without it.
 
-compendium: ## Re-export addons/Spoken_Quests/Data/Compendium.lua (needs the repack's MySQL; ARGS=--no-db without it)
+compendium: ## Re-export addons/Spoken_Conversations/Data/Compendium.lua (needs the repack's MySQL; ARGS=--no-db without it)
 	@$(PYTHON) pipelines/quests/tools/export_compendium.py $(ARGS)
 
 release-dry: ## Show what `make release` would upload to CurseForge and Wago
@@ -413,14 +413,14 @@ export-locale-text: ## quest_line localeText -> build/quests/$(LOCALE)/locale-te
 # the addon, not a pack: the name follows the client's language, not the voice the player
 # chose, so it has to be there with the English packs too (tts_cli/giver_names.py). Rerun after
 # an import-locale; the files only change when a name does.
-export-giver-names: ## entity_name -> addons/Spoken_Quests/Locale/Names/<lang>.lua
-	@$(QUESTS_CLI) export-giver-names --out-dir $(abspath addons/Spoken_Quests/Locale/Names)
+export-giver-names: ## entity_name -> addons/Spoken_Conversations/Locale/Names/<lang>.lua
+	@$(QUESTS_CLI) export-giver-names --out-dir $(abspath addons/Spoken_Conversations/Locale/Names)
 
 # What a gossip line reads as on every other client, and which files are one moment. Committed
 # into the addon for export-giver-names' reason: the text follows the client, not the voice
 # (tts_cli/gossip_text.py). Rerun after an import-locale, a broadcast-text upload or a relink.
-export-gossip-text: ## quest_line, broadcast_text -> addons/Spoken_Quests/Gossip/<lang>.lua, Aliases.lua
-	@$(QUESTS_CLI) export-gossip-text --out-dir $(abspath addons/Spoken_Quests/Gossip)
+export-gossip-text: ## quest_line, broadcast_text -> addons/Spoken_Conversations/Gossip/<lang>.lua, Aliases.lua
+	@$(QUESTS_CLI) export-gossip-text --out-dir $(abspath addons/Spoken_Conversations/Gossip)
 
 export-ignores: ## line_ignore -> corpus/ignored.json, replacing the old ssh export
 	@$(QUESTS_CLI) export-ignores $(ARGS)

@@ -37,7 +37,7 @@ end
 
 local MODULES = {
     { name = "Spoken", base = "Spoken/Strings.lua", dir = "Spoken/Locale/", table = true },
-    { name = "Quests", base = "Spoken_Quests/Strings.lua", dir = "Spoken_Quests/Locale/" },
+    { name = "Quests", base = "Spoken_Conversations/Strings.lua", dir = "Spoken_Conversations/Locale/" },
     { name = "Zones", base = "Spoken_Places/Locale/enUS.lua", dir = "Spoken_Places/Locale/" },
     { name = "Writings", base = "Spoken_Readables/Locale/enUS.lua", dir = "Spoken_Readables/Locale/" },
     -- TITLE is the addon's name, the same in every language.

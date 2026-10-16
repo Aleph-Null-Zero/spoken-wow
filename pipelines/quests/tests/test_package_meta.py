@@ -38,7 +38,7 @@ def test_the_stub_nests_under_spoken(tmp_path):
 
     assert "## Group: Spoken\n" in toc
     assert "## X-Part-Of: Spoken\n" in toc
-    assert "## X-Child-Of: Spoken_Quests\n" in toc
+    assert "## X-Child-Of: Spoken_Conversations\n" in toc
 
 
 def test_the_stub_carries_the_version_it_was_built_with(tmp_path):

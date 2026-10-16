@@ -46,7 +46,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 /** What each section's packs are called after the family: "Spoken German Audio: Places". */
 const TITLES = { quests: "Quests", zones: "Places", books: "Readables" };
 /** The addon that plays a section's packs, which X-Child-Of names for addon managers. */
-const PLAYERS = { quests: "Spoken_Quests", zones: "Spoken_Places", books: "Spoken_Readables" };
+const PLAYERS = { quests: "Spoken_Conversations", zones: "Spoken_Places", books: "Spoken_Readables" };
 
 //------------------------------------------------------------------------------
 // Pure: names, paths and the Lua, so they can be tested without a database

@@ -6,7 +6,7 @@ See the repository's [third-party notice](../../THIRD_PARTY.md).
 
 - Native textures were referenced through the `classic` branch of
   [Gethe/wow-ui-textures](https://github.com/Gethe/wow-ui-textures/tree/classic)
-  and the textures shipped with Spoken and Spoken Quests.
+  and the textures shipped with Spoken and Spoken Conversations.
 - `MinimalBackground.tga` uses the darkened `FrameGeneral/UI-Background-Rock`
   material.
 - `MinimalParchment.tga` is a band of the game's spellbook page, cut to the window's shape.

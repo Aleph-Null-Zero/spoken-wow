@@ -1,7 +1,7 @@
 -- What the player had open that Spoken may or may not read, and whether anything of Spoken's is
 -- there to read it, for the log and its snapshots: the reading window (a book, a plaque, a sign,
 -- a letter: Spoken Readables' to read), an open letter in the mailbox, and which of Spoken's modules
--- are installed. Spoken Quests says the quest and gossip windows itself. A book opened without
+-- are installed. Spoken Conversations says the quest and gossip windows itself. A book opened without
 -- Spoken Readables installed is silent and shows nothing, and this is how the log says why.
 
 local _, Developer = ...
@@ -19,7 +19,7 @@ local GetAddOnInfo = (C_AddOns and C_AddOns.GetAddOnInfo) or GetAddOnInfo
 
 -- Spoken's modules, and what each one reads.
 local MODULES = {
-	{ name = "Spoken_Quests", reads = "quests" },
+	{ name = "Spoken_Conversations", reads = "quests" },
 	{ name = "Spoken_Places", reads = "place lore" },
 	{ name = "Spoken_Readables", reads = "books, plaques, signs and letters" },
 }

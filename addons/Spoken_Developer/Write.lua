@@ -1,7 +1,7 @@
 -- Write the Debug Log for an AI Agent. No addon can write a file, nor make the game write its
 -- saved variables: the game does that only at a reload, a logout or exit. So an AI agent on this
 -- computer reading Spoken_Developer.lua sees the log as it stood at the last of those. This takes
--- the detailed snapshot of the moment (the window and quest open, what Spoken Quests would read
+-- the detailed snapshot of the moment (the window and quest open, what Spoken Conversations would read
 -- for it, Read Automatically, the queue), marks it, and has the interface reload, which writes the
 -- file; scripts/developer/read-log.py reads it from there.
 --

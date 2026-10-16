@@ -1,4 +1,4 @@
--- Spoken Quests inside DialogueUI's window (UI/DialogueUIBridge.lua), against a fake
+-- Spoken Conversations inside DialogueUI's window (UI/DialogueUIBridge.lua), against a fake
 -- DUIQuestFrame built from the parts the bridge reaches for. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local world = stub.world
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 local Expect, Failures = H.Expecter(print)
 
@@ -95,7 +95,7 @@ VO.Addon:OnInitialize()
 -- The Compendium's Quests tab, standing in for UI/QuestsTab.lua: it lists quest 101.
 local opened = {}
 VO.QuestsTab = { Has = function(_, id) return id == 101 end, Open = function(_, id) table.insert(opened, id) end }
-assert(loadfile(QUESTS .. "UI/OpenInCompendium.lua"))("Spoken_Quests", {})
+assert(loadfile(QUESTS .. "UI/OpenInCompendium.lua"))("Spoken_Conversations", {})
 VO.DataModules:Register("TestPack", {
     SoundLengthLookupByFileName = { ["101-accept"] = 12, ["101-progress"] = 2,
         ["guard-greeting"] = 2, ["guard-directions"] = 2 },
@@ -118,7 +118,7 @@ local dui = VO.Addon.db.profile.DialogueUI
 
 Expect("DialogueUI is hooked once every addon has loaded", Bridge.status, "hooked")
 Expect("the player keeps its own style", Spoken:GetPlayerStyle(), "classic")
-Expect("...and the quests addon is its voiceover provider", provider and provider.name, "Spoken Quests")
+Expect("...and the quests addon is its voiceover provider", provider and provider.name, "Spoken Conversations")
 local function Tick(seconds)
     stub.Advance(seconds or 0)
     driver.scripts.OnUpdate(driver, 0.06)
@@ -224,7 +224,7 @@ Expect("...with nothing lit", Lit(), 0)
 ---------------------------------------------------------------- typing out
 words.HighlightWord, words.Typewriter = false, true
 Spoken:StopAll()
--- DialogueUI draws the page as the dialog opens; Spoken Quests reads it a moment later.
+-- DialogueUI draws the page as the dialog opens; Spoken Conversations reads it a moment later.
 -- The words the line will type out must not show in between, or they flash up and vanish.
 DUI:HandleQuestDetail()
 Expect("a page about to be read is blank from the frame it is built in",
@@ -286,7 +286,7 @@ Expect("...shows whole once the read queues nothing, not after the wait", Paragr
 VO.Addon.GOSSIP_SHOW, VO.Addon.ExpectedLine = gossipHandler, expectedLine
 
 -- Once per Greeting, a guard's greeting already heard: the greeting stays quiet, the directions picked from it
--- do not. DialogueUI can draw the directions before Spoken Quests notes the page or after.
+-- do not. DialogueUI can draw the directions before Spoken Conversations notes the page or after.
 world.npcGUID = "Creature-0-0-0-0-4321-0"
 VO.Addon.db.profile.Audio.GossipFrequency = VO.Enums.GossipFrequency.OncePerNPC
 VO.Addon:MarkGreetingHeard(world.npcGUID, GREETING)
@@ -302,7 +302,7 @@ Expect("a greeting heard before shows whole at once", Paragraph(1), GREETING)
 stub.SelectGossipOption("Where is the bank?")
 stub.ShowGossip(DIRECTIONS)
 DUI:HandleGossip()
-Expect("directions drawn before Spoken Quests sees the page are kept blank for their line",
+Expect("directions drawn before Spoken Conversations sees the page are kept blank for their line",
     Paragraph(1), "")
 stub.FireEvent("GOSSIP_SHOW")
 stub.Advance(1)
@@ -588,10 +588,10 @@ Expect("...the row one button narrower, Open in Azeroth's Compendium moving up b
     (2 * 24 + 4) * round .. " true")
 dui.PlayButton = true
 Bridge:Refresh()
--- Spoken Quests off: DialogueUI's window as DialogueUI draws it.
+-- Spoken Conversations off: DialogueUI's window as DialogueUI draws it.
 _G.Spoken:SetPartOn("quests", false)
 Bridge:RefreshPlayButton()
-Expect("with Spoken Quests off the row and the close button go",
+Expect("with Spoken Conversations off the row and the close button go",
     tostring(controls.frame:IsShown()) .. " " .. tostring(closeButton:IsShown()), "false false")
 Expect("...and DialogueUI's own button is given back", DUI.TTSButton:GetAlpha(), 0.6)
 header:SetPoint("TOP", DUI.FrontFrame, "TOP", 0, -28)
@@ -759,7 +759,7 @@ Expect("...at the size the game's tooltip would be", tip and tip:GetScale(), 1 /
 Fire(icon, "OnLeave")
 Expect("...still in full after", icon:GetAlpha(), 1)
 Expect("...and the tooltip gone", tip and tip:IsShown(), false)
--- Without Spoken Quests' row (its bridge not loaded), the icon keeps the corner, faint.
+-- Without Spoken Conversations' row (its bridge not loaded), the icon keeps the corner, faint.
 Contribute.dialogueUISlot = nil
 Contribute:ShowOnDialogueUI(DUI, false)
 Expect("with no row to go in, the icon keeps the corner under DialogueUI's Decline, right-aligned with it",

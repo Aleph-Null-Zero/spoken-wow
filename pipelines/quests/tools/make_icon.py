@@ -15,7 +15,7 @@ Committed as a TGA rather than converted at build time so that building an addon
 ffmpeg - the same reason the corpus is committed. Re-run it (`make quests-icon`) when the
 PNGs in assets/icon/ are replaced.
 
-ONE ICON PER ADDON. The player carries the play triangle, Spoken Quests and its five sound
+ONE ICON PER ADDON. The player carries the play triangle, Spoken Conversations and its five sound
 packs the exclamation mark; they sit next to each other in the AddOns list, so the same
 artwork on both would say they are the same thing.
 """

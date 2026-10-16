@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Builds the player addon's distributable zips.
 #
-#   ./scripts/quests/package.sh                 # dist/Spoken_Quests-<version>.zip + one per legacy client
+#   ./scripts/quests/package.sh                 # dist/Spoken_Conversations-<version>.zip + one per legacy client
 #   ALLOW_DIRTY=1 ./scripts/quests/package.sh   # build from an uncommitted tree
 #
 # ONE ZIP FOR BLIZZARD'S CLIENTS, ONE APIECE FOR THE LEGACY ONES. Blizzard's clients
 # pick their .toc by flavor suffix - _Vanilla, _TBC, else the unsuffixed one, which Forever
 # reads - so a single archive serves them all and the client decides. The 1.12, 2.4.3 and 3.3.5 clients
-# predate suffix support: each reads Spoken_Quests.toc and nothing else, and each wants a
+# predate suffix support: each reads Spoken_Conversations.toc and nothing else, and each wants a
 # different file under that one name, so each needs an archive of its own. They also load a
 # vendored Ace3 of their own - the root Libs/ binds C_Timer.After at load time - which is why
 # every legacy zip carries its client's directory and none of the others.
@@ -17,7 +17,7 @@
 # differences are the legacy clients and the audio living elsewhere.
 #
 # Addon hosts unpack the zip straight into Interface/AddOns, so its root must contain the
-# Spoken_Quests/ folder itself - hence the staging copy before zipping.
+# Spoken_Conversations/ folder itself - hence the staging copy before zipping.
 #
 # THE LEGACY ZIPS ALSO CARRY THE SPOKEN PLAYER. Those clients have no addon manager to
 # install a dependency, so the player travels inside the zip, staged from its own tree at
@@ -34,8 +34,8 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-ADDON="${ADDON:-addons/Spoken_Quests}"
-NAME="${NAME:-Spoken_Quests}"
+ADDON="${ADDON:-addons/Spoken_Conversations}"
+NAME="${NAME:-Spoken_Conversations}"
 SRC="$REPO/$ADDON"
 PLAYER_SRC="$REPO/addons/Spoken"
 PLAYER="Spoken"

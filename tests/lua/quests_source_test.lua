@@ -8,11 +8,11 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local world = stub.world
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 local Expect, Failures = H.Expecter(print)
 
-local BOOK = [[Interface\AddOns\Spoken_Quests\Textures\Book]]
+local BOOK = [[Interface\AddOns\Spoken_Conversations\Textures\Book]]
 
 local lookup = {}
 for _, q in ipairs({ 101, 102, 103 }) do
@@ -327,7 +327,7 @@ VO.Addon.db.profile.Audio.OGThrall = true
 world.gossipText = "Greetings, traveller."
 VO.Addon:GOSSIP_SHOW()
 Expect("the easter egg swaps the path before the player sees it", Spoken:GetCurrent().path,
-    [[Interface\AddOns\Spoken_Quests\Sounds\og-thrall.mp3]])
+    [[Interface\AddOns\Spoken_Conversations\Sounds\og-thrall.mp3]])
 Expect("...and the length", Spoken:GetCurrent().length, 33.802375)
 
 ---------------------------------------------------------------- the quest-log overlay

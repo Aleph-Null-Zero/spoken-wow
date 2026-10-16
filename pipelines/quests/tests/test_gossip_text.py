@@ -118,8 +118,8 @@ def test_gossip_xml_loads_every_file(tmp_path):
     assert '<Script file="Aliases.lua"/>' in xml
 
 
-ADDON = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../addons/Spoken_Quests"))
-FOREVER = ("Spoken_Quests.toc",)
+ADDON = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../addons/Spoken_Conversations"))
+FOREVER = ("Spoken_Conversations.toc",)
 
 
 def toc(name):

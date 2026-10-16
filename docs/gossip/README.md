@@ -1,7 +1,7 @@
 # Gossip
 
 Gossip is what an NPC says when the player talks to them: the gossip page, and the greeting a quest
-giver opens with. It is a part of Spoken, and its code is in `addons/Spoken_Quests`, which reads
+giver opens with. It is a part of Spoken, and its code is in `addons/Spoken_Conversations`, which reads
 every NPC window. Players see it as Gossip on Spoken's list of parts and as its own page under
 Spoken's settings. Quests, the other part of that addon, reads the text of a quest.
 

@@ -1,6 +1,6 @@
 """Every quest's words, for the Quests tab of Azeroth's Compendium.
 
-Writes addons/Spoken_Quests/Data/QuestText.lua from the committed corpus and its ignores; which
+Writes addons/Spoken_Conversations/Data/QuestText.lua from the committed corpus and its ignores; which
 text is kept for each quest is tts_cli/quest_text.py's. Needs no database:
 
     make quests-compendium-text
@@ -17,7 +17,7 @@ from tts_cli.corpus import load_corpus  # noqa: E402
 from tts_cli.ignores import ignored_line_ids  # noqa: E402
 from tts_cli.quest_text import quest_text, removed_quests, render  # noqa: E402
 
-DEFAULT_OUT = os.path.join(QUESTS, "..", "..", "addons", "Spoken_Quests", "Data", "QuestText.lua")
+DEFAULT_OUT = os.path.join(QUESTS, "..", "..", "addons", "Spoken_Conversations", "Data", "QuestText.lua")
 
 
 if __name__ == "__main__":

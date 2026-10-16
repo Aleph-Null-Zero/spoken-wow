@@ -79,12 +79,12 @@ gvn = subparsers.add_parser(
     "export-giver-names",
     help="Every other language's quest-giver names -> the addon's Locale/Names/<lang>.lua.")
 gvn.add_argument("--corpus", default=DEFAULT_CORPUS_PATH)
-gvn.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Quests/Locale/Names")
+gvn.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Conversations/Locale/Names")
 
 gst = subparsers.add_parser(
     "export-gossip-text",
     help="Every client locale's gossip text and the moments' aliases -> the addon's Gossip/.")
-gst.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Quests/Gossip")
+gst.add_argument("--out-dir", required=True, help="e.g. ../../addons/Spoken_Conversations/Gossip")
 gst.add_argument("--aliases", default=DEFAULT_ALIASES_PATH,
                  help="Where the pack build reads the aliases from")
 

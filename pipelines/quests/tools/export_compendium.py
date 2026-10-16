@@ -1,6 +1,6 @@
 """Every quest, for the Quests tab of Azeroth's Compendium.
 
-Writes addons/Spoken_Quests/Data/Compendium.lua: each quest the corpus holds, with its English
+Writes addons/Spoken_Conversations/Data/Compendium.lua: each quest the corpus holds, with its English
 title, where it is, and who can take it. Its words are Data/QuestText.lua's
 (tools/export_quest_text.py).
 
@@ -72,7 +72,7 @@ CORPUS = os.path.join(QUESTS, "corpus", "corpus.json.gz")
 FACTIONS = os.path.join(QUESTS, "corpus", "factions.json")
 IGNORED = os.path.join(QUESTS, "corpus", "ignored.json")
 OVERRIDES = os.path.join(QUESTS, "corpus", "compendium_overrides.json")
-OUT =os.path.join(ROOT, "addons", "Spoken_Quests", "Data", "Compendium.lua")
+OUT =os.path.join(ROOT, "addons", "Spoken_Conversations", "Data", "Compendium.lua")
 CACHE = os.path.join(HERE, "cache")
 # The client's tables, in the cache pipelines/lib/wago.mjs keeps for every pipeline, under its
 # file names.

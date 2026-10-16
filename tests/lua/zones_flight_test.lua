@@ -84,7 +84,7 @@ for _, state in ipairs({
         Z = Boot(client, state.taxi, state.flying)
         Expect(label .. ": manually requested lore still plays", Z:PlayLore(1411), true)
         Expect(label .. ": manual playback is audible", Spoken:IsPlaying(), true)
-        local quests = Spoken:RegisterSource("quests", { title = "Quests", addon = "Spoken_Quests" })
+        local quests = Spoken:RegisterSource("quests", { title = "Quests", addon = "Spoken_Conversations" })
         local quest = H.Clip({ length = 30 })
         -- Play while a line speaks queues behind it rather than cutting it off.
         quests:PlayNow(quest)

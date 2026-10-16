@@ -1,4 +1,4 @@
--- Spoken Quests in the debug log (Debug.lua): each quest window it saw and what it decided,
+-- Spoken Conversations in the debug log (Debug.lua): each quest window it saw and what it decided,
 -- including why a line did not play; its diagnostics, as lines, for the copies; and Mock Missing
 -- Voice Over on the Developer page. With the Spoken_Developer module loaded, its log on.
 -- Run with `make test-player`.
@@ -11,7 +11,7 @@ local Expect, Failures = H.Expecter(print)
 
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
-local VO = stub.LoadQuests(here .. "/../../addons/Spoken_Quests/", here .. "/../../addons/Spoken/")
+local VO = stub.LoadQuests(here .. "/../../addons/Spoken_Conversations/", here .. "/../../addons/Spoken/")
 local Spoken = _G.Spoken
 local Dev = stub.LoadDeveloper(here .. "/../../addons/Spoken_Developer/")
 stub.FireEvent("PLAYER_ENTERING_WORLD")
@@ -80,7 +80,7 @@ Close()
 VO.Addon.db.profile.Audio.Autoplay = true
 
 ---------------------------------------------------------------- Mock Missing Voice Over
-Expect("the Developer page has Spoken Quests' section", #Spoken:GetDeveloperSettings() >= 1, true)
+Expect("the Developer page has Spoken Conversations' section", #Spoken:GetDeveloperSettings() >= 1, true)
 local mockRow
 for _, item in ipairs(Dev.optionsPanel.layout.items) do
     if item.kind == "section" then
@@ -105,10 +105,10 @@ Expect("turned off, the quest is voiced again", (VO.DataModules:PrepareSound({ e
 
 ---------------------------------------------------------------- its diagnostics, as lines
 -- The loader stands Options in for the real one, which needs AceConfig; this prints as the real
--- PrintDiagnostics does, from Spoken Quests' environment and with a colour code, which is what
+-- PrintDiagnostics does, from Spoken Conversations' environment and with a colour code, which is what
 -- the capture has to deal with.
 local PrintDiagnostics = assert(loadstring([[
-    print(format("|cFF00CCFFSpoken Quests %s|r - client test", AddonVersion))
+    print(format("|cFF00CCFFSpoken Conversations %s|r - client test", AddonVersion))
     print("Data modules: 1 detected, 1 loaded")
 ]]))
 setfenv(PrintDiagnostics, VO)
@@ -118,8 +118,8 @@ local function In(text)
     for _, line in ipairs(lines) do if line:find(text, 1, true) then return true end end
     return false
 end
-Expect("Spoken's diagnostics carry Spoken Quests'", In("Spoken Quests:"), true)
-Expect("...what /spq diagnostics says, without colour codes", In("  Spoken Quests " .. VO.AddonVersion), true)
+Expect("Spoken's diagnostics carry Spoken Conversations'", In("Spoken Conversations:"), true)
+Expect("...what /spq diagnostics says, without colour codes", In("  Spoken Conversations " .. VO.AddonVersion), true)
 Expect("...the packs", In("  Data modules: 1 detected, 1 loaded"), true)
 Expect("...and with detail, the settings that decide", In("  read automatically on"), true)
 Expect("...the last stage and its age", In("  last stage "), true)
@@ -128,7 +128,7 @@ lines = Spoken:Diagnostics(true)
 Expect("...and the window open, with what it would read", In("would read 101-accept"), true)
 Expect("...what the screen shows, read off the frames", In("  on screen: NPC quest frame shown, detail panel"), true)
 Expect("...the quest log too", In("; quest log hidden; gossip frame hidden"), true)
-Expect("...and the last window Spoken Quests read", In("  last window read, "), true)
+Expect("...and the last window Spoken Conversations read", In("  last window read, "), true)
 Close()
 -- A quest read in the quest log, no NPC: the title the details draw is put in the log, not the
 -- NPC's frame, which shares the same title header.
@@ -153,7 +153,7 @@ local ShowLogMenu = Spoken.ShowLogMenu
 Spoken.ShowLogMenu = function(_, anchor) menuFor = anchor end
 -- The stub loads the files the TOC lists for the oldest client; this one is loaded by hand, as
 -- quests_contribute_test does.
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 dofile(QUESTS .. "UI/ContributeButton.lua")
 local button = VO.ContributeButton:Setup()
 Expect("the quest window's Contribute is hooked", button and button.offersLogMenu, true)
@@ -172,4 +172,4 @@ Expect("...as any button Contribute:OfferLogMenu is given", menuFor, row)
 Spoken.ShowLogMenu = ShowLogMenu
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll Spoken Quests log tests passed")
+print("\nAll Spoken Conversations log tests passed")

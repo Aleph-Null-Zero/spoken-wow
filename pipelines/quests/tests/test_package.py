@@ -1,6 +1,6 @@
 """The addon zips: one for Blizzard's clients, one apiece for the older ones, and the player.
 
-A WoW client before flavor suffixes opens `Spoken_Quests.toc` and nothing else, so what these
+A WoW client before flavor suffixes opens `Spoken_Conversations.toc` and nothing else, so what these
 pin is which single .toc each legacy zip carries and which vendored Ace3 travels with it. Both
 mistakes are silent - the addon simply does not load, or loads a library that binds an API the
 client has never had - and neither shows up until somebody launches that client.
@@ -19,9 +19,9 @@ import pytest
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 SCRIPT = os.path.join(REPO, "scripts", "quests", "package.sh")
 PLAYER_SCRIPT = os.path.join(REPO, "scripts", "spoken", "package.sh")
-ADDON_DIR = os.path.join(REPO, "addons", "Spoken_Quests")
+ADDON_DIR = os.path.join(REPO, "addons", "Spoken_Conversations")
 PLAYER_DIR = os.path.join(REPO, "addons", "Spoken")
-NAME = "Spoken_Quests"
+NAME = "Spoken_Conversations"
 PLAYER = "Spoken"
 #: The flavor suffixes of the .toc files the modules carry for Blizzard's clients.
 FLAVORS = ("", "_TBC", "_Vanilla")
@@ -172,7 +172,7 @@ def test_spoken_ships_with_its_modules_for_blizzard_clients(player_built):
     # (addons/SpokenContributions/SpokenContributions.toc): one .toc and its icon, no Lua, and the three
     # modules: one download with everything in it.
     assert {entry.split("/", 1)[0] for entry in names} == {PLAYER, "SpokenContributions",
-                                                          "Spoken_Quests", "Spoken_Readables", "Spoken_Places"}
+                                                          "Spoken_Conversations", "Spoken_Readables", "Spoken_Places"}
     assert sorted(name for name in names if name.startswith("SpokenContributions/") and not name.endswith("/")) \
         == ["SpokenContributions/SpokenContributions.toc", "SpokenContributions/icon.tga"]
 

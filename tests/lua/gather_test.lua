@@ -7,13 +7,13 @@ local H = require("queue_helpers")
 local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
 stub.SetAddOns({
-    { folder = "Spoken_Quests", meta = { Version = "9.9.9" } },
+    { folder = "Spoken_Conversations", meta = { Version = "9.9.9" } },
     { folder = "TestPack", meta = { ["X-VoiceOver-DataModule-Version"] = "1", Version = "1.2.1", Title = "TestPack" } },
 })
 local VoiceOver = stub.LoadQuests(QUESTS, SPOKEN)

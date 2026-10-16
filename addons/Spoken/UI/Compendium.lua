@@ -1,5 +1,5 @@
 -- Azeroth's Compendium: one window, a tab for each Spoken part that has something to browse --
--- the quests (Spoken Quests), the places (Spoken Places), the writings (Spoken Readables) -- each a
+-- the quests (Spoken Conversations), the places (Spoken Places), the writings (Spoken Readables) -- each a
 -- list on the left and a page on the right.
 --
 -- Spoken's, so every module's tab shares one window. The window is the game's portrait frame, resizable from its corner

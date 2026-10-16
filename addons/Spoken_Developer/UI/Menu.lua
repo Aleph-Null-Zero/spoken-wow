@@ -1,4 +1,4 @@
--- The menu a Report or Contribute button's right-click opens (Spoken and Spoken Quests hook them
+-- The menu a Report or Contribute button's right-click opens (Spoken and Spoken Conversations hook them
 -- to call it): how big the debug log is, copy it with its diagnostics, or write it for an AI agent
 -- (Write.lua). With the log off it offers to turn it on instead, since there is nothing to copy yet.
 --

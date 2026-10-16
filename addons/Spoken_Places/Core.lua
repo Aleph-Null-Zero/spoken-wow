@@ -1046,7 +1046,7 @@ local function CmdHelp()
 end
 
 -- /spokenplaces and /spp, matching /spoken and /sp on the player and /spokenquests and
--- /spq on Spoken Quests. The pre-rename /zonelore and /zl are not registered: the addon
+-- /spq on Spoken Conversations. The pre-rename /zonelore and /zl are not registered: the addon
 -- answers to one name, and a command that still worked would keep the retired one alive
 -- in macros and in what players tell each other. /spokenzones and /spz still work, for the macros
 -- written since.

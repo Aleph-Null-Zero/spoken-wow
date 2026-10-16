@@ -30,7 +30,7 @@ Three modules, each can be switched off in the settings. **The voices are not in
 
 | Module | Voices | Voice pack |
 | --- | --- | --- |
-| **Spoken Quests** | quest dialogue, and what NPCs say when you talk to them | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-audio-quests-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-audio-quests-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-audio-quests-shared) |
+| **Spoken Conversations** | quest dialogue, and what NPCs say when you talk to them | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-audio-quests-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-audio-quests-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-audio-quests-shared) |
 | **Spoken Places** | zone and area lore, on the world map | [Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-audio-places) |
 | **Spoken Readables** | books, letters, notes and the plaques out in the world | [Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-audio-readables) |
 
@@ -54,7 +54,7 @@ Voice packs in German, Spanish, French, Korean, Portuguese, Russian and Chinese 
 
 ## Coming from the separate downloads?
 
-Spoken Quests, Spoken Zones (now Spoken Places) and Spoken Books are no longer separate downloads. Install this one, then uninstall those and delete the `SpokenQuests`, `SpokenZones` and `SpokenBooks` folders from `Interface\AddOns`. Your voice packs keep working.
+Spoken Conversations, Spoken Zones (now Spoken Places) and Spoken Books are no longer separate downloads. Install this one, then uninstall those and delete the `SpokenQuests`, `SpokenZones` and `SpokenBooks` folders from `Interface\AddOns`. Your voice packs keep working.
 
 ## Settings and commands
 

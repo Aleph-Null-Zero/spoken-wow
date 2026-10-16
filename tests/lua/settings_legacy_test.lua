@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
 local SPOKEN = here .. "/../../addons/Spoken/"
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 

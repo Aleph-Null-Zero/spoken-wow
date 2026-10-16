@@ -9,13 +9,13 @@ local Expect, Failures = H.Expecter(print)
 local world = stub.world
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 
--- The client's abandon, which Spoken Quests hooks: the quest chosen to abandon, then the call.
+-- The client's abandon, which Spoken Conversations hooks: the quest chosen to abandon, then the call.
 local abandoning
 _G.C_QuestLog = _G.C_QuestLog or {}
 C_QuestLog.GetAbandonQuest = function() return abandoning end
 C_QuestLog.AbandonQuest = function() end
 
-local VO = stub.LoadQuests(here .. "/../../addons/Spoken_Quests/", here .. "/../../addons/Spoken/")
+local VO = stub.LoadQuests(here .. "/../../addons/Spoken_Conversations/", here .. "/../../addons/Spoken/")
 local Spoken = _G.Spoken
 VO.Addon:OnInitialize()
 local source = Spoken:GetSource("quests")

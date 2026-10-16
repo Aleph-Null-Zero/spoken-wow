@@ -585,7 +585,7 @@ end
 --
 -- SpokenQuests, SpokenZones and SpokenBooks are the modules' folders before 3.0.0-beta.3 moved
 -- them to Spoken_Quests and the rest, out of the way of the retired CurseForge projects that own
--- the old names. A full old copy loads beside the renamed module: the same AceAddon, the same
+-- the old names; Spoken_Quests is the Conversations module's folder before it took that name. A full old copy loads beside the renamed module: the same AceAddon, the same
 -- globals and events, a second voice for every line. An empty folder an older release left there
 -- is LoadOnDemand and so never loaded, so it stays quiet here and only a full old copy is named.
 --
@@ -597,7 +597,7 @@ end
 -- finishes it. The Forever client accepts DisableAddOn from an addon (checked 2026-10-04); the
 -- pcall is for a client that does not, where the popup still names the folders to delete.
 local OLD_FOLDERS = { "SpokenPlayer", "VoiceOverRedux", "ZoneLore", "SpokenQuests", "SpokenZones", "SpokenBooks",
-    "Spoken_Books", "Spoken_Zones", "Spoken_Writings" }
+    "Spoken_Books", "Spoken_Zones", "Spoken_Writings", "Spoken_Quests" }
 function Addon:FindOldFolders()
     local found = {}
     if not IsAddOnLoaded then return found end

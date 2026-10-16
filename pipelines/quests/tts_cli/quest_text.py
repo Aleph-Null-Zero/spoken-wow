@@ -1,7 +1,7 @@
-"""Each quest's words, for its page in Azeroth's Compendium (addons/Spoken_Quests/UI/QuestsTab.lua).
+"""Each quest's words, for its page in Azeroth's Compendium (addons/Spoken_Conversations/UI/QuestsTab.lua).
 
-tools/export_quest_text.py writes them to addons/Spoken_Quests/Data/QuestText.lua. The client
-gives a quest's words only while its window is open, so a quest done before Spoken Quests was
+tools/export_quest_text.py writes them to addons/Spoken_Conversations/Data/QuestText.lua. The client
+gives a quest's words only while its window is open, so a quest done before Spoken Conversations was
 installed would have none to show: the English ships with the addon instead.
 
 The page shows the offer and the hand-in, so those are kept (accept, complete); the progress

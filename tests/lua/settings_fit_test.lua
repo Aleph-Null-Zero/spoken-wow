@@ -41,7 +41,7 @@ stub.TextWidth = function(fs)
     return width
 end
 local SPOKEN = here .. "/../../addons/Spoken/"
-local QUESTS = here .. "/../../addons/Spoken_Quests/"
+local QUESTS = here .. "/../../addons/Spoken_Conversations/"
 local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local ZONES = here .. "/../../addons/Spoken_Places/"
 _G.UISpecialFrames = _G.UISpecialFrames or {}
@@ -77,7 +77,7 @@ B:InitDB(); B:SetupOptions()
 -- Two of the Compendium's tabs, so Spoken's page shows their Unlock switches.
 B:SetupReadables()
 for _, file in ipairs({ "Data/Compendium", "Data/QuestText", "UI/QuestsTab" }) do
-    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Quests", {})
+    assert(loadfile(QUESTS .. file .. ".lua"))("Spoken_Conversations", {})
 end
 VO.QuestsTab:Setup()
 local Z = H.NewZoneLore()

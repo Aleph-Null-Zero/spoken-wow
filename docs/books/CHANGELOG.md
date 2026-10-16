@@ -68,7 +68,7 @@ existing compatible sound pack unless the release notes say otherwise.
   English tables shipped, so a Spanish pack on a Spanish client found no page at all. The
   packs carry their own tables, and the reader asks them first.
 - The language choice's follow-the-game entry is **Auto (<language>)**, the same words as
-  in Spoken Quests and Spoken Zones, and error messages follow the game client's language.
+  in Spoken Conversations and Spoken Zones, and error messages follow the game client's language.
 
 ## 2.0.0 — books-audio-ptBR — 2026-10-03
 

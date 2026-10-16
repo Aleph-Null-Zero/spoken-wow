@@ -9,7 +9,7 @@ local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
 local ADDONS = here .. "/../../addons/"
 local SPOKEN = ADDONS .. "Spoken/"
-local QUESTS = ADDONS .. "Spoken_Quests/"
+local QUESTS = ADDONS .. "Spoken_Conversations/"
 
 local function Read(path)
     local file = assert(io.open(path, "rb"))
@@ -24,7 +24,7 @@ end
 ---------------------------------------------------------------- in the AddOns list
 local ADDON_TITLES = {
     { folder = "Spoken", title = "Spoken" },
-    { folder = "Spoken_Quests", title = "Spoken Quests" },
+    { folder = "Spoken_Conversations", title = "Spoken Conversations" },
     { folder = "Spoken_Readables", title = "Spoken Readables" },
     { folder = "Spoken_Places", title = "Spoken Places" },
 }
@@ -38,7 +38,7 @@ end
 -- A name an older release used would bring its settings back. Every addon starts fresh.
 local SAVED = {
     { toc = "Spoken/Spoken.toc", vars = "SpokenSettings" },
-    { toc = "Spoken_Quests/Spoken_Quests.toc", vars = "SpokenQuestsSettings" },
+    { toc = "Spoken_Conversations/Spoken_Conversations.toc", vars = "SpokenQuestsSettings" },
     { toc = "Spoken_Readables/Spoken_Readables.toc", vars = "SpokenBooksSettings", char = "SpokenBooksCharacter" },
     { toc = "Spoken_Places/Spoken_Places.toc", vars = "SpokenZonesSettings", char = "SpokenZonesCharacter" },
 }
@@ -67,7 +67,7 @@ loaded = { SpokenPlayer = true, VoiceOverRedux = true, ZoneLore = true,
     SpokenQuests = true, SpokenZones = true, SpokenBooks = true, Spoken_Books = true,
     Spoken_Writings = true,
     Spoken_Zones = true,
-    Spoken_Quests = true, Spoken_Places = true, Spoken_Readables = true }
+    Spoken_Conversations = true, Spoken_Places = true, Spoken_Readables = true }
 local found = env.Addon:FindOldFolders()
 Expect("every old folder is found, and no current one", table.concat(found, " "),
     "SpokenPlayer VoiceOverRedux ZoneLore SpokenQuests SpokenZones SpokenBooks Spoken_Books Spoken_Zones Spoken_Writings")

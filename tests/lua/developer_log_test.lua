@@ -45,7 +45,7 @@ Spoken:SetLogOn(true)
 Expect("turned on, it starts with a session line", Spoken:LogLines()[1]:find("session log on: ", 1, true) ~= nil, true)
 Expect("...naming Spoken's version and the module's", Has("Spoken " .. Spoken.ADDON_VERSION .. ", Spoken Developer "), true)
 Expect("...the wall clock beside GetTime", Has("session wall clock "), true)
-Expect("...the modules Spoken plays for", Has("modules: quests (Spoken_Quests)"), true)
+Expect("...the modules Spoken plays for", Has("modules: quests (Spoken_Conversations)"), true)
 Expect("...and the diagnostics, written into the log", Has("diag log on:"), true)
 Expect("...as /spoken diagnostics says them", Has("diag   Spoken " .. Spoken.ADDON_VERSION), true)
 
@@ -96,7 +96,7 @@ Expect("the box shows them all", Spoken:ShowLog(), #merged)
 Expect("...or the newest", Spoken:ShowLog(10), 10)
 
 ---------------------------------------------------------------- the copies
-Spoken:AddDiagnostics("Spoken Quests", function(detailed)
+Spoken:AddDiagnostics("Spoken Conversations", function(detailed)
     return { "Data modules: 1 detected, 1 loaded", detailed and "open: QUEST_DETAIL 101 Kobold Camp Cleanup" or nil }
 end)
 local text, count = Dev.Copy:Text(false)
@@ -187,7 +187,7 @@ for _, line in ipairs(diagnostics) do
     local module = line:match("(Spoken_%a+) %(")
     if module then table.insert(order, module) end
 end
-Expect("...in the modules' order", table.concat(order, " "), "Spoken_Quests Spoken_Places Spoken_Readables")
+Expect("...in the modules' order", table.concat(order, " "), "Spoken_Conversations Spoken_Places Spoken_Readables")
 stub.ClosePage()
 stub.FireEvent("ITEM_TEXT_CLOSED")
 Expect("its closing is in the log", Last():find("screen reading window closed", 1, true) ~= nil, true)

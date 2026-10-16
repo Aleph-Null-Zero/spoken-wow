@@ -29,7 +29,7 @@ local all = _G.SpokenDungeons.dungeons
 local core = {}
 assert(loadfile(ZONES .. "Core.lua"))("Spoken_Places", core)
 local subzones, dungeons = data.subzones, core.Dungeons
-assert(loadfile(ADDONS .. "Spoken_Quests/Data/Compendium.lua"))()
+assert(loadfile(ADDONS .. "Spoken_Conversations/Data/Compendium.lua"))()
 local quests = _G.SpokenQuestsCompendium
 
 -- Where the Quests data files each dungeon's quests: the zone of its entrance.

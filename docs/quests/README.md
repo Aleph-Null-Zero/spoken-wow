@@ -1,4 +1,4 @@
-# Spoken Quests pipeline
+# Spoken Conversations pipeline
 
 ### [voiceline explorer: spoken.rusty.one/quests](https://spoken.rusty.one/quests)
 
@@ -150,13 +150,13 @@ make quests-package-meta                 # the "install everything" addon
 make quests-package-audio PACKS=all      # every line in one folder, when trying an encode change
 make quests-package-audio VERSION=1.4.0  # the version written into each pack's .toc
 ENCODE=copy make quests-package-audio    # the masters untouched, to hear what is being given up
-make quests-package                      # Spoken_Quests alone: one Blizzard zip, one per legacy client
+make quests-package                      # Spoken_Conversations alone: one Blizzard zip, one per legacy client
 ```
 
-Players of Blizzard's clients get Spoken_Quests inside `Spoken-<v>.zip`, which
+Players of Blizzard's clients get Spoken_Conversations inside `Spoken-<v>.zip`, which
 `make package-spoken` builds (`scripts/spoken/package.sh`; its notes are in
 `docs/spoken/CHANGELOG.md`). `make quests-package` builds the module alone, for the legacy
-clients below. It takes its version from `## Version:` in `Spoken_Quests.toc` and produces four
+clients below. It takes its version from `## Version:` in `Spoken_Conversations.toc` and produces four
 zips. It refuses to build from an uncommitted tree — `ALLOW_DIRTY=1` overrides while testing —
 and refuses when a variant `.toc` or `Environment.lua` names a different version, which is drift
 nothing else notices until it ships.
@@ -164,9 +164,9 @@ nothing else notices until it ships.
 **One zip for Blizzard's clients, one apiece for the legacy ones.** Blizzard's clients
 pick a `.toc` by flavor suffix (`_Vanilla`, `_TBC`, else the unsuffixed one, which Forever reads),
 so a single archive serves them all and the client chooses. The 1.12, 2.4.3 and 3.3.5 clients
-predate suffix support: each reads `Spoken_Quests.toc` and nothing else, and each wants a
+predate suffix support: each reads `Spoken_Conversations.toc` and nothing else, and each wants a
 different file under that one name, so each needs an archive of its own. Each also loads its own
-vendored Ace3 from `Spoken_Quests/<client>/`, because the root `Libs/AceTimer-3.0` binds
+vendored Ace3 from `Spoken_Conversations/<client>/`, because the root `Libs/AceTimer-3.0` binds
 `C_Timer.After` while loading and would error there. A legacy zip therefore carries one `.toc`,
 one Ace3 and Spoken (those clients have no addon manager to fetch a dependency), and neither
 of the other two clients' directories.
@@ -244,7 +244,7 @@ copied, and mutagen reads a VBR mp3's Xing header and an Ogg page's granule posi
 its own folder, which is what the client draws beside the name in the AddOns list; without it
 each pack shows a red question mark. The sources are in `assets/icon/`, a 512 px PNG per mark:
 `spoken-player-512.png` is the play triangle the player ships, `spoken-quests-512.png` the
-exclamation mark Spoken Quests and all five sound packs ship. Each also comes as
+exclamation mark Spoken Conversations and all five sound packs ship. Each also comes as
 `spoken-<mark>-<locale>-512.png` with the language's badge, which a language's packs and its
 Spoken stub ship instead, so they are not mistaken for English's in the AddOns list. The `.tga`
 beside each is committed rather than converted at build time so that building needs no ffmpeg
@@ -300,7 +300,7 @@ hashes rather than to files, so an entry whose audio lives in a pack you did not
 no length and stays quiet.
 
 **Which side a quest is on comes first from the Compendium's race masks**
-(`addons/Spoken_Quests/Data/Compendium.lua`, `tts_cli/factions.py` `compendium_sides`): a quest
+(`addons/Spoken_Conversations/Data/Compendium.lua`, `tts_cli/factions.py` `compendium_sides`): a quest
 whose `races` are all one side's is that side's, and one open to both is shared. That covers
 Forever's own quests, which the vmangos world DB lacks (528 more one-side quests than the export
 below). A quest the Compendium does not list takes its side from `corpus/factions.json`, exported by
@@ -915,7 +915,7 @@ because reporting is what a player who cannot sign in has.
 ### Reports from inside the game
 
 Report is a round bug icon, and it sits where the line is: in the corner of Spoken's windows,
-beside the subtitles' hover controls, in Spoken Quests' row of controls on DialogueUI's window,
+beside the subtitles' hover controls, in Spoken Conversations' row of controls on DialogueUI's window,
 beside Play on the details view of the Forever quest log, and on each part of a quest's page in
 Azeroth's Compendium. It shows whether or not audio actually played — a silent quest is among
 the most useful things a player can tell you — and for gossip and greetings as well as quests.
@@ -982,7 +982,7 @@ section of Spoken's settings, one switch for the buttons of every module; each m
 asks `Spoken:AreContributeButtonsHidden()` in its gap check and refreshes on the player's
 `CONTRIBUTE_SETTINGS_CHANGED` callback, since toggling it fires no game event.
 With DialogueUI, which never shows the game's quest and gossip frames, the Report icon goes
-in Spoken Quests' row of controls on the window's title line instead, right of Play and Skip
+in Spoken Conversations' row of controls on the window's title line instead, right of Play and Skip
 and left of a close button, the window's text moved down to make room. It reports on every
 page and contributes where a line is missing. The words in that window are marked as they are
 read through `Spoken:WordMarks()`, the captions' matching kept in Spoken (see
@@ -1337,7 +1337,7 @@ BroadcastText row, and Forever lines no source had yet.
 #### Gossip text for every client, and one moment under several names
 
 The addon carries every line's gossip text for each client locale but English,
-`addons/Spoken_Quests/Gossip/<lang>.lua`, each returning before it builds anything on a client
+`addons/Spoken_Conversations/Gossip/<lang>.lua`, each returning before it builds anything on a client
 in another locale, and asks it before any pack's tables. It lives in the addon, not the packs,
 for the giver names' reason: the text follows the client and the voice is any language, so a
 German client with English or Portuguese packs finds its line the same way. Each file is about
@@ -1408,7 +1408,7 @@ the modules beside it, and Quests needs Spoken. To run a checkout's code, the re
 and `/reload` loads it. It skips the audio packs, whose mp3s are not in git, so install a pack
 with the command above.
 
-Use `Spoken_Quests` and not upstream's `AI_VoiceOver/`, which calls
+Use `Spoken_Conversations` and not upstream's `AI_VoiceOver/`, which calls
 `GetNumAddOns`, `GetAddOnMetadata` and `LoadAddOn`, which Blizzard moved to `C_AddOns` in
 10.2 and removed in 11.0.2, so on Classic Era 1.15.9 it errors while enumerating and the
 sound pack never registers. Install one player, never two — two copies fight over the same
@@ -1434,7 +1434,7 @@ quest hooks after it still have to be installed.
 **The rename.** The player was `AI_VoiceOver_Continued` and the pack `AI_VoiceOverData_Vanilla`
 until this project had diverged far enough from upstream that carrying its name was
 misleading; they became `VoiceOverRedux` and `VoiceOverReduxAudio`, and are `SpokenQuests` and
-`SpokenQuestsAudio` since 2.0.0. The module's folder has been `Spoken_Quests` since 3.0.0-beta.3;
+`SpokenQuestsAudio` since 2.0.0. The module's folder was `Spoken_Quests` from 3.0.0-beta.3 and is `Spoken_Conversations` now;
 an old `SpokenQuests` copy left on disk is switched off by Spoken at login. An old pack still works —
 the player finds packs by the `X-SpokenQuests-DataModule-Version` key in the TOC, or the inherited `X-VoiceOver-DataModule-Version` that every shipped pack carries, not by name
 (`DataModules:EnumerateAddons`) — but settings do not survive, because `SavedVariables` live in

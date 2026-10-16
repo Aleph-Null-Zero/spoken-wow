@@ -12,7 +12,7 @@
 # There are no legacy-client zips of Spoken: those clients have no addon manager, so the quests
 # addon's 1.12/2.4.3/3.3.5 zips carry Spoken inside them (scripts/quests/package.sh).
 #
-# The modules' folders are Spoken_Quests, Spoken_Readables and Spoken_Places. Their old names,
+# The modules' folders are Spoken_Conversations, Spoken_Readables and Spoken_Places. Their old names,
 # SpokenQuests and the rest, belong to the retired CurseForge projects, so this zip never ships
 # a folder under them: two projects shipping one folder is what the rename exists to stop.
 #
@@ -81,7 +81,7 @@ done
 # checks would refuse. A case rather than an associative array: macOS still ships bash 3.2.
 module_packager() {
   case "$1" in
-    Spoken_Quests) echo "$REPO/scripts/quests/package.sh" ;;
+    Spoken_Conversations) echo "$REPO/scripts/quests/package.sh" ;;
     Spoken_Readables) echo "$REPO/scripts/books/package.sh" ;;
     Spoken_Places) echo "$REPO/scripts/zones/package.sh" ;;
   esac
@@ -89,7 +89,7 @@ module_packager() {
 modules_dist="$(mktemp -d)"
 trap 'rm -rf "$staging" "$modules_dist"' EXIT
 folders=("$NAME" "$STORE")
-for module in Spoken_Quests Spoken_Readables Spoken_Places; do
+for module in Spoken_Conversations Spoken_Readables Spoken_Places; do
   module_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$module/$module.toc" | head -1 | tr -d '\r\n')"
   DIST="$modules_dist" "$(module_packager "$module")" >/dev/null
   module_zip="$modules_dist/$module-$module_version.zip"

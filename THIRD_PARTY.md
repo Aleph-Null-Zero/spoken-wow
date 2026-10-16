@@ -6,7 +6,7 @@ and they are not interchangeable.
 
 ## Vendored Lua libraries
 
-Spoken and Spoken_Quests ship the libraries they load, because a WoW addon has
+Spoken and Spoken_Conversations ship the libraries they load, because a WoW addon has
 no package manager: the client loads what is in the folder. They are unmodified copies, and are
 found under `addons/<Addon>/Libs/` — plus `addons/<Addon>/<client>/Libs/` for the 1.12, 2.4.3
 and 3.3.5 clients, which need their own build of Ace3. Spoken_Places, Spoken_Readables and
@@ -14,11 +14,11 @@ Spoken_Developer ship none; they use Spoken's.
 
 | Library | Used by | License |
 |---|---|---|
-| LibStub | Spoken, Spoken_Quests | Public domain (stated in the file header) |
+| LibStub | Spoken, Spoken_Conversations | Public domain (stated in the file header) |
 | CallbackHandler-1.0 | the same two | [Ace3 license](https://www.wowace.com/projects/ace3) — BSD-style, free use with attribution |
-| Ace3: AceAddon, AceConsole, AceDBOptions, AceEvent, AceGUI-3.0, AceConfig-3.0 | Spoken_Quests | [Ace3 license](https://www.wowace.com/projects/ace3) |
-| Ace3: AceDB, AceTimer | Spoken, Spoken_Quests | [Ace3 license](https://www.wowace.com/projects/ace3) |
-| Ace3: AceCore-3.0 | the 1.12 trees of Spoken and Spoken_Quests | [Ace3 license](https://www.wowace.com/projects/ace3) |
+| Ace3: AceAddon, AceConsole, AceDBOptions, AceEvent, AceGUI-3.0, AceConfig-3.0 | Spoken_Conversations | [Ace3 license](https://www.wowace.com/projects/ace3) |
+| Ace3: AceDB, AceTimer | Spoken, Spoken_Conversations | [Ace3 license](https://www.wowace.com/projects/ace3) |
+| Ace3: AceCore-3.0 | the 1.12 trees of Spoken and Spoken_Conversations | [Ace3 license](https://www.wowace.com/projects/ace3) |
 | LibDataBroker-1.1 | Spoken | Public domain / CC0, per its project page; the copy carries a README and no license text |
 | LibDBIcon-1.0 | Spoken | Public domain, by Rabbit, per its project page; the file header states no license |
 | [LibDeflate](https://github.com/SafeteeWoW/LibDeflate) 1.0.2-release | Spoken | zlib License (`Libs/LibDeflate/LICENSE.txt`) |
@@ -33,11 +33,11 @@ only adding a row here.
 
 ## The addons' own lineage
 
-**Spoken Quests** began as a fork of **AI VoiceOver** (`AI_VoiceOver_Continued`), an
+**Spoken Conversations** began as a fork of **AI VoiceOver** (`AI_VoiceOver_Continued`), an
 addon by Mrthinger and its later maintainers, and still carries structure from it —
 the sound queue and the data-module loader most visibly. The fork adapted the removed
 global addon-management APIs to `C_AddOns` and the gossip APIs to `C_GossipInfo`, was
-renamed `VoiceOverRedux`, then `SpokenQuests`, and is `Spoken_Quests` today. Its sound packs deliberately
+renamed `VoiceOverRedux`, then `SpokenQuests`, and is `Spoken_Conversations` today. Its sound packs deliberately
 stay loadable by upstream's player, and upstream's packs stay loadable by this one.
 
 **Spoken**'s sound queue is a port of that same queue, generalised so that
@@ -72,7 +72,7 @@ None of this is the project's to license, and the MIT grant does not reach it.
   [EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf) by JIVESCORP, published
   under **CC BY 4.0**; the text itself is Blizzard's.
 - **Where Forever's quests are filed, who may take them and which quest follows which**
-  (`addons/Spoken_Quests/Data/Compendium.lua`), where the world DB has none of it, come from the
+  (`addons/Spoken_Conversations/Data/Compendium.lua`), where the world DB has none of it, come from the
   quest and NPC data players' Forever clients recorded.
   Data from Efficient Games (https://efficient.games), licensed under CC BY 4.0.
   `pipelines/quests/tools/export_compendium.py` reads it from
@@ -85,11 +85,11 @@ None of this is the project's to license, and the MIT grant does not reach it.
 - **The older `.blp` textures** came with the AI VoiceOver fork, as it shipped them: in
   `addons/Spoken/Textures/` `BackgroundGradient`, `Book`, `MinimapButton`, `PortraitFrameAtlas`,
   `PortraitFrameBackground` and `SettingsButton` (`SettingsButtonSoft` is the same ring with its middle
-  at 90%); in `Spoken_Quests/Textures/` `QuestLogPlayButton`,
+  at 90%); in `Spoken_Conversations/Textures/` `QuestLogPlayButton`,
   `QuestLogStopButton`, `StopGossip`, `StopGossipMore` and the four `SoundQueueBullet*` files.
   `git log --follow` takes each back to the AI VoiceOver import. The game art in them is
   Blizzard's. The 1.12 tree's `UI-Minimap-Background.blp` comes with LibDBIcon.
-- **Addon-list icons** (`icon.tga` in Spoken, Spoken_Quests, Spoken_Developer and
+- **Addon-list icons** (`icon.tga` in Spoken, Spoken_Conversations, Spoken_Developer and
   SpokenContributions, `Textures/AddonIcon.tga` in
   Spoken_Readables, Spoken_Places and the two sound packs, and the badged copies the language
   packs ship): the Spoken shields, drawn for this project by Nucabe, from the sources in `pipelines/quests/assets/icon/`, `pipelines/books/assets/` and
@@ -128,7 +128,7 @@ None of this is the project's to license, and the MIT grant does not reach it.
 - **Minimal Classic player textures** (`addons/Spoken/Textures/Minimal*.tga`)
   also derive from Blizzard UI artwork. Sources and adaptations are listed in
   [`docs/minimal-classic/ARTWORK.md`](docs/minimal-classic/ARTWORK.md).
-- **The Thrall Easter egg** (`addons/Spoken_Quests/Sounds/og-thrall.mp3`) is AI VoiceOver's
+- **The Thrall Easter egg** (`addons/Spoken_Conversations/Sounds/og-thrall.mp3`) is AI VoiceOver's
   reading of a Thrall line, upstream's file byte for byte. The line's text is Blizzard's. The
   terms for the recording itself are upstream's, which this repository does not record.
 - **The generated audio** is synthesised by [ElevenLabs](https://elevenlabs.io) and

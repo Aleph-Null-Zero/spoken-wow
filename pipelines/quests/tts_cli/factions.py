@@ -12,7 +12,7 @@ walks every registered module and takes the first whose SoundLengthLookupByFileN
 file, which is how upstream shipped one pack per expansion.
 
 WHICH SIDE A QUEST IS ON IS NOT DERIVED HERE. It is read from two committed files, so building a
-pack needs no database. First the Compendium's own data (addons/Spoken_Quests/Data/Compendium.lua,
+pack needs no database. First the Compendium's own data (addons/Spoken_Conversations/Data/Compendium.lua,
 tools/export_compendium.py): a quest whose `races` are all one side's is that side's. It has
 Forever's quests, which the vmangos world DB lacks, and Forever's client's race masks. Then, for
 a quest the Compendium does not list, corpus/factions.json, the export tools/export_factions.py
@@ -30,7 +30,7 @@ from tts_cli.naming import subfolder_from_line_id
 
 DEFAULT_FACTIONS_PATH = "corpus/factions.json"
 DEFAULT_COMPENDIUM_PATH = os.path.normpath(os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "addons", "Spoken_Quests", "Data",
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "addons", "Spoken_Conversations", "Data",
     "Compendium.lua"))
 
 #: Each side's races as the Compendium's `races` bits (ChrRaces.PlayableRaceBit): Human, Dwarf,

@@ -194,7 +194,7 @@ def test_toc_nests_the_pack_under_spoken():
     # member of that group, the packs showed at the top of the list instead.
     assert "## Group: Spoken\n" in toc
     assert "## X-Part-Of: Spoken\n" in toc
-    assert "## X-Child-Of: Spoken_Quests\n" in toc
+    assert "## X-Child-Of: Spoken_Conversations\n" in toc
 
 
 def test_install_refuses_to_replace_without_force(tmp_path):
