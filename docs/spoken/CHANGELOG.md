@@ -5,7 +5,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 ## Unreleased
 
 - **The minimap button's tooltip shows Spoken's version.** It sits above the click hints, where
-  a bug report can quote it without opening the settings.
+  a bug report can quote it without opening the settings. *([anon1231823](https://github.com/anon1231823))*
+
 ### Modules
 
 - New icons for Spoken, Quests, Places and Readables in the AddOns list, on the minimap button and in
