@@ -35,6 +35,12 @@ local AUTO_POLL_INTERVAL = 0.1
 -- Store original function before EQL3 (Extended Quest Log 3) overrides it and starts prepending quest level
 local GetTitleText = GetTitleText
 
+-- The open quest's title, or "" where there is none or the game hides it from addons (in
+-- instances on the Forever client): it keys tables, which take no nil.
+local function QuestTitle()
+    return GetTitleText and NotSecret(GetTitleText()) or ""
+end
+
 local function IsFrameVisible(frame)
     if not frame then
         return false
@@ -93,7 +99,7 @@ end
 --- Followup.lua's accept and turn-in hooks on the legacy clients.
 function Addon:DialogQuestID(event)
     local quest = QUEST_EVENTS[event]
-    return ResolveQuestID(quest.source, QuestIDFor(event), GetTitleText and NotSecret(GetTitleText()) or "",
+    return ResolveQuestID(quest.source, QuestIDFor(event), QuestTitle(),
         Utils:GetNPCName() or "", quest.text(), true) or 0
 end
 
@@ -104,7 +110,7 @@ local function CaptureQuestSnapshot(event)
     end
     local readText = quest.text
     local questID = QuestIDFor(event)
-    local questTitle = GetTitleText and NotSecret(GetTitleText()) or ""
+    local questTitle = QuestTitle()
     -- Nothing to replay, and nothing to identify a quest by either.
     if (not questID or questID == 0) and questTitle == "" then
         return
@@ -127,7 +133,7 @@ local function ReadQuestFields(event)
         return snapshot.questID, snapshot.title, snapshot.text, snapshot.guid, snapshot.targetName,
             snapshot.isObjectOrItem
     end
-    return QuestIDFor(event), NotSecret(GetTitleText()), QUEST_EVENTS[event].text(), Utils:GetNPCGUID(),
+    return QuestIDFor(event), QuestTitle(), QUEST_EVENTS[event].text(), Utils:GetNPCGUID(),
         Utils:GetNPCName(), Utils:IsNPCObjectOrItem()
 end
 
@@ -316,7 +322,7 @@ function Addon:GetVisibleLine(event)
     local probe
     if quest then
         local questID = ResolveQuestID(quest.source, QuestIDFor(event),
-            GetTitleText and NotSecret(GetTitleText()) or "", Utils:GetNPCName() or "", quest.text(), true)
+            QuestTitle(), Utils:GetNPCName() or "", quest.text(), true)
         if not questID then
             return nil
         end
@@ -594,9 +600,7 @@ function Addon:OnInitialize()
             return
         end
 
-        local titleSucceeded, questTitle = pcall(function()
-            return GetTitleText and NotSecret(GetTitleText()) or ""
-        end)
+        local titleSucceeded, questTitle = pcall(QuestTitle)
         if not titleSucceeded then
             error(questTitle)
         end
