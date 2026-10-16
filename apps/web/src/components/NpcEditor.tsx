@@ -249,6 +249,7 @@ function BodyCells({
             edits={edits}
             readOnly={false}
             busy={busy}
+            lockType
             onSave={(next) => onPost({ race: answer.race, sex: answer.sex, flavor: next.flavor ?? answer.flavor, doubtful: next.doubtful ?? false })}
           />
           <LiteButton className={ROW_BUTTON} disabled={busy} onClick={() => onPost({ action: "remove", race: answer.race, sex: answer.sex })}
