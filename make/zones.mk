@@ -31,13 +31,15 @@ check: validate lint locale-check ## Run every pre-package check
 validate: ## Sanity-check the generated Lua data files
 	@node pipelines/zones/tools/validate.mjs
 
-# The in-game addon list reads a TGA or BLP, never the PNG or SVG in pipelines/zones/assets/, so the
+# The in-game addon list reads a TGA or BLP, never the PNGs in pipelines/zones/assets/, so the
 # icon is converted and committed. Both addons carry the same shield: they install as a
-# pair, and two icons would imply they are alternatives to each other.
-icon: ## Rebuild both addons' AddonIcon.tga from pipelines/zones/assets/spoken-zones-512.png (needs ffmpeg)
+# pair, and two icons would imply they are alternatives to each other. A language's pack wears
+# the shield with its badge: scripts/zones/package-audio.sh copies spoken-zones-<locale>.tga over it.
+icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/zones/assets/*-512.png (needs ffmpeg)
 	@python3 pipelines/zones/tools/make-icon.py pipelines/zones/assets/spoken-zones-512.png addons/Spoken_Places/Textures/AddonIcon.tga
 	@cp addons/Spoken_Places/Textures/AddonIcon.tga addons/SpokenZonesAudio/Textures/AddonIcon.tga
 	@echo "==> copied to addons/SpokenZonesAudio/Textures/AddonIcon.tga"
+	@for png in pipelines/zones/assets/spoken-zones-??[A-Z][A-Z]-512.png; do python3 pipelines/zones/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
 
 lint: ## Block-balance check on the addon's Lua
 	@python3 pipelines/zones/tools/lua-syntax-check.py

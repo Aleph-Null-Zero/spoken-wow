@@ -6,6 +6,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ### Modules
 
+- New icons for Spoken, Quests, Places and Readables in the AddOns list, on the minimap button and in
+  Settings. A language's packs show the same icon with the language's badge, so they are told apart
+  from the English ones. *([Nucabe](https://github.com/Nucabe))*
+
 - Zones is now Places, in every language: its card, settings page, Compendium tab, menu entry, and the
   panel beside the map, now Place Story. Its commands are /spp and /spokenplaces, and /spz still
   works. Its folder is `Spoken_Places`, so each character's discovered places and the places it has

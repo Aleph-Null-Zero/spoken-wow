@@ -9,7 +9,7 @@ import shutil
 
 import pytest
 
-from tts_cli.build import build_module
+from tts_cli.build import build_module, icon_source
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 
@@ -189,6 +189,19 @@ def test_the_pack_ships_an_icon_the_toc_points_at(tmp_path):
     with open(module / "Mod.toc", encoding="utf-8") as f:
         assert "## IconTexture: Interface\\AddOns\\Mod\\icon.tga\n" in f.read()
     assert (module / "icon.tga").is_file()
+
+
+def test_a_language_pack_wears_its_badged_icon(tmp_path):
+    # Otherwise a language's packs look like English's in the AddOns list.
+    store = _store(tmp_path, "quests/5-accept.ogg")
+
+    build_module(CORPUS, store, str(tmp_path / "dist"), "Mod", language="esMX")
+
+    with open(tmp_path / "dist" / "Mod" / "icon.tga", "rb") as shipped, \
+            open(icon_source("esMX"), "rb") as badged, open(icon_source(), "rb") as english:
+        data = shipped.read()
+        assert data == badged.read()
+        assert data != english.read()
 
 
 def test_the_length_table_measures_ogg(tmp_path):

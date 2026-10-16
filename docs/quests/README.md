@@ -243,11 +243,13 @@ copied, and mutagen reads a VBR mp3's Xing header and an Ogg page's granule posi
 
 **Icons.** Every addon here carries an `icon.tga` and a `## IconTexture:` line naming
 its own folder, which is what the client draws beside the name in the AddOns list; without it
-each pack shows a red question mark. The sources are in `assets/icon/`, one pair of SVG and
-512 px PNG per mark: `spoken-player.*` is the play triangle the player ships, `spoken-quests.*`
-the exclamation mark Spoken Quests and all five sound packs ship. The `.tga` beside each is
-committed rather than converted at build time so that building needs no ffmpeg — `make
-quests-icon` regenerates both from the PNGs, `tools/make_icon.py` is what it runs, and that
+each pack shows a red question mark. The sources are in `assets/icon/`, a 512 px PNG per mark:
+`spoken-player-512.png` is the play triangle the player ships, `spoken-quests-512.png` the
+exclamation mark Spoken Quests and all five sound packs ship. Each also comes as
+`spoken-<mark>-<locale>-512.png` with the language's badge, which a language's packs and its
+Spoken stub ship instead, so they are not mistaken for English's in the AddOns list. The `.tga`
+beside each is committed rather than converted at build time so that building needs no ffmpeg
+— `make quests-icon` regenerates them all from the PNGs, `tools/make_icon.py` is what it runs, and that
 file's header explains why ffmpeg's own targa encoder is not used (it writes RLE, and the
 client wants uncompressed).
 
@@ -256,7 +258,7 @@ The minimap button is the same mark again, as `addons/Spoken/Textures/MinimapBut
 list takes either. `tools/make_minimap_icon.py` (also run by `make quests-icon`) crops the
 shield's frame off the 512 px render before scaling, since LibDBIcon draws the icon 17 pixels
 across inside a round border of its own and two frames at that size read as dirt; the header
-explains the crop, the 5% LibDBIcon trims off each edge, and why the BLP is palettized.
+explains the crop, the 5% LibDBIcon trims off each edge, and why the BLP is DXT5.
 
 ### The pack ships in four pieces
 
