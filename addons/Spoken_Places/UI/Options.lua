@@ -134,7 +134,7 @@ function SpokenZones:SetupOptions()
 	-- Auto stores no language at all, so it keeps following the client: switch the game to French
 	-- and the text is French. Every other entry pins its language.
 	local AUTO = {}
-	local langMenu = layout:Dropdown(L.OPT_LANGUAGE, L.OPT_LANGUAGE_TIP,
+	local langMenu = layout:Dropdown(L.OPT_LANGUAGE,
 		function()
 			local values = { AUTO }
 			for _, locale in ipairs(SpokenZones:GetSelectableLanguages()) do
