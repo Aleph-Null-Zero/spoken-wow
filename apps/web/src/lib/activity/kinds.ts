@@ -88,6 +88,9 @@ export type ActivityDetail = {
   };
   "npc.split": { npcName?: string | null; race?: string; sex?: number };
   "npc.unsplit": { npcName?: string | null; race?: string; sex?: number };
+  /** An NPC made one more speaker of a line by hand, or taken back off it. Subject: the line. */
+  "npc.speaker_added": { npcName?: string | null; npcType: string; npcId: number };
+  "npc.speaker_removed": { npcName?: string | null; npcType: string; npcId: number };
   "type.changed": {
     action: string;
     gender?: string | null;

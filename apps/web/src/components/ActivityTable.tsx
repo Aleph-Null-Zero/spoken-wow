@@ -91,6 +91,12 @@ function bodyWords(d: Record<string, unknown>): string {
   return [str(d.race), num(d.sex) === 3 ? "woman" : "man"].join(" ");
 }
 
+/** An NPC an activity names, by name or else by kind and id. */
+function speakerName(d: Record<string, unknown>): string {
+  const id = num(d.npcId);
+  return str(d.npcName) ?? (id === null ? "an NPC" : `${str(d.npcType) ?? "NPC"} ${id}`);
+}
+
 /** "a → b", or whichever half is known: rows backfilled from older tables carry neither. */
 function change(before: string | null, after: string | null): string | null {
   if (before && after) return `${before} → ${after}`;
@@ -215,6 +221,10 @@ function describe(row: ActivityRow): { what: string; quote: string | null } {
       return d.race
         ? { what: `took a body from ${str(d.npcName) ?? row.subject}`, quote: bodyWords(d) }
         : { what: `gave ${str(d.npcName) ?? row.subject} one voice again`, quote: null };
+    case "npc.speaker_added":
+      return { what: `made ${speakerName(d)} a speaker of ${row.subject}`, quote: null };
+    case "npc.speaker_removed":
+      return { what: `took ${speakerName(d)} off ${row.subject}`, quote: null };
     case "npc.resolved":
       return {
         what: `set who ${str(d.npcName) ?? row.subject} is${num(d.sex) === 3 ? " as a woman" : num(d.sex) === 2 ? " as a man" : ""}`,

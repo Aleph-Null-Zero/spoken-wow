@@ -1007,8 +1007,8 @@ puts an `edited` version on top. A contributed speaker is what `corpus_db.py`'s 
 alone when it replaces every extracted speaker, and it numbers from 1,000,000 so a re-import
 never meets it. The corpus
 wins where it already has the line: a quest moment is matched by quest id and moment alone
-(the tables carry some only as `:m`/`:f` variants), and a gossip line it already has gains the
-contributing NPC as one more speaker instead of a copy. Progress lines are kept, marked
+(the tables carry some only as `:m`/`:f` variants), and a quest moment or gossip line it already
+has gains the contributing NPC as one more speaker instead of a copy. Progress lines are kept, marked
 `progress` and never voiced, as the extract marks its own. Once written, a contribution cannot
 be moved back to new. Rejecting it ignores every line it wrote, reason `Rejected contribution
 #N`: in its language, or in every language for an English row, so it needs the same right an
@@ -1019,8 +1019,11 @@ the explorer brings the line back.
 A quest row is accepted the same way whatever language its client was in. A line is the
 language's own `quest_line` row; who speaks it is a fact about the world, so a speaker row any
 language wrote voices the line in every language. Accepting a quest moment writes the
-language's row and a `quest_line_speaker` row only when the moment has no speaker in any
-language yet. Only then does it need the NPC's race and gender answered. Its id
+language's row, and a `quest_line_speaker` row when the moment has no speaker in any language
+yet or its speakers do not include the contribution's NPC: a quest two givers offer is voiced in
+each one's voice. Only then does it need the NPC's race and gender answered, and the
+contributions page counts such a row as blocked until it has them. A speaker added to a moment
+someone already speaks goes on each of its lines, in the language its speakers are in. Its id
 and file are the quest's and the moment's, the same in every language, so nothing has to be
 sent in English first, and English sending the moment later writes English's row under the
 same id and file, voiced by the speaker already there. In another language the line keeps its
@@ -1151,6 +1154,15 @@ store (`tts_cli/voice_files.py`). A quest giver is found through `QuestFileLooku
 installed pack has it; a greeting's speaker and a follow-up's are looked up per NPC already, so
 their tables simply name the speaker's own file. The greeting tables keyed by NPC name, used when
 the addon has no id, name the line's own file, since same-named NPCs can differ in voice. Progress text is never voiced and never split.
+
+An admin can add a speaker the game data lacks, from the explorer: the person icon under a
+speaker's id adds another NPC who says that line, by kind and id. One nobody has answered is
+answered in the same dialog, as `/npcs` would, since a speaker is written with its voice. The row
+goes on each of the moment's lines (both sides of a player-gender split), marked with the admin
+in `addedBy` (migration 0076), and shows as *added* with a way to take it back; the dump's own
+speakers cannot be removed. Like a contributed speaker, an added one numbers from 1,000,000, is
+exported with its `addedBy`, and is kept by `corpus_db.py`'s import until the dump has the same
+NPC on the same line (`lib/quests/speakers.ts`, `api/quests/lines/speakers`).
 
 An NPC can be split by body. One creature id can be drawn as several races and both sexes: a
 Stormwind City Guard is a man or a woman at even odds, and an Ironforge Reveler a dwarf, a

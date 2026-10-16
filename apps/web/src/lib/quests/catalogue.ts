@@ -115,7 +115,7 @@ const SPEAKER_NAME = `case when r."lang" = '${BASE_LANG}' then r."npcName" else 
 function speakersBy(key: string): string {
   return `(
   select r."id", r."key", r."lineId", r."variant", r."lang", r."ord", r."npcType", r."npcId", ${SPEAKER_NAME} as "npcName",
-         r."contributionId", r."voice" as "writtenVoice",
+         r."contributionId", r."addedBy" is not null as "added", r."voice" as "writtenVoice",
          coalesce(x."race", n."race", '') as "race",
          coalesce(x."gender", n."gender", '') as "gender",
          case when x."sex" is null then n."flavor" else x."flavor" end as "flavor",
@@ -235,6 +235,7 @@ type Row = {
   generatable: boolean;
   skipReason: string | null;
   contributionId: number | null;
+  added: boolean;
 };
 
 /**
@@ -250,7 +251,7 @@ async function build(lang: Lang): Promise<CorpusLine[]> {
     `select l."lineId", l."variant", l."source", l."questId", l."questTitle",
             s."npcId", s."npcName", s."npcType", s."race", s."gender", s."flavor", s."writtenVoice",
             s."npcSex", s."npcBody", l."playerGender", l."text", l."originalText", l."fileName",
-            l."generatable", l."skipReason", s."contributionId"
+            l."generatable", l."skipReason", s."contributionId", s."added"
        from ${SPEAKERS} s
        join "quest_line" l
          on l."lineId" = s."lineId" and l."variant" = s."variant"
@@ -322,7 +323,7 @@ async function buildTranslated(lang: Lang): Promise<CorpusLine[]> {
             coalesce(t."fileName", e."fileName") as "fileName",
             coalesce(t."generatable", false) as "generatable",
             case when t."id" is null then 'untranslated' else t."skipReason" end as "skipReason",
-            s."contributionId",
+            s."contributionId", s."added",
             t."id" is null as "textMissing",
             coalesce(t."questId", e."questId") is not null and qn."id" is null as "titleMissing",
             nn."id" is null as "nameMissing",

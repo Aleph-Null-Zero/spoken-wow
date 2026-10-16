@@ -48,6 +48,26 @@ def test_an_older_file_skips_the_round_tripped_copy_of_a_contributed_speaker():
     assert skipped == 1
 
 
+def added(line_id, npc_id, by="admin-1"):
+    return {**row(line_id, npc_id), "addedBy": by}
+
+
+def test_a_speaker_added_by_hand_this_database_holds_is_left_alone():
+    lines = [row("q:1:accept", 10), added("q:1:accept", 11)]
+    extracted, skipped = split_contributed(
+        lines, CONTRIBUTIONS_MARKED, set(), set(), {("q:1:accept", "creature", 11)})
+    assert extracted == [row("q:1:accept", 10)]
+    assert skipped == 1
+
+
+def test_a_speaker_added_by_hand_unknown_here_keeps_its_mark():
+    # Written as an added speaker again, so the next extract import keeps it.
+    lines = [row("q:1:accept", 10), added("q:1:accept", 11)]
+    extracted, skipped = split_contributed(lines, CONTRIBUTIONS_MARKED, set(), set())
+    assert extracted == lines
+    assert skipped == 0
+
+
 def npc(npc_id, race, gender, flavor, npc_type="creature"):
     return {"npcType": npc_type, "npcId": npc_id, "race": race, "gender": gender, "flavor": flavor}
 

@@ -6,7 +6,7 @@
  */
 import type { PoolClient } from "pg";
 
-import { db } from "@/lib/db";
+import { inTransaction } from "@/lib/db";
 
 import { newVoiceName, type Gender } from "./roster";
 import { GENDERS } from "./voices";
@@ -72,20 +72,6 @@ function gender(value: unknown): Gender {
 /** A field that may be left out: absent, null and "" are all "none". */
 function optional<T>(value: unknown, parse: (value: unknown) => T): T | null {
   return value === undefined || value === null || value === "" ? null : parse(value);
-}
-
-async function inTransaction(work: (client: PoolClient) => Promise<void>): Promise<void> {
-  const client = await db().connect();
-  try {
-    await client.query("begin");
-    await work(client);
-    await client.query("commit");
-  } catch (error) {
-    await client.query("rollback");
-    throw error;
-  } finally {
-    client.release();
-  }
 }
 
 async function exists(client: PoolClient, sql: string, params: unknown[]): Promise<boolean> {

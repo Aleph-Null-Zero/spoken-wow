@@ -8,7 +8,7 @@
  * `new Pool()` does not open a connection until the first query, so importing this during
  * `next build` does not need a reachable database.
  */
-import { Pool, type QueryResultRow } from "pg";
+import { Pool, type PoolClient, type QueryResultRow } from "pg";
 
 /**
  * How many connections one process may hold.
@@ -67,6 +67,23 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
 ): Promise<T[]> {
   const result = await db().query<T>(text, params);
   return result.rows;
+}
+
+/** `work` in one transaction on one client: committed when it returns, rolled back when it throws. */
+export async function inTransaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await db().connect();
+  try {
+    await client.query("begin");
+    const result = await work(client);
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    // Its own failure (a dropped connection) would hide the error that matters.
+    await client.query("rollback").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 /**

@@ -40,6 +40,8 @@ export type CorpusLine = {
    * because many tests build a CorpusLine by hand for questions this has no bearing on.
    */
   contributionId?: number | null;
+  /** An admin added this speaker by hand in the explorer (migration 0076), and may take it back. */
+  added?: boolean;
   /**
    * What a language other than English has not translated yet. The row then carries the
    * English in its place, for the explorer to show and mark -- never to voice: a line whose
