@@ -90,8 +90,8 @@ None of this is the project's to license, and the MIT grant does not reach it.
   `git log --follow` takes each back to the AI VoiceOver import. The game art in them is
   Blizzard's. The 1.12 tree's `UI-Minimap-Background.blp` comes with LibDBIcon.
 - **Addon-list icons** (`icon.tga` in Spoken and Spoken_Quests, `Textures/AddonIcon.tga` in
-  Spoken_Readables, Spoken_Places and the two sound packs): the Spoken shields, made for this project
-  from the sources in `pipelines/quests/assets/icon/`, `pipelines/books/assets/` and
+  Spoken_Readables, Spoken_Places and the two sound packs, and the badged copies the language
+  packs ship): the Spoken shields, drawn for this project by Nucabe, from the sources in `pipelines/quests/assets/icon/`, `pipelines/books/assets/` and
   `pipelines/zones/assets/`.
 - **Round vignette** (`addons/Spoken/Textures/RoundVignette.tga`): a black alpha gradient made for
   this project.

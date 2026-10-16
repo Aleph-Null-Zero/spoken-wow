@@ -186,7 +186,7 @@ jobs:
           cp -a apps/web/migrations "$R"/migrations
 
           test -f "$R"/apps/web/server.js
-          test -f "$R"/apps/web/public/icons/zones.svg   # public/ survived the copy
+          test -f "$R"/apps/web/public/icons/zones.png   # public/ survived the copy
           test -L "$R"/apps/web/node_modules/next   # symlink survived the copy
           test -f "$R"/migrations/0001_auth.sql
           test -f "$R"/migrations/0020_take.sql
@@ -286,7 +286,7 @@ jobs:
           # And an icon, for the same reason one directory over: public/ is copied by hand
           # and a missing one is three broken images on the front page, which nothing else
           # here would notice.
-          curl -fsS -o /dev/null http://127.0.0.1:3999/icons/zones.svg
+          curl -fsS -o /dev/null http://127.0.0.1:3999/icons/zones.png
           echo "bundle boots and serves"
 
       - name: Set release name

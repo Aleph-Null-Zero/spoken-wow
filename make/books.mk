@@ -148,17 +148,19 @@ package-audio: check-synced sounds lookup
 	 shasum -a 256 "$$zip_path"
 endif
 
-# The in-game addon list reads a TGA or BLP, never the PNG or SVG in
+# The in-game addon list reads a TGA or BLP, never the PNGs in
 # pipelines/books/assets/, so the icon is converted and committed -- an addon must build
 # with no ffmpeg on the machine. Borrowed from the zones pipeline rather than copied: the
 # script takes a source and a destination and knows nothing about which project it serves.
 #
 # Both addons carry the same icon: they install as a pair, and two icons would imply they
-# are alternatives to each other.
-icon: ## Rebuild both addons' AddonIcon.tga from pipelines/books/assets (needs ffmpeg)
+# are alternatives to each other. A language's pack wears the icon with its badge:
+# scripts/books/package-audio.sh copies spoken-books-<locale>.tga over it.
+icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/books/assets (needs ffmpeg)
 	@python3 pipelines/zones/tools/make-icon.py pipelines/books/assets/spoken-books-512.png addons/Spoken_Readables/Textures/AddonIcon.tga
 	@cp addons/Spoken_Readables/Textures/AddonIcon.tga addons/SpokenBooksAudio/Textures/AddonIcon.tga
 	@echo "==> copied to addons/SpokenBooksAudio/Textures/AddonIcon.tga"
+	@for png in pipelines/books/assets/spoken-books-??[A-Z][A-Z]-512.png; do python3 pipelines/zones/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
 
 deploy: ## Symlink the addon into a client (CLIENT=era|anniversary|forever)
 	@./scripts/books/deploy.sh

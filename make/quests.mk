@@ -168,7 +168,9 @@ acted: pull-recorded package-acted ## Pull the recordings and build the voice-ac
 # icon is converted and committed. Two marks, not one: the player wears the play triangle and
 # Spoken Quests the exclamation mark, since they sit next to each other in that list. The five
 # sound packs take the Quests mark -- scripts/quests/package-meta.sh and tts_cli/build.py copy
-# spoken-quests.tga into every module they build.
+# spoken-quests.tga into every module they build. A language's packs and its Spoken stub take the
+# same mark with the language's badge, spoken-<mark>-<locale>.tga, made from the
+# spoken-<mark>-<locale>-512.png beside it.
 # The minimap button wears the same player mark from a tighter crop, as a BLP rather than a
 # TGA: a texture a frame loads is BLP on every client this ships to. LibDBIcon draws its own
 # round border around it, so the crop drops the shield's octagonal frame -- two frames at 17
@@ -177,6 +179,7 @@ icon: ## Rebuild the addons' icon.tga and the minimap BLP from pipelines/quests/
 	@python3 pipelines/quests/tools/make_icon.py pipelines/quests/assets/icon/spoken-player-512.png pipelines/quests/assets/icon/spoken-player.tga
 	@python3 pipelines/quests/tools/make_icon.py pipelines/quests/assets/icon/spoken-quests-512.png pipelines/quests/assets/icon/spoken-quests.tga
 	@cp pipelines/quests/assets/icon/spoken-player.tga addons/Spoken/icon.tga
+	@for png in pipelines/quests/assets/icon/spoken-*-??[A-Z][A-Z]-512.png; do python3 pipelines/quests/tools/make_icon.py "$$png" "$${png%-512.png}.tga"; done
 	@cp pipelines/quests/assets/icon/spoken-quests.tga addons/Spoken_Quests/icon.tga
 	@echo "==> copied into addons/Spoken/ and addons/Spoken_Quests/"
 	@python3 pipelines/quests/tools/make_minimap_icon.py pipelines/quests/assets/icon/spoken-player-512.png addons/Spoken/Textures/MinimapButton.blp

@@ -85,9 +85,21 @@ LANGUAGE_KEY = "X-SpokenQuests-Language"
 #: The artwork the client shows beside the addon's name in the AddOns list. Committed as a TGA
 #: rather than converted at build time, so building needs no ffmpeg; tools/make_icon.py is what
 #: made it, and its header explains the format.
-ICON_SOURCE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                           "assets", "icon", "spoken-quests.tga")
+ICON_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "assets", "icon")
 ICON_NAME = "icon.tga"
+
+
+def icon_source(language: str = None) -> str:
+    """English's mark, or the language's: the same mark with its badge, so a language's packs
+    are told apart from English's in the AddOns list. A language without one is an error
+    rather than English's mark, which would ship a pack that looks like the wrong language."""
+    if not language or language == "enUS":
+        return os.path.join(ICON_DIR, "spoken-quests.tga")
+    path = os.path.join(ICON_DIR, f"spoken-quests-{language}.tga")
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"no icon for {language}: {path} (make quests-icon)")
+    return path
 
 TOC_HEADER = """## Interface: 100007, 11509, 20506, 16001
 ## Title: {title}
@@ -422,7 +434,7 @@ def build_module(corpus: dict, store_dir: str, dist_dir: str = DEFAULT_DIST_DIR,
     write_sound_length_table_lua(module_name, sounds_dir, generated_dir)
     written.append("sound_length_table.lua")
 
-    shutil.copy2(ICON_SOURCE, os.path.join(module_dir, ICON_NAME))
+    shutil.copy2(icon_source(language), os.path.join(module_dir, ICON_NAME))
 
     with open(os.path.join(module_dir, "Module.lua"), "w", encoding="utf-8") as f:
         f.write(MODULE_LUA.format(module=module_name, extension=extension))

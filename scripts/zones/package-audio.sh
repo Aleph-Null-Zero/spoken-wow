@@ -234,6 +234,9 @@ for tier in "${tiers[@]}"; do
   # either re-encoded or copied into place and the lookup is this language's, so the tree the
   # client sees is identical apart from those and the .toc lines rewritten below.
   rsync -a --exclude 'Sounds/' --exclude 'Data/Sounds.lua' --exclude '.DS_Store' "$SRC/" "$staging/$folder/"
+  # A language's pack wears the shield with its badge, so it is not mistaken for English's in
+  # the AddOns list. `make zones-icon` makes these from the PNGs beside them.
+  english || cp "$REPO/pipelines/zones/assets/spoken-zones-$LOCALE.tga" "$staging/$folder/Textures/AddonIcon.tga"
   mkdir -p "$staging/$folder/Data"
   # -p, not a bare cp: this used to arrive through the rsync -a below before Sounds.lua was
   # split out of it, and a plain cp stamps the copy with "now" instead of preserving the

@@ -14,7 +14,7 @@ than failing, which is the kind of bug that survives review.
 
 Committed as a TGA rather than converted at build time so that building an addon needs
 no ffmpeg -- the same reason the corpus is committed. Re-run it (`make icon`) when
-assets/spoken-zones.svg changes and its PNG renders are re-exported.
+the PNGs in assets/ are replaced.
 """
 import argparse
 import struct
