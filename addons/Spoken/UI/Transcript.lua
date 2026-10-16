@@ -270,7 +270,7 @@ end
 function Transcript:Sync()
     if self.held then return end
     -- The line playing, or the sample a window previews.
-    local current = PlayerFrame and PlayerFrame:Current() or SoundQueue:GetCurrentSound()
+    local current = PlayerFrame and PlayerFrame:Head() or SoundQueue:GetCurrentSound()
     -- A window turning to it by fading out first: these words stay until it has.
     if HeldFor(self, current) then
         self.held, self.heldStart = true, { clip = current, at = GetTime() }
@@ -391,20 +391,6 @@ end
 --- slides past its edges, or a half line would hang outside the captions.
 function Transcript:CanGlide()
     return self.frame ~= nil and self.frame.SetClipsChildren ~= nil
-end
-
---- The first visible line, fractional mid-glide, and the highest it can be. For a player
---- that draws its own scrollbar beside the captions.
-function Transcript:GetScroll()
-    return self.top or 1, self:MaxTop()
-end
-
---- Show the captions from `line` on, holding there as a wheel scroll does.
-function Transcript:ScrollTo(line)
-    self.manualScroll = true
-    self.topTarget = self:Snap(line)
-    self.top = self.topTarget
-    self:Update()
 end
 
 function Transcript:ActiveSegment(progress)
@@ -558,7 +544,7 @@ end
 -- the caption text and its reading position.
 function Transcript:HeightForClip(clip)
     -- Subtitles stand apart from the player, which then keeps its compact height.
-    if not Config().Enabled or Addon:DisplayStyle() == "subtitle" or not clip or self:TextFor(clip) == "" then return 0 end
+    if not Addon:ShowsNarrator(clip) or Addon:DisplayStyle() == "subtitle" or not clip or self:TextFor(clip) == "" then return 0 end
     return LineCount() * ((Config().FontSize or 16) + GAP)
 end
 
@@ -598,7 +584,8 @@ end
 function Transcript:Update()
     if not self.frame or self.held then return end
     self:Render()
-    self.frame:SetShown(Config().Enabled and Addon:DisplayStyle() ~= "subtitle" and self.clip ~= nil and self.text ~= "")
+    self.frame:SetShown(Addon:ShowsNarrator(self.clip) and Addon:DisplayStyle() ~= "subtitle" and self.clip ~= nil
+        and self.text ~= "")
     Subtitle:Update()
 end
 
@@ -726,9 +713,7 @@ function Transcript:Initialize()
         GameTooltip:AddLine(L.TRANSCRIPT_HINT, 1, .82, 0, true)
         GameTooltip:Show()
     end)
-    local function HideTooltip()
-        if GameTooltip:GetOwner() == frame then GameTooltip_Hide() end
-    end
+    local function HideTooltip() Actions.HideTipFor(frame) end
     frame:SetScript("OnLeave", HideTooltip)
     frame:SetScript("OnHide", HideTooltip)
     self.expand = CreateFrame("Button", nil, frame)
@@ -744,9 +729,7 @@ function Transcript:Initialize()
         GameTooltip:SetText(Expanded() and L.TRANSCRIPT_COLLAPSE or L.TRANSCRIPT_EXPAND)
         GameTooltip:Show()
     end)
-    local function HideExpandTooltip()
-        if GameTooltip:GetOwner() == self.expand then GameTooltip_Hide() end
-    end
+    local function HideExpandTooltip() Actions.HideTipFor(self.expand) end
     self.expand:SetScript("OnLeave", HideExpandTooltip)
     self.expand:SetScript("OnHide", HideExpandTooltip)
     self.labels = {}

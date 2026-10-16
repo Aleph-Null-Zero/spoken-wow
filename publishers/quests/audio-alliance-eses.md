@@ -6,9 +6,9 @@ lang: esES
 pack: alliance
 version: 0.0.5
 github: false
-slug: spanish-eu-spoken-quests-alliance
-name: Spanish (EU) Spoken Quests: Alliance
-summary: Alliance-only quest dialogue, voiced in Spanish (EU). Pair it with the Shared pack. Needs Spoken Player.
+slug: spoken-spanish-eu-audio-quests-alliance
+name: Spoken Spanish (EU) Audio: Quests - Alliance
+summary: Alliance-only quest dialogue, voiced in Spanish (EU). Pair it with the Shared pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -20,17 +20,17 @@ This is the Spanish (EU) audio pack for Alliance quest dialogue: the quests only
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spanish (EU) Spoken Quests: Shared](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Spanish (EU) Audio: Quests - Shared](https://www.curseforge.com/wow/addons/spoken-spanish-eu-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Alliance** | Alliance-only quests | **this pack** |
-| [Horde](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-horde) | Horde-only quests | |
-| [Shared](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-shared) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-gossip) | NPC gossip chatter | |
+| [Horde](https://www.curseforge.com/wow/addons/spoken-spanish-eu-audio-quests-horde) | Horde-only quests | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-spanish-eu-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-spanish-eu-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

@@ -7,16 +7,22 @@ picture, enhanced, is "<place> - new.png", and its original "<place> - old.<ext>
 no "- new" yet has no picture in the game.
 
 Each picture is cropped to a 2:1 banner, tinted a touch toward the parchment it sits on, thinned
-to the paper toward its edges and written as a DXT1 BLP to addons/Spoken_Zones/Textures/Pictures/.
+to the paper toward its edges and written as a DXT1 BLP to addons/Spoken_Places/Textures/Pictures/.
 The edges themselves, where the paint fails in dry-brush streaks, specks and spatters, are mask
 textures (Mask1.blp...) the game cuts each picture with, so a picture costs no alpha. Writes
 Data/Pictures.lua (which picture and mask each place has) and CREDITS.md (each picture's wiki
 source file, found by matching the original against the downloads in cache/pictures, or
 named in sources.json for a picture added by hand).
 
-Usage: python tools/pictures/prepare.py [--choices DIR] [--force]
+The choices folder may hold only the places being worked on. A place it lacks keeps the picture
+Pictures.lua and CREDITS.md already give it, and no texture is deleted: the ones no place uses are
+listed. --prune is for a choices folder holding every place: only its places are written, and
+the textures none of them uses are deleted.
+
+Usage: python tools/pictures/prepare.py [--choices DIR] [--force] [--prune]
   --choices  the choices folder (default: ~/Desktop/Zone picture choices)
   --force    write pictures again that are already there
+  --prune    the choices folder is every place: drop the rest, and delete unused textures
 """
 
 import argparse
@@ -26,6 +32,7 @@ import os
 import re
 import struct
 import sys
+import urllib.parse
 import zlib
 
 import numpy as np
@@ -35,10 +42,10 @@ from scipy import ndimage
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, "..", "..", "..", ".."))
 CACHE = os.path.join(ROOT, "pipelines/zones/tools/cache/pictures")
-DATA = os.path.join(ROOT, "addons/Spoken_Zones/Data/enUS")
+DATA = os.path.join(ROOT, "addons/Spoken_Places/Data/enUS")
 CHOICES = os.path.expanduser(os.path.join("~", "Desktop", "Zone picture choices"))
-OUT = os.path.join(ROOT, "addons/Spoken_Zones/Textures/Pictures")
-LUA = os.path.join(ROOT, "addons/Spoken_Zones/Data/Pictures.lua")
+OUT = os.path.join(ROOT, "addons/Spoken_Places/Textures/Pictures")
+LUA = os.path.join(ROOT, "addons/Spoken_Places/Data/Pictures.lua")
 
 # Shipped at twice the size the frame draws them (about 320 wide), so the game shrinks a picture
 # rather than stretching it: stretched, a 256-wide picture looked soft.
@@ -329,20 +336,75 @@ def baked_masks():
     return {t: int(m) for t, m in re.findall(r'\{ "([^"]+)", (\d+) \}', open(LUA, encoding="utf-8").read())}
 
 
-def deal_masks(places, baked):
+def listed():
+    """The places the Pictures.lua write_lua made gives a picture: [{ parent, key, texture, mask }]."""
+    if not os.path.exists(LUA):
+        return []
+    out, parent = [], None
+    for line in open(LUA, encoding="utf-8").read().splitlines():
+        m = re.match(r"^\t\[(\d+)\] = \{$", line)
+        if m:
+            parent = int(m.group(1))
+            continue
+        m = re.match(r'^\t\t\["((?:[^"\\]|\\.)*)"\] = \{ "([^"]+)", (\d+) \},$', line)
+        if m and parent is not None:
+            out.append({"parent": parent, "key": m.group(1) or None, "texture": m.group(2), "mask": int(m.group(3))})
+    return out
+
+
+def credited():
+    """Each texture's row in the CREDITS.md write_credits made: { texture: (place, source cell) }."""
+    path = os.path.join(OUT, "CREDITS.md")
+    if not os.path.exists(path):
+        return {}
+    rows = {}
+    for line in open(path, encoding="utf-8").read().splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) == 3 and cells[0] not in ("Picture", "---"):
+            rows[cells[0]] = (cells[1], cells[2])
+    return rows
+
+
+def in_lore():
+    """(parent, key) of every place the lore lists, written or pending; key None for a zone."""
+    zones, areas = lore_names()
+    return {(z, None) for z in zones.values()} | {(parent, key) for parent, names in areas.items()
+                                                  for key, _ in names.values()}
+
+
+def kept(placed, credits):
+    """The places Pictures.lua gives a picture that the choices folder does not hold, as placed
+    entries: their texture, mask and credit as they are, where the texture is still there and the
+    lore still lists the place."""
+    have = {(p["parent"], p.get("key")) for p in placed}
+    lore = in_lore()
+    out = []
+    for entry in listed():
+        if (entry["parent"], entry["key"]) in have or (entry["parent"], entry["key"]) not in lore:
+            continue
+        if not os.path.exists(os.path.join(OUT, entry["texture"] + ".blp")):
+            continue
+        title, cell = credits.get(entry["texture"], ("", ""))
+        out.append({**entry, "id": entry["texture"], "title": title, "source": True, "credit": cell, "kept": True})
+    return out
+
+
+def deal_masks(places, baked, reserved=None):
     """Each place's mask, by id. Each zone's places take the masks in a shuffled order of their own,
     so no two places in one zone (32 at most share one only past that) have the same edge. A place
     keeps the mask its texture was written with, so adding a place to a zone writes that one
-    texture, not the zone's."""
+    texture, not the zone's. `reserved` ({zone: [masks]}) are the masks of the zone's places the
+    choices folder does not hold, which keep theirs."""
     order = {}
     for p in places:
         order.setdefault(p["parent"], []).append(p["id"])
     mask_of = {}
     for parent, ids in order.items():
-        taken = set()
+        others = (reserved or {}).get(parent, [])
+        taken = set(others)
         for pid in sorted(ids):
             # Past MASKS places a zone repeats masks anyway, so a repeat is no clash to undo.
-            if baked.get(pid) and (baked[pid] not in taken or len(ids) > MASKS):
+            if baked.get(pid) and (baked[pid] not in taken or len(ids) + len(others) > MASKS):
                 mask_of[pid] = baked[pid]
                 taken.add(baked[pid])
         deck = [int(m) for m in seeded("zone%d" % parent).permutation(MASKS) + 1]
@@ -356,11 +418,12 @@ def write_credits(placed):
     lines = [
         "# Zone pictures",
         "",
-        "Screenshots of World of Warcraft, (c) Blizzard Entertainment, from these warcraft.wiki.gg",
-        "files, each chosen by hand. Each was cleaned up and sharpened with Gemini 3.1 Flash Image",
-        "(the same scene, lighting and colours; compression artifacts and interface removed), then",
-        "cropped, tinted and edged by `pipelines/zones/tools/pictures/prepare.py`. Each source file's",
-        "page gives its uploader and terms.",
+        "Screenshots of World of Warcraft, (c) Blizzard Entertainment, each chosen by hand: most from",
+        "the warcraft.wiki.gg files linked below, the rest from where their row says. Each was cleaned",
+        "up and sharpened with Gemini 3.1 Flash Image (the same scene, lighting and colours;",
+        "compression artifacts and interface removed), then cropped, tinted and edged by",
+        "`pipelines/zones/tools/pictures/prepare.py`. Each wiki file's page gives its uploader and",
+        "terms.",
         "",
         "| Picture | Place | Source file |",
         "| --- | --- | --- |",
@@ -372,10 +435,18 @@ def write_credits(placed):
             continue
         seen.add(p["texture"])
         src = p["source"]
-        if not src:
+        if p.get("credit"):
+            source = p["credit"]
+        elif not src:
             source = "unknown, added by hand"
         elif src.startswith("http"):
-            source = src
+            # A file's address, named by its file. An archived revision's name carries its
+            # timestamp and a "!" before the file's own name.
+            name = urllib.parse.unquote(src.rsplit("/", 1)[-1])
+            archived = "/images/archive/" in src
+            if archived:
+                name = name.split("!", 1)[-1]
+            source = "[%s%s](%s)" % (cell(name.replace("_", " ")), " (an earlier version)" if archived else "", src)
         elif src.startswith("own:"):
             source = cell(src[4:].strip())
         else:
@@ -487,17 +558,23 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--choices", default=CHOICES)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--prune", action="store_true")
     args = ap.parse_args()
 
     places, unknown = reviewed(args.choices)
     sources = source_index()
     by_hand = json.load(open(os.path.join(HERE, "sources.json"), encoding="utf-8"))
+    credits = {} if args.prune else credited()
+    others = [] if args.prune else kept(places, credits)
     os.makedirs(OUT, exist_ok=True)
     masks = [make_mask(i + 1) for i in range(MASKS)]
     for i, mask in enumerate(masks):
         save_mask(mask, os.path.join(OUT, "Mask%d.blp" % (i + 1)))
     baked = baked_masks()
-    mask_of = deal_masks(places, baked)
+    reserved = {}
+    for p in others:
+        reserved.setdefault(p["parent"], []).append(p["mask"])
+    mask_of = deal_masks(places, baked, reserved)
     placed, written, shared = [], 0, {}
     for p in sorted(places, key=lambda p: p["id"]):
         # One texture for a picture several places share (a subzone listed under two zones):
@@ -513,24 +590,30 @@ def main():
                 save_blp(prepare(Image.open(p["path"]).convert("RGB"), masks[chosen["mask"] - 1], p["id"]), out)
                 written += 1
         md5 = p["old"] and hashlib.md5(open(p["old"], "rb").read()).hexdigest()
-        placed.append({**p, **chosen, "source": by_hand.get(p["id"]) or sources.get(md5)})
+        source = by_hand.get(p["id"]) or sources.get(md5)
+        # With no download to match (cache/pictures is not on every machine), the credit it has.
+        credit = None if source else credits.get(chosen["texture"], (None, None))[1]
+        placed.append({**p, **chosen, "source": source or bool(credit), "credit": credit})
         sys.stdout.write("\r  %d placed" % len(placed))
     sys.stdout.write("\n")
-    shown_twice = twins(placed)
-    placed += shown_twice
+    shown_twice = twins(placed + others)
+    shown_twice = [p for p in shown_twice if (p["parent"], p["key"]) not in {(o["parent"], o["key"]) for o in others}]
+    placed += shown_twice + others
 
     write_lua(placed)
     write_credits(placed)
-    # Pictures no reviewed place uses go.
     keep = {pl["texture"] + ".blp" for pl in placed} | {"Mask%d.blp" % (i + 1) for i in range(MASKS)} | {"CREDITS.md"}
-    for f in os.listdir(OUT):
-        if f not in keep:
+    unused = sorted(f for f in os.listdir(OUT) if f not in keep)
+    if args.prune:
+        for f in unused:
             os.remove(os.path.join(OUT, f))
+    elif unused:
+        print("%d textures no place uses (--prune deletes them): %s" % (len(unused), ", ".join(unused)))
     total = sum(os.path.getsize(os.path.join(OUT, f)) for f in os.listdir(OUT))
     # A place listed twice is credited under its twin.
     missing = [pl["id"] for pl in placed if not pl["source"] and pl not in shown_twice]
-    print("written %d, placed %d (%d listed twice), textures %d, folder %.1f MB"
-          % (written, len(placed), len(shown_twice), len(shared), total / 1e6))
+    print("written %d, placed %d (%d listed twice, %d kept from before), textures %d, folder %.1f MB"
+          % (written, len(placed), len(shown_twice), len(others), len(shared), total / 1e6))
     if unknown:
         print("folders not in the lore, skipped:", unknown)
     if missing:

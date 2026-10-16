@@ -6,7 +6,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local after = C_Timer.After
 local onTaxi, flying = false, false
 
@@ -33,12 +33,12 @@ local function Boot(client, taxi, flight, greeting)
     env.Addon:Enable()
     C_Timer.After = after
     local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Zones", Z)
-    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
+    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1411] = { name = "Durotar", full = "Durotar lore." }
     Z.Subzones[1411] = { ["valley of trials"] = { name = "Valley of Trials", full = "Valley lore." } }
     stub.SetZone({ map = 1411, zone = "Durotar", subzone = "Valley of Trials" })
-    stub.FireEvent("ADDON_LOADED", "Spoken_Zones")
+    stub.FireEvent("ADDON_LOADED", "Spoken_Places")
     Z:SetupAudio()
     Z:SetupAutoplay()
     return Z
@@ -95,7 +95,7 @@ for _, state in ipairs({
     end
 end
 
-local Z = Boot("11509", false, false)
+local Z = Boot("16001", false, false)
 IsFlying = nil
 onTaxi = true
 stub.FireEvent("CHAT_MSG_SYSTEM", "Discovered Durotar.")
@@ -104,14 +104,14 @@ onTaxi = false
 stub.FireEvent("CHAT_MSG_SYSTEM", "Discovered Durotar.")
 Expect("without IsFlying, ground discovery still plays", Spoken:IsPlaying(), true)
 
-Z = Boot("11509", false, false)
+Z = Boot("16001", false, false)
 UnitOnTaxi = nil
 stub.FireEvent("CHAT_MSG_SYSTEM", "Discovered Durotar.")
 Expect("missing flight APIs do not break ground discovery", Spoken:IsPlaying(), true)
 
 -- Midnight hands some chat payloads over as secret values: tainted code that indexes one
 -- errors. The stand-in is a plain string whose indexing throws, as the client's would.
-Z = Boot("11509", false, false)
+Z = Boot("16001", false, false)
 Z:Set("debug", true)
 local SECRET = "Discovered Durotar."
 _G.issecretvalue = function(value) return value == SECRET end

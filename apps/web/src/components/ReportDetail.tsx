@@ -15,6 +15,8 @@ import { useLang } from "@/components/LangProvider";
 import { useState } from "react";
 
 import OverrideDialog from "@/components/OverrideDialog";
+import OutdatedNote from "@/components/OutdatedNote";
+import LineHeading from "@/components/reports/LineHeading";
 import { Button } from "@/components/ui/button";
 import { detailOf, regenerateLine, type SourceLine } from "@/lib/reports/detail";
 
@@ -28,10 +30,12 @@ type Props = {
   line: SourceLine | null | undefined;
   /** Whether this visitor may spend credits. The page already gates the rest. */
   canRegenerate: boolean;
+  /** Whether the speaker's name opens the NPC page. See LineHeading. */
+  showNpcPage: boolean;
   /** Hands the new take's version up, so the player busts its cache. */
   onRegenerated: (version: number) => void;
-  /** Hands a rewrite up, so the panel and the row read the text that will be spoken next. */
-  onOverridden: (text: string | null) => void;
+  /** A rewrite was saved, so the panel and the row read the text that will be spoken next. */
+  onRewritten: () => void;
 };
 
 export default function ReportDetail({
@@ -39,8 +43,9 @@ export default function ReportDetail({
   lineId,
   line,
   canRegenerate,
+  showNpcPage,
   onRegenerated,
-  onOverridden,
+  onRewritten,
 }: Props) {
   const lang = useLang();
   const [busy, setBusy] = useState(false);
@@ -81,14 +86,15 @@ export default function ReportDetail({
   return (
     <div className="flex flex-col gap-2 px-3 py-3">
       <div>
-        <span className="font-medium">{detail.heading}</span>
-        <span className="text-muted-foreground ml-2 text-xs">{detail.context}</span>
+        <LineHeading detail={detail} showNpcPage={showNpcPage} asideClassName="ml-2" />
       </div>
 
       <p className="text-sm whitespace-pre-wrap">{detail.text}</p>
 
       {detail.audioSrc === null ? (
         <p className="text-muted-foreground text-xs">No audio on file for this line.</p>
+      ) : detail.stale ? (
+        <OutdatedNote className="text-xs" />
       ) : null}
 
       {canRegenerate ? (
@@ -116,12 +122,15 @@ export default function ReportDetail({
       {editing && source === "quests" ? (
         <OverrideDialog
           line={line as QuestLine}
-          onSaved={(_file, text) => {
+          onSaved={() => {
             setEditing(false);
-            onOverridden(text);
+            onRewritten();
           }}
           // The moment's other lines took the text too, so the explorer is where to see them.
-          onRewritten={() => setEditing(false)}
+          onRewritten={() => {
+            setEditing(false);
+            onRewritten();
+          }}
           onCancel={() => setEditing(false)}
         />
       ) : null}

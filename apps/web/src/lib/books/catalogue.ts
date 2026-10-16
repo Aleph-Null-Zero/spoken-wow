@@ -13,11 +13,20 @@ import "server-only";
 import { query } from "@/lib/db";
 import type { LiveRecording } from "@/lib/recordings/live";
 import { memoByLang } from "@/lib/memo";
-import { nameStamp, versionStamp } from "@/lib/stamp";
+import { bookPageStamp, nameStamp, versionStamp } from "@/lib/stamp";
 import { loadDirtyContext, NO_DIRT, type DirtyContext } from "@/lib/generation/dirty";
 
 import { ownerEntityKind, type OwnerKind } from "./filters";
-import { spokenText, spokenHash, textHash, fileFor, isGeneratable, spokenWithTitle } from "./tools";
+import {
+  spokenText,
+  spokenHash,
+  textHash,
+  fileFor,
+  isGeneratable,
+  spokenWithTitle,
+  pageKeyOf,
+  lineIdOfKey,
+} from "./tools";
 import { speakPlayerTokens } from "@/lib/player-words";
 import { madeByOf, type MadeBy } from "@/lib/takes/made-by";
 import { liveTakes } from "@/lib/takes/store";
@@ -26,16 +35,19 @@ import { BASE_LANG, type Lang } from "@/lib/lang";
 
 /** One voiceable page of one book. */
 export type BookPage = {
-  /** 'b:1381'. naming.mjs owns the format. */
+  /** 'b:1381' or 'b:n{uuid}'. naming.mjs owns the format. */
   id: string;
-  pageId: number;
-  /** The chain's first page. Two pages share it exactly when they are one book. */
-  bookId: number;
+  /** '1381' or 'n{uuid}': the landing URL's and the addon's name for the page. */
+  key: string;
+  /** The world database's pageTextID; null for a page only a player's client has shown. */
+  pageId: number | null;
+  /** Two pages share it exactly when they are one book. */
+  bookId: string;
   pageNumber: number;
   pageCount: number;
   /** The owning object's or item's name. Not unique: two objects are "A Dusty Tome". */
   title: string;
-  ownerKind: OwnerKind;
+  ownerKind: OwnerKind | null;
   ownerIds: number[];
   material: number;
   /** The page as the client shows it. */
@@ -50,10 +62,7 @@ export type BookPage = {
    *  language has not translated. */
   generatable: boolean;
   skipReason: string | null;
-  /**
-   * What a language other than English has not translated yet; the English stands in on
-   * the page, marked, and is never voiced. Absent in English, and where nothing is missing.
-   */
+  /** What this language has not written; another language's words stand in, marked. */
   missing?: { text: boolean; title: boolean };
   /** The English page, for a translator to work from. Absent when reading English. */
   english?: string;
@@ -148,29 +157,16 @@ const cacheKey = Symbol.for("spoken.books-catalogue.by-lang");
  * the other keeps serving.
  */
 async function stampOf(lang: Lang): Promise<string> {
-  const english = versionStamp("book_line", `"lang" = '${BASE_LANG}'`);
-  // Another language is read over the English pages and names their owners in entity_name,
-  // so its memo moves with either of those as well as with its own text: one statement.
   const rows = await query<{ stamp: string }>(
-    lang === BASE_LANG
-      ? `select ${english} as "stamp"`
-      : `select ${english} || '|' || ${versionStamp("book_line", `"lang" = $1`)} || '|' ||
-                ${nameStamp(["item", "gameobject"])} as "stamp"`,
-    lang === BASE_LANG ? [] : [lang],
+    `select ${versionStamp("book_line", `"lang" = $1`)} || '|' ||
+            ${versionStamp("book_line", `"lang" = '${BASE_LANG}'`)} || '|' ||
+            ${bookPageStamp()} || '|' ||
+            ${nameStamp(["item", "gameobject"])} as "stamp"`,
+    [lang],
   );
   return rows[0]?.stamp ?? "";
 }
 
-/**
- * Another language's pages: every English page, with this language's text and titles where
- * it has them. The English pages are the skeleton because they are what exists -- which
- * pages there are, in which books, owned by what, voiced into which file -- and none of that
- * differs by language. Where the language has not written a page, the English stands in,
- * marked `missing`, and the page is not generatable: a rendering, never a row.
- *
- * A title is the owner's name, so it comes from entity_name under the first owner, the one
- * a page is filed under.
- */
 /**
  * A page as a narrator would be sent it: its $N, $C and $R spoken as the language's words
  * (player-words.ts) before the pipeline's own rules flatten it, hash it and judge it. The
@@ -198,13 +194,47 @@ function spokenTitle(pageNumber: number, title: string | undefined): string | un
   return pageNumber === 1 ? title : undefined;
 }
 
-async function buildTranslated(lang: Lang): Promise<BookPage[]> {
-  const [english, own, names] = await Promise.all([
-    catalogue(BASE_LANG),
-    query<{ lineId: string; text: string }>(
-      `select "lineId", "text" from "book_line"
-        where "lang" = $1 and "isCurrent"`,
-      [lang],
+type PageRow = {
+  lineId: string;
+  pageTextId: number | null;
+  bookId: string;
+  pageNumber: number;
+  pageCount: number;
+  ownerKind: OwnerKind | null;
+  ownerIds: number[] | null;
+  material: number | null;
+  text: string | null;
+  title: string | null;
+  englishText: string | null;
+  englishTitle: string | null;
+  /** Any language's title, for a page neither this language nor English names. */
+  anyTitle: string | null;
+};
+
+/**
+ * Every page that exists, with this language's words where it has them. Where it has none, the
+ * page is still listed -- its place is a fact about the world -- with English, or any language,
+ * standing in, marked `missing`, and never voiced.
+ *
+ * A title is the owner's name in entity_name when the page has an owner, and otherwise the
+ * page's own book_line title, as for a page a player's client showed.
+ */
+async function build(lang: Lang): Promise<BookPage[]> {
+  const [rows, names] = await Promise.all([
+    query<PageRow>(
+      `select p."lineId", p."pageTextId", p."bookId", p."pageNumber",
+              count(*) over (partition by p."bookId")::int as "pageCount",
+              p."ownerKind", p."ownerIds", p."material",
+              l."text", l."title", e."text" as "englishText", e."title" as "englishTitle",
+              (select a."title" from "book_line" a
+                where a."lineId" = p."lineId" and a."isCurrent" and trim(a."title") <> ''
+                order by a."lang" limit 1) as "anyTitle"
+         from "book_page" p
+         left join "book_line" l on l."lineId" = p."lineId" and l."lang" = $1 and l."isCurrent"
+         left join "book_line" e on e."lineId" = p."lineId" and e."lang" = $2 and e."isCurrent"
+        where p."aliasOf" is null
+        order by p."bookId", p."pageNumber"`,
+      [lang, BASE_LANG],
     ),
     query<{ kind: string; entityId: string; name: string }>(
       `select "kind", "entityId", "name" from "entity_name"
@@ -212,65 +242,61 @@ async function buildTranslated(lang: Lang): Promise<BookPage[]> {
       [lang],
     ),
   ]);
-  const texts = new Map(own.map((row) => [row.lineId, row]));
-  const titles = new Map(names.map((row) => [`${row.kind}:${row.entityId}`, row.name]));
-
-  return english.map((page) => {
-    const text = texts.get(page.id);
-    const owner = `${ownerEntityKind(page.ownerKind)}:${page.ownerIds[0]}`;
-    const title = titles.get(owner);
-    return {
-      ...page,
-      ...(text
-        ? { text: text.text, ...voiced(text.text, lang, spokenTitle(page.pageNumber, title)) }
-        : { spoken: "", hash: textHash(""), generatable: false, skipReason: "untranslated" }),
-      title: title ?? page.title,
-      english: page.text,
-      englishTitle: page.title,
-      ...(!text || title === undefined
-        ? { missing: { text: !text, title: title === undefined } }
-        : {}),
-    };
-  });
-}
-
-async function build(lang: Lang): Promise<BookPage[]> {
-  if (lang !== BASE_LANG) return buildTranslated(lang);
-  const rows = await query<{
-    lineId: string;
-    pageId: number;
-    bookId: number;
-    pageNumber: number;
-    pageCount: number;
-    title: string;
-    ownerKind: OwnerKind;
-    ownerIds: number[];
-    material: number;
-    text: string;
-  }>(
-    `select "lineId", "pageId", "bookId", "pageNumber", "pageCount", "title",
-            "ownerKind", "ownerIds", "material", "text"
-       from "book_line"
-      where "lang" = $1 and "isCurrent"
-      order by "bookId", "pageNumber"`,
-    [lang],
-  );
   if (rows.length === 0) throw new CorpusEmpty(lang);
+  const owned = new Map(names.map((row) => [`${row.kind}:${row.entityId}`, row.name]));
+
+  // A page with an owner is titled by the owner's name in this language and by nothing else:
+  // book_line's title is the English owner name for an extracted page. A page without an owner
+  // takes its book's first page's title, as that page resolves it, so every page of a book reads
+  // under one name; only where that page is ownerless and untitled does the page fall back to
+  // its own. An empty title is no title.
+  const named = (title: string | null | undefined) => (title?.trim() ? title : undefined);
+  const ownTitle = (row: PageRow): string | undefined => {
+    if (!row.ownerKind) return named(row.title);
+    if (lang === BASE_LANG) return named(row.englishTitle);
+    const ownerIds = row.ownerIds ?? [];
+    return ownerIds.length ? named(owned.get(`${ownerEntityKind(row.ownerKind)}:${ownerIds[0]}`)) : undefined;
+  };
+  const first = new Map<string, { title: string | undefined; owned: boolean }>();
+  for (const row of rows) {
+    if (!first.has(row.bookId)) first.set(row.bookId, { title: ownTitle(row), owned: row.ownerKind !== null });
+  }
 
   return rows.map((row) => {
-    return {
+    const ownerIds = row.ownerIds ?? [];
+    const book = first.get(row.bookId)!;
+    const title = row.ownerKind ? ownTitle(row) : book.owned ? book.title : book.title ?? ownTitle(row);
+    const shown = title ?? named(row.englishTitle) ?? named(row.anyTitle) ?? "";
+    const base = {
       id: row.lineId,
-      pageId: row.pageId,
+      key: pageKeyOf(row.lineId),
+      pageId: row.pageTextId,
       bookId: row.bookId,
       pageNumber: row.pageNumber,
       pageCount: row.pageCount,
-      title: row.title,
+      title: shown,
       ownerKind: row.ownerKind,
-      ownerIds: row.ownerIds,
-      material: row.material,
+      ownerIds,
+      material: row.material ?? 0,
+      file: fileFor(pageKeyOf(row.lineId)),
+      ...(lang !== BASE_LANG && { english: row.englishText ?? "", englishTitle: row.englishTitle ?? "" }),
+    };
+    if (row.text === null) {
+      return {
+        ...base,
+        text: row.englishText ?? "",
+        spoken: "",
+        hash: textHash(""),
+        generatable: false,
+        skipReason: "untranslated",
+        missing: { text: true, title: title === undefined },
+      };
+    }
+    return {
+      ...base,
       text: row.text,
-      ...voiced(row.text, lang, spokenTitle(row.pageNumber, row.title)),
-      file: fileFor(row.pageId),
+      ...voiced(row.text, lang, spokenTitle(row.pageNumber, title)),
+      ...(title === undefined && { missing: { text: false, title: true } }),
     };
   });
 }
@@ -335,31 +361,26 @@ export async function isKnownLine(lineId: string, lang: Lang = BASE_LANG): Promi
   return (await catalogue(lang)).some((page) => page.id === lineId);
 }
 
-/**
- * One page, by the id the game and the addon know it as.
- *
- * What /books/r/{pageId} resolves, and what the report endpoint checks an address against.
- * The addon can only name a page by this number -- `b:{pageTextID}` is frozen, which is what
- * lets it build a report link with no per-page table to ship.
- *
- * Off the memoised catalogue rather than a query of its own, as isKnownLine above is: the
- * corpus is 1,191 rows, it is already in memory for every other page on this section, and a
- * second query would be a second thing to keep in step with `isCurrent`.
- */
-export async function pageById(
-  pageId: number,
-  lang: Lang = BASE_LANG,
-): Promise<BookPage | undefined> {
-  if (!Number.isInteger(pageId)) return undefined;
-  return (await catalogue(lang)).find((page) => page.pageId === pageId);
+/** One page, by the key the addon and the landing URL know it as: '1381' or 'n{uuid}'. */
+export async function pageById(key: string, lang: Lang = BASE_LANG): Promise<BookPage | undefined> {
+  const keyed = lineIdOfKey(key);
+  if (!keyed) return undefined;
+  // A minted page folded into a real one is still addressed by its old key, from packs and
+  // reports already out.
+  const rows = await query<{ aliasOf: string | null }>(
+    `select "aliasOf" from "book_page" where "lineId" = $1`,
+    [keyed],
+  );
+  const lineId = rows[0]?.aliasOf ?? keyed;
+  return (await catalogue(lang)).find((page) => page.id === lineId);
 }
 
 /** The book dropdown's options, derived from the corpus rather than hardcoded. */
-export type BookFacet = { bookId: number; title: string; pages: number; ownerKind: OwnerKind };
+export type BookFacet = { bookId: string; title: string; pages: number; ownerKind: OwnerKind | null };
 
 export async function bookFacets(lang: Lang = BASE_LANG): Promise<BookFacet[]> {
   const pages = await catalogue(lang);
-  const books = new Map<number, BookFacet>();
+  const books = new Map<string, BookFacet>();
 
   for (const page of pages) {
     const existing = books.get(page.bookId);
@@ -378,6 +399,6 @@ export async function bookFacets(lang: Lang = BASE_LANG): Promise<BookFacet[]> {
   // By title, then by id: 381 distinct titles cover 404 books, so a stable tiebreak is
   // what keeps two "A Dusty Tome" entries from swapping places between requests.
   return [...books.values()].sort(
-    (a, b) => a.title.localeCompare(b.title) || a.bookId - b.bookId,
+    (a, b) => a.title.localeCompare(b.title) || a.bookId.localeCompare(b.bookId, undefined, { numeric: true }),
   );
 }

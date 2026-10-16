@@ -6,12 +6,13 @@
         status remove clean voice voice-zones lookup export \
         pull-history pull-live pull-recorded package-acted acted history-status sounds ssh-check sync check-synced full-release \
         icon lore-import lore-import-names lore-export lore-check lore-rewrite aliases languages locale-check \
+        areas forever-areas pictures \
         release release-dry release-wago release-curse release-audio release-audio-dry
 
 # The \# escapes are required: an unescaped # starts a make comment, even
 # inside a $(shell ...) call.
-VERSION := $(shell sed -n 's/^\#\# Version:[[:space:]]*//p' addons/Spoken_Zones/Spoken_Zones.toc | head -1)
-ZIP := dist/Spoken_Zones-$(VERSION).zip
+VERSION := $(shell sed -n 's/^\#\# Version:[[:space:]]*//p' addons/Spoken_Places/Spoken_Places.toc | head -1)
+ZIP := dist/Spoken_Places-$(VERSION).zip
 
 help: ## Show this help
 	@echo "Spoken Zones $(VERSION)"
@@ -19,7 +20,7 @@ help: ## Show this help
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-package: check ## Build dist/Spoken_Zones-<version>.zip for upload
+package: check ## Build dist/Spoken_Places-<version>.zip for upload
 	@./scripts/zones/package.sh
 
 check: validate lint locale-check ## Run every pre-package check
@@ -30,13 +31,15 @@ check: validate lint locale-check ## Run every pre-package check
 validate: ## Sanity-check the generated Lua data files
 	@node pipelines/zones/tools/validate.mjs
 
-# The in-game addon list reads a TGA or BLP, never the PNG or SVG in pipelines/zones/assets/, so the
+# The in-game addon list reads a TGA or BLP, never the PNGs in pipelines/zones/assets/, so the
 # icon is converted and committed. Both addons carry the same shield: they install as a
-# pair, and two icons would imply they are alternatives to each other.
-icon: ## Rebuild both addons' AddonIcon.tga from pipelines/zones/assets/spoken-zones-512.png (needs ffmpeg)
-	@python3 pipelines/zones/tools/make-icon.py pipelines/zones/assets/spoken-zones-512.png addons/Spoken_Zones/Textures/AddonIcon.tga
-	@cp addons/Spoken_Zones/Textures/AddonIcon.tga addons/SpokenZonesAudio/Textures/AddonIcon.tga
+# pair, and two icons would imply they are alternatives to each other. A language's pack wears
+# the shield with its badge: scripts/zones/package-audio.sh copies spoken-zones-<locale>.tga over it.
+icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/zones/assets/*-512.png (needs ffmpeg)
+	@python3 pipelines/zones/tools/make-icon.py pipelines/zones/assets/spoken-zones-512.png addons/Spoken_Places/Textures/AddonIcon.tga
+	@cp addons/Spoken_Places/Textures/AddonIcon.tga addons/SpokenZonesAudio/Textures/AddonIcon.tga
 	@echo "==> copied to addons/SpokenZonesAudio/Textures/AddonIcon.tga"
+	@for png in pipelines/zones/assets/spoken-zones-??[A-Z][A-Z]-512.png; do python3 pipelines/zones/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
 
 lint: ## Block-balance check on the addon's Lua
 	@python3 pipelines/zones/tools/lua-syntax-check.py
@@ -61,8 +64,8 @@ clean: ## Remove build output
 # Voicelines
 #
 # None of these can spend a credit. They report on lines, build the addon's lookup
-# table and check it; cutting audio is the site's, on the droplet. See README
-# "Generating voicelines".
+# table and check it; cutting audio is the site's, on the droplet. See
+# docs/zones/VOICE.md, "Generating voicelines".
 #-------------------------------------------------------------------------------
 
 # Which language's takes and pack the voice targets act on: English, or LOCALE=esMX for
@@ -126,7 +129,7 @@ lore-import-names: ## Name zones and subzones in a language from tools/seed/area
 	@test -n "$(LOCALE)" || { echo "lore-import-names: set LOCALE, e.g. LOCALE=deDE"; exit 2; }
 	@node pipelines/zones/tools/lore/import-names.mjs --lang $(LOCALE)
 
-lore-export: ## Write addons/Spoken_Zones/Data/<lang>/*.lua, every translated language, from the database
+lore-export: ## Write addons/Spoken_Places/Data/<lang>/*.lua, every translated language, from the database
 	@node pipelines/zones/tools/lore/export.mjs
 
 lore-check: ## Confirm the committed Lua matches the database
@@ -147,12 +150,36 @@ lore-rewrite: ## Rewrite one zone's lore from the full wiki article (ZONE=1420, 
 # "Burning Steppes" -- and the corpus is keyed by the English one in every
 # language. Without these tables such a client matches no subzone at all, which
 # is what it did for the addon's whole life before they existed. Regenerate only
-# when the pinned client build in pipelines/zones/tools/lib/db2.mjs moves.
+# when a client build pinned in pipelines/lib/wago.mjs moves.
 #-------------------------------------------------------------------------------
 
 aliases: ## Rebuild Data/<locale>/Aliases.lua and seed/area-names.json from the client's AreaTable
 	@node pipelines/zones/tools/locale/build-aliases.mjs
 	@node pipelines/zones/tools/locale/build-languages.mjs
+
+#-------------------------------------------------------------------------------
+# Which places each client has
+#
+# The lore export keeps the places either client can name (seed/era-areas.json and
+# seed/camelot-areas.json, Era's and Forever's AreaTable), and Data/ForeverAreas.lua says which
+# only Forever has, which Forever names differently and which no Forever player reaches
+# (seed/forever-places.json, by hand). Run areas when a pinned build moves, forever-areas after
+# it, after a lore export or after an edit to forever-places.json.
+#-------------------------------------------------------------------------------
+
+areas: ## Refetch seed/era-areas.json and seed/camelot-areas.json from the pinned client builds
+	@node pipelines/zones/tools/fetch-era-areas.mjs
+	@node pipelines/zones/tools/fetch-era-areas.mjs --forever
+
+forever-areas: ## Rebuild Data/ForeverAreas.lua from the area seeds and seed/forever-places.json
+	@node pipelines/zones/tools/lore/export-forever-areas.mjs
+
+# The reviewed pictures in the choices folder, as the shipped textures, Data/Pictures.lua and
+# Textures/Pictures/CREDITS.md. A folder holding only the places being worked on is safe: the
+# rest keep their pictures, and nothing is deleted unless ARGS=--prune says the folder holds
+# every place. Needs Python with numpy, Pillow and scipy.
+pictures: ## Prepare the reviewed zone pictures (CHOICES=<folder>, ARGS=--force or --prune)
+	@python3 pipelines/zones/tools/pictures/prepare.py $(if $(CHOICES),--choices "$(CHOICES)") $(ARGS)
 
 languages: ## Rebuild Data/Languages.lua -- what each language covers, and whether it ships
 	@node pipelines/zones/tools/locale/build-languages.mjs

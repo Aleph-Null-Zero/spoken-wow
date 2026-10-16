@@ -20,6 +20,7 @@ function report(lineId: string | null, createdAt: string, extra: Partial<Report>
     createdAt,
     resolvedAt: null,
     resolvedBy: null,
+    context: null,
     ...extra,
   };
 }

@@ -58,12 +58,11 @@ function post(body: unknown): Request {
 
 describe("POST /api/contributions/resolve", () => {
   it("accepts a row", async () => {
-    // Books, not quests: accepting a quests row now also needs a resolved speaker
-    // (lib/contributions/accept.ts), which is its own test suite (accept.test.ts). This is
-    // just the plain status flip, which books and zones still get unchanged.
+    // Zones: accepting a quests or books row also writes it (lib/contributions/accept.ts),
+    // which is its own test suite (accept.test.ts). This is just the plain status flip.
     const { rows } = await db().query<{ id: number }>(
       `insert into "contribution" ("source", "key", "raw", "dedup", "text", "ip")
-       values ('books', '123', 'raw', $2, 'Words.', $1) returning "id"`,
+       values ('zones', '123', 'raw', $2, 'Words.', $1) returning "id"`,
       [ip, `${dedup}-accept`],
     );
     const response = await POST(post({ id: rows[0].id, status: "accepted" }));

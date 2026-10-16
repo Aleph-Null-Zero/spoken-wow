@@ -10,7 +10,7 @@ local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 local env = stub.LoadSpoken(SPOKEN)
 local C = env.Spoken.Contribute
 
@@ -92,19 +92,12 @@ for _, v in ipairs(vectors) do
     Expect(("base64url(%q) matches the known vector"):format(v[1]), C:Base64URL(v[1]), v[2])
 end
 
-local LibDeflate = LibStub:GetLibrary("LibDeflate")
 
 local function RoundTrips(label, envelope)
     local encoded = C:Encode(envelope)
     Expect(label .. ": Encode produces something", type(encoded) == "string" and encoded ~= "", true)
     Expect(label .. ": the alphabet is base64url only", encoded:match("^[A-Za-z0-9%-_]+$") ~= nil, true)
-    -- Undo the base64url ourselves (standard alphabet, '-'/'_' swapped back to '+'/'/', then
-    -- padded to a multiple of 4) so this test does not depend on Encode's own inverse existing.
-    local STD = encoded:gsub("-", "+"):gsub("_", "/")
-    local pad = (4 - (#STD % 4)) % 4
-    STD = STD .. string.rep("=", pad)
-    local decoded = require("base64_decode_for_test")(STD)
-    local inflated = LibDeflate:DecompressDeflate(decoded)
+    local inflated = H.DecodeFragment(encoded)
     Expect(label .. ": deflate-raw round trips to the exact envelope", inflated, envelope)
 end
 

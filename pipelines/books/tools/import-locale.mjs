@@ -17,6 +17,8 @@ import { localeInfo, BASE_LOCALE } from "../../lib/locales.mjs";
 import { localizedPages, localizedTitles } from "./lib/locale.mjs";
 import { chunks, progress, writeNames } from "../../lib/bulk.mjs";
 import { decideImport } from "./lib/promote.mjs";
+import { foldMinted } from "./lib/absorb.mjs";
+import { BOOK_ID_COMPAT, PAGE_COUNT } from "./lib/page.mjs";
 
 await loadEnv("books", { override: MYSQL_VARS });
 
@@ -42,7 +44,7 @@ const connection = await mysql.createConnection({
   database: process.env.MYSQL_DATABASE ?? "mangos",
 });
 
-const counts = { promote: 0, record: 0, skip: 0, names: 0 };
+const counts = { promote: 0, record: 0, skip: 0, names: 0, folded: 0 };
 
 /** One transaction for a batch of writes: an import that fails leaves nothing half-applied. */
 async function inTransaction(work) {
@@ -60,14 +62,13 @@ async function inTransaction(work) {
 }
 
 try {
-  const { rows: english } = await pool.query(
-    `select "lineId", "pageId", "bookId", "pageNumber", "pageCount", "title", "ownerKind",
-            "ownerIds", "material"
-       from "book_line" where "lang" = $1 and "isCurrent"`,
-    [BASE_LOCALE],
+  // The pages the world database names, placed by book_page: never read from book_line.
+  const { rows: extracted } = await pool.query(
+    `select "lineId", "ownerKind", coalesce("ownerIds", '{}') as "ownerIds"
+       from "book_page" where "pageTextId" is not null and "aliasOf" is null`,
   );
-  if (english.length === 0) throw new Error("book_line holds no English pages; run make books-import first");
-  const structure = new Map(english.map((row) => [row.lineId, row]));
+  if (extracted.length === 0) throw new Error("book_page holds no extracted pages; run make books-import first");
+  const structure = new Map(extracted.map((row) => [row.lineId, row]));
 
   const [pageRows] = await connection.query(
     `SELECT entry, Text_loc${N} AS text FROM locales_page_text`,
@@ -99,9 +100,9 @@ try {
           [retiring, lang],
         );
       }
-      // Structure is the English row's, joined in: where a page sits is a fact about the
-      // world, not a translation. The title column is required and carries the English; the
-      // language's own title for the owner lives in entity_name.
+      // Structure is book_page's, joined in: where a page sits is a fact about the world, not
+      // a translation. The title column carries the English; the language's own title for the
+      // owner lives in entity_name.
       await client.query(
         `insert into "book_line"
            ("lineId", "lang", "version", "isCurrent", "origin", "pageId", "bookId",
@@ -110,12 +111,14 @@ try {
          select r."lineId", $1,
                 coalesce((select max(m."version") from "book_line" m
                            where m."lineId" = r."lineId" and m."lang" = $1), 0) + 1,
-                r."promote", 'extracted', e."pageId", e."bookId", e."pageNumber",
-                e."pageCount", e."title", e."ownerKind", e."ownerIds", e."material",
+                r."promote", 'extracted', p."pageTextId", ${BOOK_ID_COMPAT}, p."pageNumber", ${PAGE_COUNT},
+                coalesce((select e."title" from "book_line" e
+                           where e."lineId" = p."lineId" and e."lang" = $7 and e."isCurrent"), ''),
+                p."ownerKind", p."ownerIds", coalesce(p."material", 0),
                 r."text", r."generatable", r."skipReason"
            from unnest($2::text[], $3::boolean[], $4::text[], $5::boolean[], $6::text[])
                 as r("lineId", "promote", "text", "generatable", "skipReason")
-           join "book_line" e on e."lineId" = r."lineId" and e."lang" = $7 and e."isCurrent"`,
+           join "book_page" p on p."lineId" = r."lineId" and p."aliasOf" is null`,
         [
           lang,
           batch.map((w) => w.page.lineId),
@@ -129,11 +132,13 @@ try {
       bar.add(batch.length);
     }
     bar.end();
+    // This language's words may show a minted page to be a real one.
+    counts.folded = await foldMinted(client);
   });
 
-  // The owners the English corpus names, and nothing else: the dump localises every item.
+  // The owners the extracted pages have, and nothing else: the dump localises every item.
   const owners = { object: new Set(), item: new Set() };
-  for (const row of english) for (const id of row.ownerIds) owners[row.ownerKind].add(id);
+  for (const row of extracted) if (row.ownerKind) for (const id of row.ownerIds) owners[row.ownerKind].add(id);
   const ownerRows = [];
   for (const [kind, table] of [["object", "locales_gameobject"], ["item", "locales_item"]]) {
     if (owners[kind].size === 0) continue;
@@ -163,7 +168,8 @@ try {
 
   console.log(
     `${lang}: ${counts.promote} pages promoted, ${counts.record} recorded, ${counts.skip} unchanged, ` +
-      `${withoutEnglish} without an English page; ${counts.names} titles written`,
+      `${withoutEnglish} without an English page; ${counts.names} titles written; ` +
+      `${counts.folded} minted pages found in the world database`,
   );
 } finally {
   await connection.end();

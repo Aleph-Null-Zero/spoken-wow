@@ -18,6 +18,7 @@ const questLine = {
   source: "accept",
   questId: 374,
   npcId: 233,
+  npcType: "creature",
   npcName: "Marshal Dughan",
   questTitle: "Kobold Camp Cleanup",
   race: "human",
@@ -27,6 +28,7 @@ const questLine = {
   text: "Those kobolds are a menace.",
   audioPath: "quests/374-accept.mp3",
   hasAudio: true,
+  stale: false,
 } as unknown as QuestLine;
 
 const zoneLine = {
@@ -41,6 +43,7 @@ const zoneLine = {
 const bookLine = {
   id: "b:261",
   pageId: 261,
+  key: "261",
   title: "The Dusty Tome",
   pageNumber: 2,
   pageCount: 4,
@@ -53,23 +56,49 @@ describe("detailOf", () => {
   it("names a quest line by its NPC, and says which voice it was cut with", () => {
     const detail = detailOf("quests", questLine);
     expect(detail.heading).toBe("Kobold Camp Cleanup");
-    expect(detail.context).toBe("Marshal Dughan · human male · human-male");
+    expect(detail.aside).toBe("human male · human-male");
     expect(detail.text).toBe("Those kobolds are a menace.");
     expect(detail.lineId).toBe("q:374:accept");
     expect(detail.audioSrc).toBe("/api/quests/audio/quests/374-accept.mp3");
   });
 
+  it("links the quest and its speaker into the explorer", () => {
+    const detail = detailOf("quests", questLine);
+    expect(detail.headingHref).toBe("/quests?q=374&filter=quest");
+    expect(detail.speaker).toEqual({
+      name: "Marshal Dughan",
+      page: "/npcs?q=233",
+      search: "/quests?q=233&filter=npc&type=creature",
+    });
+    expect(detail.speakerIsHeading).toBe(false);
+    expect(detail.aside).toBe("human male · human-male");
+  });
+
+  it("heads a quest-less line with its speaker, and names them once", () => {
+    const gossip = { ...questLine, source: "gossip", questId: null, questTitle: null } as QuestLine;
+    const detail = detailOf("quests", gossip);
+    expect(detail.heading).toBe("Marshal Dughan");
+    expect(detail.headingHref).toBeNull();
+    expect(detail.speakerIsHeading).toBe(true);
+    expect(detail.speaker?.search).toBe("/gossip?q=233&filter=npc&type=creature");
+  });
+
+  it("says when the audio was made from text that has since changed", () => {
+    expect(detailOf("quests", questLine).stale).toBe(false);
+    expect(detailOf("quests", { ...questLine, stale: true } as QuestLine).stale).toBe(true);
+    expect(detailOf("zones", { ...zoneLine, state: "stale" } as ZoneLine).stale).toBe(true);
+    expect(detailOf("books", bookLine).stale).toBe(false);
+  });
+
   it("carries a quest line's flavor, which is what picks one of that race's voices", () => {
     const shaman = { ...questLine, flavor: "shaman" } as QuestLine;
-    expect(detailOf("quests", shaman).context).toBe(
-      "Marshal Dughan · human male shaman · human-male",
-    );
+    expect(detailOf("quests", shaman).aside).toBe("human male shaman · human-male");
   });
 
   it("places a zone line by zone and subzone", () => {
     const detail = detailOf("zones", zoneLine);
     expect(detail.heading).toBe("Razor Hill");
-    expect(detail.context).toBe("Durotar");
+    expect(detail.aside).toBe("Durotar");
     expect(detail.lineId).toBe("s:1411:razor hill");
     expect(detail.audioSrc).toBe("/api/zones/audio/1411/razor-hill.mp3");
   });
@@ -77,7 +106,7 @@ describe("detailOf", () => {
   it("places a book page in its book", () => {
     const detail = detailOf("books", bookLine);
     expect(detail.heading).toBe("The Dusty Tome");
-    expect(detail.context).toBe("page 2 of 4");
+    expect(detail.aside).toBe("page 2 of 4");
     expect(detail.lineId).toBe("b:261");
   });
 

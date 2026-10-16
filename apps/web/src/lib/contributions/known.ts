@@ -20,8 +20,8 @@
  * as a body its voice is not, it is missing until the NPC is split by body: the voice the site
  * has is the wrong one, and storing the row is what splits it.
  *
- * Zones and books are not compared here: a zone has no text to compare, and the table already
- * shows a book page's corpus text beside the contribution (page.tsx's existingTextFor).
+ * A books row is compared through the books matcher (book-match.ts): the same words on the page
+ * it matches (the page a moderator named, if one did) are known, other words a correction. A zone has no text to compare.
  */
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
@@ -29,6 +29,8 @@ import { raceOfModel } from "@/lib/npc/models";
 import { bodyName, isSex, SEX_GENDER } from "@/lib/npc/npc";
 import { splitBody } from "@/lib/npc/store";
 
+import type { Contribution } from "./store";
+import { loadBookCorpus, matchBook } from "./book-match";
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
 import { answersQuestMomentSql } from "./naming";
@@ -39,7 +41,9 @@ export type LineState =
   /** `current` is the corpus's text of `lineId` and `variant`, in the contribution's language. */
   | { kind: "changed"; lineId: string; variant: number; current: string };
 
-type Comparable = Pick<Submission, "source" | "locale" | "text" | "meta">;
+/** A stored row also carries a moderator's books answer; an intake submission has none. */
+type Comparable = Pick<Submission, "source" | "locale" | "text" | "meta"> &
+  Partial<Pick<Contribution, "matchLineId" | "matchBookId" | "matchPageNumber" | "matchNewBook">>;
 
 const MISSING: LineState = { kind: "missing" };
 
@@ -157,8 +161,9 @@ async function voicedBodies(npcIds: number[]): Promise<Map<number, VoicedBodies>
   return voiced;
 }
 
-/** Each contribution's LineState, in the order given: three queries for the lot. */
+/** Each contribution's LineState, in the order given: three queries for the lot, and the books corpus when a books row is in it. */
 export async function lineStates(rows: readonly Comparable[]): Promise<LineState[]> {
+  const books = rows.some((row) => row.source === "books" && row.text) ? await loadBookCorpus() : null;
   const moments: { locale: string; moment: string }[] = [];
   const greetings: { locale: string; npcId: number }[] = [];
   // Only a greeting that reports a sex can be seen as another body, as only such a row splits.
@@ -180,6 +185,25 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
   ]);
 
   return rows.map((row) => {
+    if (row.source === "books") {
+      if (!books || !row.text) return MISSING;
+      // A moderator's stored answer overrides the matcher, as it does when the row is accepted.
+      const match = matchBook(
+        {
+          locale: row.locale,
+          text: row.text,
+          meta: row.meta,
+          matchLineId: row.matchLineId ?? null,
+          matchBookId: row.matchBookId ?? null,
+          matchPageNumber: row.matchPageNumber ?? null,
+          matchNewBook: row.matchNewBook ?? false,
+        },
+        books,
+      );
+      if (match.kind === "known") return { kind: "known" };
+      if (match.kind === "correction") return { kind: "changed", lineId: match.lineId, variant: 0, current: match.current };
+      return MISSING;
+    }
     if (row.source !== "quests" || !row.text) return MISSING;
     const text = row.text;
     const moment = momentOf(row);

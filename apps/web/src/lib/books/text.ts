@@ -12,7 +12,7 @@
  *
  *   * A page has one text, where a zone line has a full and a short.
  *   * The structural fields -- which book, which page number, what opens it -- are copied
- *     from the live row rather than accepted from the caller. Which pages exist is the
+ *     from book_page rather than accepted from the caller. Which pages exist is the
  *     extract's business (0026 says so plainly), and an API that let a text edit move a
  *     page to another book would be one bad request away from a page the addon cannot find.
  *
@@ -30,6 +30,7 @@ import { BASE_LANG, type Lang } from "@/lib/lang";
 
 import { speakPlayerTokens } from "@/lib/player-words";
 import { isGeneratable } from "./tools";
+import { BOOK_ID_COMPAT, PAGE_COUNT } from "@books-tools/lib/page.mjs";
 
 export type BookVersion = {
   lineId: string;
@@ -98,24 +99,17 @@ export async function saveBookText(args: {
     );
     const current = currentRows[0];
 
-    // The first translation of a page has no row of its own to copy the structure from, and
-    // takes it from the English page -- where a page sits is a fact about the world, the
-    // same in every language.
-    let source: { lang: Lang; version: number } | null = current
-      ? { lang, version: current.version }
-      : null;
-    if (!source && lang !== BASE_LANG) {
-      const { rows: english } = await client.query<{ version: number }>(
-        `select "version" from "book_line"
-          where "lineId" = $1 and "lang" = $2 and "isCurrent"`,
-        [args.lineId, BASE_LANG],
-      );
-      if (english[0]) source = { lang: BASE_LANG, version: english[0].version };
-    }
-    if (!source) {
-      throw new BookMissing(
-        `${args.lineId} is not in book_line -- seed the table with: make books-import`,
-      );
+    const { rows: titled } = await client.query<{ title: string }>(
+      `select "title" from "book_line"
+        where "lineId" = $1 and "lang" = $2 and "isCurrent"`,
+      [args.lineId, lang],
+    );
+    const { rows: placed } = await client.query<{ lineId: string }>(
+      `select "lineId" from "book_page" where "lineId" = $1`,
+      [args.lineId],
+    );
+    if (!placed[0]) {
+      throw new BookMissing(`${args.lineId} is not a page -- seed the table with: make books-import`);
     }
     if (
       current &&
@@ -149,9 +143,8 @@ export async function saveBookText(args: {
       [args.lineId, lang],
     );
 
-    // The structural fields ride along from the row being replaced, or from the English
-    // page for a first translation. They are the extract's to set, and copying them keeps
-    // this one insert rather than an insert plus a lookup.
+    // The structural fields come from book_page, which places a page once for every language;
+    // book_line gets a copy, which the previous release reads.
     //
     // Whether the page can be voiced is not structure: it is a property of this language's
     // text, judged again on every save, with its $N spoken as this language's word
@@ -162,16 +155,15 @@ export async function saveBookText(args: {
          ("lineId", "lang", "version", "isCurrent", "origin", "pageId", "bookId",
           "pageNumber", "pageCount", "title", "ownerKind", "ownerIds", "material",
           "text", "generatable", "skipReason", "editedBy", "note")
-       select "lineId", $2, $3, true, 'edited', "pageId", "bookId",
-              "pageNumber", "pageCount", "title", "ownerKind", "ownerIds", "material",
-              $4, $9, $10, $5, $6
-         from "book_line"
-        where "lineId" = $1 and "lang" = $8 and "version" = $7
+       select p."lineId", $2, $3, true, 'edited', p."pageTextId", ${BOOK_ID_COMPAT}, p."pageNumber",
+              ${PAGE_COUNT},
+              coalesce($9, e."title", ''), p."ownerKind", p."ownerIds", coalesce(p."material", 0),
+              $4, $7, $8, $5, $6
+         from "book_page" p
+         left join "book_line" e on e."lineId" = p."lineId" and e."lang" = '${BASE_LANG}' and e."isCurrent"
+        where p."lineId" = $1
        returning ${COLUMNS}`,
-      [
-        args.lineId, lang, version, text, args.editedBy, args.note?.trim() || null,
-        source.version, source.lang, generatable, skipReason,
-      ],
+      [args.lineId, lang, version, text, args.editedBy, args.note?.trim() || null, generatable, skipReason, titled[0]?.title ?? null],
     );
     await recordActivity(
       {

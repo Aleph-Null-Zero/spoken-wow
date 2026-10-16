@@ -1,24 +1,30 @@
--- The zones addon's settings panel. It is a canvas of its own -- the addon has settings
--- that have nothing to do with the player, and must have them with the player absent --
--- but it is laid out by the same UI/Layout.lua every Spoken addon carries, so the panels
--- read alike. Run with `make test-player`.
+-- The zones module's settings page, nested under Spoken's and laid out by Spoken's
+-- UI/Layout.lua, so the pages read alike. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
+local SPOKEN = here .. "/../../addons/Spoken/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.settingsCategories = {}
+local env = stub.LoadSpoken(SPOKEN)
+env.Addon:Enable()
 local Z = H.NewZoneLore()
-for _, file in ipairs({ "UI/Layout", "UI/Options" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Zones", Z)
+for _, file in ipairs({ "UI/Options" }) do
+    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupOptions()
 
-Expect("the panel is registered as a settings category", stub.settingsCategories[1] ~= nil, true)
-Expect("...under its own name", stub.settingsCategories[1] and stub.settingsCategories[1].name, "Spoken Zones")
+local registered
+for _, category in ipairs(stub.settingsCategories) do
+    if category.name == "Places" then registered = category end
+end
+Expect("the page is registered as a settings category", registered ~= nil, true)
+Expect("...nested under Spoken's", registered and registered.parent and registered.parent.name, "Spoken")
 
 -- The rows live in the scroller's content frame, not on the panel: the settings canvas
 -- neither scrolls nor clips, so a panel with more rows than fit draws over the world.
@@ -36,15 +42,20 @@ for _, child in ipairs(content.children) do
     end
 end
 
-Expect("every section is there", table.getn(headings), 7)
+Expect("every section is there", table.getn(headings), 4)
 -- No minimap section: the player's one button is the one a player sees.
 local names = {}
 for _, heading in ipairs(headings) do table.insert(names, heading.text) end
-Expect("...in order", table.concat(names, "|"),
-    "When to Read|World Map|Azeroth's Compendium|Reading History|Voice Packs|Fix a Problem|Start Over")
-Expect("the language waits while English is the only one: a menu of one chooses nothing",
-    table.concat(hidden, "|"), "Language")
-Expect("and every setting", table.getn(rows) >= 13, true)
+Expect("...in order", table.concat(names, "|"), "When to Read|Stories|Voice Packs|Reading History")
+do
+    local language
+    for _, entry in ipairs(Z.optionsPanel.layout.entries) do
+        if entry.label == Z.L.OPT_LANGUAGE then language = entry.frame end
+    end
+    Expect("Text Language waits while English is the only one: a menu of one chooses nothing",
+        language ~= nil and language.layoutRow.shown, false)
+end
+Expect("and every setting", table.getn(rows) >= 9, true)
 
 local function Distinct(values)
     local seen, count = {}, 0
@@ -101,7 +112,7 @@ do
     local discovery = Row(Z.L.OPT_AUTOPLAY)
     Expect("the voice switch says what it does", Z.L.OPT_PLAY_BUTTON, "Read Stories Aloud")
     Z:Set("voiceEnabled", false); layout:Refresh()
-    Expect("...and off, Read on Discovery greys out, saying why", discovery and discovery.layoutReason, Z.L.REASON_VOICE)
+    Expect("...and off, Read Automatically greys out, saying why", discovery and discovery.layoutReason, Z.L.REASON_VOICE)
     Z:Set("voiceEnabled", true); layout:Refresh()
     Expect("...and comes back with it", discovery and discovery.layoutReason, nil)
 end

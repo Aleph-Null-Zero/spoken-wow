@@ -29,6 +29,8 @@ staging="$(mktemp -d)"
 trap 'rm -rf "$staging"' EXIT
 mkdir -p "$staging/$folder/Data"
 rsync -a --exclude 'Sounds/' --exclude 'Data/Sounds.lua' --exclude '.DS_Store' "$SRC/" "$staging/$folder/"
+# English's icon with this language's badge (`make books-icon`).
+cp "$REPO/pipelines/books/assets/spoken-books-$LOCALE.tga" "$staging/$folder/Textures/AddonIcon.tga"
 mv "$staging/$folder/SpokenBooksAudio.toc" "$staging/$folder/$folder.toc"
 cp "$REPO/dist/descriptions/$slug.md" "$staging/$folder/README.md"
 cp "$WORK/Data/Sounds.lua" "$staging/$folder/Data/Sounds.lua"

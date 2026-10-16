@@ -13,7 +13,7 @@ DEFAULT_STORE_DIR = "audio"
 #: its files.
 SUBFOLDERS = ("quests", "gossip", "followup")
 #: What counts as audio when walking a directory. The folder itself is always mp3 - the
-#: masters, as ElevenLabs made them - but scripts/package-audio.sh stages a transcoded copy
+#: masters, as ElevenLabs made them - but scripts/quests/package-audio.sh stages a transcoded copy
 #: and hands it to `build --store`, and that copy is ogg for the packs this project ships.
 AUDIO_EXTENSIONS = (".mp3", ".ogg")
 

@@ -4,11 +4,11 @@
 #
 #   make package-spoken-all                 # dist/SpokenAll-<version>.zip
 #   VERSION=3.0.0 make package-spoken-all   # the version written into the .toc
-#   LANG_CODE=deDE make package-spoken-all  # "Spoken: German", dist/SpokenAll_deDE-<version>.zip
+#   LANG_CODE=deDE make package-spoken-all  # "Spoken German", dist/SpokenAll_deDE-<version>.zip
 #
 # A LANGUAGE'S META ADDON is the same stub under its own folder, title and version, all read off
 # publishers/spoken/all-<lang>.md through scripts/lib/packs.mjs, which also lists the packs it
-# depends on. It names that language's packs only: the English set is Spoken Everything's.
+# depends on. It names that language's packs only: the English set is Spoken English's.
 #
 # The same mechanism as Spoken Quests Audio: All (scripts/quests/package-meta.sh), one level up:
 # a CurseForge file can declare required dependencies, and both the CurseForge app and WowUp
@@ -34,13 +34,13 @@ ZIP="${ZIP:-1}"
 if [ "$LANG_CODE" = enUS ]; then
   NAME="${NAME:-SpokenAll}"
   VERSION="${VERSION:-3.0.0}"
-  TITLE="${TITLE:-Spoken Everything: Quests, Zones, Books AI Voiceover}"
+  TITLE="${TITLE:-Spoken English}"
   NOTES="Installs every Spoken addon with its English audio - quests, gossip, zone lore and books."
 else
   NAME="${NAME:-$(meta_field folder)}"
   VERSION="${VERSION:-$(meta_field version)}"
   TITLE="${TITLE:-$(meta_field name)}"
-  NOTES="Installs Spoken Player with every ${TITLE#Spoken: } voice pack."
+  NOTES="Installs Spoken with every ${TITLE#Spoken } voice pack."
 fi
 
 module_dir="$DIST/$NAME"
@@ -48,17 +48,20 @@ rm -rf "$module_dir"
 mkdir -p "$module_dir"
 
 cat > "$module_dir/Meta.lua" <<'LUA'
--- Intentionally empty. This addon exists to pull in Spoken Player and a language's sound packs
+-- Intentionally empty. This addon exists to pull in Spoken and a language's sound packs
 -- as CurseForge dependencies; it holds no audio and no code of its own.
 LUA
 
-# The player's artwork, since this is the Spoken family as a whole rather than one addon of it.
-cp "$REPO/pipelines/quests/assets/icon/spoken-player.tga" "$module_dir/icon.tga"
+# The player's artwork, since this is the Spoken family as a whole rather than one addon of it,
+# with the language's badge on a language's stub.
+icon="spoken-player.tga"
+[ "$LANG_CODE" = enUS ] || icon="spoken-player-$LANG_CODE.tga"
+cp "$REPO/pipelines/quests/assets/icon/$icon" "$module_dir/icon.tga"
 
 cat > "$module_dir/$NAME.toc" <<TOC
-## Interface: 100000, 11509, 20506, 16001
+## Interface: 100007, 11509, 20506, 16001
 ## Title: $TITLE
-## Notes: $NOTES|n|nThis addon holds no audio itself. If your addon manager did not fetch the rest with it, install them from CurseForge; |cFFFFD200Spoken Player|r says what is missing.
+## Notes: $NOTES|n|nThis addon holds no audio itself. If your addon manager did not fetch the rest with it, install them from CurseForge; |cFFFFD200Spoken|r says what is missing.
 ## Version: $VERSION
 ## IconTexture: Interface\\AddOns\\$NAME\\icon.tga
 ## Group: Spoken

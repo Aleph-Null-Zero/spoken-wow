@@ -13,6 +13,8 @@ import {
   booksHref,
   explorerHref,
   lexiconHref,
+  npcHref,
+  npcPageHref,
   questsHref,
   reportHref,
   targetExplorerHref,
@@ -55,6 +57,26 @@ describe("questsHref", () => {
 
   it("omits what was not asked for", () => {
     expect(questsHref({ finding: 7 })).toBe("/quests?finding=7");
+  });
+});
+
+describe("npcHref", () => {
+  it("narrows the quests explorer to one NPC of one kind", () => {
+    expect(npcHref({ npcId: 233, npcType: "creature", gossip: false })).toBe(
+      "/quests?q=233&filter=npc&type=creature",
+    );
+  });
+
+  it("sends a gossip speaker to the gossip explorer", () => {
+    expect(npcHref({ npcId: 68, npcType: "gameobject", gossip: true })).toBe(
+      "/gossip?q=68&filter=npc&type=gameobject",
+    );
+  });
+});
+
+describe("npcPageHref", () => {
+  it("opens the NPCs page on one NPC", () => {
+    expect(npcPageHref(233)).toBe("/npcs?q=233");
   });
 });
 

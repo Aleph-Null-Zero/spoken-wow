@@ -12,11 +12,6 @@ setfenv(1, VoiceOver)
 -- data module failed to load there is no soundData at all, and that is the case most worth
 -- sending.
 
--- The merged domain, not the frozen voiceover.rusty.one that ReportButton.lua points at: the
--- contribute page is new and exists only on the site the three sections share. That file's
--- SITE_URL is a local of its own and deliberately stays where it is -- a report link that moved
--- would be a report link that breaks for everyone still running the shipped addon.
-local SITE_URL = "https://spoken.rusty.one"
 
 local EVENT_PATHS =
 {
@@ -47,34 +42,40 @@ local function QuestItem()
     if guidType ~= nil and guidType ~= Enums.GUID.Item then
         return nil
     end
-    local questID = GetQuestID and GetQuestID() or 0
+    local questID = GetQuestID and NotSecret(GetQuestID()) or 0
     if not (questID and questID > 0 and Spoken and Spoken.QuestItem) then
         return nil
     end
     return Spoken:QuestItem(questID)
 end
 
-local function NPCID()
-    local guid = Utils:GetNPCGUID()
+local function IDFromGUID(guid)
     if guid and Utils.GetIDFromGUID then
         local ok, read = pcall(Utils.GetIDFromGUID, Utils, guid)
         if ok and read then
             return read
         end
     end
-    return (QuestItem())
 end
 
-local function NPCField()
-    local id = NPCID()
-    local name = UnitName and UnitName("npc") or nil
-    if not name then
-        name = select(2, QuestItem())
-    end
+local function NPCID()
+    return IDFromGUID(Utils:GetNPCGUID()) or (QuestItem())
+end
+
+--- The npc field as the site reads it: "<id> <name>", or whichever half is known.
+local function NPCLabel(id, name)
     if id and name then
         return format("%d %s", id, name)
     end
     return id and tostring(id) or name
+end
+
+local function NPCField()
+    local name = UnitName and NotSecret(UnitName("npc")) or nil
+    if not name then
+        name = select(2, QuestItem())
+    end
+    return NPCLabel(NPCID(), name)
 end
 
 --- Which id space the unit's GUID belongs to.
@@ -172,27 +173,27 @@ local function Observations(fields)
     if kind == "creature" then
         add("displays", CachedDisplays())
     end
-    add("sex", UnitSex and UnitSex("npc") or nil)
-    add("creature", UnitCreatureType and UnitCreatureType("npc") or nil)
+    add("sex", UnitSex and NotSecret(UnitSex("npc")) or nil)
+    add("creature", UnitCreatureType and NotSecret(UnitCreatureType("npc")) or nil)
 end
 
 --- Which panel the player is looking at, as the event it would have played.
 local function EventOnScreen()
     if QuestFrameRewardPanel and QuestFrameRewardPanel:IsShown() then
-        return Enums.SoundEvent.QuestComplete, GetRewardText and GetRewardText()
+        return Enums.SoundEvent.QuestComplete, GetRewardText and NotSecret(GetRewardText())
     elseif QuestFrameProgressPanel and QuestFrameProgressPanel:IsShown() then
-        return Enums.SoundEvent.QuestProgress, GetProgressText and GetProgressText()
+        return Enums.SoundEvent.QuestProgress, GetProgressText and NotSecret(GetProgressText())
     elseif QuestFrameDetailPanel and QuestFrameDetailPanel:IsShown() then
-        return Enums.SoundEvent.QuestAccept, GetQuestText and GetQuestText()
+        return Enums.SoundEvent.QuestAccept, GetQuestText and NotSecret(GetQuestText())
     end
     -- The quest API answers for the dialog whichever window draws it.
     local page = Utils:DialogueUIPage()
     if page == "QUEST_COMPLETE" then
-        return Enums.SoundEvent.QuestComplete, GetRewardText and GetRewardText()
+        return Enums.SoundEvent.QuestComplete, GetRewardText and NotSecret(GetRewardText())
     elseif page == "QUEST_PROGRESS" then
-        return Enums.SoundEvent.QuestProgress, GetProgressText and GetProgressText()
+        return Enums.SoundEvent.QuestProgress, GetProgressText and NotSecret(GetProgressText())
     elseif page == "QUEST_DETAIL" then
-        return Enums.SoundEvent.QuestAccept, GetQuestText and GetQuestText()
+        return Enums.SoundEvent.QuestAccept, GetQuestText and NotSecret(GetQuestText())
     end
     return nil, nil
 end
@@ -204,13 +205,13 @@ end
 --- taken at its word.
 local function GossipOnScreen()
     if Utils:DialogueUIPage() == "GOSSIP_SHOW" then
-        return GetGossipText and GetGossipText()
+        return GetGossipText and NotSecret(GetGossipText())
     end
     local frame = _G.GossipFrame
     if frame and frame.IsVisible and not frame:IsVisible() then
         return nil
     end
-    return GetGossipText and GetGossipText()
+    return GetGossipText and NotSecret(GetGossipText())
 end
 
 -- A letter, a digit, or any byte of a multi-byte UTF-8 character. Byte-wise rather than %w,
@@ -259,9 +260,11 @@ end
 ---
 --- Class and race are replaced wherever they occur as words, so a warrior reading "a warrior's
 --- discipline" sends "a $c's discipline" -- a known cost, taken over voicing someone's class
---- at every other player. $G cannot be undone at all: the client picked one side of the
---- branch, and the words of the other side are not on screen.
-function Contribute:Detemplate(text)
+--- at every other player. The class is kept as written on a quest that only that class can take
+--- (questID), since the word there is the quest's own whichever way Blizzard wrote it. $G cannot
+--- be undone at all: the client picked one side of the branch, and the words of the other side
+--- are not on screen.
+function Contribute:Detemplate(text, questID)
     local swaps = {}
     local function add(word, token)
         if type(word) == "string" and word ~= "" then
@@ -287,8 +290,13 @@ function Contribute:Detemplate(text)
             end
         end
     end
+    local localized, classFile, classID
     if UnitClass then
-        local localized, classFile = UnitClass("player")
+        localized, classFile, classID = UnitClass("player")
+    end
+    local quests = _G.SpokenQuestsCompendium and _G.SpokenQuestsCompendium.quests
+    local quest = questID and quests and quests[questID]
+    if localized and not (quest and classID and quest.classes == 2 ^ (classID - 1)) then
         addCased(localized, "$C", "$c")
         -- The locales that inflect a class by gender (deDE "Kriegerin") render the form for
         -- this character, which is the one UnitClass already answered; both are asked for in
@@ -338,17 +346,17 @@ function Contribute:Capture()
     local fields = BaseFields()
 
     if event and text and text ~= "" then
-        local questID = GetQuestID and GetQuestID() or 0
+        local questID = GetQuestID and NotSecret(GetQuestID()) or 0
         if questID and questID > 0 then
             fields[#fields + 1] = { "quest", questID }
         end
         fields[#fields + 1] = { "event", EVENT_PATHS[event] }
         fields[#fields + 1] = { "npc", NPCField() }
         Observations(fields)
-        fields[#fields + 1] = { "title", GetTitleText and GetTitleText() or "" }
+        fields[#fields + 1] = { "title", GetTitleText and NotSecret(GetTitleText()) or "" }
         -- The second value is what Gather keys the line on: the quest, the moment and who said
         -- it. The text is left out on purpose -- the same panel read twice is one line.
-        return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text)),
+        return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text, questID)),
             format("q:%s:%s:%s", tostring(questID or 0), EVENT_PATHS[event], tostring(NPCID() or ""))
     end
 
@@ -369,12 +377,57 @@ function Contribute:Capture()
         Observations(fields)
         -- An NPC can say several different things, so gossip is keyed on the words as well.
         -- Keyed on the sex too, so a man and a woman saying the same words are two lines.
-        local sex = UnitSex and UnitSex("npc")
+        local sex = UnitSex and NotSecret(UnitSex("npc"))
         return Spoken.Contribute:Envelope("quests", fields, gossip),
             format("g:%d:%d%s", NPCID(), Spoken.Contribute:Checksum(gossip), sex == 3 and ":f" or "")
     end
 
     return nil
+end
+
+--- Whether the window on screen is still showing the line `clip` played.
+local function ShowsClip(clip)
+    if clip.questID and EVENT_PATHS[clip.event] then
+        local event = EventOnScreen()
+        return event == clip.event and (GetQuestID and GetQuestID()) == clip.questID
+    end
+    return clip.unitGUID ~= nil and clip.unitGUID == Utils:GetNPCGUID() and GossipOnScreen() ~= nil
+end
+
+--- What a report carries beside its address: this client, and the line as the player met it.
+---
+--- The window on screen first, since only it can still be asked about the NPC's model and sex.
+--- A clip the window no longer shows -- Report is offered after the window closes -- is sent
+--- as the clip remembers it, with no observations rather than another NPC's.
+---@param clip table|nil  the clip being reported, { fromLog, questID, title } for a quest in
+---                        the log, or nil for the window on screen
+---@return string|nil envelope
+function Contribute:ReportContext(clip)
+    if clip and clip.fromLog then
+        return self:CaptureFromLog(clip.questID, clip.title)
+    end
+    if not clip or ShowsClip(clip) then
+        local envelope = self:Capture()
+        if envelope or not clip then
+            return envelope
+        end
+    end
+
+    local fields = BaseFields()
+    local path = EVENT_PATHS[clip.event]
+    if clip.questID and clip.questID > 0 and path then
+        fields[#fields + 1] = { "quest", clip.questID }
+        fields[#fields + 1] = { "event", path }
+    end
+    local npc = NPCLabel(IDFromGUID(clip.unitGUID), clip.name)
+    if npc then
+        fields[#fields + 1] = { "npc", npc }
+    end
+    if clip.title and clip.title ~= "" then
+        fields[#fields + 1] = { "title", clip.title }
+    end
+    local text = type(clip.text) == "string" and clip.text ~= "" and self:Detemplate(clip.text) or nil
+    return Spoken.Contribute:Envelope("quests", fields, text)
 end
 
 --- Whether this client's data module has a line for what is on screen.
@@ -387,7 +440,7 @@ end
 local function HasSoundForCurrent()
     local event, text = EventOnScreen()
     if event and text and text ~= "" then
-        return DataModules:PrepareSound({ event = event, questID = GetQuestID and GetQuestID() or 0 })
+        return DataModules:PrepareSound({ event = event, questID = GetQuestID and NotSecret(GetQuestID()) or 0 })
     end
 
     local gossip = GossipOnScreen()
@@ -536,7 +589,7 @@ function Contribute:QuestLogDescription(questID)
             if id == questID then
                 local previous = GetQuestLogSelection()
                 SelectQuestLogEntry(index)
-                local description = GetQuestLogQuestText and GetQuestLogQuestText()
+                local description = GetQuestLogQuestText and NotSecret(GetQuestLogQuestText())
                 SelectQuestLogEntry(previous or 0)
                 return description
             end
@@ -568,7 +621,7 @@ function Contribute:CaptureFromLog(questID, title)
     fields[#fields + 1] = { "event", "accept" }
     fields[#fields + 1] = { "title", title or "" }
     fields[#fields + 1] = { "from", "log" }
-    return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text))
+    return Spoken.Contribute:Envelope("quests", fields, Contribute:Detemplate(text, questID))
 end
 
 --- Whether the quest log should offer Contribute in place of a Play it cannot give.
@@ -629,7 +682,7 @@ end
 --- Hand the player an envelope: as one link where the bundled player can build one, and as the
 --- raw text and the address otherwise.
 local function Offer(envelope, key)
-    local address = format("%s/contribute", SITE_URL)
+    local address = format("%s/contribute", Spoken.SITE_URL)
     -- What the first-click choice gathers if the player takes it. Only for a line with a key:
     -- a quest log entry has no NPC in front of it, so it is sent but never kept.
     local gather = key and { key = key, envelope = envelope } or nil

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { booksLua, quote } from "./lua.mjs";
+import { booksLua, indexLua, pageIndex, quote } from "./lua.mjs";
 import { pageChecksum } from "./naming.mjs";
 
 const entries = [
@@ -55,6 +55,17 @@ test("a checksum shared by two pages is left out of the loose index", () => {
   assert.ok(!loose.includes(String(pageChecksum("..."))), "the ambiguous checksum is absent");
 });
 
+test("a book nobody can have is left out with its pages", () => {
+  const lua = booksLua([
+    ...entries,
+    { pageId: 30, bookId: 30, pageNumber: 1, pageCount: 1, title: "Deprecated Writ of Lakeshire", text: "Writ." },
+    { pageId: 40, bookId: 40, pageNumber: 1, pageCount: 1, title: "Sam's Tome", text: "Missing Text" },
+    { pageId: 691, bookId: 691, pageNumber: 1, pageCount: 1, title: "Musty Note", text: "Brother." },
+  ]);
+  assert.doesNotMatch(lua, /Deprecated|Sam's Tome|Musty Note|\[(30|40|691)\] = \{ book/);
+  assert.match(lua, /\[20\] = \{ title = "A Note"/);
+});
+
 test("a quote in a title is escaped", () => {
   const lua = booksLua([
     { pageId: 1, bookId: 1, pageNumber: 1, pageCount: 1, title: 'The "Book"', text: "x" },
@@ -78,4 +89,19 @@ test("pages that are indistinguishable on screen resolve to the lowest book, det
   ];
   const lua = booksLua(identical);
   assert.match(lua, new RegExp(`\\[1\\] = \\{ \\[${pageChecksum("Same.")}\\] = 30 \\}`));
+});
+
+test("a page is found under each of its texts", () => {
+  const { index } = pageIndex([
+    { pageId: 38, bookId: 38, pageNumber: 1, titles: ["Nota de Wiley"], texts: ["Stoutmantle --", "Mantorrecio:"] },
+  ]);
+  const byChecksum = index.get("Nota de Wiley").get(1);
+  assert.equal(byChecksum.get(pageChecksum("Stoutmantle --")), 38);
+  assert.equal(byChecksum.get(pageChecksum("Mantorrecio:")), 38);
+});
+
+test("a minted page is written as a quoted key", () => {
+  const lines = indexLua(pageIndex([{ pageId: "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11", bookId: "n1", pageNumber: 1, title: "X", text: "Y" }]), "extra");
+  assert.ok(lines.some((line) => line.includes('= "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"')));
+  assert.equal(lines[0], "\textraIndex = {");
 });

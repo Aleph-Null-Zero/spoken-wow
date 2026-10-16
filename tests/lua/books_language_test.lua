@@ -5,20 +5,22 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 local PAGE, ONLY_ENGLISH = 15, 16
 
 --- Load the addon on a client in `locale`, with the given packs installed.
 local function Install(packs, locale)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetLocale(locale or "enUS")
     _G.SpokenBooksSettings = nil
     _G.SpokenBooksAudioPacks = {}
     for _, pack in ipairs(packs) do
         _G.SpokenBooksAudioPacks[pack.addon] = { version = 1, addon = pack.addon,
-            language = pack.language, pages = pack.pages, index = pack.index, loose = pack.loose }
+            language = pack.language, pages = pack.pages, index = pack.index, loose = pack.loose,
+            extraIndex = pack.extraIndex, extraLoose = pack.extraLoose, places = pack.places,
+            books = pack.books }
     end
     _G.SpokenBooksData = {
         version = 1,
@@ -30,7 +32,7 @@ local function Install(packs, locale)
     }
     local B = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio" }) do
-        assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
+        assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
     end
     B:InitDB()
     return B
@@ -113,11 +115,15 @@ SpokenBooksAudioPacks.SpokenBooksAudio_deDE.pages = { [PAGE] = {
 Expect("E. new packs provide captions before a page is opened",
     B:ClipFor(PAGE).present.transcript, "Gespeicherte deutsche Seite.")
 B = Install({ ENGLISH })
+Expect("E. with no Spoken there is nothing to report to", B:ReportURL(PAGE), nil)
+-- The address is Spoken's to build (Spoken:ReportURL); this suite loads Books alone.
+stub.LoadSpoken(here .. "/../../addons/Spoken/")
 Expect("E. an English report keeps its address", B:ReportURL(PAGE, "enUS"),
     "https://spoken.rusty.one/books/r/15")
 Expect("E. ...as does one with no language", B:ReportURL(PAGE), "https://spoken.rusty.one/books/r/15")
 Expect("E. a German report goes to the German page", B:ReportURL(PAGE, "deDE"),
     "https://spoken.rusty.one/deDE/books/r/15")
+_G.Spoken, _G.SpokenEnv = nil, nil
 
 ---------------------------------------------------------------- F. a language no client runs in
 -- Italian has no index of its own: the page is found by the English client's and read from
@@ -134,6 +140,66 @@ Expect("F. ...and the Italian pack reads it", B:ClipFor(PAGE).present.transcript
 B = Install({ ENGLISH, ITALIAN }, "itIT")
 Expect("F. a client claiming Italian is not taken at its word", B:GetClientLanguage(), "enUS")
 Expect("F. Italian is not a client language", B:IsClientLanguage("itIT"), false)
+
+---------------------------------------------------------------- G. pages only a pack has
+do
+    local MINTED = "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"
+    local TEXT = "Trotamundos."
+    local sum = Install({}, "esES"):ChecksumOf(TEXT)
+    local function Pack(extra)
+        local pack = { addon = "SpokenBooksAudio_esES", language = "esES",
+            pages = { [MINTED] = { file = MINTED, len = 2, text = TEXT } },
+            extraIndex = { ["Instrucciones"] = { [1] = { [sum] = MINTED } } },
+            extraLoose = {},
+            places = { [MINTED] = { book = "n1", number = 1 } },
+            books = { ["n1"] = { pages = { MINTED } } } }
+        for k, v in pairs(extra or {}) do pack[k] = v end
+        return pack
+    end
+
+    B = Install({ Pack() }, "esES")
+    stub.ShowPage({ title = "Instrucciones", number = 1, text = TEXT })
+    Expect("G. a pack with only extra pages is still asked", B:PageOnScreen(), MINTED)
+    Expect("G. ...and has its audio", B:HasAudio(MINTED), true)
+    local minted = B:ClipFor(MINTED)
+    Expect("G. ...read from the pack's own file", minted and minted.path,
+        [[Interface\AddOns\SpokenBooksAudio_esES\Sounds\]] .. MINTED .. ".mp3")
+    Expect("G. ...queued under its lineId", minted and minted.key, "b:" .. MINTED)
+    Expect("G. ...titled as the client shows it", (B:ClipFor(MINTED) or {}).present.label, "Instrucciones")
+    Expect("G. ...placed in the pack's book", B:PlaceOf(MINTED), "n1")
+    Expect("G. ...which reads from its page", B:BookOf(MINTED).pages[1], MINTED)
+    stub.LoadSpoken(here .. "/../../addons/Spoken/")
+    Expect("G. ...reported by its key", B:ReportURL(MINTED, "esES"),
+        "https://spoken.rusty.one/esES/books/r/" .. MINTED)
+    Expect("G. an English report of a minted page", B:ReportURL(MINTED),
+        "https://spoken.rusty.one/books/r/" .. MINTED)
+    Expect("G. a string that is not a minted key has no report", B:ReportURL("../x", "esES"), nil)
+    _G.Spoken, _G.SpokenEnv = nil, nil
+
+    B = Install({ Pack({ extraIndex = {}, extraLoose = { [sum] = MINTED } }) }, "esES")
+    stub.ShowPage({ title = "Otro", number = 1, text = TEXT })
+    Expect("G. the pack's loose table finds it under any title", B:PageOnScreen(), MINTED)
+
+    B = Install({ Pack({ extraIndex = false, extraLoose = false, places = false, books = false }) }, "esES")
+    stub.ShowPage({ title = "Instrucciones", number = 1, text = TEXT })
+    Expect("G. a pack without the extra tables finds nothing, as an older addon would", B:PageOnScreen(), nil)
+    Expect("G. ...and does not place the page", B:PlaceOf(MINTED), nil)
+    Expect("G. ...nor read it", B:ClipFor(MINTED), nil)
+
+    -- A book Books.lua has, with one more page only the pack carries.
+    local both = Pack({ places = { [MINTED] = { book = 1, number = 3 } },
+        books = { [1] = { pages = { MINTED } } } })
+    B = Install({ ENGLISH, both }, "esES")
+    local pages = B:BookOf(PAGE).pages
+    Expect("G. an extracted book merges its pack pages in number order",
+        table.concat(pages, ","), PAGE .. "," .. ONLY_ENGLISH .. "," .. MINTED)
+    Expect("G. ...whichever page it is asked from", table.concat(B:BookOf(MINTED).pages, ","),
+        PAGE .. "," .. ONLY_ENGLISH .. "," .. MINTED)
+    Expect("G. ...with the corpus's title", B:BookOf(MINTED).title, "Registry")
+    Expect("G. ...and the corpus's list left alone", #SpokenBooksData.books[1].pages, 2)
+    both.books[1].pages = { MINTED, ONLY_ENGLISH }
+    Expect("G. a page both list is not repeated", #B:BookOf(PAGE).pages, 3)
+end
 
 ---------------------------------------------------------------- in step with SpokenZones
 local booksCodes = {}
@@ -158,6 +224,10 @@ do
     local spoken = _G.Spoken
     _G.Spoken = { BagItemIcon = function(_, name) return name == "Worn Tablet" and 133741 or nil, { 0, 1, 0, 1 } end }
     Expect("...and a book from the bags its own icon", Bk:ClipFor(PAGE).present.portrait.texture, 133741)
+    -- The next page of the open book is built while another is open (the one before it ends, or
+    -- DialogueUI has left the game on the last): it keeps the book's picture.
+    Expect("a later page of the open book keeps its icon", Bk:ClipFor(ONLY_ENGLISH).present.portrait.texture, 133741)
+    Expect("...and its material", Bk:ClipFor(ONLY_ENGLISH).present.material, "Stone")
     _G.Spoken = spoken
     Bk.lastPage = nil
     _G.ItemTextGetItem, _G.ItemTextGetMaterial = nil, nil

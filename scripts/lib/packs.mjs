@@ -186,8 +186,18 @@ export function findPack(section, lang, pack, packs = loadPacks()) {
   return found;
 }
 
-// A language's meta addon, "Spoken: <Language>": publishers/spoken/all-<lang>.md, the language's
-// counterpart of Spoken Everything (scripts/spoken/package-meta.sh). Not a pack -- the page has
+// The words before the colon in a sound pack's title: "Spoken Audio" for English and, for
+// another language, its meta addon's name plus "Audio" -- "Spoken German Audio" -- so a
+// language is spelled the way its store pages spell it.
+export function audioFamily(lang, dir = PUBLISHERS_DIR) {
+  if (lang === BASE_LOCALE) return "Spoken Audio";
+  const page = join("spoken", `all-${lang.toLowerCase()}.md`);
+  const { meta } = parseFrontmatter(readFileSync(join(dir, page), "utf8"), page);
+  return `${meta.name} Audio`;
+}
+
+// A language's meta addon, "Spoken <Language>": publishers/spoken/all-<lang>.md, the language's
+// counterpart of Spoken English (scripts/spoken/package-meta.sh). Not a pack -- the page has
 // no `section` -- but its dependencies are the packs, so they are read off the registry here
 // rather than listed a second time: every pack of the language that is on CurseForge and not
 // dormant, quests, zones and books alike. A language without a zones or books project simply
@@ -208,7 +218,7 @@ export function metaFor(lang, packs = loadPacks(), dir = PUBLISHERS_DIR) {
     page, lang, version: meta.version, slug: meta.slug, name: meta.name,
     curseforge: meta.curseforge ?? null,
     folder: `SpokenAll_${lang}`, release: `spoken-all-${lang}`,
-    dependencies: ["spoken-player", ...shipped.map((p) => p.slug)],
+    dependencies: ["spoken", ...shipped.map((p) => p.slug)],
   };
 }
 

@@ -23,7 +23,9 @@ import { Refreshing } from "@/components/Loading";
 import Pagination from "@/components/Pagination";
 import QuestsPlayer from "@/components/Player";
 import ReportDetail from "@/components/ReportDetail";
+import OutdatedNote from "@/components/OutdatedNote";
 import SortHeader from "@/components/SortHeader";
+import { ReportContextNote } from "@/components/reports/ReportContextFacts";
 import { LinkTabs } from "@/components/StatusTabs";
 import { usePendingPush } from "@/components/usePendingPush";
 import { useSearchBox } from "@/components/useSearchBox";
@@ -34,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
 import { explorerHref, reportHref, targetExplorerHref } from "@/lib/links";
 import type { ResultLine as BookLine } from "@/lib/books/search";
-import { searchPath, type SourceLine } from "@/lib/reports/detail";
+import { isStale, searchPath, type SourceLine } from "@/lib/reports/detail";
 import {
   reportsHref,
   SECTIONS,
@@ -47,7 +49,7 @@ import { CATEGORIES, CATEGORY_COLUMN, STATUS_LABELS, type Category, type Report,
 import { resolveReport } from "@/lib/reports/client";
 import { applyResolutions, type ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
 import type { Source } from "@/lib/sections";
 
@@ -88,7 +90,9 @@ export default function ReportTable({
   sectionCounts,
   statusCounts,
   filters,
+  stale,
   canRegenerate,
+  showNpcPage,
 }: {
   /** This page's lines, each with its reports, in the order the server sorted them. */
   groups: ReportGroup[];
@@ -101,8 +105,12 @@ export default function ReportTable({
   /** This section's reports in each status, under the complaint and search in force. */
   statusCounts: Record<StatusView, number>;
   filters: ReportFilters;
+  /** This page's lines whose audio predates their text, by id. A looked-up line answers for itself. */
+  stale: string[];
   /** Whether this visitor may spend credits from the panel below a row. */
   canRegenerate: boolean;
+  /** The NPC page is the admins'; see LineHeading. */
+  showNpcPage: boolean;
 }) {
   /**
    * What this session resolved, overlaid on the server's rows.
@@ -148,36 +156,44 @@ export default function ReportTable({
   // line therefore stops the previous one with no bookkeeping - see AudioPlayer.
   const audio = useRef<HTMLAudioElement>(null);
 
+  /**
+   * One request per line, kept as the promise so a play press that lands while the row's
+   * lookup is still in flight waits for it rather than asking again. `fresh` asks again after
+   * a regeneration or a rewrite: the search knows what changed, where a patch would guess.
+   */
+  const requests = useRef(new Map<string, Promise<SourceLine | null>>());
+
   const load = useCallback(
-    async (reportSource: Source, lineId: string): Promise<SourceLine | null> => {
+    (reportSource: Source, lineId: string, fresh = false): Promise<SourceLine | null> => {
       const key = lineKey(reportSource, lineId);
-      let cached: SourceLine | null | undefined;
-      // Read through a setState rather than off `lines`, which this callback closes over
-      // stale: two rows expanded in the same tick would otherwise both fetch.
-      setLines((current) => {
-        cached = current[key];
-        return current;
-      });
-      if (cached !== undefined) return cached;
+      const known = requests.current.get(key);
+      if (known && !fresh) return known;
 
-      const response = await fetch(searchPath(reportSource, lineId, lang)).catch(() => null);
-      const body = response?.ok
-        ? ((await response.json().catch(() => null)) as { lines?: SourceLine[] } | null)
-        : null;
-      const line = body?.lines?.[0] ?? null;
+      const request = (async () => {
+        const response = await fetch(searchPath(reportSource, lineId, lang)).catch(() => null);
+        const body = response?.ok
+          ? ((await response.json().catch(() => null)) as { lines?: SourceLine[] } | null)
+          : null;
+        const line = body?.lines?.[0] ?? null;
 
-      setLines((current) => ({ ...current, [key]: line }));
-      return line;
+        setLines((current) => ({ ...current, [key]: line }));
+        return line;
+      })();
+      requests.current.set(key, request);
+      return request;
     },
-    [],
+    [lang],
   );
 
+  const staleIds = new Set(stale);
+
+  /** Opens the group's line below it and unclamps what its reporters said, which a report with no line still has. */
   function toggle(group: ReportGroup) {
-    const report = group.reports[0];
-    if (!report.lineId) return;
+    if (endsSelection()) return;
+    const [first] = group.reports;
     const next = open === group.key ? null : group.key;
     setOpen(next);
-    if (next !== null) void load(report.source, report.lineId);
+    if (next !== null && first.lineId) void load(first.source, first.lineId);
   }
 
   async function play(report: Report) {
@@ -223,6 +239,7 @@ export default function ReportTable({
 
   /** The line: a link into the explorer narrowed to it. The tab already says the section. */
   function whereCell(report: Report, count?: number) {
+    const line = report.lineId ? lines[lineKey(report.source, report.lineId)] : null;
     return (
       <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
         {/* The explorer, narrowed to this line: where a triager works. A report with no
@@ -256,31 +273,28 @@ export default function ReportTable({
             {count} reports
           </Badge>
         ) : null}
+        {(line ? isStale(report.source, line) : report.lineId !== null && staleIds.has(report.lineId)) ? (
+          <OutdatedNote className="shrink-0" />
+        ) : null}
       </div>
     );
   }
 
-  /** Play and open the line. Once per line, so on a group's row rather than each report's. */
+  /** Play the line. Once per line, so on a group's row rather than each report's. */
   function lineActions(group: ReportGroup) {
     const [first] = group.reports;
     if (!first.lineId) return null;
-    const expanded = open === group.key;
 
     return (
-      <>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          title="Play this line"
-          aria-label="Play this line"
-          onClick={() => void play(first)}
-        >
-          <Play />
-        </Button>
-        <Button size="sm" variant="ghost" aria-expanded={expanded} onClick={() => toggle(group)}>
-          {expanded ? "Hide" : "Details"}
-        </Button>
-      </>
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        title="Play this line"
+        aria-label="Play this line"
+        onClick={() => void play(first)}
+      >
+        <Play />
+      </Button>
     );
   }
 
@@ -322,9 +336,15 @@ export default function ReportTable({
       lineActions,
       nested,
       expanded,
-    }: { where?: ReactNode; lineActions?: ReactNode; nested?: boolean; expanded: boolean },
+      onToggle,
+    }: {
+      where?: ReactNode;
+      lineActions?: ReactNode;
+      nested?: boolean;
+      expanded: boolean;
+      onToggle: () => void;
+    },
   ) {
-
     return (
       // Every cell is one line except the body, which is clamped to two, so the row centres
       // rather than aligning to a top edge that only one cell has.
@@ -343,8 +363,9 @@ export default function ReportTable({
 
         <td className="pr-3 text-xs whitespace-nowrap">{CATEGORY_COLUMN[report.category]}</td>
 
-        <td className="max-w-md pr-3">
+        <td className="max-w-md cursor-pointer pr-3" aria-expanded={expanded} onClick={onToggle}>
           <p className={cn("whitespace-pre-wrap", !expanded && "line-clamp-2")}>{report.body}</p>
+          <ReportContextNote context={report.context} />
           {report.name || report.email ? (
             <p className="text-muted-foreground mt-1 text-xs">
               {[report.name, report.email].filter(Boolean).join(" · ")}
@@ -382,7 +403,12 @@ export default function ReportTable({
           {when(first.createdAt)}
         </td>
         <td className="max-w-[20rem] pr-3 text-xs">{whereCell(first, group.reports.length)}</td>
-        <td className="pr-3 text-xs" colSpan={2}>
+        <td
+          className="cursor-pointer pr-3 text-xs"
+          colSpan={2}
+          aria-expanded={open === group.key}
+          onClick={() => toggle(group)}
+        >
           {complaints.join(", ")}
         </td>
         <td className="pr-3 text-xs whitespace-nowrap">
@@ -476,6 +502,7 @@ export default function ReportTable({
               const expanded = open === group.key;
               const key = first.lineId ? lineKey(first.source, first.lineId) : null;
               const single = group.reports.length === 1;
+              const onToggle = () => toggle(group);
 
               return [
                 single ? (
@@ -483,12 +510,13 @@ export default function ReportTable({
                     where: whereCell(first),
                     lineActions: lineActions(group),
                     expanded,
+                    onToggle,
                   })
                 ) : (
                   groupRow(group)
                 ),
 
-                ...(single ? [] : group.reports.map((report) => reportRow(report, { nested: true, expanded }))),
+                ...(single ? [] : group.reports.map((report) => reportRow(report, { nested: true, expanded, onToggle }))),
 
                 expanded && first.lineId && key ? (
                   <tr key={`${group.key}-detail`}>
@@ -498,16 +526,12 @@ export default function ReportTable({
                         lineId={first.lineId}
                         line={lines[key]}
                         canRegenerate={canRegenerate}
-                        onRegenerated={(version) =>
-                          setVersions((current) => ({ ...current, [key]: version }))
-                        }
-                        onOverridden={(text) =>
-                          setLines((current) => {
-                            const known = current[key];
-                            if (!known) return current;
-                            return { ...current, [key]: { ...known, override: text } };
-                          })
-                        }
+                        showNpcPage={showNpcPage}
+                        onRegenerated={(version) => {
+                          setVersions((current) => ({ ...current, [key]: version }));
+                          void load(first.source, first.lineId!, true);
+                        }}
+                        onRewritten={() => void load(first.source, first.lineId!, true)}
                       />
                     </td>
                   </tr>

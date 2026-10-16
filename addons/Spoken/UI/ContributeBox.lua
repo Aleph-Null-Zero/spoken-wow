@@ -31,6 +31,7 @@ local function Build()
     frame:SetWidth(WIDTH)
     frame:SetHeight(HEIGHT)
     frame:SetPoint("CENTER")
+    if UISpecialFrames then table.insert(UISpecialFrames, "SpokenContributeBox") end -- close on Escape
     frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)
     frame:EnableMouse(true)
@@ -268,4 +269,14 @@ function Spoken:ShowContribution(payload, address, isLink, gather)
 
     ShowPayload(payload, address, isLink)
     return true
+end
+
+--- A report address in the copy box, with the context `build` returns in its fragment: a link
+--- that long outgrows a StaticPopup's edit box. `build` runs guarded, and the bare address is
+--- shown when it fails, returns nothing or will not encode: a report without context is still
+--- a report.
+function Spoken:ShowReport(url, build)
+    local ok, envelope = pcall(build)
+    local link = ok and envelope and self.Contribute and self.Contribute:Link(url, envelope)
+    return self:ShowContribution(link or url, nil, true)
 end

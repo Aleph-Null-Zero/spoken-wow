@@ -27,7 +27,7 @@ const safe = (s) => s.replace(/[<>:"/\\|?*]/g, "").replace(/\s+/g, " ").trim();
 async function main() {
   const all = await entries();
   const manifest = (await readJson(join(HERE, "manifest.json"))).pictures;
-  const zones = await readFile(join(ROOT, "addons/Spoken_Zones/Data/enUS/Zones.lua"), "utf8");
+  const zones = await readFile(join(ROOT, "addons/Spoken_Places/Data/enUS/Zones.lua"), "utf8");
   const zoneName = new Map([...zones.matchAll(/\[(\d+)\] = \{\s*\n\s*name = "([^"]+)"/g)].map((m) => [Number(m[1]), m[2]]));
 
   // The main page beside the Classic one the lore cites: "Arathi Highlands (Classic)" has 41

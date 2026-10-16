@@ -7,20 +7,20 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 local function LoadBooks()
     local SpokenBooks = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Books", SpokenBooks)
+        chunk("Spoken_Readables", SpokenBooks)
     end
     return SpokenBooks
 end
 
 local function Boot()
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     _G.SpokenBooksSettings = nil
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
@@ -40,19 +40,19 @@ end
 -- Its own loader, because LoadBooks above is deliberately the two files this file's other
 -- sections need: Events.lua is what creates the frame the events arrive at, and without it
 -- firing them reaches nothing and the test passes for the wrong reason.
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local bootEnv = stub.LoadSpoken(SPOKEN)
 bootEnv.Addon:Enable()
 local B0 = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B0)
+    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B0)
 end
 
 stub.FireEvent("ADDON_LOADED", "SomebodyElse")
 Expect("another addon's load leaves the saved variables alone", SpokenBooksSettings, nil)
 
-stub.FireEvent("ADDON_LOADED", "Spoken_Books")
+stub.FireEvent("ADDON_LOADED", "Spoken_Readables")
 Expect("the addon's own ADDON_LOADED writes the defaults", SpokenBooksSettings.autoplay, true)
 Expect("...and claims no source yet, because the player may not have loaded", B0.source, nil)
 
@@ -62,11 +62,26 @@ local claimed = B0.source
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 Expect("...and a second loading screen does not replace it", B0.source, claimed)
 
+-- The test line plays a page ClipFor can place, whichever key the pack lists first.
+_G.SpokenBooksData = { version = 1, index = {}, loose = {}, books = { [1] = { title = "T", pages = { 15 } } },
+    pages = { [15] = { book = 1, number = 1, text = "x" } } }
+-- Packs are tried in addon-name order: the unplaceable key is alone in the first.
+_G.SpokenBooksAudioPacks = {
+    SpokenBooksAudio_a = { version = 1, addon = "SpokenBooksAudio_a", pages = {
+        ["n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"] = { file = "n", len = 1 } } },
+    SpokenBooksAudio_b = { version = 1, addon = "SpokenBooksAudio_b", pages = { [15] = { file = "15", len = 1 } } } }
+B0:PlayTestLine()
+local queued = _G.Spoken:GetQueue()
+Expect("the test line skips a page nothing places and queues one that is placed",
+    queued[1] and queued[1].key, "b:15")
+_G.SpokenBooksData, _G.SpokenBooksAudioPacks = nil, nil
+
 local env, B = Boot()
 local Spoken = _G.Spoken
 
 ---------------------------------------------------------------- registration
 Expect("the books addon registers a source with the player", Spoken:GetSource("books"), B.source)
+Expect("...headed in the minimap menu by its page's name, in the player's language", B.source.title, B.L.OPT_PAGE_TITLE)
 -- No cap: a book is a bounded sequence somebody opened, not a burst of discoveries. Capped,
 -- the player trims the oldest waiting clip and a four-page book loses its middle.
 Expect("...with no queue limit", B.source.queueLimit, nil)

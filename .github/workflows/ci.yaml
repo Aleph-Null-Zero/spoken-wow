@@ -7,7 +7,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [master, develop]
+    branches: [master]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -37,6 +37,11 @@ jobs:
               - Makefile
               - addons/**
               - tests/**
+              - scripts/check-addon-xml.mjs
+              - pipelines/zones/tools/lua-syntax-check.py
+              - docs/spoken/CHANGELOG.md
+              - scripts/lib/changelog.mjs
+              - scripts/spoken/check-changelog.sh
             quests:
               - .github/workflows/ci.yaml
               - pipelines/quests/**
@@ -64,7 +69,10 @@ jobs:
               - .github/workflows/ci.yaml
               - pipelines/zones/**
               - pipelines/lib/**
-              - addons/Spoken_Zones/**
+              - addons/Spoken_Places/**
+              # The books pipeline's and the scripts' Node tests run in this job too.
+              - pipelines/books/**
+              - scripts/**
               # descriptions --check compares publishers/ with the READMEs generated from it.
               - publishers/**
               - addons/*/README.md
@@ -85,6 +93,17 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y luajit
       # The stub client is Lua 5.1, which is what 1.12 through retail all run.
       - run: make test-player
+      # No "--" inside an XML comment and every comment closed: one stray "--" makes the client
+      # load none of the files that .xml lists. globSync needs Node 22 or later.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: node scripts/check-addon-xml.mjs
+      # Block balance in Spoken_Places' Lua (make zones-lint).
+      - run: python3 pipelines/zones/tools/lua-syntax-check.py
+      # The changelog's rules: credits under Unreleased, and the .toc's version has a section.
+      - run: ./scripts/spoken/check-changelog.sh
 
   quests-python:
     name: Quests pipeline (Python)
@@ -168,3 +187,5 @@ jobs:
       - run: node pipelines/zones/tools/validate.mjs
       - run: node scripts/descriptions.mjs --check
       - run: node pipelines/zones/tools/locale/check-strings.mjs
+      - run: pnpm --filter @spoken/books-pipeline test
+      - run: node --test scripts/lib/*.test.mjs scripts/audio/*.test.mjs

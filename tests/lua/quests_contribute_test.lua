@@ -9,7 +9,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 -- The loader quest_dispatch_test.lua and quest_overlay_test.lua use: it boots the player
 -- itself, so there is no separate stub.LoadSpoken call here.
 local VoiceOver = stub.LoadQuests(QUESTS, SPOKEN)
@@ -33,6 +33,7 @@ world.npcGUID = "Creature-0-0-0-0-12345-0"
 stub.ShowPanel("QuestFrameDetailPanel")
 
 local envelope = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-accept", envelope)
 Expect("the source is quests", envelope:match("^!SPOKEN1 quests\n") ~= nil, true)
 Expect("the quest id is carried", envelope:match("\nquest=9123\n") ~= nil, true)
 Expect("the event is the panel on screen", envelope:match("\nevent=accept\n") ~= nil, true)
@@ -50,11 +51,31 @@ Expect("the addon field carries the real .toc version, not the \"dev\" fallback"
 stub.HidePanels()
 stub.ShowGossip("We stand ready.")
 local gossip = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-gossip", gossip)
 Expect("gossip carries the npc and no quest", gossip:match("\nquest=") == nil, true)
 Expect("...and the gossip text", gossip:match("\nWe stand ready%.\n") ~= nil, true)
 
 stub.HidePanels()
 Expect("nothing on screen contributes nothing", VoiceOver.Contribute:Capture(), nil)
+
+---------------------------------------------------------------- what a report carries
+-- The window on screen when it still shows the clip, so the NPC can be observed.
+stub.ShowPanel("QuestFrameDetailPanel")
+local clip = { questID = 9123, event = VoiceOver.Enums.SoundEvent.QuestAccept, unitGUID = world.npcGUID,
+    name = "Deathguard Linnea", title = "A Rough Start", text = "Kill six of them, Tester." }
+local onScreen = VoiceOver.Contribute:ReportContext(clip)
+Expect("a report on the clip on screen reads the window", onScreen
+    and onScreen:match("\nKill six of them%.\nThen come back%.\n") ~= nil, true)
+
+-- Report is offered after the window closes: the clip as it remembers itself.
+stub.HidePanels()
+local remembered = VoiceOver.Contribute:ReportContext(clip)
+Expect("...a closed window's clip from what it remembers", remembered
+    and remembered:match("\nquest=9123\nevent=accept\nnpc=12345 Deathguard Linnea\ntitle=A Rough Start\n") ~= nil, true)
+Expect("...its text with the reader put back as a token", remembered
+    and remembered:match("\nKill six of them, %$N%.\n") ~= nil, true)
+Expect("...and the addon version", remembered and remembered:match("\naddon=SpokenQuests/9%.9%.9\n") ~= nil, true)
+Expect("nothing on screen and no clip reports no context", VoiceOver.Contribute:ReportContext(nil), nil)
 
 ---------------------------------------------------------------- the reader put back as tokens
 -- The client expands $N, $C and $R to whoever is reading, so the text is sent with the
@@ -72,6 +93,23 @@ world.questText = "Eine Kriegerin, Tester."
 local inflected = VoiceOver.Contribute:Capture()
 Expect("...and the class in either gender's form", inflected:match("\nEine %$C, %$N%.\n") ~= nil, true)
 _G.LOCALIZED_CLASS_NAMES_FEMALE = nil
+
+-- A quest only the reader's class can take says the class as its own word, not as the reader's.
+world.playerClass, world.playerClassFile, world.playerClassID = "Paladin", "PALADIN", 2
+world.questText = "Tester, a paladin must reflect the Light."
+_G.SpokenQuestsCompendium = { quests = { [9123] = { "A Rough Start", classes = 2 } } }
+Expect("a quest only that class can take keeps the class as written",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a paladin must reflect the Light.")
+Expect("...also from the quest log",
+    VoiceOver.Contribute:Detemplate("A paladin, Tester.", 9123), "A paladin, $N.")
+_G.SpokenQuestsCompendium.quests[9123].classes = 2 + 4
+Expect("a quest two classes can take still puts the reader's class back",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a $c must reflect the Light.")
+_G.SpokenQuestsCompendium.quests[9123].classes = nil
+Expect("...as does a quest open to every class",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a $c must reflect the Light.")
+_G.SpokenQuestsCompendium = nil
+world.playerClassID = nil
 
 world.playerName = "Valaas Dawnsight"
 world.questText = "Greetings, young Valaas. The Dawnsight name is known, Valaas Dawnsight."
@@ -268,6 +306,7 @@ Expect("firing the callback hides the probe immediately, before any click",
     stub.playerModel and stub.playerModel.shown, false)
 
 local seen = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-observed", seen)
 Expect("the model file id is reported once the load has fired", seen:match("\nmodel=122055\n") ~= nil, true)
 Expect("the sex the client reports is carried too", seen:match("\nsex=2\n") ~= nil, true)
 Expect("the creature type is carried", seen:match("\ncreature=Humanoid\n") ~= nil, true)
@@ -561,6 +600,7 @@ _G.C_Container = {
 }
 stub.ShowPanel("QuestFrameDetailPanel")
 local item = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-item", item)
 Expect("an item that starts the quest is reported as an item", item:match("\nkind=item\n") ~= nil, true)
 Expect("...named by the bag item whose quest is on screen",
     item:match("\nnpc=211315 Underground Map\n") ~= nil, true)

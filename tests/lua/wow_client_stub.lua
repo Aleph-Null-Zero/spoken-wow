@@ -92,6 +92,33 @@ function M.HidePanels()
     world.gossipOptions = nil
 end
 
+--- The game's secret values: in an instance or in combat the Forever client hands addons some
+--- values that their code cannot index, compare or join (#357). M.Secrets(a, b, ...) marks those
+--- values secret, issecretvalue answers for them, and indexing a marked string throws, as the
+--- client's does. M.Secrets() with nothing ends it: no issecretvalue, as on a legacy client.
+--- Returns its first value, so a test can mark one where it hands it over.
+local secret = {}
+local stringIndex = getmetatable("").__index
+function M.Secrets(...)
+    secret = {}
+    local count = select("#", ...)
+    if count == 0 then
+        _G.issecretvalue = nil
+        getmetatable("").__index = stringIndex
+        return nil
+    end
+    for i = 1, count do
+        local value = select(i, ...)
+        if value ~= nil then secret[value] = true end
+    end
+    _G.issecretvalue = function(value) return value ~= nil and secret[value] == true end
+    getmetatable("").__index = function(s, key)
+        if secret[s] then error("attempt to index a secret string value", 2) end
+        return stringIndex[key]
+    end
+    return (...)
+end
+
 --- Deliver a client event to every frame registered for it.
 function M.FireEvent(event, ...)
     for _, frame in ipairs(allFrames) do
@@ -218,8 +245,14 @@ local function Widget(kind, name)
     function w:SetTexture(t) self.texture = t; self.atlas = nil; return true end
     function w:GetTexture() return self.texture end
     function w:SetAtlas(name) self.atlas = name; self.texture = nil end
+    -- A gradient stays on a texture until another replaces it, as the client keeps it.
+    function w:SetGradient(orientation, from, to) self.gradient = { orientation = orientation, from = from, to = to } end
     function w:GetAtlas() return self.atlas end
     function w:SetTexCoord(...) self.texCoord = { ... } end
+    -- Recorded: a greyed badge or toggle is all that says nothing is found or opens.
+    function w:SetDesaturated(v) self.desaturated = v and true or false end
+    function w:IsDesaturated() return self.desaturated or false end
+    function w:SetVertexColor(r, g, b, a) self.vertexColor = { r, g, b, a } end
     function w:CreateTexture(n, layer) local t = Widget("Texture", n); t.parent = self; t.layer = layer; return t end
     -- A mask, as the client hands one back: the small window rounds a portrait with it.
     function w:CreateMaskTexture(n) local t = Widget("MaskTexture", n); t.parent = self; return t end
@@ -295,6 +328,27 @@ local function Widget(kind, name)
 end
 M.Widget = Widget
 
+-- The atlases the Compendium's list draws, at Forever's sizes, as C_Texture.GetAtlasInfo gives
+-- them: each the whole of a file named after it, so a test reads which piece of which was drawn
+-- from a texture's file and tex coords.
+local LIST_ATLASES = {
+    ["Objective-Header-CampaignHorde"] = { 274, 42 }, ["Objective-Header-CampaignAlliance"] = { 274, 42 },
+    ["glues-characterselect-card-singles-c60"] = { 321, 100 },
+    ["glues-characterselect-card-singles-hover-c60"] = { 321, 100 },
+    ["glues-characterselect-card-selected-c60"] = { 342, 122 },
+    ["collections-itemborder-collected"] = { 56, 56 }, ["questlog-storylineicon"] = { 22, 22 },
+    ["ui-frame-bar-fill-yellow"] = { 256, 17 }, ["PetJournal-ExpBar-Left"] = { 11, 11 },
+    ["PetJournal-ExpBar-Mid"] = { 11, 11 }, ["PetJournal-ExpBar-Right"] = { 11, 11 },
+    ["questlog-icon-expand"] = { 18, 18 }, ["questlog-icon-shrink"] = { 18, 18 },
+    ["questlog-icon-checkmark-yellow"] = { 17, 14 }, ["LFG-lock"] = { 17, 21 },
+}
+function M.ListAtlas(name)
+    local size = LIST_ATLASES[name]
+    if not size then return nil end
+    return { width = size[1], height = size[2], file = "file:" .. name,
+        leftTexCoord = 0, rightTexCoord = 1, topTexCoord = 0, bottomTexCoord = 1 }
+end
+
 local function MakeFrame(name)
     return Widget("Frame", name)
 end
@@ -329,14 +383,14 @@ end
 
 local _G = _G
 
--- A current Blizzard client by default, which is where the 10 Hz watcher runs at all.
--- SetClient() swaps in a legacy client: those have no WOW_PROJECT_ID, and 1.12
--- reports no interface version at all, which is exactly what Version.lua keys on.
+-- The Forever client by default, the one Spoken is made on. SetClient() swaps in another:
+-- the legacy ones have no WOW_PROJECT_ID, and 1.12 reports no interface version at all,
+-- which is exactly what Version.lua keys on.
 local CLIENTS = {
     ["20506"] = { "2.5.6", "60000", 20506, 5 },
-    -- The Forever client: a mainline-flavoured client carrying vanilla content, and the one
-    -- whose quest log is the modern map-attached one rather than the named QuestLogFrame.
-    ["16001"] = { "1.60.1", "69913", 16001, 1 },
+    -- Forever: vanilla content on the modern engine, with a project id of its own, and the
+    -- client whose quest log is the modern map-attached one rather than the named QuestLogFrame.
+    ["16001"] = { "1.60.1", "70338", 16001, 18 },
     ["11509"] = { "1.15.9", "69109", 11509, 2 },
     ["1.12"]  = { "1.12.1", "5875", nil, nil },
     ["2.4.3"] = { "2.4.3", "8606", 20400, nil },
@@ -374,7 +428,7 @@ function _G.GetRewardText() return world.rewardText end
 function _G.UnitName(unit) return unit == "player" and (world.playerName or "Tester") or world.npcName end
 -- Nil unless a test sets them: a class or race the stub made up would be swapped out of every
 -- text a test captures, and only the tests about that swap should see it happen.
-function _G.UnitClass() return world.playerClass, world.playerClassFile end
+function _G.UnitClass() return world.playerClass, world.playerClassFile, world.playerClassID end
 function _G.UnitRace() return world.playerRace, world.playerRaceFile end
 function _G.GetRealmName() return "Realm" end
 function _G.UnitGUID() return world.npcGUID end
@@ -517,6 +571,7 @@ function M.LabelsUnder(frame, found)
 end
 function _G.CreateFont(name) return Widget("Font", name) end
 _G.GameFontNormal = Widget("Font", "GameFontNormal")
+_G.CreateColor = _G.CreateColor or function(r, g, b, a) return { r = r, g = g, b = b, a = a } end
 _G.GameTooltip = Widget("Frame", "GameTooltip")
 function _G.GameTooltip_Hide() end
 function _G.MouseIsOver() return false end
@@ -538,7 +593,7 @@ M.modernSettings = {
     OpenToCategory = function() return true end,
 }
 _G.Settings = M.modernSettings
-M.SetClient("20506")
+M.SetClient("16001")
 
 -- What the zones addon's playback and autoplay files reach for.
 M.chat = {}
@@ -596,11 +651,12 @@ M.gossipAPI = {
     GetOptions = function()
         local infos = {}
         for i, name in ipairs(world.gossipOptions or {}) do
-            infos[i] = { name = name, gossipOptionID = GossipOptionID(i) }
+            infos[i] = { name = name, gossipOptionID = GossipOptionID(i), orderIndex = i }
         end
         return infos
     end,
     SelectOption = function() end,
+    SelectOptionByIndex = function() end,
 }
 --- The pre-namespace pair: options come back flattened as name, type, name, type...
 function _G.GetGossipOptions()
@@ -613,11 +669,14 @@ function _G.GetGossipOptions()
 end
 function _G.SelectGossipOption() end
 
---- The player clicking one of the page's options, through whichever API the client has.
-function M.SelectGossipOption(name)
+--- The player clicking one of the page's options, through whichever API the client has. DialogueUI
+--- picks by index (`byIndex`), the game's own window by id.
+function M.SelectGossipOption(name, byIndex)
     for i, option in ipairs(world.gossipOptions or {}) do
         if option == name then
-            if _G.C_GossipInfo then
+            if _G.C_GossipInfo and byIndex then
+                _G.C_GossipInfo.SelectOptionByIndex(i)
+            elseif _G.C_GossipInfo then
                 _G.C_GossipInfo.SelectOption(GossipOptionID(i))
             else
                 _G.SelectGossipOption(i)
@@ -629,8 +688,8 @@ function M.SelectGossipOption(name)
 end
 
 --- ...and the NPC answering with `nextText` on a fresh GOSSIP_SHOW.
-function M.PickGossipOption(name, nextText)
-    M.SelectGossipOption(name)
+function M.PickGossipOption(name, nextText, byIndex)
+    M.SelectGossipOption(name, byIndex)
     M.ShowGossip(nextText)
     M.FireEvent("GOSSIP_SHOW")
 end
@@ -1080,11 +1139,15 @@ libs["AceDB-3.0"] = {
         _G[name] = sv
         sv.profiles = sv.profiles or {}
         sv.profiles.Default = Merge(defaults.profile, sv.profiles.Default)
+        -- The profile this character starts on: a test sets M.StartProfile to be another character.
+        local startName = M.StartProfile or "Default"
+        sv.profiles[startName] = Merge(defaults.profile, sv.profiles[startName])
         sv.char = sv.char or {}
         local charKey = next(sv.char) or "Tester - Realm"
         sv.char[charKey] = Merge(defaults.char, sv.char[charKey])
         sv.global = sv.global or {}
-        local db = { profile = sv.profiles.Default, char = sv.char[charKey], global = sv.global, sv = sv }
+        local db = { profile = sv.profiles[startName], char = sv.char[charKey], global = sv.global, sv = sv,
+            keys = { char = charKey } }
         db.RegisterCallback = function() end
         function db:Shutdown()
             StripDefaults(self.profile, defaults.profile)
@@ -1092,7 +1155,7 @@ libs["AceDB-3.0"] = {
         end
         table.insert(databases, db)
         -- The profile half of AceDB, which the settings panels offer inline.
-        local current = "Default"
+        local current = startName
         function db:GetCurrentProfile() return current end
         function db:GetProfiles()
             local names = {}
@@ -1125,14 +1188,18 @@ end
 --- .toc's order), then initialises the saved variables the way ADDON_LOADED would.
 function M.LoadSpoken(addonDirectory)
     for _, file in ipairs({ "Environment", "Version", "Core", "SoundUtils", "Callbacks", "SoundQueue", "Sources", "Developer", "OtherSounds",
-        "Strings", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU", "Locale/koKR", "Locale/zhCN",
-        "Locale/zhTW", "UI/Layout", "UI/DialogueUITheme", "UI/Transcript", "UI/Subtitle", "UI/WordMarks", "UI/Search", "UI/Portrait", "UI/StaticPortrait", "UI/Actions", "UI/PlayerFrame",
-        "UI/MinimalPlayer", "UI/DialogueUIPlayer", "UI/MinimapButton",
+        "BackgroundSound", "Strings", "Locale/deDE", "Locale/esES", "Locale/frFR", "Locale/ptBR", "Locale/ruRU", "Locale/koKR", "Locale/zhCN",
+        "Locale/zhTW", "UI/Layout", "UI/DialogueUITheme", "UI/Transcript", "UI/Subtitle", "UI/WordMarks", "UI/Search", "UI/Portrait", "UI/StaticPortrait", "UI/Actions", "UI/Snap", "UI/Face", "UI/PlayerFrame",
+        "UI/MinimalPlayer", "UI/DialogueUIPlayer", "UI/DialogueUITransitions", "UI/MinimapButton",
         -- Real LibDeflate, not a hand-faked stub library: Contribute:Encode's round trip through
         -- actual compression is the point of testing it at all.
         "UI/Options", "UI/DialogueUIOptions", "UI/Welcome", "API", "Libs/LibDeflate/LibDeflate", "Compat", "UI/ContributeBox", "Contribute", "Gather" }) do
         dofile(addonDirectory .. file .. ".lua")
     end
+    -- Azeroth's Compendium, its dungeons and its text view (Compendium.xml).
+    dofile(addonDirectory .. "Data/Dungeons.lua")
+    dofile(addonDirectory .. "UI/TextView.lua")
+    dofile(addonDirectory .. "UI/Compendium.lua")
     local env = _G.SpokenEnv
     env.Addon:InitDB()
     -- The suites time the queue by each module's own gap; the player's pause between lines has
@@ -1171,11 +1238,13 @@ end
 --- Load the zones addon's playback files the way the client would -- each chunk receives
 --- the addon name and the shared table as varargs -- against a hand-built SpokenZones table
 --- carrying the few Core.lua facts Audio.lua and Autoplay.lua read. Returns that table.
---- UI/Compendium.lua too, as the toc loads it: a clip's header is the place above, from its tree.
+--- Spoken's UI/Compendium.lua too where Spoken has not loaded it: a clip's header is the place
+--- above, from its tree.
 function M.LoadZones(addonDirectory, SpokenZones)
-    for _, file in ipairs({ "Audio", "UI/ReportButton", "Autoplay", "UI/Compendium" }) do
+    if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
+    for _, file in ipairs({ "Audio", "UI/ContributeButton", "Autoplay" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
-        chunk("Spoken_Zones", SpokenZones)
+        chunk("Spoken_Places", SpokenZones)
     end
     return SpokenZones
 end
@@ -1317,14 +1386,15 @@ function M.LoadQuestsAlone(addonDirectory)
     return VO
 end
 
---- The quests addon's settings panel, which the dispatch tests have no use for: its two
---- files, on top of an addon already loaded by LoadQuests or LoadQuestsAlone.
+--- The quests addon's settings pages, quests' and gossip's (VO.GossipSettingsPanel), which the
+--- dispatch tests have no use for: their files, on top of an addon already loaded by
+--- LoadQuests or LoadQuestsAlone. Returns the quests page.
 function M.LoadQuestsPanel(addonDirectory, VO)
-    dofile(addonDirectory .. "UI/Layout.lua")
     -- SettingsPanel builds its DialogueUI section only with the bridge loaded; a bridge test
     -- has loaded and hooked its own already.
     if not VO.DialogueUIBridge then dofile(addonDirectory .. "UI/DialogueUIBridge.lua") end
     dofile(addonDirectory .. "UI/SettingsPanel.lua")
+    dofile(addonDirectory .. "UI/GossipSettingsPanel.lua")
     return VO.SettingsPanel
 end
 

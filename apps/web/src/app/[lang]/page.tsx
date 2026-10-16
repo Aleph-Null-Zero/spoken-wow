@@ -32,7 +32,7 @@ function DiscordIcon({ className }: { className?: string }) {
  * it, and how to install it.
  *
  * Top to bottom: the logo and one sentence, the Discord invite, a button per explorer, then
- * the install section. That leads with Spoken Everything, because a player using an addon
+ * the install section. That leads with Spoken English, because a player using an addon
  * manager in English needs nothing else, and follows with one table of every addon and every
  * sound pack by language for everybody else.
  *
@@ -57,8 +57,8 @@ type Addon = {
 const ADDONS: Addon[] = [
   // First, since every other row needs it.
   {
-    slug: "spoken-player",
-    label: "Spoken Player",
+    slug: "spoken",
+    label: "Spoken",
     description: "Plays the audio for the other addons. Required by all of them.",
     wago: true,
     release: "spoken/",
@@ -73,7 +73,7 @@ const ADDONS: Addon[] = [
   },
   {
     slug: "spoken-zones",
-    label: "Spoken Zones",
+    label: "Spoken Places",
     description: "Narrates the lore of each zone as you enter it.",
     wago: true,
     release: "zones/",
@@ -81,8 +81,8 @@ const ADDONS: Addon[] = [
   },
   {
     slug: "spoken-books",
-    label: "Spoken Books",
-    description: "Reads books, letters and notes aloud.",
+    label: "Spoken Readables",
+    description: "Reads books, letters, notes and plaques aloud.",
     wago: true,
     release: "books/",
     section: "books",
@@ -91,12 +91,12 @@ const ADDONS: Addon[] = [
 
 /**
  * The explorers. Each carries the addon's own icon, the same art CurseForge and the in-game
- * addon list show -- the exported SVGs from pipelines/*, copied into public/icons/.
+ * addon list show -- the 512 px renders in pipelines/*, scaled to 84 px in public/icons/.
  */
 const EXPLORERS = [
-  { href: "/quests", icon: "/icons/quests.svg", title: "Quests" },
-  { href: "/zones", icon: "/icons/zones.svg", title: "Zones" },
-  { href: "/books", icon: "/icons/books.svg", title: "Books" },
+  { href: "/quests", icon: "/icons/quests.png", title: "Quests" },
+  { href: "/zones", icon: "/icons/zones.png", title: "Places" },
+  { href: "/books", icon: "/icons/books.png", title: "Readables" },
 ];
 
 /** The languages with at least one pack, in the site's order: the table's columns. */
@@ -167,8 +167,8 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
                 href={explorer.href}
                 className="hover:bg-accent inline-flex items-center gap-2.5 rounded-lg border px-5 py-3 font-medium transition-colors"
               >
-                {/* Plain img, not next/image: fixed-size SVGs, which the optimiser passes
-                    through untouched anyway. */}
+                {/* Plain img, not next/image: fixed-size PNGs already at 3x, which the
+                    optimiser has nothing left to do for. */}
                 <img src={explorer.icon} alt="" width={28} height={28} className="h-7 w-7" />
                 {explorer.title}
               </Link>
@@ -180,7 +180,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
 
         <div className="mt-4 text-sm">
           <p>
-            Install <External href={`${CURSEFORGE}/spoken`}>Spoken Everything</External> from
+            Install <External href={`${CURSEFORGE}/spoken-english`}>Spoken English</External> from
             CurseForge or WowUp-CF if you use one of these managers. It brings in every addon and
             its English audio.
           </p>

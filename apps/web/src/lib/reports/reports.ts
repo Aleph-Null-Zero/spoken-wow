@@ -6,6 +6,7 @@
  * bundle. Same reasoning as the note atop lib/line-fields.ts.
  */
 
+import type { ReportContext } from "@/lib/reports/context";
 import type { Source } from "@/lib/sections";
 
 export const CATEGORIES = [
@@ -26,7 +27,7 @@ export type Status = (typeof STATUSES)[number];
 export const SOURCE_LABELS: Record<Source, string> = {
   quests: "Quests",
   zones: "Zones",
-  books: "Books",
+  books: "Writings",
 };
 
 /** Written for a player rather than an editor: the reporter is not reading the schema. */
@@ -82,6 +83,8 @@ export type Report = {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
+  /** What the player's addon said it saw, or null for a report that came without it. */
+  context: ReportContext | null;
 };
 
 export function isCategory(value: unknown): value is Category {

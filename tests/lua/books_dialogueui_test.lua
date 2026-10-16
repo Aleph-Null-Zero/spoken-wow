@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 -- The Hillsbrad Town Registry: four real pages of one real book, 261 through 265; a pack with
@@ -22,15 +22,15 @@ _G.SpokenBooksAudioPacks = {
 
 local function LoadBooks()
     local SpokenBooks = {}
-    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "UI/CopyLink",
+    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Contribute", "Audio", "Playlist", "UI/CopyLink",
         "UI/DialogueUIBook" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Books", SpokenBooks)
+        chunk("Spoken_Readables", SpokenBooks)
     end
     return SpokenBooks
 end
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
@@ -161,14 +161,14 @@ row.play.scripts.OnLeave(row.play)
 row.report.scripts.OnClick(row.report)
 local box = Spoken.ContributeBox
 Expect("Report gives the address for the page being read, in Spoken's box",
-    box and box.editBox:GetText(), B:ReportURL(261))
+    box and (H.SplitReportLink(box.editBox:GetText())), B:ReportURL(261))
 -- The letter open in the view while the Registry is still read: Report is for the letter shown.
 B.lastPage = 16
 Book:Draw()
 row.report.scripts.OnClick(row.report)
 box = Spoken.ContributeBox
 Expect("...and with another book open in the view, the address for that book, not the one being read",
-    box and box.editBox:GetText(), B:ReportURL(16))
+    box and (H.SplitReportLink(box.editBox:GetText())), B:ReportURL(16))
 B.lastPage = 265
 Book:Draw()
 row.play.scripts.OnClick(row.play, "LeftButton")
@@ -240,6 +240,21 @@ Book:Draw()
 Expect("a book no pack voices greys Play", row.play:IsEnabled(), false)
 Expect("...and has nothing to report", row.report:IsShown(), false)
 Expect("...Skip and Play moving up to the close button", row.skip.anchor.relativeTo, row.frame)
+
+---------------------------------------------------------------- a book only a pack has
+local MINTED = "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"
+_G.SpokenBooksAudioPacks.SpokenBooksAudio_zz = { version = 1, addon = "SpokenBooksAudio_zz",
+    pages = { [MINTED] = { file = MINTED, len = 5 } },
+    places = { [MINTED] = { book = "n1", number = 1 } },
+    books = { n1 = { pages = { MINTED } } } }
+B.lastPage = MINTED
+Book:Draw()
+Expect("a book only a pack has lights Play", row.play:IsEnabled(), true)
+Expect("...and has a report", row.report:IsShown(), true)
+row.report.scripts.OnClick(row.report)
+box = Spoken.ContributeBox
+Expect("...to its key", box and box.editBox:GetText(), B:ReportURL(MINTED))
+_G.SpokenBooksAudioPacks.SpokenBooksAudio_zz = nil
 
 ---------------------------------------------------------------- closing
 view:Hide()

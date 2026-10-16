@@ -3,12 +3,8 @@ import { describe, expect, it } from "vitest";
 import { corpusLookup } from "./existing";
 
 describe("corpusLookup", () => {
-  it("reads a books key as the page id it is", () => {
-    expect(corpusLookup("books", "261")).toEqual({ source: "books", pageId: 261 });
-  });
-
-  it("refuses a books key that is not digits", () => {
-    expect(corpusLookup("books", "b261")).toBe(null);
+  it("answers null for books, whose key is a checksum naming no page", () => {
+    expect(corpusLookup("books", "261")).toBe(null);
   });
 
   it("splits a zones key on its first colon, slugging the rest", () => {

@@ -64,9 +64,12 @@ E.SoundUtils={WhyInaudible=function() end,IsMutedByPlayer=function() return fals
 E.StaticPortrait={Configure=function() return false end,Resolved=function() return false end}
 E.Portrait={Configure=function(_,frame) frame.active='mock-model' end}
 dofile(addons .. 'Spoken/UI/Actions.lua')
+dofile(addons .. 'Spoken/UI/Snap.lua')
+dofile(addons .. 'Spoken/UI/Face.lua')
 dofile(addons .. 'Spoken/UI/PlayerFrame.lua')
 dofile(addons .. 'Spoken/UI/MinimalPlayer.lua')
 dofile(addons .. 'Spoken/UI/DialogueUIPlayer.lua')
+dofile(addons .. 'Spoken/UI/DialogueUITransitions.lua')
 E.Minimap={Setup=function() end}; E.Options={Setup=function() end}
 -- The windows first, with the word lit: the subtitles a first install shows are switched to
 -- below, and the defaults themselves are pinned in defaults_test.
@@ -186,6 +189,7 @@ T:SetEnabled(false); Advance(10)
 Check(not T.frame:IsShown() and Q:IsPlaying(a),'hiding captions leaves audio playing')
 T:SetEnabled(true)
 Check(T.frame:IsShown() and T:GetElapsed()==10 and HighlightCount()>=1,'reopening catches up to current narration')
+M.fader:Step(1)
 Q:Skip()
 Check(T.clip==a and T.held,'skip keeps the first line words while the window fades out')
 M.fader:Step(1)
@@ -329,19 +333,21 @@ frameCfg.Style='minimal'; E.PlayerFrame:RefreshConfig()
 Check(T.frame:IsVisible(),'showing the player restores its attached captions')
 local movedTop=M.frame:GetTop()
 T:SetEnabled(false)
-Check(M.frame:GetHeight()==98 and M.frame:IsShown(),'disabling captions restores the original compact player height')
-Check(math.abs(M.frame:GetTop()-movedTop)<.001,'removing captions keeps the portrait in place')
+M.fader:Step(1)
+Check(not M.frame:IsShown() and not T.frame:IsVisible() and Q:IsPlaying(),'Show Narrator off puts the player away while audio continues')
 T:SetEnabled(true)
-Check(math.abs(M.frame:GetTop()-movedTop)<.001,'restoring captions keeps the portrait in place')
+M.fader:Step(1)
+Check(M.frame:IsShown() and math.abs(M.frame:GetTop()-movedTop)<.001,'Show Narrator on brings the player back where it was')
 T:TurnPage(-1); T.frame:Fire('OnClick','LeftButton')
 Check(not T.manualScroll,'clicking the caption text resumes following')
 T.frame:Fire('OnClick','RightButton')
 Check(M.menu:IsShown(),'right-clicking captions opens the existing player menu')
 M.menu:Hide()
+GetCursorPosition=GetCursorPosition or function() return 0,0 end
 frameCfg.LockFrame=true; E.PlayerFrame:RefreshConfig(); M:StartDrag()
-Check(not M.frame.moving and not M.resizer:IsShown(),'the player lock controls the attached caption layout')
+Check(E.Snap.Active()==nil and not M.resizer:IsShown(),'the player lock controls the attached caption layout')
 frameCfg.LockFrame=false; E.PlayerFrame:RefreshConfig(); M.header:Fire('OnDragStart')
-Check(M.frame.moving,'the existing header still moves the whole player')
+Check(E.Snap.Active()==M.frame,'the existing header still moves the whole player')
 M.header:Fire('OnDragStop')
 frameCfg.Style='classic'; E.PlayerFrame:RefreshConfig()
 local original=E.PlayerFrame.frame
@@ -384,7 +390,7 @@ for _,size in ipairs({12,26}) do
             M.frame:SetWidth(width); T:RefreshConfig()
                         local displayed={}
             for page=1,T:PageCount() do
-                T:ScrollTo((page-1)*count+1)
+                T.manualScroll=true; T.topTarget=T:Snap((page-1)*count+1); T.top=T.topTarget; T:Update()
                 CheckLayout()
                 displayed[#displayed+1]=Plain(Captions())
             end
@@ -453,8 +459,6 @@ cfg.Typewriter=false
 cfg.ScrollMode='line'; T:Update()
 T.frame:Fire('OnMouseWheel',1)
 Check(T.manualScroll and T.topTarget<target,'the wheel scrolls back by lines, holding there')
-T:ScrollTo(1)
-Check(T.top==1 and T.manualScroll,'a scrollbar drag lands at once')
 T:Follow()
 Check(not T.manualScroll,'clicking the captions follows the voice again')
 Q:RemoveAllSoundsFromQueue()
@@ -598,15 +602,24 @@ Check(not S.controls:IsShown(),'once the pointer leaves they fade out, and go')
 
 local centre=UIParent:GetWidth()/2
 Check(math.abs(S.frame:GetTop()-336)<.001,'the subtitle starts at its default height')
+local shift=true
+IsShiftKeyDown=function() return shift end
 S.frame:Fire('OnDragStart')
-cursor[1],cursor[2]=300,80; S.frame:Fire('OnUpdate',.05)
-Check(math.abs(S.frame:GetTop()-416)<.001 and math.abs(S.frame:GetCenter()-centre)<.001,
-    'dragging moves the subtitle up with the cursor and never sideways')
-cursor[2]=164; S.frame:Fire('OnDragStop'); cursor[1],cursor[2]=0,0
-Check(math.abs(S.frame:GetTop()-500)<.001 and math.abs(S.frame:GetCenter()-centre)<.001
-    and E.Addon:Layout().Subtitle.top==500,'a dragged subtitle stays at the height it was dropped, on the centre line')
-S.frame:Fire('OnDragStart'); cursor[2]=5000; S.frame:Fire('OnDragStop'); cursor[2]=0
+cursor[1],cursor[2]=100,80; E.Snap.Move()
+Check(math.abs(S.frame:GetTop()-416)<.001 and math.abs(S.frame:GetCenter()-centre-100)<.001,
+    'dragging moves the subtitle with the cursor, up and sideways')
+cursor[2]=164; E.Snap.Move(); S.frame:Fire('OnDragStop'); cursor[1],cursor[2]=0,0
+Check(math.abs(S.frame:GetTop()-500)<.001 and math.abs(S.frame:GetCenter()-centre-100)<.001
+    and E.Addon:Layout().Subtitle.top==500 and math.abs(E.Addon:Layout().Subtitle.x-100)<.001,
+    'a dragged subtitle stays where it was dropped')
+S.frame:Fire('OnDragStart'); cursor[2]=5000; E.Snap.Move(); S.frame:Fire('OnDragStop'); cursor[2]=0
 Check(math.abs(S.frame:GetTop()-UIParent:GetHeight())<.001,'it cannot be dragged off the top of the screen')
+shift=false
+S:Reset(); S:Place()
+S.frame:Fire('OnDragStart'); cursor[1]=4; E.Snap.Move(); S.frame:Fire('OnDragStop'); cursor[1]=0
+Check(math.abs(S.frame:GetCenter()-centre)<.001 and E.Addon:Layout().Subtitle.x==0,
+    'a subtitle dropped near the middle of the screen holds on it')
+shift=true
 S:Reset(); E.Addon:Layout().Subtitle={top=500}; S:Place()
 local droppedCenter=S.frame:GetCenter()
 cfg.SubtitleScale=1.5; T:RefreshConfig()

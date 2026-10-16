@@ -11968,19 +11968,5 @@
     "dictionaryId": "Elx0hcDze8EXW2rImeLT",
     "dictionaryVersionId": "ChaiSYKomLhEsnqpPSkx",
     "generatedAt": "2026-08-09T17:05:38.392Z"
-  },
-  "z:947": {
-    "file": "947/zone",
-    "textHash": "328c1683eedd06e49637ef0885fcce7cfc045944",
-    "chars": 569,
-    "credits": 347,
-    "durationSec": 38.687,
-    "bytes": 619459,
-    "voiceId": "ggodpz28jXGN11DlccGk",
-    "modelId": "eleven_v3",
-    "outputFormat": "mp3_44100_128",
-    "dictionaryId": "Elx0hcDze8EXW2rImeLT",
-    "dictionaryVersionId": "ChaiSYKomLhEsnqpPSkx",
-    "generatedAt": "2026-08-09T16:50:01.390Z"
   }
 }

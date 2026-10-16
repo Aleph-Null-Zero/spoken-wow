@@ -7,7 +7,7 @@ import SortQueue from "@/components/reports/SortQueue";
 import { auth } from "@/lib/auth";
 import { viewerOf } from "@/lib/grants/store";
 import { BASE_LANG } from "@/lib/lang";
-import { can } from "@/lib/permissions";
+import { can, isAdmin } from "@/lib/permissions";
 import { sortQueue } from "@/lib/reports/sort";
 import { listReports, skippedIds } from "@/lib/reports/store";
 import { isSource } from "@/lib/sections";
@@ -39,6 +39,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string;
       // English quest text is rewritten through an override, which spends nothing itself but
       // is guarded as regeneration is (OverrideDialog); every other text is an edit.
       canEditText={section === "quests" && lang === BASE_LANG ? canRegenerate : true}
+      showNpcPage={isAdmin(session.user.role)}
     />
   );
 }

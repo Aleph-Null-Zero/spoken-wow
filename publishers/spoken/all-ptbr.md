@@ -3,8 +3,8 @@ curseforge: 1746508
 lang: ptBR
 version: 1.0.0
 slug: spoken-portuguese
-name: Spoken: Portuguese
-summary: Meta package: installs Spoken Player with every Brazilian Portuguese voice pack, quests, gossip, zones and books. Install through the CurseForge app.
+name: Spoken Portuguese
+summary: Meta package: installs Spoken with every Brazilian Portuguese voice pack, quests, gossip, zones and books. Install through the CurseForge app.
 categories:
   - Audio & Video
   - Roleplay
@@ -14,21 +14,21 @@ license: MIT
 
 ⚠️ NOT for manual download, install only via CurseForge app ⚠️
 
-**Install this and everything is voiced in Brazilian Portuguese.** It holds no audio and no code — it is a few kilobytes that names Spoken Player and every Brazilian Portuguese sound pack as a dependency, so your addon manager fetches the lot.
+**Install this and everything is voiced in Brazilian Portuguese.** It holds no audio and no code — it is a few kilobytes that names Spoken and every Brazilian Portuguese sound pack as a dependency, so your addon manager fetches the lot.
 
 ## What it installs
 
-[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Zones and Spoken Books inside it, and the Brazilian Portuguese voice packs:
+[Spoken](https://www.curseforge.com/wow/addons/spoken), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Brazilian Portuguese voice packs:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue | [Portuguese Spoken Quests](https://www.curseforge.com/wow/addons/portuguese-spoken-quests) |
-| Spoken Quests | NPC gossip | [Portuguese Spoken Quests: Gossip](https://www.curseforge.com/wow/addons/portuguese-spoken-quests-gossip) |
-| Spoken Zones | zone and subzone lore | [Spoken Zones Audio: Portuguese](https://www.curseforge.com/wow/addons/spoken-zones-audio-ptbr) |
-| Spoken Books | books, letters, notes and plaques | [Spoken Books Audio: Portuguese](https://www.curseforge.com/wow/addons/spoken-books-audio-ptbr) |
+| Spoken Quests | quest dialogue | [Spoken Portuguese Audio: Quests](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-quests-shared) |
+| Spoken Quests | NPC gossip | [Spoken Portuguese Audio: Gossip](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-gossip) |
+| Spoken Places | zone and subzone lore | [Spoken Portuguese Audio: Places](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-places) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Portuguese Audio: Readables](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-readables) |
 
 ## Language
 
 Spoken speaks in your client's language by default. To hear Brazilian Portuguese on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Brazilian Portuguese packs do not hold.
 
-English has its own set: [Spoken Everything](https://www.curseforge.com/wow/addons/spoken).
+English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).

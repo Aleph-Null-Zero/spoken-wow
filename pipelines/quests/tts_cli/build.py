@@ -78,11 +78,11 @@ VoiceOver.DataModules:Register("{module}", {module})
 # only once no supported release still looks for it.
 #
 # The Interface line names every client the packs ship for - Era, Anniversary, Forever - as
-# the zones and books packs do, after 100000: the 1.12/2.4.3/3.3.5 clients read the first
+# the zones and books packs do, after 100007: the 1.12/2.4.3/3.3.5 clients read the first
 # number alone and refuse one below 20000. DataModules turns checkAddonVersion off around LoadAddOn, which
 # loads a pack a client calls out of date, but Forever build 70170 calls an Interface it does
 # not list incompatible instead, and nothing turns that off: the pack has to name the client.
-DEFAULT_TITLE = "Spoken Quests Audio"
+DEFAULT_TITLE = "Spoken Audio: Quests"
 
 #: The TOC key naming the language a pack was recorded in. Must match what the addon's
 #: DataModules.lua reads.
@@ -91,11 +91,23 @@ LANGUAGE_KEY = "X-SpokenQuests-Language"
 #: The artwork the client shows beside the addon's name in the AddOns list. Committed as a TGA
 #: rather than converted at build time, so building needs no ffmpeg; tools/make_icon.py is what
 #: made it, and its header explains the format.
-ICON_SOURCE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                           "assets", "icon", "spoken-quests.tga")
+ICON_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "assets", "icon")
 ICON_NAME = "icon.tga"
 
-TOC_HEADER = """## Interface: 100000, 11509, 20506, 16001
+
+def icon_source(language: str = None) -> str:
+    """English's mark, or the language's: the same mark with its badge, so a language's packs
+    are told apart from English's in the AddOns list. A language without one is an error
+    rather than English's mark, which would ship a pack that looks like the wrong language."""
+    if not language or language == "enUS":
+        return os.path.join(ICON_DIR, "spoken-quests.tga")
+    path = os.path.join(ICON_DIR, f"spoken-quests-{language}.tga")
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"no icon for {language}: {path} (make quests-icon)")
+    return path
+
+TOC_HEADER = """## Interface: 100007, 11509, 20506, 16001
 ## Title: {title}
 ## Notes: Contains voiceovers for content released during the Vanilla era.|n|nIt's |cFF20FF20OK|r for this addon to appear |cFF808080"disabled"|r or |cFFFF2020"out of date"|r, it's compatible with any client and |cFFFFD200Spoken Quests|r will load it even if it's disabled or out of date.
 ## Version: {version}
@@ -106,10 +118,8 @@ TOC_HEADER = """## Interface: 100000, 11509, 20506, 16001
 ## X-Child-Of: Spoken_Quests
 ## X-SpokenQuests-DataModule-Version: 1
 ## X-SpokenQuests-DataModule-Priority: 100
-## X-SpokenQuests-DataModule-Maps: 0, 1, 30, 33, 43, 47, 48, 70, 90, 109, 129, 189, 209, 229, 230, 289, 309, 329, 349, 369, 389, 429, 469, 509, 531, 533
 ## X-VoiceOver-DataModule-Version: 1
 ## X-VoiceOver-DataModule-Priority: 100
-## X-VoiceOver-DataModule-Maps: 0, 1, 30, 33, 43, 47, 48, 70, 90, 109, 129, 189, 209, 229, 230, 289, 309, 329, 349, 369, 389, 429, 469, 509, 531, 533
 
 Module.lua
 """
@@ -457,7 +467,7 @@ def build_module(corpus: dict, store_dir: str, dist_dir: str = DEFAULT_DIST_DIR,
     write_sound_length_table_lua(module_name, sounds_dir, generated_dir)
     written.append("sound_length_table.lua")
 
-    shutil.copy2(ICON_SOURCE, os.path.join(module_dir, ICON_NAME))
+    shutil.copy2(icon_source(language), os.path.join(module_dir, ICON_NAME))
 
     with open(os.path.join(module_dir, "Module.lua"), "w", encoding="utf-8") as f:
         f.write(MODULE_LUA.format(module=module_name, extension=extension))

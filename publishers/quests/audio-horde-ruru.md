@@ -7,9 +7,9 @@ pack: horde
 dormant: true
 version: 0.0.3
 github: false
-slug: russian-spoken-quests-horde
-name: Russian Spoken Quests: Horde
-summary: Horde-only quest dialogue, voiced in Russian. Pair it with the Shared pack. Needs Spoken Player.
+slug: spoken-russian-audio-quests-horde
+name: Spoken Russian Audio: Quests - Horde
+summary: Horde-only quest dialogue, voiced in Russian. Pair it with the Shared pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -21,17 +21,17 @@ This is the Russian audio pack for Horde quest dialogue: the quests only a Horde
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Russian Spoken Quests](https://www.curseforge.com/wow/addons/russian-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Russian Audio: Quests](https://www.curseforge.com/wow/addons/spoken-russian-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
-| [Alliance](https://www.curseforge.com/wow/addons/russian-spoken-quests-alliance) | Alliance-only quests | |
+| [Alliance](https://www.curseforge.com/wow/addons/spoken-russian-audio-quests-alliance) | Alliance-only quests | |
 | **Horde** | Horde-only quests | **this pack** |
-| [Shared](https://www.curseforge.com/wow/addons/russian-spoken-quests) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/russian-spoken-quests-gossip) | NPC gossip chatter | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-russian-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-russian-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

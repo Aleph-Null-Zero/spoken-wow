@@ -17,6 +17,17 @@ import { clientIp } from "@/lib/reports/client-ip";
 import { validateSubmission } from "@/lib/reports/reports";
 import { langParam } from "@/lib/lang-server";
 import { countRecent, createReport } from "@/lib/reports/store";
+import { envelopeFor } from "@/lib/reports/context";
+import type { Envelope } from "@/lib/contributions/envelope";
+import { submissionFrom } from "@/lib/contributions/submission";
+import {
+  CONTRIBUTION_WINDOW_MS,
+  CONTRIBUTIONS_PER_HOUR,
+  type Identity,
+  knownSubmissions,
+  storeSubmission,
+} from "@/lib/contributions/intake";
+import { countRecentContributions, recordContributionHit } from "@/lib/contributions/store";
 import { formatTarget, parseTarget, resolveTarget } from "@/lib/reports/target";
 import { pageById } from "@/lib/books/catalogue";
 import { lineByPath } from "@/lib/zones/catalogue";
@@ -90,6 +101,17 @@ export async function POST(request: Request) {
   // way to put words in another person's mouth.
   const session = await auth.api.getSession({ headers: await headers() });
 
+  const identity = {
+    userId: session?.user.id ?? null,
+    name: session ? null : validated.value.name,
+    email: session ? null : validated.value.email,
+    ip,
+  };
+
+  // parseEnvelope refuses anything past its own MAX_BYTES before reading it.
+  const envelope = envelopeFor(body.context, source);
+  const context = envelope && { fields: envelope.fields, text: envelope.text };
+
   await createReport({
     source,
     lang,
@@ -97,13 +119,46 @@ export async function POST(request: Request) {
     target: addressed.target,
     category: validated.value.category,
     body: validated.value.body,
-    userId: session?.user.id ?? null,
-    name: session ? null : validated.value.name,
-    email: session ? null : validated.value.email,
-    ip,
+    ...identity,
+    context,
   });
 
+  // The report is filed by now: a failure here must not answer 500 and invite a second one.
+  if (envelope && validated.value.category === "missing") {
+    await contributeMissing(envelope, body.context as string, validated.value.body, identity).catch((error) =>
+      console.error("filing a missing report as a contribution failed", error),
+    );
+  }
+
   return Response.json({ ok: true });
+}
+
+/**
+ * "Nothing played" with the text attached is also a contribution: the player's client holds a
+ * line the corpus may not. Filed through the contribute route's own checks and allowance, and
+ * dropped as that route drops it when the corpus already has the line -- then the audio, not
+ * the text, is what is missing, and the report says so. Zones never: a zones report is about
+ * lore that exists, and a zones contribution is a description someone wrote. Books never in
+ * practice: a books report names a corpus page by `id`, so submissionFrom finds no `page`.
+ */
+async function contributeMissing(
+  envelope: Envelope,
+  raw: string,
+  complaint: string,
+  identity: Omit<Identity, "body"> & { ip: string },
+): Promise<void> {
+  if (envelope.source === "zones") return;
+  const submission = submissionFrom(envelope, raw);
+  if (!submission) return;
+  const [recent, [known]] = await Promise.all([
+    countRecentContributions(identity.ip, CONTRIBUTION_WINDOW_MS),
+    knownSubmissions([submission]),
+  ]);
+  if (recent >= CONTRIBUTIONS_PER_HOUR) return;
+  if (!known) {
+    await storeSubmission(submission, { ...identity, body: complaint });
+  }
+  await recordContributionHit(identity.ip);
 }
 
 /**
@@ -136,7 +191,7 @@ async function booksTarget(
 ): Promise<{ lineId: string | null; target: string } | null> {
   if (!raw) return null;
 
-  const page = await pageById(Number(raw));
+  const page = await pageById(raw);
   if (!page) return null;
 
   return { lineId: page.id, target: page.file };

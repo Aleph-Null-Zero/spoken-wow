@@ -24,6 +24,7 @@ function report(overrides: Partial<Report> = {}): Report {
     createdAt: "2026-09-01T00:00:00Z",
     resolvedAt: null,
     resolvedBy: null,
+    context: null,
     ...overrides,
   };
 }

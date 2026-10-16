@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Writes addons/Spoken_Zones/Data/Languages.lua: what each language covers, and
+// Writes addons/Spoken_Places/Data/Languages.lua: what each language covers, and
 // whether it is finished enough to offer to players.
 //
 //   node tools/locale/build-languages.mjs
@@ -28,7 +28,10 @@ import { luaString, ROOT } from "../lib/wiki.mjs";
 import { stringCoverage } from "./check-strings.mjs";
 import { loadPacks } from "../../../../scripts/lib/packs.mjs";
 
-const DATA = join(ROOT, "addons/Spoken_Zones/Data");
+// A Windows checkout has CRLF on disk; the counts and the --check compare lines as Git stores them.
+const read = async (path) => (await readFile(path, "utf8")).replace(/\r\n/g, "\n");
+
+const DATA = join(ROOT, "addons/Spoken_Places/Data");
 const OUT_PATH = join(DATA, "Languages.lua");
 
 // Whether a language has a pack: its page under publishers/zones/ is what says so, since a
@@ -55,9 +58,9 @@ function countEntries(src, openRe) {
 }
 
 async function countLore(lang) {
-  const zones = await readFile(join(DATA, lang, "Zones.lua"), "utf8").catch(() => null);
+  const zones = await read(join(DATA, lang, "Zones.lua")).catch(() => null);
   if (zones === null) return { zones: 0, subzones: 0 };
-  const subzones = await readFile(join(DATA, lang, "Subzones.lua"), "utf8").catch(() => "");
+  const subzones = await read(join(DATA, lang, "Subzones.lua")).catch(() => "");
   return {
     zones: countEntries(zones, /^\t\[\d+\] = \{$/),
     subzones: countEntries(subzones, /^\t\t\[".*"\] = \{$/),
@@ -65,7 +68,7 @@ async function countLore(lang) {
 }
 
 async function countAliases(lang) {
-  const src = await readFile(join(DATA, lang, "Aliases.lua"), "utf8").catch(() => null);
+  const src = await read(join(DATA, lang, "Aliases.lua")).catch(() => null);
   if (src === null) return 0;
   return (src.match(/^\t\[".*"\] = ".*",$/gm) || []).length;
 }
@@ -125,7 +128,7 @@ export async function buildLanguages() {
 async function main() {
   const { text, rows } = await buildLanguages();
 
-  const onDisk = await readFile(OUT_PATH, "utf8").catch(() => null);
+  const onDisk = await read(OUT_PATH).catch(() => null);
   if (process.argv.includes("--check")) {
     if (onDisk !== text) {
       console.error(`out of date: ${OUT_PATH}`);

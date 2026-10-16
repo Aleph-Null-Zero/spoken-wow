@@ -16,7 +16,7 @@ local OLD, NEW = "X-VoiceOver-DataModule-", "X-SpokenQuests-DataModule-"
 
 --- Install one pack carrying exactly the given TOC keys, and enumerate.
 local function Enumerate(meta)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     meta.Title = meta.Title or "TestPack"
     meta.Version = meta.Version or "1.2.1"
     stub.SetAddOns({ { folder = "TestPack", meta = meta } })
@@ -59,7 +59,7 @@ local ok = pcall(function() VO.DataModules:Register("TestPack", { GetSoundPath =
 Expect("a new-key pack can register its data", ok, true)
 
 ---------------------------------------------------------------- switched off in the AddOns list
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 stub.SetAddOns({
     { folder = "OnPack", meta = { [OLD .. "Version"] = "1", Title = "OnPack", Version = "1.2.1" } },
     { folder = "OffPack", loadable = false, reason = "DISABLED",
@@ -89,9 +89,9 @@ Expect("...nor is a missing one", D:IsOlderContent(nil, "2.1.0"), false)
 
 --- Install one shipping pack at a version, and collect what the options offer for it.
 local function Offered(version)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetAddOns({ { folder = "SpokenQuestsAudioShared",
-        meta = { Title = "Spoken Quests Audio: Shared Quests", Version = version, [NEW .. "Version"] = "1" } } })
+        meta = { Title = "Spoken Audio: Quests - Shared", Version = version, [NEW .. "Version"] = "1" } } })
     local vo = stub.LoadQuests(QUESTS, SPOKEN)
     local offered = {}
     vo.Options = setmetatable({
@@ -111,6 +111,14 @@ Expect("a current pack is offered nothing", offered.SpokenQuestsAudioShared, nil
 offered = Offered("99.0.0")
 Expect("a pack newer than the addon knows is offered nothing", offered.SpokenQuestsAudioShared, nil)
 Expect("...and having a pack silences the others", offered.SpokenQuestsAudioHorde, nil)
+
+---------------------------------------------------------------- a pack's label
+local DM = VO.DataModules
+Expect("a language's pack is labelled by what it holds",
+    DM:GetPackLabel({ AddonName = "SpokenQuestsAudioHorde_deDE", Title = "Spoken German Audio: Quests - Horde" }),
+    "Quests - Horde")
+Expect("...and so is a pack built under the old title",
+    DM:GetPackLabel({ AddonName = "SpokenQuestsAudioHorde_deDE", Title = "Spoken Quests Audio: Horde" }), "Horde")
 
 stub.ResetAddOns()
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

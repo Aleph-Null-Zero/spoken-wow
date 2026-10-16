@@ -28,7 +28,16 @@ if (fs.existsSync(rootEnv)) {
   }
 }
 
+// The Spoken release this checkout is, for the report pages' "might already be fixed": read
+// at build, since the standalone bundle carries no addons/ to read it from at runtime.
+const spokenToc = path.join(repoRoot, "addons", "Spoken", "Spoken.toc");
+const spokenVersion = fs.existsSync(spokenToc)
+  ? (fs.readFileSync(spokenToc, "utf8").match(/^## Version:\s*(\S+)/m)?.[1] ?? "")
+  : "";
+
 const config: NextConfig = {
+  env: { NEXT_PUBLIC_SPOKEN_VERSION: spokenVersion },
+
   // The corpus and the audio store are read at runtime through node:fs, never bundled,
   // so they need no asset config. See src/lib/paths.ts for how they are located.
 

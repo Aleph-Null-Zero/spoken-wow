@@ -1,4 +1,4 @@
-// book_line -> addons/Spoken_Books/Data/Books.lua.
+// book_line -> addons/Spoken_Readables/Data/Books.lua.
 //
 // The table is the corpus and this file is an export of it, exactly as the zones side
 // exports lore_line: the addon build, and anyone packaging a release, must work on a clone
@@ -17,7 +17,7 @@ import { booksLua } from "./lib/lua.mjs";
 // compiled into the site and its paths would be the build machine's.
 await loadEnv("books");
 
-const OUT = new URL("../../../addons/Spoken_Books/Data/Books.lua", import.meta.url).pathname;
+const OUT = new URL("../../../addons/Spoken_Readables/Data/Books.lua", import.meta.url).pathname;
 const LANG = "enUS";
 
 const url = process.env.DATABASE_URL;
@@ -27,10 +27,12 @@ const pool = new pg.Pool({ connectionString: url });
 
 try {
   const { rows } = await pool.query(
-    `select "pageId", "bookId", "pageNumber", "pageCount", "title", "text"
-       from "book_line"
-      where "lang" = $1 and "isCurrent"
-      order by "bookId", "pageNumber"`,
+    `select p."pageTextId" as "pageId", p."bookId"::int as "bookId", p."pageNumber",
+            count(*) over (partition by p."bookId")::int as "pageCount", l."title", l."text"
+       from "book_page" p
+       join "book_line" l on l."lineId" = p."lineId" and l."lang" = $1 and l."isCurrent"
+      where p."aliasOf" is null and p."pageTextId" is not null
+      order by p."bookId"::int, p."pageNumber"`,
     [LANG],
   );
 

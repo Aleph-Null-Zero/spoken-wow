@@ -102,7 +102,7 @@ export function speakPlayerTokens(
       ? word[0].toUpperCase() + word.slice(1)
       : word;
 
-  let spoken = playerGenderSides(text)[playerGender === "f" ? 1 : 0];
+  let spoken = text.replace(GENDER, playerGender === "f" ? "$2" : "$1");
   const genitive = words.nameGenitive;
   if (genitive) {
     spoken = spoken.replace(TOKEN_GENITIVE, (_, _token: string, at: number, whole: string) =>

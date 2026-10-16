@@ -7,9 +7,9 @@ pack: alliance
 dormant: true
 version: 0.0.1
 github: false
-slug: chinese-traditional-spoken-quests-alliance
-name: Chinese (Traditional) Spoken Quests: Alliance
-summary: Alliance-only quest dialogue, voiced in Chinese (Traditional). Pair it with the Shared pack. Needs Spoken Player.
+slug: spoken-chinese-traditional-audio-quests-alliance
+name: Spoken Chinese (Traditional) Audio: Quests - Alliance
+summary: Alliance-only quest dialogue, voiced in Chinese (Traditional). Pair it with the Shared pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -21,17 +21,17 @@ This is the Chinese (Traditional) audio pack for Alliance quest dialogue: the qu
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Chinese (Traditional) Spoken Quests](https://www.curseforge.com/wow/addons/chinese-traditional-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Chinese (Traditional) Audio: Quests](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Alliance** | Alliance-only quests | **this pack** |
-| [Horde](https://www.curseforge.com/wow/addons/chinese-traditional-spoken-quests-horde) | Horde-only quests | |
-| [Shared](https://www.curseforge.com/wow/addons/chinese-traditional-spoken-quests) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/chinese-traditional-spoken-quests-gossip) | NPC gossip chatter | |
+| [Horde](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-quests-horde) | Horde-only quests | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

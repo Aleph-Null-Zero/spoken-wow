@@ -32,6 +32,8 @@ import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { readLines, shipped } from "../../pipelines/zones/tools/lib/loredata.mjs";
+import { assignFiles } from "../../pipelines/zones/tools/voice/naming.mjs";
 import { archiveOf } from "../lib/archives.mjs";
 import { NAMED_QUESTS_SQL, namedBy } from "./relevant.mjs";
 
@@ -98,8 +100,17 @@ const takes = listing.map((row) => {
   return { file, stem, archived: name ? join(prefix, stem, name) : "" };
 });
 
-// Quests carry only the audio a current line names (relevant.mjs).
-const relevant = section === "quests" ? namedBy(psql(NAMED_QUESTS_SQL)) : () => true;
+// Quests carry only the audio a current line names (relevant.mjs), and zones only the places the
+// committed lore has words for: a take stays live after its place leaves the lore, and the lookup
+// (build-lookup.mjs) does not list it.
+async function zonesShipped() {
+  const entries = await readLines();
+  const lore = shipped(entries);
+  const files = new Set([...assignFiles(entries)].filter(([id]) => lore.has(id)).map(([, file]) => file));
+  return (stem) => files.has(stem);
+}
+const relevant =
+  section === "quests" ? namedBy(psql(NAMED_QUESTS_SQL)) : section === "zones" ? await zonesShipped() : () => true;
 const live = takes.filter((take) => relevant(take.stem));
 const unnamed = takes.length - live.length;
 
@@ -146,7 +157,7 @@ for (const { file, stem, archived } of live) {
 }
 
 console.log(`${section}: ${copied} clips in ${paths.out.slice(ROOT.length + 1)}`);
-if (unnamed) console.log(`  ${unnamed} live takes left out: no current line names their file`);
+if (unnamed) console.log(`  ${unnamed} live takes left out: no current line names their file, or no lore their place`);
 if (gone.length) {
   // Known, and not this machine's fault: the take's clip was not kept before the archive
   // was the record. The line ships without audio, the same as one never generated.

@@ -1,22 +1,22 @@
 <!-- GENERATED from publishers/zones/spoken-zones-audio.md by scripts/descriptions.mjs. Do not edit by hand. -->
 
-Narrated zone lore for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Zones module. This addon is data only — it does nothing on its own.
+Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Places module. This addon is data only — it does nothing on its own.
 
 ## The voice, as of 0.3.0
 
 Every line was re-recorded with a new narrator — picked for the tone the lore deserves rather than for getting a first pass made cheaply — and the names of NPCs and places now go through a pronunciation dictionary, so Lordaeron sounds the same in every line it appears in.
 
-That doesn't make it finished. With this many lines, some readings will still land flat and some names will still come out wrong. If a line reads badly, report it: there's a Feedback button on [lore.rusty.one](https://lore.rusty.one), and per-line re-rolls follow what comes in.
+That doesn't make it finished. With this many lines, some readings will still land flat and some names will still come out wrong. If a line reads badly, report it: the Report button beside a playing story opens that line on [spoken.rusty.one](https://spoken.rusty.one), and per-line re-rolls follow what comes in.
 
 The **lore text** was rewritten in the same release to describe the world as a vanilla character finds it. Where a line's text gets fixed, its narration is regenerated — so an occasional re-download is expected.
 
 ## Installing
 
-Install **Spoken Player** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped — Spoken finds packs by folder name.
+Install **Spoken** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped — Spoken finds packs by folder name.
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken 3.0.0 or later.
 
 ## Support
 

@@ -7,7 +7,7 @@ import Link from "@/components/LocaleLink";
 import ReportTable from "@/components/ReportTable";
 import { auth } from "@/lib/auth";
 import { viewerOf } from "@/lib/grants/store";
-import { can } from "@/lib/permissions";
+import { can, isAdmin } from "@/lib/permissions";
 import { isCategory, type Category, type Status } from "@/lib/reports/reports";
 import {
   isStatusView,
@@ -20,6 +20,7 @@ import {
   type Section,
   type StatusView,
 } from "@/lib/reports/query";
+import { staleLineIds } from "@/lib/reports/stale";
 import { listReports } from "@/lib/reports/store";
 import { isSection, queryOf } from "@/lib/contributions/query";
 import { localeHref } from "@/lib/lang";
@@ -79,6 +80,8 @@ export default async function Page({
   const pages = Math.max(1, Math.ceil(groups.length / PAGE_SIZE));
   const page = Math.min(pageOf(rawPage), pages);
   const shown = groups.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const lineIds = shown.flatMap(({ reports: [first] }) => (first.lineId ? [first.lineId] : []));
+  const stale = await staleLineIds(section, lineIds, lang);
 
   return (
     <main className="pt-6 pb-24">
@@ -104,7 +107,9 @@ export default async function Page({
           sectionCounts={sectionCounts}
           statusCounts={statusCounts}
           filters={{ section, view, category, q, dir }}
+          stale={stale}
           canRegenerate={can(viewer, "regenerate", lang)}
+          showNpcPage={isAdmin(session.user.role)}
         />
       </Wide>
     </main>
