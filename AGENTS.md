@@ -32,10 +32,9 @@ covers how they are made. Spoken has no guide; `docs/spoken/` holds its changelo
 
 ## Branches and checks
 
-`develop` is where work lands: open the PR against it. Merging needs one approval from
-another collaborator and the four CI jobs green. Only the admin merges into `master`, and a
-push to `master` that touches the site's inputs deploys production
-(`.github/workflows/deploy-web.yaml`).
+`master` is where work lands: open the PR against it. Merging needs the four CI jobs green,
+and only the admin merges. A merge into `master` that touches the site's inputs deploys
+production (`.github/workflows/deploy-web.yaml`).
 
 Run what your change touches before pushing:
 
