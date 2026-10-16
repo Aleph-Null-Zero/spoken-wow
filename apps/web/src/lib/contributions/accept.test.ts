@@ -323,7 +323,7 @@ describe("resolveContribution: quests accept", () => {
     expect(await linesFor(questLineId(questId, "accept"))).toHaveLength(1);
   });
 
-  it("the corpus wins on a collision: marks the contribution but writes nothing", async () => {
+  it("the corpus wins on a collision: writes no line, only its NPC as one more speaker", async () => {
     await speaker(npcId, "human", "male", "standard");
 
     // quest 33 accept is a real, committed corpus line (corpus.test.ts pins the same one).
@@ -331,9 +331,21 @@ describe("resolveContribution: quests accept", () => {
     const outcome = await resolveContribution(id, "accepted", RESOLVER);
     expect(outcome.ok).toBe(true);
 
-    expect(await speakersOf(id)).toHaveLength(0);
+    expect(await speakersOf(id)).toEqual([{ lineId: "q:33:accept", ord: expect.any(Number) }]);
     expect((await linesFor("q:33:accept")).map((l) => l.origin)).not.toContain("contributed");
     if (outcome.ok) expect(await lineIsInExplorer(outcome.contribution)).toBe(true);
+  });
+
+  it("the corpus wins on a collision with its own speaker: writes nothing", async () => {
+    const { rows } = await db().query<{ npcType: string; npcId: number }>(
+      `select "npcType", "npcId" from "quest_line_speaker" where "lineId" = 'q:33:accept' and "lang" = 'enUS' limit 1`,
+    );
+    const id = await questContribution(
+      { quest: "33", event: "accept", title: "Wolves Across the Border", kind: rows[0].npcType },
+      rows[0].npcId,
+    );
+    expect((await resolveContribution(id, "accepted", RESOLVER)).ok).toBe(true);
+    expect(await speakersOf(id)).toHaveLength(0);
   });
 
   it("the corpus wins when it only carries a quest moment's player-gender variants", async () => {
@@ -343,11 +355,12 @@ describe("resolveContribution: quests accept", () => {
     const id = await questContribution({ quest: "166", event: "complete", title: "The Defias Brotherhood" });
     expect((await resolveContribution(id, "accepted", RESOLVER)).ok).toBe(true);
 
-    expect(await speakersOf(id)).toHaveLength(0);
+    // Its NPC speaks both sides, as the dump's speakers do.
+    expect((await speakersOf(id)).map((row) => row.lineId).sort()).toEqual(["q:166:complete:f", "q:166:complete:m"]);
     expect(await linesFor("q:166:complete")).toHaveLength(0);
   });
 
-  it("a second contribution for the same quest moment accepts cleanly, without a second line", async () => {
+  it("a second contribution for the same quest moment adds its NPC as a speaker, without a second line", async () => {
     // dedup is on (source, key, locale, text) -- a druid and a mage accepting the same quest
     // moment are two different contributions for one q:X:event.
     const secondNpcId = npcId + 1;
@@ -361,7 +374,7 @@ describe("resolveContribution: quests accept", () => {
     expect((await resolveContribution(second, "accepted", RESOLVER)).ok).toBe(true);
 
     expect(await linesFor(questLineId(questId, "accept"))).toHaveLength(1);
-    expect(await speakersOf(second)).toHaveLength(0);
+    expect(await speakersOf(second)).toEqual([{ lineId: questLineId(questId, "accept"), ord: expect.any(Number) }]);
 
     const { rows: statuses } = await db().query<{ status: string }>(
       `select "status" from "contribution" where "id" = any($1::int[]) order by "id"`,
@@ -479,7 +492,7 @@ describe("resolveContribution: quests accept", () => {
 });
 
 describe("resolveContributions: a batch, side by side", () => {
-  it("two contributions for one quest moment write one line and are both accepted", async () => {
+  it("two contributions for one quest moment write one line, with both NPCs as its speakers", async () => {
     await speaker(npcId, "orc", "female", "standard");
     await speaker(npcId + 1, "orc", "female", "standard");
     const first = await questContribution({}, npcId, "Bring me six wolf pelts, druid.");
@@ -490,7 +503,16 @@ describe("resolveContributions: a batch, side by side", () => {
 
     expect(await linesFor(questLineId(questId, "accept"))).toHaveLength(1);
     const written = [...(await speakersOf(first)), ...(await speakersOf(second))];
-    expect(written).toHaveLength(1);
+    expect(written).toHaveLength(2);
+  });
+
+  it("a quest moment from the same NPC twice is spoken by it once", async () => {
+    await speaker(npcId, "orc", "female", "standard");
+    const first = await questContribution({}, npcId, "Bring me six wolf pelts, druid.");
+    const second = await questContribution({}, npcId, "Bring me six wolf pelts, mage.");
+
+    await resolveContributions([first, second], "accepted", RESOLVER);
+    expect([...(await speakersOf(first)), ...(await speakersOf(second))]).toHaveLength(1);
   });
 
   it("one new gossip line sent by two NPCs is written once, with both as its speakers", async () => {
@@ -644,12 +666,18 @@ describe("resolveContribution: a translation", () => {
     return rows;
   }
 
-  it("says which moments already have a speaker, in any language, which accept takes with no answer", async () => {
-    const id = await translation(String(questId), "accept", "Traga-me seis peles de lobo, $C.");
-    const rows = async () => (await listContributions("new", LOCALE)).filter((row) => row.id === id);
+  it("says which moments already have the row's speaker, in any language, which accept takes with no answer", async () => {
+    const same = await translation(String(questId), "accept", "Traga-me seis peles de lobo, $C.", {
+      title: "Uma Missão de Teste",
+      kind: "creature",
+      npc: `${npcId} Orador`,
+    });
+    // Ginro is not who English has speaking it: accepting makes him one more speaker, so he needs an answer.
+    const other = await translation(String(questId), "accept", "Traga-me seis peles de lobo, $N.");
+    const rows = async () => (await listContributions("new", LOCALE)).filter((row) => row.id === same || row.id === other);
     expect(await momentHasSpeaker(await rows())).toEqual(new Set());
     await englishLine();
-    expect(await momentHasSpeaker(await rows())).toEqual(new Set([id]));
+    expect(await momentHasSpeaker(await rows())).toEqual(new Set([same]));
   });
 
   it("names the quest and the NPC in the language, as the client showed them", async () => {

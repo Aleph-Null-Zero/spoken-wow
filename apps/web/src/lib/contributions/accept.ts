@@ -46,6 +46,16 @@ import { isGeneratable, mintBookId, mintPageId } from "@/lib/books/tools";
 import { branchesOnPlayerGender, speakPlayerTokens } from "@/lib/player-words";
 import { corpus } from "@/lib/quests/catalogue";
 import { forgetIgnores, writeIgnore } from "@/lib/quests/ignores";
+import {
+  addToMoment,
+  insertSpeaker,
+  lockLine,
+  momentSpeakers,
+  speakerFromResolution,
+  speaksMoment,
+  type Speaker,
+  type SpeakerRow,
+} from "@/lib/quests/speakers";
 import type { Roster } from "@/lib/voices/roster";
 import { loadRoster } from "@/lib/voices/roster-store";
 
@@ -59,19 +69,13 @@ import {
   type LineIdentity,
 } from "./naming";
 import { gossipIdentity, recordBroadcast, resolveGossip, type GossipPlan } from "./gossip";
+import { noVoice } from "./speaker";
 import { noteFor, pageNotes } from "./notes";
 import { CONTRIBUTION_COLUMNS, observationMeta, type Contribution } from "./store";
 import { spokenFromTemplate } from "./tokens";
 import { idOnlyResolution } from "./triage";
 
 const COLUMNS = CONTRIBUTION_COLUMNS;
-
-/**
- * Where contributed speakers start in quest_line_speaker's `ord`. The importer numbers the
- * extract's own rows from 0 on every import, so contributed rows sit far above it: they never
- * collide with a re-import, and the export lists them after everything the extract carries.
- */
-export const CONTRIBUTED_ORD_FLOOR = 1_000_000;
 
 export type ResolveRefusal =
   | { ok: false; reason: "not-found" }
@@ -82,22 +86,6 @@ export type ResolveRefusal =
   | { ok: false; reason: "malformed"; message: string };
 
 export type ResolveOutcome = { ok: true; contribution: Contribution } | ResolveRefusal;
-
-/**
- * Who speaks a contribution's line. `race` and `gender` are the ones its voice's files are named
- * by (migration 0071's voice table), not the NPC's type: a gameobject's greeting hashes and
- * matches as the narrator's, as every one the extract wrote does.
- */
-type Speaker = {
-  npcId: number;
-  npcName: string | null;
-  npcType: NpcRowKind;
-  race: string;
-  gender: string;
-  flavor: string | null;
-  /** "" while no voice reads the NPC's type, which speakerFor refuses. */
-  voice: string;
-};
 
 /**
  * What accept writes: a new line and its speaker, or only a speaker on a line already there.
@@ -152,20 +140,7 @@ async function resolvedSpeaker(
     resolution = lookup.resolution;
   }
 
-  if (!resolution?.race) return null;
-
-  const roster = await loadRoster();
-  const voice = roster.voiceFor(resolution.race, resolution.gender, resolution.flavor);
-  const family = voice ? roster.familyOf(voice) : null;
-  return {
-    npcId: observed.npcId,
-    npcName: resolution.npcName ?? observed.npcName,
-    npcType: resolution.npcKind,
-    race: family?.race ?? resolution.race,
-    gender: family?.gender ?? resolution.gender ?? "",
-    flavor: resolution.flavor,
-    voice: voice ?? "",
-  };
+  return resolution ? speakerFromResolution(resolution, await loadRoster(), observed.npcName) : null;
 }
 
 /**
@@ -244,7 +219,7 @@ async function speakerFor(
       ok: false,
       reason: "needs-speaker",
       // With no voice, race and gender are still the NPC's own (resolvedSpeaker).
-      message: `No voice reads ${[speaker.race, speaker.gender, speaker.flavor].filter(Boolean).join("-")} yet -- give it one under NPCs → Types.`,
+      message: `${noVoice(speaker)} -- give it one under NPCs → Types.`,
     };
   }
   return { ok: true, speaker };
@@ -352,27 +327,37 @@ export async function linesInExplorer(contributions: readonly Contribution[]): P
 }
 
 /**
- * The quests rows whose moment already has a speaker, in any language, by id. Accepting one of
- * those writes only the language's text; the rest need a speaker answered first.
+ * The quests rows whose moment already has their speaker, in any language, by id: one of the
+ * moment's speakers is the row's NPC, or the row names none. Accepting one of those writes only
+ * the language's text; the rest need a speaker answered first, since accepting makes their NPC
+ * one more speaker of the moment (acceptQuestMoment).
  */
 export async function momentHasSpeaker(contributions: readonly Contribution[]): Promise<Set<number>> {
   const moments = momentsOf(contributions);
   if (moments.length === 0) return new Set();
   const { rows } = await db().query<{ id: number }>(
-    `select m."id" from unnest($1::int[], $2::text[]) as m ("id", "lineId")
+    `select m."id" from unnest($1::int[], $2::text[], $3::int[], $4::text[]) as m ("id", "lineId", "npcId", "npcKind")
       where exists (select 1 from "quest_line_speaker" s
-                     where ${answersQuestMomentSql(`s."lineId"`, `m."lineId"`)})`,
-    [moments.map((m) => m.id), moments.map((m) => m.lineId)],
+                     where ${answersQuestMomentSql(`s."lineId"`, `m."lineId"`)}
+                       -- speaksMoment's rule, in SQL
+                       and (m."npcId" is null
+                            or (s."npcId" = m."npcId" and (m."npcKind" is null or s."npcType" = m."npcKind"))))`,
+    [moments.map((m) => m.id), moments.map((m) => m.lineId), moments.map((m) => m.npcId), moments.map((m) => m.npcKind)],
   );
   return new Set(rows.map((row) => row.id));
 }
 
 /** Each quest-moment contribution's moment id; gossip names none. */
-function momentsOf(contributions: readonly Contribution[]): { id: number; lineId: string; lang: string }[] {
+function momentsOf(
+  contributions: readonly Contribution[],
+): { id: number; lineId: string; lang: string; npcId: number | null; npcKind: string | null }[] {
   return contributions.flatMap((c) => {
     if (c.source !== "quests" || !(c.meta.quest && c.meta.event)) return [];
     const identity = lineIdentityFor(c.meta, c.text ?? "", "", "");
-    return identity ? [{ id: c.id, lineId: identity.lineId, lang: c.locale }] : [];
+    const observed = observedFrom(observationMeta(c));
+    return identity
+      ? [{ id: c.id, lineId: identity.lineId, lang: c.locale, npcId: observed.npcId, npcKind: observed.npcKind }]
+      : [];
   });
 }
 
@@ -449,40 +434,6 @@ async function momentsInExplorer(contributions: readonly Contribution[]): Promis
   return rows.map((row) => row.id);
 }
 
-async function insertSpeaker(
-  client: PoolClient,
-  contributionId: number,
-  lineId: string,
-  variant: number,
-  speaker: Speaker,
-  lang: Lang = BASE_LANG,
-): Promise<void> {
-  // One writer at a time past this point, so two accepts can never pick the same `ord`.
-  await client.query(`select pg_advisory_xact_lock(hashtext('quest_line_speaker.contributed_ord'))`);
-  await client.query(
-    `insert into "quest_line_speaker"
-       ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName", "race", "gender",
-        "flavor", "voice", "contributionId")
-     select $1, $2, $3,
-            greatest(coalesce(max("ord") + 1, 0), $4),
-            $5, $6, $7, $8, $9, $10, $11, $12
-       from "quest_line_speaker" where "lang" = $3`,
-    [
-      lineId, variant, lang, CONTRIBUTED_ORD_FLOOR, speaker.npcType, speaker.npcId,
-      speaker.npcName ?? `npc ${speaker.npcId}`, speaker.race, speaker.gender, speaker.flavor,
-      speaker.voice, contributionId,
-    ],
-  );
-}
-
-/**
- * One writer per line id past this point, so two accepts of the same line running side by side
- * (resolveContributions) can never both find it missing and both write it.
- */
-async function lockLine(client: PoolClient, lineId: string): Promise<void> {
-  await client.query(`select pg_advisory_xact_lock(hashtext('quest_line:' || $1))`, [lineId]);
-}
-
 /**
  * insertSpeaker, unless this NPC already speaks the line. Asked of the table rather than the
  * catalogue: in a batch the catalogue is read once, before any of it is written, so a speaker
@@ -500,7 +451,7 @@ async function addSpeakerOnce(
     `select 1 from "quest_line_speaker" where "lineId" = $1 and "npcType" = $2 and "npcId" = $3`,
     [lineId, speaker.npcType, speaker.npcId],
   );
-  if (!rowCount) await insertSpeaker(client, contributionId, lineId, variant, speaker, lang);
+  if (!rowCount) await insertSpeaker(client, { lineId, variant, lang, speaker, contributionId });
 }
 
 /** The structure a language's row for a moment takes: the id, file and player gender. */
@@ -585,11 +536,13 @@ async function ownRows(client: PoolClient, identity: LineIdentity, text: string,
 }
 
 /**
- * Accepting a quest moment, the same in every language: the language's own row for it, and a
- * speaker only when the moment has none in any language yet. Who speaks a line is a fact about
- * the world, so a speaker one language wrote voices the line in every other.
+ * Accepting a quest moment, the same in every language: the language's own row for it, and its
+ * NPC as a speaker when the moment has none in any language yet, or has others but not this one
+ * -- a quest two givers offer, each in their own voice (addToMoment). Who speaks a line is a fact
+ * about the world, so a speaker one language wrote voices the line in every other.
  *
- * A moment the language already has is left alone: an import or a translator got there first.
+ * The text of a moment the language already has is left alone: an import or a translator got
+ * there first.
  * The id and file are the quest's and the event's in every language, in the shape ownRows
  * gives them. In another language the quest's and the NPC's names the client showed are
  * written too (namesSeenIn).
@@ -610,24 +563,28 @@ async function acceptQuestMoment(
   // Under the moment's lock: a batch reads nothing up front, but two rows of it may share the
   // moment, and only one of them may find it missing.
   await lockLine(client, identity.lineId);
-  if (await momentTaken(client, lang, identity.lineId)) return null;
+  const taken = await momentTaken(client, lang, identity.lineId);
+  const speakers = await momentSpeakers(client, identity.lineId);
+  const spoken = momentSpeaks(speakers, contribution);
+  if (taken && spoken !== "others") return null;
 
-  const rows = await ownRows(client, identity, text, lang);
-
-  const { rowCount: spoken } = await client.query(
-    `select 1 from "quest_line_speaker" where ${answersQuestMomentSql(`"lineId"`, "$1")} limit 1`,
-    [identity.lineId],
-  );
   let speaker: Speaker | null = null;
-  if (!spoken) {
+  if (spoken !== "this-npc") {
     const found = await speakerFor(contribution);
     if (!found.ok) return found;
     speaker = found.speaker;
   }
 
-  for (const row of rows) {
-    await insertLine(client, contribution.id, userId, row, text, lang);
-    if (speaker) await insertSpeaker(client, contribution.id, row.lineId, 0, speaker, lang);
+  if (!taken) {
+    for (const row of await ownRows(client, identity, text, lang)) {
+      await insertLine(client, contribution.id, userId, row, text, lang);
+      if (speaker && spoken === "nobody") {
+        await insertSpeaker(client, { lineId: row.lineId, variant: 0, lang, speaker, contributionId: contribution.id });
+      }
+    }
+  }
+  if (speaker && spoken === "others") {
+    await addToMoment(client, identity.lineId, speaker, { contributionId: contribution.id }, speakers);
   }
   if (lang !== BASE_LANG) {
     for (const name of namesSeenIn(contribution)) {
@@ -635,6 +592,18 @@ async function acceptQuestMoment(
     }
   }
   return null;
+}
+
+/**
+ * Who already speaks a moment, in any language, as far as a contribution is concerned: nobody,
+ * its own NPC (or it names none), or only others. A kind-less envelope's NPC is matched by id
+ * alone, as idOnlyResolution answers it.
+ */
+function momentSpeaks(rows: SpeakerRow[], contribution: Contribution): "nobody" | "this-npc" | "others" {
+  const observed = observedFrom(observationMeta(contribution));
+  if (rows.length === 0) return "nobody";
+  if (observed.npcId === null) return "this-npc";
+  return speaksMoment(rows, observed.npcId, observed.npcKind) ? "this-npc" : "others";
 }
 
 /** Longer than any name the game gives a quest or an NPC; what npc-identity caps a typed one at. */
@@ -1062,7 +1031,9 @@ async function acceptGossip(
         { ...prepared.identity, playerGender: null, originalText: prepared.text },
         prepared.text, BASE_LANG,
       );
-      await insertSpeaker(client, contribution.id, prepared.identity.lineId, 0, prepared.speaker, BASE_LANG);
+      await insertSpeaker(client, {
+        lineId: prepared.identity.lineId, variant: 0, lang: BASE_LANG, speaker: prepared.speaker, contributionId: contribution.id,
+      });
     }
   } else if (prepared.kind === "speaker") {
     await lockLine(client, prepared.lineId);
@@ -1107,7 +1078,7 @@ async function acceptTranslatedGossip(
     if (!(await momentTaken(client, lang, identity.lineId))) {
       for (const row of await ownRows(client, identity, text, lang)) {
         await insertLine(client, contribution.id, userId, row, text, lang);
-        if (plan.kind === "line") await insertSpeaker(client, contribution.id, row.lineId, 0, speaker, lang);
+        if (plan.kind === "line") await insertSpeaker(client, { lineId: row.lineId, variant: 0, lang, speaker, contributionId: contribution.id });
       }
     }
     if (plan.kind === "translation" && plan.addSpeaker) await addSpeakerOnce(client, contribution.id, lineId, 0, speaker);

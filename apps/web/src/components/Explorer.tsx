@@ -11,6 +11,7 @@ import LineRow from "./LineRow";
 import Key from "./Key";
 import Pagination from "./Pagination";
 import Player from "./Player";
+import AddSpeakerDialog from "./AddSpeakerDialog";
 import IgnoreDialog from "./IgnoreDialog";
 import ReportDialog from "./ReportDialog";
 import OverrideDialog from "./OverrideDialog";
@@ -122,6 +123,8 @@ export default function Explorer({ facets }: { facets: Facets }) {
   // the generation settings have rather than the reach a rewrite has. Same gate as the API.
   const canConfigure = canConfigureGeneration(session?.user.role);
   const canIgnore = may("ignore");
+  // Who speaks a line holds in every language, as an NPC's answer does: admins only, as the API.
+  const canSpeakers = isAdmin(session?.user.role);
 
   // The URL is the source of truth for a search, so a result is linkable and survives a
   // reload; `query` is the uncommitted keystroke state in front of it.
@@ -217,6 +220,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
     );
   }, []);
   const [ignoring, setIgnoring] = useState<ResultLine | null>(null);
+  const [addingSpeaker, setAddingSpeaker] = useState<ResultLine | null>(null);
   // Anyone can open this one, signed in or not - see ReportDialog.
   const [reporting, setReporting] = useState<ResultLine | null>(null);
   const [pendingBatch, setPendingBatch] = useState<
@@ -409,6 +413,26 @@ export default function Explorer({ facets }: { facets: Facets }) {
         : current,
     );
   }, []);
+
+  /**
+   * Take back a speaker an admin added. The page is fetched again rather than patched: the
+   * speaker's voice's line goes with it.
+   */
+  const removeSpeaker = useCallback(
+    async (line: ResultLine) => {
+      const params = new URLSearchParams({ lineId: line.lineId, npcType: line.npcType, npcId: String(line.npcId) });
+      const response = await fetch(withLang(lang, `/api/quests/lines/speakers?${params}`), { method: "DELETE" }).catch(
+        () => null,
+      );
+      if (!response?.ok) {
+        const body = (await response?.json().catch(() => ({}))) as { error?: string } | undefined;
+        setQueueNote(body?.error ?? "Could not take the speaker back.");
+        return;
+      }
+      refetch();
+    },
+    [lang, refetch],
+  );
 
   /**
    * Adopt an ignore decision without a reload.
@@ -909,6 +933,8 @@ export default function Explorer({ facets }: { facets: Facets }) {
                   onEditText={editText}
                   onRename={lang !== BASE_LANG && canEdit ? rename : null}
                   onIgnore={canIgnore ? setIgnoring : null}
+                  onAddSpeaker={canSpeakers ? setAddingSpeaker : null}
+                  onRemoveSpeaker={canSpeakers ? (l) => void removeSpeaker(l) : null}
                   onReport={setReporting}
                   onRegenerate={regenerateLine}
                   onRestored={handleRestored}
@@ -962,6 +988,16 @@ export default function Explorer({ facets }: { facets: Facets }) {
         line={ignoring}
         onSaved={handleIgnoreSaved}
         onCancel={() => setIgnoring(null)}
+      />
+
+      <AddSpeakerDialog
+        line={addingSpeaker}
+        // Fetched again: a speaker in another voice is a new row of its own.
+        onSaved={() => {
+          setAddingSpeaker(null);
+          refetch();
+        }}
+        onCancel={() => setAddingSpeaker(null)}
       />
 
       <ReportDialog

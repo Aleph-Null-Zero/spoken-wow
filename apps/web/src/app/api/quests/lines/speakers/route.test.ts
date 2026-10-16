@@ -1,0 +1,224 @@
+/**
+ * An admin adding an NPC as one more speaker of a line, and taking it back.
+ *
+ * Needs DATABASE_URL and migrations applied (0076 in particular). Every line, speaker and NPC
+ * here is this run's own, numbered far outside anything the game files.
+ */
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+import { closeDb, db } from "@/lib/db";
+import { upsertResolution } from "@/lib/npc/store";
+import { corpus } from "@/lib/quests/catalogue";
+
+const ADMIN = "test-quests-speakers-route";
+let admin = true;
+
+vi.mock("@/lib/generation/authz", () => ({
+  requireAdmin: async (request: Request) => {
+    const lang = new URL(request.url).searchParams.get("lang") || "enUS";
+    return admin
+      ? { lang, session: { user: { id: ADMIN } }, denied: null }
+      : { lang: null, session: null, denied: Response.json({ error: "not allowed" }, { status: 403 }) };
+  },
+}));
+
+import { DELETE, GET, POST } from "./route";
+
+const base = 990_000_000 + Math.floor(Math.random() * 9_000_000);
+const questId = base;
+const giver = base + 1;
+const second = base + 2;
+const ORD = 1_900_000_000 + Math.floor(Math.random() * 100_000_000);
+const LINE = `q:${questId}:accept`;
+
+beforeAll(async () => {
+  await db().query(
+    `insert into "user" ("id", "name", "email", "emailVerified")
+     values ($1, 'Test Speakers Admin', $2, false)
+     on conflict ("id") do nothing`,
+    [ADMIN, `${ADMIN}@example.invalid`],
+  );
+});
+
+afterEach(async () => {
+  await db().query(`delete from "quest_line_speaker" where "lineId" like $1`, [`q:${questId}:%`]);
+  await db().query(`delete from "quest_line" where "lineId" like $1`, [`q:${questId}:%`]);
+  await db().query(`delete from "npc" where "npcId" between $1 and $2`, [base, base + 10]);
+  await db().query(
+    `delete from "entity_name" where ("kind" = 'quest' and "entityId" = $1) or ("kind" = 'creature' and "entityId" = any($2::text[]))`,
+    [String(questId), [giver, second].map(String)],
+  );
+  await db().query(`delete from "activity" where "actorId" = $1`, [ADMIN]);
+});
+
+afterAll(async () => {
+  await db().query(`delete from "user" where "id" = $1`, [ADMIN]);
+  await closeDb();
+});
+
+async function answer(npcId: number, race: string, gender: string | null, flavor: string | null): Promise<void> {
+  await upsertResolution({
+    npcKind: "creature",
+    npcId,
+    npcName: `Speaker ${npcId}`,
+    race,
+    gender,
+    flavor,
+    provenance: "moderator",
+    confirmed: true,
+    doubtful: false,
+    modelFileId: null,
+    sex: null,
+    creatureType: null,
+    build: null,
+    note: null,
+    resolvedBy: ADMIN,
+  });
+}
+
+/** An English quest line spoken by `giver`, as an import writes it; `split` gives it :m and :f sides. */
+async function line(split = false): Promise<void> {
+  const ids = split ? [`${LINE}:m`, `${LINE}:f`] : [LINE];
+  for (const [i, lineId] of ids.entries()) {
+    await db().query(
+      `insert into "quest_line"
+         ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "questId",
+          "questTitle", "fileName", "text", "originalText", "generatable")
+       values ($1, 0, 'enUS', 1, true, 'extracted', 'accept', $2, 'A Test Quest', $3,
+               'Bring me six wolf pelts.', 'Bring me six wolf pelts.', true)`,
+      [lineId, questId, lineId.replaceAll(":", "-")],
+    );
+    await db().query(
+      `insert into "quest_line_speaker"
+         ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName", "race", "gender", "flavor", "voice")
+       values ($1, 0, 'enUS', $2, 'creature', $3, 'Giver', 'human', 'male', 'standard', 'human-male-standard')`,
+      [lineId, ORD + i, giver],
+    );
+  }
+}
+
+async function speakers(): Promise<{ lineId: string; npcId: number; addedBy: string | null; ord: number }[]> {
+  const { rows } = await db().query(
+    `select "lineId", "npcId", "addedBy", "ord" from "quest_line_speaker"
+      where "lineId" like $1 order by "lineId", "ord"`,
+    [`q:${questId}:%`],
+  );
+  return rows;
+}
+
+function post(body: unknown): Request {
+  return new Request("https://example.com/api/quests/lines/speakers", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+function del(lineId: string, npcId: number): Request {
+  return new Request(
+    `https://example.com/api/quests/lines/speakers?lineId=${encodeURIComponent(lineId)}&npcType=creature&npcId=${npcId}`,
+    { method: "DELETE" },
+  );
+}
+
+describe("POST /api/quests/lines/speakers", () => {
+  it("refuses anyone but an admin", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    admin = false;
+    try {
+      expect((await POST(post({ lineId: LINE, npcType: "creature", npcId: second }))).status).toBe(403);
+    } finally {
+      admin = true;
+    }
+    expect(await speakers()).toHaveLength(1);
+  });
+
+  it("adds an answered NPC as one more speaker, marked and clear of the extract's numbering", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    expect((await POST(post({ lineId: LINE, npcType: "creature", npcId: second }))).status).toBe(200);
+
+    const rows = await speakers();
+    expect(rows.map((row) => [row.npcId, row.addedBy])).toEqual([
+      [giver, null],
+      [second, ADMIN],
+    ]);
+    expect(rows[1].ord).toBeGreaterThanOrEqual(1_000_000);
+  });
+
+  it("gives the added NPC its own voice's line in the catalogue, missing until generated", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
+
+    const lines = (await corpus()).lines.filter((l) => l.questId === questId);
+    expect(lines.map((l) => [l.lineId, l.npcId, l.added ?? false])).toEqual([
+      [LINE, giver, false],
+      [`${LINE}~orc-male-shady`, second, true],
+    ]);
+  });
+
+  it("adds it to both sides of a line split by player gender, from either side", async () => {
+    await line(true);
+    await answer(second, "orc", "male", "shady");
+    expect((await POST(post({ lineId: `${LINE}:f~human-male-standard`, npcType: "creature", npcId: second }))).status).toBe(200);
+
+    const added = (await speakers()).filter((row) => row.npcId === second).map((row) => row.lineId);
+    expect(added).toEqual([`${LINE}:f`, `${LINE}:m`]);
+  });
+
+  it("refuses an NPC that already speaks the line", async () => {
+    await line();
+    await answer(giver, "human", "male", "standard");
+    expect((await POST(post({ lineId: LINE, npcType: "creature", npcId: giver }))).status).toBe(409);
+    expect(await speakers()).toHaveLength(1);
+  });
+
+  it("refuses a line nobody speaks", async () => {
+    await answer(second, "orc", "male", "shady");
+    expect((await POST(post({ lineId: LINE, npcType: "creature", npcId: second }))).status).toBe(404);
+  });
+
+  it("refuses an NPC with no type", async () => {
+    await line();
+    const response = await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
+    expect(response.status).toBe(400);
+    expect(await speakers()).toHaveLength(1);
+  });
+});
+
+describe("GET /api/quests/lines/speakers", () => {
+  it("looks an NPC up with its voice", async () => {
+    await answer(second, "orc", "male", "shady");
+    const response = await GET(new Request(`https://example.com/api/quests/lines/speakers?npcType=creature&npcId=${second}`));
+    const body = await response.json();
+    expect(body.npc).toMatchObject({ npcName: `Speaker ${second}`, race: "orc", voice: "orc-male-shady" });
+    expect(body.roster).toBeNull();
+  });
+
+  it("answers null for an NPC nobody has answered, and hands the roster over to answer it", async () => {
+    const response = await GET(new Request(`https://example.com/api/quests/lines/speakers?npcType=creature&npcId=${second}`));
+    const body = await response.json();
+    expect(body.npc).toBeNull();
+    expect(body.roster.races.length).toBeGreaterThan(0);
+  });
+});
+
+describe("DELETE /api/quests/lines/speakers", () => {
+  it("takes back a speaker added by hand, on every side of the line", async () => {
+    await line(true);
+    await answer(second, "orc", "male", "shady");
+    await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
+
+    const response = await DELETE(del(`${LINE}:m`, second));
+    expect(await response.json()).toEqual({ removed: 2 });
+    expect((await speakers()).map((row) => row.npcId)).toEqual([giver, giver]);
+  });
+
+  it("refuses to remove a speaker the dump has", async () => {
+    await line();
+    expect((await DELETE(del(LINE, giver))).status).toBe(409);
+    expect(await speakers()).toHaveLength(1);
+  });
+});

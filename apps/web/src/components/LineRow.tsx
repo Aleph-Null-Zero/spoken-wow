@@ -15,6 +15,8 @@ import {
   MessageSquareQuoteIcon,
   PencilIcon,
   PlayIcon,
+  UserPlusIcon,
+  XIcon,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -142,6 +144,9 @@ type Props = {
   onRename: ((line: ResultLine, what: "npc" | "quest") => void) | null;
   /** Open the ignore dialog, or null for anyone not allowed to make that decision. */
   onIgnore: ((line: ResultLine) => void) | null;
+  /** Add another NPC who says this line, and take back one added that way. Null but for an admin. */
+  onAddSpeaker: ((line: ResultLine) => void) | null;
+  onRemoveSpeaker: ((line: ResultLine) => void) | null;
   onRegenerate: (line: ResultLine) => void;
   /** Open the report dialog. Everyone gets this, signed in or not. */
   onReport: (line: ResultLine) => void;
@@ -200,6 +205,8 @@ export default function LineRow({
   onEditText,
   onRename,
   onIgnore,
+  onAddSpeaker,
+  onRemoveSpeaker,
   onRegenerate,
   onReport,
   onRestored,
@@ -268,7 +275,34 @@ export default function LineRow({
                 </a>
               </>
             )}
+            {onAddSpeaker && (
+              <button
+                type="button"
+                title="Add another NPC who says this line"
+                aria-label={`Add another NPC who says ${line.npcName}'s line`}
+                onClick={() => onAddSpeaker(line)}
+                className="hover:text-foreground ml-1 inline-flex align-middle"
+              >
+                <UserPlusIcon className="size-3" />
+              </button>
+            )}
           </span>
+          {line.added && (
+            <span className="text-muted-foreground block text-xs" title="Added by hand, not from the game data">
+              added
+              {onRemoveSpeaker && (
+                <button
+                  type="button"
+                  title={`Take ${line.npcName} back off this line`}
+                  aria-label={`Take ${line.npcName} back off this line`}
+                  onClick={() => onRemoveSpeaker(line)}
+                  className="hover:text-foreground ml-1 inline-flex align-middle"
+                >
+                  <XIcon className="size-3" />
+                </button>
+              )}
+            </span>
+          )}
         </td>
       )}
 

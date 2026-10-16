@@ -86,6 +86,12 @@ function plural(n: number | null, noun: string, nouns = `${noun}s`): string {
   return `${n === null ? "?" : n.toLocaleString()} ${n === 1 ? noun : nouns}`;
 }
 
+/** An NPC an activity names, by name or else by kind and id. */
+function speakerName(d: Record<string, unknown>): string {
+  const id = num(d.npcId);
+  return str(d.npcName) ?? (id === null ? "an NPC" : `${str(d.npcType) ?? "NPC"} ${id}`);
+}
+
 /** "a → b", or whichever half is known: rows backfilled from older tables carry neither. */
 function change(before: string | null, after: string | null): string | null {
   if (before && after) return `${before} → ${after}`;
@@ -206,6 +212,10 @@ function describe(row: ActivityRow): { what: string; quote: string | null } {
       return { what: `split ${str(d.npcName) ?? row.subject} into a man and a woman`, quote: null };
     case "npc.unsplit":
       return { what: `gave ${str(d.npcName) ?? row.subject} one voice again`, quote: null };
+    case "npc.speaker_added":
+      return { what: `made ${speakerName(d)} a speaker of ${row.subject}`, quote: null };
+    case "npc.speaker_removed":
+      return { what: `took ${speakerName(d)} off ${row.subject}`, quote: null };
     case "npc.resolved":
       return {
         what: `set who ${str(d.npcName) ?? row.subject} is${num(d.sex) === 3 ? " as a woman" : num(d.sex) === 2 ? " as a man" : ""}`,

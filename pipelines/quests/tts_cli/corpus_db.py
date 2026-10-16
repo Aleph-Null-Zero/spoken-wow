@@ -63,6 +63,10 @@ SPEAKER_FIELDS = ("npcType", "npcId", "npcName", "race", "gender", "flavor", "vo
 # file a contributed row looks exactly like the dump's, so nothing in it may overtake one.
 CONTRIBUTIONS_MARKED = 3
 
+# Where a speaker the site wrote starts in `ord`: a contribution's (apps/web lib/quests/speakers.ts)
+# and one an admin added. The extract numbers its own rows 0..n, and `ord` is unique per language.
+ORD_FLOOR = 1_000_000
+
 
 def connect():
     url = os.environ.get("DATABASE_URL")
@@ -152,7 +156,8 @@ def _variants(lines):
     return order
 
 
-def split_contributed(lines, schema_version, known_contributions, contributed_speakers):
+def split_contributed(lines, schema_version, known_contributions, contributed_speakers,
+                      added_speakers=frozenset()):
     """The file's rows -> (the dump's rows, how many contributed rows were left alone).
 
     A contributed row is already in the tables, written when a moderator accepted it, and is
@@ -164,10 +169,17 @@ def split_contributed(lines, schema_version, known_contributions, contributed_sp
     as CI is -- has no contribution to hang from, so it is seeded as a plain row, as it always
     was. An older file marks nothing, so a row identical to a contributed speaker
     (`contributed_speakers`: lineId plus SPEAKER_FIELDS) is taken for that speaker's copy.
+
+    A speaker an admin added (apps/web migration 0076) carries its "addedBy" and is left alone
+    the same way when the database has it (`added_speakers`: lineId, npcType, npcId). One it does
+    not have keeps the key, and is written as an added speaker again.
     """
     marked = schema_version >= CONTRIBUTIONS_MARKED
     extracted, skipped = [], 0
     for row in lines:
+        if row.get("addedBy") is not None and (row["lineId"], row["npcType"], row["npcId"]) in added_speakers:
+            skipped += 1
+            continue
         contribution = row.get("contributionId")
         if marked:
             if contribution is not None and contribution in known_contributions:
@@ -468,9 +480,15 @@ def import_corpus_data(corpus, verbose=True):
                 (LANG,),
             )
             contributed_speakers = {tuple(r) for r in cur.fetchall()}
+            cur.execute(
+                """select "lineId", "npcType", "npcId" from "quest_line_speaker"
+                    where "lang" = %s and "addedBy" is not null""",
+                (LANG,),
+            )
+            added_speakers = {tuple(r) for r in cur.fetchall()}
             lines, contributed = split_contributed(
                 corpus["lines"], corpus["schemaVersion"], known_contributions,
-                contributed_speakers,
+                contributed_speakers, added_speakers,
             )
             answers = answered_models(cur, lines)
             answered = sum(1 for row in lines
@@ -582,18 +600,23 @@ def import_corpus_data(corpus, verbose=True):
             # extract's, and would otherwise vanish -- line and all -- on the next import.
             # Those rows take an `ord` from 1,000,000 up, so the extract's 0..n never meets them.
             # Until the dump has the same NPC on the same line: then the dump is the source of
-            # truth, and the contribution has done its job (below).
+            # truth, and the contribution has done its job (below). The same goes for a speaker
+            # an admin added by hand (migration 0076), marked by its "addedBy".
             cur.execute(
                 """delete from "quest_line_speaker"
-                    where "lang" = %s and "contributionId" is null""",
+                    where "lang" = %s and "contributionId" is null and "addedBy" is null""",
                 (LANG,),
             )
             # A line split here is spoken by the dump's speakers on both of its sides. The
             # sides' `ord`s follow the dump's own, which are only ever as many as its rows.
-            speaker_rows = []
+            # A row added by hand keeps the line it was added to, split side or not.
+            speaker_rows, added_rows = [], []
             for ord_, row in enumerate(lines):
                 variant = variants[row["lineId"]].index(_line_key(row))
                 speaker = tuple(row[field] for field in SPEAKER_FIELDS)
+                if row.get("addedBy") is not None:
+                    added_rows.append((row["lineId"], variant, LANG) + speaker + (row["addedBy"],))
+                    continue
                 if (row["lineId"], variant) not in split:
                     speaker_rows.append((row["lineId"], variant, LANG, ord_) + speaker)
                     continue
@@ -607,6 +630,21 @@ def import_corpus_data(corpus, verbose=True):
                        ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName",
                         "race", "gender", "flavor", "voice")
                      values %s""")
+            # Only from a file seeding a database that lacks them: clear of the extract's
+            # numbering, after every speaker the site already wrote, in the file's order.
+            if added_rows:
+                cur.execute(
+                    """select greatest(coalesce(max("ord") + 1, 0), %s) from "quest_line_speaker"
+                        where "lang" = %s""",
+                    (ORD_FLOOR, LANG),
+                )
+                first = cur.fetchone()[0]
+                added_rows = [row[:3] + (first + i,) + row[3:] for i, row in enumerate(added_rows)]
+                _bulk(cur, "quest_line_speaker: added by hand", added_rows,
+                      """insert into "quest_line_speaker"
+                           ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName",
+                            "race", "gender", "flavor", "voice", "addedBy")
+                         values %s""")
 
             npc_rows = npc_answers(corpus.get("npcs", []))
             kept_npcs = []
@@ -619,21 +657,25 @@ def import_corpus_data(corpus, verbose=True):
             if "npcSexes" in corpus:
                 _import_npc_sexes(cur, sex_rows)
 
-            # Only from a marked file: in an older one, the rows that would match are the
-            # contributed speakers' own round-tripped copies, skipped above or not.
-            superseded = 0
-            if marked:
-                cur.execute(
-                    """delete from "quest_line_speaker" c
-                        where c."lang" = %s and c."contributionId" is not null
-                          and exists (
-                            select 1 from "quest_line_speaker" e
-                             where e."contributionId" is null and e."lang" = c."lang"
-                               and e."lineId" = c."lineId" and e."variant" = c."variant"
-                               and e."npcType" = c."npcType" and e."npcId" = c."npcId")""",
-                    (LANG,),
-                )
-                superseded = cur.rowcount
+            # A contributed speaker only from a marked file: in an older one, the rows that
+            # would match are its own round-tripped copies, skipped above or not. A speaker added
+            # by hand is marked in every file that carries one, so needs no schema check.
+            cur.execute(
+                """delete from "quest_line_speaker" c
+                    where c."lang" = %s
+                      and (c."addedBy" is not null or (%s and c."contributionId" is not null))
+                      and exists (
+                        select 1 from "quest_line_speaker" e
+                         where e."contributionId" is null and e."addedBy" is null
+                           and e."lang" = c."lang"
+                           and e."lineId" = c."lineId" and e."variant" = c."variant"
+                           and e."npcType" = c."npcType" and e."npcId" = c."npcId")
+                    returning c."addedBy" is not null""",
+                (LANG, bool(marked)),
+            )
+            overtaken = [row[0] for row in cur.fetchall()]
+            superseded_added = sum(overtaken)
+            superseded = len(overtaken) - superseded_added
 
             cur.execute("""delete from "quest_spawn" """)
             spawn_rows = []
@@ -683,6 +725,7 @@ def import_corpus_data(corpus, verbose=True):
             f"speakers overtaken by the dump"
             + ("" if marked else " (none: the file predates marking them)")
         )
+        print(f"{superseded_added} speakers added by hand overtaken by the dump")
         print(
             f"defects carried over unchanged: {collisions} lineIds naming two different "
             f"lines, {duplicates} duplicate rows"
@@ -690,11 +733,14 @@ def import_corpus_data(corpus, verbose=True):
     return counts
 
 
-def _with_contribution(row, contribution_id):
+def _with_contribution(row, contribution_id, added_by=None):
     """A contributed row carries its contributionId, last, so the import can tell it from the
-    dump's. The dump's rows have no such key, which keeps them as the extract writes them."""
+    dump's, and a speaker an admin added carries its addedBy the same way. The dump's rows have
+    no such key, which keeps them as the extract writes them."""
     if contribution_id is not None:
         row["contributionId"] = contribution_id
+    if added_by is not None:
+        row["addedBy"] = added_by
     return row
 
 
@@ -712,7 +758,7 @@ def _speaker_rows(cur):
                     (select n."name" from "entity_name" n
                       where n."kind" = s."npcType" and n."entityId" = s."npcId"::text
                         and n."lang" = %(lang)s and n."isCurrent"), s."npcName") end,
-                  s."race", s."gender", s."flavor", s."voice", s."contributionId",
+                  s."race", s."gender", s."flavor", s."voice", s."contributionId", s."addedBy",
                   l."lineId", l."source", l."questId", l."questTitle",
                   l."playerGender", l."text", l."originalText", l."fileName",
                   l."generatable", l."skipReason"
@@ -812,8 +858,8 @@ def export_corpus(path, check=False, verbose=True):
             "fileName": file_name,
             "generatable": generatable,
             "skipReason": skip_reason,
-        }, contribution_id)
-        for (npc_type, npc_id, npc_name, race, gender, flavor, voice, contribution_id,
+        }, contribution_id, added_by)
+        for (npc_type, npc_id, npc_name, race, gender, flavor, voice, contribution_id, added_by,
              line_id, source, quest_id, quest_title, player_gender, text, original_text,
              file_name, generatable, skip_reason) in rows
     ]
