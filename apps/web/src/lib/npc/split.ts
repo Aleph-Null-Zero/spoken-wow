@@ -28,7 +28,7 @@ async function answerFor(observed: Observed, sex: Sex, race: string): Promise<Bo
     : null;
   const exact = displays?.exact && displays.voice.gender === gender && displays.voice.race === race
     ? displays.voice : null;
-  const offered = displays && !displays.exact && displays.gender === gender ? displays.flavors : [];
+  const offered = displays && !displays.exact && displays.gender === gender && displays.race === race ? displays.flavors : [];
   const fallback = exact ? null : await defaultFlavorFor(race, gender);
   return {
     npcKind: "creature",

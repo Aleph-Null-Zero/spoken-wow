@@ -437,4 +437,14 @@ describe("splitting by body", () => {
     expect(await splitByBody({ ...gnomeMan, modelFileId: 118355 }, npcDwarf)).toBe(true);
     expect(vi.mocked(upsertBody).mock.calls.map(([row]) => [row.race, row.sex])).toEqual([["dwarf", 2]]);
   });
+
+  it("takes no flavor from displays of another race than the body seen", async () => {
+    vi.mocked(getBodies).mockResolvedValueOnce([]);
+    vi.mocked(upsertBody).mockClear();
+    vi.mocked(defaultFlavorFor).mockResolvedValue("standard");
+    vi.mocked(voiceFromDisplays).mockResolvedValue({ exact: false, race: "gnome", gender: "female", flavors: ["gnomish"] });
+    // An unreadable model: the body seen keeps the NPC's dwarf race, whatever the displays say.
+    await splitByBody({ ...gnomeMan, sex: 3, modelFileId: 1, displayIds: [1] }, npcDwarf);
+    expect(vi.mocked(upsertBody).mock.calls.at(-1)![0]).toMatchObject({ race: "dwarf", sex: 3, flavor: "standard" });
+  });
 });
