@@ -4,7 +4,7 @@ release: zones-audio-zhCN
 section: zones
 lang: zhCN
 version: 2.0.0
-slug: spoken-zones-audio-zhcn
+slug: spoken-chinese-simplified-audio-places
 name: Spoken Chinese (Simplified) Audio: Places
 summary: The Simplified Chinese narration for Spoken's Places module: every zone and subzone read aloud in Chinese (Simplified).
 categories:
@@ -14,9 +14,9 @@ categories:
 license: MIT
 ---
 
-Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)**'s Places module, in Simplified Chinese. This addon is data only — it does nothing on its own.
+Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Places module, in Simplified Chinese. This addon is data only — it does nothing on its own.
 
-It plays while Spoken Places is showing its lore in **Chinese (Simplified)**, and never under another language's text. It installs beside the English pack, **[Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio)**, rather than replacing it, so a player who switches languages keeps the narration for both.
+It plays while Spoken Places is showing its lore in **Chinese (Simplified)**, and never under another language's text. It installs beside the English pack, **[Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-audio-places)**, rather than replacing it, so a player who switches languages keeps the narration for both.
 
 ## Installing
 

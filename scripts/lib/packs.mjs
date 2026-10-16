@@ -218,7 +218,7 @@ export function metaFor(lang, packs = loadPacks(), dir = PUBLISHERS_DIR) {
     page, lang, version: meta.version, slug: meta.slug, name: meta.name,
     curseforge: meta.curseforge ?? null,
     folder: `SpokenAll_${lang}`, release: `spoken-all-${lang}`,
-    dependencies: ["spoken-player", ...shipped.map((p) => p.slug)],
+    dependencies: ["spoken", ...shipped.map((p) => p.slug)],
   };
 }
 

@@ -33,40 +33,40 @@ which is why there is one file per project here and not two.
 
 | File | Project | CurseForge id | Wago id | Slug |
 | --- | --- | --- | --- | --- |
-| `spoken/spoken.md` | Spoken | 1700375 | QN53yXKB | `spoken-player` |
-| `spoken/all.md` | Spoken English | 1721569 | — | `spoken` |
+| `spoken/spoken.md` | Spoken | 1700375 | QN53yXKB | `spoken` |
+| `spoken/all.md` | Spoken English | 1721569 | — | `spoken-english` |
 | `spoken/all-<lang>.md` | `Spoken <Language>`, a language's meta addon: Spoken and that language's packs on CurseForge | each page's `curseforge:` | — | `spoken-<language>` |
 | `quests/player.md` | Spoken Quests (retired; was VoiceOver Redux) | 1655859 | aN0XPlNj | `spoken-quests` |
 | `quests/audio-all.md` | Spoken Quests Audio: All | 1660196 | ANzkpD64 | `spoken-quests-audio-all` |
-| `quests/audio-alliance.md` | Spoken Audio: Quests - Alliance | 1660197 | 5NR8mJK3 | `spoken-quests-audio-alliance` |
-| `quests/audio-horde.md` | Spoken Audio: Quests - Horde | 1660198 | vNAg3OKo | `spoken-quests-audio-horde` |
-| `quests/audio-shared.md` | Spoken Audio: Quests - Shared | 1660199 | QNlz3YKe | `spoken-quests-audio-shared` |
-| `quests/audio-gossip.md` | Spoken Audio: Gossip | 1660202 | XKqA45Ky | `spoken-quests-audio-gossip` |
+| `quests/audio-alliance.md` | Spoken Audio: Quests - Alliance | 1660197 | 5NR8mJK3 | `spoken-audio-quests-alliance` |
+| `quests/audio-horde.md` | Spoken Audio: Quests - Horde | 1660198 | vNAg3OKo | `spoken-audio-quests-horde` |
+| `quests/audio-shared.md` | Spoken Audio: Quests - Shared | 1660199 | QNlz3YKe | `spoken-audio-quests-shared` |
+| `quests/audio-gossip.md` | Spoken Audio: Gossip | 1660202 | XKqA45Ky | `spoken-audio-gossip` |
 | `quests/audio-<pack>-<lang>.md` | `Spoken <Language> Audio: Quests - <Side>` for Alliance, Horde and Shared, and `Spoken <Language> Audio: Gossip` | each page's `curseforge:` | — | `<language>-spoken-quests-<pack>` |
 | `quests/audio-shared-<lang>.md` for itIT, ptBR, koKR, ruRU, zhCN, zhTW | `Spoken <Language> Audio: Quests`, every quest in one pack beside Gossip; Alliance and Horde dormant | each page's `curseforge:` | — | `<language>-spoken-quests` |
 | `quests/audio-<lang>.md` | Spoken Quests Audio: `<Language>`, every line in one folder, GitHub only | — | — | — |
 | `zones/spoken-zones.md` | Spoken Zones (retired; was ZoneLore) | 1636521 | mNw7b5No | `spoken-zones` |
-| `zones/spoken-zones-audio.md` | Spoken Audio: Places | 1636532 | b6mvD9KP | `spoken-zones-audio` |
-| `zones/spoken-zones-audio-dede.md` | Spoken German Audio: Places | 1713131 | — | `spoken-zones-audio-dede` |
-| `zones/spoken-zones-audio-eses.md` | Spoken Spanish (EU) Audio: Places | 1712807 | — | `spoken-zones-audio-eses` |
-| `zones/spoken-zones-audio-esmx.md` | Spoken Spanish (AL) Audio: Places | 1711067 | — | `spoken-zones-audio-esmx` |
-| `zones/spoken-zones-audio-frfr.md` | Spoken French Audio: Places | 1713125 | — | `spoken-zones-audio-frfr` |
-| `zones/spoken-zones-audio-kokr.md` | Spoken Korean Audio: Places | 1723252 | — | `spoken-zones-audio-kokr` |
-| `zones/spoken-zones-audio-ptbr.md` | Spoken Portuguese Audio: Places | 1713138 | — | `spoken-zones-audio-ptbr` |
-| `zones/spoken-zones-audio-ruru.md` | Spoken Russian Audio: Places | 1713143 | — | `spoken-zones-audio-ruru` |
-| `zones/spoken-zones-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Places | 1723273 | — | `spoken-zones-audio-zhcn` |
-| `zones/spoken-zones-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Places | 1723276 | — | `spoken-zones-audio-zhtw` |
+| `zones/spoken-zones-audio.md` | Spoken Audio: Places | 1636532 | b6mvD9KP | `spoken-audio-places` |
+| `zones/spoken-zones-audio-dede.md` | Spoken German Audio: Places | 1713131 | — | `spoken-german-audio-places` |
+| `zones/spoken-zones-audio-eses.md` | Spoken Spanish (EU) Audio: Places | 1712807 | — | `spoken-spanish-eu-audio-places` |
+| `zones/spoken-zones-audio-esmx.md` | Spoken Spanish (AL) Audio: Places | 1711067 | — | `spoken-spanish-al-audio-places` |
+| `zones/spoken-zones-audio-frfr.md` | Spoken French Audio: Places | 1713125 | — | `spoken-french-audio-places` |
+| `zones/spoken-zones-audio-kokr.md` | Spoken Korean Audio: Places | 1723252 | — | `spoken-korean-audio-places` |
+| `zones/spoken-zones-audio-ptbr.md` | Spoken Portuguese Audio: Places | 1713138 | — | `spoken-portuguese-audio-places` |
+| `zones/spoken-zones-audio-ruru.md` | Spoken Russian Audio: Places | 1713143 | — | `spoken-russian-audio-places` |
+| `zones/spoken-zones-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Places | 1723273 | — | `spoken-chinese-simplified-audio-places` |
+| `zones/spoken-zones-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Places | 1723276 | — | `spoken-chinese-traditional-audio-places` |
 | `books/spoken-books.md` | Spoken Books (retired) | 1701514 | qGYZnRNg | `spoken-books` |
-| `books/spoken-books-audio.md` | Spoken Audio: Readables | 1701520 | qGZOrvNd | `spoken-books-audio` |
-| `books/spoken-books-audio-dede.md` | Spoken German Audio: Readables | 1723279 | — | `spoken-books-audio-dede` |
-| `books/spoken-books-audio-eses.md` | Spoken Spanish (EU) Audio: Readables | 1723280 | — | `spoken-books-audio-eses` |
-| `books/spoken-books-audio-esmx.md` | Spoken Spanish (AL) Audio: Readables | 1723282 | — | `spoken-books-audio-esmx` |
-| `books/spoken-books-audio-frfr.md` | Spoken French Audio: Readables | 1723284 | — | `spoken-books-audio-frfr` |
-| `books/spoken-books-audio-ruru.md` | Spoken Russian Audio: Readables | 1723285 | — | `spoken-books-audio-ruru` |
-| `books/spoken-books-audio-ptbr.md` | Spoken Portuguese Audio: Readables | 1723287 | — | `spoken-books-audio-ptbr` |
-| `books/spoken-books-audio-kokr.md` | Spoken Korean Audio: Readables | 1723288 | — | `spoken-books-audio-kokr` |
-| `books/spoken-books-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Readables | 1723289 | — | `spoken-books-audio-zhcn` |
-| `books/spoken-books-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Readables | 1723295 | — | `spoken-books-audio-zhtw` |
+| `books/spoken-books-audio.md` | Spoken Audio: Readables | 1701520 | qGZOrvNd | `spoken-audio-readables` |
+| `books/spoken-books-audio-dede.md` | Spoken German Audio: Readables | 1723279 | — | `spoken-german-audio-readables` |
+| `books/spoken-books-audio-eses.md` | Spoken Spanish (EU) Audio: Readables | 1723280 | — | `spoken-spanish-eu-audio-readables` |
+| `books/spoken-books-audio-esmx.md` | Spoken Spanish (AL) Audio: Readables | 1723282 | — | `spoken-spanish-al-audio-readables` |
+| `books/spoken-books-audio-frfr.md` | Spoken French Audio: Readables | 1723284 | — | `spoken-french-audio-readables` |
+| `books/spoken-books-audio-ruru.md` | Spoken Russian Audio: Readables | 1723285 | — | `spoken-russian-audio-readables` |
+| `books/spoken-books-audio-ptbr.md` | Spoken Portuguese Audio: Readables | 1723287 | — | `spoken-portuguese-audio-readables` |
+| `books/spoken-books-audio-kokr.md` | Spoken Korean Audio: Readables | 1723288 | — | `spoken-korean-audio-readables` |
+| `books/spoken-books-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Readables | 1723289 | — | `spoken-chinese-simplified-audio-readables` |
+| `books/spoken-books-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Readables | 1723295 | — | `spoken-chinese-traditional-audio-readables` |
 
 **A sound pack's page is also its registry entry.** `section:` (quests, zones or books), `lang:`
 and, on a quests pack, `pack:` say which pack it is; a language other than English also carries
@@ -83,8 +83,11 @@ ids, and nothing builds or uploads them. Splitting the language later is droppin
 renaming Shared back: its players keep the folder and add their side. Italian, Portuguese,
 Korean, Russian and both Chinese ship this way.
 
-The slugs follow the projects' names, `-all` included: the meta addon is the "All" pack as far
-as a player is concerned, so it is the one project whose slug names a pack that holds no audio.
+The slugs follow the projects' names: lowercased, with the colon, the dash and the brackets
+dropped, so `Spoken German Audio: Quests - Horde` is `spoken-german-audio-quests-horde`. A Shared
+page that holds every quest is the one exception: it is named `... Audio: Quests` but keeps the
+`-quests-shared` slug, so splitting the language later renames the project without moving it.
+`spoken-quests-audio-all` and the retired projects keep the slugs they were published under.
 
 **Gossip has no project of its own.** It is a part of Spoken Quests, in Spoken's zip, and its
 voices are the Gossip pack above, which every language's quests pack also holds.

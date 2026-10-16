@@ -18,17 +18,17 @@ license: MIT
 
 ## What it installs
 
-[Spoken](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Russian voice packs:
+[Spoken](https://www.curseforge.com/wow/addons/spoken), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Russian voice packs:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue | [Spoken Russian Audio: Quests](https://www.curseforge.com/wow/addons/russian-spoken-quests) |
-| Spoken Quests | NPC gossip | [Spoken Russian Audio: Gossip](https://www.curseforge.com/wow/addons/russian-spoken-quests-gossip) |
-| Spoken Places | zone and subzone lore | [Spoken Russian Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio-ruru) |
-| Spoken Readables | books, letters, notes and plaques | [Spoken Russian Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio-ruru) |
+| Spoken Quests | quest dialogue | [Spoken Russian Audio: Quests](https://www.curseforge.com/wow/addons/spoken-russian-audio-quests-shared) |
+| Spoken Quests | NPC gossip | [Spoken Russian Audio: Gossip](https://www.curseforge.com/wow/addons/spoken-russian-audio-gossip) |
+| Spoken Places | zone and subzone lore | [Spoken Russian Audio: Places](https://www.curseforge.com/wow/addons/spoken-russian-audio-places) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Russian Audio: Readables](https://www.curseforge.com/wow/addons/spoken-russian-audio-readables) |
 
 ## Language
 
 Spoken speaks in your client's language by default. To hear Russian on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Russian packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken).
+English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).

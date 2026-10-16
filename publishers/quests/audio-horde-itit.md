@@ -7,7 +7,7 @@ pack: horde
 dormant: true
 version: 0.0.2
 github: false
-slug: italian-spoken-quests-horde
+slug: spoken-italian-audio-quests-horde
 name: Spoken Italian Audio: Quests - Horde
 summary: Horde-only quest dialogue, voiced in Italian. Pair it with the Shared pack. Needs Spoken.
 categories:
@@ -21,17 +21,17 @@ This is the Italian audio pack for Horde quest dialogue: the quests only a Horde
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spoken Italian Audio: Quests](https://www.curseforge.com/wow/addons/italian-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Italian Audio: Quests](https://www.curseforge.com/wow/addons/spoken-italian-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
-| [Alliance](https://www.curseforge.com/wow/addons/italian-spoken-quests-alliance) | Alliance-only quests | |
+| [Alliance](https://www.curseforge.com/wow/addons/spoken-italian-audio-quests-alliance) | Alliance-only quests | |
 | **Horde** | Horde-only quests | **this pack** |
-| [Shared](https://www.curseforge.com/wow/addons/italian-spoken-quests) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/italian-spoken-quests-gossip) | NPC gossip chatter | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-italian-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-italian-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

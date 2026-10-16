@@ -4,7 +4,7 @@ wago: b6mvD9KP
 release: zones-audio
 section: zones
 lang: enUS
-slug: spoken-zones-audio
+slug: spoken-audio-places
 name: Spoken Audio: Places
 summary: The narration for Spoken's Places module: every zone and subzone read aloud.
 categories:
@@ -15,7 +15,7 @@ license: MIT
 addonReadme: addons/SpokenZonesAudio/README.md
 ---
 
-Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)**'s Places module. This addon is data only — it does nothing on its own.
+Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Places module. This addon is data only — it does nothing on its own.
 
 ## The voice, as of 0.3.0
 

@@ -18,17 +18,17 @@ license: MIT
 
 ## What it installs
 
-[Spoken](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Korean voice packs:
+[Spoken](https://www.curseforge.com/wow/addons/spoken), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Korean voice packs:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue | [Spoken Korean Audio: Quests](https://www.curseforge.com/wow/addons/korean-spoken-quests) |
-| Spoken Quests | NPC gossip | [Spoken Korean Audio: Gossip](https://www.curseforge.com/wow/addons/korean-spoken-quests-gossip) |
-| Spoken Places | zone and subzone lore | [Spoken Korean Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio-kokr) |
-| Spoken Readables | books, letters, notes and plaques | [Spoken Korean Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio-kokr) |
+| Spoken Quests | quest dialogue | [Spoken Korean Audio: Quests](https://www.curseforge.com/wow/addons/spoken-korean-audio-quests-shared) |
+| Spoken Quests | NPC gossip | [Spoken Korean Audio: Gossip](https://www.curseforge.com/wow/addons/spoken-korean-audio-gossip) |
+| Spoken Places | zone and subzone lore | [Spoken Korean Audio: Places](https://www.curseforge.com/wow/addons/spoken-korean-audio-places) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Korean Audio: Readables](https://www.curseforge.com/wow/addons/spoken-korean-audio-readables) |
 
 ## Language
 
 Spoken speaks in your client's language by default. To hear Korean on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Korean packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken).
+English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).

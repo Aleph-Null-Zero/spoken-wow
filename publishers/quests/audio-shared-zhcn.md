@@ -7,7 +7,7 @@ pack: shared
 holds: quests
 version: 0.0.1
 github: false
-slug: chinese-simplified-spoken-quests
+slug: spoken-chinese-simplified-audio-quests-shared
 name: Spoken Chinese (Simplified) Audio: Quests
 summary: Every quest's dialogue, for both factions, voiced in Simplified Chinese. NPC gossip is a separate pack. Needs Spoken.
 categories:
@@ -21,14 +21,14 @@ This is the Simplified Chinese audio pack for quest dialogue: every quest, which
 
 **You need one more addon for this to do anything:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Quests** | every quest, both factions | **this pack** |
-| [Gossip](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-gossip) | NPC gossip chatter | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

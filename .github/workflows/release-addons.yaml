@@ -98,10 +98,10 @@ jobs:
               # Wago carries the addons but not the packs: each pack is 300-450 MB and that
               # upload endpoint answers 413, so only the player has a second store link.
               "wago_link_blizz": "https://addons.wago.io/addons/spoken-quests",
-              "curse_link_pack_alliance": "https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance",
-              "curse_link_pack_horde": "https://www.curseforge.com/wow/addons/spoken-quests-audio-horde",
-              "curse_link_pack_shared": "https://www.curseforge.com/wow/addons/spoken-quests-audio-shared",
-              "curse_link_pack_gossip": "https://www.curseforge.com/wow/addons/spoken-quests-audio-gossip",
+              "curse_link_pack_alliance": "https://www.curseforge.com/wow/addons/spoken-audio-quests-alliance",
+              "curse_link_pack_horde": "https://www.curseforge.com/wow/addons/spoken-audio-quests-horde",
+              "curse_link_pack_shared": "https://www.curseforge.com/wow/addons/spoken-audio-quests-shared",
+              "curse_link_pack_gossip": "https://www.curseforge.com/wow/addons/spoken-audio-gossip",
           }
 
           with open(".github/release-template.md", encoding="utf-8") as handle:

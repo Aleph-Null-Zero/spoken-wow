@@ -4,7 +4,7 @@ wago: qGZOrvNd
 release: books-audio
 section: books
 lang: enUS
-slug: spoken-books-audio
+slug: spoken-audio-readables
 name: Spoken Audio: Readables
 summary: The narration for Spoken's Readables module: books, letters and notes read aloud. Data only — install it beside Spoken.
 categories:
@@ -15,7 +15,7 @@ license: MIT
 addonReadme: addons/SpokenBooksAudio/README.md
 ---
 
-Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)**'s Readables module. This addon is data only — it does nothing on its own.
+Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Readables module. This addon is data only — it does nothing on its own.
 
 One clip per page, covering every readable book, letter, note and plaque in the world that can be spoken at all.
 

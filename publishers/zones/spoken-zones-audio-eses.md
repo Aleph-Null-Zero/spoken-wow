@@ -4,7 +4,7 @@ release: zones-audio-esES
 section: zones
 lang: esES
 version: 2.0.1
-slug: spoken-zones-audio-eses
+slug: spoken-spanish-eu-audio-places
 name: Spoken Spanish (EU) Audio: Places
 summary: The European Spanish narration for Spoken's Places module: every zone and subzone read aloud in Spanish (EU).
 categories:
@@ -14,9 +14,9 @@ categories:
 license: MIT
 ---
 
-Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)**'s Places module, in European Spanish. This addon is data only — it does nothing on its own.
+Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Places module, in European Spanish. This addon is data only — it does nothing on its own.
 
-It plays while Spoken Places is showing its lore in **Spanish (EU)**, and never under another language's text. It installs beside the English pack, **[Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio)**, rather than replacing it, so a player who switches languages keeps the narration for both.
+It plays while Spoken Places is showing its lore in **Spanish (EU)**, and never under another language's text. It installs beside the English pack, **[Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-audio-places)**, rather than replacing it, so a player who switches languages keeps the narration for both.
 
 ## Installing
 

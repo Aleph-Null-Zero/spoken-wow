@@ -57,7 +57,7 @@ type Addon = {
 const ADDONS: Addon[] = [
   // First, since every other row needs it.
   {
-    slug: "spoken-player",
+    slug: "spoken",
     label: "Spoken",
     description: "Plays the audio for the other addons. Required by all of them.",
     wago: true,
@@ -180,7 +180,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
 
         <div className="mt-4 text-sm">
           <p>
-            Install <External href={`${CURSEFORGE}/spoken`}>Spoken English</External> from
+            Install <External href={`${CURSEFORGE}/spoken-english`}>Spoken English</External> from
             CurseForge or WowUp-CF if you use one of these managers. It brings in every addon and
             its English audio.
           </p>

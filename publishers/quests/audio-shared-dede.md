@@ -6,7 +6,7 @@ lang: deDE
 pack: shared
 version: 1.0.0
 github: false
-slug: german-spoken-quests-shared
+slug: spoken-german-audio-quests-shared
 name: Spoken German Audio: Quests - Shared
 summary: Quest dialogue both factions can hear, voiced in German. Install alongside the Alliance or Horde pack. Needs Spoken.
 categories:
@@ -20,17 +20,17 @@ This is the German audio pack for the quests **both factions** can take, voiced 
 
 **Everyone wants this pack**, and on its own it is only part of the story. Pair it with your side, and with the player:
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spoken German Audio: Quests - Alliance](https://www.curseforge.com/wow/addons/german-spoken-quests-alliance)** or **[(Horde)](https://www.curseforge.com/wow/addons/german-spoken-quests-horde)** — whichever side your character is on.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken German Audio: Quests - Alliance](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-alliance)** or **[(Horde)](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-horde)** — whichever side your character is on.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
-| [Alliance](https://www.curseforge.com/wow/addons/german-spoken-quests-alliance) | Alliance-only quests | |
-| [Horde](https://www.curseforge.com/wow/addons/german-spoken-quests-horde) | Horde-only quests | |
+| [Alliance](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-alliance) | Alliance-only quests | |
+| [Horde](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-horde) | Horde-only quests | |
 | **Shared** | quests both factions can take | **this pack** |
-| [Gossip](https://www.curseforge.com/wow/addons/german-spoken-quests-gossip) | NPC gossip chatter | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-german-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

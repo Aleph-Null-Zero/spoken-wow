@@ -88,10 +88,10 @@ target_slug()       { case "$1" in zones) echo "spoken-zones";; audio) pack_fiel
 # client it cannot load on is worse than one that is simply absent there.
 # Required dependencies by CurseForge slug. The pack needs the module that reads it: it is
 # data, inert without it, and a manager that installs it alone leaves a player several hundred
-# megabytes heavier and no louder. Since 3.0.0 the module ships inside spoken-player, so that
+# megabytes heavier and no louder. Since 3.0.0 the module ships inside spoken, so that
 # is what the pack names; spoken-zones is retired, and its last file is the tombstone the
-# addon target uploads, which needs spoken-player too.
-target_dependencies()  { case "$1" in zones) echo "spoken-player";; audio) echo "spoken-player";; esac; }
+# addon target uploads, which needs spoken too.
+target_dependencies()  { case "$1" in zones) echo "spoken";; audio) echo "spoken";; esac; }
 target_game_versions() { echo "$GAME_VERSION_ERA $GAME_VERSION_ANNIVERSARY $GAME_VERSION_FOREVER"; }
 
 dry_run=""

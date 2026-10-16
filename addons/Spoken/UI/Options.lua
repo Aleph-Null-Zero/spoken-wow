@@ -223,9 +223,9 @@ local LINKS = {
     { name = "Discord", icon = [[Interface\AddOns\Spoken\Textures\LinkDiscord]],
         url = "https://discord.gg/HEGUgn6Yf" },
     { name = "CurseForge", icon = [[Interface\AddOns\Spoken\Textures\LinkCurseForge]],
-        url = "https://www.curseforge.com/wow/addons/spoken-player" },
+        url = "https://www.curseforge.com/wow/addons/spoken" },
     { name = "Wago", icon = [[Interface\AddOns\Spoken\Textures\LinkWago]],
-        url = "https://addons.wago.io/addons/spoken-player" },
+        url = "https://addons.wago.io/addons/spoken" },
     { name = "Buy Me a Coffee", icon = [[Interface\AddOns\Spoken\Textures\LinkBuyMeACoffee]],
         url = "https://buymeacoffee.com/rustykey" },
 }

@@ -1,7 +1,7 @@
 ---
 curseforge: 1700375
 wago: QN53yXKB
-slug: spoken-player
+slug: spoken
 name: Spoken
 summary: Expressive, character-driven AI voiceover for WoW Forever. Quest dialogue, NPC gossip, zone lore and books, read aloud. Spoken Quests, Gossip, Places and Readables in one download.
 categories:
@@ -30,12 +30,12 @@ Three modules, each can be switched off in the settings. **The voices are not in
 
 | Module | Voices | Voice pack |
 | --- | --- | --- |
-| **Spoken Quests** | quest dialogue, and what NPCs say when you talk to them | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-quests-audio-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-quests-audio-shared) |
-| **Spoken Places** | zone and area lore, on the world map | [Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio) |
-| **Spoken Readables** | books, letters, notes and the plaques out in the world | [Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio) |
+| **Spoken Quests** | quest dialogue, and what NPCs say when you talk to them | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-audio-quests-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-audio-quests-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-audio-quests-shared) |
+| **Spoken Places** | zone and area lore, on the world map | [Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-audio-places) |
+| **Spoken Readables** | books, letters, notes and the plaques out in the world | [Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-audio-readables) |
 
 <!-- only:curseforge -->
-Want everything in English at once? Install [Spoken English](https://www.curseforge.com/wow/addons/spoken) instead: it brings this addon and every English pack.
+Want everything in English at once? Install [Spoken English](https://www.curseforge.com/wow/addons/spoken-english) instead: it brings this addon and every English pack.
 
 <!-- /only -->
 Voice packs in German, Spanish, French, Korean, Portuguese, Russian and Chinese are separate downloads.

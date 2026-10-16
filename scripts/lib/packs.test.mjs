@@ -21,13 +21,13 @@ function tree(pages) {
 }
 
 const zonesEn = ["zones", "a.md", { section: "zones", lang: "enUS", curseforge: "1636532",
-  wago: "b6mvD9KP", release: "zones-audio", slug: "spoken-zones-audio", name: "Spoken Zones Audio" }];
+  wago: "b6mvD9KP", release: "zones-audio", slug: "spoken-audio-places", name: "Spoken Zones Audio" }];
 const zonesMx = ["zones", "b.md", { section: "zones", lang: "esMX", version: "1.0.0",
-  curseforge: "1711067", release: "zones-audio-esMX", slug: "spoken-zones-audio-esmx",
+  curseforge: "1711067", release: "zones-audio-esMX", slug: "spoken-spanish-al-audio-places",
   name: "Spoken Zones Audio: Spanish (AL)" }];
 const hordeEn = ["quests", "h.md", { section: "quests", lang: "enUS", pack: "horde",
   curseforge: "1660198", wago: "vNAg3OKo", release: "quests-audio-horde",
-  slug: "spoken-quests-audio-horde", name: "Spoken Quests Audio: Horde" }];
+  slug: "spoken-audio-quests-horde", name: "Spoken Quests Audio: Horde" }];
 const addonPage = ["zones", "addon.md", { curseforge: "1636521", slug: "spoken-zones",
   name: "Spoken Zones" }];
 

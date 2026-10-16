@@ -18,12 +18,12 @@ license: MIT
 
 ## What it installs
 
-[Spoken](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Italian voice packs:
+[Spoken](https://www.curseforge.com/wow/addons/spoken), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Italian voice packs:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue | [Spoken Italian Audio: Quests](https://www.curseforge.com/wow/addons/italian-spoken-quests) |
-| Spoken Quests | NPC gossip | [Spoken Italian Audio: Gossip](https://www.curseforge.com/wow/addons/italian-spoken-quests-gossip) |
+| Spoken Quests | quest dialogue | [Spoken Italian Audio: Quests](https://www.curseforge.com/wow/addons/spoken-italian-audio-quests-shared) |
+| Spoken Quests | NPC gossip | [Spoken Italian Audio: Gossip](https://www.curseforge.com/wow/addons/spoken-italian-audio-gossip) |
 
 Spoken Places and Spoken Readables have no Italian voice pack yet, so they play in English, or not at all, depending on **Fallback Language**.
 
@@ -31,4 +31,4 @@ Spoken Places and Spoken Readables have no Italian voice pack yet, so they play 
 
 Spoken speaks in your client's language by default. To hear Italian on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Italian packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken).
+English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).

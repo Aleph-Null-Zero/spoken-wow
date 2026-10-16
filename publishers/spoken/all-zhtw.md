@@ -18,17 +18,17 @@ license: MIT
 
 ## What it installs
 
-[Spoken](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Traditional Chinese voice packs:
+[Spoken](https://www.curseforge.com/wow/addons/spoken), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Traditional Chinese voice packs:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue | [Spoken Chinese (Traditional) Audio: Quests](https://www.curseforge.com/wow/addons/chinese-traditional-spoken-quests) |
-| Spoken Quests | NPC gossip | [Spoken Chinese (Traditional) Audio: Gossip](https://www.curseforge.com/wow/addons/chinese-traditional-spoken-quests-gossip) |
-| Spoken Places | zone and subzone lore | [Spoken Chinese (Traditional) Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio-zhtw) |
-| Spoken Readables | books, letters, notes and plaques | [Spoken Chinese (Traditional) Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio-zhtw) |
+| Spoken Quests | quest dialogue | [Spoken Chinese (Traditional) Audio: Quests](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-quests-shared) |
+| Spoken Quests | NPC gossip | [Spoken Chinese (Traditional) Audio: Gossip](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-gossip) |
+| Spoken Places | zone and subzone lore | [Spoken Chinese (Traditional) Audio: Places](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-places) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Chinese (Traditional) Audio: Readables](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-readables) |
 
 ## Language
 
 Spoken speaks in your client's language by default. To hear Traditional Chinese on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Traditional Chinese packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken).
+English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).

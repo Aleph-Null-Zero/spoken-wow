@@ -4,7 +4,7 @@ release: books-audio-zhCN
 section: books
 lang: zhCN
 version: 2.0.0
-slug: spoken-books-audio-zhcn
+slug: spoken-chinese-simplified-audio-readables
 name: Spoken Chinese (Simplified) Audio: Readables
 summary: The Simplified Chinese narration for Spoken's Readables module: books, letters and notes read aloud in Chinese (Simplified).
 categories:
@@ -14,9 +14,9 @@ categories:
 license: MIT
 ---
 
-Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)**'s Readables module, in Simplified Chinese. This addon is data only — it does nothing on its own.
+Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Readables module, in Simplified Chinese. This addon is data only — it does nothing on its own.
 
-One clip per page, read from the game's own Chinese (Simplified) text. It installs beside the English pack, **[Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio)**, rather than replacing it, so a player who switches languages keeps the narration for both.
+One clip per page, read from the game's own Chinese (Simplified) text. It installs beside the English pack, **[Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-audio-readables)**, rather than replacing it, so a player who switches languages keeps the narration for both.
 
 ## Installing
 

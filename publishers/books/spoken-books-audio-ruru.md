@@ -4,7 +4,7 @@ release: books-audio-ruRU
 section: books
 lang: ruRU
 version: 2.0.0
-slug: spoken-books-audio-ruru
+slug: spoken-russian-audio-readables
 name: Spoken Russian Audio: Readables
 summary: The Russian narration for Spoken's Readables module: books, letters and notes read aloud in Russian.
 categories:
@@ -14,9 +14,9 @@ categories:
 license: MIT
 ---
 
-Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)**'s Readables module, in Russian. This addon is data only — it does nothing on its own.
+Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Readables module, in Russian. This addon is data only — it does nothing on its own.
 
-One clip per page, read from the game's own Russian text. It installs beside the English pack, **[Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio)**, rather than replacing it, so a player who switches languages keeps the narration for both.
+One clip per page, read from the game's own Russian text. It installs beside the English pack, **[Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-audio-readables)**, rather than replacing it, so a player who switches languages keeps the narration for both.
 
 ## Installing
 

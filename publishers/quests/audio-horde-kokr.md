@@ -7,7 +7,7 @@ pack: horde
 dormant: true
 version: 0.0.2
 github: false
-slug: korean-spoken-quests-horde
+slug: spoken-korean-audio-quests-horde
 name: Spoken Korean Audio: Quests - Horde
 summary: Horde-only quest dialogue, voiced in Korean. Pair it with the Shared pack. Needs Spoken.
 categories:
@@ -21,17 +21,17 @@ This is the Korean audio pack for Horde quest dialogue: the quests only a Horde 
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spoken Korean Audio: Quests](https://www.curseforge.com/wow/addons/korean-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Korean Audio: Quests](https://www.curseforge.com/wow/addons/spoken-korean-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
-| [Alliance](https://www.curseforge.com/wow/addons/korean-spoken-quests-alliance) | Alliance-only quests | |
+| [Alliance](https://www.curseforge.com/wow/addons/spoken-korean-audio-quests-alliance) | Alliance-only quests | |
 | **Horde** | Horde-only quests | **this pack** |
-| [Shared](https://www.curseforge.com/wow/addons/korean-spoken-quests) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/korean-spoken-quests-gossip) | NPC gossip chatter | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-korean-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-korean-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

@@ -7,7 +7,7 @@ pack: alliance
 dormant: true
 version: 0.0.3
 github: false
-slug: russian-spoken-quests-alliance
+slug: spoken-russian-audio-quests-alliance
 name: Spoken Russian Audio: Quests - Alliance
 summary: Alliance-only quest dialogue, voiced in Russian. Pair it with the Shared pack. Needs Spoken.
 categories:
@@ -21,17 +21,17 @@ This is the Russian audio pack for Alliance quest dialogue: the quests only an A
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spoken Russian Audio: Quests](https://www.curseforge.com/wow/addons/russian-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Russian Audio: Quests](https://www.curseforge.com/wow/addons/spoken-russian-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Alliance** | Alliance-only quests | **this pack** |
-| [Horde](https://www.curseforge.com/wow/addons/russian-spoken-quests-horde) | Horde-only quests | |
-| [Shared](https://www.curseforge.com/wow/addons/russian-spoken-quests) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/russian-spoken-quests-gossip) | NPC gossip chatter | |
+| [Horde](https://www.curseforge.com/wow/addons/spoken-russian-audio-quests-horde) | Horde-only quests | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-russian-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-russian-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

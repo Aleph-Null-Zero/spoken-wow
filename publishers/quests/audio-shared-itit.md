@@ -7,7 +7,7 @@ pack: shared
 holds: quests
 version: 0.0.2
 github: false
-slug: italian-spoken-quests
+slug: spoken-italian-audio-quests-shared
 name: Spoken Italian Audio: Quests
 summary: Every quest's dialogue, for both factions, voiced in Italian. NPC gossip is a separate pack. Needs Spoken.
 categories:
@@ -21,14 +21,14 @@ This is the Italian audio pack for quest dialogue: every quest, whichever side y
 
 **You need one more addon for this to do anything:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Quests** | every quest, both factions | **this pack** |
-| [Gossip](https://www.curseforge.com/wow/addons/italian-spoken-quests-gossip) | NPC gossip chatter | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-italian-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

@@ -14,7 +14,7 @@ categories:
 license: MIT
 ---
 
-Voiced quest dialogue for **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)**'s Quests module, in European Spanish. This addon is data only — it does nothing on its own.
+Voiced quest dialogue for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Quests module, in European Spanish. This addon is data only — it does nothing on its own.
 
 **Experimental.** This is a first cut, numbered 0.x until it has been listened through: expect lines to be re-recorded, and report the ones that sound wrong.
 

@@ -18,17 +18,17 @@ license: MIT
 
 ## What it installs
 
-[Spoken](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Simplified Chinese voice packs:
+[Spoken](https://www.curseforge.com/wow/addons/spoken), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Simplified Chinese voice packs:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue | [Spoken Chinese (Simplified) Audio: Quests](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests) |
-| Spoken Quests | NPC gossip | [Spoken Chinese (Simplified) Audio: Gossip](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-gossip) |
-| Spoken Places | zone and subzone lore | [Spoken Chinese (Simplified) Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio-zhcn) |
-| Spoken Readables | books, letters, notes and plaques | [Spoken Chinese (Simplified) Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio-zhcn) |
+| Spoken Quests | quest dialogue | [Spoken Chinese (Simplified) Audio: Quests](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-quests-shared) |
+| Spoken Quests | NPC gossip | [Spoken Chinese (Simplified) Audio: Gossip](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-gossip) |
+| Spoken Places | zone and subzone lore | [Spoken Chinese (Simplified) Audio: Places](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-places) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Chinese (Simplified) Audio: Readables](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-readables) |
 
 ## Language
 
 Spoken speaks in your client's language by default. To hear Simplified Chinese on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Simplified Chinese packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken).
+English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).

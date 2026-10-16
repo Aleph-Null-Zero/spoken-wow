@@ -6,7 +6,7 @@ lang: frFR
 pack: alliance
 version: 0.0.4
 github: false
-slug: french-spoken-quests-alliance
+slug: spoken-french-audio-quests-alliance
 name: Spoken French Audio: Quests - Alliance
 summary: Alliance-only quest dialogue, voiced in French. Pair it with the Shared pack. Needs Spoken.
 categories:
@@ -20,17 +20,17 @@ This is the French audio pack for Alliance quest dialogue: the quests only an Al
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spoken French Audio: Quests - Shared](https://www.curseforge.com/wow/addons/french-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken French Audio: Quests - Shared](https://www.curseforge.com/wow/addons/spoken-french-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Alliance** | Alliance-only quests | **this pack** |
-| [Horde](https://www.curseforge.com/wow/addons/french-spoken-quests-horde) | Horde-only quests | |
-| [Shared](https://www.curseforge.com/wow/addons/french-spoken-quests-shared) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/french-spoken-quests-gossip) | NPC gossip chatter | |
+| [Horde](https://www.curseforge.com/wow/addons/spoken-french-audio-quests-horde) | Horde-only quests | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-french-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-french-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

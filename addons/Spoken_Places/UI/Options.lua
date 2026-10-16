@@ -16,7 +16,7 @@ local function LanguageName(code)
 end
 -- The voice pack this addon is made for, and where to get it.
 local AUDIO_ADDON = "SpokenZonesAudio"
-local AUDIO_URL = "https://www.curseforge.com/wow/addons/spoken-zones-audio"
+local AUDIO_URL = "https://www.curseforge.com/wow/addons/spoken-audio-places"
 
 local panel
 

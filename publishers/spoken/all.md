@@ -1,6 +1,6 @@
 ---
 curseforge: 1721569
-slug: spoken
+slug: spoken-english
 name: Spoken English
 summary: Meta package for when you want everything voiced over and don't care about disk space: quests, gossip, places and readables narrated for you
 categories:
@@ -16,13 +16,13 @@ license: MIT
 
 ## What it installs
 
-[Spoken](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the English voice pack for each:
+[Spoken](https://www.curseforge.com/wow/addons/spoken), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the English voice pack for each:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
 | Spoken Quests | quest dialogue, and what NPCs say when you talk to them | [Spoken Quests Audio: All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all) |
-| Spoken Places | zone and subzone lore | [Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio) |
-| Spoken Readables | books, letters, notes and plaques | [Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio) |
+| Spoken Places | zone and subzone lore | [Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-audio-places) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-audio-readables) |
 
 ## Language
 

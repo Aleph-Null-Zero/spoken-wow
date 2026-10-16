@@ -261,7 +261,7 @@ release-spoken: ## Upload Spoken's zip to CurseForge and Wago (build it with pac
 package-spoken-retired: ## Zip the tombstones the retired Quests, Zones and Books projects ship last
 	@./scripts/spoken/package-retired.sh
 
-# Spoken English, CurseForge project `spoken`: a few kilobytes naming every Spoken addon
+# Spoken English, CurseForge project `spoken-english`: a few kilobytes naming every Spoken addon
 # and English sound pack as required dependencies, so the CurseForge app installs the lot.
 # scripts/spoken/package-meta.sh explains it; the upload is release.sh's spoken-all target, and
 # its notes come from docs/spoken/CHANGELOG-ALL.md. VERSION defaults to the script's own.

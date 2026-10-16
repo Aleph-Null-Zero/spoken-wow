@@ -7,7 +7,7 @@ pack: alliance
 dormant: true
 version: 0.0.1
 github: false
-slug: chinese-simplified-spoken-quests-alliance
+slug: spoken-chinese-simplified-audio-quests-alliance
 name: Spoken Chinese (Simplified) Audio: Quests - Alliance
 summary: Alliance-only quest dialogue, voiced in Chinese (Simplified). Pair it with the Shared pack. Needs Spoken.
 categories:
@@ -21,17 +21,17 @@ This is the Chinese (Simplified) audio pack for Alliance quest dialogue: the que
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spoken Chinese (Simplified) Audio: Quests](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Chinese (Simplified) Audio: Quests](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Alliance** | Alliance-only quests | **this pack** |
-| [Horde](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-horde) | Horde-only quests | |
-| [Shared](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/chinese-simplified-spoken-quests-gossip) | NPC gossip chatter | |
+| [Horde](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-quests-horde) | Horde-only quests | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-chinese-simplified-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

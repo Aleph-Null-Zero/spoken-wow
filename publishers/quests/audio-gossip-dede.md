@@ -6,7 +6,7 @@ lang: deDE
 pack: gossip
 version: 1.0.0
 github: false
-slug: german-spoken-quests-gossip
+slug: spoken-german-audio-gossip
 name: Spoken German Audio: Gossip
 summary: NPC gossip chatter, voiced in German. Optional extra for any of the quest packs. Needs Spoken.
 categories:
@@ -22,16 +22,16 @@ Innkeepers, guards, faction quartermasters and the rest saying their piece out l
 
 **You need the player and at least one quest pack for any of this to work:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. Your quest audio — **[Alliance](https://www.curseforge.com/wow/addons/german-spoken-quests-alliance)** or **[Horde](https://www.curseforge.com/wow/addons/german-spoken-quests-horde)**, plus **[Shared](https://www.curseforge.com/wow/addons/german-spoken-quests-shared)**.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. Your quest audio — **[Alliance](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-alliance)** or **[Horde](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-horde)**, plus **[Shared](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-shared)**.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
-| [Alliance](https://www.curseforge.com/wow/addons/german-spoken-quests-alliance) | Alliance-only quests | |
-| [Horde](https://www.curseforge.com/wow/addons/german-spoken-quests-horde) | Horde-only quests | |
-| [Shared](https://www.curseforge.com/wow/addons/german-spoken-quests-shared) | quests both factions can take | |
+| [Alliance](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-alliance) | Alliance-only quests | |
+| [Horde](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-horde) | Horde-only quests | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-shared) | quests both factions can take | |
 | **Gossip** | NPC gossip chatter | **this pack** |
 
 Gossip is not split by faction: an NPC greets whoever walks up, so one pack serves both sides.

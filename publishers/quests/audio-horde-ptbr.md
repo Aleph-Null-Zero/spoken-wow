@@ -7,7 +7,7 @@ pack: horde
 dormant: true
 version: 0.0.3
 github: false
-slug: portuguese-spoken-quests-horde
+slug: spoken-portuguese-audio-quests-horde
 name: Spoken Portuguese Audio: Quests - Horde
 summary: Horde-only quest dialogue, voiced in Portuguese. Pair it with the Shared pack. Needs Spoken.
 categories:
@@ -21,17 +21,17 @@ This is the Portuguese audio pack for Horde quest dialogue: the quests only a Ho
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spoken Portuguese Audio: Quests](https://www.curseforge.com/wow/addons/portuguese-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Portuguese Audio: Quests](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
-| [Alliance](https://www.curseforge.com/wow/addons/portuguese-spoken-quests-alliance) | Alliance-only quests | |
+| [Alliance](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-quests-alliance) | Alliance-only quests | |
 | **Horde** | Horde-only quests | **this pack** |
-| [Shared](https://www.curseforge.com/wow/addons/portuguese-spoken-quests) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/portuguese-spoken-quests-gossip) | NPC gossip chatter | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

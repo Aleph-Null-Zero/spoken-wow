@@ -18,17 +18,17 @@ license: MIT
 
 ## What it installs
 
-[Spoken](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Brazilian Portuguese voice packs:
+[Spoken](https://www.curseforge.com/wow/addons/spoken), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the Brazilian Portuguese voice packs:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue | [Spoken Portuguese Audio: Quests](https://www.curseforge.com/wow/addons/portuguese-spoken-quests) |
-| Spoken Quests | NPC gossip | [Spoken Portuguese Audio: Gossip](https://www.curseforge.com/wow/addons/portuguese-spoken-quests-gossip) |
-| Spoken Places | zone and subzone lore | [Spoken Portuguese Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio-ptbr) |
-| Spoken Readables | books, letters, notes and plaques | [Spoken Portuguese Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio-ptbr) |
+| Spoken Quests | quest dialogue | [Spoken Portuguese Audio: Quests](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-quests-shared) |
+| Spoken Quests | NPC gossip | [Spoken Portuguese Audio: Gossip](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-gossip) |
+| Spoken Places | zone and subzone lore | [Spoken Portuguese Audio: Places](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-places) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Portuguese Audio: Readables](https://www.curseforge.com/wow/addons/spoken-portuguese-audio-readables) |
 
 ## Language
 
 Spoken speaks in your client's language by default. To hear Brazilian Portuguese on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Brazilian Portuguese packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken).
+English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).

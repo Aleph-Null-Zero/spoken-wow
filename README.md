@@ -17,9 +17,9 @@ developers and is not in the zip.
 | Folder | Addon | Voices | Voice packs |
 |---|---|---|---|
 | `Spoken` | **Spoken** | nothing itself: it plays every module's lines | — |
-| `Spoken_Quests` | **Spoken Quests** | quest dialogue and NPC gossip | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-quests-audio-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-quests-audio-shared) · [Gossip](https://www.curseforge.com/wow/addons/spoken-quests-audio-gossip) — or all in one from [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=quests-audio) |
-| `Spoken_Readables` | **Spoken Readables** | books, letters and other in-world texts | [CurseForge](https://www.curseforge.com/wow/addons/spoken-books-audio) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=books-audio) |
-| `Spoken_Places` | **Spoken Places** | zone and subzone lore | [CurseForge](https://www.curseforge.com/wow/addons/spoken-zones-audio) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=zones-audio) |
+| `Spoken_Quests` | **Spoken Quests** | quest dialogue and NPC gossip | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-audio-quests-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-audio-quests-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-audio-quests-shared) · [Gossip](https://www.curseforge.com/wow/addons/spoken-audio-gossip) — or all in one from [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=quests-audio) |
+| `Spoken_Readables` | **Spoken Readables** | books, letters and other in-world texts | [CurseForge](https://www.curseforge.com/wow/addons/spoken-audio-readables) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=books-audio) |
+| `Spoken_Places` | **Spoken Places** | zone and subzone lore | [CurseForge](https://www.curseforge.com/wow/addons/spoken-audio-places) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=zones-audio) |
 
 `make package-spoken` builds the download, `Spoken-<version>.zip`, with every module built by
 its own packager. A module's voice pack holds its recordings; the module has nothing to play
@@ -35,7 +35,7 @@ The 1.12, 2.4.3 and 3.3.5 clients have no addon manager and no CurseForge. They 
 Quests' own zips from [Releases](../../releases), which carry Spoken inside
 them; Places and Readables do not run there.
 
-On the stores, `spoken-player` is Spoken and ships the zip above, and `spoken` is a meta addon
+On the stores, `spoken` is Spoken and ships the zip above, and `spoken-english` is a meta addon
 that pulls in Spoken and every English voice pack. `spoken-quests`, `spoken-zones` and
 `spoken-books` are retired. Each has a page in `publishers/` that says so, and its last release
 (`make package-spoken-retired`) replaces the old module folder with a folder that never loads.
