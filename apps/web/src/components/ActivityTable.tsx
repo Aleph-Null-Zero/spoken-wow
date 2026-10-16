@@ -88,7 +88,8 @@ function plural(n: number | null, noun: string, nouns = `${noun}s`): string {
 
 /** An NPC an activity names, by name or else by kind and id. */
 function speakerName(d: Record<string, unknown>): string {
-  return str(d.npcName) ?? `${str(d.npcType)} ${num(d.npcId)}`;
+  const id = num(d.npcId);
+  return str(d.npcName) ?? (id === null ? "an NPC" : `${str(d.npcType) ?? "NPC"} ${id}`);
 }
 
 /** "a → b", or whichever half is known: rows backfilled from older tables carry neither. */

@@ -78,7 +78,8 @@ export async function inTransaction<T>(work: (client: PoolClient) => Promise<T>)
     await client.query("commit");
     return result;
   } catch (error) {
-    await client.query("rollback");
+    // Its own failure (a dropped connection) would hide the error that matters.
+    await client.query("rollback").catch(() => {});
     throw error;
   } finally {
     client.release();

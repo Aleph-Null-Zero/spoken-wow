@@ -20,7 +20,7 @@ import { BASE_LANG } from "@/lib/lang";
 import { branchesOnPlayerGender, speakPlayerTokens } from "@/lib/player-words";
 import { validateOverride } from "@/lib/quests/override";
 import { writeOverride } from "@/lib/quests/overrides";
-import { ORD_FLOOR } from "@/lib/quests/speakers";
+import { lockLine, ORD_FLOOR } from "@/lib/quests/speakers";
 import { QuestTextConflict } from "@/lib/quests/text";
 import { skipReasonFor } from "@/lib/text-gate";
 
@@ -104,6 +104,9 @@ async function splitByPlayerGender(
   const client = await db().connect();
   try {
     await client.query("begin");
+    // The moment's lock, as addToMoment's writers hold it: a speaker added meanwhile would
+    // reach the plain line only, after the copies were taken.
+    await lockLine(client, momentOf(plain.lineId));
     const { rowCount } = await client.query(
       `update "quest_line" set "isCurrent" = false
         where "lineId" = $1 and "variant" = $2 and "lang" = $3 and "isCurrent"`,

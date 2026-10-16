@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { useLang } from "@/components/LangProvider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { flavorOptionsFor, noVoice } from "@/lib/contributions/speaker";
+import { withLang } from "@/lib/lang";
 import { NPC_ROW_KINDS, type NpcRowKind } from "@/lib/npc/npc";
 import type { ResultLine } from "@/lib/search";
 import { Roster, type RosterData } from "@/lib/voices/roster";
@@ -61,6 +63,7 @@ function Choice({
  * one nobody has answered is answered here, as /npcs would, since a speaker needs a voice.
  */
 export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
+  const lang = useLang();
   const [npcType, setNpcType] = useState<NpcRowKind>("creature");
   const [npcId, setNpcId] = useState("");
   const [found, setFound] = useState<Found | null>(null);
@@ -92,7 +95,7 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
 
   /** A request's body, or null once its error is shown. */
   async function request<T>(url: string, init?: RequestInit): Promise<T | null> {
-    const response = await fetch(url, init);
+    const response = await fetch(withLang(lang, url), init);
     const body = (await response.json().catch(() => ({}))) as T & { error?: string };
     if (response.ok) return body;
     setError(body.error ?? `request failed (${response.status})`);
