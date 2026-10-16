@@ -111,7 +111,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
             {/* The target is the page id, which is what the addon put in the address and what
                 the endpoint resolves; the lineId is sent for the endpoint to ignore, exactly as
                 the zones form does. */}
-            <ReportForm source="books" target={String(page.pageId)} lineId={page.id} />
+            <ReportForm source="books" target={String(page.pageId)} lineId={page.id} fromGame />
           </section>
 
           <footer className="text-muted-foreground mt-8 text-sm">

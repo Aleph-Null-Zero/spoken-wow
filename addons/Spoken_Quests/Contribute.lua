@@ -49,27 +49,33 @@ local function QuestItem()
     return Spoken:QuestItem(questID)
 end
 
-local function NPCID()
-    local guid = Utils:GetNPCGUID()
+local function IDFromGUID(guid)
     if guid and Utils.GetIDFromGUID then
         local ok, read = pcall(Utils.GetIDFromGUID, Utils, guid)
         if ok and read then
             return read
         end
     end
-    return (QuestItem())
 end
 
-local function NPCField()
-    local id = NPCID()
-    local name = UnitName and NotSecret(UnitName("npc")) or nil
-    if not name then
-        name = select(2, QuestItem())
-    end
+local function NPCID()
+    return IDFromGUID(Utils:GetNPCGUID()) or (QuestItem())
+end
+
+--- The npc field as the site reads it: "<id> <name>", or whichever half is known.
+local function NPCLabel(id, name)
     if id and name then
         return format("%d %s", id, name)
     end
     return id and tostring(id) or name
+end
+
+local function NPCField()
+    local name = UnitName and NotSecret(UnitName("npc")) or nil
+    if not name then
+        name = select(2, QuestItem())
+    end
+    return NPCLabel(NPCID(), name)
 end
 
 --- Which id space the unit's GUID belongs to.
@@ -593,6 +599,51 @@ function Contribute:Capture()
     end
 
     return nil
+end
+
+--- Whether the window on screen is still showing the line `clip` played.
+local function ShowsClip(clip)
+    if clip.questID and EVENT_PATHS[clip.event] then
+        local event = EventOnScreen()
+        return event == clip.event and (GetQuestID and GetQuestID()) == clip.questID
+    end
+    return clip.unitGUID ~= nil and clip.unitGUID == Utils:GetNPCGUID() and GossipOnScreen() ~= nil
+end
+
+--- What a report carries beside its address: this client, and the line as the player met it.
+---
+--- The window on screen first, since only it can still be asked about the NPC's model and sex.
+--- A clip the window no longer shows -- Report is offered after the window closes -- is sent
+--- as the clip remembers it, with no observations rather than another NPC's.
+---@param clip table|nil  the clip being reported, { fromLog, questID, title } for a quest in
+---                        the log, or nil for the window on screen
+---@return string|nil envelope
+function Contribute:ReportContext(clip)
+    if clip and clip.fromLog then
+        return self:CaptureFromLog(clip.questID, clip.title)
+    end
+    if not clip or ShowsClip(clip) then
+        local envelope = self:Capture()
+        if envelope or not clip then
+            return envelope
+        end
+    end
+
+    local fields = BaseFields()
+    local path = EVENT_PATHS[clip.event]
+    if clip.questID and clip.questID > 0 and path then
+        fields[#fields + 1] = { "quest", clip.questID }
+        fields[#fields + 1] = { "event", path }
+    end
+    local npc = NPCLabel(IDFromGUID(clip.unitGUID), clip.name)
+    if npc then
+        fields[#fields + 1] = { "npc", npc }
+    end
+    if clip.title and clip.title ~= "" then
+        fields[#fields + 1] = { "title", clip.title }
+    end
+    local text = type(clip.text) == "string" and clip.text ~= "" and self:Detemplate(clip.text) or nil
+    return Spoken.Contribute:Envelope("quests", fields, text)
 end
 
 --- Whether this client's data module has a line for what is on screen.

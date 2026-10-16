@@ -849,7 +849,8 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                     -- Report passes it: a fallback line is an English take under another language.
                     local sound = { event = Enums.SoundEvent.QuestAccept, questID = button.questID }
                     local language = DataModules:PrepareSound(sound) and sound.language or nil
-                    if target then ReportButton:ShowLink(target, language) end
+                    local clip = { fromLog = true, questID = button.questID, title = button.title }
+                    if target then ReportButton:ShowLink(target, language, clip) end
                 end)
                 report:HookScript("OnEnter", function(button)
                     GameTooltip:SetOwner(button, "ANCHOR_LEFT")
@@ -868,11 +869,13 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             local playButton = self.detailsPlayButton
             local report = self.detailsReportButton
             local contributeButton = self.detailsContributeButton
+            local title = self:GetQuestTitle(questID)
             report.questID = questID
+            report.title = title
 
             -- Rebound rather than kept: this button stood for a different quest a moment ago. A line
             -- of this quest's already queued is the one it stands for, whoever queued it.
-            self:BindPlayButton(playButton, questID, self:GetQuestTitle(questID))
+            self:BindPlayButton(playButton, questID, title)
             playButton.soundData = self:QueuedLine(questID)
 
             -- No sound: Contribute in the pair's place, where this client can contribute at all
@@ -886,7 +889,6 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             elseif contribute and contribute.CanOfferFromLog and contribute:CanOfferFromLog() then
                 playButton:Hide()
                 report:Hide()
-                local title = self:GetQuestTitle(questID)
                 contributeButton:SetScript("OnClick", function()
                     contribute:ShowFromLog(questID, title)
                 end)

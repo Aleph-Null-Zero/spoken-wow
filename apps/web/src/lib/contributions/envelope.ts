@@ -134,6 +134,17 @@ type DecodeResult = { ok: true; text: string } | { ok: false; error: DecodeError
  * Async because DecompressionStream is a stream API with no synchronous form; every caller
  * already awaits the fetch this replaces, so that costs nothing a paste didn't already have.
  */
+/**
+ * The payload of a #e1= fragment, taken out of the address bar as it is read so the game text
+ * does not linger in history or get shared onward. Null when the address carries none.
+ */
+export function takeFragment(): string | null {
+  const hash = window.location.hash;
+  if (!hash.startsWith("#e1=")) return null;
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  return hash.slice("#e1=".length);
+}
+
 export async function decodeFragment(fragment: string): Promise<DecodeResult> {
   // Older Safari (pre-16.4) has no DecompressionStream at all. Reported plainly rather than
   // thrown -- ContributeForm's job is to say so and point at the paste box, not to crash on

@@ -22,7 +22,7 @@ _G.SpokenBooksAudioPacks = {
 
 local function LoadBooks()
     local SpokenBooks = {}
-    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "UI/CopyLink",
+    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Contribute", "Audio", "Playlist", "UI/CopyLink",
         "UI/DialogueUIBook" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
         chunk("Spoken_Readables", SpokenBooks)
@@ -161,14 +161,14 @@ row.play.scripts.OnLeave(row.play)
 row.report.scripts.OnClick(row.report)
 local box = Spoken.ContributeBox
 Expect("Report gives the address for the page being read, in Spoken's box",
-    box and box.editBox:GetText(), B:ReportURL(261))
+    box and (H.SplitReportLink(box.editBox:GetText())), B:ReportURL(261))
 -- The letter open in the view while the Registry is still read: Report is for the letter shown.
 B.lastPage = 16
 Book:Draw()
 row.report.scripts.OnClick(row.report)
 box = Spoken.ContributeBox
 Expect("...and with another book open in the view, the address for that book, not the one being read",
-    box and box.editBox:GetText(), B:ReportURL(16))
+    box and (H.SplitReportLink(box.editBox:GetText())), B:ReportURL(16))
 B.lastPage = 265
 Book:Draw()
 row.play.scripts.OnClick(row.play, "LeftButton")

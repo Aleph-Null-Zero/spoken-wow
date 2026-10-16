@@ -203,11 +203,13 @@ local REPORT = {
     end,
     onClick = function(clip)
         -- The line itself first: by the time Report is clicked the quest window may be shut.
-        local target = ReportButton:TargetForClip(clip) or ReportButton:CurrentTarget()
+        local target = ReportButton:TargetForClip(clip)
+        local described = target and clip or nil
+        target = target or ReportButton:CurrentTarget()
         if target then
             -- The language the clip was spoken in, which PrepareSound recorded: a fallback line
             -- is an English take even under a German selection, and its report is about that.
-            ReportButton:ShowLink(target, clip.language)
+            ReportButton:ShowLink(target, clip.language, described)
         else
             StaticPopup_Show("VOICEOVER_ERROR", L.OPT_REPORT_NO_LINE)
         end

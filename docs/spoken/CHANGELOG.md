@@ -268,6 +268,13 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Spoken's own button is the one to use. *([Nucabe](https://github.com/Nucabe))*
 - /spb gather is gone. /sp collect does the same. *([Nucabe](https://github.com/Nucabe))*
 
+### Reports
+
+- A report says what you saw. The address Report gives also carries the addon version, your game
+  client, the text on screen and the NPC you spoke to, so whoever reads the report sees what went
+  wrong without asking. It is a longer address, shown in Spoken's copy box, and the report page
+  says what it will send. *([rusty-key](https://github.com/rusty-key))*
+
 ### Fixes
 
 - The Places tab and the Place Story panel beside the world map sit against the map's visible frame, at

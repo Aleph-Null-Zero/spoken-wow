@@ -750,8 +750,9 @@ do
     Expect("...on one line, cut short", sub.text.wordWrap, false)
 end
 local copied
-local showCopyLink = B.ShowCopyLink
-B.ShowCopyLink = function(_, url) copied = url end
+-- ShowReport's copy box and context are Contribute.lua's, tested there: here, only which page.
+local showReport = B.ShowReport
+B.ShowReport = function(_, pageId, language) copied = B:ReportURL(pageId, language) end
 page.report.scripts.OnClick(page.report)
 Expect("...a click giving the address to report its first voiced page", copied ~= nil
     and copied:find("/books/r/" .. alleriaPage, 1, true) ~= nil, true)
@@ -787,7 +788,7 @@ do
     Expect("...Report filing its first page", copied ~= nil and copied:find("/books/r/" .. first, 1, true) ~= nil, true)
 end
 B.HasAudio = function(_, p) return p == alleriaPage end
-B.ShowCopyLink = showCopyLink
+B.ShowReport = showReport
 local spoken, hidden = _G.Spoken, true
 _G.Spoken = setmetatable({ AreReportButtonsHidden = function() return hidden end }, { __index = spoken })
 page:RefreshPlay()

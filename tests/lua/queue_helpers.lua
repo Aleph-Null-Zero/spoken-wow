@@ -152,6 +152,7 @@ function M.NewZoneLore()
         return list
     end
     function Z:ShowCopyLink(url) self.copied = url end
+    function Z:ShowReport(mapID, areaKey, language) self.copied = self:ReportURL(mapID, areaKey, language) end
     function Z:MarkHeard(mapID, areaKey) table.insert(self.heard, tostring(mapID) .. "/" .. tostring(areaKey)) end
     function Z:OnZoneChanged(fn) table.insert(self.zoneChanged, fn) end
     function Z:ToggleLoreWindow() self.toggled = true end
@@ -174,6 +175,26 @@ function M.NewZoneLore()
     function Z:GetLanguageName(code) return code and Z.L["LANG_" .. code] or "Automatic" end
     function Z:RedrawPanel() end
     return Z
+end
+
+--- A report link split into its address and the envelope its #e1= fragment carries, decoded
+--- independently of Contribute.lua as contribute_envelope_test.lua decodes it. Nil envelope
+--- when the link has no fragment.
+--- A #e1= payload back to its envelope, undoing the base64url here (standard alphabet, then
+--- padded to a multiple of 4) so a test does not depend on Encode's own inverse existing.
+function M.DecodeFragment(fragment)
+    local std = fragment:gsub("-", "+"):gsub("_", "/")
+    std = std .. string.rep("=", (4 - (#std % 4)) % 4)
+    local decoded = require("base64_decode")(std)
+    return LibStub:GetLibrary("LibDeflate"):DecompressDeflate(decoded)
+end
+
+function M.SplitReportLink(link)
+    local address, fragment = tostring(link):match("^(.-)#e1=(.+)$")
+    if not address then
+        return link, nil
+    end
+    return address, M.DecodeFragment(fragment)
 end
 
 return M

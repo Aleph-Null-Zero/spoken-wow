@@ -21,6 +21,7 @@ import TakeSelector from "@/components/TakeSelector";
 import { lineTextSubject, TranslateDialog } from "@/components/TranslateDialog";
 import { PageTextDialog } from "@/components/books/PageTextDialog";
 import { Player as BooksPlayer } from "@/components/books/Player";
+import { ReportContextNote } from "@/components/reports/ReportContextFacts";
 import { Button } from "@/components/ui/button";
 import { LoreDialog } from "@/components/zones/LoreDialog";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
@@ -538,6 +539,7 @@ function ReportPreview({ report, expanded }: { report: Report; expanded: boolean
       >
         {report.body}
       </p>
+      <ReportContextNote context={report.context} />
     </article>
   );
 }

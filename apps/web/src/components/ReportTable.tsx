@@ -25,6 +25,7 @@ import QuestsPlayer from "@/components/Player";
 import ReportDetail from "@/components/ReportDetail";
 import OutdatedNote from "@/components/OutdatedNote";
 import SortHeader from "@/components/SortHeader";
+import { ReportContextNote } from "@/components/reports/ReportContextFacts";
 import { LinkTabs } from "@/components/StatusTabs";
 import { usePendingPush } from "@/components/usePendingPush";
 import { useSearchBox } from "@/components/useSearchBox";
@@ -364,6 +365,7 @@ export default function ReportTable({
 
         <td className="max-w-md cursor-pointer pr-3" aria-expanded={expanded} onClick={onToggle}>
           <p className={cn("whitespace-pre-wrap", !expanded && "line-clamp-2")}>{report.body}</p>
+          <ReportContextNote context={report.context} />
           {report.name || report.email ? (
             <p className="text-muted-foreground mt-1 text-xs">
               {[report.name, report.email].filter(Boolean).join(" · ")}

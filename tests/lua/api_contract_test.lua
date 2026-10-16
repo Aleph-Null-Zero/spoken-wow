@@ -56,7 +56,7 @@ local METHODS = {
     "AddLogSource", "ShowLogMenu", "LogMenuHint", "AddDeveloperSettings", "GetDeveloperSettings",
     "AddDiagnostics", "Diagnostics",
     -- contributions
-    "ShowContribution", "SetContributeHost", "AreContributeButtonsHidden",
+    "ShowContribution", "ShowReport", "SetContributeHost", "AreContributeButtonsHidden",
     -- a speaker's face on a feature addon's page
     "CreateSpeakerFace",
     -- Play, Skip and Report on DialogueUI's quest window and book view

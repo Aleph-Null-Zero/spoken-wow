@@ -98,10 +98,7 @@ function Book:Row()
 	end)
 	report:SetScript("OnClick", function()
 		local pageId, language = ReadingPage(OpenBook())
-		local url = pageId and SpokenBooks:ReportURL(pageId, language)
-		if url and Spoken.ShowContribution then
-			Spoken:ShowContribution(url, nil, true)
-		end
+		if pageId then SpokenBooks:ShowReport(pageId, language) end
 	end)
 	row:SetTip(report, function(tooltip)
 		tooltip:SetText(L.REPORT_PROBLEM)

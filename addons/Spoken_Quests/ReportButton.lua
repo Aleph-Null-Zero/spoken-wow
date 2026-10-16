@@ -131,8 +131,20 @@ local function ShowCopy(url)
     StaticPopup_Show(COPY_DIALOG)
 end
 
-function ReportButton:ShowLink(target, language)
-    ShowCopy(self:Link(target, language))
+--- The report address for `target`, with the line as the player met it in its fragment: the
+--- addon version, the client, the text and the NPC. `clip` is the line being reported, or nil
+--- for the window on screen. The bare address in the popup under a Spoken too old to say more.
+function ReportButton:ShowLink(target, language, clip)
+    local url = self:Link(target, language)
+    if not (Spoken and Spoken.ShowReport) then
+        ShowCopy(url)
+        return
+    end
+    -- Absent on the legacy clients, whose toc never loads Contribute.xml.
+    local contribute = rawget(VoiceOver, "Contribute")
+    Spoken:ShowReport(url, function()
+        return contribute and contribute:ReportContext(clip)
+    end)
 end
 
 --- The same popup, for an address that is not a report: the settings panel offers one per

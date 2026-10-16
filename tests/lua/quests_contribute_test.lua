@@ -58,6 +58,25 @@ Expect("...and the gossip text", gossip:match("\nWe stand ready%.\n") ~= nil, tr
 stub.HidePanels()
 Expect("nothing on screen contributes nothing", VoiceOver.Contribute:Capture(), nil)
 
+---------------------------------------------------------------- what a report carries
+-- The window on screen when it still shows the clip, so the NPC can be observed.
+stub.ShowPanel("QuestFrameDetailPanel")
+local clip = { questID = 9123, event = VoiceOver.Enums.SoundEvent.QuestAccept, unitGUID = world.npcGUID,
+    name = "Deathguard Linnea", title = "A Rough Start", text = "Kill six of them, Tester." }
+local onScreen = VoiceOver.Contribute:ReportContext(clip)
+Expect("a report on the clip on screen reads the window", onScreen
+    and onScreen:match("\nKill six of them%.\nThen come back%.\n") ~= nil, true)
+
+-- Report is offered after the window closes: the clip as it remembers itself.
+stub.HidePanels()
+local remembered = VoiceOver.Contribute:ReportContext(clip)
+Expect("...a closed window's clip from what it remembers", remembered
+    and remembered:match("\nquest=9123\nevent=accept\nnpc=12345 Deathguard Linnea\ntitle=A Rough Start\n") ~= nil, true)
+Expect("...its text with the reader put back as a token", remembered
+    and remembered:match("\nKill six of them, %$N%.\n") ~= nil, true)
+Expect("...and the addon version", remembered and remembered:match("\naddon=SpokenQuests/9%.9%.9\n") ~= nil, true)
+Expect("nothing on screen and no clip reports no context", VoiceOver.Contribute:ReportContext(nil), nil)
+
 ---------------------------------------------------------------- the reader put back as tokens
 -- The client expands $N, $C and $R to whoever is reading, so the text is sent with the
 -- tokens back in place of this character's name, class and race.

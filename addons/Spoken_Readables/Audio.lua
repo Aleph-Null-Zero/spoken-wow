@@ -149,10 +149,7 @@ local ACTIONS = {
 			if not clip then
 				return
 			end
-			local url = SpokenBooks:ReportURL(clip.pageId, clip.language)
-			if url and SpokenBooks.ShowCopyLink then
-				SpokenBooks:ShowCopyLink(url, L.REPORT_LINE_ADDRESS)
-			end
+			SpokenBooks:ShowReport(clip.pageId, clip.language)
 		end,
 	},
 }
