@@ -6,7 +6,8 @@ import { matching, decorate, search, stateOf } from "./search";
 const page = (over: Partial<BookPage> = {}): BookPage => ({
   id: "b:10",
   pageId: 10,
-  bookId: 10,
+  key: "10",
+  bookId: "10",
   pageNumber: 1,
   pageCount: 1,
   title: "A Dusty Tome",
@@ -60,7 +61,7 @@ describe("matching", () => {
   const lines = [
     decorate(page(), EMPTY_CONTEXT),
     decorate(
-      page({ id: "b:20", pageId: 20, bookId: 20, title: "Stalvan's Note", ownerKind: "item", text: "A ledger of debts owed." }),
+      page({ id: "b:20", pageId: 20, key: "20", bookId: "20", title: "Stalvan's Note", ownerKind: "item", text: "A ledger of debts owed." }),
       EMPTY_CONTEXT,
     ),
   ];
@@ -82,7 +83,7 @@ describe("matching", () => {
   });
 
   it("filters to one book", () => {
-    expect(matching(lines, { bookId: 20 }).map((l) => l.id)).toEqual(["b:20"]);
+    expect(matching(lines, { bookId: "20" }).map((l) => l.id)).toEqual(["b:20"]);
   });
 
   it("selects one page by its id, which is how a report links here", () => {
@@ -105,9 +106,9 @@ describe("matching", () => {
 
 describe("search", () => {
   const pages = [
-    page({ id: "b:12", pageId: 12, bookId: 10, pageNumber: 3, pageCount: 3 }),
-    page({ id: "b:10", pageId: 10, bookId: 10, pageNumber: 1, pageCount: 3 }),
-    page({ id: "b:11", pageId: 11, bookId: 10, pageNumber: 2, pageCount: 3 }),
+    page({ id: "b:12", pageId: 12, key: "12", bookId: "10", pageNumber: 3, pageCount: 3 }),
+    page({ id: "b:10", pageId: 10, key: "10", bookId: "10", pageNumber: 1, pageCount: 3 }),
+    page({ id: "b:11", pageId: 11, key: "11", bookId: "10", pageNumber: 2, pageCount: 3 }),
   ];
 
   it("orders pages by book and then by page number, so a book reads in order", () => {

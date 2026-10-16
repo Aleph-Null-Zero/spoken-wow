@@ -181,6 +181,14 @@ export async function setLiveTake(
     if (now.length === 0) {
       throw new Error(`no version ${version} of ${file} in ${source}`);
     }
+    // Books pages folded into one another have takes under two files; one stays live.
+    if (source === "books") {
+      await client.query(
+        `update "take" set "isCurrent" = false
+          where "source" = 'books' and "lineId" = $1 and "lang" = $2 and "isCurrent" and "file" <> $3`,
+        [now[0].lineId, lang, file],
+      );
+    }
     await recordActivity(
       {
         kind: "take.restored",

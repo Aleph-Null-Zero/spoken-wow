@@ -72,7 +72,7 @@ export function SearchBar({
   const active = activeFilterCount(filters);
 
   const bookOptions: ChipOption[] = books.map((book) => ({
-    value: String(book.bookId),
+    value: book.bookId,
     label: book.pages > 1 ? `${book.title} (${book.pages} pages)` : book.title,
   }));
 
@@ -98,9 +98,9 @@ export function SearchBar({
 
       <FilterChip
         label="book"
-        value={filters.bookId === undefined ? undefined : String(filters.bookId)}
+        value={filters.bookId}
         options={bookOptions}
-        onChange={(value) => onChange({ bookId: value ? Number(value) : undefined })}
+        onChange={(value) => onChange({ bookId: value || undefined })}
       />
 
       <FilterChip

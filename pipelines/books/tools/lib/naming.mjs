@@ -2,7 +2,7 @@
 // exists: AGENTS.md freezes line ids and audio filenames, so a second place deriving
 // either is a second place that can drift and strand a sound pack every user has.
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { normaliseText, spokenText } from "./text.mjs";
 
@@ -11,9 +11,35 @@ export function lineIdFor(pageId) {
   return `b:${pageId}`;
 }
 
-/** Store-relative and extension-less, as the zones side names files: '1381'. */
-export function fileFor(pageId) {
-  return String(pageId);
+const MINTED = /^n[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** Store-relative and extension-less, as the zones side names files: '1381', or a minted key. */
+export function fileFor(pageIdOrKey) {
+  return String(pageIdOrKey);
+}
+
+/** '1381' for 'b:1381', 'n{uuid}' for a minted page: what the addon and the landing URL use. */
+export function pageKeyOf(lineId) {
+  return lineId.slice(2);
+}
+
+/** The lineId a key names, or null for anything that is not a page id or a minted one. */
+export function lineIdOfKey(key) {
+  return /^\d+$/.test(key) || MINTED.test(key) ? `b:${key}` : null;
+}
+
+/** A page no world database names, as a player's client showed it. */
+export function mintPageId() {
+  return `b:n${randomUUID()}`;
+}
+
+/** A book made of such pages. */
+export function mintBookId() {
+  return `n${randomUUID()}`;
+}
+
+export function isMinted(lineId) {
+  return MINTED.test(pageKeyOf(lineId));
 }
 
 // A checksum the addon can recompute in Lua.

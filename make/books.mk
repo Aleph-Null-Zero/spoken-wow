@@ -82,7 +82,7 @@ RSYNC_OPTS := -a --partial --info=stats1,progress2 --human-readable
 # shared with quests and zones -- see scripts/db/sync-section.sh. This used to fetch the
 # takes but not book_line, so a page fixed on the site shipped with its old words.
 sync: require-droplet ## Replace the local book text and takes with the droplet's (DESTRUCTIVE)
-	@$(DB_ENV) scripts/db/sync-section.sh books book_line
+	@$(DB_ENV) scripts/db/sync-section.sh books book_line book_page
 	@echo "==> rebuild the pack's table with:  make books-lookup"
 
 check-synced: ## Compare the local books data with the droplet's, and prompt if they differ

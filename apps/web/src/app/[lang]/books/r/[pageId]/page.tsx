@@ -22,10 +22,10 @@ import { Contained } from "@/components/Width";
  * either. Someone arriving from the game is a player, not a collaborator; flags, takes,
  * staleness and the regenerate controls are answers to questions they did not ask.
  *
- * The address is /books/r/{pageTextID} -- the page id and nothing else -- because the addon
- * can build it from what it already has, with no per-page table to ship and nothing to
- * escape. docs/books/AGENTS.md freezes that id, which is what makes the address safe to bake
- * into a release. See SpokenBooks' ReportURL.
+ * The address is /books/r/{key}: the pageTextID, or a minted page's n{uuid}. The key and
+ * nothing else -- because the addon can build it from what it already has, with no per-page
+ * table to ship and nothing to escape. docs/books/AGENTS.md freezes both forms, which is what
+ * makes the address safe to bake into a release. See SpokenBooks' ReportURL.
  */
 type Params = { lang: string; pageId: string };
 
@@ -33,7 +33,7 @@ async function resolve(params: Promise<Params>) {
   const lang = await pageLang(params);
   const { pageId } = await params;
   try {
-    return await pageById(Number(pageId), lang);
+    return await pageById(pageId, lang);
   } catch (error) {
     // An unseeded corpus names no pages, so no address resolves to one. What a player
     // arriving from the game should see is the same page an unknown id gives them.
@@ -111,7 +111,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
             {/* The target is the page id, which is what the addon put in the address and what
                 the endpoint resolves; the lineId is sent for the endpoint to ignore, exactly as
                 the zones form does. */}
-            <ReportForm source="books" target={String(page.pageId)} lineId={page.id} fromGame />
+            <ReportForm source="books" target={page.key} lineId={page.id} fromGame />
           </section>
 
           <footer className="text-muted-foreground mt-8 text-sm">

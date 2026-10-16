@@ -1,5 +1,5 @@
 /**
- * Accepting a correction: a quest line the corpus has, sent back by a player's client with
+ * Accepting a correction: a quest line or book page the corpus has, sent back by a player's client with
  * different text (known.ts's "changed"), taken as what the line now speaks.
  *
  * It is the explorer's text edit done in one click, not resolve's accept: that writes a line
@@ -18,15 +18,22 @@
  * to speak in that language. A template that branches on the player's gender is two lines in
  * either language: saveQuestText splits a translation, and correctEnglish an English line.
  *
+ * A book page is written as an editor's save of that language's text (a new 'edited' version).
+ * Unlike a quest line, its text is what the row is compared on, so once accepted the row is
+ * known, and tabOf lists it with the accepted contributions.
+ *
  * Not one transaction with the status flip: the two writers own theirs, and both are
  * idempotent -- the same text again spends no version and logs nothing -- so an accept that
- * fails after the text is written is simply sent again.
+ * fails after the text is written is simply sent again. A book page so written already reads
+ * as known; its current version carrying this contribution's note is what lets the resend
+ * flip the status alone.
  */
 import "server-only";
 
 import { recordActivity } from "@/lib/activity/store";
+import { BookConflict, BookMissing, saveBookText } from "@/lib/books/text";
 import { db } from "@/lib/db";
-import { BASE_LANG, isLang } from "@/lib/lang";
+import { BASE_LANG, isLang, type Lang } from "@/lib/lang";
 import { branchesOnPlayerGender } from "@/lib/player-words";
 import { englishMomentLines, rewriteEnglish } from "@/lib/quests/english-rewrite";
 import { OverrideError } from "@/lib/quests/override";
@@ -35,17 +42,13 @@ import { QuestTextConflict, QuestTextMissing, saveQuestText } from "@/lib/quests
 import { lineStates } from "./known";
 import { momentOf } from "./naming";
 import { CONTRIBUTION_COLUMNS, type Contribution } from "./store";
+import { correctionNote } from "./notes";
 import { spokenFromTemplate } from "./tokens";
 
 export type CorrectionOutcome =
   | { ok: true; contribution: Contribution }
   | { ok: false; reason: "not-found" }
   | { ok: false; reason: "not-a-correction" | "malformed"; message: string };
-
-/** The note a translation's version carries, so its history says where the text came from. */
-export function correctionNote(contributionId: number): string {
-  return `correction from the game, contribution #${contributionId}`;
-}
 
 export async function acceptCorrection(id: number, userId: string): Promise<CorrectionOutcome> {
   const { rows } = await db().query<Contribution>(
@@ -55,11 +58,19 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
   const contribution = rows[0];
   if (!contribution) return { ok: false, reason: "not-found" };
   const lang = contribution.locale;
-  if (contribution.source !== "quests" || !contribution.text || !isLang(lang)) {
-    return { ok: false, reason: "not-a-correction", message: "Only a quest line sent in a site language is a correction." };
+  if ((contribution.source !== "quests" && contribution.source !== "books") || !contribution.text || !isLang(lang)) {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "Only a quest line or a book page sent in a site language is a correction.",
+    };
   }
 
   const [state] = await lineStates([contribution]);
+  if (state.kind === "known" && contribution.source === "books" && contribution.status !== "accepted"
+      && (await bookCorrectionWritten(id, lang))) {
+    return markAccepted(contribution, lang, userId);
+  }
   if (state.kind !== "changed") {
     return {
       ok: false,
@@ -69,7 +80,9 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
   }
 
   try {
-    if (lang === BASE_LANG) {
+    if (contribution.source === "books") {
+      await saveBookText({ lineId: state.lineId, text: contribution.text, note: correctionNote(id), editedBy: userId, lang });
+    } else if (lang === BASE_LANG) {
       const refusal = await correctEnglish(momentOf(state.lineId), state.variant, contribution.text, id, userId);
       if (refusal) return refusal;
     } else {
@@ -84,12 +97,35 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
       });
     }
   } catch (error) {
-    if (error instanceof OverrideError || error instanceof QuestTextMissing || error instanceof QuestTextConflict) {
+    if (
+      error instanceof OverrideError ||
+      error instanceof QuestTextMissing ||
+      error instanceof QuestTextConflict ||
+      error instanceof BookMissing ||
+      error instanceof BookConflict
+    ) {
       return { ok: false, reason: "malformed", message: error.message };
     }
     throw error;
   }
 
+  return markAccepted(contribution, lang, userId);
+}
+
+/**
+ * Whether this contribution's correction is already the page's current text in its language:
+ * the text was saved and the status flip after it failed, so the row now reads as known.
+ */
+async function bookCorrectionWritten(id: number, lang: string): Promise<boolean> {
+  const { rowCount } = await db().query(
+    `select 1 from "book_line" where "note" = $1 and "lang" = $2 and "isCurrent"`,
+    [correctionNote(id), lang],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+async function markAccepted(contribution: Contribution, lang: Lang, userId: string): Promise<CorrectionOutcome> {
+  const { id } = contribution;
   const client = await db().connect();
   try {
     await client.query("begin");

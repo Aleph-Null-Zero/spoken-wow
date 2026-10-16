@@ -17,12 +17,14 @@ import type { NpcKind, NpcRowKind } from "@/lib/npc/npc";
 
 import type { ContributionStatus, Submission } from "./contributions";
 import type { EnvelopeSource } from "./envelope";
+import { pageNotes } from "./notes";
 import { DEFAULT_SORT, type ContributionSort, type SortColumn } from "./query";
 
 /** Exported for accept.ts, whose row lock reads the same shape inside its own transaction. */
 export const CONTRIBUTION_COLUMNS = `"id", "source", "key", "locale", "build", "text", "meta", "raw", "count",
                  "status", "body", "name", "email", "userId", "createdAt"::text,
-                 "updatedAt"::text, "resolvedBy", "npcKind", "npcId", "npcName", "pageId"`;
+                 "updatedAt"::text, "resolvedBy", "npcKind", "npcId", "npcName", "pageId",
+                 "matchLineId", "matchBookId", "matchPageNumber", "matchNewBook"`;
 const COLUMNS = CONTRIBUTION_COLUMNS;
 
 export type Contribution = {
@@ -50,6 +52,11 @@ export type Contribution = {
   npcName: string | null;
   /** The English page a moderator matched a books contribution to (migration 0059); null until then. */
   pageId: number | null;
+  /** A moderator's answer to "which page is this?" (migration 0074): a page, a place in a book, or a new book. */
+  matchLineId: string | null;
+  matchBookId: string | null;
+  matchPageNumber: number | null;
+  matchNewBook: boolean;
 };
 
 /**
@@ -101,28 +108,28 @@ export async function setContributionNpc(
   return row;
 }
 
+export type BookAnswer = { lineId: string } | { bookId: string; pageNumber: number } | { newBook: true } | null;
+
 /**
- * Record which English page a books contribution's text is, or clear it with null. A no-op,
- * returning null, for a row that is not books or whose page accept has already written: the
- * written page is one-way (accept.ts), and moving the match under it would leave the two
- * disagreeing. The page is the caller's to check exists. Returns the updated row.
+ * Record which page a books contribution is, or clear the answer with null. A no-op, returning
+ * null, for a row that is not books or whose page accept has already written -- that is one-way
+ * (accept.ts). The page or book is the caller's to check exists. Returns the updated row.
  *
  * `by` is who answered, for the activity log, as for setContributionNpc.
  */
-export async function setContributionPage(
-  id: number,
-  pageId: number | null,
-  by: string | null,
-): Promise<Contribution | null> {
+export async function setContributionMatch(id: number, answer: BookAnswer, by: string | null): Promise<Contribution | null> {
+  const lineId = answer && "lineId" in answer ? answer.lineId : null;
+  const bookId = answer && "bookId" in answer ? answer.bookId : null;
+  const pageNumber = answer && "pageNumber" in answer ? answer.pageNumber : null;
+  const newBook = answer !== null && "newBook" in answer;
   const { rows } = await db().query<Contribution>(
     `update "contribution"
-        set "pageId" = $2, "updatedAt" = now()
+        set "matchLineId" = $2, "matchBookId" = $3, "matchPageNumber" = $4, "matchNewBook" = $5,
+            "updatedAt" = now()
       where "id" = $1 and "source" = 'books'
-        and not exists (select 1 from "book_line" b
-                         where b."origin" = 'contributed'
-                           and b."note" = 'contribution #' || "contribution"."id")
+        and not exists (select 1 from "book_line" b where b."note" = any($6::text[]))
       returning ${COLUMNS}`,
-    [id, pageId],
+    [id, lineId, bookId, pageNumber, newBook, pageNotes(id)],
   );
   const row = rows[0];
   if (!row) return null;
@@ -132,7 +139,7 @@ export async function setContributionPage(
     source: row.source,
     subject: String(id),
     actorId: by,
-    detail: { field: "pageId", value: pageId },
+    detail: { field: "match", value: answer },
   });
   return row;
 }
@@ -347,6 +354,15 @@ export async function acceptedContributions(): Promise<Contribution[]> {
     `select ${COLUMNS} from "contribution"
       where "status" = 'accepted'
       order by "source", "key"`,
+  );
+  return rows;
+}
+
+/** The books rows among `ids`, whole. */
+export async function booksContributions(ids: readonly number[]): Promise<Contribution[]> {
+  const { rows } = await db().query<Contribution>(
+    `select ${COLUMNS} from "contribution" where "id" = any($1::int[]) and "source" = 'books'`,
+    [ids],
   );
   return rows;
 }

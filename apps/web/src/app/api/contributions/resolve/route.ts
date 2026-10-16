@@ -10,11 +10,12 @@ import { contributionLocale } from "@/lib/contributions/store";
 import { BASE_LANG, isLang } from "@/lib/lang";
 import { isStatus } from "@/lib/contributions/contributions";
 import { resolveContribution } from "@/lib/contributions/accept";
+import { bookMatchOf } from "@/lib/contributions/book-match";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => ({}))) as { id?: unknown; status?: unknown };
+  const body = (await request.json().catch(() => ({}))) as { id?: unknown; status?: unknown; bookMatch?: unknown };
 
   const id = Number(body.id);
   if (!Number.isInteger(id) || id <= 0) {
@@ -38,7 +39,10 @@ export async function POST(request: Request) {
 
   // Rejecting a row already written ignores its line, so it also takes what ignoring takes.
   const mayIgnore = body.status === "rejected" && (await mayIgnoreIn(session, lang));
-  const outcome = await resolveContribution(id, body.status, session.user.id, undefined, mayIgnore);
+  // A books row's match as the moderator saw it: accepting refuses a row that now matches
+  // otherwise, as the bulk route does.
+  const bookMatch = bookMatchOf(body.bookMatch);
+  const outcome = await resolveContribution(id, body.status, session.user.id, undefined, mayIgnore, bookMatch);
   if (!outcome.ok) {
     if (outcome.reason === "not-found") {
       return Response.json({ error: "unknown contribution" }, { status: 404 });

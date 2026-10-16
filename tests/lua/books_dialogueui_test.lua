@@ -241,6 +241,21 @@ Expect("a book no pack voices greys Play", row.play:IsEnabled(), false)
 Expect("...and has nothing to report", row.report:IsShown(), false)
 Expect("...Skip and Play moving up to the close button", row.skip.anchor.relativeTo, row.frame)
 
+---------------------------------------------------------------- a book only a pack has
+local MINTED = "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"
+_G.SpokenBooksAudioPacks.SpokenBooksAudio_zz = { version = 1, addon = "SpokenBooksAudio_zz",
+    pages = { [MINTED] = { file = MINTED, len = 5 } },
+    places = { [MINTED] = { book = "n1", number = 1 } },
+    books = { n1 = { pages = { MINTED } } } }
+B.lastPage = MINTED
+Book:Draw()
+Expect("a book only a pack has lights Play", row.play:IsEnabled(), true)
+Expect("...and has a report", row.report:IsShown(), true)
+row.report.scripts.OnClick(row.report)
+box = Spoken.ContributeBox
+Expect("...to its key", box and box.editBox:GetText(), B:ReportURL(MINTED))
+_G.SpokenBooksAudioPacks.SpokenBooksAudio_zz = nil
+
 ---------------------------------------------------------------- closing
 view:Hide()
 watch.scripts.OnHide(watch)
