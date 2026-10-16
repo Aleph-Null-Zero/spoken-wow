@@ -80,6 +80,20 @@ world.npcGUID = "Creature-0-0-0-0-1-7"
 calls = stub.SetUnitCount()
 stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
 Expect("pointing at an unsplit creature asks for nothing", stub.SetUnitCount(), calls)
+-- Targeted with no dialog after, and a client that never says the model is in: the probe is
+-- still put away within two seconds, having asked once.
+stub.ResetTimers()
+world.npcGUID = "Creature-0-0-0-0-15906-8"
+world.modelStillLoading = true
+calls = stub.SetUnitCount()
+stub.FireEvent("PLAYER_TARGET_CHANGED")
+Expect("a target with no dialog is loading", VO.NPCModel:IsLoading("Creature-0-0-0-0-15906-8"), true)
+Expect("...with the probe shown", stub.playerModel.shown, true)
+stub.Advance(2.1)
+Expect("two seconds on, it is finished", VO.NPCModel:IsLoading(), false)
+Expect("...and the probe put away", stub.playerModel.shown, false)
+Expect("...having asked once", stub.SetUnitCount(), calls + 1)
+world.modelStillLoading = false
 world.npcGUID = "Creature-0-0-0-0-1234-0"; world.modelFileID = nil
 
 os.exit(Failures() == 0 and 0 or 1)

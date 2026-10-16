@@ -614,6 +614,22 @@ stub.ShowGossip("Prosit!")
 stub.FireEvent("GOSSIP_SHOW")
 stub.FinishModelLoad()
 Expect("drawn as a dwarf, the body its voice is, nothing is offered", bodyButton:IsShown(), false)
+
+-- With the buttons hidden and nothing gathered, a creature's body is only worth its model where
+-- the model picks the file it plays: a split creature.
+SpokenEnv.Addon.db.profile.Contribute.HideButtons = true
+stub.HidePanels()
+world.npcGUID = "Creature-0-0-0-0-15906-2"
+stub.ShowGossip("Prosit!")
+local hiddenSetUnits = stub.SetUnitCount()
+VoiceOver.Contribute:HasGap()
+Expect("buttons hidden, an unsplit creature's model is not read", stub.SetUnitCount(), hiddenSetUnits)
+pack.GossipFileLookupByNPCBody = { [15906] = { ["dwarf-male"] = { [HASH] = HASH } } }
+VoiceOver.Contribute:HasGap()
+Expect("...but a split creature's is", stub.SetUnitCount(), hiddenSetUnits + 1)
+stub.FinishModelLoad()
+pack.GossipFileLookupByNPCBody = nil
+SpokenEnv.Addon.db.profile.Contribute.HideButtons = false
 stub.HidePanels()
 stub.FireEvent("GOSSIP_CLOSED")
 world.modelFileID = nil

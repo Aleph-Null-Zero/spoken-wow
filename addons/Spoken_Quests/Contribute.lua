@@ -480,25 +480,28 @@ function Contribute:HasGap()
     if not (_G.Spoken and Spoken.Contribute and Spoken.ShowContribution) then
         return false
     end
-    -- Hidden in the Spoken settings: no gap to show, and so no model to prime. The
+    -- Hidden in the Spoken settings: no gap to show, and so no model to prime for one. The
     -- method is guarded because an older bundled player does not have it.
     local hidden = Spoken.AreContributeButtonsHidden and Spoken:AreContributeButtonsHidden()
     -- Gathering needs the model primed as much as a click does, and runs with the buttons
     -- hidden as readily as with them shown.
     local gathering = Spoken.Gather and Spoken.Gather:IsEnabled()
     -- A body the voice is not can only be seen in the model, so a creature whose bodies the
-    -- packs list has it read whatever the gap: once per guid, as for a gap. Primed at most once
-    -- per pass, since each Prime of a guid still loading counts towards giving up on it.
+    -- packs list has it read whatever the gap, where a gap could be shown or gathered. A split
+    -- creature has it read regardless, since the model picks the file it plays. Once per guid,
+    -- as for a gap, and at most once per pass, since each Prime of a guid still loading counts
+    -- towards giving up on it.
     local guid = Utils:GetNPCGUID()
     local id = guid and Utils:GetCreatureIDFromGUID(guid)
-    local hasBodies = id and DataModules:HasBodies(id)
-    if hasBodies then
+    local readBody = id and DataModules:HasBodies(id)
+        and ((not hidden or gathering) or DataModules:IsSplit(id))
+    if readBody then
         NPCModel:Prime(guid, "npc")
     end
     local missing = (not hidden or gathering) and IsMissing()
     local gap = not hidden and missing
     if missing then
-        if not hasBodies then
+        if not readBody then
             NPCModel:Prime(guid, "npc")
         end
         -- Gathered here, on the one pass that already knows the line is missing, rather than
@@ -507,7 +510,7 @@ function Contribute:HasGap()
         if gathering then
             GatherLine()
         end
-    elseif NPCModel:IsLoading() and not hasBodies then
+    elseif NPCModel:IsLoading() and not readBody then
         -- No gap, but a load is still in flight for whatever NPC started it: the player closed
         -- the dialog, or a pack picked up the line, with no click and no retarget to trigger
         -- NPCModel:Prime's own guid-switch guard. Left alone, this is unbounded exposure --

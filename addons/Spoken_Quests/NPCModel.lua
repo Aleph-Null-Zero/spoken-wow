@@ -222,7 +222,11 @@ function NPCModel:Abandon()
     end
 end
 
-function NPCModel:IsLoading()
+--- Whether a load is in flight: any, or the one for `guid`.
+function NPCModel:IsLoading(guid)
+    if guid then
+        return loadingGUID == guid
+    end
     return loadingGUID ~= nil
 end
 
@@ -233,8 +237,21 @@ end
 local function PrimeUnit(unit)
     local guid = UnitGUID and UnitGUID(unit)
     local id = guid and Utils:GetCreatureIDFromGUID(guid)
-    if id and DataModules and DataModules:IsSplit(id) then
-        NPCModel:Prime(guid, unit)
+    if not (id and DataModules and DataModules:IsSplit(id)) then
+        return
+    end
+    NPCModel:Prime(guid, unit)
+    -- No dialog may follow, and so no HasGap to put the probe away: polled here instead, so a
+    -- load whose OnModelLoaded never fires reaches MAX_LOAD_REFRESHES and is finished within
+    -- two seconds, rather than leaving the probe shown until something else is primed.
+    if NPCModel:IsLoading(guid) and C_Timer and C_Timer.After then
+        local function Poll()
+            if NPCModel:IsLoading(guid) then
+                NPCModel:Prime(guid, unit)
+            end
+        end
+        C_Timer.After(1, Poll)
+        C_Timer.After(2, Poll)
     end
 end
 
