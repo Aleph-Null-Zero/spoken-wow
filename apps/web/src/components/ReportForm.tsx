@@ -23,10 +23,10 @@
 import { useLang } from "@/components/LangProvider";
 import Link from "@/components/LocaleLink";
 import ReportContextFacts from "@/components/reports/ReportContextFacts";
-import { decodeFragment } from "@/lib/contributions/envelope";
+import { decodeFragment, takeFragment } from "@/lib/contributions/envelope";
 import { withLang } from "@/lib/lang";
 import { LATEST_VERSION, contextFrom, outdatedVersion } from "@/lib/reports/context";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
@@ -37,11 +37,14 @@ export default function ReportForm({
   source,
   target,
   lineId,
+  fromGame = false,
 }: {
   source: Source;
   /** The raw address the report came in on, or null where the section has none. */
   target: string | null;
   lineId: string | null;
+  /** On an /r/ page the game links to, whose address may carry the addon's context. */
+  fromGame?: boolean;
 }) {
   const lang = useLang();
   // isPending rather than a bare null check: while the session is still loading, showing
@@ -51,8 +54,8 @@ export default function ReportForm({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const raw = useFragmentContext();
-  const context = contextFrom(raw, source);
+  const raw = useFragmentContext(fromGame);
+  const context = useMemo(() => contextFrom(raw, source), [raw, source]);
   const outdated = outdatedVersion(context);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -201,13 +204,14 @@ const STORED = "spoken.report.context";
  * report is a navigation to ?line=, and a link carries no fragment along. Taken out of the
  * address bar once read, as ContributeForm does, so the game text does not linger in history.
  */
-function useFragmentContext(): string | null {
+function useFragmentContext(enabled: boolean): string | null {
   const [raw, setRaw] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const key = `${STORED}:${window.location.pathname}`;
-    const hash = window.location.hash;
-    if (!hash.startsWith("#e1=")) {
+    const fragment = takeFragment();
+    if (fragment === null) {
       try {
         setRaw(window.sessionStorage.getItem(key));
       } catch {
@@ -218,8 +222,7 @@ function useFragmentContext(): string | null {
 
     // Not cancelled on cleanup: the hash is gone from the address once this runs, so an effect
     // run twice (React's development double-invoke) has only this decode to get it from.
-    window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    void decodeFragment(hash.slice("#e1=".length)).then((result) => {
+    void decodeFragment(fragment).then((result) => {
       if (!result.ok) return;
       setRaw(result.text);
       try {
@@ -228,7 +231,7 @@ function useFragmentContext(): string | null {
         // As above.
       }
     });
-  }, []);
+  }, [enabled]);
 
   return raw;
 }

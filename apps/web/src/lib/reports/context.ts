@@ -5,7 +5,7 @@
  * Client-safe, like envelope.ts: the report form reads the fragment in the browser, and the
  * triage rows render it there.
  */
-import { parseEnvelope } from "@/lib/contributions/envelope";
+import { parseEnvelope, type Envelope } from "@/lib/contributions/envelope";
 import type { Source } from "@/lib/sections";
 
 export type ReportContext = { fields: Record<string, string>; text: string | null };
@@ -17,10 +17,15 @@ export type ReportContext = { fields: Record<string, string>; text: string | nul
  * the report, and the context only helps read it.
  */
 export function contextFrom(raw: unknown, source: Source): ReportContext | null {
+  const envelope = envelopeFor(raw, source);
+  return envelope && { fields: envelope.fields, text: envelope.text };
+}
+
+/** The parsed envelope behind contextFrom, for a caller that needs more of it than the context. */
+export function envelopeFor(raw: unknown, source: Source): Envelope | null {
   if (typeof raw !== "string" || !raw) return null;
   const parsed = parseEnvelope(raw);
-  if (!parsed.ok || parsed.value.source !== source) return null;
-  return { fields: parsed.value.fields, text: parsed.value.text };
+  return parsed.ok && parsed.value.source === source ? parsed.value : null;
 }
 
 /**
@@ -28,6 +33,11 @@ export function contextFrom(raw: unknown, source: Source): ReportContext | null 
  * bumps on master, where the site deploys from. Null in a build that could not read it.
  */
 export const LATEST_VERSION: string | null = process.env.NEXT_PUBLIC_SPOKEN_VERSION || null;
+
+/** "SpokenQuests 3.4.0" from the addon field's "SpokenQuests/3.4.0". */
+export function addonLabel(context: ReportContext): string | undefined {
+  return context.fields.addon?.replace("/", " ");
+}
 
 /** "3.4.0" from "SpokenQuests/3.4.0", or null for a source checkout's "dev". */
 export function addonVersion(context: ReportContext | null): string | null {
@@ -69,7 +79,7 @@ export function contextFacts(context: ReportContext): { label: string; value: st
   const add = (label: string, value: string | undefined) => {
     if (value) facts.push({ label, value });
   };
-  add("Addon", f.addon?.replace("/", " "));
+  add("Addon", addonLabel(context));
   add("Client", f.build);
   add("Language", f.locale && f.pack && f.pack !== f.locale ? `${f.locale}, hearing ${f.pack}` : f.locale);
   add("NPC", f.npc);

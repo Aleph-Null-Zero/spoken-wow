@@ -6,6 +6,7 @@
  */
 import {
   LATEST_VERSION,
+  addonLabel,
   contextFacts,
   outdatedVersion,
   type ReportContext,
@@ -48,7 +49,7 @@ export default function ReportContextFacts({
  */
 export function ReportContextNote({ context }: { context: ReportContext | null }) {
   if (!context) return null;
-  const version = context.fields.addon?.replace("/", " ") ?? "the game";
+  const version = addonLabel(context) ?? "the game";
   const outdated = outdatedVersion(context);
   return (
     <details className="mt-1 text-xs" onClick={(event) => event.stopPropagation()}>

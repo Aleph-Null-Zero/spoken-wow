@@ -869,12 +869,13 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             local playButton = self.detailsPlayButton
             local report = self.detailsReportButton
             local contributeButton = self.detailsContributeButton
+            local title = self:GetQuestTitle(questID)
             report.questID = questID
-            report.title = self:GetQuestTitle(questID)
+            report.title = title
 
             -- Rebound rather than kept: this button stood for a different quest a moment ago. A line
             -- of this quest's already queued is the one it stands for, whoever queued it.
-            self:BindPlayButton(playButton, questID, self:GetQuestTitle(questID))
+            self:BindPlayButton(playButton, questID, title)
             playButton.soundData = self:QueuedLine(questID)
 
             -- No sound: Contribute in the pair's place, where this client can contribute at all
@@ -888,7 +889,6 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             elseif contribute and contribute.CanOfferFromLog and contribute:CanOfferFromLog() then
                 playButton:Hide()
                 report:Hide()
-                local title = self:GetQuestTitle(questID)
                 contributeButton:SetScript("OnClick", function()
                     contribute:ShowFromLog(questID, title)
                 end)

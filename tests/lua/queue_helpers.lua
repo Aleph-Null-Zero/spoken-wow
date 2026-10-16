@@ -180,15 +180,21 @@ end
 --- A report link split into its address and the envelope its #e1= fragment carries, decoded
 --- independently of Contribute.lua as contribute_envelope_test.lua decodes it. Nil envelope
 --- when the link has no fragment.
+--- A #e1= payload back to its envelope, undoing the base64url here (standard alphabet, then
+--- padded to a multiple of 4) so a test does not depend on Encode's own inverse existing.
+function M.DecodeFragment(fragment)
+    local std = fragment:gsub("-", "+"):gsub("_", "/")
+    std = std .. string.rep("=", (4 - (#std % 4)) % 4)
+    local decoded = require("base64_decode")(std)
+    return LibStub:GetLibrary("LibDeflate"):DecompressDeflate(decoded)
+end
+
 function M.SplitReportLink(link)
     local address, fragment = tostring(link):match("^(.-)#e1=(.+)$")
     if not address then
         return link, nil
     end
-    local std = fragment:gsub("-", "+"):gsub("_", "/")
-    std = std .. string.rep("=", (4 - (#std % 4)) % 4)
-    local decoded = require("base64_decode_for_test")(std)
-    return address, LibStub:GetLibrary("LibDeflate"):DecompressDeflate(decoded)
+    return address, M.DecodeFragment(fragment)
 end
 
 return M

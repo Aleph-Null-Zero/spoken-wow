@@ -49,27 +49,33 @@ local function QuestItem()
     return Spoken:QuestItem(questID)
 end
 
-local function NPCID()
-    local guid = Utils:GetNPCGUID()
+local function IDFromGUID(guid)
     if guid and Utils.GetIDFromGUID then
         local ok, read = pcall(Utils.GetIDFromGUID, Utils, guid)
         if ok and read then
             return read
         end
     end
-    return (QuestItem())
 end
 
-local function NPCField()
-    local id = NPCID()
-    local name = UnitName and NotSecret(UnitName("npc")) or nil
-    if not name then
-        name = select(2, QuestItem())
-    end
+local function NPCID()
+    return IDFromGUID(Utils:GetNPCGUID()) or (QuestItem())
+end
+
+--- The npc field as the site reads it: "<id> <name>", or whichever half is known.
+local function NPCLabel(id, name)
     if id and name then
         return format("%d %s", id, name)
     end
     return id and tostring(id) or name
+end
+
+local function NPCField()
+    local name = UnitName and NotSecret(UnitName("npc")) or nil
+    if not name then
+        name = select(2, QuestItem())
+    end
+    return NPCLabel(NPCID(), name)
 end
 
 --- Which id space the unit's GUID belongs to.
@@ -629,12 +635,7 @@ function Contribute:ReportContext(clip)
         fields[#fields + 1] = { "quest", clip.questID }
         fields[#fields + 1] = { "event", path }
     end
-    local id
-    if clip.unitGUID and Utils.GetIDFromGUID then
-        local ok, read = pcall(Utils.GetIDFromGUID, Utils, clip.unitGUID)
-        id = ok and read or nil
-    end
-    local npc = id and clip.name and format("%d %s", id, clip.name) or (id and tostring(id)) or clip.name
+    local npc = NPCLabel(IDFromGUID(clip.unitGUID), clip.name)
     if npc then
         fields[#fields + 1] = { "npc", npc }
     end

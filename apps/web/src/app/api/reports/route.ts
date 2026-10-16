@@ -17,12 +17,13 @@ import { clientIp } from "@/lib/reports/client-ip";
 import { validateSubmission } from "@/lib/reports/reports";
 import { langParam } from "@/lib/lang-server";
 import { countRecent, createReport } from "@/lib/reports/store";
-import { contextFrom } from "@/lib/reports/context";
-import { parseEnvelope } from "@/lib/contributions/envelope";
+import { envelopeFor } from "@/lib/reports/context";
+import type { Envelope } from "@/lib/contributions/envelope";
 import { submissionFrom } from "@/lib/contributions/submission";
 import {
   CONTRIBUTION_WINDOW_MS,
   CONTRIBUTIONS_PER_HOUR,
+  type Identity,
   knownSubmissions,
   storeSubmission,
 } from "@/lib/contributions/intake";
@@ -108,7 +109,8 @@ export async function POST(request: Request) {
   };
 
   // parseEnvelope refuses anything past its own MAX_BYTES before reading it.
-  const context = contextFrom(body.context, source);
+  const envelope = envelopeFor(body.context, source);
+  const context = envelope && { fields: envelope.fields, text: envelope.text };
 
   await createReport({
     source,
@@ -122,8 +124,8 @@ export async function POST(request: Request) {
   });
 
   // The report is filed by now: a failure here must not answer 500 and invite a second one.
-  if (context && validated.value.category === "missing") {
-    await contributeMissing(body.context as string, validated.value.body, identity).catch((error) =>
+  if (envelope && validated.value.category === "missing") {
+    await contributeMissing(envelope, body.context as string, validated.value.body, identity).catch((error) =>
       console.error("filing a missing report as a contribution failed", error),
     );
   }
@@ -140,18 +142,19 @@ export async function POST(request: Request) {
  * practice: a books report names a corpus page by `id`, so submissionFrom finds no `page`.
  */
 async function contributeMissing(
+  envelope: Envelope,
   raw: string,
   complaint: string,
-  identity: { userId: string | null; name: string | null; email: string | null; ip: string },
+  identity: Omit<Identity, "body"> & { ip: string },
 ): Promise<void> {
-  const parsed = parseEnvelope(raw);
-  if (!parsed.ok || parsed.value.source === "zones") return;
-  const submission = submissionFrom(parsed.value, raw);
+  if (envelope.source === "zones") return;
+  const submission = submissionFrom(envelope, raw);
   if (!submission) return;
-  if ((await countRecentContributions(identity.ip, CONTRIBUTION_WINDOW_MS)) >= CONTRIBUTIONS_PER_HOUR) {
-    return;
-  }
-  const [known] = await knownSubmissions([submission]);
+  const [recent, [known]] = await Promise.all([
+    countRecentContributions(identity.ip, CONTRIBUTION_WINDOW_MS),
+    knownSubmissions([submission]),
+  ]);
+  if (recent >= CONTRIBUTIONS_PER_HOUR) return;
   if (!known) {
     await storeSubmission(submission, { ...identity, body: complaint });
   }

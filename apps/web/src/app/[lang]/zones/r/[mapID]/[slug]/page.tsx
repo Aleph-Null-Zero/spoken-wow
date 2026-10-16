@@ -112,7 +112,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
               Wrong lore, a mispronunciation, or narration that does not play. Nothing is
               required but the description.
             </p>
-            <ReportForm source="zones" target={entry.file} lineId={entry.id} />
+            <ReportForm source="zones" target={entry.file} lineId={entry.id} fromGame />
           </section>
 
           <footer className="text-muted-foreground mt-8 text-sm">

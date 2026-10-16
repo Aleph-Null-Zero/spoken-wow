@@ -78,23 +78,20 @@ function SpokenBooks:ReportContext(pageId)
 	return Spoken.Contribute:Envelope("books", fields, text)
 end
 
---- The report address for a page, with its context in the fragment, in Spoken's copy box: a
---- link that long outgrows a StaticPopup's edit box. The bare address in the popup where the
---- player has no such box.
-function SpokenBooks:ShowReport(pageId, language, caption)
+--- The report address for a page, with its context in the fragment. The bare address in the
+--- popup under a Spoken too old to say more.
+function SpokenBooks:ShowReport(pageId, language)
 	local url = self:ReportURL(pageId, language)
 	if not url then
 		return
 	end
-	local codec = _G.Spoken and Spoken.Contribute
-	if codec and codec.Link and Spoken.ShowContribution then
-		local context = self:ReportContext(pageId)
-		Spoken:ShowContribution(context and codec:Link(url, context) or url, nil, true)
+	if _G.Spoken and Spoken.ShowReport then
+		Spoken:ShowReport(url, function()
+			return self:ReportContext(pageId)
+		end)
 		return
 	end
-	if self.ShowCopyLink then
-		self:ShowCopyLink(url, caption)
-	end
+	self:ShowCopyLink(url, self.L.REPORT_LINE_ADDRESS)
 end
 
 --- Keep the page on screen for later, if the player opted into gathering and the corpus has

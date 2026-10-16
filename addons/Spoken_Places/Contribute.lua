@@ -39,6 +39,17 @@ local function BaseFields(self)
     }
 end
 
+--- BaseFields and the place: the map, and its name as this client shows it.
+local function PlaceFields(self, mapID)
+    local fields = BaseFields(self)
+    fields[#fields + 1] = { "map", mapID }
+    local zone = self:GetMapName(mapID)
+    if zone and zone ~= "" then
+        fields[#fields + 1] = { "zone", zone }
+    end
+    return fields
+end
+
 --- The envelope for a place the panel is showing with no lore, or nil with no map to name.
 ---
 --- The place the player is looking at, not where they stand: every zone and subzone is already
@@ -50,12 +61,7 @@ function SpokenZones:CaptureContribution(mapID, subzone)
         return nil
     end
 
-    local fields = BaseFields(self)
-    fields[#fields + 1] = { "map", mapID }
-    local zone = self:GetMapName(mapID)
-    if zone and zone ~= "" then
-        fields[#fields + 1] = { "zone", zone }
-    end
+    local fields = PlaceFields(self, mapID)
     -- Omitted rather than sent empty for the zone itself: the site keys a contribution on the
     -- map, or the map and the subzone, and an empty subzone is a key it would have to decide
     -- about.
@@ -91,30 +97,24 @@ function SpokenZones:ReportContext(mapID, areaKey)
     if not (mapID and _G.Spoken and Spoken.Contribute) then
         return nil
     end
-    local fields = BaseFields(self)
-    fields[#fields + 1] = { "map", mapID }
-    local zone = self:GetMapName(mapID)
-    if zone and zone ~= "" then
-        fields[#fields + 1] = { "zone", zone }
-    end
+    local fields = PlaceFields(self, mapID)
     if areaKey then
         fields[#fields + 1] = { "key", areaKey }
     end
     return Spoken.Contribute:Envelope("zones", fields, nil)
 end
 
---- The report address for a place, with its context in the fragment, in Spoken's copy box: a
---- link that long outgrows a StaticPopup's edit box. The bare address in the popup where the
---- player has no such box.
+--- The report address for a place, with its context in the fragment. The bare address in the
+--- popup under a Spoken too old to say more.
 function SpokenZones:ShowReport(mapID, areaKey, language)
     local url = self:ReportURL(mapID, areaKey, language)
     if not url then
         return
     end
-    local codec = _G.Spoken and Spoken.Contribute
-    if codec and codec.Link and Spoken.ShowContribution then
-        local context = self:ReportContext(mapID, areaKey)
-        Spoken:ShowContribution(context and codec:Link(url, context) or url, nil, true)
+    if _G.Spoken and Spoken.ShowReport then
+        Spoken:ShowReport(url, function()
+            return self:ReportContext(mapID, areaKey)
+        end)
         return
     end
     self:ShowCopyLink(url, self.L.OPT_REPORT_LINE_ADDRESS)

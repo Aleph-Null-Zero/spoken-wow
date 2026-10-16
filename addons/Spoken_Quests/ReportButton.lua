@@ -120,11 +120,10 @@ function ReportButton:Link(target, language)
     return Spoken:ReportURL("quests", target, language)
 end
 
---- Spoken's copy box where the player has one: a report carrying its context is longer than a
---- StaticPopup's edit box will hold, and DialogueUI hides UIParent and the game's popups with
---- it, while the box shows over that window.
+--- DialogueUI hides UIParent and the game's popups with it, so under its window the address
+--- goes to Spoken's copy box, which shows over that window.
 local function ShowCopy(url)
-    if Spoken and Spoken.ShowContribution then
+    if Utils:DialogueUIPage() and Spoken and Spoken.ShowContribution then
         Spoken:ShowContribution(url, nil, true)
         return
     end
@@ -134,19 +133,18 @@ end
 
 --- The report address for `target`, with the line as the player met it in its fragment: the
 --- addon version, the client, the text and the NPC. `clip` is the line being reported, or nil
---- for the window on screen. The bare address when there is nothing to add or no way to
---- encode it: a report without context is still a report.
+--- for the window on screen. The bare address in the popup under a Spoken too old to say more.
 function ReportButton:ShowLink(target, language, clip)
     local url = self:Link(target, language)
+    if not (Spoken and Spoken.ShowReport) then
+        ShowCopy(url)
+        return
+    end
     -- Absent on the legacy clients, whose toc never loads Contribute.xml.
     local contribute = rawget(VoiceOver, "Contribute")
-    local ok, context = false, nil
-    if contribute and contribute.ReportContext then
-        ok, context = pcall(contribute.ReportContext, contribute, clip)
-    end
-    local codec = Spoken and Spoken.Contribute
-    local link = ok and context and codec and codec.Link and codec:Link(url, context)
-    ShowCopy(link or url)
+    Spoken:ShowReport(url, function()
+        return contribute and contribute:ReportContext(clip)
+    end)
 end
 
 --- The same popup, for an address that is not a report: the settings panel offers one per

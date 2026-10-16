@@ -40,6 +40,17 @@ Expect("the box holds the link itself", box.editBox:GetText(), link)
 Expect("...with the link-specific hint", box.hint:GetText(), "Copy this and open it in your browser:")
 Expect("...and no redundant address line, since the link already carries it", box.address:GetText(), "")
 
+------------------------------------------------------------------------------- a report
+local report = "https://spoken.rusty.one/quests/r/quest/5/accept"
+Expect("a report is shown", Spoken:ShowReport(report, function() return envelope end), true)
+local address, carried = H.SplitReportLink(box.editBox:GetText())
+Expect("...at its own address", address, report)
+Expect("...carrying the context in its fragment", carried, envelope)
+Spoken:ShowReport(report, function() error("broken") end)
+Expect("a context that errors leaves the bare address", box.editBox:GetText(), report)
+Spoken:ShowReport(report, function() return nil end)
+Expect("...as does no context at all", box.editBox:GetText(), report)
+
 ------------------------------------------------------------------------------- over a host
 -- A dialog window that hides UIParent (DialogueUI's) would hide the box with it, so a feature
 -- addon puts it over that window while it is open.
