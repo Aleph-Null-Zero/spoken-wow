@@ -1348,7 +1348,11 @@ function Addon:QUEST_FINISHED()
     currentQuestSoundData = nil
     local pending = pendingRead
     pendingRead = nil
-    if pending then Player:Enqueue(pending) end
+    if pending then
+        -- Its window has closed, so it is no window's line: the next close leaves it playing.
+        pending.addedCallback = nil
+        Player:Enqueue(pending)
+    end
 end
 
 function Addon:GOSSIP_CLOSED()
