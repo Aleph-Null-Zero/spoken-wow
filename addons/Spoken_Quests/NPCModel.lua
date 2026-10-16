@@ -15,10 +15,21 @@ NPCModel.onLoaded = {}
 -- Keyed by the NPC's guid, since the probe is asked about a different unit every time a
 -- different NPC comes on screen, and a load that already finished for one says nothing
 -- about another. `false` remembers "asked, and nothing came back" (a gameobject, a client
--- with no GUID, or a load that genuinely resolves to nothing) so a miss is asked for at most
--- once per guid rather than retried on every refresh; a guid missing from this table entirely
--- has simply never been asked about.
+-- with no GUID, or a guid whose every load attempt came back empty) so a miss stops being
+-- asked for rather than retried on every refresh; a guid missing from this table entirely
+-- has never been answered.
 local modelCache = {}
+
+-- How many loads each guid has started, and how many it may. A load that came back empty is
+-- not taken as the answer while attempts remain: a cursor sweep over a crowd starts a load for
+-- each creature and leaves it a moment later, and the model only arrives while the probe is
+-- kept on it. Bounded all the same, since every load is a 3D scene this client has hung on.
+local loadAttempts = {}
+local MAX_LOAD_ATTEMPTS = 2
+
+-- Bumped on every load started, so a poll scheduled for an earlier load of the same guid can
+-- tell it is not polling the load now in flight.
+local loadSerial = 0
 
 -- The one guid currently waiting on a load, and how many refreshes it has waited without
 -- resolving. A second refresh for the same guid while it is still loading must not call
@@ -28,8 +39,8 @@ local modelCache = {}
 local loadingGUID
 local loadingRefreshes
 
--- How many refreshes a guid may wait, once primed, before PollLoadingGUID gives up on it and
--- caches a miss instead. OnModelLoaded is the fast path -- most of the time this bound is
+-- How many refreshes a guid may wait, once primed, before PollLoadingGUID gives up on this
+-- load. OnModelLoaded is the fast path -- most of the time this bound is
 -- never reached, because the callback (when this client fires it at all) resolves the guid
 -- first. This is what makes the client behaving either way converge on the same outcome.
 local MAX_LOAD_REFRESHES = 2
@@ -101,8 +112,8 @@ end
 --- nothing left on screen to keep the probe up for: the player closed the dialog, or clicked
 --- away, with no retarget to another NPC to trigger the guard NPCModel:Prime already has.
 --- Left uncached, a guid abandoned this way is primed again (one more SetUnit) the next time
---- it is a gap, rather than permanently remembered as a miss it never actually resolved to --
---- only PollLoadingGUID's MAX_LOAD_REFRESHES bound is allowed to decide that.
+--- it is asked for, rather than permanently remembered as a miss it never actually resolved
+--- to -- only running out of MAX_LOAD_ATTEMPTS is allowed to decide that.
 local function AbandonModelLoad(guid)
     local probe = modelProbe
     if probe and probe.SetScript then
@@ -117,35 +128,61 @@ local function AbandonModelLoad(guid)
     end
 end
 
---- A refresh for a guid that is still loading, with no cached answer yet: OnModelLoaded may
---- or may not exist on this client, and may or may not have fired already -- there is no way
---- to tell from here, and no need to. The probe is still shown regardless (nothing but
---- FinishModelLoad ever hides it), so read it directly. Finalise on success, or once this
---- guid has waited long enough that leaving the probe shown any longer is not worth it either.
-local function PollLoadingGUID(guid)
-    loadingRefreshes = loadingRefreshes + 1
+--- The file id the probe holds now, or nil while it has none.
+local function ReadProbe()
     local probe = modelProbe
     local ok, id = false, nil
     if probe then
         ok, id = pcall(probe.GetModelFileID, probe)
     end
-    if (ok and type(id) == "number" and id > 0) or loadingRefreshes >= MAX_LOAD_REFRESHES then
+    if ok and type(id) == "number" and id > 0 then
+        return id
+    end
+    return nil
+end
+
+--- Stop a load that came back empty: a miss for good once the guid has no attempts left,
+--- otherwise only put away, so the next ask loads it again.
+local function GiveUpModelLoad(guid)
+    if (loadAttempts[guid] or 0) >= MAX_LOAD_ATTEMPTS then
         FinishModelLoad(guid)
+    else
+        AbandonModelLoad(guid)
     end
 end
 
---- Start a model load for this NPC's guid, if nothing has asked about it yet. Everything
---- this does is one-shot per guid -- HasGap calls it on every quest and gossip event, and a
---- second call for a guid already cached or already loading must be free.
+--- A refresh for a guid that is still loading, with no cached answer yet: OnModelLoaded may
+--- or may not exist on this client, and may or may not have fired already -- there is no way
+--- to tell from here, and no need to. The probe is still shown regardless (nothing but
+--- FinishModelLoad ever hides it), so read it directly. Finalise on success, or give this
+--- load up once it has waited long enough that leaving the probe shown any longer is not
+--- worth it either.
+local function PollLoadingGUID(guid)
+    loadingRefreshes = loadingRefreshes + 1
+    if ReadProbe() then
+        FinishModelLoad(guid)
+    elseif loadingRefreshes >= MAX_LOAD_REFRESHES then
+        GiveUpModelLoad(guid)
+    end
+end
+
+--- Start a model load for this NPC's guid, if nothing has answered for it yet. HasGap calls
+--- it on every quest and gossip event, and a second call for a guid already cached or already
+--- loading must be free.
 function NPCModel:Prime(guid, unit)
     -- Whatever is on screen now, a load left in flight for a DIFFERENT guid is no longer
     -- relevant to anything -- retargeting between two quest givers faster than a load
-    -- resolves is ordinary play, not an edge case. Finalise it (whatever it resolved to, or
-    -- nothing) before doing anything else, so the probe is never left associated with an
-    -- abandoned target: not while priming the new one, and not indefinitely afterward if the
-    -- player then lingers on a guid that happens to already be cached.
+    -- resolves is ordinary play, not an edge case. Settle it before doing anything else, so
+    -- the probe is never left associated with an abandoned target: not while priming the new
+    -- one, and not indefinitely afterward if the player then lingers on a guid that happens to
+    -- already be cached. Cached if its model is in; otherwise given up, which leaves it to be
+    -- loaded again later while it has attempts left.
     if loadingGUID and loadingGUID ~= guid then
-        FinishModelLoad(loadingGUID)
+        if ReadProbe() then
+            FinishModelLoad(loadingGUID)
+        else
+            GiveUpModelLoad(loadingGUID)
+        end
     end
 
     if not guid or modelCache[guid] ~= nil then
@@ -157,11 +194,14 @@ function NPCModel:Prime(guid, unit)
     end
 
     local probe = ModelProbeFrame()
-    if not probe or not probe.SetUnit or not probe.GetModelFileID then
+    if not probe or not probe.SetUnit or not probe.GetModelFileID
+        or (loadAttempts[guid] or 0) >= MAX_LOAD_ATTEMPTS then
         modelCache[guid] = false
         return
     end
 
+    loadAttempts[guid] = (loadAttempts[guid] or 0) + 1
+    loadSerial = loadSerial + 1
     loadingGUID = guid
     loadingRefreshes = 0
     if probe.Show then probe:Show() end
@@ -178,39 +218,44 @@ function NPCModel:Prime(guid, unit)
         pcall(probe.SetScript, probe, "OnModelLoaded", function() FinishModelLoad(guid) end)
     end
     pcall(probe.SetUnit, probe, unit or "npc")
+
+    -- Whoever asked may never refresh again -- a target with no dialog after, or a dialog
+    -- closed on a creature whose bodies keep its load from being abandoned -- so the load
+    -- polls itself and is settled within two seconds even if OnModelLoaded never fires.
+    if C_Timer and C_Timer.After then
+        local serial = loadSerial
+        local function Poll()
+            if loadSerial == serial and loadingGUID == guid then
+                PollLoadingGUID(guid)
+            end
+        end
+        pcall(C_Timer.After, 1, Poll)
+        pcall(C_Timer.After, 2, Poll)
+    end
 end
 
 --- What the model probe has cached for the NPC on screen, reading it directly as a last
 --- resort on a miss for the guid that is still loading.
 ---
 --- A gossip interaction fires exactly one refresh (GOSSIP_SHOW) before the player reads and
---- clicks -- there is no second refresh for PollLoadingGUID to ever run on, so the poll bound
---- is never reached by click time, and a cache built only from refreshes would omit the model
---- on almost every gossip contribution. But SetUnit happened when the panel opened, seconds
---- before this click, and live-client evidence says that is enough: read the probe (never
---- SetUnit it again -- that would be asking a second time, which NPCModel:Prime already
---- guards against).
+--- clicks, so a cache built only from refreshes and timed polls could still lack a model the
+--- probe has. SetUnit happened when the panel opened, seconds before this click, and
+--- live-client evidence says that is enough: read the probe (never SetUnit it again -- that
+--- would be asking a second time, which NPCModel:Prime already guards against).
 ---
 --- Only a successful read finalises anything here. A click quick enough to beat the load --
 --- distinct from a load that has genuinely finished with nothing to show -- must not write
 --- `false`: doing so would clear loadingGUID and cache a permanent miss, foreclosing the
 --- callback or the next poll from ever resolving this guid for the rest of the session. Only
---- PollLoadingGUID's MAX_LOAD_REFRESHES bound is allowed to give up for real; this is not
---- that, so an empty read here simply leaves the guid exactly as it was and omits the field
---- for this one capture.
+--- running out of MAX_LOAD_ATTEMPTS is allowed to give up for real; this is not that, so an
+--- empty read here simply leaves the guid exactly as it was and omits the field for this one
+--- capture.
 function NPCModel:Get(guid)
     if not guid then
         return nil
     end
-    if modelCache[guid] == nil and loadingGUID == guid then
-        local probe = modelProbe
-        local ok, id = false, nil
-        if probe then
-            ok, id = pcall(probe.GetModelFileID, probe)
-        end
-        if ok and type(id) == "number" and id > 0 then
-            FinishModelLoad(guid)
-        end
+    if modelCache[guid] == nil and loadingGUID == guid and ReadProbe() then
+        FinishModelLoad(guid)
     end
     return modelCache[guid] or nil
 end
@@ -241,18 +286,6 @@ local function PrimeUnit(unit)
         return
     end
     NPCModel:Prime(guid, unit)
-    -- No dialog may follow, and so no HasGap to put the probe away: polled here instead, so a
-    -- load whose OnModelLoaded never fires reaches MAX_LOAD_REFRESHES and is finished within
-    -- two seconds, rather than leaving the probe shown until something else is primed.
-    if NPCModel:IsLoading(guid) and C_Timer and C_Timer.After then
-        local function Poll()
-            if NPCModel:IsLoading(guid) then
-                NPCModel:Prime(guid, unit)
-            end
-        end
-        C_Timer.After(1, Poll)
-        C_Timer.After(2, Poll)
-    end
 end
 
 if CreateFrame then

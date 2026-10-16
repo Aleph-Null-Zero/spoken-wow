@@ -94,6 +94,50 @@ Expect("two seconds on, it is finished", VO.NPCModel:IsLoading(), false)
 Expect("...and the probe put away", stub.playerModel.shown, false)
 Expect("...having asked once", stub.SetUnitCount(), calls + 1)
 world.modelStillLoading = false
+
+-- A cursor swept over a crowd starts a load for each creature it passes and leaves it before
+-- the model is in. That is no answer: the creature left is loaded again when next asked.
+stub.ResetTimers()
+local A, B = "Creature-0-0-0-0-15906-20", "Creature-0-0-0-0-15906-21"
+world.modelFileID, world.modelStillLoading = 119159, true
+calls = stub.SetUnitCount()
+VO.NPCModel:Prime(A, "mouseover")
+VO.NPCModel:Prime(B, "mouseover")
+Expect("swept on before its model is in, a creature is not loading", VO.NPCModel:IsLoading(A), false)
+Expect("...the next one is", VO.NPCModel:IsLoading(B), true)
+VO.NPCModel:Prime(A, "target")
+Expect("...and the one left is loaded again when asked", stub.SetUnitCount(), calls + 3)
+world.modelStillLoading = false
+stub.FinishModelLoad()
+Expect("...whose model is then in", VO.NPCModel:Get(A), 119159)
+
+-- Swept back and forth, each creature is loaded twice at most.
+local E, F = "Creature-0-0-0-0-15906-22", "Creature-0-0-0-0-15906-23"
+world.modelStillLoading = true
+calls = stub.SetUnitCount()
+VO.NPCModel:Prime(E, "mouseover")
+VO.NPCModel:Prime(F, "mouseover")
+VO.NPCModel:Prime(E, "mouseover")
+VO.NPCModel:Prime(F, "mouseover")
+VO.NPCModel:Prime(E, "mouseover")
+Expect("a creature swept over a third time loads nothing", stub.SetUnitCount(), calls + 4)
+Expect("...and nothing is left loading", VO.NPCModel:IsLoading(), false)
+Expect("...with the probe put away", stub.playerModel.shown, false)
+
+-- A load that times out is one attempt, not a miss for good, until the attempts run out.
+stub.ResetTimers()
+local D = "Creature-0-0-0-0-15906-24"
+calls = stub.SetUnitCount()
+VO.NPCModel:Prime(D, "npc")
+stub.Advance(2.1)
+Expect("a timed-out load is not loading", VO.NPCModel:IsLoading(D), false)
+VO.NPCModel:Prime(D, "npc")
+Expect("...and is loaded again when asked", stub.SetUnitCount(), calls + 2)
+stub.Advance(2.1)
+VO.NPCModel:Prime(D, "npc")
+Expect("timed out twice, it is loaded no more", stub.SetUnitCount(), calls + 2)
+Expect("...nor the probe shown", stub.playerModel.shown, false)
+world.modelStillLoading = false
 world.npcGUID = "Creature-0-0-0-0-1234-0"; world.modelFileID = nil
 
 os.exit(Failures() == 0 and 0 or 1)

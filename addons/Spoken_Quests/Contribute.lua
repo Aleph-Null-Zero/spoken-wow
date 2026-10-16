@@ -471,11 +471,12 @@ end)
 
 --- Whether the contribute button belongs on screen: something to send, and nothing to play.
 ---
---- Priming the model cache happens here, not in Capture, and only when there is actually a
---- gap or a creature whose bodies the packs list: most NPCs already have sound and one voice,
---- and there is no reason to ever ask a model to load for one of those. One SetUnit per NPC encountered while a gap is showing, not one per event --
---- a player reads a quest for seconds, which is ample for the load NPCModel:Prime started to
---- finish before a click ever reads it back.
+--- Priming the model cache happens here, not in Capture, and only where a model can matter:
+--- a gap, a creature whose bodies the packs list while its gap could be shown or gathered, or
+--- a split creature, whose model picks the file it plays. Most NPCs are none of those, and no
+--- model is ever loaded for them. Once per NPC, not once per event -- a player reads a quest
+--- for seconds, which is ample for the load NPCModel:Prime started to finish before a click
+--- ever reads it back.
 function Contribute:HasGap()
     if not (_G.Spoken and Spoken.Contribute and Spoken.ShowContribution) then
         return false
