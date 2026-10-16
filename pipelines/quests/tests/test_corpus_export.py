@@ -51,7 +51,7 @@ def speaker(cur, line_id, lang, ord_, npc_id):
 
 def exported(cur):
     """This test's rows as (lineId, npcId), in the export's order."""
-    return [(row[8], row[1]) for row in _speaker_rows(cur) if row[8].startswith(f"q:{QUEST}:")]
+    return [(row[9], row[1]) for row in _speaker_rows(cur) if row[9].startswith(f"q:{QUEST}:")]
 
 
 def test_a_line_english_speaks_has_english_speakers_alone(cur):
@@ -84,8 +84,18 @@ def test_a_speaker_another_language_wrote_is_named_in_english_where_english_has_
     cur.execute("""insert into "entity_name" ("kind", "entityId", "lang", "version", "isCurrent", "origin", "name")
                    values ('creature', %s, 'enUS', 1, true, 'extracted', 'English Name')""",
                 (str(QUEST + 1),))
-    names = [(row[1], row[2]) for row in _speaker_rows(cur) if row[8] == f"q:{QUEST}:accept"]
+    names = [(row[1], row[2]) for row in _speaker_rows(cur) if row[9] == f"q:{QUEST}:accept"]
     assert names == [(QUEST + 1, "English Name"), (QUEST + 2, "Test Speaker")]
+
+
+def test_a_speaker_added_by_hand_carries_who_added_it(cur):
+    line(cur, f"q:{QUEST}:accept")
+    speaker(cur, f"q:{QUEST}:accept", "enUS", 0, 1)
+    speaker(cur, f"q:{QUEST}:accept", "enUS", 1, 2)
+    cur.execute("""update "quest_line_speaker" set "addedBy" = 'admin-1'
+                    where "lineId" = %s and "npcId" = 2""", (f"q:{QUEST}:accept",))
+    marks = [(row[1], row[8]) for row in _speaker_rows(cur) if row[9] == f"q:{QUEST}:accept"]
+    assert marks == [(1, None), (2, "admin-1")]
 
 
 def test_the_file_names_the_export_as_its_only_writer(cur, tmp_path):

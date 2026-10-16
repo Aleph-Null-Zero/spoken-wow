@@ -25,6 +25,8 @@ from tts_cli.npc_sexes import npc_sexes
 #: 3: a row a player contributed carries its "contributionId". The extract has none to mark,
 #: but the number says the file's unmarked rows are all the dump's -- which is what lets
 #: corpus_db's import let them overtake a contribution (see CONTRIBUTIONS_MARKED there).
+#: A speaker an admin added by hand carries its "addedBy" the same way; no number marks that,
+#: since a file without the key has no such speaker to keep.
 #: 4: "npcs", each NPC once with its own race, gender and flavor and whose answer that is
 #: (`provenance`), which every line the NPC speaks is voiced in (the npc table, migration 0070).
 #: The extract's are `corpus`; an export carries every answer the site has.
