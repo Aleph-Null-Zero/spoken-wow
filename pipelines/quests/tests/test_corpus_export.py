@@ -151,3 +151,11 @@ def test_a_schema_5_files_sexes_import_as_bodies(cur):
     cur.execute("""select "race", "sex", "weight" from "npc_body" where "npcId" = %s order by "sex" """,
                 (npc_id,))
     assert cur.fetchall() == [("human", 2, None), ("human", 3, None)]
+
+
+def test_a_lone_body_is_no_split_and_is_not_exported(cur):
+    npc_id = QUEST + 4
+    npc_row(cur, npc_id)
+    cur.execute("""insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance")
+                   values ('creature', %s, 'human', 3, 'warrior', 'moderator')""", (npc_id,))
+    assert exported_bodies(cur, npc_id) == []

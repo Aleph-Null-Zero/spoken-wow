@@ -25,8 +25,18 @@ export const dynamic = "force-dynamic";
 const text = (value: unknown, max: number) =>
   typeof value === "string" && value.trim() ? value.trim().slice(0, max) : null;
 
-/** A new body for `npc`, splitting it with its own body kept as a moderator's answer. */
+/**
+ * A new body for `npc`, splitting it with its own body kept as a moderator's answer. Its own body,
+ * on an NPC split without it, is that answer itself: there is nothing to split it from.
+ */
 async function addBody(npc: NpcResolution, race: string, sex: Sex, resolvedBy: string): Promise<void> {
+  if (race === npc.race && sex === sexOf(npc.gender)) {
+    await upsertBody({
+      npcKind: npc.npcKind, npcId: npc.npcId, race, sex, weight: null, flavor: npc.flavor,
+      provenance: "moderator", confirmed: true, doubtful: false, note: null, resolvedBy,
+    });
+    return;
+  }
   await splitNpc(npc, {
     npcKind: npc.npcKind, npcId: npc.npcId, race, sex, weight: null,
     flavor: await defaultFlavorFor(race, SEX_GENDER[sex]),

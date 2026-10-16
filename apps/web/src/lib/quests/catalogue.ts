@@ -27,6 +27,7 @@ import "server-only";
 import { query } from "@/lib/db";
 import { memoByLang } from "@/lib/memo";
 import { isSex } from "@/lib/npc/npc";
+import { splitBody } from "@/lib/npc/store";
 import { nameStamp, versionStamp } from "@/lib/stamp";
 import type { Corpus, CorpusLine } from "@/lib/corpus";
 import { BASE_LANG, type Lang } from "@/lib/lang";
@@ -108,8 +109,8 @@ const SPEAKER_NAME = `case when r."lang" = '${BASE_LANG}' then r."npcName" else 
  *
  * Race, gender and flavor are the NPC's and nobody else's (migration 0070), so an answer given
  * for an NPC voices every line it speaks. Migration 0071 gave every speaker's NPC an answer; one
- * that still has no type has no voice. An NPC split by body (migration 0075) is a speaker per body,
- * each with that body's answer.
+ * that still has no type has no voice. An NPC split by body (migration 0075, two or more rows) is
+ * a speaker per body, each with that body's answer.
  */
 function speakersBy(key: string): string {
   return `(
@@ -135,7 +136,7 @@ function speakersBy(key: string): string {
     left join "npc" n
       on n."npcKind" = r."npcType" and n."npcId" = r."npcId"
     left join "npc_body" x
-      on x."npcKind" = r."npcType" and x."npcId" = r."npcId"
+      on x."npcKind" = r."npcType" and x."npcId" = r."npcId" and ${splitBody("x")}
    where case when r."hasEnglish" then r."lang" = '${BASE_LANG}' and r."lineId" = r."firstLine" else r."nth" = 1 end
 )`;
 }

@@ -402,12 +402,20 @@ def _import_npc_bodies(cur, rows):
                                  and (y."race", y."sex") is distinct from (x."race", x."sex"))""")
 
 
+# An NPC is split by two or more npc_body rows. One alone (a moderator's body an import kept)
+# splits nothing, so it is left out of everything a split NPC is built from.
+SPLIT_BODIES = """exists (select 1 from "npc_body" o
+                           where o."npcKind" = b."npcKind" and o."npcId" = b."npcId"
+                             and (o."race", o."sex") is distinct from (b."race", b."sex"))"""
+
+
 def export_npc_bodies(cur) -> list:
-    """npc_body as the file's npcBodies."""
+    """npc_body as the file's npcBodies, for the NPCs it splits."""
     cur.execute(
         """select "npcKind", "npcId", "race", "sex", "gender", "weight",
                   case when "provenance" = 'corpus' and "doubtful" then null else "flavor" end,
-                  "provenance", voice_for("race", "gender", "flavor") from "npc_body"
+                  "provenance", voice_for("race", "gender", "flavor") from "npc_body" b
+            where """ + SPLIT_BODIES + """
             order by "npcKind", "npcId", "sex", "weight" desc nulls last, "updatedAt", "race" """
     )
     return [{"npcType": kind, "npcId": npc_id, "race": race, "sex": sex, "gender": gender,
@@ -1038,7 +1046,8 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
                 speakers.setdefault(line_id, []).append(tuple(speaker))
 
             # A split NPC shows each sex its own form of a BroadcastText row.
-            cur.execute("""select distinct "npcKind", "npcId", "gender" from "npc_body" order by 1, 2, 3""")
+            cur.execute("""select distinct "npcKind", "npcId", "gender" from "npc_body" b
+                            where """ + SPLIT_BODIES + """ order by 1, 2, 3""")
             sexes = {}
             for kind, npc_id, gender in cur.fetchall():
                 sexes.setdefault((kind, npc_id), []).append(gender)

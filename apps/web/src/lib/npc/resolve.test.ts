@@ -419,6 +419,27 @@ describe("splitting by body", () => {
     expect(upsertBody).not.toHaveBeenCalled();
   });
 
+  it("splits an NPC whose one body row is the body seen, one row being no split", async () => {
+    vi.mocked(getBodies).mockResolvedValueOnce([
+      { npcKind: "creature", npcId: 15906, race: "gnome", sex: 2, gender: "male" } as never,
+    ]);
+    vi.mocked(upsertBody).mockClear();
+    expect(await splitByBody(gnomeMan, npcDwarf)).toBe(true);
+    expect(vi.mocked(upsertBody).mock.calls.map(([row]) => [row.race, row.sex])).toEqual([
+      ["dwarf", 2],
+      ["gnome", 2],
+    ]);
+  });
+
+  it("leaves an NPC whose one body row is its own body unsplit, seen as that body", async () => {
+    vi.mocked(getBodies).mockResolvedValueOnce([
+      { npcKind: "creature", npcId: 15906, race: "dwarf", sex: 2, gender: "male" } as never,
+    ]);
+    vi.mocked(upsertBody).mockClear();
+    expect(await splitByBody({ ...gnomeMan, modelFileId: 118355 }, npcDwarf)).toBe(false);
+    expect(upsertBody).not.toHaveBeenCalled();
+  });
+
   it("stores a race the roster has no voice for as a guess, unconfirmed", async () => {
     vi.mocked(getBodies).mockResolvedValueOnce([]);
     vi.mocked(upsertBody).mockClear();

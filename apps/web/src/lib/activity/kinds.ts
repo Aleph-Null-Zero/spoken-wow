@@ -79,7 +79,7 @@ export type ActivityDetail = {
   "sample.merged": { files: string[]; into?: string };
   "npc.resolved": {
     npcName?: string | null;
-    /** For one sex of an NPC split by sex (migration 0072): UnitSex's 2 or 3. */
+    /** For one body of an NPC split by body (migration 0075): its sex, UnitSex's 2 or 3. */
     sex?: number;
     race?: string | null;
     gender?: string | null;

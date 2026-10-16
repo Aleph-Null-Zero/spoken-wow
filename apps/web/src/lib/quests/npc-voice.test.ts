@@ -256,12 +256,22 @@ describe("an NPC split by body", WHOLE_CORPUS, () => {
     await line(npcIds.slice(0, 2).map((npcId) => ({ npcId, race: "human", gender: "male", flavor: "official" })), "gossip");
     await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
     await npc(npcIds[1], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await body(npcIds[0], "human", 2, "official");
     await body(npcIds[0], "human", 3, "warrior");
 
     expect(await byBody()).toEqual([
       `human-female ${lineId}~human-female-warrior human-female-warrior`,
+      `human-male ${lineId} human-male-official`,
       `- ${lineId} human-male-official`,
     ]);
+  });
+
+  it("is not split by one row alone: the NPC's answer voices it", async () => {
+    await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "gossip");
+    await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await body(npcIds[0], "human", 3, "warrior");
+
+    expect(await byBody()).toEqual([`- ${lineId} human-male-official`]);
   });
 });
 

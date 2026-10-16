@@ -92,10 +92,11 @@ export async function splitByBody(observed: Observed, npc: NpcResolution | null)
   if (own === null || npc.provenance === "none") return false;
   const race = seenRace(observed, sex, npc.race);
   const bodies = await getBodies("creature", observed.npcId);
-  if (bodies.some((row) => row.sex === sex && row.race === race)) return true;
+  // A split is two or more rows: a row alone (a moderator's body an import kept) splits nothing.
+  if (bodies.length >= 2 && bodies.some((row) => row.sex === sex && row.race === race)) return true;
   if (sex === own && race === npc.race) {
-    // Its own body: nothing to split, or, on an NPC split without it, that body answered.
-    if (!bodies.length) return false;
+    // Its own body: nothing to split, or, beside another body's row, that body answered.
+    if (!bodies.some((row) => row.sex !== sex || row.race !== race)) return false;
     await upsertBody(await answerFor(observed, sex, race));
     return true;
   }

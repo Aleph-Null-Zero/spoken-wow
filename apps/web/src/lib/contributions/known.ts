@@ -27,6 +27,7 @@ import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
 import { raceForModel } from "@/lib/npc/models";
 import { bodyName, isSex, SEX_GENDER } from "@/lib/npc/npc";
+import { splitBody } from "@/lib/npc/store";
 
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
@@ -128,7 +129,7 @@ type VoicedBodies = { bodies: Set<string>; sexes: Set<number> };
 
 /**
  * The bodies each creature among `npcIds` is voiced as: its npc row's where it is not split, each
- * of its npc_body rows where it is (migration 0075). A creature with no race or gender is not
+ * of its npc_body rows where it is (migration 0075: two or more rows). A creature with no race or gender is not
  * listed, and is never seen as another body.
  */
 async function voicedBodies(npcIds: number[]): Promise<Map<number, VoicedBodies>> {
@@ -136,13 +137,14 @@ async function voicedBodies(npcIds: number[]): Promise<Map<number, VoicedBodies>
   const { rows } = await db().query<{ npcId: number; race: string; gender: "male" | "female"; sex: number }>(
     `select x."npcId", x."race", x."gender", x."sex"::int as "sex"
        from "npc_body" x
-      where x."npcKind" = 'creature' and x."npcId" = any($1::int[])
+      where x."npcKind" = 'creature' and x."npcId" = any($1::int[]) and ${splitBody("x")}
      union all
      select n."npcId", n."race", n."gender", case n."gender" when 'male' then 2 else 3 end
        from "npc" n
       where n."npcKind" = 'creature' and n."npcId" = any($1::int[]) and n."gender" in ('male', 'female')
         and n."race" is not null and n."provenance" <> 'none'
-        and not exists (select 1 from "npc_body" x where x."npcKind" = n."npcKind" and x."npcId" = n."npcId")`,
+        and not exists (select 1 from "npc_body" x
+                         where x."npcKind" = n."npcKind" and x."npcId" = n."npcId" and ${splitBody("x")})`,
     [npcIds],
   );
   const voiced = new Map<number, VoicedBodies>();

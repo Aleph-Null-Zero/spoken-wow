@@ -252,6 +252,16 @@ export type NpcBodyAnswer = {
   updatedAt: string;
 };
 
+/**
+ * Whether npc_body row `alias` is one of two or more for its NPC, which is what splits it. A row
+ * alone (a moderator's body an import kept) splits nothing, and the NPC's own row answers for it.
+ */
+export function splitBody(alias: string): string {
+  return `exists (select 1 from "npc_body" o
+    where o."npcKind" = ${alias}."npcKind" and o."npcId" = ${alias}."npcId"
+      and (o."race", o."sex") <> (${alias}."race", ${alias}."sex"))`;
+}
+
 const BODY_COLUMNS = `x."npcKind", x."npcId", x."race", x."sex"::int as "sex", x."gender", x."weight",
                       x."flavor", x."provenance", x."confirmed", x."doubtful", x."note", x."resolvedBy",
                       x."updatedAt"::text`;

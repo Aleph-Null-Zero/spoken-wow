@@ -106,6 +106,20 @@ describe("POST /api/npcs/body", () => {
     expect((await post({ action: "add", race: "gnome", sex: 2 })).status).toBe(400);
   });
 
+  it("adds the NPC's own body to an NPC split without it", async () => {
+    await db().query(
+      `insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance")
+       values ('creature', $1, 'gnome', 2, 'standard', 'corpus'), ('creature', $1, 'gnome', 3, 'standard', 'corpus')`,
+      [npcId],
+    );
+    expect((await post({ action: "add", race: "human", sex: 2 })).status).toBe(200);
+    expect((await getBodies("creature", npcId)).map((row) => [row.race, row.sex, row.provenance])).toEqual([
+      ["gnome", 2, "corpus"],
+      ["human", 2, "moderator"],
+      ["gnome", 3, "corpus"],
+    ]);
+  });
+
   it("removes a body, and the second-last unsplits", async () => {
     await post({ action: "add", race: "gnome", sex: 2 });
     await post({ action: "add", race: "gnome", sex: 3 });
