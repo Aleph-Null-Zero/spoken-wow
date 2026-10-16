@@ -7,8 +7,8 @@ pack: gossip
 version: 0.0.4
 github: false
 slug: french-spoken-quests-gossip
-name: French Spoken Quests: Gossip
-summary: NPC gossip chatter, voiced in French. Optional extra for any of the quest packs. Needs Spoken Player.
+name: Spoken French Audio: Gossip
+summary: NPC gossip chatter, voiced in French. Optional extra for any of the quest packs. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -22,7 +22,7 @@ Innkeepers, guards, faction quartermasters and the rest saying their piece out l
 
 **You need the player and at least one quest pack for any of this to work:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
 2. Your quest audio — **[Alliance](https://www.curseforge.com/wow/addons/french-spoken-quests-alliance)** or **[Horde](https://www.curseforge.com/wow/addons/french-spoken-quests-horde)**, plus **[Shared](https://www.curseforge.com/wow/addons/french-spoken-quests-shared)**.
 
 ## The packs

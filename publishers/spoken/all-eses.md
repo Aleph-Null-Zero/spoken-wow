@@ -3,8 +3,8 @@ curseforge: 1746503
 lang: esES
 version: 1.0.0
 slug: spoken-spanish-eu
-name: Spoken: Spanish (EU)
-summary: Meta package: installs Spoken Player with every European Spanish voice pack, quests, gossip, zones and books. Install through the CurseForge app.
+name: Spoken Spanish (EU)
+summary: Meta package: installs Spoken with every European Spanish voice pack, quests, gossip, zones and books. Install through the CurseForge app.
 categories:
   - Audio & Video
   - Roleplay
@@ -14,18 +14,18 @@ license: MIT
 
 ⚠️ NOT for manual download, install only via CurseForge app ⚠️
 
-**Install this and everything is voiced in European Spanish.** It holds no audio and no code — it is a few kilobytes that names Spoken Player and every European Spanish sound pack as a dependency, so your addon manager fetches the lot.
+**Install this and everything is voiced in European Spanish.** It holds no audio and no code — it is a few kilobytes that names Spoken and every European Spanish sound pack as a dependency, so your addon manager fetches the lot.
 
 ## What it installs
 
-[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Zones and Spoken Books inside it, and the European Spanish voice packs:
+[Spoken](https://www.curseforge.com/wow/addons/spoken-player), which carries Spoken Quests, Spoken Places and Spoken Readables inside it, and the European Spanish voice packs:
 
 | Module | Voices | Its audio |
 | --- | --- | --- |
-| Spoken Quests | quest dialogue | [Spanish (EU) Spoken Quests: Alliance](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-alliance)<br>[Spanish (EU) Spoken Quests: Horde](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-horde)<br>[Spanish (EU) Spoken Quests: Shared](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-shared) |
-| Spoken Quests | NPC gossip | [Spanish (EU) Spoken Quests: Gossip](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-gossip) |
-| Spoken Zones | zone and subzone lore | [Spoken Zones Audio: Spanish (EU)](https://www.curseforge.com/wow/addons/spoken-zones-audio-eses) |
-| Spoken Books | books, letters, notes and plaques | [Spoken Books Audio: Spanish (EU)](https://www.curseforge.com/wow/addons/spoken-books-audio-eses) |
+| Spoken Quests | quest dialogue | [Spoken Spanish (EU) Audio: Quests - Alliance](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-alliance)<br>[Spoken Spanish (EU) Audio: Quests - Horde](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-horde)<br>[Spoken Spanish (EU) Audio: Quests - Shared](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-shared) |
+| Spoken Quests | NPC gossip | [Spoken Spanish (EU) Audio: Gossip](https://www.curseforge.com/wow/addons/spanish-eu-spoken-quests-gossip) |
+| Spoken Places | zone and subzone lore | [Spoken Spanish (EU) Audio: Places](https://www.curseforge.com/wow/addons/spoken-zones-audio-eses) |
+| Spoken Readables | books, letters, notes and plaques | [Spoken Spanish (EU) Audio: Readables](https://www.curseforge.com/wow/addons/spoken-books-audio-eses) |
 
 The quest dialogue comes as three packs, one per faction plus the quests both sides share, and this installs all of them: it does not know which side you play. Remove the other faction's pack afterwards if you want the disk space back.
 
@@ -33,4 +33,4 @@ The quest dialogue comes as three packs, one per faction plus the quests both si
 
 Spoken speaks in your client's language by default. To hear European Spanish on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the European Spanish packs do not hold.
 
-English has its own set: [Spoken Everything](https://www.curseforge.com/wow/addons/spoken).
+English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken).

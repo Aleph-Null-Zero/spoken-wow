@@ -7,8 +7,8 @@ pack: alliance
 version: 0.0.4
 github: false
 slug: french-spoken-quests-alliance
-name: French Spoken Quests: Alliance
-summary: Alliance-only quest dialogue, voiced in French. Pair it with the Shared pack. Needs Spoken Player.
+name: Spoken French Audio: Quests - Alliance
+summary: Alliance-only quest dialogue, voiced in French. Pair it with the Shared pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -20,8 +20,8 @@ This is the French audio pack for Alliance quest dialogue: the quests only an Al
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[French Spoken Quests: Shared](https://www.curseforge.com/wow/addons/french-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+2. **[Spoken French Audio: Quests - Shared](https://www.curseforge.com/wow/addons/french-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
 
 ## The packs
 

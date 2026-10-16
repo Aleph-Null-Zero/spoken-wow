@@ -2,7 +2,7 @@
 
 The description of each project, as markdown, one file per project, for every store the
 addons are published on. **Two of them**: CurseForge and Wago Addons, which carry the addons
-and the English packs under the same slugs (the language packs and Spoken Everything are on
+and the English packs under the same slugs (the language packs and Spoken English are on
 CurseForge alone), and this directory is the source for both sets of pages. It was `curseforge/` while there was only one store, and the frontmatter still names
 each store's own project id separately -- `curseforge:` and `wago:` -- because the ids are
 the one thing the two do not share.
@@ -26,47 +26,47 @@ Each directory keeps its own `published.json`, and a release prints the pages in
 that have moved on since they were last pasted.
 
 ONE BODY, TWO SETS OF LINKS. A page links to its sibling projects, and a link is only right on
-the store it is read on: a player on the Wago page for Spoken Zones should be offered the Wago
+the store it is read on: a player on the Wago page for Spoken Places should be offered the Wago
 page for its sound pack, not sent somewhere their addon manager cannot install from. The
 slugs are identical on both stores, so the Wago copy is the same text with one substitution --
 which is why there is one file per project here and not two.
 
 | File | Project | CurseForge id | Wago id | Slug |
 | --- | --- | --- | --- | --- |
-| `spoken/spoken.md` | Spoken Player | 1700375 | QN53yXKB | `spoken-player` |
-| `spoken/all.md` | Spoken Everything: Quests, Zones, Books AI Voiceover | 1721569 | — | `spoken` |
-| `spoken/all-<lang>.md` | `Spoken: <Language>`, a language's meta addon: Spoken Player and that language's packs on CurseForge | each page's `curseforge:` | — | `spoken-<language>` |
+| `spoken/spoken.md` | Spoken | 1700375 | QN53yXKB | `spoken-player` |
+| `spoken/all.md` | Spoken English | 1721569 | — | `spoken` |
+| `spoken/all-<lang>.md` | `Spoken <Language>`, a language's meta addon: Spoken and that language's packs on CurseForge | each page's `curseforge:` | — | `spoken-<language>` |
 | `quests/player.md` | Spoken Quests (retired; was VoiceOver Redux) | 1655859 | aN0XPlNj | `spoken-quests` |
 | `quests/audio-all.md` | Spoken Quests Audio: All | 1660196 | ANzkpD64 | `spoken-quests-audio-all` |
-| `quests/audio-alliance.md` | Spoken Quests Audio: Alliance | 1660197 | 5NR8mJK3 | `spoken-quests-audio-alliance` |
-| `quests/audio-horde.md` | Spoken Quests Audio: Horde | 1660198 | vNAg3OKo | `spoken-quests-audio-horde` |
-| `quests/audio-shared.md` | Spoken Quests Audio: Shared Quests | 1660199 | QNlz3YKe | `spoken-quests-audio-shared` |
-| `quests/audio-gossip.md` | Spoken Quests Audio: Gossip | 1660202 | XKqA45Ky | `spoken-quests-audio-gossip` |
-| `quests/audio-<pack>-<lang>.md` | `<Language> Spoken Quests: <Pack>`, four per language: Alliance, Horde, Shared, Gossip | each page's `curseforge:` | — | `<language>-spoken-quests-<pack>` |
-| `quests/audio-shared-<lang>.md` for itIT, ptBR, koKR, ruRU, zhCN, zhTW | `<Language> Spoken Quests`, every quest in one pack beside Gossip; Alliance and Horde dormant | each page's `curseforge:` | — | `<language>-spoken-quests` |
+| `quests/audio-alliance.md` | Spoken Audio: Quests - Alliance | 1660197 | 5NR8mJK3 | `spoken-quests-audio-alliance` |
+| `quests/audio-horde.md` | Spoken Audio: Quests - Horde | 1660198 | vNAg3OKo | `spoken-quests-audio-horde` |
+| `quests/audio-shared.md` | Spoken Audio: Quests - Shared | 1660199 | QNlz3YKe | `spoken-quests-audio-shared` |
+| `quests/audio-gossip.md` | Spoken Audio: Gossip | 1660202 | XKqA45Ky | `spoken-quests-audio-gossip` |
+| `quests/audio-<pack>-<lang>.md` | `Spoken <Language> Audio: Quests - <Side>` for Alliance, Horde and Shared, and `Spoken <Language> Audio: Gossip` | each page's `curseforge:` | — | `<language>-spoken-quests-<pack>` |
+| `quests/audio-shared-<lang>.md` for itIT, ptBR, koKR, ruRU, zhCN, zhTW | `Spoken <Language> Audio: Quests`, every quest in one pack beside Gossip; Alliance and Horde dormant | each page's `curseforge:` | — | `<language>-spoken-quests` |
 | `quests/audio-<lang>.md` | Spoken Quests Audio: `<Language>`, every line in one folder, GitHub only | — | — | — |
 | `zones/spoken-zones.md` | Spoken Zones (retired; was ZoneLore) | 1636521 | mNw7b5No | `spoken-zones` |
-| `zones/spoken-zones-audio.md` | Spoken Zones Audio | 1636532 | b6mvD9KP | `spoken-zones-audio` |
-| `zones/spoken-zones-audio-dede.md` | Spoken Zones Audio: German | 1713131 | — | `spoken-zones-audio-dede` |
-| `zones/spoken-zones-audio-eses.md` | Spoken Zones Audio: Spanish (EU) | 1712807 | — | `spoken-zones-audio-eses` |
-| `zones/spoken-zones-audio-esmx.md` | Spoken Zones Audio: Spanish (AL) | 1711067 | — | `spoken-zones-audio-esmx` |
-| `zones/spoken-zones-audio-frfr.md` | Spoken Zones Audio: French | 1713125 | — | `spoken-zones-audio-frfr` |
-| `zones/spoken-zones-audio-kokr.md` | Spoken Zones Audio: Korean | 1723252 | — | `spoken-zones-audio-kokr` |
-| `zones/spoken-zones-audio-ptbr.md` | Spoken Zones Audio: Portuguese | 1713138 | — | `spoken-zones-audio-ptbr` |
-| `zones/spoken-zones-audio-ruru.md` | Spoken Zones Audio: Russian | 1713143 | — | `spoken-zones-audio-ruru` |
-| `zones/spoken-zones-audio-zhcn.md` | Spoken Zones Audio: Chinese (Simplified) | 1723273 | — | `spoken-zones-audio-zhcn` |
-| `zones/spoken-zones-audio-zhtw.md` | Spoken Zones Audio: Chinese (Traditional) | 1723276 | — | `spoken-zones-audio-zhtw` |
+| `zones/spoken-zones-audio.md` | Spoken Audio: Places | 1636532 | b6mvD9KP | `spoken-zones-audio` |
+| `zones/spoken-zones-audio-dede.md` | Spoken German Audio: Places | 1713131 | — | `spoken-zones-audio-dede` |
+| `zones/spoken-zones-audio-eses.md` | Spoken Spanish (EU) Audio: Places | 1712807 | — | `spoken-zones-audio-eses` |
+| `zones/spoken-zones-audio-esmx.md` | Spoken Spanish (AL) Audio: Places | 1711067 | — | `spoken-zones-audio-esmx` |
+| `zones/spoken-zones-audio-frfr.md` | Spoken French Audio: Places | 1713125 | — | `spoken-zones-audio-frfr` |
+| `zones/spoken-zones-audio-kokr.md` | Spoken Korean Audio: Places | 1723252 | — | `spoken-zones-audio-kokr` |
+| `zones/spoken-zones-audio-ptbr.md` | Spoken Portuguese Audio: Places | 1713138 | — | `spoken-zones-audio-ptbr` |
+| `zones/spoken-zones-audio-ruru.md` | Spoken Russian Audio: Places | 1713143 | — | `spoken-zones-audio-ruru` |
+| `zones/spoken-zones-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Places | 1723273 | — | `spoken-zones-audio-zhcn` |
+| `zones/spoken-zones-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Places | 1723276 | — | `spoken-zones-audio-zhtw` |
 | `books/spoken-books.md` | Spoken Books (retired) | 1701514 | qGYZnRNg | `spoken-books` |
-| `books/spoken-books-audio.md` | Spoken Writings Audio | 1701520 | qGZOrvNd | `spoken-books-audio` |
-| `books/spoken-books-audio-dede.md` | Spoken Writings Audio: German | 1723279 | — | `spoken-books-audio-dede` |
-| `books/spoken-books-audio-eses.md` | Spoken Writings Audio: Spanish (EU) | 1723280 | — | `spoken-books-audio-eses` |
-| `books/spoken-books-audio-esmx.md` | Spoken Writings Audio: Spanish (AL) | 1723282 | — | `spoken-books-audio-esmx` |
-| `books/spoken-books-audio-frfr.md` | Spoken Writings Audio: French | 1723284 | — | `spoken-books-audio-frfr` |
-| `books/spoken-books-audio-ruru.md` | Spoken Writings Audio: Russian | 1723285 | — | `spoken-books-audio-ruru` |
-| `books/spoken-books-audio-ptbr.md` | Spoken Writings Audio: Portuguese | 1723287 | — | `spoken-books-audio-ptbr` |
-| `books/spoken-books-audio-kokr.md` | Spoken Writings Audio: Korean | 1723288 | — | `spoken-books-audio-kokr` |
-| `books/spoken-books-audio-zhcn.md` | Spoken Writings Audio: Chinese (Simplified) | 1723289 | — | `spoken-books-audio-zhcn` |
-| `books/spoken-books-audio-zhtw.md` | Spoken Writings Audio: Chinese (Traditional) | 1723295 | — | `spoken-books-audio-zhtw` |
+| `books/spoken-books-audio.md` | Spoken Audio: Readables | 1701520 | qGZOrvNd | `spoken-books-audio` |
+| `books/spoken-books-audio-dede.md` | Spoken German Audio: Readables | 1723279 | — | `spoken-books-audio-dede` |
+| `books/spoken-books-audio-eses.md` | Spoken Spanish (EU) Audio: Readables | 1723280 | — | `spoken-books-audio-eses` |
+| `books/spoken-books-audio-esmx.md` | Spoken Spanish (AL) Audio: Readables | 1723282 | — | `spoken-books-audio-esmx` |
+| `books/spoken-books-audio-frfr.md` | Spoken French Audio: Readables | 1723284 | — | `spoken-books-audio-frfr` |
+| `books/spoken-books-audio-ruru.md` | Spoken Russian Audio: Readables | 1723285 | — | `spoken-books-audio-ruru` |
+| `books/spoken-books-audio-ptbr.md` | Spoken Portuguese Audio: Readables | 1723287 | — | `spoken-books-audio-ptbr` |
+| `books/spoken-books-audio-kokr.md` | Spoken Korean Audio: Readables | 1723288 | — | `spoken-books-audio-kokr` |
+| `books/spoken-books-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Readables | 1723289 | — | `spoken-books-audio-zhcn` |
+| `books/spoken-books-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Readables | 1723295 | — | `spoken-books-audio-zhtw` |
 
 **A sound pack's page is also its registry entry.** `section:` (quests, zones or books), `lang:`
 and, on a quests pack, `pack:` say which pack it is; a language other than English also carries
@@ -78,7 +78,7 @@ keeping a table of its own. Adding a language's pack is its page -- one per pack
 
 **A language with few players yet ships two quests packs, not four.** Its Shared page says
 `holds: quests` and carries every quest line, both sides' included, under the name
-`<Language> Spoken Quests`; its Alliance and Horde pages say `dormant: true`, keep their project
+`Spoken <Language> Audio: Quests`; its Alliance and Horde pages say `dormant: true`, keep their project
 ids, and nothing builds or uploads them. Splitting the language later is dropping both keys and
 renaming Shared back: its players keep the folder and add their side. Italian, Portuguese,
 Korean, Russian and both Chinese ship this way.
@@ -86,11 +86,11 @@ Korean, Russian and both Chinese ship this way.
 The slugs follow the projects' names, `-all` included: the meta addon is the "All" pack as far
 as a player is concerned, so it is the one project whose slug names a pack that holds no audio.
 
-**Gossip has no project of its own.** It is a part of Spoken Quests, in Spoken Player's zip, and its
+**Gossip has no project of its own.** It is a part of Spoken Quests, in Spoken's zip, and its
 voices are the Gossip pack above, which every language's quests pack also holds.
 
 **Three projects are retired and keep a page.** `quests/player.md`, `zones/spoken-zones.md` and
-`books/spoken-books.md` tell a visitor to install Spoken Player instead. Each project's last
+`books/spoken-books.md` tell a visitor to install Spoken instead. Each project's last
 release holds a tombstone folder that never loads (`make package-spoken-retired`), so the old
 module folder is replaced rather than left to load twice. Their ids stay in the release scripts
 for that release and no other.
@@ -112,14 +112,14 @@ project name and the summary, so "VoiceOver Redux" is findable only because each
 *Formerly VoiceOver Redux*. That clause is the one place an old name belongs. Everywhere else -
 prose, headings, comments, new identifiers - it reads as a name the project still uses.
 
-**Spoken Player is the project everything else depends on**, and it had to exist *and be
+**Spoken is the project everything else depends on**, and it had to exist *and be
 approved* before any upload could name it: the errorCode 1018 gate below. It was created first
 for that reason and its id is in `target_curseforge()` in `scripts/quests/release.sh`, whose
 `spoken` target `scripts/spoken/release.sh` (`make release-spoken`) runs. Every Spoken addon
 declares it in `relations`, which is what makes addon managers install it.
 
 `audio-all` is the odd one: that project ships a **meta addon** rather than audio, because the
-complete pack is too big to upload. It is a few kilobytes declaring Spoken Player and the four packs as required
+complete pack is too big to upload. It is a few kilobytes declaring Spoken and the four packs as required
 dependencies, which `scripts/quests/release.sh` sends as part of the upload metadata - relations are
 per file, so they need no web-UI step and cannot drift from the file that shipped.
 
@@ -153,7 +153,7 @@ the same wall the complete quests pack meets on CurseForge. Every pack is 280-45
 `scripts/*/release.sh` uploads the addons to both stores and the packs to CurseForge alone.
 The Wago ids for the pack projects are listed above anyway: the projects exist, and the day
 that endpoint takes a larger file they are what it uploads to.
-A language's pack -- Spoken Zones Audio: Spanish (AL) is the first -- has no Wago project at all:
+A language's pack -- Spoken Spanish (AL) Audio: Places is the first -- has no Wago project at all:
 its page leaves `wago:` out, `scripts/descriptions.mjs` writes no Wago copy of it, and
 `scripts/zones/release.sh` skips the Wago upload for it.
 

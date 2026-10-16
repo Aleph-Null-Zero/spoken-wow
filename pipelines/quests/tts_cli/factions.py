@@ -59,15 +59,16 @@ PACK_SUFFIXES = {
 #: pack_title - which is a parameter because a set of packs built together is named together.
 PACK_LABELS = {
     "all": "All",
-    "alliance": "Alliance",
-    "horde": "Horde",
-    "shared": "Shared Quests",
+    "alliance": "Quests - Alliance",
+    "horde": "Quests - Horde",
+    "shared": "Quests - Shared",
     "gossip": "Gossip",
     "quests": "Quests",
 }
 
-#: The family every pack belongs to unless told otherwise, which is every shipping build.
-DEFAULT_TITLE_FAMILY = "Spoken Quests Audio"
+#: The family every pack belongs to unless told otherwise: English's. Another language's is
+#: "Spoken <Language> Audio", and its titles come from its pages (scripts/lib/packs.mjs).
+DEFAULT_TITLE_FAMILY = "Spoken Audio"
 
 
 def pack_title(pack: str, family: str = DEFAULT_TITLE_FAMILY) -> str:

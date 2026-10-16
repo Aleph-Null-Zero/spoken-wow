@@ -809,7 +809,7 @@ local function CmdStatus()
 	if pack then
 		SpokenZones:Print("sound pack: %s -- %s", pack.addon, SpokenZones:GetAudioPackLabel(pack))
 	else
-		SpokenZones:Print("|cffffcc00no sound pack installed|r -- install Spoken Zones Audio to hear the lore")
+		SpokenZones:Print("|cffffcc00no sound pack installed|r -- install Spoken Audio: Places to hear the lore")
 	end
 
 	if SpokenZones:Get("debug") then
@@ -871,7 +871,7 @@ local function CmdAudioPack(arg)
 		-- Named by CurseForge project, not by folder: a player with the pre-rename pack has a
 		-- ZoneLoreAudio folder, and saying that name sends them looking for a project that no
 		-- longer exists.
-		SpokenZones:Print("  install Spoken Zones Audio alongside Spoken Places")
+		SpokenZones:Print("  install Spoken Audio: Places alongside Spoken Places")
 		return
 	end
 

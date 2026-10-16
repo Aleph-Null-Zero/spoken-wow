@@ -155,12 +155,12 @@ def test_every_pack_has_a_folder_suffix_and_a_label():
 
 
 def test_a_title_reads_as_the_project_it_ships_to():
-    assert pack_title("alliance") == "Spoken Quests Audio: Alliance"
-    assert pack_title("shared") == "Spoken Quests Audio: Shared Quests"
+    assert pack_title("alliance") == "Spoken Audio: Quests - Alliance"
+    assert pack_title("shared") == "Spoken Audio: Quests - Shared"
 
 
 def test_a_family_names_a_whole_set_of_packs_at_once():
     # A set of packs built together is named together, and its CurseForge projects are named
     # for the family rather than per pack - so the family is a parameter and not five more
     # constants to keep in step. One family ships today; a language pack would be the next.
-    assert pack_title("horde", "Spoken Quests Audio deDE") == "Spoken Quests Audio deDE: Horde"
+    assert pack_title("horde", "Spoken German Audio") == "Spoken German Audio: Quests - Horde"

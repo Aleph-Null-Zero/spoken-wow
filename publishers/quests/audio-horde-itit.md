@@ -8,8 +8,8 @@ dormant: true
 version: 0.0.2
 github: false
 slug: italian-spoken-quests-horde
-name: Italian Spoken Quests: Horde
-summary: Horde-only quest dialogue, voiced in Italian. Pair it with the Shared pack. Needs Spoken Player.
+name: Spoken Italian Audio: Quests - Horde
+summary: Horde-only quest dialogue, voiced in Italian. Pair it with the Shared pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -21,8 +21,8 @@ This is the Italian audio pack for Horde quest dialogue: the quests only a Horde
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Italian Spoken Quests](https://www.curseforge.com/wow/addons/italian-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+2. **[Spoken Italian Audio: Quests](https://www.curseforge.com/wow/addons/italian-spoken-quests)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 

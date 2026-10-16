@@ -8,8 +8,8 @@ holds: quests
 version: 0.0.1
 github: false
 slug: chinese-traditional-spoken-quests
-name: Chinese (Traditional) Spoken Quests
-summary: Every quest's dialogue, for both factions, voiced in Traditional Chinese. NPC gossip is a separate pack. Needs Spoken Player.
+name: Spoken Chinese (Traditional) Audio: Quests
+summary: Every quest's dialogue, for both factions, voiced in Traditional Chinese. NPC gossip is a separate pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -21,7 +21,7 @@ This is the Traditional Chinese audio pack for quest dialogue: every quest, whic
 
 **You need one more addon for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
 
 ## The packs
 

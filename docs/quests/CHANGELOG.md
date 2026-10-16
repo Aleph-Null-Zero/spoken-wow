@@ -6,6 +6,12 @@ The player and the sound pack are versioned independently — the pack moves whe
 rebuilt, the player when its Lua changes — so a section belongs to whichever of the two
 carries that version. The heading says which.
 
+## Unreleased
+
+- **The sound packs are renamed** in the AddOns list: Spoken Audio: Quests - Horde, Quests -
+  Alliance, Quests - Shared and Gossip, and Spoken German Audio: Quests - Horde and so on for a
+  language. Their folders keep their names, so nothing needs reinstalling.
+
 ## 2.3.0 — Spoken Quests Audio
 
 - New lines voiced for the Forever client.

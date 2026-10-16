@@ -203,7 +203,7 @@ installs the four packs.
 | | |
 | --- | --- |
 | Folders | `SpokenQuestsAudio…` |
-| Titles | `Spoken Quests Audio: Alliance` |
+| Titles | `Spoken Audio: Quests - Alliance` |
 | Encode | `ogg-q0-44k`, ~300 MB a pack |
 | Built by | `make quests-package-audio` + `quests-package-meta` |
 

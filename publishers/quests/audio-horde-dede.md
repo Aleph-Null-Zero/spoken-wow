@@ -7,8 +7,8 @@ pack: horde
 version: 1.0.0
 github: false
 slug: german-spoken-quests-horde
-name: German Spoken Quests: Horde
-summary: Horde-only quest dialogue, voiced in German. Pair it with the Shared pack. Needs Spoken Player.
+name: Spoken German Audio: Quests - Horde
+summary: Horde-only quest dialogue, voiced in German. Pair it with the Shared pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -20,8 +20,8 @@ This is the German audio pack for Horde quest dialogue: the quests only a Horde 
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[German Spoken Quests: Shared](https://www.curseforge.com/wow/addons/german-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+2. **[Spoken German Audio: Quests - Shared](https://www.curseforge.com/wow/addons/german-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 

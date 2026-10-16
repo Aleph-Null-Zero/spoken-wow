@@ -5,8 +5,8 @@ release: zones-audio
 section: zones
 lang: enUS
 slug: spoken-zones-audio
-name: Spoken Zones Audio
-summary: The narration for Spoken Player's Places module: every zone and subzone read aloud.
+name: Spoken Audio: Places
+summary: The narration for Spoken's Places module: every zone and subzone read aloud.
 categories:
   - Audio & Video
   - Miscellaneous
@@ -15,7 +15,7 @@ license: MIT
 addonReadme: addons/SpokenZonesAudio/README.md
 ---
 
-Narrated zone lore for **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)**'s Places module. This addon is data only — it does nothing on its own.
+Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)**'s Places module. This addon is data only — it does nothing on its own.
 
 ## The voice, as of 0.3.0
 
@@ -31,11 +31,11 @@ The **lore text** was rewritten in the same release to describe the world as a v
 **This pack is not installable from Wago.** At 448 MB it is over the upload limit here, so the file lives in its [GitHub release](https://github.com/rusty-key/spoken-wow/releases?q=zones-audio), and on CurseForge.
 
 <!-- /only -->
-Install **Spoken Player** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped — Spoken finds packs by folder name.
+Install **Spoken** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped — Spoken finds packs by folder name.
 
 ## Compatibility
 
-For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken 3.0.0 or later.
 
 ## Support
 

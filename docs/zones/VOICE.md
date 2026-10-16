@@ -119,7 +119,7 @@ make zones-full-release             # all of the above, with one question before
 - `zones-release-audio` uploads to CurseForge only. `zones-full-release` also runs
   `scripts/audio-github-release.sh`, which publishes the pack on GitHub. Wago refuses a file that
   size, so a Wago player gets the pack from GitHub.
-- The pack depends on Spoken Player in the upload's metadata. It cannot load without Spoken.
+- The pack depends on Spoken in the upload's metadata. It cannot load without Spoken.
 - Bump `PACK_FORMAT` in `Audio.lua` only when the data shape of `Sounds.lua` changes, and do not
   cut a pack for a change to the module alone.
 - The module ships in Spoken's zip: `scripts/spoken/package.sh` calls `scripts/zones/package.sh`.

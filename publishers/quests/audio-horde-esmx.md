@@ -7,8 +7,8 @@ pack: horde
 version: 0.0.5
 github: false
 slug: spanish-al-spoken-quests-horde
-name: Spanish (AL) Spoken Quests: Horde
-summary: Horde-only quest dialogue, voiced in Spanish (AL). Pair it with the Shared pack. Needs Spoken Player.
+name: Spoken Spanish (AL) Audio: Quests - Horde
+summary: Horde-only quest dialogue, voiced in Spanish (AL). Pair it with the Shared pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -20,8 +20,8 @@ This is the Spanish (AL) audio pack for Horde quest dialogue: the quests only a 
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Spanish (AL) Spoken Quests: Shared](https://www.curseforge.com/wow/addons/spanish-al-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+2. **[Spoken Spanish (AL) Audio: Quests - Shared](https://www.curseforge.com/wow/addons/spanish-al-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it a Horde character hears only part of their quests.
 
 ## The packs
 
