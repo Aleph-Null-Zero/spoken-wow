@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **An NPC that comes in several races under one name now speaks in the voice of the race you
+  see.** The Ironforge Reveler, for one, is a dwarf, a gnome or a human, and spoke with only one
+  voice; it speaks in each now, once its packs have that voice.
 - **The quest pack Spoken suggests for your language links to its download again.** It pointed
   at CurseForge pages that now hold only part of a language's quests; it now opens the one-pack
   download on GitHub. Chinese clients are offered their own pack too, instead of English's.

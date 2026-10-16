@@ -6,6 +6,11 @@ The player and the sound pack are versioned independently — the pack moves whe
 rebuilt, the player when its Lua changes — so a section belongs to whichever of the two
 carries that version. The heading says which.
 
+## Unreleased
+
+- Packs carry a file per race and sex for NPCs drawn as more than one, alongside the per-sex
+  files older versions of Spoken read.
+
 ## 2.3.0 — Spoken Quests Audio
 
 - New lines voiced for the Forever client.
