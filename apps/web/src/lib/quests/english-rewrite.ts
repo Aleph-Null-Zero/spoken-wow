@@ -14,7 +14,7 @@ import "server-only";
 import { recordActivity } from "@/lib/activity/store";
 import { audioRelPath } from "@/lib/audio";
 import { CONTRIBUTED_ORD_FLOOR } from "@/lib/contributions/accept";
-import { answersQuestMomentSql, playerGenderForms } from "@/lib/contributions/naming";
+import { answersQuestMomentSql, baseLineId, momentOf, playerGenderForms } from "@/lib/contributions/naming";
 import type { CorpusLine } from "@/lib/corpus";
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
@@ -29,8 +29,12 @@ type EnglishRow = Pick<
   "lineId" | "source" | "questId" | "questTitle" | "playerGender" | "fileName" | "originalText"
 >;
 
-/** A moment's current English lines: its plain line, or its `:m` and `:f`. */
-export async function englishMomentLines(moment: string, variant: number): Promise<EnglishRow[]> {
+/**
+ * A moment's current English lines: its plain line, or its `:m` and `:f`. Any of the moment's
+ * ids finds them, a side's or a voice's (`{lineId}~{voice}`) included.
+ */
+export async function englishMomentLines(lineId: string, variant: number): Promise<EnglishRow[]> {
+  const moment = momentOf(baseLineId(lineId));
   const { rows } = await db().query<EnglishRow>(
     `select "lineId", "source", "questId", "questTitle", "playerGender", "fileName", "originalText"
        from "quest_line"

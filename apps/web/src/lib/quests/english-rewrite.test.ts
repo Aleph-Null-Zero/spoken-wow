@@ -49,6 +49,13 @@ afterAll(async () => {
   await closeDb();
 });
 
+describe("englishMomentLines", () => {
+  it("finds the moment from a voice's line id", async () => {
+    const found = await englishMomentLines(`${moment}~gnome-male`, 0);
+    expect(found.map((row) => row.lineId)).toEqual([moment]);
+  });
+});
+
 describe("rewriteEnglish", () => {
   it("splits an extracted plain line into each reader's words, keeping what it prints", async () => {
     const outcome = await rewriteEnglish(await englishMomentLines(moment, 0), 0, {
