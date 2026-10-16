@@ -615,7 +615,7 @@ def import_corpus_data(corpus, verbose=True):
                 variant = variants[row["lineId"]].index(_line_key(row))
                 speaker = tuple(row[field] for field in SPEAKER_FIELDS)
                 if row.get("addedBy") is not None:
-                    added_rows.append((row["lineId"], variant, LANG, ord_) + speaker + (row["addedBy"],))
+                    added_rows.append((row["lineId"], variant, LANG) + speaker + (row["addedBy"],))
                     continue
                 if (row["lineId"], variant) not in split:
                     speaker_rows.append((row["lineId"], variant, LANG, ord_) + speaker)
@@ -639,7 +639,7 @@ def import_corpus_data(corpus, verbose=True):
                     (ORD_FLOOR, LANG),
                 )
                 first = cur.fetchone()[0]
-                added_rows = [row[:3] + (first + i,) + row[4:] for i, row in enumerate(added_rows)]
+                added_rows = [row[:3] + (first + i,) + row[3:] for i, row in enumerate(added_rows)]
                 _bulk(cur, "quest_line_speaker: added by hand", added_rows,
                       """insert into "quest_line_speaker"
                            ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName",

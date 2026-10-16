@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { flavorOptionsFor } from "@/lib/contributions/speaker";
+import { flavorOptionsFor, noVoice } from "@/lib/contributions/speaker";
 import { NPC_ROW_KINDS, type NpcRowKind } from "@/lib/npc/npc";
 import type { ResultLine } from "@/lib/search";
 import { Roster, type RosterData } from "@/lib/voices/roster";
@@ -25,11 +25,35 @@ type Props = {
 
 type Found = {
   npc: { npcName: string | null; race: string | null; gender: string | null; flavor: string | null; voice: string | null } | null;
-  roster: RosterData;
+  /** Only while the NPC has no voice, to answer it with. */
+  roster: RosterData | null;
 };
 
 const FIELD =
   "border-input bg-transparent focus-visible:ring-ring/50 rounded-md border px-3 py-2 text-sm focus-visible:ring-[3px] focus-visible:outline-none";
+
+function Choice({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className={FIELD}>
+      <option value="">{label.toLowerCase()}</option>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 /**
  * Adding an NPC as one more speaker of a line: a quest two givers offer, a greeting several
@@ -48,6 +72,7 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
   const [error, setError] = useState<string | null>(null);
   // Which line the form belongs to, so opening another row starts it over (as IgnoreDialog).
   const [seeded, setSeeded] = useState<string | null>(null);
+  const roster = useMemo(() => (found?.roster ? new Roster(found.roster) : null), [found]);
 
   if (!line) return null;
 
@@ -60,11 +85,27 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
     return null;
   }
 
-  const roster = found ? new Roster(found.roster) : null;
   const answered = Boolean(found?.npc?.voice);
   const genders = roster && race ? roster.gendersOf(race) : [];
   const flavors = roster ? flavorOptionsFor(race || null, gender || null, roster) : [];
-  const answerReady = Boolean(race && (gender || genders.length === 0) && npcName.trim());
+  const answerReady = Boolean(race && (gender || roster?.isGenderless(race)) && npcName.trim());
+
+  /** A request's body, or null once its error is shown. */
+  async function request<T>(url: string, init?: RequestInit): Promise<T | null> {
+    const response = await fetch(url, init);
+    const body = (await response.json().catch(() => ({}))) as T & { error?: string };
+    if (response.ok) return body;
+    setError(body.error ?? `request failed (${response.status})`);
+    return null;
+  }
+
+  function post(url: string, body: Record<string, unknown>) {
+    return request(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
 
   async function lookUp() {
     if (!/^\d+$/.test(npcId.trim())) {
@@ -74,14 +115,10 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch(
+      const body = await request<Found>(
         `/api/quests/lines/speakers?npcType=${npcType}&npcId=${encodeURIComponent(npcId.trim())}`,
       );
-      const body = (await response.json().catch(() => ({}))) as Found & { error?: string };
-      if (!response.ok) {
-        setError(body.error ?? `request failed (${response.status})`);
-        return;
-      }
+      if (!body) return;
       setFound(body);
       setNpcName(body.npc?.npcName ?? "");
       setRace(body.npc?.race ?? "");
@@ -92,18 +129,6 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
     } finally {
       setBusy(false);
     }
-  }
-
-  async function post(url: string, body: Record<string, unknown>): Promise<boolean> {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (response.ok) return true;
-    const { error } = (await response.json().catch(() => ({}))) as { error?: string };
-    setError(error ?? `request failed (${response.status})`);
-    return false;
   }
 
   async function add() {
@@ -192,7 +217,7 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
             <div className="grid gap-2">
               <p className="text-muted-foreground text-xs">
                 {found.npc?.race
-                  ? `No voice reads ${[found.npc.race, found.npc.gender, found.npc.flavor].filter(Boolean).join("-")} yet: answer who this NPC is.`
+                  ? `${noVoice(found.npc)}: answer who this NPC is.`
                   : "Nobody has said who this NPC is yet. The answer holds for every line it speaks."}
               </p>
               <input
@@ -204,56 +229,28 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
                 className={FIELD}
               />
               <div className="flex gap-2">
-                <select
-                  aria-label="Type"
+                <Choice
+                  label="Type"
                   value={race}
-                  onChange={(event) => {
-                    setRace(event.target.value);
+                  options={roster.races}
+                  onChange={(value) => {
+                    setRace(value);
                     setGender("");
                     setFlavor("");
                   }}
-                  className={FIELD}
-                >
-                  <option value="">type</option>
-                  {roster.races.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                />
                 {genders.length > 0 && (
-                  <select
-                    aria-label="Gender"
+                  <Choice
+                    label="Gender"
                     value={gender}
-                    onChange={(event) => {
-                      setGender(event.target.value);
+                    options={genders}
+                    onChange={(value) => {
+                      setGender(value);
                       setFlavor("");
                     }}
-                    className={FIELD}
-                  >
-                    <option value="">gender</option>
-                    {genders.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 )}
-                {flavors.length > 0 && (
-                  <select
-                    aria-label="Flavor"
-                    value={flavor}
-                    onChange={(event) => setFlavor(event.target.value)}
-                    className={FIELD}
-                  >
-                    <option value="">flavor</option>
-                    {flavors.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                {flavors.length > 0 && <Choice label="Flavor" value={flavor} options={flavors} onChange={setFlavor} />}
               </div>
             </div>
           )}

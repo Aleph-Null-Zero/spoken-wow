@@ -6,8 +6,9 @@
  * Admin only, as an NPC's answer is (api/npcs): who speaks a line holds in every language, and
  * it picks which voices the line is generated in.
  *
- * GET looks an NPC up for the dialog: its answer, and the roster to answer it with when it has
- * none, which the dialog saves through api/npcs first, since a speaker is written with its voice.
+ * GET looks an NPC up for the dialog: its answer, and, while that gives it no voice, the roster
+ * to answer it with, which the dialog saves through api/npcs first, since a speaker is written
+ * with its voice.
  * POST adds it. DELETE takes back a speaker added here, and only those (speakers.ts).
  */
 import { recordActivity } from "@/lib/activity/store";
@@ -42,15 +43,16 @@ export async function GET(request: Request) {
   if (!npc) return Response.json({ error: "unknown npc" }, { status: 400 });
 
   const [resolution, roster] = await Promise.all([getResolution(npc.npcType, npc.npcId), loadRoster()]);
+  const voice = resolution && roster.voiceFor(resolution.race, resolution.gender, resolution.flavor);
   return Response.json({
     npc: resolution && {
       npcName: resolution.npcName,
       race: resolution.race,
       gender: resolution.gender,
       flavor: resolution.flavor,
-      voice: roster.voiceFor(resolution.race, resolution.gender, resolution.flavor),
+      voice,
     },
-    roster: roster.data,
+    roster: voice ? null : roster.data,
   });
 }
 

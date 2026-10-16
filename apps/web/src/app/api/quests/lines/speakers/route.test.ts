@@ -189,17 +189,19 @@ describe("POST /api/quests/lines/speakers", () => {
 });
 
 describe("GET /api/quests/lines/speakers", () => {
-  it("looks an NPC up with its voice, and hands the roster over", async () => {
+  it("looks an NPC up with its voice", async () => {
     await answer(second, "orc", "male", "shady");
     const response = await GET(new Request(`https://example.com/api/quests/lines/speakers?npcType=creature&npcId=${second}`));
     const body = await response.json();
     expect(body.npc).toMatchObject({ npcName: `Speaker ${second}`, race: "orc", voice: "orc-male-shady" });
-    expect(body.roster.races.length).toBeGreaterThan(0);
+    expect(body.roster).toBeNull();
   });
 
-  it("answers null for an NPC nobody has answered", async () => {
+  it("answers null for an NPC nobody has answered, and hands the roster over to answer it", async () => {
     const response = await GET(new Request(`https://example.com/api/quests/lines/speakers?npcType=creature&npcId=${second}`));
-    expect((await response.json()).npc).toBeNull();
+    const body = await response.json();
+    expect(body.npc).toBeNull();
+    expect(body.roster.races.length).toBeGreaterThan(0);
   });
 });
 

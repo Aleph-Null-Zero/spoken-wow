@@ -15,6 +15,11 @@ export function flavorOptionsFor(race: string | null, gender: string | null, ros
   return roster.flavorsOf(race, gender);
 }
 
+/** Why an NPC of this type cannot speak yet: a speaker is written with its voice. */
+export function noVoice(type: { race: string | null; gender: string | null; flavor: string | null }): string {
+  return `No voice reads ${[type.race, type.gender, type.flavor].filter(Boolean).join("-")} yet`;
+}
+
 /** A stored resolution, as SpeakerCell renders it. */
 export function summaryFromResolution(resolution: NpcResolution, roster: Roster): NpcSummary {
   return {

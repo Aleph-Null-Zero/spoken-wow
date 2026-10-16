@@ -51,8 +51,8 @@ import {
   insertSpeaker,
   lockLine,
   momentSpeakers,
-  noVoice,
   speakerFromResolution,
+  speaksMoment,
   type Speaker,
   type SpeakerRow,
 } from "@/lib/quests/speakers";
@@ -69,6 +69,7 @@ import {
   type LineIdentity,
 } from "./naming";
 import { gossipIdentity, recordBroadcast, resolveGossip, type GossipPlan } from "./gossip";
+import { noVoice } from "./speaker";
 import { noteFor, pageNotes } from "./notes";
 import { CONTRIBUTION_COLUMNS, observationMeta, type Contribution } from "./store";
 import { spokenFromTemplate } from "./tokens";
@@ -139,8 +140,7 @@ async function resolvedSpeaker(
     resolution = lookup.resolution;
   }
 
-  if (!resolution?.race) return null;
-  return speakerFromResolution({ ...resolution, race: resolution.race }, await loadRoster(), observed.npcName);
+  return resolution ? speakerFromResolution(resolution, await loadRoster(), observed.npcName) : null;
 }
 
 /**
@@ -339,6 +339,7 @@ export async function momentHasSpeaker(contributions: readonly Contribution[]): 
     `select m."id" from unnest($1::int[], $2::text[], $3::int[], $4::text[]) as m ("id", "lineId", "npcId", "npcKind")
       where exists (select 1 from "quest_line_speaker" s
                      where ${answersQuestMomentSql(`s."lineId"`, `m."lineId"`)}
+                       -- speaksMoment's rule, in SQL
                        and (m."npcId" is null
                             or (s."npcId" = m."npcId" and (m."npcKind" is null or s."npcType" = m."npcKind"))))`,
     [moments.map((m) => m.id), moments.map((m) => m.lineId), moments.map((m) => m.npcId), moments.map((m) => m.npcKind)],
@@ -602,10 +603,7 @@ function momentSpeaks(rows: SpeakerRow[], contribution: Contribution): "nobody" 
   const observed = observedFrom(observationMeta(contribution));
   if (rows.length === 0) return "nobody";
   if (observed.npcId === null) return "this-npc";
-  const named = rows.some(
-    (row) => row.npcId === observed.npcId && (!observed.npcKind || row.npcType === observed.npcKind),
-  );
-  return named ? "this-npc" : "others";
+  return speaksMoment(rows, observed.npcId, observed.npcKind) ? "this-npc" : "others";
 }
 
 /** Longer than any name the game gives a quest or an NPC; what npc-identity caps a typed one at. */

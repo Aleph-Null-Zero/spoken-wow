@@ -13,7 +13,8 @@
 import type { PoolClient } from "pg";
 
 import { answersQuestMomentSql } from "@/lib/contributions/naming";
-import { db } from "@/lib/db";
+import { noVoice } from "@/lib/contributions/speaker";
+import { inTransaction } from "@/lib/db";
 import { BASE_LANG, type Lang } from "@/lib/lang";
 import type { NpcRowKind } from "@/lib/npc/npc";
 import { getResolution, type NpcResolution } from "@/lib/npc/store";
@@ -39,14 +40,15 @@ export type Speaker = {
 };
 
 /**
- * The speaker an NPC's answer makes. With no voice for its type, race and gender stay the NPC's
- * own, which is what noVoice names.
+ * The speaker an NPC's answer makes, or null when it has no type. With no voice for its type,
+ * race and gender stay the NPC's own, which is what noVoice names.
  */
 export function speakerFromResolution(
-  resolution: NpcResolution & { race: string },
+  resolution: NpcResolution,
   roster: Roster,
   fallbackName: string | null = null,
-): Speaker {
+): Speaker | null {
+  if (!resolution.race) return null;
   const voice = roster.voiceFor(resolution.race, resolution.gender, resolution.flavor);
   const family = voice ? roster.familyOf(voice) : null;
   return {
@@ -60,15 +62,10 @@ export function speakerFromResolution(
   };
 }
 
-/** Why a speaker with no voice cannot be written. */
-export function noVoice(speaker: Speaker): string {
-  return `No voice reads ${[speaker.race, speaker.gender, speaker.flavor].filter(Boolean).join("-")} yet`;
-}
-
 /** The speaker an NPC's answer in `npc` makes, or null when it has no type. */
 export async function speakerOf(npcType: NpcRowKind, npcId: number): Promise<Speaker | null> {
   const [resolution, roster] = await Promise.all([getResolution(npcType, npcId), loadRoster()]);
-  return resolution?.race ? speakerFromResolution({ ...resolution, race: resolution.race }, roster) : null;
+  return resolution ? speakerFromResolution(resolution, roster) : null;
 }
 
 /** One writer per moment past this point, keyed by the moment's id. */
@@ -131,6 +128,15 @@ export async function momentSpeakers(client: PoolClient, moment: string): Promis
 }
 
 /**
+ * Whether the NPC is one of a moment's speakers. With no kind (an envelope that names none) it
+ * is matched by id alone, as idOnlyResolution answers it. accept.ts's momentHasSpeaker asks the
+ * same in SQL, for a page of rows at once.
+ */
+export function speaksMoment(rows: SpeakerRow[], npcId: number, npcKind: string | null): boolean {
+  return rows.some((row) => row.npcId === npcId && (!npcKind || row.npcType === npcKind));
+}
+
+/**
  * Makes `speaker` one more speaker of the moment, beside the ones it has: on each of its lines
  * (both player-gender sides of a split one) and each variant, in the language its speakers are
  * in. That is English's wherever English has any, since the catalogue reads only English's
@@ -149,7 +155,7 @@ export async function addToMoment(
 ): Promise<"added" | "spoken" | "unknown"> {
   rows ??= await momentSpeakers(client, moment);
   if (rows.length === 0) return "unknown";
-  if (rows.some((row) => row.npcType === speaker.npcType && row.npcId === speaker.npcId)) return "spoken";
+  if (speaksMoment(rows, speaker.npcId, speaker.npcType)) return "spoken";
 
   const lang = rows[0].lang as Lang;
   const targets = new Map<string, { lineId: string; variant: number }>();
@@ -179,23 +185,13 @@ export async function addSpeaker(args: {
   if (!speaker?.voice) {
     return { ok: false, reason: "no-voice", message: speaker ? noVoice(speaker) : "This NPC has no type yet" };
   }
-  const { moment } = args;
-
-  const client = await db().connect();
-  try {
-    await client.query("begin");
-    await lockLine(client, moment);
-    const outcome = await addToMoment(client, moment, speaker, { addedBy: args.addedBy });
-    await client.query("commit");
-    if (outcome === "unknown") return { ok: false, reason: "unknown-line", message: "unknown line" };
-    if (outcome === "spoken") return { ok: false, reason: "spoken", message: "This NPC already speaks the line" };
-    return { ok: true, speaker };
-  } catch (error) {
-    await client.query("rollback");
-    throw error;
-  } finally {
-    client.release();
-  }
+  const outcome = await inTransaction(async (client) => {
+    await lockLine(client, args.moment);
+    return addToMoment(client, args.moment, speaker, { addedBy: args.addedBy });
+  });
+  if (outcome === "unknown") return { ok: false, reason: "unknown-line", message: "unknown line" };
+  if (outcome === "spoken") return { ok: false, reason: "spoken", message: "This NPC already speaks the line" };
+  return { ok: true, speaker };
 }
 
 export type RemoveOutcome =
@@ -211,31 +207,21 @@ export async function removeSpeaker(args: {
   npcType: NpcRowKind;
   npcId: number;
 }): Promise<RemoveOutcome> {
-  const { moment } = args;
-  const client = await db().connect();
-  try {
-    await client.query("begin");
-    await lockLine(client, moment);
-    const rows = (await momentSpeakers(client, moment)).filter(
-      (row) => row.npcType === args.npcType && row.npcId === args.npcId,
+  const params = [args.moment, args.npcType, args.npcId];
+  const ofNpc = `${answersQuestMomentSql(`"lineId"`, "$1")} and "npcType" = $2 and "npcId" = $3`;
+  return inTransaction(async (client): Promise<RemoveOutcome> => {
+    await lockLine(client, args.moment);
+    const extracted = await client.query(
+      `select 1 from "quest_line_speaker" where ${ofNpc} and "addedBy" is null limit 1`,
+      params,
     );
-    if (rows.some((row) => row.addedBy === null)) {
-      await client.query("rollback");
+    if (extracted.rowCount) {
       return { ok: false, reason: "extracted", message: "Only a speaker added by hand can be removed" };
     }
     const { rows: removed } = await client.query<{ npcName: string | null }>(
-      `delete from "quest_line_speaker"
-        where ${answersQuestMomentSql(`"lineId"`, "$1")} and "npcType" = $2 and "npcId" = $3
-          and "addedBy" is not null
-        returning "npcName"`,
-      [moment, args.npcType, args.npcId],
+      `delete from "quest_line_speaker" where ${ofNpc} and "addedBy" is not null returning "npcName"`,
+      params,
     );
-    await client.query("commit");
     return { ok: true, removed: removed.length, npcName: removed[0]?.npcName ?? null };
-  } catch (error) {
-    await client.query("rollback");
-    throw error;
-  } finally {
-    client.release();
-  }
+  });
 }
