@@ -48,6 +48,8 @@ jobs:
               # test_package.py runs the packaging scripts over the real addon folders.
               - addons/**
               - scripts/**
+              # build.py turns a model's file id into a body with the site's model map.
+              - apps/web/src/lib/npc/character-models.json
             web:
               - .github/workflows/ci.yaml
               - apps/web/**

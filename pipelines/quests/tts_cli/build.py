@@ -7,6 +7,7 @@ came from treating a pre-built pack as immutable input.
 
 Needs no database: the corpus carries every field the lookup tables key on.
 """
+import json
 import os
 import shutil
 
@@ -17,7 +18,7 @@ from tts_cli.ignores import ignored_files
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
                             moment_of, split_voice, subfolder_from_line_id, variant_file_name)
-from tts_cli.npc_sexes import GENDER_SEX
+from tts_cli.npc_bodies import GENDER_SEX, body_name
 from tts_cli.store import SUBFOLDERS, audio_extension, stored_files
 from tts_cli.utils import (get_first_n_words, get_last_n_words,
                            replace_dollar_bs_with_space)
@@ -33,6 +34,11 @@ GUARD = "if not VoiceOver or not VoiceOver.DataModules then return end"
 #: X-Part-Of and X-Child-Of are custom X- fields the client does not read at all; they are
 #: kept because addon managers do, and because upstream shipped them. Three keys that look
 #: interchangeable, one of which does the work.
+
+#: The site's model-to-race map (apps/web/src/lib/npc/models.ts), shipped so the addon can name
+#: the body a creature is drawn as from its model file id.
+CHARACTER_MODELS = os.path.join(os.path.dirname(__file__), "..", "..", "..", "apps", "web", "src",
+                                "lib", "npc", "character-models.json")
 
 #: How many leading and trailing words the addon fuzzy-matches quest text on. Must stay
 #: in step with DataModules:GetQuestID in AI_VoiceOver/DataModules.lua.
@@ -162,6 +168,11 @@ def prune_quest_id_table(quest_id_table: dict) -> dict:
     return pruned
 
 
+def body_by_model() -> dict:
+    with open(CHARACTER_MODELS, encoding="utf-8") as f:
+        return {int(file_id): body_name(row["race"], row["gender"]) for file_id, row in json.load(f).items()}
+
+
 def build_tables(corpus: dict, ignored=()) -> dict:
     """Every lookup table, as {output filename: (lua table name, data)}.
 
@@ -179,18 +190,24 @@ def build_tables(corpus: dict, ignored=()) -> dict:
     # own (tts_cli/voice_files.py): keyed by the moment's file and the giver, since the addon
     # names a quest's file from its id and event and knows who is giving it.
     quest_files = {"creature": {}, "gameobject": {}}
-    # A split NPC's file per sex, keyed by the line's own stem: the addon finds the line as
-    # before, then asks the sex.
+    # A split NPC's file per body, keyed by the line's own stem: the addon finds the line as
+    # before, then asks the body. Each sex keeps a file too, its fallback body's
+    # (npc_bodies.sex_bodies), for addons that read only the sex.
+    gossip_by_body = {}
+    quest_files_by_body = {}
+    followup_by_body = {}
     gossip_by_sex = {}
     quest_files_by_sex = {}
     followup_by_sex = {}
-    # Which sex each other speaking creature is drawn as, so the addon can tell a man's voice
-    # given to a woman, and offer her line for contribution.
-    split = {(row["npcType"], row["npcId"]) for row in corpus.get("npcSexes", [])}
-    npc_sex = {npc["npcId"]: GENDER_SEX[npc["gender"]] for npc in corpus.get("npcs", [])
+    # The bodies each creature that greets is voiced as, so the addon can tell a body on screen
+    # its voice is not, and offer its line for contribution; and the sex of each unsplit one,
+    # which addons before the bodies read instead.
+    split = {(row["npcType"], row["npcId"]) for row in corpus.get("npcBodies", [])}
+    unsplit = {npc["npcId"]: npc for npc in corpus.get("npcs", [])
                if npc["npcType"] == "creature" and npc.get("gender") in GENDER_SEX
                and ("creature", npc["npcId"]) not in split}
     sex_of = {}
+    bodies_of = {}
 
     for line in corpus["lines"]:
         base_id, voice = split_voice(line["lineId"])
@@ -207,16 +224,19 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         if line["source"] == FOLLOWUP:
             broadcast = int(line["lineId"].split(":")[1])
             stem = followup_stem_from_line_id(line["lineId"])
-            # A split NPC's follow-up is a file per sex. The chat event names the speaker, but
-            # its sex is readable only while the speaker is a unit the player has up, so the
-            # man's file stays the line's for when it is not.
-            if line.get("npcSex"):
+            # A split NPC's follow-up is a file per body. The chat event names the speaker, but
+            # its body is readable only while the speaker is a unit the player has up, so the
+            # man's fallback body's file stays the line's for when it is not.
+            if line.get("npcBody"):
+                followup_by_body.setdefault(line["npcId"], {}).setdefault(broadcast, {})[
+                    line["npcBody"]] = stem
+            if line.get("sexBody"):
                 followup_by_sex.setdefault(line["npcId"], {}).setdefault(broadcast, {})[
                     line["npcSex"]] = stem
             files = followup.setdefault(line["npcId"], {})
-            if line.get("npcSex") == 2:
+            if line.get("sexBody") and line["npcSex"] == 2:
                 files[broadcast] = stem
-            else:
+            elif not line.get("npcBody") or line.get("sexBody"):
                 files.setdefault(broadcast, stem)
             continue
 
@@ -227,11 +247,17 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             # The bare hash: the addon adds the gender prefix when resolving.
             digest = gossip_hash_from_line_id(line["lineId"])
             own = gossip_hash_from_line_id(base_id)
-            if line.get("npcSex") and kind == "creature":
-                gossip_by_sex.setdefault(line["npcId"], {}).setdefault(line["npcSex"], {})[own] = digest
+            if line.get("npcBody") and kind == "creature":
+                gossip_by_body.setdefault(line["npcId"], {}).setdefault(line["npcBody"], {})[own] = digest
+                bodies_of.setdefault(line["npcId"], {})[line["npcBody"]] = True
+                if line.get("sexBody"):
+                    gossip_by_sex.setdefault(line["npcId"], {}).setdefault(line["npcSex"], {})[own] = digest
                 digest = own
-            elif kind == "creature" and line["npcId"] in npc_sex:
-                sex_of[line["npcId"]] = npc_sex[line["npcId"]]
+            elif kind == "creature" and line["npcId"] in unsplit:
+                npc = unsplit[line["npcId"]]
+                sex_of[line["npcId"]] = GENDER_SEX[npc["gender"]]
+                if npc.get("race"):
+                    bodies_of[line["npcId"]] = {body_name(npc["race"], npc["gender"]): True}
             gossip_by_id[kind].setdefault(line["npcId"], {})[text] = digest
             # Same-named NPCs of different voices share one entry here, so it names the line's
             # own file, never a voice's that only some of them speak.
@@ -246,10 +272,12 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         if line["source"] == "accept" and kind in questlog:
             questlog[kind][line["questId"]] = line["npcId"]
 
-        if line.get("npcSex") and kind == "creature":
+        if line.get("npcBody") and kind == "creature":
             stem = f'{line["questId"]}-{line["source"]}'
-            quest_files_by_sex.setdefault(stem, {}).setdefault(line["npcId"], {})[
-                line["npcSex"]] = variant_file_name(stem, voice) if voice else stem
+            file_name = variant_file_name(stem, voice) if voice else stem
+            quest_files_by_body.setdefault(stem, {}).setdefault(line["npcId"], {})[line["npcBody"]] = file_name
+            if line.get("sexBody"):
+                quest_files_by_sex.setdefault(stem, {}).setdefault(line["npcId"], {})[line["npcSex"]] = file_name
         elif voice and kind in quest_files:
             stem = f'{line["questId"]}-{line["source"]}'
             quest_files[kind].setdefault(stem, {})[line["npcId"]] = variant_file_name(stem, voice)
@@ -279,6 +307,11 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         "npc_sex_quest_file_lookups": ("QuestFileLookupByNPCSex", quest_files_by_sex),
         "npc_sex_lookups": ("NPCSexByNPCID", sex_of),
         "npc_sex_followup_lookups": ("FollowupLookupByNPCSex", followup_by_sex),
+        "npc_body_gossip_file_lookups": ("GossipFileLookupByNPCBody", gossip_by_body),
+        "npc_body_quest_file_lookups": ("QuestFileLookupByNPCBody", quest_files_by_body),
+        "npc_body_followup_lookups": ("FollowupLookupByNPCBody", followup_by_body),
+        "npc_bodies_lookups": ("NPCBodiesByNPCID", bodies_of),
+        "body_model_lookups": ("BodyByModelFileID", body_by_model()),
     }
 
 
@@ -313,8 +346,8 @@ def locale_tables(corpus: dict, rows: list, ignored=()) -> dict:
         kind = line["npcType"]
         if kind not in tables:
             continue
-        # A split NPC's sexes find the line's own stem, and GossipFileLookupByNPCSex the rest.
-        stem = gossip_hash_from_line_id(base_id if line.get("npcSex") else line["lineId"])
+        # A split NPC's bodies find the line's own stem, and GossipFileLookupByNPCBody the rest.
+        stem = gossip_hash_from_line_id(base_id if line.get("npcBody") else line["lineId"])
         for text in texts.get((moment_of(base_id), line["originalText"]), ()):
             tables[kind].setdefault(line["npcId"], {})[escape_lua_string(text)] = stem
     return {filename: (table_name, tables[kind])

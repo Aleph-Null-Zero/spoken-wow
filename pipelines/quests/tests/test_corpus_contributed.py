@@ -96,33 +96,35 @@ def test_only_the_extracts_own_flavorless_answer_gets_the_default():
     assert rows[1] == ("creature", 2, "human", "male", None, "moderator", False)
 
 
-def sex(npc_id, value, race, flavor, **extra):
-    from tts_cli.npc_sexes import SEX_GENDER
-    return {"npcType": "creature", "npcId": npc_id, "sex": value, "race": race,
-            "gender": SEX_GENDER[value], "flavor": flavor, **extra}
+def body(npc_id, value, race, flavor, **extra):
+    from tts_cli.npc_bodies import SEX_GENDER
+    return {"npcType": "creature", "npcId": npc_id, "race": race, "sex": value,
+            "gender": SEX_GENDER[value], "weight": None, "flavor": flavor, **extra}
 
 
-def test_a_sex_the_game_names_no_flavor_for_gets_its_race_genders_default_marked_doubtful():
-    from tts_cli.corpus_db import npc_sex_answers
-    rows = npc_sex_answers(
-        [sex(1, 2, "human", "official"), sex(1, 3, "human", None),
-         sex(2, 3, "human", None, provenance="moderator")],
+def test_a_body_the_game_names_no_flavor_for_gets_its_race_genders_default_marked_doubtful():
+    from tts_cli.corpus_db import npc_body_answers
+    rows = npc_body_answers(
+        [body(1, 2, "human", "official"), body(1, 3, "human", None),
+         body(2, 3, "human", None, provenance="moderator")],
         [npc(1, "human", "male", "official"), npc(3, "human", "female", "standard")])
     assert rows == [
-        ("creature", 1, 2, "human", "official", "corpus", False),
-        ("creature", 1, 3, "human", "standard", "corpus", True),
-        ("creature", 2, 3, "human", None, "moderator", False),
+        ("creature", 1, "human", 2, None, "official", "corpus", False),
+        ("creature", 1, "human", 3, None, "standard", "corpus", True),
+        ("creature", 2, "human", 3, None, None, "moderator", False),
     ]
 
 
-def test_a_moderators_answer_for_a_split_npc_is_its_own_sexs():
-    from tts_cli.corpus_db import npc_sex_answers
-    rows = npc_sex_answers(
-        [sex(1, 2, "human", "official"), sex(1, 3, "human", "standard")],
+def test_a_moderators_answer_for_a_split_npc_is_its_own_bodys():
+    from tts_cli.corpus_db import npc_body_answers
+    rows = npc_body_answers(
+        [body(1, 2, "human", "official"), body(1, 3, "human", "standard"),
+         body(1, 2, "dwarf", "official", weight=25.0)],
         [dict(npc(1, "human", "male", "guard"), provenance="moderator", doubtful=True)])
     assert rows == [
-        ("creature", 1, 2, "human", "guard", "moderator", True),
-        ("creature", 1, 3, "human", "standard", "corpus", False),
+        ("creature", 1, "human", 2, None, "guard", "moderator", True),
+        ("creature", 1, "human", 3, None, "standard", "corpus", False),
+        ("creature", 1, "dwarf", 2, 25.0, "official", "corpus", False),
     ]
 
 

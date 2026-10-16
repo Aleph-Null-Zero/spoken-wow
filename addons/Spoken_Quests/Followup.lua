@@ -253,9 +253,9 @@ end
 --- carries the full lookup whether or not it has the audio, so the first stem is usually the
 --- only one; a second is tried only in case packs of different builds disagree.
 ---
---- An NPC split by sex has a file per sex in FollowupLookupByNPCSex. Its sex is readable only
---- while the speaker is a unit the player has up, so FollowupLookup's file, the man's, plays
---- when it is not.
+--- An NPC split by body has a file per body in FollowupLookupByNPCBody, and per sex in
+--- FollowupLookupByNPCSex. Its body is readable only once its model has loaded, and its sex only
+--- while the speaker is a unit the player has up; FollowupLookup's file plays when neither is.
 ---@return SoundData|nil
 local function OwnClip(line, npcID, guid)
     local speaker = line.speaker or npcID
@@ -263,12 +263,15 @@ local function OwnClip(line, npcID, guid)
         return nil
     end
     local sex = guid and Utils:GetSexForGUID(guid)
+    local body = guid and Utils:GetBodyForGUID(guid)
     local tried = {}
     for _, module in DataModules:GetModules() do
+        local byBody = body and module.FollowupLookupByNPCBody and module.FollowupLookupByNPCBody[speaker]
+        local ofBody = byBody and byBody[line.id] and byBody[line.id][body]
         local bySex = sex and module.FollowupLookupByNPCSex and module.FollowupLookupByNPCSex[speaker]
         local ofSex = bySex and bySex[line.id] and bySex[line.id][sex]
         local byLine = module.FollowupLookup and module.FollowupLookup[speaker]
-        local stem = ofSex or byLine and byLine[line.id]
+        local stem = ofBody or ofSex or byLine and byLine[line.id]
         if stem and not tried[stem] then
             tried[stem] = true
             local probe = { event = Enums.SoundEvent.QuestFollowup, fileName = stem }

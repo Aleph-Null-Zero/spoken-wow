@@ -107,18 +107,65 @@ def test_the_file_names_the_export_as_its_only_writer(cur, tmp_path):
     assert load_corpus(path)["producedBy"] == "export-corpus"
 
 
-def test_a_split_npcs_sexes_land_by_rank_and_a_corpus_sex_the_file_drops_goes(cur):
-    from tts_cli.corpus_db import _import_npc_sexes
-
-    npc_id = QUEST
+def npc_row(cur, npc_id):
     cur.execute("""insert into "npc" ("npcKind", "npcId", "race", "gender", "flavor", "provenance")
                    values ('creature', %s, 'human', 'male', 'official', 'corpus')""", (npc_id,))
-    cur.execute("""insert into "npc_sex" ("npcKind", "npcId", "sex", "race", "flavor", "provenance")
-                   values ('creature', %s, 2, 'human', 'official', 'corpus'),
-                          ('creature', %s, 3, 'human', 'warrior', 'moderator')""", (npc_id, npc_id))
-    _import_npc_sexes(cur, [("creature", npc_id, 3, "human", "official", "corpus", False),
-                            # No npc row: skipped, not an error.
-                            ("creature", npc_id + 1, 3, "human", "official", "corpus", False)])
-    cur.execute("""select "sex", "gender", "flavor", "provenance" from "npc_sex"
+
+
+def test_a_split_npcs_bodies_land_by_rank_and_a_corpus_body_the_file_drops_goes(cur):
+    from tts_cli.corpus_db import _import_npc_bodies
+
+    npc_id = QUEST
+    npc_row(cur, npc_id)
+    cur.execute("""insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance")
+                   values ('creature', %s, 'human', 2, 'official', 'corpus'),
+                          ('creature', %s, 'human', 3, 'warrior', 'moderator')""", (npc_id, npc_id))
+    _import_npc_bodies(cur, [("creature", npc_id, "human", 3, None, "official", "corpus", False),
+                             # No npc row: skipped, not an error.
+                             ("creature", npc_id + 1, "human", 3, None, "official", "corpus", False)])
+    cur.execute("""select "race", "sex", "gender", "flavor", "provenance" from "npc_body"
                     where "npcId" in (%s, %s) order by "sex" """, (npc_id, npc_id + 1))
-    assert cur.fetchall() == [(3, "female", "warrior", "moderator")]
+    assert cur.fetchall() == [("human", 3, "female", "warrior", "moderator")]
+
+
+def import_corpus_bodies(cur, bodies, **corpus):
+    from tts_cli.corpus_db import _bodies_of, _import_npc_bodies, npc_body_answers
+    file = {"npcs": [], **corpus} | bodies
+    _import_npc_bodies(cur, npc_body_answers(_bodies_of(file), file["npcs"]))
+
+
+def exported_bodies(cur, npc_id):
+    from tts_cli.corpus_db import export_npc_bodies
+    return [row for row in export_npc_bodies(cur) if row["npcId"] == npc_id]
+
+
+def test_an_npc_of_two_races_of_one_sex_imports_and_exports_unchanged(cur):
+    npc_id = QUEST + 2
+    npc_row(cur, npc_id)
+    bodies = [{"npcType": "creature", "npcId": npc_id, "race": race, "sex": 2, "gender": "male",
+               "weight": 25.0, "flavor": "official", "provenance": "corpus"} for race in ("dwarf", "gnome")]
+    import_corpus_bodies(cur, {"npcBodies": bodies})
+    # The voice is the voice table's to name, and a test database has none.
+    assert [{k: v for k, v in row.items() if k != "voice"} for row in exported_bodies(cur, npc_id)] == bodies
+    assert [(row["race"], row["sex"], row["weight"]) for row in exported_bodies(cur, npc_id)] == [
+        ("dwarf", 2, 25.0), ("gnome", 2, 25.0)]
+
+
+def test_a_schema_5_files_sexes_import_as_bodies(cur):
+    npc_id = QUEST + 3
+    npc_row(cur, npc_id)
+    sexes = [{"npcType": "creature", "npcId": npc_id, "sex": value, "race": "human",
+              "gender": gender, "flavor": "official", "provenance": "corpus",
+              "voice": f"human-{gender}-official"} for value, gender in ((2, "male"), (3, "female"))]
+    import_corpus_bodies(cur, {"npcSexes": sexes})
+    cur.execute("""select "race", "sex", "weight" from "npc_body" where "npcId" = %s order by "sex" """,
+                (npc_id,))
+    assert cur.fetchall() == [("human", 2, None), ("human", 3, None)]
+
+
+def test_a_lone_body_is_no_split_and_is_not_exported(cur):
+    npc_id = QUEST + 4
+    npc_row(cur, npc_id)
+    cur.execute("""insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance")
+                   values ('creature', %s, 'human', 3, 'warrior', 'moderator')""", (npc_id,))
+    assert exported_bodies(cur, npc_id) == []

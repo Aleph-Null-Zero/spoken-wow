@@ -98,11 +98,68 @@ describe("lineStates", () => {
     try {
       expect(await lineStates([woman, man])).toEqual([{ kind: "missing" }, { kind: "known" }]);
       await db().query(
-        `insert into "npc_sex" ("npcKind", "npcId", "sex", "race", "flavor", "provenance")
-         values ('creature', $1, 2, 'human', 'official', 'corpus'), ('creature', $1, 3, 'human', 'official', 'client')`,
+        `insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance")
+         values ('creature', $1, 'human', 2, 'official', 'corpus'), ('creature', $1, 'human', 3, 'official', 'client')`,
         [npc],
       );
       expect(await lineStates([woman, man])).toEqual([{ kind: "known" }, { kind: "known" }]);
+    } finally {
+      await db().query(`delete from "npc_body" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
+      await db().query(`delete from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
+    }
+  });
+
+  it("calls a greeting missing from an NPC drawn as another race, until that body is split", async () => {
+    // npc is answered as a human man; 119159 is a gnome man's model.
+    const gnome = { ...greeting(npc, "Well met, traveler."), meta: { ...greeting(npc, "").meta, sex: "2", model: "119159" } };
+    await db().query(
+      `insert into "npc" ("npcKind", "npcId", "race", "gender", "flavor", "provenance")
+       values ('creature', $1, 'human', 'male', 'official', 'corpus')`,
+      [npc],
+    );
+    try {
+      expect((await lineStates([gnome]))[0]).toEqual({ kind: "missing" });
+      await db().query(
+        `insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance")
+         values ('creature', $1, 'human', 2, 'standard', 'corpus'), ('creature', $1, 'gnome', 2, null, 'client')`,
+        [npc],
+      );
+      expect((await lineStates([gnome]))[0]).toEqual({ kind: "known" });
+    } finally {
+      await db().query(`delete from "npc_body" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
+      await db().query(`delete from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
+    }
+  });
+
+  it("does not take one npc_body row alone for a split", async () => {
+    const woman = { ...greeting(npc, "Well met, traveler."), meta: { ...greeting(npc, "").meta, sex: "3" } };
+    await db().query(
+      `insert into "npc" ("npcKind", "npcId", "race", "gender", "flavor", "provenance")
+       values ('creature', $1, 'human', 'male', 'official', 'corpus')`,
+      [npc],
+    );
+    try {
+      await db().query(
+        `insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance")
+         values ('creature', $1, 'human', 3, 'official', 'moderator')`,
+        [npc],
+      );
+      expect((await lineStates([woman]))[0]).toEqual({ kind: "missing" });
+    } finally {
+      await db().query(`delete from "npc_body" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
+      await db().query(`delete from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
+    }
+  });
+
+  it("reads an unknown model as the sex alone", async () => {
+    const man = { ...greeting(npc, "Well met, traveler."), meta: { ...greeting(npc, "").meta, sex: "2", model: "1" } };
+    await db().query(
+      `insert into "npc" ("npcKind", "npcId", "race", "gender", "flavor", "provenance")
+       values ('creature', $1, 'human', 'male', 'official', 'corpus')`,
+      [npc],
+    );
+    try {
+      expect((await lineStates([man]))[0]).toEqual({ kind: "known" });
     } finally {
       await db().query(`delete from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
     }

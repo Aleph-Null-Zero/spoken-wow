@@ -162,36 +162,36 @@ describe("a greeting's voice", WHOLE_CORPUS, () => {
   });
 });
 
-describe("an NPC split by sex", WHOLE_CORPUS, () => {
-  async function sex(npcId: number, value: 2 | 3, race: string, flavor: string | null) {
+describe("an NPC split by body", WHOLE_CORPUS, () => {
+  async function body(npcId: number, race: string, value: 2 | 3, flavor: string | null) {
     await db().query(
-      `insert into "npc_sex" ("npcKind", "npcId", "sex", "race", "flavor", "provenance", "confirmed")
+      `insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance", "confirmed")
        values ('creature', $1, $2, $3, $4, 'corpus', true)`,
-      [npcId, value, race, flavor],
+      [npcId, race, value, flavor],
     );
   }
 
-  /** As spoken(), with the sex each row is the NPC drawn as. */
-  async function bySex(): Promise<string[]> {
+  /** As spoken(), with the body each row is the NPC drawn as. */
+  async function byBody(): Promise<string[]> {
     return (await corpus()).lines
       .filter((candidate) => candidate.lineId === lineId || candidate.lineId.startsWith(`${lineId}~`))
-      .sort((a, b) => a.npcId - b.npcId || (a.npcSex ?? 0) - (b.npcSex ?? 0))
-      .map((l) => `${l.npcSex ?? "-"} ${l.lineId} ${l.voice}`);
+      .sort((a, b) => a.npcId - b.npcId || (a.npcBody ?? "").localeCompare(b.npcBody ?? ""))
+      .map((l) => `${l.npcBody ?? "-"} ${l.lineId} ${l.voice}`);
   }
 
-  it("speaks each line once per sex, the other sex's in a file of its own voice", async () => {
+  it("speaks each line once per body, the other sex's in a file of its own voice", async () => {
     await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "gossip");
     await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
-    await sex(npcIds[0], 2, "human", "official");
-    await sex(npcIds[0], 3, "human", "official");
+    await body(npcIds[0], "human", 2, "official");
+    await body(npcIds[0], "human", 3, "official");
 
-    expect(await bySex()).toEqual([
-      `2 ${lineId} human-male-official`,
-      `3 ${lineId}~human-female-official human-female-official`,
+    expect(await byBody()).toEqual([
+      `human-female ${lineId}~human-female-official human-female-official`,
+      `human-male ${lineId} human-male-official`,
     ]);
   });
 
-  it("lists a line once when both sexes are read by one voice", async () => {
+  it("lists a line once when both bodies are read by one voice", async () => {
     await line([{ npcId: npcIds[0], race: "orc", gender: "male", flavor: "guard" }], "gossip");
     await npc(npcIds[0], { race: "orc", gender: "male", flavor: "guard", provenance: "corpus" });
     // A race with no genders is read by one voice whatever the sex.
@@ -200,9 +200,9 @@ describe("an NPC split by sex", WHOLE_CORPUS, () => {
     await db().query(`insert into "voice" ("name", "race", "gender") values ($1, $1, '')`, [type]);
     await db().query(`insert into "voice_assignment" ("race", "voice") values ($1, $1)`, [type]);
     try {
-      await sex(npcIds[0], 2, type, null);
-      await sex(npcIds[0], 3, type, null);
-      expect(await bySex()).toEqual([`2 ${lineId}~${type} ${type}`]);
+      await body(npcIds[0], type, 2, null);
+      await body(npcIds[0], type, 3, null);
+      expect(await byBody()).toEqual([`${type}-male ${lineId}~${type} ${type}`]);
     } finally {
       await db().query(`delete from "npc" where "npcId" = $1`, [npcIds[0]]);
       await db().query(`delete from "voice_assignment" where "race" = $1`, [type]);
@@ -211,25 +211,67 @@ describe("an NPC split by sex", WHOLE_CORPUS, () => {
     }
   });
 
+  it("speaks each line once per race of one sex, each in its own voice", async () => {
+    await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "gossip");
+    await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await body(npcIds[0], "human", 2, "official");
+    await body(npcIds[0], "dwarf", 2, "standard");
+
+    expect(await byBody()).toEqual([
+      `dwarf-male ${lineId}~dwarf-male-standard dwarf-male-standard`,
+      `human-male ${lineId} human-male-official`,
+    ]);
+  });
+
+  it("lists a line once when two races are read by one voice", async () => {
+    await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "gossip");
+    await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    const other = `k${questId}`;
+    await db().query(`insert into "race" ("key") values ($1)`, [other]);
+    await db().query(
+      `insert into "voice_assignment" ("race", "gender", "flavor", "voice") values ($1, 'male', 'official', 'human-male-official')`,
+      [other],
+    );
+    try {
+      await body(npcIds[0], "human", 2, "official");
+      await body(npcIds[0], other, 2, "official");
+      expect(await byBody()).toEqual([`human-male ${lineId} human-male-official`]);
+    } finally {
+      await db().query(`delete from "npc" where "npcId" = $1`, [npcIds[0]]);
+      await db().query(`delete from "voice_assignment" where "race" = $1`, [other]);
+      await db().query(`delete from "race" where "key" = $1`, [other]);
+    }
+  });
+
   it("lists a line nobody voices once", async () => {
     await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "progress");
     await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
-    await sex(npcIds[0], 2, "human", "official");
-    await sex(npcIds[0], 3, "human", "official");
+    await body(npcIds[0], "human", 2, "official");
+    await body(npcIds[0], "human", 3, "official");
 
-    expect(await bySex()).toEqual([`2 ${lineId} human-male-official`]);
+    expect(await byBody()).toEqual([`human-male ${lineId} human-male-official`]);
   });
 
   it("leaves the NPC's other speakers in one voice", async () => {
     await line(npcIds.slice(0, 2).map((npcId) => ({ npcId, race: "human", gender: "male", flavor: "official" })), "gossip");
     await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
     await npc(npcIds[1], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
-    await sex(npcIds[0], 3, "human", "warrior");
+    await body(npcIds[0], "human", 2, "official");
+    await body(npcIds[0], "human", 3, "warrior");
 
-    expect(await bySex()).toEqual([
-      `3 ${lineId}~human-female-warrior human-female-warrior`,
+    expect(await byBody()).toEqual([
+      `human-female ${lineId}~human-female-warrior human-female-warrior`,
+      `human-male ${lineId} human-male-official`,
       `- ${lineId} human-male-official`,
     ]);
+  });
+
+  it("is not split by one row alone: the NPC's answer voices it", async () => {
+    await line([{ npcId: npcIds[0], race: "human", gender: "male", flavor: "official" }], "gossip");
+    await npc(npcIds[0], { race: "human", gender: "male", flavor: "official", provenance: "corpus" });
+    await body(npcIds[0], "human", 3, "warrior");
+
+    expect(await byBody()).toEqual([`- ${lineId} human-male-official`]);
   });
 });
 

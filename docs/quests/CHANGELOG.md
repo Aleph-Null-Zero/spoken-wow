@@ -11,6 +11,8 @@ carries that version. The heading says which.
 - **The sound packs are renamed** in the AddOns list: Spoken Audio: Quests - Horde, Quests -
   Alliance, Quests - Shared and Gossip, and Spoken German Audio: Quests - Horde and so on for a
   language. Their folders keep their names, so nothing needs reinstalling.
+- Packs carry a file per race and sex for NPCs drawn as more than one, alongside the per-sex
+  files older versions of Spoken read.
 
 ## 2.3.0 — Spoken Quests Audio
 
