@@ -7,9 +7,9 @@ pack: shared
 holds: quests
 version: 0.0.2
 github: false
-slug: korean-spoken-quests
-name: Korean Spoken Quests
-summary: Every quest's dialogue, for both factions, voiced in Korean. NPC gossip is a separate pack. Needs Spoken Player.
+slug: spoken-korean-audio-quests-shared
+name: Spoken Korean Audio: Quests
+summary: Every quest's dialogue, for both factions, voiced in Korean. NPC gossip is a separate pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -21,14 +21,14 @@ This is the Korean audio pack for quest dialogue: every quest, whichever side yo
 
 **You need one more addon for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Quests** | every quest, both factions | **this pack** |
-| [Gossip](https://www.curseforge.com/wow/addons/korean-spoken-quests-gossip) | NPC gossip chatter | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-korean-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

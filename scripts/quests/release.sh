@@ -7,7 +7,7 @@
 #   ./scripts/quests/release.sh audio-horde  # just one sound pack
 #   ./scripts/quests/release.sh spoken-all   # the English meta addon; never part of a bare run
 #   ./scripts/quests/release.sh --lang=esMX audio-horde # that language's Horde pack instead
-#   ./scripts/quests/release.sh --lang=deDE spoken-all  # that language's meta addon, "Spoken: German"
+#   ./scripts/quests/release.sh --lang=deDE spoken-all  # that language's meta addon, "Spoken German"
 #   ./scripts/quests/release.sh --store=wago # one store only; --store=curseforge for the other
 #
 # TWO STORES, ONE RELEASE. The same zip goes to both by default: a file that exists on one
@@ -121,10 +121,10 @@ esac; }
 # The slug each project is published under, the same on both stores. Used for the link printed
 # after an upload, and for the Wago upload's own log line.
 target_slug() { case "$1" in
-  spoken)         echo "spoken-player";;
+  spoken)         echo "spoken";;
   player)         echo "spoken-quests";;
   audio-all)      echo "spoken-quests-audio-all";;
-  spoken-all)     if english; then echo "spoken"; else meta_field slug; fi;;
+  spoken-all)     if english; then echo "spoken-english"; else meta_field slug; fi;;
   audio-alliance|audio-horde|audio-shared|audio-gossip) pack_field "$1" slug;;
 esac; }
 
@@ -177,22 +177,22 @@ target_version() {
 # By slug, which is why the slugs are read off the live projects rather than guessed - see
 # publishers/README.md. A slug that no longer resolves is a dependency silently not installed.
 #
-# Since 3.0.0 the module that reads a pack ships inside spoken-player, so the packs and the meta
-# addons name spoken-player and never spoken-quests, spoken-zones or spoken-books: those
+# Since 3.0.0 the module that reads a pack ships inside spoken, so the packs and the meta
+# addons name spoken and never spoken-quests, spoken-zones or spoken-books: those
 # projects are retired, and their last file is a tombstone that would only add a dead folder.
 target_dependencies() { case "$1" in
-  player)    echo "spoken-player";;
-  audio-all) echo "spoken-player spoken-quests-audio-alliance spoken-quests-audio-horde \
-                   spoken-quests-audio-shared spoken-quests-audio-gossip";;
+  player)    echo "spoken";;
+  audio-all) echo "spoken spoken-audio-quests-alliance spoken-audio-quests-horde \
+                   spoken-audio-quests-shared spoken-audio-gossip";;
   # Everything English, for one-click installs (scripts/spoken/package-meta.sh). The four quest
   # packs are named here as well as through audio-all, so a manager that does not follow a
   # dependency's own dependencies still installs them.
   spoken-all) ! english && { meta_field dependencies; return; }
-              echo "spoken-player spoken-quests-audio-all \
-                    spoken-quests-audio-alliance spoken-quests-audio-horde \
-                    spoken-quests-audio-shared spoken-quests-audio-gossip \
-                    spoken-zones-audio spoken-books-audio";;
-  audio-*)   echo "spoken-player";;
+              echo "spoken spoken-quests-audio-all \
+                    spoken-audio-quests-alliance spoken-audio-quests-horde \
+                    spoken-audio-quests-shared spoken-audio-gossip \
+                    spoken-audio-places spoken-audio-readables";;
+  audio-*)   echo "spoken";;
 esac; }
 
 # THE META ADDON GOES LAST. It names the four packs as dependencies, and CurseForge resolves

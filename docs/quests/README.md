@@ -203,7 +203,7 @@ installs the four packs.
 | | |
 | --- | --- |
 | Folders | `SpokenQuestsAudio…` |
-| Titles | `Spoken Quests Audio: Alliance` |
+| Titles | `Spoken Audio: Quests - Alliance` |
 | Encode | `ogg-q0-44k`, ~300 MB a pack |
 | Built by | `make quests-package-audio` + `quests-package-meta` |
 
@@ -324,7 +324,7 @@ make quests-release                       # upload every zip in dist/
 
 `scripts/quests/release.sh` uploads what is **already in `dist/`** — it builds nothing, so the
 zip that goes out is the one you tested. Seven projects, one per target: `spoken`
-([spoken-player](https://www.curseforge.com/wow/addons/spoken-player), `1700375`), which is
+([spoken](https://www.curseforge.com/wow/addons/spoken), `1700375`), which is
 Spoken's zip; `player` ([spoken-quests](https://www.curseforge.com/wow/addons/spoken-quests),
 `1655859`), retired, whose last file is the tombstone `make package-spoken-retired` builds;
 `audio-all`

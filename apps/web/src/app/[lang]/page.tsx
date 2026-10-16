@@ -32,7 +32,7 @@ function DiscordIcon({ className }: { className?: string }) {
  * it, and how to install it.
  *
  * Top to bottom: the logo and one sentence, the Discord invite, a button per explorer, then
- * the install section. That leads with Spoken Everything, because a player using an addon
+ * the install section. That leads with Spoken English, because a player using an addon
  * manager in English needs nothing else, and follows with one table of every addon and every
  * sound pack by language for everybody else.
  *
@@ -57,8 +57,8 @@ type Addon = {
 const ADDONS: Addon[] = [
   // First, since every other row needs it.
   {
-    slug: "spoken-player",
-    label: "Spoken Player",
+    slug: "spoken",
+    label: "Spoken",
     description: "Plays the audio for the other addons. Required by all of them.",
     wago: true,
     release: "spoken/",
@@ -73,7 +73,7 @@ const ADDONS: Addon[] = [
   },
   {
     slug: "spoken-zones",
-    label: "Spoken Zones",
+    label: "Spoken Places",
     description: "Narrates the lore of each zone as you enter it.",
     wago: true,
     release: "zones/",
@@ -81,7 +81,7 @@ const ADDONS: Addon[] = [
   },
   {
     slug: "spoken-books",
-    label: "Spoken Writings",
+    label: "Spoken Readables",
     description: "Reads books, letters, notes and plaques aloud.",
     wago: true,
     release: "books/",
@@ -95,8 +95,8 @@ const ADDONS: Addon[] = [
  */
 const EXPLORERS = [
   { href: "/quests", icon: "/icons/quests.png", title: "Quests" },
-  { href: "/zones", icon: "/icons/zones.png", title: "Zones" },
-  { href: "/books", icon: "/icons/books.png", title: "Writings" },
+  { href: "/zones", icon: "/icons/zones.png", title: "Places" },
+  { href: "/books", icon: "/icons/books.png", title: "Readables" },
 ];
 
 /** The languages with at least one pack, in the site's order: the table's columns. */
@@ -180,7 +180,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
 
         <div className="mt-4 text-sm">
           <p>
-            Install <External href={`${CURSEFORGE}/spoken`}>Spoken Everything</External> from
+            Install <External href={`${CURSEFORGE}/spoken-english`}>Spoken English</External> from
             CurseForge or WowUp-CF if you use one of these managers. It brings in every addon and
             its English audio.
           </p>

@@ -285,12 +285,12 @@ local PACK_PAGES = {
         itIT = { github = "quests-audio-itIT" }, koKR = { github = "quests-audio-koKR" },
         ptBR = { github = "quests-audio-ptBR" }, ruRU = { github = "quests-audio-ruRU" },
         zhCN = { github = "quests-audio-zhCN" }, zhTW = { github = "quests-audio-zhTW" } },
-    zones = { deDE = "spoken-zones-audio-dede", esES = "spoken-zones-audio-eses", esMX = "spoken-zones-audio-esmx",
-        frFR = "spoken-zones-audio-frfr", koKR = "spoken-zones-audio-kokr", ptBR = "spoken-zones-audio-ptbr",
-        ruRU = "spoken-zones-audio-ruru", zhCN = "spoken-zones-audio-zhcn", zhTW = "spoken-zones-audio-zhtw" },
-    books = { deDE = "spoken-books-audio-dede", esES = "spoken-books-audio-eses", esMX = "spoken-books-audio-esmx",
-        frFR = "spoken-books-audio-frfr", koKR = "spoken-books-audio-kokr", ptBR = "spoken-books-audio-ptbr",
-        ruRU = "spoken-books-audio-ruru", zhCN = "spoken-books-audio-zhcn", zhTW = "spoken-books-audio-zhtw" },
+    zones = { deDE = "spoken-german-audio-places", esES = "spoken-spanish-eu-audio-places", esMX = "spoken-spanish-al-audio-places",
+        frFR = "spoken-french-audio-places", koKR = "spoken-korean-audio-places", ptBR = "spoken-portuguese-audio-places",
+        ruRU = "spoken-russian-audio-places", zhCN = "spoken-chinese-simplified-audio-places", zhTW = "spoken-chinese-traditional-audio-places" },
+    books = { deDE = "spoken-german-audio-readables", esES = "spoken-spanish-eu-audio-readables", esMX = "spoken-spanish-al-audio-readables",
+        frFR = "spoken-french-audio-readables", koKR = "spoken-korean-audio-readables", ptBR = "spoken-portuguese-audio-readables",
+        ruRU = "spoken-russian-audio-readables", zhCN = "spoken-chinese-simplified-audio-readables", zhTW = "spoken-chinese-traditional-audio-readables" },
 }
 
 --- The voice pack `module` ("quests", "zones" or "books") has in `lang`, English's aside: the folder

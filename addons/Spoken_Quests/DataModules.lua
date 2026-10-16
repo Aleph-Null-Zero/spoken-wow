@@ -127,31 +127,31 @@ DataModules =
         },
         {
             AddonName = "SpokenQuestsAudioAlliance",
-            Title = "Spoken Quests Audio: Alliance",
+            Title = "Spoken Audio: Quests - Alliance",
             ContentVersion = "2.2.0",
             RelevantAboveVersion = 0,
-            URL = "https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance",
+            URL = "https://www.curseforge.com/wow/addons/spoken-audio-quests-alliance",
         },
         {
             AddonName = "SpokenQuestsAudioHorde",
-            Title = "Spoken Quests Audio: Horde",
+            Title = "Spoken Audio: Quests - Horde",
             ContentVersion = "2.2.0",
             RelevantAboveVersion = 0,
-            URL = "https://www.curseforge.com/wow/addons/spoken-quests-audio-horde",
+            URL = "https://www.curseforge.com/wow/addons/spoken-audio-quests-horde",
         },
         {
             AddonName = "SpokenQuestsAudioShared",
-            Title = "Spoken Quests Audio: Shared Quests",
+            Title = "Spoken Audio: Quests - Shared",
             ContentVersion = "2.2.0",
             RelevantAboveVersion = 0,
-            URL = "https://www.curseforge.com/wow/addons/spoken-quests-audio-shared",
+            URL = "https://www.curseforge.com/wow/addons/spoken-audio-quests-shared",
         },
         {
             AddonName = "SpokenQuestsAudioGossip",
-            Title = "Spoken Quests Audio: Gossip",
+            Title = "Spoken Audio: Gossip",
             ContentVersion = "2.2.0",
             RelevantAboveVersion = 0,
-            URL = "https://www.curseforge.com/wow/addons/spoken-quests-audio-gossip",
+            URL = "https://www.curseforge.com/wow/addons/spoken-audio-gossip",
         },
     },
 }
@@ -236,7 +236,8 @@ function DataModules:GetPackLabel(module)
         return label
     end
     local title = module and module.Title or ""
-    title = string.gsub(title, "Spoken Quests Audio: ", "")
+    -- "Spoken German Audio: Quests - Horde", or a pack built before that, "Spoken Quests Audio: Horde".
+    title = string.gsub(title, "^Spoken [^:]*Audio: ", "")
     return (string.gsub(title, "VoiceOver Data %- ", ""))
 end
 

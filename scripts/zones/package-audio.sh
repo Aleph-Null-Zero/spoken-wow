@@ -118,7 +118,7 @@ tier_encoding() { case "$1" in standard) echo "vbr-v6";; high) echo "copy";; esa
 # Another language's title is its page's.
 tier_title() {
   if ! english; then echo "$PACK_TITLE"; return; fi
-  case "$1" in standard) echo "Spoken Zones Audio 64";; high) echo "Spoken Zones Audio";; esac
+  case "$1" in standard) echo "Spoken Audio: Places 64";; high) echo "Spoken Audio: Places";; esac
 }
 
 # One tier, now that the 64 kbps pack is retired: two qualities meant two CurseForge

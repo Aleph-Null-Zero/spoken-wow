@@ -6,9 +6,9 @@ lang: zhTW
 pack: gossip
 version: 0.0.1
 github: false
-slug: chinese-traditional-spoken-quests-gossip
-name: Chinese (Traditional) Spoken Quests: Gossip
-summary: NPC gossip chatter, voiced in Traditional Chinese. Optional extra for the quest pack. Needs Spoken Player.
+slug: spoken-chinese-traditional-audio-gossip
+name: Spoken Chinese (Traditional) Audio: Gossip
+summary: NPC gossip chatter, voiced in Traditional Chinese. Optional extra for the quest pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -22,14 +22,14 @@ Innkeepers, guards, faction quartermasters and the rest saying their piece out l
 
 **You need the player and the quest pack for any of this to work:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[Chinese (Traditional) Spoken Quests](https://www.curseforge.com/wow/addons/chinese-traditional-spoken-quests)** — the quest dialogue.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken Chinese (Traditional) Audio: Quests](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-quests-shared)** — the quest dialogue.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
-| [Quests](https://www.curseforge.com/wow/addons/chinese-traditional-spoken-quests) | every quest, both factions | |
+| [Quests](https://www.curseforge.com/wow/addons/spoken-chinese-traditional-audio-quests-shared) | every quest, both factions | |
 | **Gossip** | NPC gossip chatter | **this pack** |
 
 ## Voiced with care

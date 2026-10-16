@@ -323,10 +323,10 @@ CurseForge projects are left here:
 | Project | id | Slug |
 | --- | --- | --- |
 | Spoken Books, retired | 1701514 | `spoken-books` |
-| Spoken Writings Audio | 1701520 | `spoken-books-audio` |
+| Spoken Audio: Readables | 1701520 | `spoken-audio-readables` |
 
 The first project's last file is the tombstone that `make package-spoken-retired` builds. The
-second is the sound pack, which declares `spoken-player` as its required dependency. Cutting a
+second is the sound pack, which declares `spoken` as its required dependency. Cutting a
 pack:
 
 ```bash

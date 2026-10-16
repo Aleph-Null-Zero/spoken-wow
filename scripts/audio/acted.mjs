@@ -39,11 +39,12 @@ import { fileURLToPath } from "node:url";
 import { BASE_LOCALE, CODES } from "../../pipelines/lib/locales.mjs";
 import { luaString } from "../../pipelines/zones/tools/lib/wiki.mjs";
 import { archiveOf } from "../lib/archives.mjs";
-import { actedFolder, languageFolder } from "../lib/packs.mjs";
+import { actedFolder, audioFamily, languageFolder } from "../lib/packs.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
-const TITLES = { quests: "Spoken Quests Audio", zones: "Spoken Zones Audio", books: "Spoken Books Audio" };
+/** What each section's packs are called after the family: "Spoken German Audio: Places". */
+const TITLES = { quests: "Quests", zones: "Places", books: "Readables" };
 /** The addon that plays a section's packs, which X-Child-Of names for addon managers. */
 const PLAYERS = { quests: "Spoken_Quests", zones: "Spoken_Places", books: "Spoken_Readables" };
 
@@ -220,7 +221,7 @@ function interfaceOf(section) {
 }
 
 export function toc({ section, lang, version, credits, iface }) {
-  const title = `${TITLES[section]}: Voice Actors${lang === BASE_LOCALE ? "" : ` (${lang})`}`;
+  const title = `${audioFamily(lang)}: ${TITLES[section]} - Voice Actors`;
   const lines = [
     `## Interface: ${iface}`,
     `## Title: ${title}`,

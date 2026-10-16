@@ -9,6 +9,12 @@ is the pack's, and `scripts/zones/release.sh` matches on the kind as well as the
 section with no kind in its heading is the addon's. A language's pack numbers itself too, from
 2.0.0 in step with the English pack (Spanish (AL) shipped first, as 1.0.0), and its sections are headed by its release tag: `## <version> — zones-audio-esMX`.
 
+## Unreleased
+
+- **The sound packs are called Spoken Audio: Places** in the AddOns list, after the module that
+  reads them, and a language's is Spoken German Audio: Places and so on. Their folders keep their
+  names, so nothing needs reinstalling.
+
 ## 3.0.0 — 2026-10-05
 
 - **Spoken Zones is now part of Spoken**, and this download no longer carries the addon. It

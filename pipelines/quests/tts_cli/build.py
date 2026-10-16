@@ -76,7 +76,7 @@ VoiceOver.DataModules:Register("{module}", {module})
 # number alone and refuse one below 20000. DataModules turns checkAddonVersion off around LoadAddOn, which
 # loads a pack a client calls out of date, but Forever build 70170 calls an Interface it does
 # not list incompatible instead, and nothing turns that off: the pack has to name the client.
-DEFAULT_TITLE = "Spoken Quests Audio"
+DEFAULT_TITLE = "Spoken Audio: Quests"
 
 #: The TOC key naming the language a pack was recorded in. Must match what the addon's
 #: DataModules.lua reads.

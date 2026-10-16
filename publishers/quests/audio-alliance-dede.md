@@ -6,9 +6,9 @@ lang: deDE
 pack: alliance
 version: 1.0.0
 github: false
-slug: german-spoken-quests-alliance
-name: German Spoken Quests: Alliance
-summary: Alliance-only quest dialogue, voiced in German. Pair it with the Shared pack. Needs Spoken Player.
+slug: spoken-german-audio-quests-alliance
+name: Spoken German Audio: Quests - Alliance
+summary: Alliance-only quest dialogue, voiced in German. Pair it with the Shared pack. Needs Spoken.
 categories:
   - Audio & Video
   - Roleplay
@@ -20,17 +20,17 @@ This is the German audio pack for Alliance quest dialogue: the quests only an Al
 
 **You need two more addons for this to do anything:**
 
-1. **[Spoken Player](https://www.curseforge.com/wow/addons/spoken-player)** — the player. Without it no pack plays.
-2. **[German Spoken Quests: Shared](https://www.curseforge.com/wow/addons/german-spoken-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
+1. **[Spoken](https://www.curseforge.com/wow/addons/spoken)** — the player. Without it no pack plays.
+2. **[Spoken German Audio: Quests - Shared](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-shared)** — the quests both factions can take, including everything in the neutral hubs like Booty Bay and Gadgetzan. Without it an Alliance character hears only part of their quests.
 
 ## The packs
 
 | Pack | Holds | |
 | --- | --- | --- |
 | **Alliance** | Alliance-only quests | **this pack** |
-| [Horde](https://www.curseforge.com/wow/addons/german-spoken-quests-horde) | Horde-only quests | |
-| [Shared](https://www.curseforge.com/wow/addons/german-spoken-quests-shared) | quests both factions can take | |
-| [Gossip](https://www.curseforge.com/wow/addons/german-spoken-quests-gossip) | NPC gossip chatter | |
+| [Horde](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-horde) | Horde-only quests | |
+| [Shared](https://www.curseforge.com/wow/addons/spoken-german-audio-quests-shared) | quests both factions can take | |
+| [Gossip](https://www.curseforge.com/wow/addons/spoken-german-audio-gossip) | NPC gossip chatter | |
 
 Gossip — the chatter NPCs give you when you talk to them without a quest — is optional on top.
 

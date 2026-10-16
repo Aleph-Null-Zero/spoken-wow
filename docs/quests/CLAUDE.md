@@ -17,7 +17,7 @@ behaviour changes.
   (`QUEST_GREETING`) and the gossip page (`GOSSIP_SHOW`). `docs/gossip/AGENTS.md` is Gossip's
   guide.
 - Sound packs `SpokenQuestsAudio{Alliance,Horde,Shared,Gossip}`, plus the `All` meta addon,
-  which depends on those four and `spoken-player`. A language other than English has one pack,
+  which depends on those four and `spoken`. A language other than English has one pack,
   `SpokenQuestsAudio_<lang>` (`LOCALE=xx`), holding quests and gossip together. Pack metadata,
   CurseForge and Wago ids live in `publishers/quests/audio-*.md` and are read by
   `scripts/lib/packs.mjs`.
@@ -53,7 +53,7 @@ claiming is global.
 - The meta addon must never carry a `DataModule-Version` key. If it does, the player counts it
   as an installed pack and stops offering the real ones.
 - `scripts/quests/release.sh` uploads what is already in `dist/` and never builds. Its targets
-  are `spoken` (the bundle, to `spoken-player`), `player` (the retired SpokenQuests tombstone),
+  are `spoken` (the bundle, to `spoken`), `player` (the retired SpokenQuests tombstone),
   the four packs and `audio-all`; `spoken-all` is accepted by name only. A failing target does
   not stop the rest.
 - Legacy 1.12/2.4.3/3.3.5 zips are built only from a `quests/vX` tag

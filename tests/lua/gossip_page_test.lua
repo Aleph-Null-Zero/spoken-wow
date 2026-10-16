@@ -16,9 +16,9 @@ _G.SpokenQuestsSettings = nil
 -- Installed: the Gossip pack, and Alliance's, which holds no gossip.
 stub.SetAddOns({
     { folder = "SpokenQuestsAudioGossip", meta = { ["X-VoiceOver-DataModule-Version"] = "1", Version = "2.2.0",
-        Title = "Spoken Quests Audio: Gossip" } },
+        Title = "Spoken Audio: Gossip" } },
     { folder = "SpokenQuestsAudioAlliance", meta = { ["X-VoiceOver-DataModule-Version"] = "1", Version = "2.2.0",
-        Title = "Spoken Quests Audio: Alliance" } },
+        Title = "Spoken Audio: Quests - Alliance" } },
 })
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
@@ -112,7 +112,7 @@ Expect("...which clears this character's greetings heard", next(db.char.hasSeenG
 
 ---------------------------------------------------------------- the packs that hold gossip
 Expect("the part lists the packs that hold gossip, not Alliance's", table.concat(Spoken:GetSource("gossip").packs(), "|"),
-    "Spoken Quests Audio: Gossip")
+    "Spoken Audio: Gossip")
 Expect("the minimap menu heads its entries with the page's name", Spoken:GetSource("gossip").title, L.OPT_GOSSIP_PAGE_TITLE)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
