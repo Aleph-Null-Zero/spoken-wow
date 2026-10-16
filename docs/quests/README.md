@@ -1,15 +1,16 @@
 # Spoken Quests pipeline
 
-### [voiceline explorer: voiceover.rusty.one](https://voiceover.rusty.one)
+### [voiceline explorer: spoken.rusty.one/quests](https://spoken.rusty.one/quests)
 
 ## Overview
 
-A pipeline for producing AI voiceovers for WoW Classic dialog. The sound pack and the addon
-data module are build outputs of this project.
+A pipeline for producing AI voiceovers for the quest and gossip dialogue of WoW: Forever, which
+is mostly Classic's text. The corpus comes from the vmangos Classic world database. The sound
+packs and the addon data modules are build outputs of this project.
 
 Every line the project knows about is browsable, playable and — for signed-in collaborators —
-re-voiceable at [voiceover.rusty.one](https://voiceover.rusty.one), which is the `web/`
-directory of this repo; it is also the only place audio is made.
+re-voiceable at [spoken.rusty.one/quests](https://spoken.rusty.one/quests), which is the quests
+section of `apps/web`; it is also the only place audio is made.
 
 **Audio is made on the site and nowhere else.** Every take is cut there, archived as a file
 of its own that is never changed, and recorded as a row; which take is live is a flag on
@@ -141,39 +142,44 @@ the pack build and, after one confirmation, the CurseForge and GitHub uploads.
 the mp3s it just copied. The addon resolves sounds through that table rather than the
 filesystem, so building the two together is what stops a line going silent.
 
-For a module to hand to players, use `make package-audio` instead: it transcodes first.
+For a module to hand to players, use `make quests-package-audio` instead: it transcodes first.
 
 ```bash
-make package                       # the player addon: one Blizzard zip, one per legacy client
-make package-audio                 # transcode to ogg, build five packs, zip each -> dist/
-make package-audio-complete        # every line in one folder, for the site (~1.3 GB)
-make package-meta                  # the "install everything" addon
-make package-audio PACKS=all       # only the complete pack, when trying an encode change
-make package-audio VERSION=1.4.0   # the version written into each pack's .toc
-ENCODE=copy make package-audio     # the masters untouched, to hear what is being given up
+make quests-package-audio                # transcode to ogg, build the four packs, zip each, bundle them for GitHub -> dist/
+make quests-package-meta                 # the "install everything" addon
+make quests-package-audio PACKS=all      # every line in one folder, when trying an encode change
+make quests-package-audio VERSION=1.4.0  # the version written into each pack's .toc
+ENCODE=copy make quests-package-audio    # the masters untouched, to hear what is being given up
+make quests-package                      # Spoken_Quests alone: one Blizzard zip, one per legacy client
 ```
 
-`make package` takes its version from `## Version:` in `Spoken_Quests.toc` and produces four
+Players of Blizzard's clients get Spoken_Quests inside `Spoken-<v>.zip`, which
+`make package-spoken` builds (`scripts/spoken/package.sh`; its notes are in
+`docs/spoken/CHANGELOG.md`). `make quests-package` builds the module alone, for the legacy
+clients below. It takes its version from `## Version:` in `Spoken_Quests.toc` and produces four
 zips. It refuses to build from an uncommitted tree — `ALLOW_DIRTY=1` overrides while testing —
 and refuses when a variant `.toc` or `Environment.lua` names a different version, which is drift
 nothing else notices until it ships.
 
 **One zip for Blizzard's clients, one apiece for the legacy ones.** Blizzard's clients
-pick a `.toc` by flavor suffix — `_Vanilla`, `_TBC`, `_Wrath`, `_Mainline` — so a single archive
-serves Classic Era through retail and the client chooses. The 1.12, 2.4.3 and 3.3.5 clients
+pick a `.toc` by flavor suffix (`_Vanilla`, `_TBC`, else the unsuffixed one, which Forever reads),
+so a single archive serves them all and the client chooses. The 1.12, 2.4.3 and 3.3.5 clients
 predate suffix support: each reads `Spoken_Quests.toc` and nothing else, and each wants a
 different file under that one name, so each needs an archive of its own. Each also loads its own
 vendored Ace3 from `Spoken_Quests/<client>/`, because the root `Libs/AceTimer-3.0` binds
 `C_Timer.After` while loading and would error there. A legacy zip therefore carries one `.toc`,
-one Ace3, and neither of the other two clients' directories.
+one Ace3 and Spoken (those clients have no addon manager to fetch a dependency),
+the `SpokenPlayer` and `SpokenQuests` tombstones, and neither of the other two clients'
+directories.
 
 CurseForge has no game version to file those zips against, so they are published to a GitHub
-release: tag `v<version>` and `.github/workflows/release-addons.yaml` checks the tag against
-`## Version:`, runs this same script, and attaches all four zips.
+release: tag `quests/v<version>` and `.github/workflows/release-addons.yaml` checks the tag
+against `## Version:`, runs this same script, and attaches all four zips. The workflow ignores a
+bare `v<version>` tag.
 
 The sound packs are the same files on every client. Their
-`## Interface: 100000, 11509, 20506, 16001` names Era, Anniversary and Forever, as the zones and
-books packs do, after a 100000 for the 1.12/2.4.3/3.3.5 clients, which read the first number
+`## Interface: 100007, 11509, 20506, 16001` names Era, Anniversary and Forever, as the zones and
+books packs do, after a 100007 for the 1.12/2.4.3/3.3.5 clients, which read the first number
 alone and refuse one below 20000. `DataModules` sets `checkAddonVersion` to 0 around
 `LoadAddOn` so a client that considers a pack out of date loads it anyway. That switch reaches "out of date" and nothing else: the Forever client marks an
 Interface it does not list as incompatible (since build 70170), which no setting overrides, so
@@ -181,20 +187,16 @@ every client a pack is filed against has to be on the line. Packs up to quests 2
 `100000` alone and relied on the switch.
 
 **The shipping packs are Ogg Vorbis at 44.1 kHz** (`ogg-q0-44k`), which takes 3.2 GB of masters
-to about 1.3 GB, split five ways. Vorbis is worth 1.3–1.5× over LAME at these rates and is VBR,
+to about 1.3 GB, split four ways. Vorbis is worth 1.3–1.5× over LAME at these rates and is VBR,
 so the bits follow the voice instead of padding silence to a constant rate. A 22.05 kHz
 downsample halves that again and speech survives the 11 kHz ceiling it imposes — it shipped as a
 second set of packs for a while and is retired, because one format is one set of projects and one
 answer to "which do I install".
 
-`make package-audio-complete` builds the same audio as one `SpokenQuestsAudioComplete` folder, ~1.3 GB.
-It is **not a CurseForge release**: it is far over the upload ceiling and always will be. The site
-hosts it instead — `make push-complete` puts a built zip in `shared/downloads/` on the droplet and
-repoints
-[`/downloads/SpokenQuestsAudioComplete-latest.zip`](https://spoken.rusty.one/downloads/SpokenQuestsAudioComplete-latest.zip),
-a symlink, so the published URL never changes once the pack is renamed. The pre-rename
-`VoiceOverReduxAudioHQ-latest.zip` is not kept alive: the descriptions carrying it are being
-re-pasted. See `deploy/README.md`.
+There is no complete pack, every line in one folder: it is far over CurseForge's upload ceiling,
+and the site no longer offers one. Its old address,
+`/downloads/SpokenQuestsAudioComplete-latest.zip`, redirects to the meta addon's page, which
+installs the four packs.
 
 **The packs ship as five CurseForge projects** — four packs and a meta addon:
 
@@ -203,7 +205,7 @@ re-pasted. See `deploy/README.md`.
 | Folders | `SpokenQuestsAudio…` |
 | Titles | `Spoken Quests Audio: Alliance` |
 | Encode | `ogg-q0-44k`, ~300 MB a pack |
-| Built by | `make package-audio` + `package-meta` |
+| Built by | `make quests-package-audio` + `quests-package-meta` |
 
 The five projects the retired packs used stay published and are never uploaded to again, so
 `MODULE` and `TITLE_FAMILY` in `scripts/quests/package-audio.sh` have one set of packs to name.
@@ -212,7 +214,7 @@ nothing stores a path built from a folder name — `DataModules` composes one at
 the folder the client reports — but `availableModules` in `DataModules.lua` has to move with
 them, since that is how an installed pack is recognised.
 
-`docs/pack-size.md` is where every encode was measured, along with the dead ends (deduplication, silence trimming, harder zip
+[`docs/pack-size.md`](docs/pack-size.md) is where every encode was measured, along with the dead ends (deduplication, silence trimming, harder zip
 compression — all worth nothing).
 
 Homebrew's `ffmpeg` has no `libvorbis` and ffmpeg's own Vorbis encoder is worse, so `oggenc`
@@ -256,11 +258,12 @@ shield's frame off the 512 px render before scaling, since LibDBIcon draws the i
 across inside a round border of its own and two frames at that size read as dirt; the header
 explains the crop, the 5% LibDBIcon trims off each edge, and why the BLP is palettized.
 
-### The pack ships in five pieces
+### The pack ships in four pieces
 
 600 MB is more than CurseForge accepts in one upload — a 564 MB zip comes back `413` from
 Cloudflare before CurseForge ever sees it — and more than a player wants for lines their
-character cannot reach. So the store is transcoded once and built into five packs:
+character cannot reach. So the store is transcoded once and built into four packs, with a meta
+addon beside them:
 
 | Pack | Folder | Zip |
 | --- | --- | --- |
@@ -278,9 +281,11 @@ chatter, and lands around 300 MB instead of 600.
 is a Cloudflare `413` before CurseForge sees the body, which is what forced the split — so that
 project ships a few kilobytes carrying no audio and declaring the other four as *required
 dependencies*. The CurseForge app and WowUp fetch those automatically, so "install All" still
-means "get everything", and no folder is ever owned by two projects. `scripts/package-meta.sh`
-builds it and its header explains the rest; `make package-audio PACKS=all` still builds the
-single complete folder for local use. The stub deliberately carries no
+means "get everything", and no folder is ever owned by two projects. `scripts/quests/package-meta.sh`
+builds it and its header explains the rest; `make quests-package-audio PACKS=all` still builds
+the single complete folder for local use. For GitHub, which takes a larger file, the four
+folders are bundled into one zip, `SpokenQuestsAudioAll-<version>.zip`; they are the folders
+CurseForge installs, so the two channels overwrite each other. The stub deliberately carries no
 `X-SpokenQuests-DataModule-Version` or the inherited `X-VoiceOver-DataModule-Version`: with either, the player would count the stub as an installed pack
 and stop telling somebody with no audio where to get any.
 
@@ -293,7 +298,11 @@ per expansion. Every pack carries the full lookup tables (3.5 MB); they map text
 hashes rather than to files, so an entry whose audio lives in a pack you did not install finds
 no length and stays quiet.
 
-**Which side a quest is on comes from `corpus/factions.json`**, exported by
+**Which side a quest is on comes first from the Compendium's race masks**
+(`addons/Spoken_Quests/Data/Compendium.lua`, `tts_cli/factions.py` `compendium_sides`): a quest
+whose `races` are all one side's is that side's, and one open to both is shared. That covers
+Forever's own quests, which the vmangos world DB lacks (528 more one-side quests than the export
+below). A quest the Compendium does not list takes its side from `corpus/factions.json`, exported by
 `make factions` from the world DB and committed beside the corpus, so building a pack never
 needs a database. `tools/export_factions.py` explains the derivation, and the short version is
 that `quest_template.RequiredRaces` is nearly useless — vanilla sets it on race and class
@@ -306,22 +315,28 @@ player megabytes, being strict costs them a line that never plays.
 ### Releasing to CurseForge
 
 ```bash
-make release-dry          # resolve clients, print every file and note, send nothing
-make release              # upload every zip in dist/
-./scripts/release.sh audio   # or just one of them
+make quests-release-dry                   # resolve clients, print every file and note, send nothing
+make quests-release                       # upload every zip in dist/
+./scripts/quests/release.sh audio-horde   # or just one target
 ```
 
-`scripts/release.sh` uploads what is **already in `dist/`** — it builds nothing, so the zip
-that goes out is the one you tested. Seven projects, one per target: `spoken`
-([spoken-player](https://www.curseforge.com/wow/addons/spoken-player), `1700375`), `player`
-([spoken-quests](https://www.curseforge.com/wow/addons/spoken-quests), `1655859`), `audio-all`
+`scripts/quests/release.sh` uploads what is **already in `dist/`** — it builds nothing, so the
+zip that goes out is the one you tested. Seven projects, one per target: `spoken`
+([spoken-player](https://www.curseforge.com/wow/addons/spoken-player), `1700375`), which is
+Spoken's zip; `player` ([spoken-quests](https://www.curseforge.com/wow/addons/spoken-quests),
+`1655859`), retired, whose last file is the tombstone `make package-spoken-retired` builds;
+`audio-all`
 ([spoken-quests-audio-all](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), `1660196`),
-and `audio-alliance` / `audio-horde` / `audio-shared` / `audio-gossip`. A target with no id
-fails the run rather than uploading a Horde pack over the Alliance project — which is also why
-the five retired downsampled projects have no id here at all. It needs
-`CURSEFORGE_TOKEN` in the repo root's `.env` — an *author* token from
+and `audio-alliance` / `audio-horde` / `audio-shared` / `audio-gossip`. `spoken-all`, the
+English install-everything addon, is accepted by name and is never part of a bare run. A target
+with no id fails the run rather than uploading a Horde pack over the Alliance project — which
+is also why the five retired downsampled projects have no id here at all. It needs
+`CURSEFORGE_TOKEN`, and `WAGO_TOKEN` for Wago, in the repo root's `.env`. The CurseForge one is
+an *author* token from
 [authors-old.curseforge.com](https://authors-old.curseforge.com/account/api-tokens), tied to
-the account rather than a project, so one covers both.
+the account rather than a project, so one covers every project. A pack goes to CurseForge
+alone: Wago answers `413` to a file that size, and `scripts/audio-github-release.sh` puts it on
+GitHub.
 
 The player and the packs are versioned independently, and each finds its version somewhere
 different for a reason. The player is committed files with a `.toc`, so its version is read
@@ -330,41 +345,42 @@ back out of its module in `dist/`, which means releasing a pack nobody built fai
 uploading a stale zip that happens to still be lying around. `CHANGELOG.md` holds one section
 per version and each target looks up its own.
 
-Files are offered to **Era (1.15.9) and the 2.5.6 Anniversary client** only. The zip carries
-`_Wrath` and `_Mainline` TOCs too, but nothing here has been run on those clients, and a file
-offered to a client it misbehaves on is worse than one that is simply absent there. Client
+Files are offered to **Forever (1.60.1), Era (1.15.9) and the 2.5.6 Anniversary client** only. Nothing
+here has been run on any other client, and a file offered to a client it misbehaves on is worse
+than one that is simply absent there. Client
 names are resolved against `/api/game/versions` and a name matching anything but exactly one
 version is fatal, because the alternative failure is a file filed against the wrong client —
 which players meet as "the addon does not appear in my list".
 
 Uploading a file cannot change the page around it: descriptions, relations and project
 settings live in the web UI, and a script that rewrote them each release would be one that
-could quietly undo an edit made there. The complete pack has no project and is not released.
+could quietly undo an edit made there.
 
-### A language's packs
+### A language's pack
 
-A language's four packs exist because their pages do: `publishers/quests/audio-<pack>-<lang>.md`
-(one per `alliance`/`horde`/`shared`/`gossip`) names the CurseForge project, version, folder and
-title that `scripts/lib/packs.mjs` reads instead of a case added to a script per language. `LOCALE=`
-moves the whole chain — pull, assemble, build, release — to that language, staged under
-`build/quests/<lang>/audio/` rather than English's `pipelines/quests/audio/`:
+A language other than English has one pack, holding both factions' quests and the gossip. It
+exists because its page does: `publishers/quests/audio-<lang>.md` (`pack: all`) names the
+project, version, folder and title that `scripts/lib/packs.mjs` reads instead of a case added to
+a script per language. `LOCALE=` moves the chain — pull, assemble, build — to that language,
+staged under `build/quests/<lang>/audio/` rather than English's `pipelines/quests/audio/`:
 
 ```bash
-make pull-live LOCALE=esMX          # this language's live takes
-make sounds LOCALE=esMX             # build/quests/esMX/audio, assembled from the archive
-make package-audio LOCALE=esMX      # the four packs, encoded, into dist/
-make release-audio LOCALE=esMX      # uploads them, ./scripts/quests/release.sh --lang=esMX
+make quests-pull-live LOCALE=esMX          # this language's live takes
+make quests-sounds LOCALE=esMX             # build/quests/esMX/audio, assembled from the archive
+make quests-package-audio LOCALE=esMX      # SpokenQuestsAudio_esMX, encoded, into dist/
 ```
+
+The zip goes to GitHub under the tag `quests-audio-<lang>/v<version>`
+(`scripts/audio-github-release.sh quests esMX`).
 
 The client never says which gossip line is on screen, only who is speaking and the words, and
 the addon matches those words against a table to find the line's file. A client in another
-locale shows them in its language, so a language's Gossip pack also carries that language's
+locale shows them in its language, so a language's pack also carries that language's
 gossip tables under `generated/<lang>/`, loaded only on a client in it (`tts_cli/locale_text.py`).
 They are keyed on `quest_line.localeText` — the line as the world database, and so the client,
 has it, not a correction made on the site — and `package-audio` exports it first
 (`make export-locale-text LOCALE=esMX`, into `build/quests/esMX/`). Only the Gossip pack
-carries them, once per language; the faction packs and every English pack are built as
-before. A language with no imported text (`make import-locale LOCALE=esMX`) still builds, with
+carries them, once per language; English's packs are built as before. A language with no imported text (`make import-locale LOCALE=esMX`) still builds, with
 a warning, and its gossip is matched against the English text.
 
 #### A line for each player gender, where a language's text needs it
@@ -416,7 +432,7 @@ which `tts_cli/questit.py` reproduces over the corpus's English. A line matches 
 English is the corpus's, so a quest reworded since is left out. Rows are written with origin
 `community` and the release in `note`; a later release replaces them, and a line edited on the
 site keeps its edit. Everything client-keyed is skipped for a language like this (`client: false`
-in `pipelines/lib/locales.mjs`): its packs carry no gossip locale text, the addon never picks
+in `pipelines/lib/locales.mjs`): its pack carries no gossip locale text, the addon never picks
 it on Auto, and it offers no contributions while a player listens in it.
 
 ### Browsing the corpus
@@ -644,12 +660,11 @@ the value to configure.
 
 #### What the corpus scan found
 
-`tools/scan_corpus_hiccups.py` reads the corpus and writes `corpus/hiccups.json.gz`: every
-token or fragment likely to trip a reader up — invented names no pronunciation rule covers,
-stage directions in asterisks, Blizzard's own typos, raw binary, alphanumeric codes. The
-artifact is committed and ships inside a release; `/issues` → **Reload scan** loads it into
-Postgres, and it is never read on the search path. `docs/corpus-hiccups.md` documents the
-method and the categories.
+`tools/scan_corpus_hiccups.py` reads the corpus and lists every token or fragment likely to
+trip a reader up — invented names no pronunciation rule covers, stage directions in asterisks,
+Blizzard's own typos, raw binary, alphanumeric codes. It is retired as it stands: the
+`/issues` queue its JSON fed is gone, so the JSON is written only with `--json` and is no
+longer committed or shipped. `docs/corpus-hiccups.md` documents the method and the categories.
 
 **A finding is a detection, not a defect.** `Ashenvale` occurring 199 times is a fact about
 the corpus; whether it is a problem depends on the lexicon and on someone having listened. So
@@ -721,8 +736,9 @@ UPDATE "user" SET role = 'admin' WHERE email = 'you@example.com';
 
 #### Deploying the explorer
 
-The explorer runs at [voiceover.rusty.one](https://voiceover.rusty.one), on a DigitalOcean
-droplet behind nginx. Pushing to `master` builds and ships it automatically — the workflow
+The explorer runs at [spoken.rusty.one/quests](https://spoken.rusty.one/quests), on a
+DigitalOcean droplet behind nginx. The old voiceover.rusty.one addresses redirect there
+(`deploy/web/nginx-voiceover-redirect.conf`). Pushing to `master` builds and ships it automatically — the workflow
 typechecks, applies the migrations with the droplet's own script, runs the tests against a
 throwaway Postgres, and only then builds and swaps the release. The audio does not travel
 with it: takes are cut on the droplet, and come home one way, by hand.
@@ -735,7 +751,7 @@ make web-releases            # what is deployed, and what you can roll back to
 make web-rollback            # back one release; RELEASE=<name> to pick one
 ```
 
-Deploys are versioned as directories under `/srv/voiceover/releases/`, with `current` a
+Deploys are versioned as directories under `/srv/spoken/releases/`, with `current` a
 symlink that pm2 follows, so a rollback is a symlink swap needing neither CI nor network.
 The take archive lives outside every release in `shared/`: it is never copied on deploy and
 survives a rollback untouched. Migrations run before the swap and are forward-only — a
@@ -744,10 +760,10 @@ release after it.
 
 A running batch survives a deploy. The new leader picks up whatever it finds in the queue,
 and the outgoing one is given 30 seconds to finish its in-flight generations before pm2 kills
-it, which is what `kill_timeout` in `deploy/ecosystem.config.js` is for.
+it, which is what `kill_timeout` in `deploy/web/ecosystem.config.js` is for.
 
 First-time droplet setup, the nginx vhost, and the GitHub secrets the workflow needs are in
-[`deploy/README.md`](deploy/README.md).
+[`deploy/web/README.md`](../../deploy/web/README.md).
 
 ## Output
 
@@ -858,12 +874,18 @@ Alterac Valley questgivers are spawned by the battleground's scripts and appear 
 the scan flags quests a player really can do. Read the quest, then ignore it in the explorer
 where the decision carries a reason.
 
+The Compendium reads the same list. `tts_cli/quest_text.py` `left_out` is the one rule for which
+quests it lists and has words for: Blizzard's debris (quest 1, `<NYI>` titles), a quest every
+line of which is ignored, and the `remove` entries of `corpus/compendium_overrides.json`. Those
+23 removals are the Compendium's alone until `line_ignore` holds their lines; once it does, the
+packs drop their clips too and the entries can go.
+
 ### Reporting a line
 
 Two routes, one destination. In the explorer, every row has a flag button that opens the report
 form in a dialog — no navigation, and the row already knows which line it is, so the report
-carries a `lineId` as well as an address. From the game, the addon's Report button gives the
-player an address to open, which lands on `/r/…` and shows the same form.
+carries a `lineId` as well as an address. From the game, a Report button gives the
+player an address to open, which lands on `/quests/r/…` and shows the same form.
 
 Both write the same `target` string (`lib/reports/line-target.ts` composes it from a corpus
 line, mirroring `formatTarget`), so triage reads one list rather than two. The button is
@@ -872,20 +894,29 @@ because reporting is what a player who cannot sign in has.
 
 ### Reports from inside the game
 
-The addon shows a **Report** button in the bottom-right corner of the sound queue frame,
-whether or not audio actually played — a silent quest is among the most useful things a player
-can tell you. That frame is the only one present for all of it: gossip, quest progress and
-completion text, and whatever is playing right now, which is when the complaint tends to occur
-to someone. It sits just left of the frame's corner because the resize grabber already owns
-that exact spot. Clicking it opens a copy box holding an address, because the client cannot
-open a URL or send anything anywhere; the player copies it and opens it in a browser.
+Report is a round bug icon, and it sits where the line is: in the corner of Spoken's windows,
+beside the subtitles' hover controls, in Spoken Quests' row of controls on DialogueUI's window,
+beside Play on the details view of the Forever quest log, and on each part of a quest's page in
+Azeroth's Compendium. It shows whether or not audio actually played — a silent quest is among
+the most useful things a player can tell you — and for gossip and greetings as well as quests.
+Spoken's **Hide Report Buttons** takes it away. The **Fix a Problem** section of Spoken's page
+has a Report a Problem button too, for what belongs to no one line. Clicking an icon opens a
+copy box holding an address, because the client cannot open a URL or send anything anywhere;
+the player copies it and opens it in a browser.
 
-The address is built from what the client can see, never from what the data module resolved:
-`/r/quest/{questID}/{accept|progress|complete}`, or `/r/npc/{creatureID}` for gossip, for a
-client reporting quest id `0`, and as the fallback whenever a quest id is unavailable. That
-matters because a data module which failed to load produces no `soundData` at all, and that is
-exactly the state most worth hearing about. It also means there is no slug or hash shared
-between Lua and Python that could silently drift.
+The address is built from what the client can see, never from what the data module resolved
+(`ReportButton:TargetForQuest` and `TargetForGUID`, through `Spoken:ReportURL`):
+`https://spoken.rusty.one/quests/r/quest/{questID}/{accept|progress|complete}`, or
+`…/quests/r/npc/{creatureID}` for gossip, for a client reporting quest id `0`, and as the
+fallback whenever a quest id is unavailable. A gameobject has `…/quests/r/object/{objectID}`,
+since creature and object ids overlap (creature 68 is a guard, object 68 a poster). A line
+that was read in a language other than English adds it: `https://spoken.rusty.one/{lang}/quests/r/…`.
+That matters because a data module which failed to load produces no `soundData` at all, and
+that is exactly the state most worth hearing about. It also means there is no slug or hash
+shared between Lua and Python that could silently drift. `tests/lua/report_url_contract_test.lua`
+holds every address the modules build to `tests/fixtures/report-urls.txt`, which
+`apps/web/src/lib/reports/report-urls.test.ts` opens through the site's routes. Installed copies
+that still build `voiceover.rusty.one/r/…` are redirected.
 
 The landing page resolves the address against the corpus, plays the take that is currently
 live, and hosts the form. An address that resolves to nothing still renders the form — an
@@ -917,15 +948,15 @@ the corpus is built from a 1.12 world database, so it has nothing for content th
 vanilla, for a locale that database does not carry, or for custom content a server added on
 top of it. In those three cases the client in front of the player is holding the only copy of
 the text, and `Contribute:HasGap()` puts a button reading **"Contribute"** — the same word
-the books addon's button carries — in the top right corner of the Blizzard quest or gossip
-frame, just left of its close button, exactly when there is text on screen and nothing queued
-to play. The quest log offers the same thing where a quest's Play would be: a small plus icon
+the Readables button carries — in the strip under the close button at the top right of the
+Blizzard quest or gossip window, exactly when there is text on screen and nothing queued to
+play. The quest log offers the same thing where a quest's Play would be: a small plus icon
 in the list, and the details view's Play reading **Contribute**. A contribution from the log
 carries the quest's own description as its accept text and `from=log`, but no NPC — the log
 does not say who gave the quest. It exists on the Blizzard clients only: contributing is off for now on the 1.12, 2.4.3
 and 3.3.5 clients, and their `.toc` files leave out the `Contribute.xml`
-that loads it (the 1.12 client's Lua 5.0 could not parse it anyway). A player who does not want it turns it off with **Hide the Contribute buttons** in the
-Spoken Player settings, one switch for the quests, books and zones buttons alike; each addon
+that loads it (the 1.12 client's Lua 5.0 could not parse it anyway). A player who does not want it turns it off with **Hide Contribute Buttons** in the Contribute
+section of Spoken's settings, one switch for the buttons of every module; each module
 asks `Spoken:AreContributeButtonsHidden()` in its gap check and refreshes on the player's
 `CONTRIBUTE_SETTINGS_CHANGED` callback, since toggling it fires no game event.
 With DialogueUI, which never shows the game's quest and gossip frames, the Report icon goes
@@ -934,15 +965,18 @@ and left of a close button, the window's text moved down to make room. It report
 page and contributes where a line is missing. The words in that window are marked as they are
 read through `Spoken:WordMarks()`, the captions' matching kept in Spoken (see
 [`DIALOGUEUI-BRIDGE.md`](DIALOGUEUI-BRIDGE.md)).
-**Hide Report Buttons**, in the same settings, takes the icon away with every other Report button,
+**Hide Report Buttons**, in Spoken's settings, takes the icon away with every other Report button,
 the quest log's included, except where it contributes; each addon asks
 `Spoken:AreReportButtonsHidden()` and redraws on the player's `REPORT_SETTINGS_CHANGED` callback.
 
-Clicking it opens the same copy box `ReportButton.lua` uses, holding a plain-text envelope
-instead of an address: the addon, the build, the locale, the quest or NPC, and the text
-itself. The client still cannot open a browser or post anywhere, so the player copies it,
-opens `spoken.rusty.one/contribute`, pastes, sees a field-by-field preview of exactly what is
-about to be sent, and submits.
+Clicking it opens Spoken's contribute box (`UI/ContributeBox.lua`). It holds a link to
+`spoken.rusty.one/contribute` that carries an envelope: the addon, the build, the locale, the
+quest or NPC, and the text itself. Where no link can be built it holds the envelope and the
+address to paste. The client still cannot open a browser or post anywhere, so the player copies
+it, opens it, sees a field-by-field preview of exactly what is about to be sent, and submits.
+The first click ever asks whether to send just that line or to collect as the player plays:
+**Collect Missing Lines** (`Gather.lua`, `/sp collect`) keeps every line Spoken is missing in
+`SpokenContributions.lua`, which the player uploads at `/contribute` (`/sp send` says how).
 
 The same text pasted again — by the same player or a different one — bumps a count on the
 existing row rather than filing a second one; different text under the same key stays its own
@@ -963,7 +997,9 @@ client knows which words those were — so a contributed line is a template like
 one: stored as `originalText`, spoken as `Adventurer`/`Traveler` by the extract's own table,
 and hashed on the template when it is gossip. Class and race are swapped wherever they occur as
 whole words, so a warrior's "a warrior's discipline" arrives as "a `$c`'s discipline"; that
-false positive is accepted over voicing one player's class at everyone. The contribution's id on its speaker row, or its note on the first
+false positive is accepted over voicing one player's class at everyone, except on a quest only
+that class can take (the Compendium's `classes` is that one class), where the class is left as
+written. The contribution's id on its speaker row, or its note on the first
 version of a line it wrote without one, is the mark, not the line's origin, because an edit
 puts an `edited` version on top. A contributed speaker is what `corpus_db.py`'s import leaves
 alone when it replaces every extracted speaker, and it numbers from 1,000,000 so a re-import
@@ -1264,24 +1300,22 @@ it over every line, use `apps/web/scripts/relink-gossip.mts`; `--dry-run` lists 
 ## Addon Install
 
 ```bash
-python cli-main.py install --force        # dist/<module> -> the AddOns folder
+python cli-main.py install --force --addons "<WoW folder>/_classic_beta_/Interface/AddOns"
 ```
 
-`install` targets `_classic_era_` by default (`--addons` for another path) and moves any
-existing install aside to `<module>.replaced` rather than deleting it. The addon itself is a
-separate folder in the same AddOns directory; symlink both for faster development:
+`install` copies a built pack from `dist/` into the AddOns folder. Its default is a macOS
+`_classic_era_` folder, so pass `--addons` for Forever (`_classic_beta_`). It moves any existing
+install aside to `<module>.replaced` rather than deleting it. The addons are `addons/Spoken` and
+the modules beside it, and Quests needs Spoken. To run a checkout's code, the repo's
+`/link-addon` skill links every addon folder into a client (`beta`, the default, is Forever)
+and `/reload` loads it. It skips the audio packs, whose mp3s are not in git, so install a pack
+with the command above.
 
-```bash
-export WOW_DIR=PATH_OF_YOUR_WOW_DIR
-ln -s "$PWD/Spoken_Quests" "$WOW_DIR/_classic_era_/Interface/AddOns/Spoken_Quests"
-ln -s "$PWD/dist/SpokenQuestsAudio" "$WOW_DIR/_classic_era_/Interface/AddOns/SpokenQuestsAudio"
-```
-
-Use `Spoken_Quests/` on a current client. Upstream `AI_VoiceOver/` calls
+Use `Spoken_Quests` and not upstream's `AI_VoiceOver/`, which calls
 `GetNumAddOns`, `GetAddOnMetadata` and `LoadAddOn`, which Blizzard moved to `C_AddOns` in
 10.2 and removed in 11.0.2, so on Classic Era 1.15.9 it errors while enumerating and the
 sound pack never registers. Install one player, never two — two copies fight over the same
-`VoiceOverDB` and the same sound queue. `SUPERSEDED_PLAYERS` at the top of `VoiceOver.lua`
+saved variables and the same sound queue. `SUPERSEDED_PLAYERS` at the top of `VoiceOver.lua`
 pairs upstream's players with the folders they install into — `AI_VoiceOver` and
 `AI_VoiceOver_Continued` — and each one found is stopped by AceAddon name for the session and
 disabled by folder for the next login. This project's own old folder, `VoiceOverRedux`, is
@@ -1303,7 +1337,8 @@ quest hooks after it still have to be installed.
 **The rename.** The player was `AI_VoiceOver_Continued` and the pack `AI_VoiceOverData_Vanilla`
 until this project had diverged far enough from upstream that carrying its name was
 misleading; they became `VoiceOverRedux` and `VoiceOverReduxAudio`, and are `SpokenQuests` and
-`SpokenQuestsAudio` since 2.0.0. An old pack still works —
+`SpokenQuestsAudio` since 2.0.0. The module's folder has been `Spoken_Quests` since 3.0.0-beta.3;
+the old `SpokenQuests` folder is a tombstone. An old pack still works —
 the player finds packs by the `X-SpokenQuests-DataModule-Version` key in the TOC, or the inherited `X-VoiceOver-DataModule-Version` that every shipped pack carries, not by name
 (`DataModules:EnumerateAddons`) — but settings do not survive, because `SavedVariables` live in
 `WTF/…/SavedVariables/<folder>.lua` and the folder is the identity.
@@ -1366,13 +1401,239 @@ not voiced yet, or a line only the fallback language has with the fallback set t
 nothing plays: a borrowed gossip or quest clip would say other words under this line's text.
 The debug log records `followup-no-recording` with the line's id, and `/spq followup` marks
 such a line "no recording yet — silent". A clip that does play is queued behind the turn-in's
-own voiceover rather than over it. The Report button has no address for a follow-up line: it reports what the client
-shows, and by the time the NPC speaks the quest dialog has closed. On the site the explorer
+own voiceover rather than over it. Report on a follow-up line files it under the speaker's `npc/{id}`, since the clip
+carries the speaker and no quest id: by the time the NPC speaks the quest dialog has closed. On the site the explorer
 files one under the speaker's `npc/{id}` address with the line's id, the way it files gossip -
 `quest/{id}/complete` would name the turn-in text instead. The explorer marks these rows with an
 amber speech bubble and "after quest {id}", and the source filter calls them "follow-up"; it
 cannot say whether the line follows the accept or the turn-in, since the corpus row keeps only
 the quest.
+
+### The Quests tab of Azeroth's Compendium
+
+Azeroth's Compendium is Spoken's window (`addons/Spoken/UI/Compendium.lua`, its pages scrolling
+in Spoken's `UI/TextView.lua`). `UI/QuestsTab.lua` adds a Quests tab to it once the world is up,
+first, before Places and Readables; it needs Spoken and no other module. `Compendium.xml` loads
+the tab and its data from the `.toc` files of the clients the window runs on (Forever, Classic
+Era and TBC Anniversary), not on the legacy clients.
+
+Two generated files feed it, both committed so the addon never needs a database:
+
+- `Data/Compendium.lua` (`make quests-compendium`, `tools/export_compendium.py`): every corpus
+  quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
+  the zone of its entrance, else where its giver stands: the area the repack's map files put the
+  spawn in, `COMPENDIUM_MAPS`, as the books' places have it, else the smallest zone rectangle
+  around it, and a city's rectangle over the ground around it), or the QuestSort of a class, profession
+  or season with its name in every language, and the races and classes allowed to take it. Areas,
+  zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, pinned
+  in `pipelines/lib/wago.mjs` and cached in `pipelines/lib/cache/wago/` for every pipeline), which
+  have Forever's zones and sorts (Zephras Isle, Darkspear Islands,
+  Camping, The High Order); Era's (1.15.9.69109) fill in anything they lack. The
+  zone and who may take it come from the Forever repack's TrinityCore world DB
+  (`COMPENDIUM_MYSQL_*`), since the vmangos extraction keeps neither. `ARGS=--no-db` keeps the
+  quests already listed and adds the corpus's new ones, placed by their giver's spawn and open to
+  the races of the side `corpus/factions.json` gives them.
+  A quest the quest log files under a dungeon or a raid (`DUNGEONS`) is placed in the zone of its
+  entrance, wherever its giver stands, with `dungeon`, the dungeon's map: its QuestSortID is the
+  dungeon's own area, an area of its map, or an area of its name (Gnomeregan's quests are under
+  133, an area of Dun Morogh), else the client's `zoneAreaId` is (`Maps.dungeon_of_area`). The
+  dungeons, their entrances' zones and the other instances come from `pipelines/lib/dungeons.json`,
+  which the books' places read too; their names in every language are Spoken's
+  `Data/Dungeons.lua` (`make dungeons`). The Excavation Site in the Wetlands is an instance of the
+  Wetlands' own quests, not a dungeon.
+  Battleground quests are under the battleground: the quest log files a few under an area of its
+  name outside it (`Maps.battleground_of_area`), and a battlemaster's next quest, which it files
+  under no zone or his city, follows the one before it from him (`battleground_follow_ups`). A
+  giver found in four zones or more (any chicken, a battlemaster in every capital) places its
+  quest nowhere (`GENERIC_GIVER_ZONES`).
+  `races` keeps a mask's playable bits (`ChrRaces.PlayableRaceBit`): Classic's eight, bits 0-7,
+  and Forever's Skyborne, 32 (High Order, Alliance) and 33 (Windshaper, Horde), all below 2^53 so
+  a Lua number holds them exactly. The DB's masks are read as Forever's client has them
+  (`db_races`): one naming every Classic race is anyone (the client has the DB's 0xFF and
+  0xFFFFFFFF as everyone), and one side's four Classic races are that side's Skyborne too. The
+  tab tests the bit with arithmetic, `bit.band` being 32-bit, and maps race ids
+  95 and 96 to bits 32 and 33 (`Has` in `UI/QuestsTab.lua`).
+  Most quests one side's giver hands out are open to every race in the DB (`AllowableRaces` 0 or
+  all), so where the DB says anyone, the quest takes the side `corpus/factions.json` gives it,
+  and failing that the side of the quest before it in its chain: a follow-up is reached only
+  through that quest (`quest_races`). The export prints how many quests are still not on the
+  side of the quest before them (`side_leaks`, the audit's leak check).
+  A quest filed under a class's QuestSort that the DB names no class for is that class's
+  (`quest_classes`): Forever's class quests are not in the DB, and without it every class would
+  see them under the class.
+  Each quest that follows another in a chain has `prev`, the quest before it, from the same DB's
+  `quest_template_addon` (`chain_links`): a positive `PrevQuestID`; else the lowest quest whose
+  `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb
+  whose `BreadcrumbForQuestId` names it, where the DB has that column. A negative `PrevQuestID`
+  (the other quest only has to be in the log) is no link. Quests the corpus lacks are passed
+  through, and a link closing a loop is dropped. `--no-db` keeps the links already written.
+  Each quest handed in to another than its giver has `ender`, the creature it is handed in to
+  (`enderObject` for an object), from the same DB's `creature_questender` and
+  `gameobject_questender` (`quest_enders`): of several, the one the corpus has saying its progress
+  or complete line, else its giver, else the lowest creature, then the lowest object. A quest the
+  DB names no one for takes that speaker, and so do the quests `--no-db` adds. The giver it is
+  compared with is the corpus's speaker of the accept line, as the packs' quest log tables have it.
+  The DB has almost none of Forever's own quests, so after it comes Forever's client, as players
+  recorded it: Efficient Games' open data ([EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf),
+  CC BY 4.0, credited in `THIRD_PARTY.md`), `quests.enUS.json` and `npcs.json` of every
+  `wow_classic_beta` build, the latest build's record of a quest winning. Its `zoneAreaId` (a zone
+  through Forever's tables) or `categoryId` (a QuestSort) places a quest the DB does not, before
+  the giver's spawn; a `zoneAreaId` of a Forever area no map shows is placed where players saw
+  its giver (`npcs.json` `offers`, else `takes`, by `positions[].uiMap`). Its `raceMask` limits a
+  quest the DB opens to everyone, before `factions.json`, and its `nextQuestId` links a quest no
+  DB link reaches. It adds and never changes what the DB says. The files are read at one commit
+  of their repository (`EG_COMMIT`), since it grows every day and an export run twice must give
+  the same file; they are fetched once into `tools/cache/efficient-games/<commit>/` and read from
+  there after, offline too. Moving the commit is a deliberate change whose diff is reviewed.
+  The file's header names the client builds and the commit it was made from.
+  `--without-efficient-games` leaves it out.
+  Forever serves quests the corpus has no lines for yet. Each one players were seen being offered
+  or handing in (`npcs.json` `offers`, `takes`) or working on (`objectives.json`), and that the
+  client data has a title for, is listed with `notext = true` (`served_quests`, `without_text`):
+  placed, limited and linked by its client record as above, so the tab lists it with no words
+  until its lines reach the corpus and an export drops the flag. Its page says so
+  (`L.QUEST_NO_WORDS_YET`, "No words yet: this quest has not been recorded."). `--no-db` makes these again on
+  every run; the hand corrections' removals are never listed.
+  Last come the hand corrections, `corpus/compendium_overrides.json` (`load_overrides`,
+  `apply_overrides`, `chain_names`): what neither the DB nor the client data can say, such as a
+  breadcrumb's link, a quest the beta removed, or a chain's name. Each `quests` entry names its
+  quest (`id`) or quests (`ids`) and sets any of `title`, `zones` (uiMapIDs, taking the quest out
+  of its sort), `sort` (a QuestSort, or the word of a group the client has none for, such as
+  `"winterveil"`; 0 for none), `prev` (0 for none), `races`, `classes` and `remove: true`; each
+  `chains` entry names a quest of a chain and the chain's `name`, a quest's id (the client gives
+  its title in its own language) or words with their translations in `names`. Every entry has a
+  `source`, the wiki page or the reason, for a reviewer to check; the export refuses one without.
+  Entries apply in order, so a later one wins. A quest dropped is passed through by the quests
+  after it; an entry for a quest the corpus lacks is printed, not applied, since a quest needs
+  its lines in the corpus before it can be listed. A chain's name is written as `name` on its
+  first quest, so it is the chain's in every zone it crosses. With `--no-db` the quest entries
+  apply to every quest again (each line read back, `parse_quest_line`), so a correction written
+  since the last run with the database takes effect; the chain entries apply to the quests added.
+- `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
+  `tts_cli/quest_text.py`): each quest's accept and complete text (its progress only where it has neither, as its accept), the corpus's
+  `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
+  text; where givers' texts differ, the one most of the moment's lines have, ties to the first in
+  the corpus; ignored lines, and the quests the hand corrections `remove`, are left out. About 2.8 MB, parsed at every login on those clients.
+
+The tab lists only the quests this character's race and class may take. A quest is found once
+the client says it is completed (`C_QuestLog.GetAllCompletedQuestIDs`, else
+`GetQuestsCompleted`, else `IsQuestFlaggedCompleted` one at a time) or while it is in the quest
+log (`C_QuestLog.GetInfo` where the client has it, else `GetQuestLogTitle`; where a collapsed
+header hides some, `C_QuestLog.IsOnQuest` for each quest). A quest in the log and not completed
+is in progress: the gossip window's quest mark before its title, and the mark and "In progress"
+after where it is on its page; zone and group counts include it, and a page's count says how many of them
+are in progress. The list follows the log while it is open (`QUEST_LOG_UPDATE`,
+`QUEST_ACCEPTED`, `QUEST_REMOVED`, drawn again once a burst is over and only when the log's
+quests changed). The rest are locked unless Unlock Unstarted Quests is on, which Spoken's page
+shows in its Compendium section. The filter menu holds Started Only and Voiced Only, which leaves
+out the quests no voice pack has the offer or the hand-in of, with any card or banner left with nothing, and counts
+only what it lists. That switch and both filters are kept in
+`SpokenQuestsSettings.global.Compendium`.
+
+The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
+for each zone with quests (a city a small card inside its zone's); an Other Lands banner holding
+a card for each zone on no continent the client knows (Zephras Isle, whose map hangs under
+Azeroth), as the Places tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong
+Gulch, Arathi Basin and Darkspear Islands, whatever map the client hangs them under (Forever's
+newer client puts Alterac Valley in Hillsbrad Foothills, its older one under Azeroth, where no
+continent's list reached it); a map the client has never heard of (Forever's Zephras Isle and
+Darkspear Islands on Era) has no card, and its quests are neither listed nor counted; then a
+banner each for Classes, Professions (Camping, 666, with them: its quests are Camping 101 for
+one profession or another), Holidays and Events and Other, holding a line of the list for each
+class, profession, season or other QuestSort, and Place Unknown under Other. Banners are for
+continents and types, cards for places alone (zones, cities, dungeons), and everything else is a
+line of the list with what it holds under it. The tab names some groups itself (`GROUP_NAMES`):
+Special (284) is Children's Week, under Events, as it holds nothing else; Reputation (367) is
+Commendation Signets, its hand-ins; Invasion (368) is Scourge Invasion, as the German and
+Chinese clients call it; and the groups the client has no QuestSort for, a word in the data
+(`winterveil`, `hallowsend`, `loveisintheair` and `harvestfestival` under Events, `argentdawn`
+and `library` under Other), take their names from the strings. Inside a zone's card, its
+dungeons' and raids' quests (those with `dungeon`) are the dungeon's card, named as Spoken's
+`Data/Dungeons.lua` names it in the client's language; where the zone has several (Searing Gorge
+holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a card
+for each dungeon under it.
+The tab lands on the player's zone, opened; where it has no quests, or Started Only or Voiced
+Only leaves it out, on the player's continent, as Places and Readables land, else on the first continent
+listed (there is no Azeroth row). A switch in the filter menu that leaves out the chosen row
+(`onHidden`) lands again where the tab chose it, and otherwise chooses the nearest row above it
+that is still listed: a quest's zone or group, a zone's continent. The list is drawn in the game's own art
+(`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
+tracker's campaign header for the player's faction, without its crest, and a card is Classic's
+character select card, both silvered. A zone's card shows its painting (`Spoken:ZoneIcon`) in the
+collections window's frame, silvered as the card is, greyed with none started; a dungeon's card a
+key in the same frame. On the card's
+right, level with its name, are the quest mark with how many of its quests
+are in progress, the quests completed out of all and the share completed (or, once all are, the
+quest log's gold tick), and the Pet Journal's bar along its foot is filled as far. A banner counts
+completed out of all. A quest's row has the gold tick once completed and the quest mark while in progress.
+Chosen, a banner's, card's or line's page has one line under its name, what holds it and its
+count, parted by " · ". A place is "In" its holder ("In Eastern Kingdoms · 1 of 88 completed, 2 in
+progress"): a zone is in its continent, Other Lands or Battlegrounds, a city in its zone, a
+continent, Other Lands and Battlegrounds in Azeroth, and a dungeon in the zone of its entrance. A class, profession or season
+and Place Unknown are no place, and are named as they are: their line names their section
+("Classes · 3 of 7 completed"), and a chain's line under one names it ("Mage · …"). The sections
+have nothing above them, and their line is the count alone. A quest's page says where it is: "In"
+its zones (the first two, and how many more: "In Elwynn Forest, Westfall and 1 more"), else its
+section and its group ("Classes · Mage"), else "Other · Place Unknown". Where something holds
+what is chosen, the line is plain words: it leads nowhere.
+
+In each zone, class, profession, season or Place Unknown, the quests of one chain (two or more
+there, linked by `prev`) are a line of the list of their own, before the quests in no chain. The
+line has the chain's name, the same in every zone the chain crosses: the `name` the data gives the
+chain's first quest (a quest's id, whose title the client gives in its own language, or words by
+language), else the title of the chain's first quest this character may take, wherever that
+quest is (`ChainName`): Rude Awakening, the Undead's, does not name the chain an Orc joins later.
+Where one place has two or more chains of one name (Warsong Gulch's six Fight for Warsong Gulch),
+each is numbered on its line and its page, "Fight for Warsong Gulch (2)", in the order of their
+first quests' ids. The line has no badge or bar; its numbers count its quests as a zone's card
+does. A chain that runs through several zones has a line in each, for its quests there. Chosen, a chain's page has
+its name, what lists it (the zone, dungeon or group that holds it) and how many of its quests
+are completed and in progress, and asks for one of its quests
+to be chosen from the list; it has no Play. The client has no chain of its own, so without `prev`
+in the data every quest is a row of its own.
+
+The page fills the placeholders for the player as the client does. A started quest's page shows
+its offer; its hand-in, with its Play and Report, shows only once the quest is completed, or with
+Unlock Unstarted Quests on, since it tells how the quest ends. The progress, said while the quest
+is under way, has no part on the page: it is not shown or played there, and Voiced Only counts
+only the offer and the hand-in, so a quest voiced only in its progress counts as unvoiced. Each
+part's Play plays that part. A part is named and pictured for who says it: the offer for the
+quest's giver, as the quest log's Play is, and the hand-in for the one it is handed in to
+(`ender` or `enderObject`, else the giver). The offer's part is named Description, by the
+client's own `QUEST_DESCRIPTION` (the heading of a quest's text in its quest window) where it has
+one, else `L.QUEST_PART_ACCEPT`; the hand-in's is Completion. Each part is headed as
+the Small Window heads a line, with DialogueUI installed or not: the speaker's round face
+(`Spoken:CreateSpeakerFace`, 44 across) with the part's badge, their name over the part's name
+beside it, the two centred on the face together, and the part's Report (every part, voiced or
+not: the site's report page takes a line with no recording) and its Play (where a pack voices
+it) at the right on the face's middle. A creature the client has not cached
+shows the book until it has, one never cached or no one known keeps the book, and an object or
+an item shows the quest's item, else a posted notice. Shift-click on a quest's row hands its first part
+shown that a pack voices (its accept line, else its complete line) to `Player:Enqueue`, behind
+what the queue holds, and leaves the selection and the page as they were; a line already queued
+is not queued again. The page shown with no quest chosen says so.
+
+A zone's, city's, continent's or dungeon's page shows Spoken Places' picture of the place above its
+words where Places has one (`SpokenCompendium.PlacePicture`).
+
+Open in Azeroth's Compendium (`UI/OpenInCompendium.lua`) is Spoken Places' lore-page button for
+quests: the Compendium's tome in the player's round button, opening the tab on the quest with its
+zone, continent or group opened and its page shown (`QuestsTab:Open(questID)`), though Started
+Only or Voiced Only leaves its row out of the list, which keeps its filters. It shows, with Quests
+on, for a quest this character may take whose page shows its words: started, or any with Unlock
+Unstarted Quests on, and switching that refreshes the buttons on the windows open. It is on the
+quest giver's window, left of Listen or Contribute
+in the strip under the close button, or in that corner; in Classic Era's quest log, at the top
+right of the selected quest's details; in the map's quest log (Forever), left of the details
+view's Play, Report or Contribute; and in DialogueUI's window, at the left end of Spoken's row on
+a quest page (`UI/DialogueUIBridge.lua`). DialogueUI hides the rest of the interface while it is
+up, so that one closes DialogueUI's window before the Compendium opens.
+
+On a client in another language, `QUEST_DETAIL` and `QUEST_COMPLETE` keep the window's title and
+words in `SpokenQuestsSettings.global.CompendiumText[locale][questID]`, shown over the English;
+`QUEST_PROGRESS` keeps the title alone. The player's name, class and race go back to `$N`, `$C` and `$R` where the
+English has them, so another character sees its own. A text kept by a character of the other sex
+is not shown where the English has a `$G`. An English client keeps nothing.
 
 ## Tests
 
@@ -1460,7 +1721,7 @@ own, which is what `SetPlayButtonState` calls instead of swapping the icon.
 The web suite runs against a **real Postgres**, because the invariants it protects — archive
 the current take before anything overwrites it, never hand the same file to two jobs — live in
 schema constraints rather than in code. It reads `DATABASE_URL` from the environment or from
-`web/.env.local`, and runs one file at a time, since claiming from a shared queue is global by
+`apps/web/.env.local`, and runs one file at a time, since claiming from a shared queue is global by
 definition. `audio.test.ts` is the one that stops a naming change going unnoticed: it asserts
 every file in the store is addressed by some corpus line.
 

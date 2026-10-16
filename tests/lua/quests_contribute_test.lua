@@ -9,7 +9,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 -- The loader quest_dispatch_test.lua and quest_overlay_test.lua use: it boots the player
 -- itself, so there is no separate stub.LoadSpoken call here.
 local VoiceOver = stub.LoadQuests(QUESTS, SPOKEN)
@@ -33,6 +33,7 @@ world.npcGUID = "Creature-0-0-0-0-12345-0"
 stub.ShowPanel("QuestFrameDetailPanel")
 
 local envelope = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-accept", envelope)
 Expect("the source is quests", envelope:match("^!SPOKEN1 quests\n") ~= nil, true)
 Expect("the quest id is carried", envelope:match("\nquest=9123\n") ~= nil, true)
 Expect("the event is the panel on screen", envelope:match("\nevent=accept\n") ~= nil, true)
@@ -50,6 +51,7 @@ Expect("the addon field carries the real .toc version, not the \"dev\" fallback"
 stub.HidePanels()
 stub.ShowGossip("We stand ready.")
 local gossip = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-gossip", gossip)
 Expect("gossip carries the npc and no quest", gossip:match("\nquest=") == nil, true)
 Expect("...and the gossip text", gossip:match("\nWe stand ready%.\n") ~= nil, true)
 
@@ -72,6 +74,23 @@ world.questText = "Eine Kriegerin, Tester."
 local inflected = VoiceOver.Contribute:Capture()
 Expect("...and the class in either gender's form", inflected:match("\nEine %$C, %$N%.\n") ~= nil, true)
 _G.LOCALIZED_CLASS_NAMES_FEMALE = nil
+
+-- A quest only the reader's class can take says the class as its own word, not as the reader's.
+world.playerClass, world.playerClassFile, world.playerClassID = "Paladin", "PALADIN", 2
+world.questText = "Tester, a paladin must reflect the Light."
+_G.SpokenQuestsCompendium = { quests = { [9123] = { "A Rough Start", classes = 2 } } }
+Expect("a quest only that class can take keeps the class as written",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a paladin must reflect the Light.")
+Expect("...also from the quest log",
+    VoiceOver.Contribute:Detemplate("A paladin, Tester.", 9123), "A paladin, $N.")
+_G.SpokenQuestsCompendium.quests[9123].classes = 2 + 4
+Expect("a quest two classes can take still puts the reader's class back",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a $c must reflect the Light.")
+_G.SpokenQuestsCompendium.quests[9123].classes = nil
+Expect("...as does a quest open to every class",
+    VoiceOver.Contribute:Capture():match("\n([^\n]*Light%.)\n"), "$N, a $c must reflect the Light.")
+_G.SpokenQuestsCompendium = nil
+world.playerClassID = nil
 
 world.playerName = "Valaas Dawnsight"
 world.questText = "Greetings, young Valaas. The Dawnsight name is known, Valaas Dawnsight."
@@ -268,6 +287,7 @@ Expect("firing the callback hides the probe immediately, before any click",
     stub.playerModel and stub.playerModel.shown, false)
 
 local seen = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-observed", seen)
 Expect("the model file id is reported once the load has fired", seen:match("\nmodel=122055\n") ~= nil, true)
 Expect("the sex the client reports is carried too", seen:match("\nsex=2\n") ~= nil, true)
 Expect("the creature type is carried", seen:match("\ncreature=Humanoid\n") ~= nil, true)
@@ -548,6 +568,7 @@ _G.C_Container = {
 }
 stub.ShowPanel("QuestFrameDetailPanel")
 local item = VoiceOver.Contribute:Capture()
+H.WriteCapturedFixture(here, "quests-item", item)
 Expect("an item that starts the quest is reported as an item", item:match("\nkind=item\n") ~= nil, true)
 Expect("...named by the bag item whose quest is on screen",
     item:match("\nnpc=211315 Underground Map\n") ~= nil, true)

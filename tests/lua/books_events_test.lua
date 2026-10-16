@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 _G.SpokenBooksAudioPacks = {
@@ -28,12 +28,12 @@ local function LoadBooks()
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
         "UI/PlayButton", "Events", "Commands" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Books", SpokenBooks)
+        chunk("Spoken_Readables", SpokenBooks)
     end
     return SpokenBooks
 end
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
@@ -77,7 +77,7 @@ Expect("...and remembers where the reader is", B.lastPage, 262)
 
 ---------------------------------------------------------------- closing it
 -- The frame goes before the event does: ItemTextGetText() answers nil from here, which is
--- what the client actually does and what makes `/spb read` afterwards a no-op.
+-- what the client actually does and what makes `/spw read` afterwards a no-op.
 stub.ClosePage()
 stub.FireEvent("ITEM_TEXT_CLOSED")
 Expect("closing the book does not stop narration", Reading(), 3)
@@ -112,36 +112,40 @@ B:StopReading()
 SpokenBooksSettings.autoplay = true
 
 ---------------------------------------------------------------- the slash command
-SlashCmdList["SPOKENBOOKS"]("autoplay")
-Expect("/spb autoplay toggles it", SpokenBooksSettings.autoplay, false)
-SlashCmdList["SPOKENBOOKS"]("autoplay")
+Expect("the commands are /spokenreadables and /spr, and /spokenwritings, /spw, /spokenbooks and /spb still work",
+    table.concat({ SLASH_SPOKENWRITINGS1, SLASH_SPOKENWRITINGS2, SLASH_SPOKENWRITINGS3, SLASH_SPOKENWRITINGS4,
+        SLASH_SPOKENWRITINGS5, SLASH_SPOKENWRITINGS6 }, " "),
+    "/spokenreadables /spr /spokenwritings /spw /spokenbooks /spb")
+SlashCmdList["SPOKENWRITINGS"]("autoplay")
+Expect("/spw autoplay toggles it", SpokenBooksSettings.autoplay, false)
+SlashCmdList["SPOKENWRITINGS"]("autoplay")
 Expect("...and back", SpokenBooksSettings.autoplay, true)
 
-SlashCmdList["SPOKENBOOKS"]("whole")
-Expect("/spb whole toggles whole-book reading", SpokenBooksSettings.readWholeBook, false)
-SlashCmdList["SPOKENBOOKS"]("whole")
+SlashCmdList["SPOKENWRITINGS"]("whole")
+Expect("/spw whole toggles whole-book reading", SpokenBooksSettings.readWholeBook, false)
+SlashCmdList["SPOKENWRITINGS"]("whole")
 
 stub.ClosePage()
 stub.FireEvent("ITEM_TEXT_CLOSED")
-SlashCmdList["SPOKENBOOKS"]("read")
-Expect("/spb read with no book open queues nothing", #QueuedPages(), 0)
+SlashCmdList["SPOKENWRITINGS"]("read")
+Expect("/spw read with no book open queues nothing", #QueuedPages(), 0)
 
--- With the page already queued, /spb read says why nothing new started: reading, or stopped.
+-- With the page already queued, /spw read says why nothing new started: reading, or stopped.
 do
     local said
     local chat = _G.DEFAULT_CHAT_FRAME.AddMessage
     _G.DEFAULT_CHAT_FRAME.AddMessage = function(_, message) said = message end
     stub.ShowPage({ title = "Hillsbrad Town Registry", number = 1, text = REGISTRY_1, hasNext = true })
     stub.FireEvent("ITEM_TEXT_READY")
-    SlashCmdList["SPOKENBOOKS"]("read")
-    Expect("/spb read on the page being read says so", said and said:find("already reading") ~= nil, true)
+    SlashCmdList["SPOKENWRITINGS"]("read")
+    Expect("/spw read on the page being read says so", said and said:find("already reading") ~= nil, true)
     Spoken:Pause()
-    SlashCmdList["SPOKENBOOKS"]("read")
+    SlashCmdList["SPOKENWRITINGS"]("read")
     Expect("...and on a stopped one, that Spoken is stopped", said and said:find("Spoken is stopped") ~= nil, true)
     Spoken:Resume()
     stub.ShowPage({ title = "Hillsbrad Town Registry", number = 2, text = REGISTRY_2, hasNext = true })
     stub.FireEvent("ITEM_TEXT_READY")
-    SlashCmdList["SPOKENBOOKS"]("read")
+    SlashCmdList["SPOKENWRITINGS"]("read")
     Expect("...and on a page of it still to come, that it is coming", said and said:find("still to come") ~= nil, true)
     B:StopReading()
     stub.ClosePage()
@@ -221,6 +225,21 @@ Expect("...and offers to start it again", button:GetText(), "Play")
 button.scripts.OnClick(button)
 Expect("pressing it again reads the book", Reading(), 3)
 Expect("...whatever autoplay and read-once say", button:GetText(), "Stop")
+
+-- Open in Azeroth's Compendium beside it, for a writing whose page the Compendium shows.
+local open, opened = B.openButton, nil
+local has, show = B.CompendiumHas, B.ShowReadables
+B.CompendiumHas = function(_, book) return book ~= nil end
+B.ShowReadables = function(_, book) opened = book end
+B:RefreshPlayButton()
+Expect("Open in Azeroth's Compendium beside Play, for a writing the Compendium shows",
+    open ~= nil and open:IsShown() and open.anchor.relativeTo == button and open.anchor.point, "RIGHT")
+open.scripts.OnClick(open)
+Expect("...opening its tab on the book", opened ~= nil and opened == B:PlaceOf(B:PageOnScreen()), true)
+B.CompendiumHas = function() return false end
+B:RefreshPlayButton()
+Expect("...and none for one it does not", open:IsShown(), false)
+B.CompendiumHas, B.ShowReadables = has, show
 
 -- Mail is not a book, and a button on a letter would be an invitation to read somebody's
 -- post aloud.

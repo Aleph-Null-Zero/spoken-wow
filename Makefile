@@ -1,10 +1,10 @@
 # Spoken -- the dispatcher.
 #
-# The two projects keep their own Makefiles. They collide on fifteen target names
-# (help, package, release, push, pull, rollback and the rest) and each target is
+# The four projects (quests, zones, books and web) keep their own Makefiles. They share about
+# thirty target names (help, package, release, pull, sync and the rest) and each target is
 # commented with the failure it exists to prevent, several of them guarding an
 # rsync --delete against audio that cannot be regenerated. Merging them is a
-# semantic rewrite of about a hundred targets with nothing to show for it, so
+# semantic rewrite of well over a hundred targets with nothing to show for it, so
 # they are dispatched instead and the prefix disambiguates:
 #
 #     make quests-package        ->  make -f make/quests.mk package
@@ -12,7 +12,7 @@
 #     make web-dev               ->  make -f make/web.mk    dev
 #     make books-extract         ->  make -f make/books.mk  extract
 #
-# Both .mk files use paths relative to the repo root, so they must be run from
+# Every .mk file uses paths relative to the repo root, so they must be run from
 # here -- which is what the pattern rules below guarantee.
 
 .DEFAULT_GOAL := help
@@ -20,9 +20,10 @@
 LUA ?= $(shell command -v luajit || command -v lua5.1)
 
 .PHONY: help test test-player contribute-fixtures lint package-all \
-        package-spoken package-spoken-retired package-spoken-all release-spoken-all release-spoken-all-dry \
+        package-spoken package-spoken-retired package-spoken-all release-spoken release-spoken-dry \
+        release-spoken-all release-spoken-all-dry \
         descriptions descriptions-check descriptions-published \
-        character-models \
+        character-models dungeons \
         audio-release audio-release-dry
 
 help: ## Show this help
@@ -51,6 +52,9 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@[ -n "$(LUA)" ] || { echo "No luajit found: brew install luajit"; exit 1; }
 	@$(LUA) tests/lua/quest_dispatch_test.lua
 	@$(LUA) tests/lua/quest_autoplay_test.lua
+	@$(LUA) tests/lua/gossip_part_test.lua
+	@$(LUA) tests/lua/gossip_page_test.lua
+	@$(LUA) tests/lua/quests_saved_settings_test.lua
 	@$(LUA) tests/lua/gossip_frequency_test.lua
 	@$(LUA) tests/lua/quest_overlay_test.lua
 	@$(LUA) tests/lua/quest_followup_test.lua
@@ -58,26 +62,33 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/easter_egg_test.lua
 	@$(LUA) tests/lua/sound_utils_test.lua
 	@$(LUA) tests/lua/other_sounds_test.lua
+	@$(LUA) tests/lua/background_sound_test.lua
 	@$(LUA) tests/lua/parts_test.lua
 	@$(LUA) tests/lua/settings_ux_test.lua
 	@$(LUA) tests/lua/settings_legacy_test.lua
 	@$(LUA) tests/lua/settings_art_test.lua
-	@for lang in enUS deDE esES frFR ptBR ruRU koKR zhCN zhTW; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
+	@for lang in enUS deDE esES esMX frFR ptBR ruRU koKR zhCN zhTW itIT; do $(LUA) tests/lua/settings_fit_test.lua $$lang || exit 1; done
 	@$(LUA) tests/lua/settings_audit_test.lua
 	@$(LUA) tests/lua/queue_test.lua
+	@$(LUA) tests/lua/battlegrounds_test.lua
+	@$(LUA) tests/lua/secret_values_test.lua
 	@$(LUA) tests/lua/developer_hooks_test.lua
 	@$(LUA) tests/lua/developer_log_test.lua
 	@$(LUA) tests/lua/quests_log_test.lua
 	@$(LUA) tests/lua/sources_test.lua
 	@$(LUA) tests/lua/api_contract_test.lua
 	@$(LUA) tests/lua/contribute_envelope_test.lua
+	@$(LUA) tests/lua/report_url_contract_test.lua
 	@$(LUA) tests/lua/contribute_toc_test.lua
 	@$(LUA) tests/lua/transcript_toc_test.lua
+	@$(LUA) tests/lua/interface_numbers_test.lua
 	@$(LUA) tests/lua/contribute_box_test.lua
 	@$(LUA) tests/lua/quests_contribute_test.lua
 	@$(LUA) tests/lua/player_frame_test.lua
+	@$(LUA) tests/lua/snap_test.lua
 	@$(LUA) tests/lua/player_dialogueui_style_test.lua
 	@$(LUA) tests/lua/minimal_window_test.lua
+	@$(LUA) tests/minimal-classic/verify.lua
 	@$(LUA) tests/captions/verify.lua
 	@$(LUA) tests/lua/zones_source_test.lua
 	@$(LUA) tests/lua/zones_flight_test.lua
@@ -89,11 +100,12 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/data_modules_test.lua
 	@$(LUA) tests/lua/quests_language_test.lua
 	@$(LUA) tests/lua/quest_voice_files_test.lua
-	@$(LUA) tests/lua/player_required_test.lua
+	@$(LUA) tests/lua/quests_no_packs_test.lua
 	@$(LUA) tests/lua/duplicate_player_test.lua
 	@$(LUA) tests/lua/zones_options_test.lua
 	@$(LUA) tests/lua/zones_test_line_test.lua
 	@$(LUA) tests/lua/zones_lore_ui_test.lua
+	@$(LUA) tests/lua/zones_lands_test.lua
 	@$(LUA) tests/lua/zones_map_click_test.lua
 	@$(LUA) tests/lua/zones_map_highlight_test.lua
 	@$(LUA) tests/lua/zones_area_at_test.lua
@@ -108,6 +120,9 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/quests_dialogueui_test.lua
 	@$(LUA) tests/lua/books_source_test.lua
 	@$(LUA) tests/lua/books_options_test.lua
+	@$(LUA) tests/lua/module_settings_test.lua
+	@$(LUA) tests/lua/module_profiles_test.lua
+	@$(LUA) tests/lua/locale_parity_test.lua
 	@$(LUA) tests/lua/books_reader_test.lua
 	@$(LUA) tests/lua/books_playlist_test.lua
 	@$(LUA) tests/lua/books_dialogueui_test.lua
@@ -115,19 +130,32 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/books_close_test.lua
 	@$(LUA) tests/lua/books_contribute_test.lua
 	@$(LUA) tests/lua/books_readables_test.lua
+	@$(LUA) tests/lua/quests_compendium_test.lua
+	@$(LUA) tests/lua/quests_shift_queue_test.lua
+	@$(LUA) tests/lua/quests_compendium_races_test.lua
 	@$(LUA) tests/lua/books_language_test.lua
 	@$(LUA) tests/lua/gather_test.lua
 	@$(LUA) tests/lua/zones_contribute_test.lua
 	@$(LUA) tests/lua/zones_language_test.lua
 	@$(LUA) tests/lua/zones_each_place_once_test.lua
 	@$(LUA) tests/lua/zones_city_test.lua
+	@$(LUA) tests/lua/zones_dungeons_test.lua
+	@$(LUA) tests/lua/zones_story_place_test.lua
+	@$(LUA) tests/lua/zones_area_zones_test.lua
+	@$(LUA) tests/lua/zones_forever_places_test.lua
 	@$(LUA) tests/lua/minimap_compartment_test.lua
 	@$(LUA) tests/lua/bronze_rings_test.lua
 
 # Rewrite the envelope fixtures the TypeScript reader is tested against. A diff here is the
-# wire format changing, and that is a change the reader's tests must be part of.
+# wire format changing, and that is a change the reader's tests must be part of. The
+# captured-* ones are what the modules' own Capture functions produce in their tests, and
+# report-urls.txt the report addresses the site's report-urls.test.ts resolves.
 contribute-fixtures:
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/contribute_envelope_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/report_url_contract_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/quests_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/zones_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/books_contribute_test.lua
 
 # The Python half needs its own venv:
 #
@@ -137,9 +165,9 @@ contribute-fixtures:
 # tests/test_corpus.py skips itself without pandas, which is in requirements-extract.txt and
 # pinned at a version with no wheel for this Python. See docs/quests/README.md#tests.
 
-test: test-player ## Everything: both webs, the Python pipeline, the addons
+test: test-player ## Everything: the site, the Node and Python pipelines, the addons
 	@pnpm -r test
-	@node --test scripts/lib/*.test.mjs scripts/audio/*.test.mjs
+	@node --test scripts/lib/*.test.mjs scripts/audio/*.test.mjs pipelines/lib/*.test.mjs
 	@[ -x pipelines/quests/.venv/bin/python ] || { \
 	  echo "No venv at pipelines/quests/.venv -- see the comment above 'test' in the Makefile"; \
 	  exit 1; }
@@ -148,9 +176,11 @@ test: test-player ## Everything: both webs, the Python pipeline, the addons
 lint: ## The checks CI gates on
 	@pnpm -r typecheck
 	@node scripts/check-addon-xml.mjs
+	@./scripts/spoken/check-changelog.sh
 	@node pipelines/zones/tools/validate.mjs
 	@node scripts/descriptions.mjs --check
 	@node pipelines/zones/tools/locale/check-strings.mjs
+	@node pipelines/zones/tools/locale/build-languages.mjs --check
 
 # The store project pages, for every addon. One tool over publishers/*/ rather than one
 # per project: the pages are the same shape, and a second copy of this would be a second place
@@ -170,6 +200,12 @@ descriptions-published: ## Record the current descriptions as pasted into the si
 
 # Not a target that runs itself -- scripts/character-models.mjs takes the listfile on stdin
 # so this step never pulls 152 MB on its own. Run it by hand when a new race ships.
+
+# The dungeons the quests' and books' exporters file things under, and the one table the addon
+# reads (Spoken/Data/Dungeons.lua), both from pipelines/lib/dungeons.json. Run it after editing
+# that file, then the exporters that read it.
+dungeons: ## Rebuild addons/Spoken/Data/Dungeons.lua from pipelines/lib/dungeons.json and the client's Map table
+	@node pipelines/lib/dungeons.mjs
 
 character-models: ## Print how to regenerate apps/web/src/lib/npc/character-models.json
 	@sed -n '2,10p' scripts/character-models.mjs | sed -e 's/^\/\/ //' -e 's/^\/\/$$//'
@@ -204,10 +240,19 @@ package-all: ## Build every addon zip: Spoken with its modules, then quests and 
 	@$(MAKE) --no-print-directory -f make/quests.mk package
 	@$(MAKE) --no-print-directory -f make/zones.mk  package
 
-# Spoken's download: Spoken and its three modules in one zip, each module built by its own
+# Spoken's download: Spoken and its four modules in one zip, each module built by its own
 # packager. No sound packs; scripts/spoken/package.sh says why.
-package-spoken: ## Zip Spoken with its modules, Quests, Books and Zones, without the sound packs
+package-spoken: ## Zip Spoken with its modules, Quests, Places and Readables, without the sound packs
 	@./scripts/spoken/package.sh
+
+# Spoken's release: the zip package-spoken built, to both stores, with its changelog section
+# as the notes. scripts/spoken/release.sh refuses a version whose notes are still under
+# ## Unreleased.
+release-spoken-dry: ## Check Spoken's release and show what uploading it would send
+	@./scripts/spoken/release.sh --dry-run
+
+release-spoken: ## Upload Spoken's zip to CurseForge and Wago (build it with package-spoken first)
+	@./scripts/spoken/release.sh
 
 # The last release of each retired project, spoken-quests, spoken-zones and spoken-books: a
 # tombstone under the folder name it shipped, so updating it leaves the old module nothing to

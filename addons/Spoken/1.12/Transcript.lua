@@ -26,6 +26,4 @@ function Transcript:Reset() end
 function Transcript:RefreshConfig() end
 function Transcript:ScrollMode() return "off" end
 function Transcript:SetStyle() end
-function Transcript:GetScroll() return 1, 1 end
-function Transcript:ScrollTo() end
 function Transcript:Describe() return "transcript: not available on this client" end

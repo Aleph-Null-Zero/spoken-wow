@@ -15,9 +15,9 @@
     <Include file="Locale\zhCN.lua"/>
     <Include file="Locale\zhTW.lua"/>
     <Include file="Locale\Names\Names.xml"/>
-    <Include file="UI\Layout.lua"/>
     <Include file="Options.lua"/>
     <Include file="UI\SettingsPanel.lua"/>
+    <Include file="UI\GossipSettingsPanel.lua"/>
     <Include file="FuzzySearch.lua"/>
     <Include file="QuestOverlayUI.lua"/>
     <Include file="ReportButton.lua"/>

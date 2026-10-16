@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { readdir } from "node:fs/promises";
 
 import { loadEnvFile } from "../lib/env.mjs";
-import { readLines } from "../lib/loredata.mjs";
+import { readLines, shipped } from "../lib/loredata.mjs";
 import { assignFiles, lineId } from "./naming.mjs";
 import { hasBrackets, loadPronunciation, toSpokenText } from "./normalise.mjs";
 import { LANG, loadManifest, packDir, soundsDir } from "./store.mjs";
@@ -42,6 +42,7 @@ async function main() {
   const rules = await loadPronunciation();
   const files = assignFiles(entries);
   const manifest = await loadManifest();
+  const lore = shipped(entries);
 
   //-- the spoken text is safe for v3 ----------------------------------------
   let bracketed = 0;
@@ -65,13 +66,21 @@ async function main() {
   //-- manifest vs disk ------------------------------------------------------
   const onDisk = new Set(await mp3sOnDisk(soundsDir()));
   const manifestFiles = new Set(Object.values(manifest).map((r) => r.file));
+  // What the lookup lists and the pack ships: a take whose place has no words is left out.
+  const shippedFiles = new Set(
+    Object.entries(manifest).filter(([id]) => lore.has(id)).map(([, r]) => r.file),
+  );
 
   for (const [id, record] of Object.entries(manifest)) {
+    if (!lore.has(id)) {
+      note(`${id}: live, but the lore has no words for it; left out of the pack`);
+      continue;
+    }
     if (!onDisk.has(record.file)) problem(`${id}: manifest says ${record.file}.mp3, which is not on disk`);
-    if (!files.has(id)) problem(`${id}: in the manifest but no longer in the lore data`);
   }
   for (const file of onDisk) {
     if (!manifestFiles.has(file)) note(`${file}.mp3 is on disk with no manifest entry (orphan)`);
+    else if (!shippedFiles.has(file)) problem(`${file}.mp3 is on disk but no place with words plays it`);
   }
 
   //-- lookup table vs disk --------------------------------------------------
@@ -85,7 +94,7 @@ async function main() {
     for (const file of referenced) {
       if (!onDisk.has(file)) problem(`lookup table points at ${file}.mp3, which is not on disk (plays silence)`);
     }
-    const missingFromLookup = [...manifestFiles].filter((f) => !referenced.includes(f));
+    const missingFromLookup = [...shippedFiles].filter((f) => !referenced.includes(f));
     if (missingFromLookup.length) {
       problem(`${missingFromLookup.length} generated files are not in the lookup table `
         + "(unreachable in-game) -- run node tools/voice/build-lookup.mjs");

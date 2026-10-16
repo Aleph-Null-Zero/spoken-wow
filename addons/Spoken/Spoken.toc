@@ -23,3 +23,4 @@ embeds.xml
 addon.xml
 Transcript.xml
 Contribute.xml
+Compendium.xml

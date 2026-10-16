@@ -37,6 +37,7 @@ import { listContributions, observationMeta, type Contribution } from "@/lib/con
 import {
   bookFor,
   npcSummaryFrom,
+  packHeard,
   questFor,
   resolveMissing,
   idOnlyResolution,
@@ -335,6 +336,7 @@ export default async function Page({
     source: row.source,
     key: row.key,
     locale: row.locale,
+    pack: packHeard(row),
     client: clientOf(row.build),
     count: row.count,
     text: row.text,

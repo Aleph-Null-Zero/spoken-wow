@@ -7,9 +7,9 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 local ELWYNN, STORMWIND, DUROTAR, ORGRIMMAR = 1429, 1453, 1411, 1454
 local names = { [ELWYNN] = "Elwynn Forest", [STORMWIND] = "Stormwind City", [DUROTAR] = "Durotar", [ORGRIMMAR] = "Orgrimmar" }
 _G.C_Map = _G.C_Map or {}

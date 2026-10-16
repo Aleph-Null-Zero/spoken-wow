@@ -19,6 +19,11 @@ test("spoken text drops the HTML the signed pages carry", () => {
   assert.equal(spokenText("<HTML><BODY><H1>Ledger</H1>Three crates.</BODY></HTML>"), "Ledger Three crates.");
 });
 
+test("spoken text shows an entity as its character, and never as a tag", () => {
+  assert.equal(spokenText("MILITARY RANKS OF THE HORDE &amp; ALLIANCE"), "MILITARY RANKS OF THE HORDE & ALLIANCE");
+  assert.equal(spokenText("<P>1 &lt;b&gt; 2</P>"), "1 <b> 2");
+});
+
 test("spoken text keeps ordinary prose untouched apart from newlines", () => {
   assert.equal(spokenText("Dear sir,\n\nThe rains have come."), "Dear sir, The rains have come.");
 });

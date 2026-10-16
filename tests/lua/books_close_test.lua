@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 _G.SpokenBooksAudioPacks = {
@@ -29,12 +29,12 @@ local function LoadBooks()
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
         "Events", "Commands" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Books", SpokenBooks)
+        chunk("Spoken_Readables", SpokenBooks)
     end
     return SpokenBooks
 end
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
@@ -144,9 +144,9 @@ SpokenBooksAudioPacks.SpokenBooksAudio.pages[265] = voiced
 Reset()
 
 ---------------------------------------------------------------- the command
-SlashCmdList["SPOKENBOOKS"]("close")
-Expect("/spb close toggles it", SpokenBooksSettings.closeWhenRead, false)
-SlashCmdList["SPOKENBOOKS"]("close")
+SlashCmdList["SPOKENWRITINGS"]("close")
+Expect("/spw close toggles it", SpokenBooksSettings.closeWhenRead, false)
+SlashCmdList["SPOKENWRITINGS"]("close")
 Expect("...and back", SpokenBooksSettings.closeWhenRead, true)
 
 print(Failures() == 0 and "All books close tests passed" or (Failures() .. " failed"))

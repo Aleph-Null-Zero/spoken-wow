@@ -36,10 +36,12 @@ end
 
 VO.Addon:OnInitialize()
 VO.DataModules:Register("TestPack", {
-    SoundLengthLookupByFileName = { ["748-accept"] = 1 },
+    SoundLengthLookupByFileName = { ["748-accept"] = 1, ["176-accept"] = 1 },
     -- The quest log has no NPC to ask who gave the quest; the pack says, in English.
     NPCIDLookupByQuestID = { [748] = 2948 },
     NPCNameLookupByNPCID = { [2948] = "Mull Thunderhorn" },
+    ObjectIDLookupByQuestID = { [176] = 5555 },
+    ObjectNameLookupByObjectID = { [5555] = "Wanted Poster" },
     GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
 })
 -- Wait out the deferred data module load that OnInitialize schedules.
@@ -118,8 +120,11 @@ Expect("...once, however often the log is redrawn", stub.SetCreatureCount() - se
 buttons[748]:Click()
 -- Read before the clip ends: the button drops its sound data when playback stops.
 Expect("...under the quest's own title", buttons[748].soundData.title, "Poison Water")
+Expect("...the row's Play wears the player's square dress, with the checkbox's border", type(buttons[748].SetState), "function")
+Expect("...showing Stop while its line speaks", buttons[748].state, "stop")
 stub.Advance(3)
 Expect("clicking play reads the accept line", table.concat(played, ", "), "748-accept")
+Expect("...and Play once it has", buttons[748].state, "play")
 
 -- The giver, named the way the dialog would have: on an English client the pack's name, on
 -- any other the client's own, which the addon ships because the packs only have English.
@@ -135,6 +140,19 @@ Expect("a Russian client names the quest-log giver in Russian", buttons[748].sou
 stub.Advance(3)
 Expect("...and the other languages' files built nothing there", VO.GiverNames.creature[2948], "Мулл Громовой Рог")
 stub.SetLocale("enUS")
+
+-- A quest a poster gives has no face to draw: its Play in the log shows the notice, as the dialog's
+-- line does, and a creature's keeps its face.
+local function Portrait() local clip = _G.Spoken:GetCurrent() return clip and clip.present.portrait end
+buttons[748]:Click()
+Expect("a creature's quest in the log keeps its model", Portrait() and Portrait().kind, "model")
+stub.Advance(3)
+VO.QuestOverlayUI:BindPlayButton(buttons[748], 176, "Wanted: Hogger")
+buttons[748]:Click()
+Expect("a quest from a poster in the log shows a posted notice", Portrait() and Portrait().texture,
+    [[Interface\Icons\INV_Misc_Note_01]])
+stub.Advance(3)
+VO.QuestOverlayUI:BindPlayButton(buttons[748], 748, "Poison Water")
 VO.GiverNames = nil
 
 

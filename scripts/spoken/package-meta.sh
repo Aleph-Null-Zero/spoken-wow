@@ -56,7 +56,7 @@ LUA
 cp "$REPO/pipelines/quests/assets/icon/spoken-player.tga" "$module_dir/icon.tga"
 
 cat > "$module_dir/$NAME.toc" <<TOC
-## Interface: 100000, 11509, 20506, 16001
+## Interface: 100007, 11509, 20506, 16001
 ## Title: $TITLE
 ## Notes: $NOTES|n|nThis addon holds no audio itself. If your addon manager did not fetch the rest with it, install them from CurseForge; |cFFFFD200Spoken Player|r says what is missing.
 ## Version: $VERSION

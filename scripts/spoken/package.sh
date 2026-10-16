@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Builds Spoken's zip for Blizzard's clients: Spoken itself and its modules, Quests, Books
-# and Zones, in one download.
+# Builds Spoken's zip for Blizzard's clients: Spoken itself and its modules, Quests, Places
+# and Readables, in one download.
 #
 #   ./scripts/spoken/package.sh                 # dist/Spoken-<version>.zip
 #   ALLOW_DIRTY=1 ./scripts/spoken/package.sh   # build from an uncommitted tree
@@ -12,13 +12,13 @@
 # There are no legacy-client zips of Spoken: those clients have no addon manager, so the quests
 # addon's 1.12/2.4.3/3.3.5 zips carry Spoken inside them (scripts/quests/package.sh).
 #
-# The modules' folders are Spoken_Quests, Spoken_Books and Spoken_Zones. Their old names,
+# The modules' folders are Spoken_Quests, Spoken_Readables and Spoken_Places. Their old names,
 # SpokenQuests and the rest, belong to the retired CurseForge projects, and this zip carries no
 # tombstone under them: two projects shipping one folder is what the rename exists to stop. The
 # retired projects' last releases carry those (scripts/spoken/package-retired.sh).
 #
-# Spoken_Developer (the debug log and the Developer page) is not in this zip: it is a download of
-# its own (scripts/developer/package.sh), for whoever tries Spoken out or is asked for a log.
+# Spoken_Developer (the debug log and the Developer page) is not in this zip: it is for developers
+# only and never published (scripts/developer/package.sh builds it by hand).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -86,6 +86,10 @@ for toc in "$SRC"/$NAME.toc "$SRC"/${NAME}_*.toc; do
   case "$suffix" in _1.12.toc|_2.4.3.toc|_3.3.5.toc) continue ;; esac
   tombstone_toc "$REPO/addons/$TOMBSTONE/$TOMBSTONE.toc" "$toc" "$staging/$TOMBSTONE/$TOMBSTONE$suffix"
 done
+# The old folder also had _Mainline and _Wrath names; Spoken has none, so those clients read Spoken.toc.
+for suffix in _Mainline _Wrath; do
+  tombstone_toc "$REPO/addons/$TOMBSTONE/$TOMBSTONE.toc" "$TOC" "$staging/$TOMBSTONE/$TOMBSTONE$suffix.toc"
+done
 
 excludes=()
 for client in "${LEGACY_CLIENTS[@]}"; do
@@ -96,16 +100,15 @@ done
 module_packager() {
   case "$1" in
     Spoken_Quests) echo "$REPO/scripts/quests/package.sh" ;;
-    Spoken_Books) echo "$REPO/scripts/books/package.sh" ;;
-    Spoken_Zones) echo "$REPO/scripts/zones/package.sh" ;;
+    Spoken_Readables) echo "$REPO/scripts/books/package.sh" ;;
+    Spoken_Places) echo "$REPO/scripts/zones/package.sh" ;;
   esac
 }
 modules_dist="$(mktemp -d)"
 trap 'rm -rf "$staging" "$modules_dist"' EXIT
 folders=("$NAME" "$STORE" "$TOMBSTONE")
-for module in Spoken_Quests Spoken_Books Spoken_Zones; do
-  module_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$module/$module.toc" | head -1 | tr -d '
-')"
+for module in Spoken_Quests Spoken_Readables Spoken_Places; do
+  module_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$module/$module.toc" | head -1 | tr -d '\r\n')"
   DIST="$modules_dist" "$(module_packager "$module")" >/dev/null
   module_zip="$modules_dist/$module-$module_version.zip"
   [ -f "$module_zip" ] || { echo "error: $(module_packager "$module") did not produce $module_zip" >&2; exit 1; }

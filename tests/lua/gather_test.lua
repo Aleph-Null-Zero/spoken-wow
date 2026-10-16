@@ -8,10 +8,10 @@ local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 stub.SetAddOns({
     { folder = "Spoken_Quests", meta = { Version = "9.9.9" } },
     { folder = "TestPack", meta = { ["X-VoiceOver-DataModule-Version"] = "1", Version = "1.2.1", Title = "TestPack" } },
@@ -22,6 +22,10 @@ local Gather = Spoken.Gather
 
 ------------------------------------------------------------------------------- the store
 Expect("gathering is on until the player opts out", Gather:IsEnabled(), true)
+SlashCmdList.SPOKEN("collect")
+Expect("/sp collect turns it off", Gather:IsEnabled(), false)
+SlashCmdList.SPOKEN("collect")
+Expect("...and on again", Gather:IsEnabled(), true)
 Gather:SetEnabled(false)
 Expect("...so opting out keeps nothing", Gather:Add("q:1:accept:2", "!SPOKEN1 quests\n"), false)
 Expect("...and nothing is counted", Gather:Count(), 0)
@@ -147,7 +151,7 @@ Expect("...counting what is kept", box.body:GetText():match("1 line") ~= nil, tr
 ------------------------------------------------------------------------------- books
 local SpokenBooks = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", SpokenBooks)
+    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", SpokenBooks)
 end
 SpokenBooks:InitDB()
 dofile(BOOKS .. "Data/Books.lua")
