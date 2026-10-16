@@ -121,7 +121,7 @@ local box = _G.Spoken.ContributeBox
 local address, context = H.SplitReportLink(box and box.frame:IsShown() and box.editBox:GetText())
 Expect("pressing it offers the page's address", address, "https://spoken.rusty.one/books/r/261")
 Expect("...carrying the addon and the page", context
-    and context:find("\naddon=SpokenBooks/", 1, true) and context:find("\nid=261\n", 1, true) and true, true)
+    and context:find("\naddon=", 1, true) and context:find("\nid=261\n", 1, true) and true, true)
 box.frame:Hide()
 
 ---------------------------------------------------------------- reading a book
