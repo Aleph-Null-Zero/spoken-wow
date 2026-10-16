@@ -326,7 +326,7 @@ function Minimap:Setup()
                 if head.present.header then tooltip:AddLine(head.present.header, 1, 0.82, 0) end
                 tooltip:AddLine(head.present.label or "", 0.8, 0.8, 0.8)
             end
-            tooltip:AddLine(" ")
+            tooltip:AddLine("v" .. AddonVersion, 0.7, 0.7, 0.7)
             tooltip:AddLine(L.MENU_LEFT, 0.7, 0.7, 0.7)
             tooltip:AddLine(L.MENU_MIDDLE, 0.7, 0.7, 0.7)
             tooltip:AddLine(L.MENU_RIGHT, 0.7, 0.7, 0.7)
