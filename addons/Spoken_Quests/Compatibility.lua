@@ -975,28 +975,6 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                 playButton:SetPoint("RIGHT", report, "RIGHT", 0, 0)
             end
             self:SetPlayButtonState(playButton)
-            -- Once, for the debug log: how the page draws the quest's title, which the Compendium's
-            -- pages are matched to, and what holds it.
-            local title = QuestInfoTitleHeader
-            if not self.recordedTitle and title and title.GetFont then
-                self.recordedTitle = true
-                local ok, text = pcall(function()
-                    local face, size, flags = title:GetFont()
-                    local r, g, b = title:GetTextColor()
-                    local sr, sg, sb, sa = title:GetShadowColor()
-                    local sx, sy = title:GetShadowOffset()
-                    local chain, frame = {}, title:GetParent()
-                    for _ = 1, 5 do
-                        if not frame then break end
-                        chain[#chain + 1] = (frame.GetName and frame:GetName()) or "?"
-                        frame = frame.GetParent and frame:GetParent() or nil
-                    end
-                    return format("font %s %s %s, colour %.2f %.2f %.2f, shadow %.2f %.2f %.2f %.2f offset %s %s, width %s, held by %s",
-                        tostring(face), tostring(size), tostring(flags), r, g, b, sr, sg, sb, sa, tostring(sx), tostring(sy),
-                        tostring(title:GetWidth()), table.concat(chain, " < "))
-                end)
-                Debug:Record("quest-log-title", ok and text or ("failed: " .. tostring(text)))
-            end
         end
 
         hooksecurefunc("QuestMapFrame_ShowQuestDetails", function()
@@ -1043,8 +1021,6 @@ do
             button:SetFrameLevel(block:GetFrameLevel() + 3)
             button:SetPoint("TOPRIGHT", block, "TOPRIGHT", 0, 0)
             buttons[block] = button
-            Debug:Record("tracker-play", format("button on a block %sx%s, header %s", tostring(block:GetWidth()),
-                tostring(block:GetHeight()), tostring(block.HeaderText ~= nil)))
             -- Stopped or replayed from the subtitle or the windows, the glyph follows.
             if not listening and Spoken.RegisterCallback then
                 listening = true
