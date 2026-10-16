@@ -10,17 +10,20 @@ const SECTION_LABELS: Record<Section, string> = {
   zones: "Zones",
 };
 
-const QUEST_VIEWS = [
-  { key: "contributions", label: "Contributions", href: "/contributions/quests" },
-  { key: "corrections", label: "Corrections", href: "/contributions/quests/corrections" },
-] as const;
+function viewsOf(section: "quests" | "books") {
+  return [
+    { key: "contributions", label: "Contributions", href: `/contributions/${section}` },
+    { key: "corrections", label: "Corrections", href: `/contributions/${section}/corrections` },
+  ] as const;
+}
 
-type View = (typeof QUEST_VIEWS)[number]["key"];
+type View = ReturnType<typeof viewsOf>[number]["key"];
 
 /**
- * The sections of /contributions, and under Quests its two views: lines the corpus lacks and
- * corrections to lines it has, which only quests can have. Links, not client state: each is
- * its own page with its own gate. Each tab carries how many new rows wait in it, when given.
+ * The sections of /contributions, and under Quests and Books their two views: lines the corpus
+ * lacks and corrections to lines it has, which only quests and books can have. Links, not client
+ * state: each is its own page with its own gate. Each tab carries how many new rows wait in it,
+ * when given.
  */
 export default function ContributionsTabs({
   lang,
@@ -38,12 +41,18 @@ export default function ContributionsTabs({
     label: counted(SECTION_LABELS[key], pending?.sections[key]),
     href: `/contributions/${key}`,
   }));
-  const views = QUEST_VIEWS.map((tab) => ({ ...tab, label: counted(tab.label, pending?.quests[tab.key]) }));
   return (
     <>
       <LinkTabs label="Contributions" tabs={localised(lang, sections)} active={section} />
-      {section === "quests" ? (
-        <LinkTabs label="Quests" tabs={localised(lang, views)} active={view ?? "contributions"} />
+      {section === "quests" || section === "books" ? (
+        <LinkTabs
+          label={SECTION_LABELS[section]}
+          tabs={localised(
+            lang,
+            viewsOf(section).map((tab) => ({ ...tab, label: counted(tab.label, pending?.[section][tab.key]) })),
+          )}
+          active={view ?? "contributions"}
+        />
       ) : null}
     </>
   );

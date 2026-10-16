@@ -542,7 +542,9 @@ export function Explorer({ books }: { books: BookFacet[] }) {
                 onEditText={setEditFor}
                 onRename={
                   lang !== BASE_LANG && canEdit
-                    ? (l) =>
+                    ? (l) => {
+                        // A page without an owner is named by no entity.
+                        if (!l.ownerKind) return;
                         setNaming(
                           nameSubject({
                             kind: ownerEntityKind(l.ownerKind),
@@ -552,7 +554,8 @@ export function Explorer({ books }: { books: BookFacet[] }) {
                             english: l.englishTitle ?? l.title,
                             current: l.missing?.title ? null : l.title,
                           }),
-                        )
+                        );
+                      }
                     : null
                 }
                 onRestored={(line, version) => {

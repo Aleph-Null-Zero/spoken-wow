@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { booksLua, quote } from "./lua.mjs";
+import { booksLua, indexLua, pageIndex, quote } from "./lua.mjs";
 import { pageChecksum } from "./naming.mjs";
 
 const entries = [
@@ -89,4 +89,19 @@ test("pages that are indistinguishable on screen resolve to the lowest book, det
   ];
   const lua = booksLua(identical);
   assert.match(lua, new RegExp(`\\[1\\] = \\{ \\[${pageChecksum("Same.")}\\] = 30 \\}`));
+});
+
+test("a page is found under each of its texts", () => {
+  const { index } = pageIndex([
+    { pageId: 38, bookId: 38, pageNumber: 1, titles: ["Nota de Wiley"], texts: ["Stoutmantle --", "Mantorrecio:"] },
+  ]);
+  const byChecksum = index.get("Nota de Wiley").get(1);
+  assert.equal(byChecksum.get(pageChecksum("Stoutmantle --")), 38);
+  assert.equal(byChecksum.get(pageChecksum("Mantorrecio:")), 38);
+});
+
+test("a minted page is written as a quoted key", () => {
+  const lines = indexLua(pageIndex([{ pageId: "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11", bookId: "n1", pageNumber: 1, title: "X", text: "Y" }]), "extra");
+  assert.ok(lines.some((line) => line.includes('= "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"')));
+  assert.equal(lines[0], "\textraIndex = {");
 });

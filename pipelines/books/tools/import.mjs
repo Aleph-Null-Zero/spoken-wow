@@ -9,6 +9,8 @@ import { readFile } from "node:fs/promises";
 import pg from "pg";
 
 import { loadEnv } from "../../lib/env.mjs";
+import { foldMinted } from "./lib/absorb.mjs";
+import { bookPageUpsert } from "./lib/page.mjs";
 import { decideImport, structuralDiff } from "./lib/promote.mjs";
 
 // The repo-root .env holds the shared credentials, this pipeline's .env whatever is its
@@ -27,8 +29,17 @@ const pool = new pg.Pool({ connectionString: url });
 
 const counts = { promote: 0, record: 0, skip: 0, restructured: 0 };
 
+// Every book_page upsert shares one transaction: book_page_place is deferred, so pages of a
+// book that swap numbers in one re-extract are checked at commit, not halfway.
+const placing = await pool.connect();
+
 try {
+  await placing.query("begin");
   for (const entry of entries) {
+    // Where the page sits, whatever its text does: the extract owns structure.
+    const placed = bookPageUpsert(entry);
+    await placing.query(placed.text, placed.values);
+
     const { rows } = await pool.query(
       `select "id", "version", "origin", "text", "bookId", "pageNumber", "pageCount",
               "title", "ownerKind", "ownerIds", "material", "generatable", "skipReason"
@@ -103,10 +114,21 @@ try {
     }
   }
 
+  // A minted page whose words turn out to be a real page's folds into it, in the same
+  // transaction as the placing.
+  const folded = await foldMinted(placing);
+
+  await placing.query("commit");
+  console.log(`${folded} minted pages found in the world database`);
+
   console.log(
     `${counts.promote} promoted, ${counts.record} recorded, ${counts.skip} unchanged, ` +
       `${counts.restructured} restructured`,
   );
+} catch (error) {
+  await placing.query("rollback");
+  throw error;
 } finally {
+  placing.release();
   await pool.end();
 }

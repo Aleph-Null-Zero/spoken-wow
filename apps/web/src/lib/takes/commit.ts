@@ -141,6 +141,15 @@ async function insertLive(input: {
         where "source" = $1 and "file" = $2 and "lang" = $3 and "isCurrent"`,
       [source, file, lang],
     );
+    // A page folded into another keeps its old file, so a books page can have live takes under
+    // two files; the new one replaces them all.
+    if (source === "books") {
+      await client.query(
+        `update "take" set "isCurrent" = false
+          where "source" = 'books' and "lineId" = $1 and "lang" = $2 and "isCurrent"`,
+        [fields.lineId, lang],
+      );
+    }
     await client.query(
       `insert into "take"
          ("source", "lang", "file", "lineId", "version", "isCurrent", "origin",

@@ -31,7 +31,7 @@ export type PageFilters = {
   field?: Field;
   ownerKind?: OwnerKind;
   /** A chain's first page. Selects every page of that one book. */
-  bookId?: number;
+  bookId?: string;
   state?: State;
   /**
    * Audio cut before a pronunciation it speaks was changed, and not since judged.
@@ -90,7 +90,7 @@ export function filterParams(filters: PageFilters): URLSearchParams {
   if (filters.q) params.set("q", filters.q);
   if (filters.field && filters.field !== "any") params.set("field", filters.field);
   if (filters.ownerKind) params.set("kind", filters.ownerKind);
-  if (filters.bookId !== undefined) params.set("book", String(filters.bookId));
+  if (filters.bookId !== undefined) params.set("book", filters.bookId);
   if (filters.state) params.set("state", filters.state);
   if (filters.dirty) params.set("dirty", "1");
   if (filters.voiceable) params.set("voiceable", "1");
@@ -110,13 +110,13 @@ function oneOf<T extends string>(value: string | null, allowed: readonly T[]): T
 }
 
 export function filtersFromParams(params: URLSearchParams): PageFilters {
-  const bookId = Number(params.get("book"));
+  const book = params.get("book");
 
   return {
     q: params.get("q") ?? undefined,
     field: oneOf(params.get("field"), FIELDS),
     ownerKind: oneOf(params.get("kind"), OWNER_KINDS),
-    bookId: Number.isFinite(bookId) && bookId > 0 ? bookId : undefined,
+    bookId: book && /^(\d+|n[0-9a-f-]{36})$/.test(book) ? book : undefined,
     state: oneOf(params.get("state"), STATES),
     dirty: params.get("dirty") === "1" || undefined,
     voiceable: params.get("voiceable") === "1" || undefined,

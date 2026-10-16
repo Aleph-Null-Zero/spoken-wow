@@ -62,6 +62,20 @@ local claimed = B0.source
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 Expect("...and a second loading screen does not replace it", B0.source, claimed)
 
+-- The test line plays a page ClipFor can place, whichever key the pack lists first.
+_G.SpokenBooksData = { version = 1, index = {}, loose = {}, books = { [1] = { title = "T", pages = { 15 } } },
+    pages = { [15] = { book = 1, number = 1, text = "x" } } }
+-- Packs are tried in addon-name order: the unplaceable key is alone in the first.
+_G.SpokenBooksAudioPacks = {
+    SpokenBooksAudio_a = { version = 1, addon = "SpokenBooksAudio_a", pages = {
+        ["n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"] = { file = "n", len = 1 } } },
+    SpokenBooksAudio_b = { version = 1, addon = "SpokenBooksAudio_b", pages = { [15] = { file = "15", len = 1 } } } }
+B0:PlayTestLine()
+local queued = _G.Spoken:GetQueue()
+Expect("the test line skips a page nothing places and queues one that is placed",
+    queued[1] and queued[1].key, "b:15")
+_G.SpokenBooksData, _G.SpokenBooksAudioPacks = nil, nil
+
 local env, B = Boot()
 local Spoken = _G.Spoken
 

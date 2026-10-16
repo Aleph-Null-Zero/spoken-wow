@@ -190,17 +190,18 @@ local function TitleFirstTimings(title, text, length)
 end
 
 function SpokenBooks:ClipFor(pageId)
-	local place = self:Data() and self:Data().pages[pageId]
-	if not place then
+	local bookId, number = self:PlaceOf(pageId)
+	if not bookId then
 		return nil
 	end
+	local place = (self:Data() and self:Data().pages[pageId]) or { book = bookId, number = number }
 
 	local packs = self:GetAudioPacks()
 	for _, language in ipairs(self:LanguageOrder()) do
 		for _, pack in ipairs(packs) do
 			local entry = self:PackLanguage(pack) == language and pack.pages[pageId]
 			if entry then
-				local book = self:Data().books[place.book]
+				local book = self:BookOf(pageId)
 				local oneLine = self:OneLine()
 				local text = entry.text
 				if not text and language == self.BASE_LANGUAGE then text = place.text end
@@ -279,8 +280,7 @@ end
 
 --- Whether ClipFor would find a clip, without building one.
 function SpokenBooks:HasAudio(pageId)
-	local data = self:Data()
-	if not (data and data.pages[pageId]) then
+	if not self:PlaceOf(pageId) then
 		return false
 	end
 	local packs = self:GetAudioPacks()

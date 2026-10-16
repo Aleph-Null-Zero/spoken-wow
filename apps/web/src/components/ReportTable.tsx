@@ -531,7 +531,7 @@ export default function ReportTable({
                           setVersions((current) => ({ ...current, [key]: version }));
                           void load(first.source, first.lineId!, true);
                         }}
-                        onOverridden={() => void load(first.source, first.lineId!, true)}
+                        onRewritten={() => void load(first.source, first.lineId!, true)}
                       />
                     </td>
                   </tr>
