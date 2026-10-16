@@ -319,7 +319,7 @@ function Options:RunSelfTest()
             }
             if not DataModules:PrepareSound(soundData) then
                 Debug:Record("self-test-data-failed", "The Vanilla Data module did not provide the known 3441-accept test sound")
-                print("|cFFFF4040Spoken Quests test failed: the known Vanilla test sound was not found in the loaded sound packs.|r")
+                print("|cFFFF4040Spoken Quests test failed: the known Vanilla test sound was not found in the loaded voice packs.|r")
                 return
             end
 
@@ -365,7 +365,7 @@ function Options:PrintDiagnostics()
                     module.ContentVersion or "unknown version", status))
             end
             if presentCount == 0 then
-                print("Data: no sound packs were detected")
+                print("Data: no voice packs were detected")
             else
                 print(format("Data modules: %d detected, %d loaded", presentCount, registeredCount))
             end

@@ -195,7 +195,7 @@ function Addon:ShowMissingDataModulePopup()
         end
     end
     local details = next(loadDetails) and ("|n|nDetected but not loaded:|n" .. table.concat(loadDetails, "|n")) or ""
-    local text = [[No usable sound packs were loaded.|n|nKeep a sound pack installed beside this addon - "Spoken Audio: Quests", or the older "AI_VoiceOverData_Vanilla". Run "/spq diagnostics" for details.]] .. details
+    local text = [[No usable voice packs were loaded.|n|nKeep a voice pack installed beside this addon - "Spoken Audio: Quests", or the older "AI_VoiceOverData_Vanilla". Run "/spq diagnostics" for details.]] .. details
     if IsGamepadUI() then
         Say(text)
         return

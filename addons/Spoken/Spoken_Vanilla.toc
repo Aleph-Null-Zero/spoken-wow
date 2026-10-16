@@ -1,7 +1,7 @@
 ## Interface: 11509
 ## Title: Spoken
 ## Notes: The voice player every Spoken addon speaks through: one queue, one window, one minimap button.
-## Notes-deDE: Der Voice-Player, über den jedes Spoken-Addon spricht, eine Warteschlange, ein Fenster, ein Minimap-Button.
+## Notes-deDE: Der Voice-Player, über den jedes Spoken-AddOn spricht, eine Warteschlange, ein Fenster, eine Minikartenschaltfläche.
 ## Notes-esES: El reproductor de voz a través del cual habla cada addon Spoken, una cola, una ventana, un botón del minimapa.
 ## Notes-esMX: El reproductor de voz a través del cual habla cada addon Spoken, una cola, una ventana, un botón del minimapa.
 ## Notes-frFR: Le lecteur vocal par lequel chaque addon Spoken parle, une file, une fenêtre, un bouton de minicarte.

@@ -807,9 +807,9 @@ local function CmdStatus()
 
 	local pack = SpokenZones:GetActiveAudioPack()
 	if pack then
-		SpokenZones:Print("sound pack: %s -- %s", pack.addon, SpokenZones:GetAudioPackLabel(pack))
+		SpokenZones:Print("voice pack: %s -- %s", pack.addon, SpokenZones:GetAudioPackLabel(pack))
 	else
-		SpokenZones:Print("|cffffcc00no sound pack installed|r -- install Spoken Audio: Places to hear the lore")
+		SpokenZones:Print("|cffffcc00no voice pack installed|r -- install Spoken Audio: Places to hear the lore")
 	end
 
 	if SpokenZones:Get("debug") then
@@ -867,7 +867,7 @@ local function CmdAudioPack(arg)
 	if #packs == 0 then
 		-- Any pack would do -- packs are interchangeable across languages -- so an
 		-- empty list really does mean nothing is installed.
-		SpokenZones:Print("|cffffcc00no sound pack installed|r")
+		SpokenZones:Print("|cffffcc00no voice pack installed|r")
 		-- Named by CurseForge project, not by folder: a player with the pre-rename pack has a
 		-- ZoneLoreAudio folder, and saying that name sends them looking for a project that no
 		-- longer exists.
@@ -885,12 +885,12 @@ local function CmdAudioPack(arg)
 				return
 			end
 		end
-		SpokenZones:Print('|cffffcc00"%s" is not an installed sound pack|r', arg)
+		SpokenZones:Print('|cffffcc00"%s" is not an installed voice pack|r', arg)
 		return
 	end
 
 	local active = SpokenZones:GetActiveAudioPack()
-	SpokenZones:Print("sound packs:")
+	SpokenZones:Print("voice packs:")
 	for i = 1, #packs do
 		local pack = packs[i]
 		SpokenZones:Print(
