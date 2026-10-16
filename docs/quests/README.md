@@ -1170,13 +1170,17 @@ then by sex, then in its own file. A model that has not loaded yet reads as no b
 model plays the sex's file. Priming a model costs a `SetUnit`, so it is done only where the
 answer is used: on target and mouseover for creatures a pack splits (the gossip tables only),
 and on dialog open for creatures in `NPCBodiesByNPCID` only when the contribute buttons are
-shown or gathering is on, or when the creature is split. A load that was primed is finished
-within about two seconds by `C_Timer` polls. `DataModules:IsOtherBody` tells the addon a creature
+shown or gathering is on, or when the creature is split. Every load is settled within about
+two seconds by `C_Timer` polls. A load left before its model is in (the cursor swept on, the
+target changed, two seconds passed) is not taken for a miss: the creature is loaded again when
+next asked, two loads at most, and only the second coming back empty is remembered. `DataModules:IsOtherBody` tells the addon a creature
 is drawn as a body its voice is not: the line still plays in the voice it has, and the
 Contribute button offers it, so the site hears that the NPC comes in more than one body.
 
-The corpus file carries the rows as `npcBodies` (schema 6: race, sex, weight, flavor); a file of
-schema 5 with `npcSexes` still imports, each row a body of its NPC's race.
+The corpus file carries the rows as `npcBodies` (schema 6: race, sex, weight, flavor), only for
+NPCs with two or more, as the catalogue and the contribution check read only those: a row
+alone, such as a moderator's body an import kept, splits nothing. A file of schema 5 with
+`npcSexes` still imports, each row a body of its NPC's race.
 
 `npc` also keeps what the client
 reported even when a moderator overrules it — evidence about the NPC is worth more than the
