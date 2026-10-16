@@ -71,7 +71,10 @@ export default async function RootLayout({
                   />
                 </Link>
                 <div className="flex items-center gap-1">
-                  <LanguageSwitcher />
+                  {/* On a phone the switch lives in UserMenu's burger, with the links. */}
+                  <div className="hidden md:block">
+                    <LanguageSwitcher />
+                  </div>
                   <UserMenu />
                 </div>
               </Contained>

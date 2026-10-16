@@ -55,6 +55,17 @@ test("a checksum shared by two pages is left out of the loose index", () => {
   assert.ok(!loose.includes(String(pageChecksum("..."))), "the ambiguous checksum is absent");
 });
 
+test("a book nobody can have is left out with its pages", () => {
+  const lua = booksLua([
+    ...entries,
+    { pageId: 30, bookId: 30, pageNumber: 1, pageCount: 1, title: "Deprecated Writ of Lakeshire", text: "Writ." },
+    { pageId: 40, bookId: 40, pageNumber: 1, pageCount: 1, title: "Sam's Tome", text: "Missing Text" },
+    { pageId: 691, bookId: 691, pageNumber: 1, pageCount: 1, title: "Musty Note", text: "Brother." },
+  ]);
+  assert.doesNotMatch(lua, /Deprecated|Sam's Tome|Musty Note|\[(30|40|691)\] = \{ book/);
+  assert.match(lua, /\[20\] = \{ title = "A Note"/);
+});
+
 test("a quote in a title is escaped", () => {
   const lua = booksLua([
     { pageId: 1, bookId: 1, pageNumber: 1, pageCount: 1, title: 'The "Book"', text: "x" },

@@ -180,23 +180,21 @@ def test_toc_declares_both_generations_of_the_module_key():
     for suffix, value in (("Version", "1"), ("Priority", "100")):
         assert f"## X-SpokenQuests-DataModule-{suffix}: {value}\n" in toc
         assert f"## X-VoiceOver-DataModule-{suffix}: {value}\n" in toc
-    assert toc.count("-DataModule-Maps: ") == 2
-    # The two generations must agree, or the pack means one thing to each reader.
-    maps = [line.split(": ", 1)[1] for line in toc.splitlines() if "-DataModule-Maps: " in line]
-    assert maps[0] == maps[1]
+    # A map list would be read and never used: every pack loads on every map.
+    assert "-DataModule-Maps" not in toc
 
 
-def test_toc_nests_the_pack_under_the_player():
+def test_toc_nests_the_pack_under_spoken():
     # Group is the one the client reads (11.1.0+), and its value is the main addon's *name*,
     # so it is the folder and not the title. X-Part-Of carries the title for addon managers,
     # and X-Child-Of a folder again. Three keys a rename can silently swap between.
     toc = module_toc("VoiceOverReduxAudio", [])
 
-    # The folder the packs nest under is the addon's, which the rename moved; the pack
-    # folders themselves did not move, so these are the only names here that change.
-    assert "## Group: SpokenQuests\n" in toc
+    # Every addon and pack sits in the one Spoken group. Named after SpokenQuests, itself a
+    # member of that group, the packs showed at the top of the list instead.
+    assert "## Group: Spoken\n" in toc
     assert "## X-Part-Of: Spoken\n" in toc
-    assert "## X-Child-Of: SpokenQuests\n" in toc
+    assert "## X-Child-Of: Spoken_Quests\n" in toc
 
 
 def test_install_refuses_to_replace_without_force(tmp_path):

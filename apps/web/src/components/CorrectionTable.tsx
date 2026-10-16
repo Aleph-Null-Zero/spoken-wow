@@ -16,8 +16,9 @@ import { useCallback, useState } from "react";
 
 import { useLang } from "@/components/LangProvider";
 import ClientSelect from "@/components/ClientSelect";
-import { SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
-import FilterChip, { type ChipOption } from "@/components/FilterChip";
+import { SEARCH_IN_OPTIONS, STAGE_CHIP_OPTIONS, STAGE_LABELS } from "@/components/contribution-chips";
+import FilterChip from "@/components/FilterChip";
+import MultiFilterChip from "@/components/MultiFilterChip";
 import { LiteButton } from "@/components/LiteControls";
 import { Refreshing } from "@/components/Loading";
 import SendersButton from "@/components/SendersButton";
@@ -28,7 +29,7 @@ import { useSearchBox } from "@/components/useSearchBox";
 import type { ClientSummary } from "@/lib/contributions/client";
 import { wordDiff, type DiffPart } from "@/lib/contributions/compare";
 import type { ContributionStatus } from "@/lib/contributions/contributions";
-import { QUEST_STAGES, type ClientFilter, type QuestStage, type StageFilter } from "@/lib/contributions/query";
+import { type ClientFilter, type QuestStage, type StageFilter } from "@/lib/contributions/query";
 import { localeHref } from "@/lib/lang";
 import type { Filter } from "@/lib/search";
 import { cn } from "@/lib/utils";
@@ -58,13 +59,8 @@ export type CorrectionRow = {
   body: string | null;
 };
 
-const STAGE_LABELS: Record<QuestStage, string> = {
-  accept: "Accept",
-  progress: "Progress",
-  complete: "Complete",
-};
-
-const STAGE_CHIP_OPTIONS: ChipOption[] = QUEST_STAGES.map((option) => ({ value: option, label: STAGE_LABELS[option] }));
+/** Corrections are quest panels only, so gossip is not offered. */
+const QUEST_STAGE_OPTIONS = STAGE_CHIP_OPTIONS.filter((option) => option.value !== "gossip");
 
 export type CorrectionSource = "quests" | "books";
 
@@ -73,7 +69,7 @@ type Filters = { status: ContributionStatus; client: ClientFilter; stage: StageF
 function correctionsHref(source: CorrectionSource, filters: Filters): string {
   // Client always written, "all" included: left out, it means the Era and Forever default.
   const params = new URLSearchParams({ status: filters.status, client: filters.client });
-  if (filters.stage !== "all") params.set("stage", filters.stage);
+  if (filters.stage.length) params.set("stage", filters.stage.join(","));
   if (filters.q.trim()) params.set("q", filters.q.trim());
   if (filters.searchIn !== "any") params.set("filter", filters.searchIn);
   return `/contributions/${source}/corrections?${params}`;
@@ -200,11 +196,11 @@ export default function CorrectionTable({
           onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
         />
         {source === "quests" ? (
-          <FilterChip
+          <MultiFilterChip
             label="stage"
-            value={stage === "all" ? undefined : stage}
-            options={STAGE_CHIP_OPTIONS}
-            onChange={(next) => go({ stage: (next ?? "all") as StageFilter })}
+            values={stage}
+            options={QUEST_STAGE_OPTIONS}
+            onChange={(next) => go({ stage: (next ?? []) as StageFilter })}
           />
         ) : null}
         <span className="text-muted-foreground text-xs">

@@ -26,12 +26,12 @@ function repo(pages, changelogs) {
 const pages = [
   ["zones", "addon.md", { slug: "spoken-zones", name: "Spoken Zones" }],
   ["zones", "a.md", { section: "zones", lang: "enUS", release: "zones-audio",
-    slug: "spoken-zones-audio", name: "Spoken Zones Audio" }],
+    slug: "spoken-audio-places", name: "Spoken Zones Audio" }],
   ["zones", "b.md", { section: "zones", lang: "frFR", version: "2.0.0", release: "zones-audio-frFR",
-    slug: "spoken-zones-audio-frfr", name: "Spoken Zones Audio: French" }],
+    slug: "spoken-french-audio-places", name: "Spoken Zones Audio: French" }],
   ["quests", "player.md", { slug: "spoken-quests", name: "Spoken Quests" }],
   ["quests", "h.md", { section: "quests", lang: "enUS", pack: "horde", release: "quests-audio-horde",
-    slug: "spoken-quests-audio-horde", name: "Spoken Quests Audio: Horde" }],
+    slug: "spoken-audio-quests-horde", name: "Spoken Quests Audio: Horde" }],
 ];
 
 const zones = `# Changelog

@@ -11,9 +11,12 @@
  * a row that would silently render an empty panel if it reached for the wrong pair.
  */
 import { BASE_LANG, withLang, type Lang } from "@/lib/lang";
+import { noApiKeyMessage } from "@/lib/no-api-key";
 import type { ResultLine as BookLine } from "@/lib/books/search";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
+
+import { npcHref, npcPageHref, questsHref } from "@/lib/links";
 
 import { targetForLine } from "./line-target";
 import type { Source } from "@/lib/sections";
@@ -24,8 +27,18 @@ export type SourceLine = QuestLine | ZoneLine | BookLine;
 export type LineDetail = {
   /** What the line is called: the quest, the subzone, the book. */
   heading: string;
+  /** The explorer, narrowed to the heading's quest. Null where the heading is no quest. */
+  headingHref: string | null;
+  /**
+   * Who says it, quests only, with their NPC page and the explorer narrowed to their lines.
+   * A line with no quest is headed by its speaker, who is then not named a second time.
+   */
+  speaker: { name: string; page: string; search: string } | null;
+  speakerIsHeading: boolean;
   /** Where it sits, and for quests what picked its voice. */
-  context: string;
+  aside: string;
+  /** The live take was made from text that has since changed. */
+  stale: boolean;
   text: string;
   /** The audio route, or null where there is no take to play. */
   audioSrc: string | null;
@@ -69,6 +82,49 @@ export function regeneratePath(source: Source, lang: Lang = BASE_LANG): string {
 }
 
 /**
+ * Cuts a new take of one line, and says which version it wrote or why it could not.
+ *
+ * "You have the role but no key on file" is one page away from fixed, so it comes back in
+ * those words rather than reading as a failure of the line.
+ */
+export async function regenerateLine(
+  source: Source,
+  lineId: string,
+  lang: Lang = BASE_LANG,
+): Promise<{ version: number } | { error: string }> {
+  const response = await fetch(regeneratePath(source, lang), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ lineId }),
+  }).catch(() => null);
+  if (!response) return { error: "the request did not go through" };
+
+  const body = (await response.json().catch(() => ({}))) as {
+    ok?: boolean;
+    version?: number;
+    error?: string;
+    code?: string;
+  };
+  const noKey = noApiKeyMessage(response.status, body);
+  if (noKey) return { error: noKey };
+  if (!response.ok || !body.ok || body.version === undefined) {
+    return { error: body.error ?? `failed (${response.status})` };
+  }
+  return { version: body.version };
+}
+
+const FILES: Record<Source, (line: SourceLine) => string> = {
+  quests: (line) => (line as QuestLine).audioPath,
+  zones: (line) => (line as ZoneLine).file,
+  books: (line) => (line as BookLine).file,
+};
+
+/** The store-relative file a line's takes belong to, as /api/takes addresses it. */
+export function fileOf(source: Source, line: SourceLine): string {
+  return FILES[source](line);
+}
+
+/**
  * `version` is the take a regeneration wrote in this session, appended as a cache buster.
  * A regenerated line keeps its path - the addon resolves sounds by filename, so it cannot
  * change - and without this the browser replays the take that was just overwritten.
@@ -84,6 +140,11 @@ export function detailOf(
   return bookDetail(line as BookLine, version, lang);
 }
 
+/** The live take was made from text that has since changed. */
+export function isStale(source: Source, line: SourceLine): boolean {
+  return source === "quests" ? (line as QuestLine).stale : (line as ZoneLine | BookLine).state === "stale";
+}
+
 function audio(source: Source, path: string, version: number | undefined, lang: Lang): string {
   return withLang(lang, `/api/${source}/audio/${path}${version === undefined ? "" : `?v=${version}`}`);
 }
@@ -92,10 +153,21 @@ function questDetail(line: QuestLine, version: number | undefined, lang: Lang): 
   // Race, gender and flavor rather than the voice alone: "wrong voice for this character"
   // is a complaint about that triple, and the voice is what it currently resolves to.
   const who = [line.race, line.gender, line.flavor].filter(Boolean).join(" ");
+  const npc = {
+    name: line.npcName,
+    page: npcPageHref(line.npcId),
+    search: npcHref({ npcId: line.npcId, npcType: line.npcType, gossip: line.source === "gossip" }),
+  };
+  const aside = [who, line.voice].filter(Boolean).join(" · ");
 
   return {
     heading: line.questTitle ?? line.npcName,
-    context: [line.npcName, who, line.voice].filter(Boolean).join(" · "),
+    headingHref:
+      line.questTitle && line.questId !== null ? questsHref({ q: String(line.questId), filter: "quest" }) : null,
+    speaker: npc,
+    speakerIsHeading: !line.questTitle,
+    aside,
+    stale: isStale("quests", line),
     // The override when there is one: it is what the next take will say, and a panel that
     // showed the corpus text would report a rewrite as having changed nothing.
     text: line.override ?? line.text,
@@ -107,7 +179,11 @@ function questDetail(line: QuestLine, version: number | undefined, lang: Lang): 
 function zoneDetail(line: ZoneLine, version: number | undefined, lang: Lang): LineDetail {
   return {
     heading: line.name,
-    context: line.zoneName,
+    headingHref: null,
+    speaker: null,
+    speakerIsHeading: false,
+    aside: line.zoneName,
+    stale: isStale("zones", line),
     text: line.text,
     audioSrc: line.state === "missing" ? null : audio("zones", `${line.file}.mp3`, version, lang),
     lineId: line.id,
@@ -117,7 +193,11 @@ function zoneDetail(line: ZoneLine, version: number | undefined, lang: Lang): Li
 function bookDetail(line: BookLine, version: number | undefined, lang: Lang): LineDetail {
   return {
     heading: line.title,
-    context: `page ${line.pageNumber} of ${line.pageCount}`,
+    headingHref: null,
+    speaker: null,
+    speakerIsHeading: false,
+    aside: `page ${line.pageNumber} of ${line.pageCount}`,
+    stale: isStale("books", line),
     text: line.text,
     audioSrc: line.state === "missing" ? null : audio("books", `${line.file}.mp3`, version, lang),
     lineId: line.id,

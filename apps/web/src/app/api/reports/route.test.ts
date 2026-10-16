@@ -9,6 +9,8 @@
  *   docker compose up -d postgres && deploy/bin/migrate.sh "$PWD/web"
  */
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
+
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
@@ -19,6 +21,12 @@ vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: async () => null } } }
 import { POST } from "./route";
 
 const ip = "203.0.113.99";
+
+/** Written by tests/lua/contribute_envelope_test.lua, as the addon writes a report's context. */
+const observed = readFileSync(
+  new URL("../../../../../../tests/fixtures/contributions/quests-observed.txt", import.meta.url),
+  "utf8",
+);
 
 function post(body: unknown): Request {
   return new Request("https://example.com/api/reports", {
@@ -34,6 +42,8 @@ function valid(overrides: Record<string, unknown> = {}) {
 
 afterEach(async () => {
   await db().query(`delete from "report" where "ip" = $1`, [ip]);
+  await db().query(`delete from "contribution" where "ip" = $1`, [ip]);
+  await db().query(`delete from "contribution_hit" where "ip" = $1`, [ip]);
 });
 
 afterAll(async () => {
@@ -139,5 +149,47 @@ describe("POST /api/reports", () => {
       [ip],
     );
     expect(rows[0].lineId).toBeNull();
+  });
+
+  it("keeps the context the addon sent", async () => {
+    expect((await POST(post(valid({ context: observed })))).status).toBe(200);
+
+    const { rows } = await db().query<{ context: { fields: Record<string, string>; text: string } }>(
+      `select "context" from "report" where "ip" = $1`,
+      [ip],
+    );
+    expect(rows[0].context.fields.addon).toBe("SpokenQuests/2.0.4");
+    expect(rows[0].context.fields.npc).toBe("9123 Boarton Shadetotem");
+    expect(rows[0].context.text).toBe("We'll need to work on your stealth skills, druid.");
+  });
+
+  it("files the report without a context that fails its checks", async () => {
+    const tampered = observed.replace("druid", "rogue");
+    expect((await POST(post(valid({ context: tampered })))).status).toBe(200);
+
+    const { rows } = await db().query<{ context: unknown }>(
+      `select "context" from "report" where "ip" = $1`,
+      [ip],
+    );
+    expect(rows.map((row) => row.context)).toEqual([null]);
+  });
+
+  it("contributes the text of a missing line", async () => {
+    await POST(post(valid({ category: "missing", body: "Nothing played.", context: observed })));
+
+    const { rows } = await db().query<{ key: string; text: string; body: string }>(
+      `select "key", "text", "body" from "contribution" where "ip" = $1`,
+      [ip],
+    );
+    expect(rows).toEqual([
+      { key: "76156:progress", text: "We'll need to work on your stealth skills, druid.", body: "Nothing played." },
+    ]);
+  });
+
+  it("contributes nothing for any other complaint", async () => {
+    await POST(post(valid({ category: "pronunciation", context: observed })));
+
+    const { rows } = await db().query(`select 1 from "contribution" where "ip" = $1`, [ip]);
+    expect(rows).toHaveLength(0);
   });
 });

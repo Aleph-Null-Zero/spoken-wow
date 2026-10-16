@@ -1,6 +1,7 @@
 "use client";
 
-import { nameSubject, TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
+import { lineTextSubject, nameSubject, TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
+import { isTypingTarget } from "@/lib/keyboard";
 import { useLang } from "@/components/LangProvider";
 import { BASE_LANG, withLang } from "@/lib/lang";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -25,7 +26,7 @@ import RecordingDropZone from "@/components/RecordingDropZone";
 import { RECORDED, type Recorded } from "@/lib/recordings/live";
 import { BROADCAST_STATUSES } from "@/lib/broadcast/status";
 import type { Facets } from "@/lib/facets";
-import type { Kind } from "@/lib/line-fields";
+import { sourcesFromParam } from "@/lib/line-fields";
 import { NARRATOR_VOICE } from "@/lib/generation/narration";
 import { PROVIDER_NAME } from "@/lib/generation/providers";
 import {
@@ -69,8 +70,7 @@ function filterParams(filters: LineFilters): URLSearchParams {
   if (filters.gender) params.set("gender", filters.gender);
   if (filters.flavor) params.set("flavor", filters.flavor);
   if (filters.voice) params.set("voice", filters.voice);
-  if (filters.kind) params.set("kind", filters.kind);
-  if (filters.source) params.set("source", filters.source);
+  if (filters.source?.length) params.set("source", filters.source.join(","));
   if (filters.npcType) params.set("type", filters.npcType);
   if (filters.includeProgress) params.set("progress", "1");
   if (filters.narration) params.set("narration", "1");
@@ -106,7 +106,7 @@ function speakerSpans(lines: ResultLine[]): number[] {
   return spans;
 }
 
-export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind }) {
+export default function Explorer({ facets }: { facets: Facets }) {
   const router = useRouter();
   const lang = useLang();
   const params = useSearchParams();
@@ -132,9 +132,6 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
   // rather than held in state, so the back button is a working undo for a filter too.
   const filters = useMemo<LineFilters>(
     () => ({
-      // From the page, not the URL: which explorer this is is where it lives, so a link
-      // carries it in its path.
-      kind,
       q: urlQuery,
       filter: (params.get("filter") as Filter) ?? "any",
       state: audioStateFromParams(params),
@@ -142,7 +139,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
       gender: params.get("gender") ?? undefined,
       flavor: params.get("flavor") ?? undefined,
       voice: params.get("voice") ?? undefined,
-      source: (params.get("source") as LineFilters["source"]) ?? undefined,
+      source: sourcesFromParam(params.get("source")),
       npcType: (params.get("type") as LineFilters["npcType"]) ?? undefined,
       includeProgress: params.get("progress") === "1",
       narration: params.get("narration") === "1",
@@ -158,7 +155,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
       recorded: RECORDED.find((value) => value === params.get("rec")),
       broadcast: BROADCAST_STATUSES.find((value) => value === params.get("bt")),
     }),
-    [kind, params, urlQuery],
+    [params, urlQuery],
   );
 
   const [query, setQuery] = useState(urlQuery);
@@ -194,16 +191,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
         setEditing(line);
         return;
       }
-      setTranslating({
-        title: line.npcName,
-        subtitle: line.lineId,
-        english: line.english ? line.originalText : "There is no English line yet.",
-        current: line.missing?.text ? null : line.text,
-        endpoint: "/api/quests/lines/text",
-        address: { lineId: line.lineId, variant: line.variant ?? 0 },
-        field: "text",
-        multiline: true,
-      });
+      setTranslating(lineTextSubject(line));
     },
     [lang],
   );
@@ -305,7 +293,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
         ...("gender" in next ? { gender: next.gender } : {}),
         ...("flavor" in next ? { flavor: next.flavor } : {}),
         ...("voice" in next ? { voice: next.voice } : {}),
-        ...("source" in next ? { source: next.source } : {}),
+        ...("source" in next ? { source: next.source?.join(",") } : {}),
         ...("npcType" in next ? { type: next.npcType } : {}),
         ...("narration" in next ? { narration: next.narration ? "1" : undefined } : {}),
         ...("includeProgress" in next
@@ -742,14 +730,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      // The shadcn Select trigger is a <button role="combobox">, not a <select>, so
-      // checking tagName alone would let space both toggle audio and open the dropdown.
-      const target = event.target instanceof HTMLElement ? event.target : null;
-      const typing =
-        !!target &&
-        (["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName) ||
-          target.isContentEditable ||
-          !!target.closest('[role="combobox"],[role="listbox"],[role="dialog"]'));
+      const typing = isTypingTarget(event.target);
 
       if (event.key === "/" && !typing) {
         event.preventDefault();
@@ -811,7 +792,6 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
           canTriage={showRegenerate}
           madeBy={result?.madeBy}
           recordable={showRecordings}
-          broadcastable={kind === "gossip"}
         />
 
         {showRecordings && <RecordingDropZone source="quests" onUploaded={refetch} />}
@@ -876,8 +856,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
           >
             <colgroup>
               <col className="w-52" />
-              {kind !== "gossip" && <col className="w-48" />}
-              {kind === "gossip" && <col className="w-24" />}
+              <col className="w-48" />
               <col className="w-32" />
               {/* The line text takes whatever the named columns leave, which is what anyone
                   here to read came for. */}
@@ -898,8 +877,7 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
             <thead>
               <tr className="text-muted-foreground border-border border-b text-left text-xs">
                 <th className="px-2 pb-1 font-medium">NPC / object</th>
-                {kind !== "gossip" && <th className="px-2 pb-1 font-medium">Quest</th>}
-                {kind === "gossip" && <th className="px-2 pb-1 font-medium">Broadcast</th>}
+                <th className="px-2 pb-1 font-medium">Quest / broadcast</th>
                 <th className="px-2 pb-1 font-medium">Race / gender / flavor</th>
                 <th className="px-2 pb-1 font-medium">Line</th>
                 <th className="px-2 pb-1 font-medium">Audio</th>
@@ -936,8 +914,6 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
                   onRestored={handleRestored}
                   onNarrowToNpc={narrowToNpc}
                   showNpcPage={isAdmin(session?.user.role)}
-                  showQuest={kind !== "gossip"}
-                  showBroadcast={kind === "gossip"}
                   groupSpan={groupSpans[index]}
                   onNarrowToQuest={narrowToQuest}
                 />
@@ -967,6 +943,10 @@ export default function Explorer({ facets, kind }: { facets: Facets; kind: Kind 
       <OverrideDialog
         line={editing}
         onSaved={handleOverrideSaved}
+        onRewritten={() => {
+          setEditing(null);
+          refetch();
+        }}
         onCancel={() => setEditing(null)}
       />
 

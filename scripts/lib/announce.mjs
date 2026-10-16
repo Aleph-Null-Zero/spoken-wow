@@ -6,7 +6,7 @@
 // THE NOTES ARE THE CHANGELOG, NOT THE RELEASE BODY. Three different things write a release's
 // body -- GitHub's generated PR list for most addons, release-template.md's download tables for
 // quests, the changelog for the sound packs -- and the generated list runs from the previous tag
-// of ANY addon, so it would announce a quests pack's PRs under Spoken Player. The changelog is
+// of ANY addon, so it would announce a quests pack's PRs under Spoken. The changelog is
 // written for players and is what CurseForge and Wago already show.
 //
 // The name is the store page's, so Discord says exactly what the stores say. A pack's page names

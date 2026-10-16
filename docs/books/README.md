@@ -2,7 +2,13 @@
 
 Every book, letter, note and plaque World of Warcraft will show you, extracted from the
 vmangos world database, reviewable at `/books` on the site, and
-read aloud in game by **SpokenBooks**.
+read aloud in game by Spoken's Readables module (`addons/Spoken_Readables`).
+
+Players see this section as **Readables**: the module, its page and tab, its commands (`/spr`; `/spw`
+and `/spb` still work), the sound packs' titles and the site's labels. Everything they never see keeps the name books:
+this folder, `pipelines/books`, `make books-*`, the `books` source and part key, the
+`SpokenBooks*` globals and saved variables, `b:{pageTextID}`, the `/books` routes, and the
+`SpokenBooksAudio` folder with its `books-audio` tags.
 
 ## Where the words come from, and why not from anywhere else
 
@@ -88,7 +94,7 @@ plays (`pipelines/books/tools/lib/absorb.mjs`).
 | `import` | that file | `book_page` and `book_line` rows | the same maintainer |
 | review | `book_line` | corrected text | anyone, at `/books` |
 | generate | `book_line` | mp3s and `take` rows | anyone with an ElevenLabs key |
-| export | `book_line` | `addons/Spoken_Books/Data/Books.lua` | a maintainer, before a release |
+| export | `book_line` | `addons/Spoken_Readables/Data/Books.lua` | a maintainer, before a release |
 
 ## Running it locally
 
@@ -140,7 +146,7 @@ pnpm --filter @spoken/web test     # the site, including lib/books
 
 ## The addon
 
-`addons/Spoken_Books` hooks `ITEM_TEXT_BEGIN` / `READY` / `CLOSED` — the whole book UI, and
+`addons/Spoken_Readables` hooks `ITEM_TEXT_BEGIN` / `READY` / `CLOSED` — the whole book UI, and
 the same API on Era, Anniversary and Forever, which is why there is one addon rather than
 three.
 
@@ -150,7 +156,7 @@ where no other page shares it; then nothing. Nothing is the right third answer: 
 alternative is reading the wrong page's words aloud.
 
 **The checksum is the load-bearing part.** `pipelines/books/tools/lib/naming.mjs` and
-`addons/Spoken_Books/Checksum.lua` must produce the same number for the same text, over
+`addons/Spoken_Readables/Checksum.lua` must produce the same number for the same text, over
 UTF-8 bytes, using only multiply, add and modulo — the clients run Lua 5.1, which has no
 bitwise operators. `tests/lua/books_source_test.lua` asserts the two agree, on an ASCII
 string and an accented one. They have to: the lookup is keyed on that number, and a
@@ -167,31 +173,35 @@ source's own gap, not Pause Between Lines or the cue. Turning to the page being 
 still to come changes nothing; turning back starts the book again from there. The progress
 bar runs across the book: each page carries the seconds before it and the reading's length
 (`clip.span`), unless a page in it has no recorded length. *Read Book as One Line* (on by default,
-`/spb oneline`) turns this off: every page is queued at once as a line of its own, the book's
+`/spr oneline`) turns this off: every page is queued at once as a line of its own, the book's
 title over its page count, grouped so no pause or cue falls between them.
 
 **Readables pile up on purpose.** One opened while another is read queues after it: a
 gravestone read on the way waits for the book. The source has no queue limit, unlike zones,
 whose cap drops the oldest waiting clip and here would drop what the player opened.
 
-**Two saved-variable tables, on purpose.** `SpokenBooksSettings` is account-wide and holds the
-three switches — autoplay, whole-book, read-once. `SpokenBooksCharacter` is per character and
-holds only what that character has been read, keyed by book id. Settings are how you like
-the addon to behave; having read something is a thing a character did, so an alt walking
-into the same library hears it fresh.
+**Settings and reading are kept apart, on purpose.** The settings (autoplay, whole book, one
+line, read once, stop when the book closes, close when read, the voice language and the
+Compendium's switches) live in Spoken's profile under `Writings`, bound by
+`Spoken:BindModuleSettings` and copied from `SpokenBooksSettings` the first time. That saved
+variable keeps its name and stays the module's own table until Spoken binds it.
+`SpokenBooksCharacter` is per character and holds what that character has read and found,
+keyed by book id. Settings are how you like the addon to behave; having read something is a
+thing a character did, so an alt walking into the same library hears it fresh.
 
 **Read-once marks a book when narration starts, not when it ends.** The addon is never told
 that a clip finished — the player owns the queue — so "finished" could only be inferred
-from a queue that `/spb stop` or a zone change can empty early. The rule refuses autoplay
-only: `/spb read` and the Play button go straight to the playlist, because a reader pressing
+from a queue that `/spr stop` or a zone change can empty early. The rule refuses autoplay
+only: `/spr read` and the Play button go straight to the playlist, because a reader pressing
 play has asked again in so many words. It also does not refuse the book it is in the middle
 of reading, which is what `SpokenBooks:IsNarrating` is for — a reader who jumps past the
 queued pages would otherwise strand the narration on the page they turned away from.
 
 **The panel and the button are the two files this addon reads books without.**
-`UI/Options.lua` registers a settings canvas the way the zones panel does, and
-`UI/PlayButton.lua` puts Play/Stop on the book window's page row. `Events.lua` guards both
-calls, so a partial install still narrates. Every switch on the panel is also a `/spb`
+`UI/Options.lua` is the module's page under Spoken's in the game's settings
+(`Spoken:AddSettingsPage`), laid out by Spoken's `UI/Layout.lua` like the other modules' pages,
+and `UI/PlayButton.lua` puts Play/Stop on the book window's page row. `Events.lua` guards both
+calls, so a partial install still narrates. Every switch on the panel is also a `/spr`
 command, which is what a client with no Settings API gets.
 
 **The button is anchored to `ItemTextScrollFrame` — the page — in its bottom-right corner,
@@ -210,10 +220,11 @@ colliding with one of Blizzard's controls on page two of every book.
 **Every clip carries a Report action**, the bug icon the quests and zones clips use, falling
 back to an "R" on the three legacy clients where that texture does not exist. The
 client cannot open a browser or post anywhere, so pressing it raises a popup holding one
-selectable address — `UI/CopyLink.lua`, the same shape the zones addon carries, and not
+selectable address — `UI/CopyLink.lua`, the same shape the Places addon carries, and not
 shared with it because two addons cannot own one StaticPopup id.
 
-The address is `https://spoken.rusty.one/books/r/{pageTextID}`, built from the page id
+The address is `https://spoken.rusty.one/books/r/{pageTextID}` (`/{lang}/books/r/…` when the
+clip was read in another language, through `Spoken:ReportURL`), built from the page id
 alone. That is deliberate: the id is frozen, so the addon can address any page with no
 per-page table to ship and nothing to escape — the trade the zones landing page makes with
 its `{mapID}/{slug}` path.
@@ -237,58 +248,119 @@ triage sees.
 is every post-vanilla book, every locale but one, and custom text a server added
 itself — `Contribute.lua`'s `HasContributionGap` is true exactly there, whenever
 `PageOnScreen` found nothing. The Play button itself becomes the way to say so: relabelled
-**Contribute** in that state, it opens the same copy box the Report action uses, holding an
+**Contribute** in that state, it opens Spoken's contribute box (`UI/ContributeBox.lua`) with an
 envelope instead of an address — the addon, the build, the locale, the book, the page number,
 the checksum the page would be looked up by if the corpus knew it, and the page's own text.
 **Mail is excluded the same way narration already excludes it**, doubly: a letter with a
-creator, or anything shown while `MailFrame` is open, is never captured. The player copies the
-box, opens `spoken.rusty.one/contribute`, pastes, and sees exactly what is about to be sent
-before it goes — the same page, submitted again by the same or another reader, bumps a count
-on one row at `/contributions` rather than filing a second.
+creator, or anything shown while `MailFrame` is open, is never captured. The box holds a link
+to `spoken.rusty.one/contribute` that carries the envelope, or, where no link can be built, the
+envelope and the address to paste. The player copies it, opens it, and sees exactly what is
+about to be sent before it goes — the same page, submitted again by the same or another
+reader, bumps a count on one row at `/contributions` rather than filing a second. The first
+click ever also offers Spoken's **Collect Missing Lines**, which keeps such pages in
+`SpokenContributions.lua` for the player to upload at `/contribute`.
 
-`UI/Layout.lua` is the fourth copy of a file that must stay byte-identical across
-Spoken, SpokenQuests, SpokenZones and SpokenBooks;
-`pipelines/quests/tests/test_package.py` is what enforces that.
+### The Readables tab
+
+Azeroth's Compendium (Spoken's `UI/Compendium.lua`, shared with the Quests and Places tabs) is a
+movable window that closes on Escape, resizes from its corner and folds down to its list. The
+Readables tab (`UI/Readables.lua`, key `readables`; the rest of the code says books) lists
+every book, letter, note, scroll, tablet, plaque, gravestone, exhibit and picture Spoken Readables
+reads, found or not, with the words of each on the right, on the spellbook's parchment, to read
+and to listen to wherever you are. Which readables exist and where they are comes from
+`Data/Places.lua` (`pipelines/books/tools/places.mjs`); what this character has found, from
+`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`.
+
+**The list.** A banner for each continent, Kalimdor and the Eastern Kingdoms, each opening and
+closing on its own. Under a continent each zone is a card (its name, how many of its readables are
+found out of all, and a bar), a city a card inside the zone around it, and
+after the city the card of each dungeon or raid whose entrance is in the zone (a zone with several
+has a Dungeons and Raids line holding them, as on Quests). Several cards can be open at once. An
+opened zone or dungeon has a line for each kind of readable it holds, closed until chosen, and the
+readables under it, each once: a city's under the city, a dungeon's under its card. After the
+continents come Other Lands' banner (zones on no continent) and Battlegrounds'; then a banner for
+the seasonal events, for the readables had in more than eight zones (Across Azeroth) and for those
+whose origin is not known. Holidays and Events holds a line for each event (Feast of Winter Veil,
+Harvest Festival, Stranglethorn Fishing Extravaganza, Scourge Invasion; `event` in
+`Data/Places.lua`, `EVENTS` in `Readables.lua`), each with a line per kind inside; a readable whose
+event the data does not name is listed under its kind alone. A banner shows only for a continent or
+a kind, a card only for a place. A readable is listed in every zone it is had in: a lore book
+shelved in Stormwind and in Scholomance is under both cards, because a player looking through
+either place expects to find it there. Inside a zone it is listed once: under the city where it
+is also in the zone around it, under the dungeon's card where it is had only from inside a
+dungeon whose entrance is in that zone (`dungeons` in `Data/Places.lua`, the instance maps of
+Spoken's `Data/Dungeons.lua`). A continent's banner counts each readable once, so its count can
+be less than the sum of its zone cards.
+
+**What the list keeps.** The search box looks in names only: a search naming a place lists
+everything under it, a title lists itself under its place. The filter menu has Found Only and Voiced
+Only, which leave out what has nothing found or voiced and take it from the counts, By Zone (the
+default) or By Type, and the window's Unlock Unfound Readables, which makes every one readable
+here. Without it a readable not found yet is greyed with a padlock, and its page says to open it in
+the world. A filter that hides the chosen row moves the page to the nearest row above it that is
+still listed, or to where the player stands; a row chosen only because the player stood there is
+chosen again. The window opens on where the player stands: the dungeon's card, else the zone's,
+else the continent's banner.
+
+**The page.** A readable's page has its name, the places it is in under it (its first two zones, and
+how many more; a click goes up to its kind in its place, then the zone and the continent), and
+then two parts: Where to Find It (how it is had: "Dropped by Defias Messenger (Westfall)", each
+source with its zone) and its words, all its pages one after another. A zone's, city's, continent's
+or dungeon's page has its count and Places' picture of the place above it; the other lines (a kind,
+a banner) show their count alone. Play starts the readable from its first page with a recording and becomes Stop and then
+Replay while it is read, as every Play of the Compendium's; browsing here does not count as hearing
+it in the world (Read Only Once), nor as finding it. Report is there on every page, voiced or
+not: it files the page being read, else the first with a recording, else the first, at
+`/books/r/<page id>`, which the site renders for an unvoiced page too. Hide Report Buttons, in
+Spoken's settings, takes it away. Shift-click on a readable's row queues it behind what is playing
+and leaves the page as it was.
+
+**Opened from elsewhere.** The book frame and DialogueUI's book view have the Compendium's tome
+button (`UI/PlayButton.lua`, `NewOpenButton`), which opens this tab on that readable with what holds
+it opened (`SpokenBooks:ShowReadables(bookId)`). It shows for readables listed, and found or with
+Unlock Unfound Readables on (`SpokenBooks:CompendiumHas`).
 
 ### Installing it in a client
 
 ```bash
-make books-deploy                  # symlink into Classic Era
-CLIENT=forever make books-deploy   # or the Forever beta (wow_classic_beta)
+CLIENT=forever make books-deploy   # symlink Spoken_Readables and SpokenBooksAudio into the Forever beta (wow_classic_beta)
 make books-status                  # what is installed where, and how many mp3s exist
 ```
 
+`scripts/books/deploy.sh` links only those two folders and defaults to Classic Era, so pass
+`CLIENT=forever`. It looks under `/Applications/World of Warcraft`. Spoken has to be installed
+as well: the repo's `/link-addon` skill links every addon folder of a checkout into a client,
+Forever by default.
+
 ## Releasing
 
-The two CurseForge projects:
+The module ships inside Spoken's zip: `make package-spoken` builds `Spoken-<version>.zip`, the
+release is tagged `spoken/v<version>`, and its notes are in `docs/spoken/CHANGELOG.md`. Two
+CurseForge projects are left here:
 
 | Project | id | Slug |
 | --- | --- | --- |
-| Spoken Books | 1701514 | `spoken-books` |
-| Spoken Books Audio | 1701520 | `spoken-books-audio` |
+| Spoken Books, retired | 1701514 | `spoken-books` |
+| Spoken Audio: Readables | 1701520 | `spoken-audio-readables` |
 
-Cutting one:
+The first project's last file is the tombstone that `make package-spoken-retired` builds. The
+second is the sound pack, which declares `spoken` as its required dependency. Cutting a
+pack:
 
 ```bash
-make books-package                 # -> dist/Spoken_Books-<version>.zip
 make books-package-audio           # -> dist/SpokenBooksAudio-<version>.zip
 make books-release-dry             # what would be uploaded, uploading nothing
 make books-release                 # needs CURSEFORGE_TOKEN
 ```
 
-The version is the `## Version:` line in each `.toc`, and the release notes are the matching
-`## <version>` section of `docs/books/CHANGELOG.md` — a version with no section there fails
-before anything is sent. `scripts/books/release.sh` carries the two ids in
+The pack's version is the `## Version:` line in its `.toc`, and its release notes are the
+matching `## <version>` section of `docs/books/CHANGELOG.md` — a version with no section there
+fails before anything is sent. `make books-package` builds `Spoken_Readables` alone, for a
+`books/v<version>` tag, which `.github/workflows/release-addons.yaml` still builds. `scripts/books/release.sh` carries the two ids in
 `target_curseforge()`, and an unknown target fails on the empty id rather than defaulting, for
 the reason `docs/quests/CLAUDE.md` gives: an id left in that function is an id something
 eventually uploads to, and uploading a books pack over another project is not recoverable
 from this side.
-
-The addon uploads before the pack, because the pack declares it as a required dependency and
-CurseForge resolves a `relations` slug at upload time — against an *approved* project. Both
-projects are new, so the first release is the one that can meet that gate late: if
-`spoken-books` is still in moderation the pack's upload is rejected with errorCode 1018, and
-the fix is to send the pack again once the project is approved.
 
 The project pages themselves are `publishers/books/*.md`, one body per project for both
 stores; after `make descriptions`, paste `dist/descriptions/<slug>.md` into CurseForge and
@@ -298,7 +370,7 @@ into Wago, then record it with `make descriptions-published`.
 `make books-release` sends each zip to both stores. The pack goes to CurseForge alone: at
 452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
 in as many words. `make audio-release` then publishes it as a GitHub release under
-`books-audio/vX.Y.Z`, which is where the Wago page for Spoken Books sends anyone looking for
+`books-audio/vX.Y.Z`, which is where the pack's Wago page sends anyone looking for
 the narration.
 
 ### A language's pack
@@ -318,7 +390,7 @@ make books-release-audio LOCALE=esMX  # uploads it, CurseForge only
 
 The addon finds a page by its title and a checksum of its words, and a client in another
 locale shows neither in English. So a language's `Data/Sounds.lua` also carries that
-language's `index` and `loose`, in the shape of `Spoken_Books/Data/Books.lua`'s: every page
+language's `index` and `loose`, in the shape of `Spoken_Readables/Data/Books.lua`'s: every page
 the world database translates, under each name its owners have in that language, keyed on the
 text as the client shows it — the newest *extracted* version, not a correction made on the
 site. The reader asks it only on a client in the pack's language, before the English index.

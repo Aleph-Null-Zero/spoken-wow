@@ -8,6 +8,7 @@
 // what `loose` records -- a fallback for a client whose object name does not match ours.
 
 import { pageChecksum } from "./naming.mjs";
+import { cannotBeHad } from "./places.mjs";
 import { spokenText } from "./text.mjs";
 
 /** Escape control bytes too: page text can contain newlines and tabs. */
@@ -109,12 +110,25 @@ export function indexLua({ index, loose }, prefix = "") {
 }
 
 /**
+ * The corpus rows of the books someone can have (places.mjs cannotBeHad): a retired, test or
+ * never-given book is no page the reader can be shown.
+ */
+export function canBeHad(entries) {
+  const texts = new Map();
+  for (const entry of entries) {
+    if (!texts.has(entry.bookId)) texts.set(entry.bookId, []);
+    texts.get(entry.bookId).push(entry.text);
+  }
+  return entries.filter((entry) => !cannotBeHad(entry.title, texts.get(entry.bookId), entry.bookId));
+}
+
+/**
  * @param entries corpus rows: pageId, bookId, pageNumber, pageCount, title, text
  */
 export function booksLua(entries) {
   // Sorted throughout, so re-exporting an unchanged corpus produces an identical file and a
   // diff shows only what actually moved.
-  const sorted = [...entries].sort((a, b) => a.bookId - b.bookId || a.pageNumber - b.pageNumber);
+  const sorted = canBeHad(entries).sort((a, b) => a.bookId - b.bookId || a.pageNumber - b.pageNumber);
 
   const books = new Map();
   for (const entry of sorted) {

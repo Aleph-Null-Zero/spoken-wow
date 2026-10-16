@@ -1,6 +1,6 @@
 """Building a module over a staged store, which may hold mp3 or ogg.
 
-The store on disk is always mp3; scripts/package-audio.sh stages a transcoded copy and
+The store on disk is always mp3; scripts/quests/package-audio.sh stages a transcoded copy and
 hands that to `build --store`, and that copy is ogg for the packs this project ships. So
 the module's sound paths have to follow the files rather than assume an extension.
 """
@@ -9,7 +9,7 @@ import shutil
 
 import pytest
 
-from tts_cli.build import build_module
+from tts_cli.build import build_module, icon_source
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 
@@ -160,22 +160,22 @@ def test_the_toc_title_says_which_pack_this_is(tmp_path):
     store = _store(tmp_path, "quests/5-accept.ogg")
 
     build_module(CORPUS, store, str(tmp_path / "dist"), "Mod",
-                 title="Spoken Quests Audio (Horde)")
+                 title="Spoken Audio: Quests - Horde")
 
     with open(tmp_path / "dist" / "Mod" / "Mod.toc", encoding="utf-8") as f:
-        assert "## Title: Spoken Quests Audio (Horde)\n" in f.read()
+        assert "## Title: Spoken Audio: Quests - Horde\n" in f.read()
 
 
 def test_the_toc_names_the_forever_client(tmp_path):
     # Forever marks a pack whose Interface it does not list incompatible, which the player's
     # checkAddonVersion switch cannot override, so every client the packs ship for is named.
-    # 100000 leads for the legacy clients, which read one number.
+    # 100007 leads for the legacy clients, which read one number.
     store = _store(tmp_path, "quests/5-accept.ogg")
 
     build_module(CORPUS, store, str(tmp_path / "dist"), "Mod")
 
     with open(tmp_path / "dist" / "Mod" / "Mod.toc", encoding="utf-8") as f:
-        assert f.read().startswith("## Interface: 100000, 11509, 20506, 16001\n")
+        assert f.read().startswith("## Interface: 100007, 11509, 20506, 16001\n")
 
 
 def test_the_pack_ships_an_icon_the_toc_points_at(tmp_path):
@@ -189,6 +189,19 @@ def test_the_pack_ships_an_icon_the_toc_points_at(tmp_path):
     with open(module / "Mod.toc", encoding="utf-8") as f:
         assert "## IconTexture: Interface\\AddOns\\Mod\\icon.tga\n" in f.read()
     assert (module / "icon.tga").is_file()
+
+
+def test_a_language_pack_wears_its_badged_icon(tmp_path):
+    # Otherwise a language's packs look like English's in the AddOns list.
+    store = _store(tmp_path, "quests/5-accept.ogg")
+
+    build_module(CORPUS, store, str(tmp_path / "dist"), "Mod", language="esMX")
+
+    with open(tmp_path / "dist" / "Mod" / "icon.tga", "rb") as shipped, \
+            open(icon_source("esMX"), "rb") as badged, open(icon_source(), "rb") as english:
+        data = shipped.read()
+        assert data == badged.read()
+        assert data != english.read()
 
 
 def test_the_length_table_measures_ogg(tmp_path):

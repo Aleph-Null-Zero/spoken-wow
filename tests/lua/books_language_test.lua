@@ -5,14 +5,14 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 local PAGE, ONLY_ENGLISH = 15, 16
 
 --- Load the addon on a client in `locale`, with the given packs installed.
 local function Install(packs, locale)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetLocale(locale or "enUS")
     _G.SpokenBooksSettings = nil
     _G.SpokenBooksAudioPacks = {}
@@ -32,7 +32,7 @@ local function Install(packs, locale)
     }
     local B = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio" }) do
-        assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Books", B)
+        assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
     end
     B:InitDB()
     return B
@@ -115,11 +115,15 @@ SpokenBooksAudioPacks.SpokenBooksAudio_deDE.pages = { [PAGE] = {
 Expect("E. new packs provide captions before a page is opened",
     B:ClipFor(PAGE).present.transcript, "Gespeicherte deutsche Seite.")
 B = Install({ ENGLISH })
+Expect("E. with no Spoken there is nothing to report to", B:ReportURL(PAGE), nil)
+-- The address is Spoken's to build (Spoken:ReportURL); this suite loads Books alone.
+stub.LoadSpoken(here .. "/../../addons/Spoken/")
 Expect("E. an English report keeps its address", B:ReportURL(PAGE, "enUS"),
     "https://spoken.rusty.one/books/r/15")
 Expect("E. ...as does one with no language", B:ReportURL(PAGE), "https://spoken.rusty.one/books/r/15")
 Expect("E. a German report goes to the German page", B:ReportURL(PAGE, "deDE"),
     "https://spoken.rusty.one/deDE/books/r/15")
+_G.Spoken, _G.SpokenEnv = nil, nil
 
 ---------------------------------------------------------------- F. a language no client runs in
 -- Italian has no index of its own: the page is found by the English client's and read from
@@ -164,11 +168,13 @@ do
     Expect("G. ...titled as the client shows it", (B:ClipFor(MINTED) or {}).present.label, "Instrucciones")
     Expect("G. ...placed in the pack's book", B:PlaceOf(MINTED), "n1")
     Expect("G. ...which reads from its page", B:BookOf(MINTED).pages[1], MINTED)
+    stub.LoadSpoken(here .. "/../../addons/Spoken/")
     Expect("G. ...reported by its key", B:ReportURL(MINTED, "esES"),
         "https://spoken.rusty.one/esES/books/r/" .. MINTED)
     Expect("G. an English report of a minted page", B:ReportURL(MINTED),
         "https://spoken.rusty.one/books/r/" .. MINTED)
     Expect("G. a string that is not a minted key has no report", B:ReportURL("../x", "esES"), nil)
+    _G.Spoken, _G.SpokenEnv = nil, nil
 
     B = Install({ Pack({ extraIndex = {}, extraLoose = { [sum] = MINTED } }) }, "esES")
     stub.ShowPage({ title = "Otro", number = 1, text = TEXT })
@@ -218,6 +224,10 @@ do
     local spoken = _G.Spoken
     _G.Spoken = { BagItemIcon = function(_, name) return name == "Worn Tablet" and 133741 or nil, { 0, 1, 0, 1 } end }
     Expect("...and a book from the bags its own icon", Bk:ClipFor(PAGE).present.portrait.texture, 133741)
+    -- The next page of the open book is built while another is open (the one before it ends, or
+    -- DialogueUI has left the game on the last): it keeps the book's picture.
+    Expect("a later page of the open book keeps its icon", Bk:ClipFor(ONLY_ENGLISH).present.portrait.texture, 133741)
+    Expect("...and its material", Bk:ClipFor(ONLY_ENGLISH).present.material, "Stone")
     _G.Spoken = spoken
     Bk.lastPage = nil
     _G.ItemTextGetItem, _G.ItemTextGetMaterial = nil, nil

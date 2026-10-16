@@ -2,7 +2,7 @@
 # Build the data module from transcoded copies of the audio store, and zip it.
 #
 #   make package-audio                 # the four shipping packs, Ogg Vorbis, into dist/
-#   make package-audio-complete        # every line in one folder, for the site
+
 #   make package-audio VERSION=1.4.0   # the version written into the .toc
 #   ENCODE=copy make package-audio     # the masters, untranscoded, for a listening check
 #   JOBS=1 make package-audio          # serial, when a failing encode needs readable output
@@ -10,7 +10,7 @@
 # The store is 3.2 GB of mono speech, almost all of it 128 kbps CBR from ElevenLabs;
 # 48 files are still the 64 kbps pack this project inherited. Shipping that as-is
 # asks a player to download three gigabytes for audio most of them hear once per
-# quest. docs/pack-size.md measures every encode that was considered.
+# quest. docs/quests/docs/pack-size.md measures every encode that was considered.
 #
 # THE SHIPPING PACK IS OGG VORBIS AT 44.1 kHz (`ogg-q0-44k`), which make passes in:
 # 3.2 GB of masters become ~1.3 GB, split five ways. Vorbis is worth 1.3-1.5x over
@@ -20,7 +20,7 @@
 # A 22.05 kHz downsample halves that again and speech survives an 11 kHz ceiling, so
 # it shipped as a second family for a while. It is retired - one family is one set of
 # projects, one set of folder names and one answer to "which do I install" - and the
-# profile stays available here for anyone measuring. docs/pack-size.md has the numbers.
+# profile stays available here for anyone measuring. docs/quests/docs/pack-size.md has the numbers.
 #
 # The masters stay in audio/ untouched, so raising the shipped quality later is a
 # re-run of this script rather than a second purchase from ElevenLabs, which bills
@@ -282,7 +282,7 @@ fi
 # ONE STAGED STORE, SEVERAL PACKS. 600 MB is more than CurseForge takes in one upload and more
 # than a player wants for lines their character cannot reach, so the store is transcoded once
 # and built into a pack per side of the war, one for the quests both sides share, one for
-# gossip, and one holding everything. Each is an addon folder of its own - a second file on
+# gossip. Each is an addon folder of its own - a second file on
 # one project would let an addon manager move a player from the pack they chose to whichever
 # was uploaded last. tts_cli/factions.py holds the split and explains it.
 #
@@ -304,8 +304,11 @@ for pack in $PACKS; do
 
   version="$VERSION"
   language_args=()
+  build_pack="$pack"
   if [ "$LANGUAGE" != enUS ]; then
     module="$(pack_field "$pack" folder)"
+    # A Shared page that holds every quest builds the quests slice (scripts/lib/packs.mjs).
+    build_pack="$(pack_field "$pack" build)"
     title="$(pack_field "$pack" name)"
     version="$(pack_field "$pack" version)"
     language_args=(--language "$LANGUAGE")
@@ -317,7 +320,7 @@ for pack in $PACKS; do
   # ${language_args[@]+...} rather than a bare expansion: macOS's bash 3.2 raises "unbound
   # variable" under set -u when a plain "${arr[@]}" is empty, which it is on every English build.
   (cd "$QUESTS" && "$PYTHON" cli-main.py build --store "$staging" --dist "$DIST" \
-    --module "$module" --version "$version" --pack "$pack" ${title:+--module-title "$title"} \
+    --module "$module" --version "$version" --pack "$build_pack" ${title:+--module-title "$title"} \
     "${language_args[@]+"${language_args[@]}"}")
 
   echo "  module size: $(du -sh "$DIST/$module" | cut -f1)  (store: $(du -sh "$STORE" | cut -f1))"

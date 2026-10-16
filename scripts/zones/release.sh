@@ -73,7 +73,7 @@ target_curseforge() { case "$1" in zones) echo "1636521";; audio) pack_field cur
 # there, which sends players to the GitHub release.
 target_wago()       { case "$1" in zones) echo "mNw7b5No";; esac; }
 # zones is the spoken-zones project, retiring: the module ships inside Spoken's zip, from the
-# Spoken_Zones folder, and this project's last file is the tombstone that
+# Spoken_Places folder, and this project's last file is the tombstone that
 # scripts/spoken/package-retired.sh builds under the old folder's name (make
 # package-spoken-retired), its version read off the template, addons/SpokenZones/SpokenZones.toc.
 target_addon()      { case "$1" in zones) echo "SpokenZones";; audio) pack_field folder;; esac; }
@@ -88,10 +88,10 @@ target_slug()       { case "$1" in zones) echo "spoken-zones";; audio) pack_fiel
 # client it cannot load on is worse than one that is simply absent there.
 # Required dependencies by CurseForge slug. The pack needs the module that reads it: it is
 # data, inert without it, and a manager that installs it alone leaves a player several hundred
-# megabytes heavier and no louder. Since 3.0.0 the module ships inside spoken-player, so that
+# megabytes heavier and no louder. Since 3.0.0 the module ships inside spoken, so that
 # is what the pack names; spoken-zones is retired, and its last file is the tombstone the
-# addon target uploads, which needs spoken-player too.
-target_dependencies()  { case "$1" in zones) echo "spoken-player";; audio) echo "spoken-player";; esac; }
+# addon target uploads, which needs spoken too.
+target_dependencies()  { case "$1" in zones) echo "spoken";; audio) echo "spoken";; esac; }
 target_game_versions() { echo "$GAME_VERSION_ERA $GAME_VERSION_ANNIVERSARY $GAME_VERSION_FOREVER"; }
 
 dry_run=""

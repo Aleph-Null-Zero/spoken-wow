@@ -113,7 +113,7 @@ DataModules =
     -- anyway, which is the only cost a rename has.
     --
     -- The sound pack ships in five pieces, so this is a menu rather than a single answer: a
-    -- player picks their side plus the shared quests, or takes the complete pack. Only shown
+    -- player picks their side plus the shared quests, or takes them all. Only shown
     -- to somebody who has no pack at all - see EnumerateAddons, where having one silences the
     -- other four, since suggesting the Horde pack to an Alliance player who already installed
     -- theirs is noise.
@@ -127,31 +127,31 @@ DataModules =
         },
         {
             AddonName = "SpokenQuestsAudioAlliance",
-            Title = "Spoken Quests Audio: Alliance",
+            Title = "Spoken Audio: Quests - Alliance",
             ContentVersion = "2.2.0",
             RelevantAboveVersion = 0,
-            URL = "https://www.curseforge.com/wow/addons/spoken-quests-audio-alliance",
+            URL = "https://www.curseforge.com/wow/addons/spoken-audio-quests-alliance",
         },
         {
             AddonName = "SpokenQuestsAudioHorde",
-            Title = "Spoken Quests Audio: Horde",
+            Title = "Spoken Audio: Quests - Horde",
             ContentVersion = "2.2.0",
             RelevantAboveVersion = 0,
-            URL = "https://www.curseforge.com/wow/addons/spoken-quests-audio-horde",
+            URL = "https://www.curseforge.com/wow/addons/spoken-audio-quests-horde",
         },
         {
             AddonName = "SpokenQuestsAudioShared",
-            Title = "Spoken Quests Audio: Shared Quests",
+            Title = "Spoken Audio: Quests - Shared",
             ContentVersion = "2.2.0",
             RelevantAboveVersion = 0,
-            URL = "https://www.curseforge.com/wow/addons/spoken-quests-audio-shared",
+            URL = "https://www.curseforge.com/wow/addons/spoken-audio-quests-shared",
         },
         {
             AddonName = "SpokenQuestsAudioGossip",
-            Title = "Spoken Quests Audio: Gossip",
+            Title = "Spoken Audio: Gossip",
             ContentVersion = "2.2.0",
             RelevantAboveVersion = 0,
-            URL = "https://www.curseforge.com/wow/addons/spoken-quests-audio-gossip",
+            URL = "https://www.curseforge.com/wow/addons/spoken-audio-gossip",
         },
     },
 }
@@ -236,7 +236,8 @@ function DataModules:GetPackLabel(module)
         return label
     end
     local title = module and module.Title or ""
-    title = string.gsub(title, "Spoken Quests Audio: ", "")
+    -- "Spoken German Audio: Quests - Horde", or a pack built before that, "Spoken Quests Audio: Horde".
+    title = string.gsub(title, "^Spoken [^:]*Audio: ", "")
     return (string.gsub(title, "VoiceOver Data %- ", ""))
 end
 
@@ -482,9 +483,10 @@ local function GossipLookupKey(soundData)
         soundData.name and (replaceDoubleQuotes(soundData.name))
 end
 
---- Whether any pack holds gossip for this speaker, whatever the text. Asked the moment a
---- gossip dialog opens, before its text can be trusted, to decide whether to silence the
---- NPC's greeting for a line that is coming.
+--- Whether a pack holds the audio of any of this speaker's gossip lines, whatever the text on
+--- screen. Asked the moment a gossip dialog opens, before its text can be trusted, to decide
+--- whether to silence the NPC's greeting for a line that is coming. The addon's own text names
+--- every NPC's lines, so it counts only where a pack has the file.
 ---@param soundData { unitGUID: string?, name: string?, unitIsObjectOrItem: boolean? }
 ---@return boolean
 function DataModules:HasGossipFor(soundData)
@@ -492,12 +494,23 @@ function DataModules:HasGossipFor(soundData)
     if not table or npc == nil then
         return false
     end
-    if GossipText and GossipText[table] and GossipText[table][npc] then
+    local probe = { event = Enums.SoundEvent.Gossip, unitGUID = soundData.unitGUID, name = soundData.name,
+        unitIsObjectOrItem = soundData.unitIsObjectOrItem }
+    local function Voiced(lines)
+        for text in pairs(lines or {}) do
+            probe.text = text
+            if self:PrepareSound(probe) then
+                return true
+            end
+        end
+        return false
+    end
+    if Voiced(GossipText and GossipText[table] and GossipText[table][npc]) then
         return true
     end
     for _, module in self:GetModules() do
         local data = TextLookup(module, table)
-        if data and data[npc] then
+        if Voiced(data and data[npc]) then
             return true
         end
     end

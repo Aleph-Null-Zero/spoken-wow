@@ -21,7 +21,7 @@ import { dirname, join } from "node:path";
 import pg from "pg";
 
 import { isClientLocale } from "../../../lib/locales.mjs";
-import { compareIds, indexLua, luaId, pageIndex, quote } from "./lua.mjs";
+import { canBeHad, compareIds, indexLua, luaId, pageIndex, quote } from "./lua.mjs";
 import { spokenText } from "./text.mjs";
 
 const ROOT = new URL("../../../../", import.meta.url).pathname;
@@ -102,7 +102,10 @@ export function packLua(lang, clips, entries = null) {
     // Null only for a take imported from a store this app did not cut. Written as 0 so
     // the addon can tell "unknown" from "short" and fall back to its own timer.
     const len = row.durationSec === null ? 0 : row.durationSec;
-    const text = row.text == null ? "" : `, text = ${quote(spokenText(row.text))}`;
+    // English's words for a page Books.lua has are Books.lua's, which the addon falls back to: a
+    // copy here was 440 KB more in every English pack. A minted page is not in Books.lua.
+    const inBooksLua = lang === LANG && typeof row.pageId === "number";
+    const text = row.text == null || inBooksLua ? "" : `, text = ${quote(spokenText(row.text))}`;
     lines.push(`\t\t[${luaId(row.pageId)}] = { file = ${quote(row.file)}, len = ${len}${text} },`);
   }
   lines.push("\t},");
@@ -113,7 +116,7 @@ export function packLua(lang, clips, entries = null) {
     // language's clip like any other.
     if (entries.known.length > 0) lines.push("", ...indexLua(pageIndex(entries.known)));
     if (entries.extra.length > 0) {
-      // Pages Spoken_Books/Data/Books.lua lacks: found, placed and grouped from here. Older
+      // Pages Spoken_Readables/Data/Books.lua lacks: found, placed and grouped from here. Older
       // versions of the addon read only `index` and `loose`, so they never meet an id they
       // cannot place.
       lines.push("", ...indexLua(pageIndex(entries.extra), "extra"), "", "\tplaces = {");
@@ -163,7 +166,8 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
       `select * from (
        select distinct on (t."lineId")
               case when p."pageTextId" is not null then p."pageTextId"::text else substr(p."lineId", 3) end as "pageId",
-              p."pageTextId" is not null as "numeric", p."pageTextId", p."lineId", b."text", t."file", t."durationSec"
+              p."pageTextId" is not null as "numeric", p."pageTextId", p."lineId", p."bookId", b."title", b."text",
+              t."file", t."durationSec"
          from "take" t
          join "book_line" b on b."lineId" = t."lineId" and b."lang" = t."lang" and b."isCurrent"
          join "book_page" p on p."lineId" = t."lineId" and p."aliasOf" is null
@@ -172,7 +176,14 @@ export async function buildLookup({ lang = LANG, out = lookupPath(lang) } = {}) 
         order by c."pageTextId" nulls last, c."lineId"`,
       [lang],
     );
-    const rows = clips.rows.map((r) => ({ ...r, pageId: r.numeric ? Number(r.pageId) : r.pageId }));
+    // A book nobody can have has no page the reader is shown, so no clip of it ships.
+    const rows = canBeHad(
+      clips.rows.map((r) => ({
+        ...r,
+        pageId: r.numeric ? Number(r.pageId) : r.pageId,
+        bookId: /^\d+$/.test(r.bookId) ? Number(r.bookId) : r.bookId,
+      })),
+    );
 
     // A language no client runs in (Italian) has no index: no client shows its words, so a page
     // is always found by the client's own index and only played in this one.

@@ -15,10 +15,11 @@ import { useLang } from "@/components/LangProvider";
 import { useState } from "react";
 
 import OverrideDialog from "@/components/OverrideDialog";
+import OutdatedNote from "@/components/OutdatedNote";
+import LineHeading from "@/components/reports/LineHeading";
 import { Button } from "@/components/ui/button";
-import { detailOf, regeneratePath, type SourceLine } from "@/lib/reports/detail";
+import { detailOf, regenerateLine, type SourceLine } from "@/lib/reports/detail";
 
-import { noApiKeyMessage } from "@/lib/no-api-key";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { Source } from "@/lib/sections";
 
@@ -29,6 +30,8 @@ type Props = {
   line: SourceLine | null | undefined;
   /** Whether this visitor may spend credits. The page already gates the rest. */
   canRegenerate: boolean;
+  /** Whether the speaker's name opens the NPC page. See LineHeading. */
+  showNpcPage: boolean;
   /** Hands the new take's version up, so the player busts its cache. */
   onRegenerated: (version: number) => void;
   /** Hands a rewrite up, so the panel and the row read the text that will be spoken next. */
@@ -40,6 +43,7 @@ export default function ReportDetail({
   lineId,
   line,
   canRegenerate,
+  showNpcPage,
   onRegenerated,
   onOverridden,
 }: Props) {
@@ -54,33 +58,12 @@ export default function ReportDetail({
     setError(null);
     setDone(false);
 
-    const response = await fetch(regeneratePath(source, lang), {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ lineId }),
-    }).catch(() => null);
-
-    const body = (await response?.json().catch(() => ({}))) as {
-      ok?: boolean;
-      version?: number;
-      error?: string;
-      code?: string;
-    };
+    const result = await regenerateLine(source, lineId, lang);
     setBusy(false);
-
-    if (!response) return setError("the request did not go through");
-
-    // "You have the role but no key on file" is one page away from fixed, so it says so
-    // rather than reading as a failure of the line.
-    const noKey = noApiKeyMessage(response.status, body);
-    if (noKey) return setError(noKey);
-
-    if (!response.ok || !body.ok || body.version === undefined) {
-      return setError(body.error ?? `failed (${response.status})`);
-    }
+    if ("error" in result) return setError(result.error);
 
     setDone(true);
-    onRegenerated(body.version);
+    onRegenerated(result.version);
   }
 
   if (line === undefined) {
@@ -103,14 +86,15 @@ export default function ReportDetail({
   return (
     <div className="flex flex-col gap-2 px-3 py-3">
       <div>
-        <span className="font-medium">{detail.heading}</span>
-        <span className="text-muted-foreground ml-2 text-xs">{detail.context}</span>
+        <LineHeading detail={detail} showNpcPage={showNpcPage} asideClassName="ml-2" />
       </div>
 
       <p className="text-sm whitespace-pre-wrap">{detail.text}</p>
 
       {detail.audioSrc === null ? (
         <p className="text-muted-foreground text-xs">No audio on file for this line.</p>
+      ) : detail.stale ? (
+        <OutdatedNote className="text-xs" />
       ) : null}
 
       {canRegenerate ? (
@@ -142,6 +126,8 @@ export default function ReportDetail({
             setEditing(false);
             onOverridden(text);
           }}
+          // The moment's other lines took the text too, so the explorer is where to see them.
+          onRewritten={() => setEditing(false)}
           onCancel={() => setEditing(false)}
         />
       ) : null}

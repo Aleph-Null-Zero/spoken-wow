@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Writes addons/Spoken_Zones/Data/<lang>/{Zones,Subzones}.lua from lore_line, English and
+// Writes addons/Spoken_Places/Data/<lang>/{Zones,Subzones}.lua from lore_line, English and
 // every language with a translation.
 //
 //   node tools/lore/export.mjs           # write every language's pair
@@ -14,10 +14,12 @@
 // It is not part of `make check`, which has to keep passing on clones with no Postgres.
 
 import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 import { zonesLua, subzonesLua } from "../lib/loredata.mjs";
 import { loadClientAreas } from "../lib/era.mjs";
 import { BASE_LOCALE, CODES } from "../lib/locales.mjs";
+import { readJson, ROOT } from "../lib/wiki.mjs";
 import { emitZones, emitSubzones } from "./lua.mjs";
 import { isEnabled, readCurrent, readNames, writeCorpus } from "./store.mjs";
 import { close } from "../voice/db.mjs";
@@ -54,6 +56,14 @@ async function main() {
       `leaving ${unreachable} line(s) behind: no client can report them ` +
         `(builds ${client.builds.join(", ")})`,
     );
+  }
+  // Forever's spelling of a place the lore keeps under another key is that place, not a second
+  // one: Data/ForeverAreas.lua sends the client's name to the frozen key.
+  const { renamed } = await readJson(join(ROOT, "pipelines/zones/tools/seed/forever-places.json"));
+  const twice = rows.filter((row) => row.kind === "subzone" && renamed[row.key]);
+  for (const row of twice) rows.splice(rows.indexOf(row), 1);
+  if (twice.length) {
+    console.log(`leaving ${twice.length} line(s) behind: Forever's spelling of a place kept under another key`);
   }
 
   // A 'discovered' row is a place the client has and nobody has written about yet. It
@@ -132,8 +142,8 @@ async function main() {
     return;
   }
 
-  console.log("\nreview with:  git diff addons/Spoken_Zones/Data/");
-  console.log("a new language also needs its two files in Spoken_Zones.toc, then:  make zones-languages");
+  console.log("\nreview with:  git diff addons/Spoken_Places/Data/");
+  console.log("a new language also needs its two files in Spoken_Places.toc, then:  make zones-languages");
   console.log("then rebuild the audio lookup if any English text moved:  make zones-lookup");
 }
 

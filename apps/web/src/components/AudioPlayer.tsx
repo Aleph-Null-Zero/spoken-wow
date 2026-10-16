@@ -199,7 +199,7 @@ export default function AudioPlayer({
 
   return (
     <div className="bg-card/95 border-t backdrop-blur">
-      <Contained className="flex items-center gap-4 py-3">
+      <Contained className="flex items-center gap-2 py-3 sm:gap-4">
         <Button
           size="icon"
           variant="secondary"
@@ -277,7 +277,8 @@ export default function AudioPlayer({
           }}
           disabled={!src}
           aria-label={muted || volume === 0 ? "Unmute" : "Mute"}
-          className="shrink-0"
+          // A phone has volume buttons, and at its width the seek bar needs the room more.
+          className="hidden shrink-0 sm:inline-flex"
         >
           {muted || volume === 0 ? <VolumeX /> : <Volume2 />}
         </Button>
@@ -288,7 +289,7 @@ export default function AudioPlayer({
           aria-label="Volume"
           // Not disabled with nothing playing: the level is worth setting before the first
           // line, and it is remembered either way. Same enlarged pointer target as the seek bar.
-          className="-my-2 w-20 shrink-0 cursor-pointer py-2"
+          className="-my-2 hidden w-20 shrink-0 cursor-pointer py-2 sm:flex"
           onValueChange={([value]) => changeVolume(value ?? 0)}
         />
 

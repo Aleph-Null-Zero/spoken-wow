@@ -21,13 +21,13 @@ function tree(pages) {
 }
 
 const zonesEn = ["zones", "a.md", { section: "zones", lang: "enUS", curseforge: "1636532",
-  wago: "b6mvD9KP", release: "zones-audio", slug: "spoken-zones-audio", name: "Spoken Zones Audio" }];
+  wago: "b6mvD9KP", release: "zones-audio", slug: "spoken-audio-places", name: "Spoken Zones Audio" }];
 const zonesMx = ["zones", "b.md", { section: "zones", lang: "esMX", version: "1.0.0",
-  curseforge: "1711067", release: "zones-audio-esMX", slug: "spoken-zones-audio-esmx",
+  curseforge: "1711067", release: "zones-audio-esMX", slug: "spoken-spanish-al-audio-places",
   name: "Spoken Zones Audio: Spanish (AL)" }];
 const hordeEn = ["quests", "h.md", { section: "quests", lang: "enUS", pack: "horde",
   curseforge: "1660198", wago: "vNAg3OKo", release: "quests-audio-horde",
-  slug: "spoken-quests-audio-horde", name: "Spoken Quests Audio: Horde" }];
+  slug: "spoken-audio-quests-horde", name: "Spoken Quests Audio: Horde" }];
 const addonPage = ["zones", "addon.md", { curseforge: "1636521", slug: "spoken-zones",
   name: "Spoken Zones" }];
 
@@ -147,4 +147,31 @@ test("an acted overlay is the section's English folder plus Acted, and the langu
   assert.equal(actedFolder("zones", "deDE"), "SpokenZonesAudioActed_deDE");
   assert.equal(actedFolder("books", "ptBR"), "SpokenBooksAudioActed_ptBR");
   assert.throws(() => actedFolder("zones", "xxYY"));
+});
+
+const itQuests = (pack, extra = {}) => ["quests", `${pack}.md`, { section: "quests", lang: "itIT",
+  pack, version: "0.0.2", curseforge: "1", release: `quests-audio-${pack}-itIT`,
+  slug: `italian-spoken-quests-${pack}`, name: `Italian ${pack}`, github: "false", ...extra }];
+
+test("a Shared pack holding every quest builds as the quests pack, and its sides are dormant", () => {
+  const packs = loadPacks(tree([itQuests("shared", { holds: "quests" }),
+    itQuests("alliance", { dormant: "true" }), itQuests("horde", { dormant: "true" }), itQuests("gossip")]));
+  const shared = findPack("quests", "itIT", "shared", packs);
+  assert.equal(shared.build, "quests");
+  assert.equal(shared.folder, "SpokenQuestsAudioShared_itIT");
+  assert.equal(findPack("quests", "itIT", "gossip", packs).build, "gossip");
+  assert.equal(findPack("quests", "itIT", "horde", packs).dormant, true);
+});
+
+test("a dormant side needs a Shared pack holding every quest, and the other way round", () => {
+  assert.throws(() => loadPacks(tree([itQuests("shared", { holds: "quests" }), itQuests("horde")])),
+    /must be dormant/);
+  assert.throws(() => loadPacks(tree([itQuests("shared"), itQuests("horde", { dormant: "true" })])),
+    /must say holds: quests/);
+});
+
+test("only a language's shared pack holds quests, and only its sides are dormant", () => {
+  assert.throws(() => loadPacks(tree([itQuests("gossip", { holds: "quests" })])), /holds: quests/);
+  assert.throws(() => loadPacks(tree([itQuests("gossip", { dormant: "true" })])), /dormant: true/);
+  assert.throws(() => loadPacks(tree([["quests", "h.md", { ...hordeEn[2], dormant: "true" }]])), /dormant: true/);
 });

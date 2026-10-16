@@ -5,25 +5,26 @@ setfenv(1, SpokenEnv)
 --
 -- Left-click opens settings. Right-click opens a menu: the player's entries, then each
 -- source's, grouped in source order. Middle-click stops or replays. All three are
--- rebindable (Minimap.Commands in the profile), which is what keeps VoiceOverRedux's three-configurable-clicks
--- behaviour for the players who use it.
+-- rebindable (Minimap.Commands in the profile).
 Minimap = { entries = {} }
 
 local ICON = [[Interface\AddOns\Spoken\Textures\MinimapButton]]
 local ldbObject, menuFrame, minimapButton
 
--- The player's own entries.
+-- The player's own entries: the same playback rows as the Small Window's menu, then the
+-- Compendium and the settings.
 local PLAYER_ENTRIES = {
     { id = "PlayPause", text = L.STOP_REPLAY,  order = 1, onClick = function() SoundQueue:TogglePauseQueue() end },
-    { id = "Stop",      text = L.MIN_STOP_ALL, order = 2, onClick = function() SoundQueue:RemoveAllSoundsFromQueue() end },
+    { id = "Skip",      text = L.MIN_SKIP,     order = 2, onClick = function() SoundQueue:Skip() end },
+    { id = "Stop",      text = L.MIN_STOP_ALL, order = 3, onClick = function() SoundQueue:RemoveAllSoundsFromQueue() end },
     -- Azeroth's Compendium, whichever parts have a tab in it (UI/Compendium.lua in each).
-    { id = "Compendium", text = L.OPT_COMPENDIUM_OPEN, order = 3,
+    { id = "Compendium", text = L.OPT_COMPENDIUM_OPEN, order = 4,
         visible = function()
             local compendium = _G.SpokenCompendium
             return compendium ~= nil and compendium.Available ~= nil and compendium:Available()
         end,
         onClick = function() _G.SpokenCompendium:Toggle() end },
-    { id = "Settings",  text = L.SETTINGS,     order = 4, onClick = function() Options:Open() end },
+    { id = "Settings",  text = L.SETTINGS,     order = 5, onClick = function() Options:Open() end },
 }
 
 --- entry = { id, text, icon, order, onClick(button), tooltip(GameTooltip), visible() }
@@ -325,7 +326,7 @@ function Minimap:Setup()
                 if head.present.header then tooltip:AddLine(head.present.header, 1, 0.82, 0) end
                 tooltip:AddLine(head.present.label or "", 0.8, 0.8, 0.8)
             end
-            tooltip:AddLine(" ")
+            tooltip:AddLine("v" .. AddonVersion, 0.7, 0.7, 0.7)
             tooltip:AddLine(L.MENU_LEFT, 0.7, 0.7, 0.7)
             tooltip:AddLine(L.MENU_MIDDLE, 0.7, 0.7, 0.7)
             tooltip:AddLine(L.MENU_RIGHT, 0.7, 0.7, 0.7)

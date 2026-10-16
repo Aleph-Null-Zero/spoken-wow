@@ -64,6 +64,11 @@ superpowers/
 
 /pipelines/quests/tools/.lines_cache.pkl
 
+# The client's map tables from wago.tools, for `make quests-compendium`.
+/pipelines/quests/tools/cache/
+# The client's tables from wago.tools (pipelines/lib/wago.mjs), for every pipeline.
+/pipelines/lib/cache/
+
 # The hiccup scan's output. One command rebuilds it from a corpus that is committed, and it
 # exists to be filled in while reviewing - a committed copy would conflict with every
 # reviewer's own.

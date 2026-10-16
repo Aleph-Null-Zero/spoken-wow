@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from tts_cli.factions import (PACK_LABELS, PACK_SUFFIXES, PACKS, load_sides,
+from tts_cli.factions import (PACK_LABELS, PACK_SUFFIXES, PACKS, compendium_sides, load_sides,
                               pack_of_line, pack_stems, pack_title)
 
 CORPUS = {
@@ -69,6 +69,15 @@ def test_the_all_pack_is_every_stem():
         "quests/5-accept", "quests/7-accept", "quests/9-accept", "gossip/abc123"}
 
 
+def test_the_quests_pack_is_every_side_but_no_gossip():
+    # A language not split by side ships Alliance, Horde and Shared as one pack.
+    assert pack_stems(CORPUS, SIDES, "quests") == (
+        pack_stems(CORPUS, SIDES, "alliance") | pack_stems(CORPUS, SIDES, "horde")
+        | pack_stems(CORPUS, SIDES, "shared"))
+    assert pack_stems(CORPUS, SIDES, "quests") == {
+        "quests/5-accept", "quests/7-accept", "quests/9-accept"}
+
+
 def test_the_packs_partition_the_corpus():
     # Nothing may fall between the four: a line in no pack is a line that ships nowhere.
     split = set()
@@ -88,17 +97,52 @@ def test_sides_load_with_integer_quest_ids(tmp_path):
     path = tmp_path / "factions.json"
     path.write_text(json.dumps({"sides": {"5": "alliance", "7": "horde"}}))
 
-    assert load_sides(str(path)) == {5: "alliance", 7: "horde"}
+    assert load_sides(str(path), str(tmp_path / "none.lua")) == {5: "alliance", 7: "horde"}
 
 
 def test_a_missing_export_sides_with_nobody(tmp_path):
     """A checkout with no export builds one pack of everything rather than failing: the
     split is a packaging decision, and `build` still has to work without it."""
-    assert load_sides(str(tmp_path / "nope.json")) == {}
+    assert load_sides(str(tmp_path / "nope.json"), str(tmp_path / "none.lua")) == {}
+
+
+COMPENDIUM = """SpokenQuestsCompendium = {
+\tversion = 1,
+
+\tquests = {
+\t\t[5] = { "Jitters' Growling Gut", zones = { 1431 }, ender = 272, races = 4294967373 },
+\t\t[8] = { "A Rogue's Deal", zones = { 1420 }, races = 8589934770 },
+\t\t[9] = { "The Killing Fields", zones = { 1436 } },
+\t\t[92474] = { "Falling With Style", zones = { 2521 }, races = 4294967296 },
+\t\t[92485] = { "A Student of Nature", sort = 263, races = 4294967297, classes = 1024 },
+\t},
+
+\tsorts = {
+\t\t[263] = { "Druid" },
+\t},
+}
+"""
+
+
+def test_the_compendium_s_race_masks_give_a_quest_its_side(tmp_path):
+    """Forever's quests are not in the vmangos DB the export reads, so the Compendium's race
+    masks side them: a Skyborne-only quest is its side's, and one open to both sides is shared."""
+    compendium = tmp_path / "Compendium.lua"
+    compendium.write_text(COMPENDIUM, encoding="utf-8")
+    assert compendium_sides(str(compendium)) == {5: "alliance", 8: "horde", 9: None, 92474: "alliance",
+                                                 92485: "alliance"}
+
+
+def test_the_compendium_wins_and_the_export_fills_in_what_it_does_not_list(tmp_path):
+    compendium, export = tmp_path / "Compendium.lua", tmp_path / "factions.json"
+    compendium.write_text(COMPENDIUM, encoding="utf-8")
+    export.write_text(json.dumps({"sides": {"9": "alliance", "236": "horde"}}))
+    assert load_sides(str(export), str(compendium)) == {5: "alliance", 8: "horde", 92474: "alliance",
+                                                        92485: "alliance", 236: "horde"}
 
 
 def test_pack_names_are_stable():
-    assert PACKS == ("all", "alliance", "horde", "shared", "gossip")
+    assert PACKS == ("all", "alliance", "horde", "shared", "gossip", "quests")
 
 
 def test_every_pack_has_a_folder_suffix_and_a_label():
@@ -111,12 +155,12 @@ def test_every_pack_has_a_folder_suffix_and_a_label():
 
 
 def test_a_title_reads_as_the_project_it_ships_to():
-    assert pack_title("alliance") == "Spoken Quests Audio: Alliance"
-    assert pack_title("shared") == "Spoken Quests Audio: Shared Quests"
+    assert pack_title("alliance") == "Spoken Audio: Quests - Alliance"
+    assert pack_title("shared") == "Spoken Audio: Quests - Shared"
 
 
 def test_a_family_names_a_whole_set_of_packs_at_once():
     # A set of packs built together is named together, and its CurseForge projects are named
     # for the family rather than per pack - so the family is a parameter and not five more
     # constants to keep in step. One family ships today; a language pack would be the next.
-    assert pack_title("horde", "Spoken Quests Audio deDE") == "Spoken Quests Audio deDE: Horde"
+    assert pack_title("horde", "Spoken German Audio") == "Spoken German Audio: Quests - Horde"

@@ -31,13 +31,14 @@ flavors have not been visually verified.
 | Stop or Replay button | Stop the line, or Replay it from the beginning; "• (Stopped)" follows the title meanwhile |
 | Skip button | Skip the line |
 | Report button | Report a problem with the line, where its module offers it |
-| "• +N" after the title | How many lines wait behind this one |
+| "• +N" after the title | How many lines wait behind this one; point at it for the list |
 | Right-click portrait, speaker, title or panel | Playback menu and source actions |
 | Drag speaker name or panel | Move the unlocked player |
 | Hover collapsed player | Reveal the resize grip |
+| Ctrl and the mouse wheel | Window Size; with Shift too, Text Size (not while locked) |
 | `/sp options` | Narrator style, scale, lock and the window's other settings |
 | `/sp player minimal` | Switch to this layout (`classic`, `subtitle` or `none` for the others) |
-| `/sp reset` | Reset the active layout's position and width |
+| `/sp reset` | Reset every window's position, and the Small Window's width |
 | `/sp diagnostics` | Inspect playback, UI state and captured callback errors |
 
 The hidden-portrait and optional-action settings remain effective in this

@@ -2,7 +2,7 @@ import { pageLang } from "@/lib/lang-server";
 import { viewerOf } from "@/lib/grants/store";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import ContributionTable, { type ContributionRow } from "@/components/ContributionTable";
 import ContributionsTabs from "@/components/ContributionsTabs";
@@ -21,12 +21,11 @@ import {
   isBucket,
   isSection,
   namesSpeaker,
-  sectionOf,
-  sourceOfSection,
   matchesSearch,
-  isStageFilter,
   matchesStage,
   pageOf,
+  queryOf,
+  stagesOf,
   PAGE_SIZE,
   sortOf,
   type ClientFilter,
@@ -39,6 +38,7 @@ import { listContributions, observationMeta, type Contribution } from "@/lib/con
 import {
   bookFor,
   npcSummaryFrom,
+  packHeard,
   questFor,
   resolveMissing,
   idOnlyResolution,
@@ -234,6 +234,12 @@ export default async function Page({
 }) {
   const lang = await pageLang(params);
   const { source } = await params;
+  // Gossip was a section of its own; an old link opens quests narrowed to it.
+  if (source === "gossip") {
+    const query = queryOf(await searchParams);
+    query.set("stage", "gossip");
+    redirect(localeHref(lang, `/contributions/quests?${query}`));
+  }
   if (!isSection(source)) notFound();
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -285,7 +291,7 @@ export default async function Page({
   const client: ClientFilter = clientFilterOf(rawClient);
 
   // Which quest panel the text was read off -- accept, progress or complete -- or gossip.
-  const stage: StageFilter = source === "quests" && isStageFilter(rawStage) ? rawStage : "all";
+  const stage: StageFilter = source === "quests" ? stagesOf(rawStage) : [];
 
   // Books and zones name no NPC or quest, so their search is always over the text.
   const q = typeof rawQ === "string" ? rawQ.trim() : "";
@@ -296,12 +302,10 @@ export default async function Page({
 
   // Lines the corpus already has are not this queue's: a different text is a correction, on
   // its own tab, and the same text is nothing to triage at all (known.ts's tabOf).
-  // Gossip is the quests rows tied to no quest, so the two sections read one source and split it.
-  const [all, pending] = await Promise.all([
-    listContributions(status, lang, sort, sourceOfSection(source)),
+  const [listed, pending] = await Promise.all([
+    listContributions(status, lang, sort, source),
     pendingCounts(lang),
   ]);
-  const listed = all.filter((row) => sectionOf(row, questFor(row)) === source);
   const states = await lineStates(listed);
   const contributions = listed.filter((row, index) => tabOf(row.status, states[index]) === "contributions");
   // Every row's NPC, not just this page's: the buckets read it, and it is one query for the lot.
@@ -347,6 +351,7 @@ export default async function Page({
     source: row.source,
     key: row.key,
     locale: row.locale,
+    pack: packHeard(row),
     client: clientOf(row.build),
     count: row.count,
     text: row.text,

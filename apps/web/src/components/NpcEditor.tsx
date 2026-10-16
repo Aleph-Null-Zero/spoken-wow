@@ -167,17 +167,15 @@ function NameCell({
 }
 
 /**
- * Where an NPC's lines can be looked up: both explorers, and both contribution sections. The
- * contribution links carry this page's client filter, since the two pages read it the same way.
+ * Where an NPC's lines can be looked up: the explorer and the contributions. The contributions
+ * link carries this page's client filter, since the two pages read it the same way.
  */
 function lookups(npcId: number, client: ClientFilter): { label: string; path: string; where: string }[] {
   const search = `q=${npcId}&filter=npc`;
   const contributed = client === DEFAULT_CLIENT_FILTER ? search : `${search}&client=${client}`;
   return [
     { label: "Q", path: `/quests?${search}`, where: "the quests explorer" },
-    { label: "G", path: `/gossip?${search}`, where: "the gossip explorer" },
     { label: "CQ", path: `/contributions/quests?${contributed}`, where: "quest contributions" },
-    { label: "CG", path: `/contributions/gossip?${contributed}`, where: "gossip contributions" },
   ];
 }
 

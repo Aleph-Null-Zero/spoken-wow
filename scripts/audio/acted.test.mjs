@@ -50,13 +50,24 @@ test("the quests overlay is a module whose length table is its list of lines", (
 });
 
 test("a quests overlay outranks the generated packs, and says its language", () => {
-  const text = toc({ section: "quests", lang: "deDE", version: "1.0.0", credits: ["A", "B"], iface: "11509", maps: "0, 1" });
+  const text = toc({ section: "quests", lang: "deDE", version: "1.0.0", credits: ["A", "B"], iface: "11509" });
+  assert.match(text, /^## Title: Spoken German Audio: Quests - Voice Actors$/m);
   assert.match(text, /^## X-SpokenQuests-Language: deDE$/m);
   assert.match(text, /^## X-SpokenQuests-DataModule-Priority: 200$/m);
   assert.match(text, /^## X-VoiceOver-DataModule-Priority: 200$/m);
   assert.match(text, /^## X-Spoken-Actors: A, B$/m);
   assert.match(text, /^## Author: rusty, A, B$/m);
-  const english = toc({ section: "zones", lang: "enUS", version: "1.0.0", credits: ["A"], iface: "11509", maps: null });
+  const english = toc({ section: "zones", lang: "enUS", version: "1.0.0", credits: ["A"], iface: "11509" });
+  assert.match(english, /^## Title: Spoken Audio: Places - Voice Actors$/m);
   assert.doesNotMatch(english, /Language/);
   assert.match(english, /^Data\/Sounds.lua$/m);
+});
+
+test("every overlay nests under Spoken and names the addon that plays it", () => {
+  for (const [section, player] of [["quests", "Spoken_Quests"], ["zones", "Spoken_Places"], ["books", "Spoken_Readables"]]) {
+    const text = toc({ section, lang: "enUS", version: "1.0.0", credits: ["A"], iface: "11509", maps: "0" });
+    assert.match(text, /^## Group: Spoken$/m);
+    assert.match(text, /^## X-Part-Of: Spoken$/m);
+    assert.match(text, new RegExp(`^## X-Child-Of: ${player}$`, "m"));
+  }
 });

@@ -9,7 +9,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
 
 _G.UISpecialFrames = _G.UISpecialFrames or {}
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
 stub.world.questID = 0; stub.ShowPanel(nil)
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
@@ -21,7 +21,7 @@ local D = env.Defaults.profile
 Expect("every module on", next(D.Parts), nil)
 Expect("Subtitles Only", D.Frame.Style, "subtitle")
 Expect("...listed first among the narrator styles", env.Options:Styles()[1], "subtitle")
-Expect("Show Words on", D.Transcript.Enabled, true)
+Expect("Show Narrator on", D.Transcript.Enabled, true)
 Expect("Highlight Word off", D.Transcript.HighlightWord, false)
 Expect("Type Words Out on", D.Transcript.Typewriter, true)
 Expect("...letter by letter", D.Transcript.TypewriterBy, "letter")

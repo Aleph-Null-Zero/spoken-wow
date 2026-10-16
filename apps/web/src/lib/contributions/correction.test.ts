@@ -147,10 +147,10 @@ describe("acceptCorrection", () => {
          from "quest_line" where "lineId" = any($1::text[]) and "lang" = 'enUS' and "isCurrent" order by "lineId"`,
       [linesOf(contributedQuest)],
     );
-    const shared = { text: "Well met, $glad:lass;.", originalText: "Well met, $glad:lass;.", origin: "contributed", generatable: true };
+    const shared = { originalText: "Well met, $glad:lass;.", origin: "contributed", generatable: true };
     expect(rows).toEqual([
-      { lineId: `${moments[1]}:f`, playerGender: "f", fileName: `f-${contributedQuest}-accept`, ...shared },
-      { lineId: `${moments[1]}:m`, playerGender: "m", fileName: `m-${contributedQuest}-accept`, ...shared },
+      { lineId: `${moments[1]}:f`, playerGender: "f", fileName: `f-${contributedQuest}-accept`, text: "Well met, lass.", ...shared },
+      { lineId: `${moments[1]}:m`, playerGender: "m", fileName: `m-${contributedQuest}-accept`, text: "Well met, lad.", ...shared },
     ]);
 
     // The export joins speakers by line id, so each side carries its own.
@@ -191,15 +191,15 @@ describe("acceptCorrection", () => {
     expect(!outcome.ok && outcome.reason).toBe("malformed");
   });
 
-  it("refuses to split an extracted line, which the next import would bring back", async () => {
+  it("splits an extracted line too, the site being the corpus", async () => {
     const id = await contribution("enUS", "Well met, $glad:lass;.", "accept", extractedQuest);
     const outcome = await acceptCorrection(id, ACCEPTER);
-    expect(!outcome.ok && outcome.reason).toBe("malformed");
+    expect(outcome.ok && outcome.contribution.status).toBe("accepted");
     const { rows } = await db().query(
-      `select "lineId" from "quest_line" where "lineId" = any($1::text[]) and "isCurrent"`,
+      `select "lineId" from "quest_line" where "lineId" = any($1::text[]) and "isCurrent" order by "lineId"`,
       [linesOf(extractedQuest)],
     );
-    expect(rows).toEqual([{ lineId: moments[3] }]);
+    expect(rows).toEqual([{ lineId: `${moments[3]}:f` }, { lineId: `${moments[3]}:m` }]);
   });
 
   it("refuses a contribution the corpus does not differ from", async () => {

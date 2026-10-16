@@ -647,6 +647,33 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
         return QuestScrollFrame
     end
 
+    -- Dressed as the player's square Play button: the tracking checkbox's border beside it, Play's
+    -- own glyph inside, as the Zones story and the narrator styles have it. A failure leaves the
+    -- button as it was and is said once, so the quest log never loses its Play.
+    local said
+    local function Say(err)
+        if said then return end
+        said = true
+        print("|cffff8080Spoken Quests:|r the quest log's Play button kept its old look: " .. tostring(err))
+    end
+    -- Built bare, not from the old button: its own art would stay drawn over the checkbox's border.
+    local MakePlayButton = QuestOverlayUI.MakePlayButton
+    function QuestOverlayUI:MakePlayButton(parent)
+        if Spoken and Spoken.DressBoxButton then
+            local button = Utils:CreateDetachedFrame("Button", nil, parent or self:GetPlayButtonParent())
+            button:SetSize(20, 20)
+            button:SetHitRectInsets(2, 2, 2, 2)
+            local ok, err = pcall(Spoken.DressBoxButton, Spoken, button)
+            if ok then
+                button.setPlayState = QuestOverlayUI.FollowQueue
+                return button
+            end
+            Say(err)
+            button:Hide()
+        end
+        return MakePlayButton(self, parent)
+    end
+
     --- The client's own objective icon for this quest, drawn when "Quest objectives" is on: a
     --- small square button carrying the quest's ID, anchored to the row's top left corner and
     --- pooled beside the rows rather than parented to them. The play button is the one frame
@@ -669,9 +696,13 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
     -- already decided, and a prefix re-wraps it inside a row too short to hold the extra line.
     function QuestOverlayUI:UpdateQuestTitle(questLogTitleFrame, playButton)
         playButton:ClearAllPoints()
+        if playButton.MatchBox and questLogTitleFrame.Checkbox then
+            local ok, err = pcall(playButton.MatchBox, playButton, questLogTitleFrame.Checkbox)
+            if not ok then Say(err) end
+        end
         local poiButton = QuestPOIButton(questLogTitleFrame)
         if poiButton and questLogTitleFrame.Checkbox then
-            playButton:SetPoint("RIGHT", questLogTitleFrame.Checkbox, "LEFT", -2, 0)
+            playButton:SetPoint("RIGHT", questLogTitleFrame.Checkbox, "LEFT", -3, 0)
         elseif poiButton then
             playButton:SetPoint("TOPRIGHT", questLogTitleFrame, "TOPRIGHT", -4, -2)
         else
@@ -745,35 +776,6 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
     -- follow it there: a frame has one parent. Play, Report and Contribute, rebound to whichever
     -- quest the panel is showing, in the corner opposite its Back button.
     if QuestMapFrame and QuestMapFrame.DetailsFrame and QuestMapFrame_ShowQuestDetails then
-        -- This quest's accept line in the queue, whoever queued it: autoplay, the log's own button
-        -- or this one. Found again each time, since a rebind or a reopened panel starts afresh.
-        local function QueuedLine(questID)
-            for _, clip in ipairs(Player:Queued()) do
-                if clip.questID == questID and clip.event == Enums.SoundEvent.QuestAccept then return clip end
-            end
-        end
-        -- Stop while this quest's line speaks, Replay while it is stopped at the head, Play otherwise.
-        local function StateOf(questID)
-            local clip = QueuedLine(questID)
-            if not clip or Spoken:GetCurrent() ~= clip then return "play", clip end
-            if Spoken:IsPaused() then return "replay", clip end
-            if Spoken:GetNowPlaying() == clip then return "stop", clip end
-            return "play", clip
-        end
-        local function SetRoundPlaying(button)
-            button:SetState((StateOf(button.questID)))
-        end
-        -- The tooltip says what a click does now.
-        local TIPS = { play = { L.OPT_PLAY, L.OPT_PLAY_TIP }, stop = { L.OPT_STOP, L.OPT_STOP_TIP },
-            replay = { L.OPT_REPLAY, L.OPT_REPLAY_TIP } }
-        local function PlayTooltip(button)
-            local tip = TIPS[button.state or "play"]
-            GameTooltip:SetOwner(button, "ANCHOR_LEFT")
-            GameTooltip:SetText(tip[1])
-            GameTooltip:AddLine(tip[2], 1, 0.8, 0.2, true)
-            GameTooltip:Show()
-        end
-
         function QuestOverlayUI:UpdateDetailsPlayButton()
             if not Addon:IsPartOn() then
                 if self.detailsPlayButton then self.detailsPlayButton:Hide() end
@@ -814,14 +816,10 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                 local playButton = Spoken:CreateRoundButton(header, "play", "SpokenQuestsDetailsPlayButton")
                 playButton:SetFrameLevel(header:GetFrameLevel() + 2)
                 playButton:SetPoint("RIGHT", report, "LEFT", -4, 0)
-                playButton.setPlayState = SetRoundPlaying
+                playButton.setPlayState = QuestOverlayUI.FollowQueue
                 self.detailsPlayButton = playButton
-                -- Stopped or replayed from the subtitle or the windows, the glyph follows.
+                -- Hide Report Buttons, in Spoken's settings, fires no game event.
                 if Spoken.RegisterCallback then
-                    Spoken:RegisterCallback("AUDIO_CHANGED", function()
-                        QuestOverlayUI:SetPlayButtonState(playButton)
-                    end)
-                    -- Hide Report Buttons, in Spoken's settings, fires no game event.
                     Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
                         QuestOverlayUI:UpdateDetailsPlayButton()
                     end)
@@ -851,7 +849,8 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                     -- Report passes it: a fallback line is an English take under another language.
                     local sound = { event = Enums.SoundEvent.QuestAccept, questID = button.questID }
                     local language = DataModules:PrepareSound(sound) and sound.language or nil
-                    if target then ReportButton:ShowLink(target, language) end
+                    local clip = { fromLog = true, questID = button.questID, title = button.title }
+                    if target then ReportButton:ShowLink(target, language, clip) end
                 end)
                 report:HookScript("OnEnter", function(button)
                     GameTooltip:SetOwner(button, "ANCHOR_LEFT")
@@ -870,46 +869,14 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             local playButton = self.detailsPlayButton
             local report = self.detailsReportButton
             local contributeButton = self.detailsContributeButton
+            local title = self:GetQuestTitle(questID)
             report.questID = questID
+            report.title = title
 
             -- Rebound rather than kept: this button stood for a different quest a moment ago. A line
             -- of this quest's already queued is the one it stands for, whoever queued it.
-            playButton.questID = questID
-            self:BindPlayButton(playButton, questID, self:GetQuestTitle(questID))
-            playButton.soundData = QueuedLine(questID)
-            -- This quest's line speaking or stopped: Stop or Replay it, as the subtitle's
-            -- button does. Waiting behind a line speaking: leave it queued; behind a stopped one: play it.
-            -- Otherwise: queue it.
-            local bound = playButton:GetScript("OnClick")
-            -- Named arguments, not varargs: this file also loads on 1.12, whose Lua 5.0 cannot
-            -- parse `...` as an expression, and one parse error loses the whole file.
-            playButton:SetScript("OnClick", function(button, mouse, down)
-                -- Looked up each click, never the copy kept when the panel opened: a line that has
-                -- since finished is no longer in the queue, and holding on to it left the button dead.
-                local state, clip = StateOf(button.questID)
-                if state == "stop" or state == "replay" then
-                    SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-                    Spoken:TogglePause()
-                elseif clip and Spoken:IsPaused() and Player.source then
-                    -- Waiting behind a stopped line: Play on it plays it, and takes the queue out of its stop.
-                    SpokenLayout.Sound("U_CHAT_SCROLL_BUTTON")
-                    Player.source:PlayNow(clip)
-                elseif not clip and bound then
-                    -- The bound handler queues the line it holds, so it starts from a fresh one.
-                    button.soundData = nil
-                    bound(button, mouse, down)
-                end
-                QuestOverlayUI:SetPlayButtonState(button)
-                if GameTooltip:GetOwner() == button then PlayTooltip(button) end
-            end)
-            playButton:SetScript("OnEnter", function(button)
-                if button:IsEnabled() then button.glyph:SetAlpha(1) end
-                PlayTooltip(button)
-            end)
-            playButton:SetScript("OnLeave", function(button)
-                if button:IsEnabled() then button.glyph:SetAlpha(0.85) end
-                GameTooltip:Hide()
-            end)
+            self:BindPlayButton(playButton, questID, title)
+            playButton.soundData = self:QueuedLine(questID)
 
             -- No sound: Contribute in the pair's place, where this client can contribute at all
             -- (Contribute:CanOfferFromLog); otherwise Play greyed out and nothing to report.
@@ -922,7 +889,6 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
             elseif contribute and contribute.CanOfferFromLog and contribute:CanOfferFromLog() then
                 playButton:Hide()
                 report:Hide()
-                local title = self:GetQuestTitle(questID)
                 contributeButton:SetScript("OnClick", function()
                     contribute:ShowFromLog(questID, title)
                 end)
@@ -951,4 +917,87 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
         end)
     end
 
+end
+
+-- Play on the objective tracker's quests, at the right end of each quest's title as the quest log has
+-- it: the same square button. The tracker pools its blocks, so a block keeps one button and rebinds it
+-- to the quest it shows. Where the client has no such tracker nothing is hooked.
+do
+    local MODULES = { "QuestObjectiveTracker", "CampaignQuestObjectiveTracker" }
+    -- The quest log's tracking checkbox, as it draws on this client (what its Play button matches).
+    local BOX, SIZE = "QuestLog-icon-ticksquare", 14
+    local buttons, hooked = {}, {}
+
+    local function Dress(block)
+        local questID = block.id
+        local button = buttons[block]
+        if type(questID) ~= "number" or not (Spoken and Spoken.DressBoxButton) or not Addon:IsPartOn()
+            or not DataModules:PrepareSound({ event = Enums.SoundEvent.QuestAccept, questID = questID }) then
+            if button then button:Hide() end
+            return
+        end
+        if not button then
+            button = Utils:CreateDetachedFrame("Button", nil, block)
+            button:SetSize(SIZE, SIZE)
+            button:SetHitRectInsets(1, 1, 1, 1)
+            local ok, err = pcall(Spoken.DressBoxButton, Spoken, button)
+            if ok then ok, err = pcall(button.SetBox, button, BOX, SIZE, SIZE) end
+            if not ok then
+                Debug:Record("tracker-play", "not dressed: " .. tostring(err))
+                button:Hide()
+                return
+            end
+            button.setPlayState = QuestOverlayUI.FollowQueue
+            -- Black behind the box: the tracker sits on the world, not on a panel.
+            local back = button:CreateTexture(nil, "BACKGROUND", nil, -1)
+            back:SetPoint("TOPLEFT", 1, -1)
+            back:SetPoint("BOTTOMRIGHT", -1, 1)
+            back:SetColorTexture(0, 0, 0, 0.6)
+            button:SetFrameLevel(block:GetFrameLevel() + 3)
+            button:SetPoint("TOPRIGHT", block, "TOPRIGHT", 0, 0)
+            buttons[block] = button
+        end
+        if button.questID ~= questID then button.soundData = nil end
+        QuestOverlayUI:BindPlayButton(button, questID, C_QuestLog.GetTitleForQuestID(questID) or "",
+            "the objective tracker's Play button")
+        button:Show()
+        QuestOverlayUI:SetPlayButtonState(button)
+    end
+
+    -- The blocks already drawn: the tracker lays out before the packs have loaded and before this
+    -- hook, and would otherwise show no button until something redraws it.
+    local function Sweep()
+        for _, name in ipairs(MODULES) do
+            local module = _G[name]
+            for _, byTemplate in pairs(type(module) == "table" and module.usedBlocks or {}) do
+                if type(byTemplate) == "table" then
+                    for _, block in pairs(byTemplate) do
+                        if type(block) == "table" and block.id then Dress(block) end
+                    end
+                end
+            end
+        end
+    end
+
+    local function Install()
+        for _, name in ipairs(MODULES) do
+            local module = _G[name]
+            if type(module) == "table" and module.AddBlock and not hooked[name] then
+                hooked[name] = true
+                hooksecurefunc(module, "AddBlock", function(_, block) Dress(block) end)
+            end
+        end
+        Sweep()
+    end
+    Install()
+    -- The tracker may load after this file, and the voice packs after the tracker.
+    local waiter = CreateFrame("Frame")
+    waiter:RegisterEvent("PLAYER_LOGIN")
+    waiter:SetScript("OnEvent", function()
+        Install()
+        if Spoken and Spoken.RegisterCallback then
+            Spoken:RegisterCallback("VOICE_PACKS_LOADED", Sweep)
+            Spoken:RegisterCallback("PART_SWITCHED", function(key) if key == "quests" then Sweep() end end)
+        end
+    end)
 end

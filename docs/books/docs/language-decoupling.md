@@ -160,7 +160,7 @@ number. No row is refused for lacking an English page.
   `book_page` joined with that language's `book_line`, so minted pages are in it. Each page is
   indexed under the checksum of its current text, and also under the checksum of its extracted
   text when the two differ. Era's wording and Forever's then both play.
-- A minted page has no English text, so it is absent from `Spoken_Books/Data/Books.lua` and from
+- A minted page has no English text, so it is absent from `Spoken_Readables/Data/Books.lua` and from
   the English pack.
 - The index lookup in `Reader.lua` (`Find`) can now return a page id that is the string
   `n{uuid}` instead of a number, and its file is `n{uuid}.mp3`. Older addon versions must not

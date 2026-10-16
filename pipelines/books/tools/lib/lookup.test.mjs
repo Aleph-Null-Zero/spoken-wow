@@ -14,6 +14,12 @@ test("a voiced page carries caption text from its current language row", () => {
   assert.match(lua, /text = "Registro Hola\. Adiós\."/);
 });
 
+test("an English clip carries no text: Books.lua has the words", () => {
+  const lua = packLua("enUS", [{ pageId: 15, file: "15", durationSec: 2.5, text: "<H1>Ledger</H1>Three crates." }]);
+  assert.match(lua, /\[15\] = \{ file = "15", len = 2\.5 \},/);
+  assert.doesNotMatch(lua, /Three crates/);
+});
+
 test("another language's is build output, never in English's folder", () => {
   const path = lookupPath("esMX");
   assert.match(path, /build\/books\/esMX\/Data\/Sounds\.lua$/);

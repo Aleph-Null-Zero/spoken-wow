@@ -9,6 +9,27 @@ setfenv(1, SpokenEnv)
 Spoken.API_VERSION = 1
 Spoken.ADDON_VERSION = AddonVersion
 
+-- The site every module's report, contribute and help links point at. The old hosts
+-- (voiceover.rusty.one, lore.rusty.one) keep redirecting, so changing this breaks no copy
+-- already installed.
+Spoken.SITE_URL = "https://spoken.rusty.one"
+
+--- The page for reporting one line: `section` is "quests", "zones" or "books", `path` the
+--- line's address under it, `language` the language the line was read in. English goes
+--- unprefixed, the address the site serves it at; any other language keeps its prefix, so the
+--- report lands beside that language's line. tests/lua/report_url_contract_test.lua holds
+--- these addresses to the site's routes.
+---@param section string
+---@param path string
+---@param language? string
+---@return string url
+function Spoken:ReportURL(section, path, language)
+    if language and language ~= "enUS" then
+        return ("%s/%s/%s/r/%s"):format(self.SITE_URL, language, section, path)
+    end
+    return ("%s/%s/r/%s"):format(self.SITE_URL, section, path)
+end
+
 ---@param required number The API_VERSION the caller was written against.
 function Spoken:IsCompatible(required)
     return type(required) == "number" and required <= self.API_VERSION
@@ -104,11 +125,43 @@ function Spoken:GetPortraitRenderer(kind)
     return Renderers[kind]
 end
 
---- Ask the client about a creature whose portrait may soon be drawn, so the small and the
---- DialogueUI windows show its face, not the book. A no-op in the large window (a 3D model).
+--- Ask the client about a creature whose portrait may soon be drawn, so the subtitles and the
+--- small and DialogueUI windows show its face, not the book. A no-op with the large window (a
+--- 3D model) and with Voice Only.
 function Spoken:PrimePortrait(creatureID)
-    local skin = PlayerFrame.Skin and PlayerFrame:Skin()
-    if skin and StaticPortrait then StaticPortrait:Prime(creatureID) end
+    local style = Addon.db and Addon:DisplayStyle()
+    if style and style ~= "classic" and style ~= "none" and StaticPortrait then StaticPortrait:Prime(creatureID) end
+end
+
+--- Play, Skip and, with `report`, Report in a row on one of DialogueUI's dialogs (`dialog`, its
+--- quest window or its book view), for a feature addon to put its line's controls there.
+--- `tooltip()` returns the tooltip the dialog uses. The row has `frame`, `play`, `skip` and
+--- `report`; `row:SetTip(button, fill)`, `row:ShowTip(button)`, `row:RefreshTip(button)`,
+--- `row:HideTips()`, and `row:Place(buttons, anchor, force)`, right to left from `anchor`. Additive:
+--- guard on the field.
+function Spoken:CreateDialogueUIRow(dialog, tooltip, report)
+    return Actions.DialogRow(dialog, tooltip, report)
+end
+
+--- The Small Window's round portrait, `size` across, on `parent`: the speaker masked round in its
+--- ring, with a line's badge at the lower right, for a page of a feature addon's to show who says
+--- a line. Anchor it yourself. Additive: guard on the field.
+---
+---   face:SetSpeaker({
+---     creatureID   = 197,             -- the creature to draw, or nil
+---     guid         = "Creature-...",  -- optional; drawn from its unit while one is about
+---     objectOrItem = false,           -- an object or an item: its `icon`, else a posted notice
+---     icon         = [[...]],         -- optional; an object's or item's picture
+---     bullet       = "quest-accept",  -- optional; the badge, a RegisterBullet id or a quest moment's
+---   })
+---
+--- A creature the client has not cached yet shows the book and turns into its face once the client
+--- has it; one with no face to draw keeps the book, as the Small Window does.
+---@param parent table a frame
+---@param size number
+---@return table face  a Frame, with SetSpeaker
+function Spoken:CreateSpeakerFace(parent, size)
+    return Face.CreateSpeaker(parent, size)
 end
 
 --- How lines are shown: "subtitle", "none", "minimal", "classic" or "dialogueui".
@@ -161,7 +214,7 @@ end
 
 --- Add a feature addon's rows to Spoken's page, after the narrator style's. build(layout) runs once,
 --- when the page is built or at once if it is: it adds a section and rows to the SpokenLayout, and
---- may return a function that resets them, which Spoken's Start Over runs. Never called without
+--- may return a function that resets them, which Spoken's Reset Spoken Settings runs. Never called without
 --- DialogueUI. Additive: guard on the field; without it, keep the rows on the addon's own page,
 --- still only with DialogueUI installed.
 function Spoken:AddDialogueUISettings(build)
@@ -185,7 +238,7 @@ function Spoken:RefreshPlayer()
 end
 
 --- A feature addon's settings page, shown under Spoken's own in the game's settings as `name`,
---- listed in `order` (Quests 1, Books 2, Zones 3). Pass the page's SpokenLayout and its
+--- listed in `order` (Quests 1, Gossip 2, Places 3, Readables 4). Pass the page's SpokenLayout and its
 --- scroller to make its rows searchable from Home. Returns a table whose `category` is
 --- filled in once the page is registered, for Settings.OpenToCategory; nil where the client
 --- cannot nest pages, in which case the addon registers a top-level page as before.
@@ -225,15 +278,19 @@ local CURSEFORGE = "https://www.curseforge.com/wow/addons/"
 local RELEASES = "https://github.com/rusty-key/spoken-wow/releases?q="
 local PACK_FOLDERS = { quests = "SpokenQuestsAudio", zones = "SpokenZonesAudio", books = "SpokenBooksAudio" }
 local PACK_PAGES = {
-    quests = { deDE = "spoken-quests-audio-dede", esES = "spoken-quests-audio-eses", esMX = "spoken-quests-audio-esmx",
-        frFR = "spoken-quests-audio-frfr", itIT = { github = "quests-audio-itIT" }, koKR = "spoken-quests-audio-kokr",
-        ptBR = "spoken-quests-audio-ptbr", ruRU = "spoken-quests-audio-ruru" },
-    zones = { deDE = "spoken-zones-audio-dede", esES = "spoken-zones-audio-eses", esMX = "spoken-zones-audio-esmx",
-        frFR = "spoken-zones-audio-frfr", koKR = "spoken-zones-audio-kokr", ptBR = "spoken-zones-audio-ptbr",
-        ruRU = "spoken-zones-audio-ruru", zhCN = "spoken-zones-audio-zhcn", zhTW = "spoken-zones-audio-zhtw" },
-    books = { deDE = "spoken-books-audio-dede", esES = "spoken-books-audio-eses", esMX = "spoken-books-audio-esmx",
-        frFR = "spoken-books-audio-frfr", koKR = "spoken-books-audio-kokr", ptBR = "spoken-books-audio-ptbr",
-        ruRU = "spoken-books-audio-ruru", zhCN = "spoken-books-audio-zhcn", zhTW = "spoken-books-audio-zhtw" },
+    -- Quests in one folder per language is a GitHub download: on CurseForge a language's quests
+    -- are split into packs under other folders.
+    quests = { deDE = { github = "quests-audio-deDE" }, esES = { github = "quests-audio-esES" },
+        esMX = { github = "quests-audio-esMX" }, frFR = { github = "quests-audio-frFR" },
+        itIT = { github = "quests-audio-itIT" }, koKR = { github = "quests-audio-koKR" },
+        ptBR = { github = "quests-audio-ptBR" }, ruRU = { github = "quests-audio-ruRU" },
+        zhCN = { github = "quests-audio-zhCN" }, zhTW = { github = "quests-audio-zhTW" } },
+    zones = { deDE = "spoken-german-audio-places", esES = "spoken-spanish-eu-audio-places", esMX = "spoken-spanish-al-audio-places",
+        frFR = "spoken-french-audio-places", koKR = "spoken-korean-audio-places", ptBR = "spoken-portuguese-audio-places",
+        ruRU = "spoken-russian-audio-places", zhCN = "spoken-chinese-simplified-audio-places", zhTW = "spoken-chinese-traditional-audio-places" },
+    books = { deDE = "spoken-german-audio-readables", esES = "spoken-spanish-eu-audio-readables", esMX = "spoken-spanish-al-audio-readables",
+        frFR = "spoken-french-audio-readables", koKR = "spoken-korean-audio-readables", ptBR = "spoken-portuguese-audio-readables",
+        ruRU = "spoken-russian-audio-readables", zhCN = "spoken-chinese-simplified-audio-readables", zhTW = "spoken-chinese-traditional-audio-readables" },
 }
 
 --- The voice pack `module` ("quests", "zones" or "books") has in `lang`, English's aside: the folder
@@ -249,7 +306,7 @@ end
 -- zone's icon, Teldrassil takes Darnassus's, and a map not listed takes its parent's.
 local ZONE_ART = [[Interface\AddOns\Spoken\Textures\Zones\]]
 local ZONE_ICONS = {
-    [947] = "Azeroth", [1414] = "Kalimdor", [1415] = "EasternKingdoms",
+    [1414] = "Kalimdor", [1415] = "EasternKingdoms",
     [1411] = "Durotar", [1412] = "Mulgore", [1413] = "Barrens", [1416] = "AlteracMountains",
     [1417] = "ArathiHighlands", [1418] = "Badlands", [1419] = "BlastedLands", [1420] = "TirisfalGlades",
     [1421] = "Silverpine", [1422] = "WesternPlaguelands", [1423] = "EasternPlaguelands",
@@ -266,9 +323,8 @@ local ZONE_ICONS = {
     -- Forever's own zones, drawn for Spoken.
     [2521] = "ZephrasIsle", [2524] = "DarkspearIslands", [2548] = "Riverglades", [2652] = "Shendralas",
 }
--- Trims the icons' bevelled border, as the game does in a round frame. The globe needs none.
+-- Trims the icons' bevelled border, as the game does in a round frame.
 local ICON_CROP = { 0.08, 0.92, 0.08, 0.92 }
-local WHOLE = { 0, 1, 0, 1 }
 Spoken.ZONE_ICONS = ZONE_ICONS
 
 --- The icon for `mapID` or its nearest ancestor that has one, with its crop.
@@ -276,12 +332,20 @@ function Spoken:ZoneIcon(mapID)
     local depth = 0
     while mapID and depth < 6 do
         local icon = ZONE_ICONS[mapID]
-        if icon then return ZONE_ART .. icon, icon == "Azeroth" and WHOLE or ICON_CROP end
+        if icon then return ZONE_ART .. icon, ICON_CROP end
         local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
         mapID = info and info.parentMapID
         depth = depth + 1
     end
     return nil
+end
+
+-- A dungeon's or a raid's badge on every tab of the Compendium: a key, as to a door below.
+local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
+
+--- The icon for the dungeon or raid whose instance map is `map`, with its crop.
+function Spoken:DungeonIcon(map)
+    return DUNGEON_ICON, ICON_CROP
 end
 
 -- C_Container where the client has it, else the old bag functions.
@@ -363,16 +427,70 @@ function Spoken:GetLanguageChoice()
     return language.Voice, language.Fallback
 end
 
+--- Spoken's words in the player's language, for what every module's settings page shares and
+--- names the same way: MODULE_SWITCH, MODULE_WHEN, PART_VOICE, MODULE_TEST_LINE, TEST_LINE_TEXT, MODULE_HISTORY,
+--- MODULE_DOWNLOAD, MODULE_INSTALLED, MODULE_NOT_LOADED, MODULE_NO_PACK, MODULE_RESET,
+--- REASON_PART_OFF, OPT_RESET_ALL_TIP and CANCEL. Read, never written.
+function Spoken:Words()
+    return L
+end
+
+--- A language's name as the lists show it, the same in every module: its own, or in English where
+--- this client's font cannot draw it.
+function Spoken:LanguageName(code)
+    return Options:LanguageName(code)
+end
+
+--- The voice language as it plays: the one chosen on Spoken's page, "auto" being the client's.
+function Spoken:VoiceLanguage()
+    local voice = self:GetLanguageChoice()
+    if voice == nil or voice == "auto" then return Options:ClientLanguage() end
+    return voice
+end
+
+--- What a module's page says under its voice packs when nothing can be heard: no pack in the voice
+--- language exists for `module` ("quests", "zones" or "books"), and If a Voice Is Missing is Stay
+--- Silent. Nil otherwise.
+function Spoken:SilentNote(module)
+    local voice = self:VoiceLanguage()
+    local _, fallback = self:GetLanguageChoice()
+    if voice == "enUS" or fallback ~= "none" or self:VoicePack(module, voice) then return nil end
+    return format(L.MODULE_NO_VOICE_FMT, Options:LanguageName(voice))
+end
+
 function Spoken:SetPartOn(key, on)
     Sources:SetTurnedOff(key, not on)
     -- Home lists the same switch.
     Options:UpdateRows()
 end
 
+--- Where a feature addon keeps its settings: a table inside Spoken's profile, so one profile holds
+--- them all. See Addon:BindModuleSettings. Returns false where Spoken has no profile yet, and the
+--- addon goes on with the table it keeps itself.
+function Spoken:BindModuleSettings(name, legacy, bind, skip)
+    return Addon:BindModuleSettings(name, legacy, bind, skip)
+end
+
 --- Whether Spoken's page and minimap menu open Azeroth's Compendium and hold its Unlock switches,
 --- so the parts leave theirs off their own pages.
 function Spoken:ShowsCompendium()
     return true
+end
+
+--- The Text Size of the words of stories, books and quests in Azeroth's Compendium and beside the
+--- map, from the Compendium section of Spoken's page. Until the player sets it there, the size
+--- they set on the Zones page, where it was before; 12 with neither.
+function Spoken:CompendiumFontSize()
+    local size = Addon.db and Addon.db.profile.CompendiumFontSize
+    if size == nil and type(SpokenZonesSettings) == "table" then size = SpokenZonesSettings.fontSize end
+    return tonumber(size) or 12
+end
+
+--- Set the Compendium's Text Size, and tell the parts that draw its words.
+function Spoken:SetCompendiumFontSize(size)
+    if not Addon.db then return end
+    Addon.db.profile.CompendiumFontSize = size
+    Callbacks:Fire("COMPENDIUM_FONT_CHANGED")
 end
 
 --- A button on the player's panel that opens a feature addon's own settings, for the
@@ -454,6 +572,12 @@ function Spoken:CreateRoundButton(parent, kind, name, icon)
     return Actions.NewRound(parent, kind, name, icon)
 end
 
+--- `button`, a Button the caller made, dressed as a square Play button with the game's checkbox for
+--- its border (`button:SetState("play" | "stop")`, `button:MatchBox(checkbox)`): the quest log's rows.
+function Spoken:DressBoxButton(button)
+    return Actions.BoxPlay(button)
+end
+
 --- End the head; the backlog runs.
 function Spoken:Skip()
     return SoundQueue:Skip()
@@ -476,12 +600,29 @@ end
 --- when the line starts, so an NPC's greeting is never heard instead of being cut short.
 --- Honours the player's "mute game dialogue" setting, and lifts itself if nothing comes.
 function Spoken:MuteGameDialogueAhead(source)
+    -- Where Read in Battlegrounds keeps Spoken quiet no line follows, so the greeting is left alone.
+    if not Addon:ReadsHere() then
+        return
+    end
     SoundQueue:MuteGameDialogueAhead(source:GetChannel())
+end
+
+--- The read that MuteGameDialogueAhead was taken for found no line: the game's dialogue comes
+--- back at once, unless a line is speaking.
+function Spoken:EndMuteGameDialogueAhead()
+    SoundQueue:EndMuteGameDialogueAhead()
 end
 
 --- A gate that applies to every source: fn(clip) -> reason | nil.
 function Spoken:AddGate(fn)
     SoundQueue:AddGate(fn)
+end
+
+--- False in a battleground or arena with Read in Battlegrounds off, where a source's Enqueue
+--- refuses every line the player did not ask for (`source:Enqueue(clip, true)` is one they did):
+--- a module can skip the work of finding one. Additive: guard on the field.
+function Spoken:ReadsHere()
+    return Addon:ReadsHere()
 end
 
 --------------------------------------------------------------------------------
@@ -559,6 +700,8 @@ end
 --   SOURCE_REGISTERED  (source)
 --   CONTRIBUTE_SETTINGS_CHANGED ()          the hide-Contribute-buttons setting was toggled
 --   REPORT_SETTINGS_CHANGED     ()          the hide-Report-buttons setting was toggled
+--   VOICE_PACKS_LOADED          ()          the quest and gossip voice packs found at login have loaded
+--   COMPENDIUM_FONT_CHANGED     ()          the Compendium's Text Size changed (Spoken:CompendiumFontSize)
 
 function Spoken:RegisterCallback(event, fn)
     return Callbacks:Register(event, fn)
@@ -685,8 +828,16 @@ end
 --- out, which a player never needs. build(layout) is called once, when the page is built, with
 --- the page's SpokenLayout, and may return a function that puts its rows back to their defaults
 --- for the page's Defaults button. Kept until the module builds its page; nothing shows without it.
-function Spoken:AddDeveloperSettings(build)
-    Developer:AddSettings(build)
+--- `group`, "chat" (switches for messages in chat) or "testing", puts the rows build adds under
+--- that group's title, with every other module's, in `order` (the module's page order: Quests 1,
+--- Gossip 2, Places 3, Readables 4); without it, build adds a section of its own.
+function Spoken:AddDeveloperSettings(build, group, order)
+    Developer:AddSettings(build, group, order)
+end
+
+--- The group and order a section handed in was given, or nil.
+function Spoken:GetDeveloperGroup(build)
+    return Developer.groups[build], Developer.orders[build]
 end
 
 --- For the module: every section handed in so far, in order.

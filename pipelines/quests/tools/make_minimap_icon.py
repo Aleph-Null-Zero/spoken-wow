@@ -39,10 +39,10 @@ import zlib
 
 SIZE = 32
 
-# The field polygon in spoken-player.svg runs 20..236 of 256 with 42-unit corner chamfers, so
-# the largest square lying wholly inside it starts at 41 -- 82 of 512. A looser crop keeps a
-# sliver of frame gold in each corner, which at 17 pixels reads as dirt rather than as a frame.
-CROP = 82
+# The largest square lying wholly inside the render's dark field starts at 84 of 512, measured
+# on its corners; 86 leaves the antialiased edge out too. A looser crop keeps a sliver of
+# frame gold in each corner, which at 17 pixels reads as dirt rather than as a frame.
+CROP = 86
 
 # The glyph reaches within a few pixels of that square's right edge and LibDBIcon trims a
 # further 5% off each side while the button is idle, so the crop is scaled to 28/32 of the
