@@ -9,6 +9,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+import type { PoolClient } from "pg";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "books-absorb-"));
@@ -95,16 +96,19 @@ afterAll(async () => {
   fs.rmSync(root, { recursive: true, force: true });
 });
 
-async function fold() {
+/** `work` in a transaction of its own, as the imports run absorb and foldMinted. */
+async function inTx(work: (client: PoolClient) => Promise<unknown>) {
   const client = await db().connect();
   try {
     await client.query("begin");
-    await absorb(client, { from: MINTED, to: REAL });
+    await work(client);
     await client.query("commit");
   } finally {
     client.release();
   }
 }
+
+const fold = () => inTx((client) => absorb(client, { from: MINTED, to: REAL }));
 
 async function bookAnswer(): Promise<number> {
   const { rows } = await db().query<{ id: number }>(
@@ -121,14 +125,7 @@ const matchBookOf = async (id: number) =>
 
 describe("absorb", () => {
   it("moves a minted page's texts, takes, reports, recordings and matches to the real page", async () => {
-    const client = await db().connect();
-    try {
-      await client.query("begin");
-      await absorb(client, { from: MINTED, to: REAL });
-      await client.query("commit");
-    } finally {
-      client.release();
-    }
+    await fold();
 
     const q = async (sql: string, p: unknown[]) => (await db().query(sql, p)).rows;
     expect(await q(`select count(*)::int as c from "book_line" where "lineId" = $1`, [MINTED])).toEqual([{ c: 0 }]);
@@ -193,14 +190,7 @@ describe("absorb", () => {
   });
 
   it("folds every minted page whose distinctive words are a real page's", async () => {
-    const client = await db().connect();
-    try {
-      await client.query("begin");
-      expect(await foldMinted(client)).toBeGreaterThanOrEqual(1);
-      await client.query("commit");
-    } finally {
-      client.release();
-    }
+    await inTx(async (client) => expect(await foldMinted(client)).toBeGreaterThanOrEqual(1));
     const { rows } = await db().query(`select "aliasOf" from "book_page" where "lineId" = $1`, [MINTED]);
     expect(rows).toEqual([{ aliasOf: REAL }]);
   });
@@ -209,14 +199,7 @@ describe("absorb", () => {
     await fold();
     await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $1, 1)`, [MINTED_THREE]);
     await line(MINTED_THREE, "esES", 1, true, "Trotamundos de los elfos:");
-    const client = await db().connect();
-    try {
-      await client.query("begin");
-      await foldMinted(client);
-      await client.query("commit");
-    } finally {
-      client.release();
-    }
+    await inTx(foldMinted);
     const { rows } = await db().query(`select "aliasOf" from "book_page" where "lineId" = $1`, [MINTED_THREE]);
     expect(rows).toEqual([{ aliasOf: REAL }]);
   });
@@ -224,16 +207,11 @@ describe("absorb", () => {
   it("moves a minted page that does not fold off the place the extract gives a real page", async () => {
     await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 2)`, [MINTED_THREE, String(n)]);
     await line(MINTED_THREE, "deDE", 1, true, "Kurz");
-    const client = await db().connect();
-    try {
-      await client.query("begin");
+    await inTx(async (client) => {
       // The extract now places a real page where the minted one sits.
       await client.query(`update "book_page" set "pageNumber" = 2 where "lineId" = $1`, [REAL]);
       await foldMinted(client);
-      await client.query("commit");
-    } finally {
-      client.release();
-    }
+    });
     const { rows } = await db().query(
       `select "lineId", "pageNumber" from "book_page" where "bookId" = $1 and "aliasOf" is null order by "pageNumber"`,
       [String(n)],

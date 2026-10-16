@@ -83,20 +83,16 @@ export async function foldMinted(client) {
   const absorptions = findAbsorptions(rows.filter((p) => p.minted), rows.filter((p) => !p.minted));
   for (const move of absorptions) await absorb(client, move);
 
-  const { rows: displaced } = await client.query(
-    `select m."lineId", m."bookId" from "book_page" m
-       join "book_page" r on r."bookId" = m."bookId" and r."pageNumber" = m."pageNumber"
-                         and r."pageTextId" is not null and r."aliasOf" is null
-      where m."pageTextId" is null and m."aliasOf" is null
-      order by m."bookId", m."pageNumber"`,
+  await client.query(
+    `update "book_page" p set "pageNumber" = d."next"
+       from (select m."lineId",
+                    (select max(o."pageNumber") from "book_page" o where o."bookId" = m."bookId" and o."aliasOf" is null)
+                      + row_number() over (partition by m."bookId" order by m."pageNumber") as "next"
+               from "book_page" m
+               join "book_page" r on r."bookId" = m."bookId" and r."pageNumber" = m."pageNumber"
+                                 and r."pageTextId" is not null and r."aliasOf" is null
+              where m."pageTextId" is null and m."aliasOf" is null) d
+      where p."lineId" = d."lineId"`,
   );
-  for (const { lineId, bookId } of displaced) {
-    await client.query(
-      `update "book_page" set "pageNumber" =
-              (select max(o."pageNumber") + 1 from "book_page" o where o."bookId" = $2 and o."aliasOf" is null)
-        where "lineId" = $1`,
-      [lineId, bookId],
-    );
-  }
   return absorptions.length;
 }

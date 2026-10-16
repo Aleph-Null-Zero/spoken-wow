@@ -26,6 +26,7 @@
 import { skipReasonFor } from "@/lib/text-gate";
 import type { PoolClient } from "pg";
 
+import { BOOK_ID_COMPAT, PAGE_COUNT } from "@books-tools/lib/page.mjs";
 import { normaliseText } from "@books-tools/lib/text.mjs";
 
 import { recordActivity } from "@/lib/activity/store";
@@ -385,24 +386,24 @@ function momentsOf(contributions: readonly Contribution[]): { id: number; lineId
  */
 async function booksInExplorer(contributions: readonly Contribution[]): Promise<Set<number>> {
   const accepted = contributions.filter((c) => c.source === "books" && c.status === "accepted");
-  if (accepted.length === 0) return new Set();
-  const notes = accepted.map((c) => pageNotes(c.id));
-  const { rows } = await db().query<{ id: number }>(
-    `select c."id" from unnest($1::int[], $2::text[], $3::text[], $4::text[], $5::text[])
-                        as c ("id", "note", "correction", "lang", "matchLineId")
-      where exists (select 1 from "book_line" b where b."note" in (c."note", c."correction"))
-         or c."lang" = $6
-         or exists (select 1 from "book_line" b where b."lineId" = c."matchLineId" and b."lang" = c."lang")`,
-    [
-      accepted.map((c) => c.id),
-      notes.map(([note]) => note),
-      notes.map(([, correction]) => correction),
-      accepted.map((c) => c.locale),
-      accepted.map((c) => c.matchLineId),
-      BASE_LANG,
-    ],
+  const found = new Set(accepted.filter((c) => c.locale === BASE_LANG).map((c) => c.id));
+  const rest = accepted.filter((c) => !found.has(c.id));
+  if (rest.length === 0) return found;
+  const { rows: notes } = await db().query<{ note: string }>(
+    `select distinct "note" from "book_line" where "note" = any($1::text[])`,
+    [rest.flatMap((c) => pageNotes(c.id))],
   );
-  return new Set(rows.map((row) => row.id));
+  const written = new Set(notes.map((row) => row.note));
+  for (const c of rest) if (pageNotes(c.id).some((note) => written.has(note))) found.add(c.id);
+  const unwritten = rest.filter((c) => !found.has(c.id) && c.matchLineId !== null);
+  if (unwritten.length === 0) return found;
+  const { rows } = await db().query<{ id: number }>(
+    `select c."id" from unnest($1::int[], $2::text[], $3::text[]) as c ("id", "lang", "lineId")
+      where exists (select 1 from "book_line" b where b."lineId" = c."lineId" and b."lang" = c."lang")`,
+    [unwritten.map((c) => c.id), unwritten.map((c) => c.locale), unwritten.map((c) => c.matchLineId)],
+  );
+  for (const row of rows) found.add(row.id);
+  return found;
 }
 
 async function questsInExplorer(candidates: readonly Contribution[]): Promise<Set<number>> {
@@ -817,8 +818,7 @@ async function insertText(
         "title", "ownerKind", "ownerIds", "material", "text", "generatable", "skipReason", "editedBy", "note")
      select p."lineId", $2,
             coalesce((select max(m."version") from "book_line" m where m."lineId" = p."lineId" and m."lang" = $2), 0) + 1,
-            true, $9, p."pageTextId", case when p."bookId" ~ '^\\d+$' then p."bookId"::int end, p."pageNumber",
-            (select count(*) from "book_page" c where c."bookId" = p."bookId" and c."aliasOf" is null),
+            true, $9, p."pageTextId", ${BOOK_ID_COMPAT}, p."pageNumber", ${PAGE_COUNT},
             coalesce($3, (select e."title" from "book_line" e
                            where e."lineId" = p."lineId" and (e."lang" = $2 or e."isCurrent")
                            order by (e."lang" = $2) desc, e."version" desc, e."lang" limit 1), ''),

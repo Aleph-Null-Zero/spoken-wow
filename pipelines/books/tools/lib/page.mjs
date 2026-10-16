@@ -1,5 +1,10 @@
 // The structure half of a page: its row in book_page, as the extract places it.
 
+// book_line's copy of a page's structure, read from book_page `p` by whatever writes a row:
+// the integer bookId (null for a minted book), and the page count.
+export const BOOK_ID_COMPAT = `case when p."bookId" ~ '^\\d+$' then p."bookId"::int end`;
+export const PAGE_COUNT = `(select count(*) from "book_page" c where c."bookId" = p."bookId" and c."aliasOf" is null)`;
+
 /**
  * Inserts an extracted page's book_page row, or moves it where the extract now places it.
  * Owners an accepted contribution added (accept.ts addOwner) are kept after the extract's own,
@@ -15,13 +20,12 @@ export function bookPageUpsert(entry) {
            on conflict ("lineId") do update
              set "pageTextId" = excluded."pageTextId", "bookId" = excluded."bookId",
                  "pageNumber" = excluded."pageNumber",
-                 "ownerKind" = coalesce(excluded."ownerKind", "book_page"."ownerKind"),
+                 "ownerKind" = excluded."ownerKind",
                  "ownerIds" = case
-                   when excluded."ownerKind" is not null and excluded."ownerKind" <> "book_page"."ownerKind"
-                     or "book_page"."ownerIds" is null then excluded."ownerIds"
-                   else coalesce(excluded."ownerIds", '{}') || array(
+                   when excluded."ownerKind" is distinct from "book_page"."ownerKind" then excluded."ownerIds"
+                   else excluded."ownerIds" || array(
                      select o from unnest("book_page"."ownerIds") with ordinality as k (o, i)
-                      where not (o = any(coalesce(excluded."ownerIds", '{}'))) order by i)
+                      where o <> all(excluded."ownerIds") order by i)
                  end,
                  "material" = excluded."material"`,
     values: [

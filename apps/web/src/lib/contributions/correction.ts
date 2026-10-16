@@ -45,8 +45,6 @@ import { CONTRIBUTION_COLUMNS, type Contribution } from "./store";
 import { correctionNote } from "./notes";
 import { spokenFromTemplate } from "./tokens";
 
-export { correctionNote };
-
 export type CorrectionOutcome =
   | { ok: true; contribution: Contribution }
   | { ok: false; reason: "not-found" }

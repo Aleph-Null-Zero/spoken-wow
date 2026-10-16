@@ -18,6 +18,7 @@ import { localizedPages, localizedTitles } from "./lib/locale.mjs";
 import { chunks, progress, writeNames } from "../../lib/bulk.mjs";
 import { decideImport } from "./lib/promote.mjs";
 import { foldMinted } from "./lib/absorb.mjs";
+import { BOOK_ID_COMPAT, PAGE_COUNT } from "./lib/page.mjs";
 
 await loadEnv("books", { override: MYSQL_VARS });
 
@@ -110,9 +111,7 @@ try {
          select r."lineId", $1,
                 coalesce((select max(m."version") from "book_line" m
                            where m."lineId" = r."lineId" and m."lang" = $1), 0) + 1,
-                r."promote", 'extracted', p."pageTextId",
-                case when p."bookId" ~ '^\\d+$' then p."bookId"::int end, p."pageNumber",
-                (select count(*) from "book_page" c where c."bookId" = p."bookId" and c."aliasOf" is null),
+                r."promote", 'extracted', p."pageTextId", ${BOOK_ID_COMPAT}, p."pageNumber", ${PAGE_COUNT},
                 coalesce((select e."title" from "book_line" e
                            where e."lineId" = p."lineId" and e."lang" = $7 and e."isCurrent"), ''),
                 p."ownerKind", p."ownerIds", coalesce(p."material", 0),

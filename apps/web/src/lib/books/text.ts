@@ -30,6 +30,7 @@ import { BASE_LANG, type Lang } from "@/lib/lang";
 
 import { speakPlayerTokens } from "@/lib/player-words";
 import { isGeneratable } from "./tools";
+import { BOOK_ID_COMPAT, PAGE_COUNT } from "@books-tools/lib/page.mjs";
 
 export type BookVersion = {
   lineId: string;
@@ -43,9 +44,6 @@ export type BookVersion = {
 };
 
 type Row = Omit<BookVersion, "createdAt"> & { createdAt: Date };
-
-/** book_line's integer bookId: the extracted book's id, or null for a minted book. */
-const BOOK_ID_COMPAT = `case when p."bookId" ~ '^\\d+$' then p."bookId"::int end`;
 
 const COLUMNS = `"lineId", "version", "isCurrent", "origin", "text", "editedBy", "note",
                  "createdAt"`;
@@ -158,7 +156,7 @@ export async function saveBookText(args: {
           "pageNumber", "pageCount", "title", "ownerKind", "ownerIds", "material",
           "text", "generatable", "skipReason", "editedBy", "note")
        select p."lineId", $2, $3, true, 'edited', p."pageTextId", ${BOOK_ID_COMPAT}, p."pageNumber",
-              (select count(*) from "book_page" c where c."bookId" = p."bookId" and c."aliasOf" is null),
+              ${PAGE_COUNT},
               coalesce($9, e."title", ''), p."ownerKind", p."ownerIds", coalesce(p."material", 0),
               $4, $7, $8, $5, $6
          from "book_page" p

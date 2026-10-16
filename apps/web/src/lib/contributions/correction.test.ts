@@ -11,7 +11,8 @@ import { saveBookText } from "@/lib/books/text";
 
 import { createContribution } from "./store";
 
-import { acceptCorrection, correctionNote } from "./correction";
+import { acceptCorrection } from "./correction";
+import { correctionNote } from "./notes";
 import { lineStates } from "./known";
 
 const ACCEPTER = "test-contributions-correction";

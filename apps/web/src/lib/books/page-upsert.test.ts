@@ -11,11 +11,11 @@ import { bookPageUpsert } from "@books-tools/lib/page.mjs";
 const n = 800_000_000 + Math.floor(Math.random() * 90_000_000);
 const PAGE = `b:${n}`;
 
-const extract = (ownerKind: string | null, ownerIds: number[] | null) => ({
+const extract = (ownerKind: string, ownerIds: number[]) => ({
   lineId: PAGE, pageId: n, bookId: n, pageNumber: 1, ownerKind, ownerIds, material: 0,
 });
 
-async function upsert(ownerKind: string | null, ownerIds: number[] | null) {
+async function upsert(ownerKind: string, ownerIds: number[]) {
   const { text, values } = bookPageUpsert(extract(ownerKind, ownerIds));
   await db().query(text, values);
 }
@@ -36,13 +36,6 @@ describe("bookPageUpsert", () => {
     await db().query(`update "book_page" set "ownerIds" = array_append("ownerIds", 9) where "lineId" = $1`, [PAGE]);
     await upsert("object", [7, 5]);
     expect(await owners()).toEqual({ ownerKind: "object", ownerIds: [7, 5, 9] });
-  });
-
-  it("keeps the owner a contribution gave a page the extract leaves ownerless", async () => {
-    await upsert(null, null);
-    await db().query(`update "book_page" set "ownerKind" = 'item', "ownerIds" = '{9}' where "lineId" = $1`, [PAGE]);
-    await upsert(null, null);
-    expect(await owners()).toEqual({ ownerKind: "item", ownerIds: [9] });
   });
 
   it("takes the extract's owners when they are of the other kind", async () => {
