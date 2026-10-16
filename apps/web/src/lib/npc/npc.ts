@@ -56,3 +56,16 @@ export function sexOf(gender: string | null | undefined): Sex | null {
 export function oppositeSex(sex: Sex): Sex {
   return sex === 2 ? 3 : 2;
 }
+
+/**
+ * A body is a race and a sex, as the client draws a creature (migration 0075), named as the
+ * packs key it: "gnome-female".
+ */
+export function bodyName(race: string, gender: "male" | "female"): string {
+  return `${race}-${gender}`;
+}
+
+export function parseBody(body: string): { race: string; gender: "male" | "female" } | null {
+  const match = /^(.+)-(male|female)$/.exec(body);
+  return match ? { race: match[1], gender: match[2] as "male" | "female" } : null;
+}
