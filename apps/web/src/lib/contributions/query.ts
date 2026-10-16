@@ -8,6 +8,7 @@
  * contributions.ts and npc.ts, whose types this one only composes: ContributionTable is a client
  * component and calls this directly on every dropdown change.
  */
+import { listParam } from "../line-fields";
 import type { ClientFilter } from "./client";
 import type { ContributionStatus } from "./contributions";
 import type { EnvelopeSource } from "./envelope";
@@ -43,12 +44,8 @@ export function bucketOf(
 
 export type { ClientFilter };
 
-/**
- * A section of /contributions, which is the page's path: an envelope source, or gossip -- the
- * quests rows tied to no quest, which the site shows apart although the addon files them as
- * quests.
- */
-export const SECTIONS = ["quests", "gossip", "books", "zones"] as const;
+/** A section of /contributions, which is the page's path: an envelope source. */
+export const SECTIONS = ["quests", "books", "zones"] as const satisfies readonly EnvelopeSource[];
 
 export type Section = (typeof SECTIONS)[number];
 
@@ -56,19 +53,9 @@ export function isSection(value: unknown): value is Section {
   return SECTIONS.includes(value as Section);
 }
 
-/** The envelope source a section's rows are filed under. */
-export function sourceOfSection(section: Section): EnvelopeSource {
-  return section === "gossip" ? "quests" : section;
-}
-
 /** Whether a section's rows name a speaker, so they split into buckets and search by NPC. */
 export function namesSpeaker(section: Section): boolean {
-  return sourceOfSection(section) === "quests";
-}
-
-/** The section a row is listed under. */
-export function sectionOf(row: { source: EnvelopeSource }, quest: QuestSummary | null): Section {
-  return quest === "gossip" ? "gossip" : row.source;
+  return section === "quests";
 }
 
 /**
@@ -83,10 +70,17 @@ export function isQuestStage(value: unknown): value is QuestStage {
   return QUEST_STAGES.includes(value as QuestStage);
 }
 
-export type StageFilter = QuestStage | "all";
+/** What the Stage dropdown offers: a quest panel, or gossip -- the quests rows tied to no quest. */
+export const STAGES = [...QUEST_STAGES, "gossip"] as const;
 
-export function isStageFilter(value: unknown): value is StageFilter {
-  return isQuestStage(value) || value === "all";
+export type Stage = (typeof STAGES)[number];
+
+/** The stages picked, none meaning every row. */
+export type StageFilter = readonly Stage[];
+
+/** The `stage` query parameter, comma-separated, in STAGES order; anything else is dropped. */
+export function stagesOf(value: unknown): Stage[] {
+  return listParam(value, STAGES);
 }
 
 /**
@@ -94,9 +88,10 @@ export function isStageFilter(value: unknown): value is StageFilter {
  * row with no quest concept at all (zones, books).
  */
 export function matchesStage(quest: QuestSummary | null, filter: StageFilter): boolean {
-  if (filter === "all") return true;
-  if (quest === null || quest === "gossip") return false;
-  return quest.stage === filter;
+  if (filter.length === 0) return true;
+  if (quest === null) return false;
+  if (quest === "gossip") return filter.includes("gossip");
+  return quest.stage !== null && filter.includes(quest.stage);
 }
 
 /**
@@ -189,7 +184,7 @@ export function nextContributionFilters(
     bucket: "bucket" in next ? (next.bucket ?? "ready") : current.bucket,
     client: "client" in next ? (next.client ?? "all") : current.client,
     source: current.source,
-    stage: "stage" in next ? (next.stage ?? "all") : current.stage,
+    stage: "stage" in next ? (next.stage ?? []) : current.stage,
     sort: "sort" in next ? (next.sort ?? DEFAULT_SORT) : current.sort,
     q: "q" in next ? next.q : current.q,
     searchIn: "searchIn" in next ? next.searchIn : current.searchIn,
@@ -218,7 +213,7 @@ export function contributionsHref(current: ContributionFilters, next: FilterChan
     status: filters.status,
     client: filters.client,
   });
-  if (filters.stage !== "all") params.set("stage", filters.stage);
+  if (filters.stage.length) params.set("stage", filters.stage.join(","));
   if (filters.bucket !== "ready") params.set("bucket", filters.bucket);
   if (filters.q?.trim()) params.set("q", filters.q.trim());
   if (filters.searchIn && filters.searchIn !== "any") params.set("filter", filters.searchIn);

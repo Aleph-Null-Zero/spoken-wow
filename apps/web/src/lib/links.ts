@@ -32,6 +32,21 @@ export function questsHref(options: { q?: string; filter?: Scope; finding?: numb
   return params.size ? `/quests?${params}` : "/quests";
 }
 
+/** The NPCs page, narrowed to one NPC: who it is and which voice reads it. Admins only. */
+export function npcPageHref(npcId: number): string {
+  return `/npcs?${new URLSearchParams({ q: String(npcId) })}`;
+}
+
+/**
+ * The quests or gossip explorer, narrowed to one NPC: what clicking the name in an explorer
+ * row does. `type` too, because an NPC id is unique only within its kind - creature 68 and
+ * gameobject 68 are two speakers.
+ */
+export function npcHref(npc: { npcId: number; npcType: string; gossip: boolean }): string {
+  const params = new URLSearchParams({ q: String(npc.npcId), filter: "npc", type: npc.npcType });
+  return `/${npc.gossip ? "gossip" : "quests"}?${params}`;
+}
+
 /**
  * The zones explorer, narrowed to one zone or to a search.
  *
@@ -90,10 +105,7 @@ export function lexiconHref(grapheme: string): string {
  * on every line carrying the id, which is the set the report is about.
  */
 export function explorerHref(source: Source, lineId: string): string {
-  // Gossip shares the quests corpus and takes but has its own explorer, and its ids are the
-  // only ones starting `g:` (tts_cli/naming.py).
-  const path = source === "quests" && lineId.startsWith("g:") ? "gossip" : source;
-  return `/${path}?${new URLSearchParams({ line: lineId })}`;
+  return `/${source}?${new URLSearchParams({ line: lineId })}`;
 }
 
 /**
@@ -115,10 +127,8 @@ export function targetExplorerHref(source: Source, target: string): string | nul
   if (source === "quests") {
     // The two shapes lib/reports/target.ts parses. A bare number is an id lookup in quests
     // search, so the id goes in `q` with the filter that says which id it is.
-    // An NPC address is how gossip travels, so it opens the gossip explorer. A follow-up
-    // travels the same way and is in the quests one, which this link does not show.
     if (segments[0] === "npc" && segments.length === 2 && /^\d+$/.test(segments[1])) {
-      return `/gossip?${new URLSearchParams({ q: segments[1], filter: "npc" })}`;
+      return questsHref({ q: segments[1], filter: "npc" });
     }
     if (segments[0] === "quest" && segments.length === 3 && /^\d+$/.test(segments[1])) {
       return questsHref({ q: segments[1], filter: "quest" });

@@ -18,6 +18,8 @@ local Expect, Failures = require("queue_helpers").Expecter(print)
 local GREETING = "Well met. How can I help?"
 local BANK = "Where is the bank?"
 local DIRECTIONS = "The bank is past the fountain."
+-- The option picked to reach the page of the clip that started last.
+local lastTitle
 
 local function Boot(client)
     stub.SetClient(client); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -25,11 +27,12 @@ local function Boot(client)
     stub.HidePanels()
     _G.SpokenQuestsSettings = nil
     local VO = stub.LoadQuests(QUESTS, SPOKEN)
+    dofile(QUESTS .. "UI/DialogPlayButton.lua")
     VO.Addon:OnInitialize()
     -- By id and by name: the 1.12 client has no GUID for the lookup to key on.
     local gossip = { [GREETING] = "greeting-hash", [DIRECTIONS] = "directions-hash" }
     VO.DataModules:Register("TestPack", {
-        SoundLengthLookupByFileName = { ["greeting-hash"] = 1, ["directions-hash"] = 1 },
+        SoundLengthLookupByFileName = { ["greeting-hash"] = 1, ["directions-hash"] = 1, ["101-accept"] = 1 },
         GossipLookupByNPCID = { [12345] = gossip },
         GossipLookupByNPCName = { Guard = gossip },
         GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
@@ -41,6 +44,7 @@ local function Boot(client)
     local played = {}
     _G.Spoken:RegisterCallback("CLIP_STARTED", function(clip)
         table.insert(played, clip.fileName)
+        lastTitle = clip.title
     end)
     return VO, played
 end
@@ -57,10 +61,10 @@ local function Talk()
     stub.Advance(1)
 end
 
-local function AskForTheBank()
+local function AskForTheBank(byIndex)
     -- The greeting is cut short, the way a player clicking through it leaves it.
     _G.Spoken:StopAll()
-    stub.PickGossipOption(BANK, DIRECTIONS)
+    stub.PickGossipOption(BANK, DIRECTIONS, byIndex)
     stub.Advance(1)
 end
 
@@ -95,11 +99,80 @@ for _, client in ipairs({ "11509", "1.12" }) do
     Expect(client .. ": a pick on the last visit does not carry over", Played(played), "(nothing)")
     Leave()
 
+    -- DialogueUI picks an option by its index, not its id.
+    if _G.C_GossipInfo then
+        Talk()
+        AskForTheBank(true)
+        Expect(client .. ": an option picked by index leads to its directions too", Played(played), "directions-hash")
+        Expect(client .. ": ...labelled with the option", lastTitle, '"' .. BANK .. '"')
+        Leave()
+    end
+
     VO.Addon.db.profile.Audio.GossipFrequency = Frequency.Never
     Talk()
     AskForTheBank()
     Expect(client .. ": Never keeps the directions quiet too", Played(played), "(nothing)")
     Leave()
+
+    -- At Never nothing reads itself and the NPC windows offer Listen instead.
+    local button = VO.DialogPlayButton.button
+    VO.Addon.db.profile.Audio.GossipFrequency = Frequency.Never
+    Talk()
+    Expect(client .. ": at Never, gossip reads nothing", Played(played), "(nothing)")
+    Expect(client .. ": ...and the gossip window shows Listen", button:IsShown(), true)
+    button:Click()
+    stub.Advance(0.2)
+    Expect(client .. ": Listen reads it", Played(played), "greeting-hash")
+    Leave()
+    Expect(client .. ": closing the window hides the button", button:IsShown(), false)
+    -- Quest windows are not held back by Read Greetings.
+    world.questID = 101
+    stub.ShowPanel("QuestFrameDetailPanel")
+    stub.FireEvent("QUEST_DETAIL")
+    stub.Advance(0.3)
+    Expect(client .. ": ...and a quest window shows no Listen at Never", button:IsShown(), false)
+    stub.HidePanels()
+    stub.FireEvent("QUEST_FINISHED")
+    stub.Advance(10)
+    Played(played)
+    -- Picking a quest from the page moves to the quest's window, and Listen does not stay on it.
+    Talk()
+    Expect(client .. ": a gossip window at Never shows Listen again", button:IsShown(), true)
+    stub.HidePanels()
+    world.questID = 101
+    stub.ShowPanel("QuestFrameDetailPanel")
+    stub.FireEvent("QUEST_DETAIL")
+    stub.Advance(0.3)
+    Expect(client .. ": ...but not once a quest is picked from it", button:IsShown(), false)
+    stub.HidePanels()
+    stub.FireEvent("QUEST_FINISHED")
+    stub.Advance(10)
+    world.questID = 0
+    Played(played)
+    -- With the part off there is no button either.
+    _G.Spoken:SetPartOn("gossip", false)
+    Talk()
+    Expect(client .. ": with Gossip off, no Listen at Never", button:IsShown(), false)
+    Leave()
+    _G.Spoken:SetPartOn("gossip", true)
+
+    -- Stop When Window Closes stops a quest giver's greeting too, as its quest frame closes.
+    VO.Addon.db.profile.Audio.GossipFrequency = Frequency.Always
+    VO.Addon.db.profile.Audio.StopAudioOnDisengage = true
+    world.questID = 0
+    world.greetingText = GREETING
+    stub.ShowPanel("QuestFrameGreetingPanel")
+    stub.FireEvent("QUEST_GREETING")
+    stub.Advance(0.3)
+    Expect(client .. ": a greeting reads itself at Always", _G.Spoken:GetCurrent() ~= nil, true)
+    stub.ShowPanel(nil)
+    stub.FireEvent("QUEST_FINISHED")
+    stub.Advance(0.1)
+    Expect(client .. ": ...and stops as its window closes, under Stop When Window Closes",
+        _G.Spoken:GetCurrent(), nil)
+    stub.Advance(10)
+    Played(played)
+    VO.Addon.db.profile.Audio.StopAudioOnDisengage = false
 end
 
 if Failures() > 0 then

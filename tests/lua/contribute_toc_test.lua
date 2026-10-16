@@ -20,7 +20,7 @@ for _, addon in ipairs({ "Spoken", "Spoken_Quests" }) do
         Expect(addon .. "_" .. legacy .. ".toc does not load contributing", Lists(toc, "Contribute.xml"), false)
         Expect("...but still loads the addon", Lists(toc, "addon.xml"), true)
     end
-    for _, flavor in ipairs({ "", "_Mainline", "_Vanilla", "_TBC", "_Wrath" }) do
+    for _, flavor in ipairs({ "", "_Vanilla", "_TBC" }) do
         local toc = ADDONS .. addon .. "/" .. addon .. flavor .. ".toc"
         Expect(addon .. flavor .. ".toc loads contributing", Lists(toc, "Contribute.xml"), true)
     end

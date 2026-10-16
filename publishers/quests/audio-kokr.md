@@ -1,5 +1,4 @@
 ---
-curseforge: 1719018
 release: quests-audio-koKR
 section: quests
 lang: koKR
@@ -31,7 +30,7 @@ Spoken Quests speaks in your client's language by default. To hear Korean on ano
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
 
 ## Support
 

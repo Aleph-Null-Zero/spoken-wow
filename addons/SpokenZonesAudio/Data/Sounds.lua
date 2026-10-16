@@ -11,7 +11,6 @@ local ADDON_NAME = ...
 local pack = {
 	version = 1,
 	zones = {
-		[947] = { file = "947\\zone", len = 38.687 },
 		[1411] = { file = "1411\\zone", len = 81.946 },
 		[1412] = { file = "1412\\zone", len = 61.962 },
 		[1413] = { file = "1413\\zone", len = 90.514 },

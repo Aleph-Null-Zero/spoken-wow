@@ -7,18 +7,21 @@
  * Walks the list the server sorted without navigating, so answering a card costs one
  * request and no page load, and the next card's line is fetched while this one is read.
  */
-import { ArrowLeft, ChevronsDownUp, ChevronsUpDown, Pause, Pencil, Play, RefreshCw, Undo2 } from "lucide-react";
+import { ArrowLeft, Pause, Pencil, Play, RefreshCw, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useLang } from "@/components/LangProvider";
 import { ACCEPT_TONE, LiteButton, REJECT_TONE } from "@/components/LiteControls";
 import Link from "@/components/LocaleLink";
 import OverrideDialog from "@/components/OverrideDialog";
+import OutdatedNote from "@/components/OutdatedNote";
+import LineHeading from "@/components/reports/LineHeading";
 import QuestsPlayer from "@/components/Player";
 import TakeSelector from "@/components/TakeSelector";
 import { lineTextSubject, TranslateDialog } from "@/components/TranslateDialog";
 import { PageTextDialog } from "@/components/books/PageTextDialog";
 import { Player as BooksPlayer } from "@/components/books/Player";
+import { ReportContextNote } from "@/components/reports/ReportContextFacts";
 import { Button } from "@/components/ui/button";
 import { LoreDialog } from "@/components/zones/LoreDialog";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
@@ -32,7 +35,7 @@ import { CATEGORY_COLUMN, SOURCE_LABELS, STATUS_LABELS, type Report, type Status
 import type { ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { Source } from "@/lib/sections";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
 
 /** Enough to read a typical complaint whole without pushing the actions off a phone screen. */
@@ -79,12 +82,15 @@ export default function SortQueue({
   groups: initial,
   canRegenerate,
   canEditText,
+  showNpcPage,
 }: {
   source: Source;
   /** The queue as the server sorted it, open reports only, skipped lines already left out. */
   groups: ReportGroup[];
   canRegenerate: boolean;
   canEditText: boolean;
+  /** Whether the speaker's name opens the NPC page. See LineHeading. */
+  showNpcPage: boolean;
 }) {
   const lang = useLang();
   // Held from the first render: a refresh while sorting brings back a list without the lines
@@ -285,11 +291,6 @@ export default function SortQueue({
           </Link>
           <span className="flex-1 font-medium">{SOURCE_LABELS[source]}</span>
           {previousButton}
-          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-pressed={expanded}>
-            {expanded ? <ChevronsDownUp /> : <ChevronsUpDown />}
-            {expanded ? "Collapse" : "Expand"}
-            <Hint>[X]</Hint>
-          </Button>
           <span className="text-muted-foreground text-sm tabular-nums">
             {index + 1} / {total}
           </span>
@@ -329,11 +330,24 @@ export default function SortQueue({
           </p>
         ) : (
           <>
-            <div>
-              <p className="leading-snug font-medium">{detail.heading}</p>
-              <p className="text-muted-foreground mt-0.5 text-xs">{detail.context}</p>
+            <div className="flex flex-col">
+              <LineHeading
+                detail={detail}
+                showNpcPage={showNpcPage}
+                className="leading-snug"
+                asideClassName="mt-0.5"
+              />
             </div>
-            <p className={cn("text-sm whitespace-pre-wrap", !expanded && text.length > LONG_TEXT && "line-clamp-5")}>
+            {/* The text is the expand control, as each report below is: [X] does the same from
+                the keyboard. */}
+            <p
+              className={cn(
+                "cursor-pointer text-sm whitespace-pre-wrap",
+                !expanded && text.length > LONG_TEXT && "line-clamp-5",
+              )}
+              aria-expanded={expanded}
+              onClick={() => !endsSelection() && setExpanded(!expanded)}
+            >
               {text}
             </p>
             <div className="text-muted-foreground flex items-center gap-3 text-xs">
@@ -351,6 +365,7 @@ export default function SortQueue({
                   void load(lineId);
                 }}
               />
+              {detail.stale ? <OutdatedNote /> : null}
             </div>
           </>
         )}
@@ -484,13 +499,16 @@ function EditDialog({
   if (lang !== BASE_LANG) {
     return <TranslateDialog subject={lineTextSubject(line as QuestLine)} onClose={onClose} onSaved={onSaved} />;
   }
+  const done = () => {
+    onClose();
+    onSaved();
+  };
   return (
     <OverrideDialog
       line={line as QuestLine}
-      onSaved={() => {
-        onClose();
-        onSaved();
-      }}
+      onSaved={done}
+      // A `$G` text went to the moment's lines; this one's text changed with them.
+      onRewritten={done}
       onCancel={onClose}
     />
   );
@@ -505,7 +523,7 @@ function Hint({ children }: { children: ReactNode }) {
 function ReportPreview({ report, expanded }: { report: Report; expanded: boolean }) {
   const [opened, setOpened] = useState(false);
   return (
-    <article className="bg-card cursor-pointer rounded-lg border px-3 py-2.5" onClick={() => setOpened(!opened)}>
+    <article className="bg-card cursor-pointer rounded-lg border px-3 py-2.5" onClick={() => !endsSelection() && setOpened(!opened)}>
       <div className="text-muted-foreground flex items-center gap-2 text-xs">
         <span className="bg-muted text-foreground rounded px-1.5 py-0.5 font-medium">
           {CATEGORY_COLUMN[report.category]}
@@ -521,6 +539,7 @@ function ReportPreview({ report, expanded }: { report: Report; expanded: boolean
       >
         {report.body}
       </p>
+      <ReportContextNote context={report.context} />
     </article>
   );
 }

@@ -2,13 +2,15 @@
 // Rebuilds a candidate tools/seed/zones.json from a live client map dump.
 //
 //   in-game:  /spz dump   then  /reload
-//   here:     node tools/seed-from-dump.mjs [--write]
+//   here:     node pipelines/zones/tools/seed-from-dump.mjs [--write] [--wtf <WTF/Account folder>]
 //
 // Without --write it only reports differences against the current seed, which is
 // the useful mode: it tells you whether any hand-entered uiMapID is wrong.
 //
-// Reads ZoneLoreDB.dump out of the SavedVariables file. That file is Lua, but the
-// dump has a fixed shape, so it is scanned rather than interpreted.
+// Reads SpokenZonesSettings.dump out of the SavedVariables file the game names after the
+// addon's folder, Spoken_Places.lua. That file is Lua, but the dump has a fixed shape, so it is
+// scanned rather than interpreted. The WTF/Account folder is --wtf, else SPOKEN_ZONES_WTF, else
+// the first of the clients' usual folders that exists, Forever's first.
 
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -19,28 +21,41 @@ import { fileURLToPath } from "node:url";
 // lib/loredata.mjs for why this reaches the repo root rather than the pipeline root.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const SEED = join(ROOT, "pipelines/zones/tools/seed/zones.json");
-const WTF = "/Applications/World of Warcraft/_classic_era_/WTF/Account";
+const argv = process.argv.slice(2);
+const WTF_FOLDERS = [
+  argv.includes("--wtf") ? argv[argv.indexOf("--wtf") + 1] : null,
+  process.env.SPOKEN_ZONES_WTF,
+  "C:/Program Files (x86)/World of Warcraft/_classic_beta_/WTF/Account",
+  "/Applications/World of Warcraft/_classic_beta_/WTF/Account",
+  "/Applications/World of Warcraft/_classic_era_/WTF/Account",
+].filter(Boolean);
+const SAVED = "Spoken_Places.lua";
 
-const write = process.argv.includes("--write");
+const write = argv.includes("--write");
 
-// Map types worth having lore for. Dungeon/Micro/Orphan are skipped.
-const WANTED = new Set(["World", "Continent", "Zone"]);
+// Map types worth having lore for. World (Azeroth has no page), Dungeon, Micro and Orphan are skipped.
+const WANTED = new Set(["Continent", "Zone"]);
 
 async function findSavedVariables() {
-  if (!existsSync(WTF)) {
-    throw new Error(`no WTF/Account directory at ${WTF}`);
+  const wtf = WTF_FOLDERS.find((dir) => existsSync(dir));
+  if (!wtf) {
+    throw new Error(`no WTF/Account directory at any of: ${WTF_FOLDERS.join(", ")} (pass --wtf)`);
   }
-  const accounts = await readdir(WTF);
+  const accounts = await readdir(wtf);
   const candidates = [];
   for (const account of accounts) {
-    const p = join(WTF, account, "SavedVariables", "ZoneLore.lua");
+    const p = join(wtf, account, "SavedVariables", SAVED);
     if (existsSync(p)) candidates.push(p);
   }
   if (candidates.length === 0) {
     throw new Error(
-      "no ZoneLore.lua in any account's SavedVariables.\n" +
+      `no ${SAVED} in any account's SavedVariables under ${wtf}.\n` +
         "Run `/spz dump` then `/reload` in-game first."
     );
+  }
+  // The account that ran /spz dump, where there are several.
+  for (const p of candidates) {
+    if ((await readFile(p, "utf8")).includes('["dump"]')) return p;
   }
   return candidates[0];
 }
@@ -85,7 +100,7 @@ console.log(`reading ${svPath}`);
 
 const maps = parseDump(await readFile(svPath, "utf8"));
 const wanted = maps.filter((m) => WANTED.has(m.mapTypeName));
-console.log(`dump contains ${maps.length} maps, ${wanted.length} of type World/Continent/Zone`);
+console.log(`dump contains ${maps.length} maps, ${wanted.length} of type Continent/Zone`);
 
 const seedRaw = JSON.parse(await readFile(SEED, "utf8"));
 const comment = seedRaw._comment;

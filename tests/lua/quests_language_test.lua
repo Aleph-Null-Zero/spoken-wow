@@ -20,7 +20,7 @@ local LANG = "X-SpokenQuests-Language"
 --- Install the given packs and load the addon. Each entry is
 --- { folder, language (nil = declares none), priority, lines = { [fileName] = length } }.
 local function Install(packs, locale)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetLocale(locale or "enUS")
     local addons = {}
     for _, pack in ipairs(packs) do
@@ -245,10 +245,14 @@ Expect("H. with no pack at all, the chosen language", VO.DataModules:GetPackLang
 
 ---------------------------------------------------------------- J. a report is filed in the clip's language
 VO = Install({ { folder = "EnglishPack", lines = EN_LINES } })
-Expect("J. an English report keeps the address it always had",
-    VO.ReportButton:Link("quest/1/accept", "enUS"), "https://voiceover.rusty.one/r/quest/1/accept")
+Expect("J. an English report goes to the unprefixed page",
+    VO.ReportButton:Link("quest/1/accept", "enUS"), "https://spoken.rusty.one/quests/r/quest/1/accept")
 Expect("J. ...and so does one with no language",
-    VO.ReportButton:Link("quest/1/accept"), "https://voiceover.rusty.one/r/quest/1/accept")
+    VO.ReportButton:Link("quest/1/accept"), "https://spoken.rusty.one/quests/r/quest/1/accept")
+Expect("J. a creature is reported by its npc address",
+    VO.ReportButton:TargetForGUID("Creature-0-1-2-3-68-0000000001"), "npc/68")
+Expect("J. ...and an object of the same id by its object address",
+    VO.ReportButton:TargetForGUID("GameObject-0-1-2-3-68-0000000001"), "object/68")
 Expect("J. another language's report goes to that language's page",
     VO.ReportButton:Link("quest/1/accept", "deDE"), "https://spoken.rusty.one/deDE/quests/r/quest/1/accept")
 
@@ -316,6 +320,12 @@ Expect("L. a German client matches on the addon's German text", own.fileName, SE
 Expect("L. ...and hears the English pack", own.module.METADATA.AddonName, "EnglishPack")
 Expect("L. ...and the NPC counts as having gossip", VO.DataModules:HasGossipFor(
     { unitGUID = "Creature-0-0-0-0-6929-0" }), true)
+
+-- The text names every NPC's lines whether or not a pack voices them, so it alone says nothing.
+VO = Install({ { folder = "EnglishPack", lines = {} } }, "deDE")
+VO.GossipText = DE_OWN
+Expect("L. ...but not where no pack holds its audio", VO.DataModules:HasGossipFor(
+    { unitGUID = "Creature-0-0-0-0-6929-0" }), false)
 
 -- The same German client choosing Portuguese.
 VO = Install({

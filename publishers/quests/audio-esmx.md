@@ -1,10 +1,9 @@
 ---
-curseforge: 1717814
 release: quests-audio-esMX
 section: quests
 lang: esMX
 pack: all
-version: 0.0.4
+version: 0.0.5
 slug: spoken-quests-audio-esmx
 name: Spoken Quests Audio: Spanish (AL)
 summary: Every quest and gossip line for Spoken Player, voiced in Latin American Spanish. One pack, both factions. Needs Spoken Player.
@@ -29,7 +28,7 @@ Spoken Quests speaks in your client's language by default. To hear Latin America
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
 
 ## Support
 

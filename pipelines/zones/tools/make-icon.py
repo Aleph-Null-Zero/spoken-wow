@@ -1,6 +1,6 @@
 """Turn the project artwork into the TGA the client shows beside an addon's name.
 
-    python3 pipelines/zones/tools/make-icon.py pipelines/zones/assets/spoken-zones-512.png addons/Spoken_Zones/Textures/AddonIcon.tga
+    python3 pipelines/zones/tools/make-icon.py pipelines/zones/assets/spoken-zones-512.png addons/Spoken_Places/Textures/AddonIcon.tga
 
 WHY NOT JUST FFMPEG. Its targa encoder writes RLE (image type 10) and ignores
 -compression_algo raw on the versions to hand; the client wants an uncompressed image.
@@ -14,7 +14,7 @@ than failing, which is the kind of bug that survives review.
 
 Committed as a TGA rather than converted at build time so that building an addon needs
 no ffmpeg -- the same reason the corpus is committed. Re-run it (`make icon`) when
-assets/spoken-zones.svg changes and its PNG renders are re-exported.
+the PNGs in assets/ are replaced.
 """
 import argparse
 import struct

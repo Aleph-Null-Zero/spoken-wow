@@ -2,8 +2,9 @@
 #
 #     make books-extract     ->  make -f make/books.mk extract
 #
-# Its own file because AGENTS.md forbids merging the Makefiles: quests.mk and zones.mk
-# already collide on fifteen target names and this one would collide with both.
+# Its own file because AGENTS.md forbids merging the Makefiles: the project files share many
+# target names (help, package, release, sync and the rest), and the root Makefile's prefix
+# tells them apart.
 #
 # The MySQL is the quests pipeline's. One vmangos dump on the machine, loaded once and read
 # by both extracts -- a second copy is hundreds of megabytes and another thing to keep in
@@ -43,12 +44,12 @@ import-locale: ## locales_page_text -> book_line + entity_name (LOCALE=deDE; nee
 	@test -n "$(LOCALE)" || { echo "import-locale: set LOCALE, e.g. LOCALE=deDE"; exit 2; }
 	@node $(PIPELINE)/tools/import-locale.mjs --lang $(LOCALE)
 
-export: ## book_line -> addons/Spoken_Books/Data/Books.lua (needs DATABASE_URL)
+export: ## book_line -> addons/Spoken_Readables/Data/Books.lua (needs DATABASE_URL)
 	@node $(PIPELINE)/tools/export.mjs
 
 # Where each readable is, for Azeroth's Compendium. A TrinityCore world DB (the Forever repack's
 # by default; PLACES_MYSQL_* in .env) and the client's map tables from wago.tools.
-places: ## world DB + client maps -> addons/Spoken_Books/Data/Places.lua
+places: ## world DB + client maps -> addons/Spoken_Readables/Data/Places.lua
 	@node $(PIPELINE)/tools/places.mjs
 
 lookup: ## take -> the pack's Data/Sounds.lua (LOCALE=xx: into build/books/xx; needs DATABASE_URL)
@@ -147,17 +148,19 @@ package-audio: check-synced sounds lookup
 	 shasum -a 256 "$$zip_path"
 endif
 
-# The in-game addon list reads a TGA or BLP, never the PNG or SVG in
+# The in-game addon list reads a TGA or BLP, never the PNGs in
 # pipelines/books/assets/, so the icon is converted and committed -- an addon must build
 # with no ffmpeg on the machine. Borrowed from the zones pipeline rather than copied: the
 # script takes a source and a destination and knows nothing about which project it serves.
 #
 # Both addons carry the same icon: they install as a pair, and two icons would imply they
-# are alternatives to each other.
-icon: ## Rebuild both addons' AddonIcon.tga from pipelines/books/assets (needs ffmpeg)
-	@python3 pipelines/zones/tools/make-icon.py pipelines/books/assets/spoken-books-512.png addons/Spoken_Books/Textures/AddonIcon.tga
-	@cp addons/Spoken_Books/Textures/AddonIcon.tga addons/SpokenBooksAudio/Textures/AddonIcon.tga
+# are alternatives to each other. A language's pack wears the icon with its badge:
+# scripts/books/package-audio.sh copies spoken-books-<locale>.tga over it.
+icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/books/assets (needs ffmpeg)
+	@python3 pipelines/zones/tools/make-icon.py pipelines/books/assets/spoken-books-512.png addons/Spoken_Readables/Textures/AddonIcon.tga
+	@cp addons/Spoken_Readables/Textures/AddonIcon.tga addons/SpokenBooksAudio/Textures/AddonIcon.tga
 	@echo "==> copied to addons/SpokenBooksAudio/Textures/AddonIcon.tga"
+	@for png in pipelines/books/assets/spoken-books-??[A-Z][A-Z]-512.png; do python3 pipelines/zones/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
 
 deploy: ## Symlink the addon into a client (CLIENT=era|anniversary|forever)
 	@./scripts/books/deploy.sh
@@ -177,7 +180,8 @@ test: ## The pipeline's unit tests
 #-------------------------------------------------------------------------------
 # The release
 #
-# Two CurseForge projects, uploaded by scripts/books/release.sh. Both zips have to be built
+# Two CurseForge projects, uploaded by scripts/books/release.sh: the retired Spoken Books, whose
+# last release is the tombstone, and the Writings sound pack. Both zips have to be built
 # first: the release script refuses a target whose zip is missing rather than uploading a
 # stale one it found in dist/.
 #-------------------------------------------------------------------------------

@@ -8,12 +8,12 @@ local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local after = C_Timer.After
 local getMapInfo = C_Map.GetMapInfo
 
 local function Boot(where, level, record)
-    stub.SetClient("11509")
+    stub.SetClient("16001")
     stub.ResetSound(); stub.ResetTimers()
     stub.world.inCombat = false
     stub.world.playerLevel = level
@@ -31,8 +31,8 @@ local function Boot(where, level, record)
     env.Addon:Enable()
     C_Timer.After = after
     local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Zones", Z)
-    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Zones", Z)
+    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
+    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1411] = { name = "Durotar", full = "Durotar lore." }
     Z.Zones[1453] = { name = "Stormwind City", full = "Stormwind lore." }
     Z.Subzones[1411] = {
@@ -40,7 +40,7 @@ local function Boot(where, level, record)
         ["razor hill"] = { name = "Razor Hill", full = "Razor Hill lore." },
     }
     stub.SetZone(where)
-    stub.FireEvent("ADDON_LOADED", "Spoken_Zones")
+    stub.FireEvent("ADDON_LOADED", "Spoken_Places")
     Z:SetupAudio()
     Z:SetupAutoplay()
     return Z

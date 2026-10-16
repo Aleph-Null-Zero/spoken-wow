@@ -24,7 +24,7 @@ local GREETING_HASH = "9fdeb82237b72e8801030487901e690f"
 lookup[GREETING_HASH] = 3
 
 local function Boot()
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     -- The client state the previous scenario left: a quest ID and a visible panel would
     -- have the new addon's 10 Hz watcher queue a line before the scenario starts.
@@ -46,6 +46,7 @@ end
 local VO, env, Spoken = Boot()
 local source = Spoken:GetSource("quests")
 Expect("the quests addon registers a source", source ~= nil and source == VO.Player.source, true)
+Expect("...headed in the minimap menu by its page's name, in the player's language", source.title, VO.L.OPT_PAGE_TITLE)
 Expect("...probing files before queueing, as it always did", source.testBeforeQueue, true)
 Expect("...on the configured channel, as a string", source:GetChannel(), "Master")
 
@@ -113,7 +114,6 @@ Expect("a quest from an item shows the item's icon", fromItem and fromItem.prese
 Expect("...the icon found by name too, for a book read from the bags", Spoken:BagItemIcon("Gold Pickup Schedule"), 134939)
 _G.C_Container = nil
 Expect("a city takes its zone's icon, as an area does", Spoken:ZoneIcon(1455), [[Interface\AddOns\Spoken\Textures\Zones\DunMorogh]])
-Expect("...Azeroth the world map's globe", Spoken:ZoneIcon(947), [[Interface\AddOns\Spoken\Textures\Zones\Azeroth]])
 Expect("...a Forever zone the icon drawn for it", Spoken:ZoneIcon(2524), [[Interface\AddOns\Spoken\Textures\Zones\DarkspearIslands]])
 Expect("...and a map with none, itself or above it, none", Spoken:ZoneIcon(9999), nil)
 _G.UnitExists = unitExists
@@ -166,7 +166,7 @@ Expect("...and logging out mid-line restores it", world.cvars.Sound_EnableDialog
 -- the mute covers a quest line speaking, not the quests source having a backlog.
 VO, env, Spoken = Boot()
 VO.Addon.db.profile.Audio.AutoToggleDialog = true
-local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Zones", channel = function() return "Dialog" end })
+local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Places", channel = function() return "Dialog" end })
 world.questID = 101
 VO.Addon:QUEST_DETAIL()
 stub.Advance(0.6)
@@ -215,6 +215,17 @@ stub.Advance(2)
 Expect("...past the mute's own deadline too", world.cvars.Sound_EnableDialog, "0")
 Spoken:StopAll()
 Expect("...and the empty queue restores it", world.cvars.Sound_EnableDialog, "1")
+
+-- The mute is taken for the NPC's lines; the page then read has none a pack holds.
+VO, env, Spoken = MuteBoot()
+VO.Addon.db.char.hasSeenGossipForNPC = {}
+stub.ShowGossip("Greetings, traveller.")
+Open(VO, "GOSSIP_SHOW")
+Expect("a voiced NPC's gossip opening mutes it...", world.cvars.Sound_EnableDialog, "0")
+lookup[GREETING_HASH] = nil
+stub.Advance(0.2)
+Expect("...and its voice is back as soon as the read finds no line", world.cvars.Sound_EnableDialog, "1")
+lookup[GREETING_HASH] = 3
 
 VO, env, Spoken = MuteBoot()
 world.npcGUID = "Creature-0-0-0-0-9999-0"
@@ -265,6 +276,15 @@ world.questID = 999
 Open(VO, "QUEST_DETAIL")
 Expect("a quest no pack holds keeps its greeting", world.cvars.Sound_EnableDialog, "1")
 
+VO, env, Spoken = MuteBoot()
+Spoken:SetPartOn("quests", false)
+world.questID = 101
+stub.ShowPanel("QuestFrameDetailPanel")
+Open(VO, "QUEST_DETAIL")
+Expect("a quest dialog keeps its greeting while Quests is switched off", world.cvars.Sound_EnableDialog, "1")
+Expect("...and expects no line to hold the words back for", VO.Addon:ExpectedLine("QUEST_DETAIL"), nil)
+Spoken:SetPartOn("quests", true)
+
 ---------------------------------------------------------------- disengage and abandon
 VO, env, Spoken = Boot()
 VO.Addon.db.profile.Audio.StopAudioOnDisengage = true
@@ -276,6 +296,30 @@ VO.Addon.db.profile.Audio.StopAudioOnDisengage = false
 VO.Addon:QUEST_DETAIL()
 VO.Addon:QUEST_FINISHED()
 Expect("...and leaves it otherwise", Spoken:GetQueueSize(), 1)
+
+-- Read Automatically off: the Play button starts the line, and the event still ends it.
+VO, env, Spoken = Boot()
+VO.Addon.db.profile.Audio.StopAudioOnDisengage = true
+VO.Addon:SetAutoplay(false)
+world.questID = 101
+VO.Addon:QUEST_DETAIL(nil, true)
+Expect("a line the Play button started is queued", Spoken:GetQueueSize(), 1)
+VO.Addon:DispatchDirectEvent("QUEST_FINISHED", "test")
+Expect("closing the quest frame stops it with Read Automatically off", Spoken:GetQueueSize(), 0)
+
+-- Read When Window Closes: an automatic read waits for the window to close, and is not read twice.
+VO, env, Spoken = Boot()
+VO.Addon.db.profile.Audio.ReadAfterClose = true
+world.questID = 101
+VO.Addon:QUEST_DETAIL(nil, nil)
+Expect("with Read When Window Closes on, an automatic read waits while the window is open", Spoken:GetQueueSize(), 0)
+VO.Addon:DispatchDirectEvent("QUEST_FINISHED", "test")
+Expect("...and starts when it closes", Spoken:GetQueueSize(), 1)
+VO.Addon:DispatchDirectEvent("QUEST_FINISHED", "test")
+Expect("...once", Spoken:GetQueueSize(), 1)
+Spoken:StopAll()
+VO.Addon:QUEST_DETAIL(nil, true)
+Expect("a read the player asks for does not wait", Spoken:GetQueueSize(), 1)
 
 ---------------------------------------------------------------- the easter egg
 VO, env, Spoken = Boot()
@@ -302,7 +346,7 @@ VO, env, Spoken = Boot()
 local labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
 Expect("the quests addon adds its entries to the one button", table.concat(labels, "|"),
-    "Stop or Replay|Stop All|Settings|Quests Settings")
+    "Stop or Replay|Skip Line|Stop All|Settings|Quests Settings|Gossip Settings")
 Expect("...and registers no button of its own", stub.ldbObjects.SpokenQuests, nil)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

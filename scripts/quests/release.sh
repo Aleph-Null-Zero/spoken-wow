@@ -7,6 +7,7 @@
 #   ./scripts/quests/release.sh audio-horde  # just one sound pack
 #   ./scripts/quests/release.sh spoken-all   # the English meta addon; never part of a bare run
 #   ./scripts/quests/release.sh --lang=esMX audio-horde # that language's Horde pack instead
+#   ./scripts/quests/release.sh --lang=deDE spoken-all  # that language's meta addon, "Spoken: German"
 #   ./scripts/quests/release.sh --store=wago # one store only; --store=curseforge for the other
 #
 # TWO STORES, ONE RELEASE. The same zip goes to both by default: a file that exists on one
@@ -50,6 +51,9 @@ english() { [[ "$LANG_CODE" == enUS ]]; }
 # audio-horde -> horde; the meta addon (audio-all) and the two addons are not packs.
 pack_of() { case "$1" in audio-alliance|audio-horde|audio-shared|audio-gossip) echo "${1#audio-}";; esac; }
 pack_field() { node "$REPO/scripts/lib/packs.mjs" get quests "$LANG_CODE" "$(pack_of "$1")" "$2"; }
+# A language's spoken-all is its own project, "Spoken: <Language>", read off
+# publishers/spoken/all-<lang>.md -- dependencies included, which are that language's packs.
+meta_field() { node "$REPO/scripts/lib/packs.mjs" meta "$LANG_CODE" "$1"; }
 
 # The Wago half, which is the same for every project and so lives in one file.
 # shellcheck source=../lib/wago.sh
@@ -64,9 +68,8 @@ API="https://wow.curseforge.com/api"
 # the first time they needed changing.
 #
 # Era, the 2.5.6 Anniversary client and the 1.60.1 Forever client (CurseForge's name for the
-# one whose TOC suffix is _Camelot). The zip carries _Wrath and _Mainline TOCs as well, but
-# nothing here has been run on those clients, and a file offered to a client it misbehaves on
-# is worse than one that is simply absent there.
+# one whose TOC suffix is _Camelot). Nothing here has been run on any other client, and a file
+# offered to a client it misbehaves on is worse than one that is simply absent there.
 #
 # The 1.12, 2.4.3 and 3.3.5 zips package.sh also builds are deliberately not uploaded here:
 # CurseForge has no game version to file them against. They go out on the GitHub release that
@@ -83,9 +86,8 @@ RELEASE_TYPE="${RELEASE_TYPE:-release}"
 # /projects//upload-file, which would fail somewhere less legible or land on whatever project
 # the API resolved.
 #
-# The complete pack (make package-audio-complete) is deliberately absent: the whole corpus in one
-# folder is twice the upload ceiling, so the site hosts it instead - see deploy/README.md. The
-# audio-all target here is the meta addon, not that pack.
+# There is no complete pack: the whole corpus in one folder is twice the upload ceiling. The
+# audio-all target here is the meta addon, which names the four packs as dependencies.
 #
 # A pack whose project does not exist yet has no id, and the run fails on it rather than
 # uploading a Horde pack over the Alliance project. Create the project on CurseForge, then
@@ -100,7 +102,7 @@ target_curseforge() { case "$1" in
   spoken)         echo "${SPOKEN_PROJECT_ID:-1700375}";;
   player)         echo "1655859";;
   audio-all)      echo "1660196";;
-  spoken-all)     echo "1721569";;
+  spoken-all)     if english; then echo "1721569"; else meta_field curseforge; fi;;
   audio-alliance|audio-horde|audio-shared|audio-gossip) pack_field "$1" curseforge;;
 esac; }
 # The Wago project id for the same project: eight alphanumeric characters, from the project's
@@ -122,7 +124,7 @@ target_slug() { case "$1" in
   spoken)         echo "spoken-player";;
   player)         echo "spoken-quests";;
   audio-all)      echo "spoken-quests-audio-all";;
-  spoken-all)     echo "spoken";;
+  spoken-all)     if english; then echo "spoken"; else meta_field slug; fi;;
   audio-alliance|audio-horde|audio-shared|audio-gossip) pack_field "$1" slug;;
 esac; }
 
@@ -146,7 +148,7 @@ target_zip_name() { case "$1" in
   spoken)         echo "Spoken";;
   player)         echo "SpokenQuests";;
   audio-all)      echo "SpokenQuestsAudio";;
-  spoken-all)     echo "SpokenAll";;
+  spoken-all)     if english; then echo "SpokenAll"; else meta_field folder; fi;;
   audio-alliance|audio-horde|audio-shared|audio-gossip) pack_field "$1" folder;;
 esac; }
 
@@ -185,7 +187,8 @@ target_dependencies() { case "$1" in
   # Everything English, for one-click installs (scripts/spoken/package-meta.sh). The four quest
   # packs are named here as well as through audio-all, so a manager that does not follow a
   # dependency's own dependencies still installs them.
-  spoken-all) echo "spoken-player spoken-quests-audio-all \
+  spoken-all) ! english && { meta_field dependencies; return; }
+              echo "spoken-player spoken-quests-audio-all \
                     spoken-quests-audio-alliance spoken-quests-audio-horde \
                     spoken-quests-audio-shared spoken-quests-audio-gossip \
                     spoken-zones-audio spoken-books-audio";;
@@ -216,9 +219,9 @@ for arg in "$@"; do
   esac
 done
 
-# A language has no player, addon or meta addon project of its own -- spoken, player and
-# audio-all are each one project for every language -- so --lang refuses anything but the
-# four packs, the same way books' and zones' release.sh do.
+# A language has no player or addon project of its own -- spoken, player and audio-all are each
+# one project for every language -- so --lang refuses anything but the four packs, the same way
+# books' and zones' release.sh do, and the language's meta addon, spoken-all, which is.
 if ! english; then
   # Checked once, before the per-target validation below: an unregistered language has no
   # pack pages at all, and letting each of the four audio-* targets discover that separately
@@ -227,9 +230,17 @@ if ! english; then
   # ${targets[@]+...} rather than a bare expansion: macOS's bash 3.2 raises "unbound variable"
   # under set -u when "${targets[@]}" is empty, which it is for `--lang=xx` alone.
   for t in ${targets[@]+"${targets[@]}"}; do
-    [[ "$t" == audio-* ]] || { echo "error: --lang=$LANG_CODE releases sound packs; '$t' has one project for every language" >&2; exit 1; }
+    [[ "$t" == audio-* || "$t" == spoken-all ]] || { echo "error: --lang=$LANG_CODE releases sound packs; '$t' has one project for every language" >&2; exit 1; }
   done
-  (( ${#targets[@]} > 0 )) || targets=(audio-alliance audio-horde audio-shared audio-gossip)
+  # The language's packs on CurseForge, less any dormant (scripts/lib/packs.mjs): a language
+  # not split by side ships Shared and Gossip alone.
+  if (( ${#targets[@]} == 0 )); then
+    for p in $(node "$REPO/scripts/lib/packs.mjs" list quests "$LANG_CODE" curseforge); do targets+=("audio-$p"); done
+  fi
+  for t in "${targets[@]}"; do
+    [[ "$t" == spoken-all ]] && continue
+    [[ "$(pack_field "$t" dormant)" == false ]] || { echo "error: the $LANG_CODE $t pack is dormant: its lines ship in Shared" >&2; exit 1; }
+  done
 fi
 
 # Asked once, answered at each of the places below that only concern one store.
@@ -408,6 +419,8 @@ upload_target() {
 
   if [[ "$target" == audio-* ]] && ! english; then
     changelog="$(node "$REPO/scripts/lib/packs.mjs" changelog "$REPO/docs/quests/CHANGELOG.md" "$version" "$(pack_field "$target" release)")" || return 1
+  elif [[ "$target" == spoken-all ]] && ! english; then
+    changelog="$(node "$REPO/scripts/lib/packs.mjs" changelog "$REPO/docs/spoken/CHANGELOG-ALL.md" "$version" "$(meta_field release)")" || return 1
   else
     case "$target" in player|spoken|spoken-all) kind=$target;; *) kind=pack;; esac
     changelog="$(changelog_for "$version" "$kind")" || return 1

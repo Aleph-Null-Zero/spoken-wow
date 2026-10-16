@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Books/"
+local BOOKS = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 -- The Hillsbrad Town Registry: four real pages of one real book, 261 through 265.
@@ -31,14 +31,14 @@ _G.SpokenBooksAudioPacks = {
 
 local function LoadBooks()
     local SpokenBooks = {}
-    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
+    for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Contribute", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
         local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Books", SpokenBooks)
+        chunk("Spoken_Readables", SpokenBooks)
     end
     return SpokenBooks
 end
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
@@ -88,6 +88,16 @@ Expect("...named by the book, whatever page of it this is: the book is one line"
     "Hillsbrad Town Registry")
 Expect("a page the pack does not carry has no clip", B:ClipFor(263), nil)
 local letter = B:ClipFor(15)
+-- A first page that does not open with its title is read after it: the narration reads the title
+-- first, and the captions' words start once it is said.
+local timings = letter.present.timings
+Expect("a letter's words start after its title, which its recording reads first",
+    timings ~= nil and #timings == #(_G.Spoken:CaptionWords(letter.present.transcript)) and timings[1] > 0, true)
+local rising = timings ~= nil
+for i = 2, #(timings or {}) do rising = rising and timings[i] > timings[i - 1] end
+Expect("...each word after the last, all within the recording", rising and timings[#timings] < letter.length, true)
+Expect("a first page opening with its own title starts its words at once", clip.present.timings, nil)
+Expect("...and a later page, read without its title, too", B:ClipFor(262).present.timings, nil)
 Expect("a one-page letter is named by its title, under what it is", letter.present.label .. " " .. tostring(letter.present.header ~= letter.present.label),
     "William's Shipment true")
 
@@ -104,13 +114,15 @@ Expect("the report address names the page", B:ReportURL(261),
     "https://spoken.rusty.one/books/r/261")
 Expect("...and is nothing at all without one", B:ReportURL(nil), nil)
 
--- The client cannot open a browser, so pressing it can only offer the address to copy.
-local before = table.getn(stub.popups)
+-- The client cannot open a browser, so pressing it can only offer the address to copy, in
+-- Spoken's box: the context makes it longer than a popup's edit box holds.
 report.onClick(clip)
-Expect("pressing it raises one popup", table.getn(stub.popups), before + 1)
-Expect("...saying what the address is for",
-    string.find(stub.popups[table.getn(stub.popups)].args[1] or "", "report a problem") ~= nil,
-    true)
+local box = _G.Spoken.ContributeBox
+local address, context = H.SplitReportLink(box and box.frame:IsShown() and box.editBox:GetText())
+Expect("pressing it offers the page's address", address, "https://spoken.rusty.one/books/r/261")
+Expect("...carrying the addon and the page", context
+    and context:find("\naddon=", 1, true) and context:find("\nid=261\n", 1, true) and true, true)
+box.frame:Hide()
 
 ---------------------------------------------------------------- reading a book
 Expect("a book lists the pages from here on", Same(B:PagesFrom(262), { 262, 263, 265 }), true)
@@ -194,6 +206,23 @@ Expect("with whole-book reading off, only the page on screen is queued",
 SpokenBooksSettings.readWholeBook = true
 B:StopReading()
 
+---------------------------------------------------------------- played while the player is stopped
+-- A book opened in the world waits its turn behind the player's Stop; Play in the Compendium
+-- starts it, ending the stop.
+Spoken:Pause()
+B:PlayFrom(261)
+Expect("a book opened in the world while the player is stopped waits in the queue, silent",
+    table.concat(QueuedPages(), ",") .. " " .. tostring(Spoken:IsPaused()) .. " " .. tostring(Spoken:IsPlaying()),
+    "261 true false")
+B:StopReading()
+Spoken:Pause()
+local playedBefore = #stub.world.played
+Expect("Play in the Compendium while the player is stopped plays the book at once, ending the stop",
+    B:PlayFrom(261, true) .. " " .. tostring(Spoken:IsPaused()) .. " " .. tostring(stub.world.played[#stub.world.played]
+    == B:ClipFor(261).path and #stub.world.played > playedBefore), "3 false true")
+Expect("...the rest of the book to follow it", Same(Coming(), { 262, 265 }), true)
+B:StopReading()
+
 ---------------------------------------------------------------- the progress bar across the book
 -- One line: the bar runs across the whole book, not each page.
 B:PlayFrom(261)
@@ -250,7 +279,7 @@ B:StopReading()
 _G.SpokenBooksAudioPacks = {}
 Expect("no pack means no clips", B:ClipFor(261), nil)
 Expect("...and a message that names the download rather than blaming the page",
-    B:DescribeMissingAudio(), "No Books voice pack is installed.")
+    B:DescribeMissingAudio(), "No Readables voice pack is installed.")
 
 print(Failures() == 0 and "All books playlist tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

@@ -26,8 +26,9 @@ import { useRouter } from "next/navigation";
 import { memo, useCallback, useMemo, useState } from "react";
 
 import ClientSelect from "@/components/ClientSelect";
-import { SEARCH_IN_OPTIONS } from "@/components/contribution-chips";
-import FilterChip, { type ChipOption } from "@/components/FilterChip";
+import { SEARCH_IN_OPTIONS, STAGE_CHIP_OPTIONS, STAGE_LABELS } from "@/components/contribution-chips";
+import FilterChip from "@/components/FilterChip";
+import MultiFilterChip from "@/components/MultiFilterChip";
 import SortHeader from "@/components/SortHeader";
 import SpeakerCell, { ProvenanceBadge, type SpeakerAnswer } from "@/components/SpeakerCell";
 import { ACCEPT_TONE, LiteButton, LiteCheckbox, REJECT_TONE } from "@/components/LiteControls";
@@ -51,14 +52,12 @@ import {
   bucketOf,
   contributionsHref,
   namesSpeaker,
-  QUEST_STAGES,
   nextSort,
   type Bucket,
   type Section,
   type ClientFilter,
   type ContributionSort,
   type FilterChange,
-  type QuestStage,
   type SortColumn,
   type StageFilter,
 } from "@/lib/contributions/query";
@@ -73,7 +72,7 @@ import type { BookMatch, BookSummary, NpcConflictOption, NpcSummary, QuestSummar
 import { NPC_ROW_KINDS, type NpcKind, type NpcRowKind } from "@/lib/npc/npc";
 import type { NpcResolution } from "@/lib/npc/store";
 import type { Filter } from "@/lib/search";
-import { cn } from "@/lib/utils";
+import { cn, endsSelection } from "@/lib/utils";
 import { wowheadEntityUrl, wowheadForeverUrl, wowheadQuestUrl } from "@/lib/wowhead";
 
 export type { NpcSummary };
@@ -85,6 +84,8 @@ export type ContributionRow = Pick<
 > & {
   /** The game client the text came from, classified from the envelope's `build`. */
   client: ClientSummary;
+  /** The voice packs' language when it is not the client's (triage.ts packHeard), else null. */
+  pack: string | null;
   /** Null when the envelope never named an NPC at all -- zones and books, or a quest keyed on quest+event. */
   npc: NpcSummary | null;
   /** Null when the source has no quest concept at all. See lib/contributions/triage.ts. */
@@ -112,17 +113,6 @@ const BOOKS_LIST = "contribution-english-books";
 function bookOption(book: BookChoice): string {
   return `${book.title} #${book.bookId}`;
 }
-
-const STAGE_LABELS: Record<QuestStage, string> = {
-  accept: "Accept",
-  progress: "Progress",
-  complete: "Complete",
-};
-
-const STAGE_CHIP_OPTIONS: ChipOption[] = QUEST_STAGES.map((option) => ({
-  value: option,
-  label: STAGE_LABELS[option],
-}));
 
 const STATUS_LABELS: Record<ContributionStatus, string> = {
   new: "New",
@@ -525,7 +515,7 @@ export default function ContributionTable({
           type="search"
           value={query}
           placeholder={
-            source === "quests" ? "NPC, quest, or what they sent…" : source === "gossip" ? "NPC, or what they sent…" : "What they sent…"
+            source === "quests" ? "NPC, quest, or what they sent…" : "What they sent…"
           }
           aria-label="Search"
           className="h-8 min-w-0 basis-64"
@@ -535,14 +525,14 @@ export default function ContributionTable({
           <FilterChip
             label="search in"
             value={searchIn === "any" ? undefined : searchIn}
-            options={source === "gossip" ? SEARCH_IN_OPTIONS.filter((option) => option.value !== "quest") : SEARCH_IN_OPTIONS}
+            options={SEARCH_IN_OPTIONS}
             onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
           />
         ) : null}
         {source === "quests" ? (
-          <FilterChip
+          <MultiFilterChip
             label="stage"
-            value={stage === "all" ? undefined : stage}
+            values={stage}
             options={STAGE_CHIP_OPTIONS}
             onChange={(next) => go({ stage: next as StageFilter | undefined })}
           />
@@ -650,8 +640,6 @@ export default function ContributionTable({
                   <th className="border-b py-2 pr-3 font-normal">NPC</th>
                   <th className="border-b py-2 pr-3 font-normal">Quest</th>
                 </>
-              ) : source === "gossip" ? (
-                <th className="border-b py-2 pr-3 font-normal">NPC</th>
               ) : (
                 <th className="border-b py-2 pr-3 font-normal">{source === "books" ? "Book" : "Place"}</th>
               )}
@@ -797,7 +785,7 @@ const ContributionTableRow = memo(function ContributionTableRow({
           // A click on one of the row's controls is that control's, and one ending a drag over
           // the text is somebody copying it: neither should fold the row out from under them.
           if ((event.target as HTMLElement).closest("button, a, input, select, textarea, label, form")) return;
-          if (!window.getSelection()?.isCollapsed) return;
+          if (endsSelection()) return;
           setExpanded((open) => !open);
         }}
         className="align-top [&>td]:border-b [&>td]:py-2 [&>td]:leading-5"
@@ -884,36 +872,36 @@ const ContributionTableRow = memo(function ContributionTableRow({
           </td>
         ) : null}
 
-        {row.quest === "gossip" ? null : (
-          <td className="max-w-[14rem] pr-3 text-xs whitespace-nowrap">
-            {book ? (
-              <BookMatchCell
-                book={book}
-                lang={lang}
-                busy={npcBusy}
-                locked={pageWritten || locked}
-                onSave={(answer) => void onMatchPage(row.id, answer)}
-              />
-            ) : row.quest === null ? (
-              <span title={row.key}>{row.place ?? row.key}</span>
-            ) : (
-              <>
-                <span className="truncate">{row.quest.title}</span>{" "}
-                <a
-                  href={wowheadQuestUrl(row.quest.questId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-muted-foreground hover:underline"
-                >
-                  #{row.quest.questId}
-                </a>
-                {row.quest.stage ? (
-                  <div className="text-muted-foreground">{STAGE_LABELS[row.quest.stage]}</div>
-                ) : null}
-              </>
-            )}
-          </td>
-        )}
+        <td className="max-w-[14rem] pr-3 text-xs whitespace-nowrap">
+          {book ? (
+            <BookMatchCell
+              book={book}
+              lang={lang}
+              busy={npcBusy}
+              locked={pageWritten || locked}
+              onSave={(answer) => void onMatchPage(row.id, answer)}
+            />
+          ) : row.quest === null ? (
+            <span title={row.key}>{row.place ?? row.key}</span>
+          ) : row.quest === "gossip" ? (
+            STAGE_LABELS.gossip
+          ) : (
+            <>
+              <span className="truncate">{row.quest.title}</span>{" "}
+              <a
+                href={wowheadQuestUrl(row.quest.questId)}
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground hover:underline"
+              >
+                #{row.quest.questId}
+              </a>
+              {row.quest.stage ? (
+                <div className="text-muted-foreground">{STAGE_LABELS[row.quest.stage]}</div>
+              ) : null}
+            </>
+          )}
+        </td>
 
         {/* Which game, then the locale and the exact build underneath: the version is
             in the label, and the build number is what tells a beta's builds apart. */}
@@ -923,6 +911,11 @@ const ContributionTableRow = memo(function ContributionTableRow({
             {row.locale}
             {row.client.buildNumber ? ` · ${row.client.buildNumber}` : null}
           </div>
+          {row.pack ? (
+            <div className="text-muted-foreground" title="The language of the voice packs the player was hearing">
+              heard in {row.pack}
+            </div>
+          ) : null}
         </td>
 
         <td className="pr-3 text-xs whitespace-nowrap"><SendersButton id={row.id} count={row.count} /></td>

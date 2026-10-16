@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Builds the Spoken Books zip for CurseForge.
+# Builds the Spoken Writings zip for CurseForge.
 #
-#   ./scripts/books/package.sh                 # dist/Spoken_Books-<version>.zip
+#   ./scripts/books/package.sh                 # dist/Spoken_Readables-<version>.zip
 #   ALLOW_DIRTY=1 ./scripts/books/package.sh   # build from an uncommitted tree
 #
 # The version comes from `## Version:` in the .toc, so bumping the addon and naming the zip
@@ -13,7 +13,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-NAME="Spoken_Books"
+NAME="Spoken_Readables"
 SRC="$REPO/addons/$NAME"
 TOC="$SRC/$NAME.toc"
 DIST="${DIST:-$REPO/dist}"
@@ -44,18 +44,6 @@ if [ ${#missing[@]} -gt 0 ]; then
   printf '       %s\n' "${missing[@]}" >&2
   exit 1
 fi
-
-# UI/Layout.lua is byte-identical across all four Spoken addons and the packaged copy has to
-# stay that way; pipelines/quests/tests/test_package.py enforces it on the tree, and this
-# catches a staging copy that somehow diverged from it.
-for other in Spoken Spoken_Quests Spoken_Zones; do
-  peer="$REPO/addons/$other/UI/Layout.lua"
-  [ -f "$peer" ] || continue
-  cmp -s "$SRC/UI/Layout.lua" "$peer" || {
-    echo "error: UI/Layout.lua differs from addons/$other/UI/Layout.lua" >&2
-    exit 1
-  }
-done
 
 mkdir -p "$DIST"
 zip_path="$DIST/$NAME-$version.zip"

@@ -3,7 +3,7 @@ release: quests-audio-itIT
 section: quests
 lang: itIT
 pack: all
-version: 0.0.1
+version: 0.0.2
 slug: spoken-quests-audio-itit
 name: Spoken Quests Audio: Italian
 summary: Quest and gossip lines for Spoken Player, voiced in Italian from the QuestIT community translation. One pack, both factions. Partial. Needs Spoken Player.
@@ -30,7 +30,7 @@ No game client runs in Italian, so Spoken Quests never picks this pack on its ow
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
 
 ## Support
 

@@ -104,3 +104,16 @@ def test_a_moderators_answer_for_a_split_npc_is_its_own_sexs():
         ("creature", 1, 2, "human", "guard", "moderator", True),
         ("creature", 1, 3, "human", "standard", "corpus", False),
     ]
+
+
+def test_a_plain_line_the_site_split_by_player_gender_stays_split():
+    from tts_cli.corpus_db import split_here
+    variants = {"q:1:accept": ["a"], "q:2:accept": ["b"], "q:3:accept": ["c", "d"]}
+    live = {("q:1:accept:m", 0): (), ("q:1:accept:f", 0): (), ("q:2:accept", 0): (),
+            ("q:3:accept", 0): (), ("q:3:accept:f", 1): ()}
+    assert split_here(variants, live) == {("q:1:accept", 0), ("q:3:accept", 1)}
+
+
+def test_a_line_new_to_the_dump_is_not_taken_for_a_split():
+    from tts_cli.corpus_db import split_here
+    assert split_here({"q:1:accept": ["a"], "q:1:accept:m": ["b"]}, {}) == set()

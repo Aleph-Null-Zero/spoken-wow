@@ -25,8 +25,8 @@ end
 local ADDON_TITLES = {
     { folder = "Spoken", title = "Spoken" },
     { folder = "Spoken_Quests", title = "Spoken Quests" },
-    { folder = "Spoken_Books", title = "Spoken Books" },
-    { folder = "Spoken_Zones", title = "Spoken Zones" },
+    { folder = "Spoken_Readables", title = "Spoken Readables" },
+    { folder = "Spoken_Places", title = "Spoken Places" },
 }
 for _, addon in ipairs(ADDON_TITLES) do
     local toc = ADDONS .. addon.folder .. "/" .. addon.folder .. ".toc"
@@ -39,8 +39,8 @@ end
 local SAVED = {
     { toc = "Spoken/Spoken.toc", vars = "SpokenSettings" },
     { toc = "Spoken_Quests/Spoken_Quests.toc", vars = "SpokenQuestsSettings" },
-    { toc = "Spoken_Books/Spoken_Books.toc", vars = "SpokenBooksSettings", char = "SpokenBooksCharacter" },
-    { toc = "Spoken_Zones/Spoken_Zones.toc", vars = "SpokenZonesSettings", char = "SpokenZonesCharacter" },
+    { toc = "Spoken_Readables/Spoken_Readables.toc", vars = "SpokenBooksSettings", char = "SpokenBooksCharacter" },
+    { toc = "Spoken_Places/Spoken_Places.toc", vars = "SpokenZonesSettings", char = "SpokenZonesCharacter" },
 }
 for _, addon in ipairs(SAVED) do
     Expect(addon.toc .. " saves " .. addon.vars, Field(ADDONS .. addon.toc, "SavedVariables"), addon.vars)
@@ -51,7 +51,7 @@ Expect("no tombstone folders", io.open(ADDONS .. "tombstones/VoiceOverRedux/Voic
 
 ---------------------------------------------------------------- an old copy left behind
 _G.UISpecialFrames = _G.UISpecialFrames or {}
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.settingsCategories = {}; stub.ldbObjects = {}; stub.dbIcons = {}
 stub.world.questID = 0; stub.ShowPanel(nil)
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
@@ -64,17 +64,19 @@ _G.IsAddOnLoaded = function(folder) return loaded[folder] == true end
 stub.disabledAddOns = {}
 Expect("nothing left behind, nothing found", table.getn(env.Addon:FindOldFolders()), 0)
 loaded = { SpokenPlayer = true, VoiceOverRedux = true, ZoneLore = true,
-    SpokenQuests = true, SpokenZones = true, SpokenBooks = true,
-    Spoken_Quests = true, Spoken_Zones = true, Spoken_Books = true }
+    SpokenQuests = true, SpokenZones = true, SpokenBooks = true, Spoken_Books = true,
+    Spoken_Writings = true,
+    Spoken_Zones = true,
+    Spoken_Quests = true, Spoken_Places = true, Spoken_Readables = true }
 local found = env.Addon:FindOldFolders()
 Expect("every old folder is found, and no current one", table.concat(found, " "),
-    "SpokenPlayer VoiceOverRedux ZoneLore SpokenQuests SpokenZones SpokenBooks")
+    "SpokenPlayer VoiceOverRedux ZoneLore SpokenQuests SpokenZones SpokenBooks Spoken_Books Spoken_Zones Spoken_Writings")
 Expect("...and finding them disables nothing", table.getn(stub.disabledAddOns), 0)
 stub.popups = {}
 local reloads = stub.reloads
 env.Addon:RetireOldFolders()
 Expect("retiring them switches every old folder off for the next login", table.concat(stub.disabledAddOns, " "),
-    "SpokenPlayer VoiceOverRedux ZoneLore SpokenQuests SpokenZones SpokenBooks")
+    "SpokenPlayer VoiceOverRedux ZoneLore SpokenQuests SpokenZones SpokenBooks Spoken_Books Spoken_Zones Spoken_Writings")
 local popup = stub.popups[1]
 Expect("...names them in a popup", popup and popup.key, "SPOKEN_OLD_FOLDERS")
 Expect("...that offers the reload which finishes it", popup and popup.dialog.button1, "Reload Now")
@@ -92,7 +94,7 @@ Expect("...and reloads when taken up on it", stub.reloads, reloads + 1)
 stub.disabledAddOns, stub.popups = {}, {}
 SetCVar("InputDeviceInterfaceStyle", "1")
 env.Addon:RetireOldFolders()
-Expect("under the gamepad UI, old folders are still switched off", table.getn(stub.disabledAddOns), 6)
+Expect("under the gamepad UI, old folders are still switched off", table.getn(stub.disabledAddOns), 9)
 Expect("...with no popup", table.getn(stub.popups), 0)
 SetCVar("InputDeviceInterfaceStyle", "0")
 loaded = {}
@@ -116,6 +118,6 @@ local function CodesIn(path)
     return table.concat(codes, " ")
 end
 Expect("Spoken's languages are Quests', in the same order", Codes(env.LANGUAGES), CodesIn(QUESTS .. "Language.lua"))
-Expect("...and Books'", Codes(env.LANGUAGES), CodesIn(ADDONS .. "Spoken_Books/Language.lua"))
+Expect("...and Readables'", Codes(env.LANGUAGES), CodesIn(ADDONS .. "Spoken_Readables/Language.lua"))
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

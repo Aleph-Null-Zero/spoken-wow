@@ -8,10 +8,10 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
-stub.SetClient("11509")
+stub.SetClient("16001")
 local env = stub.LoadSpoken(SPOKEN)
 
 -- The addon's own .toc Version, deliberately unlike "dev" so the assertion below cannot pass
@@ -19,7 +19,7 @@ local env = stub.LoadSpoken(SPOKEN)
 -- confirming a particular one. See addons/Spoken_Quests/Contribute.lua's Contribute:Capture
 -- for the same pattern; SpokenZones.VERSION does not exist, only the lowercase
 -- SpokenZones.version Core.lua already computes from the .toc.
-stub.SetAddOns({ { folder = "Spoken_Zones", meta = { Version = "9.9.9" } } })
+stub.SetAddOns({ { folder = "Spoken_Places", meta = { Version = "9.9.9" } } })
 
 local Z = H.LoadZones(ZONES)   -- the loader that loads Core.lua for real, unlike stub.LoadZones
 
@@ -33,6 +33,7 @@ env.Addon.db.profile.Contribute.HideButtons = false
 
 Z.Zones[1537] = { name = "Ironforge", pending = true }
 local envelope = Z:CaptureContribution(1537, "A Nook With No Lore")
+H.WriteCapturedFixture(here, "zones-subzone", envelope)
 Expect("the source is zones", envelope:match("^!SPOKEN1 zones\n") ~= nil, true)
 Expect("the map is the one shown, not the player's", envelope:match("\nmap=1537\n") ~= nil, true)
 Expect("the zone is named from the map", envelope:match("\nzone=Ironforge\n") ~= nil, true)
@@ -43,6 +44,7 @@ Expect("the addon field carries the real .toc version, not the \"dev\" fallback"
     envelope:match("\naddon=SpokenZones/9%.9%.9\n") ~= nil, true)
 
 local zoneOnly = Z:CaptureContribution(1537, nil)
+H.WriteCapturedFixture(here, "zones-zone", zoneOnly)
 Expect("a zone with no subzone leaves the key out rather than sending it empty", zoneOnly:match("\nsubzone=") == nil, true)
 Expect("nothing is captured without a map", Z:CaptureContribution(nil, nil), nil)
 

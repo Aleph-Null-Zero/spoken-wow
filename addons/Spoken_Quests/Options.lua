@@ -18,15 +18,6 @@ local FRAME_STRATAS =
     "DIALOG",
 }
 
---- The language dropdowns' choices: every language, after one entry of the dropdown's own.
-local function LanguageValues(firstKey, firstLabel)
-    local values = { [firstKey] = firstLabel }
-    for _, locale in ipairs(Language.LOCALES) do
-        values[locale.code] = Language:GetNativeName(locale.code)
-    end
-    return values
-end
-
 -- General Tab
 ---@type AceConfigOptionsTable
 local GeneralTab =
@@ -41,12 +32,12 @@ local GeneralTab =
             inline = true,
             name = L.OPT_GROUP_AUDIO,
             args = {
+                -- Named as the settings page names them.
                 ToggleAutoplay = {
                     type = "toggle",
                     order = 1,
                     width = 2,
-                    name = L.OPT_AUTOPLAY,
-                    desc = L.OPT_AUTOPLAY_TIP,
+                    name = L.OPT_PANEL_AUTOPLAY,
                     get = function(info) return Addon:IsAutoplayOn() end,
                     set = function(info, value) Addon:SetAutoplay(value) end,
                 },
@@ -58,13 +49,12 @@ local GeneralTab =
                     -- It decides which greetings autoplay reads, so with autoplay off it has
                     -- nothing to decide.
                     disabled = function(info) return not Addon:IsAutoplayOn() end,
-                    name = L.OPT_GREETING_FREQ,
-                    desc = L.OPT_GREETING_FREQ_TIP,
+                    name = L.OPT_PANEL_GREETINGS,
                     values = {
-                        [Enums.GossipFrequency.Always] = L.OPT_GREETING_ALWAYS,
-                        [Enums.GossipFrequency.OncePerQuestNPC] = L.OPT_GREETING_ONCE_QUEST,
-                        [Enums.GossipFrequency.OncePerNPC] = L.OPT_GREETING_ONCE_NPC,
-                        [Enums.GossipFrequency.Never] = L.OPT_GREETING_NEVER,
+                        [Enums.GossipFrequency.Always] = L.OPT_GREETING_LABEL_ALWAYS,
+                        [Enums.GossipFrequency.OncePerQuestNPC] = L.OPT_GREETING_LABEL_ONCE_QUEST,
+                        [Enums.GossipFrequency.OncePerNPC] = L.OPT_GREETING_LABEL_ONCE_NPC,
+                        [Enums.GossipFrequency.Never] = L.OPT_GREETING_LABEL_NEVER,
                     },
                     get = function(info) return Addon.db.profile.Audio.GossipFrequency end,
                     set = function(info, value)
@@ -77,8 +67,7 @@ local GeneralTab =
                     type = "toggle",
                     order = 6,
                     width = 2,
-                    name = L.OPT_SYNC_WINDOW,
-                    desc = L.OPT_SYNC_WINDOW_TIP,
+                    name = L.OPT_PANEL_STOP_ON_CLOSE,
                     get = function(info) return Addon.db.profile.Audio.StopAudioOnDisengage end,
                     set = function(info, value)
                         Addon.db.profile.Audio.StopAudioOnDisengage = value
@@ -88,44 +77,12 @@ local GeneralTab =
                     type = "toggle",
                     order = 6.5,
                     width = 2,
-                    name = L.OPT_FOLLOWUP,
-                    desc = L.OPT_FOLLOWUP_TIP,
+                    name = L.OPT_PANEL_FOLLOWUP,
                     -- Follow-up lines read themselves, so autoplay off leaves this nothing to do.
                     disabled = function(info) return not Addon:IsAutoplayOn() end,
                     get = function(info) return Addon.db.profile.Audio.FollowupLines ~= false end,
                     set = function(info, value)
                         Addon.db.profile.Audio.FollowupLines = value
-                    end,
-                },
-                LineBreak3 = { type = "description", name = "", order = 7 },
-                -- Its own row: the two selects are one decision, and beside OGThrall they wrap
-                -- unevenly on a narrow options frame.
-                LineBreak4 = { type = "description", name = "", order = 8.5 },
-                VoiceLanguage = {
-                    type = "select",
-                    width = 1.1,
-                    order = 9,
-                    name = L.OPT_VOICE_LANGUAGE,
-                    desc = L.OPT_VOICE_LANGUAGE_TIP,
-                    values = function()
-                        return LanguageValues(Language.AUTO,
-                            format(L.OPT_LANG_AUTO_FMT, Language:GetNativeName(Language:GetClientLanguage())))
-                    end,
-                    get = function(info) return Addon.db.profile.Audio.VoiceLanguage end,
-                    set = function(info, value)
-                        Addon.db.profile.Audio.VoiceLanguage = value
-                    end,
-                },
-                FallbackLanguage = {
-                    type = "select",
-                    width = 1.1,
-                    order = 10,
-                    name = L.OPT_FALLBACK_LANGUAGE,
-                    desc = L.OPT_FALLBACK_LANGUAGE_TIP,
-                    values = function() return LanguageValues("none", L.OPT_FALLBACK_NONE) end,
-                    get = function(info) return Addon.db.profile.Audio.FallbackLanguage end,
-                    set = function(info, value)
-                        Addon.db.profile.Audio.FallbackLanguage = value
                     end,
                 },
                 OGThrall = {
@@ -141,23 +98,6 @@ local GeneralTab =
                 },
             }
         },
-        Debug = {
-            type = "group",
-            order = 5,
-            inline = true,
-            name = L.OPT_GROUP_DEBUG,
-            args = {
-                DebugEnabled = {
-                    type = "toggle",
-                    order = 1,
-                    width = 1.25,
-                    name = L.OPT_DEBUG,
-                    desc = L.OPT_DEBUG_TIP,
-                    get = function(info) return Addon.db.profile.DebugEnabled end,
-                    set = function(info, value) Addon.db.profile.DebugEnabled = value end,
-                },
-            }
-        }
     }
 }
 
@@ -189,35 +129,8 @@ local SlashCommands = {
     order = 110,
     inline = true,
     dialogHidden = true,
+    -- Stop or Replay and Stop All are Spoken's (/sp replay, /sp stopall), not repeated here.
     args = {
-        PlayPause = {
-            type = "execute",
-            order = 1,
-            name = L.OPT_CMD_PLAYPAUSE,
-            desc = L.OPT_CMD_PLAYPAUSE_DESC,
-            hidden = true,
-            func = function(info)
-                if Spoken then Spoken:TogglePause() end
-            end
-        },
-        Play = {
-            type = "execute",
-            order = 2,
-            name = L.OPT_CMD_PLAY,
-            desc = L.OPT_CMD_PLAY_DESC,
-            func = function(info)
-                if Spoken then Spoken:Resume() end
-            end
-        },
-        Pause = {
-            type = "execute",
-            order = 3,
-            name = L.OPT_CMD_PAUSE,
-            desc = L.OPT_CMD_PAUSE_DESC,
-            func = function(info)
-                if Spoken then Spoken:Pause() end
-            end
-        },
         Skip = {
             type = "execute",
             order = 4,
@@ -225,15 +138,6 @@ local SlashCommands = {
             desc = L.OPT_CMD_SKIP_DESC,
             func = function(info)
                 if Spoken then Spoken:Skip() end
-            end
-        },
-        Clear = {
-            type = "execute",
-            order = 5,
-            name = L.OPT_CMD_CLEAR,
-            desc = L.OPT_CMD_CLEAR_DESC,
-            func = function(info)
-                if Spoken then Spoken:StopAll() end
             end
         },
         Read = {
@@ -274,14 +178,21 @@ local SlashCommands = {
             dropdownHidden = true,
             func = function() Options:PrintDiagnostics() end
         },
+        -- The settings page where the client has one, and the window where it has not.
         Options = {
             type = "execute",
             order = 100,
             name = L.OPT_CMD_OPTIONS,
             desc = L.OPT_CMD_OPTIONS_DESC,
-            func = function(info)
-                Options:OpenConfigWindow()
-            end
+            func = function(info) Options:OpenSettings() end
+        },
+        Settings = {
+            type = "execute",
+            order = 101,
+            name = L.OPT_CMD_OPTIONS,
+            desc = L.OPT_CMD_OPTIONS_DESC,
+            hidden = true,
+            func = function(info) Options:OpenSettings() end
         },
     }
 }
@@ -334,7 +245,7 @@ function Options:AddDataModule(module, order)
             Title = MakeDescription(L.OPT_ROW_TITLE, module.Title),
             ModuleVersion = MakeDescription(L.OPT_ROW_FORMAT_VERSION, module.ModuleVersion),
             ModulePriority = MakeDescription(L.OPT_ROW_PRIORITY, module.ModulePriority),
-            Language = MakeDescription(L.OPT_ROW_LANGUAGE, function() return Language:GetName(module.Language) end),
+            Language = MakeDescription(L.OPT_ROW_LANGUAGE, function() return Language:GetNativeName(module.Language) end),
             ContentVersion = MakeDescription(L.OPT_ROW_CONTENT_VERSION, module.ContentVersion),
             LoadOnDemand = MakeDescription(L.OPT_ROW_LOAD_ON_DEMAND, module.LoadOnDemand and YES or NO),
             Loaded = MakeDescription(L.OPT_ROW_LOADED, function() return DataModules:GetModule(module.AddonName) and YES or NO end),
@@ -403,6 +314,7 @@ function Options:RunSelfTest()
                 questID = 3441,
                 name = "Spoken Quests self-test",
                 title = "Spoken Quests self-test",
+                text = Spoken:Words().TEST_LINE_TEXT,
                 origin = "/spq test",
             }
             if not DataModules:PrepareSound(soundData) then
@@ -415,7 +327,7 @@ function Options:RunSelfTest()
             -- that means the music channel, and a self-test that went another way would
             -- answer a question nobody asked.
             local channel = Player.source and Player.source:GetChannel() or "unknown"
-            if Player:Enqueue(soundData) then
+            if Player:Enqueue(soundData, true) then
                 Debug:Record("self-test-playing", format("Self-test queued on %s: %s", channel, soundData.filePath))
                 print(format("|cFF40FF40Spoken Quests test started on %s.|r You should hear a short voice line.", channel))
             else
@@ -516,6 +428,7 @@ function Options:Initialize()
         -- table above still backs every /spq command and still fills the window below,
         -- which is where profiles and the pack manager live.
         SettingsPanel:Setup()
+        GossipSettingsPanel:Setup()
     end)
     Debug:Print("Done!", "Options")
 
@@ -538,6 +451,14 @@ end
 --- everywhere else. The window is still how profiles and the pack manager are reached.
 function Options:OpenSettings()
     if SettingsPanel and SettingsPanel.Open and SettingsPanel:Open() then
+        return
+    end
+    self:OpenConfigWindow()
+end
+
+--- Gossip's page, its own entry beside Quests' under Spoken's.
+function Options:OpenGossipSettings()
+    if GossipSettingsPanel and GossipSettingsPanel.Open and GossipSettingsPanel:Open() then
         return
     end
     self:OpenConfigWindow()

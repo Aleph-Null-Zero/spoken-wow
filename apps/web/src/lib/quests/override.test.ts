@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_OVERRIDE_LENGTH, OverrideError, overrideOf, validateOverride, type LineOverride } from "./override";
+import { MAX_OVERRIDE_LENGTH, OverrideError, overrideOf, validateOverride, validateRewrite, type LineOverride } from "./override";
 
 const VALID = { file: "quests/1155-accept.mp3", lineId: "q:1155:accept", text: "  A crystal fragment.  " };
 
@@ -15,6 +15,17 @@ describe("validateOverride", () => {
   it("refuses the characters an override exists to remove", () => {
     expect(() => validateOverride({ ...VALID, text: "what < is this" })).toThrow(OverrideError);
     expect(() => validateOverride({ ...VALID, text: "in $2113w days" })).toThrow(/unvoiceable/);
+  });
+
+  it("refuses a $g branch, which no one file can say", () => {
+    expect(() => validateOverride({ ...VALID, text: "Well met, $glad:lass;." })).toThrow(/unvoiceable/);
+  });
+});
+
+describe("validateRewrite", () => {
+  it("accepts a $g branch, the route's to split, but nothing else of the token's kind", () => {
+    expect(() => validateRewrite({ ...VALID, text: "Well met, $glad:lass;." })).not.toThrow();
+    expect(() => validateRewrite({ ...VALID, text: "Well met, $glad:lass;, $N." })).toThrow(/unvoiceable/);
   });
 
   it("accepts either bracketed span, which the narrator and the NPC now voice", () => {

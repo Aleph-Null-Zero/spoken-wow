@@ -11,7 +11,7 @@
  */
 import { audioStateFromParams } from "./audio-state";
 import { facets } from "./facets";
-import { KINDS, NPC_TYPES, SOURCES } from "./line-fields";
+import { NPC_TYPES, sourcesFromParam } from "./line-fields";
 import { RECORDED } from "./recordings/live";
 import { BROADCAST_STATUSES } from "./broadcast/status";
 import type { Filter, LineFilters } from "./search";
@@ -37,8 +37,7 @@ export async function filtersFromParams(params: URLSearchParams): Promise<LineFi
     gender: oneOf(params.get("gender"), genders),
     flavor: oneOf(params.get("flavor"), flavors),
     voice: oneOf(params.get("voice"), voices),
-    kind: oneOf(params.get("kind"), KINDS),
-    source: oneOf(params.get("source"), SOURCES),
+    source: sourcesFromParam(params.get("source")),
     npcType: oneOf(params.get("type"), NPC_TYPES),
     narration: params.get("narration") === "1",
     // Absent means hidden, so the default state needs no parameter and a bare URL is the

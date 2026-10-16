@@ -23,7 +23,7 @@ Expect("Iterate follows `order`", table.concat(order, ","), "quests,zones")
 
 ---------------------------------------------------------------- admit
 local vetoed = nil
-local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Books", order = 3,
+local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Readables", order = 3,
     admit = function(clip, queue) if vetoed then return false, vetoed end return true end })
 vetoed = "no page open"
 local bc = H.Clip()
@@ -152,6 +152,20 @@ stub.Advance(1.6)
 Expect("a line queued under it keeps dialog muted past the deadline", GetCVar("Sound_EnableDialog"), "0")
 _G.Spoken:StopAll()
 Expect("...until the queue drains", GetCVar("Sound_EnableDialog"), "1")
+
+_G.Spoken:MuteGameDialogueAhead(quests)
+stub.Advance(0.2)
+_G.Spoken:EndMuteGameDialogueAhead()
+Expect("a read that finds no line lifts the mute at once", GetCVar("Sound_EnableDialog"), "1")
+
+_G.Spoken:MuteGameDialogueAhead(quests)
+quests:Enqueue(H.Clip({ length = 5 }))
+stub.Advance(0.6)
+_G.Spoken:EndMuteGameDialogueAhead()
+Expect("...but not under a line that is speaking", GetCVar("Sound_EnableDialog"), "0")
+_G.Spoken:StopAll()
+_G.Spoken:EndMuteGameDialogueAhead()
+Expect("...and with no mute ahead it does nothing", GetCVar("Sound_EnableDialog"), "1")
 
 -- Paused, a line queues and does not speak: the greeting has nothing to make way for.
 env, quests, zones = H.Fresh(stub, SPOKEN)

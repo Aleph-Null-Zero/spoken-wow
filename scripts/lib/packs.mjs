@@ -8,9 +8,10 @@
 // which is what a case block per script per language turned into the moment there was a second
 // language.
 //
-//   node scripts/lib/packs.mjs list <section> <lang> [github]            pack keys, or "-"
+//   node scripts/lib/packs.mjs list <section> <lang> [github|curseforge] pack keys, or "-"; never dormant
 //   node scripts/lib/packs.mjs get <section> <lang> <pack|-> <field>     one field
 //   node scripts/lib/packs.mjs changelog <file> <version> <release>      a pack's notes
+//   node scripts/lib/packs.mjs meta <lang> <field>                       a language's meta addon
 //
 // WHAT IS DERIVED AND WHAT IS WRITTEN. The folder and the release tag are rules, not fields:
 // English's are the names players already have installed, and a language's are those plus its
@@ -122,9 +123,22 @@ function toPack(page, meta) {
   if (meta.github !== undefined && meta.github !== "false") fail(`github may only be false`);
   const github = meta.github !== "false";
 
+  // A language with too few players yet for three quest packs ships two: Gossip, and a Shared
+  // pack that `holds: quests` -- every quest line, both sides' included (tts_cli/factions.py
+  // builds it as the 'quests' pack). Its Alliance and Horde pages stay, project ids and all, as
+  // `dormant: true`: nothing builds or uploads them until the language is split, when Shared
+  // goes back to holding shared quests and its players keep the folder and add their side.
+  if (meta.holds !== undefined && !(meta.holds === "quests" && !english && pack === "shared")) {
+    fail(`only a language's shared quests pack may say holds: quests`);
+  }
+  if (meta.dormant !== undefined && !(meta.dormant === "true" && !english && ["alliance", "horde"].includes(pack))) {
+    fail(`only a language's alliance or horde quests pack may say dormant: true`);
+  }
+
   const folder = english ? englishFolder(section, pack) : `${languageFolder(section, pack)}_${lang}`;
   return {
     page, section, lang, pack, version, github,
+    build: meta.holds ?? pack, dormant: meta.dormant === "true",
     curseforge: meta.curseforge ?? null, wago: meta.wago ?? null, release,
     bundles: english && section === "quests" && pack === "all" ? ENGLISH_QUESTS_BUNDLE : null,
     slug: meta.slug, name: meta.name, folder,
@@ -146,17 +160,56 @@ export function loadPacks(dir = PUBLISHERS_DIR) {
     if (seen.has(key)) throw new Error(`two pages for one pack (${key}): publishers/${seen.get(key)} and publishers/${p.page}`);
     seen.set(key, p.page);
   }
+  // Shared holding every quest and a side's own pack would ship that side's lines twice; Shared
+  // holding only shared quests with a side dormant would ship them nowhere.
+  for (const shared of packs.filter((p) => p.section === "quests" && p.pack === "shared")) {
+    for (const side of packs.filter((p) => p.section === "quests" && p.lang === shared.lang &&
+      ["alliance", "horde"].includes(p.pack))) {
+      if (side.dormant !== (shared.build === "quests")) {
+        throw new Error(shared.build === "quests"
+          ? `publishers/${shared.page} holds every quest, so publishers/${side.page} must be dormant: true`
+          : `publishers/${side.page} is dormant, so publishers/${shared.page} must say holds: quests`);
+      }
+    }
+  }
   return packs;
 }
 
+// A null section means every section's.
 export function packsFor(section, lang, packs = loadPacks()) {
-  return packs.filter((p) => p.section === section && p.lang === lang);
+  return packs.filter((p) => (section === null || p.section === section) && p.lang === lang);
 }
 
 export function findPack(section, lang, pack, packs = loadPacks()) {
   const found = packsFor(section, lang, packs).find((p) => p.pack === (pack ?? null));
   if (!found) throw new Error(`no ${section} pack registered for ${lang}${pack ? ` (${pack})` : ""}`);
   return found;
+}
+
+// A language's meta addon, "Spoken: <Language>": publishers/spoken/all-<lang>.md, the language's
+// counterpart of Spoken Everything (scripts/spoken/package-meta.sh). Not a pack -- the page has
+// no `section` -- but its dependencies are the packs, so they are read off the registry here
+// rather than listed a second time: every pack of the language that is on CurseForge and not
+// dormant, quests, zones and books alike. A language without a zones or books project simply
+// has none to name.
+export function metaFor(lang, packs = loadPacks(), dir = PUBLISHERS_DIR) {
+  if (lang === BASE_LOCALE) throw new Error(`English's meta addon is spoken-all itself, not a language's`);
+  const page = join("spoken", `all-${lang.toLowerCase()}.md`);
+  let text;
+  try { text = readFileSync(join(dir, page), "utf8"); } catch { throw new Error(`no meta addon page publishers/${page}`); }
+  const { meta } = parseFrontmatter(text, page);
+  const fail = (why) => { throw new Error(`publishers/${page}: ${why}`); };
+  if (meta.lang !== lang) fail(`lang should be ${lang}, not ${meta.lang}`);
+  if (!/^\d+\.\d+\.\d+$/.test(meta.version ?? "")) fail(`needs version: x.y.z`);
+  const order = (p) => SECTIONS.indexOf(p.section) * 10 + ["alliance", "horde", "shared", "gossip"].indexOf(p.pack);
+  const shipped = packsFor(null, lang, packs).filter((p) => !p.dormant && p.curseforge !== null).sort((a, b) => order(a) - order(b));
+  if (!shipped.some((p) => p.section === "quests")) fail(`${lang} has no quests pack on CurseForge to depend on`);
+  return {
+    page, lang, version: meta.version, slug: meta.slug, name: meta.name,
+    curseforge: meta.curseforge ?? null,
+    folder: `SpokenAll_${lang}`, release: `spoken-all-${lang}`,
+    dependencies: ["spoken-player", ...shipped.map((p) => p.slug)],
+  };
 }
 
 // `## 1.0.0 — zones-audio-esMX`: a release tag ending in a language code. English headings
@@ -184,8 +237,12 @@ export function changelogSection(text, version, release) {
 function main([command, ...args]) {
   if (command === "list") {
     const [section, lang, only] = args;
-    if (only !== undefined && only !== "github") throw new Error(`list filters by 'github' only, not '${only}'`);
-    const packs = packsFor(section, lang).filter((p) => only !== "github" || p.github);
+    // Dormant packs are never listed: the list is what gets built and released.
+    if (only !== undefined && only !== "github" && only !== "curseforge") {
+      throw new Error(`list filters by 'github' or 'curseforge' only, not '${only}'`);
+    }
+    const packs = packsFor(section, lang).filter((p) => !p.dormant &&
+      (only === undefined || (only === "github" ? p.github : p.curseforge !== null)));
     if (packs.length === 0) throw new Error(`no ${section} packs registered for ${lang}${only ? ` on ${only}` : ""}`);
     for (const p of packs) console.log(p.pack ?? "-");
   } else if (command === "get") {
@@ -194,11 +251,17 @@ function main([command, ...args]) {
     if (!(field in found)) throw new Error(`no field '${field}'`);
     const value = found[field];
     console.log(Array.isArray(value) ? value.join(" ") : value ?? "");
+  } else if (command === "meta") {
+    const [lang, field] = args;
+    const found = metaFor(lang);
+    if (!(field in found)) throw new Error(`no field '${field}'`);
+    const value = found[field];
+    console.log(Array.isArray(value) ? value.join(" ") : value ?? "");
   } else if (command === "changelog") {
     const [file, version, release] = args;
     process.stdout.write(changelogSection(readFileSync(file, "utf8"), version, release));
   } else {
-    throw new Error("usage: packs.mjs list <section> <lang> [github] | get <section> <lang> <pack|-> <field> | changelog <file> <version> <release>");
+    throw new Error("usage: packs.mjs list <section> <lang> [github|curseforge] | get <section> <lang> <pack|-> <field> | changelog <file> <version> <release> | meta <lang> <field>");
   }
 }
 

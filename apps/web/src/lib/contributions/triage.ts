@@ -14,6 +14,16 @@ import { loadRoster } from "@/lib/voices/roster-store";
 import type { NpcResolution, NpcRowKind, Provenance } from "@/lib/npc/store";
 import { isQuestStage, type QuestStage } from "./query";
 
+/**
+ * The language of the voice packs the player was hearing, from the envelope's `pack`, when it
+ * is not the client's own. A German client listening to English packs is missing the line in
+ * both, and triage needs to see that. Null when the two agree or the envelope carries none.
+ */
+export function packHeard(row: { locale: string; meta: Record<string, string> }): string | null {
+  const pack = row.meta.pack?.trim();
+  return pack && pack !== row.locale ? pack : null;
+}
+
 /** `stage` is null only for stored meta whose `event` is not one the addon sends. */
 export type QuestSummary = { title: string; questId: number; stage: QuestStage | null } | "gossip";
 

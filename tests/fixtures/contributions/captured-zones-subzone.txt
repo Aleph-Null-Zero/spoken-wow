@@ -1,0 +1,9 @@
+!SPOKEN1 zones
+addon=SpokenZones/9.9.9
+build=1.15.9/69109
+locale=enUS
+pack=enUS
+map=1537
+zone=Ironforge
+subzone=A Nook With No Lore
+sum=1495768520

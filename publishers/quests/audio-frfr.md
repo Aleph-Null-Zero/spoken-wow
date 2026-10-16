@@ -1,10 +1,9 @@
 ---
-curseforge: 1717800
 release: quests-audio-frFR
 section: quests
 lang: frFR
 pack: all
-version: 0.0.3
+version: 0.0.4
 slug: spoken-quests-audio-frfr
 name: Spoken Quests Audio: French
 summary: Every quest and gossip line for Spoken Player, voiced in French. One pack, both factions. Needs Spoken Player.
@@ -29,7 +28,7 @@ Spoken Quests speaks in your client's language by default. To hear French on ano
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
 
 ## Support
 

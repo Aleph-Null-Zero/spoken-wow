@@ -11,7 +11,7 @@ local Expect, Failures = H.Expecter(print)
 
 --- One pack holding `lines`, and the per-giver files `byNPC` names.
 local function Install(lines, byNPC, byObject)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetAddOns({ { folder = "Pack", meta = { ["X-SpokenQuests-DataModule-Version"] = "1",
         Version = "1.0.0", Title = "Pack" } } })
     _G.SpokenQuestsSettings = nil
@@ -53,7 +53,7 @@ Expect("a pack built before per-voice files resolves as it always has", Resolve(
 
 -- Two packs of different languages: the player's own language holds only the line, English
 -- holds the giver's voice too. The line in the player's language wins over English.
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 stub.SetLocale("deDE")
 stub.SetAddOns({
     { folder = "German", meta = { ["X-SpokenQuests-DataModule-Version"] = "1", Version = "1.0.0",
@@ -82,7 +82,7 @@ local GUARD = "Creature-0-0-0-0-68-0"
 local CLERK = "Creature-0-0-0-0-1-0"
 local LINE = string.rep("a", 32)
 stub.SetLocale("enUS")
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 stub.SetAddOns({ { folder = "Pack", meta = { ["X-SpokenQuests-DataModule-Version"] = "1",
     Version = "1.0.0", Title = "Pack" } } })
 _G.SpokenQuestsSettings = nil

@@ -12,18 +12,14 @@ setfenv(1, SpokenEnv)
 --
 -- A renderer's Update returns false when it has nothing to draw -- a model with no
 -- creature, a creature the client has not cached -- and the portrait then draws the
--- spec's `fallback` instead, once. That is VoiceOverRedux's ShouldShowBookFor turned
--- inside out: the book for Items, GameObjects, missing GUIDs, 2.4.3 and unloaded models
--- is now the quests addon's fallback rather than the player's knowledge.
+-- spec's `fallback` instead, once.
 Portrait = {}
 
-local TEXTURES = [[Interface\AddOns\Spoken\Textures\]]
 local WAIT_FOR_ANIMATION_FINISH_BEFORE_IDLE = true
 local CAN_MODEL_LOAD_CACHE = Version:IsRetailOrAboveLegacyVersion(60000)
 
 --------------------------------------------------------------------------------
--- Animation durations, by model FileDataID. Lifted whole from the quests addon's
--- Utils.lua: 200 lines about models, none about quests.
+-- Animation durations, by model FileDataID.
 --------------------------------------------------------------------------------
 local animationDurations = {
     ["Original"] = {
@@ -87,7 +83,6 @@ function Portrait:FrameHead(model)
     model:SetCustomCamera(0)
 end
 
----@return number|nil seconds  0 if the model is known to lack the animation
 --- Whether a model frame has something to draw.
 ---
 --- Model:GetModel returned a path and was removed from the current clients, which answer
@@ -106,6 +101,7 @@ function Portrait:ModelLoaded(model)
     return true
 end
 
+---@return number|nil seconds  0 if the model is known to lack the animation
 function Portrait:GetModelAnimationDuration(model, animation)
     if not model or model == 123 then return end
     local models = animationDurations[self:GetCurrentModelSet()] or animationDurations["Original"]

@@ -92,6 +92,10 @@ local VO, env = stub.LoadQuests(QUESTS, SPOKEN)
 dofile(QUESTS .. "UI/DialogueUIBridge.lua")
 local Bridge = VO.DialogueUIBridge
 VO.Addon:OnInitialize()
+-- The Compendium's Quests tab, standing in for UI/QuestsTab.lua: it lists quest 101.
+local opened = {}
+VO.QuestsTab = { Has = function(_, id) return id == 101 end, Open = function(_, id) table.insert(opened, id) end }
+assert(loadfile(QUESTS .. "UI/OpenInCompendium.lua"))("Spoken_Quests", {})
 VO.DataModules:Register("TestPack", {
     SoundLengthLookupByFileName = { ["101-accept"] = 12, ["101-progress"] = 2,
         ["guard-greeting"] = 2, ["guard-directions"] = 2 },
@@ -208,7 +212,7 @@ Expect("Spoken's Highlight Words off: DialogueUI's own text", Paragraph(1) .. Pa
 words.HighlightWord = true
 words.Enabled = false
 Tick(0)
-Expect("...and with Spoken's Show Words off, which greys it", Lit(), 0)
+Expect("...and with Spoken's Show Narrator off, which greys it", Lit(), 0)
 words.Enabled = true
 Tick(0)
 Expect("...lit again when it is back on", Lit(), 2)
@@ -322,7 +326,7 @@ world.npcGUID, world.gossipText, DUI.handler = questGiver, nil, nil
 -- A zone clip whose transcript is the quest text word for word.
 Spoken:StopAll()
 DUI:HandleQuestDetail()
-local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Zones" })
+local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Places" })
 zones:Enqueue({ key = "z:12", path = "z12.ogg", length = 12,
     present = { header = "Elwynn Forest", transcript = QUEST_TEXT, bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
@@ -467,6 +471,17 @@ Expect("...the row just left of it, on its middle", controls.frame.anchor and co
     and controls.frame.anchor.point .. " " .. controls.frame.anchor.relativePoint .. " " .. controls.frame.anchor.x
     .. " " .. controls.frame.anchor.y, "RIGHT LEFT -4 0")
 Expect("...Play left of Skip", play.anchor and play.anchor.relativeTo == skip and play.anchor.relativePoint, "LEFT")
+local open = controls.open
+Expect("...and left of Play, Open in Azeroth's Compendium, for a quest the tab lists", open ~= nil and open:IsShown()
+    and open.anchor and open.anchor.relativeTo == play and open.questID, 101)
+if open then
+    local hidUI = false
+    DUI.HideUI = function() hidUI = true end
+    open.scripts.OnClick(open)
+    DUI.HideUI = nil
+    Expect("...which closes DialogueUI's window, as the interface is hidden while it is up, and opens the quest",
+        hidUI and opened[#opened], 101)
+end
 local round = UIParent:GetEffectiveScale() / DUI:GetEffectiveScale()
 Expect("...as large on screen as Place Lore draws them, 24 at UIParent's scale, whatever DialogueUI's size",
     play:GetWidth() .. " " .. play:GetScale() .. " " .. skip:GetScale(), "24 " .. round .. " " .. round)
@@ -477,6 +492,7 @@ Expect("...in the paper's art on DialogueUI's parchment", closeButton.file,
 DUI.handler = "HandleGossip"
 DUI:HandleGossip()
 Bridge:RefreshPlayButton("GOSSIP_SHOW")
+Expect("a gossip page has no Open in Azeroth's Compendium", open ~= nil and open:IsShown(), false)
 -- The gossip text's top 36 under the line too, not the quest header's distance.
 local gossipShift = (2 * 36 + 24) * lineScale - 42
 Expect("...and on a gossip page its text starts 36 under the line, its own line moved with it",
@@ -567,7 +583,9 @@ dui.PlayButton = false
 Bridge:Refresh()
 Expect("with the setting off Play is not there", play:IsShown(), false)
 Expect("...and DialogueUI's own button is given back", DUI.TTSButton:GetAlpha(), 0.6)
-Expect("...Skip moving up to the row's left end", controls.frame:GetWidth(), 24 * round)
+Expect("...the row one button narrower, Open in Azeroth's Compendium moving up beside Skip",
+    controls.frame:GetWidth() .. " " .. tostring(open and open.anchor and open.anchor.relativeTo == skip),
+    (2 * 24 + 4) * round .. " true")
 dui.PlayButton = true
 Bridge:Refresh()
 -- Spoken Quests off: DialogueUI's window as DialogueUI draws it.
@@ -762,7 +780,11 @@ Expect("...and goes back in the row on the next page", icon.anchor and icon.anch
 driver.scripts.OnShow(driver)
 Fire(icon, "OnClick")
 local box = Spoken.ContributeBox
-Expect("Report opens the quest page's address", box and box.editBox:GetText(), "https://voiceover.rusty.one/r/quest/101/accept")
+local address, context = H.SplitReportLink(box and box.editBox:GetText())
+Expect("Report opens the quest page's address", address, "https://spoken.rusty.one/quests/r/quest/101/accept")
+Expect("...carrying the addon, the quest and the text on screen", context
+    and context:find("\naddon=SpokenQuests/", 1, true) and context:find("\nquest=101\nevent=accept\n", 1, true)
+    and context:find("\ntext<<\n", 1, true) and true, true)
 Expect("...over DialogueUI's window", box and box.frame:GetParent(), DUI)
 box.frame:Hide()
 
@@ -827,14 +849,14 @@ local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end
 layout:Refresh()
 -- They change DialogueUI's quest window, which is there whatever the narrator style.
-local narratorEnd, section, compendium
+local words, section, playback
 for index, item in ipairs(layout.items) do
-    if item.kind == "groupEnd" and item.group.text == env.L.OPT_NARRATOR_SETTINGS then narratorEnd = index end
+    if item.kind == "section" and item.text == env.L.OPT_TEXT_TITLE then words = index end
     if item.kind == "section" and item.text == VO.L.OPT_SECTION_DIALOGUEUI then section = index end
-    if item.kind == "section" and item.text == env.L.OPT_COMPENDIUM_TITLE then compendium = index end
+    if item.kind == "section" and item.text == env.L.OPT_PLAYBACK_TITLE then playback = index end
 end
-Expect("...in a DialogueUI section after the narrator style's settings", captions:IsShown()
-    and narratorEnd ~= nil and section ~= nil and section > narratorEnd and compendium ~= nil and section < compendium
+Expect("...in a DialogueUI section of its own after Words", captions:IsShown()
+    and words ~= nil and section ~= nil and section > words and playback ~= nil and section < playback
     and layout.items[section].heading ~= nil, true)
 for _, style in ipairs({ "subtitle", "minimal", "classic", "none" }) do
     chosen = style
@@ -849,15 +871,14 @@ for _, style in ipairs({ "subtitle", "minimal", "classic", "dialogueui" }) do
     layout:Refresh()
     Expect("...and is with the " .. style .. " style", showPlayer:IsShown(), true)
 end
--- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked.
-for _, label in ipairs({ env.L.TRANSCRIPT_SHOW, env.L.TRANSCRIPT_HIGHLIGHT, env.L.TRANSCRIPT_TYPEWRITER }) do
-    local tip
-    for _, entry in ipairs(layout.entries) do
-        if entry.label == label then tip = entry.tooltip end
-    end
-    Expect(label .. "'s tooltip names DialogueUI's quest text", tip ~= nil
-        and string.find(tip, "DialogueUI's quest and gossip text", 1, true) ~= nil, true)
+-- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked:
+-- Mark Words in DialogueUI says so, once, rather than each of them.
+local markTip
+for _, entry in ipairs(layout.entries) do
+    if entry.label == VO.L.OPT_DUI_CAPTIONS then markTip = entry.tooltip end
 end
+Expect("Mark Words in DialogueUI's tooltip points to the Words section", markTip ~= nil
+    and string.find(markTip, "as set under Words", 1, true) ~= nil, true)
 chosen = "dialogueui"
 layout:Refresh()
 Expect("...live while DialogueUI is loaded", captions and captions.layoutReason, nil)

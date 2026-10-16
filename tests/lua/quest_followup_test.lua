@@ -125,7 +125,7 @@ local function Boot(client, packs, locale)
     if booted and booted.Followup.frame then
         booted.Followup.frame:UnregisterAllEvents()
     end
-    stub.SetClient(client or "11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient(client or "16001"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     world.questID = 0; stub.ShowPanel(nil); world.gossipText = nil; world.greetingText = nil
     world.playerName = "Tester"; world.unitSex = 2

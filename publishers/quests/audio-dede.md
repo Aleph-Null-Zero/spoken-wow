@@ -1,10 +1,9 @@
 ---
-curseforge: 1717808
 release: quests-audio-deDE
 section: quests
 lang: deDE
 pack: all
-version: 0.0.5
+version: 1.0.0
 slug: spoken-quests-audio-dede
 name: Spoken Quests Audio: German
 summary: Every quest and gossip line for Spoken Player, voiced in German. One pack, both factions. Needs Spoken Player.
@@ -29,7 +28,7 @@ Spoken Quests speaks in your client's language by default. To hear German on ano
 
 ## Compatibility
 
-Built for **Classic Era 1.15.9**, with Spoken Player 3.0.0 or later.
+For **WoW Forever**, Classic Era and Anniversary, with Spoken Player 3.0.0 or later.
 
 ## Support
 
