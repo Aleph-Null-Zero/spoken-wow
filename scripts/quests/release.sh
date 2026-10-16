@@ -68,9 +68,8 @@ API="https://wow.curseforge.com/api"
 # the first time they needed changing.
 #
 # Era, the 2.5.6 Anniversary client and the 1.60.1 Forever client (CurseForge's name for the
-# one whose TOC suffix is _Camelot). The zip carries _Wrath and _Mainline TOCs as well, but
-# nothing here has been run on those clients, and a file offered to a client it misbehaves on
-# is worse than one that is simply absent there.
+# one whose TOC suffix is _Camelot). Nothing here has been run on any other client, and a file
+# offered to a client it misbehaves on is worse than one that is simply absent there.
 #
 # The 1.12, 2.4.3 and 3.3.5 zips package.sh also builds are deliberately not uploaded here:
 # CurseForge has no game version to file them against. They go out on the GitHub release that
@@ -87,9 +86,8 @@ RELEASE_TYPE="${RELEASE_TYPE:-release}"
 # /projects//upload-file, which would fail somewhere less legible or land on whatever project
 # the API resolved.
 #
-# The complete pack (make package-audio-complete) is deliberately absent: the whole corpus in one
-# folder is twice the upload ceiling, so the site hosts it instead - see deploy/README.md. The
-# audio-all target here is the meta addon, not that pack.
+# There is no complete pack: the whole corpus in one folder is twice the upload ceiling. The
+# audio-all target here is the meta addon, which names the four packs as dependencies.
 #
 # A pack whose project does not exist yet has no id, and the run fails on it rather than
 # uploading a Horde pack over the Alliance project. Create the project on CurseForge, then

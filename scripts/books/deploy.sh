@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Makes addons/Spoken_Books and addons/SpokenBooksAudio visible to a WoW client.
+# Makes addons/Spoken_Readables and addons/SpokenBooksAudio visible to a WoW client.
 #
 #   ./scripts/deploy.sh          # symlink (edits are live, just /reload in-game)
 #   ./scripts/deploy.sh --copy   # rsync a real copy instead
@@ -17,7 +17,7 @@
 # behind in the one you were not thinking about.
 #
 # Symlinking is preferred: no re-run needed after each edit. If the client's
-# AddOns list does not show Spoken Books, fall back to --copy and re-run per change.
+# AddOns list does not show Spoken Writings, fall back to --copy and re-run per change.
 #
 # Both addons are handled together. The sound pack is optional to the player but
 # not to development: symlinking it means a generation run lands in the client
@@ -34,7 +34,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WOW="/Applications/World of Warcraft"
-NAMES=(Spoken_Books SpokenBooksAudio)
+NAMES=(Spoken_Readables SpokenBooksAudio)
 
 # Client key -> the flavour directory Blizzard installs it under.
 CLIENTS=(era anniversary forever)
@@ -149,7 +149,7 @@ fi
 
 echo
 echo "next steps in-game ($CLIENT client):"
-echo "  1. enable Spoken Books in the AddOns list at the character select screen"
+echo "  1. enable Spoken Writings in the AddOns list at the character select screen"
 echo "  2. /console scriptErrors 1     (surface Lua errors)"
-echo "  3. /spb status                 (what is known, and what is narrated)"
-echo "  4. open a book                 (autoplay reads it; /spb read starts it by hand)"
+echo "  3. /spw status                 (what is known, and what is narrated)"
+echo "  4. open a book                 (autoplay reads it; /spw read starts it by hand)"

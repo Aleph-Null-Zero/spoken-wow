@@ -10,13 +10,6 @@ setfenv(1, VoiceOver)
 --- - and never from soundData. When the data module fails to load there is no soundData at
 --- all, and a quest that plays nothing is the report most worth having.
 
-local SITE_URL = "https://voiceover.rusty.one"
-
--- Where a report on another language's line goes. The old host redirects /r/ to the English
--- page and nothing else, and its links must keep working as they are, so a language's report
--- goes straight to the merged site, whose /{lang}/ prefix files it with that language's lines.
-local LANGUAGE_REPORT_URL = "https://spoken.rusty.one/%s/quests/r/%s"
-
 local COPY_DIALOG = "VOICEOVER_COPY_REPORT_LINK"
 
 ReportButton =
@@ -58,7 +51,9 @@ function ReportButton:TargetForQuest(questID, event)
     return format("quest/%d/%s", questID, path)
 end
 
---- The creature behind a GUID, or nil when this client cannot tell us.
+--- The creature or object behind a GUID, or nil when this client cannot tell us. The two
+--- number their ids apart (creature 68 is a guard, object 68 a poster), so each has its own
+--- address.
 ---
 --- Guarded twice over: Utils:GetIDFromGUID is absent on 1.12 and asserts on a GUID carrying no
 --- id, and an error thrown here would land on a player who only wanted to complain about audio.
@@ -76,7 +71,7 @@ function ReportButton:TargetForGUID(guid)
     if not readID or not id then
         return nil
     end
-    return format("npc/%d", id)
+    return format(guidType == Enums.GUID.GameObject and "object/%d" or "npc/%d", id)
 end
 
 --- The line a clip is, from what the clip carries: its quest and event, or the NPC who said
@@ -101,7 +96,7 @@ function ReportButton:CurrentTarget()
         event = page and PAGE_EVENTS[page]
     end
 
-    local target = event and self:TargetForQuest(GetQuestID and GetQuestID(), event)
+    local target = event and self:TargetForQuest(GetQuestID and NotSecret(GetQuestID()), event)
     if target then
         return target
     end
@@ -117,15 +112,12 @@ end
 local shownLink
 
 --- The report address for `target`, filed under `language` -- the language of the clip being
---- reported, which is not necessarily the client's. English keeps the address it always had.
+--- reported, which is not necessarily the client's.
 ---@param target string
 ---@param language? string
 ---@return string url
 function ReportButton:Link(target, language)
-    if language and language ~= Language.BASE then
-        return format(LANGUAGE_REPORT_URL, language, target)
-    end
-    return format("%s/r/%s", SITE_URL, target)
+    return Spoken:ReportURL("quests", target, language)
 end
 
 --- DialogueUI hides UIParent and the game's popups with it, so under its window the address
@@ -156,7 +148,7 @@ function ReportButton:Initialize()
     StaticPopupDialogs[COPY_DIALOG] =
     {
         text = L.OPT_REPORT_COPY,
-        button1 = OKAY,
+        button1 = CLOSE,
         timeout = 0,
         whileDead = 1,
         hasEditBox = true,

@@ -18,7 +18,7 @@ import { BASE_LOCALE } from "./locales.mjs";
 //
 // Four levels up, not two: this file is pipelines/zones/tools/lib/. The constant has to
 // reach the repo root rather than the pipeline root because what it resolves is now
-// split across the tree -- the lore corpus lives in addons/Spoken_Zones/Data/, the voice
+// split across the tree -- the lore corpus lives in addons/Spoken_Places/Data/, the voice
 // config in pipelines/zones/tools/voice/, the CurseForge descriptions in
 // publishers/zones/ and the built zips in dist/. One root with full paths beats four
 // roots.
@@ -43,11 +43,11 @@ export const ROOT =
 // Every other language sits beside it in Data/<lang>/, which is where Language.lua's guard
 // and validate.mjs both expect it.
 export function zonesLua(lang = BASE_LOCALE) {
-  return join(ROOT, `addons/Spoken_Zones/Data/${lang}/Zones.lua`);
+  return join(ROOT, `addons/Spoken_Places/Data/${lang}/Zones.lua`);
 }
 
 export function subzonesLua(lang = BASE_LOCALE) {
-  return join(ROOT, `addons/Spoken_Zones/Data/${lang}/Subzones.lua`);
+  return join(ROOT, `addons/Spoken_Places/Data/${lang}/Subzones.lua`);
 }
 
 // The emitter escapes exactly these, so the reader reverses exactly these.
@@ -68,8 +68,13 @@ function fields(block) {
   return out;
 }
 
+// A Windows checkout has CRLF on disk; every pattern here matches lines as Git stores them.
+async function readLua(path) {
+  return (await readFile(path, "utf8")).replace(/\r\n/g, "\n");
+}
+
 export async function readZones() {
-  const src = await readFile(zonesLua(), "utf8");
+  const src = await readLua(zonesLua());
   const zones = [];
 
   // Split on the top-level "[id] = {" headers, so each block is one zone.
@@ -82,7 +87,7 @@ export async function readZones() {
 }
 
 export async function readSubzones() {
-  const src = await readFile(subzonesLua(), "utf8");
+  const src = await readLua(subzonesLua());
   const subzones = [];
 
   const zoneParts = src.split(/^\t\[(\d+)\] = \{$/m);
@@ -97,11 +102,19 @@ export async function readSubzones() {
   return subzones;
 }
 
-// Every voiceable entry, in a single shape. `key` is null for a zone.
+// Every voiceable entry, in a single shape. `key` is null for a zone. A pending entry (a place
+// nobody has written yet) is one too, with empty text: `shipped` tells the two apart.
 export async function readLines() {
   const [zones, subzones] = await Promise.all([readZones(), readSubzones()]);
   return [
     ...zones.map((z) => ({ ...z, key: null, kind: "zone" })),
     ...subzones.map((s) => ({ ...s, kind: "subzone" })),
   ];
+}
+
+/** The lineIds of the entries the addon has words for: neither pending nor empty. */
+export function shipped(entries) {
+  return new Set(
+    entries.filter((e) => e.full).map((e) => (e.key ? `s:${e.mapID}:${e.key}` : `z:${e.mapID}`)),
+  );
 }

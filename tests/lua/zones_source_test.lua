@@ -8,10 +8,10 @@ local H = require("queue_helpers")
 local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
-local BOOK = [[Interface\AddOns\Spoken_Zones\Textures\Book]]
+local BOOK = [[Interface\AddOns\Spoken\Textures\Book]]
 
 local NewZoneLore = H.NewZoneLore
 
@@ -26,7 +26,7 @@ _G.ZoneLoreAudioPacks = {
 local StubAfter = _G.C_Timer.After
 
 local function Boot()
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     world.inCombat = false
     local env = stub.LoadSpoken(SPOKEN)
@@ -42,6 +42,7 @@ end
 local env, Z = Boot()
 local Spoken = _G.Spoken
 Expect("the zones addon registers a source with the player", Spoken:GetSource("zones"), Z.source)
+Expect("...headed in the minimap menu by its page's name, in the player's language", Z.source.title, Z.L.OPT_PAGE_TITLE)
 -- No channel of its own: the channel is one setting, on the player.
 Expect("...on the player's channel", Z.source:GetChannel(), "Master")
 Expect("...SpokenZones's queue limit", Z.source.queueLimit, 3)
@@ -104,7 +105,7 @@ Z.GetMapName = GetMapName
 -- Report only, as an icon among the header's controls. Reading the text is reached from the map,
 -- the minimap menu and /spz; a button on the player that opened a window over the thing being
 -- read was one way too many.
-Expect("...and no strip of buttons", F.frame.actions.shown, 0)
+Expect("...and Report its only action", #F.frame.actions.buttons, 1)
 Expect("...but Report in the header after Skip", F.row and F.row[3] == F.frame.actions.buttons[1]
     and F.frame.actions.buttons[1]:GetParent() == F.controls, true)
 
@@ -213,28 +214,28 @@ env, Z = Boot()
 local labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
 Expect("the zones addon adds its settings entry to the one button, and not the Compendium's",
-    table.concat(labels, "|"), "Stop or Replay|Stop All|Settings|Zones Settings")
+    table.concat(labels, "|"), "Stop or Replay|Skip Line|Stop All|Settings|Places Settings")
 -- The Compendium is Spoken's own entry, there once a part has a tab in it, and opens the window.
-assert(loadfile(ZONES .. "UI/Compendium.lua"))("Spoken_Zones", Z)
+dofile(here .. "/../../addons/Spoken/UI/Compendium.lua")
 local opened = 0
 SpokenCompendium:Register("places", { label = "Zones", order = 1, build = function() end,
     open = function() opened = opened + 1 end })
 labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
 Expect("...which is Spoken's, before Settings, once a part has a tab", table.concat(labels, "|"),
-    "Stop or Replay|Stop All|Open Azeroth's Compendium|Settings|Zones Settings")
+    "Stop or Replay|Skip Line|Stop All|Open Azeroth's Compendium|Settings|Places Settings")
 env.Minimap:FindEntry("Compendium").onClick()
 Expect("...and opens the window through the tab", opened, 1)
 SpokenCompendium.tabs.places.enabled = function() return false end
 labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
 Expect("...and is gone while no tab's part is on", table.concat(labels, "|"),
-    "Stop or Replay|Stop All|Settings|Zones Settings")
+    "Stop or Replay|Skip Line|Stop All|Settings|Places Settings")
 SpokenCompendium = nil
 Expect("...and registers no button of its own", stub.ldbObjects.SpokenZones, nil)
 
 ---------------------------------------------------------------- without the player
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 local saved = _G.Spoken
 _G.Spoken = nil
 local alone = stub.LoadZones(ZONES, NewZoneLore())
@@ -289,7 +290,7 @@ _G.ZoneLoreAudioPacks = savedPacks
 -- Reaching GetPlayerMapID means the gate let the attempt through, and stubbing it to nil
 -- ends the attempt there.
 local function BootGreeting(level)
-    stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers()
+    stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.ldbObjects = {}; stub.dbIcons = {}
     world.inCombat = false
     world.playerLevel = level

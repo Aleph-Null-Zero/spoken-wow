@@ -69,7 +69,7 @@ target_curseforge() { case "$1" in books) echo "1701514";; audio) pack_field cur
 # there, which sends players to the GitHub release.
 target_wago()       { case "$1" in books) echo "qGYZnRNg";; esac; }
 # books is the spoken-books project, retiring: the module ships inside Spoken's zip, from the
-# Spoken_Books folder, and this project's last file is the tombstone that
+# Spoken_Readables folder, and this project's last file is the tombstone that
 # scripts/spoken/package-retired.sh builds under the old folder's name (make
 # package-spoken-retired), its version read off the template, addons/SpokenBooks/SpokenBooks.toc.
 target_addon()      { case "$1" in books) echo "SpokenBooks";; audio) pack_field folder;; esac; }

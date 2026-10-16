@@ -7,8 +7,9 @@ brings back what was hidden, inside DialogueUI's window:
 
 - **Mark the words being read.** DialogueUI's own quest and gossip text follows the line the
   way Spoken's captions do. Spoken's **Type Words Out** types it out as the voice reaches each
-  word, and its **Highlight Words** lights the word being read. Either, both or neither: the
-  bridge follows those two settings on Spoken's page and has none of its own. The light is
+  word, and its **Highlight Words** lights the word being read. **Mark Words in DialogueUI**
+  turns the marking on or off, and which kind it is follows those two settings on Spoken's
+  page. The light is
   gold on DialogueUI's dark theme and deep red on its parchment theme, where gold is hard to read.
 - **Keep the words in view.** Long text scrolls to the paragraph being read whenever reading
   moves to another paragraph.
@@ -17,14 +18,14 @@ brings back what was hidden, inside DialogueUI's window:
 - **Spoken's controls on the title line.** At the top right of DialogueUI's window, on the line
   of its quest title, sit the player's round Play, Skip and Report buttons and, right of them, a
   close button in the art of DialogueUI's book view (the paper's on the parchment theme, the
-  stone's on the dark one). The buttons are as large on screen as Place Lore draws them (24 at
-  UIParent's scale, whatever DialogueUI's size setting), and the row is in the same place on
+  stone's on the dark one). The buttons are 24 across at
+  UIParent's scale, whatever DialogueUI's size setting, and the row is in the same place on
   every quest and gossip page. DialogueUI's Copy Text button, or a translator's, goes just left
   of the row. To make room, the text moves down: on a quest page DialogueUI's header and text
   move so the title's top is 36 under the row, and on a gossip page, which has no header, its
   text and the line over it move so the text starts 36 under it. The text's scroll height
   shrinks by as much. The close button closes the window as Escape does.
-- **Play button on DialogueUI.** Play is there whether or not DialogueUI's Text To Speech is on
+- **Listen button on DialogueUI.** Play is there whether or not DialogueUI's Text To Speech is on
   (DialogueUI has it off by default, and draws its own button only with it on). Left-click
   plays the page's line, or stops it while it speaks, when the button shows Stop; on a quest
   page, right-click turns Spoken Quests' **Read Automatically** on or off, as a right-click on
@@ -43,22 +44,25 @@ brings back what was hidden, inside DialogueUI's window:
   Spoken's **Hide Report Buttons** takes it away, except where it contributes; there is no
   setting of its own here: the Contribute button was missing under DialogueUI
   ([rusty-key/spoken-wow#246](https://github.com/rusty-key/spoken-wow/issues/246)), and
-  gathering saved nothing. With a Spoken Quests too old to have the row, the icon sits small
-  and faint (40 %) under DialogueUI's Decline (or Goodbye) button, right-aligned with it, in
-  full where it contributes.
+  gathering saved nothing. Where Spoken Quests is not installed, the icon sits small and
+  faint (40 %) under DialogueUI's Decline (or Goodbye) button, right-aligned with it, in full
+  where it contributes.
 
 All but **Show Spoken over DialogueUI** are on by default: DialogueUI's window, marked as the
 line plays, already shows the words. They sit in a DialogueUI section on Spoken's page, after
 the narrator style's settings, added there through `Spoken:AddDialogueUISettings`, and show under
 every narrator style, since DialogueUI's window is there whichever one is chosen. **Show Spoken
 over DialogueUI** is the exception: with Voice Only there is no window or subtitle to keep on
-screen, so it is not shown. Spoken's Start Over resets them too. With a Spoken too old to have that place, they are a **DialogueUI** section
-of the Quests page instead. Without
-DialogueUI installed there are none anywhere. When something else they need is missing they
-are greyed out with the reason in their tooltip.
+screen, so it is not shown. **Reset Spoken Settings** on that page resets them too. Without
+DialogueUI installed there are none. When something else they need is missing they are greyed
+out with the reason in their tooltip.
 `/spq diagnostics` prints one `DialogueUI:` line with the same answer.
 
 ## How it works
+
+Gossip and greeting pages come through the same bridge: it reads a page's line, the words it
+expects, reads it at once and stops it for them as for quest pages, so those pages are marked,
+waited for and played as quest pages are.
 
 Nothing in DialogueUI is changed. The module reaches it from outside, through names that are
 DialogueUI internals rather than an API:
@@ -80,8 +84,7 @@ is worked out on every call rather than read from the captions, which stop updat
 DialogueUI hides their window. Each line of DialogueUI's text is split with
 `Spoken:SplitCaption()`, the same splitter the captions use, so Chinese is matched character
 by character. The matching and marking below are Spoken's (`UI/WordMarks.lua`), reached through
-`Spoken:WordMarks()`, so another window's text can be marked the same way; with a Spoken too old
-to have it, the marking settings are greyed. The caption's words are matched in order against
+`Spoken:WordMarks()`, so another window's text can be marked the same way. The caption's words are matched in order against
 DialogueUI's words:
 
 - A match may skip a few words. This covers the NPC name DialogueUI can put in front of the
@@ -89,8 +92,8 @@ DialogueUI's words:
 - Every starting paragraph is tried, because DialogueUI can keep earlier gossip above the
   current page. On a tie, the later paragraph wins.
 - Below 60 % of the words matched, the window shows something else, so nothing is marked.
-- Only Spoken Quests' own lines are matched. A zone's lore or a book page playing while
-  DialogueUI is open leaves its text alone.
+- Only the lines of Spoken Quests, quests and gossip, are matched. A zone's lore or a book page
+  playing while DialogueUI is open leaves its text alone.
 
 **Drawing.** Both marks are made in the paragraph's own text:
 
@@ -151,9 +154,9 @@ to `Spoken:SetContributeHost`, which puts Spoken's copy box over it. A box still
 window closes goes back to UIParent and stays up.
 
 **The row of controls.** DialogueUI creates its own Play button only when its Text To Speech
-setting turns on, and has no public way to show it, so the bridge builds a row of the player's
-round buttons (`Spoken:CreateRoundButton`, "play" and "skip", plus the Report icon) in a holder
-that is a child of `DUIQuestFrame`. The close button is cut from DialogueUI's
+setting turns on, and has no public way to show it, so the bridge puts the player's row there
+(`Spoken:CreateDialogueUIRow`, the one Spoken Readables puts on DialogueUI's book view): Play and
+Skip, plus the Report icon, in a holder that is a child of `DUIQuestFrame`. The close button is cut from DialogueUI's
 `Art/Book/TextureKit-Parchment.png` or `-Metal.png`, by DialogueUI's theme (told from the colour
 of `DUIFont_QuestType_Left`), 64 of the art's pixels across at 0.5333 each times DialogueUI's
 size (its header's width over 358), 26 of them in from the right edge. Its middle, and the
@@ -203,7 +206,7 @@ which a click on its button never does. That call is always ignored: Spoken Ques
 - Matching relies on DialogueUI showing the client's text. A translator addon's translated
   paragraphs are skipped, and only the original paragraphs, when shown, are marked.
 - DialogueUI's text-to-speech reads the paragraphs back from the window. While a paragraph is
-  typed part way it would read only that part. With **Play Button on DialogueUI** on, a page
+  typed part way it would read only that part. With **Listen Button on DialogueUI** on, a page
   with a recording plays the recording instead.
 - DialogueUI's internals can change in any release. When they do, the settings say so and
   nothing breaks, but the feature is off until this file catches up.

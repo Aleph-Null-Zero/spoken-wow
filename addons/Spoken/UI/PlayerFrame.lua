@@ -44,7 +44,7 @@ local PORTRAIT_ATLAS_VIEWPORT_SIZE = 348
 local PORTRAIT_BORDER_OUTSET = 34 * PORTRAIT_SIZE / PORTRAIT_ATLAS_VIEWPORT_SIZE
 -- The name's height, for the words under it, and the gap left before the round controls.
 local NAME_SIZE, NAME_GAP = 22, 8
-local ROUND_GAP = 4
+local ROUND_GAP = Actions.ROUND_GAP
 local TEXTURES = [[Interface\AddOns\Spoken\Textures\]]
 -- TalkingHeadUI.lua's colours for its dark box: a gold name, white words, black shadows.
 local NAME_COLOR = { 1, .82, .02 }
@@ -69,7 +69,7 @@ do
 end
 
 local function Label(clip) return clip and (clip.present and clip.present.label or clip.key) or "" end
-local function Waiting() return math.max(0, SoundQueue:GetQueueSize() - 1) end
+local Waiting = Actions.Waiting
 
 local function FirstAtlas(names)
     for _, name in ipairs(names) do
@@ -150,19 +150,15 @@ function PlayerFrame:InitHeader()
     container.name:SetShadowColor(0, 0, 0, 1)
     container.name:SetShadowOffset(1, -1)
     container.name:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
-    self.stopped = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
-    self.stopped:SetWordWrap(false)
-    self.stopped:SetText(format("• (%s)", L.SUBTITLE_STOPPED))
-    self.stopped:Hide()
-    self.count = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
-    self.count:SetWordWrap(false)
-    self.count:Hide()
-    self.held = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
-    self.held:SetWordWrap(false)
-    self.held:Hide()
-    for _, text in ipairs({ self.stopped, self.count, self.held }) do
+    local function TailText()
+        local text = container:CreateFontString(nil, "ARTWORK", "SpokenLabelFont")
+        text:SetWordWrap(false)
         text:SetTextColor(TAIL_COLOR[1], TAIL_COLOR[2], TAIL_COLOR[3])
+        text:Hide()
+        return text
     end
+    self.stopped, self.count, self.held = TailText(), TailText(), TailText()
+    self.stopped:SetText(format("• (%s)", L.SUBTITLE_STOPPED))
     self.tail = Actions.Tail(self.stopped, self.count, self.held)
 
     self.controls = CreateFrame("Frame", nil, container)
@@ -178,23 +174,26 @@ function PlayerFrame:InitHeader()
 end
 
 function PlayerFrame:InitMover()
-    self.frame.mover = CreateFrame("Button", nil, self.frame.portrait.border)
-    self.frame.mover:SetSize(26, 26)
-    self.frame.mover:SetNormalTexture(TEXTURES .. "PortraitFrameAtlas")
-    self.frame.mover:GetNormalTexture():SetTexCoord(462 / PORTRAIT_ATLAS_SIZE, 512 / PORTRAIT_ATLAS_SIZE, 462 / PORTRAIT_ATLAS_SIZE, 512 / PORTRAIT_ATLAS_SIZE)
-    self.frame.mover:GetNormalTexture():ClearAllPoints()
-    self.frame.mover:GetNormalTexture():SetPoint("CENTER")
-    self.frame.mover:GetNormalTexture():SetSize(16, 16)
-    self.frame.mover:SetPushedTexture(TEXTURES .. "PortraitFrameAtlas")
-    self.frame.mover:GetPushedTexture():SetTexCoord(462 / PORTRAIT_ATLAS_SIZE, 512 / PORTRAIT_ATLAS_SIZE, 462 / PORTRAIT_ATLAS_SIZE, 512 / PORTRAIT_ATLAS_SIZE)
-    self.frame.mover:GetPushedTexture():ClearAllPoints()
-    self.frame.mover:GetPushedTexture():SetPoint("CENTER")
-    self.frame.mover:GetPushedTexture():SetSize(14, 14)
-    self.frame.mover.background = self.frame.mover:CreateTexture(nil, "BACKGROUND")
-    self.frame.mover.background:SetTexture(TEXTURES .. "SettingsButton")
-    self.frame.mover.background:SetPoint("CENTER")
-    self.frame.mover.background:SetSize(32, 32)
-    self.frame.mover:HookScript("OnEnter", function(button)
+    local mover = CreateFrame("Button", nil, self.frame.portrait.border)
+    self.frame.mover = mover
+    mover:SetSize(26, 26)
+    -- The move arrows' cell of the portrait atlas, centred, a little smaller pushed in.
+    local function Arrows(texture, size)
+        texture:SetTexCoord(462 / PORTRAIT_ATLAS_SIZE, 512 / PORTRAIT_ATLAS_SIZE, 462 / PORTRAIT_ATLAS_SIZE, 512 / PORTRAIT_ATLAS_SIZE)
+        texture:ClearAllPoints()
+        texture:SetPoint("CENTER")
+        texture:SetSize(size, size)
+    end
+    mover:SetNormalTexture(TEXTURES .. "PortraitFrameAtlas")
+    Arrows(mover:GetNormalTexture(), 16)
+    mover:SetPushedTexture(TEXTURES .. "PortraitFrameAtlas")
+    Arrows(mover:GetPushedTexture(), 14)
+    mover.background = mover:CreateTexture(nil, "BACKGROUND")
+    mover.background:SetTexture(TEXTURES .. "SettingsButton")
+    mover.background:SetPoint("CENTER")
+    mover.background:SetSize(32, 32)
+    Actions.TintWithRings(mover.background)
+    mover:HookScript("OnEnter", function(button)
         if Addon:IsFrameLocked() then return end
         SetCursor([[Interface\Cursor\UI-Cursor-Move]])
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
@@ -202,14 +201,14 @@ function PlayerFrame:InitMover()
         GameTooltip:AddLine(L.QUEUE_DRAG_HINT, 1, 1, 1, true)
         GameTooltip:Show()
     end)
-    self.frame.mover:HookScript("OnLeave", function() SetCursor(nil); GameTooltip_Hide() end)
-    self.frame.mover:HookScript("OnMouseDown", function()
+    mover:HookScript("OnLeave", function() SetCursor(nil); GameTooltip_Hide() end)
+    mover:HookScript("OnMouseDown", function()
         if Addon:IsFrameLocked() then return end
-        self.frame:StartMoving()
+        Snap.Start(self.frame, { locked = function() return Addon:IsFrameLocked() end })
     end)
-    self.frame.mover:HookScript("OnMouseUp", function()
+    mover:HookScript("OnMouseUp", function()
         if Addon:IsFrameLocked() then return end
-        self.frame:StopMovingOrSizing()
+        Snap.Stop()
         self:SaveLayout()
     end)
 end
@@ -307,7 +306,7 @@ end
 local function Left() return FrameConfig().HidePortrait and BARE_LEFT or NAME_X end
 
 --- The lines of words that fit between the name and the progress line, up to MOST_LINES, and a
---- line's height; no lines where the line has no words to show (Show Words off, none written, or
+--- line's height; no lines where the line has no words to show (Show Narrator off, none written, or
 --- 1.12, which has no captions).
 function PlayerFrame:WordLines(clip)
     local lineHeight = (Addon:Profile("Transcript").FontSize or 16) + 4
@@ -409,7 +408,7 @@ function PlayerFrame:ShowSample(shown)
         key = "sample", length = 0,
         source = { key = "sample", gates = {}, interClipGap = 0 },
         present = { header = L.SAMPLE_SPEAKER, label = L.SAMPLE_LINE,
-            transcript = L.SUBTITLE_SAMPLE_TEXT,
+            transcript = L.SAMPLE_WINDOW_TEXT,
             portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\icon.tga]] } },
     } or nil
     Transcript:Sync()
@@ -426,10 +425,17 @@ function PlayerFrame:WillTurn(clip)
         and not self.fader:Leaving() and not Actions.DialogCovers()
 end
 
---- The line the window stands for: the one playing, or the sample while nothing is.
-function PlayerFrame:Current()
+--- The line playing, or the sample while nothing is.
+function PlayerFrame:Head()
     if not SoundQueue:IsEmpty() then self.sample = nil end
     return SoundQueue:GetCurrentSound() or self.sample
+end
+
+--- The line the window stands for: the head, unless its module has Show Narrator off.
+function PlayerFrame:Current()
+    local head = self:Head()
+    if head and not Addon:ShowsNarrator(head) then return nil end
+    return head
 end
 
 function PlayerFrame:Update()
@@ -505,11 +511,12 @@ function PlayerFrame:SaveLayout()
     Addon:SaveLayout("Player", self.frame)
 end
 
---- Back to the default spot, forgetting the saved one, for a frame dragged off-screen.
+--- Every window back to its default spot, forgetting the place saved for each, whichever is in
+--- use: for a frame dragged off-screen or in the way. The subtitles have their own (Subtitle:Reset).
 function PlayerFrame:Reset()
-    local skin = self:Skin()
-    if skin then skin:Reset(); return end
     Addon:Layout().Player = nil
+    MinimalPlayer:Reset()
+    if DialogueUIPlayer.Reset then DialogueUIPlayer:Reset() end
     if not self.frame then return end
     self.frame:Reset()
     self:RefreshConfig()

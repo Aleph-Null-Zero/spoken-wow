@@ -43,7 +43,7 @@ building an addon needs no ffmpeg. `make icon` regenerates both copies from
 The two copies are byte-identical on purpose. The addons install as a pair, and giving them
 different icons would imply they are alternatives to each other.
 
-`scripts/package-audio.sh` rewrites the path when it stages the standard tier: the texture
+`scripts/zones/package-audio.sh` rewrites the path when it stages the standard tier: the texture
 lives under the folder it ships in, and `ZoneLoreAudio64` is not `ZoneLoreAudio`. A path
 pointing at an addon the player does not have installed shows no icon at all rather than
 failing loudly.

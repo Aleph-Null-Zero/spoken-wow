@@ -6,9 +6,9 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 
-stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
+stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 
 -- Durotar's map, 1000 by 500, with two explored overlays: the Valley of Trials, and Orgrimmar's
 -- gate at the top. Nothing explored on Dun Morogh's map, and none on Orgrimmar's own (cities have
@@ -55,6 +55,13 @@ function Z:GetLoreWithFallback(mapID) return {}, mapID end
 function Z:GetSubzoneLore(mapID, name)
     local key = string.lower(name)
     if self.Subzones[mapID] and self.Subzones[mapID][key] then return {}, key end
+end
+-- Every area where its story is kept, as Core.lua has it with nothing in Data/AreaZones.lua.
+function Z:FoundOn() return {} end
+function Z:AreasIn(zone)
+    local list = {}
+    for key in pairs(self.Subzones[zone] or {}) do table.insert(list, { mapID = zone, key = key }) end
+    return list
 end
 local onZone
 function Z:OnZoneChanged(fn) onZone = fn end
@@ -105,6 +112,20 @@ Expect("being on a continent's map, between zones, records no visit", SpokenZone
 where.map = 1426
 onZone()
 Expect("...a zone's still does", SpokenZonesCharacter.visited["1426"], true)
+
+-- Razorfen Downs: its story kept under Thousand Needles, its entrance in The Barrens, where the
+-- game reports it (Spoken's Data/Dungeons.lua).
+function Z:FoundOn(mapID, key) if mapID == 1441 and key == "razorfen downs" then return { 1413 } end return {} end
+Expect("a dungeon whose story is under another zone is not found before it is", Z:IsFound(1441, "razorfen downs"), false)
+SpokenZonesCharacter.visited["1413/razorfen downs"] = true
+Expect("...found stood in at its entrance", Z:IsFound(1441, "razorfen downs"), true)
+SpokenZonesCharacter.visited["1413/razorfen downs"] = nil
+OVERLAYS[1413], AREAS[5] = { { hitRect = { left = 0, right = 1000, top = 0, bottom = 500 }, area = 5 } }, "Razorfen Downs"
+Z:RefreshFound()
+Expect("...and explored on its entrance's map",
+    tostring(Z:IsFound(1441, "razorfen downs")) .. "|" .. select(2, Z:IsFound(1441, "razorfen downs")), "true|explored on map 1413")
+OVERLAYS[1413], AREAS[5] = nil, nil
+Z:RefreshFound()
 
 Expect("undiscovered places hidden unless the setting says", Z:ShowsUndiscovered(), false)
 settings.showUndiscovered = true

@@ -82,6 +82,8 @@ Expect("...the choice is kept, for DialogueUI coming back", env.Addon.db.profile
 Expect("...and the player frame is the small one", Spoken:GetPlayerFrame(), env.MinimalPlayer.frame)
 Expect("...with the reason to hand", env.DialogueUITheme:Problem(), env.L.OPT_STYLE_DUI_MISSING)
 Expect("no DialogueUI window is built for it", env.DialogueUIPlayer.frame, nil)
+Expect("Voice Only offers no word rows without DialogueUI: nothing would show the words",
+    env.DialogueUIOptions:WordRowsShown("none"), false)
 
 env = Boot("1.12")
 Expect("the legacy client has the large window and nothing else", Spoken:GetPlayerStyle(), "classic")
@@ -96,7 +98,7 @@ Spoken = _G.Spoken
 Expect("with DialogueUI it is a fifth tile, after the large window",
     table.concat(env.Options:Styles(), ","), "subtitle,minimal,classic,dialogueui,none")
 Expect("...named, described and drawn", env.Options.STYLE_LABELS.dialogueui ~= nil and env.Options.STYLE_TEXTS.dialogueui ~= nil
-    and env.Options.STYLE_TIPS.dialogueui ~= nil and env.Options.SKETCHES.dialogueui ~= nil, true)
+    and env.Options.SKETCHES.dialogueui ~= nil, true)
 SlashCmdList.SPOKEN("player dialogueui")
 local Skin, T = env.DialogueUIPlayer, env.Transcript
 Expect("/spoken player dialogueui draws it", Spoken:GetPlayerStyle(), "dialogueui")
@@ -148,12 +150,23 @@ for _, page in ipairs(env.Options.pages or {}) do
     if page.name == env.L.OPT_STYLE_DIALOGUEUI then listed = true end
 end
 Expect("the DialogueUI settings are on Spoken's page, with no page of their own", listed, false)
-Expect("the window's size is the player's Window Size", Shown(main, env.L.OPT_SCALE, env.L.OPT_SCALE_TIP), true)
-Expect("...its words' size and lines theirs", Shown(main, env.L.TRANSCRIPT_SIZE, env.L.TRANSCRIPT_SIZE_TIP)
+Expect("the window's size is the player's Window Size", Shown(main, env.L.OPT_SCALE), true)
+Expect("...its words' size and rows theirs", Shown(main, env.L.TRANSCRIPT_SIZE)
     and Shown(main, env.L.TRANSCRIPT_LINES), true)
 Expect("...and how the words scroll too", Shown(main, env.L.TRANSCRIPT_SCROLL), true)
-Expect("beside them, the window's theme", Live(env.L.OPT_DUI_FOLLOW_THEME), true)
-Expect("...and Fit to the Words", Live(env.L.OPT_DUI_FIT_TEXT), true)
+-- Two Theme rows share the name, the Small Window's and this window's: this one also offers
+-- DialogueUI's own.
+local function ThemeRow()
+    for _, entry in ipairs(main.entries) do
+        local values = entry.frame.layoutValues
+        if entry.label == env.L.OPT_DUI_THEME and type(values) == "table" and values[1] == "follow" then
+            return entry.frame
+        end
+    end
+end
+local theme = ThemeRow()
+Expect("beside them, the window's Theme", theme ~= nil and theme:IsShown() and theme.layoutReason == nil, true)
+Expect("...and Fit Window to Words", Live(env.L.OPT_DUI_FIT_TEXT), true)
 -- A note is not indexed by label: found by what it says.
 local function NoteShown(text)
     for _, item in ipairs(main.items) do
@@ -163,24 +176,41 @@ local function NoteShown(text)
     end
     return false
 end
-Expect("...and the wheel's shortcuts", NoteShown(env.L.DUI_WHEEL_HINT), true)
-Expect("no Hide Portrait for it: its header has the face's socket built in", Shown(main, env.L.OPT_HIDE_PORTRAIT), false)
+Expect("...and the wheel's shortcuts", NoteShown(env.L.WINDOW_WHEEL_HINT), true)
+-- Hide Portrait is two rows, the subtitles' under Show Name and Title and the windows' own.
+local function AnyShown(label)
+    for _, entry in ipairs(main.entries) do
+        if entry.label == label and entry.frame:IsShown() then return true end
+    end
+    return false
+end
+Expect("no Hide Portrait for it: its header has the face's socket built in", AnyShown(env.L.OPT_HIDE_PORTRAIT), false)
 env.Addon.db.profile.Frame.HidePortrait = true
 Skin:ConfigurePortrait()
 Expect("...so the face stays with Hide Portrait set for another style", Skin.portrait:IsShown(), true)
 env.Addon.db.profile.Frame.HidePortrait = false
 Skin:ConfigurePortrait()
-Expect("the theme waits on not following DialogueUI's", Row(main, env.L.OPT_DUI_THEME).layoutReason, env.L.REASON_DUI_FOLLOW)
+-- One row for what is kept as two settings: following DialogueUI's theme, or a theme of its own.
+local panelSettings = env.Addon.db.profile.Frame.DialogueUI
+Expect("the Theme row starts the same as DialogueUI's", theme.layoutRead(), "follow")
+theme.layoutChoose(2)
+Expect("...and choosing Dark stops following it", tostring(panelSettings.FollowTheme) .. " " .. tostring(panelSettings.Theme),
+    "false 2")
+theme.layoutChoose("follow")
+Expect("...and Same as DialogueUI follows it again, keeping the theme chosen", tostring(panelSettings.FollowTheme) .. " "
+    .. tostring(panelSettings.Theme), "true 2")
+panelSettings.Theme = 1
 env.Addon:SetPlayerStyle("minimal")
 main:Refresh()
 Expect("with another style chosen they are not shown", Shown(main, env.L.OPT_DUI_FIT_TEXT)
-    or Shown(main, env.L.OPT_DUI_FOLLOW_THEME) or NoteShown(env.L.DUI_WHEEL_HINT), false)
-Expect("...and the small window has Hide Portrait", Shown(main, env.L.OPT_HIDE_PORTRAIT), true)
+    or theme:IsShown(), false)
+Expect("...but the small window has the wheel's shortcuts too", NoteShown(env.L.WINDOW_WHEEL_HINT), true)
+Expect("...and the small window has Hide Portrait", AnyShown(env.L.OPT_HIDE_PORTRAIT), true)
 env.Addon:SetPlayerStyle("dialogueui")
 main:Refresh()
 env.Addon.db.profile.Frame.DialogueUI.FitText = false
 Page:Reset()
-Expect("Start Over puts the window's settings back", env.Addon.db.profile.Frame.DialogueUI.FitText, true)
+Expect("Defaults puts the window's settings back", env.Addon.db.profile.Frame.DialogueUI.FitText, true)
 
 ---------------------------------------------------------------- only the line playing
 -- No fold: the other windows' words opened, this one still shows Lines Shown of the line playing.
@@ -261,7 +291,7 @@ Expect("the page's Defaults puts Fit to the Words back", panel.FitText, true)
 local noted = false
 local function Look(row)
     for _, region in ipairs(row.regions or {}) do
-        if region.text == env.L.DUI_WHEEL_HINT then noted = true end
+        if region.text == env.L.WINDOW_WHEEL_HINT then noted = true end
     end
 end
 for _, item in ipairs(main.items or {}) do
@@ -276,7 +306,7 @@ env.PlayerFrame:RefreshConfig()
 env.Options:Preview("dialogueui")
 Expect("previewing the tile shows the window with a sample line", Skin.wanted, true)
 Expect("...its speaker", Skin.name:GetText(), env.L.SAMPLE_SPEAKER)
-Expect("...and words, as the subtitle's sample has", T.text, env.L.SUBTITLE_SAMPLE_TEXT)
+Expect("...and words of the windows' own, which do not say to drag them", T.text, env.L.SAMPLE_WINDOW_TEXT)
 env.Options:Preview(nil)
 Expect("...and puts it away", Skin.wanted, false)
 
@@ -286,6 +316,7 @@ quests:Enqueue(clip)
 Expect("a queued line shows the window", Skin.wanted, true)
 Expect("...naming the speaker", Skin.name:GetText(), "Eagan Peltskinner")
 Expect("...and the line", Skin.title.text:GetText(), "Wolves Across the Border")
+
 quests:Enqueue(H.Clip({ present = { header = "Eagan", label = "Second", portrait = { kind = "none" } } }))
 Expect("a waiting line gets no row, the title counts it", tostring(Skin.rows) .. " " .. Skin.count:GetText(), "nil • +1")
 Spoken:StopAll()
@@ -307,8 +338,8 @@ Skin:Layout()
 Expect("...and keeps it when the window is laid out again", Faces(), NOTO .. "|" .. NOTO)
 Spoken:StopAll()
 
--- A book page and a zone's lore, queued as Spoken_Books and Spoken_Zones queue them.
-local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Books", order = 3 })
+-- A book page and a zone's lore, queued as Spoken_Readables and Spoken_Places queue them.
+local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Readables", order = 3 })
 books:Enqueue({ key = "b:1", path = "b1.mp3", length = 6, present = { header = "A Letter Home", transcript = "Dear mother, the war goes well.",
     bullet = "book", portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 Expect("a book page shows the window", Skin.wanted, true)
@@ -316,10 +347,10 @@ Expect("...titled by the book, never by its key", Skin.title.text:GetText(), "A 
 Expect("...said once: no name over it", Skin.name:GetText(), "")
 Expect("...the book for a face", Skin.viewport.active, "texture")
 Expect("...badged as a book, as the subtitle badges it", tostring(Skin.badge:IsShown()) .. " " .. tostring(Skin.badge.texture),
-    "true " .. tostring(env.MinimalPlayer.BADGES.book))
+    "true " .. tostring(env.Face.BADGES.book))
 Expect("...with its words in the window", T.text, "Dear mother, the war goes well.")
 Spoken:StopAll()
-local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Zones", order = 2 })
+local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2 })
 zones:Enqueue({ key = "z:12", path = "z12.ogg", length = 20, present = { header = "Elwynn Forest", label = "Goldshire",
     bullet = "zone", portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 Expect("a zone's lore shows it too", Skin.name:GetText() .. "/" .. Skin.title.text:GetText(), "Elwynn Forest/Goldshire")
@@ -389,16 +420,27 @@ Expect("...saying so", _G.GameTooltip.text, env.L.TRANSCRIPT_SIZE .. ": 17")
 ctrl, shift = false, false
 words.FontSize = 16
 env.PlayerFrame:RefreshConfig()
+-- Lock Position: nothing is resized, and the words still scroll.
+frameCfg.LockFrame = true
+ctrl = true
+T.manualScroll = false
+T.frame:GetScript("OnMouseWheel")(T.frame, -1)
+Expect("locked, Ctrl and the wheel leave Window Size alone", frameCfg.FrameScale, 0.7)
+Expect("...and scroll the words instead", T.manualScroll, true)
+shift = true
+Skin.frame:GetScript("OnMouseWheel")(Skin.frame, 1)
+Expect("...nor does Ctrl, Shift and the wheel change Text Size", words.FontSize, 16)
+ctrl, shift = false, false
+frameCfg.LockFrame = false
+env.PlayerFrame:RefreshConfig()
 
 ---------------------------------------------------------------- over DialogueUI's window
 Spoken:SetPlayerHost(DUI)
 Expect("hosted over DialogueUI the window moves onto it", Skin.frame:GetParent(), DUI)
 Expect("...at its share of the window it sits on", math.abs(Skin.frame.scale - 0.65) < 1e-6, true)
-local moving = false
-Skin.frame.StartMoving = function() moving = true end
+_G.GetCursorPosition = _G.GetCursorPosition or function() return 0, 0 end
 Skin:StartDrag()
-Expect("...and can still be dragged there", moving, true)
-Skin.frame.StartMoving = nil
+Expect("...and can still be dragged there", env.Snap.Active(), Skin.frame)
 Skin:StopDrag()
 local placed = env.Addon:Layout().DialogueUI
 Expect("...its place saved", placed ~= nil, true)
@@ -408,6 +450,49 @@ env.PlayerFrame:RefreshConfig()
 Expect("...to the place saved over the window", placed ~= nil and math.abs(Skin.frame:GetLeft() - placed.left) < 1e-6
     and math.abs(Skin.frame:GetTop() - placed.top) < 1e-6, true)
 Expect("...at its own scale", math.abs(Skin.frame.scale - 0.52) < 1e-6, true)
+
+---------------------------------------------------------------- Voice Only with DialogueUI
+-- The three word settings still mark DialogueUI's own text with nothing of Spoken's on screen, so
+-- the settings page may offer them there (DialogueUIOptions:WordRowsShown).
+do
+    local words = env.Addon.db.profile.Transcript
+    local saved = { words.Enabled, words.HighlightWord, words.Typewriter }
+    words.Enabled, words.HighlightWord, words.Typewriter = true, true, true
+    env.Addon:SetPlayerStyle("none")
+    env.PlayerFrame:RefreshConfig()
+    Spoken:StopAll()
+    quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Heard", portrait = { kind = "none" },
+        transcript = "The kobolds dig deeper into the mine every night." } }))
+    env.Transcript:Sync()
+    local caption = Spoken:GetCaption()
+    Expect("under Voice Only the captions still follow the line for DialogueUI's text",
+        caption ~= nil and caption.clip ~= nil and caption.highlight == true and caption.typewriter == true, true)
+    Expect("...so the word rows are offered there with DialogueUI installed",
+        env.DialogueUIOptions:WordRowsShown("none"), true)
+    Expect("...and under the styles that show words", env.DialogueUIOptions:WordRowsShown("subtitle"), true)
+    words.Enabled = false
+    Expect("Show Narrator off turns the marks off there too",
+        select(1, Spoken:GetCaptionOptions()) or select(2, Spoken:GetCaptionOptions()), false)
+    words.Enabled, words.HighlightWord, words.Typewriter = saved[1], saved[2], saved[3]
+    Spoken:StopAll()
+    env.Addon:SetPlayerStyle("dialogueui")
+    env.PlayerFrame:RefreshConfig()
+end
+
+---------------------------------------------------------------- why a line waits
+-- As every style says it: after the title, before the count.
+Spoken:StopAll()
+local holding = true
+quests:AddGate(function() if holding then return "in combat" end end)
+quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "Held", portrait = { kind = "none" } } }))
+env.PlayerFrame:RefreshConfig()
+Skin:UpdateControls()
+Expect("a held line says why after its title", tostring(Skin.held:IsShown()) .. " " .. tostring(Skin.held:GetText()),
+    "true • (in combat)")
+holding = false
+quests:RecheckGates()
+Skin:UpdateControls()
+Expect("...and not once it may play", Skin.held:IsShown(), false)
 
 ---------------------------------------------------------------- its controls, the subtitle's
 Spoken:StopAll()
@@ -559,6 +644,37 @@ Skin:Tick(0.05)
 Expect("...then fades in as one image", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.content:GetAlpha(), "true 1")
 Skin:Tick(0.4)
 Expect("...itself again once in", tostring(Skin.frame:IsFrameBuffer()) .. " " .. Skin.frame:GetAlpha(), "false 1")
+-- The window takes the wheel only while Ctrl is held over it, unlocked, and never once it is deaf to
+-- the pointer for becoming one image: the camera zooms otherwise.
+do
+    local wheelOn
+    local window = Skin.frame
+    window.IsMouseOver = function() return true end
+    window.EnableMouseWheel = function(_, on) wheelOn = on end
+    window.spokenWheelOn = nil
+    ctrl = false
+    Skin:Tick(0.01)
+    Expect("the window leaves the wheel to the camera without Ctrl", wheelOn, nil)
+    ctrl = true
+    Skin:Tick(0.01)
+    Expect("...takes it while Ctrl is held over it", wheelOn, true)
+    Skin:Deafen()
+    Expect("...gives it back as it goes deaf, before it becomes one image", wheelOn, false)
+    Skin:Undeafen()
+    Skin:Tick(0.01)
+    frameCfg.LockFrame = true
+    Skin:Tick(0.01)
+    Expect("...gives it back while locked", wheelOn, false)
+    frameCfg.LockFrame = false
+    Skin:Tick(0.01)
+    Expect("...takes it again unlocked", wheelOn, true)
+    window:Hide()
+    window:GetScript("OnHide")(window)
+    Expect("...and gives it back once it hides, Ctrl still held", wheelOn, false)
+    window:Show()
+    ctrl = false
+    window.IsMouseOver, window.EnableMouseWheel, window.spokenWheelOn = nil, nil, nil
+end
 do
     -- A client with no frame buffers: the paper and what is on it fade in turn.
     local SetIsFrameBuffer = Skin.frame.SetIsFrameBuffer
@@ -997,7 +1113,21 @@ local function Page(material)
         portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 end
 local function Rows(texture) return texture.texCoord and (texture.texCoord[3] * 2048) .. "-" .. (texture.texCoord[4] * 2048) end
+-- The title already says the page's label when the book's look changes its font: the client can
+-- leave such a string blank, and ignores the same text set again, so it is emptied and set again.
+Skin.title.text:SetText("Page 1 of 4")
+local titleSets, setTitle = {}, Skin.title.text.SetText
+Skin.title.text.SetText = function(self, text)
+    table.insert(titleSets, text)
+    return setTitle(self, text)
+end
 books:Enqueue(Page(nil))
+Skin.title.text.SetText = setTitle
+local emptiedThenSet = false
+for i = 1, #titleSets - 1 do
+    if titleSets[i] == "" and titleSets[i + 1] == "Page 1 of 4" then emptiedThenSet = true end
+end
+Expect("a title whose font changes under the same text is emptied and set again, so it is drawn", emptiedThenSet, true)
 Expect("a book's page is drawn in the book view's paper", Skin.parchments[1].texture .. " " .. Skin.parchments[3].texture,
     BOOK .. "Parchment.png " .. BOOK .. "Parchment.png")
 Expect("...its top cap, the middle and its torn foot", Rows(Skin.parchments[1]) .. " " .. Rows(Skin.parchments[2]) .. " "
@@ -1085,7 +1215,12 @@ local card = Skin.card
 Expect("a stone closed while a quest's line plays does not take this window's place", Skin.settling, nil)
 Expect("...this window comes back as it was, in the quest's parchment", tostring(Skin.wanted) .. " "
     .. Skin.parchments[1].texture, "true " .. BROWN .. "Parchment.png")
-Expect("...and the stone's page is lifted off where the stone was, as large, in stone",
+Expect("...fading back in at once as itself, not one image, the stone's page going behind it",
+    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.fadeTime ~= nil) .. " " .. tostring(not Skin.buffered), "true true true")
+Skin:Tick(0.1)
+Expect("...the window coming in as the page flies, not appearing at once", Skin.level > 0 and Skin.level < 1, true)
+card = Skin.card
+Expect("...then the stone's page is lifted off where the stone was, as large, in stone",
     Skin.tuck ~= nil and card:IsShown() and card.strips[1].texture == BOOK .. "Metal.png"
     and Near(card.anchor.x * card.scale, (200 + 409.6 / 2) * 0.8 / ui)
     and Near(card.anchor.y * card.scale, (100 + 477.87 / 2) * 0.8 / ui)
@@ -1107,6 +1242,13 @@ Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
 Expect("a dialog closed on another's line, having queued nothing, brings this window back and nothing more",
     tostring(Skin.tuck) .. " " .. tostring(Skin.settling) .. " " .. tostring(Skin.wanted), "nil nil true")
+-- The window coming back on another's line fades in first: a page waits until it shows in full.
+local function UntilTucked()
+    for _ = 1, 40 do
+        if Skin.tuck then return end
+        Skin:Tick(0.05)
+    end
+end
 -- A dialog opening while a page flies: cut short.
 stub.Advance(2)
 BookView:Show()
@@ -1115,6 +1257,7 @@ books:Enqueue(Page(nil))
 BookView:Hide()
 Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
+UntilTucked()
 Expect("a book's page goes behind in the book view's paper", card.strips[1].texture, BOOK .. "Parchment.png")
 Skin:TuckStep(0.3)
 stub.Advance(1)
@@ -1134,6 +1277,7 @@ stub.Advance(2)
 DUI:ShowUI()
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Second", portrait = { kind = "none" } } }))
 CloseDialog()
+UntilTucked()
 Expect("a giver's second quest accepted while the first's line plays sends its page behind this window",
     tostring(Skin.settling) .. " " .. tostring(Skin.tuck ~= nil) .. " " .. tostring(card:IsShown()), "nil true true")
 Skin:TuckStep(1)
@@ -1157,6 +1301,7 @@ OpenDialog()
 CloseDialog()
 stub.Advance(0.4)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Quick Second", portrait = { kind = "none" } } }))
+UntilTucked()
 Expect("...and, another line playing, its page goes behind this window", tostring(Skin.settling) .. " " .. tostring(Skin.tuck ~= nil), "nil true")
 Skin:TuckStep(1)
 stub.Advance(2)
@@ -1173,7 +1318,7 @@ stub.Advance(1.5)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Late", portrait = { kind = "none" } } }))
 Expect("...nor a quest's line queued long after", tostring(Skin.settling) .. " " .. tostring(Skin.tuck), "nil nil")
 -- Coming back from nothing on another's line, and the quest's line queued while it waits to fade
--- in: its page goes behind, and the window still fades in, after the page.
+-- in: the window fades in at once, as itself, while the page goes behind it, never behind nothing.
 Spoken:StopAll()
 for _ = 1, 40 do Skin:Tick(0.05) end
 stub.Advance(2)
@@ -1185,12 +1330,13 @@ Expect("closed on another's line, the window waits unseen to fade in",
     tostring(Skin.preparing ~= nil) .. " " .. Skin.level, "true 0")
 stub.Advance(0.4)
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Baine Bloodhoof", label = "Quick Third", portrait = { kind = "none" } } }))
-Expect("...a quest's line queued then goes behind it, the fade still to come",
-    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.preparing ~= nil), "true true")
+Expect("...a quest's line queued then fades it in at once as itself, its page going behind it",
+    tostring(Skin.tuck ~= nil) .. " " .. tostring(Skin.fadeTime ~= nil) .. " " .. tostring(Skin.preparing) .. " "
+    .. tostring(not Skin.buffered), "true true nil true")
 Skin.stillFor = 1
-Expect("...not as one image while the page flies", Skin:Still(), false)
+Expect("...the window not one image while the page flies", Skin:Still(), false)
 for _ = 1, 40 do Skin:TuckStep(0.05); Skin:Tick(0.05) end
-Expect("...and in once it has", tostring(Skin.tuck) .. " " .. Skin.level, "nil 1")
+Expect("...and the page gone behind it, the window still shown", tostring(Skin.tuck) .. " " .. Skin.level, "nil 1")
 Skin.frame.GetLeft, Skin.frame.GetTop = frameLeft, frameTop
 Spoken:StopAll()
 

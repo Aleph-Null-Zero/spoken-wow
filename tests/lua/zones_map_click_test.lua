@@ -4,7 +4,7 @@ local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(print)
-local ZONES = here .. "/../../addons/Spoken_Zones/"
+local ZONES = here .. "/../../addons/Spoken_Places/"
 
 local KALIMDOR, MULGORE = 1414, 1412
 local hooks, cursor = {}, { 0.5, 0.5 }
@@ -32,7 +32,7 @@ local Z = {
     SelectSubzone = function(_, mapID, name) opened = mapID .. ":" .. name end,
     MarkFound = function(_, mapID, key) marked = mapID .. "/" .. key end,
 }
-assert(loadfile(ZONES .. "UI/SubzoneClick.lua"))("Spoken_Zones", Z)
+assert(loadfile(ZONES .. "UI/SubzoneClick.lua"))("Spoken_Places", Z)
 Z:SetupSubzoneClicks()
 
 local container = WorldMapFrame.ScrollContainer

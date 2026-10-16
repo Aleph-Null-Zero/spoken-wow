@@ -26,6 +26,7 @@ and this Environment file must be loaded before all others
 -- both spellings can be looked for. A call target is not -- the pack names the symbol.
 local _G = getfenv(0)
 local previousEnvironment = rawget(_G, "VoiceOver")
+local Spoken = rawget(_G, "Spoken")
 
 VoiceOver = setmetatable({
     _G = _G,
@@ -34,4 +35,6 @@ VoiceOver = setmetatable({
     -- metadata API; scripts/package.sh refuses to build when it disagrees with the .toc.
     AddonVersion = "3.4.0",
     PreviousEnvironment = previousEnvironment,
+    -- A value the game hides from addons in some situations comes back as nil, not an error.
+    NotSecret = Spoken and Spoken.NotSecret or function(value) return value end,
 }, { __index = _G })

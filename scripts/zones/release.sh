@@ -73,7 +73,7 @@ target_curseforge() { case "$1" in zones) echo "1636521";; audio) pack_field cur
 # there, which sends players to the GitHub release.
 target_wago()       { case "$1" in zones) echo "mNw7b5No";; esac; }
 # zones is the spoken-zones project, retiring: the module ships inside Spoken's zip, from the
-# Spoken_Zones folder, and this project's last file is the tombstone that
+# Spoken_Places folder, and this project's last file is the tombstone that
 # scripts/spoken/package-retired.sh builds under the old folder's name (make
 # package-spoken-retired), its version read off the template, addons/SpokenZones/SpokenZones.toc.
 target_addon()      { case "$1" in zones) echo "SpokenZones";; audio) pack_field folder;; esac; }

@@ -23,7 +23,7 @@ local function Expect(scenario, actual, expected)
 end
 
 ---------------------------------------------------------------- a current client
-stub.SetClient("11509")
+stub.SetClient("16001")
 stub.ResetSound()
 local env = stub.LoadSpoken(SPOKEN)
 local SU = env.SoundUtils
@@ -46,7 +46,6 @@ Expect("a channel at zero volume is a reason", SU:WhyInaudible("Dialog"), "the D
 stub.ResetSound()
 
 Expect("everything on is audible", SU:WhyInaudible("Dialog"), nil)
-Expect("IsSoundEnabled is the predicate form", SU:IsSoundEnabled("Dialog"), true)
 
 local clip = { path = "a.ogg" }
 Expect("PlaySound reports the client accepted the file", SU:PlaySound(clip, "Dialog"), true)

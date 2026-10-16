@@ -1,6 +1,6 @@
 """Building a module over a staged store, which may hold mp3 or ogg.
 
-The store on disk is always mp3; scripts/package-audio.sh stages a transcoded copy and
+The store on disk is always mp3; scripts/quests/package-audio.sh stages a transcoded copy and
 hands that to `build --store`, and that copy is ogg for the packs this project ships. So
 the module's sound paths have to follow the files rather than assume an extension.
 """
@@ -169,13 +169,13 @@ def test_the_toc_title_says_which_pack_this_is(tmp_path):
 def test_the_toc_names_the_forever_client(tmp_path):
     # Forever marks a pack whose Interface it does not list incompatible, which the player's
     # checkAddonVersion switch cannot override, so every client the packs ship for is named.
-    # 100000 leads for the legacy clients, which read one number.
+    # 100007 leads for the legacy clients, which read one number.
     store = _store(tmp_path, "quests/5-accept.ogg")
 
     build_module(CORPUS, store, str(tmp_path / "dist"), "Mod")
 
     with open(tmp_path / "dist" / "Mod" / "Mod.toc", encoding="utf-8") as f:
-        assert f.read().startswith("## Interface: 100000, 11509, 20506, 16001\n")
+        assert f.read().startswith("## Interface: 100007, 11509, 20506, 16001\n")
 
 
 def test_the_pack_ships_an_icon_the_toc_points_at(tmp_path):
