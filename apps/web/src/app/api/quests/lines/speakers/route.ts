@@ -7,13 +7,13 @@
  * it picks which voices the line is generated in.
  *
  * GET looks an NPC up for the dialog: its answer, and the roster to answer it with when it has
- * none. POST adds it; an NPC nobody has answered yet is answered in the same request, the way
- * /npcs would. DELETE takes back a speaker added here, and only those (speakers.ts).
+ * none, which the dialog saves through api/npcs first, since a speaker is written with its voice.
+ * POST adds it. DELETE takes back a speaker added here, and only those (speakers.ts).
  */
 import { recordActivity } from "@/lib/activity/store";
 import { requireAdmin } from "@/lib/generation/authz";
 import { INT32_MAX } from "@/lib/npc/npc";
-import { getResolution, NPC_ROW_KINDS, resolutionKey, upsertResolution, type NpcRowKind } from "@/lib/npc/store";
+import { getResolution, NPC_ROW_KINDS, type NpcRowKind } from "@/lib/npc/store";
 import { baseLineId, momentOf } from "@/lib/contributions/naming";
 import { addSpeaker, removeSpeaker } from "@/lib/quests/speakers";
 import { loadRoster } from "@/lib/voices/roster-store";
@@ -28,8 +28,10 @@ function npcOf(kind: unknown, id: unknown): { npcType: NpcRowKind; npcId: number
   return { npcType, npcId };
 }
 
-const text = (value: unknown, max: number) =>
-  typeof value === "string" && value.trim() ? value.trim().slice(0, max) : null;
+/** The moment a request's line belongs to, from any of its ids: a voice's, a side's, the plain one. */
+function momentFrom(lineId: unknown): string | null {
+  return typeof lineId === "string" && lineId ? momentOf(baseLineId(lineId)) : null;
+}
 
 export async function GET(request: Request) {
   const { denied } = await requireAdmin(request);
@@ -57,61 +59,23 @@ export async function POST(request: Request) {
   if (denied) return denied;
 
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const lineId = typeof body.lineId === "string" && body.lineId ? baseLineId(body.lineId) : null;
-  if (!lineId) return Response.json({ error: "unknown line" }, { status: 404 });
+  const moment = momentFrom(body.lineId);
+  if (!moment) return Response.json({ error: "unknown line" }, { status: 404 });
   const npc = npcOf(body.npcType, body.npcId);
   if (!npc) return Response.json({ error: "unknown npc" }, { status: 400 });
 
-  // An NPC nobody has answered is answered here, as /npcs would: the speaker is written with its
-  // voice. One already answered keeps its answer; changing it is /npcs's job.
-  const existing = await getResolution(npc.npcType, npc.npcId);
-  if (!existing?.race && "race" in body) {
-    const npcName = text(body.npcName, 200) ?? existing?.npcName ?? null;
-    if (!npcName) return Response.json({ error: "name the NPC" }, { status: 400 });
-    const race = text(body.race, 64);
-    const gender = text(body.gender, 16);
-    const flavor = text(body.flavor, 64);
-    const refusal = (await loadRoster()).isAnswer(race, gender, flavor);
-    if (refusal) return Response.json({ error: refusal }, { status: 400 });
-    const row = await upsertResolution({
-      npcKind: npc.npcType,
-      npcId: npc.npcId,
-      npcName,
-      race,
-      gender,
-      flavor,
-      provenance: "moderator",
-      confirmed: true,
-      doubtful: false,
-      modelFileId: existing?.modelFileId ?? null,
-      sex: existing?.sex ?? null,
-      creatureType: existing?.creatureType ?? null,
-      build: existing?.build ?? null,
-      note: existing?.note ?? null,
-      resolvedBy: session.user.id,
-    });
-    await recordActivity({
-      kind: "npc.resolved",
-      lang,
-      actorId: session.user.id,
-      subject: resolutionKey(npc.npcType, npc.npcId),
-      detail: { npcName: row.npcName, race: row.race, gender: row.gender, flavor: row.flavor, doubtful: false },
-    });
-  }
-
-  const outcome = await addSpeaker({ lineId, ...npc, addedBy: session.user.id });
+  const outcome = await addSpeaker({ moment, ...npc, addedBy: session.user.id });
   if (!outcome.ok) {
     const status = outcome.reason === "unknown-line" ? 404 : outcome.reason === "spoken" ? 409 : 400;
     return Response.json({ error: outcome.message, reason: outcome.reason }, { status });
   }
 
-  const npcName = (await getResolution(npc.npcType, npc.npcId))?.npcName ?? null;
   await recordActivity({
     kind: "npc.speaker_added",
     lang,
     actorId: session.user.id,
-    subject: momentOf(lineId),
-    detail: { npcName, npcType: npc.npcType, npcId: npc.npcId },
+    subject: moment,
+    detail: { npcName: outcome.speaker.npcName, ...npc },
   });
   return Response.json({ added: true });
 }
@@ -121,23 +85,22 @@ export async function DELETE(request: Request) {
   if (denied) return denied;
 
   const params = new URL(request.url).searchParams;
-  const lineId = params.get("lineId") ? baseLineId(params.get("lineId")!) : null;
-  if (!lineId) return Response.json({ error: "unknown line" }, { status: 404 });
+  const moment = momentFrom(params.get("lineId"));
+  if (!moment) return Response.json({ error: "unknown line" }, { status: 404 });
   const npc = npcOf(params.get("npcType"), params.get("npcId"));
   if (!npc) return Response.json({ error: "unknown npc" }, { status: 400 });
 
-  const outcome = await removeSpeaker({ lineId, ...npc });
+  const outcome = await removeSpeaker({ moment, ...npc });
   if (!outcome.ok) return Response.json({ error: outcome.message, reason: outcome.reason }, { status: 409 });
 
   // 200 with nothing removed, as the ignore route does: the speaker the caller wanted gone is gone.
   if (outcome.removed > 0) {
-    const npcName = (await getResolution(npc.npcType, npc.npcId))?.npcName ?? null;
     await recordActivity({
       kind: "npc.speaker_removed",
       lang,
       actorId: session.user.id,
-      subject: momentOf(lineId),
-      detail: { npcName, npcType: npc.npcType, npcId: npc.npcId },
+      subject: moment,
+      detail: { npcName: outcome.npcName, ...npc },
     });
   }
   return Response.json({ removed: outcome.removed });

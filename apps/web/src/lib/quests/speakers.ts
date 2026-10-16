@@ -12,11 +12,12 @@
  */
 import type { PoolClient } from "pg";
 
-import { answersQuestMomentSql, baseLineId, momentOf } from "@/lib/contributions/naming";
+import { answersQuestMomentSql } from "@/lib/contributions/naming";
 import { db } from "@/lib/db";
 import { BASE_LANG, type Lang } from "@/lib/lang";
 import type { NpcRowKind } from "@/lib/npc/npc";
-import { getResolution } from "@/lib/npc/store";
+import { getResolution, type NpcResolution } from "@/lib/npc/store";
+import type { Roster } from "@/lib/voices/roster";
 import { loadRoster } from "@/lib/voices/roster-store";
 
 export const ORD_FLOOR = 1_000_000;
@@ -37,17 +38,21 @@ export type Speaker = {
   voice: string;
 };
 
-/** The speaker an NPC's answer in `npc` makes, or null when it has no type. */
-export async function speakerOf(npcType: NpcRowKind, npcId: number): Promise<Speaker | null> {
-  const resolution = await getResolution(npcType, npcId);
-  if (!resolution?.race) return null;
-  const roster = await loadRoster();
+/**
+ * The speaker an NPC's answer makes. With no voice for its type, race and gender stay the NPC's
+ * own, which is what noVoice names.
+ */
+export function speakerFromResolution(
+  resolution: NpcResolution & { race: string },
+  roster: Roster,
+  fallbackName: string | null = null,
+): Speaker {
   const voice = roster.voiceFor(resolution.race, resolution.gender, resolution.flavor);
   const family = voice ? roster.familyOf(voice) : null;
   return {
-    npcId,
-    npcName: resolution.npcName,
-    npcType,
+    npcId: resolution.npcId,
+    npcName: resolution.npcName ?? fallbackName,
+    npcType: resolution.npcKind,
     race: family?.race ?? resolution.race,
     gender: family?.gender ?? resolution.gender ?? "",
     flavor: resolution.flavor,
@@ -55,7 +60,18 @@ export async function speakerOf(npcType: NpcRowKind, npcId: number): Promise<Spe
   };
 }
 
-/** One writer per moment past this point: accept.ts takes the same lock by the same key. */
+/** Why a speaker with no voice cannot be written. */
+export function noVoice(speaker: Speaker): string {
+  return `No voice reads ${[speaker.race, speaker.gender, speaker.flavor].filter(Boolean).join("-")} yet`;
+}
+
+/** The speaker an NPC's answer in `npc` makes, or null when it has no type. */
+export async function speakerOf(npcType: NpcRowKind, npcId: number): Promise<Speaker | null> {
+  const [resolution, roster] = await Promise.all([getResolution(npcType, npcId), loadRoster()]);
+  return resolution?.race ? speakerFromResolution({ ...resolution, race: resolution.race }, roster) : null;
+}
+
+/** One writer per moment past this point, keyed by the moment's id. */
 export async function lockLine(client: PoolClient, lineId: string): Promise<void> {
   await client.query(`select pg_advisory_xact_lock(hashtext('quest_line:' || $1))`, [lineId]);
 }
@@ -91,10 +107,20 @@ export async function insertSpeaker(
   );
 }
 
-type SpeakerRow = { lineId: string; variant: number; lang: string; npcType: string; npcId: number; addedBy: string | null };
+export type SpeakerRow = {
+  lineId: string;
+  variant: number;
+  lang: string;
+  npcType: string;
+  npcId: number;
+  addedBy: string | null;
+};
 
-/** Every speaker row of a moment's lines (the plain one and its `:m`/`:f`), in `ord` order. */
-async function momentSpeakers(client: PoolClient, moment: string): Promise<SpeakerRow[]> {
+/**
+ * Every speaker row of a moment's lines (the plain one and its `:m`/`:f`), English's first and
+ * each language's in `ord` order.
+ */
+export async function momentSpeakers(client: PoolClient, moment: string): Promise<SpeakerRow[]> {
   const { rows } = await client.query<SpeakerRow>(
     `select "lineId", "variant", "lang", "npcType", "npcId", "addedBy" from "quest_line_speaker"
       where ${answersQuestMomentSql(`"lineId"`, "$1")}
@@ -112,15 +138,16 @@ async function momentSpeakers(client: PoolClient, moment: string): Promise<Speak
  *
  * Returns "spoken" when the NPC already speaks it, "unknown" when the moment has no speaker to
  * stand beside -- a line is in the explorer only through its speakers -- and "added" otherwise.
- * The caller holds the moment's lock.
+ * The caller holds the moment's lock, and passes the moment's speakers when it already read them.
  */
 export async function addToMoment(
   client: PoolClient,
   moment: string,
   speaker: Speaker,
   mark: { contributionId?: number | null; addedBy?: string | null },
+  rows?: SpeakerRow[],
 ): Promise<"added" | "spoken" | "unknown"> {
-  const rows = await momentSpeakers(client, moment);
+  rows ??= await momentSpeakers(client, moment);
   if (rows.length === 0) return "unknown";
   if (rows.some((row) => row.npcType === speaker.npcType && row.npcId === speaker.npcId)) return "spoken";
 
@@ -134,7 +161,7 @@ export async function addToMoment(
 }
 
 export type AddOutcome =
-  | { ok: true }
+  | { ok: true; speaker: Speaker }
   | { ok: false; reason: "unknown-line" | "spoken" | "no-voice"; message: string };
 
 /**
@@ -143,22 +170,16 @@ export type AddOutcome =
  * catalogue gives it its own voice's line from there.
  */
 export async function addSpeaker(args: {
-  lineId: string;
+  moment: string;
   npcType: NpcRowKind;
   npcId: number;
   addedBy: string;
 }): Promise<AddOutcome> {
   const speaker = await speakerOf(args.npcType, args.npcId);
   if (!speaker?.voice) {
-    return {
-      ok: false,
-      reason: "no-voice",
-      message: speaker
-        ? `No voice reads ${[speaker.race, speaker.gender, speaker.flavor].filter(Boolean).join("-")} yet`
-        : "This NPC has no type yet",
-    };
+    return { ok: false, reason: "no-voice", message: speaker ? noVoice(speaker) : "This NPC has no type yet" };
   }
-  const moment = momentOf(baseLineId(args.lineId));
+  const { moment } = args;
 
   const client = await db().connect();
   try {
@@ -168,7 +189,7 @@ export async function addSpeaker(args: {
     await client.query("commit");
     if (outcome === "unknown") return { ok: false, reason: "unknown-line", message: "unknown line" };
     if (outcome === "spoken") return { ok: false, reason: "spoken", message: "This NPC already speaks the line" };
-    return { ok: true };
+    return { ok: true, speaker };
   } catch (error) {
     await client.query("rollback");
     throw error;
@@ -178,7 +199,7 @@ export async function addSpeaker(args: {
 }
 
 export type RemoveOutcome =
-  | { ok: true; removed: number }
+  | { ok: true; removed: number; npcName: string | null }
   | { ok: false; reason: "extracted"; message: string };
 
 /**
@@ -186,11 +207,11 @@ export type RemoveOutcome =
  * contribution's go with the contribution.
  */
 export async function removeSpeaker(args: {
-  lineId: string;
+  moment: string;
   npcType: NpcRowKind;
   npcId: number;
 }): Promise<RemoveOutcome> {
-  const moment = momentOf(baseLineId(args.lineId));
+  const { moment } = args;
   const client = await db().connect();
   try {
     await client.query("begin");
@@ -202,14 +223,15 @@ export async function removeSpeaker(args: {
       await client.query("rollback");
       return { ok: false, reason: "extracted", message: "Only a speaker added by hand can be removed" };
     }
-    const { rowCount } = await client.query(
+    const { rows: removed } = await client.query<{ npcName: string | null }>(
       `delete from "quest_line_speaker"
         where ${answersQuestMomentSql(`"lineId"`, "$1")} and "npcType" = $2 and "npcId" = $3
-          and "addedBy" is not null`,
+          and "addedBy" is not null
+        returning "npcName"`,
       [moment, args.npcType, args.npcId],
     );
     await client.query("commit");
-    return { ok: true, removed: rowCount ?? 0 };
+    return { ok: true, removed: removed.length, npcName: removed[0]?.npcName ?? null };
   } catch (error) {
     await client.query("rollback");
     throw error;

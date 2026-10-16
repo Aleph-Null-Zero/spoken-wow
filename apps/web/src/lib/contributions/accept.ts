@@ -45,7 +45,16 @@ import { isGeneratable } from "@/lib/books/tools";
 import { branchesOnPlayerGender, speakPlayerTokens } from "@/lib/player-words";
 import { corpus } from "@/lib/quests/catalogue";
 import { forgetIgnores, writeIgnore } from "@/lib/quests/ignores";
-import { addToMoment, insertSpeaker, lockLine, type Speaker } from "@/lib/quests/speakers";
+import {
+  addToMoment,
+  insertSpeaker,
+  lockLine,
+  momentSpeakers,
+  noVoice,
+  speakerFromResolution,
+  type Speaker,
+  type SpeakerRow,
+} from "@/lib/quests/speakers";
 import type { Roster } from "@/lib/voices/roster";
 import { loadRoster } from "@/lib/voices/roster-store";
 
@@ -127,19 +136,7 @@ async function resolvedSpeaker(
   }
 
   if (!resolution?.race) return null;
-
-  const roster = await loadRoster();
-  const voice = roster.voiceFor(resolution.race, resolution.gender, resolution.flavor);
-  const family = voice ? roster.familyOf(voice) : null;
-  return {
-    npcId: observed.npcId,
-    npcName: resolution.npcName ?? observed.npcName,
-    npcType: resolution.npcKind,
-    race: family?.race ?? resolution.race,
-    gender: family?.gender ?? resolution.gender ?? "",
-    flavor: resolution.flavor,
-    voice: voice ?? "",
-  };
+  return speakerFromResolution({ ...resolution, race: resolution.race }, await loadRoster(), observed.npcName);
 }
 
 /**
@@ -218,7 +215,7 @@ async function speakerFor(
       ok: false,
       reason: "needs-speaker",
       // With no voice, race and gender are still the NPC's own (resolvedSpeaker).
-      message: `No voice reads ${[speaker.race, speaker.gender, speaker.flavor].filter(Boolean).join("-")} yet -- give it one under NPCs → Types.`,
+      message: `${noVoice(speaker)} -- give it one under NPCs → Types.`,
     };
   }
   return { ok: true, speaker };
@@ -551,7 +548,8 @@ async function acceptQuestMoment(
   // moment, and only one of them may find it missing.
   await lockLine(client, identity.lineId);
   const taken = await momentTaken(client, lang, identity.lineId);
-  const spoken = await momentSpeaks(client, identity.lineId, contribution);
+  const speakers = await momentSpeakers(client, identity.lineId);
+  const spoken = momentSpeaks(speakers, contribution);
   if (taken && spoken !== "others") return null;
 
   let speaker: Speaker | null = null;
@@ -570,7 +568,7 @@ async function acceptQuestMoment(
     }
   }
   if (speaker && spoken === "others") {
-    await addToMoment(client, identity.lineId, speaker, { contributionId: contribution.id });
+    await addToMoment(client, identity.lineId, speaker, { contributionId: contribution.id }, speakers);
   }
   if (lang !== BASE_LANG) {
     for (const name of namesSeenIn(contribution)) {
@@ -585,17 +583,8 @@ async function acceptQuestMoment(
  * its own NPC (or it names none), or only others. A kind-less envelope's NPC is matched by id
  * alone, as idOnlyResolution answers it.
  */
-async function momentSpeaks(
-  client: PoolClient,
-  momentId: string,
-  contribution: Contribution,
-): Promise<"nobody" | "this-npc" | "others"> {
+function momentSpeaks(rows: SpeakerRow[], contribution: Contribution): "nobody" | "this-npc" | "others" {
   const observed = observedFrom(observationMeta(contribution));
-  const { rows } = await client.query<{ npcType: string; npcId: number }>(
-    `select distinct "npcType", "npcId" from "quest_line_speaker"
-      where ${answersQuestMomentSql(`"lineId"`, "$1")}`,
-    [momentId],
-  );
   if (rows.length === 0) return "nobody";
   if (observed.npcId === null) return "this-npc";
   const named = rows.some(

@@ -657,36 +657,25 @@ def import_corpus_data(corpus, verbose=True):
             if "npcSexes" in corpus:
                 _import_npc_sexes(cur, sex_rows)
 
-            # Only from a marked file: in an older one, the rows that would match are the
-            # contributed speakers' own round-tripped copies, skipped above or not.
-            superseded = 0
-            if marked:
-                cur.execute(
-                    """delete from "quest_line_speaker" c
-                        where c."lang" = %s and c."contributionId" is not null
-                          and exists (
-                            select 1 from "quest_line_speaker" e
-                             where e."contributionId" is null and e."addedBy" is null
-                               and e."lang" = c."lang"
-                               and e."lineId" = c."lineId" and e."variant" = c."variant"
-                               and e."npcType" = c."npcType" and e."npcId" = c."npcId")""",
-                    (LANG,),
-                )
-                superseded = cur.rowcount
-            # A speaker added by hand, once the dump has it too. Every file that carries one
-            # marks it, so this needs no schema check.
+            # A contributed speaker only from a marked file: in an older one, the rows that
+            # would match are its own round-tripped copies, skipped above or not. A speaker added
+            # by hand is marked in every file that carries one, so needs no schema check.
             cur.execute(
-                """delete from "quest_line_speaker" a
-                    where a."lang" = %s and a."addedBy" is not null
+                """delete from "quest_line_speaker" c
+                    where c."lang" = %s
+                      and (c."addedBy" is not null or (%s and c."contributionId" is not null))
                       and exists (
                         select 1 from "quest_line_speaker" e
                          where e."contributionId" is null and e."addedBy" is null
-                           and e."lang" = a."lang"
-                           and e."lineId" = a."lineId" and e."variant" = a."variant"
-                           and e."npcType" = a."npcType" and e."npcId" = a."npcId")""",
-                (LANG,),
+                           and e."lang" = c."lang"
+                           and e."lineId" = c."lineId" and e."variant" = c."variant"
+                           and e."npcType" = c."npcType" and e."npcId" = c."npcId")
+                    returning c."addedBy" is not null""",
+                (LANG, bool(marked)),
             )
-            superseded_added = cur.rowcount
+            overtaken = [row[0] for row in cur.fetchall()]
+            superseded_added = sum(overtaken)
+            superseded = len(overtaken) - superseded_added
 
             cur.execute("""delete from "quest_spawn" """)
             spawn_rows = []

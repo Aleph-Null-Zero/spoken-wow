@@ -13,6 +13,3 @@
 -- Additive and forward-only: the previous release reads an added row as one of the extract's.
 
 alter table "quest_line_speaker" add column if not exists "addedBy" text;
-
-create index if not exists "quest_line_speaker_added_idx"
-  on "quest_line_speaker" ("lineId") where "addedBy" is not null;

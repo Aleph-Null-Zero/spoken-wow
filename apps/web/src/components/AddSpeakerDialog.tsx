@@ -94,27 +94,27 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
     }
   }
 
+  async function post(url: string, body: Record<string, unknown>): Promise<boolean> {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (response.ok) return true;
+    const { error } = (await response.json().catch(() => ({}))) as { error?: string };
+    setError(error ?? `request failed (${response.status})`);
+    return false;
+  }
+
   async function add() {
     if (!line) return;
     setBusy(true);
     setError(null);
+    const npc = { npcId: Number(npcId.trim()) };
     try {
-      const response = await fetch("/api/quests/lines/speakers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lineId: line.lineId,
-          npcType,
-          npcId: Number(npcId.trim()),
-          ...(answered ? {} : { npcName, race, gender, flavor }),
-        }),
-      });
-      const body = (await response.json().catch(() => ({}))) as { error?: string };
-      if (!response.ok) {
-        setError(body.error ?? `request failed (${response.status})`);
-        return;
-      }
-      onSaved();
+      // An NPC nobody has answered is answered first, as /npcs would: a speaker needs a voice.
+      if (!answered && !(await post("/api/npcs", { ...npc, npcKind: npcType, npcName, race, gender, flavor }))) return;
+      if (await post("/api/quests/lines/speakers", { ...npc, lineId: line.lineId, npcType })) onSaved();
     } catch (problem) {
       setError(String(problem));
     } finally {

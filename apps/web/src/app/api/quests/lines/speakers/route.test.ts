@@ -180,30 +180,9 @@ describe("POST /api/quests/lines/speakers", () => {
     expect((await POST(post({ lineId: LINE, npcType: "creature", npcId: second }))).status).toBe(404);
   });
 
-  it("refuses an NPC with no type, unless it is answered in the same request", async () => {
+  it("refuses an NPC with no type", async () => {
     await line();
     const response = await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
-    expect(response.status).toBe(400);
-    expect(await speakers()).toHaveLength(1);
-
-    const nameless = await POST(post({ lineId: LINE, npcType: "creature", npcId: second, race: "orc", gender: "male", flavor: "shady" }));
-    expect(nameless.status).toBe(400);
-
-    const answered = await POST(
-      post({ lineId: LINE, npcType: "creature", npcId: second, npcName: "Grunt", race: "orc", gender: "male", flavor: "shady" }),
-    );
-    expect(answered.status).toBe(200);
-    expect((await speakers()).map((row) => row.npcId)).toEqual([giver, second]);
-
-    const { rows } = await db().query(`select "race", "provenance" from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [second]);
-    expect(rows).toEqual([{ race: "orc", provenance: "moderator" }]);
-  });
-
-  it("refuses an answer the roster has no place for", async () => {
-    await line();
-    const response = await POST(
-      post({ lineId: LINE, npcType: "creature", npcId: second, npcName: "Grunt", race: "orc", gender: "male", flavor: "nosuch" }),
-    );
     expect(response.status).toBe(400);
     expect(await speakers()).toHaveLength(1);
   });
