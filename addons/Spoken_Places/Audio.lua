@@ -563,9 +563,9 @@ end
 -- saying anything at all.
 function SpokenZones:DescribeMissingAudio()
 	if #self:GetAudioPacks() == 0 then
-		return "no sound pack installed -- get Spoken Audio: Places to hear the lore read aloud"
+		return "no voice pack installed -- get Spoken Audio: Places to hear the lore read aloud"
 	end
-	return "no narration for this entry in the installed sound pack yet"
+	return "no narration for this entry in the installed voice pack yet"
 end
 
 --------------------------------------------------------------------------------

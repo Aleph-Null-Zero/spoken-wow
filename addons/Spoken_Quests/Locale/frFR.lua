@@ -92,7 +92,7 @@ L.OPT_OG_THRALL_TIP = "Joue l'enregistrement du discours de Thrall d'AI VoiceOve
 L.REASON_FORGET_GREETINGS = "Réglez Lire les salutations sur Une fois par salutation ou Une fois pour les donneurs de quêtes pour utiliser ceci."
 L.OPT_PANEL_GAME_GREETING_FIRST = "Voix du PNJ avant la lecture"
 L.OPT_PANEL_GAME_GREETING_FIRST_TIP = "Attend la fin de la voix du PNJ avant de lire."
-L.GREETING_DIALOG_APART = "Spoken : volume Dialogues réglé à %1$d%%, à l'écart des autres curseurs de volume, pour que Voix du PNJ avant la lecture sache quand un PNJ a fini de parler."
+L.GREETING_DIALOG_APART = "Spoken : volume des dialogues réglé à %1$d%%, à l'écart des autres curseurs de volume, pour que Voix du PNJ avant la lecture sache quand un PNJ a fini de parler."
 L.OPT_CMD_FOLLOWUP = "Suite de quête"
 L.OPT_CMD_FOLLOWUP_DESC = "Rejoue les répliques de suite d'une quête comme si vous veniez de la rendre : /spq followup <questID> [start]"
 -- UI/DialogueUIBridge.lua
@@ -128,7 +128,7 @@ L.OPT_REPORT_QUEST_TIP = "Obtenez un lien pour signaler une lecture erronée ou 
 -- Starting over
 L.OPT_RESET_PROFILE_CONFIRM = "Remettre chaque paramètre de Quêtes et de Discussions du profil utilisé à sa valeur par défaut ?"
 L.OPT_CANCEL = "Annuler"
-L.OPT_REPORT_LINE_TIP = "Mauvaise lecture, nom mal prononcé : ceci donne un lien pour le signaler."
+L.OPT_REPORT_LINE_TIP = "Obtenez un lien pour signaler une lecture erronée ou un nom mal prononcé."
 L.OPT_REPORT_NO_LINE = "Ce client ne peut pas savoir de quelle réplique il s'agissait, il n'y a donc pas d'adresse pour la signaler."
 L.OPT_STOP_GOSSIP = "Arrêter la discussion"
 L.OPT_NEXT_GOSSIP = "Discussion suivante"

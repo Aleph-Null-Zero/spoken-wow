@@ -121,6 +121,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   game's other sounds too, and puts your own value back once the last line ends, after a reload or
   at the next login. A change you make to that setting meanwhile is kept. Off by default.
   *([Nucabe](https://github.com/Nucabe))*
+- Names and tooltips were read again in every language: a part or control has one name wherever it appears,
+  tooltips that still described old behaviour say what the control does now, and the voice packs are called
+  voice packs in chat and in the missing-pack messages. *([Nucabe](https://github.com/Nucabe))*
 
 ### Battlegrounds
 
