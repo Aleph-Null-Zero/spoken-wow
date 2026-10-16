@@ -203,9 +203,13 @@ function describe(row: ActivityRow): { what: string; quote: string | null } {
       };
     }
     case "npc.split":
-      return { what: `split ${str(d.npcName) ?? row.subject} into a man and a woman`, quote: null };
+      return d.race
+        ? { what: `gave ${str(d.npcName) ?? row.subject} another body`, quote: [str(d.race), num(d.sex) === 3 ? "woman" : "man"].join(" ") }
+        : { what: `split ${str(d.npcName) ?? row.subject} into a man and a woman`, quote: null };
     case "npc.unsplit":
-      return { what: `gave ${str(d.npcName) ?? row.subject} one voice again`, quote: null };
+      return d.race
+        ? { what: `took a body from ${str(d.npcName) ?? row.subject}`, quote: [str(d.race), num(d.sex) === 3 ? "woman" : "man"].join(" ") }
+        : { what: `gave ${str(d.npcName) ?? row.subject} one voice again`, quote: null };
     case "npc.resolved":
       return {
         what: `set who ${str(d.npcName) ?? row.subject} is${num(d.sex) === 3 ? " as a woman" : num(d.sex) === 2 ? " as a man" : ""}`,

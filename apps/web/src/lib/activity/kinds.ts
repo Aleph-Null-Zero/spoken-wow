@@ -86,8 +86,8 @@ export type ActivityDetail = {
     flavor?: string | null;
     doubtful?: boolean;
   };
-  "npc.split": { npcName?: string | null };
-  "npc.unsplit": { npcName?: string | null };
+  "npc.split": { npcName?: string | null; race?: string; sex?: number };
+  "npc.unsplit": { npcName?: string | null; race?: string; sex?: number };
   "type.changed": {
     action: string;
     gender?: string | null;
