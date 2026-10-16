@@ -1129,7 +1129,7 @@ displays, each drawn by its probability and each with a sex, and the rest of the
 only `display_id1`. A speaking creature whose displays include both sexes is split: 58 of them
 in the classic dump, guards for the most part. Each sex takes the race of its likeliest display
 and the flavor its displays' greeting sounds name most. A sex with no greeting sound gets its
-race-gender's default, marked doubtful, as an NPC does. `make quests-import-npc-sexes` writes
+race-gender's default, marked doubtful, as an NPC does. `make quests-import-npc-bodies` writes
 the same rows into a database that is already filled, production included, without a whole
 extract; it keeps a moderator's answer.
 
