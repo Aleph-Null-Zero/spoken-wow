@@ -50,7 +50,6 @@ import { loadRoster } from "@/lib/voices/roster-store";
 
 import { loadBookCorpus, matchBook, sameMatch, type BookCorpus, type BookMatchResult } from "./book-match";
 import type { ContributionStatus } from "./contributions";
-import { correctionNote } from "./correction";
 import {
   answersQuestMomentSql,
   baseLineId,
@@ -59,6 +58,7 @@ import {
   type LineIdentity,
 } from "./naming";
 import { gossipIdentity, recordBroadcast, resolveGossip, type GossipPlan } from "./gossip";
+import { noteFor, pageNotes } from "./notes";
 import { CONTRIBUTION_COLUMNS, observationMeta, type Contribution } from "./store";
 import { spokenFromTemplate } from "./tokens";
 import { idOnlyResolution } from "./triage";
@@ -378,15 +378,29 @@ function momentsOf(contributions: readonly Contribution[]): { id: number; lineId
 /**
  * The books side of linesInExplorer: an accepted row is there once it has written its page,
  * as a first version or a correction.
+ *
+ * A row accepted before accept wrote books rows in every language wrote nothing in English, and
+ * in another language only where the page lacked that language: such an English row is there,
+ * and another language's is once its page has that language's text.
  */
 async function booksInExplorer(contributions: readonly Contribution[]): Promise<Set<number>> {
   const accepted = contributions.filter((c) => c.source === "books" && c.status === "accepted");
   if (accepted.length === 0) return new Set();
+  const notes = accepted.map((c) => pageNotes(c.id));
   const { rows } = await db().query<{ id: number }>(
-    `select c."id" from unnest($1::int[]) as c("id")
-      where exists (select 1 from "book_line" b
-                     where b."note" in ('contribution #' || c."id", 'correction from the game, contribution #' || c."id"))`,
-    [accepted.map((c) => c.id)],
+    `select c."id" from unnest($1::int[], $2::text[], $3::text[], $4::text[], $5::text[])
+                        as c ("id", "note", "correction", "lang", "matchLineId")
+      where exists (select 1 from "book_line" b where b."note" in (c."note", c."correction"))
+         or c."lang" = $6
+         or exists (select 1 from "book_line" b where b."lineId" = c."matchLineId" and b."lang" = c."lang")`,
+    [
+      accepted.map((c) => c.id),
+      notes.map(([note]) => note),
+      notes.map(([, correction]) => correction),
+      accepted.map((c) => c.locale),
+      accepted.map((c) => c.matchLineId),
+      BASE_LANG,
+    ],
   );
   return new Set(rows.map((row) => row.id));
 }
@@ -679,11 +693,6 @@ async function nameIfUnnamed(
   return (rowCount ?? 0) > 0;
 }
 
-/** The note a written row carries, which is also how it is found again. */
-export function noteFor(contributionId: number): string {
-  return `contribution #${contributionId}`;
-}
-
 /**
  * Ignore every line a quests contribution wrote, in its language, or in every language for an
  * English row. A line it only added a speaker to is ignored whole, whoever else speaks it.
@@ -708,7 +717,7 @@ async function ignoreWrittenLines(client: PoolClient, contribution: Contribution
 async function contributedPageExists(contributionId: number, client: PoolClient): Promise<boolean> {
   const { rowCount } = await client.query(
     `select 1 from "book_line" where "note" = any($1::text[])`,
-    [[noteFor(contributionId), correctionNote(contributionId)]],
+    [pageNotes(contributionId)],
   );
   return (rowCount ?? 0) > 0;
 }
@@ -716,8 +725,8 @@ async function contributedPageExists(contributionId: number, client: PoolClient)
 /**
  * A books contribution, in any language: what the matcher says it is, written.
  *
- * Matched again here, inside the transaction and under a lock on its language and title, so
- * two pages of one new book accepted at once find each other rather than minting two books.
+ * Matched again here, inside the transaction and under a lock every books accept takes, so two
+ * pages of one new book accepted at once find each other rather than minting two books.
  * A page the game names keeps its id; one only a player's client has shown gets a minted
  * `b:n{uuid}`, in a minted `n{uuid}` book when it starts one. A correction is a new version of
  * that language's text, as an editor's save is; the rest is a first version, 'contributed'.
@@ -735,7 +744,9 @@ async function acceptBookContribution(
   if (!text) return { ok: false, reason: "malformed", message: "contribution has no text to voice" };
   const lang = contribution.locale as Lang;
   const title = contribution.meta.book?.trim() || null;
-  await client.query(`select pg_advisory_xact_lock(hashtext($1))`, [`books|${lang}|${title ?? ""}`]);
+  // One books accept at a time, in any language: two rows of one new page or book may be in
+  // different languages, or shown under different titles.
+  await client.query(`select pg_advisory_xact_lock(hashtext('books.accept'))`);
 
   const corpus = await loadBookCorpus(client);
   const match = matchBook(contribution, corpus);
@@ -809,7 +820,8 @@ async function insertText(
             true, $9, p."pageTextId", case when p."bookId" ~ '^\\d+$' then p."bookId"::int end, p."pageNumber",
             (select count(*) from "book_page" c where c."bookId" = p."bookId" and c."aliasOf" is null),
             coalesce($3, (select e."title" from "book_line" e
-                           where e."lineId" = p."lineId" and e."isCurrent" order by e."lang" limit 1), ''),
+                           where e."lineId" = p."lineId" and (e."lang" = $2 or e."isCurrent")
+                           order by (e."lang" = $2) desc, e."version" desc, e."lang" limit 1), ''),
             p."ownerKind", p."ownerIds", coalesce(p."material", 0), $4, $5, $6, $7, $8
        from "book_page" p where p."lineId" = $1 and p."aliasOf" is null`,
     [row.lineId, row.lang, row.title, row.text, row.generatable, row.skipReason, row.userId, row.note, row.origin],

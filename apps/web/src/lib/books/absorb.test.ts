@@ -27,6 +27,8 @@ const MINTED_FILE = `n${randomUUID()}`;
 const MINTED = `b:${MINTED_FILE}`;
 /** A second page of the minted book, for a book that keeps a live page after the fold. */
 const MINTED_TWO = `b:n${randomUUID()}`;
+/** Another language's minted copy of the real page, or a page minted into the real book. */
+const MINTED_THREE = `b:n${randomUUID()}`;
 
 async function line(lineId: string, lang: string, version: number, isCurrent: boolean, text: string) {
   await db().query(
@@ -46,7 +48,7 @@ async function take(lineId: string, file: string, lang: string) {
 }
 
 async function clean() {
-  const ids = [REAL, MINTED, MINTED_TWO];
+  const ids = [REAL, MINTED, MINTED_TWO, MINTED_THREE];
   await db().query(`delete from "contribution" where "source" = 'books' and "key" like $1`, [`absorb-${n}%`]);
   for (const table of ["take", "report", "recording"]) {
     await db().query(`delete from "${table}" where "lineId" = any($1)`, [ids]);
@@ -201,5 +203,44 @@ describe("absorb", () => {
     }
     const { rows } = await db().query(`select "aliasOf" from "book_page" where "lineId" = $1`, [MINTED]);
     expect(rows).toEqual([{ aliasOf: REAL }]);
+  });
+
+  it("folds a second minted copy into a real page that has absorbed one already", async () => {
+    await fold();
+    await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $1, 1)`, [MINTED_THREE]);
+    await line(MINTED_THREE, "esES", 1, true, "Trotamundos de los elfos:");
+    const client = await db().connect();
+    try {
+      await client.query("begin");
+      await foldMinted(client);
+      await client.query("commit");
+    } finally {
+      client.release();
+    }
+    const { rows } = await db().query(`select "aliasOf" from "book_page" where "lineId" = $1`, [MINTED_THREE]);
+    expect(rows).toEqual([{ aliasOf: REAL }]);
+  });
+
+  it("moves a minted page that does not fold off the place the extract gives a real page", async () => {
+    await db().query(`insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 2)`, [MINTED_THREE, String(n)]);
+    await line(MINTED_THREE, "deDE", 1, true, "Kurz");
+    const client = await db().connect();
+    try {
+      await client.query("begin");
+      // The extract now places a real page where the minted one sits.
+      await client.query(`update "book_page" set "pageNumber" = 2 where "lineId" = $1`, [REAL]);
+      await foldMinted(client);
+      await client.query("commit");
+    } finally {
+      client.release();
+    }
+    const { rows } = await db().query(
+      `select "lineId", "pageNumber" from "book_page" where "bookId" = $1 and "aliasOf" is null order by "pageNumber"`,
+      [String(n)],
+    );
+    expect(rows).toEqual([
+      { lineId: REAL, pageNumber: 2 },
+      { lineId: MINTED_THREE, pageNumber: 3 },
+    ]);
   });
 });

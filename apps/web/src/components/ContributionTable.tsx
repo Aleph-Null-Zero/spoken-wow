@@ -371,10 +371,12 @@ export default function ContributionTable({
 
   /** One row's status change, from its own buttons. True when it landed. */
   const send = useCallback(async (id: number, next: ContributionStatus): Promise<boolean> => {
+    // What the row was shown to match, so the accept refuses it if that has changed since.
+    const bookMatch = next === "accepted" ? initial.find((row) => row.id === id)?.book?.match : undefined;
     const response = await fetch("/api/contributions/resolve", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id, status: next }),
+      body: JSON.stringify({ id, status: next, bookMatch }),
     }).catch(() => null);
 
     if (!response?.ok) {
@@ -386,7 +388,7 @@ export default function ContributionTable({
     }
     landed(id, next);
     return true;
-  }, [landed]);
+  }, [initial, landed]);
 
   const resolve = useCallback(
     async (id: number, next: ContributionStatus) => {

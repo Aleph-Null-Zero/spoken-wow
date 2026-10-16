@@ -73,6 +73,32 @@ export type MatchVia = "moderator" | "owner" | "text" | "title" | "none";
 export const bulkAcceptable = (match: BookMatchResult) =>
   match.kind === "translation" || match.kind === "new-page";
 
+/**
+ * A match a request carries back, as the table showed it, or undefined when the value is not
+ * one. Only what sameMatch compares is checked; `via` and `current` are not read.
+ */
+export function bookMatchOf(value: unknown): BookMatchResult | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const m = value as Record<string, unknown>;
+  const page = Number.isInteger(m.pageNumber);
+  switch (m.kind) {
+    case "known":
+    case "correction":
+    case "translation":
+      return typeof m.lineId === "string" ? (value as BookMatchResult) : undefined;
+    case "new-page":
+      return typeof m.bookId === "string" && page ? (value as BookMatchResult) : undefined;
+    case "new-book":
+      return typeof m.title === "string" && page ? (value as BookMatchResult) : undefined;
+    case "ambiguous":
+      return Array.isArray(m.candidates) && m.candidates.every((c) => typeof c === "string")
+        ? (value as BookMatchResult)
+        : undefined;
+    default:
+      return undefined;
+  }
+}
+
 /** Whether two matches would write the same thing: the same kind, at the same page or place. */
 export function sameMatch(a: BookMatchResult, b: BookMatchResult): boolean {
   const target = (m: BookMatchResult) => {

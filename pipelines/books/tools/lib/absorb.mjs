@@ -69,16 +69,34 @@ export async function absorb(client, { from, to }) {
 /**
  * Every minted page whose words turn out to be a real page's, folded into it, in the caller's
  * transaction. Returns how many were.
+ *
+ * A minted page that does not fold but sits where the extract now places a real page moves to
+ * the end of its book, so the place is the real page's and book_page_place holds at commit.
  */
 export async function foldMinted(client) {
   const { rows } = await client.query(
     `select p."lineId", p."pageTextId" is null as "minted", jsonb_object_agg(l."lang", l."text") as "texts"
        from "book_page" p join "book_line" l on l."lineId" = p."lineId" and l."isCurrent"
       where p."aliasOf" is null
-        and not exists (select 1 from "book_page" a where a."aliasOf" = p."lineId")
       group by p."lineId", p."pageTextId"`,
   );
   const absorptions = findAbsorptions(rows.filter((p) => p.minted), rows.filter((p) => !p.minted));
   for (const move of absorptions) await absorb(client, move);
+
+  const { rows: displaced } = await client.query(
+    `select m."lineId", m."bookId" from "book_page" m
+       join "book_page" r on r."bookId" = m."bookId" and r."pageNumber" = m."pageNumber"
+                         and r."pageTextId" is not null and r."aliasOf" is null
+      where m."pageTextId" is null and m."aliasOf" is null
+      order by m."bookId", m."pageNumber"`,
+  );
+  for (const { lineId, bookId } of displaced) {
+    await client.query(
+      `update "book_page" set "pageNumber" =
+              (select max(o."pageNumber") + 1 from "book_page" o where o."bookId" = $2 and o."aliasOf" is null)
+        where "lineId" = $1`,
+      [lineId, bookId],
+    );
+  }
   return absorptions.length;
 }

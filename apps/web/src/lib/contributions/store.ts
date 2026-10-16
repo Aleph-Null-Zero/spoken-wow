@@ -17,6 +17,7 @@ import type { NpcKind, NpcRowKind } from "@/lib/npc/npc";
 
 import type { ContributionStatus, Submission } from "./contributions";
 import type { EnvelopeSource } from "./envelope";
+import { pageNotes } from "./notes";
 import { DEFAULT_SORT, type ContributionSort, type SortColumn } from "./query";
 
 /** Exported for accept.ts, whose row lock reads the same shape inside its own transaction. */
@@ -126,11 +127,9 @@ export async function setContributionMatch(id: number, answer: BookAnswer, by: s
         set "matchLineId" = $2, "matchBookId" = $3, "matchPageNumber" = $4, "matchNewBook" = $5,
             "updatedAt" = now()
       where "id" = $1 and "source" = 'books'
-        and not exists (select 1 from "book_line" b
-                         where b."note" in ('contribution #' || "contribution"."id",
-                                            'correction from the game, contribution #' || "contribution"."id"))
+        and not exists (select 1 from "book_line" b where b."note" = any($6::text[]))
       returning ${COLUMNS}`,
-    [id, lineId, bookId, pageNumber, newBook],
+    [id, lineId, bookId, pageNumber, newBook, pageNotes(id)],
   );
   const row = rows[0];
   if (!row) return null;

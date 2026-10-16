@@ -1,6 +1,8 @@
 -- book_line's copy of a page's structure is no longer read (book_page holds it), so a page with
--- no pageTextID, or in a book with no integer id, may leave it empty. Relaxing only: every row
--- the previous release reads still has these filled in.
+-- no pageTextID, or in a book with no integer id, may leave it empty. Relaxing only, but not
+-- free to roll back past: once a minted page is accepted, its current rows have no pageId or
+-- bookId, which the previous release's catalogue and export do not expect. Retire those rows
+-- ("isCurrent" = false where "lineId" like 'b:n%') before running it again.
 alter table "book_line" alter column "pageId" drop not null;
 alter table "book_line" alter column "bookId" drop not null;
 alter table "book_line" alter column "pageNumber" drop not null;

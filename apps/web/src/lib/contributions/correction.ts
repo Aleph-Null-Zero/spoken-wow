@@ -42,17 +42,15 @@ import { QuestTextConflict, QuestTextMissing, saveQuestText } from "@/lib/quests
 import { lineStates } from "./known";
 import { momentOf } from "./naming";
 import { CONTRIBUTION_COLUMNS, type Contribution } from "./store";
+import { correctionNote } from "./notes";
 import { spokenFromTemplate } from "./tokens";
+
+export { correctionNote };
 
 export type CorrectionOutcome =
   | { ok: true; contribution: Contribution }
   | { ok: false; reason: "not-found" }
   | { ok: false; reason: "not-a-correction" | "malformed"; message: string };
-
-/** The note a translation's version carries, so its history says where the text came from. */
-export function correctionNote(contributionId: number): string {
-  return `correction from the game, contribution #${contributionId}`;
-}
 
 export async function acceptCorrection(id: number, userId: string): Promise<CorrectionOutcome> {
   const { rows } = await db().query<Contribution>(

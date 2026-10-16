@@ -1263,7 +1263,7 @@ describe("resolveContribution: a books contribution, in any language", () => {
       const { rows } = await db().query<{ n: number }>(
         `select count(*)::int as "n" from pg_stat_activity
           where "datname" = current_database() and "wait_event_type" = 'Lock'
-            and ("query" like 'select pg_advisory_xact_lock(hashtext($1))%' or "query" like 'insert into "book_page"%')`,
+            and ("query" like 'select pg_advisory_xact_lock(%' or "query" like 'insert into "book_page"%')`,
       );
       if (rows[0].n >= 2) return;
       await new Promise((resolve) => setTimeout(resolve, 25));
@@ -1366,6 +1366,37 @@ describe("resolveContribution: a books contribution, in any language", () => {
     const pages = await pagesTitled(title, "esES");
     expect(pages).toHaveLength(2);
     expect(new Set(pages.map((p) => p.bookId)).size).toBe(1);
+  });
+
+  it("keeps a page's own title when an English correction names no book", async () => {
+    const id = await booksRow({ locale: "enUS", text: `New words one ${base}.`, meta: { number: "1", object: String(base) } });
+    expect(await resolveContribution(id, "accepted", RESOLVER)).toMatchObject({ ok: true });
+    expect(await textOf(`b:${base}`, "enUS")).toEqual({
+      text: `New words one ${base}.`, origin: "edited", title: `A Test Tome ${base}`,
+    });
+  });
+
+  it("counts a row accepted before books rows were written as in the explorer where it would be", async () => {
+    const english = await booksRow({ locale: "enUS", text: `Old flow ${base}.`, meta: { book: DUSTY, number: "1" } });
+    const translated = await booksRow({ locale: "esMX", text: `Viejo ${base}.`, meta: { book: "Libro", number: "1" } });
+    const lacking = await booksRow({ locale: "deDE", text: `Alt ${base}.`, meta: { book: "Buch", number: "1" } });
+    await db().query(
+      `update "contribution" set "status" = 'accepted', "matchLineId" = $2 where "id" = any($1::int[])`,
+      [[english, translated, lacking], `b:${base}`],
+    );
+    expect(await lineIsInExplorer(await row(english))).toBe(true);
+    expect(await lineIsInExplorer(await row(translated))).toBe(true);
+    expect(await lineIsInExplorer(await row(lacking))).toBe(false);
+  });
+
+  it("refuses a row whose match changed since the moderator saw it", async () => {
+    const id = await booksRow({ locale: "esES", text: `Palabras esMX uno ${base}.`, meta: { book: "Libro", number: "1" } });
+    const seen = { kind: "translation", lineId: `b:${base}`, via: "text" } as const;
+    await textRow(`b:${base}`, "esES", "Otro texto.");
+    expect(await resolveContribution(id, "accepted", RESOLVER, undefined, false, seen)).toMatchObject({
+      ok: false, reason: "changed",
+    });
+    expect(await versionsOf(`b:${base}`, "esES")).toHaveLength(1);
   });
 
   it("accepts an English page the corpus lacks", async () => {

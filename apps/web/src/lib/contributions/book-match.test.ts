@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { indexCorpus, matchBook, type BookCorpus, type BookMatchInput } from "./book-match";
+import { bookMatchOf, indexCorpus, matchBook, type BookCorpus, type BookMatchInput } from "./book-match";
 
 function page(lineId: string, bookId: string, pageNumber: number, texts: Record<string, string>, titles: Record<string, string>, owner?: [ "object" | "item", number ]) {
   return {
@@ -148,5 +148,21 @@ describe("matchBook", () => {
       matchBook(row({ text: `Palabras ${n}`, meta: { book: `Libro ${n}`, number: "1" } }), big);
     }
     expect(performance.now() - start).toBeLessThan(500);
+  });
+});
+
+describe("bookMatchOf", () => {
+  it("takes a match as the table sent it back", () => {
+    const match = { kind: "new-page", bookId: "n1", pageNumber: 2, via: "title" };
+    expect(bookMatchOf(match)).toBe(match);
+    expect(bookMatchOf({ kind: "ambiguous", candidates: ["b:1", "b:2"] })).toBeDefined();
+  });
+
+  it("drops anything else", () => {
+    expect(bookMatchOf(undefined)).toBeUndefined();
+    expect(bookMatchOf({ kind: "translation" })).toBeUndefined();
+    expect(bookMatchOf({ kind: "new-book", title: "T", pageNumber: "2" })).toBeUndefined();
+    expect(bookMatchOf({ kind: "ambiguous", candidates: [1] })).toBeUndefined();
+    expect(bookMatchOf({ kind: "elsewhere", lineId: "b:1" })).toBeUndefined();
   });
 });
