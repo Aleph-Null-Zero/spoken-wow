@@ -2,7 +2,7 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
-## Unreleased
+## 3.5.0-alpha.1 — 2026-10-16
 
 ### Modules
 
