@@ -17,7 +17,7 @@ from tts_cli.ignores import ignored_files
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
                             moment_of, split_voice, subfolder_from_line_id, variant_file_name)
-from tts_cli.npc_sexes import GENDER_SEX
+from tts_cli.npc_bodies import GENDER_SEX
 from tts_cli.store import SUBFOLDERS, audio_extension, stored_files
 from tts_cli.utils import (get_first_n_words, get_last_n_words,
                            replace_dollar_bs_with_space)

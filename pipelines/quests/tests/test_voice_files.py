@@ -1,6 +1,6 @@
 from tts_cli.build import build_tables, locale_tables
 from tts_cli.ignores import ignored_files
-from tts_cli.npc_sexes import SEX_GENDER
+from tts_cli.npc_bodies import SEX_GENDER
 from tts_cli.voice_files import npc_voices, stored_stems, with_voice_files
 
 

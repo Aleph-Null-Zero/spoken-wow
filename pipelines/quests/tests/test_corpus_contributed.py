@@ -77,7 +77,7 @@ def test_only_the_extracts_own_flavorless_answer_gets_the_default():
 
 
 def sex(npc_id, value, race, flavor, **extra):
-    from tts_cli.npc_sexes import SEX_GENDER
+    from tts_cli.npc_bodies import SEX_GENDER
     return {"npcType": "creature", "npcId": npc_id, "sex": value, "race": race,
             "gender": SEX_GENDER[value], "flavor": flavor, **extra}
 

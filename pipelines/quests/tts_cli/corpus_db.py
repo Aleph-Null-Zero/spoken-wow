@@ -389,7 +389,7 @@ def _import_npc_sexes(cur, rows):
 def import_npc_sexes(display_rows, verbose=True) -> list:
     """The world database's split NPCs into a filled database's npc_sex, without a whole
     extract. Returns the rows written."""
-    from tts_cli.npc_sexes import npc_sexes
+    from tts_cli.npc_bodies import npc_bodies as npc_sexes
 
     conn = connect()
     try:

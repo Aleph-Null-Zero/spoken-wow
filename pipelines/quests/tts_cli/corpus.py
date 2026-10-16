@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 
 from tts_cli.flavors import is_model_voice
 from tts_cli.naming import filename_for_row, line_id_for_row
-from tts_cli.npc_sexes import npc_sexes
+from tts_cli.npc_bodies import npc_bodies as npc_sexes
 
 #: 3: a row a player contributed carries its "contributionId". The extract has none to mark,
 #: but the number says the file's unmarked rows are all the dump's -- which is what lets
