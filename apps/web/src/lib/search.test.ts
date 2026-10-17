@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { audioRelPath } from "./audio";
 import { npcKey } from "./corpus";
 import { corpus as catalogue } from "./quests/catalogue";
-import { batchJobs, batchPlan, isGap, matchingLines, search } from "./search";
+import { batchJobs, batchPlan, hasLiveAudio, isGap, matchingLines, search } from "./search";
 import { madeByOf } from "./takes/made-by";
 import { isModelVoice } from "./voices/voices";
 
@@ -232,6 +232,30 @@ describe("gaps", () => {
     // `voiceable`, not the corpus's `generatable`: the latter was baked in before a stage
     // direction could be narrated, so it now says no to lines this app will happily voice.
     expect(lines.every((l) => l.voiceable && !l.hasAudio)).toBe(true);
+  });
+});
+
+describe("a take in another voice", () => {
+  const voiced = corpus.lines.find((l) => l.source === "accept" && l.generatable && !isModelVoice(l.voice))!;
+  const file = audioRelPath(voiced);
+  const live = new Set([file]);
+
+  it("is no audio for a line now spoken in another voice, and a gap to generate", () => {
+    const takeVoices = new Map([[file, "someone-else"]]);
+    expect(hasLiveAudio(voiced, live, takeVoices)).toBe(false);
+    expect(isGap(voiced, live, undefined, takeVoices)).toBe(true);
+  });
+
+  it("is audio in the line's own voice, or with no voice recorded, or when nobody asked", () => {
+    expect(hasLiveAudio(voiced, live, new Map([[file, voiced.voice]]))).toBe(true);
+    expect(hasLiveAudio(voiced, live, new Map([[file, null]]))).toBe(true);
+    expect(hasLiveAudio(voiced, live)).toBe(true);
+  });
+
+  it("is still audio for progress text, which is never voiced again", () => {
+    const progress = corpus.lines.find((l) => l.source === "progress")!;
+    const path = audioRelPath(progress);
+    expect(hasLiveAudio(progress, new Set([path]), new Map([[path, "someone-else"]]))).toBe(true);
   });
 });
 

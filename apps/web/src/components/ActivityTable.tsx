@@ -225,6 +225,11 @@ function describe(row: ActivityRow): { what: string; quote: string | null } {
       return { what: `made ${speakerName(d)} a speaker of ${row.subject}`, quote: null };
     case "npc.speaker_removed":
       return { what: `took ${speakerName(d)} off ${row.subject}`, quote: null };
+    case "npc.speaker_replaced":
+      return {
+        what: `put ${speakerName(d)} in place of ${speakerName({ npcName: d.fromName, npcType: d.fromType, npcId: d.fromId })} on ${row.subject}`,
+        quote: null,
+      };
     case "npc.resolved":
       return {
         what: `set who ${str(d.npcName) ?? row.subject} is${num(d.sex) === 3 ? " as a woman" : num(d.sex) === 2 ? " as a man" : ""}`,

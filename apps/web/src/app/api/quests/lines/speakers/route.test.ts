@@ -1,7 +1,8 @@
 /**
- * An admin adding an NPC as one more speaker of a line, and taking it back.
+ * An admin adding an NPC as one more speaker of a line, taking one off, and putting one in
+ * another's place.
  *
- * Needs DATABASE_URL and migrations applied (0076 in particular). Every line, speaker and NPC
+ * Needs DATABASE_URL and migrations applied (0076 and 0077 in particular). Every line, speaker and NPC
  * here is this run's own, numbered far outside anything the game files.
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -42,6 +43,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
   await db().query(`delete from "quest_line_speaker" where "lineId" like $1`, [`q:${questId}:%`]);
+  await db().query(`delete from "quest_line_speaker_removed" where "moment" like $1`, [`q:${questId}:%`]);
   await db().query(`delete from "quest_line" where "lineId" like $1`, [`q:${questId}:%`]);
   await db().query(`delete from "npc" where "npcId" between $1 and $2`, [base, base + 10]);
   await db().query(
@@ -49,6 +51,7 @@ afterEach(async () => {
     [String(questId), [giver, second].map(String)],
   );
   await db().query(`delete from "activity" where "actorId" = $1`, [ADMIN]);
+  await db().query(`delete from "contribution" where "ip" = $1`, [IP]);
 });
 
 afterAll(async () => {
@@ -106,6 +109,29 @@ async function speakers(): Promise<{ lineId: string; npcId: number; addedBy: str
   return rows;
 }
 
+async function removals(): Promise<[string, number, string][]> {
+  const { rows } = await db().query<{ moment: string; npcId: number; removedBy: string }>(
+    `select "moment", "npcId", "removedBy" from "quest_line_speaker_removed" where "moment" like $1 order by 1, 2`,
+    [`q:${questId}:%`],
+  );
+  return rows.map((row) => [row.moment, row.npcId, row.removedBy]);
+}
+
+const IP = `test-speakers-${base}`;
+
+/** Marks `npcId`'s rows as a contribution's, as accepting one writes them. */
+async function contributed(npcId: number): Promise<void> {
+  const { rows } = await db().query<{ id: number }>(
+    `insert into "contribution" ("source", "key", "raw", "dedup", "text", "ip")
+     values ('quests', $1, 'raw', $2, 'Bring me six wolf pelts.', $3) returning "id"`,
+    [LINE, `${IP}-${npcId}`, IP],
+  );
+  await db().query(
+    `update "quest_line_speaker" set "contributionId" = $1 where "lineId" like $2 and "npcId" = $3`,
+    [rows[0].id, `q:${questId}:%`, npcId],
+  );
+}
+
 function post(body: unknown): Request {
   return new Request("https://example.com/api/quests/lines/speakers", {
     method: "POST",
@@ -157,6 +183,8 @@ describe("POST /api/quests/lines/speakers", () => {
       [LINE, giver, false],
       [`${LINE}~orc-male-shady`, second, true],
     ]);
+    // Two NPCs speak it now, so the explorer offers to take either off.
+    expect(lines.every((l) => !l.soleSpeaker)).toBe(true);
   });
 
   it("adds it to both sides of a line split by player gender, from either side", async () => {
@@ -216,9 +244,95 @@ describe("DELETE /api/quests/lines/speakers", () => {
     expect((await speakers()).map((row) => row.npcId)).toEqual([giver, giver]);
   });
 
-  it("refuses to remove a speaker the dump has", async () => {
+  it("refuses to remove a line's last speaker", async () => {
     await line();
-    expect((await DELETE(del(LINE, giver))).status).toBe(409);
+    const response = await DELETE(del(LINE, giver));
+    expect(response.status).toBe(409);
+    expect((await response.json()).reason).toBe("last");
     expect(await speakers()).toHaveLength(1);
+  });
+
+  it("removes a speaker the dump has while another speaks the line, and records it for the import", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
+
+    expect(await (await DELETE(del(LINE, giver))).json()).toEqual({ removed: 1 });
+    expect((await speakers()).map((row) => row.npcId)).toEqual([second]);
+    expect(await removals()).toEqual([[LINE, giver, ADMIN]]);
+  });
+
+  it("forgets the removal once the speaker is added back", async () => {
+    await line();
+    await answer(giver, "human", "male", "standard");
+    await answer(second, "orc", "male", "shady");
+    await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
+    await DELETE(del(LINE, giver));
+
+    expect((await POST(post({ lineId: LINE, npcType: "creature", npcId: giver }))).status).toBe(200);
+    expect(await removals()).toEqual([]);
+  });
+
+  it("refuses to remove a contribution's speaker", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
+    await contributed(giver);
+
+    const response = await DELETE(del(LINE, giver));
+    expect(response.status).toBe(409);
+    expect((await response.json()).reason).toBe("contributed");
+    expect(await speakers()).toHaveLength(2);
+  });
+});
+
+describe("POST /api/quests/lines/speakers with replaces", () => {
+  function replace(npcId: number, replaces: number): Request {
+    return post({ lineId: LINE, npcType: "creature", npcId, replaces: { npcType: "creature", npcId: replaces } });
+  }
+
+  it("puts the NPC in the dump's speaker's place, on every side of the line", async () => {
+    await line(true);
+    await answer(second, "orc", "male", "shady");
+    expect((await POST(replace(second, giver))).status).toBe(200);
+
+    const rows = await speakers();
+    expect(rows.map((row) => [row.lineId, row.npcId, row.addedBy])).toEqual([
+      [`${LINE}:f`, second, ADMIN],
+      [`${LINE}:m`, second, ADMIN],
+    ]);
+    expect(await removals()).toEqual([[LINE, giver, ADMIN]]);
+  });
+
+  it("gives the new NPC the line's own file, in its own voice", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    await POST(replace(second, giver));
+
+    const lines = (await corpus()).lines.filter((l) => l.questId === questId);
+    expect(lines.map((l) => [l.lineId, l.npcId, l.voice])).toEqual([[LINE, second, "orc-male-shady"]]);
+    expect(lines[0].soleSpeaker).toBe(true);
+  });
+
+  it("only removes the old speaker when the new one already speaks the line", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
+    expect((await POST(replace(second, giver))).status).toBe(200);
+    expect((await speakers()).map((row) => row.npcId)).toEqual([second]);
+  });
+
+  it("refuses an NPC with no type, and leaves the line as it was", async () => {
+    await line();
+    expect((await POST(replace(second, giver))).status).toBe(400);
+    expect((await speakers()).map((row) => row.npcId)).toEqual([giver]);
+  });
+
+  it("refuses to replace a contribution's speaker, writing nothing", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    await contributed(giver);
+    expect((await POST(replace(second, giver))).status).toBe(409);
+    expect((await speakers()).map((row) => row.npcId)).toEqual([giver]);
   });
 });

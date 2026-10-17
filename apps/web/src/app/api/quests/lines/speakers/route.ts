@@ -9,14 +9,16 @@
  * GET looks an NPC up for the dialog: its answer, and, while that gives it no voice, the roster
  * to answer it with, which the dialog saves through api/npcs first, since a speaker is written
  * with its voice.
- * POST adds it. DELETE takes back a speaker added here, and only those (speakers.ts).
+ * POST adds it, or with `replaces` puts it in that speaker's place. DELETE takes a speaker off
+ * while another still speaks the line (speakers.ts).
  */
 import { recordActivity } from "@/lib/activity/store";
 import { requireAdmin } from "@/lib/generation/authz";
 import { INT32_MAX } from "@/lib/npc/npc";
 import { getResolution, NPC_ROW_KINDS, type NpcRowKind } from "@/lib/npc/store";
 import { baseLineId, momentOf } from "@/lib/contributions/naming";
-import { addSpeaker, removeSpeaker } from "@/lib/quests/speakers";
+import type { Lang } from "@/lib/lang";
+import { addSpeaker, removeSpeaker, replaceSpeaker } from "@/lib/quests/speakers";
 import { loadRoster } from "@/lib/voices/roster-store";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
   if (!moment) return Response.json({ error: "unknown line" }, { status: 404 });
   const npc = npcOf(body.npcType, body.npcId);
   if (!npc) return Response.json({ error: "unknown npc" }, { status: 400 });
+  if (body.replaces !== undefined) return replace(moment, npc, body.replaces, lang, session.user.id);
 
   const outcome = await addSpeaker({ moment, ...npc, addedBy: session.user.id });
   if (!outcome.ok) {
@@ -92,7 +95,7 @@ export async function DELETE(request: Request) {
   const npc = npcOf(params.get("npcType"), params.get("npcId"));
   if (!npc) return Response.json({ error: "unknown npc" }, { status: 400 });
 
-  const outcome = await removeSpeaker({ moment, ...npc });
+  const outcome = await removeSpeaker({ moment, ...npc, removedBy: session.user.id });
   if (!outcome.ok) return Response.json({ error: outcome.message, reason: outcome.reason }, { status: 409 });
 
   // 200 with nothing removed, as the ignore route does: the speaker the caller wanted gone is gone.
@@ -106,4 +109,32 @@ export async function DELETE(request: Request) {
     });
   }
   return Response.json({ removed: outcome.removed });
+}
+
+async function replace(
+  moment: string,
+  npc: { npcType: NpcRowKind; npcId: number },
+  replaces: unknown,
+  lang: Lang,
+  actorId: string,
+): Promise<Response> {
+  const from = replaces && typeof replaces === "object"
+    ? npcOf((replaces as Record<string, unknown>).npcType, (replaces as Record<string, unknown>).npcId)
+    : null;
+  if (!from) return Response.json({ error: "unknown npc to replace" }, { status: 400 });
+
+  const outcome = await replaceSpeaker({ moment, from, to: npc, by: actorId });
+  if (!outcome.ok) {
+    const status = outcome.reason === "unknown-line" ? 404 : outcome.reason === "contributed" ? 409 : 400;
+    return Response.json({ error: outcome.message, reason: outcome.reason }, { status });
+  }
+
+  await recordActivity({
+    kind: "npc.speaker_replaced",
+    lang,
+    actorId,
+    subject: moment,
+    detail: { npcName: outcome.speaker.npcName, ...npc, fromName: outcome.npcName, fromType: from.npcType, fromId: from.npcId },
+  });
+  return Response.json({ replaced: true });
 }

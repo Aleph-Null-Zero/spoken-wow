@@ -15,6 +15,7 @@ import {
   MessageSquareQuoteIcon,
   PencilIcon,
   PlayIcon,
+  RepeatIcon,
   UserPlusIcon,
   XIcon,
 } from "lucide-react";
@@ -144,8 +145,9 @@ type Props = {
   onRename: ((line: ResultLine, what: "npc" | "quest") => void) | null;
   /** Open the ignore dialog, or null for anyone not allowed to make that decision. */
   onIgnore: ((line: ResultLine) => void) | null;
-  /** Add another NPC who says this line, and take back one added that way. Null but for an admin. */
+  /** Add another NPC who says this line, put one in this speaker's place, or take it off. Null but for an admin. */
   onAddSpeaker: ((line: ResultLine) => void) | null;
+  onReplaceSpeaker: ((line: ResultLine) => void) | null;
   onRemoveSpeaker: ((line: ResultLine) => void) | null;
   onRegenerate: (line: ResultLine) => void;
   /** Open the report dialog. Everyone gets this, signed in or not. */
@@ -206,6 +208,7 @@ export default function LineRow({
   onRename,
   onIgnore,
   onAddSpeaker,
+  onReplaceSpeaker,
   onRemoveSpeaker,
   onRegenerate,
   onReport,
@@ -286,21 +289,33 @@ export default function LineRow({
                 <UserPlusIcon className="size-3" />
               </button>
             )}
+            {/* A contribution's speaker goes with the contribution, on /contributions. */}
+            {onReplaceSpeaker && !line.contributionId && (
+              <button
+                type="button"
+                title={`Put another NPC in ${line.npcName}'s place on this line`}
+                aria-label={`Put another NPC in ${line.npcName}'s place on this line`}
+                onClick={() => onReplaceSpeaker(line)}
+                className="hover:text-foreground ml-1 inline-flex align-middle"
+              >
+                <RepeatIcon className="size-3" />
+              </button>
+            )}
+            {onRemoveSpeaker && !line.contributionId && !line.soleSpeaker && (
+              <button
+                type="button"
+                title={`Take ${line.npcName} off this line`}
+                aria-label={`Take ${line.npcName} off this line`}
+                onClick={() => onRemoveSpeaker(line)}
+                className="hover:text-foreground ml-1 inline-flex align-middle"
+              >
+                <XIcon className="size-3" />
+              </button>
+            )}
           </span>
           {line.added && (
             <span className="text-muted-foreground block text-xs" title="Added by hand, not from the game data">
               added
-              {onRemoveSpeaker && (
-                <button
-                  type="button"
-                  title={`Take ${line.npcName} back off this line`}
-                  aria-label={`Take ${line.npcName} back off this line`}
-                  onClick={() => onRemoveSpeaker(line)}
-                  className="hover:text-foreground ml-1 inline-flex align-middle"
-                >
-                  <XIcon className="size-3" />
-                </button>
-              )}
             </span>
           )}
         </td>

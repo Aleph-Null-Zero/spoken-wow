@@ -1,6 +1,6 @@
 """Which of the corpus file's rows an import may write as the dump's, and which are contributions
 the tables already hold (tts_cli/corpus_db.py, migration 0060)."""
-from tts_cli.corpus_db import CONTRIBUTIONS_MARKED, split_contributed
+from tts_cli.corpus_db import CONTRIBUTIONS_MARKED, removed_here, split_contributed
 
 
 def row(line_id, npc_id, contribution=None):
@@ -66,6 +66,15 @@ def test_a_speaker_added_by_hand_unknown_here_keeps_its_mark():
     extracted, skipped = split_contributed(lines, CONTRIBUTIONS_MARKED, set(), set())
     assert extracted == lines
     assert skipped == 0
+
+
+def test_a_speaker_removed_by_hand_is_left_out_on_every_side_of_its_moment():
+    removed = {("q:1:accept", "creature", 10)}
+    assert removed_here(row("q:1:accept", 10), removed)
+    assert removed_here(row("q:1:accept:f", 10), removed)
+    assert not removed_here(row("q:1:accept", 11), removed)
+    assert not removed_here(row("q:1:complete", 10), removed)
+    assert not removed_here({**row("q:1:accept", 10), "npcType": "gameobject"}, removed)
 
 
 def npc(npc_id, race, gender, flavor, npc_type="creature"):

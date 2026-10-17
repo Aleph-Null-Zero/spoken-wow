@@ -23,6 +23,7 @@ import type { LineBroadcast } from "./broadcast/store";
 import type { BroadcastStatus } from "./broadcast/status";
 import type { AudioState } from "./audio-state";
 import { isVoiceable, unvoicedReason, type UnvoicedReason } from "./text-gate";
+import { isModelVoice } from "./voices/voices";
 import { madeByFacets, madeByMatches, type MadeBy, type MadeByFacets } from "./takes/made-by";
 import { recordedMatches, type LiveRecording, type Recorded } from "./recordings/live";
 
@@ -167,6 +168,8 @@ export type SearchContext = {
   reports?: Map<string, number>;
   /** file -> which take is live and how many there are. Public, like the other two rows'. */
   takes?: Map<string, { version: number; takes: number }>;
+  /** file -> the voice its live take was made in. Absent means nobody asked: see hasLiveAudio. */
+  takeVoices?: Map<string, string | null>;
   /** file -> who and what made the live take. Absent for anybody not working in the language. */
   madeBy?: Map<string, MadeBy>;
   /** file -> its live voice-actor recording. Absent for anybody who does not record here. */
@@ -380,10 +383,31 @@ export function isGap(
   line: CorpusLine,
   store: Set<string>,
   overrides: Map<string, LineOverride> = NO_CONTEXT.overrides,
+  takeVoices?: Map<string, string | null>,
 ): boolean {
   const audioPath = audioRelPath(line);
   const text = overrideOf(overrides, audioPath)?.text ?? line.text;
-  return isVoiceable(line, text) && !store.has(audioPath);
+  return isVoiceable(line, text) && !hasLiveAudio(line, store, takeVoices);
+}
+
+/**
+ * Whether the line has audio in the voice it is spoken in now. A take made in another voice is
+ * the file of a speaker the line no longer has (speakers.ts replaceSpeaker), so the line counts
+ * as missing until it is generated again, though packs ship that take until then. A take with
+ * no voice recorded counts, as does every take when `takeVoices` is absent. So does any take of
+ * a progress line, which is never voiced again, and of a line with no voice chosen yet, which
+ * has none to compare with.
+ */
+export function hasLiveAudio(
+  line: CorpusLine,
+  store: Set<string>,
+  takeVoices?: Map<string, string | null>,
+): boolean {
+  const audioPath = audioRelPath(line);
+  if (!store.has(audioPath)) return false;
+  const voice = takeVoices?.get(audioPath);
+  if (!voice || line.source === "progress" || isModelVoice(line.voice)) return true;
+  return voice === line.voice;
 }
 
 /**
@@ -447,6 +471,7 @@ export function matchingLines(
     madeBy,
     recordings,
     broadcast: broadcastOf,
+    takeVoices,
   }: SearchContext = NO_CONTEXT,
 ): CorpusLine[] {
   const query = q.trim();
@@ -461,7 +486,7 @@ export function matchingLines(
       : lines.filter((line) => !ignores.has(baseLineId(line.lineId)));
   }
   if (query) lines = lines.filter((line) => matches(line, query, filter));
-  if (state === "missing") lines = lines.filter((line) => isGap(line, store, overrides));
+  if (state === "missing") lines = lines.filter((line) => isGap(line, store, overrides, takeVoices));
   if (race) lines = lines.filter((line) => line.race === race);
   if (gender) lines = lines.filter((line) => line.gender === gender);
   if (flavor) lines = lines.filter((line) => line.flavor === flavor);
@@ -491,7 +516,7 @@ export function matchingLines(
   if (state === "current") {
     lines = lines.filter((line) => {
       const file = audioRelPath(line);
-      return store.has(file) && stale !== undefined && !stale.has(file);
+      return hasLiveAudio(line, store, takeVoices) && stale !== undefined && !stale.has(file);
     });
   }
   // Absent `dirty` means nobody asked, so nothing matches rather than everything - the
@@ -559,7 +584,7 @@ export function search(
     return {
       ...line,
       key: keys.get(line)!,
-      hasAudio: store.has(audioPath),
+      hasAudio: hasLiveAudio(line, store, context.takeVoices),
       audioPath,
       reportsOpen: context.reports?.get(line.lineId) ?? 0,
       take: context.takes?.get(audioPath) ?? null,

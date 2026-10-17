@@ -1156,10 +1156,26 @@ An admin can add a speaker the game data lacks, from the explorer: the person ic
 speaker's id adds another NPC who says that line, by kind and id. One nobody has answered is
 answered in the same dialog, as `/npcs` would, since a speaker is written with its voice. The row
 goes on each of the moment's lines (both sides of a player-gender split), marked with the admin
-in `addedBy` (migration 0076), and shows as *added* with a way to take it back; the dump's own
-speakers cannot be removed. Like a contributed speaker, an added one numbers from 1,000,000, is
-exported with its `addedBy`, and is kept by `corpus_db.py`'s import until the dump has the same
-NPC on the same line (`lib/quests/speakers.ts`, `api/quests/lines/speakers`).
+in `addedBy` (migration 0076), and shows as *added*. Like a contributed speaker, an added one
+numbers from 1,000,000, is exported with its `addedBy`, and is kept by `corpus_db.py`'s import
+until the dump has the same NPC on the same line (`lib/quests/speakers.ts`,
+`api/quests/lines/speakers`).
+
+The dump can also name the wrong speaker: a quest it says a gameobject offers is offered by a
+creature. An admin takes a speaker off a line with the cross beside it, and puts another NPC in
+its place with the arrows, through the same dialog. Neither is offered for a contribution's
+speaker, which goes when the contribution is rejected, and a line's last speaker cannot be taken
+off, since a line is in the explorer only through its speakers: replace it instead, which adds
+the new NPC before the old one goes. Taking off one of the dump's speakers deletes its rows on
+every line of the moment and records it in `quest_line_speaker_removed` (migration 0077), which
+the import reads so it leaves that NPC off the moment from then on. The export carries those
+records as `removedSpeakers`, written only once there is one. Adding the NPC back deletes the
+record.
+
+The line's file and takes stay as they were. When the speaker left on a line speaks in another
+voice than its live take was made in, the explorer counts the line as missing audio
+(`search.ts` `hasLiveAudio`) until it is generated again, and a pack keeps shipping the old take,
+so the addon plays it until then. Progress text and a line with no voice chosen yet are exempt.
 
 An NPC can be split by body. One creature id can be drawn as several races and both sexes: a
 Stormwind City Guard is a man or a woman at even odds, and an Ironforge Reveler a dwarf, a

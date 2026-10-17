@@ -221,6 +221,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
   }, []);
   const [ignoring, setIgnoring] = useState<ResultLine | null>(null);
   const [addingSpeaker, setAddingSpeaker] = useState<ResultLine | null>(null);
+  const [replacingSpeaker, setReplacingSpeaker] = useState<ResultLine | null>(null);
   // Anyone can open this one, signed in or not - see ReportDialog.
   const [reporting, setReporting] = useState<ResultLine | null>(null);
   const [pendingBatch, setPendingBatch] = useState<
@@ -415,8 +416,8 @@ export default function Explorer({ facets }: { facets: Facets }) {
   }, []);
 
   /**
-   * Take back a speaker an admin added. The page is fetched again rather than patched: the
-   * speaker's voice's line goes with it.
+   * Take a speaker off a line. The page is fetched again rather than patched: the speaker's
+   * voice's line goes with it, and the file may pass to another speaker's voice.
    */
   const removeSpeaker = useCallback(
     async (line: ResultLine) => {
@@ -426,7 +427,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
       );
       if (!response?.ok) {
         const body = (await response?.json().catch(() => ({}))) as { error?: string } | undefined;
-        setQueueNote(body?.error ?? "Could not take the speaker back.");
+        setQueueNote(body?.error ?? "Could not take the speaker off.");
         return;
       }
       refetch();
@@ -934,6 +935,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
                   onRename={lang !== BASE_LANG && canEdit ? rename : null}
                   onIgnore={canIgnore ? setIgnoring : null}
                   onAddSpeaker={canSpeakers ? setAddingSpeaker : null}
+                  onReplaceSpeaker={canSpeakers ? setReplacingSpeaker : null}
                   onRemoveSpeaker={canSpeakers ? (l) => void removeSpeaker(l) : null}
                   onReport={setReporting}
                   onRegenerate={regenerateLine}
@@ -998,6 +1000,16 @@ export default function Explorer({ facets }: { facets: Facets }) {
           refetch();
         }}
         onCancel={() => setAddingSpeaker(null)}
+      />
+
+      <AddSpeakerDialog
+        line={replacingSpeaker}
+        replace
+        onSaved={() => {
+          setReplacingSpeaker(null);
+          refetch();
+        }}
+        onCancel={() => setReplacingSpeaker(null)}
       />
 
       <ReportDialog
