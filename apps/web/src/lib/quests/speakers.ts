@@ -219,13 +219,13 @@ export async function addSpeaker(args: {
 
 export type RemoveOutcome =
   | { ok: true; removed: number; npcName: string | null }
-  | { ok: false; reason: "last" | "contributed"; message: string };
+  | { ok: false; reason: "last"; message: string };
 
 /**
  * Takes an NPC off a moment, every line and language of it, while another NPC still speaks it in
  * each of those languages: a line is in the explorer only through its speakers. A speaker of the
- * dump's is recorded as removed, so no import brings it back. A contribution's speaker is not
- * removed here: it goes when the contribution is rejected. The caller holds the moment's lock.
+ * dump's or a contribution's is recorded as removed, so no import brings it back. The caller
+ * holds the moment's lock.
  *
  * A line's file was made in its first speaker's voice, as the site and the pack build read it, so
  * when that speaker goes the next one inherits the voice its row is written with. The file then
@@ -239,9 +239,6 @@ async function removeFromMoment(
   const rows = await momentSpeakers(client, args.moment);
   const ofNpc = rows.filter((row) => isNpc(row, args));
   if (ofNpc.length === 0) return { ok: true, removed: 0, npcName: null };
-  if (ofNpc.some((row) => row.contributionId !== null)) {
-    return { ok: false, reason: "contributed", message: "This speaker came from a contribution: reject it instead" };
-  }
   const langs = new Set(ofNpc.map((row) => row.lang));
   if ([...langs].some((lang) => !rows.some((row) => row.lang === lang && !isNpc(row, args)))) {
     return { ok: false, reason: "last", message: "A line needs a speaker: add another before removing this one" };
@@ -263,13 +260,13 @@ async function removeFromMoment(
     [args.moment, args.npcType, args.npcId],
   );
 
-  const { rows: removed } = await client.query<{ npcName: string | null; extracted: boolean }>(
+  const { rows: removed } = await client.query<{ npcName: string | null; byHand: boolean }>(
     `delete from "quest_line_speaker"
       where ${answersQuestMomentSql(`"lineId"`, "$1")} and "npcType" = $2 and "npcId" = $3
-      returning "npcName", "addedBy" is null as "extracted"`,
+      returning "npcName", "addedBy" is not null as "byHand"`,
     [args.moment, args.npcType, args.npcId],
   );
-  if (removed.some((row) => row.extracted)) {
+  if (removed.some((row) => !row.byHand)) {
     await client.query(
       `insert into "quest_line_speaker_removed" ("moment", "npcType", "npcId", "removedBy")
        values ($1, $2, $3, $4) on conflict do nothing`,
@@ -288,7 +285,7 @@ export async function removeSpeaker(args: Npc & { moment: string; removedBy: str
 
 export type ReplaceOutcome =
   | { ok: true; speaker: Speaker; npcName: string | null }
-  | { ok: false; reason: "unknown-line" | "no-voice" | "contributed" | "last" | "same" | "gone"; message: string };
+  | { ok: false; reason: "unknown-line" | "no-voice" | "last" | "same" | "gone"; message: string };
 
 /** Carries a refusal out of the transaction, so the add before it is rolled back. */
 class Refused extends Error {
