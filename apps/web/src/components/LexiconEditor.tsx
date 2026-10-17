@@ -664,7 +664,8 @@ function SyncBanner({
 
   return (
     <p className="text-muted-foreground text-xs">
-      In force since {saved.syncedAt ? new Date(saved.syncedAt).toLocaleString() : "—"} · version{" "}
+      In force since {saved.syncedAt ? new Date(saved.syncedAt).toLocaleString() : "—"} ·
+      dictionary <code>{saved.locator?.dictionaryId}</code> · version{" "}
       <code>{saved.locator?.versionId}</code>
       {saved.rulesKept !== null && <> · {saved.rulesKept} rules</>}
     </p>
