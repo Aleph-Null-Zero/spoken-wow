@@ -129,7 +129,7 @@ Z:Set("autoplayExplored", true)
 stub.FireEvent("ZONE_CHANGED")
 local clip = Spoken:GetCurrent()
 Expect("standing in Strahnbrad plays its story by its own id", clip and clip.key, "s:1424:strahnbrad")
-Expect("...headed by Alterac Mountains, where it is listed", clip and clip.present.header, "Alterac Mountains")
+Expect("...headed by its own name, not Alterac Mountains, where it is listed", clip and clip.present.header, "Strahnbrad")
 Expect("...with its picture", clip and clip.present.picture and clip.present.picture.file,
     [[Interface\AddOns\Spoken_Places\Textures\Pictures\1424-strahnbrad]])
 Expect("...and its report names the story's map", clip and Z:ReportURL(clip.mapID, clip.areaKey),
@@ -154,7 +154,7 @@ Z:Set("autoplayExplored", true)
 stub.FireEvent("ZONE_CHANGED")
 clip = Spoken:GetCurrent()
 Expect("standing at the Great Lift's top in The Barrens plays its story", clip and clip.key, "s:1441:great lift")
-Expect("...headed by Thousand Needles, where it is listed", clip and clip.present.header, "Thousand Needles")
+Expect("...headed by its own name, not Thousand Needles, where it is listed", clip and clip.present.header, "Great Lift")
 
 Z = Boot({ map = HILLSBRAD, zone = "Hillsbrad Foothills", subzone = "Southshore" })
 Expect("not found before it is stood in", Z:IsFound(HILLSBRAD, "strahnbrad"), false)

@@ -93,9 +93,10 @@ a language pins it on every client.
 
 `SpokenZones:NewLoreSound(mapID, areaKey)` builds the clip: its key is `z:<mapID>` for a zone and
 `s:<mapID>:<key>` for an area (frozen, see the root `AGENTS.md`), the file and length from the
-voice pack's lookup, and the `present` table Spoken's windows draw: header (the zone), label,
-words (the story in the pack's language), a font where that script needs one, the zone badge,
-the zone's icon as the face (Spoken's book without one), the place's picture and the Report action.
+voice pack's lookup, and the `present` table Spoken's windows draw: header (the place's own
+name), words (the story in the pack's language), a font where that script needs one, the zone
+badge, the zone's icon as the face (Spoken's book without one), the place's picture and the
+Report action.
 
 - Play on a page and `/spp play` use `PlayNow`: the story starts at once, ahead of the queue.
 - A shift-click on a row in the Compendium queues the story behind what is playing (`QueueLore`),

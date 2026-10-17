@@ -73,9 +73,8 @@ end
 --     continues = true,                       -- optional; its next part follows (source:Continue), no pause or cue
 --     span     = { before = 12, total = 40 }, -- optional; seconds of its item before it and in all, for the progress bar
 --     present  = {
---       header   = "Eagan Peltskinner",       -- NPC name | place above | book title;
---                                             -- nil over the world's own lore
---       label    = "Wolves Across the Border",-- quest title | subzone | page label
+--       header   = "Eagan Peltskinner",       -- NPC name | place name | book title
+--       label    = "Wolves Across the Border",-- quest title | page label
 --       transcript = "Full dialogue text",   -- optional; falls back to clip.text
 --       font     = [[Interface\AddOns\...\x.ttf]], -- optional; draws this clip's header, label
 --                                             -- and text, for a script the game's font has no

@@ -464,7 +464,7 @@ local ACTIONS = {
 --- zone's continent, a continent's world. Nil for the world.
 function SpokenZones:PlaceAbove(mapID)
 	local C = _G.SpokenCompendium
-	-- A Compendium that failed to load costs the header, not the clip.
+	-- A Compendium that failed to load costs the place's line.
 	if not C or mapID == C.WORLD then return nil end
 	for _, continent in ipairs(C.CONTINENTS) do
 		if continent == mapID then return C.WORLD end
@@ -485,7 +485,7 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		return nil
 	end
 
-	local label = self:GetAudioLabel(mapID, areaKey)
+	local name = self:GetAudioLabel(mapID, areaKey)
 	-- The place's picture and its frayed edge, for a window that shows one over the words.
 	local picture, mask
 	if self.Picture then picture, mask = self:Picture(mapID, areaKey) end
@@ -498,10 +498,6 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 	-- the client's file cannot draw names the file that can. Otherwise the window's own is kept.
 	local font = self.FontFor and self:FontFor(GameFontNormal, language)
 	if font == GameFontNormal:GetFont() then font = nil end
-	-- An area is headed by the zone Azeroth's Compendium lists it in: Razorfen Downs by The Barrens,
-	-- where its entrance is, and Strahnbrad by Alterac Mountains, their stories kept under Thousand
-	-- Needles and Hillsbrad Foothills.
-	local zone = areaKey and (self.AreaZone and self:AreaZone(mapID, areaKey) or mapID)
 	return {
 		key = areaKey and ("s:" .. mapID .. ":" .. areaKey) or ("z:" .. mapID),
 		path = path,
@@ -511,9 +507,8 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		mapID = mapID,
 		areaKey = areaKey,
 		present = {
-			-- An area under its zone; anything else under the place above it.
-			header = areaKey and (self:GetMapName(zone) or label) or self:GetMapName(self:PlaceAbove(mapID)),
-			label = label,
+			-- The place's own name: heading a subzone with its zone names the wrong place.
+			header = name,
 			transcript = entry and entry.full,
 			font = font,
 			bullet = "zone",

@@ -80,7 +80,7 @@ end
 --- tests. Contribute.lua needs the real GetPlayerMapID, GetLoreWithFallback, GetSubzoneLore,
 --- GetLore and IsPending, all of which live in Core.lua, so this loads that too, and the
 --- language and pack answers it sends, from Language.lua and Audio.lua. Spoken's UI/Compendium.lua
---- too where Spoken has not loaded it: a clip's header is the place above, from its tree.
+--- too, where Spoken has not loaded it: Audio.lua's PlaceAbove reads the Compendium's tree.
 --- `seed` is the addon table as it stands before Language.lua runs, for what the
 --- generated data would have put there first (SpokenZones.Languages).
 function M.LoadZones(addonDirectory, seed)

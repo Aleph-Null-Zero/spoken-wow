@@ -61,7 +61,7 @@ Z:Set("autoplayExplored", true)
 stub.FireEvent("ZONE_CHANGED")
 local clip = Spoken:GetCurrent()
 Expect("standing at its entrance plays its story by its own id", clip and clip.key, "s:1441:razorfen downs")
-Expect("...headed by The Barrens, where its entrance is", clip and clip.present.header, "The Barrens")
+Expect("...headed by its own name, not The Barrens, where its entrance is", clip and clip.present.header, "Razorfen Downs")
 Expect("...and its report names the story's map", clip and Z:ReportURL(clip.mapID, clip.areaKey),
     "https://spoken.rusty.one/zones/r/1441/razorfen-downs")
 Expect("...and the visit is recorded at its entrance, where it is found",

@@ -56,14 +56,14 @@ local zone = Z:NewLoreSound(1411, nil)
 Expect("a zone clip keeps the frozen line id as its key", zone.key, "z:1411")
 Expect("...resolves the pack path", zone.path, [[Interface\AddOns\ZoneLoreAudio\Sounds\1411\zone.mp3]])
 Expect("...and the pack's duration", zone.length, 81.9)
-Expect("...headed by where the zone is, its continent, not its own name twice", zone.present.header, "Kalimdor")
+Expect("...headed by its own name, not the continent it sits on", zone.present.header, "Durotar")
 local packZones = _G.ZoneLoreAudioPacks.ZoneLoreAudio.zones
 for _, id in ipairs({ 1454, 1414, 947 }) do packZones[id] = { file = id .. "\\zone", len = 10 } end
 local function Header(id) return tostring(Z:NewLoreSound(id, nil).present.header) end
-Expect("a city is headed by the zone around it, a continent by the world, the world by nothing",
-    Header(1454) .. " " .. Header(1414) .. " " .. Header(947), "Durotar Azeroth nil")
+Expect("a city, a continent and the world are each headed by their own name",
+    Header(1454) .. " " .. Header(1414) .. " " .. Header(947), "Orgrimmar Kalimdor Azeroth")
 for _, id in ipairs({ 1454, 1414, 947 }) do packZones[id] = nil end
-Expect("...label is the zone too", zone.present.label, "Durotar")
+Expect("...with nothing under it: the name is the window's one line", zone.present.label, nil)
 Expect("...portrait is the zone's icon, trimmed of its border", zone.present.portrait.kind .. ":" .. zone.present.portrait.texture
     .. ":" .. table.concat(zone.present.portrait.texCoord, ","), "texture:" .. [[Interface\AddOns\Spoken\Textures\Zones\Durotar]] .. ":0.08,0.92,0.08,0.92")
 Expect("...and the book for a map with no icon", Z:Portrait(9999).texture, BOOK)
@@ -73,7 +73,8 @@ Expect("...remembers where it came from", zone.mapID, 1411)
 
 local sub = Z:NewLoreSound(1411, "valley of trials")
 Expect("a subzone clip keeps the frozen line id", sub.key, "s:1411:valley of trials")
-Expect("...header is the zone, label the subzone", sub.present.header .. " / " .. sub.present.label, "Durotar / Valley of Trials")
+Expect("...headed by the subzone itself, not the zone it is listed under", sub.present.header, "Valley of Trials")
+Expect("...and no label under it", sub.present.label, nil)
 Expect("no pack entry, no clip", Z:NewLoreSound(1426, nil), nil)
 Expect("a place with no picture sends none", zone.present.picture, nil)
 Z.Picture = function(_, mapID, key) if mapID == 1411 and not key then return "Pictures/1411", "Pictures/Mask3" end end
@@ -100,7 +101,7 @@ Expect("the player's AUDIO_CHANGED reaches SpokenZones's own listeners", changed
 Expect("starting marks the area heard in the per-character record", Z:HasHeard(1411, nil), true)
 
 local F = env.PlayerFrame
-Expect("the player frame shows where the zone is, over its name", F.frame.container.name:GetText(), "Kalimdor")
+Expect("the player frame shows the zone's own name", F.frame.container.name:GetText(), "Durotar")
 Z.GetMapName = GetMapName
 -- Report only, as an icon among the header's controls. Reading the text is reached from the map,
 -- the minimap menu and /spz; a button on the player that opened a window over the thing being

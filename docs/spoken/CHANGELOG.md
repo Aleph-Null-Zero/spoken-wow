@@ -13,6 +13,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   plays in English instead, and reporting it used to land on the English page, where nobody
   looking after your language would see it. It now goes to your language's page.
   *([rusty-key](https://github.com/rusty-key))*
+- **A place's story is headed by the place's own name.** A subzone was headed by the zone it is
+  listed under and a zone by its continent, so discovering Moonbrook read "Westfall" over the
+  words. The header now names the place itself, with nothing under it.
+  *([anon1231823](https://github.com/anon1231823))*
 
 ## 3.5.0 — 2026-10-17
 
