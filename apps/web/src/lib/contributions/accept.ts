@@ -645,7 +645,7 @@ export async function writeWording(
 async function nextWording(client: PoolClient, moment: string): Promise<number> {
   const { rows } = await client.query<{ n: number | null }>(
     `select max(substring("lineId" from ':w([0-9]+)(?::[mf])?$')::int) as "n"
-       from "quest_line" where ${wordingsOfMomentSql(`"lineId"`, "$1")}`,
+       from "quest_line" where ${wordingsOfMomentSql(`"lineId"`, `"questId"`, "$1")}`,
     [moment],
   );
   return (rows[0].n ?? 0) + 1;

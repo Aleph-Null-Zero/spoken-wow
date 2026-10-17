@@ -17,9 +17,10 @@ const gossipId = `g:test-known-${quest}`;
 async function line(lineId: string, lang: string, source: string, originalText: string, localeText: string | null) {
   await db().query(
     `insert into "quest_line"
-       ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "fileName",
+       ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "questId", "fileName",
         "text", "originalText", "localeText")
-     values ($1, 0, $2, 1, true, 'extracted', $3, $1, $4, $4, $5)`,
+     values ($1, 0, $2, 1, true, 'extracted', $3,
+             case when $1 like 'q:%' then split_part($1, ':', 2)::int end, $1, $4, $4, $5)`,
     [lineId, lang, source, originalText, localeText],
   );
 }
@@ -78,6 +79,10 @@ describe("lineStates", () => {
     expect(await lineStates([moment("accept", "Hello, $N.\n\nTurn right at the tree.", "frFR")])).toEqual([
       { kind: "missing" },
     ]);
+  });
+
+  it("calls a moment with an event no quest has missing, whatever the event says", async () => {
+    expect(await lineStates([moment("accept(", "Hello, $N.")])).toEqual([{ kind: "missing" }]);
   });
 
   it("calls a moment the corpus lacks missing", async () => {

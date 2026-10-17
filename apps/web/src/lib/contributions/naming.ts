@@ -87,11 +87,13 @@ export function questMomentOf(lineId: string): string {
 }
 
 /**
- * Every wording of a quest moment in SQL, each in any player-gender form. A moment id holds
- * only digits, letters and colons, so it is safe inside the pattern.
+ * Every wording of a quest moment (`q:{questId}:{event}`, its event one of QUEST_EVENTS, so the
+ * id is safe inside the pattern) in SQL, each in any player-gender form. The quest id narrows
+ * it first: a pattern alone cannot use the lineId index, and read every row of the language.
  */
-export function wordingsOfMomentSql(column: string, moment: string): string {
-  return `(${answersQuestMomentSql(column, moment)} or ${column} ~ ('^' || ${moment} || ':w[1-9][0-9]*(:[mf])?$'))`;
+export function wordingsOfMomentSql(column: string, questIdColumn: string, moment: string): string {
+  return `${questIdColumn} = split_part(${moment}, ':', 2)::int
+    and (${answersQuestMomentSql(column, moment)} or ${column} ~ ('^' || ${moment} || ':w[1-9][0-9]*(:[mf])?$'))`;
 }
 
 export function questFileName(questId: number, event: QuestEvent): string {
