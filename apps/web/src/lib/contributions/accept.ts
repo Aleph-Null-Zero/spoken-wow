@@ -66,7 +66,11 @@ import {
   baseLineId,
   lineIdentityFor,
   playerGenderForms,
+  questWordingFileName,
+  questWordingLineId,
+  wordingsOfMomentSql,
   type LineIdentity,
+  type QuestEvent,
 } from "./naming";
 import { gossipIdentity, recordBroadcast, resolveGossip, type GossipPlan } from "./gossip";
 import { noVoice } from "./speaker";
@@ -193,7 +197,7 @@ function indexOf(lines: readonly CorpusLine[], roster: Roster): CorpusIndex {
   return index;
 }
 
-async function speakerFor(
+export async function speakerFor(
   contribution: Contribution,
   resolutions?: Resolutions,
 ): Promise<{ ok: true; speaker: Speaker } | ResolveRefusal> {
@@ -467,7 +471,7 @@ type MomentRow = Pick<CorpusLine, "lineId" | "playerGender" | "fileName" | "ques
  * template with "adventurer" in place of $N, $C and $R; another language keeps them, as the
  * dump's own translations do, and is what that client showed, so it is `localeText` too.
  */
-async function insertLine(
+export async function insertLine(
   client: PoolClient,
   contributionId: number,
   userId: string,
@@ -521,7 +525,7 @@ async function englishOriginals(client: PoolClient, momentId: string): Promise<M
  * player gender, whatever other languages made of the moment; a client has already picked one
  * side of any $G, so a contribution is almost always one line.
  */
-async function ownRows(client: PoolClient, identity: LineIdentity, text: string, lang: Lang): Promise<MomentRow[]> {
+export async function ownRows(client: PoolClient, identity: LineIdentity, text: string, lang: Lang): Promise<MomentRow[]> {
   const originals = lang === BASE_LANG ? new Map<string, string>() : await englishOriginals(client, identity.lineId);
   return playerGenderForms(identity.lineId, identity.fileName, branchesOnPlayerGender(text)).map((form) => ({
     ...form,
@@ -592,6 +596,59 @@ async function acceptQuestMoment(
     }
   }
   return null;
+}
+
+/**
+ * Another wording of a quest moment the corpus already has: the contribution's text as the
+ * moment's next `:w{n}` line in its language, spoken by its NPC (naming.py says what a wording
+ * is). Numbered past every wording the moment has in any language, under the moment's lock,
+ * so two accepts never take one number.
+ */
+export async function writeWording(
+  contribution: Contribution,
+  userId: string,
+): Promise<{ ok: true; lineId: string } | ResolveRefusal> {
+  const identity = lineIdentityFor(contribution.meta, contribution.text, "", "");
+  if (!identity || identity.questId === null || !contribution.text) {
+    return { ok: false, reason: "malformed", message: "Only a quest line can be another wording." };
+  }
+  const found = await speakerFor(contribution);
+  if (!found.ok) return found;
+  const lang = contribution.locale as Lang;
+  const event = identity.source as QuestEvent;
+
+  const client = await db().connect();
+  try {
+    await client.query("begin");
+    await lockLine(client, identity.lineId);
+    const n = await nextWording(client, identity.lineId);
+    const wording: LineIdentity = {
+      ...identity,
+      lineId: questWordingLineId(identity.questId, event, n),
+      fileName: questWordingFileName(identity.questId, event, n),
+    };
+    for (const row of await ownRows(client, wording, contribution.text, lang)) {
+      await insertLine(client, contribution.id, userId, row, contribution.text, lang);
+      await insertSpeaker(client, { lineId: row.lineId, variant: 0, lang, speaker: found.speaker, contributionId: contribution.id });
+    }
+    await client.query("commit");
+    return { ok: true, lineId: wording.lineId };
+  } catch (error) {
+    await client.query("rollback").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/** One past the highest wording a moment has in any language: 1 for a moment with only its first. */
+async function nextWording(client: PoolClient, moment: string): Promise<number> {
+  const { rows } = await client.query<{ n: number | null }>(
+    `select max(substring("lineId" from ':w([0-9]+)(?::[mf])?$')::int) as "n"
+       from "quest_line" where ${wordingsOfMomentSql(`"lineId"`, "$1")}`,
+    [moment],
+  );
+  return (rows[0].n ?? 0) + 1;
 }
 
 /**

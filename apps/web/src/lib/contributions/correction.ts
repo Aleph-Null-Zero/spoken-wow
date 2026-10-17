@@ -27,6 +27,10 @@
  * fails after the text is written is simply sent again. A book page so written already reads
  * as known; its current version carrying this contribution's note is what lets the resend
  * flip the status alone.
+ *
+ * A correction that is not a fix but another wording of the moment -- another giver's, or the
+ * same NPC's to another player -- is accepted with acceptAsWording, which writes beside the
+ * line instead of over it.
  */
 import "server-only";
 
@@ -39,6 +43,7 @@ import { englishMomentLines, rewriteEnglish } from "@/lib/quests/english-rewrite
 import { OverrideError } from "@/lib/quests/override";
 import { QuestTextConflict, QuestTextMissing, saveQuestText } from "@/lib/quests/text";
 
+import { contributedLineExists, writeWording } from "./accept";
 import { lineStates } from "./known";
 import { momentOf } from "./naming";
 import { CONTRIBUTION_COLUMNS, type Contribution } from "./store";
@@ -48,7 +53,7 @@ import { spokenFromTemplate } from "./tokens";
 export type CorrectionOutcome =
   | { ok: true; contribution: Contribution }
   | { ok: false; reason: "not-found" }
-  | { ok: false; reason: "not-a-correction" | "malformed"; message: string };
+  | { ok: false; reason: "not-a-correction" | "malformed" | "needs-speaker"; message: string };
 
 export async function acceptCorrection(id: number, userId: string): Promise<CorrectionOutcome> {
   const { rows } = await db().query<Contribution>(
@@ -113,6 +118,45 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
 }
 
 /**
+ * Accepting a correction as another wording of its moment rather than a fix of it: both texts
+ * are the game's, shown to different players or by different givers. The corpus line is left
+ * alone and the player's text is written beside it (accept.ts writeWording). Once written the
+ * row reads as known, so a resend that finds its wording only flips the status.
+ */
+export async function acceptAsWording(id: number, userId: string): Promise<CorrectionOutcome> {
+  const { rows } = await db().query<Contribution>(
+    `select ${CONTRIBUTION_COLUMNS} from "contribution" where "id" = $1`,
+    [id],
+  );
+  const contribution = rows[0];
+  if (!contribution) return { ok: false, reason: "not-found" };
+  const lang = contribution.locale;
+  if (contribution.source !== "quests" || !contribution.text || !isLang(lang)) {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "Only a quest line sent in a site language can be another wording.",
+    };
+  }
+  if (await contributedLineExists(id)) return markAccepted(contribution, lang, userId, { wording: true });
+
+  const [state] = await lineStates([contribution]);
+  if (state.kind !== "changed") {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "The corpus already has this text for the moment -- nothing to add.",
+    };
+  }
+  const written = await writeWording(contribution, userId);
+  if (!written.ok) {
+    if (written.reason === "needs-speaker" || written.reason === "malformed") return written;
+    return { ok: false, reason: "malformed", message: "message" in written ? written.message : "Could not write the wording." };
+  }
+  return markAccepted(contribution, lang, userId, { wording: written.lineId });
+}
+
+/**
  * Whether this contribution's correction is already the page's current text in its language:
  * the text was saved and the status flip after it failed, so the row now reads as known.
  */
@@ -124,7 +168,12 @@ async function bookCorrectionWritten(id: number, lang: string): Promise<boolean>
   return (rowCount ?? 0) > 0;
 }
 
-async function markAccepted(contribution: Contribution, lang: Lang, userId: string): Promise<CorrectionOutcome> {
+async function markAccepted(
+  contribution: Contribution,
+  lang: Lang,
+  userId: string,
+  extra: Record<string, unknown> = {},
+): Promise<CorrectionOutcome> {
   const { id } = contribution;
   const client = await db().connect();
   try {
@@ -143,7 +192,7 @@ async function markAccepted(contribution: Contribution, lang: Lang, userId: stri
         source: contribution.source,
         subject: String(id),
         actorId: userId,
-        detail: { status: "accepted", key: contribution.key, correction: true },
+        detail: { status: "accepted", key: contribution.key, correction: true, ...extra },
       },
       client,
     );

@@ -6,8 +6,11 @@
  * player sent it in. That includes English, whose rewrite is a line_override -- which the
  * explorer's own override route keeps to `regenerate`, but a correction is text the game
  * itself shows, not a rewrite someone composed.
+ *
+ * `as: "wording"` keeps the corpus text and adds the player's as another wording of the
+ * moment (acceptAsWording).
  */
-import { acceptCorrection } from "@/lib/contributions/correction";
+import { acceptAsWording, acceptCorrection } from "@/lib/contributions/correction";
 import { contributionLocale } from "@/lib/contributions/store";
 import { requireCapability } from "@/lib/generation/authz";
 import { BASE_LANG, isLang } from "@/lib/lang";
@@ -15,7 +18,7 @@ import { BASE_LANG, isLang } from "@/lib/lang";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => ({}))) as { id?: unknown };
+  const body = (await request.json().catch(() => ({}))) as { id?: unknown; as?: unknown };
 
   const id = Number(body.id);
   if (!Number.isInteger(id) || id <= 0) {
@@ -31,7 +34,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "unknown contribution" }, { status: 404 });
   }
 
-  const outcome = await acceptCorrection(id, session.user.id);
+  const outcome =
+    body.as === "wording" ? await acceptAsWording(id, session.user.id) : await acceptCorrection(id, session.user.id);
   if (!outcome.ok) {
     if (outcome.reason === "not-found") {
       return Response.json({ error: "unknown contribution" }, { status: 404 });
