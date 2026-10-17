@@ -123,9 +123,7 @@ make zones-full-release             # all of the above, with one question before
 - Bump `PACK_FORMAT` in `Audio.lua` only when the data shape of `Sounds.lua` changes, and do not
   cut a pack for a change to the module alone.
 - The module ships in Spoken's zip: `scripts/spoken/package.sh` calls `scripts/zones/package.sh`.
-  `scripts/zones/release.sh zones` uploads the old `SpokenZones` project's last file, the
-  tombstone that `make package-spoken-retired` builds. `make zones-release` with no target
-  uploads both that and the English pack.
+  `make zones-release` with no target uploads the English pack.
 
 `make zones-acted` builds an overlay pack from the voice actors' recordings, as
 `SpokenZonesAudioOverlays`. No code in the addon reads that registry yet, so an overlay does

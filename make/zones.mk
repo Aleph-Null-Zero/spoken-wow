@@ -7,7 +7,7 @@
         pull-history pull-live pull-recorded package-acted acted history-status sounds ssh-check sync check-synced full-release \
         icon lore-import lore-import-names lore-export lore-check lore-rewrite aliases languages locale-check \
         areas forever-areas pictures \
-        release release-dry release-wago release-curse release-audio release-audio-dry
+        release release-dry release-audio release-audio-dry
 
 # The \# escapes are required: an unescaped # starts a make comment, even
 # inside a $(shell ...) call.
@@ -304,28 +304,17 @@ check-synced: ## Compare the local zones data with the droplet's, and prompt if 
 package-audio: check-synced sounds lookup validate-audio ## Build the sound-pack zip (LOCALE=esMX for that language's)
 	@LOCALE="$(or $(LOCALE),enUS)" ./scripts/zones/package-audio.sh
 
-release-dry: ## Show what `make release` would upload to CurseForge and Wago
+release-dry: ## Show what `make release` would upload to CurseForge
 	@./scripts/zones/release.sh --dry-run
 
-release: ## Upload the built zips to CurseForge and Wago (needs both tokens)
+release: ## Upload the built sound pack to CurseForge (needs CURSEFORGE_TOKEN)
 	@./scripts/zones/release.sh
 
-# One language's sound pack, to CurseForge (and Wago where its page has an id). English's is
-# `release` as always; LOCALE picks another language's page under publishers/zones/.
 release-audio-dry: ## Show what uploading the sound pack would send (LOCALE=xx for a language)
 	@./scripts/zones/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
 
 release-audio: ## Upload the sound pack (LOCALE=xx for a language's)
 	@./scripts/zones/release.sh --lang=$(or $(LOCALE),enUS) audio
-
-# One store at a time, for the case a release half-landed: a zip CurseForge took and Wago
-# refused, or the other way round. Re-running `release` would upload the file twice to the
-# store that already has it, which each of them shows as a duplicate rather than ignoring.
-release-wago: ## Upload the built zips to Wago only (needs WAGO_TOKEN)
-	@./scripts/zones/release.sh --store=wago
-
-release-curse: ## Upload the built zips to CurseForge only (needs CURSEFORGE_TOKEN)
-	@./scripts/zones/release.sh --store=curseforge
 
 # The whole pack release, from production's data to the stores, with one question before
 # anything is uploaded. Each step is its own target and still runs alone; this is their order.
@@ -338,9 +327,9 @@ full-release: require-droplet ## Sync, pull live takes, build and upload the sou
 	@$(MAKE) --no-print-directory -f make/zones.mk sync
 	@$(MAKE) --no-print-directory -f make/zones.mk pull-live LOCALE=$(LOCALE)
 	@$(MAKE) --no-print-directory -f make/zones.mk package-audio LOCALE=$(LOCALE)
-	@./scripts/zones/release.sh --dry-run --store=curseforge --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/zones/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
 	@./scripts/audio-github-release.sh --dry-run zones $(or $(LOCALE),enUS)
 	@printf 'Upload the zones pack to CurseForge and GitHub? [y/N] '; \
 	  read -r answer; [ "$$answer" = y ] || { echo aborted; exit 1; }
-	@./scripts/zones/release.sh --store=curseforge --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/zones/release.sh --lang=$(or $(LOCALE),enUS) audio
 	@./scripts/audio-github-release.sh zones $(or $(LOCALE),enUS)

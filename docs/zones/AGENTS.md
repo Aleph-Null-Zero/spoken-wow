@@ -59,5 +59,4 @@ make lint                 # what CI gates on
   Bump it only when the pack's data shape changes.
 - `make zones-full-release` chains sync, pull-live, package-audio and the upload, and asks
   before uploading.
-- `scripts/zones/release.sh` uploads the English pack and the tombstone of the retired
-  `SpokenZones` project, or one language's pack with `--lang`. Never add code to the tombstone.
+- `scripts/zones/release.sh` uploads the English pack, or one language's pack with `--lang`.

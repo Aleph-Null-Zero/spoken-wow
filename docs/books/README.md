@@ -343,9 +343,8 @@ CurseForge projects are left here:
 | Spoken Books, retired | 1701514 | `spoken-books` |
 | Spoken Audio: Readables | 1701520 | `spoken-audio-readables` |
 
-The first project's last file is the tombstone that `make package-spoken-retired` builds. The
-second is the sound pack, which declares `spoken` as its required dependency. Cutting a
-pack:
+The first is retired and gets no more uploads. The second is the sound pack, which declares
+`spoken` as its required dependency. Cutting a pack:
 
 ```bash
 make books-package-audio           # -> dist/SpokenBooksAudio-<version>.zip
@@ -367,8 +366,7 @@ stores; after `make descriptions`, paste `dist/descriptions/<slug>.md` into Curs
 `dist/descriptions-wago/<slug>.md` — the same text with its cross-links pointed at Wago —
 into Wago, then record it with `make descriptions-published`.
 
-`make books-release` sends each zip to both stores. The pack goes to CurseForge alone: at
-452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
+`make books-release` uploads the pack to CurseForge alone: at 452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
 in as many words. `make audio-release` then publishes it as a GitHub release under
 `books-audio/vX.Y.Z`, which is where the pack's Wago page sends anyone looking for
 the narration.
