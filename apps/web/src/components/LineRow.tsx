@@ -117,7 +117,7 @@ type Props = {
   showMadeBy: boolean;
   /** Whether to draw the voice actor cell: the search sent recordings, so the viewer records here. */
   showRecordings: boolean;
-  onRecordingChanged: () => void;
+  onRecordingChanged: (line: ResultLine) => void;
   canRegenerate: boolean;
   /** May write this line's text in the page's language. Apart from regenerating: a
    *  translator may do this and not spend anything. */
@@ -560,7 +560,7 @@ export default function LineRow({
           source="quests"
           file={line.audioPath}
           recording={line.recording ?? null}
-          onChanged={onRecordingChanged}
+          onChanged={() => onRecordingChanged(line)}
         />
       )}
 

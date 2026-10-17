@@ -33,7 +33,7 @@ type Props = {
   showMadeBy: boolean;
   /** Whether to draw the voice actor cell: the search sent recordings, so the viewer records here. */
   showRecordings: boolean;
-  onRecordingChanged: () => void;
+  onRecordingChanged: (line: ResultLine) => void;
   /** Editor and up: the rewrite and regenerate controls. */
   canRegenerate: boolean;
   /** May write this line's text in the page's language, which a translator may do without
@@ -236,7 +236,7 @@ export function LineRow({
           source="zones"
           file={line.file}
           recording={line.recording ?? null}
-          onChanged={onRecordingChanged}
+          onChanged={() => onRecordingChanged(line)}
         />
       )}
 

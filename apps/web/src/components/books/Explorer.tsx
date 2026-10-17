@@ -42,6 +42,7 @@ import {
 } from "@/lib/generation/client";
 import { useClearDirty } from "@/lib/generation/use-clear-dirty";
 import { noApiKeyMessage } from "@/lib/no-api-key";
+import { fetchRows, patchRows } from "@/lib/row-refresh";
 import * as echo from "@/lib/url-echo";
 
 // Long enough to hold a whole typed word: the timer restarts on every keystroke, so this is
@@ -198,13 +199,12 @@ export function Explorer({ books }: { books: BookFacet[] }) {
   // A string, not the object: memoising on object identity would refetch every render.
   const filterQuery = useMemo(() => filterParams(filters).toString(), [filters]);
 
-  // Held in refs so refetch() -- called from a poll and from a completed regeneration --
-  // reads the current view without being rebuilt on every filter change, which would
-  // restart the poll timer each time.
   // Held so a cleared row stays cleared without a refetch that would rebuild a hundred rows
   // to unset one boolean.
   const { cleared, clear: clearDirty } = useClearDirty("books");
 
+  // Held in refs so the callbacks below read the current view without being
+  // rebuilt on every filter change.
   const filterQueryRef = useRef(filterQuery);
   filterQueryRef.current = filterQuery;
   const pageRef = useRef(page);
@@ -248,6 +248,23 @@ export function Explorer({ books }: { books: BookFacet[] }) {
       .then((data: SearchResult) => setResult(data))
       .catch(() => {});
   }, [lang]);
+
+  /**
+   * Fetch these rows again by id and swap them in where they sit, so a row the change moved
+   * out of the filter stays until the filter is asked again. See lib/row-refresh.
+   */
+  const refreshRows = useCallback(
+    async (ids: string[]) => {
+      const fresh = await fetchRows<ResultLine>(
+        (id) => withLang(lang, `/api/books/search?${new URLSearchParams({ line: id })}`),
+        ids,
+      );
+      setResult((current) =>
+        current && { ...current, lines: patchRows(current.lines, fresh, (row) => row.id, (row) => row.id) },
+      );
+    },
+    [lang],
+  );
 
   //----------------------------------------------------------------------------
   // Regeneration
@@ -310,7 +327,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
             [line.id]: { phase: "done", version: data.version! },
           }));
           setVersions((state) => ({ ...state, [line.id]: data.version! }));
-          refetch();
+          void refreshRows([line.id]);
         })
         .catch((err: Error) => {
           setRowStates((state) => ({
@@ -319,7 +336,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
           }));
         });
     },
-    [refetch, lang],
+    [refreshRows, lang],
   );
 
   /**
@@ -397,8 +414,8 @@ export function Explorer({ books }: { books: BookFacet[] }) {
    * The queue, polled.
    *
    * Two seconds while there is work and fifteen while there is not, so an idle page is not
-   * asking the database forty times a minute for the same empty answer. The refetch is what
-   * makes a batch's results appear as they land.
+   * asking the database forty times a minute for the same empty answer. Each finished page
+   * is fetched again as it lands, the way a click's result is.
    */
   useEffect(() => {
     if (!canRegenerate) return;
@@ -413,13 +430,19 @@ export function Explorer({ books }: { books: BookFacet[] }) {
       if (cancelled) return;
 
       if (snapshot) {
-        const wasActive = active;
         active = snapshot.active;
         cursor.current = snapshot.cursor;
         setQueue(snapshot);
-        // Only when a run has just finished, rather than on every tick: refetching per poll
-        // would reorder the table under somebody who is reading it.
-        if (wasActive && !snapshot.active) refetch();
+        // Only this section's, in this page's language: the queue carries all of them.
+        const mine = snapshot.finished.filter((job) => job.source === "books" && job.lang === lang);
+        if (mine.length > 0) {
+          setVersions((state) => {
+            const next = { ...state };
+            for (const job of mine) next[job.lineId] = job.version;
+            return next;
+          });
+          void refreshRows(mine.map((job) => job.lineId));
+        }
       }
 
       timer = setTimeout(poll, active ? 2_000 : 15_000);
@@ -431,7 +454,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [canRegenerate, refetch]);
+  }, [canRegenerate, refreshRows, lang]);
 
   //----------------------------------------------------------------------------
   // Playback
@@ -544,7 +567,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
                 current={current}
                 showMadeBy={result.madeBy !== undefined}
                 showRecordings={result.recordable === true}
-                onRecordingChanged={refetch}
+                onRecordingChanged={(line) => void refreshRows([line.id])}
                 canRegenerate={canRegenerate}
                 canEdit={canEdit}
                 rowStates={rowStates}
@@ -577,7 +600,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
                   // The player's cache buster, so the clip that was just put back is the one
                   // that plays rather than the take it replaced -- the file name does not move.
                   setVersions((state) => ({ ...state, [line.id]: version }));
-                  refetch();
+                  void refreshRows([line.id]);
                 }}
               />
             </div>
@@ -609,7 +632,20 @@ export function Explorer({ books }: { books: BookFacet[] }) {
         onSaved={(line, text) => setRewritten((current) => ({ ...current, [line.id]: text }))}
       />
 
-      <TranslateDialog subject={naming} onClose={() => setNaming(null)} onSaved={() => refetch()} />
+      <TranslateDialog
+        subject={naming}
+        onClose={() => setNaming(null)}
+        // A title is on every page its owner has.
+        onSaved={() => {
+          if (!naming) return;
+          const { kind, entityId } = naming.address;
+          void refreshRows(
+            (result?.lines ?? [])
+              .filter((line) => line.ownerKind && ownerEntityKind(line.ownerKind) === kind && String(line.ownerIds[0]) === String(entityId))
+              .map((line) => line.id),
+          );
+        }}
+      />
 
       <ReportDialog
         subject={reportFor && { source: "books", line: reportFor }}

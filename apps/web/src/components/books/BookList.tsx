@@ -20,7 +20,7 @@ type Props = {
   showMadeBy: boolean;
   /** Whether to draw the voice actor column: the search sent recordings. */
   showRecordings: boolean;
-  onRecordingChanged: () => void;
+  onRecordingChanged: (line: ResultLine) => void;
   canRegenerate: boolean;
   canEdit: boolean;
   rowStates: Record<string, RowState>;
