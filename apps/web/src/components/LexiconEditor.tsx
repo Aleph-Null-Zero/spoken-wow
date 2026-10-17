@@ -819,7 +819,7 @@ function Row({
                 onChange={(event) => onChange({ alias: event.target.value })}
                 placeholder="nomeregan"
                 aria-label="Respelling"
-                title="Respell it as it should be said — “nomeregan”, not “NOME-reh-gan”."
+                title="Respell it as it should be said. Capitals mark stress — “NOME-reh-gan”."
                 className={cn("flex-1", FIELD)}
               />
             )}

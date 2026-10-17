@@ -602,9 +602,8 @@ at the new spelling but works on every model. Both kinds sit in one dictionary, 
 does not have to pick. When the configured model ignores phoneme rules the page says how many
 entries that silently skips, rather than implying the whole page is inert.
 
-Respell it as it should be *said*, not as it should be *read*: `nomeregan`, not
-`NOME-reh-gan`. Capitals can be spoken as an acronym and hyphens as pauses; if the
-stress-capitals form is worth recording for a reader, it belongs in the entry's note.
+Respell it as it should be *said*. Stress capitals steer the model, so `NOME-reh-gan` is a
+valid respelling.
 
 **A phoneme rule cannot be case-insensitive.** ElevenLabs discards one carrying
 `case_sensitive: false` *silently* — a 200, an id, a version, and the rule simply absent from
