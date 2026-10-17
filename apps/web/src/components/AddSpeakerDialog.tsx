@@ -159,19 +159,11 @@ export default function AddSpeakerDialog({ line, replace = false, onSaved, onCan
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{replace ? "Replace the speaker" : "Add a speaker"}</DialogTitle>
-          {replace ? (
-            <DialogDescription>
-              The NPC who really says this line, in place of {line.npcName}. The line is spoken in the
-              new NPC&rsquo;s voice and shows as missing until it is generated again; the addon plays
-              the old audio until then. {line.npcName} stays off the line across imports.
-            </DialogDescription>
-          ) : (
-            <DialogDescription>
-              Another NPC who says this line. It is spoken in that NPC&rsquo;s own voice: one whose voice
-              differs gets a line of its own here, with no audio until it is generated. Kept across
-              imports until the game data lists the NPC too.
-            </DialogDescription>
-          )}
+          <DialogDescription>
+            {replace
+              ? `The NPC who really says this line, in place of ${line.npcName}. The line is spoken in the new NPC’s voice and shows as missing until it is generated again; the addon plays the old audio until then. ${line.npcName} stays off the line across imports.`
+              : "Another NPC who says this line. It is spoken in that NPC’s own voice: one whose voice differs gets a line of its own here, with no audio until it is generated. Kept across imports until the game data lists the NPC too."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3">

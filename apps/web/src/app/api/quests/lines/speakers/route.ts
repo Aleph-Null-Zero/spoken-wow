@@ -36,6 +36,12 @@ function momentFrom(lineId: unknown): string | null {
   return typeof lineId === "string" && lineId ? momentOf(baseLineId(lineId)) : null;
 }
 
+/** A refusal from speakers.ts: an unknown line, a conflict with the speakers it has, or a bad NPC. */
+function refused({ reason, message }: { reason: string; message: string }): Response {
+  const status = reason === "unknown-line" ? 404 : ["spoken", "contributed", "last"].includes(reason) ? 409 : 400;
+  return Response.json({ error: message, reason }, { status });
+}
+
 export async function GET(request: Request) {
   const { denied } = await requireAdmin(request);
   if (denied) return denied;
@@ -70,10 +76,7 @@ export async function POST(request: Request) {
   if (body.replaces !== undefined) return replace(moment, npc, body.replaces, lang, session.user.id);
 
   const outcome = await addSpeaker({ moment, ...npc, addedBy: session.user.id });
-  if (!outcome.ok) {
-    const status = outcome.reason === "unknown-line" ? 404 : outcome.reason === "spoken" ? 409 : 400;
-    return Response.json({ error: outcome.message, reason: outcome.reason }, { status });
-  }
+  if (!outcome.ok) return refused(outcome);
 
   await recordActivity({
     kind: "npc.speaker_added",
@@ -96,7 +99,7 @@ export async function DELETE(request: Request) {
   if (!npc) return Response.json({ error: "unknown npc" }, { status: 400 });
 
   const outcome = await removeSpeaker({ moment, ...npc, removedBy: session.user.id });
-  if (!outcome.ok) return Response.json({ error: outcome.message, reason: outcome.reason }, { status: 409 });
+  if (!outcome.ok) return refused(outcome);
 
   // 200 with nothing removed, as the ignore route does: the speaker the caller wanted gone is gone.
   if (outcome.removed > 0) {
@@ -118,23 +121,19 @@ async function replace(
   lang: Lang,
   actorId: string,
 ): Promise<Response> {
-  const from = replaces && typeof replaces === "object"
-    ? npcOf((replaces as Record<string, unknown>).npcType, (replaces as Record<string, unknown>).npcId)
-    : null;
+  const old = replaces as Record<string, unknown> | null;
+  const from = old && typeof old === "object" ? npcOf(old.npcType, old.npcId) : null;
   if (!from) return Response.json({ error: "unknown npc to replace" }, { status: 400 });
 
   const outcome = await replaceSpeaker({ moment, from, to: npc, by: actorId });
-  if (!outcome.ok) {
-    const status = outcome.reason === "unknown-line" ? 404 : outcome.reason === "contributed" ? 409 : 400;
-    return Response.json({ error: outcome.message, reason: outcome.reason }, { status });
-  }
+  if (!outcome.ok) return refused(outcome);
 
   await recordActivity({
     kind: "npc.speaker_replaced",
     lang,
     actorId,
     subject: moment,
-    detail: { npcName: outcome.speaker.npcName, ...npc, fromName: outcome.npcName, fromType: from.npcType, fromId: from.npcId },
+    detail: { npcName: outcome.speaker.npcName, ...npc, from: { npcName: outcome.npcName, ...from } },
   });
   return Response.json({ replaced: true });
 }

@@ -16,7 +16,7 @@ import { npcKey } from "./corpus";
 import { baseLineId } from "./contributions/naming";
 import { audioRelPath } from "./audio";
 import { hasNarration, restoresOnlyNarration } from "./generation/narration";
-import type { NpcType, Source } from "./line-fields";
+import { OWN_VOICE_SOURCES, type NpcType, type Source } from "./line-fields";
 import type { LineIgnore } from "./quests/ignores";
 import { overrideOf, type LineOverride } from "./quests/override";
 import type { LineBroadcast } from "./broadcast/store";
@@ -387,7 +387,7 @@ export function isGap(
 ): boolean {
   const audioPath = audioRelPath(line);
   const text = overrideOf(overrides, audioPath)?.text ?? line.text;
-  return isVoiceable(line, text) && !hasLiveAudio(line, store, takeVoices);
+  return isVoiceable(line, text) && !hasLiveAudio(line, audioPath, store, takeVoices);
 }
 
 /**
@@ -398,13 +398,13 @@ export function isGap(
  */
 export function hasLiveAudio(
   line: CorpusLine,
+  audioPath: string,
   store: Set<string>,
   takeVoices?: Map<string, string | null>,
 ): boolean {
-  const audioPath = audioRelPath(line);
   if (!store.has(audioPath)) return false;
   const voice = takeVoices?.get(audioPath);
-  if (!voice || line.source === "progress" || isModelVoice(line.voice)) return true;
+  if (!voice || !OWN_VOICE_SOURCES.has(line.source) || isModelVoice(line.voice)) return true;
   return voice === line.voice;
 }
 
@@ -514,7 +514,7 @@ export function matchingLines(
   if (state === "current") {
     lines = lines.filter((line) => {
       const file = audioRelPath(line);
-      return hasLiveAudio(line, store, takeVoices) && stale !== undefined && !stale.has(file);
+      return hasLiveAudio(line, file, store, takeVoices) && stale !== undefined && !stale.has(file);
     });
   }
   // Absent `dirty` means nobody asked, so nothing matches rather than everything - the
@@ -582,7 +582,7 @@ export function search(
     return {
       ...line,
       key: keys.get(line)!,
-      hasAudio: hasLiveAudio(line, store, context.takeVoices),
+      hasAudio: hasLiveAudio(line, audioPath, store, context.takeVoices),
       audioPath,
       reportsOpen: context.reports?.get(line.lineId) ?? 0,
       take: context.takes?.get(audioPath) ?? null,

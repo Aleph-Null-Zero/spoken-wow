@@ -227,7 +227,7 @@ function describe(row: ActivityRow): { what: string; quote: string | null } {
       return { what: `took ${speakerName(d)} off ${row.subject}`, quote: null };
     case "npc.speaker_replaced":
       return {
-        what: `put ${speakerName(d)} in place of ${speakerName({ npcName: d.fromName, npcType: d.fromType, npcId: d.fromId })} on ${row.subject}`,
+        what: `put ${speakerName(d)} in place of ${speakerName((d.from ?? {}) as Record<string, unknown>)} on ${row.subject}`,
         quote: null,
       };
     case "npc.resolved":

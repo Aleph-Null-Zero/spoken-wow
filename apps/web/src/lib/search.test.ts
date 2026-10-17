@@ -242,20 +242,20 @@ describe("a take in another voice", () => {
 
   it("is no audio for a line now spoken in another voice, and a gap to generate", () => {
     const takeVoices = new Map([[file, "someone-else"]]);
-    expect(hasLiveAudio(voiced, live, takeVoices)).toBe(false);
+    expect(hasLiveAudio(voiced, file, live, takeVoices)).toBe(false);
     expect(isGap(voiced, live, undefined, takeVoices)).toBe(true);
   });
 
   it("is audio in the line's own voice, or with no voice recorded, or when nobody asked", () => {
-    expect(hasLiveAudio(voiced, live, new Map([[file, voiced.voice]]))).toBe(true);
-    expect(hasLiveAudio(voiced, live, new Map([[file, null]]))).toBe(true);
-    expect(hasLiveAudio(voiced, live)).toBe(true);
+    expect(hasLiveAudio(voiced, file, live, new Map([[file, voiced.voice]]))).toBe(true);
+    expect(hasLiveAudio(voiced, file, live, new Map([[file, null]]))).toBe(true);
+    expect(hasLiveAudio(voiced, file, live)).toBe(true);
   });
 
   it("is still audio for progress text, which is never voiced again", () => {
     const progress = corpus.lines.find((l) => l.source === "progress")!;
     const path = audioRelPath(progress);
-    expect(hasLiveAudio(progress, new Set([path]), new Map([[path, "someone-else"]]))).toBe(true);
+    expect(hasLiveAudio(progress, path, new Set([path]), new Map([[path, "someone-else"]]))).toBe(true);
   });
 });
 

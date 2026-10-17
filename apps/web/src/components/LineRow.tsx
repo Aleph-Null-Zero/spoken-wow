@@ -19,7 +19,7 @@ import {
   UserPlusIcon,
   XIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import ReportsBadge from "./ReportsBadge";
 import TakeSelector from "./TakeSelector";
@@ -188,6 +188,20 @@ function WowheadLink({ href }: { href: string }) {
   );
 }
 
+function SpeakerAction({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      className="hover:text-foreground ml-1 inline-flex align-middle"
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function LineRow({
   line,
   current,
@@ -279,38 +293,27 @@ export default function LineRow({
               </>
             )}
             {onAddSpeaker && (
-              <button
-                type="button"
-                title="Add another NPC who says this line"
-                aria-label={`Add another NPC who says ${line.npcName}'s line`}
-                onClick={() => onAddSpeaker(line)}
-                className="hover:text-foreground ml-1 inline-flex align-middle"
-              >
+              <SpeakerAction label={`Add another NPC who says ${line.npcName}'s line`} onClick={() => onAddSpeaker(line)}>
                 <UserPlusIcon className="size-3" />
-              </button>
+              </SpeakerAction>
             )}
             {/* A contribution's speaker goes with the contribution, on /contributions. */}
-            {onReplaceSpeaker && !line.contributionId && (
-              <button
-                type="button"
-                title={`Put another NPC in ${line.npcName}'s place on this line`}
-                aria-label={`Put another NPC in ${line.npcName}'s place on this line`}
-                onClick={() => onReplaceSpeaker(line)}
-                className="hover:text-foreground ml-1 inline-flex align-middle"
-              >
-                <RepeatIcon className="size-3" />
-              </button>
-            )}
-            {onRemoveSpeaker && !line.contributionId && !line.soleSpeaker && (
-              <button
-                type="button"
-                title={`Take ${line.npcName} off this line`}
-                aria-label={`Take ${line.npcName} off this line`}
-                onClick={() => onRemoveSpeaker(line)}
-                className="hover:text-foreground ml-1 inline-flex align-middle"
-              >
-                <XIcon className="size-3" />
-              </button>
+            {!line.contributionId && (
+              <>
+                {onReplaceSpeaker && (
+                  <SpeakerAction
+                    label={`Put another NPC in ${line.npcName}'s place on this line`}
+                    onClick={() => onReplaceSpeaker(line)}
+                  >
+                    <RepeatIcon className="size-3" />
+                  </SpeakerAction>
+                )}
+                {onRemoveSpeaker && !line.soleSpeaker && (
+                  <SpeakerAction label={`Take ${line.npcName} off this line`} onClick={() => onRemoveSpeaker(line)}>
+                    <XIcon className="size-3" />
+                  </SpeakerAction>
+                )}
+              </>
             )}
           </span>
           {line.added && (

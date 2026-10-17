@@ -220,8 +220,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
     );
   }, []);
   const [ignoring, setIgnoring] = useState<ResultLine | null>(null);
-  const [addingSpeaker, setAddingSpeaker] = useState<ResultLine | null>(null);
-  const [replacingSpeaker, setReplacingSpeaker] = useState<ResultLine | null>(null);
+  const [speakerDialog, setSpeakerDialog] = useState<{ line: ResultLine; replace: boolean } | null>(null);
   // Anyone can open this one, signed in or not - see ReportDialog.
   const [reporting, setReporting] = useState<ResultLine | null>(null);
   const [pendingBatch, setPendingBatch] = useState<
@@ -934,8 +933,8 @@ export default function Explorer({ facets }: { facets: Facets }) {
                   onEditText={editText}
                   onRename={lang !== BASE_LANG && canEdit ? rename : null}
                   onIgnore={canIgnore ? setIgnoring : null}
-                  onAddSpeaker={canSpeakers ? setAddingSpeaker : null}
-                  onReplaceSpeaker={canSpeakers ? setReplacingSpeaker : null}
+                  onAddSpeaker={canSpeakers ? (l) => setSpeakerDialog({ line: l, replace: false }) : null}
+                  onReplaceSpeaker={canSpeakers ? (l) => setSpeakerDialog({ line: l, replace: true }) : null}
                   onRemoveSpeaker={canSpeakers ? (l) => void removeSpeaker(l) : null}
                   onReport={setReporting}
                   onRegenerate={regenerateLine}
@@ -993,23 +992,14 @@ export default function Explorer({ facets }: { facets: Facets }) {
       />
 
       <AddSpeakerDialog
-        line={addingSpeaker}
+        line={speakerDialog?.line ?? null}
+        replace={speakerDialog?.replace}
         // Fetched again: a speaker in another voice is a new row of its own.
         onSaved={() => {
-          setAddingSpeaker(null);
+          setSpeakerDialog(null);
           refetch();
         }}
-        onCancel={() => setAddingSpeaker(null)}
-      />
-
-      <AddSpeakerDialog
-        line={replacingSpeaker}
-        replace
-        onSaved={() => {
-          setReplacingSpeaker(null);
-          refetch();
-        }}
-        onCancel={() => setReplacingSpeaker(null)}
+        onCancel={() => setSpeakerDialog(null)}
       />
 
       <ReportDialog

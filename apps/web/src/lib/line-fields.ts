@@ -15,6 +15,9 @@ export const SOURCES = ["accept", "progress", "complete", "gossip", "followup"] 
 export const NPC_TYPES = ["creature", "gameobject", "item"] as const;
 
 export type Source = (typeof SOURCES)[number];
+
+/** The sources an NPC speaks in its own voice. Progress text is never voiced. */
+export const OWN_VOICE_SOURCES: ReadonlySet<string> = new Set<Source>(["accept", "complete", "gossip", "followup"]);
 export type NpcType = (typeof NPC_TYPES)[number];
 
 /**

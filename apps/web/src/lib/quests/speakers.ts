@@ -143,6 +143,12 @@ export function speaksMoment(rows: SpeakerRow[], npcId: number, npcKind: string 
   return rows.some((row) => row.npcId === npcId && (!npcKind || row.npcType === npcKind));
 }
 
+type Npc = { npcType: NpcRowKind; npcId: number };
+
+function isNpc(row: { npcType: string; npcId: number }, npc: Npc): boolean {
+  return row.npcType === npc.npcType && row.npcId === npc.npcId;
+}
+
 /**
  * Makes `speaker` one more speaker of the moment, beside the ones it has: on each of its lines
  * (both player-gender sides of a split one) and each variant, in the language its speakers are
@@ -182,6 +188,13 @@ export type AddOutcome =
   | { ok: true; speaker: Speaker }
   | { ok: false; reason: "unknown-line" | "spoken" | "no-voice"; message: string };
 
+/** The speaker an NPC makes, or why it makes none: a speaker is written with its voice. */
+async function voicedSpeaker(npc: Npc): Promise<Speaker | { ok: false; reason: "no-voice"; message: string }> {
+  const speaker = await speakerOf(npc.npcType, npc.npcId);
+  if (speaker?.voice) return speaker;
+  return { ok: false, reason: "no-voice", message: speaker ? noVoice(speaker) : "This NPC has no type yet" };
+}
+
 /**
  * An admin adds an NPC as one more speaker of a line, from the explorer. The NPC must already
  * be answered (`npc`) with a type a voice reads: a speaker is written with its voice, and the
@@ -193,10 +206,8 @@ export async function addSpeaker(args: {
   npcId: number;
   addedBy: string;
 }): Promise<AddOutcome> {
-  const speaker = await speakerOf(args.npcType, args.npcId);
-  if (!speaker?.voice) {
-    return { ok: false, reason: "no-voice", message: speaker ? noVoice(speaker) : "This NPC has no type yet" };
-  }
+  const speaker = await voicedSpeaker(args);
+  if ("ok" in speaker) return speaker;
   const outcome = await inTransaction(async (client) => {
     await lockLine(client, args.moment);
     return addToMoment(client, args.moment, speaker, { addedBy: args.addedBy });
@@ -218,10 +229,10 @@ export type RemoveOutcome =
  */
 async function removeFromMoment(
   client: PoolClient,
-  args: { moment: string; npcType: NpcRowKind; npcId: number; removedBy: string },
+  args: Npc & { moment: string; removedBy: string },
 ): Promise<RemoveOutcome> {
   const rows = await momentSpeakers(client, args.moment);
-  const ofNpc = rows.filter((row) => row.npcType === args.npcType && row.npcId === args.npcId);
+  const ofNpc = rows.filter((row) => isNpc(row, args));
   if (ofNpc.length === 0) return { ok: true, removed: 0, npcName: null };
   if (ofNpc.some((row) => row.contributionId !== null)) {
     return { ok: false, reason: "contributed", message: "This speaker came from a contribution: reject it instead" };
@@ -246,12 +257,7 @@ async function removeFromMoment(
   return { ok: true, removed: removed.length, npcName: removed[0]?.npcName ?? null };
 }
 
-export async function removeSpeaker(args: {
-  moment: string;
-  npcType: NpcRowKind;
-  npcId: number;
-  removedBy: string;
-}): Promise<RemoveOutcome> {
+export async function removeSpeaker(args: Npc & { moment: string; removedBy: string }): Promise<RemoveOutcome> {
   return inTransaction(async (client) => {
     await lockLine(client, args.moment);
     return removeFromMoment(client, args);
@@ -260,38 +266,36 @@ export async function removeSpeaker(args: {
 
 export type ReplaceOutcome =
   | { ok: true; speaker: Speaker; npcName: string | null }
-  | { ok: false; reason: "unknown-line" | "no-voice" | "contributed" | "same"; message: string };
+  | { ok: false; reason: "unknown-line" | "no-voice" | "contributed" | "last" | "same"; message: string };
+
+/** Carries a refusal out of the transaction, so the add before it is rolled back. */
+class Refused extends Error {
+  constructor(readonly outcome: Extract<ReplaceOutcome, { ok: false }>) {
+    super(outcome.message);
+  }
+}
 
 /**
  * The new NPC is added before the old one goes, so the line always has a speaker. The line's take
  * stays: it counts as missing while it is in another voice than the speaker's, and the addon
  * plays it until the line is generated again.
  */
-export async function replaceSpeaker(args: {
-  moment: string;
-  from: { npcType: NpcRowKind; npcId: number };
-  to: { npcType: NpcRowKind; npcId: number };
-  by: string;
-}): Promise<ReplaceOutcome> {
-  if (args.from.npcType === args.to.npcType && args.from.npcId === args.to.npcId) {
-    return { ok: false, reason: "same", message: "That is the speaker already" };
+export async function replaceSpeaker(args: { moment: string; from: Npc; to: Npc; by: string }): Promise<ReplaceOutcome> {
+  if (isNpc(args.from, args.to)) return { ok: false, reason: "same", message: "That is the speaker already" };
+  const speaker = await voicedSpeaker(args.to);
+  if ("ok" in speaker) return speaker;
+  try {
+    return await inTransaction(async (client): Promise<ReplaceOutcome> => {
+      await lockLine(client, args.moment);
+      // "spoken" is no failure: the new NPC already speaks the line, and only the old one has to go.
+      const added = await addToMoment(client, args.moment, speaker, { addedBy: args.by });
+      if (added === "unknown") return { ok: false, reason: "unknown-line", message: "unknown line" };
+      const removed = await removeFromMoment(client, { moment: args.moment, ...args.from, removedBy: args.by });
+      if (!removed.ok) throw new Refused(removed);
+      return { ok: true, speaker, npcName: removed.npcName };
+    });
+  } catch (error) {
+    if (error instanceof Refused) return error.outcome;
+    throw error;
   }
-  const speaker = await speakerOf(args.to.npcType, args.to.npcId);
-  if (!speaker?.voice) {
-    return { ok: false, reason: "no-voice", message: speaker ? noVoice(speaker) : "This NPC has no type yet" };
-  }
-  return inTransaction(async (client): Promise<ReplaceOutcome> => {
-    await lockLine(client, args.moment);
-    // Checked before anything is written, since the add cannot be taken back once it has been.
-    const rows = await momentSpeakers(client, args.moment);
-    if (rows.some((row) => row.npcType === args.from.npcType && row.npcId === args.from.npcId && row.contributionId !== null)) {
-      return { ok: false, reason: "contributed", message: "This speaker came from a contribution: reject it instead" };
-    }
-    // "spoken" is no failure: the new NPC already speaks the line, and only the old one has to go.
-    const added = await addToMoment(client, args.moment, speaker, { addedBy: args.by }, rows);
-    if (added === "unknown") return { ok: false, reason: "unknown-line", message: "unknown line" };
-    const removed = await removeFromMoment(client, { moment: args.moment, ...args.from, removedBy: args.by });
-    if (!removed.ok) throw new Error(`replacing a speaker of ${args.moment}: ${removed.message}`);
-    return { ok: true, speaker, npcName: removed.npcName };
-  });
 }
