@@ -230,6 +230,7 @@ export async function regenerateLine(
         costUsd: speech.costUsd,
         settings: speech.made.settings,
         spokenHash: spokenHash(spokenText),
+        dictionaryId: speech.made.dictionaryId,
         dictionaryVersion: speech.made.dictionaryVersion,
         leadIn: speech.leadIn,
         leadInSec: speech.leadInSec,
