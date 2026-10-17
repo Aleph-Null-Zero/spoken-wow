@@ -20,7 +20,7 @@
 ## OptionalDeps: Spoken_Quests, Spoken_Places, Spoken_Readables
 # The modules are listed for load order only: their Developer sections are handed to Spoken
 # whether this loads before or after them.
-## IconTexture: Interface\AddOns\Spoken\icon.tga
+## IconTexture: Interface\AddOns\Spoken_Developer\icon.tga
 ## Group: Spoken
 ## X-License: MIT
 

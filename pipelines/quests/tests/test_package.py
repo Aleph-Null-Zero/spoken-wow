@@ -169,12 +169,12 @@ def test_spoken_ships_with_its_modules_for_blizzard_clients(player_built):
     for client in LEGACY_CLIENTS:
         assert not any(name.startswith(f"{PLAYER}/{client}/") for name in names)
     # Spoken, the folder whose only job is to name the gathered-lines file
-    # (addons/SpokenContributions/SpokenContributions.toc): one .toc, no Lua, and the three
+    # (addons/SpokenContributions/SpokenContributions.toc): one .toc and its icon, no Lua, and the three
     # modules: one download with everything in it.
     assert {entry.split("/", 1)[0] for entry in names} == {PLAYER, "SpokenContributions",
                                                           "Spoken_Quests", "Spoken_Readables", "Spoken_Places"}
-    assert [name for name in names if name.startswith("SpokenContributions/") and not name.endswith("/")] \
-        == ["SpokenContributions/SpokenContributions.toc"]
+    assert sorted(name for name in names if name.startswith("SpokenContributions/") and not name.endswith("/")) \
+        == ["SpokenContributions/SpokenContributions.toc", "SpokenContributions/icon.tga"]
 
 
 def test_the_compendium_files_are_spoken_s_alone():

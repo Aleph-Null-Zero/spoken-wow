@@ -89,7 +89,8 @@ None of this is the project's to license, and the MIT grant does not reach it.
   `QuestLogStopButton`, `StopGossip`, `StopGossipMore` and the four `SoundQueueBullet*` files.
   `git log --follow` takes each back to the AI VoiceOver import. The game art in them is
   Blizzard's. The 1.12 tree's `UI-Minimap-Background.blp` comes with LibDBIcon.
-- **Addon-list icons** (`icon.tga` in Spoken and Spoken_Quests, `Textures/AddonIcon.tga` in
+- **Addon-list icons** (`icon.tga` in Spoken, Spoken_Quests, Spoken_Developer and
+  SpokenContributions, `Textures/AddonIcon.tga` in
   Spoken_Readables, Spoken_Places and the two sound packs, and the badged copies the language
   packs ship): the Spoken shields, drawn for this project by Nucabe, from the sources in `pipelines/quests/assets/icon/`, `pipelines/books/assets/` and
   `pipelines/zones/assets/`.
