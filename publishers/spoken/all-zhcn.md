@@ -3,7 +3,7 @@ curseforge: 1746511
 lang: zhCN
 version: 1.0.0
 slug: spoken-chinese-simplified
-name: Spoken Chinese (Simplified)
+name: Spoken: Chinese (Simplified)
 summary: Meta package: installs Spoken with every Simplified Chinese voice pack, quests, gossip, zones and books. Install through the CurseForge app.
 categories:
   - Audio & Video
@@ -31,4 +31,4 @@ license: MIT
 
 Spoken speaks in your client's language by default. To hear Simplified Chinese on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Simplified Chinese packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).
+English has its own set: [Spoken: English](https://www.curseforge.com/wow/addons/spoken-english).

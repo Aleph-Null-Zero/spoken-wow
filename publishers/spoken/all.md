@@ -1,7 +1,7 @@
 ---
 curseforge: 1721569
 slug: spoken-english
-name: Spoken English
+name: Spoken: English
 summary: Meta package for when you want everything voiced over and don't care about disk space: quests, gossip, places and readables narrated for you
 categories:
   - Audio & Video

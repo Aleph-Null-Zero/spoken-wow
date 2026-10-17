@@ -32,7 +32,7 @@ function DiscordIcon({ className }: { className?: string }) {
  * it, and how to install it.
  *
  * Top to bottom: the logo and one sentence, the Discord invite, a button per explorer, then
- * the install section. That leads with Spoken English, because a player using an addon
+ * the install section. That leads with Spoken: English, because a player using an addon
  * manager in English needs nothing else, and follows with one table of every addon and every
  * sound pack by language for everybody else.
  *
@@ -180,7 +180,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
 
         <div className="mt-4 text-sm">
           <p>
-            Install <External href={`${CURSEFORGE}/spoken-english`}>Spoken English</External> from
+            Install <External href={`${CURSEFORGE}/spoken-english`}>Spoken: English</External> from
             CurseForge or WowUp-CF if you use one of these managers. It brings in every addon and
             its English audio.
           </p>

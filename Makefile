@@ -256,11 +256,11 @@ release-spoken-dry: ## Check Spoken's release and show what uploading it would s
 release-spoken: ## Upload Spoken's zip to CurseForge and Wago (build it with package-spoken first)
 	@./scripts/spoken/release.sh
 
-# Spoken English, CurseForge project `spoken-english`: a few kilobytes naming every Spoken addon
+# Spoken: English, CurseForge project `spoken-english`: a few kilobytes naming every Spoken addon
 # and English sound pack as required dependencies, so the CurseForge app installs the lot.
 # scripts/spoken/package-meta.sh explains it; the upload is release.sh's spoken-all target, and
 # its notes come from docs/spoken/CHANGELOG-ALL.md. VERSION defaults to the script's own.
-# LOCALE=deDE builds and uploads that language's meta addon, "Spoken German", instead
+# LOCALE=deDE builds and uploads that language's meta addon, "Spoken: German", instead
 # (publishers/spoken/all-<lang>.md).
 package-spoken-all: ## Zip the English meta addon (LOCALE=xx: that language's) that pulls in every pack
 	@VERSION=$(VERSION) LANG_CODE=$(or $(LOCALE),enUS) ./scripts/spoken/package-meta.sh

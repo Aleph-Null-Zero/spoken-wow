@@ -3,7 +3,7 @@ curseforge: 1746503
 lang: esES
 version: 1.0.0
 slug: spoken-spanish-eu
-name: Spoken Spanish (EU)
+name: Spoken: Spanish (EU)
 summary: Meta package: installs Spoken with every European Spanish voice pack, quests, gossip, zones and books. Install through the CurseForge app.
 categories:
   - Audio & Video
@@ -33,4 +33,4 @@ The quest dialogue comes as three packs, one per faction plus the quests both si
 
 Spoken speaks in your client's language by default. To hear European Spanish on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the European Spanish packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).
+English has its own set: [Spoken: English](https://www.curseforge.com/wow/addons/spoken-english).

@@ -3,6 +3,12 @@
 The meta addon: no audio and no code, only required dependencies. Versioned on its own, apart
 from the player whose changelog is CHANGELOG.md beside this one.
 
+## Unreleased
+
+- **Each meta addon is now called Spoken: <Language>**, so Spoken: German, Spoken: French and
+  Spoken: English, in the AddOns list and on CurseForge.
+  *([rusty-key](https://github.com/rusty-key))*
+
 ## 1.0.0 — spoken-all-deDE — 2026-10-15
 
 - First release. Installs Spoken Player with every German sound pack on CurseForge, 6 in all,

@@ -3,7 +3,7 @@ curseforge: 1746507
 lang: itIT
 version: 1.0.0
 slug: spoken-italian
-name: Spoken Italian
+name: Spoken: Italian
 summary: Meta package: installs Spoken with every Italian voice pack, quests and gossip. Install through the CurseForge app.
 categories:
   - Audio & Video
@@ -31,4 +31,4 @@ Spoken Places and Spoken Readables have no Italian voice pack yet, so they play 
 
 Spoken speaks in your client's language by default. To hear Italian on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Italian packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).
+English has its own set: [Spoken: English](https://www.curseforge.com/wow/addons/spoken-english).
