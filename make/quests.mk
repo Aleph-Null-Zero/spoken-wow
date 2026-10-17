@@ -170,7 +170,8 @@ acted: pull-recorded package-acted ## Pull the recordings and build the voice-ac
 # sound packs take the Quests mark -- scripts/quests/package-meta.sh and tts_cli/build.py copy
 # spoken-quests.tga into every module they build. A language's packs and its Spoken stub take the
 # same mark with the language's badge, spoken-<mark>-<locale>.tga, made from the
-# spoken-<mark>-<locale>-512.png beside it.
+# spoken-<mark>-<locale>-512.png beside it. Spoken_Developer and SpokenContributions have no
+# pipeline of their own, so their marks (the brackets and the heart) are kept and built here too.
 # The minimap button wears the same player mark from a tighter crop, as a BLP rather than a
 # TGA: a texture a frame loads is BLP on every client this ships to. LibDBIcon draws its own
 # round border around it, so the crop drops the shield's octagonal frame -- two frames at 17
@@ -181,7 +182,10 @@ icon: ## Rebuild the addons' icon.tga and the minimap BLP from pipelines/quests/
 	@cp pipelines/quests/assets/icon/spoken-player.tga addons/Spoken/icon.tga
 	@for png in pipelines/quests/assets/icon/spoken-*-??[A-Z][A-Z]-512.png; do python3 pipelines/quests/tools/make_icon.py "$$png" "$${png%-512.png}.tga"; done
 	@cp pipelines/quests/assets/icon/spoken-quests.tga addons/Spoken_Quests/icon.tga
-	@echo "==> copied into addons/Spoken/ and addons/Spoken_Quests/"
+	@for mark in developer contributions; do python3 pipelines/quests/tools/make_icon.py "pipelines/quests/assets/icon/spoken-$$mark-512.png" "pipelines/quests/assets/icon/spoken-$$mark.tga"; done
+	@cp pipelines/quests/assets/icon/spoken-developer.tga addons/Spoken_Developer/icon.tga
+	@cp pipelines/quests/assets/icon/spoken-contributions.tga addons/SpokenContributions/icon.tga
+	@echo "==> copied into addons/Spoken/, addons/Spoken_Quests/, addons/Spoken_Developer/ and addons/SpokenContributions/"
 	@python3 pipelines/quests/tools/make_minimap_icon.py pipelines/quests/assets/icon/spoken-player-512.png addons/Spoken/Textures/MinimapButton.blp
 
 package: ## Zip the player addon into dist/: one Blizzard zip, one per legacy client
