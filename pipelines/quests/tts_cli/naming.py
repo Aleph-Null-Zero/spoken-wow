@@ -145,26 +145,31 @@ def quest_wording_file_name(quest, source: str, n: int) -> str:
 
 
 def _quest_parts(line_id: str):
-    """(quest, source, wording n or None, player gender or None) of an unvoiced quest id."""
+    """(the moment's stem, the line's stem, player gender or None) of an unvoiced quest id."""
     kind, quest, source, *rest = line_id.split(":")
     if kind != "q":
         raise ValueError(f"{line_id!r} is not a quest line")
+    moment = f"{quest}-{source}"
     n = _wording(rest[0]) if rest else None
     if n is not None:
         rest = rest[1:]
-    return quest, source, n, rest[0] if rest else None
+    return moment, quest_wording_file_name(quest, source, n) if n else moment, rest[0] if rest else None
 
 
 def quest_stem_from_line_id(line_id: str) -> str:
     """A quest line's file without player-gender prefix or voice: what the addon looks up."""
-    quest, source, n, _gender = _quest_parts(split_voice(line_id)[0])
-    return quest_wording_file_name(quest, source, n) if n else f"{quest}-{source}"
+    return _quest_parts(split_voice(line_id)[0])[1]
 
 
 def quest_moment_stem(line_id: str) -> str:
     """The stem of a quest line's moment, the same for every wording: QuestWordingLookup's key."""
-    quest, source, _n, _gender = _quest_parts(split_voice(line_id)[0])
-    return f"{quest}-{source}"
+    return _quest_parts(split_voice(line_id)[0])[0]
+
+
+def several_wordings(moments: dict) -> dict:
+    """{moment stem: {text: stem}} keeping only the moments with more than one wording: with one
+    there is nothing to tell apart, and the addon names the file from the quest id alone."""
+    return {moment: texts for moment, texts in moments.items() if len(set(texts.values())) > 1}
 
 
 def variant_line_id(line_id: str, voice: str) -> str:
@@ -190,8 +195,7 @@ def filename_from_line_id(line_id: str) -> str:
         return variant_file_name(filename_from_line_id(line_id), voice)
     kind, *rest = line_id.split(":")
     if kind == "q":
-        quest, source, n, player_gender = _quest_parts(line_id)
-        base = quest_wording_file_name(quest, source, n) if n else f"{quest}-{source}"
+        _moment, base, player_gender = _quest_parts(line_id)
         gender = [player_gender] if player_gender else []
     elif kind == "g":
         hash_, *gender = rest

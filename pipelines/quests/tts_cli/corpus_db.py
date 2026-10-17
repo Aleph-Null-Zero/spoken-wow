@@ -1103,6 +1103,38 @@ def export_giver_names(corpus_path, out_dir, verbose=True):
     write_names_xml(out_dir, sorted(by_lang))
 
 
+def _client_texts(cur, sources, locales):
+    """(english, translations, natives) of the current lines of `sources`, as
+    gossip_text.gossip_text_tables takes them: English's template by lineId; each locale's
+    newest translation with localeText, as (lineId, the English it translates, its text); and
+    each locale's own text by lineId, for a line English lacks."""
+    cur.execute(
+        """select "lineId", "originalText" from "quest_line"
+            where "isCurrent" and "source" = any(%s) and "lang" = %s""", (list(sources), LANG))
+    english = dict(cur.fetchall())
+
+    cur.execute(
+        """select distinct on ("lineId", "variant", "lang")
+                  "lang", "lineId", "originalText", "localeText"
+             from "quest_line"
+            where "lang" = any(%s) and "source" = any(%s)
+              and coalesce("localeText", '') <> ''
+            order by "lineId", "variant", "lang", "version" desc""",
+        (list(locales), list(sources)))
+    translations = {}
+    for lang, line_id, original, text in cur.fetchall():
+        translations.setdefault(lang, []).append((line_id, original, text))
+
+    cur.execute(
+        """select "lang", "lineId", "originalText" from "quest_line"
+            where "isCurrent" and "source" = any(%s) and "lang" = any(%s)""",
+        (list(sources), list(locales)))
+    natives = {}
+    for lang, line_id, text in cur.fetchall():
+        natives.setdefault(lang, {})[line_id] = text
+    return english, translations, natives
+
+
 def export_gossip_text(out_dir, aliases_path, verbose=True):
     """Every client locale's gossip text, and the moments' aliases -> the addon's Gossip/.
 
@@ -1133,30 +1165,7 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
             for kind, npc_id, gender in cur.fetchall():
                 sexes.setdefault((kind, npc_id), []).append(gender)
 
-            cur.execute(
-                """select "lineId", "originalText" from "quest_line"
-                    where "isCurrent" and "source" = 'gossip' and "lang" = %s""", (LANG,))
-            english = dict(cur.fetchall())
-
-            cur.execute(
-                """select distinct on ("lineId", "variant", "lang")
-                          "lang", "lineId", "originalText", "localeText"
-                     from "quest_line"
-                    where "lang" = any(%s) and "source" = 'gossip'
-                      and coalesce("localeText", '') <> ''
-                    order by "lineId", "variant", "lang", "version" desc""",
-                (list(CLIENT_LOCALES),))
-            translations = {}
-            for lang, line_id, original, text in cur.fetchall():
-                translations.setdefault(lang, []).append((line_id, original, text))
-
-            cur.execute(
-                """select "lang", "lineId", "originalText" from "quest_line"
-                    where "isCurrent" and "source" = 'gossip' and "lang" = any(%s)""",
-                (list(CLIENT_LOCALES),))
-            natives = {}
-            for lang, line_id, text in cur.fetchall():
-                natives.setdefault(lang, {})[line_id] = text
+            english, translations, natives = _client_texts(cur, ("gossip",), CLIENT_LOCALES)
 
             cur.execute("""select "lineId", "broadcastTextId" from "gossip_broadcast"
                             order by 1, 2""")
@@ -1178,31 +1187,8 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
             merges = cur.fetchall()
 
             # Quest text in every client locale, for the moments shown in more than one wording.
-            cur.execute(
-                """select "lineId", "originalText" from "quest_line"
-                    where "isCurrent" and "source" in ('accept', 'complete') and "lang" = %s""",
-                (LANG,))
-            quest_english = dict(cur.fetchall())
-
-            cur.execute(
-                """select distinct on ("lineId", "variant", "lang")
-                          "lang", "lineId", "originalText", "localeText"
-                     from "quest_line"
-                    where "lang" = any(%s) and "source" in ('accept', 'complete')
-                      and coalesce("localeText", '') <> ''
-                    order by "lineId", "variant", "lang", "version" desc""",
-                (list(CLIENT_LOCALES),))
-            quest_translations = {}
-            for lang, line_id, original, text in cur.fetchall():
-                quest_translations.setdefault(lang, []).append((line_id, original, text))
-
-            cur.execute(
-                """select "lang", "lineId", coalesce("localeText", "originalText") from "quest_line"
-                    where "isCurrent" and "source" in ('accept', 'complete') and "lang" = any(%s)""",
-                (list(CLIENT_LOCALES),))
-            quest_natives = {}
-            for lang, line_id, text in cur.fetchall():
-                quest_natives.setdefault(lang, {})[line_id] = text
+            quest_english, quest_translations, quest_natives = _client_texts(
+                cur, ("accept", "complete"), CLIENT_LOCALES)
     finally:
         conn.close()
 

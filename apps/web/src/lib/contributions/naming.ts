@@ -81,19 +81,13 @@ export function questWordingFileName(questId: number, event: QuestEvent, n: numb
   return `${questFileName(questId, event)}-w${n}`;
 }
 
-/** The quest moment a quest line is a wording of: `q:1:accept` for `q:1:accept:w2:f`. */
-export function questMomentOf(lineId: string): string {
-  return momentOf(lineId).replace(/:w[1-9]\d*$/, "");
-}
-
 /**
- * Every wording of a quest moment (`q:{questId}:{event}`, its event one of QUEST_EVENTS, so the
- * id is safe inside the pattern) in SQL, each in any player-gender form. The quest id narrows
- * it first: a pattern alone cannot use the lineId index, and read every row of the language.
+ * Every line of a quest moment (`q:{questId}:{event}`) in SQL, each wording in any player-gender
+ * form: a quest line's id is its quest and event, which the row carries as `questId` and
+ * `source`, and the quest id is what quest_line is indexed on.
  */
-export function wordingsOfMomentSql(column: string, questIdColumn: string, moment: string): string {
-  return `${questIdColumn} = split_part(${moment}, ':', 2)::int
-    and (${answersQuestMomentSql(column, moment)} or ${column} ~ ('^' || ${moment} || ':w[1-9][0-9]*(:[mf])?$'))`;
+export function wordingsOfMomentSql(questIdColumn: string, sourceColumn: string, moment: string): string {
+  return `${questIdColumn} = split_part(${moment}, ':', 2)::int and ${sourceColumn} = split_part(${moment}, ':', 3)`;
 }
 
 export function questFileName(questId: number, event: QuestEvent): string {

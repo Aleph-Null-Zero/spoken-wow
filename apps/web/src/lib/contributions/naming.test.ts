@@ -15,7 +15,6 @@ import {
   playerGenderForms,
   questFileName,
   questLineId,
-  questMomentOf,
   questWordingFileName,
   questWordingLineId,
   variantFileName,
@@ -101,12 +100,6 @@ describe("quest wordings", () => {
   it("names a wording as naming.py does", () => {
     expect(questWordingLineId(97287, "accept", 1)).toBe("q:97287:accept:w1");
     expect(questWordingFileName(97287, "accept", 1)).toBe("97287-accept-w1");
-  });
-
-  it("finds the moment of any wording or player-gender form", () => {
-    expect(questMomentOf("q:5:accept")).toBe("q:5:accept");
-    expect(questMomentOf("q:5:accept:m")).toBe("q:5:accept");
-    expect(questMomentOf("q:5:accept:w2:f")).toBe("q:5:accept");
   });
 
   it("keeps a wording its own player-gender moment", () => {

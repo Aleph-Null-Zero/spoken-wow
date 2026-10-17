@@ -17,8 +17,9 @@ from tqdm import tqdm
 from tts_cli.ignores import ignored_files
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
-                            moment_of, quest_moment_stem, quest_stem_from_line_id, split_voice,
-                            subfolder_from_line_id, variant_file_name)
+                            moment_of, quest_moment_stem, quest_stem_from_line_id,
+                            several_wordings, split_voice, subfolder_from_line_id,
+                            variant_file_name)
 from tts_cli.npc_bodies import GENDER_SEX, body_name
 from tts_cli.store import SUBFOLDERS, audio_extension, stored_files
 from tts_cli.utils import (get_first_n_words, get_last_n_words,
@@ -293,9 +294,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
                  .setdefault(escape_lua_string(line["npcName"]), {}) \
                  .setdefault(quest_search_text(line["originalText"]), line["questId"])
 
-    # A moment with one wording needs no matching: its file is named from the quest id alone.
-    wordings = {moment: texts for moment, texts in wordings.items()
-                if len(set(texts.values())) > 1}
+    wordings = several_wordings(wordings)
 
     return {
         "npc_gossip_file_lookups": ("GossipLookupByNPCID", gossip_by_id["creature"]),

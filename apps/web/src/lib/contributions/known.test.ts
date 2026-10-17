@@ -85,6 +85,11 @@ describe("lineStates", () => {
     expect(await lineStates([moment("accept(", "Hello, $N.")])).toEqual([{ kind: "missing" }]);
   });
 
+  it("calls a quest id past the integer ceiling missing", async () => {
+    const huge = { source: "quests" as const, locale: "enUS", text: "Hi.", meta: { quest: "99999999999", event: "accept" } };
+    expect(await lineStates([huge])).toEqual([{ kind: "missing" }]);
+  });
+
   it("calls a moment the corpus lacks missing", async () => {
     expect(await lineStates([moment("progress", "Any luck?")])).toEqual([{ kind: "missing" }]);
   });

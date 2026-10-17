@@ -569,6 +569,15 @@ local function CollectTexts(table, key, inClientLocale, into)
     return into
 end
 
+--- The file of the text on screen among `entries`: its exact key, else the closest above the floor.
+local function MatchShown(text, entries)
+    if entries[text] then
+        return entries[text]
+    end
+    local best = ClosestGossipLine(text, entries)
+    return best and best.value or nil
+end
+
 ---@param soundData SoundData
 ---@return string|nil hash
 function DataModules:GetNPCGossipTextHash(soundData)
@@ -578,21 +587,17 @@ function DataModules:GetNPCGossipTextHash(soundData)
     end
     local text = soundData.text
     -- An NPC whose text varies by who asks may lack the variant on screen. Playing nothing then
-    -- lets the window offer Contribute.
+    -- lets the window offer Contribute. HasGossipFor asks with each key itself, so an exact key
+    -- skips scoring every line again.
     local text_entries = CollectTexts(table, npc, true, {})
-    -- HasGossipFor asks with each key itself, so an exact key skips scoring every line again.
-    if text_entries[text] then
-        return text_entries[text]
+    if next(text_entries) ~= nil then
+        return MatchShown(text, text_entries)
     end
     -- Only when no pack in the client's locale knows this NPC are the rest searched. That is
     -- what every non-English client has always done with English packs, and it mostly works:
     -- most NPCs have a single line, and the fuzzy match lands on it whatever it is shown in.
-    local search = ClosestGossipLine
-    if next(text_entries) == nil then
-        CollectTexts(table, npc, false, text_entries)
-        search = FuzzySearchBestKeys
-    end
-    local best_result = search(text, text_entries)
+    CollectTexts(table, npc, false, text_entries)
+    local best_result = FuzzySearchBestKeys(text, text_entries)
     return best_result and best_result.value
 end
 
@@ -747,11 +752,7 @@ local function QuestFile(soundData, event)
     if not wordings or next(wordings) == nil then
         return stem
     end
-    if wordings[text] then
-        return wordings[text]
-    end
-    local best = ClosestGossipLine(text, wordings)
-    return best and best.value or nil
+    return MatchShown(text, wordings)
 end
 
 ---@type table<SoundEvent, fun(soundData: SoundData): string|nil>

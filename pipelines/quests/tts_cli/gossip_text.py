@@ -32,7 +32,7 @@ import os
 from tts_cli.build import escape_lua_string
 from tts_cli.giver_names import lua_string
 from tts_cli.naming import (gossip_hash_from_line_id, gossip_stem_rank, quest_moment_stem,
-                            quest_stem_from_line_id)
+                            quest_stem_from_line_id, several_wordings)
 
 #: Every client locale but English, whose text is the packs' own tables. Italian is no
 #: client's locale.
@@ -129,8 +129,7 @@ def quest_wording_tables(english: dict, translations: dict, natives: dict, ignor
     """{lang: {moment stem: {client text: wording stem}}} for every client locale.
 
     english, translations and natives as gossip_text_tables takes them, for quest lines. Only a
-    moment with two or more wordings in the language is listed: with one there is nothing to
-    tell apart, and the addon plays the moment's file.
+    moment with two or more wordings in the language is listed (several_wordings).
     """
     tables = {}
     for lang in CLIENT_LOCALES:
@@ -147,8 +146,7 @@ def quest_wording_tables(english: dict, translations: dict, natives: dict, ignor
                 continue
             moments.setdefault(quest_moment_stem(line_id), {})[escape_lua_string(text)] = \
                 quest_stem_from_line_id(line_id)
-        tables[lang] = {moment: found for moment, found in moments.items()
-                        if len(set(found.values())) > 1}
+        tables[lang] = several_wordings(moments)
     return tables
 
 

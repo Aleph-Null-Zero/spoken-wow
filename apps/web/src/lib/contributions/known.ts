@@ -34,7 +34,7 @@ import type { Contribution } from "./store";
 import { loadBookCorpus, matchBook } from "./book-match";
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
-import { QUEST_EVENTS, wordingsOfMomentSql } from "./naming";
+import { wordingsOfMomentSql } from "./naming";
 
 export type LineState =
   | { kind: "missing" }
@@ -49,14 +49,12 @@ type Comparable = Pick<Submission, "source" | "locale" | "text" | "meta"> &
 const MISSING: LineState = { kind: "missing" };
 
 /**
- * The quest moment a contribution names, `q:{quest}:{event}`, or null for a greeting. An event
- * that is none of the quest events is a hand-edited paste, and names no moment.
+ * The quest moment a contribution names, `q:{quest}:{event}`, or null for a greeting. Past the
+ * integer ceiling the quest is no id quest_line could hold, and names no moment.
  */
 function momentOf(row: Comparable): string | null {
   const { quest, event } = row.meta;
-  return quest && event && /^\d+$/.test(quest) && (QUEST_EVENTS as readonly string[]).includes(event)
-    ? `q:${quest}:${event}`
-    : null;
+  return quest && event && /^\d+$/.test(quest) && Number(quest) <= 2_147_483_647 ? `q:${quest}:${event}` : null;
 }
 
 /** The NPC id a greeting names, from the envelope's `"<id> <name>"`. */
@@ -97,7 +95,7 @@ async function momentTexts(pairs: { locale: string; moment: string }[]): Promise
        from unnest($1::text[], $2::text[]) as m ("locale", "moment")
        join "quest_line" l
          on l."lang" = m."locale" and l."isCurrent"
-        and ${wordingsOfMomentSql(`l."lineId"`, `l."questId"`, `m."moment"`)}
+        and ${wordingsOfMomentSql(`l."questId"`, `l."source"`, `m."moment"`)}
       order by l."lineId" ~ ':w[0-9]+(:[mf])?$', l."lineId", l."variant"`,
     [pairs.map((p) => p.locale), pairs.map((p) => p.moment), BASE_LANG],
   );

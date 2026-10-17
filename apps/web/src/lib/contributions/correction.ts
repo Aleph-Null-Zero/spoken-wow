@@ -149,10 +149,7 @@ export async function acceptAsWording(id: number, userId: string): Promise<Corre
     };
   }
   const written = await writeWording(contribution, userId);
-  if (!written.ok) {
-    if (written.reason === "needs-speaker" || written.reason === "malformed") return written;
-    return { ok: false, reason: "malformed", message: "message" in written ? written.message : "Could not write the wording." };
-  }
+  if (!written.ok) return written;
   return markAccepted(contribution, lang, userId, { wording: written.lineId });
 }
 
