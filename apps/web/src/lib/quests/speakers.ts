@@ -222,10 +222,15 @@ export type RemoveOutcome =
   | { ok: false; reason: "last" | "contributed"; message: string };
 
 /**
- * Takes an NPC off a moment, every line and language of it, while another NPC still speaks it:
- * a line is in the explorer only through its speakers. A speaker of the dump's is recorded as
- * removed, so no import brings it back. A contribution's speaker is not removed here: it goes
- * when the contribution is rejected. The caller holds the moment's lock.
+ * Takes an NPC off a moment, every line and language of it, while another NPC still speaks it in
+ * each of those languages: a line is in the explorer only through its speakers. A speaker of the
+ * dump's is recorded as removed, so no import brings it back. A contribution's speaker is not
+ * removed here: it goes when the contribution is rejected. The caller holds the moment's lock.
+ *
+ * A line's file was made in its first speaker's voice, as the site and the pack build read it, so
+ * when that speaker goes the next one inherits the voice its row is written with. The file then
+ * stays the old voice's, each speaker keeps its own voice's line and takes, and a pack plays the
+ * old file for a speaker whose own has no audio yet.
  */
 async function removeFromMoment(
   client: PoolClient,
@@ -237,9 +242,26 @@ async function removeFromMoment(
   if (ofNpc.some((row) => row.contributionId !== null)) {
     return { ok: false, reason: "contributed", message: "This speaker came from a contribution: reject it instead" };
   }
-  if (ofNpc.length === rows.length) {
+  const langs = new Set(ofNpc.map((row) => row.lang));
+  if ([...langs].some((lang) => !rows.some((row) => row.lang === lang && !isNpc(row, args)))) {
     return { ok: false, reason: "last", message: "A line needs a speaker: add another before removing this one" };
   }
+
+  await client.query(
+    `with "owner" as (
+       select distinct on ("lineId", "variant", "lang") "lineId", "variant", "lang", "npcType", "npcId", "voice"
+         from "quest_line_speaker" where ${answersQuestMomentSql(`"lineId"`, "$1")}
+        order by "lineId", "variant", "lang", "ord", "id"
+     ), "heir" as (
+       select distinct on (s."lineId", s."variant", s."lang") s."id", o."voice"
+         from "quest_line_speaker" s
+         join "owner" o using ("lineId", "variant", "lang")
+        where o."npcType" = $2 and o."npcId" = $3 and not (s."npcType" = $2 and s."npcId" = $3)
+        order by s."lineId", s."variant", s."lang", s."ord", s."id"
+     )
+     update "quest_line_speaker" s set "voice" = h."voice" from "heir" h where s."id" = h."id"`,
+    [args.moment, args.npcType, args.npcId],
+  );
 
   const { rows: removed } = await client.query<{ npcName: string | null; extracted: boolean }>(
     `delete from "quest_line_speaker"
@@ -266,7 +288,7 @@ export async function removeSpeaker(args: Npc & { moment: string; removedBy: str
 
 export type ReplaceOutcome =
   | { ok: true; speaker: Speaker; npcName: string | null }
-  | { ok: false; reason: "unknown-line" | "no-voice" | "contributed" | "last" | "same"; message: string };
+  | { ok: false; reason: "unknown-line" | "no-voice" | "contributed" | "last" | "same" | "gone"; message: string };
 
 /** Carries a refusal out of the transaction, so the add before it is rolled back. */
 class Refused extends Error {
@@ -276,9 +298,9 @@ class Refused extends Error {
 }
 
 /**
- * The new NPC is added before the old one goes, so the line always has a speaker. The line's take
- * stays: it counts as missing while it is in another voice than the speaker's, and the addon
- * plays it until the line is generated again.
+ * The new NPC is added before the old one goes, so the line always has a speaker. It inherits the
+ * old one's file (removeFromMoment), so the line shows as missing in its own voice until that is
+ * generated, and the addon plays the old file until then.
  */
 export async function replaceSpeaker(args: { moment: string; from: Npc; to: Npc; by: string }): Promise<ReplaceOutcome> {
   if (isNpc(args.from, args.to)) return { ok: false, reason: "same", message: "That is the speaker already" };
@@ -292,6 +314,10 @@ export async function replaceSpeaker(args: { moment: string; from: Npc; to: Npc;
       if (added === "unknown") return { ok: false, reason: "unknown-line", message: "unknown line" };
       const removed = await removeFromMoment(client, { moment: args.moment, ...args.from, removedBy: args.by });
       if (!removed.ok) throw new Refused(removed);
+      // Taken off by somebody else meanwhile: the add alone would be no replace.
+      if (removed.removed === 0) {
+        throw new Refused({ ok: false, reason: "gone", message: "That NPC no longer speaks the line" });
+      }
       return { ok: true, speaker, npcName: removed.npcName };
     });
   } catch (error) {

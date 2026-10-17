@@ -36,9 +36,9 @@ function momentFrom(lineId: unknown): string | null {
   return typeof lineId === "string" && lineId ? momentOf(baseLineId(lineId)) : null;
 }
 
-/** A refusal from speakers.ts: an unknown line, a conflict with the speakers it has, or a bad NPC. */
+/** An unknown line is 404, a clash with the speakers the line has 409, and a bad NPC 400. */
 function refused({ reason, message }: { reason: string; message: string }): Response {
-  const status = reason === "unknown-line" ? 404 : ["spoken", "contributed", "last"].includes(reason) ? 409 : 400;
+  const status = reason === "unknown-line" ? 404 : ["spoken", "contributed", "last", "gone"].includes(reason) ? 409 : 400;
   return Response.json({ error: message, reason }, { status });
 }
 

@@ -1172,10 +1172,10 @@ the import reads so it leaves that NPC off the moment from then on. The export c
 records as `removedSpeakers`, written only once there is one. Adding the NPC back deletes the
 record.
 
-The line's file and takes stay as they were. When the speaker left on a line speaks in another
-voice than its live take was made in, the explorer counts the line as missing audio
-(`search.ts` `hasLiveAudio`) until it is generated again, and a pack keeps shipping the old take,
-so the addon plays it until then. Progress text and a line with no voice chosen yet are exempt.
+The line's file and takes stay as they were. A line's file was made in its first speaker's voice,
+so when that speaker goes, the next one's row inherits the voice it is written with. Each
+remaining speaker then keeps its own voice's line and takes. A replaced line shows as missing in
+the new NPC's voice until it is generated, and a pack plays the old file for that NPC until then.
 
 An NPC can be split by body. One creature id can be drawn as several races and both sexes: a
 Stormwind City Guard is a man or a woman at even odds, and an Ironforge Reveler a dwarf, a

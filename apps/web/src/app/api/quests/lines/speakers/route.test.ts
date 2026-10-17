@@ -261,6 +261,31 @@ describe("DELETE /api/quests/lines/speakers", () => {
     expect(await removals()).toEqual([[LINE, giver, ADMIN]]);
   });
 
+  it("leaves the line's file in its old voice, so the next speaker keeps its own voice's line", async () => {
+    await line();
+    await answer(giver, "human", "male", "standard");
+    await answer(second, "orc", "male", "shady");
+    await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
+    await DELETE(del(LINE, giver));
+
+    const lines = (await corpus()).lines.filter((l) => l.questId === questId);
+    expect(lines.map((l) => [l.lineId, l.npcId])).toEqual([[`${LINE}~orc-male-shady`, second]]);
+  });
+
+  it("refuses to leave a language without a speaker, whatever another language has", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    await db().query(
+      `insert into "quest_line_speaker"
+         ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName", "race", "gender", "flavor", "voice")
+       values ($1, 0, 'deDE', $2, 'creature', $3, 'Zweiter', 'orc', 'male', 'shady', 'orc-male-shady')`,
+      [LINE, ORD + 50, second],
+    );
+    const response = await DELETE(del(LINE, giver));
+    expect(response.status).toBe(409);
+    expect((await response.json()).reason).toBe("last");
+  });
+
   it("forgets the removal once the speaker is added back", async () => {
     await line();
     await answer(giver, "human", "male", "standard");
@@ -303,14 +328,23 @@ describe("POST /api/quests/lines/speakers with replaces", () => {
     expect(await removals()).toEqual([[LINE, giver, ADMIN]]);
   });
 
-  it("gives the new NPC the line's own file, in its own voice", async () => {
+  it("gives the new NPC its own voice's line, missing until generated", async () => {
     await line();
     await answer(second, "orc", "male", "shady");
     await POST(replace(second, giver));
 
     const lines = (await corpus()).lines.filter((l) => l.questId === questId);
-    expect(lines.map((l) => [l.lineId, l.npcId, l.voice])).toEqual([[LINE, second, "orc-male-shady"]]);
+    expect(lines.map((l) => [l.lineId, l.npcId])).toEqual([[`${LINE}~orc-male-shady`, second]]);
     expect(lines[0].soleSpeaker).toBe(true);
+  });
+
+  it("refuses when the old NPC no longer speaks the line, adding nobody", async () => {
+    await line();
+    await answer(second, "orc", "male", "shady");
+    const response = await POST(replace(second, giver + 5));
+    expect(response.status).toBe(409);
+    expect((await response.json()).reason).toBe("gone");
+    expect((await speakers()).map((row) => row.npcId)).toEqual([giver]);
   });
 
   it("only removes the old speaker when the new one already speaks the line", async () => {

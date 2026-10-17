@@ -31,7 +31,6 @@ import { splitBody } from "@/lib/npc/store";
 import { nameStamp, versionStamp } from "@/lib/stamp";
 import { npcKey, type Corpus, type CorpusLine } from "@/lib/corpus";
 import { BASE_LANG, type Lang } from "@/lib/lang";
-import { OWN_VOICE_SOURCES } from "@/lib/line-fields";
 import { baseLineId, momentOf, momentSql, variantFileName, variantLineId } from "@/lib/contributions/naming";
 import { newVoiceName, type Roster } from "@/lib/voices/roster";
 import { loadRoster, ROSTER_STAMP } from "@/lib/voices/roster-store";
@@ -150,6 +149,16 @@ const SPEAKERS = speakersBy(`s."lineId"`);
  */
 const MOMENT_SPEAKERS = speakersBy(momentSql(`s."lineId"`));
 
+/**
+ * Every NPC speaks a line in its own voice. Where NPCs of different voices share one, the file
+ * already made keeps the voice it was made in -- the one its speakers were written with -- and
+ * each other voice is a line of its own (naming.ts's variantLineId): the same words, in a file
+ * named after the voice. An NPC whose voice changes moves to its new voice's line, which has no
+ * audio until somebody generates it; one with no flavor yet moves to a line nobody can voice
+ * until it gets one. Progress text is never voiced, so it is never split.
+ */
+const OWN_VOICE_SOURCES: ReadonlySet<string> = new Set(["accept", "complete", "gossip", "followup"]);
+
 type Speaking = {
   lineId: string;
   variant: number;
@@ -167,14 +176,6 @@ type Speaking = {
   skipReason: string | null;
 };
 
-/**
- * Every NPC speaks a line in its own voice. Where NPCs of different voices share one, the file
- * already made keeps the voice it was made in -- the one its speakers were written with -- and
- * each other voice is a line of its own (naming.ts's variantLineId): the same words, in a file
- * named after the voice. An NPC whose voice changes moves to its new voice's line, which has no
- * audio until somebody generates it; one with no flavor yet moves to a line nobody can voice
- * until it gets one. Progress text is never voiced, so it is never split.
- */
 function voiced<T extends Speaking>(rows: T[], roster: Roster): (T & { voice: string })[] {
   const written = new Map<string, string>();
   const lineOf = (row: T) => `${row.lineId}|${row.variant}`;

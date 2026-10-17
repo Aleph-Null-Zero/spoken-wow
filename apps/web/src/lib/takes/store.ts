@@ -80,8 +80,6 @@ export type LiveTake = {
   provider: Provider;
   modelId: string | null;
   voiceId: string | null;
-  /** The quests NPC voice it was made in, as 'race-gender-flavor'. Null elsewhere. */
-  voice: string | null;
   createdAt: Date;
   /** Who asked for it: null for anything the CLI imported, or a deleted account's. */
   createdBy: string | null;
@@ -114,7 +112,7 @@ export async function liveTakes(source: Source, lang: Lang = BASE_LANG): Promise
     query<Omit<LiveTake, "takes">>(
       `select t."lineId", t."file", t."version", t."spokenHash", t."characters",
               t."credits", t."durationSec"::float8 as "durationSec", t."bytes"::float8 as "bytes",
-              t."provider", t."modelId", t."voiceId", t."voice", t."createdAt", t."createdBy",
+              t."provider", t."modelId", t."voiceId", t."createdAt", t."createdBy",
               u."name" as "createdByName"
          from "take" t
          left join "user" u on u."id" = t."createdBy"

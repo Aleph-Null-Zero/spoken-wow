@@ -78,7 +78,6 @@ export async function searchContext(
   const takes = new Map(live.map((row) => [row.file, { version: row.version, takes: row.takes }]));
   const generatedAt = new Map(live.map((row) => [row.file, row.createdAt.getTime()]));
   const madeBy = seesMadeBy ? new Map(live.map((row) => [row.file, madeByOf(row)])) : undefined;
-  const takeVoices = new Map(live.map((row) => [row.file, row.voice]));
 
   try {
     // Overrides are English's alone -- they rewrite the English corpus. Staleness and dirt
@@ -97,7 +96,6 @@ export async function searchContext(
         ignores,
         reports,
         takes,
-        takeVoices,
         generatedAt,
         madeBy,
         stale: stale ?? undefined,
@@ -106,6 +104,6 @@ export async function searchContext(
     };
   } catch (error) {
     console.warn("[quests] search context unavailable, serving unmarked results:", error);
-    return { voiced, context: { ...NO_CONTEXT, takes, takeVoices, generatedAt, madeBy } };
+    return { voiced, context: { ...NO_CONTEXT, takes, generatedAt, madeBy } };
   }
 }
