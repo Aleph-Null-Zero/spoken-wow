@@ -4,6 +4,7 @@ import ActorTakeCell from "@/components/ActorTakeCell";
 import { MadeByCell } from "@/components/MadeBy";
 import { RenameButton } from "@/components/RenameButton";
 import { Untranslated, UntranslatedMark } from "@/components/Untranslated";
+import FilterLink from "@/components/FilterLink";
 import { useLang } from "@/components/LangProvider";
 import { localeHref } from "@/lib/lang";
 import {
@@ -158,9 +159,11 @@ type Props = {
   groupSpan: number;
   /** Whether the NPC's id links to its row on /npcs, which only an admin can open. */
   showNpcPage?: boolean;
-  /** Narrow the search to this line's NPC, or to its quest. */
+  /** Narrow the search to this line's NPC, or to its quest; the hrefs open that view elsewhere. */
   onNarrowToNpc: (line: ResultLine) => void;
   onNarrowToQuest: (line: ResultLine) => void;
+  npcHref: (line: ResultLine) => string;
+  questHref: (line: ResultLine) => string;
   /** Say this take is fine as it stands, despite a pronunciation having moved under it. */
   onClearDirty: (line: ResultLine) => void;
 };
@@ -214,6 +217,8 @@ export default function LineRow({
   showNpcPage = false,
   groupSpan,
   onNarrowToQuest,
+  npcHref,
+  questHref,
   onClearDirty,
 }: Props) {
   const missing = absence(line);
@@ -250,13 +255,14 @@ export default function LineRow({
     >
       {spanned && (
         <td rowSpan={groupSpan} className="px-2 py-2">
-          <button
+          <FilterLink
+            href={npcHref(line)}
+            onApply={() => onNarrowToNpc(line)}
             className="hover:text-foreground block max-w-full truncate text-left underline-offset-2 hover:underline"
             title={`Show only ${line.npcName}`}
-            onClick={() => onNarrowToNpc(line)}
           >
             <Untranslated missing={line.missing?.npcName}>{line.npcName}</Untranslated>
-          </button>
+          </FilterLink>
           {onRename && (
             <RenameButton label={`Name ${line.npcName}`} onClick={() => onRename(line, "npc")} />
           )}
@@ -310,15 +316,16 @@ export default function LineRow({
         <td rowSpan={groupSpan} className="px-2 py-2">
           {line.questId !== null ? (
             <>
-              <button
+              <FilterLink
+                href={questHref(line)}
+                onApply={() => onNarrowToQuest(line)}
                 className="hover:text-foreground block max-w-full truncate text-left underline-offset-2 hover:underline"
                 title={`Show only quest ${line.questId}`}
-                onClick={() => onNarrowToQuest(line)}
               >
                 <Untranslated missing={line.missing?.questTitle}>
                   {line.questTitle ?? `quest ${line.questId}`}
                 </Untranslated>
-              </button>
+              </FilterLink>
               {onRename && (
                 <RenameButton
                   label={`Name quest ${line.questId}`}

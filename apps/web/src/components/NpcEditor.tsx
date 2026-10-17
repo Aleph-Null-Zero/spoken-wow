@@ -12,6 +12,7 @@ import { useCallback, useMemo, useState } from "react";
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
 import { LiteButton, ROW_BUTTON, ROW_LINE } from "@/components/LiteControls";
 import { useLang } from "@/components/LangProvider";
+import { useHistoryMode } from "@/components/useHistoryMode";
 import { useRosterEdits } from "@/components/RosterEdits";
 import SortHeader from "@/components/SortHeader";
 import SpeakerCell, { type SpeakerAnswer } from "@/components/SpeakerCell";
@@ -285,7 +286,7 @@ export default function NpcEditor({
   const pathname = usePathname();
   const params = useSearchParams();
   // The filters live in the URL, so a reload or a shared link keeps the view. Written with
-  // history.replaceState rather than router.replace, for zones/Explorer.tsx's reason: the rows
+  // native history calls rather than the router, for zones/Explorer.tsx's reason: the rows
   // are all here already, and Next re-renders useSearchParams() from a native history call.
   const query = params.get("q") ?? "";
   const speakerParam = params.get("speaker");
@@ -296,6 +297,7 @@ export default function NpcEditor({
   const client = clientFilterOf(params.get("client"));
   const sortValue = params.get("sort");
   const sort = useMemo(() => sortOf(sortValue), [sortValue]);
+  const historyMode = useHistoryMode();
   const setParam = useCallback(
     (name: string, value: string | undefined) => {
       const search = new URLSearchParams(params.toString());
@@ -304,9 +306,12 @@ export default function NpcEditor({
       // A narrower view starts again from its first page: the one it was on may not exist.
       if (name !== "page") search.delete("page");
       const next = search.toString();
-      window.history.replaceState(null, "", next ? `${pathname}?${next}` : pathname);
+      const url = next ? `${pathname}?${next}` : pathname;
+      // The search box writes per keystroke; see useHistoryMode.
+      if (historyMode(name === "q") === "push") window.history.pushState(null, "", url);
+      else window.history.replaceState(null, "", url);
     },
-    [params, pathname],
+    [historyMode, params, pathname],
   );
   /** What this session saved, over the server's rows, keyed by NPC. */
   const [saved, setSaved] = useState<Record<string, NpcSummary>>({});

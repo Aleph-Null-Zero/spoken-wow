@@ -2,6 +2,7 @@
 
 import { nameSubject, TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
 import { useCan } from "@/components/useCan";
+import { useHistoryMode } from "@/components/useHistoryMode";
 import { useLang } from "@/components/LangProvider";
 import { BASE_LANG, withLang } from "@/lib/lang";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -116,20 +117,25 @@ export function Explorer({ books }: { books: BookFacet[] }) {
   // URL
   //----------------------------------------------------------------------------
 
-  // history.replaceState rather than router.replace: nothing on this screen needs the
+  // The native history calls rather than the router: nothing on this screen needs the
   // server for a filter change -- the rows come from /api/books/search -- and Next
   // re-renders useSearchParams() from a native history call, so the URL still carries the
   // view without a round trip per keystroke.
-  const replaceQuery = useCallback(
-    (search: URLSearchParams) => {
+  const historyMode = useHistoryMode();
+
+  /** `typed` for the search box's own writes; see useHistoryMode. */
+  const writeQuery = useCallback(
+    (search: URLSearchParams, typed = false) => {
       const next = search.toString();
-      window.history.replaceState(null, "", next ? `${pathname}?${next}` : pathname);
+      const url = next ? `${pathname}?${next}` : pathname;
+      if (historyMode(typed) === "push") window.history.pushState(null, "", url);
+      else window.history.replaceState(null, "", url);
     },
-    [pathname],
+    [historyMode, pathname],
   );
 
   const updateUrl = useCallback(
-    (next: Record<string, string | number | undefined>) => {
+    (next: Record<string, string | number | undefined>, typed = false) => {
       const merged = new URLSearchParams(params.toString());
       for (const [key, value] of Object.entries(next)) {
         if (value === undefined || value === "" || value === 0) merged.delete(key);
@@ -138,9 +144,9 @@ export function Explorer({ books }: { books: BookFacet[] }) {
       // Any change other than paging returns to page 1: staying on page 7 of a result set
       // that just became three pages long shows nothing and looks like a bug.
       if (!("page" in next)) merged.delete("page");
-      replaceQuery(merged);
+      writeQuery(merged, typed);
     },
-    [params, replaceQuery],
+    [params, writeQuery],
   );
 
   // Held in a ref so a filter change mid-word does not restart the keystroke timer.
@@ -149,7 +155,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
 
   const commitQuery = useCallback((value: string) => {
     pending.current = echo.write(pending.current, value);
-    updateUrlRef.current({ q: value });
+    updateUrlRef.current({ q: value }, true);
   }, []);
 
   // A debounce, not a throttle: every keystroke clears and restarts the timer.
@@ -172,9 +178,17 @@ export function Explorer({ books }: { books: BookFacet[] }) {
 
   const updateFilters = useCallback(
     (next: Partial<PageFilters>) => {
-      replaceQuery(filterParams({ ...filters, ...next }));
+      writeQuery(filterParams({ ...filters, ...next }));
     },
-    [filters, replaceQuery],
+    [filters, writeQuery],
+  );
+
+  const filtersHref = useCallback(
+    (next: Partial<PageFilters>) => {
+      const query = filterParams({ ...filters, ...next }).toString();
+      return query ? `${pathname}?${query}` : pathname;
+    },
+    [filters, pathname],
   );
 
   //----------------------------------------------------------------------------
@@ -456,7 +470,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
           onQueryChange={setQuery}
           onQuerySubmit={submitQuery}
           onChange={updateFilters}
-          onClearAll={() => replaceQuery(new URLSearchParams())}
+          onClearAll={() => writeQuery(new URLSearchParams())}
           canTriage={canEdit}
           madeBy={result?.madeBy}
           recordable={result?.recordable === true}
@@ -538,6 +552,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
                 onClearDirty={(line) => clearDirty([line.file])}
                 onRegenerate={regenerateOne}
                 onSelectBook={(line) => updateFilters({ bookId: line.bookId })}
+                bookHref={(line) => filtersHref({ bookId: line.bookId })}
                 onReport={setReportFor}
                 onEditText={setEditFor}
                 onRename={
