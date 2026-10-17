@@ -566,10 +566,8 @@ function DataModules:GetNPCGossipTextHash(soundData)
             end
         end
     end
-    -- Text in the client's locale must be like the line to be read for it: an NPC whose text
-    -- varies by who asks (a trainer's profession, a guard's faction) holds only the variants
-    -- somebody has recorded, and the one on screen may not be among them. Nothing plays then,
-    -- and the window offers Contribute.
+    -- An NPC whose text varies by who asks may lack the variant on screen. Playing nothing then
+    -- lets the window offer Contribute.
     collect(true)
     if next(text_entries) ~= nil then
         local best_result = FuzzySearchGossipLine(text, text_entries)

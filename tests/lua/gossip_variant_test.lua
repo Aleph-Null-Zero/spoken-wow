@@ -1,7 +1,5 @@
--- One NPC, several gossip texts: a trainer greets a player of its profession differently, and
--- a guard sends the Horde and the Alliance to different places. The text on screen picks the
--- line, and a text the packs do not hold for this NPC plays nothing, so the window offers
--- Contribute instead of reading another of the NPC's lines. Run with `make test-player`.
+-- One NPC with several gossip texts: the text on screen picks the line, and a text the packs
+-- lack for this NPC plays nothing. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")

@@ -20,11 +20,8 @@ local function jaccardSimilarity(a, b)
     return intersection / union
 end
 
--- How alike a line must be to the text on screen to be read for it. Measured on the corpus: a
--- line and the client's rewording of the same moment score 0.8 or more once punctuation and the
--- player's tokens are set aside, while an NPC's other lines, read for a text the packs lack (a
--- trainer's greeting to a player of its profession, a barker's place for the other faction),
--- mostly score under 0.6.
+-- Measured on the corpus: a rewording of the same line scores 0.8 or more, while an NPC's
+-- other variants (another profession's or faction's) mostly score under 0.6.
 GOSSIP_MATCH_FLOOR = 0.7
 
 --- A line's words as they are compared: lower case, ASCII punctuation as spaces. Bytes past
@@ -33,10 +30,8 @@ local function Words(text)
     return (string.gsub(string.lower(text), "%p", " "))
 end
 
---- The NPC's line for the gossip text on screen, or nil when none is like it.
----
---- The lines are keyed by their text as extracted, with the server's tokens ($N, $g...) still
---- in it, so each is filled in for this player before it is compared.
+--- The keys still hold the server's tokens ($N, $g...), so each is filled in for this player
+--- before it is compared.
 ---@param shown string
 ---@param lines table<string, any> line text -> value
 ---@return { value: any, text: string, similarity: number }|nil
