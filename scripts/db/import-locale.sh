@@ -35,8 +35,8 @@ fi
 
 # Which of the three sources this language has. `vmangos` is null where the dump carries no
 # text at all; place names still come from the addon's aliases. A language no client runs in
-# (Italian) has neither: its text is the QuestIT community's (make quests-import-questit) and
-# what is written on the site.
+# (Italian, Vietnamese) has neither: its text is its community's (make quests-import-questit,
+# make quests-import-forever-csv) and what is written on the site.
 vmangos=$(node --input-type=module -e '
   const { localeInfo, BASE_LOCALE } = await import("./pipelines/lib/locales.mjs");
   const info = localeInfo(process.argv[1]);

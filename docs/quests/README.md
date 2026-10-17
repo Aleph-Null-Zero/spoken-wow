@@ -434,6 +434,24 @@ site keeps its edit. Everything client-keyed is skipped for a language like this
 in `pipelines/lib/locales.mjs`): its pack carries no gossip locale text, the addon never picks
 it on Auto, and it offers no contributions while a player listens in it.
 
+#### Vietnamese, from Forever's mission export
+
+`viVN` is the same kind of language, and its quest text comes from Forever's mission export, a
+CSV with one row per paragraph of a quest's title, description, progress and completion text:
+
+```bash
+make quests-import-forever-csv CSV=~/Downloads/forever-mission-viVN-20261013-091803.csv ARGS=--dry-run
+make quests-import-forever-csv CSV=~/Downloads/forever-mission-viVN-20261013-091803.csv
+```
+
+The export carries the English the Forever client showed beside each translation, and
+`tts_cli/forever_csv.py` matches it by quest id and field against the corpus's English in that
+shape (`<name>` for `$N`, `<boy/girl>` for `$G`, class and race names folded to tokens, the
+items a progress text asks for cut off its end). A field whose English differs is left out,
+which includes a line where Forever resolved `$G` to one gender: its translation would say
+that gender to every reader. Objectives are not imported. Rows are `community`, with the
+export's stamp in `note`.
+
 ### Browsing the corpus
 
 Nothing in a filename identifies an NPC — quest audio is `{questID}-{accept|complete}.mp3`
