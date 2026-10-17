@@ -118,15 +118,15 @@ export default function CorrectionTable({
   /** "Accept all" asks twice: every row it accepts writes a line's or page's text. */
   const [confirmAll, setConfirmAll] = useState(false);
 
-  // Accepting writes the player's text as the line's (api/contributions/correction); rejecting
-  // and reopening are resolve's plain status flips.
-  const send = useCallback(async (id: number, next: ContributionStatus): Promise<boolean> => {
+  // Accepting writes the player's text as the line's, or beside it as another wording
+  // (api/contributions/correction); rejecting and reopening are resolve's plain status flips.
+  const send = useCallback(async (id: number, next: ContributionStatus, wording = false): Promise<boolean> => {
     const response = await fetch(
       next === "accepted" ? "/api/contributions/correction" : "/api/contributions/resolve",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, status: next }),
+        body: JSON.stringify({ id, status: next, ...(wording ? { as: "wording" } : {}) }),
       },
     ).catch(() => null);
     if (response?.ok) {
@@ -141,9 +141,9 @@ export default function CorrectionTable({
   }, []);
 
   const resolve = useCallback(
-    async (id: number, next: ContributionStatus) => {
+    async (id: number, next: ContributionStatus, wording = false) => {
       setBusy(id);
-      await send(id, next);
+      await send(id, next, wording);
       setBusy(null);
     },
     [send],
@@ -342,6 +342,16 @@ export default function CorrectionTable({
                           >
                             Accept
                           </LiteButton>
+                          {source === "quests" ? (
+                            <LiteButton
+                              variant="accept"
+                              disabled={busy === row.id || bulk !== null}
+                              title="Keep the corpus text and add the player's as another wording of this moment"
+                              onClick={() => void resolve(row.id, "accepted", true)}
+                            >
+                              Accept as new line
+                            </LiteButton>
+                          ) : null}
                           <LiteButton
                             variant="reject"
                             disabled={busy === row.id || bulk !== null}
