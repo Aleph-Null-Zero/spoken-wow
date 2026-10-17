@@ -27,6 +27,7 @@ async function line(lineId: string, lang: string, source: string, originalText: 
 beforeAll(async () => {
   await line(`q:${quest}:accept`, "enUS", "accept", "Hello, $n.$B$BTurn right at the tree.", null);
   await line(`q:${quest}:complete:m`, "enUS", "complete", "Thank you, sir.", null);
+  await line(`q:${quest}:accept:w1`, "enUS", "accept", "Oh, you are back.", null);
   await line(`q:${quest}:accept`, "deDE", "accept", "Hello, $n.", "Hallo, $N. $B $B Biegt rechts ab.");
   await line(gossipId, "enUS", "gossip", "Well met, traveler.", null);
   await db().query(
@@ -40,7 +41,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await db().query(`delete from "quest_line_speaker" where "lineId" = $1`, [gossipId]);
   await db().query(`delete from "quest_line" where "lineId" = any($1::text[])`, [
-    [`q:${quest}:accept`, `q:${quest}:complete:m`, gossipId],
+    [`q:${quest}:accept`, `q:${quest}:complete:m`, `q:${quest}:accept:w1`, gossipId],
   ]);
   await closeDb();
 });
@@ -66,6 +67,10 @@ describe("lineStates", () => {
     expect(await lineStates([moment("accept", "Hello, $N.\n\nTurn left at the tree.")])).toEqual([
       { kind: "changed", lineId: `q:${quest}:accept`, variant: 0, current: "Hello, $n.$B$BTurn right at the tree." },
     ]);
+  });
+
+  it("counts a text any wording of the moment says as known", async () => {
+    expect(await lineStates([moment("accept", "Oh, you are back.")])).toEqual([{ kind: "known" }]);
   });
 
   it("compares a translation against its own language's text", async () => {

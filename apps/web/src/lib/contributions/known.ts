@@ -10,7 +10,8 @@
  *
  * Compared in the contribution's own language, against the current version of each line:
  * `localeText` for a translation, the English template (`originalText`) otherwise. compare.ts
- * says what counts as the same.
+ * says what counts as the same. Every wording of the moment (naming.py's `:w{n}`) counts; a
+ * "changed" row is shown against the first.
  *
  * A quest moment is matched as accept.ts's answersQuestMoment matches it -- the bare id or a
  * `:m`/`:f` variant -- and is "known" when any of them says the same. A greeting has no id to
@@ -33,7 +34,7 @@ import type { Contribution } from "./store";
 import { loadBookCorpus, matchBook } from "./book-match";
 import { sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
-import { answersQuestMomentSql } from "./naming";
+import { wordingsOfMomentSql } from "./naming";
 
 export type LineState =
   | { kind: "missing" }
@@ -91,8 +92,8 @@ async function momentTexts(pairs: { locale: string; moment: string }[]): Promise
        from unnest($1::text[], $2::text[]) as m ("locale", "moment")
        join "quest_line" l
          on l."lang" = m."locale" and l."isCurrent"
-        and ${answersQuestMomentSql(`l."lineId"`, `m."moment"`)}
-      order by l."lineId", l."variant"`,
+        and ${wordingsOfMomentSql(`l."lineId"`, `m."moment"`)}
+      order by l."lineId" ~ ':w[0-9]+(:[mf])?$', l."lineId", l."variant"`,
     [pairs.map((p) => p.locale), pairs.map((p) => p.moment), BASE_LANG],
   );
   for (const row of rows) {
