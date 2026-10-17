@@ -16,9 +16,6 @@ covers how they are made. Spoken has no guide; `docs/spoken/` holds its changelo
     or builds it with `scripts/developer/package.sh` (`addons/Spoken_Developer/README.md`).
   - `SpokenZonesAudio` and `SpokenBooksAudio` are sound packs. The quests packs have no folder
     here; they are built into `pipelines/quests/audio/`, which is gitignored.
-  - `SpokenPlayer`, `SpokenQuests`, `SpokenZones` and `SpokenBooks` are tombstones: a `.toc`
-    and no Lua, so an update replaces an old install with a folder that never loads. Never
-    add code to them.
 - `apps/web`: the site, `spoken.rusty.one`, a Next.js app backed by Postgres. It imports
   `pipelines/zones` and `pipelines/books` (`@tools/*` and `@books-tools/*`), so a change there is
   a change to the site.
@@ -99,8 +96,8 @@ Tooling, the site, CI and docs add no notes.
 A release PR bumps the version and renames `## Unreleased` to the real version heading with
 its date.
 
-- Spoken, its modules, `SpokenContributions` and the tombstones move together, in every
-  `.toc`, both `Environment.lua` `AddonVersion` literals included. Their notes go in
+- Spoken, its modules and `SpokenContributions` move together, in every `.toc`, both
+  `Environment.lua` `AddonVersion` literals included. Their notes go in
   `docs/spoken/CHANGELOG.md`, and they release as the `spoken/vX` tag.
 - Sound packs version on their own, with sections in their section's changelog.
 - `Spoken_Developer` has its own version, and nothing releases it.

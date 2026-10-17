@@ -168,9 +168,8 @@ predate suffix support: each reads `Spoken_Quests.toc` and nothing else, and eac
 different file under that one name, so each needs an archive of its own. Each also loads its own
 vendored Ace3 from `Spoken_Quests/<client>/`, because the root `Libs/AceTimer-3.0` binds
 `C_Timer.After` while loading and would error there. A legacy zip therefore carries one `.toc`,
-one Ace3 and Spoken (those clients have no addon manager to fetch a dependency),
-the `SpokenPlayer` and `SpokenQuests` tombstones, and neither of the other two clients'
-directories.
+one Ace3 and Spoken (those clients have no addon manager to fetch a dependency), and neither
+of the other two clients' directories.
 
 CurseForge has no game version to file those zips against, so they are published to a GitHub
 release: tag `quests/v<version>` and `.github/workflows/release-addons.yaml` checks the tag
@@ -323,11 +322,9 @@ make quests-release                       # upload every zip in dist/
 ```
 
 `scripts/quests/release.sh` uploads what is **already in `dist/`** — it builds nothing, so the
-zip that goes out is the one you tested. Seven projects, one per target: `spoken`
+zip that goes out is the one you tested. Six projects, one per target: `spoken`
 ([spoken](https://www.curseforge.com/wow/addons/spoken), `1700375`), which is
-Spoken's zip; `player` ([spoken-quests](https://www.curseforge.com/wow/addons/spoken-quests),
-`1655859`), retired, whose last file is the tombstone `make package-spoken-retired` builds;
-`audio-all`
+Spoken's zip; `audio-all`
 ([spoken-quests-audio-all](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), `1660196`),
 and `audio-alliance` / `audio-horde` / `audio-shared` / `audio-gossip`. `spoken-all`, the
 English install-everything addon, is accepted by name and is never part of a bare run. A target
@@ -1379,15 +1376,14 @@ quest hooks after it still have to be installed.
 until this project had diverged far enough from upstream that carrying its name was
 misleading; they became `VoiceOverRedux` and `VoiceOverReduxAudio`, and are `SpokenQuests` and
 `SpokenQuestsAudio` since 2.0.0. The module's folder has been `Spoken_Quests` since 3.0.0-beta.3;
-the old `SpokenQuests` folder is a tombstone. An old pack still works —
+an old `SpokenQuests` copy left on disk is switched off by Spoken at login. An old pack still works —
 the player finds packs by the `X-SpokenQuests-DataModule-Version` key in the TOC, or the inherited `X-VoiceOver-DataModule-Version` that every shipped pack carries, not by name
 (`DataModules:EnumerateAddons`) — but settings do not survive, because `SavedVariables` live in
 `WTF/…/SavedVariables/<folder>.lua` and the folder is the identity.
 
 **The pack is nested under Spoken in the AddOns list** by `## Group: Spoken` in both
 TOCs, as is every other addon and pack of the project — the value is the main addon's *name*,
-so it is the folder rather than the title. It named `SpokenQuests` until 3.0, which left the
-packs at the top level once that folder became a tombstone.
+so it is the folder rather than the title. It named `SpokenQuests` until 3.0.
 That tag arrived in 11.1.0; the `X-Part-Of` and `X-Child-Of` lines beside it are custom `X-`
 fields the client never reads, kept because addon managers do and because upstream shipped
 them.

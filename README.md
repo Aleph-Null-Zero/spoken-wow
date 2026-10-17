@@ -37,8 +37,7 @@ them; Places and Readables do not run there.
 
 On the stores, `spoken` is Spoken and ships the zip above, and `spoken-english` is a meta addon
 that pulls in Spoken and every English voice pack. `spoken-quests`, `spoken-zones` and
-`spoken-books` are retired. Each has a page in `publishers/` that says so, and its last release
-(`make package-spoken-retired`) replaces the old module folder with a folder that never loads.
+`spoken-books` are retired. Each has a page in `publishers/` that says so.
 The module folders were `SpokenQuests`, `SpokenZones` and `SpokenBooks` until 3.0.0-beta.3,
 and those names belong to the retired projects, so the modules moved to `Spoken_Quests`,
 `Spoken_Places` and `Spoken_Books`; Spoken_Books has since become `Spoken_Readables`. The voice

@@ -586,14 +586,12 @@ end
 -- SpokenQuests, SpokenZones and SpokenBooks are the modules' folders before 3.0.0-beta.3 moved
 -- them to Spoken_Quests and the rest, out of the way of the retired CurseForge projects that own
 -- the old names. A full old copy loads beside the renamed module: the same AceAddon, the same
--- globals and events, a second voice for every line. Their last releases, and the legacy zips,
--- leave a tombstone there instead (addons/SpokenQuests/SpokenQuests.toc), which is LoadOnDemand
--- and so never loaded, so it alone stays quiet here and only a full old copy is named.
+-- globals and events, a second voice for every line. An empty folder an older release left there
+-- is LoadOnDemand and so never loaded, so it stays quiet here and only a full old copy is named.
 --
 -- Spoken_Books and Spoken_Writings are the Readables module's folders before it took that name, and
 -- Spoken_Zones the Places module's. An older zip unpacked by hand leaves one beside its module, where
--- it registers the same source and reads every page twice. No project owns those names, so no
--- tombstone replaces them.
+-- it registers the same source and reads every page twice.
 --
 -- Each one found is switched off for the next login, and the player is offered the reload that
 -- finishes it. The Forever client accepts DisableAddOn from an addon (checked 2026-10-04); the

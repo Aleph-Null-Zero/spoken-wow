@@ -13,9 +13,8 @@
 # addon's 1.12/2.4.3/3.3.5 zips carry Spoken inside them (scripts/quests/package.sh).
 #
 # The modules' folders are Spoken_Quests, Spoken_Readables and Spoken_Places. Their old names,
-# SpokenQuests and the rest, belong to the retired CurseForge projects, and this zip carries no
-# tombstone under them: two projects shipping one folder is what the rename exists to stop. The
-# retired projects' last releases carry those (scripts/spoken/package-retired.sh).
+# SpokenQuests and the rest, belong to the retired CurseForge projects, so this zip never ships
+# a folder under them: two projects shipping one folder is what the rename exists to stop.
 #
 # Spoken_Developer (the debug log and the Developer page) is not in this zip: it is for developers
 # only and never published (scripts/developer/package.sh builds it by hand).
@@ -38,7 +37,7 @@ version="$(sed -n 's/^## Version:[[:space:]]*//p' "$TOC" | head -1 | tr -d '\r')
 [ -n "$version" ] || { echo "error: no '## Version:' line in $TOC" >&2; exit 1; }
 
 if [ -z "${ALLOW_DIRTY:-}" ] && git -C "$REPO" rev-parse --git-dir >/dev/null 2>&1; then
-  if [ -n "$(git -C "$REPO" status --porcelain -- "addons/$NAME" "addons/$STORE" "addons/SpokenPlayer")" ]; then
+  if [ -n "$(git -C "$REPO" status --porcelain -- "addons/$NAME" "addons/$STORE")" ]; then
     echo "error: addons/$NAME/ has uncommitted changes." >&2
     echo "       Commit them, or re-run with ALLOW_DIRTY=1 to package anyway." >&2
     exit 1
@@ -74,23 +73,6 @@ cp "$STORE_SRC/$STORE.toc" "$staging/$STORE/"
 store_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$STORE_SRC/$STORE.toc" | head -1 | tr -d '\r')"
 [ "$store_version" = "$version" ] || { echo "error: $STORE.toc says $store_version, $NAME.toc says $version" >&2; exit 1; }
 
-# The SpokenPlayer tombstone, over every .toc name the old player's folder had on these clients.
-# shellcheck source=../lib/tombstone.sh
-source "$REPO/scripts/lib/tombstone.sh"
-TOMBSTONE="SpokenPlayer"
-tombstone_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$TOMBSTONE/$TOMBSTONE.toc" | head -1 | tr -d '\r')"
-[ "$tombstone_version" = "$version" ] || { echo "error: $TOMBSTONE.toc says $tombstone_version, $NAME.toc says $version" >&2; exit 1; }
-mkdir -p "$staging/$TOMBSTONE"
-for toc in "$SRC"/$NAME.toc "$SRC"/${NAME}_*.toc; do
-  suffix="${toc##*/$NAME}"
-  case "$suffix" in _1.12.toc|_2.4.3.toc|_3.3.5.toc) continue ;; esac
-  tombstone_toc "$REPO/addons/$TOMBSTONE/$TOMBSTONE.toc" "$toc" "$staging/$TOMBSTONE/$TOMBSTONE$suffix"
-done
-# The old folder also had _Mainline and _Wrath names; Spoken has none, so those clients read Spoken.toc.
-for suffix in _Mainline _Wrath; do
-  tombstone_toc "$REPO/addons/$TOMBSTONE/$TOMBSTONE.toc" "$TOC" "$staging/$TOMBSTONE/$TOMBSTONE$suffix.toc"
-done
-
 excludes=()
 for client in "${LEGACY_CLIENTS[@]}"; do
   excludes+=("$NAME/$client/*" "$NAME/${NAME}_$client.toc")
@@ -106,7 +88,7 @@ module_packager() {
 }
 modules_dist="$(mktemp -d)"
 trap 'rm -rf "$staging" "$modules_dist"' EXIT
-folders=("$NAME" "$STORE" "$TOMBSTONE")
+folders=("$NAME" "$STORE")
 for module in Spoken_Quests Spoken_Readables Spoken_Places; do
   module_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$module/$module.toc" | head -1 | tr -d '\r\n')"
   DIST="$modules_dist" "$(module_packager "$module")" >/dev/null

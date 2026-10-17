@@ -42,8 +42,7 @@ local function Check(where, line)
 end
 
 local FOLDERS = { "Spoken", "Spoken_Quests", "Spoken_Places", "Spoken_Readables", "Spoken_Developer",
-    "SpokenContributions", "SpokenZonesAudio", "SpokenBooksAudio", "SpokenPlayer", "SpokenQuests", "SpokenZones",
-    "SpokenBooks" }
+    "SpokenContributions", "SpokenZonesAudio", "SpokenBooksAudio" }
 local SUFFIXES = { "", "_Vanilla", "_TBC", "_1.12", "_2.4.3", "_3.3.5" }
 for _, folder in ipairs(FOLDERS) do
     for _, suffix in ipairs(SUFFIXES) do

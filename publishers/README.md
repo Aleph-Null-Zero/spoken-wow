@@ -93,10 +93,8 @@ page that holds every quest is the one exception: it is named `... Audio: Quests
 voices are the Gossip pack above, which every language's quests pack also holds.
 
 **Three projects are retired and keep a page.** `quests/player.md`, `zones/spoken-zones.md` and
-`books/spoken-books.md` tell a visitor to install Spoken instead. Each project's last
-release holds a tombstone folder that never loads (`make package-spoken-retired`), so the old
-module folder is replaced rather than left to load twice. Their ids stay in the release scripts
-for that release and no other.
+`books/spoken-books.md` tell a visitor to install Spoken instead. Nothing uploads to them
+again.
 
 **Six more projects exist and are retired.** 1655867, 1658236, 1658237, 1658239 and 1658235 held
 the second set of quest packs, back when the audio shipped at two qualities, and 1636548 the

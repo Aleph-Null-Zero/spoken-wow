@@ -18,7 +18,7 @@
 
 .DEFAULT_GOAL := help
 .PHONY: help db extract import export places lookup deploy deploy-copy status remove \
-        import-locale pull-history pull-live pull-recorded package-acted acted sounds sync check-synced package package-audio release-dry release release-wago release-curse \
+        import-locale pull-history pull-live pull-recorded package-acted acted sounds sync check-synced package package-audio release-dry release \
         release-audio-dry release-audio icon test \
         full-release
 
@@ -180,29 +180,17 @@ test: ## The pipeline's unit tests
 #-------------------------------------------------------------------------------
 # The release
 #
-# Two CurseForge projects, uploaded by scripts/books/release.sh: the retired Spoken Books, whose
-# last release is the tombstone, and the Writings sound pack. Both zips have to be built
-# first: the release script refuses a target whose zip is missing rather than uploading a
-# stale one it found in dist/.
+# The Writings sound pack, uploaded to CurseForge by scripts/books/release.sh. Build its zip
+# first: the release script refuses one that is missing rather than uploading a stale one it
+# found in dist/.
 #-------------------------------------------------------------------------------
 
-release-dry: ## Show what `make books-release` would upload to CurseForge and Wago
+release-dry: ## Show what `make books-release` would upload to CurseForge
 	@./scripts/books/release.sh --dry-run
 
-release: ## Upload the built zips to CurseForge and Wago (needs both tokens)
+release: ## Upload the built sound pack to CurseForge (needs CURSEFORGE_TOKEN)
 	@./scripts/books/release.sh
 
-# One store at a time, for the case a release half-landed: a zip CurseForge took and Wago
-# refused, or the other way round. Re-running `release` would upload the file twice to the
-# store that already has it, which each of them shows as a duplicate rather than ignoring.
-release-wago: ## Upload the built zips to Wago only (needs WAGO_TOKEN)
-	@./scripts/books/release.sh --store=wago
-
-release-curse: ## Upload the built zips to CurseForge only (needs CURSEFORGE_TOKEN)
-	@./scripts/books/release.sh --store=curseforge
-
-# One language's sound pack, to CurseForge (and Wago where its page has an id). English's is
-# `release` as always; LOCALE picks another language's page under publishers/books/.
 release-audio-dry: ## Show what uploading the sound pack would send (LOCALE=xx for a language)
 	@./scripts/books/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
 
@@ -220,9 +208,9 @@ full-release: require-droplet ## Sync, pull live takes, build and upload the sou
 	@$(MAKE) --no-print-directory -f make/books.mk sync
 	@$(MAKE) --no-print-directory -f make/books.mk pull-live LOCALE=$(LOCALE)
 	@$(MAKE) --no-print-directory -f make/books.mk package-audio LOCALE=$(LOCALE)
-	@./scripts/books/release.sh --dry-run --store=curseforge --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/books/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
 	@./scripts/audio-github-release.sh --dry-run books $(or $(LOCALE),enUS)
 	@printf 'Upload the books pack to CurseForge and GitHub? [y/N] '; \
 	  read -r answer; [ "$$answer" = y ] || { echo aborted; exit 1; }
-	@./scripts/books/release.sh --store=curseforge --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/books/release.sh --lang=$(or $(LOCALE),enUS) audio
 	@./scripts/audio-github-release.sh books $(or $(LOCALE),enUS)
