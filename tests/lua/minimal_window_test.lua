@@ -278,7 +278,8 @@ env, quests = Boot()
 local places = env.Addon:Layout()
 for _, key in ipairs({ "Player", "Minimal", "DialogueUI", "Subtitle" }) do places[key] = { left = 10, top = 500, width = 400 } end
 local reset
-for _, entry in ipairs(_G.SpokenOptionsPanel.layout.entries) do
+-- On the Contribute & Report page, in Fix a Problem.
+for _, entry in ipairs(_G.SpokenContributeOptionsPanel.layout.entries) do
     if entry.label == env.L.OPT_RESET then reset = entry.frame end
 end
 reset:GetScript("OnClick")(reset)

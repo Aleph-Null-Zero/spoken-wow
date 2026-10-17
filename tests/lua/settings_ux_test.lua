@@ -254,8 +254,8 @@ do
     end
     Expect("Spoken's sections, the most changed first", table.concat(titles, ", "), table.concat({
         L.OPT_PARTS_TITLE, L.OPT_PLAYER_STYLE, L.OPT_LANGUAGE_TITLE, L.OPT_AUDIO_TITLE, L.OPT_WHILE_READING_TITLE,
-        L.OPT_KEYS_TITLE, L.OPT_COMPENDIUM_TITLE, L.OPT_FIX_TITLE, L.OPT_LOOK_TITLE, L.OPT_TEXT_TITLE,
-        L.OPT_PLAYBACK_TITLE, L.OPT_LOWER_TITLE, L.OPT_CONTRIBUTE_TITLE, L.OPT_MINIMAP_TITLE,
+        L.OPT_KEYS_TITLE, L.OPT_COMPENDIUM_TITLE, L.OPT_LOOK_TITLE, L.OPT_TEXT_TITLE,
+        L.OPT_PLAYBACK_TITLE, L.OPT_LOWER_TITLE, L.OPT_MINIMAP_TITLE,
         L.OPT_SECTION_PROFILES, L.OPT_LINKS_TITLE }, ", "))
     local modules
     for _, item in ipairs(home.items) do
@@ -263,9 +263,19 @@ do
     end
     Expect("Show Welcome Window is the button on the What Spoken Reads title", modules and modules.button
         and modules.button:GetText(), L.OPT_WELCOME_AGAIN)
-    Expect("Fix a Problem shows the diagnostics, reports a problem and resets the positions",
-        tostring(Row(home, L.OPT_DIAGNOSTICS) ~= nil) .. " " .. tostring(Row(home, L.DIALOGUE_REPORT_PROBLEM) ~= nil)
-        .. " " .. tostring(Row(home, L.OPT_RESET) ~= nil), "true true true")
+    -- Fix a Problem is on the Contribute & Report page, after the contribution rows.
+    local page = _G.SpokenContributeOptionsPanel.layout
+    local pageTitles = {}
+    for _, item in ipairs(page.items) do
+        if item.kind == "section" and item.text then table.insert(pageTitles, item.text) end
+    end
+    Expect("Fix a Problem is a section of the Contribute & Report page", table.concat(pageTitles, ", "), L.OPT_FIX_TITLE)
+    Expect("...showing the diagnostics, reporting a problem and resetting the positions",
+        tostring(Row(page, L.OPT_DIAGNOSTICS) ~= nil) .. " " .. tostring(Row(page, L.DIALOGUE_REPORT_PROBLEM) ~= nil)
+        .. " " .. tostring(Row(page, L.OPT_RESET) ~= nil), "true true true")
+    Expect("...and none of it is on Spoken's page", tostring(Row(home, L.OPT_DIAGNOSTICS) ~= nil) .. " "
+        .. tostring(Row(home, L.DIALOGUE_REPORT_PROBLEM) ~= nil) .. " " .. tostring(Row(home, L.OPT_RESET) ~= nil),
+        "false false false")
     -- One Theme row per window that has a choice.
     local themes = 0
     for _, entry in ipairs(home.entries) do if entry.label == L.OPT_DUI_THEME then themes = themes + 1 end end
@@ -306,8 +316,10 @@ do
 end
 
 ---------------------------------------------------------------- collected lines
+-- Contributing has a page of its own under Spoken's, beside the modules'.
+Expect("Contribute is a page of its own", _G.SpokenContributeOptionsPanel ~= nil, true)
 local collected
-for _, row in ipairs(_G.SpokenOptionsPanel.content.children) do
+for _, row in ipairs(_G.SpokenContributeOptionsPanel.layout.parent.children) do
     local line = row.layoutStatusLine
     if line and (line.message == L.GATHER_NONE or line.message == L.GATHER_OFF) then collected = line end
 end

@@ -99,7 +99,7 @@ local pages = { { name = "General", layout = _G.SpokenOptionsPanel.layout } }
 for _, page in ipairs(env.Options.pages or {}) do
     table.insert(pages, { name = page.name, layout = page.layout })
 end
-Expect("General, the four parts' pages and the Developer page are all here", #pages, 6)
+Expect("General, the four parts' pages, Contribute and the Developer page are all here", #pages, 7)
 
 local BOX = Layout.BOX_MARGIN
 local function Label(row)
