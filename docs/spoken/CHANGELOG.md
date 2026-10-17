@@ -2,7 +2,7 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
-## 3.5.0-alpha.1 — 2026-10-16
+## 3.5.0 — 2026-10-17
 
 - **Readables finds and reads pages only a language pack has.** A page that exists in your client's
   language but not in English, such as one a player sent in, is now recognised, placed in its
