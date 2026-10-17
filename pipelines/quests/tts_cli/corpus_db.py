@@ -1110,7 +1110,7 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
     export_locale_text's reason, and is kept only while it translates the current English.
     """
     from tts_cli.gossip_text import (CLIENT_LOCALES, gossip_aliases, gossip_text_tables,
-                                     write_aliases_json, write_gossip_text)
+                                     quest_wording_tables, write_aliases_json, write_gossip_text)
     from tts_cli.ignores import ignored_line_ids
 
     conn = connect()
@@ -1176,6 +1176,33 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
 
             cur.execute("""select "lineId", "mergedInto" from "gossip_merge" order by 1""")
             merges = cur.fetchall()
+
+            # Quest text in every client locale, for the moments shown in more than one wording.
+            cur.execute(
+                """select "lineId", "originalText" from "quest_line"
+                    where "isCurrent" and "source" in ('accept', 'complete') and "lang" = %s""",
+                (LANG,))
+            quest_english = dict(cur.fetchall())
+
+            cur.execute(
+                """select distinct on ("lineId", "variant", "lang")
+                          "lang", "lineId", "originalText", "localeText"
+                     from "quest_line"
+                    where "lang" = any(%s) and "source" in ('accept', 'complete')
+                      and coalesce("localeText", '') <> ''
+                    order by "lineId", "variant", "lang", "version" desc""",
+                (list(CLIENT_LOCALES),))
+            quest_translations = {}
+            for lang, line_id, original, text in cur.fetchall():
+                quest_translations.setdefault(lang, []).append((line_id, original, text))
+
+            cur.execute(
+                """select "lang", "lineId", coalesce("localeText", "originalText") from "quest_line"
+                    where "isCurrent" and "source" in ('accept', 'complete') and "lang" = any(%s)""",
+                (list(CLIENT_LOCALES),))
+            quest_natives = {}
+            for lang, line_id, text in cur.fetchall():
+                quest_natives.setdefault(lang, {})[line_id] = text
     finally:
         conn.close()
 
@@ -1187,10 +1214,12 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
     tables = gossip_text_tables(shown, english, translations, natives, broadcast_ids,
                                 broadcast_texts, ignored)
     aliases = gossip_aliases(speakers, broadcast_ids, ignored, merges)
-    write_gossip_text(out_dir, tables, aliases)
+    wordings = quest_wording_tables(quest_english, quest_translations, quest_natives, ignored)
+    write_gossip_text(out_dir, tables, aliases, wordings)
     write_aliases_json(aliases_path, aliases)
     if verbose:
         for lang in CLIENT_LOCALES:
             count = sum(len(texts) for kind in tables[lang].values() for texts in kind.values())
-            print(f"wrote {lang}.lua: {count} texts")
+            print(f"wrote {lang}.lua: {count} texts, "
+                  f"{len(wordings[lang])} quest moments in several wordings")
         print(f"wrote Aliases.lua: {len(aliases)} stems with aliases")
