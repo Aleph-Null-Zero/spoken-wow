@@ -173,6 +173,29 @@ function Utils:ColorizeText(text, color)
     return color .. text .. "|r"
 end
 
+-- A replacement string for gsub: a name is never going to hold a %, but a pattern error in an
+-- event handler would be a new error on every NPC window for the rest of the session.
+local function Literal(text)
+    return (string.gsub(text or "", "%%", "%%%%"))
+end
+
+--- A line's text with the server's tokens filled in for the local player: name, race, class,
+--- the $g branch for the player's sex, and $B as a line break.
+---@param text string
+---@return string
+function Utils:FillPlayerTokens(text)
+    local female = UnitSex and UnitSex("player") == 3
+    -- $gmale:female; and $Gmale:female; - the export keeps Blizzard's spacing, "$GHe : She;".
+    text = string.gsub(text, "%$[gG]([^:;]*):([^;]*);", function(male, femaleForm)
+        return string.trim(female and femaleForm or male)
+    end)
+    text = string.gsub(text, "%$[nN]", Literal(UnitName("player")))
+    text = string.gsub(text, "%$[rR]", Literal(UnitRace and UnitRace("player")))
+    text = string.gsub(text, "%$[cC]", Literal(UnitClass and UnitClass("player")))
+    text = string.gsub(text, "%$[bB]", "\n")
+    return text
+end
+
 --- Returns an iterator to the table sorted with the provided function, or sorted by value if no function was provided.
 ---@generic K, V
 ---@param tbl table<K, V>

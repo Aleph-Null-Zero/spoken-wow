@@ -47,14 +47,7 @@ end
 --- The line's text with the server's tokens filled in for the local player. The name is
 --- UnitName("player") deliberately: a line naming somebody else then cannot match.
 local function Render(text, sender)
-    local female = UnitSex and UnitSex("player") == 3
-    -- $gmale:female; and $Gmale:female; - the export keeps Blizzard's spacing, "$GHe : She;".
-    text = string.gsub(text, "%$[gG]([^:;]*):([^;]*);", function(male, femaleForm)
-        return string.trim(female and femaleForm or male)
-    end)
-    text = string.gsub(text, "%$[nN]", Literal(UnitName("player")))
-    text = string.gsub(text, "%$[rR]", Literal(UnitRace and UnitRace("player")))
-    text = string.gsub(text, "%$[cC]", Literal(UnitClass and UnitClass("player")))
+    text = Utils:FillPlayerTokens(text)
     -- Emote-style lines carry the speaker as %s, which the client fills with the sender.
     if sender then
         text = string.gsub(text, "%%s", Literal(sender))
