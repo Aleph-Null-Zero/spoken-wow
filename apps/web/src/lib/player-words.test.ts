@@ -78,6 +78,23 @@ describe("speakPlayerTokens", () => {
     );
   });
 
+  it("speaks a writ's count as an order, in the languages that have the words", () => {
+    // q:94360:accept, q:94219:accept, q:94241:accept and q:94004:accept, as players sent them.
+    expect(speakPlayerTokens("the note is requesting $2oa Soul Pouch, along with", "enUS")).toBe(
+      "the note is requesting an order of Soul Pouch, along with",
+    );
+    expect(speakPlayerTokens("o bilhete solicita $2oax Tisana de Respiração Aquática, além", "ptBR")).toBe(
+      "o bilhete solicita algumas unidades de Tisana de Respiração Aquática, além",
+    );
+    expect(speakPlayerTokens("заказ на $2oa темных кожаных мундира:темных кожаных мундиров, а также", "ruRU")).toBe(
+      "заказ на несколько темных кожаных мундиров, а также",
+    );
+    expect(speakPlayerTokens("заказ на $2oa порции:порций эликсира силы огра, а также", "ruRU")).toBe(
+      "заказ на несколько порций эликсира силы огра, а также",
+    );
+    expect(speakPlayerTokens("verlangt $2oa Seelenbeutel", "deDE")).toBe("verlangt $2oa Seelenbeutel");
+  });
+
   it("leaves a token it has no word for", () => {
     expect(speakPlayerTokens("$2113w Kisten", "deDE")).toBe("$2113w Kisten");
   });
