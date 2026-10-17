@@ -36,6 +36,7 @@ import RecordingDropZone from "@/components/RecordingDropZone";
 import { filterParams, filtersFromParams, PAGE_SIZE, type LineFilters } from "@/lib/zones/filters";
 import type { ResultLine, SearchResult } from "@/lib/zones/search";
 import { useClearDirty } from "@/lib/generation/use-clear-dirty";
+import { fetchRows, patchRows } from "@/lib/row-refresh";
 import * as echo from "@/lib/url-echo";
 
 // Long enough to hold a whole typed word: the timer restarts on every keystroke, so this
@@ -217,9 +218,8 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   // A string, not the object: memoising on object identity would refetch every render.
   const filterQuery = useMemo(() => filterParams(filters).toString(), [filters]);
 
-  // Held in refs so refetch() -- called from a poll and from a completed regeneration
-  // -- reads the current view without being rebuilt on every filter change, which
-  // would restart the poll timer each time.
+  // Held in refs so the callbacks below read the current view without being
+  // rebuilt on every filter change.
   const filterQueryRef = useRef(filterQuery);
   filterQueryRef.current = filterQuery;
   const pageRef = useRef(page);
@@ -299,6 +299,23 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
       .catch(() => {});
   }, [lang]);
 
+  /**
+   * Fetch these rows again by id and swap them in where they sit, so a row the change moved
+   * out of the filter stays until the filter is asked again. See lib/row-refresh.
+   */
+  const refreshRows = useCallback(
+    async (ids: string[]) => {
+      const fresh = await fetchRows<ResultLine>(
+        (id) => withLang(lang, `/api/zones/search?${new URLSearchParams({ line: id })}`),
+        ids,
+      );
+      setResult((current) =>
+        current && { ...current, lines: patchRows(current.lines, fresh, (row) => row.id, (row) => row.id) },
+      );
+    },
+    [lang],
+  );
+
   // What the plan allows and what is left of it, for the confirmation dialog. Shared with
   // the quests section because it is one account and one budget.
   useEffect(() => {
@@ -356,7 +373,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
             [line.id]: { phase: "done", version: data.version! },
           }));
           setVersions((current) => ({ ...current, [line.id]: data.version! }));
-          refetch();
+          void refreshRows([line.id]);
         })
         .catch((err: Error) => {
           setRowStates((current) => ({
@@ -365,7 +382,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
           }));
         });
     },
-    [refetch, lang],
+    [refreshRows, lang],
   );
 
   /**
@@ -478,7 +495,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
             for (const job of mine) next[job.lineId] = job.version;
             return next;
           });
-          refetch();
+          void refreshRows(mine.map((job) => job.lineId));
         }
       }
 
@@ -491,7 +508,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [canRegenerate, refetch, lang]);
+  }, [canRegenerate, refreshRows, lang]);
 
   //----------------------------------------------------------------------------
   // Playback
@@ -693,7 +710,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
                 current={line.id === current?.id}
                 showMadeBy={showMadeBy}
                 showRecordings={showRecordings}
-                onRecordingChanged={refetch}
+                onRecordingChanged={(l) => void refreshRows([l.id])}
                 canRegenerate={canRegenerate}
                 canEdit={canEdit}
                 canTriage={canTriage}
@@ -706,7 +723,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
                   // The player's cache buster: the file name does not move when a take is
                   // put back, so without this the browser replays the clip just replaced.
                   setVersions((current) => ({ ...current, [l.id]: version }));
-                  refetch();
+                  void refreshRows([l.id]);
                 }}
                 onReport={setReportFor}
                 onEditText={(l) => setEditFor(withEdits(l))}
@@ -751,7 +768,14 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
         onSaved={(line, full) => setRewritten((current) => ({ ...current, [line.id]: full }))}
       />
 
-      <TranslateDialog subject={naming} onClose={() => setNaming(null)} onSaved={() => refetch()} />
+      <TranslateDialog
+        subject={naming}
+        onClose={() => setNaming(null)}
+        // A place is named by its line's id; see onRename.
+        onSaved={() => {
+          if (naming) void refreshRows([String(naming.address.entityId)]);
+        }}
+      />
 
       <ReportDialog
         subject={reportFor && { source: "zones", line: reportFor }}

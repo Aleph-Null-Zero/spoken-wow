@@ -48,6 +48,7 @@ import { canConfigureGeneration, isAdmin } from "@/lib/permissions";
 import { isVoiceable } from "@/lib/text-gate";
 import { isModelVoice } from "@/lib/voices/voices";
 import type { Filter, LineFilters, ResultLine, SearchResult } from "@/lib/search";
+import { fetchRows, patchRows } from "@/lib/row-refresh";
 import { type Pending, receive, target, write } from "@/lib/url-echo";
 
 /** What a line's Regenerate button is doing, keyed by lineId. */
@@ -190,12 +191,11 @@ export default function Explorer({ facets }: { facets: Facets }) {
   // Per-line regeneration state, and per-file version numbers used to bust the audio cache.
   const [lineStates, setLineStates] = useState<Record<string, LineState>>({});
   const [versions, setVersions] = useState<Record<string, number>>({});
-  // Bumped to fetch the page again after something changed what it shows -- a new take, a
-  // restore -- the way the zones and books explorers do. Take counts, staleness and the
-  // pronunciation mark all arrive on the rows themselves now; there is no second copy of
-  // them held here to keep in step.
+  // Bumped to fetch the page again after a recording upload, which can touch any row.
   const [refreshKey, setRefreshKey] = useState(0);
   const refetch = useCallback(() => setRefreshKey((key) => key + 1), []);
+  const resultRef = useRef(result);
+  resultRef.current = result;
   // What has been cleared since this page was fetched, laid over the rows' own marks until
   // the next fetch brings the acknowledgement back from the server.
   const { cleared, clear: clearDirty } = useClearDirty("quests");
@@ -203,20 +203,28 @@ export default function Explorer({ facets }: { facets: Facets }) {
   const [editing, setEditing] = useState<ResultLine | null>(null);
   // Another language's text or names, which are written as versions rather than as
   // English's overrides. See TranslateDialog.
-  const [translating, setTranslating] = useState<TranslateSubject | null>(null);
+  // `touches` picks the rows on this page that show what is being translated.
+  const [translating, setTranslating] = useState<{
+    subject: TranslateSubject;
+    touches: (row: ResultLine) => boolean;
+  } | null>(null);
   const editText = useCallback(
     (line: ResultLine) => {
       if (lang === BASE_LANG) {
         setEditing(line);
         return;
       }
-      setTranslating(lineTextSubject(line));
+      setTranslating({ subject: lineTextSubject(line), touches: (row) => row.lineId === line.lineId });
     },
     [lang],
   );
   const rename = useCallback((line: ResultLine, what: "npc" | "quest") => {
-    setTranslating(
-      what === "npc"
+    setTranslating({
+      touches:
+        what === "npc"
+          ? (row) => row.npcType === line.npcType && row.npcId === line.npcId
+          : (row) => row.questId === line.questId,
+      subject: what === "npc"
         ? nameSubject({
             kind: line.npcType,
             entityId: String(line.npcId),
@@ -233,7 +241,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
             english: line.english?.questTitle ?? "",
             current: line.missing?.questTitle ? null : line.questTitle,
           }),
-    );
+    });
   }, []);
   const [ignoring, setIgnoring] = useState<ResultLine | null>(null);
   const [speakerDialog, setSpeakerDialog] = useState<{ line: ResultLine; replace: boolean } | null>(null);
@@ -440,8 +448,34 @@ export default function Explorer({ facets }: { facets: Facets }) {
   }, []);
 
   /**
-   * Take a speaker off a line. The page is fetched again rather than patched: the speaker's
-   * voice's line goes with it, and the file may pass to another speaker's voice.
+   * Fetch the rows `touches` picks again and swap them in where they sit. See lib/row-refresh.
+   *
+   * The id alone, not the page's filters, so a row the change moved out of the filter stays.
+   * `progress` and `ignored` because the search hides those rows unless asked.
+   */
+  const refreshRows = useCallback(
+    async (touches: (row: ResultLine) => boolean) => {
+      const rows = resultRef.current?.lines.filter(touches) ?? [];
+      if (!rows.length) return;
+      const ignored = new Set(rows.filter((row) => row.ignored).map((row) => row.lineId));
+      const fresh = await fetchRows<ResultLine>(
+        (id) => {
+          const search = new URLSearchParams({ line: id, progress: "1" });
+          if (ignored.has(id)) search.set("ignored", "1");
+          return withLang(lang, `/api/quests/search?${search}`);
+        },
+        rows.map((row) => row.lineId),
+      );
+      setResult((current) =>
+        current && { ...current, lines: patchRows(current.lines, fresh, (row) => row.lineId, (row) => row.key) },
+      );
+    },
+    [lang],
+  );
+
+  /**
+   * Take a speaker off a line. Every row of the line and of its file is fetched again: the
+   * speaker's row goes, and the file may pass to another speaker's voice.
    */
   const removeSpeaker = useCallback(
     async (line: ResultLine) => {
@@ -454,9 +488,9 @@ export default function Explorer({ facets }: { facets: Facets }) {
         setQueueNote(body?.error ?? "Could not take the speaker off.");
         return;
       }
-      refetch();
+      void refreshRows((row) => row.lineId === line.lineId || row.audioPath === line.audioPath);
     },
-    [lang, refetch],
+    [lang, refreshRows],
   );
 
   /**
@@ -490,9 +524,9 @@ export default function Explorer({ facets }: { facets: Facets }) {
   const handleRestored = useCallback(
     (file: string, version: number) => {
       setVersions((current) => ({ ...current, [file]: version }));
-      refetch();
+      void refreshRows((row) => row.audioPath === file);
     },
-    [refetch],
+    [refreshRows],
   );
 
   /**
@@ -555,12 +589,12 @@ export default function Explorer({ facets }: { facets: Facets }) {
   const applySuccess = useCallback(
     (file: string, version: number, lineId: string) => {
       // The version busts the audio cache at once; everything else the row shows -- that it
-      // has audio, how many takes, whether it is stale -- comes back with the refetch.
+      // has audio, how many takes, whether it is stale -- comes back with the rows.
       setVersions((current) => ({ ...current, [file]: version }));
       setLineStates((current) => ({ ...current, [lineId]: { phase: "done", version } }));
-      refetch();
+      void refreshRows((row) => row.audioPath === file || row.lineId === lineId);
     },
-    [refetch],
+    [refreshRows],
   );
 
   /**
@@ -930,7 +964,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
                   current={line.key === current?.key}
                   showMadeBy={showMadeBy}
                   showRecordings={showRecordings}
-                  onRecordingChanged={refetch}
+                  onRecordingChanged={(l) => void refreshRows((row) => row.audioPath === l.audioPath)}
                   canRegenerate={showRegenerate}
                   canEdit={canEdit}
                   canTriage={canEdit}
@@ -985,18 +1019,20 @@ export default function Explorer({ facets }: { facets: Facets }) {
         line={editing}
         onSaved={handleOverrideSaved}
         onRewritten={() => {
+          const file = editing?.audioPath;
           setEditing(null);
-          refetch();
+          void refreshRows((row) => row.audioPath === file);
         }}
         onCancel={() => setEditing(null)}
       />
 
       <TranslateDialog
-        subject={translating}
+        subject={translating?.subject ?? null}
         onClose={() => setTranslating(null)}
-        // A name is on many rows and a line's text changes whether it can be voiced, so the
-        // page is fetched again rather than patched.
-        onSaved={() => refetch()}
+        // Fetched again rather than patched: a line's text changes whether it can be voiced.
+        onSaved={() => {
+          if (translating) void refreshRows(translating.touches);
+        }}
       />
 
       <IgnoreDialog
@@ -1010,8 +1046,9 @@ export default function Explorer({ facets }: { facets: Facets }) {
         replace={speakerDialog?.replace}
         // Fetched again: a speaker in another voice is a new row of its own.
         onSaved={() => {
+          const line = speakerDialog?.line;
           setSpeakerDialog(null);
-          refetch();
+          if (line) void refreshRows((row) => row.lineId === line.lineId || row.audioPath === line.audioPath);
         }}
         onCancel={() => setSpeakerDialog(null)}
       />

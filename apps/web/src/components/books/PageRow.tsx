@@ -29,7 +29,7 @@ type Props = {
   showMadeBy: boolean;
   /** Whether to draw the voice actor cell: the search sent recordings, so the viewer records here. */
   showRecordings: boolean;
-  onRecordingChanged: () => void;
+  onRecordingChanged: (line: ResultLine) => void;
   /** Editor and up: the regenerate control, and reading and resolving the row's reports. */
   canRegenerate: boolean;
   /** May write this page's text in the page's language, apart from regenerating it. */
@@ -257,7 +257,7 @@ export function PageRow({
           source="books"
           file={line.file}
           recording={line.recording ?? null}
-          onChanged={onRecordingChanged}
+          onChanged={() => onRecordingChanged(line)}
         />
       )}
 
