@@ -18,6 +18,7 @@ import type { Metadata } from "next";
 import Link from "@/components/LocaleLink";
 
 import ReportForm from "@/components/ReportForm";
+import ListenFirst from "@/components/reports/ListenFirst";
 import { audioRelPath } from "@/lib/audio";
 import { formatTarget, parseTarget, resolveTarget } from "@/lib/reports/target";
 import { liveVersion } from "@/lib/takes/store";
@@ -82,6 +83,8 @@ export default async function ReportPage({
         <p className="text-muted-foreground mt-1 mb-5 text-sm">
           You came here from the game. Tell us what sounded wrong and someone will listen to it.
         </p>
+
+        {line ? <ListenFirst className="mb-4" /> : null}
 
         {line ? (
           <section className="mb-6 rounded border p-4">
