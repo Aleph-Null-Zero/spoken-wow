@@ -522,6 +522,25 @@ function DataModules:HasGossipFor(soundData)
     return false
 end
 
+-- Measured on the corpus: a rewording of the same line scores 0.8 or more, while an NPC's
+-- other variants (another profession's or faction's) mostly score under 0.6.
+local GOSSIP_MATCH_FLOOR = 0.7
+
+--- A line's words as they are compared: lower case, ASCII punctuation as spaces. Bytes past
+--- ASCII are kept, so another alphabet's words compare whole.
+local function Words(text)
+    return (string.gsub(string.lower(text), "%p", " "))
+end
+
+--- The keys still hold the server's tokens ($N, $g...), so each is filled in for this player
+--- before it is compared.
+local function ClosestGossipLine(shown, lines)
+    local best = FuzzySearchBestKeys(Words(shown), lines, function(text)
+        return Words(Utils:FillPlayerTokens(text))
+    end)
+    return best and best.similarity >= GOSSIP_MATCH_FLOOR and best or nil
+end
+
 ---@param soundData SoundData
 ---@return string|nil hash
 function DataModules:GetNPCGossipTextHash(soundData)
@@ -569,13 +588,16 @@ function DataModules:GetNPCGossipTextHash(soundData)
     -- An NPC whose text varies by who asks may lack the variant on screen. Playing nothing then
     -- lets the window offer Contribute.
     collect(true)
-    if next(text_entries) ~= nil then
-        local best_result = FuzzySearchGossipLine(text, text_entries)
-        return best_result and best_result.value
+    -- HasGossipFor asks with each key itself, so an exact key skips scoring every line again.
+    if text_entries[text] then
+        return text_entries[text]
     end
-    collect(false)
-
-    local best_result = FuzzySearchBestKeys(text, text_entries)
+    local search = ClosestGossipLine
+    if next(text_entries) == nil then
+        collect(false)
+        search = FuzzySearchBestKeys
+    end
+    local best_result = search(text, text_entries)
     return best_result and best_result.value
 end
 

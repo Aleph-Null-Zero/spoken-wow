@@ -173,26 +173,24 @@ function Utils:ColorizeText(text, color)
     return color .. text .. "|r"
 end
 
--- A replacement string for gsub: a name is never going to hold a %, but a pattern error in an
--- event handler would be a new error on every NPC window for the rest of the session.
-local function Literal(text)
-    return (string.gsub(text or "", "%%", "%%%%"))
-end
-
 --- A line's text with the server's tokens filled in for the local player: name, race, class,
 --- the $g branch for the player's sex, and $B as a line break.
 ---@param text string
 ---@return string
 function Utils:FillPlayerTokens(text)
+    local name = UnitName and UnitName("player") or ""
+    local class = UnitClass and UnitClass("player") or ""
+    local race = UnitRace and UnitRace("player") or ""
     local female = UnitSex and UnitSex("player") == 3
     -- $gmale:female; and $Gmale:female; - the export keeps Blizzard's spacing, "$GHe : She;".
     text = string.gsub(text, "%$[gG]([^:;]*):([^;]*);", function(male, femaleForm)
         return string.trim(female and femaleForm or male)
     end)
-    text = string.gsub(text, "%$[nN]", Literal(UnitName("player")))
-    text = string.gsub(text, "%$[rR]", Literal(UnitRace and UnitRace("player")))
-    text = string.gsub(text, "%$[cC]", Literal(UnitClass and UnitClass("player")))
+    -- Function replacements, so a % in a name is never read as a capture.
     text = string.gsub(text, "%$[bB]", "\n")
+    text = string.gsub(text, "%$[nN]", function() return name end)
+    text = string.gsub(text, "%$[cC]", function() return class end)
+    text = string.gsub(text, "%$[rR]", function() return race end)
     return text
 end
 

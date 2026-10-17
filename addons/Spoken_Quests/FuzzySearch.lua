@@ -20,28 +20,6 @@ local function jaccardSimilarity(a, b)
     return intersection / union
 end
 
--- Measured on the corpus: a rewording of the same line scores 0.8 or more, while an NPC's
--- other variants (another profession's or faction's) mostly score under 0.6.
-GOSSIP_MATCH_FLOOR = 0.7
-
---- A line's words as they are compared: lower case, ASCII punctuation as spaces. Bytes past
---- ASCII are kept, so another alphabet's words compare whole.
-local function Words(text)
-    return (string.gsub(string.lower(text), "%p", " "))
-end
-
---- The keys still hold the server's tokens ($N, $g...), so each is filled in for this player
---- before it is compared.
----@param shown string
----@param lines table<string, any> line text -> value
----@return { value: any, text: string, similarity: number }|nil
-function FuzzySearchGossipLine(shown, lines)
-    local best = FuzzySearchBestKeys(Words(shown), lines, function(text)
-        return Words(Utils:FillPlayerTokens(text))
-    end)
-    return best and best.similarity >= GOSSIP_MATCH_FLOOR and best or nil
-end
-
 ---@param query string
 ---@param tableVar table<string, any>
 ---@param keyText fun(key: string): string? what a key is compared as, the key itself by default
