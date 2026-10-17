@@ -737,15 +737,13 @@ local function PageReading(id)
 end
 
 -- Report on a readable's page, voiced or not (the site's report page takes a line with no
--- recording): the page being read, else its first voiced page, else its first, filed under the
--- language it plays in, as the player's Report files a page.
+-- recording): the page being read, else its first voiced page, else its first.
 local REPORT = {
 	has = function(id) local book = Books()[id]; return book ~= nil and book.pages ~= nil and #book.pages > 0 end,
 	open = function(id)
 		local book = Books()[id]
 		local pageId = PageReading(id) or FirstVoiced(id) or book and book.pages and book.pages[1]
-		local clip = pageId and SpokenBooks:ClipFor(pageId)
-		if pageId then SpokenBooks:ShowReport(pageId, clip and clip.language) end
+		if pageId then SpokenBooks:ShowReport(pageId) end
 	end,
 	title = L.REPORT_PROBLEM,
 	tip = L.REPORT_LINE_TIP,
