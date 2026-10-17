@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * The corrections tab: a quest line as the corpus has it, beside the text a player's client
- * showed for the same quest and moment, with the words that differ marked on each side.
+ * The corrections tab: a quest line or book page as the corpus has it, beside the text a
+ * player's client showed for the same quest and moment, or page, with the words that differ marked on each side.
  *
  * Both texts are shown open, not behind a `<details>` as the triage table's are: the
  * difference is the whole reason the row is here, and it is usually a word or two in a
@@ -31,7 +31,6 @@ import { wordDiff, type DiffPart } from "@/lib/contributions/compare";
 import type { ContributionStatus } from "@/lib/contributions/contributions";
 import { type ClientFilter, type QuestStage, type StageFilter } from "@/lib/contributions/query";
 import { localeHref } from "@/lib/lang";
-import { explorerHref } from "@/lib/links";
 import type { Filter } from "@/lib/search";
 import { cn } from "@/lib/utils";
 import { wowheadQuestUrl } from "@/lib/wowhead";
@@ -40,7 +39,9 @@ export type CorrectionRow = {
   id: number;
   /** The corpus line `before` is the text of. */
   lineId: string;
-  /** Null only for stored meta naming no quest, which a correction always does. */
+  /** Where the line is edited, locale prefix not yet applied. */
+  editHref: string;
+  /** Null for a book page, and for stored meta naming no quest, which a quest correction always does. */
   quest: { title: string; questId: number; stage: QuestStage | null } | null;
   /** Who the player's client said speaks the line; null when the envelope named nobody. */
   npc: { npcId: number; npcName: string | null } | null;
@@ -49,6 +50,8 @@ export type CorrectionRow = {
   count: number;
   createdAt: string;
   status: ContributionStatus;
+  /** A book page's title, with its number; null for a quest. */
+  title: string | null;
   /** The corpus's current text, its `$B` breaks already made line breaks. */
   before: string;
   /** What the player's client showed. */
@@ -59,15 +62,17 @@ export type CorrectionRow = {
 /** Corrections are quest panels only, so gossip is not offered. */
 const QUEST_STAGE_OPTIONS = STAGE_CHIP_OPTIONS.filter((option) => option.value !== "gossip");
 
+export type CorrectionSource = "quests" | "books";
+
 type Filters = { status: ContributionStatus; client: ClientFilter; stage: StageFilter; q: string; searchIn: Filter };
 
-function correctionsHref(filters: Filters): string {
+function correctionsHref(source: CorrectionSource, filters: Filters): string {
   // Client always written, "all" included: left out, it means the Era and Forever default.
   const params = new URLSearchParams({ status: filters.status, client: filters.client });
   if (filters.stage.length) params.set("stage", filters.stage.join(","));
   if (filters.q.trim()) params.set("q", filters.q.trim());
   if (filters.searchIn !== "any") params.set("filter", filters.searchIn);
-  return `/contributions/quests/corrections?${params}`;
+  return `/contributions/${source}/corrections?${params}`;
 }
 
 function when(at: string): string {
@@ -80,6 +85,7 @@ function when(at: string): string {
 }
 
 export default function CorrectionTable({
+  source,
   initial,
   status,
   client,
@@ -87,6 +93,7 @@ export default function CorrectionTable({
   q,
   searchIn,
 }: {
+  source: CorrectionSource;
   initial: CorrectionRow[];
   status: ContributionStatus;
   client: ClientFilter;
@@ -97,7 +104,7 @@ export default function CorrectionTable({
   const lang = useLang();
   const { pending, push } = usePendingPush();
   const filters: Filters = { status, client, stage, q, searchIn };
-  const go = (next: Partial<Filters>) => push(localeHref(lang, correctionsHref({ ...filters, ...next })));
+  const go = (next: Partial<Filters>) => push(localeHref(lang, correctionsHref(source, { ...filters, ...next })));
   const [query, setQuery] = useSearchBox(q, (next) => go({ q: next }));
   /** Statuses changed here since the page loaded, shown without waiting for a reload. */
   const [resolved, setResolved] = useState<Record<number, ContributionStatus>>({});
@@ -108,7 +115,7 @@ export default function CorrectionTable({
   const [bulk, setBulk] = useState<{ done: number; total: number } | null>(null);
   /** What the last "Accept all" came to, until the next one starts. */
   const [bulkOutcome, setBulkOutcome] = useState<string | null>(null);
-  /** "Accept all" asks twice: every row it accepts writes a quest line's text. */
+  /** "Accept all" asks twice: every row it accepts writes a line's or page's text. */
   const [confirmAll, setConfirmAll] = useState(false);
 
   // Accepting writes the player's text as the line's (api/contributions/correction); rejecting
@@ -171,13 +178,13 @@ export default function CorrectionTable({
       <StatusTabs
         active={status}
         onGo={push}
-        hrefFor={(next) => localeHref(lang, correctionsHref({ ...filters, status: next }))}
+        hrefFor={(next) => localeHref(lang, correctionsHref(source, { ...filters, status: next }))}
       />
       <nav className="mb-4 flex flex-wrap items-center gap-2">
         <Input
           type="search"
           value={query}
-          placeholder="NPC, quest, or either text…"
+          placeholder={source === "books" ? "Either text…" : "NPC, quest, or either text…"}
           aria-label="Search"
           className="h-8 min-w-0 basis-64"
           onChange={(event) => setQuery(event.target.value)}
@@ -185,15 +192,17 @@ export default function CorrectionTable({
         <FilterChip
           label="search in"
           value={searchIn === "any" ? undefined : searchIn}
-          options={SEARCH_IN_OPTIONS}
+          options={source === "books" ? SEARCH_IN_OPTIONS.filter((option) => option.value === "text") : SEARCH_IN_OPTIONS}
           onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
         />
-        <MultiFilterChip
-          label="stage"
-          values={stage}
-          options={QUEST_STAGE_OPTIONS}
-          onChange={(next) => go({ stage: (next ?? []) as StageFilter })}
-        />
+        {source === "quests" ? (
+          <MultiFilterChip
+            label="stage"
+            values={stage}
+            options={QUEST_STAGE_OPTIONS}
+            onChange={(next) => go({ stage: (next ?? []) as StageFilter })}
+          />
+        ) : null}
         <span className="text-muted-foreground text-xs">
           {initial.length} {initial.length === 1 ? "correction" : "corrections"}
         </span>
@@ -210,7 +219,8 @@ export default function CorrectionTable({
           ) : confirmAll ? (
             <>
               <span>
-                Accept all {toAccept.length} shown? Each writes the player&apos;s text as what its line speaks.
+                Accept all {toAccept.length} shown? Each writes the player&apos;s text as{" "}
+                {source === "books" ? "its page's words" : "what its line speaks"}.
               </span>
               <LiteButton
                 variant="accept"
@@ -243,7 +253,7 @@ export default function CorrectionTable({
         >
           <thead className="text-muted-foreground text-left text-xs">
             <tr>
-              <th className="border-b py-2 pr-3 font-normal">Quest</th>
+              <th className="border-b py-2 pr-3 font-normal">{source === "books" ? "Book" : "Quest"}</th>
               <th className="border-b py-2 pr-3 font-normal">Client</th>
               <th className="border-b py-2 pr-3 font-normal">Count</th>
               <th className="w-[38%] border-b py-2 pr-3 font-normal">Corpus has</th>
@@ -281,7 +291,7 @@ export default function CorrectionTable({
                         ) : null}
                       </>
                     ) : (
-                      row.lineId
+                      (row.title ?? row.lineId)
                     )}
                     {row.npc ? (
                       <div className="text-muted-foreground">
@@ -317,17 +327,17 @@ export default function CorrectionTable({
                   <td>
                     <div className="flex items-center justify-end gap-1">
                       <Link
-                        href={localeHref(lang, explorerHref("quests", row.lineId))}
+                        href={localeHref(lang, row.editHref)}
                         className="border-border bg-background hover:bg-muted inline-flex h-7 items-center rounded-md border px-2.5 text-[0.8rem] font-medium whitespace-nowrap"
                       >
-                        Edit line
+                        {source === "books" ? "Edit page" : "Edit line"}
                       </Link>
                       {current === "new" ? (
                         <>
                           <LiteButton
                             variant="accept"
                             disabled={busy === row.id || bulk !== null}
-                            title="Take the player's text as what this line speaks"
+                            title={source === "books" ? "Take the player's text as this page's words" : "Take the player's text as what this line speaks"}
                             onClick={() => void resolve(row.id, "accepted")}
                           >
                             Accept

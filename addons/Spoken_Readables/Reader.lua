@@ -48,7 +48,15 @@ local function Find(index, title, number, checksum)
 
 	-- The fallback. `loose` holds only checksums no other page shares, so a hit here is
 	-- the page, not a guess between candidates.
-	return index.loose and index.loose[checksum]
+	found = index.loose and index.loose[checksum]
+	if found then
+		return found
+	end
+
+	-- A pack's own pages, which the corpus module does not have.
+	byTitle = title and index.extraIndex and index.extraIndex[title]
+	byNumber = byTitle and byTitle[number]
+	return (byNumber and byNumber[checksum]) or (index.extraLoose and index.extraLoose[checksum])
 end
 
 --- The page id the client is showing, or nil.
@@ -75,7 +83,8 @@ function SpokenBooks:PageOnScreen()
 	-- left on the English index, as before.
 	local client = self:GetClientLanguage()
 	for _, pack in ipairs(self:GetAudioPacks()) do
-		if type(pack.index) == "table" and self:PackLanguage(pack) == client then
+		if (type(pack.index) == "table" or type(pack.extraIndex) == "table")
+			and self:PackLanguage(pack) == client then
 			local found = Find(pack, title, number, checksum)
 			if found then
 				self:RememberPageText(found, client, text, title)
@@ -105,19 +114,70 @@ function SpokenBooks:RememberPageText(pageId, language, text, title)
 	end
 end
 
---- Where a page sits: its book and its number. Nil for a page the lookup does not carry.
+--- Where a page sits: its book and its number. The corpus module's place, or a pack's for a
+--- page only it has. Nil for a page nothing carries.
 function SpokenBooks:PlaceOf(pageId)
 	local data = self:Data()
 	local place = data and data.pages[pageId]
+	if not place then
+		for _, pack in ipairs(self:GetAudioPacks()) do
+			place = type(pack.places) == "table" and pack.places[pageId]
+			if place then break end
+		end
+	end
 	if not place then
 		return nil, nil
 	end
 	return place.book, place.number
 end
 
+--- A book's title and its pages in reading order, by book id. A pack adds the pages Books.lua
+--- lacks, so the list merges both, ordered by page number; a book only a pack has is its own.
+function SpokenBooks:BookById(bookId)
+	local data = self:Data()
+	local book = data and data.books[bookId]
+	local packs = self:GetAudioPacks()
+	local hasBooks = false
+	for _, pack in ipairs(packs) do
+		if type(pack.books) == "table" then hasBooks = true break end
+	end
+	if not hasBooks then
+		return book
+	end
+
+	local extra = {}
+	local seen = {}
+	for _, id in ipairs(book and book.pages or {}) do seen[id] = true end
+	for _, pack in ipairs(packs) do
+		local entry = type(pack.books) == "table" and pack.books[bookId]
+		for _, id in ipairs(entry and entry.pages or {}) do
+			if not seen[id] then
+				seen[id] = true
+				table.insert(extra, id)
+			end
+		end
+	end
+	if #extra == 0 then
+		return book
+	end
+
+	local pages = {}
+	for _, id in ipairs(book and book.pages or {}) do table.insert(pages, id) end
+	for _, id in ipairs(extra) do table.insert(pages, id) end
+	local order = {}
+	for position, id in ipairs(pages) do
+		local _, number = self:PlaceOf(id)
+		order[id] = { number or math.huge, position }
+	end
+	table.sort(pages, function(a, b)
+		if order[a][1] ~= order[b][1] then return order[a][1] < order[b][1] end
+		return order[a][2] < order[b][2]
+	end)
+	return { title = book and book.title, pages = pages }
+end
+
 --- The book a page belongs to: its title and its pages in reading order.
 function SpokenBooks:BookOf(pageId)
-	local data = self:Data()
 	local book = self:PlaceOf(pageId)
-	return book and data.books[book] or nil
+	return book and self:BookById(book) or nil
 end

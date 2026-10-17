@@ -42,7 +42,7 @@ export function Player({ line, version, audioRef }: Props) {
       }
       meta={line?.id}
       subtitle={line?.text}
-      downloadName={line ? `${line.title.replace(/\W+/g, "-").toLowerCase()}-${line.pageId}.mp3` : undefined}
+      downloadName={line ? `${line.title.replace(/\W+/g, "-").toLowerCase()}-${line.key}.mp3` : undefined}
       // Books records the duration on the take, so the total is known before the file loads.
       totalHint={line?.take?.durationSec ?? undefined}
     />

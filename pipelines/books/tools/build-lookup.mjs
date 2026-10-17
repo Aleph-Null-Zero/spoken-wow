@@ -14,6 +14,7 @@ await loadEnv("books");
 const lang = process.argv.find((arg) => arg.startsWith("--lang="))?.slice("--lang=".length) || "enUS";
 const { clips, pages, path } = await buildLookup({ lang });
 console.log(`${clips} clips${pages === null ? "" : `, ${pages} ${lang} pages indexed`} -> ${path}`);
-if (pages === 0) {
+// English's index is Books.lua, so its pack carries only pages English lacks, often none.
+if (pages === 0 && lang !== "enUS") {
   console.warn(`warning: no ${lang} pages imported (make books-import-locale LOCALE=${lang}), so a ${lang} client will find none`);
 }

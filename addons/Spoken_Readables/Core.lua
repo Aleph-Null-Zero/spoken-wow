@@ -291,9 +291,11 @@ end
 --- the link from what it already has, with no per-page table to ship and nothing to escape.
 --- The zones landing page makes the same trade with its {mapID}/{slug} path.
 function SpokenBooks:ReportURL(pageId, language)
-	if type(pageId) ~= "number" or not self:SiteURL() then
+	local key = type(pageId) == "number" and format("%d", pageId)
+		or (type(pageId) == "string" and pageId:match("^n[%x%-]+$"))
+	if not key or not self:SiteURL() then
 		return nil
 	end
 	-- Filed under the language of the clip being reported.
-	return _G.Spoken:ReportURL("books", tostring(pageId), language)
+	return _G.Spoken:ReportURL("books", key, language)
 end

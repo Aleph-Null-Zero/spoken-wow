@@ -8,6 +8,7 @@
  * Needs DATABASE_URL and migrations applied:
  *   docker compose up -d postgres && deploy/bin/migrate.sh "$PWD/web"
  */
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
@@ -82,6 +83,62 @@ describe("POST /api/reports", () => {
     }
 
     expect((await POST(post(valid()))).status).toBe(429);
+  });
+
+  it("files a books report against a minted page's key", async () => {
+    const key = `n${randomUUID()}`;
+    const lineId = `b:${key}`;
+    await db().query(
+      `insert into "book_page" ("lineId", "bookId", "pageNumber") values ($1, $2, 1)`,
+      [lineId, key],
+    );
+    try {
+      await db().query(
+        `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+         values ($1, 'enUS', 1, true, 'contributed', 'Minted', 'Words.')`,
+        [lineId],
+      );
+
+      expect((await POST(post(valid({ source: "books", target: key })))).status).toBe(200);
+
+      const { rows } = await db().query<{ lineId: string | null }>(
+        `select "lineId" from "report" where "ip" = $1`,
+        [ip],
+      );
+      expect(rows).toEqual([{ lineId }]);
+    } finally {
+      await db().query(`delete from "book_line" where "lineId" = $1`, [lineId]);
+      await db().query(`delete from "book_page" where "lineId" = $1`, [lineId]);
+    }
+  });
+
+  it("files a report with a folded minted page's key under the real page", async () => {
+    const key = `n${randomUUID()}`;
+    const mintedId = `b:${key}`;
+    const realId = `b:${700_000_000 + Math.floor(Math.random() * 90_000_000)}`;
+    const num = Number(realId.slice(2));
+    await db().query(
+      `insert into "book_page" ("lineId", "pageTextId", "bookId", "pageNumber") values ($1, $2::int, $2::int::text, 1)`,
+      [realId, num],
+    );
+    await db().query(
+      `insert into "book_page" ("lineId", "bookId", "pageNumber", "aliasOf") values ($1, $2, 1, $3)`,
+      [mintedId, key, realId],
+    );
+    try {
+      await db().query(
+        `insert into "book_line" ("lineId", "lang", "version", "isCurrent", "origin", "title", "text")
+         values ($1, 'enUS', 1, true, 'extracted', 'Real', 'Words.')`,
+        [realId],
+      );
+      expect((await POST(post(valid({ source: "books", target: key })))).status).toBe(200);
+      const { rows } = await db().query(`select "lineId" from "report" where "ip" = $1`, [ip]);
+      expect(rows).toEqual([{ lineId: realId }]);
+    } finally {
+      await db().query(`delete from "book_line" where "lineId" = $1`, [realId]);
+      await db().query(`delete from "book_page" where "lineId" = $1`, [mintedId]);
+      await db().query(`delete from "book_page" where "lineId" = $1`, [realId]);
+    }
   });
 
   it("stores no lineId when the claimed line does not belong to the target", async () => {

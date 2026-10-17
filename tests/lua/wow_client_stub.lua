@@ -1353,7 +1353,7 @@ function M.LoadQuests(addonDirectory, spokenDirectory)
     for _, module in ipairs({ "QuestOverlayUI", "Options" }) do
         VO[module] = setmetatable({}, { __index = function() return function() end end })
     end
-    for _, file in ipairs({ "Version", "Enums", "Utils", "Language", "Debug", "Strings", "Locale/deDE", "Locale/esES",
+    for _, file in ipairs({ "Version", "Enums", "Utils", "NPCModel", "Language", "Debug", "Strings", "Locale/deDE", "Locale/esES",
         "Locale/frFR", "Locale/ptBR", "Locale/ruRU", "Locale/koKR", "Locale/zhCN", "Locale/zhTW", "FuzzySearch",
         "EasterEggs", "DataModules", "ReportButton", "Player", "GreetingFirst", "VoiceOver", "Contribute" }) do
         dofile(addonDirectory .. file .. ".lua")
@@ -1379,7 +1379,7 @@ function M.LoadQuestsAlone(addonDirectory)
     for _, module in ipairs({ "QuestOverlayUI", "Options" }) do
         VO[module] = setmetatable({}, { __index = function() return function() end end })
     end
-    for _, file in ipairs({ "Version", "Enums", "Utils", "Language", "Debug", "Strings", "FuzzySearch", "EasterEggs",
+    for _, file in ipairs({ "Version", "Enums", "Utils", "NPCModel", "Language", "Debug", "Strings", "FuzzySearch", "EasterEggs",
         "DataModules", "ReportButton", "Player", "GreetingFirst", "VoiceOver", "Contribute" }) do
         dofile(addonDirectory .. file .. ".lua")
     end

@@ -68,12 +68,30 @@ unchanged text, and the addon matches on the text rather than on an id — those
 extra work. Forever-only books are a known gap, to be measured before anything is built for
 them.
 
+## Pages in any language
+
+A page's structure lives in `book_page`, once for every language: its book, its place in it, and
+the item or object that opens it. `book_line` holds the words, one versioned row set per language.
+A page needs no English row, so a page only a Spanish client has shown exists in Spanish alone.
+
+A player's client sends a page with its words, its title and page number, and the item or object
+it was read from, but no page id. The site matches it the way a person would: by the owner first,
+then the same words in any language, then the title and page number in the row's language
+(`apps/web/src/lib/contributions/book-match.ts`). Where two pages remain, nothing is guessed and a
+moderator picks one.
+
+Accepting a row for a page nothing in the corpus has mints it: `b:n{uuid}`, in the matched book or
+in a new `n{uuid}` book. A minted page is voiced, reported and shipped in packs like any other. If
+a later import finds its words in the world database, it folds into the real page: texts, takes,
+reports and contributions move, and the minted id stays as an alias so a pack that shipped it still
+plays (`pipelines/books/tools/lib/absorb.mjs`).
+
 ## The stages
 
 | Stage | Input | Output | Who runs it |
 | --- | --- | --- | --- |
 | `extract` | vmangos world DB | `pipelines/books/corpus/extract.json` | a maintainer, after a dump refresh |
-| `import` | that file | `book_line` rows | the same maintainer |
+| `import` | that file | `book_page` and `book_line` rows | the same maintainer |
 | review | `book_line` | corrected text | anyone, at `/books` |
 | generate | `book_line` | mp3s and `take` rows | anyone with an ElevenLabs key |
 | export | `book_line` | `addons/Spoken_Readables/Data/Books.lua` | a maintainer, before a release |

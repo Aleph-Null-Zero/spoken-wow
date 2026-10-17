@@ -12,7 +12,6 @@
  * both sides of a split moment, or a plain line split into them.
  */
 import { fileIndex } from "@/lib/audio";
-import { momentOf } from "@/lib/contributions/naming";
 import { requireRegenerate } from "@/lib/generation/authz";
 import { branchesOnPlayerGender } from "@/lib/player-words";
 import { englishMomentLines, rewriteEnglish } from "@/lib/quests/english-rewrite";
@@ -42,7 +41,9 @@ export async function PUT(request: Request) {
   if (branchesOnPlayerGender(draft.text)) {
     const variant = line.variant ?? 0;
     try {
-      const rows = await englishMomentLines(momentOf(line.lineId), variant);
+      const rows = await englishMomentLines(line.lineId, variant);
+      // The file is the corpus's, so its moment has lines unless they moved since it was indexed.
+      if (rows.length === 0) return Response.json({ error: "unknown line" }, { status: 404 });
       const { files } = await rewriteEnglish(rows, variant, { text: draft.text, userId: session.user.id });
       return Response.json({ files });
     } catch (error) {

@@ -18,7 +18,8 @@ import type { QuestSummary } from "./triage";
 
 /**
  * Whether a row of the New tab can be accepted as it stands, the same in every language:
- * - a quest moment that already has a speaker, in any language, needs nothing more;
+ * - a quest moment that already has the row's NPC as a speaker, in any language, needs nothing
+ *   more (one whose speakers are others makes the NPC one more, so it needs an answer);
  * - any other quests row needs a speaker whose type, gender and flavor a voice reads, whoever
  *   set them (accept.ts's speakerFor);
  * - zones and books rows have no speaker to check.

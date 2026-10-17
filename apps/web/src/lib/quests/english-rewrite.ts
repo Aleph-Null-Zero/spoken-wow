@@ -13,14 +13,14 @@ import "server-only";
 
 import { recordActivity } from "@/lib/activity/store";
 import { audioRelPath } from "@/lib/audio";
-import { CONTRIBUTED_ORD_FLOOR } from "@/lib/contributions/accept";
-import { answersQuestMomentSql, playerGenderForms } from "@/lib/contributions/naming";
+import { answersQuestMomentSql, baseLineId, momentOf, playerGenderForms } from "@/lib/contributions/naming";
 import type { CorpusLine } from "@/lib/corpus";
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
 import { branchesOnPlayerGender, speakPlayerTokens } from "@/lib/player-words";
 import { validateOverride } from "@/lib/quests/override";
 import { writeOverride } from "@/lib/quests/overrides";
+import { lockLine, ORD_FLOOR } from "@/lib/quests/speakers";
 import { QuestTextConflict } from "@/lib/quests/text";
 import { skipReasonFor } from "@/lib/text-gate";
 
@@ -29,8 +29,12 @@ type EnglishRow = Pick<
   "lineId" | "source" | "questId" | "questTitle" | "playerGender" | "fileName" | "originalText"
 >;
 
-/** A moment's current English lines: its plain line, or its `:m` and `:f`. */
-export async function englishMomentLines(moment: string, variant: number): Promise<EnglishRow[]> {
+/**
+ * A moment's current English lines: its plain line, or its `:m` and `:f`. Any of the moment's
+ * ids finds them, a side's or a voice's (`{lineId}~{voice}`) included.
+ */
+export async function englishMomentLines(lineId: string, variant: number): Promise<EnglishRow[]> {
+  const moment = momentOf(baseLineId(lineId));
   const { rows } = await db().query<EnglishRow>(
     `select "lineId", "source", "questId", "questTitle", "playerGender", "fileName", "originalText"
        from "quest_line"
@@ -100,6 +104,9 @@ async function splitByPlayerGender(
   const client = await db().connect();
   try {
     await client.query("begin");
+    // The moment's lock, as addToMoment's writers hold it: a speaker added meanwhile would
+    // reach the plain line only, after the copies were taken.
+    await lockLine(client, momentOf(plain.lineId));
     const { rowCount } = await client.query(
       `update "quest_line" set "isCurrent" = false
         where "lineId" = $1 and "variant" = $2 and "lang" = $3 and "isCurrent"`,
@@ -152,14 +159,14 @@ async function splitByPlayerGender(
     await client.query(
       `insert into "quest_line_speaker"
          ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName", "race", "gender",
-          "flavor", "voice", "contributionId")
+          "flavor", "voice", "contributionId", "addedBy")
        select f."lineId", s."variant", s."lang",
               greatest((select coalesce(max(o."ord") + 1, 0) from "quest_line_speaker" o where o."lang" = s."lang"), $3)
                 + row_number() over (partition by s."lang" order by f."lineId", s."ord", s."id") - 1,
-              s."npcType", s."npcId", s."npcName", s."race", s."gender", s."flavor", s."voice", s."contributionId"
+              s."npcType", s."npcId", s."npcName", s."race", s."gender", s."flavor", s."voice", s."contributionId", s."addedBy"
          from "quest_line_speaker" s cross join unnest($4::text[]) as f ("lineId")
         where s."lineId" = $1 and s."variant" = $2`,
-      [plain.lineId, variant, CONTRIBUTED_ORD_FLOOR, forms.map((form) => form.lineId)],
+      [plain.lineId, variant, ORD_FLOOR, forms.map((form) => form.lineId)],
     );
     await client.query("commit");
   } catch (error) {

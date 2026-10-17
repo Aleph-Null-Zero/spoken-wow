@@ -700,6 +700,7 @@ dofile(addons .. 'Spoken_Quests/Environment.lua')
 dofile(addons .. 'Spoken_Quests/Strings.lua')
 VoiceOver.Version=E.Version
 dofile(addons .. 'Spoken_Quests/Enums.lua')
+dofile(addons .. 'Spoken_Quests/NPCModel.lua')
 dofile(addons .. 'Spoken_Quests/Contribute.lua')
 dofile(addons .. 'Spoken_Quests/Player.lua')
 local V=VoiceOver

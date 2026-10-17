@@ -1007,8 +1007,8 @@ puts an `edited` version on top. A contributed speaker is what `corpus_db.py`'s 
 alone when it replaces every extracted speaker, and it numbers from 1,000,000 so a re-import
 never meets it. The corpus
 wins where it already has the line: a quest moment is matched by quest id and moment alone
-(the tables carry some only as `:m`/`:f` variants), and a gossip line it already has gains the
-contributing NPC as one more speaker instead of a copy. Progress lines are kept, marked
+(the tables carry some only as `:m`/`:f` variants), and a quest moment or gossip line it already
+has gains the contributing NPC as one more speaker instead of a copy. Progress lines are kept, marked
 `progress` and never voiced, as the extract marks its own. Once written, a contribution cannot
 be moved back to new. Rejecting it ignores every line it wrote, reason `Rejected contribution
 #N`: in its language, or in every language for an English row, so it needs the same right an
@@ -1019,8 +1019,11 @@ the explorer brings the line back.
 A quest row is accepted the same way whatever language its client was in. A line is the
 language's own `quest_line` row; who speaks it is a fact about the world, so a speaker row any
 language wrote voices the line in every language. Accepting a quest moment writes the
-language's row and a `quest_line_speaker` row only when the moment has no speaker in any
-language yet. Only then does it need the NPC's race and gender answered. Its id
+language's row, and a `quest_line_speaker` row when the moment has no speaker in any language
+yet or its speakers do not include the contribution's NPC: a quest two givers offer is voiced in
+each one's voice. Only then does it need the NPC's race and gender answered, and the
+contributions page counts such a row as blocked until it has them. A speaker added to a moment
+someone already speaks goes on each of its lines, in the language its speakers are in. Its id
 and file are the quest's and the moment's, the same in every language, so nothing has to be
 sent in English first, and English sending the moment later writes English's row under the
 same id and file, voiced by the speaker already there. In another language the line keeps its
@@ -1152,46 +1155,82 @@ installed pack has it; a greeting's speaker and a follow-up's are looked up per 
 their tables simply name the speaker's own file. The greeting tables keyed by NPC name, used when
 the addon has no id, name the line's own file, since same-named NPCs can differ in voice. Progress text is never voiced and never split.
 
-An NPC can be split by sex. One creature id can be drawn as a man or a woman: a Stormwind City
-Guard is either, at even odds. The `npc` row answers one race, gender and flavor for the id, so
-both used to speak in the man's voice. A split NPC has a row per sex in `npc_sex` (migration
-0072), keyed on the sex the client's `UnitSex` reports (2 for a man, 3 for a woman), and each
-row answers that sex's race and flavor under `npc`'s provenance rules. Its gender is the sex's.
-Every line the NPC speaks is then spoken once per sex, by the rule above: the sex whose voice
-made the file keeps it, and the other speaks `{lineId}~{voice}`. The `npc` row stays the answer
-for whatever does not know the sex. The corpus file carries the rows as `npcSexes` (schema 5),
-and deleting them unsplits the NPC.
+An admin can add a speaker the game data lacks, from the explorer: the person icon under a
+speaker's id adds another NPC who says that line, by kind and id. One nobody has answered is
+answered in the same dialog, as `/npcs` would, since a speaker is written with its voice. The row
+goes on each of the moment's lines (both sides of a player-gender split), marked with the admin
+in `addedBy` (migration 0076), and shows as *added* with a way to take it back; the dump's own
+speakers cannot be removed. Like a contributed speaker, an added one numbers from 1,000,000, is
+exported with its `addedBy`, and is kept by `corpus_db.py`'s import until the dump has the same
+NPC on the same line (`lib/quests/speakers.ts`, `api/quests/lines/speakers`).
 
-The extract finds them in the game's data (`tts_cli/npc_sexes.py`). A creature has up to four
-displays, each drawn by its probability and each with a sex, and the rest of the extract reads
-only `display_id1`. A speaking creature whose displays include both sexes is split: 58 of them
-in the classic dump, guards for the most part. Each sex takes the race of its likeliest display
-and the flavor its displays' greeting sounds name most. A sex with no greeting sound gets its
-race-gender's default, marked doubtful, as an NPC does. `make quests-import-npc-sexes` writes
-the same rows into a database that is already filled, production included, without a whole
-extract; it keeps a moderator's answer.
+An NPC can be split by body. One creature id can be drawn as several races and both sexes: a
+Stormwind City Guard is a man or a woman at even odds, and an Ironforge Reveler a dwarf, a
+gnome or a human. A body is a race and a sex, and the client's `UnitSex` (2 for a man, 3 for a
+woman) is the sex half of it. The `npc` row answers one race, gender and flavor for the id, so
+every body used to speak in the first one's voice. A split NPC has a row per body in `npc_body`
+(migration 0075, which took over `npc_sex`'s rows with the race of their NPC), and each row
+answers that body's flavor under `npc`'s provenance rules; its gender is the sex's. Two or more
+rows mean a split, and deleting the second-last unsplits it, the last row going with it. Every line the NPC speaks is then
+spoken once per body, by the rule above: the body whose voice made the file keeps it, and each
+other voice speaks `{lineId}~{voice}`. The `npc` row stays the answer for whatever does not
+know the body.
 
-A contribution splits the NPCs the dump does not know. A greeting from a creature drawn as the
-sex its voice is not (the envelope's `sex` against the `npc` row's gender) is not dropped as
-known, even when the NPC already says it, and storing it splits the NPC (`npc/split.ts`): the
-NPC's answer becomes its own sex's, and the sex the player saw is answered as `resolveNpc`
-answers from the client, from the appearances drawn with the reported body, else that body's
-race and a default flavor, unconfirmed. Once the NPC is split the row reads as known again and
-leaves the queue. On `/npcs` an admin sees each sex under its NPC, answers it, and can split or
-unsplit any creature by hand (`api/npcs/sex`).
+The extract finds them in the game's data (`tts_cli/npc_bodies.py`). A creature has up to four
+displays, each drawn by its probability and each with a race and sex, and the rest of the
+extract reads only `display_id1`. A speaking creature whose displays include more than one body
+is split: guards for the most part. A body's weight is the summed probability of its displays,
+and its flavor is the one its displays' greeting sounds name most; a body with no greeting
+sound gets its race-gender's default, marked doubtful, as an NPC does. vmangos has no per-spawn
+displays, so a creature that only a spawn draws two ways, such as the Brigadier General, comes
+from contributions. `make quests-import-npc-bodies` writes the same rows into a database that
+is already filled, production included, without a whole extract. It keeps a moderator's answer,
+and the stragglers it removes are only corpus-provenance rows nothing in the extract still
+names: a moderator's lone body stays.
 
-A pack finds a split NPC's line as it always has, by its text, under the line's own stem, and
-then asks the sex: `GossipFileLookupByNPCSex[npcId][sex][stem]` and
-`QuestFileLookupByNPCSex[stem][npcId][sex]` name the file each sex hears. A sex keeps the
-line's own file until its voice's has audio in the store, as any NPC does. An addon that
-predates the split never reads those tables and plays the line's own file. `NPCSexByNPCID`
-gives the sex every other speaking creature is answered with, so the addon can tell when it is
-drawn as the other one: the line still plays in the voice it has, and the Contribute button
-offers it, so the site hears that the NPC comes in both sexes. A follow-up is said in chat:
-`FollowupLookupByNPCSex[npcId][broadcastId][sex]` names each sex's file, which plays when the
-speaker is a unit the player has up (the dialog's NPC, the target, the mouseover), and
-`FollowupLookup` names the man's for when its sex cannot be read. The addon's gossip text (`gossip_text.py`) gives a split
-NPC both forms of a BroadcastText row.
+A contribution splits the NPCs the dump does not know. A greeting from a creature drawn as a
+body its voice is not (the envelope's model against the `npc` row, or its `sex` where the model
+is unknown) is not dropped as known, even when the NPC already says it, and storing it splits
+the NPC (`npc/split.ts`): the NPC's answer becomes its own body's, and the body the player saw
+is answered as `resolveNpc` answers from the client. The model's file id becomes a race through
+`apps/web/src/lib/npc/character-models.json`, and where the model is unknown the body is the
+sex alone, with the NPC's own race. Once the NPC is split the row reads as known again and
+leaves the queue. On `/npcs` an admin sees each body under its NPC, answers it, and can split
+by sex, add a body, remove one or unsplit any creature by hand (`api/npcs/body`).
+
+Sex is the half of a body older addons know, so a sex with several bodies is voiced by the one
+whose race is the `npc` row's, failing that the heaviest, ties going to the earliest answer (the
+sex rule). The pack's sex tables are built by it. A pack finds a split NPC's line as it always
+has, by its text, under the line's own stem, and then asks the body:
+`GossipFileLookupByNPCBody[npcId][body][stem]` and `QuestFileLookupByNPCBody[stem][npcId][body]`
+name the file each body hears, a body being written `{race}-{sex}`, as in `gnome-female`. A
+body keeps the line's own file until its voice's has audio in the store, as any NPC does. A
+follow-up is said in chat: `FollowupLookupByNPCBody[npcId][broadcastId][body]` names each
+body's file, which plays when the speaker is a unit the player has up (the dialog's NPC, the
+target, the mouseover). `NPCBodiesByNPCID` lists the bodies every speaking creature is voiced
+as, and `BodyByModelFileID` turns a model's file id into the body it draws, built from
+`character-models.json`. `GossipFileLookupByNPCSex`, `QuestFileLookupByNPCSex`,
+`FollowupLookupByNPCSex`, `NPCSexByNPCID` and `FollowupLookup` still ship, derived by the sex
+rule, for an addon that predates the split, which reads only them and plays the line's own
+file where they are silent. The addon's gossip text (`gossip_text.py`) gives a
+split NPC both forms of a BroadcastText row.
+
+The addon reads the body from the creature's model (`NPCModel.lua`) and looks a line up by body,
+then by sex, then in its own file. A model that has not loaded yet reads as no body, so a cold
+model plays the sex's file. Priming a model costs a `SetUnit`, so it is done only where the
+answer is used: on target and mouseover for creatures a pack splits (the gossip tables only),
+and on dialog open for creatures in `NPCBodiesByNPCID` only when the contribute buttons are
+shown or gathering is on, or when the creature is split. Every load is settled within about
+two seconds by `C_Timer` polls. A load left before its model is in (the cursor swept on, the
+target changed, two seconds passed) is not taken for a miss: the creature is loaded again when
+next asked, two loads at most, and only the second coming back empty is remembered. `DataModules:IsOtherBody` tells the addon a creature
+is drawn as a body its voice is not: the line still plays in the voice it has, and the
+Contribute button offers it, so the site hears that the NPC comes in more than one body.
+
+The corpus file carries the rows as `npcBodies` (schema 6: race, sex, weight, flavor), only for
+NPCs with two or more, as the catalogue and the contribution check read only those: a row
+alone, such as a moderator's body an import kept, splits nothing. A file of schema 5 with
+`npcSexes` still imports, each row a body of its NPC's race.
 
 `npc` also keeps what the client
 reported even when a moderator overrules it — evidence about the NPC is worth more than the

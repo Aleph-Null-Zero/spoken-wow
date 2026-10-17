@@ -34,8 +34,8 @@ type Props = {
   showNpcPage: boolean;
   /** Hands the new take's version up, so the player busts its cache. */
   onRegenerated: (version: number) => void;
-  /** Hands a rewrite up, so the panel and the row read the text that will be spoken next. */
-  onOverridden: (text: string | null) => void;
+  /** A rewrite was saved, so the panel and the row read the text that will be spoken next. */
+  onRewritten: () => void;
 };
 
 export default function ReportDetail({
@@ -45,7 +45,7 @@ export default function ReportDetail({
   canRegenerate,
   showNpcPage,
   onRegenerated,
-  onOverridden,
+  onRewritten,
 }: Props) {
   const lang = useLang();
   const [busy, setBusy] = useState(false);
@@ -122,12 +122,15 @@ export default function ReportDetail({
       {editing && source === "quests" ? (
         <OverrideDialog
           line={line as QuestLine}
-          onSaved={(_file, text) => {
+          onSaved={() => {
             setEditing(false);
-            onOverridden(text);
+            onRewritten();
           }}
           // The moment's other lines took the text too, so the explorer is where to see them.
-          onRewritten={() => setEditing(false)}
+          onRewritten={() => {
+            setEditing(false);
+            onRewritten();
+          }}
           onCancel={() => setEditing(false)}
         />
       ) : null}

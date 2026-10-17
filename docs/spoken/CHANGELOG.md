@@ -4,8 +4,17 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Readables finds and reads pages only a language pack has.** A page that exists in your client's
+  language but not in English, such as one a player sent in, is now recognised, placed in its
+  book and read aloud once its language pack carries it, and Report works on it.
+  *([rusty-key](https://github.com/rusty-key))*
 - **The minimap button's tooltip shows Spoken's version.** It sits above the click hints, where
-  a bug report can quote it without opening the settings. *([anon1231823](https://github.com/anon1231823))*
+  a bug report can quote it without opening the settings.
+  *([anon1231823](https://github.com/anon1231823))*
+- **An NPC that comes in several races under one name now speaks in the voice of the race you
+  see.** The Ironforge Reveler, for one, is a dwarf, a gnome or a human, and spoke with only one
+  voice; it speaks in each now, once its packs have that voice.
+  *([rusty-key](https://github.com/rusty-key))*
 
 ### Modules
 

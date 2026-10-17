@@ -191,7 +191,7 @@ async function booksTarget(
 ): Promise<{ lineId: string | null; target: string } | null> {
   if (!raw) return null;
 
-  const page = await pageById(Number(raw));
+  const page = await pageById(raw);
   if (!page) return null;
 
   return { lineId: page.id, target: page.file };
