@@ -175,10 +175,10 @@ local function ContextLines(lines)
     local guid = Safe(function() return Utils:GetNPCGUID() end)
     table.insert(lines, format("now: quest ID %s, title %q, NPC %q, GUID %s", tostring(questID), tostring(title or ""),
         tostring(npc or ""), tostring(guid)))
-    local heard = guid and Addon.db and Addon.db.char.hasSeenGossipForNPC
-        and Addon.db.char.hasSeenGossipForNPC[guid]
+    local text = Safe(function() return NotSecret(GetGossipText()) or NotSecret(GetGreetingText()) end)
+    local heard = guid and Addon.db and Addon:HasHeardGreeting(guid, text)
     if guid then
-        table.insert(lines, "this NPC's greeting heard before: " .. (heard and "yes" or "no"))
+        table.insert(lines, "this NPC's greeting on screen heard before: " .. (heard and "yes" or "no"))
     end
     local found, probe, event = pcall(function() return Addon:GetVisibleLine() end)
     if found and probe then

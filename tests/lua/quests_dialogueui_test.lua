@@ -285,11 +285,11 @@ Tick(0)
 Expect("...shows whole once the read queues nothing, not after the wait", Paragraph(1) ~= "", true)
 VO.Addon.GOSSIP_SHOW, VO.Addon.ExpectedLine = gossipHandler, expectedLine
 
--- Once per NPC, a guard already heard: the greeting stays quiet, the directions picked from it
+-- Once per Greeting, a guard's greeting already heard: the greeting stays quiet, the directions picked from it
 -- do not. DialogueUI can draw the directions before Spoken Quests notes the page or after.
 world.npcGUID = "Creature-0-0-0-0-4321-0"
 VO.Addon.db.profile.Audio.GossipFrequency = VO.Enums.GossipFrequency.OncePerNPC
-VO.Addon.db.char.hasSeenGossipForNPC[world.npcGUID] = true
+VO.Addon:MarkGreetingHeard(world.npcGUID, GREETING)
 local function Greet()
     Spoken:StopAll()
     stub.ShowGossip(GREETING, { "Where is the bank?" })

@@ -105,7 +105,7 @@ Expect("Forget Greetings Heard is a button", forget ~= nil, true)
 -- It only matters while a greeting is read once.
 stub.PickDropdown(greetings, "Every Time"); Panel.panel.layout:Refresh()
 Expect("...greyed while every greeting is read each time, saying why", forget.layoutReason, L.REASON_FORGET_GREETINGS)
-stub.PickDropdown(greetings, "Once per NPC"); Panel.panel.layout:Refresh()
+stub.PickDropdown(greetings, "Once per Greeting"); Panel.panel.layout:Refresh()
 Expect("...and live with a greeting read once", forget.layoutReason, nil)
 forget.scripts.OnClick(forget)
 Expect("...which clears this character's greetings heard", next(db.char.hasSeenGossipForNPC), nil)

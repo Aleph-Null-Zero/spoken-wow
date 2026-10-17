@@ -143,7 +143,7 @@ for _, client in ipairs({ "16001", "1.12" }) do
     Expect(client .. ": a quest with no line shows no Play button", button:IsShown(), false)
     Close()
 
-    -- Gossip already heard once from this NPC: the Once per NPC default would hold it back
+    -- Gossip already heard once from this NPC: the Once per Greeting default would hold it back
     -- from autoplay, but Play is the player asking for it.
     OpenGossip("We stand ready.")
     Expect(client .. ": autoplay off, gossip reads nothing", Played(played), "(nothing)")
