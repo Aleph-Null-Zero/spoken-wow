@@ -6,7 +6,7 @@
 #   ./scripts/quests/release.sh audio-horde  # just one sound pack
 #   ./scripts/quests/release.sh spoken-all   # the English meta addon; never part of a bare run
 #   ./scripts/quests/release.sh --lang=esMX audio-horde # that language's Horde pack instead
-#   ./scripts/quests/release.sh --lang=deDE spoken-all  # that language's meta addon, "Spoken German"
+#   ./scripts/quests/release.sh --lang=deDE spoken-all  # that language's meta addon, "Spoken: German"
 #   ./scripts/quests/release.sh --store=wago # one store only; --store=curseforge for the other
 #
 # TWO STORES, ONE RELEASE. The same zip goes to both by default: a file that exists on one

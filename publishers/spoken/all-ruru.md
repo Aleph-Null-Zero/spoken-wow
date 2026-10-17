@@ -3,7 +3,7 @@ curseforge: 1746510
 lang: ruRU
 version: 1.0.0
 slug: spoken-russian
-name: Spoken Russian
+name: Spoken: Russian
 summary: Meta package: installs Spoken with every Russian voice pack, quests, gossip, zones and books. Install through the CurseForge app.
 categories:
   - Audio & Video
@@ -31,4 +31,4 @@ license: MIT
 
 Spoken speaks in your client's language by default. To hear Russian on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Russian packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).
+English has its own set: [Spoken: English](https://www.curseforge.com/wow/addons/spoken-english).

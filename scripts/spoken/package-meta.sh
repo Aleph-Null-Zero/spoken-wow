@@ -4,11 +4,11 @@
 #
 #   make package-spoken-all                 # dist/SpokenAll-<version>.zip
 #   VERSION=3.0.0 make package-spoken-all   # the version written into the .toc
-#   LANG_CODE=deDE make package-spoken-all  # "Spoken German", dist/SpokenAll_deDE-<version>.zip
+#   LANG_CODE=deDE make package-spoken-all  # "Spoken: German", dist/SpokenAll_deDE-<version>.zip
 #
 # A LANGUAGE'S META ADDON is the same stub under its own folder, title and version, all read off
 # publishers/spoken/all-<lang>.md through scripts/lib/packs.mjs, which also lists the packs it
-# depends on. It names that language's packs only: the English set is Spoken English's.
+# depends on. It names that language's packs only: the English set is Spoken: English's.
 #
 # The same mechanism as Spoken Quests Audio: All (scripts/quests/package-meta.sh), one level up:
 # a CurseForge file can declare required dependencies, and both the CurseForge app and WowUp
@@ -34,13 +34,13 @@ ZIP="${ZIP:-1}"
 if [ "$LANG_CODE" = enUS ]; then
   NAME="${NAME:-SpokenAll}"
   VERSION="${VERSION:-3.0.0}"
-  TITLE="${TITLE:-Spoken English}"
+  TITLE="${TITLE:-Spoken: English}"
   NOTES="Installs every Spoken addon with its English audio - quests, gossip, zone lore and books."
 else
   NAME="${NAME:-$(meta_field folder)}"
   VERSION="${VERSION:-$(meta_field version)}"
   TITLE="${TITLE:-$(meta_field name)}"
-  NOTES="Installs Spoken with every ${TITLE#Spoken } voice pack."
+  NOTES="Installs Spoken with every ${TITLE#Spoken: } voice pack."
 fi
 
 module_dir="$DIST/$NAME"
