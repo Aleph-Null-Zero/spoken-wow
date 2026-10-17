@@ -117,6 +117,25 @@ function progressOf(npc: NpcSummary, roster: Roster): Progress {
   return npc.doubtful ? "doubtful" : "finished";
 }
 
+/**
+ * Whether the NPC, or any body it is split into, is of this type or read by this voice. Each
+ * filter matches on its own when the other is unset.
+ */
+function matchesSpeaker(
+  npc: NpcSummary,
+  bodies: NpcBodyAnswer[],
+  roster: Roster,
+  type: string | undefined,
+  voice: string | undefined,
+): boolean {
+  if (!type && !voice) return true;
+  return [npc, ...bodies].some(
+    (answer) =>
+      (!type || answer.race === type) &&
+      (!voice || roster.voiceFor(answer.race, answer.gender, answer.flavor) === voice),
+  );
+}
+
 /** A voice answer, or a name: the route saves each on its own. */
 type Answer = SpeakerAnswer & { npcName?: string };
 
@@ -293,6 +312,10 @@ export default function NpcEditor({
   const provenance = isProvenance(speakerParam) ? speakerParam : undefined;
   const progressParam = params.get("progress");
   const progress = isProgress(progressParam) ? progressParam : undefined;
+  // Taken as written rather than checked against the roster: FilterChip shows an unknown value
+  // as itself, and it matches nothing.
+  const type = params.get("type") || undefined;
+  const voice = params.get("voice") || undefined;
   // Absent is the default bin, so "all" is written out.
   const client = clientFilterOf(params.get("client"));
   const sortValue = params.get("sort");
@@ -420,8 +443,14 @@ export default function NpcEditor({
       )
       .filter((npc) => !provenance || npc.provenance === provenance)
       .filter((npc) => !progress || progressOf(npc, roster) === progress)
+      .filter((npc) => {
+        const k = key(npc.npcKind, npc.npcId);
+        return matchesSpeaker(npc, savedBodies[k] ?? initialBodies.get(k) ?? [], roster, type, voice);
+      })
       .sort(compare(sort));
-  }, [initial, client, saved, query, provenance, progress, sort, roster]);
+  }, [initial, client, saved, savedBodies, initialBodies, query, provenance, progress, type, voice, sort, roster]);
+  const typeOptions = useMemo(() => roster.races.map((race) => ({ value: race, label: race })), [roster]);
+  const voiceOptions = useMemo(() => roster.voiceNames.map((name) => ({ value: name, label: name })), [roster]);
 
   // A page at a time: every row is a SpeakerCell with its own selects, and all of them at once
   // made the first load and every tick slow.
@@ -472,6 +501,8 @@ export default function NpcEditor({
           options={PROGRESS_CHIP_OPTIONS}
           onChange={(next) => setParam("progress", next)}
         />
+        <FilterChip label="type" value={type} options={typeOptions} onChange={(next) => setParam("type", next)} />
+        <FilterChip label="voice" value={voice} options={voiceOptions} onChange={(next) => setParam("voice", next)} />
         <span className="text-muted-foreground text-xs">
           {rows.length} of {initial.length}
         </span>
