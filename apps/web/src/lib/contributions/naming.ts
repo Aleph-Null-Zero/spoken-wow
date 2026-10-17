@@ -12,6 +12,7 @@
  * naming.py's `:{m|f}` suffix exists for a text that branches on the player's gender (`$G`).
  * Each language decides it from its own text (playerGenderForms), so one moment can be a
  * plain line in one language and two in another.
+ * naming.py's `:w{n}` is another wording of a moment, a line of its own.
  */
 import { createHash } from "node:crypto";
 
@@ -68,6 +69,29 @@ export function playerGenderForms(
  */
 export function answersQuestMomentSql(column: string, moment: string): string {
   return `${column} = any(array[${moment}, ${moment} || ':m', ${moment} || ':f'])`;
+}
+
+/** naming.py's quest_wording_line_id: another wording of a moment, n from 1. */
+export function questWordingLineId(questId: number, event: QuestEvent, n: number): string {
+  return `${questLineId(questId, event)}:w${n}`;
+}
+
+/** naming.py's quest_wording_file_name, before any player-gender prefix. */
+export function questWordingFileName(questId: number, event: QuestEvent, n: number): string {
+  return `${questFileName(questId, event)}-w${n}`;
+}
+
+/** The quest moment a quest line is a wording of: `q:1:accept` for `q:1:accept:w2:f`. */
+export function questMomentOf(lineId: string): string {
+  return momentOf(lineId).replace(/:w[1-9]\d*$/, "");
+}
+
+/**
+ * Every wording of a quest moment in SQL, each in any player-gender form. A moment id holds
+ * only digits, letters and colons, so it is safe inside the pattern.
+ */
+export function wordingsOfMomentSql(column: string, moment: string): string {
+  return `(${answersQuestMomentSql(column, moment)} or ${column} ~ ('^' || ${moment} || ':w[1-9][0-9]*(:[mf])?$'))`;
 }
 
 export function questFileName(questId: number, event: QuestEvent): string {
