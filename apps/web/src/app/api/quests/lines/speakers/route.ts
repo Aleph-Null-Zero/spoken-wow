@@ -38,7 +38,7 @@ function momentFrom(lineId: unknown): string | null {
 
 /** An unknown line is 404, a clash with the speakers the line has 409, and a bad NPC 400. */
 function refused({ reason, message }: { reason: string; message: string }): Response {
-  const status = reason === "unknown-line" ? 404 : ["spoken", "contributed", "last", "gone"].includes(reason) ? 409 : 400;
+  const status = reason === "unknown-line" ? 404 : ["spoken", "last", "gone"].includes(reason) ? 409 : 400;
   return Response.json({ error: message, reason }, { status });
 }
 

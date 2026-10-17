@@ -1167,10 +1167,9 @@ until the dump has the same NPC on the same line (`lib/quests/speakers.ts`,
 
 The dump can also name the wrong speaker: a quest it says a gameobject offers is offered by a
 creature. An admin takes a speaker off a line with the cross beside it, and puts another NPC in
-its place with the arrows, through the same dialog. Neither is offered for a contribution's
-speaker, which goes when the contribution is rejected, and a line's last speaker cannot be taken
-off, since a line is in the explorer only through its speakers: replace it instead, which adds
-the new NPC before the old one goes. Taking off one of the dump's speakers deletes its rows on
+its place with the arrows, through the same dialog, whichever source the speaker came from: the
+dump, a contribution or an admin. A line's last speaker cannot be taken off, since a line is in the explorer only through its speakers: replace it instead, which adds
+the new NPC before the old one goes. Taking off a speaker deletes its rows on
 every line of the moment and records it in `quest_line_speaker_removed` (migration 0077), which
 the import reads so it leaves that NPC off the moment from then on. The export carries those
 records as `removedSpeakers`, written only once there is one. Adding the NPC back deletes the

@@ -297,16 +297,15 @@ describe("DELETE /api/quests/lines/speakers", () => {
     expect(await removals()).toEqual([]);
   });
 
-  it("refuses to remove a contribution's speaker", async () => {
+  it("removes a contribution's speaker like any other, and records it for the import", async () => {
     await line();
     await answer(second, "orc", "male", "shady");
     await POST(post({ lineId: LINE, npcType: "creature", npcId: second }));
     await contributed(giver);
 
-    const response = await DELETE(del(LINE, giver));
-    expect(response.status).toBe(409);
-    expect((await response.json()).reason).toBe("contributed");
-    expect(await speakers()).toHaveLength(2);
+    expect(await (await DELETE(del(LINE, giver))).json()).toEqual({ removed: 1 });
+    expect((await speakers()).map((row) => row.npcId)).toEqual([second]);
+    expect(await removals()).toEqual([[LINE, giver, ADMIN]]);
   });
 });
 
@@ -361,11 +360,11 @@ describe("POST /api/quests/lines/speakers with replaces", () => {
     expect((await speakers()).map((row) => row.npcId)).toEqual([giver]);
   });
 
-  it("refuses to replace a contribution's speaker, writing nothing", async () => {
+  it("replaces a contribution's speaker like any other", async () => {
     await line();
     await answer(second, "orc", "male", "shady");
     await contributed(giver);
-    expect((await POST(replace(second, giver))).status).toBe(409);
-    expect((await speakers()).map((row) => row.npcId)).toEqual([giver]);
+    expect((await POST(replace(second, giver))).status).toBe(200);
+    expect((await speakers()).map((row) => row.npcId)).toEqual([second]);
   });
 });

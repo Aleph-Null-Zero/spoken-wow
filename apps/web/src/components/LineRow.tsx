@@ -303,23 +303,18 @@ export default function LineRow({
                 <UserPlusIcon className="size-3" />
               </SpeakerAction>
             )}
-            {/* A contribution's speaker goes with the contribution, on /contributions. */}
-            {!line.contributionId && (
-              <>
-                {onReplaceSpeaker && (
-                  <SpeakerAction
-                    label={`Put another NPC in ${line.npcName}'s place on this line`}
-                    onClick={() => onReplaceSpeaker(line)}
-                  >
-                    <RepeatIcon className="size-3" />
-                  </SpeakerAction>
-                )}
-                {onRemoveSpeaker && !line.soleSpeaker && (
-                  <SpeakerAction label={`Take ${line.npcName} off this line`} onClick={() => onRemoveSpeaker(line)}>
-                    <XIcon className="size-3" />
-                  </SpeakerAction>
-                )}
-              </>
+            {onReplaceSpeaker && (
+              <SpeakerAction
+                label={`Put another NPC in ${line.npcName}'s place on this line`}
+                onClick={() => onReplaceSpeaker(line)}
+              >
+                <RepeatIcon className="size-3" />
+              </SpeakerAction>
+            )}
+            {onRemoveSpeaker && !line.soleSpeaker && (
+              <SpeakerAction label={`Take ${line.npcName} off this line`} onClick={() => onRemoveSpeaker(line)}>
+                <XIcon className="size-3" />
+              </SpeakerAction>
             )}
           </span>
           {line.added && (
