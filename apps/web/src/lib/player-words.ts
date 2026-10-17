@@ -78,6 +78,34 @@ const HAS_GENDER = new RegExp(GENDER.source);
 // opening quote or Spanish's inverted marks.
 const SENTENCE_START = new RegExp(String.raw`(?:^|[${ENDS}]|\n)[\s"'«„“¡¿]*$`, "u");
 
+// A Craftsman's Writ asks for `$2oa` of an item: a count the client fills in from the quest's
+// objective, which no recording can know. Each language says "some" in words that keep the
+// sentence's grammar. ruRU writes the noun phrase twice, "мундира:мундиров", as the count's
+// two plural forms, the second having as many words as the first; its "несколько" takes the
+// second. ptBR writes a glued "x" ("5x Tisana"). A language with no entry keeps the token,
+// so the gate still refuses the line.
+const QUANTITY = /\$\d+oax?\s+/g;
+const QUANTITY_WORDS: Partial<Record<Lang, string>> = {
+  enUS: "an order of ",
+  ptBR: "algumas unidades de ",
+};
+const RU_FORMS = /\$\d+oa\s+([^\s:]+(?:\s+[^\s:]+)*):((?:\s*[^\s,.;:!?]+)+)/g;
+
+function speakQuantities(text: string, lang: Lang): string {
+  if (lang === "ruRU") {
+    return text.replace(RU_FORMS, (whole, few: string, rest: string) => {
+      const count = few.split(/\s+/).length;
+      const words = rest.trim().split(/\s+/);
+      if (words.length < count) return whole;
+      const many = words.slice(0, count).join(" ");
+      const after = words.slice(count).join(" ");
+      return `несколько ${many}${after ? ` ${after}` : ""}`;
+    });
+  }
+  const words = QUANTITY_WORDS[lang];
+  return words ? text.replace(QUANTITY, words) : text;
+}
+
 /** Whether a text branches on the player's gender, and so is two lines rather than one. */
 export function branchesOnPlayerGender(text: string): boolean {
   return HAS_GENDER.test(text);
@@ -96,6 +124,7 @@ export function speakPlayerTokens(
 ): string {
   const forms = WORDS[lang];
   if (!forms) return text;
+  text = speakQuantities(text, lang);
   const words = playerGender === "f" ? forms.f : forms.m;
   const cased = (word: string, at: number, whole: string) =>
     ALWAYS_CAPITAL.has(lang) || SENTENCE_START.test(whole.slice(0, at))

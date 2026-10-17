@@ -491,6 +491,10 @@ token glued to a following letter (`$Nama`) is left in, so the line stays unvoic
 translator rewrites it. German's genitive `s` is the one exception: `$Ns` and `$Cs` read as
 `Abenteurers`, or `Abenteurerin` on the female variant. A branch never spans a sentence's end,
 so one whose `;` was lost stays in as a token instead of swallowing the text up to a later `;`.
+A Craftsman's Writ's `$2oa`, the item count the client fills in, reads as "an order of" in
+English, "algumas unidades de" in ptBR, and "несколько" plus the second of ruRU's two written
+forms (`порции:порций`); a language without words for it keeps the token and stays
+unvoiceable.
 Contributions triage shows any token still left after this, a bare `<` or `>`, and a gap
 before `.` or `,` or a mid-sentence double space where a gender branch came through empty,
 above the row's text, so a line that would never be voiced is seen before it is accepted.
