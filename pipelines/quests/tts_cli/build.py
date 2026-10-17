@@ -17,7 +17,8 @@ from tqdm import tqdm
 from tts_cli.ignores import ignored_files
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
-                            moment_of, split_voice, subfolder_from_line_id, variant_file_name)
+                            moment_of, quest_moment_stem, quest_stem_from_line_id, split_voice,
+                            subfolder_from_line_id, variant_file_name)
 from tts_cli.npc_bodies import GENDER_SEX, body_name
 from tts_cli.store import SUBFOLDERS, audio_extension, stored_files
 from tts_cli.utils import (get_first_n_words, get_last_n_words,
@@ -190,6 +191,9 @@ def build_tables(corpus: dict, ignored=()) -> dict:
     # own (tts_cli/voice_files.py): keyed by the moment's file and the giver, since the addon
     # names a quest's file from its id and event and knows who is giving it.
     quest_files = {"creature": {}, "gameobject": {}}
+    # A quest moment the game shows in several wordings: each wording's text and its file, by
+    # the moment's stem. The addon matches the text on screen against it as it does gossip.
+    wordings = {}
     # A split NPC's file per body, keyed by the line's own stem: the addon finds the line as
     # before, then asks the body. Each sex keeps a file too, its fallback body's
     # (npc_bodies.sex_bodies), for addons that read only the sex.
@@ -269,23 +273,29 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         if line["source"] == "progress":
             continue
 
+        stem = quest_stem_from_line_id(base_id)
+        wordings.setdefault(quest_moment_stem(base_id), {})[
+            escape_lua_string(line["originalText"])] = stem
+
         if line["source"] == "accept" and kind in questlog:
             questlog[kind][line["questId"]] = line["npcId"]
 
         if line.get("npcBody") and kind == "creature":
-            stem = f'{line["questId"]}-{line["source"]}'
             file_name = variant_file_name(stem, voice) if voice else stem
             quest_files_by_body.setdefault(stem, {}).setdefault(line["npcId"], {})[line["npcBody"]] = file_name
             if line.get("sexBody"):
                 quest_files_by_sex.setdefault(stem, {}).setdefault(line["npcId"], {})[line["npcSex"]] = file_name
         elif voice and kind in quest_files:
-            stem = f'{line["questId"]}-{line["source"]}'
             quest_files[kind].setdefault(stem, {})[line["npcId"]] = variant_file_name(stem, voice)
 
         quest_ids.setdefault(line["source"], {}) \
                  .setdefault(escape_lua_string(line["questTitle"]), {}) \
                  .setdefault(escape_lua_string(line["npcName"]), {}) \
                  .setdefault(quest_search_text(line["originalText"]), line["questId"])
+
+    # A moment with one wording needs no matching: its file is named from the quest id alone.
+    wordings = {moment: texts for moment, texts in wordings.items()
+                if len(set(texts.values())) > 1}
 
     return {
         "npc_gossip_file_lookups": ("GossipLookupByNPCID", gossip_by_id["creature"]),
@@ -302,6 +312,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         "item_name_lookups": ("ItemNameLookupByItemID", names["item"]),
         "followup_lookups": ("FollowupLookup", followup),
         "npc_quest_file_lookups": ("QuestFileLookupByNPCID", quest_files["creature"]),
+        "quest_wording_lookups": ("QuestWordingLookup", wordings),
         "object_quest_file_lookups": ("QuestFileLookupByObjectID", quest_files["gameobject"]),
         "npc_sex_gossip_file_lookups": ("GossipFileLookupByNPCSex", gossip_by_sex),
         "npc_sex_quest_file_lookups": ("QuestFileLookupByNPCSex", quest_files_by_sex),
