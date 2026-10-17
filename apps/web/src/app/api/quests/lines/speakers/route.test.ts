@@ -183,7 +183,6 @@ describe("POST /api/quests/lines/speakers", () => {
       [LINE, giver, false],
       [`${LINE}~orc-male-shady`, second, true],
     ]);
-    // Two NPCs speak it now, so the explorer offers to take either off.
     expect(lines.every((l) => !l.soleSpeaker)).toBe(true);
   });
 

@@ -168,7 +168,7 @@ export type SearchContext = {
   reports?: Map<string, number>;
   /** file -> which take is live and how many there are. Public, like the other two rows'. */
   takes?: Map<string, { version: number; takes: number }>;
-  /** file -> the voice its live take was made in. Absent means nobody asked: see hasLiveAudio. */
+  /** file -> the voice its live take was made in. Absent means every take counts. */
   takeVoices?: Map<string, string | null>;
   /** file -> who and what made the live take. Absent for anybody not working in the language. */
   madeBy?: Map<string, MadeBy>;
@@ -391,12 +391,10 @@ export function isGap(
 }
 
 /**
- * Whether the line has audio in the voice it is spoken in now. A take made in another voice is
- * the file of a speaker the line no longer has (speakers.ts replaceSpeaker), so the line counts
- * as missing until it is generated again, though packs ship that take until then. A take with
- * no voice recorded counts, as does every take when `takeVoices` is absent. So does any take of
- * a progress line, which is never voiced again, and of a line with no voice chosen yet, which
- * has none to compare with.
+ * Whether the line has audio in the voice it is spoken in now. A take in another voice belongs to
+ * a speaker the line no longer has, so the line is missing until generated again; packs still
+ * ship that take. Progress text is never voiced again, and a model voice has nothing to compare
+ * with, so their takes always count.
  */
 export function hasLiveAudio(
   line: CorpusLine,

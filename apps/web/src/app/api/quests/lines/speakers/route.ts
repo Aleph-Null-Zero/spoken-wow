@@ -10,7 +10,7 @@
  * to answer it with, which the dialog saves through api/npcs first, since a speaker is written
  * with its voice.
  * POST adds it, or with `replaces` puts it in that speaker's place. DELETE takes a speaker off
- * while another still speaks the line (speakers.ts).
+ * while another still speaks the line.
  */
 import { recordActivity } from "@/lib/activity/store";
 import { requireAdmin } from "@/lib/generation/authz";

@@ -44,7 +44,7 @@ export type CorpusLine = {
   added?: boolean;
   /**
    * No other NPC speaks this line's moment, so the explorer offers no way to take this one off:
-   * a line is there only through its speakers (lib/quests/speakers.ts).
+   * a line is there only through its speakers.
    */
   soleSpeaker?: boolean;
   /**

@@ -246,7 +246,6 @@ async function removeFromMoment(
   return { ok: true, removed: removed.length, npcName: removed[0]?.npcName ?? null };
 }
 
-/** An admin takes a speaker off a line, from the explorer. */
 export async function removeSpeaker(args: {
   moment: string;
   npcType: NpcRowKind;
@@ -264,10 +263,9 @@ export type ReplaceOutcome =
   | { ok: false; reason: "unknown-line" | "no-voice" | "contributed" | "same"; message: string };
 
 /**
- * An admin puts one NPC in another's place on a line: the dump named the wrong one. The new one
- * is added before the old one goes, so the line is never without a speaker, and nothing is left
- * half done. The line's file keeps its take: the explorer shows it missing while that take is in
- * another voice than its speaker's (search.ts), and the addon plays it until it is generated again.
+ * The new NPC is added before the old one goes, so the line always has a speaker. The line's take
+ * stays: it counts as missing while it is in another voice than the speaker's, and the addon
+ * plays it until the line is generated again.
  */
 export async function replaceSpeaker(args: {
   moment: string;
