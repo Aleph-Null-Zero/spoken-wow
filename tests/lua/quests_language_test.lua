@@ -308,6 +308,7 @@ Expect("K. a client claiming Italian is not taken at its word", VO.Language:GetC
 Expect("K. ...so Auto stays English", Resolve(VO, 1), "EnglishPack")
 Expect("K. Italian is not a client language", VO.Language:IsClientLanguage("itIT"), false)
 Expect("K. Portuguese is", VO.Language:IsClientLanguage("ptBR"), true)
+Expect("K. nor is Vietnamese", VO.Language:IsClientLanguage("viVN"), false)
 
 ---------------------------------------------------------------- L. the addon's own gossip text, and aliases
 -- Gossip/<locale>.lua gives every line's text in the client's locale, whatever the packs

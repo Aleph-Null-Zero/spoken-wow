@@ -36,6 +36,11 @@ describe("speakPlayerTokens", () => {
     expect(speakPlayerTokens("Grazie, $N.", "itIT", "f")).toBe("Grazie, avventuriera.");
   });
 
+  it("speaks Vietnamese, which has one word for either reader", () => {
+    expect(speakPlayerTokens("Cảm ơn, $N.", "viVN", "f")).toBe("Cảm ơn, nhà thám hiểm.");
+    expect(speakPlayerTokens("$R, hãy đi đi.", "viVN")).toBe("Lữ khách, hãy đi đi.");
+  });
+
   it("resolves ruRU's three-field $g by the player gender, agreeing with the noun", () => {
     const line = "Привет тебе, $gюный:юная:r; $r.";
     expect(speakPlayerTokens(line, "ruRU")).toBe("Привет тебе, юный странник.");

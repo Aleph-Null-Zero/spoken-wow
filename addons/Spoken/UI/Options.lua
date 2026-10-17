@@ -162,6 +162,10 @@ LANGUAGES = {
     { code = "koKR", native = "한국어", english = "Korean", script = "korean" },
     { code = "zhCN", native = "简体中文", english = "Chinese (Simplified)", script = "han" },
     { code = "zhTW", native = "繁體中文", english = "Chinese (Traditional)", script = "han" },
+    -- No client runs in it either, and its stacked accents are glyphs a Latin font can lack.
+    -- `hidden` keeps it out of the menus until its pack is released: picked before then, every
+    -- line would play in the fallback language.
+    { code = "viVN", native = "Tiếng Việt", english = "Vietnamese", script = "vietnamese", hidden = true },
 }
 
 -- Whether the settings' font draws `text`. A glyph the font lacks draws as nothing or as a box,
@@ -516,8 +520,10 @@ local function Build(canvas)
     local language = function() return Addon.db.profile.Language end
     local voices, fallbacks = { "auto" }, { "none" }
     for _, locale in ipairs(LANGUAGES) do
-        table.insert(voices, locale.code)
-        table.insert(fallbacks, locale.code)
+        if not locale.hidden then
+            table.insert(voices, locale.code)
+            table.insert(fallbacks, locale.code)
+        end
     end
     layout:Dropdown(L.OPT_VOICE_LANGUAGE, nil, voices,
         function() return language().Voice or "auto" end,

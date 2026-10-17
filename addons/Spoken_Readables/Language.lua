@@ -21,8 +21,8 @@ local ADDON_NAME, SpokenBooks = ...
 -- player makes once and finds half-honoured. tests/lua/books_language_test.lua holds them
 -- together.
 --
--- `client = false` is a language no game client runs in -- Italian, which a community
--- translates. A player hears it by choosing it; "auto" never lands on it, because
+-- `client = false` is a language no game client runs in -- Italian and Vietnamese, which a
+-- community translates. A player hears it by choosing it; "auto" never lands on it, because
 -- GetLocale() never says it.
 SpokenBooks.LOCALES = {
 	{ code = "enUS", name = "English", native = "English" },
@@ -36,6 +36,7 @@ SpokenBooks.LOCALES = {
 	{ code = "koKR", name = "Korean", native = "한국어" },
 	{ code = "zhCN", name = "Chinese (S)", native = "简体中文" },
 	{ code = "zhTW", name = "Chinese (T)", native = "繁體中文" },
+	{ code = "viVN", name = "Vietnamese", native = "Tiếng Việt", client = false },
 }
 
 SpokenBooks.BASE_LANGUAGE = "enUS"

@@ -60,6 +60,9 @@ const BYTES_PER_CHARACTER: Partial<Record<Lang, number>> = {
   koKR: 3,
   zhCN: 3,
   zhTW: 3,
+  // Not a letter width: Vietnamese mixes ASCII letters with two- and three-byte ones, and
+  // the Forever translation's letters average 1.41 bytes.
+  viVN: 1.5,
 };
 const ACCENTED_LATIN = 1.1;
 

@@ -182,6 +182,7 @@ Expect("G. a client claiming Italian still reads English on Auto", Z:GetAutoLang
 local HANGUL, HAN, CYRILLIC = { [234] = true, [235] = true, [236] = true, [237] = true },
     { [228] = true, [229] = true, [230] = true, [231] = true, [232] = true, [233] = true },
     { [208] = true, [209] = true }
+local VIETNAMESE = { [225] = true }   -- ế and ệ, U+1EBF and U+1EC7
 local fontHas = {   -- the lead bytes each file draws
     ["Fonts\\FRIZQT__.TTF"] = CYRILLIC,
     ["Fonts\\QUEST.TTF"] = CYRILLIC,
@@ -190,6 +191,7 @@ local fontHas = {   -- the lead bytes each file draws
     ["Fonts\\2002.TTF"] = HANGUL,
     ["Fonts\\ARKai_T.ttf"] = HAN,
     ["Fonts\\blei00d.TTF"] = HAN,
+    ["Fonts\\ARIALN.TTF"] = VIETNAMESE,
 }
 local realParent = _G.UIParent.CreateFontString
 local realHighlight, realQuest = _G.GameFontHighlight, _G.QuestFont
@@ -226,6 +228,9 @@ Expect("H. ...and Chinese in its Chinese fonts", Font(_G.QuestFont, "zhCN") .. "
     .. Font(_G.QuestFont, "zhTW"), "Fonts\\ARKai_T.ttf Fonts\\blei00d.TTF")
 Expect("H. a Latin language needs no asking", Z:CanRenderLanguage("frFR"), true)
 Expect("H. ...and keeps the page's font", Font(_G.GameFontHighlight, "frFR"), "Fonts\\FRIZQT__.TTF")
+Expect("H. Vietnamese, which the page's font cannot draw, is written in Arial Narrow",
+    tostring(Z:CanRenderLanguage("viVN")) .. " " .. Font(_G.GameFontHighlight, "viVN"),
+    "true Fonts\\ARIALN.TTF")
 
 -- The captions set a font file too: a clip of Korean lore on a German client names the one to use.
 local realNormal = _G.GameFontNormal
@@ -262,6 +267,9 @@ fontHas["Fonts\\2002.TTF"] = {}
 Z.drawable, Z.fonts = {}, {}
 Expect("H. a client whose Korean font cannot draw Korean does not offer it",
     Z:CanRenderLanguage("koKR"), false)
+fontHas["Fonts\\ARIALN.TTF"] = {}
+Z.drawable, Z.fonts = {}, {}
+Expect("H. ...nor Vietnamese where no font draws its accents", Z:CanRenderLanguage("viVN"), false)
 _G.UIParent.CreateFontString = realParent
 _G.GameFontHighlight, _G.QuestFont = realHighlight, realQuest
 

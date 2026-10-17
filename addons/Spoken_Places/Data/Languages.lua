@@ -22,4 +22,5 @@ SpokenZones.Languages = {
 	{ code = "koKR", lore = { done = 840, total = 840 }, strings = { done = 76, total = 76 }, aliases = 860, audio = true, ready = true },
 	{ code = "zhCN", lore = { done = 840, total = 840 }, strings = { done = 76, total = 76 }, aliases = 860, audio = true, ready = true },
 	{ code = "zhTW", lore = { done = 840, total = 840 }, strings = { done = 76, total = 76 }, aliases = 868, audio = true, ready = true },
+	{ code = "viVN", lore = { done = 0, total = 840 }, strings = { done = 0, total = 76 }, aliases = 0, audio = false, ready = false },
 }
