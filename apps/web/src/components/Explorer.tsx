@@ -107,6 +107,21 @@ function speakerSpans(lines: ResultLine[]): number[] {
   return spans;
 }
 
+/**
+ * The URL change that narrows to one NPC.
+ *
+ * The entity type goes with the id because the two id spaces overlap - creature 68 is a
+ * Stormwind City Guard, gameobject 68 is a Wanted Poster - so the id alone would pull in a
+ * stranger.
+ */
+function npcNarrowing(line: ResultLine) {
+  return { q: String(line.npcId), filter: "npc", type: line.npcType };
+}
+
+function questNarrowing(line: ResultLine) {
+  return { q: String(line.questId), filter: "quest", type: undefined };
+}
+
 export default function Explorer({ facets }: { facets: Facets }) {
   const router = useRouter();
   const lang = useLang();
@@ -265,7 +280,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
    * a different result set is not where they were - and often does not exist. Only the pager
    * itself passes `page`.
    */
-  const updateUrl = useCallback(
+  const hrefFor = useCallback(
     (next: { page?: number } & Record<string, string | number | undefined>) => {
       const search = new URLSearchParams(params.toString());
 
@@ -281,9 +296,15 @@ export default function Explorer({ facets }: { facets: Facets }) {
       // The current path, never a literal "/": this explorer was the site root until the
       // merge moved it to /quests, and a hardcoded "/" sent every narrowing click to the
       // landing page carrying the filters it was asked for.
-      router.replace(search.toString() ? `${pathname}?${search}` : pathname, { scroll: false });
+      return search.toString() ? `${pathname}?${search}` : pathname;
     },
-    [params, pathname, router],
+    [params, pathname],
+  );
+
+  const updateUrl = useCallback(
+    (next: { page?: number } & Record<string, string | number | undefined>) =>
+      router.replace(hrefFor(next), { scroll: false }),
+    [hrefFor, router],
   );
 
   const updateFilters = useCallback(
@@ -708,32 +729,19 @@ export default function Explorer({ facets }: { facets: Facets }) {
     queueMicrotask(() => void audio.current?.play().catch(() => {}));
   }, []);
 
-  /**
-   * Narrow to one NPC.
-   *
-   * The entity type goes with the id because the two id spaces overlap - creature 68 is a
-   * Stormwind City Guard, gameobject 68 is a Wanted Poster - so the id alone would pull in a
-   * stranger.
-   */
-  const narrowToNpc = useCallback(
-    (line: ResultLine) => {
-      setQuery(String(line.npcId));
-      pending.current = write(pending.current, String(line.npcId));
-      updateUrl({ q: String(line.npcId), filter: "npc", type: line.npcType });
+  const narrowTo = useCallback(
+    (next: { q: string } & Record<string, string | undefined>) => {
+      setQuery(next.q);
+      pending.current = write(pending.current, next.q);
+      updateUrl(next);
     },
     [updateUrl],
   );
 
-  const narrowToQuest = useCallback(
-    (line: ResultLine) => {
-      if (line.questId === null) return;
-      const q = String(line.questId);
-      setQuery(q);
-      pending.current = write(pending.current, q);
-      updateUrl({ q, filter: "quest", type: undefined });
-    },
-    [updateUrl],
-  );
+  const narrowToNpc = useCallback((line: ResultLine) => narrowTo(npcNarrowing(line)), [narrowTo]);
+  const narrowToQuest = useCallback((line: ResultLine) => narrowTo(questNarrowing(line)), [narrowTo]);
+  const npcHref = useCallback((line: ResultLine) => hrefFor(npcNarrowing(line)), [hrefFor]);
+  const questHref = useCallback((line: ResultLine) => hrefFor(questNarrowing(line)), [hrefFor]);
 
   // A flat, in-display-order list of what can actually be played, for j/k. This page only:
   // paging is a deliberate act, not something arrow keys should do behind your back.
@@ -939,9 +947,11 @@ export default function Explorer({ facets }: { facets: Facets }) {
                   onRegenerate={regenerateLine}
                   onRestored={handleRestored}
                   onNarrowToNpc={narrowToNpc}
+                  npcHref={npcHref}
                   showNpcPage={isAdmin(session?.user.role)}
                   groupSpan={groupSpans[index]}
                   onNarrowToQuest={narrowToQuest}
+                  questHref={questHref}
                 />
               ))}
             </tbody>

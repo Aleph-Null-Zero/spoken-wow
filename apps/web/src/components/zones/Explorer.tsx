@@ -196,6 +196,14 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
     [filters, replaceQuery],
   );
 
+  const filtersHref = useCallback(
+    (next: Partial<LineFilters>) => {
+      const query = filterParams({ ...filters, ...next }).toString();
+      return query ? `${pathname}?${query}` : pathname;
+    },
+    [filters, pathname],
+  );
+
   //----------------------------------------------------------------------------
   // Fetch
   //----------------------------------------------------------------------------
@@ -685,6 +693,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
                 canTriage={canTriage}
                 onPlay={play}
                 onNarrowToZone={(l) => updateFilters({ mapID: l.mapID })}
+                zoneHref={(l) => filtersHref({ mapID: l.mapID })}
                 state={rowStates[line.id]}
                 onClearDirty={(l) => clearDirty([l.file])}
                 onRestored={(l, version) => {

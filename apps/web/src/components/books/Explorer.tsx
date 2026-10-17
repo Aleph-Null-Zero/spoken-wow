@@ -177,6 +177,14 @@ export function Explorer({ books }: { books: BookFacet[] }) {
     [filters, replaceQuery],
   );
 
+  const filtersHref = useCallback(
+    (next: Partial<PageFilters>) => {
+      const query = filterParams({ ...filters, ...next }).toString();
+      return query ? `${pathname}?${query}` : pathname;
+    },
+    [filters, pathname],
+  );
+
   //----------------------------------------------------------------------------
   // Fetch
   //----------------------------------------------------------------------------
@@ -538,6 +546,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
                 onClearDirty={(line) => clearDirty([line.file])}
                 onRegenerate={regenerateOne}
                 onSelectBook={(line) => updateFilters({ bookId: line.bookId })}
+                bookHref={(line) => filtersHref({ bookId: line.bookId })}
                 onReport={setReportFor}
                 onEditText={setEditFor}
                 onRename={
