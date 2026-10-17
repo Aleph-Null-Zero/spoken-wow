@@ -1,4 +1,4 @@
--- The Developer page: Spoken > Developer in the game's settings, last of Spoken's pages. Tools for
+-- The Developer page: Spoken > Developer in the game's settings, after the modules' pages. Tools for
 -- trying Spoken out, which a player never needs: this module's debug log first, then what feature
 -- addons handed Spoken with Spoken:AddDeveloperSettings (Spoken keeps them until this builds the
 -- page, and announces a late one with DEVELOPER_SETTINGS_ADDED): every module's switches for

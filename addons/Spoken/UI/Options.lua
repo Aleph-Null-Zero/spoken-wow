@@ -269,8 +269,9 @@ function Options:PreviewButton(layout)
     return button
 end
 
--- Feature addons' pages asked for before this panel was registered; see Options:AddPage.
+-- Feature addons' pages asked for before they are registered; see Options:AddPage.
 local pendingPages = {}
+local pagesHeld = true
 
 -- The same parts and ways of showing lines, drawn the same way, in the welcome window.
 Options.SKETCHES = SKETCHES
@@ -311,6 +312,30 @@ function Options:Styles()
     if DialogueUITheme and DialogueUITheme:Available() then table.insert(styles, "dialogueui") end
     table.insert(styles, "none")
     return styles
+end
+
+-- Contribute & Report's page: last, after the modules' (Quests 1, Gossip 2, Places 3, Readables 4)
+-- and Developer's (5).
+local CONTRIBUTE_ORDER = 6
+local contribute
+
+--- Contribute & Report's own page under Spoken's, its rows added by `build(layout)`.
+local function BuildContributePage(build)
+    local frame = CreateFrame("Frame", "SpokenContributeOptionsPanel")
+    frame.name = L.OPT_CONTRIBUTE_TITLE
+    local pageScroller = Layout.Scroll(frame)
+    local content = pageScroller.child
+    local layout = Layout.New(content, INDENT, -TOP)
+    frame.layout = layout
+    layout:Intro(nil, L.OPT_CONTRIBUTE_TITLE)
+    layout:Section(nil)
+    build(layout)
+    local function Fit() pageScroller:SetContentHeight(layout:Height() + 40) end
+    layout.onResize = Fit
+    content:SetScript("OnShow", function() layout:Refresh() end)
+    layout:Refresh()
+    Fit()
+    contribute = Options:AddPage(frame, L.OPT_CONTRIBUTE_TITLE, CONTRIBUTE_ORDER, layout, pageScroller)
 end
 
 local function Build(canvas)
@@ -633,17 +658,22 @@ local function Build(canvas)
     end
 
     -- Where a player goes when something is wrong, for every module at once. Each module's page
-    -- keeps its own Play a Test Line, beside its voice packs.
-    layout:Section(L.OPT_FIX_TITLE)
-    layout:Columns(2)
-    layout:Button(L.OPT_DIAGNOSTICS, 200, function() Options:ShowDiagnostics() end)
-    -- For what belongs to no one line; each line has its own Report. The game cannot open a
-    -- link, so it hands over the address to copy.
-    if Spoken.ShowContribution then
-        layout:Button(L.DIALOGUE_REPORT_PROBLEM, 200, function() Spoken:ShowContribution(Spoken.SITE_URL, nil, true) end)
+    -- keeps its own Play a Test Line, beside its voice packs. On the settings canvas it is on the
+    -- Contribute & Report page (ContributeRows); elsewhere a section here.
+    local function FixRows(rows)
+        rows:Section(L.OPT_FIX_TITLE)
+        rows:Columns(2)
+        rows:Button(L.OPT_DIAGNOSTICS, 200, function() Options:ShowDiagnostics() end)
+        -- For what belongs to no one line; each line has its own Report. The game cannot open a
+        -- link, so it hands over the address to copy.
+        if Spoken.ShowContribution then
+            rows:Button(L.DIALOGUE_REPORT_PROBLEM, 200, function() Spoken:ShowContribution(Spoken.SITE_URL, nil, true) end)
+        end
+        rows:Columns(nil)
+        rows:ShowWhen(rows:Button(L.OPT_RESET, 200, function() Options:ResetPositions() end), Shown)
     end
-    layout:Columns(nil)
-    Only(layout:Button(L.OPT_RESET, 200, function() Options:ResetPositions() end), Shown)
+    local ownPage = canvas and Spoken.Contribute
+    if not ownPage then FixRows(layout) end
 
     -- The finer settings from here on.
 
@@ -690,8 +720,8 @@ local function Build(canvas)
     -- Report on the window and the subtitles, on the legacy clients, which have no Contribute
     -- section to hold it. Its tip names only what they have: no Small Window, and no subtitles on
     -- 1.12.
-    local function ReportRow(tip)
-        return layout:Checkbox(L.OPT_HIDE_REPORT, tip,
+    local function ReportRow(tip, rows)
+        return (rows or layout):Checkbox(L.OPT_HIDE_REPORT, tip,
             function() return cfg().HiddenActions.report end,
             function(v) cfg().HiddenActions.report = v or nil end, function()
                 refresh()
@@ -825,13 +855,14 @@ local function Build(canvas)
     end
 
     -- The buttons live on Blizzard's quest, book and map frames, not on the player, but
-    -- they all open the player's box, so the one switch for them is here. Absent where
-    -- Contribute.xml is not loaded (the legacy clients): nothing there to hide.
-    if Spoken.Contribute then
-        layout:Section(L.OPT_CONTRIBUTE_TITLE)
+    -- they all open the player's box, so the one switch for them is Spoken's. On the settings
+    -- canvas they have a page of their own under Spoken's, in the list beside the modules';
+    -- elsewhere a section here. Absent where Contribute.xml is not loaded (the legacy
+    -- clients): nothing there to hide.
+    local function ContributeRows(rows)
         -- How much there is to send, first, so a player knows when it is worth sending.
         if Gather then
-            layout:Badge(L.OPT_GATHER_ROW, function()
+            rows:Badge(L.OPT_GATHER_ROW, function()
                 if not Gather:IsEnabled() then return "off", L.GATHER_OFF end
                 local count = Gather:Count()
                 if count == 0 then return "off", L.GATHER_NONE end
@@ -839,23 +870,34 @@ local function Build(canvas)
             end, nil, true)
             -- The opt-out the first Contribute click promises. Independent of hiding the
             -- buttons: a player who collects has no use for them, and hiding them must not stop it.
-            layout:Checkbox(L.OPT_GATHER, L.OPT_GATHER_TIP,
+            rows:Checkbox(L.OPT_GATHER, L.OPT_GATHER_TIP,
                 function() return Gather:IsEnabled() end,
                 function(v)
                     -- Choosing here is an answer to the first-click question too.
                     Gather:SetIntroduced()
                     Gather:SetEnabled(v)
                 end, function() Options:UpdateRows() end)
-            layout:Columns(2)
-            layout:Button(L.OPT_GATHER_SHARE, 200, function() Spoken:ShowGatherInstructions() end)
-            layout:Button(L.OPT_GATHER_CLEAR, 200, function() Gather:Clear(); Options:UpdateRows() end)
-            layout:Columns(nil)
+            rows:Columns(2)
+            rows:Button(L.OPT_GATHER_SHARE, 200, function() Spoken:ShowGatherInstructions() end)
+            rows:Button(L.OPT_GATHER_CLEAR, 200, function() Gather:Clear(); Options:UpdateRows() end)
+            rows:Columns(nil)
         end
-        layout:Checkbox(L.OPT_HIDE_CONTRIBUTE, nil,
+        rows:Checkbox(L.OPT_HIDE_CONTRIBUTE, nil,
             function() return Addon.db.profile.Contribute.HideButtons end,
             function(v) Addon.db.profile.Contribute.HideButtons = v end,
             function() Callbacks:Fire("CONTRIBUTE_SETTINGS_CHANGED") end)
-        ReportRow(nil)
+        ReportRow(nil, rows)
+    end
+    if Spoken.Contribute then
+        if ownPage then
+            BuildContributePage(function(rows)
+                ContributeRows(rows)
+                FixRows(rows)
+            end)
+        else
+            layout:Section(L.OPT_CONTRIBUTE_TITLE)
+            ContributeRows(layout)
+        end
     end
 
     layout:Section(L.OPT_MINIMAP_TITLE)
@@ -927,6 +969,7 @@ end
 function Options:UpdateRows()
     if not panel then return end
     panel.layout:Refresh()
+    if contribute then contribute.layout:Refresh() end
     for _, row in ipairs(panel.parts or {}) do
         local installed = Sources:Get(row.partKey) ~= nil
         row.text:SetText(installed and row.partLabel or format(L.OPT_PART_MISSING, row.partLabel))
@@ -1162,9 +1205,7 @@ function Options:Setup()
         FitWindow()
         self.category = Settings.RegisterCanvasLayoutCategory(panel, "Spoken")
         Settings.RegisterAddOnCategory(self.category)
-        table.sort(pendingPages, function(a, b) return a.order < b.order end)
-        for _, page in ipairs(pendingPages) do self:RegisterPage(page) end
-        pendingPages = {}
+        if not pagesHeld then self:ReleasePages() end
     else
         -- No Settings API: a window of our own, opened by /spoken options. Sized to its
         -- rows, which vary by client, rather than a fixed height the rows can outgrow.
@@ -1194,13 +1235,33 @@ function Options:AddPage(frame, name, order, layout, pageScroller)
     self.pages = self.pages or {}
     table.insert(self.pages, page)
     table.sort(self.pages, function(a, b) return a.order < b.order end)
-    if self.category then
+    if self.category and not pagesHeld then
         self:RegisterPage(page)
     else
         table.insert(pendingPages, page)
     end
     return page
 end
+
+--- Register the pages held so far, in their order. The game lists the pages under Spoken in the
+--- order they were registered, not sorted, and the modules ask for theirs on entering the world,
+--- in whatever order their frames hear it: so every page waits until just after that, and they
+--- are registered together. One asked for later is registered at once, after them.
+function Options:ReleasePages()
+    pagesHeld = false
+    if not self.category then return end
+    table.sort(pendingPages, function(a, b) return a.order < b.order end)
+    for _, page in ipairs(pendingPages) do self:RegisterPage(page) end
+    pendingPages = {}
+end
+
+local release = CreateFrame("Frame")
+release:RegisterEvent("PLAYER_ENTERING_WORLD")
+release:SetScript("OnEvent", function()
+    release:UnregisterEvent("PLAYER_ENTERING_WORLD")
+    -- The next frame: after every module's own PLAYER_ENTERING_WORLD.
+    if C_Timer then C_Timer.After(0, function() Options:ReleasePages() end) else Options:ReleasePages() end
+end)
 
 function Options:RegisterPage(page)
     page.category = Settings.RegisterCanvasLayoutSubcategory(self.category, page.frame, page.name)

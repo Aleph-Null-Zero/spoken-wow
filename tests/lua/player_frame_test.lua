@@ -716,10 +716,14 @@ Expect("the scale slider is a slider", scale ~= nil, true)
 Expect("...with a height, or it draws nothing", scale and scale.height, 16)
 Expect("...and an orientation", scale and scale:GetOrientation(), "HORIZONTAL")
 -- Report shows on the quest log, DialogueUI's window and the lore pages as well as on the
--- windows, so its switch is a general one, beside Contribute's, not among the window's.
-Expect("Report has one switch for every window", labels["Hide Report Buttons"], true)
+-- windows, so its switch is a general one, beside Contribute's on its page, not among the window's.
+local contributeOrder = {}
+for _, text in ipairs(stub.LabelsUnder(_G.SpokenContributeOptionsPanel)) do
+    if type(text) == "string" and text ~= "" then table.insert(contributeOrder, text) end
+end
+local order = table.concat(contributeOrder, "|")
+Expect("Report has one switch for every window", string.find(order, "Hide Report Buttons", 1, true) ~= nil, true)
 Expect("...not among the window's own settings", labels["Hide Report Button"], nil)
-local order = table.concat(PanelOrder("16001"), "|")
 Expect("...beside hiding the Contribute buttons", string.find(order,
     "Hide Contribute Buttons|Hide Report Buttons", 1, true) ~= nil, true)
 -- Nothing on screen at all is a way of showing lines, chosen with the others, not a switch

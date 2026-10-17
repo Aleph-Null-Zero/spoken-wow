@@ -86,12 +86,12 @@ local pages = { { name = "Spoken", layout = _G.SpokenOptionsPanel.layout } }
 for _, page in ipairs(env.Options.pages or {}) do
     table.insert(pages, { name = page.name, layout = page.layout })
 end
--- The Developer page comes from the Spoken_Developer module.
-Expect("Spoken, the four parts' pages and the Developer page are all here", #pages, 6)
+-- The Developer page comes from the Spoken_Developer module; Contribute's is Spoken's own.
+Expect("Spoken, the four parts' pages, Contribute and the Developer page are all here", #pages, 7)
 local names = {}
 for _, page in ipairs(pages) do table.insert(names, page.name) end
-Expect("the parts' pages are listed Quests, Gossip, Places, Readables",
-    table.concat(names, ", ", 2, 5), "Quests, Gossip, Places, Readables")
+Expect("the parts' pages are listed Quests, Gossip, Places, Readables, then Developer and Contribute & Report",
+    table.concat(names, ", ", 2, 7), "Quests, Gossip, Places, Readables, Developer, Contribute & Report")
 
 local function Controls(layout)
     local list = {}

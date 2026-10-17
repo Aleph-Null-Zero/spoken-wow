@@ -1209,6 +1209,9 @@ function M.LoadSpoken(addonDirectory)
     -- (defaults_test pins those). The Minimal Classic layout, including switching back to
     -- this one, has its own UI/timer fixture.
     env.Addon.db.profile.Frame.Style = "classic"
+    -- The world is entered at once in these suites: pages register as they are asked for.
+    -- parts_test sets holdPages to see them held until then.
+    if not M.holdPages then env.Options:ReleasePages() end
     return env
 end
 
