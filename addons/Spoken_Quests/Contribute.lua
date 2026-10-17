@@ -440,7 +440,9 @@ end
 local function HasSoundForCurrent()
     local event, text = EventOnScreen()
     if event and text and text ~= "" then
-        return DataModules:PrepareSound({ event = event, questID = GetQuestID and NotSecret(GetQuestID()) or 0 })
+        -- The text and giver too: a moment in several wordings is found by the words on screen.
+        return DataModules:PrepareSound({ event = event, questID = GetQuestID and NotSecret(GetQuestID()) or 0,
+            text = text, unitGUID = Utils:GetNPCGUID() })
     end
 
     local gossip = GossipOnScreen()

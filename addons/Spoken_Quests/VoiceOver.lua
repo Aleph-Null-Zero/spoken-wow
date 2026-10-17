@@ -1272,10 +1272,11 @@ function Addon:ExpectedLine(event, textIsCurrent)
         if not questID or questID == 0 then
             return nil
         end
-        if not DataModules:PrepareSound({ event = quest.sound, questID = questID }) then
+        local text = quest.text() or ""
+        if not DataModules:PrepareSound({ event = quest.sound, questID = questID, text = text }) then
             return nil
         end
-        return quest.text() or ""
+        return text
     end
     return nil
 end

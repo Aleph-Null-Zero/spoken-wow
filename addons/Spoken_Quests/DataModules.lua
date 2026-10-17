@@ -741,14 +741,16 @@ end
 --- wordings in its own plays the moment's file, as it always has.
 local function QuestFile(soundData, event)
     local stem = format("%d-%s", soundData.questID, event)
-    local wordings = soundData.text and CollectTexts("QuestWordingLookup", stem, true, {})
+    -- An empty text is what a quest reader answers when it has none to give.
+    local text = soundData.text ~= "" and soundData.text or nil
+    local wordings = text and CollectTexts("QuestWordingLookup", stem, true, {})
     if not wordings or next(wordings) == nil then
         return stem
     end
-    if wordings[soundData.text] then
-        return wordings[soundData.text]
+    if wordings[text] then
+        return wordings[text]
     end
-    local best = ClosestGossipLine(soundData.text, wordings)
+    local best = ClosestGossipLine(text, wordings)
     return best and best.value or nil
 end
 

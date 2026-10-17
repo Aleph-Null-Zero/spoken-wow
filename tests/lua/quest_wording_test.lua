@@ -48,6 +48,19 @@ Expect("another wording plays its own", Accept(VO, 20, "Oh, you are back."), "20
 Expect("a wording the packs lack plays nothing", Accept(VO, 20, "Greetings, traveller, the road is long."), nil)
 Expect("a moment with one wording is named from its id alone", Accept(VO, 21, "Anything at all."), "21-accept")
 Expect("with no text on screen, the moment's file", Accept(VO, 20, nil), "20-accept")
+Expect("an empty text is no text: the moment's file", Accept(VO, 20, ""), "20-accept")
+
+-- The window offers Contribute when the wording on screen has no line, though the moment's
+-- first wording has audio.
+SpokenEnv.Spoken.Gather:SetEnabled(false)
+world.questID = 20; world.title = "T"; world.npcName = "Image of Archmage Modera"
+world.npcGUID = "Creature-0-0-0-0-2-0"
+world.questText = "Greetings, traveller, the road is long."
+stub.ShowPanel("QuestFrameDetailPanel")
+Expect("a wording no pack has is a gap to contribute", VO.Contribute:HasGap(), true)
+world.questText = BACK
+Expect("a wording a pack has is none", VO.Contribute:HasGap(), false)
+stub.HidePanels()
 
 VO = Boot("deDE")
 Expect("a client whose language has no wordings plays the moment's file",
