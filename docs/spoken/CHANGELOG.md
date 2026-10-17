@@ -19,6 +19,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   changes with who gives it or who takes it, Spoken plays the recording of the text on your
   screen, and where it has none for those words it plays nothing and offers Contribute.
   *([rusty-key](https://github.com/rusty-key))*
+- **The Compendium's Minimize button is the same size as its Close button.** The two top-right
+  buttons on the Compendium window were different sizes; the Minimize button now matches the
+  Close button.
+  *([anon1231823](https://github.com/anon1231823))*
 - **An NPC whose words change with who asks no longer reads you the wrong line.** A trainer
   greets someone of its profession differently, and a barker sends each faction to its own
   place. Where the packs hold only another of these, the NPC used to read that one. Now it reads
