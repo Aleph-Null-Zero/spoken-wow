@@ -80,8 +80,11 @@ end
 
 --- The report address for a page, with its context in the fragment. The bare address in the
 --- popup under a Spoken too old to say more.
-function SpokenBooks:ShowReport(pageId, language)
-	local url = self:ReportURL(pageId, language)
+---
+--- Filed under the voice language, not the language the page played in: a page missing from a
+--- German pack plays the English fallback, and "no German" belongs beside the German page.
+function SpokenBooks:ShowReport(pageId)
+	local url = self:ReportURL(pageId, self:GetVoiceLanguage())
 	if not url then
 		return
 	end

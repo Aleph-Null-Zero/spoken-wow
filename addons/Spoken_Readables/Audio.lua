@@ -149,7 +149,7 @@ local ACTIONS = {
 			if not clip then
 				return
 			end
-			SpokenBooks:ShowReport(clip.pageId, clip.language)
+			SpokenBooks:ShowReport(clip.pageId)
 		end,
 	},
 }

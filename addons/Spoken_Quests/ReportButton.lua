@@ -111,8 +111,7 @@ end
 -- the legacy clients: there the popup would open with an empty box.
 local shownLink
 
---- The report address for `target`, filed under `language` -- the language of the clip being
---- reported, which is not necessarily the client's.
+--- The report address for `target`, filed under `language`.
 ---@param target string
 ---@param language? string
 ---@return string url
@@ -134,8 +133,12 @@ end
 --- The report address for `target`, with the line as the player met it in its fragment: the
 --- addon version, the client, the text and the NPC. `clip` is the line being reported, or nil
 --- for the window on screen. The bare address in the popup under a Spoken too old to say more.
-function ReportButton:ShowLink(target, language, clip)
-    local url = self:Link(target, language)
+---
+--- Filed under the voice language the player chose, not the language the clip played in. A
+--- line missing from a German pack plays the English fallback, and its report ("no German")
+--- belongs beside the German line: filed under the clip's language, it reached the English page.
+function ReportButton:ShowLink(target, clip)
+    local url = self:Link(target, Language:GetVoiceLanguage())
     if not (Spoken and Spoken.ShowReport) then
         ShowCopy(url)
         return

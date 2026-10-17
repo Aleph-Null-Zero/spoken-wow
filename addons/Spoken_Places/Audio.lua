@@ -452,9 +452,10 @@ local ACTIONS = {
 			if not clip then
 				return
 			end
-			-- Filed under the language the clip was narrated in, which for an entry the
-			-- active pack lacks is the English pack's, whatever is being read.
-			SpokenZones:ShowReport(clip.mapID, clip.areaKey, clip.pack and clip.pack.language)
+			-- Filed under the voice language, not the pack the clip came from: an entry the
+			-- active pack lacks plays the English fallback, and "no German" belongs beside
+			-- the German entry.
+			SpokenZones:ShowReport(clip.mapID, clip.areaKey, SpokenZones:GetVoiceLanguage())
 		end,
 	}
 }

@@ -1113,11 +1113,7 @@ local function PartButtons(moment)
     report:SetScript("OnClick", function(self)
         local id = self.questID
         local target = id and VO.ReportButton and VO.ReportButton:TargetForQuest(id, EVENTS[moment])
-        -- The language the part plays in, as the quest log's Report passes it: a fallback line is
-        -- an English take under another language.
-        local sound = { event = EVENTS[moment], questID = id }
-        local language = VO.DataModules:PrepareSound(sound) and sound.language or nil
-        if target then VO.ReportButton:ShowLink(target, language) end
+        if target then VO.ReportButton:ShowLink(target) end
     end)
     report:HookScript("OnEnter", function(self) C.ReportTooltip(self, L.OPT_REPORT_PROBLEM, L.OPT_REPORT_QUEST_TIP) end)
     report:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)

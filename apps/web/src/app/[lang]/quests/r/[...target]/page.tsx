@@ -84,7 +84,7 @@ export default async function ReportPage({
           You came here from the game. Tell us what sounded wrong and someone will listen to it.
         </p>
 
-        {line ? <ListenFirst className="mb-4" /> : null}
+        {line && version !== null ? <ListenFirst className="mb-4" /> : null}
 
         {line ? (
           <section className="mb-6 rounded border p-4">
@@ -93,14 +93,19 @@ export default async function ReportPage({
               {line.npcName} · {line.voice}
             </p>
             <p className="mt-2 text-sm whitespace-pre-wrap">{line.text}</p>
-            <audio
-              controls
-              className="mt-3 w-full"
-              src={withLang(
-                lang,
-                `/api/quests/audio/${audioRelPath(line)}${version === null ? "" : `?v=${version}`}`,
-              )}
-            />
+            {/* No live take is the line a player heard in the fallback language and reported as
+                missing in this one: the audio route has nothing to serve, so say so. */}
+            {version === null ? (
+              <p className="text-muted-foreground mt-3 text-sm">
+                This line has no recording in this language yet.
+              </p>
+            ) : (
+              <audio
+                controls
+                className="mt-3 w-full"
+                src={withLang(lang, `/api/quests/audio/${audioRelPath(line)}?v=${version}`)}
+              />
+            )}
           </section>
         ) : null}
 

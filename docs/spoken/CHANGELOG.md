@@ -9,6 +9,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   place. Where the packs hold only another of these, the NPC used to read that one. Now it reads
   nothing and offers Contribute, so the line you saw can be added.
   *([rusty-key](https://github.com/rusty-key))*
+- **Report files a line under the voice language you chose.** A line missing from your language
+  plays in English instead, and reporting it used to land on the English page, where nobody
+  looking after your language would see it. It now goes to your language's page.
+  *([rusty-key](https://github.com/rusty-key))*
 
 ## 3.5.0 — 2026-10-17
 

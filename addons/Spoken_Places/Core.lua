@@ -329,8 +329,8 @@ function SpokenZones:SiteURL()
 	return _G.Spoken and _G.Spoken.SITE_URL
 end
 
--- `language` names the narration being reported, for a report made from the player about a
--- clip; the lore window's report is about the text on screen and passes none.
+-- `language` is the voice language, for a report made from the player about a clip; the lore
+-- window's report is about the text on screen and passes none.
 function SpokenZones:ReportURL(mapID, areaKey, language)
 	if not mapID or not self:SiteURL() then
 		return nil

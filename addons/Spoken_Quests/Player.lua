@@ -207,9 +207,7 @@ local REPORT = {
         local described = target and clip or nil
         target = target or ReportButton:CurrentTarget()
         if target then
-            -- The language the clip was spoken in, which PrepareSound recorded: a fallback line
-            -- is an English take even under a German selection, and its report is about that.
-            ReportButton:ShowLink(target, clip.language, described)
+            ReportButton:ShowLink(target, described)
         else
             StaticPopup_Show("VOICEOVER_ERROR", L.OPT_REPORT_NO_LINE)
         end

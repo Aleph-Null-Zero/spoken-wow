@@ -155,14 +155,12 @@ local function OnLeave()
     end
 end
 
---- Report what DialogueUI's window shows, in the language its line would be heard in.
+--- Report what DialogueUI's window shows.
 function ContributeButton:ReportFromDialogueUI()
     local target = ReportButton:CurrentTarget()
-    if not target then
-        return
+    if target then
+        ReportButton:ShowLink(target)
     end
-    local ok, line = pcall(Addon.GetVisibleLine, Addon, Utils:DialogueUIPage())
-    ReportButton:ShowLink(target, ok and line and line.language or nil)
 end
 
 --- The game's tooltip is a child of UIParent, which DialogueUI hides, so its window gets its

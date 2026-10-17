@@ -38,9 +38,9 @@ local function ReadingPage(key, first)
 	local head = Spoken.GetCurrent and Spoken:GetCurrent()
 	if key and head and head.pageId and SpokenBooks:IsQueued(head.pageId)
 		and SpokenBooks:PlaceOf(head.pageId) == key then
-		return head.pageId, head.language
+		return head.pageId
 	end
-	return first, nil
+	return first
 end
 
 local function ReportsHidden()
@@ -96,8 +96,8 @@ function Book:Row()
 		row:RefreshTip(play)
 	end)
 	report:SetScript("OnClick", function()
-		local pageId, language = ReadingPage(OpenBook())
-		if pageId then SpokenBooks:ShowReport(pageId, language) end
+		local pageId = ReadingPage(OpenBook())
+		if pageId then SpokenBooks:ShowReport(pageId) end
 	end)
 	row:SetTip(report, function(tooltip)
 		tooltip:SetText(L.REPORT_PROBLEM)

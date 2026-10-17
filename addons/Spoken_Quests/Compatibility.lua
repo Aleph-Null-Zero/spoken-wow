@@ -845,12 +845,8 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
                 -- of this quest.
                 report:SetScript("OnClick", function(button)
                     local target = ReportButton:TargetForQuest(button.questID, Enums.SoundEvent.QuestAccept)
-                    -- The language the line plays in, which PrepareSound records, as the player's
-                    -- Report passes it: a fallback line is an English take under another language.
-                    local sound = { event = Enums.SoundEvent.QuestAccept, questID = button.questID }
-                    local language = DataModules:PrepareSound(sound) and sound.language or nil
                     local clip = { fromLog = true, questID = button.questID, title = button.title }
-                    if target then ReportButton:ShowLink(target, language, clip) end
+                    if target then ReportButton:ShowLink(target, clip) end
                 end)
                 report:HookScript("OnEnter", function(button)
                     GameTooltip:SetOwner(button, "ANCHOR_LEFT")
