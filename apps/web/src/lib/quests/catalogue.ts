@@ -29,9 +29,9 @@ import { memoByLang } from "@/lib/memo";
 import { isSex } from "@/lib/npc/npc";
 import { splitBody } from "@/lib/npc/store";
 import { nameStamp, versionStamp } from "@/lib/stamp";
-import type { Corpus, CorpusLine } from "@/lib/corpus";
+import { npcKey, type Corpus, type CorpusLine } from "@/lib/corpus";
 import { BASE_LANG, type Lang } from "@/lib/lang";
-import { momentSql, variantFileName, variantLineId } from "@/lib/contributions/naming";
+import { baseLineId, momentOf, momentSql, variantFileName, variantLineId } from "@/lib/contributions/naming";
 import { newVoiceName, type Roster } from "@/lib/voices/roster";
 import { loadRoster, ROSTER_STAMP } from "@/lib/voices/roster-store";
 
@@ -262,13 +262,13 @@ async function build(lang: Lang): Promise<CorpusLine[]> {
 
   if (rows.length === 0) throw new CorpusEmpty(lang);
 
-  return voiced(rows, await loadRoster()).map(({ writtenVoice: _written, npcSex, npcBody, ...row }) => ({
+  return withSoleSpeakers(voiced(rows, await loadRoster()).map(({ writtenVoice: _written, npcSex, npcBody, ...row }) => ({
     ...row,
     ...(isSex(npcSex) && npcBody ? { npcSex, npcBody } : {}),
     npcType: row.npcType as CorpusLine["npcType"],
     source: row.source as CorpusLine["source"],
     playerGender: row.playerGender as CorpusLine["playerGender"],
-  }));
+  })));
 }
 
 /**
@@ -352,7 +352,7 @@ async function buildTranslated(lang: Lang): Promise<CorpusLine[]> {
 
   if (rows.length === 0) throw new CorpusEmpty();
 
-  return voiced(rows, await loadRoster()).map((raw) => {
+  return withSoleSpeakers(voiced(rows, await loadRoster()).map((raw) => {
     const { textMissing, titleMissing, nameMissing, native, englishTitle, englishName, writtenVoice: _written, npcSex, npcBody, ...row } = raw;
     return {
       ...row,
@@ -366,7 +366,25 @@ async function buildTranslated(lang: Lang): Promise<CorpusLine[]> {
         ? { missing: { text: textMissing, questTitle: titleMissing, npcName: nameMissing } }
         : {}),
     };
+  }));
+}
+
+/** Marks every row of a moment one NPC alone speaks, in place: the rows are this build's own. */
+function withSoleSpeakers(lines: CorpusLine[]): CorpusLine[] {
+  // moment -> its one NPC, or null once a second speaks it.
+  const sole = new Map<string, string | null>();
+  const moments = lines.map((line) => {
+    const moment = momentOf(baseLineId(line.lineId));
+    const npc = npcKey(line);
+    const seen = sole.get(moment);
+    if (seen === undefined) sole.set(moment, npc);
+    else if (seen !== npc) sole.set(moment, null);
+    return moment;
   });
+  lines.forEach((line, i) => {
+    if (sole.get(moments[i]) !== null) line.soleSpeaker = true;
+  });
+  return lines;
 }
 
 // One memo per language (lib/memo.ts). A single slot would be rebuilt on every request that

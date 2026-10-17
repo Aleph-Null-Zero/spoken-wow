@@ -21,6 +21,8 @@ import { Roster, type RosterData } from "@/lib/voices/roster";
 type Props = {
   /** The line gaining a speaker, or null when the dialog is closed. */
   line: ResultLine | null;
+  /** Whether the NPC found takes the place of the line's speaker rather than joining it. */
+  replace?: boolean;
   onSaved: () => void;
   onCancel: () => void;
 };
@@ -59,10 +61,11 @@ function Choice({
 
 /**
  * Adding an NPC as one more speaker of a line: a quest two givers offer, a greeting several
- * guards share. The NPC is looked up first; one already answered speaks in its own voice, and
- * one nobody has answered is answered here, as /npcs would, since a speaker needs a voice.
+ * guards share. Or, with `replace`, putting it in the place of a speaker the game data got
+ * wrong. The NPC is looked up first; one already answered speaks in its own voice, and one
+ * nobody has answered is answered here, as /npcs would, since a speaker needs a voice.
  */
-export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
+export default function AddSpeakerDialog({ line, replace = false, onSaved, onCancel }: Props) {
   const lang = useLang();
   const [npcType, setNpcType] = useState<NpcRowKind>("creature");
   const [npcId, setNpcId] = useState("");
@@ -142,7 +145,8 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
     try {
       // An NPC nobody has answered is answered first, as /npcs would: a speaker needs a voice.
       if (!answered && !(await post("/api/npcs", { ...npc, npcKind: npcType, npcName, race, gender, flavor }))) return;
-      if (await post("/api/quests/lines/speakers", { ...npc, lineId: line.lineId, npcType })) onSaved();
+      const replaces = replace ? { replaces: { npcType: line.npcType, npcId: line.npcId } } : {};
+      if (await post("/api/quests/lines/speakers", { ...npc, lineId: line.lineId, npcType, ...replaces })) onSaved();
     } catch (problem) {
       setError(String(problem));
     } finally {
@@ -154,11 +158,11 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Add a speaker</DialogTitle>
+          <DialogTitle>{replace ? "Replace the speaker" : "Add a speaker"}</DialogTitle>
           <DialogDescription>
-            Another NPC who says this line. It is spoken in that NPC&rsquo;s own voice: one whose voice
-            differs gets a line of its own here, with no audio until it is generated. Kept across
-            imports until the game data lists the NPC too.
+            {replace
+              ? `The NPC who really says this line, in place of ${line.npcName}. The line is spoken in the new NPC’s voice and shows as missing until it is generated again; the addon plays the old audio until then. ${line.npcName} stays off the line across imports.`
+              : "Another NPC who says this line. It is spoken in that NPC’s own voice: one whose voice differs gets a line of its own here, with no audio until it is generated. Kept across imports until the game data lists the NPC too."}
           </DialogDescription>
         </DialogHeader>
 
@@ -270,7 +274,7 @@ export default function AddSpeakerDialog({ line, onSaved, onCancel }: Props) {
             Cancel
           </Button>
           <Button disabled={busy || !found || (!answered && !answerReady)} onClick={() => void add()}>
-            Add speaker
+            {replace ? "Replace speaker" : "Add speaker"}
           </Button>
         </DialogFooter>
       </DialogContent>

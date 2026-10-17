@@ -193,6 +193,12 @@ def split_contributed(lines, schema_version, known_contributions, contributed_sp
     return extracted, skipped
 
 
+def removed_here(row, removed_speakers):
+    """Whether a row of the dump names a speaker an admin removed from its moment (apps/web
+    migration 0077). `removed_speakers` holds (moment, npcType, npcId)."""
+    return (moment_of(row["lineId"]), row["npcType"], row["npcId"]) in removed_speakers
+
+
 def _progress(message):
     """One line per step, as it happens: the import is a single transaction, so nothing it
     writes is visible from outside until the end, and this is the only way to see it move."""
@@ -523,6 +529,17 @@ def import_corpus_data(corpus, verbose=True):
                 (LANG,),
             )
             added_speakers = {tuple(r) for r in cur.fetchall()}
+            # Only rows this database lacks: a fresh extract carries none, and a removal is
+            # taken back by adding the speaker again, never by an import.
+            if corpus.get("removedSpeakers"):
+                _bulk(cur, "quest_line_speaker_removed", [
+                          (r["moment"], r["npcType"], r["npcId"], r["removedBy"])
+                          for r in corpus["removedSpeakers"]],
+                      """insert into "quest_line_speaker_removed"
+                           ("moment", "npcType", "npcId", "removedBy")
+                         values %s on conflict do nothing""")
+            cur.execute("""select "moment", "npcType", "npcId" from "quest_line_speaker_removed" """)
+            removed_speakers = {tuple(r) for r in cur.fetchall()}
             lines, contributed = split_contributed(
                 corpus["lines"], corpus["schemaVersion"], known_contributions,
                 contributed_speakers, added_speakers,
@@ -647,12 +664,17 @@ def import_corpus_data(corpus, verbose=True):
             # A line split here is spoken by the dump's speakers on both of its sides. The
             # sides' `ord`s follow the dump's own, which are only ever as many as its rows.
             # A row added by hand keeps the line it was added to, split side or not.
-            speaker_rows, added_rows = [], []
+            # A speaker an admin removed (migration 0077) is left out here and nowhere earlier:
+            # its row may be the only one carrying the line's text into quest_line.
+            speaker_rows, added_rows, removed = [], [], 0
             for ord_, row in enumerate(lines):
                 variant = variants[row["lineId"]].index(_line_key(row))
                 speaker = tuple(row[field] for field in SPEAKER_FIELDS)
                 if row.get("addedBy") is not None:
                     added_rows.append((row["lineId"], variant, LANG) + speaker + (row["addedBy"],))
+                    continue
+                if removed_here(row, removed_speakers):
+                    removed += 1
                     continue
                 if (row["lineId"], variant) not in split:
                     speaker_rows.append((row["lineId"], variant, LANG, ord_) + speaker)
@@ -762,7 +784,8 @@ def import_corpus_data(corpus, verbose=True):
             f"speakers overtaken by the dump"
             + ("" if marked else " (none: the file predates marking them)")
         )
-        print(f"{superseded_added} speakers added by hand overtaken by the dump")
+        print(f"{superseded_added} speakers added by hand overtaken by the dump, "
+              f"{removed} of the dump's speakers left out as removed by hand")
         print(
             f"defects carried over unchanged: {collisions} lineIds naming two different "
             f"lines, {duplicates} duplicate rows"
@@ -864,6 +887,12 @@ def export_corpus(path, check=False, verbose=True):
             npc_rows = cur.fetchall()
 
             body_rows = export_npc_bodies(cur)
+
+            cur.execute(
+                """select "moment", "npcType", "npcId", "removedBy"
+                     from "quest_line_speaker_removed" order by 1, 2, 3"""
+            )
+            removed_rows = cur.fetchall()
     finally:
         conn.close()
 
@@ -918,6 +947,12 @@ def export_corpus(path, check=False, verbose=True):
         ],
         "npcBodies": body_rows,
     }
+    # Only once there is one, so the files exported before the table existed stay identical.
+    if removed_rows:
+        corpus["removedSpeakers"] = [
+            {"moment": moment, "npcType": kind, "npcId": npc_id, "removedBy": by}
+            for moment, kind, npc_id, by in removed_rows
+        ]
 
     if check:
         existing = load_corpus(path)

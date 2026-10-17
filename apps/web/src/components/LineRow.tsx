@@ -16,10 +16,11 @@ import {
   MessageSquareQuoteIcon,
   PencilIcon,
   PlayIcon,
+  RepeatIcon,
   UserPlusIcon,
   XIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import ReportsBadge from "./ReportsBadge";
 import TakeSelector from "./TakeSelector";
@@ -145,8 +146,9 @@ type Props = {
   onRename: ((line: ResultLine, what: "npc" | "quest") => void) | null;
   /** Open the ignore dialog, or null for anyone not allowed to make that decision. */
   onIgnore: ((line: ResultLine) => void) | null;
-  /** Add another NPC who says this line, and take back one added that way. Null but for an admin. */
+  /** Add another NPC who says this line, put one in this speaker's place, or take it off. Null but for an admin. */
   onAddSpeaker: ((line: ResultLine) => void) | null;
+  onReplaceSpeaker: ((line: ResultLine) => void) | null;
   onRemoveSpeaker: ((line: ResultLine) => void) | null;
   onRegenerate: (line: ResultLine) => void;
   /** Open the report dialog. Everyone gets this, signed in or not. */
@@ -189,6 +191,20 @@ function WowheadLink({ href }: { href: string }) {
   );
 }
 
+function SpeakerAction({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      className="hover:text-foreground ml-1 inline-flex align-middle"
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function LineRow({
   line,
   current,
@@ -209,6 +225,7 @@ export default function LineRow({
   onRename,
   onIgnore,
   onAddSpeaker,
+  onReplaceSpeaker,
   onRemoveSpeaker,
   onRegenerate,
   onReport,
@@ -282,31 +299,32 @@ export default function LineRow({
               </>
             )}
             {onAddSpeaker && (
-              <button
-                type="button"
-                title="Add another NPC who says this line"
-                aria-label={`Add another NPC who says ${line.npcName}'s line`}
-                onClick={() => onAddSpeaker(line)}
-                className="hover:text-foreground ml-1 inline-flex align-middle"
-              >
+              <SpeakerAction label={`Add another NPC who says ${line.npcName}'s line`} onClick={() => onAddSpeaker(line)}>
                 <UserPlusIcon className="size-3" />
-              </button>
+              </SpeakerAction>
+            )}
+            {/* A contribution's speaker goes with the contribution, on /contributions. */}
+            {!line.contributionId && (
+              <>
+                {onReplaceSpeaker && (
+                  <SpeakerAction
+                    label={`Put another NPC in ${line.npcName}'s place on this line`}
+                    onClick={() => onReplaceSpeaker(line)}
+                  >
+                    <RepeatIcon className="size-3" />
+                  </SpeakerAction>
+                )}
+                {onRemoveSpeaker && !line.soleSpeaker && (
+                  <SpeakerAction label={`Take ${line.npcName} off this line`} onClick={() => onRemoveSpeaker(line)}>
+                    <XIcon className="size-3" />
+                  </SpeakerAction>
+                )}
+              </>
             )}
           </span>
           {line.added && (
             <span className="text-muted-foreground block text-xs" title="Added by hand, not from the game data">
               added
-              {onRemoveSpeaker && (
-                <button
-                  type="button"
-                  title={`Take ${line.npcName} back off this line`}
-                  aria-label={`Take ${line.npcName} back off this line`}
-                  onClick={() => onRemoveSpeaker(line)}
-                  className="hover:text-foreground ml-1 inline-flex align-middle"
-                >
-                  <XIcon className="size-3" />
-                </button>
-              )}
             </span>
           )}
         </td>
