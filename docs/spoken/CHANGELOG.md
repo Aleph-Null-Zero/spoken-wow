@@ -2,6 +2,14 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## Unreleased
+
+- **An NPC whose words change with who asks no longer reads you the wrong line.** A trainer
+  greets someone of its profession differently, and a barker sends each faction to its own
+  place. Where the packs hold only another of these, the NPC used to read that one. Now it reads
+  nothing and offers Contribute, so the line you saw can be added.
+  *([rusty-key](https://github.com/rusty-key))*
+
 ## 3.5.0 — 2026-10-17
 
 - **Readables finds and reads pages only a language pack has.** A page that exists in your client's

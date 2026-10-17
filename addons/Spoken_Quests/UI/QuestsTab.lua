@@ -934,10 +934,6 @@ local function Sex()
     return UnitSex and UnitSex("player") or 2
 end
 
-local function Trim(text)
-    return (text:gsub("^%s+", ""):gsub("%s+$", ""))
-end
-
 local function Plain(text)
     return (text:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0"))
 end
@@ -945,16 +941,7 @@ end
 --- A quest's words for this character, as the client fills them: the name, class and race,
 --- the word for its sex out of "$G male:female;", and $B a line break.
 function QuestsTab:Fill(text)
-    local name = UnitName and UnitName("player") or ""
-    local class = UnitClass and UnitClass("player") or ""
-    local race = UnitRace and UnitRace("player") or ""
-    local female = Sex() == 3
-    text = text:gsub("%$[Gg]([^:;]*):([^;]*);", function(male, her) return Trim(female and her or male) end)
-    text = text:gsub("%$[Bb]", "\n")
-    text = text:gsub("%$[Nn]", function() return name end)
-    text = text:gsub("%$[Cc]", function() return class end)
-    text = text:gsub("%$[Rr]", function() return race end)
-    return text
+    return VO.Utils:FillPlayerTokens(text)
 end
 
 -- Words the client showed, made fit for another character: where the English names the player,
