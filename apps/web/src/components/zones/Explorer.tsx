@@ -2,6 +2,7 @@
 
 import { nameSubject, TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
 import { useCan } from "@/components/useCan";
+import { useHistoryMode } from "@/components/useHistoryMode";
 import { useLang } from "@/components/LangProvider";
 import { BASE_LANG, withLang } from "@/lib/lang";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -124,7 +125,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   // URL
   //----------------------------------------------------------------------------
 
-  // history.replaceState, not router.replace, and the current path rather than "/".
+  // The native history calls, not the router, and the current path rather than "/".
   //
   // Both halves of that were a page load per keystroke. The bare path is a redirect
   // route -- src/app/page.tsx sends it to /enUS -- so "/?q=..." cost a round trip, a
@@ -135,16 +136,21 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   // Nothing on this screen needs the server for a filter change: the rows come from
   // /api/search below, and Next re-renders useSearchParams() from a native history
   // call, so `filters` still rebuilds from the URL and the URL still carries the view.
-  const replaceQuery = useCallback(
-    (search: URLSearchParams) => {
+  const historyMode = useHistoryMode();
+
+  /** `typed` for the search box's own writes; see useHistoryMode. */
+  const writeQuery = useCallback(
+    (search: URLSearchParams, typed = false) => {
       const query = search.toString();
-      window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
+      const url = query ? `${pathname}?${query}` : pathname;
+      if (historyMode(typed) === "push") window.history.pushState(null, "", url);
+      else window.history.replaceState(null, "", url);
     },
-    [pathname],
+    [historyMode, pathname],
   );
 
   const updateUrl = useCallback(
-    (next: Record<string, string | number | undefined>) => {
+    (next: Record<string, string | number | undefined>, typed = false) => {
       const merged = new URLSearchParams(params.toString());
       for (const [key, value] of Object.entries(next)) {
         if (value === undefined || value === "" || value === 0) merged.delete(key);
@@ -153,9 +159,9 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
       // Any change other than paging returns to page 1: staying on page 7 of a result
       // set that just became three pages long shows nothing and looks like a bug.
       if (!("page" in next)) merged.delete("page");
-      replaceQuery(merged);
+      writeQuery(merged, typed);
     },
-    [params, replaceQuery],
+    [params, writeQuery],
   );
 
   // Held in a ref so a filter change mid-word does not restart the keystroke timer.
@@ -164,7 +170,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
 
   const commitQuery = useCallback((value: string) => {
     pending.current = echo.write(pending.current, value);
-    updateUrlRef.current({ q: value });
+    updateUrlRef.current({ q: value }, true);
   }, []);
 
   // A debounce, not a throttle: the timer is cleared and restarted by every keystroke,
@@ -191,9 +197,9 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   const updateFilters = useCallback(
     (next: Partial<LineFilters>) => {
       const merged = { ...filters, ...next };
-      replaceQuery(filterParams(merged));
+      writeQuery(filterParams(merged));
     },
-    [filters, replaceQuery],
+    [filters, writeQuery],
   );
 
   const filtersHref = useCallback(
@@ -587,7 +593,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
           onQueryChange={setQuery}
           onQuerySubmit={submitQuery}
           onChange={updateFilters}
-          onClearAll={() => replaceQuery(new URLSearchParams())}
+          onClearAll={() => writeQuery(new URLSearchParams())}
         />
 
         {showRecordings && <RecordingDropZone source="zones" onUploaded={refetch} />}

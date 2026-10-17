@@ -43,6 +43,7 @@ import {
 import { estimate as estimateBatch, LIST_RATE } from "@/lib/generation/billing";
 import { useClearDirty } from "@/lib/generation/use-clear-dirty";
 import { useCan } from "@/components/useCan";
+import { useHistoryMode } from "@/components/useHistoryMode";
 import { canConfigureGeneration, isAdmin } from "@/lib/permissions";
 import { isVoiceable } from "@/lib/text-gate";
 import { isModelVoice } from "@/lib/voices/voices";
@@ -301,10 +302,13 @@ export default function Explorer({ facets }: { facets: Facets }) {
     [params, pathname],
   );
 
+  const historyMode = useHistoryMode();
+
+  /** `typed` for the search box's own writes; see useHistoryMode. */
   const updateUrl = useCallback(
-    (next: { page?: number } & Record<string, string | number | undefined>) =>
-      router.replace(hrefFor(next), { scroll: false }),
-    [hrefFor, router],
+    (next: { page?: number } & Record<string, string | number | undefined>, typed = false) =>
+      router[historyMode(typed)](hrefFor(next), { scroll: false }),
+    [historyMode, hrefFor, router],
   );
 
   const updateFilters = useCallback(
@@ -354,8 +358,8 @@ export default function Explorer({ facets }: { facets: Facets }) {
   const clearAll = useCallback(() => {
     setQuery("");
     pending.current = write(pending.current, "");
-    router.replace(pathname, { scroll: false });
-  }, [pathname, router]);
+    router[historyMode(false)](pathname, { scroll: false });
+  }, [historyMode, pathname, router]);
 
   // Held in a ref so the debounce below restarts on keystrokes only. `updateUrl` changes
   // identity on every param change, and letting that reset the timer would let a filter
@@ -369,7 +373,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
     if (query === target(pending.current, urlQuery)) return;
     const timer = setTimeout(() => {
       pending.current = write(pending.current, query);
-      updateUrlRef.current({ q: query });
+      updateUrlRef.current({ q: query }, true);
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [query, urlQuery]);
