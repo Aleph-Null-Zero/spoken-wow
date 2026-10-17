@@ -86,8 +86,9 @@ a language pins it on every client.
   pack first, then the fallback language's packs, unless If a Voice Is Missing is Stay Silent.
 - `/spp lang <code> force` and the Developer page's Offer Unfinished Translations show an
   unfinished language. Every login prints a warning while the override is on.
-- Italian is in the list (`client = false`: no client runs in it) and has no data yet. The
-  list in `Language.lua` must equal `pipelines/lib/locales.mjs`; `validate.mjs` checks it.
+- Italian and Vietnamese are in the list (`client = false`: no client runs in them) and have no
+  data yet. Vietnamese is offered only where a font draws its accents (`script = "vietnamese"`).
+  The list in `Language.lua` must equal `pipelines/lib/locales.mjs`; `validate.mjs` checks it.
 
 ## How a story is read
 

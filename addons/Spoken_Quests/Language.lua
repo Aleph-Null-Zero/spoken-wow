@@ -39,9 +39,10 @@ Language = {}
 -- the two addons are installed side by side and a player who sets Portuguese in one and
 -- finds no such option in the other has found a bug.
 --
--- `client = false` is a language no game client runs in -- Italian, which a community
--- translates. A pack may declare it and a player may choose it; "auto" never lands on it,
--- and nothing that reads the client's own text (gossip tables, contributions) is ever in it.
+-- `client = false` is a language no game client runs in -- Italian and Vietnamese, which a
+-- community translates. A pack may declare it and a player may choose it; "auto" never lands
+-- on it, and nothing that reads the client's own text (gossip tables, contributions) is ever
+-- in it.
 Language.LOCALES = {
     { code = "enUS", name = "English", native = "English" },
     { code = "deDE", name = "German", native = "Deutsch" },
@@ -54,6 +55,7 @@ Language.LOCALES = {
     { code = "koKR", name = "Korean", native = "한국어" },
     { code = "zhCN", name = "Chinese (S)", native = "简体中文" },
     { code = "zhTW", name = "Chinese (T)", native = "繁體中文" },
+    { code = "viVN", name = "Vietnamese", native = "Tiếng Việt", client = false },
 }
 
 -- What an undeclared pack is, what a client in an unknown locale gets, and what the

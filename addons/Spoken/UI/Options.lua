@@ -162,6 +162,8 @@ LANGUAGES = {
     { code = "koKR", native = "한국어", english = "Korean", script = "korean" },
     { code = "zhCN", native = "简体中文", english = "Chinese (Simplified)", script = "han" },
     { code = "zhTW", native = "繁體中文", english = "Chinese (Traditional)", script = "han" },
+    -- No client runs in it either, and its stacked accents are glyphs a Latin font can lack.
+    { code = "viVN", native = "Tiếng Việt", english = "Vietnamese", script = "vietnamese" },
 }
 
 -- Whether the settings' font draws `text`. A glyph the font lacks draws as nothing or as a box,

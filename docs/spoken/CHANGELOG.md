@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Vietnamese is a voice language.** No client runs in it, so pick it under Voice Language;
+  Auto never chooses it. Its voice packs come later, and until then Fallback Language decides
+  what plays. Its name shows in English where your client's font cannot draw its accents.
+  *([rusty-key](https://github.com/rusty-key))*
 - **An NPC whose words change with who asks no longer reads you the wrong line.** A trainer
   greets someone of its profession differently, and a barker sends each faction to its own
   place. Where the packs hold only another of these, the NPC used to read that one. Now it reads
