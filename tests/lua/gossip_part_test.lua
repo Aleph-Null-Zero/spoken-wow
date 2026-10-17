@@ -22,7 +22,7 @@ local function Boot()
     world.questID = 0; stub.ShowPanel(nil); world.gossipText = nil; world.greetingText = nil
     local VO, env = stub.LoadQuests(QUESTS, SPOKEN)
     VO.Addon:OnInitialize()
-    -- Once per NPC is the default, and the profile outlives a scenario: each starts as a stranger.
+    -- Once per Greeting is the default, and the profile outlives a scenario: each starts as a stranger.
     VO.Addon.db.char.hasSeenGossipForNPC = {}
     VO.DataModules:Register("TestPack", {
         SoundLengthLookupByFileName = lookup,

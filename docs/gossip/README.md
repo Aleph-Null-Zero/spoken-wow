@@ -63,13 +63,16 @@ Spoken's own page. Gossip adds no saved variable.
   it did before Gossip had a page. Read Greetings waits on it, and says so. So does NPC Voice
   Before Reading, on the same page: the NPC's own greeting plays first, for quest windows and
   gossip windows.
-- On Gossip's page, Read Greetings: Every Time, Once for Quest Givers, Once per NPC (the
-  default) or Never. Once for Quest Givers holds back a repeat only where the NPC has quests. At
-  Never nothing reads itself and the NPC windows show a Listen button.
+- On Gossip's page, Read Greetings: Every Time, Once for Quest Givers, Once per Greeting (the
+  default, saved as `OncePerNPC`) or Never. The once-per settings remember each text an NPC greets
+  with, so an NPC with several greetings reads each new one once. Once for Quest Givers holds
+  back a repeat only where the NPC has quests. At Never nothing reads itself and the NPC windows
+  show a Listen button.
 - Original Thrall Speech, and Forget Greetings Heard, which makes every
   NPC greet this character again. That matters only for the two once-per settings. Heard
-  greetings are kept per character in `hasSeenGossipForNPC`, keyed by the NPC's GUID, and marked
-  when the line starts playing.
+  greetings are kept per character in `hasSeenGossipForNPC`: under each NPC's GUID, a short hash
+  of every text heard from it, marked when the line starts playing. A GUID marked `true` dates
+  from when only the NPC was kept, and counts as unheard.
 - Stop When Window Closes is on the Quests page and covers the quest, gossip and greeting windows.
   Closing the quest frame also stops a greeting, but never a quest's own line.
 

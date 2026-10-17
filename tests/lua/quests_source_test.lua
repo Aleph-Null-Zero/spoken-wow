@@ -234,7 +234,7 @@ Open(VO, "GOSSIP_SHOW")
 Expect("an NPC no pack voices keeps its greeting", world.cvars.Sound_EnableDialog, "1")
 
 VO, env, Spoken = MuteBoot()
-VO.Addon.db.char.hasSeenGossipForNPC[world.npcGUID] = true
+VO.Addon:MarkGreetingHeard(world.npcGUID, "Greetings, traveller.")
 stub.ShowGossip("Greetings, traveller.")
 Open(VO, "GOSSIP_SHOW")
 Expect("gossip the frequency rule will skip keeps its greeting", world.cvars.Sound_EnableDialog, "1")

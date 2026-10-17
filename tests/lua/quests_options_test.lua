@@ -138,13 +138,13 @@ local entries = stub.OpenDropdown(greetings)
 local offered = {}
 for _, entry in ipairs(entries) do table.insert(offered, entry.text) end
 Expect("...offering every choice at once", table.concat(offered, "|"),
-    "Every Time|Once for Quest Givers|Once per NPC|Never")
+    "Every Time|Once for Quest Givers|Once per Greeting|Never")
 Expect("...with the current one ticked", entries[1].checked, true)
 
-Expect("picking one is possible", stub.PickDropdown(greetings, "Once per NPC"), true)
+Expect("picking one is possible", stub.PickDropdown(greetings, "Once per Greeting"), true)
 Expect("...and stores the number the addon reads", db.Audio.GossipFrequency,
     VO.Enums.GossipFrequency.OncePerNPC)
-Expect("...and relabels", greetings.dropdownText, "Once per NPC")
+Expect("...and relabels", greetings.dropdownText, "Once per Greeting")
 -- Picking again from a different value: what the control shows and what it compares have
 -- to be the same thing, or it can never find where in the list it is.
 Expect("picking a second time works too", stub.PickDropdown(greetings, "Never"), true)

@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Read Greetings reads each new greeting once, not each NPC.** Many NPCs greet you with one of
+  several lines, and Once per NPC kept every line but the first one silent. The setting is now
+  Once per Greeting: each line plays the first time you see it. Once for Quest Givers works the
+  same way. Greetings heard before this update play once more.
+  *([rusty-key](https://github.com/rusty-key))*
 - **Spoken Contributions has its own icon in the AddOns list**, a heart, rather than none, and its
   name is no longer greyed out. No Spoken addon colours its name or description there any more.
   *([Nucabe](https://github.com/Nucabe))*

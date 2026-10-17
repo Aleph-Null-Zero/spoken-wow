@@ -365,11 +365,12 @@ local defaults = {
         -- The frame, the minimap button, the sound channel's legacy music-channel
         -- workaround and the paused flag are the Spoken player's settings now.
         Audio = {
-            -- Once per NPC rather than once per quest NPC, which upstream defaulted to:
+            -- Once per greeting rather than once per quest NPC, which upstream defaulted to:
             -- that setting only silences a repeat where the NPC has a quest, so every
             -- innkeeper, vendor and flight master said the same line on every visit --
             -- the greeting a player hears most often is exactly the one it did not
-            -- remember. A profile that stored a choice of its own keeps it.
+            -- remember. The saved name OncePerNPC dates from when only the NPC was
+            -- remembered. A profile that stored a choice of its own keeps it.
             GossipFrequency = Enums.GossipFrequency.OncePerNPC,
             -- The sound channel and the muting of the client's own NPC dialogue used to
             -- live here. They describe how anything is played rather than what this addon
@@ -1128,13 +1129,44 @@ function Addon:QUEST_COMPLETE(_, manual)
     QueueRead(soundData, manual)
 end
 
+-- A greeting's text as a short key: the full text of every greeting heard would swell the saved
+-- variables. A sum kept below 2^31, so it stays exact in a double.
+local function TextKey(text)
+    local h = 5381
+    for i = 1, string.len(text) do
+        h = h * 33 + string.byte(text, i)
+        h = h - math.floor(h / 2147483647) * 2147483647
+    end
+    return format("%08x", h)
+end
+
+--- Whether this character has heard this NPC greet them with this text. An NPC that greets
+--- with several texts reads each of them once. A GUID that holds anything but a table was
+--- marked when only the NPC was remembered, and counts as unheard.
+function Addon:HasHeardGreeting(guid, text)
+    if not text then
+        return false
+    end
+    local heard = self.db.char.hasSeenGossipForNPC[guid or "unknown"]
+    return type(heard) == "table" and heard[TextKey(text)] == true
+end
+
+function Addon:MarkGreetingHeard(guid, text)
+    local seen = self.db.char.hasSeenGossipForNPC
+    local npcKey = guid or "unknown"
+    if type(seen[npcKey]) ~= "table" then
+        seen[npcKey] = {}
+    end
+    seen[npcKey][TextKey(text)] = true
+end
+
 ---@param followsOption boolean? the page was reached by picking one of the NPC's options
 function Addon:ShouldPlayGossip(guid, text, manual, followsOption)
     local npcKey = guid or "unknown"
 
     -- Asked for by name, so having heard it before does not stand in the way.
     if manual then
-        return true, npcKey
+        return true
     end
 
     if self:IsNever() then
@@ -1143,28 +1175,28 @@ function Addon:ShouldPlayGossip(guid, text, manual, followsOption)
     end
     -- The once-per settings hold back the greeting an NPC opens with, not the pages after it.
     if followsOption then
-        return true, npcKey
+        return true
     end
 
-    local gossipSeenForNPC = self.db.char.hasSeenGossipForNPC[npcKey]
+    local heard = self:HasHeardGreeting(guid, text)
 
     -- Asked again for the same NPC while its window stays open; the log says it once.
     if self.db.profile.Audio.GossipFrequency == Enums.GossipFrequency.OncePerQuestNPC then
         local numActiveQuests = GetNumGossipActiveQuests()
         local numAvailableQuests = GetNumGossipAvailableQuests()
         local npcHasQuests = (numActiveQuests > 0 or numAvailableQuests > 0)
-        if npcHasQuests and gossipSeenForNPC then
-            Debug:Note("gossip", npcKey .. ":quest-npc", "greeting of %s not read: an NPC with quests, heard before (NPC Greetings: once per quest NPC)", npcKey)
+        if npcHasQuests and heard then
+            Debug:Note("gossip", npcKey .. ":quest-npc", "greeting of %s not read: an NPC with quests, this greeting heard before (NPC Greetings: once for quest givers)", npcKey)
             return
         end
     elseif self.db.profile.Audio.GossipFrequency == Enums.GossipFrequency.OncePerNPC then
-        if gossipSeenForNPC then
-            Debug:Note("gossip", npcKey .. ":once", "greeting of %s not read: heard before (NPC Greetings: once per NPC)", npcKey)
+        if heard then
+            Debug:Note("gossip", npcKey .. ":once", "greeting of %s not read: this greeting heard before (NPC Greetings: once per greeting)", npcKey)
             return
         end
     end
 
-    return true, npcKey
+    return true
 end
 
 --- An NPC's own greeting starts the moment its dialog opens, and the line that replaces it
@@ -1220,7 +1252,9 @@ function Addon:ExpectedLine(event, textIsCurrent)
             return nil
         end
         local followsOption = event == "GOSSIP_SHOW" and gossipOptionPicked
-        if not self:ShouldPlayGossip(guid, nil, false, followsOption)
+        -- Whether the greeting was heard goes by its text, so the text on screen is the best
+        -- guess there is. A stale one costs only the NPC's own greeting being cut or not.
+        if not self:ShouldPlayGossip(guid, speech.text(), false, followsOption)
             or not DataModules:HasGossipFor(speaker) then
             return nil
         end
@@ -1259,8 +1293,7 @@ function Addon:QUEST_GREETING(event, manual)
         return
     end
 
-    local play, npcKey = self:ShouldPlayGossip(guid, greetingText, manual)
-    if not play then
+    if not self:ShouldPlayGossip(guid, greetingText, manual) then
         return
     end
 
@@ -1274,7 +1307,7 @@ function Addon:QUEST_GREETING(event, manual)
         unitIsObjectOrItem = Utils:IsNPCObjectOrItem(),
         addedCallback = GossipSoundDataAdded,
         startCallback = function()
-            self.db.char.hasSeenGossipForNPC[npcKey] = true
+            self:MarkGreetingHeard(guid, greetingText)
         end
     }
     Player:Enqueue(soundData, manual)
@@ -1319,8 +1352,7 @@ function Addon:GOSSIP_SHOW(event, manual)
         return
     end
 
-    local play, npcKey = self:ShouldPlayGossip(guid, gossipText, manual, gossipOptionPicked)
-    if not play then
+    if not self:ShouldPlayGossip(guid, gossipText, manual, gossipOptionPicked) then
         return
     end
 
@@ -1335,7 +1367,7 @@ function Addon:GOSSIP_SHOW(event, manual)
         unitIsObjectOrItem = Utils:IsNPCObjectOrItem(),
         addedCallback = GossipSoundDataAdded,
         startCallback = function()
-            self.db.char.hasSeenGossipForNPC[npcKey] = true
+            self:MarkGreetingHeard(guid, gossipText)
         end
     }
     Player:Enqueue(soundData, manual)
