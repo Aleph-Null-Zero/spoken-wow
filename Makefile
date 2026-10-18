@@ -241,7 +241,7 @@ audio-release: ## Publish the built sound packs as GitHub releases (needs gh; SE
 
 # The launcher's channel (scripts/launcher/): what dist/ holds, uploaded to R2 as changed files only.
 # Build first with the <section>-package-audio targets. Needs R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
-# R2_SECRET_ACCESS_KEY, R2_BUCKET and SPOKEN_PACKS_SIGNING_KEY.
+# R2_SECRET_ACCESS_KEY, R2_BUCKET and SPOKEN_PACKS_SIGNING_KEY, in the repo-root .env.
 launcher-publish-dry: ## Show what the launcher channel would get from dist/
 	@node scripts/launcher/cli.mjs publish --dry-run
 
