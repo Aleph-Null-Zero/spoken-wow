@@ -424,13 +424,14 @@ describe('zip limits', () => {
     await expect(scanZip(huge, OFFICIAL_LIMITS)).rejects.toThrow(/more than 6\.0 GB/)
   })
 
+  // 20,001 entries take 2-5 s on the Windows runner.
   it('counts entries', async () => {
     const dir = tmpDir()
     const file = path.join(dir, 'many.zip')
     fs.writeFileSync(file, rawZip(Array.from({ length: 20_001 }, (_, i) => ({ name: `SpokenCommunity_x/f${i}`, data: '' }))))
     await expect(scanZip(file, COMMUNITY_LIMITS)).rejects.toThrow(/more than 20,000 files/)
     expect((await scanZip(file, OFFICIAL_LIMITS)).entries).toBe(20_001)
-  })
+  }, 30_000)
 
   it('refuses a community pack above its limit before extracting anything', async () => {
     const e = await env()
