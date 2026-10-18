@@ -3,3 +3,4 @@ packages:
   - pipelines/zones
   - pipelines/books
   - packages/*
+  - scripts/launcher

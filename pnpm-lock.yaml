@@ -108,6 +108,12 @@ importers:
         specifier: ^8.13.1
         version: 8.23.0
 
+  scripts/launcher:
+    dependencies:
+      aws4fetch:
+        specifier: 1.0.20
+        version: 1.0.20
+
 packages:
 
   '@alloc/quick-lru@5.3.0':
@@ -1854,6 +1860,9 @@ packages:
   aws-ssl-profiles@1.1.2:
     resolution: {integrity: sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g==}
     engines: {node: '>= 6.0.0'}
+
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
@@ -5096,6 +5105,8 @@ snapshots:
   atomically@1.7.0: {}
 
   aws-ssl-profiles@1.1.2: {}
+
+  aws4fetch@1.0.20: {}
 
   balanced-match@4.0.4: {}
 
