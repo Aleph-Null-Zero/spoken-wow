@@ -449,7 +449,7 @@ describe('launcher updates per platform', () => {
 
 describe('the snapshot names the platform', () => {
   it('is the running one', () => {
-    const svc = new LauncherService({ dataPath: tmpDir(), appVersion: '0.1.0', send: () => undefined, autoPaths: [] })
+    const svc = new LauncherService({ dataPath: tmpDir(), appVersion: '0.1.0', packsBaseUrl: 'http://127.0.0.1:9/', send: () => undefined, autoPaths: [] })
     const expected = process.platform === 'win32' || process.platform === 'darwin' ? process.platform : 'linux'
     expect(svc.snapshot().platform).toBe(expected)
   })

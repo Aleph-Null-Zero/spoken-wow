@@ -146,6 +146,7 @@ export const S = {
     badge: { installed: 'Installed', update: 'Update Available', linked: 'Linked', ahead: 'Newer Than Release', unknown: 'Installed by Hand' },
     install: 'Install',
     update: 'Update',
+    withSpoken: (action: string) => `${action} Spoken and Pack`,
     confirmRemove: 'Remove this pack?',
     installAll: (_lang: string) => 'Install All',
     allInstalled: (_lang: string) => 'All Installed',

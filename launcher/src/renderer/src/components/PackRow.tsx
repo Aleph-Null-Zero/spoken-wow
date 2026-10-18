@@ -95,12 +95,12 @@ export function PackRow({ gameId, productId, writable, blockedReason, released, 
       <span className="row-buttons">
         {s === 'not-installed' && (
           <button type="button" className="btn btn-primary btn-sm" disabled={!!reason} onClick={install}>
-            {S.voices.install}
+            {status?.needsSpoken ? S.voices.withSpoken(S.voices.install) : S.voices.install}
           </button>
         )}
         {(s === 'update-available' || (s === 'unknown' && released)) && (
           <button type="button" className="btn btn-primary btn-sm" disabled={!!reason} onClick={install}>
-            {S.voices.update}
+            {status?.needsSpoken ? S.voices.withSpoken(S.voices.update) : S.voices.update}
           </button>
         )}
         {canRepair && (

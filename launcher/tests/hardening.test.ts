@@ -217,7 +217,7 @@ describe('the downloads folder', () => {
 
   it('the service rejects a bad downloads folder in plain words and keeps the old one', async () => {
     const e = await env()
-    const svc = new LauncherService({ dataPath: tmpDir(), appVersion: '0.1.0', send: () => undefined, autoPaths: [e.game.root] })
+    const svc = new LauncherService({ dataPath: tmpDir(), appVersion: '0.1.0', packsBaseUrl: 'http://127.0.0.1:9/', send: () => undefined, autoPaths: [e.game.root] })
     await svc.init()
     expect(() => svc.setSettings({ downloadsPath: e.game.addOnsPath })).toThrow(PlainError)
     expect(() => svc.setSettings({ downloadsPath: 'relative' })).toThrow(/full folder path/)
@@ -552,6 +552,7 @@ describe('backups, repair, leftovers and downloads', () => {
     const svc = new LauncherService({
       dataPath: e.data,
       appVersion: '0.1.0',
+      packsBaseUrl: 'http://127.0.0.1:9/',
       send: (channel, payload) => sent.push({ channel, payload }),
       fetchImpl: (async (url: string, init?: RequestInit) =>
         String(url).startsWith('https://api.github.com/') ? new Response(JSON.stringify(list), { status: 200 }) : fetch(url, init)) as unknown as typeof fetch,
@@ -591,7 +592,7 @@ describe('backups, repair, leftovers and downloads', () => {
 
   it('service: forgets the last game when it is gone, clears downloads, refuses while a job runs', async () => {
     const e = await env()
-    const svc = new LauncherService({ dataPath: e.data, appVersion: '0.1.0', send: () => undefined, autoPaths: [e.game.root] })
+    const svc = new LauncherService({ dataPath: e.data, appVersion: '0.1.0', packsBaseUrl: 'http://127.0.0.1:9/', send: () => undefined, autoPaths: [e.game.root] })
     svc.setSettings({ lastGameId: 'a-game-from-an-earlier-run' })
     await svc.init()
     expect(svc.settings.lastGameId).toBe('')
@@ -614,7 +615,7 @@ describe('backups, repair, leftovers and downloads', () => {
     write(path.join(backup, 'Spoken', 'Spoken.toc'), toc('Spoken', '3.4.0'))
     write(path.join(e.addOns, WORK_DIR, 'staging', 'job9', 'x.lua'), 'x')
     fs.writeFileSync(journalOf(e.game), JSON.stringify({ productId: 'spoken', entries: [{ folder: 'Spoken', hadOld: true, phase: 'backedUp' }] }))
-    const svc = new LauncherService({ dataPath: e.data, appVersion: '0.1.0', send: () => undefined, autoPaths: [e.game.root] })
+    const svc = new LauncherService({ dataPath: e.data, appVersion: '0.1.0', packsBaseUrl: 'http://127.0.0.1:9/', send: () => undefined, autoPaths: [e.game.root] })
     await svc.init()
     expect(fs.readFileSync(path.join(e.addOns, 'Spoken', 'Spoken.toc'), 'utf8')).toContain('3.4.0')
     expect(fs.readdirSync(path.join(e.addOns, WORK_DIR, 'staging'))).toEqual([])
