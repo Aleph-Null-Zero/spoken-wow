@@ -65,6 +65,7 @@ function createWindow(): BrowserWindow {
     backgroundColor: BACKGROUND,
     show: false,
     title: 'Spoken Launcher',
+    icon: path.join(app.getAppPath(), 'build', 'icon.png'),
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     // No system buttons: the page draws its own on the tab row (TopBar.tsx), because the native overlay

@@ -46,7 +46,8 @@
       "output": "release"
     },
     "files": [
-      "out/**"
+      "out/**",
+      "build/icon.png"
     ],
     "artifactName": "Spoken-Launcher-Setup-${version}.${ext}",
     "win": {
