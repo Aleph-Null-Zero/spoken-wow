@@ -11,6 +11,14 @@ existing compatible sound pack unless the release notes say otherwise.
 - **The sound packs are called Spoken Audio: Readables** in the AddOns list, after the module that
   reads them, and a language's is Spoken German Audio: Readables and so on. Their folders keep their names, so nothing needs reinstalling. *([Nucabe](https://github.com/Nucabe))*
 
+## 2.2.0 — Spoken Audio: Readables — 2026-10-18
+
+- **The sound pack is called Spoken Audio: Readables** in the AddOns list, after the module that
+  reads it. Its folder keeps its name, so nothing needs reinstalling.
+  *([Nucabe](https://github.com/Nucabe))*
+- 36 more pages voiced and 21 re-recorded. The five Forsaken class letters no player can get are
+  no longer in the pack.
+
 ## 3.0.0 — 2026-10-05
 
 - **Spoken Books is now part of Spoken**, and this download no longer carries the addon. It
