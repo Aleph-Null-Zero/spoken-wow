@@ -40,7 +40,7 @@ export const S = {
     version: 'Version',
     readOnly: 'This folder is read-only for your account.'
   },
-  strip: { add: 'Add a game folder' },
+  strip: { add: 'Add a game folder', missing: (label: string) => `${label} is not installed on this PC` },
   empty: {
     title: 'No game for Spoken found',
     text: 'Spoken runs on WoW: Forever, Classic Era and Anniversary. Add the folder your game is installed in: the game folder, a _classic_era_, _anniversary_ or _classic_beta_ folder, or an AddOns folder.',
@@ -58,6 +58,8 @@ export const S = {
     filterWith: 'With Spoken',
     filterWithout: 'Without Spoken',
     noMatch: 'No game matches this filter.',
+    notInstalled: 'Not installed on this PC',
+    addFolder: 'Add folder',
     whatsNew: "What's new",
     readAll: 'Read all',
     noVoice: 'No voice packs',

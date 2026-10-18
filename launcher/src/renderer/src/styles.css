@@ -2291,3 +2291,41 @@ svg.is-spinning {
   letter-spacing: 0;
   text-transform: none;
 }
+
+/* A supported game that was not found: dimmed, nothing to click */
+.is-missing .card-art {
+  filter: grayscale(0.7) brightness(0.55);
+}
+
+.is-missing .game-name,
+.is-missing .eyebrow {
+  color: var(--muted);
+}
+
+.is-missing .status {
+  color: var(--faint);
+}
+
+.link-add {
+  align-self: flex-start;
+}
+
+.strip-tile.is-missing {
+  cursor: default;
+}
+
+.strip-tile.is-missing .game-icon {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.strip-tile.is-missing:hover {
+  background: none;
+}
+
+.strip-tip-plain {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}

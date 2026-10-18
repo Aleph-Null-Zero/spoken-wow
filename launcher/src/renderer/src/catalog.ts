@@ -22,6 +22,8 @@ export function latestOf(state: State, gameId: string, productId: string): Relea
 export interface FlavorLook {
   /** Plain name, for labels. */
   name: string
+  /** The game's label as the launcher lists it, for a game that was not found. */
+  label: string
   /** The two lines of the wordmark: a small line over a large one. */
   kicker: string
   title: string
@@ -32,9 +34,9 @@ export interface FlavorLook {
 }
 
 const LOOKS: Record<Flavor, FlavorLook> = {
-  classic_beta: { name: 'Forever', kicker: 'Spoken', title: 'Forever', from: '#1d6f8f', to: '#0b2a3a', glow: '#f0c25a' },
-  classic_era: { name: 'Classic Era', kicker: 'Spoken', title: 'Classic Era', from: '#9a5a1c', to: '#33200f', glow: '#f2b04a' },
-  anniversary: { name: 'Anniversary', kicker: 'Spoken', title: 'Anniversary', from: '#a23a58', to: '#2e1020', glow: '#f4bb78' }
+  classic_beta: { name: 'Forever', label: 'WoW: Forever', kicker: 'Spoken', title: 'Forever', from: '#1d6f8f', to: '#0b2a3a', glow: '#f0c25a' },
+  classic_era: { name: 'Classic Era', label: 'WoW: Classic Era', kicker: 'Spoken', title: 'Classic Era', from: '#9a5a1c', to: '#33200f', glow: '#f2b04a' },
+  anniversary: { name: 'Anniversary', label: 'WoW: Anniversary', kicker: 'Spoken', title: 'Anniversary', from: '#a23a58', to: '#2e1020', glow: '#f4bb78' }
 }
 
 export const flavorLook = (flavor: Flavor): FlavorLook => LOOKS[flavor]

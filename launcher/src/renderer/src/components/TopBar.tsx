@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import icon from '../assets/spoken.png'
 import { formatTime } from '../format'
+import type { Flavor, GameInstall } from '@shared/types'
+import { SUPPORTED_FLAVORS } from '@shared/types'
 import { useGame, useStore, useSupportedGames, type Page } from '../store'
 import { S } from '../strings'
 import { flavorLook } from '../catalog'
@@ -68,7 +70,22 @@ export function GamesStrip(): ReactNode {
   return (
     <nav className="strip" aria-label={S.home.title}>
       <span className="strip-label">{S.home.title}</span>
-      {games.map((g) => {
+      {SUPPORTED_FLAVORS.flatMap((flavor): { g: GameInstall | undefined; flavor: Flavor }[] => {
+        const found = games.filter((g) => g.flavor === flavor)
+        if (found.length > 0) return found.map((g) => ({ g, flavor }))
+        return [{ g: undefined, flavor }]
+      }).map(({ g, flavor }) => {
+        if (!g) {
+          const text = S.strip.missing(flavorLook(flavor).label)
+          return (
+            <button key={flavor} type="button" className="strip-tile is-missing" disabled aria-label={text}>
+              <GameIcon flavor={flavor} />
+              <span className="strip-tip strip-tip-plain" aria-hidden="true">
+                {text}
+              </span>
+            </button>
+          )
+        }
         const active = onGamePage && g.id === game?.id
         return (
           <button

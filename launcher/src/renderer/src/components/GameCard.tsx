@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
-import type { GameInstall } from '@shared/types'
-import { jobBusy, langTag, statusOf } from '../catalog'
+import type { Flavor, GameInstall } from '@shared/types'
+import { flavorLook, jobBusy, langTag, statusOf } from '../catalog'
 import { jobKey, useStore } from '../store'
 import { S } from '../strings'
 import { CardArt } from './Brand'
+import { useAddGame } from './EmptyGames'
 import { JobBar } from './JobBar'
 import { IconAlert, IconX } from './Icons'
 import { SpokenStatus } from './SpokenStatus'
@@ -84,6 +85,40 @@ export function GameCard({ game }: { game: GameInstall }): ReactNode {
             </button>
           )}
           <button type="button" className="btn" onClick={() => actions.navigate('voices', game.id)}>
+            {S.home.voicePacksButton}
+          </button>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+/** A supported game the scan did not find: the same card, dimmed and disabled, with a way to add its folder. */
+export function MissingCard({ flavor }: { flavor: Flavor }): ReactNode {
+  const look = flavorLook(flavor)
+  const { add, error, busy } = useAddGame()
+  return (
+    <article className="card game-card is-missing">
+      <div className="art-static">
+        <CardArt flavor={flavor} />
+      </div>
+      <div className="game-card-body">
+        <p className="eyebrow">{look.name}</p>
+        <h2 className="game-name">{look.label}</h2>
+        <p className="status">{S.home.notInstalled}</p>
+        <button type="button" className="link link-add" onClick={add} disabled={busy}>
+          {S.home.addFolder}
+        </button>
+        {error && (
+          <p className="status status-error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="game-actions">
+          <button type="button" className="btn btn-primary" disabled>
+            {S.home.installSpoken}
+          </button>
+          <button type="button" className="btn" disabled>
             {S.home.voicePacksButton}
           </button>
         </div>

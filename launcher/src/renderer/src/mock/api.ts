@@ -1,6 +1,6 @@
 // A believable fake LauncherApi, used only when `window.launcher` is missing (a plain browser:
 // `npm run dev:web`). Address options: ?offline=1, ?empty=1 (no games), ?empty=packs (an empty community
-// list), ?readonly=1 (Anniversary is read-only), ?linked=1 (Spoken on Anniversary is a link to a development folder), ?update=1 (a launcher update banner).
+// list), ?readonly=1 (Anniversary is read-only), ?missing=anniversary (that game was not found; also forever, era), ?linked=1 (Spoken on Anniversary is a link to a development folder), ?update=1 (a launcher update banner).
 import type { AddGameResult, InstallOptions, LauncherApi, UpdaterState } from '@shared/api'
 import { PRODUCTS, SPOKEN_FOLDERS, productById } from '@shared/products'
 import type { Catalog, CommunityCatalog, CommunityPack, GameInstall, JobProgress, Product, ProductStatus, ReleaseInfo, Settings, Snapshot } from '@shared/types'
@@ -233,6 +233,8 @@ export function createMockApi(): LauncherApi {
   const empty = q.has('empty') && q.get('empty') !== 'packs'
   const offline = q.has('offline')
 
+  // ?missing=forever,era,anniversary: those games were not found by the scan.
+  const missing = (q.get('missing') ?? '').split(',').map((m) => ({ forever: 'classic_beta', era: 'classic_era', anniversary: 'anniversary' })[m.trim()] ?? m.trim())
   let games: GameInstall[] = empty
     ? []
     : [
@@ -240,6 +242,7 @@ export function createMockApi(): LauncherApi {
         game(`${WOW}\\_classic_era_`, '_classic_era_', 'classic_era', 'wow_classic_era', 'WoW: Classic Era', '1.15.8.65301'),
         { ...game(`${WOW}\\_anniversary_`, '_anniversary_', 'anniversary', 'wow_anniversary', 'WoW: Anniversary', '2.5.5.65340'), writable: !q.has('readonly') }
       ]
+  games = games.filter((g) => !missing.includes(g.flavor))
   const forever = games.find((g) => g.flavor === 'classic_beta')
   const era = games.find((g) => g.flavor === 'classic_era')
   const installs: Record<string, Record<string, Installed>> = {}
