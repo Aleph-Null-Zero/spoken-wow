@@ -141,9 +141,9 @@ package-audio: check-synced sounds lookup
 	 rm -f "$$zip_path"; \
 	 (cd addons && zip -r -0 -q -X "$$zip_path" SpokenBooksAudio \
 	   -x '*.DS_Store' '*/.*'); \
-	 rm -rf dist/SpokenBooksAudio; \
-	 rsync -a --exclude '.[!.]*' addons/SpokenBooksAudio/ dist/SpokenBooksAudio/; \
-	 touch dist/SpokenBooksAudio/SpokenBooksAudio.toc; \
+	 rm -rf dist/SpokenBooksAudio && \
+	 rsync -a --exclude '.[!.]*' addons/SpokenBooksAudio/ dist/SpokenBooksAudio/ && \
+	 touch dist/SpokenBooksAudio/SpokenBooksAudio.toc || exit 1; \
 	 printf '%s\n' "built dist/SpokenBooksAudio-$$version.zip"; \
 	 printf '  %s mp3, %s\n' \
 	   "$$(unzip -Z1 "$$zip_path" | grep -c '\.mp3$$')" \

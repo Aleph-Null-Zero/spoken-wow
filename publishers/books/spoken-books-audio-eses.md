@@ -12,6 +12,7 @@ categories:
   - Miscellaneous
   - Roleplay
 license: MIT
+launcher: true
 ---
 
 Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Readables module, in European Spanish. This addon is data only — it does nothing on its own.

@@ -336,6 +336,9 @@ for pack in $PACKS; do
   rm -f "$zip_path"
   echo "  zipping $(basename "$zip_path")..."
   (cd "$DIST" && zip -r -q -X "$zip_path" "$module" -x '*.DS_Store' '*.part')
+  # The folder was built before its zip; scripts/launcher/publish.mjs refuses a folder older than
+  # its zip as a stale build, so mark this one as current.
+  touch "$DIST/$module/$module.toc"
   echo "  ==> $zip_path ($(du -h "$zip_path" | cut -f1))"
 done
 
