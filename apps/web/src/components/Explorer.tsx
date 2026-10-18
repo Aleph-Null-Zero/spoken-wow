@@ -557,22 +557,27 @@ export default function Explorer({ facets }: { facets: Facets }) {
       // otherwise be blocked for the wrong reason - "no voice named orc-male-shady" when
       // the truth is that nothing has been asked.
       if (!status) return null;
-      // Named for the generator this collaborator has chosen, not always ElevenLabs: someone
-      // on fish.audio with a key and references was otherwise told to go and set up a
-      // provider they do not use.
-      const provider = PROVIDER_NAME[status.provider];
+      // A voice pinned to fish.audio is spoken there whatever this collaborator chose, so it
+      // is fish.audio's key and references that decide, exactly as the server will.
+      const pinned = status.pinned?.voices.includes(line.voice) ? status.pinned : null;
+      const fish = pinned !== null || status.provider === "fish";
+      // Named for the generator this line goes to, not always ElevenLabs: someone on
+      // fish.audio with a key and references was otherwise told to go and set up a provider
+      // they do not use.
+      const provider = PROVIDER_NAME[fish ? "fish" : status.provider];
+      const voices = pinned ? pinned.references : status.voices;
       const missing = (voice: string) =>
-        status.provider === "fish"
+        fish
           ? `No fish.audio reference for "${voice}" in this language yet — cut one on /voices`
           : `No ElevenLabs voice named "${voice}" yet — create it on /voices`;
-      if (status.noApiKey) {
-        return `No ${provider} key on your account — set one in your profile`;
+      if (pinned ? pinned.noApiKey : status.noApiKey) {
+        return `${pinned ? `${line.voice} is pinned to fish.audio: n` : "N"}o ${provider} key on your account — set one in your profile`;
       }
-      if (!status.voices.includes(line.voice)) {
+      if (!voices.includes(line.voice)) {
         return missing(line.voice);
       }
       // A narrated line needs both voices, and the server refuses it for the same reason.
-      if (line.narration && !status.voices.includes(NARRATOR_VOICE)) {
+      if (line.narration && !voices.includes(NARRATOR_VOICE)) {
         return `Narrated line: ${missing(NARRATOR_VOICE)}`;
       }
       return null;
@@ -710,14 +715,20 @@ export default function Explorer({ facets }: { facets: Facets }) {
       // the list rate, which overstates - the right direction for a number meant to give
       // someone pause.
       const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
+      // Pinned voices' lines are priced apart, in fish.audio's dollars: credits and dollars
+      // are never added together.
+      const pinned = status?.pinned ?? null;
+      const isPinned = (job: (typeof batch.jobs)[number]) => pinned?.voices.includes(job.voice) ?? false;
+      const priced = (jobs: typeof batch.jobs) =>
+        jobs.map((job) => ({ file: job.audioPath, characters: job.characters }));
+      const fishJobs = batch.jobs.filter(isPinned);
       return {
         ...open,
         matched: batch.matched,
         skipped: batch.skipped,
-        estimate: estimateBatch(
-          batch.jobs.map((job) => ({ file: job.audioPath, characters: job.characters })),
-          rate,
-        ),
+        estimate: estimateBatch(priced(batch.jobs.filter((job) => !isPinned(job))), rate),
+        pinnedEstimate:
+          pinned && fishJobs.length > 0 ? estimateBatch(priced(fishJobs), pinned.rate) : null,
       };
     });
   }, [filterQuery, status, lang]);

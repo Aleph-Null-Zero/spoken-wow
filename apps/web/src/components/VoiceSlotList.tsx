@@ -397,7 +397,7 @@ export default function VoiceSlotList({
                             {tab === "fish" ? (
                               references[slot.name] ? (
                                 <Badge variant="outline" className="text-sky-400">
-                                  reference
+                                  {references[slot.name].pinned ? "reference · pinned" : "reference"}
                                 </Badge>
                               ) : (
                                 <span className="text-muted-foreground text-xs">no reference</span>
@@ -589,6 +589,11 @@ function ReferencePlayer({ voice, reference }: { voice: string; reference: Refer
         src={withLang(lang, `/api/voices/${voice}/reference/audio?v=${reference.clipHash}`)}
         className="h-8 w-full max-w-md"
       />
+      {reference.pinned && (
+        <p className="text-muted-foreground mt-2 text-xs">
+          Pinned: every line of this voice is spoken by fish.audio, whichever generator is active.
+        </p>
+      )}
     </div>
   );
 }
