@@ -4,7 +4,7 @@ Filenames are load-bearing: the addon resolves a sound by looking its filename u
 SoundLengthLookupByFileName, so a name that differs by one character silently plays
 nothing. Every filename in this project is derived here and nowhere else.
 
-    quest lines     {questID}-{accept|complete}      optional m-/f- prefix
+    quest lines     {questID}-{accept|complete}[-w{n}]   optional m-/f- prefix
     gossip lines    md5(original_text+race+gender)   optional m-/f- prefix
                     b{broadcastTextID}-{voice}
                     {lang}-md5(locale_text+race+gender)
@@ -13,7 +13,7 @@ nothing. Every filename in this project is derived here and nowhere else.
 lineId is a stable handle used by the corpus, the audio store and the web app. It is
 deliberately not the filename, so references survive a naming change.
 
-    q:{questID}:{source}[:{m|f}]
+    q:{questID}:{source}[:w{n}][:{m|f}]
     g:{hash}[:{m|f}]
     g:b{broadcastTextID}-{voice}[:{m|f}]
     g:{lang}-{hash}[:{m|f}]
@@ -26,6 +26,12 @@ whole voice like a follow-up, and failing that one named after its own language'
 line keeps the form it was minted with; when it later turns out to be the same moment as
 another, the two are linked (GossipAliases), never renamed. The dashes keep both new forms
 from ever equalling a 32-hex hash.
+
+A quest moment the game shows in more than one wording (another giver, or the same NPC to
+another player) keeps its first as the plain id and file, and each other as `:w{n}` and
+`-w{n}`, n from 1. Ordinals rather than text hashes, so every language shares the id: one
+language's w1 translates another's. The addon picks a wording by the text on screen
+(QuestWordingLookup), as it picks a gossip line.
 
 Any of them in one more voice than the one its file was made in:
 
@@ -118,6 +124,54 @@ def moment_of(line_id: str) -> str:
     return line_id[:-2] if line_id[-2:] in (":m", ":f") else line_id
 
 
+WORDING_PREFIX = "w"
+
+
+def _wording(part: str):
+    """n for a `w{n}` id part, else None."""
+    if part.startswith(WORDING_PREFIX) and part[1:].isdigit() and part[1:] != "0":
+        return int(part[1:])
+    return None
+
+
+def quest_wording_line_id(quest, source: str, n: int) -> str:
+    """Another wording of a quest moment, e.g. 'q:97287:accept:w1'."""
+    return f"q:{quest}:{source}:{WORDING_PREFIX}{n}"
+
+
+def quest_wording_file_name(quest, source: str, n: int) -> str:
+    """Its file before any player-gender prefix, e.g. '97287-accept-w1'."""
+    return f"{quest}-{source}-{WORDING_PREFIX}{n}"
+
+
+def _quest_parts(line_id: str):
+    """(the moment's stem, the line's stem, player gender or None) of an unvoiced quest id."""
+    kind, quest, source, *rest = line_id.split(":")
+    if kind != "q":
+        raise ValueError(f"{line_id!r} is not a quest line")
+    moment = f"{quest}-{source}"
+    n = _wording(rest[0]) if rest else None
+    if n is not None:
+        rest = rest[1:]
+    return moment, quest_wording_file_name(quest, source, n) if n else moment, rest[0] if rest else None
+
+
+def quest_stem_from_line_id(line_id: str) -> str:
+    """A quest line's file without player-gender prefix or voice: what the addon looks up."""
+    return _quest_parts(split_voice(line_id)[0])[1]
+
+
+def quest_moment_stem(line_id: str) -> str:
+    """The stem of a quest line's moment, the same for every wording: QuestWordingLookup's key."""
+    return _quest_parts(split_voice(line_id)[0])[0]
+
+
+def several_wordings(moments: dict) -> dict:
+    """{moment stem: {text: stem}} keeping only the moments with more than one wording: with one
+    there is nothing to tell apart, and the addon names the file from the quest id alone."""
+    return {moment: texts for moment, texts in moments.items() if len(set(texts.values())) > 1}
+
+
 def variant_line_id(line_id: str, voice: str) -> str:
     """A line in one more voice than its file was made in."""
     return f"{line_id}{VOICE_SEPARATOR}{voice}"
@@ -141,8 +195,8 @@ def filename_from_line_id(line_id: str) -> str:
         return variant_file_name(filename_from_line_id(line_id), voice)
     kind, *rest = line_id.split(":")
     if kind == "q":
-        quest, source, *gender = rest
-        base = f"{quest}-{source}"
+        _moment, base, player_gender = _quest_parts(line_id)
+        gender = [player_gender] if player_gender else []
     elif kind == "g":
         hash_, *gender = rest
         base = hash_

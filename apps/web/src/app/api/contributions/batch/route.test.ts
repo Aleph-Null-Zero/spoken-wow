@@ -81,8 +81,8 @@ describe("POST /api/contributions/batch", () => {
     const lineId = `q:${questId}:accept`;
     await db().query(
       `insert into "quest_line"
-         ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "fileName", "text", "originalText")
-       values ($1, 0, 'enUS', 1, true, 'extracted', 'accept', $1, $2, $2)`,
+         ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "questId", "fileName", "text", "originalText")
+       values ($1, 0, 'enUS', 1, true, 'extracted', 'accept', split_part($1, ':', 2)::int, $1, $2, $2)`,
       [lineId, "Kill six.$B$BThen come back, $n."],
     );
     try {

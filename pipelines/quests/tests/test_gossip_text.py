@@ -3,7 +3,8 @@ import glob
 import os
 
 from tts_cli.gossip_text import (CLIENT_LOCALES, broadcast_form, gossip_aliases,
-                                 gossip_text_tables, load_aliases, render, render_aliases,
+                                 gossip_text_tables, load_aliases, quest_wording_tables, render,
+                                 render_aliases,
                                  write_aliases_json, write_gossip_text)
 
 HASH = "a" * 32
@@ -141,3 +142,38 @@ def test_forever_loads_only_its_own_locale_and_the_rest_load_every_one():
             assert "Gossip\\Gossip.xml" in lines, name
     with open(os.path.join(ADDON, "addon.xml"), encoding="utf-8") as f:
         assert "Gossip\\" not in f.read()
+
+
+QUEST_ENGLISH = {"q:20:accept": "You are the Horde, $c.", "q:20:accept:w1": "Oh, you are back."}
+
+
+def test_a_moment_s_wordings_in_a_client_s_language():
+    found = quest_wording_tables(
+        QUEST_ENGLISH,
+        {"deDE": [("q:20:accept", "You are the Horde, $c.", "Ihr seid die Horde, $c."),
+                  ("q:20:accept:w1", "Oh, you are back.", "Oh, Ihr seid zurück.")]},
+        {})
+    assert found["deDE"] == {"20-accept": {"Ihr seid die Horde, $c.": "20-accept",
+                                           "Oh, Ihr seid zurück.": "20-accept-w1"}}
+    assert found["frFR"] == {}
+
+
+def test_one_wording_in_the_client_s_language_is_no_table():
+    found = quest_wording_tables(
+        QUEST_ENGLISH, {"deDE": [("q:20:accept", "You are the Horde, $c.", "Ihr seid die Horde, $c.")]}, {})
+    assert found["deDE"] == {}
+
+
+def test_a_wording_only_the_language_has_counts():
+    found = quest_wording_tables(
+        QUEST_ENGLISH,
+        {"deDE": [("q:20:accept", "You are the Horde, $c.", "Ihr seid die Horde, $c.")]},
+        {"deDE": {"q:20:accept:w2": "Na, wieder da?"}})
+    assert found["deDE"]["20-accept"]["Na, wieder da?"] == "20-accept-w2"
+
+
+def test_the_wordings_are_written_into_the_locale_file():
+    text = render("deDE", {"creature": {}, "gameobject": {}},
+                  {"20-accept": {"Oh, Ihr seid zurück.": "20-accept-w1"}})
+    assert ('    QuestWordingLookup = {\n        ["20-accept"] = {\n'
+            '            ["Oh, Ihr seid zurück."] = "20-accept-w1",') in text

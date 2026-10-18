@@ -27,6 +27,10 @@
  * fails after the text is written is simply sent again. A book page so written already reads
  * as known; its current version carrying this contribution's note is what lets the resend
  * flip the status alone.
+ *
+ * A correction that is not a fix but another wording of the moment -- another giver's, or the
+ * same NPC's to another player -- is accepted with acceptAsWording, which writes beside the
+ * line instead of over it.
  */
 import "server-only";
 
@@ -39,7 +43,8 @@ import { englishMomentLines, rewriteEnglish } from "@/lib/quests/english-rewrite
 import { OverrideError } from "@/lib/quests/override";
 import { QuestTextConflict, QuestTextMissing, saveQuestText } from "@/lib/quests/text";
 
-import { lineStates } from "./known";
+import { writeWording } from "./accept";
+import { lineStates, type CorpusText } from "./known";
 import { momentOf } from "./naming";
 import { CONTRIBUTION_COLUMNS, type Contribution } from "./store";
 import { correctionNote } from "./notes";
@@ -48,9 +53,16 @@ import { spokenFromTemplate } from "./tokens";
 export type CorrectionOutcome =
   | { ok: true; contribution: Contribution }
   | { ok: false; reason: "not-found" }
-  | { ok: false; reason: "not-a-correction" | "malformed"; message: string };
+  | { ok: false; reason: "not-a-correction" | "malformed" | "needs-speaker"; message: string };
 
-export async function acceptCorrection(id: number, userId: string): Promise<CorrectionOutcome> {
+/** One of a quest moment's wordings (known.ts LineState), as the corrections tab names it. */
+export type WordingPick = Pick<CorpusText, "lineId" | "variant">;
+
+/**
+ * `pick` is the wording the correction fixes, where the moderator chose one; otherwise it is
+ * the one closest to the player's text.
+ */
+export async function acceptCorrection(id: number, userId: string, pick?: WordingPick): Promise<CorrectionOutcome> {
   const { rows } = await db().query<Contribution>(
     `select ${CONTRIBUTION_COLUMNS} from "contribution" where "id" = $1`,
     [id],
@@ -78,17 +90,27 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
       message: "The corpus no longer has a different text for this line -- nothing to correct.",
     };
   }
+  const target = pick
+    ? state.wordings.find((line) => line.lineId === pick.lineId && line.variant === pick.variant)
+    : state.wordings[state.closest];
+  if (!target) {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "That is not a wording this moment has any more -- reload to see its wordings.",
+    };
+  }
 
   try {
     if (contribution.source === "books") {
-      await saveBookText({ lineId: state.lineId, text: contribution.text, note: correctionNote(id), editedBy: userId, lang });
+      await saveBookText({ lineId: target.lineId, text: contribution.text, note: correctionNote(id), editedBy: userId, lang });
     } else if (lang === BASE_LANG) {
-      const refusal = await correctEnglish(momentOf(state.lineId), state.variant, contribution.text, id, userId);
+      const refusal = await correctEnglish(momentOf(target.lineId), target.variant, contribution.text, id, userId);
       if (refusal) return refusal;
     } else {
       await saveQuestText({
-        lineId: state.lineId,
-        variant: state.variant,
+        lineId: target.lineId,
+        variant: target.variant,
         lang,
         text: contribution.text,
         note: correctionNote(id),
@@ -113,6 +135,41 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
 }
 
 /**
+ * Accepting a correction as another wording of its moment rather than a fix of it: both texts
+ * are the game's, shown to different players or by different givers. The corpus line is left
+ * alone and the player's text is written beside it (accept.ts writeWording). Once written the
+ * row reads as known, so a resend that finds its wording only flips the status.
+ */
+export async function acceptAsWording(id: number, userId: string): Promise<CorrectionOutcome> {
+  const { rows } = await db().query<Contribution>(
+    `select ${CONTRIBUTION_COLUMNS} from "contribution" where "id" = $1`,
+    [id],
+  );
+  const contribution = rows[0];
+  if (!contribution) return { ok: false, reason: "not-found" };
+  const lang = contribution.locale;
+  if (contribution.source !== "quests" || !contribution.text || !isLang(lang)) {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "Only a quest line sent in a site language can be another wording.",
+    };
+  }
+  // Whether the text is already a wording is writeWording's to say, under the moment's lock.
+  const [state] = await lineStates([contribution]);
+  if (state.kind === "missing") {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "The corpus has no line for this moment yet -- accept it on the contributions tab.",
+    };
+  }
+  const written = await writeWording(contribution, userId);
+  if (!written.ok) return written;
+  return markAccepted(contribution, lang, userId, { wording: written.lineId });
+}
+
+/**
  * Whether this contribution's correction is already the page's current text in its language:
  * the text was saved and the status flip after it failed, so the row now reads as known.
  */
@@ -124,7 +181,12 @@ async function bookCorrectionWritten(id: number, lang: string): Promise<boolean>
   return (rowCount ?? 0) > 0;
 }
 
-async function markAccepted(contribution: Contribution, lang: Lang, userId: string): Promise<CorrectionOutcome> {
+async function markAccepted(
+  contribution: Contribution,
+  lang: Lang,
+  userId: string,
+  extra: Record<string, unknown> = {},
+): Promise<CorrectionOutcome> {
   const { id } = contribution;
   const client = await db().connect();
   try {
@@ -143,7 +205,7 @@ async function markAccepted(contribution: Contribution, lang: Lang, userId: stri
         source: contribution.source,
         subject: String(id),
         actorId: userId,
-        detail: { status: "accepted", key: contribution.key, correction: true },
+        detail: { status: "accepted", key: contribution.key, correction: true, ...extra },
       },
       client,
     );

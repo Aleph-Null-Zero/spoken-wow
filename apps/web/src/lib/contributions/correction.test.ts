@@ -75,6 +75,11 @@ beforeAll(async () => {
             ($1 || ':f', 0, 'enUS', 1, true, 'extracted', 'accept', 'f', 'f-' || $2, 'Hail, lass.', 'Hail, $glad:lass;.', null)`,
     [moments[2], `${splitQuest}-accept`],
   );
+  // Every quest row carries its quest id, which is what known.ts finds a moment's lines by.
+  await db().query(
+    `update "quest_line" set "questId" = split_part("lineId", ':', 2)::int where "lineId" = any($1::text[])`,
+    [quests.flatMap(linesOf)],
+  );
   await db().query(
     `insert into "quest_line_speaker"
        ("lineId", "variant", "lang", "ord", "npcType", "npcId", "npcName", "race", "gender", "flavor", "voice")

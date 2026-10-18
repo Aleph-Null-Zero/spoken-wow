@@ -541,6 +541,43 @@ local function ClosestGossipLine(shown, lines)
     return best and best.similarity >= GOSSIP_MATCH_FLOOR and best or nil
 end
 
+--- Every text a table of text as a client shows it holds under `key`, mapped to its file, into
+--- `into`: the tables written in the client's own locale when `inClientLocale`, the rest
+--- otherwise. That locale is not the language the player chose to hear: an English client
+--- playing a Portuguese pack still shows English text. The file is the line's, not the
+--- recording's, so whichever table found it, PrepareSound looks for the clip in the voice
+--- language.
+---
+--- GossipText (Gossip/<locale>.lua, built only on a client in that locale) is this addon's own
+--- copy of every line's text in the client's locale, so it is asked before any pack's.
+local function CollectTexts(table, key, inClientLocale, into)
+    local client = Language:GetClientLanguage()
+    local own = inClientLocale and GossipText and GossipText[table]
+    if own and own[key] then
+        for text, file in pairs(own[key]) do
+            into[text] = file
+        end
+    end
+    for _, module in DataModules:GetModules() do
+        local data, locale = TextLookup(module, table)
+        if data and (locale == client) == inClientLocale and data[key] then
+            for text, file in pairs(data[key]) do
+                into[text] = into[text] or file -- module priority: the first pack's entry stands
+            end
+        end
+    end
+    return into
+end
+
+--- The file of the text on screen among `entries`: its exact key, else the closest above the floor.
+local function MatchShown(text, entries)
+    if entries[text] then
+        return entries[text]
+    end
+    local best = ClosestGossipLine(text, entries)
+    return best and best.value or nil
+end
+
 ---@param soundData SoundData
 ---@return string|nil hash
 function DataModules:GetNPCGossipTextHash(soundData)
@@ -549,55 +586,18 @@ function DataModules:GetNPCGossipTextHash(soundData)
         return
     end
     local text = soundData.text
-
-    local text_entries = {}
-
-    -- A gossip table maps the NPC's text *as a client shows it* to the line's hash, so the
-    -- tables that can match exactly are the ones written in the client's own locale --
-    -- which is not the language the player chose to hear: an English client playing a
-    -- Portuguese pack still shows English text. The hash is the line's, not the recording's,
-    -- so whichever table found it, PrepareSound looks for the clip in the voice language.
-    --
+    -- An NPC whose text varies by who asks may lack the variant on screen. Playing nothing then
+    -- lets the window offer Contribute. HasGossipFor asks with each key itself, so an exact key
+    -- skips scoring every line again.
+    local text_entries = CollectTexts(table, npc, true, {})
+    if next(text_entries) ~= nil then
+        return MatchShown(text, text_entries)
+    end
     -- Only when no pack in the client's locale knows this NPC are the rest searched. That is
     -- what every non-English client has always done with English packs, and it mostly works:
     -- most NPCs have a single line, and the fuzzy match lands on it whatever it is shown in.
-    --
-    -- GossipText (Gossip/<locale>.lua, built only on a client in that locale) is this addon's
-    -- own copy of every line's text in the client's locale, so it is asked before any pack's.
-    local client = Language:GetClientLanguage()
-    local function collect(inClientLocale)
-        local own = inClientLocale and GossipText and GossipText[table]
-        if own and own[npc] then
-            for text, hash in pairs(own[npc]) do
-                text_entries[text] = hash
-            end
-        end
-        for _, module in self:GetModules() do
-            local data, locale = TextLookup(module, table)
-            if data and (locale == client) == inClientLocale then
-                local npc_gossip_table = data[npc]
-                if npc_gossip_table then
-                    for text, hash in pairs(npc_gossip_table) do
-                        text_entries[text] = text_entries[text] or
-                            hash -- Respect module priority, don't overwrite the entry if there is already one
-                    end
-                end
-            end
-        end
-    end
-    -- An NPC whose text varies by who asks may lack the variant on screen. Playing nothing then
-    -- lets the window offer Contribute.
-    collect(true)
-    -- HasGossipFor asks with each key itself, so an exact key skips scoring every line again.
-    if text_entries[text] then
-        return text_entries[text]
-    end
-    local search = ClosestGossipLine
-    if next(text_entries) == nil then
-        collect(false)
-        search = FuzzySearchBestKeys
-    end
-    local best_result = search(text, text_entries)
+    CollectTexts(table, npc, false, text_entries)
+    local best_result = FuzzySearchBestKeys(text, text_entries)
     return best_result and best_result.value
 end
 
@@ -740,12 +740,27 @@ function DataModules:GetObjectName(type, id)
     end
 end
 
+--- A quest moment's file: `{questID}-{event}`, or, where the moment has more than one wording
+--- in the client's language, the wording the screen shows, matched as gossip is and none below
+--- the floor. Text in another language cannot be compared to the screen, so a client with no
+--- wordings in its own plays the moment's file, as it always has.
+local function QuestFile(soundData, event)
+    local stem = format("%d-%s", soundData.questID, event)
+    -- An empty text is what a quest reader answers when it has none to give.
+    local text = soundData.text ~= "" and soundData.text or nil
+    local wordings = text and CollectTexts("QuestWordingLookup", stem, true, {})
+    if not wordings or next(wordings) == nil then
+        return stem
+    end
+    return MatchShown(text, wordings)
+end
+
 ---@type table<SoundEvent, fun(soundData: SoundData): string|nil>
 local getFileNameForEvent =
 {
-    [Enums.SoundEvent.QuestAccept]   = function(soundData) return format("%d-%s", soundData.questID, "accept") end,
-    [Enums.SoundEvent.QuestProgress] = function(soundData) return format("%d-%s", soundData.questID, "progress") end,
-    [Enums.SoundEvent.QuestComplete] = function(soundData) return format("%d-%s", soundData.questID, "complete") end,
+    [Enums.SoundEvent.QuestAccept]   = function(soundData) return QuestFile(soundData, "accept") end,
+    [Enums.SoundEvent.QuestProgress] = function(soundData) return QuestFile(soundData, "progress") end,
+    [Enums.SoundEvent.QuestComplete] = function(soundData) return QuestFile(soundData, "complete") end,
     [Enums.SoundEvent.QuestGreeting] = function(soundData) return DataModules:GetNPCGossipTextHash(soundData) end,
     [Enums.SoundEvent.Gossip]        = function(soundData) return DataModules:GetNPCGossipTextHash(soundData) end,
 }
@@ -908,7 +923,7 @@ function DataModules:PrepareSound(soundData)
     soundData.fileName = getFileNameForEvent[soundData.event](soundData)
 
     if soundData.fileName == nil then
-        return false, "no file name for it (no quest ID, or a greeting no pack's text matches)"
+        return false, "no file name for it (no quest ID, or a text no pack's wording or greeting matches)"
     end
 
     -- A quest given by NPCs of different voices is a file per voice: this giver's own first,

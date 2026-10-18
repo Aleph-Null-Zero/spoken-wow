@@ -89,6 +89,20 @@ export function sameLine(current: string, contributed: string): boolean {
   return genderForms(current).some((form) => matches(tokensOf(form), theirs));
 }
 
+/**
+ * How alike two texts are, 0 to 1: the share of words either uses that both do (Jaccard),
+ * letter case aside. What picks, among a moment's wordings, the one a correction is a fix of.
+ */
+export function closeness(a: string, b: string): number {
+  const words = (text: string) =>
+    new Set(tokensOf(text).filter((token) => token.kind === "word").map((token) => token.value.toLocaleLowerCase()));
+  const x = words(a);
+  const y = words(b);
+  const both = [...x].filter((word) => y.has(word)).length;
+  const either = x.size + y.size - both;
+  return either === 0 ? 0 : both / either;
+}
+
 /** A corpus template as a reader sees it: the game's `$B` paragraph breaks as line breaks. */
 export function readable(template: string): string {
   return template.replace(/\$[bB]/g, "\n");

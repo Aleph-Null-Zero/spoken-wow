@@ -12,6 +12,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Spoken Contributions has its own icon in the AddOns list**, a heart, rather than none, and its
   name is no longer greyed out. No Spoken addon colours its name or description there any more.
   *([Nucabe](https://github.com/Nucabe))*
+- **A quest that reads differently for you is voiced in your words.** Where a quest's text
+  changes with who gives it or who takes it, Spoken plays the recording of the text on your
+  screen, and where it has none for those words it plays nothing and offers Contribute.
+  *([rusty-key](https://github.com/rusty-key))*
 - **An NPC whose words change with who asks no longer reads you the wrong line.** A trainer
   greets someone of its profession differently, and a barker sends each faction to its own
   place. Where the packs hold only another of these, the NPC used to read that one. Now it reads

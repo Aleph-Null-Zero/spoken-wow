@@ -1371,6 +1371,27 @@ to ship them, and a link to it shows the line kept. Lines of one moment that rea
 stay apart, and the explorer's Quest / broadcast column links each to the others as "same moment". To run
 it over every line, use `apps/web/scripts/relink-gossip.mts`; `--dry-run` lists what it would merge.
 
+#### A quest moment in more than one wording
+
+The game can show one quest moment in different words: another giver offers the same quest,
+or one NPC words it differently for another race, class or faction. The corpus keeps each as
+a line of its own. The first keeps the moment's id and file; each other is
+`q:{quest}:{event}:w{n}`, file `{quest}-{event}-w{n}` (naming.py), numbered across languages
+so a translation shares its English's id.
+
+A correction whose text is such a wording, not a fix, is accepted on the corrections tab with
+**Accept as new line**: the corpus line stays and the player's text becomes the moment's next
+wording in its language, spoken by the NPC that showed it (`correction.ts` acceptAsWording).
+A correction of a moment with several wordings lists them all under "Corpus has", the closest
+to the player's text picked; **Accept** fixes the picked one, and clicking another picks it.
+
+The packs map each wording's text to its file by the moment's stem (`QuestWordingLookup`), and
+each client locale's `Gossip/<locale>.lua` carries the same in its own text. Only a moment with
+two or more wordings gets an entry. The addon matches the quest window's text against them as
+it matches gossip (similarity 0.7); below that it plays nothing and offers Contribute. A client
+whose language has fewer than two wordings of a moment plays the moment's file, as before.
+Progress text is kept but never voiced.
+
 ## Addon Install
 
 ```bash

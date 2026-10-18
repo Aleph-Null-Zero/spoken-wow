@@ -66,7 +66,7 @@ reproduced. Never prune those.
 **The droplet is never named in the tree.** Host, user and key come from the environment
 (`make/droplet.mk`) locally and from the `DO_*` secrets in CI.
 
-**Ids and filenames are frozen.** `q:{questID}:{accept|progress|complete}`, `g:{md5}`,
+**Ids and filenames are frozen.** `q:{questID}:{accept|progress|complete}` (and its other wordings, `…:w{n}`), `g:{md5}`,
 `g:b{broadcastTextID}-{voice}`, `g:{lang}-{md5}`, `f:{broadcastTextID}:{voice}` (each with an optional `:m`/`:f` suffix), `z:{mapID}`,
 `s:{mapID}:{key}`, `b:{pageTextID}`, the minted `b:n{uuid}` (a page only a player's client has
 shown) and its book's `n{uuid}`, and the paths derived from them. A minted page later found in
