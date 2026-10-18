@@ -3,7 +3,7 @@
 // conditional, so two publishes racing cannot both win. Spec:
 // docs/superpowers/specs/2026-10-18-launcher-delta-packs-design.md
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -75,6 +75,13 @@ export async function publish({ store, packs, distDir, signingKey, minSpoken, la
   // Every folder and every requirement is checked before anything is read from or sent to R2.
   for (const { folder, section } of packs) {
     if (!existsSync(join(distDir, folder))) throw new Error(`dist/${folder} is missing: build it first (make ${section}-package-audio)`);
+    // The packagers leave dist/<folder>/ beside the zip; a folder older than a zip is a stale build.
+    const toc = join(distDir, folder, `${folder}.toc`);
+    if (existsSync(toc)) {
+      const tocMs = statSync(toc).mtimeMs;
+      const newer = readdirSync(distDir).some((n) => n.startsWith(`${folder}-`) && n.endsWith(".zip") && statSync(join(distDir, n)).mtimeMs > tocMs);
+      if (newer) throw new Error(`dist/${folder} is older than its zip: rebuild it (make ${section}-package-audio)`);
+    }
     if (compareVersions(minSpoken[section], latestSpoken) > 0) {
       throw new Error(`${folder} needs Spoken ${minSpoken[section]}, but the latest release is ${latestSpoken}`);
     }

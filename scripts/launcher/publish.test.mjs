@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -80,6 +80,16 @@ test("a dry run sends nothing", async () => {
 test("a missing folder stops the run before anything is read or sent", async () => {
   const store = memoryStore();
   await assert.rejects(run(store, mkdtempSync(join(tmpdir(), "empty-"))), /dist\/SpokenZonesAudio_deDE is missing/);
+  assert.equal(store.log.length, 0);
+});
+
+test("a folder older than its zip is refused as a stale build", async () => {
+  const store = memoryStore();
+  const d = dist({ "SpokenZonesAudio_deDE.toc": "toc" });
+  const old = new Date("2026-01-01T00:00:00Z");
+  utimesSync(join(d, "SpokenZonesAudio_deDE", "SpokenZonesAudio_deDE.toc"), old, old);
+  writeFileSync(join(d, "SpokenZonesAudio_deDE-1.0.0.zip"), "zip");
+  await assert.rejects(run(store, d), /dist\/SpokenZonesAudio_deDE is older than its zip: rebuild it \(make zones-package-audio\)/);
   assert.equal(store.log.length, 0);
 });
 
