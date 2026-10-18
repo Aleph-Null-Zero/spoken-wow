@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -118,4 +118,30 @@ test("latestSpokenRelease picks the highest published spoken/v tag", async () =>
     { tag_name: "zones-audio/v9.0.0", draft: false, prerelease: false },
   ]));
   assert.equal(await latestSpokenRelease(fake), "3.10.0");
+});
+
+test("latestSpokenRelease reads past a page with no spoken/v release", async () => {
+  const requests = [];
+  const fake = async (url) => {
+    const page = Number(new URL(url).searchParams.get("page"));
+    requests.push(page);
+    const body = page === 1
+      ? Array.from({ length: 100 }, (_, i) => ({ tag_name: `zones-audio/v1.0.${i}`, draft: false, prerelease: false }))
+      : page === 2
+        ? [{ tag_name: "spoken/v3.2.0", draft: false, prerelease: false }, { tag_name: "spoken/v3.1.0", draft: false, prerelease: false }]
+        : [];
+    return new Response(JSON.stringify(body));
+  };
+  assert.equal(await latestSpokenRelease(fake), "3.2.0");
+  assert.equal(requests.length, 2);
+});
+
+test("a blob whose bytes no longer match its hash is refused and nothing is indexed", async () => {
+  const store = memoryStore();
+  const d = dist({ "a.toc": "toc" });
+  const abs = join(d, "SpokenZonesAudio_deDE", "a.toc");
+  const st = statSync(abs);
+  const cache = new Map([[abs, { size: st.size, mtimeMs: st.mtimeMs, sha256: "0".repeat(64) }]]);
+  await assert.rejects(run(store, d, { cache }), /changed while publishing/);
+  assert.equal(store.objects.has("index.json"), false);
 });

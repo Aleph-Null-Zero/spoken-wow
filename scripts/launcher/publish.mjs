@@ -2,6 +2,7 @@
 // Blobs, then manifests, then the index; the index write is the only one players see, and it is
 // conditional, so two publishes racing cannot both win. Spec:
 // docs/superpowers/specs/2026-10-18-launcher-delta-packs-design.md
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -40,15 +41,24 @@ export async function eachLimit(items, limit, fn) {
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
+// The releases list is newest first and mixes in per-language audio releases, so spoken/v tags can
+// sit past page 1. Pages are read until one holds a spoken/v release, the list runs out, or 10 pages.
 export async function latestSpokenRelease(fetchImpl = fetch, token = process.env.GITHUB_TOKEN) {
-  const res = await fetchImpl("https://api.github.com/repos/rusty-key/spoken-wow/releases?per_page=100", {
-    headers: { accept: "application/vnd.github+json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
-  });
-  if (!res.ok) throw new Error(`GitHub releases: HTTP ${res.status}`);
-  const versions = (await res.json())
-    .filter((r) => !r.draft && !r.prerelease)
-    .map((r) => /^spoken\/v(\d+\.\d+\.\d+)$/.exec(r.tag_name)?.[1])
-    .filter(Boolean);
+  const versions = [];
+  for (let page = 1; page <= 10; page++) {
+    const res = await fetchImpl(`https://api.github.com/repos/rusty-key/spoken-wow/releases?per_page=100&page=${page}`, {
+      headers: { accept: "application/vnd.github+json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error(`GitHub releases: HTTP ${res.status}`);
+    const releases = await res.json();
+    if (releases.length === 0) break;
+    for (const r of releases) {
+      if (r.draft || r.prerelease) continue;
+      const v = /^spoken\/v(\d+\.\d+\.\d+)$/.exec(r.tag_name)?.[1];
+      if (v) versions.push(v);
+    }
+    if (versions.length > 0) break;
+  }
   if (versions.length === 0) throw new Error("no published Spoken release");
   return versions.sort(compareVersions).at(-1);
 }
@@ -109,7 +119,13 @@ export async function publish({ store, packs, distDir, signingKey, minSpoken, la
   let done = 0;
   await eachLimit([...blobs], 16, async ([sha, b]) => {
     if (!(await store.head(`blobs/${sha}`))) {
-      await store.put(`blobs/${sha}`, await readFile(b.abs), { contentType: "application/octet-stream", cacheControl: IMMUTABLE });
+      const bytes = await readFile(b.abs);
+      // A blob under an immutable, year-cached key cannot be corrected, so its bytes are checked
+      // against the key first (a stale hash-cache entry would otherwise store the wrong bytes).
+      if (createHash("sha256").update(bytes).digest("hex") !== sha) {
+        throw new Error(`${b.abs} changed while publishing; run it again`);
+      }
+      await store.put(`blobs/${sha}`, bytes, { contentType: "application/octet-stream", cacheControl: IMMUTABLE });
     }
     if (++done % 1000 === 0) log(`  ${done}/${blobs.size} blobs`);
   });
