@@ -7,6 +7,7 @@ import { isAllowedExternalUrl } from './external'
 import { registerIpc } from './ipc'
 import { LauncherService } from './service'
 import { initLog, log } from './state'
+import { isOurPage as isOurPageUrl, type AppPage } from './trust'
 import { startUpdater } from './updater'
 
 app.setName('Spoken Launcher')
@@ -39,15 +40,10 @@ function contentSecurityPolicy(): string {
   return ["default-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data:"].join('; ')
 }
 
+const PAGE: AppPage = { devUrl: DEV_URL, indexHtml: path.join(__dirname, '../renderer/index.html') }
+
 function isOurPage(url: string): boolean {
-  if (DEV_URL) {
-    try {
-      return new URL(url).origin === new URL(DEV_URL).origin
-    } catch {
-      return false
-    }
-  }
-  return url.startsWith('file://')
+  return isOurPageUrl(url, PAGE)
 }
 
 function setUpSession(): void {
@@ -93,15 +89,19 @@ function createWindow(): BrowserWindow {
     if (isAllowedExternalUrl(url)) void shell.openExternal(url)
     return { action: 'deny' }
   })
-  win.webContents.on('will-navigate', (event, url) => {
+  // The window shows its own page and nothing else: every other navigation, redirect or frame is blocked.
+  const block = (event: { preventDefault: () => void }, url: string): void => {
     if (isOurPage(url)) return
     event.preventDefault()
     if (isAllowedExternalUrl(url)) void shell.openExternal(url)
-  })
+  }
+  win.webContents.on('will-navigate', block)
+  win.webContents.on('will-redirect', block)
+  win.webContents.on('will-frame-navigate', (details) => block(details, details.url))
   win.webContents.on('will-attach-webview', (event) => event.preventDefault())
 
   if (DEV_URL) void win.loadURL(DEV_URL)
-  else void win.loadFile(path.join(__dirname, '../renderer/index.html'))
+  else void win.loadFile(PAGE.indexHtml)
   return win
 }
 
@@ -116,6 +116,20 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('window-all-closed', () => app.quit())
 
+  // Quitting with a job running: stop it and wait for its rollback first, so the quit (and an
+  // update installed on quit) never lands in the middle of swapping folders.
+  let quitting = false
+  app.on('before-quit', (event) => {
+    if (quitting || !service || service.jobs.active().length === 0) return
+    quitting = true
+    event.preventDefault()
+    log('Quit requested while a job is running: stopping it first.')
+    void service.jobs
+      .cancelAll()
+      .catch((err) => log('Stopping jobs failed:', err))
+      .finally(() => app.quit())
+  })
+
   void app.whenReady().then(() => {
     const dataPath = app.getPath('userData')
     initLog(dataPath)
@@ -123,7 +137,7 @@ if (!app.requestSingleInstanceLock()) {
 
     setUpSession()
     service = new LauncherService({ dataPath, appVersion: app.getVersion(), send: broadcast })
-    registerIpc(service)
+    registerIpc(service, PAGE)
     void service.init()
 
     mainWindow = createWindow()

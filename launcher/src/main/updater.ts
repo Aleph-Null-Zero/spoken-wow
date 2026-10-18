@@ -21,10 +21,6 @@ let last: UpdaterState = { state: 'idle' }
 /** The check in progress was started by the player, not by the launcher on its own. */
 let userTriggered = false
 
-export function updaterState(): UpdaterState {
-  return last
-}
-
 function publish(state: UpdaterState): void {
   last = state
   try {

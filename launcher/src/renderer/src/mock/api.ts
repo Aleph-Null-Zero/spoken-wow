@@ -1,10 +1,10 @@
 // A believable fake LauncherApi, used only when `window.launcher` is missing (a plain browser:
 // `npm run dev:web`). Address options: ?offline=1, ?empty=1 (no games), ?empty=packs (an empty community
-// list), ?readonly=1 (Anniversary is read-only), ?retailonly=1, ?update=1 (a launcher update banner).
+// list), ?readonly=1 (Anniversary is read-only), ?linked=1 (Spoken on Anniversary is a link to a development folder), ?update=1 (a launcher update banner).
 import type { AddGameResult, InstallOptions, LauncherApi, UpdaterState } from '@shared/api'
 import { PRODUCTS, SPOKEN_FOLDERS, productById } from '@shared/products'
 import type { Catalog, CommunityCatalog, CommunityPack, GameInstall, JobProgress, Product, ProductStatus, ReleaseInfo, Settings, Snapshot } from '@shared/types'
-import { DEFAULT_SETTINGS, communityFolder, unsupportedReason } from '@shared/types'
+import { DEFAULT_SETTINGS, communityFolder } from '@shared/types'
 import { compareVersions } from '@shared/version'
 
 const MB = 1024 * 1024
@@ -225,7 +225,7 @@ interface Installed {
 }
 
 const WOW = 'C:\\Program Files (x86)\\World of Warcraft'
-const PICKS = ['D:\\Games\\WoW\\_classic_ptr_', 'C:\\Users\\hello\\Documents']
+const PICKS = ['D:\\Games\\WoW\\_classic_era_', 'C:\\Users\\hello\\Documents']
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
 
 export function createMockApi(): LauncherApi {
@@ -238,10 +238,8 @@ export function createMockApi(): LauncherApi {
     : [
         game(`${WOW}\\_classic_beta_`, '_classic_beta_', 'classic_beta', 'wow_classic_beta', 'WoW: Forever', '1.60.1.70450'),
         game(`${WOW}\\_classic_era_`, '_classic_era_', 'classic_era', 'wow_classic_era', 'WoW: Classic Era', '1.15.8.65301'),
-        { ...game(`${WOW}\\_anniversary_`, '_anniversary_', 'anniversary', 'wow_anniversary', 'WoW: Anniversary', '2.5.5.65340'), writable: !q.has('readonly') },
-        game(`${WOW}\\_retail_`, '_retail_', 'retail', 'wow', 'WoW: Retail', '12.0.1.66102')
+        { ...game(`${WOW}\\_anniversary_`, '_anniversary_', 'anniversary', 'wow_anniversary', 'WoW: Anniversary', '2.5.5.65340'), writable: !q.has('readonly') }
       ]
-  if (q.has('retailonly')) games = games.filter((g) => g.flavor === 'retail')
   const forever = games.find((g) => g.flavor === 'classic_beta')
   const era = games.find((g) => g.flavor === 'classic_era')
   const installs: Record<string, Record<string, Installed>> = {}
@@ -254,6 +252,8 @@ export function createMockApi(): LauncherApi {
     }
   }
   if (era) installs[era.id] = { spoken: { version: '3.5.0', folders: SPOKEN_FOLDERS.filter((f) => f !== 'Spoken_NPCs') } }
+  const anniversary = games.find((g) => g.flavor === 'anniversary')
+  if (anniversary && q.has('linked')) installs[anniversary.id] = { spoken: { version: '3.5.0', folders: [...SPOKEN_FOLDERS], linked: true } }
 
   let settings: Settings = { ...DEFAULT_SETTINGS, lastGameId: forever?.id ?? '' }
   const releases = buildReleases()
@@ -275,6 +275,7 @@ export function createMockApi(): LauncherApi {
   const updaterListeners = new Set<(s: UpdaterState) => void>()
   const running = new Map<string, { timer: number; cancel: () => void }>()
   let seq = 0
+  let cleared = false
   let pick = 0
   const failedOnce = new Set<string>()
 
@@ -400,10 +401,10 @@ export function createMockApi(): LauncherApi {
     },
     async addGame(path): Promise<AddGameResult> {
       await sleep(400)
-      if (!/_(retail|classic\w*)_|AddOns|World of Warcraft|WoW/i.test(path)) {
-        return { error: `${path} does not look like World of Warcraft. Pick the game folder, a _retail_ or _classic_ folder, or an AddOns folder.` }
+      if (!/_(classic_era|anniversary|classic_beta)_|AddOns|World of Warcraft|WoW/i.test(path)) {
+        return { error: `${path} does not look like a game Spoken runs on. Pick the game folder, a _classic_era_, _anniversary_ or _classic_beta_ folder, or an AddOns folder.` }
       }
-      const added = { ...game(path, '_classic_ptr_', 'classic_ptr', 'wow_classic_ptr', 'WoW: Classic PTR', '1.60.1.70512'), source: 'manual' as const }
+      const added = { ...game(path, '_classic_era_', 'classic_era', 'wow_classic_era', 'WoW: Classic Era', '1.15.8.65301'), source: 'manual' as const }
       if (!games.some((g) => g.id === added.id)) games = [...games, added]
       gameListeners.forEach((l) => l(games))
       return { game: added }
@@ -428,13 +429,13 @@ export function createMockApi(): LauncherApi {
     },
     async install(gameId, productId, options?: InstallOptions) {
       const g = find(gameId)
-      const refused = unsupportedReason(g)
-      if (refused) throw new Error(refused)
       if (!g.writable) throw new Error('This folder is read-only for your account.')
       const p = productFor(productId)
       if (!p) throw new Error(`Unknown product ${productId}`)
       if (installs[g.id]?.[p.id]?.linked) throw new Error(`${p.title} on ${g.label} is a link to a development folder, so it was left alone.`)
-      const rel = options?.version ? releases[p.id]?.find((r) => r.version === options.version) : releasesFor(p.id)[0]
+      const kept = installs[g.id]?.[p.id]?.version
+      const wanted = options?.repair ? kept : options?.version
+      const rel = wanted ? releases[p.id]?.find((r) => r.version === wanted) ?? releasesFor(p.id)[0] : releasesFor(p.id)[0]
       if (!rel) throw new Error(`There is no release of ${p.title} to install yet.`)
       return run(g, p, 'install', rel)
     },
@@ -448,10 +449,8 @@ export function createMockApi(): LauncherApi {
     async cancel(jobId) {
       running.get(jobId)?.cancel()
     },
-    async getSettings() {
-      return settings
-    },
     async setSettings(patch) {
+      if (patch.downloadsPath && /[<>"|?*]/.test(patch.downloadsPath)) throw new Error('That folder name has characters Windows does not allow. Pick another folder.')
       settings = { ...settings, ...patch }
       return settings
     },
@@ -467,6 +466,18 @@ export function createMockApi(): LauncherApi {
     },
     async openLogs() {
       console.info('[mock] openLogs')
+    },
+    async checkLauncherUpdate() {
+      const emit = (s: UpdaterState): void => updaterListeners.forEach((l) => l(s))
+      emit({ state: 'checking' })
+      await sleep(900)
+      emit(offline ? { state: 'error', message: "Can't reach GitHub to look for a new launcher." } : q.has('update') ? { state: 'available', version: '0.2.0' } : { state: 'idle' })
+    },
+    async clearDownloads() {
+      await sleep(300)
+      const out = cleared ? { files: 0, bytes: 0 } : { files: 3, bytes: 2.1 * 1024 * MB }
+      cleared = true
+      return out
     },
     onJob(l) {
       jobListeners.add(l)

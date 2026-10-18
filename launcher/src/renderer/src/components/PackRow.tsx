@@ -96,6 +96,11 @@ export function PackRow({ gameId, productId, writable, blockedReason, released, 
           </button>
         )}
         {present && (
+          <button type="button" className="btn btn-sm" disabled={!!reason} onClick={() => void actions.repair(gameId, productId)}>
+            {S.common.repair}
+          </button>
+        )}
+        {present && (
           <button type="button" className="btn btn-sm" disabled={!!reason} onClick={() => setConfirm(true)}>
             {S.common.remove}
           </button>

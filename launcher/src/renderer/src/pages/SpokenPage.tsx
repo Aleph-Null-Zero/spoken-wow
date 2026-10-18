@@ -3,12 +3,11 @@ import type { GameInstall, ReleaseInfo } from '@shared/types'
 import { compareVersions } from '@shared/version'
 import { api } from '../api'
 import { jobBusy, releasesFor, statusOf } from '../catalog'
+import { Wordmark } from '../components/Brand'
 import { CopyText, Menu, Select } from '../components/Controls'
 import { NoGame } from '../components/EmptyGames'
-import { GameSelect } from '../components/GameSelect'
 import { IconAlert, IconCheck, IconExternal, IconFolder, IconGear, IconLink, IconRefresh, IconX } from '../components/Icons'
 import { JobBar } from '../components/JobBar'
-import { MiniPoster } from '../components/Poster'
 import { SpokenStatus } from '../components/SpokenStatus'
 import { formatDate } from '../format'
 import { Markdown } from '../markdown'
@@ -57,16 +56,18 @@ function SpokenFor({ game }: { game: GameInstall }): ReactNode {
           : S.spoken.installVersion(selected)
 
   const run = (version?: string): void => void actions.install(game.id, 'spoken', version && version !== latest?.version ? version : undefined)
-  const repair = (): void => run(installed && releases.some((r) => r.version === installed) ? installed : undefined)
+  const repair = (): void => void actions.repair(game.id, 'spoken')
   const tab = state.spokenTab
   const setTab = (t: SpokenTab): void => actions.navigate('spoken', game.id, t)
 
   return (
-    <div className="page spoken">
-      <aside className="rail" aria-label="Spoken on this game">
-        <MiniPoster flavor={game.flavor} label={game.label} version={game.gameVersion} />
-        <div className="rail-body">
-          <GameSelect />
+    <div className="frame">
+      <aside className="rail scroll" aria-label="Spoken on this game">
+        <div className="rail-top">
+          <Wordmark flavor={game.flavor} />
+          <p className="rail-game">{game.gameVersion ? `${game.label} · ${game.gameVersion}` : game.label}</p>
+        </div>
+        <div className="rail-bottom">
           <Select label={S.spoken.channel} value={selected} onChange={setPicked} disabled={releases.length === 0}>
             {versionOptions.length === 0 && <option value="">{S.spoken.noRelease}</option>}
             {versionOptions.map((o) => (
@@ -76,15 +77,13 @@ function SpokenFor({ game }: { game: GameInstall }): ReactNode {
             ))}
           </Select>
 
-          <SpokenStatus status={status} />
-
           {busy ? (
             <JobBar job={job} size="lg" onCancel={() => actions.cancel(job.jobId)} />
           ) : (
             <div className="install-row">
               <button
                 type="button"
-                className="btn btn-primary btn-lg btn-block"
+                className="btn btn-primary btn-play"
                 disabled={linked || !selected || !game.writable}
                 onClick={() => run(selected)}
               >
@@ -103,7 +102,14 @@ function SpokenFor({ game }: { game: GameInstall }): ReactNode {
             </div>
           )}
 
-          {!game.writable && <p className="status status-error"><IconAlert size={15} />{S.common.readOnly}</p>}
+          <SpokenStatus status={status} />
+
+          {!game.writable && (
+            <p className="status status-error">
+              <IconAlert size={14} />
+              {S.common.readOnly}
+            </p>
+          )}
 
           {confirmRemove && !busy && (
             <div className="confirm" role="alertdialog" aria-label={S.spoken.removeItem}>
@@ -154,23 +160,36 @@ function SpokenFor({ game }: { game: GameInstall }): ReactNode {
         </div>
       </aside>
 
-      <section className="spoken-main">
-        <div className="subtabs" role="tablist" aria-label="Spoken">
-          {(['modules', 'changelog'] as const).map((t) => (
-            <button key={t} type="button" role="tab" id={`tab-${t}`} aria-selected={tab === t} aria-controls={`panel-${t}`} className="subtab" onClick={() => setTab(t)}>
-              {t === 'modules' ? S.spoken.tabModules : S.spoken.tabChangelog}
+      <section className="center scroll">
+        <div className="center-inner">
+          <div className="pill-row pill-row-end">
+            <button type="button" className="pill pill-action" onClick={() => void api().openPath(game.addOnsPath)}>
+              <IconFolder size={14} />
+              {S.spoken.openAddOns}
             </button>
-          ))}
+            <button type="button" className="pill pill-action" onClick={() => void api().openExternal(latest?.htmlUrl ?? REPO_URL)}>
+              <IconExternal size={14} />
+              {S.spoken.github}
+            </button>
+          </div>
+
+          <div className="subtabs" role="tablist" aria-label="Spoken">
+            {(['modules', 'changelog'] as const).map((t) => (
+              <button key={t} type="button" role="tab" id={`tab-${t}`} aria-selected={tab === t} aria-controls={`panel-${t}`} className="subtab" onClick={() => setTab(t)}>
+                {t === 'modules' ? S.spoken.tabModules : S.spoken.tabChangelog}
+              </button>
+            ))}
+          </div>
+          {tab === 'modules' ? (
+            <div role="tabpanel" id="panel-modules" aria-labelledby="tab-modules">
+              <Modules folders={status?.installedFolders ?? []} linked={linked} />
+            </div>
+          ) : (
+            <div role="tabpanel" id="panel-changelog" aria-labelledby="tab-changelog">
+              <Changelog releases={releases} installed={installed} />
+            </div>
+          )}
         </div>
-        {tab === 'modules' ? (
-          <div role="tabpanel" id="panel-modules" aria-labelledby="tab-modules">
-            <Modules folders={status?.installedFolders ?? []} linked={linked} />
-          </div>
-        ) : (
-          <div role="tabpanel" id="panel-changelog" aria-labelledby="tab-changelog">
-            <Changelog releases={releases} installed={installed} />
-          </div>
-        )}
       </section>
     </div>
   )

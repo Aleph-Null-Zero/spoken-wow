@@ -1,7 +1,7 @@
 // What is installed for each product on one game, and how it compares with the catalog.
 import fs from 'node:fs'
 import path from 'node:path'
-import { unsupportedReason, type Catalog, type GameInstall, type InstallState, type Product, type ProductStatus, type Settings } from '../shared/types'
+import type { Catalog, GameInstall, InstallState, Product, ProductStatus, Settings } from '../shared/types'
 import { PRODUCTS } from '../shared/products'
 import { compareVersions } from '../shared/version'
 import { latestFor } from './catalog'
@@ -42,24 +42,8 @@ export async function computeStatuses(
   products: readonly Product[] = PRODUCTS
 ): Promise<ProductStatus[]> {
   const out: ProductStatus[] = []
-  const unsupported = unsupportedReason(game)
   for (const product of products) {
     const hasReleases = (catalog.releases[product.id]?.length ?? 0) > 0
-
-    // A game Spoken does not run on: nothing is installed there and nothing may be.
-    if (unsupported) {
-      if (!hasReleases) continue
-      const latest = latestFor(catalog, product.id, settings.includePrereleases || product.kind === 'community')
-      out.push({
-        gameId: game.id,
-        productId: product.id,
-        state: 'not-installed',
-        installedFolders: [],
-        ...(latest ? { latest } : {}),
-        blockedReason: unsupported
-      })
-      continue
-    }
 
     const installedFolders: string[] = []
     for (const folder of allowedFolders(product)) {

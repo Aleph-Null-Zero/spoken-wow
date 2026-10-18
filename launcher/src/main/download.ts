@@ -46,7 +46,7 @@ function wantedHash(digest: string | undefined): string | null {
   return m ? m[1]!.toLowerCase() : null
 }
 
-export async function sha256OfFile(file: string, signal?: AbortSignal): Promise<string> {
+async function sha256OfFile(file: string, signal?: AbortSignal): Promise<string> {
   const hash = createHash('sha256')
   const stream = fs.createReadStream(file, { highWaterMark: 1024 * 1024 })
   try {
@@ -73,6 +73,36 @@ async function removeQuiet(file: string): Promise<void> {
 }
 
 class Retryable extends Error {}
+
+/** What the server said identifies the file, saved beside the `.part` so a resume can prove it is the same file. */
+interface Validator {
+  etag?: string
+  lastModified?: string
+}
+
+function metaOf(part: string): string {
+  return `${part}.meta`
+}
+
+function readValidator(part: string): Validator | null {
+  try {
+    const v = JSON.parse(fs.readFileSync(metaOf(part), 'utf8')) as Validator
+    return v && typeof v === 'object' ? v : null
+  } catch {
+    return null
+  }
+}
+
+/** The `If-Range` value: a strong ETag, else the date. Weak ETags are not allowed there. */
+function ifRangeOf(v: Validator): string | null {
+  if (v.etag && !v.etag.startsWith('W/')) return v.etag
+  return v.lastModified ?? null
+}
+
+async function removePart(part: string): Promise<void> {
+  await removeQuiet(part)
+  await removeQuiet(metaOf(part))
+}
 
 /** Checks a finished file; deletes it and throws in plain words when it is wrong. */
 async function verifyFile(file: string, opts: DownloadOptions, hash: Hash | null): Promise<void> {
@@ -138,9 +168,16 @@ export async function downloadAsset(opts: DownloadOptions): Promise<DownloadResu
 
   async function attemptOnce(): Promise<void> {
     let existing = await sizeOf(part)
-    if (opts.expectedSize > 0 && existing > opts.expectedSize) {
-      await removeQuiet(part)
+    let saved = existing > 0 ? readValidator(part) : null
+    // A part with no record beside it cannot be shown to belong to this file: start again.
+    if (existing > 0 && !saved) {
+      await removePart(part)
       existing = 0
+    }
+    if (opts.expectedSize > 0 && existing > opts.expectedSize) {
+      await removePart(part)
+      existing = 0
+      saved = null
     }
 
     if (opts.expectedSize > 0 && existing === opts.expectedSize) {
@@ -152,7 +189,12 @@ export async function downloadAsset(opts: DownloadOptions): Promise<DownloadResu
       'User-Agent': opts.userAgent ?? 'SpokenLauncher',
       Accept: 'application/octet-stream'
     }
-    if (existing > 0) headers.Range = `bytes=${existing}-`
+    if (existing > 0) {
+      headers.Range = `bytes=${existing}-`
+      // Only if it is still the same file; otherwise the server sends 200 and the download starts again.
+      const ifRange = ifRangeOf(saved ?? {})
+      if (ifRange) headers['If-Range'] = ifRange
+    }
 
     let res: Response
     try {
@@ -168,7 +210,7 @@ export async function downloadAsset(opts: DownloadOptions): Promise<DownloadResu
         await finish(null)
         return
       }
-      await removeQuiet(part)
+      await removePart(part)
       throw new Retryable('the server did not accept the resume request')
     }
     if (res.status >= 500 || res.status === 429) {
@@ -191,7 +233,7 @@ export async function downloadAsset(opts: DownloadOptions): Promise<DownloadResu
       const m = /^bytes (\d+)-/.exec(res.headers.get('content-range') ?? '')
       if (!m || Number(m[1]) !== existing) {
         await res.body.cancel().catch(() => undefined)
-        await removeQuiet(part)
+        await removePart(part)
         throw new Retryable('the server resumed at the wrong place')
       }
       if (existing === 0) hash = createHash('sha256')
@@ -200,6 +242,17 @@ export async function downloadAsset(opts: DownloadOptions): Promise<DownloadResu
       flags = 'w'
       existing = 0
       hash = createHash('sha256')
+    }
+
+    // Remember what identifies this file, for the next resume.
+    const base = res.status === 206 ? saved : null
+    const etag = res.headers.get('etag') ?? base?.etag
+    const lastModified = res.headers.get('last-modified') ?? base?.lastModified
+    const fresh: Validator = { ...(etag ? { etag } : {}), ...(lastModified ? { lastModified } : {}) }
+    try {
+      await fs.promises.writeFile(metaOf(part), JSON.stringify(fresh), 'utf8')
+    } catch (err) {
+      log('Could not save the download record:', err)
     }
 
     const lengthHeader = Number(res.headers.get('content-length'))
@@ -264,7 +317,13 @@ export async function downloadAsset(opts: DownloadOptions): Promise<DownloadResu
   }
 
   async function finish(hash: Hash | null): Promise<void> {
-    await verifyFile(part, opts, hash)
+    try {
+      await verifyFile(part, opts, hash)
+    } catch (err) {
+      if (!isAbortError(err)) await removeQuiet(metaOf(part))
+      throw err
+    }
     await fs.promises.rename(part, zip)
+    await removeQuiet(metaOf(part))
   }
 }

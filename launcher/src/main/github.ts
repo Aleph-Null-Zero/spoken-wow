@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { log, readJsonFile, writeJsonAtomic } from './state'
 
-export const REPO = 'rusty-key/spoken-wow'
+const REPO = 'rusty-key/spoken-wow'
 const PER_PAGE = 100
 const MAX_PAGES = 5
 
@@ -104,7 +104,7 @@ class PageFailure extends Error {
   }
 }
 
-async function fetchPage(opts: FetchReleasesOptions, page: number): Promise<{ body: unknown[]; fresh: boolean }> {
+async function fetchPage(opts: FetchReleasesOptions, page: number): Promise<unknown[]> {
   const doFetch = opts.fetchImpl ?? fetch
   const cached = loadPage(opts.dataPath, page)
   const headers: Record<string, string> = {
@@ -122,7 +122,7 @@ async function fetchPage(opts: FetchReleasesOptions, page: number): Promise<{ bo
     throw new PageFailure(`Could not reach GitHub (${err instanceof Error ? err.message : String(err)}).`, false)
   }
 
-  if (res.status === 304 && cached) return { body: cached.body, fresh: true }
+  if (res.status === 304 && cached) return cached.body
   if (isRateLimited(res)) {
     throw new PageFailure(`GitHub is limiting how often this computer may ask for updates.${resetTime(res.headers)}`, true)
   }
@@ -143,7 +143,7 @@ async function fetchPage(opts: FetchReleasesOptions, page: number): Promise<{ bo
       log('Could not write the GitHub cache:', err)
     }
   }
-  return { body, fresh: true }
+  return body
 }
 
 /** The release list. On any failure the cached list comes back with `offline: true` and the reason. */
@@ -151,7 +151,7 @@ export async function fetchReleases(opts: FetchReleasesOptions): Promise<Release
   const all: GithubRelease[] = []
   try {
     for (let page = 1; page <= MAX_PAGES; page++) {
-      const { body } = await fetchPage(opts, page)
+      const body = await fetchPage(opts, page)
       all.push(...(body as GithubRelease[]))
       if (body.length < PER_PAGE) break
     }

@@ -1,63 +1,40 @@
 // Finds World of Warcraft installs: the registry, Battle.net's product list, the usual folders,
-// and folders the player added by hand. One GameInstall per flavor folder.
+// and folders the player added by hand. One GameInstall per flavor folder, and only for the game
+// versions Spoken runs on (SUPPORTED_FLAVORS): Retail, Classic and the PTRs and betas never appear.
 import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import type { Flavor, GameInstall } from '../shared/types'
+import { SUPPORTED_FLAVORS, type Flavor, type GameInstall } from '../shared/types'
 import { canWriteQuick } from './guard'
 import { loadState, log, updateState } from './state'
 
 // ---------------------------------------------------------------- tables
 
-/** Flavor folder name (lower case) -> flavor, in the order installs are listed. */
-const FLAVOR_FOLDERS: [string, Flavor][] = [
-  ['_retail_', 'retail'],
-  ['_classic_', 'classic'],
-  ['_classic_era_', 'classic_era'],
-  ['_anniversary_', 'anniversary'],
-  ['_classic_ptr_', 'classic_ptr'],
-  ['_classic_beta_', 'classic_beta'],
-  ['_xptr_', 'xptr'],
-  ['_ptr_', 'ptr'],
-  ['_beta_', 'beta']
-]
-
+/** `_classic_beta_` -> `classic_beta`; null for anything that is not a game version Spoken runs on. */
 export function flavorOfFolder(name: string): Flavor | null {
   const lower = name.toLowerCase()
-  return FLAVOR_FOLDERS.find(([n]) => n === lower)?.[1] ?? null
+  return SUPPORTED_FLAVORS.find((f) => `_${f}_` === lower) ?? null
 }
 
-/** The product code Blizzard uses for each flavor, for when no `.flavor.info` says. */
-const DEFAULT_PRODUCT: Record<Flavor, string> = {
-  retail: 'wow',
-  classic: 'wow_classic',
-  classic_era: 'wow_classic_era',
-  anniversary: 'wow_anniversary',
-  classic_ptr: 'wow_classic_ptr',
-  classic_beta: 'wow_classic_beta',
-  xptr: 'wowxptr',
-  ptr: 'wowt',
-  beta: 'wow_beta',
-  unknown: ''
+/** Any Blizzard flavor folder, supported or not: `_retail_`, `_classic_ptr_`, ... */
+function isFlavorFolderName(name: string): boolean {
+  return /^_[a-z0-9_]+_$/i.test(name)
 }
 
-const LABELS: Record<string, string> = {
-  wow_classic_beta: 'WoW: Forever',
-  wow_classic_era: 'WoW: Classic Era',
-  wow_anniversary: 'WoW: Anniversary',
-  wow_classic: 'WoW: Classic',
-  wow: 'WoW: Retail',
-  wow_classic_ptr: 'WoW: Classic PTR',
-  wow_classic_era_ptr: 'WoW: Classic PTR',
-  wow_ptr: 'WoW: Retail PTR',
-  wowt: 'WoW: Retail PTR',
-  wowxptr: 'WoW: Retail PTR',
-  wow_beta: 'WoW: Beta'
+const LABELS: Record<Flavor, string> = {
+  classic_beta: 'WoW: Forever',
+  classic_era: 'WoW: Classic Era',
+  anniversary: 'WoW: Anniversary'
 }
 
-export function labelFor(product: string): string {
-  return LABELS[product.toLowerCase()] ?? 'WoW'
+export function labelFor(flavor: Flavor): string {
+  return LABELS[flavor]
+}
+
+/** What to tell a player who picked a game Spoken does not run on. */
+export function notSupportedMessage(folder: string): string {
+  return `Spoken runs on WoW: Forever, Classic Era and Anniversary. ${folder} is not one of them.`
 }
 
 /** First 12 hex digits of sha1 of the lower-cased root. */
@@ -126,7 +103,7 @@ async function names(p: string): Promise<string[] | null> {
 
 // ---------------------------------------------------------------- one flavor folder
 
-/** A GameInstall for a flavor folder, or null when it holds no Interface or WTF folder and no Wow*.exe. */
+/** A GameInstall for a flavor folder, or null when it is not one of the supported ones or holds no Interface or WTF folder and no Wow*.exe. */
 export async function describeFlavorFolder(flavorPath: string, source: 'auto' | 'manual'): Promise<GameInstall | null> {
   const root = path.resolve(flavorPath)
   const entries = await names(root)
@@ -135,15 +112,16 @@ export async function describeFlavorFolder(flavorPath: string, source: 'auto' | 
   if (!holdsGame) return null
 
   const flavorFolder = path.basename(root)
-  const flavor = flavorOfFolder(flavorFolder) ?? 'unknown'
+  const flavor = flavorOfFolder(flavorFolder)
+  if (!flavor) return null
 
   const fromFlavorFile = parseFlavorInfo((await readText(path.join(root, '.flavor.info'))) ?? '')
-  const product = fromFlavorFile ?? DEFAULT_PRODUCT[flavor]
+  const product = fromFlavorFile ?? `wow_${flavor}`
 
   let gameVersion: string | undefined
   const buildText =
     (await readText(path.join(path.dirname(root), '.build.info'))) ?? (await readText(path.join(root, '.build.info')))
-  if (buildText && product) {
+  if (buildText) {
     const row = parseBuildInfo(buildText).find((r) => r.Product?.toLowerCase() === product.toLowerCase())
     if (row?.Version) gameVersion = row.Version
   }
@@ -156,19 +134,20 @@ export async function describeFlavorFolder(flavorPath: string, source: 'auto' | 
     flavorFolder,
     flavor,
     product,
-    label: labelFor(product),
+    label: labelFor(flavor),
     ...(gameVersion ? { gameVersion } : {}),
     source,
     writable: await canWriteQuick(addOnsPath)
   }
 }
 
-export const NOT_WOW_MESSAGE =
-  'This does not look like a World of Warcraft folder. Choose the game folder (the one that holds _retail_ or _classic_), a game version folder such as _retail_, or its Interface\\AddOns folder.'
+const NOT_WOW_MESSAGE =
+  'This does not look like a World of Warcraft folder. Choose the game folder (the one that holds _classic_beta_, _classic_era_ or _anniversary_), one of those folders, or its Interface\\AddOns folder.'
 
 /**
  * Turns a folder the player (or the registry) named into flavor folders: a game folder gives
- * every flavor it holds, a flavor folder or an AddOns folder gives that one.
+ * every supported flavor it holds, a flavor folder or an AddOns folder gives that one. A flavor
+ * folder of a game Spoken does not run on is refused in plain words.
  */
 export async function resolveGamePath(input: string, source: 'auto' | 'manual'): Promise<{ games: GameInstall[]; error?: string }> {
   const cleaned = typeof input === 'string' ? input.trim().replace(/^"(.*)"$/, '$1') : ''
@@ -176,23 +155,33 @@ export async function resolveGamePath(input: string, source: 'auto' | 'manual'):
   const abs = path.resolve(cleaned)
   if (!(await isDir(abs))) return { games: [], error: 'That folder does not exist.' }
 
-  const base = path.basename(abs).toLowerCase()
+  const base = path.basename(abs)
   const parent = path.dirname(abs)
+  let flavorFolder: string | null = null
   let candidates: string[] = []
 
-  if (base === 'addons' && path.basename(parent).toLowerCase() === 'interface') {
-    candidates = [path.dirname(parent)]
-  } else if (base === 'interface') {
-    candidates = [parent]
-  } else if (flavorOfFolder(base)) {
-    candidates = [abs]
+  if (base.toLowerCase() === 'addons' && path.basename(parent).toLowerCase() === 'interface') {
+    flavorFolder = path.dirname(parent)
+  } else if (base.toLowerCase() === 'interface') {
+    flavorFolder = parent
+  } else if (isFlavorFolderName(base)) {
+    flavorFolder = abs
+  }
+
+  if (flavorFolder) {
+    const name = path.basename(flavorFolder)
+    if (!flavorOfFolder(name)) return { games: [], error: isFlavorFolderName(name) ? notSupportedMessage(name) : NOT_WOW_MESSAGE }
+    candidates = [flavorFolder]
   } else {
     const entries = (await names(abs)) ?? []
-    for (const [folder] of FLAVOR_FOLDERS) {
-      const real = entries.find((n) => n.toLowerCase() === folder)
+    for (const f of SUPPORTED_FLAVORS) {
+      const real = entries.find((n) => n.toLowerCase() === `_${f}_`)
       if (real) candidates.push(path.join(abs, real))
     }
-    if (candidates.length === 0 && entries.some((n) => n.toLowerCase() === 'interface')) candidates = [abs]
+    if (candidates.length === 0) {
+      const other = entries.find((n) => isFlavorFolderName(n))
+      return { games: [], error: other ? notSupportedMessage(other) : NOT_WOW_MESSAGE }
+    }
   }
 
   const games: GameInstall[] = []
@@ -283,7 +272,7 @@ async function fixedDrives(): Promise<string[]> {
 }
 
 /** Every folder worth looking in: registry, Battle.net, default roots, each fixed drive. */
-export async function findCandidatePaths(): Promise<string[]> {
+async function findCandidatePaths(): Promise<string[]> {
   const out: string[] = []
   out.push(...(await registryPaths()))
   out.push(...(await battleNetPaths()))
@@ -315,7 +304,15 @@ export interface ScanOptions {
 
 /** Auto-found installs (minus the ones the player removed), then the manual ones. */
 export async function scanGames(dataPath: string, options: ScanOptions = {}): Promise<GameInstall[]> {
-  const state = loadState(dataPath)
+  let state = loadState(dataPath)
+  // A game saved by an earlier run that Spoken does not run on is forgotten (nothing on disk is touched).
+  const keep = state.manualGames.filter((p) => flavorOfFolder(path.basename(p)) !== null || !isFlavorFolderName(path.basename(p)))
+  if (keep.length !== state.manualGames.length) {
+    log(`Forgot ${state.manualGames.length - keep.length} saved game folder(s) that Spoken does not run on.`)
+    state = updateState(dataPath, (st) => {
+      st.manualGames = keep
+    })
+  }
   const hidden = new Set(state.hiddenGames)
   const found = new Map<string, GameInstall>()
   const candidates = options.autoPaths ?? (await findCandidatePaths())

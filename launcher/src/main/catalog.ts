@@ -50,7 +50,7 @@ function toInfo(release: GithubRelease, product: Product): ReleaseInfo | null {
 }
 
 /** Newest first; at equal versions a stable release comes before a pre-release, then the later date. */
-export function compareReleases(a: ReleaseInfo, b: ReleaseInfo): number {
+function compareReleases(a: ReleaseInfo, b: ReleaseInfo): number {
   const v = compareVersions(b.version, a.version) ?? 0
   if (v !== 0) return v
   if (a.prerelease !== b.prerelease) return a.prerelease ? 1 : -1
@@ -85,7 +85,7 @@ export function latestFor(catalog: Catalog, productId: string, includePrerelease
   return list.find((r) => includePrereleases || !(r.prerelease || isPrerelease(r.version)))
 }
 
-export function catalogFile(dataPath: string): string {
+function catalogFile(dataPath: string): string {
   return path.join(dataPath, 'catalog.json')
 }
 

@@ -1,7 +1,7 @@
 // Runs install and uninstall jobs: one at a time per game folder, the rest wait in a queue.
 import { randomUUID } from 'node:crypto'
 import type { JobProgress } from '../shared/types'
-import { isAbortError, plainMessage } from './errors'
+import { isAbortError, plainMessage, PlainError } from './errors'
 import { log } from './state'
 
 export interface JobSpec {
@@ -20,19 +20,16 @@ interface Job {
   state: 'queued' | 'running' | 'finished'
 }
 
-const KEEP_MS = 10 * 60 * 1000
-
 export class JobManager {
   private queues = new Map<string, Job[]>()
   private running = new Set<string>()
   private jobs = new Map<string, Job>()
-  private last = new Map<string, { progress: JobProgress; at: number }>()
+  private waiters: (() => void)[] = []
 
   constructor(private broadcast: (p: JobProgress) => void) {}
 
   /** Queues a job and returns its id. The same product on the same game while one is waiting or running gives that job's id. */
   enqueue(spec: JobSpec): string {
-    this.prune()
     for (const j of this.jobs.values()) {
       if (
         j.state !== 'finished' &&
@@ -64,16 +61,25 @@ export class JobManager {
         q.filter((j) => j !== job)
       )
       job.state = 'finished'
+      this.jobs.delete(job.id)
       this.publish(job, 'cancelled', 'Cancelled.')
+      this.settle()
       return true
     }
     job.controller.abort()
     return true
   }
 
-  /** The newest progress event of a job, for a while after it ends. */
-  lastProgress(jobId: string): JobProgress | undefined {
-    return this.last.get(jobId)?.progress
+  /** Stops every job (queued ones are dropped, running ones roll back) and resolves when all have ended. */
+  async cancelAll(): Promise<void> {
+    for (const id of this.active()) this.cancel(id)
+    if (this.jobs.size === 0) return
+    await new Promise<void>((resolve) => this.waiters.push(resolve))
+  }
+
+  private settle(): void {
+    if (this.jobs.size > 0) return
+    for (const resolve of this.waiters.splice(0)) resolve()
   }
 
   /** Jobs that are waiting or running. */
@@ -97,7 +103,6 @@ export class JobManager {
   }
 
   private emit(job: Job, progress: JobProgress): void {
-    this.last.set(job.id, { progress, at: Date.now() })
     try {
       this.broadcast(progress)
     } catch (err) {
@@ -118,13 +123,19 @@ export class JobManager {
         jobId: job.id,
         signal: job.controller.signal,
         emit: (p) => {
-          if (p.phase === 'done') ended = true
+          if (p.phase === 'done') {
+            // Over from here on: a new request for the same thing is a new job, not this one.
+            ended = true
+            job.state = 'finished'
+            this.jobs.delete(job.id)
+          }
           this.emit(job, p)
         }
       })
       if (!ended) this.publish(job, 'done')
     } catch (err) {
-      if (isAbortError(err) || job.controller.signal.aborted) {
+      // A plain error wins over a cancel: a cancelled install whose rollback failed must say so.
+      if (!(err instanceof PlainError) && (isAbortError(err) || job.controller.signal.aborted)) {
         this.publish(job, 'cancelled', 'Cancelled.')
       } else {
         log(`Job ${job.spec.action} ${job.spec.productId} failed:`, err)
@@ -132,18 +143,10 @@ export class JobManager {
       }
     } finally {
       job.state = 'finished'
+      this.jobs.delete(job.id)
       this.running.delete(gameId)
+      this.settle()
       void this.pump(gameId)
-    }
-  }
-
-  private prune(): void {
-    const now = Date.now()
-    for (const [id, v] of this.last) {
-      if (now - v.at > KEEP_MS && this.jobs.get(id)?.state === 'finished') {
-        this.last.delete(id)
-        this.jobs.delete(id)
-      }
     }
   }
 }

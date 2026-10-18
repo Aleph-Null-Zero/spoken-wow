@@ -124,7 +124,7 @@ describe('installProduct: success', () => {
     const zip = await yazlZip(spokenEntries('3.5.0'))
     const rel = release('spoken', '3.5.0', zip, await serveZip(zip))
     await installProduct(env.game, productById('spoken')!, rel, ctx(env, { keepDownloads: true }))
-    expect(fs.readdirSync(env.downloads)).toEqual(['spoken-3.5.0.zip'])
+    expect(fs.readdirSync(env.downloads)).toEqual([`${env.game.id}-spoken-3.5.0.zip`])
   })
 
   it('installs a voice pack bundle with exactly its folders', async () => {
@@ -403,7 +403,7 @@ describe('installProduct: rollback', () => {
     })
     const err = await installProduct(env.game, productById('spoken')!, rel, c).catch((e) => e)
     expect(err).toBeInstanceOf(PlainError)
-    expect(err.message).toMatch(/could not be put back/)
+    expect(err.message).toMatch(/could not put back Spoken/)
     expect(err.message).toContain(backupDirFor(env.game, 'spoken'))
     expect(fs.readFileSync(path.join(backupDirFor(env.game, 'spoken'), 'Spoken', 'Spoken.toc'), 'utf8')).toContain('3.4.0')
   })

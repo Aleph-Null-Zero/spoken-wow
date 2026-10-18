@@ -12,8 +12,7 @@ import {
   isInside,
   isLinked,
   isWowProcess,
-  parseTasklist,
-  refuseLinked
+  parseTasklist
 } from '../src/main/guard'
 import { tmpDir, write } from './helpers'
 
@@ -96,14 +95,6 @@ describe('isLinked', () => {
     expect(await isLinked(link)).toBe(true)
     // `inner` is a plain folder that happens to be reached through a junction: it is not itself linked.
     expect(await isLinked(path.join(link, 'inner'))).toBe(false)
-  })
-
-  it('refuseLinked throws in plain words', async () => {
-    const dir = tmpDir()
-    const target = path.join(dir, 't')
-    fs.mkdirSync(target)
-    fs.symlinkSync(target, path.join(dir, 'Spoken'), 'junction')
-    await expect(refuseLinked(path.join(dir, 'Spoken'))).rejects.toThrow(/linked to a development checkout/)
   })
 })
 

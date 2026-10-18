@@ -44,6 +44,8 @@ export function sha256(data: Buffer): string {
 export interface ZipEntry {
   name: string
   data?: string | Buffer
+  /** What the table of contents claims the file unpacks to (rawZip only), to test limits without making big files. */
+  declaredSize?: number
 }
 
 /** A normal zip (deflated) made with yazl. */
@@ -80,7 +82,7 @@ export function rawZip(entries: ZipEntry[]): Buffer {
     local.writeUInt16LE(0x21, 12)
     local.writeUInt32LE(crc, 14)
     local.writeUInt32LE(data.length, 18)
-    local.writeUInt32LE(data.length, 22)
+    local.writeUInt32LE(e.declaredSize ?? data.length, 22)
     local.writeUInt16LE(name.length, 26)
     local.writeUInt16LE(0, 28)
     locals.push(local, name, data)
@@ -94,8 +96,8 @@ export function rawZip(entries: ZipEntry[]): Buffer {
     central.writeUInt16LE(0, 12)
     central.writeUInt16LE(0x21, 14)
     central.writeUInt32LE(crc, 16)
-    central.writeUInt32LE(data.length, 20)
-    central.writeUInt32LE(data.length, 24)
+    central.writeUInt32LE(e.declaredSize ?? data.length, 20)
+    central.writeUInt32LE(e.declaredSize ?? data.length, 24)
     central.writeUInt16LE(name.length, 28)
     central.writeUInt16LE(0, 30)
     central.writeUInt16LE(0, 32)
@@ -119,10 +121,10 @@ export function rawZip(entries: ZipEntry[]): Buffer {
 // ---------------------------------------------------------------- a fake WoW install
 
 /** `<tmp>/World of Warcraft/<flavorFolder>` with Interface\AddOns and WTF, plus Blizzard's info files. */
-export async function makeGame(
+export function makeGameFolders(
   base: string,
   options: { flavorFolder?: string; product?: string; version?: string } = {}
-): Promise<GameInstall> {
+): string {
   const flavorFolder = options.flavorFolder ?? '_classic_beta_'
   const product = options.product ?? 'wow_classic_beta'
   const gameRoot = path.join(base, 'World of Warcraft')
@@ -135,7 +137,14 @@ export async function makeGame(
     `Branch!STRING:0|Active!DEC:1|Build Key!HEX:16|Version!STRING:0|Product!STRING:0\n` +
       `us|1|abc|${options.version ?? '1.60.1.70450'}|${product}\n`
   )
-  const game = await describeFlavorFolder(flavor, 'manual')
+  return flavor
+}
+
+export async function makeGame(
+  base: string,
+  options: { flavorFolder?: string; product?: string; version?: string } = {}
+): Promise<GameInstall> {
+  const game = await describeFlavorFolder(makeGameFolders(base, options), 'manual')
   if (!game) throw new Error('fixture game not recognised')
   return game
 }
@@ -152,7 +161,7 @@ export function listDir(dir: string): string[] {
 
 export interface TestServer {
   url: string
-  requests: { url: string; range?: string; userAgent?: string; authorization?: string }[]
+  requests: { url: string; range?: string; ifRange?: string; userAgent?: string; authorization?: string }[]
   close(): Promise<void>
 }
 
@@ -163,6 +172,7 @@ export async function startServer(handler: (req: http.IncomingMessage, res: http
     requests.push({
       url: req.url ?? '',
       ...(req.headers.range ? { range: req.headers.range } : {}),
+      ...(req.headers['if-range'] ? { ifRange: String(req.headers['if-range']) } : {}),
       ...(req.headers['user-agent'] ? { userAgent: req.headers['user-agent'] } : {}),
       ...(req.headers.authorization ? { authorization: req.headers.authorization } : {})
     })
@@ -181,10 +191,13 @@ export async function startServer(handler: (req: http.IncomingMessage, res: http
   }
 }
 
-/** Serves `data` with Range support (206, 416). */
-export function serveBuffer(req: http.IncomingMessage, res: http.ServerResponse, data: Buffer): void {
+/** Serves `data` with Range support (206, 416). With `etag`, sends it and answers 200 to a Range whose If-Range differs. */
+export function serveBuffer(req: http.IncomingMessage, res: http.ServerResponse, data: Buffer, etag?: string): void {
   const m = /^bytes=(\d+)-/.exec(req.headers.range ?? '')
-  if (m) {
+  const ifRange = req.headers['if-range']
+  const sameFile = !etag || ifRange === undefined || ifRange === etag
+  const extra: Record<string, string> = etag ? { ETag: etag } : {}
+  if (m && sameFile) {
     const start = Number(m[1])
     if (start >= data.length) {
       res.writeHead(416, { 'Content-Range': `bytes */${data.length}` })
@@ -194,13 +207,22 @@ export function serveBuffer(req: http.IncomingMessage, res: http.ServerResponse,
     res.writeHead(206, {
       'Content-Length': data.length - start,
       'Content-Range': `bytes ${start}-${data.length - 1}/${data.length}`,
-      'Content-Type': 'application/octet-stream'
+      'Content-Type': 'application/octet-stream',
+      ...extra
     })
     res.end(data.subarray(start))
     return
   }
-  res.writeHead(200, { 'Content-Length': data.length, 'Content-Type': 'application/octet-stream' })
+  res.writeHead(200, { 'Content-Length': data.length, 'Content-Type': 'application/octet-stream', ...extra })
   res.end(data)
+}
+
+/** A half-finished download as the launcher leaves it: the .part and its record of what the server said. */
+export function writePart(dir: string, baseName: string, data: Buffer, validator: { etag?: string; lastModified?: string } = {}): string {
+  const part = path.join(dir, `${baseName}.zip.part`)
+  fs.writeFileSync(part, data)
+  fs.writeFileSync(`${part}.meta`, JSON.stringify(validator))
+  return part
 }
 
 export function release(productId: string, version: string, zip: Buffer, url: string, extra: Partial<ReleaseInfo> = {}): ReleaseInfo {

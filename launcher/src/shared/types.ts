@@ -1,17 +1,7 @@
 // The one file the main process and the window both import: what the app talks about.
 
-/** The Blizzard flavor folder a game lives in: `_retail_`, `_classic_era_`, `_classic_beta_` (Forever), ... */
-export type Flavor =
-  | 'retail'
-  | 'classic'
-  | 'classic_era'
-  | 'anniversary'
-  | 'classic_ptr'
-  | 'classic_beta'
-  | 'xptr'
-  | 'ptr'
-  | 'beta'
-  | 'unknown'
+/** The game versions Spoken runs on, by their folder: `_classic_beta_` (Forever), `_classic_era_`, `_anniversary_`. */
+export type Flavor = 'classic_beta' | 'classic_era' | 'anniversary'
 
 /** One World of Warcraft install: a flavor folder such as `...\World of Warcraft\_classic_beta_`. */
 export interface GameInstall {
@@ -26,7 +16,7 @@ export interface GameInstall {
   flavor: Flavor
   /** The Blizzard product code from `.build.info` / `.flavor.info`, e.g. `wow_classic_beta`. */
   product: string
-  /** What the player calls it: "WoW: Forever", "WoW: Classic Era", "WoW: Retail". */
+  /** What the player calls it: "WoW: Forever", "WoW: Classic Era", "WoW: Anniversary". */
   label: string
   /** `1.60.1.70450`, when `.build.info` says. */
   gameVersion?: string
@@ -38,18 +28,12 @@ export interface GameInstall {
 
 /**
  * The game versions Spoken runs on, as publishers/spoken/spoken.md says: made and tested on
- * Forever (`_classic_beta_`), and installs on Classic Era and Anniversary. Anything else is
- * listed but nothing is installed there.
+ * Forever (`_classic_beta_`), and installs on Classic Era and Anniversary. The scan lists no other.
  */
 export const SUPPORTED_FLAVORS: Flavor[] = ['classic_beta', 'classic_era', 'anniversary']
 
 export function isSupportedFlavor(flavor: Flavor): boolean {
   return SUPPORTED_FLAVORS.includes(flavor)
-}
-
-/** The plain-words reason a game cannot be used, or null when it can. */
-export function unsupportedReason(game: Pick<GameInstall, 'flavor' | 'label'>): string | null {
-  return isSupportedFlavor(game.flavor) ? null : `Spoken is not available for ${game.label}. It runs on WoW: Forever, Classic Era and Anniversary.`
 }
 
 export type Section = 'quests' | 'zones' | 'books'

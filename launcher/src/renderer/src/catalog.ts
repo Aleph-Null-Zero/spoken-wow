@@ -20,27 +20,24 @@ export function latestOf(state: State, gameId: string, productId: string): Relea
 }
 
 export interface FlavorLook {
+  /** Plain name, for labels. */
   name: string
-  /** CSS colours for the poster: [top-left, middle, glow]. */
+  /** The two lines of the wordmark: a small line over a large one. */
+  kicker: string
+  title: string
+  /** CSS colours: the tint of the art, the dark end and the glow of the wordmark. */
   from: string
   to: string
   glow: string
 }
 
 const LOOKS: Record<Flavor, FlavorLook> = {
-  classic_beta: { name: 'Forever', from: '#12706b', to: '#0b2e3b', glow: '#e0b04a' },
-  classic_era: { name: 'Classic Era', from: '#8a531f', to: '#33200f', glow: '#f0a24a' },
-  anniversary: { name: 'Anniversary', from: '#8a2f4a', to: '#2e1020', glow: '#f2b36a' },
-  classic: { name: 'Classic', from: '#7d3b24', to: '#2f1712', glow: '#e8804a' },
-  classic_ptr: { name: 'Classic PTR', from: '#5f32a3', to: '#26164a', glow: '#b48bff' },
-  retail: { name: 'Retail', from: '#1c5ab0', to: '#0d2650', glow: '#4aa3ff' },
-  ptr: { name: 'PTR', from: '#5f32a3', to: '#26164a', glow: '#b48bff' },
-  xptr: { name: 'PTR', from: '#5f32a3', to: '#26164a', glow: '#b48bff' },
-  beta: { name: 'Beta', from: '#6a2fa0', to: '#2a1450', glow: '#c48bff' },
-  unknown: { name: 'World of Warcraft', from: '#3a4a68', to: '#182236', glow: '#8fa6d0' }
+  classic_beta: { name: 'Forever', kicker: 'Spoken', title: 'Forever', from: '#1d6f8f', to: '#0b2a3a', glow: '#f0c25a' },
+  classic_era: { name: 'Classic Era', kicker: 'Spoken', title: 'Classic Era', from: '#9a5a1c', to: '#33200f', glow: '#f2b04a' },
+  anniversary: { name: 'Anniversary', kicker: 'Spoken', title: 'Anniversary', from: '#a23a58', to: '#2e1020', glow: '#f4bb78' }
 }
 
-export const flavorLook = (flavor: Flavor): FlavorLook => LOOKS[flavor] ?? LOOKS.unknown
+export const flavorLook = (flavor: Flavor): FlavorLook => LOOKS[flavor]
 
 const TAGS: Record<string, string> = {
   enUS: 'EN',

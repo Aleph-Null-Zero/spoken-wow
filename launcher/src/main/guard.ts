@@ -40,11 +40,6 @@ export async function isLinked(p: string): Promise<boolean> {
 
 export const LINKED_MESSAGE = 'This folder is linked to a development checkout. The launcher will not change it.'
 
-/** Throws when `p` is linked. */
-export async function refuseLinked(p: string, name: string = path.basename(p)): Promise<void> {
-  if (await isLinked(p)) throw new PlainError(`${name}: ${LINKED_MESSAGE}`)
-}
-
 // ---------------------------------------------------------------- allowed names
 
 /** The folder names a product may install: voice packs' own, Spoken's list. */
@@ -103,7 +98,7 @@ async function nearestExisting(p: string): Promise<string> {
   }
 }
 
-export async function freeSpace(dir: string): Promise<number> {
+async function freeSpace(dir: string): Promise<number> {
   const at = await nearestExisting(dir)
   const s = await fs.promises.statfs(at)
   return Number(s.bavail) * Number(s.bsize)
@@ -159,6 +154,37 @@ export async function canWrite(dir: string): Promise<boolean> {
     return true
   } catch {
     return false
+  }
+}
+
+/**
+ * The reason a downloads folder cannot be used, in plain words, or null when it can. It must be a
+ * full local path that exists or can be created, and not inside a game's AddOns or WTF folder.
+ */
+export function checkDownloadsPath(value: string, games: readonly { root: string; addOnsPath: string }[]): string | null {
+  if (value === '') return null
+  if (value.includes('\0') || value.length > 240) return 'That is not a usable folder name for downloads.'
+  if (/^[\\/]{2}/.test(value)) return 'Network folders (\\\\server\\share) cannot be used for downloads. Choose a folder on a local drive.'
+  if (!path.isAbsolute(value)) return 'Choose a full folder path for downloads, such as D:\\Downloads.'
+  const abs = path.resolve(value)
+  for (const g of games) {
+    if (isInside(g.addOnsPath, abs) || isInside(path.join(g.root, 'WTF'), abs)) {
+      return "Downloads cannot be kept inside a game's AddOns or WTF folder."
+    }
+  }
+  let at = abs
+  for (;;) {
+    try {
+      const st = fs.statSync(at)
+      if (!st.isDirectory()) return at === abs ? 'That path is a file, not a folder.' : 'That folder cannot be created: a file is in the way.'
+      fs.accessSync(at, fs.constants.W_OK)
+      return null
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') return 'The launcher cannot write to that folder.'
+      const up = path.dirname(at)
+      if (up === at) return 'That drive does not exist.'
+      at = up
+    }
   }
 }
 

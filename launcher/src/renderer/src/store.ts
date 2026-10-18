@@ -143,6 +143,9 @@ export interface Actions {
   selectGame(gameId: string): void
   install(gameId: string, productId: string, version?: string): Promise<void>
   uninstall(gameId: string, productId: string): Promise<void>
+  /** Puts the installed version back, over what is there. */
+  repair(gameId: string, productId: string): Promise<void>
+  checkLauncherUpdate(): Promise<void>
   cancel(jobId: string): void
   dismissJob(key: string): void
   refresh(): Promise<void>
@@ -182,6 +185,21 @@ function makeActions(dispatch: Dispatch<Action>, get: () => State): Actions {
         await api().install(gameId, productId, version ? { version } : undefined)
       } catch (e) {
         dispatch({ type: 'job', job: localError(gameId, productId, 'install', errorText(e)) })
+      }
+    },
+    async repair(gameId, productId) {
+      dispatch({ type: 'dismiss', key: jobKey(gameId, productId) })
+      try {
+        await api().install(gameId, productId, { repair: true })
+      } catch (e) {
+        dispatch({ type: 'job', job: localError(gameId, productId, 'install', errorText(e)) })
+      }
+    },
+    async checkLauncherUpdate() {
+      try {
+        await api().checkLauncherUpdate()
+      } catch (e) {
+        dispatch({ type: 'updater', state: { state: 'error', message: errorText(e) } })
       }
     },
     async uninstall(gameId, productId) {

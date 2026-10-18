@@ -14,7 +14,7 @@ function make(children: ReactNode, fill = false) {
         viewBox="0 0 24 24"
         fill={fill ? 'currentColor' : 'none'}
         stroke={fill ? 'none' : 'currentColor'}
-        strokeWidth="2"
+        strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
@@ -93,3 +93,10 @@ export const IconInfo = make(
   </>
 )
 export const IconPlay = make(<path d="M8 5.5v13l11-6.5z" />, true)
+export const IconChevronRight = make(<path d="M9 6l6 6-6 6" />)
+export const IconGames = make(
+  <>
+    <rect x="3" y="6" width="18" height="12" rx="2" />
+    <path d="M10 9.5v5l4-2.5z" />
+  </>
+)

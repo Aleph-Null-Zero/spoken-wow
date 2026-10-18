@@ -32,6 +32,8 @@
     "yazl": "^3.3.1"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/noto-sans": "^5.3.0",
     "electron-updater": "^6.8.9",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

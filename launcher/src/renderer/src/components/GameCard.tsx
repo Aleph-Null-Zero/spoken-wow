@@ -1,18 +1,15 @@
 import type { ReactNode } from 'react'
 import type { GameInstall } from '@shared/types'
-import { unsupportedReason } from '@shared/types'
 import { jobBusy, langTag, statusOf } from '../catalog'
 import { jobKey, useStore } from '../store'
 import { S } from '../strings'
+import { CardArt } from './Brand'
 import { JobBar } from './JobBar'
 import { IconAlert, IconX } from './Icons'
-import { Poster } from './Poster'
 import { SpokenStatus } from './SpokenStatus'
 
 export function GameCard({ game }: { game: GameInstall }): ReactNode {
   const { state, actions } = useStore()
-  const reason = unsupportedReason(game)
-  if (reason) return <UnsupportedCard game={game} reason={reason} />
   const status = statusOf(state, game.id, 'spoken')
   const spokenState = status?.state ?? 'not-installed'
   const job = state.jobs[jobKey(game.id, 'spoken')]
@@ -36,12 +33,12 @@ export function GameCard({ game }: { game: GameInstall }): ReactNode {
 
   return (
     <article className="card game-card">
-      <button type="button" className="poster-button" aria-label={S.home.openSpoken(game.label)} onClick={() => actions.navigate('spoken', game.id)}>
-        <Poster flavor={game.flavor} label={game.label} />
+      <button type="button" className="art-button" aria-label={S.home.openSpoken(game.label)} onClick={() => actions.navigate('spoken', game.id)}>
+        <CardArt flavor={game.flavor} />
       </button>
       <div className="game-card-body">
+        <p className="eyebrow">{game.gameVersion ? `Game version ${game.gameVersion}` : game.flavorFolder}</p>
         <h2 className="game-name">{game.label}</h2>
-        <p className="game-version">{game.gameVersion ? `Game version ${game.gameVersion}` : game.flavorFolder}</p>
 
         {busy ? (
           <div className="game-job">
@@ -52,7 +49,7 @@ export function GameCard({ game }: { game: GameInstall }): ReactNode {
             <SpokenStatus status={status} />
             {job?.phase === 'error' && (
               <p className="status status-error" role="alert">
-                <IconAlert size={15} />
+                <IconAlert size={14} />
                 <span>{job.message ?? S.jobs.error}</span>
                 <button type="button" className="icon-btn icon-btn-sm" aria-label={S.common.dismiss} onClick={() => actions.dismissJob(jobKey(game.id, 'spoken'))}>
                   <IconX size={13} />
@@ -82,12 +79,7 @@ export function GameCard({ game }: { game: GameInstall }): ReactNode {
 
         <div className="game-actions">
           {!busy && (
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={primary.text !== S.home.manage && !canInstall}
-              onClick={primary.run}
-            >
+            <button type="button" className="btn btn-primary" disabled={primary.text !== S.home.manage && !canInstall} onClick={primary.run}>
               {primary.text}
             </button>
           )}
@@ -95,22 +87,6 @@ export function GameCard({ game }: { game: GameInstall }): ReactNode {
             {S.home.voicePacksButton}
           </button>
         </div>
-      </div>
-    </article>
-  )
-}
-
-/** A game Spoken does not run on: shown, dimmed, with the reason and nothing to click. */
-function UnsupportedCard({ game, reason }: { game: GameInstall; reason: string }): ReactNode {
-  return (
-    <article className="card game-card is-unsupported">
-      <div className="poster-static">
-        <Poster flavor={game.flavor} label={game.label} />
-      </div>
-      <div className="game-card-body">
-        <h2 className="game-name">{game.label}</h2>
-        <p className="game-version">{game.gameVersion ? `Game version ${game.gameVersion}` : game.flavorFolder}</p>
-        <p className="unsupported-note">{reason}</p>
       </div>
     </article>
   )

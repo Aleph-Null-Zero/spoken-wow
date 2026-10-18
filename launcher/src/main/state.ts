@@ -33,7 +33,7 @@ export function writeJsonAtomic(file: string, data: unknown): void {
 
 // ---------------------------------------------------------------- settings
 
-export function settingsFile(dataPath: string): string {
+function settingsFile(dataPath: string): string {
   return path.join(dataPath, 'settings.json')
 }
 
@@ -180,10 +180,6 @@ export function initLog(dataPath: string): void {
   } catch {
     logFile = null
   }
-}
-
-export function stopLog(): void {
-  logFile = null
 }
 
 function describe(v: unknown): string {

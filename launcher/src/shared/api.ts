@@ -13,12 +13,13 @@ export const CHANNELS = {
   install: 'launcher:install',
   uninstall: 'launcher:uninstall',
   cancel: 'launcher:cancel',
-  getSettings: 'launcher:settings:get',
   setSettings: 'launcher:settings:set',
   pickFolder: 'launcher:pick-folder',
   openPath: 'launcher:open-path',
   openExternal: 'launcher:open-external',
   openLogs: 'launcher:open-logs',
+  checkLauncherUpdate: 'launcher:updater:check',
+  clearDownloads: 'launcher:downloads:clear',
   // main -> window
   jobProgress: 'launcher:event:job',
   gamesChanged: 'launcher:event:games',
@@ -36,6 +37,14 @@ export interface AddGameResult {
 export interface InstallOptions {
   /** A version other than the newest, e.g. to go back. */
   version?: string
+  /** Put the installed version back: the same download and install, over what is there. Ignores `version`. */
+  repair?: boolean
+}
+
+export interface ClearDownloadsResult {
+  /** Zip and part files deleted from the downloads folder. */
+  files: number
+  bytes: number
 }
 
 export type UpdaterState =
@@ -66,13 +75,16 @@ export interface LauncherApi {
   /** Removes the folders the launcher installed for a product. */
   uninstall(gameId: string, productId: string): Promise<string>
   cancel(jobId: string): Promise<void>
-  getSettings(): Promise<Settings>
   setSettings(patch: Partial<Settings>): Promise<Settings>
   /** The system folder picker; null when cancelled. */
   pickFolder(): Promise<string | null>
   openPath(path: string): Promise<void>
   openExternal(url: string): Promise<void>
   openLogs(): Promise<void>
+  /** Asks for a newer launcher now. Progress and failures come through `onUpdater`. */
+  checkLauncherUpdate(): Promise<void>
+  /** Deletes the downloaded zips (and half-finished ones) kept in the downloads folder. Refused while a job runs. */
+  clearDownloads(): Promise<ClearDownloadsResult>
 
   onJob(listener: (progress: JobProgress) => void): () => void
   onGamesChanged(listener: (games: GameInstall[]) => void): () => void

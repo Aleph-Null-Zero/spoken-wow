@@ -1,4 +1,5 @@
 // What the window may ask the main process to open. No electron imports, so it can be tested.
+import fs from 'node:fs'
 import path from 'node:path'
 import { isInside } from './guard'
 
@@ -21,4 +22,21 @@ export function isAllowedOpenPath(value: unknown, roots: readonly string[]): boo
   if (typeof value !== 'string' || value === '' || value.includes('\0') || value.length > 2048) return false
   if (!path.isAbsolute(value)) return false
   return roots.some((r) => r !== '' && isInside(r, value))
+}
+
+/**
+ * The folder to open in Explorer: inside one of `roots`, and a directory. A file is never opened
+ * (the shell would run it), and neither is a link to one.
+ */
+export async function openableDirectory(value: unknown, roots: readonly string[]): Promise<string> {
+  if (!isAllowedOpenPath(value, roots)) throw new Error('That folder cannot be opened from here')
+  const target = path.resolve(value as string)
+  let st: fs.Stats
+  try {
+    st = await fs.promises.stat(target)
+  } catch {
+    throw new Error('That folder does not exist')
+  }
+  if (!st.isDirectory()) throw new Error('Only folders can be opened from here')
+  return target
 }

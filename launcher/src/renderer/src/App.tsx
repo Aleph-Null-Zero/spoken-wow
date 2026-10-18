@@ -1,23 +1,27 @@
 import { useEffect, useRef, type ReactNode } from 'react'
-import { Banners, TopBar } from './components/TopBar'
+import { Backdrop } from './components/Brand'
+import { Banners, GamesStrip, TopBar } from './components/TopBar'
 import { CommunityPage } from './pages/CommunityPage'
 import { HomePage } from './pages/HomePage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SpokenPage } from './pages/SpokenPage'
 import { VoicePacksPage } from './pages/VoicePacksPage'
-import { useStore } from './store'
+import { useGame, useStore } from './store'
 import { S } from './strings'
 import icon from './assets/spoken.png'
 
 export function App(): ReactNode {
   const { state } = useStore()
+  const game = useGame()
   const main = useRef<HTMLElement>(null)
   useEffect(() => {
-    main.current?.scrollTo(0, 0)
+    main.current?.querySelectorAll('.scroll').forEach((el) => el.scrollTo(0, 0))
   }, [state.page, state.gameId])
   return (
     <div className="shell">
+      {state.ready && !state.fatal && game && state.page !== 'settings' && <Backdrop flavor={game.flavor} compact={state.page === 'home'} />}
       <TopBar />
+      <GamesStrip />
       <Banners />
       <main className="main" ref={main} aria-busy={!state.ready}>
         {!state.ready ? (

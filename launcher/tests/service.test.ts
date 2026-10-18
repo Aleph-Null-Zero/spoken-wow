@@ -5,7 +5,7 @@ import { CHANNELS } from '../src/shared/api'
 import type { Catalog, JobProgress } from '../src/shared/types'
 import { LauncherService } from '../src/main/service'
 import { loadSettings } from '../src/main/state'
-import { makeGame, serveBuffer, sha256, startServer, tmpDir, toc, write, yazlZip, type TestServer } from './helpers'
+import { makeGame, makeGameFolders, serveBuffer, sha256, startServer, tmpDir, toc, write, yazlZip, type TestServer } from './helpers'
 
 let server: TestServer | null = null
 afterEach(async () => {
@@ -166,7 +166,7 @@ describe('LauncherService', () => {
 
   it('adds and removes games and validates settings', async () => {
     const { svc, game } = await setup()
-    const other = await makeGame(tmpDir(), { flavorFolder: '_retail_', product: 'wow' })
+    const other = await makeGame(tmpDir(), { flavorFolder: '_anniversary_', product: 'wow_anniversary' })
     const res = await svc.addGame(other.root)
     expect(res.game?.id).toBe(other.id)
     expect(svc.games).toHaveLength(2)
@@ -176,7 +176,8 @@ describe('LauncherService', () => {
     expect(svc.removeGame(other.id).map((g) => g.id)).toEqual([game.id])
     expect(svc.settings.lastGameId).toBe('')
 
-    const s = svc.setSettings({ includePrereleases: true, downloadsPath: 'relative\\path', voiceLanguage: 'deDE' })
+    expect(() => svc.setSettings({ downloadsPath: 'relative\path' })).toThrow(/full folder path/)
+    const s = svc.setSettings({ includePrereleases: true, voiceLanguage: 'deDE' })
     expect(s).toMatchObject({ includePrereleases: true, downloadsPath: '', voiceLanguage: 'deDE' })
     expect(loadSettings(svc.dataPath).voiceLanguage).toBe('deDE')
     const abs = path.join(tmpDir(), 'dl')
@@ -184,29 +185,21 @@ describe('LauncherService', () => {
     expect(svc.downloadsPath()).toBe(abs)
   })
 
-  it('refuses install and uninstall on a game Spoken does not run on, and reports it as not installed', async () => {
-    const { svc, sent } = await setup()
+  it('never lists or adds a game Spoken does not run on; the install guard still refuses one that slipped in', async () => {
+    const { svc, game, sent } = await setup()
     await svc.refreshCatalog(true)
-    const retail = await makeGame(tmpDir(), { flavorFolder: '_retail_', product: 'wow' })
-    write(path.join(retail.addOnsPath, 'Spoken', 'Spoken.toc'), toc('Spoken', '3.5.0'))
-    const added = await svc.addGame(retail.root)
-    expect(added.game?.flavor).toBe('retail')
+    const retail = makeGameFolders(tmpDir(), { flavorFolder: '_retail_', product: 'wow' })
+    const added = await svc.addGame(retail)
+    expect(added.game).toBeUndefined()
+    expect(added.error).toBe('Spoken runs on WoW: Forever, Classic Era and Anniversary. _retail_ is not one of them.')
+    expect(svc.games.map((g) => g.id)).toEqual([game.id])
 
-    const statuses = await svc.statuses(retail.id)
-    const spoken = statuses.find((s) => s.productId === 'spoken')!
-    expect(spoken).toMatchObject({
-      state: 'not-installed',
-      installedFolders: [],
-      blockedReason: 'Spoken is not available for WoW: Retail. It runs on WoW: Forever, Classic Era and Anniversary.'
-    })
-    expect(spoken.latest?.version).toBe('3.5.0')
-
-    const end = await waitFor(sent, svc.install(retail.id, 'spoken'))
-    expect(end).toMatchObject({ phase: 'error', message: spoken.blockedReason })
-    const gone = await waitFor(sent, svc.uninstall(retail.id, 'spoken'))
-    expect(gone).toMatchObject({ phase: 'error', message: spoken.blockedReason })
-    expect(fs.readFileSync(path.join(retail.addOnsPath, 'Spoken', 'Spoken.toc'), 'utf8')).toContain('3.5.0')
-    expect(fs.existsSync(path.join(retail.addOnsPath, '.spoken-launcher'))).toBe(false)
+    // A second line of defence: a game of another flavor placed in the list is refused by install and uninstall.
+    const odd = { ...game, id: 'oddgame00001', flavor: 'retail' as never, flavorFolder: '_retail_' }
+    svc.games.push(odd)
+    const refused = 'Spoken runs on WoW: Forever, Classic Era and Anniversary. _retail_ is not one of them.'
+    expect(await waitFor(sent, svc.install(odd.id, 'spoken'))).toMatchObject({ phase: 'error', message: refused })
+    expect(await waitFor(sent, svc.uninstall(odd.id, 'spoken'))).toMatchObject({ phase: 'error', message: refused })
   })
 
   it('treats Forever, Classic Era and Anniversary as supported', async () => {

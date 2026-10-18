@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { CommunityPack, Section } from '@shared/types'
-import { unsupportedReason } from '@shared/types'
 import { LANGUAGES, languageName } from '@shared/products'
 import { api } from '../api'
 import { statusOf } from '../catalog'
+import { Wordmark } from '../components/Brand'
 import { NoGame } from '../components/EmptyGames'
-import { GameSelect } from '../components/GameSelect'
 import { IconAlert, IconExternal } from '../components/Icons'
 import { PackRow } from '../components/PackRow'
 import { formatBytes } from '../format'
@@ -82,129 +81,137 @@ export function CommunityPage(): ReactNode {
   const failed = noList && (community.offline || !!community.error)
 
   return (
-    <div className="page">
-      <div className="page-head page-head-top">
-        <div className="page-title">
-          <h1>{S.community.title}</h1>
-          <p className="page-sub">{S.community.intro}</p>
-          <p className="page-note">{S.community.needsNewer}</p>
+    <div className="frame">
+      <aside className="rail scroll" aria-label={S.community.title}>
+        <div className="rail-top">
+          <Wordmark flavor={game.flavor} />
+          <p className="rail-game">{game.gameVersion ? `${game.label} · ${game.gameVersion}` : game.label}</p>
         </div>
-        <div className="page-tools">
-          <GameSelect inline />
-          <button type="button" className="btn" onClick={() => open(COMMUNITY_README_URL)}>
+        <div className="rail-bottom">
+          <button type="button" className="btn btn-play btn-wrap" onClick={() => open(COMMUNITY_README_URL)}>
             <IconExternal size={16} />
             {S.community.share}
           </button>
         </div>
-      </div>
+      </aside>
 
-      {notice && (
-        <div className="notice notice-caution" role="note">
-          <IconAlert size={18} />
-          <p>{S.community.notice}</p>
-          <button type="button" className="btn btn-sm" onClick={dismiss}>
-            {S.common.dismiss}
-          </button>
-        </div>
-      )}
-
-      {community.offline && !noList && (
-        <div className="notice notice-warn" role="status">
-          {S.community.offline}
-        </div>
-      )}
-
-      {failed ? (
-        <div className="card pad state-box" role="alert">
-          <h2>{community.offline ? S.community.errorTitle : S.community.unreadable}</h2>
-          <p className="muted">{S.community.errorText}</p>
-          <button type="button" className="btn" onClick={() => void actions.refreshCommunity(true)}>
-            {S.common.retry}
-          </button>
-        </div>
-      ) : noList ? (
-        <div className="card pad state-box">
-          <h2>{S.community.emptyTitle}</h2>
-          <p className="muted">{S.community.emptyText}</p>
-          <button type="button" className="btn btn-primary" onClick={() => open(COMMUNITY_README_URL)}>
-            <IconExternal size={16} />
-            {S.community.share}
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="filter-bar">
-            <div className="filter-group">
-              <span className="field-label" id="community-lang">
-                {S.community.language}
-              </span>
-              <div className="chips" role="group" aria-labelledby="community-lang">
-                <button type="button" className="chip" aria-pressed={lang === ''} onClick={() => setLang('')}>
-                  {S.community.allLanguages}
-                </button>
-                {languages.map((code) => (
-                  <button key={code} type="button" className="chip" aria-pressed={lang === code} onClick={() => setLang(code)}>
-                    {languageName(code)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="filter-group">
-              <span className="field-label" id="community-section">
-                {S.community.section}
-              </span>
-              <div className="chips" role="group" aria-labelledby="community-section">
-                <button type="button" className="chip" aria-pressed={section === ''} onClick={() => setSection('')}>
-                  {S.community.allSections}
-                </button>
-                {SECTIONS.map((sec) => (
-                  <button key={sec} type="button" className="chip" aria-pressed={section === sec} onClick={() => setSection(sec)}>
-                    {S.voices.sections[sec].title}
-                  </button>
-                ))}
-              </div>
-            </div>
+      <section className="center scroll">
+        <div className="center-inner">
+          <div className="page-title-block">
+            <h1 className="page-title">{S.community.title}</h1>
+            <p className="page-sub">{S.community.intro}</p>
+            <p className="page-note">{S.community.needsNewer}</p>
           </div>
 
-          <div className="list-bar">
-            <p className="count" aria-live="polite">
-              {S.community.count(shown.length, community.packs.length)}
-            </p>
-            <div className="search-group">
-              <label className="sr-only" htmlFor="community-search">
-                {S.community.searchLabel}
-              </label>
-              <input
-                id="community-search"
-                type="search"
-                className="search"
-                placeholder={S.community.search}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
-              />
+          {notice && (
+            <div className="notice notice-caution" role="note">
+              <IconAlert size={18} />
+              <p>{S.community.notice}</p>
+              <button type="button" className="btn btn-sm" onClick={dismiss}>
+                {S.common.dismiss}
+              </button>
             </div>
-          </div>
+          )}
 
-          {shown.length === 0 ? (
+          {community.offline && !noList && (
+            <div className="notice notice-warn" role="status">
+              {S.community.offline}
+            </div>
+          )}
+
+          {failed ? (
+            <div className="card pad state-box" role="alert">
+              <h2>{community.offline ? S.community.errorTitle : S.community.unreadable}</h2>
+              <p className="muted">{S.community.errorText}</p>
+              <button type="button" className="btn" onClick={() => void actions.refreshCommunity(true)}>
+                {S.common.retry}
+              </button>
+            </div>
+          ) : noList ? (
             <div className="card pad state-box">
-              <p className="muted">{S.community.noMatch}</p>
-              <button type="button" className="btn btn-sm" onClick={clear}>
-                {S.community.clear}
+              <h2>{S.community.emptyTitle}</h2>
+              <p className="muted">{S.community.emptyText}</p>
+              <button type="button" className="btn btn-primary" onClick={() => open(COMMUNITY_README_URL)}>
+                <IconExternal size={16} />
+                {S.community.share}
               </button>
             </div>
           ) : (
-            <section className="card section" aria-label={S.community.title}>
-              <ul className="list">
-                {shown.map((pack) => (
-                  <CommunityRow key={pack.id} pack={pack} gameId={game.id} />
-                ))}
-              </ul>
-            </section>
+            <>
+              <div className="filter-bar">
+                <div className="filter-group">
+                  <span className="field-label" id="community-lang">
+                    {S.community.language}
+                  </span>
+                  <div className="pills" role="group" aria-labelledby="community-lang">
+                    <button type="button" className="pill" aria-pressed={lang === ''} onClick={() => setLang('')}>
+                      {S.community.allLanguages}
+                    </button>
+                    {languages.map((code) => (
+                      <button key={code} type="button" className="pill" aria-pressed={lang === code} onClick={() => setLang(code)}>
+                        {languageName(code)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="filter-group">
+                  <span className="field-label" id="community-section">
+                    {S.community.section}
+                  </span>
+                  <div className="pills" role="group" aria-labelledby="community-section">
+                    <button type="button" className="pill" aria-pressed={section === ''} onClick={() => setSection('')}>
+                      {S.community.allSections}
+                    </button>
+                    {SECTIONS.map((sec) => (
+                      <button key={sec} type="button" className="pill" aria-pressed={section === sec} onClick={() => setSection(sec)}>
+                        {S.voices.sections[sec].title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="list-bar">
+                <p className="count" aria-live="polite">
+                  {S.community.count(shown.length, community.packs.length)}
+                </p>
+                <div className="search-group">
+                  <label className="sr-only" htmlFor="community-search">
+                    {S.community.searchLabel}
+                  </label>
+                  <input
+                    id="community-search"
+                    type="search"
+                    className="search"
+                    placeholder={S.community.search}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </div>
+              </div>
+
+              {shown.length === 0 ? (
+                <div className="card pad state-box">
+                  <p className="muted">{S.community.noMatch}</p>
+                  <button type="button" className="btn btn-sm" onClick={clear}>
+                    {S.community.clear}
+                  </button>
+                </div>
+              ) : (
+                <section className="card section" aria-label={S.community.title}>
+                  <ul className="list">
+                    {shown.map((pack) => (
+                      <CommunityRow key={pack.id} pack={pack} gameId={game.id} />
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
           )}
-        </>
-      )}
+        </div>
+      </section>
     </div>
   )
 }
@@ -215,7 +222,7 @@ function CommunityRow({ pack, gameId }: { pack: CommunityPack; gameId: string })
   const status = statusOf(state, gameId, `community/${pack.id}`)
   const present = !!status && status.state !== 'not-installed'
   const link = httpsUrl(pack.homepage)
-  const blocked = (game ? unsupportedReason(game) : null) ?? status?.blockedReason ?? null
+  const blocked = status?.blockedReason ?? null
   return (
     <PackRow
       gameId={gameId}

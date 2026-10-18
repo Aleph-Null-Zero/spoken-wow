@@ -63,6 +63,8 @@ export interface JobContext {
   backoffMs?: number
   /** Replaces the file operations (tests). */
   ops?: Partial<FsOps>
+  /** A repair: the same version put back. Only changes the words of the done message. */
+  repair?: boolean
   /** Replaces the running-game check (tests). */
   isRunning?: () => Promise<boolean>
 }
@@ -147,67 +149,104 @@ interface Change {
   staged?: string
 }
 
-type Phase = 'start' | 'backingUp' | 'backedUp' | 'placing' | 'placed'
-interface Journal {
+type Phase = 'start' | 'backingUp' | 'backedUp' | 'placing' | 'placed' | 'restored'
+interface JournalEntry {
   folder: string
   hadOld: boolean
   phase: Phase
 }
+/** Written to `.spoken-launcher\staging\journal.json` before every step of a swap, so a crash can be undone at the next start. */
+interface JournalFile {
+  productId: string
+  entries: JournalEntry[]
+}
+
+function journalPath(game: GameInstall): string {
+  return path.join(workDir(game), 'staging', 'journal.json')
+}
+
+function saveJournal(game: GameInstall, journal: JournalFile): void {
+  const file = journalPath(game)
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, JSON.stringify(journal), 'utf8')
+}
+
+function dropJournal(game: GameInstall): void {
+  fs.rmSync(journalPath(game), { force: true })
+}
+
+const SAFE_FOLDER = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
+const SAFE_PRODUCT = /^[A-Za-z0-9_-]+(\/[a-z0-9]+(-[a-z0-9]+)*)?$/
 
 /**
  * Moves each current folder to the backup, then each staged folder in. Any failure puts every
  * folder back as it was. Returns the folders that did not exist before.
  */
 async function applyChanges(
-  addOns: string,
-  backupDir: string,
+  game: GameInstall,
+  productId: string,
   changes: Change[],
   ops: FsOps,
   signal?: AbortSignal
 ): Promise<{ created: string[] }> {
-  // The previous backup of this product is replaced.
+  const addOns = game.addOnsPath
+  const backupDir = backupDirFor(game, productId)
+  // The previous backup of this product is replaced (an earlier failed rollback was dealt with before this runs).
   await ops.rm(backupDir)
   await fs.promises.mkdir(backupDir, { recursive: true })
 
-  const journal: Journal[] = []
+  const journal: JournalFile = { productId, entries: [] }
+  const step = (entry: JournalEntry, phase: Phase): void => {
+    entry.phase = phase
+    saveJournal(game, journal)
+  }
   try {
     for (const change of changes) {
       throwIfAborted(signal)
       const target = path.join(addOns, change.folder)
-      const entry: Journal = { folder: change.folder, hadOld: await exists(target), phase: 'start' }
-      journal.push(entry)
+      const entry: JournalEntry = { folder: change.folder, hadOld: await exists(target), phase: 'start' }
+      journal.entries.push(entry)
+      saveJournal(game, journal)
       if (entry.hadOld) {
-        entry.phase = 'backingUp'
+        step(entry, 'backingUp')
         await moveDir(target, path.join(backupDir, change.folder), ops)
-        entry.phase = 'backedUp'
+        step(entry, 'backedUp')
       }
       if (change.staged) {
-        entry.phase = 'placing'
+        step(entry, 'placing')
         await moveDir(change.staged, target, ops)
-        entry.phase = 'placed'
+        step(entry, 'placed')
       }
     }
   } catch (err) {
-    const failed = await rollback(addOns, backupDir, journal, ops)
+    const failed = await rollback(game, journal, ops)
+    if (failed.length > 0) {
+      log('Rollback failed for:', failed.join(', '), err)
+      throw new PlainError(
+        `${isAbortError(err) ? 'Cancelled, but' : 'Something went wrong, and'} the launcher could not put back ${failed.join(', ')}. The previous version is in ${backupDir}. Copy it back into the AddOns folder before installing again.`
+      )
+    }
+    dropJournal(game)
     if (isAbortError(err)) throw err
     log('Install failed, rolled back:', err)
     const why = err instanceof Error ? err.message : String(err)
-    const hint = errorCode(err) === 'EPERM' || errorCode(err) === 'EBUSY' || errorCode(err) === 'EACCES'
-      ? ' A file may be in use: close the game and anything else that has the add-on open, then try again.'
-      : ''
-    if (failed.length > 0) {
-      throw new PlainError(
-        `Something went wrong (${why}) and ${failed.join(', ')} could not be put back. The previous version is in ${backupDir}.${hint}`
-      )
-    }
+    const hint =
+      errorCode(err) === 'EPERM' || errorCode(err) === 'EBUSY' || errorCode(err) === 'EACCES'
+        ? ' A file may be in use: close the game and anything else that has the add-on open, then try again.'
+        : ''
     throw new PlainError(`Nothing was changed: ${why}.${hint}`)
   }
-  return { created: journal.filter((j) => !j.hadOld).map((j) => j.folder) }
+  dropJournal(game)
+  return { created: journal.entries.filter((j) => !j.hadOld).map((j) => j.folder) }
 }
 
-async function rollback(addOns: string, backupDir: string, journal: Journal[], ops: FsOps): Promise<string[]> {
+/** Puts folders back as the journal says; returns the ones that could not be. Safe to run again: a restored entry is skipped. */
+async function rollback(game: GameInstall, journal: JournalFile, ops: FsOps): Promise<string[]> {
+  const addOns = game.addOnsPath
+  const backupDir = backupDirFor(game, journal.productId)
   const failed: string[] = []
-  for (const entry of [...journal].reverse()) {
+  for (const entry of [...journal.entries].reverse()) {
+    if (entry.phase === 'restored') continue
     const target = path.join(addOns, entry.folder)
     const saved = path.join(backupDir, entry.folder)
     try {
@@ -215,17 +254,69 @@ async function rollback(addOns: string, backupDir: string, journal: Journal[], o
         if (entry.phase === 'placing' || entry.phase === 'placed') await ops.rm(target)
       } else if (entry.phase === 'start' || entry.phase === 'backingUp') {
         if (await exists(target)) await ops.rm(saved)
-        else await moveDir(saved, target, ops)
-      } else {
+        else if (await exists(saved)) await moveDir(saved, target, ops)
+      } else if (await exists(saved)) {
+        // Only when the backup is really there: without it the folder in place is the old one already.
         await ops.rm(target)
         await moveDir(saved, target, ops)
       }
+      entry.phase = 'restored'
+      saveJournal(game, journal)
     } catch (err) {
       log(`Rollback of ${entry.folder} failed:`, err)
       failed.push(entry.folder)
     }
   }
   return failed
+}
+
+/**
+ * At start, and before any job: if the last swap on this game was cut short (a crash, a power
+ * cut, a rollback that failed), put its folders back from the backup. Returns the folders that
+ * still could not be restored; the journal stays until they are.
+ */
+export async function recoverInterrupted(game: GameInstall, ops: FsOps = defaultOps): Promise<string[]> {
+  let journal: JournalFile
+  try {
+    journal = JSON.parse(await fs.promises.readFile(journalPath(game), 'utf8')) as JournalFile
+  } catch {
+    return []
+  }
+  const valid =
+    journal &&
+    typeof journal.productId === 'string' &&
+    SAFE_PRODUCT.test(journal.productId) &&
+    !journal.productId.includes('..') &&
+    Array.isArray(journal.entries)
+  if (!valid) {
+    log('Ignoring an unreadable swap journal.')
+    dropJournal(game)
+    return []
+  }
+  // Only names a swap could have written; anything else in the file is ignored.
+  journal.entries = journal.entries.filter(
+    (e) => e && typeof e.folder === 'string' && SAFE_FOLDER.test(e.folder) && !/^(wtf|interface|addons)$/i.test(e.folder) && typeof e.hadOld === 'boolean' && typeof e.phase === 'string'
+  )
+  log(`Undoing an interrupted change to ${journal.productId} on ${game.label}.`)
+  const failed = await rollback(game, journal, ops)
+  if (failed.length === 0) dropJournal(game)
+  return failed
+}
+
+async function refuseUnresolved(game: GameInstall, ops: FsOps): Promise<void> {
+  const failed = await recoverInterrupted(game, ops)
+  if (failed.length > 0) {
+    let where = backupDirFor(game, 'the product')
+    try {
+      const j = JSON.parse(fs.readFileSync(journalPath(game), 'utf8')) as JournalFile
+      where = backupDirFor(game, j.productId)
+    } catch {
+      /* keep the generic path */
+    }
+    throw new PlainError(
+      `An earlier change to this game's add-ons could not be undone (${failed.join(', ')}). The previous version is in ${where}. Copy it back into the AddOns folder, then try again.`
+    )
+  }
 }
 
 // ---------------------------------------------------------------- extraction
@@ -246,8 +337,63 @@ function openEntry(zf: yauzl.ZipFile, entry: yauzl.Entry): Promise<NodeJS.Readab
 
 const BAD_ZIP = 'The downloaded zip file is damaged or holds unsafe paths, so nothing was installed.'
 
+export interface ZipLimits {
+  bytes: number
+  entries: number
+}
+const GB = 1024 ** 3
+export const OFFICIAL_LIMITS: ZipLimits = { bytes: 6 * GB, entries: 200_000 }
+export const COMMUNITY_LIMITS: ZipLimits = { bytes: 2 * GB, entries: 20_000 }
+
+/** Reads the zip's table of contents and returns what it would unpack to; throws in plain words above the limits. */
+export async function scanZip(zipFile: string, limits: ZipLimits): Promise<{ entries: number; bytes: number }> {
+  let zf: yauzl.ZipFile
+  try {
+    zf = await openZip(zipFile)
+  } catch (err) {
+    log('Zip open failed:', err)
+    throw new PlainError(BAD_ZIP)
+  }
+  return new Promise((resolve, reject) => {
+    let entries = 0
+    let bytes = 0
+    let finished = false
+    const fail = (err: Error): void => {
+      if (finished) return
+      finished = true
+      try {
+        zf.close()
+      } catch {
+        /* already closed */
+      }
+      reject(err)
+    }
+    zf.on('error', (err) => {
+      log('Zip read failed:', err)
+      fail(new PlainError(BAD_ZIP))
+    })
+    zf.on('end', () => {
+      if (finished) return
+      finished = true
+      resolve({ entries, bytes })
+    })
+    zf.on('entry', (entry: yauzl.Entry) => {
+      entries++
+      bytes += entry.uncompressedSize
+      if (entries > limits.entries) {
+        return fail(new PlainError(`The zip holds more than ${limits.entries.toLocaleString('en-US')} files, more than a pack of this kind may have, so nothing was installed.`))
+      }
+      if (bytes > limits.bytes) {
+        return fail(new PlainError(`The zip would unpack to more than ${formatBytes(limits.bytes)}, more than a pack of this kind may take, so nothing was installed.`))
+      }
+      zf.readEntry()
+    })
+    zf.readEntry()
+  })
+}
+
 /** Streams every entry into `dest`; refuses anything outside `allowed`. */
-export async function extractZip(
+async function extractZip(
   zipFile: string,
   dest: string,
   allowed: readonly string[],
@@ -394,6 +540,33 @@ async function staleFolders(game: GameInstall, product: Product, dataPath: strin
   return out
 }
 
+/**
+ * After a successful job: the backups of every other product on this game are deleted, so the
+ * backup that stays is the one of the job just done (kept until the next successful job). An
+ * uninstalled 1.4 GB pack does not sit in the backup folder forever.
+ */
+export async function pruneBackups(game: GameInstall, keepProductId: string): Promise<void> {
+  const backups = path.join(workDir(game), 'backup')
+  try {
+    if (await isLinked(backups)) return
+    const keep = path.resolve(backupDirFor(game, keepProductId))
+    const remove = (p: string): Promise<void> => fs.promises.rm(p, { recursive: true, force: true, maxRetries: 3, retryDelay: 150 })
+    for (const entry of await fs.promises.readdir(backups, { withFileTypes: true })) {
+      const p = path.join(backups, entry.name)
+      if (entry.name === 'community' && entry.isDirectory()) {
+        for (const child of await fs.promises.readdir(p)) {
+          if (path.resolve(p, child) !== keep) await remove(path.join(p, child))
+        }
+        await fs.promises.rmdir(p).catch(() => undefined)
+      } else if (path.resolve(p) !== keep) {
+        await remove(p)
+      }
+    }
+  } catch (err) {
+    if (errorCode(err) !== 'ENOENT') log('Could not remove old backups:', err)
+  }
+}
+
 function listNames(names: string[]): string {
   return names.length === 1 ? names[0]! : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 }
@@ -417,7 +590,8 @@ export async function installProduct(
   const allowed = allowedFolders(product)
   const addOns = game.addOnsPath
   const stagingJob = path.join(workDir(game), 'staging', ctx.jobId.replace(/[^\w.-]/g, '_'))
-  const baseName = `${product.id}-${release.version}`.replace(/[^\w.-]/g, '_')
+  // Keyed by game too: the same pack going to two games must not share one .part.
+  const baseName = `${game.id}-${product.id}-${release.version}`.replace(/[^\w.-]/g, '_')
   const zip = zipPathFor(ctx.downloadsPath, baseName)
 
   rep.set(0, release.assetSize, 0)
@@ -433,6 +607,7 @@ export async function installProduct(
     }
   }
   await checkWritable(game)
+  await refuseUnresolved(game, ops)
 
   // Free space: the zip on the downloads drive; twice its size on the game drive (extracted copy and the move).
   const have = Math.max(await fileSize(zip), await fileSize(`${zip}.part`))
@@ -469,6 +644,9 @@ export async function installProduct(
     rep.set(0, release.assetSize, 0)
     rep.send('extracting')
     await fs.promises.rm(stagingJob, { recursive: true, force: true })
+    const total = await scanZip(downloaded.file, product.kind === 'community' ? COMMUNITY_LIMITS : OFFICIAL_LIMITS)
+    // What the unpacked copy needs, with the zip's own size as margin (they may share a drive).
+    await ensureFreeSpace(addOns, total.bytes + release.assetSize, `${product.title} (${formatBytes(total.bytes)} unpacked)`)
     let lastSent = 0
     await extractZip(downloaded.file, stagingJob, allowed, ctx.signal, (done) => {
       rep.set(done, release.assetSize, 0)
@@ -494,8 +672,8 @@ export async function installProduct(
     rep.set(release.assetSize, release.assetSize, 0)
     rep.send('installing')
     const { created } = await applyChanges(
-      addOns,
-      backupDirFor(game, product.id),
+      game,
+      product.id,
       [...folders.map((folder) => ({ folder, staged: path.join(stagingJob, folder) })), ...stale.map((folder) => ({ folder }))],
       ops,
       ctx.signal
@@ -514,7 +692,8 @@ export async function installProduct(
 
     if (!ctx.keepDownloads) await fs.promises.rm(downloaded.file, { force: true }).catch(() => undefined)
     const running = await (ctx.isRunning ?? (() => isGameRunning(game.flavor)))()
-    const note = stale.length > 0 ? `Removed the old ${listNames(stale)} folder${stale.length > 1 ? 's' : ''}. ` : ''
+    await pruneBackups(game, product.id)
+    const note = (ctx.repair ? 'Repaired. ' : '') + (stale.length > 0 ? `Removed the old ${listNames(stale)} folder${stale.length > 1 ? 's' : ''}. ` : '')
     const message = note + doneMessage(running, created.length > 0, false)
     rep.send('done', message)
     return { version: release.version, folders, removed: stale, gameRunning: running, message }
@@ -536,6 +715,7 @@ export async function uninstallProduct(game: GameInstall, product: Product, ctx:
 
   throwIfAborted(ctx.signal)
   await checkWritable(game)
+  await refuseUnresolved(game, ops)
 
   const present: string[] = []
   for (const folder of wanted) {
@@ -549,14 +729,15 @@ export async function uninstallProduct(game: GameInstall, product: Product, ctx:
   rep.send('installing', 'Removing')
   if (present.length > 0) {
     await applyChanges(
-      game.addOnsPath,
-      backupDirFor(game, product.id),
+      game,
+      product.id,
       present.map((folder) => ({ folder })),
       ops,
       ctx.signal
     )
   }
   updateState(ctx.dataPath, (s) => removeRecord(s, game.id, product.id))
+  if (present.length > 0) await pruneBackups(game, product.id)
   log(`Removed ${product.id} from ${game.label} (${present.join(', ') || 'nothing on disk'}).`)
 
   const running = await (ctx.isRunning ?? (() => isGameRunning(game.flavor)))()

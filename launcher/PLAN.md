@@ -10,8 +10,8 @@ reports, CurseForge catalog, other addons).
 
 ## What it does
 
-1. Finds every World of Warcraft install on the PC (retail, Classic Era, Classic, Forever, PTR,
-   beta) and lets the player add a folder by hand.
+1. Finds the World of Warcraft installs Spoken runs on (Forever, Classic Era, Anniversary) and lets
+   the player add a folder by hand. Retail, Classic, the PTRs and betas are never listed.
 2. For each install, shows whether Spoken is installed, which version, and whether a newer one
    exists on GitHub.
 3. Installs, updates, repairs and removes Spoken (one zip: Spoken and its modules).
@@ -49,9 +49,11 @@ opens with the last catalog and says so.
 
 From `publishers/spoken/spoken.md`: Spoken is made and tested on Forever (`_classic_beta_`) and
 installs on Classic Era (`_classic_era_`) and Anniversary (`_anniversary_`). Those three are
-`SUPPORTED_FLAVORS` in `src/shared/types.ts`. Every other install the scan finds (Retail, Classic,
-PTRs, betas) is listed with "Spoken is not available for <game>", with no install button, and the
-service refuses an install there. The 1.12, 2.4.3 and 3.3.5 clients have no Blizzard folders and
+`SUPPORTED_FLAVORS` in `src/shared/types.ts`, and the only ones the scan looks for. Any other
+flavor folder (Retail, Classic, PTRs, betas) is not listed; adding one by hand is refused with
+"Spoken runs on WoW: Forever, Classic Era and Anniversary. <folder> is not one of them.", and a
+saved game of such a flavor from an earlier run is dropped on load (nothing on disk is touched).
+The service keeps a cheap refusal as a second check. The 1.12, 2.4.3 and 3.3.5 clients have no Blizzard folders and
 are out of scope: they take Spoken Quests' own zips from Releases.
 
 ## Community voice packs
@@ -133,8 +135,17 @@ Rules the installer keeps:
   replace it. (This machine has one: `AddOns\spoken-wow` and the Spoken folders link into a
   repo.)
 - Extract to `AddOns\.spoken-launcher\staging\<id>`, then move each folder in. The old folder
-  moves to `.spoken-launcher\backup\<id>` first and comes back if anything fails. Backups of the
-  previous version are kept until the next successful install.
+  moves to `.spoken-launcher\backup\<id>` first and comes back if anything fails. Every step is
+  written to `staging\journal.json` first, so a crash is undone at the next start (and before the
+  next job). The backup that stays after a successful job is that job's own; every other product's
+  backup on that game is deleted then. If a rollback fails, the error names the backup folder and
+  the next change on that game is refused until it is restored.
+- A zip is read before it is unpacked: official packs may unpack to 6 GB in 200,000 files,
+  community packs to 2 GB in 20,000.
+- A resume sends `If-Range` with the ETag or date saved beside the `.part`; if the server answers
+  200 the download starts again. The downloaded file is named by game, so two games never share one.
+- At start: interrupted swaps are undone, `staging` is emptied, and `.part` files nobody resumed
+  for a week are removed. Quitting with a job running stops it and waits for its rollback.
 - Zip entries are checked: no `..`, no absolute paths, nothing outside the allowed folder
   names for that product.
 - A download is a `.part` file with a `Range` resume; done only when the size matches and, when

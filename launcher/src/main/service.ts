@@ -1,15 +1,17 @@
 // The launcher's logic without electron: what ipc.ts exposes to the window. Holds the game list,
 // the settings and the catalog, and runs jobs.
 import path from 'node:path'
-import { CHANNELS, type AddGameResult, type InstallOptions } from '../shared/api'
-import { unsupportedReason, type Catalog, type CommunityCatalog, type GameInstall, type JobProgress, type Product, type ProductStatus, type ReleaseInfo, type Settings, type Snapshot } from '../shared/types'
+import { CHANNELS, type AddGameResult, type ClearDownloadsResult, type InstallOptions } from '../shared/api'
+import { isSupportedFlavor, type Catalog, type CommunityCatalog, type GameInstall, type JobProgress, type Product, type ProductStatus, type ReleaseInfo, type Settings, type Snapshot } from '../shared/types'
 import { PRODUCTS } from '../shared/products'
 import { buildCatalog, latestFor, loadCatalog, saveCatalog } from './catalog'
 import { COMMUNITY_PREFIX, communityProduct, communityRelease, fetchCommunity, isCommunityProductId, loadCommunity, saveCommunity } from './community'
 import { PlainError } from './errors'
-import { addGame, removeGame, scanGames } from './games'
+import { checkDownloadsPath } from './guard'
+import { cleanLeftovers, clearDownloads } from './cleanup'
+import { addGame, notSupportedMessage, removeGame, scanGames } from './games'
 import { fetchReleases } from './github'
-import { installProduct, uninstallProduct, type FsOps } from './install'
+import { installProduct, recoverInterrupted, uninstallProduct, type FsOps } from './install'
 import { JobManager } from './jobs'
 import { loadSettings, loadState, log, sanitizeSettings, saveSettings } from './state'
 import { computeStatuses } from './status'
@@ -61,10 +63,19 @@ export class LauncherService {
 
   /** Starts the first scan; `ready` settles when it ends. */
   init(): Promise<void> {
-    this.ready = this.scan().then(
-      () => undefined,
-      (err) => log('First scan failed:', err)
-    )
+    this.ready = this.scan()
+      .then(async () => {
+        // A swap cut short by a crash is undone first, then every leftover is cleared.
+        for (const game of this.games) {
+          const failed = await recoverInterrupted(game)
+          if (failed.length > 0) log(`Could not restore ${failed.join(', ')} on ${game.label}; the backup is kept.`)
+        }
+        await cleanLeftovers(this.games, this.downloadsPath())
+      })
+      .then(
+        () => undefined,
+        (err) => log('First scan failed:', err)
+      )
     return this.ready
   }
 
@@ -84,6 +95,8 @@ export class LauncherService {
 
   async scan(): Promise<GameInstall[]> {
     this.games = await scanGames(this.opts.dataPath, this.opts.autoPaths ? { autoPaths: this.opts.autoPaths } : {})
+    // The game last looked at may be gone, or may be one an earlier run listed that no longer is.
+    if (this.settings.lastGameId && !this.games.some((g) => g.id === this.settings.lastGameId)) this.setSettings({ lastGameId: '' })
     this.opts.send(CHANNELS.gamesChanged, this.games)
     return this.games
   }
@@ -237,13 +250,30 @@ export class LauncherService {
     }
   }
 
+  /** The release of the version that is installed, for a repair. */
+  private async releaseToRepair(gameId: string, product: Product): Promise<ReleaseInfo> {
+    const status = (await this.statuses(gameId)).find((s) => s.productId === product.id)
+    if (!status || status.installedFolders.length === 0) throw new PlainError(`${product.title} is not installed, so there is nothing to repair. Install it instead.`)
+    const version = status.installedVersion
+    const release = version ? this.pickRelease(product.id, version) : undefined
+    if (!release) {
+      throw new PlainError(
+        version
+          ? `Version ${version} of ${product.title} is no longer in the list of releases, so it cannot be put back. Update it instead.`
+          : `The installed version of ${product.title} is not known, so it cannot be put back. Update it instead.`
+      )
+    }
+    return release
+  }
+
   install(gameId: string, productId: string, options?: InstallOptions): string {
     const game = this.requireGame(gameId)
     const product = this.findProduct(productId)
     if (!product) throw new Error('Unknown product')
-    const refused = unsupportedReason(game)
-    const wanted = options?.version
-    const release = this.pickRelease(productId, wanted)
+    const refused = isSupportedFlavor(game.flavor) ? null : notSupportedMessage(game.flavorFolder)
+    const repair = options?.repair === true
+    const wanted = repair ? undefined : options?.version
+    const release = repair ? undefined : this.pickRelease(productId, wanted)
     return this.jobs.enqueue({
       gameId,
       productId,
@@ -251,6 +281,11 @@ export class LauncherService {
       ...(release ? { version: release.version } : {}),
       run: async (ctx) => {
         if (refused) throw new PlainError(refused)
+        if (repair) {
+          const again = await this.releaseToRepair(game.id, product)
+          await installProduct(game, product, again, { ...this.jobContext(ctx.jobId, ctx.signal, ctx.emit), repair: true })
+          return
+        }
         if (!release) {
           throw new PlainError(
             wanted
@@ -272,7 +307,7 @@ export class LauncherService {
     if (!product && isCommunityProductId(productId)) product = communityProduct({ id: productId.slice(COMMUNITY_PREFIX.length) })
     if (!product) throw new Error('Unknown product')
     const target = product
-    const refused = unsupportedReason(game)
+    const refused = isSupportedFlavor(game.flavor) ? null : notSupportedMessage(game.flavorFolder)
     return this.jobs.enqueue({
       gameId,
       productId,
@@ -284,15 +319,17 @@ export class LauncherService {
     })
   }
 
+  /** Deletes the kept zips; not while a download or install runs. */
+  async clearDownloads(): Promise<ClearDownloadsResult> {
+    if (this.jobs.active().length > 0) throw new PlainError('Wait for the running downloads and installs to finish first.')
+    return clearDownloads(this.downloadsPath())
+  }
+
   cancel(jobId: string): void {
     this.jobs.cancel(jobId)
   }
 
   // ---------------------------------------------------------------- settings
-
-  getSettings(): Settings {
-    return this.settings
-  }
 
   setSettings(patch: Partial<Settings>): Settings {
     const clean: Partial<Settings> = {}
@@ -300,8 +337,9 @@ export class LauncherService {
     for (const key of Object.keys(patch) as (keyof Settings)[]) {
       if (key in merged) (clean as Record<string, unknown>)[key] = merged[key]
     }
-    if (typeof clean.downloadsPath === 'string' && clean.downloadsPath !== '' && !path.isAbsolute(clean.downloadsPath)) {
-      delete clean.downloadsPath
+    if (typeof clean.downloadsPath === 'string') {
+      const problem = checkDownloadsPath(clean.downloadsPath, this.games)
+      if (problem) throw new PlainError(problem)
     }
     this.settings = { ...this.settings, ...clean }
     try {

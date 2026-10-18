@@ -47,7 +47,7 @@ export function useAddGame(): { add: () => Promise<void>; scan: () => Promise<vo
 export function EmptyGames(): ReactNode {
   const { add, scan, error, busy, scanning } = useAddGame()
   return (
-    <div className="empty">
+    <div className="empty scroll">
       <img className="empty-icon" src={icon} alt="" width={96} height={96} />
       <h1>{S.empty.title}</h1>
       <p>{S.empty.text}</p>
@@ -67,23 +67,7 @@ export function EmptyGames(): ReactNode {
   )
 }
 
-/** Games are listed but none is one Spoken runs on. */
-function NoSupportedGame(): ReactNode {
-  const { actions } = useStore()
-  return (
-    <div className="empty">
-      <img className="empty-icon" src={icon} alt="" width={96} height={96} />
-      <h1>{S.noGame.title}</h1>
-      <p>{S.noGame.text}</p>
-      <button type="button" className="btn btn-primary btn-lg" onClick={() => actions.navigate('settings')}>
-        {S.noGame.button}
-      </button>
-    </div>
-  )
-}
-
-/** What the game pages show when there is no game to show: none found, or none supported. */
+/** What the game pages show when there is no game to show. */
 export function NoGame(): ReactNode {
-  const { state } = useStore()
-  return state.games.length === 0 ? <EmptyGames /> : <NoSupportedGame />
+  return <EmptyGames />
 }

@@ -15,7 +15,7 @@ import { LANGUAGES } from '../shared/products'
 import { compareVersions } from '../shared/version'
 import { log, readJsonFile, writeJsonAtomic } from './state'
 
-export const REGISTRY_URL = 'https://raw.githubusercontent.com/rusty-key/spoken-wow/master/community/packs.json'
+const REGISTRY_URL = 'https://raw.githubusercontent.com/rusty-key/spoken-wow/master/community/packs.json'
 export const COMMUNITY_PREFIX = 'community/'
 
 const MAX_PACKS = 500
@@ -184,7 +184,7 @@ export function communityRelease(pack: CommunityPack): ReleaseInfo {
 
 // ---------------------------------------------------------------- fetch and cache
 
-export function emptyCommunity(): CommunityCatalog {
+function emptyCommunity(): CommunityCatalog {
   return { fetchedAt: null, offline: false, packs: [] }
 }
 
@@ -198,7 +198,7 @@ function cacheFile(dataPath: string): string {
   return path.join(dataPath, 'github-cache', 'community-packs.json')
 }
 
-export function communityFile(dataPath: string): string {
+function communityFile(dataPath: string): string {
   return path.join(dataPath, 'community.json')
 }
 

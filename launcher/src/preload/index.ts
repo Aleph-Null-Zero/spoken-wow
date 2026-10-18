@@ -18,17 +18,21 @@ const api: LauncherApi = {
   install: (gameId, productId, options) => ipcRenderer.invoke(CHANNELS.install, gameId, productId, options),
   uninstall: (gameId, productId) => ipcRenderer.invoke(CHANNELS.uninstall, gameId, productId),
   cancel: (jobId) => ipcRenderer.invoke(CHANNELS.cancel, jobId),
-  getSettings: () => ipcRenderer.invoke(CHANNELS.getSettings),
   setSettings: (patch) => ipcRenderer.invoke(CHANNELS.setSettings, patch),
   pickFolder: () => ipcRenderer.invoke(CHANNELS.pickFolder),
   openPath: (path) => ipcRenderer.invoke(CHANNELS.openPath, path),
   openExternal: (url) => ipcRenderer.invoke(CHANNELS.openExternal, url),
   openLogs: () => ipcRenderer.invoke(CHANNELS.openLogs),
+  checkLauncherUpdate: () => ipcRenderer.invoke(CHANNELS.checkLauncherUpdate),
+  clearDownloads: () => ipcRenderer.invoke(CHANNELS.clearDownloads),
   onJob: (l) => listen(CHANNELS.jobProgress, l),
   onGamesChanged: (l) => listen(CHANNELS.gamesChanged, l),
   onCatalogChanged: (l) => listen(CHANNELS.catalogChanged, l),
   onCommunityChanged: (l) => listen(CHANNELS.communityChanged, l),
   onUpdater: (l) => listen(CHANNELS.updaterState, l)
 }
+
+// A file dropped on the window would make the browser open it; nothing here takes drops.
+for (const type of ['dragover', 'drop']) window.addEventListener(type, (e) => e.preventDefault(), true)
 
 contextBridge.exposeInMainWorld('launcher', api)

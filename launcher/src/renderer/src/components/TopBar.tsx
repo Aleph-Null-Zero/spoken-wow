@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
 import icon from '../assets/spoken.png'
 import { formatTime } from '../format'
-import { useStore, type Page } from '../store'
+import { useGame, useStore, useSupportedGames, type Page } from '../store'
 import { S } from '../strings'
-import { IconGear, IconRefresh } from './Icons'
+import { flavorLook } from '../catalog'
+import { GameIcon } from './Brand'
+import { IconGear, IconPlus, IconRefresh } from './Icons'
 
 const TABS: { page: Page; label: string }[] = [
   { page: 'home', label: S.tabs.home },
@@ -29,13 +31,7 @@ export function TopBar(): ReactNode {
       </button>
       <nav className="tabs-main" aria-label="Main">
         {TABS.map((t) => (
-          <button
-            key={t.page}
-            type="button"
-            className="tab"
-            aria-current={state.page === t.page ? 'page' : undefined}
-            onClick={() => actions.navigate(t.page)}
-          >
+          <button key={t.page} type="button" className="tab" aria-current={state.page === t.page ? 'page' : undefined} onClick={() => actions.navigate(t.page)}>
             {t.label}
           </button>
         ))}
@@ -59,6 +55,48 @@ export function TopBar(): ReactNode {
         </button>
       </div>
     </header>
+  )
+}
+
+/** The games as icon tiles under the top bar; the one the game pages show is underlined. */
+export function GamesStrip(): ReactNode {
+  const { state, actions } = useStore()
+  const games = useSupportedGames()
+  const game = useGame()
+  if (!state.ready || state.page === 'settings') return null
+  const onGamePage = state.page === 'spoken' || state.page === 'voices' || state.page === 'community'
+  return (
+    <nav className="strip" aria-label={S.home.title}>
+      <span className="strip-label">{S.home.title}</span>
+      {games.map((g) => {
+        const active = onGamePage && g.id === game?.id
+        return (
+          <button
+            key={g.id}
+            type="button"
+            className="strip-tile"
+            aria-label={g.label}
+            aria-current={active ? 'true' : undefined}
+            onClick={() => {
+              actions.selectGame(g.id)
+              if (!onGamePage) actions.navigate('spoken', g.id)
+            }}
+          >
+            <GameIcon flavor={g.flavor} />
+            <span className="strip-tip" aria-hidden="true">
+              <small>{flavorLook(g.flavor).kicker}</small>
+              <span>{flavorLook(g.flavor).title}</span>
+            </span>
+          </button>
+        )
+      })}
+      <button type="button" className="strip-tile strip-add" aria-label={S.strip.add} onClick={() => actions.navigate('settings')}>
+        <IconPlus size={18} />
+        <span className="strip-tip" aria-hidden="true">
+          {S.strip.add}
+        </span>
+      </button>
+    </nav>
   )
 }
 

@@ -15,7 +15,6 @@ import {
   saveSettings,
   saveState,
   setRecord,
-  stopLog,
   writeJsonAtomic
 } from '../src/main/state'
 import { tmpDir } from './helpers'
@@ -94,7 +93,7 @@ describe('JobManager', () => {
     expect(phases(first)).toEqual(['queued', 'cancelled'])
     expect(jm.cancel(first)).toBe(false)
     expect(jm.cancel('nope')).toBe(false)
-    expect(jm.lastProgress(first)!.message).toBe('Cancelled.')
+    expect(events.filter((e) => e.jobId === first).at(-1)!.message).toBe('Cancelled.')
   })
 
   it('turns a plain error into an error event with its words, and any other error into a generic one', async () => {
@@ -104,20 +103,23 @@ describe('JobManager', () => {
     await tick()
     const b = jm.enqueue({ gameId: 'g', productId: 'b', action: 'uninstall', run: async () => { throw new Error('ENOENT: boom') } })
     await tick()
-    expect(jm.lastProgress(a)).toMatchObject({ phase: 'error', message: 'Spoken: This folder is linked.' })
-    expect(jm.lastProgress(b)).toMatchObject({ phase: 'error', action: 'uninstall', message: 'Something went wrong: ENOENT: boom' })
+    const last = (id: string) => events.filter((e) => e.jobId === id).at(-1)
+    expect(last(a)).toMatchObject({ phase: 'error', message: 'Spoken: This folder is linked.' })
+    expect(last(b)).toMatchObject({ phase: 'error', action: 'uninstall', message: 'Something went wrong: ENOENT: boom' })
   })
 
   it('does not break when the broadcast throws, and does not send a second done', async () => {
     let n = 0
-    const jm = new JobManager(() => {
+    const seen: string[] = []
+    const jm = new JobManager((p) => {
       n++
+      seen.push(p.phase)
       throw new Error('window closed')
     })
-    const id = jm.enqueue({ gameId: 'g', productId: 'a', action: 'install', run: async ({ emit }) => emit({ jobId: 'x', gameId: 'g', productId: 'a', action: 'install', phase: 'done', received: 0, total: 0, bytesPerSecond: 0 }) })
+    jm.enqueue({ gameId: 'g', productId: 'a', action: 'install', run: async ({ emit }) => emit({ jobId: 'x', gameId: 'g', productId: 'a', action: 'install', phase: 'done', received: 0, total: 0, bytesPerSecond: 0 }) })
     await tick()
-    expect(jm.lastProgress(id)!.phase).toBe('done')
-    expect(n).toBe(2) // queued, done
+    expect(seen).toEqual(['queued', 'done'])
+    expect(n).toBe(2)
   })
 })
 
@@ -182,6 +184,5 @@ describe('log', () => {
     expect(fs.existsSync(`${file}.1`)).toBe(true)
     expect(fs.readFileSync(file, 'utf8')).toContain('after')
     expect(fs.statSync(file).size).toBeLessThan(1000)
-    stopLog()
   })
 })

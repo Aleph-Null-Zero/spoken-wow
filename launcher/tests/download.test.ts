@@ -4,7 +4,7 @@ import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { downloadAsset } from '../src/main/download'
 import { isAbortError, PlainError } from '../src/main/errors'
-import { serveBuffer, sha256, startServer, tmpDir, type TestServer } from './helpers'
+import { serveBuffer, sha256, startServer, tmpDir, writePart, type TestServer } from './helpers'
 
 const DATA = randomBytes(300_000)
 let server: TestServer | null = null
@@ -56,7 +56,7 @@ describe('downloadAsset', () => {
 
   it('resumes a .part file with a Range header', async () => {
     server = await startServer((req, res) => serveBuffer(req, res, DATA))
-    fs.writeFileSync(path.join(dir, 'pack-1.0.0.zip.part'), DATA.subarray(0, 100_000))
+    writePart(dir, 'pack-1.0.0', DATA.subarray(0, 100_000))
     const result = await downloadAsset({ url: `${server.url}/file`, dir, ...base() })
     expect(server.requests).toHaveLength(1)
     expect(server.requests[0]!.range).toBe('bytes=100000-')
@@ -64,12 +64,70 @@ describe('downloadAsset', () => {
     expect(fs.readFileSync(result.file).equals(DATA)).toBe(true)
   })
 
+  it('sends If-Range with the saved validator and resumes when the server says 206', async () => {
+    server = await startServer((req, res) => serveBuffer(req, res, DATA, '"v1"'))
+    writePart(dir, 'pack-1.0.0', DATA.subarray(0, 100_000), { etag: '"v1"' })
+    const result = await downloadAsset({ url: `${server.url}/file`, dir, ...base() })
+    expect(server.requests[0]!.range).toBe('bytes=100000-')
+    expect(server.requests[0]!.ifRange).toBe('"v1"')
+    expect(result.fetched).toBe(DATA.length - 100_000)
+    expect(fs.readFileSync(result.file).equals(DATA)).toBe(true)
+    expect(fs.readdirSync(dir)).toEqual(['pack-1.0.0.zip'])
+  })
+
+  it('uses Last-Modified when there is no strong ETag', async () => {
+    server = await startServer((req, res) => serveBuffer(req, res, DATA))
+    writePart(dir, 'pack-1.0.0', DATA.subarray(0, 1000), { etag: 'W/"weak"', lastModified: 'Wed, 21 Oct 2026 07:28:00 GMT' })
+    await downloadAsset({ url: `${server.url}/file`, dir, ...base() })
+    expect(server.requests[0]!.ifRange).toBe('Wed, 21 Oct 2026 07:28:00 GMT')
+  })
+
+  it('starts the file again when the server answers 200 because the file changed', async () => {
+    server = await startServer((req, res) => serveBuffer(req, res, DATA, '"v2"'))
+    // The .part is the start of some other version of the file.
+    writePart(dir, 'pack-1.0.0', randomBytes(100_000), { etag: '"v1"' })
+    const result = await downloadAsset({ url: `${server.url}/file`, dir, ...base() })
+    expect(server.requests[0]!.ifRange).toBe('"v1"')
+    expect(result.fetched).toBe(DATA.length)
+    expect(fs.readFileSync(result.file).equals(DATA)).toBe(true)
+  })
+
+  it('does not resume a .part that has no record beside it', async () => {
+    server = await startServer((req, res) => serveBuffer(req, res, DATA))
+    fs.writeFileSync(path.join(dir, 'pack-1.0.0.zip.part'), DATA.subarray(0, 100_000))
+    const result = await downloadAsset({ url: `${server.url}/file`, dir, ...base() })
+    expect(server.requests[0]!.range).toBeUndefined()
+    expect(result.fetched).toBe(DATA.length)
+    expect(fs.readFileSync(result.file).equals(DATA)).toBe(true)
+  })
+
+  it('keeps the record of a part that was cut short, and saves the validator of a new one', async () => {
+    server = await startServer((_req, res) => {
+      res.writeHead(200, { 'Content-Length': DATA.length, ETag: '"v9"', 'Last-Modified': 'Wed, 21 Oct 2026 07:28:00 GMT' })
+      res.write(DATA.subarray(0, 50_000))
+      // never finished
+    })
+    const controller = new AbortController()
+    const err = await downloadAsset({
+      url: `${server.url}/file`,
+      dir,
+      ...base(),
+      signal: controller.signal,
+      onProgress: () => controller.abort()
+    }).catch((e) => e)
+    expect(isAbortError(err)).toBe(true)
+    expect(JSON.parse(fs.readFileSync(path.join(dir, 'pack-1.0.0.zip.part.meta'), 'utf8'))).toEqual({
+      etag: '"v9"',
+      lastModified: 'Wed, 21 Oct 2026 07:28:00 GMT'
+    })
+  })
+
   it('starts again when the server ignores the Range header', async () => {
     server = await startServer((_req, res) => {
       res.writeHead(200, { 'Content-Length': DATA.length })
       res.end(DATA)
     })
-    fs.writeFileSync(path.join(dir, 'pack-1.0.0.zip.part'), DATA.subarray(0, 50_000))
+    writePart(dir, 'pack-1.0.0', DATA.subarray(0, 50_000))
     const result = await downloadAsset({ url: `${server.url}/file`, dir, ...base() })
     expect(server.requests[0]!.range).toBe('bytes=50000-')
     expect(fs.readFileSync(result.file).equals(DATA)).toBe(true)
@@ -77,7 +135,7 @@ describe('downloadAsset', () => {
 
   it('verifies and finishes a complete .part without asking the server', async () => {
     server = await startServer((req, res) => serveBuffer(req, res, DATA))
-    fs.writeFileSync(path.join(dir, 'pack-1.0.0.zip.part'), DATA)
+    writePart(dir, 'pack-1.0.0', DATA)
     const result = await downloadAsset({ url: `${server.url}/file`, dir, ...base() })
     expect(server.requests).toHaveLength(0)
     expect(fs.readFileSync(result.file).equals(DATA)).toBe(true)
@@ -85,7 +143,7 @@ describe('downloadAsset', () => {
 
   it('treats a 416 on resume as "already complete" and verifies the file', async () => {
     server = await startServer((req, res) => serveBuffer(req, res, DATA))
-    fs.writeFileSync(path.join(dir, 'pack-1.0.0.zip.part'), DATA)
+    writePart(dir, 'pack-1.0.0', DATA)
     // The size is not known in advance here, so the request goes out and the server answers 416.
     const result = await downloadAsset({ url: `${server.url}/file`, dir, ...base({ expectedSize: 0 }) })
     expect(server.requests[0]!.range).toBe(`bytes=${DATA.length}-`)
@@ -138,7 +196,7 @@ describe('downloadAsset', () => {
     server = await startServer((req, res) => serveBuffer(req, res, DATA))
     const damaged = Buffer.from(DATA.subarray(0, 100_000))
     damaged[10] = damaged[10]! ^ 0xff
-    fs.writeFileSync(path.join(dir, 'pack-1.0.0.zip.part'), damaged)
+    writePart(dir, 'pack-1.0.0', damaged)
     const err = await downloadAsset({ url: `${server.url}/file`, dir, ...base() }).catch((e) => e)
     expect(err).toBeInstanceOf(PlainError)
     expect(fs.readdirSync(dir)).toEqual([])

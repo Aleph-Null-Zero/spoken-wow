@@ -1,21 +1,181 @@
 import { useState, type ReactNode } from 'react'
-import { isSupportedFlavor, unsupportedReason } from '@shared/types'
+import { formatBytes } from '../format'
 import { api, errorText } from '../api'
+import { GameIcon } from '../components/Brand'
 import { Switch } from '../components/Controls'
 import { useAddGame } from '../components/EmptyGames'
-import { IconExternal, IconFolder, IconPlus, IconRefresh } from '../components/Icons'
+import { IconChevron, IconChevronRight, IconDownload, IconExternal, IconFolder, IconGames, IconInfo, IconPlus, IconRefresh } from '../components/Icons'
 import { useStore } from '../store'
 import { REPO_URL, S, SITE_URL } from '../strings'
 
+type Section = 'games' | 'updates' | 'downloads' | 'about'
+
+const NAV: { id: Section; label: string; icon: ReactNode }[] = [
+  { id: 'games', label: S.settings.folders, icon: <IconGames size={18} /> },
+  { id: 'updates', label: S.settings.updates, icon: <IconRefresh size={18} /> },
+  { id: 'downloads', label: S.settings.downloads, icon: <IconDownload size={18} /> },
+  { id: 'about', label: S.settings.about, icon: <IconInfo size={18} /> }
+]
+
 export function SettingsPage(): ReactNode {
+  const { state } = useStore()
+  const [section, setSection] = useState<Section>('games')
+  return (
+    <div className="settings">
+      <header className="settings-head">
+        <h1>{S.settings.title}</h1>
+      </header>
+      <div className="settings-body">
+        <nav className="settings-nav" aria-label={S.settings.title}>
+          {NAV.map((n) => (
+            <button key={n.id} type="button" className="nav-item" aria-current={section === n.id ? 'page' : undefined} onClick={() => setSection(n.id)}>
+              {n.icon}
+              {n.label}
+            </button>
+          ))}
+        </nav>
+        <div className="settings-content scroll">
+          <div className="settings-inner">
+            {section === 'games' && <GamesSection />}
+            {section === 'updates' && <UpdatesSection />}
+            {section === 'downloads' && <DownloadsSection />}
+            {section === 'about' && <AboutSection />}
+          </div>
+        </div>
+      </div>
+      <footer className="settings-footer">{state.appVersion}</footer>
+    </div>
+  )
+}
+
+function GamesSection(): ReactNode {
+  const { state, actions } = useStore()
+  const { add, scan, error, busy, scanning } = useAddGame()
+  const [open, setOpen] = useState<Set<string>>(() => new Set(state.games.slice(0, 1).map((g) => g.id)))
+  const allOpen = state.games.length > 0 && state.games.every((g) => open.has(g.id))
+  const toggle = (id: string): void =>
+    setOpen((prev) => {
+      const next = new Set(prev)
+      if (!next.delete(id)) next.add(id)
+      return next
+    })
+  return (
+    <section aria-labelledby="set-folders">
+      <div className="settings-title-row">
+        <h2 id="set-folders" className="settings-h">
+          {S.settings.folders}
+        </h2>
+        {state.games.length > 1 && (
+          <button type="button" className="link" onClick={() => setOpen(allOpen ? new Set() : new Set(state.games.map((g) => g.id)))}>
+            {allOpen ? S.settings.collapseAll : S.settings.expandAll}
+          </button>
+        )}
+      </div>
+      <p className="settings-text">{S.settings.foldersText}</p>
+
+      {state.games.length === 0 ? (
+        <p className="muted">{S.settings.noFolders}</p>
+      ) : (
+        <ul className="acc-list">
+          {state.games.map((g) => {
+            const expanded = open.has(g.id)
+            return (
+              <li key={g.id} className="acc">
+                <button type="button" className="acc-head" aria-expanded={expanded} aria-controls={`acc-${g.id}`} onClick={() => toggle(g.id)}>
+                  {expanded ? <IconChevron size={14} /> : <IconChevronRight size={14} />}
+                  <GameIcon flavor={g.flavor} />
+                  <span className="acc-title">{g.label}</span>
+                  <span className={`badge ${g.source === 'auto' ? 'badge-muted' : 'badge-info'}`}>{g.source === 'auto' ? S.settings.auto : S.settings.manual}</span>
+                </button>
+                {expanded && (
+                  <div className="acc-body" id={`acc-${g.id}`}>
+                    <span className="field-label">{S.settings.installLocation}</span>
+                    <div className="path-line">
+                      <span className="input ellipsis" title={g.root}>
+                        {g.root}
+                      </span>
+                      <button type="button" className="btn" onClick={() => void api().openPath(g.root)}>
+                        <IconFolder size={14} />
+                        {S.common.open}
+                      </button>
+                      {g.source === 'manual' && (
+                        <button type="button" className="btn" onClick={() => void actions.removeGame(g.id)}>
+                          {S.common.remove}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      <div className="setting-actions">
+        <button type="button" className="btn" onClick={add} disabled={busy}>
+          <IconPlus size={14} />
+          {S.empty.add}
+        </button>
+        <button type="button" className="btn" onClick={scan} disabled={scanning} aria-busy={scanning}>
+          <IconRefresh size={14} className={scanning ? 'is-spinning' : ''} />
+          {S.empty.scan}
+        </button>
+      </div>
+      {error && (
+        <p className="text-error" role="alert">
+          {error}
+        </p>
+      )}
+    </section>
+  )
+}
+
+function UpdatesSection(): ReactNode {
   const { state, actions } = useStore()
   const { settings } = state
-  const { add, scan, error, busy, scanning } = useAddGame()
-  const [downloadError, setDownloadError] = useState('')
   const set = (patch: Parameters<typeof actions.setSettings>[0]): void => void actions.setSettings(patch).catch(() => undefined)
+  return (
+    <section aria-labelledby="set-updates">
+      <h2 id="set-updates" className="settings-h">
+        {S.settings.updates}
+      </h2>
+      <div className="switches">
+        <Switch checked={settings.includePrereleases} onChange={(v) => set({ includePrereleases: v })} label={S.settings.prereleases} text={S.settings.prereleasesText} />
+        <Switch checked={settings.checkOnStart} onChange={(v) => set({ checkOnStart: v })} label={S.settings.checkOnStart} text={S.settings.checkOnStartText} />
+        <Switch checked={settings.autoUpdateLauncher} onChange={(v) => set({ autoUpdateLauncher: v })} label={S.settings.autoUpdate} text={S.settings.autoUpdateText} />
+      </div>
+    </section>
+  )
+}
 
+function DownloadsSection(): ReactNode {
+  const { state, actions } = useStore()
+  const { settings } = state
+  const [downloadError, setDownloadError] = useState('')
+  const [cleared, setCleared] = useState('')
+  const [clearing, setClearing] = useState(false)
+  const useDefault = (): void => {
+    setDownloadError('')
+    void actions.setSettings({ downloadsPath: '' }).catch((e) => setDownloadError(errorText(e)))
+  }
+  const set = (patch: Parameters<typeof actions.setSettings>[0]): void => void actions.setSettings(patch).catch(() => undefined)
+  const clear = async (): Promise<void> => {
+    setCleared('')
+    setDownloadError('')
+    setClearing(true)
+    try {
+      const r = await api().clearDownloads()
+      setCleared(r.files === 0 ? S.settings.clearedNone : S.settings.cleared(r.files, formatBytes(r.bytes)))
+    } catch (e) {
+      setDownloadError(errorText(e))
+    } finally {
+      setClearing(false)
+    }
+  }
   const changeDownloads = async (): Promise<void> => {
     setDownloadError('')
+    setCleared('')
     try {
       const path = await api().pickFolder()
       if (path) await actions.setSettings({ downloadsPath: path })
@@ -23,141 +183,112 @@ export function SettingsPage(): ReactNode {
       setDownloadError(errorText(e))
     }
   }
-
   return (
-    <div className="page page-narrow">
-      <div className="page-head">
-        <h1>{S.settings.title}</h1>
+    <section aria-labelledby="set-downloads">
+      <h2 id="set-downloads" className="settings-h">
+        {S.settings.downloads}
+      </h2>
+      <span className="field-label">{S.settings.downloadsFolder}</span>
+      <div className="path-line">
+        <span className={`input ellipsis${settings.downloadsPath ? '' : ' is-default'}`} title={settings.downloadsPath || state.dataPath}>
+          {settings.downloadsPath || S.settings.appFolder}
+        </span>
+        <button type="button" className="btn" onClick={() => void changeDownloads()}>
+          {S.common.change}
+        </button>
+        <button type="button" className="btn" onClick={() => void api().openPath(settings.downloadsPath || state.dataPath)}>
+          {S.common.open}
+        </button>
+        {settings.downloadsPath && (
+          <button type="button" className="link" onClick={useDefault}>
+            {S.settings.useDefault}
+          </button>
+        )}
       </div>
+      {downloadError && (
+        <p className="text-error" role="alert">
+          {downloadError}
+        </p>
+      )}
+      <div className="setting-actions">
+        <button type="button" className="btn" onClick={() => void clear()} disabled={clearing} aria-busy={clearing}>
+          {S.settings.clearDownloads}
+        </button>
+      </div>
+      {cleared && (
+        <p className="status status-ok-text setting-result" role="status">
+          {cleared}
+        </p>
+      )}
+      <div className="switches">
+        <Switch checked={settings.keepDownloads} onChange={(v) => set({ keepDownloads: v })} label={S.settings.keepZips} text={S.settings.keepZipsText} />
+      </div>
+    </section>
+  )
+}
 
-      <section className="card setting-card" aria-labelledby="set-folders">
-        <header className="section-head">
-          <h2 id="set-folders">{S.settings.folders}</h2>
-          <p>{S.settings.foldersText}</p>
-        </header>
-        {state.games.length === 0 ? (
-          <p className="muted pad-x">{S.settings.noFolders}</p>
-        ) : (
-          <ul className="list">
-            {state.games.map((g) => (
-              <li key={g.id} className="row">
-                <div className="row-main">
-                  <span className="row-title">{g.label}</span>
-                  <span className="row-text ellipsis" title={g.root}>
-                    {g.root}
-                  </span>
-                </div>
-                {!isSupportedFlavor(g.flavor) && (
-                  <span className="badge badge-muted" title={unsupportedReason(g) ?? undefined}>
-                    {S.settings.notSupported}
-                  </span>
-                )}
-                <span className={`badge ${g.source === 'auto' ? 'badge-muted' : 'badge-info'}`}>{g.source === 'auto' ? S.settings.auto : S.settings.manual}</span>
-                <span className="row-buttons">
-                  <button type="button" className="btn btn-sm" onClick={() => void api().openPath(g.root)}>
-                    <IconFolder size={14} />
-                    {S.common.open}
-                  </button>
-                  {g.source === 'manual' && (
-                    <button type="button" className="btn btn-sm" onClick={() => void actions.removeGame(g.id)}>
-                      {S.common.remove}
-                    </button>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="setting-actions">
-          <button type="button" className="btn btn-primary" onClick={add} disabled={busy}>
-            <IconPlus size={16} />
-            {S.empty.add}
-          </button>
-          <button type="button" className="btn" onClick={scan} disabled={scanning} aria-busy={scanning}>
-            <IconRefresh size={16} className={scanning ? 'is-spinning' : ''} />
-            {S.empty.scan}
-          </button>
-        </div>
-        {error && (
-          <p className="text-error pad-x" role="alert">
-            {error}
-          </p>
-        )}
-      </section>
-
-      <section className="card setting-card" aria-labelledby="set-updates">
-        <header className="section-head">
-          <h2 id="set-updates">{S.settings.updates}</h2>
-        </header>
-        <div className="switches">
-          <Switch checked={settings.includePrereleases} onChange={(v) => set({ includePrereleases: v })} label={S.settings.prereleases} text={S.settings.prereleasesText} />
-          <Switch checked={settings.checkOnStart} onChange={(v) => set({ checkOnStart: v })} label={S.settings.checkOnStart} text={S.settings.checkOnStartText} />
-          <Switch checked={settings.autoUpdateLauncher} onChange={(v) => set({ autoUpdateLauncher: v })} label={S.settings.autoUpdate} text={S.settings.autoUpdateText} />
-        </div>
-      </section>
-
-      <section className="card setting-card" aria-labelledby="set-downloads">
-        <header className="section-head">
-          <h2 id="set-downloads">{S.settings.downloads}</h2>
-        </header>
-        <div className="path-row">
-          <div className="row-main">
-            <span className="field-label">{S.settings.downloadsFolder}</span>
-            <span className={`path ellipsis${settings.downloadsPath ? '' : ' is-default'}`} title={settings.downloadsPath || state.dataPath}>
-              {settings.downloadsPath || S.settings.appFolder}
-            </span>
-          </div>
-          <span className="row-buttons">
-            <button type="button" className="btn btn-sm" onClick={() => void changeDownloads()}>
-              {S.common.change}
-            </button>
-            <button type="button" className="btn btn-sm" onClick={() => void api().openPath(settings.downloadsPath || state.dataPath)}>
-              {S.common.open}
-            </button>
-            {settings.downloadsPath && (
-              <button type="button" className="link" onClick={() => set({ downloadsPath: '' })}>
-                {S.settings.useDefault}
-              </button>
-            )}
-          </span>
-        </div>
-        {downloadError && (
-          <p className="text-error pad-x" role="alert">
-            {downloadError}
-          </p>
-        )}
-        <div className="switches">
-          <Switch checked={settings.keepDownloads} onChange={(v) => set({ keepDownloads: v })} label={S.settings.keepZips} text={S.settings.keepZipsText} />
-        </div>
-      </section>
-
-      <section className="card setting-card" aria-labelledby="set-about">
-        <header className="section-head">
-          <h2 id="set-about">{S.settings.about}</h2>
-        </header>
-        <dl className="about">
-          <dt>{S.settings.version}</dt>
-          <dd>{state.appVersion || '-'}</dd>
-          <dt>{S.settings.dataPath}</dt>
-          <dd className="ellipsis" title={state.dataPath}>
-            {state.dataPath || '-'}
-          </dd>
-        </dl>
-        <div className="setting-actions">
-          <button type="button" className="btn" onClick={() => void api().openLogs()}>
-            <IconFolder size={16} />
-            {S.settings.openLogs}
-          </button>
-          <button type="button" className="btn" onClick={() => void api().openExternal(REPO_URL)}>
-            <IconExternal size={16} />
-            {S.settings.repository}
-          </button>
-          <button type="button" className="btn" onClick={() => void api().openExternal(SITE_URL)}>
-            <IconExternal size={16} />
-            {S.settings.site}
-          </button>
-        </div>
-      </section>
-    </div>
+function AboutSection(): ReactNode {
+  const { state, actions } = useStore()
+  const [asked, setAsked] = useState(false)
+  const [waiting, setWaiting] = useState(false)
+  const u = state.updater
+  const busy = waiting || u.state === 'checking' || u.state === 'downloading'
+  const check = async (): Promise<void> => {
+    setAsked(true)
+    setWaiting(true)
+    await actions.checkLauncherUpdate()
+    setWaiting(false)
+  }
+  const result =
+    u.state === 'checking' || waiting
+      ? { text: S.settings.updateChecking, cls: 'status-muted' }
+      : u.state === 'available'
+        ? { text: S.settings.updateAvailable(u.version), cls: 'status-warn' }
+        : u.state === 'downloading'
+          ? { text: S.banners.updating(Math.round(u.percent)), cls: 'status-muted' }
+          : u.state === 'ready'
+            ? { text: S.banners.updateReady(u.version), cls: 'status-ok-text' }
+            : u.state === 'error'
+              ? { text: u.message, cls: 'status-error' }
+              : asked
+                ? { text: S.settings.updateCurrent, cls: 'status-ok-text' }
+                : null
+  return (
+    <section aria-labelledby="set-about">
+      <h2 id="set-about" className="settings-h">
+        {S.settings.about}
+      </h2>
+      <dl className="about">
+        <dt className="field-label">{S.settings.version}</dt>
+        <dd>{state.appVersion || '-'}</dd>
+        <dt className="field-label">{S.settings.dataPath}</dt>
+        <dd className="ellipsis" title={state.dataPath}>
+          {state.dataPath || '-'}
+        </dd>
+      </dl>
+      <div className="setting-actions">
+        <button type="button" className="btn" onClick={() => void check()} disabled={busy} aria-busy={busy}>
+          <IconRefresh size={14} className={busy ? 'is-spinning' : ''} />
+          {S.settings.checkUpdate}
+        </button>
+        <button type="button" className="btn" onClick={() => void api().openLogs()}>
+          <IconFolder size={14} />
+          {S.settings.openLogs}
+        </button>
+        <button type="button" className="btn" onClick={() => void api().openExternal(REPO_URL)}>
+          <IconExternal size={14} />
+          {S.settings.repository}
+        </button>
+        <button type="button" className="btn" onClick={() => void api().openExternal(SITE_URL)}>
+          <IconExternal size={14} />
+          {S.settings.site}
+        </button>
+      </div>
+      {result && (
+        <p className={`status ${result.cls} setting-result`} role={u.state === 'error' ? 'alert' : 'status'}>
+          {result.text}
+        </p>
+      )}
+    </section>
   )
 }

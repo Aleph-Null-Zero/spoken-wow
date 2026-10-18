@@ -1,12 +1,13 @@
 // The handlers for every channel in shared/api.ts. Each argument is checked before it is used.
-import path from 'node:path'
 import { BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
 import { CHANNELS, type InstallOptions } from '../shared/api'
 import type { Settings } from '../shared/types'
 import { DEFAULT_SETTINGS } from '../shared/types'
-import { isAllowedExternalUrl, isAllowedOpenPath } from './external'
+import { isAllowedExternalUrl, openableDirectory } from './external'
 import type { LauncherService } from './service'
+import { isOurPage, type AppPage } from './trust'
 import { log, logsDir } from './state'
+import { checkForLauncherUpdate } from './updater'
 
 function text(v: unknown, what: string, max = 2048): string {
   if (typeof v !== 'string' || v.length === 0 || v.length > max || v.includes('\0')) throw new Error(`Invalid ${what}`)
@@ -33,6 +34,7 @@ function settingsPatch(v: unknown): Partial<Settings> {
   for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
     if (!(key in raw)) continue
     if (typeof raw[key] !== typeof DEFAULT_SETTINGS[key]) throw new Error(`Invalid setting ${key}`)
+    if (typeof raw[key] === 'string' && ((raw[key] as string).length > 2000 || (raw[key] as string).includes('\0'))) throw new Error(`Invalid setting ${key}`)
     ;(out as Record<string, unknown>)[key] = raw[key]
   }
   return out
@@ -41,30 +43,26 @@ function settingsPatch(v: unknown): Partial<Settings> {
 function installOptions(v: unknown): InstallOptions | undefined {
   if (v === undefined || v === null) return undefined
   if (typeof v !== 'object') throw new Error('Invalid options')
-  const version = (v as { version?: unknown }).version
-  if (version === undefined) return {}
-  if (typeof version !== 'string' || version.length > 100 || !/^[\w.+-]+$/.test(version)) throw new Error('Invalid version')
-  return { version }
+  const { version, repair } = v as { version?: unknown; repair?: unknown }
+  if (repair !== undefined && typeof repair !== 'boolean') throw new Error('Invalid options')
+  if (version !== undefined && (typeof version !== 'string' || version.length > 100 || !/^[\w.+-]+$/.test(version))) throw new Error('Invalid version')
+  return { ...(typeof version === 'string' ? { version } : {}), ...(repair === true ? { repair } : {}) }
 }
 
-/** Only our own window (the built file, or the dev server) may call. */
-function trusted(event: IpcMainInvokeEvent): boolean {
-  const url = event.senderFrame?.url ?? ''
-  const dev = process.env.ELECTRON_RENDERER_URL
-  if (dev) {
-    try {
-      return url.startsWith(new URL(dev).origin)
-    } catch {
-      return false
-    }
-  }
-  return url.startsWith('file://')
+/** Only the window's own page, in its top frame, may call. */
+function trusted(event: IpcMainInvokeEvent, page: AppPage): boolean {
+  const frame = event.senderFrame
+  if (!frame || frame !== event.sender.mainFrame) return false
+  return isOurPage(frame.url, page)
 }
 
-export function registerIpc(service: LauncherService): void {
+export function registerIpc(service: LauncherService, page: AppPage): void {
   const handle = (channel: string, fn: (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown): void => {
     ipcMain.handle(channel, async (event, ...args) => {
-      if (!trusted(event)) throw new Error('Not allowed')
+      if (!trusted(event, page)) {
+        log(`Blocked ${channel} from ${event.senderFrame?.url ?? 'an unknown frame'}`)
+        throw new Error('Not allowed')
+      }
       await service.ready
       try {
         return await fn(event, ...args)
@@ -87,7 +85,6 @@ export function registerIpc(service: LauncherService): void {
   )
   handle(CHANNELS.uninstall, (_e, gameId, pid) => service.uninstall(id(gameId, 'game id'), productId(pid)))
   handle(CHANNELS.cancel, (_e, jobId) => service.cancel(id(jobId, 'job id')))
-  handle(CHANNELS.getSettings, () => service.getSettings())
   handle(CHANNELS.setSettings, (_e, patch) => service.setSettings(settingsPatch(patch)))
 
   handle(CHANNELS.pickFolder, async (event) => {
@@ -98,9 +95,8 @@ export function registerIpc(service: LauncherService): void {
   })
 
   handle(CHANNELS.openPath, async (_e, p) => {
-    const target = path.resolve(text(p, 'path'))
     const roots = [...service.games.map((g) => g.addOnsPath), service.dataPath, service.downloadsPath()]
-    if (!isAllowedOpenPath(target, roots)) throw new Error('That folder cannot be opened from here')
+    const target = await openableDirectory(text(p, 'path'), roots)
     const problem = await shell.openPath(target)
     if (problem) log('Could not open a folder:', problem)
   })
@@ -109,6 +105,9 @@ export function registerIpc(service: LauncherService): void {
     if (!isAllowedExternalUrl(url)) throw new Error('That link cannot be opened from here')
     await shell.openExternal(url as string)
   })
+
+  handle(CHANNELS.checkLauncherUpdate, () => checkForLauncherUpdate())
+  handle(CHANNELS.clearDownloads, () => service.clearDownloads())
 
   handle(CHANNELS.openLogs, async () => {
     const problem = await shell.openPath(logsDir(service.dataPath))
