@@ -55,9 +55,12 @@ function refuse(why: string): never {
   throw new PlainError(`The voice pack list could not be trusted (${why}), so it was not used.`)
 }
 
+// Windows treats these as devices whatever the extension: CON, CON.txt and con.ogg are all the console.
+const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i
+
 export function isSafePackPath(p: unknown): p is string {
   if (typeof p !== 'string' || p === '' || p.startsWith('/') || /^[A-Za-z]:/.test(p)) return false
-  return p.split('/').every((s) => s !== '' && s !== '.' && s !== '..' && !BAD_CHARS.test(s) && !/[. ]$/.test(s))
+  return p.split('/').every((s) => s !== '' && s !== '.' && s !== '..' && !BAD_CHARS.test(s) && !/[. ]$/.test(s) && !RESERVED.test(s.split('.')[0]!))
 }
 
 export function sha256Text(text: string): string {

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { buildManifest, diffFiles, hashFolder, isSafePath, revOf } from "./manifest.mjs";
+import { buildManifest, caseDuplicate, diffFiles, hashFolder, isSafePath, revOf } from "./manifest.mjs";
 
 function folder(files) {
   const dir = mkdtempSync(join(tmpdir(), "manifest-"));
@@ -33,8 +33,8 @@ test("hashFolder trusts the cache when size and mtime match", async () => {
 });
 
 test("unsafe paths are refused", () => {
-  for (const p of ["", "/a", "C:/a", "a/../b", "..", "a\\b", "a/b.", "a/ b ", "a//b"]) assert.equal(isSafePath(p), false, p);
-  for (const p of ["a.ogg", "generated/sounds/quests/20-accept.ogg", "x~Voice.ogg"]) assert.equal(isSafePath(p), true, p);
+  for (const p of ["", "/a", "C:/a", "a/../b", "..", "a\\b", "a/b.", "a/ b ", "a//b", "CON", "con.ogg", "a/NUL.txt", "Sounds/com1.ogg", "lpt9"]) assert.equal(isSafePath(p), false, p);
+  for (const p of ["a.ogg", "generated/sounds/quests/20-accept.ogg", "x~Voice.ogg", "console.ogg", "COM0.ogg", "a/com10.ogg"]) assert.equal(isSafePath(p), true, p);
 });
 
 test("buildManifest totals the files", () => {
@@ -53,4 +53,9 @@ test("diffFiles counts added, changed and removed paths", () => {
 
 test("revOf is UTC to the second", () => {
   assert.equal(revOf(new Date("2026-10-18T14:22:33.456Z")), "20261018T142233Z");
+});
+
+test("a path repeated apart from case is found", () => {
+  assert.equal(caseDuplicate([{ path: "a/x.ogg" }, { path: "b.ogg" }, { path: "A/X.ogg" }]), "A/X.ogg");
+  assert.equal(caseDuplicate([{ path: "a.ogg" }, { path: "b.ogg" }]), null);
 });

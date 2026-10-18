@@ -32,9 +32,9 @@ describe('openEnvelope', () => {
 })
 
 describe('isSafePackPath', () => {
-  it('refuses escapes, drives, backslashes and trailing dots', () => {
-    for (const p of ['', '/a', 'C:/a', 'a/../b', '..', 'a\\b', 'a/b.', 'a//b', 'a/b ']) expect(isSafePackPath(p), p).toBe(false)
-    for (const p of ['a.ogg', 'generated/sounds/quests/20-accept.ogg', 'x~Voice.ogg']) expect(isSafePackPath(p), p).toBe(true)
+  it('refuses escapes, drives, backslashes and trailing dots and device names', () => {
+    for (const p of ['', '/a', 'C:/a', 'a/../b', '..', 'a\\b', 'a/b.', 'a//b', 'a/b ', 'CON', 'con.ogg', 'a/NUL.txt', 'Sounds/com1.ogg', 'lpt9']) expect(isSafePackPath(p), p).toBe(false)
+    for (const p of ['a.ogg', 'generated/sounds/quests/20-accept.ogg', 'x~Voice.ogg', 'console.ogg', 'COM0.ogg']) expect(isSafePackPath(p), p).toBe(true)
   })
 })
 

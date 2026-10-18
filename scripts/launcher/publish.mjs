@@ -7,8 +7,11 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { buildManifest, diffFiles, hashFolder, revOf } from "./manifest.mjs";
+import { buildManifest, caseDuplicate, diffFiles, hashFolder, revOf } from "./manifest.mjs";
 import { openJson, publicKeyOf, sealJson, sha256Text } from "./sign.mjs";
+
+// The launcher's own PACK_ID (launcher/src/main/packs-remote.ts): an index entry it rejects hides the whole channel.
+const PACK_ID = /^Spoken[A-Za-z]+(_[a-z]{2}[A-Z]{2})?$/;
 
 export const IMMUTABLE = "public, max-age=31536000, immutable";
 export const INDEX_CACHE = "public, max-age=60";
@@ -74,6 +77,7 @@ export async function publish({ store, packs, distDir, signingKey, minSpoken, la
 
   // Every folder and every requirement is checked before anything is read from or sent to R2.
   for (const { folder, section } of packs) {
+    if (!PACK_ID.test(folder)) throw new Error(`${folder} is not a pack id the launcher accepts`);
     if (!existsSync(join(distDir, folder))) throw new Error(`dist/${folder} is missing: build it first (make ${section}-package-audio)`);
     // The packagers leave dist/<folder>/ beside the zip; a folder older than a zip is a stale build.
     const toc = join(distDir, folder, `${folder}.toc`);
@@ -93,6 +97,9 @@ export async function publish({ store, packs, distDir, signingKey, minSpoken, la
   for (const { folder, section } of packs) {
     log(`${folder}: hashing`);
     const files = await hashFolder(join(distDir, folder), cache);
+    // Windows and macOS fold case, so paths differing only in case would be one file there.
+    const dup = caseDuplicate(files);
+    if (dup) throw new Error(`${folder} lists ${dup} twice, differing only in case`);
     const requires = { Spoken: `>=${minSpoken[section]}` };
     let before = [];
     const entry = live[folder];

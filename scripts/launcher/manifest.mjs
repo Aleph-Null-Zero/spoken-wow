@@ -7,9 +7,12 @@ import { join } from "node:path";
 
 const BAD_CHARS = /[\0<>:"|?*\\\x01-\x1f]/;
 
+// Windows treats these as devices whatever the extension: CON, CON.txt and con.ogg are all the console.
+const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
 export function isSafePath(p) {
   if (typeof p !== "string" || p === "" || p.startsWith("/") || /^[A-Za-z]:/.test(p)) return false;
-  return p.split("/").every((s) => s !== "" && s !== "." && s !== ".." && !BAD_CHARS.test(s) && !/[. ]$/.test(s));
+  return p.split("/").every((s) => s !== "" && s !== "." && s !== ".." && !BAD_CHARS.test(s) && !/[. ]$/.test(s) && !RESERVED.test(s.split(".")[0]));
 }
 
 // Dotfiles (.DS_Store and the like) never ship.
@@ -57,6 +60,17 @@ export async function hashFolder(root, cache) {
     files.push({ path, sha256, size: st.size });
   }
   return files;
+}
+
+// The first path that repeats an earlier one apart from case, or null.
+export function caseDuplicate(files) {
+  const seen = new Set();
+  for (const f of files) {
+    const key = f.path.toLowerCase();
+    if (seen.has(key)) return f.path;
+    seen.add(key);
+  }
+  return null;
 }
 
 export function buildManifest({ packId, rev, requires, files }) {

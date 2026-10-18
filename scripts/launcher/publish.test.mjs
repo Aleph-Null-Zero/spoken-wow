@@ -99,6 +99,18 @@ test("a folder with no root .toc is refused: the build did not finish", async ()
   assert.equal(store.log.length, 0);
 });
 
+test("a folder name the launcher would reject is refused before anything is read", async () => {
+  const store = memoryStore();
+  await assert.rejects(run(store, dist({}), { packs: [{ folder: "Spoken Zones", section: "zones" }] }), /not a pack id the launcher accepts/);
+  assert.equal(store.log.length, 0);
+});
+
+test("a reserved Windows device name in a file path is refused", async () => {
+  const store = memoryStore();
+  await assert.rejects(run(store, dist({ "SpokenZonesAudio_deDE.toc": "toc", "Sounds/nul.ogg": "x" })), /unsafe file name Sounds\/nul\.ogg/);
+  assert.equal(store.log.filter(([op]) => op === "put").length, 0);
+});
+
 test("a pack that needs an unreleased Spoken is refused", async () => {
   await assert.rejects(run(memoryStore(), dist({ "SpokenZonesAudio_deDE.toc": "t" }), { minSpoken: { ...minSpoken, zones: "3.1.0" } }),
     /needs Spoken 3.1.0, but the latest release is 3.0.0/);
