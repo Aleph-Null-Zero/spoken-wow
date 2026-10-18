@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import type { GameInstall } from '@shared/types'
+import { isSupportedFlavor } from '@shared/types'
 import { releasesFor, statusOf } from '../catalog'
 import { EmptyGames } from '../components/EmptyGames'
 import { Select } from '../components/Controls'
@@ -12,7 +13,8 @@ import { S } from '../strings'
 type Filter = 'all' | 'with' | 'without'
 type Sort = 'installed' | 'name'
 
-const hasSpoken = (state: State, g: GameInstall): boolean => (statusOf(state, g.id, 'spoken')?.state ?? 'not-installed') !== 'not-installed'
+const supported = (g: GameInstall): boolean => isSupportedFlavor(g.flavor)
+const hasSpoken = (state: State, g: GameInstall): boolean => supported(g) && (statusOf(state, g.id, 'spoken')?.state ?? 'not-installed') !== 'not-installed'
 
 export function HomePage(): ReactNode {
   const { state, actions } = useStore()
@@ -23,14 +25,16 @@ export function HomePage(): ReactNode {
   const counts = {
     all: state.games.length,
     with: state.games.filter((g) => hasSpoken(state, g)).length,
-    without: state.games.filter((g) => !hasSpoken(state, g)).length
+    without: state.games.filter((g) => supported(g) && !hasSpoken(state, g)).length
   }
   const shown = state.games
-    .filter((g) => filter === 'all' || (filter === 'with') === hasSpoken(state, g))
+    .filter((g) => filter === 'all' || (supported(g) && (filter === 'with') === hasSpoken(state, g)))
     .sort((a, b) => {
+      const d = Number(supported(b)) - Number(supported(a))
+      if (d) return d
       if (sort === 'installed') {
-        const d = Number(hasSpoken(state, b)) - Number(hasSpoken(state, a))
-        if (d) return d
+        const e = Number(hasSpoken(state, b)) - Number(hasSpoken(state, a))
+        if (e) return e
       }
       return a.label.localeCompare(b.label)
     })
@@ -76,7 +80,7 @@ export function HomePage(): ReactNode {
                 <span className="version-pill">{newest.version}</span>
                 {newest.prerelease && <span className="tag tag-warn">{S.spoken.prerelease}</span>}
                 <span className="muted">{formatDate(newest.publishedAt)}</span>
-                <button type="button" className="link whats-new-more" onClick={() => actions.navigate('spoken', state.games[0]?.id, 'changelog')}>
+                <button type="button" className="link whats-new-more" onClick={() => actions.navigate('spoken', state.games.find(supported)?.id, 'changelog')}>
                   {S.home.readAll}
                 </button>
               </div>

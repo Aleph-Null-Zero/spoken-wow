@@ -5,7 +5,7 @@ import { CHANNELS } from '../src/shared/api'
 import type { Catalog, JobProgress } from '../src/shared/types'
 import { LauncherService } from '../src/main/service'
 import { loadSettings } from '../src/main/state'
-import { makeGame, serveBuffer, sha256, startServer, tmpDir, toc, yazlZip, type TestServer } from './helpers'
+import { makeGame, serveBuffer, sha256, startServer, tmpDir, toc, write, yazlZip, type TestServer } from './helpers'
 
 let server: TestServer | null = null
 afterEach(async () => {
@@ -182,5 +182,42 @@ describe('LauncherService', () => {
     const abs = path.join(tmpDir(), 'dl')
     expect(svc.setSettings({ downloadsPath: abs }).downloadsPath).toBe(abs)
     expect(svc.downloadsPath()).toBe(abs)
+  })
+
+  it('refuses install and uninstall on a game Spoken does not run on, and reports it as not installed', async () => {
+    const { svc, sent } = await setup()
+    await svc.refreshCatalog(true)
+    const retail = await makeGame(tmpDir(), { flavorFolder: '_retail_', product: 'wow' })
+    write(path.join(retail.addOnsPath, 'Spoken', 'Spoken.toc'), toc('Spoken', '3.5.0'))
+    const added = await svc.addGame(retail.root)
+    expect(added.game?.flavor).toBe('retail')
+
+    const statuses = await svc.statuses(retail.id)
+    const spoken = statuses.find((s) => s.productId === 'spoken')!
+    expect(spoken).toMatchObject({
+      state: 'not-installed',
+      installedFolders: [],
+      blockedReason: 'Spoken is not available for WoW: Retail. It runs on WoW: Forever, Classic Era and Anniversary.'
+    })
+    expect(spoken.latest?.version).toBe('3.5.0')
+
+    const end = await waitFor(sent, svc.install(retail.id, 'spoken'))
+    expect(end).toMatchObject({ phase: 'error', message: spoken.blockedReason })
+    const gone = await waitFor(sent, svc.uninstall(retail.id, 'spoken'))
+    expect(gone).toMatchObject({ phase: 'error', message: spoken.blockedReason })
+    expect(fs.readFileSync(path.join(retail.addOnsPath, 'Spoken', 'Spoken.toc'), 'utf8')).toContain('3.5.0')
+    expect(fs.existsSync(path.join(retail.addOnsPath, '.spoken-launcher'))).toBe(false)
+  })
+
+  it('treats Forever, Classic Era and Anniversary as supported', async () => {
+    const { svc } = await setup()
+    await svc.refreshCatalog(true)
+    for (const [folder, product] of [['_classic_era_', 'wow_classic_era'], ['_anniversary_', 'wow_anniversary']] as const) {
+      const g = await makeGame(tmpDir(), { flavorFolder: folder, product })
+      const res = await svc.addGame(g.root)
+      const spoken = (await svc.statuses(res.game!.id)).find((s) => s.productId === 'spoken')!
+      expect(spoken.blockedReason).toBeUndefined()
+      expect(spoken.state).toBe('not-installed')
+    }
   })
 })

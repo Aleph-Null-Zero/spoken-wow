@@ -66,3 +66,24 @@ export function EmptyGames(): ReactNode {
     </div>
   )
 }
+
+/** Games are listed but none is one Spoken runs on. */
+function NoSupportedGame(): ReactNode {
+  const { actions } = useStore()
+  return (
+    <div className="empty">
+      <img className="empty-icon" src={icon} alt="" width={96} height={96} />
+      <h1>{S.noGame.title}</h1>
+      <p>{S.noGame.text}</p>
+      <button type="button" className="btn btn-primary btn-lg" onClick={() => actions.navigate('settings')}>
+        {S.noGame.button}
+      </button>
+    </div>
+  )
+}
+
+/** What the game pages show when there is no game to show: none found, or none supported. */
+export function NoGame(): ReactNode {
+  const { state } = useStore()
+  return state.games.length === 0 ? <EmptyGames /> : <NoSupportedGame />
+}

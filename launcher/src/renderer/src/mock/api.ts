@@ -1,9 +1,10 @@
 // A believable fake LauncherApi, used only when `window.launcher` is missing (a plain browser:
-// `npm run dev:web`). Address options: ?offline=1, ?empty=1, ?update=1 (a launcher update banner).
+// `npm run dev:web`). Address options: ?offline=1, ?empty=1 (no games), ?empty=packs (an empty community
+// list), ?readonly=1 (Anniversary is read-only), ?retailonly=1, ?update=1 (a launcher update banner).
 import type { AddGameResult, InstallOptions, LauncherApi, UpdaterState } from '@shared/api'
 import { PRODUCTS, SPOKEN_FOLDERS, productById } from '@shared/products'
-import type { Catalog, GameInstall, JobProgress, Product, ProductStatus, ReleaseInfo, Settings, Snapshot } from '@shared/types'
-import { DEFAULT_SETTINGS } from '@shared/types'
+import type { Catalog, CommunityCatalog, CommunityPack, GameInstall, JobProgress, Product, ProductStatus, ReleaseInfo, Settings, Snapshot } from '@shared/types'
+import { DEFAULT_SETTINGS, communityFolder, unsupportedReason } from '@shared/types'
 import { compareVersions } from '@shared/version'
 
 const MB = 1024 * 1024
@@ -102,6 +103,106 @@ function buildReleases(): Record<string, ReleaseInfo[]> {
   return out
 }
 
+const SHA = '0'.repeat(64)
+const pack = (p: Omit<CommunityPack, 'sha256' | 'url' | 'addedAt'>): CommunityPack => ({
+  sha256: SHA,
+  url: `https://github.com/example/${p.id}/releases/download/v${p.version}/${communityFolder(p.id)}-${p.version}.zip`,
+  addedAt: '2026-10-12',
+  ...p
+})
+
+const COMMUNITY_PACKS: CommunityPack[] = [
+  pack({
+    id: 'elune-quests-deDE',
+    title: 'Elune: Quests auf Deutsch',
+    author: 'Elune Voices',
+    description: 'Every Eastern Kingdoms quest read by a small cast of German volunteers.',
+    lang: 'deDE',
+    section: 'quests',
+    version: '1.2.0',
+    size: 412 * MB,
+    homepage: 'https://github.com/example',
+    license: 'CC-BY-4.0'
+  }),
+  pack({
+    id: 'mirelle-zones-frFR',
+    title: 'Mirelle: Les lieux de Kalimdor',
+    author: 'Mirelle',
+    description: 'The story of each Kalimdor zone, told by one voice.',
+    lang: 'frFR',
+    section: 'zones',
+    version: '0.9.1',
+    size: 138 * MB,
+    homepage: 'https://example.org/mirelle',
+    license: 'CC-BY-NC-4.0'
+  }),
+  pack({
+    id: 'tomes-aloud-enUS',
+    title: 'Tomes Aloud',
+    author: 'Brannic and friends',
+    description: 'Books, letters and notes in a dwarven accent.',
+    lang: 'enUS',
+    section: 'books',
+    version: '2.0.0',
+    size: 96 * MB,
+    license: 'All rights reserved'
+  }),
+  pack({
+    id: 'sombra-quests-esMX',
+    title: 'Sombra: Misiones en español',
+    author: 'Sombra',
+    description: 'Quest voices for the Barrens and Stranglethorn.',
+    lang: 'esMX',
+    section: 'quests',
+    version: '0.4.0',
+    size: 233 * MB,
+    homepage: 'http://insecure.example/sombra'
+  }),
+  pack({
+    id: 'north-zones-ruRU',
+    title: 'Север: Зоны Нортренда',
+    author: 'Север',
+    description: 'Zone stories for Northrend, in Russian.',
+    lang: 'ruRU',
+    section: 'zones',
+    version: '1.1.0',
+    size: 187 * MB,
+    homepage: 'https://example.org/sever',
+    license: 'MIT'
+  })
+]
+
+/** The pack as a product and a release, so the ordinary install path works on it. */
+function communityProduct(pk: CommunityPack): Product {
+  return {
+    id: `community/${pk.id}`,
+    kind: 'community',
+    title: pk.title,
+    description: pk.description,
+    section: pk.section,
+    lang: pk.lang,
+    tagPrefix: `community/${pk.id}`,
+    folders: [communityFolder(pk.id)],
+    assetPattern: '.*'
+  }
+}
+
+function communityRelease(pk: CommunityPack): ReleaseInfo {
+  const asset = `${communityFolder(pk.id)}-${pk.version}.zip`
+  return {
+    productId: `community/${pk.id}`,
+    tag: `v${pk.version}`,
+    version: pk.version,
+    prerelease: false,
+    publishedAt: `${pk.addedAt}T10:00:00Z`,
+    notes: '',
+    assetName: asset,
+    assetSize: pk.size,
+    assetUrl: pk.url,
+    htmlUrl: pk.homepage ?? pk.url
+  }
+}
+
 function game(root: string, flavorFolder: string, flavor: GameInstall['flavor'], product: string, label: string, gameVersion: string): GameInstall {
   return {
     id: Array.from(root).reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7).toString(16).padStart(8, '0') + 'a1b2',
@@ -129,7 +230,7 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 
 export function createMockApi(): LauncherApi {
   const q = new URLSearchParams(location.search)
-  const empty = q.has('empty')
+  const empty = q.has('empty') && q.get('empty') !== 'packs'
   const offline = q.has('offline')
 
   let games: GameInstall[] = empty
@@ -137,25 +238,40 @@ export function createMockApi(): LauncherApi {
     : [
         game(`${WOW}\\_classic_beta_`, '_classic_beta_', 'classic_beta', 'wow_classic_beta', 'WoW: Forever', '1.60.1.70450'),
         game(`${WOW}\\_classic_era_`, '_classic_era_', 'classic_era', 'wow_classic_era', 'WoW: Classic Era', '1.15.8.65301'),
+        { ...game(`${WOW}\\_anniversary_`, '_anniversary_', 'anniversary', 'wow_anniversary', 'WoW: Anniversary', '2.5.5.65340'), writable: !q.has('readonly') },
         game(`${WOW}\\_retail_`, '_retail_', 'retail', 'wow', 'WoW: Retail', '12.0.1.66102')
       ]
-  const [forever, , retail] = games
+  if (q.has('retailonly')) games = games.filter((g) => g.flavor === 'retail')
+  const forever = games.find((g) => g.flavor === 'classic_beta')
+  const era = games.find((g) => g.flavor === 'classic_era')
   const installs: Record<string, Record<string, Installed>> = {}
   if (forever) {
     installs[forever.id] = {
       spoken: { version: '3.4.0', folders: SPOKEN_FOLDERS.filter((f) => f !== 'Spoken_NPCs') },
-      'zones-audio-deDE': { version: '2.1.0', folders: ['SpokenZonesAudio_deDE'] }
+      'zones-audio-deDE': { version: '2.1.0', folders: ['SpokenZonesAudio_deDE'] },
+      'community/elune-quests-deDE': { version: '1.2.0', folders: [communityFolder('elune-quests-deDE')] },
+      'community/mirelle-zones-frFR': { version: '0.8.0', folders: [communityFolder('mirelle-zones-frFR')] }
     }
   }
-  if (retail) installs[retail.id] = { spoken: { version: '3.5.0-dev', folders: [...SPOKEN_FOLDERS], linked: true } }
+  if (era) installs[era.id] = { spoken: { version: '3.5.0', folders: SPOKEN_FOLDERS.filter((f) => f !== 'Spoken_NPCs') } }
 
   let settings: Settings = { ...DEFAULT_SETTINGS, lastGameId: forever?.id ?? '' }
   const releases = buildReleases()
+  const packs = q.get('empty') === 'packs' ? [] : COMMUNITY_PACKS
+  const everyProduct = (): Product[] => [...PRODUCTS, ...packs.map(communityProduct)]
+  const productFor = (id: string): Product | undefined => productById(id) ?? everyProduct().find((p) => p.id === id)
   let fetchedAt = offline ? '2026-10-17T09:12:00Z' : new Date().toISOString()
   const catalog = (): Catalog => ({ fetchedAt, offline, error: offline ? 'getaddrinfo ENOTFOUND api.github.com' : undefined, releases })
+  const community = (): CommunityCatalog => ({
+    fetchedAt: offline ? '2026-10-17T09:12:00Z' : fetchedAt,
+    offline,
+    error: offline ? 'getaddrinfo ENOTFOUND raw.githubusercontent.com' : undefined,
+    packs
+  })
 
   const jobListeners = new Set<(p: JobProgress) => void>()
   const gameListeners = new Set<(g: GameInstall[]) => void>()
+  const communityListeners = new Set<(c: CommunityCatalog) => void>()
   const updaterListeners = new Set<(s: UpdaterState) => void>()
   const running = new Map<string, { timer: number; cancel: () => void }>()
   let seq = 0
@@ -165,6 +281,8 @@ export function createMockApi(): LauncherApi {
   const emit = (p: JobProgress): void => jobListeners.forEach((l) => l({ ...p }))
 
   function releasesFor(productId: string): ReleaseInfo[] {
+    const pk = packs.find((x) => `community/${x.id}` === productId)
+    if (pk) return [communityRelease(pk)]
     return (releases[productId] ?? []).filter((r) => settings.includePrereleases || !r.prerelease)
   }
 
@@ -274,7 +392,7 @@ export function createMockApi(): LauncherApi {
   const api: LauncherApi = {
     async snapshot(): Promise<Snapshot> {
       await sleep(250)
-      return { games, settings, catalog: catalog(), products: PRODUCTS, appVersion: '0.1.0', dataPath: 'C:\\Users\\hello\\AppData\\Roaming\\Spoken Launcher' }
+      return { games, settings, catalog: catalog(), community: community(), products: PRODUCTS, appVersion: '0.1.0', dataPath: 'C:\\Users\\hello\\AppData\\Roaming\\Spoken Launcher' }
     },
     async scanGames() {
       await sleep(900)
@@ -299,14 +417,21 @@ export function createMockApi(): LauncherApi {
       if (!offline) fetchedAt = new Date().toISOString()
       return catalog()
     },
+    async refreshCommunity() {
+      await sleep(700)
+      return community()
+    },
     async statuses(gameId) {
       await sleep(60)
       const g = find(gameId)
-      return PRODUCTS.map((p) => statusFor(g, p))
+      return everyProduct().map((p) => statusFor(g, p))
     },
     async install(gameId, productId, options?: InstallOptions) {
       const g = find(gameId)
-      const p = productById(productId)
+      const refused = unsupportedReason(g)
+      if (refused) throw new Error(refused)
+      if (!g.writable) throw new Error('This folder is read-only for your account.')
+      const p = productFor(productId)
       if (!p) throw new Error(`Unknown product ${productId}`)
       if (installs[g.id]?.[p.id]?.linked) throw new Error(`${p.title} on ${g.label} is a link to a development folder, so it was left alone.`)
       const rel = options?.version ? releases[p.id]?.find((r) => r.version === options.version) : releasesFor(p.id)[0]
@@ -315,7 +440,7 @@ export function createMockApi(): LauncherApi {
     },
     async uninstall(gameId, productId) {
       const g = find(gameId)
-      const p = productById(productId)
+      const p = productFor(productId)
       if (!p) throw new Error(`Unknown product ${productId}`)
       if (installs[g.id]?.[p.id]?.linked) throw new Error(`${p.title} on ${g.label} is a link to a development folder, so it was left alone.`)
       return run(g, p, 'uninstall', undefined)
@@ -353,6 +478,10 @@ export function createMockApi(): LauncherApi {
     },
     onCatalogChanged() {
       return () => undefined
+    },
+    onCommunityChanged(l) {
+      communityListeners.add(l)
+      return () => void communityListeners.delete(l)
     },
     onUpdater(l) {
       updaterListeners.add(l)

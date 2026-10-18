@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { GameInstall } from '@shared/types'
+import { unsupportedReason } from '@shared/types'
 import { jobBusy, langTag, statusOf } from '../catalog'
 import { jobKey, useStore } from '../store'
 import { S } from '../strings'
@@ -10,6 +11,8 @@ import { SpokenStatus } from './SpokenStatus'
 
 export function GameCard({ game }: { game: GameInstall }): ReactNode {
   const { state, actions } = useStore()
+  const reason = unsupportedReason(game)
+  if (reason) return <UnsupportedCard game={game} reason={reason} />
   const status = statusOf(state, game.id, 'spoken')
   const spokenState = status?.state ?? 'not-installed'
   const job = state.jobs[jobKey(game.id, 'spoken')]
@@ -92,6 +95,22 @@ export function GameCard({ game }: { game: GameInstall }): ReactNode {
             {S.home.voicePacksButton}
           </button>
         </div>
+      </div>
+    </article>
+  )
+}
+
+/** A game Spoken does not run on: shown, dimmed, with the reason and nothing to click. */
+function UnsupportedCard({ game, reason }: { game: GameInstall; reason: string }): ReactNode {
+  return (
+    <article className="card game-card is-unsupported">
+      <div className="poster-static">
+        <Poster flavor={game.flavor} label={game.label} />
+      </div>
+      <div className="game-card-body">
+        <h2 className="game-name">{game.label}</h2>
+        <p className="game-version">{game.gameVersion ? `Game version ${game.gameVersion}` : game.flavorFolder}</p>
+        <p className="unsupported-note">{reason}</p>
       </div>
     </article>
   )

@@ -2,10 +2,10 @@ import { useMemo, useState, type ReactNode } from 'react'
 import type { Product, ProductStatus, Section } from '@shared/types'
 import { BASE_LANGUAGE, LANGUAGES, languageName } from '@shared/products'
 import { jobBusy, latestOf, releasesFor, statusOf } from '../catalog'
-import { EmptyGames } from '../components/EmptyGames'
+import { NoGame } from '../components/EmptyGames'
 import { GameSelect } from '../components/GameSelect'
-import { IconAlert, IconCheck, IconDownload, IconLink, IconX } from '../components/Icons'
-import { JobBar } from '../components/JobBar'
+import { IconDownload } from '../components/Icons'
+import { PackRow } from '../components/PackRow'
 import { formatBytes } from '../format'
 import { jobKey, useGame, useStore } from '../store'
 import { S } from '../strings'
@@ -24,7 +24,7 @@ export function VoicePacksPage(): ReactNode {
   const chosen = state.settings.voiceLanguage || BASE_LANGUAGE
   const chips = LANGUAGES.filter((l) => withRelease.has(l.code) || l.code === chosen)
 
-  if (!game) return <EmptyGames />
+  if (!game) return <NoGame />
 
   const inLang = voices.filter((p) => p.lang === chosen)
   const statusFor = (p: Product): ProductStatus | undefined => statusOf(state, game.id, p.id)
@@ -94,7 +94,7 @@ export function VoicePacksPage(): ReactNode {
                 </header>
                 <ul className="list">
                   {bundle.map((p) => (
-                    <PackRow key={p.id} product={p} gameId={game.id} writable={game.writable} />
+                    <VoiceRow key={p.id} product={p} gameId={game.id} writable={game.writable} />
                   ))}
                   {split.length > 0 && (
                     <li className="row-label" aria-hidden="true">
@@ -102,7 +102,7 @@ export function VoicePacksPage(): ReactNode {
                     </li>
                   )}
                   {split.map((p) => (
-                    <PackRow key={p.id} product={p} gameId={game.id} writable={game.writable} />
+                    <VoiceRow key={p.id} product={p} gameId={game.id} writable={game.writable} />
                   ))}
                 </ul>
               </section>
@@ -142,112 +142,26 @@ function packName(p: Product): string {
   return S.voices.sections[p.section ?? 'quests'].title
 }
 
-function PackRow({ product, gameId, writable }: { product: Product; gameId: string; writable: boolean }): ReactNode {
-  const { state, actions } = useStore()
-  const [confirm, setConfirm] = useState(false)
+function VoiceRow({ product, gameId, writable }: { product: Product; gameId: string; writable: boolean }): ReactNode {
+  const { state } = useStore()
   const status = statusOf(state, gameId, product.id)
   const latest = latestOf(state, gameId, product.id)
-  const job = state.jobs[jobKey(gameId, product.id)]
-  const busy = jobBusy(job)
   const s = status?.state ?? 'not-installed'
   const present = s !== 'not-installed'
-
-  const badge =
-    s === 'up-to-date' ? (
-      <span className="badge badge-ok">
-        <IconCheck size={13} />
-        {S.voices.badge.installed}
-      </span>
-    ) : s === 'update-available' ? (
-      <span className="badge badge-warn">
-        <IconAlert size={13} />
-        {S.voices.badge.update}
-      </span>
-    ) : s === 'linked' ? (
-      <span className="badge badge-dev">
-        <IconLink size={13} />
-        {S.voices.badge.linked}
-      </span>
-    ) : s === 'ahead' ? (
-      <span className="badge badge-ok">{S.voices.badge.ahead}</span>
-    ) : s === 'unknown' ? (
-      <span className="badge badge-muted">{S.voices.badge.unknown}</span>
-    ) : null
-
-  const install = (): void => void actions.install(gameId, product.id)
-
-  let action: ReactNode
-  if (busy) {
-    action = <JobBar job={job} size="sm" onCancel={() => actions.cancel(job.jobId)} />
-  } else if (!latest && !present) {
-    action = <span className="muted">{S.common.notReleased}</span>
-  } else if (confirm) {
-    action = (
-      <span className="inline-confirm">
-        <span>{S.voices.confirmRemove}</span>
-        <button
-          type="button"
-          className="btn btn-danger btn-sm"
-          onClick={() => {
-            setConfirm(false)
-            void actions.uninstall(gameId, product.id)
-          }}
-        >
-          {S.common.remove}
-        </button>
-        <button type="button" className="btn btn-sm" onClick={() => setConfirm(false)}>
-          {S.common.keep}
-        </button>
-      </span>
-    )
-  } else if (s === 'linked') {
-    action = null
-  } else {
-    action = (
-      <span className="row-buttons">
-        {s === 'not-installed' && (
-          <button type="button" className="btn btn-primary btn-sm" disabled={!writable} onClick={install}>
-            {S.voices.install}
-          </button>
-        )}
-        {s === 'update-available' && (
-          <button type="button" className="btn btn-primary btn-sm" disabled={!writable} onClick={install}>
-            {S.voices.update}
-          </button>
-        )}
-        {present && (
-          <button type="button" className="btn btn-sm" disabled={!writable} onClick={() => setConfirm(true)}>
-            {S.common.remove}
-          </button>
-        )}
-      </span>
-    )
-  }
-
   return (
-    <li className="row pack-row">
-      <div className="row-main">
-        <span className="row-title">{packName(product)}</span>
-        <span className="row-text">
+    <PackRow
+      gameId={gameId}
+      productId={product.id}
+      writable={writable}
+      released={!!latest}
+      title={packName(product)}
+      text={
+        <>
           {latest ? `${formatBytes(latest.assetSize)} · ` : ''}
           {present && status?.installedVersion ? S.voices.installedVersion(status.installedVersion) : S.voices.notInstalled}
           {s === 'update-available' && latest ? ` → ${latest.version}` : ''}
-        </span>
-        {job?.phase === 'error' && (
-          <span className="row-error" role="alert">
-            <IconAlert size={14} />
-            {job.message ?? S.jobs.error}
-            <button type="button" className="link" onClick={job.action === 'uninstall' ? () => void actions.uninstall(gameId, product.id) : install}>
-              {S.common.retry}
-            </button>
-            <button type="button" className="icon-btn icon-btn-sm" aria-label={S.common.dismiss} onClick={() => actions.dismissJob(jobKey(gameId, product.id))}>
-              <IconX size={13} />
-            </button>
-          </span>
-        )}
-      </div>
-      {!busy && badge}
-      <div className="row-action">{action}</div>
-    </li>
+        </>
+      }
+    />
   )
 }

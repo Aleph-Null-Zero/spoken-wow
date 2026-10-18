@@ -30,6 +30,7 @@ export interface FlavorLook {
 const LOOKS: Record<Flavor, FlavorLook> = {
   classic_beta: { name: 'Forever', from: '#12706b', to: '#0b2e3b', glow: '#e0b04a' },
   classic_era: { name: 'Classic Era', from: '#8a531f', to: '#33200f', glow: '#f0a24a' },
+  anniversary: { name: 'Anniversary', from: '#8a2f4a', to: '#2e1020', glow: '#f2b36a' },
   classic: { name: 'Classic', from: '#7d3b24', to: '#2f1712', glow: '#e8804a' },
   classic_ptr: { name: 'Classic PTR', from: '#5f32a3', to: '#26164a', glow: '#b48bff' },
   retail: { name: 'Retail', from: '#1c5ab0', to: '#0d2650', glow: '#4aa3ff' },

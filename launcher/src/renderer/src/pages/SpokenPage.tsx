@@ -4,7 +4,7 @@ import { compareVersions } from '@shared/version'
 import { api } from '../api'
 import { jobBusy, releasesFor, statusOf } from '../catalog'
 import { CopyText, Menu, Select } from '../components/Controls'
-import { EmptyGames } from '../components/EmptyGames'
+import { NoGame } from '../components/EmptyGames'
 import { GameSelect } from '../components/GameSelect'
 import { IconAlert, IconCheck, IconExternal, IconFolder, IconGear, IconLink, IconRefresh, IconX } from '../components/Icons'
 import { JobBar } from '../components/JobBar'
@@ -17,7 +17,7 @@ import { jobKey, useGame, useStore, type SpokenTab } from '../store'
 
 export function SpokenPage(): ReactNode {
   const game = useGame()
-  if (!game) return <EmptyGames />
+  if (!game) return <NoGame />
   return <SpokenFor key={game.id} game={game} />
 }
 

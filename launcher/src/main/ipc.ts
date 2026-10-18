@@ -19,6 +19,13 @@ function id(v: unknown, what: string): string {
   return s
 }
 
+/** An official product id, or `community/<pack id>`. */
+function productId(v: unknown): string {
+  const s = text(v, 'product id', 80)
+  if (!/^[\w.-]+$/.test(s) && !/^community\/[a-z0-9]+(-[a-z0-9]+)*$/.test(s)) throw new Error('Invalid product id')
+  return s
+}
+
 function settingsPatch(v: unknown): Partial<Settings> {
   if (typeof v !== 'object' || v === null || Array.isArray(v)) throw new Error('Invalid settings')
   const out: Partial<Settings> = {}
@@ -73,11 +80,12 @@ export function registerIpc(service: LauncherService): void {
   handle(CHANNELS.addGame, (_e, p) => service.addGame(text(p, 'path')))
   handle(CHANNELS.removeGame, (_e, gameId) => service.removeGame(id(gameId, 'game id')))
   handle(CHANNELS.refreshCatalog, (_e, force) => service.refreshCatalog(force === true))
+  handle(CHANNELS.refreshCommunity, (_e, force) => service.refreshCommunity(force === true))
   handle(CHANNELS.statuses, (_e, gameId) => service.statuses(id(gameId, 'game id')))
-  handle(CHANNELS.install, (_e, gameId, productId, options) =>
-    service.install(id(gameId, 'game id'), id(productId, 'product id'), installOptions(options))
+  handle(CHANNELS.install, (_e, gameId, pid, options) =>
+    service.install(id(gameId, 'game id'), productId(pid), installOptions(options))
   )
-  handle(CHANNELS.uninstall, (_e, gameId, productId) => service.uninstall(id(gameId, 'game id'), id(productId, 'product id')))
+  handle(CHANNELS.uninstall, (_e, gameId, pid) => service.uninstall(id(gameId, 'game id'), productId(pid)))
   handle(CHANNELS.cancel, (_e, jobId) => service.cancel(id(jobId, 'job id')))
   handle(CHANNELS.getSettings, () => service.getSettings())
   handle(CHANNELS.setSettings, (_e, patch) => service.setSettings(settingsPatch(patch)))

@@ -5,6 +5,7 @@ export type Flavor =
   | 'retail'
   | 'classic'
   | 'classic_era'
+  | 'anniversary'
   | 'classic_ptr'
   | 'classic_beta'
   | 'xptr'
@@ -35,6 +36,22 @@ export interface GameInstall {
   writable: boolean
 }
 
+/**
+ * The game versions Spoken runs on, as publishers/spoken/spoken.md says: made and tested on
+ * Forever (`_classic_beta_`), and installs on Classic Era and Anniversary. Anything else is
+ * listed but nothing is installed there.
+ */
+export const SUPPORTED_FLAVORS: Flavor[] = ['classic_beta', 'classic_era', 'anniversary']
+
+export function isSupportedFlavor(flavor: Flavor): boolean {
+  return SUPPORTED_FLAVORS.includes(flavor)
+}
+
+/** The plain-words reason a game cannot be used, or null when it can. */
+export function unsupportedReason(game: Pick<GameInstall, 'flavor' | 'label'>): string | null {
+  return isSupportedFlavor(game.flavor) ? null : `Spoken is not available for ${game.label}. It runs on WoW: Forever, Classic Era and Anniversary.`
+}
+
 export type Section = 'quests' | 'zones' | 'books'
 export type QuestsPack = 'all' | 'alliance' | 'horde' | 'shared' | 'gossip'
 
@@ -42,8 +59,8 @@ export type QuestsPack = 'all' | 'alliance' | 'horde' | 'shared' | 'gossip'
 export interface Product {
   /** `spoken`, `quests-audio`, `quests-audio-alliance`, `zones-audio-deDE`, ... (the release tag prefix). */
   id: string
-  kind: 'addon' | 'voices'
-  /** "Spoken", "Quests voices", "Places voices", "Readables voices". */
+  kind: 'addon' | 'voices' | 'community'
+  /** "Spoken","Quests voices", "Places voices", "Readables voices". */
   title: string
   /** One line for the card. */
   description: string
@@ -58,6 +75,48 @@ export interface Product {
   folders: string[] | null
   /** Regular-expression source an asset name must match (the zip). */
   assetPattern: string
+}
+
+/**
+ * One voice pack made by a player, as listed in `community/packs.json` of the repo. Added by
+ * pull request, so a maintainer has looked at it. Installs as the folder `SpokenCommunity_<id>`.
+ */
+export interface CommunityPack {
+  /** Lower-case letters, digits and hyphens: `elune-quests-deDE`. Unique in the registry. */
+  id: string
+  title: string
+  /** The player or group that made it. */
+  author: string
+  description: string
+  /** `enUS`, `deDE`, ... */
+  lang: string
+  section: Section
+  version: string
+  /** Bytes of the zip. */
+  size: number
+  /** Required. The download is refused when it does not match. */
+  sha256: string
+  /** An https GitHub release asset (github.com/<owner>/<repo>/releases/download/...). */
+  url: string
+  /** Where the author talks about it (an https link), if anywhere. */
+  homepage?: string
+  /** `CC-BY-4.0`, `All rights reserved`, ... as the author states it. */
+  license?: string
+  /** `2026-10-18`. */
+  addedAt: string
+}
+
+/** The folder a community pack installs as. */
+export function communityFolder(id: string): string {
+  return `SpokenCommunity_${id}`
+}
+
+export interface CommunityCatalog {
+  fetchedAt: string | null
+  /** The last fetch failed and this is what was kept. */
+  offline: boolean
+  error?: string
+  packs: CommunityPack[]
 }
 
 /** One GitHub release of a product. */
@@ -169,6 +228,7 @@ export interface Snapshot {
   games: GameInstall[]
   settings: Settings
   catalog: Catalog
+  community: CommunityCatalog
   products: Product[]
   appVersion: string
   /** Where state, logs and downloads are kept. */

@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { Banners, TopBar } from './components/TopBar'
+import { CommunityPage } from './pages/CommunityPage'
 import { HomePage } from './pages/HomePage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SpokenPage } from './pages/SpokenPage'
@@ -33,6 +34,7 @@ export function App(): ReactNode {
             {state.page === 'home' && <HomePage />}
             {state.page === 'spoken' && <SpokenPage />}
             {state.page === 'voices' && <VoicePacksPage />}
+            {state.page === 'community' && <CommunityPage />}
             {state.page === 'settings' && <SettingsPage />}
           </>
         )}

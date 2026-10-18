@@ -343,8 +343,8 @@ async function verifyStaged(product: Product, dir: string): Promise<string[]> {
     const stray = names.filter((n) => !SPOKEN_FOLDERS.includes(n))
     if (stray.length > 0) throw new PlainError(`The zip holds a folder the launcher may not install (${stray[0]}), so nothing was installed.`)
   }
-  if (!product.folders) {
-    // Spoken's folders must each be a loadable add-on; a voice pack's tocs are not required here.
+  if (!product.folders || product.kind === 'community') {
+    // Spoken's folders and a community pack must each be a loadable add-on; an official voice pack's toc is not required here.
     for (const n of names) {
       if (!(await exists(path.join(dir, n, `${n}.toc`)))) {
         throw new PlainError(`The zip file is incomplete (${n}\\${n}.toc is missing), so nothing was installed.`)
@@ -422,6 +422,16 @@ export async function installProduct(
 
   rep.set(0, release.assetSize, 0)
   throwIfAborted(ctx.signal)
+  if (product.kind === 'community') {
+    // Stricter than the official packs: a checksum is required, and the only folder is the pack's own.
+    if (!release.digest || !/^sha256:[0-9a-f]{64}$/i.test(release.digest)) {
+      throw new PlainError('This community pack has no checksum, so the launcher will not install it.')
+    }
+    const only = product.folders?.[0]
+    if (product.folders?.length !== 1 || !only || !only.startsWith('SpokenCommunity_') || SPOKEN_FOLDERS.includes(only)) {
+      throw new PlainError('This community pack has no valid folder name, so the launcher will not install it.')
+    }
+  }
   await checkWritable(game)
 
   // Free space: the zip on the downloads drive; twice its size on the game drive (extracted copy and the move).

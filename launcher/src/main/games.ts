@@ -15,6 +15,7 @@ const FLAVOR_FOLDERS: [string, Flavor][] = [
   ['_retail_', 'retail'],
   ['_classic_', 'classic'],
   ['_classic_era_', 'classic_era'],
+  ['_anniversary_', 'anniversary'],
   ['_classic_ptr_', 'classic_ptr'],
   ['_classic_beta_', 'classic_beta'],
   ['_xptr_', 'xptr'],
@@ -32,6 +33,7 @@ const DEFAULT_PRODUCT: Record<Flavor, string> = {
   retail: 'wow',
   classic: 'wow_classic',
   classic_era: 'wow_classic_era',
+  anniversary: 'wow_anniversary',
   classic_ptr: 'wow_classic_ptr',
   classic_beta: 'wow_classic_beta',
   xptr: 'wowxptr',
@@ -43,6 +45,7 @@ const DEFAULT_PRODUCT: Record<Flavor, string> = {
 const LABELS: Record<string, string> = {
   wow_classic_beta: 'WoW: Forever',
   wow_classic_era: 'WoW: Classic Era',
+  wow_anniversary: 'WoW: Anniversary',
   wow_classic: 'WoW: Classic',
   wow: 'WoW: Retail',
   wow_classic_ptr: 'WoW: Classic PTR',

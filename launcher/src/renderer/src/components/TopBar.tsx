@@ -8,7 +8,8 @@ import { IconGear, IconRefresh } from './Icons'
 const TABS: { page: Page; label: string }[] = [
   { page: 'home', label: S.tabs.home },
   { page: 'spoken', label: S.tabs.spoken },
-  { page: 'voices', label: S.tabs.voices }
+  { page: 'voices', label: S.tabs.voices },
+  { page: 'community', label: S.tabs.community }
 ]
 
 export function TopBar(): ReactNode {

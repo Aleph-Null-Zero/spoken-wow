@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { isSupportedFlavor, unsupportedReason } from '@shared/types'
 import { api, errorText } from '../api'
 import { Switch } from '../components/Controls'
 import { useAddGame } from '../components/EmptyGames'
@@ -46,6 +47,11 @@ export function SettingsPage(): ReactNode {
                     {g.root}
                   </span>
                 </div>
+                {!isSupportedFlavor(g.flavor) && (
+                  <span className="badge badge-muted" title={unsupportedReason(g) ?? undefined}>
+                    {S.settings.notSupported}
+                  </span>
+                )}
                 <span className={`badge ${g.source === 'auto' ? 'badge-muted' : 'badge-info'}`}>{g.source === 'auto' ? S.settings.auto : S.settings.manual}</span>
                 <span className="row-buttons">
                   <button type="button" className="btn btn-sm" onClick={() => void api().openPath(g.root)}>

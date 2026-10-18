@@ -4,10 +4,11 @@ import type { Section } from '@shared/types'
 
 export const REPO_URL = 'https://github.com/rusty-key/spoken-wow'
 export const SITE_URL = 'https://spoken.rusty.one'
+export const COMMUNITY_README_URL = 'https://github.com/rusty-key/spoken-wow/blob/master/community/README.md'
 
 export const S = {
   appName: 'Spoken Launcher',
-  tabs: { home: 'Home', spoken: 'Spoken', voices: 'Voice packs', settings: 'Settings' },
+  tabs: { home: 'Home', spoken: 'Spoken', voices: 'Voice packs', community: 'Community', settings: 'Settings' },
   refresh: {
     idle: 'Check for new versions',
     last: (time: string) => `Last checked ${time}`,
@@ -37,6 +38,11 @@ export const S = {
     game: 'Game',
     version: 'Version',
     readOnly: 'This folder is read-only for your account.'
+  },
+  noGame: {
+    title: 'No game for Spoken',
+    text: 'Spoken runs on WoW: Forever, Classic Era and Anniversary, and none of those is in your list. Add one under Settings, in Game folders.',
+    button: 'Open Settings'
   },
   empty: {
     title: 'No World of Warcraft found',
@@ -130,6 +136,33 @@ export const S = {
     confirmInstall: 'Install',
     nothingReleased: 'No voice packs have been released yet.'
   },
+  community: {
+    title: 'Community voice packs',
+    intro: 'Voice packs that players made.',
+    needsNewer: 'Needs a newer Spoken to play these.',
+    notice: "Packs from the community are not made or checked by Spoken's authors. A pack carries code that runs in the game. Install only from authors you trust.",
+    share: 'Share your pack',
+    language: 'Language',
+    section: 'Section',
+    allLanguages: 'All languages',
+    allSections: 'All',
+    search: 'Search by title or author',
+    searchLabel: 'Search',
+    by: (author: string) => `by ${author}`,
+    authorPage: "Author's page",
+    authorPageLabel: (author: string) => `${author}'s page`,
+    licenseUnknown: 'License not stated',
+    installedVersion: (v: string) => `Installed ${v}`,
+    noMatch: 'No pack matches these filters.',
+    clear: 'Clear filters',
+    emptyTitle: 'No community packs yet.',
+    emptyText: 'Be the first.',
+    offline: "Can't reach GitHub. Showing the last list we had.",
+    errorTitle: "Can't load the list of community packs.",
+    errorText: 'Check your connection and try again.',
+    unreadable: 'The list of community packs could not be read.',
+    count: (shown: number, all: number) => (shown === all ? `${all} pack${all === 1 ? '' : 's'}` : `${shown} of ${all} packs`)
+  },
   jobs: {
     queued: 'Waiting',
     downloading: (pct: number) => `Downloading ${pct}%`,
@@ -148,6 +181,7 @@ export const S = {
     foldersText: 'The launcher installs into the AddOns folder of each game listed here.',
     auto: 'Auto',
     manual: 'Manual',
+    notSupported: 'Not supported',
     noFolders: 'No game folders yet.',
     updates: 'Updates',
     prereleases: 'Include pre-releases',

@@ -13,6 +13,7 @@ const api: LauncherApi = {
   addGame: (path) => ipcRenderer.invoke(CHANNELS.addGame, path),
   removeGame: (gameId) => ipcRenderer.invoke(CHANNELS.removeGame, gameId),
   refreshCatalog: (force) => ipcRenderer.invoke(CHANNELS.refreshCatalog, force),
+  refreshCommunity: (force) => ipcRenderer.invoke(CHANNELS.refreshCommunity, force),
   statuses: (gameId) => ipcRenderer.invoke(CHANNELS.statuses, gameId),
   install: (gameId, productId, options) => ipcRenderer.invoke(CHANNELS.install, gameId, productId, options),
   uninstall: (gameId, productId) => ipcRenderer.invoke(CHANNELS.uninstall, gameId, productId),
@@ -26,6 +27,7 @@ const api: LauncherApi = {
   onJob: (l) => listen(CHANNELS.jobProgress, l),
   onGamesChanged: (l) => listen(CHANNELS.gamesChanged, l),
   onCatalogChanged: (l) => listen(CHANNELS.catalogChanged, l),
+  onCommunityChanged: (l) => listen(CHANNELS.communityChanged, l),
   onUpdater: (l) => listen(CHANNELS.updaterState, l)
 }
 

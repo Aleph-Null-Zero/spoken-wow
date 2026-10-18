@@ -164,7 +164,7 @@ describe('downloadAsset', () => {
       ...base(),
       signal: controller.signal,
       onProgress: (received) => {
-        if (received >= 100_000) controller.abort()
+        if (received > 0) controller.abort()
       }
     })
     const err = await promise.catch((e) => e)

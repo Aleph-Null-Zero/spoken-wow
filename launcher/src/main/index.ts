@@ -130,6 +130,7 @@ if (!app.requestSingleInstanceLock()) {
 
     if (service.settings.checkOnStart) {
       void service.ready.then(() => service?.refreshCatalog(false)).catch((err) => log('Catalog refresh failed:', err))
+      void service.ready.then(() => service?.refreshCommunity(false)).catch((err) => log('Community refresh failed:', err))
     }
     const svc = service
     void startUpdater({

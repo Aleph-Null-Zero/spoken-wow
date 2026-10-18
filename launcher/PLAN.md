@@ -45,6 +45,34 @@ app. The versions, sizes, notes and download URLs come from the GitHub API at ru
 by ETag so the unauthenticated limit (60 requests an hour) is not a problem. Offline, the app
 opens with the last catalog and says so.
 
+## Which games
+
+From `publishers/spoken/spoken.md`: Spoken is made and tested on Forever (`_classic_beta_`) and
+installs on Classic Era (`_classic_era_`) and Anniversary (`_anniversary_`). Those three are
+`SUPPORTED_FLAVORS` in `src/shared/types.ts`. Every other install the scan finds (Retail, Classic,
+PTRs, betas) is listed with "Spoken is not available for <game>", with no install button, and the
+service refuses an install there. The 1.12, 2.4.3 and 3.3.5 clients have no Blizzard folders and
+are out of scope: they take Spoken Quests' own zips from Releases.
+
+## Community voice packs
+
+A COMMUNITY page lists voice packs players made. The list is `community/packs.json` in the repo
+(`CommunityPack` in `src/shared/types.ts`), fetched from
+`https://raw.githubusercontent.com/rusty-key/spoken-wow/master/community/packs.json`, ETag-cached,
+and kept offline. A player shares a pack by opening a pull request that adds an entry, so a
+maintainer has looked at it; `community/README.md` says how.
+
+- Product id `community/<pack id>`, installed as the one folder `SpokenCommunity_<pack id>`. It never
+  replaces an official pack's folder.
+- The registry is untrusted input: ids, folders, urls and sizes are validated; the url must be an
+  https GitHub release asset; `sha256` is required and checked after the download.
+- The zip may hold only that one folder. A pack carries Lua, so the page says so before the first
+  install ("Packs from the community are not made or checked by Spoken's authors").
+- Rows show title, author, language, section, size, version, license, a link to the author's page,
+  and Install / Update / Remove, filtered by language and section.
+- Spoken does not load these folders yet: its pack discovery knows the official names only.
+  That is addon work, tracked in `spoken-later.txt`. Until then the page says "Needs a newer Spoken to play these".
+
 ## Site map
 
 ```
@@ -60,6 +88,8 @@ Spoken Launcher
 |- VOICE PACKS                 (per game)
 |    Language chips; sections Quests, Places, Readables; a row per pack (size, installed
 |    version, state, Install / Update / Remove, progress); "Install everything in <language>"
+|- COMMUNITY                    (per game)
+|    Packs from players: filters, a row per pack, a notice about who made them, "Share your pack"
 |- SETTINGS
 |    Game folders (list, Add, Remove, Rescan)
 |    Updates (include pre-releases, check on start, launcher auto-update)

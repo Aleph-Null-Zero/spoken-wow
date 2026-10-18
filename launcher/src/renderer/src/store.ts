@@ -2,11 +2,11 @@
 // nothing here guesses the result of an install before the job says so.
 import { createContext, createElement, useContext, useEffect, useMemo, useReducer, useRef, type Dispatch, type ReactNode } from 'react'
 import type { AddGameResult, UpdaterState } from '@shared/api'
-import type { Catalog, GameInstall, JobProgress, Product, ProductStatus, Settings, Snapshot } from '@shared/types'
-import { DEFAULT_SETTINGS } from '@shared/types'
+import type { Catalog, CommunityCatalog, GameInstall, JobProgress, Product, ProductStatus, Settings, Snapshot } from '@shared/types'
+import { DEFAULT_SETTINGS, isSupportedFlavor } from '@shared/types'
 import { api, errorText } from './api'
 
-export type Page = 'home' | 'spoken' | 'voices' | 'settings'
+export type Page = 'home' | 'spoken' | 'voices' | 'community' | 'settings'
 export type SpokenTab = 'modules' | 'changelog'
 
 export interface State {
@@ -15,6 +15,7 @@ export interface State {
   games: GameInstall[]
   settings: Settings
   catalog: Catalog
+  community: CommunityCatalog
   products: Product[]
   appVersion: string
   dataPath: string
@@ -34,6 +35,7 @@ type Action =
   | { type: 'fatal'; message: string }
   | { type: 'games'; games: GameInstall[] }
   | { type: 'catalog'; catalog: Catalog }
+  | { type: 'community'; community: CommunityCatalog }
   | { type: 'settings'; settings: Settings }
   | { type: 'statuses'; gameId: string; list: ProductStatus[] }
   | { type: 'job'; job: JobProgress }
@@ -45,12 +47,14 @@ type Action =
 export const jobKey = (gameId: string, productId: string): string => `${gameId}|${productId}`
 
 const EMPTY_CATALOG: Catalog = { fetchedAt: null, offline: false, releases: {} }
+const EMPTY_COMMUNITY: CommunityCatalog = { fetchedAt: null, offline: false, packs: [] }
 
 const initial: State = {
   ready: false,
   games: [],
   settings: DEFAULT_SETTINGS,
   catalog: EMPTY_CATALOG,
+  community: EMPTY_COMMUNITY,
   products: [],
   appVersion: '',
   dataPath: '',
@@ -72,6 +76,7 @@ function reducer(s: State, a: Action): State {
         games: a.snap.games,
         settings: a.snap.settings,
         catalog: a.snap.catalog,
+        community: a.snap.community ?? EMPTY_COMMUNITY,
         products: a.snap.products,
         appVersion: a.snap.appVersion,
         dataPath: a.snap.dataPath,
@@ -89,6 +94,8 @@ function reducer(s: State, a: Action): State {
     }
     case 'catalog':
       return { ...s, catalog: a.catalog }
+    case 'community':
+      return { ...s, community: a.community }
     case 'settings':
       return { ...s, settings: a.settings }
     case 'statuses':
@@ -114,7 +121,7 @@ function reducer(s: State, a: Action): State {
   }
 }
 
-const PAGES: Page[] = ['home', 'spoken', 'voices', 'settings']
+const PAGES: Page[] = ['home', 'spoken', 'voices', 'community', 'settings']
 
 function parseHash(): { page: Page; gameId?: string; tab?: SpokenTab } {
   const [, page, gameId, tab] = location.hash.split('/')
@@ -128,7 +135,7 @@ function parseHash(): { page: Page; gameId?: string; tab?: SpokenTab } {
 
 function formatHash(page: Page, gameId: string, tab: SpokenTab): string {
   if (page === 'spoken') return `#/spoken/${encodeURIComponent(gameId)}${tab === 'changelog' ? '/changelog' : ''}`
-  return page === 'voices' ? `#/voices/${encodeURIComponent(gameId)}` : `#/${page}`
+  return page === 'voices' || page === 'community' ? `#/${page}/${encodeURIComponent(gameId)}` : `#/${page}`
 }
 
 export interface Actions {
@@ -139,6 +146,7 @@ export interface Actions {
   cancel(jobId: string): void
   dismissJob(key: string): void
   refresh(): Promise<void>
+  refreshCommunity(force?: boolean): Promise<void>
   addGame(path: string): Promise<AddGameResult>
   removeGame(gameId: string): Promise<void>
   scan(): Promise<void>
@@ -189,13 +197,26 @@ function makeActions(dispatch: Dispatch<Action>, get: () => State): Actions {
     async refresh() {
       dispatch({ type: 'refreshing', on: true })
       try {
-        const catalog = await api().refreshCatalog(true)
+        const [catalog] = await Promise.all([
+          api().refreshCatalog(true),
+          api()
+            .refreshCommunity(true)
+            .then((community) => dispatch({ type: 'community', community }))
+            .catch(() => dispatch({ type: 'community', community: { ...get().community, offline: true } }))
+        ])
         dispatch({ type: 'catalog', catalog })
         refetchAll(get().games)
       } catch {
         dispatch({ type: 'catalog', catalog: { ...get().catalog, offline: true } })
       } finally {
         dispatch({ type: 'refreshing', on: false })
+      }
+    },
+    async refreshCommunity(force) {
+      try {
+        dispatch({ type: 'community', community: await api().refreshCommunity(force) })
+      } catch {
+        dispatch({ type: 'community', community: { ...get().community, offline: true } })
       }
     },
     async addGame(path) {
@@ -255,7 +276,8 @@ export function StoreProvider({ children }: { children: ReactNode }): ReactNode 
         )
         if (!alive) return
         const route = parseHash()
-        const gameId = [route.gameId, snap.settings.lastGameId].find((id) => snap.games.some((g) => g.id === id)) ?? snap.games[0]?.id ?? ''
+        const usable = snap.games.filter((g) => isSupportedFlavor(g.flavor))
+        const gameId = [route.gameId, snap.settings.lastGameId].find((id) => usable.some((g) => g.id === id)) ?? usable[0]?.id ?? snap.games[0]?.id ?? ''
         dispatch({ type: 'init', snap, statuses: Object.fromEntries(entries), page: route.page, gameId, tab: route.tab })
       } catch (e) {
         if (alive) dispatch({ type: 'fatal', message: errorText(e) })
@@ -275,6 +297,7 @@ export function StoreProvider({ children }: { children: ReactNode }): ReactNode 
         dispatch({ type: 'catalog', catalog })
         refetchAll()
       }),
+      a.onCommunityChanged((community) => dispatch({ type: 'community', community })),
       a.onUpdater((u) => dispatch({ type: 'updater', state: u }))
     ]
     const onHash = (): void => {
@@ -306,8 +329,15 @@ export function useStore(): Store {
   return v
 }
 
-/** The game the Spoken and Voice packs pages show: the chosen one, else the first. */
+/** The games Spoken runs on; the others are listed on Home and in Settings only. */
+export function useSupportedGames(): GameInstall[] {
+  const { state } = useStore()
+  return useMemo(() => state.games.filter((g) => isSupportedFlavor(g.flavor)), [state.games])
+}
+
+/** The game the Spoken, Voice packs and Community pages show: the chosen one, else the first supported. */
 export function useGame(): GameInstall | undefined {
   const { state } = useStore()
-  return state.games.find((g) => g.id === state.gameId) ?? state.games[0]
+  const games = useSupportedGames()
+  return games.find((g) => g.id === state.gameId) ?? games[0]
 }

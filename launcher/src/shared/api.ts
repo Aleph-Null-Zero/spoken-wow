@@ -1,6 +1,6 @@
 // The contract between the window and the main process. The preload exposes `LauncherApi` as
 // `window.launcher`; the main process answers each channel.
-import type { Catalog, GameInstall, JobProgress, ProductStatus, Settings, Snapshot } from './types'
+import type { Catalog, CommunityCatalog, GameInstall, JobProgress, ProductStatus, Settings, Snapshot } from './types'
 
 export const CHANNELS = {
   snapshot: 'launcher:snapshot',
@@ -8,6 +8,7 @@ export const CHANNELS = {
   addGame: 'launcher:games:add',
   removeGame: 'launcher:games:remove',
   refreshCatalog: 'launcher:catalog:refresh',
+  refreshCommunity: 'launcher:community:refresh',
   statuses: 'launcher:statuses',
   install: 'launcher:install',
   uninstall: 'launcher:uninstall',
@@ -22,6 +23,7 @@ export const CHANNELS = {
   jobProgress: 'launcher:event:job',
   gamesChanged: 'launcher:event:games',
   catalogChanged: 'launcher:event:catalog',
+  communityChanged: 'launcher:event:community',
   updaterState: 'launcher:event:updater'
 } as const
 
@@ -54,6 +56,9 @@ export interface LauncherApi {
   removeGame(gameId: string): Promise<GameInstall[]>
   /** Asks GitHub for the releases (ETag-cached); `force` skips the cache window. */
   refreshCatalog(force?: boolean): Promise<Catalog>
+  /** Reads the community registry (ETag-cached). A pack installs, updates and uninstalls through
+   *  the ordinary `install`/`uninstall`/`statuses` with the product id `community/<pack id>`. */
+  refreshCommunity(force?: boolean): Promise<CommunityCatalog>
   /** What is installed and what is new, for each product, on one game. */
   statuses(gameId: string): Promise<ProductStatus[]>
   /** Starts a download and install; the progress comes through `onJob`. Returns the job id. */
@@ -72,5 +77,6 @@ export interface LauncherApi {
   onJob(listener: (progress: JobProgress) => void): () => void
   onGamesChanged(listener: (games: GameInstall[]) => void): () => void
   onCatalogChanged(listener: (catalog: Catalog) => void): () => void
+  onCommunityChanged(listener: (community: CommunityCatalog) => void): () => void
   onUpdater(listener: (state: UpdaterState) => void): () => void
 }
