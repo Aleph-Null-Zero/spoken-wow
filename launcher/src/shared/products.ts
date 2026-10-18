@@ -130,6 +130,7 @@ export function productById(id: string): Product | undefined {
 /** The folders of every voice pack and Spoken's known ones: the only names the installer may touch. */
 export const SPOKEN_FOLDERS = [
   'Spoken',
+  'Spoken_Quests',
   'Spoken_Conversations',
   'Spoken_Places',
   'Spoken_Readables',

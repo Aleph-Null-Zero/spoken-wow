@@ -1,0 +1,172 @@
+// Every word the window shows, in English. Other languages can follow by swapping this file's
+// object; nothing else in the window holds text a player reads (apart from names from the data).
+import type { Section } from '@shared/types'
+
+export const REPO_URL = 'https://github.com/rusty-key/spoken-wow'
+export const SITE_URL = 'https://spoken.rusty.one'
+
+export const S = {
+  appName: 'Spoken Launcher',
+  tabs: { home: 'Home', spoken: 'Spoken', voices: 'Voice packs', settings: 'Settings' },
+  refresh: {
+    idle: 'Check for new versions',
+    last: (time: string) => `Last checked ${time}`,
+    offline: 'Offline: showing what was kept',
+    label: 'Refresh the list of releases'
+  },
+  banners: {
+    offline: "Can't reach GitHub. Showing the last list.",
+    updateReady: (v: string) => `Update ready: restart to use ${v}`,
+    updating: (pct: number) => `Downloading a launcher update: ${pct}%`
+  },
+  common: {
+    loading: 'Loading',
+    cancel: 'Cancel',
+    retry: 'Retry',
+    open: 'Open',
+    remove: 'Remove',
+    dismiss: 'Dismiss',
+    keep: 'Keep',
+    change: 'Change',
+    copy: 'Click to copy',
+    copied: 'Copied',
+    newer: 'Pre-release',
+    latest: 'latest',
+    installed: 'installed',
+    notReleased: 'Not released yet',
+    game: 'Game',
+    version: 'Version',
+    readOnly: 'This folder is read-only for your account.'
+  },
+  empty: {
+    title: 'No World of Warcraft found',
+    text: 'Add the folder your game is installed in. The launcher looks for the game folder, a _retail_ or _classic_ folder, or an AddOns folder.',
+    add: 'Add game folder',
+    scan: 'Scan again',
+    scanning: 'Looking'
+  },
+  home: {
+    title: 'My games',
+    sort: 'Sort by',
+    sortInstalled: 'Installed first',
+    sortName: 'Name',
+    filters: 'Show',
+    filterAll: 'All',
+    filterWith: 'With Spoken',
+    filterWithout: 'Without Spoken',
+    noMatch: 'No game matches this filter.',
+    whatsNew: "What's new",
+    readAll: 'Read all',
+    noVoice: 'No voice packs',
+    voicePacks: (n: number) => `${n} voice pack${n === 1 ? '' : 's'}`,
+    packUpdates: (n: number) => `${n} voice pack update${n === 1 ? '' : 's'}`,
+    installSpoken: 'Install Spoken',
+    update: 'Update',
+    manage: 'Manage',
+    voicePacksButton: 'Voice packs',
+    openSpoken: (label: string) => `Open Spoken for ${label}`
+  },
+  status: {
+    upToDate: (v: string) => `Spoken ${v} · up to date`,
+    updateAvailable: (from: string, to: string) => `Update available: ${from} → ${to}`,
+    notInstalled: 'Spoken not installed',
+    linked: 'Linked to a development folder',
+    ahead: (v: string) => `Spoken ${v} · newer than the last release`,
+    unknown: (v?: string) => (v ? `Spoken ${v} · installed by hand` : 'Spoken installed by hand')
+  },
+  spoken: {
+    title: 'Spoken',
+    channel: 'Version',
+    install: 'Install',
+    installVersion: (v: string) => `Install ${v}`,
+    updateTo: (v: string) => `Update to ${v}`,
+    reinstall: 'Reinstall',
+    linkedButton: 'Linked to a development folder',
+    noRelease: 'No release found',
+    moreActions: 'More actions',
+    openAddOns: 'Open AddOns folder',
+    repair: 'Reinstall (repair)',
+    removeItem: 'Remove Spoken',
+    github: 'View on GitHub',
+    confirmRemove: (label: string) => `Remove Spoken from ${label}? Your settings and saved data are not touched.`,
+    addOnsPath: 'AddOns folder',
+    tabModules: 'Modules',
+    tabChangelog: 'Changelog',
+    installedState: 'Installed',
+    missing: 'Missing',
+    linkedState: 'Linked',
+    noNotes: 'No notes for this release.',
+    noReleases: 'No releases to show yet. Refresh when you are online.',
+    prerelease: 'Pre-release'
+  },
+  modules: [
+    { folder: 'Spoken', title: 'Spoken', text: 'The core: the narrator, the queue and the settings window.' },
+    { folder: 'Spoken_Quests', alt: 'Spoken_Conversations', title: 'Quests and gossip', text: 'Reads quest text and what NPCs say when you talk to them.' },
+    { folder: 'Spoken_Places', title: 'Places', text: 'Tells the story of a zone, dungeon or area as you enter it.' },
+    { folder: 'Spoken_Readables', title: 'Readables', text: 'Reads books, letters and notes when you open them.' },
+    { folder: 'Spoken_NPCs', title: 'NPCs and bosses', text: 'Voices for NPCs and boss encounters.' },
+    { folder: 'SpokenContributions', title: 'Contributions', text: 'Lets you send in missing lines and recordings.' }
+  ],
+  voices: {
+    title: 'Voice packs',
+    languages: 'Voice language',
+    sections: {
+      quests: { title: 'Quests', text: 'Every quest, spoken as you read it, and the gossip of the people who give them.' },
+      zones: { title: 'Places', text: 'The story of each zone, dungeon and place, told as you arrive.' },
+      books: { title: 'Readables', text: 'Books, letters and notes read aloud when you open them.' }
+    } satisfies Record<Section, { title: string; text: string }>,
+    packNames: { all: 'All quests', alliance: 'Alliance', horde: 'Horde', shared: 'Shared', gossip: 'Gossip' },
+    splitHint: 'Or only part of it',
+    notInstalled: 'Not installed',
+    installedVersion: (v: string) => `Installed ${v}`,
+    badge: { installed: 'Installed', update: 'Update available', linked: 'Linked', ahead: 'Newer than release', unknown: 'Installed by hand' },
+    install: 'Install',
+    update: 'Update',
+    confirmRemove: 'Remove this pack?',
+    installAll: (lang: string) => `Install everything in ${lang}`,
+    allInstalled: (lang: string) => `Everything in ${lang} is installed`,
+    confirmAll: (n: number, size: string, lang: string) =>
+      `Install ${n} pack${n === 1 ? '' : 's'} in ${lang}? About ${size} to download.`,
+    confirmInstall: 'Install',
+    nothingReleased: 'No voice packs have been released yet.'
+  },
+  jobs: {
+    queued: 'Waiting',
+    downloading: (pct: number) => `Downloading ${pct}%`,
+    downloadingUnknown: 'Downloading',
+    verifying: 'Verifying',
+    extracting: 'Extracting',
+    installing: 'Installing',
+    removing: 'Removing',
+    done: 'Done',
+    cancelled: 'Cancelled',
+    error: 'Something went wrong'
+  },
+  settings: {
+    title: 'Settings',
+    folders: 'Game folders',
+    foldersText: 'The launcher installs into the AddOns folder of each game listed here.',
+    auto: 'Auto',
+    manual: 'Manual',
+    noFolders: 'No game folders yet.',
+    updates: 'Updates',
+    prereleases: 'Include pre-releases',
+    prereleasesText: 'Offer alpha and beta versions of Spoken and the voice packs.',
+    checkOnStart: 'Check for updates when the launcher starts',
+    checkOnStartText: 'Looks at GitHub for new releases each time you open the launcher.',
+    autoUpdate: 'Keep the launcher up to date',
+    autoUpdateText: 'Downloads a new launcher in the background and uses it after a restart.',
+    downloads: 'Downloads',
+    downloadsFolder: 'Download folder',
+    appFolder: 'App folder',
+    useDefault: 'Use the app folder',
+    keepZips: 'Keep downloaded zip files after installing',
+    keepZipsText: 'Saves a copy of each pack, so a reinstall does not download it again. Packs are large.',
+    about: 'About',
+    version: 'Launcher version',
+    dataPath: 'Data folder',
+    openLogs: 'Open log folder',
+    repository: 'GitHub repository',
+    site: 'Project site'
+  }
+}

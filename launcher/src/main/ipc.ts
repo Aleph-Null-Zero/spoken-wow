@@ -1,0 +1,109 @@
+// The handlers for every channel in shared/api.ts. Each argument is checked before it is used.
+import path from 'node:path'
+import { BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
+import { CHANNELS, type InstallOptions } from '../shared/api'
+import type { Settings } from '../shared/types'
+import { DEFAULT_SETTINGS } from '../shared/types'
+import { isAllowedExternalUrl, isAllowedOpenPath } from './external'
+import type { LauncherService } from './service'
+import { log, logsDir } from './state'
+
+function text(v: unknown, what: string, max = 2048): string {
+  if (typeof v !== 'string' || v.length === 0 || v.length > max || v.includes('\0')) throw new Error(`Invalid ${what}`)
+  return v
+}
+
+function id(v: unknown, what: string): string {
+  const s = text(v, what, 200)
+  if (!/^[\w.-]+$/.test(s)) throw new Error(`Invalid ${what}`)
+  return s
+}
+
+function settingsPatch(v: unknown): Partial<Settings> {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) throw new Error('Invalid settings')
+  const out: Partial<Settings> = {}
+  const raw = v as Record<string, unknown>
+  for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
+    if (!(key in raw)) continue
+    if (typeof raw[key] !== typeof DEFAULT_SETTINGS[key]) throw new Error(`Invalid setting ${key}`)
+    ;(out as Record<string, unknown>)[key] = raw[key]
+  }
+  return out
+}
+
+function installOptions(v: unknown): InstallOptions | undefined {
+  if (v === undefined || v === null) return undefined
+  if (typeof v !== 'object') throw new Error('Invalid options')
+  const version = (v as { version?: unknown }).version
+  if (version === undefined) return {}
+  if (typeof version !== 'string' || version.length > 100 || !/^[\w.+-]+$/.test(version)) throw new Error('Invalid version')
+  return { version }
+}
+
+/** Only our own window (the built file, or the dev server) may call. */
+function trusted(event: IpcMainInvokeEvent): boolean {
+  const url = event.senderFrame?.url ?? ''
+  const dev = process.env.ELECTRON_RENDERER_URL
+  if (dev) {
+    try {
+      return url.startsWith(new URL(dev).origin)
+    } catch {
+      return false
+    }
+  }
+  return url.startsWith('file://')
+}
+
+export function registerIpc(service: LauncherService): void {
+  const handle = (channel: string, fn: (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown): void => {
+    ipcMain.handle(channel, async (event, ...args) => {
+      if (!trusted(event)) throw new Error('Not allowed')
+      await service.ready
+      try {
+        return await fn(event, ...args)
+      } catch (err) {
+        log(`IPC ${channel} failed:`, err)
+        throw err
+      }
+    })
+  }
+
+  handle(CHANNELS.snapshot, () => service.snapshot())
+  handle(CHANNELS.scanGames, () => service.scan())
+  handle(CHANNELS.addGame, (_e, p) => service.addGame(text(p, 'path')))
+  handle(CHANNELS.removeGame, (_e, gameId) => service.removeGame(id(gameId, 'game id')))
+  handle(CHANNELS.refreshCatalog, (_e, force) => service.refreshCatalog(force === true))
+  handle(CHANNELS.statuses, (_e, gameId) => service.statuses(id(gameId, 'game id')))
+  handle(CHANNELS.install, (_e, gameId, productId, options) =>
+    service.install(id(gameId, 'game id'), id(productId, 'product id'), installOptions(options))
+  )
+  handle(CHANNELS.uninstall, (_e, gameId, productId) => service.uninstall(id(gameId, 'game id'), id(productId, 'product id')))
+  handle(CHANNELS.cancel, (_e, jobId) => service.cancel(id(jobId, 'job id')))
+  handle(CHANNELS.getSettings, () => service.getSettings())
+  handle(CHANNELS.setSettings, (_e, patch) => service.setSettings(settingsPatch(patch)))
+
+  handle(CHANNELS.pickFolder, async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const options = { properties: ['openDirectory' as const] }
+    const res = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
+    return res.canceled || res.filePaths.length === 0 ? null : res.filePaths[0]!
+  })
+
+  handle(CHANNELS.openPath, async (_e, p) => {
+    const target = path.resolve(text(p, 'path'))
+    const roots = [...service.games.map((g) => g.addOnsPath), service.dataPath, service.downloadsPath()]
+    if (!isAllowedOpenPath(target, roots)) throw new Error('That folder cannot be opened from here')
+    const problem = await shell.openPath(target)
+    if (problem) log('Could not open a folder:', problem)
+  })
+
+  handle(CHANNELS.openExternal, async (_e, url) => {
+    if (!isAllowedExternalUrl(url)) throw new Error('That link cannot be opened from here')
+    await shell.openExternal(url as string)
+  })
+
+  handle(CHANNELS.openLogs, async () => {
+    const problem = await shell.openPath(logsDir(service.dataPath))
+    if (problem) log('Could not open the log folder:', problem)
+  })
+}

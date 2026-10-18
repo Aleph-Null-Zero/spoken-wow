@@ -123,6 +123,15 @@ Rules the installer keeps:
 Out of scope for now: macOS, other addons, a login, translations of the launcher itself (English
 first; strings are in one file so the languages can follow), anything that sends data anywhere.
 
+## Launcher releases
+
+A tag `launcher/vX.Y.Z` builds the installer, publishes it as that tag's release, and refreshes
+the `launcher-latest` release (`latest.yml` and the installer, replaced each time) so installed
+launchers can update. They read it through electron-updater's generic provider at
+`https://github.com/rusty-key/spoken-wow/releases/download/launcher-latest`, not the GitHub
+provider, because the GitHub provider takes the repo's newest release and that is usually a
+`spoken/` or `*-audio/` tag. A workflow for this is a later task.
+
 ## Checks
 
 `npm test` (vitest) for the core, `npm run typecheck`, and a manual pass in the running window
