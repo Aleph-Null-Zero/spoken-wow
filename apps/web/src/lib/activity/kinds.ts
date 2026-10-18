@@ -73,6 +73,8 @@ export type ActivityDetail = {
   "reference.set": { sample?: string; transcript?: string | null };
   "reference.edited": { transcript?: string | null };
   "reference.deleted": Record<string, never>;
+  "reference.pinned": Record<string, never>;
+  "reference.unpinned": Record<string, never>;
   "sample.added": { files: string[] };
   "sample.deleted": { files: string[] };
   "sample.imported": { files: string[] };
