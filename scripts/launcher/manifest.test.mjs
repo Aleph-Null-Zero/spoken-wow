@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -23,13 +23,25 @@ test("hashFolder lists every file by its / path, sorted, and skips dotfiles", as
   assert.equal(files[1].size, 3);
 });
 
-test("hashFolder trusts the cache when size and mtime match", async () => {
+test("hashFolder trusts the cache when size, mtime and ctime match", async () => {
   const dir = folder({ "a.ogg": "abc" });
   const cache = new Map();
   await hashFolder(dir, cache);
   const [key, hit] = [...cache][0];
   cache.set(key, { ...hit, sha256: "f".repeat(64) });
   assert.equal((await hashFolder(dir, cache))[0].sha256, "f".repeat(64));
+});
+
+test("hashFolder reads a file again whose content changed under a restored mtime", async () => {
+  const dir = folder({ "a.ogg": "abc" });
+  const cache = new Map();
+  await hashFolder(dir, cache);
+  const file = join(dir, "a.ogg");
+  const { mtime } = statSync(file);
+  await new Promise((r) => setTimeout(r, 20));
+  writeFileSync(file, "xyz");
+  utimesSync(file, mtime, mtime);
+  assert.equal((await hashFolder(dir, cache))[0].sha256, "3608bca1e44ea6c4d268eb6db02260269892c0b42b86bbf1e77a6fa16c3c9282");
 });
 
 test("unsafe paths are refused", () => {

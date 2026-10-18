@@ -191,18 +191,28 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
       ctx.signal
     )
 
+    // The new folders are live: from here nothing fails the job. A file that cannot be read now is left out of
+    // the state, and the next sync hashes it.
     for (const { manifest, target } of plans) {
-      const stats = new Map<string, PackFileState>()
+      const files: Record<string, PackFileState> = {}
       await eachLimit(
         manifest.files,
         STAGE_PARALLEL,
         async (f) => {
-          const st = await fs.promises.stat(path.join(target, ...segments(f.path)))
-          stats.set(f.path, { sha256: f.sha256, size: st.size, mtimeMs: st.mtimeMs })
+          try {
+            const st = await fs.promises.stat(path.join(target, ...segments(f.path)))
+            files[f.path] = { sha256: f.sha256, size: st.size, mtimeMs: st.mtimeMs }
+          } catch (err) {
+            log(`Could not record ${manifest.packId}/${f.path}:`, err)
+          }
         },
         () => undefined
       )
-      savePackState(game, { packId: manifest.packId, rev: manifest.rev, files: Object.fromEntries(manifest.files.map((f) => [f.path, stats.get(f.path)!])) })
+      try {
+        savePackState(game, { packId: manifest.packId, rev: manifest.rev, files })
+      } catch (err) {
+        log(`Could not save the state of ${manifest.packId}:`, err)
+      }
     }
     updateState(ctx.dataPath, (s) => setRecord(s, game.id, product.id, { version: shown, folders, installedAt: new Date().toISOString(), tag: channelTag(revs) }))
     for (const sha of wanted.keys()) await fs.promises.rm(path.join(blobs, sha), { force: true }).catch(() => undefined)

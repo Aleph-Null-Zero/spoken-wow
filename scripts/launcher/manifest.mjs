@@ -46,8 +46,9 @@ export function saveHashCache(file, cache) {
   writeFileSync(file, JSON.stringify(Object.fromEntries(cache)));
 }
 
-// The cache maps an absolute path to { size, mtimeMs, sha256 }; a file whose size and mtime are
-// unchanged is not read again.
+// The cache maps an absolute path to { size, mtimeMs, ctimeMs, sha256 }; a file whose size and
+// times are unchanged is not read again. ctime is in the key because rsync -a and cp -p set mtime
+// back on new content, and nothing can set ctime: a stale hit would ship the old clip.
 export async function hashFolder(root, cache) {
   const files = [];
   for (const path of await listFiles(root)) {
@@ -55,8 +56,9 @@ export async function hashFolder(root, cache) {
     const abs = join(root, ...path.split("/"));
     const st = await stat(abs);
     const hit = cache.get(abs);
-    const sha256 = hit && hit.size === st.size && hit.mtimeMs === st.mtimeMs ? hit.sha256 : await sha256File(abs);
-    cache.set(abs, { size: st.size, mtimeMs: st.mtimeMs, sha256 });
+    const same = hit && hit.size === st.size && hit.mtimeMs === st.mtimeMs && hit.ctimeMs === st.ctimeMs;
+    const sha256 = same ? hit.sha256 : await sha256File(abs);
+    cache.set(abs, { size: st.size, mtimeMs: st.mtimeMs, ctimeMs: st.ctimeMs, sha256 });
     files.push({ path, sha256, size: st.size });
   }
   return files;

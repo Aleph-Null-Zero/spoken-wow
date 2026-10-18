@@ -169,7 +169,7 @@ test("a blob whose bytes no longer match its hash is refused and nothing is inde
   const d = dist({ "SpokenZonesAudio_deDE.toc": "toc" });
   const abs = join(d, "SpokenZonesAudio_deDE", "SpokenZonesAudio_deDE.toc");
   const st = statSync(abs);
-  const cache = new Map([[abs, { size: st.size, mtimeMs: st.mtimeMs, sha256: "0".repeat(64) }]]);
+  const cache = new Map([[abs, { size: st.size, mtimeMs: st.mtimeMs, ctimeMs: st.ctimeMs, sha256: "0".repeat(64) }]]);
   await assert.rejects(run(store, d, { cache }), /changed while publishing/);
   assert.equal(store.objects.has("index.json"), false);
 });

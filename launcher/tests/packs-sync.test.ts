@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { productById } from '../src/shared/products'
 import type { GameInstall } from '../src/shared/types'
 import { cleanLeftovers } from '../src/main/cleanup'
@@ -123,6 +123,24 @@ describe('syncPacks', () => {
     await expect(syncPacks(game, { product, manifests: [second.manifest], baseUrl: second.base }, ctx(data, { jobId: 'job2' }))).rejects.toThrow(PlainError)
     expect(folderFiles(game)).toEqual(v1.files)
     expect(second.server.requests.filter((r) => r.url === `/blobs/${bad}`).length).toBe(1)
+  })
+
+  it('a file that cannot be read after the swap is left out of the state, and the job still succeeds', async () => {
+    const game = await makeGame(tmpDir())
+    const data = tmpDir()
+    const { manifest, base } = await channel(v1)
+    const held = path.join(game.addOnsPath, PACK, 'Sounds', '2.ogg')
+    const real = fs.promises.stat
+    const spy = vi.spyOn(fs.promises, 'stat').mockImplementation(((p: fs.PathLike, ...rest: unknown[]) =>
+      String(p) === held ? Promise.reject(Object.assign(new Error('busy'), { code: 'EBUSY' })) : (real as (...a: unknown[]) => unknown)(p, ...rest)) as typeof fs.promises.stat)
+    try {
+      await syncPacks(game, { product, manifests: [manifest], baseUrl: base }, ctx(data))
+    } finally {
+      spy.mockRestore()
+    }
+    expect(folderFiles(game)).toEqual(v1.files)
+    expect(Object.keys(loadPackState(game, PACK)?.files ?? {}).sort()).toEqual(['Sounds/1.ogg', `${PACK}.toc`])
+    expect(getRecord(loadState(data), game.id, product.id)?.tag).toBe(`channel/${v1.rev}`)
   })
 
   it('moves out the folders an earlier install of the product recorded and the channel no longer has', async () => {
