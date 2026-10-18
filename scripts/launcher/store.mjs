@@ -6,6 +6,10 @@ export class ConflictError extends Error {}
 const XML_ENTITIES = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&apos;": "'" };
 const decodeXml = (s) => s.replace(/&(amp|lt|gt|quot|apos);/g, (m) => XML_ENTITIES[m]);
 
+// R2 answers with a weak ETag (W/"…") for JSON it compresses on the way out, and If-Match
+// compares strongly, so the weak form never matches: every conditional write would 412.
+export const strongEtag = (etag) => etag?.replace(/^W\//, "") ?? null;
+
 export function r2Store(env) {
   const need = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET"];
   const missing = need.filter((k) => !env[k]);
@@ -24,13 +28,13 @@ export function r2Store(env) {
       const res = await client.fetch(url(key), { method: "HEAD" });
       if (res.status === 404) return null;
       if (!res.ok) await fail("HEAD", key, res);
-      return { etag: res.headers.get("etag") };
+      return { etag: strongEtag(res.headers.get("etag")) };
     },
     async get(key) {
       const res = await client.fetch(url(key));
       if (res.status === 404) return null;
       if (!res.ok) await fail("GET", key, res);
-      return { body: Buffer.from(await res.arrayBuffer()), etag: res.headers.get("etag") };
+      return { body: Buffer.from(await res.arrayBuffer()), etag: strongEtag(res.headers.get("etag")) };
     },
     async put(key, body, opts = {}) {
       const headers = {};

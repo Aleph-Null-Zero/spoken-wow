@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { ConflictError, memoryStore, r2Store } from "./store.mjs";
+import { ConflictError, memoryStore, r2Store, strongEtag } from "./store.mjs";
 
 test("memoryStore honours If-Match and If-None-Match", async () => {
   const s = memoryStore();
@@ -24,4 +24,10 @@ test("memoryStore lists by prefix and deletes", async () => {
 
 test("r2Store names every missing variable", () => {
   assert.throws(() => r2Store({ R2_BUCKET: "b" }), /R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY/);
+});
+
+test("strongEtag drops the weak prefix R2 puts on compressed JSON", () => {
+  assert.equal(strongEtag('W/"abc"'), '"abc"');
+  assert.equal(strongEtag('"abc"'), '"abc"');
+  assert.equal(strongEtag(null), null);
 });
