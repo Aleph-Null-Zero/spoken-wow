@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
 
-import { addGrant, removeGrant } from "./store";
+import { addGrants, removeGrant } from "./store";
 
 const GRANTEE = `test-grantee-${Math.random().toString(36).slice(2, 10)}`;
 const GRANTER = `test-granter-${Math.random().toString(36).slice(2, 10)}`;
@@ -37,9 +37,32 @@ async function logged(kind: string) {
   return rows;
 }
 
+describe("addGrants", () => {
+  it("grants several at once and logs only the ones that are new", async () => {
+    await addGrants(GRANTEE, "frFR", ["edit"], GRANTER);
+    await addGrants(GRANTEE, "frFR", ["edit", "regenerate", "record"], GRANTER);
+
+    const { rows } = await db().query(
+      `select "capability" from "language_grant" where "userId" = $1 and "lang" = 'frFR' order by 1`,
+      [GRANTEE],
+    );
+    expect(rows.map((row) => row.capability)).toEqual(["edit", "record", "regenerate"]);
+    expect((await logged("grant.added")).filter((row) => row.lang === "frFR")).toHaveLength(3);
+  });
+
+  it("grants none when one is refused by the table", async () => {
+    await expect(addGrants(GRANTEE, "esES", ["edit", "nonsense" as never], GRANTER)).rejects.toThrow();
+    const { rows } = await db().query(
+      `select 1 from "language_grant" where "userId" = $1 and "lang" = 'esES'`,
+      [GRANTEE],
+    );
+    expect(rows).toEqual([]);
+  });
+});
+
 describe("removeGrant", () => {
   it("records who removed which grant, once, and nothing for a grant that was not there", async () => {
-    await addGrant(GRANTEE, "ptBR", "edit", GRANTER);
+    await addGrants(GRANTEE, "ptBR", ["edit"], GRANTER);
     await removeGrant(GRANTEE, "ptBR", "edit", GRANTER);
     await removeGrant(GRANTEE, "ptBR", "edit", GRANTER);
 

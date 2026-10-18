@@ -29,10 +29,11 @@ export default function GrantCell({
   grants: readonly GrantRow[];
   viewer: Viewer;
   busy: boolean;
-  onGrant: (lang: Lang, capability: Capability) => Promise<boolean>;
+  onGrant: (lang: Lang, capabilities: Capability[]) => Promise<boolean>;
   onRevoke: (lang: Lang, capability: Capability) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  // Which popover is open: "new" for any language, or the language whose "+" was clicked.
+  const [open, setOpen] = useState<"new" | Lang | null>(null);
   const byLang = new Map<Lang, Capability[]>();
   for (const grant of grants) {
     if (!isLang(grant.lang)) continue;
@@ -67,96 +68,162 @@ export default function GrantCell({
               </Badge>
             );
           })}
+          {offer(lang).length > 0 ? (
+            <GrantPopover
+              open={open === lang}
+              onOpenChange={(next) => setOpen(next ? lang : null)}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  disabled={busy}
+                  aria-label={`Grant more in ${langName(lang)}`}
+                >
+                  +
+                </Button>
+              }
+            >
+              <GrantPicker
+                offer={offer}
+                lang={lang}
+                busy={busy}
+                onPick={(lang, capabilities) =>
+                  void onGrant(lang, capabilities).then((ok) => {
+                    if (ok) setOpen(null);
+                  })
+                }
+              />
+            </GrantPopover>
+          ) : null}
         </span>
       ))}
       {CODES.some((lang) => offer(lang).length > 0) ? (
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
+        <GrantPopover
+          open={open === "new"}
+          onOpenChange={(next) => setOpen(next ? "new" : null)}
+          trigger={
             <Button variant="ghost" size="xs" disabled={busy}>
               + Grant
             </Button>
-          </PopoverTrigger>
-          {/* Mounted only while open, so the choice starts fresh each time. */}
-          <PopoverContent align="start" className="w-auto">
-            <GrantPicker
-              offer={offer}
-              busy={busy}
-              onPick={(lang, capability) =>
-                void onGrant(lang, capability).then((ok) => {
-                  if (ok) setOpen(false);
-                })
-              }
-            />
-          </PopoverContent>
-        </Popover>
+          }
+        >
+          <GrantPicker
+            offer={offer}
+            busy={busy}
+            onPick={(lang, capabilities) =>
+              void onGrant(lang, capabilities).then((ok) => {
+                if (ok) setOpen(null);
+              })
+            }
+          />
+        </GrantPopover>
       ) : null}
     </div>
   );
 }
 
+function GrantPopover({
+  open,
+  onOpenChange,
+  trigger,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      {/* Mounted only while open, so the choice starts fresh each time. */}
+      <PopoverContent align="start" className="w-auto max-w-[min(32rem,calc(100vw-2rem))]">
+        {children}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 /**
- * A language, a capability in it, and a button: what every grant is made from.
+ * A language, the capabilities to give in it, and a button: what every grant is made from.
+ * Several at once, since somebody brought into a language usually needs more than one.
  *
  * `offer` says what may be granted in each language; languages it offers nothing in are
- * left out, and changing the language picks the first thing offered there.
+ * left out, and changing the language clears what was ticked. `lang` fixes the language and
+ * hides its select, for adding to one somebody already holds.
  */
 export function GrantPicker({
   offer,
+  lang: fixed,
   busy,
   onPick,
   children,
 }: {
   offer: (lang: Lang) => readonly Capability[];
+  lang?: Lang;
   busy: boolean;
-  onPick: (lang: Lang, capability: Capability) => void;
+  onPick: (lang: Lang, capabilities: Capability[]) => void;
   /** Anything to put before the selects, such as an email field; the whole is one form. */
   children?: React.ReactNode;
 }) {
   const langs = CODES.filter((code) => offer(code).length > 0);
-  const [lang, setLang] = useState(langs[0]);
-  const [capability, setCapability] = useState(lang && offer(lang)[0]);
+  const [lang, setLang] = useState(fixed ?? langs[0]);
+  const [picked, setPicked] = useState<ReadonlySet<Capability>>(new Set());
+  const offered = lang ? offer(lang) : [];
+
+  const toggle = (capability: Capability) =>
+    setPicked((current) => {
+      const next = new Set(current);
+      if (!next.delete(capability)) next.add(capability);
+      return next;
+    });
 
   return (
     <form
       className="flex flex-wrap items-center gap-2"
       onSubmit={(event) => {
         event.preventDefault();
-        if (lang && capability) onPick(lang, capability);
+        // In CAPABILITIES' order, whatever order they were ticked in.
+        if (lang && picked.size) onPick(lang, offered.filter((cap) => picked.has(cap)));
       }}
     >
       {children}
-      <Select
-        value={lang}
-        onValueChange={(value) => {
-          setLang(value as Lang);
-          setCapability(offer(value as Lang)[0]);
-        }}
-      >
-        <SelectTrigger className="w-40" aria-label="Language">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {langs.map((code) => (
-            <SelectItem key={code} value={code}>
-              {langName(code)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={capability} onValueChange={(value) => setCapability(value as Capability)}>
-        <SelectTrigger className="w-36" aria-label="Capability">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {(lang ? offer(lang) : []).map((cap) => (
-            <SelectItem key={cap} value={cap}>
-              {capabilityLabel(cap)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button type="submit" size="sm" disabled={busy || !lang || !capability}>
-        Grant
+      {fixed ? null : (
+        <Select
+          value={lang}
+          onValueChange={(value) => {
+            setLang(value as Lang);
+            setPicked(new Set());
+          }}
+        >
+          <SelectTrigger className="w-40" aria-label="Language">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {langs.map((code) => (
+              <SelectItem key={code} value={code}>
+                {langName(code)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      <div role="group" aria-label="Capabilities" className="flex flex-wrap gap-1">
+        {offered.map((cap) => (
+          <Button
+            key={cap}
+            type="button"
+            size="sm"
+            variant={picked.has(cap) ? "default" : "outline"}
+            aria-pressed={picked.has(cap)}
+            onClick={() => toggle(cap)}
+          >
+            {capabilityLabel(cap)}
+          </Button>
+        ))}
+      </div>
+      <Button type="submit" size="sm" disabled={busy || !lang || picked.size === 0}>
+        {fixed ? `Grant in ${langName(fixed)}` : "Grant"}
       </Button>
     </form>
   );

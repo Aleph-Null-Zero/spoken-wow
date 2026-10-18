@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import GrantCell, { GrantPicker } from "@/components/GrantCell";
 import Pagination from "@/components/Pagination";
+import SortHeader from "@/components/SortHeader";
 import { usePendingPush } from "@/components/usePendingPush";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import type { GrantRow } from "@/lib/grants/store";
 import type { Lang } from "@/lib/lang";
+import { nextUserSort, usersQuery, type UserSort } from "@/lib/users/sort";
 import { cn } from "@/lib/utils";
 import {
   CAPABILITIES,
@@ -34,7 +36,7 @@ export type UserRow = {
   name: string | null;
   email: string;
   /** Present for a global admin's listing only, as are the joined date and the key. */
-  role?: string | undefined;
+  role?: string | null | undefined;
   createdAt?: string;
 };
 
@@ -53,9 +55,47 @@ type Props = {
    * back.
    */
   keyedUserIds: string[] | null;
+  /**
+   * The search. A global admin's `users` are already its matches; a language admin's list is
+   * filtered here.
+   */
+  q: string;
+  /** Likewise: a global admin's `users` come in this order, a language admin's are put in it here. */
+  sort: UserSort;
   /** Where a global admin's list is; null for a language admin's, which is not paged. */
   page: { page: number; pageCount: number } | null;
 };
+
+function matches(user: UserRow, q: string): boolean {
+  const needle = q.toLowerCase();
+  return user.email.toLowerCase().includes(needle) || (user.name?.toLowerCase().includes(needle) ?? false);
+}
+
+/**
+ * A language admin's order, the server's for a global admin's (lib/users/store): languages is
+ * the languages held, alphabetically joined, admins first; empty values last either way.
+ */
+function compareUsers(sort: UserSort, langsOf: (user: UserRow) => string | null) {
+  const key = (user: UserRow): string | null => {
+    switch (sort.column) {
+      case "name":
+        return user.name || null;
+      case "email":
+        return user.email;
+      case "joined":
+        return user.createdAt ?? null;
+      case "languages":
+        return isAdmin(user.role) ? "" : langsOf(user);
+    }
+  };
+  const sign = sort.direction === "asc" ? 1 : -1;
+  return (a: UserRow, b: UserRow) => {
+    const x = key(a);
+    const y = key(b);
+    if (x === null || y === null) return Number(x === null) - Number(y === null);
+    return sign * x.localeCompare(y);
+  };
+}
 
 /** `users`, plus whoever in `grants` is not among them yet, in the order they turned up. */
 function withGrantees(users: UserRow[], grants: readonly GrantRow[]): UserRow[] {
@@ -74,6 +114,8 @@ export default function UserTable({
   viewer,
   currentUserId,
   keyedUserIds,
+  q,
+  sort,
   page,
 }: Props) {
   const { pending, push } = usePendingPush();
@@ -102,6 +144,18 @@ export default function UserTable({
     return byUser;
   }, [grants]);
 
+  const shown = global
+    ? users
+    : users
+        .filter((user) => !q || matches(user, q))
+        .sort(
+          compareUsers(sort, (user) => {
+            const langs = [...new Set((grantsOf.get(user.id) ?? NONE).map((grant) => grant.lang))];
+            return langs.length ? langs.sort().join(",") : null;
+          }),
+        );
+  const onSort = (column: UserSort["column"]) => push(usersQuery({ q, sort: nextUserSort(sort, column) }));
+
   async function sendGrant(busyKey: string, method: "PUT" | "DELETE", target: string, body?: unknown) {
     setPendingId(busyKey);
     setError(null);
@@ -123,8 +177,8 @@ export default function UserTable({
     return true;
   }
 
-  const grant = (busyKey: string, email: string, lang: Lang, capability: Capability) =>
-    sendGrant(busyKey, "PUT", "/api/grants", { email, lang, capability });
+  const grant = (busyKey: string, email: string, lang: Lang, capabilities: Capability[]) =>
+    sendGrant(busyKey, "PUT", "/api/grants", { email, lang, capabilities });
 
   const revoke = (userId: string, lang: Lang, capability: Capability) =>
     void sendGrant(userId, "DELETE", `/api/grants?${new URLSearchParams({ userId, lang, capability })}`);
@@ -184,31 +238,36 @@ export default function UserTable({
       >
         <thead>
           <tr className="text-muted-foreground border-b text-left text-xs">
-            <th className="py-2 pr-3 font-normal">Name</th>
-            <th className="py-2 pr-3 font-normal">Email</th>
-            {global && <th className="py-2 pr-3 font-normal">Joined</th>}
+            <SortHeader column="name" sort={sort} onSort={onSort}>
+              Name
+            </SortHeader>
+            <SortHeader column="email" sort={sort} onSort={onSort}>
+              Email
+            </SortHeader>
             {global && <th className="py-2 pr-3 font-normal">Role</th>}
-            <th className="py-2 pr-3 font-normal">Languages</th>
-            {global && <th className="py-2 font-normal">Key</th>}
+            <SortHeader column="languages" sort={sort} onSort={onSort}>
+              Languages
+            </SortHeader>
+            {global && <th className="py-2 pr-3 font-normal">Key</th>}
+            {global && (
+              <SortHeader column="joined" sort={sort} onSort={onSort}>
+                Joined
+              </SortHeader>
+            )}
           </tr>
         </thead>
         <tbody>
-          {users.length === 0 && (
+          {shown.length === 0 && (
             <tr>
               <td colSpan={3} className="text-muted-foreground py-2">
-                Nobody works in your languages yet.
+                {q ? "Nobody matches that." : "Nobody works in your languages yet."}
               </td>
             </tr>
           )}
-          {users.map((user) => (
+          {shown.map((user) => (
             <tr key={user.id} className="border-b align-top last:border-0">
               <td className="py-2 pr-3">{user.name}</td>
               <td className="text-muted-foreground py-2 pr-3">{user.email}</td>
-              {global && (
-                <td className="text-muted-foreground py-2 pr-3 whitespace-nowrap">
-                  {user.createdAt?.slice(0, 10)}
-                </td>
-              )}
               {global && (
                 <td className="py-2 pr-3">
                   <RoleCell
@@ -227,13 +286,13 @@ export default function UserTable({
                     grants={grantsOf.get(user.id) ?? NONE}
                     viewer={viewer}
                     busy={pendingId === user.id}
-                    onGrant={(lang, capability) => grant(user.id, user.email, lang, capability)}
+                    onGrant={(lang, capabilities) => grant(user.id, user.email, lang, capabilities)}
                     onRevoke={(lang, capability) => revoke(user.id, lang, capability)}
                   />
                 )}
               </td>
               {global && (
-                <td className="py-2 whitespace-nowrap">
+                <td className="py-2 pr-3 whitespace-nowrap">
                   {keyed.has(user.id) ? (
                     <span className="flex items-center gap-2">
                       <span aria-label="key set">✓</span>
@@ -252,6 +311,11 @@ export default function UserTable({
                   )}
                 </td>
               )}
+              {global && (
+                <td className="text-muted-foreground py-2 whitespace-nowrap">
+                  {user.createdAt?.slice(0, 10)}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -261,7 +325,7 @@ export default function UserTable({
         <Pagination
           page={page.page}
           pageCount={page.pageCount}
-          onPage={(next) => push(`?page=${next}`)}
+          onPage={(next) => push(usersQuery({ q, sort, page: next }))}
         />
       )}
 
@@ -269,7 +333,7 @@ export default function UserTable({
         <AddByEmail
           viewer={viewer}
           busy={pendingId === "new"}
-          onGrant={(email, lang, capability) => grant("new", email, lang, capability)}
+          onGrant={(email, lang, capabilities) => grant("new", email, lang, capabilities)}
         />
       )}
     </>
@@ -328,7 +392,7 @@ function AddByEmail({
 }: {
   viewer: Viewer;
   busy: boolean;
-  onGrant: (email: string, lang: Lang, capability: Capability) => Promise<boolean>;
+  onGrant: (email: string, lang: Lang, capabilities: Capability[]) => Promise<boolean>;
 }) {
   const [email, setEmail] = useState("");
   return (
@@ -336,8 +400,8 @@ function AddByEmail({
       <GrantPicker
         offer={(lang) => CAPABILITIES.filter((cap) => canGrant(viewer, cap, lang))}
         busy={busy}
-        onPick={(lang, capability) =>
-          void onGrant(email, lang, capability).then((ok) => {
+        onPick={(lang, capabilities) =>
+          void onGrant(email, lang, capabilities).then((ok) => {
             if (ok) setEmail("");
           })
         }
