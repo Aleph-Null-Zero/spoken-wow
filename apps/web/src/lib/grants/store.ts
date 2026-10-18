@@ -8,8 +8,8 @@ import "server-only";
 
 import { cache } from "react";
 
-import { recordActivity } from "@/lib/activity/store";
-import { query } from "@/lib/db";
+import { recordActivities, recordActivity } from "@/lib/activity/store";
+import { inTransaction, query } from "@/lib/db";
 import { isLang, type Lang } from "@/lib/lang";
 import { isCapability, type Capability, type Grant, type Viewer } from "@/lib/permissions";
 
@@ -55,30 +55,35 @@ export async function listGrants(langs?: string[]): Promise<GrantRow[]> {
 }
 
 /**
- * Recorded in the activity log only when the row is new: granting what somebody already
- * holds changes nothing, and the log would otherwise say it was handed out twice.
+ * Several capabilities in one language at once, all or none. Recorded in the activity log
+ * only for the rows that are new: granting what somebody already holds changes nothing, and
+ * the log would otherwise say it was handed out twice.
  */
-export async function addGrant(
+export async function addGrants(
   userId: string,
   lang: string,
-  capability: Capability,
+  capabilities: readonly Capability[],
   grantedBy: string,
 ): Promise<void> {
   if (!isLang(lang)) throw new Error(`${lang} is not a language this site knows`);
-  const inserted = await query(
-    `insert into "language_grant" ("userId", "lang", "capability", "grantedBy")
-     values ($1, $2, $3, $4)
-     on conflict ("userId", "lang", "capability") do nothing
-     returning 1`,
-    [userId, lang, capability, grantedBy],
-  );
-  if (inserted.length === 0) return;
-  await recordActivity({
-    kind: "grant.added",
-    lang,
-    subject: userId,
-    actorId: grantedBy,
-    detail: { capability },
+  await inTransaction(async (client) => {
+    const { rows } = await client.query<{ capability: Capability }>(
+      `insert into "language_grant" ("userId", "lang", "capability", "grantedBy")
+       select $1, $2, capability, $4 from unnest($3::text[]) as capability
+       on conflict ("userId", "lang", "capability") do nothing
+       returning "capability"`,
+      [userId, lang, capabilities, grantedBy],
+    );
+    await recordActivities(
+      rows.map(({ capability }) => ({
+        kind: "grant.added",
+        lang,
+        subject: userId,
+        actorId: grantedBy,
+        detail: { capability },
+      })),
+      client,
+    );
   });
 }
 
