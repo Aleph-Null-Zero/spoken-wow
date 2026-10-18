@@ -145,7 +145,7 @@ export function matching(lines: ResultLine[], filters: PageFilters = {}): Result
   if (filters.state) out = out.filter((l) => l.state === filters.state);
   // Its own filter rather than a fourth state, because a current take can be dirty.
   if (filters.dirty) out = out.filter((l) => l.dirty);
-  if (filters.voiceable) out = out.filter((l) => l.generatable);
+  if (filters.voiceable !== undefined) out = out.filter((l) => l.generatable === filters.voiceable);
   if (filters.reports === "open") out = out.filter((l) => l.reportsOpen > 0);
   // An id the corpus no longer carries matches nothing rather than everything: a report
   // about a page that has since been dropped must not read as "here it is".

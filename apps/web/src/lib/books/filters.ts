@@ -42,7 +42,7 @@ export type PageFilters = {
    */
   dirty?: boolean;
   /**
-   * Only pages that can be voiced at all.
+   * true for only the pages that can be voiced at all, false for only those that cannot.
    *
    * 88 of the 1191 cannot: 36 hold substitution tokens the game fills in at runtime, 26
    * are empty and 26 say "Missing Text". They are in the corpus deliberately -- the game
@@ -93,7 +93,7 @@ export function filterParams(filters: PageFilters): URLSearchParams {
   if (filters.bookId !== undefined) params.set("book", filters.bookId);
   if (filters.state) params.set("state", filters.state);
   if (filters.dirty) params.set("dirty", "1");
-  if (filters.voiceable) params.set("voiceable", "1");
+  if (filters.voiceable !== undefined) params.set("voiceable", filters.voiceable ? "1" : "0");
   if (filters.reports) params.set("fb", filters.reports);
   if (filters.line) params.set("line", filters.line);
   if (filters.model) params.set("model", filters.model);
@@ -119,7 +119,7 @@ export function filtersFromParams(params: URLSearchParams): PageFilters {
     bookId: book && /^(\d+|n[0-9a-f-]{36})$/.test(book) ? book : undefined,
     state: oneOf(params.get("state"), STATES),
     dirty: params.get("dirty") === "1" || undefined,
-    voiceable: params.get("voiceable") === "1" || undefined,
+    voiceable: params.get("voiceable") === "1" ? true : params.get("voiceable") === "0" ? false : undefined,
     reports: oneOf(params.get("fb"), REPORTS),
     line: params.get("line") || undefined,
     model: params.get("model") || undefined,
@@ -137,7 +137,7 @@ export function activeFilterCount(filters: PageFilters): number {
     filters.bookId,
     filters.state,
     filters.dirty,
-    filters.voiceable,
+    filters.voiceable !== undefined,
     filters.reports,
     filters.line,
     filters.model,
