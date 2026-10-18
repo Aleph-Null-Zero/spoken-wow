@@ -2,7 +2,6 @@
 // Blobs, then manifests, then the index; the index write is the only one players see, and it is
 // conditional, so two publishes racing cannot both win. Spec:
 // docs/superpowers/specs/2026-10-18-launcher-delta-packs-design.md
-import { createHash } from "node:crypto";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -135,7 +134,7 @@ export async function publish({ store, packs, distDir, signingKey, minSpoken, la
       const bytes = await readFile(b.abs);
       // A blob under an immutable, year-cached key cannot be corrected, so its bytes are checked
       // against the key first (a stale hash-cache entry would otherwise store the wrong bytes).
-      if (createHash("sha256").update(bytes).digest("hex") !== sha) {
+      if (sha256Text(bytes) !== sha) {
         throw new Error(`${b.abs} changed while publishing; run it again`);
       }
       await store.put(`blobs/${sha}`, bytes, { contentType: "application/octet-stream", cacheControl: IMMUTABLE });

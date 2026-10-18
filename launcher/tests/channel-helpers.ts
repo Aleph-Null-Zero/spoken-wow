@@ -1,7 +1,7 @@
 // A launcher channel in miniature: keys, sealed index and manifests, blobs, and a server for them.
-import { createHash, generateKeyPairSync, sign, type KeyObject } from 'node:crypto'
+import { generateKeyPairSync, sign, type KeyObject } from 'node:crypto'
 import type http from 'node:http'
-import { startServer, type TestServer } from './helpers'
+import { sha256, startServer, type TestServer } from './helpers'
 
 export interface ChannelKeys {
   publicKey: string
@@ -17,8 +17,6 @@ export function seal(value: unknown, keys: ChannelKeys): { text: string; signed:
   const signed = JSON.stringify(value)
   return { signed, text: JSON.stringify({ signed, sig: sign(null, Buffer.from(signed, 'utf8'), keys.privateKey).toString('base64') }) }
 }
-
-const sha = (b: Buffer | string): string => createHash('sha256').update(b).digest('hex')
 
 export interface PackSpec {
   packId: string
@@ -40,15 +38,15 @@ export function channelFixture(keys: ChannelKeys, packs: PackSpec[]): ChannelFix
   for (const p of packs) {
     const files = Object.entries(p.files).map(([path, text]) => {
       const body = Buffer.from(text)
-      objects.set(`/blobs/${sha(body)}`, body)
-      return { path, sha256: sha(body), size: body.length }
+      objects.set(`/blobs/${sha256(body)}`, body)
+      return { path, sha256: sha256(body), size: body.length }
     })
     const requires = { Spoken: `>=${p.requires ?? '3.0.0'}` }
     const totalSize = files.reduce((n, f) => n + f.size, 0)
     const sealed = seal({ packId: p.packId, rev: p.rev, requires, fileCount: files.length, totalSize, files }, keys)
     objects.set(`/packs/${p.packId}/${p.rev}.json`, Buffer.from(sealed.text))
     fx.manifestSigned[p.packId] = sealed.signed
-    fx.index.packs[p.packId] = { rev: p.rev, manifestSha256: sha(sealed.signed), fileCount: files.length, totalSize, requires }
+    fx.index.packs[p.packId] = { rev: p.rev, manifestSha256: sha256(sealed.signed), fileCount: files.length, totalSize, requires }
   }
   objects.set('/index.json', Buffer.from(seal(fx.index, keys).text))
   return fx

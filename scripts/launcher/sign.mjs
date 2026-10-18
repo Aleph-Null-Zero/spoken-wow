@@ -32,6 +32,6 @@ export function openJson(text, publicKeyB64) {
   return { value: JSON.parse(env.signed), signed: env.signed };
 }
 
-export function sha256Text(text) {
-  return createHash("sha256").update(text, "utf8").digest("hex");
+export function sha256Text(data) {
+  return createHash("sha256").update(data, typeof data === "string" ? "utf8" : undefined).digest("hex");
 }
