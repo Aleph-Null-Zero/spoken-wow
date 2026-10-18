@@ -22,22 +22,21 @@ describe('planPack', () => {
 
   it('fetches everything for a fresh install', async () => {
     const plan = await planPack(m, null, local([]), hashOf({}).hash)
-    expect(plan.fetch.map((x) => x.path)).toEqual(['a.toc', 's/1.ogg', 's/2.ogg'])
-    expect(plan.bytes).toBe(9)
+    expect(plan.map((x) => x.path)).toEqual(['a.toc', 's/1.ogg', 's/2.ogg'])
   })
 
   it('trusts the state when size and mtime match, and hashes nothing', async () => {
     const state: PackState = { packId: m.packId, rev: 'old', files: Object.fromEntries(m.files.map((x) => [x.path, { sha256: x.sha256, size: x.size, mtimeMs: 5 }])) }
     const h = hashOf({})
     const plan = await planPack(m, state, local(m.files.map((x) => [x.path, { size: x.size, mtimeMs: 5 }])), h.hash)
-    expect(plan.fetch).toEqual([])
+    expect(plan).toEqual([])
     expect(h.calls).toEqual([])
   })
 
   it('adopts a folder with no state by hashing, and fetches only what differs', async () => {
     const h = hashOf({ 'a.toc': 'toc', 's/1.ogg': 'one', 's/2.ogg': 'TWO' })
     const plan = await planPack(m, null, local(m.files.map((x) => [x.path, { size: x.size, mtimeMs: 1 }])), h.hash)
-    expect(plan.fetch.map((x) => x.path)).toEqual(['s/2.ogg'])
+    expect(plan.map((x) => x.path)).toEqual(['s/2.ogg'])
     expect(h.calls.sort()).toEqual(['a.toc', 's/1.ogg', 's/2.ogg'])
   })
 
@@ -45,20 +44,20 @@ describe('planPack', () => {
     const state: PackState = { packId: m.packId, rev: 'old', files: Object.fromEntries(m.files.map((x) => [x.path, { sha256: x.sha256, size: x.size, mtimeMs: 5 }])) }
     const h = hashOf({ 'a.toc': 'toc', 's/1.ogg': 'ONE', 's/2.ogg': 'two' })
     const plan = await planPack(m, state, local(m.files.map((x) => [x.path, { size: x.size, mtimeMs: 5 }])), h.hash, false)
-    expect(plan.fetch.map((x) => x.path)).toEqual(['s/1.ogg'])
+    expect(plan.map((x) => x.path)).toEqual(['s/1.ogg'])
   })
 
   it('a file of the wrong size is fetched without hashing', async () => {
     const h = hashOf({})
     const plan = await planPack(manifest([f('a.toc', 'toc')]), null, local([['a.toc', { size: 99, mtimeMs: 1 }]]), h.hash)
-    expect(plan.fetch.length).toBe(1)
+    expect(plan.length).toBe(1)
     expect(h.calls).toEqual([])
   })
 
   it('counts one clip used at two paths once', async () => {
-    const plan = await planPack(manifest([f('a.ogg', 'same'), f('b.ogg', 'same')]), null, local([]), hashOf({}).hash)
-    expect(plan.files).toBe(2)
-    expect(plan.bytes).toBe(4)
+    const m = manifest([f('a.ogg', 'same'), f('b.ogg', 'same')])
+    expect(await planPack(m, null, local([]), hashOf({}).hash)).toHaveLength(2)
+    expect(estimatePack(m, null)).toEqual({ files: 2, bytes: 4 })
   })
 })
 

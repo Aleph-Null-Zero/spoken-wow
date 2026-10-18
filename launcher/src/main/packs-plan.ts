@@ -9,16 +9,6 @@ export interface LocalFile {
   mtimeMs: number
 }
 
-export interface PackPlan {
-  /** Files the folder holds as the manifest wants them. */
-  keep: ChannelFile[]
-  /** Files to download. */
-  fetch: ChannelFile[]
-  /** Bytes to download: one clip used at two paths is counted once. */
-  bytes: number
-  files: number
-}
-
 /** Every regular file under `dir` by its `/` path; links and other entries are skipped. Empty when `dir` is missing. */
 export async function listLocal(dir: string): Promise<Map<string, LocalFile>> {
   const out = new Map<string, LocalFile>()
@@ -42,6 +32,7 @@ export async function listLocal(dir: string): Promise<Map<string, LocalFile>> {
   return out
 }
 
+/** Bytes to download: one clip used at two paths is counted once. */
 function sizeOf(fetch: ChannelFile[]): { bytes: number; files: number } {
   const blobs = new Map<string, number>()
   for (const f of fetch) blobs.set(f.sha256, f.size)
@@ -49,7 +40,7 @@ function sizeOf(fetch: ChannelFile[]): { bytes: number; files: number } {
 }
 
 /**
- * A file whose size and mtime are what the state recorded is trusted to hold the recorded hash.
+ * The files to download. A file whose size and mtime are what the state recorded is trusted to hold the recorded hash.
  * Any other file of the right size is hashed: all of them for a folder with no state (installed by
  * another client) and for a repair (`trustState` false).
  */
@@ -59,8 +50,7 @@ export async function planPack(
   local: Map<string, LocalFile>,
   hash: (relPath: string) => Promise<string>,
   trustState = true
-): Promise<PackPlan> {
-  const keep: ChannelFile[] = []
+): Promise<ChannelFile[]> {
   const fetch: ChannelFile[] = []
   for (const f of manifest.files) {
     const l = local.get(f.path)
@@ -70,9 +60,9 @@ export async function planPack(
     }
     const s = trustState ? state?.files[f.path] : undefined
     const sha = s && s.size === l.size && s.mtimeMs === l.mtimeMs ? s.sha256 : await hash(f.path)
-    ;(sha === f.sha256 ? keep : fetch).push(f)
+    if (sha !== f.sha256) fetch.push(f)
   }
-  return { keep, fetch, ...sizeOf(fetch) }
+  return fetch
 }
 
 /** What an update would download, judged from the state alone, for the Update button's label. */

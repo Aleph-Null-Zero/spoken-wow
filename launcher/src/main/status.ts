@@ -5,7 +5,7 @@ import type { Catalog, GameInstall, InstallState, Product, ProductStatus, Settin
 import { PRODUCTS } from '../shared/products'
 import { compareVersions } from '../shared/version'
 import { latestFor } from './catalog'
-import { channelTag, isChannelRelease } from './packs-catalog'
+import { channelTag, isChannelRelease } from '../shared/channel'
 import { loadPackState } from './packs-state'
 import { LINKED_MESSAGE, allowedFolders, isLinked } from './guard'
 import { getRecord, type StateFile } from './state'

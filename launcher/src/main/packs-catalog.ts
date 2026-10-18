@@ -1,13 +1,12 @@
 // Voice packs the launcher channel carries, as the catalog and the statuses see them: each is one
 // "release" whose tag names the rev of each of its folders, so a status is a tag comparison.
+import { channelTag } from '../shared/channel'
 import type { Catalog, Product, ReleaseInfo } from '../shared/types'
 import type { ChannelIndex } from './packs-remote'
 
-/** The tag of a channel install: `channel/` and the rev of each of the product's folders, in order. */
-export const CHANNEL_TAG = 'channel/'
-
-export function channelTag(revs: string[]): string {
-  return CHANNEL_TAG + revs.join('+')
+/** The newest of a set of revs; they sort as text. */
+export function newestRev(revs: string[]): string {
+  return [...revs].sort().at(-1)!
 }
 
 /** `20261018T142233Z` -> `2026-10-18T14:22:33Z`. */
@@ -21,7 +20,7 @@ export function channelRelease(product: Product, index: ChannelIndex | null, bas
   const packs = product.folders.map((f) => index.packs[f])
   if (packs.some((p) => !p)) return null
   const revs = packs.map((p) => p!.rev)
-  const newest = [...revs].sort().at(-1)!
+  const newest = newestRev(revs)
   return {
     productId: product.id,
     tag: channelTag(revs),
@@ -34,10 +33,6 @@ export function channelRelease(product: Product, index: ChannelIndex | null, bas
     assetUrl: baseUrl,
     htmlUrl: ''
   }
-}
-
-export function isChannelRelease(r: ReleaseInfo | undefined): boolean {
-  return !!r && r.tag.startsWith(CHANNEL_TAG)
 }
 
 /** The catalog with every voice product the channel fully carries offered from the channel instead of GitHub. */

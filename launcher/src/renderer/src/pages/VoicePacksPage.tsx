@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import type { Product, ProductStatus, Section } from '@shared/types'
+import { isChannelRelease } from '@shared/channel'
 import { BASE_LANGUAGE, LANGUAGES, languageName } from '@shared/products'
 import { jobBusy, latestOf, releasesFor, statusOf } from '../catalog'
 import { Wordmark } from '../components/Brand'
@@ -157,8 +158,8 @@ function VoiceRow({ product, gameId, writable }: { product: Product; gameId: str
   const latest = latestOf(state, gameId, product.id)
   const s = status?.state ?? 'not-installed'
   const present = s !== 'not-installed'
-  const channel = !!latest?.tag.startsWith('channel/')
-  const size = latest ? formatBytes(channel && s === 'update-available' && status?.delta ? status.delta.bytes : latest.assetSize) : ''
+  const channel = isChannelRelease(latest)
+  const size = latest ? formatBytes(status?.delta ? status.delta.bytes : latest.assetSize) : ''
   return (
     <PackRow
       gameId={gameId}

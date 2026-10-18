@@ -14,10 +14,11 @@ import { addGame, notSupportedMessage, removeGame, scanGames } from './games'
 import { fetchReleases } from './github'
 import { installProduct, recoverInterrupted, uninstallProduct, type FsOps, type JobContext } from './install'
 import { JobManager } from './jobs'
-import { channelRelease, isChannelRelease, withChannel } from './packs-catalog'
+import { isChannelRelease } from '../shared/channel'
+import { channelRelease, withChannel } from './packs-catalog'
 import { PACKS_BASE_URL } from './packs-key'
 import { estimatePack } from './packs-plan'
-import { fetchIndex, fetchManifest, loadCachedIndex, loadCachedManifest, type ChannelIndex, type ChannelManifest, type ChannelOptions } from './packs-remote'
+import { fetchIndex, fetchManifest, loadCachedIndex, loadCachedManifest, type ChannelIndex, type ChannelOptions, type ChannelPack } from './packs-remote'
 import { dropPackState, loadPackState } from './packs-state'
 import { syncPacks } from './packs-sync'
 import { loadSettings, loadState, log, sanitizeSettings, saveSettings } from './state'
@@ -184,9 +185,10 @@ export class LauncherService {
     // Warm the manifest cache of installed channel packs so the Update label can be computed offline.
     for (const game of this.games) {
       for (const p of PRODUCTS) {
-        if (!channelRelease(p, this.channel, this.packsBase()) || !(p.folders ?? []).some((f) => loadPackState(game, f))) continue
-        for (const f of p.folders ?? []) {
-          await fetchManifest(this.opts.dataPath, f, this.channel!.packs[f]!, this.channelOptions()).catch((err) => log(`Manifest of ${f}:`, err))
+        const packs = this.channelPacks(p)
+        if (!packs || !p.folders!.some((f) => loadPackState(game, f))) continue
+        for (const [i, f] of p.folders!.entries()) {
+          await fetchManifest(this.opts.dataPath, f, packs[i]!, this.channelOptions()).catch((err) => log(`Manifest of ${f}:`, err))
         }
       }
     }
@@ -251,17 +253,38 @@ export class LauncherService {
     }
   }
 
+  /** The channel's pack for each folder of a voice product, in folder order; null unless the channel carries every one. */
+  private channelPacks(product: Product): ChannelPack[] | null {
+    if (product.kind !== 'voices' || !this.channel || !product.folders || product.folders.length === 0) return null
+    const packs = product.folders.map((f) => this.channel!.packs[f])
+    return packs.every((p) => !!p) ? (packs as ChannelPack[]) : null
+  }
+
   /** The highest `requires.Spoken` among a product's channel folders, as `3.1.0`. */
   private requiredSpoken(product: Product): string | null {
-    const versions = (product.folders ?? []).map((f) => this.channel?.packs[f]?.requires.Spoken.slice(2)).filter((v): v is string => !!v)
+    const versions = (this.channelPacks(product) ?? []).map((p) => p.requires.Spoken.slice(2))
     return versions.sort((a, b) => compareVersions(a, b) ?? 0).at(-1) ?? null
+  }
+
+  /** What an update of a channel product would download, judged from the cached manifests; null when one is missing. */
+  private deltaOf(game: GameInstall, product: Product, packs: ChannelPack[]): { files: number; bytes: number } | null {
+    let files = 0
+    let bytes = 0
+    for (const [i, f] of product.folders!.entries()) {
+      const manifest = loadCachedManifest(this.opts.dataPath, f, packs[i]!, this.opts.packsPublicKey)
+      if (!manifest) return null
+      const d = estimatePack(manifest, loadPackState(game, f))
+      files += d.files
+      bytes += d.bytes
+    }
+    return { files, bytes }
   }
 
   /** Installs the newest Spoken release when the installed one is older than the pack needs; refuses when none is new enough. */
   private async ensureSpoken(game: GameInstall, product: Product, ctx: JobContext): Promise<void> {
     const need = this.requiredSpoken(product)
     if (!need) return
-    const spoken = (await this.statuses(game.id)).find((s) => s.productId === 'spoken')
+    const spoken = (await computeStatuses(game, this.effectiveCatalog(), this.settings, loadState(this.opts.dataPath), [productById('spoken')!]))[0]
     if (spoken?.installedVersion && (compareVersions(spoken.installedVersion, need) ?? -1) >= 0) return
     const release = this.pickRelease('spoken')
     if (!release || (compareVersions(release.version, need) ?? -1) < 0) {
@@ -276,12 +299,10 @@ export class LauncherService {
   }
 
   private async syncChannel(game: GameInstall, product: Product, ctx: JobContext, repair: boolean): Promise<void> {
-    const folders = product.folders ?? []
-    const packs = folders.map((f) => this.channel?.packs[f])
-    if (folders.length === 0 || packs.some((p) => !p)) throw new PlainError(`${product.title} is not on the voice pack server right now. Press refresh and try again.`)
+    const packs = this.channelPacks(product)
+    if (!packs) throw new PlainError(`${product.title} is not on the voice pack server right now. Press refresh and try again.`)
     const opts = this.channelOptions(ctx.signal)
-    const manifests: ChannelManifest[] = []
-    for (let i = 0; i < folders.length; i++) manifests.push(await fetchManifest(this.opts.dataPath, folders[i]!, packs[i]!, opts))
+    const manifests = await Promise.all(packs.map((p, i) => fetchManifest(this.opts.dataPath, product.folders![i]!, p, opts)))
     await this.ensureSpoken(game, product, ctx)
     await syncPacks(game, { product, manifests, baseUrl: this.packsBase(), repair }, ctx)
   }
@@ -310,19 +331,9 @@ export class LauncherService {
       const need = this.requiredSpoken(product)
       if (need && (!spoken || (compareVersions(spoken, need) ?? -1) < 0)) status.needsSpoken = need
       if (status.state !== 'update-available') continue
-      let files = 0
-      let bytes = 0
-      for (const f of product.folders ?? []) {
-        const manifest = loadCachedManifest(this.opts.dataPath, f, this.channel!.packs[f]!, this.opts.packsPublicKey)
-        if (!manifest) {
-          files = -1
-          break
-        }
-        const d = estimatePack(manifest, loadPackState(game, f))
-        files += d.files
-        bytes += d.bytes
-      }
-      if (files > 0) status.delta = { files, bytes }
+      const packs = this.channelPacks(product)
+      const delta = packs && this.deltaOf(game, product, packs)
+      if (delta && delta.files > 0) status.delta = delta
     }
     return out
   }
@@ -389,7 +400,7 @@ export class LauncherService {
         }
         if (repair) {
           const again = await this.releaseToRepair(game.id, product)
-          await installProduct(game, product, again, { ...this.jobContext(ctx.jobId, ctx.signal, ctx.emit), repair: true })
+          await installProduct(game, product, again, { ...this.githubContext(game, product, ctx), repair: true })
           return
         }
         if (!release) {
@@ -401,9 +412,21 @@ export class LauncherService {
                 : 'The list of releases has not been loaded yet. Check your connection, press refresh and try again.'
           )
         }
-        await installProduct(game, product, release, this.jobContext(ctx.jobId, ctx.signal, ctx.emit))
+        await installProduct(game, product, release, this.githubContext(game, product, ctx))
       }
     })
+  }
+
+  /**
+   * The context of an install from GitHub. Once it has replaced a voice product's folders, the channel revs
+   * recorded for them no longer describe what is installed, so they are dropped before the job reports done.
+   */
+  private githubContext(game: GameInstall, product: Product, ctx: { jobId: string; signal: AbortSignal; emit: (p: JobProgress) => void }): JobContext {
+    const emit = (p: JobProgress): void => {
+      if (p.phase === 'done' && product.kind === 'voices') for (const f of product.folders ?? []) dropPackState(game, f)
+      ctx.emit(p)
+    }
+    return this.jobContext(ctx.jobId, ctx.signal, emit)
   }
 
   uninstall(gameId: string, productId: string): string {

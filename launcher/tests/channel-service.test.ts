@@ -21,17 +21,21 @@ const keys = channelKeys()
 const PACK = 'SpokenZonesAudio_deDE'
 const spec: PackSpec = { packId: PACK, rev: '20261018T000000Z', files: { [`${PACK}.toc`]: 'toc', 'Sounds/1.ogg': 'one' }, requires: '3.0.0' }
 
-async function setup(options: { spoken?: string; requires?: string } = {}) {
+/** A fetch whose GitHub API answers with `releases` and whose other requests go through. */
+function githubFetch(releases: unknown[] = []): typeof fetch {
+  return (async (url: string, init?: RequestInit) =>
+    String(url).startsWith('https://api.github.com/') ? new Response(JSON.stringify(releases), { status: 200, headers: { 'content-type': 'application/json' } }) : fetch(url, init)) as unknown as typeof fetch
+}
+
+async function setup(options: { spoken?: string; requires?: string; releases?: unknown[] } = {}) {
   const game = await makeGame(tmpDir())
   if (options.spoken) write(path.join(game.addOnsPath, 'Spoken', 'Spoken.toc'), toc('Spoken', options.spoken))
   const s = await serveChannel(channelFixture(keys, [{ ...spec, ...(options.requires ? { requires: options.requires } : {}) }]))
   server = s
-  const github = (async (url: string, init?: RequestInit) =>
-    String(url).startsWith('https://api.github.com/') ? new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } }) : fetch(url, init)) as unknown as typeof fetch
   const sent: { channel: string; payload: unknown }[] = []
   const svc = new LauncherService({
     dataPath: tmpDir(), appVersion: '0.1.0', send: (channel, payload) => sent.push({ channel, payload }),
-    fetchImpl: github, autoPaths: [game.root], isRunning: async () => false, backoffMs: 1,
+    fetchImpl: githubFetch(options.releases), autoPaths: [game.root], isRunning: async () => false, backoffMs: 1,
     packsBaseUrl: s.base, packsPublicKey: keys.publicKey
   })
   await svc.init()
@@ -72,6 +76,29 @@ describe('the channel through the service', () => {
     expect(loadPackState(game, PACK)).toBeNull()
   })
 
+  it('forgets the channel revs of a folder that GitHub content replaced', async () => {
+    const zip = await yazlZip([
+      { name: `${PACK}/${PACK}.toc`, data: toc(PACK, '1.0.0') },
+      { name: `${PACK}/Sounds/1.ogg`, data: 'github' }
+    ])
+    extra = await startServer((req, res) => serveBuffer(req, res, zip))
+    const releases = [
+      {
+        tag_name: 'zones-audio-deDE/v1.0.0', draft: false, prerelease: false, published_at: '2026-10-01T00:00:00Z', body: '', html_url: '',
+        assets: [{ name: `${PACK}-1.0.0.zip`, size: zip.length, browser_download_url: `${extra.url}/zones.zip`, digest: `sha256:${sha256(zip)}`, state: 'uploaded' }]
+      }
+    ]
+    const { svc, game, sent } = await setup({ spoken: '3.0.0', releases })
+    expect((await waitFor(sent, svc.install(game.id, 'zones-audio-deDE'))).phase).toBe('done')
+    expect(loadPackState(game, PACK)).not.toBeNull()
+
+    // The channel stops carrying the pack, so the same product is installed from GitHub.
+    svc.channel = null
+    expect((await waitFor(sent, svc.install(game.id, 'zones-audio-deDE', { version: '1.0.0' }))).phase).toBe('done')
+    expect(fs.readFileSync(path.join(game.addOnsPath, PACK, 'Sounds', '1.ogg'), 'utf8')).toBe('github')
+    expect(loadPackState(game, PACK)).toBeNull()
+  })
+
   it('says which Spoken a pack needs, and refuses when none is released', async () => {
     const { svc, game, sent } = await setup({ spoken: '3.0.0', requires: '3.1.0' })
     expect((await svc.statuses(game.id)).find((s) => s.productId === 'zones-audio-deDE')?.needsSpoken).toBe('3.1.0')
@@ -96,24 +123,21 @@ describe('the channel through the service', () => {
     ]
     const s = await serveChannel(channelFixture(keys, [{ ...spec, requires: '3.1.0' }]))
     server = s
-    const fetchImpl = (async (url: string, init?: RequestInit) =>
-      String(url).startsWith('https://api.github.com/') ? new Response(JSON.stringify(releases), { status: 200, headers: { 'content-type': 'application/json' } }) : fetch(url, init)) as unknown as typeof fetch
+    const clip = path.join(game.addOnsPath, PACK, 'Sounds', '1.ogg')
+    let clipAtDone: boolean | null = null
     const sent: { channel: string; payload: unknown }[] = []
     const svc = new LauncherService({
-      dataPath: tmpDir(), appVersion: '0.1.0', send: (channel, payload) => sent.push({ channel, payload }),
-      fetchImpl, autoPaths: [game.root], isRunning: async () => false, backoffMs: 1, packsBaseUrl: s.base, packsPublicKey: keys.publicKey
+      dataPath: tmpDir(), appVersion: '0.1.0',
+      send: (channel, payload) => {
+        sent.push({ channel, payload })
+        if (clipAtDone === null && channel === CHANNELS.jobProgress && (payload as JobProgress).phase === 'done') clipAtDone = fs.existsSync(clip)
+      },
+      fetchImpl: githubFetch(releases), autoPaths: [game.root], isRunning: async () => false, backoffMs: 1, packsBaseUrl: s.base, packsPublicKey: keys.publicKey
     })
     await svc.init()
     await svc.refreshCatalog(true)
-    const clip = path.join(game.addOnsPath, PACK, 'Sounds', '1.ogg')
-    let clipAtDone: boolean | null = null
     const jobId = svc.install(game.id, 'zones-audio-deDE')
-    const watch = setInterval(() => {
-      const ev = sent.filter((e) => e.channel === CHANNELS.jobProgress && (e.payload as JobProgress).jobId === jobId)
-      if (clipAtDone === null && ev.some((e) => (e.payload as JobProgress).phase === 'done')) clipAtDone = fs.existsSync(clip)
-    }, 1)
     const done = await waitFor(sent, jobId)
-    clearInterval(watch)
     expect(done.phase).toBe('done')
     const events = sent.filter((e) => e.channel === CHANNELS.jobProgress && (e.payload as JobProgress).jobId === jobId).map((e) => e.payload as JobProgress)
     expect(events.filter((e) => e.phase === 'done')).toHaveLength(1)
@@ -130,10 +154,8 @@ describe('the channel through the service', () => {
     const releases = [
       { tag_name: 'spoken/v3.1.0', draft: false, prerelease: false, published_at: '2026-10-01T00:00:00Z', body: '', html_url: '', assets: [{ name: 'Spoken-3.1.0.zip', size: 1, browser_download_url: 'http://127.0.0.1:9/x.zip' }] }
     ]
-    const fetchImpl = (async (url: string, init?: RequestInit) =>
-      String(url).startsWith('https://api.github.com/') ? new Response(JSON.stringify(releases), { status: 200, headers: { 'content-type': 'application/json' } }) : fetch(url, init)) as unknown as typeof fetch
     const svc = new LauncherService({
-      dataPath: tmpDir(), appVersion: '0.1.0', send: () => undefined, fetchImpl, autoPaths: [game.root], isRunning: async () => false,
+      dataPath: tmpDir(), appVersion: '0.1.0', send: () => undefined, fetchImpl: githubFetch(releases), autoPaths: [game.root], isRunning: async () => false,
       packsBaseUrl: `${server.url}/`, packsPublicKey: keys.publicKey, packsTimeoutMs: 200
     })
     await svc.init()

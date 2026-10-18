@@ -7,14 +7,15 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
+import { channelTag } from '../shared/channel'
 import type { GameInstall, JobPhase, Product } from '../shared/types'
 import { sha256OfFile } from './download'
 import { PlainError, formatBytes, isAbortError, sleep, throwIfAborted } from './errors'
 import { LINKED_MESSAGE, ensureFreeSpace, isGameRunning, isLinked } from './guard'
 import { applyChanges, backupDirFor, checkWritable, defaultOps, doneMessage, pruneBackups, refuseUnresolved, workDir, type FsOps, type JobContext, type JobResult } from './install'
-import { channelTag } from './packs-catalog'
-import { listLocal, planPack, type PackPlan } from './packs-plan'
-import type { ChannelManifest } from './packs-remote'
+import { newestRev } from './packs-catalog'
+import { listLocal, planPack } from './packs-plan'
+import type { ChannelFile, ChannelManifest } from './packs-remote'
 import { savePackState, loadPackState, type PackFileState } from './packs-state'
 import { log, setRecord, updateState } from './state'
 
@@ -31,6 +32,7 @@ export interface SyncInput {
 }
 
 const PARALLEL = 12
+const STAGE_PARALLEL = 16
 const MARGIN = 64 * 1024 * 1024
 
 export function blobDir(game: GameInstall): string {
@@ -107,7 +109,7 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
   const ops: FsOps = { ...defaultOps, ...ctx.ops }
   const link = input.link ?? ((from: string, to: string) => fs.promises.link(from, to))
   const revs = manifests.map((m) => m.rev)
-  const shown = [...revs].sort().at(-1) ?? ''
+  const shown = revs.length > 0 ? newestRev(revs) : ''
   const emit = (phase: JobPhase, received: number, total: number, bytesPerSecond = 0, message?: string): void =>
     ctx.emit({ jobId: ctx.jobId, gameId: game.id, productId: product.id, action: input.repair ? 'repair' : 'install', phase, received, total, bytesPerSecond, version: shown, ...(message ? { message } : {}) })
 
@@ -117,7 +119,7 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
 
   // Every folder is planned before anything is downloaded.
   emit('verifying', 0, 0, 0, 'Checking your files')
-  const plans: { manifest: ChannelManifest; plan: PackPlan; target: string }[] = []
+  const plans: { manifest: ChannelManifest; plan: ChannelFile[]; target: string }[] = []
   for (const manifest of manifests) {
     const target = path.join(game.addOnsPath, manifest.packId)
     if (await isLinked(target)) throw new PlainError(`${manifest.packId}: ${LINKED_MESSAGE}`)
@@ -128,7 +130,7 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
   const blobs = blobDir(game)
   await fs.promises.mkdir(blobs, { recursive: true })
   const wanted = new Map<string, number>()
-  for (const { plan } of plans) for (const f of plan.fetch) wanted.set(f.sha256, f.size)
+  for (const { plan } of plans) for (const f of plan) wanted.set(f.sha256, f.size)
   // A blob kept from an interrupted job is whole: it was renamed into place only after its hash checked out.
   const missing: [string, number][] = []
   for (const [sha, size] of wanted) {
@@ -151,29 +153,23 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
   emit('downloading', 0, total)
   // The workers run under their own signal, so a failed blob stops the others before the job reports its error.
   const stop = new AbortController()
-  const onOuterAbort = (): void => stop.abort()
-  if (ctx.signal?.aborted) stop.abort()
-  ctx.signal?.addEventListener('abort', onOuterAbort, { once: true })
-  const dlCtx: JobContext = { ...ctx, signal: stop.signal }
-  try {
-    await eachLimit(
-      missing,
-      PARALLEL,
-      ([sha, size]) =>
-        fetchBlob(`${input.baseUrl}blobs/${sha}`, path.join(blobs, sha), sha, size, dlCtx, (n) => {
-          if (stop.signal.aborted) return
-          received += n
-          const now = Date.now()
-          if (now - lastSent > 100) {
-            lastSent = now
-            emit('downloading', received, total, received / Math.max(1, (now - started) / 1000))
-          }
-        }),
-      () => stop.abort()
-    )
-  } finally {
-    ctx.signal?.removeEventListener('abort', onOuterAbort)
-  }
+  const signal = ctx.signal ? AbortSignal.any([ctx.signal, stop.signal]) : stop.signal
+  const dlCtx: JobContext = { ...ctx, signal }
+  await eachLimit(
+    missing,
+    PARALLEL,
+    ([sha, size]) =>
+      fetchBlob(`${input.baseUrl}blobs/${sha}`, path.join(blobs, sha), sha, size, dlCtx, (n) => {
+        if (signal.aborted) return
+        received += n
+        const now = Date.now()
+        if (now - lastSent > 100) {
+          lastSent = now
+          emit('downloading', received, total, received / Math.max(1, (now - started) / 1000))
+        }
+      }),
+    () => stop.abort()
+  )
 
   const stagingJob = path.join(workDir(game), 'staging', ctx.jobId.replace(/[^\w.-]/g, '_'))
   try {
@@ -182,18 +178,26 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
     for (const { manifest, plan, target } of plans) {
       const staged = path.join(stagingJob, manifest.packId)
       await fs.promises.mkdir(staged, { recursive: true })
-      const fetched = new Set(plan.fetch.map((f) => f.path))
-      for (const f of manifest.files) {
-        throwIfAborted(ctx.signal)
-        const from = fetched.has(f.path) ? path.join(blobs, f.sha256) : path.join(target, ...segments(f.path))
-        const to = path.join(staged, ...segments(f.path))
-        await fs.promises.mkdir(path.dirname(to), { recursive: true })
-        try {
-          await link(from, to)
-        } catch {
-          await fs.promises.copyFile(from, to)
-        }
-      }
+      const fetched = new Set(plan.map((f) => f.path))
+      const made = new Map<string, Promise<unknown>>()
+      await eachLimit(
+        manifest.files,
+        STAGE_PARALLEL,
+        async (f) => {
+          throwIfAborted(ctx.signal)
+          const from = fetched.has(f.path) ? path.join(blobs, f.sha256) : path.join(target, ...segments(f.path))
+          const to = path.join(staged, ...segments(f.path))
+          const dir = path.dirname(to)
+          if (!made.has(dir)) made.set(dir, fs.promises.mkdir(dir, { recursive: true }))
+          await made.get(dir)
+          try {
+            await link(from, to)
+          } catch {
+            await fs.promises.copyFile(from, to)
+          }
+        },
+        () => undefined
+      )
     }
 
     emit('installing', total, total)
@@ -206,12 +210,17 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
     )
 
     for (const { manifest, target } of plans) {
-      const files: Record<string, PackFileState> = {}
-      for (const f of manifest.files) {
-        const st = await fs.promises.stat(path.join(target, ...segments(f.path)))
-        files[f.path] = { sha256: f.sha256, size: st.size, mtimeMs: st.mtimeMs }
-      }
-      savePackState(game, { packId: manifest.packId, rev: manifest.rev, files })
+      const stats = new Map<string, PackFileState>()
+      await eachLimit(
+        manifest.files,
+        STAGE_PARALLEL,
+        async (f) => {
+          const st = await fs.promises.stat(path.join(target, ...segments(f.path)))
+          stats.set(f.path, { sha256: f.sha256, size: st.size, mtimeMs: st.mtimeMs })
+        },
+        () => undefined
+      )
+      savePackState(game, { packId: manifest.packId, rev: manifest.rev, files: Object.fromEntries(manifest.files.map((f) => [f.path, stats.get(f.path)!])) })
     }
     const folders = manifests.map((m) => m.packId)
     updateState(ctx.dataPath, (s) => setRecord(s, game.id, product.id, { version: shown, folders, installedAt: new Date().toISOString(), tag: channelTag(revs) }))
