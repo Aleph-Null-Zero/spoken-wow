@@ -18,7 +18,8 @@ export const CATEGORIES = [
   "other",
 ] as const;
 
-export const STATUSES = ["open", "fixed", "not_an_issue"] as const;
+/** `minor` is set aside: not open, so nothing counts it, and not answered either. */
+export const STATUSES = ["open", "minor", "fixed", "not_an_issue"] as const;
 
 
 export type Category = (typeof CATEGORIES)[number];
@@ -58,6 +59,7 @@ export const CATEGORY_COLUMN: Record<Category, string> = {
 
 export const STATUS_LABELS: Record<Status, string> = {
   open: "Open",
+  minor: "Minor",
   fixed: "Fixed",
   not_an_issue: "Not a problem",
 };
