@@ -39,22 +39,28 @@ export function blobDir(game: GameInstall): string {
 
 const segments = (p: string): string[] => p.split('/')
 
-/** Runs `fn` over `items`, `limit` at a time; the first failure stops new work and is thrown. */
-async function eachLimit<T>(items: T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
+/**
+ * Runs `fn` over `items`, `limit` at a time. The first failure calls `onFail` and stops new work; every
+ * running worker is waited for before the first error is thrown, so nothing runs on after this returns.
+ */
+async function eachLimit<T>(items: T[], limit: number, fn: (item: T) => Promise<void>, onFail: () => void): Promise<void> {
   let next = 0
-  let failed = false
+  let failure: { err: unknown } | null = null
   const worker = async (): Promise<void> => {
-    while (!failed && next < items.length) {
+    while (!failure && next < items.length) {
       const item = items[next++]!
       try {
         await fn(item)
       } catch (err) {
-        failed = true
-        throw err
+        if (!failure) {
+          failure = { err }
+          onFail()
+        }
       }
     }
   }
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  if (failure) throw (failure as { err: unknown }).err
 }
 
 /** Downloads one blob to `dest`, through `.part`, renamed only when its size and hash are right. */
@@ -126,8 +132,12 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
   // A blob kept from an interrupted job is whole: it was renamed into place only after its hash checked out.
   const missing: [string, number][] = []
   for (const [sha, size] of wanted) {
-    const have = await fs.promises.stat(path.join(blobs, sha)).then((s) => s.size, () => -1)
-    if (have !== size) missing.push([sha, size])
+    const file = path.join(blobs, sha)
+    const have = await fs.promises.stat(file).then((st) => st.size, () => -1)
+    // Size alone is not proof: a rename that was never flushed can leave the right size with the wrong bytes.
+    if (have === size && (await sha256OfFile(file, ctx.signal).catch(() => '')) === sha) continue
+    if (have >= 0) await fs.promises.rm(file, { force: true })
+    missing.push([sha, size])
   }
   const total = missing.reduce((n, [, size]) => n + size, 0)
   await ensureFreeSpace(game.addOnsPath, total + MARGIN, `${product.title} (${formatBytes(total)})`)
@@ -136,16 +146,31 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
   let lastSent = 0
   const started = Date.now()
   emit('downloading', 0, total)
-  await eachLimit(missing, PARALLEL, ([sha, size]) =>
-    fetchBlob(`${input.baseUrl}blobs/${sha}`, path.join(blobs, sha), sha, size, ctx, (n) => {
-      received += n
-      const now = Date.now()
-      if (now - lastSent > 100) {
-        lastSent = now
-        emit('downloading', received, total, received / Math.max(1, (now - started) / 1000))
-      }
-    })
-  )
+  // The workers run under their own signal, so a failed blob stops the others before the job reports its error.
+  const stop = new AbortController()
+  const onOuterAbort = (): void => stop.abort()
+  if (ctx.signal?.aborted) stop.abort()
+  ctx.signal?.addEventListener('abort', onOuterAbort, { once: true })
+  const dlCtx: JobContext = { ...ctx, signal: stop.signal }
+  try {
+    await eachLimit(
+      missing,
+      PARALLEL,
+      ([sha, size]) =>
+        fetchBlob(`${input.baseUrl}blobs/${sha}`, path.join(blobs, sha), sha, size, dlCtx, (n) => {
+          if (stop.signal.aborted) return
+          received += n
+          const now = Date.now()
+          if (now - lastSent > 100) {
+            lastSent = now
+            emit('downloading', received, total, received / Math.max(1, (now - started) / 1000))
+          }
+        }),
+      () => stop.abort()
+    )
+  } finally {
+    ctx.signal?.removeEventListener('abort', onOuterAbort)
+  }
 
   const stagingJob = path.join(workDir(game), 'staging', ctx.jobId.replace(/[^\w.-]/g, '_'))
   try {

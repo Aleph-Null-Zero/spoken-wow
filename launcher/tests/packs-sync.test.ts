@@ -167,6 +167,51 @@ describe('syncPacks', () => {
   })
 })
 
+describe('syncPacks download failures and kept blobs', () => {
+  it('stops the other downloads when one fails, and emits nothing after the rejection', async () => {
+    const game = await makeGame(tmpDir())
+    const failing = sha256(Buffer.from('one'))
+    const slow = sha256(Buffer.from('two'))
+    const { manifest, base } = await channel(v1, (req, res) => {
+      if (req.url === `/blobs/${failing}`) {
+        res.writeHead(500)
+        res.end()
+        return true
+      }
+      if (req.url === `/blobs/${slow}`) {
+        res.writeHead(200, { 'Content-Length': 3 })
+        res.write('tw')
+        setTimeout(() => res.end('o'), 150)
+        return true
+      }
+      return false
+    })
+    const c = collect()
+    let rejected = false
+    await expect(
+      syncPacks(game, { product, manifests: [manifest], baseUrl: base }, ctx(tmpDir(), { emit: c.emit })).catch((e) => {
+        rejected = true
+        throw e
+      })
+    ).rejects.toThrow(PlainError)
+    expect(rejected).toBe(true)
+    const after = (): number => c.events.length
+    const n = after()
+    await new Promise((r) => setTimeout(r, 200))
+    expect(after()).toBe(n)
+  })
+
+  it('downloads again a kept blob whose bytes are wrong although its size is right', async () => {
+    const game = await makeGame(tmpDir())
+    const { manifest, base, server: s } = await channel(v1)
+    const blob = path.join(blobDir(game), sha256(Buffer.from('one')))
+    write(blob, 'XXX')
+    await syncPacks(game, { product, manifests: [manifest], baseUrl: base }, ctx(tmpDir()))
+    expect(s.requests.filter((r) => r.url === `/blobs/${sha256(Buffer.from('one'))}`).length).toBe(1)
+    expect(folderFiles(game)).toEqual(v1.files)
+  })
+})
+
 describe('cleanLeftovers', () => {
   it('removes downloaded blobs nobody used for a week', async () => {
     const game = await makeGame(tmpDir())
