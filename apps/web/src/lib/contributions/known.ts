@@ -123,7 +123,7 @@ export async function momentTexts(
 }
 
 /** A moment's lines, one per wording and variant: the first of a wording split by player gender. */
-function oneLineEach(lines: CorpusText[]): CorpusText[] {
+export function oneLineEach(lines: CorpusText[]): CorpusText[] {
   const seen = new Set<string>();
   return lines.filter((line) => {
     const key = `${momentOf(line.lineId)}|${line.variant}`;

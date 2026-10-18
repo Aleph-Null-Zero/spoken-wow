@@ -20,7 +20,7 @@ import {
   type Section,
   type StatusView,
 } from "@/lib/reports/query";
-import { staleLineIds } from "@/lib/reports/stale";
+import { npcDetails } from "@/lib/reports/npc";
 import { listReports } from "@/lib/reports/store";
 import { isSection, queryOf } from "@/lib/contributions/query";
 import { localeHref } from "@/lib/lang";
@@ -80,8 +80,9 @@ export default async function Page({
   const pages = Math.max(1, Math.ceil(groups.length / PAGE_SIZE));
   const page = Math.min(pageOf(rawPage), pages);
   const shown = groups.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const lineIds = shown.flatMap(({ reports: [first] }) => (first.lineId ? [first.lineId] : []));
-  const stale = await staleLineIds(section, lineIds, lang);
+  // A report with no line is about its address; in quests that is most often a gossip NPC.
+  const targets = shown.flatMap(({ reports: [first] }) => (!first.lineId && first.target ? [first.target] : []));
+  const npcs = section === "quests" ? await npcDetails(targets, lang) : {};
 
   return (
     <main className="pt-6 pb-24">
@@ -107,7 +108,7 @@ export default async function Page({
           sectionCounts={sectionCounts}
           statusCounts={statusCounts}
           filters={{ section, view, category, q, dir }}
-          stale={stale}
+          npcs={npcs}
           canRegenerate={can(viewer, "regenerate", lang)}
           showNpcPage={isAdmin(session.user.role)}
         />

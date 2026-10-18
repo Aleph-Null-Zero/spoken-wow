@@ -44,6 +44,8 @@ export type QueueEntry = {
   npcName: string;
   preview: string;
   characters: number;
+  /** The batch's provider when absent: only a voice pinned to fish.audio overrides it. */
+  provider?: Provider;
 };
 
 /** A claimed job, with the batch's owner joined in so the take records who paid for it. */
@@ -198,9 +200,11 @@ export async function enqueue(
   const { rowCount } = await db().query(
     `insert into "regeneration_job"
        ("batchId", "source", "lang", "provider", "owner", "lineId", "file", "npcName", "preview", "characters")
-     select $1, $2, $8, $9,
+     select $1, $2, $8, "provider",
             (select "createdBy" from "regeneration_batch" where "id" = $1),
-            * from unnest($3::text[], $4::text[], $5::text[], $6::text[], $7::int[])
+            "lineId", "file", "npcName", "preview", "characters"
+       from unnest($3::text[], $4::text[], $5::text[], $6::text[], $7::int[], $9::text[])
+         as job ("lineId", "file", "npcName", "preview", "characters", "provider")
      on conflict ("source", "lang", "file") where "state" in ('pending', 'running') do nothing`,
     [
       batchId,
@@ -211,7 +215,7 @@ export async function enqueue(
       jobs.map((job) => job.preview),
       jobs.map((job) => job.characters),
       lang,
-      provider,
+      jobs.map((job) => job.provider ?? provider),
     ],
   );
 

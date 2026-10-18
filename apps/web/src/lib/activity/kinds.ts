@@ -70,9 +70,13 @@ export type ActivityDetail = {
 
   // Voices.
   "voice.cloned": { voiceId?: string; sampleCount?: number | null };
+  /** A voice already in the account, renamed into the slot; `from` is its name before. */
+  "voice.adopted": { voiceId?: string; from?: string };
   "reference.set": { sample?: string; transcript?: string | null };
   "reference.edited": { transcript?: string | null };
   "reference.deleted": Record<string, never>;
+  "reference.pinned": Record<string, never>;
+  "reference.unpinned": Record<string, never>;
   "sample.added": { files: string[] };
   "sample.deleted": { files: string[] };
   "sample.imported": { files: string[] };

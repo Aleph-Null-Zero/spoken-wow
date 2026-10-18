@@ -8,7 +8,7 @@
 import { Search } from "lucide-react";
 
 import Link from "@/components/LocaleLink";
-import type { LineDetail } from "@/lib/reports/detail";
+import type { Heading } from "@/lib/reports/detail";
 import { cn } from "@/lib/utils";
 
 const LINK = "underline-offset-2 hover:underline";
@@ -19,7 +19,7 @@ export default function LineHeading({
   className,
   asideClassName,
 }: {
-  detail: LineDetail;
+  detail: Heading;
   /** Whether the viewer may open /npcs, which is the admins' alone. */
   showNpcPage: boolean;
   className?: string;
@@ -60,7 +60,7 @@ function Speaker({
   admin,
   className,
 }: {
-  speaker: NonNullable<LineDetail["speaker"]>;
+  speaker: NonNullable<Heading["speaker"]>;
   admin: boolean;
   className?: string;
 }) {
