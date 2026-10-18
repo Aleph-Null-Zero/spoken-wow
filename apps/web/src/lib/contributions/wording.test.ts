@@ -11,7 +11,7 @@ import { closeDb, db } from "@/lib/db";
 import { upsertResolution } from "@/lib/npc/store";
 import { corpus } from "@/lib/quests/catalogue";
 
-import { acceptAsWording } from "./correction";
+import { acceptAsWording, acceptCorrection } from "./correction";
 import { lineStates } from "./known";
 
 const ACCEPTER = "test-contributions-wording";
@@ -87,6 +87,8 @@ afterAll(async () => {
             and "subject" in (select "id"::text from "contribution" where "ip" = $2))`,
     [lines, ip],
   );
+  await db().query(`delete from "activity" where "kind" = 'override.set' and "subject" like $1`, [`quests/${quest}-accept%`]);
+  await db().query(`delete from "line_override" where "file" like $1`, [`quests/${quest}-accept%`]);
   await db().query(`delete from "quest_line_speaker" where "lineId" like $1`, [lines]);
   await db().query(`delete from "contribution" where "ip" = $1`, [ip]);
   await db().query(`delete from "quest_line" where "lineId" like $1`, [lines]);
@@ -158,6 +160,46 @@ describe("acceptAsWording", () => {
     );
     // w1 from the first test, w3 here; the resend wrote no w4.
     expect(rows.map((row) => row.lineId)).toEqual([`${moment}:w1`, `${moment}:w3`]);
+    // Both accepts log the wording they wrote or found.
+    const { rows: logged } = await db().query(
+      `select "detail"->>'wording' as "wording" from "activity"
+        where "kind" = 'contribution.resolved' and "subject" = $1`,
+      [String(id)],
+    );
+    expect(logged.map((row) => row.wording)).toEqual([`${moment}:w3`, `${moment}:w3`]);
+  });
+
+  it("writes one wording for two accepts at once", async () => {
+    const id = await contribution("enUS", "You again?");
+    const other = await contribution("enUS", "You again?");
+    const outcomes = await Promise.all([acceptAsWording(id, ACCEPTER), acceptAsWording(id, ACCEPTER), acceptAsWording(other, ACCEPTER)]);
+    expect(outcomes.every((outcome) => outcome.ok)).toBe(true);
+    const { rows } = await db().query(
+      `select "lineId" from "quest_line" where "lineId" like $1 and "lang" = 'enUS' and "originalText" = 'You again?'`,
+      [`${moment}:w%`],
+    );
+    expect(rows).toHaveLength(1);
+  });
+
+  it("refuses a moment the corpus lacks, pointing at the triage queue", async () => {
+    const id = await contribution("enUS", "Nothing here yet.", { event: "complete" });
+    const outcome = await acceptAsWording(id, ACCEPTER);
+    expect(!outcome.ok && "message" in outcome && outcome.message).toMatch(/no line for this moment/);
+  });
+
+  it("corrects the wording a moderator picks, not only the closest", async () => {
+    // Closest to w1, "Oh, you are back, $N.", but a fix of the first wording.
+    const id = await contribution("enUS", "Oh, you are back, $N. Hello.");
+    const outcome = await acceptCorrection(id, ACCEPTER, { lineId: moment, variant: 0 });
+    expect(outcome.ok).toBe(true);
+    const { rows } = await db().query(`select "lineId", "text" from "line_override" where "file" like $1`, [`quests/${quest}-accept%`]);
+    expect(rows).toEqual([{ lineId: moment, text: "Oh, you are back, Adventurer. Hello." }]);
+  });
+
+  it("refuses a pick that is no wording of the moment", async () => {
+    const id = await contribution("enUS", "Oh, you are back, $N. Bye.");
+    const outcome = await acceptCorrection(id, ACCEPTER, { lineId: `q:${quest}:complete`, variant: 0 });
+    expect(!outcome.ok && outcome.reason).toBe("not-a-correction");
   });
 
   it("refuses a text the moment already has", async () => {

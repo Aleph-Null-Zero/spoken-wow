@@ -60,11 +60,13 @@ import type { Roster } from "@/lib/voices/roster";
 import { loadRoster } from "@/lib/voices/roster-store";
 
 import { loadBookCorpus, matchBook, sameMatch, type BookCorpus, type BookMatchResult } from "./book-match";
+import { sameLine } from "./compare";
 import type { ContributionStatus } from "./contributions";
 import {
   answersQuestMomentSql,
   baseLineId,
   lineIdentityFor,
+  momentOf,
   playerGenderForms,
   questWordingFileName,
   questWordingLineId,
@@ -622,6 +624,9 @@ export async function writeWording(
 
   return inTransaction(async (client) => {
     await lockLine(client, identity.lineId);
+    // A second accept of this text that waited on the lock finds what the first wrote.
+    const already = (await ownWording(contribution.id, client)) ?? (await wordingSaying(client, identity.lineId, lang, text));
+    if (already) return { ok: true as const, lineId: already };
     const n = await nextWording(client, identity.lineId);
     const wording: LineIdentity = {
       ...identity,
@@ -634,6 +639,27 @@ export async function writeWording(
     }
     return { ok: true as const, lineId: wording.lineId };
   });
+}
+
+/** The wording a contribution's accept wrote, by the speaker row it left; null for none. */
+export async function ownWording(contributionId: number, client?: PoolClient): Promise<string | null> {
+  const { rows } = await (client ?? db()).query<{ lineId: string }>(
+    `select "lineId" from "quest_line_speaker" where "contributionId" = $1 order by "lineId" limit 1`,
+    [contributionId],
+  );
+  return rows[0] ? momentOf(rows[0].lineId) : null;
+}
+
+/** The wording of a moment that already says `text` in `lang` (compare.ts sameLine), or null. */
+async function wordingSaying(client: PoolClient, moment: string, lang: Lang, text: string): Promise<string | null> {
+  const { rows } = await client.query<{ lineId: string; text: string }>(
+    `select "lineId", coalesce(case when "lang" = $3 then "originalText" else "localeText" end, "text") as "text"
+       from "quest_line"
+      where "lang" = $2 and "isCurrent" and ${wordingsOfMomentSql(`"questId"`, `"source"`, "$1")}`,
+    [moment, lang, BASE_LANG],
+  );
+  const found = rows.find((row) => sameLine(row.text, text));
+  return found ? momentOf(found.lineId) : null;
 }
 
 /** One past the highest wording a moment has in any language: 1 for a moment with only its first. */

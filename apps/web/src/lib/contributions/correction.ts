@@ -43,7 +43,7 @@ import { englishMomentLines, rewriteEnglish } from "@/lib/quests/english-rewrite
 import { OverrideError } from "@/lib/quests/override";
 import { QuestTextConflict, QuestTextMissing, saveQuestText } from "@/lib/quests/text";
 
-import { contributedLineExists, writeWording } from "./accept";
+import { ownWording, writeWording } from "./accept";
 import { lineStates } from "./known";
 import { momentOf } from "./naming";
 import { CONTRIBUTION_COLUMNS, type Contribution } from "./store";
@@ -55,7 +55,14 @@ export type CorrectionOutcome =
   | { ok: false; reason: "not-found" }
   | { ok: false; reason: "not-a-correction" | "malformed" | "needs-speaker"; message: string };
 
-export async function acceptCorrection(id: number, userId: string): Promise<CorrectionOutcome> {
+/** One of a quest moment's wordings (known.ts LineState), as the corrections tab names it. */
+export type WordingPick = { lineId: string; variant: number };
+
+/**
+ * `pick` is the wording the correction fixes, where the moderator chose one; otherwise it is
+ * the one closest to the player's text.
+ */
+export async function acceptCorrection(id: number, userId: string, pick?: WordingPick): Promise<CorrectionOutcome> {
   const { rows } = await db().query<Contribution>(
     `select ${CONTRIBUTION_COLUMNS} from "contribution" where "id" = $1`,
     [id],
@@ -83,17 +90,27 @@ export async function acceptCorrection(id: number, userId: string): Promise<Corr
       message: "The corpus no longer has a different text for this line -- nothing to correct.",
     };
   }
+  const target = pick
+    ? (state.wordings ?? [state]).find((line) => line.lineId === pick.lineId && line.variant === pick.variant)
+    : state;
+  if (!target) {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "That is not a wording this moment has any more -- reload to see its wordings.",
+    };
+  }
 
   try {
     if (contribution.source === "books") {
-      await saveBookText({ lineId: state.lineId, text: contribution.text, note: correctionNote(id), editedBy: userId, lang });
+      await saveBookText({ lineId: target.lineId, text: contribution.text, note: correctionNote(id), editedBy: userId, lang });
     } else if (lang === BASE_LANG) {
-      const refusal = await correctEnglish(momentOf(state.lineId), state.variant, contribution.text, id, userId);
+      const refusal = await correctEnglish(momentOf(target.lineId), target.variant, contribution.text, id, userId);
       if (refusal) return refusal;
     } else {
       await saveQuestText({
-        lineId: state.lineId,
-        variant: state.variant,
+        lineId: target.lineId,
+        variant: target.variant,
         lang,
         text: contribution.text,
         note: correctionNote(id),
@@ -138,9 +155,17 @@ export async function acceptAsWording(id: number, userId: string): Promise<Corre
       message: "Only a quest line sent in a site language can be another wording.",
     };
   }
-  if (await contributedLineExists(id)) return markAccepted(contribution, lang, userId, { wording: true });
+  const own = await ownWording(id);
+  if (own) return markAccepted(contribution, lang, userId, { wording: own });
 
   const [state] = await lineStates([contribution]);
+  if (state.kind === "missing") {
+    return {
+      ok: false,
+      reason: "not-a-correction",
+      message: "The corpus has no line for this moment yet -- accept it on the contributions tab.",
+    };
+  }
   if (state.kind !== "changed") {
     return {
       ok: false,

@@ -1382,6 +1382,8 @@ so a translation shares its English's id.
 A correction whose text is such a wording, not a fix, is accepted on the corrections tab with
 **Accept as new line**: the corpus line stays and the player's text becomes the moment's next
 wording in its language, spoken by the NPC that showed it (`correction.ts` acceptAsWording).
+A correction of a moment with several wordings lists them all under "Corpus has", the closest
+to the player's text picked; **Accept** fixes the picked one, and clicking another picks it.
 
 The packs map each wording's text to its file by the moment's stem (`QuestWordingLookup`), and
 each client locale's `Gossip/<locale>.lua` carries the same in its own text. Only a moment with

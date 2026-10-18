@@ -322,12 +322,14 @@ function Addon:GetVisibleLine(event)
     local speech = event and SPEECH_EVENTS[event]
     local probe
     if quest then
+        local text = quest.text()
         local questID = ResolveQuestID(quest.source, QuestIDFor(event),
-            QuestTitle(), Utils:GetNPCName() or "", quest.text(), true)
+            QuestTitle(), Utils:GetNPCName() or "", text, true)
         if not questID then
             return nil
         end
-        probe = { event = quest.sound, questID = questID }
+        -- The text and giver too: a moment in several wordings is found by the words on screen.
+        probe = { event = quest.sound, questID = questID, text = text, unitGUID = Utils:GetNPCGUID() }
     elseif speech then
         local guid, name = Utils:GetNPCGUID(), Utils:GetNPCName()
         if not guid and not name then

@@ -60,6 +60,12 @@ stub.ShowPanel("QuestFrameDetailPanel")
 Expect("a wording no pack has is a gap to contribute", VO.Contribute:HasGap(), true)
 world.questText = BACK
 Expect("a wording a pack has is none", VO.Contribute:HasGap(), false)
+
+-- The Listen button asks the same: the wording on screen, not the moment's first.
+local probe = VO.Addon:GetVisibleLine()
+Expect("the line the window offers is the wording on screen", probe and probe.fileName, "20-accept-w1")
+world.questText = "Greetings, traveller, the road is long."
+Expect("a wording no pack has offers no Listen", VO.Addon:GetVisibleLine(), nil)
 stub.HidePanels()
 
 VO = Boot("deDE")

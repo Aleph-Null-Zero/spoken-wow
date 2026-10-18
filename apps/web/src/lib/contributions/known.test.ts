@@ -66,8 +66,22 @@ describe("lineStates", () => {
 
   it("gives the corpus text of a moment that reads differently", async () => {
     expect(await lineStates([moment("accept", "Hello, $N.\n\nTurn left at the tree.")])).toEqual([
-      { kind: "changed", lineId: `q:${quest}:accept`, variant: 0, current: "Hello, $n.$B$BTurn right at the tree." },
+      {
+        kind: "changed",
+        lineId: `q:${quest}:accept`,
+        variant: 0,
+        current: "Hello, $n.$B$BTurn right at the tree.",
+        wordings: [
+          { lineId: `q:${quest}:accept`, variant: 0, text: "Hello, $n.$B$BTurn right at the tree." },
+          { lineId: `q:${quest}:accept:w1`, variant: 0, text: "Oh, you are back." },
+        ],
+      },
     ]);
+  });
+
+  it("sets a changed moment against the wording closest to the player's", async () => {
+    const [state] = await lineStates([moment("accept", "Oh, so you are back.")]);
+    expect(state.kind === "changed" && [state.lineId, state.current]).toEqual([`q:${quest}:accept:w1`, "Oh, you are back."]);
   });
 
   it("counts a text any wording of the moment says as known", async () => {

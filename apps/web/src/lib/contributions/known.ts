@@ -11,7 +11,8 @@
  * Compared in the contribution's own language, against the current version of each line:
  * `localeText` for a translation, the English template (`originalText`) otherwise. compare.ts
  * says what counts as the same. Every wording of the moment (naming.py's `:w{n}`) counts; a
- * "changed" row is shown against the first.
+ * "changed" row carries them all, and is set against the one closest to the player's text
+ * (compare.ts closeness), the first on a tie.
  *
  * A quest moment is matched as accept.ts's answersQuestMoment matches it -- the bare id or a
  * `:m`/`:f` variant -- and is "known" when any of them says the same. A greeting has no id to
@@ -32,15 +33,21 @@ import { splitBody } from "@/lib/npc/store";
 
 import type { Contribution } from "./store";
 import { loadBookCorpus, matchBook } from "./book-match";
-import { sameLine } from "./compare";
+import { closeness, sameLine } from "./compare";
 import type { ContributionStatus, Submission } from "./contributions";
-import { wordingsOfMomentSql } from "./naming";
+import { momentOf, wordingsOfMomentSql } from "./naming";
+
+export type CorpusText = { lineId: string; variant: number; text: string };
 
 export type LineState =
   | { kind: "missing" }
   | { kind: "known" }
-  /** `current` is the corpus's text of `lineId` and `variant`, in the contribution's language. */
-  | { kind: "changed"; lineId: string; variant: number; current: string };
+  /**
+   * `current` is the corpus's text of `lineId` and `variant`, in the contribution's language.
+   * A quest moment's `wordings` are each of its wordings, in order, one line apiece (a split
+   * wording by its first side); `lineId` is one of them.
+   */
+  | { kind: "changed"; lineId: string; variant: number; current: string; wordings?: CorpusText[] };
 
 /** A stored row also carries a moderator's books answer; an intake submission has none. */
 type Comparable = Pick<Submission, "source" | "locale" | "text" | "meta"> &
@@ -52,7 +59,7 @@ const MISSING: LineState = { kind: "missing" };
  * The quest moment a contribution names, `q:{quest}:{event}`, or null for a greeting. Past the
  * integer ceiling the quest is no id quest_line could hold, and names no moment.
  */
-function momentOf(row: Comparable): string | null {
+function momentNamed(row: Comparable): string | null {
   const { quest, event } = row.meta;
   return quest && event && /^\d+$/.test(quest) && Number(quest) <= 2_147_483_647 ? `q:${quest}:${event}` : null;
 }
@@ -83,8 +90,6 @@ function otherBody(row: Comparable, voiced: VoicedBodies | undefined): boolean {
   return !voiced.sexes.has(sex);
 }
 
-type CorpusText = { lineId: string; variant: number; text: string };
-
 /** Every current line answering each (language, moment), in one query. */
 async function momentTexts(pairs: { locale: string; moment: string }[]): Promise<Map<string, CorpusText[]>> {
   const found = new Map<string, CorpusText[]>();
@@ -107,6 +112,17 @@ async function momentTexts(pairs: { locale: string; moment: string }[]): Promise
     else found.set(key, [text]);
   }
   return found;
+}
+
+/** A moment's lines, one per wording and variant: the first of a wording split by player gender. */
+function oneLineEach(lines: CorpusText[]): CorpusText[] {
+  const seen = new Set<string>();
+  return lines.filter((line) => {
+    const key = `${momentOf(line.lineId)}|${line.variant}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /** Every current greeting each (language, NPC) speaks, in one query. */
@@ -174,7 +190,7 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
   const sexed = new Set<number>();
   for (const row of rows) {
     if (row.source !== "quests" || !row.text) continue;
-    const moment = momentOf(row);
+    const moment = momentNamed(row);
     const npcId = moment ? null : npcOf(row);
     if (moment) moments.push({ locale: row.locale, moment });
     else if (npcId !== null) {
@@ -210,12 +226,16 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
     }
     if (row.source !== "quests" || !row.text) return MISSING;
     const text = row.text;
-    const moment = momentOf(row);
+    const moment = momentNamed(row);
     if (moment) {
       const lines = byMoment.get(`${row.locale}|${moment}`);
       if (!lines?.length) return MISSING;
       if (lines.some((line) => sameLine(line.text, text))) return { kind: "known" };
-      return { kind: "changed", lineId: lines[0].lineId, variant: lines[0].variant, current: lines[0].text };
+      const wordings = oneLineEach(lines);
+      const closest = wordings.reduce((best, line) =>
+        closeness(line.text, text) > closeness(best.text, text) ? line : best,
+      );
+      return { kind: "changed", lineId: closest.lineId, variant: closest.variant, current: closest.text, wordings };
     }
     const npcId = npcOf(row);
     const spoken = npcId === null ? undefined : byNpc.get(`${row.locale}|${npcId}`);
