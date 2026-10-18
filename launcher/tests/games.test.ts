@@ -57,11 +57,16 @@ describe('Blizzard files', () => {
     }
   })
 
-  it('makes a stable, case-insensitive 12 digit id', () => {
-    const a = gameIdFor('C:\\Program Files (x86)\\World of Warcraft\\_classic_beta_')
+  it('makes a stable 12 digit id, case-insensitive on Windows and macOS only', () => {
+    const a = gameIdFor('C:\\Program Files (x86)\\World of Warcraft\\_classic_beta_', 'win32')
     expect(a).toMatch(/^[0-9a-f]{12}$/)
-    expect(gameIdFor('c:\\program files (x86)\\world of warcraft\\_CLASSIC_BETA_')).toBe(a)
-    expect(gameIdFor('C:\\other')).not.toBe(a)
+    expect(gameIdFor('c:\\program files (x86)\\world of warcraft\\_CLASSIC_BETA_', 'win32')).toBe(a)
+    expect(gameIdFor('C:\\other', 'win32')).not.toBe(a)
+    const mac = gameIdFor('/Applications/World of Warcraft/_classic_era_', 'darwin')
+    expect(gameIdFor('/applications/world of warcraft/_CLASSIC_ERA_', 'darwin')).toBe(mac)
+    const linux = gameIdFor('/home/me/Games/battlenet/drive_c/World of Warcraft/_classic_era_', 'linux')
+    expect(gameIdFor('/home/me/games/battlenet/drive_c/world of warcraft/_classic_era_', 'linux')).not.toBe(linux)
+    expect(gameIdFor('/home/me/Games/battlenet/drive_c/World of Warcraft/_classic_era_', 'linux')).toBe(linux)
   })
 
   it('reads install paths from reg query output and from product.db bytes', () => {

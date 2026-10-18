@@ -163,7 +163,7 @@ function SpokenFor({ game }: { game: GameInstall }): ReactNode {
       <section className="center scroll">
         <div className="center-inner">
           <div className="pill-row pill-row-end">
-            <button type="button" className="pill pill-action" onClick={() => void api().openPath(game.addOnsPath)}>
+            <button type="button" className="pill pill-action" title={S.common.showIn(state.platform)} onClick={() => void api().openPath(game.addOnsPath)}>
               {S.spoken.openAddOns}
             </button>
             <button type="button" className="pill pill-action" onClick={() => void api().openExternal(latest?.htmlUrl ?? REPO_URL)}>

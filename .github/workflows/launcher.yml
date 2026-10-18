@@ -1,0 +1,164 @@
+name: Launcher
+
+# Builds, tests and releases Spoken Launcher (launcher/) for Windows, macOS and Linux.
+#
+#   workflow_dispatch     test and package on all three systems; the installers are kept as
+#                         workflow artifacts, nothing is released.
+#   tag launcher/vX.Y.Z   the same, then a release for the tag with every installer, then the
+#                         `launcher-latest` release is refreshed: the launcher's own updater reads
+#                         latest*.yml from there (launcher/src/main/updater.ts, FEED_URL).
+#
+# The tag has to match "version" in launcher/package.json; the release job checks it.
+#
+# First release: `launcher-latest` does not exist yet and the release job creates it as a normal
+# release (not a draft, not a pre-release) that is not marked "latest", so the repo's "latest"
+# release stays Spoken's own. Later runs only swap its assets.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "launcher/v*"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: launcher
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  package:
+    name: Package (${{ matrix.os }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist:win
+            artifact: launcher-windows
+            files: |
+              launcher/release/*.exe
+              launcher/release/*.exe.blockmap
+              launcher/release/latest.yml
+          - os: macos-latest
+            script: dist:mac
+            artifact: launcher-macos
+            files: |
+              launcher/release/*.dmg
+              launcher/release/*.dmg.blockmap
+              launcher/release/*.zip
+              launcher/release/*.zip.blockmap
+              launcher/release/latest-mac.yml
+          - os: ubuntu-latest
+            script: dist:linux
+            artifact: launcher-linux
+            files: |
+              launcher/release/*.AppImage
+              launcher/release/*.tar.gz
+              launcher/release/latest-linux.yml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+      - run: npm ci
+      - name: Build the installers
+        run: npm run ${{ matrix.script }}
+        env:
+          # The macOS build is not signed: do not go looking for a certificate.
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+  release:
+    name: Release
+    needs: [test, package]
+    if: startsWith(github.ref, 'refs/tags/launcher/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: launcher-release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag against package.json
+        working-directory: .
+        run: |
+          version="${GITHUB_REF_NAME#launcher/v}"
+          have="$(node -p "require('./launcher/package.json').version")"
+          if [ "$version" != "$have" ]; then
+            echo "Tag ${GITHUB_REF_NAME} says ${version} but launcher/package.json says ${have}." >&2
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: launcher-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create the release for the tag
+        working-directory: .
+        run: |
+          ls -l dist
+          flags=""
+          case "${GITHUB_REF_NAME}" in *-*) flags="--prerelease" ;; esac
+          # The installers only: the update feed files and block maps go to launcher-latest.
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/*.exe dist/*.dmg dist/*.zip dist/*.AppImage dist/*.tar.gz \
+            --title "Spoken Launcher ${GITHUB_REF_NAME#launcher/v}" \
+            --notes "Installers for Windows, macOS and Linux. See launcher/README.md for how to install them." \
+            --verify-tag --latest=false $flags
+
+      # What the launcher's updater reads: latest.yml, latest-mac.yml, latest-linux.yml and the files
+      # they name. A pre-release tag does not touch it, so only stable versions reach players.
+      - name: Refresh the launcher-latest release
+        working-directory: .
+        run: |
+          case "${GITHUB_REF_NAME}" in
+            *-*) echo "Pre-release tag: launcher-latest is left alone."; exit 0 ;;
+          esac
+          if gh release view launcher-latest >/dev/null 2>&1; then
+            gh release view launcher-latest --json assets --jq '.assets[].name' | while read -r name; do
+              gh release delete-asset launcher-latest "$name" --yes
+            done
+            gh release upload launcher-latest dist/* --clobber
+          else
+            # First run: a normal release (not a draft, not a pre-release), and not "latest".
+            gh release create launcher-latest dist/* \
+              --title "Spoken Launcher (update feed)" \
+              --notes "The files the launcher downloads its own updates from. Replaced by each launcher release; do not edit." \
+              --latest=false
+          fi
+          gh release edit launcher-latest --draft=false --prerelease=false --latest=false

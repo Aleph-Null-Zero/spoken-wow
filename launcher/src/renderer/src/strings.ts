@@ -1,6 +1,20 @@
 // Every word the window shows, in English. Other languages can follow by swapping this file's
 // object; nothing else in the window holds text a player reads (apart from names from the data).
-import type { Section } from '@shared/types'
+import type { Section, Snapshot } from '@shared/types'
+
+export type Platform = Snapshot['platform']
+
+/** What the system calls its file browser, for text that says where a folder opens. */
+export function fileManager(platform: Platform): string {
+  return platform === 'darwin' ? 'Finder' : platform === 'linux' ? 'File Manager' : 'Explorer'
+}
+
+/** Where the game usually lives, for the help text of the empty state. */
+function gameFolderExample(platform: Platform): string {
+  if (platform === 'darwin') return '/Applications/World of Warcraft'
+  if (platform === 'linux') return 'the World of Warcraft folder inside your Wine prefix or Lutris/Bottles game folder'
+  return 'the game folder (for example C:\\Program Files (x86)\\World of Warcraft)'
+}
 
 export const REPO_URL = 'https://github.com/rusty-key/spoken-wow'
 export const SITE_URL = 'https://spoken.rusty.one'
@@ -18,7 +32,9 @@ export const S = {
   banners: {
     offline: "Can't reach GitHub. Showing the last list.",
     updateReady: (v: string) => `Update ready: restart to use ${v}`,
-    updating: (pct: number) => `Downloading a launcher update: ${pct}%`
+    updating: (pct: number) => `Downloading a launcher update: ${pct}%`,
+    updateAvailable: (v: string) => `Version ${v} is available.`,
+    download: 'Download'
   },
   common: {
     loading: 'Loading',
@@ -38,13 +54,15 @@ export const S = {
     notReleased: 'Not Released Yet',
     game: 'Game',
     version: 'Version',
-    readOnly: 'This folder is read-only for your account.'
+    readOnly: 'This folder is read-only for your account.',
+    showIn: (platform: Platform) => `Show in ${fileManager(platform)}`
   },
   window: { minimize: 'Minimize', maximize: 'Maximize', restore: 'Restore', close: 'Close' },
   strip: { add: 'Add a Game Folder', missing: (label: string) => `${label} is not installed on this PC` },
   empty: {
     title: 'No Game for Spoken Found',
-    text: 'Spoken runs on WoW: Forever, Classic Era and Anniversary. Add the folder your game is installed in: the game folder, a _classic_era_, _anniversary_ or _classic_beta_ folder, or an AddOns folder.',
+    text: (platform: Platform) =>
+      `Spoken runs on WoW: Forever, Classic Era and Anniversary. Add the folder your game is installed in: ${gameFolderExample(platform)}, a _classic_era_, _anniversary_ or _classic_beta_ folder, or an AddOns folder.`,
     add: 'Add Game Folder',
     scan: 'Scan Again',
     scanning: 'Looking'

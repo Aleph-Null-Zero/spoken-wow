@@ -18,7 +18,7 @@ export function App(): ReactNode {
     main.current?.querySelectorAll('.scroll').forEach((el) => el.scrollTo(0, 0))
   }, [state.page, state.gameId])
   return (
-    <div className="shell">
+    <div className={`shell platform-${state.platform}`}>
       {state.ready && !state.fatal && game && state.page !== 'settings' && <Backdrop flavor={game.flavor} compact={state.page === 'home'} />}
       <TopBar />
       <GamesStrip />

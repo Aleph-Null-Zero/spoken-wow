@@ -1,8 +1,9 @@
 // Spoken Launcher: main process. No telemetry of any kind: the only network traffic is the GitHub
 // release list, the asset downloads and the launcher's own update.
 import path from 'node:path'
-import { app, BrowserWindow, session, shell } from 'electron'
+import { app, BrowserWindow, Menu, session, shell } from 'electron'
 import { CHANNELS } from '../shared/api'
+import { windowChrome } from './chrome'
 import { isAllowedExternalUrl } from './external'
 import { registerIpc } from './ipc'
 import { LauncherService } from './service'
@@ -56,7 +57,14 @@ function setUpSession(): void {
   session.defaultSession.setPermissionCheckHandler(() => false)
 }
 
+/** macOS shows one menu bar for the whole app; without it Cmd+Q, Cmd+C, Cmd+V and Cmd+A do nothing. */
+function setUpMenu(): void {
+  if (process.platform !== 'darwin') return
+  Menu.setApplicationMenu(Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }, { role: 'windowMenu' }]))
+}
+
 function createWindow(): BrowserWindow {
+  const chrome = windowChrome(process.platform)
   const win = new BrowserWindow({
     width: 1180,
     height: 760,
@@ -67,9 +75,12 @@ function createWindow(): BrowserWindow {
     title: 'Spoken Launcher',
     icon: path.join(app.getAppPath(), 'build', 'icon.png'),
     autoHideMenuBar: true,
-    titleBarStyle: 'hidden',
-    // No system buttons: the page draws its own on the tab row (TopBar.tsx), because the native overlay
-    // cannot be transparent or bigger. They call the window:* channels in ipc.ts.
+    titleBarStyle: chrome.titleBarStyle,
+    ...(chrome.frame === false ? { frame: false } : {}),
+    ...(chrome.trafficLightPosition ? { trafficLightPosition: chrome.trafficLightPosition } : {}),
+    // Windows and Linux: no system buttons, the page draws its own on the tab row (TopBar.tsx), because the
+    // native overlay cannot be transparent or bigger. They call the window:* channels in ipc.ts.
+    // macOS keeps the system buttons (inset into the tab row) and the page hides its own.
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -78,7 +89,7 @@ function createWindow(): BrowserWindow {
       webSecurity: true
     }
   })
-  win.removeMenu()
+  if (process.platform !== 'darwin') win.removeMenu()
   win.on('maximize', () => win.webContents.send(CHANNELS.windowMaximized, true))
   win.on('unmaximize', () => win.webContents.send(CHANNELS.windowMaximized, false))
 
@@ -118,7 +129,13 @@ if (!app.requestSingleInstanceLock()) {
     mainWindow.focus()
   })
 
-  app.on('window-all-closed', () => app.quit())
+  // macOS apps stay open without a window (Cmd+Q quits, a click on the Dock icon opens the window again).
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit()
+  })
+  app.on('activate', () => {
+    if (service && BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow()
+  })
 
   // Quitting with a job running: stop it and wait for its rollback first, so the quit (and an
   // update installed on quit) never lands in the middle of swapping folders.
@@ -140,6 +157,7 @@ if (!app.requestSingleInstanceLock()) {
     log(`Spoken Launcher ${app.getVersion()} starting (Electron ${process.versions.electron}).`)
 
     setUpSession()
+    setUpMenu()
     service = new LauncherService({ dataPath, appVersion: app.getVersion(), send: broadcast })
     registerIpc(service, PAGE)
     void service.init()
@@ -153,6 +171,7 @@ if (!app.requestSingleInstanceLock()) {
     const svc = service
     void startUpdater({
       isPackaged: app.isPackaged,
+      appVersion: app.getVersion(),
       autoUpdateLauncher: () => svc.settings.autoUpdateLauncher,
       send: (state) => broadcast(CHANNELS.updaterState, state)
     })

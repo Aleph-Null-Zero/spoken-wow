@@ -42,6 +42,8 @@ export async function computeStatuses(
   products: readonly Product[] = PRODUCTS
 ): Promise<ProductStatus[]> {
   const out: ProductStatus[] = []
+  // An AddOns (or Interface) folder that is itself a link counts for every product installed in it.
+  const addOnsLinked = (await isLinked(game.addOnsPath)) || (await isLinked(path.dirname(game.addOnsPath)))
   for (const product of products) {
     const hasReleases = (catalog.releases[product.id]?.length ?? 0) > 0
 
@@ -60,7 +62,7 @@ export async function computeStatuses(
       installedVersion = (await tocVersion(game.addOnsPath, installedFolders[0]!)) ?? record?.version
     }
 
-    let linked = false
+    let linked = addOnsLinked && installedFolders.length > 0
     for (const folder of installedFolders) {
       if (await isLinked(path.join(game.addOnsPath, folder))) {
         linked = true
@@ -81,7 +83,7 @@ export async function computeStatuses(
     const blockedReason = linked
       ? LINKED_MESSAGE
       : !game.writable
-        ? 'The launcher cannot write to this game folder. Check that it is not read-only and that your Windows account may change it.'
+        ? 'The launcher cannot write to this game folder. Check that it is not read-only and that your account may change it.'
         : undefined
 
     out.push({

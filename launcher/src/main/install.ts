@@ -506,7 +506,7 @@ async function verifyStaged(product: Product, dir: string): Promise<string[]> {
 async function checkWritable(game: GameInstall): Promise<void> {
   if (!(await canWrite(game.addOnsPath))) {
     throw new PlainError(
-      `The launcher cannot write to ${game.addOnsPath}. Check that the folder is not read-only and that your Windows account may change it.`
+      `The launcher cannot write to ${game.addOnsPath}. Check that the folder is not read-only and that your account may change it.`
     )
   }
   await fs.promises.mkdir(game.addOnsPath, { recursive: true })

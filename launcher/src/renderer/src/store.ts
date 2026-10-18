@@ -5,6 +5,7 @@ import type { AddGameResult, UpdaterState } from '@shared/api'
 import type { Catalog, CommunityCatalog, GameInstall, JobProgress, Product, ProductStatus, Settings, Snapshot } from '@shared/types'
 import { DEFAULT_SETTINGS, isSupportedFlavor } from '@shared/types'
 import { api, errorText } from './api'
+import type { Platform } from './strings'
 
 export type Page = 'home' | 'spoken' | 'voices' | 'community' | 'settings'
 export type SpokenTab = 'modules' | 'changelog'
@@ -18,6 +19,7 @@ export interface State {
   community: CommunityCatalog
   products: Product[]
   appVersion: string
+  platform: Platform
   dataPath: string
   /** By game id. */
   statuses: Record<string, ProductStatus[]>
@@ -57,6 +59,7 @@ const initial: State = {
   community: EMPTY_COMMUNITY,
   products: [],
   appVersion: '',
+  platform: 'win32',
   dataPath: '',
   statuses: {},
   jobs: {},
@@ -79,6 +82,7 @@ function reducer(s: State, a: Action): State {
         community: a.snap.community ?? EMPTY_COMMUNITY,
         products: a.snap.products,
         appVersion: a.snap.appVersion,
+        platform: a.snap.platform,
         dataPath: a.snap.dataPath,
         statuses: a.statuses,
         page: a.page,

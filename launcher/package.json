@@ -14,7 +14,10 @@
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "dist": "electron-vite build && electron-builder --win"
+    "dist": "npm run dist:win",
+    "dist:win": "electron-vite build && electron-builder --win --publish never",
+    "dist:mac": "electron-vite build && electron-builder --mac --publish never",
+    "dist:linux": "electron-vite build && electron-builder --linux --publish never"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
@@ -49,8 +52,8 @@
       "out/**",
       "build/icon.png"
     ],
-    "artifactName": "Spoken-Launcher-Setup-${version}.${ext}",
     "win": {
+      "artifactName": "Spoken-Launcher-Setup-${version}.${ext}",
       "target": [
         {
           "target": "nsis",
@@ -64,6 +67,47 @@
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "artifactName": "Spoken-Launcher-${version}-mac-${arch}.${ext}",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "category": "Utility",
+      "artifactName": "Spoken-Launcher-${version}-linux.${ext}",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "tar.gz",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "publish": [
       {

@@ -4,9 +4,10 @@
 import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { SUPPORTED_FLAVORS, type Flavor, type GameInstall } from '../shared/types'
-import { canWriteQuick } from './guard'
+import { canWriteQuick, foldsCase, samePath } from './guard'
 import { loadState, log, updateState } from './state'
 
 // ---------------------------------------------------------------- tables
@@ -37,9 +38,12 @@ export function notSupportedMessage(folder: string): string {
   return `Spoken runs on WoW: Forever, Classic Era and Anniversary. ${folder} is not one of them.`
 }
 
-/** First 12 hex digits of sha1 of the lower-cased root. */
-export function gameIdFor(root: string): string {
-  return createHash('sha1').update(root.toLowerCase()).digest('hex').slice(0, 12)
+/** First 12 hex digits of sha1 of the root, lower-cased where the file system ignores case (Windows, macOS). */
+export function gameIdFor(root: string, platform: NodeJS.Platform = process.platform): string {
+  return createHash('sha1')
+    .update(foldsCase(platform) ? root.toLowerCase() : root)
+    .digest('hex')
+    .slice(0, 12)
 }
 
 // ---------------------------------------------------------------- Blizzard's files
@@ -103,12 +107,27 @@ async function names(p: string): Promise<string[] | null> {
 
 // ---------------------------------------------------------------- one flavor folder
 
-/** A GameInstall for a flavor folder, or null when it is not one of the supported ones or holds no Interface or WTF folder and no Wow*.exe. */
-export async function describeFlavorFolder(flavorPath: string, source: 'auto' | 'manual'): Promise<GameInstall | null> {
+/** The entry of `entries` named `name` ignoring case (the exact name first), else `name` itself: what to create when it is missing. */
+function realName(entries: readonly string[] | null, name: string): string {
+  if (!entries) return name
+  return entries.includes(name) ? name : (entries.find((n) => n.toLowerCase() === name.toLowerCase()) ?? name)
+}
+
+/**
+ * A GameInstall for a flavor folder, or null when it is not one of the supported ones or holds no
+ * Interface or WTF folder, no Wow*.exe and no World of Warcraft*.app (macOS). The AddOns path keeps
+ * the casing found on disk (Linux file systems tell `interface` from `Interface`) and uses
+ * `Interface/AddOns` when the folders do not exist yet.
+ */
+export async function describeFlavorFolder(
+  flavorPath: string,
+  source: 'auto' | 'manual',
+  platform: NodeJS.Platform = process.platform
+): Promise<GameInstall | null> {
   const root = path.resolve(flavorPath)
   const entries = await names(root)
   if (!entries) return null
-  const holdsGame = entries.some((n) => /^(interface|wtf)$/i.test(n) || /^wow.*\.exe$/i.test(n))
+  const holdsGame = entries.some((n) => /^(interface|wtf)$/i.test(n) || /^wow.*\.exe$/i.test(n) || /^world of warcraft.*\.app$/i.test(n))
   if (!holdsGame) return null
 
   const flavorFolder = path.basename(root)
@@ -126,9 +145,11 @@ export async function describeFlavorFolder(flavorPath: string, source: 'auto' | 
     if (row?.Version) gameVersion = row.Version
   }
 
-  const addOnsPath = path.join(root, 'Interface', 'AddOns')
+  const interfaceName = realName(entries, 'Interface')
+  const addOnsName = realName(await names(path.join(root, interfaceName)), 'AddOns')
+  const addOnsPath = path.join(root, interfaceName, addOnsName)
   return {
-    id: gameIdFor(root),
+    id: gameIdFor(root, platform),
     root,
     addOnsPath,
     flavorFolder,
@@ -141,15 +162,22 @@ export async function describeFlavorFolder(flavorPath: string, source: 'auto' | 
   }
 }
 
-const NOT_WOW_MESSAGE =
-  'This does not look like a World of Warcraft folder. Choose the game folder (the one that holds _classic_beta_, _classic_era_ or _anniversary_), one of those folders, or its Interface\\AddOns folder.'
+function notWowMessage(platform: NodeJS.Platform): string {
+  const addOns = platform === 'win32' ? 'Interface\\AddOns' : 'Interface/AddOns'
+  return `This does not look like a World of Warcraft folder. Choose the game folder (the one that holds _classic_beta_, _classic_era_ or _anniversary_), one of those folders, or its ${addOns} folder.`
+}
 
 /**
  * Turns a folder the player (or the registry) named into flavor folders: a game folder gives
  * every supported flavor it holds, a flavor folder or an AddOns folder gives that one. A flavor
  * folder of a game Spoken does not run on is refused in plain words.
  */
-export async function resolveGamePath(input: string, source: 'auto' | 'manual'): Promise<{ games: GameInstall[]; error?: string }> {
+export async function resolveGamePath(
+  input: string,
+  source: 'auto' | 'manual',
+  platform: NodeJS.Platform = process.platform
+): Promise<{ games: GameInstall[]; error?: string }> {
+  const NOT_WOW_MESSAGE = notWowMessage(platform)
   const cleaned = typeof input === 'string' ? input.trim().replace(/^"(.*)"$/, '$1') : ''
   if (cleaned === '') return { games: [], error: 'Choose a folder first.' }
   const abs = path.resolve(cleaned)
@@ -186,7 +214,7 @@ export async function resolveGamePath(input: string, source: 'auto' | 'manual'):
 
   const games: GameInstall[] = []
   for (const c of candidates) {
-    const g = await describeFlavorFolder(c, source)
+    const g = await describeFlavorFolder(c, source, platform)
     if (g && !games.some((x) => x.id === g.id)) games.push(g)
   }
   return games.length > 0 ? { games } : { games: [], error: NOT_WOW_MESSAGE }
@@ -212,13 +240,14 @@ export function parseRegQuery(output: string): string[] {
   return out
 }
 
-/** Install paths in Battle.net's `product.db` (protobuf, but the paths are plain text). */
+/** Install paths in Battle.net's `product.db` (protobuf, but the paths are plain text): Windows drive paths, and macOS paths under /Applications, /Volumes or /Users. */
 export function parseProductDb(data: Buffer): string[] {
   const text = data.toString('latin1')
   const found = new Set<string>()
-  const re = /[A-Za-z]:[\\/][\x20-\x7e]{0,240}?World of Warcraft/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(text))) found.add(m[0])
+  for (const re of [/[A-Za-z]:[\\/][\x20-\x7e]{0,240}?World of Warcraft/g, /\/(?:Applications|Volumes|Users)\/[\x20-\x7e]{0,240}?World of Warcraft/g]) {
+    let m: RegExpExecArray | null
+    while ((m = re.exec(text))) found.add(m[0])
+  }
   return [...found]
 }
 
@@ -236,10 +265,16 @@ async function registryPaths(): Promise<string[]> {
   return out
 }
 
-async function battleNetPaths(): Promise<string[]> {
-  const base = process.env.ProgramData
-  if (!base) return []
-  const file = path.join(base, 'Battle.net', 'Agent', 'product.db')
+async function battleNetPaths(platform: NodeJS.Platform = process.platform, fsRoot = '/'): Promise<string[]> {
+  const file =
+    platform === 'win32'
+      ? process.env.ProgramData
+        ? path.join(process.env.ProgramData, 'Battle.net', 'Agent', 'product.db')
+        : ''
+      : platform === 'darwin'
+        ? path.join(fsRoot, 'Users', 'Shared', 'Battle.net', 'Agent', 'product.db')
+        : ''
+  if (!file) return []
   try {
     const st = await fs.promises.stat(file)
     if (st.size > 8 * 1024 * 1024) return []
@@ -271,12 +306,119 @@ async function fixedDrives(): Promise<string[]> {
   return probed
 }
 
-/** Every folder worth looking in: registry, Battle.net, default roots, each fixed drive. */
-async function findCandidatePaths(): Promise<string[]> {
+export interface DiscoveryOptions {
+  /** Default: the running platform. Tests pass another one to run its logic on any machine. */
+  platform?: NodeJS.Platform
+  /** Default: the player's home folder. */
+  homedir?: string
+  /** What `/` means: tests point it at a temp folder. Default `/`. */
+  fsRoot?: string
+  /** The WINEPREFIX variable. Default: the process's. */
+  winePrefix?: string | undefined
+  /** Longest time the folder search may take, in milliseconds. Default 4000. */
+  budgetMs?: number
+}
+
+/** The sub-folder names the Linux search does not look into: Lutris keeps Wine builds there, not game prefixes. */
+const SKIP_PREFIX_PARENTS = new Set(['runners', 'runtime'])
+
+/**
+ * Where a Mac or Linux install may be: the usual Applications folders and mounted volumes on macOS;
+ * the Wine prefixes of Wine, Lutris, Bottles, Steam (Proton) and Heroic on Linux. Only folders that
+ * exist are returned. The work is a few `readdir` calls without recursion, cut short by the
+ * time budget, and every error is ignored. Windows is handled by `findCandidatePaths`.
+ */
+export async function discoverUnixPaths(options: DiscoveryOptions = {}): Promise<string[]> {
+  const platform = options.platform ?? process.platform
+  const home = options.homedir ?? os.homedir()
+  const root = options.fsRoot ?? '/'
+  const deadline = Date.now() + (options.budgetMs ?? 4000)
+  const inTime = (): boolean => Date.now() < deadline
   const out: string[] = []
-  out.push(...(await registryPaths()))
-  out.push(...(await battleNetPaths()))
-  if (process.platform === 'win32') {
+
+  const listing = async (dir: string): Promise<string[]> => {
+    if (!inTime()) return []
+    return (await names(dir)) ?? []
+  }
+  const addIfDir = async (p: string): Promise<void> => {
+    if (inTime() && (await isDir(p))) out.push(p)
+  }
+
+  if (platform === 'darwin') {
+    await addIfDir(path.join(root, 'Applications', 'World of Warcraft'))
+    await addIfDir(path.join(home, 'Applications', 'World of Warcraft'))
+    for (const v of await listing(path.join(root, 'Volumes'))) {
+      await addIfDir(path.join(root, 'Volumes', v, 'World of Warcraft'))
+      await addIfDir(path.join(root, 'Volumes', v, 'Applications', 'World of Warcraft'))
+    }
+  } else if (platform !== 'win32') {
+    // Prefix folders: a Wine prefix is a folder holding drive_c.
+    const prefixes: string[] = []
+    const winePrefix = options.winePrefix !== undefined ? options.winePrefix : process.env.WINEPREFIX
+    if (winePrefix) prefixes.push(winePrefix)
+    prefixes.push(path.join(home, '.wine'), path.join(home, 'Games', 'battlenet'))
+    /** Every sub-folder of `parent` is a prefix; with `inner` each one's `inner` folder is too (Proton keeps its prefix in `pfx`). */
+    const children = async (parent: string, inner?: string): Promise<void> => {
+      for (const n of await listing(parent)) {
+        if (SKIP_PREFIX_PARENTS.has(n)) continue
+        prefixes.push(path.join(parent, n))
+        if (inner) prefixes.push(path.join(parent, n, inner))
+      }
+    }
+    const share = path.join(home, '.local', 'share')
+    const flatpak = path.join(home, '.var', 'app')
+    await children(path.join(home, 'Games'))
+    await children(path.join(share, 'bottles', 'bottles'))
+    await children(path.join(flatpak, 'com.usebottles.bottles', 'data', 'bottles', 'bottles'))
+    await children(path.join(share, 'lutris'))
+    await children(path.join(share, 'lutris', 'prefixes'))
+    await children(path.join(flatpak, 'net.lutris.Lutris', 'data', 'lutris'))
+    await children(path.join(flatpak, 'net.lutris.Lutris', 'data', 'lutris', 'prefixes'))
+    await children(path.join(home, 'Games', 'Heroic', 'Prefixes'), 'pfx')
+    await children(path.join(home, 'Games', 'Heroic', 'Prefixes', 'default'), 'pfx')
+    for (const steam of [
+      path.join(share, 'Steam'),
+      path.join(home, '.steam', 'steam'),
+      path.join(flatpak, 'com.valvesoftware.Steam', 'data', 'Steam')
+    ]) {
+      await children(path.join(steam, 'steamapps', 'compatdata'), 'pfx')
+    }
+    await addIfDir(path.join(home, 'Games', 'World of Warcraft'))
+    for (const p of new Set(prefixes)) {
+      for (const programs of ['Program Files (x86)', 'Program Files']) {
+        await addIfDir(path.join(p, 'drive_c', programs, 'World of Warcraft'))
+      }
+    }
+  }
+  return out
+}
+
+/** The same folder reached twice (`/Volumes/Macintosh HD` is `/`) counts once: the first spelling stays. */
+async function dropSameFolders(list: string[], platform: NodeJS.Platform): Promise<string[]> {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const p of list) {
+    let real = path.resolve(p)
+    try {
+      real = await fs.promises.realpath(p)
+    } catch {
+      // not there: keep the plain spelling
+    }
+    const key = foldsCase(platform) ? real.toLowerCase() : real
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(p)
+  }
+  return out
+}
+
+/** Every folder worth looking in: Windows registry, Battle.net's list, default roots, each fixed drive; the macOS and Linux places on those systems. */
+export async function findCandidatePaths(options: DiscoveryOptions = {}): Promise<string[]> {
+  const platform = options.platform ?? process.platform
+  const out: string[] = []
+  if (platform === 'win32') {
+    out.push(...(await registryPaths()))
+    out.push(...(await battleNetPaths(platform)))
     out.push('C:\\Program Files (x86)\\World of Warcraft', 'C:\\Program Files\\World of Warcraft')
     for (const d of await fixedDrives()) {
       out.push(
@@ -285,14 +427,19 @@ async function findCandidatePaths(): Promise<string[]> {
         path.join(d, 'Program Files (x86)', 'World of Warcraft')
       )
     }
+  } else {
+    out.push(...(await battleNetPaths(platform, options.fsRoot)))
+    out.push(...(await discoverUnixPaths({ ...options, platform })))
   }
   const seen = new Set<string>()
-  return out.filter((p) => {
-    const k = path.resolve(p).toLowerCase()
+  const unique = out.filter((p) => {
+    const abs = path.resolve(p)
+    const k = foldsCase(platform) ? abs.toLowerCase() : abs
     if (seen.has(k)) return false
     seen.add(k)
     return true
   })
+  return platform === 'win32' ? unique : dropSameFolders(unique, platform)
 }
 
 // ---------------------------------------------------------------- the list
@@ -300,6 +447,10 @@ async function findCandidatePaths(): Promise<string[]> {
 export interface ScanOptions {
   /** Used instead of the registry and default-folder search (tests). */
   autoPaths?: string[]
+  /** Default: the running platform. */
+  platform?: NodeJS.Platform
+  /** Where the default-folder search looks, for tests; ignored when autoPaths is given. */
+  discovery?: DiscoveryOptions
 }
 
 /** Auto-found installs (minus the ones the player removed), then the manual ones. */
@@ -313,15 +464,16 @@ export async function scanGames(dataPath: string, options: ScanOptions = {}): Pr
       st.manualGames = keep
     })
   }
+  const platform = options.platform ?? process.platform
   const hidden = new Set(state.hiddenGames)
   const found = new Map<string, GameInstall>()
-  const candidates = options.autoPaths ?? (await findCandidatePaths())
+  const candidates = options.autoPaths ?? (await findCandidatePaths({ ...options.discovery, platform }))
   for (const p of candidates) {
-    const { games } = await resolveGamePath(p, 'auto')
+    const { games } = await resolveGamePath(p, 'auto', platform)
     for (const g of games) if (!hidden.has(g.id) && !found.has(g.id)) found.set(g.id, g)
   }
   for (const p of state.manualGames) {
-    const { games } = await resolveGamePath(p, 'manual')
+    const { games } = await resolveGamePath(p, 'manual', platform)
     for (const g of games) if (!found.has(g.id)) found.set(g.id, g)
   }
   const list = [...found.values()]
@@ -330,12 +482,16 @@ export async function scanGames(dataPath: string, options: ScanOptions = {}): Pr
 }
 
 /** Adds a game folder, a flavor folder or an AddOns folder; remembers each flavor folder it resolves to. */
-export async function addGame(dataPath: string, input: string): Promise<{ games: GameInstall[]; error?: string }> {
-  const res = await resolveGamePath(input, 'manual')
+export async function addGame(
+  dataPath: string,
+  input: string,
+  platform: NodeJS.Platform = process.platform
+): Promise<{ games: GameInstall[]; error?: string }> {
+  const res = await resolveGamePath(input, 'manual', platform)
   if (res.error || res.games.length === 0) return res
   updateState(dataPath, (s) => {
     for (const g of res.games) {
-      if (!s.manualGames.some((m) => m.toLowerCase() === g.root.toLowerCase())) s.manualGames.push(g.root)
+      if (!s.manualGames.some((m) => samePath(m, g.root, platform))) s.manualGames.push(g.root)
       s.hiddenGames = s.hiddenGames.filter((id) => id !== g.id)
     }
   })
@@ -343,9 +499,9 @@ export async function addGame(dataPath: string, input: string): Promise<{ games:
 }
 
 /** Takes an install off the list: a manual one is forgotten, an auto-found one is hidden. */
-export function removeGame(dataPath: string, game: GameInstall): void {
+export function removeGame(dataPath: string, game: GameInstall, platform: NodeJS.Platform = process.platform): void {
   updateState(dataPath, (s) => {
-    s.manualGames = s.manualGames.filter((m) => m.toLowerCase() !== game.root.toLowerCase())
+    s.manualGames = s.manualGames.filter((m) => !samePath(m, game.root, platform))
     if (game.source === 'auto' && !s.hiddenGames.includes(game.id)) s.hiddenGames.push(game.id)
   })
 }

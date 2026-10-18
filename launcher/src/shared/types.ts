@@ -215,6 +215,8 @@ export interface Snapshot {
   community: CommunityCatalog
   products: Product[]
   appVersion: string
+  /** The operating system the launcher runs on: the window's frame and the game search differ. */
+  platform: 'win32' | 'darwin' | 'linux'
   /** Where state, logs and downloads are kept. */
   dataPath: string
 }

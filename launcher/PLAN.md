@@ -1,6 +1,6 @@
 # Spoken Launcher: plan
 
-A small Windows app that installs and updates Spoken and its voice packs. Open it, see what is
+A small app for Windows, macOS and Linux that installs and updates Spoken and its voice packs. Open it, see what is
 installed and what is new, press a button. No account, no login, no store.
 
 Built from scratch. The AI VoiceOver launcher was looked at for what it offers (game list,
@@ -151,7 +151,7 @@ Rules the installer keeps:
 - A download is a `.part` file with a `Range` resume; done only when the size matches and, when
   GitHub gives a `sha256` digest for the asset, the digest matches.
 - Free space is checked before a download (size plus the extracted size).
-- If `Wow*.exe` is running, installing is allowed but says "reload or restart the game".
+- If the game is running (`tasklist` on Windows, `ps` on macOS and Linux), installing is allowed but says "reload or restart the game".
 - Nothing runs elevated. A game folder the user cannot write to is reported with the reason.
 
 ## Phases
@@ -159,22 +159,114 @@ Rules the installer keeps:
 1. Core and contract: types, discovery, GitHub, catalog, download, install, guard, state, with tests.
 2. Window: shell, navigation, Home, Spoken, Voice Packs, Settings, in the Battle.net style.
 3. Polish: empty and error states, offline, progress and cancel, keyboard focus, high-DPI.
-4. Package: icon, NSIS installer, auto-update, a release workflow for `launcher/v*` tags.
+4. Package: icon, installers for the three systems, auto-update, a release workflow for `launcher/v*` tags.
 
-Out of scope for now: macOS, other addons, a login, translations of the launcher itself (English
+Out of scope for now: other addons, a login, translations of the launcher itself (English
 first; strings are in one file so the languages can follow), anything that sends data anywhere.
 
 ## Launcher releases
 
-A tag `launcher/vX.Y.Z` builds the installer, publishes it as that tag's release, and refreshes
-the `launcher-latest` release (`latest.yml` and the installer, replaced each time) so installed
-launchers can update. They read it through electron-updater's generic provider at
+A tag `launcher/vX.Y.Z` builds the installers for the three systems, publishes them as that tag's
+release, and refreshes the `launcher-latest` release (`latest.yml`, `latest-mac.yml`,
+`latest-linux.yml` and the installers, replaced each time) so installed launchers can update. They read it through electron-updater's generic provider at
 `https://github.com/rusty-key/spoken-wow/releases/download/launcher-latest`, not the GitHub
 provider, because the GitHub provider takes the repo's newest release and that is usually a
-`spoken/` or `*-audio/` tag. A workflow for this is a later task.
+`spoken/` or `*-audio/` tag. The workflow is `.github/workflows/launcher.yml` (separate from
+`ci.yaml`): a test job and a package job on Windows, macOS and Linux, and a release job that runs
+only for tags. It checks that the tag matches `version` in `package.json`. A tag with a `-` in it
+(`launcher/v0.2.0-beta.1`) is published as a pre-release and leaves `launcher-latest` alone. The
+first run creates `launcher-latest` as a normal release that is not marked "latest", so the repo's
+"latest" stays Spoken's own.
 
 ## Checks
 
 `npm test` (vitest) for the core, `npm run typecheck`, and a manual pass in the running window
-with a throw-away AddOns folder. Not part of the repo's CI or its pnpm workspace: the launcher has
-its own `package-lock.json` and its own folder, `launcher/`.
+with a throw-away AddOns folder. Not part of the repo's `ci.yaml` or its pnpm workspace: the launcher
+has its own `package-lock.json`, its own folder, `launcher/`, and its own workflow, `launcher.yml`,
+which runs typecheck, tests and build on Windows, macOS and Linux.
+
+The tests run the logic of every system on any machine: discovery, case rules, the running-game
+check and the updater take the platform (and the home folder) as parameters, and the tests pass a
+temp folder as the root of the disk. What they cannot show is the real system: see the end of
+"Platforms".
+
+## Platforms
+
+| | Windows | macOS | Linux |
+| --- | --- | --- | --- |
+| Installer | NSIS, x64 | dmg and zip, Intel and Apple silicon | AppImage and tar.gz, x64 |
+| Finds the game | registry, Battle.net list, default folders, every fixed drive | /Applications, ~/Applications, /Volumes | Wine prefixes: Wine, Lutris, Bottles, Steam (Proton), Heroic |
+| Game running | `tasklist` | `ps` | `ps`, also sees Wine's Wow.exe |
+| Launcher update | by itself | a link to the download page | by itself in an AppImage, else a link |
+| Window | no frame, page draws the buttons | system buttons inset in the top bar | no frame, page draws the buttons |
+| Letter case in paths | ignored | ignored | matters |
+| Data and logs | `%APPDATA%\Spoken Launcher` | `~/Library/Application Support/Spoken Launcher` | `~/.config/Spoken Launcher` |
+
+Logs are in `logs/launcher.log` inside the data folder.
+
+### Finding the game
+
+Every discovery function takes the platform and the home folder as parameters (default: the running
+system), so the tests run all three on one machine.
+
+- Windows: as before (registry keys, Battle.net's `product.db`, `Program Files`, each fixed drive).
+- macOS: `/Applications/World of Warcraft`, `~/Applications/World of Warcraft`, and for every
+  folder in `/Volumes` its `World of Warcraft` and `Applications/World of Warcraft`. The startup disk
+  is also listed in `/Volumes`; a folder reached twice counts once. Battle.net's list at
+  `/Users/Shared/Battle.net/Agent/product.db` is read too. A flavor folder holds
+  `World of Warcraft*.app`, which counts as a game marker next to `Interface`, `WTF` and `Wow*.exe`.
+- Linux: the game runs under Wine, so the search is for a Wine prefix (a folder with `drive_c`) and
+  then `drive_c/Program Files (x86)/World of Warcraft` or `drive_c/Program Files/World of Warcraft`.
+  Prefixes: `$WINEPREFIX`, `~/.wine`, `~/Games/*`, `~/.local/share/bottles/bottles/*`, the Flatpak
+  Bottles and Lutris data folders, `~/.local/share/lutris/*` (not `runners`), Steam's
+  `steamapps/compatdata/*/pfx` (also the Flatpak and `~/.steam` copies), `~/Games/Heroic/Prefixes/*`
+  and `default/*`. No recursion, every read error ignored, and the whole search stops after 4
+  seconds. A game in a place not listed is added with the folder picker.
+
+### Letter case and links
+
+- Paths are compared without regard to case on Windows and macOS and exactly on Linux (`samePath`,
+  `isInside`, game ids, the downloads folder check, the page trust check).
+- `Interface/AddOns` and `WTF` are looked up by listing the folder when the exact name is missing,
+  so `interface/addons` on Linux is used as it is. When the folders are missing they are created
+  as `Interface/AddOns`.
+- A symlink (macOS, Linux) or a junction (Windows) in the AddOns folder is refused with the usual
+  message ("This folder is linked to a development checkout"). The same goes for an AddOns or
+  Interface folder that is itself a link.
+
+### Launcher updates
+
+Windows (NSIS) and a Linux AppImage (the `APPIMAGE` variable is set) download the update and install
+it when the launcher quits. macOS builds are not signed, and the updater cannot install an unsigned
+build, so macOS never downloads. Linux outside an AppImage (the tar.gz) has nothing to download
+into either, and electron-updater does not even check there. On both, the launcher does not use
+electron-updater: it fetches `latest-mac.yml` or `latest-linux.yml` from the feed, compares its
+`version:` with its own, and when the feed is newer shows "available" with a link to
+`https://github.com/rusty-key/spoken-wow/releases/tag/launcher-latest`. Failures are silent at start
+and shown when the player asks for a check.
+
+### Signing and first start
+
+The macOS and Linux builds are not signed and not notarized (no certificate yet).
+
+- macOS: open the dmg, drag the app to Applications. The first start is blocked: right-click the app,
+  choose Open, then Open again. Or run
+  `xattr -dr com.apple.quarantine "/Applications/Spoken Launcher.app"` once.
+- Linux AppImage: `chmod +x Spoken-Launcher-*-linux.AppImage`, then run it. On Ubuntu 24.04 and
+  later AppArmor can block the browser sandbox of an Electron app and the window never opens. Start it
+  as `./Spoken-Launcher-*-linux.AppImage --no-sandbox`; this turns the Chromium sandbox off for that
+  run, so use it only until a proper profile or a .deb exists.
+- Windows: the installer is not signed either; SmartScreen may ask once.
+
+### Not yet checked on a real machine
+
+Written and tested with temp folders on Windows only.
+
+- macOS: that the dmg and zip build; that the Apple silicon build starts unsigned (if it is reported
+  as damaged, `identity` in `package.json` may need to be `"-"`, an ad-hoc signature); the traffic
+  lights against the 68 px bar; Cmd+Q, Cmd+C, Cmd+V; the Dock click opening the window again; what
+  `ps` prints for the game; Battle.net's product list on a Mac.
+- Linux: that the AppImage starts and updates itself; the frameless window with the page's own
+  buttons under X11 and Wayland; every prefix location in the table; `ps` output under Wine.
+- The release workflow has not run yet. The first `launcher/v*` tag is its test, and it creates
+  `launcher-latest` on that run.

@@ -9,10 +9,31 @@ import { PlainError, formatBytes } from './errors'
 
 // ---------------------------------------------------------------- linked folders
 
-function samePath(a: string, b: string): boolean {
-  const x = path.resolve(a)
-  const y = path.resolve(b)
-  return process.platform === 'win32' ? x.toLowerCase() === y.toLowerCase() : x === y
+/** The path rules of a platform: Windows paths on Windows, POSIX paths elsewhere. On the running platform this is `path`. */
+function pathFor(platform: NodeJS.Platform): typeof path.posix {
+  return platform === 'win32' ? path.win32 : path.posix
+}
+
+/** Windows and macOS file systems ignore letter case by default; Linux does not. */
+export function foldsCase(platform: NodeJS.Platform = process.platform): boolean {
+  return platform === 'win32' || platform === 'darwin'
+}
+
+/** Whether two paths name the same place, comparing case the way the platform's file system does. */
+export function samePath(a: string, b: string, platform: NodeJS.Platform = process.platform): boolean {
+  const x = pathFor(platform).resolve(a)
+  const y = pathFor(platform).resolve(b)
+  return foldsCase(platform) ? x.toLowerCase() === y.toLowerCase() : x === y
+}
+
+/** The real-cased entry of `dir` named `name` ignoring case (the exact name preferred), or null when there is none. */
+export function findEntrySync(dir: string, name: string): string | null {
+  try {
+    const list = fs.readdirSync(dir)
+    return list.includes(name) ? name : (list.find((n) => n.toLowerCase() === name.toLowerCase()) ?? null)
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -76,10 +97,12 @@ export function checkEntryPath(name: string, allowed: readonly string[]): EntryC
 }
 
 /** True when `child` is `parent` or inside it (no `..` escape). */
-export function isInside(parent: string, child: string): boolean {
-  const rel = path.relative(path.resolve(parent), path.resolve(child))
+export function isInside(parent: string, child: string, platform: NodeJS.Platform = process.platform): boolean {
+  const p = pathFor(platform)
+  const fold = (x: string): string => (foldsCase(platform) ? x.toLowerCase() : x)
+  const rel = p.relative(fold(p.resolve(parent)), fold(p.resolve(child)))
   if (rel === '') return true
-  return !rel.startsWith('..') && !path.isAbsolute(rel)
+  return !rel.startsWith('..') && !p.isAbsolute(rel)
 }
 
 // ---------------------------------------------------------------- disk
@@ -161,14 +184,25 @@ export async function canWrite(dir: string): Promise<boolean> {
  * The reason a downloads folder cannot be used, in plain words, or null when it can. It must be a
  * full local path that exists or can be created, and not inside a game's AddOns or WTF folder.
  */
-export function checkDownloadsPath(value: string, games: readonly { root: string; addOnsPath: string }[]): string | null {
+export function checkDownloadsPath(
+  value: string,
+  games: readonly { root: string; addOnsPath: string }[],
+  platform: NodeJS.Platform = process.platform
+): string | null {
   if (value === '') return null
-  if (value.includes('\0') || value.length > 240) return 'That is not a usable folder name for downloads.'
-  if (/^[\\/]{2}/.test(value)) return 'Network folders (\\\\server\\share) cannot be used for downloads. Choose a folder on a local drive.'
-  if (!path.isAbsolute(value)) return 'Choose a full folder path for downloads, such as D:\\Downloads.'
-  const abs = path.resolve(value)
+  if (value.includes('\0') || value.length > (platform === 'win32' ? 240 : 1024)) return 'That is not a usable folder name for downloads.'
+  if (platform === 'win32' && /^[\\/]{2}/.test(value)) {
+    return 'Network folders (\\\\server\\share) cannot be used for downloads. Choose a folder on a local drive.'
+  }
+  if (!pathFor(platform).isAbsolute(value)) {
+    return platform === 'win32'
+      ? 'Choose a full folder path for downloads, such as D:\\Downloads.'
+      : 'Choose a full folder path for downloads, such as /home/you/Downloads.'
+  }
+  const abs = pathFor(platform).resolve(value)
   for (const g of games) {
-    if (isInside(g.addOnsPath, abs) || isInside(path.join(g.root, 'WTF'), abs)) {
+    const wtf = pathFor(platform).join(g.root, findEntrySync(g.root, 'WTF') ?? 'WTF')
+    if (isInside(g.addOnsPath, abs, platform) || isInside(wtf, abs, platform)) {
       return "Downloads cannot be kept inside a game's AddOns or WTF folder."
     }
   }
@@ -205,13 +239,53 @@ export function isWowProcess(name: string): boolean {
   return /^wow.*\.exe$/i.test(name)
 }
 
-/** Whether any World of Warcraft client is running. The flavor is accepted for the caller's sake; the exe names differ too much to tell which client it is. */
-export function isGameRunning(_flavor?: string): Promise<boolean> {
-  if (process.platform !== 'win32') return Promise.resolve(false)
+/**
+ * Whether a line of `ps -A -o comm=,args=` output is a World of Warcraft client: the macOS app
+ * bundle's executable, or a Windows client (`Wow.exe`, `WowClassic.exe`, `WowB.exe`, ...) under Wine.
+ */
+export function isWowPsLine(line: string): boolean {
+  if (/\/Contents\/MacOS\/(?:World of Warcraft|Wow)/i.test(line)) return true
+  if (/^World of Warcraft(?:\s|$)/i.test(line.trim())) return true
+  return /(?:^|[\\/\s])wow[^\s\\/"]*\.exe(?=\s|$|")/i.test(line)
+}
+
+/** True when any line of `ps -A -o comm=,args=` output is a WoW client. */
+export function parsePs(output: string): boolean {
+  return output.split(/\r?\n/).some((l) => l.trim() !== '' && isWowPsLine(l))
+}
+
+function capture(file: string, args: string[]): Promise<string | null> {
   return new Promise((resolve) => {
-    execFile('tasklist', ['/FO', 'CSV', '/NH'], { timeout: 8000, windowsHide: true, maxBuffer: 8 * 1024 * 1024 }, (err, stdout) => {
-      if (err) return resolve(false)
-      resolve(parseTasklist(String(stdout)).some(isWowProcess))
-    })
+    try {
+      execFile(file, args, { timeout: 8000, windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (err, stdout) => resolve(err ? null : String(stdout)))
+    } catch {
+      resolve(null)
+    }
   })
+}
+
+export interface RunningOptions {
+  platform?: NodeJS.Platform
+  /** Runs a command and gives its output, or null when it is missing or fails (tests). */
+  exec?: (file: string, args: string[]) => Promise<string | null>
+}
+
+/**
+ * Whether any World of Warcraft client is running: `tasklist` on Windows, `ps` on macOS and Linux.
+ * The flavor is accepted for the caller's sake; the process names differ too much to tell which
+ * client it is. When the command is missing or fails the answer is false, so it never blocks an install.
+ */
+export async function isGameRunning(_flavor?: string, options: RunningOptions = {}): Promise<boolean> {
+  const platform = options.platform ?? process.platform
+  const exec = options.exec ?? capture
+  try {
+    if (platform === 'win32') {
+      const out = await exec('tasklist', ['/FO', 'CSV', '/NH'])
+      return out !== null && parseTasklist(out).some(isWowProcess)
+    }
+    const out = await exec('ps', ['-A', '-o', 'comm=,args='])
+    return out !== null && parsePs(out)
+  } catch {
+    return false
+  }
 }

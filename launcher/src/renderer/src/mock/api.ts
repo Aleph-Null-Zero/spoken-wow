@@ -1,6 +1,6 @@
 // A believable fake LauncherApi, used only when `window.launcher` is missing (a plain browser:
 // `npm run dev:web`). Address options: ?offline=1, ?empty=1 (no games), ?empty=packs (an empty community
-// list), ?readonly=1 (Anniversary is read-only), ?missing=anniversary (that game was not found; also forever, era), ?linked=1 (Spoken on Anniversary is a link to a development folder), ?update=1 (a launcher update banner).
+// list), ?readonly=1 (Anniversary is read-only), ?missing=anniversary (that game was not found; also forever, era), ?linked=1 (Spoken on Anniversary is a link to a development folder), ?update=1 (a launcher update banner), ?update=url (an update to download in the browser), ?platform=darwin|linux|win32 (the window frame of that system).
 import type { AddGameResult, InstallOptions, LauncherApi, UpdaterState } from '@shared/api'
 import { PRODUCTS, SPOKEN_FOLDERS, productById } from '@shared/products'
 import type { Catalog, CommunityCatalog, CommunityPack, GameInstall, JobProgress, Product, ProductStatus, ReleaseInfo, Settings, Snapshot } from '@shared/types'
@@ -232,6 +232,8 @@ export function createMockApi(): LauncherApi {
   const q = new URLSearchParams(location.search)
   const empty = q.has('empty') && q.get('empty') !== 'packs'
   const offline = q.has('offline')
+  const platformParam = q.get('platform')
+  const platform = platformParam === 'darwin' || platformParam === 'linux' ? platformParam : 'win32'
 
   // ?missing=forever,era,anniversary: those games were not found by the scan.
   const missing = (q.get('missing') ?? '').split(',').map((m) => ({ forever: 'classic_beta', era: 'classic_era', anniversary: 'anniversary' })[m.trim()] ?? m.trim())
@@ -398,7 +400,7 @@ export function createMockApi(): LauncherApi {
   const api: LauncherApi = {
     async snapshot(): Promise<Snapshot> {
       await sleep(250)
-      return { games, settings, catalog: catalog(), community: community(), products: PRODUCTS, appVersion: '0.1.0', dataPath: 'C:\\Users\\hello\\AppData\\Roaming\\Spoken Launcher' }
+      return { games, settings, catalog: catalog(), community: community(), products: PRODUCTS, appVersion: '0.1.0', platform, dataPath: platform === 'darwin' ? '/Users/hello/Library/Application Support/Spoken Launcher' : platform === 'linux' ? '/home/hello/.config/Spoken Launcher' : 'C:\\Users\\hello\\AppData\\Roaming\\Spoken Launcher' }
     },
     async scanGames() {
       await sleep(900)
@@ -476,7 +478,7 @@ export function createMockApi(): LauncherApi {
       const emit = (s: UpdaterState): void => updaterListeners.forEach((l) => l(s))
       emit({ state: 'checking' })
       await sleep(900)
-      emit(offline ? { state: 'error', message: "Can't reach GitHub to look for a new launcher." } : q.has('update') ? { state: 'available', version: '0.2.0' } : { state: 'idle' })
+      emit(offline ? { state: 'error', message: "Can't reach GitHub to look for a new launcher." } : q.has('update') ? { state: 'available', version: '0.2.0', ...(q.get('update') === 'url' ? { url: 'https://github.com/rusty-key/spoken-wow/releases/latest' } : {}) } : { state: 'idle' })
     },
     async clearDownloads() {
       await sleep(300)
@@ -518,7 +520,9 @@ export function createMockApi(): LauncherApi {
     },
     onUpdater(l) {
       updaterListeners.add(l)
-      if (q.has('update')) {
+      if (q.get('update') === 'url') {
+        window.setTimeout(() => l({ state: 'available', version: '0.2.0', url: 'https://github.com/rusty-key/spoken-wow/releases/latest' }), 1500)
+      } else if (q.has('update')) {
         window.setTimeout(() => l({ state: 'ready', version: '0.2.0' }), 1500)
       }
       return () => void updaterListeners.delete(l)

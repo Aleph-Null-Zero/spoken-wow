@@ -55,7 +55,8 @@ export interface ClearDownloadsResult {
 export type UpdaterState =
   | { state: 'idle' }
   | { state: 'checking' }
-  | { state: 'available'; version: string }
+  /** `url`: where to download it, when this system cannot update the launcher by itself (macOS without signing). */
+  | { state: 'available'; version: string; url?: string }
   | { state: 'downloading'; percent: number }
   | { state: 'ready'; version: string }
   | { state: 'error'; message: string }

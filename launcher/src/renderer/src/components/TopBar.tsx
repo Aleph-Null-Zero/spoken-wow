@@ -57,7 +57,7 @@ export function TopBar(): ReactNode {
           {S.tabs.settings}
         </button>
       </div>
-      <WindowControls />
+      {state.platform !== 'darwin' && <WindowControls />}
     </header>
   )
 }
@@ -163,6 +163,14 @@ export function Banners(): ReactNode {
       {catalog.offline && (
         <div className="banner banner-warn" role="status">
           {S.banners.offline}
+        </div>
+      )}
+      {updater.state === 'available' && updater.url && (
+        <div className="banner banner-info banner-action" role="status">
+          {S.banners.updateAvailable(updater.version)}
+          <button type="button" className="btn btn-sm" onClick={() => void api().openExternal(updater.url!)}>
+            {S.banners.download}
+          </button>
         </div>
       )}
       {updater.state === 'ready' && (

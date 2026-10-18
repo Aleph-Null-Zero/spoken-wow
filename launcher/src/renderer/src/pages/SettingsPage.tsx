@@ -4,7 +4,7 @@ import { api, errorText } from '../api'
 import { GameIcon } from '../components/Brand'
 import { Switch } from '../components/Controls'
 import { useAddGame } from '../components/EmptyGames'
-import { IconChevron, IconChevronRight, IconDownload, IconFolder, IconGames, IconInfo, IconRefresh } from '../components/Icons'
+import { IconChevron, IconChevronRight, IconDownload, IconGames, IconInfo, IconRefresh } from '../components/Icons'
 import { useStore } from '../store'
 import { REPO_URL, S, SITE_URL } from '../strings'
 
@@ -94,8 +94,7 @@ function GamesSection(): ReactNode {
                       <span className="input ellipsis" title={g.root}>
                         {g.root}
                       </span>
-                      <button type="button" className="btn" onClick={() => void api().openPath(g.root)}>
-                        <IconFolder size={14} />
+                      <button type="button" className="btn" title={S.common.showIn(state.platform)} onClick={() => void api().openPath(g.root)}>
                         {S.common.open}
                       </button>
                       {g.source === 'manual' && (
@@ -241,7 +240,7 @@ function AboutSection(): ReactNode {
     u.state === 'checking' || waiting
       ? { text: S.settings.updateChecking, cls: 'status-muted' }
       : u.state === 'available'
-        ? { text: S.settings.updateAvailable(u.version), cls: 'status-warn' }
+        ? { text: u.url ? S.banners.updateAvailable(u.version) : S.settings.updateAvailable(u.version), cls: 'status-warn' }
         : u.state === 'downloading'
           ? { text: S.banners.updating(Math.round(u.percent)), cls: 'status-muted' }
           : u.state === 'ready'
@@ -269,7 +268,12 @@ function AboutSection(): ReactNode {
         <button type="button" className="btn" onClick={() => void check()} disabled={busy} aria-busy={busy}>
           {S.settings.checkUpdate}
         </button>
-        <button type="button" className="btn" onClick={() => void api().openLogs()}>
+        {u.state === 'available' && u.url && (
+          <button type="button" className="btn btn-primary" onClick={() => void api().openExternal(u.url!)}>
+            {S.banners.download}
+          </button>
+        )}
+        <button type="button" className="btn" title={S.common.showIn(state.platform)} onClick={() => void api().openLogs()}>
           {S.settings.openLogs}
         </button>
         <button type="button" className="btn" onClick={() => void api().openExternal(REPO_URL)}>

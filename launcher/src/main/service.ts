@@ -87,7 +87,8 @@ export class LauncherService {
       community: this.community,
       products: PRODUCTS,
       appVersion: this.opts.appVersion,
-      dataPath: this.opts.dataPath
+      dataPath: this.opts.dataPath,
+      platform: process.platform === 'darwin' ? 'darwin' : process.platform === 'win32' ? 'win32' : 'linux'
     }
   }
 

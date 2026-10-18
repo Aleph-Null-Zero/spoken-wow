@@ -301,6 +301,12 @@ h2 {
   align-self: stretch;
 }
 
+/* macOS: the system draws the traffic lights at the left (main puts them at about x=20, centred in the bar),
+   so the logo starts after them and the right-hand items keep the normal padding. */
+.platform-darwin .topbar {
+  padding: 0 var(--topbar-pad) 0 84px;
+}
+
 .window-controls {
   display: flex;
   align-self: stretch;
@@ -501,6 +507,13 @@ svg.is-spinning {
   border-radius: var(--radius-m);
   font-size: var(--fs-small);
   text-align: center;
+}
+
+.banner-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 .banner-warn {

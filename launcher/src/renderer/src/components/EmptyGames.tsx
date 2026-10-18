@@ -45,11 +45,12 @@ export function useAddGame(): { add: () => Promise<void>; scan: () => Promise<vo
 /** Shown on every game page when no install is known. */
 export function EmptyGames(): ReactNode {
   const { add, scan, error, busy, scanning } = useAddGame()
+  const { state } = useStore()
   return (
     <div className="empty scroll">
       <img className="empty-icon" src={icon} alt="" width={96} height={96} />
       <h1>{S.empty.title}</h1>
-      <p>{S.empty.text}</p>
+      <p>{S.empty.text(state.platform)}</p>
       <button type="button" className="btn btn-primary btn-lg" onClick={add} disabled={busy}>
         {S.empty.add}
       </button>

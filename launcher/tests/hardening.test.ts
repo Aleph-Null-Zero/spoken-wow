@@ -61,7 +61,8 @@ const journalOf = (game: GameInstall): string => path.join(game.addOnsPath, WORK
 // ---------------------------------------------------------------- trust and what may be opened
 
 describe('which page is trusted', () => {
-  const index = path.resolve('C:\\app\\out\\renderer\\index.html')
+  const app = tmpDir()
+  const index = path.join(app, 'out', 'renderer', 'index.html')
   const page = { indexHtml: index }
 
   it('is exactly the built index.html, whatever the hash or query', () => {
@@ -73,8 +74,8 @@ describe('which page is trusted', () => {
 
   it('refuses every other file, scheme and host', () => {
     for (const bad of [
-      pageFileUrl(path.resolve('C:\\app\\out\\renderer\\other.html')),
-      pageFileUrl(path.resolve('C:\\Windows\\win.ini')),
+      pageFileUrl(path.join(app, 'out', 'renderer', 'other.html')),
+      pageFileUrl(path.join(app, 'win.ini')),
       'file://evil-host/share/index.html',
       'https://github.com/',
       'http://localhost:5173/',
@@ -88,6 +89,14 @@ describe('which page is trusted', () => {
     ]) {
       expect(isOurPage(bad, page)).toBe(false)
     }
+  })
+
+  it('compares the file path with the case rules of the platform', () => {
+    const shouty = pageFileUrl(path.join(app, 'out', 'renderer', 'index.html').toUpperCase())
+    expect(isOurPage(shouty, page, 'win32')).toBe(true)
+    expect(isOurPage(shouty, page, 'darwin')).toBe(true)
+    // A URL with the same letters in the same case is ours on every platform.
+    expect(isOurPage(pageFileUrl(index), page, 'linux')).toBe(true)
   })
 
   it('in development is the dev server origin only', () => {
@@ -139,13 +148,42 @@ describe('the downloads folder', () => {
     expect(checkDownloadsPath(path.join(tmpDir(), 'new', 'deeper'), [game])).toBeNull()
   })
 
-  it('refuses a relative path, a UNC path and a path with NUL or too long', () => {
+  it('refuses a relative path and a path with NUL or too long, on every platform', () => {
     expect(checkDownloadsPath('downloads', [game])).toMatch(/full folder path/)
-    expect(checkDownloadsPath('\\\\server\\share\\dl', [game])).toMatch(/Network folders/)
-    expect(checkDownloadsPath('//server/share/dl', [game])).toMatch(/Network folders/)
-    expect(checkDownloadsPath('\\\\?\\C:\\dl', [game])).toMatch(/Network folders/)
+    expect(checkDownloadsPath('downloads', [game], 'win32')).toMatch(/such as D:/)
+    expect(checkDownloadsPath('downloads', [game], 'linux')).toContain('such as /home/you/Downloads')
+    expect(checkDownloadsPath('downloads', [game], 'darwin')).toMatch(/full folder path/)
     expect(checkDownloadsPath(`${tmpDir()}\0x`, [game])).toMatch(/not a usable/)
-    expect(checkDownloadsPath(path.join(tmpDir(), 'x'.repeat(300)), [game])).toMatch(/not a usable/)
+    expect(checkDownloadsPath(path.join(tmpDir(), 'x'.repeat(300)), [game], 'win32')).toMatch(/not a usable/)
+    expect(checkDownloadsPath(path.join(tmpDir(), 'x'.repeat(1100)), [game], 'linux')).toMatch(/not a usable/)
+  })
+
+  it('refuses network folders on Windows only', () => {
+    expect(checkDownloadsPath('\\\\server\\share\\dl', [game], 'win32')).toMatch(/Network folders/)
+    expect(checkDownloadsPath('//server/share/dl', [game], 'win32')).toMatch(/Network folders/)
+    expect(checkDownloadsPath('\\\\?\\C:\\dl', [game], 'win32')).toMatch(/Network folders/)
+    // On macOS and Linux a double slash is an ordinary path.
+    expect(checkDownloadsPath('//server/share/dl', [game], 'linux') ?? '').not.toMatch(/Network folders/)
+    expect(checkDownloadsPath('//server/share/dl', [game], 'darwin') ?? '').not.toMatch(/Network folders/)
+  })
+
+  it('keeps downloads out of AddOns and WTF with the case rules of the platform', () => {
+    const mac = { root: '/Users/me/wow/_classic_era_', addOnsPath: '/Users/me/wow/_classic_era_/Interface/AddOns' }
+    expect(checkDownloadsPath('/USERS/me/wow/_classic_era_/interface/addons/x', [mac], 'darwin')).toMatch(/AddOns or WTF/)
+    expect(checkDownloadsPath('/users/me/wow/_classic_era_/wtf/Account', [mac], 'darwin')).toMatch(/AddOns or WTF/)
+    // Linux tells the spellings apart, so another spelling is another folder.
+    expect(checkDownloadsPath('/Users/me/wow/_classic_era_/Interface/AddOns/x', [mac], 'linux')).toMatch(/AddOns or WTF/)
+    expect(checkDownloadsPath('/Users/me/wow/_classic_era_/WTF/Account', [mac], 'linux')).toMatch(/AddOns or WTF/)
+    expect(checkDownloadsPath('/USERS/me/wow/_classic_era_/interface/addons/x', [mac], 'linux') ?? '').not.toMatch(/AddOns or WTF/)
+    const win = { root: 'C:\\wow\\_classic_era_', addOnsPath: 'C:\\wow\\_classic_era_\\Interface\\AddOns' }
+    expect(checkDownloadsPath('c:\\WOW\\_classic_era_\\wtf\\x', [win], 'win32')).toMatch(/AddOns or WTF/)
+  })
+
+  it('protects a WTF folder under the spelling it has on disk', () => {
+    const root = tmpDir()
+    fs.mkdirSync(path.join(root, 'wtf'))
+    const g = { root, addOnsPath: path.join(root, 'Interface', 'AddOns') }
+    expect(checkDownloadsPath(path.join(root, 'wtf', 'Account'), [g])).toMatch(/AddOns or WTF/)
   })
 
   it('refuses a folder inside a game AddOns or WTF folder', () => {
