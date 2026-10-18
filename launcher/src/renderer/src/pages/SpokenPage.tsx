@@ -36,7 +36,7 @@ function SpokenFor({ game }: { game: GameInstall }): ReactNode {
   const present = !!status && status.state !== 'not-installed'
 
   const versionOptions = releases.map((r) => {
-    const marks = [r.version === latest?.version ? S.common.latest : '', r.version === installed ? S.common.installed : '', r.prerelease ? 'pre-release' : '']
+    const marks = [r.version === latest?.version ? S.common.latest : '', r.version === installed ? S.common.installed : '', r.prerelease ? S.spoken.prerelease : '']
       .filter(Boolean)
       .join(', ')
     return { value: r.version, label: marks ? `${r.version} (${marks})` : r.version }
@@ -164,11 +164,9 @@ function SpokenFor({ game }: { game: GameInstall }): ReactNode {
         <div className="center-inner">
           <div className="pill-row pill-row-end">
             <button type="button" className="pill pill-action" onClick={() => void api().openPath(game.addOnsPath)}>
-              <IconFolder size={14} />
               {S.spoken.openAddOns}
             </button>
             <button type="button" className="pill pill-action" onClick={() => void api().openExternal(latest?.htmlUrl ?? REPO_URL)}>
-              <IconExternal size={14} />
               {S.spoken.github}
             </button>
           </div>

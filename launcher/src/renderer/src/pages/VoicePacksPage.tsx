@@ -4,7 +4,6 @@ import { BASE_LANGUAGE, LANGUAGES, languageName } from '@shared/products'
 import { jobBusy, latestOf, releasesFor, statusOf } from '../catalog'
 import { Wordmark } from '../components/Brand'
 import { NoGame } from '../components/EmptyGames'
-import { IconDownload } from '../components/Icons'
 import { PackRow } from '../components/PackRow'
 import { formatBytes } from '../format'
 import { jobKey, useGame, useStore } from '../store'
@@ -72,7 +71,6 @@ export function VoicePacksPage(): ReactNode {
               </div>
             ) : (
               <button type="button" className="btn btn-primary btn-play btn-wrap" disabled={todo.length === 0 || !game.writable} onClick={() => setConfirmAll(true)}>
-                <IconDownload size={18} />
                 {todo.length === 0 ? S.voices.allInstalled(lang) : S.voices.installAll(lang)}
               </button>
             ))}

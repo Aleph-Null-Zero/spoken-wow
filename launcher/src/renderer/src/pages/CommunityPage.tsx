@@ -5,7 +5,7 @@ import { api } from '../api'
 import { statusOf } from '../catalog'
 import { Wordmark } from '../components/Brand'
 import { NoGame } from '../components/EmptyGames'
-import { IconAlert, IconExternal } from '../components/Icons'
+import { IconAlert } from '../components/Icons'
 import { PackRow } from '../components/PackRow'
 import { formatBytes } from '../format'
 import { useGame, useStore } from '../store'
@@ -89,7 +89,6 @@ export function CommunityPage(): ReactNode {
         </div>
         <div className="rail-bottom">
           <button type="button" className="btn btn-play btn-wrap" onClick={() => open(COMMUNITY_README_URL)}>
-            <IconExternal size={16} />
             {S.community.share}
           </button>
         </div>
@@ -132,7 +131,6 @@ export function CommunityPage(): ReactNode {
               <h2>{S.community.emptyTitle}</h2>
               <p className="muted">{S.community.emptyText}</p>
               <button type="button" className="btn btn-primary" onClick={() => open(COMMUNITY_README_URL)}>
-                <IconExternal size={16} />
                 {S.community.share}
               </button>
             </div>
@@ -251,7 +249,6 @@ function CommunityRow({ pack, gameId }: { pack: CommunityPack; gameId: string })
         {link && (
           <button type="button" className="link link-inline" aria-label={S.community.authorPageLabel(pack.author)} onClick={() => open(link)}>
             {S.community.authorPage}
-            <IconExternal size={12} />
           </button>
         )}
       </span>

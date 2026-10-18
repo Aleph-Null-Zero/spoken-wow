@@ -4,7 +4,7 @@ import { api, errorText } from '../api'
 import { GameIcon } from '../components/Brand'
 import { Switch } from '../components/Controls'
 import { useAddGame } from '../components/EmptyGames'
-import { IconChevron, IconChevronRight, IconDownload, IconExternal, IconFolder, IconGames, IconInfo, IconPlus, IconRefresh } from '../components/Icons'
+import { IconChevron, IconChevronRight, IconDownload, IconFolder, IconGames, IconInfo, IconRefresh } from '../components/Icons'
 import { useStore } from '../store'
 import { REPO_URL, S, SITE_URL } from '../strings'
 
@@ -114,11 +114,9 @@ function GamesSection(): ReactNode {
 
       <div className="setting-actions">
         <button type="button" className="btn" onClick={add} disabled={busy}>
-          <IconPlus size={14} />
           {S.empty.add}
         </button>
         <button type="button" className="btn" onClick={scan} disabled={scanning} aria-busy={scanning}>
-          <IconRefresh size={14} className={scanning ? 'is-spinning' : ''} />
           {S.empty.scan}
         </button>
       </div>
@@ -269,19 +267,15 @@ function AboutSection(): ReactNode {
       <p className="settings-text disclaimer">{S.settings.disclaimer}</p>
       <div className="setting-actions">
         <button type="button" className="btn" onClick={() => void check()} disabled={busy} aria-busy={busy}>
-          <IconRefresh size={14} className={busy ? 'is-spinning' : ''} />
           {S.settings.checkUpdate}
         </button>
         <button type="button" className="btn" onClick={() => void api().openLogs()}>
-          <IconFolder size={14} />
           {S.settings.openLogs}
         </button>
         <button type="button" className="btn" onClick={() => void api().openExternal(REPO_URL)}>
-          <IconExternal size={14} />
           {S.settings.repository}
         </button>
         <button type="button" className="btn" onClick={() => void api().openExternal(SITE_URL)}>
-          <IconExternal size={14} />
           {S.settings.site}
         </button>
       </div>

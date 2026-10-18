@@ -3,7 +3,6 @@ import { api, errorText } from '../api'
 import icon from '../assets/spoken.png'
 import { useStore } from '../store'
 import { S } from '../strings'
-import { IconPlus } from './Icons'
 
 /** Pick a folder and add it as a game; the error from the main process stays in `error`. */
 export function useAddGame(): { add: () => Promise<void>; scan: () => Promise<void>; error: string; busy: boolean; scanning: boolean } {
@@ -52,7 +51,6 @@ export function EmptyGames(): ReactNode {
       <h1>{S.empty.title}</h1>
       <p>{S.empty.text}</p>
       <button type="button" className="btn btn-primary btn-lg" onClick={add} disabled={busy}>
-        <IconPlus size={18} />
         {S.empty.add}
       </button>
       {error && (

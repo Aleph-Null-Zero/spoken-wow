@@ -38,7 +38,7 @@ export function GameCard({ game }: { game: GameInstall }): ReactNode {
         <CardArt flavor={game.flavor} />
       </button>
       <div className="game-card-body">
-        <p className="eyebrow">{game.gameVersion ? `Game version ${game.gameVersion}` : game.flavorFolder}</p>
+        <p className="eyebrow">{game.gameVersion ? `Game Version ${game.gameVersion}` : game.flavorFolder}</p>
         <h2 className="game-name">{game.label}</h2>
 
         {busy ? (
