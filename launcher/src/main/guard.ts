@@ -214,7 +214,9 @@ export function checkDownloadsPath(
       fs.accessSync(at, fs.constants.W_OK)
       return null
     } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') return 'The launcher cannot write to that folder.'
+      const code = (err as NodeJS.ErrnoException).code
+      if (code === 'ENOTDIR') return 'That folder cannot be created: a file is in the way.'
+      if (code !== 'ENOENT') return 'The launcher cannot write to that folder.'
       const up = path.dirname(at)
       if (up === at) return 'That drive does not exist.'
       at = up
