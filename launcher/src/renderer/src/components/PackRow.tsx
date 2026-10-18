@@ -55,6 +55,14 @@ export function PackRow({ gameId, productId, writable, blockedReason, released, 
     ) : null
 
   const install = (): void => void actions.install(gameId, productId)
+  const repair = (): void => void actions.repair(gameId, productId)
+  const retry = (): void => {
+    if (job?.action === 'uninstall') void actions.uninstall(gameId, productId)
+    else if (job?.action === 'repair') repair()
+    else install()
+  }
+  // Installed by hand: a repair needs to know the version, an update puts the newest one over it.
+  const canRepair = present && (s !== 'unknown' || !!status?.installedVersion)
 
   let action: ReactNode
   if (busy) {
@@ -90,13 +98,13 @@ export function PackRow({ gameId, productId, writable, blockedReason, released, 
             {S.voices.install}
           </button>
         )}
-        {s === 'update-available' && (
+        {(s === 'update-available' || (s === 'unknown' && released)) && (
           <button type="button" className="btn btn-primary btn-sm" disabled={!!reason} onClick={install}>
             {S.voices.update}
           </button>
         )}
-        {present && (
-          <button type="button" className="btn btn-sm" disabled={!!reason} onClick={() => void actions.repair(gameId, productId)}>
+        {canRepair && (
+          <button type="button" className="btn btn-sm" disabled={!!reason} onClick={repair}>
             {S.common.repair}
           </button>
         )}
@@ -125,7 +133,7 @@ export function PackRow({ gameId, productId, writable, blockedReason, released, 
           <span className="row-error" role="alert">
             <IconAlert size={14} />
             {job.message ?? S.jobs.error}
-            <button type="button" className="link" onClick={job.action === 'uninstall' ? () => void actions.uninstall(gameId, productId) : install}>
+            <button type="button" className="link" onClick={retry}>
               {S.common.retry}
             </button>
             <button type="button" className="icon-btn icon-btn-sm" aria-label={S.common.dismiss} onClick={() => actions.dismissJob(jobKey(gameId, productId))}>

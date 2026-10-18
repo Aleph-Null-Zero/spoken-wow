@@ -24,11 +24,15 @@ export function isAllowedOpenPath(value: unknown, roots: readonly string[]): boo
   return roots.some((r) => r !== '' && isInside(r, value))
 }
 
+// Folders macOS opens as a program or plug-in instead of showing them in Finder.
+const MAC_BUNDLE = /\.(app|appex|bundle|framework|kext|mdimporter|plugin|prefpane|qlgenerator|saver|xpc)$/i
+
 /**
  * The folder to open in Explorer: inside one of `roots`, and a directory. A file is never opened
- * (the shell would run it), and neither is a link to one.
+ * (the shell would run it), and neither is a link to one. On macOS an app is a folder too, so a
+ * bundle is refused as well.
  */
-export async function openableDirectory(value: unknown, roots: readonly string[]): Promise<string> {
+export async function openableDirectory(value: unknown, roots: readonly string[], platform: NodeJS.Platform = process.platform): Promise<string> {
   if (!isAllowedOpenPath(value, roots)) throw new Error('That folder cannot be opened from here')
   const target = path.resolve(value as string)
   let st: fs.Stats
@@ -38,5 +42,8 @@ export async function openableDirectory(value: unknown, roots: readonly string[]
     throw new Error('That folder does not exist')
   }
   if (!st.isDirectory()) throw new Error('Only folders can be opened from here')
+  if (platform === 'darwin' && MAC_BUNDLE.test(path.basename(await fs.promises.realpath(target)))) {
+    throw new Error('Only folders can be opened from here')
+  }
   return target
 }

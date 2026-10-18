@@ -135,11 +135,16 @@ jobs:
           flags=""
           case "${GITHUB_REF_NAME}" in *-*) flags="--prerelease" ;; esac
           # The installers only: the update feed files and block maps go to launcher-latest.
-          gh release create "${GITHUB_REF_NAME}" \
-            dist/*.exe dist/*.dmg dist/*.zip dist/*.AppImage dist/*.tar.gz \
-            --title "Spoken Launcher ${GITHUB_REF_NAME#launcher/v}" \
-            --notes "Installers for Windows, macOS and Linux. See launcher/README.md for how to install them." \
-            --verify-tag --latest=false $flags
+          installers="dist/*.exe dist/*.dmg dist/*.zip dist/*.AppImage dist/*.tar.gz"
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            # A re-run: the release is there already, so only its files are replaced.
+            gh release upload "${GITHUB_REF_NAME}" $installers --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" $installers \
+              --title "Spoken Launcher ${GITHUB_REF_NAME#launcher/v}" \
+              --notes "Installers for Windows, macOS and Linux. See launcher/README.md for how to install them." \
+              --verify-tag --latest=false $flags
+          fi
 
       # What the launcher's updater reads: latest.yml, latest-mac.yml, latest-linux.yml and the files
       # they name. A pre-release tag does not touch it, so only stable versions reach players.
@@ -150,10 +155,12 @@ jobs:
             *-*) echo "Pre-release tag: launcher-latest is left alone."; exit 0 ;;
           esac
           if gh release view launcher-latest >/dev/null 2>&1; then
-            gh release view launcher-latest --json assets --jq '.assets[].name' | while read -r name; do
-              gh release delete-asset launcher-latest "$name" --yes
-            done
+            # Upload first, then drop what the new version no longer ships, so a failed upload
+            # leaves the old feed working and a re-run picks up from there.
             gh release upload launcher-latest dist/* --clobber
+            gh release view launcher-latest --json assets --jq '.assets[].name' | while read -r name; do
+              [ -e "dist/$name" ] || gh release delete-asset launcher-latest "$name" --yes
+            done
           else
             # First run: a normal release (not a draft, not a pre-release), and not "latest".
             gh release create launcher-latest dist/* \

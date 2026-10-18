@@ -1,6 +1,6 @@
 // The handlers for every channel in shared/api.ts. Each argument is checked before it is used.
 import { BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
-import { CHANNELS, type InstallOptions } from '../shared/api'
+import { CHANNELS, type InstallOptions, type UpdaterState } from '../shared/api'
 import type { Settings } from '../shared/types'
 import { DEFAULT_SETTINGS } from '../shared/types'
 import { isAllowedExternalUrl, openableDirectory } from './external'
@@ -56,7 +56,7 @@ function trusted(event: IpcMainInvokeEvent, page: AppPage): boolean {
   return isOurPage(frame.url, page)
 }
 
-export function registerIpc(service: LauncherService, page: AppPage): void {
+export function registerIpc(service: LauncherService, page: AppPage, updater: () => UpdaterState): void {
   const handle = (channel: string, fn: (event: IpcMainInvokeEvent, ...args: unknown[]) => unknown): void => {
     ipcMain.handle(channel, async (event, ...args) => {
       if (!trusted(event, page)) {
@@ -89,7 +89,7 @@ export function registerIpc(service: LauncherService, page: AppPage): void {
   ipcMain.handle(CHANNELS.windowClose, (event) => void windowOf(event)?.close())
   ipcMain.handle(CHANNELS.windowIsMaximized, (event) => windowOf(event)?.isMaximized() ?? false)
 
-  handle(CHANNELS.snapshot, () => service.snapshot())
+  handle(CHANNELS.snapshot, () => ({ ...service.snapshot(), updater: updater() }))
   handle(CHANNELS.scanGames, () => service.scan())
   handle(CHANNELS.addGame, (_e, p) => service.addGame(text(p, 'path')))
   handle(CHANNELS.removeGame, (_e, gameId) => service.removeGame(id(gameId, 'game id')))

@@ -136,6 +136,21 @@ describe('openableDirectory', () => {
     }
     await expect(openableDirectory(path.join(addOns, 'link'), [addOns])).rejects.toThrow(/Only folders/)
   })
+
+  it('never opens a macOS app bundle, even through a link', async () => {
+    const base = tmpDir()
+    const addOns = path.join(base, 'AddOns')
+    write(path.join(addOns, 'Evil.app', 'Contents', 'Info.plist'), 'x')
+    await expect(openableDirectory(path.join(addOns, 'Evil.app'), [addOns], 'darwin')).rejects.toThrow(/Only folders/)
+    expect(await openableDirectory(path.join(addOns, 'Evil.app', 'Contents'), [addOns], 'darwin')).toBe(path.join(addOns, 'Evil.app', 'Contents'))
+    expect(await openableDirectory(path.join(addOns, 'Evil.app'), [addOns], 'win32')).toBe(path.join(addOns, 'Evil.app'))
+    try {
+      fs.symlinkSync(path.join(addOns, 'Evil.app'), path.join(addOns, 'Plain'), 'dir')
+    } catch {
+      return
+    }
+    await expect(openableDirectory(path.join(addOns, 'Plain'), [addOns], 'darwin')).rejects.toThrow(/Only folders/)
+  })
 })
 
 describe('the downloads folder', () => {
@@ -557,7 +572,7 @@ describe('backups, repair, leftovers and downloads', () => {
         }, 10)
       })
 
-    expect(await last(svc.install(e.game.id, 'spoken', { repair: true }))).toMatchObject({ phase: 'error', message: expect.stringMatching(/nothing to repair/) })
+    expect(await last(svc.install(e.game.id, 'spoken', { repair: true }))).toMatchObject({ action: 'repair', phase: 'error', message: expect.stringMatching(/nothing to repair/) })
 
     expect((await last(svc.install(e.game.id, 'spoken'))).phase).toBe('done')
     // Damage the install, then repair it.

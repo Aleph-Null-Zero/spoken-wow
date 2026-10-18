@@ -7,7 +7,7 @@ import { log } from './state'
 export interface JobSpec {
   gameId: string
   productId: string
-  action: 'install' | 'uninstall'
+  action: JobProgress['action']
   /** The work. Emits its own progress and `done`; throws to fail. */
   run: (ctx: { jobId: string; signal: AbortSignal; emit: (p: JobProgress) => void }) => Promise<void>
   version?: string

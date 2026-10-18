@@ -196,7 +196,8 @@ export interface JobProgress {
   jobId: string
   gameId: string
   productId: string
-  action: 'install' | 'uninstall'
+  /** A repair is an install of the version already there. */
+  action: 'install' | 'repair' | 'uninstall'
   phase: JobPhase
   /** Bytes of the download so far and its total. */
   received: number
@@ -219,4 +220,6 @@ export interface Snapshot {
   platform: 'win32' | 'darwin' | 'linux'
   /** Where state, logs and downloads are kept. */
   dataPath: string
+  /** The launcher's own update, as last sent: a window opened later still shows it. */
+  updater?: import('./api').UpdaterState
 }
