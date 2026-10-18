@@ -313,14 +313,13 @@ function runUpdater(
 }
 
 describe('launcher updates per platform', () => {
-  it('Windows, and Linux inside an AppImage, update by themselves', () => {
+  it('Windows, macOS, and Linux inside an AppImage, update by themselves', () => {
     expect(updateMode('win32', {})).toBe('auto')
+    expect(updateMode('darwin', {})).toBe('auto')
     expect(updateMode('linux', { APPIMAGE: '/home/me/Spoken-Launcher.AppImage' })).toBe('auto')
   })
 
-  it('macOS, and Linux outside an AppImage, only point to the download page', () => {
-    expect(updateMode('darwin', {})).toBe('manual')
-    expect(updateMode('darwin', { APPIMAGE: '/x' })).toBe('manual')
+  it('Linux outside an AppImage only points to the download page', () => {
     expect(updateMode('linux', {})).toBe('manual')
   })
 
@@ -335,21 +334,25 @@ describe('launcher updates per platform', () => {
     expect(r.states[3]).toEqual({ state: 'downloading', percent: 42 })
   })
 
-  it('an AppImage does the same', async () => {
-    const r = runUpdater('linux', { APPIMAGE: '/home/me/app.AppImage' })
-    await r.updater.start()
-    expect(r.u.autoDownload).toBe(true)
-    expect(r.states.at(-1)).toEqual({ state: 'ready', version: '0.2.0' })
-  })
+  for (const [name, platform, env] of [
+    ['macOS', 'darwin', {}],
+    ['an AppImage', 'linux', { APPIMAGE: '/home/me/app.AppImage' }]
+  ] as const) {
+    it(`${name} does the same`, async () => {
+      const r = runUpdater(platform, env)
+      await r.updater.start()
+      expect(r.u.autoDownload).toBe(true)
+      expect(r.states.at(-1)).toEqual({ state: 'ready', version: '0.2.0' })
+    })
+  }
 
   for (const [name, platform, env, file] of [
-    ['macOS', 'darwin', {}, 'latest-mac.yml'],
     ['Linux without an AppImage', 'linux', {}, 'latest-linux.yml']
   ] as const) {
     it(`${name} reads ${file} itself, downloads nothing and gives the release page`, async () => {
       const r = runUpdater(platform, env)
       await r.updater.start()
-      // electron-updater is not involved at all: it does nothing outside an AppImage and cannot install an unsigned Mac build.
+      // electron-updater is not involved at all: it does nothing outside an AppImage.
       expect(r.record.feeds).toEqual([])
       expect(r.record.checks).toBe(0)
       expect(r.record.downloads).toBe(0)
@@ -385,10 +388,10 @@ describe('launcher updates per platform', () => {
 
   it('a feed that cannot be read or has no version is a silent failure at start and an error when asked', async () => {
     for (const feed of [new Error('offline'), yml('files: []'), yml('version: not-a-version')]) {
-      const quiet = runUpdater('darwin', {}, { feed })
+      const quiet = runUpdater('linux', {}, { feed })
       await quiet.updater.start()
       expect(quiet.states.at(-1)).toEqual({ state: 'idle' })
-      const asked = runUpdater('darwin', {}, { feed })
+      const asked = runUpdater('linux', {}, { feed })
       await asked.updater.checkNow()
       expect(asked.states.at(-1)).toMatchObject({ state: 'error' })
     }
@@ -399,7 +402,7 @@ describe('launcher updates per platform', () => {
     const server: TestServer = await startServer((req, res) => {
       requests.push(req.url ?? '')
       res.setHeader('content-type', 'text/yaml')
-      res.end(yml('version: 0.3.0', 'files:', '  - url: Spoken-Launcher-0.3.0-mac-arm64.dmg'))
+      res.end(yml('version: 0.3.0', 'files:', '  - url: Spoken-Launcher-0.3.0-linux.tar.gz'))
     })
     try {
       const states: UpdaterState[] = []
@@ -408,12 +411,12 @@ describe('launcher updates per platform', () => {
         appVersion: '0.1.0',
         autoUpdateLauncher: () => true,
         send: (s) => states.push(s),
-        platform: 'darwin',
+        platform: 'linux',
         env: {},
         feedUrl: server.url
       })
       await updater.start()
-      expect(requests).toEqual(['/latest-mac.yml'])
+      expect(requests).toEqual(['/latest-linux.yml'])
       expect(states.at(-1)).toEqual({ state: 'available', version: '0.3.0', url: MANUAL_UPDATE_URL })
     } finally {
       await server.close()
