@@ -35,7 +35,7 @@ describe("a fish.audio rate", () => {
   });
 
   it("is unknown for a model with no published price", async () => {
-    expect(await observedFishRate("drama-3-preview", "enUS")).toMatchObject({
+    expect(await observedFishRate("drama-3", "enUS")).toMatchObject({
       unknown: true,
       samples: 0,
     });
