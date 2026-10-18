@@ -43,7 +43,7 @@ async function renameWithRetry(from: string, to: string): Promise<void> {
   }
 }
 
-const defaultOps: FsOps = {
+export const defaultOps: FsOps = {
   rename: renameWithRetry,
   rm: (target) => fs.promises.rm(target, { recursive: true, force: true, maxRetries: 3, retryDelay: 150 }),
   cp: (from, to) => fs.promises.cp(from, to, { recursive: true, errorOnExist: true, force: false })
@@ -134,7 +134,7 @@ function reporter(game: GameInstall, product: Product, ctx: JobContext, action: 
   }
 }
 
-function doneMessage(running: boolean, createdNew: boolean, removed: boolean): string {
+export function doneMessage(running: boolean, createdNew: boolean, removed: boolean): string {
   const base = 'Reload the game (/reload) or restart it to use it.'
   if (removed) return running ? 'The game is running. Reload the game (/reload) or restart it to apply this.' : 'Removed. Reload the game (/reload) or restart it if it is open.'
   if (running && createdNew) return 'The game is running. Restart it to load the new files.'
@@ -182,7 +182,7 @@ const SAFE_PRODUCT = /^[A-Za-z0-9_-]+(\/[a-z0-9]+(-[a-z0-9]+)*)?$/
  * Moves each current folder to the backup, then each staged folder in. Any failure puts every
  * folder back as it was. Returns the folders that did not exist before.
  */
-async function applyChanges(
+export async function applyChanges(
   game: GameInstall,
   productId: string,
   changes: Change[],
@@ -303,7 +303,7 @@ export async function recoverInterrupted(game: GameInstall, ops: FsOps = default
   return failed
 }
 
-async function refuseUnresolved(game: GameInstall, ops: FsOps): Promise<void> {
+export async function refuseUnresolved(game: GameInstall, ops: FsOps): Promise<void> {
   const failed = await recoverInterrupted(game, ops)
   if (failed.length > 0) {
     let where = backupDirFor(game, 'the product')
@@ -503,7 +503,7 @@ async function verifyStaged(product: Product, dir: string): Promise<string[]> {
 
 // ---------------------------------------------------------------- install
 
-async function checkWritable(game: GameInstall): Promise<void> {
+export async function checkWritable(game: GameInstall): Promise<void> {
   if (!(await canWrite(game.addOnsPath))) {
     throw new PlainError(
       `The launcher cannot write to ${game.addOnsPath}. Check that the folder is not read-only and that your account may change it.`

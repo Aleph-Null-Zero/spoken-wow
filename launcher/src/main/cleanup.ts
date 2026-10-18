@@ -27,6 +27,19 @@ export async function cleanLeftovers(games: GameInstall[], downloadsPath: string
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') log(`Could not clean ${staging}:`, err)
     }
+    // Blobs a sync downloaded but never used (it was cancelled and not retried) go after a week, as .part downloads do.
+    const blobs = path.join(work, 'blobs')
+    try {
+      if (!(await isLinked(blobs))) {
+        for (const name of await fs.promises.readdir(blobs)) {
+          const file = path.join(blobs, name)
+          const st = await fs.promises.lstat(file)
+          if (st.isFile() && now - st.mtimeMs > STALE_PART_MS) await fs.promises.rm(file, { force: true })
+        }
+      }
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') log(`Could not clean ${blobs}:`, err)
+    }
   }
   try {
     const all = await fs.promises.readdir(downloadsPath)

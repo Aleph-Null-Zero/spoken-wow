@@ -46,7 +46,7 @@ function wantedHash(digest: string | undefined): string | null {
   return m ? m[1]!.toLowerCase() : null
 }
 
-async function sha256OfFile(file: string, signal?: AbortSignal): Promise<string> {
+export async function sha256OfFile(file: string, signal?: AbortSignal): Promise<string> {
   const hash = createHash('sha256')
   const stream = fs.createReadStream(file, { highWaterMark: 1024 * 1024 })
   try {
