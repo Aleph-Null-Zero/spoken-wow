@@ -68,9 +68,30 @@ local function Books()
 	return data and data.books or {}
 end
 
+-- A page's words as this client reads them. The pack in the client's language carries that
+-- language's own text for the pages it voices -- the words Play reads aloud -- and the reader
+-- keeps the words the client itself showed for pages opened in the world. The corpus's own is
+-- English, what a client with neither of those falls back to.
+local function PageWords(pageId)
+	local client = SpokenBooks:GetClientLanguage()
+	for _, pack in ipairs(SpokenBooks:GetAudioPacks()) do
+		local entry = SpokenBooks:PackLanguage(pack) == client and pack.pages[pageId] or nil
+		if entry and entry.text and entry.text ~= "" then return entry.text end
+	end
+	local kept = SpokenBooks.pageText and SpokenBooks.pageText[client]
+	if kept and kept[pageId] and kept[pageId] ~= "" then return kept[pageId] end
+	local data = SpokenBooks:Data()
+	return data and data.pages[pageId] and data.pages[pageId].text
+end
+
+-- A readable's title: the one the client showed when its book was opened, kept beside the
+-- words in the language they were shown in; then the one the pack in this client's language
+-- names it by, which names books the world has not shown yet; then the corpus's own, English.
 local function Title(id)
 	local book = Books()[id]
-	return book and book.title or tostring(id)
+	local client = SpokenBooks:GetClientLanguage()
+	local kept = SpokenBooks.bookTitle and SpokenBooks.bookTitle[client]
+	return (kept and kept[id]) or SpokenBooks:PackBookTitle(id, client) or (book and book.title) or tostring(id)
 end
 
 -- The dungeons and raids, by instance map (Spoken's Data/Dungeons.lua): `zone`, the zone of
@@ -865,9 +886,8 @@ local function ShowEntry()
 			return
 		end
 		local words = {}
-		local data = SpokenBooks:Data()
 		for _, pageId in ipairs(Books()[id].pages) do
-			local text = data.pages[pageId] and data.pages[pageId].text
+			local text = PageWords(pageId)
 			if text and text ~= "" then table.insert(words, text) end
 		end
 		-- How it is had, in a part of its own above the words, which follow under no heading.

@@ -572,6 +572,40 @@ Expect("...its words in the next, under no heading", parts[2].heading:IsShown() 
     and #parts[2].words.text > 40 and parts[2].words.text:find(L.FROM_QUEST_START:format(""), 1, true), nil)
 Expect("...set apart from the part above by room", select(5, parts[2].words:GetPoint(1)) < select(5, parts[1].words:GetPoint(1)), true)
 
+---------------------------------------------------------------- another language
+-- A Spanish client: the title and the words the client showed when the book was opened in the
+-- world are kept, and shown over the English.
+local englishWords = parts[2].words.text
+_G.GetLocale = function() return "esES" end
+B:RememberPageText(B:Data().books[LETTER].pages[1], "esES", "Querido Morgan, el negocio va bien", "Carta polvorienta")
+B:RefreshReadables()
+Expect("the title the client showed", page.title.text, "Carta polvorienta")
+Expect("...and its words, over the English", (page.body.parts[2].words.text or ""):find("Querido Morgan", 1, true)
+    ~= nil, true)
+-- A pack in the client's language carries the language's own text for the pages it voices,
+-- which is what Play reads aloud: the page and the voice agree, unopened book or not. Its
+-- index is keyed by the titles that language's clients see, so it names the book too.
+local letterPage = B:Data().books[LETTER].pages[1]
+_G.SpokenBooksAudioPacks = { SpokenBooksAudio_esES = { version = 1, addon = "SpokenBooksAudio_esES",
+    language = "esES", pages = { [letterPage] = { file = "16", len = 1, text = "Words del pack" } },
+    index = { ["Carta sin enviar"] = { [1] = { [1] = letterPage } } } } }
+B.packBookTitle = nil
+B:RefreshReadables()
+Expect("...and outranks what was kept", (page.body.parts[2].words.text or ""):find("Words del pack", 1, true)
+    ~= nil, true)
+Expect("...the title the client showed outranking the pack's", page.title.text, "Carta polvorienta")
+-- A book the world has not shown: nothing is kept for it, and the pack's index names it.
+B.bookTitle = nil
+B:RefreshReadables()
+Expect("...and a book never opened named by its pack", page.title.text, "Carta sin enviar")
+-- Back on an English client: nothing of the other language's shows.
+_G.GetLocale = function() return "enUS" end
+_G.SpokenBooksAudioPacks = nil
+B.pageText, B.bookTitle, B.packBookTitle = nil, nil, nil
+B:RefreshReadables()
+Expect("...the English back as it was", page.title.text, "A Dusty Unsent Letter")
+Expect("...with its words", page.body.parts[2].words.text, englishWords)
+
 -- The search: every match, with what holds it, opened.
 local box
 for _, child in ipairs(panel.children or {}) do if child.template == "SearchBoxTemplate" then box = child end end

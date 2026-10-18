@@ -21,6 +21,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   plays in English instead, and reporting it used to land on the English page, where nobody
   looking after your language would see it. It now goes to your language's page.
   *([rusty-key](https://github.com/rusty-key))*
+- **Azeroth's Compendium's Readables tab reads in your language.** A book's page and its title
+  are shown in the words your client showed when you opened the book in the world, and in your
+  voice pack's own language where it has them, rather than always in English.
+  *([anon1231823](https://github.com/anon1231823))*
 
 ## 3.5.0 — 2026-10-17
 

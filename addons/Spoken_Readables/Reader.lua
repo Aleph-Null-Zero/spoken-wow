@@ -131,6 +131,53 @@ function SpokenBooks:PlaceOf(pageId)
 	return place.book, place.number
 end
 
+--- A book's title as a pack in `language` names it, or nil. A pack's index is keyed by the
+--- titles that language's clients see, so every key reaching one of the book's pages is a name
+--- the book has there -- for a book never opened, which the world is the only other source of.
+--- Built once per language and kept for the session: packs are fixed while the game runs. The
+--- base language is left out: the corpus already names every book in it, and an index's keys
+--- there are owner names, which need not be the book's own.
+function SpokenBooks:PackBookTitle(bookId, language)
+	if language == self.BASE_LANGUAGE then
+		return nil
+	end
+	self.packBookTitle = self.packBookTitle or {}
+	local books = self.packBookTitle[language]
+	if not books then
+		books = {}
+		for _, pack in ipairs(self:GetAudioPacks()) do
+			if self:PackLanguage(pack) == language then
+				for _, index in ipairs({ "index", "extraIndex" }) do
+					local map = type(pack[index]) == "table" and pack[index] or nil
+					if map then
+						-- A book is under each name its pages carry in this language. Sorted,
+						-- so the same one wins every session rather than whichever pairs()
+						-- reaches first.
+						local titles = {}
+						for title in pairs(map) do titles[#titles + 1] = title end
+						table.sort(titles)
+						for _, title in ipairs(titles) do
+							local byNumber = map[title]
+							if type(byNumber) == "table" then
+								for _, byChecksum in pairs(byNumber) do
+									if type(byChecksum) == "table" then
+										for _, pageId in pairs(byChecksum) do
+											local id = self:PlaceOf(pageId)
+											if id and books[id] == nil then books[id] = title end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+		self.packBookTitle[language] = books
+	end
+	return books[bookId]
+end
+
 --- A book's title and its pages in reading order, by book id. A pack adds the pages Books.lua
 --- lacks, so the list merges both, ordered by page number; a book only a pack has is its own.
 function SpokenBooks:BookById(bookId)
