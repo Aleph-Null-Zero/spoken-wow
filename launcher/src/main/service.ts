@@ -41,6 +41,8 @@ export interface ServiceOptions {
   packsBaseUrl?: string
   /** Replaces the channel's public key (tests). */
   packsPublicKey?: string
+  /** How long a channel request may take before it is given up (default 30 s; tests). */
+  packsTimeoutMs?: number
 }
 
 /** A catalog fetched less than this long ago is not fetched again unless forced. */
@@ -245,7 +247,7 @@ export class LauncherService {
       userAgent: `SpokenLauncher/${this.opts.appVersion}`,
       ...(this.opts.packsPublicKey ? { publicKey: this.opts.packsPublicKey } : {}),
       ...(this.opts.fetchImpl ? { fetchImpl: this.opts.fetchImpl } : {}),
-      ...(signal ? { signal } : {})
+      signal: signal ?? AbortSignal.timeout(this.opts.packsTimeoutMs ?? 30000)
     }
   }
 
@@ -265,7 +267,12 @@ export class LauncherService {
     if (!release || (compareVersions(release.version, need) ?? -1) < 0) {
       throw new PlainError(`${product.title} needs Spoken ${need} or newer, which is not released yet.`)
     }
-    await installProduct(game, productById('spoken')!, release, ctx)
+    // Spoken's own 'done' would end the pack's job, so it is reported as a step of the pack's job.
+    const inner: JobContext = {
+      ...ctx,
+      emit: (p) => ctx.emit({ ...p, productId: product.id, phase: p.phase === 'done' ? 'installing' : p.phase, ...(p.phase === 'done' ? { message: 'Spoken is up to date.' } : {}) })
+    }
+    await installProduct(game, productById('spoken')!, release, inner)
   }
 
   private async syncChannel(game: GameInstall, product: Product, ctx: JobContext, repair: boolean): Promise<void> {
