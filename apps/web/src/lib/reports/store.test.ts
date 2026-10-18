@@ -110,6 +110,16 @@ describe("setStatus", () => {
     expect(reopened?.resolvedBy).toBeNull();
   });
 
+  it("sets a report aside as minor, out of the open list", async () => {
+    await createReport(submission({ body: "Minor quibble." }));
+    const [report] = (await reportsForLine("quests", "q:1:accept")).filter((each) => each.body === "Minor quibble.");
+
+    expect((await setStatus(report.id, "minor", RESOLVER))?.status).toBe("minor");
+    const ids = async (status: "open" | "minor") => (await listReports(status)).map((each) => each.id);
+    expect(await ids("open")).not.toContain(report.id);
+    expect(await ids("minor")).toContain(report.id);
+  });
+
   it("returns null for an id that does not exist", async () => {
     expect(await setStatus(2147483000, "fixed", RESOLVER)).toBeNull();
   });

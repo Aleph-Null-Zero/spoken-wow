@@ -265,18 +265,29 @@ export default function ReportTable({
   }
 
   /**
-   * Fixed and Not a problem while any of these reports is open, Reopen once none is.
+   * Fixed and Not a problem while any of these reports is open or set aside as minor, with
+   * Minor beside them for open ones and Reopen for minor ones. Reopen alone once all are answered.
    *
-   * Given a whole group, it answers every open report in it: one regenerated line fixes
-   * every complaint about it, and answering them one by one was the chore grouping removes.
+   * Given a whole group, it answers every open report in it - or, with none open, every minor
+   * one: one regenerated line fixes every complaint about it, and answering them one by one
+   * was the chore grouping removes.
    */
   function resolveActions(rows: Report[]) {
-    const openIds = rows.filter((row) => row.status === "open").map((row) => row.id);
-    const ids = openIds.length ? openIds : rows.map((row) => row.id);
+    const withStatus = (status: Status) => rows.filter((row) => row.status === status).map((row) => row.id);
+    const open = withStatus("open");
+    const pending = open.length ? open : withStatus("minor");
+    const ids = pending.length ? pending : rows.map((row) => row.id);
     const disabled = ids.some((id) => busy.has(id));
     const all = rows.length > 1;
 
-    return openIds.length ? (
+    const reopen = (
+      <LiteButton variant="ghost" disabled={disabled} onClick={() => resolve(ids, "open")}>
+        {all ? "Reopen all" : "Reopen"}
+      </LiteButton>
+    );
+    if (!pending.length) return reopen;
+
+    return (
       <>
         <LiteButton variant="accept" disabled={disabled} onClick={() => resolve(ids, "fixed")}>
           {all ? "All fixed" : "Fixed"}
@@ -284,11 +295,14 @@ export default function ReportTable({
         <LiteButton variant="reject" disabled={disabled} onClick={() => resolve(ids, "not_an_issue")}>
           {all ? "All not problems" : "Not a problem"}
         </LiteButton>
+        {open.length ? (
+          <LiteButton variant="ghost" disabled={disabled} onClick={() => resolve(ids, "minor")}>
+            {all ? "All minor" : "Minor"}
+          </LiteButton>
+        ) : (
+          reopen
+        )}
       </>
-    ) : (
-      <LiteButton variant="ghost" disabled={disabled} onClick={() => resolve(ids, "open")}>
-        {all ? "Reopen all" : "Reopen"}
-      </LiteButton>
     );
   }
 

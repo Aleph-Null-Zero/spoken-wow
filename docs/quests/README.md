@@ -948,8 +948,10 @@ sending the field), a limit of ten reports per hour per IP counted in Postgres s
 pm2 restart, and a category checked against a closed set. The IP is the rate limiter's key and
 nothing else: never displayed, never read back. Signing in replaces any typed name.
 
-Collaborators and admins triage at `/reports`, marking each report fixed, not a problem, or
-reopening it. **A report never becomes a regeneration job.** Regenerating spends ElevenLabs
+Collaborators and admins triage at `/reports`, marking each report fixed, not a problem or
+minor, or reopening it. Minor (migration 0079) sets a report aside: real, but not worth
+attention now. It is not open, so no count, badge or sorting queue shows it; it waits under
+its own tab until someone resolves or reopens it. **A report never becomes a regeneration job.** Regenerating spends ElevenLabs
 credits, so nothing public can start one; someone reads the report, listens, and queues the
 file through the normal flow.
 
@@ -957,7 +959,7 @@ file through the normal flow.
 (gossip included), books and zones with how many lines each has open, then walks one section's
 lines, most reported first, each with its line, its takes, its reports, the explorers' player
 and Play, Edit and Regenerate.
-Fixed and Not a problem answer every open report on the line. Skip is per person and stored in
+Fixed, Not a problem and Minor answer every open report on the line. Skip is per person and stored in
 `report_skip` (migration 0074), per report: a line comes back when a new report arrives on it,
 and Reset on the picker brings back everything that person skipped in that section.
 
