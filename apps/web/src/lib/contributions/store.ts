@@ -372,6 +372,15 @@ export async function booksContributions(ids: readonly number[]): Promise<Contri
  * one that does not exist. Asked before resolving it, since who may resolve it is whoever
  * may edit that language.
  */
+/** The row a submission was stored as (createContribution's upsert), or null before it is. */
+export async function contributionByDedup(dedup: string): Promise<{ id: number; status: ContributionStatus } | null> {
+  const { rows } = await db().query<{ id: number; status: ContributionStatus }>(
+    `select "id", "status" from "contribution" where "dedup" = $1`,
+    [dedup],
+  );
+  return rows[0] ?? null;
+}
+
 export async function contributionLocale(id: number): Promise<string | null> {
   const { rows } = await db().query<{ locale: string }>(
     `select "locale" from "contribution" where "id" = $1`,

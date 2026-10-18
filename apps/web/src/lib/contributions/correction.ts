@@ -44,7 +44,7 @@ import { OverrideError } from "@/lib/quests/override";
 import { QuestTextConflict, QuestTextMissing, saveQuestText } from "@/lib/quests/text";
 
 import { writeWording } from "./accept";
-import { lineStates, type CorpusText } from "./known";
+import { lineStates, type CorpusText, type LineState } from "./known";
 import { momentOf } from "./naming";
 import { CONTRIBUTION_COLUMNS, type Contribution } from "./store";
 import { correctionNote } from "./notes";
@@ -60,9 +60,16 @@ export type WordingPick = Pick<CorpusText, "lineId" | "variant">;
 
 /**
  * `pick` is the wording the correction fixes, where the moderator chose one; otherwise it is
- * the one closest to the player's text.
+ * the one closest to the player's text. `against` is the moment's wordings when the caller
+ * compared on something other than the printed text: a report's text is compared on what the
+ * line speaks (reports/contribute.ts).
  */
-export async function acceptCorrection(id: number, userId: string, pick?: WordingPick): Promise<CorrectionOutcome> {
+export async function acceptCorrection(
+  id: number,
+  userId: string,
+  pick?: WordingPick,
+  against?: Extract<LineState, { kind: "changed" }>,
+): Promise<CorrectionOutcome> {
   const { rows } = await db().query<Contribution>(
     `select ${CONTRIBUTION_COLUMNS} from "contribution" where "id" = $1`,
     [id],
@@ -78,7 +85,7 @@ export async function acceptCorrection(id: number, userId: string, pick?: Wordin
     };
   }
 
-  const [state] = await lineStates([contribution]);
+  const [state] = against ? [against] : await lineStates([contribution]);
   if (state.kind === "known" && contribution.source === "books" && contribution.status !== "accepted"
       && (await bookCorrectionWritten(id, lang))) {
     return markAccepted(contribution, lang, userId);
