@@ -276,6 +276,8 @@ export function createMockApi(): LauncherApi {
   const gameListeners = new Set<(g: GameInstall[]) => void>()
   const communityListeners = new Set<(c: CommunityCatalog) => void>()
   const updaterListeners = new Set<(s: UpdaterState) => void>()
+  const maximizedListeners = new Set<(m: boolean) => void>()
+  let maximized = false
   const running = new Map<string, { timer: number; cancel: () => void }>()
   let seq = 0
   let cleared = false
@@ -482,6 +484,19 @@ export function createMockApi(): LauncherApi {
       cleared = true
       return out
     },
+    async windowMinimize() {
+      console.info('[mock] windowMinimize')
+    },
+    async windowToggleMaximize() {
+      maximized = !maximized
+      maximizedListeners.forEach((l) => l(maximized))
+    },
+    async windowClose() {
+      console.info('[mock] windowClose')
+    },
+    async windowIsMaximized() {
+      return maximized
+    },
     onJob(l) {
       jobListeners.add(l)
       return () => void jobListeners.delete(l)
@@ -496,6 +511,10 @@ export function createMockApi(): LauncherApi {
     onCommunityChanged(l) {
       communityListeners.add(l)
       return () => void communityListeners.delete(l)
+    },
+    onWindowMaximized(l) {
+      maximizedListeners.add(l)
+      return () => void maximizedListeners.delete(l)
     },
     onUpdater(l) {
       updaterListeners.add(l)

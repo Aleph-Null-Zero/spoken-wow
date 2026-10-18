@@ -25,11 +25,16 @@ const api: LauncherApi = {
   openLogs: () => ipcRenderer.invoke(CHANNELS.openLogs),
   checkLauncherUpdate: () => ipcRenderer.invoke(CHANNELS.checkLauncherUpdate),
   clearDownloads: () => ipcRenderer.invoke(CHANNELS.clearDownloads),
+  windowMinimize: () => ipcRenderer.invoke(CHANNELS.windowMinimize),
+  windowToggleMaximize: () => ipcRenderer.invoke(CHANNELS.windowToggleMaximize),
+  windowClose: () => ipcRenderer.invoke(CHANNELS.windowClose),
+  windowIsMaximized: () => ipcRenderer.invoke(CHANNELS.windowIsMaximized),
   onJob: (l) => listen(CHANNELS.jobProgress, l),
   onGamesChanged: (l) => listen(CHANNELS.gamesChanged, l),
   onCatalogChanged: (l) => listen(CHANNELS.catalogChanged, l),
   onCommunityChanged: (l) => listen(CHANNELS.communityChanged, l),
-  onUpdater: (l) => listen(CHANNELS.updaterState, l)
+  onUpdater: (l) => listen(CHANNELS.updaterState, l),
+  onWindowMaximized: (l) => listen(CHANNELS.windowMaximized, l)
 }
 
 // A file dropped on the window would make the browser open it; nothing here takes drops.

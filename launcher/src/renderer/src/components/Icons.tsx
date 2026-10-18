@@ -27,6 +27,27 @@ function make(children: ReactNode, fill = false) {
   }
 }
 
+/** Window buttons: thin 10px glyphs like Windows', drawn on their own grid. */
+function windowGlyph(children: ReactNode) {
+  return function Glyph(): ReactNode {
+    return (
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true" focusable="false">
+        {children}
+      </svg>
+    )
+  }
+}
+
+export const IconWinMinimize = windowGlyph(<path d="M0 5.5h10" />)
+export const IconWinMaximize = windowGlyph(<rect x="0.5" y="0.5" width="9" height="9" />)
+export const IconWinRestore = windowGlyph(
+  <>
+    <rect x="0.5" y="2.5" width="7" height="7" />
+    <path d="M2.5 2.5v-2h7v7h-2" />
+  </>
+)
+export const IconWinClose = windowGlyph(<path d="M0 0l10 10M10 0L0 10" />)
+
 export const IconRefresh = make(
   <>
     <path d="M20 11a8 8 0 0 0-14.3-4.5L4 8.5" />

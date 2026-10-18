@@ -40,6 +40,7 @@ export const S = {
     version: 'Version',
     readOnly: 'This folder is read-only for your account.'
   },
+  window: { minimize: 'Minimize', maximize: 'Maximize', restore: 'Restore', close: 'Close' },
   strip: { add: 'Add a game folder', missing: (label: string) => `${label} is not installed on this PC` },
   empty: {
     title: 'No game for Spoken found',

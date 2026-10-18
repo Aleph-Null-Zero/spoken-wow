@@ -73,6 +73,22 @@ export function registerIpc(service: LauncherService, page: AppPage): void {
     })
   }
 
+  // The window buttons must work even while the service is still starting, so they skip `service.ready`.
+  const windowOf = (event: IpcMainInvokeEvent): BrowserWindow | null => {
+    if (!trusted(event, page)) {
+      log(`Blocked a window command from ${event.senderFrame?.url ?? 'an unknown frame'}`)
+      throw new Error('Not allowed')
+    }
+    return BrowserWindow.fromWebContents(event.sender)
+  }
+  ipcMain.handle(CHANNELS.windowMinimize, (event) => void windowOf(event)?.minimize())
+  ipcMain.handle(CHANNELS.windowToggleMaximize, (event) => {
+    const win = windowOf(event)
+    if (win) win.isMaximized() ? win.unmaximize() : win.maximize()
+  })
+  ipcMain.handle(CHANNELS.windowClose, (event) => void windowOf(event)?.close())
+  ipcMain.handle(CHANNELS.windowIsMaximized, (event) => windowOf(event)?.isMaximized() ?? false)
+
   handle(CHANNELS.snapshot, () => service.snapshot())
   handle(CHANNELS.scanGames, () => service.scan())
   handle(CHANNELS.addGame, (_e, p) => service.addGame(text(p, 'path')))

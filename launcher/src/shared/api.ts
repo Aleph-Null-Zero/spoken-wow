@@ -20,12 +20,17 @@ export const CHANNELS = {
   openLogs: 'launcher:open-logs',
   checkLauncherUpdate: 'launcher:updater:check',
   clearDownloads: 'launcher:downloads:clear',
+  windowMinimize: 'launcher:window:minimize',
+  windowToggleMaximize: 'launcher:window:toggle-maximize',
+  windowClose: 'launcher:window:close',
+  windowIsMaximized: 'launcher:window:is-maximized',
   // main -> window
   jobProgress: 'launcher:event:job',
   gamesChanged: 'launcher:event:games',
   catalogChanged: 'launcher:event:catalog',
   communityChanged: 'launcher:event:community',
-  updaterState: 'launcher:event:updater'
+  updaterState: 'launcher:event:updater',
+  windowMaximized: 'launcher:event:window-maximized'
 } as const
 
 export interface AddGameResult {
@@ -85,10 +90,18 @@ export interface LauncherApi {
   checkLauncherUpdate(): Promise<void>
   /** Deletes the downloaded zips (and half-finished ones) kept in the downloads folder. Refused while a job runs. */
   clearDownloads(): Promise<ClearDownloadsResult>
+  /** The window has no system title bar, so the page draws its own buttons and calls these. */
+  windowMinimize(): Promise<void>
+  /** Maximizes the window, or puts it back when it is already maximized. */
+  windowToggleMaximize(): Promise<void>
+  windowClose(): Promise<void>
+  windowIsMaximized(): Promise<boolean>
 
   onJob(listener: (progress: JobProgress) => void): () => void
   onGamesChanged(listener: (games: GameInstall[]) => void): () => void
   onCatalogChanged(listener: (catalog: Catalog) => void): () => void
   onCommunityChanged(listener: (community: CommunityCatalog) => void): () => void
   onUpdater(listener: (state: UpdaterState) => void): () => void
+  /** True when the window becomes maximized, false when it is put back. */
+  onWindowMaximized(listener: (maximized: boolean) => void): () => void
 }

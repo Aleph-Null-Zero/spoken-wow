@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { api } from '../api'
 import icon from '../assets/spoken.png'
 import { formatTime } from '../format'
 import type { Flavor, GameInstall } from '@shared/types'
@@ -7,7 +8,7 @@ import { useGame, useStore, useSupportedGames, type Page } from '../store'
 import { S } from '../strings'
 import { flavorLook } from '../catalog'
 import { GameIcon } from './Brand'
-import { IconGear, IconPlus, IconRefresh } from './Icons'
+import { IconGear, IconPlus, IconRefresh, IconWinClose, IconWinMaximize, IconWinMinimize, IconWinRestore } from './Icons'
 
 const TABS: { page: Page; label: string }[] = [
   { page: 'home', label: S.tabs.home },
@@ -29,7 +30,7 @@ export function TopBar(): ReactNode {
   return (
     <header className="topbar">
       <button type="button" className="brand" aria-label={`${S.appName}: ${S.tabs.home}`} onClick={() => actions.navigate('home')}>
-        <img src={icon} alt="" width={30} height={30} />
+        <img src={icon} alt="" width={40} height={40} />
       </button>
       <nav className="tabs-main" aria-label="Main">
         {TABS.map((t) => (
@@ -56,7 +57,45 @@ export function TopBar(): ReactNode {
           {S.tabs.settings}
         </button>
       </div>
+      <WindowControls />
     </header>
+  )
+}
+
+/** Minimize, maximize and close, drawn here because the window has no system title bar. */
+function WindowControls(): ReactNode {
+  const [maximized, setMaximized] = useState(false)
+  useEffect(() => {
+    let alive = true
+    void api()
+      .windowIsMaximized()
+      .then((m) => alive && setMaximized(m))
+      .catch(() => undefined)
+    const off = api().onWindowMaximized(setMaximized)
+    return () => {
+      alive = false
+      off()
+    }
+  }, [])
+  const run = (call: () => Promise<void>) => () => void call().catch(() => undefined)
+  return (
+    <div className="window-controls">
+      <button type="button" className="win-btn" aria-label={S.window.minimize} title={S.window.minimize} onClick={run(() => api().windowMinimize())}>
+        <IconWinMinimize />
+      </button>
+      <button
+        type="button"
+        className="win-btn"
+        aria-label={maximized ? S.window.restore : S.window.maximize}
+        title={maximized ? S.window.restore : S.window.maximize}
+        onClick={run(() => api().windowToggleMaximize())}
+      >
+        {maximized ? <IconWinRestore /> : <IconWinMaximize />}
+      </button>
+      <button type="button" className="win-btn win-close" aria-label={S.window.close} title={S.window.close} onClick={run(() => api().windowClose())}>
+        <IconWinClose />
+      </button>
+    </div>
   )
 }
 

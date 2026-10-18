@@ -13,7 +13,7 @@ import { startUpdater } from './updater'
 app.setName('Spoken Launcher')
 if (process.platform === 'win32') app.setAppUserModelId('one.rusty.spoken.launcher')
 
-const BACKGROUND = '#0b0f17'
+const BACKGROUND = '#16171d'
 const DEV_URL = process.env.ELECTRON_RENDERER_URL
 
 let service: LauncherService | null = null
@@ -67,7 +67,8 @@ function createWindow(): BrowserWindow {
     title: 'Spoken Launcher',
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
-    titleBarOverlay: { color: BACKGROUND, symbolColor: '#9aa4b5', height: 40 },
+    // No system buttons: the page draws its own on the tab row (TopBar.tsx), because the native overlay
+    // cannot be transparent or bigger. They call the window:* channels in ipc.ts.
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -77,6 +78,8 @@ function createWindow(): BrowserWindow {
     }
   })
   win.removeMenu()
+  win.on('maximize', () => win.webContents.send(CHANNELS.windowMaximized, true))
+  win.on('unmaximize', () => win.webContents.send(CHANNELS.windowMaximized, false))
 
   win.once('ready-to-show', () => win.show())
   win.webContents.on('did-fail-load', (_e, code, description) => {

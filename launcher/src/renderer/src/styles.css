@@ -49,11 +49,11 @@
   --ls-label: 0.05em;
 
   /* Frame */
-  --topbar-h: 44px;
+  --logo-size: 40px;
+  --topbar-pad: 16px;
+  --topbar-h: calc(var(--logo-size) + 2 * var(--topbar-pad));
   --strip-h: 48px;
   --float: 10px;
-  /* Below the window buttons when the app draws its own title bar; a small gap in a browser. */
-  --top: max(var(--float), calc(env(titlebar-area-height, 0px) + 4px));
   --rail-w: clamp(236px, 22vw, 264px);
 }
 
@@ -205,25 +205,14 @@ h2 {
   background: var(--bg);
 }
 
-.shell::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 3;
-  height: var(--top);
-  -webkit-app-region: drag;
-}
-
 .topbar {
   flex: none;
   display: flex;
   align-items: stretch;
   gap: 6px;
   height: var(--topbar-h);
-  margin: var(--top) 0 0;
-  padding: 0 18px 0 22px;
+  margin: 0;
+  padding: 0 0 0 var(--topbar-pad);
   position: relative;
   z-index: 5;
   -webkit-app-region: drag;
@@ -235,18 +224,22 @@ h2 {
   -webkit-app-region: no-drag;
 }
 
+/* Same space left, above and below the logo: --topbar-pad. */
 .brand {
+  align-self: center;
   display: flex;
   align-items: center;
-  padding: 0 14px 0 0;
+  margin-right: 14px;
+  padding: 0;
   background: none;
   border: 0;
+  border-radius: var(--radius-s);
 }
 
 .brand img {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: var(--logo-size);
+  height: var(--logo-size);
 }
 
 .tabs-main {
@@ -281,7 +274,8 @@ h2 {
   position: absolute;
   left: 14px;
   right: 14px;
-  bottom: 0;
+  /* Close under the label (about 5px below its baseline), not at the bottom edge of the tall bar. */
+  top: calc(50% + 10px);
   height: 2px;
   background: var(--accent);
   transform: scaleX(0);
@@ -305,6 +299,45 @@ h2 {
 
 .topbar-right .tab-gear {
   align-self: stretch;
+}
+
+.window-controls {
+  display: flex;
+  align-self: stretch;
+  margin-left: 8px;
+}
+
+.win-btn {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: #b4b6bb;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.win-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.win-btn:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.win-close:hover {
+  background: #c42b1c;
+}
+
+.win-close:active {
+  background: #b32b1e;
+}
+
+.win-btn:focus-visible {
+  outline-offset: -4px;
 }
 
 .topbar-version {
@@ -389,12 +422,11 @@ svg.is-spinning {
   display: flex;
   align-items: stretch;
   height: var(--strip-h);
-  margin: 6px var(--float) 0;
+  margin: 0 var(--float) 0;
   overflow: visible;
   background: rgba(36, 37, 43, 0.86);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
   backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--radius-m);
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.3);
 }
@@ -435,9 +467,9 @@ svg.is-spinning {
 .strip-tile[aria-current='true']::after {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
+  left: 11px;
+  right: 11px;
+  bottom: 3px;
   height: 2px;
   background: var(--accent);
 }
@@ -1422,7 +1454,7 @@ svg.is-spinning {
 
 .subtab {
   margin-bottom: -1px;
-  padding: 8px 0 10px;
+  padding: 10px 0 1px;
   background: none;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -2256,20 +2288,26 @@ svg.is-spinning {
   position: absolute;
   left: 0;
   top: 0;
-  width: calc(var(--rail-w) + 24px);
-  height: min(86%, 760px);
+  width: calc(var(--rail-w) + 140px);
+  height: min(92%, 800px);
   background: var(--g-art) var(--g-pos, left top) / cover;
   filter: var(--g-filter, none);
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 55%, transparent 100%), linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0%, #000 55%, transparent 100%), linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.4) 62%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.4) 62%, transparent 100%);
 }
 
 .backdrop-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(420px 320px at 0 0, color-mix(in srgb, var(--g-from) 14%, transparent), transparent 70%);
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0,
+      color-mix(in srgb, var(--bg) 35%, transparent) calc(var(--rail-w) * 0.5),
+      color-mix(in srgb, var(--bg) 78%, transparent) calc(var(--rail-w) + 40px),
+      var(--bg) calc(var(--rail-w) + 140px)
+    ),
+    radial-gradient(420px 320px at 0 0, color-mix(in srgb, var(--g-from) 14%, transparent), transparent 70%);
 }
 
 /* Home has no rail: the colour wash only, no art under the cards */
@@ -2278,11 +2316,11 @@ svg.is-spinning {
 }
 
 .strip-tile.is-missing .game-icon {
-  filter: grayscale(1) brightness(0.55);
+  filter: saturate(0.55) brightness(0.65);
 }
 
 .is-missing .card-art {
-  filter: grayscale(0.75) brightness(0.55);
+  filter: saturate(0.5) brightness(0.6);
 }
 
 .disclaimer {
@@ -2293,4 +2331,21 @@ svg.is-spinning {
 .rail-game {
   color: var(--label);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* The rail scrolls only when it really overflows, and then without a drawn scrollbar or lost width */
+.rail {
+  gap: 16px;
+  padding: 18px 25px 16px;
+  scrollbar-width: none;
+}
+
+.wm-logo {
+  max-height: 150px;
+}
+
+/* The copy hint opens upward, so it never adds scroll length under the rail */
+.copytext-button[data-tip]::before {
+  top: auto;
+  bottom: calc(100% + 6px);
 }
