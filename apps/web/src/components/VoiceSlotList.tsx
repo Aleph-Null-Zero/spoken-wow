@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 
 import FishReference, { type ReferenceView } from "./FishReference";
 import VoiceSamples from "./VoiceSamples";
+import AccountVoicePicker from "./voices/AccountVoicePicker";
 import { cloneVoice } from "./voices/PopulateDialog";
 import { Badge } from "@/components/ui/badge";
 import type { Provider } from "@/lib/generation/providers";
@@ -402,14 +403,15 @@ export default function VoiceSlotList({
                               ) : (
                                 <span className="text-muted-foreground text-xs">no reference</span>
                               )
+                            ) : present?.has(slot.name) ? (
+                              // Before the clips: a voice adopted from the account has none.
+                              <Badge variant="outline" className="text-emerald-400">
+                                in your account
+                              </Badge>
                             ) : clips.length === 0 ? (
                               <span className="text-muted-foreground text-xs">no clips</span>
                             ) : present === null ? (
                               <span className="text-muted-foreground text-xs">unknown</span>
-                            ) : present.has(slot.name) ? (
-                              <Badge variant="outline" className="text-emerald-400">
-                                in your account
-                              </Badge>
                             ) : (
                               <span className="text-muted-foreground text-xs">not in your account</span>
                             )}
@@ -508,9 +510,16 @@ function ClonePanel({
 
   if (samples.length === 0) {
     return (
-      <p className="text-muted-foreground border-t py-3 pr-3 pl-9 text-xs">
-        No clips for this voice in {langName(lang)} yet, so there is nothing to clone.
-      </p>
+      <div className="border-t py-3 pr-3 pl-9 text-xs">
+        <p className="text-muted-foreground">
+          No clips for this voice in {langName(lang)} yet, so there is nothing to clone.
+        </p>
+        {canClone && (
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <AccountVoicePicker voice={voice} exists={exists} onAdopted={onCloned} />
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -543,6 +552,9 @@ function ClonePanel({
             {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
             {confirming ? "Confirm replace" : exists ? "Replace in my account" : "Add to my account"}
           </Button>
+          {!confirming && (
+            <AccountVoicePicker voice={voice} exists={exists} disabled={busy} onAdopted={onCloned} />
+          )}
           {confirming ? (
             <>
               <span className="text-xs text-amber-400">

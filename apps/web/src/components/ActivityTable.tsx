@@ -195,6 +195,11 @@ function describe(row: ActivityRow): { what: string; quote: string | null } {
         what: `cloned the voice “${row.subject}”${num(d.sampleCount) ? ` from ${num(d.sampleCount)} samples` : ""}`,
         quote: null,
       };
+    case "voice.adopted":
+      return {
+        what: `set the voice “${row.subject}”${str(d.from) ? ` to “${str(d.from)}” from their account` : " from their account"}`,
+        quote: null,
+      };
     case "reference.set":
       return { what: `set the fish.audio reference for “${row.subject}”`, quote: str(d.transcript) };
     case "reference.edited":
