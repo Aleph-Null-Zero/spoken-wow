@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Targeting or pointing at a unit whose GUID is secret no longer raises a Lua error.**
+  Spoken Quests skips the hidden GUID before comparing or parsing it.
+  *([Merryfett](https://github.com/Merryfett))*
 - **Read Greetings reads each new greeting once, not each NPC.** Many NPCs greet you with one of
   several lines, and Once per NPC kept every line but the first one silent. The setting is now
   Once per Greeting: each line plays the first time you see it. Once for Quest Givers works the
