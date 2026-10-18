@@ -188,10 +188,11 @@ export default function CorrectionTable({
     [send],
   );
 
-  /** The wording a row's Accept fixes: the one picked, or the closest. */
+  /** The wording a row is set against, and its Accept fixes: the one picked, or the closest. */
+  const chosenOf = (row: CorrectionRow): number => picked[row.id] ?? row.closest;
   const fixOf = (row: CorrectionRow): Accept => {
-    const wording = row.wordings[picked[row.id] ?? row.closest];
-    return { lineId: wording.lineId, variant: wording.variant };
+    const { lineId, variant } = row.wordings[chosenOf(row)];
+    return { lineId, variant };
   };
   const toAccept = initial
     .filter((row) => (resolved[row.id] ?? row.status) === "new")
@@ -288,7 +289,7 @@ export default function CorrectionTable({
           <tbody>
             {initial.map((row) => {
               const current = resolved[row.id] ?? row.status;
-              const chosen = picked[row.id] ?? row.closest;
+              const chosen = chosenOf(row);
               const wording = row.wordings[chosen];
               const diff = wordDiff(wording.before, row.after);
               return (
@@ -340,13 +341,14 @@ export default function CorrectionTable({
                   <td className="pr-3">
                     {row.wordings.length > 1 ? (
                       <ul className="space-y-2">
-                        {row.wordings.map((line, index) =>
-                          index === chosen ? (
-                            <li key={line.lineId} className="border-l-2 border-red-500/60 pl-2">
+                        {row.wordings.map((line, index) => (
+                          <li
+                            key={`${line.lineId}|${line.variant}`}
+                            className={cn("border-l-2 pl-2", index === chosen ? "border-red-500/60" : "border-transparent")}
+                          >
+                            {index === chosen ? (
                               <Marked parts={diff.before} tone="removed" />
-                            </li>
-                          ) : (
-                            <li key={line.lineId} className="border-l-2 border-transparent pl-2">
+                            ) : (
                               <button
                                 type="button"
                                 title="Set the player's text against this wording"
@@ -355,9 +357,9 @@ export default function CorrectionTable({
                               >
                                 {line.before}
                               </button>
-                            </li>
-                          ),
-                        )}
+                            )}
+                          </li>
+                        ))}
                       </ul>
                     ) : (
                       <Marked parts={diff.before} tone="removed" />

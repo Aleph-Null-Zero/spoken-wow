@@ -25,6 +25,8 @@
  * A books row is compared through the books matcher (book-match.ts): the same words on the page
  * it matches (the page a moderator named, if one did) are known, other words a correction. A zone has no text to compare.
  */
+import type { PoolClient } from "pg";
+
 import { db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
 import { raceOfModel } from "@/lib/npc/models";
@@ -43,11 +45,11 @@ export type LineState =
   | { kind: "missing" }
   | { kind: "known" }
   /**
-   * `current` is the corpus's text of `lineId` and `variant`, in the contribution's language.
-   * A quest moment's `wordings` are each of its wordings, in order, one line apiece (a split
-   * wording by its first side); `lineId` is one of them.
+   * The corpus's texts in the contribution's language: a quest moment's every wording, in
+   * order, one line apiece (a split wording by its first side), or a book page alone.
+   * `closest` indexes the one nearest the contribution's text.
    */
-  | { kind: "changed"; lineId: string; variant: number; current: string; wordings?: CorpusText[] };
+  | { kind: "changed"; wordings: CorpusText[]; closest: number };
 
 /** A stored row also carries a moderator's books answer; an intake submission has none. */
 type Comparable = Pick<Submission, "source" | "locale" | "text" | "meta"> &
@@ -90,11 +92,17 @@ function otherBody(row: Comparable, voiced: VoicedBodies | undefined): boolean {
   return !voiced.sexes.has(sex);
 }
 
-/** Every current line answering each (language, moment), in one query. */
-async function momentTexts(pairs: { locale: string; moment: string }[]): Promise<Map<string, CorpusText[]>> {
+/**
+ * Every current line answering each (language, moment), in one query, keyed `locale|moment`.
+ * `client` reads inside a transaction (accept.ts writeWording, under the moment's lock).
+ */
+export async function momentTexts(
+  pairs: { locale: string; moment: string }[],
+  client?: PoolClient,
+): Promise<Map<string, CorpusText[]>> {
   const found = new Map<string, CorpusText[]>();
   if (pairs.length === 0) return found;
-  const { rows } = await db().query<{ locale: string; moment: string; lineId: string; variant: number; text: string }>(
+  const { rows } = await (client ?? db()).query<{ locale: string; moment: string; lineId: string; variant: number; text: string }>(
     `select m."locale", m."moment", l."lineId", l."variant",
             coalesce(case when l."lang" = $3 then l."originalText" else l."localeText" end, l."text") as "text"
        from unnest($1::text[], $2::text[]) as m ("locale", "moment")
@@ -221,7 +229,9 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
         books,
       );
       if (match.kind === "known") return { kind: "known" };
-      if (match.kind === "correction") return { kind: "changed", lineId: match.lineId, variant: 0, current: match.current };
+      if (match.kind === "correction") {
+        return { kind: "changed", wordings: [{ lineId: match.lineId, variant: 0, text: match.current }], closest: 0 };
+      }
       return MISSING;
     }
     if (row.source !== "quests" || !row.text) return MISSING;
@@ -232,10 +242,8 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
       if (!lines?.length) return MISSING;
       if (lines.some((line) => sameLine(line.text, text))) return { kind: "known" };
       const wordings = oneLineEach(lines);
-      const closest = wordings.reduce((best, line) =>
-        closeness(line.text, text) > closeness(best.text, text) ? line : best,
-      );
-      return { kind: "changed", lineId: closest.lineId, variant: closest.variant, current: closest.text, wordings };
+      const scores = wordings.map((line) => closeness(line.text, text));
+      return { kind: "changed", wordings, closest: scores.indexOf(Math.max(...scores)) };
     }
     const npcId = npcOf(row);
     const spoken = npcId === null ? undefined : byNpc.get(`${row.locale}|${npcId}`);

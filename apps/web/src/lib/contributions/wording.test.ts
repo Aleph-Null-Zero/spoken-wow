@@ -173,7 +173,8 @@ describe("acceptAsWording", () => {
     const id = await contribution("enUS", "You again?");
     const other = await contribution("enUS", "You again?");
     const outcomes = await Promise.all([acceptAsWording(id, ACCEPTER), acceptAsWording(id, ACCEPTER), acceptAsWording(other, ACCEPTER)]);
-    expect(outcomes.every((outcome) => outcome.ok)).toBe(true);
+    // Whichever writes first, the other's text is then a wording the moment has, as it would be one after the other.
+    expect(outcomes.filter((outcome) => !outcome.ok).map((outcome) => outcome.reason)).toEqual(["not-a-correction"]);
     const { rows } = await db().query(
       `select "lineId" from "quest_line" where "lineId" like $1 and "lang" = 'enUS' and "originalText" = 'You again?'`,
       [`${moment}:w%`],

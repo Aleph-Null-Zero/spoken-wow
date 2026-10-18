@@ -62,6 +62,7 @@ import { loadRoster } from "@/lib/voices/roster-store";
 import { loadBookCorpus, matchBook, sameMatch, type BookCorpus, type BookMatchResult } from "./book-match";
 import { sameLine } from "./compare";
 import type { ContributionStatus } from "./contributions";
+import { momentTexts } from "./known";
 import {
   answersQuestMomentSql,
   baseLineId,
@@ -297,14 +298,19 @@ function preparedFrom(plan: GossipPlan, text: string, speaker: Speaker): Prepare
  * that already had speakers took without one.
  */
 export async function contributedLineExists(contributionId: number, client?: PoolClient): Promise<boolean> {
-  const { rowCount } = await (client ?? db()).query(
-    `select 1 from "quest_line_speaker" where "contributionId" = $1
+  return (await contributedLine(contributionId, client)) !== null;
+}
+
+/** The moment of the line a contribution's accept wrote (momentOf its id), or null for none. */
+export async function contributedLine(contributionId: number, client?: PoolClient): Promise<string | null> {
+  const { rows } = await (client ?? db()).query<{ lineId: string }>(
+    `select "lineId" from "quest_line_speaker" where "contributionId" = $1
      union all
-     select 1 from "quest_line" where "origin" = 'contributed' and "note" = $2
+     select "lineId" from "quest_line" where "origin" = 'contributed' and "note" = $2
      limit 1`,
     [contributionId, noteFor(contributionId)],
   );
-  return (rowCount ?? 0) > 0;
+  return rows[0] ? momentOf(rows[0].lineId) : null;
 }
 
 /**
@@ -609,7 +615,11 @@ async function acceptQuestMoment(
 export async function writeWording(
   contribution: Contribution,
   userId: string,
-): Promise<{ ok: true; lineId: string } | Extract<ResolveRefusal, { reason: "needs-speaker" | "malformed" }>> {
+): Promise<
+  | { ok: true; lineId: string }
+  | { ok: false; reason: "not-a-correction"; message: string }
+  | Extract<ResolveRefusal, { reason: "needs-speaker" | "malformed" }>
+> {
   const identity = lineIdentityFor(contribution.meta, contribution.text, "", "");
   if (!identity || identity.questId === null || !contribution.text) {
     return { ok: false, reason: "malformed", message: "Only a quest line can be another wording." };
@@ -624,9 +634,14 @@ export async function writeWording(
 
   return inTransaction(async (client) => {
     await lockLine(client, identity.lineId);
-    // A second accept of this text that waited on the lock finds what the first wrote.
-    const already = (await ownWording(contribution.id, client)) ?? (await wordingSaying(client, identity.lineId, lang, text));
-    if (already) return { ok: true as const, lineId: already };
+    // Decided under the lock, so an accept that waited on another's sees what it wrote: its
+    // own wording again is done, and a text some wording already says is not another.
+    const own = await contributedLine(contribution.id, client);
+    if (own) return { ok: true as const, lineId: own };
+    const lines = (await momentTexts([{ locale: lang, moment: identity.lineId }], client)).get(`${lang}|${identity.lineId}`);
+    if (lines?.some((line) => sameLine(line.text, text))) {
+      return { ok: false as const, reason: "not-a-correction" as const, message: "The corpus already has this text for the moment -- nothing to add." };
+    }
     const n = await nextWording(client, identity.lineId);
     const wording: LineIdentity = {
       ...identity,
@@ -639,27 +654,6 @@ export async function writeWording(
     }
     return { ok: true as const, lineId: wording.lineId };
   });
-}
-
-/** The wording a contribution's accept wrote, by the speaker row it left; null for none. */
-export async function ownWording(contributionId: number, client?: PoolClient): Promise<string | null> {
-  const { rows } = await (client ?? db()).query<{ lineId: string }>(
-    `select "lineId" from "quest_line_speaker" where "contributionId" = $1 order by "lineId" limit 1`,
-    [contributionId],
-  );
-  return rows[0] ? momentOf(rows[0].lineId) : null;
-}
-
-/** The wording of a moment that already says `text` in `lang` (compare.ts sameLine), or null. */
-async function wordingSaying(client: PoolClient, moment: string, lang: Lang, text: string): Promise<string | null> {
-  const { rows } = await client.query<{ lineId: string; text: string }>(
-    `select "lineId", coalesce(case when "lang" = $3 then "originalText" else "localeText" end, "text") as "text"
-       from "quest_line"
-      where "lang" = $2 and "isCurrent" and ${wordingsOfMomentSql(`"questId"`, `"source"`, "$1")}`,
-    [moment, lang, BASE_LANG],
-  );
-  const found = rows.find((row) => sameLine(row.text, text));
-  return found ? momentOf(found.lineId) : null;
 }
 
 /** One past the highest wording a moment has in any language: 1 for a moment with only its first. */

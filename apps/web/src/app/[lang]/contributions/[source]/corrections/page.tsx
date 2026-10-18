@@ -81,7 +81,7 @@ export default async function Page({
     if (source === "quests" && !matchesStage(quest, stage)) return [];
     const observed = observedFrom(observationMeta(row));
     const npc = observed.npcId === null ? null : { npcId: observed.npcId, npcName: observed.npcName };
-    const wordings = (state.wordings ?? [{ lineId: state.lineId, variant: state.variant, text: state.current }]).map(
+    const wordings = state.wordings.map(
       (line) => ({ lineId: line.lineId, variant: line.variant, editHref: explorerHref(source, line.lineId), before: readable(line.text) }),
     );
     // Either side can hold the words somebody remembers: the corpus's or the player's.
@@ -91,7 +91,7 @@ export default async function Page({
       {
         id: row.id,
         wordings,
-        closest: wordings.findIndex((line) => line.lineId === state.lineId && line.variant === state.variant),
+        closest: state.closest,
         quest: quest === "gossip" ? null : quest,
         title: source === "books" ? bookTitleOf(row.meta) : null,
         client: clientOf(row.build),

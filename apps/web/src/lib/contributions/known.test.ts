@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
 
-import { lineStates, tabOf } from "./known";
+import { lineStates, tabOf, type LineState } from "./known";
 
 const quest = 2_000_000_000 - Math.floor(Math.random() * 1_000_000);
 const npc = quest;
@@ -68,9 +68,7 @@ describe("lineStates", () => {
     expect(await lineStates([moment("accept", "Hello, $N.\n\nTurn left at the tree.")])).toEqual([
       {
         kind: "changed",
-        lineId: `q:${quest}:accept`,
-        variant: 0,
-        current: "Hello, $n.$B$BTurn right at the tree.",
+        closest: 0,
         wordings: [
           { lineId: `q:${quest}:accept`, variant: 0, text: "Hello, $n.$B$BTurn right at the tree." },
           { lineId: `q:${quest}:accept:w1`, variant: 0, text: "Oh, you are back." },
@@ -81,7 +79,11 @@ describe("lineStates", () => {
 
   it("sets a changed moment against the wording closest to the player's", async () => {
     const [state] = await lineStates([moment("accept", "Oh, so you are back.")]);
-    expect(state.kind === "changed" && [state.lineId, state.current]).toEqual([`q:${quest}:accept:w1`, "Oh, you are back."]);
+    expect(state.kind === "changed" && state.wordings[state.closest]).toEqual({
+      lineId: `q:${quest}:accept:w1`,
+      variant: 0,
+      text: "Oh, you are back.",
+    });
   });
 
   it("counts a text any wording of the moment says as known", async () => {
@@ -238,7 +240,7 @@ describe("lineStates: books", () => {
       { source: "books", locale: "esES", text: "Nada.", meta: { book: `Nuevo ${base}`, number: "1" } },
     ]);
     expect(known).toEqual({ kind: "known" });
-    expect(changed).toEqual({ kind: "changed", lineId: pages[0], variant: 0, current: `Texto uno ${base}.` });
+    expect(changed).toEqual({ kind: "changed", wordings: [{ lineId: pages[0], variant: 0, text: `Texto uno ${base}.` }], closest: 0 });
     expect(missing).toEqual({ kind: "missing" });
   });
 
@@ -248,14 +250,14 @@ describe("lineStates: books", () => {
       { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: {}, matchLineId: pages[0] },
       { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: { book: `Libro ${base}`, number: "1" }, matchNewBook: true },
     ]);
-    expect(named).toEqual({ kind: "changed", lineId: pages[0], variant: 0, current: `Texto uno ${base}.` });
+    expect(named).toEqual({ kind: "changed", wordings: [{ lineId: pages[0], variant: 0, text: `Texto uno ${base}.` }], closest: 0 });
     expect(ownText).toEqual({ kind: "known" });
     expect(newBook).toEqual({ kind: "missing" });
   });
 });
 
 describe("tabOf", () => {
-  const changed = { kind: "changed", lineId: "q:1:accept", variant: 0, current: "x" } as const;
+  const changed: LineState = { kind: "changed", wordings: [{ lineId: "q:1:accept", variant: 0, text: "x" }], closest: 0 };
 
   it("puts a changed row on the corrections tab, accepted or not", () => {
     expect(tabOf("new", changed)).toBe("corrections");

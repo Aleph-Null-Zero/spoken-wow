@@ -43,8 +43,8 @@ import { englishMomentLines, rewriteEnglish } from "@/lib/quests/english-rewrite
 import { OverrideError } from "@/lib/quests/override";
 import { QuestTextConflict, QuestTextMissing, saveQuestText } from "@/lib/quests/text";
 
-import { ownWording, writeWording } from "./accept";
-import { lineStates } from "./known";
+import { writeWording } from "./accept";
+import { lineStates, type CorpusText } from "./known";
 import { momentOf } from "./naming";
 import { CONTRIBUTION_COLUMNS, type Contribution } from "./store";
 import { correctionNote } from "./notes";
@@ -56,7 +56,7 @@ export type CorrectionOutcome =
   | { ok: false; reason: "not-a-correction" | "malformed" | "needs-speaker"; message: string };
 
 /** One of a quest moment's wordings (known.ts LineState), as the corrections tab names it. */
-export type WordingPick = { lineId: string; variant: number };
+export type WordingPick = Pick<CorpusText, "lineId" | "variant">;
 
 /**
  * `pick` is the wording the correction fixes, where the moderator chose one; otherwise it is
@@ -91,8 +91,8 @@ export async function acceptCorrection(id: number, userId: string, pick?: Wordin
     };
   }
   const target = pick
-    ? (state.wordings ?? [state]).find((line) => line.lineId === pick.lineId && line.variant === pick.variant)
-    : state;
+    ? state.wordings.find((line) => line.lineId === pick.lineId && line.variant === pick.variant)
+    : state.wordings[state.closest];
   if (!target) {
     return {
       ok: false,
@@ -155,22 +155,13 @@ export async function acceptAsWording(id: number, userId: string): Promise<Corre
       message: "Only a quest line sent in a site language can be another wording.",
     };
   }
-  const own = await ownWording(id);
-  if (own) return markAccepted(contribution, lang, userId, { wording: own });
-
+  // Whether the text is already a wording is writeWording's to say, under the moment's lock.
   const [state] = await lineStates([contribution]);
   if (state.kind === "missing") {
     return {
       ok: false,
       reason: "not-a-correction",
       message: "The corpus has no line for this moment yet -- accept it on the contributions tab.",
-    };
-  }
-  if (state.kind !== "changed") {
-    return {
-      ok: false,
-      reason: "not-a-correction",
-      message: "The corpus already has this text for the moment -- nothing to add.",
     };
   }
   const written = await writeWording(contribution, userId);
