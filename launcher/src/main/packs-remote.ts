@@ -168,9 +168,17 @@ export async function fetchIndex(dataPath: string, opts: ChannelOptions = {}): P
   }
 }
 
+// A manifest is immutable per hash, so one that was verified once is not read and checked again.
+const verified = new Map<string, ChannelManifest>()
+const memoKey = (packId: string, pack: ChannelPack): string => `${packId}@${pack.rev}@${pack.manifestSha256}`
+
 export function loadCachedManifest(dataPath: string, packId: string, pack: ChannelPack, publicKey?: string): ChannelManifest | null {
+  const known = verified.get(memoKey(packId, pack))
+  if (known) return known
   try {
-    return parseManifest(openEnvelope(fs.readFileSync(manifestFile(dataPath, packId, pack.rev), 'utf8'), publicKey), packId, pack)
+    const manifest = parseManifest(openEnvelope(fs.readFileSync(manifestFile(dataPath, packId, pack.rev), 'utf8'), publicKey), packId, pack)
+    verified.set(memoKey(packId, pack), manifest)
+    return manifest
   } catch {
     return null
   }
@@ -188,5 +196,6 @@ export async function fetchManifest(dataPath: string, packId: string, pack: Chan
     if (name.startsWith(`${packId}-`) && name !== path.basename(file)) fs.rmSync(path.join(path.dirname(file), name), { force: true })
   }
   fs.writeFileSync(file, raw, 'utf8')
+  verified.set(memoKey(packId, pack), manifest)
   return manifest
 }

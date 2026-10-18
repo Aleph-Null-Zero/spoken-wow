@@ -22,8 +22,11 @@ export function packStatePath(game: GameInstall, packId: string): string {
   return path.join(workDir(game), 'packs', `${packId}.json`)
 }
 
-export function loadPackState(game: GameInstall, packId: string): PackState | null {
-  const raw = readJsonFile<unknown>(packStatePath(game, packId), null) as Partial<PackState> | null
+// Parsed states by file, with the mtime they were read at; a status reads every folder's state. Callers treat a state as read-only.
+const memo = new Map<string, { mtimeMs: number; state: PackState | null }>()
+
+function parse(file: string, packId: string): PackState | null {
+  const raw = readJsonFile<unknown>(file, null) as Partial<PackState> | null
   if (!raw || raw.packId !== packId || typeof raw.rev !== 'string' || typeof raw.files !== 'object' || raw.files === null) return null
   const files: Record<string, PackFileState> = {}
   for (const [p, x] of Object.entries(raw.files as Record<string, Partial<PackFileState> | null>)) {
@@ -32,12 +35,31 @@ export function loadPackState(game: GameInstall, packId: string): PackState | nu
   return { packId, rev: raw.rev, files }
 }
 
+export function loadPackState(game: GameInstall, packId: string): PackState | null {
+  const file = packStatePath(game, packId)
+  let mtimeMs: number
+  try {
+    mtimeMs = fs.statSync(file).mtimeMs
+  } catch {
+    memo.delete(file)
+    return null
+  }
+  const known = memo.get(file)
+  if (known && known.mtimeMs === mtimeMs) return known.state
+  const state = parse(file, packId)
+  memo.set(file, { mtimeMs, state })
+  return state
+}
+
 export function savePackState(game: GameInstall, state: PackState): void {
   const file = packStatePath(game, state.packId)
   fs.mkdirSync(path.dirname(file), { recursive: true })
   writeJsonAtomic(file, state)
+  memo.set(file, { mtimeMs: fs.statSync(file).mtimeMs, state })
 }
 
 export function dropPackState(game: GameInstall, packId: string): void {
-  fs.rmSync(packStatePath(game, packId), { force: true })
+  const file = packStatePath(game, packId)
+  fs.rmSync(file, { force: true })
+  memo.delete(file)
 }
