@@ -19,7 +19,8 @@ export default function LineHeading({
   className,
   asideClassName,
 }: {
-  detail: LineDetail;
+  /** A line's, or a speaker's alone (lib/reports/npc.ts), which is all of it this reads. */
+  detail: Pick<LineDetail, "heading" | "headingHref" | "speaker" | "speakerIsHeading" | "aside">;
   /** Whether the viewer may open /npcs, which is the admins' alone. */
   showNpcPage: boolean;
   className?: string;

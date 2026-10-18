@@ -8,10 +8,11 @@
  * spoken and the button that cuts a new take are here; the audio plays through the page's
  * transport bar, the same one both explorers use, so one line stops the previous one.
  *
- * Presentational: the row is fetched by ReportTable, because the play button needs the
- * same line without this panel being open.
+ * Presentational: the row is fetched by ReportTable, which owns the transport bar the play
+ * button starts.
  */
 import { useLang } from "@/components/LangProvider";
+import { Play } from "lucide-react";
 import { useState } from "react";
 
 import OverrideDialog from "@/components/OverrideDialog";
@@ -36,6 +37,8 @@ type Props = {
   onRegenerated: (version: number) => void;
   /** A rewrite was saved, so the panel and the row read the text that will be spoken next. */
   onRewritten: () => void;
+  /** Points the page's transport bar at this line and starts it. */
+  onPlay: () => void;
 };
 
 export default function ReportDetail({
@@ -46,6 +49,7 @@ export default function ReportDetail({
   showNpcPage,
   onRegenerated,
   onRewritten,
+  onPlay,
 }: Props) {
   const lang = useLang();
   const [busy, setBusy] = useState(false);
@@ -85,8 +89,15 @@ export default function ReportDetail({
 
   return (
     <div className="flex flex-col gap-2 px-3 py-3">
-      <div>
-        <LineHeading detail={detail} showNpcPage={showNpcPage} asideClassName="ml-2" />
+      <div className="flex items-center gap-1">
+        {detail.audioSrc === null ? null : (
+          <Button size="icon-xs" variant="ghost" title="Play this line" aria-label="Play this line" onClick={onPlay}>
+            <Play />
+          </Button>
+        )}
+        <div>
+          <LineHeading detail={detail} showNpcPage={showNpcPage} asideClassName="ml-2" />
+        </div>
       </div>
 
       <p className="text-sm whitespace-pre-wrap">{detail.text}</p>
