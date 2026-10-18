@@ -31,12 +31,11 @@ import { usePendingPush } from "@/components/usePendingPush";
 import { useSearchBox } from "@/components/useSearchBox";
 import { Player as BooksPlayer } from "@/components/books/Player";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
 import { explorerHref, reportHref, targetExplorerHref } from "@/lib/links";
 import type { ResultLine as BookLine } from "@/lib/books/search";
-import { searchPath, type SourceLine } from "@/lib/reports/detail";
+import { searchPath, type Heading, type SourceLine } from "@/lib/reports/detail";
 import {
   reportsHref,
   SECTIONS,
@@ -47,7 +46,6 @@ import {
 } from "@/lib/reports/query";
 import { CATEGORIES, CATEGORY_COLUMN, STATUS_LABELS, type Category, type Report, type Status } from "@/lib/reports/reports";
 import { resolveReport } from "@/lib/reports/client";
-import type { NpcDetail } from "@/lib/reports/npc";
 import { applyResolutions, type ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import { cn } from "@/lib/utils";
@@ -107,8 +105,8 @@ export default function ReportTable({
   statusCounts: Record<StatusView, number>;
   filters: ReportFilters;
   /** Who this page's reports with no line are about, by address, where that is an NPC. */
-  npcs: Record<string, NpcDetail>;
-  /** Whether this visitor may spend credits from the panel below a row. */
+  npcs: Record<string, Heading>;
+  /** Whether this visitor may spend credits from the line's panel. */
   canRegenerate: boolean;
   /** The NPC page is the admins'; see LineHeading. */
   showNpcPage: boolean;
@@ -183,7 +181,6 @@ export default function ReportTable({
     [lang],
   );
 
-
   // Every line on the page is shown beside its reports, so every one is looked up. `load`
   // asks once per line, so a re-render or a resolution asks nothing again.
   useEffect(() => {
@@ -234,9 +231,9 @@ export default function ReportTable({
   const playingVersion = playingKey === null ? undefined : versions[playingKey];
 
   /** The line: a link into the explorer narrowed to it. The tab already says the section. */
-  function whereCell(report: Report) {
+  function whereCell(report: Report, rowSpan: number) {
     return (
-      <div className="flex items-center gap-2">
+      <td rowSpan={rowSpan} className="w-0 pr-3 text-xs whitespace-nowrap">
         {/* The explorer, narrowed to this line: where a triager works. A report with no
             line id - a gossip NPC whose reporter never picked one of the takes - narrows
             the explorer by its address instead. The `/r/` page the reporter saw is the
@@ -263,7 +260,7 @@ export default function ReportTable({
         ) : (
           <span className="text-muted-foreground">about the project</span>
         )}
-      </div>
+      </td>
     );
   }
 
@@ -301,24 +298,25 @@ export default function ReportTable({
    */
   function detailCell(group: ReportGroup, rowSpan: number) {
     const [first] = group.reports;
-    const key = first.lineId ? lineKey(first.source, first.lineId) : null;
+    const { source, lineId } = first;
+    const key = lineId ? lineKey(source, lineId) : null;
     // No line, so no take to show: a report about an NPC as a whole shows who that NPC is.
-    const npc = !first.lineId && first.target ? npcs[first.target] : undefined;
+    const npc = first.target ? npcs[first.target] : undefined;
 
     return (
       <td rowSpan={rowSpan} className={cn("align-top", (key || npc) && "w-[28rem] min-w-[28rem]")}>
-        {first.lineId && key ? (
+        {lineId && key ? (
           <ReportDetail
-            source={first.source}
-            lineId={first.lineId}
+            source={source}
+            lineId={lineId}
             line={lines[key]}
             canRegenerate={canRegenerate}
             showNpcPage={showNpcPage}
             onRegenerated={(version) => {
               setVersions((current) => ({ ...current, [key]: version }));
-              void load(first.source, first.lineId!, true);
+              void load(source, lineId, true);
             }}
-            onRewritten={() => void load(first.source, first.lineId!, true)}
+            onRewritten={() => void load(source, lineId, true)}
             onPlay={() => void play(first)}
           />
         ) : npc ? (
@@ -377,9 +375,7 @@ export default function ReportTable({
 
     return (
       <tr key={group.key} className="bg-muted/20 align-top [&>td]:border-b [&>td]:py-2 [&>td]:leading-5">
-        <td rowSpan={rows} className="w-0 pr-3 text-xs whitespace-nowrap">
-          {whereCell(first)}
-        </td>
+        {whereCell(first, rows)}
         {detailCell(group, rows)}
         {/* No date: each report under it has its own, and the empty cell sets this row apart. */}
         <td className="w-0" />
@@ -472,7 +468,7 @@ export default function ReportTable({
                 ? reportRow(
                     first,
                     <>
-                      <td className="w-0 pr-3 text-xs whitespace-nowrap">{whereCell(first)}</td>
+                      {whereCell(first, 1)}
                       {detailCell(group, 1)}
                     </>,
                   )

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The line a report is about, opened in place.
+ * The line a report is about, shown beside it.
  *
  * A triager's loop used to be: read the row, open the explorer in another tab, find the
  * line, listen, come back. The context that picked the voice, the text as it will be
