@@ -75,17 +75,12 @@ world.itemText = ""
 Expect("an empty page is not a page", B:PageOnScreen(), nil)
 
 ---------------------------------------------------------------- the ambiguous ones
--- "Inscribed Kodo Leather" is four books holding identical text. Nothing on screen tells
--- them apart, so the lookup collapses them and this must resolve to the lowest of the four
+-- "Pteradon Skeleton" is two books holding identical text. Nothing on screen tells them
+-- apart, so the lookup collapses them and the page must resolve to the lower of the two
 -- rather than to nothing.
-local kodo
-for pageId, place in pairs(SpokenBooksData.pages) do
-    local b = SpokenBooksData.books[place.book]
-    if b and b.title == "Inscribed Kodo Leather" then
-        kodo = (kodo == nil or pageId < kodo) and pageId or kodo
-    end
-end
-Expect("the corpus still has the four Kodo Leathers", kodo ~= nil, true)
+local PTERADON = "This intact pteradon skeleton was recovered from the remote Un'Goro Crater. Based on the skeletal structure, it is clear that this specific genus has not yet been encountered. This skeleton could have been preserved for any number of centuries beneath the region's rich soil."
+stub.ShowPage({ title = "Pteradon Skeleton", number = 1, text = PTERADON })
+Expect("two books with the same words resolve to the lower", B:PageOnScreen(), 1756)
 
 print(Failures() == 0 and "All books reader tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)
