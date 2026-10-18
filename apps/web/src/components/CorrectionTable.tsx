@@ -436,7 +436,7 @@ export default function CorrectionTable({
 }
 
 /** One side of a correction, its differing words marked. */
-function Marked({ parts, tone }: { parts: DiffPart[]; tone: "removed" | "added" }) {
+export function Marked({ parts, tone }: { parts: DiffPart[]; tone: "removed" | "added" }) {
   return (
     <p className="whitespace-pre-wrap">
       {parts.map((part, index) =>

@@ -24,6 +24,7 @@ import Pagination from "@/components/Pagination";
 import QuestsPlayer from "@/components/Player";
 import ReportDetail from "@/components/ReportDetail";
 import LineHeading from "@/components/reports/LineHeading";
+import ReportContribution from "@/components/reports/ReportContribution";
 import SortHeader from "@/components/SortHeader";
 import { ReportContextNote } from "@/components/reports/ReportContextFacts";
 import { LinkTabs } from "@/components/StatusTabs";
@@ -360,7 +361,15 @@ export default function ReportTable({
             <span className="text-muted-foreground mr-2 text-xs">{CATEGORY_COLUMN[report.category]}</span>
             {report.body}
           </p>
-          <ReportContextNote context={report.context} />
+          <ReportContextNote context={report.context}>
+            {/* The text the reporter's addon saw, as the contributions page would take it. */}
+            {report.source !== "zones" && report.context?.text?.trim() ? (
+              <ReportContribution
+                report={report}
+                onFixed={(fixed) => setResolved((current) => ({ ...current, [fixed.id]: fixed }))}
+              />
+            ) : null}
+          </ReportContextNote>
           {report.name || report.email ? (
             <p className="text-muted-foreground mt-1 text-xs">
               {[report.name, report.email].filter(Boolean).join(" · ")}
