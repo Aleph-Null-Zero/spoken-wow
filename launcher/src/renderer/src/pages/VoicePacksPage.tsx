@@ -53,7 +53,7 @@ export function VoicePacksPage(): ReactNode {
     <div className="frame">
       <aside className="rail scroll" aria-label={S.voices.title}>
         <div className="rail-top">
-          <Wordmark flavor={game.flavor} />
+          <Wordmark flavor={game.flavor} kicker />
           <p className="rail-game">{game.gameVersion ? `${game.label} · ${game.gameVersion}` : game.label}</p>
         </div>
         <div className="rail-bottom">

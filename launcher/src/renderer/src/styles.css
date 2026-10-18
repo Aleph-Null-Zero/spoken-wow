@@ -4,18 +4,18 @@
   color-scheme: dark;
 
   /* Surfaces, sampled from the Battle.net desktop app */
-  --bg: #14161a;
+  --bg: #16171d;
   --bg-deep: #101216;
-  --panel: #1b1d22;
-  --panel-2: #17191d;
-  --field: #22252b;
-  --field-hover: #292c33;
-  --field-input: #121418;
+  --panel: #222329;
+  --panel-2: #1b1c22;
+  --field: #25272e;
+  --field-hover: #2e3037;
+  --field-input: #121318;
   --line: rgba(255, 255, 255, 0.1);
   --line-soft: rgba(255, 255, 255, 0.05);
-  --btn: #2a2d33;
-  --btn-hover: #353941;
-  --row-hover: #22252b;
+  --btn: #31333a;
+  --btn-hover: #3c3e46;
+  --row-hover: #2d2e36;
 
   /* Text */
   --text: #f4f5f7;
@@ -174,13 +174,13 @@ h2 {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3a3c43;
+  background: transparent;
   border: 3px solid transparent;
   background-clip: padding-box;
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #50525a;
+  background: #5a5c65;
   background-clip: padding-box;
 }
 
@@ -391,7 +391,7 @@ svg.is-spinning {
   height: var(--strip-h);
   margin: 6px var(--float) 0;
   overflow: visible;
-  background: rgba(27, 29, 34, 0.78);
+  background: rgba(36, 37, 43, 0.86);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
   backdrop-filter: blur(14px) saturate(1.2);
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -458,30 +458,6 @@ svg.is-spinning {
 }
 
 /* The small round emblem of a game: its art in a gold ring, with the Spoken badge */
-.game-icon {
-  position: relative;
-  display: inline-block;
-  flex: none;
-  width: 28px;
-  height: 28px;
-  background:
-    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.28), transparent 55%),
-    var(--g-art, none) center / cover,
-    linear-gradient(135deg, var(--g-from, #3a4a68), var(--g-to, #182236));
-  border: 2px solid var(--g-glow, var(--gold-mid));
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 0 10px color-mix(in srgb, var(--g-glow, #f0c25a) 30%, transparent);
-}
-
-.game-icon img {
-  position: absolute;
-  right: -5px;
-  bottom: -5px;
-  width: 14px;
-  height: 14px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
-}
-
 /* ---------- Banners ---------- */
 
 .banner {
@@ -525,27 +501,6 @@ svg.is-spinning {
 }
 
 /* The art, enlarged and blurred, strongest at the upper left, gone toward the right and the bottom. */
-.backdrop-art {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: calc(var(--rail-w) + 30px);
-  height: 58%;
-  background: var(--g-art) center / cover;
-  filter: blur(16px) saturate(1.1);
-  opacity: 0.24;
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.55) 55%, transparent 100%), linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.55) 55%, transparent 100%), linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
-}
-
-.backdrop-glow {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(340px 280px at 0 0, color-mix(in srgb, var(--g-from) 16%, transparent), transparent 70%);
-}
-
 .splash {
   position: relative;
   height: 100%;
@@ -663,77 +618,6 @@ svg.is-spinning {
 
 /* ---------- The game wordmark: our own logo, not a Blizzard one ---------- */
 
-.wordmark {
-  --wm-len: 7;
-  container-type: inline-size;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  width: 100%;
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  user-select: none;
-}
-
-.wm-emblem {
-  display: block;
-  width: 64px;
-  height: 64px;
-  margin-bottom: 6px;
-  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--g-glow) 55%, transparent)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
-}
-
-.wm-kicker {
-  color: #ead9a6;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.34em;
-  margin-right: -0.34em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.wm-title {
-  max-width: 100%;
-  padding: 2px 0 4px;
-  font-size: min(44px, calc(100cqw / (var(--wm-len) * 0.74)));
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  background: linear-gradient(180deg, var(--gold-hi) 0%, var(--gold-mid) 48%, var(--gold-lo) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 16px color-mix(in srgb, var(--g-glow) 40%, transparent));
-}
-
-.wm-rule {
-  width: 72%;
-  height: 1px;
-  margin-top: 4px;
-  background: linear-gradient(90deg, transparent, var(--gold-mid), transparent);
-  opacity: 0.8;
-}
-
-.wordmark-sm .wm-emblem {
-  width: 30px;
-  height: 30px;
-  margin-bottom: 2px;
-}
-
-.wordmark-sm .wm-kicker {
-  font-size: 9.5px;
-}
-
-.wordmark-sm .wm-title {
-  font-size: min(26px, calc(100cqw / (var(--wm-len) * 0.74)));
-}
-
-.wordmark-sm .wm-rule {
-  display: none;
-}
-
 /* ---------- Buttons ---------- */
 
 .btn {
@@ -810,23 +694,17 @@ svg.is-spinning {
 /* The big button of the rail: Install, Update, Install everything */
 .btn-play {
   width: 100%;
-  height: auto;
-  min-height: 44px;
-  padding: 6px 8px;
+  height: 44px;
+  padding: 0 8px;
   font-size: 16px;
-  line-height: 1.2;
-  white-space: normal;
-  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn-wrap {
-  height: auto;
-  min-height: 44px;
-  padding: 8px 14px;
+  height: 44px;
+  padding: 0 14px;
   font-size: 14px;
-  line-height: 1.3;
-  white-space: normal;
-  text-align: center;
 }
 
 .install-row {
@@ -842,7 +720,7 @@ svg.is-spinning {
 
 .install-row .menu-button {
   width: 44px;
-  height: auto;
+  height: 44px;
   padding: 0;
   background: var(--blue);
   border-left: 1px solid rgba(255, 255, 255, 0.28);
@@ -1193,7 +1071,7 @@ svg.is-spinning {
 
 .game-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
 }
 
@@ -1214,41 +1092,6 @@ svg.is-spinning {
 
 .art-button:focus-visible {
   outline-offset: -3px;
-}
-
-.card-art {
-  position: relative;
-  display: grid;
-  place-items: center;
-  aspect-ratio: 16 / 8;
-  overflow: hidden;
-  background: linear-gradient(135deg, var(--g-from), var(--g-to));
-}
-
-.card-art-img {
-  position: absolute;
-  inset: -6%;
-  background: var(--g-art) center / cover;
-  filter: saturate(1.25) brightness(1.25);
-  transition: transform 0.4s ease-out;
-}
-
-.art-button:hover .card-art-img {
-  transform: scale(1.05);
-}
-
-.card-art::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at center, rgba(10, 11, 16, 0), rgba(10, 11, 16, 0.4) 100%),
-    linear-gradient(180deg, transparent 60%, var(--panel) 100%);
-}
-
-.card-art .wordmark {
-  position: relative;
-  z-index: 1;
 }
 
 .game-card-body {
@@ -1420,7 +1263,7 @@ svg.is-spinning {
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  background: #1f2227;
+  background: #292a31;
   border-radius: var(--radius-s);
 }
 
@@ -1635,35 +1478,6 @@ svg.is-spinning {
   background: var(--panel);
   border-radius: var(--radius-m);
   overflow: hidden;
-}
-
-.hero-art {
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-height: 200px;
-  background: linear-gradient(135deg, var(--g-from), var(--g-to));
-}
-
-.hero-art-img {
-  position: absolute;
-  inset: 0;
-  background: var(--g-art) center / cover;
-}
-
-.hero-art::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(10, 11, 16, 0.1) 30%, var(--panel) 100%),
-    linear-gradient(180deg, transparent 60%, rgba(10, 11, 16, 0.35));
-}
-
-.hero-art img {
-  position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
 }
 
 .hero-body {
@@ -2232,35 +2046,18 @@ svg.is-spinning {
   top: calc(100% + 8px);
   left: 50%;
   z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 7px 14px 8px;
+  padding: 6px 12px;
   background: #2a2b31;
   border-radius: var(--radius-s);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
-  font-family: var(--font-display);
-  text-transform: uppercase;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
   transform: translate(-50%, -2px);
   transition: opacity 0.12s 0.3s, transform 0.12s 0.3s;
-}
-
-.strip-tip small {
-  color: #ead9a6;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.3em;
-  margin-right: -0.3em;
-}
-
-.strip-tip span {
-  color: var(--gold-mid);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
 }
 
 .strip-tile:hover .strip-tip,
@@ -2270,16 +2067,6 @@ svg.is-spinning {
 }
 
 /* Home has no rail: the art stays in the corner, narrower still */
-.backdrop-compact .backdrop-art {
-  width: 200px;
-  height: 36%;
-  opacity: 0.18;
-}
-
-.backdrop-compact .backdrop-glow {
-  background: radial-gradient(260px 220px at 0 0, color-mix(in srgb, var(--g-from) 12%, transparent), transparent 70%);
-}
-
 .strip-add:hover {
   color: var(--text);
 }
@@ -2293,10 +2080,6 @@ svg.is-spinning {
 }
 
 /* A supported game that was not found: dimmed, nothing to click */
-.is-missing .card-art {
-  filter: grayscale(0.7) brightness(0.55);
-}
-
 .is-missing .game-name,
 .is-missing .eyebrow {
   color: var(--muted);
@@ -2314,10 +2097,6 @@ svg.is-spinning {
   cursor: default;
 }
 
-.strip-tile.is-missing .game-icon {
-  filter: grayscale(1) brightness(0.55);
-}
-
 .strip-tile.is-missing:hover {
   background: none;
 }
@@ -2328,4 +2107,190 @@ svg.is-spinning {
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: #3d3f47;
+  background-clip: padding-box;
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
+  background: #5a5c65;
+  background-clip: padding-box;
+}
+
+.scroll,
+.page,
+.center,
+.settings-content,
+.hero-notes {
+  scrollbar-gutter: stable;
+}
+
+/* ---------- Game imagery: the games' own logos, key art and icons (see CREDITS.md) ---------- */
+
+.game-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+}
+
+.game-icon img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: center;
+  user-select: none;
+}
+
+/* The small letter-spaced word over the logo, on the rail only */
+.wm-kicker {
+  color: var(--label);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  margin-right: -0.34em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.wm-logo {
+  display: block;
+  width: 100%;
+  max-height: 168px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
+}
+
+.card-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 150px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+
+.card-art-img {
+  position: absolute;
+  inset: 0;
+  background: var(--g-art) var(--g-pos, center) / cover;
+  filter: var(--g-filter, none);
+  transition: transform 0.4s ease-out;
+}
+
+.art-button:hover .card-art-img {
+  transform: scale(1.05);
+}
+
+.card-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(14, 15, 20, 0.35), rgba(14, 15, 20, 0.1) 70%),
+    linear-gradient(180deg, transparent 55%, var(--panel) 100%);
+}
+
+.card-art .wordmark {
+  position: relative;
+  z-index: 1;
+  width: auto;
+}
+
+.card-art .wm-logo {
+  width: auto;
+  max-width: 64%;
+  max-height: 112px;
+  margin: 0 auto;
+}
+
+.hero {
+  grid-template-columns: minmax(200px, 36%) 1fr;
+}
+
+.hero-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  background: var(--panel-2);
+}
+
+.hero-art-img {
+  position: absolute;
+  inset: 0;
+  background: var(--g-art) var(--g-pos, center) / cover;
+  filter: var(--g-filter, none);
+}
+
+.hero-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(14, 15, 20, 0.15) 35%, var(--panel) 100%);
+}
+
+.hero-art .wm-logo {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  max-width: 62%;
+  max-height: 120px;
+}
+
+/* The key art behind a game page: large at the left, fading into the page colour to the right and the bottom */
+.backdrop-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--rail-w) + 24px);
+  height: min(86%, 760px);
+  background: var(--g-art) var(--g-pos, left top) / cover;
+  filter: var(--g-filter, none);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 55%, transparent 100%), linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0%, #000 55%, transparent 100%), linear-gradient(180deg, #000 0%, #000 45%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.backdrop-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(420px 320px at 0 0, color-mix(in srgb, var(--g-from) 14%, transparent), transparent 70%);
+}
+
+/* Home has no rail: the colour wash only, no art under the cards */
+.backdrop-compact .backdrop-art {
+  display: none;
+}
+
+.strip-tile.is-missing .game-icon {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.is-missing .card-art {
+  filter: grayscale(0.75) brightness(0.55);
+}
+
+.disclaimer {
+  max-width: 600px;
+  margin: 18px 0 0;
+}
+
+.rail-game {
+  color: var(--label);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }

@@ -24,9 +24,6 @@ export interface FlavorLook {
   name: string
   /** The game's label as the launcher lists it, for a game that was not found. */
   label: string
-  /** The two lines of the wordmark: a small line over a large one. */
-  kicker: string
-  title: string
   /** CSS colours: the tint of the art, the dark end and the glow of the wordmark. */
   from: string
   to: string
@@ -34,9 +31,9 @@ export interface FlavorLook {
 }
 
 const LOOKS: Record<Flavor, FlavorLook> = {
-  classic_beta: { name: 'Forever', label: 'WoW: Forever', kicker: 'Spoken', title: 'Forever', from: '#1d6f8f', to: '#0b2a3a', glow: '#f0c25a' },
-  classic_era: { name: 'Classic Era', label: 'WoW: Classic Era', kicker: 'Spoken', title: 'Classic Era', from: '#9a5a1c', to: '#33200f', glow: '#f2b04a' },
-  anniversary: { name: 'Anniversary', label: 'WoW: Anniversary', kicker: 'Spoken', title: 'Anniversary', from: '#a23a58', to: '#2e1020', glow: '#f4bb78' }
+  classic_beta: { name: 'Forever', label: 'WoW: Forever', from: '#1d6f8f', to: '#0b2a3a', glow: '#f0c25a' },
+  classic_era: { name: 'Classic Era', label: 'WoW: Classic Era', from: '#9a5a1c', to: '#33200f', glow: '#f2b04a' },
+  anniversary: { name: 'Anniversary', label: 'WoW: Anniversary', from: '#a23a58', to: '#2e1020', glow: '#f4bb78' }
 }
 
 export const flavorLook = (flavor: Flavor): FlavorLook => LOOKS[flavor]

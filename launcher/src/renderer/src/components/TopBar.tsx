@@ -80,7 +80,7 @@ export function GamesStrip(): ReactNode {
           return (
             <button key={flavor} type="button" className="strip-tile is-missing" disabled aria-label={text}>
               <GameIcon flavor={flavor} />
-              <span className="strip-tip strip-tip-plain" aria-hidden="true">
+              <span className="strip-tip" aria-hidden="true">
                 {text}
               </span>
             </button>
@@ -101,8 +101,7 @@ export function GamesStrip(): ReactNode {
           >
             <GameIcon flavor={g.flavor} />
             <span className="strip-tip" aria-hidden="true">
-              <small>{flavorLook(g.flavor).kicker}</small>
-              <span>{flavorLook(g.flavor).title}</span>
+              {flavorLook(g.flavor).label}
             </span>
           </button>
         )

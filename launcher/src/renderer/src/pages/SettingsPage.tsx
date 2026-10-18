@@ -266,6 +266,7 @@ function AboutSection(): ReactNode {
           {state.dataPath || '-'}
         </dd>
       </dl>
+      <p className="settings-text disclaimer">{S.settings.disclaimer}</p>
       <div className="setting-actions">
         <button type="button" className="btn" onClick={() => void check()} disabled={busy} aria-busy={busy}>
           <IconRefresh size={14} className={busy ? 'is-spinning' : ''} />
