@@ -2,7 +2,7 @@
 // release list, the asset downloads and the launcher's own update.
 import path from 'node:path'
 import { app, BrowserWindow, Menu, session, shell } from 'electron'
-import { CHANNELS } from '../shared/api'
+import { CHANNELS, type UpdaterState } from '../shared/api'
 import { windowChrome } from './chrome'
 import { isAllowedExternalUrl } from './external'
 import { registerIpc } from './ipc'
@@ -19,6 +19,8 @@ const DEV_URL = process.env.ELECTRON_RENDERER_URL
 
 let service: LauncherService | null = null
 let mainWindow: BrowserWindow | null = null
+// Each state is sent once, so a window opened later (macOS, from the Dock) reads it from the snapshot.
+let updaterState: UpdaterState = { state: 'idle' }
 
 function broadcast(channel: string, payload: unknown): void {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -159,7 +161,7 @@ if (!app.requestSingleInstanceLock()) {
     setUpSession()
     setUpMenu()
     service = new LauncherService({ dataPath, appVersion: app.getVersion(), send: broadcast })
-    registerIpc(service, PAGE)
+    registerIpc(service, PAGE, () => updaterState)
     void service.init()
 
     mainWindow = createWindow()
@@ -173,7 +175,10 @@ if (!app.requestSingleInstanceLock()) {
       isPackaged: app.isPackaged,
       appVersion: app.getVersion(),
       autoUpdateLauncher: () => svc.settings.autoUpdateLauncher,
-      send: (state) => broadcast(CHANNELS.updaterState, state)
+      send: (state) => {
+        updaterState = state
+        broadcast(CHANNELS.updaterState, state)
+      }
     })
   })
 }

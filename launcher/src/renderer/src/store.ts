@@ -84,6 +84,8 @@ function reducer(s: State, a: Action): State {
         appVersion: a.snap.appVersion,
         platform: a.snap.platform,
         dataPath: a.snap.dataPath,
+        // A state sent while the window was starting is newer than the snapshot's.
+        updater: s.updater.state === 'idle' ? (a.snap.updater ?? s.updater) : s.updater,
         statuses: a.statuses,
         page: a.page,
         gameId: a.gameId,
@@ -160,7 +162,7 @@ export interface Actions {
   setSettings(patch: Partial<Settings>): Promise<void>
 }
 
-function localError(gameId: string, productId: string, action: 'install' | 'uninstall', message: string): JobProgress {
+function localError(gameId: string, productId: string, action: JobProgress['action'], message: string): JobProgress {
   return { jobId: `local-${Date.now()}`, gameId, productId, action, phase: 'error', received: 0, total: 0, bytesPerSecond: 0, message }
 }
 
@@ -196,7 +198,7 @@ function makeActions(dispatch: Dispatch<Action>, get: () => State): Actions {
       try {
         await api().install(gameId, productId, { repair: true })
       } catch (e) {
-        dispatch({ type: 'job', job: localError(gameId, productId, 'install', errorText(e)) })
+        dispatch({ type: 'job', job: localError(gameId, productId, 'repair', errorText(e)) })
       }
     },
     async checkLauncherUpdate() {

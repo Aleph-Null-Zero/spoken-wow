@@ -278,7 +278,7 @@ export class LauncherService {
     return this.jobs.enqueue({
       gameId,
       productId,
-      action: 'install',
+      action: repair ? 'repair' : 'install',
       ...(release ? { version: release.version } : {}),
       run: async (ctx) => {
         if (refused) throw new PlainError(refused)

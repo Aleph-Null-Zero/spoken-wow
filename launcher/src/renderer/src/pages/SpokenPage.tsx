@@ -146,7 +146,7 @@ function SpokenFor({ game }: { game: GameInstall }): ReactNode {
               <IconAlert size={16} />
               <span>{job.message ?? S.jobs.error}</span>
               <div className="notice-actions">
-                <button type="button" className="link" onClick={() => (job.action === 'uninstall' ? void actions.uninstall(game.id, 'spoken') : run(job.version))}>
+                <button type="button" className="link" onClick={() => (job.action === 'uninstall' ? void actions.uninstall(game.id, 'spoken') : job.action === 'repair' ? repair() : run(job.version))}>
                   {S.common.retry}
                 </button>
                 <button type="button" className="link link-muted" onClick={() => actions.dismissJob(jobKey(game.id, 'spoken'))}>
