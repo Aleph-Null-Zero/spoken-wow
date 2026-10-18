@@ -1,5 +1,5 @@
 // A pack folder in dist/ as the launcher channel describes it: every file by its / path, with
-// its sha256 and size. The same path rules as the launcher's (launcher/src/main/packs-remote.ts).
+// its sha256 and size. A path the launcher refuses would hide the whole pack, so the rules match its own.
 import { createHash } from "node:crypto";
 import { createReadStream, readFileSync, writeFileSync } from "node:fs";
 import { readdir, stat } from "node:fs/promises";

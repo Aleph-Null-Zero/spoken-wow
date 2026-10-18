@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { buildManifest, caseDuplicate, diffFiles, hashFolder, revOf } from "./manifest.mjs";
 import { openJson, publicKeyOf, sealJson, sha256Text } from "./sign.mjs";
 
-// The launcher's own PACK_ID (launcher/src/main/packs-remote.ts): an index entry it rejects hides the whole channel.
+// The pack ids the launcher accepts: an index entry it rejects hides the whole channel.
 const PACK_ID = /^Spoken[A-Za-z]+(_[a-z]{2}[A-Z]{2})?$/;
 
 export const IMMUTABLE = "public, max-age=31536000, immutable";

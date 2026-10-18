@@ -2,17 +2,14 @@
 // installed folder lacks, build the new folder in staging from hard links (the unchanged files of
 // the installed folder and the new blobs), and swap it in with install.ts's journaled folder swap.
 // Spec: docs/superpowers/specs/2026-10-18-launcher-delta-packs-design.md
-import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { Readable } from 'node:stream'
-import { pipeline } from 'node:stream/promises'
 import { channelTag } from '../shared/channel'
 import type { GameInstall, JobPhase, Product } from '../shared/types'
-import { sha256OfFile } from './download'
-import { PlainError, formatBytes, isAbortError, sleep, throwIfAborted } from './errors'
+import { downloadAsset, sha256OfFile } from './download'
+import { PlainError, formatBytes, isAbortError, throwIfAborted } from './errors'
 import { LINKED_MESSAGE, ensureFreeSpace, isGameRunning, isLinked } from './guard'
-import { applyChanges, backupDirFor, checkWritable, defaultOps, doneMessage, pruneBackups, refuseUnresolved, workDir, type FsOps, type JobContext, type JobResult } from './install'
+import { applyChanges, backupDirFor, checkWritable, defaultOps, doneMessage, pruneBackups, refuseUnresolved, staleFolders, staleNote, workDir, type FsOps, type JobContext, type JobResult } from './install'
 import { newestRev } from './packs-catalog'
 import { listLocal, planPack } from './packs-plan'
 import type { ChannelFile, ChannelManifest } from './packs-remote'
@@ -65,45 +62,6 @@ async function eachLimit<T>(items: T[], limit: number, fn: (item: T) => Promise<
   if (failure) throw (failure as { err: unknown }).err
 }
 
-/** Downloads one blob to `dest`, through `.part`, renamed only when its size and hash are right. */
-async function fetchBlob(url: string, dest: string, sha: string, size: number, ctx: JobContext, onBytes: (n: number) => void): Promise<void> {
-  const attempts = ctx.attempts ?? 3
-  let wait = ctx.backoffMs ?? 1000
-  const part = `${dest}.part`
-  for (let attempt = 1; ; attempt++) {
-    throwIfAborted(ctx.signal)
-    let got = 0
-    try {
-      const res = await (ctx.fetchImpl ?? fetch)(url, {
-        headers: ctx.userAgent ? { 'User-Agent': ctx.userAgent } : {},
-        ...(ctx.signal ? { signal: ctx.signal } : {})
-      })
-      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`)
-      const hash = createHash('sha256')
-      const body = Readable.fromWeb(res.body as never)
-      body.on('data', (chunk: Buffer) => {
-        hash.update(chunk)
-        got += chunk.length
-        onBytes(chunk.length)
-      })
-      await pipeline(body, fs.createWriteStream(part))
-      if (got !== size || hash.digest('hex') !== sha) throw new Error('checksum mismatch')
-      await fs.promises.rename(part, dest)
-      return
-    } catch (err) {
-      onBytes(-got)
-      await fs.promises.rm(part, { force: true }).catch(() => undefined)
-      if (isAbortError(err)) throw err
-      if (attempt >= attempts) {
-        log(`Blob ${sha} failed:`, err)
-        throw new PlainError('A voice file could not be downloaded intact. Check your connection and try again; what was already downloaded is kept.')
-      }
-      await sleep(wait, ctx.signal)
-      wait *= 2
-    }
-  }
-}
-
 export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobContext): Promise<JobResult> {
   const { product, manifests } = input
   const ops: FsOps = { ...defaultOps, ...ctx.ops }
@@ -117,6 +75,7 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
   await checkWritable(game)
   await refuseUnresolved(game, ops)
 
+  const folders = manifests.map((m) => m.packId)
   // Every folder is planned before anything is downloaded.
   emit('verifying', 0, 0, 0, 'Checking your files')
   const plans: { manifest: ChannelManifest; plan: ChannelFile[]; target: string }[] = []
@@ -154,20 +113,41 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
   // The workers run under their own signal, so a failed blob stops the others before the job reports its error.
   const stop = new AbortController()
   const signal = ctx.signal ? AbortSignal.any([ctx.signal, stop.signal]) : stop.signal
-  const dlCtx: JobContext = { ...ctx, signal }
   await eachLimit(
     missing,
     PARALLEL,
-    ([sha, size]) =>
-      fetchBlob(`${input.baseUrl}blobs/${sha}`, path.join(blobs, sha), sha, size, dlCtx, (n) => {
-        if (signal.aborted) return
-        received += n
-        const now = Date.now()
-        if (now - lastSent > 100) {
-          lastSent = now
-          emit('downloading', received, total, received / Math.max(1, (now - started) / 1000))
+    async ([sha, size]) => {
+      // Progress comes per blob as bytes so far, which drops back when an attempt starts again.
+      let mine = 0
+      await downloadAsset({
+        url: `${input.baseUrl}blobs/${sha}`,
+        dir: blobs,
+        baseName: sha,
+        ext: '',
+        source: 'the voice pack server',
+        expectedSize: size,
+        digest: `sha256:${sha}`,
+        signal,
+        ...(ctx.userAgent ? { userAgent: ctx.userAgent } : {}),
+        ...(ctx.fetchImpl ? { fetchImpl: ctx.fetchImpl } : {}),
+        ...(ctx.attempts ? { attempts: ctx.attempts } : {}),
+        ...(ctx.backoffMs !== undefined ? { backoffMs: ctx.backoffMs } : {}),
+        onProgress: (got) => {
+          if (signal.aborted) return
+          received += got - mine
+          mine = got
+          const now = Date.now()
+          if (now - lastSent > 100) {
+            lastSent = now
+            emit('downloading', received, total, received / Math.max(1, (now - started) / 1000))
+          }
         }
-      }),
+      }).catch((err: unknown) => {
+        received -= mine
+        if (!isAbortError(err)) log(`Blob ${sha} failed:`, err)
+        throw err
+      })
+    },
     () => stop.abort()
   )
 
@@ -200,11 +180,13 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
       )
     }
 
+    // Folders an earlier install of this product recorded (a GitHub zip's other names) go to the backup with the swap.
+    const stale = await staleFolders(game, product, ctx.dataPath, folders)
     emit('installing', total, total)
     const { created } = await applyChanges(
       game,
       product.id,
-      plans.map(({ manifest }) => ({ folder: manifest.packId, staged: path.join(stagingJob, manifest.packId) })),
+      [...plans.map(({ manifest }) => ({ folder: manifest.packId, staged: path.join(stagingJob, manifest.packId) })), ...stale.map((folder) => ({ folder }))],
       ops,
       ctx.signal
     )
@@ -222,19 +204,19 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
       )
       savePackState(game, { packId: manifest.packId, rev: manifest.rev, files: Object.fromEntries(manifest.files.map((f) => [f.path, stats.get(f.path)!])) })
     }
-    const folders = manifests.map((m) => m.packId)
     updateState(ctx.dataPath, (s) => setRecord(s, game.id, product.id, { version: shown, folders, installedAt: new Date().toISOString(), tag: channelTag(revs) }))
     for (const sha of wanted.keys()) await fs.promises.rm(path.join(blobs, sha), { force: true }).catch(() => undefined)
     log(`Synced ${product.id} on ${game.label}: ${wanted.size} files fetched (${formatBytes(total)}), revs ${revs.join(', ')}.`)
+    if (stale.length > 0) log(`Moved old folders of ${product.id} to the backup: ${stale.join(', ')}.`)
 
     const running = await (ctx.isRunning ?? (() => isGameRunning(game.flavor)))()
     // A channel pack can always be fetched again, and the kept backup shares hard links with the live files, which a
     // playing game can hold open on Windows. Removing it now leaves the next run nothing to delete; a failure is fine.
     await ops.rm(backupDirFor(game, product.id)).catch(() => undefined)
     await pruneBackups(game, product.id)
-    const message = (input.repair ? 'Repaired. ' : '') + doneMessage(running, created.length > 0, false)
+    const message = (input.repair ? 'Repaired. ' : '') + staleNote(stale) + doneMessage(running, created.length > 0, false)
     emit('done', total, total, 0, message)
-    return { version: shown, folders, removed: [], gameRunning: running, message }
+    return { version: shown, folders, removed: stale, gameRunning: running, message }
   } finally {
     await fs.promises.rm(stagingJob, { recursive: true, force: true }).catch(() => undefined)
     await fs.promises.rmdir(path.join(workDir(game), 'staging')).catch(() => undefined)

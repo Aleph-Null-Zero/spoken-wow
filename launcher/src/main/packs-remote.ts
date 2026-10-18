@@ -159,6 +159,12 @@ export async function fetchIndex(dataPath: string, opts: ChannelOptions = {}): P
   try {
     const raw = await getText(`${opts.baseUrl ?? PACKS_BASE_URL}index.json`, opts)
     const index = parseIndex(openEnvelope(raw, opts.publicKey))
+    // A cache edge or a replay can serve an older signed index; taking it would offer a downgrade to blobs gc may have removed.
+    const cached = loadCachedIndex(dataPath, opts.publicKey)
+    if (cached && Date.parse(index.generatedAt) < Date.parse(cached.generatedAt)) {
+      log(`Voice pack index from ${index.generatedAt} is older than the saved one from ${cached.generatedAt}; kept the saved one.`)
+      return { index: cached, offline: false }
+    }
     fs.mkdirSync(dataPath, { recursive: true })
     fs.writeFileSync(indexFile(dataPath), raw, 'utf8')
     return { index, offline: false }

@@ -9,7 +9,7 @@ import { backupDirFor, type JobContext } from '../src/main/install'
 import { parseIndex, parseManifest, type ChannelManifest } from '../src/main/packs-remote'
 import { loadPackState, savePackState } from '../src/main/packs-state'
 import { blobDir, syncPacks } from '../src/main/packs-sync'
-import { getRecord, loadState } from '../src/main/state'
+import { getRecord, loadState, setRecord, updateState } from '../src/main/state'
 import { channelFixture, channelKeys, serveChannel, type PackSpec } from './channel-helpers'
 import { collect, makeGame, sha256, tmpDir, write, type TestServer } from './helpers'
 
@@ -107,7 +107,7 @@ describe('syncPacks', () => {
     expect(blobRequests(s)).toBe(3 + 1)
   })
 
-  it('a blob that keeps arriving wrong fails the job and leaves the install untouched', async () => {
+  it('a blob that arrives wrong fails the job and leaves the install untouched', async () => {
     const game = await makeGame(tmpDir())
     const data = tmpDir()
     const first = await channel(v1)
@@ -122,7 +122,20 @@ describe('syncPacks', () => {
     })
     await expect(syncPacks(game, { product, manifests: [second.manifest], baseUrl: second.base }, ctx(data, { jobId: 'job2' }))).rejects.toThrow(PlainError)
     expect(folderFiles(game)).toEqual(v1.files)
-    expect(second.server.requests.filter((r) => r.url === `/blobs/${bad}`).length).toBe(2)
+    expect(second.server.requests.filter((r) => r.url === `/blobs/${bad}`).length).toBe(1)
+  })
+
+  it('moves out the folders an earlier install of the product recorded and the channel no longer has', async () => {
+    const game = await makeGame(tmpDir())
+    const data = tmpDir()
+    write(path.join(game.addOnsPath, 'Spoken_ZonesAudio_deDE', 'Spoken_ZonesAudio_deDE.toc'), 'old')
+    updateState(data, (s) => setRecord(s, game.id, product.id, { version: '2.0.0', folders: ['Spoken_ZonesAudio_deDE'], installedAt: '2026-10-01T00:00:00.000Z', tag: 'zones-audio-deDE/v2.0.0' }))
+    const { manifest, base } = await channel(v1)
+    const result = await syncPacks(game, { product, manifests: [manifest], baseUrl: base }, ctx(data))
+    expect(result.removed).toEqual(['Spoken_ZonesAudio_deDE'])
+    expect(fs.existsSync(path.join(game.addOnsPath, 'Spoken_ZonesAudio_deDE'))).toBe(false)
+    expect(folderFiles(game)).toEqual(v1.files)
+    expect(getRecord(loadState(data), game.id, product.id)?.folders).toEqual([PACK])
   })
 
   it('reuses a blob already downloaded by an earlier, interrupted job', async () => {

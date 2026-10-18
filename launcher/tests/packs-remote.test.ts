@@ -79,6 +79,18 @@ describe('fetching', () => {
     expect(offline.index?.packs[pack.packId]?.rev).toBe(pack.rev)
     expect(loadCachedIndex(data, channelKeys().publicKey)).toBeNull()
   })
+  it('keeps the saved index when the server answers with an older one', async () => {
+    const fx = channelFixture(keys, [pack])
+    const s = await serveChannel(fx)
+    server = s
+    const data = tmpDir()
+    await fetchIndex(data, { baseUrl: s.base, publicKey: keys.publicKey })
+    fx.objects.set('/index.json', Buffer.from(seal({ generatedAt: '2026-10-17T00:00:00.000Z', packs: {} }, keys).text))
+    const again = await fetchIndex(data, { baseUrl: s.base, publicKey: keys.publicKey })
+    expect(again.offline).toBe(false)
+    expect(again.index?.packs[pack.packId]?.rev).toBe(pack.rev)
+    expect(loadCachedIndex(data, keys.publicKey)?.generatedAt).toBe(fx.index.generatedAt)
+  })
   it('fetches a manifest once and reads it from disk after', async () => {
     const fx = channelFixture(keys, [pack])
     const s = await serveChannel(fx)

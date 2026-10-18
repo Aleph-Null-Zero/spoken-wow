@@ -182,17 +182,34 @@ export class LauncherService {
     } catch (err) {
       log('Could not save the catalog:', err)
     }
-    // Warm the manifest cache of installed channel packs so the Update label can be computed offline.
+    this.opts.send(CHANNELS.catalogChanged, next)
+    // Warm the manifest cache of installed channel packs so the Update label can be computed offline. The window has
+    // the catalog already; it is told again once a manifest it lacked has arrived, so the label's size can show.
+    const wanted = new Map<string, ChannelPack>()
     for (const game of this.games) {
       for (const p of PRODUCTS) {
         const packs = this.channelPacks(p)
         if (!packs || !p.folders!.some((f) => loadPackState(game, f))) continue
-        for (const [i, f] of p.folders!.entries()) {
-          await fetchManifest(this.opts.dataPath, f, packs[i]!, this.channelOptions()).catch((err) => log(`Manifest of ${f}:`, err))
-        }
+        p.folders!.forEach((f, i) => {
+          if (!loadCachedManifest(this.opts.dataPath, f, packs[i]!, this.opts.packsPublicKey)) wanted.set(f, packs[i]!)
+        })
       }
     }
-    this.opts.send(CHANNELS.catalogChanged, next)
+    if (wanted.size > 0) {
+      const opts = this.channelOptions()
+      const got = await Promise.all(
+        [...wanted].map(([f, pack]) =>
+          fetchManifest(this.opts.dataPath, f, pack, opts).then(
+            () => true,
+            (err: unknown) => {
+              log(`Manifest of ${f}:`, err)
+              return false
+            }
+          )
+        )
+      )
+      if (got.some(Boolean)) this.opts.send(CHANNELS.catalogChanged, next)
+    }
     return next
   }
 

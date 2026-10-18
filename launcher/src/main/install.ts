@@ -527,7 +527,7 @@ export async function checkWritable(game: GameInstall): Promise<void> {
 const RESERVED = new Set(['wtf', 'interface', 'addons', WORK_DIR])
 
 /** Folders the launcher recorded for this product earlier that the new zip no longer holds: real folders only, never linked, never another product's. */
-async function staleFolders(game: GameInstall, product: Product, dataPath: string, folders: string[]): Promise<string[]> {
+export async function staleFolders(game: GameInstall, product: Product, dataPath: string, folders: string[]): Promise<string[]> {
   const state = loadState(dataPath)
   const previous = getRecord(state, game.id, product.id)?.folders ?? []
   const otherOwned = new Set(
@@ -577,6 +577,11 @@ export async function pruneBackups(game: GameInstall, keepProductId: string): Pr
 
 function listNames(names: string[]): string {
   return names.length === 1 ? names[0]! : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+}
+
+/** The done message's note on the old folders a job moved to the backup; empty when there were none. */
+export function staleNote(stale: string[]): string {
+  return stale.length > 0 ? `Removed the old ${listNames(stale)} folder${stale.length > 1 ? 's' : ''}. ` : ''
 }
 
 async function fileSize(p: string): Promise<number> {
@@ -701,7 +706,7 @@ export async function installProduct(
     if (!ctx.keepDownloads) await fs.promises.rm(downloaded.file, { force: true }).catch(() => undefined)
     const running = await (ctx.isRunning ?? (() => isGameRunning(game.flavor)))()
     await pruneBackups(game, product.id)
-    const note = (ctx.repair ? 'Repaired. ' : '') + (stale.length > 0 ? `Removed the old ${listNames(stale)} folder${stale.length > 1 ? 's' : ''}. ` : '')
+    const note = (ctx.repair ? 'Repaired. ' : '') + staleNote(stale)
     const message = note + doneMessage(running, created.length > 0, false)
     rep.send('done', message)
     return { version: release.version, folders, removed: stale, gameRunning: running, message }
