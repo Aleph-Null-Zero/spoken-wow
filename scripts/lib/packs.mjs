@@ -123,6 +123,10 @@ function toPack(page, meta) {
   if (meta.github !== undefined && meta.github !== "false") fail(`github may only be false`);
   const github = meta.github !== "false";
 
+  // `launcher: true` puts the pack on the launcher's channel (scripts/launcher/), one language at a
+  // time, so a language goes there only once its packs have been checked against it.
+  if (meta.launcher !== undefined && meta.launcher !== "true") fail(`launcher may only be true`);
+
   // A language with too few players yet for three quest packs ships two: Gossip, and a Shared
   // pack that `holds: quests` -- every quest line, both sides' included (tts_cli/factions.py
   // builds it as the 'quests' pack). Its Alliance and Horde pages stay, project ids and all, as
@@ -138,7 +142,7 @@ function toPack(page, meta) {
   const folder = english ? englishFolder(section, pack) : `${languageFolder(section, pack)}_${lang}`;
   return {
     page, section, lang, pack, version, github,
-    build: meta.holds ?? pack, dormant: meta.dormant === "true",
+    build: meta.holds ?? pack, dormant: meta.dormant === "true", launcher: meta.launcher === "true",
     curseforge: meta.curseforge ?? null, wago: meta.wago ?? null, release,
     bundles: english && section === "quests" && pack === "all" ? ENGLISH_QUESTS_BUNDLE : null,
     slug: meta.slug, name: meta.name, folder,
@@ -184,6 +188,22 @@ export function findPack(section, lang, pack, packs = loadPacks()) {
   const found = packsFor(section, lang, packs).find((p) => p.pack === (pack ?? null));
   if (!found) throw new Error(`no ${section} pack registered for ${lang}${pack ? ` (${pack})` : ""}`);
   return found;
+}
+
+// The oldest Spoken whose lookups each section's packs are built for. Bumped by hand only when a
+// section's lookup format changes; scripts/launcher/ refuses to publish past the latest release.
+export const MIN_SPOKEN = { quests: "3.0.0", zones: "3.0.0", books: "3.0.0" };
+
+// The folders the launcher channel carries, each once: a bundle's folders, else the pack's own.
+export function launcherFolders(packs = loadPacks()) {
+  const out = [];
+  for (const p of packs) {
+    if (!p.launcher) continue;
+    for (const folder of p.bundles ?? [p.folder]) {
+      if (!out.some((o) => o.folder === folder)) out.push({ folder, section: p.section, lang: p.lang });
+    }
+  }
+  return out;
 }
 
 // The words before the colon in a sound pack's title: "Spoken Audio" for English and, for

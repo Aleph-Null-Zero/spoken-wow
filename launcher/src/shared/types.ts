@@ -144,6 +144,10 @@ export interface ProductStatus {
   installedFolders: string[]
   /** The newest release for the player's channel, if the catalog is known. */
   latest?: ReleaseInfo
+  /** For a channel pack with an update: what it would download, judged from what was recorded. */
+  delta?: { files: number; bytes: number }
+  /** For a channel pack: the Spoken version it needs, when the one installed is older or missing. */
+  needsSpoken?: string
   /** Why nothing may be done (`linked`, not writable, ...). */
   blockedReason?: string
 }

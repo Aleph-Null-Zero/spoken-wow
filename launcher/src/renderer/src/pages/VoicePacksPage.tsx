@@ -1,11 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import type { Product, ProductStatus, Section } from '@shared/types'
+import { isChannelRelease } from '@shared/channel'
 import { BASE_LANGUAGE, LANGUAGES, languageName } from '@shared/products'
 import { jobBusy, latestOf, releasesFor, statusOf } from '../catalog'
 import { Wordmark } from '../components/Brand'
 import { NoGame } from '../components/EmptyGames'
 import { PackRow } from '../components/PackRow'
-import { formatBytes } from '../format'
+import { formatBytes, formatDate } from '../format'
 import { jobKey, useGame, useStore } from '../store'
 import { S } from '../strings'
 
@@ -157,6 +158,8 @@ function VoiceRow({ product, gameId, writable }: { product: Product; gameId: str
   const latest = latestOf(state, gameId, product.id)
   const s = status?.state ?? 'not-installed'
   const present = s !== 'not-installed'
+  const channel = isChannelRelease(latest)
+  const size = latest ? formatBytes(status?.delta ? status.delta.bytes : latest.assetSize) : ''
   return (
     <PackRow
       gameId={gameId}
@@ -166,9 +169,9 @@ function VoiceRow({ product, gameId, writable }: { product: Product; gameId: str
       title={packName(product)}
       text={
         <>
-          {latest ? `${formatBytes(latest.assetSize)} · ` : ''}
+          {latest ? `${size} · ` : ''}
           {present && status?.installedVersion ? S.voices.installedVersion(status.installedVersion) : S.voices.notInstalled}
-          {s === 'update-available' && latest ? ` → ${latest.version}` : ''}
+          {s === 'update-available' && latest ? ` → ${channel ? formatDate(latest.publishedAt) : latest.version}` : ''}
         </>
       }
     />

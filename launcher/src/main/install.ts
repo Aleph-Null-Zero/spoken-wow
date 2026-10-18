@@ -43,7 +43,7 @@ async function renameWithRetry(from: string, to: string): Promise<void> {
   }
 }
 
-const defaultOps: FsOps = {
+export const defaultOps: FsOps = {
   rename: renameWithRetry,
   rm: (target) => fs.promises.rm(target, { recursive: true, force: true, maxRetries: 3, retryDelay: 150 }),
   cp: (from, to) => fs.promises.cp(from, to, { recursive: true, errorOnExist: true, force: false })
@@ -134,7 +134,7 @@ function reporter(game: GameInstall, product: Product, ctx: JobContext, action: 
   }
 }
 
-function doneMessage(running: boolean, createdNew: boolean, removed: boolean): string {
+export function doneMessage(running: boolean, createdNew: boolean, removed: boolean): string {
   const base = 'Reload the game (/reload) or restart it to use it.'
   if (removed) return running ? 'The game is running. Reload the game (/reload) or restart it to apply this.' : 'Removed. Reload the game (/reload) or restart it if it is open.'
   if (running && createdNew) return 'The game is running. Restart it to load the new files.'
@@ -182,7 +182,16 @@ const SAFE_PRODUCT = /^[A-Za-z0-9_-]+(\/[a-z0-9]+(-[a-z0-9]+)*)?$/
  * Moves each current folder to the backup, then each staged folder in. Any failure puts every
  * folder back as it was. Returns the folders that did not exist before.
  */
-async function applyChanges(
+function nothingChanged(err: unknown): PlainError {
+  const why = err instanceof Error ? err.message : String(err)
+  const hint =
+    errorCode(err) === 'EPERM' || errorCode(err) === 'EBUSY' || errorCode(err) === 'EACCES'
+      ? ' A file may be in use: close the game and anything else that has the add-on open, then try again.'
+      : ''
+  return new PlainError(`Nothing was changed: ${why}.${hint}`)
+}
+
+export async function applyChanges(
   game: GameInstall,
   productId: string,
   changes: Change[],
@@ -192,7 +201,11 @@ async function applyChanges(
   const addOns = game.addOnsPath
   const backupDir = backupDirFor(game, productId)
   // The previous backup of this product is replaced (an earlier failed rollback was dealt with before this runs).
-  await ops.rm(backupDir)
+  try {
+    await ops.rm(backupDir)
+  } catch (err) {
+    throw nothingChanged(err)
+  }
   await fs.promises.mkdir(backupDir, { recursive: true })
 
   const journal: JournalFile = { productId, entries: [] }
@@ -229,12 +242,7 @@ async function applyChanges(
     dropJournal(game)
     if (isAbortError(err)) throw err
     log('Install failed, rolled back:', err)
-    const why = err instanceof Error ? err.message : String(err)
-    const hint =
-      errorCode(err) === 'EPERM' || errorCode(err) === 'EBUSY' || errorCode(err) === 'EACCES'
-        ? ' A file may be in use: close the game and anything else that has the add-on open, then try again.'
-        : ''
-    throw new PlainError(`Nothing was changed: ${why}.${hint}`)
+    throw nothingChanged(err)
   }
   dropJournal(game)
   return { created: journal.entries.filter((j) => !j.hadOld).map((j) => j.folder) }
@@ -303,7 +311,7 @@ export async function recoverInterrupted(game: GameInstall, ops: FsOps = default
   return failed
 }
 
-async function refuseUnresolved(game: GameInstall, ops: FsOps): Promise<void> {
+export async function refuseUnresolved(game: GameInstall, ops: FsOps): Promise<void> {
   const failed = await recoverInterrupted(game, ops)
   if (failed.length > 0) {
     let where = backupDirFor(game, 'the product')
@@ -503,7 +511,7 @@ async function verifyStaged(product: Product, dir: string): Promise<string[]> {
 
 // ---------------------------------------------------------------- install
 
-async function checkWritable(game: GameInstall): Promise<void> {
+export async function checkWritable(game: GameInstall): Promise<void> {
   if (!(await canWrite(game.addOnsPath))) {
     throw new PlainError(
       `The launcher cannot write to ${game.addOnsPath}. Check that the folder is not read-only and that your account may change it.`
@@ -519,7 +527,7 @@ async function checkWritable(game: GameInstall): Promise<void> {
 const RESERVED = new Set(['wtf', 'interface', 'addons', WORK_DIR])
 
 /** Folders the launcher recorded for this product earlier that the new zip no longer holds: real folders only, never linked, never another product's. */
-async function staleFolders(game: GameInstall, product: Product, dataPath: string, folders: string[]): Promise<string[]> {
+export async function staleFolders(game: GameInstall, product: Product, dataPath: string, folders: string[]): Promise<string[]> {
   const state = loadState(dataPath)
   const previous = getRecord(state, game.id, product.id)?.folders ?? []
   const otherOwned = new Set(
@@ -569,6 +577,11 @@ export async function pruneBackups(game: GameInstall, keepProductId: string): Pr
 
 function listNames(names: string[]): string {
   return names.length === 1 ? names[0]! : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+}
+
+/** The done message's note on the old folders a job moved to the backup; empty when there were none. */
+export function staleNote(stale: string[]): string {
+  return stale.length > 0 ? `Removed the old ${listNames(stale)} folder${stale.length > 1 ? 's' : ''}. ` : ''
 }
 
 async function fileSize(p: string): Promise<number> {
@@ -693,7 +706,7 @@ export async function installProduct(
     if (!ctx.keepDownloads) await fs.promises.rm(downloaded.file, { force: true }).catch(() => undefined)
     const running = await (ctx.isRunning ?? (() => isGameRunning(game.flavor)))()
     await pruneBackups(game, product.id)
-    const note = (ctx.repair ? 'Repaired. ' : '') + (stale.length > 0 ? `Removed the old ${listNames(stale)} folder${stale.length > 1 ? 's' : ''}. ` : '')
+    const note = (ctx.repair ? 'Repaired. ' : '') + staleNote(stale)
     const message = note + doneMessage(running, created.length > 0, false)
     rep.send('done', message)
     return { version: release.version, folders, removed: stale, gameRunning: running, message }

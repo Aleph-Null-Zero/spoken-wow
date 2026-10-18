@@ -24,7 +24,8 @@ LUA ?= $(shell command -v luajit || command -v lua5.1)
         release-spoken-all release-spoken-all-dry \
         descriptions descriptions-check descriptions-published \
         character-models dungeons \
-        audio-release audio-release-dry
+        audio-release audio-release-dry \
+        launcher-publish launcher-publish-dry launcher-gc launcher-gc-dry
 
 help: ## Show this help
 	@printf 'Spoken\n\n'
@@ -237,6 +238,21 @@ audio-release-dry: ## Show which pack releases would be cut (SECTION=zones LOCAL
 audio-release: ## Publish the built sound packs as GitHub releases (needs gh; SECTION=, LOCALE=)
 	$(require_section_for_locale)
 	@./scripts/audio-github-release.sh $(SECTION) $(if $(SECTION),$(LOCALE))
+
+# The launcher's channel (scripts/launcher/): what dist/ holds, uploaded to R2 as changed files only.
+# Build first with the <section>-package-audio targets. Needs R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
+# R2_SECRET_ACCESS_KEY, R2_BUCKET and SPOKEN_PACKS_SIGNING_KEY, in the repo-root .env.
+launcher-publish-dry: ## Show what the launcher channel would get from dist/
+	@node scripts/launcher/cli.mjs publish --dry-run
+
+launcher-publish: ## Publish dist/'s launcher packs to the launcher channel
+	@node scripts/launcher/cli.mjs publish
+
+launcher-gc-dry: ## Show what launcher-gc would delete
+	@node scripts/launcher/cli.mjs gc --dry-run
+
+launcher-gc: ## Delete channel files no recent manifest needs
+	@node scripts/launcher/cli.mjs gc
 
 package-all: ## Build every addon zip: Spoken with its modules, then quests and zones on their own
 	@./scripts/spoken/package.sh

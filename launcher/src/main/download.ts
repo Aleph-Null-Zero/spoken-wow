@@ -1,5 +1,6 @@
-// Resumable download of one release asset to `<dir>/<name>.zip.part`, renamed to `.zip` when it
-// is complete, the right size and (when GitHub gave one) the right sha256.
+// Resumable download of one file to `<dir>/<name>.zip.part` (a release asset) or `<dir>/<name>.part`
+// (a channel blob), renamed into place when it is complete, the right size and (when the server
+// gave one) the right sha256.
 import { createHash, type Hash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -13,6 +14,10 @@ export interface DownloadOptions {
   dir: string
   /** File name without extension, e.g. `quests-audio-1.2.0`. */
   baseName: string
+  /** Appended to `baseName` (default `.zip`). */
+  ext?: string
+  /** Who published the file, for the error messages (default `GitHub`). */
+  source?: string
   expectedSize: number
   /** `sha256:<hex>`. */
   digest?: string
@@ -38,15 +43,15 @@ export function zipPathFor(dir: string, baseName: string): string {
   return path.join(dir, `${baseName}.zip`)
 }
 
-const MISMATCH =
-  'The downloaded file does not match what GitHub published, so it was deleted. Try again; if it keeps happening, check your connection.'
+const mismatch = (source: string): string =>
+  `The downloaded file does not match what ${source} published, so it was deleted. Try again; if it keeps happening, check your connection.`
 
 function wantedHash(digest: string | undefined): string | null {
   const m = digest ? /^sha256:([0-9a-f]{64})$/i.exec(digest) : null
   return m ? m[1]!.toLowerCase() : null
 }
 
-async function sha256OfFile(file: string, signal?: AbortSignal): Promise<string> {
+export async function sha256OfFile(file: string, signal?: AbortSignal): Promise<string> {
   const hash = createHash('sha256')
   const stream = fs.createReadStream(file, { highWaterMark: 1024 * 1024 })
   try {
@@ -110,7 +115,7 @@ async function verifyFile(file: string, opts: DownloadOptions, hash: Hash | null
   if (opts.expectedSize > 0 && size !== opts.expectedSize) {
     await removeQuiet(file)
     log(`Download size mismatch: got ${size}, expected ${opts.expectedSize}.`)
-    throw new PlainError(MISMATCH)
+    throw new PlainError(mismatch(opts.source ?? 'GitHub'))
   }
   const want = wantedHash(opts.digest)
   if (want) {
@@ -123,7 +128,7 @@ async function verifyFile(file: string, opts: DownloadOptions, hash: Hash | null
     if (got !== want) {
       await removeQuiet(file)
       log('Download checksum mismatch.')
-      throw new PlainError(MISMATCH)
+      throw new PlainError(mismatch(opts.source ?? 'GitHub'))
     }
   }
 }
@@ -132,7 +137,7 @@ async function verifyFile(file: string, opts: DownloadOptions, hash: Hash | null
 export async function downloadAsset(opts: DownloadOptions): Promise<DownloadResult> {
   const doFetch = opts.fetchImpl ?? fetch
   await fs.promises.mkdir(opts.dir, { recursive: true })
-  const zip = zipPathFor(opts.dir, opts.baseName)
+  const zip = path.join(opts.dir, `${opts.baseName}${opts.ext ?? '.zip'}`)
   const part = `${zip}.part`
   const attempts = opts.attempts ?? 3
 
@@ -221,8 +226,8 @@ export async function downloadAsset(opts: DownloadOptions): Promise<DownloadResu
       await res.body?.cancel().catch(() => undefined)
       throw new PlainError(
         res.status === 404
-          ? 'GitHub no longer has this file. Refresh the list and try again.'
-          : `GitHub refused the download (${res.status}).`
+          ? `${opts.source ?? 'GitHub'} no longer has this file. Refresh the list and try again.`
+          : `${opts.source ?? 'GitHub'} refused the download (${res.status}).`
       )
     }
     if (!res.body) throw new Retryable('empty answer')

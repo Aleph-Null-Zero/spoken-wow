@@ -13,6 +13,7 @@ categories:
   - Roleplay
 license: MIT
 addonReadme: addons/SpokenZonesAudio/README.md
+launcher: true
 ---
 
 Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Places module. This addon is data only — it does nothing on its own.

@@ -13,6 +13,7 @@ categories:
   - Roleplay
 license: MIT
 addonReadme: addons/SpokenBooksAudio/README.md
+launcher: true
 ---
 
 Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Readables module. This addon is data only — it does nothing on its own.

@@ -54,6 +54,7 @@ async function setup() {
   const svc = new LauncherService({
     dataPath: data,
     appVersion: '0.1.0',
+    packsBaseUrl: 'http://127.0.0.1:9/',
     send: (channel, payload) => sent.push({ channel, payload }),
     fetchImpl,
     autoPaths: [game.root],
@@ -151,6 +152,7 @@ describe('LauncherService', () => {
     const down = new LauncherService({
       dataPath: data,
       appVersion: '0.1.0',
+      packsBaseUrl: 'http://127.0.0.1:9/',
       send: () => undefined,
       fetchImpl: (async () => {
         throw new TypeError('fetch failed')

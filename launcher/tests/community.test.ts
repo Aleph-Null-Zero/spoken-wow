@@ -392,6 +392,7 @@ describe('community packs through the service', () => {
     const svc = new LauncherService({
       dataPath: tmpDir(),
       appVersion: '0.1.0',
+      packsBaseUrl: 'http://127.0.0.1:9/',
       send: (channel, payload) => sent.push({ channel, payload }),
       fetchImpl,
       autoPaths: [game.root],

@@ -1,0 +1,11 @@
+{
+  "name": "spoken-launcher-channel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test *.test.mjs"
+  },
+  "dependencies": {
+    "aws4fetch": "1.0.20"
+  }
+}

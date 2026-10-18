@@ -13,6 +13,7 @@ categories:
   - Roleplay
   - Quests & Leveling
 license: MIT
+launcher: true
 ---
 
 <!-- only:curseforge -->

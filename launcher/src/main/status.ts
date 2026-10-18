@@ -5,6 +5,8 @@ import type { Catalog, GameInstall, InstallState, Product, ProductStatus, Settin
 import { PRODUCTS } from '../shared/products'
 import { compareVersions } from '../shared/version'
 import { latestFor } from './catalog'
+import { channelTag, isChannelRelease } from '../shared/channel'
+import { loadPackState } from './packs-state'
 import { LINKED_MESSAGE, allowedFolders, isLinked } from './guard'
 import { getRecord, type StateFile } from './state'
 
@@ -74,6 +76,11 @@ export async function computeStatuses(
     if (installedFolders.length === 0) st = 'not-installed'
     else if (linked) st = 'linked'
     else if (product.folders && product.folders.length > 1 && installedFolders.length < product.folders.length) st = 'unknown'
+    else if (latest && isChannelRelease(latest)) {
+      // Judged per folder: a bundle and its split packs share folders, and each folder's pack state is what is on disk.
+      const installedTag = channelTag((product.folders ?? []).map((f) => loadPackState(game, f)?.rev ?? ''))
+      st = installedTag === latest.tag ? 'up-to-date' : 'update-available'
+    }
     else if (!latest || !installedVersion) st = 'unknown'
     else {
       const c = compareVersions(installedVersion, latest.version)
