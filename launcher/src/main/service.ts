@@ -420,8 +420,8 @@ export class LauncherService {
       action: 'uninstall',
       run: async (ctx) => {
         if (refused) throw new PlainError(refused)
-        await uninstallProduct(game, target, this.jobContext(ctx.jobId, ctx.signal, ctx.emit))
-        if (target.kind === 'voices') for (const f of target.folders ?? []) dropPackState(game, f)
+        const result = await uninstallProduct(game, target, this.jobContext(ctx.jobId, ctx.signal, ctx.emit))
+        if (target.kind === 'voices') for (const f of result.removed) dropPackState(game, f)
       }
     })
   }
