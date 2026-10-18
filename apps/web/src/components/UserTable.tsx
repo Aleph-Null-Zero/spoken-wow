@@ -9,6 +9,7 @@ import { usePendingPush } from "@/components/usePendingPush";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -198,6 +199,25 @@ export default function UserTable({
   }
 
   /**
+   * The account and what is only theirs: sessions, keys, grants and preferences go with it
+   * (cascades); what they made, from takes to contributions, stays and loses its author.
+   */
+  async function removeUser(userId: string) {
+    setPendingId(userId);
+    setError(null);
+
+    const { error } = await authClient.admin.removeUser({ userId });
+
+    if (error) {
+      setError(error.message ?? "Could not delete that user.");
+    } else {
+      setUsers((current) => current.filter((user) => user.id !== userId));
+      setGrants((current) => current.filter((grant) => grant.userId !== userId));
+    }
+    setPendingId(null);
+  }
+
+  /**
    * Take back what a grant spends with.
    *
    * The counterpart of handing out regenerate: someone who leaves should not need psql to be
@@ -253,6 +273,11 @@ export default function UserTable({
               <SortHeader column="joined" sort={sort} onSort={onSort}>
                 Joined
               </SortHeader>
+            )}
+            {global && (
+              <th className="py-2 font-normal">
+                <span className="sr-only">Delete</span>
+              </th>
             )}
           </tr>
         </thead>
@@ -312,8 +337,19 @@ export default function UserTable({
                 </td>
               )}
               {global && (
-                <td className="text-muted-foreground py-2 whitespace-nowrap">
+                <td className="text-muted-foreground py-2 pr-3 whitespace-nowrap">
                   {user.createdAt?.slice(0, 10)}
+                </td>
+              )}
+              {global && (
+                <td className="py-2 text-right whitespace-nowrap">
+                  {user.id === currentUserId ? null : (
+                    <DeleteUser
+                      user={user}
+                      busy={pendingId === user.id}
+                      onDelete={() => removeUser(user.id)}
+                    />
+                  )}
                 </td>
               )}
             </tr>
@@ -337,6 +373,53 @@ export default function UserTable({
         />
       )}
     </>
+  );
+}
+
+/**
+ * Asks first, in a popover: deleting an account cannot be undone. Not offered on your own
+ * row, for the same reason RoleCell has no select there.
+ */
+function DeleteUser({ user, busy, onDelete }: { user: UserRow; busy: boolean; onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={busy}
+          aria-label={`Delete ${user.email}`}
+          className="text-destructive hover:text-destructive"
+        >
+          Delete
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 text-sm">
+        <p>
+          Delete <span className="font-medium">{user.name || user.email}</span> for good? Their
+          grants and keys go with the account; what they made stays, without their name.
+        </p>
+        <div className="mt-3 flex justify-end gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            Keep
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              setOpen(false);
+              onDelete();
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
