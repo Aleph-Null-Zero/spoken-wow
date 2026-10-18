@@ -5,6 +5,7 @@ import type { Catalog, GameInstall, InstallState, Product, ProductStatus, Settin
 import { PRODUCTS } from '../shared/products'
 import { compareVersions } from '../shared/version'
 import { latestFor } from './catalog'
+import { isChannelRelease } from './packs-catalog'
 import { LINKED_MESSAGE, allowedFolders, isLinked } from './guard'
 import { getRecord, type StateFile } from './state'
 
@@ -74,6 +75,7 @@ export async function computeStatuses(
     if (installedFolders.length === 0) st = 'not-installed'
     else if (linked) st = 'linked'
     else if (product.folders && product.folders.length > 1 && installedFolders.length < product.folders.length) st = 'unknown'
+    else if (latest && isChannelRelease(latest)) st = record?.tag === latest.tag ? 'up-to-date' : 'update-available'
     else if (!latest || !installedVersion) st = 'unknown'
     else {
       const c = compareVersions(installedVersion, latest.version)
