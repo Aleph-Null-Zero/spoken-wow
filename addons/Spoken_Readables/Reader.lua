@@ -71,9 +71,15 @@ function SpokenBooks:PageOnScreen()
 		return nil
 	end
 
-	local checksum = self:ChecksumOf(text)
+	local checksums = { self:ChecksumOf(text), self:MarkedChecksumOf(text) }
 	local title = ItemTextGetItem and NotSecret(ItemTextGetItem())
 	local number = (ItemTextGetPage and NotSecret(ItemTextGetPage())) or 1
+	local function FindAny(index)
+		for _, checksum in ipairs(checksums) do
+			local found = Find(index, title, number, checksum)
+			if found then return found end
+		end
+	end
 
 	-- The client's own locale first: the title and the words are what this client shows, and
 	-- a German client's are German. A language's index ships in that language's pack, in the
@@ -85,14 +91,14 @@ function SpokenBooks:PageOnScreen()
 	for _, pack in ipairs(self:GetAudioPacks()) do
 		if (type(pack.index) == "table" or type(pack.extraIndex) == "table")
 			and self:PackLanguage(pack) == client then
-			local found = Find(pack, title, number, checksum)
+			local found = FindAny(pack)
 			if found then
 				self:RememberPageText(found, client, text, title)
 				return found
 			end
 		end
 	end
-	local found = Find(data, title, number, checksum)
+	local found = FindAny(data)
 	if found then self:RememberPageText(found, self.BASE_LANGUAGE, text, title) end
 	return found
 end

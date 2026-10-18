@@ -53,10 +53,21 @@ and "traveler", or the page's language's own words, and takes `$G`'s first branc
 flattened, hashed and judged). The extract's stored `substitution` label is left as it was;
 the catalogue re-judges every page from its text.
 
+Words in angle brackets are read, as a quest's stage directions are: `<illegible text>`,
+`<The rest of the book is blank>`. Each is set apart by a line break on either side, so it is
+not run into the sentence around it. Four of the 26 empty pages above held nothing else, and
+are voiced in every language now. Only the tags of the 54 signed pages (`<HTML>`, `<P>`,
+`<BR/>`, `<IMG>` and the rest) are dropped, and esMX's `<nombre>`, which would otherwise be
+read as the word.
+
+The signed pages are HTML in `page_text`. `normaliseText` stores them as the lines the
+client draws, so the site shows words rather than tags. The addon's `Normalise` lays out what
+`ItemTextGetText` returns the same way before it takes the checksum; it also tries the
+checksum over the HTML, which is what packs built before 2026-10-18 are keyed on.
+
 A book's first page is narrated with its title ahead of it — "Letter to Ello.", a line
 break, then "The letters on this note…" — because the client shows the title and never says
-it (`spokenWithTitle` in `tools/lib/text.mjs`). The break is the one newline spoken text
-keeps, for the pause: fish.audio is sent the title as a request of its own, and the page is
+it (`spokenWithTitle` in `tools/lib/text.mjs`). The break is kept for the pause: fish.audio is sent the title as a request of its own, and the page is
 hashed with `spokenHash`, which does not flatten it. The narration only: the stored text and the addon's checksum stay the
 page's own words, so nothing in the addon changes. The 33 first pages that already open with
 their title (gravestones, a treatise's `<H1>`) are left alone rather than read it twice. In

@@ -109,6 +109,13 @@ Expect("...and WoW's $B newline token", B:ChecksumOf("One.$B$BTwo."), B:Checksum
 Expect("...and trailing whitespace", B:ChecksumOf("One.   \nTwo."), B:ChecksumOf("One.\nTwo."))
 Expect("a non-string is not an error", B:ChecksumOf(nil), 0)
 
+local SIGNED = '<HTML><BODY><H1>Ledger</H1><BR/><P align="right">Three &amp; four</P></BR></BODY></HTML>'
+Expect("a signed page is hashed as the lines the exporter stores", B:ChecksumOf(SIGNED), 700299336)
+Expect("...the same as those lines", B:ChecksumOf("Ledger\n\nThree & four"), 700299336)
+Expect("...and over its HTML for packs built before", B:MarkedChecksumOf(SIGNED), 2122167809)
+Expect("a page with no markup has no second checksum", B:MarkedChecksumOf("The rains have come."), nil)
+Expect("an aside is not markup", B:ChecksumOf("<illegible text> runes"), 885014114)
+
 ---------------------------------------------------------------- the generated data
 dofile(BOOKS .. "Data/Books.lua")
 local data = B:Data()
