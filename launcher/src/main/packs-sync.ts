@@ -135,7 +135,10 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
     const file = path.join(blobs, sha)
     const have = await fs.promises.stat(file).then((st) => st.size, () => -1)
     // Size alone is not proof: a rename that was never flushed can leave the right size with the wrong bytes.
-    if (have === size && (await sha256OfFile(file, ctx.signal).catch(() => '')) === sha) continue
+    if (have === size && (await sha256OfFile(file, ctx.signal).catch((err: unknown) => {
+      if (isAbortError(err)) throw err
+      return ''
+    })) === sha) continue
     if (have >= 0) await fs.promises.rm(file, { force: true })
     missing.push([sha, size])
   }
