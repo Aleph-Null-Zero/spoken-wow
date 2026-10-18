@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import GrantCell, { GrantPicker } from "@/components/GrantCell";
+import Cell from "@/components/Cell";
 import Pagination from "@/components/Pagination";
 import SortHeader from "@/components/SortHeader";
 import { usePendingPush } from "@/components/usePendingPush";
@@ -284,26 +285,26 @@ export default function UserTable({
         <tbody>
           {shown.length === 0 && (
             <tr>
-              <td colSpan={3} className="text-muted-foreground py-2">
+              <Cell colSpan={3} className="text-muted-foreground">
                 {q ? "Nobody matches that." : "Nobody works in your languages yet."}
-              </td>
+              </Cell>
             </tr>
           )}
           {shown.map((user) => (
-            <tr key={user.id} className="border-b align-top last:border-0">
-              <td className="py-2 pr-3">{user.name}</td>
-              <td className="text-muted-foreground py-2 pr-3">{user.email}</td>
+            <tr key={user.id} className="border-b last:border-0">
+              <Cell>{user.name}</Cell>
+              <Cell className="text-muted-foreground">{user.email}</Cell>
               {global && (
-                <td className="py-2 pr-3">
+                <Cell fit="control">
                   <RoleCell
                     user={user}
                     self={user.id === currentUserId}
                     busy={pendingId === user.id}
                     onChange={(role) => changeRole(user.id, role)}
                   />
-                </td>
+                </Cell>
               )}
-              <td className="py-2 pr-3">
+              <Cell fit="control">
                 {isAdmin(user.role) ? (
                   <span className="text-muted-foreground text-xs">every language, as admin</span>
                 ) : (
@@ -315,9 +316,9 @@ export default function UserTable({
                     onRevoke={(lang, capability) => revoke(user.id, lang, capability)}
                   />
                 )}
-              </td>
+              </Cell>
               {global && (
-                <td className="py-2 pr-3 whitespace-nowrap">
+                <Cell fit="control" className="whitespace-nowrap">
                   {keyed.has(user.id) ? (
                     <span className="flex items-center gap-2">
                       <span aria-label="key set">✓</span>
@@ -334,15 +335,15 @@ export default function UserTable({
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
-                </td>
+                </Cell>
               )}
               {global && (
-                <td className="text-muted-foreground py-2 pr-3 whitespace-nowrap">
+                <Cell className="text-muted-foreground whitespace-nowrap">
                   {user.createdAt?.slice(0, 10)}
-                </td>
+                </Cell>
               )}
               {global && (
-                <td className="py-2 text-right whitespace-nowrap">
+                <Cell fit="control" className="whitespace-nowrap">
                   {user.id === currentUserId ? null : (
                     <DeleteUser
                       user={user}
@@ -350,7 +351,7 @@ export default function UserTable({
                       onDelete={() => removeUser(user.id)}
                     />
                   )}
-                </td>
+                </Cell>
               )}
             </tr>
           ))}
