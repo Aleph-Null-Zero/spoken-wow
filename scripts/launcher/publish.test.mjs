@@ -34,7 +34,7 @@ const index = (store) => openJson(store.objects.get("index.json").body.toString(
 
 test("a first publish uploads every blob, the manifest, then the index", async () => {
   const store = memoryStore();
-  const out = await run(store, dist({ "a.toc": "toc", "s/1.ogg": "one" }));
+  const out = await run(store, dist({ "SpokenZonesAudio_deDE.toc": "toc", "s/1.ogg": "one" }));
   assert.equal(out.rev, "20261018T142233Z");
   assert.equal(out.blobs, 2);
   const puts = store.log.filter(([op]) => op === "put").map(([, k]) => k);
@@ -50,7 +50,7 @@ test("a first publish uploads every blob, the manifest, then the index", async (
 
 test("an unchanged pack gets no new rev and nothing is uploaded", async () => {
   const store = memoryStore();
-  const d = dist({ "a.toc": "toc" });
+  const d = dist({ "SpokenZonesAudio_deDE.toc": "toc" });
   await run(store, d);
   store.log.length = 0;
   const out = await run(store, d, { now: new Date("2026-10-19T00:00:00Z") });
@@ -60,9 +60,9 @@ test("an unchanged pack gets no new rev and nothing is uploaded", async () => {
 
 test("a change uploads only the new blob", async () => {
   const store = memoryStore();
-  const d = dist({ "a.toc": "toc", "s/1.ogg": "one" });
+  const d = dist({ "SpokenZonesAudio_deDE.toc": "toc", "s/1.ogg": "one" });
   await run(store, d);
-  writeFolder(d, { "a.toc": "toc", "s/1.ogg": "one", "s/2.ogg": "two" });
+  writeFolder(d, { "SpokenZonesAudio_deDE.toc": "toc", "s/1.ogg": "one", "s/2.ogg": "two" });
   store.log.length = 0;
   const out = await run(store, d, { now: new Date("2026-10-19T00:00:00Z") });
   assert.equal(out.blobs, 1);
@@ -72,7 +72,7 @@ test("a change uploads only the new blob", async () => {
 
 test("a dry run sends nothing", async () => {
   const store = memoryStore();
-  const out = await run(store, dist({ "a.toc": "toc" }), { dryRun: true });
+  const out = await run(store, dist({ "SpokenZonesAudio_deDE.toc": "toc" }), { dryRun: true });
   assert.equal(out.blobs, 1);
   assert.equal(store.objects.size, 0);
 });
@@ -93,16 +93,22 @@ test("a folder older than its zip is refused as a stale build", async () => {
   assert.equal(store.log.length, 0);
 });
 
+test("a folder with no root .toc is refused: the build did not finish", async () => {
+  const store = memoryStore();
+  await assert.rejects(run(store, dist({ "s/1.ogg": "one" })), /dist\/SpokenZonesAudio_deDE has no SpokenZonesAudio_deDE\.toc: the build did not finish/);
+  assert.equal(store.log.length, 0);
+});
+
 test("a pack that needs an unreleased Spoken is refused", async () => {
-  await assert.rejects(run(memoryStore(), dist({ "a.toc": "t" }), { minSpoken: { ...minSpoken, zones: "3.1.0" } }),
+  await assert.rejects(run(memoryStore(), dist({ "SpokenZonesAudio_deDE.toc": "t" }), { minSpoken: { ...minSpoken, zones: "3.1.0" } }),
     /needs Spoken 3.1.0, but the latest release is 3.0.0/);
 });
 
 test("a publish that loses the race to the index fails", async () => {
   const store = memoryStore();
-  const d = dist({ "a.toc": "toc" });
+  const d = dist({ "SpokenZonesAudio_deDE.toc": "toc" });
   await run(store, d);
-  writeFolder(d, { "a.toc": "changed" });
+  writeFolder(d, { "SpokenZonesAudio_deDE.toc": "changed" });
   const realGet = store.get;
   store.get = async (key) => {
     const got = await realGet(key);
@@ -114,9 +120,9 @@ test("a publish that loses the race to the index fails", async () => {
 
 test("two publishes in the same second do not overwrite a manifest", async () => {
   const store = memoryStore();
-  const d = dist({ "a.toc": "toc" });
+  const d = dist({ "SpokenZonesAudio_deDE.toc": "toc" });
   await run(store, d);
-  writeFolder(d, { "a.toc": "changed" });
+  writeFolder(d, { "SpokenZonesAudio_deDE.toc": "changed" });
   await assert.rejects(run(store, d), ConflictError);
 });
 
@@ -148,8 +154,8 @@ test("latestSpokenRelease reads past a page with no spoken/v release", async () 
 
 test("a blob whose bytes no longer match its hash is refused and nothing is indexed", async () => {
   const store = memoryStore();
-  const d = dist({ "a.toc": "toc" });
-  const abs = join(d, "SpokenZonesAudio_deDE", "a.toc");
+  const d = dist({ "SpokenZonesAudio_deDE.toc": "toc" });
+  const abs = join(d, "SpokenZonesAudio_deDE", "SpokenZonesAudio_deDE.toc");
   const st = statSync(abs);
   const cache = new Map([[abs, { size: st.size, mtimeMs: st.mtimeMs, sha256: "0".repeat(64) }]]);
   await assert.rejects(run(store, d, { cache }), /changed while publishing/);

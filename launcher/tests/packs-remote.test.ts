@@ -50,11 +50,15 @@ describe('parseManifest', () => {
     expect(() => parseManifest(old.manifestSigned[pack.packId]!, pack.packId, now.index.packs[pack.packId]!)).toThrow(/not the one the index names/)
   })
   it('refuses a path listed twice in different case', () => {
-    const fx = channelFixture(keys, [{ ...pack, files: { 'a.ogg': '1', 'A.ogg': '2' } }])
+    const fx = channelFixture(keys, [{ ...pack, files: { 'SpokenZonesAudio_deDE.toc': 't', 'a.ogg': '1', 'A.ogg': '2' } }])
     expect(() => parseManifest(fx.manifestSigned[pack.packId]!, pack.packId, fx.index.packs[pack.packId]!)).toThrow(/twice/)
   })
+  it('refuses a manifest with no .toc at its root', () => {
+    const fx = channelFixture(keys, [{ ...pack, files: { 'Sounds/1.ogg': 'one', 'Sub/SpokenZonesAudio_deDE.toc': 'nested' } }])
+    expect(() => parseManifest(fx.manifestSigned[pack.packId]!, pack.packId, fx.index.packs[pack.packId]!)).toThrow(/no SpokenZonesAudio_deDE\.toc/)
+  })
   it('refuses an unsafe path', () => {
-    const fx = channelFixture(keys, [{ ...pack, files: { '../Spoken/evil.lua': 'x' } }])
+    const fx = channelFixture(keys, [{ ...pack, files: { 'SpokenZonesAudio_deDE.toc': 't', '../Spoken/evil.lua': 'x' } }])
     expect(() => parseManifest(fx.manifestSigned[pack.packId]!, pack.packId, fx.index.packs[pack.packId]!)).toThrow(/file entry/)
   })
 })

@@ -120,6 +120,8 @@ export function parseManifest(signed: string, packId: string, pack: ChannelPack)
     seen.add(folded)
     files.push({ path: f.path, sha256: f.sha256, size: f.size })
   }
+  // A pack with no .toc at its root is not an addon, and syncing to it would empty the folder.
+  if (!seen.has(`${packId}.toc`.toLowerCase())) return refuse(`${packId} manifest has no ${packId}.toc`)
   return { packId, rev: pack.rev, requires: { Spoken: raw.requires.Spoken }, fileCount: files.length, totalSize: files.reduce((n, f) => n + f.size, 0), files }
 }
 
