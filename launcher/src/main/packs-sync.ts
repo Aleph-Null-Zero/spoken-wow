@@ -11,7 +11,7 @@ import type { GameInstall, JobPhase, Product } from '../shared/types'
 import { sha256OfFile } from './download'
 import { PlainError, formatBytes, isAbortError, sleep, throwIfAborted } from './errors'
 import { LINKED_MESSAGE, ensureFreeSpace, isGameRunning, isLinked } from './guard'
-import { applyChanges, checkWritable, defaultOps, doneMessage, pruneBackups, refuseUnresolved, workDir, type FsOps, type JobContext, type JobResult } from './install'
+import { applyChanges, backupDirFor, checkWritable, defaultOps, doneMessage, pruneBackups, refuseUnresolved, workDir, type FsOps, type JobContext, type JobResult } from './install'
 import { channelTag } from './packs-catalog'
 import { listLocal, planPack, type PackPlan } from './packs-plan'
 import type { ChannelManifest } from './packs-remote'
@@ -216,6 +216,9 @@ export async function syncPacks(game: GameInstall, input: SyncInput, ctx: JobCon
     log(`Synced ${product.id} on ${game.label}: ${wanted.size} files fetched (${formatBytes(total)}), revs ${revs.join(', ')}.`)
 
     const running = await (ctx.isRunning ?? (() => isGameRunning(game.flavor)))()
+    // A channel pack can always be fetched again, and the kept backup shares hard links with the live files, which a
+    // playing game can hold open on Windows. Removing it now leaves the next run nothing to delete; a failure is fine.
+    await ops.rm(backupDirFor(game, product.id)).catch(() => undefined)
     await pruneBackups(game, product.id)
     const message = (input.repair ? 'Repaired. ' : '') + doneMessage(running, created.length > 0, false)
     emit('done', total, total, 0, message)

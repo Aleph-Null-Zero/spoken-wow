@@ -75,7 +75,7 @@ describe('syncPacks', () => {
     await syncPacks(game, { product, manifests: [second.manifest], baseUrl: second.base }, ctx(data, { jobId: 'job2' }))
     expect(folderFiles(game)).toEqual(v2.files)
     expect(blobRequests(second.server)).toBe(2)
-    expect(fs.existsSync(path.join(backupDirFor(game, product.id), PACK, 'Sounds', '2.ogg'))).toBe(true)
+    expect(fs.existsSync(backupDirFor(game, product.id))).toBe(false)
   })
 
   it('adopts a folder another client installed, downloading nothing it already has', async () => {
@@ -163,6 +163,26 @@ describe('syncPacks', () => {
       throw Object.assign(new Error('busy'), { code: 'EBUSY' })
     }
     await expect(syncPacks(game, { product, manifests: [second.manifest], baseUrl: second.base }, ctx(data, { jobId: 'job2', ops: { rename } }))).rejects.toThrow(/Nothing was changed/)
+    expect(folderFiles(game)).toEqual(v1.files)
+  })
+})
+
+describe('syncPacks backup removal', () => {
+  it('a backup the game holds open fails with nothing changed and the live folder intact', async () => {
+    const game = await makeGame(tmpDir())
+    const data = tmpDir()
+    const first = await channel(v1)
+    await syncPacks(game, { product, manifests: [first.manifest], baseUrl: first.base }, ctx(data))
+    await first.server.close()
+    const second = await channel(v2)
+    const backup = backupDirFor(game, product.id)
+    const rm = async (target: string): Promise<void> => {
+      if (target === backup || target.startsWith(backup + path.sep)) throw Object.assign(new Error('busy'), { code: 'EBUSY' })
+      await fs.promises.rm(target, { recursive: true, force: true })
+    }
+    const run = syncPacks(game, { product, manifests: [second.manifest], baseUrl: second.base }, ctx(data, { jobId: 'job2', ops: { rm } }))
+    await expect(run).rejects.toThrow(/Nothing was changed/)
+    await expect(run).rejects.toThrow(/A file may be in use/)
     expect(folderFiles(game)).toEqual(v1.files)
   })
 })

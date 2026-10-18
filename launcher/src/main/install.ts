@@ -182,6 +182,15 @@ const SAFE_PRODUCT = /^[A-Za-z0-9_-]+(\/[a-z0-9]+(-[a-z0-9]+)*)?$/
  * Moves each current folder to the backup, then each staged folder in. Any failure puts every
  * folder back as it was. Returns the folders that did not exist before.
  */
+function nothingChanged(err: unknown): PlainError {
+  const why = err instanceof Error ? err.message : String(err)
+  const hint =
+    errorCode(err) === 'EPERM' || errorCode(err) === 'EBUSY' || errorCode(err) === 'EACCES'
+      ? ' A file may be in use: close the game and anything else that has the add-on open, then try again.'
+      : ''
+  return new PlainError(`Nothing was changed: ${why}.${hint}`)
+}
+
 export async function applyChanges(
   game: GameInstall,
   productId: string,
@@ -192,7 +201,11 @@ export async function applyChanges(
   const addOns = game.addOnsPath
   const backupDir = backupDirFor(game, productId)
   // The previous backup of this product is replaced (an earlier failed rollback was dealt with before this runs).
-  await ops.rm(backupDir)
+  try {
+    await ops.rm(backupDir)
+  } catch (err) {
+    throw nothingChanged(err)
+  }
   await fs.promises.mkdir(backupDir, { recursive: true })
 
   const journal: JournalFile = { productId, entries: [] }
@@ -229,12 +242,7 @@ export async function applyChanges(
     dropJournal(game)
     if (isAbortError(err)) throw err
     log('Install failed, rolled back:', err)
-    const why = err instanceof Error ? err.message : String(err)
-    const hint =
-      errorCode(err) === 'EPERM' || errorCode(err) === 'EBUSY' || errorCode(err) === 'EACCES'
-        ? ' A file may be in use: close the game and anything else that has the add-on open, then try again.'
-        : ''
-    throw new PlainError(`Nothing was changed: ${why}.${hint}`)
+    throw nothingChanged(err)
   }
   dropJournal(game)
   return { created: journal.entries.filter((j) => !j.hadOld).map((j) => j.folder) }
