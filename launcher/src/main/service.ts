@@ -400,7 +400,8 @@ export class LauncherService {
         }
         if (repair) {
           const again = await this.releaseToRepair(game.id, product)
-          await installProduct(game, product, again, { ...this.githubContext(game, product, ctx), repair: true })
+          this.dropChannelState(game, product)
+          await installProduct(game, product, again, { ...this.jobContext(ctx.jobId, ctx.signal, ctx.emit), repair: true })
           return
         }
         if (!release) {
@@ -412,21 +413,19 @@ export class LauncherService {
                 : 'The list of releases has not been loaded yet. Check your connection, press refresh and try again.'
           )
         }
-        await installProduct(game, product, release, this.githubContext(game, product, ctx))
+        this.dropChannelState(game, product)
+        await installProduct(game, product, release, this.jobContext(ctx.jobId, ctx.signal, ctx.emit))
       }
     })
   }
 
   /**
-   * The context of an install from GitHub. Once it has replaced a voice product's folders, the channel revs
-   * recorded for them no longer describe what is installed, so they are dropped before the job reports done.
+   * Before a zip from GitHub replaces a voice product's folders: the channel revs recorded for them would
+   * no longer describe what is installed. Dropped first rather than after, so no status can see them in
+   * between; if the install fails, the folders are only hashed again on the next channel sync.
    */
-  private githubContext(game: GameInstall, product: Product, ctx: { jobId: string; signal: AbortSignal; emit: (p: JobProgress) => void }): JobContext {
-    const emit = (p: JobProgress): void => {
-      if (p.phase === 'done' && product.kind === 'voices') for (const f of product.folders ?? []) dropPackState(game, f)
-      ctx.emit(p)
-    }
-    return this.jobContext(ctx.jobId, ctx.signal, emit)
+  private dropChannelState(game: GameInstall, product: Product): void {
+    if (product.kind === 'voices') for (const f of product.folders ?? []) dropPackState(game, f)
   }
 
   uninstall(gameId: string, productId: string): string {
