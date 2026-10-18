@@ -5,7 +5,8 @@ import { DEFAULT_SETTINGS } from '../src/shared/types'
 import { emptyCatalog } from '../src/main/catalog'
 import { channelRelease, isChannelRelease, revToIso, withChannel } from '../src/main/packs-catalog'
 import type { ChannelIndex } from '../src/main/packs-remote'
-import { setRecord, type StateFile } from '../src/main/state'
+import { savePackState } from '../src/main/packs-state'
+import type { StateFile } from '../src/main/state'
 import { computeStatuses } from '../src/main/status'
 import { makeGame, tmpDir, write } from './helpers'
 
@@ -60,10 +61,27 @@ describe('computeStatuses with the channel', () => {
   it('up to date when the recorded tag is the channel\'s', async () => {
     const game = await makeGame(tmpDir())
     write(path.join(game.addOnsPath, 'SpokenZonesAudio_deDE', 'SpokenZonesAudio_deDE.toc'), '## Version: 1.0.0\n')
-    const st = state()
-    setRecord(st, game.id, 'zones-audio-deDE', { version: '20261018T000000Z', folders: ['SpokenZonesAudio_deDE'], installedAt: '', tag: 'channel/20261018T000000Z' })
-    const s = (await computeStatuses(game, cat, DEFAULT_SETTINGS, st)).find((x) => x.productId === 'zones-audio-deDE')
+    savePackState(game, { packId: 'SpokenZonesAudio_deDE', rev: '20261018T000000Z', files: {} })
+    const s = (await computeStatuses(game, cat, DEFAULT_SETTINGS, state())).find((x) => x.productId === 'zones-audio-deDE')
     expect(s?.state).toBe('up-to-date')
+  })
+
+  it('a bundle and its split packs both read up to date from their folders\' pack states', async () => {
+    const game = await makeGame(tmpDir())
+    const revs = {
+      SpokenQuestsAudioAlliance: '20261001T000000Z',
+      SpokenQuestsAudioHorde: '20261002T000000Z',
+      SpokenQuestsAudioShared: '20261003T000000Z',
+      SpokenQuestsAudioGossip: '20261004T000000Z'
+    }
+    for (const [folder, rev] of Object.entries(revs)) {
+      write(path.join(game.addOnsPath, folder, `${folder}.toc`), '## Version: 1.0.0\n')
+      savePackState(game, { packId: folder, rev, files: {} })
+    }
+    const statuses = await computeStatuses(game, cat, DEFAULT_SETTINGS, state())
+    for (const id of ['quests-audio', 'quests-audio-alliance']) {
+      expect(statuses.find((x) => x.productId === id)?.state).toBe('up-to-date')
+    }
   })
 
   it('update available when the tag differs or a folder was installed by another client', async () => {
