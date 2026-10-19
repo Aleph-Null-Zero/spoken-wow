@@ -917,7 +917,8 @@ end
 
 -- Play on the objective tracker's quests, at the right end of each quest's title as the quest log has
 -- it: the same square button. The tracker pools its blocks, so a block keeps one button and rebinds it
--- to the quest it shows. Where the client has no such tracker nothing is hooked.
+-- to the quest it shows. Where the client has no such tracker nothing is hooked. A setting on the
+-- Quests page takes them all away.
 do
     local MODULES = { "QuestObjectiveTracker", "CampaignQuestObjectiveTracker" }
     -- The quest log's tracking checkbox, as it draws on this client (what its Play button matches).
@@ -928,6 +929,7 @@ do
         local questID = block.id
         local button = buttons[block]
         if type(questID) ~= "number" or not (Spoken and Spoken.DressBoxButton) or not Addon:IsPartOn()
+            or not (Addon.db and Addon.db.profile.TrackerPlayButton)
             or not DataModules:PrepareSound({ event = Enums.SoundEvent.QuestAccept, questID = questID }) then
             if button then button:Hide() end
             return
@@ -986,6 +988,7 @@ do
         Sweep()
     end
     Install()
+    QuestOverlayUI.UpdateTrackerButtons = Sweep
     -- The tracker may load after this file, and the voice packs after the tracker.
     local waiter = CreateFrame("Frame")
     waiter:RegisterEvent("PLAYER_LOGIN")
