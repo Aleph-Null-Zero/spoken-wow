@@ -2,6 +2,15 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
+## Unreleased
+
+- **The Spoken Launcher can send the lines Spoken collects for you.** Turn on Sharing in the
+  launcher, and the lines Spoken had no voice for go to the site after each logout or /reload,
+  so you no longer upload the file yourself. Collected lines now also say which version of your
+  voice pack was playing, so the site can tell a line nobody has voiced from a pack that is out
+  of date. The note Spoken shows before collecting says so.
+  *([rusty-key](https://github.com/rusty-key))*
+
 ## 3.5.1 — 2026-10-19
 
 - **The objective tracker's Play buttons can be turned off.** Untick Show Play Button, under

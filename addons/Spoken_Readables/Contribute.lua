@@ -28,6 +28,7 @@ local function BaseFields(self)
 		-- beside it, so triage can see what the player was hearing.
 		{ "locale", (GetLocale and GetLocale()) or "enUS" },
 		{ "pack", self:GetPackLanguage() },
+		{ "packVersion", self:GetPackVersion(self:GetPackLanguage()) },
 	}
 end
 

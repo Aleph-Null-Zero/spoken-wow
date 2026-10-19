@@ -264,6 +264,23 @@ function DataModules:GetPackLanguage()
     return order[1]
 end
 
+--- The newest .toc Version among the installed packs recorded in `language`, or "none" when
+--- no pack speaks it. What a contribution says the player was hearing with, so the site can
+--- tell a line nobody has voiced from one only this player's pack is behind on.
+---@param language string
+---@return string version
+function DataModules:GetPackVersion(language)
+    local newest
+    for _, module in self:GetPresentModules() do
+        local version = module.ContentVersion
+        if module.Language == language and version
+            and (not newest or self:IsOlderContent(newest, version)) then
+            newest = version
+        end
+    end
+    return newest or "none"
+end
+
 ---@param loadModules? boolean Whether LoadOnDemand data modules should be loaded during enumeration
 function DataModules:EnumerateAddons(loadModules)
     assert(GetNumAddOns and GetAddOnMetadata and GetAddOnInfo,

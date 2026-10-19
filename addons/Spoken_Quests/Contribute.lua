@@ -337,6 +337,7 @@ local function BaseFields()
         -- The language of the packs the player hears, said outright so triage can see that a
         -- German client listening to English packs is missing the line in both.
         { "pack", DataModules:GetPackLanguage() },
+        { "packVersion", DataModules:GetPackVersion(DataModules:GetPackLanguage()) },
     }
 end
 

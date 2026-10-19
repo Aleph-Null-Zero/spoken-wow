@@ -42,6 +42,9 @@ Expect("the title is carried", envelope:match("\ntitle=A Rough Start\n") ~= nil,
 Expect("the text is the client's", envelope:match("\nKill six of them%.\nThen come back%.\n") ~= nil, true)
 Expect("the locale is carried", envelope:match("\nlocale=enUS\n") ~= nil, true)
 Expect("the pack language is carried beside it", envelope:match("\npack=enUS\n") ~= nil, true)
+-- No pack is enumerated yet at this point of the test, so the version is the "none" a player
+-- with no pack in the language sends.
+Expect("...and the version of the pack speaking it, none without one", envelope:match("\npackVersion=none\n") ~= nil, true)
 Expect("the build is carried", envelope:match("\nbuild=") ~= nil, true)
 Expect("no character name is carried", envelope:match(world.playerName or "Tester") == nil, true)
 Expect("the addon field carries the real .toc version, not the \"dev\" fallback",
@@ -639,6 +642,8 @@ Expect("...and no later event brings it back while nothing is open", lingering:I
 -- only its model shows it is a body the site has no voice for. The model is read on the dialog
 -- opening, and the button comes up once it is in.
 local pack = VoiceOver.DataModules:GetModule("TestPack")
+Expect("a pack's version is its .toc Version", VoiceOver.DataModules:GetPackVersion("enUS"), "1.2.1")
+Expect("...and a language no pack speaks is \"none\"", VoiceOver.DataModules:GetPackVersion("deDE"), "none")
 local HASH = string.rep("b", 32)
 pack.SoundLengthLookupByFileName[HASH] = 2
 pack.GossipLookupByNPCID = { [15906] = { ["Prosit!"] = HASH } }

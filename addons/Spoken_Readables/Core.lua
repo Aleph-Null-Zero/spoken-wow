@@ -17,6 +17,7 @@ local L = SpokenBooks.L
 -- through whichever exists removes a class of load-time failure on a client this has not
 -- been run on.
 local GetAddOnMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+SpokenBooks.GetAddOnMeta = GetAddOnMeta
 
 SpokenBooks.name = ADDON_NAME
 SpokenBooks.version = GetAddOnMeta and GetAddOnMeta(ADDON_NAME, "Version") or "dev"
