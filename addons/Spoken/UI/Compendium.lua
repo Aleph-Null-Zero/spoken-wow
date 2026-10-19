@@ -99,6 +99,7 @@ local function Atlas(texture, atlas, useAtlasSize)
 	end
 	return false
 end
+C.Atlas = Atlas
 
 -- Where `atlas` sits in its file, for drawing a piece of it: nil where the client has not got it,
 -- or does not say.
@@ -1545,6 +1546,7 @@ end
 -- this falls back to.
 local INK = { 0.25, 0.16, 0.08 }
 if _G.SPELLBOOK_FONT_COLOR and SPELLBOOK_FONT_COLOR.GetRGB then INK = { SPELLBOOK_FONT_COLOR:GetRGB() } end
+C.INK = INK
 -- The line under the title under the pointer, where a click on it goes up a level: the places'
 -- page's link colour.
 local LINK = { 0.5, 0.12, 0.04 }
