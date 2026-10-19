@@ -140,7 +140,9 @@ jobs:
         run: |
           for app in release/mac*/*.app; do
             codesign --verify --deep --strict --verbose=2 "$app"
-            codesign -dv "$app" 2>&1 | grep -q '^Authority=Developer ID Application:'
+            # Read whole first: grep -q stopping early would break codesign's pipe, and pipefail is on.
+            info="$(codesign -dv "$app" 2>&1)"
+            grep -q '^Authority=Developer ID Application:' <<< "$info"
             if [ "${NOTARIZED:-}" = true ]; then
               xcrun stapler validate "$app"
               spctl --assess --type execute --verbose=2 "$app"
