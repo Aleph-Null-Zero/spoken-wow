@@ -5,7 +5,7 @@
  */
 import { readFileSync } from "node:fs";
 
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
 import { MAX_ENVELOPES } from "@/lib/contributions/saved-variables";
@@ -43,8 +43,12 @@ function gossip(words: string): string {
   return `${body}sum=${checksum(body)}\n`;
 }
 
+const installId = crypto.randomUUID();
+
 afterEach(async () => {
   vi.mocked(resolveNpc).mockClear();
+  await db().query(`delete from "missing_audio_hit" where "installId" = $1`, [installId]);
+  await db().query(`delete from "contribution_hit" where "installId" = $1`, [installId]);
   await db().query(`delete from "contribution" where "ip" = $1`, [ip]);
   await db().query(`delete from "contribution_hit" where "ip" = $1`, [ip]);
 });
@@ -63,6 +67,7 @@ describe("POST /api/contributions/batch", () => {
       ok: true,
       accepted: 2,
       known: 0,
+      counted: 0,
       refused: { describe: 1, checksum: 1, malformed: 1 },
     });
 
@@ -93,7 +98,7 @@ describe("POST /api/contributions/batch", () => {
       const response = await POST(
         post({ envelopes: [envelope("Kill six.\n\nThen come back, $N."), envelope("Kill seven.\n\nThen come back, $N.")] }),
       );
-      expect(await response.json()).toEqual({ ok: true, accepted: 2, known: 1, refused: {} });
+      expect(await response.json()).toEqual({ ok: true, accepted: 2, known: 1, counted: 0, refused: {} });
 
       const { rows } = await db().query<{ text: string }>(`select "text" from "contribution" where "ip" = $1`, [ip]);
       expect(rows.map((row) => row.text)).toEqual(["Kill seven.\n\nThen come back, $N."]);
@@ -128,5 +133,81 @@ describe("POST /api/contributions/batch", () => {
     expect((await POST(post({ envelopes: [quests], website: "x" }))).status).toBe(200);
     const { rows } = await db().query(`select 1 from "contribution" where "ip" = $1`, [ip]);
     expect(rows).toHaveLength(0);
+  });
+});
+
+describe("POST /api/contributions/batch from the launcher", () => {
+  const questId = 2_000_000_000 - Math.floor(Math.random() * 1_000_000);
+  const lineId = `q:${questId}:accept`;
+
+  /** A gathered accept panel the corpus has, heard with the given pack. */
+  function heard(pack: string, packVersion?: string, text = "Kill six.\n\nThen come back, $N."): string {
+    const version = packVersion ? `packVersion=${packVersion}\n` : "";
+    const body = `!SPOKEN1 quests\naddon=SpokenQuests/2.1.0\nbuild=1.60.1/69913\nlocale=enUS\npack=${pack}\n${version}quest=${questId}\nevent=accept\nnpc=9123 Tester\nkind=creature\ntitle=Test\ntext<<\n${text}\n>>\n`;
+    return `${body}sum=${checksum(body)}\n`;
+  }
+
+  async function hits() {
+    const { rows } = await db().query<{ lineId: string; packLang: string; packVersion: string | null }>(
+      `select "lineId", "packLang", "packVersion" from "missing_audio_hit" where "installId" = $1 order by "packLang"`,
+      [installId],
+    );
+    return rows;
+  }
+
+  beforeAll(async () => {
+    await db().query(
+      `insert into "quest_line"
+         ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "questId", "fileName", "text", "originalText")
+       values ($1, 0, 'enUS', 1, true, 'extracted', 'accept', split_part($1, ':', 2)::int, $1, $2, $2)`,
+      [lineId, "Kill six.$B$BThen come back, $n."],
+    );
+  });
+
+  afterAll(async () => {
+    await db().query(`delete from "quest_line" where "lineId" = $1`, [lineId]);
+  });
+
+  it("counts a known line once per line, pack language and install", async () => {
+    const response = await POST(post({ envelopes: [heard("enUS", "2.3.0"), heard("deDE", "none")], installId }));
+    expect(await response.json()).toEqual({ ok: true, accepted: 2, known: 2, counted: 2, refused: {} });
+    expect(await hits()).toEqual([
+      { lineId, packLang: "deDE", packVersion: "none" },
+      { lineId, packLang: "enUS", packVersion: "2.3.0" },
+    ]);
+
+    await POST(post({ envelopes: [heard("enUS", "2.4.0")], installId }));
+    expect(await hits()).toEqual([
+      { lineId, packLang: "deDE", packVersion: "none" },
+      { lineId, packLang: "enUS", packVersion: "2.4.0" },
+    ]);
+  });
+
+  it("stores an unknown line as a contribution, as without an install id", async () => {
+    const response = await POST(post({ envelopes: [heard("enUS", "2.3.0", "Kill seven.")], installId }));
+    expect(await response.json()).toMatchObject({ known: 0, counted: 0 });
+    const { rows } = await db().query(`select 1 from "contribution" where "ip" = $1`, [ip]);
+    expect(rows).toHaveLength(1);
+    expect(await hits()).toEqual([]);
+  });
+
+  it("keeps a line from an addon that predates packVersion, without one", async () => {
+    await POST(post({ envelopes: [heard("enUS")], installId }));
+    expect(await hits()).toEqual([{ lineId, packLang: "enUS", packVersion: null }]);
+  });
+
+  it("counts nothing without an install id, and ignores one that is not a UUID", async () => {
+    await POST(post({ envelopes: [heard("enUS", "2.3.0")] }));
+    const response = await POST(post({ envelopes: [heard("enUS", "2.3.0")], installId: "not-an-id" }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ known: 1, counted: 0 });
+    const { rows } = await db().query(`select 1 from "missing_audio_hit" where "lineId" = $1`, [lineId]);
+    expect(rows).toEqual([]);
+  });
+
+  it("refuses an install past its own allowance while the IP still has room", async () => {
+    for (let i = 0; i < 4; i++) await POST(post({ envelopes: [books], installId }));
+    expect((await POST(post({ envelopes: [books], installId }))).status).toBe(429);
+    expect((await POST(post({ envelopes: [books] }))).status).toBe(200);
   });
 });
