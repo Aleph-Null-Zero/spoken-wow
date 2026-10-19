@@ -417,7 +417,8 @@ do
     locked.scripts.OnLeave(locked)
     GameTooltip.lines = nil
     open.scripts.OnEnter(open)
-    Expect("...and nothing under the pointer on one that opens", GameTooltip.lines, nil)
+    Expect("...and, on one that opens, how Shift-click queues it",
+        table.concat(GameTooltip.lines or {}, "|"), "Kobold Camp Cleanup|" .. L.QUESTS_SHIFT_QUEUE)
     open.scripts.OnLeave(open)
 end
 
@@ -641,7 +642,7 @@ Expect("a chain opens on its quests, in the order they are taken",
 Expect("...rows one step further in", RowOfQuest(PIE).row.nest, 2)
 Expect("...chosen, its page has the chain's name", page.title.text, "Lost Necklace")
 Expect("...the zone it is listed in and its count", page.sub.text.text, "In Elwynn Forest · 2 of 4 completed, 1 in progress")
-Expect("...and, as a zone's page, the quests on the left to choose", PageWords(), L.QUESTS_PICK)
+Expect("...and, as a zone's page, no words", PageWords(), "")
 Expect("...nothing to play on it", page.play, nil)
 Expect("...the Compendium's tome for its portrait, where the tab names none, the title where every page has it",
     page.headFace.speaker.icon == SpokenCompendium.ICON and page.shift > 0, true)
@@ -658,6 +659,10 @@ do
     Expect("...one cut short, whole in the tooltip", table.concat(GameTooltip.lines or {}, "|"), "No Line Under It")
     page.titleHit.scripts.OnLeave(page.titleHit)
     page.title.IsTruncated = nil
+    page:Show({ title = "Nothing Written", empty = true })
+    Expect("an empty page shows its mark", page.mark:IsShown(), true)
+    page:Show({ title = "Nothing Written", empty = true, picture = { file = "Interface\\Elwynn" } })
+    Expect("...but not under a place's picture", page.mark:IsShown(), false)
     ClickChain("Lost Necklace")
     ClickChain("Lost Necklace")
 end
@@ -932,8 +937,8 @@ Expect("a part's Report tooltip ends with the debug log's menu hint", Tip(PartBu
     L.OPT_REPORT_PROBLEM .. "|" .. L.OPT_REPORT_QUEST_TIP .. "|Right-click: the debug log")
 Spoken:RegisterDeveloper(nil)
 Click("Kobold Candles")
-Expect("a quest no pack has has no Play", PartButton(L.QUEST_PART_ACCEPT, "play") == nil
-    or not PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown(), true)
+Expect("a quest no pack has has a greyed Play", PartButton(L.QUEST_PART_ACCEPT, "play") ~= nil
+    and PartButton(L.QUEST_PART_ACCEPT, "play"):IsShown() and not PartButton(L.QUEST_PART_ACCEPT, "play"):IsEnabled(), true)
 Expect("...but Report: a line no pack voices can be wrong too", PartButton(L.QUEST_PART_ACCEPT, "report") ~= nil
     and PartButton(L.QUEST_PART_ACCEPT, "report"):IsShown(), true)
 Expect("...and, no one known to say it, the book in its face and no name over its heading",
@@ -959,16 +964,17 @@ do
     Expect("a part with no words known that no pack voices is left out", #page.body.lastParts .. " "
         .. page.body.lastParts[1].heading, "1 " .. L.QUEST_PART_ACCEPT)
     SpokenQuestsText[CANDLES].complete = handInWords
-    -- A quest Forever has that the corpus has no lines for (notext) says there are no words yet.
+    -- A quest Forever has that the corpus has no lines for (notext) says nothing is written.
     local candles, record = SpokenQuestsText[CANDLES], SpokenQuestsCompendium.quests[CANDLES]
     SpokenQuestsText[CANDLES], record.notext = nil, true
     Click("Kobold Camp Cleanup")
     Click("Kobold Candles")
-    Expect("a quest with no words in the corpus says there are none yet", PageWords(), L.QUEST_NO_WORDS_YET)
+    Expect("a quest with no words in the corpus says nothing is written", PageWords(), SpokenCompendium.NotWritten())
+    Expect("...with Contribute under it", page.contribute:IsShown(), true)
     SpokenQuestsText[CANDLES], record.notext = candles, nil
     Click("Kobold Camp Cleanup")
     Click("Kobold Candles")
-    Expect("...its words back once the corpus has them", PageWords() ~= L.QUEST_NO_WORDS_YET, true)
+    Expect("...its words back once the corpus has them", PageWords() ~= SpokenCompendium.NotWritten(), true)
 end
 ClickChain("Lost Necklace")
 completed[NECKLACE] = true

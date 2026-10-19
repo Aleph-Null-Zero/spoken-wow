@@ -330,8 +330,11 @@ local function BuildChrome()
 		local ok, mm = pcall(CreateFrame, "Frame", nil, window, "MaximizeMinimizeButtonFrameTemplate")
 		if ok and mm and mm.MaximizeButton and mm.MinimizeButton then
 			minimizeFrame = mm
+			-- The same size as Close and on its top edge: the frame's own size and the buttons' anchors
+			-- are the template's, which left the arrow larger than Close and above the title bar.
+			mm:SetSize(buttonSize, buttonSize)
 			mm:ClearAllPoints()
-			mm:SetPoint("RIGHT", close, "LEFT", 0, 0)
+			mm:SetPoint("TOPRIGHT", close, "TOPLEFT", 0, 0)
 			mm:SetFrameLevel(close:GetFrameLevel())
 			mm:SetSize(buttonSize, buttonSize)
 			mm.MinimizeButton:SetSize(buttonSize, buttonSize)
@@ -730,7 +733,10 @@ List.__index = List
 --- them running to the window's foot. opts = { search = text, none = text, only = text, onlyGet(),
 --- onlySet(on), checks = { { label, get(), set(on) }... }, arrange = { values, describe(value), get(),
 --- set(value) }, build() -> items,
---- isSelected(item), onClick(item), onSearch(), onHidden(), addScrollBar(scroll, child, inset) }.
+--- isSelected(item), onClick(item), onSearch(), onHidden(), addScrollBar(scroll, child, inset),
+--- hint(item) -> a line of help under an open row's name in its tooltip, or nil }.
+--- unlocked() is true while the tab's Unlock switch is on: nothing is then greyed for having none
+--- found, as every row is open to read.
 --- onHidden is called when a switch in the filter menu leaves the chosen row out of the list, after
 --- the list is drawn again; the tab chooses what to show in its place. Without it the page keeps
 --- what it showed. The search does not call it: what it hides comes back when it is cleared. The filter
@@ -919,11 +925,12 @@ local function OnRowClick(self)
 	if list.opts.onClick then list.opts.onClick(item) end
 end
 
--- `reason`, why a row does not open, in the colour the settings give a reason.
-local function ShowTip(owner, text, reason)
+-- `reason`, why a row does not open, in the colour the settings give a reason; `hint` in white.
+local function ShowTip(owner, text, reason, hint)
 	GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
 	GameTooltip:SetText(text or "")
 	if reason then GameTooltip:AddLine(reason, 1, 0.5, 0.25, true) end
+	if hint then GameTooltip:AddLine(hint, 1, 1, 1, true) end
 	GameTooltip:Show()
 	owner.tipShown = true
 end
@@ -981,10 +988,12 @@ function List:AcquireRow(index)
 		self.over = not (self.row and self.row.locked)
 		Light(self)
 		-- A name cut short with an ellipsis, whole in the tooltip; a locked row says why it does not
-		-- open, in the reason's colour the settings use.
-		local reason = self.row and self.row.locked and self.list.opts.locked and self.list.opts.locked(self.row)
-		if GameTooltip and self.row and (reason or (self.label.IsTruncated and self.label:IsTruncated())) then
-			ShowTip(self, self.row.label, reason)
+		-- open, in the reason's colour the settings use; an open one gives the tab's hint.
+		local opts = self.list.opts
+		local reason = self.row and self.row.locked and opts.locked and opts.locked(self.row)
+		local hint = self.row and not self.row.locked and opts.hint and opts.hint(self.row)
+		if GameTooltip and self.row and (reason or hint or (self.label.IsTruncated and self.label:IsTruncated())) then
+			ShowTip(self, self.row.label, reason, hint)
 		end
 	end)
 	row:SetScript("OnLeave", function(self)
@@ -1080,7 +1089,13 @@ end
 -- completed, not those in progress too).
 local function Toggle(row, item, onlyFound)
 	local count = item.found or item.count or 0
-	local opens = ((item.total or count) > 0) and not item.locked and not (onlyFound and count == 0)
+	-- A card with nothing inside it (a dungeon's, a city with no areas) has nothing to open: no
+	-- button, rather than a disabled one that does nothing.
+	if (item.total or count) <= 0 then
+		row.toggle:Hide()
+		return
+	end
+	local opens = not item.locked and not (onlyFound and count == 0)
 	local atlas = opens and item.open and "questlog-icon-shrink" or "questlog-icon-expand"
 	if Atlas(row.toggle, atlas) then
 		if row.toggle.SetDesaturated then row.toggle:SetDesaturated(not opens) end
@@ -1243,9 +1258,11 @@ end
 function List:Render()
 	local items = self.opts.build()
 	local onlyFound = self.opts.onlyGet and self.opts.onlyGet()
+	local unlocked = self.opts.unlocked and self.opts.unlocked()
 	local y = LIST_TOP
 	local underBanner = false
 	for i, item in ipairs(items) do
+		if unlocked then item.none = false end
 		if item.style == "banner" then underBanner = true end
 		local row = self:AcquireRow(i)
 		row.row = item
@@ -1512,9 +1529,22 @@ end
 -- so every tab is on the same paper as the places; the game's own atlas where the client has it;
 -- a plain colour where neither.
 local ZONES_ART = "Interface\\AddOns\\Spoken_Places\\Textures\\Art\\"
+-- What a page with nothing to read shows in its middle: the client's wax seal of the player's
+-- faction at MARK_ALPHA and its own size (larger, it blurs), else the lattice in the ink at LATTICE_ALPHA.
+local LATTICE = "Interface\\AddOns\\Spoken\\Textures\\Lattice"
+local LATTICE_SIZE, LATTICE_ALPHA, MARK_ALPHA, MARK_MOST = 240, 0.18, 0.35, 380
 local FACE_GAP, FACE_SIZE = 10, 50
 -- For a page the tab gives no picture: with one on every page, the title never moves.
 local TOME = { objectOrItem = true, icon = ICON }
+
+-- The wax seal of the player's faction, else the other's; nil where the client has neither.
+local function MarkAtlas()
+	local horde = UnitFactionGroup and UnitFactionGroup("player") == "Horde"
+	for _, faction in ipairs(horde and { "Horde", "Alliance" } or { "Alliance", "Horde" }) do
+		local name = "Quest-" .. faction .. "-WaxSeal"
+		if HasAtlas(name) then return name end
+	end
+end
 -- One ink for every word on the page: a lighter one for the line under the title and for a page
 -- with nothing chosen read as greyed out, and was hard to make out on the parchment.
 -- The spellbook's own, as the places' page has it: the game's colour is darker than the brown
@@ -1576,7 +1606,10 @@ function C.PlayTooltip(button, state, tip)
 	if not (words and GameTooltip) then return end
 	GameTooltip:SetOwner(button, "ANCHOR_LEFT")
 	local line
-	if state == "stop" then
+	if button.IsEnabled and not button:IsEnabled() then
+		GameTooltip:SetText(words.PLAY)
+		line = words.PLAY_NO_VOICE
+	elseif state == "stop" then
 		GameTooltip:SetText(words.STOP)
 		line = words.STOP_READING_TIP
 	elseif state == "replay" then
@@ -1764,8 +1797,33 @@ function C.NewPage(parent, addon, play, report, look)
 	-- Text cut off at an edge fades into the parchment under it.
 	if file then body:SetFadeSource(frame, file, coords) end
 	self.body = body
+	local mark = frame:CreateTexture(nil, "BORDER")
+	mark:SetPoint("CENTER", body.frame, "CENTER")
+	mark:Hide()
+	self.mark = mark
 	-- The header's buttons stand over the words' right edge, which moves as the bar comes and goes.
 	body.onRoom = function() self:RefreshPlay() end
+
+	-- Contribute, under the words that say nothing is written yet: on a page that says so only, and
+	-- where the player has not hidden the Contribute buttons.
+	local words = SpokenEnv and SpokenEnv.L or {}
+	local contribute = CreateFrame("Button", nil, body.child, "UIPanelButtonTemplate")
+	contribute:SetSize(100, 22)
+	contribute:SetText(words.COMPENDIUM_CONTRIBUTE or "Contribute")
+	contribute:SetPoint("TOPLEFT", body.text, "BOTTOMLEFT", 0, -12)
+	contribute:Hide()
+	contribute:SetScript("OnClick", function() if self.unwritten then self.unwritten() end end)
+	contribute:SetScript("OnEnter", function(b)
+		GameTooltip:SetOwner(b, "ANCHOR_RIGHT")
+		GameTooltip:SetText(words.COMPENDIUM_CONTRIBUTE or "Contribute")
+		GameTooltip:AddLine(words.COMPENDIUM_CONTRIBUTE_TIP or "", 1, 0.8, 0.2, true)
+		GameTooltip:Show()
+	end)
+	contribute:SetScript("OnLeave", function() GameTooltip:Hide() end)
+	self.contribute = contribute
+	if _G.Spoken and Spoken.RegisterCallback then
+		Spoken:RegisterCallback("CONTRIBUTE_SETTINGS_CHANGED", function() self:RefreshContribute() end)
+	end
 
 	-- Report in the heading's corner, the game's bug in the player's round button, as the places'
 	-- page has it.
@@ -1821,6 +1879,27 @@ function C.PlaceIcon(mapID, dungeon)
 	return placeIcons[at]
 end
 
+function Page:PaintMark(shown)
+	local mark = self.mark
+	mark:SetShown(shown and true or false)
+	if not shown then return end
+	local atlas = MarkAtlas()
+	if atlas then
+		mark:SetAtlas(atlas, true)
+		local width, height = mark:GetSize()
+		local shrink = math.max(width, height) / MARK_MOST
+		if shrink > 1 then mark:SetSize(width / shrink, height / shrink) end
+		mark:SetVertexColor(1, 1, 1)
+		mark:SetAlpha(MARK_ALPHA)
+	else
+		mark:SetTexture(LATTICE)
+		mark:SetTexCoord(0, 1, 0, 1)
+		mark:SetSize(LATTICE_SIZE, LATTICE_SIZE)
+		mark:SetVertexColor(INK[1], INK[2], INK[3])
+		mark:SetAlpha(LATTICE_ALPHA)
+	end
+end
+
 --- A round button of the caller's on the heading's line, left of Report and Play, shown or hidden
 --- by the caller: Open in Azeroth's Compendium on Spoken Places' page beside the map.
 function Page:AddButton(button)
@@ -1829,8 +1908,28 @@ function Page:AddButton(button)
 	button:HookScript("OnHide", function() self:RefreshPlay() end)
 end
 
---- Report in the heading's corner and Play beside it, each only where it does something, and the
---- caller's buttons after them; the title stops 10 short of the last shown.
+--- Report in the heading's corner where it has something to report, Play beside it on every page
+--- that can have words (grey where there is no recording; none on an empty page), and the caller's
+--- buttons after them; the title stops 10 short of the last shown.
+--- Where Contribute goes for a page with nothing written and no way of its own: Spoken's
+--- contribution page.
+function C.NotWritten()
+	local words = SpokenEnv and SpokenEnv.L
+	return words and words.COMPENDIUM_NOT_WRITTEN or "Nothing has been written for this yet."
+end
+
+function C.ContributeGeneral()
+	if _G.Spoken and Spoken.ShowContribution then
+		Spoken:ShowContribution(Spoken.SITE_URL .. "/contribute", nil, true)
+	end
+end
+
+function Page:RefreshContribute()
+	local hidden = _G.Spoken and Spoken.AreContributeButtonsHidden and Spoken:AreContributeButtonsHidden()
+	local can = _G.Spoken and Spoken.ShowContribution ~= nil
+	self.contribute:SetShown(self.unwritten ~= nil and can and not hidden and true or false)
+end
+
 function Page:RefreshPlay()
 	local target = self.target
 	local report, button = self.report, self.play
@@ -1839,12 +1938,11 @@ function Page:RefreshPlay()
 		report:SetShown(target ~= nil and not hidden and self.reporting.has(target) and true or false)
 	end
 	if button then
-		local has = target ~= nil and self.playing.has(target)
-		button:SetShown(has and true or false)
-		if has then
-			button.pageState = C.PlayState(self.playing.find(target))
-			if button.SetState then button:SetState(button.pageState) end
-		end
+		local has = target ~= nil and self.playing.has(target) and true or false
+		button:SetShown(not self.empty)
+		if has then button:Enable() else button:Disable() end
+		button.pageState = has and C.PlayState(self.playing.find(target)) or "play"
+		if button.SetState then button:SetState(button.pageState) end
 	end
 	-- Level with the title's first line, from the scroll bar's right edge leftward, 4 apart. The bar
 	-- stands at the view's right edge whether or not it shows, so the buttons stay put.
@@ -1885,7 +1983,9 @@ end
 --- entry = { title, subtitle, onSubtitle, text, target = what Play and Report act on, or nil for
 --- none, icon = the round portrait left of the title (a Spoken:CreateSpeakerFace speaker table), the
 --- Compendium's tome without it, picture = { file, mask } above the words, parts = { { heading, text, buttons } } in place
---- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts) }.
+--- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts),
+--- empty = true for a page that never has words (a group, a dungeon): its mark in the middle, where
+--- it has no picture }.
 --- onSubtitle(), where given, is what a click on the line under the title does (the map panel's
 --- area story returns to its zone's with it); without it the line is plain words.
 function Page:Show(entry)
@@ -1913,13 +2013,30 @@ function Page:Show(entry)
 	Ink(self.sub.text, INK)
 	-- Told to the view rather than painted on its text, which a re-wrap would repaint.
 	self.body:SetColor(INK[1], INK[2], INK[3])
+	local unwritten = entry.unwritten
+	self.unwritten = (type(unwritten) == "function" and unwritten) or (unwritten and C.ContributeGeneral) or nil
+	local contribute = self.contribute
 	if entry.parts and self.body.SetParts then
+		-- Under the last part, where the words of a part are the page's.
+		self.body.extraBelow = self.unwritten and 34 or 0
+		self.body.onPartsEnd = function(y)
+			contribute:ClearAllPoints()
+			contribute:SetPoint("TOPLEFT", self.body.child, "TOPLEFT", 0, -(y + 12))
+		end
 		self.body:SetParts(entry.parts)
 	else
+		self.body.extraBelow, self.body.onPartsEnd = 0, nil
+		contribute:ClearAllPoints()
+		contribute:SetPoint("TOPLEFT", self.body.text, "BOTTOMLEFT", 0, -12)
 		local picture = entry.picture
 		self.body:SetPicture(picture and picture.file, picture and picture.mask)
-		self.body:SetText(entry.text or "")
+		-- A page with nothing written says so in one voice on every tab, with Contribute under it.
+		local words = entry.unwritten and C.NotWritten()
+		self.body:SetText(entry.empty and "" or words or entry.text or "")
 	end
+	self:PaintMark(entry.empty and not entry.picture)
+	self.empty = entry.empty
 	self.target = entry.target
+	self:RefreshContribute()
 	self:RefreshPlay()
 end
