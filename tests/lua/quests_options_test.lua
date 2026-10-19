@@ -267,7 +267,7 @@ do
     local heading, box
     for _, child in ipairs(Panel.panel.content.children) do
         if child.layoutHeading and child.text == "Objective Tracker" then heading = child end
-        if type(child.text) == "table" and child.text.text == "Play Button on Each Quest" then box = child end
+        if type(child.text) == "table" and child.text.text == "Show Play Button" then box = child end
     end
     Expect("a client with the tracker has its section", heading and heading:IsShown(), true)
     local swept = 0
