@@ -2,7 +2,7 @@
 
 Spoken Player until 3.0.0, when it became Spoken and took its modules into one download.
 
-## Unreleased
+## 3.5.1 — 2026-10-19
 
 - **The objective tracker's Play buttons can be turned off.** Untick Show Play Button, under
   Objective Tracker on the Quests settings page, and the button beside each tracked quest goes
