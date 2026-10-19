@@ -28,6 +28,7 @@ end
 --- above reject, or a client before 2.3 where Compatibility.lua removes them. Guarded with
 --- pcall because those helpers assert, and the callers run on chat and playback events.
 function Utils:GetCreatureIDFromGUID(guid)
+    guid = NotSecret(guid)
     if type(guid) ~= "string" or guid == "" or not (self.GetGUIDType and self.GetIDFromGUID) then
         return nil
     end
