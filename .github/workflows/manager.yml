@@ -85,6 +85,19 @@ jobs:
           cache: npm
           cache-dependency-path: manager/package-lock.json
       - run: npm ci
+      # The macOS app icon is an Icon Composer file (build/icon.icon), which only Xcode 26's actool
+      # compiles. The runner may default to an older Xcode next to a newer one.
+      - name: Use Xcode 26 or newer
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          major="$(xcodebuild -version | awk 'NR==1 { split($2, v, "."); print v[1] }')"
+          if [ "$major" -lt 26 ]; then
+            xcode="$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | sort -V | tail -1)"
+            [ -n "$xcode" ] || { echo "No Xcode 26 or newer on this runner." >&2; exit 1; }
+            sudo xcode-select -s "$xcode"
+          fi
+          xcodebuild -version
       # macOS is signed with the Developer ID certificate and notarized with an App Store Connect
       # API key. A run without the secrets (a fork) builds it unsigned; a release tag never does.
       # When Apple refuses to notarize (an agreement it says is unsigned, an outage), the build is

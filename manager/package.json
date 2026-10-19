@@ -69,6 +69,7 @@
       "allowToChangeInstallationDirectory": true
     },
     "mac": {
+      "icon": "build/icon.icon",
       "category": "public.app-category.utilities",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,

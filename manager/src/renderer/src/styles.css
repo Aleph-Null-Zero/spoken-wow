@@ -52,6 +52,8 @@
   --logo-size: 40px;
   --topbar-pad: 16px;
   --topbar-h: calc(var(--logo-size) + 2 * var(--topbar-pad));
+  /* macOS: the strip above the bar that holds the traffic lights. */
+  --lights-h: 28px;
   --strip-h: 48px;
   --float: 10px;
   --rail-w: clamp(236px, 22vw, 264px);
@@ -301,10 +303,11 @@ h2 {
   align-self: stretch;
 }
 
-/* macOS: the system draws the traffic lights at the left (main puts them at about x=20, centred in the bar),
-   so the logo starts after them and the right-hand items keep the normal padding. */
+/* macOS: the system draws the traffic lights in a strip of their own above the bar (main centres them
+   in it), so the bar grows by that strip and the logo keeps the normal left padding. */
 .platform-darwin .topbar {
-  padding: 0 var(--topbar-pad) 0 84px;
+  height: calc(var(--topbar-h) + var(--lights-h));
+  padding: var(--lights-h) var(--topbar-pad) 0 var(--topbar-pad);
 }
 
 .window-controls {
