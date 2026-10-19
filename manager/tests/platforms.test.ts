@@ -225,14 +225,13 @@ describe('an AddOns folder that is itself a link', () => {
 // ---------------------------------------------------------------- the window
 
 describe('the window frame', () => {
-  it('macOS keeps the system buttons, inset into the top bar, and the page hides its own', () => {
+  it('macOS keeps the system buttons, in a strip above the tabs, and the page hides its own', () => {
     const c = windowChrome('darwin')
     expect(c.titleBarStyle).toBe('hiddenInset')
     expect(c.pageDrawsButtons).toBe(false)
-    // The top bar is about 68 px tall: the buttons (about 14 px) sit near its middle.
+    // The strip (--lights-h in styles.css) is 28 px tall: the buttons (about 14 px) fit inside it.
     expect(c.trafficLightPosition!.x).toBeGreaterThanOrEqual(12)
-    expect(c.trafficLightPosition!.y).toBeGreaterThanOrEqual(20)
-    expect(c.trafficLightPosition!.y).toBeLessThanOrEqual(40)
+    expect(c.trafficLightPosition!.y + 14).toBeLessThanOrEqual(28)
   })
 
   it('Windows and Linux are frameless and the page draws the buttons', () => {
