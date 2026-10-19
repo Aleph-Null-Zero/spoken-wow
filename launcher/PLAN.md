@@ -249,7 +249,8 @@ and shown when the player asks for a check.
 
 The macOS build is signed with a Developer ID certificate and notarized in CI (the `MAC_CSC_LINK`,
 `MAC_CSC_KEY_PASSWORD`, `APPLE_API_KEY_P8`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` secrets). The
-Linux and Windows builds are not signed.
+Linux and Windows builds are not signed. When Apple refuses to notarize, CI ships the Mac build
+signed only, with a warning on the run; macOS then asks the player to choose Open Anyway once.
 
 - macOS: open the dmg, drag the app to Applications. 0.1.1 and older were unsigned, and macOS calls
   them damaged; `xattr -dr com.apple.quarantine "/Applications/Spoken Launcher.app"` opens one.

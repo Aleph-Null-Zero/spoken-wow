@@ -87,6 +87,9 @@ jobs:
       - run: npm ci
       # macOS is signed with the Developer ID certificate and notarized with an App Store Connect
       # API key. A run without the secrets (a fork) builds it unsigned; a release tag never does.
+      # When Apple refuses to notarize (an agreement it says is unsigned, an outage), the build is
+      # made again signed only, with a warning: players get "could not verify" and Open Anyway
+      # instead of no release.
       - name: Build the installers
         shell: bash
         run: |
@@ -112,7 +115,19 @@ jobs:
           else
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
-          npm run ${{ matrix.script }}
+          if [ -z "${APPLE_API_KEY:-}" ]; then
+            npm run ${{ matrix.script }}
+          elif npm run ${{ matrix.script }} 2>&1 | tee "$RUNNER_TEMP/build.log"; then
+            echo "NOTARIZED=true" >> "$GITHUB_ENV"
+          elif grep -q "Failed to notarize" "$RUNNER_TEMP/build.log"; then
+            echo "::warning title=Not notarized::Apple refused to notarize the macOS build; it ships signed only. See the log above."
+            rm -rf release
+            # electron-builder notarizes only when these are set.
+            unset APPLE_API_KEY APPLE_API_KEY_ID APPLE_API_ISSUER
+            npm run ${{ matrix.script }}
+          else
+            exit 1
+          fi
         env:
           MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
           MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
@@ -125,8 +140,11 @@ jobs:
         run: |
           for app in release/mac*/*.app; do
             codesign --verify --deep --strict --verbose=2 "$app"
-            xcrun stapler validate "$app"
-            spctl --assess --type execute --verbose=2 "$app"
+            codesign -dv "$app" 2>&1 | grep -q '^Authority=Developer ID Application:'
+            if [ "${NOTARIZED:-}" = true ]; then
+              xcrun stapler validate "$app"
+              spctl --assess --type execute --verbose=2 "$app"
+            fi
           done
         env:
           SIGNED: ${{ secrets.MAC_CSC_LINK != '' }}

@@ -17,9 +17,10 @@ Windows: run `Spoken-Launcher-Setup-<version>.exe`. If SmartScreen asks, choose 
 "Run anyway". The launcher updates itself after that.
 
 macOS: open `Spoken-Launcher-<version>-mac-arm64.dmg` (Apple silicon) or `-mac-x64.dmg` (Intel) and
-drag the app to Applications. The app is signed and notarized by Apple, and updates itself from
-there. Version 0.1.1 and older were not signed: macOS calls them damaged. Run this once in Terminal
-to open one, or download the newest version instead:
+drag the app to Applications. The app is signed and updates itself from there. If macOS says it
+cannot verify the app, open System Settings → Privacy & Security and choose Open Anyway (once).
+Version 0.1.1 and older were not signed: macOS calls them damaged. Run this once in Terminal to
+open one, or download the newest version instead:
 
     xattr -dr com.apple.quarantine "/Applications/Spoken Launcher.app"
 
