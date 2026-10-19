@@ -56,7 +56,7 @@ cp "$REPO/pipelines/quests/assets/icon/spoken-quests.tga" "$module_dir/icon.tga"
 
 cat > "$module_dir/$NAME.toc" <<TOC
 ## Interface: 11509, 20506, 16001
-## Title: $TITLE
+## Title: ${TITLE/#Spoken/|cffb48cffSpoken|r}
 ## Notes: Installs every Spoken Quests sound pack$VARIANT - Alliance, Horde, Shared Quests and Gossip.|n|nThis addon holds no audio itself. If your addon manager did not fetch the four packs with it, install them yourself; Spoken Quests plays whatever it finds.
 ## Version: $VERSION
 ## IconTexture: Interface\\AddOns\\$NAME\\icon.tga

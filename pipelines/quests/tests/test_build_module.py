@@ -163,7 +163,7 @@ def test_the_toc_title_says_which_pack_this_is(tmp_path):
                  title="Spoken Audio: Quests - Horde")
 
     with open(tmp_path / "dist" / "Mod" / "Mod.toc", encoding="utf-8") as f:
-        assert "## Title: Spoken Audio: Quests - Horde\n" in f.read()
+        assert "## Title: |cffb48cffSpoken|r Audio: Quests - Horde\n" in f.read()
 
 
 def test_the_toc_names_the_forever_client(tmp_path):

@@ -240,7 +240,8 @@ function DataModules:GetPackLabel(module)
     if label then
         return label
     end
-    local title = module and module.Title or ""
+    -- Without the colour Spoken's name is drawn in.
+    local title = string.gsub(module and module.Title or "", "|c%x%x%x%x%x%x%x%x(.-)|r", "%1")
     -- "Spoken German Audio: Quests - Horde", or a pack built before that, "Spoken Quests Audio: Horde".
     title = string.gsub(title, "^Spoken [^:]*Audio: ", "")
     return (string.gsub(title, "VoiceOver Data %- ", ""))
