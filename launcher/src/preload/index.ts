@@ -25,6 +25,8 @@ const api: LauncherApi = {
   openLogs: () => ipcRenderer.invoke(CHANNELS.openLogs),
   checkLauncherUpdate: () => ipcRenderer.invoke(CHANNELS.checkLauncherUpdate),
   clearDownloads: () => ipcRenderer.invoke(CHANNELS.clearDownloads),
+  shareNow: () => ipcRenderer.invoke(CHANNELS.shareNow),
+  resetShareId: () => ipcRenderer.invoke(CHANNELS.resetShareId),
   windowMinimize: () => ipcRenderer.invoke(CHANNELS.windowMinimize),
   windowToggleMaximize: () => ipcRenderer.invoke(CHANNELS.windowToggleMaximize),
   windowClose: () => ipcRenderer.invoke(CHANNELS.windowClose),
@@ -34,6 +36,7 @@ const api: LauncherApi = {
   onCatalogChanged: (l) => listen(CHANNELS.catalogChanged, l),
   onCommunityChanged: (l) => listen(CHANNELS.communityChanged, l),
   onUpdater: (l) => listen(CHANNELS.updaterState, l),
+  onSharing: (l) => listen(CHANNELS.sharingChanged, l),
   onWindowMaximized: (l) => listen(CHANNELS.windowMaximized, l)
 }
 

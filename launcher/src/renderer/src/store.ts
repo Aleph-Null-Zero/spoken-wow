@@ -2,7 +2,7 @@
 // nothing here guesses the result of an install before the job says so.
 import { createContext, createElement, useContext, useEffect, useMemo, useReducer, useRef, type Dispatch, type ReactNode } from 'react'
 import type { AddGameResult, UpdaterState } from '@shared/api'
-import type { Catalog, CommunityCatalog, GameInstall, JobProgress, Product, ProductStatus, Settings, Snapshot } from '@shared/types'
+import type { Catalog, CommunityCatalog, GameInstall, JobProgress, Product, ProductStatus, Settings, SharingStatus, Snapshot } from '@shared/types'
 import { DEFAULT_SETTINGS, isSupportedFlavor } from '@shared/types'
 import { api, errorText } from './api'
 import type { Platform } from './strings'
@@ -26,6 +26,7 @@ export interface State {
   /** The latest job of each `gameId|productId`; finished ones stay until dismissed. */
   jobs: Record<string, JobProgress>
   updater: UpdaterState
+  sharing: SharingStatus
   refreshing: boolean
   page: Page
   gameId: string
@@ -43,6 +44,7 @@ type Action =
   | { type: 'job'; job: JobProgress }
   | { type: 'dismiss'; key: string }
   | { type: 'updater'; state: UpdaterState }
+  | { type: 'sharing'; status: SharingStatus }
   | { type: 'refreshing'; on: boolean }
   | { type: 'nav'; page: Page; gameId?: string; tab?: SpokenTab }
 
@@ -64,6 +66,7 @@ const initial: State = {
   statuses: {},
   jobs: {},
   updater: { state: 'idle' },
+  sharing: { sending: false },
   refreshing: false,
   page: 'home',
   gameId: '',
@@ -86,6 +89,7 @@ function reducer(s: State, a: Action): State {
         dataPath: a.snap.dataPath,
         // A state sent while the window was starting is newer than the snapshot's.
         updater: s.updater.state === 'idle' ? (a.snap.updater ?? s.updater) : s.updater,
+        sharing: a.snap.sharingStatus ?? s.sharing,
         statuses: a.statuses,
         page: a.page,
         gameId: a.gameId,
@@ -120,6 +124,8 @@ function reducer(s: State, a: Action): State {
     }
     case 'updater':
       return { ...s, updater: a.state }
+    case 'sharing':
+      return { ...s, sharing: a.status }
     case 'refreshing':
       return { ...s, refreshing: a.on }
     case 'nav':
@@ -160,6 +166,8 @@ export interface Actions {
   removeGame(gameId: string): Promise<void>
   scan(): Promise<void>
   setSettings(patch: Partial<Settings>): Promise<void>
+  /** Sends the collected lines now; the result comes through `state.sharing`. */
+  shareNow(): Promise<void>
 }
 
 function localError(gameId: string, productId: string, action: JobProgress['action'], message: string): JobProgress {
@@ -265,6 +273,13 @@ function makeActions(dispatch: Dispatch<Action>, get: () => State): Actions {
       const settings = await api().setSettings(patch)
       dispatch({ type: 'settings', settings })
       if ('includePrereleases' in patch) refetchAll(get().games)
+    },
+    async shareNow() {
+      try {
+        await api().shareNow()
+      } catch (e) {
+        dispatch({ type: 'sharing', status: { ...get().sharing, sending: false, error: errorText(e) } })
+      }
     }
   }
 }
@@ -322,7 +337,8 @@ export function StoreProvider({ children }: { children: ReactNode }): ReactNode 
         refetchAll()
       }),
       a.onCommunityChanged((community) => dispatch({ type: 'community', community })),
-      a.onUpdater((u) => dispatch({ type: 'updater', state: u }))
+      a.onUpdater((u) => dispatch({ type: 'updater', state: u })),
+      a.onSharing((status) => dispatch({ type: 'sharing', status }))
     ]
     const onHash = (): void => {
       const route = parseHash()

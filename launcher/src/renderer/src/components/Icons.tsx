@@ -113,6 +113,7 @@ export const IconInfo = make(
     <path d="M12 7.6v.1" />
   </>
 )
+export const IconHeart = make(<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />)
 export const IconPlay = make(<path d="M8 5.5v13l11-6.5z" />, true)
 export const IconChevronRight = make(<path d="M9 6l6 6-6 6" />)
 export const IconGames = make(

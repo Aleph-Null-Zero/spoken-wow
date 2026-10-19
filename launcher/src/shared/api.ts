@@ -1,6 +1,6 @@
 // The contract between the window and the main process. The preload exposes `LauncherApi` as
 // `window.launcher`; the main process answers each channel.
-import type { Catalog, CommunityCatalog, GameInstall, JobProgress, ProductStatus, Settings, Snapshot } from './types'
+import type { Catalog, CommunityCatalog, GameInstall, JobProgress, ProductStatus, Settings, SharingStatus, Snapshot } from './types'
 
 export const CHANNELS = {
   snapshot: 'launcher:snapshot',
@@ -20,6 +20,8 @@ export const CHANNELS = {
   openLogs: 'launcher:open-logs',
   checkLauncherUpdate: 'launcher:updater:check',
   clearDownloads: 'launcher:downloads:clear',
+  shareNow: 'launcher:sharing:send',
+  resetShareId: 'launcher:sharing:reset-id',
   windowMinimize: 'launcher:window:minimize',
   windowToggleMaximize: 'launcher:window:toggle-maximize',
   windowClose: 'launcher:window:close',
@@ -30,6 +32,7 @@ export const CHANNELS = {
   catalogChanged: 'launcher:event:catalog',
   communityChanged: 'launcher:event:community',
   updaterState: 'launcher:event:updater',
+  sharingChanged: 'launcher:event:sharing',
   windowMaximized: 'launcher:event:window-maximized'
 } as const
 
@@ -91,6 +94,11 @@ export interface LauncherApi {
   checkLauncherUpdate(): Promise<void>
   /** Deletes the downloaded zips (and half-finished ones) kept in the downloads folder. Refused while a job runs. */
   clearDownloads(): Promise<ClearDownloadsResult>
+  /** Sends the collected lines now. Refused while Sharing is off. */
+  /** The status comes through onSharing. */
+  shareNow(): Promise<void>
+  /** Gives this launcher a new random id. */
+  resetShareId(): Promise<void>
   /** The window has no system title bar, so the page draws its own buttons and calls these. */
   windowMinimize(): Promise<void>
   /** Maximizes the window, or puts it back when it is already maximized. */
@@ -103,6 +111,7 @@ export interface LauncherApi {
   onCatalogChanged(listener: (catalog: Catalog) => void): () => void
   onCommunityChanged(listener: (community: CommunityCatalog) => void): () => void
   onUpdater(listener: (state: UpdaterState) => void): () => void
+  onSharing(listener: (status: SharingStatus) => void): () => void
   /** True when the window becomes maximized, false when it is put back. */
   onWindowMaximized(listener: (maximized: boolean) => void): () => void
 }

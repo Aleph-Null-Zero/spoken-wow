@@ -1,19 +1,20 @@
 import { useState, type ReactNode } from 'react'
-import { formatBytes } from '../format'
+import { formatBytes, formatDate, formatTime } from '../format'
 import { api, errorText } from '../api'
 import { GameIcon } from '../components/Brand'
 import { Switch } from '../components/Controls'
 import { useAddGame } from '../components/EmptyGames'
-import { IconChevron, IconChevronRight, IconDownload, IconGames, IconInfo, IconRefresh } from '../components/Icons'
+import { IconChevron, IconChevronRight, IconDownload, IconGames, IconHeart, IconInfo, IconRefresh } from '../components/Icons'
 import { useStore } from '../store'
 import { REPO_URL, S, SITE_URL } from '../strings'
 
-type Section = 'games' | 'updates' | 'downloads' | 'about'
+type Section = 'games' | 'updates' | 'downloads' | 'sharing' | 'about'
 
 const NAV: { id: Section; label: string; icon: ReactNode }[] = [
   { id: 'games', label: S.settings.folders, icon: <IconGames size={18} /> },
   { id: 'updates', label: S.settings.updates, icon: <IconRefresh size={18} /> },
   { id: 'downloads', label: S.settings.downloads, icon: <IconDownload size={18} /> },
+  { id: 'sharing', label: S.settings.sharing, icon: <IconHeart size={18} /> },
   { id: 'about', label: S.settings.about, icon: <IconInfo size={18} /> }
 ]
 
@@ -39,6 +40,7 @@ export function SettingsPage(): ReactNode {
             {section === 'games' && <GamesSection />}
             {section === 'updates' && <UpdatesSection />}
             {section === 'downloads' && <DownloadsSection />}
+            {section === 'sharing' && <SharingSection />}
             {section === 'about' && <AboutSection />}
           </div>
         </div>
@@ -220,6 +222,54 @@ function DownloadsSection(): ReactNode {
       <div className="switches">
         <Switch checked={settings.keepDownloads} onChange={(v) => set({ keepDownloads: v })} label={S.settings.keepZips} text={S.settings.keepZipsText} />
       </div>
+    </section>
+  )
+}
+
+function SharingSection(): ReactNode {
+  const { state, actions } = useStore()
+  const { sharing } = state
+  const on = state.settings.sharing === 'on'
+  const [reset, setReset] = useState(false)
+  const last = sharing.lastSent
+  const resetId = async (): Promise<void> => {
+    await api().resetShareId()
+    setReset(true)
+  }
+  return (
+    <section aria-labelledby="set-sharing">
+      <h2 id="set-sharing" className="settings-h">
+        {S.settings.sharing}
+      </h2>
+      <div className="switches">
+        <Switch
+          checked={on}
+          onChange={(v) => void actions.setSettings({ sharing: v ? 'on' : 'off' }).catch(() => undefined)}
+          label={S.settings.sharingSwitch}
+          text={S.settings.sharingText}
+        />
+      </div>
+      <p className="settings-text" role="status">
+        {sharing.sending ? `${S.settings.sending}…` : last ? S.settings.lastSent(last.count, `${formatDate(last.at)} ${formatTime(last.at)}`) : S.settings.neverSent}
+      </p>
+      {sharing.error && (
+        <p className="text-error" role="alert">
+          {sharing.error}
+        </p>
+      )}
+      <div className="setting-actions">
+        <button type="button" className="btn" onClick={() => void actions.shareNow()} disabled={!on || sharing.sending} aria-busy={sharing.sending}>
+          {S.settings.sendNow}
+        </button>
+        <button type="button" className="btn" onClick={() => void resetId()}>
+          {S.settings.resetId}
+        </button>
+      </div>
+      {reset && (
+        <p className="status status-ok-text setting-result" role="status">
+          {S.settings.resetDone}
+        </p>
+      )}
     </section>
   )
 }

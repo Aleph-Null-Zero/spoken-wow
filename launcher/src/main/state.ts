@@ -2,7 +2,7 @@
 // Every function takes the data path, so nothing here needs electron.
 import fs from 'node:fs'
 import path from 'node:path'
-import { DEFAULT_SETTINGS, type Settings } from '../shared/types'
+import { DEFAULT_SETTINGS, SETTING_CHOICES, type Settings } from '../shared/types'
 
 // ---------------------------------------------------------------- files
 
@@ -48,6 +48,7 @@ export function sanitizeSettings(raw: unknown, base: Settings = DEFAULT_SETTINGS
     const want = typeof DEFAULT_SETTINGS[key]
     if (typeof v !== want) continue
     if (typeof v === 'string' && v.length > 2000) continue
+    if (SETTING_CHOICES[key] && !SETTING_CHOICES[key].includes(v)) continue
     ;(out as unknown as Record<string, unknown>)[key] = v
   }
   return out

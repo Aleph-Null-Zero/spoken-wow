@@ -164,6 +164,22 @@ export interface Settings {
   voiceLanguage: string
   /** The game last looked at. */
   lastGameId: string
+  /** Sending what Spoken collects to the site: 'unset' until the player answers the first-start question. */
+  sharing: SharingChoice
+}
+
+export const SHARING_CHOICES = ['unset', 'on', 'off'] as const
+
+export type SharingChoice = (typeof SHARING_CHOICES)[number]
+
+/** What the window shows of sharing. The install id stays in the main process. */
+export interface SharingStatus {
+  /** The last send that the site took: when, and how many lines. */
+  lastSent?: { at: string; count: number }
+  /** A send is running now. */
+  sending: boolean
+  /** Why the last attempt failed, in plain words, until one succeeds. */
+  error?: string
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -173,7 +189,13 @@ export const DEFAULT_SETTINGS: Settings = {
   downloadsPath: '',
   keepDownloads: false,
   voiceLanguage: 'enUS',
-  lastGameId: ''
+  lastGameId: '',
+  sharing: 'unset'
+}
+
+/** The settings that take only some values of their type; anything else is dropped on load. */
+export const SETTING_CHOICES: Partial<Record<keyof Settings, readonly unknown[]>> = {
+  sharing: SHARING_CHOICES
 }
 
 /** The release lists the catalog holds, by product id, newest first. */
@@ -226,4 +248,5 @@ export interface Snapshot {
   dataPath: string
   /** The launcher's own update, as last sent: a window opened later still shows it. */
   updater?: import('./api').UpdaterState
+  sharingStatus?: SharingStatus
 }

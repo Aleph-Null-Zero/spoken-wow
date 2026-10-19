@@ -1,9 +1,9 @@
 // A believable fake LauncherApi, used only when `window.launcher` is missing (a plain browser:
 // `npm run dev:web`). Address options: ?offline=1, ?empty=1 (no games), ?empty=packs (an empty community
-// list), ?readonly=1 (Anniversary is read-only), ?missing=anniversary (that game was not found; also forever, era), ?linked=1 (Spoken on Anniversary is a link to a development folder), ?update=1 (a launcher update banner), ?update=url (an update to download in the browser), ?platform=darwin|linux|win32 (the window frame of that system).
+// list), ?readonly=1 (Anniversary is read-only), ?missing=anniversary (that game was not found; also forever, era), ?linked=1 (Spoken on Anniversary is a link to a development folder), ?update=1 (a launcher update banner), ?update=url (an update to download in the browser), ?platform=darwin|linux|win32 (the window frame of that system), ?sharing=on|off (the first-start question already answered).
 import type { AddGameResult, InstallOptions, LauncherApi, UpdaterState } from '@shared/api'
 import { PRODUCTS, SPOKEN_FOLDERS, productById } from '@shared/products'
-import type { Catalog, CommunityCatalog, CommunityPack, GameInstall, JobProgress, Product, ProductStatus, ReleaseInfo, Settings, Snapshot } from '@shared/types'
+import type { Catalog, CommunityCatalog, CommunityPack, GameInstall, JobProgress, Product, ProductStatus, ReleaseInfo, Settings, SharingStatus, Snapshot } from '@shared/types'
 import { DEFAULT_SETTINGS, communityFolder } from '@shared/types'
 import { compareVersions } from '@shared/version'
 
@@ -260,7 +260,14 @@ export function createMockApi(): LauncherApi {
   const anniversary = games.find((g) => g.flavor === 'anniversary')
   if (anniversary && q.has('linked')) installs[anniversary.id] = { spoken: { version: '3.5.0', folders: [...SPOKEN_FOLDERS], linked: true } }
 
-  let settings: Settings = { ...DEFAULT_SETTINGS, lastGameId: forever?.id ?? '' }
+  const sharingParam = q.get('sharing')
+  let settings: Settings = {
+    ...DEFAULT_SETTINGS,
+    lastGameId: forever?.id ?? '',
+    ...(sharingParam === 'on' || sharingParam === 'off' ? { sharing: sharingParam } : {})
+  }
+  let sharingStatus: SharingStatus = { sending: false, ...(sharingParam === 'on' ? { lastSent: { at: new Date(Date.now() - 3 * 3600 * 1000).toISOString(), count: 37 } } : {}) }
+  const sharingListeners = new Set<(s: SharingStatus) => void>()
   const releases = buildReleases()
   const packs = q.get('empty') === 'packs' ? [] : COMMUNITY_PACKS
   const everyProduct = (): Product[] => [...PRODUCTS, ...packs.map(communityProduct)]
@@ -400,7 +407,7 @@ export function createMockApi(): LauncherApi {
   const api: LauncherApi = {
     async snapshot(): Promise<Snapshot> {
       await sleep(250)
-      return { games, settings, catalog: catalog(), community: community(), products: PRODUCTS, appVersion: '0.1.0', platform, dataPath: platform === 'darwin' ? '/Users/hello/Library/Application Support/Spoken Launcher' : platform === 'linux' ? '/home/hello/.config/Spoken Launcher' : 'C:\\Users\\hello\\AppData\\Roaming\\Spoken Launcher' }
+      return { games, settings, sharingStatus, catalog: catalog(), community: community(), products: PRODUCTS, appVersion: '0.1.0', platform, dataPath: platform === 'darwin' ? '/Users/hello/Library/Application Support/Spoken Launcher' : platform === 'linux' ? '/home/hello/.config/Spoken Launcher' : 'C:\\Users\\hello\\AppData\\Roaming\\Spoken Launcher' }
     },
     async scanGames() {
       await sleep(900)
@@ -486,6 +493,20 @@ export function createMockApi(): LauncherApi {
       cleared = true
       return out
     },
+    async shareNow() {
+      if (settings.sharing !== 'on') throw new Error('Turn on Sharing first.')
+      const emit = (next: SharingStatus): void => {
+        sharingStatus = next
+        sharingListeners.forEach((l) => l(next))
+      }
+      emit({ ...sharingStatus, sending: true })
+      await sleep(900)
+      if (offline) emit({ ...sharingStatus, sending: false, error: 'The site could not be reached (fetch failed).' })
+      else emit({ sending: false, lastSent: { at: new Date().toISOString(), count: 12 } })
+    },
+    async resetShareId() {
+      console.info('[mock] resetShareId')
+    },
     async windowMinimize() {
       console.info('[mock] windowMinimize')
     },
@@ -513,6 +534,10 @@ export function createMockApi(): LauncherApi {
     onCommunityChanged(l) {
       communityListeners.add(l)
       return () => void communityListeners.delete(l)
+    },
+    onSharing(l) {
+      sharingListeners.add(l)
+      return () => void sharingListeners.delete(l)
     },
     onWindowMaximized(l) {
       maximizedListeners.add(l)

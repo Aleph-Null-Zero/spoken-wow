@@ -20,7 +20,9 @@ reports, CurseForge catalog, other addons).
 5. Shows what is new (the release notes) before updating.
 6. Keeps itself up to date.
 
-It never touches `WTF`, saved variables, or any folder it did not install.
+It never writes to `WTF`, saved variables, or any folder it did not install. With Sharing on (opt-in,
+asked once at the first start) it reads `SavedVariables/SpokenContributions.lua` of each account and
+sends the lines Spoken collected to the site (`src/main/share.ts`, README "Sharing").
 
 ## Where the files come from
 
@@ -96,6 +98,7 @@ Spoken Launcher
 |    Game folders (list, Add, Remove, Rescan)
 |    Updates (include pre-releases, check on start, launcher auto-update)
 |    Downloads (cache folder, keep downloaded zips)
+|    Sharing (send what Spoken collects, last sent, send now, reset id)
 |    About (versions, links, open log folder)
 ```
 
