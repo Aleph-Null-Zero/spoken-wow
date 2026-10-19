@@ -369,7 +369,7 @@ for tier in "${tiers[@]}"; do
   (cd "$staging" && zip -r -q -X "$zip_path" "$folder" \
     -x '*.DS_Store' '*/.git/*' '*.bak' '*.orig' '*.part')
 
-  # The launcher channel publishes dist/<folder>/, so it must hold the tree the zip holds.
+  # The manager channel publishes dist/<folder>/, so it must hold the tree the zip holds.
   rm -rf "$DIST/$folder"
   rsync -a --exclude '.DS_Store' --exclude '.git' --exclude '*.bak' --exclude '*.orig' --exclude '*.part' \
     "$staging/$folder/" "$DIST/$folder/"

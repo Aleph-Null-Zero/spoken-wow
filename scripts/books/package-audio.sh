@@ -47,7 +47,7 @@ zip_path="$DIST/$folder-$version.zip"
 rm -f "$zip_path"
 # Stored, not deflated, as English's: the payload is mp3.
 (cd "$staging" && zip -r -0 -q -X "$zip_path" "$folder" -x '*.DS_Store' '*/.*')
-# The launcher channel publishes dist/<folder>/, so it must hold the tree the zip holds.
+# The manager channel publishes dist/<folder>/, so it must hold the tree the zip holds.
 rm -rf "$DIST/$folder"
 rsync -a --exclude '.[!.]*' "$staging/$folder/" "$DIST/$folder/"
 # rsync keeps mtimes, and publish.mjs reads a .toc older than the zip as a stale build.

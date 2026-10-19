@@ -289,7 +289,7 @@ export async function recordContributionHit(ip: string | null, installId: string
   await db().query(`insert into "contribution_hit" ("ip", "installId") values ($1, $2)`, [ip, installId]);
 }
 
-/** The launcher's uploads from one install, counted as countRecentContributions counts an IP's. */
+/** The manager's uploads from one install, counted as countRecentContributions counts an IP's. */
 export async function countRecentInstallUploads(installId: string, withinMs: number): Promise<number> {
   return countRecentHits(`"installId"`, installId, withinMs);
 }

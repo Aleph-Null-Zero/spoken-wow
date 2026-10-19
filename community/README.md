@@ -1,6 +1,6 @@
 # Community voice packs
 
-This folder lists voice packs that players made for Spoken. The Spoken Launcher reads
+This folder lists voice packs that players made for Spoken. The Spoken Manager reads
 `community/packs.json` from the `master` branch and shows each entry on its Community page, where a
 player can install, update and remove it. The authors of Spoken do not make these packs and do not
 check what is inside them. A pack carries Lua files, so install only packs from people you trust.
@@ -39,23 +39,23 @@ Each entry is an object in the `packs` list. This is an example only. It is not 
 | `section` | `quests`, `zones` or `books`. |
 | `version` | A version such as `1.0.0` or `1.1.0-beta.1`. Raise it for every new zip, so installed copies show an update. |
 | `size` | The size of the zip in bytes, as a whole number. |
-| `sha256` | The SHA-256 checksum of the zip, 64 hex digits. Required. The launcher refuses a download that does not match. |
+| `sha256` | The SHA-256 checksum of the zip, 64 hex digits. Required. The manager refuses a download that does not match. |
 | `url` | A GitHub release asset: `https://github.com/<owner>/<repo>/releases/download/<tag>/<file>.zip`. |
 | `homepage` | Optional. An https link to a page about the pack. |
 | `license` | Optional. The license as you state it, up to 60 characters. |
 | `addedAt` | The date you added the entry, as `YYYY-MM-DD`. |
 
-An entry that breaks a rule is ignored by the launcher, so check the list above before you submit.
+An entry that breaks a rule is ignored by the manager, so check the list above before you submit.
 
 ## What the zip must contain
 
 - One folder at the root of the zip, named `SpokenCommunity_<id>`. For the example it is
   `SpokenCommunity_elune-quests-de`. Nothing else may be in the zip: no other folder and no loose files.
 - A file `SpokenCommunity_<id>.toc` inside that folder, so the game can read it as an add-on.
-- Forward slashes in the paths, no `..` and no absolute paths. The launcher refuses a zip that has them.
+- Forward slashes in the paths, no `..` and no absolute paths. The manager refuses a zip that has them.
 - Your own work, or work you have the right to share. Say how it may be used in `license`.
 
-The launcher installs the folder into `Interface\AddOns` and never touches any other folder. It keeps
+The manager installs the folder into `Interface\AddOns` and never touches any other folder. It keeps
 the previous version in a backup folder until the next install.
 
 Spoken does not load these folders yet. Its pack discovery knows the official names only, so a pack

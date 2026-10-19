@@ -8,7 +8,7 @@
  * then submissionFrom -- and one that fails is counted and skipped rather than failing the
  * rest: a file gathered over an evening should not be refused whole for one bad line.
  *
- * A file the Spoken Launcher sends carries the install id it made when its player turned
+ * A file the Spoken Manager sends carries the install id it made when its player turned
  * Sharing on. Then a line the corpus already knows is counted as a missing-audio hit
  * (lib/contributions/missing-audio.ts) rather than dropped, and the install has an allowance of
  * its own beside the IP's. Without one, as from /contribute, known lines are dropped as before.

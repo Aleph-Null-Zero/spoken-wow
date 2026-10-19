@@ -65,7 +65,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
             </Path>
             <UploadGathered signedInAs={signedInAs} />
             <p className="text-muted-foreground text-sm">
-              Or let the Spoken Launcher send it after each logout: turn on Sharing in its
+              Or let the Spoken Manager send it after each logout: turn on Sharing in its
               settings.
             </p>
           </Section>

@@ -3,7 +3,7 @@
  *
  * The addon gathers a line exactly when the installed pack has no sound for it, so a gathered
  * envelope the corpus already knows is one a player heard in silence. The /contribute page
- * drops those (there is nothing to triage); the Spoken Launcher, when its player turned Sharing
+ * drops those (there is nothing to triage); the Spoken Manager, when its player turned Sharing
  * on, sends the same file with a random install id, and each such line is counted here once
  * per line, pack language and install. Ranked by installs, that is which lines to voice next,
  * and which players are only behind on their pack.
@@ -15,14 +15,14 @@ import { BASE_LANG, isLang } from "@/lib/lang";
 
 import type { Submission } from "./contributions";
 
-/** Per install, beside the per-IP allowance; the launcher backs off on a 429 from either. */
+/** Per install, beside the per-IP allowance; the manager backs off on a 429 from either. */
 export const INSTALL_UPLOADS_PER_HOUR = 4;
 
 export type MissingAudioHit = { lineId: string; packLang: string; packVersion: string | null };
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-/** The install id a launcher sent, or null: a bad one is ignored, never a reason to refuse the file. */
+/** The install id a manager sent, or null: a bad one is ignored, never a reason to refuse the file. */
 export function installIdFrom(value: unknown): string | null {
   return typeof value === "string" && UUID_V4.test(value) ? value.toLowerCase() : null;
 }

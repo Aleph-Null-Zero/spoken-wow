@@ -25,7 +25,7 @@ LUA ?= $(shell command -v luajit || command -v lua5.1)
         descriptions descriptions-check descriptions-published \
         character-models dungeons \
         audio-release audio-release-dry \
-        launcher-publish launcher-publish-dry launcher-gc launcher-gc-dry
+        manager-publish manager-publish-dry manager-gc manager-gc-dry
 
 help: ## Show this help
 	@printf 'Spoken\n\n'
@@ -239,20 +239,20 @@ audio-release: ## Publish the built sound packs as GitHub releases (needs gh; SE
 	$(require_section_for_locale)
 	@./scripts/audio-github-release.sh $(SECTION) $(if $(SECTION),$(LOCALE))
 
-# The launcher's channel (scripts/launcher/): what dist/ holds, uploaded to R2 as changed files only.
+# The manager's channel (scripts/manager/): what dist/ holds, uploaded to R2 as changed files only.
 # Build first with the <section>-package-audio targets. Needs R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
 # R2_SECRET_ACCESS_KEY, R2_BUCKET and SPOKEN_PACKS_SIGNING_KEY, in the repo-root .env.
-launcher-publish-dry: ## Show what the launcher channel would get from dist/
-	@node scripts/launcher/cli.mjs publish --dry-run
+manager-publish-dry: ## Show what the manager channel would get from dist/
+	@node scripts/manager/cli.mjs publish --dry-run
 
-launcher-publish: ## Publish dist/'s launcher packs to the launcher channel
-	@node scripts/launcher/cli.mjs publish
+manager-publish: ## Publish dist/'s manager packs to the manager channel
+	@node scripts/manager/cli.mjs publish
 
-launcher-gc-dry: ## Show what launcher-gc would delete
-	@node scripts/launcher/cli.mjs gc --dry-run
+manager-gc-dry: ## Show what manager-gc would delete
+	@node scripts/manager/cli.mjs gc --dry-run
 
-launcher-gc: ## Delete channel files no recent manifest needs
-	@node scripts/launcher/cli.mjs gc
+manager-gc: ## Delete channel files no recent manifest needs
+	@node scripts/manager/cli.mjs gc
 
 package-all: ## Build every addon zip: Spoken with its modules, then quests and zones on their own
 	@./scripts/spoken/package.sh

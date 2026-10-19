@@ -123,9 +123,9 @@ function toPack(page, meta) {
   if (meta.github !== undefined && meta.github !== "false") fail(`github may only be false`);
   const github = meta.github !== "false";
 
-  // `launcher: true` puts the pack on the launcher's channel (scripts/launcher/), one language at a
+  // `manager: true` puts the pack on the manager's channel (scripts/manager/), one language at a
   // time, so a language goes there only once its packs have been checked against it.
-  if (meta.launcher !== undefined && meta.launcher !== "true") fail(`launcher may only be true`);
+  if (meta.manager !== undefined && meta.manager !== "true") fail(`manager may only be true`);
 
   // A language with too few players yet for three quest packs ships two: Gossip, and a Shared
   // pack that `holds: quests` -- every quest line, both sides' included (tts_cli/factions.py
@@ -142,7 +142,7 @@ function toPack(page, meta) {
   const folder = english ? englishFolder(section, pack) : `${languageFolder(section, pack)}_${lang}`;
   return {
     page, section, lang, pack, version, github,
-    build: meta.holds ?? pack, dormant: meta.dormant === "true", launcher: meta.launcher === "true",
+    build: meta.holds ?? pack, dormant: meta.dormant === "true", manager: meta.manager === "true",
     curseforge: meta.curseforge ?? null, wago: meta.wago ?? null, release,
     bundles: english && section === "quests" && pack === "all" ? ENGLISH_QUESTS_BUNDLE : null,
     slug: meta.slug, name: meta.name, folder,
@@ -191,14 +191,14 @@ export function findPack(section, lang, pack, packs = loadPacks()) {
 }
 
 // The oldest Spoken whose lookups each section's packs are built for. Bumped by hand only when a
-// section's lookup format changes; scripts/launcher/ refuses to publish past the latest release.
+// section's lookup format changes; scripts/manager/ refuses to publish past the latest release.
 export const MIN_SPOKEN = { quests: "3.0.0", zones: "3.0.0", books: "3.0.0" };
 
-// The folders the launcher channel carries, each once: a bundle's folders, else the pack's own.
-export function launcherFolders(packs = loadPacks()) {
+// The folders the manager channel carries, each once: a bundle's folders, else the pack's own.
+export function managerFolders(packs = loadPacks()) {
   const out = [];
   for (const p of packs) {
-    if (!p.launcher) continue;
+    if (!p.manager) continue;
     for (const folder of p.bundles ?? [p.folder]) {
       if (!out.some((o) => o.folder === folder)) out.push({ folder, section: p.section, lang: p.lang });
     }
