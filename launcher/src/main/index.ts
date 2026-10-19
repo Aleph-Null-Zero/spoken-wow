@@ -1,5 +1,6 @@
-// Spoken Launcher: main process. No telemetry of any kind: the only network traffic is the GitHub
-// release list, the asset downloads and the launcher's own update.
+// Spoken Launcher: main process. The network traffic is the GitHub release list, the voice pack
+// server, the asset downloads and the launcher's own update, plus, only when the player turned
+// Sharing on, the lines Spoken collected, sent to spoken.rusty.one (share.ts).
 import path from 'node:path'
 import { app, BrowserWindow, Menu, session, shell } from 'electron'
 import { CHANNELS, type UpdaterState } from '../shared/api'
@@ -160,9 +161,12 @@ if (!app.requestSingleInstanceLock()) {
 
     setUpSession()
     setUpMenu()
-    service = new LauncherService({ dataPath, appVersion: app.getVersion(), send: broadcast })
+    // A dev build can send to a local site instead (SPOKEN_SHARE_URL); a packaged one never does.
+    const shareUrl = app.isPackaged ? undefined : process.env.SPOKEN_SHARE_URL
+    service = new LauncherService({ dataPath, appVersion: app.getVersion(), send: broadcast, ...(shareUrl ? { shareUrl } : {}) })
     registerIpc(service, PAGE, () => updaterState)
     void service.init()
+    service.startSharing()
 
     mainWindow = createWindow()
 

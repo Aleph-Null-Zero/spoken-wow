@@ -43,7 +43,8 @@ export type CorpusText = { lineId: string; variant: number; text: string };
 
 export type LineState =
   | { kind: "missing" }
-  | { kind: "known" }
+  /** `lineId` is the corpus line it matched: what a missing-audio hit is counted against. */
+  | { kind: "known"; lineId: string }
   /**
    * The corpus's texts in the contribution's language: a quest moment's every wording, in
    * order, one line apiece (a split wording by its first side), or a book page alone.
@@ -134,12 +135,12 @@ export function oneLineEach(lines: CorpusText[]): CorpusText[] {
 }
 
 /** Every current greeting each (language, NPC) speaks, in one query. */
-async function greetingTexts(pairs: { locale: string; npcId: number }[]): Promise<Map<string, string[]>> {
-  const found = new Map<string, string[]>();
+async function greetingTexts(pairs: { locale: string; npcId: number }[]): Promise<Map<string, CorpusText[]>> {
+  const found = new Map<string, CorpusText[]>();
   if (pairs.length === 0) return found;
   // A line's speakers voice it in every language, whichever language wrote them.
-  const { rows } = await db().query<{ locale: string; npcId: number; text: string }>(
-    `select distinct m."locale", m."npcId",
+  const { rows } = await db().query<{ locale: string; npcId: number; lineId: string; variant: number; text: string }>(
+    `select distinct m."locale", m."npcId", l."lineId", l."variant",
             coalesce(case when l."lang" = $3 then l."originalText" else l."localeText" end, l."text") as "text"
        from unnest($1::text[], $2::int[]) as m ("locale", "npcId")
        join "quest_line_speaker" s on s."npcId" = m."npcId"
@@ -151,8 +152,9 @@ async function greetingTexts(pairs: { locale: string; npcId: number }[]): Promis
   for (const row of rows) {
     const key = `${row.locale}|${row.npcId}`;
     const group = found.get(key);
-    if (group) group.push(row.text);
-    else found.set(key, [row.text]);
+    const text = { lineId: row.lineId, variant: row.variant, text: row.text };
+    if (group) group.push(text);
+    else found.set(key, [text]);
   }
   return found;
 }
@@ -228,7 +230,7 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
         },
         books,
       );
-      if (match.kind === "known") return { kind: "known" };
+      if (match.kind === "known") return { kind: "known", lineId: match.lineId };
       if (match.kind === "correction") {
         return { kind: "changed", wordings: [{ lineId: match.lineId, variant: 0, text: match.current }], closest: 0 };
       }
@@ -240,7 +242,8 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
     if (moment) {
       const lines = byMoment.get(`${row.locale}|${moment}`);
       if (!lines?.length) return MISSING;
-      if (lines.some((line) => sameLine(line.text, text))) return { kind: "known" };
+      const same = lines.find((line) => sameLine(line.text, text));
+      if (same) return { kind: "known", lineId: same.lineId };
       const wordings = oneLineEach(lines);
       const scores = wordings.map((line) => closeness(line.text, text));
       return { kind: "changed", wordings, closest: scores.indexOf(Math.max(...scores)) };
@@ -248,7 +251,8 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
     const npcId = npcOf(row);
     const spoken = npcId === null ? undefined : byNpc.get(`${row.locale}|${npcId}`);
     if (npcId !== null && otherBody(row, bodies.get(npcId))) return MISSING;
-    return spoken?.some((line) => sameLine(line, text)) ? { kind: "known" } : MISSING;
+    const same = spoken?.find((line) => sameLine(line.text, text));
+    return same ? { kind: "known", lineId: same.lineId } : MISSING;
   });
 }
 

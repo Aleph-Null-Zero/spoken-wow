@@ -64,6 +64,10 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
               <strong className="text-foreground whitespace-nowrap">SpokenContributions.lua</strong>
             </Path>
             <UploadGathered signedInAs={signedInAs} />
+            <p className="text-muted-foreground text-sm">
+              Or let the Spoken Launcher send it after each logout: turn on Sharing in its
+              settings.
+            </p>
           </Section>
 
           <Section title="Game text cache">

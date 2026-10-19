@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { Backdrop } from './components/Brand'
+import { SharingPrompt } from './components/SharingPrompt'
 import { Banners, GamesStrip, TopBar } from './components/TopBar'
 import { CommunityPage } from './pages/CommunityPage'
 import { HomePage } from './pages/HomePage'
@@ -43,6 +44,7 @@ export function App(): ReactNode {
           </>
         )}
       </main>
+      <SharingPrompt />
     </div>
   )
 }

@@ -285,19 +285,29 @@ export async function contributionSenders(
   return { senders: rows, anonymous: Math.max(0, found[0].count - named) };
 }
 
-export async function recordContributionHit(ip: string | null): Promise<void> {
-  await db().query(`insert into "contribution_hit" ("ip") values ($1)`, [ip]);
+export async function recordContributionHit(ip: string | null, installId: string | null = null): Promise<void> {
+  await db().query(`insert into "contribution_hit" ("ip", "installId") values ($1, $2)`, [ip, installId]);
+}
+
+/** The launcher's uploads from one install, counted as countRecentContributions counts an IP's. */
+export async function countRecentInstallUploads(installId: string, withinMs: number): Promise<number> {
+  return countRecentHits(`"installId"`, installId, withinMs);
 }
 
 export async function countRecentContributions(ip: string, withinMs: number): Promise<number> {
   // Counts hits, not rows: the upsert above collapses identical text, and a person who pasted
   // the same envelope ten times has still pasted ten times.
+  return countRecentHits(`"ip"`, ip, withinMs);
+}
+
+/** The column is one of two literals, never the caller's string. */
+async function countRecentHits(column: `"ip"` | `"installId"`, value: string, withinMs: number): Promise<number> {
   const { rows } = await db().query<{ count: string }>(
     `select count(*)::text as count
        from "contribution_hit"
-      where "ip" = $1
+      where ${column} = $1
         and "createdAt" > now() - ($2::bigint * interval '1 millisecond')`,
-    [ip, withinMs],
+    [value, withinMs],
   );
   return Number(rows[0]?.count ?? 0);
 }

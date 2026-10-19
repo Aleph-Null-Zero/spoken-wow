@@ -13,7 +13,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "types": ["node"],
-    "paths": { "@shared/*": ["./src/shared/*"] }
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "@site-contributions/*": ["../apps/web/src/lib/contributions/*"]
+    }
   },
   "include": ["src", "tests", "electron.vite.config.ts", "vitest.config.ts"]
 }

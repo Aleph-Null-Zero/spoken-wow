@@ -282,7 +282,7 @@ describe("acceptCorrection: a books page", () => {
       { version: 2, text: english, origin: "edited", note: correctionNote(id) },
     ]);
     const [state] = await lineStates([{ source: "books", locale: "esES", text: english, meta: {} }]);
-    expect(state).toEqual({ kind: "known" });
+    expect(state).toEqual({ kind: "known", lineId: page });
   });
 
   it("changes nothing when accepted a second time with the same text", async () => {

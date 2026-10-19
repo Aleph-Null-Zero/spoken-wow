@@ -3,8 +3,9 @@
 A small app for Windows, macOS and Linux that installs and updates the Spoken addon and its voice
 packs for World of Warcraft: Forever, Classic Era and Anniversary. It finds your game, shows what
 is installed and what is new, and installs, updates or removes it with one button. It has no
-account, no login and no tracking. The only network traffic is GitHub (the release list, Spoken
-and the launcher's own updates) and spoken-packs.rusty.one (the voice packs, updated file by file).
+account and no login. The network traffic is GitHub (the release list, Spoken and the launcher's
+own updates) and spoken-packs.rusty.one (the voice packs, updated file by file), plus, only when
+you turn on Sharing, spoken.rusty.one (see [Sharing](#sharing)).
 
 The plan and the rules the installer follows are in [PLAN.md](PLAN.md).
 
@@ -82,5 +83,22 @@ The data folder holds the settings, the record of what was installed, the downlo
 
 The log is `logs/launcher.log` in that folder, and the last older log is `launcher.log.1`. The
 launcher also keeps a hidden `.spoken-launcher` folder inside each game's `Interface/AddOns` folder
-for working files and for the backup of what an update replaced. It never touches `WTF` or any addon
-it did not install.
+for working files and for the backup of what an update replaced. It never writes to `WTF` or to any
+addon it did not install. With Sharing on it reads one file there, below. `share.json` in the data
+folder is Sharing's: the launcher's random id and a fingerprint of each line already sent.
+
+## Sharing
+
+Spoken keeps every quest, gossip and book line it had no voice for in
+`WTF/Account/<account>/SavedVariables/SpokenContributions.lua`. You can upload that file at
+spoken.rusty.one/contribute, or let the launcher send it: the first time it starts it asks, and
+Settings > Sharing changes the answer. It is off until you say yes.
+
+With Sharing on, the launcher reads that file of each account of each game (it never writes it)
+when it starts and every five minutes after, and sends the lines it has not sent before. The game
+writes the file when you log out or type `/reload`. What is sent: the collected lines as Spoken
+wrote them (the text on screen, the quest or NPC, the game's version, the language and version of
+your voice packs) and a random id the launcher made for itself, which Settings can replace. Nothing
+about your Battle.net account or your characters is in it. The site uses lines it does not have to
+add them, and counts the ones it has but your pack could not play, to know what to voice next.
+

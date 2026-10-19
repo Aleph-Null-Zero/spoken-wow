@@ -160,7 +160,8 @@ async function reportState(submission: Submission): Promise<LineState> {
   );
   const text = submission.text;
   if (rows.length === 0) return state;
-  if (rows.some((row) => sameLine(row.text, text))) return { kind: "known" };
+  const same = rows.find((row) => sameLine(row.text, text));
+  if (same) return { kind: "known", lineId: same.lineId };
   const wordings = oneLineEach(rows);
   const scores = wordings.map((line) => closeness(line.text, text));
   return { kind: "changed", wordings, closest: scores.indexOf(Math.max(...scores)) };

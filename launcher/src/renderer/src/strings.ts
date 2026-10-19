@@ -194,6 +194,13 @@ export const S = {
     cancelled: 'Cancelled',
     error: 'Something went wrong'
   },
+  sharingPrompt: {
+    title: 'Help Voice More of the Game',
+    text: 'Automatically send the lines Spoken had no voice for?',
+    note: 'You can change this in Settings.',
+    no: 'No Thanks',
+    yes: 'Send Automatically'
+  },
   settings: {
     title: 'Settings',
     installLocation: 'Install Location',
@@ -224,6 +231,15 @@ export const S = {
     useDefault: 'Use the App Folder',
     keepZips: 'Keep Downloaded Zip Files After Installing',
     keepZipsText: 'Saves a copy of each pack, so a reinstall does not download it again. Packs are large.',
+    sharing: 'Sharing',
+    sharingSwitch: 'Send What Spoken Collects',
+    sharingText: 'Sent to spoken.rusty.one after each logout, with your pack versions and a random id. Nothing about your account.',
+    lastSent: (count: number, when: string) => `Last sent: ${count} line${count === 1 ? '' : 's'}, ${when}`,
+    neverSent: 'Nothing sent yet.',
+    sending: 'Sending',
+    sendNow: 'Send Now',
+    resetId: 'Reset Id',
+    resetDone: 'This launcher has a new id. Lines already sent are not sent again.',
     about: 'About',
     disclaimer: 'World of Warcraft and its logos and artwork are trademarks and works of Blizzard Entertainment. Spoken is a fan project and is not affiliated with or endorsed by Blizzard Entertainment.',
     version: 'Launcher Version',

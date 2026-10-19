@@ -124,6 +124,8 @@ export function registerIpc(service: LauncherService, page: AppPage, updater: ()
 
   handle(CHANNELS.checkLauncherUpdate, () => checkForLauncherUpdate())
   handle(CHANNELS.clearDownloads, () => service.clearDownloads())
+  handle(CHANNELS.shareNow, () => service.sendNow())
+  handle(CHANNELS.resetShareId, () => service.resetShareId())
 
   handle(CHANNELS.openLogs, async () => {
     const problem = await shell.openPath(logsDir(service.dataPath))

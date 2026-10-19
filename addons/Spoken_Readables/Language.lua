@@ -144,3 +144,18 @@ function SpokenBooks:GetPackLanguage()
 	end
 	return order[1]
 end
+
+--- The .toc Version of the installed pack recorded in `language`, or "none" when no pack
+--- speaks it: what a contribution says the player was hearing with. One pack per language
+--- ships, so the first found (GetAudioPacks sorts by folder) is the one.
+function SpokenBooks:GetPackVersion(language)
+	for _, pack in ipairs(self:GetAudioPacks()) do
+		if self:PackLanguage(pack) == language then
+			local version = self.GetAddOnMeta and pack.addon and self.GetAddOnMeta(pack.addon, "Version")
+			if type(version) == "string" and version ~= "" then
+				return version
+			end
+		end
+	end
+	return "none"
+end
