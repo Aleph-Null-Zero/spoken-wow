@@ -2,12 +2,11 @@
 // (latest*.yml and the installers) each launcher release replaces, so the repo's other releases
 // (spoken/, *-audio/) never get in the way.
 //
-// Windows (NSIS installer) and a Linux AppImage use electron-updater's generic provider: it
-// downloads the update and installs it when the launcher quits. macOS builds are not signed, and
-// the updater cannot install an unsigned build; on Linux, electron-updater does nothing outside an
-// AppImage (the tar.gz). There the launcher does not use electron-updater at all: it reads the
-// feed's `latest-mac.yml` or `latest-linux.yml`, compares the version and reports the page to
-// download from. Does nothing when the app is not packaged or the player switched it off; it
+// Windows (NSIS installer), macOS (signed and notarized, updated from the zip) and a Linux AppImage
+// use electron-updater's generic provider: it downloads the update and installs it when the
+// launcher quits. On Linux, electron-updater does nothing outside an AppImage (the tar.gz). There
+// the launcher does not use electron-updater at all: it reads the feed's `latest-linux.yml`,
+// compares the version and reports the page to download from. Does nothing when the app is not packaged or the player switched it off; it
 // never throws.
 import { compareVersions } from '../shared/version'
 import type { UpdaterState } from '../shared/api'
@@ -48,7 +47,7 @@ export interface UpdaterLike {
 
 /** `auto`: electron-updater downloads and installs. `manual`: only tell the player where to get the new version. */
 export function updateMode(platform: NodeJS.Platform, env: NodeJS.ProcessEnv): 'auto' | 'manual' {
-  if (platform === 'win32') return 'auto'
+  if (platform === 'win32' || platform === 'darwin') return 'auto'
   if (platform === 'linux' && env.APPIMAGE) return 'auto'
   return 'manual'
 }
@@ -131,7 +130,7 @@ export class LauncherUpdater {
     return u
   }
 
-  /** macOS, and Linux outside an AppImage: read the feed, compare, point to the download page. */
+  /** Linux outside an AppImage: read the feed, compare, point to the download page. */
   private async checkManually(): Promise<void> {
     this.publish({ state: 'checking' })
     const url = `${this.opts.feedUrl ?? FEED_URL}/${feedFileFor(this.platform)}`

@@ -236,22 +236,24 @@ system), so the tests run all three on one machine.
 
 ### Launcher updates
 
-Windows (NSIS) and a Linux AppImage (the `APPIMAGE` variable is set) download the update and install
-it when the launcher quits. macOS builds are not signed, and the updater cannot install an unsigned
-build, so macOS never downloads. Linux outside an AppImage (the tar.gz) has nothing to download
-into either, and electron-updater does not even check there. On both, the launcher does not use
-electron-updater: it fetches `latest-mac.yml` or `latest-linux.yml` from the feed, compares its
+Windows (NSIS), macOS (from the zip; the build is signed, which the Mac updater requires) and a
+Linux AppImage (the `APPIMAGE` variable is set) download the update and install it when the
+launcher quits. Linux outside an AppImage (the tar.gz) has nothing to download into, and
+electron-updater does not even check there. There the launcher does not use electron-updater: it
+fetches `latest-linux.yml` from the feed, compares its
 `version:` with its own, and when the feed is newer shows "available" with a link to
 `https://github.com/rusty-key/spoken-wow/releases/tag/launcher-latest`. Failures are silent at start
 and shown when the player asks for a check.
 
 ### Signing and first start
 
-The macOS and Linux builds are not signed and not notarized (no certificate yet).
+The macOS build is signed with a Developer ID certificate and notarized in CI (the `MAC_CSC_LINK`,
+`MAC_CSC_KEY_PASSWORD`, `APPLE_API_KEY_P8`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER` secrets). The
+Linux and Windows builds are not signed. When Apple refuses to notarize, CI ships the Mac build
+signed only, with a warning on the run; macOS then asks the player to choose Open Anyway once.
 
-- macOS: open the dmg, drag the app to Applications. The first start is blocked: right-click the app,
-  choose Open, then Open again. Or run
-  `xattr -dr com.apple.quarantine "/Applications/Spoken Launcher.app"` once.
+- macOS: open the dmg, drag the app to Applications. 0.1.1 and older were unsigned, and macOS calls
+  them damaged; `xattr -dr com.apple.quarantine "/Applications/Spoken Launcher.app"` opens one.
 - Linux AppImage: `chmod +x Spoken-Launcher-*-linux.AppImage`, then run it. On Ubuntu 24.04 and
   later AppArmor can block the browser sandbox of an Electron app and the window never opens. Start it
   as `./Spoken-Launcher-*-linux.AppImage --no-sandbox`; this turns the Chromium sandbox off for that
@@ -262,8 +264,7 @@ The macOS and Linux builds are not signed and not notarized (no certificate yet)
 
 Written and tested with temp folders on Windows only.
 
-- macOS: that the dmg and zip build; that the Apple silicon build starts unsigned (if it is reported
-  as damaged, `identity` in `package.json` may need to be `"-"`, an ad-hoc signature); the traffic
+- macOS: that a signed build updates itself from the zip; the traffic
   lights against the 68 px bar; Cmd+Q, Cmd+C, Cmd+V; the Dock click opening the window again; what
   `ps` prints for the game; Battle.net's product list on a Mac.
 - Linux: that the AppImage starts and updates itself; the frameless window with the page's own
