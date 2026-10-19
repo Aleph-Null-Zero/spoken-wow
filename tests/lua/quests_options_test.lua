@@ -40,7 +40,9 @@ Expect("...and not as a top-level entry of its own", SettingsPanel.category, nil
 
 local rows, headings = {}, {}
 for _, child in ipairs(SettingsPanel.panel.content.children) do
-    if child.layoutHeading then
+    -- Hidden: the Objective Tracker section, on a client without one.
+    if not child:IsShown() then
+    elseif child.layoutHeading then
         table.insert(headings, { y = child.layoutY, height = child.layoutHeight, text = child.text })
     elseif child.layoutHeight then
         table.insert(rows, { y = child.layoutY, height = child.layoutHeight, anchor = child.anchor and child.anchor.y })
@@ -254,6 +256,27 @@ do
     VO.DataModules:Register("TestPack", {})
     stub.Advance(2)
     Expect("...and says its version once the packs have loaded", row and row.message, "1.2.1")
+end
+
+---------------------------------------------------------------- the objective tracker's Play button
+-- Only where the client has the tracker, and unticked, every tracker button goes.
+do
+    _G.QuestObjectiveTracker = {}
+    local VO, Panel = Boot()
+    Panel.panel.layout:Refresh()
+    local heading, box
+    for _, child in ipairs(Panel.panel.content.children) do
+        if child.layoutHeading and child.text == "Objective Tracker" then heading = child end
+        if type(child.text) == "table" and child.text.text == "Play Button on Each Quest" then box = child end
+    end
+    Expect("a client with the tracker has its section", heading and heading:IsShown(), true)
+    local swept = 0
+    VO.QuestOverlayUI.UpdateTrackerButtons = function() swept = swept + 1 end
+    box:SetChecked(false)
+    box:GetScript("OnClick")(box)
+    Expect("unticking it turns the buttons off", VO.Addon.db.profile.TrackerPlayButton, false)
+    Expect("...and takes away the ones drawn", swept, 1)
+    _G.QuestObjectiveTracker = nil
 end
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

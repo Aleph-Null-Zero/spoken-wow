@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The objective tracker's Play buttons can be turned off.** Untick Play Button on Each Quest,
+  under Objective Tracker on the Quests settings page, and the button beside each tracked quest
+  goes away.
+  *([rusty-key](https://github.com/rusty-key))*
 - **Targeting or pointing at a unit whose GUID is secret no longer raises a Lua error.**
   Spoken Quests skips the hidden GUID before comparing or parsing it.
   *([Merryfett](https://github.com/Merryfett))*

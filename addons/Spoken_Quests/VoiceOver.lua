@@ -409,6 +409,8 @@ local defaults = {
             -- Shown whether or not DialogueUI's Text To Speech is on.
             PlayButton = true,
         },
+        -- The Play button on each quest in the objective tracker.
+        TrackerPlayButton = true,
         DebugEnabled = false,
     },
     char = {
@@ -970,6 +972,7 @@ end
 
 function Addon:RefreshConfig()
     Player:RefreshConfig()
+    if QuestOverlayUI.UpdateTrackerButtons then QuestOverlayUI.UpdateTrackerButtons() end
 end
 
 function Addon:ADDON_LOADED(event, addon)
