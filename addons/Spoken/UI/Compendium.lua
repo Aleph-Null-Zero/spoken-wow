@@ -1883,6 +1883,11 @@ function C.PlaceIcon(mapID, dungeon)
 	return placeIcons[at]
 end
 
+--- The portrait of a page or a line whose picture does not exist yet: the question mark, with `bullet`'s badge.
+function C.UnknownIcon(bullet)
+	return { objectOrItem = true, icon = UNKNOWN_ICON, bullet = bullet }
+end
+
 function Page:PaintMark(shown)
 	local mark = self.mark
 	mark:SetShown(shown and true or false)
