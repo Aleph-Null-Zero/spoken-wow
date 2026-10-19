@@ -12,6 +12,7 @@ categories:
   - Miscellaneous
   - Roleplay
 license: MIT
+manager: true
 ---
 
 Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Places module, in Traditional Chinese. This addon is data only — it does nothing on its own.

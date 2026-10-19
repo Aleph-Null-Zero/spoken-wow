@@ -12,6 +12,7 @@ categories:
   - Roleplay
   - Quests & Leveling
 license: MIT
+manager: true
 ---
 
 Voiced quest dialogue for **[Spoken Quests](https://www.curseforge.com/wow/addons/spoken-quests)**, in Traditional Chinese. This addon is data only — it does nothing on its own.
