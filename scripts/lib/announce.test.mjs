@@ -32,6 +32,9 @@ const pages = [
   ["quests", "player.md", { slug: "spoken-quests", name: "Spoken Quests" }],
   ["quests", "h.md", { section: "quests", lang: "enUS", pack: "horde", release: "quests-audio-horde",
     slug: "spoken-audio-quests-horde", name: "Spoken Quests Audio: Horde" }],
+  ["spoken", "all.md", { slug: "spoken-english", name: "Spoken: English" }],
+  ["spoken", "all-dede.md", { lang: "deDE", slug: "spoken-german", name: "Spoken: German" }],
+  ["spoken", "spoken.md", { slug: "spoken", name: "Spoken" }],
 ];
 
 const zones = `# Changelog
@@ -66,10 +69,19 @@ Pack notes.
 Player notes.
 `;
 
-const run = repo(pages, { zones, quests });
+const spoken = `## 3.5.1 — 2026-10-19
+
+- Spoken notes.
+`;
+
+const run = repo(pages, { zones, quests, spoken });
 
 test("an addon takes the store page's name and its own heading, not its audio's", () => {
   assert.deepEqual(run("zones/v2.0.1"), { name: "Spoken Zones", version: "2.0.1", notes: "- Addon notes." });
+});
+
+test("spoken is named by its own page, not by a meta addon beside it", () => {
+  assert.deepEqual(run("spoken/v3.5.1"), { name: "Spoken", version: "3.5.1", notes: "- Spoken notes." });
 });
 
 test("English audio takes the heading its kind word marks", () => {
