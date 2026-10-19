@@ -12,7 +12,7 @@ categories:
   - Miscellaneous
   - Roleplay
 license: MIT
-launcher: true
+manager: true
 ---
 
 Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Places module, in Latin American Spanish. This addon is data only — it does nothing on its own.

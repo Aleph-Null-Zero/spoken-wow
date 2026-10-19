@@ -108,7 +108,7 @@ importers:
         specifier: ^8.13.1
         version: 8.23.0
 
-  scripts/launcher:
+  scripts/manager:
     dependencies:
       aws4fetch:
         specifier: 1.0.20

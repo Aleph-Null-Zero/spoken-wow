@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 
 import {
   actedFolder,
-  changelogSection, findPack, isLanguageHeading, launcherFolders, loadPacks, MIN_SPOKEN, packsFor,
+  changelogSection, findPack, isLanguageHeading, managerFolders, loadPacks, MIN_SPOKEN, packsFor,
 } from "./packs.mjs";
 
 // A publishers/ tree in a temp directory, one page per entry: [group, file, frontmatter].
@@ -176,22 +176,22 @@ test("only a language's shared pack holds quests, and only its sides are dormant
   assert.throws(() => loadPacks(tree([["quests", "h.md", { ...hordeEn[2], dormant: "true" }]])), /dormant: true/);
 });
 
-test("launcher: true puts a pack's folders on the launcher channel", () => {
-  const onChannel = ["zones", "b.md", { ...zonesMx[2], launcher: "true" }];
-  assert.deepEqual(launcherFolders(loadPacks(tree([zonesEn, onChannel]))),
+test("manager: true puts a pack's folders on the manager channel", () => {
+  const onChannel = ["zones", "b.md", { ...zonesMx[2], manager: "true" }];
+  assert.deepEqual(managerFolders(loadPacks(tree([zonesEn, onChannel]))),
     [{ folder: "SpokenZonesAudio_esMX", section: "zones", lang: "esMX" }]);
 });
 
 test("English's quests bundle puts its four folders on the channel", () => {
   const all = ["quests", "all.md", { section: "quests", lang: "enUS", pack: "all", release: "quests-audio",
-    slug: "spoken-audio-quests", name: "Spoken Quests Audio", launcher: "true" }];
-  assert.deepEqual(launcherFolders(loadPacks(tree([all]))).map((p) => p.folder), [
+    slug: "spoken-audio-quests", name: "Spoken Quests Audio", manager: "true" }];
+  assert.deepEqual(managerFolders(loadPacks(tree([all]))).map((p) => p.folder), [
     "SpokenQuestsAudioAlliance", "SpokenQuestsAudioHorde", "SpokenQuestsAudioShared", "SpokenQuestsAudioGossip",
   ]);
 });
 
-test("launcher may only be true", () => {
-  assert.throws(() => loadPacks(tree([["zones", "b.md", { ...zonesMx[2], launcher: "yes" }]])), /launcher may only be true/);
+test("manager may only be true", () => {
+  assert.throws(() => loadPacks(tree([["zones", "b.md", { ...zonesMx[2], manager: "yes" }]])), /manager may only be true/);
 });
 
 test("every section names the oldest Spoken its packs need", () => {

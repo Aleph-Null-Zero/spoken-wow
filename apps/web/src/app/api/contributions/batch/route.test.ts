@@ -136,7 +136,7 @@ describe("POST /api/contributions/batch", () => {
   });
 });
 
-describe("POST /api/contributions/batch from the launcher", () => {
+describe("POST /api/contributions/batch from the manager", () => {
   const questId = 2_000_000_000 - Math.floor(Math.random() * 1_000_000);
   const lineId = `q:${questId}:accept`;
 

@@ -12,7 +12,7 @@ categories:
   - Roleplay
   - Quests & Leveling
 license: MIT
-launcher: true
+manager: true
 ---
 
 Voiced quest dialogue for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Quests module, in European Spanish. This addon is data only — it does nothing on its own.

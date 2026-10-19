@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Missing audio · Spoken" };
 export const dynamic = "force-dynamic";
 
 /**
- * Lines players heard in silence, most players first: what the Spoken Launcher counts when its
+ * Lines players heard in silence, most players first: what the Spoken Manager counts when its
  * player turned Sharing on (lib/contributions/missing-audio.ts). Read only. Queueing a line is
  * the explorer's flow, which each row links to.
  */
@@ -35,7 +35,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
       <Contained>
         <h1 className="text-xl font-semibold">Missing audio</h1>
         <p className="text-muted-foreground mt-1 mb-5 text-sm">
-          Lines players heard with no voice in {langName(lang)}, counted once per launcher install.
+          Lines players heard with no voice in {langName(lang)}, counted once per manager install.
           &ldquo;Voiced here&rdquo; means the site has a take and the players&apos; packs are older.
         </p>
         {rows.length === 0 ? (
