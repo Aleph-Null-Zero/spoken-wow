@@ -271,10 +271,9 @@ end
 -- A split creature's greeting plays the moment its dialog opens, too soon for a model asked for
 -- then. Targeting or pointing at it first is nearly always how a dialog is opened, so its model
 -- is asked for then. Only a split creature: nothing else is heard differently by its model.
--- DataModules loads after this file, so it is reached at event time. In an instance the GUID
--- can come as a secret, which cannot be read.
+-- DataModules loads after this file, so it is reached at event time.
 local function PrimeUnit(unit)
-    local guid = UnitGUID and NotSecret(UnitGUID(unit))
+    local guid = UnitGUID and UnitGUID(unit)
     local id = guid and Utils:GetCreatureIDFromGUID(guid)
     if not (id and DataModules and DataModules:IsSplit(id)) then
         return

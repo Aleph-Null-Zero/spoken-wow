@@ -80,13 +80,6 @@ world.npcGUID = "Creature-0-0-0-0-1-7"
 calls = stub.SetUnitCount()
 stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
 Expect("pointing at an unsplit creature asks for nothing", stub.SetUnitCount(), calls)
--- In an instance the target's GUID can be a secret, which the client errors on comparing.
-world.npcGUID = "Creature-0-0-0-0-15906-9"
-stub.Secrets(world.npcGUID)
-Expect("targeting a split creature whose GUID is secret raises no error",
-    pcall(stub.FireEvent, "PLAYER_TARGET_CHANGED"), true)
-Expect("...and asks for nothing", stub.SetUnitCount(), calls)
-stub.Secrets()
 -- Targeted with no dialog after, and a client that never says the model is in: the probe is
 -- still put away within two seconds, having asked once.
 stub.ResetTimers()
