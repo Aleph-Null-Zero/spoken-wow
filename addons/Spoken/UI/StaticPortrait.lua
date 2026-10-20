@@ -62,12 +62,8 @@ end
 -- and SetPortraitTextureFromCreatureDisplayID draws that as a unit-frame portrait. A face met
 -- later through a real unit is newer and wins over this one.
 --
--- One model, never parented and never shown: a shown model draws a 3D scene every frame,
--- and this client has hung its GPU on model rendering before. nil until first asked for;
--- false on a client without what it takes, so it is never asked again.
-local roller
 -- Creature id -> the appearance it answered with, kept so a face does not change between
--- clips. A creature the client has not cached answers 0 until its server replies to the
+-- clips. A creature the client has not cached answers a stand-in until its server replies to the
 -- query SetCreature sent, so the face's window asks again every few frames (Resolved)
 -- rather than waiting for a timer; one that never replies keeps the book. `asked` holds when
 -- a creature was first and last asked: the watcher below captures on every mouseover, and
@@ -80,16 +76,18 @@ local GIVE_UP_SECONDS = 5
 -- so one model asked about many creatures hands the first creature's face to the rest. Each
 -- creature waiting for its appearance has a model of its own, taken from a small pool; a model
 -- put back remembers what it last answered, and that answer is not believed on the first read
--- after it is given a new creature.
+-- after it is given a new creature. The models are never parented and never shown: a shown model
+-- draws a 3D scene every frame, and this client has hung its GPU on model rendering before.
 local POOL_MOST = 16
 local RESEND_SECONDS = 1
 local pool, holder = {}, {}
 
-local function Roller()
-    if roller == nil then
-        roller = SetPortraitTextureFromCreatureDisplayID and CreateFrame and true or false
-    end
-    return roller or nil
+-- A hidden model, or nil on a client that cannot make one.
+local function NewModel()
+    local ok, frame = pcall(CreateFrame, "DressUpModel")
+    if not (ok and frame and frame.GetDisplayInfo) then return nil end
+    frame:Hide()
+    return frame
 end
 
 -- A model whose creature is not cached yet answers with a stand-in until the server replies: the
@@ -99,11 +97,8 @@ local probes
 local function Defaults()
     if probes == nil then
         probes = false
-        local ok, own = pcall(CreateFrame, "DressUpModel")
-        local blank = ok and select(2, pcall(CreateFrame, "DressUpModel"))
-        if ok and own and blank and own.SetUnit and own.GetDisplayInfo and blank.GetDisplayInfo then
-            own:Hide()
-            blank:Hide()
+        local own, blank = NewModel(), NewModel()
+        if own and blank and own.SetUnit then
             probes = { own = own, blank = blank }
         end
     end
@@ -130,9 +125,8 @@ local function TakeModel(creature)
         if not each.creature then model = each; break end
     end
     if not model and #pool < POOL_MOST then
-        local ok, frame = pcall(CreateFrame, "DressUpModel")
-        if not (ok and frame and frame.SetCreature and frame.GetDisplayInfo) then return end
-        frame:Hide()
+        local frame = NewModel()
+        if not (frame and frame.SetCreature) then return end
         model = frame
         pool[#pool + 1] = model
     end
@@ -156,7 +150,7 @@ end
 
 local function DisplayFor(creature)
     if displays[creature] then return displays[creature] end
-    if not Roller() then return end
+    if not (SetPortraitTextureFromCreatureDisplayID and CreateFrame) then return end
     local now = GetTime()
     local times = asked[creature]
     if times and (now - times.first > GIVE_UP_SECONDS or now - times.last < RETRY_SECONDS) then

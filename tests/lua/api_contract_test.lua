@@ -187,7 +187,6 @@ do
     world.unloaded = nil
     world.time = world.time + 1.1
     own[#own + 1] = tostring((E.StaticPortrait:Prime(311)))
-    world.blankDisplay = nil
     world.blankDisplay, world.unloaded = 5555, { [321] = true }
     local shipped = E.StaticPortrait:FromCreature(321, 4321)
     world.blankDisplay, world.unloaded = nil, nil
