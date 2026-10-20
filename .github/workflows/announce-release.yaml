@@ -60,10 +60,10 @@ jobs:
           api() {
             curl -fsS -H "Authorization: Bot $DISCORD_BOT_TOKEN" -H 'Content-Type: application/json' "$@"
           }
-          # Found by name, as the language channels are.
+          # Found by name, as the language channels are, decorated or not (📢｜announcements).
           CHANNEL=$(for guild in $(api https://discord.com/api/v10/users/@me/guilds | jq -r '.[].id'); do
             api "https://discord.com/api/v10/guilds/$guild/channels" \
-              | jq -r '.[] | select(.name == "announcements") | .id'
+              | jq -r '.[] | select(.name == "announcements" or (.name | endswith("｜announcements"))) | .id'
           done | head -n 1)
           if [ -z "$CHANNEL" ]; then
             echo "::error::the bot sees no #announcements channel"

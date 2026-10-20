@@ -10,7 +10,8 @@
 // there is only ever one post, and it is pinned.
 //
 // The channel is found by name, `feedback-<lang>` in lower case (feedback-de-de), so a new
-// language needs a channel and no code. A language without one is skipped.
+// language needs a channel and no code. A language without one is skipped. A name may carry
+// a decoration before a "｜" (🇩🇪｜feedback-de-de).
 //
 // A WEBHOOK CANNOT DO THIS. It can neither pin nor list pins, so finding the previous post would
 // mean remembering its id somewhere between workflow runs. A bot can: the old post is whichever
@@ -114,9 +115,14 @@ export function discord(token) {
   };
 }
 
+/** Whether a channel is called `name`, with or without an emoji and "｜" in front. */
+export function isNamed(channel, name) {
+  return channel.name === name || channel.name.endsWith(`｜${name}`);
+}
+
 export async function findChannel(api, name) {
   for (const guild of await api("GET", "/users/@me/guilds")) {
-    const channel = (await api("GET", `/guilds/${guild.id}/channels`)).find((c) => c.name === name);
+    const channel = (await api("GET", `/guilds/${guild.id}/channels`)).find((c) => isNamed(c, name));
     if (channel) return channel;
   }
   return null;

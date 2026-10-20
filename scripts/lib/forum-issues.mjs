@@ -17,7 +17,7 @@
 //   GITHUB_REPOSITORY   owner/repo
 import { fileURLToPath } from "node:url";
 
-import { discord, findChannel } from "./language-post.mjs";
+import { discord, findChannel, isNamed } from "./language-post.mjs";
 
 export const FORUM = "bugs-and-ideas";
 export const LABEL = "from-discord";
@@ -156,7 +156,7 @@ async function closed(api, gh, number) {
   }
   const thread = await api("GET", `/channels/${link.thread}`).catch(() => null);
   const forum = thread && await api("GET", `/channels/${thread.parent_id}`);
-  if (!forum || forum.name !== FORUM) {
+  if (!forum || !isNamed(forum, FORUM)) {
     console.log(`skipped: issue #${number}'s link is not a #${FORUM} post`);
     return;
   }

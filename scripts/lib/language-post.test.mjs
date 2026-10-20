@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { channelName, languageOf, latestReleases, oldPosts, postText } from "./language-post.mjs";
+import { channelName, isNamed, languageOf, latestReleases, oldPosts, postText } from "./language-post.mjs";
 
 const url = (tag) => `https://github.com/o/r/releases/tag/${tag}`;
 const release = (tag, extra = {}) => ({ tag_name: tag, html_url: url(tag), draft: false, prerelease: false, ...extra });
@@ -14,6 +14,13 @@ const packs = [
   { section: "zones", lang: "enUS", release: "zones-audio", github: true },
   { section: "quests", lang: "enUS", release: "quests-audio-horde", github: false },
 ];
+
+test("a channel is found by its name, with or without an emoji and a bar in front", () => {
+  assert.ok(isNamed({ name: "feedback-de-de" }, "feedback-de-de"));
+  assert.ok(isNamed({ name: "🇩🇪｜feedback-de-de" }, "feedback-de-de"));
+  assert.ok(!isNamed({ name: "old-feedback-de-de" }, "feedback-de-de"));
+  assert.ok(!isNamed({ name: "🇦🇹｜feedback-de-de-at" }, "feedback-de-de"));
+});
 
 test("channel names follow the code in lower case", () => {
   assert.equal(channelName("deDE"), "feedback-de-de");
