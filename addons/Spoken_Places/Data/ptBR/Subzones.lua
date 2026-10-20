@@ -1266,8 +1266,8 @@ local subzones = {
 		},
 		["northpass tower"] = {
 			name = "Torre do Passo Norte",
-			short = "A Torre do Passo Norte é a mais setentrional das torres de vigia das Terras Pestilentas Orientais e marca a estrada que segue rumo às Terras Fantasmas de Quel'Thalas.",
-			full = "A Torre do Passo Norte é a mais setentrional das torres de vigia das Terras Pestilentas Orientais e marca a estrada que segue rumo às Terras Fantasmas de Quel'Thalas. O Flagelo varreu Lordaeron, e a torre ainda carrega suas cicatrizes.",
+			short = "A Torre do Passo Norte é a mais setentrional das torres de vigia das Terras Pestilentas Orientais e marca a estrada que segue rumo a Quel'Thalas.",
+			full = "A Torre do Passo Norte é a mais setentrional das torres de vigia das Terras Pestilentas Orientais e marca a estrada que segue rumo a Quel'Thalas. O Flagelo varreu Lordaeron, e a torre ainda carrega suas cicatrizes.",
 			source = "https://warcraft.wiki.gg/wiki/Northpass_Tower",
 		},
 		["noxious glade"] = {
@@ -1290,8 +1290,8 @@ local subzones = {
 		},
 		["quellithien lodge"] = {
 			name = "Abrigo Quel'Lithien",
-			short = "O Abrigo Quel'Lithien era um acampamento dos Andarilhos perto de Quel'Thalas, um lugar de calor e acolhida. Lor'themar Theron se lembrava dele assim de suas próprias visitas, recebido calorosamente pelos compatriotas que o chamavam de lar.",
-			full = "O Abrigo Quel'Lithien era um acampamento dos Andarilhos perto de Quel'Thalas, um lugar de calor e acolhida. Lor'themar Theron se lembrava dele assim de suas próprias visitas, recebido calorosamente pelos compatriotas que o chamavam de lar. O abrigo guardava vários documentos élficos, alguns relativos à família real e à General-patrulheira de Luaprata. Na época da Segunda Guerra, Renthar Hawkspear liderava os caçadores de lá.",
+			short = "O Abrigo Quel'Lithien era um acampamento dos Andarilhos perto de Quel'Thalas, um lugar de calor e acolhida.",
+			full = "O Abrigo Quel'Lithien era um acampamento dos Andarilhos perto de Quel'Thalas, um lugar de calor e acolhida. O abrigo guardava vários documentos élficos, alguns relativos à família real e à General-patrulheira de Luaprata. Na época da Segunda Guerra, Renthar Hawkspear liderava os caçadores de lá.",
 			source = "https://warcraft.wiki.gg/wiki/Quel'Lithien_Lodge",
 		},
 		["scarlet base camp"] = {
@@ -1468,7 +1468,7 @@ local subzones = {
 		["southpoint tower"] = {
 			name = "Torre do Sul",
 			short = "A Torre do Sul fica no extremo oeste do Contraforte de Eira dos Montes, logo ao sul da estrada que segue rumo à Floresta de Pinhaprata.",
-			full = "A Torre do Sul fica no extremo oeste do Contraforte de Eira dos Montes, logo ao sul da estrada que segue rumo à Floresta de Pinhaprata. A cantaria é velha e rachada, um posto de observação deixado em ruínas, embora a torre em si nunca tenha sido derrubada nos combates que passaram por aqui. Perto dali, sem identificação, outra torre se ergue entre a Serraria Tarren e Costa Sul, também poupada da destruição que varreu o resto do contraforte.",
+			full = "A Torre do Sul fica no extremo oeste do Contraforte de Eira dos Montes, logo ao sul da estrada que segue rumo à Floresta de Pinhaprata. A cantaria é velha e rachada, um posto de observação deixado em ruínas, embora a torre em si nunca tenha sido derrubada nos combates que passaram por aqui.",
 			source = "https://warcraft.wiki.gg/wiki/Southpoint_Tower",
 		},
 		["strahnbrad"] = {
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares do Sul",
 			short = "Os Mares do Sul enchem as águas entre os continentes conhecidos, uma parte do Grande Mar. Zandalar se ergue destas águas, antigo lar do império troll.",
-			full = "Os Mares do Sul enchem as águas entre os continentes conhecidos, uma parte do Grande Mar. Zandalar se ergue destas águas, antigo lar do império troll. Kezan também fica entre elas, uma ilha vulcânica que mantém seu próprio povo afastado das potências do continente. Mais perto da Selva do Espinhaço, o mar fica traiçoeiro, cheio de recifes e pequenas ilhas, algumas nada mais que um banco de areia, outras guardando ruínas cujos construtores já se foram. Os Mares do Sul banham as fronteiras do Espinhaço, de Tanaris e de Uldum.",
+			full = "Os Mares do Sul enchem as águas entre os continentes conhecidos, uma parte do Grande Mar. Zandalar se ergue destas águas, antigo lar do império troll. Mais perto da Selva do Espinhaço, o mar fica traiçoeiro, cheio de recifes e pequenas ilhas, algumas nada mais que um banco de areia, outras guardando ruínas cujos construtores já se foram. Os Mares do Sul banham as fronteiras do Espinhaço e de Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares do Sul",
 			short = "As águas ao sul dos continentes conhecidos se abrem numa ampla extensão do Grande Mar, levando correntes para além de ilhas cujos nomes são conhecidos principalmente pelos marinheiros.",
-			full = "As águas ao sul dos continentes conhecidos se abrem numa ampla extensão do Grande Mar, levando correntes para além de ilhas cujos nomes são conhecidos principalmente pelos marinheiros. Zandalar se ergue destas águas, antigo lar do império troll. Kezan também fica entre elas, uma ilha vulcânica que mantém seu próprio povo afastado das potências do continente.\n\nMais perto da Selva do Espinhaço, o mar fica traiçoeiro, com recifes e enseadas escondidas, o tipo de água em que um capitão ou conhece cada rocha pelo nome ou perde o navio. Pequenas ilhas pontilham este trecho, algumas nada mais que um banco de areia, outras guardando ruínas cujos construtores há muito desapareceram sob as ondas.\n\nO que torna este mar digno de nome é menos alguma batalha travada nele do que as coisas que ele engoliu e meio revelou de novo: templos submersos, costas afogadas, ruínas vistas através da água clara na maré baixa. É um mar de beiradas e de lugares intermediários, que banha as fronteiras do Espinhaço, de Tanaris e de Uldum, levando o que quer que as marés escolham trazer às praias que ele separa.",
+			full = "As águas ao sul dos continentes conhecidos se abrem numa ampla extensão do Grande Mar, levando correntes para além de ilhas cujos nomes são conhecidos principalmente pelos marinheiros. Zandalar se ergue destas águas, antigo lar do império troll.\n\nMais perto da Selva do Espinhaço, o mar fica traiçoeiro, com recifes e enseadas escondidas, o tipo de água em que um capitão ou conhece cada rocha pelo nome ou perde o navio. Pequenas ilhas pontilham este trecho, algumas nada mais que um banco de areia, outras guardando ruínas cujos construtores há muito desapareceram sob as ondas.\n\nO que torna este mar digno de nome é menos alguma batalha travada nele do que as coisas que ele engoliu e meio revelou de novo: templos submersos, costas afogadas, ruínas vistas através da água clara na maré baixa. É um mar de beiradas e de lugares intermediários, que banha as fronteiras do Espinhaço e de Tanaris, levando o que quer que as marés escolham trazer às praias que ele separa.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4155,8 +4155,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "Porto de Bondebico",
-			short = "O Porto de Bondebico fica na costa leste de Tanaris, com uma estrada que segue para o oeste até sua cidade-mãe, Geringontzan, e um cais que se estende em direção a Kezan.",
-			full = "O Porto de Bondebico fica na costa leste de Tanaris, com uma estrada que segue para o oeste até sua cidade-mãe, Geringontzan, e um cais que se estende em direção a Kezan. Pertence ao Cartel Bondebico, goblins que negociam com qualquer um, desde que o ouro seja bom.\n\nEntre os moradores do porto está Yeh'kinya, cujos negócios contribuíram para o retorno de Hakkar, o Esfolalmas.",
+			short = "O Porto de Bondebico fica na costa leste de Tanaris, com uma estrada que segue para o oeste até sua cidade-mãe, Geringontzan, e um cais que avança mar adentro.",
+			full = "O Porto de Bondebico fica na costa leste de Tanaris, com uma estrada que segue para o oeste até sua cidade-mãe, Geringontzan, e um cais que avança mar adentro. Pertence ao Cartel Bondebico, goblins que negociam com qualquer um, desde que o ouro seja bom.\n\nEntre os moradores do porto está Yeh'kinya, cujos negócios contribuíram para o retorno de Hakkar, o Esfolalmas.",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4807,7 +4807,7 @@ local subzones = {
 		["valley of heroes"] = {
 			name = "Vale dos Heróis",
 			short = "Uma ponte de pedra clara leva todo viajante sobre o fosso diante do portão sul de Ventobravo, até um vale verde ladeado de estátuas erguidas tanto pelo luto quanto pela glória.",
-			full = "Uma ponte de pedra clara leva todo viajante sobre o fosso diante do portão sul de Ventobravo, até um vale verde ladeado de estátuas erguidas tanto pelo luto quanto pela glória.\n\nDepois da Segunda Guerra, quando Ventobravo foi reconstruída das ruínas, a cidade homenageou os que lideraram a Expedição da Aliança pelo Portal Negro para selá-lo do outro lado. Kurdran Martelo Feroz e o Arquimago Khadgar estão à esquerda da estrada; o Comandante de Tropas Danath Matatroll e a Capitã-patrulheira Alleria Correventos, à direita; e no fim da estrada, onde ela se bifurca para entrar na cidade propriamente dita, está o General Turalyon, que liderou todos eles. Nenhum dos cinco jamais voltou.\n\nAnos depois, Arator, filho de Alleria e Turalyon, foi levado a uma cerimônia no vale, carregado nos ombros de um Cavaleiro do Punho de Prata. Ele olhou para a semelhança em pedra de sua mãe, um rosto de que não tinha lembrança. Algo dela o alcançou ali, pois o menino sorriu e estendeu a mão em direção à estátua. Ele voltaria vez após vez enquanto crescia, para ficar diante do rosto dela e saber, sem se lembrar dela, que ela o havia amado.",
+			full = "Uma ponte de pedra clara leva todo viajante sobre o fosso diante do portão sul de Ventobravo, até um vale verde ladeado de estátuas erguidas tanto pelo luto quanto pela glória.\n\nDepois da Segunda Guerra, quando Ventobravo foi reconstruída das ruínas, a cidade homenageou os que lideraram a Expedição da Aliança pelo Portal Negro para selá-lo do outro lado. Kurdran Martelo Feroz e o Arquimago Khadgar estão à esquerda da estrada; o Comandante de Tropas Danath Matatroll e a Capitã-patrulheira Alleria Correventos, à direita; e no fim da estrada, onde ela se bifurca para entrar na cidade propriamente dita, está o General Turalyon, que liderou todos eles. Nenhum dos cinco jamais voltou.",
 			source = "https://warcraft.wiki.gg/wiki/Valley_of_Heroes",
 		},
 	},

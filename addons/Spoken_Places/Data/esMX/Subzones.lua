@@ -1266,8 +1266,8 @@ local subzones = {
 		},
 		["northpass tower"] = {
 			name = "Torre del Paso Norte",
-			short = "La Torre del Paso Norte es la más septentrional de las torres de vigilancia de las Tierras de la Peste del Este, y señala el camino hacia las Tierras Fantasma de Quel'Thalas.",
-			full = "La Torre del Paso Norte es la más septentrional de las torres de vigilancia de las Tierras de la Peste del Este, y señala el camino hacia las Tierras Fantasma de Quel'Thalas. La Plaga arrasó Lordaeron, y la torre aún lleva sus cicatrices.",
+			short = "La Torre del Paso Norte es la más septentrional de las torres de vigilancia de las Tierras de la Peste del Este, y señala el camino hacia Quel'Thalas.",
+			full = "La Torre del Paso Norte es la más septentrional de las torres de vigilancia de las Tierras de la Peste del Este, y señala el camino hacia Quel'Thalas. La Plaga arrasó Lordaeron, y la torre aún lleva sus cicatrices.",
 			source = "https://warcraft.wiki.gg/wiki/Northpass_Tower",
 		},
 		["noxious glade"] = {
@@ -1290,8 +1290,8 @@ local subzones = {
 		},
 		["quellithien lodge"] = {
 			name = "Refugio Quel'Lithien",
-			short = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor. Así lo recordaba Lor'themar Theron de sus propias visitas, cuando lo recibían con afecto los compatriotas que lo consideraban su hogar.",
-			full = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor. Así lo recordaba Lor'themar Theron de sus propias visitas, cuando lo recibían con afecto los compatriotas que lo consideraban su hogar. El refugio albergó en otro tiempo varios documentos élficos, algunos relacionados con la familia real y con el general forestal de Lunargenta. Para la época de la Segunda Guerra, Renthar Hawkspear dirigía allí a los cazadores.",
+			short = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor.",
+			full = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor. El refugio albergó en otro tiempo varios documentos élficos, algunos relacionados con la familia real y con el general forestal de Lunargenta. Para la época de la Segunda Guerra, Renthar Hawkspear dirigía allí a los cazadores.",
 			source = "https://warcraft.wiki.gg/wiki/Quel'Lithien_Lodge",
 		},
 		["scarlet base camp"] = {
@@ -1468,7 +1468,7 @@ local subzones = {
 		["southpoint tower"] = {
 			name = "Torre Austral",
 			short = "La Torre Austral se alza en el extremo occidental de las Laderas de Trabalomas, justo al sur del camino que continúa hacia el Bosque de Argénteos.",
-			full = "La Torre Austral se alza en el extremo occidental de las Laderas de Trabalomas, justo al sur del camino que continúa hacia el Bosque de Argénteos. La mampostería es vieja y está agrietada, un puesto de exploración abandonado a la ruina, aunque la torre en sí nunca fue derribada en los combates que pasaron por aquí. Cerca, sin nombre, otra torre se alza entre el Molino Tarren y Costasur, también a salvo de la destrucción que arrasó el resto de las laderas.",
+			full = "La Torre Austral se alza en el extremo occidental de las Laderas de Trabalomas, justo al sur del camino que continúa hacia el Bosque de Argénteos. La mampostería es vieja y está agrietada, un puesto de exploración abandonado a la ruina, aunque la torre en sí nunca fue derribada en los combates que pasaron por aquí.",
 			source = "https://warcraft.wiki.gg/wiki/Southpoint_Tower",
 		},
 		["strahnbrad"] = {
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares del Sur",
 			short = "Los Mares del Sur ocupan las aguas entre los continentes conocidos, una parte del Mare Magnum. De estas aguas surge Zandalar, antiguo hogar del imperio trol.",
-			full = "Los Mares del Sur ocupan las aguas entre los continentes conocidos, una parte del Mare Magnum. De estas aguas surge Zandalar, antiguo hogar del imperio trol. Entre ellas se encuentra también Kezan, una isla volcánica cuyo pueblo se mantiene apartado de las potencias del continente. Más cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes e islotes, algunos no más que un banco de arena, otros con ruinas cuyos constructores ya no existen. Los Mares del Sur bañan las fronteras de Tuercespina, Tanaris y Uldum.",
+			full = "Los Mares del Sur ocupan las aguas entre los continentes conocidos, una parte del Mare Magnum. De estas aguas surge Zandalar, antiguo hogar del imperio trol. Más cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes e islotes, algunos no más que un banco de arena, otros con ruinas cuyos constructores ya no existen. Los Mares del Sur bañan las fronteras de Tuercespina y Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares del Sur",
 			short = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Mare Magnum, con corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros.",
-			full = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Mare Magnum, con corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros. De estas aguas surge Zandalar, antiguo hogar del imperio trol. Entre ellas se encuentra también Kezan, una isla volcánica cuyo pueblo se mantiene apartado de las potencias del continente.\n\nMás cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes y calas ocultas, el tipo de aguas donde un capitán o conoce cada roca por su nombre o pierde el barco. Pequeñas islas salpican este tramo, algunas no más que un banco de arena, otras con ruinas cuyos constructores desaparecieron hace mucho bajo las olas.\n\nLo que hace que este mar merezca un nombre no es tanto una batalla concreta librada en él como lo que se ha tragado y ha vuelto a revelar a medias: templos hundidos, costas anegadas, ruinas vislumbradas a través del agua clara con la marea baja. Es un mar de bordes y lugares intermedios, que recorre las fronteras de Tuercespina, Tanaris y Uldum, y que lleva lo que las mareas decidan traer a las costas que separa.",
+			full = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Mare Magnum, con corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros. De estas aguas surge Zandalar, antiguo hogar del imperio trol.\n\nMás cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes y calas ocultas, el tipo de aguas donde un capitán o conoce cada roca por su nombre o pierde el barco. Pequeñas islas salpican este tramo, algunas no más que un banco de arena, otras con ruinas cuyos constructores desaparecieron hace mucho bajo las olas.\n\nLo que hace que este mar merezca un nombre no es tanto una batalla concreta librada en él como lo que se ha tragado y ha vuelto a revelar a medias: templos hundidos, costas anegadas, ruinas vislumbradas a través del agua clara con la marea baja. Es un mar de bordes y lugares intermedios, que recorre las fronteras de Tuercespina y Tanaris, y que lleva lo que las mareas decidan traer a las costas que separa.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4155,8 +4155,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "Puerto Bonvapor",
-			short = "Puerto Bonvapor se encuentra en la costa oriental de Tanaris, con un camino que va hacia el oeste hasta su ciudad madre, Gadgetzan, y un muelle que se extiende hacia Kezan.",
-			full = "Puerto Bonvapor se encuentra en la costa oriental de Tanaris, con un camino que va hacia el oeste hasta su ciudad madre, Gadgetzan, y un muelle que se extiende hacia Kezan. Pertenece al Cártel Bonvapor, goblins que tratan con cualquiera mientras el oro sea bueno.\n\nEntre los residentes del puerto está Yeh'kinya, cuyos tratos propiciaron el regreso de Hakkar el Desollador de Almas.",
+			short = "Puerto Bonvapor se encuentra en la costa oriental de Tanaris, con un camino que va hacia el oeste hasta su ciudad madre, Gadgetzan, y un muelle que se adentra en el mar.",
+			full = "Puerto Bonvapor se encuentra en la costa oriental de Tanaris, con un camino que va hacia el oeste hasta su ciudad madre, Gadgetzan, y un muelle que se adentra en el mar. Pertenece al Cártel Bonvapor, goblins que tratan con cualquiera mientras el oro sea bueno.\n\nEntre los residentes del puerto está Yeh'kinya, cuyos tratos propiciaron el regreso de Hakkar el Desollador de Almas.",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4807,7 +4807,7 @@ local subzones = {
 		["valley of heroes"] = {
 			name = "Valle de los Héroes",
 			short = "Un puente de piedra clara lleva a todo viajero sobre el foso que hay ante la puerta sur de Ventormenta, hasta un valle verde flanqueado por estatuas levantadas tanto por el dolor como por la gloria.",
-			full = "Un puente de piedra clara lleva a todo viajero sobre el foso que hay ante la puerta sur de Ventormenta, hasta un valle verde flanqueado por estatuas levantadas tanto por el dolor como por la gloria.\n\nDespués de la Segunda Guerra, cuando Ventormenta se reconstruyó de sus ruinas, la ciudad honró a quienes dirigieron la Expedición de la Alianza a través del Portal Oscuro para sellarlo desde el otro lado. Kurdran Martillo Salvaje y el archimago Khadgar se alzan a la izquierda del camino; el comandante de fuerzas Danath Aterratrols y la capitana forestal Alleria Brisaveloz, a la derecha; y al final del camino, donde se bifurca para entrar en la ciudad propiamente dicha, se alza el general Turalyon, que los dirigió a todos. Ninguno de los cinco regresó jamás.\n\nAños después, Arator, el hijo de Alleria y Turalyon, fue llevado a una ceremonia en el valle, a hombros de un Caballero de la Mano de Plata. Alzó la vista hacia la imagen de piedra de su madre, un rostro del que no guardaba recuerdo. Algo de ella llegó hasta él allí, pues el niño sonrió y tendió la mano hacia la estatua. Volvería una y otra vez a medida que crecía, para detenerse ante su rostro y saber, sin recordarla, que ella lo había amado.",
+			full = "Un puente de piedra clara lleva a todo viajero sobre el foso que hay ante la puerta sur de Ventormenta, hasta un valle verde flanqueado por estatuas levantadas tanto por el dolor como por la gloria.\n\nDespués de la Segunda Guerra, cuando Ventormenta se reconstruyó de sus ruinas, la ciudad honró a quienes dirigieron la Expedición de la Alianza a través del Portal Oscuro para sellarlo desde el otro lado. Kurdran Martillo Salvaje y el archimago Khadgar se alzan a la izquierda del camino; el comandante de fuerzas Danath Aterratrols y la capitana forestal Alleria Brisaveloz, a la derecha; y al final del camino, donde se bifurca para entrar en la ciudad propiamente dicha, se alza el general Turalyon, que los dirigió a todos. Ninguno de los cinco regresó jamás.",
 			source = "https://warcraft.wiki.gg/wiki/Valley_of_Heroes",
 		},
 	},

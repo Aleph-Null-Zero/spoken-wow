@@ -394,8 +394,8 @@ local subzones = {
 		},
 		["forgotten pools"] = {
 			name = "Forgotten Pools",
-			short = "The Forgotten Pools lie north of the western road out of the Crossroads, the northernmost of the oases scattered through the Northern Barrens.",
-			full = "The Forgotten Pools lie north of the western road out of the Crossroads, the northernmost of the oases scattered through the Northern Barrens. Their shores stay green, ringed with Laden Mushrooms found nowhere else, and their waters hold deviate fish unlike any caught elsewhere in the Barrens.\n\nKolkar centaurs range the water's edge alongside the turtles and wildlife that shelter there.",
+			short = "The Forgotten Pools lie north of the western road out of the Crossroads, the northernmost of the oases scattered through the north of the Barrens.",
+			full = "The Forgotten Pools lie north of the western road out of the Crossroads, the northernmost of the oases scattered through the north of the Barrens. Their shores stay green, ringed with Laden Mushrooms found nowhere else, and their waters hold deviate fish unlike any caught elsewhere in the Barrens.\n\nKolkar centaurs range the water's edge alongside the turtles and wildlife that shelter there.",
 			source = "https://warcraft.wiki.gg/wiki/Forgotten_Pools",
 		},
 		["fray island"] = {
@@ -1329,8 +1329,8 @@ local subzones = {
 		},
 		["northpass tower"] = {
 			name = "Northpass Tower",
-			short = "Northpass Tower stands farthest north of the watchtowers in the Eastern Plaguelands, marking the road toward the Ghostlands of Quel'Thalas.",
-			full = "Northpass Tower stands farthest north of the watchtowers in the Eastern Plaguelands, marking the road toward the Ghostlands of Quel'Thalas. The Scourge swept through Lordaeron, and the tower wears its scars still.",
+			short = "Northpass Tower stands farthest north of the watchtowers in the Eastern Plaguelands, marking the road toward Quel'Thalas.",
+			full = "Northpass Tower stands farthest north of the watchtowers in the Eastern Plaguelands, marking the road toward Quel'Thalas. The Scourge swept through Lordaeron, and the tower wears its scars still.",
 			source = "https://warcraft.wiki.gg/wiki/Northpass_Tower",
 		},
 		["noxious glade"] = {
@@ -1353,8 +1353,8 @@ local subzones = {
 		},
 		["quellithien lodge"] = {
 			name = "Quel'Lithien Lodge",
-			short = "Quel'Lithien Lodge stood as a Farstrider camp near Quel'Thalas, a place of warmth and welcome. Lor'themar Theron remembered it that way from his own visits, greeted warmly by compatriots who called it home.",
-			full = "Quel'Lithien Lodge stood as a Farstrider camp near Quel'Thalas, a place of warmth and welcome. Lor'themar Theron remembered it that way from his own visits, greeted warmly by compatriots who called it home. The lodge once housed a number of elven documents, some pertaining to the royal family and the Ranger-General of Silvermoon. By the time of the Second War, Renthar Hawkspear led the hunters there.",
+			short = "Quel'Lithien Lodge stood as a Farstrider camp near Quel'Thalas, a place of warmth and welcome.",
+			full = "Quel'Lithien Lodge stood as a Farstrider camp near Quel'Thalas, a place of warmth and welcome. The lodge once housed a number of elven documents, some pertaining to the royal family and the Ranger-General of Silvermoon. By the time of the Second War, Renthar Hawkspear led the hunters there.",
 			source = "https://warcraft.wiki.gg/wiki/Quel'Lithien_Lodge",
 		},
 		["scarlet base camp"] = {
@@ -1531,7 +1531,7 @@ local subzones = {
 		["southpoint tower"] = {
 			name = "Southpoint Tower",
 			short = "Southpoint Tower stands at the far western edge of Hillsbrad Foothills, just south of the road that runs on toward Silverpine Forest.",
-			full = "Southpoint Tower stands at the far western edge of Hillsbrad Foothills, just south of the road that runs on toward Silverpine Forest. The stonework is old and cracked, a scout post left to ruin, though the tower itself was never brought down in the fighting that passed through here. Nearby, unmarked, another tower stands between Tarren Mill and Southshore, also spared the destruction that swept the rest of the foothills.",
+			full = "Southpoint Tower stands at the far western edge of Hillsbrad Foothills, just south of the road that runs on toward Silverpine Forest. The stonework is old and cracked, a scout post left to ruin, though the tower itself was never brought down in the fighting that passed through here.",
 			source = "https://warcraft.wiki.gg/wiki/Southpoint_Tower",
 		},
 		["strahnbrad"] = {
@@ -2639,7 +2639,7 @@ local subzones = {
 		["south seas"] = {
 			name = "South Seas",
 			short = "The South Seas fill the water between the known continents, a portion of the Great Sea. Zandalar rises from these waters, ancient home of the troll empire.",
-			full = "The South Seas fill the water between the known continents, a portion of the Great Sea. Zandalar rises from these waters, ancient home of the troll empire. Kezan lies among them too, a volcanic island holding its own people apart from the mainland powers. Nearer Stranglethorn Vale, the sea grows treacherous with reefs and small islands, some no more than a sandbar, others holding ruins whose builders are gone. The South Seas run along the borders of Stranglethorn, Tanaris, and Uldum.",
+			full = "The South Seas fill the water between the known continents, a portion of the Great Sea. Zandalar rises from these waters, ancient home of the troll empire. Nearer Stranglethorn Vale, the sea grows treacherous with reefs and small islands, some no more than a sandbar, others holding ruins whose builders are gone. The South Seas run along the borders of Stranglethorn and Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4257,7 +4257,7 @@ local subzones = {
 		["south seas"] = {
 			name = "South Seas",
 			short = "The waters south of the known continents open into a wide stretch of the Great Sea, carrying currents past islands whose names are known mostly to sailors.",
-			full = "The waters south of the known continents open into a wide stretch of the Great Sea, carrying currents past islands whose names are known mostly to sailors. Zandalar rises from these waters, ancient home of the troll empire. Kezan lies among them too, a volcanic island holding its own people apart from the mainland powers.\n\nCloser to Stranglethorn Vale, the sea grows treacherous with reefs and hidden coves, the sort of waters where a captain either knows every rock by name or loses the ship. Small islands dot this stretch, some no more than a sandbar, others holding ruins whose builders have long vanished beneath the waves.\n\nWhat makes this sea worth naming is less any single battle fought upon it than the things it has swallowed and half-revealed again: sunken temples, drowned coasts, ruins glimpsed through clear water at low tide. It is a sea of edges and in-between places, running along the borders of Stranglethorn, Tanaris, and Uldum, carrying whatever the tides choose to bring to the shores it divides.",
+			full = "The waters south of the known continents open into a wide stretch of the Great Sea, carrying currents past islands whose names are known mostly to sailors. Zandalar rises from these waters, ancient home of the troll empire.\n\nCloser to Stranglethorn Vale, the sea grows treacherous with reefs and hidden coves, the sort of waters where a captain either knows every rock by name or loses the ship. Small islands dot this stretch, some no more than a sandbar, others holding ruins whose builders have long vanished beneath the waves.\n\nWhat makes this sea worth naming is less any single battle fought upon it than the things it has swallowed and half-revealed again: sunken temples, drowned coasts, ruins glimpsed through clear water at low tide. It is a sea of edges and in-between places, running along the borders of Stranglethorn and Tanaris, carrying whatever the tides choose to bring to the shores it divides.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4274,8 +4274,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "Steamwheedle Port",
-			short = "Steamwheedle Port sits on Tanaris's eastern coast, a road running west to its mother city of Gadgetzan and a dock reaching toward Kezan.",
-			full = "Steamwheedle Port sits on Tanaris's eastern coast, a road running west to its mother city of Gadgetzan and a dock reaching toward Kezan. It belongs to the Steamwheedle Cartel, goblins who deal with all comers so long as the gold is good.\n\nAmong the port's residents is Yeh'kinya, whose dealings stirred the return of Hakkar the Soulflayer.",
+			short = "Steamwheedle Port sits on Tanaris's eastern coast, a road running west to its mother city of Gadgetzan and a dock reaching out to sea.",
+			full = "Steamwheedle Port sits on Tanaris's eastern coast, a road running west to its mother city of Gadgetzan and a dock reaching out to sea. It belongs to the Steamwheedle Cartel, goblins who deal with all comers so long as the gold is good.\n\nAmong the port's residents is Yeh'kinya, whose dealings stirred the return of Hakkar the Soulflayer.",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4982,7 +4982,7 @@ local subzones = {
 		["valley of heroes"] = {
 			name = "Valley of Heroes",
 			short = "A bridge of pale stone carries every traveler over the moat before Stormwind's southern gate, into a green valley lined with statues raised for grief as much as glory.",
-			full = "A bridge of pale stone carries every traveler over the moat before Stormwind's southern gate, into a green valley lined with statues raised for grief as much as glory.\n\nAfter the Second War, when Stormwind was rebuilt from ruin, the city honored those who led the Alliance Expedition through the Dark Portal to seal it from the far side. Kurdran Wildhammer and the Archmage Khadgar stand to the left of the road; Force Commander Danath Trollbane and Ranger-Captain Alleria Windrunner to the right; and at the road's end, where it forks to enter the city proper, stands General Turalyon, who led them all. None of the five ever returned.\n\nYears later, Alleria and Turalyon's son Arator was brought to a ceremony in the valley, carried on the shoulders of a Knight of the Silver Hand. He looked up at the stone likeness of his mother, a face he had no memory of. Something of her reached him there, for the boy smiled and reached out toward the statue. He would come back again and again as he grew, to stand before her face and know, without remembering her, that she had loved him.",
+			full = "A bridge of pale stone carries every traveler over the moat before Stormwind's southern gate, into a green valley lined with statues raised for grief as much as glory.\n\nAfter the Second War, when Stormwind was rebuilt from ruin, the city honored those who led the Alliance Expedition through the Dark Portal to seal it from the far side. Kurdran Wildhammer and the Archmage Khadgar stand to the left of the road; Force Commander Danath Trollbane and Ranger-Captain Alleria Windrunner to the right; and at the road's end, where it forks to enter the city proper, stands General Turalyon, who led them all. None of the five ever returned.",
 			source = "https://warcraft.wiki.gg/wiki/Valley_of_Heroes",
 		},
 	},

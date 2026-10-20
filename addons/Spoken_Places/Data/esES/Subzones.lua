@@ -366,8 +366,8 @@ local subzones = {
 		},
 		["forgotten pools"] = {
 			name = "Las Charcas del Olvido",
-			short = "Las Charcas del Olvido se encuentran al norte del camino occidental que sale de El Cruce, y son el más septentrional de los oasis dispersos por Los Baldíos del Norte.",
-			full = "Las Charcas del Olvido se encuentran al norte del camino occidental que sale de El Cruce, y son el más septentrional de los oasis dispersos por Los Baldíos del Norte. Sus orillas se mantienen verdes, rodeadas de champiñones cargados que no se encuentran en ningún otro lugar, y sus aguas albergan peces descarriados distintos de cualquiera que se pesque en otra parte de Los Baldíos.\n\nLos centauros Kolkar recorren la orilla junto a las tortugas y los animales que se refugian allí.",
+			short = "Las Charcas del Olvido se encuentran al norte del camino occidental que sale de El Cruce, y son el más septentrional de los oasis dispersos por el norte de Los Baldíos.",
+			full = "Las Charcas del Olvido se encuentran al norte del camino occidental que sale de El Cruce, y son el más septentrional de los oasis dispersos por el norte de Los Baldíos. Sus orillas se mantienen verdes, rodeadas de champiñones cargados que no se encuentran en ningún otro lugar, y sus aguas albergan peces descarriados distintos de cualquiera que se pesque en otra parte de Los Baldíos.\n\nLos centauros Kolkar recorren la orilla junto a las tortugas y los animales que se refugian allí.",
 			source = "https://warcraft.wiki.gg/wiki/Forgotten_Pools",
 		},
 		["fray island"] = {
@@ -1266,8 +1266,8 @@ local subzones = {
 		},
 		["northpass tower"] = {
 			name = "Torre del Paso Norte",
-			short = "La Torre del Paso Norte es la más septentrional de las atalayas de las Tierras de la Peste del Este y señala el camino hacia las Tierras Fantasma de Quel'Thalas.",
-			full = "La Torre del Paso Norte es la más septentrional de las atalayas de las Tierras de la Peste del Este y señala el camino hacia las Tierras Fantasma de Quel'Thalas. La Plaga arrasó Lordaeron, y la torre aún lleva sus cicatrices.",
+			short = "La Torre del Paso Norte es la más septentrional de las atalayas de las Tierras de la Peste del Este y señala el camino hacia Quel'Thalas.",
+			full = "La Torre del Paso Norte es la más septentrional de las atalayas de las Tierras de la Peste del Este y señala el camino hacia Quel'Thalas. La Plaga arrasó Lordaeron, y la torre aún lleva sus cicatrices.",
 			source = "https://warcraft.wiki.gg/wiki/Northpass_Tower",
 		},
 		["noxious glade"] = {
@@ -1291,7 +1291,7 @@ local subzones = {
 		["quellithien lodge"] = {
 			name = "Refugio Quel'Lithien",
 			short = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor.",
-			full = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor. Lor'themar Theron lo recordaba así de sus propias visitas, cuando lo recibían con afecto los compatriotas que lo consideraban su hogar. El refugio albergaba antaño varios documentos élficos, algunos relativos a la familia real y al general forestal de Lunargenta. Para la época de la Segunda Guerra, Renthar Hawkspear dirigía a los cazadores de allí.",
+			full = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor. El refugio albergaba antaño varios documentos élficos, algunos relativos a la familia real y al general forestal de Lunargenta. Para la época de la Segunda Guerra, Renthar Hawkspear dirigía a los cazadores de allí.",
 			source = "https://warcraft.wiki.gg/wiki/Quel'Lithien_Lodge",
 		},
 		["scarlet base camp"] = {
@@ -1468,7 +1468,7 @@ local subzones = {
 		["southpoint tower"] = {
 			name = "Torre Austral",
 			short = "La Torre Austral se alza en el extremo occidental de las Laderas de Trabalomas, justo al sur del camino que continúa hacia el Bosque de Argénteos.",
-			full = "La Torre Austral se alza en el extremo occidental de las Laderas de Trabalomas, justo al sur del camino que continúa hacia el Bosque de Argénteos. La mampostería es vieja y está agrietada, un puesto de exploración abandonado a la ruina, aunque la torre en sí nunca fue derribada en los combates que pasaron por aquí. Cerca, sin nombre, otra torre se alza entre el Molino Tarren y Costasur, también a salvo de la destrucción que arrasó el resto de las laderas.",
+			full = "La Torre Austral se alza en el extremo occidental de las Laderas de Trabalomas, justo al sur del camino que continúa hacia el Bosque de Argénteos. La mampostería es vieja y está agrietada, un puesto de exploración abandonado a la ruina, aunque la torre en sí nunca fue derribada en los combates que pasaron por aquí.",
 			source = "https://warcraft.wiki.gg/wiki/Southpoint_Tower",
 		},
 		["strahnbrad"] = {
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares del Sur",
 			short = "Los Mares del Sur llenan las aguas entre los continentes conocidos y forman parte del Gran Mar.",
-			full = "Los Mares del Sur llenan las aguas entre los continentes conocidos y forman parte del Gran Mar. Zandalar se alza en estas aguas, antiguo hogar del imperio trol. Kezan también se encuentra entre ellas, una isla volcánica que mantiene a su propio pueblo apartado de las potencias del continente. Cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes e islotes, algunos no más que un banco de arena y otros con ruinas cuyos constructores desaparecieron. Los Mares del Sur bordean Tuercespina, Tanaris y Uldum.",
+			full = "Los Mares del Sur llenan las aguas entre los continentes conocidos y forman parte del Gran Mar. Zandalar se alza en estas aguas, antiguo hogar del imperio trol. Cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes e islotes, algunos no más que un banco de arena y otros con ruinas cuyos constructores desaparecieron. Los Mares del Sur bordean Tuercespina y Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares del Sur",
 			short = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Gran Mar y llevan corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros.",
-			full = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Gran Mar y llevan corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros. Zandalar se alza en estas aguas, antiguo hogar del imperio trol. Kezan también se encuentra entre ellas, una isla volcánica que mantiene a su propio pueblo apartado de las potencias del continente.\n\nCerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes y calas ocultas, la clase de aguas en las que un capitán o conoce cada roca por su nombre o pierde el barco. Pequeñas islas salpican este tramo, algunas no más que un banco de arena y otras con ruinas cuyos constructores desaparecieron hace mucho bajo las olas.\n\nLo que hace que este mar merezca un nombre no es tanto ninguna batalla concreta librada en él como las cosas que ha engullido y vuelto a mostrar a medias: templos hundidos, costas anegadas, ruinas entrevistas a través del agua clara con la marea baja. Es un mar de bordes y de lugares intermedios, que bordea Tuercespina, Tanaris y Uldum y lleva lo que las mareas decidan a las orillas que separa.",
+			full = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Gran Mar y llevan corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros. Zandalar se alza en estas aguas, antiguo hogar del imperio trol.\n\nCerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes y calas ocultas, la clase de aguas en las que un capitán o conoce cada roca por su nombre o pierde el barco. Pequeñas islas salpican este tramo, algunas no más que un banco de arena y otras con ruinas cuyos constructores desaparecieron hace mucho bajo las olas.\n\nLo que hace que este mar merezca un nombre no es tanto ninguna batalla concreta librada en él como las cosas que ha engullido y vuelto a mostrar a medias: templos hundidos, costas anegadas, ruinas entrevistas a través del agua clara con la marea baja. Es un mar de bordes y de lugares intermedios, que bordea Tuercespina y Tanaris y lleva lo que las mareas decidan a las orillas que separa.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4155,8 +4155,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "Puerto Bonvapor",
-			short = "Puerto Bonvapor se encuentra en la costa oriental de Tanaris, con un camino que va hacia el oeste hasta su ciudad madre, Gadgetzan, y un muelle que se extiende hacia Kezan.",
-			full = "Puerto Bonvapor se encuentra en la costa oriental de Tanaris, con un camino que va hacia el oeste hasta su ciudad madre, Gadgetzan, y un muelle que se extiende hacia Kezan. Pertenece al Cártel Bonvapor, goblins que tratan con cualquiera siempre que el oro sea bueno.\n\nEntre los residentes del puerto está Yeh'kinya, cuyos negocios propiciaron el regreso de Hakkar el Desollalmas.",
+			short = "Puerto Bonvapor se encuentra en la costa oriental de Tanaris, con un camino que va hacia el oeste hasta su ciudad madre, Gadgetzan, y un muelle que se adentra en el mar.",
+			full = "Puerto Bonvapor se encuentra en la costa oriental de Tanaris, con un camino que va hacia el oeste hasta su ciudad madre, Gadgetzan, y un muelle que se adentra en el mar. Pertenece al Cártel Bonvapor, goblins que tratan con cualquiera siempre que el oro sea bueno.\n\nEntre los residentes del puerto está Yeh'kinya, cuyos negocios propiciaron el regreso de Hakkar el Desollalmas.",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4807,7 +4807,7 @@ local subzones = {
 		["valley of heroes"] = {
 			name = "Valle de los Héroes",
 			short = "Un puente de piedra clara lleva a todo viajero sobre el foso que hay ante la puerta sur de Ventormenta, hasta un valle verde flanqueado por estatuas levantadas tanto por el duelo como por la gloria.",
-			full = "Un puente de piedra clara lleva a todo viajero sobre el foso que hay ante la puerta sur de Ventormenta, hasta un valle verde flanqueado por estatuas levantadas tanto por el duelo como por la gloria.\n\nDespués de la Segunda Guerra, cuando Ventormenta se reconstruyó de sus ruinas, la ciudad honró a quienes dirigieron la Expedición de la Alianza a través del Portal Oscuro para sellarlo desde el otro lado. Kurdran Martillo Salvaje y el archimago Khadgar se alzan a la izquierda del camino; el comandante de fuerza Danath Aterratrols y la capitana forestal Alleria Brisaveloz, a la derecha; y al final del camino, donde se bifurca para entrar en la ciudad propiamente dicha, se alza el general Turalyon, que los dirigió a todos. Ninguno de los cinco regresó jamás.\n\nAños después, Arator, el hijo de Alleria y Turalyon, fue llevado a una ceremonia en el valle, a hombros de un Caballero de la Mano de Plata. Alzó la vista hacia la imagen de piedra de su madre, un rostro del que no tenía recuerdo. Algo de ella llegó hasta él allí, porque el niño sonrió y tendió la mano hacia la estatua. Volvería una y otra vez a medida que crecía, para detenerse ante su rostro y saber, sin recordarla, que ella lo había amado.",
+			full = "Un puente de piedra clara lleva a todo viajero sobre el foso que hay ante la puerta sur de Ventormenta, hasta un valle verde flanqueado por estatuas levantadas tanto por el duelo como por la gloria.\n\nDespués de la Segunda Guerra, cuando Ventormenta se reconstruyó de sus ruinas, la ciudad honró a quienes dirigieron la Expedición de la Alianza a través del Portal Oscuro para sellarlo desde el otro lado. Kurdran Martillo Salvaje y el archimago Khadgar se alzan a la izquierda del camino; el comandante de fuerza Danath Aterratrols y la capitana forestal Alleria Brisaveloz, a la derecha; y al final del camino, donde se bifurca para entrar en la ciudad propiamente dicha, se alza el general Turalyon, que los dirigió a todos. Ninguno de los cinco regresó jamás.",
 			source = "https://warcraft.wiki.gg/wiki/Valley_of_Heroes",
 		},
 	},

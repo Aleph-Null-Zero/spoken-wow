@@ -1266,8 +1266,8 @@ local subzones = {
 		},
 		["northpass tower"] = {
 			name = "Tour du Col du nord",
-			short = "La tour du Col du nord est la plus septentrionale des tours de guet des Maleterres de l'est ; elle marque la route vers les Terres fantômes de Quel'Thalas.",
-			full = "La tour du Col du nord est la plus septentrionale des tours de guet des Maleterres de l'est ; elle marque la route vers les Terres fantômes de Quel'Thalas. Le Fléau déferla sur Lordaeron, et la tour en porte encore les cicatrices.",
+			short = "La tour du Col du nord est la plus septentrionale des tours de guet des Maleterres de l'est ; elle marque la route vers Quel'Thalas.",
+			full = "La tour du Col du nord est la plus septentrionale des tours de guet des Maleterres de l'est ; elle marque la route vers Quel'Thalas. Le Fléau déferla sur Lordaeron, et la tour en porte encore les cicatrices.",
 			source = "https://warcraft.wiki.gg/wiki/Northpass_Tower",
 		},
 		["noxious glade"] = {
@@ -1290,8 +1290,8 @@ local subzones = {
 		},
 		["quellithien lodge"] = {
 			name = "Gîte de Quel'Lithien",
-			short = "Le gîte de Quel'Lithien était un camp des Pérégrins près de Quel'Thalas, un lieu chaleureux et accueillant. C'est ainsi que Lor'themar Theron s'en souvenait de ses propres visites, chaleureusement accueilli par des compatriotes qui y avaient leur foyer.",
-			full = "Le gîte de Quel'Lithien était un camp des Pérégrins près de Quel'Thalas, un lieu chaleureux et accueillant. C'est ainsi que Lor'themar Theron s'en souvenait de ses propres visites, chaleureusement accueilli par des compatriotes qui y avaient leur foyer. Le gîte abritait jadis un certain nombre de documents elfiques, dont certains concernaient la famille royale et le général des forestiers de Lune-d'argent. À l'époque de la deuxième guerre, Renthar Hawkspear y menait les chasseurs.",
+			short = "Le gîte de Quel'Lithien était un camp des Pérégrins près de Quel'Thalas, un lieu chaleureux et accueillant.",
+			full = "Le gîte de Quel'Lithien était un camp des Pérégrins près de Quel'Thalas, un lieu chaleureux et accueillant. Le gîte abritait jadis un certain nombre de documents elfiques, dont certains concernaient la famille royale et le général des forestiers de Lune-d'argent. À l'époque de la deuxième guerre, Renthar Hawkspear y menait les chasseurs.",
 			source = "https://warcraft.wiki.gg/wiki/Quel'Lithien_Lodge",
 		},
 		["scarlet base camp"] = {
@@ -1468,7 +1468,7 @@ local subzones = {
 		["southpoint tower"] = {
 			name = "Tour de la Pointe du Midi",
 			short = "La tour de la Pointe du Midi se dresse à l'extrême ouest des contreforts d'Hillsbrad, juste au sud de la route qui mène à la forêt des Pins argentés.",
-			full = "La tour de la Pointe du Midi se dresse à l'extrême ouest des contreforts d'Hillsbrad, juste au sud de la route qui mène à la forêt des Pins argentés. La maçonnerie est vieille et fissurée, un poste d'observation laissé à l'abandon, bien que la tour elle-même n'ait jamais été abattue lors des combats qui ont traversé la région. Non loin, sans nom, une autre tour se dresse entre Moulin-de-Tarren et Southshore, elle aussi épargnée par la destruction qui a balayé le reste des contreforts.",
+			full = "La tour de la Pointe du Midi se dresse à l'extrême ouest des contreforts d'Hillsbrad, juste au sud de la route qui mène à la forêt des Pins argentés. La maçonnerie est vieille et fissurée, un poste d'observation laissé à l'abandon, bien que la tour elle-même n'ait jamais été abattue lors des combats qui ont traversé la région.",
 			source = "https://warcraft.wiki.gg/wiki/Southpoint_Tower",
 		},
 		["strahnbrad"] = {
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mers du sud",
 			short = "Les Mers du sud emplissent les eaux entre les continents connus, une partie de la Grande mer. Zandalar s'élève de ces eaux, antique berceau de l'empire troll.",
-			full = "Les Mers du sud emplissent les eaux entre les continents connus, une partie de la Grande mer. Zandalar s'élève de ces eaux, antique berceau de l'empire troll. Kezan se trouve aussi parmi elles, une île volcanique dont le peuple se tient à l'écart des puissances du continent. Plus près de la vallée de Strangleronce, la mer devient traîtresse, semée de récifs et d'îlots, certains guère plus qu'un banc de sable, d'autres abritant des ruines dont les bâtisseurs ont disparu. Les Mers du sud longent les frontières de Strangleronce, de Tanaris et d'Uldum.",
+			full = "Les Mers du sud emplissent les eaux entre les continents connus, une partie de la Grande mer. Zandalar s'élève de ces eaux, antique berceau de l'empire troll. Plus près de la vallée de Strangleronce, la mer devient traîtresse, semée de récifs et d'îlots, certains guère plus qu'un banc de sable, d'autres abritant des ruines dont les bâtisseurs ont disparu. Les Mers du sud longent les frontières de Strangleronce et de Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mers du sud",
 			short = "Les eaux au sud des continents connus s'ouvrent sur une vaste étendue de la Grande mer, dont les courants passent devant des îles dont seuls les marins connaissent vraiment les noms.",
-			full = "Les eaux au sud des continents connus s'ouvrent sur une vaste étendue de la Grande mer, dont les courants passent devant des îles dont seuls les marins connaissent vraiment les noms. Zandalar s'élève de ces eaux, antique berceau de l'empire troll. Kezan se trouve aussi parmi elles, une île volcanique dont le peuple se tient à l'écart des puissances du continent.\n\nPlus près de la vallée de Strangleronce, la mer devient traîtresse, semée de récifs et de criques cachées, le genre d'eaux où un capitaine connaît chaque rocher par son nom ou perd son navire. De petites îles parsèment cette étendue, certaines guère plus qu'un banc de sable, d'autres abritant des ruines dont les bâtisseurs ont depuis longtemps disparu sous les flots.\n\nCe qui rend cette mer digne d'être nommée, c'est moins une bataille qui s'y serait livrée que tout ce qu'elle a englouti puis à demi révélé de nouveau : temples engloutis, côtes noyées, ruines entrevues à travers l'eau claire à marée basse. C'est une mer de lisières et d'entre-deux, qui longe les frontières de Strangleronce, de Tanaris et d'Uldum, portant ce que les marées choisissent d'apporter aux rivages qu'elle sépare.",
+			full = "Les eaux au sud des continents connus s'ouvrent sur une vaste étendue de la Grande mer, dont les courants passent devant des îles dont seuls les marins connaissent vraiment les noms. Zandalar s'élève de ces eaux, antique berceau de l'empire troll.\n\nPlus près de la vallée de Strangleronce, la mer devient traîtresse, semée de récifs et de criques cachées, le genre d'eaux où un capitaine connaît chaque rocher par son nom ou perd son navire. De petites îles parsèment cette étendue, certaines guère plus qu'un banc de sable, d'autres abritant des ruines dont les bâtisseurs ont depuis longtemps disparu sous les flots.\n\nCe qui rend cette mer digne d'être nommée, c'est moins une bataille qui s'y serait livrée que tout ce qu'elle a englouti puis à demi révélé de nouveau : temples engloutis, côtes noyées, ruines entrevues à travers l'eau claire à marée basse. C'est une mer de lisières et d'entre-deux, qui longe les frontières de Strangleronce et de Tanaris, portant ce que les marées choisissent d'apporter aux rivages qu'elle sépare.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4155,8 +4155,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "Port Gentepression",
-			short = "Port Gentepression se trouve sur la côte orientale de Tanaris, avec une route filant vers l'ouest jusqu'à sa ville mère, Gadgetzan, et un quai tendu vers Kezan.",
-			full = "Port Gentepression se trouve sur la côte orientale de Tanaris, avec une route filant vers l'ouest jusqu'à sa ville mère, Gadgetzan, et un quai tendu vers Kezan. Il appartient au Cartel Gentepression, des gobelins qui traitent avec tous les venus tant que l'or est bon.\n\nParmi les résidents du port se trouve Yeh'kinya, dont les manigances contribuèrent au retour de Hakkar l'Écorcheur d'âmes.",
+			short = "Port Gentepression se trouve sur la côte orientale de Tanaris, avec une route filant vers l'ouest jusqu'à sa ville mère, Gadgetzan, et un quai tendu vers le large.",
+			full = "Port Gentepression se trouve sur la côte orientale de Tanaris, avec une route filant vers l'ouest jusqu'à sa ville mère, Gadgetzan, et un quai tendu vers le large. Il appartient au Cartel Gentepression, des gobelins qui traitent avec tous les venus tant que l'or est bon.\n\nParmi les résidents du port se trouve Yeh'kinya, dont les manigances contribuèrent au retour de Hakkar l'Écorcheur d'âmes.",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4807,7 +4807,7 @@ local subzones = {
 		["valley of heroes"] = {
 			name = "Vallée des héros",
 			short = "Un pont de pierre pâle mène chaque voyageur par-dessus les douves, devant la porte sud de Stormwind, jusqu'à une vallée verdoyante bordée de statues élevées autant par chagrin que par gloire.",
-			full = "Un pont de pierre pâle mène chaque voyageur par-dessus les douves, devant la porte sud de Stormwind, jusqu'à une vallée verdoyante bordée de statues élevées autant par chagrin que par gloire.\n\nAprès la deuxième guerre, lorsque Stormwind fut rebâtie sur ses ruines, la cité rendit hommage à ceux qui menèrent l'expédition de l'Alliance à travers la Porte des ténèbres pour la sceller depuis l'autre côté. Kurdran Marteau-hardi et l'archimage Khadgar se dressent à gauche de la route ; le commandant des forces Danath Trollemort et la capitaine des forestiers Alleria Windrunner à droite ; et au bout de la route, là où elle se divise pour entrer dans la cité proprement dite, se tient le général Turalyon, qui les commandait tous. Aucun des cinq ne revint jamais.\n\nDes années plus tard, Arator, le fils d'Alleria et de Turalyon, fut conduit à une cérémonie dans la vallée, porté sur les épaules d'un chevalier de la Main d'argent. Il leva les yeux vers l'effigie de pierre de sa mère, un visage dont il n'avait aucun souvenir. Quelque chose d'elle l'atteignit pourtant, car l'enfant sourit et tendit la main vers la statue. Il reviendrait encore et encore en grandissant, pour se tenir devant son visage et savoir, sans se souvenir d'elle, qu'elle l'avait aimé.",
+			full = "Un pont de pierre pâle mène chaque voyageur par-dessus les douves, devant la porte sud de Stormwind, jusqu'à une vallée verdoyante bordée de statues élevées autant par chagrin que par gloire.\n\nAprès la deuxième guerre, lorsque Stormwind fut rebâtie sur ses ruines, la cité rendit hommage à ceux qui menèrent l'expédition de l'Alliance à travers la Porte des ténèbres pour la sceller depuis l'autre côté. Kurdran Marteau-hardi et l'archimage Khadgar se dressent à gauche de la route ; le commandant des forces Danath Trollemort et la capitaine des forestiers Alleria Windrunner à droite ; et au bout de la route, là où elle se divise pour entrer dans la cité proprement dite, se tient le général Turalyon, qui les commandait tous. Aucun des cinq ne revint jamais.",
 			source = "https://warcraft.wiki.gg/wiki/Valley_of_Heroes",
 		},
 	},
