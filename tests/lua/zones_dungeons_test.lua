@@ -239,6 +239,7 @@ Expect("...one level further in", (RowFor("Razorfen Downs").row.leaf and "leaf" 
 Expect("...the line chosen, its page counting its dungeons in its zone",
     page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
     "Dungeons and Raids|In The Barrens · 0 of 2 discovered|")
+Expect("...an empty page: its mark in the middle and no Play", tostring(page.mark:IsShown()) .. " " .. tostring(page.play:IsShown()), "true false")
 Expect("...its row lit as chosen", RowFor("Dungeons and Raids").selected, true)
 Click("Razorfen Downs")
 Expect("Razorfen Downs' page is its story", page.title.text .. ": " .. page.body.text.text, "Razorfen Downs: The quilboars' barrows.")

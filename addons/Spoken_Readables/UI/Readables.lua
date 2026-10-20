@@ -232,8 +232,11 @@ local function FirstVoiced(id)
 	end
 end
 
+-- Asked of every row on every render: kept until the next render, when a pack may have come or gone.
+local voiced = {}
 local function Voiced(id)
-	return FirstVoiced(id) ~= nil
+	if voiced[id] == nil then voiced[id] = FirstVoiced(id) ~= nil end
+	return voiced[id]
 end
 
 -- Whether a set of writings ({ [id] = true }) has one to list under Voiced Only.
@@ -386,25 +389,25 @@ local function AsLeft(named, build)
 	return rows
 end
 
+-- each(text) for every page of a readable that has words, in order, until it returns true.
+local function EachText(id, each)
+	local data = SpokenBooks:Data()
+	for _, pageId in ipairs(Books()[id].pages) do
+		local text = data.pages[pageId] and data.pages[pageId].text
+		if text and text ~= "" and each(text) then return true end
+	end
+	return false
+end
+
 -- A readable's pages joined, "" where none has words.
 local function Words(id)
 	local words = {}
-	local data = SpokenBooks:Data()
-	for _, pageId in ipairs(Books()[id].pages) do
-		local text = data.pages[pageId] and data.pages[pageId].text
-		if text and text ~= "" then table.insert(words, text) end
-	end
+	EachText(id, function(text) table.insert(words, text) end)
 	return table.concat(words, "\n\n")
 end
 
--- Whether any page of a readable has words.
 local function HasWords(id)
-	local data = SpokenBooks:Data()
-	for _, pageId in ipairs(Books()[id].pages) do
-		local text = data.pages[pageId] and data.pages[pageId].text
-		if text and text ~= "" then return true end
-	end
-	return false
+	return EachText(id, function() return true end)
 end
 
 -- A readable's row, or nil where it is not listed. `whole`: what holds it was named by the search.
@@ -669,6 +672,7 @@ end
 -- A banner for each continent, its zones' lines under it; Other Lands' and Battlegrounds'; then
 -- the groups' banners.
 local function BuildRows()
+	voiced = {}
 	if not ByZone() then return TypeRows() end
 	local out = {}
 	local function Add(rows) for _, row in ipairs(rows) do table.insert(out, row) end end
@@ -827,7 +831,7 @@ end
 local function ShowEntry()
 	if not page then return end
 	if not selection then
-		page:Show({ title = L.COMPENDIUM_READABLES, subtitle = Count(Tally(Index().all)), empty = true })
+		page:Show({ title = L.COMPENDIUM_READABLES, subtitle = Count(Tally(Index().all)) })
 		return
 	end
 	if selection.book then
@@ -857,7 +861,7 @@ local function ShowEntry()
 	local set = {}
 	if selection.type and not selection.group then
 		for _, id in ipairs(Index().types[selection.type] or {}) do set[id] = true end
-		page:Show({ title = TypeLabel(selection.type), subtitle = Count(Tally(set)), empty = true,
+		page:Show({ title = TypeLabel(selection.type), subtitle = Count(Tally(set)),
 			icon = TypeIcon(selection.type) })
 		return
 	end
@@ -867,21 +871,20 @@ local function ShowEntry()
 			byType, where = (Index().dungeons[selection.mapID] or {})[selection.dungeon], DungeonName(selection.dungeon)
 		end
 		for _, id in ipairs((byType or {})[selection.group] or {}) do set[id] = true end
-		page:Show({ title = TypeLabel(selection.group), subtitle = InAndCount(where, Tally(set)), empty = true,
+		page:Show({ title = TypeLabel(selection.group), subtitle = InAndCount(where, Tally(set)),
 			icon = TypeIcon(selection.group) })
 		return
 	end
 	if selection.dungeon then
 		DungeonReadables(selection.mapID, selection.dungeon, set)
 		page:Show({ title = DungeonName(selection.dungeon), subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
-			empty = true, icon = C.PlaceIcon(nil, selection.dungeon),
+			icon = C.PlaceIcon(nil, selection.dungeon),
 			picture = C.PlacePicture({ mapID = selection.mapID, dungeon = selection.dungeon }) })
 		return
 	end
 	if selection.dungeons then
 		for map in pairs(Index().dungeons[selection.mapID] or {}) do DungeonReadables(selection.mapID, map, set) end
-		page:Show({ title = L.GROUP_DUNGEONS, subtitle = InAndCount(MapName(selection.mapID), Tally(set)),
-			empty = true })
+		page:Show({ title = L.GROUP_DUNGEONS, subtitle = InAndCount(MapName(selection.mapID), Tally(set)) })
 		return
 	end
 	if selection.type and selection.group then
@@ -890,7 +893,7 @@ local function ShowEntry()
 			if Index().typeOf[id] == selection.type then set[id] = true end
 		end
 		page:Show({ title = TypeLabel(selection.type), icon = TypeIcon(selection.type),
-			subtitle = L[GROUP_LABEL[selection.group]] .. " · " .. Count(Tally(set)), empty = true })
+			subtitle = L[GROUP_LABEL[selection.group]] .. " · " .. Count(Tally(set)) })
 		return
 	end
 	if selection.event then
@@ -899,18 +902,17 @@ local function ShowEntry()
 			if Index().eventOf[id] == selection.event then set[id] = true end
 		end
 		page:Show({ title = EventLabel(selection.event),
-			subtitle = L.GROUP_EVENTS .. " · " .. Count(Tally(set)), empty = true })
+			subtitle = L.GROUP_EVENTS .. " · " .. Count(Tally(set)) })
 		return
 	end
 	if selection.zones then
 		for _, mapID in ipairs(ZONES_OF[selection.zones]()) do ReadablesIn(mapID, set) end
-		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = InAndCount(MapName(C.WORLD), Tally(set)),
-			empty = true })
+		page:Show({ title = L[ZONES_LABEL[selection.zones]], subtitle = InAndCount(MapName(C.WORLD), Tally(set)) })
 		return
 	end
 	if GROUP_LABEL[selection.group] then
 		for _, id in ipairs(Index()[selection.group]) do set[id] = true end
-		page:Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)), empty = true })
+		page:Show({ title = L[GROUP_LABEL[selection.group]], subtitle = Count(Tally(set)) })
 		return
 	end
 	if C.IsContinent(selection.mapID) then
@@ -919,7 +921,7 @@ local function ShowEntry()
 		ReadablesIn(selection.mapID, set)
 	end
 	page:Show({ title = MapName(selection.mapID), subtitle = InAndCount(MapName(Above(selection.mapID)), Tally(set)),
-		empty = true, icon = C.PlaceIcon(selection.mapID),
+		icon = C.PlaceIcon(selection.mapID),
 		picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
@@ -1131,7 +1133,6 @@ local function Build(panel)
 		isSelected = IsSelected,
 		onClick = OnClick,
 		locked = function() return SpokenCompendium.LockedReason("OPT_UNLOCK_WRITINGS") end,
-		unlocked = Unlocked,
 		onHidden = OnHidden,
 		onSearch = function(text)
 			filter = text

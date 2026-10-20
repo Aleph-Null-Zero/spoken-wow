@@ -485,7 +485,7 @@ local function Panel(key)
 		local panel = CreateFrame("Frame", nil, window)
 		panel:SetAllPoints(window)
 		panel:Hide()
-		tab.panel = panel
+		tab.panel, panel.tab = panel, tab
 		tab.build(panel)
 		if panel.pageInset then panel.pageInset:SetShown(not minimized) end
 	end
@@ -734,8 +734,8 @@ List.__index = List
 --- set(value) }, build() -> items,
 --- isSelected(item), onClick(item), onSearch(), onHidden(), addScrollBar(scroll, child, inset),
 --- hint(item) -> a line of help under an open row's name in its tooltip, or nil }.
---- unlocked() is true while the tab's Unlock switch is on: nothing is then greyed for having none
---- found, as every row is open to read.
+--- While the tab's Unlock switch (its `unlock.get`) is on, nothing is greyed for having none found,
+--- as every row is open to read.
 --- onHidden is called when a switch in the filter menu leaves the chosen row out of the list, after
 --- the list is drawn again; the tab chooses what to show in its place. Without it the page keeps
 --- what it showed. The search does not call it: what it hides comes back when it is cleared. The filter
@@ -1178,7 +1178,7 @@ end
 -- the names of what it holds, and on the right what is found out of all and the share, the quest
 -- mark with how many are under way, a tick once all are found, a padlock on what does not open.
 local function DrawGroup(row, item, indent, onlyFound)
-	if (item.total or 0) == 0 then row.toggle:Hide() else Toggle(row, item, onlyFound) end
+	Toggle(row, item, onlyFound)
 	row.toggle:ClearAllPoints()
 	row.toggle:SetPoint("CENTER", row, "LEFT", indent + RAIL_X + TOGGLE_SHIFT, 0)
 
@@ -1257,7 +1257,8 @@ end
 function List:Render()
 	local items = self.opts.build()
 	local onlyFound = self.opts.onlyGet and self.opts.onlyGet()
-	local unlocked = self.opts.unlocked and self.opts.unlocked()
+	local unlock = self.panel.tab and self.panel.tab.unlock
+	local unlocked = unlock and unlock.get and unlock.get()
 	local y = LIST_TOP
 	local underBanner = false
 	for i, item in ipairs(items) do
@@ -1809,8 +1810,12 @@ function C.NewPage(parent, addon, play, report, look)
 	local contribute = CreateFrame("Button", nil, body.child, "UIPanelButtonTemplate")
 	contribute:SetSize(100, 22)
 	contribute:SetText(words.COMPENDIUM_CONTRIBUTE or "Contribute")
-	contribute:SetPoint("TOPLEFT", body.text, "BOTTOMLEFT", 0, -12)
 	contribute:Hide()
+	-- Under the last part, where the words of a part are the page's.
+	body.onPartsEnd = function(y)
+		contribute:ClearAllPoints()
+		contribute:SetPoint("TOPLEFT", body.child, "TOPLEFT", 0, -(y + 12))
+	end
 	contribute:SetScript("OnClick", function() if self.unwritten then self.unwritten() end end)
 	contribute:SetScript("OnEnter", function(b)
 		GameTooltip:SetOwner(b, "ANCHOR_RIGHT")
@@ -1983,9 +1988,8 @@ end
 --- entry = { title, subtitle, onSubtitle, text, target = what Play and Report act on, or nil for
 --- none, icon = the round portrait left of the title (a Spoken:CreateSpeakerFace speaker table), the
 --- Compendium's tome without it, picture = { file, mask } above the words, parts = { { heading, text, buttons } } in place
---- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts),
---- empty = true for a page that never has words (a group, a dungeon): its mark in the middle, where
---- it has no picture }.
+--- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts) }. With no text, parts, target or unwritten the page is a group's or a place's: no
+--- Play, and its mark in the middle where it has no picture.
 --- onSubtitle(), where given, is what a click on the line under the title does (the map panel's
 --- area story returns to its zone's with it); without it the line is plain words.
 function Page:Show(entry)
@@ -2016,26 +2020,23 @@ function Page:Show(entry)
 	local unwritten = entry.unwritten
 	self.unwritten = (type(unwritten) == "function" and unwritten) or (unwritten and C.ContributeGeneral) or nil
 	local contribute = self.contribute
+	-- A page with nothing to read or play (no words, parts, target or Contribute) is a group's or a
+	-- place's: its mark.
+	local empty = entry.text == nil and entry.parts == nil and entry.target == nil and not entry.unwritten
+	self.body.extraBelow = self.unwritten and 34 or 0
 	if entry.parts and self.body.SetParts then
-		-- Under the last part, where the words of a part are the page's.
-		self.body.extraBelow = self.unwritten and 34 or 0
-		self.body.onPartsEnd = function(y)
-			contribute:ClearAllPoints()
-			contribute:SetPoint("TOPLEFT", self.body.child, "TOPLEFT", 0, -(y + 12))
-		end
 		self.body:SetParts(entry.parts)
 	else
-		self.body.extraBelow, self.body.onPartsEnd = 0, nil
 		contribute:ClearAllPoints()
 		contribute:SetPoint("TOPLEFT", self.body.text, "BOTTOMLEFT", 0, -12)
 		local picture = entry.picture
 		self.body:SetPicture(picture and picture.file, picture and picture.mask)
 		-- A page with nothing written says so in one voice on every tab, with Contribute under it.
 		local words = entry.unwritten and C.NotWritten()
-		self.body:SetText(entry.empty and "" or words or entry.text or "")
+		self.body:SetText(words or entry.text or "")
 	end
-	self:PaintMark(entry.empty and not entry.picture)
-	self.empty = entry.empty
+	self:PaintMark(empty and not entry.picture)
+	self.empty = empty
 	self.target = entry.target
 	self:RefreshContribute()
 	self:RefreshPlay()

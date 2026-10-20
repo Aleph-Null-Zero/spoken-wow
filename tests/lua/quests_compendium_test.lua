@@ -964,14 +964,14 @@ do
     Expect("a part with no words known that no pack voices is left out", #page.body.lastParts .. " "
         .. page.body.lastParts[1].heading, "1 " .. L.QUEST_PART_ACCEPT)
     SpokenQuestsText[CANDLES].complete = handInWords
-    -- A quest Forever has that the corpus has no lines for (notext) says nothing is written.
-    local candles, record = SpokenQuestsText[CANDLES], SpokenQuestsCompendium.quests[CANDLES]
-    SpokenQuestsText[CANDLES], record.notext = nil, true
+    -- A quest Forever has that the corpus has no lines for says nothing is written.
+    local candles = SpokenQuestsText[CANDLES]
+    SpokenQuestsText[CANDLES] = nil
     Click("Kobold Camp Cleanup")
     Click("Kobold Candles")
     Expect("a quest with no words in the corpus says nothing is written", PageWords(), SpokenCompendium.NotWritten())
     Expect("...with Contribute under it", page.contribute:IsShown(), true)
-    SpokenQuestsText[CANDLES], record.notext = candles, nil
+    SpokenQuestsText[CANDLES] = candles
     Click("Kobold Camp Cleanup")
     Click("Kobold Candles")
     Expect("...its words back once the corpus has them", PageWords() ~= SpokenCompendium.NotWritten(), true)

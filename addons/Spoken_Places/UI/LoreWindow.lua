@@ -325,8 +325,14 @@ local function OnlyVoiced()
 	return SpokenZones:Get("loreVoicedOnly") == true
 end
 
+-- Asked of every row on every render: kept until the next render, when a pack may have come or gone.
+local voiced = {}
 local function Voiced(mapID, key)
-	return SpokenZones.HasAudio ~= nil and SpokenZones:HasAudio(mapID, key) and true or false
+	local at = mapID .. ":" .. (key or "")
+	if voiced[at] == nil then
+		voiced[at] = SpokenZones.HasAudio ~= nil and SpokenZones:HasAudio(mapID, key) and true or false
+	end
+	return voiced[at]
 end
 
 local function AnyVoiced(mapID)
@@ -503,6 +509,7 @@ end
 -- The list: a banner for each continent, its zones' lines under it, and the opened zones'
 -- areas. While searching, every match a click could reach, with what holds it opened to show it.
 local function BuildRowList()
+	voiced = {}
 	local list = {}
 	local function Add(rows) for _, row in ipairs(rows) do table.insert(list, row) end end
 	local searching = filter ~= ""
@@ -626,13 +633,13 @@ end
 local function ShowEntry()
 	if selection.dungeons then
 		local zone = selection.dungeons
-		page:Show({ title = L.DUNGEONS, subtitle = InAndCount(zone, DungeonCount(zone)), empty = true })
+		page:Show({ title = L.DUNGEONS, subtitle = InAndCount(zone, DungeonCount(zone)) })
 		return
 	end
 	if selection.group then
 		local group = Group(selection.group)
 		local found, total = BannerCount(group.zones())
-		page:Show({ title = group.label(), subtitle = InAndCount(WORLD, found, total), empty = true })
+		page:Show({ title = group.label(), subtitle = InAndCount(WORLD, found, total) })
 		return
 	end
 	local mapID, key = selection.mapID, selection.key
@@ -812,7 +819,6 @@ local function BuildPanel(p)
 		checks = { { label = L.LORE_VOICED_ONLY, get = OnlyVoiced,
 			set = function(on) SpokenZones:Set("loreVoicedOnly", on) end } },
 		build = BuildRowList,
-		unlocked = function() return SpokenZones:Get("showUndiscovered") == true end,
 		isSelected = IsSelected,
 		onClick = OnRowClick,
 		locked = function() return L.NOT_DISCOVERED end,
