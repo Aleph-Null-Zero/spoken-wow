@@ -45,6 +45,44 @@ Expect("Wailing Caverns has the Lady Anacondra and Mutanus first and last",
 Expect("a boss's name in another language is there", SpokenBosses.maps[33][1][1] .. "|" .. tostring(SpokenBosses.maps[33][1].deDE),
     "Rethilgore|Rotkralle")
 
+dofile(ADDONS .. "Spoken_NPCs/Data/Creatures.lua")
+local creatures = SpokenBossCreatures
+local isBoss, notBoss, shared, owner = {}, {}, {}, {}
+for map, bosses in pairs(SpokenBosses.maps) do
+    for _, boss in ipairs(bosses) do isBoss[map .. "/" .. boss.key] = true end
+end
+for map, entries in pairs(creatures) do
+    for key, entry in pairs(entries) do
+        if not isBoss[map .. "/" .. key] then table.insert(notBoss, map .. "/" .. key) end
+        if entry.creature and owner[entry.creature] then table.insert(shared, entry.creature) end
+        if entry.creature then owner[entry.creature] = true end
+    end
+end
+table.sort(notBoss)
+table.sort(shared)
+Expect("every entry of Data/Creatures.lua is a boss of Data/Bosses.lua", table.concat(notBoss, ","), "")
+Expect("...no creature is two bosses', so targeting one shows its own story", table.concat(shared, ","), "")
+local function Face(map, key)
+    local entry = creatures[map] and creatures[map][key]
+    return entry and tostring(entry.creature) .. "/" .. tostring(entry.display) or "none"
+end
+local function Faces(map, keys)
+    local out = {}
+    for _, key in ipairs(keys) do table.insert(out, Face(map, key)) end
+    return table.concat(out, ",")
+end
+Expect("the Ruins of Lordaeron's bosses have their creature and portrait from the database",
+    Faces(2999, { "witherfang", "the abandoned", "rathmael", "bjork" }), "250483/144189,250631/138667,250657/144175,256097/144170")
+Expect("...The Butcher is the game's The Baron, the abomination", Face(2999, "the butcher"), "250660/144188")
+Expect("the Hall of Thanes' bosses have theirs, Infurnus as the game's Magmatus",
+    Faces(3065, { "faldrim anvilmar", "plunder", "durgen dirgehammer", "infurnus" }), "261306/142826,261311/142840,261319/142837,261316/1070")
+Expect("bosses the database lacks have theirs from Efficient Games' records: the City of Dalaran",
+    Faces(2959, { "fel ancient", "mana devourer", "unstable sentinel", "shade of the archmage", "lyn the ignored", "atrexis the grave knight" }),
+    "246003/129894,246008/129895,246017/129954,246020/130061,247032/130235,247126/145787")
+Expect("...the Excavation Site: Wetlands", Faces(2998, { "saltspine", "shadetooth", "relic guardian", "highland horror" }),
+    "260322/144209,260325/144210,260326/144224,260808/9010")
+Expect("...and two of the Karazhan Crypts' Marylas", Faces(2875, { "kaigy maryla", "sairuh maryla" }), "256275/139545,256273/139544")
+
 ---------------------------------------------------------------- the list
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.LoadSpoken(here .. "/../../addons/Spoken/").Addon:Enable()

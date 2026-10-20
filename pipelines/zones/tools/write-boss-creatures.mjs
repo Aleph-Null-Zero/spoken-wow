@@ -7,6 +7,8 @@
 // passive ones, and repeats of a name (the lowest id of a name stays); the first MOST by id are kept.
 // Where the database gives a boss no model or no spells, the Adventure Guide's (retail JournalEncounter
 // tables) fill in: its creature's model where Forever's client has that model, its abilities that name a spell.
+// boss-creatures-manual.json then sets the creature and model of the bosses the database cannot give, each
+// with its evidence, and fails the run on a model the client does not have.
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -48,7 +50,8 @@ function rowFor(map, key) {
 }
 let filledModels = 0;
 let filledSpells = 0;
-for (const boss of await readBosses()) {
+const bosses = await readBosses();
+for (const boss of bosses) {
   const guide = guideOf(boss);
   if (!guide) continue;
   const row = rowFor(boss.map, boss.key);
@@ -88,6 +91,24 @@ for (const entry of manual) {
   row.spells = [...new Set([...entry.spells, ...row.spells])];
   filledManual++;
 }
+// Creatures only Forever has, known from Efficient Games' records of the fight, are not in the database.
+const fixed = JSON.parse(await readFile(join(ROOT, "pipelines/zones/tools/boss-creatures-manual.json"), "utf8"));
+const known = new Set(bosses.map((b) => `${b.map}\t${b.key}`));
+for (const entry of fixed) {
+  const at = `${entry.map}\t${entry.key}`;
+  if (!known.has(at)) throw new Error(`boss-creatures-manual.json: ${entry.map} "${entry.key}" is not a boss in Data/Bosses.lua`);
+  if (entry.display && !models.has(entry.display)) {
+    throw new Error(`boss-creatures-manual.json: ${entry.key}'s display ${entry.display} is not in the client's CreatureDisplayInfo`);
+  }
+  let row = have.get(at);
+  if (!row) {
+    row = { map: entry.map, key: entry.key, creature: null, display: null, spells: [] };
+    have.set(at, row);
+    rows.push(row);
+  }
+  if ("creature" in entry) row.creature = entry.creature;
+  if ("display" in entry) row.display = entry.display;
+}
 rows.splice(0, rows.length, ...rows.filter((r) => r.creature || r.display || r.spells.length));
 
 const maps = {};
@@ -126,4 +147,4 @@ for (const map of Object.keys(maps).map(Number).sort((a, b) => a - b)) {
 }
 lines.push("}", "");
 await writeFile(OUT, lines.join("\r\n"), "utf8");
-console.log(rows.length, "bosses,", withSpells, "with spells ->", OUT, `(guide: ${filledModels} models, ${filledSpells} spell lists; wiki: ${filledWiki} bosses; by hand: ${filledManual})`);
+console.log(rows.length, "bosses,", withSpells, "with spells ->", OUT, `(guide: ${filledModels} models, ${filledSpells} spell lists; wiki: ${filledWiki} bosses; by hand: ${filledManual} spell lists, ${fixed.length} creatures)`);

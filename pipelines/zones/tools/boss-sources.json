@@ -2575,14 +2575,18 @@
   "map": 2999,
   "key": "the abandoned",
   "wikiTitle": "Ruins of Lordaeron",
-  "npcIds": [],
+  "npcIds": [
+   250631
+  ],
   "abilityTitle": null
  },
  {
   "map": 2999,
   "key": "the butcher",
   "wikiTitle": "Othmar Garithos",
-  "npcIds": [],
+  "npcIds": [
+   250660
+  ],
   "abilityTitle": null
  },
  {
@@ -2624,7 +2628,9 @@
   "map": 3065,
   "key": "infurnus",
   "wikiTitle": "Hall of Thanes (instance)",
-  "npcIds": [],
+  "npcIds": [
+   261316
+  ],
   "abilityTitle": null
  },
  {
