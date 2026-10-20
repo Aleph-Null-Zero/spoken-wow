@@ -162,7 +162,7 @@ for _, name in ipairs({ "StoryPlace", "AreaZone", "FoundOn", "AreasIn", "GetSubz
     Z[name] = core[name]
 end
 function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
-for _, file in ipairs({ "UI/ContributeButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupLoreWindow()
@@ -212,7 +212,7 @@ Expect("...no numbers of its own", RowFor("Deadmines").count.text, "")
 Expect("...greyed while not found", RowFor("Deadmines").row.missing, true)
 found["1436/deadmines"] = true
 Z:RefreshLoreWindow(); Shown()
-Expect("...ticked once found, as its area's row was", RowFor("Deadmines").status:IsShown() and not RowFor("Deadmines").row.missing, true)
+Expect("...ticked once found, as its area's row was", RowFor("Deadmines").status:IsShown(), true)
 found["1436/deadmines"] = nil
 showAll = false
 Z:RefreshLoreWindow(); Shown()
@@ -238,7 +238,8 @@ Expect("...opening on a click, a line for each under it by name", Shown(),
 Expect("...one level further in", (RowFor("Razorfen Downs").row.leaf and "leaf" or "group") .. "|" .. RowFor("Razorfen Downs").row.nest, "leaf|2")
 Expect("...the line chosen, its page counting its dungeons in its zone",
     page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
-    "Dungeons and Raids|In The Barrens · 0 of 2 discovered|" .. Z.L.DUNGEONS_PICK)
+    "Dungeons and Raids|In The Barrens · 0 of 2 discovered|")
+Expect("...an empty page: its mark in the middle and no Play", tostring(page.mark:IsShown()) .. " " .. tostring(page.play:IsShown()), "true false")
 Expect("...its row lit as chosen", RowFor("Dungeons and Raids").selected, true)
 Click("Razorfen Downs")
 Expect("Razorfen Downs' page is its story", page.title.text .. ": " .. page.body.text.text, "Razorfen Downs: The quilboars' barrows.")

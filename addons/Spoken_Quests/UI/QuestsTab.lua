@@ -17,7 +17,7 @@
 -- its hand-in each under the face and name of who says it, with Play where a voice pack has it,
 -- or L.QUEST_NOT_FOUND where it does not open. Its hand-in waits until
 -- it is completed, unless Unlock Unstarted Quests is on. A banner's or line's is its name,
--- what holds it and its count on one line, and L.QUESTS_PICK, the quests being on the left to
+-- what holds it and its count on one line, and an empty page with its mark, the quests being on the left to
 -- choose. A place is "In" its holder; a section, a class, profession or event and Place Unknown
 -- are no place and are named as they are. The sections have nothing above them: their line is the
 -- count.
@@ -575,7 +575,8 @@ local chainOpen = {}
 
 local function QuestRow(id, nest)
     return { kind = "quest", leaf = true, quest = id, label = Title(id, filter == ""),
-        nest = nest, locked = not Found(id) and not Unlocked(), going = InProgress(id), done = Completed(id) }
+        nest = nest, locked = not Found(id) and not Unlocked(), going = InProgress(id), done = Completed(id),
+        missing = not QuestsTab:HasWords(id) or not AnyVoiced(id) }
 end
 
 local function Shows(id)
@@ -951,22 +952,25 @@ local function Generalise(text, english)
     return text
 end
 
--- Each moment's words: those kept in this client's language, else the English. Kept words
--- filled for the other sex are not used where the English has a word for each.
--- One part's words, in the client's language where its window was seen, or nil.
-local function PartText(id, moment)
+-- Each moment's words as stored: those kept in this client's language, else the English, or nil.
+-- Kept words filled for the other sex are not used where the English has a word for each.
+local function Stored(id, moment)
     local english = English(id)
     local kept = Kept()
     kept = kept and kept[id]
-    local text
     local own = kept and kept[moment]
-    if type(own) == "table" and own.text and not (own.sex ~= Sex() and (english[moment] or ""):find("%$[Gg]")) then
+    local text = english[moment]
+    if type(own) == "table" and own.text and not (own.sex ~= Sex() and (text or ""):find("%$[Gg]")) then
         text = own.text
     end
-    text = text or english[moment]
-    if text and text ~= "" then return QuestsTab:Fill(text) end
+    if text and text ~= "" then return text end
 end
 
+-- One part's words, in the client's language where its window was seen, or nil.
+local function PartText(id, moment)
+    local text = Stored(id, moment)
+    return text and QuestsTab:Fill(text)
+end
 
 --- Keep what the open quest window shows, in this client's language.
 function QuestsTab:Keep(moment, text, title)
@@ -1010,6 +1014,12 @@ end
 -- Unstarted Quests on, where the player chose to see everything.
 local function Shows(id, moment)
     return moment ~= "complete" or Completed(id) or Unlocked()
+end
+
+-- Whether the page has words to show: the offer's, or the hand-in's where it shows. Looks at the
+-- stored text only, so a row can ask it on every render.
+function QuestsTab:HasWords(id)
+    return Stored(id, "accept") ~= nil or (Shows(id, "complete") and Stored(id, "complete") ~= nil)
 end
 
 -- Who says one moment of a quest: the hand-in is said by the one it is handed
@@ -1147,7 +1157,9 @@ local function FaceSpeaker(id, moment)
     local kind, speaker = Speaker(id, moment)
     local bullet = BULLETS[moment]
     if not speaker then return { bullet = bullet } end
-    if Enums.GUID:IsCreature(kind) then return { creatureID = speaker, bullet = bullet } end
+    if Enums.GUID:IsCreature(kind) then
+        return { creatureID = speaker, displayID = VO.Player:QuestFace(speaker), bullet = bullet }
+    end
     local icon = kind == Enums.GUID.Item and Spoken.QuestItemIcon and Spoken:QuestItemIcon(id) or nil
     return { objectOrItem = true, icon = icon, bullet = bullet }
 end
@@ -1169,15 +1181,18 @@ local function Parts(id)
             if buttons then
                 buttons.play.questID, buttons.report.questID = id, id
                 buttons.report:SetShown(not reportsHidden)
-                buttons.play:SetShown(voiced)
+                buttons.play:Show()
+                if voiced then buttons.play:Enable() else buttons.play:Disable() end
                 PaintPartPlay(buttons.play)
                 list = { buttons.report, buttons.play }
             end
             local name, speaker = PartName(moment), SpeakerName(Speaker(id, moment))
             local face = PartFace(moment)
             if face then face:SetSpeaker(FaceSpeaker(id, moment)) end
-            table.insert(parts, { heading = name, text = text, buttons = list, face = face,
-                caption = face and speaker or nil })
+            -- Who speaks is the heading, over which part it is: Description or Completion.
+            local who = face and speaker and speaker ~= "" and speaker or nil
+            table.insert(parts, { heading = who or name, text = text, buttons = list, face = face,
+                caption = who and name or nil })
         end
     end
     return #parts > 0 and parts or nil
@@ -1303,15 +1318,67 @@ local function Subtitle(id)
     return Where(id)
 end
 
+-- The quest's scroll, with the question mark badge where `done`, else the exclamation mark.
+local function ScrollIcon(done)
+    return { objectOrItem = true, icon = [[Interface\Icons\INV_Scroll_03]], bullet = done and BULLETS.complete or BULLETS.accept }
+end
+
 local function QuestIcon(id)
-    return { objectOrItem = true, icon = [[Interface\Icons\INV_Scroll_03]],
-        bullet = Completed(id) and BULLETS.complete or BULLETS.accept }
+    return ScrollIcon(Completed(id))
+end
+
+-- A chain is quests, so it has the quest's scroll: the question mark badge once every quest in it is done.
+local function ChainIcon(ids)
+    local done = #ids > 0
+    for _, id in ipairs(ids) do
+        if not Completed(id) then
+            done = false
+            break
+        end
+    end
+    return ScrollIcon(done)
+end
+
+-- The pages that are no place and no quest have an icon that fits: a class's own, a profession's, a
+-- holiday's. Each is checked against the client's files, since a texture it lacks draws solid green;
+-- one it lacks falls back to the section's icon, then to the question mark.
+local ICON_DIR = [[Interface\Icons\]]
+local SECTION_ICONS = {
+    classes = "INV_Misc_Book_09", professions = "Trade_Engineering", events = "INV_Misc_Gift_01",
+    other = "INV_Misc_Bag_08", lands = "INV_Misc_Map_01", battlegrounds = "INV_BannerPVP_02",
+}
+local SORT_ICONS = {
+    -- Classes (QuestSort).
+    [61] = "ClassIcon_Warlock", [81] = "ClassIcon_Warrior", [82] = "ClassIcon_Shaman", [141] = "ClassIcon_Paladin",
+    [161] = "ClassIcon_Mage", [162] = "ClassIcon_Rogue", [261] = "ClassIcon_Hunter", [262] = "ClassIcon_Priest",
+    [263] = "ClassIcon_Druid",
+    -- Professions.
+    [24] = "Trade_Herbalism", [101] = "Trade_Fishing", [121] = "Trade_BlackSmithing", [181] = "Trade_Alchemy",
+    [182] = "Trade_LeatherWorking", [201] = "Trade_Engineering", [264] = "Trade_Tailoring", [304] = "INV_Misc_Food_15",
+    [324] = "INV_Misc_Bandage_15", [666] = "Spell_Fire_Fire",
+    -- Holidays and events.
+    winterveil = "INV_Holiday_Christmas_Present_01", hallowsend = "INV_Misc_Bag_28_Halloween",
+    loveisintheair = "INV_Misc_Gift_02", harvestfestival = "INV_Misc_Food_15",
+}
+
+local function Present(name)
+    if not name then return nil end
+    local path = ICON_DIR .. name
+    -- A client without the lookup is trusted.
+    if _G.GetFileIDFromPath and GetFileIDFromPath(path) == nil then return nil end
+    return path
+end
+
+local function GroupIcon(sort, section)
+    local path = Present(sort and SORT_ICONS[sort]) or Present(section and SECTION_ICONS[section])
+    if not path then return C.UnknownIcon(nil) end
+    return { objectOrItem = true, icon = path }
 end
 
 local function ShowEntry()
     if not page then return end
     if not selection then
-        page:Show({ title = L.COMPENDIUM_QUESTS, subtitle = Count(Index().all), text = L.QUESTS_PICK })
+        page:Show({ title = L.COMPENDIUM_QUESTS, subtitle = Count(Index().all) })
         return
     end
     local up = Holder(selection)
@@ -1321,7 +1388,7 @@ local function ShowEntry()
         local holder, place
         if selection.where then holder, place = HolderName(selection.where) end
         page:Show({ title = ChainLabel(selection.first or First(ids[1]), selection.nth),
-            subtitle = Line(SetOf(ids), holder, place), text = L.QUESTS_PICK })
+            subtitle = Line(SetOf(ids), holder, place), icon = ChainIcon(ids) })
         return
     end
     if selection.quest then
@@ -1331,31 +1398,32 @@ local function ShowEntry()
             return
         end
         -- Play and Report on each part's heading, not the page's: each part is said at its own time.
-        -- A quest Forever has that the corpus has no lines for yet says so, not that none are known.
-        local record = Quests()[id]
-        page:Show({ title = Title(id), subtitle = Subtitle(id), parts = Parts(id), icon = QuestIcon(id),
-            text = record and record.notext and L.QUEST_NO_WORDS_YET or L.QUEST_NO_TEXT })
+        local parts = Parts(id)
+        page:Show({ title = Title(id), subtitle = Subtitle(id), parts = parts, icon = QuestIcon(id),
+            unwritten = not QuestsTab:HasWords(id) })
         return
     end
     if selection.dungeon then
         -- In the zone of its entrance, whose line holds it.
         local zone = tonumber(selection.dungeon:match("^d(%d+)"))
         local place = zone and selection.map and { mapID = zone, dungeon = selection.map } or nil
-        page:Show({ title = selection.label, subtitle = Line(SetOf(selection.ids), zone and C.MapName(zone), true), text = L.QUESTS_PICK, icon = C.PlaceIcon(zone, selection.map), picture = place and C.PlacePicture(place) or nil })
+        page:Show({ title = selection.label, subtitle = Line(SetOf(selection.ids), zone and C.MapName(zone), true), icon = C.PlaceIcon(zone, selection.map), picture = place and C.PlacePicture(place) or nil })
         return
     end
     local banner = selection.section and ZONE_BANNERS[selection.section]
     if banner then
         local set = {}
         for _, mapID in ipairs(banner.zones()) do QuestsIn(mapID, set) end
-        page:Show({ title = L[banner.label], subtitle = Line(set, C.MapName(C.WORLD), true), text = L.QUESTS_PICK })
+        page:Show({ title = L[banner.label], subtitle = Line(set, C.MapName(C.WORLD), true),
+            icon = GroupIcon(nil, selection.section) })
         return
     end
     -- Classes, Professions, Holidays and Events and Other are no place: their count alone.
     if selection.section then
         for _, section in ipairs(SECTIONS) do
             if section.key == selection.section then
-                page:Show({ title = L[section.label], subtitle = Count((SectionSet(section.key))), text = L.QUESTS_PICK })
+                page:Show({ title = L[section.label], subtitle = Count((SectionSet(section.key))),
+                    icon = GroupIcon(nil, section.key) })
             end
         end
         return
@@ -1363,11 +1431,13 @@ local function ShowEntry()
     -- A sort's line, and Place Unknown's, names the section that holds it, which is no place.
     if selection.sort then
         page:Show({ title = SortName(selection.sort),
-            subtitle = Line(SetOf(Index().sorts[selection.sort]), SectionName(SectionOf(selection.sort))), text = L.QUESTS_PICK })
+            subtitle = Line(SetOf(Index().sorts[selection.sort]), SectionName(SectionOf(selection.sort))),
+            icon = GroupIcon(selection.sort, SectionOf(selection.sort)) })
         return
     end
     if selection.group == "elsewhere" then
-        page:Show({ title = L.QUESTS_ELSEWHERE, subtitle = Line(SetOf(Index().elsewhere), SectionName("other")), text = L.QUESTS_PICK })
+        page:Show({ title = L.QUESTS_ELSEWHERE, subtitle = Line(SetOf(Index().elsewhere), SectionName("other")),
+            icon = C.UnknownIcon(nil) })
         return
     end
     local set = {}
@@ -1376,7 +1446,7 @@ local function ShowEntry()
     else
         QuestsIn(selection.mapID, set)
     end
-    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, ZoneHolderName(up), true), text = L.QUESTS_PICK, icon = C.PlaceIcon(selection.mapID), picture = C.PlacePicture({ mapID = selection.mapID }) })
+    page:Show({ title = C.MapName(selection.mapID), subtitle = Line(set, ZoneHolderName(up), true), icon = C.PlaceIcon(selection.mapID), picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
 --------------------------------------------------------------------------------
@@ -1522,6 +1592,7 @@ local function Build(panel)
         isSelected = IsSelected,
         onClick = OnClick,
         locked = function() return C.LockedReason("OPT_UNLOCK_QUESTS") end,
+        hint = function(item) return item.kind == "quest" and L.QUESTS_SHIFT_QUEUE or nil end,
         onHidden = OnHidden,
         onSearch = function(text)
             filter = text
