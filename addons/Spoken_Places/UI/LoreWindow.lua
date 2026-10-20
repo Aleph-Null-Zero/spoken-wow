@@ -411,11 +411,9 @@ local function DungeonRows(zone, nest, whole)
 		local isFound = Found(dungeon.mapID, dungeon.key) and true or false
 		if not OnlyVoiced() or Voiced(dungeon.mapID, dungeon.key) then
 			if (isFound or not OnlyFound()) and (filter == "" or whole or Matches(dungeon.name)) then
-				local icon, iconCrop
-				if Spoken and Spoken.DungeonIcon then icon, iconCrop = Spoken:DungeonIcon(dungeon.dungeon) end
-				table.insert(cards, { style = "card", kind = "dungeon", mapID = dungeon.mapID, key = dungeon.key,
+				table.insert(cards, { style = "group", kind = "dungeon", mapID = dungeon.mapID, key = dungeon.key,
 					label = dungeon.name, nest = several and nest + 1 or nest, dungeon = dungeon.dungeon,
-					icon = icon, iconCrop = iconCrop, count = 0, total = 0, ratio = 0, tick = isFound,
+					count = 0, total = 0, ratio = 0, tick = isFound,
 					none = not isFound, missing = SpokenZones:IsPending(dungeon.entry) })
 			end
 		end
@@ -472,10 +470,8 @@ local function ZoneRows(mapID, nest, whole)
 	local shown
 	if searched then shown = not searchClosed[closeKey] else shown = open end
 	-- With no areas of its own (Thunder Bluff), nothing to count: no line, share or bar.
-	local icon, iconCrop
-	if Spoken and Spoken.ZoneIcon then icon, iconCrop = Spoken:ZoneIcon(mapID) end
-	local rows = { { style = "card", kind = "zone", mapID = mapID, label = zoneName, nest = nest,
-		count = found, total = total, icon = icon, iconCrop = iconCrop,
+	local rows = { { style = "group", kind = "zone", mapID = mapID, label = zoneName, nest = nest,
+		count = found, total = total,
 		ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
 		none = found == 0 and not Found(mapID),
 		open = searched and shown and #inside > 0 or not searched and shown,

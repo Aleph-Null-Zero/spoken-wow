@@ -414,17 +414,12 @@ local function Leaves(ids, nest, into, whole)
 	end
 end
 
--- A zone's or a dungeon's card or a line, with its numbers: the found out of all, the share and the
--- bar. A zone's card has the zone's painting for a badge, a dungeon's a key; a line has none.
-local function Card(item, found, total)
-	item.style = (item.kind == "zone" or item.kind == "dungeon") and "card" or "group"
+-- A zone's, a dungeon's or a kind of writing's line, with its numbers: the found out of all and the
+-- share.
+local function Counted(item, found, total)
+	item.style = "group"
 	item.count, item.total = found, total
 	item.asLeft = asLeft
-	if item.kind == "zone" and Spoken and Spoken.ZoneIcon then
-		item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID)
-	elseif item.kind == "dungeon" and Spoken and Spoken.DungeonIcon then
-		item.icon, item.iconCrop = Spoken:DungeonIcon(item.dungeon)
-	end
 	item.ratio = total > 0 and found / total or 0
 	item.tick = total > 0 and found == total
 	item.none = found == 0
@@ -454,7 +449,7 @@ local function Lines(lines, nest, into, item, opened, whole)
 					closed = not SearchOpens(card.closeKey)
 				end
 				card.label, card.nest, card.open = line.label, nest, not closed
-				table.insert(into, Card(card, Tally(set)))
+				table.insert(into, Counted(card, Tally(set)))
 				if not closed then
 					for _, row in ipairs(leaves) do table.insert(into, row) end
 				end
@@ -501,7 +496,7 @@ local function DungeonCard(mapID, map, nest, whole)
 	if filter ~= "" and #inside == 0 and not whole then return {} end
 	local shown
 	if filter ~= "" and not asLeft then shown = SearchOpens("d" .. key) else shown = open end
-	return Holding(Card({ kind = "dungeon", mapID = mapID, dungeon = map, label = name, nest = nest,
+	return Holding(Counted({ kind = "dungeon", mapID = mapID, dungeon = map, label = name, nest = nest,
 		open = shown and #inside > 0, closeKey = "d" .. key }, found, total), inside, shown)
 end
 
@@ -533,7 +528,7 @@ local function DungeonRows(mapID, nest, whole)
 	if filter ~= "" and #inside == 0 and not whole then return {} end
 	local shown
 	if filter ~= "" and not asLeft then shown = SearchOpens("ds" .. mapID) else shown = open end
-	return Holding(Card({ kind = "dungeons", mapID = mapID, label = L.GROUP_DUNGEONS, nest = nest,
+	return Holding(Counted({ kind = "dungeons", mapID = mapID, label = L.GROUP_DUNGEONS, nest = nest,
 		open = shown and #inside > 0, closeKey = "ds" .. mapID }, found, total), inside, shown)
 end
 
@@ -564,7 +559,7 @@ local function ZoneRows(mapID, nest, whole)
 	-- Closed with a click during this search: the card alone.
 	local shown
 	if filter ~= "" and not asLeft then shown = searched else shown = open end
-	return Holding(Card({ kind = "zone", mapID = mapID, label = MapName(mapID), nest = nest,
+	return Holding(Counted({ kind = "zone", mapID = mapID, label = MapName(mapID), nest = nest,
 		open = shown and #inside > 0, closeKey = "z" .. mapID }, found, total), inside, shown)
 end
 

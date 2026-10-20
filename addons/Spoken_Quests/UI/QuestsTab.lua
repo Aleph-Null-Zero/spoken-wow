@@ -585,22 +585,13 @@ local function Shows(id)
         and (not Filtering() or Matches(Title(id)) or Matches(english))
 end
 
--- A card's or a line's numbers: the completed (a card's share and its bar) out of all, and how
--- many more are in progress. A card's badge: a zone's painting, a dungeon's key. A line has none.
-local function Card(item, found, total, going)
+-- A line's numbers: the completed (and their share) out of all, and how many more are in progress.
+local function Counted(item, found, total, going)
     local done = found - going
-    -- Places are cards: zones, cities, dungeons. A kind of quest (a class, a profession, a holiday,
-    -- a zone's several dungeons) and a chain are lines of the list, what they hold under them.
-    local place = item.kind == "zone" or item.kind == "dungeon" or (item.kind == "dungeons" and item.place)
-    item.style = place and "card" or "group"
+    item.style = "group"
     -- `found`, completed or under way, is what opens: a chain with one quest started has that to show.
     item.count, item.total, item.goingCount, item.found = done, total, going, found
     item.asLeft = asLeft
-    if item.kind == "zone" then
-        if Spoken and Spoken.ZoneIcon then item.icon, item.iconCrop = Spoken:ZoneIcon(item.mapID) end
-    elseif (item.kind == "dungeons" or item.kind == "dungeon") and Spoken and Spoken.DungeonIcon then
-        item.icon, item.iconCrop = Spoken:DungeonIcon(item.dungeon)
-    end
     item.ratio = total > 0 and done / total or 0
     item.tick = total > 0 and done == total
     item.none = found == 0
@@ -624,7 +615,7 @@ local function ChainRows(where, first, ids, nest, nth)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    return Rows(Card({ kind = "chain", key = key, ids = ids, first = first, nth = nth, label = label, nest = nest,
+    return Rows(Counted({ kind = "chain", key = key, ids = ids, first = first, nth = nth, label = label, nest = nest,
         where = where, open = #inside > 0 }, found, total, going), inside, "c" .. key)
 end
 
@@ -750,7 +741,7 @@ local function DungeonRows(mapID, byDungeon, nest)
                 return rows
             end)
             if not Unlisted(f, t) and not (Filtering() and #leaves == 0) then
-                for _, row in ipairs(Rows(Card({ kind = "dungeon", key = dkey, dungeon = dungeon, ids = ids, label = name,
+                for _, row in ipairs(Rows(Counted({ kind = "dungeon", key = dkey, dungeon = dungeon, ids = ids, label = name,
                     nest = nest + 1, open = #leaves > 0 }, f, t, g), leaves, "d" .. dkey)) do
                     table.insert(out, row)
                 end
@@ -759,7 +750,7 @@ local function DungeonRows(mapID, byDungeon, nest)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    return Rows(Card({ kind = "dungeons", key = key, ids = all, label = label, nest = nest, place = #dungeons == 1,
+    return Rows(Counted({ kind = "dungeons", key = key, ids = all, label = label, nest = nest,
         dungeon = #dungeons == 1 and dungeons[1] or nil,
         open = #inside > 0 }, found, total, going), inside, "d" .. key)
 end
@@ -785,7 +776,7 @@ local function ZoneRows(mapID, nest)
         return out
     end)
     if Filtering() and #inside == 0 then return {} end
-    return Rows(Card({ kind = "zone", mapID = mapID, label = C.MapName(mapID), nest = nest,
+    return Rows(Counted({ kind = "zone", mapID = mapID, label = C.MapName(mapID), nest = nest,
         open = (open or Searched()) and #inside > 0 }, found, total, going), inside, "z" .. mapID)
 end
 
@@ -800,7 +791,7 @@ local function GroupRows(kind, key, label, ids)
         return out
     end)
     if Filtering() and #leaves == 0 then return {} end
-    return Rows(Card({ kind = kind, key = key, label = label, nest = 0, open = #leaves > 0 },
+    return Rows(Counted({ kind = kind, key = key, label = label, nest = 0, open = #leaves > 0 },
         found, total, going), leaves, "g" .. key)
 end
 

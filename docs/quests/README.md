@@ -1622,31 +1622,31 @@ are in progress. The list follows the log while it is open (`QUEST_LOG_UPDATE`,
 `QUEST_ACCEPTED`, `QUEST_REMOVED`, drawn again once a burst is over and only when the log's
 quests changed). The rest are locked unless Unlock Unstarted Quests is on, which Spoken's page
 shows in its Compendium section. The filter menu holds Started Only and Voiced Only, which leaves
-out the quests no voice pack has the offer or the hand-in of, with any card or banner left with nothing, and counts
+out the quests no voice pack has the offer or the hand-in of, with any line or banner left with nothing, and counts
 only what it lists. That switch and both filters are kept in
 `SpokenQuestsSettings.global.Compendium`.
 
-The list is the Compendium's cards. Its top level is a banner for each continent, holding a card
-for each zone with quests (a city a small card inside its zone's); an Other Lands banner holding
-a card for each zone on no continent the client knows (Zephras Isle, whose map hangs under
+The list is the Compendium's banners and lines. Its top level is a banner for each continent, holding a line
+for each zone with quests (a city a line inside its zone's); an Other Lands banner holding
+a line for each zone on no continent the client knows (Zephras Isle, whose map hangs under
 Azeroth), as the Places tab lists them; a Battlegrounds banner holding Alterac Valley, Warsong
 Gulch, Arathi Basin and Darkspear Islands, whatever map the client hangs them under (Forever's
 newer client puts Alterac Valley in Hillsbrad Foothills, its older one under Azeroth, where no
 continent's list reached it); a map the client has never heard of (Forever's Zephras Isle and
-Darkspear Islands on Era) has no card, and its quests are neither listed nor counted; then a
+Darkspear Islands on Era) has no line, and its quests are neither listed nor counted; then a
 banner each for Classes, Professions (Camping, 666, with them: its quests are Camping 101 for
 one profession or another), Holidays and Events and Other, holding a line of the list for each
 class, profession, season or other QuestSort, and Place Unknown under Other. Banners are for
-continents and types, cards for places alone (zones, cities, dungeons), and everything else is a
+continents and types, and everything else, places included, is a
 line of the list with what it holds under it. The tab names some groups itself (`GROUP_NAMES`):
 Special (284) is Children's Week, under Events, as it holds nothing else; Reputation (367) is
 Commendation Signets, its hand-ins; Invasion (368) is Scourge Invasion, as the German and
 Chinese clients call it; and the groups the client has no QuestSort for, a word in the data
 (`winterveil`, `hallowsend`, `loveisintheair` and `harvestfestival` under Events, `argentdawn`
-and `library` under Other), take their names from the strings. Inside a zone's card, its
-dungeons' and raids' quests (those with `dungeon`) are the dungeon's card, named as Spoken's
+and `library` under Other), take their names from the strings. Inside a zone, its
+dungeons' and raids' quests (those with `dungeon`) are the dungeon's line, named as Spoken's
 `Data/Dungeons.lua` names it in the client's language; where the zone has several (Searing Gorge
-holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a card
+holds Blackrock Mountain's four) they are a line of the list, Dungeons and Raids, with a line
 for each dungeon under it.
 The tab lands on the player's zone, opened; where it has no quests, or Started Only or Voiced
 Only leaves it out, on the player's continent, as Places and Readables land, else on the first continent
@@ -1654,15 +1654,12 @@ listed (there is no Azeroth row). A switch in the filter menu that leaves out th
 (`onHidden`) lands again where the tab chose it, and otherwise chooses the nearest row above it
 that is still listed: a quest's zone or group, a zone's continent. The list is drawn in the game's own art
 (`UI/Compendium.lua`, plain colours where a client lacks an atlas): a banner is the objective
-tracker's campaign header for the player's faction, without its crest, and a card is Classic's
-character select card, both silvered. A zone's card shows its painting (`Spoken:ZoneIcon`) in the
-collections window's frame, silvered as the card is, greyed with none started; a dungeon's card a
-key in the same frame. On the card's
-right, level with its name, are the quest mark with how many of its quests
+tracker's campaign header for the player's faction, without its crest. A zone's or a dungeon's line has its
+plus or minus and its name, and on its right the quest mark with how many of its quests
 are in progress, the quests completed out of all and the share completed (or, once all are, the
-quest log's gold tick), and the Pet Journal's bar along its foot is filled as far. A banner counts
+quest log's gold tick). Its picture is on its page. A banner counts
 completed out of all. A quest's row has the gold tick once completed and the quest mark while in progress.
-Chosen, a banner's, card's or line's page has one line under its name, what holds it and its
+Chosen, a banner's or line's page has one line under its name, what holds it and its
 count, parted by " · ". A place is "In" its holder ("In Eastern Kingdoms · 1 of 88 completed, 2 in
 progress"): a zone is in its continent, Other Lands or Battlegrounds, a city in its zone, a
 continent, Other Lands and Battlegrounds in Azeroth, and a dungeon in the zone of its entrance. A class, profession or season
@@ -1681,7 +1678,7 @@ language), else the title of the chain's first quest this character may take, wh
 quest is (`ChainName`): Rude Awakening, the Undead's, does not name the chain an Orc joins later.
 Where one place has two or more chains of one name (Warsong Gulch's six Fight for Warsong Gulch),
 each is numbered on its line and its page, "Fight for Warsong Gulch (2)", in the order of their
-first quests' ids. The line has no badge or bar; its numbers count its quests as a zone's card
+first quests' ids. Its numbers count its quests as a zone's line
 does. A chain that runs through several zones has a line in each, for its quests there. Chosen, a chain's page has
 its name, what lists it (the zone, dungeon or group that holds it) and how many of its quests
 are completed and in progress, and asks for one of its quests
