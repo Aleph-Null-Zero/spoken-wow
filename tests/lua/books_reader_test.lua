@@ -27,6 +27,7 @@ local B = LoadBooks()
 B:InitDB()
 B:SetupSource()
 dofile(BOOKS .. "Data/Books.lua")
+dofile(BOOKS .. "Data/Variants.lua")
 
 -- Two real pages of one real book: the Hillsbrad Town Registry, whose first page names the
 -- town and whose second lists its debts.
@@ -116,6 +117,22 @@ Expect("a picture page has no words to find it by", B:PageOnScreen(), nil)
 
 stub.ShowPage({ title = "Thurman's Letter", number = 2, text = "Words  nobody\nwrote." })
 Expect("words the corpus does not have are still nil", B:PageOnScreen(), nil)
+
+---------------------------------------------------------------- the same page in other words
+-- Pages as the Forever server words them (Data/Variants.lua): a spelling the server corrects,
+-- a page it keeps under another id, a page rewritten after Classic. Each plays its corpus page.
+local MORGAN_3 = "someday be reunited with his wife and children.\n\nMorgan would eventually return to his homeland, but find it nothing like how he remembered it. The once verdant forest was corrupted and teemed with the undead and other dark forces. Destroyed houses and farms could be found everywhere, and the cemetery near Raven Hill now dominated much of the area. A shocked and bewildered Morgan eventually made his way to his home, only to find it in ruins. Not knowing what had befallen his homeland, he"
+stub.ShowPage({ title = "The Story of Morgan Ladimore", number = 3, text = MORGAN_3 })
+Expect("a page the server spells differently is found as its corpus page", B:PageOnScreen(), 66)
+
+local NEEKA_3 = "The Badlands are filled with enemies. Ogres roam the blistering sands, ambushing the unwary. Darkiron dwarves inhabit a barracks east of Kargath and battle their lighter-skinned cousins in Loch Modan to the north. Brutal, primitive beasts called Troggs haunt any scrap of shade they find and defend it savagely.$B$BAnd in eastern Badlands in the Lethlor Ravine there are dragons. We don't know how many and we don't know how big, since scouts who get too close never return."
+stub.ShowPage({ title = "Neeka's Report", number = 3, text = NEEKA_3 })
+Expect("...and one it keeps under another id, as the page at its place in the book", B:PageOnScreen(), 792)
+
+-- The server's chain skips page 1774, so this is its second page.
+local SARGERAS_3 = "Although Sargeras' nearly limitless powers made short work of the shambling demons he found throughout the Great Dark, he was greatly troubled by the creatures' corruption and all-consuming evil. Incapable of fathoming such depravity, the great Titan began to slip into a brooding depression. Despite his growing unease, Sargeras rid the universe of demonic entities by trapping them within a corner of the Twisting Nether."
+stub.ShowPage({ title = "Sargeras and the Betrayal", number = 2, text = SARGERAS_3 })
+Expect("...and one rewritten, under whichever number the server gives it", B:PageOnScreen(), 1775)
 
 print(Failures() == 0 and "All books reader tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

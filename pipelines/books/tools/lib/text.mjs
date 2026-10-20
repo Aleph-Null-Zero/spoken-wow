@@ -102,6 +102,19 @@ export function spokenText(text) {
 }
 
 /**
+ * A page's words with the layout gone: entities as their characters, an aside's brackets
+ * dropped, every run of whitespace one space. The addon's FlatWords in Checksum.lua, which
+ * finds a page this way when a server lays it out differently; a caption (spokenText) and
+ * the page it was made from give the same result. ASCII whitespace only, as Lua's %s.
+ */
+export function flatWords(text) {
+  return String(text ?? "")
+    .replace(/&([A-Za-z]+);/g, (match, name) => ENTITIES[name] ?? match)
+    .replace(/[<> \t\n\r\f\v]+/g, " ")
+    .replace(/^ | $/g, "");
+}
+
+/**
  * Whether this page can be voiced, and if not, why.
  *
  * Mirrors the quests corpus's `generatable`/`skipReason` pair: a page that cannot be

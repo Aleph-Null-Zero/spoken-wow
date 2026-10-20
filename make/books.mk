@@ -17,7 +17,7 @@
 # MYSQL_PASSWORD turns this into an access-denied error that reads like a missing dump.
 
 .DEFAULT_GOAL := help
-.PHONY: help db extract import export places lookup deploy deploy-copy status remove \
+.PHONY: help db extract import export places variants lookup deploy deploy-copy status remove \
         import-locale pull-history pull-live pull-recorded package-acted acted sounds sync check-synced package package-audio release-dry release \
         release-audio-dry release-audio icon test \
         full-release
@@ -51,6 +51,11 @@ export: ## book_line -> addons/Spoken_Readables/Data/Books.lua (needs DATABASE_U
 # by default; PLACES_MYSQL_* in .env) and the client's map tables from wago.tools.
 places: ## world DB + client maps -> addons/Spoken_Readables/Data/Places.lua
 	@node $(PIPELINE)/tools/places.mjs
+
+# The pages that world DB shows in other words than Books.lua's, as aliases of the corpus page.
+# The same DB and client tables as places; run it again after an export.
+variants: ## world DB + Books.lua -> addons/Spoken_Readables/Data/Variants.lua
+	@node $(PIPELINE)/tools/variants.mjs
 
 lookup: ## take -> the pack's Data/Sounds.lua (LOCALE=xx: into build/books/xx; needs DATABASE_URL)
 	@node $(PIPELINE)/tools/build-lookup.mjs --lang=$(or $(LOCALE),enUS)

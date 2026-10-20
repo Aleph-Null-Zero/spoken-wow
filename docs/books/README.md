@@ -163,11 +163,19 @@ three.
 
 **A page is identified by what is on screen**, because the client never says which page id
 it is showing. Title, page number and a checksum of the text; then the checksum alone,
-where no other page shares it; then the words with the layout ignored (`PageByWords`: every
-run of whitespace one space, an aside's brackets dropped), for a server that breaks a page's
-lines or spaces its sentences differently, by title and number first and then where no other
-page has the same words; then nothing. Nothing is the right last answer: the alternative is
-reading the wrong page's words aloud.
+where no other page shares it, or in `Data/Variants.lua`; then the words with the layout
+ignored (`PageByWords`: every run of whitespace one space, an aside's brackets dropped), for a
+server that breaks a page's lines or spaces its sentences differently, by title and number
+first and then where no other page has the same words; then nothing. Nothing is the right last
+answer: the alternative is reading the wrong page's words aloud.
+
+**`Data/Variants.lua` holds the pages a server words differently.** `make books-variants`
+(`pipelines/books/tools/variants.mjs`) reads every chain the Forever world DB can show, as
+Reader.lua would, and gives each page the reader misses the checksum of the server's text as an
+alias of the corpus page it stands for: its own id, or the page at its place in the readable
+when the server gives it another id. The clip that plays is the corpus page's, in the corpus's
+words. Left out: pages whose text the client fills in (`$N`, `$g`), pages with no words, and
+words the corpus has for another page, which are that readable's. Run it again after an export.
 
 **The checksum is the load-bearing part.** `pipelines/books/tools/lib/naming.mjs` and
 `addons/Spoken_Readables/Checksum.lua` must produce the same number for the same text, over

@@ -127,7 +127,7 @@ local WORD_ENTITIES = { amp = "&", quot = "\"", apos = "'", nbsp = " ", lt = "<"
 --- dropped, every run of whitespace one space. Servers lay the same page out differently (a
 --- line break where another has a space, two spaces after a full stop), which changes the
 --- checksum and not a word. A Books.lua caption, written by spokenText, gives the same
---- result as the page it was made from.
+--- result as the page it was made from. Mirrors flatWords in tools/lib/text.mjs.
 ---@param text string a caption, or a page already through Normalise
 ---@return string
 function SpokenBooks:FlatWords(text)

@@ -10,8 +10,9 @@
 --
 --   1. title + page number + checksum   -- the normal path
 --   2. checksum alone                   -- for a client whose object name differs from the
---                                          corpus's; only for checksums no other page shares
---   3. the words, layout ignored        -- for a server that breaks the lines differently;
+--                                          corpus's; only for checksums no other page shares,
+--                                          and a server's other wording of a page (variants)
+--   3. the words, layout ignored       -- for a server that breaks the lines differently;
 --                                          by title and number, then words no other page has
 --   4. nothing                          -- silently, because the alternative is reading the
 --                                          wrong page's words aloud
@@ -51,6 +52,13 @@ local function Find(index, title, number, checksum)
 	-- The fallback. `loose` holds only checksums no other page shares, so a hit here is
 	-- the page, not a guess between candidates.
 	found = index.loose and index.loose[checksum]
+	if found then
+		return found
+	end
+
+	-- A page a server shows in other words than the corpus's (Data/Variants.lua), as the page
+	-- it stands for.
+	found = index.variants and index.variants[checksum]
 	if found then
 		return found
 	end
