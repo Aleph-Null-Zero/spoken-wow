@@ -1225,7 +1225,13 @@ end
 -- completed, not those in progress too).
 local function Toggle(row, item, onlyFound)
 	local count = item.found or item.count or 0
-	local opens = ((item.total or count) > 0) and not item.locked and not (onlyFound and count == 0)
+	-- A card with nothing inside it (a dungeon's, a city with no areas) has nothing to open: no
+	-- button, rather than a disabled one that does nothing.
+	if (item.total or count) <= 0 then
+		row.toggle:Hide()
+		return
+	end
+	local opens = not item.locked and not (onlyFound and count == 0)
 	local atlas = opens and item.open and "questlog-icon-shrink" or "questlog-icon-expand"
 	if Atlas(row.toggle, atlas) then
 		if row.toggle.SetDesaturated then row.toggle:SetDesaturated(not opens) end
