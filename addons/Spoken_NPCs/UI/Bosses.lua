@@ -347,6 +347,8 @@ end
 -- How fast a story is read, in words a second, and the least time one stays in the narrator.
 local READING_SPEED, LEAST_SECONDS = 2.5, 6
 
+local SKULL = [[Interface\TargetingFrame\UI-RaidTargetingIcon_8]]
+
 --- The story of the boss `key` of `map` as a line for Spoken's narrator, words with no voice; nil
 --- where it has none.
 function NPCs:StoryClip(map, key)
@@ -358,8 +360,7 @@ function NPCs:StoryClip(map, key)
 	end
 	if not boss then return nil end
 	local _, words = story:gsub("%S+", "")
-	local known = _G.SpokenBossCreatures
-	local entry = known and known[map] and known[map][key]
+	local entry = Creature(map, key)
 	return {
 		key = "boss:" .. map .. ":" .. key,
 		textOnly = true,
@@ -370,7 +371,7 @@ function NPCs:StoryClip(map, key)
 			transcript = story,
 			bullet = "boss",
 			portrait = entry and entry.display and { kind = "model", creatureID = entry.creature, displayID = entry.display }
-				or { kind = "texture", texture = [[Interface\TargetingFrame\UI-RaidTargetingIcon_8]] },
+				or { kind = "texture", texture = SKULL },
 		},
 	}
 end
@@ -396,7 +397,6 @@ local MASK = [[Interface\CharacterFrame\TempPortraitAlphaMask]]
 local PLATE_REST, PLATE_HOVER, HOVER_ALPHA = 0.3, 0.7, 0.35
 local BUTTON, ICON, EDGE, GAP = 40, 36, 14, 12
 local NAME_SIZE, SUB_SIZE, LINE_GAP = 16, 12, 2
-local SKULL = [[Interface\TargetingFrame\UI-RaidTargetingIcon_8]]
 local cards
 
 -- The skull in the ring's small socket, where a quest's portrait has its badge.
