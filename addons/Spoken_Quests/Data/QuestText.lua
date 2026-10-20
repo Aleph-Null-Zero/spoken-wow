@@ -16564,7 +16564,7 @@ SpokenQuestsText = {
 	},
 	[87760] = {
 		accept = "I have received word back from Darnassus, $N!\n\nFrom the animal samples, we learned that the naga dominated these sea creatures to use as unwilling mounts and beasts of burden. The ones that were too obstinate, or too old or badly injured, they drove out for sport. Monstrous!\n\nIt is our sacred duty to put a stop to this!\n\nThe naga have forces in the Ruins of Mathystra, and they must be seizing threshers from off the shore. Find their beastmistress, slay her, and bring back her tools of domination!",
-		complete = "This has been a long journey, Orangequake, but it was worth it.\n\nAt long last, you have wrested away the rod that the naga use to compel the sea creatures into their service. I will make sure it is destroyed, and the threshers and sea turtles can finally live in peace.\n\nThank you again. Your persistence has finally been rewarded, and I, personally, am grateful to you.",
+		complete = "This has been a long journey, $n, but it was worth it.\n\nAt long last, you have wrested away the rod that the naga use to compel the sea creatures into their service. I will make sure it is destroyed, and the threshers and sea turtles can finally live in peace.\n\nThank you again. Your persistence has finally been rewarded, and I, personally, am grateful to you.",
 	},
 	[88756] = {
 		accept = "The Dark Irons have a few camps east of here on Direforge Hill, and they've stolen a bunch of explosives from our construction site and hauled 'em back to their tents.\n\nI don't need tae tell ya what kinda mischief Dark Irons can get up tae with a barrel o' powder!\n\nI know the Dark Irons are dangerous, but we need those barrels back. You can tell 'em from other barrels because of the red markings on 'em. We cannae let the Dark Irons keep 'em!",
@@ -16653,7 +16653,7 @@ SpokenQuestsText = {
 	},
 	[91746] = {
 		accept = "The trophy serves as an impressive reminder of your victory over Elmpaw. A local hunter or skinner might be interested to hear the story.",
-		complete = "So, you took down Elmpaw? Very impressive, Ingmmar!\n\nLet me give you something in return for your trophy - I know a few collectors who will pay quite well to have this on their mantle once I've prepared it.",
+		complete = "So, you took down Elmpaw? Very impressive, $n!\n\nLet me give you something in return for your trophy - I know a few collectors who will pay quite well to have this on their mantle once I've prepared it.",
 	},
 	[91751] = {
 		accept = "Are you looking for an opportunity to practice skinning? My husband usually helps with hunting wolves, but he's busy up by the abbey. I could use a hand collecting more pelts to finish the orders I'm working on.",
@@ -16665,7 +16665,7 @@ SpokenQuestsText = {
 	},
 	[91753] = {
 		accept = "Academic rigor is of course essential to the enchanter's craft, but a practical foundation can pay dividends. Consider, as an example, the lowly Kobold. Lacking formal education, they nevertheless demonstrate a sort of innate aptitude for simple cantrips and enchantments.\n\nObtain some of their wax effigies and deconstruct the enchantments bound within them. You may find it elucidating.",
-		complete = "Theory and practice are two sides of a coin, Spineblast. Remember this.",
+		complete = "Theory and practice are two sides of a coin, $n. Remember this.",
 	},
 	[91758] = {
 		accept = "You're not done with those kobolds yet. We just got word from Kelsey that a kobold left the mine carrying a large sack of books. I need you to track down this kobold so we can retrieve the books for Brother Paxton.\n\nGo talk to Tordrin Sternblade. He's the new Hunter trainer that just arrived from Ironforge. You can find him behind the abbey, near the stable. He can help you track this kobold thief.",
@@ -16724,7 +16724,7 @@ SpokenQuestsText = {
 	},
 	[91921] = {
 		accept = "Here is the new potion to aid in Quinn's recovery, made with love extracted from six whole hearts.\n\nNow, please excuse me before your presence necessitates more paperwork.",
-		complete = "<Quinn takes the potion and drinks it.>\n\nYes, I can feel it working.  I will soon be able to travel.\n\nYou have done me a great favor, Saixgone.",
+		complete = "<Quinn takes the potion and drinks it.>\n\nYes, I can feel it working.  I will soon be able to travel.\n\nYou have done me a great favor, $n.",
 	},
 	[92109] = {
 		accept = "Erm... 'Ello, miss. I'm not supposed to talk to strangers, but... Hey, what are those shiny bottles sticking out of your backpack for? Are you an alchemist? That's so cool!\n\nWhen I grow up, I want to be an alchemist too. Daddy won't let me play with any of his herbs; too dangerous, he says.\n\nWell, I want to start learning now. Could you maybe get some supplies for me, pretty please?",
@@ -16898,7 +16898,7 @@ SpokenQuestsText = {
 	},
 	[92532] = {
 		accept = "While you were gone our warrior trainer--Blademaster Ren--requested that we send you their way when you returned. She dropped this note off for you as well.\n\nGive it a read, then find Blademaster Ren inside the village watchtower.",
-		complete = "You are about to embark upon a dangerous journey. Our world is changing and it will need those who have the will to lead and protect others if our people hope to survive. As you grow in power you will need guidance. Come to me--I will do what I can to train you as you progress.\n\nGood luck, Zaelriel, may the winds guide you.",
+		complete = "You are about to embark upon a dangerous journey. Our world is changing and it will need those who have the will to lead and protect others if our people hope to survive. As you grow in power you will need guidance. Come to me--I will do what I can to train you as you progress.\n\nGood luck, $n, may the winds guide you.",
 	},
 	[92544] = {
 		accept = "A band of Al'Aketh cult ruffians have taken up residence near the temple ruins just southwest of here, led by a real monster called Malduko Cloudcrush. This rabble has no doubt been dispatched here by High Priestess Lorthuna at the Shrine of Akir to attack travelers and coerce our people into joining the cult.\n\nI need to stay here at my post to alert travelers leaving the grove of the danger, but I would be grateful if you could do something about those cultists and their leader for me.",
@@ -17037,7 +17037,7 @@ SpokenQuestsText = {
 	},
 	[92745] = {
 		accept = "The well samples you collected contain toxic metals! If we do not put an end to this corruption quickly, it will be decades before crops can grow in this soil again.\nThe Defias have seized the mines of Westfall and use creatures as labor to strip their resources. Disrupt them by slaying their miners in the Jangolode Mine to the north, and the Gold Coast Quarry to the west.",
-		complete = "Well done, Xeph. But I fear the source of the poison may lie somewhere else...",
+		complete = "Well done, $n. But I fear the source of the poison may lie somewhere else...",
 	},
 	[92747] = {
 		accept = "Strange - the poison does not seem to originate from the mines you investigated.\n\nI am told the Deadmines under the town of Moonbrook are the largest, deepest mines of Westfall, but they have been abandoned since the First War. Could the Deadmines be active again?\n\nPlease travel to Moonbrook, $N, and look for evidence of mining or industrial activity. This is the last lead we have!",
@@ -17061,7 +17061,7 @@ SpokenQuestsText = {
 	},
 	[92752] = {
 		accept = "That's it - the bomb's ready to go! Careful with that detonator, now.",
-		complete = "I'm glad you've returned, Busch.",
+		complete = "I'm glad you've returned, $n.",
 	},
 	[92753] = {
 		accept = "The source of the poison is likely a large metallurgical forge of some kind. Find a way into the Deadmines and locate the forge, then place the explosives.\nI will wait for you in the hills behind Moonbrook. Once you return, we can detonate the explosives. Hopefully with the forge gone, the land can begin to heal.",
@@ -17069,7 +17069,7 @@ SpokenQuestsText = {
 	},
 	[92819] = {
 		accept = "We are almost finished. Use the detonator, and end this.",
-		complete = "I don't know what to say, Samelyn. To think that Stormwind would put their military ambitions over the livelihood of their people...",
+		complete = "I don't know what to say, $n. To think that Stormwind would put their military ambitions over the livelihood of their people...",
 	},
 	[92834] = {
 		accept = "When the cult began their campaign of violence, the Peacekeepers and Windshapers responded with posturing. I saw this as foolish escalation so I advocated for peaceful dialogue. Yesterday I dispatched my friend Belathaan Brightwish to the Shrine of Akir, hoping to establish that dialogue.\n\nA box just arrived containing Belathaan's tongue, dipped in silver pigment.\n\nIts clear to me now that there is no reasoning with the cult. Kill any cultists you see, and bring me the prayer charms that they carry.",
@@ -17116,7 +17116,7 @@ SpokenQuestsText = {
 	},
 	[92911] = {
 		accept = "I see... this gives me some insight into what makes those monsters tick. I have an idea how we could override their systems, at least momentarily.\n\nI'll continue tinkering with the assembly you brought me. In the meantime, could you scrounge up some parts for the device?",
-		complete = "Here it is, Raton! Should work great. Go give it a try!\n\n...Me? No, I'll stay here. It's starting to feel like home, anyway.",
+		complete = "Here it is, $n! Should work great. Go give it a try!\n\n...Me? No, I'll stay here. It's starting to feel like home, anyway.",
 	},
 	[92947] = {
 		accept = "Everyone is here, good. I've just sent a few of my best fighters in through the front of the shrine to cause a bit of trouble and serve as a distraction, while I lead the Windshapers and High Order in from the flank.\n\nIf all goes well, we should be able to punch through quickly and take out the High Priestess. As for you, get in there and start cracking skulls. Meet my second, Hyusaa Quickbreeze, near the steps to the shrine after you've caused some trouble.\n\nWinds guide you, $c.",
@@ -17301,11 +17301,11 @@ SpokenQuestsText = {
 	},
 	[94013] = {
 		accept = "You've returned triumphant from taming two beasts, it's time now for your last trial. The winds of Zephras whisper of greater challenges ahead.\n\nTake this Taming Rod and journey to the Gustberry Lowlands. There, tame a Vuldren Alpha and prove your mastery.\n\nComplete this lesson and you'll be ready to learn the deeper ways of the hunter.",
-		complete = "Excellent, Naanariel! You are quite a fast learner. Now that you know the basics, I can teach you how to forge a lasting bond with an animal companion.\n\nGo with this knowledge and thrive. Be the $c that Zephras Isle needs you to be.",
+		complete = "Excellent, $n! You are quite a fast learner. Now that you know the basics, I can teach you how to forge a lasting bond with an animal companion.\n\nGo with this knowledge and thrive. Be the $c that Zephras Isle needs you to be.",
 	},
 	[94050] = {
 		accept = "You now have the power to tame a pet, but you must also gain the skills to train it. For this, there is none better than my sister, Quel'dora. She will give you the ability to train your new pet.\n\nGo with the winds, young $c.",
-		complete = "A fledgling $c, I see. Yes, I can bestow you with the skills you need to train and guide your pet. Not only will you be able to teach your pet new abilities, you will now be able to feed your pet, as well as revive it, should it fall in battle.\n\nRemember, Gei, always respect the balance and live in awe of nature around you. Now, go forth. We shall speak again, at a later date.",
+		complete = "A fledgling $c, I see. Yes, I can bestow you with the skills you need to train and guide your pet. Not only will you be able to teach your pet new abilities, you will now be able to feed your pet, as well as revive it, should it fall in battle.\n\nRemember, $n, always respect the balance and live in awe of nature around you. Now, go forth. We shall speak again, at a later date.",
 	},
 	[94212] = {
 		accept = "<Penned in faded ink, the note is requesting $2oa Elixir of Wisdom, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
@@ -17824,7 +17824,7 @@ SpokenQuestsText = {
 	},
 	[94449] = {
 		accept = "It's been long since ye were last tested, $N. Ye've shown patience, aye -- but now it's time ye learned of chaos... of destruction. Fire's call is loud, and if ye're ready to pay its price, it'll speak to ye.\n\nSeek out Bruegs Kindleborn, far east in the mountains. He dwells in a cave above South Gate Outpost. He'll know if ye're truly ready.",
-		complete = "Hmm... that elder sent ye, eh? Well, a $c's word is solid, so I'll not argue. That means ye're ready for the next sapta. The sapta of fire. I see it in yer eyes already -- the burnin', the hunger. Ye've tasted power, and now ye want more. But mind yerself, Shamfor. Remember what the stone taught ye. Fire's easy to wield, but harder to master. Know when to hold back.",
+		complete = "Hmm... that elder sent ye, eh? Well, a $c's word is solid, so I'll not argue. That means ye're ready for the next sapta. The sapta of fire. I see it in yer eyes already -- the burnin', the hunger. Ye've tasted power, and now ye want more. But mind yerself, $n. Remember what the stone taught ye. Fire's easy to wield, but harder to master. Know when to hold back.",
 	},
 	[94465] = {
 		accept = "Aye, ye've the strength to bear the totem o' fire, lad--but strength alone won't make ye ready.\n\nBeyond the Valley o' Kings, in the crags of Loch Modan, lies a hidden path to one o' our sacred peaks. There, Braldir Ashmantle guards the Shrine o' the Dormant Flame.\n\nTake this torch to him--it shows yer intent. Return it burnin' by the shrine's brazier, and I'll see ye earn the totem proper.",
@@ -17898,11 +17898,11 @@ SpokenQuestsText = {
 	},
 	[94499] = {
 		accept = "Aye, Redridge drinks deep from Lake Everstill, but by the time the waters tumble down Stonewatch Falls, somethin' has seeped in. The murlocs down there are big, twisted brutes. Not like the ones ye find here or in the Loch. Lucky for the townsfolk they keep to the base o' the falls.\n\nBring a sampling to me. I've a mind to find out if it's magic, venom, or somethin' worse that's taintin' the waters near that old fort.",
-		complete = "Aye, this is good water, Theinn. The magic used by the shadowseers in the region must be changin' the murlocs. Nothin' but pure water, this be. Yer dedication to the task at hand and abilities to seek out that which is needed proves you're ready for the next stage of your journey.\n\nOne more sample is all I need to create the reagent needed for your sapta. Norric will be pleased as well.",
+		complete = "Aye, this is good water, $n. The magic used by the shadowseers in the region must be changin' the murlocs. Nothin' but pure water, this be. Yer dedication to the task at hand and abilities to seek out that which is needed proves you're ready for the next stage of your journey.\n\nOne more sample is all I need to create the reagent needed for your sapta. Norric will be pleased as well.",
 	},
 	[94500] = {
 		accept = "Take this waterskin and journey deep into the emerald shade o' Ashenvale. Astranaar rests cradled by waters untouched by corruption. Ruins litter the bed o' the lake, hinting at a bygone era. Bring back a sample from the lake. Pure, ancient, and possibly enchanted water.\n\nIt's the last liquid I need before I send ye back to Norric.\n\nBoard the boat in Menethil to Auberdine, it stops in Southshore on the way over.\n\nAnd mind yerself... the forest's got eyes, and they don't blink.",
-		complete = "Well done, Theinn! With all three samples in hand, I'll brew ye a vial o' water so pure it'd make the mountains weep. It's the final piece for yer rite o' passage. I'm proud to call ye kin, Theinn. Ye've done $c proud, and I look forward to hearing yer tales in the future.",
+		complete = "Well done, $n! With all three samples in hand, I'll brew ye a vial o' water so pure it'd make the mountains weep. It's the final piece for yer rite o' passage. I'm proud to call ye kin, $n. Ye've done $c proud, and I look forward to hearing yer tales in the future.",
 	},
 	[94501] = {
 		accept = "Norric will have one more task for ye before rewarding ye with the water totem rites. The vial of water I've given ye is necessary for whatever that task is. Go now and find him. We shall meet again some day.",
@@ -17918,7 +17918,7 @@ SpokenQuestsText = {
 	},
 	[94505] = {
 		accept = "Take shard. Take shard and give life.\n\nGive life and understand. Understand water is life... corruption stops life.\n\nYou protect and give life with water's power.",
-		complete = "Aye, this is the proof I asked for, and ye've done well, Theinn. I'm proud to be the first to offer my congratulations--and yer water totem. Use it wisely, and may fortune walk beside ye.\n\nYer next trial won't come soon, so take this time to learn. Pure water heals, aye, but its gifts go far beyond mending wounds.",
+		complete = "Aye, this is the proof I asked for, and ye've done well, $n. I'm proud to be the first to offer my congratulations--and yer water totem. Use it wisely, and may fortune walk beside ye.\n\nYer next trial won't come soon, so take this time to learn. Pure water heals, aye, but its gifts go far beyond mending wounds.",
 	},
 	[94568] = {
 		accept = "The turncoat clearly was afraid of the what the cult had planned, enough so to defect and seek our aid. It's truly unfortunate that he is dead and took his secrets to the grave with him.\n\nWe must discuss this further to determine our next steps.",
@@ -17962,7 +17962,7 @@ SpokenQuestsText = {
 	},
 	[94822] = {
 		accept = "You've caught the attention of our superiors, $N. They've asked you travel to the Hall of Mysteries in Ironforge as soon as possible. Apparently they feel you've proven yourself already and are prepared to further your training. When you get there, find High Priestess Mims. She will be able to guide you further. Good luck, and may the Light be with you.",
-		complete = "You took your time arriving, Vall. But you can be excused given your dedicated service to the Light. Please pay close attention to this lesson.",
+		complete = "You took your time arriving, $n. But you can be excused given your dedicated service to the Light. Please pay close attention to this lesson.",
 	},
 	[94824] = {
 		accept = "Time's come for you to head to Stormwind, $N. High Priestess Mims in the Hall of Mysteries commands you to come speak with her. Gotta be somethin' really good or really bad for the High Priestess to want you there personally, but I'm guessin' you've only done well for yourself and it's a good thing that she wants to speak to ya.\n\nBut don't waste too much time 'round here. I'd head there as soon as you can.",
@@ -18016,11 +18016,11 @@ SpokenQuestsText = {
 	},
 	[94978] = {
 		accept = "Every hunter begins by learning the bond between beast and master. This is your first challenge. In time, you'll tame creatures from every corner of the world, but for now, start with our rivers and lakes on Zephras.\n\nTake this Taming Rod and seek out a Windsong Crawler.\n\nShow that you can earn its trust, and begin your path toward true mastery.",
-		complete = "Well tamed, Venator! You are becoming adept already.",
+		complete = "Well tamed, $n! You are becoming adept already.",
 	},
 	[94979] = {
 		accept = "You've proven you can tame the river's crawler, now it's time to test your skill on open ground. The plains of Zephras echo with the cries of the Galestrider, a proud, winged hunter that runs like the wind.\n\nTake this Taming Rod and seek one out. Travel to the lowlands and earn its trust.\n\nShow you're ready for the trials yet to come.",
-		complete = "You're back already! Impressive speed, Naanariel!",
+		complete = "You're back already! Impressive speed, $n!",
 	},
 	[95034] = {
 		accept = "I think you should know that it wasn't actually the Gnolls who attacked us on the road.\n\nWe were actually attacked by a giant, wolf-like creature that I now know as a \"worgen\". It dispatched our guards and came for me, but Banon threw himself in its path. I managed to get a spell off which startled the creature, causing it to flee, but Banon was already badly bitten. He insisted I leave him there but I refused.\n\nWe were limping back here when the gnolls found us. What came next was terrifying...",
@@ -18032,7 +18032,7 @@ SpokenQuestsText = {
 	},
 	[95041] = {
 		accept = "Before we fled Gnomeregan, I made a hard copy of my family's archives. Arcanotechnical field equations, Second War submarine hull designs, Grandma Quikswitch's chili recipe... our greatest accomplishments are in those files.\n\nIt wasn't until we reached Ironforge that I found a hole in my pack! Several punch cards are gone, and without them the data's too scrambled to recover.\n\nThe cards must be buried in the snow, somewhere outside Gnomeregan. Could you find them? I know it's a long shot...",
-		complete = "These cards seem a bit damp... but I can work with this! Thank you, Archnatum!",
+		complete = "These cards seem a bit damp... but I can work with this! Thank you, $n!",
 	},
 	[95042] = {
 		accept = "A Forsaken paladin... here in Ashenvale? Amusing.\n\nSo you seek a Kor Gem? Unsurprising as these are sometimes employed to empower magical weapons and implements by the paladins of the alliance. Why should a fallen paladin like you be any different?\n\nIf you truly desire one of the gems, then you must head north to the ruins known as Blackfathom Deeps. The naga who still use the gems are down below. Do not go alone, $c.",
@@ -18052,11 +18052,11 @@ SpokenQuestsText = {
 	},
 	[95126] = {
 		accept = "Here's the blade. You said that a paladin named Trevan sent you? Please extend my thanks to him for this opportunity when you next see him. Go with honor, friend.",
-		complete = "<Trevan takes the blade and inspects it carefully.>\n\nThis will do nicely, Alteä. I knew that Ott had it in him to make something truly great.\n\nThe only thing left now is to kill that beast. Speak with Lumina when you are ready.",
+		complete = "<Trevan takes the blade and inspects it carefully.>\n\nThis will do nicely, $n. I knew that Ott had it in him to make something truly great.\n\nThe only thing left now is to kill that beast. Speak with Lumina when you are ready.",
 	},
 	[95140] = {
 		accept = "I see that you have your weapon now, $c. I pray that it will not fail you.\n\nThe locals tell me that Old Fire-Eye hunts in a large area south of here and you can generally find him near the gates to Gilneas. Find him, and use your new blade to end him. When it is done, return and you will have the gratitude of the Windshapers.",
-		complete = "Thank you, Quantum. Banon may now rest in peace.\n\nIf you would be willing to allow it, I believe that I can impart some magic upon your freshly blooded blade to infuse it with a small measure of the magic of my people.\n\n<Lumina Windsinger's eyes begin to glow a vibrant blue as she touches the bloodstained blade in your hand.>\n\nIt is done. It's a small thing, and I could scarcely improve such a magnificent blade. Regardless, I will pray to the winds that it serves you well, $c.",
+		complete = "Thank you, $n. Banon may now rest in peace.\n\nIf you would be willing to allow it, I believe that I can impart some magic upon your freshly blooded blade to infuse it with a small measure of the magic of my people.\n\n<Lumina Windsinger's eyes begin to glow a vibrant blue as she touches the bloodstained blade in your hand.>\n\nIt is done. It's a small thing, and I could scarcely improve such a magnificent blade. Regardless, I will pray to the winds that it serves you well, $c.",
 	},
 	[95161] = {
 		accept = "If you're looking for Jeremy Heartweaver, your best bet is to talk to his newly adopted mother, Avette Fellwood out in Duskwood. Sweet woman. Likely needs another pair of hands for her work, but it beats staying in the orphanage.\n\nIf you see little Jeremy do be sure to tell him we're all thinking of him, won't you?",
@@ -18092,7 +18092,7 @@ SpokenQuestsText = {
 	},
 	[95217] = {
 		accept = "So you're looking to learn the blacksmith's trade? Maybe we can help each other.\n\nThe supply shipment's late, and I need materials for some repairs around the camp. If you get me what I need, I'll teach you some of my techniques. Sound fair?",
-		complete = "You're a resourceful one, Gort.\n\nNow listen up - I'm not going to repeat myself!",
+		complete = "You're a resourceful one, $n.\n\nNow listen up - I'm not going to repeat myself!",
 	},
 	[95250] = {
 		accept = "What do you want, $r? Can't you see there is a war to be won?\n\nMy master has already charged into the fray and has ordered me to maintain my post. It has been quite some time, however.\n\nI doubt you'll survive ten minutes in combat, but if it keeps your simple mind busy, why don't you seek out the Grand Marshal. He is the tallest, most statuesque hero you've ever laid eyes on. You'll know him when you see him.",
@@ -18174,7 +18174,7 @@ SpokenQuestsText = {
 	},
 	[95774] = {
 		accept = "The healer who saved me could not save her, and she has died in battle. Her name is Olgra, and I will never forget her.\n\nYou did not find her adornments on her body? She wore many jewels of polished bone.\n\nSlay the Razormane Raiders near where she fell, and find her precious works of art!\n\nI will place them with the memorial that I build in her memory.",
-		complete = "I will place these adornments with my wife's memorial, so that I never forget her. My blood will always run hot with revenge!\n\nYou have done me... done us... a great favor, Johnathon.",
+		complete = "I will place these adornments with my wife's memorial, so that I never forget her. My blood will always run hot with revenge!\n\nYou have done me... done us... a great favor, $n.",
 	},
 	[95795] = {
 		complete = "Ah no...\n<He buries his head in his hands and sobs.>\n\nI should 'ave gone with 'em.\n\nMuch of what I was smithin' was for 'im, was plannin' a surprise but it wasn't ready when he came by gettin' things for his journey.\n\nNow that these are finished, I don't have it in me to reforge or sell any of it.\nYou can have this. It's the least I can do for you, bringing me this grim day.",
@@ -18223,7 +18223,7 @@ SpokenQuestsText = {
 	},
 	[95999] = {
 		accept = "Wanted! Incinerator Gar'im, Leader of an orc incursion in Render's Valley. Purported to be working with the Blackrock of Stonewatch Keep.\n\nBeware of Incinerator Gar'im. He and his Shadowcasters are extremely dangerous. A handsome reward will be given to any brave soul that can deliver proof of Incinerator Gar'im's demise to Magistrate Solomon.",
-		complete = "Excellent work, Eraina! Incinerator Gar'im was preparing to bolster the defenses at Stonewatch Keep. With this victory, we may yet succeed in reclaiming the keep!",
+		complete = "Excellent work, $n! Incinerator Gar'im was preparing to bolster the defenses at Stonewatch Keep. With this victory, we may yet succeed in reclaiming the keep!",
 	},
 	[96016] = {
 		accept = "Ye did good, and I can see yer itchin' fer yer reward. Sorry tae say, I'm not exactly a $r of many possessions.\n\n<Veyric gestures broadly at his remote location.>\n\nTell ye what, though. I hear a troll named the Windwatcher lives out in the Alterac Mountains. He's a powerful $c himself, and an expert in storm elementals. If ye bring that there elemental core to him, I bet he can make ye a weapon worthy of yer victory.",
@@ -18474,7 +18474,7 @@ SpokenQuestsText = {
 	},
 	[96822] = {
 		accept = "We lost many brave warriors of the Horde when we sacked Tiragarde Keep. Now that the humans have reinforced the ruins, we cannot collect their remains to properly honor their deaths.\n\nGo to the ruins surrounding the keep, and search for the weapons left by our fallen kin. We will display them in a place of honor.",
-		complete = "These warriors will always be remembered, Ulvarg. You have made sure of that.",
+		complete = "These warriors will always be remembered, $n. You have made sure of that.",
 	},
 	[96825] = {
 		accept = "Our hunters and fishers bring back plenty of savory food for our troops - but it's rare that they get a sweet treat.\n\nI've seen a cactus that produces a prickly, tasty fruit. But it only grows in the hills to the west, where the wretched quilboars make their camps. Make your way past the quilboars and bring me some of those fruits. And be careful - the fruits are as spiny as the quilboars!",
@@ -18486,7 +18486,7 @@ SpokenQuestsText = {
 	},
 	[96874] = {
 		accept = "Have you seen the huge beasts of Thunder Ridge? I keep thinking the spines on their backs would be perfect for crafting the head of a mighty axe. Saru laughed when I told him... but what does he know!?\n\nAs part of your smithing lessons, you can help me out! Bring me some of those spines, along with grinding stones to sharpen them.",
-		complete = "These spines are tougher than I expected, Gehrfik! Crafting with them may not be as easy as I thought... but I'll keep working on it!",
+		complete = "These spines are tougher than I expected, $n! Crafting with them may not be as easy as I thought... but I'll keep working on it!",
 	},
 	[96875] = {
 		accept = "Orgrimmar is always expanding, $c. And when the peons need hides to line the walls and roofs of our new buildings, they come to me!\n\nThe hides of the lizards in Thunder Ridge are typically too thick for armor, but they make excellent building material. Bring me some of their hides, along with a few lighter cured hides. Let's see your skill with leather!",
@@ -18538,7 +18538,7 @@ SpokenQuestsText = {
 	},
 	[97005] = {
 		accept = "There's rumors of a monstrous abomination that makes its lair at a cave to the northwest of here, on the plateau known as Thorn Hill. The Razormane call it Chol'aruk or \"The Ravener\" and those that have seen it say its so massive that it can swallow an orc whole.\n\nFew believe such tales, but I do... because I've fought one like it myself. On the honor of those I lost to these things, this beast must die.\n\nGather strong allies and find the lair of Chol'aruk. Kill the abomination and bring me it's head.",
-		complete = "My dead men will rest easier knowing that there is one less of these monsters in the world. You've done well, and are a true and stalwart defender of the alliance. Thank you.\n\nGo with honor, Gryma.",
+		complete = "My dead men will rest easier knowing that there is one less of these monsters in the world. You've done well, and are a true and stalwart defender of the alliance. Thank you.\n\nGo with honor, $n.",
 	},
 	[97047] = {
 		accept = "Hey! You! You have to help me! I was just out exploring the jungle when, all of a sudden, I was ambushed by these maniacs! I don't know what they plan to do with me, but I've heard talk of tigers and headshrinkers, and I don't want part in either!\n\nI don't know how, but you have to get me out of here! Please! A key to this cage, a disguise to sneak out, something! Anything!",
@@ -18578,7 +18578,7 @@ SpokenQuestsText = {
 	},
 	[97237] = {
 		accept = "I've checked our inventory and all of the selections Mr. Lewells has listed are currently available.\n\nYou will, however, need to procure them off the shelves yourself. Part of our librarian duty is vigilance, and for that, I will resume supervisory bookkeeping.\n\nReturning with the material to Roy on his behalf will not mark yourself accountable for their return; as with his note you're serving as the book club's official courier. Their establishment shall carry that burden.\n\nGood day, $N.",
-		complete = "These are them! Some of them even smell exotic! Fantastic, I can't wait for us to have lively conversations about these writings.\n\nCellar after hours, of course.\n\nThanks for the quick errand run, Gad. As promised, it's on the house. We keep our word here.",
+		complete = "These are them! Some of them even smell exotic! Fantastic, I can't wait for us to have lively conversations about these writings.\n\nCellar after hours, of course.\n\nThanks for the quick errand run, $n. As promised, it's on the house. We keep our word here.",
 	},
 	[97242] = {
 		accept = "Yelmak doesn't want his apprentice breaking anything. Well, anything more than he already has.\n\nHe told me the young mixer in training has too much pride to ask for help when he really needs it. Yelmak wants to give him a taste of a particular home-brewed recipe.\n\nGather a mix of cattail and speargrass cuttings taken from the plants growing around the water in the Valley of Honor. I'd get them myself, but if I left the shop, Whuut would surely know we're catering to his mood.",
@@ -18614,7 +18614,7 @@ SpokenQuestsText = {
 	},
 	[97257] = {
 		accept = "Now we will perform the ritual.\n\nI will place the materials onto the altar and call forth the spirits of flame. If the offering is accepted, they will appear and light the Eternal Flame. You will then hold your torch forth and capture the flame.\n\nCarry the lit torch to Valanaar and place it in the Brazier of Eternal Flames. You must do so quickly, for the flames of the Firelands are quick to dissipate here in Skywall.",
-		complete = "It is done. The Eternal Flame burns once again.\n\nYour trial is now complete. I am pleased to present you with your Fire Totem. Use this icon of power well in your travels, Bilbøn.\n\nJust remember, the power of the elemental plane serves those that respect it, and consumes those who do not. This is our way.",
+		complete = "It is done. The Eternal Flame burns once again.\n\nYour trial is now complete. I am pleased to present you with your Fire Totem. Use this icon of power well in your travels, $n.\n\nJust remember, the power of the elemental plane serves those that respect it, and consumes those who do not. This is our way.",
 	},
 	[97263] = {
 		accept = "<Several misplaced packages have been left by the mailbox. You note that one of them is marked for delivery from Aerie Peak, to Ironforge, to Eldrun Stormbreaker. It is marked \"urgent.\">",
@@ -18633,7 +18633,7 @@ SpokenQuestsText = {
 	},
 	[97279] = {
 		accept = "With an influx of new recruits like yourself, it's been hard to keep our weapons supplied. Our weaponsmith, Kzan, is running low on training weapons and I'd like to see what kinds of skills you possess to get an idea of what I have to work with. Luckily for you, I have a solution to both.\n\nWhile you're out there cutting your teeth on boars, salvage six abandoned training weapons. Our failed recruits left them laying on the ground. Once you do, return them to our weaponsmith Kzan behind me in the Den.",
-		complete = "Thank you for returning these weapons, Sparkled. I will get to work repairing them for the next wave of recruits.",
+		complete = "Thank you for returning these weapons, $n. I will get to work repairing them for the next wave of recruits.",
 	},
 	[97281] = {
 		accept = "<Before you is a strange orb with a dull surface. When picked up a small electrical current seems to vibrate from within. Upon closer inspection, it looks as if a dark mist swirls within and every so often a small electrical spark can be seen.\n\nIt is clear the harpy was using it for some purpose. Perhaps Rezlak would be interested in this object?>",
@@ -19006,7 +19006,7 @@ SpokenQuestsText = {
 	},
 	[98046] = {
 		accept = "<Arch Druid Fandral Staghelm's gaze narrows.>\n\nYou're still here?\n\nTake the phial and get out of my sight, $c. It is clear my answers do not lie in the waters, just as they did not before.\n\nPerhaps one of the priestesses in the Temple of the Moon to the south will dispose of it.\n\n<Fandral looks away, no longer speaking to you.>\n\nI must look elsewhere if this is to work...",
-		complete = "Do not mind the Arch Druid, Sneaky. He bears the weight of much in Malfurion's absence.\n\nWait! Some drops yet remain in the phial! Perhaps that is why his incantation failed?",
+		complete = "Do not mind the Arch Druid, $n. He bears the weight of much in Malfurion's absence.\n\nWait! Some drops yet remain in the phial! Perhaps that is why his incantation failed?",
 	},
 	[98059] = {
 		accept = "Hillsbrad's council hasn't answered our new magistrate's letters. The last word I pried out of a passing merchant from the town did little to justify their silence.\n\nWe're only asking for a small platoon--yet I'm told multiple siege ballista rest in pristine condition within a walled-off compound.\n\nWalk into their town hall like a citizen returning a census request, and place this neatly upon the bookkeeping table.\n\nReturn to me when the deed is done.",
@@ -19038,7 +19038,7 @@ SpokenQuestsText = {
 	},
 	[98093] = {
 		accept = "I'm so glad you saw me!\n\nThe weather was lovely this morning, so I walked from Camp Taurajo down the golden road. When it came time to head back, I couldn't--a pack of hyenas started circling, and Stormhide lizards blocked my only escape.\n\nScrambling up this tree I went, and now there are too many foes about at this hour for me to make the run home through the fields.\n\nWould you mind clearing out these Stormhide and Hecklefang Stalkers for me?",
-		complete = "Thank you for helping me out, Illbean. I'll let Camp Taurajo know you were able to rescue me. I'm so lucky you helped, I could have been stuck there all day!\n\nThis is all I have to spare, but I hope it's useful to you.\n\nI'll be making my exit once I make the careful climb down.",
+		complete = "Thank you for helping me out, $n. I'll let Camp Taurajo know you were able to rescue me. I'm so lucky you helped, I could have been stuck there all day!\n\nThis is all I have to spare, but I hope it's useful to you.\n\nI'll be making my exit once I make the careful climb down.",
 	},
 	[98094] = {
 		accept = "Now that we can trust you to deliver critical information to our forward spies, there's an extra task for you.\n\nBring this to Deathstalker Masoj almost directly south of us. He'll have more for you to do once you get there and hand this to him. He is posted on elevated terrain north of the rotten vineyard they call Nethander Stead.\n\nOur plan to take control of these lands continues steadily.",
@@ -19198,11 +19198,11 @@ SpokenQuestsText = {
 	},
 	[98326] = {
 		accept = "Do ye know how hard it is to fish on a frozen lake? My poor husband, Paxton, has been out in the middle of it for days and we barely have a single sack to show fer it.\n\nWell, we DID have a sack to show fer it. Until the thrice-damned wendigo attacked me and made off with our haul. It'll take us weeks to fish all that back up! If that loudmouth Frosthowl didn't scare 'em all off, anyway.\n\nDo us a favor and get it back, aye? Drooling brute is hiding somewhere deep in the Grizzled Den to the southeast.",
-		complete = "Yer a real lifesaver, Leif!\n\nMy husband would just laugh it off, but I couldn't bare tellin' him he has to spend another night on the lake. Maybe now we can enjoy a real feast.",
+		complete = "Yer a real lifesaver, $n!\n\nMy husband would just laugh it off, but I couldn't bare tellin' him he has to spend another night on the lake. Maybe now we can enjoy a real feast.",
 	},
 	[98340] = {
 		accept = "It would seem that you are ready for the next step in your journey, young druid. Dendrite Starblaze has sent for you, and wishes for you to seek him out in Moonglade once again.\n\nYou have already learned to call upon the magic to take you to Moonglade, so you should be able to embark immediately if you choose. I would suggest you leave soon, if you wish to continue your druidic training.",
-		complete = "And so it continues, Father Cenarius.\n\n<Dendrite makes a quick, invisible gesture in the air above him. A slight aura of power falls over him.>\n\nGreetings again, Qiy. It is time for you to learn the next perspective of nature: the cat. I will put you on the path to understanding this aspect of druidic life, but much like the bear, it is you that must embrace this learning and propagate it.",
+		complete = "And so it continues, Father Cenarius.\n\n<Dendrite makes a quick, invisible gesture in the air above him. A slight aura of power falls over him.>\n\nGreetings again, $n. It is time for you to learn the next perspective of nature: the cat. I will put you on the path to understanding this aspect of druidic life, but much like the bear, it is you that must embrace this learning and propagate it.",
 	},
 	[98341] = {
 		accept = "A spirit of your homeland has recently appeared here and has asked me to guide you to it. This windborne cat spirit has come to tutor and mentor you so that you may take the feline shape of the spirit on Zephras.\n\nAll druids eventually seek this wisdom, though it seems your homeland has a slightly different shape than our traditional one. If you desire to take this spirit's feline form, you will need to undergo our trial.\n\nIt can be found in the southern part of Moonglade, south of the twin bridges.",
@@ -19214,18 +19214,18 @@ SpokenQuestsText = {
 	},
 	[98362] = {
 		accept = "The time has come for us to part ways once again, young one, as the application of your lessons takes you back to whom that sent you to me. It would seem your instructor, Turak Runetotem, has found a worthy pupil in you. I believe I see one as well. Heed his lessons and you shall soon be able to draw upon the Great Cat Spirit to take its shape.\n\nGo back to whence you came. When the time is right, we will meet again.",
-		complete = "Welcome back, Cory. I can sense you have met with the Great Cat Spirit and have successfully completed the trial. All druids must pass a trial given by this spirit, though the trials vary by generation. I am proud you have passed and have heeded the wisdom of the Great Cat Spirit. It is an ancient spirit that is as deadly as it is playful, though I can sense you understand the spirit's nature already.\n\nI will now instruct you on how to take the shape of the cat.",
+		complete = "Welcome back, $n. I can sense you have met with the Great Cat Spirit and have successfully completed the trial. All druids must pass a trial given by this spirit, though the trials vary by generation. I am proud you have passed and have heeded the wisdom of the Great Cat Spirit. It is an ancient spirit that is as deadly as it is playful, though I can sense you understand the spirit's nature already.\n\nI will now instruct you on how to take the shape of the cat.",
 	},
 	[98372] = {
 		complete = "The deceased Night Watchman lying before you is covered in deep gashes and cuts. It's clear to see that he was mauled by some sort of large beast.\n\nYou notice that the corpse has an unlit torch in his hand. You reach down and pry it from his stiff fingers. This could be useful in your travels through Duskwood and beyond to reveal things hidden by darkness.",
 	},
 	[98386] = {
 		accept = "Orcs, gnolls, murlocs. Everything seems to be out to stop me from getting this bridge done on time. Now we have word there's an infestation of tarantulas at our lumber mill!\n\nIf you're up to earn a bit more coin, would you head over to Alther's Mill to the east and clear out their spider problem? Place is as good as useless to me if I can't safely send workers to collect shipments.\n\nOh, and if you see ol' Alther, tell him he owes me for cleaning up his mess.",
-		complete = "The mill is that bad? That's worse than I thought.\n\nI'm not particularly squeamish, but work's bad enough without spiders snatching up my workers. Thanks for the help,Raton!",
+		complete = "The mill is that bad? That's worse than I thought.\n\nI'm not particularly squeamish, but work's bad enough without spiders snatching up my workers. Thanks for the help,$n!",
 	},
 	[98387] = {
 		accept = "What the Blackrock orcs don't understand is that this is a war of attrition. Their brazen push into Alliance territory has left them vulnerable and without supplies, relying on the surrounding mountains to gather resources.\n\nAn army can't run on empty bellies, $N. Go to their encampments south of Stonewatch Keep to the east and rob them of their food and weapons. Let's see the orcs' fighting spirit when they're starved and defenseless.",
-		complete = "Excellent work, Eraina. With the Blackrock orcs cut off from their allies in the Burning Steppes, they will have no hope of maintaining their foothold here without proper supplies.",
+		complete = "Excellent work, $n. With the Blackrock orcs cut off from their allies in the Burning Steppes, they will have no hope of maintaining their foothold here without proper supplies.",
 	},
 	[98389] = {
 		accept = "Greetings, $c. Yes, I am a paladin. Not even death can stop the Light.\n\nThis my kind have in common with all Forsaken--we have overcome what the living view as their end. However, some even among our own fear us; they suspect we will smite them as some monstrosity.\n\nIn truth, our relationship with undeath is complex, but I am not here to hurt our own. Help me show the others this. Venture to Night's Web Hollow to the northwest and free the freshly raised fools trapped by the spiders there.",
@@ -19241,7 +19241,7 @@ SpokenQuestsText = {
 	},
 	[98393] = {
 		accept = "It would seem that you are ready for the next step in your journey, young druid. Dendrite Starblaze has sent for you, and wishes for you to seek him out in Moonglade once again.\n\nYou have already learned to call upon the magic to take you to Moonglade, so you should be able to embark immediately if you choose. I would suggest you leave soon, if you wish to continue your druidic training.",
-		complete = "And so it continues, Father Cenarius.\n\n<Dendrite makes a quick, invisible gesture in the air above him. A slight aura of power falls over him.>\n\nGreetings again, Hans. It is time for you to learn the next perspective of nature: the cat. I will put you on the path to understanding this aspect of druidic life, but much like the bear, it is you that must embrace this learning and propagate it.",
+		complete = "And so it continues, Father Cenarius.\n\n<Dendrite makes a quick, invisible gesture in the air above him. A slight aura of power falls over him.>\n\nGreetings again, $n. It is time for you to learn the next perspective of nature: the cat. I will put you on the path to understanding this aspect of druidic life, but much like the bear, it is you that must embrace this learning and propagate it.",
 	},
 	[98394] = {
 		accept = "In the southern part of Moonglade, on a hill overlooking the bridge, resides a wise and cunning being we call the Great Cat Spirit.\n\nMuch like the Great Bear Spirit, this spirit has served as a tutor and mentor to druids that desire to take the feline shape. All druids eventually seek its wisdom, and if you desire to take the form of a cat, you will as well.\n\nGo meet with the Great Cat Spirit and learn what it will teach you.",
@@ -19253,7 +19253,7 @@ SpokenQuestsText = {
 	},
 	[98397] = {
 		accept = "The time has come for us to part ways once again, young one, as the application of your lessons takes you back to whom that sent you to me. It would seem your instructor, Mathrengyl Bearwalker, has found a worthy pupil in you. I believe I see one as well. Heed his lessons and you shall soon be able to draw upon the Great Cat Spirit to take its shape.\n\nGo back to whence you came. When the time is right, we will meet again.",
-		complete = "Welcome back, Turq. I can sense you have met with the Great Cat Spirit and have successfully completed the trial. All druids must pass a trial given by this spirit, though the trials vary by generation. I am proud you have passed and have heeded the wisdom of the Great Cat Spirit. It is an ancient spirit that is as deadly as it is playful, though I can sense you understand the spirit's nature already.\n\nI will now instruct you on how to take the shape of the cat.",
+		complete = "Welcome back, $n. I can sense you have met with the Great Cat Spirit and have successfully completed the trial. All druids must pass a trial given by this spirit, though the trials vary by generation. I am proud you have passed and have heeded the wisdom of the Great Cat Spirit. It is an ancient spirit that is as deadly as it is playful, though I can sense you understand the spirit's nature already.\n\nI will now instruct you on how to take the shape of the cat.",
 	},
 	[98398] = {
 		accept = "I am impressed by what you have accomplished here in so short a time, $N. Would that I could ask you to remain here to assist me with my duties... but I know in my heart that greater tasks lie ahead for you.\n\nI have noticed the Oracle Tree has just shed a piece of its bark. No doubt it has a task that it wishes completed. You should speak with it.",
@@ -19273,7 +19273,7 @@ SpokenQuestsText = {
 	},
 	[98407] = {
 		accept = "If the gnolls are growing so bold they are willing to camp this close to humans, there's no telling how much further they'll go. We need to deter them.\n\nThe beasts are hardly organized, but they seem to respect strength above all else. If we can slay the worst of them, maybe claim some of their trophies, we can remind these gnolls why they should stay in the hills where they belong.\n\nShould you see any of their thrashers, bring me their collars. That should put the fear of the Alliance back into them.",
-		complete = "Quite the armful you have.\n\nWhile this doesn't solve our problem out here, I can rest comfortably knowing we've discouraged them pushing any further. Great work, Zurk.",
+		complete = "Quite the armful you have.\n\nWhile this doesn't solve our problem out here, I can rest comfortably knowing we've discouraged them pushing any further. Great work, $n.",
 	},
 	[98417] = {
 		accept = "At the moment our fates bound us most vulnerable, tragedy fell upon our villages. Satyrs defiled our temples, their profane touch staining sacred boughs, and they slaughtered the innocent without mercy.\n\nKurothel was consumed by wrath. The druids are taking the fight to the satyr, and he has followed.\n\nOur bond endures. I feel my husband, west, within these woods. Please, return to me with news of his fate.",
@@ -19446,7 +19446,7 @@ SpokenQuestsText = {
 	},
 	[99101] = {
 		accept = "Baine Bloodhoof leads our village. He must know of this incursion at once.\n\nBring him Longwalker Malah's report. You will find him at the center of town.\n\nQuickly, now. There is no time to waste!",
-		complete = "<Baine reads the report, his gaze darkening.>\n\nThis will not stand. Thank you for delivering it to me, Vanyel.",
+		complete = "<Baine reads the report, his gaze darkening.>\n\nThis will not stand. Thank you for delivering it to me, $n.",
 	},
 	[99108] = {
 		accept = "Hail, young $c. Though you are not a warrior and I cannot teach you that path, that does not mean you would not benefit from my tutelage.\n\nBefore you lies the arena. In it, it matters not who you call mother or whether you wield sword or bow. All are equal, and all learn to sharpen their horns in direct combat.\n\nWill you enter our space, and learn our ways for yourself? You may face any of these novices, or any other willing adversary. I care not which.",

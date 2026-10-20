@@ -2984,7 +2984,7 @@ SpokenQuestsCompendium = {
 		[7505] = { "Frost Shock and You", zones = { 1444 }, dungeon = 429, ender = 14381 },
 		[7506] = { "The Emerald Dream...", zones = { 1444 }, dungeon = 429, ender = 14381, classes = 1024 },
 		[7507] = { "Foror's Compendium", zones = { 1444 }, dungeon = 429, ender = 14368 },
-		[7508] = { "The Forging of Quel'Serrar", zones = { 1444 }, dungeon = 429, prev = 7507 },
+		[7508] = { "The Forging of Quel'Serrar", zones = { 1444 }, dungeon = 429, prev = 7507, ender = 14368 },
 		[7509] = { "The Forging of Quel'Serrar", zones = { 1445 }, dungeon = 249, prev = 7508 },
 		[7541] = { "Service to the Horde", zones = { 1445 }, prev = 1262, ender = 4047, races = 8589934770 },
 		[7562] = { "Mor'zul Bloodbringer", sort = 61, ender = 14436, classes = 256 },

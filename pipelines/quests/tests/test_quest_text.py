@@ -12,8 +12,14 @@ from tts_cli.quest_text import in_game, left_out, lua_string, quest_text, remove
 
 QUESTS = Path(__file__).resolve().parent.parent
 QUEST_TEXT_LUA = QUESTS.parent.parent / "addons" / "Spoken_Quests" / "Data" / "QuestText.lua"
-#: Players' names that contributed text carried where the game says $n.
-PLAYER_NAMES = ["Aranvielle", "Sladkiy", "Marabi", "Rhett", "Ukko", "Reli", "Drakath", "Thank you Dead"]
+#: Players' names that contributed text carried where the game says $n: the first eight fixed by
+#: hand, the rest by the site's own export.
+PLAYER_NAMES = ["Aranvielle", "Sladkiy", "Marabi", "Rhett", "Ukko", "Reli", "Drakath", "Thank you Dead",
+                "Orangequake", "Ingmmar", "Spineblast", "Saixgone", "Zaelriel", "Xeph", "Busch", "Samelyn",
+                "Raton", "Naanariel", "Gei", "Shamfor", "Theinn", "Vall", "Venator", "Archnatum", "Quantum",
+                "Gort", "Johnathon", "Eraina", "Ulvarg", "Thay", "Gehrfik", "Gryma", "Gad", "Nattyrav",
+                "Sparkled", "Sneaky", "Illbean", "Leif", "Qiy", "Cory", "Hans", "Turq", "Zurk", "Dovahshark",
+                "Vanyel"]
 
 
 def _line(quest, source, text, npc=288, gender=None, title="Growling Gut"):
@@ -127,6 +133,16 @@ def test_the_menethil_crest_offer_says_lad_or_lass_by_the_player_s_gender(commit
     assert set(offers) == {"q:98190:accept:m", "q:98190:accept:f"}
     assert all("this one, $glad:lass;." in text for text in offers.values())
     assert "this one, $glad:lass;." in lua
+
+
+def test_hand_ins_the_site_splits_by_the_player_s_gender_are_a_pair(committed):
+    corpus, _ = committed
+    ids = {line["lineId"] for line in corpus["lines"]}
+    for base in ("q:3097:complete", "q:91282:complete", "g:368720c602f129b62676fcebd9b31777"):
+        assert base not in ids
+        assert {base + ":m", base + ":f"} <= ids
+    texts = {line["lineId"]: line["text"] for line in corpus["lines"] if line.get("questId") in (3097, 91282)}
+    assert "call you Lady." in texts["q:3097:complete:f"] and "sister." in texts["q:91282:complete:f"]
 
 
 def test_children_s_week_offers_are_their_own_not_duskwood_s(committed):
