@@ -52,7 +52,7 @@ All of it is in `addons/Spoken/UI/`, one copy for every module.
   their creature (`StaticPortrait.lua`), else the line's own picture, cut round, with the line's
   badge on a dark disc at its lower right, and the disc only under a badge. A creature the client
   has not cached shows the book until it comes. The Large Window draws a 3D model instead.
-- **Show Progress Bar**: a progress line under the words, for the subtitles and every window.
+- **Show Progress Bar**: a progress line under the words, for the subtitles and every window. Off by default.
 - **Dragging** a window or the subtitles draws it to the screen's edges and middle, and the DialogueUI
   window to its resting place too, with a gold guide line where it holds. Holding Shift drags it free.
 - **Lock Position**: the windows and the subtitles cannot be dragged or resized, and clicks on

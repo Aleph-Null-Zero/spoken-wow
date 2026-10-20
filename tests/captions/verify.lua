@@ -79,6 +79,9 @@ E.Addon.db.profile.Frame.Style='minimal'
 E.Addon.db.profile.Frame.MinimalBackground='dark'
 E.Addon.db.profile.Audio.LineGap=0
 E.Addon.db.profile.Transcript.HighlightWord=true
+-- The checks below follow the words typed in and the progress line, which are off by default.
+E.Addon.db.profile.Transcript.Typewriter=true
+E.Addon.db.profile.Transcript.SubtitleProgress=true
 E.Addon:Enable()
 local T,Q,M=E.Transcript,E.SoundQueue,E.MinimalPlayer
 local source=E.Sources:Register('quests',{interClipGap=.55})
@@ -309,8 +312,8 @@ do
     Check(cfg.HighlightWord==d.HighlightWord and cfg.SubtitleShadow==d.SubtitleShadow and cfg.TypewriterBy==d.TypewriterBy,
         'resetting the words puts back the defaults a first install has')
 end
--- The window checks below follow the word being read.
-cfg.HighlightWord=true; T:RefreshConfig()
+-- The window checks below follow the word being read, typed in, with the progress line.
+cfg.HighlightWord=true; cfg.Typewriter=true; cfg.SubtitleProgress=true; T:RefreshConfig()
 local playerTop=M.frame:GetTop()
 local extra={}
 for i=1,6 do extra[i]=Clip('extra'..i,'Later dialogue',10); source:Enqueue(extra[i]) end

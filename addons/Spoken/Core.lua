@@ -106,14 +106,14 @@ Defaults = {
             -- How the captions follow the voice: "line", "page" or "off".
             ScrollMode = "line",
             Lines = 2,
-            HighlightWord = false,
+            HighlightWord = true,
             FontSize = 16,
             -- The subtitle player's own (UI/Subtitle.lua).
-            Typewriter = true,
+            Typewriter = false,
             -- "letter": each word typed in; "word": each word appears whole.
             TypewriterBy = "letter",
             SubtitleShadow = 0.6,
-            SubtitleProgress = true,
+            SubtitleProgress = false,
             SubtitleName = true,
             SubtitleScroll = "page",
             SubtitleScale = 1,
