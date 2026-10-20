@@ -1316,12 +1316,16 @@ local function Subtitle(id)
     return Where(id)
 end
 
-local function QuestIcon(id)
-    return { objectOrItem = true, icon = [[Interface\Icons\INV_Scroll_03]],
-        bullet = Completed(id) and BULLETS.complete or BULLETS.accept }
+-- The quest's scroll, with the question mark badge where `done`, else the exclamation mark.
+local function ScrollIcon(done)
+    return { objectOrItem = true, icon = [[Interface\Icons\INV_Scroll_03]], bullet = done and BULLETS.complete or BULLETS.accept }
 end
 
--- A chain is quests, so it has the quest's scroll: the question mark once every quest in it is done.
+local function QuestIcon(id)
+    return ScrollIcon(Completed(id))
+end
+
+-- A chain is quests, so it has the quest's scroll: the question mark badge once every quest in it is done.
 local function ChainIcon(ids)
     local done = #ids > 0
     for _, id in ipairs(ids) do
@@ -1330,7 +1334,7 @@ local function ChainIcon(ids)
             break
         end
     end
-    return { objectOrItem = true, icon = [[Interface\Icons\INV_Scroll_03]], bullet = done and "quest-complete" or "quest-accept" }
+    return ScrollIcon(done)
 end
 
 -- The pages that are no place and no quest have an icon that fits: a class's own, a profession's, a
