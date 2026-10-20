@@ -58,7 +58,6 @@ local function EventLabel(key) return EVENT_NAMES[key] and L[EVENT_NAMES[key]] o
 local TYPES, TYPE_NAMES = SpokenBooks.TYPES, SpokenBooks.TYPE_NAMES
 local function TypeLabel(type) return L[(TYPE_NAMES[type] or TYPE_NAMES.other).all] end
 
--- A kind of writing's portrait: its icon, and the small training book for a badge.
 local TYPE_ICONS = {
 	book = "INV_Misc_Book_09", journal = "INV_Misc_Book_11", letter = "INV_Letter_15", note = "INV_Misc_Note_01",
 	scroll = "INV_Scroll_03", tablet = "INV_Misc_StoneTablet_11", plaque = "INV_Misc_Note_06",
@@ -414,13 +413,10 @@ local function Leaves(ids, nest, into, whole)
 	end
 end
 
--- A zone's, a dungeon's or a kind of writing's line, with its numbers: the found out of all and the
--- share.
 local function Counted(item, found, total)
 	item.style = "group"
 	item.count, item.total = found, total
 	item.asLeft = asLeft
-	item.ratio = total > 0 and found / total or 0
 	item.tick = total > 0 and found == total
 	item.none = found == 0
 	return item
@@ -459,7 +455,7 @@ local function Lines(lines, nest, into, item, opened, whole)
 end
 
 -- A line for each kind of writing in `byType` ({ [type] = ids }), by Lines.
-local function KindCards(byType, nest, into, item, opened, whole)
+local function KindLines(byType, nest, into, item, opened, whole)
 	local lines = {}
 	for _, type in ipairs(TYPES) do
 		if byType[type] then table.insert(lines, { key = type, label = TypeLabel(type), ids = byType[type] }) end
@@ -478,7 +474,7 @@ end
 
 -- A dungeon's or a raid's line, and when it is open (or a search finds something in it) a line for
 -- each kind of writing in it, as a zone's.
-local function DungeonCard(mapID, map, nest, whole)
+local function DungeonLines(mapID, map, nest, whole)
 	local name = DungeonName(map)
 	whole = Named(name, whole)
 	local all = DungeonReadables(mapID, map)
@@ -489,7 +485,7 @@ local function DungeonCard(mapID, map, nest, whole)
 	local open = dungeonOpen[key] == true
 	local inside = {}
 	if open or (filter ~= "" and not asLeft) then
-		KindCards(Index().dungeons[mapID][map], nest + 1, inside,
+		KindLines(Index().dungeons[mapID][map], nest + 1, inside,
 			function(type) return { kind = "group", which = type, mapID = mapID, dungeon = map } end,
 			function(type) return zoneTypeOpen[key .. ":" .. type] end, whole)
 	end
@@ -506,7 +502,7 @@ local function DungeonRows(mapID, nest, whole)
 	local maps = {}
 	for map in pairs(Index().dungeons[mapID] or {}) do table.insert(maps, map) end
 	if #maps == 0 then return {} end
-	if #maps == 1 then return DungeonCard(mapID, maps[1], nest, whole) end
+	if #maps == 1 then return DungeonLines(mapID, maps[1], nest, whole) end
 	table.sort(maps, function(a, b)
 		local na, nb = DungeonName(a), DungeonName(b)
 		if na == nb then return a < b end
@@ -522,7 +518,7 @@ local function DungeonRows(mapID, nest, whole)
 	local inside = {}
 	if open or (filter ~= "" and not asLeft) then
 		for _, map in ipairs(maps) do
-			for _, row in ipairs(DungeonCard(mapID, map, nest + 1, whole)) do table.insert(inside, row) end
+			for _, row in ipairs(DungeonLines(mapID, map, nest + 1, whole)) do table.insert(inside, row) end
 		end
 	end
 	if filter ~= "" and #inside == 0 and not whole then return {} end
@@ -551,7 +547,7 @@ local function ZoneRows(mapID, nest, whole)
 			end
 		end
 		for _, row in ipairs(DungeonRows(mapID, nest + 1, whole)) do table.insert(inside, row) end
-		KindCards(Index().zones[mapID] or {}, nest + 1, inside,
+		KindLines(Index().zones[mapID] or {}, nest + 1, inside,
 			function(type) return { kind = "group", which = type, mapID = mapID } end,
 			function(type) return zoneTypeOpen[mapID .. ":" .. type] end, whole)
 	end
@@ -595,7 +591,7 @@ local function GroupRows(key, label, ids)
 			Lines(events, 0, inside,
 				function(event) return { kind = "event", which = event, group = key } end,
 				function(event) return groupTypeOpen[key .. ":" .. event] end, whole)
-			KindCards(byType, 0, inside,
+			KindLines(byType, 0, inside,
 				function(type) return { kind = "kind", which = type, group = key } end,
 				function(type) return groupTypeOpen[key .. ":" .. type] end, whole)
 		end)

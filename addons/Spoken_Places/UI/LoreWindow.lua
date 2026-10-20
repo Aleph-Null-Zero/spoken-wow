@@ -395,12 +395,9 @@ local function DungeonCount(zone)
 	return found, total
 end
 
--- A zone's dungeons and raids, as the Quests tab files their quests: one a row of its own, several
--- a Dungeons and Raids line with a row for each under it. A dungeon's story is its area's, so its
--- row is a single thing with nothing under it, ticked once found and greyed until then; the line
--- counts its dungeons found out of all as a zone's line counts its places, opens and closes as a
--- zone's does, and its page counts them too. A search lists the dungeons that match, or all of them
--- where it names what holds them (`whole`).
+-- A zone's dungeons and raids: one a line of its own, several under a Dungeons and Raids line that
+-- counts them. A dungeon's story is its area's, so nothing opens under its line. A search lists the
+-- dungeons that match, or all of them where it names what holds them (`whole`).
 local function DungeonRows(zone, nest, whole)
 	local listed = DungeonsIn(zone)
 	if #listed == 0 then return {} end
@@ -413,8 +410,8 @@ local function DungeonRows(zone, nest, whole)
 		if not OnlyVoiced() or Voiced(dungeon.mapID, dungeon.key) then
 			if (isFound or not OnlyFound()) and (filter == "" or whole or Matches(dungeon.name)) then
 				table.insert(dungeonRows, { leaf = true, kind = "dungeon", mapID = dungeon.mapID, key = dungeon.key,
-					label = dungeon.name, nest = several and nest + 1 or nest, dungeon = dungeon.dungeon,
-					done = isFound, none = not isFound, missing = SpokenZones:IsPending(dungeon.entry) })
+					label = dungeon.name, nest = several and nest + 1 or nest, done = isFound,
+					missing = not isFound or SpokenZones:IsPending(dungeon.entry) })
 			end
 		end
 	end
@@ -424,7 +421,7 @@ local function DungeonRows(zone, nest, whole)
 	local shown
 	if filter ~= "" and not asLeft then shown = not searchClosed[closeKey] else shown = dungeonsOpen[zone] == true end
 	local rows = { { style = "group", kind = "dungeons", zone = zone, label = L.DUNGEONS, nest = nest,
-		count = found, total = total, ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
+		count = found, total = total, tick = total > 0 and found == total,
 		none = found == 0, open = shown, closeKey = closeKey, asLeft = asLeft } }
 	if shown then
 		for _, row in ipairs(dungeonRows) do table.insert(rows, row) end
@@ -469,11 +466,8 @@ local function ZoneRows(mapID, nest, whole)
 	-- Closed with a click during this search: the line alone.
 	local shown
 	if searched then shown = not searchClosed[closeKey] else shown = open end
-	-- With nothing in it at all (Thunder Bluff): no plus that opens nothing.
-	local empty = #CitiesIn(mapID) == 0 and #DungeonsIn(mapID) == 0 and #Areas(mapID) == 0
 	local rows = { { style = "group", kind = "zone", mapID = mapID, label = zoneName, nest = nest,
-		count = found, total = total, empty = empty,
-		ratio = total > 0 and found / total or 0, tick = total > 0 and found == total,
+		count = found, total = total, tick = total > 0 and found == total,
 		none = found == 0 and not Found(mapID),
 		open = searched and shown and #inside > 0 or not searched and shown,
 		closeKey = closeKey, asLeft = asLeft, missing = Missing(mapID) } }
@@ -617,10 +611,9 @@ local function InAndCount(where, found, total)
 	return line
 end
 
--- An area's portrait: a dungeon's key for a dungeon's, as the other tabs show it, else its zone's.
+-- An area's portrait: a dungeon's key for a dungeon's, else its zone's.
 local function AreaIcon(mapID, key)
-	local zone, dungeon = SpokenZones:DungeonOf(mapID, key)
-	return SpokenCompendium.PlaceIcon(zone or SpokenZones:AreaZone(mapID, key), dungeon)
+	return SpokenCompendium.PlaceIcon(SpokenZones:AreaZone(mapID, key), select(2, SpokenZones:DungeonOf(mapID, key)))
 end
 
 local function ShowEntry()

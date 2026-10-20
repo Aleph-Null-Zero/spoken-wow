@@ -5,10 +5,9 @@
 --
 -- The list is the Compendium's banners and lines. Banners are for continents and types:
 -- one for each continent, Other Lands for the zones on no continent, Battlegrounds, then the
--- sections Classes, Professions, Holidays and Events and Other. Cards are for places alone: a
--- zone, its city, a dungeon. Everything else is a line of the list with what it holds under it: a
--- class, profession, holiday or other kind of quest and Place Unknown in a section's banner, a
--- zone's Dungeons and Raids where it has several (a line for each dungeon under it; a zone with
+-- sections Classes, Professions, Holidays and Events and Other. Everything else is a line of the
+-- list with what it holds under it: a place, a class, profession, holiday or other kind of quest
+-- and Place Unknown in a section's banner, a zone's Dungeons and Raids where it has several (a line for each dungeon under it; a zone with
 -- one has that dungeon's line), and a chain, the quests that follow one another (`prev` in the
 -- data), with the same name in every zone it crosses. The rest are the leaves, a row each.
 -- Every line and banner counts its quests completed out of all and those in progress; Voiced Only
@@ -585,14 +584,13 @@ local function Shows(id)
         and (not Filtering() or Matches(Title(id)) or Matches(english))
 end
 
--- A line's numbers: the completed (and their share) out of all, and how many more are in progress.
+-- A line counts its completed quests; those under way are counted apart.
 local function Counted(item, found, total, going)
     local done = found - going
     item.style = "group"
     -- `found`, completed or under way, is what opens: a chain with one quest started has that to show.
     item.count, item.total, item.goingCount, item.found = done, total, going, found
     item.asLeft = asLeft
-    item.ratio = total > 0 and done / total or 0
     item.tick = total > 0 and done == total
     item.none = found == 0
     return item
@@ -1305,11 +1303,9 @@ local function Subtitle(id)
     return Where(id)
 end
 
--- A quest's portrait: a scroll, and the badge of its state, the exclamation mark until it is
--- done, then the question mark.
 local function QuestIcon(id)
     return { objectOrItem = true, icon = [[Interface\Icons\INV_Scroll_03]],
-        bullet = Completed(id) and "quest-complete" or "quest-accept" }
+        bullet = Completed(id) and BULLETS.complete or BULLETS.accept }
 end
 
 local function ShowEntry()

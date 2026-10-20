@@ -209,10 +209,10 @@ Expect("...a single line, one level in, as a city's is", (RowFor("Deadmines").ro
 Expect("...with no plus, as nothing opens under it", RowFor("Deadmines").toggle:IsShown(), false)
 Expect("...counted as one of the zone's places", RowFor("Westfall").count.text:match("/(%d+)"), "2")
 Expect("...no numbers of its own", RowFor("Deadmines").count.text, "")
-Expect("...greyed while not found", RowFor("Deadmines").row.none, true)
+Expect("...greyed while not found", RowFor("Deadmines").row.missing, true)
 found["1436/deadmines"] = true
 Z:RefreshLoreWindow(); Shown()
-Expect("...ticked once found, as its area's row was", RowFor("Deadmines").status:IsShown() and not RowFor("Deadmines").row.none, true)
+Expect("...ticked once found, as its area's row was", RowFor("Deadmines").status:IsShown() and not RowFor("Deadmines").row.missing, true)
 found["1436/deadmines"] = nil
 showAll = false
 Z:RefreshLoreWindow(); Shown()

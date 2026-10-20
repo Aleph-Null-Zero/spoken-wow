@@ -608,8 +608,6 @@ local MINUS = [[Interface\Buttons\UI-MinusButton-Up]]
 local PLUS_OFF = [[Interface\Buttons\UI-PlusButton-Disabled]]
 local READY = [[Interface\RaidFrame\ReadyCheck-Ready]]
 local ACTIVE = [[Interface\GossipFrame\ActiveQuestIcon]]
--- What stands in for a picture that is not there yet: the question mark, drawn like any other, so a
--- page and a line always have their portrait.
 local UNKNOWN_ICON = [[Interface\Icons\INV_Misc_QuestionMark]]
 local CHECK = "questlog-icon-checkmark-yellow"
 -- One size for every tick in the column down the list's right, on every line.
@@ -670,12 +668,9 @@ local function NameInk(label, item)
 	end
 end
 
--- The share of `item` found, 0 to 1: its own `ratio`, else its count out of its total.
 local function Share(item)
 	local total = item.total or 0
-	local ratio = item.ratio
-	if ratio == nil and total > 0 then ratio = (item.count or 0) / total end
-	return math.max(0, math.min(1, ratio or 0))
+	return total > 0 and math.max(0, math.min(1, (item.count or 0) / total)) or 0
 end
 
 -- A tick: the game's yellow check, else its ready check.
@@ -747,9 +742,9 @@ List.__index = List
 ---   the name, count/total.
 --- - style = "group": one line holding more lines (a place, a chain, a kind of quest or of
 ---   writing): its plus or minus, the name, beside it `count`/`total` and the share or a tick with
----   `tick` (and `goingCount` by the quest mark); no plus or minus with `empty`, nothing ever under it.
+---   `tick` (and `goingCount` by the quest mark); no plus or minus with nothing to count.
 --- - leaf = true: one line for a single thing: the name, and at the line's end a tick with `done`,
----   the quest mark with `going`, or the padlock with `locked`; greyed with `missing` or `none`.
+---   the quest mark with `going`, or the padlock with `locked`.
 --- Groups and leaves give `nest`, how many open groups hold them.
 function C.NewList(panel, opts)
 	local list = setmetatable({ panel = panel, opts = opts, rows = {}, filter = "" }, List)
@@ -924,6 +919,21 @@ local function OnRowClick(self)
 	if list.opts.onClick then list.opts.onClick(item) end
 end
 
+-- `reason`, why a row does not open, in the colour the settings give a reason.
+local function ShowTip(owner, text, reason)
+	GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+	GameTooltip:SetText(text or "")
+	if reason then GameTooltip:AddLine(reason, 1, 0.5, 0.25, true) end
+	GameTooltip:Show()
+	owner.tipShown = true
+end
+
+local function HideTip(owner)
+	if not owner.tipShown then return end
+	owner.tipShown = nil
+	if GameTooltip then GameTooltip:Hide() end
+end
+
 function List:AcquireRow(index)
 	local row = self.rows[index]
 	if row then
@@ -974,20 +984,13 @@ function List:AcquireRow(index)
 		-- open, in the reason's colour the settings use.
 		local reason = self.row and self.row.locked and self.list.opts.locked and self.list.opts.locked(self.row)
 		if GameTooltip and self.row and (reason or (self.label.IsTruncated and self.label:IsTruncated())) then
-			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-			GameTooltip:SetText(self.row.label or "")
-			if reason then GameTooltip:AddLine(reason, 1, 0.5, 0.25, true) end
-			GameTooltip:Show()
-			self.tipShown = true
+			ShowTip(self, self.row.label, reason)
 		end
 	end)
 	row:SetScript("OnLeave", function(self)
 		self.over = false
 		Light(self)
-		if self.tipShown then
-			self.tipShown = nil
-			if GameTooltip then GameTooltip:Hide() end
-		end
+		HideTip(self)
 	end)
 
 	self.rows[index] = row
@@ -1091,11 +1094,6 @@ local function Toggle(row, item, onlyFound)
 	row.toggle:Show()
 end
 
--- One line, a single thing or a group: no frame round it.
-local function Flat(item)
-	return item.leaf or item.style == "group"
-end
-
 -- The room above the row for `items[i]`, and how many open groups hold both it and the row above.
 local function GapAbove(items, i)
 	local item, before = items[i], items[i - 1]
@@ -1166,7 +1164,7 @@ end
 -- the names of what it holds, and on the right what is found out of all and the share, the quest
 -- mark with how many are under way, a tick once all are found, a padlock on what does not open.
 local function DrawGroup(row, item, indent, onlyFound)
-	if item.empty then row.toggle:Hide() else Toggle(row, item, onlyFound) end
+	if (item.total or 0) == 0 then row.toggle:Hide() else Toggle(row, item, onlyFound) end
 	row.toggle:ClearAllPoints()
 	row.toggle:SetPoint("CENTER", row, "LEFT", indent + RAIL_X + TOGGLE_SHIFT, 0)
 
@@ -1233,7 +1231,7 @@ local function DrawLeaf(row, item, indent)
 	-- found, greyer: listed, but it does not open.
 	if item.locked then
 		Tint(row.label, LOCKED_INK)
-	elseif item.missing or item.none then
+	elseif item.missing then
 		row.label:SetTextColor(0.66, 0.64, 0.60)
 	else
 		row.label:SetTextColor(0.94, 0.93, 0.89)
@@ -1283,7 +1281,7 @@ function List:Render()
 		end
 		-- A single row's light starts on the line down its left, its gold edge over that line.
 		local lit = indent
-		if Flat(item) and (nest > 0 or underBanner) then lit = indent - (NEST_STEP - RAIL_X) - 0.5 end
+		if item.style ~= "banner" and (nest > 0 or underBanner) then lit = indent - (NEST_STEP - RAIL_X) - 0.5 end
 		row.wash:ClearAllPoints()
 		row.wash:SetPoint("TOPLEFT", row, "TOPLEFT", lit, 0)
 		row.wash:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
@@ -1515,6 +1513,8 @@ end
 -- a plain colour where neither.
 local ZONES_ART = "Interface\\AddOns\\Spoken_Places\\Textures\\Art\\"
 local FACE_GAP, FACE_SIZE = 10, 50
+-- For a page the tab gives no picture: with one on every page, the title never moves.
+local TOME = { objectOrItem = true, icon = ICON }
 -- One ink for every word on the page: a lighter one for the line under the title and for a page
 -- with nothing chosen read as greyed out, and was hard to make out on the parchment.
 -- The spellbook's own, as the places' page has it: the game's colour is darker than the brown
@@ -1689,21 +1689,14 @@ function C.NewPage(parent, addon, play, report, look)
 	-- Its shadow is the quest log's: the font's own, which Ink would take away.
 	title:SetTextColor(INK[1], INK[2], INK[3])
 	self.title = title
-	-- A title cut short, whole in the tooltip, as a list row's name is.
+	-- A title cut short, whole in the tooltip.
 	local titleHit = CreateFrame("Frame", nil, frame)
 	titleHit:SetAllPoints(title)
 	titleHit:EnableMouse(true)
 	titleHit:SetScript("OnEnter", function(hit)
-		if not (GameTooltip and title.IsTruncated and title:IsTruncated()) then return end
-		GameTooltip:SetOwner(hit, "ANCHOR_BOTTOMLEFT")
-		GameTooltip:SetText(title:GetText() or "", 1, 1, 1, 1, true)
-		GameTooltip:Show()
-		hit.tipShown = true
+		if GameTooltip and title.IsTruncated and title:IsTruncated() then ShowTip(hit, title:GetText()) end
 	end)
-	titleHit:SetScript("OnLeave", function(hit)
-		if hit.tipShown and GameTooltip then GameTooltip:Hide() end
-		hit.tipShown = nil
-	end)
+	titleHit:SetScript("OnLeave", HideTip)
 	self.titleHit = titleHit
 
 	-- The line under the title as the places' page sets it: a line 16 high, its words in the middle,
@@ -1813,21 +1806,19 @@ function C.NewPage(parent, addon, play, report, look)
 end
 
 --- The portrait of a place's page (`icon` of Page:Show): a dungeon's or a zone's picture, with the
---- world for a badge; the question mark where there is no picture yet.
+--- world for a badge; the question mark where there is no picture yet. Made once for each place.
+local placeIcons = {}
 function C.PlaceIcon(mapID, dungeon)
+	local at = tostring(mapID) .. ":" .. tostring(dungeon)
+	if placeIcons[at] then return placeIcons[at] end
 	local icon, crop
 	if dungeon and Spoken and Spoken.DungeonIcon then
 		icon, crop = Spoken:DungeonIcon(dungeon)
 	elseif mapID and Spoken and Spoken.ZoneIcon then
 		icon, crop = Spoken:ZoneIcon(mapID)
 	end
-	if not icon then return C.UnknownIcon("zone") end
-	return { objectOrItem = true, icon = icon, iconCrop = crop, bullet = "zone" }
-end
-
---- The portrait of a page or a line whose picture does not exist yet: the question mark, with `bullet`'s badge.
-function C.UnknownIcon(bullet)
-	return { objectOrItem = true, icon = UNKNOWN_ICON, bullet = bullet }
+	placeIcons[at] = { objectOrItem = true, icon = icon or UNKNOWN_ICON, iconCrop = icon and crop or nil, bullet = "zone" }
+	return placeIcons[at]
 end
 
 --- A round button of the caller's on the heading's line, left of Report and Play, shown or hidden
@@ -1892,29 +1883,27 @@ function Page:PlaceDivider()
 end
 
 --- entry = { title, subtitle, onSubtitle, text, target = what Play and Report act on, or nil for
---- none, icon = what the round portrait at the left of the title shows (the speaker table of
---- Spoken:CreateSpeakerFace: a picture and its small badge), picture = { file, mask } above the words, parts = { { heading, text, buttons } } in place
+--- none, icon = the round portrait left of the title (a Spoken:CreateSpeakerFace speaker table), the
+--- Compendium's tome without it, picture = { file, mask } above the words, parts = { { heading, text, buttons } } in place
 --- of `text`: words in parts, each under its heading with its own buttons (TextView:SetParts) }.
 --- onSubtitle(), where given, is what a click on the line under the title does (the map panel's
 --- area story returns to its zone's with it); without it the line is plain words.
 function Page:Show(entry)
-	-- The Compendium's tome where the tab names no picture: the title never moves between pages.
-	local icon = entry.icon or { objectOrItem = true, icon = ICON }
 	if self.headFace == nil then
 		local ok, made = false, nil
 		if _G.Spoken and Spoken.CreateSpeakerFace then ok, made = pcall(Spoken.CreateSpeakerFace, Spoken, self.frame, FACE_SIZE) end
 		self.headFace = ok and made or false
+		if made and ok then made:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD, -(self.top - 4)) end
 	end
 	local face = self.headFace or nil
-	if face then face:SetSpeaker(icon) end
-	if self.face and self.face ~= face then self.face:Hide() end
+	local icon = entry.icon or TOME
+	-- Drawn again only for another picture: a page is shown again on every refresh.
+	if face and icon ~= self.faceIcon then
+		face:SetSpeaker(icon)
+		self.faceIcon = icon
+	end
 	self.face = face
 	self.shift = face and ((face:GetWidth() or 0) + FACE_GAP) or 0
-	if face then
-		face:ClearAllPoints()
-		face:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD, -(self.top - 4))
-		face:Show()
-	end
 	self.title:SetText(entry.title or "")
 	self.sub.text:SetText(entry.subtitle or "")
 	-- No line under the title takes no room: the divider closes up under it.
