@@ -102,7 +102,7 @@ async function allReleases(repo) {
   }
 }
 
-function discord(token) {
+export function discord(token) {
   return async (method, path, body) => {
     const res = await fetch(`https://discord.com/api/v10${path}`, {
       method,
@@ -114,7 +114,7 @@ function discord(token) {
   };
 }
 
-async function findChannel(api, name) {
+export async function findChannel(api, name) {
   for (const guild of await api("GET", "/users/@me/guilds")) {
     const channel = (await api("GET", `/guilds/${guild.id}/channels`)).find((c) => c.name === name);
     if (channel) return channel;

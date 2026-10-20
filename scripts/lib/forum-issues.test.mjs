@@ -1,0 +1,48 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+
+import { closedReply, issueFor, labelsFor, threadOf } from "./forum-issues.mjs";
+
+const thread = { id: "222", name: "Quest text cut off", thread_metadata: { create_timestamp: "2026-10-20T12:00:00.000Z" } };
+const starter = (content, extra = {}) => ({ content, author: { username: "pud2000", global_name: "Pud" }, attachments: [], ...extra });
+
+test("a post's link is found in an issue's footer, and a message's link is not a post's", () => {
+  assert.deepEqual(threadOf("Posted by **Pud** in [#bugs-and-ideas](https://discord.com/channels/111/222) on Discord"),
+    { guild: "111", thread: "222" });
+  assert.equal(threadOf("See https://discord.com/channels/111/222/333 for the message"), null);
+  assert.equal(threadOf(null), null);
+});
+
+test("tags become the repository's labels, always with from-discord and never twice", () => {
+  assert.deepEqual(labelsFor(["Bug", "Quests", "Gossip", "Forever"]), ["from-discord", "bug", "Addon / Spoken Quests"]);
+  assert.deepEqual(labelsFor([]), ["from-discord"]);
+});
+
+test("the issue quotes the post line by line and links back to it", () => {
+  const issue = issueFor({ guild: "111", thread, starter: starter("Mulgore quests are silent.\n\nOnly Contribute shows."), tagNames: ["Bug"] });
+  assert.equal(issue.title, "Quest text cut off");
+  assert.equal(issue.body, [
+    "**Original report**",
+    "> Mulgore quests are silent.",
+    ">",
+    "> Only Contribute shows.",
+    "",
+    "---",
+    "Posted by **Pud** in [#bugs-and-ideas](https://discord.com/channels/111/222) on Discord · 2026-10-20T12:00:00.000Z",
+  ].join("\n"));
+  assert.deepEqual(threadOf(issue.body), { guild: "111", thread: "222" });
+});
+
+test("a post with only pictures, or whose first message is gone, still files", () => {
+  const pictures = issueFor({ guild: "111", thread, starter: starter("", { attachments: [{}, {}] }), tagNames: [] });
+  assert.match(pictures.body, /> \(no text\)\n\n2 attachments in the Discord post\./);
+  assert.match(issueFor({ guild: "111", thread, starter: null, tagNames: [] }).body, /Posted by \*\*someone\*\*/);
+});
+
+test("a closed issue tells the post fixed, not planned, or a duplicate with no tag", () => {
+  const url = "https://github.com/o/r/issues/5";
+  assert.equal(closedReply({ state_reason: "completed", html_url: url }).tag, "Fixed");
+  assert.equal(closedReply({ state_reason: "not_planned", html_url: url }).tag, "Not planned");
+  assert.equal(closedReply({ state_reason: "duplicate", html_url: url }).tag, null);
+  assert.match(closedReply({ state_reason: "completed", html_url: url }).content, /issues\/5/);
+});
