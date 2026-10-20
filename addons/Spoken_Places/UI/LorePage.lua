@@ -229,7 +229,7 @@ function Page:Show(entry)
 	local picture, mask
 	if story then picture, mask = SpokenZones:Picture(story[1], story[2]) end
 	self.page:Show({ title = entry.title, subtitle = entry.subtitle, onSubtitle = entry.onSubtitle, text = entry.text,
-		target = story, picture = picture and { file = picture, mask = mask } or nil })
+		target = story, picture = picture and { file = picture, mask = mask } or nil, icon = entry.icon })
 	local contribute = entry.contribute
 	self.contribute:SetTarget(contribute and contribute[1], contribute and contribute[2])
 	if self.open then
