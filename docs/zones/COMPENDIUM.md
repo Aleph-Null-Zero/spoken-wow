@@ -11,7 +11,7 @@ modules add to it, so there is one copy of each piece:
 | `addons/Spoken/UI/TextView.lua` | The scrolling, wrapping text with its scroll bar and edge fade, and the picture above the words (`SetPicture`). The words are drawn at Text Size. |
 | `addons/Spoken/UI/Face.lua` | The round face on the player windows, and the badge for a line's kind (`zone` uses the world map icon). |
 
-`Compendium.lua` also holds what every tab lays places out by: `C.WORLD` (947, the continents' parent, with no page of its own), `C.CONTINENTS`
+`Compendium.lua` also holds what every tab lays places out by: `C.WORLD` (947, Azeroth, the continents' parent), `C.CONTINENTS`
 (Kalimdor 1414 and the Eastern Kingdoms 1415), `C.CITY_IN`, `C.BATTLEGROUNDS`, `C.ContinentOf`,
 `C.OpenAround`, `C.OpenZone` and `C.PlayerZone`. The other tabs show a place's picture through
 `C.PlacePicture`.
@@ -27,7 +27,9 @@ has a button that opens the place in the tab.
 
 ## The list
 
-A banner for each continent, Kalimdor and the Eastern Kingdoms, then two more banners:
+First Azeroth's banner, which opens the world's story. Nothing is listed or counted under it, and it is
+never locked: the line under its name says how many continents and zones the tab holds. Then a banner
+for each continent, Kalimdor and the Eastern Kingdoms, then two more banners:
 
 - Other Lands, for zones on no continent the client knows (Forever's Zephras Isle).
 - Battlegrounds, for the maps in `C.BATTLEGROUNDS` that have an entry in the data, wherever the

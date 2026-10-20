@@ -43,6 +43,10 @@ L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Places에 이곳의 이야기가 없습�
 L.CONTRIBUTE_BUTTON_TIP = "이곳을 설명하여 기여하세요: 무엇인지, 누가 사는지, 무슨 일이 있었는지."
 L.IN_ZONE_FMT = "위치: %1$s"
 L.DISCOVERED_FMT = "%2$d곳 중 %1$d곳 발견"
+L.ZONE_COUNT_FMT = "지역 %1$d곳"
+L.ZONE_COUNT_ONE = "지역 1곳"
+L.CONTINENT_COUNT_FMT = "대륙 %1$d개"
+L.CONTINENT_COUNT_ONE = "대륙 1개"
 
 L.QUEUE_HELD_COMBAT = "전투 종료 대기 중."
 L.QUEUE_HELD_CINEMATIC = "시네마틱 종료 대기 중."

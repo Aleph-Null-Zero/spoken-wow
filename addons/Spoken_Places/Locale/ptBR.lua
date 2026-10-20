@@ -43,6 +43,10 @@ L.CONTRIBUTE_BUTTON_TIP_TITLE = "O Spoken Places não tem história para este lu
 L.CONTRIBUTE_BUTTON_TIP = "Contribua descrevendo-o: o que é, quem mora lá, o que aconteceu lá."
 L.IN_ZONE_FMT = "Local: %1$s"
 L.DISCOVERED_FMT = "%1$d de %2$d descobertas"
+L.ZONE_COUNT_FMT = "%1$d zonas"
+L.ZONE_COUNT_ONE = "1 zona"
+L.CONTINENT_COUNT_FMT = "%1$d continentes"
+L.CONTINENT_COUNT_ONE = "1 continente"
 
 L.QUEUE_HELD_COMBAT = "Aguardando o fim do combate."
 L.QUEUE_HELD_CINEMATIC = "Aguardando o fim da cinemática."

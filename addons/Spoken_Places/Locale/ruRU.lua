@@ -43,6 +43,10 @@ L.CONTRIBUTE_BUTTON_TIP_TITLE = "У Spoken Places нет истории для �
 L.CONTRIBUTE_BUTTON_TIP = "Помогите, описав его: что это, кто там живёт, что там случилось."
 L.IN_ZONE_FMT = "Расположение: %1$s"
 L.DISCOVERED_FMT = "Открыто %1$d из %2$d"
+L.ZONE_COUNT_FMT = "зон: %1$d"
+L.ZONE_COUNT_ONE = "1 зона"
+L.CONTINENT_COUNT_FMT = "Континентов: %1$d"
+L.CONTINENT_COUNT_ONE = "1 континент"
 
 L.QUEUE_HELD_COMBAT = "Ожидание конца боя."
 L.QUEUE_HELD_CINEMATIC = "Ожидание конца ролика."

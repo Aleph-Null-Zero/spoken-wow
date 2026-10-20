@@ -43,6 +43,10 @@ L.CONTRIBUTE_BUTTON_TIP_TITLE = "Spoken Places hat keine Geschichte für diesen 
 L.CONTRIBUTE_BUTTON_TIP = "Wirke mit, indem du ihn beschreibst: was es ist, wer dort lebt, was dort geschah."
 L.IN_ZONE_FMT = "Lage: %1$s"
 L.DISCOVERED_FMT = "%1$d von %2$d entdeckt"
+L.ZONE_COUNT_FMT = "%1$d Zonen"
+L.ZONE_COUNT_ONE = "1 Zone"
+L.CONTINENT_COUNT_FMT = "%1$d Kontinente"
+L.CONTINENT_COUNT_ONE = "1 Kontinent"
 
 L.QUEUE_HELD_COMBAT = "Wartet auf Kampfende."
 L.QUEUE_HELD_CINEMATIC = "Wartet auf das Ende der Zwischensequenz."
