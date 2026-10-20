@@ -4,6 +4,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Show Spoken Over DialogueUI is gone.** While DialogueUI's window is open, Spoken's window and
+  subtitles step aside, and DialogueUI's own window shows the words and the queue. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
   manager, and the lines Spoken had no voice for go to the site after each logout or /reload,
   so you no longer upload the file yourself. Collected lines now also say which version of your
