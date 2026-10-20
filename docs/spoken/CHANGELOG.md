@@ -4,6 +4,44 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **More bosses in the Bosses tab show their face.** The bosses of the Ruins of Lordaeron, the Hall of Thanes,
+  the City of Dalaran and the Excavation Site: Wetlands, and two of the Marylas in the Karazhan Crypts, have their
+  portrait. Sneed, Grubbis, Darkmaster Gandling, Sapphiron and Dalaran's Arcane Anomaly show the right one, a boss
+  with no known face shows the question mark instead of an empty portrait, and targeting Balnazzar in Stratholme no
+  longer shows the Scarlet Enclave's story. Five bosses take the name the game gives them: The Baron, Magmatus,
+  Kirtonos the Herald, Ras Frostwhisper and C'Thun. *([Nucabe](https://github.com/Nucabe))*
+  longer shows the Scarlet Enclave's story. *([Nucabe](https://github.com/Nucabe))*
+- **Readables are read and found on a server that lays their pages out differently.** A page whose
+  lines break or whose sentences are spaced differently from the voice pack's was not read aloud or
+  counted as found. It is now found by its words. *([Nucabe](https://github.com/Nucabe))*
+- **A boss's story shows in the narrator when you target the boss.** It shows once per character, as words
+  with no voice. On the Bosses settings page, Show a Boss's Story picks targeting or killing it, and Forget
+  Stories Shown shows each again. *([Nucabe](https://github.com/Nucabe))*
+- **Show Spoken Over DialogueUI is gone.** While DialogueUI's window is open, Spoken's window and
+  subtitles step aside, and DialogueUI's own window shows the words and the queue. *([Nucabe](https://github.com/Nucabe))*
+- **Read Greetings is Once for Quest Givers by default.** A quest giver's greeting is read once, and other
+  NPCs greet every time. A choice you made yourself is kept. *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's minimise arrow sits in the middle of its button.** It was drawn off to one side of the
+  frame the template gives it. *([Nucabe](https://github.com/Nucabe))*
+- **The AddOns list shows Spoken and each module's name in colour, with new icons.** Spoken, Conversations,
+  Places, Readables, Contributions and Developer each have a new icon, the voice packs are titled Voice Pack,
+  and the minimap button shows the mark at its size, centred. *([Nucabe](https://github.com/Nucabe))*
+- **Found books, quests and areas are listed in gold in the Compendium**, as the groups above them are.
+  They were white, close to the grey of what is not found yet. *([Nucabe](https://github.com/Nucabe))*
+- **Taking a flight reads the zone it lands in.** While you fly, Places reads the story
+  of the zone the flight ends in. Places you fly over stay silent, and the zone is not
+  read a second time when you land. Untick Read Flight Destination, under When to Read
+  on the Places settings page, to turn it off. *([Nucabe](https://github.com/Nucabe))*
+- **The quest log marks the quests a voice pack reads.** A small speech bubble on a quest's
+  row says that its offer, progress or turn-in is read aloud; its tooltip says the same. On
+  Forever's map quest log it sits at the row's right end, beside the tracking checkbox. Mark
+  Voiced Quests, under Quest Log on the Quests page, turns it off. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: closing DialogueUI on a giver's greeting after taking a quest showed the queue's
+  animation with no window.** The quest's page went behind a window that was not on screen.
+  Now the window flies out of the dialog with the greeting, the quest counted after its title.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Highlight Words is on by default, and Type Words Out and Show Progress Bar are off.** The words of a
+  line show whole and the word being read is lit. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
   manager, and the lines Spoken had no voice for go to the site after each logout or /reload,
   so you no longer upload the file yourself. Collected lines now also say which version of your

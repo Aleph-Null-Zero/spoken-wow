@@ -163,8 +163,11 @@ three.
 
 **A page is identified by what is on screen**, because the client never says which page id
 it is showing. Title, page number and a checksum of the text; then the checksum alone,
-where no other page shares it; then nothing. Nothing is the right third answer: the
-alternative is reading the wrong page's words aloud.
+where no other page shares it; then the words with the layout ignored (`PageByWords`: every
+run of whitespace one space, an aside's brackets dropped), for a server that breaks a page's
+lines or spaces its sentences differently, by title and number first and then where no other
+page has the same words; then nothing. Nothing is the right last answer: the alternative is
+reading the wrong page's words aloud.
 
 **The checksum is the load-bearing part.** `pipelines/books/tools/lib/naming.mjs` and
 `addons/Spoken_Readables/Checksum.lua` must produce the same number for the same text, over

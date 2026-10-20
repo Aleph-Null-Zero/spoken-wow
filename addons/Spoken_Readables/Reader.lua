@@ -11,7 +11,9 @@
 --   1. title + page number + checksum   -- the normal path
 --   2. checksum alone                   -- for a client whose object name differs from the
 --                                          corpus's; only for checksums no other page shares
---   3. nothing                          -- silently, because the alternative is reading the
+--   3. the words, layout ignored        -- for a server that breaks the lines differently;
+--                                          by title and number, then words no other page has
+--   4. nothing                          -- silently, because the alternative is reading the
 --                                          wrong page's words aloud
 
 local ADDON_NAME, SpokenBooks = ...
@@ -98,9 +100,55 @@ function SpokenBooks:PageOnScreen()
 			end
 		end
 	end
-	local found = FindAny(data)
+	local found = FindAny(data) or self:PageByWords(data, title, number, text)
 	if found then self:RememberPageText(found, self.BASE_LANGUAGE, text, title) end
 	return found
+end
+
+--- A corpus page with the same words as the page on screen, laid out differently. The last
+--- step, after every checksum has missed: a server that breaks a line where the corpus has a
+--- space shows the same page under another checksum, and the packs are keyed on the page id
+--- this finds, so its clip plays. The title and number's pages first; then the words alone,
+--- only where no other page has them, as `loose` is for checksums.
+function SpokenBooks:PageByWords(data, title, number, text)
+	local pages = data.pages
+	if type(pages) ~= "table" then
+		return nil
+	end
+	local words = self:FlatWords(self:Normalise(text))
+	-- A picture page has no words, and every other picture page would match it.
+	if words == "" then
+		return nil
+	end
+
+	local byTitle = title and data.index and data.index[title]
+	local byNumber = byTitle and byTitle[number]
+	local best
+	for _, pageId in pairs(byNumber or {}) do
+		local page = pages[pageId]
+		-- The lowest id, as the index keeps the lowest book, so the answer is not pairs' order.
+		if page and type(page.text) == "string" and self:FlatWords(page.text) == words
+			and (not best or (type(pageId) == type(best) and pageId < best)) then
+			best = pageId
+		end
+	end
+	if best then
+		return best
+	end
+
+	-- Built on the first page a checksum misses, not at load: most sessions never need it.
+	if not self.pageByWords then
+		local byWords = {}
+		for pageId, page in pairs(pages) do
+			local key = type(page.text) == "string" and self:FlatWords(page.text) or ""
+			if key ~= "" then
+				local seen = byWords[key]
+				byWords[key] = (seen == nil or seen == pageId) and pageId or false
+			end
+		end
+		self.pageByWords = byWords
+	end
+	return self.pageByWords[words] or nil
 end
 
 -- Older translated packs have an index but no caption text. Remember only pages

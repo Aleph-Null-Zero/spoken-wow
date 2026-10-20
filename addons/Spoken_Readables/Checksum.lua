@@ -120,3 +120,19 @@ function SpokenBooks:Normalise(text, keepMarkup)
 	end
 	return text
 end
+
+local WORD_ENTITIES = { amp = "&", quot = "\"", apos = "'", nbsp = " ", lt = "<", gt = ">" }
+
+--- A page's words with the layout gone: entities as their characters, an aside's brackets
+--- dropped, every run of whitespace one space. Servers lay the same page out differently (a
+--- line break where another has a space, two spaces after a full stop), which changes the
+--- checksum and not a word. A Books.lua caption, written by spokenText, gives the same
+--- result as the page it was made from.
+---@param text string a caption, or a page already through Normalise
+---@return string
+function SpokenBooks:FlatWords(text)
+	text = gsub(text, "&(%a+);", function(name) return WORD_ENTITIES[name] end)
+	text = gsub(text, "[<>%s]+", " ")
+	text = gsub(text, "^ ", "")
+	return (gsub(text, " $", ""))
+end

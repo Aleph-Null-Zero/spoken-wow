@@ -82,5 +82,40 @@ local PTERADON = "This intact pteradon skeleton was recovered from the remote Un
 stub.ShowPage({ title = "Pteradon Skeleton", number = 1, text = PTERADON })
 Expect("two books with the same words resolve to the lower", B:PageOnScreen(), 1756)
 
+---------------------------------------------------------------- the same words, laid out differently
+-- Pages as the Forever server's page_text holds them, which lays some out differently from the
+-- text the index was keyed on: two spaces after a full stop, $B where the corpus has a space.
+local THURMAN_2 = "I fear my father made a grave error when he decided to remain and defend our home.  The forces of the Scourge rage through Tirisfal Glades, and although we are well fortified and well stocked, after the betrayal of my brother Devlin we lack the strength and numbers to withstand their continued assault. If you receive this letter, Yvette, then know that Devlin is a traitor. "
+stub.ShowPage({ title = "Thurman's Letter", number = 2, text = THURMAN_2 })
+Expect("a page whose spacing differs is found by its words", B:PageOnScreen(), 252)
+
+local TROLL_LEGEND_1 = "Rising from the ocean, a tower of water, Neptulon sent the great Krakken to doomed I'lalai. So huge were their forms that jungles of kelp swayed through their limbs, and leviathans swam through bodies.$B$BThe largest Krakken then raised his arms high and crashed them into the sea, sending waves about him. And they raged toward I'lalai."
+stub.ShowPage({ title = "The Third Troll Legend", number = 1, text = TROLL_LEGEND_1 })
+Expect("...and one whose line breaks differ", B:PageOnScreen(), 324)
+
+stub.ShowPage({ title = "Some other name", number = 5, text = TROLL_LEGEND_1 })
+Expect("...also under a title the corpus does not know, when no other page has the words", B:PageOnScreen(), 324)
+
+-- The server numbers these pages 712 and 2697; the corpus has the same words as 791 and 2711.
+local NEEKA_2 = "I will describe the surrounding lands as the scouts of Kargath have surveyed:$B$B-Red, rocky hills and dry flats that offer little support for life.$B-A blazing sun and severe winds.$B-No lakes or streams. Not even scattered pools. To find water denizens must dig deep, muddy wells, or suck scant moisture from the rare cactus or spiny weed.$B$BIn short: hot, hard living."
+stub.ShowPage({ title = "Neeka's Report", number = 2, text = NEEKA_2 })
+Expect("a page the server keeps under another id is found by its words", B:PageOnScreen(), 791)
+
+local MORZUL_7 = "Completing the Ritual$B$BYou can track your progress by the magic runes along the border of the circle. When nine runes appear then the ritual is complete, and you will see energy rise from the newly empowered Circle.$B$BFrom there, you may invoke the Xorothian Glyphs and open a portal into Xoroth and pull a dreadsteed through it.$B$BDefeat the dreadsteed and release his spirit. Confront the spirit and it will be enthralled, and you will be rewarded with the secret of its summoning."
+stub.ShowPage({ title = "Mor'zul's Instructions", number = 7, text = MORZUL_7 })
+Expect("...on the last page of a book too", B:PageOnScreen(), 2711)
+
+-- The server's page 2304 holds Lady Mara Fordragon's plaque, not the White Stag's fourth page.
+local LADY_MARA = "Lady Mara Fordragon High Clerist of Stormwind Patron of the Refugees who fled to Lordaeron after the First War. She was the bright mother of our future. May she rest in the Light. "
+stub.ShowPage({ title = "The White Stag and the Moon", number = 4, text = LADY_MARA })
+Expect("words that are another readable's are found as that readable's page", B:PageOnScreen(), 2294)
+
+local PICTURE = "<HTML>\n<BODY>\n<IMG src=\"Interface\\Pictures\\11733_blackrock_256\"/>\n</BODY>\n</HTML>\n"
+stub.ShowPage({ title = "Book", number = 1, text = PICTURE })
+Expect("a picture page has no words to find it by", B:PageOnScreen(), nil)
+
+stub.ShowPage({ title = "Thurman's Letter", number = 2, text = "Words  nobody\nwrote." })
+Expect("words the corpus does not have are still nil", B:PageOnScreen(), nil)
+
 print(Failures() == 0 and "All books reader tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)
