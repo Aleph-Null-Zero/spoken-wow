@@ -651,11 +651,11 @@ SpokenQuestsText = {
 		complete = "If the problems we've had here are indicative of what is happening elsewhere in our lands, by Magni's beard, we have some troubles ahead of us! I can only hope that the king and Senate are taking steps to deal with the threat the troggs pose.",
 	},
 	[171] = {
-		accept = "Ever since the darkness came to Duskwood, the wolves grew more feral. They were always a nuisance, but never a threat. Everything changes for the worst here, it would seem.$B$BThey used to have a stranglehold in the woods, but since the worgen started appearing in Duskwood, the wolves have been pushed back to the northern and western borders.$B$BNonetheless, the worgen didn't rid us of the problem, so it looks like it's up to us to clear the mongrels out. You'll find them to the west, along the river bank.",
-		complete = "May the heavens bless you, $N. You've done more for Randis than most would ever think of doing for him. Thank you - you're a shining star in the skies of the Alliance.$b$bPlease - if you can spare the time, come back and visit us. I know that Randis would like that, as would I.",
+		accept = "You have been so very kind to me, $N.  I never dreamed that I'd have so much fun during Children's Week.  Thank you.  I don't wanna be sad about what's happened to me and all - my folks always told me to rise above anything bad that happens.  You know, when I grow up I wanna be a hero... just like you.$B$BI'm sad to say this, but it's time for me to go home.  Let's go back and I'll tell the matron what an awesome person you are!",
+		complete = "May the heavens bless you, $N.  You've done more for Randis than most would ever think of doing for him.  Thank you - you're a shining star in the skies of the Alliance.$B$BPlease - if you can spare the time, come back and visit us.  I know that Randis would like that, as would I.$B$BRandis had so much fun with you, $N.  He wanted to give you one of his favorite pets to remember him by.",
 	},
 	[172] = {
-		accept = "Lord Ebonlocke sent me to Stormwind to represent Darkshire at the recent council of the House of Nobles. I was tasked with requesting military aid in light of the undead infestation which has taken over the forest.\n\nBut on my way back a band of thieves ambushed me. I was forced to drive my cart to The Rotting Orchard in southern Duskwood.\n\nBefore the thieves could rob me of my goods, a pack of ferocious Worgen overtook the thugs. Now I need you to retrieve my satchel from the chest in the wagon.",
+		accept = "You're willing to help us here at the orphanage?  Bless you, friend; your aid during Children's Week will be invaluable.$B$BTake this whistle.  You will only be able to use it for a short amount of time - typically not longer than Children's Week itself.  When you use it, you will be able to talk with the child you've agreed to look after.  Using it again will dismiss the child.$B$BBy all means $N - use the whistle and meet your ward!  I'm sure the child will be most eager to meet you.",
 		complete = "Zug zug!  My name is Grunth, and I guess you're looking after me?  You're an adventurer, like my mom and dad were.  My matron says that they died with honor in battle.  I'm happy to meet you.$B$BI hope we'll do plenty of things together.  I have some things I'd like to do, and the matron says you'll be like a big $G brother : sister; to me during this week.  I'd like that a whole bunch.",
 	},
 	[173] = {
@@ -16752,7 +16752,7 @@ SpokenQuestsText = {
 	},
 	[92422] = {
 		accept = "Reports have come in from the Lordamere Overlook deep within the Ruins of Lordaeron. An unholy fog has taken over the streets and graveyard, affording the scourge up there some measure of stealth.\n\nOur scouts indicate they're being conjured by a new power within their ranks, a necromancer known as Rath'mael. We do not have the luxury of waiting this one out, $N.\n\nIf you have allies, summon them and their aid to the Forsaken. Drive this creature out of our lands.",
-		complete = "While I have no doubt something of his kind will be replaced, we can only hope their ranks thin in the meantime.\n\nThank you Dead.",
+		complete = "While I have no doubt something of his kind will be replaced, we can only hope their ranks thin in the meantime.\n\nThank you $n.",
 	},
 	[92432] = {
 		accept = "I bring ill tidings from Dalaran. Something has disrupted our ley lines, causing erratic and destructive behavior from our constructs in the city.\n\nWe know not yet what is causing this mayhem. The high council has ordered us to keep this matter private so as to not bring shame to our order. But we cannot keep up this charade forever. The city is being overrun as we speak!\n\nArchmage Modera has dispatched me to solicit outside aid. Seek her image out near Dalaran beside Lordamere Lake.",
@@ -16783,7 +16783,7 @@ SpokenQuestsText = {
 	},
 	[92460] = {
 		accept = "Look at you, bright eyed and ready for adventure! We've been awaiting your arrival and anticipating your much needed help here in Thendal Village. I imagine you are brimming with both nerves and excitement for what is to come. After all, you only get to come of age once in a lifetime.\n\n<Ailee smiles kindly.>\n\nGo, seek out our village leader Rorian the Dayseeker at the entrance to the greatfather tree just west of here. He will get you started on your journey.",
-		complete = "Gale's greetings, Aranvielle. I am honored to bestow your coming of age relic today as you are recognized for the potential you bring to the shen'dorei. Our people have faced great hardship and persecution in our complex history.\n\nToday you are given this relic which is one of many held by those before you. Someday when your ashes are scattered to the winds it will pass to another to continue our tradition.\n\nAs you take this relic with you know that the winds of home will be with you wherever you travel.",
+		complete = "Gale's greetings, $n. I am honored to bestow your coming of age relic today as you are recognized for the potential you bring to the shen'dorei. Our people have faced great hardship and persecution in our complex history.\n\nToday you are given this relic which is one of many held by those before you. Someday when your ashes are scattered to the winds it will pass to another to continue our tradition.\n\nAs you take this relic with you know that the winds of home will be with you wherever you travel.",
 	},
 	[92461] = {
 		accept = "We live in times of great uncertainty for our people. We face unprecedented challenges that may require bold solutions, but we also must contend with the ordinary and mundane here in Thendal Grove. Take, for example, the recent unsustainable rise in the vuldren population.\n\nThe vuldren are a vital part of our ecosystem. However, imbalances must be corrected to maintain the delicate harmony that all creatures in Thendal Grove share.\n\nHead east and cull some of the vuldren there.",
@@ -17230,11 +17230,11 @@ SpokenQuestsText = {
 	},
 	[93740] = {
 		accept = "A number of our Windshaper novices were found dead in the Highlands this morning. We can't be certain but there is a strong chance that the Al'Aketh are responsible. Windshapers trade blood for blood, every time.\n\nHead north and kill any Al'Aketh you encounter. Bring me their windstone prayer charms as proof of the deed. We do not forgive and we do not forget.",
-		complete = "<Ayessa looks shaken and distant as you hand her the windstone charms.>\n\nDon't mind me, Sladkiy. Today has merely been... a trying day. Thank you for your service to the windshapers thus far.",
+		complete = "<Ayessa looks shaken and distant as you hand her the windstone charms.>\n\nDon't mind me, $n. Today has merely been... a trying day. Thank you for your service to the windshapers thus far.",
 	},
 	[93746] = {
 		accept = "The High Order has been warned of the consequences of meddling with the Windshaper's affairs. I think we need to make an example out of Belathaan and send him back to the High Order with a few bruises and a healthy respect for the boundaries we set.\n\nBelathaan was seen leaving town, traveling north towards the Shrine of Akir. I don't know why he was going there, but confronting him alone on the road is the safest option. Find him, and put a bit of fear into his heart.",
-		complete = "Wait--what?! Belathaan... is dead?\n\n<Ayessa listens as you give your account of what occurred.>\n\nThe High Order was meeting with the Al'Aketh to discuss peace? There is no peace with the cult, they are murderous zealots. What was Elaadrin thinking sending Belathaan to treat with them alone?\n\nPay this no mind, Marabi. You are not at fault for this. The arrogance of the High Order is to blame, yet again. You were merely in the right place at the wrong time.",
+		complete = "Wait--what?! Belathaan... is dead?\n\n<Ayessa listens as you give your account of what occurred.>\n\nThe High Order was meeting with the Al'Aketh to discuss peace? There is no peace with the cult, they are murderous zealots. What was Elaadrin thinking sending Belathaan to treat with them alone?\n\nPay this no mind, $n. You are not at fault for this. The arrogance of the High Order is to blame, yet again. You were merely in the right place at the wrong time.",
 	},
 	[93791] = {
 		accept = "$N, it is clear your skill with magic is growing and I believe it is time for you to partake in one of the High Order's oldest traditions for young and aspiring mages. It is time for you to craft a spell focus of your own.\n\nSeek out Belann Windwood in Valanaar. He has been crafting staves and wands for the High Order for over a century, so you will be in good hands.",
@@ -17828,11 +17828,11 @@ SpokenQuestsText = {
 	},
 	[94465] = {
 		accept = "Aye, ye've the strength to bear the totem o' fire, lad--but strength alone won't make ye ready.\n\nBeyond the Valley o' Kings, in the crags of Loch Modan, lies a hidden path to one o' our sacred peaks. There, Braldir Ashmantle guards the Shrine o' the Dormant Flame.\n\nTake this torch to him--it shows yer intent. Return it burnin' by the shrine's brazier, and I'll see ye earn the totem proper.",
-		complete = "Ah, me apologies, Rhett. Didn't spot the Torch in yer hand. An honor to meet ye proper.\n\nMany a wanderer climbs these heights chasin' tales of treasure or beasts, only to find naught but stone and silence. But we know better, don't we, Rhett?\n\nThis shrine holds truths far deeper than the Alliance can fathom. To us, it's a sacred flame that waits to be awakened.",
+		complete = "Ah, me apologies, $n. Didn't spot the Torch in yer hand. An honor to meet ye proper.\n\nMany a wanderer climbs these heights chasin' tales of treasure or beasts, only to find naught but stone and silence. But we know better, don't we, $n?\n\nThis shrine holds truths far deeper than the Alliance can fathom. To us, it's a sacred flame that waits to be awakened.",
 	},
 	[94466] = {
 		accept = "Bah, ye didn't trek all this way for tales, did ye, $N? Ye seek the Eternal Flame and the fire totem.\n\nFirst, ye'll need a sapta to bind yer spirit to the flame.\n\nI'll craft it--but I'll need two things: fire tar from Tunnel Rat Geomancers in the kobold caves up north, and a reagent pouch from a Stonesplinter Seer lurkin' in the southern hills. Dangerous work, but worthy of the flame.",
-		complete = "These'll do fine, Ukko.\n\nFire ain't just fury and ruin--mark me words. It's life, it's forge, it's the breath o' creation. All things are bound in balance. One force tempers the other, gives it meaning. Without shadow, light's but a glare. Without flame, stone's but cold memory.\n\nMasterin' magic means knowin' when to blend, not just burn. That's true wisdom, lad.",
+		complete = "These'll do fine, $n.\n\nFire ain't just fury and ruin--mark me words. It's life, it's forge, it's the breath o' creation. All things are bound in balance. One force tempers the other, gives it meaning. Without shadow, light's but a glare. Without flame, stone's but cold memory.\n\nMasterin' magic means knowin' when to blend, not just burn. That's true wisdom, lad.",
 	},
 	[94467] = {
 		accept = "The fire sapta's ready, $N. Now ye face the flame. Use it at the shrine, then climb to the peak. There, ye'll see the spirit--he'll not strike 'til ye do, but he'll know ye see him.\n\nStrike fast, lad. The longer ye wait, the stronger he burns. When he falls, take his glowing embers and place 'em in the brazier. Light the torch and earn the fire's favor.",
@@ -17840,13 +17840,13 @@ SpokenQuestsText = {
 	},
 	[94468] = {
 		accept = "Torch firmly in hand, you turn away from the brazier and look out over Loch Modan. You feel an excitement tugging at your spirit as the wind picks up and forces the flame to dance violently.\n\nYou start off down the path back to Dun Morogh in search of Bruegs Kindleborn.",
-		complete = "By Madoran's beard, yer spirit burns brighter than any torch I've laid eyes on, Rhett--and that's somethin' to be proud of.\n\nKeep walkin' this path, and the elements'll bend to yer will. Our kin will come to ye for wisdom and guidance. So let me be the first to offer me hearty congratulations -- and present ye with yer newest totem. Ye've earned it, flameborn.",
+		complete = "By Madoran's beard, yer spirit burns brighter than any torch I've laid eyes on, $n--and that's somethin' to be proud of.\n\nKeep walkin' this path, and the elements'll bend to yer will. Our kin will come to ye for wisdom and guidance. So let me be the first to offer me hearty congratulations -- and present ye with yer newest totem. Ye've earned it, flameborn.",
 	},
 	[94472] = {
 		complete = "Take this and remember, it is sacred.",
 	},
 	[94473] = {
-		complete = "May fire burn within your heart, Ukko.\n\nThe elements await you.",
+		complete = "May fire burn within your heart, $n.\n\nThe elements await you.",
 	},
 	[94484] = {
 		accept = "A moment, if you will $N. Are you headed towards Shadowgale Forest? There is a $c conclave there in a cave to the northeast. I have been waiting on word from them but their correspondence is long overdue.\n\nWith Ban'aethall in ruins and all the unrest lately I worry something dire may have happened. Please, if you are able go, seek out Elegael Thornpaw and put my mind at ease.",
@@ -18303,7 +18303,7 @@ SpokenQuestsText = {
 	},
 	[96204] = {
 		accept = "Now that I'm free I'm going to make these vile creatures regret ever laying eyes on a Windshaper.\n\nLet's get out of here, $c.",
-		complete = "Thank you again, Reli. I've been aquatinting myself with Trevan here, who I've learned sent you along on my trail.\n\nI've heard... less than charitable things about paladins thus far in my travels. As a sky-touched shen'dorei elf traveling through horde territory, I can certainly understand how easily intolerance and prejudice can take root.\n\nYou and your kind have a friend among the Windshapers.",
+		complete = "Thank you again, $n. I've been aquatinting myself with Trevan here, who I've learned sent you along on my trail.\n\nI've heard... less than charitable things about paladins thus far in my travels. As a sky-touched shen'dorei elf traveling through horde territory, I can certainly understand how easily intolerance and prejudice can take root.\n\nYou and your kind have a friend among the Windshapers.",
 	},
 	[96241] = {
 		accept = "Something funny be happenin' over there at Gloomrise. Ol' Mazu'kon be hearin all about these nasty new beasties skitterin' all around there.\n\nSome say those creepy crawlies got a venom that have some unique properties and this be gettin' me curious. Take my extractor. Use it on the dead bodies layin' around that place to harvest the venom. Do this and I be in ya debt, mon.",
@@ -18625,7 +18625,7 @@ SpokenQuestsText = {
 	},
 	[97275] = {
 		accept = "Whuut is a prodigy. That much is true. But he doesn't yet have the experience, wisdom, and time on the stirring rod to know how to respect alchemical processes.\n\nHe is exhausting all of the rarest and most exotic reagents we have available without pausing to practice and refine his basic skills.\n\nGive him this potion I've brewed with a quick tonic method. He'll reconsider everything he's doing when he learns how local remedies and careful touch are the first true mastery.",
-		complete = "Grorru--whaa?\n\nYou say Yelmak made this potion from speargrass and cattail with no other reagents? I didn't know chemists had any real need for these common plants we see every day.\n\nMaybe he's right. There could be a lot I'm missing out on by skipping to the most rare and least-studied flora first.\n\nDrakath, take your pick from one of these potions I brewed earlier. I appreciate you taking the time to visit our shop.",
+		complete = "Grorru--whaa?\n\nYou say Yelmak made this potion from speargrass and cattail with no other reagents? I didn't know chemists had any real need for these common plants we see every day.\n\nMaybe he's right. There could be a lot I'm missing out on by skipping to the most rare and least-studied flora first.\n\n$n, take your pick from one of these potions I brewed earlier. I appreciate you taking the time to visit our shop.",
 	},
 	[97277] = {
 		accept = "Oi, had me back turned gettin' the boar roast ready when I heard me pal Gozwin screamin' fer his life!\n\nWicked fangs and a blur are all I saw when I turned. Such huge paws! A snow leopard was draggin' its gnomish catch away. I grabbed me shotgun and fired above the beast. It dropped him and sprinted off.\n\nLuckily, it hadn't done more than give ol' Goz some deep scratches.\n\nHead back to camp in the northwestern hills and retrieve Gozwin's Mechanic's Log. Kill that snow leopard too if you see it!",
@@ -19061,7 +19061,7 @@ SpokenQuestsText = {
 		complete = "You managed to get it back from those monsters! There aren't too many artifacts of the late king left now.",
 	},
 	[98190] = {
-		accept = "You'll want to take this to Stormwind right away. Proud as I am that this keep and harbor bears King Terenas Menethil II's name, we are a calm harbor in a very nasty storm of enemies. It's just not safe here.\n\nThe Dragonmaw in particular would sacrifice much to loot something like this... and I shudder to think of what they'd do with it.\n\nDon't bother going up the chain of command on this one, lass. Go straight to Highlord Fordragon with this. He'll know where it will be best kept.",
+		accept = "You'll want to take this to Stormwind right away. Proud as I am that this keep and harbor bears King Terenas Menethil II's name, we are a calm harbor in a very nasty storm of enemies. It's just not safe here.\n\nThe Dragonmaw in particular would sacrifice much to loot something like this... and I shudder to think of what they'd do with it.\n\nDon't bother going up the chain of command on this one, $glad:lass;. Go straight to Highlord Fordragon with this. He'll know where it will be best kept.",
 		complete = "You have my gratitude for recovering this. I am relieved it did not fall into the wrong hands.",
 	},
 	[98191] = {

@@ -1,11 +1,19 @@
+import re
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
 import json
 
+from tts_cli.corpus import load_corpus
 from tts_cli.quest_text import in_game, left_out, lua_string, quest_text, removed_quests, render
+
+QUESTS = Path(__file__).resolve().parent.parent
+QUEST_TEXT_LUA = QUESTS.parent.parent / "addons" / "Spoken_Quests" / "Data" / "QuestText.lua"
+#: Players' names that contributed text carried where the game says $n.
+PLAYER_NAMES = ["Aranvielle", "Sladkiy", "Marabi", "Rhett", "Ukko", "Reli", "Drakath", "Thank you Dead"]
 
 
 def _line(quest, source, text, npc=288, gender=None, title="Growling Gut"):
@@ -96,6 +104,36 @@ def test_the_test_quest_and_those_not_yet_implemented_are_left_out():
 
 def test_a_windows_line_break_is_one_line_break():
     assert quest_text({"lines": [_line(5, "accept", "One.\r\nTwo.")]})[5]["accept"] == "One.\nTwo."
+
+
+@pytest.fixture(scope="module")
+def committed():
+    return load_corpus(str(QUESTS / "corpus" / "corpus.json.gz")), QUEST_TEXT_LUA.read_text(encoding="utf-8")
+
+
+def test_no_quest_text_names_another_player(committed):
+    corpus, lua = committed
+    for name in PLAYER_NAMES:
+        rx = re.compile(r"\b%s\b" % re.escape(name))
+        assert not rx.search(lua), name
+        assert not [line["lineId"] for line in corpus["lines"]
+                    if line.get("questId") and rx.search(line["originalText"])], name
+
+
+def test_the_menethil_crest_offer_says_lad_or_lass_by_the_player_s_gender(committed):
+    corpus, lua = committed
+    offers = {line["lineId"]: line["originalText"] for line in corpus["lines"] if line.get("questId") == 98190
+              and line["source"] == "accept"}
+    assert set(offers) == {"q:98190:accept:m", "q:98190:accept:f"}
+    assert all("this one, $glad:lass;." in text for text in offers.values())
+    assert "this one, $glad:lass;." in lua
+
+
+def test_children_s_week_offers_are_their_own_not_duskwood_s(committed):
+    corpus, _ = committed
+    words = quest_text(corpus)
+    assert "Children's Week" in words[171]["accept"] and "Children's Week" in words[172]["accept"]
+    assert "Randis had so much fun with you" in words[171]["complete"]
 
 
 def test_quotes_backslashes_and_line_breaks_are_lua_escapes():
