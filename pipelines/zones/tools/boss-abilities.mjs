@@ -7,6 +7,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { flat, readBosses } from "../../lib/bosses.mjs";
 import { cachedQuery, ROOT } from "./lib/wiki.mjs";
 
 // boss-sources.json: for each boss the wiki pages the research found (wikiTitle, abilityTitle) and its
@@ -15,25 +16,9 @@ const hints = new Map(
   JSON.parse(await readFile(join(ROOT, "pipelines/zones/tools/boss-sources.json"), "utf8")).map((h) => [`${h.map}\t${h.key}`, h]),
 );
 
-const flat = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 // A heading that is not a boss: a variant of the fight or a crowd with it.
 const NOT_BOSS = /season|hardcore|heroic|mythic|phase|adds?\b|guards?|protectors?|minions?|trash|pet/i;
 
-async function readBosses() {
-  const text = await readFile(join(ROOT, "addons/Spoken_NPCs/Data/Bosses.lua"), "utf8");
-  const out = [];
-  let map = null;
-  for (const line of text.split(/\r?\n/)) {
-    const head = line.match(/^\t\t\[(\d+)\] = \{/);
-    if (head) {
-      map = Number(head[1]);
-      continue;
-    }
-    const boss = line.match(/\{ id = \d+, ids = \{[^}]*\}, key = "([^"]+)", "((?:[^"\\]|\\.)*)"/);
-    if (boss && map !== null) out.push({ map, key: boss[1], name: boss[2].replace(/\\(.)/g, "$1") });
-  }
-  return out;
-}
 
 async function wikitext(title) {
   const query = `action=parse&format=json&formatversion=2&redirects=1&prop=wikitext&page=${encodeURIComponent(title)}`;

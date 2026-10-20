@@ -11,6 +11,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { flat, readBosses } from "../../lib/bosses.mjs";
 import { FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
 
 const RETAIL_BUILD = "12.1.5.70448";
@@ -28,26 +29,7 @@ const names = new Map((await wagoTable("SpellName", { build: FOREVER_BUILD, loca
 const attributes = new Map((await wagoTable("SpellMisc", { build: FOREVER_BUILD, locale: "enUS" })).map((r) => [Number(r.SpellID), Number(r.Attributes_0)]));
 const junk = /^(DNT|zz|\[|OLD|DEPRECATED|TEST|Test|\(OLD\))|\(OLD\)|\(DND\)|\(DNT\)/;
 
-/** [{ map, key, name, ids }] from Data/Bosses.lua. */
-async function readBosses() {
-  const text = await readFile(join(ROOT, "addons/Spoken_NPCs/Data/Bosses.lua"), "utf8");
-  const out = [];
-  let map = null;
-  for (const line of text.split(/\r?\n/)) {
-    const head = line.match(/^\t\t\[(\d+)\] = \{/);
-    if (head) {
-      map = Number(head[1]);
-      continue;
-    }
-    const boss = line.match(/\{ id = \d+, ids = \{([^}]*)\}, key = "([^"]+)", "((?:[^"\\]|\\.)*)"/);
-    if (boss && map !== null) {
-      out.push({ map, key: boss[2], name: boss[3].replace(/\\(.)/g, "$1"), ids: boss[1].split(",").map((n) => Number(n.trim())) });
-    }
-  }
-  return out;
-}
 
-const flat = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 const guideEncounters = await wagoTable("JournalEncounter", { build: RETAIL_BUILD, locale: "enUS" });
 const guideCreatures = await wagoTable("JournalEncounterCreature", { build: RETAIL_BUILD, locale: "enUS" });
 const guideSections = await wagoTable("JournalEncounterSection", { build: RETAIL_BUILD, locale: "enUS" });

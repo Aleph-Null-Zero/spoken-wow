@@ -9,13 +9,14 @@
 // Usage: node tools/pictures/fetch-bosses.mjs [--folders <dir>] [--per-boss 3] [--no-mark] [--only "<boss>"]
 //   --no-mark  leave every candidate unmarked, for choosing among them all by hand
 
-import { readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
+import { writeFile, mkdir, copyFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { CACHE, ROOT, USER_AGENT, THROTTLE_MS, sleep } from "../lib/wiki.mjs";
+import { CACHE, USER_AGENT, THROTTLE_MS, sleep } from "../lib/wiki.mjs";
 import { pageImages, imageInfo } from "./fetch.mjs";
+import { flat, readBosses } from "../../../lib/bosses.mjs";
 import { loadDungeons } from "../../../lib/dungeons.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -36,24 +37,7 @@ const LATER = /(mists|pandaria|draenor|\bwod\b|legion|\bbfa\b|battle for azeroth
 const SOFT = /(concept|artwork|illustration|\bart\b|key ?art|render)/i;
 const MIN_SIDE = 300;
 
-const flat = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
-/** [{ map, key, name }] from Data/Bosses.lua. */
-async function readBosses() {
-  const text = await readFile(join(ROOT, "addons/Spoken_NPCs/Data/Bosses.lua"), "utf8");
-  const out = [];
-  let map = null;
-  for (const line of text.split(/\r?\n/)) {
-    const head = line.match(/^\t\t\[(\d+)\] = \{/);
-    if (head) {
-      map = Number(head[1]);
-      continue;
-    }
-    const boss = line.match(/\{ id = \d+, ids = \{[^}]*\}, key = "([^"]+)", "((?:[^"\\]|\\.)*)"/);
-    if (boss && map !== null) out.push({ map, key: boss[1], name: boss[2].replace(/\\(.)/g, "$1") });
-  }
-  return out;
-}
 
 /** The page's files, best first: named for the boss, then the lead image; none the rules turn down. */
 function candidates(page, name) {

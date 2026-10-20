@@ -16,7 +16,7 @@ import { FOREVER_BUILD, wagoTable } from "./wago.mjs";
 
 const SOURCE = fileURLToPath(new URL("./dungeons.json", import.meta.url));
 const OUT = fileURLToPath(new URL("../../addons/Spoken/Data/Dungeons.lua", import.meta.url));
-const LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"];
+export const LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"];
 
 const byMap = (table) => Object.fromEntries(Object.entries(table ?? {}).map(([map, row]) => [Number(map), row]));
 
@@ -36,7 +36,8 @@ export function instanceZones(data = loadDungeons()) {
   return out;
 }
 
-function quote(text) {
+/** `text` as a Lua string literal. */
+export function quote(text) {
   return `"${String(text).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 

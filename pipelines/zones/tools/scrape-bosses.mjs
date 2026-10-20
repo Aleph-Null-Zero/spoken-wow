@@ -13,9 +13,10 @@
 // The result is the wiki's text, not the project's data: it is kept out of commits to the
 // repository, and its credit is in THIRD_PARTY.md.
 
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { readBosses } from "../../lib/bosses.mjs";
 import { ROOT, fetchLoreText, luaString, sourceUrl } from "./lib/wiki.mjs";
 
 const args = process.argv.slice(2);
@@ -24,22 +25,6 @@ const value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : nu
 const OUT = value("--out") ?? join(ROOT, "addons/Spoken_NPCs/Data/Stories.lua");
 const MAX_CHARS = 1800;
 
-/** [{ map, key, name }] from Data/Bosses.lua. */
-async function readBosses() {
-  const text = await readFile(join(ROOT, "addons/Spoken_NPCs/Data/Bosses.lua"), "utf8");
-  const out = [];
-  let map = null;
-  for (const line of text.split(/\r?\n/)) {
-    const head = line.match(/^\t\t\[(\d+)\] = \{/);
-    if (head) {
-      map = Number(head[1]);
-      continue;
-    }
-    const boss = line.match(/\{ id = \d+, ids = \{[^}]*\}, key = "([^"]+)", "((?:[^"\\]|\\.)*)"/);
-    if (boss && map !== null) out.push({ map, key: boss[1], name: boss[2].replace(/\\(.)/g, "$1") });
-  }
-  return out;
-}
 
 /** The wiki title to ask for: the boss's name; "Name (boss)" where the plain page is not about it. */
 const TITLES = (name) => [name, `${name} (boss)`, `${name} (NPC)`];

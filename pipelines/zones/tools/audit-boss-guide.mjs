@@ -1,22 +1,12 @@
 // Lists bosses whose Adventure Guide text may belong to a namesake: matched by name only, or listed in another
 // instance than ours. Writes a JSON array of "map:key" to the path given (default: stdout summary only).
-import { readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { writeFile } from "node:fs/promises";
 
+import { flat, readBosses } from "../../lib/bosses.mjs";
 import { loadDungeons } from "../../lib/dungeons.mjs";
 import { wagoTable } from "../../lib/wago.mjs";
-import { ROOT } from "./lib/wiki.mjs";
 
-const flat = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
-const text = await readFile(join(ROOT, "addons/Spoken_NPCs/Data/Bosses.lua"), "utf8");
-const bosses = [];
-let map = null;
-for (const line of text.split(/\r?\n/)) {
-  const head = line.match(/^\t\t\[(\d+)\] = \{/);
-  if (head) { map = Number(head[1]); continue; }
-  const b = line.match(/\{ id = \d+, ids = \{([^}]*)\}, key = "([^"]+)", "((?:[^"\\]|\\.)*)"/);
-  if (b && map !== null) bosses.push({ map, key: b[2], name: b[3].replace(/\\(.)/g, "$1"), ids: b[1].split(",").map((n) => Number(n.trim())) });
-}
+const bosses = await readBosses();
 const get = (n) => wagoTable(n, { build: "12.1.5.70448", locale: "enUS" });
 const encounters = await get("JournalEncounter");
 const instances = await get("JournalInstance");

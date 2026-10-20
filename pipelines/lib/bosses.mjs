@@ -13,11 +13,32 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-import { loadDungeons } from "./dungeons.mjs";
+import { LOCALES, loadDungeons, quote } from "./dungeons.mjs";
 import { FOREVER_BUILD, wagoTable } from "./wago.mjs";
 
 const OUT = fileURLToPath(new URL("../../addons/Spoken_NPCs/Data/Bosses.lua", import.meta.url));
-const LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"];
+
+/** A name as the tools match one to another: lowercased, letters and digits only. */
+export const flat = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+/** [{ map, key, name, ids }] from Data/Bosses.lua, as render() writes it. */
+export async function readBosses(path = OUT) {
+  const text = await readFile(path, "utf8");
+  const out = [];
+  let map = null;
+  for (const line of text.split(/\r?\n/)) {
+    const head = line.match(/^\t\t\[(\d+)\] = \{/);
+    if (head) {
+      map = Number(head[1]);
+      continue;
+    }
+    const boss = line.match(/\{ id = \d+, ids = \{([^}]*)\}, key = "([^"]+)", "((?:[^"\\]|\\.)*)"/);
+    if (boss && map !== null) {
+      out.push({ map, key: boss[2], name: boss[3].replace(/\\(.)/g, "$1"), ids: boss[1].split(",").map((n) => Number(n.trim())) });
+    }
+  }
+  return out;
+}
 
 // Names the client spells two ways for one boss (Blackfathom Deeps' Gelihast is Geilhast in the
 // Season of Discovery's rows): the second is the first.
@@ -78,10 +99,6 @@ export function bossesOf(rows) {
     for (const owner of owners) for (const id of boss.ids) if (!owner.ids.includes(id)) owner.ids.push(id);
     return false;
   });
-}
-
-function quote(text) {
-  return `"${String(text).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
 /** The Lua file: `maps` is { map: [{ id, key, name }] }, `names` { locale: { id: name } }. */

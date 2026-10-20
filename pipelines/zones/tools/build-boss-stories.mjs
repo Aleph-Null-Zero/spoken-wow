@@ -22,40 +22,21 @@
 //
 // Usage: node tools/build-boss-stories.mjs [--out <file>] [--no-wiki] [--report] [--packets <file>]
 
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { loadDungeons } from "../../lib/dungeons.mjs";
+import { flat, readBosses } from "../../lib/bosses.mjs";
+import { LOCALES, loadDungeons } from "../../lib/dungeons.mjs";
 import { wagoTable } from "../../lib/wago.mjs";
 import { ROOT, fetchLoreText, luaString, sourceUrl } from "./lib/wiki.mjs";
 
 const RETAIL_BUILD = "12.1.5.70448";
-const LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"];
 const args = process.argv.slice(2);
 const value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
 const OUT = value("--out") ?? join(ROOT, "addons/Spoken_NPCs/Data/Stories.lua");
 const MAX_CHARS = 1800;
 
-const flat = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
-/** [{ map, key, name, ids }] from Data/Bosses.lua. */
-async function readBosses() {
-  const text = await readFile(join(ROOT, "addons/Spoken_NPCs/Data/Bosses.lua"), "utf8");
-  const out = [];
-  let map = null;
-  for (const line of text.split(/\r?\n/)) {
-    const head = line.match(/^\t\t\[(\d+)\] = \{/);
-    if (head) {
-      map = Number(head[1]);
-      continue;
-    }
-    const boss = line.match(/\{ id = \d+, ids = \{([^}]*)\}, key = "([^"]+)", "((?:[^"\\]|\\.)*)"/);
-    if (boss && map !== null) {
-      out.push({ map, key: boss[2], name: boss[3].replace(/\\(.)/g, "$1"), ids: boss[1].split(",").map((n) => Number(n.trim())) });
-    }
-  }
-  return out;
-}
 
 /** The guide's markup out of a text: line breaks kept, colours, icons and spell templates dropped. */
 function clean(text) {

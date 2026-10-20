@@ -168,14 +168,19 @@ end
 local function Story(map, key)
 	local stories = _G.SpokenBossStories
 	local text = stories and stories[map] and stories[map][key]
-	if type(text) == "table" then text = text[GetLocale and GetLocale() or "enUS"] or text[1] end
+	if type(text) == "table" then text = Name(text) end
 	return type(text) == "string" and text ~= "" and text or nil
+end
+
+-- What Data/Creatures.lua knows of a boss (its creature, appearance and spells), or nil.
+local function Creature(map, key)
+	local known = _G.SpokenBossCreatures
+	return known and known[map] and known[map][key]
 end
 
 -- Whether a boss has a story and a known appearance.
 local function Complete(map, key)
-	local known = _G.SpokenBossCreatures
-	local entry = known and known[map] and known[map][key]
+	local entry = Creature(map, key)
 	return Story(map, key) ~= nil and entry ~= nil and entry.display ~= nil
 end
 
@@ -269,10 +274,7 @@ local function Banner(item, zones)
 	if filter ~= "" and #rows == 0 then return {} end
 	local found, total = Tally(zones)
 	if OnlyFound() and found == 0 then return {} end
-	item.style, item.count, item.total = "banner", found, total
-	item.ratio = total > 0 and found / total or 0
-	item.tick = total > 0 and found == total
-	item.none = found == 0
+	Group(item, found, total).style = "banner"
 	item.open = open and #rows > 0
 	item.isOpen = nil
 	return Holding(item, rows, open)
@@ -461,8 +463,7 @@ end
 
 -- A boss's portrait for the page's header and the part with its spells, either nil where there is none.
 local function Details(map, key)
-	local known = _G.SpokenBossCreatures
-	local entry = known and known[map] and known[map][key]
+	local entry = Creature(map, key)
 	if not (entry and (entry.creature or entry.display or (entry.spells and entry.spells[1]))) then
 		return C.UnknownIcon("boss"), nil
 	end
