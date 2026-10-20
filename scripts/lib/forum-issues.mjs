@@ -6,9 +6,9 @@
 //   node scripts/lib/forum-issues.mjs closed <number>   reply in the post of a closed issue, and tag it
 //
 // Discord tells nobody when a post is made, so `file` runs on a schedule. Which posts have an
-// issue is read off the issues themselves: an issue's footer links its post, and only the
-// thread's own link (two ids, not a message's three) counts. Nothing is kept between runs, and a
-// run that dies after filing but before replying files nothing twice.
+// issue is read off the issues themselves, whose footer links their post, and off the bot's
+// reply in the post. Nothing is kept between runs, and a run that dies after filing but before
+// replying files nothing twice.
 //
 // Environment:
 //   DISCORD_BOT_TOKEN   a bot in the server that can read the forum, post in its threads and
@@ -21,6 +21,9 @@ import { discord, findChannel } from "./language-post.mjs";
 
 export const FORUM = "bugs-and-ideas";
 export const LABEL = "from-discord";
+const FILED = "Logged on GitHub as";
+const STATE_TAGS = ["Fixed", "Not planned"];
+const GUILD_FORUM = 15;
 
 // Forum tag -> repository label. A tag with no label here files no label.
 export const TAG_LABELS = {
@@ -33,12 +36,18 @@ export const TAG_LABELS = {
   Settings: "Addon / Spoken Player",
 };
 
-const THREAD_LINK = /discord\.com\/channels\/(\d+)\/(\d+)(?![\d/])/;
+// The footer's link only: a link inside the quoted post must not stand for the post.
+const FOOTER_LINK = new RegExp(`in \\[#${FORUM}\\]\\(https://discord\\.com/channels/(\\d+)/(\\d+)\\) on Discord`);
 
-/** The forum thread an issue's body links, or null. */
+/** The forum thread an issue's footer links, or null. */
 export function threadOf(body) {
-  const m = (body ?? "").match(THREAD_LINK);
+  const m = (body ?? "").match(FOOTER_LINK);
   return m ? { guild: m[1], thread: m[2] } : null;
+}
+
+// A post's @name and #123 would ping a GitHub user and link an unrelated issue.
+function inert(text) {
+  return text.replace(/@/g, "@​").replace(/#(\d)/g, "#​$1");
 }
 
 export function labelsFor(tagNames) {
@@ -47,13 +56,13 @@ export function labelsFor(tagNames) {
 
 /** The issue for a post: its title, the post's words quoted, and a footer linking back to it. */
 export function issueFor({ guild, thread, starter, tagNames }) {
-  const text = (starter?.content ?? "").trim();
+  const text = inert((starter?.content ?? "").trim());
   const quoted = text ? text.split("\n").map((line) => `> ${line}`.trimEnd()).join("\n") : "> (no text)";
   const files = starter?.attachments?.length ?? 0;
   const author = starter ? starter.author.global_name ?? starter.author.username : "someone";
   const when = new Date(thread.thread_metadata?.create_timestamp ?? starter?.timestamp ?? Date.now()).toISOString();
   return {
-    title: thread.name,
+    title: inert(thread.name),
     body: [
       "**Original report**",
       quoted,
@@ -107,8 +116,8 @@ async function filedThreads(gh) {
 
 async function file(api, gh) {
   const forum = await findChannel(api, FORUM);
-  if (!forum) {
-    console.log(`skipped: no #${FORUM} channel`);
+  if (forum?.type !== GUILD_FORUM) {
+    console.log(`skipped: no #${FORUM} forum`);
     return;
   }
   const tagName = Object.fromEntries((forum.available_tags ?? []).map((t) => [t.id, t.name]));
@@ -118,10 +127,14 @@ async function file(api, gh) {
     // A forum post's first message has the thread's id. It is gone if its author deleted it.
     const starter = await api("GET", `/channels/${thread.id}/messages/${thread.id}`).catch(() => null);
     if (starter?.author.bot) continue;
+    // An issue that lost its label, or was moved or deleted, is not in `filed`; the post's
+    // reply still says it was filed.
+    const replies = await api("GET", `/channels/${thread.id}/messages?limit=50`);
+    if (replies.some((m) => m.author.bot && m.content.startsWith(FILED))) continue;
     const tagNames = (thread.applied_tags ?? []).map((id) => tagName[id]).filter(Boolean);
     const issue = await gh("POST", "/issues", issueFor({ guild: forum.guild_id, thread, starter, tagNames }));
     await api("POST", `/channels/${thread.id}/messages`, {
-      content: `Logged on GitHub as #${issue.number}: ${issue.html_url}\nI'll post here when it's fixed.`,
+      content: `${FILED} #${issue.number}: ${issue.html_url}\nI'll post here when it's fixed.`,
       allowed_mentions: { parse: [] },
       flags: 4, // SUPPRESS_EMBEDS
     });
@@ -131,6 +144,11 @@ async function file(api, gh) {
 
 async function closed(api, gh, number) {
   const issue = await gh("GET", `/issues/${number}`);
+  // A run that waited in the queue while the issue was reopened has nothing to say.
+  if (issue.state !== "closed") {
+    console.log(`skipped: issue #${number} is open again`);
+    return;
+  }
   const link = threadOf(issue.body);
   if (!link) {
     console.log(`skipped: issue #${number} links no forum post`);
@@ -143,9 +161,11 @@ async function closed(api, gh, number) {
     return;
   }
   const reply = closedReply(issue);
-  const tag = reply.tag && (forum.available_tags ?? []).find((t) => t.name === reply.tag);
-  // A post holds at most five tags; the state tag is the one that matters now.
-  const tags = [...(thread.applied_tags ?? []).filter((id) => id !== tag?.id).slice(0, tag ? 4 : 5),...(tag ? [tag.id] : [])];
+  const states = (forum.available_tags ?? []).filter((t) => STATE_TAGS.includes(t.name));
+  const tag = states.find((t) => t.name === reply.tag);
+  // A reopened and closed again issue changes the state; a post holds at most five tags.
+  const kept = (thread.applied_tags ?? []).filter((id) => !states.some((t) => t.id === id));
+  const tags = [...kept.slice(0, tag ? 4 : 5), ...(tag ? [tag.id] : [])];
   // Posting reopens an archived post by itself; the tags need it open first.
   await api("PATCH", `/channels/${thread.id}`, { archived: false, applied_tags: tags });
   await api("POST", `/channels/${thread.id}/messages`, {

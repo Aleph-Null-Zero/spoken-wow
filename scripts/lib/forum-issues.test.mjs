@@ -6,11 +6,19 @@ import { closedReply, issueFor, labelsFor, threadOf } from "./forum-issues.mjs";
 const thread = { id: "222", name: "Quest text cut off", thread_metadata: { create_timestamp: "2026-10-20T12:00:00.000Z" } };
 const starter = (content, extra = {}) => ({ content, author: { username: "pud2000", global_name: "Pud" }, attachments: [], ...extra });
 
-test("a post's link is found in an issue's footer, and a message's link is not a post's", () => {
+test("only the footer's link stands for the post, not a link the post itself quotes", () => {
   assert.deepEqual(threadOf("Posted by **Pud** in [#bugs-and-ideas](https://discord.com/channels/111/222) on Discord"),
     { guild: "111", thread: "222" });
   assert.equal(threadOf("See https://discord.com/channels/111/222/333 for the message"), null);
   assert.equal(threadOf(null), null);
+  const issue = issueFor({ guild: "111", thread, starter: starter("Same as https://discord.com/channels/111/999"), tagNames: [] });
+  assert.deepEqual(threadOf(issue.body), { guild: "111", thread: "222" });
+});
+
+test("a post's @names and #numbers neither ping nor link on GitHub", () => {
+  const issue = issueFor({ guild: "111", thread: { ...thread, name: "Broken since #12" }, starter: starter("ask @octocat"), tagNames: [] });
+  assert.equal(issue.title, "Broken since #​12");
+  assert.match(issue.body, /> ask @​octocat/);
 });
 
 test("tags become the repository's labels, always with from-discord and never twice", () => {
