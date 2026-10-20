@@ -128,18 +128,20 @@ local function Faceless(soundData)
     return { kind = "texture", texture = icon or NOTICE, texCoord = crop or ICON_CROP }
 end
 
--- The creature's appearance from the data, which the client cannot be trusted for until it has cached it.
-local function FaceFor(creature)
+--- The creature's appearance from the data, which the client cannot be trusted for until it has
+--- cached it; nil where the data has none. The narrator's face and the Compendium's quest parts use it.
+function Player:QuestFace(creature)
     local faces = _G.SpokenQuestFaces
     return faces and creature and faces[creature] or nil
 end
 
 local function PortraitFor(soundData)
     if soundData.unitIsObjectOrItem then return Faceless(soundData) end
+    local creature = CreatureFor(soundData)
     return {
         kind = "model",
-        creatureID = CreatureFor(soundData),
-        displayID = FaceFor(CreatureFor(soundData)),
+        creatureID = creature,
+        displayID = Player:QuestFace(creature),
         animation = 60,
         fallback = { kind = "texture", texture = BOOK },
     }

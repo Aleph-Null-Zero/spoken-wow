@@ -160,7 +160,7 @@ local function DisplayFor(creature)
     local now = GetTime()
     local times = asked[creature]
     if times and (now - times.first > GIVE_UP_SECONDS or now - times.last < RETRY_SECONDS) then
-        if times and now - times.first > GIVE_UP_SECONDS and holder[creature] then Release(holder[creature]) end
+        if now - times.first > GIVE_UP_SECONDS and holder[creature] then Release(holder[creature]) end
         return
     end
     if not times then times = { first = now }; asked[creature] = times end
@@ -168,10 +168,12 @@ local function DisplayFor(creature)
     local model = TakeModel(creature)
     if not model then return end
     local display = model:GetDisplayInfo()
-    local own, blank = Defaults()
+    local answered = type(display) == "number" and display > 0
+    local own, blank
+    if answered then own, blank = Defaults() end
     local stale = display == own or display == blank or (model.fresh and display == model.answered)
     model.fresh = false
-    if display and display > 0 and not stale then
+    if answered and not stale then
         displays[creature] = display
         model.answered = display
         Release(model)
