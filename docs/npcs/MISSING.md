@@ -37,8 +37,8 @@ A boss with no creature id is still found when the player targets it in its dung
 | Scarlet Enclave (2856) | Balnazzar | The only Balnazzar in the database is Stratholme's (10813), whose model the client lacks. The wiki's id, 240811, is not in the database. |
 | Karazhan Crypts (2875) | Harbinger of Sin, Creeping Malison, Dark Rider, Kharon, Unk'omon, Hans and Greta, The Ugly Goblin, Barian Maryla | As for Demon Fall Canyon. The database's Dark Riders (99871 and up) are retail creatures. Efficient Games has Kaigy and Sairuh Maryla, not Barian. |
 | City of Dalaran (2959) | Mana Elemental | Efficient Games' encounter 3301 names no creature, and no build has one of that name. The database's 14689 has no spawn and wears Dire Maul's Arcane Aberration model. |
-| Ruins of Lordaeron (2999) | Lordaeron Captain | The database's 32414 is a Wrath of the Lich King creature with a model the client lacks. No captain spawned on the map matches; Captain Truman (265701) is there, but not elite. The wiki calls the boss a rare. |
-| Ruins of Lordaeron (2999) | Viktor the Vile | In neither the database nor Efficient Games. No ghoul spawned on the map matches; it may be summoned. |
+| Ruins of Lordaeron (2999) | Lordaeron Captain | The database's 32414 is a Wrath of the Lich King creature with a model the client lacks. No captain spawned on the map matches; Captain Truman (265701) is there, but not elite. The wiki calls the boss a rare. No creature, dialogue or scripted summon in the repack names it: the boss is on Forever's live server only. Target it in game to record its creature and model. |
+| Ruins of Lordaeron (2999) | Viktor the Vile | In neither the database nor Efficient Games. No ghoul spawned on the map matches, and no dialogue or scripted summon names it: the boss is on Forever's live server only. Target it in game to record its creature and model. |
 
 ## A creature but no portrait (1)
 
@@ -50,8 +50,8 @@ A boss with no creature id is still found when the player targets it in its dung
 
 | Dungeon | Boss | What was chosen, and why it is not certain |
 | --- | --- | --- |
-| Ruins of Lordaeron (2999) | The Butcher | The Baron, 250660: the only unclaimed elite there, an abomination casting Ramstein's Trample and Knockout, "Fresh meat for the block!" on aggro. The wiki lists The Baron as the dungeon's abomination boss. No locale row confirms the name. |
-| The Hall of Thanes (3065) | Infurnus | Magmatus, 261316: the only other elite there, a fire elemental. The wiki lists Magmatus among the dungeon's encounters. |
+| Ruins of Lordaeron (2999) | The Butcher | The Baron, 250660: the only unclaimed elite there, an abomination casting Ramstein's Trample and Knockout, "Fresh meat for the block!" on aggro. The wiki lists The Baron as the dungeon's abomination boss. Shown as The Baron (`pipelines/lib/boss-names.json`), in English in every language: the database has no other. |
+| The Hall of Thanes (3065) | Infurnus | Magmatus, 261316: the only other elite there, a fire elemental. The wiki lists Magmatus among the dungeon's encounters. Shown as Magmatus (`boss-names.json`), in English in every language. |
 | Excavation Site: Wetlands (2998) | Highland Horror | 260808, model 9010, by name in Efficient Games. No encounter record. |
 | Karazhan Crypts (2875) | Kaigy Maryla, Sairuh Maryla | 256275 and 256273, by name in Efficient Games. The database spawns Kaigy only in the open world (map 0), and the wiki gives other ids (238233, 238213). |
 

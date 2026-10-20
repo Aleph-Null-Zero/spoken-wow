@@ -8,7 +8,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   the City of Dalaran and the Excavation Site: Wetlands, and two of the Marylas in the Karazhan Crypts, have their
   portrait. Sneed, Grubbis, Darkmaster Gandling, Sapphiron and Dalaran's Arcane Anomaly show the right one, a boss
   with no known face shows the question mark instead of an empty portrait, and targeting Balnazzar in Stratholme no
-  longer shows the Scarlet Enclave's story. *([Nucabe](https://github.com/Nucabe))*
+  longer shows the Scarlet Enclave's story. Five bosses take the name the game gives them: The Baron, Magmatus,
+  Kirtonos the Herald, Ras Frostwhisper and C'Thun. *([Nucabe](https://github.com/Nucabe))*
 - **A boss's story shows in the narrator when you target the boss.** It shows once per character, as words
   with no voice. On the Bosses settings page, Show a Boss's Story picks targeting or killing it, and Forget
   Stories Shown shows each again. *([Nucabe](https://github.com/Nucabe))*

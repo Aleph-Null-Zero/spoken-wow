@@ -49,7 +49,7 @@ a boss on its own, and a name the client spells two ways is one boss (`SAME`).
 the Classic creature of that name (a boss a script spawns, like Ragnaros); its portrait is that creature's model, else the
 Adventure Guide's where Forever's client has the model. A model the client does not have is dropped, so the boss
 shows the unknown boss's question mark rather than an empty portrait. Where the database has the creature under another name than the
-encounter's (The Butcher is the game's The Baron, Infurnus its Magmatus) or does not spawn it, its id is a hint in
+encounter's (The Butcher is the game's The Baron, Infurnus its Magmatus, named so in the list: `pipelines/lib/boss-names.json`) or does not spawn it, its id is a hint in
 `boss-sources.json`, and a boss whose only match is a namesake from another dungeon is marked `noNameMatch` there.
 Where the database has no such creature at all, or Forever draws the boss with another model,
 `boss-creatures-manual.json` gives the creature and model, with the evidence for each. The bosses still without a

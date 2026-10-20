@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { bossesOf, keyOf } from "./bosses.mjs";
+import { bossesOf, keyOf, renameAsCreatures } from "./bosses.mjs";
 
 const row = (ID, Name_lang, DifficultyID, OrderIndex) => ({ ID, Name_lang, DifficultyID, OrderIndex });
 
@@ -48,4 +48,18 @@ test("a boss keeps the id of each difficulty, and a combined row's id goes to it
   const bosses = bossesOf(rows);
   assert.deepEqual(bosses.find((boss) => boss.name === "Dreamscythe").ids.sort(), [1, 3, 4]);
   assert.deepEqual(bosses.find((boss) => boss.name === "Weaver").ids.sort(), [2, 3]);
+});
+
+test("a boss the game names as its creature takes the creature's names and keeps its key", () => {
+  const maps = { 2999: [{ id: 3355, ids: [3355], key: "the butcher", name: "The Butcher" }],
+    289: [{ id: 2805, ids: [2805], key: "kirtonos", name: "Kirtonos" }] };
+  const names = { deDE: { 3355: "Der Schlächter", 2805: "Kirtonos" } };
+  renameAsCreatures(maps, names, {
+    3355: { creature: 250660, names: { enUS: "The Baron" } },
+    2805: { creature: 10506, names: { enUS: "Kirtonos the Herald", deDE: "Kirtonos der Herold" } },
+  });
+  assert.equal(maps[2999][0].name, "The Baron");
+  assert.equal(maps[2999][0].key, "the butcher");
+  assert.equal(names.deDE[3355], undefined, "no German name in the database: the English shows");
+  assert.equal(names.deDE[2805], "Kirtonos der Herold");
 });

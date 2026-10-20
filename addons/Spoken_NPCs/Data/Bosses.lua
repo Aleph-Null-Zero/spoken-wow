@@ -163,13 +163,13 @@ SpokenBosses = {
 			{ id = 1084, ids = { 1084 }, key = "onyxia", "Onyxia", ruRU = "Ониксия", koKR = "오닉시아", zhCN = "奥妮克希亚", zhTW = "奧妮克希亞" },
 		},
 		[289] = {
-			{ id = 2805, ids = { 2805 }, key = "kirtonos", "Kirtonos", ruRU = "Киртонос", koKR = "키르토노스", zhCN = "基尔图诺斯", zhTW = "基爾圖諾斯" },
+			{ id = 2805, ids = { 2805 }, key = "kirtonos", "Kirtonos the Herald", deDE = "Kirtonos der Herold", esES = "Kirtonos el Heraldo", esMX = "Kirtonos el Heraldo", frFR = "Kirtonos le Héraut", ptBR = "Kirtonos, o Arauto", ruRU = "Киртонос Глашатай", koKR = "사자 키르토노스", zhCN = "传令官基尔图诺斯", zhTW = "傳令官基爾圖諾斯", itIT = "Kirtonos l'Alfiere" },
 			{ id = 2804, ids = { 2804 }, key = "jandice barov", "Jandice Barov", ptBR = "Janice Barov", ruRU = "Джандис Барова", koKR = "잔다이스 바로브", zhCN = "詹迪斯·巴罗夫", zhTW = "詹迪斯·巴羅夫" },
 			{ id = 2811, ids = { 2811 }, key = "rattlegore", "Rattlegore", deDE = "Blutrippe", esES = "Traquesangre", esMX = "Traquesangre", frFR = "Cliquettripes", ptBR = "Ossorrange", ruRU = "Громоклин", koKR = "들창어금니", zhCN = "血骨傀儡", zhTW = "血骨傀儡" },
 			{ id = 2809, ids = { 2809 }, key = "marduk blackpool", "Marduk Blackpool", deDE = "Marduk Schwarzborn", esES = "Marduk Pozonegro", esMX = "Marduk Pozonegro", frFR = "Marduk Noirétang", ptBR = "Marduque Lagonero", ruRU = "Мардук Блэкпул", koKR = "마르두크 블랙풀", zhCN = "马杜克·布莱克波尔", zhTW = "馬杜克·布萊克波爾" },
 			{ id = 2813, ids = { 2813 }, key = "vectus", "Vectus", ruRU = "Вектус", koKR = "벡투스", zhCN = "维克图斯", zhTW = "維克圖斯" },
 			{ id = 3055, ids = { 3055 }, key = "kormok", "Kormok", ruRU = "Кормок", koKR = "코르모크", zhCN = "库尔莫克", zhTW = "科爾莫克" },
-			{ id = 2810, ids = { 2810 }, key = "ras frostwhisperer", "Ras Frostwhisperer", deDE = "Ras Frostraunen", esES = "Ras Murmuhielo", esMX = "Ras Murmuhielo", frFR = "Ras Murmegivre", ptBR = "Ras Friomúrmuro", ruRU = "Рас Ледяной Шепот", koKR = "라스 프로스트위스퍼", zhCN = "莱斯·霜语", zhTW = "萊斯‧霜語" },
+			{ id = 2810, ids = { 2810 }, key = "ras frostwhisperer", "Ras Frostwhisper", deDE = "Ras Frostraunen", esES = "Ras Murmuhielo", esMX = "Ras Murmuhielo", frFR = "Ras Murmegivre", ptBR = "Ras Friomúrmuro", ruRU = "Рас Ледяной Шепот", koKR = "라스 프로스트위스퍼", zhCN = "莱斯·霜语", zhTW = "萊斯‧霜語", itIT = "Ras Soffiogelo" },
 			{ id = 2803, ids = { 2803 }, key = "instructor malicia", "Instructor Malicia", deDE = "Instrukteurin Malicia", esES = "Instructora Malicia", esMX = "Instructora Malicia", frFR = "Instructrice Malicia", ptBR = "Instrutora Malícia", ruRU = "Инструктор Коварнесса", koKR = "조교 말리시아", zhCN = "讲师玛丽希亚", zhTW = "講師瑪麗希亞" },
 			{ id = 2802, ids = { 2802 }, key = "doctor theolen krastinov", "Doctor Theolen Krastinov", deDE = "Doktor Theolen Krastinov", frFR = "Docteur Theolen Krastinov", ptBR = "Doutor Theolen Krastinov", ruRU = "Доктор Теолен Крастинов", koKR = "학자 테올렌 크라스티노브", zhCN = "瑟尔林·卡斯迪诺夫教授", zhTW = "瑟爾林·卡斯迪諾夫教授" },
 			{ id = 2808, ids = { 2808 }, key = "lorekeeper polkelt", "Lorekeeper Polkelt", deDE = "Hüter des Wissens Polkelt", esES = "Tradicionalista Polkelt", esMX = "Tradicionalista Polkelt", frFR = "Gardien du savoir Polkelt", ptBR = "Erudito Pulquério", ruRU = "Хранитель знаний Полкелт", koKR = "현자 폴켈트", zhCN = "博学者普克尔特", zhTW = "博學者普克爾特" },
@@ -287,7 +287,7 @@ SpokenBosses = {
 			{ id = 714, ids = { 714 }, key = "princess huhuran", "Princess Huhuran", deDE = "Prinzessin Huhuran", esES = "Princesa Huhuran", esMX = "Princesa Huhuran", frFR = "Princesse Huhuran", ptBR = "Princesa Huhuran", ruRU = "Принцесса Хухуран", koKR = "공주 후후란", zhCN = "哈霍兰公主", zhTW = "哈霍蘭公主" },
 			{ id = 715, ids = { 715 }, key = "twin emperors", "Twin Emperors", deDE = "Zwillingsimperatoren", esES = "Emperadores Gemelos", esMX = "Emperadores Gemelos", frFR = "Empereurs jumeaux", ptBR = "Imperadores Gêmeos", ruRU = "Императоры-близнецы", koKR = "쌍둥이 제왕", zhCN = "双子皇帝", zhTW = "雙子帝王" },
 			{ id = 716, ids = { 716 }, key = "ouro", "Ouro", ptBR = "Ouroboros", ruRU = "Оуро", koKR = "아우로", zhCN = "奥罗", zhTW = "奧羅" },
-			{ id = 717, ids = { 717 }, key = "cthun", "C'thun", deDE = "C'Thun", esES = "C'Thun", esMX = "C'Thun", frFR = "C'Thun", ptBR = "C'Thun", ruRU = "К'Тун", koKR = "쑨", zhCN = "克苏恩", zhTW = "克蘇恩" },
+			{ id = 717, ids = { 717 }, key = "cthun", "C'Thun", ruRU = "К'Тун", koKR = "크툰", zhCN = "克苏恩", zhTW = "克蘇恩", itIT = "C'thun" },
 		},
 		[533] = {
 			{ id = 1107, ids = { 1107 }, key = "anubrekhan", "Anub'Rekhan", ruRU = "Ануб'Рекан", koKR = "아눕레칸", zhCN = "阿努布雷坎", zhTW = "阿努比瑞克漢" },
@@ -371,7 +371,7 @@ SpokenBosses = {
 		[2999] = {
 			{ id = 3353, ids = { 3353 }, key = "witherfang", "Witherfang", deDE = "Welkzahn", esES = "Colmimarchito", esMX = "Marchitacolmillos", frFR = "Croc-Flétri", ptBR = "Sugapresa", ruRU = "Сухожвал", koKR = "쇠퇴송곳니", zhCN = "枯牙", zhTW = "枯萎之牙" },
 			{ id = 3357, ids = { 3357 }, key = "the abandoned", "The Abandoned", deDE = "Der Verlassene", esES = "El Abandonado", esMX = "El Abandonado", frFR = "L’Abandonné", ptBR = "O Abandonado", ruRU = "Покинутый", koKR = "버려진 자", zhCN = "被遗弃者", zhTW = "被棄者" },
-			{ id = 3355, ids = { 3355 }, key = "the butcher", "The Butcher", deDE = "Der Schlächter", esES = "El Carnicero", esMX = "El Carnicero", frFR = "Le Boucher", ptBR = "O Carniceiro", ruRU = "Мясник", koKR = "도살자", zhCN = "屠夫", zhTW = "屠夫" },
+			{ id = 3355, ids = { 3355 }, key = "the butcher", "The Baron" },
 			{ id = 3354, ids = { 3354 }, key = "rathmael", "Rath'mael", frFR = "Rath’mael", ruRU = "Рат'маэль", koKR = "라스마엘", zhCN = "拉斯玛尔", zhTW = "拉斯梅爾" },
 			{ id = 3408, ids = { 3408 }, key = "lordaeron captain", "Lordaeron Captain", deDE = "Hauptmann von Lordaeron", esES = "Capitán de Lordaeron", esMX = "Capitán de Lordaeron", frFR = "Capitaine de Lordaeron", ptBR = "Capitão de Lordaeron", ruRU = "Лордеронский капитан", koKR = "로데론 부대장", zhCN = "洛丹伦上尉", zhTW = "羅德隆隊長" },
 			{ id = 3411, ids = { 3411 }, key = "viktor the vile", "Viktor the Vile", deDE = "Viktor der Üble", esES = "Viktor el Abyecto", esMX = "Viktor, el Vil", frFR = "Viktor le Vil", ptBR = "Viktor, o Vil", ruRU = "Виктор Вероломный", koKR = "비열한 빅토르", zhCN = "邪恶的维克多", zhTW = "邪惡的維多" },
@@ -379,7 +379,7 @@ SpokenBosses = {
 		},
 		[3065] = {
 			{ id = 3493, ids = { 3493 }, key = "faldrim anvilmar", "Faldrim Anvilmar", esES = "Faldrim Yunquemar", esMX = "Faldrim Yunquemar", frFR = "Faldrim Courbenclume", ptBR = "Faldrim Sidermar", ruRU = "Фалдрим Старая Наковальня", koKR = "팔드림 앤빌마", zhCN = "法德林·安威玛尔", zhTW = "法爾椎‧安威瑪" },
-			{ id = 3495, ids = { 3495 }, key = "infurnus", "Infurnus", ruRU = "Инфурий", koKR = "인퍼르누스", zhCN = "茵弗努斯", zhTW = "英弗努斯" },
+			{ id = 3495, ids = { 3495 }, key = "infurnus", "Magmatus" },
 			{ id = 3494, ids = { 3494 }, key = "plunder", "Plunder", deDE = "Plünderung", esES = "Saqueo", esMX = "Saqueador", frFR = "Pillage", ptBR = "Butim", ruRU = "Крад", koKR = "약탈골렘", zhCN = "劫掠者", zhTW = "掠奪者" },
 			{ id = 3496, ids = { 3496 }, key = "durgen dirgehammer", "Durgen Dirgehammer", esES = "Durgen Martillo Funesto", esMX = "Durgen Martillo de Endecha", frFR = "Durgen Mornemartel", ptBR = "Durgen Martelúgubre", ruRU = "Дарген Сокрушающий Молот", koKR = "드루겐 더지해머", zhCN = "杜根·挽锤", zhTW = "杜爾根‧戴格哈默" },
 		},

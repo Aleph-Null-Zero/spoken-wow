@@ -17,6 +17,7 @@ import { LOCALES, loadDungeons, quote } from "./dungeons.mjs";
 import { FOREVER_BUILD, wagoTable } from "./wago.mjs";
 
 const OUT = fileURLToPath(new URL("../../addons/Spoken_NPCs/Data/Bosses.lua", import.meta.url));
+const RENAMED = fileURLToPath(new URL("./boss-names.json", import.meta.url));
 
 /** A name as the tools match one to another: lowercased, letters and digits only. */
 export const flat = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -112,6 +113,23 @@ export function bossesOf(rows) {
   });
 }
 
+/**
+ * Bosses the game names as their creature, not as the encounter (boss-names.json: Forever's The Baron
+ * for The Butcher, Kirtonos the Herald): the creature's names, in the languages the database has; the
+ * other languages show the English. The key stays the encounter's.
+ */
+export function renameAsCreatures(maps, names, renamed) {
+  for (const boss of Object.values(maps).flat()) {
+    const row = renamed[boss.id];
+    if (!row) continue;
+    boss.name = row.names.enUS;
+    for (const locale of LOCALES) {
+      if (row.names[locale]) names[locale][boss.id] = row.names[locale];
+      else delete names[locale]?.[boss.id];
+    }
+  }
+}
+
 /** The Lua file: `maps` is { map: [{ id, key, name }] }, `names` { locale: { id: name } }. */
 export function render(maps, names) {
   const blocks = Object.keys(maps).map(Number).sort((a, b) => a - b).map((map) => {
@@ -172,6 +190,7 @@ async function main() {
       if (wanted.has(id) && row.Name_lang) names[locale][id] = row.Name_lang;
     }
   }
+  renameAsCreatures(maps, names, JSON.parse(await readFile(RENAMED, "utf8")).renamed);
   const text = render(maps, names);
   if (process.argv.includes("--check")) {
     const current = (await readFile(OUT, "utf8")).replace(/\r\n/g, "\n");
