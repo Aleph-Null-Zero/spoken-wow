@@ -14,7 +14,8 @@
 //
 // A WEBHOOK CANNOT DO THIS. It can neither pin nor list pins, so finding the previous post would
 // mean remembering its id somewhere between workflow runs. A bot can: the old post is whichever
-// pinned message is the bot's own and starts with the heading.
+// pinned message is a bot's and starts with the heading. Any bot's, not only this one's, so a
+// post left by the bot the token belonged to before is replaced too.
 //
 // Environment:
 //   DISCORD_BOT_TOKEN   a bot in the server with View Channel, Send Messages, Read Message
@@ -67,6 +68,11 @@ export function postText(packs, latest) {
   return lines.length ? [HEADING, ...lines].join("\n") : null;
 }
 
+/** The pinned posts a new one replaces. */
+export function oldPosts(messages) {
+  return messages.filter((m) => m.author.bot && m.content.startsWith(HEADING));
+}
+
 /** The tag's language and that language's GitHub packs, or {skip}. */
 export function languageOf(tag, packs = loadPacks()) {
   const prefix = tag.replace(VERSION_TAG, "");
@@ -117,10 +123,8 @@ async function findChannel(api, name) {
 }
 
 async function replacePost(api, channelId, content) {
-  const me = await api("GET", "/users/@me");
   const pins = await api("GET", `/channels/${channelId}/messages/pins?limit=50`);
-  const old = pins.items.map((pin) => pin.message)
-    .filter((m) => m.author.id === me.id && m.content.startsWith(HEADING));
+  const old = oldPosts(pins.items.map((pin) => pin.message));
 
   const posted = await api("POST", `/channels/${channelId}/messages`, {
     content,
