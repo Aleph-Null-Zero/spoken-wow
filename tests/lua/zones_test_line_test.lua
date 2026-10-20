@@ -24,7 +24,7 @@ Z.Zones = {}
 for id = 1, 50 do Z.Zones[id] = { name = "Zone " .. id } end
 Z:PlayTestLine()
 Expect("with no voice pack, the test line says so once", #printed, 1)
-Expect("...naming the missing pack", printed[1] and printed[1]:find("no sound pack installed", 1, true) ~= nil, true)
+Expect("...naming the missing pack", printed[1] and printed[1]:find("no voice pack installed", 1, true) ~= nil, true)
 
 -- A pack covering one story far down the list: that one plays, and nothing is printed for the
 -- ones before it.
