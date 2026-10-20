@@ -67,7 +67,9 @@ Everything else the tab does is in `UI/LoreWindow.lua`.
   covers everything explored before the addon was installed.
 - The character has stood in it since. Small places and a city's districts have no overlay, so
   every zone change records where the character is (`SpokenZonesCharacter.visited`), and a click on
-  the map that resolves an area marks it.
+  the map that resolves an area marks it. Entering a dungeon or raid marks its card, whatever the
+  reading settings say: the client has no map for the player inside, so this is the only way most
+  dungeon cards are found.
 
 A zone is found when it or any of its areas is. A city is also found when its name is explored on
 the zone around it. A continent is found only through its zones. `/spp found` lists what is counted
