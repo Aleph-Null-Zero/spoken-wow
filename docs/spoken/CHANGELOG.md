@@ -40,6 +40,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **The AddOns list shows Spoken and each module's name in colour, with new icons.** Spoken, Quests,
   Places, Readables, Contributions and Developer each have a new icon, the voice packs show Spoken in
   colour too, and the minimap button shows the mark at its size, centred. *([Nucabe](https://github.com/Nucabe))*
+- **Entering a dungeon or raid reads its story**, once per character, and counts its card in the
+  Places tab as found. The Ruins of Lordaeron, the Deadmines, Ragefire Chasm and five more cards could
+  never be found before. Azeroth's story is back on the world map, and the Places tab lists Azeroth
+  above the continents. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
   manager, and the lines Spoken had no voice for go to the site after each logout or /reload,
   so you no longer upload the file yourself. Collected lines now also say which version of your
