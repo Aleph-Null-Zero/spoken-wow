@@ -332,7 +332,6 @@ local function BuildChrome()
 			minimizeFrame = mm
 			-- The same size as Close and on its top edge: the frame's own size and the buttons' anchors
 			-- are the template's, which left the arrow larger than Close and above the title bar.
-			mm:SetSize(buttonSize, buttonSize)
 			mm:ClearAllPoints()
 			mm:SetPoint("TOPRIGHT", close, "TOPLEFT", 0, 0)
 			mm:SetFrameLevel(close:GetFrameLevel())
@@ -1908,16 +1907,14 @@ function Page:AddButton(button)
 	button:HookScript("OnHide", function() self:RefreshPlay() end)
 end
 
---- Report in the heading's corner where it has something to report, Play beside it on every page
---- that can have words (grey where there is no recording; none on an empty page), and the caller's
---- buttons after them; the title stops 10 short of the last shown.
---- Where Contribute goes for a page with nothing written and no way of its own: Spoken's
---- contribution page.
+--- What a page nobody has written yet says.
 function C.NotWritten()
 	local words = SpokenEnv and SpokenEnv.L
 	return words and words.COMPENDIUM_NOT_WRITTEN or "Nothing has been written for this yet."
 end
 
+--- Where Contribute goes for a page with nothing written and no way of its own: Spoken's
+--- contribution page.
 function C.ContributeGeneral()
 	if _G.Spoken and Spoken.ShowContribution then
 		Spoken:ShowContribution(Spoken.SITE_URL .. "/contribute", nil, true)
@@ -1930,6 +1927,9 @@ function Page:RefreshContribute()
 	self.contribute:SetShown(self.unwritten ~= nil and can and not hidden and true or false)
 end
 
+--- Report in the heading's corner where it has something to report, Play beside it on every page
+--- that can have words (grey where there is no recording; none on an empty page), and the caller's
+--- buttons after them; the title stops 10 short of the last shown.
 function Page:RefreshPlay()
 	local target = self.target
 	local report, button = self.report, self.play
