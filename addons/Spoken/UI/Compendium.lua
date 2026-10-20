@@ -1241,9 +1241,15 @@ local function DrawLeaf(row, item, indent)
 	row.label:SetPoint("LEFT", row, "LEFT", indent + 12, 0)
 	-- Clear of the tick, quest mark or padlock at the row's end, which reach 25.5 in.
 	row.label:SetPoint("RIGHT", row, "RIGHT", -28, 0)
-	-- In the colours of the groups above it: found in gold, something with nothing to read yet in a
-	-- duller gold, still there to choose, and one not yet found grey: listed, but it does not open.
-	NameInk(row.label, item)
+	-- Something with nothing to read yet, greyed a little: still there to choose. One not yet
+	-- found, greyer: listed, but it does not open.
+	if item.locked then
+		Tint(row.label, LOCKED_INK)
+	elseif item.missing then
+		row.label:SetTextColor(0.66, 0.64, 0.60)
+	else
+		row.label:SetTextColor(0.94, 0.93, 0.89)
+	end
 	row.label:SetText(item.label)
 end
 
