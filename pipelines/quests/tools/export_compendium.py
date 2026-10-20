@@ -324,6 +324,7 @@ class Maps:
 def corpus_quests(path=CORPUS, ignored_path=IGNORED):
     """{questID: {"title", "giver", "handIn"}}, who each quest is placed by ("creature:id"), and
     the spawns. The one it is placed by is its giver, or for a quest the corpus has no offer of,
+    or one an item offers (an item stands nowhere: a Craftsman's Writ would have no place),
     whoever it is handed in to. "giver" is who says its accept line, as the packs' quest log
     tables name the giver; "handIn" who says its progress or complete line. Either is absent
     where the corpus has no such line. A quest QuestText.lua leaves out by the same rule
@@ -340,7 +341,8 @@ def corpus_quests(path=CORPUS, ignored_path=IGNORED):
         if line.get("npcId") and line.get("npcType"):
             npc = f'{line["npcType"]}:{line["npcId"]}'
             if source == "accept":
-                givers.setdefault(qid, npc)
+                if line["npcType"] != "item":
+                    givers.setdefault(qid, npc)
                 quests[qid].setdefault("giver", npc)
             else:
                 enders.setdefault(qid, npc)

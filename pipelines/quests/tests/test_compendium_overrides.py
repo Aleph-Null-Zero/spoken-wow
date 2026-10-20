@@ -117,3 +117,17 @@ def test_the_index_leaves_out_a_quest_every_line_of_which_is_ignored(tmp_path):
                        encoding="utf-8")
     quests, _, _ = corpus_quests(str(corpus), str(ignored))
     assert set(quests) == {5}
+
+
+def test_a_quest_an_item_offers_is_placed_by_whoever_it_is_handed_in_to(tmp_path):
+    def line(source, kind, npc):
+        return {"lineId": f"q:94217:{source}", "source": source, "questId": 94217,
+                "questTitle": "Craftsman's Writ", "npcType": kind, "npcId": npc}
+    corpus, ignored = tmp_path / "corpus.json.gz", tmp_path / "ignored.json"
+    with gzip.open(corpus, "wt", encoding="utf-8") as f:
+        json.dump({"lines": [line("accept", "item", 212000), line("complete", "creature", 14508)],
+                   "spawns": {}}, f)
+    ignored.write_text(json.dumps({"ignored": []}), encoding="utf-8")
+    quests, givers, _ = corpus_quests(str(corpus), str(ignored))
+    assert givers[94217] == "creature:14508"
+    assert quests[94217]["giver"] == "item:212000"

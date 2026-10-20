@@ -12157,6 +12157,10 @@ SpokenQuestsText = {
 		accept = "Return to my mate, Primal Torntusk at Revantusk Village. Tell her that I am coming home! She is sure to reward you.",
 		complete = "You have done the Revantusk a great service, $N! We owe you a great debt of gratitude.",
 	},
+	[7848] = {
+		accept = "Rifts stir, tear, and collapse all around us, $r. Not two paces from where I stand is a tear leading through the depths of Blackrock Mountain, into the maw of the Firelord.$B$BSurprised? Pity... The mortal races cannot comprehend that which they cannot see, touch, or feel.$B$BI assure you, the portal is there and access is possible.$B$BI've piqued your interest? Attunement is simple. Venture into Blackrock Depths and retrieve a core fragment. Return it to me and I shall attune your essence with the portal.",
+		complete = "I am now able to transport you to the Molten Core. Ask and it shall be done.",
+	},
 	[7849] = {
 		accept = "Like many in our village, I too have lost a loved one to the wilds. Alas, it was my twin brother Malkhor - taken in the same raid as Torntusk's mate by the Vilebranch.$B$BSadly, he was not fated to live and was given a swift, brutal execution; his remains fed to the oozes and wolves of the Vilebranch.$B$BIt is too late to save his life but not too late to save his soul. Recover his remains, $N.",
 		complete = "My dearest brother, how I will miss you...$B$BThank you for your assistance, $N. You are truly a hero in my eyes.",
@@ -14604,6 +14608,14 @@ SpokenQuestsText = {
 		accept = "Hello, I'm glad that you've decided to hear me out. The Horde needs all of the help that it can get to prepare for the Ahn'Qiraj War, and that means that we need you! Even now as we speak, official collectors are gathering the necessary material needed for the upcoming war, but we won't be able to meet our goals without your assistance, $N!$B$BYou should go speak with the guy in charge, Warlord Gorchuk. What do you say, $c? Will you help out with the vital preparations?",
 		complete = "Throm'ka, $c! Good to see so many of the Horde, such as yourself, $N, coming out to lend your support in laying the groundwork for the upcoming Ahn'Qiraj War. The effort here will ensure that we are victorious against the Silithid and their evil masters hidden away inside Ahn'Qiraj.$B$BSo now that you are here, be sure to speak with the various collectors and offer your assistance in gathering those materials that you are suited to.",
 	},
+	[8793] = {
+		accept = "Hello, I'm glad that you've decided to hear me out. The Horde needs all of the help that it can get to prepare for the Ahn'Qiraj War, and that means that we need you! Even now as we speak, official collectors are gathering the necessary material needed for the upcoming war, but we won't be able to meet our goals without your assistance, $N!\n\nYou should go speak with the guy in charge, Warlord Gorchuk. What do you say, $c? Will you help out with the vital preparations?",
+		complete = "Throm'ka, $c! Good to see so many of the Horde, such as yourself, $N, coming out to lend your support in laying the groundwork for the upcoming Ahn'Qiraj War. The effort here will ensure that we are victorious against the Silithid and their evil masters hidden away inside Ahn'Qiraj.\n\nSo now that you are here, be sure to speak with the various collectors and offer your assistance in gathering those materials that you are suited to.",
+	},
+	[8794] = {
+		accept = "Hello, I'm glad that you've decided to hear me out. The Horde needs all of the help that it can get to prepare for the Ahn'Qiraj War, and that means that we need you! Even now as we speak, official collectors are gathering the necessary material needed for the upcoming war, but we won't be able to meet our goals without your assistance, $N!\n\nYou should go speak with the guy in charge, Warlord Gorchuk. What do you say, $c? Will you help out with the vital preparations?",
+		complete = "Throm'ka, $c! Good to see so many of the Horde, such as yourself, $N, coming out to lend your support in laying the groundwork for the upcoming Ahn'Qiraj War. The effort here will ensure that we are victorious against the Silithid and their evil masters hidden away inside Ahn'Qiraj.\n\nSo now that you are here, be sure to speak with the various collectors and offer your assistance in gathering those materials that you are suited to.",
+	},
 	[8795] = {
 		accept = "Hello, I'm glad that you've decided to hear me out. The Alliance needs all of the help that it can get to prepare for the Ahn'Qiraj War, and that means that we need you! Even now as we speak, official collectors are gathering the necessary material needed for the upcoming war, but we won't be able to meet our goals without your assistance, $N!$B$BYou should go speak with the guy in charge, Field Marshal Snowfall. What do you say, $c? Will you help out with the vital preparations?",
 		complete = "Hail and well met $g lad : lass;! Good to see so many of the Alliance, such as yourself, $N, coming out to lend your support in laying the groundwork for the upcoming Ahn'Qiraj War. The effort here will ensure that we are victorious against the Silithid and their evil masters hidden away inside Ahn'Qiraj.$B$BSo now that you are here, be sure to speak with the various collectors and offer your assistance in gathering those materials that you are suited to.",
@@ -16227,21 +16239,76 @@ SpokenQuestsText = {
 		accept = "Agents of the Forsaken uncovered an Alliance plot to establish new bases here in the Eastern Plaguelands, at abandoned towers throughout the area.$b$bIt is imperative that we not allow them to establish a significant presence on our eastern borders, and so we must stave off this Alliance incursion. Our current plans are to drive them out of any towers they may have already seized, and occupy those that we have under our control against further attacks.",
 		complete = "This is good news, $n. It will be a constant struggle here in the Plaguelands until we have fully driven back the forces of the Alliance.$b$bUntil that day, I hope that we will have your continued assistance.",
 	},
+	[65593] = {
+		accept = "An incubus will be drawn to the hearts of lovers, and the most aching love will create the most irresistible lure.\n\nMy scrying has revealed two that should serve exceptionally.\n\nIn Silverpine Forest, Avelina Lilly provides her tailoring services to the fallen wizards at Ambermill. In the Barrens, Isaac Pearson hopes to make his mark in the seaside town of Ratchet.\n\nThey toil on opposite ends of the world, yet their hearts yearn only for each other. Bring those hearts to Carendin.",
+	},
+	[65597] = {
+		accept = "The time has come at last. Bring the hearts to the summoning circle below. Place them at its center and call forth the incubus.\n\nThe demon will not be pleased when it realizes that you have tempted it into a trap. Do not fall prey to its beguilement, $N. You must subdue it fully.\n\nOnly then can I teach you the spell to bind it to your will.",
+		complete = "Impressive. Very impressive. The sayaad specialize in preying upon mortals. Many a $c has thought themselves strong enough to command one, only to find themselves being commanded instead.\n\nThis trial did not break you, $N, and your efforts have earned your reward. I will teach you the spell to summon the incubus.",
+	},
 	[65601] = {
 		accept = "A sayaad male is known as an incubus. A creature of profound evil and singular mind.\n\nThe demon must be lured into our world with an item of enticement - an object that represents great love and devotion.\n\nIf you trust a blind man to lead you, $N, then listen. East from the Cleft of Shadow, along the main drag of Orgrimmar, lives Magar. He longs for the return of his mate, Krilge.\n\nSeek him out. He'll ask you to search for something precious. That is the key which you must bring to Gan'rul.",
 		complete = "Who told you about Krilge? Have you come with any news? You better not be toying with me...",
 	},
 	[65602] = {
 		accept = "You will need a powerful reagent to tempt an incubus -- an object that represents great devotion and love.\n\nWith my scrying, I have located a small figurine that should be suitable for your ritual.\n\nThousands of years ago, the figurine belonged to a young couple. The original owners are no more, but their keepsake has survived to the present day.\n\nFollow the road north into Ashenvale, then west and past Maestra's Post. You will see a house nestled amongst the trees. There you will find what you seek.",
+		complete = "<Gakin turns the wooden figurine over in his hand.>\n\nI sense the emotional energy residing within this artifact, undiminished by the passing of time. The incubus will be drawn to it like a fly to honey.\n\nTakar never disappoints.",
 	},
 	[65603] = {
 		accept = "The time has come. Take the figurine and descend into the crypts below. A summoning circle has been prepared, and you must place the figurine at its center.\n\nThen the gateway will open, and the incubus will cross into our world.\n\nA sayaad is not to be underestimated. The demon will not hesitate to attack when it realizes your ruse. You must draw upon all you have been taught to defeat it.\n\nIf you succeed, return to me and I shall bind the creature to your will. Fail, and your soul is forfeit.",
+		complete = "Not bad, $N. Your have bested the fiend, and your will remains unbroken.\n\nMany a $c has believed themselves strong enough to bind a sayaad, only to become the demon's next meal instead. I am pleased to see you are not so foolish.\n\nWatch closely, and I will teach you the invocation to call upon your newly bound incubus.",
+	},
+	[65604] = {
+		accept = "Yes... I see. I feel the residual emotions bound within these threads. Love is woven into its stitches. The incubus will not be able to resist.\n\nTake this to the summoning circle in Neeru's tent, $N. Summon forth a malevolent incubus, then show it your mastery. Do not expect it to be subdued quietly. Ready your magic and prepare yourself for a fight. Underestimating a demon has been many a warlock's final mistake.\n\nWhen you have defeated it, return the cloth to me. I will let Magar know what you found.",
+		complete = "Hah! Victorious, as expected!\n\nThe incubus is subdued, and it will be my pleasure to teach you to summon the demon. You strength is growing, and I have no doubt that this is a mere stepping stone to even greater powers.\n\nI will return the scarf to Magar. I have known that orc for many years, and never did I think he would care for someone the way he cared for Krilge.\n\nIt is a reminder of what separates us from the demons. We wield their darkness, but they will never wield us.",
 	},
 	[65610] = {
 		accept = "I met Krilge while making Mooncloth in Ashenvale. He was stationed there to protect civilians from danger, until he disappeared...\n\nThey've stopped looking for him and consider him a deserter, but I don't believe it.\n\nWe would often meet at Fallen Sky Lake before it became overrun by those aggressive bog beasts.\n\nI'm not typically one to ask favors, but if you could go to Ashenvale and look for any sign of him, I'd appreciate it.",
 	},
 	[76156] = {
 		accept = "I sense in you a hidden talent for the subtle arts, $c. Use this mask to infiltrate the nearby Venture Company mine and steal their supplies. It may not seem like a convincing disguise, but a skilled rogue can slip past any guard with naught but a winning smile and a cunning distraction. I believe this capability lies within you as well.",
+		complete = "Hmm... perhaps disguises are not your strength.",
+	},
+	[76160] = {
+		accept = "Maybe your skills lie with poisons, not disguises. The Harpies to the north nest in a tree which produces a resin of potent toxicity. Gather the fallen cones around the nests, then crush them into a salve. When applied to a blade this salve will sear your opponent's wounds into their flesh and turn their blood to salt.",
+		complete = "This is not the venomous salve I asked for. What you have brought me is pine nut butter. Are you sure you followed my instructions?\n\nThis will be of far more use spread on some spice bread than on a dagger. Although you would be quite formidable against a foe with a nut allergy.",
+	},
+	[76240] = {
+		accept = "I have one last idea that may lead us to success. I still feel there is hidden talent in you, but let us try and coax it out with a less direct approach.\n\nGo and procure a Raw Brilliant Smallfish, then bring it back here. Use these daggers to clean and fillet it. Do not think too hard - do what comes naturally.",
+		complete = "That was quite a display, $c. Although unfortunately, not the rogueish precision I hoped for.\n\nI see now that you will not be the one to carry my legacy in the subtle arts, but you may take this as a parting gift. Good luck on your travels, $c. The Horde will need heroes like you.",
+	},
+	[77617] = {
+		accept = "Relics of the Light can be found across Azeroth. These relics - in particular, the Librams that have guided our order since its founding - can help you strengthen your connection to the Light.\n\nOne such libram was held in the Abbey's archives, but it has been stolen by the Defias bandits to the east. Recover the libram, then study it and follow its guidance to learn a new combat technique. Return to me when you have done this.",
+	},
+	[77657] = {
+		accept = "Relics of the Light can be found across Azeroth. These relics - in particular, the Librams that have guided our order since its founding - can help you strengthen your connection to the Light.\n\nWe held one such libram in our archives, but it was stolen by the Frostmane trolls. The thief is likely still carrying it on them. Recover the libram, and follow its guidance to learn a new combat technique. Return to me when you have done this.",
+	},
+	[77660] = {
+		accept = "Hunters are a hardy lot, $N, even among Dwarves. We set out across Azeroth to explore lands unknown, and hunt all sort of dangerous and exotic quarry. Many times on your journey, you will find yourself alone in hostile territory, surviving only by your wits.\n\nThe Frostmane trolls have stolen a rune of great power from us. They have likely stashed it away in their cave to the south. Recover the rune, and use it to learn a new combat technique. Return to me once you have done so.",
+		complete = "Well done, $N. Applying the rune to your equipment will grant you powerful new abilities.\n\nThere are many such runes throughout Azeroth. Seek them out, as they will help along your journey.",
+	},
+	[78088] = {
+		accept = "<The mysterious orb you hold fills you with cold dread. You can almost hear a voice echo faintly in your mind. Low and guttural, you understand well that the language being spoken is demonic in nature.\n\nEven as a $c, this magic is beyond you. Find a more senior $c here in Kalimdor who might be able to help you discern the nature of this sinister object.>",
+	},
+	[78089] = {
+		accept = "There's a powerful darkness about this orb. Its nature is clearly demonic, but past that it is beyond my ability to discern its purpose.\n\nTake the orb to the one known as Katherine the Pure in the Stormwind Cathedral. Consult with her for advice on the orb.",
+		complete = "<Examines the orb with a worried expression>",
+	},
+	[78090] = {
+		accept = "I'm not sure what to make of this orb, $N. I think we will need the help of... a specialist.\n\nWe are aware of a warlock sect operating out of Stormwind. Officially we reject the presence of warlocks in the city. Unofficially, their knowledge can be of use when dealing with demonic forces.\n\nFind a representative of these warlocks, and seek their opinion on the orb.",
+		complete = "So the Church of the Holy Light requires my aid? It will not come cheaply.",
+	},
+	[78091] = {
+		accept = "I will study the orb and tell you what I learn, but you must first do something for me.\n\nThe warlocks of the Blackrock clan use specially prepared salts to enhance their summoning rituals. Collect some from the orcs in Redridge.\n\nWhen you return, I will share with you the results of my studies.",
+		complete = "Ah... the salts. I had forgotten all about them.\n\nThis orb is unlike anything I have seen, $N.",
+	},
+	[78092] = {
+		accept = "The tendrils of sentience reaching out from this orb are too much for even an experienced warlock like myself to withstand for long. I am reluctant to admit this, $N, but the orb must be destroyed.\n\nThe orb is nearly impervious, but it may be vulnerable to the weapon of a powerful demon lord. I have heard that such a blade is present in Ashenvale--at the site where the pit lord Mannoroth was destroyed.\n\nGather motes of the fallen demon's essence there, then shatter the orb upon the blade.",
+		complete = "<You raise the orb towards the spear>",
+	},
+	[78093] = {
+		accept = "<The shattered remains of the orb lay at your feet. Delgren will want to see you have succeeded.>",
+		complete = "This is a relief, $N. But whatever was watching Azeroth through that orb... I have a feeling they will not be happy it was destroyed.\n\nTake this as my thanks for your efforts. And... be careful.",
 	},
 	[78124] = {
 		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
@@ -16249,17 +16316,78 @@ SpokenQuestsText = {
 	[78127] = {
 		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
 	},
+	[78132] = {
+		complete = "Splendid job, $N! With this, I am one step further on my path to glory.",
+	},
+	[78133] = {
+		complete = "Splendid job, $N! With this, I am one step further on my path to glory.",
+	},
+	[78134] = {
+		complete = "Splendid job, $N! With this, I am one step further on my path to glory.",
+	},
+	[78142] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
 	[78143] = {
 		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
 	},
+	[78145] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
+	[78146] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
+	[78147] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
+	[78148] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
 	[78149] = {
-		accept = "Have you brought something to add to our collection?",
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
+	[78150] = {
+		complete = "Thanks to your donations, the library is thriving.\n\nPlease, take this.",
+	},
+	[78261] = {
+		accept = "<A note sits in the chest>\n\nHello, $N.\n\nI desire a treasure known as The Horn of Xelthos, which is somewhere within Shadowfang Keep.\n\nVenturing inside the keep usually calls for backup. However, for this job, a low profile is of utmost importance.\n\nYou must go alone.\n\nI have a contact, by the name of Veenix, in the Stonetalon Mountains. He should be able to help you get past the courtyard gate. The rest is up to you.\n\nReturn the horn here, and your payment will be sent soon after.\n\n- C",
+		complete = "<You place The Horn of Xelthos into the chest>",
+	},
+	[78270] = {
+		complete = "Nice job, $N. I figure that was a cakewalk for someone in your line of work.\n\nAs promised, here's the goods.",
+	},
+	[78307] = {
+		complete = "<A note sits in the chest>\n\nFor $N. I'll be seeing you.\n\n- C",
+	},
+	[78676] = {
+		accept = "<A note sits in the chest>\n\nGlad to have you back, $N.\n\nThe latest object of my desire is an artifact known as the Eye of Bhossca. My sources tell me the eye is somewhere within the Scarlet Monastery. As with Shadowfang Keep, you must infiltrate the monastery alone.\n\nIt may behoove you to find a disguise before going in. It will make getting around a touch easier. I'm sure you could find something on the monastery's grounds.\n\nReturn the eye here, and payment will be delivered as before.\n\n- C",
+		complete = "<You place The Eye of Bhossca into the chest>",
+	},
+	[78699] = {
+		complete = "<A note sits in the chest>\n\nFor $N. I'll be keeping an \"eye\" out for you.\n\n- C",
+	},
+	[78823] = {
+		accept = "The drawing is composed of rough, broad, strokes and seems to depict a large bird of prey. Despite the simple composition, the artist clearly viewed this creature with fear and awe. An expert on big game could likely tell you more.",
+	},
+	[78830] = {
+		accept = "This drawing reminds me of a story I'd heard on another expedition, not long ago. I was told of a great bird, Gharrik, who reigns over the Badlands as an apex predator.\n\nShe was last spotted northeast of Camp Cagg. Perhaps her nest is somewhere nearby?\n\nYou'll need live bait to draw her out. I'll lend you a cage to catch some. Small wildlife is scarce in the Badlands, so you'll need to find your bait elsewhere.\n\nA quill from Gharrik would make a fine prize. You'd certainly be the talk of the camp.",
+	},
+	[78916] = {
+		complete = "The servant of the Old Gods, Aku'mai, is dead. Such an accomplishment is the stuff of real heroes.\n\nThis object may be the key to much greater understanding of the nature of the Void and its effect on our world, It must be studied at once. Thank you, $N.",
+	},
+	[78917] = {
+		complete = "The servant of the Old Gods, Aku'mai, is dead. You have done a mighty service for the denizens of Kalimdor with this deed.\n\nThe pearl may also be the key to much greater understanding of the nature of the Void and its effect on our world.  It must be studied at once. Walk with the Earth Mother, $N.",
 	},
 	[79007] = {
+		accept = "<The faint radiance of the embers darkening, you stumble across the remnants of a recent fire.\n\nAmidst the scattered provisions, you discover a blistered note.>\n\n\"Not all that burns is lost. Find the twin land, find the place.\"",
 		complete = "As you stumble upon the remnants of yet another charred corpse, your gaze falls upon a message secured to a wooden plank.",
 	},
 	[79008] = {
 		accept = "<The faint radiance of the embers darkening, you stumble across the remnants of a recent fire.\n\nAmidst the scattered provisions, you discover a blistered note.>\n\n\"Not all that burns is lost. Find the twin land, find the place.\"",
+		complete = "As you stumble upon the remnants of yet another charred corpse, your gaze falls upon a message secured to a wooden plank.",
+	},
+	[79091] = {
+		complete = "Thank you, $N. You say this is from the Ironforge library? ...I'm sure they won't miss it.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
 	},
 	[79092] = {
 		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
@@ -16267,17 +16395,124 @@ SpokenQuestsText = {
 	[79093] = {
 		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
 	},
+	[79094] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
 	[79095] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
+	[79096] = {
 		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
 	},
 	[79097] = {
 		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
 	},
+	[79099] = {
+		accept = "Greetings $C. I've heard the most curious stories from the locals of a great corrupted water elemental named Baron Aquanis that stands vigil near the entrance to the $R ruins known as Blackfathom Deeps. I'm here looking to hire adventurers brave enough to retrieve the core of Baron Aquanis, a globe of corrupted water. In exchange, I'd be willing to give you access to a portal directly to the Zoram Strand that I've been using to study the environs around the ruins... from a safe distance, of course.",
+	},
+	[79192] = {
+		accept = "The note begins, \"Mission said they were both making deliveries for New Plague. Looks like simple apothecary accidents to me. Find my cozy spot in the mountains between The Barrens and Desolace if you want a safe place to talk.\"",
+		complete = "Backcountry adventurers and mercenaries alike undoubtedly make camp here. The corner of a note flapping in the breeze catches your eye and you reach for it.",
+	},
+	[79229] = {
+		accept = "The campsite before you is a grisly scene. Judging by the remains, the victims were two humans and a dwarf. Markings on the bones indicate a savage attack, but the looted supplies tell you this wasn't done by an animal. The wounds don't match centaur weaponry either.\n\nPerhaps an experienced scavenger of these lands would know what to make of this.",
+		complete = "Ah, so you found another one...",
+	},
+	[79235] = {
+		accept = "I've found a couple of scenes like you describe, $N. Always camps of humans and dwarves. Rumor among the caravans is a group of Horde marauders did it. Seems likely given the victims, and how brutal the attacks were.\n\nApparently the bandits fled Desolace once an Alliance marshal got hot on their trail.\n\nIf you're looking to track one of 'em down, I'd check Booty Bay. Ports always have shady characters coming and going. You might catch one trying to get a boat to somewhere.",
+		complete = "You need something? Make it quick.",
+	},
+	[79236] = {
+		accept = "You with the marshal? No, you don't look like it.\n\nThe rumors you've heard are only half true. Yes, we were pillaging human and dwarven camps, but we weren't doing it for the Horde. We were privately employed.\n\nI'll tell you the whole story if you buy me some grog.",
+		complete = "Ah, that's the stuff. Now, where was I?",
+	},
+	[79242] = {
+		accept = "As I was saying...\n\nOur boss wasn't with the Horde. She was a night elf named Illari Duskfeather. She gave us intel on the camps, and even let us keep most of the loot. She only kept a few of the rarer finds.\n\nOnce the marshal was on our tail, though, she left us for dead. I don't know her motives, but I think we were set up as patsies.\n\nI'm not the vengeful type, but I won't stop someone else from hunting her down. If you're looking for her, she once mentioned a hideout on the coast of Arathi.",
+		complete = "<Inside of the cache, you find a small box, along with some coin.>",
+	},
+	[79358] = {
+		accept = "Floodin' the Thousand Needles is no small feat, $N. If I hadn't felt the elements' outrage meself, I'd have never believed it. But here we are.\n\nThe quilboar aren't the first tae weaponize the elements irresponsibly, and they won't be the last. If we want to prepare our own counter-ritual, we'll need a better understanding of these twisted elements. Take this book. It details the many denizens of Azeroth and how they practice shamanism.\n\nIf you can learn from them, maybe we can find a solution.",
+		complete = "A cleansin' ritual usin' the very twisted totems of our enemies? I knew tae expect great things from ye.\n\nLet's get to work.",
+	},
+	[79360] = {
+		accept = "Now that you have mastered the elements, you have an obligation to them, and thus to all of Azeroth herself. We call to them for aid, we do not demand their power. It is time you return the favors granted to you. And I think I know how.\n\nThe quilboar twist the elements for their own ends, and seem to be extending their reach within these borders. Go into their kraul and put an end to whatever they scheme. These lands must be protected.",
+		complete = "Hmmph... One thing's certain. Whoever this note is from is right about their preparations going unseen. We've been too busy dealing with the centaur and harpies to send out wind riders to patrol the canyons.\n\nYou have our gratitude for alerting us to this threat, but we might still need further assistance.",
+	},
+	[79361] = {
+		accept = "So the quilboar mean to flood the Thousand Needles with their twisted shamanism, do they? It seems almost unimaginable, but you yourself have seen that these creatures are not to be taken lightly.\n\nI had wished to continue your training in earnest, but there is no time for that now. These lands are home to many different creatures, friend and foe alike, and none of them deserve such a fate. We must act.\n\nTake this tome. It was meant for study, but may now hold the key to dispersing this coming storm.",
+	},
 	[79362] = {
+		accept = "A shield left behind by the specter of Grant Valor, father of the Valor family and hero of Raven Hill.\n\nWith Grant's spirit still battling the undead, perhaps his unfinished business was to slay the scourge that injured him in the Raven Hill Cemetery. It is likely the one his mace is still imbedded in.",
 		complete = "For a man as proud as Grant Valor to be brought low by such a simple creature says less about him and more about the horrors of battle. It only takes one slip to be crippled for life.\n\nThese weapons tell a great deal about their owner. Let me take some time to study them.",
+	},
+	[79363] = {
+		accept = "A sword left by the spirit of Raven Hill's guard, Silvia Valor, who lived her life protecting civilians and their homes.\n\nWith Silvia's spirit still visiting farmsteads, perhaps her unfinished business was to route the defias who have taken up residence in Addle's Stead south of Raven Hill.",
+		complete = "Silvia Valor, hmm? Ah, yes. A fine warrior and a defender of our way of life--albeit with a narrow vision of what that was.\n\nYour guess is as good as mine what she would want, but the defias was a good start. Let me study this blade further.",
+	},
+	[79364] = {
+		accept = "The note you found says the Razormane have burrowed into the Thousand Needles for some sort of unseen ritual. Raging storms and rising tides...\n\nThe quilboar must be using some cruel sorcery they learned from Hirzek, a shaman who went to great lengths to twist the elements. If they plan to flood the canyon, this would require devastating elemental powers.\n\nWe are ill equipped to deal with this, but a powerful shaman like you must have an idea. Return to your allies and see if you can't find an answer.",
+		complete = "Knew I could count on you.",
+	},
+	[79365] = {
+		accept = "Here mon, a Squall-breakers Potion be what you need. Drink this to protect yourself against the elements of the storm, but remember it only goin' to last for a short while.\n\nNow go, return to your friends in need. There's nothing more I can do for you.",
+		complete = "Our wind riders have found something, but they have been unable to get close enough to assess the situation. Were you able to find anything that might help us?",
+	},
+	[79366] = {
+		accept = "Now that you have the twisted totems, we must wield them to summon forth the corrupted elementals the quilboar are calling upon. Defeat them to cleanse these lands and put an end to the Razormane's abominable ritual then report back to Rau Cliffrunner with your success.\n\nYou should begin your clensing at the steam pools to the west. That area is rich with each of the elements. But be careful, $N. The quilboar will not sit idly while you interrupt their plans.",
+	},
+	[79442] = {
+		accept = "Our people cannot thank you enough, but I have no real use for this eye. I have heard of an old shaman in the Alterac mountains that has an eye for storm elemental magic. Perhaps he may be able to craft something for you.",
+		complete = "Tell ya what. No more tricks, no more games. I got somet'in you'd be interested in.\n\nTrade me dat eye and I give you here this mighty fine rune that be ready to teach you new tricks.\n\nWhat ya say?",
+	},
+	[79482] = {
+		accept = "Listen... not to shatter the magic of the season here, but Smokywood Pastures could use some assistance - the kind you adventuring types are known to give.\n\nWe're missing an important shipment of treats that was restocking us for the season, and now we're missing the agent of Smokywood Pastures that we sent out to the field to find it!  Please - the shipment was last reported in the Alterac Mountains, and that's where our man went to look for it.\n\nSee if both are out there, safe and sound!",
+	},
+	[79483] = {
+		accept = "Listen... not to shatter the magic of the season here, but Smokywood Pastures could use some assistance - the kind you adventuring types are known to give.\n\nWe're missing an important shipment of treats that was restocking us for the season, and now we're missing the agent of Smokywood Pastures that we sent out to the field to find it!  Please - the shipment was last reported in the Alterac Mountains, and that's where our man went to look for it.\n\nSee if both are out there, safe and sound!",
+	},
+	[79492] = {
+		accept = "DISASTER has struck!  Metzen the Reindeer has been kidnapped!\n\nMetzen is one of Greatfather Winter's eight reindeer - and property of Smokywood Pastures.  We've received not one but TWO ransom letters from groups claiming to have Metzen.  With the holiday season well under way, we're strapped to the coin box here!  Please - find Metzen and return him to us!\n\nCheck out the ransom letters for clues, and sprinkle this reindeer dust on him - it will free him from any of his bonds!\n\nPlease, hurry!",
+		complete = "You did it!  Huzzah!\n\nMetzen flew back into Greatfather Winter's stables - yes Metzen can really fly - just a little while ago!  The dust worked like a charm; I knew it would.  You've saved the Feast of Winter Veil as well as Smokywood Pastures from disaster.  Thank you, $N.\n\nListen... because of what you've done here, I want you to have this.  It's something VERY special; if you have a mount, I think you'll get a kick out of it.  Happy Winter Veil!",
+	},
+	[79495] = {
+		accept = "DISASTER has struck!  Metzen the Reindeer has been kidnapped!\n\nMetzen is one of Great-father Winter's eight reindeer - and property of Smokywood Pastures.  We've received not one but TWO ransom letters from groups claiming to have Metzen.  With the holiday season well under way, we're strapped to the coin box here!  Please - find Metzen and return him to us!\n\nCheck out the ransom letters for clues, and sprinkle this reindeer dust on him - it will free him from any of his bonds!\n\nPlease, hurry!",
+		complete = "You did it!  Huzzah!\n\nMetzen flew back into Great-father Winter's stables - yes Metzen can really fly - just a little while ago!  The dust worked like a charm; I knew it would.  You've saved the Feast of Winter Veil as well as Smokywood Pastures from disaster.  Thank you, $N.\n\nListen... because of what you've done here, I want you to have this.  It's something VERY special; if you have a mount, I think you'll get a kick out of it.  Happy Winter Veil!",
+	},
+	[79731] = {
+		complete = "A magic fountain hidden in the jungle? What a story, $N!\n\nThat gives me an idea for another chapter in my book! Let's see, where did I put that manuscript...",
+	},
+	[79947] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
+	[79948] = {
+		complete = "Thank you, $N. Our knowledge expands through your efforts.\n\nIf you discover more magical works that might benefit the library, please bring them to me.",
+	},
+	[79974] = {
+		accept = "\"Always like to keep a reserve stash nearby in the off chance I've got to flee in a hurry.\n\nThe face of this mountainside is so beautiful you might say it was carved from the waterfalls of time.\nThat's the eagles nest, that's what you're looking for.\"",
+		complete = "Dwarven Engineering, always a marvel.",
+	},
+	[79975] = {
+		accept = "<You find a carefully folded letter inside of the toolbox.>\n\n\"From here, with the right tools, you call the shots. Great place to launch a parachute glider.\n\nMy loyalty to the Eagle and Fist requires distance in order to serve them best. This barricade has had better days, like the Old Kingdoms it once defended, but I'll never abandon it.\"",
+		complete = "A campfire is newly fed with wood, but signs of a quick departure are evident.",
+	},
+	[79976] = {
+		accept = "\"So, I've decided to take my work back underground. To stop it falling into the wrong hands.\"\n\n<The paper is torn just large enough to fit the message. You aren't sure if these are the last words you'll read from the author, or if they're a clue to the next hideout. An inadequately secured sleeping bag is unrolling itself onto your feet...>",
+		complete = "Heavy canvas is rolled over assorted equipment. You help yourself to the pack.",
+	},
+	[79980] = {
+		accept = "\"Not so bad, eh? Since you're reading this, it means my stash is still there. Take a hundred paces due north and don't break your ankles going down the steep cliffside. There should be enough to keep you going.\"",
+		complete = "You pull a messenger bag out of the ground. Stuffed in with the supplies is a dirty parchment.",
+	},
+	[80001] = {
+		complete = "You put your scout skills to work.",
+	},
+	[81570] = {
+		accept = "I have cutting to do.  I can't tell you what I'm going to cut, but... I need myself a blade.  A certain blade...\n\nSome people call it a moonsteel broadsword.  I call it a swing blade.\n\nYou help me?  Maybe you find it in town, maybe you talk to a blacksmith and he'll make it special.\n\nBut don't sleep on this.  What I'm cutting won't keep forever...",
+		complete = "That's a good blade.  It has a good swing.  It's a good swing blade.  Thank you.  Thank you, thank you, thank you!!!  Now I want to try it....  \n\nLater.  I'll try it later.  But like I was saying... thanks.",
 	},
 	[86574] = {
 		accept = "<The unfortunate body here bears the marks of many strikes from the Pridewing wyverns. The pack nearby is rumpled and discarded, with its contents missing, and only a small note clutched in the courier's hand to indicate what was lost: a shipment meant for Innkeeper Faralia at Stonetalon Peak.>\n\n<The wyverns have probably carried off the supply bundles to line their nests.>",
+		complete = "You found the missing shipment?\n\nOh, I had no idea that the courier didn't make it. That is... a tragic state of affairs...\n\nI'll put these supplies to good use to make sure that her loss is not in vain.",
 	},
 	[86576] = {
 		accept = "In addition to spreading their filth across the Charred Vale, the Bloodfury harpies gather anything shiny that they can find. I'm told that they collect a variety of golden-yellow sunstones for decoration. I have no use for such trinkets, but Mor'rogal has mentioned using them before.\n\nWhile you're fighting the harpies of the Vale, keep your eye out for Glittering Sunstones. Bring any that you find to Mor'rogal, up on the hills above us.",
@@ -16288,6 +16523,7 @@ SpokenQuestsText = {
 		complete = "You found Ylva's body? Ah, the poor woman. She said she was going to show the troggs that Ironforge would never fall to their kind. She went looking for a few mountaineers who never returned from a patrol through trogg country. She was always too independent-minded to be cautious. Now we know what happened.\n\nI'll take the banner back and make sure it's cleaned up and displayed. You should take her weapon. May it serve you well against the troggs.",
 	},
 	[86613] = {
+		accept = "The excavation's tools, left behind when the dwarves fled from the troggs, seem mostly untouched. Returning them to the excavators will surely aid their work.",
 		complete = "Our tools!\n\nWhen the troggs overran the camp, we had to leave most of our tools behind. This'll be a big help once we get this invasion under control and can start working again!",
 	},
 	[86614] = {
@@ -16299,6 +16535,7 @@ SpokenQuestsText = {
 		complete = "This jar is for me?\n\nSnow! Grenhild did it! She sent the snow that I asked for!\n\nA pity, though, I was hoping she would come and visit herself.\n\nUh, anyway, you probably deserve a little something for your effort. Here you go.",
 	},
 	[86757] = {
+		accept = "Orcs have taken over the eastern forest, and their scouts and grunts now lurk throughout the woods! It's not safe for our kind to move about Ashenvale any more.\n\nWe need to push back the orcs and secure the forest. We've been able to pick off some of the grunts and scouts by carefully sneaking around the edges of their camp.\n\nFight the orcs and bring me the jagged swords and curved knives that they use. I'll make sure their weapons are salvaged and repurposed, so nothing goes to waste.",
 		complete = "Excellent work, $N.\n\nI deplore the situation that requires us to resort to this kind of violence, but if the orcs aren't stopped, they'll invade Astranaar and cut down the whole wood. At least we can reuse the metal of their crude weapons to make defenses of our own.",
 	},
 	[86758] = {
@@ -16317,6 +16554,14 @@ SpokenQuestsText = {
 		accept = "Hello, traveler! I hope you are enjoying your visit to our village. I like Dolanaar because it is small and rustic and everyone is friendly.\n\nI'm a local trader, and I bring in all sorts of tools and trinkets that might be useful to you in your travels. Indeed, if you are interested in a trade, I find myself in need of some nightsaber pelts. While these majestic creatures are beautiful, the local ones are rather aggressive, so don't feel too bad about defending yourself.",
 		complete = "Oh, these are wonderful. It is a shame to resort to violence with such majestic animals, but it is important to keep the roads safe, and these pelts will make beautiful blankets and shawls.\n\nHere, let me give you something to remember them. It is both soft and sturdy.",
 	},
+	[87318] = {
+		accept = "Thandol Span has been a dangerous place since the Dark Irons blew up the bridge, but I didn't expect to run into them there!\n\nI managed to escape, but I lost sight of my partner, Essene. I've been searching all over for her, but I haven't found any sign of her. Did the Dark Irons capture her? Did she fall into the river below? Did she make it back to the other side? I don't know! I don't even know if she's alive!\n\nPlease, if you see any sign of her, let me know!",
+		complete = "Corma sent you? That's great news!\n\nWhen the Dark Irons ambushed us, we were separated, and I hit my head and couldn't tell which direction I was going. I wound up here and I've been living out of the supplies in my bag for the last few days. Now that you've made it past the Dark Irons, though, it may be possible for me to make my escape.\n\nI just have to gather my things and take a moment to catch my senses, and I'll figure out a way to escape!\n\nShe never gave up on me. What a lovely heart.",
+	},
+	[87491] = {
+		accept = "Sss! The foul Dark Irons have summoned me and kept me caged next to their petty fire pit!\n\nFire must run wild, run free! Release me! Must escape! Must BURN!\n\nNo Dark Iron is safe! Burn them to the ground! Burn their black powder! Burn their fortress, their fuses, their folly!\n\nLet me out and I will BURN THEM ALL!",
+		complete = "That was quite a pyrotechnic display! I don't think I've seen anything quite like it!\n\nGlad the fire elemental, uh, ran outta steam, as it were. Coulda been bad if it had decided to go after the rest of us instead of those Dark Irons!",
+	},
 	[87760] = {
 		accept = "I have received word back from Darnassus, $N!\n\nFrom the animal samples, we learned that the naga dominated these sea creatures to use as unwilling mounts and beasts of burden. The ones that were too obstinate, or too old or badly injured, they drove out for sport. Monstrous!\n\nIt is our sacred duty to put a stop to this!\n\nThe naga have forces in the Ruins of Mathystra, and they must be seizing threshers from off the shore. Find their beastmistress, slay her, and bring back her tools of domination!",
 		complete = "This has been a long journey, Orangequake, but it was worth it.\n\nAt long last, you have wrested away the rod that the naga use to compel the sea creatures into their service. I will make sure it is destroyed, and the threshers and sea turtles can finally live in peace.\n\nThank you again. Your persistence has finally been rewarded, and I, personally, am grateful to you.",
@@ -16324,6 +16569,13 @@ SpokenQuestsText = {
 	[88756] = {
 		accept = "The Dark Irons have a few camps east of here on Direforge Hill, and they've stolen a bunch of explosives from our construction site and hauled 'em back to their tents.\n\nI don't need tae tell ya what kinda mischief Dark Irons can get up tae with a barrel o' powder!\n\nI know the Dark Irons are dangerous, but we need those barrels back. You can tell 'em from other barrels because of the red markings on 'em. We cannae let the Dark Irons keep 'em!",
 		complete = "Ach, that's a load off me mind. At least the Dark Irons won't be able to roll a bomb-cart into our wagons... or lob 'em in a trebuchet... or roll 'em down the hill at us... or feed 'em tae slimes and then let the slimes loose near are camp and set 'em on fire.\n\nNow we just have tae make sure the powder stays dry!\n\nThanks!",
+	},
+	[88757] = {
+		accept = "While I was fleeing from those Dark Irons, I wound up dropping lots of my gear!\n\nIt looks like I lost... my green leather waterskin, my spellbook, my necklace, and... well I need these things!\n\nIf you can find them while I repack and catch my breath, that would be a great help.",
+	},
+	[88758] = {
+		accept = "I just need to finish repacking, and I can get out of here!\n\nIf you'll do me one last favor, here--take this note to Corma. It'll let her know that I'm alive and I'm on my way!",
+		complete = "She's alive? She's alive!\n\nLet me see this note... \"Dear Corma...\" mhmm... oh, blessed day! Thank the Light!\n\nI can never thank you enough for reuniting us. I can't wait until she makes it back here!\n\nYou've done a wonderful service for us both.",
 	},
 	[90902] = {
 		accept = "I am proud to welcome another newly risen $c to our ranks. As you begin to reconnect with the light you may notice that certain abilities that were once second nature to you may cause you considerable pain to use now, particularly those involving channeling the light to heal yourself or others.\n\nThe only way around this problem is--unfortunately--to go through it. Like any other muscle that has atrophied, you must push through the pain and exercise the flesh for it to return to full function.",
@@ -16377,13 +16629,18 @@ SpokenQuestsText = {
 		accept = "I was bringing back a supply shipment from the trading post, but my wagon tipped over and the supplies fell in the river! Before I could catch them, they had already washed downstream.\nBetween the murlocs and wolves down there, I don't stand a chance of retrieving the supplies on my own. You seem like the hardy sort - do you think you could find them for me?",
 		complete = "You look a bit damp, $N. Sorry about that. But thank you for retrieving the supplies.",
 	},
+	[91736] = {
+		complete = "The machine dispenses a clear liquid into a bottle...",
+	},
 	[91738] = {
 		complete = "Do my eyes deceive me? I haven't seen a drop of Thunder Applejack in months!\nThis should put a smile on the troops' faces. You have my thanks, $c!",
 	},
 	[91740] = {
+		accept = "This murloc has no doubt been terrorizing the local roads for some time. You suspect the nearby watch guards will want to know of its demise.",
 		complete = "We lost two members of the watch last week to the murlocs, $c. Hopefully with their leader slain, we can start pushing them out of Elwynn.",
 	},
 	[91741] = {
+		accept = "<One of the kobolds dropped this book. It looks like the kobold might have tried to eat it.\n\nBrother Paxton inside the abbey has a small library he maintains. The book must have come from there.>",
 		complete = "Hey! How did you end up with that? It's supposed to be on the shelf! Oh dear, the kobolds have been stealing my books again. They must want to eat them!\n\nThanks for bringing back the book, but what will I do about the rest of my missing collection?",
 	},
 	[91743] = {
@@ -16395,6 +16652,7 @@ SpokenQuestsText = {
 		complete = "Kobolds with books? Yah, I've seen kobolds running back and forth with books, yelling at each other. They must be stealing them from the library inside the abbey.",
 	},
 	[91746] = {
+		accept = "The trophy serves as an impressive reminder of your victory over Elmpaw. A local hunter or skinner might be interested to hear the story.",
 		complete = "So, you took down Elmpaw? Very impressive, Ingmmar!\n\nLet me give you something in return for your trophy - I know a few collectors who will pay quite well to have this on their mantle once I've prepared it.",
 	},
 	[91751] = {
@@ -16435,8 +16693,10 @@ SpokenQuestsText = {
 	},
 	[91860] = {
 		accept = "Out on patrol last night I spotted a group of gnolls dumping a very large body onto a pyre on the shores of Fenris Isle. I didn't see an elf or any smaller corpses, but I'd say this doesn't bode well for them.\n\nIf you are brave or stupid you are welcome to charge into Fenris Isle to learn more, but if you ask me, its a lot of work to find some snooty elf that's probably long dead.\n\nI know you paladins love swearing oaths and taking on lost causes, but this one isn't worth it. Trust me.",
+		complete = "<The corpse before you was certainly Tauren and you can tell that it was gnawed on heavily before it was tossed onto the pyre. You see no signs of the elf woman that was described to you though. Perhaps she is still alive somewhere deeper in the fortress nearby?\n\nThis will be dangerous, but there's only one way to find out for sure.>",
 	},
 	[91861] = {
+		accept = "<The fact that you only found only one body is a hopeful sign. Perhaps the High Elf that Trevan and Hadrec described is still alive somewhere deeper inside the nearby fortress?>",
 		complete = "You are one of the Forsaken, yes? Can you help free me?\n\nTime is short for me, I am afraid. Please hurry!",
 	},
 	[91862] = {
@@ -16446,7 +16706,16 @@ SpokenQuestsText = {
 	[91899] = {
 		complete = "Thank you for your hard work, $N. There has been an uprising in bandits and thieves intercepting trade routes as of late. If you find other crates laying around, please bring them here and we'll handle the rest.\n\nHere is your payment.",
 	},
+	[91900] = {
+		complete = "Thank you for your hard work, $N. There has been an uprising in bandits and thieves intercepting trade routes as of late. If you find other crates lying around, please bring them here and we'll handle the rest.\n\nHere is your payment.",
+	},
+	[91901] = {
+		complete = "Thank you for your hard work, $N. There has been an uprising in bandits and thieves intercepting trade routes as of late. If you find other crates lying around, please bring them here and we'll handle the rest.\n\nHere is your payment.",
+	},
 	[91904] = {
+		complete = "Thank you for your hard work, $N. There has been an uprising in bandits and thieves intercepting trade routes as of late. If you find other crates lying around, please bring them here and we'll handle the rest.\n\nHere is your payment.",
+	},
+	[91905] = {
 		complete = "Thank you for your hard work, $N. There has been an uprising in bandits and thieves intercepting trade routes as of late. If you find other crates lying around, please bring them here and we'll handle the rest.\n\nHere is your payment.",
 	},
 	[91920] = {
@@ -16457,6 +16726,14 @@ SpokenQuestsText = {
 		accept = "Here is the new potion to aid in Quinn's recovery, made with love extracted from six whole hearts.\n\nNow, please excuse me before your presence necessitates more paperwork.",
 		complete = "<Quinn takes the potion and drinks it.>\n\nYes, I can feel it working.  I will soon be able to travel.\n\nYou have done me a great favor, Saixgone.",
 	},
+	[92109] = {
+		accept = "Erm... 'Ello, miss. I'm not supposed to talk to strangers, but... Hey, what are those shiny bottles sticking out of your backpack for? Are you an alchemist? That's so cool!\n\nWhen I grow up, I want to be an alchemist too. Daddy won't let me play with any of his herbs; too dangerous, he says.\n\nWell, I want to start learning now. Could you maybe get some supplies for me, pretty please?",
+		complete = "Oh my gosh! Look at these! Did you pick the herbs yourself?\n\nWow, thanks miss, I am going to see what I can make with these right now! Do you want to watch?",
+	},
+	[92110] = {
+		accept = "Wow, my very first potion! Did you know that mixing those two herbs together would change the potion to a bright red color when you first started?\n\nThat was fun, but mixing a few flowers doesn't seem like the kind of alchemy Daddy does. He uses other ingredients too.\n\nI don't know what else to use, so let's try the first thing that comes to mind! Let's see... maybe murloc eyes? That sounds so gross, but I bet something will happen.",
+		complete = "You brought me murloc eyes! I am so, so excited for my first REAL potion!\n\nI snuck out and grabbed a few more herbs while you were away and found some empty vials downstairs. Um... you can do the mixing this time.\n\n<The child watches enthusiastically as you mix the ingredients, but her nose crumples as you add the eyes. The concoction takes on a sickly orange in mere seconds.>\n\nWow! See, I was right. I wouldn't drink that, but here's my recipe if you wanted to make more. Come back sometime!",
+	},
 	[92124] = {
 		accept = "We need to take stock of how many books are missing!\n\nGo talk to my useless assistant, Daniel. He can do a quick inventory and let us know how serious the problem is.\n\nHe's obsessed with the various trade professions in Elwynn Forest. The boy keeps focusing on those instead of his important work helping me.\n\nDon't let him prattle on about tradeskills, and find out what's happened to my books!",
 		complete = "Yah, I overheard. I warned Brother Paxton three times about the kobolds tunneling under the abbey.\n\nIt looks like the kobolds have taken a lot of books. There are whole bookshelves emptied out. You should probably see what Brother Paxton wants you to do about it.\n\nWhile you're here, can I talk to you about tradeskills? I'd be happy to answer any questions you have, or point you toward the local trainers.",
@@ -16466,6 +16743,7 @@ SpokenQuestsText = {
 		complete = "What I asked of you was not fair, nor would it have been unjust for you to simply walk away. Thank you stranger. I am unable to repay you in kind but I hope one of these is acceptable.\n\nI hope our paths cross again without such sorrow.",
 	},
 	[92415] = {
+		accept = "<A torn and stained bundle of parchment has barely survived the undead trodden grounds of the graveyard. It mentions a missing child of the Heartweaver family. Perhaps the orphan matron in Stormwind City will know more.>",
 		complete = "Heartweaver? Heartweaver...\n\nOh! Little Jeremy Heartweaver. He was brought in years ago after the attack on Lordaeron. Lost both of his parents in the attack, poor thing.\n\nHe was actually adopted not too long ago by a sweet woman out in Duskwood.",
 	},
 	[92421] = {
@@ -16475,6 +16753,33 @@ SpokenQuestsText = {
 	[92422] = {
 		accept = "Reports have come in from the Lordamere Overlook deep within the Ruins of Lordaeron. An unholy fog has taken over the streets and graveyard, affording the scourge up there some measure of stealth.\n\nOur scouts indicate they're being conjured by a new power within their ranks, a necromancer known as Rath'mael. We do not have the luxury of waiting this one out, $N.\n\nIf you have allies, summon them and their aid to the Forsaken. Drive this creature out of our lands.",
 		complete = "While I have no doubt something of his kind will be replaced, we can only hope their ranks thin in the meantime.\n\nThank you Dead.",
+	},
+	[92432] = {
+		accept = "I bring ill tidings from Dalaran. Something has disrupted our ley lines, causing erratic and destructive behavior from our constructs in the city.\n\nWe know not yet what is causing this mayhem. The high council has ordered us to keep this matter private so as to not bring shame to our order. But we cannot keep up this charade forever. The city is being overrun as we speak!\n\nArchmage Modera has dispatched me to solicit outside aid. Seek her image out near Dalaran beside Lordamere Lake.",
+		complete = "I see Jacques was successful in garnering aid.\n\nWhile not strictly permitted, we cannot allow our pride to turn away allies in our desperate hour. Do not let the guards fool you. Things are anything but under control.",
+	},
+	[92434] = {
+		accept = "Whatever caused Dalaran's barrier to lower has left the city in turmoil. With you having dealt with their patrols, there is no better time than now to make our way inside and discover their secrets.\n\nTake the key you found at the internment camp and seek out their sewers along the northern border of the city. With luck, those mages had no reason to put a ward over such a... disagreeable point of entry.",
+		complete = "It is surely no coincidence the horde has taken an interest in my city during such a precarious time.\n\nIn fact, I was counting on it. I have a proposition for you.",
+	},
+	[92454] = {
+		accept = "Welcome to the World of Warcraft!\n\nAs special thanks for purchasing the World of Warcraft Collector's Edition, turn in this gift voucher to Dalia Windbreeze in Thendal Grove.  You'll then be given a gift: a little companion to join you on your quest for adventure and glory.\n\nThanks again, and enjoy your stay in the World of Warcraft!",
+	},
+	[92456] = {
+		accept = "If you're going to bother me you can at least make yourself useful. I have an errand I need run.\n\nFor a city of mages, Dalaran has a surprising interest in botany. The Kirin Tor keep to themselves, but I would love a sample of their mana-infused vegetation.\n\nYou're clearly someone who is comfortable being where people don't want you, maybe you could find a way into the city. If you do, bring me back whatever is growing in their central garden.",
+		complete = "This is... not what I had in mind.\n\nClearly the city is going through more than I expected. But what you found is just as fascinating, if not more so.\n\nI guess you're not as troublesome as I thought. Good work.",
+	},
+	[92457] = {
+		accept = "The breach has affected many of our factotums and enchantments throughout the city, including many that are seeing to our defenses. This fragmented arcane energy has spoken to rogue elementals who seek to saturate themselves in this free flowing magic.\n\nWhile we are busy tending to the wards and other major incidents, it would be a favor to the Kirin Tor if you could cull this elemental throng.",
+		complete = "Thank you $N, this progress will help ensure Dalaran is safe.",
+	},
+	[92458] = {
+		accept = "Whatever disturbed the ley lines, it started at the top of the Violet Citadel. A thunderous crash rang out from the parlors above, and now we are overrun with rampant arcane power. It's taking all we have just to keep the wards in place.\n\nWe cannot afford to stall any longer. We need help.\n\nThe Kirin Tor are busy inside, but you will still need a less public approach to gain entry. Take this key and meet me in the citadel once you've made your way into the city. We must put an end to this disruption.",
+		complete = "I don't know what you saw up there, $N, but it does not matter. What matters now is containing this mote and putting an end to this madness.\n\nYou did your part well. Now the rest is up to us.",
+	},
+	[92459] = {
+		accept = "The council will not be happy to learn of our subterfuge, but they cannot deny results. The city is calming down, and we are free to lower our wards.\n\nI think it's only fair you deliver the good word. Take this mote to Archmage Celindra within the Violet Citadel.",
+		complete = "Where did you find this? The parlor?\n\n<Archmage Celindra's expression darkens momentarily before regaining her composure.>\n\nI think it is best you dispel this from your thoughts, friend. For now, the Kirin Tor welcomes a competent $c such as yourself. Welcome to Dalaran.",
 	},
 	[92460] = {
 		accept = "Look at you, bright eyed and ready for adventure! We've been awaiting your arrival and anticipating your much needed help here in Thendal Village. I imagine you are brimming with both nerves and excitement for what is to come. After all, you only get to come of age once in a lifetime.\n\n<Ailee smiles kindly.>\n\nGo, seek out our village leader Rorian the Dayseeker at the entrance to the greatfather tree just west of here. He will get you started on your journey.",
@@ -16506,8 +16811,10 @@ SpokenQuestsText = {
 	},
 	[92467] = {
 		accept = "A sapta is a drink created to bind our spirits to the elements. Fused with magic, the potion will allow the strong willed to see the elements as no one else can. Your spirit will be connected to the element the sapta was created for, and only a select few shaman know the recipe.\n\nThe sapta is always drunk in a sacred place, and never anywhere else--remember that.\n\nSeek out the Rise of Spirits up the pass northeast of here. Drink your sapta there, and... well, you will see what you need see.",
+		complete = "Ah... $N... child of the four winds... You seek understanding. You seek answers. Why have the winds left you? How may you get them back? These are answers I cannot provide, for I do not know the motives or movements of the winds.\n\nI can, however, teach you much of the earth. Its strength, its resolve. Even here, high in this endless sea of clouds, you are still a creature of the earth. If you hope to find the strength to speak to the spirits of the four winds once more, this is the path you must walk.",
 	},
 	[92468] = {
+		accept = "Take this Rough Quartz from me and bring it to the one you call Windshaper Boro as proof of our meeting. He will craft a totem for you, and this shard will be the heart of it. As small as it may seem, you will come to find that size does not matter, and that even the smallest of things can outlast many others.\n\nBe patient, $N. Remain strong. And seek wisdom. This is what the elements ask of you. In the end, you shall become one with the earth--respect it as it shall respect you.",
 		complete = "Good!\n\nThe totem I will craft for you is more than a symbol of your status among $c--it has abilities beyond that. One use of the totem is as a focus for spells. Those spells are tied to the earth, and as you earn greater and greater wisdom, more of the earth's abilities will be made accessible to you.\n\nThe trainers will know when you are ready for greater knowledge.\n\nBut for now, take this earth totem...",
 	},
 	[92469] = {
@@ -16560,6 +16867,7 @@ SpokenQuestsText = {
 	},
 	[92489] = {
 		accept = "The Kirin Tor have long been allies of the Alliance. With the destruction of their city at the hands of the arch demon Archimonde, the once proud city of mages has now become reclusive and distrusting of outsiders.\n\nIn recent years they have begun reconstruction efforts to bring the city of Dalaran back to its former glory. However, reports show they are struggling to contain an outbreak of wayward arcane energies.\n\nWe must help them disperse these attacks lest we lose one of our most powerful allies.",
+		complete = "A creature of pure mana? Whatever is causing this disturbance is more powerful than initial reports suggested.\n\nYour aid bought them precious time and reminded the Kirin Tor who their allies are. Good work, $N.",
 	},
 	[92514] = {
 		accept = "You've got that \"Windshaper\" air about you. Something about how I can feel a tiny bit of static on my skin when near someone spirit-touched that gives it away. Before I properly put you to work around here, you should check in with our resident Windshaper elder, Illaya Amberwind. She's just outside, near the center of town.\n\nOh, and check in with Coriella Calmbreeze as well, she runs the local inn and can provide lodging and supplies, should you need them.",
@@ -16576,6 +16884,9 @@ SpokenQuestsText = {
 	[92517] = {
 		accept = "There's a cave not far to the north, hidden behind a waterfall. It's well known to me that there's a group of bandits that are operating out of that cave. They were a problem for us before the cult arrived, but now they are a real terror. I can't spare the people to go and clear them out, unfortunately.\n\nI need you to go there and take care of them for me. Kill as many as you can, and if possible, take out their leader, the one they call \"Badwind\" Bennic. That cave is dangerous, so be careful.",
 		complete = "With the bandits dispersed, that is one less problem for us to deal with. Though I confess that now I worry that any bandits who survived may turn next to the cult for protection, further bolstering their increasingly alarming numbers.\n\nStill though, we'll take the victories where we can get them.",
+	},
+	[92519] = {
+		accept = "Apothecary Jorell was supposed to bring us a case of antidotes and elixirs days ago, but we're still empty handed. That fool has probably poisoned himself again by brewing in that poorly-ventilated shack he calls his lab.\n\nIf you want to further help our ward, you would be a far more reliable individual for this job.\n\nFollow the road to Go'shek farm, south and a bit west of here. You'll likely find it packed and ready to go, with Jorell either missing or unconcerned with his obligations.",
 	},
 	[92528] = {
 		accept = "The faithful of Al'Akir grow ever stronger with each eager new recruit like yourself. As you can see, our strength gives form to the storm itself!\n\nNormally I'd send you straight to Skypriest Aanders for assessment, but he is occupied at present receiving a guest at the inn on the north side of town. Please avoid that place for now. An unshaven recruit like yourself in the presence of such a guest would be inappropriate.\n\nFor now, just don't get in anyone's way.",
@@ -16674,6 +16985,7 @@ SpokenQuestsText = {
 		complete = "I... can't believe it's over. I need to stop and calm myself before my heart leaps right out of my chest.",
 	},
 	[92698] = {
+		accept = "<You lean in close to try and hear the words coming from beneath the giant construct's armor plates.>\n\n...Function error...\n\n...Question...\n\n...What is....\n\n...Function...\n\n<These fragmented words and phrases seem to just repeat. Maybe someone nearby knows more about this construct?>",
 		complete = "The construct? It's been wandering around the fields for decades. Since the wind elementals left us, I think. Alvarion suspected that it used to haul harvests to market, or maybe tend to livestock back before this was an orchard. That could have been a thousand years ago though.\n\nIn the old days, the Windshapers used to maintain these constructs. We've talked about petitioning them to come and take a look at it, but it's never been a pressing concern to us. Mostly we just ignore it these days.",
 	},
 	[92699] = {
@@ -16706,6 +17018,7 @@ SpokenQuestsText = {
 	},
 	[92727] = {
 		accept = "Seeking knowledge is the primary mandate of the High Order, but this work has never been more dangerous than it is now on Zephras.\n\nOne of our scholars--Fillion Flamebreeze--was en route to the Shen'dar Highlands to gather data on the windborne magic that congregates in some areas there. Regrettably, he has not returned and we fear that something may have befallen him on the road.\n\nIf you can, please locate him for us. He was last seen on the road leading west from Valanaar towards Shen'dar Highlands.",
+		complete = "<The satchel lying before you has a few specks of what appears to be dried blood on the flap. Studying the stain you also notice that the flap also has a name embroidered onto it. It reads \"Fillion Flamebreeze\".>",
 	},
 	[92741] = {
 		accept = "The Shadowgale Forest is incredibly dangerous and is usually off limits to normal adventurers. In recent months there's been an explosion in the shriekling population and they've started to expand their territory outside the woods, which is a potential problem. I have an interest in the alchemical properties of shriekling talons, so a much-needed culling also presents an opportunity for scholarly gain.\n\nTravel to Shadowgale Forest and hunt the beasts. Bring me as many of their talons as you can.",
@@ -16714,6 +17027,9 @@ SpokenQuestsText = {
 	[92742] = {
 		accept = "We must determine the source and nature of the poison corrupting this land. Let us begin with the groundwater under the farms in the area.\n\nGo to the Jansen Stead in the north and the Molsen Farm northwest of here, and collect samples from the wells there.",
 		complete = "Thank you. Let me see...",
+	},
+	[92743] = {
+		accept = "As the strongest centaur clan in all the land, we deserve armaments with ferocity that matches our strength!\n\nWarug needs one most of all. A helm... no, a crown! A conqueror's crown! I heard legends of a fearsome conqueror across the seas. Go to a place they call the Badlands and seek out a crypt there. Return to me only when you have found the crown.\n\nDo this for me, and I will reveal the Magram's greatest strength.",
 	},
 	[92744] = {
 		accept = "The corruption affecting Westfall's crops may have seeped into the ocean as well. If the local fish are affected too, it could doom Stormwind to famine.\nCollect gills from the murlocs along the shoreline and bring them to me. Murlocs are quite hardy, but their physiology is extremely sensitive to contaminants. Any toxins in the seawater will be readily apparent in the gills you find.",
@@ -16763,7 +17079,11 @@ SpokenQuestsText = {
 		accept = "Fillion was sent to the Overlook Standing Stones with a special device used to measure and study the elemental energy there.\n\nTake this--an Index Esoteria--and use it to extract data from the massive windstone formations that form there. Be on your guard however, as the Windshapers are likely to be jealously guarding this site now.\n\nShould any attempt to obstruct you, well... do what you need to do. I have no more patience for their interference.",
 		complete = "It would not have been my preference to spill Windshaper blood but the blame for this pointless conflict rests solely on their shoulders. We sought to peacefully gather information, and they responded with violence.\n\nUnfortunately, word has spread and the Windshapers are already calling it a 'massacre'. They wouldn't dare to retaliate here in Valanaar, but they will certainly not forget.\n\n$N, you have been of tremendous aid to the High Order. Thank you.",
 	},
+	[92841] = {
+		accept = "It is time, outsider, for you to learn of our great discovery... but Warug will not be the one to tell it!\n\nHead south to the other end of the village. Look for a big, stinky centaur named Orgrul.\n\nYou will know when you get there.\nYou will know when you see him.\nIf he thinks you deserve to know, you will know.\n\nAnd if he doesn't? Well. You can be happy knowing Warug has a new crown.",
+	},
 	[92849] = {
+		accept = "<Judging by what you've just found, it's very likely that Fillion befell some misfortune here. He may still be nearby, and he might be in need of aid. You notice a cave just to the north of your current location. You should continue searching for him there.>",
 		complete = "Th... thank you, stranger. I was returning from an assignment at the Overlook Standing Stones when I was suddenly ambushed and attacked by Windshapers. They forced me over to the mouth of the cave and left me there, barely conscious and bleeding. The last thing I remember before blacking out is a massive winged beast emerging from the cave and scooping me up.\n\nI think it's safe to say that if you hadn't come along, I'd have been dinner for that beast and its younglings.",
 	},
 	[92850] = {
@@ -16791,6 +17111,7 @@ SpokenQuestsText = {
 		complete = "Thanks a bunch! I'll get to work on an escape plan. In the meantime, take this!",
 	},
 	[92910] = {
+		accept = "The part you managed to salvage from the harvester appears mostly intact. Someone interested in harvest golems may want to see it.",
 		complete = "What's this?",
 	},
 	[92911] = {
@@ -16800,6 +17121,9 @@ SpokenQuestsText = {
 	[92947] = {
 		accept = "Everyone is here, good. I've just sent a few of my best fighters in through the front of the shrine to cause a bit of trouble and serve as a distraction, while I lead the Windshapers and High Order in from the flank.\n\nIf all goes well, we should be able to punch through quickly and take out the High Priestess. As for you, get in there and start cracking skulls. Meet my second, Hyusaa Quickbreeze, near the steps to the shrine after you've caused some trouble.\n\nWinds guide you, $c.",
 		complete = "We fought hard to get this far but it isn't over yet.",
+	},
+	[93034] = {
+		accept = "One of our scouts returned to the village while you were away, with news that confirmed my fears.\n\nThe Magram are up to something, $N. It is not good.\n\nThe Valley of Bones far to the east is a cursed land that few centaur dared to enter and fewer still ever return home. Our enemy has found something there, something evil, and we need to learn what it is.\n\nSeek out the scout Nerlokh at the southern entrance, but you may have to prove yourself further to the Gelkis.",
 	},
 	[93036] = {
 		accept = "You may or may not be aware of this, but Sania Silverstream over there is a \"missionary\" for the Al'Aketh. They like to play at being a normal religious order and send non-threatening emissaries around to recruit. We've tolerated Sania so far to avoid direct conflict with the cult, but its obvious the illusion of peace won't last much longer.\n\nYou are new here and unknown to most, so I'd like to see if you can use Sania to get close to the cult and find out what their plans are for the village.",
@@ -16833,6 +17157,19 @@ SpokenQuestsText = {
 		accept = "Most of the elves on this island seem to think that these woods are haunted, and they aren't wrong.\n\nAt the old ruins to the northeast, a strange type of ghost-like spirits gather. Some nights, you can almost hear them \"singing\". It's not like any song I've heard before, but its definitely a song and its... just so sad.\n\nI'm not sure why, but I think something terrible happened there at some point, and the spirits are trapped there somehow. If you are feeling brave, maybe you can help set them free?",
 		complete = "Thank you, stranger.",
 	},
+	[93176] = {
+		complete = "These are simply delightful! Look at the forelegs on this one! The coloring of this one's carapace! Oh, and this one's mandibles!\n\nI didn't take you for an entomologist, but you have quite a keen eye.\n\nPlease, take this. I think he might have taken a liking to you, and I've already catalogued this particular species.\n\nNow, if you'll excuse me, I must return to my research. You've given me much to study!",
+	},
+	[93224] = {
+		accept = "It likely comes as no surprise to you that both of the centaur clans are hesitant to accept aid from anyone outside of their clan. This is especially true for folks like you and me - you know, non-centaurs.\n\nOne thing we all have in common is an understanding that money is power, and we have learned that the local centaur barter with carved wood. If you bring me a few samples of their designs, I can put in a rush order for similar etchings. Perhaps we can buy ourselves an advantage.",
+	},
+	[93225] = {
+		accept = "I have noticed that centaur from different clans sometimes gather away from settlements and engage in trade. I have observed this across numerous nights and seemingly with every clan; most importantly I have seen the currency they use: carved totems.\n\nI believe we can turn the tides in our favor with either the Gelkis or the Magram if we deliver a heavy bundle of totems right to them. I have already begun carving some, but I doubt they will be easily fooled without a few authentic ones.",
+		complete = "These are beautiful--I underestimated the creativity of the centaur. I never would have imagined that a race so full of brutality and cruelty would be able to appreciate stories told through carvings.\n\nI suppose appreciating them takes way less effort than crafting them. Let me rephrase: I never would have imagined the centaur to be patient enough to carve out so many tales in wood. Where are they getting the wood?\n\nIn any case, speak to me when you are ready to make your delivery.",
+	},
+	[93227] = {
+		accept = "At first glance, I would wager that the Gelkis are struggling. Their numbers are far fewer than the Magram, and I rarely hear of them stomping around from our scouts.\n\nNonetheless, they are one of the dominant clans in the Desolace and survive to this day. They must be doing something right.\n\nIf you want to make peace with the Gelkis, take this tote of totems with you to Gelkis Village far to the southwest. Primitive as they may be, they are likely to have a treasurer of some kind.",
+	},
 	[93317] = {
 		accept = "Are you familiar with Windsong Crawlers? You see, these crabs are native only to Windsong Lake here on Zephras, and they are only able to be harvested a few weeks of the year.\n\nWith all of the cult activity of late, I've not been able to get out to the lake to harvest them, and our window is rapidly closing. I'd be appreciative if you could go and gather some for me. They can generally be found along the shorelines around the lake and in rivers.\n\nDo be careful though, they are meaner than they look!",
 		complete = "Winds bless me this meat looks fantastic!\n\nThank you so much, $c.",
@@ -16850,6 +17187,7 @@ SpokenQuestsText = {
 		complete = "We are holding them off for now, but they have greater numbers and our fighters are starting to get tired. We need to do something to break the stalemate, and do it fast.",
 	},
 	[93459] = {
+		accept = "The Al'Aketh cult normally gives this forest a wide berth, fearing the rumors that it is haunted... rumors we are happy to maintain. The Druids of my order wish only to live quiet, peaceful lives here in Shadowgale and they threaten that.\n\nMany among us are afraid.\n\nI come with an offer. Fight the cultists for us, and bring us the ears of those you kill. We will reward you for each that you return with in both coin and, in time, access to our secrets should you prove yourself to be a true friend.",
 		complete = "As promised, here is your reward.",
 	},
 	[93461] = {
@@ -16859,6 +17197,16 @@ SpokenQuestsText = {
 	[93552] = {
 		accept = "Windstones are a critical resource on Zephras Isle as they contain the raw, concentrated energy of the winds themselves. The wind elementals who used to live here on zephras with us vanished several centuries ago, and since then, the magic that sustains this island is slowly fading. Not without limitations, the windstones are still a reliable energy source, and are incredibly valuable to us.\n\nYou'll find raw windstones scattered around the grove, think you can help me harvest them?",
 		complete = "Thank you very much for these. As elves we all have a deep connection to magic and these windstones are becoming more and more precious as the magic imbued into this island by the great anchor pylons continues to fade.\n\nWindstones aren't the only beneficial thing you can harvest from the land. Please, take one of these manuals.",
+	},
+	[93585] = {
+		accept = "Oh thank goodness, someone civilized!\n\nI came here on behalf of the Church of the Holy Light to make contact with the draenei of the Harborage. The Alliance has no foothold here, you see, and a bit of diplomacy with the locals may help us in that regard. The Light welcomes all into its fold, after all!\n\nHowever, the road past this bridge is crawling with the draenei's more savage kin. If I am to make it to the Harborage safely, I will need protection. Would you aid me, $c?",
+	},
+	[93663] = {
+		accept = "The draenei of the Harborage are skilled fishermen, and willing to trawl more dangerous waters than I. We occasionally trade. They give us some of their catch, and I offer some of our extra supplies.\n\nI'd sent a goblin courier to deliver my latest shipment, but he never returned. A crocolisk likely made a meal of him.\n\nMore importantly, my business reputation is at stake. That shipment must be found, and delivered to the harborage. Please, find it if you can. Check near the waters along the road.",
+	},
+	[93680] = {
+		accept = "The Alliance had an army of mages known as the Kirin Tor. While they were powerful, the demonic Burning Legion proved to be even more so. In one fell swoop, the arch demon Archimonde flattened their city like it was a child's plaything. Those who remained were reduced to merely dispossessed vagabonds.\n\nThat is, until they rebuilt Dalaran. And on the Dark Lady's very doorstep, no less!\n\nWhile in their camps, search for something that can get us into the city unnoticed. I must know more.",
+		complete = "A sewer key? Well, thankfully I am not the one who will be using this.\n\nBut we have work to do before it's safe to use this.",
 	},
 	[93735] = {
 		accept = "Historically, the Windshapers have seen to the tending of the magical instruments and devices that were gifted to us by the spirits of the wind. This includes the myriad of magical constructs around the island. Since the spirits left us, only a scant few of these are still functional.\n\nOne of the few remaining working constructs in Valanaar has become damaged. One of our artisans was dispatched to help, but he may be in need of aid. Travel to the west end of the city and offer any assistance you can.",
@@ -16913,6 +17261,7 @@ SpokenQuestsText = {
 		complete = "So they are all dead, then. Storms curse on these cult bastards!\n\nWhile you managed to take out the priest and stop the cultists at the tower, I confess that I'm now doubly concerned about whatever it was you said that they were doing to the pylon. The fact that there was such a massive cache of windstones there with them tells me that they needed enormous energy for it.\n\nI have to wonder, what's the end goal here? Violating the pylon, attacking the village? To what end?",
 	},
 	[93928] = {
+		accept = "I need a cookie, see?\n\nNyeah!",
 		complete = "(PH) Thanks!",
 	},
 	[93948] = {
@@ -16939,8 +17288,12 @@ SpokenQuestsText = {
 		accept = "I am all that remains of the line of Skybreakers here on Zephras Isle. The rest were murdered by the Al'Aketh.\n\nThe only thing that outweighs my sorrow is my shame. My family's ancestral shield--the Skybreaker Bulwark--is now in the hands of a cultist named Zaal Stormshield. Family lore holds no harm may befall a worthy wielder of this shield.\n\nZaal is not worthy, of that I am sure. Find this man at the Shrine of Akir and reclaim my shield from him. Do this and I will teach you the Skybreaker Defense.",
 		complete = "You have done what I could not and restored my family honor. For this, I will bestow a gift that few on Zephras are worthy to receive. I will teach out the secrets of the Skybreaker Defense.\n\nAlso, you will need a shield to put what I have to teach you into practice. Please, take this one. I have little use for it now that the Skybreaker Bulwark has been returned to me.\n\nBanu'Adoraah, friend.",
 	},
+	[94004] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Elixir of Ogre's Strength, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
 	[94006] = {
 		accept = "Greetings, $N. You have progressed in your druidic studies far enough that I think it is time for you to meet one of the great spirits that reside here on Zephras. Urs'endris is a wise and noble spirit, who has taught druids how to take on the ursera shape for generations. Unfortunately his domain has begun to wither and fall into the sky like many other areas of Zephras.\n\nTo find him, travel northeast near the waterfall in the shadow of the Shrine of Akir. He should be able to instruct you further.",
+		complete = "So, you wish to embrace the way of the claw, child? Very well. Let us speak.",
 	},
 	[94007] = {
 		accept = "Now that you've gained a level of comfort in the wilds of the highlands, I believe it is time for you to seek your very own animal companion.\n\nGo to the port of Valanaar to the southeast, and speak with Quel'ana Quickgale there. He will instruct you in the art of beast taming.",
@@ -16954,20 +17307,464 @@ SpokenQuestsText = {
 		accept = "You now have the power to tame a pet, but you must also gain the skills to train it. For this, there is none better than my sister, Quel'dora. She will give you the ability to train your new pet.\n\nGo with the winds, young $c.",
 		complete = "A fledgling $c, I see. Yes, I can bestow you with the skills you need to train and guide your pet. Not only will you be able to teach your pet new abilities, you will now be able to feed your pet, as well as revive it, should it fall in battle.\n\nRemember, Gei, always respect the balance and live in awe of nature around you. Now, go forth. We shall speak again, at a later date.",
 	},
+	[94212] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Elixir of Wisdom, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+		complete = "I will admit, I expected the treacherous winds of the highlands to tear that letter to shreds. I had not imagined that someone would see my humble request, let alone deliver it straight to me.\n\nYour efforts are kind and admirable, $r. I will use this to aid my meditation.\n\nFeel free to stay and share a tale or two of your travels. I enjoy the company.",
+	},
+	[94213] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Lesser Mana Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+		complete = "Ah, is this the potion I requested?\n\n<The elven woman respectfully takes the vial from you.>\n\nYour arrival is timely, and generosity deeply appreciated. I accept this, and offer you a small token of my gratitude.\n\nThank you, may we meet again.",
+	},
+	[94214] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Shadow Protection Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94215] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Free Action Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+		complete = "<You waste little time offering the wiggling mass the Free Action Potion that was requested. It seems either unaware of your presence, or unable to claim the item.\n\nA handful of coins are scattered just beside the cocoon. You may decide to leave the potion there, and take the coins for yourself. Nature will surely sort itself out, in that case.>",
+	},
+	[94216] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Elixir of Lesser Agility, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+		complete = "<Ziz continues to talk in a hushed tone.>\n\nI'm not about to give you the whole spiel about how I got into this position, but here's some advice for you.\n\nSometimes, all you gotta do to impress your new boss is take credit for someone else's work. So you're going to hand over the elixir, and I am gonna talk about how much blood, sweat, and tears I poured into making it.\n\nIt's a new gig, okay? I need to make a good first impression!",
+	},
 	[94217] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Lesser Troll's Blood Elixir, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
 		complete = "Exactly what Short John Mithril ordered!\n\nHere's ye' coin. I'd keep it clutched to your chest as ye' scuttle out of here, the arena combatants thirst for riches as much as they thirst for blood!",
 	},
+	[94218] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Elixir of Defense, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94219] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Draught of Water Breathing, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94220] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Pearl-Handled Dagger, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94221] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Golden Rod, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94222] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Iridescent Hammer, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94223] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Silver Skeleton Key, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94224] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Heavy Bronze Mace, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94225] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Rough Bronze Leggings, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94226] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Green Iron Gauntlets, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+		complete = "Mmph. Seems to have been a severe mistranslation. I did not ask for green iron gauntlets--I specifically requested green iron knuckles.\n\n<MacKinley fakes an uppercut in your direction, stopping himself a small but calculated distance from cracking your jaw.>\n\nThese'll knock someone out cold anyway. I suppose I can use these while I wait for a replacement.\n\nHere's your payment. Oh, you expected more? Well, so did I.",
+	},
+	[94227] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Big Bronze Knife, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94228] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Green Iron Boots, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94229] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Ornate Spyglass, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94230] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Explosive Sheep, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+		complete = "The Explosive Sheep? It's a bit smaller than I had hoped but...\n\n<She reached out to claim it, but then cautiously took it out from your arms. It did not take long before she delicately placed it down.>\n\nI'm hoping this does enough damage to scare a few off...",
+	},
+	[94231] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Moonsight Rifle, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
 	[94232] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Minor Recombobulator, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
 		complete = "I don't know what I expected when I sent out an order for a curse dispelling device, but this Minor Recon--Racom--ugh, Minor Whatchamacallit sure ain't it!\n\nLook, I know how complicated the refund process is and I do NOT have time for that. It's way easier for us both if I just take this off your hands, and I'll be more specific with my next order.\n\nFor both of our sakes, let's hope you don't screw that one up too!",
 	},
 	[94233] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Practice Lock, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
 		complete = "Ahh, my practice lock has arrived.\n\nThe Syndicate here have been plotting to turn this place into a prison like it once was. I already know that at least one orc is currently being held here. Maybe more. I don't intend to be another, but I intend to be more prepared than the last time if they catch me off guard.",
 	},
+	[94234] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Shadow Goggles, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
 	[94235] = {
-		accept = "Careful where you walk, $N! This thing likes to activate when you least expect it, and we don't quite have a handle on where it can take you when we aren't actively manning the controls.",
+		accept = "<Penned in faded ink, the note is requesting 1 Gnomish Universal Remote, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94236] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Big Bronze Bomb, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94237] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Crafted Solid Shot, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94238] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Heavy Leather Ball, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94239] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Fine Leather Pants, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94240] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Herbalist's Gloves, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94241] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Dark Leather Tunic, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+		complete = "Oh your timing is impeccable!\n\nCallahan! Your new shirt arrived. Hurry up and change so I can stop hearing about how itchy you are all the time.\n\nAnd for you, $r. Here is your payment. Before you wander off, you should take a look at my wares now that you can afford 'em!",
+	},
+	[94242] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Pilferer's Gloves, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94243] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Heavy Quiver, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94244] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Dark Leather Shoulders, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94245] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Barbaric Gloves, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94246] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Red Whelp Gloves, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94247] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Lesser Wizard's Robe, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
 	},
 	[94248] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Blue Overalls, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
 		complete = "The Blue Overalls! Thank goodness, I have a proper change of clothes.\n\nTake this, and please be on your way. I do not have time to chat, I must keep an eye on the farm and can't risk more distractions.",
+	},
+	[94249] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Azure Silk Hood, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94250] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Small Silk Pack, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94251] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Phoenix Pants, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94252] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Red Woolen Boots, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94253] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Colorful Kilt, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94254] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Greater Adept's Robe, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94255] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Spider Silk Slippers, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94256] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Frost Protection Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94257] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Lesser Invisibility Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94258] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Lesser Stoneshield Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94259] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Mana Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94260] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Catseye Draught, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94261] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Great Rage Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94262] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Mana Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94263] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Fire Protection Potion,  along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94264] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Shadow Oil, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94265] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Goblin Rocket Fuel, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+		complete = "Is this... Goblin Rocket Fuel!?\n\n<Pestlezugg brings the container lightly near his nose and enjoys a whiff.>\n\nI love the smell of explosives in the morning...\n\nNixx across town refuses to give me his recipe for fuel, preferring to import it from a supplier who-knows-where. What a stupid goblin! He has an eager alchemist RIGHT HERE who would love the business!\n\nAnyway I figured I'd follow him around and order from his source and see if I can figure it out myself.\n\nDon't tell him!",
+	},
+	[94266] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Elixir of Agility, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94267] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Wildvine Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94268] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Steel Plate Helm, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94269] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Inlaid Mithril Cylinder, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94270] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Steel Weapon Chain, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94271] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Ornate Mithril Shoulders, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94272] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Blue Glittering Axe, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94273] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Moonsteel Broadsword, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94274] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Golden Scale Coif, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94275] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Solid Sharpening Stone, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94276] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Wicked Mithril Blade, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94277] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Truesilver Rod, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94278] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Golden Scale Gauntlets, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94279] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Heavy Mithril Axe, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94280] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Mechanical Dragonling, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94281] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Advanced Target Dummy, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94282] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Craftsman's Monocle, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94283] = {
+		accept = "<Penned in faded ink, the note is requesting 1 Goblin Land Mine, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94284] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Catseye Ultra Goggles, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94285] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Unstable Trigger, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94286] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Flash Bomb, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94287] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Fire Goggles, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94288] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Mithril Frag Bomb, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94289] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Gyromatic Micro-Adjuster, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94290] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Mechanical Repair Kit, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94291] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Dark Iron Bomb, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94292] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Comfortable Leather Hat, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94293] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Guardian Cloak, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94294] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Dusky Bracers, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94295] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Wild Leather Helmet, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94296] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Wild Leather Shoulders, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94297] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Quickdraw Quiver, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94298] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Swift Boots, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94299] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Nightscape Shoulders, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94300] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Big Voodoo Mask, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94301] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Big Voodoo Robe, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94302] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Turtle Scale Breastplate, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94303] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Thick Leather Ammo Pouch, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94304] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Mageweave Bag, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94305] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Shadoweave Gloves, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94306] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Crimson Silk Robe, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94307] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Shadoweave Robe, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94308] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Enchanted Mageweave Pouch, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94309] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Star Belt, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94310] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Black Mageweave Vest, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94311] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Red Mageweave Pants, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94312] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Orange Martial Shirt, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94313] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa White Bandit Mask, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94314] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Cindercloth Robe, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94315] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Earthen Silk Belt, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94316] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Potion of Demonslaying, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94317] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Dreamless Sleep Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94318] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Greater Fire Protection Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94319] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Draught of Detect Demon, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94320] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Gift of Arthas, along with information about delivery location and payment. At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94321] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Flask of Chromatic Resistance, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94322] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Limited Invulnerability Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94323] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Major Rejuvenation Potion, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94324] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Distilled Firewater, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94325] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Radiant Circlet, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94326] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Radiant Belt, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94327] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Orcish War Leggings, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94328] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Mithril Spurs, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94329] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Imperial Plate Chest, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94330] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Darkrune Gauntlets, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94331] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Huge Thorium Battleaxe, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94332] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Arcanite Skeleton Key, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94333] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Ebon Shiv, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94334] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Masterwork Target Dummy, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94335] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Green Lens, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94336] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Lifelike Mechanical Toad, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94337] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Gnomish Alarm-O-Bot, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94338] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Goblin Jumper Cables XL, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94339] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Field Repair Bot 74A, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94340] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Truesilver Transformer, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94341] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Sniper Scope, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94342] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Tranquil Mechanical Yeti, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94343] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Wicked Leather Pants, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94344] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Gordok Ogre Suit, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94345] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Volcanic Breastplate, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94346] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Runic Leather Headband, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94347] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Wicked Leather Bracers, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94348] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Chimeric Vest, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94349] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Heavy Scorpid Helm, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94350] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Runic Leather Bracers, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94351] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Frostsaber Boots, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94352] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Wizardweave Turban, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94353] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Runecloth Bag, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94354] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Runecloth Boots, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94355] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Tuxedo Jacket, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94356] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Felcloth Boots, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94357] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Cenarion Herb Bag, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94358] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Shadoweave Mask, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94359] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Ghostweave Vest, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
+	},
+	[94360] = {
+		accept = "<Penned in faded ink, the note is requesting $2oa Soul Pouch, along with information about delivery location and payment.  At the bottom appears text denoting this writ is transferable.>",
 	},
 	[94369] = {
 		accept = "Ansirem has told me much of the elemental lords and I am afraid that we have good reason to fear Al'Akir now that the wards that have hidden Zephras are down. If the Windlord chooses to attack us, we stand no chance to defend ourselves while we are here in his domain.\n\nHigh Elder Shadowsong needs to know of the danger we are in, and more importantly, what our intentions are for our mission to Azeroth. We will find the means to save our home. I swear it.",
@@ -16979,8 +17776,10 @@ SpokenQuestsText = {
 	},
 	[94374] = {
 		accept = "Aye, sapta's a brew forged with magic, bindin' our spirit to the elements. Only a few $c know the recipe, and it's nae for the weak-willed. Drink it, and ye will see what others can't. Hold true--it's only to be drunk in a sacred place.\n\nHead north to the Spirit Stone, tucked at the end of a hidden path up the mountain. Drink it there... see what the earth has to show ye.",
+		complete = "Ah... $N... the earth welcomes you, even in this frozen land. Bound in body and spirit, you'll walk forward knowing the mountains are your strength, the plains your patience, and the world your essence.\n\nTo pass this rite, stand humbly before the earth. The other elements are not so still--they clash and roar. Learn their dual nature, even here among the snow and stone.",
 	},
 	[94375] = {
+		accept = "Take this rough quartz from me and bring it to Teo Hammerstorm as proof o' our meeting. He will craft a totem for ye, and this pebble will be the heart o' it. As small as it may seem, ye will come to find that size does not matter, and that even the smallest o' things can outlast many others.\n\nBe patient, $N. Remain strong. And seek wisdom. This is what earth asks o' ye. In the end, ye shall become one with the earth--respect it as it shall respect ye.",
 		complete = "Well done! Know this - totems ain't just a mark of yer place among shamans. They're tools, a focus for spells tied to stone, soil, and other elements. As ye grow wiser, more o' the mountain's power will open to ye. The trainers will know when yer ready for more. But for now, take this totem, and let the ground speak through ye.",
 	},
 	[94411] = {
@@ -17074,6 +17873,7 @@ SpokenQuestsText = {
 		complete = "<Elegael's face pales as you relay the fate of Jorel and the condition of the rest of the druids.>\n\nNo... no! This is far worse than I had--\n\n<Elegael chokes back a sob, and grits her teeth letting out a pained snarl.>\n\nThey will pay. They will ALL pay. Anyone who allies with the Al'aketh will feel my wrath! This I swear.",
 	},
 	[94490] = {
+		accept = "<Tucked behind one of Haalien's bracers is a note that's been slightly torn and bloodstained in your fight. It looks like it contains useful information about the cultist motivations for the attack on the druid den. Elegael would be interested in this intel.>",
 		complete = "They were here for the pylon? But to what end? We were not the original reason for their attack?\n\n<Elegael trails off shaking with rage as she reads.>\n\nThey murdered my people because we were an inconvenience! I shall tear apart every cultist with my fangs! I will make sure none leave this place with their lives.\n\nGo, swiftly! If the orders truly originated in Valanaar, it means it is likely a traitor hiding there. Give the missive to Lotheluum in Valannar and tell him what has transpired.",
 	},
 	[94491] = {
@@ -17110,8 +17910,14 @@ SpokenQuestsText = {
 	},
 	[94502] = {
 		accept = "In Westfall, outside o' Moonbrook lies Stendel's Pond. Once a pure spring, now touched by dark forces. The spirits there 'ave gone silent.\n\nYe must face the corruption that fouls the waters. Take its bracers and the last drops o' Hervdana's potion, then place 'em on the shrine. That'll call forth a spirit, cleansed and true. Speak with it, learn what ye can.\n\nBring me proof the deed's done, and I'll grant ye the totem.",
+		complete = "You place the bracers atop the shrine and then pour the remaining drops of Norric's potion into dry stone. You begin to incant the simple words Norric taught you and the droplets vaporize atop the stone within the bindings....",
+	},
+	[94503] = {
+		accept = "Light erupts as the final word leaves your lips. The hiss of water turning to mist fades into silence, and your senses reel as the corrupt spirits around you unravel, their essence scattered like ash in the wind.",
+		complete = "Thanks to you. Thanks to the shamans.\n\nCorruption ebbs but life continues to wane. Up to shamans to protect life.",
 	},
 	[94505] = {
+		accept = "Take shard. Take shard and give life.\n\nGive life and understand. Understand water is life... corruption stops life.\n\nYou protect and give life with water's power.",
 		complete = "Aye, this is the proof I asked for, and ye've done well, Theinn. I'm proud to be the first to offer my congratulations--and yer water totem. Use it wisely, and may fortune walk beside ye.\n\nYer next trial won't come soon, so take this time to learn. Pure water heals, aye, but its gifts go far beyond mending wounds.",
 	},
 	[94568] = {
@@ -17121,9 +17927,20 @@ SpokenQuestsText = {
 	[94616] = {
 		complete = "Take the water sapta and find the tainted pond water in Westfall, $N. I have great faith in your abilities.",
 	},
+	[94638] = {
+		accept = "You have come to me in hopes of learning to take a shape of strength. I have a task for you, though it lies heavy on my heart.\n\nMy mate, Ur'endra, has lost herself to madness and has begun to attack her own kin. Without the magic of the winds, many creatures have begun to lose themselves... Ur'endra included. She makes her lair in a cave to the west of here, in the bluffs along the border between the Shen'dar Highlands and the Gustberry Lowlands.\n\nEnd her suffering and I shall grant you my blessing.",
+		complete = "The agony I feel over her loss is immeasurable, but it is what is necessary for the balance. You have demonstrated a resolve to persevere, even when a terrible price is asked.\n\nYou have done well, $c. I shall grant you the blessing to take on the shape of my kin. Be a beacon for those that lack the strength to persevere and a defender of those in need.\n\nGo now, and embrace the way of the claw, child.",
+	},
+	[94773] = {
+		complete = "You have done the Light a great service by becoming a shining example to those who travel in these dangerous lands and beyond. Please, accept this lesson as a thanks for all you've done.",
+	},
 	[94774] = {
 		accept = "You've caught the attention of our superiors, $N. They've asked you travel to the Cathedral of Light in Stormwind as soon as possible. Apparently they feel you've proven yourself already and are prepared to further your training. When you get there, find High Priestess Laurena. She will be able to guide you further. Good luck, and may the Light be with you.",
 		complete = "I'm glad you've arrived, Ander. There are many things we will have to discuss, but more importantly is your training in the ways of the Light.\n\nThere are lessons all servants of the Light must learn. If you are ready, we'll begin discussing some of those now.",
+	},
+	[94789] = {
+		accept = "The winds o' Azeroth greet ye, and soon ye'll stand among some o' our mightiest kin. I'm proud to see how far ye've come--your future looks bright indeed.\n\nThe element o' air's a tricky one to master, but I've faith your skill will see ye through any challenge.\n\nMake your way north into Arathi Highlands. In its northern hills, you'll find Veyric Thundervein. He'll teach ye more.",
+		complete = "Aye, I shall give ye what's needed to focus wind spells and to call upon the spirits o' air. Take this totem, and when ye are ready, train with me some more.",
 	},
 	[94792] = {
 		accept = "Many hunters prefer to travel with animal companions. With a beast at your side, you will find that you can survive even the most dangerous of circumstances. As they say, everything is easier with a friend. However, obtaining an animal companion is something that must be done with care. The balance of nature is delicate, and must always be respected.\n\nTake this Taming Rod with you to the forest. With it, you will be able to tame a Rockhide Boar and practice your skills as a hunter.",
@@ -17135,6 +17952,13 @@ SpokenQuestsText = {
 	},
 	[94817] = {
 		complete = "You took your time arriving, $N. But you can be excused given your dedicated service to the Light. Please pay close attention to this lesson.",
+	},
+	[94818] = {
+		complete = "Continue your service to the Light and you will become a great $c, $N. Maintain your vigilance and dedication!\n\nYou are ready for your next lesson in service.",
+	},
+	[94819] = {
+		accept = "$N, your High Priestess Mims would have an audience with you in Ironforge. Make haste, my clever friend, your next test quickly approaches. Although I wish I could bear witness to your race's own special rites, my place is here. But may the Light go with you in your travels. Mims should still be in the Mystic Ward once you reach the city. She will be waiting.",
+		complete = "Continue your service to the Light and you will become a great $c, $N. Maintain your vigilance and dedication!\n\nYou are ready for your next lesson in service.",
 	},
 	[94822] = {
 		accept = "You've caught the attention of our superiors, $N. They've asked you travel to the Hall of Mysteries in Ironforge as soon as possible. Apparently they feel you've proven yourself already and are prepared to further your training. When you get there, find High Priestess Mims. She will be able to guide you further. Good luck, and may the Light be with you.",
@@ -17151,6 +17975,12 @@ SpokenQuestsText = {
 	[94864] = {
 		accept = "You've proven yourself by taming a boar and a wolf, now it's time for your final challenge. Elwynn's balance depends on respect and skill. Take this Taming Rod and seek out a Young Forest Bear. Show that you can earn the trust of even the mightiest companion.\n\nCompleting this lesson will deepen your attunement to beasts.",
 		complete = "The brawn of the forest. Brave work, Darlin!",
+	},
+	[94872] = {
+		accept = "The fierce Magram are undoubtedly winning the war of territories at the moment. While we can all be thankful the clashes haven't erupted too frequently throughout the desert, every day their village just to the east grows a little bigger; their soldiers a little bolder.\n\nI worry gravely about the consequences of an unchecked Magram clan, but I cannot deny their potential as an ally.\n\nIf you wish to earn their trust, offer this sack of totems to their quartermaster, but be careful.",
+	},
+	[94873] = {
+		accept = "Either dominant centaur clan is likely to pose a good ally, but I ought to offer a word of caution regarding the Gelkis.\n\nI have trustworthy intel that suggests, between the Magram and the Gelkis, the latter are very much on the losing side. This may work to our advantage--desperation may push the isolated clan into opening up to outside help.\n\nI have prepared a tote of totems for you to take to their quartermaster, assuming they have one, in Gelkis Village. This may work in our favor.",
 	},
 	[94896] = {
 		accept = "You look like a capable adventurer. Do you happen to be headed towards Shadowgale Forest? Ban'aethal lies deep in the forest; that's where we're all from.\n\n<Ealaane gestures to the other refugees.>\n\nWe've recently had to evacuate Ban'aethal, as it began to fall into the sky. It was sudden and in the middle of the night. If you are headed that way, would you please look for any belongings left behind? The forest and village are far too dangerous for us to return to now.",
@@ -17233,12 +18063,15 @@ SpokenQuestsText = {
 		complete = "Oh no...\n\nIt's nice of you to bring this, but I don't think Jeremy is ready to see it. Matron Nightingale said my little Jeremy hasn't spoken since the attack on Lordaeron, and I don't intend to force him now. Showing him this will only cause him more pain.\n\nDon't look at me like that. I won't hide his past from him, but he needs time to heal. I'll give this to him when he's older. Thank you for stopping by, but I think it's time you should go.",
 	},
 	[95189] = {
+		accept = "<A weathered crest depicting the mark of Lordaeron. With so few relics left after the kingdom's fall, someone in Stormwind would be very keen to get their hands on this.>",
 		complete = "How in the world did you find this? It's in such remarkable condition... all things considered.\n\nThank you for restoring this piece of Alliance history, $c. I'll have my best people get to work restoring this immediately.",
 	},
 	[95195] = {
+		accept = "<The old Alliance insignia appears to have belonged to a soldier of Lordaeron. These ruins are likely filled with similar medals that living relatives would be grateful to have returned to them.>",
 		complete = "Your instincts to bring these to me were not unfounded. When Lordaeron fell to the scourge, many people fled to take refuge here in Stormwind. There are likely few who remain to claim these insignias themselves.\n\nYour duty to Stormwind is commended, Black. I'll begin distributing these tokens to next of kin right away.",
 	},
 	[95204] = {
+		accept = "<A weathered crest depicting the mark of Lordaeron. With so few relics left after the kingdom's fall, someone in the Undercity would be very keen to get their hands on this.>",
 		complete = "<Oran bites the crest to ensure authenticity.>\n\nWell I'll be. A genuine relic of our home. Mostly intact, too. We need to be extra careful with this one.\n\nThank you for your aid in restoring our history, $c. I'll see to it that we take good care of this.",
 	},
 	[95212] = {
@@ -17246,6 +18079,7 @@ SpokenQuestsText = {
 		complete = "These pelts will make excellent saddles. You've done the Alliance proud, $c!",
 	},
 	[95213] = {
+		accept = "The keg is stamped:\n\nBLASTING POWDER - DANGER - DO NOT HANDLE - DANGER - QUARRYMASTER AUTHORIZATION ONLY - DANGER\n\nYou get a sinking feeling that the troggs shouldn't have this. It would be best to report this to the quarry sooner rather than later.",
 		complete = "<The $r turns pale as he sees the empty keg.>\n\n...Where did you find this?",
 	},
 	[95214] = {
@@ -17260,11 +18094,15 @@ SpokenQuestsText = {
 		accept = "So you're looking to learn the blacksmith's trade? Maybe we can help each other.\n\nThe supply shipment's late, and I need materials for some repairs around the camp. If you get me what I need, I'll teach you some of my techniques. Sound fair?",
 		complete = "You're a resourceful one, Gort.\n\nNow listen up - I'm not going to repeat myself!",
 	},
+	[95250] = {
+		accept = "What do you want, $r? Can't you see there is a war to be won?\n\nMy master has already charged into the fray and has ordered me to maintain my post. It has been quite some time, however.\n\nI doubt you'll survive ten minutes in combat, but if it keeps your simple mind busy, why don't you seek out the Grand Marshal. He is the tallest, most statuesque hero you've ever laid eyes on. You'll know him when you see him.",
+	},
 	[95314] = {
 		accept = "Before the Scourge invasion, the reclusive village of Shadowvale was known for its Whispering Elixir. Distilled from herbs found only in Tyr's Fall, the elixir was sought by apothecaries, mystics, and poisoners alike even after being banned in the city.\n\nI've had requests from a number of buyers eager to get their hands on some elixir. Travel to the ruins of Shadowvale deep in the Whispering Forest to the west. I'm prepared to offer significant compensation if you can recover some bottles for me.",
 		complete = "You say there is evil in Shadowvale? I admit, I am not surprised. The forest folk were an odd lot, and they did not care for visitors. Some believe the Whispering Forest itself is cursed, and the elixir distilled from its roots carries that same curse...\n\n...but enough of superstition and rumors, $N. Thank you for the elixirs. Here, take this as payment.",
 	},
 	[95328] = {
+		accept = "Against your better judgement you scrape up and collect the squirming remains of the beast. Someone in Undercity might have a use for them.",
 		complete = "What an interesting specimen. From underneath the Whispering Forest, you say? It's no secret that foul place is touched by the void.\n\nI welcome the opportunity to explore the mysteries of shadow, $c. Allow me to offer you payment for what you've found.",
 	},
 	[95349] = {
@@ -17291,18 +18129,45 @@ SpokenQuestsText = {
 		accept = "Yes, I used to be a member of the Kul Tiras navy. After Lord Admiral took Theramore and started his campaign in Durotar, I had... \"objections\" to his methods. Particularly the methods involving executing civilians.\n\nThere's more to the story but... wait... what's that?\n\nThere's a group of men coming up the ridge!",
 		complete = "Well, looks like we are all alive. I... knew that someday that would catch up to me. I'm in your debt for your help here today.\n\nPlease, take this. It's not much, but its the least I can do.\n\nSafe travels, $c.",
 	},
+	[95534] = {
+		complete = "So there was a fire elemental living in the old bellows up in Strahnbrad? The real mystery is how it got there, I suppose. Either way, good work. Your efforts will be rewarded.",
+	},
 	[95621] = {
 		accept = "This morning I spotted a group of humans searching for something in the valley below. I managed to use my rifle's scope for a better look, and it was clear that they were soldiers sporting the livery of Kul Tiras.\n\nIf you'd be willing to take work from me, travel to where these soldiers made camp near the wrecked caravan to the south. Kill any you find and try to learn why they are here.",
 		complete = "So they are looking for a deserter... Well, it seems that the past has finally caught up to me.",
 	},
+	[95646] = {
+		accept = "These brackish wetlands hold a greater well of unsalted southern waters. It pains me, yet within my roots I sense a corruption seeping through that mountain gully.\n\nThe creatures, like those in our lowlands, react more bitterly to the taint. Lacking the sea's hardening salt since life's dawn, they have little strength against such evil.\n\nGo to those highlands, and bring me the Highland Horror's root core.",
+		complete = "It is worse than I feared. An ancient energy stirs. It would be most wise for you to carry word to your eager excavators to stop digging, for their own safety.",
+	},
 	[95647] = {
 		accept = "My husband, Ardin, has a rare gift for sensing nature. He'll scale any peak to gather the herbs and flowers I need for my alchemy, keeping our shelves and pantry stocked.\n\nBut I fear he's wandered into trouble. An excavation crew passed through seeking supplies. They spoke, among other things, of towering grasses unlike anything they'd ever seen. Those were what he told me he had to go see for himself. He's been gone too long!\n\nIf you learn anything of him, I'd be grateful.",
 	},
+	[95663] = {
+		accept = "The Dragonmaw are a formidable clan.\n\nThey're known for binding magic strong enough to make dragons serve, and rumor claims they're preparing some display of it in the Wetlands. Whether truth or bluster, the Deathstalkers can't act on half-formed whispers. Titanic winds carried only that much to me.\n\nA deathstalker agent needs a hand in the hills above the Dragonmaw encampment. Meet her there. She'll reveal the next steps.",
+		complete = "Arrival of the courageous few? Mind your voice.",
+	},
+	[95664] = {
+		accept = "This unusual composite shard scatters light like a living prism. Its nature is uncertain, but its power feels ancient. The most knowledgeable minds for artifacts of this bygone age must reside on the Elder rise in Thunder Bluff.",
+		complete = "It is a favored sign to have a stranger approach in this manner. I feel a power amidst you... what is this you have brought?",
+	},
 	[95682] = {
 		accept = "Dragonmaw. <She lets out a dry, amused scoff.>\n\nThe remnants of the dragon-wrangling clan think they've found something that could lead to them rising to their former power. In the eyes of whom... their false warchief?\n\nClear out their ragtag clan within the Excavation Sites so our Deathstalkers can move in undetected.\n\nIf the Dragonmaw carry anything of note upon them, return it to me--this information must stay between us and our royal command.",
+		complete = "Don't mind me snatching that right out of your hands.\n\nI recognized that orcish scrawl. So they're hoping to appease Rend? A fruitless and wasted effort.\n\nNo matter, this is highly valuable knowledge for the dark lady to consider.\n\nHere, I won't be taking any of this with me--and don't talk about the mission, grunt.",
+	},
+	[95697] = {
+		accept = "Zamja tells me we need more homestyle cooking.\nIf we start selling raptor, she thinks it'll draw in customers who don't usually visit Borstan's Firepit.\n\nHer idea is not so bad. But I want something that rises above the smells of our birth villages. We're in Orgrimmar! Borstan should serve a grand take on their familiar favorites.\n\nA hunter recently came back from the Wetlands with a giant talon from the thicket raptors in the Excavation Sites.\n\nUp for a job?",
+		complete = "Look at the marbling on these! What are they eating up there? Thank you for going all the way and back for us. If you don't mind waiting, we'll cook some for you now, on the house, of course!",
 	},
 	[95737] = {
+		accept = "From time to time, I correspond with others in my craft--herbalists or eccentrics who study rare plants and local oddities. We trade discoveries, and sometimes warnings of what lies ahead.\n\nOne alchemist in the Wetlands wrote of an excavation team her husband was part of, uncovering signs of a long-lost primordial grass... but she never sent word of its abundance or accessibility.\n\nIf you can, check on Caitlin Grassman in Menethil Harbor.",
 		complete = "Llana must be wondering where those grass seeds are that I promised I'd have my husband bring back! It comforts me to know she's as concerned as I am. It must be something about the excavation site itself that we're both sensing.",
+	},
+	[95748] = {
+		accept = "This is odd. This piece of the tablet you have brought me refers to the lost city of I'lalai as if it is a massive sprawling civilization. But the ruins off of the reef are not large enough to be something of that size.\n\n$N, to the north of the Vile Reef there is an ancient troll ruin on the hills along the coast. A tablet that contains legends of the lost troll city is within. I wish to study this legend further.\n\nTake this hide and charcoal to create a rubbing of this tablet, then return to me.",
+	},
+	[95771] = {
+		complete = "It's clear that you are a great fighter. However, such strength is wasted by serving the Light. There are powers beyond what the brothers in the cathedral can show you. Powers of shadow, and the damned. Perhaps after you've seen enough of the world, you will come to understand this as I have.\n\nHere, take this. This was passed to me as I am now passing it to you. Perhaps a taste of this power will change your perspective.",
 	},
 	[95772] = {
 		accept = "Me brother tried draggin' me off tae the Wetlands with some diggin' crew out o' Loch Modan. Said they were headin' into hills no dwarf's ever set boot in for some sort o' excavation.\n\nAye, I'd 'ave gone, if I wasn't already behind on this pile o' girdles I've got to refit.\n\nDaewyn normally writes after he sends off, though. Haven't heard a thing, gives me a strange feelin' this time.\n\nIf yer marchin' that way, mind checking in on me brother?",
@@ -17320,9 +18185,33 @@ SpokenQuestsText = {
 	},
 	[95805] = {
 		accept = "The sun and the moon, An'she and Mu'sha, are not part of our world like the elements, yet their light gives us life, guidance, and hope.\n\nWe pay respect to the spirits of the world, and so we pay respect to the twins as well.\n\nIf you would show your respect, take this smoldering incense and bring it to a shrine in the hills to the southeast, overlooking the mesa, south of the quilboar. Be quick, so that you can reach the shrine before the incense burns away.\n\nDon't get it wet!",
+		complete = "<As you empty the incense into the fire, the scent wafts around you, leaving you with just the empty pouch and a subtle sense of fulfillment.>",
 	},
 	[95809] = {
+		accept = "I need a moment to rest before I find my own way out.\n\n<He pulls some reeds from his pack and quickly braids and bends them into a heart.>\n\nTake this, and bring it back to Caitlin. Let her know I'll be home soon! Now that we have a path cleared out thanks to you, I'll gather my bushels and follow your trail.\n\nThank you.",
 		complete = "Goodness, that sounds terrible!\n\nBy the light, I'm grateful he's one of the survivors.\n\n<She holds the reed-woven heart to her own.>\n\nI'll start cooking a hearty meal for him. Thank you for bringing me this. I'd like you to have something as a token of our appreciation.",
+	},
+	[95810] = {
+		accept = "You pick up a fractured piece of the rock-mech automaton. It has a texture unlike anything you've touched before, a composite material of unknown makeup. This is certainly bound to be more 'device' than 'debris.'\n\nProspector Whelgar himself at his excavation site might have something useful to share about the relic.",
+		complete = "Ah, ye ventured all the way in and survived to tell the tale?! Let's have a look at what ye carry there.\n\nWell, knowing what ye went through to bring it back to me, I think it warrants a certain reverence for your artifact.",
+	},
+	[95816] = {
+		accept = "Greetings, accomplished craftsperson!\n\nCompletion of this form will grant you non-exclusive, revocable, and legally limited permission to display advertisement signs for your tradeskill(s) all across Azeroth!\n\nOnce completed, please bring this to your local Azeroth Commerce Authority branch's Contract Coordinator to begin processing.\n\nHappy crafting!",
+	},
+	[95819] = {
+		accept = "Greetings, accomplished craftsperson!\n\nCompletion of this form will grant you non-exclusive, revocable, and legally limited permission to display advertisement signs for your tradeskill(s) all across Azeroth!\n\nOnce completed, please bring this to your local Durotar Supply & Logistics Contract Coordinator to begin processing.\n\nHappy crafting!",
+	},
+	[95883] = {
+		accept = "<The preparations for a hastily-assembled ritual are gathered unceremoniously on the altar. According to the scrap of note, everything has been gathered. All that's missing are the offering of blood and the Tortured Soul.\n\nThe $r around you look tortured enough. They may have what you seek.>",
+		complete = "<The tortured soul lets out a foul energy in the presence of the offering stone.\n\nIt appears you are closer to fulfilling the ritual.>",
+	},
+	[95884] = {
+		accept = "<The scrap of note is mostly illegible. What is still readable, however, are notes about preparations for an offering.\n\nAn offering stone is mentioned, as well as a ritual.\n\nPerhaps you can find this offering stone nearby.>",
+		complete = "<Strange implements and items litter the rough surface of the stone.\n\nThis is surely the offering stone that is mentioned in the note.>",
+	},
+	[95885] = {
+		accept = "<All that's left now is the offering of blood.\n\nThe note scrap mentioned a 'willing sacrifice.'\n\nAn intense sense of dread washes over you.>",
+		complete = "<The offering stone is inert now. It appears your ritual drained it of power. To what end, you do not know, but it is over now.\n\nThe rough stone cracks and crumbles, now devoid of purpose.\n\nSomething glitters from within the remnants...>",
 	},
 	[95981] = {
 		accept = "Taking away their pendants is just the first step. If the Kirin Tor really are shipping a steady supply of relics from Dalaran, we must stop them at the source.\n\nSearch the roads around Ambermill for Dalaran's wizards and watchers. Their presence has allowed free access across our borders for too long. If we can cull their numbers, that should put a stop to these pendants making it into Silverpine Forest in the first place.",
@@ -17333,7 +18222,12 @@ SpokenQuestsText = {
 		complete = "So now that we've learned the basics, why don't you go and learn a tradeskill. They will also teach you the know-how to create a proper camp fixture suitable to your new profession.",
 	},
 	[95999] = {
+		accept = "Wanted! Incinerator Gar'im, Leader of an orc incursion in Render's Valley. Purported to be working with the Blackrock of Stonewatch Keep.\n\nBeware of Incinerator Gar'im. He and his Shadowcasters are extremely dangerous. A handsome reward will be given to any brave soul that can deliver proof of Incinerator Gar'im's demise to Magistrate Solomon.",
 		complete = "Excellent work, Eraina! Incinerator Gar'im was preparing to bolster the defenses at Stonewatch Keep. With this victory, we may yet succeed in reclaiming the keep!",
+	},
+	[96016] = {
+		accept = "Ye did good, and I can see yer itchin' fer yer reward. Sorry tae say, I'm not exactly a $r of many possessions.\n\n<Veyric gestures broadly at his remote location.>\n\nTell ye what, though. I hear a troll named the Windwatcher lives out in the Alterac Mountains. He's a powerful $c himself, and an expert in storm elementals. If ye bring that there elemental core to him, I bet he can make ye a weapon worthy of yer victory.",
+		complete = "Ah, this be a powerful artifact, friend! I haven't crafted with some'ting like this in a long time.\n\nYou take good care o' dis now, ya hear? Looks like ya went through plenty to get it!",
 	},
 	[96031] = {
 		accept = "You've become a leatherworker. Good for you, $c. I reckon I know someone that can teach you how to make yourself a tent that will keep you cool on hot days, and dry on rainy days.\n\nWith a good tent over your head, you'll ensure that you get all the rest you need to stay sharp on your travels.",
@@ -17391,6 +18285,18 @@ SpokenQuestsText = {
 		accept = "Among the prairie wolves that hunt the hills nearby is one that is especially aggressive. We have taken to calling her Chakuyak. She has become a threat to travelers coming from abroad.\n\nShe stalks the trees west of Stonebull Lake, moving from tree stand to tree stand.\n\nEnd this threat and bring me her pelt, and I will speak your praises to the chief. Beware, for she is dangerous! You might see other hunters seeking her out there, and perhaps you could work as a team.",
 		complete = "Taking the life of such a beautiful creature is a sad event, but it was necessary for the safety of our people. I will make certain that the pelt does not go to waste. Thank you.",
 	},
+	[96135] = {
+		accept = "Euck, just bein' around these blasted totems is givin' me the willies--but that's good. This much twisted corruption will be exactly what we need tae summon the quilboar's elementals.\n\nGo to the Thousand Needles and find a suitable spot for your defenses. The steam pools should work. They're rich with fire, earth, water, and air alike. Place these totems and be ready for a fight. The Razormane won't take too kindly to yer interference.",
+		complete = "Can ye feel it, $N? The breeze sings of yer victory. If ye hadn't earned the elements' respect before, ye sure have now.\n\nWalk tall, $c. Yer a credit to our order.",
+	},
+	[96137] = {
+		accept = "A small dagger belonging to the self-appointed ranger, Ira, who kept the forests safe by preventing the beasts within from attacking travelers.\n\nWith Ira's spirit still wandering the woods, perhaps her unfinished business was to clear out the worg that continue to claim victims throughout the forest.",
+		complete = "Ira? Are you sure? Sounds like the woman was damn near a ghost before she died. I'm surprised you found her.\n\nRest assured I will take great care of this dagger.",
+	},
+	[96138] = {
+		accept = "A bow left by the spirit of Merrick Valor, famed Watcher who prided himself on keeping the roads safe from encroaching enemies.\n\nWith Merrick's spirit still wandering the roads, perhaps his unfinished business was to clear out invaders near his home in Raven Hill. The ogres south of town may be what's troubling his spirit.",
+		complete = "Merrick Valor, you say? Poor boy always wanted to prove himself. It was a shame what happened to him and his family.\n\nThank you for bringing this, $N. Perhaps it can shed some additional light on Raven Hill's history.",
+	},
 	[96139] = {
 		accept = "In dark times like these, it's important we remember our heroes as much as our foes. Darkshire would not still be standing if it weren't for the bravery of folk like the good Lady Althea or those who lost their lives at Raven Hill.\n\nHave you read much on Raven Hill? No, of course not. Its history was wiped out along with its people. My library, impressive as it is, has little on the subject.\n\nIf you happen to find anything, I would appreciate bringing it here. Those folk deserve to be remembered.",
 		complete = "This tome appears to be about the Valor family. I believe I've heard of a few of them. Good folk. Not sure they merit an entire book about them.\n\nI'll make you a copy of the tome. If you see anything else related to them on your travels, I'll be happy to take it off your hands.",
@@ -17399,11 +18305,43 @@ SpokenQuestsText = {
 		accept = "Now that I'm free I'm going to make these vile creatures regret ever laying eyes on a Windshaper.\n\nLet's get out of here, $c.",
 		complete = "Thank you again, Reli. I've been aquatinting myself with Trevan here, who I've learned sent you along on my trail.\n\nI've heard... less than charitable things about paladins thus far in my travels. As a sky-touched shen'dorei elf traveling through horde territory, I can certainly understand how easily intolerance and prejudice can take root.\n\nYou and your kind have a friend among the Windshapers.",
 	},
+	[96241] = {
+		accept = "Something funny be happenin' over there at Gloomrise. Ol' Mazu'kon be hearin all about these nasty new beasties skitterin' all around there.\n\nSome say those creepy crawlies got a venom that have some unique properties and this be gettin' me curious. Take my extractor. Use it on the dead bodies layin' around that place to harvest the venom. Do this and I be in ya debt, mon.",
+		complete = "Heh... when I said unique properties, I wasn't kiddin' mon! You seem no worse for wear, so it be all good.\n\nThank you for your aid, $c. It be much appreciated.",
+	},
+	[96243] = {
+		accept = "It's past time ye heeded the earth, brave $C. The elements already prickle in yer skin, but once ye speak with the stone, the ground itself'll set firm 'neath yer soles--and in yer soul.\n\nSeek out Teo Hammerstorm, in Coldridge Valley. Ye'll find him within Anvilmar, a holdfast forged by hammer, fire, and will.",
+		complete = "The land itself let me know ye were comin'! Aye, sometimes, the burnin' fire within us is enough to power us through the snow without even touchin' the ground!",
+	},
+	[96259] = {
+		accept = "There is an ancient tauren burial ground at the place called Gloomrise, just northwest of this camp. Of late it has been infested with a particularly vicious brood of spiders. These spiders not only pose a threat to the people of Mulgore, they are also damaging a site that most tauren consider to be sacred.\n\nIt would be of great service if you could travel to Gloomrise and put an end to this infestation. The ancestors will surely smile upon you if you see this done.",
+		complete = "Thank you for your service to the people of this land. It may take time for us to completely clear out the infestation, but your efforts have created a stable foothold for us to leverage against these vile creatures.",
+	},
+	[96260] = {
+		accept = "Have you heard what befell the burial ground at Gloomrise? Giant spiders--rumored to have a venom so strong that it can wake the dead--have spread like wildfire. Nasty business, if you ask me.\n\nOne of the scouts dispatched to investigate returned half dead and covered in an incredibly resilient, crystalline spider silk. I harvested what I could, but I would highly value more samples of this silk for additional study.\n\nBring me more of this crystalline silk and I will reward you.",
+		complete = "These are excellent samples, and more than sufficient for my needs.\n\nHere, take this. I was able to craft a rather unique cloak with a weave I spun from the small sample of silk already in my possession. I am hopeful that you will find it useful in your travels.\n\nEarthmother watch over you, $c.",
+	},
+	[96261] = {
+		accept = "As is often the case with infestations such as the one we are facing at Gloomrise, a single powerful matriarch often leads to the rapid spread of a hostile spider population.\n\nIf we wish to drive these beasts off for good, we'll need to seek out the progenitor and end her. When you go to Gloomrise, seek out the broodmother there and destroy her. I'd advise you to bring allies, and be ready for anything. These seem to be no ordinary spiders.",
+		complete = "Reanimated dead? The broodmother possessing a night elven form? These are troubling revelations. One has to wonder what it all means... I fear that must be a concern for a later time.\n\nThank you, $N. You've done the Earthen Ring and the people of Mulgore a great service.",
+	},
+	[96264] = {
+		accept = "So yer a big shot $c now, eh? Ye've mastered the elements and want tae put 'em to good use? I think I got just the thing.\n\nIf ye want the elements' respect, ye gotta repay yer debts to 'em. They help you, you help them. And right now they need all the help they can get from those who would abuse their power.\n\nEarth's rumblin', $N. It speaks of the quilboar amassin' for some ritual of terrible power. We need tae go investigate their kraul and see what they're up to. Bring me back whatever ye find.",
+		complete = "Interestin'. The quilboar plan tae flood the Thousand Needles, eh? Those good fer nothin' beasts never did respect the elements. With abuse of this magnitude, it's no wonder we can feel it from here.\n\nYe did good findin' the source of this threat, $N, but now we gotta put an end to it.",
+	},
+	[96294] = {
+		accept = "<The Broodmother you just killed is no spider at all, but rather a night elf druid who assumed a twisted animal form. A variety of questions flood your mind about the nature--and purpose--of the spiders at Gloomrise.\n\nYou notice a note peeking out of the folds of the dead elf's robe. Perhaps this document may answer some of the questions filling your head.>",
+		complete = "This is... most disturbing. Why would a druid be behind a brood of dangerous spiders? Who or what is this \"Wild King\" and \"Pact\" that is referenced in this letter?\n\nI will confer with the druids of the Cenarion Circle on this. Perhaps they will know more.\n\nThank you again for your aid. As disturbing as this information is, we will rest easier knowing that the person controlling these vile creatures has been destroyed.",
+	},
+	[96339] = {
+		complete = "Wait, wait, you said your name was $N?\n\n$N! I am so glad to finally meet you. Someone delivered a package here addressed to you and assured me that you would eventually come to pick it up. I tried to tell them that we don't do that around here, but before I could get a word in, they were already gone!\n\nYour timing is great, too. It was gonna be lumped up with all the other garbage that I toss into the sea nightly.\n\nWhat? We all do it. Ugh, just take your package and go!",
+	},
 	[96390] = {
 		accept = "Dark Iron spies have infiltrated Dun Morogh. To what end I canna' not sure, but this is a problem we need to nip in the bud before it is allowed to grow.\n\nHead eastward to Ironband's Compound and kill the Dark Iron spies that you find there.",
 		complete = "These Dark Irons may be our cousins but they ain't family, that's for sure. I shed no tears for any misfortune that befalls them that stray too far from that accursed mountain o' theirs.\n\nHopefully this is enough to put 'em off of further incursions into these lands.",
 	},
 	[96391] = {
+		accept = "<The map you are holding seems to show a complex series of underground tunnels and highways that all seem to converge on a point underneath Ironforge itself.\n\nYou can't be sure what the runes say as they are written in the ugly jagged rune language of the Dark Iron dwarves, but you can guess at the purpose of these tunnels. As you are reading the map, a gust of wind washes over you and you can faintly hear a dwarven voice carried on it. Earthseer Farsen needs to see this.>",
 		complete = "Judging by this map, it certainly looks like these Dark Irons are planning some sort of incursion into the vaults beneath Ironforge. The band ye busted up to the east must be a scouting force.\n\nThank ye for bringing me this. If we hurry, we might be able to beat them to whatever their goal is down there.",
 	},
 	[96392] = {
@@ -17463,6 +18401,7 @@ SpokenQuestsText = {
 		complete = "With this, you'll be able to set up a camp anywhere out in the wilderness. What you've learned is just the basics, so you won't be able to place too many furnishings around it.\n\nRaise your cooking skill and you might just be able to learn to make even bigger fires.\n\nYou can also learn the basics of furnishing your campsites from other tradeskill trainers if you're savvy in their skills.",
 	},
 	[96630] = {
+		accept = "<The journal appears to be quite plain, detailing the life and adventures of someone you've never heard of.\n\nThere are multiple entries mentioning camping. It seems to be quite... fun.>",
 		complete = "Is that my journal? I've been missing this for a while. Thank you, $c.\n\nHey, you've got the look of an adventurer yourself. How would you like to learn about camping?",
 	},
 	[96634] = {
@@ -17478,6 +18417,7 @@ SpokenQuestsText = {
 		complete = "With this, you'll be able to set up a camp anywhere out in the wilderness. What you've learned is just the basics, so you won't be able to place too many furnishings around it.\n\nRaise your cooking skill and you might just be able to learn to make even bigger fires.\n\nYou can also learn the basics of furnishing your campsites from other tradeskill trainers if you're savvy in their skills.",
 	},
 	[96652] = {
+		accept = "<The journal appears to be quite plain, detailing the life and adventures of someone you've never heard of.\n\nThere are multiple entries mentioning camping. It seems to be quite... fun.>",
 		complete = "Is that my journal? I've been missing this for a while. Thank you, $c.\n\nHey, you've got the look of an adventurer yourself. How would you like to learn about camping?",
 	},
 	[96655] = {
@@ -17499,6 +18439,34 @@ SpokenQuestsText = {
 	[96661] = {
 		accept = "So you want to learn more about camping, huh? Good for you, $c. The first step any adventurer needs to take is to become a cook and learn how to make a campfire.\n\nCooking's not just about making tasty foods. It's also the foundation for your camp.",
 		complete = "With this, you'll be able to set up a camp anywhere out in the wilderness. What you've learned is just the basics, so you won't be able to place too many furnishings around it.\n\nRaise your cooking skill and you might just be able to learn to make even bigger fires.\n\nYou can also learn the basics of furnishing your campsites from other tradeskill trainers if you're savvy in their skills.",
+	},
+	[96774] = {
+		accept = "The ancient Gurubashi of Stranglethorn Vale were da masters of dark blood magics. Rumors be they'd use pure truesilver idols to channel that bad bad voodoo.\n\nOl' Mazu'kon would love to get his hands on one of those idols... for academics ya see. How 'bout you gather some friends and do a bit of smash and grab on that drowned city stickin' out the ocean off the coast of Stranglethorn? Kill the most impressive lookin' priest ya can find in there, and they sure to have what I be lookin' for.",
+	},
+	[96779] = {
+		accept = "Sometimes, $r, a single cut in the right place will drop a foe dead. The same is often true of organizations.\n\nOur agents have identified a key target among the ranks of the Syndicate: a man by the name of Lord Tomas.\n\nHe plays an instrumental role in the functions of Durnholde Keep, in Hillsbrad Foothills. If you wish to be of service to Ravenholdt, go to Durnholde and eliminate him. The quicker, and quieter, the better.",
+		complete = "With Tomas dead, Durnholde Keep will no doubt be destabilized. Lowly thugs of the Syndicate's kind often fall to disarray without a figurehead to lead them.\n\nGood work, $N. I may call upon you for future missions.",
+	},
+	[96781] = {
+		accept = "We have noticed a Syndicate scouting party prowling around the ruins of Alterac, led by a man named Barton.\n\nThey're clearly searching for something, but I cannot know what without reading his scouting reports.\n\nI ask that you pickpocket the report from him, rather than killing him outright. Barton's death will tip off the Syndicate that we're on to them, and they will certainly take counter-measures to cover their tracks.\n\nIf you hope to find him, he is most likely among the Syndicate at Strahnbrad.",
+	},
+	[96783] = {
+		accept = "Stromgarde Keep is one of the Syndicate's largest strongholds. Many of the organization's most important dealings take place behind its walls.\n\nI have received word of a certain trade taking place between members of the Syndicate somewhere in Arathi Highlands, and I'm certain the details of this trade can be found somewhere in Stromgarde.\n\nTo infiltrate the keep without arousing suspicion, you'll need a disguise. See if you can find one among the Syndicate outside the keep, at Northfold Manor.",
+		complete = "<Taking the uniform, you ready yourself for the next part of your mission.>",
+	},
+	[96784] = {
+		accept = "<You recall Myrokos' instructions to find out about an important deal going on with the Syndicate in Stromgarde Keep. With your disguise, you should be able to talk to members of the Syndicate somewhat freely. Surely, one of them knows something.>",
+		complete = "<Anastasia's eyes narrow with suspicion.>\n\n...how exactly do you know about the deal?",
+	},
+	[96785] = {
+		accept = "Who do you think you are? Showing up and sticking your nose in official business.\n\nI'm not telling some rookie anything about the higher-up's dealings without good reason. Unless you've got something important, or valuable, for me, I've got nothing to say to you.",
+		complete = "Why you...where did you find that!?\n\n<Anastasia takes a moment to compose herself.>\n\nFine. I'll tell you about the deal. Just give me that back, and we'll call it even.",
+	},
+	[96786] = {
+		accept = "Falconcrest sent some guys to do a handoff at the southern part of Thoradin's wall. I don't know what they're picking up. Must be good, because everyone involved has kept it a total secret. I don't think the guys picking it up even know what it is.\n\nThat's all I've got. Don't make me regret telling you that.",
+	},
+	[96800] = {
+		accept = "You there, $c. I have a matter I could use assistance with.\n\nI just so happen to be writing a thesis on the ancient Wildhammer runemasters of Grim Batol, and there's a particular tome I need to complete my research. According to our ledgers, a mage by the name of Doan checked the book out of the old Dalaran library before the Third War and never returned it!\n\nArcanist Doan is now holed up in the Scarlet Monastery in Tirisfal Glades. Retrieve this book for me and you'll be well rewarded.",
 	},
 	[96821] = {
 		accept = "We see fewer and fewer travelers from Razor Hill these days. The scorpids were never much fun, but now I hear there are spiders making their nest along the road.\n\nIf your travels take you up north, kill some of the spiders on your way. Then, let Razor Hill know the path's a bit safer for them.",
@@ -17525,9 +18493,11 @@ SpokenQuestsText = {
 		complete = "Your work helps Orgrimmar grow. Know that as you walk the city's paths.",
 	},
 	[96876] = {
+		accept = "The pack has the name \"Ukor\" crudely stitched along the flap.",
 		complete = "My pack! When I dropped it to run from that huge spider, I thought I'd never see it again. You really are a hero!",
 	},
 	[96877] = {
+		accept = "The enormous hoof serves as proof of your victory over the mighty lizard.",
 		complete = "What a trophy, $c! That must have been some fight!",
 	},
 	[96895] = {
@@ -17550,11 +18520,17 @@ SpokenQuestsText = {
 		accept = "You've done a great thing for the cause of the Argent Dawn here today, and I thank you. I don't know how familiar you are with the fortress of Bandarion Keep, but my commander and I were headed that way to meet with the paladins that reside there. That was before we learned of the presence of the Cult of the Damned.\n\nIf you'd like to learn more about the Argent Dawn and our mission, seek out my commander at Bandarion Keep, to the northwest of here. I'll remain here to mop up the rest of this mess.",
 		complete = "This place is full of memories for me. This place was once held by the Argent Dawn. It was here from here that we prepared for many battles and skirmishes against the scourge during their most recent push into Tirisfal Glades.\n\nWhen we withdrew to the Plaguelands I feared it would fall into disrepair. My fear was well-founded, but I am glad that Danitha and her paladins have taken over stewardship of it now.\n\nShe even named the keep after... a mutual friend.",
 	},
+	[96984] = {
+		accept = "You may not have our best interests at heart, but I won't deny an extra pair of hands. And if Dalaran falls, it takes everything with it--including your Undercity.\n\nSo, your benefactor wants in? Fine. I'll imbue your key to work past my wards so you can enter the city. Once you're in, meet me at the Violet Citadel where this all began. With everything going on the Kirin Tor will be too busy to stop you.\n\nScavenge what you will, but whatever happens, our first priority is to prevent a catastrophe.",
+		complete = "Oh my, a shade of the archmage? How utterly embarrassing for them.\n\nAnd the Kirin Tor allowed you into their inner chambers? Interesting. This could provide an opportunity...",
+	},
 	[96986] = {
 		accept = "Within the underbelly of the mage city to the north is a traitor to our kind. A necromancer of disturbing talent. He raises an army of undeath right under the Kirin Tor's nose.\n\nI care not for the fate of the mage city, $N, but this grave knight spits in the face of everything we Forsaken stand for. Put an end to him. Show him no one is beyond the reach of the Dark Lady.",
+		complete = "Excellent work. That beast is unworthy to walk among the dead. Let him lie beneath them.",
 	},
 	[96988] = {
 		accept = "With the city of Dalaran under siege by their own constructs, this is the perfect opportunity to, let's say, borrow a few samples.\n\nImagine an army of arcane-powered abominations. The Dark Lady would have no choice but to recognize my alchemical prowess. Maybe even grant me head of the Royal Apothecary Society?\n\nGo to the city and find the constructs' cores. They are unlikely to give them willingly, so do what you must.",
+		complete = "Cracked. Cracked. CRACKED.\n\nI can't make use of any of these! I said disable the sentries, not obliterate them! How dangerous could they have been?\n\nMy dreams of magus abominations are at a standstill. For now.",
 	},
 	[97003] = {
 		accept = "You there, $c. I need your aid. There are rumors of a beast that makes its lair deep in a cave at Thorn Hill, northeast of here. The Razormane call it Chol'aruk or \"The Ravener\". It's supposedly five times the size of a normal quilboar with a thirst for blood that can never be sated.\n\nMost don't believe the tales. But I do--because I've fought its like before.\n\nSeek out its lair and slay Chol'aruk. Bring me its head. I warn you though--prepare well and do not go alone.\n\nBlood and thunder, $c.",
@@ -17564,8 +18540,17 @@ SpokenQuestsText = {
 		accept = "There's rumors of a monstrous abomination that makes its lair at a cave to the northwest of here, on the plateau known as Thorn Hill. The Razormane call it Chol'aruk or \"The Ravener\" and those that have seen it say its so massive that it can swallow an orc whole.\n\nFew believe such tales, but I do... because I've fought one like it myself. On the honor of those I lost to these things, this beast must die.\n\nGather strong allies and find the lair of Chol'aruk. Kill the abomination and bring me it's head.",
 		complete = "My dead men will rest easier knowing that there is one less of these monsters in the world. You've done well, and are a true and stalwart defender of the alliance. Thank you.\n\nGo with honor, Gryma.",
 	},
+	[97047] = {
+		accept = "Hey! You! You have to help me! I was just out exploring the jungle when, all of a sudden, I was ambushed by these maniacs! I don't know what they plan to do with me, but I've heard talk of tigers and headshrinkers, and I don't want part in either!\n\nI don't know how, but you have to get me out of here! Please! A key to this cage, a disguise to sneak out, something! Anything!",
+	},
 	[97065] = {
 		accept = "An angelfish for some tastyfish. Feels like a fair trade to me.",
+	},
+	[97066] = {
+		accept = "If you got yourself a few of those Striped Racers, I've got a few tastyfish. Deal?",
+	},
+	[97067] = {
+		accept = "A QUEENFISH? Well well, I didn't expect to be among royalty...\n\nBest I can do is a few tastyfish.",
 	},
 	[97220] = {
 		accept = "Every day this week we've been short dockhands.\n\nCare to ease the stress on our cargo schedule?\n\nTake this package to the stockroom entrance of the Gatehouse. You'll find it inside Trias' Cheese shop on the second floor. The mistress, Elaine, will be quite familiar with the deliveries. The Gatehouse often has shipments arriving with more discretion to allow for ceremonial surprises on behalf of the guard's officers.",
@@ -17588,6 +18573,7 @@ SpokenQuestsText = {
 		complete = "Let's see here. Roy's Book Club, isn't it? I recognize this wrap technique.\n\nWell, if he says this is what people want to talk about, it's all fine by me. The material we receive back is always in as good of quality as we loaned it, so we know they're treating it with respect regardless of how provoking the words may be.",
 	},
 	[97236] = {
+		accept = "A fresh specimen from a beast of this size is quite a find. Perhaps someone in Aldrassil familiar with the study of spiders would be interested in the fang.",
 		complete = "My, my. How I do love surprises, $N.\n\nThis specimen will surely help further my studies.",
 	},
 	[97237] = {
@@ -17616,6 +18602,7 @@ SpokenQuestsText = {
 	},
 	[97249] = {
 		accept = "Now that I know his parents worry about how much he's actually filling that belly, I've got an idea.\n\nThey made me promise not to pack the same meal every day, so Migi grows a taste for more than one thing. Still, whenever the smoker's full and we're making sweetglazed hog belly sandwiches, he always shows up for lunch. We've started crumbling the leftover crispy glazed bits as a topping--something we can add daily.\n\nTake this to him. Maybe he'll start showing up early and bringing friends!",
+		complete = "Borstan's Meats? Is that for one of us?\n\nOh!\n\nWow... this smells really good! Yummy.\n\nThanks for bringing me my lunch. I can tell what Borstan is going to be serving daily when my friends and I walk the road to Grommash Hold, by the smells alone. This tastes like my favorite, the sweetglaze! But it's different. I like the strong-flavored crumbs.\n\nIf it's going to be this tasty every day, I think we need to stop our game to take our lunch together!",
 	},
 	[97250] = {
 		accept = "Traveler, have you plans to head toward Dustwallow Marsh? I have heard mutterings that a few human soldiers have taken a stand at its border and are toppling the landmarks left behind by our tauren pathfinders.\n\nRumor has it that a favored tavern has burned to the ground, and in typical Alliance fashion, they immediately cast their blame onto the Horde! I cannot know whether there is any truth to their claim, but their incursion onto OUR land must not stand.\n\nKill first, investigate later!",
@@ -17630,7 +18617,11 @@ SpokenQuestsText = {
 		complete = "It is done. The Eternal Flame burns once again.\n\nYour trial is now complete. I am pleased to present you with your Fire Totem. Use this icon of power well in your travels, Bilbøn.\n\nJust remember, the power of the elemental plane serves those that respect it, and consumes those who do not. This is our way.",
 	},
 	[97263] = {
+		accept = "<Several misplaced packages have been left by the mailbox. You note that one of them is marked for delivery from Aerie Peak, to Ironforge, to Eldrun Stormbreaker. It is marked \"urgent.\">",
 		complete = "What! I've been going to the mailbox by the bank every day looking for this package! This city needs to figure out its layout. Not easy to navigate like Aerie Peak!\n\nLet's see what I've got... totem carving tools... spare axe... some kind of goblin device? I didn't order that! Ah, I'll just send it back.\n\nEr, uh... I mean... thank you for bringing all of this to me. Here's a little something for your trouble.",
+	},
+	[97265] = {
+		accept = "Ever strike a deal with a satyr, mon?\n\nI have. How could I resist? The promise of power, knowledge far exceeding what any ordinary tome could offer... all alongside an eager and charismatic minion. What more could I ask for?\n\nBah, of course they would never bend the knee to a mortal. I bargained when I had nothing, only to be cast aside with even less.\n\nNow, I want revenge. Revenge against the Hatefury. Raid their camp to the northeast! Stain the dirt with their foul blood.",
 	},
 	[97275] = {
 		accept = "Whuut is a prodigy. That much is true. But he doesn't yet have the experience, wisdom, and time on the stirring rod to know how to respect alchemical processes.\n\nHe is exhausting all of the rarest and most exotic reagents we have available without pausing to practice and refine his basic skills.\n\nGive him this potion I've brewed with a quick tonic method. He'll reconsider everything he's doing when he learns how local remedies and careful touch are the first true mastery.",
@@ -17645,16 +18636,25 @@ SpokenQuestsText = {
 		complete = "Thank you for returning these weapons, Sparkled. I will get to work repairing them for the next wave of recruits.",
 	},
 	[97281] = {
+		accept = "<Before you is a strange orb with a dull surface. When picked up a small electrical current seems to vibrate from within. Upon closer inspection, it looks as if a dark mist swirls within and every so often a small electrical spark can be seen.\n\nIt is clear the harpy was using it for some purpose. Perhaps Rezlak would be interested in this object?>",
 		complete = "Woah, where did you find a neat thing like that? Ya know it reminds me of the other thing my boss Gazlowe always used to tell me...",
 	},
 	[97282] = {
 		accept = "\"Rezlack, when an opportunity come's knocking make sure you're ready to seize it.\" That's another gem Gazlowe taught me and that's exactly what I intend to do.\n\nThis orb doesn't seem damaged, it just looks like it's out of juice, but I've the idea to supercharge it back to full strength!\n\nThere are a bunch of thunder lizards in a gorge west of here. They have organs that hold a strong electrical charge that would be perfect for this.\n\nGo harvest some and bring them back to me!",
 		complete = "Hey, thanks pal! You've been a really big help to me here and I appreciate it.\n\nHere's to hoping I can get this all charged up using these organs. I bet it'll make those no good harpies think twice about attacking my caravan again. I sure hope this works.\n\nEither way you've done your side of the deal. Take this for your trouble.",
 	},
+	[97284] = {
+		accept = "If Malem is still alive, then I suspect the Burning Blade orcs are expecting someone to come searching for her soon enough. They will certainly be ready for a fight.\n\nI would prefer if you kept a low profile and stayed out of their way, but the far more likely reality is that they will be looking to meet you, blade to Burning Blade, at every opportunity.\n\nSo how about we plan to keep score from the start. Kill as many as you can, and I'll make it worth your time.",
+	},
 	[97286] = {
 		complete = "Your actions show you are one who respects knowledge. The library is open for use in your studies.",
 	},
+	[97287] = {
+		accept = "You have done well to infiltrate the city of mages, but I believe it is time for us to be more... negotiatory.\n\nAs much as it pains me to admit, there is no other place on Azeroth with such a vast knowledge of the arcane. My brilliant work still pales in comparison to the ancient wisdom the Kirin Tor have amassed over the years. I think it's high time we are granted access to this exclusive order, don't you think?\n\nTake the mote you acquired. They will surely give anything to get it back. Anything.",
+		complete = "You would give this... willingly?\n\nI do not know your game, $r, but I cannot deny the value of your interference during this delicate time for our people. I will grant you access to the city in exchange for the mote, but know that we will be keeping an eye on you. A very close eye.\n\nNow be gone while the Kirin Tor discuss this further. Pray you are not found wanting.",
+	},
 	[97288] = {
+		accept = "<As the creature falls, its head comes toppling off. It seems as if it has been reattached several times, and the connection gets weaker with each reconnection.\n\nSomeone in the Undercity would know more about this unique abomination.>",
 		complete = "Oho! I believe I know this head. A cruel joke by our Dark Lady. A delicious one at that.\n\nI think I have a use for this.",
 	},
 	[97289] = {
@@ -17673,16 +18673,31 @@ SpokenQuestsText = {
 		accept = "I have concocted a lovely serum that our new guest is sure to find quite... stimulating.\n\nTake this. Feed it into the workings dripping from above him. Let's see if we can't show him why it's in his best interest to serve loyally.\n\nAnd try not to drop it. I can't afford a new assistant.",
 		complete = "Excellent. We'll let his flesh simmer for awhile. Give him time to acclimate to his new home.\n\nI have no further use for the wretch for now, but we shall keep an eye on him. I have many plans for Othmar's future.",
 	},
+	[97326] = {
+		accept = "Hey! You've got time to help us out! I know you do, I can tell by the way you smiled watching the game we're playing.\n\nThis spot behind Grommash Hold is nice because it's clear enough for us to set up our figures. But what stinks is we don't have enough rocks for chairs or tables.\n\nYou're big and strong... d'ya think you could carry back some medium-sized rocks, smooth enough to sit on if we need a rest?",
+		complete = "How can you even hold all of those boulders!\n\nThose are great. Most even have a nice flat side, too. Now that you carried them all the way over here we can scoot them around in the dirt, right where we want 'em.\n\nThanks, $N!",
+	},
+	[97328] = {
+		accept = "<As you sift through the debris left behind by a horrible zeppelin crash directly above, you find evidence of a hefty shipment of supplies that has long since been plundered of all its value. Even the shipping labels have been torn and shredded, leaving only the words 'Booty Bay' barely legible on one.\n\nCountless two-toed footprints and several patches of divotted earth all lead toward ruins in the northwest.>",
+	},
 	[97485] = {
 		accept = "Blessings of An'she, friend.\n\nWe tauren have a tradition of scattering incense to the winds and I was hoping you'd be interested in honoring this tradition.\n\nYou will need to craft the incense by purchasing herbs from Nida, cedar from Nata, sinew thread from Mahu in the mid rise, and ceremonial flint and tinder from Naal on the upper rise. Once you have these items, combine them and spread them off the south facing cliff of Hunter's Rise.\n\nYou will find a mat and incense at the ceremonial site.",
 		complete = "You have done well.\n\nI thank you for taking the time to perform one of our time-honored traditions, $r. I hope that as you travel you will find plenty of occasions you wish to give thanks for.\n\nShould you ever wish to perform the ritual again, you should be able to repurchase the components I sent you to collect.\n\nGo with An'she's warmth.",
 	},
 	[97538] = {
 		accept = "Greetings, friend. I wonder if I may ask a favor of you? I have just run out of red pigment for my paints, and I am looking for one with younger hooves to make the long journey into the Stonetalon Mountains on my behalf.\n\nIn the middle of the mountain pass there lies a large circular lake, Mirkfallon Lake, that has a unique plant that grows within its waters. The pods of this plant, mirkweed, turn a vibrant red when dried. Gather the pods of this plant for me, and I will reward you well for your efforts.",
+		complete = "Ah, thank you, $N.\n\nIt means much to me to have you venture all the way out there for what must seem a trivial notion from an old tauren, but with your kindness I will have enough pigment for the rest of the season.\n\nThank you for supporting my livelihood, and I will strive to create something magnificent with the pigments you have brought.",
+	},
+	[97539] = {
+		accept = "This encampment is being left to rot. The siege damage stands, unrepaired, as if neglect were policy. I won't permit that same decay here. The infirmary answers to me, and I intend to keep it functional.\n\nWe are nearly out of supplies. I'm going to need more equipment--enough to keep the workers and guards on their feet.\n\nUnder pressure, we can make quite an effective field suture using twisted spider silk.\n\n$c, bring me some from the spiders that stalk these highlands.",
 	},
 	[97558] = {
 		accept = "One part of undeath no one mentions is what happens when we are injured. How does the skin of an $r heal itself?\n\nWell, it doesn't.\n\nOurs is a cursed life, $N. We must take from the living to further our own existence.\n\nWhen we sustain an injury, we must replace our skin which usually means animal hides. Since different hide thicknesses are better for different places on our bodies a variety is key!\n\nBring me wing membranes of a duskbat, hides from a darkhound and skin of a Vile Fin murloc.",
 		complete = "Ah, excellent! Thank you for acquiring these. I can promise they will be put to good use.",
+	},
+	[97583] = {
+		accept = "<The little slime seems delighted and is attempting to mirror your motions as you dance. It begins to look weary though.\n\nThe little slime hovers over a bit of sludge and absorbs it, looking slightly rejuvenated.\n\nIt seems all of this dancing has tuckered it out. Perhaps someone in the Undercity canals sells more of this nutritious sludge?>",
+		complete = "<The slime shudders with newfound energy. It seems to want to follow you, now that it has associated you with food.>",
 	},
 	[97891] = {
 		accept = "You! Quickly, I need you to bring this potion across the slime canal to Doctor Martin Felben in the Apothecarium!\n\nIt has a very limited shelf life, and no I can't go myself, my knees rattle and pop out if I attempt to run.\n\nJust another lovely side effect of undeath, apparently.\n\nBut we're wasting time! Here, take this and go!\n\n<Alessandro makes a shooing motion.>",
@@ -17949,12 +18964,21 @@ SpokenQuestsText = {
 		accept = "Tailoring is a surprisingly potent tradeskill to invest in, and I'm sure it'll serve you well.\n\nI know someone that can teach you how to craft a Faction Banner for your camp, provided you have the skill for it. Inspiration and morale are a key part of success on any battlefield, and an inspirational banner can go a long way to keeping you energized.",
 		complete = "There you have it, you can now craft your very own Rallying Banner. Most folk don't care much for camps being set up in the center of town, so you'll need to head into the wilderness if you want to test it out.\n\nOh, and just remember, no camp is complete without a campfire. You'll need one of those before you start up your camp. Most cooks can teach you to make a fire. If you haven't already, you might want to check in with someone who can train you in the culinary arts to learn the basics.",
 	},
+	[97977] = {
+		accept = "The Gnarlpine furbolg would not turn on their ancient allies so readily. We must learn more of their plight.\n\nSearch their abandoned homes for totems. If any survived the chaos of their departure, their engravings may tell us more of what happened here.\n\nYou'll find their camps along the western edge of the glen, though the grell and grellkin may have scattered them beyond.",
+		complete = "Oh, it's even worse than I thought.\n\nThese engravings tell us that the Gnarlpine began having nightmares of being wiped out by some great shadow. Before long, that fear turned to rage--and the shadow to their former elven friends. To be aware of your own mind slipping away from you...\n\nOur only hope is that this may help us better understand what is happening on Teldrassil. Thank you for your aid, $N.",
+	},
 	[97979] = {
 		accept = "You are born kaldorei--the children of the stars--and have inherited a birthright unlike any other in this world. Elune's grace may illuminate our strengths, helping our strikes hit true, or it may help conceal us just as the moon may eclipse the sun.\n\nOur Long Vigil after the defense of Mount Hyjal has ended, and we have joined an Alliance of others--which you will meet in due time. For now, you are nestled in the boughs of Teldrassil.\n\nDemonstrate Mother Moon's gifts, and bask in her blessings.",
 		complete = "You have seen what our goddess provides. Use it well, and she will never forsake you.",
 	},
 	[97985] = {
 		accept = "Fascinating, aren't they? This is the first time I have ever been privy to the secrets of abomination creation.\n\nI have been studying these notes, and it appears we need a heart. A massive one!\n\nI hear there is a thunder lizard there of impressive size called Stormheart, that patrols along the canyon edge in Thousand Needles. With a name like that it must have the perfect heart. I must have that heart!\n\nOh, also I suggest you bring friends. Stormheart isn't known for being docile.",
+		complete = "Excellent! I can hardly contain my excitement. Oh, and the heart still has electrical pulses? That's impressive. I won't have to shock it back to life then!\n\nThis heart will be a wonderful addition to the abomination, and certainly looks to be the specified size, if these notes are correct.\n\nAh, I love it when a plan comes together.",
+	},
+	[98013] = {
+		accept = "Steel yourself for your time in the ruins, young one... you will not be granted free passage there.\n\nScores of cursed Highborne, now known as naga, roam the once great city. Travel northeast and dispatch them from this land.\n\nWhat they once were... is no more. If they aid the Twilight's Hammer, they can bring only further pain to the forests that once gave them shelter.\n\nWar is what they seek, $c. War... is what we will bring.",
+		complete = "Do not fret, young one. To pillage one's own home for some dark master...\n\nIt is unforgivable.",
 	},
 	[98021] = {
 		accept = "If you'd like to get started doing some good in our world, I'd recommend reporting to a man named Gryan Stoutmantle in Westfall to the south, at the settlement known as Sentinel Hill. His people are in need of aid.\n\nAfter journeying here from another plane of existence, the problems our lands face may seem small. I assure you, the aid you provide to those impacted by such problems means everything to them, and you will grow stronger for your labors.\n\nGood luck out there, adventurer!",
@@ -17969,7 +18993,12 @@ SpokenQuestsText = {
 		complete = "It is good to know that issue has been taken care of, but it saddens me that we could not find another way. Jai'vhanel had been somewhat of a guardian of this area for quite some time, and I am not sure what could have caused her decent into madness.\n\nRegardless, thank you for your service today, $c. The roads to Auberdine are safe for travel once again.",
 	},
 	[98027] = {
+		accept = "<The silver necklace in your hands gleams gently as you examine it. The small crescent moon shape seems similar to other night elf symbols you've seen before.\n\nUpon flipping the necklace over there is a small inscription: \"Alor'lormah, Maliynn\". Perhaps it belongs to Maliynn in Astranaar?>",
 		complete = "Oh my! I can't believe you found this. I thought I had looked everywhere!\n\nI had lost it when I went to deliver supplies to one of our outposts, but after searching along the road I had given up.\n\nThank you for bringing this back to me. It was a gift from my late parents, and I can't express how much it means to have it back.",
+	},
+	[98028] = {
+		accept = "All that remains of the powerful elemental is a globe of what seems to be pure water, clouded by some unknown substance. The edges of the sphere seem to be clear until you turn it--as if the cloud actively prevents you from peering within.\n\nWhatever happened to it--and to the ruins it was guarding--is still active in some way.\n\nOnly Onu, the Ancient of Lore at the Grove of the Ancients to the far south, would have a chance at knowing more.",
+		complete = "<Onu appears surprised--or as surprised as an ancient can appear.>\n\nStairs descending down in Mathystra? Could be it be?\n\n<Onu shakes his head.>\n\nI must confer with the others on this. For now, know that it is good you uncovered this before the naga... or their cult allies.\n\nPlease accept this as thanks for your efforts. It is no small feat to defeat an elemental guardian.",
 	},
 	[98042] = {
 		accept = "<As you tear away the single page from the Twilight Tome, a foreboding voice floods your mind, uninvited.>\n\nThey have failed.\n\nYou will be forgotten.\n\nThey will lose the eye they gained.",
@@ -17979,6 +19008,10 @@ SpokenQuestsText = {
 		accept = "<Arch Druid Fandral Staghelm's gaze narrows.>\n\nYou're still here?\n\nTake the phial and get out of my sight, $c. It is clear my answers do not lie in the waters, just as they did not before.\n\nPerhaps one of the priestesses in the Temple of the Moon to the south will dispose of it.\n\n<Fandral looks away, no longer speaking to you.>\n\nI must look elsewhere if this is to work...",
 		complete = "Do not mind the Arch Druid, Sneaky. He bears the weight of much in Malfurion's absence.\n\nWait! Some drops yet remain in the phial! Perhaps that is why his incantation failed?",
 	},
+	[98059] = {
+		accept = "Hillsbrad's council hasn't answered our new magistrate's letters. The last word I pried out of a passing merchant from the town did little to justify their silence.\n\nWe're only asking for a small platoon--yet I'm told multiple siege ballista rest in pristine condition within a walled-off compound.\n\nWalk into their town hall like a citizen returning a census request, and place this neatly upon the bookkeeping table.\n\nReturn to me when the deed is done.",
+		complete = "Good work, soldier. I know you're not stationed with us, but we never turn away capable hands.\n\nIf they don't respond to THIS letter, we'll have to be more crude in our messaging.\n\nWe'll keep you on reserve for civilian interactions should the need arise again.",
+	},
 	[98065] = {
 		accept = "You must bring this to Tyrande at once! I will transfer it to a more ceremonial container for you.\n\nDo not be afraid. The High Priestess of Elune is firm, but kind. She protects all who enter Darnassus, and carries our goddess' light to all.\n\nShe will be glad to receive this sacred water. You will find her directly above us.",
 		complete = "Staghelm has done much in my beloved's absence, but he is not Malfurion. And he does not run the affairs of Darnassus--that burden is mine alone.\n\n<Tyrande's face settles.>\n\nI apologize. As you have likely seen, we have many challenges to overcome.\n\nFandral is Arch Druid for now, and I ask you respect his station. But his doings pertain to druidism, and mine not only to Elune but indeed to lead our people as she wills.\n\nEvery drop of this water is blessed by our goddess. I thank you for saving it.",
@@ -17987,11 +19020,21 @@ SpokenQuestsText = {
 		accept = "General Feathermoon ensures all sentinels have time to pray to Elune. A proper huntress wields not blade alone, but gifts of the goddess to overcome our enemies.\n\nYou may help with my daily duties. Place sentinels around the city--start with the tunnels leading beneath Cenarion Hold to the north, the bank at the center of town, the inn in the Craftsman's Terrace to the northeast, and the city gates. The guards can assist you.\n\nSomething is amiss in Teldrassil--we must remain vigilant.",
 		complete = "I thank you for your aid. Though I find peace in the daily rituals, it is nice to have a moment to reflect instead.",
 	},
+	[98069] = {
+		accept = "Those wretched harpies! They attacked the last caravan I had scheduled to deliver supplies to Freewind Post. We have enough supplies for the moment, but without more supplies, we'll run short soon.\n\nI'm not sure what the harpies plan to do with the extra supplies, but I would be grateful if you would recover them for me. They make their lair west of here. They can be found both at the base of the cliffside and inside a cave at the top.",
+		complete = "Thank you, $N. These supplies will help get us through until the next shipment arrives.",
+	},
+	[98070] = {
+		accept = "The Screeching Canyon is home to a local band of harpies known for their ferocious nature and raiding tactics. They have ambushed the last few supply caravans that have been brave enough to traverse this place.\n\nI fear if something isn't done soon, there will be no caravans that will dare make the trek to Freewind Post.\n\nGo, slay as many of these harpies as you are able. Return to me once the deed has been done, and I will reward you well for your efforts.",
+		complete = "This is wonderful news! I will send word to our suppliers that the harpies have been dealt with. At least that is one less threat the future caravans will need to worry about.",
+	},
 	[98071] = {
+		accept = "Worked a bit o' a trade with the Dun Garok brew-kin. We're not the only ones missin' the vineyards of the Fallrook family, it seems! Most o' the best bottled years are long since drank, but we do have cases of the wine still in the cellars.\n\nBring this case of Fallrook Varietal to Dun Garok in the southeast and leave it with 'em by their gatherin' fireplace at the bottom of their fort.\n\nIn return, carry a sack o' the Homebrew Hops back with ye.\n\nThat keep is the closest thing to home around here!",
 		complete = "That's the hops smell I missed! Ye done me a great favor, $N, takes me days to leave every time I make the trip to Dun Garok myself. Hard to pull me self outta the halls o' that fortress once I get comfortable.\n\nHappy to keep some old tastes on the shelf for fellow dwarves.\n\nHave a little somethin' for helpin out.",
 	},
 	[98072] = {
 		accept = "You're quite the go-getter! I have just one more favor to ask, if you're up for something a bit more dangerous.\n\nThe crocolisk trade is steady money, but they're small fish compared to what whelp scales will bring. Folks will pay top dollar for a sack of those.\n\nCrocs of the sky, I call 'em! There's no way my apprentice could get them--but it seems right up your alley!\n\nYou'll find whelps far to the east, along the Green Belt. But be careful, there's nasty orcs in those hills!",
+		complete = "You're a real natural talent! Say, if you ever decide to take a break from the adventuring life, you come on back to your buddy James. I'll put you right to work!\n\nAlthough, I suppose you'll be even older by then. Oh well!",
 	},
 	[98093] = {
 		accept = "I'm so glad you saw me!\n\nThe weather was lovely this morning, so I walked from Camp Taurajo down the golden road. When it came time to head back, I couldn't--a pack of hyenas started circling, and Stormhide lizards blocked my only escape.\n\nScrambling up this tree I went, and now there are too many foes about at this hour for me to make the run home through the fields.\n\nWould you mind clearing out these Stormhide and Hecklefang Stalkers for me?",
@@ -18006,6 +19049,7 @@ SpokenQuestsText = {
 		complete = "Good work. We advance the plans.\n\nDeathstalkers dare.\n\nLet purpose guide your strikes, $N.",
 	},
 	[98155] = {
+		accept = "The Pesterhide hyenas of Thousand Needles have the most gorgeous coats. I haven't seen such a brilliant hue of fur like that in all of my travels!\n\nI would like to send back some pelts to my sisters back in Stormwind, as I know they could make something incredible out of them.\n\nI don't have any fighting experience, so I would be very grateful if you could gather some of the Pesterhide pelts in my stead.",
 		complete = "Thank you, $N! These hides are in perfect condition. I can't imagine it was easy to get so many, but I am very grateful to you for your work.",
 	},
 	[98156] = {
@@ -18014,11 +19058,14 @@ SpokenQuestsText = {
 	},
 	[98189] = {
 		accept = "My goodness, it's--it's beautiful!\n\nThe Blind Princess was to deliver this to Menethil Harbor before tragedy struck. We were so close!\n\nI believe it was to be signed for by Captain Stoutfist in Menethil Keep just behind us. Why don't you do the honors of finishing the job?",
+		complete = "You managed to get it back from those monsters! There aren't too many artifacts of the late king left now.",
 	},
 	[98190] = {
 		accept = "You'll want to take this to Stormwind right away. Proud as I am that this keep and harbor bears King Terenas Menethil II's name, we are a calm harbor in a very nasty storm of enemies. It's just not safe here.\n\nThe Dragonmaw in particular would sacrifice much to loot something like this... and I shudder to think of what they'd do with it.\n\nDon't bother going up the chain of command on this one, lass. Go straight to Highlord Fordragon with this. He'll know where it will be best kept.",
+		complete = "You have my gratitude for recovering this. I am relieved it did not fall into the wrong hands.",
 	},
 	[98191] = {
+		accept = "King Terenas was a good man. A devout man. Beloved by his people, and truly the reason we have this Alliance at all.\n\nThe irony is he was humble--he hated these sorts of memorials, and so precious few exist. And of those, few survived Lordaeron's fall.\n\nIt seems the Light has coalesced in this statuette. It would be best kept in the Cathedral of the Light in Cathdral Square, in the center of the city. Bring it to Lord Grayson Shadowbreaker for safekeeping.",
 		complete = "By the Light... it looks just like his boy...\n\n<Lord Grayson Shadowbreaker pauses for a moment.>\n\nThis statuette has indeed been blessed. Its connection to Terenas, its survival of what that monster did to him... this carries great power for those who believe in its strength.\n\nIt is best kept here for now, under guard of the paladin order. We will meditate on it further to learn more of its gifts, and perhaps it may aid us in dark times ahead.\n\nThank you, $c. Light bless you.",
 	},
 	[98197] = {
@@ -18031,6 +19078,7 @@ SpokenQuestsText = {
 	},
 	[98209] = {
 		accept = "Would you please deliver Nord'el to elder Thundris Windweaver in Auberdine?\n\nThe boat from here should be able to get you there swiftly.\n\nI apologize for the request, I truly do. I remain fatigued from my journey here--and from fleeing those murloc devils when I first attempted to retrieve the sacred bloom!",
+		complete = "The Nord'el survived? It cannot be... after all these years!\n\nOur goddess is most wonderful indeed!\n\nYou have my thanks for delivering it here. It is a rare light in the dark times we have had of late, and a symbol of not only Elune's grace, but of the enduring will of our people to persevere without our immortality.\n\nI will see to it that it is transported safely to Darnassus, so that it may be properly cultivated.",
 	},
 	[98216] = {
 		accept = "Old Gods?! This cannot be good news at all!\n\nI've made out a new bit on the stone that speaks of a guardian of some kind. Whatever it is, it must be linked to the stone!\n\nTake it with you and see if you can find a big Titan construct of some sort in the excavation. Read this here final passage on the stone and see what happens!\n\nIf I'm right, you'll activate the thing. Take it out if so, but try to preserve anything interesting! We simply must know more!",
@@ -18038,24 +19086,38 @@ SpokenQuestsText = {
 	},
 	[98219] = {
 		accept = "Thank you again for delivering the statuette safely, $N.\n\nI could use your help with something else. There's a member of the city guard who was reassigned to duty in Southshore out in the Hillsbrad Foothills.\n\nHis father was a friend of mine, and while I don't disagree that he could use the lesson... I'd still like to see him succeed. He would really benefit from someone like you helping him out.\n\nThere is a boat that can take you that way from Menethil Harbor, if you are passing back through.",
+		complete = "Ah, of course. Another one of Stormwind's finest here to check on me. Same as last month!",
 	},
 	[98221] = {
 		accept = "In the Second War the Dragonmaw built a fleet where we now stand, intending to take Hillsbrad. They nearly succeeded!\n\nThey were routed by the red dragons, left to mere stragglers deep in the mountains. However, there has been a surge in activity in their encampment northeast of Menethil.\n\nDun Algaz is proof that they intend to march to war once again and retake this land. Find their attack plans, take note of any critical information, and destroy them. We need to know where they will strike next!",
 		complete = "Ironforge as well? Nek'rosh certainly has his father's ambition!\n\nWhat he lacks, of course, is the enslaved army of red drakes that proved so devastating in the war. He's made a gambit, alright--one he will pay for dearly.",
 	},
+	[98223] = {
+		accept = "This book has been badly burned--perhaps by the dragonfire that destroyed much of the Dragonmaw clan.\n\nOf what little is legible, it seems to describe rituals relating to the use of the Demon Soul that the clan had used to control the dragons.\n\nIt is far too incomplete to be of real use, but based on roughly inserted pages on animal hide it seems Nek'rosh had attempted to salvage it. Freshly dried ink mentions a \"Shadow Council.\"\n\nCaptain Stoutfist in Menethil Harbor would want to know about this.",
+		complete = "It's best we destroy this. Useful or not, we're not in the business of taking chances with any of those foul orcs.\n\nThe last thing we need are dragonriders on our doorstep!\n\nAnd this Shadow Council business... most troubling. I'll send word to my superiors at once.",
+	},
 	[98230] = {
 		accept = "After the War of the Three Hammers that tore dwarven life as we knew it apart, the Wildhammers settled here, founding the mountain fortress of Grim Batol.\n\nIt was a wondrous place. Gryphons soared everywhere you looked, diving down through the wetlands to grab a fish.\n\nIt didn't last long, sadly.\n\nHowin Kindfeather is one of the first Wildhammers to return in ages. Keeps to himself, far outside of town. Follow the road east--you'll find him eventually. He could surely use a hand.",
+		complete = "If yer here to help, I won't say no. Help's awful hard to come by these days.",
+	},
+	[98240] = {
+		accept = "Word is officially out on those whelps, $N. We already have an order in!\n\nI'll package 'em up all nice for you, then you take it out to the customer. I know, I know; it's just one last favor, I promise!\n\nThese will be for one \"Howin Kindfeather\". Sent his gryphon into town of all things with a letter for the order! Says he's just off the road to the east, a bit past Whelgar's Excavation Site, if you're familiar.",
+		complete = "These are perfect. Thank ye for making the journey.",
 	},
 	[98245] = {
 		accept = "I don't know who I hate more: the bloody Dark Irons, the Dragonmaw, or the drakes they rode.\n\n<Howin spits.>\n\nI aim tae make things right. But we're gonna need some supplies.\n\nThese whelp scales will protect against dragonfire a good bit, but they're a pain in the arse tae weave together.\n\nThe Razormaw raptors up in Raptor Ridge to the northeast and Saltspray Glen to the northwest are so named for their pointy chompers--they oughta break through the scales.\n\nBring me a handful of the incisors.",
+		complete = "These'll make a beautiful set of awls. Thank ye.",
 	},
 	[98246] = {
 		accept = "I'll need some eggs if my plan is going tae work. Bassbeak needs a nice an' full belly--I ain't in the business of hoppin' on the back of a surly gryphon.\n\nThey need to be perfect--no cracks or anything.\n\nTake some from the Razormaw raptors--they're known for having yolks the size of a gnome's noggin. You can find 'em in Raptor Ridge to the northeast and Saltspray Glen to the northwest.\n\nLet's make it a nice even dozen, just to be safe.",
+		complete = "They're not for me plan--they're to feed Bassbeak. She's of no help at all if she's hungry, trust me. She might be more dangerous than the orcs if she's ticked off!\n\nUntainted food can be hard to come by in these lands as of late...",
 	},
 	[98247] = {
+		accept = "<A torn shipping label can be found on the side of the now fully stocked crate. Though the intended recipient is torn off, details of its origin still remain.\n\n\"Property of the Azeroth Commerce Authority. Please return empty crates or unfulfilled shipments to our local trade hub at the Three Corners crossroads in Redridge Mountains. Couriers will be compensated for their time and travel.\"\n\nBeside the text is a crudely drawn map of the area near the aforementioned destination.>",
 		complete = "You have arrived at the right place! I am happy to mark you down as one of our affiliates. No contracts to sign and no commitments to weigh you down. All we ask of you is your diligence to assist in completing or returning any of our deliveries you find on your travels.\n\nWhen you do so, you will be compensated with Merchant's Favor that will allow you to purchase goods and services we offer here. In fact, here's a little bit to get you started.\n\nNow, do you happen to have the crate this came from?",
 	},
 	[98248] = {
+		accept = "<A torn shipping label can be found on the side of the now fully stocked crate. Though the intended recipient is torn off, details of its origin still remain.\n\n\"Return damaged shipments or empty crates to the Durotar Supply and Logistics trade outpost, now conveniently located due west of the Crossroads in the Barrens. Your time is valuable and we will compensate you for your efforts!\"\n\nBeside the text is a crudely drawn map of the area near the aforementioned destination.>",
 		complete = "You found the right place, and you're speaking with the right person! I can jot you down as one of our new associates. No paperwork necessary on your part, I can't be bothered with more of that.\n\nAll we ask of you is to assist in dealing with compromised deliveries you find out during your travels. Doing so will earn you Merchant's Favor, which you can use to purchase goods and services right here. Here's a bit to get you settled in!\n\nDo you happen to have the crate this label came with?",
 	},
 	[98251] = {
@@ -18064,10 +19126,15 @@ SpokenQuestsText = {
 	},
 	[98252] = {
 		accept = "Show my Eye of Kilrogg the way out of this ravine and back to the Ashenvale road. Keep it moving and I'll follow once I see a clear path.\n\nI'll stay here--one of us should keep our bearings. If you lose the way, I can guide you back through the eye. I will not have us both wandering blind in this malicious forest.\n\nI can hold the channel for four minutes. No longer. Reach the road before the vision breaks, or return to me and we try again.",
+		complete = "<You hear the voice of Va'xug echoing from within the floating eye.>\n\n\"Was it that simple? No matter. This vision will assist me in wrangling my unruly Voidwalker along the correct trail when I resummon him. Thank you, traveler. Cut through this forest with sure steps.\"\n\n<The Eye of Kilrogg begins to dissipate.>",
 	},
 	[98282] = {
 		accept = "Certain alchemical recipes require ingredients sourced from, well, very dangerous places. And those are often just the base herbs! The other ingredients are even worse!\n\nI need to make more antivenom before I can leave again. I swear everything in this marsh is venomous. It's like it runs through the land itself!\n\nCan you help me? I'll need a venom gland from the spiders in Thelgen Rock to the far southeast. But it has to be unruptured, or too much venom will spill out before you can get here. Sorry!",
 		complete = "Oh, perfect! This is exactly what I need. You're a real hero, you know.\n\nPlease, I'd be remiss if I didn't share some of the fruits of your labors with you. Stay safe out there!",
+	},
+	[98283] = {
+		accept = "The natural order of this land is breaking. Once it was that the Razormaw raptors kept the land from overgrowth. They now live in fear of their alpha, named only for the carnage it leaves behind.\n\nI fear the beast has been driven mad by the sickness that we have yet to fully excise.\n\nIt will respond to the malignant flesh of the diseased bears below Raptor Ridge, to the northeast. Leave their entrails in its cave lair.\n\nCarnage will come. Bring me its head.",
+		complete = "Carnage's death will bring balance to his pack. Perhaps it will buy enough time for the greater ecosystem they support.\n\nWe shall see, but I thank you for the effort regardless.",
 	},
 	[98284] = {
 		accept = "Enchanters make everything better and are always welcome at any camp out in the wilds.\n\nI reckon I know someone that can teach you how to craft an Enchanted Lute for your camp. It's so important to find entertainment during your downtime, and this bit of magic can help ensure you are ready to weather all sorts of challenges when you hit the old dusty trail once again.",
@@ -18081,8 +19148,17 @@ SpokenQuestsText = {
 		accept = "Enchanters make everything better and are always welcome at any camp out in the wilds.\n\nI reckon I know someone that can teach you how to craft an Enchanted Lute for your camp. It's so important to find entertainment during your downtime, and this bit of magic can help ensure you are ready to weather all sorts of challenges when you hit the old dusty trail once again.",
 		complete = "There you have it, you can now craft your very own Enchanted Lute. Most folk don't care much for camps being set up in the center of town, so you'll need to head into the wilderness if you want to test it out.\n\nOh, and just remember, no camp is complete without a campfire. You'll need one of those before you start up your camp. Most cooks can teach you to make a fire. If you haven't already, you might want to check in with someone who can train you in the culinary arts to learn the basics.",
 	},
+	[98291] = {
+		accept = "I plan tae get back into Grim Batol and reclaim it for the Wildhammers, $N. Or at least learn a thing or two.\n\nDon't look at me like that, now. I know the risks. I don't intend tae go in hammer swingin', ye know.\n\nRegardless, I'll need your help first. The Dragonmaw orcs march as we speak. They're all up an' down the Dragonmaw Retreat, where the red dragons routed them before.\n\nI need you tae thin their numbers before I have any chance of gettin' close. Ye can't miss 'em if you follow the road east.",
+		complete = "You won't catch me mournin' their ilk. They deserve their fate.",
+	},
 	[98293] = {
-		accept = "What's that you have there, $c?",
+		accept = "The Dragonmaw are stockpiling all manner of weaponry. It would be wise to relieve them of these before more soldiers can be armed.\n\nCaptain Stoutfist in Menethil Keep would surely be interested in these.",
+		complete = "Well done! Very well done!\n\nWe can definitely put these to use in replenishing our men. Half of these are from our own soldiers to begin with.\n\nFewer weapons in the hands of the enemy and more in ours is my kind of math, $c.",
+	},
+	[98297] = {
+		accept = "I did a quick test flight while ye were out. The good news is the armor ye helped me craft for Bassbeak works like a charm!\n\nThe very bad news is I saw a group o' them Dragonmaw in the process of enslavin' a red dragonspawn.\n\nAbsolutely not. Not again.\n\nYou have tae take it out. You'll certainly need friends tae do so. Kill the warlocks holding it down first--that ought tae free it. Then put it out of its misery.\n\nNone of them will stand in the way of the Wildhammer.",
+		complete = "I can't thank ye enough, $N. Truly, I cannae do enough for what ye've done today.\n\nMuch remains to be done before Grim Batol might hear the laughter of wee dwarven children echo through its halls again, but it's a mighty good step closer.\n\nFor all of the dwarves lost in those dark days, we may yet reclaim what was ours.\n\nHere's hopin', anyway.",
 	},
 	[98298] = {
 		accept = "Ah, it's all become so embarrassingly clear! Arugal hardly had any magic at all, let alone enough to create the worgen. 'Arugal's Curse.' Pah! Barely potent enough to last a few seconds.\n\nThese shackles prove he can bind the beasts, not create them. The worgen clearly spread their curse a different way. I would know how.\n\nGo to the Greymane Wall to the south. The worgen seem to be spreading to the humans nearby. Tear the beasts apart and bring me whatever you find. This requires a more direct approach.",
@@ -18092,8 +19168,17 @@ SpokenQuestsText = {
 		accept = "If there is one thing we do know, it is that Arugal is responsible for worgen within Silverpine. Be it his own machinations or otherwise. What we don't know is how it spreads.\n\nWhile I research a way to stop the curse, our first priority is to contain it. It appears this affliction cannot infect forsaken such as ourselves, but a large group of humans have gathered by the Greymane Wall.\n\nGo to the wall and put down these refugees before they have a chance to become servants for Arugal.",
 		complete = "It seems the Gilneans are not too keen on allowing anyone past their wall. That is fortunate, I suppose. It means there is likely no chance for the worgen curse to spread to their city.\n\nCan you imagine the depravity if an entire kingdom were infected?",
 	},
+	[98300] = {
+		accept = "My work here is far from over, $N. And I need tae send word to me wife Claira in Aerie Peak--and get Falstad an update as well.\n\nBut that's my business. Wildhammer business.\n\nThat said, you ought tae let King Magni Bronzebeard in Ironforge know about all this as well. Wetlands is but a stone's throw from his lands, and none of what's happenin' here is good news on one's doorstep. This letter oughta do the trick.\n\nYe can travel back through Dun Algaz or fly from Menethil Harbor to get to Ironforge.",
+		complete = "Ah, the Wildhammer. Yes, I know them well. They may not call me sovereign, but our relations have improved greatly as of late--the Thandol Span is a testament to that.\n\nIf what this Howin reports is true, then we must prepare for further action on our northern borders. Grim Batol has a deep, bloody history, and I'm well aware of its strategic significance.\n\nFor your efforts in helping the Wildhammer in the Wetlands, and the Alliance in Menethil Harbor as well, you have my thanks.",
+	},
 	[98310] = {
 		accept = "There are other, larger golems all around the Wetlands. They each bear inscriptions marking them as Ados, Modr, Golm, and Neru--matching the missing pieces of the Goaz Stone you found!\n\nI'd be willing to bet if we can bring pieces of them as well, we'll reveal more of the Goaz Stone!\n\nYou'll find Ados at the Dragonmaw Gates to the east, near Grim Batol. Modr is right outside Dun Modr to the north. Golm lies beneath Grim Batol, east of Dun Algaz. Neru's behind Direforge Hill, to the northeast.",
+		complete = "By Magni's beard, they're beautiful! Wait a second, do you see that?! Hold the hearts closer to the Goaz Stone for a moment...\n\n<New text reveals itself on the stone in a faint shimmering light.>\n\nHmm, it's hard to make out. \"Curse of Flesh... they will fail.\" What's that supposed to mean?!\n\nWe've got to get this somewhere safe so we can study it further!",
+	},
+	[98313] = {
+		accept = "Whatever this is all about, $N, it's epic stuff alright.\n\nI'll bundle everything up nice for you. Take it to Historian Karnik in the Hall of Explorers in Ironforge. You'll usually find him in the back, nose-deep in some tome or another in the library.\n\nIt'll take a downright army to crack the case on this one, but if what we've seen so far is any indication it will well be worth it!",
+		complete = "Well I'll be...\n\nThis is a lot to go through! Very exciting, though. VERY exciting!\n\nIt'll take me some time to even put a plan together on this one. Come back another time and I can give you the latest. For now, please accept the thanks of the Explorers' League.",
 	},
 	[98319] = {
 		accept = "It's bad enough havin' a troll problem, but the mountains are filled tae the brim with wendigos! They normally keep to their own caves, but they seem tae be spreadin' like bunnies. Now they've filled the Grizzled Den north of here.\n\nIf we want Whitebeard's report, we're gonna need to find my partner Cornelius. The blockhead got a little too excited and charged in head first. Brave, but stupid.\n\nHead into the cave and see where he is. And feel free to take out some the beasts while yer at it.",
@@ -18121,6 +19206,11 @@ SpokenQuestsText = {
 	},
 	[98341] = {
 		accept = "A spirit of your homeland has recently appeared here and has asked me to guide you to it. This windborne cat spirit has come to tutor and mentor you so that you may take the feline shape of the spirit on Zephras.\n\nAll druids eventually seek this wisdom, though it seems your homeland has a slightly different shape than our traditional one. If you desire to take this spirit's feline form, you will need to undergo our trial.\n\nIt can be found in the southern part of Moonglade, south of the twin bridges.",
+		complete = "Greetings, young shen'dorei. I have come to you because I sense you are ready to undertake the trial to determine if you understand my spiritual nature or not.\n\nI will have you take the trial of the Great Cat Spirit of Azeroth, but as you are from Zephras, I wished to oversee your progress myself. After all, it is my shape you would take, not that of a Azerothian cat spirit.\n\nLet us begin.",
+	},
+	[98342] = {
+		accept = "To draw upon my spirit, you will need more than a few words. To understand and respect my form you must prove that you can embody cunning, stealth, and if you should be cornered, ferocity.\n\nIn the Barrow Dens just east of here, are three relics of my favor you must acquire. They are guarded by powerful enraged spirits that will attack you on sight. A statue at the entrance will bless you with temporary stealth to get past them.\n\nReturn these relics to me. We will see if you are ready to take my shape.",
+		complete = "Excellent. You have shown you understand the true nature of the cat, and are able to embody the cunning, stealth, and ferocity needed to take my shape.\n\nI now deem you worthy of my blessing, young $c.",
 	},
 	[98362] = {
 		accept = "The time has come for us to part ways once again, young one, as the application of your lessons takes you back to whom that sent you to me. It would seem your instructor, Turak Runetotem, has found a worthy pupil in you. I believe I see one as well. Heed his lessons and you shall soon be able to draw upon the Great Cat Spirit to take its shape.\n\nGo back to whence you came. When the time is right, we will meet again.",
@@ -18155,6 +19245,11 @@ SpokenQuestsText = {
 	},
 	[98394] = {
 		accept = "In the southern part of Moonglade, on a hill overlooking the bridge, resides a wise and cunning being we call the Great Cat Spirit.\n\nMuch like the Great Bear Spirit, this spirit has served as a tutor and mentor to druids that desire to take the feline shape. All druids eventually seek its wisdom, and if you desire to take the form of a cat, you will as well.\n\nGo meet with the Great Cat Spirit and learn what it will teach you.",
+		complete = "I see you have come to learn to draw upon my spirit. Good. Let us see if you are ready to take my shape.",
+	},
+	[98396] = {
+		accept = "To draw upon my spirit, you will need more than a few words. To understand and respect my form you must prove that you can embody cunning, stealth, and if you should be cornered, ferocity.\n\nIn the Barrow Dens just east of here, are three relics of my favor you must acquire. They are guarded by powerful enraged spirits that will attack you on sight. A statue at the entrance will bless you with temporary stealth to get past them.\n\nReturn these relics to me. We will see if you are ready to take my shape.",
+		complete = "Excellent. You have shown you understand the true nature of the cat, and are able to embody the cunning, stealth, and ferocity needed to take my shape.\n\nI now deem you worthy of my blessing, young $c.",
 	},
 	[98397] = {
 		accept = "The time has come for us to part ways once again, young one, as the application of your lessons takes you back to whom that sent you to me. It would seem your instructor, Mathrengyl Bearwalker, has found a worthy pupil in you. I believe I see one as well. Heed his lessons and you shall soon be able to draw upon the Great Cat Spirit to take its shape.\n\nGo back to whence you came. When the time is right, we will meet again.",
@@ -18162,13 +19257,19 @@ SpokenQuestsText = {
 	},
 	[98398] = {
 		accept = "I am impressed by what you have accomplished here in so short a time, $N. Would that I could ask you to remain here to assist me with my duties... but I know in my heart that greater tasks lie ahead for you.\n\nI have noticed the Oracle Tree has just shed a piece of its bark. No doubt it has a task that it wishes completed. You should speak with it.",
+		complete = "As you inspect the fallen bark, a voice enters your mind. It is calm and soothing, cresting over you like a gentle breeze through the leaves.",
 	},
 	[98403] = {
 		accept = "Lord Melenas did not act alone; he was at the behest of another. The one you seek is Xethorr the Wicked. It seems he has twisted the spiders that call Teldrassil home, intending their venom for some foul plan.\n\nHe has taken residence deep in the forest, in the area to the northwest of here known as the Cleft. Take caution, and bring allies, for Xethorr is not an opponent to be trifled with.\n\nDispatch his brood, and bring me anything that may tell us more of the satyr's work here.",
 		complete = "I should have known this was being used to twist the spiders of this land.\n\nI have heard whispers of this substance being the source of much of the corruption plaguing us. Though this is not the original, it is an older sample and may yield more information than what we have obtained so far.\n\nNormally I would have you send this to Darnassus for further study. However, it is best we kept this quiet for the moment, or Dolanaar will never recover its reputation.\n\nI trust you to do the same.",
 	},
+	[98404] = {
+		accept = "In order to draw upon my spirit, you will need to undergo a trial. To understand and respect my form you must prove that you can embody cunning, stealth, and if you should be cornered, ferocity.\n\nIn the Barrow Dens just east of here, are three relics you must acquire. They are guarded by powerful enraged spirits that will attack you on sight. A statue at the entrance will bless you with temporary stealth to get past them.\n\nReturn these relics to me to pass the druidic trial of these lands.",
+		complete = "Excellent. You have shown you understand the true nature of the cat, and are able to embody the cunning, stealth, and ferocity needed to take my shape.\n\nI now deem you worthy of my blessing, young $c.",
+	},
 	[98405] = {
 		accept = "In the southern part of Moonglade, on a hill overlooking the bridge, resides a wise and cunning being we call the Great Cat Spirit.\n\nMuch like the Great Bear Spirit, this spirit has served as a tutor and mentor to druids that desire to take the feline shape. All druids eventually seek its wisdom, and if you desire to take the form of a cat, you will as well.\n\nGo meet with the Great Cat Spirit and learn what it will teach you.",
+		complete = "I see you have come to learn to draw upon my spirit. Good. Let us see if you are ready to take my shape.",
 	},
 	[98407] = {
 		accept = "If the gnolls are growing so bold they are willing to camp this close to humans, there's no telling how much further they'll go. We need to deter them.\n\nThe beasts are hardly organized, but they seem to respect strength above all else. If we can slay the worst of them, maybe claim some of their trophies, we can remind these gnolls why they should stay in the hills where they belong.\n\nShould you see any of their thrashers, bring me their collars. That should put the fear of the Alliance back into them.",
@@ -18179,12 +19280,15 @@ SpokenQuestsText = {
 		complete = "Oh no... words like these do not bring me comfort. Kurothel must be more than living in the wild, he's living more like a wild beast each passing night.\n\nI fear the whispers must be true.",
 	},
 	[98418] = {
+		accept = "Kurothel mentioned sightings of what they say are wolf-men. Those of the pack now lurking in greater numbers in our forest. Last we had spoken, druids were pursuing communication with those of the beast heart who displayed measured control of their animal instincts.\n\nHis written words show a darker struggle. If there is anything we can do to help see HIM again, surely quelling the demon threat that is driving him to this burning transformation will be of aid to his anguished soul.\n\nSlay the Xavian, $N.",
 		complete = "There was a welling up of... Elune's light within and around me. I feel Kurothel has witnessed your act of battle within this war that rages within our land, and within our hearts.\n\nMy hopes are that with time, the efforts of our Sentinels and our wayward druids will eliminate the demonic menace once and for all. Perhaps then and only then will the feral drive for vengeance burn out from our lineage's heritage.\n\nThank you, $N. You are an ally to the forest, and a friend of the Kaldorei.",
 	},
 	[98423] = {
+		accept = "Inside of the vault you find a tablet detailing the terms of a peace treaty between the Bronzebeard and Wildhammer $r clans. It appears to date back to time period just after the War of the Three Hammers, and is very likely a notable piece of dwarven history. The king of Ironforge would no doubt be interested in this artifact.",
 		complete = "Ah yes, my ancestor Madoran was the first Bronzebeard king of Ironforge following the great civil war between the Wildhammer, Bronzebeard, and Dark Iron clans. This treaty was drafted to codify the cessation of hostilities and terms of peace after the Bronzebeards won the mountain.\n\nAs you can see, the Wildhammers and Bronzebeards signed it... and the Dark Irons did not.\n\nThank you for recovering this and bringing it to me, $c.",
 	},
 	[98424] = {
+		accept = "Some particularly worn papers are held separately, folded in Fizsprocket's inside breast pocket.\n\nThey seem to detail important information that could be used against the Venture Co. and its operations in the region. It would be prudent to look for more before returning to Morin Cloudstalker.",
 		complete = "Ah, this is most valuable knowledge. I thank you for your efforts.\n\n<Morin looks through the notes.>\n\nIt seems our next move is clear.",
 	},
 	[98427] = {
@@ -18207,9 +19311,16 @@ SpokenQuestsText = {
 		accept = "If you're heading out of Auberdine, I could use your help!\n\nMy dear friend Tarrel and I were classmates in school. Oh, he was such a quickfire on all things excavation! We got split up after graduation--him to Wetlands, and me to here in Darkshore.\n\n<Hollee sighs, then her brow furrows slightly.>\n\nSorry, and his wife... Merrin.\n\nIt doesn't matter. If you go to the Wetlands, could you make sure he's alright? And maybe give him this? He's probably near Menethil Harbor. There's a boat straight there.",
 		complete = "<Tarrel reads the note.>\n\nOh... oh my. Poor Hollee.\n\nShe always did have a bit of a thing for me. And, truth be told, there was a time where I would have reciprocated. But I'm married. Happily married!\n\nI think the best thing to do here is not to reply. I don't know how to let her down, and I have far more pressing things to worry about here! My wife is missing!",
 	},
+	[98463] = {
+		accept = "Look, I'm glad to have you at my bar, and that's exactly why I'm telling you this.\n\nThe real party? That's over at the Salty Sailor Tavern in Booty Bay. Yes, in Stranglethorn Vale--that Booty Bay.\n\nDon't give me that look. I know it's run by goblins. Bartenders talk, and bar patrons talk a LOT. All I'm saying is that if you want to see things get real wild, head over there.\n\nNixxrax Fillamug will keep you topped up, don't even worry.",
+		complete = "I've got what you need, pal! Stay awhile, spend some of that gold weighing down your pocket, and have a good time.\n\nWelcome to the Salty Sailor Tavern!",
+	},
 	[98512] = {
 		accept = "You there, stranger. Get low and keep quiet. We are not alone here.\n\nI was on patrol near the border and noticed that there are a number of Al'Aketh skulking around the house just up the hill there to the north. I don't know what they are doing here, but it can't be good.\n\nIf you want to make yourself useful, get in there and take them out. I'll wait here and watch your back.",
 		complete = "I'm glad you made it back. That group of Al'Aketh looked like stone cold killers.\n\nThank you for your aid, I'll include your assistance in my report when I return to Valanaar.",
+	},
+	[98517] = {
+		accept = "Greetings, young Skyborne. The spirits have spoken of you, and tell me that you are ready to heed the call of fire. However, I shall not be the one to start you on that Path. Return to your home in the elemental plane, seek your mentors there. They will tell you what must be done.",
 	},
 	[98545] = {
 		accept = "Since you are here, I'd like you to deliver this letter to an old friend of mine in the Undercity. I'd deliver myself but I have a somewhat colorful history with the Dark Lady, and it would be better if a neutral third party made the delivery.\n\nYou are looking for a goblin named Glix Xizzix in the Trade Quarter area of the Undercity. I'm sure he'd be happy to compensate you for your time.\n\n<Leonid lets out a low chuckle as he hands you the letter.>",
@@ -18236,29 +19347,50 @@ SpokenQuestsText = {
 		complete = "Your training can now begin in earnest, $c. I see great promise in you, but take care not to turn away from the light, even for a moment. Embrace the pain it will cause you. That pain is a crucible, and you will emerge from it stronger than you ever were in your previous life.",
 	},
 	[98731] = {
+		accept = "Now that you have received my blessing, return to Dendrite. He will instruct you further. I do hope we meet again someday.\n\nMay the shadows forever hide you and your foes easily fall prey to your claws, young one.",
 		complete = "<Dendrite makes another invisible gesture in the air above him as you approach. Another aura of power comes over him, and he smiles ever so slightly.>\n\nI sense the cunning and ferocity of the cat within you that was not present when I sent you to meet the Great Cat Spirit. In your eyes I can sense you now understand the stealth and speed needed to adopt this nature.\n\nNow you may learn to focus your cunning and adopt the true nature of the cat and call upon its spirit.",
 	},
 	[98738] = {
+		accept = "Now that you have received my blessing, return to Dendrite. He will instruct you further.\n\nUnfortunately I have little left to teach you for the moment. I do hope you come and visit me in Zephras again someday. I sense promise in you, young shen'dorei.\n\nMay the shadows forever hide you, your foes easily fall prey to your claws, and the winds guide your steps.",
 		complete = "<Dendrite makes another invisible gesture in the air above him as you approach. Another aura of power comes over him, and he smiles ever so slightly.>\n\nI sense the cunning and ferocity of the cat within you that was not present when I sent you to meet the Great Cat Spirit. In your eyes I can sense you now understand the stealth and speed needed to adopt this nature.\n\nNow you may learn to focus your cunning and adopt the true nature of the cat and call upon its spirit.",
 	},
 	[98739] = {
+		accept = "Now that you have received my blessing, return to Dendrite. He will instruct you further. I do hope we meet again someday.\n\nMay the shadows forever hide you and your foes easily fall prey to your claws, young one.",
 		complete = "<Dendrite makes another invisible gesture in the air above him as you approach. Another aura of power comes over him, and he smiles ever so slightly.>\n\nI sense the cunning and ferocity of the cat within you that was not present when I sent you to meet the Great Cat Spirit. In your eyes I can sense you now understand the stealth and speed needed to adopt this nature.\n\nNow you may learn to focus your cunning and adopt the true nature of the cat and call upon its spirit.",
 	},
 	[98815] = {
 		accept = "The Highlands are host to ruins of some sort, secrets now being explored by an expedition team. What I know is that they've got their own wildlife and beasts lurking in that mountain marshland. How about you take a foray in there with some well-equipped friends, and we work a trade?\n\nI don't care if they're hiding, I want their hides! Bring me the skins from four of the Thicket Raptors, I'll have a trade worked out for you to make it worth it.",
+		complete = "These are some of the most impressive hides I've ever held; these will make spectacular detailing on all of my fine trim. Thank you, $N.\n\nTry these on and take one you'd like in trade.",
 	},
 	[98823] = {
 		accept = "Truly, this is a fascinating object.\n\nIt shows indications of being much more than a mere carving or sculpture.\n\nWhile our elders may be interested in observing this artifact, the Earthen Ring are who would carry the most wisdom for our buried ruins and forgotten lands. Seek out Muln Earthfury, a direct approach is fitting for the gravity of what you carry.\n\nYou can find him and other elders of the Earthen Ring council at the Skywatcher Plateau in northwest Mulgore.",
+		complete = "Ah... this shard hums with the voice of the world itself. The light within is a memory from the past, glimmering with flashes of history. This titan machine must have been waiting to be understood for lifetimes.\n\nYou've done wisely to bring it to us. The Earthen Ring will safeguard it, study it, and share the truths it keeps when we are able to receive its messages.\n\nYou honor the elements today, traveler.",
 	},
 	[98824] = {
 		accept = "With titan-like inscriptions like that on its facets, nothing less than Ironforge's Hall of Explorers is the right place to bring it.\n\nI'd like to think that you'll be noted in the history for it in the catalogue -- \"Recovered by $N! Authenticated by Prospector Whelgar...\" Ah, I'm gettin' meself carried away.\n\nHigh Explorer Magellas will receive you, and given the exquisite nature of what you carry, will surely be most generously appreciative should you donate it to the museum.\n\nGood find!",
 		complete = "What's this you've got...\n\nWoah! Look at this marvel! The light through it dances like nothin' I've seen since my first dig in old Uldaman. The marks of the keepers on this cannot be mistaken.\n\nYou've done the League a great service bringin' this home. A find like this pushes the very boundaries o' the world's wisdom forward.\n\nWe'll be sure to record the details of your contribution! Truly a job well done, adventurer.",
 	},
+	[98887] = {
+		accept = "The Theramore Expeditionary Force are tenacious and continue to send reinforcements to bolster their position on the Darkspear Islands.\n\nGo, show them the might of the Horde! Bring me the evidence of your victory in this key battleground and you will be well rewarded.",
+		complete = "The sands of the Darkspear Islands are awash with the blood of the Alliance you've killed. Well done, $N.\n\nFor the Horde!",
+	},
 	[98888] = {
-		accept = "The fight in Darkspear Islands is ceaseless, $N. Together, we will destroy the Alliance dogs in the Theramore Expeditionary Force!",
+		complete = "Well done, $c! You've helped the Horde gain control of Darkspear Islands!",
+	},
+	[98895] = {
+		accept = "The battle against the Darkspear Raiders is heating up. Without urgent aid, the Darkspear Islands will be lost to us.\n\nIt is your duty as a proud member of the Alliance to ensure this does not happen. Bring me proof of your contributions on the front lines and you will be revered as a hero of the Alliance!",
+		complete = "You've distinguished yourself honorably in battle at the Darkspear Islands and your efforts have not gone unnoticed.\n\nThere are ever more battles to fight, however. Continue to prove yourself in battle and you will surely reap the rewards.",
 	},
 	[98896] = {
 		accept = "The fight in the Darkspear Islands continues, $N. Rally your forces and crush the Darkspear Raiders!",
+	},
+	[98903] = {
+		accept = "Go forth and represent the Theramore Expeditionary Force in battle at Darkspear Islands, $N! Achieve victory and show these Horde dogs the might of the Alliance!",
+		complete = "The Theramore Expeditionary Force are grateful for your dedication and prowess in the battle for the Darkspear Islands, $N.\n\nFor the Alliance!",
+	},
+	[98906] = {
+		accept = "The battle at the Darkspear Islands be locked in a stalemate, $c. Show those Alliance fools who the superior force is.\n\nCarry your head high in service of the Darkspear and claim victory in battle. The Loa will surely be givin' you their blessing, $c!",
+		complete = "You be showin' strength and dedication out at the Darkspear Islands! Your prowess in battle are to be admired, mon!",
 	},
 	[99046] = {
 		accept = "The Council of the Forest sent a small group of sentinels to the Oracle Tree some time ago. The tree sends messages to our elders, and it falls to us to deliver them to Darnassus safely.\n\nI received word that our most recent runner has not yet arrived. The Oracle's messages vary in frequency, but it has been abnormally long.\n\nPlease head towards the Oracle Glade along the road to the west and check on her. It would have been Eralya Leafshadow's turn, and she is still in training. Elune guide you.",
@@ -18399,8 +19531,14 @@ SpokenQuestsText = {
 	[99191] = {
 		accept = "The High Order are currently accepting donations for wool cloth.\n\nA donation of sixty pieces of wool cloth will net you full recognition by the High Order for your generous actions.  Sixty pieces of wool should prove to be a sufficient amount for the High Order's needs for now.\n\nIf you have the sixty pieces of wool cloth on you and are ready to donate them, I'm able to take them from you now.",
 	},
+	[99192] = {
+		complete = "Wonderful! We thank you for your generous donation, $N!",
+	},
 	[99196] = {
 		accept = "The Windshapers are currently accepting donations for wool cloth.\n\nA donation of sixty pieces of wool cloth will net you full recognition by the Windshapers for your generosity.\n\nIf you have the sixty pieces of wool cloth on you and are ready to donate them, I'm able to take them from you now.",
+	},
+	[99197] = {
+		accept = "The Windshapers presently find ourselves in need of silk cloth. If you could spare sixty pieces of silk then we should be able to reach our goal with the support of others.\n\nA fine gift such as silk would certainly increase your honor and esteem amongst the Windshapers!\n\nIf you have the sixty pieces of silk cloth on you and are ready to donate them, I'm able to take them from you now.",
 	},
 	[99260] = {
 		accept = "I was tasked to retrieve important data on the flow of elemental energy from the Overlook Standing Stones. That data is vital to our plans to safely travel between Skywall and Azeroth. Without that data to aid in our calculations, our attempts to steer our skycutter ships through the elemental plane will fail.\n\nThe data is likely lost at this point, and I'm in no state to attempt to gather it again. I told the Supreme Magister of your role in saving me, and he wishes to speak with you again.",
