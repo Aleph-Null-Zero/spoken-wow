@@ -32,7 +32,7 @@ SpokenBossCreatures = {
 		["miner johnson"] = { creature = 3586, display = 556, spells = { 6016 } },
 		["mr smite"] = { creature = 646, display = 2026, spells = { 3391, 6264, 6432, 6435 } },
 		["rhahkzor"] = { creature = 644, display = 14403, spells = { 6304 } },
-		["sneed"] = { creature = 642, display = 1269, spells = { 7399, 3603, 845, 6713, 5141 } },
+		["sneed"] = { creature = 642, display = 7125, spells = { 7399, 3603, 845, 6713, 5141 } },
 	},
 	[43] = {
 		["kresh"] = { creature = 3653, display = 5126, spells = {  } },
@@ -75,7 +75,7 @@ SpokenBossCreatures = {
 	[90] = {
 		["crowd pummeler 9 60"] = { creature = 6229, display = 6774, spells = { 8374, 10887, 5568 } },
 		["electrocutioner 6000"] = { creature = 6235, display = 6915, spells = { 11085, 11082, 11084 } },
-		["grubbis"] = { creature = 7361, display = 6533, spells = { 12057, 1604 } },
+		["grubbis"] = { creature = 7361, display = 144378, spells = { 12057, 1604 } },
 		["mekgineer thermaplugg"] = { creature = 7800, display = 6980, spells = { 10101 } },
 		["viscous fallout"] = { creature = 7079, display = 5497, spells = { 21687 } },
 	},
@@ -156,7 +156,7 @@ SpokenBossCreatures = {
 		["onyxia"] = { creature = 10184, display = 8570, spells = { 15847, 18351, 18435 } },
 	},
 	[289] = {
-		["darkmaster gandling"] = { creature = 1853, display = 40322, spells = { 15791, 18702, 17950, 12040, 26200 } },
+		["darkmaster gandling"] = { creature = 1853, display = 11070, spells = { 15791, 18702, 17950, 12040, 26200 } },
 		["doctor theolen krastinov"] = { creature = 11261, display = 10901, spells = { 18103, 8269, 16509 } },
 		["instructor malicia"] = { creature = 10505, display = 11069, spells = { 17831, 18376, 17843, 15586, 8362, 13747 } },
 		["jandice barov"] = { creature = 10503, display = 11073, spells = { 16098, 17773, 8994, 18270 } },
@@ -190,7 +190,7 @@ SpokenBossCreatures = {
 		["baroness anastari"] = { creature = 10436, display = 10698, spells = { 16565, 16867, 17244, 18327 } },
 		["black guard swordsmith"] = { creature = 11121, display = 775, spells = { 1604, 5884 } },
 		["cannon master willey"] = { creature = 10997, display = 10674, spells = { 10101, 15615, 16496, 17279, 6201 } },
-		["crimson hammersmith"] = { creature = 11120, display = 34497, spells = { 17445 } },
+		["crimson hammersmith"] = { creature = 11120, display = nil, spells = { 17445 } },
 		["ezra grimm"] = { creature = 11058, display = 10475, spells = { 7964, 17294 } },
 		["hearthsinger forresten"] = { creature = 10558, display = 10482, spells = { 14443, 16100, 16244, 16798 } },
 		["magistrate barthilas"] = { creature = 10435, display = 10433, spells = { 10887, 16791, 16793, 14099 } },
@@ -295,7 +295,7 @@ SpokenBossCreatures = {
 		["maexxna"] = { creature = 15952, display = 15928, spells = { 28622, 29484, 28741, 28747, 28776 } },
 		["noth the plaguebringer"] = { creature = 15954, display = 16590, spells = { 29213, 29214, 29211, 29212 } },
 		["patchwerk"] = { creature = 16028, display = 16174, spells = { 26662, 28131, 32309 } },
-		["sapphiron"] = { creature = 15989, display = 113690, spells = { 28531, 28547, 19983, 28542, 15847 } },
+		["sapphiron"] = { creature = 15989, display = 16033, spells = { 28531, 28547, 19983, 28542, 15847 } },
 		["thaddius"] = { creature = 15928, display = 16137, spells = { 28169, 28089, 28084, 28059, 28299, 27680, 28167 } },
 		["the four horsemen"] = { creature = 16062, display = 16139, spells = { 26446, 29061 } },
 	},
@@ -324,7 +324,7 @@ SpokenBossCreatures = {
 		["ysondre"] = { creature = 14887, display = 15364, spells = { 24819, 24795, 24818, 24813, 15847 } },
 	},
 	[2856] = {
-		["balnazzar"] = { creature = 10813, display = 34424, spells = { 12098, 13704, 17287, 17399, 17405 } },
+		["balnazzar"] = { creature = nil, display = nil, spells = {  } },
 		["lillian voss"] = { creature = nil, display = nil, spells = { 1232043, 1232051, 1231375, 1232192, 1232190, 1233847, 1234595 } },
 	},
 	[2875] = {
@@ -339,12 +339,11 @@ SpokenBossCreatures = {
 		["unkomon"] = { creature = nil, display = nil, spells = { 1221576, 1221577, 1221578, 1220515 } },
 	},
 	[2959] = {
-		["arcane anomaly"] = { creature = 16488, display = 16216, spells = {  } },
+		["arcane anomaly"] = { creature = 245999, display = 129891, spells = {  } },
 		["atrexis the grave knight"] = { creature = 247126, display = 145787, spells = {  } },
 		["fel ancient"] = { creature = 246003, display = 129894, spells = {  } },
 		["lyn the ignored"] = { creature = 247032, display = 130235, spells = {  } },
 		["mana devourer"] = { creature = 246008, display = 129895, spells = {  } },
-		["mana elemental"] = { creature = 14689, display = 14253, spells = {  } },
 		["shade of the archmage"] = { creature = 246020, display = 130061, spells = {  } },
 		["unstable sentinel"] = { creature = 246017, display = 129954, spells = {  } },
 	},

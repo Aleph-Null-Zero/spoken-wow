@@ -48,6 +48,8 @@ function rowFor(map, key) {
   }
   return row;
 }
+// A model the client does not have draws an empty portrait: none, so the guide's or the unknown boss's is drawn.
+for (const row of rows) if (row.display && !models.has(row.display)) row.display = null;
 let filledModels = 0;
 let filledSpells = 0;
 const bosses = await readBosses();
@@ -91,7 +93,8 @@ for (const entry of manual) {
   row.spells = [...new Set([...entry.spells, ...row.spells])];
   filledManual++;
 }
-// Creatures only Forever has, known from Efficient Games' records of the fight, are not in the database.
+// Creatures only Forever has, known from Efficient Games' records of the fight, are not in the database, and a
+// few of its creatures are drawn with another model in Forever than the database's.
 const fixed = JSON.parse(await readFile(join(ROOT, "pipelines/zones/tools/boss-creatures-manual.json"), "utf8"));
 const known = new Set(bosses.map((b) => `${b.map}\t${b.key}`));
 for (const entry of fixed) {

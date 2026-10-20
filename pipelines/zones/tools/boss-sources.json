@@ -2319,6 +2319,7 @@
   "npcIds": [
    240811
   ],
+  "noNameMatch": true,
   "abilityTitle": null
  },
  {
@@ -2483,6 +2484,7 @@
   "key": "arcane anomaly",
   "wikiTitle": "City of Dalaran",
   "npcIds": [],
+  "noNameMatch": true,
   "abilityTitle": null
  },
  {
@@ -2504,6 +2506,7 @@
   "key": "mana elemental",
   "wikiTitle": "City of Dalaran",
   "npcIds": [],
+  "noNameMatch": true,
   "abilityTitle": null
  },
  {

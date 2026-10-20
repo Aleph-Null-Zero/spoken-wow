@@ -75,5 +75,36 @@
   "creature": 256273,
   "display": 139544,
   "source": "Efficient Games: creature_details 256273 Sairuh Maryla, display 139544, the id beside Kaigy Maryla's 256275. Not in the database; no encounter record."
+ },
+ {
+  "map": 36,
+  "key": "sneed",
+  "display": 7125,
+  "source": "Sneed himself (643's model) rather than his Shredder (1269), as Efficient Games' encounter 2742 and the Adventure Guide show him. The creature stays the spawned Shredder 642, so targeting it shows the story; Sneed is known by his name."
+ },
+ {
+  "map": 90,
+  "key": "grubbis",
+  "display": 144378,
+  "source": "Efficient Games: every Forever build records Grubbis (7361) with display 144378, not the database's 6533."
+ },
+ {
+  "map": 289,
+  "key": "darkmaster gandling",
+  "display": 11070,
+  "source": "The client has no display 40322 (the database's, a later model). 11070 is the model of the database's other Darkmaster Gandling (44323)."
+ },
+ {
+  "map": 533,
+  "key": "sapphiron",
+  "display": 16033,
+  "source": "The client has no display 113690 (the database's, a later model). 16033 is the model of the database's Sapphiron (1) (29991)."
+ },
+ {
+  "map": 2959,
+  "key": "arcane anomaly",
+  "creature": 245999,
+  "display": 129891,
+  "source": "Efficient Games: encounter 3298 started by 245999; creature_details 245999 Arcane Anomaly, display 129891. The database's Arcane Anomaly 16488 is Karazhan's."
  }
 ]
