@@ -52,7 +52,8 @@ shows the unknown boss's question mark rather than an empty portrait. Where the 
 encounter's (The Butcher is the game's The Baron, Infurnus its Magmatus) or does not spawn it, its id is a hint in
 `boss-sources.json`, and a boss whose only match is a namesake from another dungeon is marked `noNameMatch` there.
 Where the database has no such creature at all, or Forever draws the boss with another model,
-`boss-creatures-manual.json` gives the creature and model, with the evidence for each. Its spells are the ones chosen by hand where the article lists abilities without ids (`boss-abilities-manual.json`), then the ones in the Abilities of its warcraft.wiki.gg
+`boss-creatures-manual.json` gives the creature and model, with the evidence for each. The bosses still without a
+creature, a portrait or a story, and why, are in [MISSING.md](MISSING.md). Its spells are the ones chosen by hand where the article lists abilities without ids (`boss-abilities-manual.json`), then the ones in the Abilities of its warcraft.wiki.gg
 article, then what the database casts, then the guide's abilities that name a spell, less the passive ones and those the
 client has no name for. Bosses only Forever has, and the Classic raid bosses the wiki does not list, have what is found.
 
