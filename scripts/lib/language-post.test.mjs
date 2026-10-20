@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { channelName, languageOf, latestReleases, postText } from "./language-post.mjs";
+import { channelName, languageOf, latestReleases, oldPosts, postText } from "./language-post.mjs";
 
 const url = (tag) => `https://github.com/o/r/releases/tag/${tag}`;
 const release = (tag, extra = {}) => ({ tag_name: tag, html_url: url(tag), draft: false, prerelease: false, ...extra });
@@ -52,4 +52,15 @@ test("a tag resolves to its language's GitHub packs; English and addons are skip
   assert.deepEqual(de.packs.map((p) => p.release).sort(), ["books-audio-deDE", "quests-audio-deDE", "zones-audio-deDE"]);
   assert.ok(languageOf("zones-audio/v2.2.1", packs).skip);
   assert.ok(languageOf("spoken/v3.1.0", packs).skip);
+});
+
+test("a new post replaces any bot's pinned post, but no person's and no other pin", () => {
+  const pin = (id, bot, content) => ({ id, author: { bot }, content });
+  const old = oldPosts([
+    pin("1", true, "Audio packs:\n- Quests: a"),
+    pin("2", true, "Audio packs:\n- Zones: b"),
+    pin("3", false, "Audio packs: which one do I need?"),
+    pin("4", true, "Welcome to the channel"),
+  ]);
+  assert.deepEqual(old.map((m) => m.id), ["1", "2"]);
 });
