@@ -359,9 +359,11 @@ local function BuildChrome()
 			mm:ClearAllPoints()
 			mm:SetPoint("RIGHT", close, "LEFT", 0, 0)
 			mm:SetFrameLevel(close:GetFrameLevel())
-			mm:SetSize(buttonSize, buttonSize)
-			mm.MinimizeButton:SetSize(buttonSize, buttonSize)
-			mm.MaximizeButton:SetSize(buttonSize, buttonSize)
+			for _, arrow in ipairs({ mm.MinimizeButton, mm.MaximizeButton }) do
+				arrow:SetSize(buttonSize, buttonSize)
+				arrow:ClearAllPoints()
+				arrow:SetPoint("CENTER", mm, "CENTER", 0, 0)
+			end
 			mm.MinimizeButton:SetScript("OnClick", function() SetMinimized(true) end)
 			mm.MaximizeButton:SetScript("OnClick", function() SetMinimized(false) end)
 		else
