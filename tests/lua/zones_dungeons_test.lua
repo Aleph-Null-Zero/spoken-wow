@@ -205,7 +205,8 @@ _G.GetSubZoneText = function() return "" end
 Click("Dungeons and Raids")
 Expect("...its line and its zone's card closing again on a click each", Click("The Barrens"),
     "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Thousand Needles")
-Expect("...a line, one level in, as a city's is", RowFor("Deadmines").row.style .. "|" .. RowFor("Deadmines").row.nest, "group|1")
+Expect("...a single line, one level in, as a city's is", (RowFor("Deadmines").row.leaf and "leaf" or "group") .. "|" .. RowFor("Deadmines").row.nest, "leaf|1")
+Expect("...with no plus, as nothing opens under it", RowFor("Deadmines").toggle:IsShown(), false)
 Expect("...counted as one of the zone's places", RowFor("Westfall").count.text:match("/(%d+)"), "2")
 Expect("...no numbers of its own", RowFor("Deadmines").count.text, "")
 Expect("...greyed while not found", RowFor("Deadmines").row.none, true)
@@ -234,7 +235,7 @@ Expect("...a story under Thousand Needles counted in the zone of its entrance",
 Click("Dungeons and Raids")
 Expect("...opening on a click, a line for each under it by name", Shown(),
     "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Thousand Needles")
-Expect("...one level further in", RowFor("Razorfen Downs").row.style .. "|" .. RowFor("Razorfen Downs").row.nest, "group|2")
+Expect("...one level further in", (RowFor("Razorfen Downs").row.leaf and "leaf" or "group") .. "|" .. RowFor("Razorfen Downs").row.nest, "leaf|2")
 Expect("...the line chosen, its page counting its dungeons in its zone",
     page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
     "Dungeons and Raids|In The Barrens · 0 of 2 discovered|" .. Z.L.DUNGEONS_PICK)
@@ -268,6 +269,8 @@ Expect("opened on a dungeon, its entrance's zone and its line open", Shown(),
 Expect("...the dungeon's line chosen", RowFor("Razorfen Downs").selected, true)
 Expect("...its page with the dungeon's round portrait left of the title, the zone badge on it",
     page.headFace ~= nil and page.headFace.speaker.bullet == "zone" and page.shift > 0, true)
+Expect("...the dungeon's key, as the other tabs show it, not its zone's picture", page.headFace.speaker.icon,
+    [[Interface\Icons\INV_Misc_Key_03]])
 showAll = false
 Z:RefreshLoreWindow()
 Expect("...not discovered, its page says so, in The Barrens", page.sub.text.text .. "|" .. page.body.text.text,

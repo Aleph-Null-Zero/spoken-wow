@@ -643,6 +643,24 @@ Expect("...chosen, its page has the chain's name", page.title.text, "Lost Neckla
 Expect("...the zone it is listed in and its count", page.sub.text.text, "In Elwynn Forest · 2 of 4 completed, 1 in progress")
 Expect("...and, as a zone's page, the quests on the left to choose", PageWords(), L.QUESTS_PICK)
 Expect("...nothing to play on it", page.play, nil)
+Expect("...the Compendium's tome for its portrait, where the tab names none, the title where every page has it",
+    page.headFace.speaker.icon == SpokenCompendium.ICON and page.shift > 0, true)
+Expect("...the divider 10 under the line under the title, which the face reaches past by 2",
+    select(5, page.divider:GetPoint()), -12)
+do
+    page:Show({ title = "No Line Under It" })
+    Expect("a page with no line under its title: the divider clear of the face", select(5, page.divider:GetPoint()), -27)
+    GameTooltip.lines = nil
+    page.titleHit.scripts.OnEnter(page.titleHit)
+    Expect("...a title shown whole, nothing under the pointer", GameTooltip.lines, nil)
+    page.title.IsTruncated = function() return true end
+    page.titleHit.scripts.OnEnter(page.titleHit)
+    Expect("...one cut short, whole in the tooltip", table.concat(GameTooltip.lines or {}, "|"), "No Line Under It")
+    page.titleHit.scripts.OnLeave(page.titleHit)
+    page.title.IsTruncated = nil
+    ClickChain("Lost Necklace")
+    ClickChain("Lost Necklace")
+end
 completed[BACK], completed[GOLDTOOTH] = true, true
 questLog = {}
 Tab:Refresh()
@@ -1162,6 +1180,9 @@ list = Shown()
 Expect("in a zone with several dungeons, a line for each inside Dungeons and Raids",
     Has(list, "Blackrock Depths") and Has(list, "Blackrock Spire") and RowFor("Blackrock Depths").row.style == "group"
     and RowFor("Blackrock Depths").row.nest, 2)
+Click("Dungeons and Raids")
+Expect("...the line's page with its zone's portrait, not the question mark", page.headFace.speaker.icon ~= [[Interface\Icons\INV_Misc_QuestionMark]], true)
+Click("Dungeons and Raids")
 Expect("...the dungeon's quests inside its own line", Has(list, "Dark Iron Legacy") and RowFor("Dark Iron Legacy").row.nest >= 3, true)
 Click("Blackrock Spire")
 Expect("...a dungeon's page in the zone of its entrance, counting its quests", page.title.text == "Blackrock Spire"

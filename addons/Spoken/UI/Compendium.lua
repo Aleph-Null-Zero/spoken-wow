@@ -747,9 +747,9 @@ List.__index = List
 ---   the name, count/total.
 --- - style = "group": one line holding more lines (a place, a chain, a kind of quest or of
 ---   writing): its plus or minus, the name, beside it `count`/`total` and the share or a tick with
----   `tick` (and `goingCount` by the quest mark).
+---   `tick` (and `goingCount` by the quest mark); no plus or minus with `empty`, nothing ever under it.
 --- - leaf = true: one line for a single thing: the name, and at the line's end a tick with `done`,
----   the quest mark with `going`, or the padlock with `locked`.
+---   the quest mark with `going`, or the padlock with `locked`; greyed with `missing` or `none`.
 --- Groups and leaves give `nest`, how many open groups hold them.
 function C.NewList(panel, opts)
 	local list = setmetatable({ panel = panel, opts = opts, rows = {}, filter = "" }, List)
@@ -1166,7 +1166,7 @@ end
 -- the names of what it holds, and on the right what is found out of all and the share, the quest
 -- mark with how many are under way, a tick once all are found, a padlock on what does not open.
 local function DrawGroup(row, item, indent, onlyFound)
-	Toggle(row, item, onlyFound)
+	if item.empty then row.toggle:Hide() else Toggle(row, item, onlyFound) end
 	row.toggle:ClearAllPoints()
 	row.toggle:SetPoint("CENTER", row, "LEFT", indent + RAIL_X + TOGGLE_SHIFT, 0)
 
@@ -1233,7 +1233,7 @@ local function DrawLeaf(row, item, indent)
 	-- found, greyer: listed, but it does not open.
 	if item.locked then
 		Tint(row.label, LOCKED_INK)
-	elseif item.missing then
+	elseif item.missing or item.none then
 		row.label:SetTextColor(0.66, 0.64, 0.60)
 	else
 		row.label:SetTextColor(0.94, 0.93, 0.89)
@@ -1617,7 +1617,7 @@ local SPELLBOOK_PAGE = { file = ZONES_ART .. "spellbook-Page-Right-C60", coords 
 ---
 --- `look`, where given, changes the page's art from the spellbook's for the Compendium:
 --- { art = { file, coords } the parchment; top, right, the heading's room from the page's top and
---- its right edge; titleSize; backplate = { full,
+--- its right edge; titleSize; oneLine, a title cut short at one line rather than two; backplate = { full,
 --- height } }. Spoken Places' page beside the map is the quest log's details page this way.
 function C.NewPage(parent, addon, play, report, look)
 	look = look or {}
@@ -1682,12 +1682,29 @@ function C.NewPage(parent, addon, play, report, look)
 	title:SetPoint("TOPLEFT", frame, "TOPLEFT", PAD, -top)
 	title:SetPoint("RIGHT", frame, "RIGHT", -right - 34, 0)
 	title:SetJustifyH("LEFT")
-	-- One line, cut short with an ellipsis: a long title never wraps over the line under it.
-	if title.SetWordWrap then title:SetWordWrap(false) end
-	if title.SetMaxLines then title:SetMaxLines(1) end
+	-- Two lines at most, one where the page is narrow, cut short with an ellipsis after: the line
+	-- under it and the divider move down with it.
+	if look.oneLine and title.SetWordWrap then title:SetWordWrap(false) end
+	if title.SetMaxLines then title:SetMaxLines(look.oneLine and 1 or 2) end
 	-- Its shadow is the quest log's: the font's own, which Ink would take away.
 	title:SetTextColor(INK[1], INK[2], INK[3])
 	self.title = title
+	-- A title cut short, whole in the tooltip, as a list row's name is.
+	local titleHit = CreateFrame("Frame", nil, frame)
+	titleHit:SetAllPoints(title)
+	titleHit:EnableMouse(true)
+	titleHit:SetScript("OnEnter", function(hit)
+		if not (GameTooltip and title.IsTruncated and title:IsTruncated()) then return end
+		GameTooltip:SetOwner(hit, "ANCHOR_BOTTOMLEFT")
+		GameTooltip:SetText(title:GetText() or "", 1, 1, 1, 1, true)
+		GameTooltip:Show()
+		hit.tipShown = true
+	end)
+	titleHit:SetScript("OnLeave", function(hit)
+		if hit.tipShown and GameTooltip then GameTooltip:Hide() end
+		hit.tipShown = nil
+	end)
+	self.titleHit = titleHit
 
 	-- The line under the title as the places' page sets it: a line 16 high, its words in the middle,
 	-- 2 under the title; none at all where there is nothing to say. Where the tab gives it somewhere
@@ -1743,6 +1760,8 @@ function C.NewPage(parent, addon, play, report, look)
 		divider:SetHeight(Pixels(frame, 1))
 	end
 	self.divider = divider
+	-- A narrower page can wrap the title onto its second line.
+	frame:HookScript("OnSizeChanged", function() self:PlaceDivider() end)
 
 	local body = SpokenTextView.Create(frame, addon)
 	body.frame:SetPoint("TOPLEFT", divider, "BOTTOMLEFT", 6, -2)
@@ -1859,6 +1878,17 @@ function Page:RefreshPlay()
 	self.title:ClearAllPoints()
 	self.title:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD + self.shift, -self.top)
 	self.title:SetPoint("RIGHT", previous or self.frame, previous and "LEFT" or "RIGHT", previous and -10 or -self.right, 0)
+	self:PlaceDivider()
+end
+
+-- The divider at the page's edge, 10 under the line under the title or under the face, whichever
+-- reaches lower: with no line under the title, or a title of one line, the face reaches past it.
+function Page:PlaceDivider()
+	local title = self.title.GetStringHeight and self.title:GetStringHeight()
+	if not title or title <= 0 then title = self.titleSize end
+	local under = self.top + title + 2 + (self.sub:GetHeight() or 0)
+	local face = self.face and (self.top - 4 + FACE_SIZE) or 0
+	self.divider:SetPoint("TOPLEFT", self.sub, "BOTTOMLEFT", -6 - self.shift, -(10 + math.max(0, face - under)))
 end
 
 --- entry = { title, subtitle, onSubtitle, text, target = what Play and Report act on, or nil for
@@ -1868,16 +1898,15 @@ end
 --- onSubtitle(), where given, is what a click on the line under the title does (the map panel's
 --- area story returns to its zone's with it); without it the line is plain words.
 function Page:Show(entry)
-	local face
-	if entry.icon then
-		if self.headFace == nil then
-			local ok, made = false, nil
-			if _G.Spoken and Spoken.CreateSpeakerFace then ok, made = pcall(Spoken.CreateSpeakerFace, Spoken, self.frame, FACE_SIZE) end
-			self.headFace = ok and made or false
-		end
-		face = self.headFace or nil
-		if face then face:SetSpeaker(entry.icon) end
+	-- The Compendium's tome where the tab names no picture: the title never moves between pages.
+	local icon = entry.icon or { objectOrItem = true, icon = ICON }
+	if self.headFace == nil then
+		local ok, made = false, nil
+		if _G.Spoken and Spoken.CreateSpeakerFace then ok, made = pcall(Spoken.CreateSpeakerFace, Spoken, self.frame, FACE_SIZE) end
+		self.headFace = ok and made or false
 	end
+	local face = self.headFace or nil
+	if face then face:SetSpeaker(icon) end
 	if self.face and self.face ~= face then self.face:Hide() end
 	self.face = face
 	self.shift = face and ((face:GetWidth() or 0) + FACE_GAP) or 0
@@ -1886,8 +1915,6 @@ function Page:Show(entry)
 		face:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD, -(self.top - 4))
 		face:Show()
 	end
-	-- The divider stays where the page's edge is, under the face.
-	self.divider:SetPoint("TOPLEFT", self.sub, "BOTTOMLEFT", -6 - self.shift, -10)
 	self.title:SetText(entry.title or "")
 	self.sub.text:SetText(entry.subtitle or "")
 	-- No line under the title takes no room: the divider closes up under it.
