@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Show only the lines you play.** Under Show Narrator, **Only Lines I Play** keeps the window or subtitles for
+  lines you start with a Play button, the quest log or the Compendium. Lines Spoken reads on its own are only
+  heard, so it sits well beside Immersion and other quest windows. *([Aleph-Null-Zero](https://github.com/Aleph-Null-Zero))*
 - **More bosses in the Bosses tab show their face.** The bosses of the Ruins of Lordaeron, the Hall of Thanes,
   the City of Dalaran and the Excavation Site: Wetlands, and two of the Marylas in the Karazhan Crypts, have their
   portrait. Sneed, Grubbis, Darkmaster Gandling, Sapphiron and Dalaran's Arcane Anomaly show the right one, a boss
