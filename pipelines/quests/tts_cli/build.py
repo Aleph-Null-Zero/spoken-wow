@@ -9,6 +9,7 @@ Needs no database: the corpus carries every field the lookup tables key on.
 """
 import json
 import os
+import re
 import shutil
 
 from slpp import slpp as lua
@@ -175,6 +176,14 @@ def body_by_model() -> dict:
         return {int(file_id): body_name(row["race"], row["gender"]) for file_id, row in json.load(f).items()}
 
 
+#: A title the capture kept after the name ("Ishlee Breezewhisper <Skinner>"). The game names
+#: the unit without it, so a key carrying it is never matched and a quest log shows it.
+_SUBNAME = re.compile(r"\s*<[^<>]*>\s*$")
+
+
+def speaker_name(name: str) -> str:
+    """The name the game shows for the unit: the corpus's, less any <subname>."""
+    return _SUBNAME.sub("", name or "") or name
 
 
 def name_rank(line: dict) -> int:
@@ -235,7 +244,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         rank = name_rank(line)
         if rank >= ranks.get((kind, line["npcId"]), 0):
             ranks[(kind, line["npcId"])] = rank
-            names.setdefault(kind, {})[line["npcId"]] = line["npcName"]
+            names.setdefault(kind, {})[line["npcId"]] = speaker_name(line["npcName"])
 
         # Before the quest tables, which it must stay out of: a follow-up line carries its
         # quest, but it is said in chat rather than in the quest dialog, so matching its text
@@ -282,7 +291,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             # Same-named NPCs of different voices share one entry here, so it names the line's
             # own file, never a voice's that only some of them speak.
             gossip_by_name[kind].setdefault(
-                escape_lua_string(line["npcName"]), {})[text] = own
+                escape_lua_string(speaker_name(line["npcName"])), {})[text] = own
             continue
 
         # Progress text is never voiced, so an entry would resolve to silence.
@@ -306,7 +315,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
 
         quest_ids.setdefault(line["source"], {}) \
                  .setdefault(escape_lua_string(line["questTitle"]), {}) \
-                 .setdefault(escape_lua_string(line["npcName"]), {}) \
+                 .setdefault(escape_lua_string(speaker_name(line["npcName"])), {}) \
                  .setdefault(quest_search_text(line["originalText"]), line["questId"])
 
     wordings = several_wordings(wordings)

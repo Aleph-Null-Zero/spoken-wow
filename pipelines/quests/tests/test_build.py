@@ -336,3 +336,15 @@ def test_a_contributed_name_stands_where_there_is_no_other():
 
 def test_among_names_of_one_kind_the_last_stands():
     assert _names(_speaker(1, "Vaelan"), _speaker(1, "Acride", None, 41))[1] == "Acride"
+
+
+def test_a_subname_is_not_part_of_the_name():
+    greeting = {"lineId": "g:ab12", "source": "gossip", "questId": None, "questTitle": None,
+                "npcId": 1, "npcName": "Ishlee Breezewhisper <Skinner>", "npcType": "creature",
+                "fileName": "ab12", "originalText": "Hides?", "generatable": True,
+                "contributionId": 7}
+    tables = _wording_tables({"lines": [greeting]})
+
+    assert tables["npc_name_lookups"][1] == "Ishlee Breezewhisper"
+    # The game names the unit without it, so a key that kept it would never match.
+    assert tables["npc_name_gossip_file_lookups"] == {"Ishlee Breezewhisper": {"Hides?": "ab12"}}
