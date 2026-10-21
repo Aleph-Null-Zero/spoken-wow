@@ -30,9 +30,6 @@ for map, bosses in pairs(SpokenBosses.maps) do
         keys[boss.key] = true
         if type(boss[1]) ~= "string" or boss[1] == "" or boss.key == "" then table.insert(unnamed, map .. "/" .. tostring(boss.id)) end
         if type(boss.ids) ~= "table" or #boss.ids == 0 then table.insert(unnamed, map .. "/" .. boss.key .. " has no encounter") end
-        if type(boss.ids) ~= "table" or #boss.ids == 0 then table.insert(unnamed, map .. "/" .. boss.key .. " has no encounter") end
-        if type(boss.ids) ~= "table" or #boss.ids == 0 then table.insert(unnamed, map .. "/" .. boss.key .. " has no encounter") end
-        if type(boss.ids) ~= "table" or #boss.ids == 0 then table.insert(unnamed, map .. "/" .. boss.key .. " has no encounter") end
     end
 end
 Expect("every map with bosses is a dungeon, a raid or a world boss's of the table", table.concat(strays, ","), "")

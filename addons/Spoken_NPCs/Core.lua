@@ -36,7 +36,7 @@ local function Encounters()
 	byEncounter = {}
 	for map, bosses in pairs(_G.SpokenBosses and SpokenBosses.maps or {}) do
 		for _, boss in ipairs(bosses) do
-			for _, id in ipairs(boss.ids or { boss.id }) do
+			for _, id in ipairs(boss.ids) do
 				byEncounter[id] = byEncounter[id] or {}
 				table.insert(byEncounter[id], { map = map, key = boss.key })
 			end
@@ -61,6 +61,7 @@ function NPCs:FoundEncounter(encounterID)
 			new = true
 		end
 	end
-	if new and self.RefreshBosses then self:RefreshBosses() end
+	-- At a boss's pull: the list is drawn again only where it is seen, and opening it draws it.
+	if new and self.bosses and self.bosses:IsVisible() then self:RefreshBosses() end
 	return new
 end

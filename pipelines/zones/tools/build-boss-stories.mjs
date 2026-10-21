@@ -25,16 +25,14 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { flat, readBosses } from "../../lib/bosses.mjs";
+import { STORY_MAX_CHARS, guideFinder, readBosses } from "../../lib/bosses.mjs";
 import { LOCALES, loadDungeons } from "../../lib/dungeons.mjs";
-import { wagoTable } from "../../lib/wago.mjs";
-import { ROOT, fetchLoreText, luaString, sourceUrl } from "./lib/wiki.mjs";
+import { RETAIL_BUILD, wagoTable } from "../../lib/wago.mjs";
+import { ROOT, capParagraphs, creatureTitles, fetchLoreText, isDisambiguation, luaString, sourceUrl } from "./lib/wiki.mjs";
 
-const RETAIL_BUILD = "12.1.5.70448";
 const args = process.argv.slice(2);
 const value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
 const OUT = value("--out") ?? join(ROOT, "addons/Spoken_NPCs/Data/Stories.lua");
-const MAX_CHARS = 1800;
 
 
 
@@ -106,10 +104,10 @@ end
 
 /** The wiki's lore for `name`: { text, title } or null. */
 async function wikiStory(name) {
-  for (const title of [name, `${name} (boss)`, `${name} (NPC)`]) {
+  for (const title of creatureTitles(name)) {
     const res = await fetchLoreText(title, { minChars: 400 });
     if (res.missing || res.cleaned.empty || res.cleaned.full.length < 40) continue;
-    if (/may refer to|can refer to|disambiguation/i.test(res.cleaned.full.slice(0, 200))) continue;
+    if (isDisambiguation(res.cleaned.full)) continue;
     return { text: res.cleaned.full, title: res.resolvedTitle };
   }
   return null;
@@ -120,12 +118,7 @@ async function main() {
   const tables = await journal();
   const known = loadDungeons();
   const dungeonNames = new Map(Object.entries({ ...known.dungeons, ...known.worldBosses }).map(([map, row]) => [Number(map), row.name]));
-  const byDE = new Map();
-  const byName = new Map();
-  for (const row of tables.enUS.encounters) {
-    byDE.set(Number(row.DungeonEncounterID), row);
-    byName.set(flat(row.Name_lang), row);
-  }
+  const guideOf = guideFinder(tables.enUS.encounters);
   const localized = {};
   for (const locale of ["enUS", ...LOCALES]) {
     localized[locale] = new Map(tables[locale].encounters.map((r) => [r.ID, clean(r.Description_lang)]));
@@ -135,7 +128,7 @@ async function main() {
   const sources = [];
   const gaps = [];
   for (const boss of bosses) {
-    const row = boss.ids.map((id) => byDE.get(id)).find(Boolean) ?? byName.get(flat(boss.name));
+    const row = guideOf(boss);
     const texts = {};
     if (row) for (const locale of ["enUS", ...LOCALES]) texts[locale] = localized[locale].get(row.ID);
     const story = texts.enUS ? pack(texts) : null;
@@ -194,15 +187,7 @@ async function main() {
         missing.push(`${boss.map}/${boss.name}`);
         continue;
       }
-      let text = got.text;
-      if (text.length > MAX_CHARS) {
-        let out = "";
-        for (const paragraph of text.split("\n\n")) {
-          if (out && out.length + paragraph.length + 2 > MAX_CHARS) break;
-          out = out ? out + "\n\n" + paragraph : paragraph;
-        }
-        text = out;
-      }
+      const text = got.text.length > STORY_MAX_CHARS ? capParagraphs(got.text.split("\n\n"), STORY_MAX_CHARS) : got.text;
       (stories[boss.map] ??= {})[boss.key] = { [1]: text };
       sources.push(`${boss.map}\t${boss.key}\t${sourceUrl(got.title)}`);
       fromWiki++;

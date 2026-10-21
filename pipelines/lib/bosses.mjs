@@ -21,6 +21,17 @@ const OUT = fileURLToPath(new URL("../../addons/Spoken_NPCs/Data/Bosses.lua", im
 /** A name as the tools match one to another: lowercased, letters and digits only. */
 export const flat = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
+/** The longest a boss's story from the wiki is kept, in characters, cut at a paragraph. */
+export const STORY_MAX_CHARS = 1800;
+
+/** (boss) => its row of the Adventure Guide's JournalEncounter `encounters`: by its encounter ids,
+ * else by its name. */
+export function guideFinder(encounters) {
+  const byId = new Map(encounters.map((r) => [Number(r.DungeonEncounterID), r]));
+  const byName = new Map(encounters.map((r) => [flat(r.Name_lang), r]));
+  return (boss) => boss.ids.map((id) => byId.get(id)).find(Boolean) ?? byName.get(flat(boss.name));
+}
+
 /** [{ map, key, name, ids }] from Data/Bosses.lua, as render() writes it. */
 export async function readBosses(path = OUT) {
   const text = await readFile(path, "utf8");

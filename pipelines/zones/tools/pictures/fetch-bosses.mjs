@@ -14,8 +14,8 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { CACHE, USER_AGENT, THROTTLE_MS, sleep } from "../lib/wiki.mjs";
-import { pageImages, imageInfo } from "./fetch.mjs";
+import { CACHE } from "../lib/wiki.mjs";
+import { downloadRaw, pageImages, imageInfo } from "./fetch.mjs";
 import { flat, readBosses } from "../../../lib/bosses.mjs";
 import { loadDungeons } from "../../../lib/dungeons.mjs";
 
@@ -85,19 +85,9 @@ async function main() {
   let fetched = 0;
   for (const p of Object.values(pictures)) {
     for (const f of p.files) {
-      const ext = (f.url.match(/\.(jpe?g|png|webp)(?:$|\?)/i)?.[1] || "jpg").toLowerCase();
-      f.raw = `${f.file.replace(/^File:/, "").replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9]+/g, "_")}.${ext}`;
-      const path = join(RAW, f.raw);
-      if (existsSync(path)) continue;
-      const res = await fetch(f.url, { headers: { "User-Agent": USER_AGENT } });
-      await sleep(THROTTLE_MS);
-      if (!res.ok) {
-        console.warn(`\n  ${res.status} ${f.url}`);
-        delete f.raw;
-        continue;
-      }
-      await writeFile(path, Buffer.from(await res.arrayBuffer()));
-      process.stdout.write(`\r  downloaded ${++fetched}`);
+      const got = await downloadRaw(f.file, f.url);
+      if (got.raw) f.raw = got.raw;
+      if (got.fetched) process.stdout.write(`\r  downloaded ${++fetched}`);
     }
   }
   process.stdout.write("\n");

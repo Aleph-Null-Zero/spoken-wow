@@ -8,7 +8,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { flat, readBosses } from "../../lib/bosses.mjs";
-import { cachedQuery, ROOT } from "./lib/wiki.mjs";
+import { cachedQuery, creatureTitles, isDisambiguation, ROOT } from "./lib/wiki.mjs";
 
 // boss-sources.json: for each boss the wiki pages the research found (wikiTitle, abilityTitle) and its
 // creature ids. The pages tried first.
@@ -47,7 +47,7 @@ const bosses = await readBosses();
 for (const [n, boss] of bosses.entries()) {
   process.stdout.write(`\r  ${n + 1}/${bosses.length}`);
   const hint = hints.get(`${boss.map}\t${boss.key}`);
-  const titles = [hint?.abilityTitle, hint?.wikiTitle, boss.name, `${boss.name} (boss)`, `${boss.name} (NPC)`].filter(Boolean);
+  const titles = [hint?.abilityTitle, hint?.wikiTitle, ...creatureTitles(boss.name)].filter(Boolean);
   for (const title of [...new Set(titles)]) {
     let page;
     try {
@@ -55,7 +55,7 @@ for (const [n, boss] of bosses.entries()) {
     } catch {
       continue;
     }
-    if (!page || /may refer to|disambiguation/i.test(page.text.slice(0, 300))) continue;
+    if (!page || isDisambiguation(page.text)) continue;
     const spells = abilities(page.text, boss.name);
     if (spells.length) {
       out.push({ map: boss.map, key: boss.key, name: boss.name, title: page.title, spells });

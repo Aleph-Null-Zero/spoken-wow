@@ -84,7 +84,8 @@ module_packager() {
     Spoken_Quests) echo "$REPO/scripts/quests/package.sh" ;;
     Spoken_Readables) echo "$REPO/scripts/books/package.sh" ;;
     Spoken_Places) echo "$REPO/scripts/zones/package.sh" ;;
-    Spoken_NPCs) echo "$REPO/scripts/npcs/package.sh" ;;
+    # Packed as the places are: scripts/zones/package.sh takes the folder from ADDON and NAME.
+    Spoken_NPCs) echo "$REPO/scripts/zones/package.sh" ;;
   esac
 }
 modules_dist="$(mktemp -d)"
@@ -92,7 +93,7 @@ trap 'rm -rf "$staging" "$modules_dist"' EXIT
 folders=("$NAME" "$STORE")
 for module in Spoken_Quests Spoken_Readables Spoken_Places Spoken_NPCs; do
   module_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$REPO/addons/$module/$module.toc" | head -1 | tr -d '\r\n')"
-  DIST="$modules_dist" "$(module_packager "$module")" >/dev/null
+  ADDON="addons/$module" NAME="$module" DIST="$modules_dist" "$(module_packager "$module")" >/dev/null
   module_zip="$modules_dist/$module-$module_version.zip"
   [ -f "$module_zip" ] || { echo "error: $(module_packager "$module") did not produce $module_zip" >&2; exit 1; }
   # Two zips holding the same folder would mean one silently overwrote the other's copy.

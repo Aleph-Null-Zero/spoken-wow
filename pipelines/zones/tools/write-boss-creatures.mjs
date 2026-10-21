@@ -8,15 +8,13 @@
 // Where the database gives a boss no model or no spells, the Adventure Guide's (retail JournalEncounter
 // tables) fill in: its creature's model where Forever's client has that model, its abilities that name a spell.
 import { readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-import { flat, readBosses } from "../../lib/bosses.mjs";
-import { FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
+import { guideFinder, readBosses } from "../../lib/bosses.mjs";
+import { quote } from "../../lib/dungeons.mjs";
+import { FOREVER_BUILD, RETAIL_BUILD, wagoTable } from "../../lib/wago.mjs";
+import { ROOT } from "./lib/wiki.mjs";
 
-const RETAIL_BUILD = "12.1.5.70448";
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const args = process.argv.slice(2);
 const input = args[0] && !args[0].startsWith("--") ? args[0] : null;
 const OUT = args.includes("--out") ? args[args.indexOf("--out") + 1] : join(ROOT, "addons/Spoken_NPCs/Data/Creatures.lua");
@@ -34,23 +32,26 @@ const guideEncounters = await wagoTable("JournalEncounter", { build: RETAIL_BUIL
 const guideCreatures = await wagoTable("JournalEncounterCreature", { build: RETAIL_BUILD, locale: "enUS" });
 const guideSections = await wagoTable("JournalEncounterSection", { build: RETAIL_BUILD, locale: "enUS" });
 const models = new Set((await wagoTable("CreatureDisplayInfo", { build: FOREVER_BUILD, locale: "enUS" })).map((r) => Number(r.ID)));
-const byDE = new Map(guideEncounters.map((r) => [Number(r.DungeonEncounterID), r]));
-const byName = new Map(guideEncounters.map((r) => [flat(r.Name_lang), r]));
-const guideOf = (boss) => boss.ids.map((id) => byDE.get(id)).find(Boolean) ?? byName.get(flat(boss.name));
+const guideOf = guideFinder(guideEncounters);
 const inOrder = (list) => [...list].sort((a, b) => Number(a.OrderIndex) - Number(b.OrderIndex));
 
 const have = new Map(rows.map((r) => [`${r.map}\t${r.key}`, r]));
+/** The row of the boss `key` of `map`, a new empty one where there is none. */
+function rowFor(map, key) {
+  let row = have.get(`${map}\t${key}`);
+  if (!row) {
+    row = { map, key, creature: null, display: null, spells: [] };
+    have.set(`${map}\t${key}`, row);
+    rows.push(row);
+  }
+  return row;
+}
 let filledModels = 0;
 let filledSpells = 0;
 for (const boss of await readBosses()) {
   const guide = guideOf(boss);
   if (!guide) continue;
-  let row = have.get(`${boss.map}\t${boss.key}`);
-  if (!row) {
-    row = { map: boss.map, key: boss.key, creature: null, display: null, spells: [] };
-    have.set(`${boss.map}\t${boss.key}`, row);
-    rows.push(row);
-  }
+  const row = rowFor(boss.map, boss.key);
   if (!row.display) {
     const model = inOrder(guideCreatures.filter((c) => c.JournalEncounterID === guide.ID))
       .map((c) => Number(c.CreatureDisplayInfoID))
@@ -74,12 +75,7 @@ for (const boss of await readBosses()) {
 const wiki = args.includes("--abilities") ? JSON.parse(await readFile(args[args.indexOf("--abilities") + 1], "utf8")) : [];
 let filledWiki = 0;
 for (const entry of wiki) {
-  let row = have.get(`${entry.map}\t${entry.key}`);
-  if (!row) {
-    row = { map: entry.map, key: entry.key, creature: null, display: null, spells: [] };
-    have.set(`${entry.map}\t${entry.key}`, row);
-    rows.push(row);
-  }
+  const row = rowFor(entry.map, entry.key);
   row.spells = [...new Set([...entry.spells, ...row.spells])];
   filledWiki++;
 }
@@ -88,12 +84,7 @@ const manual = args.includes("--manual") ? JSON.parse(await readFile(args[args.i
 let filledManual = 0;
 for (const entry of manual) {
   if (!entry.spells?.length) continue;
-  let row = have.get(`${entry.map}	${entry.key}`);
-  if (!row) {
-    row = { map: entry.map, key: entry.key, creature: null, display: null, spells: [] };
-    have.set(`${entry.map}	${entry.key}`, row);
-    rows.push(row);
-  }
+  const row = rowFor(entry.map, entry.key);
   row.spells = [...new Set([...entry.spells, ...row.spells])];
   filledManual++;
 }
@@ -129,7 +120,7 @@ const lines = [
 for (const map of Object.keys(maps).map(Number).sort((a, b) => a - b)) {
   lines.push(`\t[${map}] = {`);
   for (const boss of maps[map].sort((a, b) => a.key.localeCompare(b.key))) {
-    lines.push(`\t\t["${boss.key.replace(/(["\\])/g, "\\$1")}"] = { creature = ${boss.creature ?? "nil"}, display = ${boss.display ?? "nil"}, spells = { ${boss.spells.join(", ")} } },`);
+    lines.push(`\t\t[${quote(boss.key)}] = { creature = ${boss.creature ?? "nil"}, display = ${boss.display ?? "nil"}, spells = { ${boss.spells.join(", ")} } },`);
   }
   lines.push("\t},");
 }
