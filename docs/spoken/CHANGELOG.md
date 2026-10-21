@@ -9,8 +9,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
   face are drawn from appearances that ship with Spoken, so a creature the client has not met yet no longer
   shows your own face or another creature's. *([Nucabe](https://github.com/Nucabe))*
-- **Entering a dungeon or raid reads its story**, once per character, and counts its card in the
-  Places tab as found. The Ruins of Lordaeron, the Deadmines, Ragefire Chasm and five more cards could
+- **Entering a dungeon or raid reads its story**, once per character, and counts it in the
+  Places tab as found. The Ruins of Lordaeron, the Deadmines, Ragefire Chasm and five more could
   never be found before. Azeroth's story is back on the world map, and the Places tab lists Azeroth
   above the continents. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
