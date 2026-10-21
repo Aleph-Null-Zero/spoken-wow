@@ -7,7 +7,6 @@ local L = NPCs.L
 
 -- The game's settings list sets its rows 25 in from the canvas's left.
 local INDENT = 25
-local ICON = [[Interface\Icons\INV_Misc_Head_Dragon_01]]
 
 local panel
 
@@ -32,7 +31,7 @@ function NPCs:SetupOptions()
 	panel.layout = layout
 	local refresh = function() layout:Refresh() end
 
-	layout:Intro(ICON, L.OPT_PAGE_TITLE)
+	layout:Intro(NPCs.ICON, L.OPT_PAGE_TITLE)
 
 	layout:Section(W.OPT_COMPENDIUM_TITLE)
 	layout:Checkbox(L.OPT_SHOW_ABILITIES, nil,

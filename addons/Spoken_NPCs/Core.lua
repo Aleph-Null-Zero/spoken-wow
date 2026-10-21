@@ -5,6 +5,9 @@ local _, NPCs = ...
 
 _G.SpokenNPCs = NPCs
 
+-- The module's icon.
+NPCs.ICON = [[Interface\Icons\INV_Misc_Head_Dragon_01]]
+
 local defaults = {
 	-- Every boss openable, met or not (on Spoken's page); and the list leaving out those not met.
 	unlockUnfound = false,
