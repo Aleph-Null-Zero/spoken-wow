@@ -64,7 +64,10 @@ Only places a client can report. `pipelines/zones/tools/seed/era-areas.json` and
 pinned in `pipelines/lib/wago.mjs`). `make zones-areas` fetches them again when a pin moves. The
 export keeps a subzone only when its key is in one of the two, and drops Forever's second spelling
 of a place the lore already keeps (`seed/forever-places.json`, kept by hand with a reason beside
-each entry).
+each entry). An area's English `name` is the one in those seeds, Forever's spelling first ("The
+Crossroads", where the wiki titles the page "Crossroads"), so renaming an area on the site does not
+change its title in the addon. The lore's own name stays only where the seeds have no single
+spelling for the key.
 
 The English files also hold the pending places, so `validate.mjs` counts more entries for English
 than for the other languages, which ship only the places that have text.
