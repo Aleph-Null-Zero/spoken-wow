@@ -103,12 +103,7 @@ for (const entry of fixed) {
   if (entry.display && !models.has(entry.display)) {
     throw new Error(`boss-creatures-manual.json: ${entry.key}'s display ${entry.display} is not in the client's CreatureDisplayInfo`);
   }
-  let row = have.get(at);
-  if (!row) {
-    row = { map: entry.map, key: entry.key, creature: null, display: null, spells: [] };
-    have.set(at, row);
-    rows.push(row);
-  }
+  const row = rowFor(entry.map, entry.key);
   if ("creature" in entry) row.creature = entry.creature;
   if ("display" in entry) row.display = entry.display;
 }
