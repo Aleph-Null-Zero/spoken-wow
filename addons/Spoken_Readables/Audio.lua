@@ -204,7 +204,10 @@ function SpokenBooks:ClipFor(pageId)
 				local book = self:BookOf(pageId)
 				local oneLine = self:OneLine()
 				local text = entry.text
-				if not text and language == self.BASE_LANGUAGE then text = place.text end
+				-- The caption keeps the page's tokens; the subtitle shows what the clip says.
+				if not text and language == self.BASE_LANGUAGE and place.text then
+					text = self:SaidTokens(place.text)
+				end
 				if not text and self.pageText and self.pageText[language] then
 					text = self.pageText[language][pageId]
 				end

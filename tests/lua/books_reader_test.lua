@@ -103,5 +103,14 @@ local NOTE = "Many tribes claim that it is a gift to be blessed with the aptitud
 stub.ShowPage({ title = "Simple Note", number = 1, text = NOTE })
 Expect("a class letter with the reader's class in it is found", B:PageOnScreen(), 2441)
 
+world.playerName, world.playerClass, world.playerRace, world.unitSex = "Torno", "Warrior", "Orc", 3
+Expect("a caption filled in for this character, as the page shows it",
+    B:FillPlayerTokens("Greetings, $gbrother:sister;. Tell me, $c, have you met $N the $r?"),
+    "Greetings, sister. Tell me, Warrior, have you met Torno the Orc?")
+Expect("a caption as the narrator says it: the first side, adventurer, traveler, capitalised at a sentence's start",
+    B:SaidTokens("$N, Before I go. Greetings, $g brother : sister;. Tell me, $c, have you met the $r? $N!"),
+    "Adventurer, Before I go. Greetings, brother. Tell me, adventurer, have you met the traveler? Adventurer!")
+world.playerName, world.playerClass, world.playerRace, world.unitSex = nil, nil, nil, 2
+
 print(Failures() == 0 and "All books reader tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

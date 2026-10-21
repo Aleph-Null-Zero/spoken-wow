@@ -138,6 +138,50 @@ function SpokenBooks:TokenPageOf(text)
 	return found
 end
 
+--- A caption with its tokens filled in for this character, as the client fills them on the
+--- page: name, class, race, the side of a $g branch for the character's sex, $B as a line break.
+--- The same as FillPlayerTokens in Spoken_Quests/Utils.lua.
+function SpokenBooks:FillPlayerTokens(text)
+	local name = UnitName and UnitName("player") or ""
+	local class = UnitClass and UnitClass("player") or ""
+	local race = UnitRace and UnitRace("player") or ""
+	local female = UnitSex and UnitSex("player") == 3
+	text = string.gsub(text, GENDER_TOKEN, function(male, femaleForm)
+		return (string.gsub(female and femaleForm or male, "^%s*(.-)%s*$", "%1"))
+	end)
+	-- Function replacements, so a % in a name is never read as a capture.
+	text = string.gsub(text, "%$[bB]", "\n")
+	text = string.gsub(text, "%$[nN]", function() return name end)
+	text = string.gsub(text, "%$[cC]", function() return class end)
+	text = string.gsub(text, "%$[rR]", function() return race end)
+	return text
+end
+
+-- What a recording says for each token: one file is everybody's, so it names nobody. The
+-- site's words for English (speakPlayerTokens in apps/web/src/lib/player-words.ts).
+local SAID = { n = "adventurer", c = "adventurer", r = "traveler" }
+
+--- A caption with its tokens as the narrator says them: the first side of a $g branch,
+--- "adventurer" for the name and class, "traveler" for the race, capitalised where a sentence
+--- starts. A token glued to a letter is left, as the site leaves it.
+function SpokenBooks:SaidTokens(text)
+	text = string.gsub(text, GENDER_TOKEN, function(male)
+		return (string.gsub(male, "^%s*(.-)%s*$", "%1"))
+	end)
+	return (string.gsub(text, "()%$([nNcCrR])(%a?)", function(at, token, glued)
+		if glued ~= "" then
+			return nil
+		end
+		local word = SAID[string.lower(token)]
+		local before = string.sub(text, 1, at - 1)
+		if string.find(before, "^[%s\"']*$") or string.find(before, "[%.!?\n][%s\"']*$")
+			or string.find(before, "\226\128\166[%s\"']*$") then
+			word = string.upper(string.sub(word, 1, 1)) .. string.sub(word, 2)
+		end
+		return word
+	end))
+end
+
 --- The page id the client is showing, or nil.
 function SpokenBooks:PageOnScreen()
 	local data = self:Data()
