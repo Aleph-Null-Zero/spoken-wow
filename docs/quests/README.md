@@ -896,9 +896,10 @@ where the decision carries a reason.
 
 The Compendium reads the same list. `tts_cli/quest_text.py` `left_out` is the one rule for which
 quests it lists and has words for: Blizzard's debris (quest 1, `<NYI>` titles), a quest every
-line of which is ignored, and the `remove` entries of `corpus/compendium_overrides.json`. Those
-23 removals are the Compendium's alone until `line_ignore` holds their lines; once it does, the
-packs drop their clips too and the entries can go.
+line of which is ignored, and the `remove` entries of `corpus/compendium_overrides.json`. The
+packs follow the same rule: `build` treats every offer, progress and hand-in line of a quest left
+out as ignored (`ignores.pack_ignored`), so its audio and its quest-log giver leave the pack with
+its page. Follow-up lines, said in chat, are not touched.
 
 ### Reporting a line
 
