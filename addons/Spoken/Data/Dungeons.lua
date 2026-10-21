@@ -55,6 +55,6 @@ SpokenDungeons = {
 		[2789] = { zone = 1419 },
 		[2791] = { zone = 1447 },
 		[2804] = { zone = 1451 },
-		[2832] = { zone = 1431, bossZones = { emeriss = 1431, lethon = 1444, taerar = 1440, ysondre = 1425 } },
+		[2832] = { zone = 1431, bossZones = { ["emeriss"] = 1431, ["lethon"] = 1444, ["taerar"] = 1440, ["ysondre"] = 1425 } },
 	},
 }

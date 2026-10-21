@@ -6,7 +6,9 @@ local _, NPCs = ...
 
 local L = NPCs.L
 
-if GetLocale() ~= "esES" then
+-- esMX shares this file: nothing in these strings varies by region.
+local locale = GetLocale()
+if locale ~= "esES" and locale ~= "esMX" then
 	return
 end
 L.COMPENDIUM_BOSSES = "Jefes"

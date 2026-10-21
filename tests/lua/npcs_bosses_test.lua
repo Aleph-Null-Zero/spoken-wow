@@ -174,6 +174,13 @@ Expect("an encounter that is no boss of the table is not met", NPCs:FoundEncount
 Expect("a boss's encounter is met the first time", NPCs:FoundEncounter(edwin.ids[1]), true)
 Expect("...and not again", NPCs:FoundEncounter(edwin.ids[1]), false)
 Expect("...kept for the character", SpokenNPCsCharacter.found["36:edwin vancleef"], true)
+local sunken
+for map, bosses in pairs(SpokenBosses.maps) do
+    for _, boss in ipairs(bosses) do if boss.key == "weaver" then sunken = map end end
+end
+NPCs:FoundEncounter(2955)
+Expect("an encounter of two bosses at once meets both",
+    tostring(NPCs:IsBossFound(sunken, "weaver")) .. "|" .. tostring(NPCs:IsBossFound(sunken, "dreamscythe")), "true|true")
 Shown()
 Expect("...its row open, ticked as found", tostring(RowFor("Edwin VanCleef").row.locked) .. "|" .. tostring(RowFor("Edwin VanCleef").row.done), "false|true")
 Expect("...counted on its zone's line", RowFor("Westfall").count.text, "1/" .. westfall .. " • " .. math.floor(100 / westfall) .. "%")

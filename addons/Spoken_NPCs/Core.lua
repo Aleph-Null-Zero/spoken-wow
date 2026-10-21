@@ -28,14 +28,18 @@ local function Key(map, key)
 	return map .. ":" .. key
 end
 
--- [encounter id] = { map, key }, from Data/Bosses.lua, built on first use.
+-- [encounter id] = { { map, key }, ... }, from Data/Bosses.lua, built on first use. A fight against
+-- two bosses at once (the Weaver and Dreamscythe) is one encounter of both.
 local byEncounter
 local function Encounters()
 	if byEncounter then return byEncounter end
 	byEncounter = {}
 	for map, bosses in pairs(_G.SpokenBosses and SpokenBosses.maps or {}) do
 		for _, boss in ipairs(bosses) do
-			for _, id in ipairs(boss.ids or { boss.id }) do byEncounter[id] = { map = map, key = boss.key } end
+			for _, id in ipairs(boss.ids or { boss.id }) do
+				byEncounter[id] = byEncounter[id] or {}
+				table.insert(byEncounter[id], { map = map, key = boss.key })
+			end
 		end
 	end
 	return byEncounter
@@ -46,12 +50,17 @@ function NPCs:IsBossFound(map, key)
 	return SpokenNPCsCharacter ~= nil and SpokenNPCsCharacter.found[Key(map, key)] == true
 end
 
---- The boss of the game's encounter `encounterID` is met: noted, and the tab told. Returns whether
---- it was a boss not met before.
+--- The bosses of the game's encounter `encounterID` are met: noted, and the tab told. Returns
+--- whether one was a boss not met before.
 function NPCs:FoundEncounter(encounterID)
-	local boss = SpokenNPCsCharacter and encounterID and Encounters()[encounterID]
-	if not boss or self:IsBossFound(boss.map, boss.key) then return false end
-	SpokenNPCsCharacter.found[Key(boss.map, boss.key)] = true
-	if self.RefreshBosses then self:RefreshBosses() end
-	return true
+	local bosses = SpokenNPCsCharacter and encounterID and Encounters()[encounterID]
+	local new = false
+	for _, boss in ipairs(bosses or {}) do
+		if not self:IsBossFound(boss.map, boss.key) then
+			SpokenNPCsCharacter.found[Key(boss.map, boss.key)] = true
+			new = true
+		end
+	end
+	if new and self.RefreshBosses then self:RefreshBosses() end
+	return new
 end
