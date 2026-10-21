@@ -122,6 +122,7 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/packs_test.lua
 	@$(LUA) tests/lua/quests_options_test.lua
 	@$(LUA) tests/lua/quests_dialogueui_test.lua
+	@$(LUA) tests/lua/quests_immersion_test.lua
 	@$(LUA) tests/lua/books_source_test.lua
 	@$(LUA) tests/lua/books_options_test.lua
 	@$(LUA) tests/lua/module_settings_test.lua

@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Immersion turns its pages with the voice.** While Spoken Quests reads a quest or gossip page in Immersion's
+  talk box, the text shows the part being read and Immersion's own timer waits. When the line ends or is stopped,
+  Immersion goes on as before. *([Aleph-Null-Zero](https://github.com/Aleph-Null-Zero))*
 - **More bosses in the Bosses tab show their face.** The bosses of the Ruins of Lordaeron, the Hall of Thanes,
   the City of Dalaran and the Excavation Site: Wetlands, and two of the Marylas in the Karazhan Crypts, have their
   portrait. Sneed, Grubbis, Darkmaster Gandling, Sapphiron and Dalaran's Arcane Anomaly show the right one, a boss
