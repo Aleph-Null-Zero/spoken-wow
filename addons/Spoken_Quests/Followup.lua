@@ -152,17 +152,18 @@ local function SameStep(a, b)
     return a.speaker == b.speaker and a.delay == b.delay
 end
 
---- The armed entry this chat message is, or nil.
+--- The armed entry this chat message is, or nil. Letter case is not compared: the server writes a
+--- creature's $r and $c with a capital ("Puny Human"), where a quest window writes them in lower case.
 function Followup:Match(message, sender, npcID)
     if ClientSpeaksExportLanguage() then
-        local said = Normalize(message)
+        local said = string.lower(Normalize(message))
         for _, entry in ipairs(self.armed) do
             local speaker = entry.line.speaker
             -- Checked only when both sides know: a line with no resolved speaker, or a client
             -- with no GUID in its chat events, falls back on the text alone.
             if not (speaker and npcID) or speaker == npcID then
                 for _, saying in ipairs(entry.sayings) do
-                    if (saying.text or Render(saying.raw, sender)) == said then
+                    if string.lower(saying.text or Render(saying.raw, sender)) == said then
                         return entry
                     end
                 end
