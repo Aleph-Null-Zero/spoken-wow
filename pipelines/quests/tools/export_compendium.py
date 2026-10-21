@@ -545,7 +545,8 @@ def quest_line_links(rows):
 def chain_links(rows, known, later=None, lines=None):
     """{questID: the quest before it in its storyline}, for the quests in `known`.
 
-    `rows` is quest_template_addon as {questID: {"prev", "next", "group", "breadcrumb"}}:
+    `rows` is quest_template_addon as {questID: {"prev", "next", "group", "breadcrumb"}}, with
+    quest_template's RewardNextQuest as "reward":
     - PrevQuestID > 0: that quest must be handed in first, so it comes before. A negative one only
       has to be in the log at the time; that quest is not over yet, so it is not "before".
     - NextQuestID: this quest opens that one, which comes after it where it names no PrevQuestID
@@ -557,6 +558,8 @@ def chain_links(rows, known, later=None, lines=None):
       where no link of the DB's reaches a quest the corpus has.
     - `lines` ({questID: the quest before it}, the client's quest lines, quest_line_links) links a
       quest only where neither of those does.
+    - RewardNextQuest (`reward`), the quest the server offers on handing this one in, links it
+      last, where this is the only quest of the corpus offering it.
     A quest the corpus lacks is passed through to the one before it, and a link that would close a
     loop is dropped, so every chain has a first quest.
     """
@@ -575,18 +578,27 @@ def chain_links(rows, known, later=None, lines=None):
             into.setdefault(target, qid)
 
     line_before = lines or {}
+    # An offer is no prerequisite: the quest it offers has its own giver too. So it links only
+    # from a quest the corpus has, the only one offering it: Summon Felsteed, offered after each
+    # side's warlock quests, would otherwise follow the Horde's lowest.
+    offered_by = {}
+    for qid, row in rows.items():
+        target = row.get("reward") or 0
+        if target > 0 and target != qid and qid in known:
+            offered_by.setdefault(target, set()).add(qid)
+    offered_before = {target: min(qids) for target, qids in offered_by.items() if len(qids) == 1}
 
     # The DB's links first; the client's where the DB's lead to no quest the corpus has (a
     # breadcrumb it lacks, say) or to none at all.
     def known_before(qid):
-        for first in (before.get(qid), client_before.get(qid), line_before.get(qid)):
+        for first in (before.get(qid), client_before.get(qid), line_before.get(qid), offered_before.get(qid)):
             seen, step = {qid}, first
             while step is not None and step not in known:
                 if step in seen:
                     step = None
                     break
                 seen.add(step)
-                step = before.get(step, client_before.get(step, line_before.get(step)))
+                step = before.get(step, client_before.get(step, line_before.get(step, offered_before.get(step))))
             if step is not None:
                 return step
         return None
@@ -1101,6 +1113,9 @@ def with_db(args):
         rows = {int(qid): {"prev": int(prev or 0), "next": int(nxt or 0), "group": int(group or 0),
                            "breadcrumb": int(crumb or 0)}
                 for qid, prev, nxt, group, crumb in cur.fetchall()}
+        cur.execute("SELECT ID, RewardNextQuest FROM quest_template WHERE RewardNextQuest > 0")
+        for qid, reward in cur.fetchall():
+            rows.setdefault(int(qid), {"prev": 0, "next": 0, "group": 0, "breadcrumb": 0})["reward"] = int(reward)
         ender_rows = []
         for kind in ("creature", "gameobject"):
             cur.execute(f"SELECT id, quest FROM {kind}_questender WHERE quest IN ({marks})", ids)

@@ -49,6 +49,22 @@ def test_a_loop_is_broken_so_the_chain_has_a_first_quest():
     assert len(first) == 1
 
 
+def test_a_quest_offered_after_one_other_follows_it_where_nothing_else_links_it():
+    # 5 Jitters' Growling Gut, offered on handing in 163 Raven Hill (RewardNextQuest).
+    rows = {163: {**_row(), "reward": 5}, 5: _row()}
+    assert chain_links(rows, {5, 163}) == {5: 163}
+    # 97222 Gatehouse Goods keeps the client's link; the offer comes last.
+    rows = {97242: {**_row(), "reward": 97222}, 97222: _row()}
+    assert chain_links(rows, {97220, 97222, 97242}, {97220: 97222}) == {97222: 97220}
+
+
+def test_a_quest_offered_after_several_or_after_one_the_corpus_lacks_follows_none():
+    # 4490 Summon Felsteed, offered after 3631 and 4487-4489; 869 Raptor Thieves after 14066.
+    rows = {3631: {**_row(), "reward": 4490}, 4487: {**_row(), "reward": 4490}, 4490: _row(),
+            14066: {**_row(prev=905), "reward": 869}, 905: _row(), 869: _row()}
+    assert chain_links(rows, {3631, 4487, 4490, 905, 869}) == {}
+
+
 def _line(line, order, qid):
     return {"QuestLineID": str(line), "OrderIndex": str(order), "QuestID": str(qid)}
 

@@ -1562,7 +1562,11 @@ Two generated files feed it, both committed so the addon never needs a database:
   `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb
   whose `BreadcrumbForQuestId` names it, where the DB has that column. A negative `PrevQuestID`
   (the other quest only has to be in the log) is no link. Quests the corpus lacks are passed
-  through, and a link closing a loop is dropped. `--no-db` keeps the links already written.
+  through, and a link closing a loop is dropped. Last, after the client's links below, a quest
+  follows the one whose `RewardNextQuest` offers it on hand-in, where that is the only quest of
+  the corpus offering it (5 Jitters' Growling Gut after 163 Raven Hill): an offer is no
+  prerequisite, so one offered after several (Summon Felsteed) or after a quest the corpus lacks
+  follows none. `--no-db` keeps the links already written.
   Each quest handed in to another than its giver has `ender`, the creature it is handed in to
   (`enderObject` for an object), from the same DB's `creature_questender` and
   `gameobject_questender` (`quest_enders`): of several, the one the corpus has saying its progress
