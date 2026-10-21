@@ -9,8 +9,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from export_compendium import (OVERRIDES, apply_overrides, chain_names, corpus_quests, load_overrides,  # noqa: E402
-                               quest_line)
+from export_compendium import (OVERRIDES, SIDE_RACES, apply_overrides, chain_names, corpus_quests,  # noqa: E402
+                               load_overrides, quest_line)
 
 
 def _rec(title, zones=(), sort=None, prev=None, races=0, classes=0):
@@ -117,3 +117,19 @@ def test_the_index_leaves_out_a_quest_every_line_of_which_is_ignored(tmp_path):
                        encoding="utf-8")
     quests, _, _ = corpus_quests(str(corpus), str(ignored))
     assert set(quests) == {5}
+
+
+# Zephras Isle's story both sides take. The DB names only the Horde's quest before 92517 and
+# 93320, so the export gives them and every quest after them the Horde's races.
+ZEPHRAS_SHARED = [92517, 92528, 92529, 92550, 92640, 92642, 92643, 92644, 92645, 92880, 92881, 92947, 93036,
+                  93065, 93320, 93926, 93927, 93948, 93958, 94568]
+
+
+def test_the_zephras_isle_quests_both_sides_take_are_open_to_both():
+    horde = SIDE_RACES["horde"]
+    records = {qid: _rec(str(qid), [2521], races=horde) for qid in ZEPHRAS_SHARED}
+    # Bugged follows the Horde-only To Valanaar, and stays the Horde's.
+    records[93949] = _rec("Bugged", [2521], races=horde)
+    apply_overrides(records, load_overrides(OVERRIDES)["quests"])
+    assert {qid: records[qid]["races"] for qid in ZEPHRAS_SHARED} == dict.fromkeys(ZEPHRAS_SHARED, 0)
+    assert records[93949]["races"] == horde
