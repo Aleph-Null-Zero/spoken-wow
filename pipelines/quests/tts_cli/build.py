@@ -14,7 +14,7 @@ import shutil
 from slpp import slpp as lua
 from tqdm import tqdm
 
-from tts_cli.ignores import ignored_files
+from tts_cli.ignores import ignored_files, wordless
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
                             moment_of, quest_moment_stem, quest_stem_from_line_id,
@@ -448,8 +448,9 @@ def build_module(corpus: dict, store_dir: str, dist_dir: str = DEFAULT_DIST_DIR,
 
     # Compared without extensions: the ignore list is derived from the corpus and so names
     # mp3s, while a staged store may hold the same audio transcoded to something else.
-    skip = {os.path.splitext(rel)[0] for rel in ignored_files(corpus, ignored)} \
-        if ignored else set()
+    silent = set(wordless(corpus)) | set(ignored)
+    skip = {os.path.splitext(rel)[0] for rel in ignored_files(corpus, silent)} \
+        if silent else set()
     audio = [rel for rel in stored_files(store_dir)
              if os.path.splitext(rel)[0] not in skip
              and (include is None or os.path.splitext(rel)[0] in include)]

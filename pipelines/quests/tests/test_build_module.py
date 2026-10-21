@@ -144,6 +144,22 @@ def test_a_whole_store_pack_ships_a_take_the_english_corpus_does_not_name(tmp_pa
     assert report["audioFiles"] == 2
 
 
+def test_a_line_with_no_words_ships_no_audio_but_keeps_its_giver(tmp_path):
+    corpus = {"lines": CORPUS["lines"] + [
+        {"lineId": "q:3646:accept", "source": "accept", "questId": 3646,
+         "questTitle": "Membership Card Renewal", "npcId": 8738, "npcName": "Vazario Linkgrease",
+         "npcType": "creature", "fileName": "3646-accept", "originalText": "\n",
+         "generatable": True}]}
+    store = _store(tmp_path, "quests/5-accept.ogg", "quests/3646-accept.ogg")
+
+    report = build_module(corpus, store, str(tmp_path / "dist"), "Mod")
+
+    generated = tmp_path / "dist" / "Mod" / "generated"
+    assert not (generated / "sounds" / "quests" / "3646-accept.ogg").exists()
+    assert report["audioFiles"] == 1
+    assert "[3646] = 8738" in (generated / "questlog_npc_lookups.lua").read_text(encoding="utf-8")
+
+
 def test_a_pack_still_drops_ignored_audio(tmp_path):
     store = _store(tmp_path, "quests/5-accept.ogg", "gossip/abc123.ogg")
 

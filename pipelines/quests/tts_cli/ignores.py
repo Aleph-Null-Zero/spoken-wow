@@ -58,6 +58,14 @@ def pack_ignored(corpus: dict, ignored: dict, removed=()) -> dict:
     return out
 
 
+def wordless(corpus: dict) -> dict:
+    """Lines with no words, as {lineId: reason}: 3646's offer is one line break, and its file
+    was a breath. A pack leaves their audio out but keeps their lookup entries, because the
+    quest log's giver comes from the offer and still names the quest's hand-in."""
+    return {split_voice(line["lineId"])[0]: "no words to say" for line in corpus["lines"]
+            if not (line.get("originalText") or "").strip()}
+
+
 def load_pack_ignored(corpus: dict, ignored_path: str = DEFAULT_IGNORED_PATH,
                       overrides_path: str = DEFAULT_OVERRIDES_PATH) -> dict:
     """pack_ignored over the committed export and the hand corrections."""

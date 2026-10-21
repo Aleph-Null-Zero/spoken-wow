@@ -1,6 +1,6 @@
 import json
 
-from tts_cli.ignores import ignored_files, ignored_line_ids, load_ignored, pack_ignored
+from tts_cli.ignores import ignored_files, ignored_line_ids, load_ignored, pack_ignored, wordless
 
 CORPUS = {
     "lines": [
@@ -78,6 +78,8 @@ DEAD = {"lines": [
     _quest_line(1155, "accept", "x", "<NYI> <TXT> bug crystal side quest"),
     _quest_line(620, "accept"),
     _quest_line(620, "complete"),
+    _quest_line(3646, "accept", "\n"),
+    _quest_line(3646, "complete"),
     {"lineId": "f:4377:human-male-standard", "source": "followup", "questId": 620,
      "questTitle": "A Quest", "fileName": "4377-human-male-standard", "originalText": "Thanks."},
 ]}
@@ -91,6 +93,12 @@ def test_the_pack_drops_the_quests_the_compendium_leaves_out():
     assert "q:5:accept" not in ignored
     # Said in chat, not on the quest's page: the Compendium's rule does not reach it.
     assert "f:4377:human-male-standard" not in ignored
+
+
+def test_a_line_with_no_words_is_wordless_but_not_ignored():
+    # Its giver is still the quest log's, for the hand-in that has words.
+    assert wordless(DEAD) == {"q:3646:accept": "no words to say"}
+    assert "q:3646:accept" not in pack_ignored(DEAD, {})
 
 
 def test_the_pack_keeps_line_ignore_s_own_reason():
