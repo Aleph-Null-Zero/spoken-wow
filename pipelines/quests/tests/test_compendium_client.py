@@ -212,3 +212,18 @@ def test_a_served_quest_the_corpus_lacks_is_listed_without_words():
     assert records[96261]["prev"] == 96259
     assert quest_line(96261, "The Broodmother", [1412], prev=96259, notext=True) == \
         '\t\t[96261] = { "The Broodmother", zones = { 1412 }, prev = 96259, notext = true },'
+
+
+class DungeonMaps(FakeMaps):
+    """Area 16544 is in the City of Dalaran (map 2959), whose entrance is in Alterac Mountains."""
+
+    def dungeon_of_area(self, area, dungeons):
+        return 2959 if area == 16544 and 2959 in dungeons else None
+
+
+def test_a_served_quest_of_a_dungeon_is_filed_under_it_as_the_corpuss_are():
+    # 96987 Opportunistic Education, beside 96986 and 96988 in the City of Dalaran.
+    client = {96987: {"title": "Opportunistic Education", "zoneAreaId": 16544}}
+    records = without_text({}, {96987}, client, {}, DungeonMaps(), {}, dungeons={2959: {}})
+    assert records[96987]["dungeon"] == 2959
+    assert records[96987]["zones"] == [export_compendium.INSTANCE_ZONE[2959]]

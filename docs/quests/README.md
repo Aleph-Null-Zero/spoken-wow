@@ -1601,7 +1601,8 @@ Two generated files feed it, both committed so the addon never needs a database:
   Forever serves quests the corpus has no lines for yet. Each one players were seen being offered
   or handing in (`npcs.json` `offers`, `takes`) or working on (`objectives.json`), and that the
   client data has a title for, is listed with `notext = true` (`served_quests`, `without_text`):
-  placed, limited and linked by its client record as above, so the tab lists it with no words
+  placed, limited and linked by its client record as above (a dungeon's under its dungeon, by its
+  `zoneAreaId`, as a quest with words is), so the tab lists it with no words
   until its lines reach the corpus and an export drops the flag. The tab does not read the flag:
   a quest with no lines in `SpokenQuestsText` is one with no words, and its page says so
   (the shared "Nothing has been written for this yet." with Contribute). `--no-db` makes these again on

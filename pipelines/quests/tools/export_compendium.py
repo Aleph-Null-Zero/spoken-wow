@@ -422,11 +422,12 @@ def served_quests(npc_sets, objective_sets):
     return served
 
 
-def without_text(known, served, client, seen, maps, sorts, removed=()):
+def without_text(known, served, client, seen, maps, sorts, removed=(), dungeons=None):
     """{questID: record} for the quests Forever serves (`served`) that are not `known` (the corpus's)
     nor `removed`: listed with `notext`, since the corpus has no lines for them yet. Each is placed
     and limited as Forever's client has it (its Efficient Games record, `client`; `seen` where
-    players saw its giver), and follows the quest whose nextQuestId names it. A quest the client
+    players saw its giver), a dungeon's (`dungeons`, {map: Map row}) by its zoneAreaId as the
+    corpus's quests are, and follows the quest whose nextQuestId names it. A quest the client
     data has no title for is left out: there is nothing to list it by."""
     records = {}
     for qid in sorted(set(served) - set(known) - set(removed)):
@@ -434,7 +435,11 @@ def without_text(known, served, client, seen, maps, sorts, removed=()):
         if not eg.get("title"):
             continue
         zones, sort, _ = place(0, maps, sorts, eg, seen.get(qid, ()))
-        records[qid] = {"title": eg["title"], "zones": zones, "sort": sort, "dungeon": None,
+        area = eg.get("zoneAreaId") or 0
+        dungeon = maps.dungeon_of_area(area, dungeons) if dungeons and area > 0 else None
+        if dungeon:
+            zones, sort = [INSTANCE_ZONE[dungeon]], None
+        records[qid] = {"title": eg["title"], "zones": zones, "sort": sort, "dungeon": dungeon,
                         "races": playable_races(eg_races(eg)), "classes": quest_classes(0, sort),
                         "prev": None, "notext": True}
     opened_by = {}
@@ -1104,14 +1109,15 @@ def without_db(args):
         sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
                             for locale in ["enUS"] + LOCALES})
         served = served_quests(eg_datasets("npcs"), eg_datasets("objectives"))
-        unvoiced = without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES))
+        dungeon_rows = {int(r["ID"]): r for r in table("Map") if int(r["ID"]) in DUNGEONS}
+        unvoiced = without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES), dungeon_rows)
         for sid in {rec["sort"] for rec in unvoiced.values() if isinstance(rec["sort"], int)} - set(sort_lines):
             sort_lines[sid] = sort_line(sid, sorts[sid])
         records.update(unvoiced)
     for qid, rec in records.items():
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
                                       rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None,
-                                      ender=enders.get(qid), notext=rec.get("notext"))
+                                      dungeon=rec.get("dungeon"), ender=enders.get(qid), notext=rec.get("notext"))
     placed = sum(1 for rec in records.values() if rec["zones"])
     return quest_lines, sort_lines, (f"{len(records) - len(unvoiced)} quests added, "
                                                     f"{len(unvoiced)} listed without words, {placed} of them placed")
@@ -1224,7 +1230,7 @@ def with_db(args):
 
     if not args.without_efficient_games:
         served = served_quests(eg_datasets("npcs"), eg_datasets("objectives"))
-        records.update(without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES)))
+        records.update(without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES), dungeon_rows))
 
     battleground_follow_ups(records, givers)
     overrides = load_overrides()
