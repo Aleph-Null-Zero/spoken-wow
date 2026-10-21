@@ -175,6 +175,15 @@ def body_by_model() -> dict:
         return {int(file_id): body_name(row["race"], row["gender"]) for file_id, row in json.load(f).items()}
 
 
+
+
+def name_rank(line: dict) -> int:
+    """How far the names table trusts a line's speaker name: an extracted one over a
+    contributed one, which is the contributor's client's language and has put a Russian or
+    German name in the English quest log."""
+    return 1 if line.get("contributionId") is not None else 2
+
+
 def build_tables(corpus: dict, ignored=()) -> dict:
     """Every lookup table, as {output filename: (lua table name, data)}.
 
@@ -213,6 +222,9 @@ def build_tables(corpus: dict, ignored=()) -> dict:
                and ("creature", npc["npcId"]) not in split}
     sex_of = {}
     bodies_of = {}
+    # Within a rank the last line's name stands, as it always has: the extract gives a few
+    # NPCs two English names, and another order would flip them.
+    ranks = {}
 
     for line in corpus["lines"]:
         base_id, voice = split_voice(line["lineId"])
@@ -220,7 +232,10 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             continue
 
         kind = line["npcType"]
-        names.setdefault(kind, {})[line["npcId"]] = line["npcName"]
+        rank = name_rank(line)
+        if rank >= ranks.get((kind, line["npcId"]), 0):
+            ranks[(kind, line["npcId"])] = rank
+            names.setdefault(kind, {})[line["npcId"]] = line["npcName"]
 
         # Before the quest tables, which it must stay out of: a follow-up line carries its
         # quest, but it is said in chat rather than in the quest dialog, so matching its text
