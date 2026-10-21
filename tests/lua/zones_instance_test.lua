@@ -39,7 +39,7 @@ local function Boot(opts)
     instance = opts.inside
     SpokenSettings, SpokenZonesSettings = nil, nil
     SpokenZonesCharacter = { greeted = true }
-    local subzones = { [1458] = { [RUINS] = { file = "1458\\ruins-of-lordaeron", len = 85 } } }
+    local subzones = { [1420] = { [RUINS] = { file = "1420\\ruins-of-lordaeron", len = 85 } } }
     if opts.noClip then subzones = {} end
     SpokenZonesAudioPacks = {
         SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
@@ -54,7 +54,7 @@ local function Boot(opts)
     assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1420] = { name = "Tirisfal Glades", full = "Tirisfal lore." }
     Z.Zones[1458] = { name = "Undercity", full = "Undercity lore." }
-    Z.Subzones[1458] = { [RUINS] = { name = "Ruins of Lordaeron", full = "Ruins lore." } }
+    Z.Subzones[1420] = { [RUINS] = { name = "Ruins of Lordaeron", full = "Ruins lore." } }
     stub.SetZone({ map = 1420, zone = "Tirisfal Glades", subzone = "" })
     stub.FireEvent("ADDON_LOADED", "Spoken_Places")
     Z:SetupAudio()
@@ -78,10 +78,10 @@ local function Playing()
 end
 
 Z = Boot()
-Expect("outdoors, the instance's story is not found", Z:IsFound(1458, RUINS), false)
+Expect("outdoors, the instance's story is not found", Z:IsFound(1420, RUINS), false)
 Enter(2999)
-Expect("entering the Ruins of Lordaeron reads its story", Playing(), "s:1458:" .. RUINS)
-Expect("...and counts its card found", Z:IsFound(1458, RUINS), true)
+Expect("entering the Ruins of Lordaeron reads its story", Playing(), "s:1420:" .. RUINS)
+Expect("...and counts its card found", Z:IsFound(1420, RUINS), true)
 Expect("...queued once, though the world and the zone change both announce it", Spoken:GetQueueSize(), 1)
 stub.Advance(90)
 Enter(nil)
@@ -97,16 +97,16 @@ for _, case in ipairs({
     Z:Set(case.setting, false)
     Enter(2999)
     Expect("with " .. case.label .. ", entering reads nothing", Spoken:GetQueueSize(), 0)
-    Expect("...and still counts the card found", Z:IsFound(1458, RUINS), true)
+    Expect("...and still counts the card found", Z:IsFound(1420, RUINS), true)
 end
 
 Z = Boot({ noClip = true })
 Enter(2999)
 Expect("with no clip in the pack, entering queues nothing", Spoken:GetQueueSize(), 0)
-Expect("...and still counts the card found", Z:IsFound(1458, RUINS), true)
+Expect("...and still counts the card found", Z:IsFound(1420, RUINS), true)
 
 Z = Boot()
-Z:MarkHeard(1458, RUINS)
+Z:MarkHeard(1420, RUINS)
 Enter(2999)
 Expect("a story already heard is not read again on entering", Spoken:GetQueueSize(), 0)
 
@@ -115,7 +115,7 @@ Enter(34)
 Expect("a dungeon with no story reads nothing", Spoken:GetQueueSize(), 0)
 Enter(2999, "pvp")
 Expect("a battleground's or arena's map is not looked up", Spoken:GetQueueSize(), 0)
-Expect("...nor counted found", Z:IsFound(1458, RUINS), false)
+Expect("...nor counted found", Z:IsFound(1420, RUINS), false)
 instance = nil
 stub.FireEvent("ZONE_CHANGED_NEW_AREA")
 Expect("outdoors, a zone change reads no instance", Spoken:GetQueueSize(), 0)
@@ -130,7 +130,7 @@ Expect("...and reads nothing", Spoken:GetQueueSize(), 0)
 
 Z = Boot({ inside = { map = 2999, kind = "party" } })
 stub.Advance(2)
-Expect("logging in inside the instance reads its story", Playing(), "s:1458:" .. RUINS)
+Expect("logging in inside the instance reads its story", Playing(), "s:1420:" .. RUINS)
 
 -- Every dungeon and raid card: entering the instance counts it found. Deadmines, Wailing Caverns,
 -- the Sunken Temple, the Scarlet Monastery, Onyxia's Lair, Scholomance, Ragefire Chasm and the
