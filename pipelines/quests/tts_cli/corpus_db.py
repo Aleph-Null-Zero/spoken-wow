@@ -276,11 +276,16 @@ def _import_types(cur, npcs):
     combinations = {}
     for npc in retyped(npcs):
         combinations.setdefault((npc["race"], npc["gender"], npc["flavor"]), npc.get("voice"))
+    # A race this import added stays new for its other combinations: the bare elemental is as
+    # new as the elemental-nature that happened to add the race first.
+    added_races = set()
     for (race, gender, flavor), voice in combinations.items():
         if not race or is_model_voice(race):
             continue
         cur.execute("""insert into "race" ("key") values (%s) on conflict do nothing""", (race,))
-        new_race = cur.rowcount > 0
+        if cur.rowcount > 0:
+            added_races.add(race)
+        new_race = race in added_races
         if gender:
             cur.execute("""insert into "gender" ("race", "gender") values (%s, %s)
                            on conflict do nothing""", (race, gender))

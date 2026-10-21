@@ -106,6 +106,37 @@ def test_a_type_the_site_lacks_is_added_with_the_voice_the_file_names(cur):
     assert voice_for(cur, "testtreant", None, None) == "testtreant"
 
 
+class InsertOnly:
+    """A cursor for _import_types alone, without Postgres: each insert lands once per table,
+    and rowcount says whether it was new, as "on conflict do nothing" does."""
+
+    def __init__(self):
+        self.rows = {}
+        self.rowcount = 0
+
+    def execute(self, sql, params):
+        table = sql.split('"')[1]
+        rows = self.rows.setdefault(table, set())
+        self.rowcount = 0 if params in rows else 1
+        rows.add(params)
+
+
+def test_two_types_of_one_new_race_both_get_their_voices():
+    # Elemental-nature adds the race first; the bare elemental after it still gets its voice.
+    cur = InsertOnly()
+    _import_types(cur, [
+        {"npcType": "creature", "npcId": 1, "race": "testelemental", "gender": None,
+         "flavor": "nature", "provenance": "moderator", "voice": "testelemental-nature"},
+        {"npcType": "creature", "npcId": 2, "race": "testelemental", "gender": None,
+         "flavor": None, "provenance": "moderator", "voice": "testelemental"},
+    ])
+    assert {name for name, _, _ in cur.rows["voice"]} == {"testelemental-nature", "testelemental"}
+    assert cur.rows["voice_assignment"] == {
+        ("testelemental", None, "nature", "testelemental-nature"),
+        ("testelemental", None, None, "testelemental"),
+    }
+
+
 def test_a_type_the_site_has_keeps_its_own_voice(cur):
     _import_types(cur, [{"npcType": "creature", "npcId": NPC_ID, "race": "human",
                          "gender": "male", "flavor": "standard", "provenance": "corpus",
