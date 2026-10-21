@@ -527,7 +527,22 @@ def battleground_follow_ups(records, givers):
                 changed = True
 
 
-def chain_links(rows, known, later=None):
+def quest_line_links(rows):
+    """{questID: the quest before it in its quest line}, from the client's QuestLineXQuest rows,
+    by OrderIndex. Forever's Toxic Soil (QuestLine 6026) is linked nowhere else."""
+    lines = {}
+    for r in rows:
+        lines.setdefault(int(r["QuestLineID"]), []).append((int(r["OrderIndex"]), int(r["QuestID"])))
+    links = {}
+    for _, steps in sorted(lines.items()):
+        quests = [qid for _, qid in sorted(steps)]
+        for before, qid in zip(quests, quests[1:]):
+            if before != qid:
+                links.setdefault(qid, before)
+    return links
+
+
+def chain_links(rows, known, later=None, lines=None):
     """{questID: the quest before it in its storyline}, for the quests in `known`.
 
     `rows` is quest_template_addon as {questID: {"prev", "next", "group", "breadcrumb"}}:
@@ -540,6 +555,8 @@ def chain_links(rows, known, later=None):
       else does.
     - `later` ({questID: the quest it opens}, Forever's client's nextQuestId) links a quest only
       where no link of the DB's reaches a quest the corpus has.
+    - `lines` ({questID: the quest before it}, the client's quest lines, quest_line_links) links a
+      quest only where neither of those does.
     A quest the corpus lacks is passed through to the one before it, and a link that would close a
     loop is dropped, so every chain has a first quest.
     """
@@ -557,17 +574,19 @@ def chain_links(rows, known, later=None):
         for target, qid in opened.items():
             into.setdefault(target, qid)
 
+    line_before = lines or {}
+
     # The DB's links first; the client's where the DB's lead to no quest the corpus has (a
     # breadcrumb it lacks, say) or to none at all.
     def known_before(qid):
-        for first in (before.get(qid), client_before.get(qid)):
+        for first in (before.get(qid), client_before.get(qid), line_before.get(qid)):
             seen, step = {qid}, first
             while step is not None and step not in known:
                 if step in seen:
                     step = None
                     break
                 seen.add(step)
-                step = before.get(step, client_before.get(step))
+                step = before.get(step, client_before.get(step, line_before.get(step)))
             if step is not None:
                 return step
         return None
@@ -1095,7 +1114,7 @@ def with_db(args):
     else:
         client, seen = forever_quests(eg_datasets("quests.enUS"), eg_datasets("npcs"))
     client_next = {qid: int(q["nextQuestId"]) for qid, q in client.items() if q.get("nextQuestId")}
-    links = chain_links(rows, set(ids), client_next)
+    links = chain_links(rows, set(ids), client_next, quest_line_links(table("QuestLineXQuest")))
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
     masks = {qid: race_mask(quests[qid].get("races", 0), client.get(qid)) for qid in ids}

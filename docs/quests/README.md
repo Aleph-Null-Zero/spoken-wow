@@ -1581,7 +1581,8 @@ Two generated files feed it, both committed so the addon never needs a database:
   quest the DB opens to everyone, before `factions.json`, and wins over the DB's mask where both
   limit (`race_mask`): it gives Skyborne druids their class quests and takes Desperate Prayer from
   human priests, while a `raceMask` of anyone changes nothing. Its `nextQuestId` links a quest no
-  DB link reaches. Otherwise it adds to what the DB says. The files are read at one commit
+  DB link reaches, and the client's quest lines (`QuestLineXQuest`, by `OrderIndex`,
+  `quest_line_links`) link a quest neither reaches, as Toxic Soil in Westfall. Otherwise it adds to what the DB says. The files are read at one commit
   of their repository (`EG_COMMIT`), since it grows every day and an export run twice must give
   the same file; they are fetched once into `tools/cache/efficient-games/<commit>/` and read from
   there after, offline too. Moving the commit is a deliberate change whose diff is reviewed.
