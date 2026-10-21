@@ -4,7 +4,6 @@ local _, NPCs = ...
 -- player targets the boss, or when it is killed (Show a Boss's Story, on the Bosses page).
 
 local L = NPCs.L
-local ICON = [[Interface\Icons\INV_Misc_Head_Dragon_01]]
 
 local source
 
@@ -27,7 +26,7 @@ function NPCs:SetupStories()
 	source = Spoken:RegisterSource("bosses", {
 		title = L.OPT_PAGE_TITLE,
 		addon = "Spoken_NPCs",
-		icon = ICON,
+		icon = NPCs.ICON,
 		about = L.PART_ABOUT,
 		order = 5,
 		textOnly = true,

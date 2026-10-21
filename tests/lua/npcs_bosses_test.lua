@@ -368,7 +368,7 @@ Expect("the bosses' stories are a part of Spoken's, as words with no voice", sto
 _G.SpokenBossStories[36]["edwin vancleef"] = "He led the Brotherhood."
 _G.SpokenBossCreatures = { [36] = { ["edwin vancleef"] = { creature = 639, display = 1305, spells = {} } } }
 local clip = NPCs:StoryClip(36, "edwin vancleef")
-Expect("a boss's story is a line with no recording", clip.textOnly == true and clip.path == nil, true)
+Expect("a boss's story is a line with no recording", clip.path, nil)
 Expect("...headed by its dungeon, named for the boss", clip.present.header .. "|" .. clip.present.label, "Deadmines|Edwin VanCleef")
 Expect("...with its story and its face", clip.present.transcript .. "|" .. tostring(clip.present.portrait.creatureID),
     "He led the Brotherhood.|639")
@@ -384,6 +384,7 @@ Expect("targeting is the default trigger", SpokenNPCsSettings.storyTrigger, "tar
 world.npcGUID = "Creature-0-1-2-3-639-0000ABCDEF"
 NPCs:TargetChanged()
 Expect("targeting a boss shows its story", Showing(), EDWIN)
+Expect("...as words alone, as every line of its part", Q:GetCurrentSound().textOnly, true)
 Expect("...noted for the character", SpokenNPCsCharacter.storiesRead["36:edwin vancleef"], true)
 Clear()
 Q:PauseQueue()

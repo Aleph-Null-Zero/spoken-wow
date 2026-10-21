@@ -354,16 +354,12 @@ local SKULL = [[Interface\TargetingFrame\UI-RaidTargetingIcon_8]]
 function NPCs:StoryClip(map, key)
 	local story = Story(map, key)
 	if not story then return nil end
-	local boss
-	for _, entry in ipairs(Bosses(map)) do
-		if entry.key == key then boss = entry end
-	end
+	local boss = Boss(map, key)
 	if not boss then return nil end
 	local _, words = story:gsub("%S+", "")
 	local entry = Creature(map, key)
 	return {
 		key = "boss:" .. map .. ":" .. key,
-		textOnly = true,
 		length = math.max(LEAST_SECONDS, words / READING_SPEED),
 		present = {
 			header = Index().world[map] and MapName(BossZone(map, key)) or DungeonName(map),

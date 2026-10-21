@@ -717,6 +717,8 @@ function SoundQueue:Add(clip, source, front)
     self.soundIdCounter = self.soundIdCounter + 1
     clip.id = self.soundIdCounter
     clip.source = source
+    -- A source of words alone makes every line of it one.
+    clip.textOnly = clip.textOnly or source.textOnly
     if front then
         table.insert(self.sounds, 1, clip)
     else

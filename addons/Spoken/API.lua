@@ -73,7 +73,7 @@ end
 --     key      = "q:33:accept",               -- caller-unique; the dedup key
 --     path     = [[Interface\AddOns\...\x.ogg]],
 --     length   = 3.4,                         -- seconds; the client cannot report this
---     textOnly = true,                        -- optional; no path: shown in the narrator for `length`
+--     textOnly = true,                        -- optional, as every line of a textOnly source; no path: shown in the narrator for `length`
 --     delay    = nil,                         -- silence before; only 2.4.3/3.3.5 set it
 --     priority = "normal" | "low",            -- low yields at the door; gossip is low
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
