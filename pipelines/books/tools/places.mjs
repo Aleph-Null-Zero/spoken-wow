@@ -60,6 +60,10 @@ const placeOf = (z) => (z < 0 ? INSTANCE_ZONE[-z] : z);
 // Text objects the server has and never spawns, placed by hand: the nameplates in Blackrock
 // Depths' Dark Keeper vault.
 const UNSPAWNED = { "Dark Keeper Nameplate": 230 };
+// Text objects that place no readable, by entry: the Undercity's "Book" (678602) opens the Libram
+// of Rumination's second page, and would make that Libram, dropped across Azeroth, a book on an
+// Undercity shelf.
+const NOT_PLACING = new Set([678602]);
 // Sources the world DB cannot see, by book id: an item a spell or a machine makes, a quest whose
 // giver it does not spawn. Each names a quest or an object, checked against the world DB, and
 // the zones, where the object's spawns do not give them.
@@ -73,6 +77,7 @@ const SOURCES_BY_HAND = {
   1194: [{ how: "object", object: 142696 }], // 3005-D
   2671: [{ how: "quest start", quest: 7636, zones: [1448] }], // Petrified Bark: Vartrus the Ancient, Felwood
   2859: [{ how: "quest reward", quest: 8996, zones: [1427] }], // Brazier of Invocation: Bodley, Blackrock Mountain
+  2786: [{ how: "quest reward", quest: 8228, zones: [1455] }], // Fishing Tournament!: Barrus, Ironforge, whom the DB does not spawn
 };
 // The seasonal events' readables, had only while the event runs, by event: the Compendium lists
 // them under Holidays and Events, a line for each event. Their NPCs are spawned by the event, and
@@ -240,7 +245,7 @@ async function spawnZones(spawnTable, ids) {
 try {
   // Standing in the world: text objects whose page is a readable's.
   const texts = (await q("SELECT entry, name, Data0 AS page FROM gameobject_template WHERE type = 9"))
-    .filter((r) => pageBook.has(Number(r.page)));
+    .filter((r) => pageBook.has(Number(r.page)) && !NOT_PLACING.has(Number(r.entry)));
   const textZones = await spawnZones("gameobject", texts.map((r) => Number(r.entry)));
   for (const r of texts) {
     const book = pageBook.get(Number(r.page));
