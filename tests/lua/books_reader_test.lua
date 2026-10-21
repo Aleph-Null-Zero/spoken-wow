@@ -82,5 +82,26 @@ local PTERADON = "This intact pteradon skeleton was recovered from the remote Un
 stub.ShowPage({ title = "Pteradon Skeleton", number = 1, text = PTERADON })
 Expect("two books with the same words resolve to the lower", B:PageOnScreen(), 1756)
 
+---------------------------------------------------------------- pages the client fills in
+-- The client writes the reader's name, class and gender word into a page, while the index is
+-- keyed on the page with its tokens. These are found by the words around what was filled in.
+local PROOF = "This proof of deed is to verify that %s slew Margol the Rager, scourge of the searing gorge.\n\nThe Ironforge museum recognizes this achievement and thanks the bearer for their generous contribution.\n\n-Head Curator Thorius Stonetender"
+stub.ShowPage({ title = "Proof of Deed", number = 1, text = string.format(PROOF, "Torno") })
+Expect("a page with the reader's name in it is found", B:PageOnScreen(), 1231)
+stub.ShowPage({ title = "Proof of Deed", number = 1, text = string.format(PROOF, "Valaas Dawnsight") })
+Expect("...whatever the name", B:PageOnScreen(), 1231)
+stub.ShowPage({ title = "Proof of Deed", number = 1, text = "This proof of deed is to verify that Torno slew Hogger." })
+Expect("...but other words around a name are still nil", B:PageOnScreen(), nil)
+
+local TABLET = "Greetings, %s. The Shattered Hand sends its regards and hopes you find the Valley a comfortable place to apply your trade. This is a time of testing for you, so do not think you are not being watched constantly.\n\nIt is my duty to appraise the Hand of your skills, and to then inform them when I feel you are ready to move on to greater challenges.\n\nWhen you are ready, come find me deep inside the Den. I'll be waiting for you there.\n\n-Rwag, Rogue Trainer "
+stub.ShowPage({ title = "Encrypted Tablet", number = 1, text = string.format(TABLET, "brother") })
+Expect("a page with the gender word for a man is found", B:PageOnScreen(), 2438)
+stub.ShowPage({ title = "Encrypted Tablet", number = 1, text = string.format(TABLET, "sister") })
+Expect("...and for a woman", B:PageOnScreen(), 2438)
+
+local NOTE = "Many tribes claim that it is a gift to be blessed with the aptitude to use magic or to talk to our ancestors, but you should know this as well, Warrior, you are just as gifted. Some do not have the strength in their arms to wield mighty weapons. Some do not have the skill to parry a blow from an assassin, or to even suffer the physical punishments from an arcane spellcaster, but you do. You are strong. And I will help you become stronger. Find me in Camp Narache.\n\n-Harutt Thunderhorn, Warrior Trainer"
+stub.ShowPage({ title = "Simple Note", number = 1, text = NOTE })
+Expect("a class letter with the reader's class in it is found", B:PageOnScreen(), 2441)
+
 print(Failures() == 0 and "All books reader tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)
