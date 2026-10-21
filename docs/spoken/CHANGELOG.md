@@ -6,7 +6,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 - **Gossip finds its line on Chinese, Korean and French clients.** A reworded line now matches in
   Chinese and Korean, and French text with a curly apostrophe or a no-break space matches the line it is,
-  where before it played nothing. *([Nucabe](https://github.com/Nucabe))*
+  where before it played nothing. On a client in another language than English, an NPC with several
+  lines and none in that language no longer reads one of its English lines at random: it reads nothing
+  and offers Contribute. *([Nucabe](https://github.com/Nucabe))*
 - **Found books, quests and areas are listed in gold in the Compendium**, as the groups above them are.
   They were white, close to the grey of what is not found yet. *([Nucabe](https://github.com/Nucabe))*
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver

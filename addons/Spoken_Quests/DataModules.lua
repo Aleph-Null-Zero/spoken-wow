@@ -687,12 +687,24 @@ function DataModules:GetNPCGossipTextHash(soundData)
     if next(text_entries) ~= nil then
         return MatchShown(text, text_entries)
     end
-    -- Only when no pack in the client's locale knows this NPC are the rest searched. That is
-    -- what every non-English client has always done with English packs, and it mostly works:
-    -- most NPCs have a single line, and the fuzzy match lands on it whatever it is shown in.
+    -- Only when no pack in the client's locale knows this NPC are the rest searched. Their words
+    -- cannot match the screen's, so an NPC with a single line (its aliases count as that line)
+    -- plays it whatever it is shown in. Among several, the best score is noise and would pick
+    -- any of them: one must clear the floor, which another language's words do not, and the
+    -- window offers Contribute instead.
     CollectTexts(table, npc, false, text_entries)
-    local best_result = FuzzySearchBestKeys(text, text_entries)
-    return best_result and best_result.value
+    local file, same
+    for _, each in pairs(text_entries) do
+        if not file then
+            file, same = each, { [each] = true }
+            for _, alias in ipairs(GossipAliases and GossipAliases[each] or {}) do
+                same[alias] = true
+            end
+        elseif not same[each] then
+            return MatchShown(text, text_entries)
+        end
+    end
+    return file
 end
 
 local function getFirstNWords(text, n)

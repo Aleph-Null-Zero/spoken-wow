@@ -152,11 +152,18 @@ Expect("a reworded Korean line finds its line",
     Lookup(VO, "형제여, 미안하지만 나는 사냥꾼과 그 야수에게만 도움을 줄 수가 있습니다."), "ko")
 
 ---------------------------------------------------------------- a client in another language
--- No table in the client's language knows the NPC: the English ones are guessed from, as
--- every non-English client with English packs always has.
+-- No table in the client's language knows the NPC: the English ones are searched. German words
+-- never match them, so only an NPC with one line can be told what it says.
 VO = Boot("deDE", { [TRAINER] = { [DEFAULT] = "en-guess" } })
 Expect("a German client with only English text still hears the NPC's one line",
     Lookup(VO, "Ich hoffe, Ihr stört mich aus gutem Grund."), "en-guess")
+VO = Boot("deDE", { [TRAINER] = { [DEFAULT] = "en-guess", [HERBALIST] = "en-other" } })
+Expect("...but of an NPC with several lines it hears none, rather than any one of them",
+    Lookup(VO, "Ich hoffe, Ihr stört mich aus gutem Grund."), nil)
+Expect("...unless the text on screen is one of them", Lookup(VO, HERBALIST), "en-other")
+VO.GossipAliases = { ["en-guess"] = { "en-other" }, ["en-other"] = { "en-guess" } }
+Expect("...and lines recorded as one moment count as one line",
+    Lookup(VO, "Ich hoffe, Ihr stört mich aus gutem Grund.") ~= nil, true)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll gossip variant tests passed")
