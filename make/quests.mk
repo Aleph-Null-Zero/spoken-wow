@@ -250,7 +250,7 @@ compendium-text: ## Re-export addons/Spoken_Quests/Data/QuestText.lua from the c
 # quest log's zone nor who may take a quest, so this reads the Forever repack's TrinityCore DB
 # (COMPENDIUM_MYSQL_*). ARGS=--no-db adds the corpus's new quests without it.
 
-compendium: ## Re-export addons/Spoken_Quests/Data/Compendium.lua (needs the repack's MySQL, ARGS=--no-db without it, and its map files, COMPENDIUM_MAPS)
+compendium: ## Re-export addons/Spoken_Quests/Data/Compendium.lua (needs the repack's MySQL and its map files in COMPENDIUM_MAPS; ARGS=--no-db without them)
 	@$(PYTHON) pipelines/quests/tools/export_compendium.py $(ARGS)
 
 release-dry: ## Show what `make release` would upload to CurseForge and Wago

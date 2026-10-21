@@ -154,11 +154,14 @@ def test_the_area_a_giver_stands_in_beats_the_rectangles(monkeypatch, tmp_path):
     assert maps.zone_at(0, 250, 250) == 1429
     # No tile extracted: the rectangle.
     assert maps.zone_at(0, -10567, -1170) == maps.box_at(0, -10567, -1170)
+    assert area_reader(str(tmp_path / "none")) is None
 
 
-def test_no_map_files_stops_the_export(tmp_path):
-    with pytest.raises(FileNotFoundError, match="COMPENDIUM_MAPS"):
-        area_reader(str(tmp_path / "none"))
+def test_the_run_with_the_db_stops_without_map_files_and_names_the_variable(monkeypatch, tmp_path):
+    monkeypatch.setattr(export_compendium, "MAPS_DIR", str(tmp_path / "none"))
+    monkeypatch.setattr(export_compendium, "area_reader", lambda directory=None: None)
+    with pytest.raises(SystemExit, match="COMPENDIUM_MAPS"):
+        export_compendium.with_db(export_compendium.parse_args([]))
 
 
 def test_a_citys_rectangle_wins_over_the_ground_around_it(monkeypatch):

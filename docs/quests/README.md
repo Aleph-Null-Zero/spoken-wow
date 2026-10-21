@@ -1518,9 +1518,9 @@ Two generated files feed it, both committed so the addon never needs a database:
 - `Data/Compendium.lua` (`make quests-compendium`, `tools/export_compendium.py`): every corpus
   quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
   the zone of its entrance, else where its giver stands: the area the repack's map files put the
-  spawn in, `COMPENDIUM_MAPS` (default `C:/ForeverRepack/data/maps`; the export stops without
-  them, `--no-db` too), as the books' places have it, else the smallest zone rectangle where no
-  tile was extracted, and a city's rectangle over the ground around it), or the QuestSort of a class, profession
+  spawn in, `COMPENDIUM_MAPS` (the repack's `data/maps` folder; the run with the DB stops
+  without it, `--no-db` uses the rectangles), as the books' places have it, else the smallest zone
+  rectangle where no tile was extracted, and a city's rectangle over the ground around it), or the QuestSort of a class, profession
   or season with its name in every language, and the races and classes allowed to take it. Areas,
   zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, pinned
   in `pipelines/lib/wago.mjs` and cached in `pipelines/lib/cache/wago/` for every pipeline), which
