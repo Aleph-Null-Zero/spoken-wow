@@ -62,6 +62,7 @@
     {"id": 97065, "sort": 101, "source": "Tip the Scales hands in Keefer's Angelfish, a fish caught with Fishing; neither the DB nor Forever's client places it, so it was under Place Unknown"},
     {"ids": [8446, 8447], "zones": [1450], "source": "QD3: Keeper Remulos in Moonglade ends Shrouded in Nightmare and gives Waking Legends; sort 1 (Epic) held only these two: https://warcraft.wiki.gg/wiki/Shrouded_in_Nightmare"},
     {"id": 8996, "dungeon": 229, "source": "QD3: Bodley stands in Blackrock Spire, where the rest of the chain is filed"},
+    {"ids": [8961, 8962, 8963, 8964, 8965, 8985, 8986, 8987, 8988, 8994], "zones": [1427], "source": "QC7, undecided: the quest log files these under Blackrock Mountain (25), which no map shows; Bodley stands in area 254, which the repack's map files put in Burning Steppes and the zone rectangles in Searing Gorge. Held in Searing Gorge, where they were before the map files were read, until one rule for area 25 is chosen"},
     {"ids": [94472, 94473, 94616], "sort": 82, "classes": 64, "source": "QD3: Earth, Fire and Water Sapta, as 1516-1536 in the Shaman group"},
     {"id": 95042, "sort": 141, "classes": 2, "source": "QD3: the Forsaken paladins' Seeking the Kor Gem, counterpart of 1442 in the Paladin group"},
     {"ids": [6661, 6662], "zones": [1455], "source": "QD3: Monty and Nipsy stand in the Deeprun Tram (map 369), which no map of its own shows; Ironforge is the city it joins"},
