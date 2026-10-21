@@ -118,13 +118,13 @@ describe("filter scoping", () => {
 describe("field filters", () => {
   it("narrows to a race", () => {
     const lines = all({ race: "tauren" });
-    expect(lines).toHaveLength(2181);
+    expect(lines).toHaveLength(2242);
     expect(lines.every((l) => l.race === "tauren")).toBe(true);
   });
 
   it("intersects rather than widening", () => {
     const both = all({ race: "tauren", gender: "female" });
-    expect(both).toHaveLength(674);
+    expect(both).toHaveLength(697);
     expect(both.length).toBeLessThan(all({ race: "tauren" }).length);
     expect(both.every((l) => l.race === "tauren" && l.gender === "female")).toBe(true);
   });
@@ -132,12 +132,12 @@ describe("field filters", () => {
   it("filters by voice, source and entity type", () => {
     // A voice is race-gender-flavor, so it narrows within the pair rather than matching it:
     // tauren-female speaks with three different voices.
-    expect(all({ voice: "tauren-female-shaman" })).toHaveLength(196);
+    expect(all({ voice: "tauren-female-shaman" })).toHaveLength(206);
     expect(all({ voice: "tauren-female-shaman" }).every((l) => l.race === "tauren")).toBe(true);
     // A flavor cuts across races - three of them have a shaman voice - so it narrows on its
     // own axis rather than standing in for a voice.
-    expect(all({ flavor: "shaman" })).toHaveLength(867);
-    expect(all({ flavor: "shaman", race: "tauren" })).toHaveLength(486);
+    expect(all({ flavor: "shaman" })).toHaveLength(892);
+    expect(all({ flavor: "shaman", race: "tauren" })).toHaveLength(501);
     expect(all({ source: ["gossip"] }).every((l) => l.source === "gossip")).toBe(true);
     expect(all({ npcType: "item" }).every((l) => l.npcType === "item")).toBe(true);
   });
@@ -179,15 +179,15 @@ describe("field filters", () => {
   it("hides progress text unless asked for", () => {
     // No code path will ever voice a progress line.
     expect(asShipped().every((l) => l.source !== "progress")).toBe(true);
-    expect(asShipped()).toHaveLength(17479);
-    expect(all()).toHaveLength(21132);
+    expect(asShipped()).toHaveLength(18296);
+    expect(all()).toHaveLength(22091);
   });
 
   it("treats asking for the progress source as asking to see them", () => {
     // Otherwise picking `progress` in the source filter would return nothing at all, which
     // reads as a broken filter rather than as a default doing its job.
     const lines = asShipped({ source: ["progress"] });
-    expect(lines).toHaveLength(3653);
+    expect(lines).toHaveLength(3795);
     expect(lines.every((l) => l.source === "progress")).toBe(true);
   });
 });

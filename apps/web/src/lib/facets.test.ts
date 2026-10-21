@@ -65,7 +65,7 @@ describe("facets", () => {
           .filter((s) => s.race === race && s.gender === gender)
           .map((s) => s.flavor);
 
-      expect(under("orc", "female").sort()).toEqual(["shaman", "standard", "warrior"]);
+      expect(under("orc", "female").sort()).toEqual(["kid", "shaman", "standard", "warrior"]);
       // The one race-gender with a single voice, and the one with no standard.
       expect(under("goblin", "female")).toEqual(["zany"]);
       expect(under("tauren", "male")).not.toContain("standard");
