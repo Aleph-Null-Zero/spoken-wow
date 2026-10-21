@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Found books, quests and areas are listed in gold in the Compendium**, as the groups above them are.
+  They were white, close to the grey of what is not found yet. *([Nucabe](https://github.com/Nucabe))*
+- **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
+  face are drawn from appearances that ship with Spoken, so a creature the client has not met yet no longer
+  shows your own face or another creature's. *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's minimise arrow sits in the middle of its button.** It was drawn off to one side of the
   frame the template gives it. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
@@ -12,6 +17,25 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   voice pack was playing, so the site can tell a line nobody has voiced from a pack that is out
   of date. The note Spoken shows before collecting says so.
   *([rusty-key](https://github.com/rusty-key))*
+- **Every Compendium page has a round picture beside its title, and the lists are plain lines.** A place shows its
+  picture with the world, a quest a scroll with the exclamation or question mark, a readable its kind with the
+  training book. Zones and dungeons in the lists are lines with their count, as the groups are. A title
+  is always one line. *([Nucabe](https://github.com/Nucabe))*
+- **A readable's page is its text only.** The where-to-find-it lines are gone. *([Nucabe](https://github.com/Nucabe))*
+- **A page with nothing to read shows your faction's wax seal in its middle.** Where the client has no seal
+  it shows a faint lattice. It replaces the line telling you to choose something on the left, on the
+  Compendium's pages for continents, zones, dungeons and groups. *([Nucabe](https://github.com/Nucabe))*
+- **A page nobody has written yet says so in the same words on every tab, with Contribute under them.**
+  Quests, Places and Readables use one message, and a quest part with no words gets Contribute too.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Play stays on the Compendium's pages and quest parts, greyed where nothing is recorded.** Its
+  tooltip says there is no voice for it yet. *([Nucabe](https://github.com/Nucabe))*
+- **Rows in the Compendium are dimmed when their voice, picture or words are missing.** A line with nothing
+  inside it has no plus button, and the Unlock switches no longer grey rows that have nothing found. The
+  button that shrinks the window is the size of Close. *([Nucabe](https://github.com/Nucabe))*
+- **A quest chain's page has the quest scroll, as a quest does, and the Classes, Professions, holiday and
+  other group pages have icons of their own.** Each part of a quest's page is headed by who speaks it,
+  over Description or Completion. *([Nucabe](https://github.com/Nucabe))*
 
 ## 3.5.1 — 2026-10-19
 
