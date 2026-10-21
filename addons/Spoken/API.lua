@@ -47,6 +47,12 @@ function Spoken:RegisterSource(key, info)
     return Sources:Register(key, info)
 end
 
+--- Whether the narrator would show a line of the source `key`: a narrator style that shows words,
+--- Show Narrator on, and not off for that source. A text-only line is worth queueing only then.
+function Spoken:ShowsNarratorFor(key)
+    return Addon:PlayerStyle() ~= "none" and Addon:ShowsNarrator({ source = { key = key } }) and true or false
+end
+
 function Spoken:GetSource(key)
     return Sources:Get(key)
 end
@@ -67,6 +73,7 @@ end
 --     key      = "q:33:accept",               -- caller-unique; the dedup key
 --     path     = [[Interface\AddOns\...\x.ogg]],
 --     length   = 3.4,                         -- seconds; the client cannot report this
+--     textOnly = true,                        -- optional, as every line of a textOnly source; no path: shown in the narrator for `length`
 --     delay    = nil,                         -- silence before; only 2.4.3/3.3.5 set it
 --     priority = "normal" | "low",            -- low yields at the door; gossip is low
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
@@ -240,7 +247,7 @@ function Spoken:RefreshPlayer()
 end
 
 --- A feature addon's settings page, shown under Spoken's own in the game's settings as `name`,
---- listed in `order` (Quests 1, Gossip 2, Places 3, Readables 4). Pass the page's SpokenLayout and its
+--- listed in `order` (Quests 1, Gossip 2, Places 3, Readables 4, Bosses 5). Pass the page's SpokenLayout and its
 --- scroller to make its rows searchable from Home. Returns a table whose `category` is
 --- filled in once the page is registered, for Settings.OpenToCategory; nil where the client
 --- cannot nest pages, in which case the addon registers a top-level page as before.
@@ -304,8 +311,8 @@ function Spoken:VoicePack(module, lang)
     return PACK_FOLDERS[module] .. "_" .. lang, url
 end
 
--- Zone icons by uiMapID, copied into Textures/Zones so every client has them. A city takes its
--- zone's icon, Teldrassil takes Darnassus's, and a map not listed takes its parent's.
+-- Zone icons by uiMapID, copied into Textures/Zones so every client has them. A city has an icon
+-- drawn for it; a map not listed takes its parent's.
 local ZONE_ART = [[Interface\AddOns\Spoken\Textures\Zones\]]
 local ZONE_ICONS = {
     [1414] = "Kalimdor", [1415] = "EasternKingdoms",
@@ -320,8 +327,9 @@ local ZONE_ICONS = {
     [1445] = "DustwallowMarsh", [1446] = "Tanaris", [1447] = "Azshara", [1448] = "Felwood",
     [1449] = "UngoroCrater", [1451] = "Silithus", [1452] = "Winterspring", [1438] = "Teldrassil",
     [2482] = "MountHyjal",
-    [1453] = "ElwynnForest", [1454] = "Durotar", [1455] = "DunMorogh", [1456] = "Mulgore",
-    [1457] = "Teldrassil", [1458] = "TirisfalGlades",
+    [1450] = "Moonglade", [1459] = "AlteracValley", [1460] = "WarsongGulch", [1461] = "ArathiBasin",
+    [1453] = "Stormwind", [1454] = "Orgrimmar", [1455] = "Ironforge", [1456] = "ThunderBluff",
+    [1457] = "Darnassus", [1458] = "Undercity",
     -- Forever's own zones, drawn for Spoken.
     [2521] = "ZephrasIsle", [2524] = "DarkspearIslands", [2548] = "Riverglades", [2652] = "Shendralas",
 }
@@ -342,12 +350,28 @@ function Spoken:ZoneIcon(mapID)
     return nil
 end
 
--- A dungeon's or a raid's badge on every tab of the Compendium: a key, as to a door below.
-local DUNGEON_ICON = [[Interface\Icons\INV_Misc_Key_03]]
+-- A dungeon's or a raid's badge on every tab of the Compendium, by instance map: its Dungeon Finder
+-- icon from the retail game, copied into Textures/Dungeons so every client has it. Where the Finder
+-- has none (the Hall of Thanes, Forever's own), the zone's icon, or one drawn for it (Dalaran).
+local DUNGEON_ART = [[Interface\AddOns\Spoken\Textures\Dungeons\]]
+local DUNGEON_ICONS = {
+    [33] = "ShadowfangKeep", [34] = "StormwindStockades", [36] = "Deadmines", [43] = "WailingCaverns",
+    [47] = "RazorfenKraul", [48] = "BlackfathomDeeps", [70] = "Uldaman", [90] = "Gnomeregan",
+    [109] = "SunkenTemple", [129] = "RazorfenDowns", [189] = "ScarletMonastery", [209] = "ZulFarak",
+    [229] = "BlackrockSpire", [230] = "BlackrockDepths", [249] = "OnyxiaEncounter", [289] = "Scholomance",
+    [309] = "ZulGurub", [329] = "Stratholme", [349] = "Maraudon", [389] = "RagefireChasm",
+    [409] = "MoltenCore", [429] = "DireMaul", [469] = "BlackwingLair", [509] = "AQRuins",
+    [531] = "AQTemple", [533] = "Naxxramas", [2959] = "Dalaran", [2999] = "RuinsOfLordaeron",
+    [3065] = "HallOfThanes",
+    -- Forever's own, which the Finder has no icon for: the zone's.
+    [2784] = "DemonFallCanyon", [2856] = "ScarletEnclave", [2875] = "KarazhanCrypts", [2998] = "ExcavationSite",
+}
+local DUNGEON_ICON_FALLBACK = [[Interface\Icons\INV_Misc_QuestionMark]]
 
 --- The icon for the dungeon or raid whose instance map is `map`, with its crop.
 function Spoken:DungeonIcon(map)
-    return DUNGEON_ICON, ICON_CROP
+    local icon = DUNGEON_ICONS[map]
+    return icon and (DUNGEON_ART .. icon) or DUNGEON_ICON_FALLBACK, ICON_CROP
 end
 
 -- C_Container where the client has it, else the old bag functions.

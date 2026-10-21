@@ -160,6 +160,7 @@ L = {
     OPT_UNLOCK_PLACES = "Unlock Undiscovered Places",
     OPT_UNLOCK_WRITINGS = "Unlock Unfound Readables",
     OPT_UNLOCK_QUESTS = "Unlock Unstarted Quests",
+    OPT_UNLOCK_BOSSES = "Unlock Unfound Bosses",
     COMPENDIUM_NOT_WRITTEN = "Nothing has been written for this yet.",
     COMPENDIUM_CONTRIBUTE = "Contribute",
     COMPENDIUM_CONTRIBUTE_TIP = "Help write it. This opens Spoken's contribution page.",

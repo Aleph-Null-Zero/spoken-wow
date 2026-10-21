@@ -99,6 +99,7 @@ local function Atlas(texture, atlas, useAtlasSize)
 	end
 	return false
 end
+C.Atlas = Atlas
 
 -- Where `atlas` sits in its file, for drawing a piece of it: nil where the client has not got it,
 -- or does not say.

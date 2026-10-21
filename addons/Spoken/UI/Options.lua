@@ -318,9 +318,9 @@ function Options:Styles()
     return styles
 end
 
--- Contribute & Report's page: last, after the modules' (Quests 1, Gossip 2, Places 3, Readables 4)
--- and Developer's (5).
-local CONTRIBUTE_ORDER = 6
+-- Contribute & Report's page: last, after the modules' (Quests 1, Gossip 2, Places 3, Readables 4,
+-- Bosses 5) and Developer's (6).
+local CONTRIBUTE_ORDER = 7
 local contribute
 
 --- Contribute & Report's own page under Spoken's, its rows added by `build(layout)`.
@@ -655,12 +655,16 @@ local function Build(canvas)
         { tab = "quests", part = "quests", label = L.OPT_UNLOCK_QUESTS, module = L.OPT_PART_QUESTS },
         { tab = "places", part = "zones", label = L.OPT_UNLOCK_PLACES, module = L.OPT_PART_ZONES },
         { tab = "readables", part = "books", label = L.OPT_UNLOCK_WRITINGS, module = L.OPT_PART_BOOKS },
+        -- Spoken NPCs has no part to turn off: its tab is there while the addon is.
+        { tab = "bosses", label = L.OPT_UNLOCK_BOSSES },
     }) do
         local row = layout:Checkbox(unlock.label, nil,
             function() local tab = Tab(unlock.tab); return tab ~= nil and tab.unlock ~= nil and tab.unlock.get() end,
             function(v) local tab = Tab(unlock.tab); if tab and tab.unlock then tab.unlock.set(v) end end)
         Only(row, function() local tab = Tab(unlock.tab); return tab ~= nil and tab.unlock ~= nil end)
-        Requires(row, function() return Spoken:IsPartOn(unlock.part) end, format(L.REASON_MODULE_OFF_FMT, unlock.module))
+        if unlock.part then
+            Requires(row, function() return Spoken:IsPartOn(unlock.part) end, format(L.REASON_MODULE_OFF_FMT, unlock.module))
+        end
     end
 
     -- Where a player goes when something is wrong, for every module at once. Each module's page
@@ -933,7 +937,7 @@ local function Build(canvas)
         Layout.Confirm(L.OPT_RESET_ALL_CONFIRM, L.OPT_RESET_AND_RELOAD, L.CANCEL, function()
             -- The Unlock switches are on this page but kept with each part's settings, which
             -- ResetProfile does not reach, and each part's own Reset skips them.
-            for _, key in ipairs({ "places", "readables", "quests" }) do
+            for _, key in ipairs({ "places", "readables", "quests", "bosses" }) do
                 local tab = Tab(key)
                 if tab and tab.unlock then tab.unlock.set(false) end
             end

@@ -113,7 +113,8 @@ function SoundQueue:SetPaused(value)
 end
 
 function SoundQueue:CanBePaused()
-    return not self:IsPlaying() or self:GetCurrentSound().handle ~= nil
+    local current = self:GetCurrentSound()
+    return not self:IsPlaying() or current.handle ~= nil or current.textOnly == true
 end
 
 local function CountFor(source)
@@ -505,7 +506,8 @@ end
 ---@param clip SpokenClip
 function SoundQueue:PlaySound(clip)
     local channel = SpeakingChannel(clip)
-    local willPlay = SoundUtils:PlaySound(clip, channel)
+    -- A text-only line has nothing to play and leaves the game's dialogue alone.
+    local willPlay = clip.textOnly or SoundUtils:PlaySound(clip, channel)
     if not willPlay then
         Discard(clip, "missing")
         self:Advance()
@@ -513,7 +515,12 @@ function SoundQueue:PlaySound(clip)
     end
 
     -- A line read off an NPC's window cuts its voice; one starting elsewhere (a zone's story) fades it.
-    self:MuteGameDialogue(channel, clip.cutsGameDialogue)
+    -- One of words alone lifts a mute a line before it took.
+    if clip.textOnly then
+        self:MuteGameDialogue(nil)
+    else
+        self:MuteGameDialogue(channel, clip.cutsGameDialogue)
+    end
 
     if clip.startCallback then
         clip.startCallback(clip)
@@ -649,6 +656,9 @@ local function WhyRefused(source)
     if Sources:IsTurnedOff(source) then
         return L.PART_TURNED_OFF
     end
+    if source.textOnly then
+        return nil
+    end
     local channel = source:GetChannel()
     local inaudible = SoundUtils:WhyInaudible(channel)
     if inaudible and not SoundUtils:IsMutedByPlayer(channel) then
@@ -707,6 +717,8 @@ function SoundQueue:Add(clip, source, front)
     self.soundIdCounter = self.soundIdCounter + 1
     clip.id = self.soundIdCounter
     clip.source = source
+    -- A source of words alone makes every line of it one.
+    clip.textOnly = clip.textOnly or source.textOnly
     if front then
         table.insert(self.sounds, 1, clip)
     else
