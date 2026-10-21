@@ -9,10 +9,10 @@
 // instead: players there want to know which packs to install now, not a feed of each one, so
 // there is only ever one post, and it is pinned.
 //
-// The channel is the one whose name starts with the language's flag and a "｜" (🇩🇪｜deutsch),
-// the flag being its region's (en-US is 🇺🇸), or else the one named `feedback-<lang>` in lower
-// case (feedback-de-de). So a new language needs a channel and no code. A language without one
-// is skipped.
+// The channel is the one named for the language in its own words (💬｜deutsch), or else the one
+// named `feedback-<lang>` in lower case (feedback-de-de), with or without an emoji and a "｜" in
+// front. A language without one is skipped. Flags were dropped: Windows draws them as two letters,
+// and not every language has a flag of its own.
 //
 // A WEBHOOK CANNOT DO THIS. It can neither pin nor list pins, so finding the previous post would
 // mean remembering its id somewhere between workflow runs. A bot can: the old post is whichever
@@ -26,7 +26,7 @@
 //   GITHUB_REPOSITORY   owner/repo
 import { fileURLToPath } from "node:url";
 
-import { BASE_LOCALE, localeInfo } from "../../pipelines/lib/locales.mjs";
+import { BASE_LOCALE } from "../../pipelines/lib/locales.mjs";
 import { SECTIONS, loadPacks } from "./packs.mjs";
 
 export const HEADING = "Audio packs:";
@@ -35,15 +35,23 @@ export function channelName(lang) {
   return `feedback-${lang.replace(/([a-z])([A-Z])/, "$1-$2").toLowerCase()}`;
 }
 
-/** The flag of the language's region, as regional indicator letters: deDE -> 🇩🇪, enUS -> 🇺🇸. */
-export function languageFlag(lang) {
-  const region = localeInfo(lang)?.bcp47.split("-")[1] ?? "";
-  return String.fromCodePoint(...[...region.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
-}
+/** Each language's channel name in its own words, as the server's channel list shows them. */
+export const CHANNEL_NAMES = {
+  enUS: "english",
+  deDE: "deutsch",
+  esES: "español",
+  esMX: "español-latam",
+  frFR: "français",
+  itIT: "italiano",
+  ptBR: "português",
+  ruRU: "русский",
+  koKR: "한국어",
+  zhCN: "简体中文",
+  zhTW: "繁體中文",
+};
 
 export function isLanguageChannel(channel, lang) {
-  const flag = languageFlag(lang);
-  return (flag !== "" && channel.name.startsWith(`${flag}｜`)) || isNamed(channel, channelName(lang));
+  return (CHANNEL_NAMES[lang] !== undefined && isNamed(channel, CHANNEL_NAMES[lang])) || isNamed(channel, channelName(lang));
 }
 
 const VERSION_TAG = /\/v(\d+)\.(\d+)\.(\d+)$/;
@@ -190,7 +198,7 @@ async function main() {
     return;
   }
   if (dryRun) {
-    console.log(`${languageFlag(target.lang)} ${target.lang}\n${content}`);
+    console.log(`#${CHANNEL_NAMES[target.lang] ?? channelName(target.lang)}\n${content}`);
     return;
   }
 

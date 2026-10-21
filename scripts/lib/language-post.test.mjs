@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  channelName, isLanguageChannel, isNamed, languageFlag, languageOf, latestReleases, oldPosts, postText,
+  channelName, isLanguageChannel, isNamed, languageOf, latestReleases, oldPosts, postText,
 } from "./language-post.mjs";
 
 const url = (tag) => `https://github.com/o/r/releases/tag/${tag}`;
@@ -24,15 +24,15 @@ test("a channel is found by its name, with or without an emoji and a bar in fron
   assert.ok(!isNamed({ name: "🇦🇹｜feedback-de-de-at" }, "feedback-de-de"));
 });
 
-test("a language's channel is the one named with its region's flag, or its feedback name", () => {
-  assert.equal(languageFlag("deDE"), "🇩🇪");
-  assert.equal(languageFlag("enUS"), "🇺🇸");
-  assert.equal(languageFlag("zhTW"), "🇹🇼");
-  assert.ok(isLanguageChannel({ name: "🇩🇪｜deutsch" }, "deDE"));
-  assert.ok(isLanguageChannel({ name: "🇲🇽｜español-latam" }, "esMX"));
-  assert.ok(isLanguageChannel({ name: "feedback-de-de" }, "deDE"));
-  assert.ok(!isLanguageChannel({ name: "🇪🇸｜español" }, "esMX"));
-  assert.ok(!isLanguageChannel({ name: "🇩🇪 talk" }, "deDE"));
+test("a language's channel is named in its own words, or with its feedback name", () => {
+  assert.ok(isLanguageChannel({ name: "💬｜deutsch" }, "deDE"));
+  assert.ok(isLanguageChannel({ name: "💬｜español-latam" }, "esMX"));
+  assert.ok(isLanguageChannel({ name: "💬｜繁體中文" }, "zhTW"));
+  assert.ok(isLanguageChannel({ name: "english" }, "enUS"));
+  assert.ok(isLanguageChannel({ name: "💬｜feedback-de-de" }, "deDE"));
+  assert.ok(!isLanguageChannel({ name: "💬｜español" }, "esMX"));
+  assert.ok(!isLanguageChannel({ name: "💬｜español-latam" }, "esES"));
+  assert.ok(!isLanguageChannel({ name: "deutsch-talk" }, "deDE"));
 });
 
 test("channel names follow the code in lower case", () => {
