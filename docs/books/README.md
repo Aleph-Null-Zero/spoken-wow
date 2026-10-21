@@ -280,7 +280,9 @@ every book, letter, note, scroll, tablet, plaque, gravestone, exhibit and pictur
 reads, found or not, with the words of each on the right, on the spellbook's parchment, to read
 and to listen to wherever you are. Which readables exist and where they are comes from
 `Data/Places.lua` (`pipelines/books/tools/places.mjs`); what this character has found, from
-`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`.
+`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`. A quest places a readable
+only when the quests corpus or the client's QuestV2 has it: the repack also carries Cataclysm's
+quest rows.
 
 **The list.** A banner for each continent, Kalimdor and the Eastern Kingdoms, each opening and
 closing on its own. Under a continent each zone is a line (its name, and how many of its readables are

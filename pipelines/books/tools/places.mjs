@@ -1,4 +1,4 @@
-// A TrinityCore world DB + the client's map tables -> addons/Spoken_Readables/Data/Places.lua.
+// A TrinityCore world DB + the client's map tables + the quests corpus -> addons/Spoken_Readables/Data/Places.lua.
 //
 // Where each readable is, for Azeroth's Compendium: those standing in the world (a plaque, a
 // book on a shelf) in the zones their objects are spawned in, and those carried (a letter, a
