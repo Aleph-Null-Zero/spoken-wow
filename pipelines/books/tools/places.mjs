@@ -43,7 +43,7 @@ const OUT = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Places.
 // Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
 // items, and one that shares a vanilla page id lent that book its sources and zones.
 const BUILD = process.env.PLACES_BUILD ?? FOREVER_BUILD;
-const MAPS = process.env.PLACES_MAPS ?? "C:/Forever/ForeverRepack/data/maps";
+const MAPS = process.env.PLACES_MAPS ?? "C:/ForeverRepack/data/maps";
 const WIDE = 8;
 
 // The dungeons, halls and battlegrounds, under the zone their entrance is in. The battlegrounds are

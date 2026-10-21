@@ -103,7 +103,7 @@ INSTANCE_ZONE = {int(m): row["zone"] for part in ("dungeons", "instances") for m
 # there the rectangle, which says city, is kept.
 CITY_IN = {1453: 1429, 1454: 1411, 1455: 1426, 1456: 1412, 1457: 1438, 1458: 1420}
 # The Forever repack's extracted map files, whose AREA chunks say which area a point is in.
-MAPS_DIR = os.environ.get("COMPENDIUM_MAPS", "C:/Forever/ForeverRepack/data/maps")
+MAPS_DIR = os.environ.get("COMPENDIUM_MAPS", "C:/ForeverRepack/data/maps")
 # The dungeons and raids a quest is filed under (`dungeon`): not the other instances, such as the
 # Excavation Site, an instance of the Wetlands' own story (Caitlin Grassman's quests).
 DUNGEONS = {int(m) for m in _INSTANCES["dungeons"]}
@@ -190,9 +190,10 @@ def cell_of(x, y):
 
 def area_reader(directory=MAPS_DIR):
     """area_at(map, x, y): the AreaTable id the server's map files put a point in, None where no
-    tile was extracted. None where there are no map files: then the rectangles place a giver."""
+    tile was extracted. No map files stops the export: the rectangles overlap along every border and
+    put a giver at a zone's edge in its neighbour."""
     if not os.path.isdir(directory):
-        return None
+        raise FileNotFoundError(f"no map files at {directory} (set COMPENDIUM_MAPS to the repack's maps folder)")
     tiles = {}
 
     def area_at(mapid, x, y):
@@ -1045,8 +1046,6 @@ def connect(args):
 def with_db(args):
     quests, givers, spawns = corpus_quests()
     maps = Maps(area_at=area_reader())
-    if not maps.area_at:
-        print(f"no map files at {MAPS_DIR} (COMPENDIUM_MAPS): givers are placed by zone rectangles")
     db = connect(args)
     ids = sorted(quests)
     marks = ",".join(["%s"] * len(ids))

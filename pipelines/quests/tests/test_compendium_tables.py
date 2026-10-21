@@ -2,6 +2,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import export_compendium  # noqa: E402
@@ -152,7 +154,11 @@ def test_the_area_a_giver_stands_in_beats_the_rectangles(monkeypatch, tmp_path):
     assert maps.zone_at(0, 250, 250) == 1429
     # No tile extracted: the rectangle.
     assert maps.zone_at(0, -10567, -1170) == maps.box_at(0, -10567, -1170)
-    assert area_reader(str(tmp_path / "none")) is None
+
+
+def test_no_map_files_stops_the_export(tmp_path):
+    with pytest.raises(FileNotFoundError, match="COMPENDIUM_MAPS"):
+        area_reader(str(tmp_path / "none"))
 
 
 def test_a_citys_rectangle_wins_over_the_ground_around_it(monkeypatch):
