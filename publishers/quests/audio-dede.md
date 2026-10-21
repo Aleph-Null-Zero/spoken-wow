@@ -17,8 +17,6 @@ manager: true
 
 Voiced quest dialogue for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Quests module, in German. This addon is data only — it does nothing on its own.
 
-**Experimental.** This is a first cut, numbered 0.x until it has been listened through: expect lines to be re-recorded, and report the ones that sound wrong.
-
 One pack holds everything: Alliance quests, Horde quests, the quests both sides share, and NPC gossip. It installs beside the English packs rather than replacing them, so a player who switches languages keeps both.
 
 ## Installing
