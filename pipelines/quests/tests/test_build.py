@@ -348,3 +348,16 @@ def test_a_subname_is_not_part_of_the_name():
     assert tables["npc_name_lookups"][1] == "Ishlee Breezewhisper"
     # The game names the unit without it, so a key that kept it would never match.
     assert tables["npc_name_gossip_file_lookups"] == {"Ishlee Breezewhisper": {"Hides?": "ab12"}}
+
+
+def test_a_placeholder_is_never_a_name():
+    assert 1 not in _names(_speaker(1, "null", 7, kind="gameobject"), table="object_name_lookups")
+    assert _names(_speaker(1, "npc 1", 7), _speaker(1, "Raan Wildwind", 7, 41))[1] == "Raan Wildwind"
+    assert _names(_speaker(1, "Raan Wildwind", 7), _speaker(1, "npc 1", 7, 41))[1] == "Raan Wildwind"
+    assert _names(_speaker(1, "Keg", None, 40, "gameobject"),
+                  _speaker(1, "Doodad_BeerKeg101", None, 41, "gameobject"),
+                  table="object_name_lookups")[1] == "Keg"
+
+
+def test_a_name_with_digits_or_a_dash_is_a_name():
+    assert _names(_speaker(1, "Homing Robot OOX-17/TN"))[1] == "Homing Robot OOX-17/TN"

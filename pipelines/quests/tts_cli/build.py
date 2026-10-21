@@ -179,6 +179,9 @@ def body_by_model() -> dict:
 #: A title the capture kept after the name ("Ishlee Breezewhisper <Skinner>"). The game names
 #: the unit without it, so a key carrying it is never matched and a quest log shows it.
 _SUBNAME = re.compile(r"\s*<[^<>]*>\s*$")
+#: What a capture wrote when it had no name to give: "null", "npc 263664", or the model's
+#: file name ("Doodad_BeerKeg101").
+_PLACEHOLDER = re.compile(r"(?i)null|npc \d+|\w+_\w+")
 
 
 def speaker_name(name: str) -> str:
@@ -189,7 +192,10 @@ def speaker_name(name: str) -> str:
 def name_rank(line: dict) -> int:
     """How far the names table trusts a line's speaker name: an extracted one over a
     contributed one, which is the contributor's client's language and has put a Russian or
-    German name in the English quest log."""
+    German name in the English quest log; a placeholder not at all."""
+    name = speaker_name(line["npcName"])
+    if not name or _PLACEHOLDER.fullmatch(name):
+        return 0
     return 1 if line.get("contributionId") is not None else 2
 
 
@@ -242,7 +248,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
 
         kind = line["npcType"]
         rank = name_rank(line)
-        if rank >= ranks.get((kind, line["npcId"]), 0):
+        if rank and rank >= ranks.get((kind, line["npcId"]), 0):
             ranks[(kind, line["npcId"])] = rank
             names.setdefault(kind, {})[line["npcId"]] = speaker_name(line["npcName"])
 
