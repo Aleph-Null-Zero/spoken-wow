@@ -44,3 +44,17 @@ function Spoken.NotSecret(value)
     return value
 end
 SpokenEnv.NotSecret = Spoken.NotSecret
+
+-- The creature id in a unit's GUID ("Creature-0-1-2-3-<id>-..."), or nil for a player, an object,
+-- a hex GUID or a secret one. A vehicle is a creature the player can ride.
+function Spoken.CreatureID(guid)
+    guid = Spoken.NotSecret(guid)
+    if type(guid) ~= "string" then
+        return nil
+    end
+    local _, _, kind, id = string.find(guid, "^(%a+)%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+    if kind ~= "Creature" and kind ~= "Vehicle" then
+        return nil
+    end
+    return tonumber(id)
+end

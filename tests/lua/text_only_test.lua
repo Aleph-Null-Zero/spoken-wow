@@ -60,6 +60,19 @@ Expect("with all sound off a voiced line is refused", ok == nil and why ~= nil, 
 Expect("...and a text-only line is still shown", stories:Enqueue(Story()) ~= nil, true)
 world.cvars.Sound_EnableAllSound = nil
 
+---------------------------------------------------------------- after a voiced line
+env, quests = H.Fresh(stub, SPOKEN)
+stories = env.Sources:Register("bosses", { title = "Bosses", addon = "Spoken_NPCs", order = 5, textOnly = true })
+env.Addon.db.profile.Audio.AutoToggleDialog = true
+local voiced = H.Clip()
+voiced.cutsGameDialogue = true
+quests:Enqueue(voiced)
+Expect("a voiced line mutes the game's dialogue", tostring(GetCVar("Sound_EnableDialog")), "0")
+stories:Enqueue(Story())
+stub.Advance(voiced.length + 1)
+Expect("...and a text-only line after it lets the dialogue be heard again", tostring(GetCVar("Sound_EnableDialog")), "1")
+env.Addon.db.profile.Audio.AutoToggleDialog = false
+
 ---------------------------------------------------------------- whether the narrator would show it
 env = H.Fresh(stub, SPOKEN)
 env.Sources:Register("bosses", { title = "Bosses", addon = "Spoken_NPCs", order = 5, textOnly = true })

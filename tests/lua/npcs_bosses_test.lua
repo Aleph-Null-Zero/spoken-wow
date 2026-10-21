@@ -386,6 +386,17 @@ NPCs:TargetChanged()
 Expect("targeting a boss shows its story", Showing(), EDWIN)
 Expect("...noted for the character", SpokenNPCsCharacter.storiesRead["36:edwin vancleef"], true)
 Clear()
+Q:PauseQueue()
+NPCs:ForgetStories()
+NPCs:TargetChanged()
+Expect("a story waiting behind a stop is queued", Showing(), EDWIN)
+Expect("...as low as gossip", Q:GetCurrentSound().priority, "low")
+Expect("...and not noted until it shows", SpokenNPCsCharacter.storiesRead["36:edwin vancleef"], nil)
+Clear()
+Q:ResumeQueue()
+NPCs:TargetChanged()
+Expect("...so cleared, it shows the next time", Showing(), EDWIN)
+Clear()
 NPCs:TargetChanged()
 Expect("...once", Showing(), "nothing")
 Expect("Forget Stories Shown counts what it forgot", NPCs:ForgetStories(), 1)
@@ -429,6 +440,19 @@ NPCs:EncounterEnded(edwin.id, 0)
 Expect("...nor a fight the party lost", Showing(), "nothing")
 NPCs:EncounterEnded(edwin.id, 1)
 Expect("...and killing the boss shows its story", Showing(), EDWIN)
+Clear()
+local sunkenMap
+for map, bosses in pairs(SpokenBosses.maps) do
+    for _, boss in ipairs(bosses) do
+        if boss.key == "weaver" then sunkenMap = map end
+    end
+end
+_G.SpokenBossStories[sunkenMap] = { weaver = "It weaves.", dreamscythe = "It reaps dreams." }
+NPCs:EncounterEnded(2955, 1)
+local keys = {}
+for _, queued in ipairs(Q.sounds) do keys[#keys + 1] = queued.key end
+Expect("...and an encounter of two bosses shows both stories", table.concat(keys, "|"),
+    "boss:" .. sunkenMap .. ":weaver|boss:" .. sunkenMap .. ":dreamscythe")
 Clear()
 SpokenNPCsSettings.storyTrigger = "target"
 

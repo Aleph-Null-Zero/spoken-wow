@@ -24,10 +24,7 @@ local function Identity(clip)
     if guid and Faceless(guid) then return end
     return spec, guid, spec.creatureID
 end
-local function CreatureID(guid)
-    if not guid then return end
-    return tonumber(string.match(guid, "^Creature%-%d+%-%d+%-%d+%-%d+%-(%d+)%-"))
-end
+local CreatureID = Spoken.CreatureID
 function StaticPortrait:InQueue(entry)
     for _, clip in ipairs(SoundQueue.sounds) do
         local spec, guid, creature = Identity(clip)

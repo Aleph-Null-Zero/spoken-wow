@@ -61,9 +61,9 @@ local function Encounters()
 	return byEncounter
 end
 
---- The boss { map, key } of the game's encounter `encounterID`, or nil.
-function NPCs:BossOfEncounter(encounterID)
-	return encounterID and Encounters()[encounterID] or nil
+--- The bosses { map, key } of the game's encounter `encounterID`: none, one, or two fought at once.
+function NPCs:BossesOfEncounter(encounterID)
+	return encounterID and Encounters()[encounterID] or {}
 end
 
 --- Whether this character has met the boss `key` of the dungeon `map`.

@@ -21,16 +21,6 @@ local function Creatures()
 	return byCreature
 end
 
---- The creature id in a unit's GUID ("Creature-0-1-2-3-<id>-..."), or nil for a player, a pet or
---- a GUID the client keeps secret.
-local function CreatureID(guid)
-	guid = Spoken.NotSecret and Spoken.NotSecret(guid) or nil
-	if type(guid) ~= "string" then return nil end
-	local kind, id = guid:match("^(%a+)%-%d+%-%d+%-%d+%-%d+%-(%d+)")
-	if kind ~= "Creature" and kind ~= "Vehicle" then return nil end
-	return tonumber(id)
-end
-
 --- Registers the bosses' stories with Spoken as a part of its own, after the settings are read.
 function NPCs:SetupStories()
 	if source or not (Spoken and Spoken.RegisterSource and Spoken.ShowsNarratorFor) then return end
@@ -46,21 +36,23 @@ end
 
 --- Shows the story of the boss `key` of `map` in the narrator. Nothing when this character has
 --- been shown it, the narrator would not show it, or the boss has none. Returns whether it queued.
+--- A story is low, as gossip is: a voiced line coming drops it while it waits. It counts as shown
+--- once it starts, so one dropped or cleared shows the next time.
 function NPCs:ReadStory(map, key)
 	if not (source and SpokenNPCsCharacter) then return false end
 	local id = map .. ":" .. key
 	if SpokenNPCsCharacter.storiesRead[id] or not Spoken:ShowsNarratorFor("bosses") then return false end
 	local clip = self:StoryClip(map, key)
 	if not clip then return false end
-	local queued = source:Enqueue(clip)
-	if queued then SpokenNPCsCharacter.storiesRead[id] = true end
-	return queued and true or false
+	clip.priority = "low"
+	clip.startCallback = function() SpokenNPCsCharacter.storiesRead[id] = true end
+	return source:Enqueue(clip) and true or false
 end
 
 --- The player targeted a unit: its story, where it is a boss and targeting shows them.
 function NPCs:TargetChanged()
 	if not (SpokenNPCsSettings and SpokenNPCsSettings.storyTrigger == "target") then return end
-	local id = CreatureID(UnitGUID and UnitGUID("target"))
+	local id = Spoken.CreatureID(UnitGUID and UnitGUID("target"))
 	if not id then return end
 	-- A boss only Forever has is not among Data/Creatures.lua's: known by its name in the dungeon
 	-- the player is in.
@@ -68,11 +60,10 @@ function NPCs:TargetChanged()
 	if boss then self:ReadStory(boss.map, boss.key) end
 end
 
---- An encounter ended: its boss's story, where it was killed and killing shows them.
+--- An encounter ended: its bosses' stories, where it was won and killing shows them.
 function NPCs:EncounterEnded(encounterID, success)
 	if not (SpokenNPCsSettings and SpokenNPCsSettings.storyTrigger == "kill") or success ~= 1 then return end
-	local boss = self:BossOfEncounter(encounterID)
-	if boss then self:ReadStory(boss.map, boss.key) end
+	for _, boss in ipairs(self:BossesOfEncounter(encounterID)) do self:ReadStory(boss.map, boss.key) end
 end
 
 --- Every story this character was shown can be shown again. Returns how many.

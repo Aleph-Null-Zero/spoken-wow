@@ -25,7 +25,8 @@ A boss's story also shows in Spoken's narrator, as words with no voice (`Story.l
 targets the boss (known by its creature id, or by its name in the dungeon the player is in where
 `Data/Creatures.lua` has no creature for it), or when it is killed (`ENCOUNTER_END` with success), as Show a Boss's Story on the
 Bosses page says (`SpokenNPCsSettings.storyTrigger`, targeting by default). Each story shows once per
-character (`SpokenNPCsCharacter.storiesRead`), until Forget Stories Shown. The stories are a part of
+character (`SpokenNPCsCharacter.storiesRead`, noted when it starts), until Forget Stories Shown. A story
+is low priority, as gossip is: a voiced line arriving drops it while it waits, and it shows the next time. The stories are a part of
 Spoken's, "bosses", registered with `textOnly`: What Spoken Reads turns them off, and nothing is queued
 where the narrator would not show it (`Spoken:ShowsNarratorFor`, Voice Only or Show Narrator off).
 Opened, the tab lands on the dungeon the player is in, else the zone, else the continent.

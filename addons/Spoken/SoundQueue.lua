@@ -515,7 +515,10 @@ function SoundQueue:PlaySound(clip)
     end
 
     -- A line read off an NPC's window cuts its voice; one starting elsewhere (a zone's story) fades it.
-    if not clip.textOnly then
+    -- One of words alone lifts a mute a line before it took.
+    if clip.textOnly then
+        self:MuteGameDialogue(nil)
+    else
         self:MuteGameDialogue(channel, clip.cutsGameDialogue)
     end
 
