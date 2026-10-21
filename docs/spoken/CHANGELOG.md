@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The Compendium's quest list follows live Forever more closely.** Skyborne and other races
+  see the class quests Forever gives them, and human priests no longer see Desperate Prayer.
+  Quests whose only givers are one side's are listed for that side alone, three quests moved to
+  the zone Forever's quest log uses, Westfall's Toxic Soil quests and 30 follow-ups are linked into
+  their chains, and Dark Sacrifice has its new name. *([Nucabe](https://github.com/Nucabe))*
 - **Found books, quests and areas are listed in gold in the Compendium**, as the groups above them are.
   They were white, close to the grey of what is not found yet. *([Nucabe](https://github.com/Nucabe))*
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
