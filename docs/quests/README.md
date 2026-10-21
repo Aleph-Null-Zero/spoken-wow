@@ -1574,8 +1574,10 @@ Two generated files feed it, both committed so the addon never needs a database:
   CC BY 4.0, credited in `THIRD_PARTY.md`), `quests.enUS.json` and `npcs.json` of every
   `wow_classic_beta` build, the latest build's record of a quest winning. Its `zoneAreaId` (a zone
   through Forever's tables) or `categoryId` (a QuestSort) places a quest the DB does not, before
-  the giver's spawn; a `zoneAreaId` of a Forever area no map shows is placed where players saw
-  its giver (`npcs.json` `offers`, else `takes`, by `positions[].uiMap`). Its `raceMask` limits a
+  the giver's spawn, and its `zoneAreaId` wins where the DB's QuestSortID is in another zone,
+  neither being a battleground's (Forever moved 540, 545 and 952); a `zoneAreaId` of a Forever
+  area no map shows is placed where players saw its giver (`npcs.json` `offers`, else `takes`, by
+  `positions[].uiMap`). Its `raceMask` limits a
   quest the DB opens to everyone, before `factions.json`, and wins over the DB's mask where both
   limit (`race_mask`): it gives Skyborne druids their class quests and takes Desperate Prayer from
   human priests, while a `raceMask` of anyone changes nothing. Its `nextQuestId` links a quest no

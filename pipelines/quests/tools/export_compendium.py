@@ -26,7 +26,8 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   github.com/JIVESCORP/eg-link-output-wowf, CC BY 4.0; quests.enUS.json and npcs.json, the
   latest build's record of each quest, as the repository had them at EG_COMMIT, cached in
   cache/efficient-games/). Its zone or quest sort, race mask and nextQuestId fill in where the
-  DB has none; its race mask also wins where both limit who may take a quest (race_mask).
+  DB has none; its zone wins where the DB's is another zone (place), and its race mask where
+  both limit who may take a quest (race_mask).
   --without-efficient-games leaves it out.
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
@@ -462,7 +463,9 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
     """(zones, sort, which source placed it) for a quest, the first that has an answer:
 
     - the DB's QuestSortID: an area's zone (a battleground's, for an area named after one), or a
-      sort the client names (negative);
+      sort the client names (negative). Where the client's zoneAreaId is in another zone, neither
+      being a battleground's, the client's zone: Forever moved a few quests (952 Grove of the
+      Ancients to Darkshore);
     - Forever's client (`eg`, its Efficient Games record): its zoneAreaId's zone, or its
       categoryId's sort. A zoneAreaId of a Forever area no map shows (Ruins of Lordaeron, the
       Excavation Site in the Wetlands) is placed where players saw its giver (`seen`, uiMapIDs);
@@ -472,7 +475,12 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
     places it nowhere.
     """
     if sort > 0:
-        zone = maps.battleground_of_area(sort) or maps.zone_of_area(sort)
+        battleground = maps.battleground_of_area(sort)
+        zone = battleground or maps.zone_of_area(sort)
+        live = (eg or {}).get("zoneAreaId") or 0
+        live_zone = live > 0 and not battleground and not maps.battleground_of_area(live) and maps.zone_of_area(live)
+        if zone and live_zone and live_zone != zone:
+            return [live_zone], None, "client"
         if zone:
             return [zone], None, "db"
     elif sort < 0 and -sort in sorts:
