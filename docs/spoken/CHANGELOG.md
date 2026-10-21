@@ -4,6 +4,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **A quest's page writes your class and race in lower case mid-sentence**, as the quest window does:
+  "young hunter", not "young Hunter". German keeps the capital. *([Nucabe](https://github.com/Nucabe))*
 - **Found books, quests and areas are listed in gold in the Compendium**, as the groups above them are.
   They were white, close to the grey of what is not found yet. *([Nucabe](https://github.com/Nucabe))*
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver

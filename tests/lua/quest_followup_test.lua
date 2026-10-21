@@ -202,8 +202,9 @@ Expect("...and is consumed", #VO.Followup.armed, 1)
 Say("Thanks, Tester!", SPEAKER_GUID)
 Expect("the same line said again does not replay", Keys(), "line-1")
 
--- Double spaces collapsed, gender and race/class tokens filled for this player.
-Say("Well done. He is a fine Dwarf Paladin.", SPEAKER_GUID)
+-- Double spaces collapsed, gender and race/class tokens filled for this player: $r and $c in
+-- lower case, as the client writes them.
+Say("Well done. He is a fine dwarf paladin.", SPEAKER_GUID)
 Expect("tokens and whitespace are normalised before comparing", Keys(), "line-1, line-2")
 Expect("...and nothing is left armed", #VO.Followup.armed, 0)
 
@@ -414,7 +415,7 @@ Expect("a pack's FollowupLookup plays the line's own recording", Keys(), STEM)
 Expect("...from the pack's follow-up folder", queued[1] and queued[1].path,
     [[Interface\AddOns\NewPack\]] .. FOLLOWUP_DIR .. STEM .. ".ogg")
 Expect("...with the pack's length for it", queued[1] and queued[1].length, 3)
-Say("Well done. He is a fine Dwarf Paladin.", SPEAKER_GUID)
+Say("Well done. He is a fine dwarf paladin.", SPEAKER_GUID)
 Expect("a line the lookup names but the pack has no audio for is silent", Keys(), STEM)
 Expect("...and recorded as having no recording", VO.Debug.runtime.stage, "followup-no-recording")
 
