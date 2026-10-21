@@ -9,8 +9,10 @@
 // instead: players there want to know which packs to install now, not a feed of each one, so
 // there is only ever one post, and it is pinned.
 //
-// The channel is found by name, `feedback-<lang>` in lower case (feedback-de-de), so a new
-// language needs a channel and no code. A language without one is skipped.
+// The channel is the one whose name starts with the language's flag and a "｜" (🇩🇪｜deutsch),
+// the flag being its region's (en-US is 🇺🇸), or else the one named `feedback-<lang>` in lower
+// case (feedback-de-de). So a new language needs a channel and no code. A language without one
+// is skipped.
 //
 // A WEBHOOK CANNOT DO THIS. It can neither pin nor list pins, so finding the previous post would
 // mean remembering its id somewhere between workflow runs. A bot can: the old post is whichever
@@ -24,13 +26,24 @@
 //   GITHUB_REPOSITORY   owner/repo
 import { fileURLToPath } from "node:url";
 
-import { BASE_LOCALE } from "../../pipelines/lib/locales.mjs";
+import { BASE_LOCALE, localeInfo } from "../../pipelines/lib/locales.mjs";
 import { SECTIONS, loadPacks } from "./packs.mjs";
 
 export const HEADING = "Audio packs:";
 
 export function channelName(lang) {
   return `feedback-${lang.replace(/([a-z])([A-Z])/, "$1-$2").toLowerCase()}`;
+}
+
+/** The flag of the language's region, as regional indicator letters: deDE -> 🇩🇪, enUS -> 🇺🇸. */
+export function languageFlag(lang) {
+  const region = localeInfo(lang)?.bcp47.split("-")[1] ?? "";
+  return String.fromCodePoint(...[...region.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+}
+
+export function isLanguageChannel(channel, lang) {
+  const flag = languageFlag(lang);
+  return (flag !== "" && channel.name.startsWith(`${flag}｜`)) || isNamed(channel, channelName(lang));
 }
 
 const VERSION_TAG = /\/v(\d+)\.(\d+)\.(\d+)$/;
@@ -114,9 +127,16 @@ export function discord(token) {
   };
 }
 
+/** Whether a channel is called `name`, with or without an emoji and "｜" in front. */
+export function isNamed(channel, name) {
+  return channel.name === name || channel.name.endsWith(`｜${name}`);
+}
+
+/** The first channel the bot sees that is named `name`, or that passes `name` when it is a test. */
 export async function findChannel(api, name) {
+  const test = typeof name === "function" ? name : (c) => isNamed(c, name);
   for (const guild of await api("GET", "/users/@me/guilds")) {
-    const channel = (await api("GET", `/guilds/${guild.id}/channels`)).find((c) => c.name === name);
+    const channel = (await api("GET", `/guilds/${guild.id}/channels`)).find(test);
     if (channel) return channel;
   }
   return null;
@@ -165,26 +185,25 @@ async function main() {
   if (!repo) throw new Error("GITHUB_REPOSITORY is not set");
   const latest = latestReleases(await allReleases(repo), target.packs.map((p) => p.release));
   const content = postText(target.packs, latest);
-  const name = channelName(target.lang);
   if (!content) {
     console.log(`skipped: no ${target.lang} pack has a release`);
     return;
   }
   if (dryRun) {
-    console.log(`#${name}\n${content}`);
+    console.log(`${languageFlag(target.lang)} ${target.lang}\n${content}`);
     return;
   }
 
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) throw new Error("DISCORD_BOT_TOKEN is not set");
   const api = discord(token);
-  const channel = await findChannel(api, name);
+  const channel = await findChannel(api, (c) => isLanguageChannel(c, target.lang));
   if (!channel) {
-    console.log(`skipped: no #${name} channel`);
+    console.log(`skipped: no channel for ${target.lang}`);
     return;
   }
   const { posted, deleted } = await replacePost(api, channel.id, content);
-  console.log(`#${name}: posted and pinned ${posted}, deleted ${deleted} old post(s)`);
+  console.log(`#${channel.name}: posted and pinned ${posted}, deleted ${deleted} old post(s)`);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
