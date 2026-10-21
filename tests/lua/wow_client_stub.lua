@@ -215,6 +215,7 @@ local function Widget(kind, name)
         return #tostring(self.text or "") * 7
     end
     function w:SetWordWrap(on) self.wordWrap = on and true or false end
+    function w:SetTextColor(r, g, b) self.textColor = { r, g, b } end
     function w:SetFontObject(font) self.font = type(font) == "table" and (font.name or font) or font end
     function w:GetTop() return 100 end
     function w:GetBottom() return 0 end
@@ -525,14 +526,29 @@ function _G.CreateFrame(kind, name, parent)
     -- Kept apart from the PlayerModel above on purpose: that one is the addon's model probe,
     -- tracked as M.playerModel, and the appearance roller must never replace it.
     if kind == "DressUpModel" then
+        -- A model with nothing loaded, or a creature the client has not cached (world.unloaded),
+        -- answers with the player's own appearance (world.ownDisplay).
+        function f:SetUnit() self.display, self.touched = world.ownDisplay, true end
         function f:SetCreature(id)
-            self.creature = id
+            self.creature, self.touched = id, true
             setCreatureCount = setCreatureCount + 1
             local displays = world.creatureDisplays[id]
-            self.display = displays and displays[(setCreatureCount - 1) % #displays + 1] or nil
+            local display = displays and displays[(setCreatureCount - 1) % #displays + 1] or nil
+            -- A real model keeps answering with the creature it held until the new one loads.
+            if world.modelLags then
+                self.pending, self.pendingAt = display, world.time
+            else
+                self.display = display
+            end
         end
+        function f:ClearModel() self.creature = nil end
         function f:GetDisplayInfo()
             if world.displaysUncached then return 0 end
+            if not self.touched then return world.blankDisplay or 0 end
+            if self.creature and world.unloaded and world.unloaded[self.creature] then return world.blankDisplay or 0 end
+            if self.pending and world.time > self.pendingAt then
+                self.display, self.pending = self.pending, nil
+            end
             return self.display or 0
         end
     end
@@ -1245,7 +1261,7 @@ end
 --- above, from its tree.
 function M.LoadZones(addonDirectory, SpokenZones)
     if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
-    for _, file in ipairs({ "Audio", "UI/ContributeButton", "Autoplay" }) do
+    for _, file in ipairs({ "Audio", "Autoplay" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
         chunk("Spoken_Places", SpokenZones)
     end
