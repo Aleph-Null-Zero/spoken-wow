@@ -26,7 +26,8 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   github.com/JIVESCORP/eg-link-output-wowf, CC BY 4.0; quests.enUS.json and npcs.json, the
   latest build's record of each quest, as the repository had them at EG_COMMIT, cached in
   cache/efficient-games/). Its zone or quest sort, race mask and nextQuestId fill in where the
-  DB has none, and change nothing it has. --without-efficient-games leaves it out.
+  DB has none; its race mask also wins where both limit who may take a quest (race_mask).
+  --without-efficient-games leaves it out.
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
   Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
@@ -447,6 +448,14 @@ def without_text(known, served, client, seen, maps, sorts, removed=()):
 def eg_races(q):
     """A quest's raceMask (16 hex digits, PlayableRaceBit) as a number, 0 where it has none."""
     return int(q.get("raceMask") or "0", 16)
+
+
+def race_mask(db_mask, eg=None):
+    """A quest's races: Forever's client's limit (`eg`, its Efficient Games record) where it has
+    one, else the DB's (db_races). The client's wins where both limit: it gives Skyborne druids
+    their class quests (26 A Lesson to Learn) and takes Desperate Prayer from human priests. A
+    client mask of anyone says nothing, since Blizzard gives that to many one-side quests too."""
+    return playable_races(eg_races(eg)) if eg and playable_races(eg_races(eg)) else db_mask
 
 
 def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
@@ -1081,11 +1090,7 @@ def with_db(args):
     links = chain_links(rows, set(ids), client_next)
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
-    masks = {}
-    for qid in ids:
-        masks[qid] = quests[qid].get("races", 0)
-        if not playable_races(masks[qid]) and qid in client:
-            masks[qid] = eg_races(client[qid])
+    masks = {qid: race_mask(quests[qid].get("races", 0), client.get(qid)) for qid in ids}
     races = quest_races(masks, sides, gates(rows, client_next))
     leaks = side_leaks(races, links)
 
