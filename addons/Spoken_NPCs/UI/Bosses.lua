@@ -537,7 +537,7 @@ end
 local function ShowEntry()
 	if not page then return end
 	if not selection then
-		page:Show({ title = L.COMPENDIUM_BOSSES, subtitle = Count(Tally(AllZones())), empty = true })
+		page:Show({ title = L.COMPENDIUM_BOSSES, subtitle = Count(Tally(AllZones())) })
 		return
 	end
 	if selection.boss then
@@ -561,22 +561,22 @@ local function ShowEntry()
 	if selection.dungeon then
 		page:Show({ title = DungeonName(selection.dungeon),
 			subtitle = CountLine(MapName(selection.mapID), TallyOf(selection.dungeon)),
-			empty = true, icon = C.PlaceIcon(nil, selection.dungeon),
+			icon = C.PlaceIcon(nil, selection.dungeon),
 			picture = C.PlacePicture({ mapID = selection.mapID, dungeon = selection.dungeon }) })
 		return
 	end
 	if selection.lands then
-		page:Show({ title = L.GROUP_LANDS, subtitle = Count(Tally(ZonesOn(nil))), empty = true })
+		page:Show({ title = L.GROUP_LANDS, subtitle = Count(Tally(ZonesOn(nil))) })
 		return
 	end
 	if C.IsContinent(selection.mapID) then
 		page:Show({ title = MapName(selection.mapID),
-			subtitle = Count(Tally(ZonesOn(selection.mapID))), empty = true, icon = C.PlaceIcon(selection.mapID) })
+			subtitle = Count(Tally(ZonesOn(selection.mapID))), icon = C.PlaceIcon(selection.mapID) })
 		return
 	end
 	page:Show({ title = MapName(selection.mapID),
 		subtitle = CountLine(MapName(ContinentOf(selection.mapID) or C.WORLD), Tally({ selection.mapID })),
-		empty = true, icon = C.PlaceIcon(selection.mapID), picture = C.PlacePicture({ mapID = selection.mapID }) })
+		icon = C.PlaceIcon(selection.mapID), picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
 --------------------------------------------------------------------------------
@@ -664,7 +664,6 @@ local function Build(panel)
 		onlyGet = OnlyFound,
 		onlySet = function(on) if SpokenNPCsSettings then SpokenNPCsSettings.compendiumFoundOnly = on end end,
 		locked = function() return SpokenCompendium.LockedReason("OPT_UNLOCK_BOSSES") end,
-		unlocked = Unlocked,
 		-- Found Only left the chosen row out: back to where the player stands.
 		onHidden = function()
 			selection = nil
