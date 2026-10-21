@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=18"
   },
+  "scripts": {
+    "test": "node --test tools/lib/*.test.mjs"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
     "pg": "^8.13.1"
