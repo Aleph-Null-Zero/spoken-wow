@@ -1552,8 +1552,14 @@ Two generated files feed it, both committed so the addon never needs a database:
   Most quests one side's giver hands out are open to every race in the DB (`AllowableRaces` 0 or
   all), so where the DB says anyone, the quest takes the side `corpus/factions.json` gives it,
   and failing that the side of the quest before it in its chain: a follow-up is reached only
-  through that quest (`quest_races`). The export prints how many quests are still not on the
-  side of the quest before them (`side_leaks`, the audit's leak check).
+  through that quest (`quest_races`). Failing both, it takes the side of the NPCs that start it in
+  the repack (`creature_queststarter`, `gameobject_queststarter`, else the corpus's speaker of its
+  accept line), or for a quest nothing starts (an item does) of those it is handed in to
+  (`giver_sides`): an NPC whose client `FactionTemplate` is hostile to one side only is the
+  other's (`npc_side`, the rule `tools/export_factions.py` has), and one hostile to neither, as
+  Ruul Snowhoof, leaves the quest to both. An NPC the repack lacks says nothing. The export
+  prints how many quests are still not on the side of the quest before them (`side_leaks`, the
+  audit's leak check).
   A quest filed under a class's QuestSort that the DB names no class for is that class's
   (`quest_classes`): Forever's class quests are not in the DB, and without it every class would
   see them under the class.

@@ -15,7 +15,8 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   quest_template_addon.AllowableClasses) are read from a TrinityCore world DB (the Forever
   repack's), which the vmangos extraction does not keep. Where the DB opens a quest to every
   race, it is one side's if corpus/factions.json says so, else if the quest before it in its
-  chain is (quest_races below).
+  chain is, else if the NPCs starting it (or, where none does, ending it) are hostile to the
+  other side only (quest_races, giver_sides below).
 - Chains: the quest before each one in its storyline (`prev`), from the same DB's
   quest_template_addon (chain_links below), so the tab can group a zone's quests into their chains.
 - Hand-in: who a quest is handed in to (`ender`, or `enderObject` for an object), from the same
@@ -657,6 +658,35 @@ def side_of(races):
     return None
 
 
+# FactionTemplate's EnemyGroup bits, as export_factions.py reads the vmangos faction_template.
+ENEMY_ALLIANCE, ENEMY_HORDE = 2, 4
+
+
+def npc_side(enemy_group):
+    """The side an NPC stands on by its FactionTemplate's EnemyGroup: hostile to the Horde and not
+    to the Alliance is the Alliance's. None where it is hostile to both or neither, as Southshore's
+    magistrate (template 96) and Ruul Snowhoof (714) are, whose quests are open to both."""
+    if enemy_group & ENEMY_HORDE and not enemy_group & ENEMY_ALLIANCE:
+        return "alliance"
+    if enemy_group & ENEMY_ALLIANCE and not enemy_group & ENEMY_HORDE:
+        return "horde"
+    return None
+
+
+def giver_sides(starters, enders, side_of_npc):
+    """{questID: "alliance" or "horde"}: the side of the NPCs that start a quest, where all are one
+    side's, else, for a quest nothing starts (an item does), of those it is handed in to.
+    `starters` and `enders` are {questID: {"creature:id" or "gameobject:id"}}; `side_of_npc` gives
+    an NPC's side (npc_side) or None. A starter of no side leaves the quest to both."""
+    out = {}
+    for qid in set(starters) | set(enders):
+        npcs = starters.get(qid) or enders.get(qid) or set()
+        found = {side_of_npc(npc) for npc in npcs}
+        if len(found) == 1 and None not in found:
+            out[qid] = found.pop()
+    return out
+
+
 def gates(rows, later=None):
     """{questID: the quests that open it}, from quest_template_addon as chain_links reads it: its
     PrevQuestID, else every quest whose NextQuestID names it (an ExclusiveGroup's alternatives, or
@@ -676,7 +706,7 @@ def gates(rows, later=None):
     return out
 
 
-def quest_races(masks, sides, opened_by):
+def quest_races(masks, sides, opened_by, npc_sides=None):
     """{questID: the races that may take it, 0 for anyone}, for the quests of `masks`
     ({questID: its race mask as the client has it: db_races of the DB's AllowableRaces}).
 
@@ -687,7 +717,10 @@ def quest_races(masks, sides, opened_by):
       side's: a follow-up the DB opens to everyone is still reached only through them. A quest one
       side's quest and the other's both open (The Stone Watcher, after either Seeing What Happens)
       stays open to both. A quest the corpus lacks is passed through to the quests opening it.
+    - Else the side of its starters or enders (`npc_sides`, giver_sides): factions.json knows only
+      the vmangos DB's givers, not Forever's own (Elwynn's Book Inventory) nor the repack's.
     """
+    npc_sides = npc_sides or {}
     own = {qid: playable_races(mask) or SIDE_RACES.get(sides.get(str(qid)), 0) for qid, mask in masks.items()}
     races = {}
 
@@ -704,7 +737,8 @@ def quest_races(masks, sides, opened_by):
 
     def of(qid, seen=frozenset()):
         if qid not in races:
-            races[qid] = own[qid] or SIDE_RACES.get(side_before(qid, seen | {qid}), 0)
+            races[qid] = (own[qid] or SIDE_RACES.get(side_before(qid, seen | {qid}), 0)
+                          or SIDE_RACES.get(npc_sides.get(qid), 0))
         return races[qid]
 
     for qid in own:
@@ -1116,11 +1150,35 @@ def with_db(args):
         cur.execute("SELECT ID, RewardNextQuest FROM quest_template WHERE RewardNextQuest > 0")
         for qid, reward in cur.fetchall():
             rows.setdefault(int(qid), {"prev": 0, "next": 0, "group": 0, "breadcrumb": 0})["reward"] = int(reward)
-        ender_rows = []
+        ender_rows, starter_rows = [], []
         for kind in ("creature", "gameobject"):
             cur.execute(f"SELECT id, quest FROM {kind}_questender WHERE quest IN ({marks})", ids)
             ender_rows += [(kind, int(npc), int(qid)) for npc, qid in cur.fetchall()]
+            cur.execute(f"SELECT id, quest FROM {kind}_queststarter WHERE quest IN ({marks})", ids)
+            starter_rows += [(kind, int(npc), int(qid)) for npc, qid in cur.fetchall()]
+        # Who starts and ends each quest, the corpus's speaker where the DB names no one, for the
+        # side of a quest nothing else gives one. An item starting a quest has no side.
+        starting, ending = {}, {}
+        for into, db_rows, field in ((starting, starter_rows, "giver"), (ending, ender_rows, "handIn")):
+            for kind, npc, qid in db_rows:
+                into.setdefault(qid, set()).add(f"{kind}:{npc}")
+            for qid, quest in quests.items():
+                if qid not in into and quest.get(field, "").split(":")[0] in ("creature", "gameobject"):
+                    into[qid] = {quest[field]}
+        factions = {}
+        for kind, select in (("creature", "SELECT entry, faction FROM creature_template"),
+                             ("gameobject", "SELECT t.entry, COALESCE(a.faction, 0) FROM gameobject_template t"
+                                            " LEFT JOIN gameobject_template_addon a ON a.entry = t.entry")):
+            entries = sorted({int(npc.split(":")[1]) for npcs in list(starting.values()) + list(ending.values())
+                              for npc in npcs if npc.startswith(kind + ":")})
+            if entries:
+                cur.execute(f"{select} WHERE {'entry' if kind == 'creature' else 't.entry'} IN "
+                            f"({','.join(['%s'] * len(entries))})", entries)
+                factions.update({f"{kind}:{entry}": int(faction) for entry, faction in cur.fetchall()})
     db.close()
+    # One of Forever's own NPCs the repack lacks says nothing of a side: the quest's enders do.
+    starting, ending = ({qid: npcs & set(factions) for qid, npcs in into.items() if npcs & set(factions)}
+                        for into in (starting, ending))
     enders = quest_enders(ender_rows, quests)
     # Forever's client after the DB, which has almost none of Forever's own quests: it adds
     # links, races and places where the DB has none, and changes none the DB has.
@@ -1133,7 +1191,9 @@ def with_db(args):
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
     masks = {qid: race_mask(quests[qid].get("races", 0), client.get(qid)) for qid in ids}
-    races = quest_races(masks, sides, gates(rows, client_next))
+    enemy_groups = {int(r["ID"]): int(r["EnemyGroup"]) for r in table("FactionTemplate")}
+    npc_sides = giver_sides(starting, ending, lambda npc: npc_side(enemy_groups.get(factions.get(npc, 0), 0)))
+    races = quest_races(masks, sides, gates(rows, client_next), npc_sides)
     leaks = side_leaks(races, links)
 
     sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
