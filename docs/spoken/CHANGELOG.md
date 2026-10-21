@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Readables in the Compendium are filed where Forever has them.** Archmage Khadgar's plaque is
+  under Alterac Mountains as well as Stormwind, Holidays and Events has a line for each event, the
+  Green Hills of Stranglethorn cover is under Stranglethorn Vale, and Hildelve's Journal and
+  Rabine's Letter are no longer under Loch Modan and Silithus. *([Nucabe](https://github.com/Nucabe))*
 - **Found books, quests and areas are listed in gold in the Compendium**, as the groups above them are.
   They were white, close to the grey of what is not found yet. *([Nucabe](https://github.com/Nucabe))*
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
