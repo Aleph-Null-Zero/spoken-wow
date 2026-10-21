@@ -17,6 +17,15 @@ const SUBSTITUTION = /\$(?![Bb])[A-Za-z]/;
 /** A server's stand-in for a page it has no text for, which is no page's words. */
 const PLACEHOLDER = /^missing (wdb data|text)\.?$/i;
 
+/**
+ * The world DB's spawned objects that show a page: text objects (type 9) by the page in Data0, and
+ * goobers (type 10), such as the Ameth'Aran tablets in Darkshore, by the page they open in Data7.
+ * Spawned only: an object nothing places is a page no player is shown.
+ */
+export const OBJECTS_SQL = `SELECT t.entry, t.name, IF(t.type = 9, t.Data0, t.Data7) AS page FROM gameobject_template t
+  WHERE ((t.type = 9 AND t.Data0 > 0) OR (t.type = 10 AND t.Data7 > 0))
+    AND EXISTS (SELECT 1 FROM gameobject g WHERE g.id = t.entry)`;
+
 const STRING = String.raw`"((?:[^"\\]|\\.)*)"`;
 
 /** A Lua string literal's contents, as quote in lua.mjs writes them. */

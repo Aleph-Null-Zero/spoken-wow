@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { booksLua } from "./lua.mjs";
 import { pageChecksum } from "./naming.mjs";
 import { flatWords } from "./text.mjs";
-import { lookup, readBooksLua, unquote, variantsLua, variantsOf } from "./variants.mjs";
+import { OBJECTS_SQL, lookup, readBooksLua, unquote, variantsLua, variantsOf } from "./variants.mjs";
 
 // A corpus in the shape export.mjs writes, read back the way variants.mjs reads Books.lua.
 const ROWS = [
@@ -90,4 +90,10 @@ test("one server text claimed by two pages is dropped rather than guessed", () =
 test("Variants.lua names each alias's readable and page", () => {
   const lua = variantsLua(new Map([[123, 792]]), corpus);
   assert.match(lua, /SpokenBooksData\.variants = \{\n\t\t\[123\] = 792, -- Neeka's Report, page 3\n\t\}/);
+});
+
+test("the objects read are text objects by Data0 and page-showing goobers by Data7, spawned only", () => {
+  assert.match(OBJECTS_SQL, /IF\(t\.type = 9, t\.Data0, t\.Data7\) AS page/);
+  assert.match(OBJECTS_SQL, /WHERE \(\(t\.type = 9 AND t\.Data0 > 0\) OR \(t\.type = 10 AND t\.Data7 > 0\)\)/);
+  assert.match(OBJECTS_SQL, /EXISTS \(SELECT 1 FROM gameobject g WHERE g\.id = t\.entry\)/);
 });

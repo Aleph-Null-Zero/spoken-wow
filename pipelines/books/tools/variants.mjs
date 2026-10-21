@@ -17,7 +17,7 @@ import mysql from "mysql2/promise";
 import { loadEnv } from "../../lib/env.mjs";
 import { FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
 import { walk } from "./lib/chains.mjs";
-import { readBooksLua, variantsLua, variantsOf } from "./lib/variants.mjs";
+import { OBJECTS_SQL, readBooksLua, variantsLua, variantsOf } from "./lib/variants.mjs";
 
 await loadEnv("books");
 
@@ -40,11 +40,7 @@ let pages;
 let objects;
 try {
   [pages] = await db.query("SELECT ID AS entry, Text AS text, NextPageID AS nextPage FROM page_text");
-  // Spawned only: an object nothing places is a page no player is shown.
-  [objects] = await db.query(
-    `SELECT t.entry, t.name, t.Data0 AS page FROM gameobject_template t
-      WHERE t.type = 9 AND t.Data0 > 0 AND EXISTS (SELECT 1 FROM gameobject g WHERE g.id = t.entry)`,
-  );
+  [objects] = await db.query(OBJECTS_SQL);
 } finally {
   await db.end();
 }
