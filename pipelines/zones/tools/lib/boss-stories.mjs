@@ -2,8 +2,16 @@
 
 import { luaString } from "./wiki.mjs";
 
-/** The Lua file: `stories` is { map: { key: story } }, `entry` a story as Lua. */
-export function renderStories(stories, entry = luaString) {
+/** A story as Lua: English, or { 1: English, deDE: ... } as { "English", deDE = "..." }. */
+function entry(story) {
+  if (typeof story === "string") return luaString(story);
+  const extra = Object.keys(story).filter((k) => k !== "1");
+  if (extra.length === 0) return luaString(story[1]);
+  return `{ ${luaString(story[1])}, ${extra.map((k) => `${k} = ${luaString(story[k])}`).join(", ")} }`;
+}
+
+/** The Lua file: `stories` is { map: { key: story } }. */
+export function renderStories(stories) {
   const blocks = Object.keys(stories)
     .map(Number)
     .sort((a, b) => a - b)

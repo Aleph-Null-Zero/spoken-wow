@@ -9,14 +9,14 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 
-import { cleanExtract, extractFromResponse, fetchFullExtract } from "./lib/wiki.mjs";
+import { STORY_MAX_CHARS } from "../../lib/bosses.mjs";
+import { capParagraphs, cleanExtract, creatureTitles, extractFromResponse, fetchFullExtract, isDisambiguation } from "./lib/wiki.mjs";
 import { foldSections } from "./lib/sections.mjs";
 
 const HISTORY = /^(?:history|background|lore|biography|story|origins?|description)$/i;
 // A paragraph about the encounter, not the character.
 const GAMEPLAY =
   /\b(?:bosse?s?|drops?|loot|quests?|spawns?|spawned|strateg\w*|tanks?|healers?|players?|raid|heroic|patch|located|patrol\w*|dungeon|encounter|achievements?|level \d+|elite|rare|hit points|abilit\w+|optional|killed|kill(?:ing)?|reward\w*|tier \d|respawn)\b/i;
-const MAX_CHARS = 1800;
 
 function paragraphs(text) {
   return text.split(/\n+/).map((p) => p.trim()).filter(Boolean);
@@ -34,21 +34,16 @@ function history(plain) {
 }
 
 async function story(name) {
-  for (const title of [name, `${name} (boss)`, `${name} (NPC)`]) {
+  for (const title of creatureTitles(name)) {
     const full = await fetchFullExtract(title);
     const found = extractFromResponse(full.json, title);
     if (!found) continue;
-    if (/may refer to|can refer to|disambiguation/i.test(found.text.slice(0, 300))) continue;
+    if (isDisambiguation(found.text)) continue;
     const kept = history(found.text);
     if (!kept.length) continue;
     const cleaned = cleanExtract(kept.join("\n\n"), { eraFilter: true }).full;
     if (cleaned.length < 120) continue;
-    let text = "";
-    for (const p of paragraphs(cleaned)) {
-      if (text && text.length + p.length + 2 > MAX_CHARS) break;
-      text = text ? text + "\n\n" + p : p;
-    }
-    return { title: found.resolvedTitle, text };
+    return { title: found.resolvedTitle, text: capParagraphs(paragraphs(cleaned), STORY_MAX_CHARS) };
   }
   return null;
 }

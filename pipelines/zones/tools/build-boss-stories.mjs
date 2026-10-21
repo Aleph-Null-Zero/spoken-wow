@@ -28,7 +28,7 @@ import { join } from "node:path";
 import { STORY_MAX_CHARS, guideFinder, readBosses } from "../../lib/bosses.mjs";
 import { LOCALES, loadDungeons } from "../../lib/dungeons.mjs";
 import { RETAIL_BUILD, wagoTable } from "../../lib/wago.mjs";
-import { ROOT, capParagraphs, creatureTitles, fetchLoreText, isDisambiguation, luaString, sourceUrl } from "./lib/wiki.mjs";
+import { ROOT, capParagraphs, creatureTitles, fetchLoreText, isDisambiguation, sourceUrl } from "./lib/wiki.mjs";
 import { renderStories } from "./lib/boss-stories.mjs";
 
 const args = process.argv.slice(2);
@@ -73,14 +73,6 @@ function pack(texts) {
   return out;
 }
 
-function render(stories) {
-  const entry = (v) => {
-    const extra = Object.keys(v).filter((k) => k !== "1");
-    if (extra.length === 0) return luaString(v[1]);
-    return `{ ${luaString(v[1])}, ${extra.map((k) => `${k} = ${luaString(v[k])}`).join(", ")} }`;
-  };
-  return renderStories(stories, entry);
-}
 
 /** The wiki's lore for `name`: { text, title } or null. */
 async function wikiStory(name) {
@@ -177,7 +169,7 @@ async function main() {
     missing.push(...gaps.map((b) => `${b.map}/${b.name}`));
   }
 
-  await writeFile(OUT, render(stories));
+  await writeFile(OUT, renderStories(stories));
   await writeFile(OUT.replace(/\.lua$/, ".sources.txt"), sources.join("\n") + "\n");
   console.log(`${bosses.length} bosses: ${fromGuide} from the Adventure Guide, ${fromWiki} from the wiki, ${missing.length} with none`);
   if (args.includes("--report") || missing.length) console.log("none: " + missing.join(", "));

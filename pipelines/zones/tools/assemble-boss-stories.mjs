@@ -15,7 +15,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { cleanExtract, luaString, ROOT } from "./lib/wiki.mjs";
+import { cleanExtract, ROOT } from "./lib/wiki.mjs";
 import { renderStories } from "./lib/boss-stories.mjs";
 
 const args = process.argv.slice(2);
@@ -47,37 +47,31 @@ for (const key of new Set([...guide.keys(), ...history.keys(), ...current.keys()
     const english = g.texts["1"];
     const cleaned = cleanExtract(english, { eraFilter: true });
     if (cleaned.droppedCount === 0) {
-      const { "1": _, ...rest } = g.texts;
-      put(g, { english, ...rest }, "guide");
+      put(g, g.texts, "guide");
       continue;
     }
     trimmed.push(`${g.map}/${g.key}`);
     if (cleaned.full.length >= MIN_CHARS) {
-      put(g, { english: cleaned.full }, "guideTrimmed");
+      put(g, cleaned.full, "guideTrimmed");
       continue;
     }
   }
   const h = history.get(key);
   if (h) {
-    put(h, { english: h.text }, "history");
+    put(h, h.text, "history");
     continue;
   }
   const c = current.get(key);
   if (c) {
     const cleaned = cleanExtract(c.text, { eraFilter: true });
     if (cleaned.full.length >= MIN_CHARS) {
-      put(c, { english: cleaned.full }, "current");
+      put(c, cleaned.full, "current");
       continue;
     }
   }
   dropped.push(`${r.map}/${r.key}`);
 }
 
-function entry(v) {
-  const extra = Object.keys(v).filter((k) => k !== "english");
-  if (extra.length === 0) return luaString(v.english);
-  return `{ ${luaString(v.english)}, ${extra.map((k) => `${k} = ${luaString(v[k])}`).join(", ")} }`;
-}
-await writeFile(OUT, renderStories(stories, entry));
+await writeFile(OUT, renderStories(stories));
 console.log(JSON.stringify(counts), "trimmed by the era filter:", trimmed.join(", "));
 console.log("no story:", dropped.join(", "));
