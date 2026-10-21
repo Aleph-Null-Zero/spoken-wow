@@ -4524,7 +4524,7 @@ SpokenQuestsCompendium = {
 		[95126] = { "The Moonsilver Blade", sort = 141, ender = 248840, races = 16, classes = 2 },
 		[95140] = { "Old Fire-Eye", sort = 141, races = 16, classes = 2 },
 		[95161] = { "Remember That I Love You", zones = { 2548 }, prev = 92415, ender = 228, races = 4294967373 },
-		[95189] = { "Crest of Lordaeron", zones = { 1453 }, dungeon = 2999, ender = 15991, races = 4294967373 },
+		[95189] = { "Crest of Lordaeron", zones = { 1458 }, dungeon = 2999, ender = 15991, races = 4294967373 },
 		[95195] = { "Bloodied Insignia", zones = { 1458 }, dungeon = 2999, ender = 466, races = 4294967373 },
 		[95204] = { "Crest of Lordaeron", zones = { 1458 }, dungeon = 2999, ender = 7825, races = 8589934770 },
 		[95212] = { "Never Saddle on Quality", zones = { 1426 }, races = 4294967373 },

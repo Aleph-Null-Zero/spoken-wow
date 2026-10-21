@@ -67,7 +67,6 @@
     {"id": 95042, "sort": 141, "classes": 2, "source": "QD3: the Forsaken paladins' Seeking the Kor Gem, counterpart of 1442 in the Paladin group"},
     {"ids": [6661, 6662], "zones": [1455], "source": "QD3: Monty and Nipsy stand in the Deeprun Tram (map 369), which no map of its own shows; Ironforge is the city it joins"},
     {"id": 91904, "zones": [1433], "source": "QD3: Marcy Baker and Magistrate Solomon in Lakeshire; LoreTeller files it under Redridge Mountains"},
-    {"id": 95189, "zones": [1453], "source": "QD3: ends at Lady Dena Kennedy or General Marcus Jonathan in Stormwind, as its Alliance sibling 95195 is filed; its Horde twin 95204 is under Undercity"},
     {"id": 98372, "zones": [1431], "source": "QD3: ends at a Night Watch Guard in Darkshire"},
     {"id": 1642, "prev": 1641, "source": "QD6: https://warcraft.wiki.gg/wiki/The_Tome_of_Divinity_(human_2); the DB has no link"},
     {"id": 1641, "prev": 2998, "source": "QD6: https://warcraft.wiki.gg/wiki/The_Tome_of_Divinity_(human_1), after Brother Wilhelm's Tome of Divinity"},
