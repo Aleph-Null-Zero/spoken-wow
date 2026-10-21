@@ -11,7 +11,9 @@
 --   1. title + page number + checksum   -- the normal path
 --   2. checksum alone                   -- for a client whose object name differs from the
 --                                          corpus's; only for checksums no other page shares
---   3. nothing                          -- silently, because the alternative is reading the
+--   3. words around the tokens          -- for a page the client filled with the reader's
+--                                          name, class or gender word; only where one fits
+--   4. nothing                          -- silently, because the alternative is reading the
 --                                          wrong page's words aloud
 
 local ADDON_NAME, SpokenBooks = ...

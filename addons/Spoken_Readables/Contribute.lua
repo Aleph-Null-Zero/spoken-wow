@@ -1,14 +1,15 @@
 -- A page this corpus does not carry, as something that can be sent.
 --
--- The gap is the same one Reader.lua's PageOnScreen answers with nil: a page whose checksum
--- no lookup holds. On a 1.12-derived corpus that is every post-vanilla book, every locale but
+-- The gap is the same one Reader.lua's PageOnScreen answers with nil: a page no lookup
+-- finds. On a 1.12-derived corpus that is every post-vanilla book, every locale but
 -- one, and custom text a server added itself.
 --
 -- MAIL NEVER LEAVES THE CLIENT. IsMail is already how the reader refuses to narrate a letter,
 -- and the reason is stronger here: a letter is a player's own words to another player, and
 -- this is the one path in the addon that would put them on a server of ours.
 --
--- `page` is the client-side checksum, not a pageTextID. The frozen id `b:{pageTextID}` names a
+-- `page` is the client-side checksum, of the page with the reader's name, class and race put
+-- back as tokens, not a pageTextID. The frozen id `b:{pageTextID}` names a
 -- page the corpus has; a page it has never seen has no id to be named by, and gets one only if
 -- triage accepts it.
 
