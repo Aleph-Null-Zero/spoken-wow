@@ -27,6 +27,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gunzipSync } from "node:zlib";
 
 import mysql from "mysql2/promise";
 
@@ -34,12 +35,13 @@ import { instanceZones, loadDungeons } from "../../lib/dungeons.mjs";
 import { loadEnv } from "../../lib/env.mjs";
 import { FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
 import { areaReader } from "./lib/area.mjs";
-import { cannotBeHad, dungeonsOf, isTemplateCopy, typeOf } from "./lib/places.mjs";
+import { cannotBeHad, dungeonsOf, foreverQuests, isTemplateCopy, typeOf } from "./lib/places.mjs";
 
 await loadEnv("books");
 
 const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Books.lua", import.meta.url));
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Places.lua", import.meta.url));
+const CORPUS = fileURLToPath(new URL("../../quests/corpus/corpus.json.gz", import.meta.url));
 // Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
 // items, and one that shares a vanilla page id lent that book its sources and zones.
 const BUILD = process.env.PLACES_BUILD ?? FOREVER_BUILD;
@@ -177,6 +179,12 @@ function boxAt(map, x, y) {
   }
   return best?.zone;
 }
+
+// ---------------------------------------------------------------- the quests Forever has
+
+const corpusLines = JSON.parse(gunzipSync(await readFile(CORPUS)).toString("utf8")).lines;
+const FOREVER_QUESTS = foreverQuests(corpusLines, await table("QuestV2"));
+const notForever = new Set();
 
 // ---------------------------------------------------------------- what each is (lib/places.mjs)
 
@@ -330,6 +338,9 @@ try {
       if (!questItems.has(Number(r.ID))) questItems.set(Number(r.ID), []);
       questItems.get(Number(r.ID)).push([mail.get(Number(r.t)), "mail"]);
     }
+    for (const quest of questItems.keys()) {
+      if (!FOREVER_QUESTS.has(quest)) { questItems.delete(quest); notForever.add(quest); }
+    }
     const quests = [...questItems.keys()];
     for (const r of await q("SELECT ID, QuestSortID FROM quest_template WHERE ID IN (?)", [list(quests)])) questSort.set(Number(r.ID), Number(r.QuestSortID));
     const givers = new Map();
@@ -449,4 +460,5 @@ console.log(`${counts.world} in the world, ${counts.carried} carried (${counts.w
 console.log(`${counts.inDungeon} in dungeons: ` + [...counts.dungeons].sort((a, b) => a[0] - b[0])
   .map(([d, n]) => `${n} in ${DUNGEONS[d].name}`).join(", "));
 console.log(Object.entries(counts.types).map(([t, n]) => `${n} ${t}`).join(", "));
+console.log(`${notForever.size} quests left out as not Forever's: ${[...notForever].sort((a, b) => a - b).join(", ")}`);
 console.log(`wrote ${OUT}`);
