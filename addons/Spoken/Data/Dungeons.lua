@@ -40,7 +40,7 @@ SpokenDungeons = {
 		[531] = { zone = 1451, "Ahn'Qiraj Temple", deDE = "Tempel von Ahn'Qiraj", esES = "Templo de Ahn'Qiraj", esMX = "Templo de Ahn'Qiraj", frFR = "Temple d'Ahn'Qiraj", ptBR = "Templo de Ahn'Qiraj", ruRU = "Храм Ан'Киража", koKR = "안퀴라즈 사원", zhCN = "安其拉神殿", zhTW = "安其拉神廟", itIT = "Tempio di Ahn'Qiraj" },
 		[533] = { zone = 1423, "Naxxramas", ruRU = "Наксрамас", koKR = "낙스라마스", zhCN = "纳克萨玛斯", zhTW = "納克薩瑪斯" },
 		[2959] = { zone = 1416, story = { 1416, "dalaran" }, "City of Dalaran", deDE = "Dalaran", esES = "Ciudad de Dalaran", esMX = "Ciudad de Dalaran", frFR = "Cité de Dalaran", ptBR = "Dalaran", ruRU = "Даларан", koKR = "달라란", zhCN = "达拉然城", zhTW = "達拉然城" },
-		[2999] = { zone = 1458, story = { 1458, "ruins of lordaeron" }, "Ruins of Lordaeron", deDE = "Ruinen von Lordaeron", esES = "Ruinas de Lordaeron", esMX = "Ruinas de Lordaeron", frFR = "Ruines de Lordaeron", ptBR = "Ruínas de Lordaeron", ruRU = "Руины Лордерона", koKR = "로데론의 폐허", zhCN = "洛丹伦废墟", zhTW = "羅德隆廢墟" },
+		[2999] = { zone = 1420, story = { 1420, "ruins of lordaeron" }, "Ruins of Lordaeron", deDE = "Ruinen von Lordaeron", esES = "Ruinas de Lordaeron", esMX = "Ruinas de Lordaeron", frFR = "Ruines de Lordaeron", ptBR = "Ruínas de Lordaeron", ruRU = "Руины Лордерона", koKR = "로데론의 폐허", zhCN = "洛丹伦废墟", zhTW = "羅德隆廢墟" },
 		[3065] = { zone = 1455, "The Hall of Thanes", deDE = "Die Halle der Thanen", esES = "El Salón de los Feudales", esMX = "El Salón de Señores Feudales", frFR = "La salle des Thanes", ptBR = "Salão dos Thanes", ruRU = "Чертоги танов", koKR = "영주의 전당", zhCN = "领主大厅", zhTW = "族長之廳" },
 	},
 }

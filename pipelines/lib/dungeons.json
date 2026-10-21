@@ -28,7 +28,7 @@
     "531": { "name": "Ahn'Qiraj Temple", "zone": 1451 },
     "533": { "name": "Naxxramas", "zone": 1423 },
     "2959": { "name": "City of Dalaran", "zone": 1416, "story": [1416, "dalaran"] },
-    "2999": { "name": "Ruins of Lordaeron", "zone": 1458, "story": [1458, "ruins of lordaeron"] },
+    "2999": { "name": "Ruins of Lordaeron", "zone": 1420, "story": [1420, "ruins of lordaeron"] },
     "3065": { "name": "The Hall of Thanes", "zone": 1455 }
   },
   "instances": {
