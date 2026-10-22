@@ -1,7 +1,7 @@
 /**
  * One line of any of the three corpora, as the triage table shows it.
  *
- * CLIENT-SAFE ON PURPOSE, like lib/zones/filters.ts: the expanded row runs in the browser,
+ * CLIENT-SAFE ON PURPOSE, like lib/places/filters.ts: the expanded row runs in the browser,
  * and every module that can answer "what is this line?" on the server reaches the corpus,
  * the database or the filesystem. Types cross freely; runtime code does not, so the three
  * ResultLine shapes are narrowed here from what the search endpoints already return.

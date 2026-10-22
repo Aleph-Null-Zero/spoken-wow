@@ -15,11 +15,11 @@ import { Loading, Refreshing } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import RegenerateDialog, { type PendingBatch } from "@/components/RegenerateDialog";
 import RegenerationPanel from "@/components/RegenerationPanel";
-import { LineRow, type RowState } from "@/components/zones/LineRow";
-import { LoreDialog } from "@/components/zones/LoreDialog";
-import { Player } from "@/components/zones/Player";
+import { LineRow, type RowState } from "@/components/places/LineRow";
+import { LoreDialog } from "@/components/places/LoreDialog";
+import { Player } from "@/components/places/Player";
 import ReportDialog from "@/components/ReportDialog";
-import { SearchBar } from "@/components/zones/SearchBar";
+import { SearchBar } from "@/components/places/SearchBar";
 import { Contained, Wide } from "@/components/Width";
 import { totals as estimateTotals, LIST_RATE } from "@/lib/generation/billing";
 import {

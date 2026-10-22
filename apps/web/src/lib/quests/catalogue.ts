@@ -1,7 +1,7 @@
 /**
  * The quest corpus as the explorer sees it: every line, with who speaks it.
  *
- * SERVER ONLY, and the counterpart of lib/zones/catalogue.ts and lib/books/catalogue.ts --
+ * SERVER ONLY, and the counterpart of lib/places/catalogue.ts and lib/readables/catalogue.ts --
  * the third section finally reading its corpus from the same place as the other two. It
  * used to come from corpus/corpus.json.gz, memoised forever on the reasoning that "the
  * corpus ships inside the release and cannot change under a running process". That stopped
@@ -13,7 +13,7 @@
  * explorer does with them.
  *
  * MEMOISED AGAINST A STAMP THE TABLES THEMSELVES CARRY, copied from books
- * (lib/books/catalogue.ts): max id, count, and the sum of live ids. Three terms because
+ * (lib/readables/catalogue.ts): max id, count, and the sum of live ids. Three terms because
  * there are three ways the table moves -- an edit inserts a version so the highest id
  * moves, an import can delete so the count moves, and a restore moves the live flag
  * between rows that already exist, which only the sum of live ids notices. The speakers

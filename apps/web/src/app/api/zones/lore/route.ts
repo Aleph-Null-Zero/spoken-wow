@@ -15,7 +15,7 @@
  * Nothing here drops the catalogue's memo. It is validated against a stamp the table
  * itself carries, so a save by one worker is seen by the other on its next read -- which
  * is the half the zones site could not have, running one worker with an in-process
- * invalidation. See the note on the memo in lib/zones/catalogue.ts.
+ * invalidation. See the note on the memo in lib/places/catalogue.ts.
  */
 import { requireIn } from "@/lib/generation/authz";
 import { isKnownLine } from "@/lib/places/catalogue";

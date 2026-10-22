@@ -49,7 +49,7 @@ From the 1.12 patch rows of one dump:
 That leaves **1103 voiceable pages, 385,631 characters** by the extract's count. The site
 counts the 36 token pages as voiceable too: it speaks `$N`, `$C` and `$R` as "adventurer"
 and "traveler", or the page's language's own words, and takes `$G`'s first branch
-(`apps/web/src/lib/player-words.ts`, applied in `lib/books/catalogue.ts` before the text is
+(`apps/web/src/lib/player-words.ts`, applied in `lib/readables/catalogue.ts` before the text is
 flattened, hashed and judged). The extract's stored `substitution` label is left as it was;
 the catalogue re-judges every page from its text.
 
@@ -245,7 +245,7 @@ its `{mapID}/{slug}` path.
 page's words, its current take to listen to, and the report form already pointed at the
 right line. Not the explorer — somebody arriving from the game is a player, not a
 collaborator, and flags, takes and regenerate controls answer questions they did not ask.
-`pageById` in `lib/books/catalogue.ts` resolves the id, off the memoised catalogue the rest
+`pageById` in `lib/readables/catalogue.ts` resolves the id, off the memoised catalogue the rest
 of the section already loads.
 
 Reports from books needed the section admitted to `SOURCES` in `lib/reports/reports.ts`;

@@ -8,7 +8,7 @@
  * RESTORING MOVES THE LIVE FLAG, and does nothing else: no new take, no file read or
  * written. Every take is its own archived file, so the history is the set of takes this
  * line has had, and restoring says which of them is right. It is the same thing `restore`
- * means for a lore version (lib/zones/lore.ts).
+ * means for a lore version (lib/places/lore.ts).
  *
  * Holds the same lock a regeneration does. A restore landing while a regeneration of the
  * same file is in flight would race it to decide which take is live, and whichever wrote

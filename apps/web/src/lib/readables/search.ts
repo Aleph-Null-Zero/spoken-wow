@@ -1,7 +1,7 @@
 // Filtering, as a pure function of the corpus.
 //
 // Everything database-backed arrives in a SearchContext rather than being fetched here,
-// which is the split lib/zones/search.ts makes and the reason this is testable with no
+// which is the split lib/places/search.ts makes and the reason this is testable with no
 // database and no filesystem. 1191 rows filter in a linear chain per request; there is no
 // index and at this size there does not need to be one.
 //

@@ -3,7 +3,7 @@
 // A module rather than a script, because two callers need it. `make books-lookup` runs it
 // by hand after a batch; the site runs it when the regeneration queue drains, so a take
 // somebody generated in the explorer reaches the addon without anyone remembering to
-// rebuild anything. lib/zones/tools.ts imports its equivalent for exactly the same reason.
+// rebuild anything. lib/places/tools.ts imports its equivalent for exactly the same reason.
 //
 // Durations are recorded at generation time because the client cannot report the length of
 // a sound file, and without them the player's Play button never resets itself.

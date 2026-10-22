@@ -4,7 +4,7 @@
 // app reads the table and never the files -- reading the Lua here would show whatever was
 // last exported and committed, and would let the explorer list pages it cannot save.
 //
-// Pure helpers still come from the pipeline (lib/books/tools.ts): normalising and hashing
+// Pure helpers still come from the pipeline (lib/readables/tools.ts): normalising and hashing
 // are the same operations the CLI performs, and a second implementation here is how the app
 // and the generated audio start disagreeing about what is stale.
 
@@ -88,7 +88,7 @@ export type Take = {
 
 /**
  * Everything database-backed, passed into the pure search rather than fetched by it. The
- * split lib/zones/catalogue.ts makes, and the reason the filtering is testable with no
+ * split lib/places/catalogue.ts makes, and the reason the filtering is testable with no
  * database.
  */
 export type SearchContext = {
@@ -138,7 +138,7 @@ export class CorpusEmpty extends Error {
 /**
  * Whether a thrown thing is that, across the module boundary.
  *
- * By name rather than `instanceof`, for the reason lib/zones/catalogue.ts gives: `next dev`
+ * By name rather than `instanceof`, for the reason lib/places/catalogue.ts gives: `next dev`
  * re-evaluates modules, so a route can be handed an error built by a different evaluation
  * of this file, and the two classes are not the same constructor. The name survives.
  */

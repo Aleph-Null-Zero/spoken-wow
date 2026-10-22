@@ -2,7 +2,7 @@ import { pageLang } from "@/lib/lang-server";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { Explorer } from "@/components/books/Explorer";
+import { Explorer } from "@/components/readables/Explorer";
 import { bookFacets, isCorpusEmpty } from "@/lib/readables/catalogue";
 import { Contained } from "@/components/Width";
 

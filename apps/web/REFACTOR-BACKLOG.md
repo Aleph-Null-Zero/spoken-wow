@@ -13,8 +13,8 @@ When one of these is done, delete its entry rather than ticking it.
 
 ### Book text editing copies the zones lore editor
 
-`lib/books/text.ts`, `app/api/books/text/route.ts` and `components/books/PageTextDialog.tsx`
-repeat `lib/zones/lore.ts`, `app/api/zones/lore/route.ts` and `components/zones/LoreDialog.tsx`
+`lib/readables/text.ts`, `app/api/books/text/route.ts` and `components/readables/PageTextDialog.tsx`
+repeat `lib/places/lore.ts`, `app/api/zones/lore/route.ts` and `components/places/LoreDialog.tsx`
 — about 560 lines. `restoreBookText`/`restoreLore`, `bookHistory`/`loreHistory`,
 `BookConflict`/`LoreConflict` and `BookMissing`/`LoreMissing` are the same code under two
 names, and the two route error mappers differ only in names.
@@ -30,7 +30,7 @@ structural fields the lore save does not have.
 ### Transactions are written by hand
 
 `begin` / `commit` / `rollback` / `release` is spelled out in `lib/takes/commit.ts`,
-`lib/takes/store.ts`, `lib/zones/lore.ts` and `lib/books/text.ts` (twice there).
+`lib/takes/store.ts`, `lib/places/lore.ts` and `lib/readables/text.ts` (twice there).
 
 **Cost:** code that has to be exactly right, written several times.
 
@@ -47,9 +47,9 @@ The four take routes share `serveTake` in `lib/takes/serve.ts`; the voice-sample
 ### The open-report count and its chip
 
 The grouped `report` count is written three times — `lib/quests/context.ts`,
-`lib/zones/catalogue.ts`, `lib/books/catalogue.ts` — differing only in books' `lang`
+`lib/places/catalogue.ts`, `lib/readables/catalogue.ts` — differing only in books' `lang`
 filter. The chip that shows it is copied between `components/LineRow.tsx`,
-`components/zones/LineRow.tsx` and the books page row, each with the same markup in a
+`components/places/LineRow.tsx` and the books page row, each with the same markup in a
 `<Link>` branch and a `<span>` branch.
 
 **Fix:** `openReportCounts(source, lang?)` beside `liveTakes` in `lib/takes/store.ts` or in
@@ -67,7 +67,7 @@ holder type, is in `lib/audio.ts` (`fileIndex`), `lib/facets.ts`, `lib/quests/ca
 
 ### Three catalogue stamp memos
 
-`lib/quests/catalogue.ts`, `lib/zones/catalogue.ts` and `lib/books/catalogue.ts` each carry
+`lib/quests/catalogue.ts`, `lib/places/catalogue.ts` and `lib/readables/catalogue.ts` each carry
 the same `max(id):count:sum(live ids)` stamp query and `globalThis` stamp-compare holder.
 
 **Fix:** `stampOf(table, lang)` and `memoOnStamp(key, stamp, build)` in `lib/db.ts` or a
@@ -78,7 +78,7 @@ the same `max(id):count:sum(live ids)` stamp query and `globalThis` stamp-compar
 `components/AudioPlayer.tsx` and `components/TakeSelector.tsx` both attach an `error`
 listener and catch `play()` — both are needed, because browsers differ in which one a 404
 arrives by. The explorers drive the shared element with `play().catch(() => {})`
-(`components/Explorer.tsx`, `components/zones/Explorer.tsx`, `components/books/Explorer.tsx`,
+(`components/Explorer.tsx`, `components/places/Explorer.tsx`, `components/readables/Explorer.tsx`,
 `components/ReportTable.tsx`), so a rejection there is still dropped; `AudioPlayer`'s
 listener covers it only in browsers that also fire `error`.
 

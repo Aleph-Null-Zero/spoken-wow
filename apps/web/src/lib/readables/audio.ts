@@ -34,7 +34,7 @@ export function audioRelPath(file: string): string {
 
 // Every path the corpus can address. The guard against traversal is set membership rather
 // than string inspection: a path either names a file some page owns or it does not exist,
-// and no amount of "../" produces a member of this set. lib/zones/audio.ts makes the same
+// and no amount of "../" produces a member of this set. lib/places/audio.ts makes the same
 // argument for the zones store.
 export async function addressableFiles(lang: Lang = BASE_LANG): Promise<Set<string>> {
   return new Set((await catalogue(lang)).map((page) => audioRelPath(page.file)));

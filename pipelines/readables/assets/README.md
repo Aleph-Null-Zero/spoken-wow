@@ -18,7 +18,7 @@ TGA built from the 512 PNG by `make books-icon` and committed, because an addon 
 a machine with no ffmpeg. Both English addons carry the same file. A language's pack is staged
 from English's folder, and `scripts/readables/package-audio.sh` copies its badged TGA over it.
 
-**The website** shows `apps/web/public/icons/books.png`, an 84 px copy made by hand.
+**The website** shows `apps/web/public/icons/readables.png`, an 84 px copy made by hand.
 
 **CurseForge avatars are uploaded through the website**, not shipped in the zip, so the
 packaging deliberately leaves this directory out.

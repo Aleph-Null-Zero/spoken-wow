@@ -1,6 +1,6 @@
 // The books filter vocabulary, and its translation to and from a query string.
 //
-// CLIENT-SAFE ON PURPOSE, exactly as lib/zones/filters.ts is: the catalogue reaches the
+// CLIENT-SAFE ON PURPOSE, exactly as lib/places/filters.ts is: the catalogue reaches the
 // pipeline and the database, so a client component may import types from it but never a
 // runtime value. Everything both sides need lives here.
 

@@ -7,7 +7,7 @@
  * read, triaged and regenerated, but not actually fixed, which made the report queue a list
  * of things nobody could act on.
  *
- * The zones equivalent (lib/zones/lore.ts) is the model, down to the optimistic version
+ * The zones equivalent (lib/places/lore.ts) is the model, down to the optimistic version
  * check, and the differences are the two corpora's own:
  *
  *   * A page has one text, where a zone line has a full and a short.

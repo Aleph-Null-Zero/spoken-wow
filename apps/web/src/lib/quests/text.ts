@@ -1,6 +1,6 @@
 /**
  * Writing a quest line's text in a language other than English: new quest_line versions,
- * the way lib/books/text.ts writes pages and lib/zones/lore.ts writes lore.
+ * the way lib/readables/text.ts writes pages and lib/places/lore.ts writes lore.
  *
  * English is not written here. Its spoken rewrites are line_override's -- keyed by file,
  * with the committed corpus and its export behind them -- and moving English onto versions

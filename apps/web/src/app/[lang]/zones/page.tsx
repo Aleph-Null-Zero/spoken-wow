@@ -2,7 +2,7 @@ import { pageLang } from "@/lib/lang-server";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { Explorer } from "@/components/zones/Explorer";
+import { Explorer } from "@/components/places/Explorer";
 import { isCorpusEmpty, zoneFacets } from "@/lib/places/catalogue";
 import { Contained } from "@/components/Width";
 

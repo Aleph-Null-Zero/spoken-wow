@@ -77,7 +77,7 @@ const config: NextConfig = {
   // rollback moves data and code together. Tracing them in as well would ship them twice
   // and let a stale copy win.
   // pipelines/quests, NOT pipelines/**. The zones half of that directory is compiled INTO
-  // this bundle -- lib/zones/tools.ts imports it, webpack follows those imports, and
+  // this bundle -- lib/places/tools.ts imports it, webpack follows those imports, and
   // excluding it here would exclude nothing webpack had already pulled in while making the
   // exclusion list read as though the whole pipelines tree were out. The Python side is what
   // has to stay out, and for a reason worth repeating: its .env holds the ElevenLabs key and

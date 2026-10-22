@@ -467,7 +467,7 @@ git commit -m "Books: page keys and minted ids, beside the frozen numeric ones"
 - Modify: `apps/web/src/lib/readables/catalogue.ts` (`BookPage`, `stampOf`, `buildTranslated`, `build`, `pageById`, `BookFacet`, `bookFacets`)
 - Modify: `apps/web/src/lib/readables/search.ts:23-24,89-90,142,164`
 - Modify: `apps/web/src/lib/readables/filters.ts:34,93,113-119,137`
-- Modify: `apps/web/src/components/books/SearchBar.tsx:75,101-103`, `apps/web/src/components/books/Player.tsx:45`, `apps/web/src/components/books/BookList.tsx:58` (type only)
+- Modify: `apps/web/src/components/readables/SearchBar.tsx:75,101-103`, `apps/web/src/components/readables/Player.tsx:45`, `apps/web/src/components/readables/BookList.tsx:58` (type only)
 - Modify: `apps/web/src/app/[lang]/books/r/[pageId]/page.tsx:36,114`, `apps/web/src/app/api/reports/route.ts:139`, `apps/web/src/lib/reports/detail.ts:51`
 - Test: `apps/web/src/lib/readables/catalogue.test.ts` (new), `apps/web/src/lib/readables/search.test.ts` (update fixtures)
 
@@ -726,14 +726,14 @@ Expected: PASS, the new `catalogue.test.ts` included.
 - [ ] **Step 6: Commit**
 
 ```fish
-git add -A apps/web/src/lib/readables apps/web/src/components/books apps/web/src/app/[lang]/books apps/web/src/app/api/reports apps/web/src/lib/reports
+git add -A apps/web/src/lib/readables apps/web/src/components/readables apps/web/src/app/[lang]/books apps/web/src/app/api/reports apps/web/src/lib/reports
 git commit -m "Books: the catalogue lists every page in every language, English included"
 ```
 
 ### Task 5: `<no text>` in the explorer
 
 **Files:**
-- Modify: `apps/web/src/components/books/PageRow.tsx:184-186`
+- Modify: `apps/web/src/components/readables/PageRow.tsx:184-186`
 - Create: `apps/web/src/lib/readables/shown.ts`
 - Test: `apps/web/src/lib/readables/shown.test.ts`
 
@@ -796,7 +796,7 @@ Run: `pnpm --filter web exec vitest run src/lib/readables/shown.test.ts; and pnp
 Expected: PASS.
 
 ```fish
-git add apps/web/src/lib/readables/shown.ts apps/web/src/lib/readables/shown.test.ts apps/web/src/components/books/PageRow.tsx
+git add apps/web/src/lib/readables/shown.ts apps/web/src/lib/readables/shown.test.ts apps/web/src/components/readables/PageRow.tsx
 git commit -m "Books: a page with no words in this language says so"
 ```
 

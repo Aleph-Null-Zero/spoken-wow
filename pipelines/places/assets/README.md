@@ -16,7 +16,7 @@ art comes back as new PNGs.
 
 ## Where they end up
 
-**The website** does not read this directory. `apps/web/public/icons/zones.png` is an 84 px
+**The website** does not read this directory. `apps/web/public/icons/places.png` is an 84 px
 copy, made by hand when the art changes.
 
 **CurseForge avatars are uploaded through the website**, not shipped in the zip, so

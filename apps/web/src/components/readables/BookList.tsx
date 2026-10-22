@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { PageRow, type RowState } from "@/components/books/PageRow";
+import { PageRow, type RowState } from "@/components/readables/PageRow";
 import type { ResultLine } from "@/lib/readables/search";
 
 /**

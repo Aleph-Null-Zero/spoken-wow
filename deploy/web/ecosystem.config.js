@@ -166,7 +166,7 @@ module.exports = {
         //--------------------------------------------------------------------------
 
         // Every book take, beside the other two sections' and separate from them. Has to be
-        // set: lib/books/audio.ts falls back to a path inside the release, and a release
+        // set: lib/readables/audio.ts falls back to a path inside the release, and a release
         // directory is deleted five deploys later.
         SPOKEN_BOOKS_AUDIO_HISTORY: `${SHARED}/audio-history/books`,
 
