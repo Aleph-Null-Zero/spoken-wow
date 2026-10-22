@@ -539,9 +539,6 @@ SpokenBooksData = {
 			[2] = { [1256661849] = 2306 },
 			[3] = { [1590439664] = 2307 },
 		},
-		["Foror's Compendium of Dragon Slaying"] = {
-			[1] = { [947369573] = 2637 },
-		},
 		["Fossilized Egg"] = {
 			[1] = { [443976657] = 1760 },
 		},
@@ -1099,6 +1096,9 @@ SpokenBooksData = {
 			[2] = { [793161571] = 791 },
 			[3] = { [1311302594] = 792 },
 			[4] = { [923967323] = 793 },
+		},
+		["Nostro's Compendium of Dragon Slaying"] = {
+			[1] = { [947369573] = 2637 },
 		},
 		["Of Love and Family"] = {
 			[1] = { [0] = 2351 },
@@ -4445,7 +4445,7 @@ SpokenBooksData = {
 		[2631] = { title = "Libram of Focus", pages = { 2631, 2632 } },
 		[2633] = { title = "Libram of Protection", pages = { 2633, 2634 } },
 		[2635] = { title = "Libram of Rapidity", pages = { 2635, 2636 } },
-		[2637] = { title = "Foror's Compendium of Dragon Slaying", pages = { 2637 } },
+		[2637] = { title = "Nostro's Compendium of Dragon Slaying", pages = { 2637 } },
 		[2654] = { title = "A Treatise on Military Ranks", pages = { 2654, 2655, 2656, 2657, 2658, 2854, 2855 } },
 		[2659] = { title = "The Eye of Divinity", pages = { 2659, 2666 } },
 		[2661] = { title = "Military Ranks of the Horde & Alliance", pages = { 2661, 2662, 2663, 2664, 2665, 2856, 2857 } },

@@ -34,6 +34,9 @@ SpokenZones.ForeverOnlyAreas = {
 	[1429] = {
 		["northshire valley camelot"] = true,
 	},
+	[1434] = {
+		["sunken hollow"] = true,
+	},
 	[1437] = {
 		["dragonmaw retreat"] = true,
 		["drunken dwarf"] = true,
@@ -44,7 +47,6 @@ SpokenZones.ForeverOnlyAreas = {
 	},
 	[1447] = {
 		["blackmaw hold"] = true,
-		["legashi encampment"] = true,
 		["legashi stronghold"] = true,
 		["thalassian vanguard camp"] = true,
 	},

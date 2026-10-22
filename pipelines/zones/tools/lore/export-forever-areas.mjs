@@ -56,9 +56,13 @@ async function main() {
       if (!byZone.has(zone)) byZone.set(zone, []);
       byZone.get(zone).push(k[1]);
     }
-    if (k && zone !== null && places.renamed[k[1]]) {
-      if (!notOnForever.has(zone)) notOnForever.set(zone, new Set());
-      notOnForever.get(zone).add(k[1]);
+    // Listed from the frozen key too, so the Forever spelling stays hidden after its own
+    // discovered row is gone: a later discovery would otherwise list the place twice.
+    for (const [name, { key }] of Object.entries(places.renamed)) {
+      if (k && zone !== null && (k[1] === name || k[1] === key)) {
+        if (!notOnForever.has(zone)) notOnForever.set(zone, new Set());
+        notOnForever.get(zone).add(name);
+      }
     }
   }
   const lines = [
