@@ -78,8 +78,9 @@ None of this is the project's to license, and the MIT grant does not reach it.
   [EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf) by JIVESCORP, published
   under **CC BY 4.0**; the text itself is Blizzard's.
 - **Where Forever's quests are filed, who may take them and which quest follows which**
-  (`addons/Spoken_Quests/Data/Compendium.lua`), where the world DB has none of it, come from the
-  quest and NPC data players' Forever clients recorded.
+  (`addons/Spoken_Quests/Data/Compendium.lua`), where the world DB has none of it, and the amount
+  a Craftsman's Writ asks for (`Data/QuestText.lua`), come from the quest and NPC data players'
+  Forever clients recorded.
   Data from Efficient Games (https://efficient.games), licensed under CC BY 4.0.
   `pipelines/quests/tools/export_compendium.py` reads it from
   [EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf).
@@ -102,9 +103,9 @@ None of this is the project's to license, and the MIT grant does not reach it.
   `pipelines/zones/assets/`.
 - **Round vignette** (`addons/Spoken/Textures/RoundVignette.tga`): a black alpha gradient made for
   this project.
-- **Zone icons** (`addons/Spoken/Textures/Zones/*.tga`): the game's zone achievement icons, copied
-  from the game's files so every client has them; the pictures for Spoken Places' lines. They are
-  Blizzard's. Forever's own zones, which have no icon in the game
+- **Zone icons** (`addons/Spoken/Textures/Zones/*.tga`): the game's zone achievement icons and the
+  world map's globe, copied from the game's files so every client has them; the pictures for
+  Spoken Places' lines. They are Blizzard's. Forever's own zones, which have no icon in the game
   (Zephras Isle, Darkspear Islands, Riverglades, Shen'dralas), have icons made for this project
   in the same style. The cities, Moonglade, and Dalaran in `Textures/Dungeons`, have icons made for this
   project in the same style. The battlegrounds have their icons from the retail game (the Dungeon

@@ -545,6 +545,19 @@ Expect("...where it is", page.sub.text.text, L.READABLES_IN_FMT:format("Stormwin
 Expect("...on one line", page.sub.text.wordWrap, false)
 Expect("...no line before its words saying it is in the world", (page.body.text.text or ""):find("In the World", 1, true), nil)
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)
+-- A page that names its reader shows this character's name, class and gender word, as in the game.
+do
+    local kurdranPage = SpokenBooksData.books[KURDRAN].pages[1]
+    local words = SpokenBooksData.pages[kurdranPage].text
+    SpokenBooksData.pages[kurdranPage].text = "Greetings, $gbrother:sister;. You, $N the $c, are ready."
+    stub.world.playerName, stub.world.playerClass, stub.world.unitSex = "Torno", "Warrior", 3
+    B:ShowReadables(KURDRAN)
+    Expect("...a page's tokens filled in for this character", page.body.text.text,
+        "Greetings, sister. You, Torno the Warrior, are ready.")
+    SpokenBooksData.pages[kurdranPage].text = words
+    stub.world.playerName, stub.world.playerClass, stub.world.unitSex = nil, nil, 2
+    B:ShowReadables(KURDRAN)
+end
 -- Opened on a writing from elsewhere (Open in Azeroth's Compendium): chosen, with what holds it
 -- opened, though the zone and its kind were closed.
 Click("Stormwind City")

@@ -883,9 +883,10 @@ where the decision carries a reason.
 
 The Compendium reads the same list. `tts_cli/quest_text.py` `left_out` is the one rule for which
 quests it lists and has words for: Blizzard's debris (quest 1, `<NYI>` titles), a quest every
-line of which is ignored, and the `remove` entries of `corpus/compendium_overrides.json`. Those
-23 removals are the Compendium's alone until `line_ignore` holds their lines; once it does, the
-packs drop their clips too and the entries can go.
+line of which is ignored, and the `remove` entries of `corpus/compendium_overrides.json`. The
+packs follow the same rule: `build` treats every offer, progress and hand-in line of a quest left
+out as ignored (`ignores.pack_ignored`), so its audio and its quest-log giver leave the pack with
+its page. Follow-up lines, said in chat, are not touched.
 
 ### Reporting a line
 
@@ -1591,7 +1592,10 @@ Two generated files feed it, both committed so the addon never needs a database:
   since the last run with the database takes effect; the chain entries apply to the quests added.
 - `Data/QuestText.lua` (`make quests-compendium-text`, `tools/export_quest_text.py`, rules in
   `tts_cli/quest_text.py`): each quest's accept and complete text (its progress only where it has neither, as its accept), the corpus's
-  `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept. A gendered pair is one
+  `originalText` with `$N`, `$C`, `$R`, `$G male:female;` and `$B` kept (the addon writes `$c` and
+  `$r` in lower case, as the client does, save on a German client). An objective's amount, a
+  Craftsman's Writ's `$2oa`, is written in from Efficient Games' objectives (the same cache as
+  `Data/Compendium.lua`'s; `--without-efficient-games` leaves it). A gendered pair is one
   text; where givers' texts differ, the one most of the moment's lines have, ties to the first in
   the corpus; ignored lines, and the quests the hand corrections `remove`, are left out. About 2.8 MB, parsed at every login on those clients.
 
