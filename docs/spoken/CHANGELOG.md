@@ -4,6 +4,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **A quest's page writes your class and race in lower case mid-sentence**, as the quest window does:
+  "young hunter", not "young Hunter". German keeps the capital. *([Nucabe](https://github.com/Nucabe))*
 - **Gossip finds its line on Chinese, Korean and French clients.** A reworded line now matches in
   Chinese and Korean, and French text with a curly apostrophe or a no-break space matches the line it is,
   where before it played nothing. On a client in another language than English, an NPC with several
