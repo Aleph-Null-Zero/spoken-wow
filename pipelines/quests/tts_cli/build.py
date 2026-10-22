@@ -85,6 +85,14 @@ VoiceOver.DataModules:Register("{module}", {module})
 # not list incompatible instead, and nothing turns that off: the pack has to name the client.
 DEFAULT_TITLE = "Spoken Audio: Quests"
 
+#: "Spoken" in the brand colour, as every Spoken addon is titled in the AddOns list. Only the
+#: TOC wears it: the same title names the CurseForge project, where the code would show.
+BRAND = "|cffb48cffSpoken|r"
+
+
+def toc_title(title: str) -> str:
+    return BRAND + title[len("Spoken"):] if title.startswith("Spoken") else title
+
 #: The TOC key naming the language a pack was recorded in. Must match what the addon's
 #: DataModules.lua reads.
 LANGUAGE_KEY = "X-SpokenQuests-Language"
@@ -393,7 +401,7 @@ def module_toc(module_name: str, generated_files: list, version: str = "1.0.1",
     The title is what tells the packs apart in the AddOns list, where five of them can sit at
     once and their folder names differ only by a suffix.
     """
-    lines = [TOC_HEADER.format(version=version, title=title,
+    lines = [TOC_HEADER.format(version=version, title=toc_title(title),
                                module=module_name, icon=ICON_NAME)]
     if language:
         # Only when asked: the addon reads an absent key as enUS, so every English pack keeps

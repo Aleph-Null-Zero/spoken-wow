@@ -21,6 +21,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
   face are drawn from appearances that ship with Spoken, so a creature the client has not met yet no longer
   shows your own face or another creature's. *([Nucabe](https://github.com/Nucabe))*
+- **The AddOns list shows Spoken and each module's name in colour, with new icons.** Spoken, Quests,
+  Places, Readables, Contributions and Developer each have a new icon, the voice packs show Spoken in
+  colour too, and the minimap button shows the mark at its size, centred. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
   manager, and the lines Spoken had no voice for go to the site after each logout or /reload,
   so you no longer upload the file yourself. Collected lines now also say which version of your

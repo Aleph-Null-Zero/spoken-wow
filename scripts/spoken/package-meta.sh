@@ -60,7 +60,7 @@ cp "$REPO/pipelines/quests/assets/icon/$icon" "$module_dir/icon.tga"
 
 cat > "$module_dir/$NAME.toc" <<TOC
 ## Interface: 11509, 20506, 16001
-## Title: $TITLE
+## Title: ${TITLE/#Spoken/|cffb48cffSpoken|r}
 ## Notes: $NOTES|n|nThis addon holds no audio itself. If your addon manager did not fetch the rest with it, install them from CurseForge; Spoken says what is missing.
 ## Version: $VERSION
 ## IconTexture: Interface\\AddOns\\$NAME\\icon.tga
