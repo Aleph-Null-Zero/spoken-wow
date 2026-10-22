@@ -6,15 +6,9 @@ setfenv(1, VoiceOver)
 --
 -- The talk box's text and its methods are Immersion internals, not an API: Setup checks them once
 -- and stands down if any is missing.
---
--- Parses as Lua 5.0 (no #, no %) because addon.xml is shared with the 1.12 client.
 
 ImmersionBridge = {}
 local Bridge = ImmersionBridge
-
-if Version.IsAnyLegacy then
-    return
-end
 
 -- Toasts and books are left to Immersion: a toast replays a page already read, and a book is
 -- Spoken Readables' line, not this addon's.
