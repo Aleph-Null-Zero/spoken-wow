@@ -214,6 +214,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - Names and tooltips were read again in every language: a part or control has one name wherever it appears,
   tooltips that still described old behaviour say what the control does now, and the voice packs are called
   voice packs in chat and in the missing-pack messages. *([Nucabe](https://github.com/Nucabe))*
+- Seven settings rows no longer carry a line of description under the name: Text Language, Include
+  Places Found Before, Keep Reading in Background, Collect Missing Lines, Original Thrall Speech, Mark
+  Words in DialogueUI and NPC Voice Before Reading. *([anon1231823](https://github.com/anon1231823))*
 
 ### Battlegrounds
 
