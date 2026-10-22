@@ -188,4 +188,5 @@ jobs:
       - run: node scripts/descriptions.mjs --check
       - run: node pipelines/zones/tools/locale/check-strings.mjs
       - run: pnpm --filter @spoken/books-pipeline test
+      - run: pnpm --filter @spoken/zones-pipeline test
       - run: node --test scripts/lib/*.test.mjs scripts/audio/*.test.mjs
