@@ -6,7 +6,7 @@ import { Explorer } from "@/components/zones/Explorer";
 import { isCorpusEmpty, zoneFacets } from "@/lib/zones/catalogue";
 import { Contained } from "@/components/Width";
 
-export const metadata: Metadata = { title: "Zones · Spoken" };
+export const metadata: Metadata = { title: "Places · Spoken" };
 
 /**
  * The zone dropdown is derived from the catalogue, so computing it here and passing it
@@ -32,7 +32,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
     return (
       <main className="pt-6 pb-36">
         <Contained>
-          <h1 className="text-xl font-semibold">Zone lore</h1>
+          <h1 className="text-xl font-semibold">Places</h1>
           <p className="text-muted-foreground mt-2 max-w-xl text-sm">
             The lore corpus has not been loaded into this database yet, so there is nothing to
             show. It is seeded from the committed Lua with{" "}
@@ -46,7 +46,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
   return (
     <main className="pt-6 pb-36">
       <Contained>
-        <h1 className="text-xl font-semibold">Zone lore</h1>
+        <h1 className="text-xl font-semibold">Places</h1>
         <p className="text-muted-foreground mt-1 mb-5 text-sm">
           The prose the addon reads when you walk into a place, for every zone and subzone.
           Unlike quest dialogue, these words are written rather than extracted: scraped from

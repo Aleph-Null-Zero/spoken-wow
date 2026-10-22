@@ -25,8 +25,8 @@ import { Contained } from "@/components/Width";
  *
  * The address is /books/r/{key}: the pageTextID, or a minted page's n{uuid}. The key and
  * nothing else -- because the addon can build it from what it already has, with no per-page
- * table to ship and nothing to escape. docs/books/AGENTS.md freezes both forms, which is what
- * makes the address safe to bake into a release. See SpokenBooks' ReportURL.
+ * table to ship and nothing to escape. docs/readables/AGENTS.md freezes both forms, which is
+ * what makes the address safe to bake into a release. See SpokenBooks' ReportURL.
  */
 type Params = { lang: string; pageId: string };
 

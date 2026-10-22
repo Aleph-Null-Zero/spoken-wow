@@ -8,15 +8,15 @@
 
 **Tech Stack:** Postgres migrations (`apps/web/migrations`), Next.js/TypeScript with vitest (`apps/web`), Node ESM pipeline (`pipelines/books/tools`, `node --test`), Lua 5.1 addon with luajit tests (`tests/lua`), one Python importer (`pipelines/quests/tools/import_questit.py`).
 
-**Spec:** `docs/books/docs/language-decoupling.md`
+**Spec:** `docs/readables/docs/language-decoupling.md`
 
 ## Global Constraints
 
 - Migrations are additive and forward-only. A release must run against the schema of the release after it (`deploy/web/bin/migrate.sh`).
-- An extracted page keeps `lineId` `b:{pageTextID}` and its audio file name. Both are frozen (`docs/books/AGENTS.md`).
+- An extracted page keeps `lineId` `b:{pageTextID}` and its audio file name. Both are frozen (`docs/readables/AGENTS.md`).
 - A minted page id is `b:n{uuid}` and a minted book id is `n{uuid}`, with `uuid` from `crypto.randomUUID()`.
 - `pageChecksum`'s constants do not change.
-- Mail is never captured (`docs/books/AGENTS.md`).
+- Mail is never captured (`docs/readables/AGENTS.md`).
 - Web suites and pipeline tests run against `spoken_ci_pin`, never `spoken_dev`: `set -x DATABASE_URL postgres:///spoken_ci_pin` in the shell running them. The books text tests delete whole languages.
 - The user's shell is fish. Every command given to the user is in fish syntax.
 - Comments match the surrounding code: say what the code does, not its history, and don't point at sibling files for context.
@@ -87,7 +87,7 @@ What follows from the result:
 - [ ] **Step 4: Commit the spec note only**
 
 ```fish
-git add docs/books/docs/language-decoupling.md
+git add docs/readables/docs/language-decoupling.md
 git commit -m "Books: what the client says about a readable it opens"
 ```
 
@@ -238,7 +238,7 @@ Every writer that can create a page now writes `book_page` in the same transacti
 **Interfaces:**
 - Produces: `bookPageUpsert(entry) -> { text: string, values: unknown[] }` in `lib/page.mjs`, the SQL that inserts or moves an extracted page's `book_page` row.
 
-`import-locale.mjs` keeps skipping locale pages that have no English row. A `locales_page_text` entry is a `page_text` entry, and the English extract already holds every `page_text` entry something can open. A locale page the extract lacks is one of the orphans `docs/books/README.md` counts ("66 pages … which nothing can open"). Update the spec's "Order of work" step 3 sentence to match.
+`import-locale.mjs` keeps skipping locale pages that have no English row. A `locales_page_text` entry is a `page_text` entry, and the English extract already holds every `page_text` entry something can open. A locale page the extract lacks is one of the orphans `docs/readables/README.md` counts ("66 pages … which nothing can open"). Update the spec's "Order of work" step 3 sentence to match.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -340,7 +340,7 @@ Expected: tests pass. The import reports `0 promoted … unchanged`, and the cou
 - [ ] **Step 8: Commit**
 
 ```fish
-git add pipelines/books/tools/lib/page.mjs pipelines/books/tools/lib/page.test.mjs pipelines/books/tools/import.mjs make/books.mk make/web.mk docs/books/docs/language-decoupling.md
+git add pipelines/books/tools/lib/page.mjs pipelines/books/tools/lib/page.test.mjs pipelines/books/tools/import.mjs make/books.mk make/web.mk docs/readables/docs/language-decoupling.md
 git commit -m "Books: the import places pages in book_page, and sync carries it"
 ```
 

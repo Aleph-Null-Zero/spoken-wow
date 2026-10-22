@@ -32,7 +32,7 @@ where the narrator would not show it (`Spoken:ShowsNarratorFor`, Voice Only or S
 Opened, the tab lands on the dungeon the player is in, else the zone, else the continent.
 
 The Dungeons and Raids come from `addons/Spoken/Data/Dungeons.lua`, which every tab shares
-([COMPENDIUM.md](../zones/COMPENDIUM.md)).
+([COMPENDIUM.md](../places/COMPENDIUM.md)).
 
 ## Data
 

@@ -1,13 +1,14 @@
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { announcement } from "./announce.mjs";
+import { docsFolder, SECTIONS } from "./packs.mjs";
 
 // A repo in a temp directory: publishers/ pages as [group, file, frontmatter], and one
-// docs/<section>/CHANGELOG.md per entry of `changelogs`.
+// CHANGELOG.md in the section's docs folder per entry of `changelogs`.
 function repo(pages, changelogs) {
   const dir = mkdtempSync(join(tmpdir(), "announce-"));
   for (const [group, file, fields] of pages) {
@@ -16,8 +17,8 @@ function repo(pages, changelogs) {
     writeFileSync(join(dir, "publishers", group, file), `---\n${lines.join("\n")}\n---\n\nBody.\n`);
   }
   for (const [section, text] of Object.entries(changelogs)) {
-    mkdirSync(join(dir, "docs", section), { recursive: true });
-    writeFileSync(join(dir, "docs", section, "CHANGELOG.md"), text);
+    mkdirSync(join(dir, "docs", docsFolder(section)), { recursive: true });
+    writeFileSync(join(dir, "docs", docsFolder(section), "CHANGELOG.md"), text);
   }
   const dirs = { publishersDir: join(dir, "publishers"), docsDir: join(dir, "docs") };
   return (tag) => announcement(tag, dirs);
@@ -105,4 +106,11 @@ test("a version with no changelog section still announces, without notes", () =>
 test("a tag with no store page behind it is skipped", () => {
   assert.ok(run("legacy/quests/v1.0.0").skip);
   assert.ok(run("not-a-release").skip);
+});
+
+test("every section's changelog is where the release scripts look", () => {
+  const docs = join(import.meta.dirname, "../../docs");
+  for (const section of ["spoken", ...SECTIONS]) {
+    assert.ok(existsSync(join(docs, docsFolder(section), "CHANGELOG.md")), section);
+  }
 });

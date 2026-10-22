@@ -1,7 +1,7 @@
 # AGENTS.md: Places
 
 The root `AGENTS.md` applies, including its credit, data and versioning rules. This file covers
-only the Places section, whose folders keep the name `zones`. Before changing a part, read its file:
+only the Places section, whose code, pipeline and addon folders keep the name `zones`. Before changing a part, read its file:
 
 - the module, its settings, languages and voice packs: [ADDON.md](ADDON.md)
 - the Places tab, the map panel and the area and dungeon tables: [COMPENDIUM.md](COMPENDIUM.md)
@@ -49,7 +49,7 @@ make lint                 # what CI gates on
 
 - The `Spoken_Places` module ships inside Spoken and follows Spoken's version
   (see root `AGENTS.md`).
-- `SpokenZonesAudio` versions on its own, and its notes go in `docs/zones/CHANGELOG.md` under
+- `SpokenZonesAudio` versions on its own, and its notes go in `docs/places/CHANGELOG.md` under
   `## <version> — audio`. Language packs use `## <version> — zones-audio-<lang>`.
   `changelog_for()` in `scripts/zones/release.sh` matches on version and kind, and exits on a
   missing or duplicate section.
