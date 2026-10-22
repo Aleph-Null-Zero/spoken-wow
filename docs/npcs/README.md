@@ -12,8 +12,10 @@ around the city. After the continents, Other Lands holds any zone on none. Each 
 its own (`DUNGEON_ICONS` in `addons/Spoken/API.lua`, every name in Forever's file list).
 
 A boss is found when its fight starts (`ENCOUNTER_START`, any difficulty's encounter id from the
-`ids` of `Data/Bosses.lua`), kept per character in `SpokenNPCsCharacter`. One not found is greyed with a
-padlock and its page says so, until Unlock Unfound Bosses is on (Spoken's page; `SpokenNPCsSettings`).
+`ids` of `Data/Bosses.lua`), kept per character in `SpokenNPCsCharacter`. A boss whose fight may start no
+encounter in Forever is also found when the player targets it (`onTarget`, from `ON_TARGET` in
+`pipelines/lib/bosses.mjs`): Baron Aquanis, the world bosses, Ribbly Screwspigot and Plugger Spazzring.
+One not found is greyed with a padlock and its page says so, until Unlock Unfound Bosses is on (Spoken's page; `SpokenNPCsSettings`).
 Zones, dungeons and banners count bosses found out of all, with the share and the bar, as the other tabs
 do; Found Only leaves out what holds none found. A found boss's page names its dungeon and zone and
 tells its story, or says it is not written yet; a boss with a creature in `Data/Creatures.lua` has its portrait at the left of its name, and under the
@@ -76,8 +78,8 @@ story is not written yet.
   the place the boss is known in otherwise.
 - Encounters the client lists that no Forever guide shows as a boss of the dungeon are left out
   (`UNCONFIRMED` in `pipelines/lib/bosses.mjs`): Mechanical Menagerie, Festering Rotslime, Atal'ai
-  Defenders, Ribbly Screwspigot, Plugger Spazzring, The Vault, The Molten Core, Three Little Wolves and
-  Mana Wraith. One goes back in when a source confirms it.
+  Defenders, The Vault, The Molten Core, Three Little Wolves and Mana Wraith. One goes back in when a
+  source confirms it.
 - The vmangos-style world database of the Forever repack (`world`, port 3317, the one `make compendium`
   reads) has 21,116 `creature_text` lines. 240 of the 267 bosses match a `creature_template` by name, and
   111 of them have lines of their own to say.

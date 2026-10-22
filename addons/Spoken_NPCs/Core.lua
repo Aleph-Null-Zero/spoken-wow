@@ -71,12 +71,10 @@ function NPCs:IsBossFound(map, key)
 	return SpokenNPCsCharacter ~= nil and SpokenNPCsCharacter.found[Key(map, key)] == true
 end
 
---- The bosses of the game's encounter `encounterID` are met: noted, and the tab told. Returns
---- whether one was a boss not met before.
-function NPCs:FoundEncounter(encounterID)
-	local bosses = SpokenNPCsCharacter and encounterID and Encounters()[encounterID]
+-- The bosses { map, key } are met: noted, and the tab told. Returns whether one was not met before.
+local function Meet(self, bosses)
 	local new = false
-	for _, boss in ipairs(bosses or {}) do
+	for _, boss in ipairs(bosses) do
 		if not self:IsBossFound(boss.map, boss.key) then
 			SpokenNPCsCharacter.found[Key(boss.map, boss.key)] = true
 			new = true
@@ -85,4 +83,21 @@ function NPCs:FoundEncounter(encounterID)
 	-- At a boss's pull: the list is drawn again only where it is seen, and opening it draws it.
 	if new and self.bosses and self.bosses:IsVisible() then self:RefreshBosses() end
 	return new
+end
+
+--- The bosses of the game's encounter `encounterID` are met. Returns whether one was a boss not
+--- met before.
+function NPCs:FoundEncounter(encounterID)
+	local bosses = SpokenNPCsCharacter and encounterID and Encounters()[encounterID]
+	return bosses and Meet(self, bosses) or false
+end
+
+--- The player targeted the boss `key` of `map`: met where it is one whose fight may start no
+--- encounter (`onTarget` in Data/Bosses.lua). Returns whether it was not met before.
+function NPCs:FoundTarget(map, key)
+	if not SpokenNPCsCharacter then return false end
+	for _, boss in ipairs(_G.SpokenBosses and SpokenBosses.maps[map] or {}) do
+		if boss.key == key then return boss.onTarget == true and Meet(self, { { map = map, key = key } }) end
+	end
+	return false
 end

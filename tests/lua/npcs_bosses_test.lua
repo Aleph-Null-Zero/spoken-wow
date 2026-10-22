@@ -514,6 +514,38 @@ for _, queued in ipairs(Q.sounds) do keys[#keys + 1] = queued.key end
 Expect("...and an encounter of two bosses shows both stories", table.concat(keys, "|"),
     "boss:" .. sunkenMap .. ":weaver|boss:" .. sunkenMap .. ":dreamscythe")
 Clear()
+
+-- A boss whose fight may start no encounter is met when targeted, whichever trigger shows stories.
+local function Listed(map, key)
+    for _, boss in ipairs(SpokenBosses.maps[map] or {}) do
+        if boss.key == key then return boss end
+    end
+end
+Expect("Ribbly Screwspigot and Plugger Spazzring are listed in Blackrock Depths",
+    tostring(Listed(230, "ribbly screwspigot") ~= nil) .. "|" .. tostring(Listed(230, "plugger spazzring") ~= nil), "true|true")
+Expect("Baron Aquanis, the world bosses, Ribbly and Plugger are met on target; Edwin VanCleef is not",
+    tostring(Listed(48, "baron aquanis").onTarget) .. "|" .. tostring(Listed(2789, "lord kazzak").onTarget) .. "|"
+        .. tostring(Listed(2832, "ysondre").onTarget) .. "|" .. tostring(Listed(230, "ribbly screwspigot").onTarget) .. "|"
+        .. tostring(Listed(36, "edwin vancleef").onTarget),
+    "true|true|true|true|nil")
+SpokenNPCsCharacter.found = {}
+world.npcGUID = "Creature-0-1-2-3-639-0000ABCDEF"
+NPCs:TargetChanged()
+Expect("targeting a boss whose fight starts an encounter does not meet it", NPCs:IsBossFound(36, "edwin vancleef"), false)
+_G.GetInstanceInfo = function() return "Blackrock Depths", "party", 1, "", 5, 0, false, 230 end
+_G.UnitName = function() return "Ribbly Screwspigot" end
+world.npcGUID = "Creature-0-1-2-3-9543-0000ABCDEF"
+NPCs:TargetChanged()
+Expect("targeting Ribbly Screwspigot meets him, with When Killed on", NPCs:IsBossFound(230, "ribbly screwspigot"), true)
+Expect("...and shows no story", Showing(), "nothing")
 SpokenNPCsSettings.storyTrigger = "target"
+_G.UnitName = function() return "Plugger Spazzring" end
+world.npcGUID = "Creature-0-1-2-3-9499-0000ABCDEF"
+NPCs:TargetChanged()
+Expect("...and Plugger Spazzring, with Targeting on", NPCs:IsBossFound(230, "plugger spazzring"), true)
+Clear()
+_G.GetInstanceInfo, _G.UnitName = instanceInfo, unitName
+Expect("a world boss is met on target as at its pull", tostring(NPCs:FoundTarget(2789, "lord kazzak")) .. "|"
+    .. tostring(NPCs:FoundEncounter(Listed(2789, "lord kazzak").ids[1])), "true|false")
 
 if Failures() > 0 then os.exit(1) end

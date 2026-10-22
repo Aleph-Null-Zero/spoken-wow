@@ -48,15 +48,17 @@ function NPCs:ReadStory(map, key)
 	return source:Enqueue(clip) and true or false
 end
 
---- The player targeted a unit: its story, where it is a boss and targeting shows them.
+--- The player targeted a unit: where it is a boss, met if its fight may start no encounter, and its
+--- story where targeting shows them.
 function NPCs:TargetChanged()
-	if not (SpokenNPCsSettings and SpokenNPCsSettings.storyTrigger == "target") then return end
 	local id = Spoken.CreatureID(UnitGUID and UnitGUID("target"))
 	if not id then return end
 	-- A boss only Forever has is not among Data/Creatures.lua's: known by its name in the dungeon
 	-- the player is in.
 	local boss = Creatures()[id] or self:BossNamed(Spoken.NotSecret(UnitName and UnitName("target")))
-	if boss then self:ReadStory(boss.map, boss.key) end
+	if not boss then return end
+	self:FoundTarget(boss.map, boss.key)
+	if SpokenNPCsSettings and SpokenNPCsSettings.storyTrigger == "target" then self:ReadStory(boss.map, boss.key) end
 end
 
 --- An encounter ended: its bosses' stories, where it was won and killing shows them.

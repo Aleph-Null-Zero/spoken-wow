@@ -57,14 +57,27 @@ export async function readBosses(path = OUT) {
 const SAME = { geilhast: "gelihast" };
 
 // Encounters the client lists that no Forever source shows as a boss of its dungeon (Season of Discovery's
-// raid-sized fights, Grim Guzzler barkeeps, a name that is the raid's own): left out until a source confirms them.
+// raid-sized fights, a vault with no creature, a name that is the raid's own): left out until a source confirms them.
 const UNCONFIRMED = {
   90: ["mechanical menagerie"],
   109: ["festering rotslime", "atalai defenders"],
-  230: ["ribbly screwspigot", "plugger spazzring", "the vault"],
+  230: ["the vault"],
   409: ["the molten core"],
   2875: ["three little wolves"],
   2959: ["mana wraith"],
+};
+
+// Bosses whose fight Forever may never announce with ENCOUNTER_START, found when the player targets them
+// too (`onTarget`): Baron Aquanis has only a Season of Discovery row, the world bosses' rows are on
+// instanced maps while Forever spawns them in the open world, and the Grim Guzzler's Ribbly and
+// Plugger are townsfolk until a quest or a theft turns them.
+const ON_TARGET = {
+  48: ["baron aquanis"],
+  230: ["ribbly screwspigot", "plugger spazzring"],
+  2789: ["lord kazzak"],
+  2791: ["azuregos"],
+  2804: ["prince thunderaan"],
+  2832: ["emeriss", "lethon", "taerar", "ysondre"],
 };
 
 // Forever's own difficulties: the client's other rows are Season of Discovery's.
@@ -149,6 +162,7 @@ export function render(maps, names) {
         const name = names[locale]?.[boss.id];
         if (name && name !== boss.name) parts.push(`${locale} = ${quote(name)}`);
       }
+      if (boss.onTarget) parts.push("onTarget = true");
       return `\t\t\t{ ${parts.join(", ")} },`;
     });
     return `\t\t[${map}] = {\n${lines.join("\n")}\n\t\t},`;
@@ -160,7 +174,8 @@ export function render(maps, names) {
 -- the client's encounter, \`ids\` every encounter the client has for it, one for each difficulty
 -- (the ids ENCOUNTER_START gives), \`key\` the boss's English name lowercased without punctuation (how its
 -- story is filed), then its name, and in every other language where it differs (Forever
--- ${FOREVER_BUILD}, wago.tools). Regenerate with:
+-- ${FOREVER_BUILD}, wago.tools). \`onTarget\` marks a boss found when the player targets it, as its
+-- fight may start no encounter. Regenerate with:
 --   make bosses
 --
 -- A global rather than a private namespace: a data file cannot reach into the addon's environment.
@@ -189,6 +204,13 @@ async function main() {
   }
   const maps = {};
   for (const [map, rows] of byMap) maps[map] = bossesOf(rows).filter((boss) => !UNCONFIRMED[map]?.includes(boss.key));
+  for (const [map, keys] of Object.entries(ON_TARGET)) {
+    for (const key of keys) {
+      const boss = maps[map]?.find((b) => b.key === key);
+      if (!boss) throw new Error(`ON_TARGET names ${map} ${key}, which is not a listed boss`);
+      boss.onTarget = true;
+    }
+  }
 
   const wanted = new Set(Object.values(maps).flat().map((boss) => boss.id));
   const names = {};
