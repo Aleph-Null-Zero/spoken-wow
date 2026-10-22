@@ -102,7 +102,14 @@ async function main() {
     const translated = (await readCurrent(lang))
       .filter((row) => written.has(row.lineId) && row.full.trim() && row.short.trim())
       .map((row) => ({ ...row, name: names.get(row.lineId) || areaName(row) }));
-    if (translated.length) corpora.push({ lang, rows: translated });
+    // A language ships as a pair of files or not at all: one with no zones or no areas
+    // written yet would leave a file with nothing in it, which writeCorpus refuses.
+    const kinds = new Set(translated.map((row) => row.kind));
+    if (kinds.has("zone") && kinds.has("subzone")) {
+      corpora.push({ lang, rows: translated });
+    } else if (translated.length) {
+      console.log(`skipping ${lang}: ${translated.length} line(s), but no ${kinds.has("zone") ? "areas" : "zones"} yet`);
+    }
   }
 
   const stale = [];
