@@ -29,7 +29,7 @@ const OUT = new URL("../corpus/extract.json", import.meta.url).pathname;
 //
 // THE LOAD HAS TO COME FIRST. The defaults below are the quests pipeline's docker-compose
 // values, and they are what an unread .env silently falls back to.
-await loadEnv("books", { override: MYSQL_VARS });
+await loadEnv("readables", { override: MYSQL_VARS });
 
 const connection = await mysql.createConnection({
   host: process.env.MYSQL_HOST ?? "127.0.0.1",

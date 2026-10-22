@@ -20,7 +20,7 @@ import { decideImport } from "./lib/promote.mjs";
 import { foldMinted } from "./lib/absorb.mjs";
 import { BOOK_ID_COMPAT, PAGE_COUNT } from "./lib/page.mjs";
 
-await loadEnv("books", { override: MYSQL_VARS });
+await loadEnv("readables", { override: MYSQL_VARS });
 
 const lang = process.argv[process.argv.indexOf("--lang") + 1];
 const info = process.argv.includes("--lang") ? localeInfo(lang) : null;

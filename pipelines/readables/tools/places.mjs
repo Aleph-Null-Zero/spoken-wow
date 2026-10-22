@@ -37,7 +37,7 @@ import { FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
 import { areaReader } from "./lib/area.mjs";
 import { cannotBeHad, dungeonsOf, foreverQuests, isTemplateCopy, typeOf } from "./lib/places.mjs";
 
-await loadEnv("books");
+await loadEnv("readables");
 
 const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Books.lua", import.meta.url));
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Places.lua", import.meta.url));

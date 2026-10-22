@@ -16,7 +16,7 @@ import { decideImport, structuralDiff } from "./lib/promote.mjs";
 // The repo-root .env holds the shared credentials, this pipeline's .env whatever is its
 // own; neither is read unless a command like this one asks for it, because lib/ is
 // compiled into the site and its paths would be the build machine's.
-await loadEnv("books");
+await loadEnv("readables");
 
 const IN = new URL("../corpus/extract.json", import.meta.url).pathname;
 const LANG = "enUS";

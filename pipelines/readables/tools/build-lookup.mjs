@@ -9,7 +9,7 @@ import { buildLookup } from "./lib/lookup.mjs";
 // The repo-root .env holds the shared credentials, this pipeline's .env whatever is its
 // own; neither is read unless a command like this one asks for it, because lib/ is
 // compiled into the site and its paths would be the build machine's.
-await loadEnv("books");
+await loadEnv("readables");
 
 const lang = process.argv.find((arg) => arg.startsWith("--lang="))?.slice("--lang=".length) || "enUS";
 const { clips, pages, path } = await buildLookup({ lang });

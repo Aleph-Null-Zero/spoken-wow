@@ -20,7 +20,7 @@ export const REPO_ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))
 
 export const ROOT_ENV_PATH = join(REPO_ROOT, ".env");
 
-/** Where a pipeline's own .env lives. `name` is "quests", "zones" or "books". */
+/** Where a pipeline's own .env lives. `name` is its folder: "quests", "places" or "readables". */
 export function pipelineEnvPath(name) {
   return join(REPO_ROOT, "pipelines", name, ".env");
 }
