@@ -2,7 +2,7 @@
 -- sources, a clip factory, and a recorder for the player's callbacks.
 local M = {}
 
-local ZONES = (debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$") or ".") .. "/../../addons/Spoken_Places/"
+local PLACES = (debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$") or ".") .. "/../../addons/Spoken_Places/"
 
 function M.Fresh(stub, spokenDir)
     stub.SetClient("11509")
@@ -84,13 +84,13 @@ end
 --- `seed` is the addon table as it stands before Language.lua runs, for what the
 --- generated data would have put there first (SpokenZones.Languages).
 function M.LoadZones(addonDirectory, seed)
-    local SpokenZones = seed or {}
+    local SpokenPlaces = seed or {}
     if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
     for _, file in ipairs({ "Language", "Core", "Audio", "Contribute" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
-        chunk("Spoken_Places", SpokenZones)
+        chunk("Spoken_Places", SpokenPlaces)
     end
-    return SpokenZones
+    return SpokenPlaces
 end
 
 --- The language codes SpokenZones.LOCALES lists, in order, read off its source. The other
@@ -119,7 +119,7 @@ function M.NewZoneLore()
     local registered = {}
     Z.RegisterStrings = function(_, code, strings) registered[code] = strings end
     for _, code in ipairs({ "enUS", "deDE", "esES", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW" }) do
-        assert(loadfile(ZONES .. "Locale/" .. code .. ".lua"))("Spoken_Places", Z)
+        assert(loadfile(PLACES .. "Locale/" .. code .. ".lua"))("Spoken_Places", Z)
     end
     Z.RegisterStrings = nil
     local english = registered.enUS

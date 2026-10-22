@@ -86,12 +86,12 @@ export function emitAliases(locale, aliases, builds, byZone = new Map()) {
     "-- corpus is stored under. Built by joining AreaTable's localized and English",
     `-- strings on their shared ID, from client builds ${builds.join(" (Forever), then ")} (Era).`,
     "--",
-    "-- Keyed by the raw client name: SpokenZones:NormaliseAreaKey reduces a name to",
+    "-- Keyed by the raw client name: SpokenPlaces:NormaliseAreaKey reduces a name to",
     "-- [a-z0-9 ], which erases a Cyrillic or Chinese name entirely.",
     "",
-    "local _, SpokenZones = ...",
+    "local _, SpokenPlaces = ...",
     "",
-    `if not SpokenZones:ShouldLoadAliases("${locale}") then`,
+    `if not SpokenPlaces:ShouldLoadAliases("${locale}") then`,
     "\treturn",
     "end",
     "",
@@ -104,13 +104,13 @@ export function emitAliases(locale, aliases, builds, byZone = new Map()) {
   lines.push("}", "");
 
   if (byZone.size === 0) {
-    lines.push(`SpokenZones:RegisterAliases("${locale}", aliases)`, "");
+    lines.push(`SpokenPlaces:RegisterAliases("${locale}", aliases)`, "");
     return lines.join("\n");
   }
 
   lines.push(
     "-- Names the client gives more than one place, by the uiMapID each place's story is kept",
-    "-- under. Read before the table above (SpokenZones:ResolveAreaKey).",
+    "-- under. Read before the table above (SpokenPlaces:ResolveAreaKey).",
     "local byZone = {",
   );
   for (const name of [...byZone.keys()].sort()) {
@@ -118,6 +118,6 @@ export function emitAliases(locale, aliases, builds, byZone = new Map()) {
     const cells = zones.map(([mapID, key]) => `[${mapID}] = ${luaString(key)}`).join(", ");
     lines.push(`\t[${luaString(name)}] = { ${cells} },`);
   }
-  lines.push("}", "", `SpokenZones:RegisterAliases("${locale}", aliases, byZone)`, "");
+  lines.push("}", "", `SpokenPlaces:RegisterAliases("${locale}", aliases, byZone)`, "");
   return lines.join("\n");
 }

@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 _G.SpokenBooksAudioPacks = {
@@ -25,13 +25,13 @@ local LETTER = "Hello Morgan,\n\nBusiness in Goldshire is brisk."
 local REGISTRY_1 = "Hillsbrad Town Registry\n\nWe the people of Hillsbrad do solemny swear our faith and devotion to the Alliance maintained by the great monarchs, King Magni Bronzebeard of Ironforge and King Anduin Wrynn of Stormwind.\n\nHerein lies the town registry for purposes of governing this fair city in the foothills of the great Alterac Mountains as well as serving as a record of those who have paid their taxes to their Kings and to the great almighty Alliance."
 
 local function LoadBooks()
-    local SpokenBooks = {}
+    local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
         "Events", "Commands" }) do
-        local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Readables", SpokenBooks)
+        local chunk = assert(loadfile(READABLES .. file .. ".lua"))
+        chunk("Spoken_Readables", SpokenReadables)
     end
-    return SpokenBooks
+    return SpokenReadables
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
@@ -41,7 +41,7 @@ env.Addon:Enable()
 local B = LoadBooks()
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
+dofile(READABLES .. "Data/Books.lua")
 SpokenBooksData.index["William's Shipment"][1][B:ChecksumOf(LETTER)] = 15
 
 -- The client's CloseItemText: the window goes and ITEM_TEXT_CLOSED follows.
@@ -144,9 +144,9 @@ SpokenBooksAudioPacks.SpokenBooksAudio.pages[265] = voiced
 Reset()
 
 ---------------------------------------------------------------- the command
-SlashCmdList["SPOKENWRITINGS"]("close")
+SlashCmdList["SPOKENREADABLES"]("close")
 Expect("/spw close toggles it", SpokenBooksSettings.closeWhenRead, false)
-SlashCmdList["SPOKENWRITINGS"]("close")
+SlashCmdList["SPOKENREADABLES"]("close")
 Expect("...and back", SpokenBooksSettings.closeWhenRead, true)
 
 print(Failures() == 0 and "All books close tests passed" or (Failures() .. " failed"))

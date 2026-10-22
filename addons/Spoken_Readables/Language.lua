@@ -14,7 +14,7 @@
 -- The page id is the same in every language, so every pack names a page the same way and
 -- falling back is per page.
 
-local ADDON_NAME, SpokenBooks = ...
+local ADDON_NAME, SpokenReadables = ...
 
 -- Kept in step with SpokenZones.LOCALES (addons/Spoken_Places/Language.lua): the addons sit
 -- side by side, and a language offered in one and missing from the other is a setting the
@@ -24,7 +24,7 @@ local ADDON_NAME, SpokenBooks = ...
 -- `client = false` is a language no game client runs in -- Italian and Vietnamese, which a
 -- community translates. A player hears it by choosing it; "auto" never lands on it, because
 -- GetLocale() never says it.
-SpokenBooks.LOCALES = {
+SpokenReadables.LOCALES = {
 	{ code = "enUS", name = "English", native = "English" },
 	{ code = "deDE", name = "German", native = "Deutsch" },
 	{ code = "esES", name = "Spanish (EU)", native = "Español (España)" },
@@ -39,25 +39,25 @@ SpokenBooks.LOCALES = {
 	{ code = "viVN", name = "Vietnamese", native = "Tiếng Việt", client = false },
 }
 
-SpokenBooks.BASE_LANGUAGE = "enUS"
+SpokenReadables.BASE_LANGUAGE = "enUS"
 -- "Follow the client": stored as itself rather than resolved, so a player who never chose
 -- starts hearing German the day a German pack is installed.
-SpokenBooks.AUTO_LANGUAGE = "auto"
+SpokenReadables.AUTO_LANGUAGE = "auto"
 
 local byCode = {}
-for _, locale in ipairs(SpokenBooks.LOCALES) do
+for _, locale in ipairs(SpokenReadables.LOCALES) do
 	byCode[locale.code] = locale
 end
 
 --- A code this addon can speak of, or English: absent, empty and unknown all read as enUS.
-function SpokenBooks:NormalizeLanguage(code)
+function SpokenReadables:NormalizeLanguage(code)
 	if code and byCode[code] then
 		return code
 	end
 	return self.BASE_LANGUAGE
 end
 
-function SpokenBooks:GetLanguageName(code)
+function SpokenReadables:GetLanguageName(code)
 	local locale = code and byCode[code]
 	if not locale then
 		return tostring(code)
@@ -70,12 +70,12 @@ function SpokenBooks:GetLanguageName(code)
 end
 
 --- Whether a game client runs in this language. See `client` on LOCALES.
-function SpokenBooks:IsClientLanguage(code)
+function SpokenReadables:IsClientLanguage(code)
 	local locale = code and byCode[code]
 	return locale ~= nil and locale.client ~= false
 end
 
-function SpokenBooks:GetClientLanguage()
+function SpokenReadables:GetClientLanguage()
 	local locale = GetLocale and GetLocale()
 	if self:IsClientLanguage(locale) then
 		return locale
@@ -84,7 +84,7 @@ function SpokenBooks:GetClientLanguage()
 end
 
 --- The language the player wants to hear, resolved: "auto" becomes the client's.
-function SpokenBooks:GetVoiceLanguage()
+function SpokenReadables:GetVoiceLanguage()
 	-- The one choice on Spoken's page for every module, once made; this addon's own until then.
 	local shared = Spoken and Spoken.GetLanguageChoice and Spoken:GetLanguageChoice()
 	local stored = shared or (SpokenBooksSettings and SpokenBooksSettings.voiceLanguage)
@@ -96,7 +96,7 @@ end
 
 --- The language to try when the voice language has no clip for a page. Nil means none: the
 --- page is silent rather than read in a language nobody asked for.
-function SpokenBooks:GetFallbackLanguage()
+function SpokenReadables:GetFallbackLanguage()
 	-- Called on its own: an `and` chain would keep only the first of its two answers.
 	local shared
 	if Spoken and Spoken.GetLanguageChoice then
@@ -114,7 +114,7 @@ function SpokenBooks:GetFallbackLanguage()
 end
 
 --- The languages a page may be read in, most wanted first. Never more than two.
-function SpokenBooks:LanguageOrder()
+function SpokenReadables:LanguageOrder()
 	local voice = self:GetVoiceLanguage()
 	local order = { voice }
 	local fallback = self:GetFallbackLanguage()
@@ -125,14 +125,14 @@ function SpokenBooks:LanguageOrder()
 end
 
 --- The language a pack is recorded in.
-function SpokenBooks:PackLanguage(pack)
+function SpokenReadables:PackLanguage(pack)
 	return self:NormalizeLanguage(pack and pack.language)
 end
 
 --- The language the player's packs speak to them: the first in LanguageOrder that an
 --- installed pack is recorded in, or the voice language when none is. What a report is filed
 --- under when there is no clip to ask, and what a contribution says the player was hearing.
-function SpokenBooks:GetPackLanguage()
+function SpokenReadables:GetPackLanguage()
 	local order = self:LanguageOrder()
 	local packs = self:GetAudioPacks()
 	for _, language in ipairs(order) do
@@ -148,7 +148,7 @@ end
 --- The .toc Version of the installed pack recorded in `language`, or "none" when no pack
 --- speaks it: what a contribution says the player was hearing with. One pack per language
 --- ships, so the first found (GetAudioPacks sorts by folder) is the one.
-function SpokenBooks:GetPackVersion(language)
+function SpokenReadables:GetPackVersion(language)
 	for _, pack in ipairs(self:GetAudioPacks()) do
 		if self:PackLanguage(pack) == language then
 			local version = self.GetAddOnMeta and pack.addon and self.GetAddOnMeta(pack.addon, "Version")

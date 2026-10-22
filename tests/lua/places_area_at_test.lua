@@ -7,11 +7,11 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 
 stub.SetClient("16001")
 local DUROTAR, CAVE = 1411, 9999
-local Z = H.LoadZones(ZONES)
+local Z = H.LoadZones(PLACES)
 _G.MapUtil = { FindBestAreaNameAtMouse = function() return "Razor Hill" end }
 -- A cave map with its own story under the same spot.
 _G.C_Map = _G.C_Map or {}

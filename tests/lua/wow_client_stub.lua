@@ -1238,13 +1238,13 @@ end
 --- carrying the few Core.lua facts Audio.lua and Autoplay.lua read. Returns that table.
 --- Spoken's UI/Compendium.lua too where Spoken has not loaded it: a clip's header is the place
 --- above, from its tree.
-function M.LoadZones(addonDirectory, SpokenZones)
+function M.LoadZones(addonDirectory, SpokenPlaces)
     if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
     for _, file in ipairs({ "Audio", "Autoplay" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
-        chunk("Spoken_Places", SpokenZones)
+        chunk("Spoken_Places", SpokenPlaces)
     end
-    return SpokenZones
+    return SpokenPlaces
 end
 
 --- Reset every piece of sound state a test can observe.

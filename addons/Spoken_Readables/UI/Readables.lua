@@ -16,12 +16,12 @@
 -- does not open, unless Unlock Unfound Readables is on. On the right its pages, on parchment, with
 -- where it comes from and Play.
 
-local _, SpokenBooks = ...
+local _, SpokenReadables = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
 
-local L = SpokenBooks.L
+local L = SpokenReadables.L
 
 local C = SpokenCompendium
 local CONTINENTS, CITY_IN = C.CONTINENTS, C.CITY_IN
@@ -55,7 +55,7 @@ local EVENTS = { "fishingextravaganza", "harvestfestival", "winterveil", "scourg
 local EVENT_NAMES = { winterveil = "EVENT_WINTER_VEIL", harvestfestival = "EVENT_HARVEST_FESTIVAL",
 	fishingextravaganza = "EVENT_FISHING_EXTRAVAGANZA", scourgeinvasion = "EVENT_SCOURGE_INVASION" }
 local function EventLabel(key) return EVENT_NAMES[key] and L[EVENT_NAMES[key]] or key end
-local TYPES, TYPE_NAMES = SpokenBooks.TYPES, SpokenBooks.TYPE_NAMES
+local TYPES, TYPE_NAMES = SpokenReadables.TYPES, SpokenReadables.TYPE_NAMES
 local function TypeLabel(type) return L[(TYPE_NAMES[type] or TYPE_NAMES.other).all] end
 
 local TYPE_ICONS = {
@@ -74,7 +74,7 @@ local filter = ""
 --------------------------------------------------------------------------------
 
 local function Books()
-	local data = SpokenBooks:Data()
+	local data = SpokenReadables:Data()
 	return data and data.books or {}
 end
 
@@ -206,7 +206,7 @@ local function Name(id)
 end
 
 local function Found(id)
-	return SpokenBooks:IsBookFound(id)
+	return SpokenReadables:IsBookFound(id)
 end
 
 local function Unlocked()
@@ -228,7 +228,7 @@ end
 local function FirstVoiced(id)
 	local book = Books()[id]
 	for _, pageId in ipairs(book and book.pages or {}) do
-		if SpokenBooks:HasAudio(pageId) then return pageId end
+		if SpokenReadables:HasAudio(pageId) then return pageId end
 	end
 end
 
@@ -391,7 +391,7 @@ end
 
 -- each(text) for every page of a readable that has words, in order, until it returns true.
 local function EachText(id, each)
-	local data = SpokenBooks:Data()
+	local data = SpokenReadables:Data()
 	for _, pageId in ipairs(Books()[id].pages) do
 		local text = data.pages[pageId] and data.pages[pageId].text
 		if text and text ~= "" and each(text) then return true end
@@ -403,7 +403,7 @@ end
 -- as the page shows them in the game.
 local function Words(id)
 	local words = {}
-	EachText(id, function(text) table.insert(words, SpokenBooks:FillPlayerTokens(text)) end)
+	EachText(id, function(text) table.insert(words, SpokenReadables:FillPlayerTokens(text)) end)
 	return table.concat(words, "\n\n")
 end
 
@@ -745,22 +745,22 @@ local PLAY = {
 	find = function(id)
 		if not (_G.Spoken and Spoken.GetQueue) then return nil end
 		for _, clip in ipairs(Spoken:GetQueue()) do
-			if clip.pageId and SpokenBooks:PlaceOf(clip.pageId) == id then return clip end
+			if clip.pageId and SpokenReadables:PlaceOf(clip.pageId) == id then return clip end
 		end
 	end,
 	-- Browsing: heard here is not heard in the world (Read Only Once), nor found.
-	start = function(id) SpokenBooks:SyncTo(FirstVoiced(id), true) end,
+	start = function(id) SpokenReadables:SyncTo(FirstVoiced(id), true) end,
 	tip = L.PLAY_TIP,
 }
 
 -- The page of a readable being read: the one of it in the queue. Nil where none is.
 local function PageReading(id)
-	local entry = SpokenBooks.following[id]
+	local entry = SpokenReadables.following[id]
 	if entry and entry.clip and entry.clip.pageId then return entry.clip.pageId end
 	-- Read Book as One Line off: each page is a line of its own, the first in the queue the one read.
 	if _G.Spoken and Spoken.GetQueue then
 		for _, clip in ipairs(Spoken:GetQueue()) do
-			if clip.pageId and SpokenBooks:PlaceOf(clip.pageId) == id then return clip.pageId end
+			if clip.pageId and SpokenReadables:PlaceOf(clip.pageId) == id then return clip.pageId end
 		end
 	end
 end
@@ -772,7 +772,7 @@ local REPORT = {
 	open = function(id)
 		local book = Books()[id]
 		local pageId = PageReading(id) or FirstVoiced(id) or book and book.pages and book.pages[1]
-		if pageId then SpokenBooks:ShowReport(pageId) end
+		if pageId then SpokenReadables:ShowReport(pageId) end
 	end,
 	title = L.REPORT_PROBLEM,
 	tip = L.REPORT_LINE_TIP,
@@ -1026,7 +1026,7 @@ local function OnClick(row)
 	-- Quests, and chooses nothing.
 	if row.kind == "readable" and IsShiftKeyDown and IsShiftKeyDown() then
 		local pageId = FirstVoiced(row.book)
-		if pageId then SpokenBooks:SyncTo(pageId, true, true, true) end
+		if pageId then SpokenReadables:SyncTo(pageId, true, true, true) end
 		return
 	end
 	local folded = SearchFold(row)
@@ -1077,7 +1077,7 @@ local function OnClick(row)
 		zoneTypeOpen[key] = not zoneTypeOpen[key] or nil
 		selection = { mapID = row.mapID, group = row.which, dungeon = row.dungeon }
 	end
-	SpokenBooks:RefreshReadables()
+	SpokenReadables:RefreshReadables()
 end
 
 -- Whether the list as last drawn shows `chosen`'s row.
@@ -1100,10 +1100,10 @@ local function OnHidden()
 	else
 		selection = nil
 	end
-	SpokenBooks:RefreshReadables(true)
+	SpokenReadables:RefreshReadables(true)
 end
 
-function SpokenBooks:RefreshReadables(scrollToSelection)
+function SpokenReadables:RefreshReadables(scrollToSelection)
 	if not list then return end
 	if not selection then
 		LandOnPlayer()
@@ -1138,18 +1138,18 @@ local function Build(panel)
 		onSearch = function(text)
 			filter = text
 			searchClosed = {}
-			SpokenBooks:RefreshReadables()
+			SpokenReadables:RefreshReadables()
 		end,
 		addScrollBar = function(scroll, child, inset) return SpokenTextView.AddScrollBar(scroll, child, inset) end,
 	})
-	panel.Refresh = function() SpokenBooks:RefreshReadables() end
+	panel.Refresh = function() SpokenReadables:RefreshReadables() end
 	panel.inset, panel.filterButton, panel.filterMenu, panel.noMatch = list.inset, list.filterButton, list.filterMenu, list.noMatch
 
-	page = C.NewPage(C.PageHolder(panel, list), SpokenBooks, PLAY, REPORT)
+	page = C.NewPage(C.PageHolder(panel, list), SpokenReadables, PLAY, REPORT)
 	-- Text Size, on Spoken's page, fires no game event: the page is drawn again at the new size.
 	if Spoken and Spoken.RegisterCallback then Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", ShowEntry) end
 	panel.page = page
-	SpokenBooks.readables = panel
+	SpokenReadables.readables = panel
 end
 
 -- Open what lists the writing `id` where it is first listed (Index().at), so its row shows.
@@ -1179,14 +1179,14 @@ end
 --- Whether the tab is there, its part is on, and opening it on the writing `id` shows its words:
 --- it is listed, and found or Unlock Unfound Readables is on. Found Only and Voiced Only do not
 --- count: opened on it, its page shows though they leave its row out of the list.
-function SpokenBooks:CompendiumHas(id)
+function SpokenReadables:CompendiumHas(id)
 	return SpokenCompendium ~= nil and SpokenCompendium:Tab("readables") ~= nil and self:IsPartOn()
 		and id ~= nil and Index().all[id] == true and (Found(id) or Unlocked())
 end
 
 --- Open the readables, on the writing `bookId` when one is given: chosen, with what holds it
 --- opened. Without one, on where the player stands now, unless they chose something here.
-function SpokenBooks:ShowReadables(bookId)
+function SpokenReadables:ShowReadables(bookId)
 	if not SpokenCompendium then return end
 	if bookId and Index().all[bookId] then
 		selection = { book = bookId }
@@ -1200,25 +1200,25 @@ function SpokenBooks:ShowReadables(bookId)
 	end
 	SpokenCompendium:Open("readables")
 	SpokenCompendium:Expand()
-	SpokenBooks:RefreshReadables(true)
+	SpokenReadables:RefreshReadables(true)
 end
 
-function SpokenBooks:SetupReadables()
+function SpokenReadables:SetupReadables()
 	if not SpokenCompendium or SpokenCompendium:Tab("readables") then return end
 	SpokenCompendium:Register("readables", {
 		label = L.COMPENDIUM_READABLES,
 		order = 2,
 		build = Build,
-		open = function() SpokenBooks:ShowReadables() end,
+		open = function() SpokenReadables:ShowReadables() end,
 		-- Come back to from another tab: where the player stands now, unless they chose here.
 		onShow = function() if selection == landed then selection = nil end end,
-		enabled = function() return SpokenBooks:IsPartOn() end,
+		enabled = function() return SpokenReadables:IsPartOn() end,
 		-- Unlock Unfound Readables, on Spoken's page.
 		unlock = {
 			get = function() return SpokenBooksSettings ~= nil and SpokenBooksSettings.unlockUnfound == true end,
 			set = function(value)
 				if SpokenBooksSettings then SpokenBooksSettings.unlockUnfound = value end
-				SpokenBooks:RefreshReadables()
+				SpokenReadables:RefreshReadables()
 			end,
 		},
 	})

@@ -6,7 +6,7 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 
@@ -66,7 +66,7 @@ end
 local onZone
 function Z:OnZoneChanged(fn) onZone = fn end
 _G.SpokenZonesCharacter = nil
-assert(loadfile(ZONES .. "Discovery.lua"))("SpokenZones", Z)
+assert(loadfile(PLACES .. "Discovery.lua"))("SpokenZones", Z)
 Z:SetupDiscovery()
 
 -- The city first, before anything has read Durotar's map.

@@ -9,7 +9,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local ADDONS = here .. "/../../addons/"
-local ZONES = ADDONS .. "Spoken_Places/"
+local PLACES = ADDONS .. "Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 ---------------------------------------------------------------- the data
@@ -21,13 +21,13 @@ local data = {}
 local loader = { ShouldLoadLanguage = function() return true end }
 function loader:RegisterLoreData(_, kind, t) data[kind] = t end
 for _, file in ipairs({ "enUS/Zones.lua", "enUS/Subzones.lua" }) do
-    assert(loadfile(ZONES .. "Data/" .. file))("Spoken_Places", loader)
+    assert(loadfile(PLACES .. "Data/" .. file))("Spoken_Places", loader)
 end
 dofile(ADDONS .. "Spoken/Data/Dungeons.lua")
 local all = _G.SpokenDungeons.dungeons
 -- By the zone of each's entrance, as Spoken Zones' Core.lua reads them.
 local core = {}
-assert(loadfile(ZONES .. "Core.lua"))("Spoken_Places", core)
+assert(loadfile(PLACES .. "Core.lua"))("Spoken_Places", core)
 local subzones, dungeons = data.subzones, core.Dungeons
 assert(loadfile(ADDONS .. "Spoken_Quests/Data/Compendium.lua"))()
 local quests = _G.SpokenQuestsCompendium
@@ -152,18 +152,18 @@ function Z:IsFound(mapID, key) return found[key and (mapID .. "/" .. key) or tos
 function Z:RefreshFound() end
 Z.ToggleLoreWindow = nil
 local audio = setmetatable({}, { __index = Z })
-assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Places", audio)
+assert(loadfile(PLACES .. "Audio.lua"))("Spoken_Places", audio)
 Z.PlaceAbove = audio.PlaceAbove
 -- Where an area found on a map has its story, as Core.lua finds it.
 local core = setmetatable({}, { __index = Z })
-assert(loadfile(ZONES .. "Core.lua"))("Spoken_Places", core)
+assert(loadfile(PLACES .. "Core.lua"))("Spoken_Places", core)
 Z.Aliases = {}
 for _, name in ipairs({ "StoryPlace", "AreaZone", "FoundOn", "AreasIn", "GetSubzoneLore", "ResolveAreaKey", "NormaliseAreaKey" }) do
     Z[name] = core[name]
 end
 function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
 for _, file in ipairs({ "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
+    assert(loadfile(PLACES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupLoreWindow()
 local window = Z.window

@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 -- The Hillsbrad Town Registry: four real pages of one real book, 261 through 265.
@@ -30,12 +30,12 @@ _G.SpokenBooksAudioPacks = {
 }
 
 local function LoadBooks()
-    local SpokenBooks = {}
+    local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Contribute", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
-        local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Readables", SpokenBooks)
+        local chunk = assert(loadfile(READABLES .. file .. ".lua"))
+        chunk("Spoken_Readables", SpokenReadables)
     end
-    return SpokenBooks
+    return SpokenReadables
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
@@ -45,8 +45,8 @@ env.Addon:Enable()
 local B = LoadBooks()
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
-dofile(BOOKS .. "Data/Places.lua")
+dofile(READABLES .. "Data/Books.lua")
+dofile(READABLES .. "Data/Places.lua")
 
 --- The books clips in the player's queue, in order, by page id.
 local function QueuedPages()

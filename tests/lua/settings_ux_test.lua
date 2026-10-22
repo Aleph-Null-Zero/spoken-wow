@@ -477,7 +477,7 @@ local function Hit(query)
 end
 -- A module or a style is found on its own row of its list, not at the list's top: Books, after
 -- Quests, and Voice Only, the last style.
-for _, query in ipairs({ L.OPT_PART_BOOKS, L.OPT_STYLE_NONE }) do
+for _, query in ipairs({ L.OPT_PART_READABLES, L.OPT_STYLE_NONE }) do
     local hit = Hit(query)
     local list = hit and hit.layoutRow and hit.layoutRow.control
     local index

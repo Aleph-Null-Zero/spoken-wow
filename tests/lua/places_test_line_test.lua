@@ -6,12 +6,12 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
 stub.LoadSpoken(SPOKEN)
-local Z = H.LoadZones(ZONES)
+local Z = H.LoadZones(PLACES)
 _G.SpokenZonesSettings = { voiceEnabled = true }
 local printed = {}
 Z.Print = function(_, fmt, ...)

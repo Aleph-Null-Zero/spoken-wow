@@ -20,7 +20,7 @@
 --   Audio.lua            the player menu entries and settings link
 --   Core.lua             the /spp command list
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 local L = {}
 
@@ -153,4 +153,4 @@ L.OPT_DEV_PREVIEW = "Offer Unfinished Translations"
 
 L.OPEN_IN_COMPENDIUM = "Open in Azeroth's Compendium"
 
-SpokenZones:RegisterStrings("enUS", L)
+SpokenPlaces:RegisterStrings("enUS", L)

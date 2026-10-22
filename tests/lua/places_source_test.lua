@@ -8,7 +8,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 local BOOK = [[Interface\AddOns\Spoken\Textures\Book]]
@@ -32,7 +32,7 @@ local function Boot()
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     _G.C_Timer.After = function() end   -- the login greeting is Autoplay's own business, not this test's
-    local Z = stub.LoadZones(ZONES, NewZoneLore())
+    local Z = stub.LoadZones(PLACES, NewZoneLore())
     Z:SetupAudio()
     Z:SetupAutoplay()
     return env, Z
@@ -241,7 +241,7 @@ Expect("...and registers no button of its own", stub.ldbObjects.SpokenZones, nil
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 local saved = _G.Spoken
 _G.Spoken = nil
-local alone = stub.LoadZones(ZONES, NewZoneLore())
+local alone = stub.LoadZones(PLACES, NewZoneLore())
 alone:SetupAudio()
 Expect("without Spoken, PlayLore refuses rather than erroring", alone:PlayLore(1411, nil), false)
 Expect("...and says the player is missing", alone.printed[1] and alone.printed[1]:find("Spoken") ~= nil, true)
@@ -300,7 +300,7 @@ local function BootGreeting(level)
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     _G.C_Timer.After = StubAfter
-    local Z = stub.LoadZones(ZONES, NewZoneLore())
+    local Z = stub.LoadZones(PLACES, NewZoneLore())
     local counter = { asked = 0 }
     Z.GetPlayerMapID = function() counter.asked = counter.asked + 1 end
     Z.GetLoreWithFallback = function() return nil, nil end

@@ -7,16 +7,16 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 local function LoadBooks()
-    local SpokenBooks = {}
+    local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language" }) do
-        local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Readables", SpokenBooks)
+        local chunk = assert(loadfile(READABLES .. file .. ".lua"))
+        chunk("Spoken_Readables", SpokenReadables)
     end
-    return SpokenBooks
+    return SpokenReadables
 end
 
 local function Boot()
@@ -46,7 +46,7 @@ local bootEnv = stub.LoadSpoken(SPOKEN)
 bootEnv.Addon:Enable()
 local B0 = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B0)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B0)
 end
 
 stub.FireEvent("ADDON_LOADED", "SomebodyElse")
@@ -117,7 +117,7 @@ Expect("a page with no markup has no second checksum", B:MarkedChecksumOf("The r
 Expect("an aside is not markup", B:ChecksumOf("<illegible text> runes"), 885014114)
 
 ---------------------------------------------------------------- the generated data
-dofile(BOOKS .. "Data/Books.lua")
+dofile(READABLES .. "Data/Books.lua")
 local data = B:Data()
 Expect("the lookup loaded", type(data), "table")
 Expect("...at the version this addon reads", data.version, 1)

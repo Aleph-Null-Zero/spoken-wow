@@ -6,23 +6,23 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 local function LoadBooks()
-    local SpokenBooks = {}
+    local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
-        local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Readables", SpokenBooks)
+        local chunk = assert(loadfile(READABLES .. file .. ".lua"))
+        chunk("Spoken_Readables", SpokenReadables)
     end
-    return SpokenBooks
+    return SpokenReadables
 end
 
 stub.SetClient("16001")
 local env = stub.LoadSpoken(SPOKEN)
 local B = LoadBooks()
 B:InitDB()
-dofile(BOOKS .. "Data/Books.lua")
+dofile(READABLES .. "Data/Books.lua")
 
 local UNKNOWN = "A page no corpus has ever held.\n\nWritten for this test alone."
 stub.ShowPage({ title = "Ledger of Nothing", number = 2, text = UNKNOWN })

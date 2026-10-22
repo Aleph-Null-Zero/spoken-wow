@@ -9,8 +9,8 @@ local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 _G.UISpecialFrames = _G.UISpecialFrames or {}
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -36,12 +36,12 @@ VO.GossipSettingsPanel:Setup()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Options", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB(); B:SetupOptions()
 local Z = H.NewZoneLore()
 for _, file in ipairs({ "UI/Options" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
+    assert(loadfile(PLACES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupOptions()
 -- Azeroth's Compendium, with the three tabs Spoken's page shows an Unlock switch for: stand-ins
@@ -72,7 +72,7 @@ local zonesLanguage
 Z.SetLanguage = function(_, code) zonesLanguage = code; return true end
 Z.GetLanguagePreference = function() return zonesLanguage end
 -- The books addon's own copy dialog.
-assert(loadfile(BOOKS .. "UI/CopyLink.lua"))("Spoken_Readables", B)
+assert(loadfile(READABLES .. "UI/CopyLink.lua"))("Spoken_Readables", B)
 -- The stub client measures no text; the subtitle's sample needs a height to lay out.
 do
     local build = env.Subtitle.Build

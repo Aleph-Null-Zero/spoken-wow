@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 -- The Hillsbrad Town Registry: four real pages of one real book, 261 through 265; a pack with
@@ -21,13 +21,13 @@ _G.SpokenBooksAudioPacks = {
 }
 
 local function LoadBooks()
-    local SpokenBooks = {}
+    local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Contribute", "Audio", "Playlist", "UI/CopyLink",
         "UI/DialogueUIBook" }) do
-        local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Readables", SpokenBooks)
+        local chunk = assert(loadfile(READABLES .. file .. ".lua"))
+        chunk("Spoken_Readables", SpokenReadables)
     end
-    return SpokenBooks
+    return SpokenReadables
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
@@ -82,7 +82,7 @@ _G.DUIBookFrame = view
 local B = LoadBooks()
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
+dofile(READABLES .. "Data/Books.lua")
 B:SetupDialogueUIBook()
 local Book = B.DialogueUIBook
 local watch = Book.watch

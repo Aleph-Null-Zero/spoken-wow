@@ -8,7 +8,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
@@ -21,7 +21,7 @@ local env = stub.LoadSpoken(SPOKEN)
 -- SpokenZones.version Core.lua already computes from the .toc.
 stub.SetAddOns({ { folder = "Spoken_Places", meta = { Version = "9.9.9" } } })
 
-local Z = H.LoadZones(ZONES)   -- the loader that loads Core.lua for real, unlike stub.LoadZones
+local Z = H.LoadZones(PLACES)   -- the loader that loads Core.lua for real, unlike stub.LoadZones
 
 -- The player stands somewhere else entirely: what is sent is the place the panel shows.
 stub.SetZone({ map = 1453, zone = "Stormwind City", x = 0.5, y = 0.5 })

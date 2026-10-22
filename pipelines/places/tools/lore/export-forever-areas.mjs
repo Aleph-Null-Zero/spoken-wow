@@ -26,7 +26,7 @@ const PLACES = join(ROOT, "pipelines/places/tools/seed/forever-places.json");
 const OUT = join(ROOT, "addons/Spoken_Places/Data/ForeverAreas.lua");
 
 function table(name, byZone) {
-  const lines = [`SpokenZones.${name} = {`];
+  const lines = [`SpokenPlaces.${name} = {`];
   for (const mapID of [...byZone.keys()].sort((a, b) => a - b)) {
     lines.push(`\t[${mapID}] = {`);
     for (const key of [...byZone.get(mapID)].sort()) lines.push(`\t\t[${JSON.stringify(key)}] = true,`);
@@ -72,13 +72,13 @@ async function main() {
     "-- Lore of Azeroth leaves them out on any other client, which can never report them. Keyed as",
     "-- Subzones.lua is: uiMapID, then the normalised area name.",
     "",
-    "local _, SpokenZones = ...",
+    "local _, SpokenPlaces = ...",
     "",
     ...table("ForeverOnlyAreas", byZone),
     "",
     "-- Forever's spelling of a place the lore keeps under another key, normalised: the key the",
     "-- place's lines, clip and picture are frozen under (pipelines/places/tools/seed/forever-places.json).",
-    "SpokenZones.ForeverNames = {",
+    "SpokenPlaces.ForeverNames = {",
     ...Object.entries(places.renamed)
       .sort(([a], [b]) => (a < b ? -1 : 1))
       .map(([name, { key }]) => `\t[${JSON.stringify(name)}] = ${JSON.stringify(key)},`),

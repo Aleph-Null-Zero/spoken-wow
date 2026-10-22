@@ -5,9 +5,9 @@
 -- Settings API's, and a client that does not offer one must still leave the addon
 -- configurable. /spr is what the Print below points at when that happens.
 
-local _, SpokenBooks = ...
+local _, SpokenReadables = ...
 
-local L = SpokenBooks.L
+local L = SpokenReadables.L
 
 -- The game's settings list sets its rows 25 in from the canvas's left.
 local INDENT = 25
@@ -16,7 +16,7 @@ local INDENT = 25
 -- cannot draw it.
 local function LanguageName(code)
     if Spoken and Spoken.LanguageName then return Spoken:LanguageName(code) end
-    return SpokenBooks:GetLanguageName(code)
+    return SpokenReadables:GetLanguageName(code)
 end
 -- The voice pack this addon is made for, and where to get it.
 local AUDIO_ADDON = "SpokenBooksAudio"
@@ -28,7 +28,7 @@ local panel
 -- Panel
 --------------------------------------------------------------------------------
 
-function SpokenBooks:SetupOptions()
+function SpokenReadables:SetupOptions()
 	if panel then
 		return
 	end
@@ -52,16 +52,16 @@ function SpokenBooks:SetupOptions()
 
 	-- Its own entry under Spoken's, with the module's switch first: off, everything under it is
 	-- greyed out and says why, rather than looking live and doing nothing.
-	local function PartOn() return SpokenBooks:IsPartOn() end
+	local function PartOn() return SpokenReadables:IsPartOn() end
 	layout:Intro([[Interface\Icons\INV_Misc_Book_09]], L.OPT_PAGE_TITLE)
 	local switch = layout:Checkbox(W.MODULE_SWITCH, nil, PartOn,
 		function(value) Spoken:SetPartOn("readables", value) end, refresh)
 
 	local function Get(key)
-		return function() return SpokenBooks:Get(key) end
+		return function() return SpokenReadables:Get(key) end
 	end
 	local function Set(key)
-		return function(value) SpokenBooks:Set(key, value) end
+		return function(value) SpokenReadables:Set(key, value) end
 	end
 
 	layout:Section(W.MODULE_WHEN)
@@ -96,16 +96,16 @@ function SpokenBooks:SetupOptions()
 	-- fallback's to get: it buried the one that mattered. But a voice language with no pack of its
 	-- own (itIT) is heard in the fallback's, so that is the one to get there.
 	local function Installed(addon)
-		for _, pack in ipairs(SpokenBooks:GetAudioPacks()) do
+		for _, pack in ipairs(SpokenReadables:GetAudioPacks()) do
 			if pack.addon == addon then return true end
 		end
 		return false
 	end
 	local function Wanted(code, addon)
-		local voice = SpokenBooks:GetVoiceLanguage()
+		local voice = SpokenReadables:GetVoiceLanguage()
 		if code == voice or Installed(addon) then return true end
 		local own = voice == "enUS" or Spoken:VoicePack("readables", voice)
-		return not own and code == SpokenBooks:GetFallbackLanguage()
+		return not own and code == SpokenReadables:GetFallbackLanguage()
 	end
 	-- Each language's row shown while it is wanted.
 	local listed = {}
@@ -116,10 +116,10 @@ function SpokenBooks:SetupOptions()
 				return "ok", (GetMeta and GetMeta(addon, "Version")) or W.MODULE_INSTALLED
 			end
 		end, W.MODULE_DOWNLOAD, function()
-			SpokenBooks:ShowCopyLink(url or AUDIO_URL, L.OPT_DOWNLOAD_ADDRESS)
+			SpokenReadables:ShowCopyLink(url or AUDIO_URL, L.OPT_DOWNLOAD_ADDRESS)
 		end)
 	end
-	for _, locale in ipairs(SpokenBooks.LOCALES or {}) do
+	for _, locale in ipairs(SpokenReadables.LOCALES or {}) do
 		local folder, url = Spoken:VoicePack("readables", locale.code)
 		if folder then
 			local code = locale.code
@@ -128,28 +128,28 @@ function SpokenBooks:SetupOptions()
 	end
 	layout:ShowWhen(PackRow(AUDIO_ADDON, LanguageName("enUS")), function() return Wanted("enUS", AUDIO_ADDON) end)
 	-- A pack the list does not know, after the ones it does.
-	for _, pack in ipairs(SpokenBooks:GetAudioPacks()) do
+	for _, pack in ipairs(SpokenReadables:GetAudioPacks()) do
 		if not listed[pack.addon] then PackRow(pack.addon, pack.title or pack.addon) end
 	end
-	layout:Button(W.MODULE_TEST_LINE, 200, function() SpokenBooks:PlayTestLine() end)
+	layout:Button(W.MODULE_TEST_LINE, 200, function() SpokenReadables:PlayTestLine() end)
 
 	-- What this character has heard, as on the other modules' pages. It only matters while a
 	-- writing is read once.
 	layout:Section(W.MODULE_HISTORY)
 	local forget = layout:Button(L.OPT_FORGET, 200, function()
-		local count = SpokenBooks:ForgetRead()
-		SpokenBooks:Print(L.OPT_FORGET_DONE_FMT:format(count))
+		local count = SpokenReadables:ForgetRead()
+		SpokenReadables:Print(L.OPT_FORGET_DONE_FMT:format(count))
 	end)
-	layout:Requires(forget, function() return SpokenBooks:Get("readOnce") == true end, L.REASON_READ_ONCE)
+	layout:Requires(forget, function() return SpokenReadables:Get("readOnce") == true end, L.REASON_READ_ONCE)
 
 	-- The page's Defaults, as Spoken's has.
 	layout:Defaults(function()
 		SpokenLayout.Confirm(L.OPT_RESET_PAGE_CONFIRM, W.MODULE_RESET, W.CANCEL, function()
-			SpokenBooks:ResetOptions()
+			SpokenReadables:ResetOptions()
 			layout:Refresh()
 			-- Found Only, Voiced Only and By Zone are among them: a Readables tab open beside this page
 			-- is drawn again for them.
-			if SpokenBooks.RefreshReadables then SpokenBooks:RefreshReadables() end
+			if SpokenReadables.RefreshReadables then SpokenReadables:RefreshReadables() end
 		end)
 	end, nil, W.OPT_RESET_ALL_TIP)
 	-- Switched off, the module is off: everything on its page greys out but its own switch.
@@ -164,13 +164,13 @@ function SpokenBooks:SetupOptions()
 	scroller:SetContentHeight(layout:Height() + 40)
 
 	-- Under Spoken's own entry, beside the other modules' pages.
-	SpokenBooks.optionsPage = Spoken:AddSettingsPage(panel, L.OPT_PAGE_TITLE, 4, layout, scroller)
-	SpokenBooks.optionsPanel = panel
+	SpokenReadables.optionsPage = Spoken:AddSettingsPage(panel, L.OPT_PAGE_TITLE, 4, layout, scroller)
+	SpokenReadables.optionsPanel = panel
 end
 
 --- Open the panel, or say why there is none. Reached by `/spr settings`, the player's
 --- minimap menu and the settings link on the player's own panel.
-function SpokenBooks:OpenOptions()
+function SpokenReadables:OpenOptions()
 	-- Nested under Spoken's entry: Spoken opens this page.
 	if not (self.optionsPage and self.optionsPage.Open()) then
 		self:Print("open Game Menu -> Options -> AddOns -> Spoken -> Readables")
@@ -180,8 +180,8 @@ end
 -- Spoken > Developer: why a page was or was not read, in chat (/spr debug).
 if Spoken and Spoken.AddDeveloperSettings then
 	Spoken:AddDeveloperSettings(function(layout)
-		layout:Checkbox(L.OPT_DEV_DEBUG, nil, function() return SpokenBooks:Get("debug") end,
-			function(value) SpokenBooks:Set("debug", value) end)
-		return function() SpokenBooks:Set("debug", false) end
+		layout:Checkbox(L.OPT_DEV_DEBUG, nil, function() return SpokenReadables:Get("debug") end,
+			function(value) SpokenReadables:Set("debug", value) end)
+		return function() SpokenReadables:Set("debug", false) end
 	end, "chat", 4)
 end

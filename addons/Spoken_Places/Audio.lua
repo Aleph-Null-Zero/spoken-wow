@@ -22,9 +22,9 @@
 -- When several packs are installed the player picks one; unpicked,
 -- the language being read wins, then the client's own locale.
 
-local ADDON_NAME, SpokenZones = ...
+local ADDON_NAME, SpokenPlaces = ...
 
-local L = SpokenZones.L
+local L = SpokenPlaces.L
 
 -- THERE IS NO STAND-IN CLIP. A line with no audio in the installed pack plays
 -- nothing and says why.
@@ -56,20 +56,20 @@ local PACK_FORMAT = 1
 -- same entry agrees on its glyph without polling. Bridged from the player's own
 -- AUDIO_CHANGED in SetupAudio, so a change caused by another addon's clip -- ours
 -- finishing because theirs started -- reaches these listeners too.
-SpokenZones.audioChangedCallbacks = {}
+SpokenPlaces.audioChangedCallbacks = {}
 
-function SpokenZones:OnAudioChanged(fn)
+function SpokenPlaces:OnAudioChanged(fn)
 	table.insert(self.audioChangedCallbacks, fn)
 end
 
 -- Public because toggling the feature off has to refresh every button too, not
 -- just the transitions that start and stop a clip.
-function SpokenZones:NotifyAudioChanged()
+function SpokenPlaces:NotifyAudioChanged()
 	local list = self.audioChangedCallbacks
 	for i = 1, #list do
 		local ok, err = pcall(list[i])
 		if not ok then
-			SpokenZones:Print("|cffff5555error|r: %s", tostring(err))
+			SpokenPlaces:Print("|cffff5555error|r: %s", tostring(err))
 		end
 	end
 end
@@ -82,7 +82,7 @@ local BOOK = [[Interface\AddOns\Spoken\Textures\Book]]
 local warnedNoPlayer = false
 
 --- The zone's icon, or its zone's for a subzone; the book without an icon.
-function SpokenZones:Portrait(mapID)
+function SpokenPlaces:Portrait(mapID)
 	local icon, crop
 	if Spoken and Spoken.ZoneIcon then icon, crop = Spoken:ZoneIcon(mapID) end
 	if icon then return { kind = "texture", texture = icon, texCoord = crop } end
@@ -93,19 +93,19 @@ end
 -- installed. Said once, on the first thing that would have made a sound: a missing
 -- dependency that stays silent is the bug report nobody can reproduce.
 local function Source()
-	if SpokenZones.source then
-		return SpokenZones.source
+	if SpokenPlaces.source then
+		return SpokenPlaces.source
 	end
 	if not warnedNoPlayer then
 		warnedNoPlayer = true
-		SpokenZones:Print("|cffffcc00Spoken is not installed|r -- stories cannot be read aloud without it")
+		SpokenPlaces:Print("|cffffcc00Spoken is not installed|r -- stories cannot be read aloud without it")
 	end
 	return nil
 end
 
 -- Registers with the player. Runs once the world is up, after the player itself has
 -- loaded; everything here degrades to "no narration" when it has not.
-function SpokenZones:SetupAudio()
+function SpokenPlaces:SetupAudio()
 	if self.source then
 		return
 	end
@@ -132,12 +132,12 @@ function SpokenZones:SetupAudio()
 		-- absorbs durations that are not.
 		interClipGap = 0.25,
 		-- Printed after Spoken's own by its Show Diagnostics.
-		diagnostics = function() SpokenZones:ShowDiagnostics() end,
+		diagnostics = function() SpokenPlaces:ShowDiagnostics() end,
 		-- What Spoken's settings show on this part's card: which voice packs are installed.
 		packs = function()
 			local names = {}
-			for _, pack in ipairs(SpokenZones:GetAudioPacks()) do
-				table.insert(names, pack.addon or SpokenZones:GetAudioPackLabel(pack))
+			for _, pack in ipairs(SpokenPlaces:GetAudioPacks()) do
+				table.insert(names, pack.addon or SpokenPlaces:GetAudioPackLabel(pack))
 			end
 			return names
 		end,
@@ -150,7 +150,7 @@ function SpokenZones:SetupAudio()
 	end
 
 	Spoken:RegisterCallback("AUDIO_CHANGED", function()
-		SpokenZones:NotifyAudioChanged()
+		SpokenPlaces:NotifyAudioChanged()
 	end)
 
 	-- Switched off or on in Spoken's settings: the map panel follows, and so does the Compendium's
@@ -158,7 +158,7 @@ function SpokenZones:SetupAudio()
 	if Spoken.RegisterCallback then
 		Spoken:RegisterCallback("PART_SWITCHED", function(key)
 			if key ~= "places" then return end
-			if SpokenZones.RefreshPanel then SpokenZones:RefreshPanel() end
+			if SpokenPlaces.RefreshPanel then SpokenPlaces:RefreshPanel() end
 			if SpokenCompendium and SpokenCompendium.Relayout then SpokenCompendium:Relayout() end
 		end)
 	end
@@ -166,10 +166,10 @@ function SpokenZones:SetupAudio()
 	-- The Compendium is in Spoken's own part of the menu where Spoken has one.
 	if not Spoken.ShowsCompendium then
 		Spoken.Minimap:AddEntry("places", { id = "lore", text = L.MENU_LORE_WINDOW, order = 1,
-			onClick = function() SpokenZones:ToggleLoreWindow() end })
+			onClick = function() SpokenPlaces:ToggleLoreWindow() end })
 	end
 	Spoken.Minimap:AddEntry("places", { id = "settings", text = L.MENU_ZONE_SETTINGS, order = 2,
-		onClick = function() SpokenZones:OpenOptions() end })
+		onClick = function() SpokenPlaces:OpenOptions() end })
 end
 
 --------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ local warnedFormat = {}
 -- Every pack is listed whatever it narrates -- packs are interchangeable, and an
 -- English pack under German text beats silence. Pass `lang` only to
 -- narrow the answer to one language.
-function SpokenZones:GetAudioPacks(lang)
+function SpokenPlaces:GetAudioPacks(lang)
 	local packs = {}
 	-- Two generations of the registry, newest first. ZoneLoreAudioPacks is what every pack
 	-- published before the rename writes into, and those files are on players' disks and
@@ -274,7 +274,7 @@ end
 
 -- The language narration is heard in: Spoken's Voice Language, as every module's is, "Auto"
 -- being the client's. The text's language (GetLanguage) is a choice apart.
-function SpokenZones:GetVoiceLanguage()
+function SpokenPlaces:GetVoiceLanguage()
 	local Spoken = _G.Spoken
 	if Spoken and Spoken.VoiceLanguage then
 		return Spoken:VoiceLanguage()
@@ -284,7 +284,7 @@ end
 
 -- The language a story is heard in where the voice language has no recording of it: Spoken's
 -- If a Voice Is Missing, English unless the player chose otherwise. Nil for Stay Silent.
-function SpokenZones:GetFallbackLanguage()
+function SpokenPlaces:GetFallbackLanguage()
 	local Spoken = _G.Spoken
 	local fallback
 	if Spoken and Spoken.GetLanguageChoice then
@@ -304,7 +304,7 @@ end
 -- /spp audio chose, kept as a folder name rather than an index: a player who uninstalls the
 -- high-quality pack should fall back to whatever is left instead of pointing at whichever pack
 -- happens to occupy that slot afterwards.
-function SpokenZones:GetActiveAudioPack()
+function SpokenPlaces:GetActiveAudioPack()
 	local packs = self:GetAudioPacks(self:GetVoiceLanguage())
 	local fallback = self:GetFallbackLanguage()
 	if #packs == 0 and fallback then
@@ -330,7 +330,7 @@ end
 
 -- Switches packs. Returns false when the name is not an installed pack, so the
 -- caller can say so rather than storing a preference that resolves to nothing.
-function SpokenZones:SetActiveAudioPack(name)
+function SpokenPlaces:SetActiveAudioPack(name)
 	local packs = self:GetAudioPacks()
 	for i = 1, #packs do
 		if packs[i].addon == name then
@@ -354,7 +354,7 @@ end
 -- share a language, which now means someone kept the retired 64 kbps pack beside the
 -- current one. A pack in a language this client cannot draw keeps its ASCII code,
 -- which every client can draw, instead of boxes.
-function SpokenZones:GetAudioPackLabel(pack)
+function SpokenPlaces:GetAudioPackLabel(pack)
 	if not pack then
 		return "none"
 	end
@@ -378,7 +378,7 @@ end
 -- Lookup
 --------------------------------------------------------------------------------
 
-function SpokenZones:IsVoiceEnabled()
+function SpokenPlaces:IsVoiceEnabled()
 	return self:Get("voiceEnabled") and true or false
 end
 
@@ -387,7 +387,7 @@ end
 --
 -- Duration comes from the generated lookup because there is no way to ask the
 -- client how long a sound file is; without one the button could never reset itself.
-function SpokenZones:GetAudioClip(mapID, areaKey)
+function SpokenPlaces:GetAudioClip(mapID, areaKey)
 	if not mapID then
 		return nil, nil
 	end
@@ -428,7 +428,7 @@ end
 
 --- The language narration plays in: the active pack's, or the one being read when there is
 --- no pack. What a contribution says the player was hearing.
-function SpokenZones:GetPackLanguage()
+function SpokenPlaces:GetPackLanguage()
 	local pack = self:GetActiveAudioPack()
 	return pack and pack.language or self:GetLanguage()
 end
@@ -455,14 +455,14 @@ local ACTIONS = {
 			-- Filed under the voice language, not the pack the clip came from: an entry the
 			-- active pack lacks plays the English fallback, and "no German" belongs beside
 			-- the German entry.
-			SpokenZones:ShowReport(clip.mapID, clip.areaKey, SpokenZones:GetVoiceLanguage())
+			SpokenPlaces:ShowReport(clip.mapID, clip.areaKey, SpokenPlaces:GetVoiceLanguage())
 		end,
 	}
 }
 
 --- The place one level up from a zone, as Azeroth's Compendium nests them: a city's zone, a
 --- zone's continent, a continent's world. Nil for the world.
-function SpokenZones:PlaceAbove(mapID)
+function SpokenPlaces:PlaceAbove(mapID)
 	local C = _G.SpokenCompendium
 	-- A Compendium that failed to load costs the header, not the clip.
 	if not C or mapID == C.WORLD then return nil end
@@ -479,7 +479,7 @@ end
 -- The key is the line id the website and the generation pipeline use -- z:{mapID} or
 -- s:{mapID}:{key} -- and it is frozen: it is what the player dedups on, what a report
 -- names, and what audio-history is keyed by.
-function SpokenZones:NewLoreSound(mapID, areaKey)
+function SpokenPlaces:NewLoreSound(mapID, areaKey)
 	local path, length, pack, fileName = self:GetAudioClip(mapID, areaKey)
 	if not path then
 		return nil
@@ -526,8 +526,8 @@ function SpokenZones:NewLoreSound(mapID, areaKey)
 		-- areas on silence. Only the autoplayExplored option reads it; see
 		-- Autoplay.lua.
 		startCallback = function(item)
-			if SpokenZones.MarkHeard then
-				SpokenZones:MarkHeard(item.mapID, item.areaKey)
+			if SpokenPlaces.MarkHeard then
+				SpokenPlaces:MarkHeard(item.mapID, item.areaKey)
 			end
 		end,
 	}
@@ -535,7 +535,7 @@ end
 
 -- Appends a clip that waits its turn: autoplay's, or one the player `asked` for with a shift-click.
 -- Returns whether it was admitted; the player refuses duplicates and silence of its own accord.
-function SpokenZones:EnqueueLore(item, asked)
+function SpokenPlaces:EnqueueLore(item, asked)
 	local source = Source()
 	if not source or not item then
 		return false
@@ -545,7 +545,7 @@ end
 
 --- A story behind what is playing, as a shift-click on its row in Azeroth's Compendium asks: once,
 --- where a pack has it and it is not locked. Returns whether it was queued.
-function SpokenZones:QueueLore(mapID, areaKey)
+function SpokenPlaces:QueueLore(mapID, areaKey)
 	if not self:IsVoiceEnabled() or (self.IsLocked and self:IsLocked(mapID, areaKey)) then
 		return false
 	end
@@ -553,7 +553,7 @@ function SpokenZones:QueueLore(mapID, areaKey)
 	return self:EnqueueLore(self:NewLoreSound(mapID, areaKey), true)
 end
 
-function SpokenZones:HasAudio(mapID, areaKey)
+function SpokenPlaces:HasAudio(mapID, areaKey)
 	return self:GetAudioClip(mapID, areaKey) ~= nil
 end
 
@@ -561,7 +561,7 @@ end
 -- pack" from "your pack does not cover this line": the first is a download, the
 -- second is nothing they can do, and telling them apart is the whole point of
 -- saying anything at all.
-function SpokenZones:DescribeMissingAudio()
+function SpokenPlaces:DescribeMissingAudio()
 	if #self:GetAudioPacks() == 0 then
 		return "no voice pack installed -- get Spoken Audio: Places to hear the lore read aloud"
 	end
@@ -575,11 +575,11 @@ end
 -- The head of the player's queue if it is one of ours, else nil.
 local function OurHead()
 	local Spoken = _G.Spoken
-	if not SpokenZones.source or not Spoken then
+	if not SpokenPlaces.source or not Spoken then
 		return nil
 	end
 	local head = Spoken:GetCurrent()
-	if head and head.source == SpokenZones.source then
+	if head and head.source == SpokenPlaces.source then
 		return head
 	end
 	return nil
@@ -589,7 +589,7 @@ end
 -- unstarted while a gate holds it -- waiting out a pull, say -- and a button
 -- reading "Stop" over an entry that has made no sound would stop a queue instead
 -- of a clip. The player's IsPlaying is the liveness test, not presence at the head.
-function SpokenZones:IsPlayingLore(mapID, areaKey)
+function SpokenPlaces:IsPlayingLore(mapID, areaKey)
 	local head = OurHead()
 	if not head or not _G.Spoken:IsPlaying() then
 		return false
@@ -603,7 +603,7 @@ end
 --- This story at the head of the queue, whether speaking or paused: what the Play button
 --- pauses and resumes rather than starting again.
 --- This story's line in the queue, nearest the head, or nil: what a page's Play stops or replays.
-function SpokenZones:LoreClip(mapID, areaKey)
+function SpokenPlaces:LoreClip(mapID, areaKey)
 	local Spoken = _G.Spoken
 	if not self.source or not (Spoken and Spoken.GetQueue) then return nil end
 	for _, clip in ipairs(Spoken:GetQueue()) do
@@ -611,19 +611,19 @@ function SpokenZones:LoreClip(mapID, areaKey)
 	end
 end
 
-function SpokenZones:IsLoreAtHead(mapID, areaKey)
+function SpokenPlaces:IsLoreAtHead(mapID, areaKey)
 	local head = OurHead()
 	return head ~= nil and head.mapID == mapID and head.areaKey == areaKey
 end
 
-function SpokenZones:IsPaused()
+function SpokenPlaces:IsPaused()
 	local head = OurHead()
 	return head ~= nil and _G.Spoken:IsPaused()
 end
 
 -- What the floating controls are controlling: mapID, areaKey, isPaused. Nil when
 -- nothing of ours is playing or paused, which is also what hides the controls.
-function SpokenZones:GetNowPlaying()
+function SpokenPlaces:GetNowPlaying()
 	-- Deliberately not "whatever is at the head". An entry held by a gate sits
 	-- there making no sound, and controls offering Pause over silence would be
 	-- lying; the window says why a held line waits. So: playing, or paused.
@@ -637,7 +637,7 @@ end
 
 -- How many of our entries are waiting behind the one playing. Drives the Next
 -- button. Ours only: a quest line queued behind a discovery is not lore waiting.
-function SpokenZones:QueueLength()
+function SpokenPlaces:QueueLength()
 	local Spoken = _G.Spoken
 	if not self.source or not Spoken then
 		return 0
@@ -653,7 +653,7 @@ function SpokenZones:QueueLength()
 end
 
 -- A readable name for an entry, for the controls to label what is playing.
-function SpokenZones:GetAudioLabel(mapID, areaKey)
+function SpokenPlaces:GetAudioLabel(mapID, areaKey)
 	if not mapID then
 		return ""
 	end
@@ -668,28 +668,28 @@ end
 -- The player asking for silence, as opposed to playback being reset on the way to
 -- starting something else. Stop has to mean stop, not skip to the next discovered
 -- area -- and it means *lore*: another Spoken addon's clips are left alone.
-function SpokenZones:StopLore()
-	local source = SpokenZones.source
+function SpokenPlaces:StopLore()
+	local source = SpokenPlaces.source
 	if source then
 		source:StopAll()
 	end
 end
 
 -- Pause is the player's, not this addon's: pausing lore pauses whatever is speaking.
-function SpokenZones:PauseLore()
+function SpokenPlaces:PauseLore()
 	return _G.Spoken and _G.Spoken:Pause() or false
 end
 
-function SpokenZones:ResumeLore()
+function SpokenPlaces:ResumeLore()
 	return _G.Spoken and _G.Spoken:Resume() or false
 end
 
 -- Plays this entry now, ahead of anything waiting. Pressing Play has always meant
 -- now in SpokenZones, so this front-inserts rather than appending; producers such as
 -- autoplay append instead.
-function SpokenZones:PlayLore(mapID, areaKey)
+function SpokenPlaces:PlayLore(mapID, areaKey)
 	if not self:IsVoiceEnabled() then
-		SpokenZones:NotifyAudioChanged()
+		SpokenPlaces:NotifyAudioChanged()
 		return false
 	end
 
@@ -705,7 +705,7 @@ function SpokenZones:PlayLore(mapID, areaKey)
 		-- it refuses to queue an entry with no clip -- so this only speaks when
 		-- somebody asked for this line by clicking Play or typing /spp play.
 		self:Print("|cffffcc00%s|r", self:DescribeMissingAudio())
-		SpokenZones:NotifyAudioChanged()
+		SpokenPlaces:NotifyAudioChanged()
 		return false
 	end
 

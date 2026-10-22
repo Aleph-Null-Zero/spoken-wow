@@ -8,7 +8,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local after = C_Timer.After
 
 local RUINS = "ruins of lordaeron"
@@ -48,10 +48,10 @@ local function Boot(opts)
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     C_Timer.After = after
-    local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
-    assert(loadfile(ZONES .. "Discovery.lua"))("Spoken_Places", Z)
-    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
+    local Z = H.LoadZones(PLACES)
+    assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
+    assert(loadfile(PLACES .. "Discovery.lua"))("Spoken_Places", Z)
+    assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1420] = { name = "Tirisfal Glades", full = "Tirisfal lore." }
     Z.Zones[1458] = { name = "Undercity", full = "Undercity lore." }
     Z.Subzones[1420] = { [RUINS] = { name = "Ruins of Lordaeron", full = "Ruins lore." } }

@@ -24,9 +24,9 @@ import { luaString } from "../lib/wiki.mjs";
  */
 function guard(lang) {
   return [
-    "local _, SpokenZones = ...",
+    "local _, SpokenPlaces = ...",
     "",
-    `if not SpokenZones:ShouldLoadLanguage("${lang}") then`,
+    `if not SpokenPlaces:ShouldLoadLanguage("${lang}") then`,
     "\treturn",
     "end",
     "",
@@ -77,7 +77,7 @@ export function emitZones(entries, lang = BASE_LOCALE) {
     lines.push("\t},");
   }
 
-  lines.push("}", "", `SpokenZones:RegisterLoreData("${lang}", "zones", zones)`, "");
+  lines.push("}", "", `SpokenPlaces:RegisterLoreData("${lang}", "zones", zones)`, "");
   return lines.join("\n");
 }
 
@@ -100,7 +100,7 @@ export function emitSubzones(entries, zoneNames, lang = BASE_LOCALE) {
     '-- leading "the " removed, apostrophes dropped, punctuation collapsed to',
     '-- single spaces. The client reports "The Bulwark" where the wiki titles the',
     '-- page "Bulwark", so both sides are reduced to the same key at lookup time',
-    "-- via SpokenZones:NormaliseAreaKey.",
+    "-- via SpokenPlaces:NormaliseAreaKey.",
     "--",
     "-- Every language is keyed by the ENGLISH name: a place is one place whatever",
     "-- it is called, and a non-English client gets from its own name to this key",
@@ -135,6 +135,6 @@ export function emitSubzones(entries, zoneNames, lang = BASE_LOCALE) {
     lines.push("\t},");
   }
 
-  lines.push("}", "", `SpokenZones:RegisterLoreData("${lang}", "subzones", subzones)`, "");
+  lines.push("}", "", `SpokenPlaces:RegisterLoreData("${lang}", "subzones", subzones)`, "");
   return lines.join("\n");
 }

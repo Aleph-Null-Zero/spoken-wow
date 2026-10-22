@@ -105,9 +105,9 @@ export async function buildLanguages() {
     "--",
     `-- Measured against English: ${baseTotal} lore lines, ${strings.get(BASE_LOCALE).total} interface strings.`,
     "",
-    "local _, SpokenZones = ...",
+    "local _, SpokenPlaces = ...",
     "",
-    "SpokenZones.Languages = {",
+    "SpokenPlaces.Languages = {",
   ];
 
   for (const row of rows) {

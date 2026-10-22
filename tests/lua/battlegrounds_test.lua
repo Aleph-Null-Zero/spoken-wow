@@ -107,7 +107,7 @@ Expect("off, a line the player asked for is queued in a battleground", quests:En
 Expect("...and plays", world.played[1], asked.path)
 
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 
 local function BootModules()
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -175,11 +175,11 @@ _G.SpokenSettings, _G.SpokenBooksSettings = nil, nil
 stub.LoadSpoken(SPOKEN).Addon:Enable()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
+dofile(READABLES .. "Data/Books.lua")
 _G.SpokenBooksAudioPacks = { SpokenBooksAudio = { version = 1, addon = "SpokenBooksAudio", language = "enUS",
     pages = { [261] = { file = "261", len = 30 } } } }
 _G.SpokenEnv.Addon.db.profile.Audio.ReadInBattlegrounds = false

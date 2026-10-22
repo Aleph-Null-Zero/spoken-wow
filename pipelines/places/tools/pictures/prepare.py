@@ -315,9 +315,9 @@ def write_lua(placed):
         "-- subzone name, with \"\" for the zone itself. Each is { texture, mask }: the picture under",
         "-- Textures/Pictures and which of its edge masks (Mask1..Mask%d) cuts it." % MASKS,
         "",
-        "local _, SpokenZones = ...",
+        "local _, SpokenPlaces = ...",
         "",
-        "SpokenZones.pictures = {",
+        "SpokenPlaces.pictures = {",
     ]
     for parent in sorted(by_parent):
         lines.append("\t[%d] = {" % parent)

@@ -147,16 +147,16 @@ function checkBraces(src, label) {
 // handing its table to Language.lua. A file missing the guard builds its table on
 // every client at once; one missing the registration call builds it for nobody.
 function checkHeader(src, label, { lang, local, kind }) {
-  if (!/^local _, SpokenZones = \.\.\.$/m.test(src)) {
-    note(`${label}: missing the 'local _, SpokenZones = ...' vararg header`);
+  if (!/^local _, SpokenPlaces = \.\.\.$/m.test(src)) {
+    note(`${label}: missing the 'local _, SpokenPlaces = ...' vararg header`);
   }
-  if (!src.includes(`if not SpokenZones:ShouldLoadLanguage("${lang}") then`)) {
+  if (!src.includes(`if not SpokenPlaces:ShouldLoadLanguage("${lang}") then`)) {
     note(`${label}: missing the ShouldLoadLanguage("${lang}") guard -- would load on every client`);
   }
   if (!new RegExp(`^local ${local} = \\{$`, "m").test(src)) {
     note(`${label}: missing the 'local ${local} = {' table`);
   }
-  if (!src.includes(`SpokenZones:RegisterLoreData("${lang}", "${kind}", ${local})`)) {
+  if (!src.includes(`SpokenPlaces:RegisterLoreData("${lang}", "${kind}", ${local})`)) {
     note(`${label}: missing the RegisterLoreData call -- the table would never be reachable`);
   }
 }
@@ -305,12 +305,12 @@ for (const lang of languages) {
 
   const label = `${lang}/Aliases.lua`;
   checkBraces(src, label);
-  if (!src.includes(`if not SpokenZones:ShouldLoadAliases("${lang}") then`)) {
+  if (!src.includes(`if not SpokenPlaces:ShouldLoadAliases("${lang}") then`)) {
     note(`${label}: missing the ShouldLoadAliases("${lang}") guard -- would load on every client`);
   }
   if (
-    !src.includes(`SpokenZones:RegisterAliases("${lang}", aliases)`) &&
-    !src.includes(`SpokenZones:RegisterAliases("${lang}", aliases, byZone)`)
+    !src.includes(`SpokenPlaces:RegisterAliases("${lang}", aliases)`) &&
+    !src.includes(`SpokenPlaces:RegisterAliases("${lang}", aliases, byZone)`)
   ) {
     note(`${label}: missing the RegisterAliases call -- the table would never be reachable`);
   }
@@ -430,7 +430,7 @@ for (const lang of languages) {
 //------------------------------------------------------------------------------
 // Report URL slugs
 //
-// SpokenZones:ReportURL builds spoken.rusty.one/{lang}/places/r/{mapID}/{slug} in Lua, and the site
+// SpokenPlaces:ReportURL builds spoken.rusty.one/{lang}/places/r/{mapID}/{slug} in Lua, and the site
 // resolves that path back to a line by looking it up among the file paths
 // naming.mjs assigns. That only works while every slug is derivable from the key
 // alone: assignFiles has a hash fallback for collisions, and the addon has no way

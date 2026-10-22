@@ -5,7 +5,7 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 local Expect, Failures = H.Expecter(print)
 
@@ -15,7 +15,7 @@ local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 local Z = H.NewZoneLore()
 for _, file in ipairs({ "UI/Options" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
+    assert(loadfile(PLACES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupOptions()
 

@@ -9,18 +9,18 @@
 -- whatever another Spoken addon queued, and stopping here stops narration of a book rather
 -- than a quest line that happens to be speaking.
 
-local ADDON_NAME, SpokenBooks = ...
+local ADDON_NAME, SpokenReadables = ...
 
-local L = SpokenBooks.L
+local L = SpokenReadables.L
 
 -- C_AddOns is the modern home of GetAddOnMetadata; the global is the older one. Reading
 -- through whichever exists removes a class of load-time failure on a client this has not
 -- been run on.
 local GetAddOnMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
-SpokenBooks.GetAddOnMeta = GetAddOnMeta
+SpokenReadables.GetAddOnMeta = GetAddOnMeta
 
-SpokenBooks.name = ADDON_NAME
-SpokenBooks.version = GetAddOnMeta and GetAddOnMeta(ADDON_NAME, "Version") or "dev"
+SpokenReadables.name = ADDON_NAME
+SpokenReadables.version = GetAddOnMeta and GetAddOnMeta(ADDON_NAME, "Version") or "dev"
 
 -- The API version this addon was written against: what lets an older Spoken and this addon
 -- disagree safely.
@@ -62,7 +62,7 @@ local defaults = {
 
 --- Every setting back to its default. What this character has heard is not a setting, and
 --- stays: Forget is the button for that.
-function SpokenBooks:ResetOptions()
+function SpokenReadables:ResetOptions()
 	if not SpokenBooksSettings then return end
 	-- Unlock Unfound Readables is on Spoken's page where Spoken is installed, and not this one's.
 	local elsewhere = Spoken and Spoken.ShowsCompendium and { unlockUnfound = true } or {}
@@ -80,7 +80,7 @@ local function FillDefaults()
 	end
 end
 
-function SpokenBooks:InitDB()
+function SpokenReadables:InitDB()
 	FillDefaults()
 	-- The settings live in Spoken's profile, copied from SpokenBooksSettings the first time. The
 	-- table bound is the one read from now on, and again whenever another profile is chosen.
@@ -109,17 +109,17 @@ function SpokenBooks:InitDB()
 end
 
 --- A setting by name.
-function SpokenBooks:Get(key)
+function SpokenReadables:Get(key)
 	return SpokenBooksSettings and SpokenBooksSettings[key]
 end
 
-function SpokenBooks:Set(key, value)
+function SpokenReadables:Set(key, value)
 	if SpokenBooksSettings then SpokenBooksSettings[key] = value end
 end
 
 --- Whether this character has already been read `book` -- the book key from PlaceOf, not a
 --- page. Answers false for a nil book so the caller does not have to check twice.
-function SpokenBooks:HasReadBook(book)
+function SpokenReadables:HasReadBook(book)
 	if not book or not SpokenBooksCharacter then
 		return false
 	end
@@ -132,7 +132,7 @@ end
 --- clip ends -- the player owns the queue -- so "finished" would have to be inferred from a
 --- queue that a zone change or `/spr stop` can empty early, and a book abandoned halfway
 --- would count as read anyway. Starting is the moment this addon actually observes.
-function SpokenBooks:MarkBookRead(book)
+function SpokenReadables:MarkBookRead(book)
 	if not book or not SpokenBooksCharacter then
 		return
 	end
@@ -140,7 +140,7 @@ function SpokenBooks:MarkBookRead(book)
 end
 
 --- Remember that this character has opened `book`, whether or not it was read aloud.
-function SpokenBooks:MarkBookFound(book)
+function SpokenReadables:MarkBookFound(book)
 	if not book or not SpokenBooksCharacter then
 		return
 	end
@@ -153,7 +153,7 @@ end
 
 --- Whether this character has found `book`: opened it in the world. Hearing it from the
 --- Compendium does not count.
-function SpokenBooks:IsBookFound(book)
+function SpokenReadables:IsBookFound(book)
 	if not book or not SpokenBooksCharacter then
 		return false
 	end
@@ -163,7 +163,7 @@ end
 --- Forget everything this character has heard, and say how much that was. What `/spr forget`
 --- and the settings panel's button reach: a reader who turns the setting on, then wants the
 --- library back, has no other way to undo it.
-function SpokenBooks:ForgetRead()
+function SpokenReadables:ForgetRead()
 	local count = 0
 	if not SpokenBooksCharacter then
 		return count
@@ -176,19 +176,19 @@ function SpokenBooks:ForgetRead()
 end
 
 --- Whether the player addon is present and speaks a version this addon understands.
-function SpokenBooks:PlayerAvailable()
+function SpokenReadables:PlayerAvailable()
 	return _G.Spoken ~= nil and Spoken.IsCompatible ~= nil and Spoken:IsCompatible(REQUIRED_API)
 end
 
 --- Whether the player has this part of Spoken switched on (Spoken's settings). Without the
 --- player there is no switch to read, and the part counts as on. Off, no play button shows.
-function SpokenBooks:IsPartOn()
+function SpokenReadables:IsPartOn()
 	return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("readables")
 end
 
 --- Whether the player offers background gathering this panel can switch: present with
 --- the Gather table, absent on older players and where contributing is off.
-function SpokenBooks:GatherAvailable()
+function SpokenReadables:GatherAvailable()
 	return _G.Spoken ~= nil and Spoken.Gather ~= nil
 		and type(Spoken.Gather.IsEnabled) == "function"
 		and type(Spoken.Gather.SetEnabled) == "function"
@@ -196,7 +196,7 @@ end
 
 --- Registers this addon with the player. Returns the source, or nil when there is no
 --- player to register with -- which is not an error: the addon loads, and says so.
-function SpokenBooks:SetupSource()
+function SpokenReadables:SetupSource()
 	-- PLAYER_ENTERING_WORLD fires again on every loading screen, and a second registration
 	-- would hand back a source the playlist is not holding -- so a book queued before a zone
 	-- change could no longer be stopped by the one this addon kept.
@@ -227,11 +227,11 @@ function SpokenBooks:SetupSource()
 		-- install) is refused at the door, so the book reads on from the next page.
 		testBeforeQueue = true,
 		-- Printed after Spoken's own by its Show Diagnostics.
-		diagnostics = function() SpokenBooks:ShowStatus() end,
+		diagnostics = function() SpokenReadables:ShowStatus() end,
 		-- What Spoken's settings show on this part's card: which voice packs are installed.
 		packs = function()
 			local names = {}
-			for _, pack in ipairs(SpokenBooks:GetAudioPacks()) do table.insert(names, pack.title or pack.addon) end
+			for _, pack in ipairs(SpokenReadables:GetAudioPacks()) do table.insert(names, pack.title or pack.addon) end
 			return names
 		end,
 	})
@@ -253,7 +253,7 @@ function SpokenBooks:SetupSource()
 	if Spoken.RegisterCallback then
 		Spoken:RegisterCallback("PART_SWITCHED", function(key)
 			if key ~= "readables" then return end
-			SpokenBooks:RefreshPlayButton()
+			SpokenReadables:RefreshPlayButton()
 			if SpokenCompendium and SpokenCompendium.Relayout then SpokenCompendium:Relayout() end
 		end)
 	end
@@ -262,7 +262,7 @@ function SpokenBooks:SetupSource()
 		-- No "read this book" entry: it only did anything with a book already open, and an
 		-- open book has its own Play button.
 		Spoken.Minimap:AddEntry("readables", { id = "Options", text = L.MENU_BOOK_SETTINGS,
-			order = 2, onClick = function() SpokenBooks:OpenOptions() end })
+			order = 2, onClick = function() SpokenReadables:OpenOptions() end })
 	end
 
 	return self.source
@@ -270,13 +270,13 @@ end
 
 --- The corpus, as Data/Books.lua left it. Nil only when that file failed to load, which is
 --- worth answering for rather than indexing into nil from four call sites.
-function SpokenBooks:Data()
+function SpokenReadables:Data()
 	return _G.SpokenBooksData
 end
 
 --- Spoken's site, or nil when Spoken is not loaded: no page is read aloud without it, so there
 --- is no report to send.
-function SpokenBooks:SiteURL()
+function SpokenReadables:SiteURL()
 	return _G.Spoken and _G.Spoken.SITE_URL
 end
 
@@ -286,7 +286,7 @@ end
 --- the id is frozen -- `b:{pageTextID}` per docs/readables/AGENTS.md -- so the addon can build
 --- the link from what it already has, with no per-page table to ship and nothing to escape.
 --- The zones landing page makes the same trade with its {mapID}/{slug} path.
-function SpokenBooks:ReportURL(pageId, language)
+function SpokenReadables:ReportURL(pageId, language)
 	local key = type(pageId) == "number" and format("%d", pageId)
 		or (type(pageId) == "string" and pageId:match("^n[%x%-]+$"))
 	if not key or not self:SiteURL() then

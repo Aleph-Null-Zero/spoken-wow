@@ -7,7 +7,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 -- The callbacks Spoken registers with AceDB, kept so a switch or a reset can fire them: the stub's
@@ -33,7 +33,7 @@ local function Login(profile, legacy)
     db = env.Addon.db
     local B = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core" }) do
-        assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+        assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
     end
     B:InitDB()
     return B

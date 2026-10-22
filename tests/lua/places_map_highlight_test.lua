@@ -5,7 +5,7 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 
@@ -44,7 +44,7 @@ function Z:AreaAt(_, x, y)
     if px >= 100 and px <= 400 and py >= 50 and py <= 250 then return "Valley of Trials", { name = "Valley" } end
     return "Kolkar Crag", nil
 end
-assert(loadfile(ZONES .. "UI/MapHighlight.lua"))("SpokenZones", Z)
+assert(loadfile(PLACES .. "UI/MapHighlight.lua"))("SpokenZones", Z)
 Z:SetupMapHighlight()
 local state = Z.mapHighlight
 local tick = state.driver:GetScript("OnUpdate")

@@ -7,7 +7,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
@@ -38,7 +38,7 @@ local function Install(packs)
     for _, pack in ipairs(packs) do
         _G.SpokenZonesAudioPacks[pack.addon] = pack
     end
-    return H.LoadZones(ZONES)
+    return H.LoadZones(PLACES)
 end
 
 local function Pack(addon, language, subzones)
@@ -134,7 +134,7 @@ local function InstallOn(locale, db)
     if db ~= lastInstalled then Legacy(db) end
     lastInstalled = db
     _G.SpokenZonesAudioPacks = {}
-    return H.LoadZones(ZONES, { Languages = READY })
+    return H.LoadZones(PLACES, { Languages = READY })
 end
 
 local saved = {}
@@ -165,7 +165,7 @@ local function InstallItalian(locale, db)
     stub.SetLocale(locale)
     Legacy(db)
     _G.SpokenZonesAudioPacks = {}
-    return H.LoadZones(ZONES, { Languages = WITH_ITALIAN })
+    return H.LoadZones(PLACES, { Languages = WITH_ITALIAN })
 end
 Z = InstallItalian("enUS", {})
 Expect("G. Italian is offered once its lore is in", Z:IsLanguageSelectable("itIT"), true)
@@ -244,7 +244,7 @@ local function Lore(pack)
     stub.SetLocale("deDE")
     Legacy({ language = pack.language })
     _G.SpokenZonesAudioPacks = { [pack.addon] = pack }
-    Z = H.LoadZones(ZONES, { Languages = { { code = "enUS", ready = true }, { code = "deDE", ready = true },
+    Z = H.LoadZones(PLACES, { Languages = { { code = "enUS", ready = true }, { code = "deDE", ready = true },
         { code = "koKR", ready = true } } })
     local clip = Z:NewLoreSound(MAP, nil)
     return clip and clip.present

@@ -4,7 +4,7 @@
 -- how long a sound file is; without them the Play button never resets itself.
 --
 -- Globals rather than a private namespace: a data addon cannot reach into
--- SpokenZones's, which is how AI_VoiceOverData_Vanilla does the same job.
+-- SpokenPlaces's, which is how AI_VoiceOverData_Vanilla does the same job.
 
 local ADDON_NAME = ...
 

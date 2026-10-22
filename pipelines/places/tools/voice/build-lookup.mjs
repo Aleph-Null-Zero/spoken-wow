@@ -81,12 +81,12 @@ export async function buildLookup() {
     "-- how long a sound file is; without them the Play button never resets itself.",
     "--",
     "-- Globals rather than a private namespace: a data addon cannot reach into",
-    "-- SpokenZones's, which is how AI_VoiceOverData_Vanilla does the same job.",
+    "-- SpokenPlaces's, which is how AI_VoiceOverData_Vanilla does the same job.",
     "",
     "local ADDON_NAME = ...",
     "",
     "local pack = {",
-    // Bumped only when the shape below changes in a way SpokenZones cannot read.
+    // Bumped only when the shape below changes in a way SpokenPlaces cannot read.
     // Audio.lua refuses a pack whose format it does not know rather than playing
     // silence, so this is the compatibility contract between the two addons.
     "\tversion = 1,",

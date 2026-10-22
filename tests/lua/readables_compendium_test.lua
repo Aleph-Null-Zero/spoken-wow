@@ -10,7 +10,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local SPOKEN = here .. "/../../addons/Spoken/"
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -54,12 +54,12 @@ _G.SpokenBooksSettings, _G.SpokenBooksCharacter = nil, nil
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Readables", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
-dofile(BOOKS .. "Data/Places.lua")
+dofile(READABLES .. "Data/Books.lua")
+dofile(READABLES .. "Data/Places.lua")
 local L = B.L
 -- One readable whose event the data does not name, as an older export left every one.
 SpokenBooksPlaces.books[2878].event = true

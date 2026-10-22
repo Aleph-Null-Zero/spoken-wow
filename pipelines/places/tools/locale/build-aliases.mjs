@@ -18,7 +18,7 @@
 // before these tables existed. AreaTable carries both names against one ID, so
 // the mapping is a join, not a translation, and costs nothing to produce.
 //
-// Keyed by the RAW client name rather than a normalised one. SpokenZones's
+// Keyed by the RAW client name rather than a normalised one. SpokenPlaces's
 // normalisation reduces a name to [a-z0-9 ] to reconcile the wiki's punctuation
 // with the client's, and that is exactly wrong here: "Дун Морог" normalises to
 // nothing at all. AreaTable is the table the client reads its names out of, so

@@ -11,8 +11,8 @@ local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 --- Runs fn, and answers true or the error it raised.
@@ -260,9 +260,9 @@ local function BootZones()
     }
     local zenv = stub.LoadSpoken(SPOKEN)
     zenv.Addon:Enable()
-    local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
-    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
+    local Z = H.LoadZones(PLACES)
+    assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
+    assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1411] = { name = "Durotar", full = "Durotar lore." }
     Z.Subzones[1411] = { ["valley of trials"] = { name = "Valley of Trials", full = "Valley lore." } }
     stub.SetZone({ map = 1411, zone = "Durotar", subzone = "Valley of Trials" })
@@ -293,7 +293,7 @@ Expect("the subzone no longer secret, the greeting reads it", _G.Spoken:GetQueue
 -- The discovery message, as #357 reported it from Shadowfang Keep.
 Z = BootZones()
 _G.SpokenZonesCharacter.greeted = true
-assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
+assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
 Z:SetupAutoplay()
 stub.Secrets("Discovered Durotar.")
 Expect("a secret discovery message raises no error",
@@ -309,11 +309,11 @@ _G.SpokenBooksSettings = nil
 stub.LoadSpoken(SPOKEN).Addon:Enable()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
+dofile(READABLES .. "Data/Books.lua")
 local REGISTRY_1 = "Hillsbrad Town Registry\n\nWe the people of Hillsbrad do solemny swear our faith and devotion to the Alliance maintained by the great monarchs, King Magni Bronzebeard of Ironforge and King Anduin Wrynn of Stormwind.\n\nHerein lies the town registry for purposes of governing this fair city in the foothills of the great Alterac Mountains as well as serving as a record of those who have paid their taxes to their Kings and to the great almighty Alliance."
 stub.ShowPage({ title = "Hillsbrad Town Registry", number = 1, text = REGISTRY_1 })
 stub.Secrets(REGISTRY_1, "Hillsbrad Town Registry")

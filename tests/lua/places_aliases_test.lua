@@ -7,12 +7,12 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 
 local ELWYNN, BARRENS, SWAMP, REDRIDGE, THUNDER_BLUFF, ALTERAC, HILLSBRAD, ZEPHRAS =
     1429, 1413, 1435, 1433, 1456, 1416, 1424, 2521
 
-local Z = H.LoadZones(ZONES)
+local Z = H.LoadZones(PLACES)
 Z.Subzones = {
     [THUNDER_BLUFF] = { ["spirit rise"] = { name = "Spirit Rise", full = "The elders' rise." } },
     [ZEPHRAS] = { ["rise of spirits"] = { name = "Rise of Spirits", pending = true } },
@@ -54,9 +54,9 @@ Expect("a name only the flat table has resolves through it, map or not",
     Z:ResolveAreaKey("Крепость Каменной Стражи", REDRIDGE), "stonewatch keep")
 
 ---------------------------------------------------------------- a file without the table
-local real = H.LoadZones(ZONES)
+local real = H.LoadZones(PLACES)
 real.clientLocale = "ruRU"
-assert(loadfile(ZONES .. "Data/ruRU/Aliases.lua"))("Spoken_Places", real)
+assert(loadfile(PLACES .. "Data/ruRU/Aliases.lua"))("Spoken_Places", real)
 local northshire
 for name, key in pairs(real.Aliases.ruRU) do
     if key == "northshire abbey" then northshire = name end

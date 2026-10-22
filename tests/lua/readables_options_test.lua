@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -18,7 +18,7 @@ env.Addon:Enable()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Options", "Events", "Commands" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB()
 B:SetupOptions()
@@ -124,7 +124,7 @@ close.scripts.OnClick(close)
 -- mirror here could only ever repeat it -- a reader cannot have pages off and lines on.
 -- Its command is Spoken's too (/sp collect): /spw gather no longer reaches it.
 local gathering = _G.Spoken.Gather:IsEnabled()
-SlashCmdList["SPOKENWRITINGS"]("gather")
+SlashCmdList["SPOKENREADABLES"]("gather")
 Expect("/spw gather leaves the player's switch alone", _G.Spoken.Gather:IsEnabled(), gathering)
 
 ---------------------------------------------------------------- forgetting what was read

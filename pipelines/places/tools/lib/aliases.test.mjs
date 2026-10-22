@@ -32,7 +32,7 @@ test("a name two places share in different zones is told apart by zone, and stay
 
   const lua = emitAliases("esES", flat.aliases, ["1.60.1.70450", "1.15.9.69109"], byZone);
   assert.match(lua, /^\t\["Alto de los Espíritus"\] = \{ \[1456\] = "spirit rise", \[2521\] = "rise of spirits" \},$/m);
-  assert.match(lua, /^SpokenZones:RegisterAliases\("esES", aliases, byZone\)$/m);
+  assert.match(lua, /^SpokenPlaces:RegisterAliases\("esES", aliases, byZone\)$/m);
 });
 
 test("a name one build gives one place and another build two is told apart by zone", () => {
@@ -59,7 +59,7 @@ test("places that share a name and a zone are left out: the name cannot tell the
 
   // ...and a file with no such name is written as it was before the table existed.
   const lua = emitAliases("ruRU", new Map([["Крепость Каменной Стражи", "stonewatch keep"]]), ["a", "b"], byZone);
-  assert.ok(lua.endsWith('}\n\nSpokenZones:RegisterAliases("ruRU", aliases)\n'));
+  assert.ok(lua.endsWith('}\n\nSpokenPlaces:RegisterAliases("ruRU", aliases)\n'));
   assert.ok(!lua.includes("byZone"));
 });
 

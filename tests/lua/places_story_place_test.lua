@@ -8,7 +8,7 @@ local H = require("queue_helpers")
 local print = stub.print
 local Expect, Failures = H.Expecter(print)
 local SPOKEN = here .. "/../../addons/Spoken/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local after = C_Timer.After
 
 local BARRENS, NEEDLES = 1413, 1441
@@ -28,10 +28,10 @@ local function Boot()
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     C_Timer.After = after
-    local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
+    local Z = H.LoadZones(PLACES)
+    assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     for _, file in ipairs({ "Autoplay", "Discovery", "UI/LoreWindow" }) do
-        assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
+        assert(loadfile(PLACES .. file .. ".lua"))("Spoken_Places", Z)
     end
     Z.Zones[BARRENS] = { name = "The Barrens", full = "Dry land." }
     Z.Zones[NEEDLES] = { name = "Thousand Needles", full = "Spires." }
@@ -77,7 +77,7 @@ Expect("discovering it at its entrance plays the same story", clip and clip.key,
 Z = Boot()
 Z:Set("showUndiscovered", true)
 Spoken:StopAll()
-for _, file in ipairs({ "UI/LorePage" }) do assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z) end
+for _, file in ipairs({ "UI/LorePage" }) do assert(loadfile(PLACES .. file .. ".lua"))("Spoken_Places", Z) end
 Z.Zones[1414] = { name = "Kalimdor", full = "West." }
 Z:SetupLoreWindow()
 Z:ToggleLoreWindow()

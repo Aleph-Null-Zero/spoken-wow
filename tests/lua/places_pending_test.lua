@@ -16,12 +16,12 @@ local DATA = here .. "/../../addons/Spoken_Places/Data/enUS/"
 
 -- Data files register themselves through the addon table and guard on the language.
 local registered = {}
-local SpokenZones = {
+local SpokenPlaces = {
     RegisterLoreData = function(_, _, kind, table_) registered[kind] = table_ end,
     ShouldLoadLanguage = function() return true end,
 }
 for _, file in ipairs({ "Zones.lua", "Subzones.lua" }) do
-    assert(loadfile(DATA .. file))("Spoken_Places", SpokenZones)
+    assert(loadfile(DATA .. file))("Spoken_Places", SpokenPlaces)
 end
 
 Expect("Zones.lua registered", type(registered.zones), "table")

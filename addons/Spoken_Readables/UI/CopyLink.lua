@@ -12,9 +12,9 @@
 -- The zones addon carries the same file under the same reasoning: two addons sharing one
 -- StaticPopup id would be two addons overwriting each other's dialog.
 
-local _, SpokenBooks = ...
+local _, SpokenReadables = ...
 
-local POPUP = "SPOKENBOOKS_COPY_LINK"
+local POPUP = "SPOKENREADABLES_COPY_LINK"
 
 -- The popup is a shared, reused frame, so the address cannot live on it. This is what OnShow
 -- reads and what OnTextChanged puts back.
@@ -63,7 +63,7 @@ StaticPopupDialogs[POPUP] = {
 }
 
 --- `caption` is the sentence above the box; it says what the address is for.
-function SpokenBooks:ShowCopyLink(url, caption)
+function SpokenReadables:ShowCopyLink(url, caption)
 	if not url then
 		return
 	end

@@ -6,7 +6,7 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 _G.SpokenBooksAudioPacks = {
@@ -24,13 +24,13 @@ local REGISTRY_1 = "Hillsbrad Town Registry\n\nWe the people of Hillsbrad do sol
 local REGISTRY_2 = "Magistrate Rutherford Burnside\nAll debts settled.\n\nBlacksmith Avery Verringtan\nAll debts settled.\n\nClerk Horrace Whitesteed\nAll debts settled.\n\nCouncilman Gillis\nAll debts settled.\n\nCouncilman Hooks\nAll debts settled.\n\nFarmer Getz\nAll debts settled.\n\nFarmer Ray\nDebt outstanding.  Payment in agricultural goods promised at time of harvest.\n\nFarmer Lyion\nDebt outstanding.  Evicted from the land."
 
 local function LoadBooks()
-    local SpokenBooks = {}
+    local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
         "UI/PlayButton", "Events", "Commands" }) do
-        local chunk = assert(loadfile(BOOKS .. file .. ".lua"))
-        chunk("Spoken_Readables", SpokenBooks)
+        local chunk = assert(loadfile(READABLES .. file .. ".lua"))
+        chunk("Spoken_Readables", SpokenReadables)
     end
-    return SpokenBooks
+    return SpokenReadables
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
@@ -40,7 +40,7 @@ env.Addon:Enable()
 local B = LoadBooks()
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
+dofile(READABLES .. "Data/Books.lua")
 
 local function QueuedPages()
     local pages = {}
@@ -113,21 +113,21 @@ SpokenBooksSettings.autoplay = true
 
 ---------------------------------------------------------------- the slash command
 Expect("the commands are /spokenreadables and /spr, and /spokenwritings, /spw, /spokenbooks and /spb still work",
-    table.concat({ SLASH_SPOKENWRITINGS1, SLASH_SPOKENWRITINGS2, SLASH_SPOKENWRITINGS3, SLASH_SPOKENWRITINGS4,
-        SLASH_SPOKENWRITINGS5, SLASH_SPOKENWRITINGS6 }, " "),
+    table.concat({ SLASH_SPOKENREADABLES1, SLASH_SPOKENREADABLES2, SLASH_SPOKENREADABLES3, SLASH_SPOKENREADABLES4,
+        SLASH_SPOKENREADABLES5, SLASH_SPOKENREADABLES6 }, " "),
     "/spokenreadables /spr /spokenwritings /spw /spokenbooks /spb")
-SlashCmdList["SPOKENWRITINGS"]("autoplay")
+SlashCmdList["SPOKENREADABLES"]("autoplay")
 Expect("/spw autoplay toggles it", SpokenBooksSettings.autoplay, false)
-SlashCmdList["SPOKENWRITINGS"]("autoplay")
+SlashCmdList["SPOKENREADABLES"]("autoplay")
 Expect("...and back", SpokenBooksSettings.autoplay, true)
 
-SlashCmdList["SPOKENWRITINGS"]("whole")
+SlashCmdList["SPOKENREADABLES"]("whole")
 Expect("/spw whole toggles whole-book reading", SpokenBooksSettings.readWholeBook, false)
-SlashCmdList["SPOKENWRITINGS"]("whole")
+SlashCmdList["SPOKENREADABLES"]("whole")
 
 stub.ClosePage()
 stub.FireEvent("ITEM_TEXT_CLOSED")
-SlashCmdList["SPOKENWRITINGS"]("read")
+SlashCmdList["SPOKENREADABLES"]("read")
 Expect("/spw read with no book open queues nothing", #QueuedPages(), 0)
 
 -- With the page already queued, /spw read says why nothing new started: reading, or stopped.
@@ -137,15 +137,15 @@ do
     _G.DEFAULT_CHAT_FRAME.AddMessage = function(_, message) said = message end
     stub.ShowPage({ title = "Hillsbrad Town Registry", number = 1, text = REGISTRY_1, hasNext = true })
     stub.FireEvent("ITEM_TEXT_READY")
-    SlashCmdList["SPOKENWRITINGS"]("read")
+    SlashCmdList["SPOKENREADABLES"]("read")
     Expect("/spw read on the page being read says so", said and said:find("already reading") ~= nil, true)
     Spoken:Pause()
-    SlashCmdList["SPOKENWRITINGS"]("read")
+    SlashCmdList["SPOKENREADABLES"]("read")
     Expect("...and on a stopped one, that Spoken is stopped", said and said:find("Spoken is stopped") ~= nil, true)
     Spoken:Resume()
     stub.ShowPage({ title = "Hillsbrad Town Registry", number = 2, text = REGISTRY_2, hasNext = true })
     stub.FireEvent("ITEM_TEXT_READY")
-    SlashCmdList["SPOKENWRITINGS"]("read")
+    SlashCmdList["SPOKENREADABLES"]("read")
     Expect("...and on a page of it still to come, that it is coming", said and said:find("still to come") ~= nil, true)
     B:StopReading()
     stub.ClosePage()

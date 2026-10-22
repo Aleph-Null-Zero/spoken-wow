@@ -7,8 +7,8 @@ local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
 local SPOKEN = here .. "/../../addons/Spoken/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -35,7 +35,7 @@ end
 local function Writings()
     local B = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core" }) do
-        assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+        assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
     end
     B:InitDB()
     return B
@@ -72,7 +72,7 @@ db:SetProfile("Zones profile")
 db.global.ModulesLegacy = nil
 _G.SpokenZonesSettings = { language = "deDE", showPictures = false, dump = { 1, 2, 3 } }
 _G.SpokenZonesAudioPacks = {}
-local Z = H.LoadZones(ZONES, {})
+local Z = H.LoadZones(PLACES, {})
 local zones = db.profile.Modules.Zones
 Expect("Zones: the language and switches are copied under the same keys",
     zones.language == "deDE" and zones.showPictures == false, true)
@@ -98,8 +98,8 @@ do
     local langs = { { code = "enUS", ready = true }, { code = "deDE", ready = true } }
     _G.SpokenZonesSettings = db.profile.Modules.Zones
     _G.SpokenZonesAudioPacks = {}
-    Z = H.LoadZones(ZONES, { Languages = langs })
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
+    Z = H.LoadZones(PLACES, { Languages = langs })
+    assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     stub.FireEvent("ADDON_LOADED", "Spoken_Places")
     Expect("Zones: this load reads German", Z:GetLanguage(), "deDE")
     stub.chat = {}

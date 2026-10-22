@@ -3,7 +3,7 @@
 // one section does with it -- the folder a places pack ships in, say -- lives with that
 // section.
 //
-// Must stay in step with the addons' own lists (SpokenZones.LOCALES in
+// Must stay in step with the addons' own lists (SpokenPlaces.LOCALES in
 // addons/Spoken_Places/Language.lua); pipelines/places/tools/validate.mjs fails the build if
 // they drift, and apps/web/src/lib/lang.test.ts does the same for the site.
 //

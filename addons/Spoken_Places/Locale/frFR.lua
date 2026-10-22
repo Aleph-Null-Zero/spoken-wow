@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "frFR" then
 	return
@@ -102,4 +102,4 @@ L.DUNGEONS = "Donjons et raids"
 
 L.OPEN_IN_COMPENDIUM = "Ouvrir dans le Compendium d'Azeroth"
 
-SpokenZones:RegisterStrings("frFR", L)
+SpokenPlaces:RegisterStrings("frFR", L)

@@ -56,9 +56,9 @@ local PARTS = {
         icon = [[Interface\Icons\INV_Scroll_03]], order = 1 },
     { key = "gossip", label = L.OPT_PART_GOSSIP, text = L.OPT_PART_GOSSIP_TEXT,
         icon = [[Interface\Icons\UI_Chat]], order = 2 },
-    { key = "places", label = L.OPT_PART_ZONES, text = L.OPT_PART_ZONES_TEXT,
+    { key = "places", label = L.OPT_PART_PLACES, text = L.OPT_PART_PLACES_TEXT,
         icon = [[Interface\Icons\INV_Misc_Map02]], order = 3 },
-    { key = "readables", label = L.OPT_PART_BOOKS, text = L.OPT_PART_BOOKS_TEXT,
+    { key = "readables", label = L.OPT_PART_READABLES, text = L.OPT_PART_READABLES_TEXT,
         icon = [[Interface\Icons\INV_Misc_Book_09]], order = 4 },
 }
 
@@ -600,8 +600,8 @@ local function Build()
     -- In the order of the window's tabs.
     for _, unlock in ipairs({
         { tab = "quests", part = "quests", label = L.OPT_UNLOCK_QUESTS, module = L.OPT_PART_QUESTS },
-        { tab = "places", part = "places", label = L.OPT_UNLOCK_PLACES, module = L.OPT_PART_ZONES },
-        { tab = "readables", part = "readables", label = L.OPT_UNLOCK_WRITINGS, module = L.OPT_PART_BOOKS },
+        { tab = "places", part = "places", label = L.OPT_UNLOCK_PLACES, module = L.OPT_PART_PLACES },
+        { tab = "readables", part = "readables", label = L.OPT_UNLOCK_WRITINGS, module = L.OPT_PART_READABLES },
         -- Spoken NPCs has no part to turn off: its tab is there while the addon is.
         { tab = "bosses", label = L.OPT_UNLOCK_BOSSES },
     }) do

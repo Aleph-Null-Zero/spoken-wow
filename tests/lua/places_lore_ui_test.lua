@@ -7,7 +7,7 @@ package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
 local H = require("queue_helpers")
 local print = stub.print
-local ZONES = here .. "/../../addons/Spoken_Places/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -104,11 +104,11 @@ _G.hooksecurefunc = _G.hooksecurefunc or function() end
 -- The page's line over a place's name comes from Audio.lua's PlaceAbove; the rest of that file
 -- would replace this test's stand-in packs.
 local audio = setmetatable({}, { __index = Z })
-assert(loadfile(ZONES .. "Audio.lua"))("Spoken_Places", audio)
+assert(loadfile(PLACES .. "Audio.lua"))("Spoken_Places", audio)
 Z.PlaceAbove = audio.PlaceAbove
 dofile(here .. "/../../addons/Spoken/UI/Layout.lua")
 for _, file in ipairs({ "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
-    assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
+    assert(loadfile(PLACES .. file .. ".lua"))("Spoken_Places", Z)
 end
 
 ---------------------------------------------------------------- the lore window
@@ -756,7 +756,7 @@ local function NewSession()
     local session = setmetatable({}, { __index = Z })
     function session:IsPartOn() return partOn end
     dofile(here .. "/../../addons/Spoken/UI/Compendium.lua")
-    assert(loadfile(ZONES .. "UI/LoreWindow.lua"))("Spoken_Places", session)
+    assert(loadfile(PLACES .. "UI/LoreWindow.lua"))("Spoken_Places", session)
     _G.SpokenCompendium:Register("first", { label = "First", order = 0, build = function() end })
     session:SetupLoreWindow()
     return session
