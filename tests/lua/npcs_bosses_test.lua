@@ -425,8 +425,7 @@ NPCs:SetupStories()
 local storySource = Spoken:GetSource("bosses")
 Expect("the bosses' stories are a part of Spoken's, as words with no voice", storySource ~= nil and storySource.textOnly, true)
 _G.SpokenBossStories[36]["edwin vancleef"] = "He led the Brotherhood."
-_G.SpokenBossCreatures = { [36] = { ["edwin vancleef"] = { creature = 639, display = 1305, spells = {} } },
-    [2789] = { ["lord kazzak"] = { creature = 12397, display = 12449, spells = {} } } }
+_G.SpokenBossCreatures = creatures
 local clip = NPCs:StoryClip(36, "edwin vancleef")
 Expect("a boss's story is a line with no recording", clip.path, nil)
 Expect("...headed by its dungeon, named for the boss", clip.present.header .. "|" .. clip.present.label, "Deadmines|Edwin VanCleef")
@@ -542,8 +541,12 @@ Expect("...and shows no story", Showing(), "nothing")
 SpokenNPCsSettings.storyTrigger = "target"
 _G.UnitName = function() return "Plugger Spazzring" end
 world.npcGUID = "Creature-0-1-2-3-9499-0000ABCDEF"
+world.npcFriendly = true
 NPCs:TargetChanged()
-Expect("...and Plugger Spazzring, with Targeting on", NPCs:IsBossFound(230, "plugger spazzring"), true)
+Expect("Plugger Spazzring selling ale is not met", NPCs:IsBossFound(230, "plugger spazzring"), false)
+world.npcFriendly = false
+NPCs:TargetChanged()
+Expect("...and is once he can be fought, with Targeting on", NPCs:IsBossFound(230, "plugger spazzring"), true)
 Clear()
 _G.GetInstanceInfo, _G.UnitName = instanceInfo, unitName
 -- Another creature of a fight of several shows the fight's story, in that fight's map only.

@@ -95,9 +95,6 @@ end
 --- The player targeted the boss `key` of `map`: met where it is one whose fight may start no
 --- encounter (`onTarget` in Data/Bosses.lua). Returns whether it was not met before.
 function NPCs:FoundTarget(map, key)
-	if not SpokenNPCsCharacter then return false end
-	for _, boss in ipairs(_G.SpokenBosses and SpokenBosses.maps[map] or {}) do
-		if boss.key == key then return boss.onTarget == true and Meet(self, { { map = map, key = key } }) end
-	end
-	return false
+	local boss = SpokenNPCsCharacter and self.Boss and self:Boss(map, key)
+	return boss and boss.onTarget == true and Meet(self, { { map = map, key = key } }) or false
 end

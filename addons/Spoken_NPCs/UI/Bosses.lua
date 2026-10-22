@@ -339,6 +339,11 @@ local function Boss(map, key)
 	return Index().byKey[map .. ":" .. key]
 end
 
+--- The boss `key` of the dungeon `map`, as Data/Bosses.lua lists it, or nil.
+function NPCs:Boss(map, key)
+	return Boss(map, key)
+end
+
 -- The zone a boss is filed under: its own where the map's bosses stand in several, else the map's.
 local function BossZone(map, key)
 	return Index().bossZone[map .. ":" .. key] or Index().zoneOf[map]
