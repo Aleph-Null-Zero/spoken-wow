@@ -122,7 +122,7 @@ export default function ReportContribution({
               href={explorerHref(report.source, wording.lineId)}
               className="border-border bg-background hover:bg-muted inline-flex h-7 items-center rounded-md border px-2.5 text-[0.8rem] font-medium whitespace-nowrap"
             >
-              {report.source === "books" ? "Edit page" : "Edit line"}
+              {report.source === "readables" ? "Edit page" : "Edit line"}
             </Link>
           ) : null}
           {accepted ? null : (

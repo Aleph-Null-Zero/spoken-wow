@@ -197,7 +197,7 @@ export function LineRow({
       </td>
 
       {/* Audio, in a column of its own rather than floated into the prose, the way the
-          books table has always had it: the point of a column is that it lines up down the
+          readables table has always had it: the point of a column is that it lines up down the
           page, and "which of these has no clip yet" is the question this screen is most
           often asked. It holds what the clip's state is, and which take that clip is. */}
       <td className="px-2 py-2 text-xs whitespace-nowrap">
@@ -213,7 +213,7 @@ export function LineRow({
           // Which take is live, and the way to any other. The label IS the control, so
           // there is no second icon for a history nobody knew was there.
           <TakeSelector
-            source="zones"
+            source="places"
             file={line.file}
             version={line.take?.version ?? null}
             canRestore={canRegenerate}
@@ -233,7 +233,7 @@ export function LineRow({
       {showMadeBy && <MadeByCell madeBy={line.madeBy} />}
       {showRecordings && (
         <ActorTakeCell
-          source="zones"
+          source="places"
           file={line.file}
           recording={line.recording ?? null}
           onChanged={() => onRecordingChanged(line)}
@@ -245,7 +245,7 @@ export function LineRow({
           {/* Beside the report button rather than in a column of its own: it is the same
               subject. ReportsBadge says what it shows to whom. */}
           <ReportsBadge
-            source="zones"
+            source="places"
             lineId={line.id}
             count={line.reportsOpen}
             canTriage={canTriage}

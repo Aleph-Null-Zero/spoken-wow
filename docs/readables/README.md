@@ -1,14 +1,16 @@
-# Books
+# Readables
 
 Every book, letter, note and plaque World of Warcraft will show you, extracted from the
-vmangos world database, reviewable at `/books` on the site, and
+vmangos world database, reviewable at `/readables` on the site, and
 read aloud in game by Spoken's Readables module (`addons/Spoken_Readables`).
 
 Players see this section as **Readables**: the module, its page and tab, its commands (`/spr`; `/spw`
-and `/spb` still work), the sound packs' titles and the site's labels. Most of what they never see still says books
-(the folders already say readables): `make books-*`, the `books` source and part key, the
-`SpokenBooks*` globals and saved variables, `b:{pageTextID}`, the `/books` routes, and the
-`SpokenBooksAudio` folder with its `books-audio` tags.
+and `/spb` still work), the sound packs' titles and the site's labels. Most of what they never
+see says readables too: the folders, the `make readables-*` targets, the database's `readables`
+source, the site's `/readables` routes and the `SPOKEN_READABLES_*` variables. The addon's
+internals still say books: its `books` source and part key, the `SpokenBooks*` globals and saved
+variables, the `SpokenBooksAudio` pack folders with their `books-audio` tags, the
+`publishers/books/` pages and the `b:{pageTextID}` line ids.
 
 ## Where the words come from, and why not from anywhere else
 
@@ -103,7 +105,7 @@ plays (`pipelines/readables/tools/lib/absorb.mjs`).
 | --- | --- | --- | --- |
 | `extract` | vmangos world DB | `pipelines/readables/corpus/extract.json` | a maintainer, after a dump refresh |
 | `import` | that file | `book_page` and `book_line` rows | the same maintainer |
-| review | `book_line` | corrected text | anyone, at `/books` |
+| review | `book_line` | corrected text | anyone, at `/readables` |
 | generate | `book_line` | mp3s and `take` rows | anyone with an ElevenLabs key |
 | export | `book_line` | `addons/Spoken_Readables/Data/Books.lua` | a maintainer, before a release |
 
@@ -114,10 +116,10 @@ droplet.
 
 ```bash
 orb start
-make books-db                 # the vmangos MySQL, which pipelines/quests provisions
-make books-extract            # -> pipelines/readables/corpus/extract.json
-make books-import
-pnpm --filter @spoken/web dev # /books
+make readables-db                 # the vmangos MySQL, which pipelines/quests provisions
+make readables-extract            # -> pipelines/readables/corpus/extract.json
+make readables-import
+pnpm --filter @spoken/web dev # /readables
 ```
 
 `DATABASE_URL` and the vmangos connection both come from the repo root's `.env`; copy
@@ -151,8 +153,8 @@ changing its wording as well, and one page did move between books without a word
 ## Tests
 
 ```bash
-make books-test                    # the pipeline: text, naming, chains, promotion
-pnpm --filter @spoken/web test     # the site, including lib/books
+make readables-test                    # the pipeline: text, naming, chains, promotion
+pnpm --filter @spoken/web test     # the site, including lib/readables
 ```
 
 ## The addon
@@ -190,7 +192,7 @@ bar runs across the book: each page carries the seconds before it and the readin
 title over its page count, grouped so no pause or cue falls between them.
 
 **Readables pile up on purpose.** One opened while another is read queues after it: a
-gravestone read on the way waits for the book. The source has no queue limit, unlike zones,
+gravestone read on the way waits for the book. The source has no queue limit, unlike places,
 whose cap drops the oldest waiting clip and here would drop what the player opened.
 
 **Settings and reading are kept apart, on purpose.** The settings (autoplay, whole book, one
@@ -230,27 +232,27 @@ place all of this identically, so one anchor covers three clients.
 The cost is that a full page's last line runs under the button; the alternative was
 colliding with one of Blizzard's controls on page two of every book.
 
-**Every clip carries a Report action**, the bug icon the quests and zones clips use. The
+**Every clip carries a Report action**, the bug icon the quests and places clips use. The
 client cannot open a browser or post anywhere, so pressing it raises a popup holding one
 selectable address — `UI/CopyLink.lua`, the same shape the Places addon carries, and not
 shared with it because two addons cannot own one StaticPopup id.
 
 The address is `https://spoken.rusty.one/books/r/{pageTextID}` (`/{lang}/books/r/…` when the
 clip was read in another language, through `Spoken:ReportURL`), built from the page id
-alone. That is deliberate: the id is frozen, so the addon can address any page with no
-per-page table to ship and nothing to escape — the trade the zones landing page makes with
+alone; the site sends it on to `/readables/r/…` (`lib/section-routes.ts`). That is deliberate: the id is frozen, so the addon can address any page with no
+per-page table to ship and nothing to escape — the trade the places landing page makes with
 its `{mapID}/{slug}` path.
 
-**The landing page is `app/books/r/[pageId]/page.tsx`**, shaped like the zones one: the
+**The landing page is `app/[lang]/readables/r/[pageId]/page.tsx`**, shaped like the places one: the
 page's words, its current take to listen to, and the report form already pointed at the
 right line. Not the explorer — somebody arriving from the game is a player, not a
 collaborator, and flags, takes and regenerate controls answer questions they did not ask.
 `pageById` in `lib/readables/catalogue.ts` resolves the id, off the memoised catalogue the rest
 of the section already loads.
 
-Reports from books needed the section admitted to `SOURCES` in `lib/reports/reports.ts`;
+Reports from readables needed the section admitted to `SOURCES` in `lib/reports/reports.ts`;
 migration `0028` had already widened the table's check constraint, so the database was
-waiting for it. `/api/reports` resolves a books address the strict way it resolves a zones
+waiting for it. `/api/reports` resolves a readables address the strict way it resolves a places
 one — the reporter arrived from a page this site rendered, so an id that names nothing is a
 typo rather than a corpus that failed to load — and takes the lineId from the resolved page
 rather than from the request body, so nothing the reporter can edit decides which row
@@ -276,12 +278,12 @@ click ever also offers Spoken's **Collect Missing Lines**, which keeps such page
 
 Azeroth's Compendium (Spoken's `UI/Compendium.lua`, shared with the Quests and Places tabs) is a
 movable window that closes on Escape, resizes from its corner and folds down to its list. The
-Readables tab (`UI/Readables.lua`, key `readables`; the rest of the code says books) lists
+Readables tab (`UI/Readables.lua`, key `readables`; the rest of the addon says books) lists
 every book, letter, note, scroll, tablet, plaque, gravestone, exhibit and picture Spoken Readables
 reads, found or not, with the words of each on the right, on the spellbook's parchment, to read
 and to listen to wherever you are. Which readables exist and where they are comes from
 `Data/Places.lua` (`pipelines/readables/tools/places.mjs`); what this character has found, from
-`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`. `make books-places` reads
+`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`. `make readables-places` reads
 the repack's world DB (`PLACES_MYSQL_*`) and its map files (`PLACES_MAPS`, the repack's `data/maps`
 folder; it stops without them). A quest places a readable only when the quests corpus or the
 client's QuestV2 has it: the repack also carries Cataclysm's quest rows.
@@ -325,7 +327,7 @@ a banner) show their count alone. Play starts the readable from its first page w
 Replay while it is read, as every Play of the Compendium's; browsing here does not count as hearing
 it in the world (Read Only Once), nor as finding it. Report is there on every page, voiced or
 not: it files the page being read, else the first with a recording, else the first, at
-`/books/r/<page id>`, which the site renders for an unvoiced page too. Hide Report Buttons, in
+`/readables/r/<page id>`, which the site renders for an unvoiced page too. Hide Report Buttons, in
 Spoken's settings, takes it away. Shift-click on a readable's row queues it behind what is playing
 and leaves the page as it was.
 
@@ -337,8 +339,8 @@ Unlock Unfound Readables on (`SpokenBooks:CompendiumHas`).
 ### Installing it in a client
 
 ```bash
-CLIENT=forever make books-deploy   # symlink Spoken_Readables and SpokenBooksAudio into the Forever beta (wow_classic_beta)
-make books-status                  # what is installed where, and how many mp3s exist
+CLIENT=forever make readables-deploy   # symlink Spoken_Readables and SpokenBooksAudio into the Forever beta (wow_classic_beta)
+make readables-status                  # what is installed where, and how many mp3s exist
 ```
 
 `scripts/readables/deploy.sh` links only those two folders and defaults to Classic Era, so pass
@@ -361,18 +363,18 @@ The first is retired and gets no more uploads. The second is the sound pack, whi
 `spoken` as its required dependency. Cutting a pack:
 
 ```bash
-make books-package-audio           # -> dist/SpokenBooksAudio-<version>.zip
-make books-release-dry             # what would be uploaded, uploading nothing
-make books-release                 # needs CURSEFORGE_TOKEN
+make readables-package-audio           # -> dist/SpokenBooksAudio-<version>.zip
+make readables-release-dry             # what would be uploaded, uploading nothing
+make readables-release                 # needs CURSEFORGE_TOKEN
 ```
 
 The pack's version is the `## Version:` line in its `.toc`, and its release notes are the
 matching `## <version>` section of `docs/readables/CHANGELOG.md` — a version with no section there
-fails before anything is sent. `make books-package` builds `Spoken_Readables` alone, for a
+fails before anything is sent. `make readables-package` builds `Spoken_Readables` alone, for a
 `books/v<version>` tag, which `.github/workflows/release-addons.yaml` still builds. `scripts/readables/release.sh` carries the two ids in
 `target_curseforge()`, and an unknown target fails on the empty id rather than defaulting, for
 the reason `docs/quests/CLAUDE.md` gives: an id left in that function is an id something
-eventually uploads to, and uploading a books pack over another project is not recoverable
+eventually uploads to, and uploading a readables pack over another project is not recoverable
 from this side.
 
 The project pages themselves are `publishers/books/*.md`, one body per project for both
@@ -380,7 +382,7 @@ stores; after `make descriptions`, paste `dist/descriptions/<slug>.md` into Curs
 `dist/descriptions-wago/<slug>.md` — the same text with its cross-links pointed at Wago —
 into Wago, then record it with `make descriptions-published`.
 
-`make books-release` uploads the pack to CurseForge alone: at 452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
+`make readables-release` uploads the pack to CurseForge alone: at 452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
 in as many words. `make audio-release` then publishes it as a GitHub release under
 `books-audio/vX.Y.Z`, which is where the pack's Wago page sends anyone looking for
 the narration.
@@ -390,14 +392,14 @@ the narration.
 A page under `publishers/books/`, `spoken-books-audio-<lang>.md`, is what makes a language's
 pack exist — its `curseforge:`, `version:` and `slug:` are what `scripts/lib/packs.mjs` reads,
 rather than a case a script would grow per language. `LOCALE=` moves the whole chain to that
-language, staged under `build/books/<lang>/` rather than the committed `addons/SpokenBooksAudio/`:
+language, staged under `build/readables/<lang>/` rather than the committed `addons/SpokenBooksAudio/`:
 
 ```bash
-make books-pull-live LOCALE=esMX      # this language's live takes
-make books-sounds LOCALE=esMX         # build/books/esMX/Sounds, from the archive
-make books-lookup LOCALE=esMX         # build/books/esMX/Data/Sounds.lua
+make readables-pull-live LOCALE=esMX      # this language's live takes
+make readables-sounds LOCALE=esMX         # build/readables/esMX/Sounds, from the archive
+make readables-lookup LOCALE=esMX         # build/readables/esMX/Data/Sounds.lua
 LOCALE=esMX ./scripts/readables/package-audio.sh  # dist/SpokenBooksAudio_esMX-<v>.zip
-make books-release-audio LOCALE=esMX  # uploads it, CurseForge only
+make readables-release-audio LOCALE=esMX  # uploads it, CurseForge only
 ```
 
 The addon finds a page by its title and a checksum of its words, and a client in another
@@ -406,7 +408,7 @@ language's `index` and `loose`, in the shape of `Spoken_Readables/Data/Books.lua
 the world database translates, under each name its owners have in that language, keyed on the
 text as the client shows it — the newest *extracted* version, not a correction made on the
 site. The reader asks it only on a client in the pack's language, before the English index.
-It is built from `book_line` and `entity_name`, so run `make books-import-locale LOCALE=esMX`
-first; `books-lookup` warns when it finds no pages. The checksum is exact: a page whose words
+It is built from `book_line` and `entity_name`, so run `make readables-import-locale LOCALE=esMX`
+first; `readables-lookup` warns when it finds no pages. The checksum is exact: a page whose words
 on a live client differ from the world database's by one byte is not found, and is what the
 contribution button is for.

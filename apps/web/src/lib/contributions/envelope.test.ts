@@ -26,7 +26,7 @@ describe("parseEnvelope", () => {
     expect(result.value.text).toBe("Убей шестерых.\n\nПотом возвращайся.");
   });
 
-  it("reads a zones envelope, which carries no text", () => {
+  it("reads a places envelope, which carries no text", () => {
     const result = parseEnvelope(fixture("zones-subzone.txt"));
     expect(result.ok && result.value.text).toBe(null);
     expect(result.ok && result.value.fields.subzone).toBe("A Nook With No Lore");
@@ -180,7 +180,7 @@ describe("checksum", () => {
 });
 
 describe("formatEnvelope", () => {
-  it.each(["quests-accept.txt", "quests-fenced.txt", "books-page.txt", "zones-zone.txt"])(
+  it.each(["quests-accept.txt", "quests-fenced.txt"])(
     "writes %s back byte for byte, as the addon wrote it",
     (name) => {
       const raw = fixture(name);
@@ -190,4 +190,16 @@ describe("formatEnvelope", () => {
       expect(formatEnvelope(parsed.value)).toBe(raw);
     },
   );
+
+  it.each([
+    ["books-page.txt", "readables"],
+    ["zones-zone.txt", "places"],
+  ])("writes %s back under its section's new key, which reads back the same", (name, source) => {
+    const parsed = parseEnvelope(fixture(name));
+    expect(parsed.ok && parsed.value.source).toBe(source);
+    if (!parsed.ok) return;
+    const written = formatEnvelope(parsed.value);
+    expect(written.startsWith(`!SPOKEN1 ${source}\n`)).toBe(true);
+    expect(parseEnvelope(written)).toEqual(parsed);
+  });
 });

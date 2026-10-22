@@ -1,5 +1,5 @@
 /**
- * The zones explorer's only read.
+ * The places explorer's only read.
  *
  * The URL carries `page`, not `offset`, so a shared link survives a change to PAGE_SIZE.
  * The arithmetic stays here.
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
     [entries, context, recordings] = await Promise.all([
       catalogue(lang),
       loadContext(lang, seesMadeBy),
-      recordingsFor("zones", lang),
+      recordingsFor("places", lang),
     ]);
     // Dropped for anybody who may not see recordings, as the made-by filters are above.
     if (!recordings) filters.recorded = undefined;

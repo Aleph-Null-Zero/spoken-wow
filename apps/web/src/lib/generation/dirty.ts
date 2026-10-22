@@ -3,7 +3,7 @@
  *
  * A lexicon edit changes how a name SOUNDS without changing a character of the text it
  * appears in, so no hash this project compares can see one: `spokenHash` on the quests side
- * and `textHash` on zones and books both move with the text and stand still with the
+ * and `textHash` on places and readables both move with the text and stand still with the
  * dictionary. Migration 0006 recorded `dictionaryVersion` on every take for exactly this
  * question, and until this module nothing read it.
  *

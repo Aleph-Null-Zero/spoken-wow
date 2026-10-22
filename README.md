@@ -123,8 +123,8 @@ docs/        each section's own prose
 ```
 make web-<target>       # see make/web.mk   -- the site and its droplet
 make quests-<target>    # see make/quests.mk
-make zones-<target>     # see make/zones.mk
-make books-<target>     # see make/books.mk
+make places-<target>     # see make/places.mk
+make readables-<target>     # see make/readables.mk
 make test-player        # the Lua harness, all addons
 make lint               # the repo-wide checks
 ```

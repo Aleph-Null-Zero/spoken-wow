@@ -367,7 +367,7 @@ async function main() {
 
   listSelection(selected, manifest, config, args);
   summarise(selected, manifest, "would generate", config);
-  console.log("\nTo cut these, select them on /zones and regenerate there.");
+  console.log("\nTo cut these, select them on /places and regenerate there.");
 }
 
 // Only when run as a script. buildCatalogue and select are imported by

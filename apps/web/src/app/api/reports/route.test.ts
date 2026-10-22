@@ -85,7 +85,7 @@ describe("POST /api/reports", () => {
     expect((await POST(post(valid()))).status).toBe(429);
   });
 
-  it("files a books report against a minted page's key", async () => {
+  it("files a readables report against a minted page's key", async () => {
     const key = `n${randomUUID()}`;
     const lineId = `b:${key}`;
     await db().query(
@@ -99,7 +99,7 @@ describe("POST /api/reports", () => {
         [lineId],
       );
 
-      expect((await POST(post(valid({ source: "books", target: key })))).status).toBe(200);
+      expect((await POST(post(valid({ source: "readables", target: key })))).status).toBe(200);
 
       const { rows } = await db().query<{ lineId: string | null }>(
         `select "lineId" from "report" where "ip" = $1`,
@@ -131,7 +131,7 @@ describe("POST /api/reports", () => {
          values ($1, 'enUS', 1, true, 'extracted', 'Real', 'Words.')`,
         [realId],
       );
-      expect((await POST(post(valid({ source: "books", target: key })))).status).toBe(200);
+      expect((await POST(post(valid({ source: "readables", target: key })))).status).toBe(200);
       const { rows } = await db().query(`select "lineId" from "report" where "ip" = $1`, [ip]);
       expect(rows).toEqual([{ lineId: realId }]);
     } finally {

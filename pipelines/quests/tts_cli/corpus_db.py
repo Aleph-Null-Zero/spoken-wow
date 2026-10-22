@@ -4,7 +4,7 @@ The site edits lines, records who changed them and keeps what they used to say. 
 that could live in corpus/corpus.json.gz, so it lived in line_override instead: a patch
 table keyed by file, with no history. This moves the corpus itself into Postgres beside
 lore_line and book_line, and turns the committed file into an EXPORT of that table -- the
-same arrangement zones has with tools/voice/manifest.json.
+same arrangement places has with tools/voice/manifest.json.
 
 WHAT DOES NOT CHANGE: producing audio and building a sound pack still need no database.
 tts_cli.build reads the committed file exactly as it always has,

@@ -8,7 +8,7 @@ RELEASE
 
 # Packaged addon zips and the data modules built into them. Both projects'
 # Makefiles write here from the repo root; `make quests-package` and
-# `make zones-package` do not yet partition it.
+# `make places-package` do not yet partition it.
 /dist/
 generated
 
@@ -83,10 +83,10 @@ superpowers/
 # Raw MediaWiki API responses. Regenerate with `node pipelines/places/tools/scrape.mjs`.
 /pipelines/places/tools/cache/
 
-# The client's map tables from wago.tools, for `make books-places`.
+# The client's map tables from wago.tools, for `make readables-places`.
 /pipelines/readables/tools/cache/
 
-# The pack's clips, assembled from the take archive by `make zones-sounds`.
+# The pack's clips, assembled from the take archive by `make places-sounds`.
 # No trailing slash: a test client is pointed at this pack by symlinking its audio in,
 # and a trailing slash matches only a real directory, leaving the link to be committed.
 /addons/SpokenZonesAudio/Sounds
@@ -98,7 +98,7 @@ superpowers/
 # The books narration, in the pack folder the client loads. Same rule and same reason as
 # the zones pack above, including the missing trailing slash: a test client is pointed at
 # this pack by symlinking it, and a trailing slash matches only a real directory, leaving
-# the link to be committed. Filled by `make books-pull-history && make books-sounds`.
+# the link to be committed. Filled by `make readables-pull-history && make readables-sounds`.
 /addons/SpokenBooksAudio/Sounds
 
 # Every books take, pulled from the droplet.

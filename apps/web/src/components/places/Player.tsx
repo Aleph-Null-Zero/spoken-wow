@@ -6,7 +6,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import type { ResultLine } from "@/lib/places/search";
 
 /**
- * The zones section's half of the player: which clip a line plays, and what to call it.
+ * The places section's half of the player: which clip a line plays, and what to call it.
  *
  * Everything else - the transport, the scrubber, the keyboard element - is AudioPlayer,
  * shared with quests.
@@ -31,13 +31,13 @@ export function Player({ line, version, audioRef }: Props) {
     <AudioPlayer
       audioRef={audioRef}
       src={
-        playable ? withLang(lang, `/api/zones/audio/${line.file}.mp3${query.size ? `?${query}` : ""}`) : undefined
+        playable ? withLang(lang, `/api/places/audio/${line.file}.mp3${query.size ? `?${query}` : ""}`) : undefined
       }
       title={line?.name ?? null}
       meta={line?.id}
       subtitle={line?.text}
       downloadName={line ? `${line.file.replace(/\//g, "-")}.mp3` : undefined}
-      // Zones records the duration on the take, so the total is known before the file loads.
+      // Places records the duration on the take, so the total is known before the file loads.
       totalHint={line?.take?.durationSec ?? undefined}
     />
   );

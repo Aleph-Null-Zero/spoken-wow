@@ -1,7 +1,7 @@
 ---
 curseforge: 1723285
 release: books-audio-ruRU
-section: books
+section: readables
 lang: ruRU
 version: 2.0.0
 slug: spoken-russian-audio-readables

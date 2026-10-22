@@ -1,7 +1,7 @@
-// The zones lore catalogue, built from `lore_line`.
+// The places lore catalogue, built from `lore_line`.
 //
 // SERVER ONLY. The database is the corpus; addons/Spoken_Places/Data/enUS/*.lua is an
-// export of it (`make zones-lore-export`, checked by `make zones-lore-check`), so the app
+// export of it (`make places-lore-export`, checked by `make places-lore-check`), so the app
 // reads the table and never the files. Reading the Lua here would mean the explorer showed
 // whatever was last exported and committed, and -- because a line only reaches the Lua
 // through an export -- would let it list lines that cannot be saved.
@@ -137,7 +137,7 @@ export class CorpusEmpty extends Error {
   constructor(lang: Lang = BASE_LANG) {
     super(
       lang === BASE_LANG
-        ? "lore_line holds no English lines -- seed it with: make zones-lore-import " +
+        ? "lore_line holds no English lines -- seed it with: make places-lore-import " +
             "(and check DATABASE_URL points at the database you mean)"
         : `lore_line holds no ${lang} lines yet`,
     );
@@ -185,8 +185,8 @@ export function isCorpusEmpty(error: unknown): boolean {
  * and a deploy restarts the process.
  *
  */
-const catalogueKey = Symbol.for("spoken.zones-catalogue.by-lang");
-const byPathKey = Symbol.for("spoken.zones-by-path.by-lang");
+const catalogueKey = Symbol.for("spoken.places-catalogue.by-lang");
+const byPathKey = Symbol.for("spoken.places-by-path.by-lang");
 
 /** What one language's lore rows are, as one comparable value. See the note above. */
 async function stampOf(lang: Lang = BASE_LANG): Promise<string> {
@@ -333,19 +333,19 @@ export async function loadContext(
   seesMadeBy = false,
 ): Promise<SearchContext> {
   const [takeRows, reportRows, dirt] = await Promise.all([
-    liveTakes("zones", lang),
+    liveTakes("places", lang),
     // Grouped in the database rather than counted here: the resolved rows are the ones
     // that accumulate, and there is no reason to carry them across the wire to drop them.
     // `lineId is not null` excludes a report about the project, which belongs to no line.
     query<{ lineId: string; open: number }>(
       `select "lineId", count(*)::int as "open"
          from "report"
-        where "source" = 'zones' and "status" = 'open' and "lineId" is not null
+        where "source" = 'places' and "status" = 'open' and "lineId" is not null
           and "lang" = $1
         group by "lineId"`,
       [lang],
     ),
-    loadDirtyContext("zones", lang),
+    loadDirtyContext("places", lang),
   ]);
 
   return {

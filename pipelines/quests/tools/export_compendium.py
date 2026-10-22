@@ -7,7 +7,7 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - The quests are the corpus's (corpus/corpus.json.gz): the ones the voice packs were made from.
 - Where: the zone the quest belongs to, as the quest log files it (QuestSortID: an AreaTable
   zone, or a dungeon, which counts as the zone its entrance is in), else where its giver stands
-  (the corpus's spawns): the area the server's own map files put the point in, as the books'
+  (the corpus's spawns): the area the server's own map files put the point in, as the readables'
   places have it (area_reader; COMPENDIUM_MAPS, the repack's maps folder), else the smallest zone
   rectangle around it. A quest of a class, a profession or a season is filed under that
   instead (a negative QuestSortID), named as the client names it, in every language.

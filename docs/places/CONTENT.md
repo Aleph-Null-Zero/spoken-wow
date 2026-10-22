@@ -15,10 +15,10 @@ An area with a wiki page. The wiki lists an area under `Category:<Zone> subzones
    `aliases` there settle a category that lists more than the zone's areas.
 2. `node pipelines/places/tools/scrape-subzones.mjs --list <uiMapID>` shows what the category holds.
 3. Scrape it with `DATABASE_URL` set. A run limited to one zone (`--zone <uiMapID>`) records into
-   the database, and writes nothing at all without one. Then run `make zones-lore-export` and
+   the database, and writes nothing at all without one. Then run `make places-lore-export` and
    commit the diff under `addons/Spoken_Places/Data/`.
 4. If the page is long, rewrite it with Claude first (`rewrite-lore.mjs`, which spends credits).
-5. Run `make zones-check`, then the voice steps below if the place should be read aloud.
+5. Run `make places-check`, then the voice steps below if the place should be read aloud.
 
 An area the client has and the wiki does not. It needs a row on the site with origin
 `discovered` and empty text. The export ships such a row as a `pending = true` entry, so the tab
@@ -39,12 +39,12 @@ instance map, with `zone` (the zone of its entrance) and, if it has a story, `st
 entry in `addons/Spoken_Places/Data/AreaZones.lua` instead.
 
 A place only Forever has, or names differently. Add it to `seed/forever-places.json` with the
-reason, then `make zones-forever-areas`.
+reason, then `make places-forever-areas`.
 
 ## Adding a picture
 
 Put the chosen picture's `- new.png` and `- old.<ext>` in the choices folder under the place's
-folder, then `make zones-pictures CHOICES=<folder>`. Add a `CROPS` entry for a picture whose best
+folder, then `make places-pictures CHOICES=<folder>`. Add a `CROPS` entry for a picture whose best
 2:1 band is not where the detail is. See [PICTURES.md](PICTURES.md). Look at the result in the game,
 credit anything new in `THIRD_PARTY.md`, and restart the client to see a new texture.
 
@@ -57,13 +57,13 @@ Text. The stories are written on the site in that language, and the interface st
 
 1. Add the language to `pipelines/lib/locales.mjs` and the same list in `Language.lua`
    (`validate.mjs` fails when they differ).
-2. For a language a client runs in, `make zones-aliases` builds `Data/<locale>/Aliases.lua`.
-   `make zones-lore-import-names LOCALE=<code>` names the places on the site.
-3. Translate the lines on the site, then `make zones-lore-export`.
+2. For a language a client runs in, `make places-aliases` builds `Data/<locale>/Aliases.lua`.
+   `make places-lore-import-names LOCALE=<code>` names the places on the site.
+3. Translate the lines on the site, then `make places-lore-export`.
 4. List the new data files and `Locale/<code>.lua` in `Spoken_Places.toc` in the order
    `validate.mjs` checks.
-5. `make zones-languages`. The language is offered once it is ready.
-6. `make zones-check` and `luajit tests/lua/locale_parity_test.lua`. Check the strings fit with
+5. `make places-languages`. The language is offered once it is ready.
+6. `make places-check` and `luajit tests/lua/locale_parity_test.lua`. Check the strings fit with
    `luajit tests/lua/settings_fit_test.lua <code>`.
 
 Voice. Cut the takes on the site, then follow "Languages" in [VOICE.md](VOICE.md). Add the
@@ -82,7 +82,7 @@ greps answer each part from the data.
 | Areas the client has and the lore does not | Names in `seed/era-areas.json` and `seed/camelot-areas.json` whose keys are in no Subzones file. `/spp debug` prints the name and key of the area the character stands in. |
 | Dungeons with no card | Entries in `pipelines/lib/dungeons.json` without `story`. |
 | Places with no picture | Zone and area keys in the lore and not in `Data/Pictures.lua`. |
-| Lines with no voice | `node pipelines/places/tools/voice/generate.mjs --missing --list` (per language with `SPOKEN_ZONES_LANG`). |
+| Lines with no voice | `node pipelines/places/tools/voice/generate.mjs --missing --list` (per language with `SPOKEN_PLACES_LANG`). |
 | Lines whose voice is out of date | `generate.mjs --stale --list`. |
-| Languages not finished | `make zones-languages`, then the counts in `Data/Languages.lua`. `check-strings.mjs` reports the interface strings. |
+| Languages not finished | `make places-languages`, then the counts in `Data/Languages.lua`. `check-strings.mjs` reports the interface strings. |
 | Zones with no icon of their own | `ZONE_ICONS` in `addons/Spoken/API.lua`. A map with no icon takes its parent's. A dungeon card uses a key icon. |

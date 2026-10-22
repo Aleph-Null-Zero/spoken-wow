@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { announcement } from "./announce.mjs";
-import { sectionFolder, SECTIONS } from "./packs.mjs";
+import { SECTIONS } from "./packs.mjs";
 
 // A repo in a temp directory: publishers/ pages as [group, file, frontmatter], and one
 // CHANGELOG.md in the section's docs folder per entry of `changelogs`.
@@ -17,8 +17,8 @@ function repo(pages, changelogs) {
     writeFileSync(join(dir, "publishers", group, file), `---\n${lines.join("\n")}\n---\n\nBody.\n`);
   }
   for (const [section, text] of Object.entries(changelogs)) {
-    mkdirSync(join(dir, "docs", sectionFolder(section)), { recursive: true });
-    writeFileSync(join(dir, "docs", sectionFolder(section), "CHANGELOG.md"), text);
+    mkdirSync(join(dir, "docs", section), { recursive: true });
+    writeFileSync(join(dir, "docs", section, "CHANGELOG.md"), text);
   }
   const dirs = { publishersDir: join(dir, "publishers"), docsDir: join(dir, "docs") };
   return (tag) => announcement(tag, dirs);
@@ -26,9 +26,9 @@ function repo(pages, changelogs) {
 
 const pages = [
   ["zones", "addon.md", { slug: "spoken-zones", name: "Spoken Zones" }],
-  ["zones", "a.md", { section: "zones", lang: "enUS", release: "zones-audio",
+  ["zones", "a.md", { section: "places", lang: "enUS", release: "zones-audio",
     slug: "spoken-audio-places", name: "Spoken Zones Audio" }],
-  ["zones", "b.md", { section: "zones", lang: "frFR", version: "2.0.0", release: "zones-audio-frFR",
+  ["zones", "b.md", { section: "places", lang: "frFR", version: "2.0.0", release: "zones-audio-frFR",
     slug: "spoken-french-audio-places", name: "Spoken Zones Audio: French" }],
   ["quests", "player.md", { slug: "spoken-quests", name: "Spoken Quests" }],
   ["quests", "h.md", { section: "quests", lang: "enUS", pack: "horde", release: "quests-audio-horde",
@@ -38,7 +38,7 @@ const pages = [
   ["spoken", "spoken.md", { slug: "spoken", name: "Spoken" }],
 ];
 
-const zones = `# Changelog
+const places = `# Changelog
 
 ## 2.0.1 — audio — 2026-09-18
 
@@ -75,7 +75,7 @@ const spoken = `## 3.5.1 — 2026-10-19
 - Spoken notes.
 `;
 
-const run = repo(pages, { zones, quests, spoken });
+const run = repo(pages, { places, quests, spoken });
 
 test("an addon takes the store page's name and its own heading, not its audio's", () => {
   assert.deepEqual(run("zones/v2.0.1"), { name: "Spoken Zones", version: "2.0.1", notes: "- Addon notes." });
@@ -111,6 +111,6 @@ test("a tag with no store page behind it is skipped", () => {
 test("every section's changelog is where the release scripts look", () => {
   const docs = join(import.meta.dirname, "../../docs");
   for (const section of ["spoken", ...SECTIONS]) {
-    assert.ok(existsSync(join(docs, sectionFolder(section), "CHANGELOG.md")), section);
+    assert.ok(existsSync(join(docs, section, "CHANGELOG.md")), section);
   }
 });

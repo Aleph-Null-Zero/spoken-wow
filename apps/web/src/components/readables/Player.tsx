@@ -6,10 +6,10 @@ import AudioPlayer from "@/components/AudioPlayer";
 import type { ResultLine } from "@/lib/readables/search";
 
 /**
- * The books section's half of the player: which clip a page plays, and what to call it.
+ * The readables section's half of the player: which clip a page plays, and what to call it.
  *
  * Everything else -- the transport, the scrubber, the keyboard element -- is AudioPlayer,
- * shared with quests and zones.
+ * shared with quests and places.
  */
 type Props = {
   line: ResultLine | null;
@@ -31,7 +31,7 @@ export function Player({ line, version, audioRef }: Props) {
     <AudioPlayer
       audioRef={audioRef}
       src={
-        playable ? withLang(lang, `/api/books/audio/${line.file}.mp3${query.size ? `?${query}` : ""}`) : undefined
+        playable ? withLang(lang, `/api/readables/audio/${line.file}.mp3${query.size ? `?${query}` : ""}`) : undefined
       }
       title={
         line === null
@@ -43,7 +43,7 @@ export function Player({ line, version, audioRef }: Props) {
       meta={line?.id}
       subtitle={line?.text}
       downloadName={line ? `${line.title.replace(/\W+/g, "-").toLowerCase()}-${line.key}.mp3` : undefined}
-      // Books records the duration on the take, so the total is known before the file loads.
+      // Readables records the duration on the take, so the total is known before the file loads.
       totalHint={line?.take?.durationSec ?? undefined}
     />
   );

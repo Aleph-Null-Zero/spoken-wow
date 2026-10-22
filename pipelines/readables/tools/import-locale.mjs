@@ -33,7 +33,7 @@ if (info.vmangos === null) {
 const N = info.vmangos;
 
 const url = process.env.DATABASE_URL;
-if (!url) throw new Error("DATABASE_URL is not set -- the books corpus lives in Postgres");
+if (!url) throw new Error("DATABASE_URL is not set -- the readables corpus lives in Postgres");
 const pool = new pg.Pool({ connectionString: url });
 
 const connection = await mysql.createConnection({
@@ -67,7 +67,7 @@ try {
     `select "lineId", "ownerKind", coalesce("ownerIds", '{}') as "ownerIds"
        from "book_page" where "pageTextId" is not null and "aliasOf" is null`,
   );
-  if (extracted.length === 0) throw new Error("book_page holds no extracted pages; run make books-import first");
+  if (extracted.length === 0) throw new Error("book_page holds no extracted pages; run make readables-import first");
   const structure = new Map(extracted.map((row) => [row.lineId, row]));
 
   const [pageRows] = await connection.query(

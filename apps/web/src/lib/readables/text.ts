@@ -7,7 +7,7 @@
  * read, triaged and regenerated, but not actually fixed, which made the report queue a list
  * of things nobody could act on.
  *
- * The zones equivalent (lib/places/lore.ts) is the model, down to the optimistic version
+ * The places equivalent (lib/places/lore.ts) is the model, down to the optimistic version
  * check, and the differences are the two corpora's own:
  *
  *   * A page has one text, where a zone line has a full and a short.
@@ -109,7 +109,7 @@ export async function saveBookText(args: {
       [args.lineId],
     );
     if (!placed[0]) {
-      throw new BookMissing(`${args.lineId} is not a page -- seed the table with: make books-import`);
+      throw new BookMissing(`${args.lineId} is not a page -- seed the table with: make readables-import`);
     }
     if (
       current &&
@@ -170,7 +170,7 @@ export async function saveBookText(args: {
         kind: "text.edited",
         lang,
         actorId: args.editedBy,
-        source: "books",
+        source: "readables",
         subject: args.lineId,
         lineId: args.lineId,
         detail: { version, text, note: args.note?.trim() || null },
@@ -230,7 +230,7 @@ export async function restoreBookText(
         kind: "text.restored",
         lang,
         actorId: by,
-        source: "books",
+        source: "readables",
         subject: lineId,
         lineId,
         detail: { version, from: was[0]?.version ?? null },

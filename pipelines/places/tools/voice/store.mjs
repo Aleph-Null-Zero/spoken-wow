@@ -3,7 +3,7 @@
 // READ-ONLY. generate.mjs, build-lookup.mjs and validate-audio.mjs read the take record
 // through loadManifest here; nothing in this pipeline writes a take. Takes are cut by the
 // site, through lib/takes/commit.ts, which every section shares -- this module used to
-// hold the zones copy of that, and the web app borrowed it.
+// hold the places copy of that, and the web app borrowed it.
 //
 // TWO SOURCES, ONE SHAPE:
 //
@@ -25,12 +25,12 @@ import * as db from "./db.mjs";
 const execFileAsync = promisify(execFile);
 
 // The language whose takes these tools read, and whose pack they build: English unless
-// SPOKEN_ZONES_LANG names another (make passes it as LOCALE=esMX). One per process, because
+// SPOKEN_PLACES_LANG names another (make passes it as LOCALE=esMX). One per process, because
 // everything downstream -- the manifest, Sounds/, the lookup beside it -- is one language's,
 // and a run that mixed two would build a pack whose table names another language's files.
-export const LANG = process.env.SPOKEN_ZONES_LANG || BASE_LOCALE;
+export const LANG = process.env.SPOKEN_PLACES_LANG || BASE_LOCALE;
 if (!CODES.includes(LANG)) {
-  throw new Error(`SPOKEN_ZONES_LANG=${LANG} is not a language (expected one of ${CODES.join(", ")})`);
+  throw new Error(`SPOKEN_PLACES_LANG=${LANG} is not a language (expected one of ${CODES.join(", ")})`);
 }
 
 // The pack being built: English's folder in the tree, or another language's work area under
@@ -39,14 +39,17 @@ if (!CODES.includes(LANG)) {
 export function packDir() {
   return LANG === BASE_LOCALE
     ? join(ROOT, "addons/SpokenZonesAudio")
-    : join(ROOT, "build/zones", LANG);
+    : join(ROOT, "build/places", LANG);
 }
 
-// English's manifest is committed (the droplet points SPOKEN_ZONES_MANIFEST outside the
-// release); another language's is build output beside its clips.
+// English's manifest is committed (the droplet points SPOKEN_PLACES_MANIFEST outside the
+// release); another language's is build output beside its clips. The SPOKEN_ZONES_ names
+// here are the variables' names before the rename, which a droplet whose
+// shared/ecosystem.config.js predates it still sets.
 export function manifestPath() {
   if (LANG !== BASE_LOCALE) return join(packDir(), "manifest.json");
-  return process.env.SPOKEN_ZONES_MANIFEST
+  return process.env.SPOKEN_PLACES_MANIFEST
+    || process.env.SPOKEN_ZONES_MANIFEST
     || join(ROOT, "pipelines/places/tools/voice/manifest.json");
 }
 
@@ -58,7 +61,8 @@ export function soundsDir() {
 //
 // This is the one directory whose loss is permanent.
 export function historyDir() {
-  return process.env.SPOKEN_ZONES_AUDIO_HISTORY
+  return process.env.SPOKEN_PLACES_AUDIO_HISTORY
+    || process.env.SPOKEN_ZONES_AUDIO_HISTORY
     || join(ROOT, "pipelines/places/audio-history");
 }
 
@@ -82,7 +86,7 @@ const TAKE_COLUMNS = [
 // table now, and the two name files by different frozen rules -- quests files carry an
 // extension and are shared by several NPCs, these are extension-less and one per line --
 // so nothing here may read or write a row without saying which corpus it belongs to.
-const SOURCE = "zones";
+const SOURCE = "places";
 
 // Manifest field -> column, for the four the merge renamed. The manifest keys do NOT
 // change: manifest.json is committed, build-lookup.mjs and package-audio.sh read it, and

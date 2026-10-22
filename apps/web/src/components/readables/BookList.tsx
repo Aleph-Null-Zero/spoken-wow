@@ -11,7 +11,7 @@ import type { ResultLine } from "@/lib/readables/search";
  * Same shape as the other two explorers -- fixed layout, a header row, one row per line --
  * with the difference these lines actually have: a page is only half-meaningful without the
  * book around it, so the title and what opens it are written once and span the pages
- * beneath, the way the zones table reads as one zone rather than the same word forty times.
+ * beneath, the way the places table reads as one zone rather than the same word forty times.
  */
 type Props = {
   lines: ResultLine[];

@@ -1,7 +1,7 @@
 ---
 curseforge: 1723273
 release: zones-audio-zhCN
-section: zones
+section: places
 lang: zhCN
 version: 2.0.0
 slug: spoken-chinese-simplified-audio-places

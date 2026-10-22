@@ -7,7 +7,7 @@
 -- is worse than silence, because silence is honest about what is missing.
 --
 -- Globals rather than a private namespace: a data addon cannot reach into SpokenBooks's.
--- Regenerate with:  make books-lookup
+-- Regenerate with:  make readables-lookup
 
 local ADDON_NAME = ...
 

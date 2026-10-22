@@ -1,7 +1,7 @@
 ---
 curseforge: 1712807
 release: zones-audio-esES
-section: zones
+section: places
 lang: esES
 version: 2.0.2
 slug: spoken-spanish-eu-audio-places

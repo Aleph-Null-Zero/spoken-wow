@@ -1,7 +1,7 @@
 ---
 curseforge: 1723252
 release: zones-audio-koKR
-section: zones
+section: places
 lang: koKR
 version: 2.0.0
 slug: spoken-korean-audio-places

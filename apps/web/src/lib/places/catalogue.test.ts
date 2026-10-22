@@ -79,7 +79,7 @@ describe("the catalogue stamp", () => {
     expect(await catalogueStamp()).not.toBe(before);
   });
 
-  /** Nothing in the app deletes, but `make zones-lore-import` and a hand-run scrape can. */
+  /** Nothing in the app deletes, but `make places-lore-import` and a hand-run scrape can. */
   it("moves when a version is deleted", async () => {
     await insert(1, false, "the first text");
     await insert(2, true, "the second text");

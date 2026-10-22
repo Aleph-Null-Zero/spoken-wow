@@ -2,7 +2,7 @@
 curseforge: 1636532
 wago: b6mvD9KP
 release: zones-audio
-section: zones
+section: places
 lang: enUS
 slug: spoken-audio-places
 name: Spoken Audio: Places

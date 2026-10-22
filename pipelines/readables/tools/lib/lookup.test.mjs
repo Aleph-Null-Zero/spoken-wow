@@ -22,7 +22,7 @@ test("an English clip carries no text: Books.lua has the words", () => {
 
 test("another language's is build output, never in English's folder", () => {
   const path = lookupPath("esMX");
-  assert.match(path, /build\/books\/esMX\/Data\/Sounds\.lua$/);
+  assert.match(path, /build\/readables\/esMX\/Data\/Sounds\.lua$/);
   assert.doesNotMatch(path, /addons\//);
 });
 

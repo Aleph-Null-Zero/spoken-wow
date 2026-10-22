@@ -64,7 +64,7 @@ export function LoreDialog({ line, onClose, onSaved }: Props) {
     let cancelled = false;
     const params = new URLSearchParams({ lineId: line.id });
 
-    fetch(withLang(lang, `/api/zones/lore?${params}`))
+    fetch(withLang(lang, `/api/places/lore?${params}`))
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("could not load history"))))
       .then((data: { versions: Version[] }) => {
         if (cancelled) return;
@@ -85,7 +85,7 @@ export function LoreDialog({ line, onClose, onSaved }: Props) {
     setBusy(true);
     setError(null);
 
-    const res = await fetch(withLang(lang, "/api/zones/lore"), {
+    const res = await fetch(withLang(lang, "/api/places/lore"), {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -114,7 +114,7 @@ export function LoreDialog({ line, onClose, onSaved }: Props) {
       setBusy(true);
       setError(null);
 
-      const res = await fetch(withLang(lang, "/api/zones/lore"), {
+      const res = await fetch(withLang(lang, "/api/places/lore"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ lineId: line.id, version }),

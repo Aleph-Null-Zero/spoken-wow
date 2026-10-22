@@ -119,7 +119,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
   //----------------------------------------------------------------------------
 
   // The native history calls rather than the router: nothing on this screen needs the
-  // server for a filter change -- the rows come from /api/books/search -- and Next
+  // server for a filter change -- the rows come from /api/readables/search -- and Next
   // re-renders useSearchParams() from a native history call, so the URL still carries the
   // view without a round trip per keystroke.
   const historyMode = useHistoryMode();
@@ -201,7 +201,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
 
   // Held so a cleared row stays cleared without a refetch that would rebuild a hundred rows
   // to unset one boolean.
-  const { cleared, clear: clearDirty } = useClearDirty("books");
+  const { cleared, clear: clearDirty } = useClearDirty("readables");
 
   // Held in refs so the callbacks below read the current view without being
   // rebuilt on every filter change.
@@ -219,7 +219,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
     const search = new URLSearchParams(filterQuery);
     if (page > 1) search.set("page", String(page));
 
-    fetch(withLang(lang, `/api/books/search?${search}`), { signal: controller.signal })
+    fetch(withLang(lang, `/api/readables/search?${search}`), { signal: controller.signal })
       .then(async (response) => {
         const data = await response.json();
         // 503 with a code, not a crash: "nobody has run the import yet" is a deployment
@@ -243,7 +243,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
   const refetch = useCallback(() => {
     const search = new URLSearchParams(filterQueryRef.current);
     if (pageRef.current > 1) search.set("page", String(pageRef.current));
-    fetch(withLang(lang, `/api/books/search?${search}`))
+    fetch(withLang(lang, `/api/readables/search?${search}`))
       .then((response) => response.json())
       .then((data: SearchResult) => setResult(data))
       .catch(() => {});
@@ -256,7 +256,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
   const refreshRows = useCallback(
     async (ids: string[]) => {
       const fresh = await fetchRows<ResultLine>(
-        (id) => withLang(lang, `/api/books/search?${new URLSearchParams({ line: id })}`),
+        (id) => withLang(lang, `/api/readables/search?${new URLSearchParams({ line: id })}`),
         ids,
       );
       setResult((current) =>
@@ -289,7 +289,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
     (line: ResultLine) => {
       setRowStates((state) => ({ ...state, [line.id]: { phase: "busy" } }));
 
-      fetch(withLang(lang, "/api/books/regenerate"), {
+      fetch(withLang(lang, "/api/readables/regenerate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lineId: line.id }),
@@ -348,7 +348,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
    */
   /** Every dirty page the current filter matches, not just this screen's. */
   const clearAllDirty = useCallback(() => {
-    fetch(withLang(lang, `/api/books/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
+    fetch(withLang(lang, `/api/readables/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
       .then((response) => response.json())
       .then(({ dirtyFiles }: { dirtyFiles?: string[] }) => clearDirty(dirtyFiles ?? []))
       .catch(() => {});
@@ -366,7 +366,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
     const settle = (next: (open: Batch) => Batch) =>
       setPendingBatch((open) => (open && request === batchRequest.current ? next(open) : open));
 
-    fetch(withLang(lang, `/api/books/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
+    fetch(withLang(lang, `/api/readables/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
       .then((response) => response.json())
       .then(({ ids, totalChars }: { ids: string[]; totalChars: number }) => {
         const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
@@ -391,7 +391,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
     setPendingBatch(null);
     setQueueNote(null);
 
-    const queued = await queueBatch({ source: "books", lineIds }, label, lang);
+    const queued = await queueBatch({ source: "readables", lineIds }, label, lang);
 
     if (!queued) {
       // No reason offered because none was given: the route refused for a cause this
@@ -434,7 +434,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
         cursor.current = snapshot.cursor;
         setQueue(snapshot);
         // Only this section's, in this page's language: the queue carries all of them.
-        const mine = snapshot.finished.filter((job) => job.source === "books" && job.lang === lang);
+        const mine = snapshot.finished.filter((job) => job.source === "readables" && job.lang === lang);
         if (mine.length > 0) {
           setVersions((state) => {
             const next = { ...state };
@@ -499,7 +499,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
           recordable={result?.recordable === true}
         />
 
-        {result?.recordable && <RecordingDropZone source="books" onUploaded={refetch} />}
+        {result?.recordable && <RecordingDropZone source="readables" onUploaded={refetch} />}
 
         {/* A line id has no dropdown to sit in - it arrives by link from /reports - so
             without this the list would be narrowed with nothing on the page saying so. */}
@@ -545,7 +545,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
           result && (
             <div aria-busy={loading} className={`transition-opacity ${loading ? "opacity-60" : ""}`}>
               <BookList
-                // Cleared in this session laid over the fetched rows, the way the zones
+                // Cleared in this session laid over the fetched rows, the way the places
                 // explorer lays a rewrite over its own: the search said what was true when it
                 // ran.
                 lines={result.lines.map((line) => {
@@ -648,7 +648,7 @@ export function Explorer({ books }: { books: BookFacet[] }) {
       />
 
       <ReportDialog
-        subject={reportFor && { source: "books", line: reportFor }}
+        subject={reportFor && { source: "readables", line: reportFor }}
         onClose={() => setReportFor(null)}
       />
 

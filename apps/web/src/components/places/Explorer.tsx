@@ -232,7 +232,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
     const search = new URLSearchParams(filterQuery);
     if (page > 1) search.set("page", String(page));
 
-    fetch(withLang(lang, `/api/zones/search?${search}`), { signal: controller.signal })
+    fetch(withLang(lang, `/api/places/search?${search}`), { signal: controller.signal })
       .then((response) => response.json())
       .then((data: SearchResult) => {
         setResult(data);
@@ -251,14 +251,14 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
 
   // Held rather than refetched, for the reason the rewrite overlay is: a search rebuild to
   // unset one boolean is wasteful.
-  const { cleared, clear: clearDirty } = useClearDirty("zones");
+  const { cleared, clear: clearDirty } = useClearDirty("places");
 
   // The fetched row, with any rewrite made since it was fetched laid over the top. A
   // rewritten line is stale by definition -- the text no longer hashes to what was spoken
   // -- so the state moves with the text rather than waiting for a refetch.
   /** Every dirty line the current filter matches, not just this page's. */
   const clearAllDirty = useCallback(() => {
-    fetch(withLang(lang, `/api/zones/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
+    fetch(withLang(lang, `/api/places/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
       .then((response) => response.json())
       .then(({ dirtyFiles }: { dirtyFiles?: string[] }) => clearDirty(dirtyFiles ?? []))
       .catch(() => {});
@@ -293,7 +293,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   const refetch = useCallback(() => {
     const search = new URLSearchParams(filterQueryRef.current);
     if (pageRef.current > 1) search.set("page", String(pageRef.current));
-    fetch(withLang(lang, `/api/zones/search?${search}`))
+    fetch(withLang(lang, `/api/places/search?${search}`))
       .then((response) => response.json())
       .then((data: SearchResult) => setResult(data))
       .catch(() => {});
@@ -306,7 +306,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   const refreshRows = useCallback(
     async (ids: string[]) => {
       const fresh = await fetchRows<ResultLine>(
-        (id) => withLang(lang, `/api/zones/search?${new URLSearchParams({ line: id })}`),
+        (id) => withLang(lang, `/api/places/search?${new URLSearchParams({ line: id })}`),
         ids,
       );
       setResult((current) =>
@@ -335,7 +335,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
     (line: ResultLine) => {
       setRowStates((current) => ({ ...current, [line.id]: { phase: "busy" } }));
 
-      fetch(withLang(lang, "/api/zones/regenerate"), {
+      fetch(withLang(lang, "/api/places/regenerate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lineId: line.id }),
@@ -406,7 +406,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
     const settle = (next: (open: Batch) => Batch) =>
       setPendingBatch((open) => (open && request === batchRequest.current ? next(open) : open));
 
-    fetch(withLang(lang, `/api/zones/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
+    fetch(withLang(lang, `/api/places/search?${new URLSearchParams(filterQueryRef.current)}&ids=1`))
       .then((response) => response.json())
       .then(({ ids, totalChars }: { ids: string[]; totalChars: number }) => {
         const rate = status?.rate ?? { rate: LIST_RATE, samples: 0, modelId: null };
@@ -438,7 +438,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
     setPendingBatch(null);
     setQueueNote(null);
 
-    const queued = await queueBatch({ source: "zones", lineIds }, pendingBatch.label, lang);
+    const queued = await queueBatch({ source: "places", lineIds }, pendingBatch.label, lang);
 
     if (!queued) {
       // No reason offered because none was given: the route refused for a cause this
@@ -486,9 +486,9 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
         cursor.current = snapshot.cursor;
         setQueue(snapshot);
 
-        // Only this section's finished jobs. The queue carries both, and a zones page told
+        // Only this section's finished jobs. The queue carries both, and a places page told
         // that a quests file is now at version 3 would look for a line it does not have.
-        const mine = snapshot.finished.filter((job) => job.source === "zones" && job.lang === lang);
+        const mine = snapshot.finished.filter((job) => job.source === "places" && job.lang === lang);
         if (mine.length > 0) {
           setVersions((current) => {
             const next = { ...current };
@@ -613,7 +613,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
           onClearAll={() => writeQuery(new URLSearchParams())}
         />
 
-        {showRecordings && <RecordingDropZone source="zones" onUploaded={refetch} />}
+        {showRecordings && <RecordingDropZone source="places" onUploaded={refetch} />}
 
         {/* A line id has no dropdown to sit in - it arrives by link from /reports - so
             without this the list would be narrowed with nothing on the page saying so. */}
@@ -778,7 +778,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
       />
 
       <ReportDialog
-        subject={reportFor && { source: "zones", line: reportFor }}
+        subject={reportFor && { source: "places", line: reportFor }}
         onClose={() => setReportFor(null)}
       />
 

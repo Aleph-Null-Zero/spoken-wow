@@ -35,7 +35,7 @@ export type JobState = "pending" | "running" | "done" | "failed" | "cancelled";
  * One unit of work, in terms both sections can express.
  *
  * npcName and preview are denormalised from whatever corpus this came from, so that polling
- * every two seconds - and the worker itself - never need to load one. The zones side has no
+ * every two seconds - and the worker itself - never need to load one. The places side has no
  * NPC and puts the zone's name there; what the column is for is a label the panel can show.
  */
 export type QueueEntry = {
@@ -436,7 +436,7 @@ function stopEvents(
           {
             kind: "queue.stopped",
             lang,
-            // A press can stop quests and zones batches alike; the row then names neither.
+            // A press can stop quests and places batches alike; the row then names neither.
             source: sources.size === 1 ? batches[0].source : null,
             actorId,
             detail: {

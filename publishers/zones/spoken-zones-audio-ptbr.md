@@ -1,7 +1,7 @@
 ---
 curseforge: 1713138
 release: zones-audio-ptBR
-section: zones
+section: places
 lang: ptBR
 version: 2.0.0
 slug: spoken-portuguese-audio-places

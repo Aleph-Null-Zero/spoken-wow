@@ -76,7 +76,7 @@ jobs:
       # Substitution into a fixed template needs no template engine anyway, and this keeps the
       # engine's one useful behaviour: an unfilled placeholder is an error, not empty text.
       # Only the quests addon has a template. Spoken's notes are its changelog section (the next
-      # step); zones and books take GitHub's generated notes.
+      # step); places and readables take GitHub's generated notes.
       - name: Render the release notes
         if: steps.target.outputs.name == 'quests'
         env:

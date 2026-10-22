@@ -1,20 +1,21 @@
-# AGENTS.md: books
+# AGENTS.md: Readables
 
-The root `AGENTS.md` applies. This file covers only the books section. `docs/readables/README.md`
+The root `AGENTS.md` applies. This file covers only the Readables section. `docs/readables/README.md`
 is the detailed reference.
 
-## Players see Readables; the code says books
+## Players see Readables; the addon says books
 
 The module is Readables wherever a player reads its name, and its folder is `Spoken_Readables`.
-The internal names stay books (the README lists them). The ids, saved variables and pack folder
-among them are frozen: renaming one loses players' settings or re-ships a pack.
+The site, database, pipelines and folders say readables; the addon's internal names stay books
+(the README lists them). The ids, saved variables and pack folder among them are frozen:
+renaming one loses players' settings or re-ships a pack.
 
 ## The table is the corpus; the Lua is an export of it
 
 `book_page` and `book_line` are what the site reads and what an editor changes.
 `addons/Spoken_Readables/Data/Books.lua` is generated from them and committed, so the addon builds
 on a clone with no Postgres. Nothing on the site may read that file, because it shows the last
-export rather than the table. Building the sound pack does need the database (`books-lookup` reads `DATABASE_URL`).
+export rather than the table. Building the sound pack does need the database (`readables-lookup` reads `DATABASE_URL`).
 
 ## A page exists in any language
 
@@ -22,7 +23,7 @@ export rather than the table. Building the sound pack does need the database (`b
 holds each language's words for it, so a page may exist in Spanish and nowhere else. Never read
 a page's place from `book_line`.
 
-A books contribution names no page, so `apps/web/src/lib/contributions/book-match.ts` finds it:
+A readables contribution names no page, so `apps/web/src/lib/contributions/book-match.ts` finds it:
 by the item or object it was read from, then the same words in any language, then the title and
 page number. Two candidates are never guessed between; a moderator picks. A page nothing in the
 corpus has is minted on accept as `b:n{uuid}`, in a minted `n{uuid}` book when it starts one,
@@ -56,7 +57,7 @@ is skipped. Otherwise Spoken would read the player's own post aloud.
 
 ## Packs
 
-`make books-full-release` chains sync, pull-live and package-audio, then asks once before
+`make readables-full-release` chains sync, pull-live and package-audio, then asks once before
 uploading. `package-audio` runs `check-synced`, `sounds` and `lookup` itself.
 `addons/SpokenBooksAudio/Data/Sounds.lua` is regenerated locally and committed. The site no
 longer writes it.

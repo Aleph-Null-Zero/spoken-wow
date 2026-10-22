@@ -3,7 +3,7 @@
 // Two files, in order: the repo root's .env holds what all three pipelines and the site
 // share -- the CurseForge token, the ElevenLabs key, the vmangos MySQL, DATABASE_URL --
 // and a pipeline's own .env holds only what is its alone. Before this, each pipeline
-// carried its own copy of the shared half; the copies drifted (zones held a stale
+// carried its own copy of the shared half; the copies drifted (places held a stale
 // ElevenLabs key) and scripts/readables/release.sh had to search all three .env files in turn
 // to find the one CurseForge token.
 //
@@ -57,7 +57,7 @@ async function read(paths) {
  * Copy the .env files into process.env.
  *
  * An already-set variable wins by default, so an explicit `DATABASE_URL= make ...` still
- * means "use the files" -- make/zones.mk's VOICE_DB depends on that, and says so.
+ * means "use the files" -- make/places.mk's VOICE_DB depends on that, and says so.
  *
  * `override` names the variables the file wins for instead. It exists for the generic
  * names -- MYSQL_PASSWORD and its four neighbours -- that other projects export into the

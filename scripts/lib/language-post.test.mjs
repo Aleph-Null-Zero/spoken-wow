@@ -9,11 +9,11 @@ const url = (tag) => `https://github.com/o/r/releases/tag/${tag}`;
 const release = (tag, extra = {}) => ({ tag_name: tag, html_url: url(tag), draft: false, prerelease: false, ...extra });
 
 const packs = [
-  { section: "zones", lang: "deDE", release: "zones-audio-deDE", github: true },
+  { section: "places", lang: "deDE", release: "zones-audio-deDE", github: true },
   { section: "quests", lang: "deDE", release: "quests-audio-deDE", github: true },
-  { section: "books", lang: "deDE", release: "books-audio-deDE", github: true },
-  { section: "zones", lang: "frFR", release: "zones-audio-frFR", github: true },
-  { section: "zones", lang: "enUS", release: "zones-audio", github: true },
+  { section: "readables", lang: "deDE", release: "books-audio-deDE", github: true },
+  { section: "places", lang: "frFR", release: "zones-audio-frFR", github: true },
+  { section: "places", lang: "enUS", release: "zones-audio", github: true },
   { section: "quests", lang: "enUS", release: "quests-audio-horde", github: false },
 ];
 
@@ -52,7 +52,7 @@ test("the newest shipped release wins, by version rather than by order", () => {
   assert.deepEqual(latest, { "zones-audio-deDE": { tag: "zones-audio-deDE/v2.10.0", url: url("zones-audio-deDE/v2.10.0") } });
 });
 
-test("the post lists quests, zones, books and leaves out a pack never released", () => {
+test("the post lists quests, places, readables and leaves out a pack never released", () => {
   const de = packs.filter((p) => p.lang === "deDE");
   const latest = latestReleases(
     [release("zones-audio-deDE/v2.1.0"), release("quests-audio-deDE/v0.0.4")],
@@ -61,7 +61,7 @@ test("the post lists quests, zones, books and leaves out a pack never released",
   assert.equal(postText(de, latest), [
     "Audio packs:",
     `- Quests: ${url("quests-audio-deDE/v0.0.4")}`,
-    `- Zones: ${url("zones-audio-deDE/v2.1.0")}`,
+    `- Places: ${url("zones-audio-deDE/v2.1.0")}`,
   ].join("\n"));
   assert.equal(postText(de, {}), null);
 });

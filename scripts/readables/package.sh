@@ -7,7 +7,7 @@
 # The version comes from `## Version:` in the .toc, so bumping the addon and naming the zip
 # stay one edit rather than two.
 #
-# The sound pack is packaged by make/books.mk instead. Its zip is stored rather than
+# The sound pack is packaged by make/readables.mk instead. Its zip is stored rather than
 # deflated and is built out of addons/ directly, because half a gigabyte of mp3 through a
 # staging copy is a minute of disk traffic that buys nothing.
 set -euo pipefail

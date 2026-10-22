@@ -234,7 +234,7 @@ export function PageRow({
           // number is the question, and "which other numbers are there" is what a click
           // asks. Only where there is audio to have takes of.
           <TakeSelector
-            source="books"
+            source="readables"
             file={line.file}
             version={line.take?.version ?? null}
             canRestore={canRegenerate}
@@ -254,7 +254,7 @@ export function PageRow({
       {showMadeBy && <MadeByCell madeBy={line.madeBy} />}
       {showRecordings && (
         <ActorTakeCell
-          source="books"
+          source="readables"
           file={line.file}
           recording={line.recording ?? null}
           onChanged={() => onRecordingChanged(line)}
@@ -269,11 +269,11 @@ export function PageRow({
           column keeps its width whatever a row happens to offer. */}
       <td className="py-1.5 pr-1 pl-2">
         <span className="flex items-center justify-end gap-1 whitespace-nowrap">
-        {/* The same chip the quests and zones rows carry; ReportsBadge says why. Books has
+        {/* The same chip the quests and places rows carry; ReportsBadge says why. Readables has
             no separate triage flag: the editors who regenerate a page are the ones who
             answer for it. */}
         <ReportsBadge
-          source="books"
+          source="readables"
           lineId={line.id}
           count={line.reportsOpen}
           canTriage={canEdit}

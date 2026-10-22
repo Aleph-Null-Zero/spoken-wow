@@ -1,7 +1,11 @@
 # AGENTS.md: Places
 
 The root `AGENTS.md` applies, including its credit, data and versioning rules. This file covers
-only the Places section, whose make targets, source key and addon internals still say `zones`. Before changing a part, read its file:
+only the Places section. Its folders, make targets, database source, site routes and
+`SPOKEN_PLACES_*` variables say places; the addon's internals (its `zones` source and part key,
+the `SpokenZones*` globals and saved variables), the `SpokenZonesAudio` pack folders, the
+`zones-audio` tags, the `publishers/zones/` pages and the `z:`/`s:` line ids still say zones.
+Before changing a part, read its file:
 
 - the module, its settings, languages and voice packs: [ADDON.md](ADDON.md)
 - the Places tab, the map panel and the area and dungeon tables: [COMPENDIUM.md](COMPENDIUM.md)
@@ -15,15 +19,15 @@ only the Places section, whose make targets, source key and addon internals stil
 Fix the source and regenerate. Never hand-edit the output.
 
 - `addons/Spoken_Places/Data/<lang>/Zones.lua` and `Subzones.lua` come from the `lore_line` table.
-  Edit lore through the site or re-scrape, run `make zones-lore-export`, and commit the diff.
-  `make zones-lore-check` confirms the files match the database.
-- `Data/<lang>/Aliases.lua` (`make zones-aliases`), `Data/Languages.lua` (`make zones-languages`),
-  `Data/Pictures.lua` (`make zones-pictures`) and `Data/ForeverAreas.lua`
-  (`make zones-forever-areas`) come from their own build tools. Run `make zones-languages` after
+  Edit lore through the site or re-scrape, run `make places-lore-export`, and commit the diff.
+  `make places-lore-check` confirms the files match the database.
+- `Data/<lang>/Aliases.lua` (`make places-aliases`), `Data/Languages.lua` (`make places-languages`),
+  `Data/Pictures.lua` (`make places-pictures`) and `Data/ForeverAreas.lua`
+  (`make places-forever-areas`) come from their own build tools. Run `make places-languages` after
   a change to a translation or to the keys of `Locale/enUS.lua`.
 - `addons/Spoken/Data/Dungeons.lua` comes from `pipelines/lib/dungeons.json` (`make dungeons`).
-- `addons/SpokenZonesAudio/Data/Sounds.lua` is the pack's lookup table (`make zones-lookup`).
-- `addons/SpokenZonesAudio/Sounds/` and `build/zones/<lang>/` are assembled by `make zones-sounds`
+- `addons/SpokenZonesAudio/Data/Sounds.lua` is the pack's lookup table (`make places-lookup`).
+- `addons/SpokenZonesAudio/Sounds/` and `build/places/<lang>/` are assembled by `make places-sounds`
   from the live takes. They are not a store.
 
 Kept by hand: `Data/AreaZones.lua`, `pipelines/places/tools/seed/forever-places.json`,
@@ -39,8 +43,8 @@ renamed place keeps its key and gets an alias.
 ## Checks
 
 ```sh
-make zones-check          # validate.mjs, the Lua block check and the locale check
-make zones-validate-audio # manifest, files on disk and lookup table agree
+make places-check          # validate.mjs, the Lua block check and the locale check
+make places-validate-audio # manifest, files on disk and lookup table agree
 make test-player          # the zones_*_test.lua suites among the rest
 make lint                 # what CI gates on
 ```
@@ -57,6 +61,6 @@ make lint                 # what CI gates on
 - The addon accepts a pack whose `Sounds.lua` `version` equals `PACK_FORMAT` in
   `addons/Spoken_Places/Audio.lua`. That is a format number, unrelated to either `.toc` version.
   Bump it only when the pack's data shape changes.
-- `make zones-full-release` chains sync, pull-live, package-audio and the upload, and asks
+- `make places-full-release` chains sync, pull-live, package-audio and the upload, and asks
   before uploading.
 - `scripts/places/release.sh` uploads the English pack, or one language's pack with `--lang`.

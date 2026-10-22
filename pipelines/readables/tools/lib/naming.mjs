@@ -13,7 +13,7 @@ export function lineIdFor(pageId) {
 
 const MINTED = /^n[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-/** Store-relative and extension-less, as the zones side names files: '1381', or a minted key. */
+/** Store-relative and extension-less, as the places side names files: '1381', or a minted key. */
 export function fileFor(pageIdOrKey) {
   return String(pageIdOrKey);
 }

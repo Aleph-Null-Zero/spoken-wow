@@ -3,7 +3,7 @@
 //
 //   node tools/lore/import-names.mjs --lang deDE
 //
-// From tools/seed/area-names.json, which `make zones-aliases` builds from the game's
+// From tools/seed/area-names.json, which `make places-aliases` builds from the game's
 // UiMap and AreaTable: the names a client in that language actually shows, zones included.
 // The lore prose has no such source -- nothing in the dump or the client carries it
 // translated -- so it is written on the site, and this only names the places.
@@ -47,13 +47,13 @@ try {
     await readFile(join(ROOT, "pipelines/places/tools/seed/area-names.json"), "utf8"),
   );
   const names = seed.names[lang];
-  if (!names) throw new Error(`area-names.json has no ${lang}; run make zones-aliases`);
+  if (!names) throw new Error(`area-names.json has no ${lang}; run make places-aliases`);
   const { rows: lines } = await query(
     `select "lineId", "kind", "mapID", "key" from "lore_line"
       where "lang" = $1 and "isCurrent"`,
     [BASE_LOCALE],
   );
-  if (lines.length === 0) throw new Error("lore_line holds no English lines; run make zones-lore-import");
+  if (lines.length === 0) throw new Error("lore_line holds no English lines; run make places-lore-import");
 
   // What is live, read once and decided in memory: a re-run that changes nothing is one
   // query, not three per place.

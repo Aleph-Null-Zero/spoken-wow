@@ -2,7 +2,7 @@
 curseforge: 1701520
 wago: qGZOrvNd
 release: books-audio
-section: books
+section: readables
 lang: enUS
 slug: spoken-audio-readables
 name: Spoken Audio: Readables

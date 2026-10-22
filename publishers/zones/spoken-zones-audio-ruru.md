@@ -1,7 +1,7 @@
 ---
 curseforge: 1713143
 release: zones-audio-ruRU
-section: zones
+section: places
 lang: ruRU
 version: 2.0.0
 slug: spoken-russian-audio-places

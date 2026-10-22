@@ -42,17 +42,17 @@ export async function absorb(client, { from, to }) {
     [from, to],
   );
   for (const table of ["take", "report", "recording"]) {
-    await client.query(`update "${table}" set "lineId" = $2 where "lineId" = $1 and "source" = 'books'`, [from, to]);
+    await client.query(`update "${table}" set "lineId" = $2 where "lineId" = $1 and "source" = 'readables'`, [from, to]);
   }
   // Both pages may have had a current take in one language; the newer stays current.
   await client.query(
     `update "take" set "isCurrent" = false
-      where "lineId" = $1 and "source" = 'books' and "isCurrent"
+      where "lineId" = $1 and "source" = 'readables' and "isCurrent"
         and "id" <> (select max(t."id") from "take" t
-                      where t."lineId" = $1 and t."source" = 'books' and t."isCurrent" and t."lang" = "take"."lang")`,
+                      where t."lineId" = $1 and t."source" = 'readables' and t."isCurrent" and t."lang" = "take"."lang")`,
     [to],
   );
-  await client.query(`update "regeneration_job" set "lineId" = $2 where "lineId" = $1 and "source" = 'books'`, [from, to]);
+  await client.query(`update "regeneration_job" set "lineId" = $2 where "lineId" = $1 and "source" = 'readables'`, [from, to]);
   await client.query(`update "contribution" set "matchLineId" = $2 where "matchLineId" = $1`, [from, to]);
   await client.query(`update "book_page" set "aliasOf" = $2 where "lineId" = $1`, [from, to]);
   // A moderator's "this is a page of that book", once the minted book has no live page left,

@@ -84,8 +84,8 @@ export async function exportManifest({ check = false } = {}) {
     );
   }
 
-  // A language's directory may not exist yet -- `make zones-lookup LOCALE=xx` can run before
-  // `make zones-sounds LOCALE=xx` has staged build/zones/<lang>/ -- so the write below would
+  // A language's directory may not exist yet -- `make places-lookup LOCALE=xx` can run before
+  // `make places-sounds LOCALE=xx` has staged build/places/<lang>/ -- so the write below would
   // otherwise die with ENOENT before the manifest could ever be exported.
   await mkdir(dirname(path), { recursive: true });
 

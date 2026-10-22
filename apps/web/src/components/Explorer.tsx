@@ -680,7 +680,7 @@ export default function Explorer({ facets }: { facets: Facets }) {
    * Clear every dirty file the current search matches, not just this page's.
    *
    * The search route answers `ids=1` with the dirty files of the whole match set, the same
-   * question the zones explorer asks its own route -- so nothing is cleared that the server
+   * question the places explorer asks its own route -- so nothing is cleared that the server
    * would not have called dirty.
    */
   const clearAllDirty = useCallback(async () => {

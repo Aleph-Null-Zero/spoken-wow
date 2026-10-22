@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Builds the Spoken Zones sound pack.
+# Builds the Places sound pack.
 #
 #   ./scripts/package-audio.sh                 # the pack
 #   ./scripts/package-audio.sh standard        # just the 64kbps one
 #   ./scripts/package-audio.sh high            # just the 128kbps one
 #   LOCALE=esMX ./scripts/package-audio.sh     # another language's pack
 #
-# A language other than English is built from build/zones/<lang> -- staged there by
-# `make zones-sounds LOCALE=..` and `make zones-lookup LOCALE=..` -- into a folder named and
+# A language other than English is built from build/places/<lang> -- staged there by
+# `make places-sounds LOCALE=..` and `make places-lookup LOCALE=..` -- into a folder named and
 # versioned by its store page (scripts/lib/packs.mjs), at the one VBR tier every language ships.
 #
 # Two tiers exist because this is a ~790MB download at the source bitrate, which
@@ -62,12 +62,12 @@ if english; then
   SOUNDS="$SRC/Sounds"
   LOOKUP="$SRC/Data/Sounds.lua"
 else
-  # Staged by `make zones-sounds LOCALE=..` and `make zones-lookup LOCALE=..`: build output,
+  # Staged by `make places-sounds LOCALE=..` and `make places-lookup LOCALE=..`: build output,
   # never committed. What this language's pack is called comes from its page.
-  WORK="$REPO/build/zones/$LOCALE"
+  WORK="$REPO/build/places/$LOCALE"
   SOUNDS="$WORK/Sounds"
   LOOKUP="$WORK/Data/Sounds.lua"
-  pack_field() { node "$REPO/scripts/lib/packs.mjs" get zones "$LOCALE" - "$1"; }
+  pack_field() { node "$REPO/scripts/lib/packs.mjs" get places "$LOCALE" - "$1"; }
   PACK_FOLDER="$(pack_field folder)"
   PACK_TITLE="$(pack_field name)"
   PACK_VERSION="$(pack_field version)"
@@ -173,9 +173,9 @@ count="$(find "$SOUNDS" -name '*.mp3' 2>/dev/null | wc -l | tr -d ' ' || true)"
 if [[ "$count" -eq 0 ]]; then
   echo "error: no mp3 files in $SOUNDS" >&2
   if english; then
-    echo "       Generate some first, on the site, then:  make zones-pull-live zones-sounds" >&2
+    echo "       Generate some first, on the site, then:  make places-pull-live places-sounds" >&2
   else
-    echo "       Generate some first, on the site, then:  make zones-pull-live zones-sounds zones-lookup LOCALE=$LOCALE" >&2
+    echo "       Generate some first, on the site, then:  make places-pull-live places-sounds places-lookup LOCALE=$LOCALE" >&2
   fi
   exit 1
 fi
@@ -184,7 +184,7 @@ fi
 # silence in-game rather than erroring, so check it here rather than discovering
 # it after upload.
 echo "checking the lookup table against the files..."
-SPOKEN_ZONES_LANG="$LOCALE" node "$REPO/pipelines/places/tools/voice/validate-audio.mjs"
+SPOKEN_PLACES_LANG="$LOCALE" node "$REPO/pipelines/places/tools/voice/validate-audio.mjs"
 
 # Each tier ships the README for its own CurseForge page, so the description a
 # player read before downloading is the file they end up with.
@@ -235,7 +235,7 @@ for tier in "${tiers[@]}"; do
   # client sees is identical apart from those and the .toc lines rewritten below.
   rsync -a --exclude 'Sounds/' --exclude 'Data/Sounds.lua' --exclude '.DS_Store' "$SRC/" "$staging/$folder/"
   # A language's pack wears the shield with its badge, so it is not mistaken for English's in
-  # the AddOns list. `make zones-icon` makes these from the PNGs beside them.
+  # the AddOns list. `make places-icon` makes these from the PNGs beside them.
   english || cp "$REPO/pipelines/places/assets/spoken-zones-$LOCALE.tga" "$staging/$folder/Textures/AddonIcon.tga"
   mkdir -p "$staging/$folder/Data"
   # -p, not a bare cp: this used to arrive through the rsync -a below before Sounds.lua was

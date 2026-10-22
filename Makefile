@@ -1,6 +1,6 @@
 # Spoken -- the dispatcher.
 #
-# The four projects (quests, zones, books and web) keep their own Makefiles. They share about
+# The four projects (quests, places, readables and web) keep their own Makefiles. They share about
 # thirty target names (help, package, release, pull, sync and the rest) and each target is
 # commented with the failure it exists to prevent, several of them guarding an
 # rsync --delete against audio that cannot be regenerated. Merging them is a
@@ -8,9 +8,9 @@
 # they are dispatched instead and the prefix disambiguates:
 #
 #     make quests-package        ->  make -f make/quests.mk package
-#     make zones-release-dry     ->  make -f make/zones.mk  release-dry
-#     make web-dev               ->  make -f make/web.mk    dev
-#     make books-extract         ->  make -f make/books.mk  extract
+#     make places-release-dry    ->  make -f make/places.mk release-dry
+#     make web-dev               ->  make -f make/web.mk dev
+#     make readables-extract     ->  make -f make/readables.mk extract
 #
 # Every .mk file uses paths relative to the repo root, so they must be run from
 # here -- which is what the pattern rules below guarantee.
@@ -30,9 +30,9 @@ LUA ?= $(shell command -v luajit || command -v lua5.1)
 help: ## Show this help
 	@printf 'Spoken\n\n'
 	@printf '  make quests-<target>   see make/quests.mk  (make quests-help)\n'
-	@printf '  make zones-<target>    see make/zones.mk   (make zones-help)\n'
+	@printf '  make places-<target>   see make/places.mk  (make places-help)\n'
 	@printf '  make web-<target>      see make/web.mk     (make web-help)\n'
-	@printf '  make books-<target>    see make/books.mk   (make books-help)\n\n'
+	@printf '  make readables-<target> see make/readables.mk (make readables-help)\n\n'
 	@printf 'Repo-wide:\n'
 	@grep -E '^[a-z-]+:.*?## ' $(firstword $(MAKEFILE_LIST)) \
 	  | sed 's/:.*## /|/' | awk -F'|' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -40,14 +40,14 @@ help: ## Show this help
 quests-%:
 	@$(MAKE) --no-print-directory -f make/quests.mk $*
 
-zones-%:
-	@$(MAKE) --no-print-directory -f make/zones.mk $*
+places-%:
+	@$(MAKE) --no-print-directory -f make/places.mk $*
 
 web-%:
 	@$(MAKE) --no-print-directory -f make/web.mk $*
 
-books-%:
-	@$(MAKE) --no-print-directory -f make/books.mk $*
+readables-%:
+	@$(MAKE) --no-print-directory -f make/readables.mk $*
 
 test-player: ## Run the addons' Lua tests (needs luajit)
 	@[ -n "$(LUA)" ] || { echo "No luajit found: brew install luajit"; exit 1; }
@@ -204,7 +204,7 @@ descriptions-published: ## Record the current descriptions as pasted into the si
 # Not a target that runs itself -- scripts/character-models.mjs takes the listfile on stdin
 # so this step never pulls 152 MB on its own. Run it by hand when a new race ships.
 
-# The dungeons the quests' and books' exporters file things under, and the one table the addon
+# The dungeons the quests' and readables' exporters file things under, and the one table the addon
 # reads (Spoken/Data/Dungeons.lua), both from pipelines/lib/dungeons.json. Run it after editing
 # that file, then the exporters that read it.
 dungeons: ## Rebuild addons/Spoken/Data/Dungeons.lua from pipelines/lib/dungeons.json and the client's Map table
@@ -235,7 +235,7 @@ define require_section_for_locale
 	fi
 endef
 
-audio-release-dry: ## Show which pack releases would be cut (SECTION=zones LOCALE=esMX to narrow)
+audio-release-dry: ## Show which pack releases would be cut (SECTION=places LOCALE=esMX to narrow)
 	$(require_section_for_locale)
 	@./scripts/audio-github-release.sh --dry-run $(SECTION) $(if $(SECTION),$(LOCALE))
 
@@ -258,10 +258,10 @@ manager-gc-dry: ## Show what manager-gc would delete
 manager-gc: ## Delete channel files no recent manifest needs
 	@node scripts/manager/cli.mjs gc
 
-package-all: ## Build every addon zip: Spoken with its modules, then quests and zones on their own
+package-all: ## Build every addon zip: Spoken with its modules, then quests and places on their own
 	@./scripts/spoken/package.sh
 	@$(MAKE) --no-print-directory -f make/quests.mk package
-	@$(MAKE) --no-print-directory -f make/zones.mk  package
+	@$(MAKE) --no-print-directory -f make/places.mk  package
 
 # Spoken's download: Spoken and its four modules in one zip, each module built by its own
 # packager. No sound packs; scripts/spoken/package.sh says why.

@@ -50,7 +50,7 @@ export type Contribution = {
   /** The NPC a moderator named for an envelope that named none (migration 0048); null otherwise. */
   npcId: number | null;
   npcName: string | null;
-  /** The English page a moderator matched a books contribution to (migration 0059); null until then. */
+  /** The English page a moderator matched a readables contribution to (migration 0059); null until then. */
   pageId: number | null;
   /** A moderator's answer to "which page is this?" (migration 0074): a page, a place in a book, or a new book. */
   matchLineId: string | null;
@@ -77,7 +77,7 @@ export function observationMeta(
 /**
  * Record which NPC speaks a quest contribution whose envelope named none. A no-op, returning
  * null, for a row whose envelope already named one -- the client's own observation stands -- and
- * for a zones or books row, which never has an NPC to name. Returns the updated row.
+ * for a places or readables row, which never has an NPC to name. Returns the updated row.
  *
  * `by` is who answered, for the activity log: the row keeps the answer but not whose it was.
  */
@@ -111,8 +111,8 @@ export async function setContributionNpc(
 export type BookAnswer = { lineId: string } | { bookId: string; pageNumber: number } | { newBook: true } | null;
 
 /**
- * Record which page a books contribution is, or clear the answer with null. A no-op, returning
- * null, for a row that is not books or whose page accept has already written -- that is one-way
+ * Record which page a readables contribution is, or clear the answer with null. A no-op, returning
+ * null, for a row that is not readables or whose page accept has already written -- that is one-way
  * (accept.ts). The page or book is the caller's to check exists. Returns the updated row.
  *
  * `by` is who answered, for the activity log, as for setContributionNpc.
@@ -126,7 +126,7 @@ export async function setContributionMatch(id: number, answer: BookAnswer, by: s
     `update "contribution"
         set "matchLineId" = $2, "matchBookId" = $3, "matchPageNumber" = $4, "matchNewBook" = $5,
             "updatedAt" = now()
-      where "id" = $1 and "source" = 'books'
+      where "id" = $1 and "source" = 'readables'
         and not exists (select 1 from "book_line" b where b."note" = any($6::text[]))
       returning ${COLUMNS}`,
     [id, lineId, bookId, pageNumber, newBook, pageNotes(id)],
@@ -368,10 +368,10 @@ export async function acceptedContributions(): Promise<Contribution[]> {
   return rows;
 }
 
-/** The books rows among `ids`, whole. */
-export async function booksContributions(ids: readonly number[]): Promise<Contribution[]> {
+/** The readables rows among `ids`, whole. */
+export async function readablesContributions(ids: readonly number[]): Promise<Contribution[]> {
   const { rows } = await db().query<Contribution>(
-    `select ${COLUMNS} from "contribution" where "id" = any($1::int[]) and "source" = 'books'`,
+    `select ${COLUMNS} from "contribution" where "id" = any($1::int[]) and "source" = 'readables'`,
     [ids],
   );
   return rows;

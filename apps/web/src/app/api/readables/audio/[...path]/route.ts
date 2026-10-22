@@ -1,7 +1,7 @@
 /**
- * A book page's live take: /api/books/audio/1381.mp3.
+ * A book page's live take: /api/readables/audio/1381.mp3.
  *
- * The zones route's shape and guard: membership in the set of paths the corpus can
+ * The places route's shape and guard: membership in the set of paths the corpus can
  * address, traversal-proof by construction. Which take plays is the row's `isCurrent`;
  * the bytes are that take's archived file.
  */
@@ -22,7 +22,7 @@ export async function GET(request: Request, context: { params: Promise<{ path: s
   ]);
   if (denied) return denied;
   if (!addressable) return new Response("bad audio path", { status: 400 });
-  return serveTake(request, await livePath("books", rel.slice(0, -".mp3".length), lang), {
+  return serveTake(request, await livePath("readables", rel.slice(0, -".mp3".length), lang), {
     immutable: false,
     lang,
   });

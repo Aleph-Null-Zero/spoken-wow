@@ -30,9 +30,9 @@ export function submissionFrom(envelope: Envelope, raw: string, description?: st
   // dedups against the enUS player who sent the same one.
   const locale = clientLang(sent);
   if (!locale) return null;
-  // A zones envelope carries no text -- the client has none to give -- so its contribution is
+  // A places envelope carries no text -- the client has none to give -- so its contribution is
   // the description the player wrote on the page, kept where every other source keeps its text.
-  const written = envelope.source === "zones" ? description : envelope.text;
+  const written = envelope.source === "places" ? description : envelope.text;
   const text = written ? normaliseText(written) : null;
 
   const dedup = createHash("sha256")

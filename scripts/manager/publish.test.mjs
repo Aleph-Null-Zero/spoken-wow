@@ -9,8 +9,8 @@ import { ConflictError, memoryStore } from "./store.mjs";
 import { IMMUTABLE, INDEX_CACHE, latestSpokenRelease, publish } from "./publish.mjs";
 
 const keys = generateKeys();
-const minSpoken = { quests: "3.0.0", zones: "3.0.0", books: "3.0.0" };
-const packs = [{ folder: "SpokenZonesAudio_deDE", section: "zones", lang: "deDE" }];
+const minSpoken = { quests: "3.0.0", places: "3.0.0", readables: "3.0.0" };
+const packs = [{ folder: "SpokenZonesAudio_deDE", section: "places", lang: "deDE" }];
 const quiet = () => {};
 
 function dist(files) {
@@ -89,7 +89,7 @@ test("a folder older than its zip is refused as a stale build", async () => {
   const old = new Date("2026-01-01T00:00:00Z");
   utimesSync(join(d, "SpokenZonesAudio_deDE", "SpokenZonesAudio_deDE.toc"), old, old);
   writeFileSync(join(d, "SpokenZonesAudio_deDE-1.0.0.zip"), "zip");
-  await assert.rejects(run(store, d), /dist\/SpokenZonesAudio_deDE is older than its zip: rebuild it \(make zones-package-audio\)/);
+  await assert.rejects(run(store, d), /dist\/SpokenZonesAudio_deDE is older than its zip: rebuild it \(make places-package-audio\)/);
   assert.equal(store.log.length, 0);
 });
 
@@ -101,7 +101,7 @@ test("a folder with no root .toc is refused: the build did not finish", async ()
 
 test("a folder name the manager would reject is refused before anything is read", async () => {
   const store = memoryStore();
-  await assert.rejects(run(store, dist({}), { packs: [{ folder: "Spoken Zones", section: "zones" }] }), /not a pack id the manager accepts/);
+  await assert.rejects(run(store, dist({}), { packs: [{ folder: "Spoken Zones", section: "places" }] }), /not a pack id the manager accepts/);
   assert.equal(store.log.length, 0);
 });
 
@@ -112,7 +112,7 @@ test("a reserved Windows device name in a file path is refused", async () => {
 });
 
 test("a pack that needs an unreleased Spoken is refused", async () => {
-  await assert.rejects(run(memoryStore(), dist({ "SpokenZonesAudio_deDE.toc": "t" }), { minSpoken: { ...minSpoken, zones: "3.1.0" } }),
+  await assert.rejects(run(memoryStore(), dist({ "SpokenZonesAudio_deDE.toc": "t" }), { minSpoken: { ...minSpoken, places: "3.1.0" } }),
     /needs Spoken 3.1.0, but the latest release is 3.0.0/);
 });
 

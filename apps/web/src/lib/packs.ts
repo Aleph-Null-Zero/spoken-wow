@@ -12,7 +12,7 @@
  */
 import type { Lang } from "@/lib/lang";
 
-export type Section = "quests" | "zones" | "books";
+export type Section = "quests" | "places" | "readables";
 
 export type Pack = {
   section: Section;
@@ -152,122 +152,122 @@ export const PACKS: readonly Pack[] = [
   },
 
   {
-    section: "zones",
+    section: "places",
     lang: "enUS",
     curseforge: "spoken-audio-places",
     release: "zones-audio",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "deDE",
     curseforge: "spoken-german-audio-places",
     release: "zones-audio-deDE",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "esES",
     curseforge: "spoken-spanish-eu-audio-places",
     release: "zones-audio-esES",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "esMX",
     curseforge: "spoken-spanish-al-audio-places",
     release: "zones-audio-esMX",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "frFR",
     curseforge: "spoken-french-audio-places",
     release: "zones-audio-frFR",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "ptBR",
     curseforge: "spoken-portuguese-audio-places",
     release: "zones-audio-ptBR",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "ruRU",
     curseforge: "spoken-russian-audio-places",
     release: "zones-audio-ruRU",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "koKR",
     curseforge: "spoken-korean-audio-places",
     release: "zones-audio-koKR",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "zhCN",
     curseforge: "spoken-chinese-simplified-audio-places",
     release: "zones-audio-zhCN",
   },
   {
-    section: "zones",
+    section: "places",
     lang: "zhTW",
     curseforge: "spoken-chinese-traditional-audio-places",
     release: "zones-audio-zhTW",
   },
 
   {
-    section: "books",
+    section: "readables",
     lang: "enUS",
     curseforge: "spoken-audio-readables",
     release: "books-audio",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "deDE",
     curseforge: "spoken-german-audio-readables",
     release: "books-audio-deDE",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "esES",
     curseforge: "spoken-spanish-eu-audio-readables",
     release: "books-audio-esES",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "esMX",
     curseforge: "spoken-spanish-al-audio-readables",
     release: "books-audio-esMX",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "frFR",
     curseforge: "spoken-french-audio-readables",
     release: "books-audio-frFR",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "ruRU",
     curseforge: "spoken-russian-audio-readables",
     release: "books-audio-ruRU",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "ptBR",
     curseforge: "spoken-portuguese-audio-readables",
     release: "books-audio-ptBR",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "koKR",
     curseforge: "spoken-korean-audio-readables",
     release: "books-audio-koKR",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "zhCN",
     curseforge: "spoken-chinese-simplified-audio-readables",
     release: "books-audio-zhCN",
   },
   {
-    section: "books",
+    section: "readables",
     lang: "zhTW",
     curseforge: "spoken-chinese-traditional-audio-readables",
     release: "books-audio-zhTW",

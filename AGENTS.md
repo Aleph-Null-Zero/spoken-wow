@@ -19,7 +19,7 @@ covers how they are made. Spoken has no guide; `docs/spoken/` holds its changelo
 - `apps/web`: the site, `spoken.rusty.one`, a Next.js app backed by Postgres. It imports
   `pipelines/places` and `pipelines/readables` (`@tools/*` and `@readables-tools/*`), so a change there is
   a change to the site.
-- `pipelines/`: `quests` is Python, `zones` and `books` are Node, and `lib` holds the `.mjs`
+- `pipelines/`: `quests` is Python, `places` and `readables` are Node, and `lib` holds the `.mjs`
   modules they and the site share.
 - `publishers/<section>/*.md`: every store page. `make descriptions` regenerates the READMEs
   built from them; never edit a generated README by hand.
@@ -38,14 +38,14 @@ Run what your change touches before pushing:
 ```sh
 make test-player   # addons' Lua tests (needs luajit)
 make test          # all of it: Lua, web, Node scripts, quests pytest (venv at pipelines/quests/.venv)
-make lint          # static checks: typecheck, addon XML, changelog, zones validation, store pages, locale strings
+make lint          # static checks: typecheck, addon XML, changelog, places validation, store pages, locale strings
 ```
 
 CI (`.github/workflows/ci.yaml`) runs four jobs, each only when the paths it reads changed:
-addons, quests pipeline, web, and zones pipeline. Between them they run the pieces of those
-commands, not the commands. `make lint` also checks the zones language files
+addons, quests pipeline, web, and places pipeline. Between them they run the pieces of those
+commands, not the commands. `make lint` also checks the places language files
 (`build-languages.mjs --check`), which CI does not. CI also runs the Lua block-balance check
-(`make zones-lint`), which `make lint` does not. Run both before pushing a change to either.
+(`make places-lint`), which `make lint` does not. Run both before pushing a change to either.
 
 Several web tests need a real, migrated Postgres, because the invariants they protect live in
 schema constraints. The CI `web` job shows the setup.
@@ -53,7 +53,7 @@ schema constraints. The CI `web` job shows the setup.
 ## Rules that are load-bearing
 
 **Nothing in the repo spends TTS credits** (ElevenLabs or fish.audio). Lines are voiced on the
-droplet, through the site. Do not add a generation flag to a CLI. `make zones-lore-rewrite` does spend Claude
+droplet, through the site. Do not add a generation flag to a CLI. `make places-lore-rewrite` does spend Claude
 credits, even with `--dry-run`.
 
 **Data only comes home from production.** The take archive (`audio-history/`) is the only
@@ -90,7 +90,7 @@ place: `pipelines/quests/tts_cli/naming.py` (mirrored by
 rollback restores code without reverting the schema.
 
 **The `make/*.mk` files stay separate.** They share many target names, and the root `Makefile`
-dispatches `quests-*`, `zones-*`, `books-*` and `web-*` to them. Each target is commented with
+dispatches `quests-*`, `places-*`, `readables-*` and `web-*` to them. Each target is commented with
 the failure it prevents; read that comment before changing one.
 
 **Shared credentials live in the repo-root `.env`** (`.env.example` lists them).

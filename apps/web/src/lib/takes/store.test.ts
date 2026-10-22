@@ -106,7 +106,7 @@ describe("finding a take's bytes", () => {
   });
 
   it("says a clip was not kept, rather than guessing a name for it", async () => {
-    // This used to fall back to the section's naming rule. For zones and books that rule
+    // This used to fall back to the section's naming rule. For places and readables that rule
     // named clips by overwrite position, not version, so the guess could land on a real
     // file holding a different take.
     await record(2);

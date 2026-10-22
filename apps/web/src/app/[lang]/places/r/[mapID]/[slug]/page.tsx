@@ -23,7 +23,7 @@ import { Contained } from "@/components/Width";
  * Someone arriving from the game is a player, not a collaborator; flags, takes, staleness
  * and the regenerate controls are answers to questions they did not ask.
  *
- * The address is /zones/r/{mapID}/{slug} -- the same path the line's audio file uses --
+ * The address is /places/r/{mapID}/{slug} -- the same path the line's audio file uses --
  * because the addon can build it from what it already has, with no per-line table and
  * nothing to escape. See SpokenZones' ReportURL. Builds already in players' hands point at
  * lore.rusty.one/{lang}/r/... and lore.rusty.one/r/...; both are redirected here.
@@ -90,7 +90,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
               className="mt-4 w-full"
               // The take version busts the browser cache after a regeneration; without it
               // someone sent back to check a fix would hear the clip they complained about.
-              src={withLang(lang, `/api/zones/audio/${audioRelPath(entry.file)}?v=${take.version}`)}
+              src={withLang(lang, `/api/places/audio/${audioRelPath(entry.file)}?v=${take.version}`)}
             />
           ) : (
             <p className="text-muted-foreground mt-4 text-sm">
@@ -115,11 +115,11 @@ export default async function Page({ params }: { params: Promise<Params> }) {
               Wrong lore, a mispronunciation, or narration that does not play. Nothing is
               required but the description.
             </p>
-            <ReportForm source="zones" target={entry.file} lineId={entry.id} fromGame />
+            <ReportForm source="places" target={entry.file} lineId={entry.id} fromGame />
           </section>
 
           <footer className="text-muted-foreground mt-8 text-sm">
-            <Link href={`/zones?zone=${entry.mapID}`} className="hover:text-foreground">
+            <Link href={`/places?zone=${entry.mapID}`} className="hover:text-foreground">
               Browse every line in {entry.zoneName}
             </Link>
             <p className="mt-2 text-xs">

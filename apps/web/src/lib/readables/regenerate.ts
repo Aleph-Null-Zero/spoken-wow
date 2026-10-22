@@ -1,10 +1,10 @@
 /**
  * Narrating one book page, on the shared queue's terms.
  *
- * Deliberately the zones narrator's voice: the design calls for one narrator across the
+ * Deliberately the places narrator's voice: the design calls for one narrator across the
  * section, and resolving a second would be a second answer to "who reads this", with
  * nothing asking the question. Everything from resolving it to committing the take is
- * lib/generation/narrated.ts, shared with zones; what is here is finding a page and
+ * lib/generation/narrated.ts, shared with places; what is here is finding a page and
  * deciding whether it can be voiced.
  */
 import "server-only";
@@ -48,7 +48,7 @@ export async function regenerateBookLine(
   }
 
   return regenerateNarrated(
-    "books",
+    "readables",
     { lineId: page.id, file: page.file, spoken: page.spoken, hash: page.hash },
     createdBy,
     { ...options, lang },

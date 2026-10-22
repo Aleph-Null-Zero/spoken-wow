@@ -9,7 +9,7 @@
 //
 // Reads SpokenZonesSettings.dump out of the SavedVariables file the game names after the
 // addon's folder, Spoken_Places.lua. That file is Lua, but the dump has a fixed shape, so it is
-// scanned rather than interpreted. The WTF/Account folder is --wtf, else SPOKEN_ZONES_WTF, else
+// scanned rather than interpreted. The WTF/Account folder is --wtf, else SPOKEN_PLACES_WTF, else
 // the first of the clients' usual folders that exists, Forever's first.
 
 import { readFile, writeFile, readdir } from "node:fs/promises";
@@ -24,7 +24,7 @@ const SEED = join(ROOT, "pipelines/places/tools/seed/zones.json");
 const argv = process.argv.slice(2);
 const WTF_FOLDERS = [
   argv.includes("--wtf") ? argv[argv.indexOf("--wtf") + 1] : null,
-  process.env.SPOKEN_ZONES_WTF,
+  process.env.SPOKEN_PLACES_WTF,
   "C:/Program Files (x86)/World of Warcraft/_classic_beta_/WTF/Account",
   "/Applications/World of Warcraft/_classic_beta_/WTF/Account",
   "/Applications/World of Warcraft/_classic_era_/WTF/Account",

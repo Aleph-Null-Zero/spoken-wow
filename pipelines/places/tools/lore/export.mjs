@@ -40,7 +40,7 @@ async function main() {
 
   const allRows = await readCurrent(BASE_LOCALE);
   if (allRows.length === 0) {
-    console.error("error: lore_line has no rows. Seed it with:  make zones-lore-import");
+    console.error("error: lore_line has no rows. Seed it with:  make places-lore-import");
     process.exit(1);
   }
 
@@ -155,8 +155,8 @@ async function main() {
   }
 
   console.log("\nreview with:  git diff addons/Spoken_Places/Data/");
-  console.log("a new language also needs its two files in Spoken_Places.toc, then:  make zones-languages");
-  console.log("then rebuild the audio lookup if any English text moved:  make zones-lookup");
+  console.log("a new language also needs its two files in Spoken_Places.toc, then:  make places-languages");
+  console.log("then rebuild the audio lookup if any English text moved:  make places-lookup");
 }
 
 main()

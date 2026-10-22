@@ -1,7 +1,7 @@
 ---
 curseforge: 1711067
 release: zones-audio-esMX
-section: zones
+section: places
 lang: esMX
 version: 1.0.2
 slug: spoken-spanish-al-audio-places

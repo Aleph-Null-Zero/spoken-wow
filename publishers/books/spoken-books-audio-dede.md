@@ -1,7 +1,7 @@
 ---
 curseforge: 1723279
 release: books-audio-deDE
-section: books
+section: readables
 lang: deDE
 version: 2.1.1
 slug: spoken-german-audio-readables

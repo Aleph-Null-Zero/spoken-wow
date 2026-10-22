@@ -1,13 +1,13 @@
 /**
  * A page's words, read and rewritten.
  *
- * The books twin of /api/zones/lore, and the thing books has been missing: book_line has
+ * The readables twin of /api/places/lore, and the thing readables has been missing: book_line has
  * been versioned since 0026 and nothing ever wrote an `edited` row, so a mistake somebody
  * reported in a book could be read and triaged but not fixed. Feedback about a book was a
  * queue of things nobody could act on.
  *
  * Guarded at the regenerate level -- a grant in the language -- rather than the lexicon's admin
- * level, for the reason the zones route gives: a pronunciation rule is global and changes
+ * level, for the reason the places route gives: a pronunciation rule is global and changes
  * what every later line costs, while a rewrite is one page, fully reversible through the
  * version history, and belongs with the other per-page judgements a regenerator makes.
  *

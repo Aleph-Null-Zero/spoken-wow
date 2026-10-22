@@ -1,4 +1,4 @@
-// The zones filter vocabulary, and its translation to and from a query string.
+// The places filter vocabulary, and its translation to and from a query string.
 //
 // CLIENT-SAFE ON PURPOSE. The catalogue reaches the pipeline, which reads the filesystem,
 // so a client component cannot import a *value* from it -- types cross freely, runtime

@@ -8,7 +8,7 @@
 -- for each event, rather than its zones. Zones are uiMapIDs.
 -- `dungeons` are the instance maps of the dungeons and raids a readable is had in from inside
 -- alone, in a zone it is had nowhere else in; Spoken's Data/Dungeons.lua names each, with the zone
--- its entrance is in. Regenerate with:  make books-places
+-- its entrance is in. Regenerate with:  make readables-places
 --
 -- A global rather than a private namespace, as Books.lua is: a data file cannot reach into the
 -- addon's environment.

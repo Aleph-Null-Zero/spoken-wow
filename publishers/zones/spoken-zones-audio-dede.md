@@ -1,7 +1,7 @@
 ---
 curseforge: 1713131
 release: zones-audio-deDE
-section: zones
+section: places
 lang: deDE
 version: 2.1.1
 slug: spoken-german-audio-places

@@ -1,5 +1,5 @@
 /**
- * absorb() against a real Postgres: the books pipeline has no database harness, so the
+ * absorb() against a real Postgres: the readables pipeline has no database harness, so the
  * test lives where the web suite can run it.
  *
  * Needs DATABASE_URL and migrations applied.
@@ -12,8 +12,8 @@ import path from "node:path";
 import type { PoolClient } from "pg";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "books-absorb-"));
-process.env.SPOKEN_BOOKS_AUDIO_HISTORY = path.join(root, "audio-history");
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "readables-absorb-"));
+process.env.SPOKEN_READABLES_AUDIO_HISTORY = path.join(root, "audio-history");
 
 vi.mock("server-only", () => ({}));
 
@@ -43,14 +43,14 @@ async function line(lineId: string, lang: string, version: number, isCurrent: bo
 async function take(lineId: string, file: string, lang: string) {
   await db().query(
     `insert into "take" ("source", "lang", "file", "lineId", "version", "isCurrent", "origin", "bytes")
-     values ('books', $3, $2, $1, 1, true, 'generated', 1)`,
+     values ('readables', $3, $2, $1, 1, true, 'generated', 1)`,
     [lineId, file, lang],
   );
 }
 
 async function clean() {
   const ids = [REAL, MINTED, MINTED_TWO, MINTED_THREE];
-  await db().query(`delete from "contribution" where "source" = 'books' and "key" like $1`, [`absorb-${n}%`]);
+  await db().query(`delete from "contribution" where "source" = 'readables' and "key" like $1`, [`absorb-${n}%`]);
   for (const table of ["take", "report", "recording"]) {
     await db().query(`delete from "${table}" where "lineId" = any($1)`, [ids]);
   }
@@ -75,17 +75,17 @@ beforeEach(async () => {
   await take(MINTED, MINTED_FILE, "esES");
   await db().query(
     `insert into "report" ("source", "lang", "lineId", "category", "body")
-     values ('books', 'esES', $1, 'other', 'x')`,
+     values ('readables', 'esES', $1, 'other', 'x')`,
     [MINTED],
   );
   await db().query(
     `insert into "recording" ("source", "lang", "file", "lineId", "version", "format", "archiveFile", "bytes", "durationSec", "credit")
-     values ('books', 'esES', $2, $1, 1, 'mp3', 'a', 1, 1, 'c')`,
+     values ('readables', 'esES', $2, $1, 1, 'mp3', 'a', 1, 1, 'c')`,
     [MINTED, MINTED_FILE],
   );
   await db().query(
     `insert into "contribution" ("source", "key", "raw", "dedup", "matchLineId")
-     values ('books', $1, 'r', $1, $2)`,
+     values ('readables', $1, 'r', $1, $2)`,
     [`absorb-${n}`, MINTED],
   );
 });
@@ -113,7 +113,7 @@ const fold = () => inTx((client) => absorb(client, { from: MINTED, to: REAL }));
 async function bookAnswer(): Promise<number> {
   const { rows } = await db().query<{ id: number }>(
     `insert into "contribution" ("source", "key", "raw", "dedup", "matchBookId", "matchPageNumber")
-     values ('books', $1, 'r', $1, $2, 1) returning "id"`,
+     values ('readables', $1, 'r', $1, $2, 1) returning "id"`,
     [`absorb-${n}-book`, MINTED_FILE],
   );
   return rows[0].id;
@@ -161,7 +161,7 @@ describe("absorb", () => {
 
   it("leaves one current take per page and language when the real page's file is committed next", async () => {
     await fold();
-    await commitTake("books", String(n), Buffer.from("audio"), { lineId: REAL }, { lang: "esES" });
+    await commitTake("readables", String(n), Buffer.from("audio"), { lineId: REAL }, { lang: "esES" });
     const { rows } = await db().query(
       `select "file" from "take" where "lineId" = $1 and "lang" = 'esES' and "isCurrent"`,
       [REAL],

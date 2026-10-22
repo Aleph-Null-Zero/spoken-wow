@@ -27,7 +27,7 @@ copy, made by hand when the art changes.
 Spoken Places and its English pack ship `Textures/AddonIcon.tga` and point `## IconTexture` at
 it. It is a **TGA** because the client reads TGA or BLP and neither PNG nor SVG, 64×64 because
 the size must be a power of two, and committed rather than converted at build time so that
-building an addon needs no ffmpeg. `make zones-icon` regenerates both copies, and every
+building an addon needs no ffmpeg. `make places-icon` regenerates both copies, and every
 language's TGA here, from the PNGs.
 
 The two English copies are byte-identical on purpose. The addons install as a pair, and giving

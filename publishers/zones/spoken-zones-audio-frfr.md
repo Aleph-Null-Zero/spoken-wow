@@ -1,7 +1,7 @@
 ---
 curseforge: 1713125
 release: zones-audio-frFR
-section: zones
+section: places
 lang: frFR
 version: 2.0.0
 slug: spoken-french-audio-places

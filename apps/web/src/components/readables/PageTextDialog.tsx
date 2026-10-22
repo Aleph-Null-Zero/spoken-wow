@@ -15,7 +15,7 @@ import type { ResultLine } from "@/lib/readables/search";
 // read, triaged and regenerated, but never actually fixed. That made feedback about a book
 // a queue of things nobody could act on.
 //
-// Not a shared component with zones' LoreDialog, though the chrome is the same. The two
+// Not a shared component with places' LoreDialog, though the chrome is the same. The two
 // differ in what a line IS: a zone line carries a full text and a short summary derived
 // from it, and can be untranslated; a page carries one text and is never either. Sharing
 // them would mean a field-schema abstraction, which is more machinery than the duplicated
@@ -72,7 +72,7 @@ export function PageTextDialog({ line, onClose, onSaved }: Props) {
     let cancelled = false;
     const params = new URLSearchParams({ lineId: line.id });
 
-    fetch(withLang(lang, `/api/books/text?${params}`))
+    fetch(withLang(lang, `/api/readables/text?${params}`))
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("could not load history"))))
       .then((data: { versions: Version[] }) => {
         if (cancelled) return;
@@ -93,7 +93,7 @@ export function PageTextDialog({ line, onClose, onSaved }: Props) {
     setBusy(true);
     setError(null);
 
-    const res = await fetch(withLang(lang, "/api/books/text"), {
+    const res = await fetch(withLang(lang, "/api/readables/text"), {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -124,7 +124,7 @@ export function PageTextDialog({ line, onClose, onSaved }: Props) {
       setBusy(true);
       setError(null);
 
-      const res = await fetch(withLang(lang, "/api/books/text"), {
+      const res = await fetch(withLang(lang, "/api/readables/text"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ lineId: line.id, version }),

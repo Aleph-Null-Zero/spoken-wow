@@ -11,11 +11,11 @@ language, and the site shows and edits the current one. The Lua files under
 clone with no Postgres. Nothing on the site reads those files.
 
 ```
-wiki.gg --scrape--> lore_line <--edit-- the site (apps/web, /zones)
+wiki.gg --scrape--> lore_line <--edit-- the site (apps/web, /places)
                        |
         rewrite (Claude, costs credits)
                        |
-         make zones-lore-export  -->  Data/<locale>/Zones.lua, Subzones.lua  (commit the diff)
+         make places-lore-export  -->  Data/<locale>/Zones.lua, Subzones.lua  (commit the diff)
 ```
 
 `pipelines/places/tools/lore/store.mjs` is the one place that decides between the database and the
@@ -62,7 +62,7 @@ looked up with the map it was reported on as well (see Languages).
 
 Only places a client can report. `pipelines/places/tools/seed/era-areas.json` and
 `camelot-areas.json` are dumps of the client's own AreaTable (Era's and Forever's, at the builds
-pinned in `pipelines/lib/wago.mjs`). `make zones-areas` fetches them again when a pin moves. The
+pinned in `pipelines/lib/wago.mjs`). `make places-areas` fetches them again when a pin moves. The
 export keeps a subzone only when its key is in one of the two, and drops Forever's second spelling
 of a place the lore already keeps (`seed/forever-places.json`, kept by hand with a reason beside
 each entry). An area's English `name` is the one in those seeds, Forever's spelling first ("The
@@ -107,7 +107,7 @@ A lead alone misses the History section, where the older lore is, so `rewrite-lo
 whole article and has Claude write it back as prose.
 
 ```sh
-make zones-lore-rewrite ZONE=1420     # a dry run of both variants: writes a report to dist/
+make places-lore-rewrite ZONE=1420     # a dry run of both variants: writes a report to dist/
 node pipelines/places/tools/rewrite-lore.mjs --zone 1420 --variant a     # writes the corpus
 ```
 
@@ -126,18 +126,18 @@ version and source text.
 
 ### Correcting a line
 
-An editor rewrites it on the site (`/zones`, the edit control on a line). That records an `edited`
+An editor rewrites it on the site (`/places`, the edit control on a line). That records an `edited`
 version, and the line becomes stale for the voice (see [VOICE.md](VOICE.md)). Bring it into the
 addon with:
 
 ```sh
-make zones-lore-export            # rewrites Data/<locale>/*.lua from the database
+make places-lore-export            # rewrites Data/<locale>/*.lua from the database
 git diff addons/Spoken_Places/Data/
-make zones-lookup                 # only if English text moved and the voice was cut again
-make zones-lore-check             # does the committed Lua match the database?
+make places-lookup                 # only if English text moved and the voice was cut again
+make places-lore-check             # does the committed Lua match the database?
 ```
 
-`make zones-lore-import` seeds an empty table from the committed Lua, and does nothing to a table
+`make places-lore-import` seeds an empty table from the committed Lua, and does nothing to a table
 that has rows.
 
 ## Languages
@@ -147,7 +147,7 @@ tool here. The export writes a language's pair of files from the rows that have 
 a line English ships with text.
 
 - `Data/<locale>/Aliases.lua` turns the area name a client reports into an English key. It is
-  keyed by the raw name, because normalising "Дун Морог" leaves nothing. `make zones-aliases`
+  keyed by the raw name, because normalising "Дун Морог" leaves nothing. `make places-aliases`
   builds it from the AreaTable of Forever's build, then Era's, and also writes
   `seed/area-names.json`, every place's name in each language. Only locales a client runs in get a
   table. A name that is the same in both languages needs no alias.
@@ -157,13 +157,13 @@ a line English ships with text.
   reads it first, with the map the name was reported on, and falls back to the flat table. Places
   that share a name and a zone (Stonewatch and Stonewatch Falls on a Russian client) cannot be told
   apart by name and stay out of both tables. A file without the table resolves as before.
-- `make zones-lore-import-names LOCALE=deDE` puts those names into the site's `entity_name`
+- `make places-lore-import-names LOCALE=deDE` puts those names into the site's `entity_name`
   table, so the site names a place as that client does.
-- `Data/Languages.lua` (`make zones-languages`) counts per language the stories, the interface
+- `Data/Languages.lua` (`make places-languages`) counts per language the stories, the interface
   strings, the aliases and whether a voice pack page exists, and sets `ready`. Ready means every
   story is translated and, for a client language, an alias table exists. The addon offers only
-  ready languages. Run `make zones-languages` after changing a translation or adding or removing
-  a key in `Locale/enUS.lua`: `make zones-locale-check` and `make lint` fail while the file is
+  ready languages. Run `make places-languages` after changing a translation or adding or removing
+  a key in `Locale/enUS.lua`: `make places-locale-check` and `make lint` fail while the file is
   stale.
 - Each language needs its two data files, its aliases and its `Locale/<code>.lua` listed in
   `Spoken_Places.toc`. `validate.mjs` fails when a generated file is not listed.
@@ -175,7 +175,7 @@ a line English ships with text.
 | `node pipelines/places/tools/validate.mjs` | A data file is unbalanced or has a raw control character, a key is not canonical or is in no client's AreaTable seed, a story has post-vanilla text, an alias points at a missing key (or, in `byZone`, at a key with no story under that zone), the `.toc` lists the files in the wrong order or leaves one out, `Language.lua` and `lib/locales.mjs` differ, two areas in a zone share a report slug, or the Lua and JS key and slug code have drifted. It also prints how many area names each language's aliases reach. |
 | `node pipelines/places/tools/locale/check-strings.mjs` | Reports each language's interface string coverage. It never fails on an incomplete language. |
 | `node pipelines/places/tools/locale/build-languages.mjs --check` | `Data/Languages.lua` is out of date. |
-| `make zones-lore-check` | The committed Lua differs from the database. Needs `DATABASE_URL`. |
+| `make places-lore-check` | The committed Lua differs from the database. Needs `DATABASE_URL`. |
 | `tests/lua/locale_parity_test.lua` | A module's locale keys or format arguments differ from English. |
 
-`make zones-check` runs the first three and the Lua block check.
+`make places-check` runs the first three and the Lua block check.

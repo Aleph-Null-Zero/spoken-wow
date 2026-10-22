@@ -1,5 +1,5 @@
 // What a re-import does to a line that already exists: the rule is shared by every
-// pipeline's importer and lives in pipelines/lib/promote.mjs. What is only the books
+// pipeline's importer and lives in pipelines/lib/promote.mjs. What is only the readables
 // import's business -- a page's place in a book -- is below.
 export { decideImport } from "../../../lib/promote.mjs";
 

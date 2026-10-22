@@ -22,7 +22,7 @@ DIST="$REPO/dist"
 
 # The language whose sound pack `audio` means. English unless --lang says otherwise.
 LANG_CODE=enUS
-pack_field() { node "$REPO/scripts/lib/packs.mjs" get zones "$LANG_CODE" - "$1"; }
+pack_field() { node "$REPO/scripts/lib/packs.mjs" get places "$LANG_CODE" - "$1"; }
 english() { [[ "$LANG_CODE" == enUS ]]; }
 
 # Site-relative API, per game. WoW projects are not reachable through another
@@ -189,7 +189,7 @@ changelog_for() {
 
 #-- preflight -------------------------------------------------------------------
 # EVERY TARGET'S ZIP IS RESOLVED BEFORE ANY UPLOAD STARTS. English's default run covers both
-# zones and audio, and uploading the addon before discovering the pack was never built is a
+# places and audio, and uploading the addon before discovering the pack was never built is a
 # half release. Checked in --dry-run too, since a dry run's job is to say what a real run
 # would hit.
 missing=()
@@ -202,7 +202,7 @@ for target in "${targets[@]}"; do
     version="$(sed -n 's/^## Version:[[:space:]]*//p' "$toc" 2>/dev/null | head -1 | tr -d '\r')"
   fi
   if [[ -z "$version" ]]; then
-    missing+=("$target -- not built (no version); run make zones-package-audio")
+    missing+=("$target -- not built (no version); run make places-package-audio")
     continue
   fi
   zip_path="$DIST/$(target_zip "$target")-$version.zip"

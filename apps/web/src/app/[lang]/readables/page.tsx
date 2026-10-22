@@ -33,10 +33,10 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
         <Contained>
           <h1 className="text-xl font-semibold">Readables</h1>
           <p className="text-muted-foreground mt-2 max-w-xl text-sm">
-            The books corpus has not been loaded into this database yet, so there is nothing to
+            The readables corpus has not been loaded into this database yet, so there is nothing to
             show. It is extracted from the vmangos world database with{" "}
-            <code className="text-foreground">make books-extract</code> and imported with{" "}
-            <code className="text-foreground">make books-import</code>.
+            <code className="text-foreground">make readables-extract</code> and imported with{" "}
+            <code className="text-foreground">make readables-import</code>.
           </p>
         </Contained>
       </main>

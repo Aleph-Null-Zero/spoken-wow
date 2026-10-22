@@ -113,7 +113,7 @@ Western client, for one) names a font file in `clip.present.font`. The captions,
 and every window then draw that clip's header, label and text in it, at the player's own size;
 a clip without one stays in the player's font, and so does a file the client cannot load. Readable captions are exported by `pipelines/readables/tools/lib/lua.mjs`
 using the same plain text conversion as narration. The current English export
-was regenerated from the public `/api/books/search?lang=enUS` catalogue on
+was regenerated from the public `/api/readables/search?lang=enUS` catalogue on
 2026-09-27; page IDs, book order and lookup checksums are unchanged.
 
 The DialogueUI window draws the captions in DialogueUI's font, size and colours, with an
@@ -142,13 +142,13 @@ Run from the repository root:
 ```sh
 make test-player
 node scripts/check-addon-xml.mjs
-make zones-check
-make books-test
+make places-check
+make readables-test
 ```
 
 The caption suite is `tests/captions/verify.lua`. It runs the real queue,
 player layouts, actions and quest adapter with simulated widgets and time.
 It checks playback changes, page boundaries, Unicode, resizing, attachment,
-queue placement, expansion and settings. The books and zones suites also cover
+queue placement, expansion and settings. The readables and places suites also cover
 caption sources, language fallback and queued pages. The fixture models layout and text width; it
 does not reproduce the game's font rendering or audio.

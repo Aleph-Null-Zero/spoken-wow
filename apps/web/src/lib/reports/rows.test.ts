@@ -59,7 +59,7 @@ describe("groupByLine", () => {
   });
 
   it("keeps the same line id in two sections apart", () => {
-    const groups = groupByLine([report({ id: 2, source: "zones" }), report({ id: 1 })]);
+    const groups = groupByLine([report({ id: 2, source: "places" }), report({ id: 1 })]);
     expect(groups).toHaveLength(2);
   });
 

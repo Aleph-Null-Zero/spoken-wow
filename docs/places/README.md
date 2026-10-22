@@ -33,7 +33,7 @@ The notes for the module itself are in `docs/spoken/CHANGELOG.md`, because it ve
 | --- | --- |
 | `addons/Spoken_Places` | The module: stories, lookup code, the map panel, the Places tab, settings page. |
 | `addons/SpokenZonesAudio` | The English voice pack. The repository holds `Data/Sounds.lua` (the clip lookup) and the `.toc`; the mp3s in `Sounds/` are gitignored and assembled from the site's takes. |
-| `SpokenZonesAudio_<locale>` | One pack per other language. Built into `build/zones/<locale>`, never committed. |
+| `SpokenZonesAudio_<locale>` | One pack per other language. Built into `build/places/<locale>`, never committed. |
 
 The addon still reads the packs that were published as `ZoneLoreAudio` and `ZoneLoreAudio64`
 (`Audio.lua`, `GetAudioPacks`), because those folders are on players' disks.
@@ -65,9 +65,9 @@ addons/Spoken/Data/Dungeons.lua   the dungeon and raid table every tab reads (ge
 pipelines/places/tools/   scrapers, the lore store and exporter, locale tools, pictures, voice
 pipelines/lib/dungeons.json   the dungeon table's source
 scripts/places/           package.sh, package-audio.sh, release.sh
-make/zones.mk            the make zones-* targets
-publishers/zones/        the store pages for the packs
-apps/web                 the site, with the lore explorer at /zones
+make/places.mk            the make places-* targets
+publishers/zones/         the store pages for the packs
+apps/web                  the site, with the lore explorer at /places
 tests/lua/places_*_test.lua
 ```
 
@@ -102,13 +102,13 @@ every module, and `/sp diagnostics` prints Spoken's state followed by each modul
 ## Checks
 
 ```sh
-make zones-check            # validate.mjs, the Lua block check and the locale check
-make zones-validate-audio   # manifest, files on disk and the lookup table agree
+make places-check            # validate.mjs, the Lua block check and the locale check
+make places-validate-audio   # manifest, files on disk and the lookup table agree
 make test-player            # every addon Lua test, the zones_*_test.lua ones included (needs luajit)
 make lint                   # what CI gates on
 ```
 
-`make zones-check` and `make lint` run `pipelines/places/tools/locale/build-languages.mjs --check`,
+`make places-check` and `make lint` run `pipelines/places/tools/locale/build-languages.mjs --check`,
 which fails while `Data/Languages.lua` is out of date. The Lua block check
 (`pipelines/places/tools/lua-syntax-check.py`) needs Python.
 

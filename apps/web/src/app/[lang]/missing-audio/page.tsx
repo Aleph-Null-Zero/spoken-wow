@@ -58,7 +58,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
                   <td className="py-1 pr-3 font-mono whitespace-nowrap">
                     <Link
                       className="underline"
-                      href={localeHref(lang, explorerHref(row.lineId.startsWith("b:") ? "books" : "quests", row.lineId))}
+                      href={localeHref(lang, explorerHref(row.lineId.startsWith("b:") ? "readables" : "quests", row.lineId))}
                     >
                       {row.lineId}
                     </Link>

@@ -36,7 +36,7 @@ export default async function Page({ params }: { params: Promise<{ lang: string 
           <p className="text-muted-foreground mt-2 max-w-xl text-sm">
             The lore corpus has not been loaded into this database yet, so there is nothing to
             show. It is seeded from the committed Lua with{" "}
-            <code className="text-foreground">make zones-lore-import</code>.
+            <code className="text-foreground">make places-lore-import</code>.
           </p>
         </Contained>
       </main>

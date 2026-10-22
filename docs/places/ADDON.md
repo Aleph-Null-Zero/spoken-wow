@@ -179,7 +179,8 @@ The game announces a discovery once per character, and Places reads that message
 The game cannot open a link, so a Report button shows an address to copy
 (`UI/CopyLink.lua`). `SpokenZones:ReportURL` builds it with `Spoken:ReportURL`:
 `https://spoken.rusty.one/zones/r/<mapID>/<slug>` for English and
-`https://spoken.rusty.one/<lang>/zones/r/<mapID>/<slug>` for another language. The language is
+`https://spoken.rusty.one/<lang>/zones/r/<mapID>/<slug>` for another language, which the site
+sends on to `/places/r/…` (`apps/web/src/lib/section-routes.ts`). The language is
 the one the clip is read in for Report on the player's window, and the text language for
 Report on a page. The slug is the key with spaces as hyphens and other
 characters dropped, and `zone` for a zone. `validate.mjs` fails the build if the Lua slug and

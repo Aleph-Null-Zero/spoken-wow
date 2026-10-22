@@ -13,8 +13,14 @@
 /** Large enough for a long quest, small enough that a pasted log is refused rather than stored. */
 export const MAX_BYTES = 64 * 1024;
 
-export const SOURCES = ["quests", "zones", "books"] as const;
+export const SOURCES = ["quests", "places", "readables"] as const;
 export type EnvelopeSource = (typeof SOURCES)[number];
+
+/**
+ * The keys addons released before the rename write, and every raw envelope stored before it
+ * carries. Read as the new key forever: a player can paste from a years-old saved file.
+ */
+const LEGACY_SOURCES: Record<string, EnvelopeSource> = { zones: "places", books: "readables" };
 
 export function isEnvelopeSource(value: unknown): value is EnvelopeSource {
   return typeof value === "string" && (SOURCES as readonly string[]).includes(value);
@@ -75,7 +81,7 @@ export function parseEnvelope(raw: string): Result {
   if (!headerMatch) return { ok: false, error: "malformed" };
   if (headerMatch[1] !== "1") return { ok: false, error: "version" };
 
-  const source = headerMatch[2] as EnvelopeSource;
+  const source = LEGACY_SOURCES[headerMatch[2]] ?? (headerMatch[2] as EnvelopeSource);
   if (!SOURCES.includes(source)) return { ok: false, error: "source" };
 
   // The checksum is verified before the body is trusted, but after the header: a 2.x envelope

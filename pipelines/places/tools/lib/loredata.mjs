@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 
 import { BASE_LOCALE } from "./locales.mjs";
 
-// The monorepo root. Everything under the zones pipeline derives its paths from this
+// The monorepo root. Everything under the places pipeline derives its paths from this
 // one constant.
 //
 // Four levels up, not two: this file is pipelines/places/tools/lib/. The constant has to
@@ -33,7 +33,11 @@ import { BASE_LOCALE } from "./locales.mjs";
 //
 // Unset -- which is every local run, CLI or `next dev` -- this behaves exactly as it
 // did before. See deploy/README.md for the full set.
+//
+// SPOKEN_ZONES_ROOT is the variable's name before the rename, which a droplet whose
+// shared/ecosystem.config.js predates it still sets.
 export const ROOT =
+  process.env.SPOKEN_PLACES_ROOT ||
   process.env.SPOKEN_ZONES_ROOT ||
   join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
 // The corpus, under the enUS directory it has always been committed in. The directory

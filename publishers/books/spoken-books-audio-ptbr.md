@@ -1,7 +1,7 @@
 ---
 curseforge: 1723287
 release: books-audio-ptBR
-section: books
+section: readables
 lang: ptBR
 version: 2.0.0
 slug: spoken-portuguese-audio-readables

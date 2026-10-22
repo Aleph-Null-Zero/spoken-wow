@@ -1,6 +1,6 @@
 // book_line -> addons/Spoken_Readables/Data/Books.lua.
 //
-// The table is the corpus and this file is an export of it, exactly as the zones side
+// The table is the corpus and this file is an export of it, exactly as the places side
 // exports lore_line: the addon build, and anyone packaging a release, must work on a clone
 // with no Postgres, so what the addon ships is committed rather than derived at build time.
 
@@ -21,7 +21,7 @@ const OUT = new URL("../../../addons/Spoken_Readables/Data/Books.lua", import.me
 const LANG = "enUS";
 
 const url = process.env.DATABASE_URL;
-if (!url) throw new Error("DATABASE_URL is not set -- the books corpus lives in Postgres");
+if (!url) throw new Error("DATABASE_URL is not set -- the readables corpus lives in Postgres");
 
 const pool = new pg.Pool({ connectionString: url });
 
@@ -40,7 +40,7 @@ try {
   // file with a table the addon can look nothing up in, and the addon would fail silently.
   if (rows.length === 0) {
     throw new Error(
-      "book_line holds no English pages -- run: make books-extract && make books-import",
+      "book_line holds no English pages -- run: make readables-extract && make readables-import",
     );
   }
 

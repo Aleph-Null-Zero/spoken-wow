@@ -1,7 +1,7 @@
 ---
 curseforge: 1723276
 release: zones-audio-zhTW
-section: zones
+section: places
 lang: zhTW
 version: 2.0.0
 slug: spoken-chinese-traditional-audio-places

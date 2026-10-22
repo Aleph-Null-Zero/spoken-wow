@@ -1,5 +1,5 @@
 /**
- * bookPageUpsert against a real Postgres, where the books pipeline has no database harness.
+ * bookPageUpsert against a real Postgres, where the readables pipeline has no database harness.
  *
  * Needs DATABASE_URL and migrations applied.
  */

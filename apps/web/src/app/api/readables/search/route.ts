@@ -1,8 +1,8 @@
 /**
- * The books explorer's only read.
+ * The readables explorer's only read.
  *
  * The URL carries `page`, not `offset`, so a shared link survives a change to PAGE_SIZE.
- * The arithmetic stays here. Shaped on the zones route, including the 503 below.
+ * The arithmetic stays here. Shaped on the places route, including the 503 below.
  */
 import { catalogue, isCorpusEmpty, loadContext } from "@/lib/readables/catalogue";
 import { langParam, worksHere } from "@/lib/lang-server";
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
     [pages, context, recordings] = await Promise.all([
       catalogue(lang),
       loadContext(lang, seesMadeBy),
-      recordingsFor("books", lang),
+      recordingsFor("readables", lang),
     ]);
     // Dropped for anybody who may not see recordings, as the made-by filters are above.
     if (!recordings) filters.recorded = undefined;

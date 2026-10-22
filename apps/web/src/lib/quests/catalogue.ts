@@ -12,7 +12,7 @@
  * That is deliberate: the point of this change is where the words live, not what the
  * explorer does with them.
  *
- * MEMOISED AGAINST A STAMP THE TABLES THEMSELVES CARRY, copied from books
+ * MEMOISED AGAINST A STAMP THE TABLES THEMSELVES CARRY, copied from readables
  * (lib/readables/catalogue.ts): max id, count, and the sum of live ids. Three terms because
  * there are three ways the table moves -- an edit inserts a version so the highest id
  * moves, an import can delete so the count moves, and a restore moves the live flag

@@ -127,7 +127,7 @@ def check(path):
 
 def main():
     failed = False
-    # Relative to the repo root, which is where make/zones.mk runs it from. A glob that
+    # Relative to the repo root, which is where make/places.mk runs it from. A glob that
     # matches nothing exits 0, so a stale path here reads as a clean check forever.
     paths = sorted(glob.glob("addons/Spoken_Places/**/*.lua", recursive=True))
     if not paths:

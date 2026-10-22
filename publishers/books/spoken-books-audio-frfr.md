@@ -1,7 +1,7 @@
 ---
 curseforge: 1723284
 release: books-audio-frFR
-section: books
+section: readables
 lang: frFR
 version: 2.0.0
 slug: spoken-french-audio-readables

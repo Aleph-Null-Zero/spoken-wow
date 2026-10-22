@@ -1,7 +1,7 @@
 /**
  * The bridge to pipelines/readables/tools.
  *
- * One module for the whole boundary, as lib/places/tools.ts is for the zones pipeline, and
+ * One module for the whole boundary, as lib/places/tools.ts is for the places pipeline, and
  * for the same reason: `../../../../pipelines/...` scattered through the app is a boundary
  * nobody can see. next.config.ts's outputFileTracingRoot is what puts these files in the
  * build at all.

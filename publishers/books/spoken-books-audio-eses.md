@@ -1,7 +1,7 @@
 ---
 curseforge: 1723280
 release: books-audio-esES
-section: books
+section: readables
 lang: esES
 version: 2.0.1
 slug: spoken-spanish-eu-audio-readables

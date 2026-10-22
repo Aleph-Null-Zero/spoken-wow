@@ -22,7 +22,7 @@ const IN = new URL("../corpus/extract.json", import.meta.url).pathname;
 const LANG = "enUS";
 
 const url = process.env.DATABASE_URL;
-if (!url) throw new Error("DATABASE_URL is not set -- the books corpus lives in Postgres");
+if (!url) throw new Error("DATABASE_URL is not set -- the readables corpus lives in Postgres");
 
 const { entries } = JSON.parse(await readFile(IN, "utf8"));
 const pool = new pg.Pool({ connectionString: url });

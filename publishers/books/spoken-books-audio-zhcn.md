@@ -1,7 +1,7 @@
 ---
 curseforge: 1723289
 release: books-audio-zhCN
-section: books
+section: readables
 lang: zhCN
 version: 2.0.0
 slug: spoken-chinese-simplified-audio-readables

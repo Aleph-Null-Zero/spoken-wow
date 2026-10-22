@@ -1,6 +1,6 @@
-# The books pipeline: the vmangos extract, the corpus import, the addon export.
+# The readables pipeline: the vmangos extract, the corpus import, the addon export.
 #
-#     make books-extract     ->  make -f make/books.mk extract
+#     make readables-extract     ->  make -f make/readables.mk extract
 #
 # Its own file because AGENTS.md forbids merging the Makefiles: the project files share many
 # target names (help, package, release, sync and the rest), and the root Makefile's prefix
@@ -25,7 +25,7 @@
 PIPELINE := pipelines/readables
 QUESTS   := pipelines/quests
 
-help: ## List the books targets
+help: ## List the readables targets
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | sort \
 	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
 
@@ -52,7 +52,7 @@ export: ## book_line -> addons/Spoken_Readables/Data/Books.lua (needs DATABASE_U
 places: ## world DB + client maps -> addons/Spoken_Readables/Data/Places.lua
 	@node $(PIPELINE)/tools/places.mjs
 
-lookup: ## take -> the pack's Data/Sounds.lua (LOCALE=xx: into build/books/xx; needs DATABASE_URL)
+lookup: ## take -> the pack's Data/Sounds.lua (LOCALE=xx: into build/readables/xx; needs DATABASE_URL)
 	@node $(PIPELINE)/tools/build-lookup.mjs --lang=$(or $(LOCALE),enUS)
 
 #-------------------------------------------------------------------------------
@@ -64,9 +64,9 @@ lookup: ## take -> the pack's Data/Sounds.lua (LOCALE=xx: into build/books/xx; n
 #-------------------------------------------------------------------------------
 
 include make/droplet.mk
-# Books' own archive under the shared audio-history, the directory
-# SPOKEN_BOOKS_AUDIO_HISTORY names in deploy/web/ecosystem.config.js.
-REMOTE_HISTORY := $(REMOTE_ROOT)/shared/audio-history/books/
+# Readables' own archive under the shared audio-history, the directory
+# SPOKEN_READABLES_AUDIO_HISTORY names in deploy/web/ecosystem.config.js.
+REMOTE_HISTORY := $(REMOTE_ROOT)/shared/audio-history/readables/
 LOCAL_HISTORY  := pipelines/readables/audio-history/
 
 # macOS ships openrsync as /usr/bin/rsync, which reports itself as "2.6.9 compatible" and
@@ -79,38 +79,38 @@ RSYNC ?= $(shell for r in /opt/homebrew/bin/rsync /usr/local/bin/rsync $$(comman
 RSYNC_OPTS := -a --partial --info=stats1,progress2 --human-readable
 
 # One direction only: production is upstream for every edit and every take. The recipe is
-# shared with quests and zones -- see scripts/db/sync-section.sh. This used to fetch the
+# shared with quests and places -- see scripts/db/sync-section.sh. This used to fetch the
 # takes but not book_line, so a page fixed on the site shipped with its old words.
 sync: require-droplet ## Replace the local book text and takes with the droplet's (DESTRUCTIVE)
-	@$(DB_ENV) scripts/db/sync-section.sh books book_line book_page
-	@echo "==> rebuild the pack's table with:  make books-lookup"
+	@$(DB_ENV) scripts/db/sync-section.sh readables book_line book_page
+	@echo "==> rebuild the pack's table with:  make readables-lookup"
 
-check-synced: ## Compare the local books data with the droplet's, and prompt if they differ
-	@$(DB_ENV) scripts/db/check-synced.sh books
+check-synced: ## Compare the local readables data with the droplet's, and prompt if they differ
+	@$(DB_ENV) scripts/db/check-synced.sh readables
 
 pull-history: require-droplet ## Fetch the droplet's archived takes (non-destructive)
 	@mkdir -p $(LOCAL_HISTORY)
 	@$(RSYNC) $(RSYNC_OPTS) -e "$(SSH)" $(DROPLET):$(REMOTE_HISTORY) $(LOCAL_HISTORY)
-	@echo "==> pulled. Build the pack's Sounds/ with:  make books-sounds"
+	@echo "==> pulled. Build the pack's Sounds/ with:  make readables-sounds"
 
 # Only the takes the pack is built from: the live ones, as the local database has them, so run
-# `make books-sync` first. pull-history is the whole archive, for listening to old takes.
+# `make readables-sync` first. pull-history is the whole archive, for listening to old takes.
 pull-live: require-droplet ## Fetch only the live takes the local database names (after sync)
-	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh books $(or $(LOCALE),enUS)
+	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh readables $(or $(LOCALE),enUS)
 
 # The pack folder the client loads and the release zips: not kept, but assembled from the
 # live takes and the archive before every build. See scripts/audio/sounds.mjs.
-sounds: ## Assemble the pack's Sounds/ (LOCALE=xx: into build/books/xx) from the live takes
-	@$(DB_ENV) node scripts/audio/sounds.mjs --lang=$(or $(LOCALE),enUS) books
+sounds: ## Assemble the pack's Sounds/ (LOCALE=xx: into build/readables/xx) from the live takes
+	@$(DB_ENV) node scripts/audio/sounds.mjs --lang=$(or $(LOCALE),enUS) readables
 
 # The voice actors' recordings (migration 0062) ship as an overlay pack of their own, which the
 # player prefers over the generated pack where it has a line. Built from the `recording` table
 # and the files under the archive's recorded/, not from the takes. See scripts/audio/acted.mjs.
 pull-recorded: require-droplet ## Fetch the voice actors' live recordings the local database names (after sync)
-	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh books $(or $(LOCALE),enUS) recorded
+	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh readables $(or $(LOCALE),enUS) recorded
 
 package-acted: check-synced ## Build the voice-acted overlay zip into dist/ (LOCALE=xx, ACTED_VERSION=x.y.z)
-	@$(DB_ENV) node scripts/audio/acted.mjs --lang=$(or $(LOCALE),enUS) --version=$(or $(ACTED_VERSION),1.0.0) books
+	@$(DB_ENV) node scripts/audio/acted.mjs --lang=$(or $(LOCALE),enUS) --version=$(or $(ACTED_VERSION),1.0.0) readables
 
 acted: pull-recorded package-acted ## Pull the recordings and build the voice-acted overlay (after sync)
 
@@ -153,7 +153,7 @@ endif
 
 # The in-game addon list reads a TGA or BLP, never the PNGs in
 # pipelines/readables/assets/, so the icon is converted and committed -- an addon must build
-# with no ffmpeg on the machine. Borrowed from the zones pipeline rather than copied: the
+# with no ffmpeg on the machine. Borrowed from the places pipeline rather than copied: the
 # script takes a source and a destination and knows nothing about which project it serves.
 #
 # Both addons carry the same icon: they install as a pair, and two icons would imply they
@@ -188,7 +188,7 @@ test: ## The pipeline's unit tests
 # found in dist/.
 #-------------------------------------------------------------------------------
 
-release-dry: ## Show what `make books-release` would upload to CurseForge
+release-dry: ## Show what `make readables-release` would upload to CurseForge
 	@./scripts/readables/release.sh --dry-run
 
 release: ## Upload the built sound pack to CurseForge (needs CURSEFORGE_TOKEN)
@@ -208,12 +208,12 @@ release-audio: ## Upload the sound pack (LOCALE=xx for a language's)
 # only -- Wago answers 413 to a file this size (scripts/lib/wago.sh) -- and to GitHub, which
 # is where a Wago player gets it.
 full-release: require-droplet ## Sync, pull live takes, build and upload the sound pack (LOCALE=xx for a language's)
-	@$(MAKE) --no-print-directory -f make/books.mk sync
-	@$(MAKE) --no-print-directory -f make/books.mk pull-live LOCALE=$(LOCALE)
-	@$(MAKE) --no-print-directory -f make/books.mk package-audio LOCALE=$(LOCALE)
+	@$(MAKE) --no-print-directory -f make/readables.mk sync
+	@$(MAKE) --no-print-directory -f make/readables.mk pull-live LOCALE=$(LOCALE)
+	@$(MAKE) --no-print-directory -f make/readables.mk package-audio LOCALE=$(LOCALE)
 	@./scripts/readables/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
-	@./scripts/audio-github-release.sh --dry-run books $(or $(LOCALE),enUS)
-	@printf 'Upload the books pack to CurseForge and GitHub? [y/N] '; \
+	@./scripts/audio-github-release.sh --dry-run readables $(or $(LOCALE),enUS)
+	@printf 'Upload the readables pack to CurseForge and GitHub? [y/N] '; \
 	  read -r answer; [ "$$answer" = y ] || { echo aborted; exit 1; }
 	@./scripts/readables/release.sh --lang=$(or $(LOCALE),enUS) audio
-	@./scripts/audio-github-release.sh books $(or $(LOCALE),enUS)
+	@./scripts/audio-github-release.sh readables $(or $(LOCALE),enUS)

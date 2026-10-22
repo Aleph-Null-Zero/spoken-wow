@@ -19,11 +19,11 @@ import { Contained } from "@/components/Width";
  * form already pointed at the right line -- which is the whole saving over telling them to
  * find it among 1,191 pages in the explorer.
  *
- * Deliberately not the explorer, for the reason the zones and quests landing pages are not
+ * Deliberately not the explorer, for the reason the places and quests landing pages are not
  * either. Someone arriving from the game is a player, not a collaborator; flags, takes,
  * staleness and the regenerate controls are answers to questions they did not ask.
  *
- * The address is /books/r/{key}: the pageTextID, or a minted page's n{uuid}. The key and
+ * The address is /readables/r/{key}: the pageTextID, or a minted page's n{uuid}. The key and
  * nothing else -- because the addon can build it from what it already has, with no per-page
  * table to ship and nothing to escape. docs/readables/AGENTS.md freezes both forms, which is
  * what makes the address safe to bake into a release. See SpokenBooks' ReportURL.
@@ -91,7 +91,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
               className="mt-4 w-full"
               // The take version busts the browser cache after a regeneration; without it
               // somebody sent back to check a fix would hear the clip they complained about.
-              src={withLang(lang, `/api/books/audio/${audioRelPath(page.file)}?v=${take.version}`)}
+              src={withLang(lang, `/api/readables/audio/${audioRelPath(page.file)}?v=${take.version}`)}
             />
           ) : (
             <p className="text-muted-foreground mt-4 text-sm">
@@ -113,12 +113,12 @@ export default async function Page({ params }: { params: Promise<Params> }) {
             </p>
             {/* The target is the page id, which is what the addon put in the address and what
                 the endpoint resolves; the lineId is sent for the endpoint to ignore, exactly as
-                the zones form does. */}
-            <ReportForm source="books" target={page.key} lineId={page.id} fromGame />
+                the places form does. */}
+            <ReportForm source="readables" target={page.key} lineId={page.id} fromGame />
           </section>
 
           <footer className="text-muted-foreground mt-8 text-sm">
-            <Link href={`/books?book=${page.bookId}`} className="hover:text-foreground">
+            <Link href={`/readables?book=${page.bookId}`} className="hover:text-foreground">
               Browse every page of {page.title}
             </Link>
             <p className="mt-2 text-xs">Text from the game, extracted from the world database.</p>

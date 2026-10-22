@@ -15,7 +15,7 @@
 # behind in the one you were not thinking about.
 #
 # Symlinking is preferred: no re-run needed after each edit. If the client's
-# AddOns list does not show Spoken Zones, fall back to --copy and re-run per change.
+# AddOns list does not show Spoken Places, fall back to --copy and re-run per change.
 #
 # Both addons are handled together. The sound pack is optional to the player but
 # not to development: symlinking it means a generation run lands in the client
@@ -142,7 +142,7 @@ fi
 
 echo
 echo "next steps in-game ($CLIENT client):"
-echo "  1. enable Spoken Zones in the AddOns list at the character select screen"
+echo "  1. enable Spoken Places in the AddOns list at the character select screen"
 echo "  2. /console scriptErrors 1     (surface Lua errors)"
 echo "  3. /spz                        (status for the current zone)"
 echo "  4. /spz verify                 (check data against this client)"

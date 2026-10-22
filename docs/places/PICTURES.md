@@ -17,11 +17,11 @@ Only pictures chosen by hand and reviewed ship, so a place with no picture shows
    (`Textures/Pictures/CREDITS.md` names it). That step runs outside this repository. What `prepare.py` reads is its result: in a folder laid out
    as the Places tab is (`Azeroth/<continent>/<zone>[/<area>]`), `<place> - new.png` beside the
    original, `<place> - old.<ext>`. A place with no `- new` has no picture.
-4. `make zones-pictures` runs `pipelines/places/tools/pictures/prepare.py`, which writes the textures,
+4. `make places-pictures` runs `pipelines/places/tools/pictures/prepare.py`, which writes the textures,
    `Data/Pictures.lua` and `Textures/Pictures/CREDITS.md`.
 
 ```sh
-make zones-pictures CHOICES=<folder> ARGS="--force"
+make places-pictures CHOICES=<folder> ARGS="--force"
 ```
 
 `prepare.py` needs Python with numpy, Pillow and scipy. `CHOICES` defaults to the script's own

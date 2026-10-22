@@ -1,4 +1,4 @@
-// The books corpus, built from `book_line`.
+// The readables corpus, built from `book_line`.
 //
 // SERVER ONLY. The table is the corpus; the addon's Data/*.lua is an export of it, so the
 // app reads the table and never the files -- reading the Lua here would show whatever was
@@ -70,7 +70,7 @@ export type BookPage = {
   englishTitle?: string;
 };
 
-/** The live take for a page, as the explorer needs it. Mirrors the zones shape. */
+/** The live take for a page, as the explorer needs it. Mirrors the places shape. */
 export type Take = {
   version: number;
   file: string;
@@ -127,8 +127,8 @@ export class CorpusEmpty extends Error {
   constructor(lang: Lang = BASE_LANG) {
     super(
       lang === BASE_LANG
-        ? "book_line holds no English pages -- seed it with: make books-extract && " +
-            "make books-import (and check DATABASE_URL points at the database you mean)"
+        ? "book_line holds no English pages -- seed it with: make readables-extract && " +
+            "make readables-import (and check DATABASE_URL points at the database you mean)"
         : `book_line holds no ${lang} pages yet`,
     );
     this.name = "CorpusEmpty";
@@ -147,12 +147,12 @@ export function isCorpusEmpty(error: unknown): boolean {
 }
 
 /** One memo per language (lib/memo.ts), so switching between two does not rebuild each time. */
-const cacheKey = Symbol.for("spoken.books-catalogue.by-lang");
+const cacheKey = Symbol.for("spoken.readables-catalogue.by-lang");
 
 /**
  * What the corpus's rows are, as one comparable value (lib/stamp.ts).
  *
- * Validated rather than invalidated, exactly as the zones catalogue is and for the same
+ * Validated rather than invalidated, exactly as the places catalogue is and for the same
  * reason: this app runs two pm2 workers, so a memo one worker drops after a save is a memo
  * the other keeps serving.
  */
@@ -311,19 +311,19 @@ export async function loadContext(
   seesMadeBy = false,
 ): Promise<SearchContext> {
   const [takeRows, reportRows, dirt] = await Promise.all([
-    liveTakes("books", lang),
+    liveTakes("readables", lang),
     // Grouped in the database rather than counted here: resolved rows are the ones that
     // accumulate, and there is no reason to carry them across to drop them. `lineId is not
     // null` excludes a report about the project, which belongs to no line.
     query<{ lineId: string; open: number }>(
       `select "lineId", count(*)::int as "open"
          from "report"
-        where "source" = 'books' and "status" = 'open' and "lineId" is not null
+        where "source" = 'readables' and "status" = 'open' and "lineId" is not null
           and "lang" = $1
         group by "lineId"`,
       [lang],
     ),
-    loadDirtyContext("books", lang),
+    loadDirtyContext("readables", lang),
   ]);
 
   return {

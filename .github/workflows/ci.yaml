@@ -23,7 +23,7 @@ jobs:
       addons: ${{ steps.filter.outputs.addons }}
       quests: ${{ steps.filter.outputs.quests }}
       web: ${{ steps.filter.outputs.web }}
-      zones: ${{ steps.filter.outputs.zones }}
+      places: ${{ steps.filter.outputs.places }}
     steps:
       - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
@@ -53,8 +53,8 @@ jobs:
             web:
               - .github/workflows/ci.yaml
               - apps/web/**
-              # The site bundles the zones and books pipelines and pipelines/lib, and CI seeds
-              # its database from the quests corpus through the Python importer.
+              # The site bundles the places and readables pipelines and pipelines/lib, and CI
+              # seeds its database from the quests corpus through the Python importer.
               - pipelines/**
               - deploy/web/**
               # Pack metadata (scripts/lib/packs.mjs reads publishers/) and the envelopes the
@@ -65,12 +65,12 @@ jobs:
               - package.json
               - pnpm-lock.yaml
               - pnpm-workspace.yaml
-            zones:
+            places:
               - .github/workflows/ci.yaml
               - pipelines/places/**
               - pipelines/lib/**
               - addons/Spoken_Places/**
-              # The books pipeline's and the scripts' Node tests run in this job too.
+              # The readables pipeline's and the scripts' Node tests run in this job too.
               - pipelines/readables/**
               - scripts/**
               # descriptions --check compares publishers/ with the READMEs generated from it.
@@ -100,7 +100,7 @@ jobs:
           node-version: 24
           package-manager-cache: false
       - run: node scripts/check-addon-xml.mjs
-      # Block balance in Spoken_Places' Lua (make zones-lint).
+      # Block balance in Spoken_Places' Lua (make places-lint).
       - run: python3 pipelines/places/tools/lua-syntax-check.py
       # The changelog's rules: credits under Unreleased, and the .toc's version has a section.
       - run: ./scripts/spoken/check-changelog.sh
@@ -168,10 +168,11 @@ jobs:
         working-directory: pipelines/quests
       - run: pnpm --filter @spoken/web test
 
-  zones-pipeline:
+  places-pipeline:
+    # The old name, kept because the master ruleset requires a check by that name.
     name: Zones pipeline
     needs: changes
-    if: needs.changes.outputs.zones == 'true'
+    if: needs.changes.outputs.places == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

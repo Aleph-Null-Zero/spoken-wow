@@ -13,7 +13,7 @@
  * voiced is just one line.
  *
  * Resolving the narrator, the request and the commit are lib/generation/narrated.ts, shared
- * with books. Zones used to reach into pipelines/places/tools/voice/elevenlabs.mjs for the
+ * with readables. Places used to reach into pipelines/places/tools/voice/elevenlabs.mjs for the
  * request, which left the repository with two ElevenLabs clients and put one of them in a
  * pipeline that does no generating.
  */
@@ -60,7 +60,7 @@ export async function regenerateZoneLine(
   }
 
   return regenerateNarrated(
-    "zones",
+    "places",
     { lineId: entry.id, file: entry.file, spoken: entry.spoken, hash: entry.hash },
     createdBy,
     options,

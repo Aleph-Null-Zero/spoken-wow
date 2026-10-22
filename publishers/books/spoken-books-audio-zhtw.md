@@ -1,7 +1,7 @@
 ---
 curseforge: 1723295
 release: books-audio-zhTW
-section: books
+section: readables
 lang: zhTW
 version: 2.0.0
 slug: spoken-chinese-traditional-audio-readables

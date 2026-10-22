@@ -1,7 +1,7 @@
 ---
 curseforge: 1723282
 release: books-audio-esMX
-section: books
+section: readables
 lang: esMX
 version: 2.0.2
 slug: spoken-spanish-al-audio-readables

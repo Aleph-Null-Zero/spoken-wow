@@ -144,7 +144,7 @@ async function main() {
       "AreaTable by English key, the Era build first and the Camelot build for places",
       "only it has. Names the same as English are kept: they are that language's",
       "name too. Read by tools/lore/import-names.mjs.",
-      "Regenerate with:  make zones-aliases",
+      "Regenerate with:  make places-aliases",
     ],
     builds: [build, camelot],
     names: seed,

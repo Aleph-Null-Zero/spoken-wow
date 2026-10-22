@@ -148,7 +148,7 @@ export function SearchBar({
         pronunciation moved
       </Label>
 
-      {/* Behind the triage role, as in the zones and quests bars: the count is public, but
+      {/* Behind the triage role, as in the places and quests bars: the count is public, but
           a list of what people have complained about is a worklist, and only triagers work it. */}
       {canTriage && (
         <Label className="flex items-center gap-1.5 text-xs">

@@ -15,7 +15,7 @@ VERSION := $(shell sed -n 's/^\#\# Version:[[:space:]]*//p' addons/Spoken_Places
 ZIP := dist/Spoken_Places-$(VERSION).zip
 
 help: ## Show this help
-	@echo "Spoken Zones $(VERSION)"
+	@echo "Spoken Places $(VERSION)"
 	@echo
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -73,7 +73,7 @@ clean: ## Remove build output
 # reads it; sounds, pull-live and package-audio take the same LOCALE, so one variable on the
 # command line moves the whole chain and a run cannot build one language's lookup over
 # another's clips.
-VOICE_LANG = SPOKEN_ZONES_LANG=$(or $(LOCALE),enUS)
+VOICE_LANG = SPOKEN_PLACES_LANG=$(or $(LOCALE),enUS)
 
 # The manifest comes from Postgres when DATABASE_URL is set and from the committed files
 # otherwise, and the repo-root .env sets it -- so a laptop whose Postgres is not running gets
@@ -82,7 +82,7 @@ VOICE_LANG = SPOKEN_ZONES_LANG=$(or $(LOCALE),enUS)
 #
 # Passing it empty is what env.mjs documents as "use the files": an already-set variable always
 # wins over .env. Defined-but-empty counts, so this is the default and
-# `make zones-package-audio DATABASE_URL=postgres://...` still reads the database.
+# `make places-package-audio DATABASE_URL=postgres://...` still reads the database.
 VOICE_DB = DATABASE_URL=$(DATABASE_URL)
 
 voice: ## Report on every voiceline: what is missing, stale, and what it would cost
@@ -218,11 +218,11 @@ RSYNC ?= $(shell for r in /opt/homebrew/bin/rsync /usr/local/bin/rsync $$(comman
 	[ -x "$$r" ] && "$$r" --version 2>/dev/null | head -1 | grep -q 'version 3' && { echo "$$r"; exit 0; }; \
 	done)
 
-# Zones' own archive, beside quests' and books' under one shared audio-history -- the
-# directory SPOKEN_ZONES_AUDIO_HISTORY names in deploy/web/ecosystem.config.js. The root
+# Places' own archive, beside quests' and readables' under one shared audio-history -- the
+# directory SPOKEN_PLACES_AUDIO_HISTORY names in deploy/web/ecosystem.config.js. The root
 # holds all three sections, so syncing against it would pull the other two sections' takes
 # into this one's folder.
-REMOTE_HISTORY := $(DROPLET):$(REMOTE_ROOT)/shared/audio-history/zones/
+REMOTE_HISTORY := $(DROPLET):$(REMOTE_ROOT)/shared/audio-history/places/
 # No -z: mp3 is already compressed. Never --delete: archived audio is only ever added to.
 # -e is not optional: without it rsync spawns a plain ssh that cannot authenticate.
 HISTORY_RSYNC_OPTS := -a --partial --human-readable --info=progress2 -e "$(SSH)"
@@ -251,32 +251,32 @@ pull-history: require-droplet ## Fetch the droplet's archived takes (non-destruc
 	$(preflight)
 	@mkdir -p pipelines/places/audio-history
 	$(RSYNC) $(HISTORY_RSYNC_OPTS) $(REMOTE_HISTORY) pipelines/places/audio-history/
-	@echo "==> pulled. Build the pack's Sounds/ with:  make zones-sounds"
+	@echo "==> pulled. Build the pack's Sounds/ with:  make places-sounds"
 
 # Only the takes the pack is built from: the live ones, as the local database has them, so run
-# `make zones-sync` first. pull-history is the whole archive, for listening to old takes.
+# `make places-sync` first. pull-history is the whole archive, for listening to old takes.
 pull-live: require-droplet ## Fetch only the live takes the local database names (after sync)
 	$(preflight)
-	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh zones $(or $(LOCALE),enUS)
+	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh places $(or $(LOCALE),enUS)
 
 history-status: require-droplet ## Compare archived take count and size on both sides
 	@echo "local:   $$(find pipelines/places/audio-history -name '*.mp3' 2>/dev/null | wc -l | tr -d ' ') takes, $$(du -sh pipelines/places/audio-history 2>/dev/null | cut -f1 || echo 0)"
-	@$(SSH) $(DROPLET) 'echo "droplet: $$(find $(REMOTE_ROOT)/shared/audio-history/zones -name "*.mp3" 2>/dev/null | wc -l | tr -d " ") takes, $$(du -sh $(REMOTE_ROOT)/shared/audio-history/zones 2>/dev/null | cut -f1)"' \
+	@$(SSH) $(DROPLET) 'echo "droplet: $$(find $(REMOTE_ROOT)/shared/audio-history/places -name "*.mp3" 2>/dev/null | wc -l | tr -d " ") takes, $$(du -sh $(REMOTE_ROOT)/shared/audio-history/places 2>/dev/null | cut -f1)"' \
 	  || echo "droplet unreachable (try: make ssh-check)"
 
 # The pack's Sounds/ is not kept: it is assembled from the live takes and the archive, and
 # made again before every build. See scripts/audio/sounds.mjs.
-sounds: ## Assemble the pack's Sounds/ (LOCALE=xx: into build/zones/xx) from the live takes
-	@$(DB_ENV) node scripts/audio/sounds.mjs --lang=$(or $(LOCALE),enUS) zones
+sounds: ## Assemble the pack's Sounds/ (LOCALE=xx: into build/places/xx) from the live takes
+	@$(DB_ENV) node scripts/audio/sounds.mjs --lang=$(or $(LOCALE),enUS) places
 
 # The voice actors' recordings (migration 0062) ship as an overlay pack of their own, which the
 # player prefers over the generated pack where it has a line. Built from the `recording` table
 # and the files under the archive's recorded/, not from the takes. See scripts/audio/acted.mjs.
 pull-recorded: require-droplet ## Fetch the voice actors' live recordings the local database names (after sync)
-	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh zones $(or $(LOCALE),enUS) recorded
+	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh places $(or $(LOCALE),enUS) recorded
 
 package-acted: check-synced ## Build the voice-acted overlay zip into dist/ (LOCALE=xx, ACTED_VERSION=x.y.z)
-	@$(DB_ENV) node scripts/audio/acted.mjs --lang=$(or $(LOCALE),enUS) --version=$(or $(ACTED_VERSION),1.0.0) zones
+	@$(DB_ENV) node scripts/audio/acted.mjs --lang=$(or $(LOCALE),enUS) --version=$(or $(ACTED_VERSION),1.0.0) places
 
 acted: pull-recorded package-acted ## Pull the recordings and build the voice-acted overlay (after sync)
 
@@ -284,16 +284,16 @@ acted: pull-recorded package-acted ## Pull the recordings and build the voice-ac
 # Moving the database between machines
 #
 # One direction only: production is upstream for every edit and every take, so data comes
-# home and never goes back. The recipe is shared with quests and books -- see
+# home and never goes back. The recipe is shared with quests and readables -- see
 # scripts/db/sync-section.sh.
 #-------------------------------------------------------------------------------
 
-sync: require-droplet ## Replace the local zones lore and takes with the droplet's (DESTRUCTIVE)
-	@$(DB_ENV) scripts/db/sync-section.sh zones lore_line
-	@echo "==> bring the addon into step with:  make zones-lore-export && make zones-lookup"
+sync: require-droplet ## Replace the local places lore and takes with the droplet's (DESTRUCTIVE)
+	@$(DB_ENV) scripts/db/sync-section.sh places lore_line
+	@echo "==> bring the addon into step with:  make places-lore-export && make places-lookup"
 
-check-synced: ## Compare the local zones data with the droplet's, and prompt if they differ
-	@$(DB_ENV) scripts/db/check-synced.sh zones
+check-synced: ## Compare the local places data with the droplet's, and prompt if they differ
+	@$(DB_ENV) scripts/db/check-synced.sh places
 
 #-------------------------------------------------------------------------------
 # Deploying
@@ -324,12 +324,12 @@ release-audio: ## Upload the sound pack (LOCALE=xx for a language's)
 # CurseForge only -- Wago answers 413 to a file this size (scripts/lib/wago.sh) -- and to
 # GitHub, which is where a Wago player gets it.
 full-release: require-droplet ## Sync, pull live takes, build and upload the sound pack (LOCALE=xx for a language's)
-	@$(MAKE) --no-print-directory -f make/zones.mk sync
-	@$(MAKE) --no-print-directory -f make/zones.mk pull-live LOCALE=$(LOCALE)
-	@$(MAKE) --no-print-directory -f make/zones.mk package-audio LOCALE=$(LOCALE)
+	@$(MAKE) --no-print-directory -f make/places.mk sync
+	@$(MAKE) --no-print-directory -f make/places.mk pull-live LOCALE=$(LOCALE)
+	@$(MAKE) --no-print-directory -f make/places.mk package-audio LOCALE=$(LOCALE)
 	@./scripts/places/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
-	@./scripts/audio-github-release.sh --dry-run zones $(or $(LOCALE),enUS)
-	@printf 'Upload the zones pack to CurseForge and GitHub? [y/N] '; \
+	@./scripts/audio-github-release.sh --dry-run places $(or $(LOCALE),enUS)
+	@printf 'Upload the places pack to CurseForge and GitHub? [y/N] '; \
 	  read -r answer; [ "$$answer" = y ] || { echo aborted; exit 1; }
 	@./scripts/places/release.sh --lang=$(or $(LOCALE),enUS) audio
-	@./scripts/audio-github-release.sh zones $(or $(LOCALE),enUS)
+	@./scripts/audio-github-release.sh places $(or $(LOCALE),enUS)

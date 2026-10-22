@@ -21,7 +21,7 @@
 - The user's shell is fish. Every command given to the user is in fish syntax.
 - Comments match the surrounding code: say what the code does, not its history, and don't point at sibling files for context.
 - PR descriptions follow the user's guideline: about 200 words of prose, no change lists, and no Claude attribution line.
-- Tests run before each commit and push: `make web-test` for `apps/web`, `make books-test` for the pipeline, `make test-player` for Lua.
+- Tests run before each commit and push: `make web-test` for `apps/web`, `make readables-test` for the pipeline, `make test-player` for Lua.
 
 ## Review Focus
 
@@ -231,7 +231,7 @@ Every writer that can create a page now writes `book_page` in the same transacti
 **Files:**
 - Modify: `pipelines/readables/tools/import.mjs` (the insert loop and the structural update)
 - Modify: `pipelines/readables/tools/import-locale.mjs` (the comment on `withoutEnglish` only; see below)
-- Modify: `make/web.mk:154-166` (`migrate-books`), `make/books.mk:84` (`sync`)
+- Modify: `make/web.mk:154-166` (`migrate-readables`), `make/readables.mk:84` (`sync`)
 - Create: `pipelines/readables/tools/lib/page.mjs`
 - Test: `pipelines/readables/tools/lib/page.test.mjs`
 
@@ -316,13 +316,13 @@ Two pages of the same book that swap numbers in one re-extract would collide on 
 
 - [ ] **Step 6: Sync and migrate both tables**
 
-`make/books.mk`, in `sync`:
+`make/readables.mk`, in `sync`:
 
 ```make
 	@$(DB_ENV) scripts/db/sync-section.sh books book_line book_page
 ```
 
-`make/web.mk`, in `migrate-books`: truncate both, then dump both.
+`make/web.mk`, in `migrate-readables`: truncate both, then dump both.
 
 ```make
 	@( echo 'begin;'; \
@@ -334,13 +334,13 @@ Leave the sequence reset line as it is (`book_page` has no sequence). `--table=b
 
 - [ ] **Step 7: Run the pipeline tests against a fresh import**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; make books-test; and node pipelines/readables/tools/import.mjs; and psql spoken_ci_pin -tAc 'select count(*) from book_page'`
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; make readables-test; and node pipelines/readables/tools/import.mjs; and psql spoken_ci_pin -tAc 'select count(*) from book_page'`
 Expected: tests pass. The import reports `0 promoted … unchanged`, and the count equals `select count(distinct "lineId") from book_line`.
 
 - [ ] **Step 8: Commit**
 
 ```fish
-git add pipelines/readables/tools/lib/page.mjs pipelines/readables/tools/lib/page.test.mjs pipelines/readables/tools/import.mjs make/books.mk make/web.mk docs/readables/docs/language-decoupling.md
+git add pipelines/readables/tools/lib/page.mjs pipelines/readables/tools/lib/page.test.mjs pipelines/readables/tools/import.mjs make/readables.mk make/web.mk docs/readables/docs/language-decoupling.md
 git commit -m "Books: the import places pages in book_page, and sync carries it"
 ```
 
@@ -468,7 +468,7 @@ git commit -m "Books: page keys and minted ids, beside the frozen numeric ones"
 - Modify: `apps/web/src/lib/readables/search.ts:23-24,89-90,142,164`
 - Modify: `apps/web/src/lib/readables/filters.ts:34,93,113-119,137`
 - Modify: `apps/web/src/components/readables/SearchBar.tsx:75,101-103`, `apps/web/src/components/readables/Player.tsx:45`, `apps/web/src/components/readables/BookList.tsx:58` (type only)
-- Modify: `apps/web/src/app/[lang]/books/r/[pageId]/page.tsx:36,114`, `apps/web/src/app/api/reports/route.ts:139`, `apps/web/src/lib/reports/detail.ts:51`
+- Modify: `apps/web/src/app/[lang]/readables/r/[pageId]/page.tsx:36,114`, `apps/web/src/app/api/reports/route.ts:139`, `apps/web/src/lib/reports/detail.ts:51`
 - Test: `apps/web/src/lib/readables/catalogue.test.ts` (new), `apps/web/src/lib/readables/search.test.ts` (update fixtures)
 
 **Interfaces:**
@@ -726,7 +726,7 @@ Expected: PASS, the new `catalogue.test.ts` included.
 - [ ] **Step 6: Commit**
 
 ```fish
-git add -A apps/web/src/lib/readables apps/web/src/components/readables apps/web/src/app/[lang]/books apps/web/src/app/api/reports apps/web/src/lib/reports
+git add -A apps/web/src/lib/readables apps/web/src/components/readables apps/web/src/app/[lang]/readables apps/web/src/app/api/reports apps/web/src/lib/reports
 git commit -m "Books: the catalogue lists every page in every language, English included"
 ```
 
@@ -843,7 +843,7 @@ In `saveBookText`, replace the "first translation" lookup and the insert's `sele
       [args.lineId],
     );
     if (!current && !placed[0]) {
-      throw new BookMissing(`${args.lineId} is not a page -- seed the table with: make books-import`);
+      throw new BookMissing(`${args.lineId} is not a page -- seed the table with: make readables-import`);
     }
 ```
 
@@ -925,8 +925,8 @@ QuestIT matches Italian to English pages by hash, so the join on English stays. 
 
 - [ ] **Step 6: Run every affected suite**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/readables; and make books-test; and cd pipelines/quests; and uv run pytest -q tests -k questit; cd -`
-Expected: PASS. Also run `make books-export` against `spoken_ci_pin`: `git diff --stat addons/Spoken_Books/Data/Books.lua` must show no change.
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/readables; and make readables-test; and cd pipelines/quests; and uv run pytest -q tests -k questit; cd -`
+Expected: PASS. Also run `make readables-export` against `spoken_ci_pin`: `git diff --stat addons/Spoken_Books/Data/Books.lua` must show no change.
 
 - [ ] **Step 7: Commit**
 
@@ -1490,13 +1490,13 @@ To have `bookMatches` available there, move the `bookMatchesFor(shown)` call ahe
 
 - [ ] **Step 7: `ContributionTable.tsx`'s Match cell**
 
-Rename `BookMatchCell` to `MatchCell` and change its content. It shows `book.label`; for `known`/`correction`/`translation` it links the page at `/books/r/${pageKeyOf(lineId)}` (import `pageKeyOf` is server-only, so compute `href` in `page.tsx` and pass it as `book.href`). Its controls are:
+Rename `BookMatchCell` to `MatchCell` and change its content. It shows `book.label`; for `known`/`correction`/`translation` it links the page at `/readables/r/${pageKeyOf(lineId)}` (import `pageKeyOf` is server-only, so compute `href` in `page.tsx` and pass it as `book.href`). Its controls are:
 - a `<select>` of books from the `books` datalist plus a `"new"` option labelled "New book",
 - the page number input (start value `book.number ?? 1`),
 - **Match**, which POSTs `{ id, bookId, pageNumber }`, or `{ id, newBook: true }` when "new" is selected,
 - **Clear**, shown only when `book.match.via === "moderator"`, which POSTs `{ id, clear: true }`.
 
-Change the placeholder from "English book" to "Book". Add `href: string | null` to `BookSummary` and fill it in `bookFor`'s caller: for a `lineId` match, `localeHref(lang, \`/books/r/${pageKeyOf(lineId)}\`)`, otherwise null.
+Change the placeholder from "English book" to "Book". Add `href: string | null` to `BookSummary` and fill it in `bookFor`'s caller: for a `lineId` match, `localeHref(lang, \`/readables/r/${pageKeyOf(lineId)}\`)`, otherwise null.
 
 Replace the accept-button guard that disabled books rows with no `pageId` (search `match === null` / `needs-page` in the component) with `book.match.kind === "ambiguous" || book.match.kind === "known"`, and a tooltip: "Pick the page first" or "Already in the corpus".
 
@@ -1507,7 +1507,7 @@ Expected: PASS.
 
 - [ ] **Step 9: Check it in the browser on `spoken_dev`**
 
-Run `make dev` with `DATABASE_URL=postgres:///spoken_dev` and open `/contributions/books`. Expected: contribution 30090 reads "Correction · Registro de Reclutamiento de la Horda p.1" (or "Translation", if esES has no row for page 340), and an unknown title reads "New book · …".
+Run `make dev` with `DATABASE_URL=postgres:///spoken_dev` and open `/contributions/readables`. Expected: contribution 30090 reads "Correction · Registro de Reclutamiento de la Horda p.1" (or "Translation", if esES has no row for page 340), and an unknown title reads "New book · …".
 
 - [ ] **Step 10: Commit**
 
@@ -1899,14 +1899,14 @@ Import `saveBookText` and `BookMissing`/`BookConflict` from `@/lib/readables/tex
 
 - [ ] **Step 5: Open the corrections page to books**
 
-`corrections/page.tsx`: `if (!["quests", "books"].includes((await params).source)) notFound();`. Pass `stage` filtering only for quests: wrap the `matchesStage` filter in `source === "quests" ? … : rows`. In `CorrectionTable.tsx`, wherever `row.quest` is read, guard with `row.quest &&`. The row's link goes to `/books/r/${pageKeyOf(lineId)}` for books (compute it in the page).
+`corrections/page.tsx`: `if (!["quests", "books"].includes((await params).source)) notFound();`. Pass `stage` filtering only for quests: wrap the `matchesStage` filter in `source === "quests" ? … : rows`. In `CorrectionTable.tsx`, wherever `row.quest` is read, guard with `row.quest &&`. The row's link goes to `/readables/r/${pageKeyOf(lineId)}` for books (compute it in the page).
 
 Also show the Corrections sub-tab for books in `ContributionsTabs` if it is limited to quests: `grep -n "corrections" apps/web/src/components/ContributionsTabs.tsx`, and widen the condition to `source === "quests" || source === "books"`.
 
 - [ ] **Step 6: Run the suites and look at the page**
 
 Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/contributions src/app/api/contributions; and pnpm --filter web typecheck`
-Expected: PASS. On `spoken_dev`, `/contributions/books/corrections` lists the Wiley-shaped rows with their diff.
+Expected: PASS. On `spoken_dev`, `/contributions/readables/corrections` lists the Wiley-shaped rows with their diff.
 
 - [ ] **Step 7: Commit**
 
@@ -2131,8 +2131,8 @@ Update the existing `lookup.test.mjs` and `lua.test.mjs` cases that pass `text` 
 
 - [ ] **Step 5: Run the tests and rebuild one pack**
 
-Run: `make books-test; and set -x DATABASE_URL postgres:///spoken_dev; and make books-lookup LOCALE=esES`
-Expected: tests pass. `build/books/esES/Data/Sounds.lua` has an `extraIndex` once a minted esES page has a take, and otherwise an index that differs from the previous build only by added checksums.
+Run: `make readables-test; and set -x DATABASE_URL postgres:///spoken_dev; and make readables-lookup LOCALE=esES`
+Expected: tests pass. `build/readables/esES/Data/Sounds.lua` has an `extraIndex` once a minted esES page has a take, and otherwise an index that differs from the previous build only by added checksums.
 
 - [ ] **Step 6: Commit**
 
@@ -2173,7 +2173,7 @@ do
     local clip = SpokenBooks:ClipFor(MINTED)
     Expect(clip and clip.path:find(MINTED .. ".mp3", 1, true), "read from the pack's own file")
     Expect(clip and clip.key == "b:" .. MINTED, "queued under its lineId")
-    Expect(SpokenBooks:ReportURL(MINTED, "esES"):find("/books/r/" .. MINTED, 1, true), "reported by its key")
+    Expect(SpokenBooks:ReportURL(MINTED, "esES"):find("/readables/r/" .. MINTED, 1, true), "reported by its key")
 end
 
 do
@@ -2315,7 +2315,7 @@ git commit -m "Spoken Books: find, place and read pages only a language pack has
 ### Task 13: Landing page and report route accept minted keys
 
 **Files:**
-- Modify: `apps/web/src/app/[lang]/books/r/[pageId]/page.tsx` (docstring: the address is the page's key)
+- Modify: `apps/web/src/app/[lang]/readables/r/[pageId]/page.tsx` (docstring: the address is the page's key)
 - Test: `apps/web/src/app/api/reports/route.test.ts` (books case)
 
 - [ ] **Step 1: Write the failing test**
@@ -2329,10 +2329,10 @@ Expected: PASS already, if Task 4 changed `booksTarget` to `pageById(raw)`. If i
 
 - [ ] **Step 3: Update the docstring and commit**
 
-Change "The address is /books/r/{pageTextID}" to "The address is /books/r/{key}: the pageTextID, or a minted page's n{uuid}".
+Change "The address is /readables/r/{pageTextID}" to "The address is /readables/r/{key}: the pageTextID, or a minted page's n{uuid}".
 
 ```fish
-git add apps/web/src/app/[lang]/books/r apps/web/src/app/api/reports
+git add apps/web/src/app/[lang]/readables/r apps/web/src/app/api/reports
 git commit -m "Books: a minted page has a landing page and takes reports"
 ```
 
@@ -2449,7 +2449,7 @@ In `import.mjs`, after the loop, inside the import's transaction:
 
 - [ ] **Step 4: Run tests**
 
-Run: `node --test pipelines/readables/tools/lib/absorb.test.mjs; and make books-test`
+Run: `node --test pipelines/readables/tools/lib/absorb.test.mjs; and make readables-test`
 Expected: PASS.
 
 - [ ] **Step 5: Lookup keeps the old file playable**
@@ -2475,7 +2475,7 @@ git commit -m "Books: the import folds a minted page into the real one it turns 
 
 - [ ] **Step 1:** Remove the structure columns from every insert. Run `grep -rn '"pageCount"\|"ownerIds"' apps/web/src pipelines` and expect only `book_page` reads to be left.
 - [ ] **Step 2:** The migration: `alter table "book_line" drop column "pageId", drop column "bookId", drop column "pageNumber", drop column "pageCount", drop column "ownerKind", drop column "ownerIds", drop column "material"; alter table "contribution" drop column "pageId";`. Rewrite `entity_name_from_book_line` to read owners from `book_page` first, in the same migration.
-- [ ] **Step 3:** Run every suite (`make web-test`, `make books-test`, `make test-player`, quests pytest), then commit.
+- [ ] **Step 3:** Run every suite (`make web-test`, `make readables-test`, `make test-player`, quests pytest), then commit.
 
 ---
 

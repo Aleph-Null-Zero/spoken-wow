@@ -86,13 +86,13 @@ export type ContributionRow = Pick<
   client: ClientSummary;
   /** The voice packs' language when it is not the client's (triage.ts packHeard), else null. */
   pack: string | null;
-  /** Null when the envelope never named an NPC at all -- zones and books, or a quest keyed on quest+event. */
+  /** Null when the envelope never named an NPC at all -- places and readables, or a quest keyed on quest+event. */
   npc: NpcSummary | null;
   /** Null when the source has no quest concept at all. See lib/contributions/triage.ts. */
   quest: QuestSummary | null;
-  /** A books row: what the client showed, and what the matcher or a moderator decided it is. */
+  /** A readables row: what the client showed, and what the matcher or a moderator decided it is. */
   book: BookSummary | null;
-  /** A zones or books row's place as the client named it: zone and subzone, or book and page. */
+  /** A places or readables row's place as the client named it: zone and subzone, or book and page. */
   place: string | null;
   /**
    * Whether this contribution's line is already in the explorer (accept.ts's lineIsInExplorer).
@@ -108,7 +108,7 @@ export type ContributionRow = Pick<
 export type BookChoice = { bookId: string; title: string; pages: number };
 
 /** The datalist the match form's book field offers, rendered once for the whole table. */
-const BOOKS_LIST = "contribution-books";
+const READABLES_LIST = "contribution-readables";
 const NEW_BOOK = "New book";
 
 /**
@@ -125,7 +125,7 @@ function bookLabels(books: readonly BookChoice[]): BookLabels {
   return labels;
 }
 
-/** What a moderator says a books row is, as api/contributions/page takes it; null clears it. */
+/** What a moderator says a readables row is, as api/contributions/page takes it; null clears it. */
 type MatchAnswer = { bookId: string; pageNumber: number } | { newBook: true } | null;
 
 const STATUS_LABELS: Record<ContributionStatus, string> = {
@@ -336,7 +336,7 @@ export default function ContributionTable({
   );
 
   /**
-   * A books row placed by hand (api/contributions/page), or cleared with null. The error, when
+   * A readables row placed by hand (api/contributions/page), or cleared with null. The error, when
    * there is one, is the route's own words; the page re-reads the row's match on success.
    */
   const matchPage = useCallback(
@@ -475,7 +475,7 @@ export default function ContributionTable({
   const shownToAccept = matching
     .filter((row) => row.bulk && (resolved[row.id] ?? row.status) !== "accepted")
     .map((row) => row.id);
-  // A row with no speaker would only come back refused, nor would a books row the matcher can't
+  // A row with no speaker would only come back refused, nor would a readables row the matcher can't
   // place: that one is accepted on its own.
   const notBulk = new Set(matching.filter((row) => !row.bulk).map((row) => row.id));
   const selectedToAccept = changeable(
@@ -658,7 +658,7 @@ export default function ContributionTable({
                   <th className="border-b py-2 pr-3 font-normal">Quest</th>
                 </>
               ) : (
-                <th className="border-b py-2 pr-3 font-normal">{source === "books" ? "Book" : "Place"}</th>
+                <th className="border-b py-2 pr-3 font-normal">{source === "readables" ? "Book" : "Place"}</th>
               )}
               <th className="border-b py-2 pr-3 font-normal">Client</th>
               <SortHeader column="count" sort={sort} onSort={(column) => go({ sort: nextSort(sort, column) })}>
@@ -704,7 +704,7 @@ export default function ContributionTable({
           </tbody>
         </table>
       )}
-      <datalist id={BOOKS_LIST}>
+      <datalist id={READABLES_LIST}>
         {[...labels].map(([label, choice]) => (
           <option key={label} value={label}>
             {choice ? (choice.pages === 1 ? "1 page" : `${choice.pages} pages`) : null}
@@ -758,7 +758,7 @@ const ContributionTableRow = memo(function ContributionTableRow({
   bucket: Bucket;
   /** On the New tab, the row now belongs to the other half. */
   moved: boolean;
-  /** The text already on file for the row: a zones key's line, or the matched books page in the row's own language. */
+  /** The text already on file for the row: a places key's line, or the matched readables page in the row's own language. */
   found: string | undefined;
   selected: boolean;
   /** This row's own resolve is in flight. */
@@ -1157,7 +1157,7 @@ function MissingNpcForm({
 }
 
 /**
- * A books row's match: what the matcher (or a moderator) decided it is, linked where it names a
+ * A readables row's match: what the matcher (or a moderator) decided it is, linked where it names a
  * page, and the controls to say otherwise -- a book from the table's list and a page number, or
  * a new book. Clear drops a moderator's answer and lets the matcher decide again.
  */
@@ -1209,7 +1209,7 @@ function MatchCell({
         >
           <input
             required
-            list={BOOKS_LIST}
+            list={READABLES_LIST}
             aria-label="Book"
             placeholder="Book"
             value={choice}

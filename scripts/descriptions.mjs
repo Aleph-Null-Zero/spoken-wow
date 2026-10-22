@@ -228,7 +228,7 @@ async function reportDrift(groups) {
 
 // --group=quests limits the run to one directory under publishers/. Only --drift uses it, and
 // only so that a release prints the pages that release is about: every project's pages are
-// tracked here now, and a zones upload listing five unpasted quests pages is noise at exactly
+// tracked here now, and a places upload listing five unpasted quests pages is noise at exactly
 // the moment somebody is working through a checklist.
 function groupFilter() {
   const arg = process.argv.find((a) => a.startsWith("--group="));

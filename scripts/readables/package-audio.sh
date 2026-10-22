@@ -1,35 +1,35 @@
 #!/usr/bin/env bash
-# A language's books sound pack, staged from English's folder and zipped into dist/.
+# A language's readables sound pack, staged from English's folder and zipped into dist/.
 #
 #   LOCALE=esMX ./scripts/readables/package-audio.sh
 #
-# English's pack is still zipped in place by `make books-package-audio`: its folder is the pack.
+# English's pack is still zipped in place by `make readables-package-audio`: its folder is the pack.
 # Another language's is not in the tree at all -- its clips and table are build output under
-# build/books/<lang>/ (make books-sounds / books-lookup LOCALE=..) -- so this copies English's
+# build/readables/<lang>/ (make readables-sounds / readables-lookup LOCALE=..) -- so this copies English's
 # folder around them, and its page under publishers/books/ says what it is called and which
 # version it is.
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOCALE="${LOCALE:?set LOCALE, e.g. LOCALE=esMX}"
-[[ "$LOCALE" != enUS ]] || { echo "error: English's pack is \`make books-package-audio\`" >&2; exit 1; }
+[[ "$LOCALE" != enUS ]] || { echo "error: English's pack is \`make readables-package-audio\`" >&2; exit 1; }
 
 SRC="$REPO/addons/SpokenBooksAudio"
-WORK="$REPO/build/books/$LOCALE"
+WORK="$REPO/build/readables/$LOCALE"
 DIST="$REPO/dist"
-pack_field() { node "$REPO/scripts/lib/packs.mjs" get books "$LOCALE" - "$1"; }
+pack_field() { node "$REPO/scripts/lib/packs.mjs" get readables "$LOCALE" - "$1"; }
 folder="$(pack_field folder)"; title="$(pack_field name)"
 version="$(pack_field version)"; slug="$(pack_field slug)"
 
 count="$(find "$WORK/Sounds" -name '*.mp3' 2>/dev/null | wc -l | tr -d ' ')"
-[[ "$count" -gt 0 ]] || { echo "error: no mp3 files in $WORK/Sounds -- make books-pull-live books-sounds LOCALE=$LOCALE" >&2; exit 1; }
-[[ -f "$WORK/Data/Sounds.lua" ]] || { echo "error: no $WORK/Data/Sounds.lua -- make books-lookup LOCALE=$LOCALE" >&2; exit 1; }
+[[ "$count" -gt 0 ]] || { echo "error: no mp3 files in $WORK/Sounds -- make readables-pull-live readables-sounds LOCALE=$LOCALE" >&2; exit 1; }
+[[ -f "$WORK/Data/Sounds.lua" ]] || { echo "error: no $WORK/Data/Sounds.lua -- make readables-lookup LOCALE=$LOCALE" >&2; exit 1; }
 
 node "$REPO/scripts/descriptions.mjs" --write >/dev/null
 staging="$(mktemp -d)"
 trap 'rm -rf "$staging"' EXIT
 mkdir -p "$staging/$folder/Data"
 rsync -a --exclude 'Sounds/' --exclude 'Data/Sounds.lua' --exclude '.DS_Store' "$SRC/" "$staging/$folder/"
-# English's icon with this language's badge (`make books-icon`).
+# English's icon with this language's badge (`make readables-icon`).
 cp "$REPO/pipelines/readables/assets/spoken-books-$LOCALE.tga" "$staging/$folder/Textures/AddonIcon.tga"
 mv "$staging/$folder/SpokenBooksAudio.toc" "$staging/$folder/$folder.toc"
 cp "$REPO/dist/descriptions/$slug.md" "$staging/$folder/README.md"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fetch the archived takes a section's pack is built from, and no others.
 #
-#   scripts/audio/pull-live.sh <quests|zones|books>
+#   scripts/audio/pull-live.sh <quests|places|readables>
 #   scripts/audio/pull-live.sh <section> <lang>   another language's pack
 #   scripts/audio/pull-live.sh <section> <lang> recorded
 #                                                 the voice actors' live recordings instead,
@@ -26,7 +26,7 @@
 #   RSYNC                       an rsync 3.x; macOS's openrsync lacks --info
 set -euo pipefail
 
-section=${1:?usage: pull-live.sh <quests|zones|books> [lang]}
+section=${1:?usage: pull-live.sh <quests|places|readables> [lang]}
 # A language's takes live under <lang>/ in the same archive, and the list sounds.mjs prints
 # already carries that prefix, so the rsync below is the same for every language and lands
 # them beside English's rather than over them.
@@ -47,7 +47,7 @@ esac
 # Where sounds.mjs reads the archive from, including its SPOKEN_<SECTION>_AUDIO_HISTORY
 # override, so the pull lands where the build looks.
 override="SPOKEN_$(printf '%s' "$section" | tr '[:lower:]' '[:upper:]')_AUDIO_HISTORY"
-archive=${!override:-$root/pipelines/$(node "$root/scripts/lib/packs.mjs" folder "$section")/audio-history}
+archive=${!override:-$root/pipelines/$section/audio-history}
 
 list=$(mktemp)
 trap 'rm -f "$list"' EXIT

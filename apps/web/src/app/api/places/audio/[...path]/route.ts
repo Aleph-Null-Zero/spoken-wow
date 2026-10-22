@@ -1,5 +1,5 @@
 /**
- * A zones line's live take: /api/zones/audio/1411/razor-hill.mp3.
+ * A places line's live take: /api/places/audio/1411/razor-hill.mp3.
  *
  * The guard is membership in the set of paths the catalogue can address, which is
  * traversal-proof by construction: a path either names a file some line owns or it does
@@ -18,7 +18,7 @@ export async function GET(request: Request, context: { params: Promise<{ path: s
   if (!(await isAddressable(rel))) return new Response("bad audio path", { status: 400 });
   const { lang, denied } = await langParam(request);
   if (denied) return denied;
-  return serveTake(request, await livePath("zones", rel.slice(0, -".mp3".length), lang), {
+  return serveTake(request, await livePath("places", rel.slice(0, -".mp3".length), lang), {
     immutable: false,
     lang,
   });

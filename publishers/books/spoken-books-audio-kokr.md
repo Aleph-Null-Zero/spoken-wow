@@ -1,7 +1,7 @@
 ---
 curseforge: 1723288
 release: books-audio-koKR
-section: books
+section: readables
 lang: koKR
 version: 2.0.0
 slug: spoken-korean-audio-readables
