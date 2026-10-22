@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Bosses whose fight the game may not announce are found when you target them.** Baron Aquanis, Lord
+  Kazzak, Azuregos, Prince Thunderaan and the four Emerald Dragons could stay locked after you fought them.
+  Ribbly Screwspigot and Plugger Spazzring are listed in Blackrock Depths again. Blackfathom Deeps and
+  Gnomeregan list their bosses in Forever's order, not the Season of Discovery raid's, and targeting any creature of a fight of several,
+  such as Stalagg or one of the Four Horsemen, shows the fight's story. *([Nucabe](https://github.com/Nucabe))*
 - **The Places tab sorts names without a leading "The".** The Barrens is listed under B and
   The Crossroads under C, among the zones, areas and dungeons, as you would look for them. The
   names still read in full. *([rusty-key](https://github.com/rusty-key))*
