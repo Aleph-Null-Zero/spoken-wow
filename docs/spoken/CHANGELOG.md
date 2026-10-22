@@ -6,6 +6,30 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 - **A quest's page writes your class and race in lower case mid-sentence**, as the quest window does:
   "young hunter", not "young Hunter". German keeps the capital. *([Nucabe](https://github.com/Nucabe))*
+- **Gossip finds its line on Chinese, Korean and French clients.** A reworded line now matches in
+  Chinese and Korean, and French text with a curly apostrophe or a no-break space matches the line it is,
+  where before it played nothing. On a client in another language than English, an NPC with several
+  lines and none in that language no longer reads one of its English lines at random: it reads nothing
+  and offers Contribute. *([Nucabe](https://github.com/Nucabe))*
+- **Readables that name you are recognised.** The class letters every new character gets, and other
+  letters that greet you by name, class or as brother or sister, now count as found, and the Compendium
+  shows them with your name in them. A page sent from the Contribute button no longer carries your
+  character's name. *([Nucabe](https://github.com/Nucabe))*
+- **117 more quest givers and enders show their own face.** Seven creatures, such as Malfurion Stormrage,
+  no longer ship an appearance the game cannot draw. *([Nucabe](https://github.com/Nucabe))*
+- **The Ruins of Lordaeron dungeon is listed in Tirisfal Glades**, where its entrance is, and its card
+  is Tirisfal's Ruins of Lordaeron. It was listed in the Undercity. *([Nucabe](https://github.com/Nucabe))*
+- **Highlight Words is on by default, and Type Words Out and Show Progress Bar are off.** The words of a
+  line show whole and the word being read is lit. *([Nucabe](https://github.com/Nucabe))*
+- **The AddOns list says what each part reads.** Hovering Spoken now says it reads quests, gossip,
+  places and readables, with one queue, one narrator and one minimap button. The Places and
+  Readables sound packs say what they hold and that they load with the game, and the Vanilla
+  quest packs say they are narrated.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Show Spoken Over DialogueUI is gone.** While DialogueUI's window is open, Spoken's window and
+  subtitles step aside, and DialogueUI's own window shows the words and the queue. *([Nucabe](https://github.com/Nucabe))*
+- **Read Greetings is Once for Quest Givers by default.** A quest giver's greeting is read once, and other
+  NPCs greet every time. A choice you made yourself is kept. *([Nucabe](https://github.com/Nucabe))*
 - **The 1.12, 2.4.3 and 3.3.5 clients are no longer supported.** Spoken runs on WoW: Forever, Classic Era
   and TBC Anniversary.
   *([rusty-key](https://github.com/rusty-key))*
@@ -23,11 +47,18 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
   face are drawn from appearances that ship with Spoken, so a creature the client has not met yet no longer
   shows your own face or another creature's. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: closing DialogueUI on a giver's greeting after taking a quest showed the queue's
+  animation with no window.** The quest's page went behind a window that was not on screen.
+  Now the window flies out of the dialog with the greeting, the quest counted after its title. *([Nucabe](https://github.com/Nucabe))*
 - **The Compendium's minimise arrow sits in the middle of its button.** It was drawn off to one side of the
   frame the template gives it. *([Nucabe](https://github.com/Nucabe))*
 - **The AddOns list shows Spoken and each module's name in colour, with new icons.** Spoken, Quests,
   Places, Readables, Contributions and Developer each have a new icon, the voice packs show Spoken in
   colour too, and the minimap button shows the mark at its size, centred. *([Nucabe](https://github.com/Nucabe))*
+- **Entering a dungeon or raid reads its story**, once per character, and counts it in the
+  Places tab as found. The Ruins of Lordaeron, the Deadmines, Ragefire Chasm and five more could
+  never be found before. Azeroth's story is back on the world map, and the Places tab lists Azeroth
+  above the continents. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
   manager, and the lines Spoken had no voice for go to the site after each logout or /reload,
   so you no longer upload the file yourself. Collected lines now also say which version of your
